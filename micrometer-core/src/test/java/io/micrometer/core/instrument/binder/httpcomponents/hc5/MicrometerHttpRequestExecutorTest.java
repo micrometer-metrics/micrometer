@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 VMware, Inc.
+ * Copyright 2023 VMware, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,8 +32,12 @@ import org.apache.hc.client5.http.classic.methods.HttpPost;
 import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
 import org.apache.hc.client5.http.impl.classic.HttpClientBuilder;
+import org.apache.hc.core5.http.ClassicHttpRequest;
+import org.apache.hc.core5.http.ClassicHttpResponse;
 import org.apache.hc.core5.http.impl.io.HttpRequestExecutor;
+import org.apache.hc.core5.http.io.HttpClientResponseHandler;
 import org.apache.hc.core5.http.io.entity.EntityUtils;
+import org.apache.hc.core5.util.Timeout;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -60,6 +64,8 @@ class MicrometerHttpRequestExecutorTest {
 
     private static final String EXPECTED_METER_NAME = "httpcomponents.httpclient.request";
 
+    private static final HttpClientResponseHandler<ClassicHttpResponse> NOOP_RESPONSE_HANDLER = (response) -> response;
+
     private final MeterRegistry registry = new SimpleMeterRegistry();
 
     @ParameterizedTest
@@ -68,8 +74,12 @@ class MicrometerHttpRequestExecutorTest {
             throws IOException {
         server.stubFor(any(anyUrl()));
         CloseableHttpClient client = client(executor(false, configureObservationRegistry));
-        EntityUtils.consume(client.execute(new HttpGet(server.baseUrl())).getEntity());
+        execute(client, new HttpGet(server.baseUrl()));
         assertThat(registry.get(EXPECTED_METER_NAME).timer().count()).isEqualTo(1L);
+    }
+
+    private void execute(CloseableHttpClient client, ClassicHttpRequest request) throws IOException {
+        EntityUtils.consume(client.execute(request, NOOP_RESPONSE_HANDLER).getEntity());
     }
 
     @ParameterizedTest
@@ -78,9 +88,9 @@ class MicrometerHttpRequestExecutorTest {
             throws IOException {
         server.stubFor(any(anyUrl()));
         CloseableHttpClient client = client(executor(false, configureObservationRegistry));
-        EntityUtils.consume(client.execute(new HttpGet(server.baseUrl())).getEntity());
-        EntityUtils.consume(client.execute(new HttpGet(server.baseUrl())).getEntity());
-        EntityUtils.consume(client.execute(new HttpPost(server.baseUrl())).getEntity());
+        execute(client, new HttpGet(server.baseUrl()));
+        execute(client, new HttpGet(server.baseUrl()));
+        execute(client, new HttpPost(server.baseUrl()));
         assertThat(registry.get(EXPECTED_METER_NAME).tags("method", "GET").timer().count()).isEqualTo(2L);
         assertThat(registry.get(EXPECTED_METER_NAME).tags("method", "POST").timer().count()).isEqualTo(1L);
     }
@@ -93,10 +103,10 @@ class MicrometerHttpRequestExecutorTest {
         server.stubFor(any(urlEqualTo("/notfound")).willReturn(aResponse().withStatus(404)));
         server.stubFor(any(urlEqualTo("/error")).willReturn(aResponse().withStatus(500)));
         CloseableHttpClient client = client(executor(false, configureObservationRegistry));
-        EntityUtils.consume(client.execute(new HttpGet(server.baseUrl() + "/ok")).getEntity());
-        EntityUtils.consume(client.execute(new HttpGet(server.baseUrl() + "/ok")).getEntity());
-        EntityUtils.consume(client.execute(new HttpGet(server.baseUrl() + "/notfound")).getEntity());
-        EntityUtils.consume(client.execute(new HttpGet(server.baseUrl() + "/error")).getEntity());
+        execute(client, new HttpGet(server.baseUrl() + "/ok"));
+        execute(client, new HttpGet(server.baseUrl() + "/ok"));
+        execute(client, new HttpGet(server.baseUrl() + "/notfound"));
+        execute(client, new HttpGet(server.baseUrl() + "/error"));
         assertThat(registry.get(EXPECTED_METER_NAME).tags("method", "GET", "status", "200").timer().count())
                 .isEqualTo(2L);
         assertThat(registry.get(EXPECTED_METER_NAME).tags("method", "GET", "status", "404").timer().count())
@@ -111,9 +121,9 @@ class MicrometerHttpRequestExecutorTest {
             throws IOException {
         server.stubFor(any(anyUrl()));
         CloseableHttpClient client = client(executor(false, configureObservationRegistry));
-        EntityUtils.consume(client.execute(new HttpGet(server.baseUrl())).getEntity());
-        EntityUtils.consume(client.execute(new HttpGet(server.baseUrl() + "/someuri")).getEntity());
-        EntityUtils.consume(client.execute(new HttpGet(server.baseUrl() + "/otheruri")).getEntity());
+        execute(client, new HttpGet(server.baseUrl()));
+        execute(client, new HttpGet(server.baseUrl() + "/someuri"));
+        execute(client, new HttpGet(server.baseUrl() + "/otheruri"));
         assertThat(registry.get(EXPECTED_METER_NAME).tags("uri", "UNKNOWN").timer().count()).isEqualTo(3L);
     }
 
@@ -125,7 +135,7 @@ class MicrometerHttpRequestExecutorTest {
         CloseableHttpClient client = client(executor(false, configureObservationRegistry));
         HttpGet getWithHeader = new HttpGet(server.baseUrl());
         getWithHeader.addHeader(DefaultUriMapper.URI_PATTERN_HEADER, "/some/pattern");
-        EntityUtils.consume(client.execute(getWithHeader).getEntity());
+        execute(client, getWithHeader);
         assertThat(registry.get(EXPECTED_METER_NAME).tags("uri", "/some/pattern").timer().count()).isEqualTo(1L);
         assertThrows(MeterNotFoundException.class,
                 () -> registry.get(EXPECTED_METER_NAME).tags("uri", "UNKNOWN").timer());
@@ -137,7 +147,7 @@ class MicrometerHttpRequestExecutorTest {
             throws IOException {
         server.stubFor(any(anyUrl()));
         CloseableHttpClient client = client(executor(false, configureObservationRegistry));
-        EntityUtils.consume(client.execute(new HttpGet(server.baseUrl())).getEntity());
+        execute(client, new HttpGet(server.baseUrl()));
         List<String> tagKeys = registry.get(EXPECTED_METER_NAME).timer().getId().getTags().stream().map(Tag::getKey)
                 .collect(Collectors.toList());
         assertThat(tagKeys).doesNotContain("target.scheme", "target.host", "target.port");
@@ -150,10 +160,17 @@ class MicrometerHttpRequestExecutorTest {
             throws IOException {
         server.stubFor(any(anyUrl()));
         CloseableHttpClient client = client(executor(true, configureObservationRegistry));
-        EntityUtils.consume(client.execute(new HttpGet(server.baseUrl())).getEntity());
+        execute(client, new HttpGet(server.baseUrl()));
         List<String> tagKeys = registry.get(EXPECTED_METER_NAME).timer().getId().getTags().stream().map(Tag::getKey)
                 .collect(Collectors.toList());
         assertThat(tagKeys).contains("target.scheme", "target.host", "target.port");
+    }
+
+    @Test
+    void waitForContinueGetsPassedToSuper() {
+        MicrometerHttpRequestExecutor requestExecutor = MicrometerHttpRequestExecutor.builder(registry)
+                .waitForContinue(Timeout.ofMilliseconds(1000)).build();
+        assertThat(requestExecutor).hasFieldOrPropertyWithValue("waitForContinue", Timeout.ofMilliseconds(1000));
     }
 
     @ParameterizedTest
@@ -168,10 +185,10 @@ class MicrometerHttpRequestExecutorTest {
         }
         MicrometerHttpRequestExecutor executor = executorBuilder.build();
         CloseableHttpClient client = client(executor);
-        EntityUtils.consume(client.execute(new HttpGet(server.baseUrl())).getEntity());
-        EntityUtils.consume(client.execute(new HttpGet(server.baseUrl() + "/foo")).getEntity());
-        EntityUtils.consume(client.execute(new HttpGet(server.baseUrl() + "/bar")).getEntity());
-        EntityUtils.consume(client.execute(new HttpGet(server.baseUrl() + "/foo")).getEntity());
+        execute(client, new HttpGet(server.baseUrl()));
+        execute(client, new HttpGet(server.baseUrl() + "/foo"));
+        execute(client, new HttpGet(server.baseUrl() + "/bar"));
+        execute(client, new HttpGet(server.baseUrl() + "/foo"));
         assertThat(registry.get(EXPECTED_METER_NAME).tags("uri", "/").timer().count()).isEqualTo(1L);
         assertThat(registry.get(EXPECTED_METER_NAME).tags("uri", "/foo").timer().count()).isEqualTo(2L);
         assertThat(registry.get(EXPECTED_METER_NAME).tags("uri", "/bar").timer().count()).isEqualTo(1L);
@@ -183,7 +200,7 @@ class MicrometerHttpRequestExecutorTest {
         MicrometerHttpRequestExecutor executor = MicrometerHttpRequestExecutor.builder(registry)
                 .tags(Tags.of("foo", "bar", "some.key", "value")).exportTagsForRoute(true).build();
         CloseableHttpClient client = client(executor);
-        EntityUtils.consume(client.execute(new HttpGet(server.baseUrl())).getEntity());
+        execute(client, new HttpGet(server.baseUrl()));
         assertThat(registry.get(EXPECTED_METER_NAME).tags("foo", "bar", "some.key", "value", "target.host", "localhost")
                 .timer().count()).isEqualTo(1L);
     }
@@ -204,7 +221,7 @@ class MicrometerHttpRequestExecutorTest {
         server.stubFor(any(anyUrl()));
         MicrometerHttpRequestExecutor executor = MicrometerHttpRequestExecutor.builder(registry).tags(null).build();
         CloseableHttpClient client = client(executor);
-        EntityUtils.consume(client.execute(new HttpGet(server.baseUrl())).getEntity());
+        execute(client, new HttpGet(server.baseUrl()));
         assertThat(registry.get(EXPECTED_METER_NAME)).isNotNull();
     }
 
@@ -217,7 +234,7 @@ class MicrometerHttpRequestExecutorTest {
         MicrometerHttpRequestExecutor micrometerHttpRequestExecutor = MicrometerHttpRequestExecutor.builder(registry)
                 .observationRegistry(observationRegistry).build();
         CloseableHttpClient client = client(micrometerHttpRequestExecutor);
-        EntityUtils.consume(client.execute(new HttpGet(server.baseUrl())).getEntity());
+        execute(client, new HttpGet(server.baseUrl()));
         assertThat(registry.get("custom.apache.http.client.requests")).isNotNull();
     }
 
@@ -235,7 +252,7 @@ class MicrometerHttpRequestExecutorTest {
                     }
                 }).build();
         CloseableHttpClient client = client(micrometerHttpRequestExecutor);
-        EntityUtils.consume(client.execute(new HttpGet(server.baseUrl())).getEntity());
+        execute(client, new HttpGet(server.baseUrl()));
         assertThat(registry.get("local.custom.apache.http.client.requests")).isNotNull();
     }
 
@@ -247,7 +264,7 @@ class MicrometerHttpRequestExecutorTest {
                 .observationRegistry(observationRegistry).observationConvention(new CustomGlobalApacheHttpConvention())
                 .build();
         CloseableHttpClient client = client(micrometerHttpRequestExecutor);
-        EntityUtils.consume(client.execute(new HttpGet(server.baseUrl())).getEntity());
+        execute(client, new HttpGet(server.baseUrl()));
         assertThat(registry.get("custom.apache.http.client.requests")).isNotNull();
     }
 
@@ -262,16 +279,15 @@ class MicrometerHttpRequestExecutorTest {
         CloseableHttpClient client = client(micrometerHttpRequestExecutor);
         switch (method) {
             case "get":
-                EntityUtils.consume(client.execute(new HttpGet(server.baseUrl())).getEntity());
+                execute(client, new HttpGet(server.baseUrl()));
                 break;
 
             case "post":
-                EntityUtils.consume(client.execute(new HttpPost(server.baseUrl())).getEntity());
+                execute(client, new HttpPost(server.baseUrl()));
                 break;
 
             default:
-                EntityUtils.consume(
-                        client.execute(new HttpUriRequestBase(method, URI.create(server.baseUrl()))).getEntity());
+                execute(client, new HttpUriRequestBase(method, URI.create(server.baseUrl())));
                 break;
         }
         TestObservationRegistryAssert.assertThat(observationRegistry).hasSingleObservationThat()
@@ -284,9 +300,8 @@ class MicrometerHttpRequestExecutorTest {
             @WiremockResolver.Wiremock WireMockServer server) {
         server.stubFor(any(urlEqualTo("/error")).willReturn(aResponse().withStatus(1)));
         CloseableHttpClient client = client(executor(false, configureObservationRegistry));
-        assertThatThrownBy(
-                () -> EntityUtils.consume(client.execute(new HttpGet(server.baseUrl() + "/error")).getEntity()))
-                        .isInstanceOf(ClientProtocolException.class);
+        assertThatThrownBy(() -> execute(client, new HttpGet(server.baseUrl() + "/error")))
+                .isInstanceOf(ClientProtocolException.class);
         assertThat(registry.get(EXPECTED_METER_NAME).tags("method", "GET", "status", "IO_ERROR").timer().count())
                 .isEqualTo(1L);
     }

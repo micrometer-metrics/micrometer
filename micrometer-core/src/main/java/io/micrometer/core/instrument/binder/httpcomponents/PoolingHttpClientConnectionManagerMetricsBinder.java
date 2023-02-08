@@ -36,6 +36,10 @@ import org.apache.http.pool.ConnPoolControl;
  *      HttpClient httpClient = HttpClientBuilder.create().setConnectionManager(connectionManager).build();
  *      new PoolingHttpClientConnectionManagerMetricsBinder(connectionManager, "my-pool").bindTo(registry);
  * }</pre>
+ * <p>
+ * See
+ * {@link io.micrometer.core.instrument.binder.httpcomponents.hc5.PoolingHttpClientConnectionManagerMetricsBinder}
+ * for Apache HTTP client 5 support.
  *
  * @author Benjamin Hubert (benjamin.hubert@willhaben.at)
  * @since 1.3.0
