@@ -757,7 +757,7 @@ public interface Observation extends ObservationView {
 
         /**
          * Clears the current scope and notifies the handlers that the scope was closed.
-         * You don't need to call this method manually, if you use try-with-resource, it
+         * You don't need to call this method manually. If you use try-with-resource, it
          * will call this for you. Please only call this method if you know what you are
          * doing and your use-case demands the usage of it.
          */
@@ -766,9 +766,10 @@ public interface Observation extends ObservationView {
 
         /**
          * Clears the current scope and notifies the handlers that the scope was reset.
-         * You don't need to call this method in most of the cases, please only call this
+         * You don't need to call this method in most of the cases. Please only call this
          * method if you know what you are doing and your use-case demands the usage of
          * it.
+         * @since 1.10.4
          */
         void reset();
 

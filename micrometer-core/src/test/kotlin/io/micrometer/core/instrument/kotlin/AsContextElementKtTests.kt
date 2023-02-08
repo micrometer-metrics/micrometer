@@ -53,7 +53,6 @@ internal class AsContextElementKtTests {
 
     @Test
     fun `should return observation from coroutine context when KotlinContextElement present`(): Unit = runBlocking {
-        val observationRegistry = ObservationRegistry.create()
         observationRegistry.observationConfig().observationHandler { true }
         val nextObservation = Observation.start("name", observationRegistry)
         val inScope = nextObservation.openScope()

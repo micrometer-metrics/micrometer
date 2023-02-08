@@ -74,11 +74,13 @@ public class ObservationThreadLocalAccessor implements ThreadLocalAccessor<Obser
         reset();
         Observation.Scope observationScope = value.getContext().get(SCOPE_KEY);
         if (observationScope != null) {
-            observationScope.close(); // We close the previous scope -
-            // it will put its parent as current and call all handlers
+            // We close the previous scope - it will put its parent as current and call
+            // all handlers.
+            observationScope.close();
         }
-        setValue(value); // We open the previous scope again, however this time in TL
-        // we have the whole hierarchy of scopes re-attached via handlers
+        // We open the previous scope again, however this time in TL we have the whole
+        // hierarchy of scopes re-attached via handlers.
+        setValue(value);
     }
 
 }
