@@ -67,6 +67,24 @@ class DynatraceDistributionSummaryTest {
     }
 
     @Test
+    void testDynatraceDistributionSummary_NegativeValuesAreIgnored() {
+        DynatraceDistributionSummary ds = new DynatraceDistributionSummary(ID, CLOCK, DISTRIBUTION_STATISTIC_CONFIG, 1);
+        ds.record(-1.23);
+        ds.record(-100.3);
+
+        assertMinMaxSumCount(ds, 0., 0., 0., 0);
+    }
+
+    @Test
+    void testDynatraceDistributionSummary_NaNValuesAreIgnored() {
+        DynatraceDistributionSummary ds = new DynatraceDistributionSummary(ID, CLOCK, DISTRIBUTION_STATISTIC_CONFIG, 1);
+
+        ds.record(Double.NaN);
+
+        assertMinMaxSumCount(ds, 0., 0., 0., 0);
+    }
+
+    @Test
     void testDynatraceDistributionSummaryScaled() {
         double scale = 1.5;
         DynatraceDistributionSummary ds = new DynatraceDistributionSummary(ID, CLOCK, DISTRIBUTION_STATISTIC_CONFIG,
