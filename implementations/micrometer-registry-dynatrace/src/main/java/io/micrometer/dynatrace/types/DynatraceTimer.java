@@ -71,7 +71,7 @@ public final class DynatraceTimer extends AbstractTimer implements DynatraceSumm
 
     @Override
     public DynatraceSummarySnapshot takeSummarySnapshot(TimeUnit unit) {
-        return convertIfNecessary(unit, summary.takeSummarySnapshot());
+        return convertIfNecessary(summary.takeSummarySnapshot(), unit);
     }
 
     @Override
