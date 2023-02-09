@@ -78,15 +78,15 @@ class LogbackMetricsTest {
         assertThat(registry.get("logback.events").tags("level", "error").counter().count()).isEqualTo(0.0);
     }
 
-    @Issue("#411")
+    @Issue("#411, #3623")
     @Test
     void ignoringLogMetricsInsideCounters() {
         registry = new LoggingCounterMeterRegistry();
         try (LogbackMetrics logbackMetrics = new LogbackMetrics()) {
             logbackMetrics.bindTo(registry);
-            registry.counter("my.counter").increment();
+            LoggerFactory.getLogger("test").info("This should be counted once");
         }
-        assertThat(registry.get("logback.events").tags("level", "info").counter().count()).isZero();
+        assertThat(registry.get("logback.events").tags("level", "info").counter().count()).isOne();
     }
 
     @Issue("#421")
@@ -153,10 +153,8 @@ class LogbackMetricsTest {
 
         @Override
         public void increment() {
-            LogbackMetrics.ignoreMetrics(() -> {
-                logger.info("beep");
-                super.increment();
-            });
+            logger.info("beep"); // this is necessary to test gh-3623
+            super.increment();
         }
 
     }
