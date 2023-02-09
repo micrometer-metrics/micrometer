@@ -141,10 +141,10 @@ class DynatraceTimerTest {
         DynatraceTimer timer = new DynatraceTimer(ID, CLOCK, DISTRIBUTION_STATISTIC_CONFIG, PAUSE_DETECTOR, unit);
 
         DynatraceSummarySnapshot snapshot = new DynatraceSummarySnapshot(1000., 2000., 3000., 2);
-        DynatraceSummarySnapshot unconverted = timer.convertIfNecessary(unit, snapshot);
+        DynatraceSummarySnapshot unconverted = timer.convertIfNecessary(snapshot, unit);
         assertThat(unconverted).isEqualTo(snapshot);
 
-        DynatraceSummarySnapshot converted = timer.convertIfNecessary(TimeUnit.SECONDS, snapshot);
+        DynatraceSummarySnapshot converted = timer.convertIfNecessary(snapshot, TimeUnit.SECONDS);
         assertMinMaxSumCount(converted, 1, 2, 3, 2);
     }
 
