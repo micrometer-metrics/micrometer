@@ -55,9 +55,13 @@ public final class DynatraceTimer extends AbstractTimer implements DynatraceSumm
         }
     }
 
+    /**
+     * @deprecated see {@link DynatraceSummarySnapshotSupport#hasValues()}.
+     */
     @Override
+    @Deprecated
     public boolean hasValues() {
-        return count() > 0;
+        return summary.getCount() > 0;
     }
 
     @Override
@@ -67,7 +71,7 @@ public final class DynatraceTimer extends AbstractTimer implements DynatraceSumm
 
     @Override
     public DynatraceSummarySnapshot takeSummarySnapshot(TimeUnit unit) {
-        return new DynatraceSummarySnapshot(min(unit), max(unit), totalTime(unit), count());
+        return convertIfNecessary(summary.takeSummarySnapshot(), unit);
     }
 
     @Override
@@ -77,9 +81,17 @@ public final class DynatraceTimer extends AbstractTimer implements DynatraceSumm
 
     @Override
     public DynatraceSummarySnapshot takeSummarySnapshotAndReset(TimeUnit unit) {
-        DynatraceSummarySnapshot snapshot = takeSummarySnapshot(unit);
-        summary.reset();
-        return snapshot;
+        return convertIfNecessary(summary.takeSummarySnapshotAndReset(), unit);
+    }
+
+    DynatraceSummarySnapshot convertIfNecessary(DynatraceSummarySnapshot snapshot, TimeUnit unit) {
+        if (unit == baseTimeUnit()) {
+            return snapshot;
+        }
+
+        return new DynatraceSummarySnapshot(unit.convert((long) snapshot.getMin(), baseTimeUnit()),
+                unit.convert((long) snapshot.getMax(), baseTimeUnit()),
+                unit.convert((long) snapshot.getTotal(), baseTimeUnit()), snapshot.getCount());
     }
 
     @Override
