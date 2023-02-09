@@ -17,6 +17,7 @@ package io.micrometer.registry.otlp;
 
 import io.micrometer.core.instrument.config.validate.Validated;
 import io.micrometer.core.instrument.push.PushRegistryConfig;
+import io.opentelemetry.proto.metrics.v1.AggregationTemporality;
 
 import java.util.Arrays;
 import java.util.Map;
@@ -24,8 +25,7 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.*;
-import static io.micrometer.core.instrument.config.validate.PropertyValidator.getString;
-import static io.micrometer.core.instrument.config.validate.PropertyValidator.getUrlString;
+import static io.micrometer.core.instrument.config.validate.PropertyValidator.*;
 
 /**
  * Config for {@link OtlpMeterRegistry}.
@@ -85,6 +85,19 @@ public interface OtlpConfig extends PushRegistryConfig {
         }
 
         return resourceAttributes;
+    }
+
+    /**
+     * {@link AggregationTemporality} of the OtlpMeterRegistry. This determines whether
+     * the meters should be cumulative(AGGREGATION_TEMPORALITY_CUMULATIVE) or
+     * step(AGGREGATION_TEMPORALITY_DELTA).
+     * @return the aggregationTemporality for OtlpRegistry
+     * @see <a href=
+     * "https://opentelemetry.io/docs/reference/specification/metrics/data-model/#temporality">Temporality</a>
+     */
+    default int getAggregationTemporality() {
+        return getInteger(this, "aggregationTemporality")
+                .orElse(AggregationTemporality.AGGREGATION_TEMPORALITY_CUMULATIVE_VALUE);
     }
 
     /**
