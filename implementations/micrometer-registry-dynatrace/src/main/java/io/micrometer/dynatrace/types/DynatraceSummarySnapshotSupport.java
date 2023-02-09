@@ -25,6 +25,12 @@ import java.util.concurrent.TimeUnit;
  */
 public interface DynatraceSummarySnapshotSupport {
 
+    /**
+     * @deprecated This method might lead to problems with a race condition if values are
+     * added to the summary after reading the number of values already recorded. Take a
+     * snapshot and use {@link DynatraceSummarySnapshot#getCount()} instead.
+     */
+    @Deprecated()
     boolean hasValues();
 
     DynatraceSummarySnapshot takeSummarySnapshot();
