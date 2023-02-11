@@ -196,8 +196,9 @@ public class MicrometerHttpRequestExecutor extends HttpRequestExecutor {
         }
 
         /**
-         * @return Creates an instance of {@link MicrometerHttpRequestExecutor} with all
-         * the configured properties.
+         * Creates an instance of {@link MicrometerHttpRequestExecutor} with all the
+         * configured properties.
+         * @return an instance of {@link MicrometerHttpRequestExecutor}
          */
         public MicrometerHttpRequestExecutor build() {
             return new MicrometerHttpRequestExecutor(waitForContinue, registry, uriMapper, tags, exportTagsForRoute);
