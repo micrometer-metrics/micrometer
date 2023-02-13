@@ -495,11 +495,11 @@ class DynatraceExporterV1Test {
         verify(reqBuilder).send();
         // assert that an error is logged that does not contain the token.
         assertThat(LOGGER.getLogEvents()).hasSize(1).extracting(LogEvent::getMessage)
-                .containsExactlyInAnyOrder("failed to send metrics to Dynatrace").noneMatch(x -> x.contains(apiToken));
+                .containsExactly("failed to send metrics to Dynatrace").noneMatch(x -> x.contains(apiToken));
     }
 
     private DynatraceExporterV1 getDynatraceExporterV1(HttpSender httpClient, String url, String apiToken) {
-        DynatraceExporterV1 exporter = FACTORY.injectLogger(() -> new DynatraceExporterV1(new DynatraceConfig() {
+        return FACTORY.injectLogger(() -> new DynatraceExporterV1(new DynatraceConfig() {
             @Override
             public String get(String key) {
                 return null;
@@ -515,7 +515,6 @@ class DynatraceExporterV1Test {
                 return url;
             }
         }, clock, httpClient));
-        return exporter;
     }
 
     private DynatraceExporterV1 createExporter(HttpSender httpClient) {

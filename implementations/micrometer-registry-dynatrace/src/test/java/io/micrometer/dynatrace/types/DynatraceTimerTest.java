@@ -62,7 +62,6 @@ class DynatraceTimerTest {
 
         timer.takeSummarySnapshotAndReset(BASE_TIME_UNIT);
         assertThat(timer.count()).isZero();
-
     }
 
     @Test
@@ -140,7 +139,7 @@ class DynatraceTimerTest {
         TimeUnit unit = TimeUnit.MILLISECONDS;
         DynatraceTimer timer = new DynatraceTimer(ID, CLOCK, DISTRIBUTION_STATISTIC_CONFIG, PAUSE_DETECTOR, unit);
 
-        DynatraceSummarySnapshot snapshot = new DynatraceSummarySnapshot(1000., 2000., 3000., 2);
+        DynatraceSummarySnapshot snapshot = new DynatraceSummarySnapshot(1000.0, 2000.0, 3000.0, 2);
         DynatraceSummarySnapshot unconverted = timer.convertIfNecessary(snapshot, unit);
         assertThat(unconverted).isEqualTo(snapshot);
 

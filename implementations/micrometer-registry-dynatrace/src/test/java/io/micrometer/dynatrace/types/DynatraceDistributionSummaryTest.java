@@ -72,7 +72,7 @@ class DynatraceDistributionSummaryTest {
         ds.record(-1.23);
         ds.record(-100.3);
 
-        assertMinMaxSumCount(ds, 0., 0., 0., 0);
+        assertMinMaxSumCount(ds, 0.0, 0.0, 0.0, 0);
     }
 
     @Test
@@ -81,7 +81,7 @@ class DynatraceDistributionSummaryTest {
 
         ds.record(Double.NaN);
 
-        assertMinMaxSumCount(ds, 0., 0., 0., 0);
+        assertMinMaxSumCount(ds, 0.0, 0.0, 0.0, 0);
     }
 
     @Test

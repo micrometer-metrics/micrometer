@@ -150,7 +150,7 @@ class CompositeMeterRegistryTest {
     void commonTags() {
         simple.config().commonTags("instance", "local"); // added alongside other common
                                                          // tags in the composite
-        simple.config().commonTags("region", "us-west-1"); // overriden by the composite
+        simple.config().commonTags("region", "us-west-1"); // overridden by the composite
 
         composite.config().commonTags("region", "us-east-1");
         composite.add(simple);
