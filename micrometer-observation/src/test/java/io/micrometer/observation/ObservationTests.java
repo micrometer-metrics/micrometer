@@ -305,9 +305,7 @@ class ObservationTests {
 
         // with runnable
         AtomicBoolean called = new AtomicBoolean();
-        Observation.start("service", registry).observe(() -> {
-            called.set(true);
-        });
+        Observation.start("service", registry).observe(() -> called.set(true));
         assertThat(called).isTrue();
     }
 
@@ -481,7 +479,7 @@ class ObservationTests {
 
     static class CustomContext extends Observation.Context {
 
-        public String hello() {
+        String hello() {
             return "Hello";
         }
 

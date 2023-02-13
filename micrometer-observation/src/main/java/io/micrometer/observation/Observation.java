@@ -584,14 +584,15 @@ public interface Observation extends ObservationView {
      * </ul>
      *
      * NOTE: When the {@link ObservationRegistry} is a noop, this function receives a
-     * default {@link Context} instance which is not the one that have passed at
+     * default {@link Context} instance which is not the one that has been passed at
      * {@link Observation} creation.
      * @param function the {@link Function} to call
      * @return the result from {@link Function#apply(Object)}
      * @param <C> the type of input {@link Context} to the function
      * @param <T> the type parameter of the {@link Function} return
+     * @since 1.11.0
      */
-    @SuppressWarnings({ "unchecked" })
+    @SuppressWarnings({ "unused", "unchecked" })
     @Nullable
     default <C extends Context, T> T observeWithContext(Function<C, T> function) {
         start();
@@ -621,14 +622,14 @@ public interface Observation extends ObservationView {
      * </ul>
      *
      * NOTE: When the {@link ObservationRegistry} is a noop, this function receives a
-     * default {@link Context} instance which is not the one that have passed at
+     * default {@link Context} instance which is not the one that has been passed at
      * {@link Observation} creation.
      * @param function the {@link CheckedFunction} to call
      * @return the result from {@link Function#apply(Object)}
      * @param <C> the type of input {@link Context} to the function
      * @param <T> the type of return to the function
      * @param <E> type of exception {@link CheckedFunction} throws
-     * @param <E> type of exception thrown
+     * @since 1.11.0
      */
     @SuppressWarnings({ "unused", "unchecked" })
     @Nullable
@@ -1350,6 +1351,8 @@ public interface Observation extends ObservationView {
 
     /**
      * A functional interface like {@link Function} but it can throw a {@link Throwable}.
+     *
+     * @since 1.11.0
      */
     @FunctionalInterface
     interface CheckedFunction<T, R, E extends Throwable> {
