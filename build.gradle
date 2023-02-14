@@ -12,7 +12,7 @@ buildscript {
         classpath 'gradle.plugin.com.hierynomus.gradle.plugins:license-gradle-plugin:0.16.1'
         classpath 'com.netflix.nebula:gradle-info-plugin:11.4.1'
         classpath 'com.netflix.nebula:nebula-release-plugin:16.1.0'
-        classpath 'com.netflix.nebula:nebula-publishing-plugin:18.4.0'
+        classpath 'com.netflix.nebula:nebula-publishing-plugin:20.0.0'
         classpath 'com.netflix.nebula:nebula-project-plugin:9.4.0'
         classpath 'io.spring.nohttp:nohttp-gradle:0.0.11'
         classpath 'io.github.gradle-nexus:publish-plugin:1.1.0'
@@ -274,15 +274,15 @@ subprojects {
     }
 
     if (!['samples', 'benchmarks'].find { project.name.contains(it) }) {
-        apply plugin: 'nebula.maven-publish'
-        apply plugin: 'nebula.maven-manifest'
-        apply plugin: 'nebula.maven-developer'
-        apply plugin: 'nebula.javadoc-jar'
-        apply plugin: 'nebula.source-jar'
-        apply plugin: 'nebula.maven-apache-license'
-        apply plugin: 'nebula.publish-verification'
-        apply plugin: 'nebula.contacts'
-        apply plugin: 'nebula.info'
+        apply plugin: 'com.netflix.nebula.maven-publish'
+        apply plugin: 'com.netflix.nebula.maven-manifest'
+        apply plugin: 'com.netflix.nebula.maven-developer'
+        apply plugin: 'com.netflix.nebula.javadoc-jar'
+        apply plugin: 'com.netflix.nebula.source-jar'
+        apply plugin: 'com.netflix.nebula.maven-apache-license'
+        apply plugin: 'com.netflix.nebula.publish-verification'
+        apply plugin: 'com.netflix.nebula.contacts'
+        apply plugin: 'com.netflix.nebula.info'
         apply plugin: 'nebula.project'
 
         if (project.name != 'micrometer-bom') {
