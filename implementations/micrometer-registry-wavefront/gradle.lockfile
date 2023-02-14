@@ -29,6 +29,7 @@ commons-logging:commons-logging:1.2=nohttp
 info.picocli:picocli:3.9.5=nohttp-cli
 info.picocli:picocli:4.3.1=nohttp
 info.picocli:picocli:4.6.2=checkstyle
+io.netty:netty-bom:4.1.89.Final=compileClasspath,default,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
 io.projectreactor:reactor-bom:2020.0.27=compileClasspath,default,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
 io.spring.javaformat:spring-javaformat-checkstyle:0.0.35=checkstyle
 io.spring.javaformat:spring-javaformat-config:0.0.35=checkstyle

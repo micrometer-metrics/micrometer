@@ -76,6 +76,7 @@ io.grpc:grpc-protobuf:1.46.0=compileClasspath,default,productionRuntimeClasspath
 io.grpc:grpc-services:1.46.0=default,productionRuntimeClasspath,runtimeClasspath,testRuntimeClasspath
 io.grpc:grpc-stub:1.46.0=compileClasspath,default,productionRuntimeClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
 io.grpc:grpc-xds:1.46.0=default,productionRuntimeClasspath,runtimeClasspath,testRuntimeClasspath
+io.netty:netty-bom:4.1.89.Final=default,productionRuntimeClasspath,runtimeClasspath,testRuntimeClasspath
 io.netty:netty-buffer:4.1.87.Final=default,productionRuntimeClasspath,runtimeClasspath,testRuntimeClasspath
 io.netty:netty-codec-dns:4.1.87.Final=default,productionRuntimeClasspath,runtimeClasspath,testRuntimeClasspath
 io.netty:netty-codec-http2:4.1.87.Final=default,productionRuntimeClasspath,runtimeClasspath,testRuntimeClasspath

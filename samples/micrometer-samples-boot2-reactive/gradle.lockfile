@@ -27,6 +27,7 @@ commons-logging:commons-logging:1.2=nohttp
 info.picocli:picocli:3.9.5=nohttp-cli
 info.picocli:picocli:4.3.1=nohttp
 info.picocli:picocli:4.6.2=checkstyle
+io.netty:netty-bom:4.1.89.Final=default,productionRuntimeClasspath,runtimeClasspath,testRuntimeClasspath
 io.netty:netty-buffer:4.1.87.Final=compileClasspath,default,productionRuntimeClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
 io.netty:netty-codec-dns:4.1.87.Final=compileClasspath,default,productionRuntimeClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
 io.netty:netty-codec-http2:4.1.87.Final=compileClasspath,default,productionRuntimeClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath

@@ -96,6 +96,7 @@ subprojects {
         }
       }
       implementation platform('io.projectreactor:reactor-bom:2020.0.+')
+      implementation platform('io.netty:netty-bom:4.1.+')
     }
   }
 }
