@@ -12,11 +12,11 @@ buildscript {
 
     dependencies {
         classpath 'gradle.plugin.com.hierynomus.gradle.plugins:license-gradle-plugin:0.16.1'
-        classpath 'com.netflix.nebula:gradle-info-plugin:11.4.1'
-        classpath 'com.netflix.nebula:nebula-release-plugin:16.1.0'
-        classpath 'com.netflix.nebula:nebula-publishing-plugin:18.4.0'
-        classpath 'com.netflix.nebula:nebula-project-plugin:9.4.0'
-        classpath 'io.spring.nohttp:nohttp-gradle:0.0.10'
+        classpath 'com.netflix.nebula:gradle-info-plugin:12.0.1'
+        classpath 'com.netflix.nebula:nebula-release-plugin:17.1.0'
+        classpath 'com.netflix.nebula:nebula-publishing-plugin:20.0.0'
+        classpath 'com.netflix.nebula:nebula-project-plugin:10.1.2'
+        classpath 'io.spring.nohttp:nohttp-gradle:0.0.11'
         classpath 'io.github.gradle-nexus:publish-plugin:1.1.0'
         classpath 'me.champeau.gradle:japicmp-gradle-plugin:0.4.1'
         classpath 'de.undercouch:gradle-download-task:5.2.1'
@@ -35,7 +35,7 @@ buildscript {
 
 // TODO: remove this hack, see: https://github.com/nebula-plugins/nebula-release-plugin/issues/213
 def releaseStage = findProperty('release.stage')
-apply plugin: 'nebula.release'
+apply plugin: 'com.netflix.nebula.release'
 release.defaultVersionStrategy = nebula.plugin.release.git.opinion.Strategies.SNAPSHOT
 
 apply plugin: 'io.github.gradle-nexus.publish-plugin'
@@ -286,16 +286,16 @@ subprojects {
     }
 
     if (!['samples', 'benchmarks'].find { project.name.contains(it) }) {
-        apply plugin: 'nebula.maven-publish'
-        apply plugin: 'nebula.maven-manifest'
-        apply plugin: 'nebula.maven-developer'
-        apply plugin: 'nebula.javadoc-jar'
-        apply plugin: 'nebula.source-jar'
-        apply plugin: 'nebula.maven-apache-license'
-        apply plugin: 'nebula.publish-verification'
-        apply plugin: 'nebula.contacts'
-        apply plugin: 'nebula.info'
-        apply plugin: 'nebula.project'
+        apply plugin: 'com.netflix.nebula.maven-publish'
+        apply plugin: 'com.netflix.nebula.maven-manifest'
+        apply plugin: 'com.netflix.nebula.maven-developer'
+        apply plugin: 'com.netflix.nebula.javadoc-jar'
+        apply plugin: 'com.netflix.nebula.source-jar'
+        apply plugin: 'com.netflix.nebula.maven-apache-license'
+        apply plugin: 'com.netflix.nebula.publish-verification'
+        apply plugin: 'com.netflix.nebula.contacts'
+        apply plugin: 'com.netflix.nebula.info'
+        apply plugin: 'com.netflix.nebula.project'
 
         if (project.name != 'micrometer-bom') {
             jar {
@@ -373,6 +373,7 @@ subprojects {
                 }
 
                 tasks.japicmp.dependsOn(downloadBaseline)
+                tasks.japicmp.dependsOn(jar)
                 tasks.check.dependsOn(japicmp)
             }
         }
@@ -419,7 +420,7 @@ task deleteLockFiles(type: Delete) {
 }
 
 wrapper {
-    gradleVersion = '7.5.1'
+    gradleVersion = '8.0'
 }
 
 defaultTasks 'build'
