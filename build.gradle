@@ -348,6 +348,7 @@ subprojects {
             }
 
             tasks.japicmp.dependsOn(downloadBaseline)
+            tasks.japicmp.dependsOn(jar)
             tasks.check.dependsOn(japicmp)
         }
 

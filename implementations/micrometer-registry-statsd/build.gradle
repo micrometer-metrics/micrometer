@@ -47,6 +47,8 @@ shadowJar {
     mergeServiceFiles()
 }
 
+tasks.japicmp.dependsOn(tasks.shadowJar)
+
 // The Nebula Publishing plugin automatically configures the publication of the shadow jar but
 // shadow dependencies are added to the POM as runtime so we manually clean up the POM.
 publishing {
