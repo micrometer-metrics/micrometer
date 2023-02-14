@@ -6,8 +6,8 @@ dependencies {
     implementation project(":micrometer-core")
 
     // Test sample project with SLFJ4 2.x / Logback 1.4; see gh-3415
-    runtimeClasspath 'ch.qos.logback:logback-classic:1.4.+'
-    testRuntimeClasspath 'ch.qos.logback:logback-classic:1.4.+'
+    runtimeOnly 'ch.qos.logback:logback-classic:1.4.+'
+    testRuntimeOnly 'ch.qos.logback:logback-classic:1.4.+'
 
     implementation 'org.glassfish.jersey.containers:jersey-container-jdk-http:3.0.+'
     runtimeOnly 'org.glassfish.jersey.inject:jersey-hk2:3.0.+'
