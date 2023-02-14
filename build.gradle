@@ -10,8 +10,8 @@ buildscript {
 
     dependencies {
         classpath 'gradle.plugin.com.hierynomus.gradle.plugins:license-gradle-plugin:0.16.1'
-        classpath 'com.netflix.nebula:gradle-info-plugin:11.4.1'
-        classpath 'com.netflix.nebula:nebula-release-plugin:16.1.0'
+        classpath 'com.netflix.nebula:gradle-info-plugin:12.0.1'
+        classpath 'com.netflix.nebula:nebula-release-plugin:17.1.0'
         classpath 'com.netflix.nebula:nebula-publishing-plugin:20.0.0'
         classpath 'com.netflix.nebula:nebula-project-plugin:10.1.2'
         classpath 'io.spring.nohttp:nohttp-gradle:0.0.11'
@@ -32,7 +32,7 @@ buildscript {
 
 // TODO: remove this hack, see: https://github.com/nebula-plugins/nebula-release-plugin/issues/213
 def releaseStage = findProperty('release.stage')
-apply plugin: 'nebula.release'
+apply plugin: 'com.netflix.nebula.release'
 release.defaultVersionStrategy = nebula.plugin.release.git.opinion.Strategies.SNAPSHOT
 
 apply plugin: 'io.github.gradle-nexus.publish-plugin'
