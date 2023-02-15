@@ -13,11 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/**
- * Meter binders for Jetty.
- */
-@NonNullApi
 package io.micrometer.core.instrument.binder.jetty;
 
-import io.micrometer.common.lang.NonNullApi;
+import io.micrometer.observation.Observation;
+import io.micrometer.observation.ObservationConvention;
+
+/**
+ * Convention used with Jetty client instrumentation {@link JettyClientMetrics}.
+ *
+ * @since 1.11.0
+ */
+public interface JettyClientObservationConvention extends ObservationConvention<JettyClientContext> {
+
+    @Override
+    default boolean supportsContext(Observation.Context context) {
+        return context instanceof JettyClientContext;
+    }
+
+}

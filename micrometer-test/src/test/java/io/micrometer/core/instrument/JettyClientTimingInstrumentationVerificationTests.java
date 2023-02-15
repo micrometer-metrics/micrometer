@@ -17,10 +17,11 @@ package io.micrometer.core.instrument;
 
 import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.binder.jetty.JettyClientMetrics;
+import io.micrometer.core.instrument.binder.jetty.JettyClientObservationDocumentation;
+import io.micrometer.observation.docs.ObservationDocumentation;
 import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.api.Request;
 import org.eclipse.jetty.client.util.BytesContentProvider;
-import org.junit.jupiter.api.BeforeEach;
 
 import java.net.URI;
 
@@ -29,29 +30,25 @@ class JettyClientTimingInstrumentationVerificationTests
 
     private static final String HEADER_URI_PATTERN = "URI_PATTERN";
 
-    private final HttpClient httpClient = new HttpClient();
-
     @Override
     protected String timerName() {
         return "jetty.client.requests";
     }
 
-    @BeforeEach
-    void setup() throws Exception {
-        httpClient.start();
+    @Override
+    protected ObservationDocumentation observationDocumentation() {
+        return JettyClientObservationDocumentation.DEFAULT;
     }
 
     @Override
     protected HttpClient clientInstrumentedWithMetrics() {
-        httpClient.getRequestListeners().add(JettyClientMetrics
-                .builder(getRegistry(), result -> result.getRequest().getHeaders().get(HEADER_URI_PATTERN)).build());
-        return httpClient;
+        return createHttpClient(false);
     }
 
     @Nullable
     @Override
     protected HttpClient clientInstrumentedWithObservations() {
-        return null;
+        return createHttpClient(true);
     }
 
     @Override
@@ -70,6 +67,23 @@ class JettyClientTimingInstrumentationVerificationTests
         catch (Exception e) {
             throw new RuntimeException(e);
         }
+    }
+
+    private HttpClient createHttpClient(boolean withObservationRegistry) {
+        HttpClient httpClient = new HttpClient();
+        JettyClientMetrics.Builder builder = JettyClientMetrics.builder(getRegistry(),
+                (request, result) -> request.getHeaders().get(HEADER_URI_PATTERN));
+        if (withObservationRegistry) {
+            builder.observationRegistry(getObservationRegistry());
+        }
+        httpClient.getRequestListeners().add(builder.build());
+        try {
+            httpClient.start();
+        }
+        catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        return httpClient;
     }
 
 }
