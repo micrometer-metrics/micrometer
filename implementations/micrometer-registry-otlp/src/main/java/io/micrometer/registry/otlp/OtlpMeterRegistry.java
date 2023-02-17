@@ -69,6 +69,8 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
 
     private final Resource resource;
 
+    private final boolean isDeltaAggregationTemporality;
+
     public OtlpMeterRegistry() {
         this(OtlpConfig.DEFAULT, Clock.SYSTEM);
     }
@@ -84,6 +86,8 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
         this.config = config;
         this.httpSender = httpSender;
         this.resource = Resource.newBuilder().addAllAttributes(getResourceAttributes()).build();
+        this.isDeltaAggregationTemporality = config
+                .getAggregationTemporality() == AggregationTemporality.AGGREGATION_TEMPORALITY_DELTA_VALUE;
         config().namingConvention(NamingConvention.dot);
         start(DEFAULT_THREAD_FACTORY);
     }
@@ -125,14 +129,14 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
 
     @Override
     protected Counter newCounter(Meter.Id id) {
-        return isDeltaAggregationTemporality() ? new StepCounter(id, this.clock, config.step().toMillis())
+        return isDeltaAggregationTemporality ? new StepCounter(id, this.clock, config.step().toMillis())
                 : new OtlpCounter(id, this.clock);
     }
 
     @Override
     protected Timer newTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig,
             PauseDetector pauseDetector) {
-        return isDeltaAggregationTemporality()
+        return isDeltaAggregationTemporality
                 ? new OtlpStepTimer(id, clock, distributionStatisticConfig, pauseDetector, getBaseTimeUnit(),
                         config.step().toMillis())
                 : new OtlpCumulativeTimer(id, this.clock, distributionStatisticConfig, pauseDetector,
@@ -142,7 +146,7 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
     @Override
     protected DistributionSummary newDistributionSummary(Meter.Id id,
             DistributionStatisticConfig distributionStatisticConfig, double scale) {
-        return isDeltaAggregationTemporality()
+        return isDeltaAggregationTemporality
                 ? new OtlpStepDistributionSummary(id, clock, distributionStatisticConfig, scale,
                         config.step().toMillis())
                 : new OtlpCumulativeDistributionSummary(id, this.clock, distributionStatisticConfig, scale, true);
@@ -156,7 +160,7 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
     @Override
     protected <T> FunctionTimer newFunctionTimer(Meter.Id id, T obj, ToLongFunction<T> countFunction,
             ToDoubleFunction<T> totalTimeFunction, TimeUnit totalTimeFunctionUnit) {
-        return isDeltaAggregationTemporality()
+        return isDeltaAggregationTemporality
                 ? new StepFunctionTimer<>(id, clock, config.step().toMillis(), obj, countFunction, totalTimeFunction,
                         totalTimeFunctionUnit, getBaseTimeUnit())
                 : new OtlpFunctionTimer<>(id, obj, countFunction, totalTimeFunction, totalTimeFunctionUnit,
@@ -165,14 +169,14 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
 
     @Override
     protected <T> FunctionCounter newFunctionCounter(Meter.Id id, T obj, ToDoubleFunction<T> countFunction) {
-        return isDeltaAggregationTemporality()
+        return isDeltaAggregationTemporality
                 ? new StepFunctionCounter<>(id, clock, config.step().toMillis(), obj, countFunction)
                 : new OtlpFunctionCounter<>(id, obj, countFunction, this.clock);
     }
 
     @Override
     protected LongTaskTimer newLongTaskTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig) {
-        return isDeltaAggregationTemporality()
+        return isDeltaAggregationTemporality
                 ? new DefaultLongTaskTimer(id, clock, getBaseTimeUnit(), distributionStatisticConfig, false)
                 : new OtlpLongTaskTimer(id, this.clock, getBaseTimeUnit(), distributionStatisticConfig);
     }
@@ -231,14 +235,14 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
 
         Iterable<? extends KeyValue> tags = getTagsForId(histogramSupport.getId());
         long startTimeNanos = getStartTimeNanos(histogramSupport);
-        long wallTimeNanos = getEndTimeNanos();
+        long endTimeNanos = getEndTimeNanos();
         double total = isTimeBased ? histogramSnapshot.total(getBaseTimeUnit()) : histogramSnapshot.total();
         long count = histogramSnapshot.count();
 
         // if percentiles configured, use summary
         if (histogramSnapshot.percentileValues().length != 0) {
             SummaryDataPoint.Builder summaryData = SummaryDataPoint.newBuilder().addAllAttributes(tags)
-                    .setStartTimeUnixNano(startTimeNanos).setTimeUnixNano(wallTimeNanos).setSum(total).setCount(count);
+                    .setStartTimeUnixNano(startTimeNanos).setTimeUnixNano(endTimeNanos).setSum(total).setCount(count);
             for (ValueAtPercentile percentile : histogramSnapshot.percentileValues()) {
                 summaryData.addQuantileValues(
                         SummaryDataPoint.ValueAtQuantile.newBuilder().setQuantile(percentile.percentile()).setValue(
@@ -249,9 +253,9 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
         }
 
         HistogramDataPoint.Builder histogramDataPoint = HistogramDataPoint.newBuilder().addAllAttributes(tags)
-                .setStartTimeUnixNano(startTimeNanos).setTimeUnixNano(wallTimeNanos).setSum(total).setCount(count);
+                .setStartTimeUnixNano(startTimeNanos).setTimeUnixNano(endTimeNanos).setSum(total).setCount(count);
 
-        if (isDeltaAggregationTemporality()) {
+        if (isDeltaAggregationTemporality) {
             histogramDataPoint.setMax(histogramSnapshot.max(getBaseTimeUnit()));
         }
         // if histogram enabled, add histogram buckets
@@ -281,17 +285,13 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
                 .build();
     }
 
-    private boolean isDeltaAggregationTemporality() {
-        return config.getAggregationTemporality() == AggregationTemporality.AGGREGATION_TEMPORALITY_DELTA_VALUE;
-    }
-
     private long getStartTimeNanos(Meter meter) {
-        return isDeltaAggregationTemporality() ? getEndTimeNanos() - config.step().toNanos()
+        return isDeltaAggregationTemporality ? getEndTimeNanos() - config.step().toNanos()
                 : ((StartTimeAwareMeter) meter).getStartTimeNanos();
     }
 
     private long getEndTimeNanos() {
-        return isDeltaAggregationTemporality() ? (clock.wallTime() / config.step().toMillis()) * config.step().toNanos()
+        return isDeltaAggregationTemporality ? (clock.wallTime() / config.step().toMillis()) * config.step().toNanos()
                 : TimeUnit.MILLISECONDS.toNanos(clock.wallTime());
     }
 
