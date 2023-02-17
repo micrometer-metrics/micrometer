@@ -25,8 +25,13 @@ import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.binder.MeterBinder;
 
 import java.lang.management.ManagementFactory;
+import java.lang.management.ThreadInfo;
 import java.lang.management.ThreadMXBean;
 import java.util.Arrays;
+import java.util.EnumMap;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import static java.util.Collections.emptyList;
 
@@ -67,9 +72,11 @@ public class JvmThreadMetrics implements MeterBinder {
                 .baseUnit(BaseUnits.THREADS).register(registry);
 
         try {
-            threadBean.getAllThreadIds();
+            long[] allThreadIds = threadBean.getAllThreadIds();
+            EnumMap<Thread.State, Long> stateCountGroup = Arrays.stream(threadBean.getThreadInfo(allThreadIds))
+                    .collect(Collectors.groupingBy(ThreadInfo::getThreadState, () -> new EnumMap<>(Thread.State.class),Collectors.counting()));
             for (Thread.State state : Thread.State.values()) {
-                Gauge.builder("jvm.threads.states", threadBean, (bean) -> getThreadStateCount(bean, state))
+                Gauge.builder("jvm.threads.states", () -> stateCountGroup.get(state))
                         .tags(Tags.concat(tags, "state", getStateTagValue(state)))
                         .description("The current number of threads").baseUnit(BaseUnits.THREADS).register(registry);
             }
