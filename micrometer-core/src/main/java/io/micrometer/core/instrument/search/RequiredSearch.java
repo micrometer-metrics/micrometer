@@ -112,6 +112,7 @@ public final class RequiredSearch {
     }
 
     /**
+     * Performs the search and returns any matching {@link Timer}.
      * @return Any matching {@link Timer}
      * @throws MeterNotFoundException if there is no match.
      */
@@ -120,6 +121,7 @@ public final class RequiredSearch {
     }
 
     /**
+     * Performs the search and returns any matching {@link Counter}.
      * @return Any matching {@link Counter}.
      * @throws MeterNotFoundException if there is no match.
      */
@@ -128,6 +130,7 @@ public final class RequiredSearch {
     }
 
     /**
+     * Performs the search and returns any matching {@link Gauge}.
      * @return Any matching {@link Gauge}.
      * @throws MeterNotFoundException if there is no match.
      */
@@ -136,6 +139,7 @@ public final class RequiredSearch {
     }
 
     /**
+     * Performs the search and returns any matching {@link FunctionCounter}.
      * @return Any matching {@link FunctionCounter}.
      * @throws MeterNotFoundException if there is no match.
      */
@@ -144,6 +148,7 @@ public final class RequiredSearch {
     }
 
     /**
+     * Performs the search and returns any matching {@link TimeGauge}.
      * @return Any matching {@link TimeGauge}.
      * @throws MeterNotFoundException if there is no match.
      */
@@ -152,6 +157,7 @@ public final class RequiredSearch {
     }
 
     /**
+     * Performs the search and returns any matching {@link FunctionTimer}.
      * @return Any matching {@link FunctionTimer}.
      * @throws MeterNotFoundException if there is no match.
      */
@@ -160,6 +166,7 @@ public final class RequiredSearch {
     }
 
     /**
+     * Performs the search and returns any matching {@link DistributionSummary}.
      * @return Any matching {@link DistributionSummary}.
      * @throws MeterNotFoundException if there is no match.
      */
@@ -168,6 +175,7 @@ public final class RequiredSearch {
     }
 
     /**
+     * Performs the search and returns any matching {@link LongTaskTimer}.
      * @return Any matching {@link LongTaskTimer}.
      * @throws MeterNotFoundException if there is no match.
      */
@@ -176,6 +184,7 @@ public final class RequiredSearch {
     }
 
     /**
+     * Performs the search and returns any matching {@link Meter}.
      * @return Any matching {@link Meter}.
      * @throws MeterNotFoundException if there is no match.
      */
