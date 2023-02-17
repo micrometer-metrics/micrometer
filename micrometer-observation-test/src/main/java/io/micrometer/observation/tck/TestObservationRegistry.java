@@ -19,9 +19,9 @@ import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationHandler;
 import io.micrometer.observation.ObservationRegistry;
 
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Objects;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
  * Implementation of {@link ObservationRegistry} used for testing.
@@ -69,13 +69,13 @@ public final class TestObservationRegistry implements ObservationRegistry {
         return this.delegate.observationConfig();
     }
 
-    List<TestObservationContext> getContexts() {
+    Queue<TestObservationContext> getContexts() {
         return this.handler.contexts;
     }
 
     private static class ArrayListObservationHandler implements ObservationHandler<Observation.Context> {
 
-        final List<TestObservationContext> contexts = new LinkedList<>();
+        final Queue<TestObservationContext> contexts = new ConcurrentLinkedQueue<>();
 
         @Override
         public void onStart(Observation.Context context) {
