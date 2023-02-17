@@ -19,6 +19,7 @@ import io.micrometer.common.docs.KeyName;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
 import org.assertj.core.api.Assertions;
+import org.assertj.core.api.BDDAssertions;
 import org.junit.jupiter.api.Test;
 
 import static io.micrometer.observation.tck.TestObservationRegistryAssert.assertThat;
@@ -28,6 +29,21 @@ import static org.assertj.core.api.BDDAssertions.thenThrownBy;
 class TestObservationRegistryAssertTests {
 
     TestObservationRegistry registry = TestObservationRegistry.create();
+
+    @Test
+    void should_not_break_on_multiple_threads() throws InterruptedException {
+        Observation o1 = Observation.createNotStarted("o1", registry);
+        Observation o2 = Observation.createNotStarted("o2", registry);
+        Observation o3 = Observation.createNotStarted("o3", registry);
+
+        new Thread(() -> o1.start().stop()).start();
+        new Thread(() -> o2.start().stop()).start();
+        new Thread(() -> o3.start().stop()).start();
+
+        Thread.sleep(50); // TODO: I can't add Awaitility beacuse of Gradle again :shrug:
+
+        BDDAssertions.then(registry.getContexts()).hasSize(3);
+    }
 
     @Test
     void should_fail_when_observation_not_started() {
