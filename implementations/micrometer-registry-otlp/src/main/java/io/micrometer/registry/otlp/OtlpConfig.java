@@ -95,9 +95,9 @@ public interface OtlpConfig extends PushRegistryConfig {
      * @see <a href=
      * "https://opentelemetry.io/docs/reference/specification/metrics/data-model/#temporality">Temporality</a>
      */
-    default int getAggregationTemporality() {
-        return getInteger(this, "aggregationTemporality")
-                .orElse(AggregationTemporality.AGGREGATION_TEMPORALITY_CUMULATIVE_VALUE);
+    default AggregationTemporality getAggregationTemporality() {
+        return getEnum(this, AggregationTemporality.class, "aggregationTemporality")
+                .orElse(AggregationTemporality.AGGREGATION_TEMPORALITY_CUMULATIVE);
     }
 
     /**

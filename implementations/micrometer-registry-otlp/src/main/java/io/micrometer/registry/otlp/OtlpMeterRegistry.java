@@ -87,7 +87,7 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
         this.httpSender = httpSender;
         this.resource = Resource.newBuilder().addAllAttributes(getResourceAttributes()).build();
         this.isDeltaAggregationTemporality = config
-                .getAggregationTemporality() == AggregationTemporality.AGGREGATION_TEMPORALITY_DELTA_VALUE;
+                .getAggregationTemporality() == AggregationTemporality.AGGREGATION_TEMPORALITY_DELTA;
         config().namingConvention(NamingConvention.dot);
         start(DEFAULT_THREAD_FACTORY);
     }
@@ -222,9 +222,7 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
                 .addDataPoints(NumberDataPoint.newBuilder().setStartTimeUnixNano(getStartTimeNanos(meter))
                         .setTimeUnixNano(getEndTimeNanos()).setAsDouble(count.getAsDouble())
                         .addAllAttributes(getTagsForId(meter.getId())).build())
-                .setIsMonotonic(true)
-                .setAggregationTemporality(AggregationTemporality.forNumber(config.getAggregationTemporality()))
-                .build()).build();
+                .setIsMonotonic(true).setAggregationTemporality(config.getAggregationTemporality()).build()).build();
     }
 
     // VisibleForTesting
@@ -266,14 +264,13 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
                 histogramDataPoint.addBucketCounts((long) countAtBucket.count());
             }
             metricBuilder.setHistogram(Histogram.newBuilder()
-                    .setAggregationTemporality(AggregationTemporality.forNumber(config.getAggregationTemporality()))
-                    .addDataPoints(histogramDataPoint));
+                    .setAggregationTemporality(config.getAggregationTemporality()).addDataPoints(histogramDataPoint));
             return metricBuilder.build();
         }
 
         return metricBuilder.setHistogram(Histogram.newBuilder()
-                .setAggregationTemporality(AggregationTemporality.forNumber(config.getAggregationTemporality()))
-                .addDataPoints(histogramDataPoint)).build();
+                .setAggregationTemporality(config.getAggregationTemporality()).addDataPoints(histogramDataPoint))
+                .build();
     }
 
     // VisibleForTesting

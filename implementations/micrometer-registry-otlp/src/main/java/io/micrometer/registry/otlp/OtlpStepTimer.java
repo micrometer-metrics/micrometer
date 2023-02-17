@@ -29,8 +29,6 @@ class OtlpStepTimer extends StepTimer {
     @Nullable
     private final Histogram countBucketHistogram;
 
-    private static final CountAtBucket[] EMPTY_HISTOGRAM = new CountAtBucket[0];
-
     /**
      * Create a new {@code StepTimer}.
      * @param id ID
