@@ -68,8 +68,8 @@ public class JvmThreadMetrics implements MeterBinder {
                 .baseUnit(BaseUnits.THREADS).register(registry);
 
         FunctionCounter.builder("jvm.threads.started", threadBean, ThreadMXBean::getTotalStartedThreadCount).tags(tags)
-                .description("The total number of application threads started in the JVM")
-                .baseUnit(BaseUnits.THREADS).register(registry);
+                .description("The total number of application threads started in the JVM").baseUnit(BaseUnits.THREADS)
+                .register(registry);
 
         try {
             threadBean.getAllThreadIds();
