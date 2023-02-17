@@ -21,6 +21,7 @@ import org.assertj.core.api.ThrowingConsumer;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.Queue;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -65,7 +66,7 @@ public class TestObservationRegistryAssert
      * @throws AssertionError if there is none or more than one observation
      */
     public TestObservationRegistryAssertReturningObservationContextAssert hasSingleObservationThat() {
-        List<TestObservationRegistry.TestObservationContext> contexts = actual.getContexts();
+        Queue<TestObservationRegistry.TestObservationContext> contexts = actual.getContexts();
         if (contexts.isEmpty()) {
             failForNoObservations();
         }
@@ -74,7 +75,7 @@ public class TestObservationRegistryAssert
                     "There must be only a single observation, however there are <%s> registered observations with names <%s>",
                     contexts.size(), observationNames(contexts));
         }
-        return new TestObservationRegistryAssertReturningObservationContextAssert(contexts.get(0), this);
+        return new TestObservationRegistryAssertReturningObservationContextAssert(contexts.peek(), this);
     }
 
     private void failForNoObservations() {
@@ -89,7 +90,7 @@ public class TestObservationRegistryAssert
      * @throws AssertionError if there is no matching observation
      */
     public That hasObservationWithNameEqualTo(String name) {
-        List<TestObservationRegistry.TestObservationContext> contexts = this.actual.getContexts();
+        Queue<TestObservationRegistry.TestObservationContext> contexts = this.actual.getContexts();
         if (contexts.isEmpty()) {
             failForNoObservations();
         }
@@ -102,7 +103,7 @@ public class TestObservationRegistryAssert
         return new That(testObservationContext, this);
     }
 
-    private String observationNames(List<TestObservationRegistry.TestObservationContext> contexts) {
+    private String observationNames(Queue<TestObservationRegistry.TestObservationContext> contexts) {
         return contexts.stream().map(m -> m.getContext().getName()).collect(Collectors.joining(","));
     }
 
@@ -117,7 +118,7 @@ public class TestObservationRegistryAssert
      * @throws AssertionError if there is no matching observation
      */
     public That hasObservationWithNameEqualToIgnoringCase(String name) {
-        List<TestObservationRegistry.TestObservationContext> contexts = this.actual.getContexts();
+        Queue<TestObservationRegistry.TestObservationContext> contexts = this.actual.getContexts();
         if (contexts.isEmpty()) {
             failForNoObservations();
         }
@@ -137,7 +138,7 @@ public class TestObservationRegistryAssert
      * @throws AssertionError if there are any registered observations
      */
     public void doesNotHaveAnyObservation() {
-        List<TestObservationRegistry.TestObservationContext> contexts = this.actual.getContexts();
+        Queue<TestObservationRegistry.TestObservationContext> contexts = this.actual.getContexts();
         if (!contexts.isEmpty()) {
             failWithMessage("There were <%d> observation(s) registered in the registry, expected <0>.",
                     contexts.size());
