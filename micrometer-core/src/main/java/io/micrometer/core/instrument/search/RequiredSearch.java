@@ -116,7 +116,7 @@ public final class RequiredSearch {
      * @throws MeterNotFoundException if there is no match.
      */
     public Timer timer() {
-        return findOne(Timer.class);
+        return getOne(Timer.class);
     }
 
     /**
@@ -124,7 +124,7 @@ public final class RequiredSearch {
      * @throws MeterNotFoundException if there is no match.
      */
     public Counter counter() {
-        return findOne(Counter.class);
+        return getOne(Counter.class);
     }
 
     /**
@@ -132,7 +132,7 @@ public final class RequiredSearch {
      * @throws MeterNotFoundException if there is no match.
      */
     public Gauge gauge() {
-        return findOne(Gauge.class);
+        return getOne(Gauge.class);
     }
 
     /**
@@ -140,7 +140,7 @@ public final class RequiredSearch {
      * @throws MeterNotFoundException if there is no match.
      */
     public FunctionCounter functionCounter() {
-        return findOne(FunctionCounter.class);
+        return getOne(FunctionCounter.class);
     }
 
     /**
@@ -148,7 +148,7 @@ public final class RequiredSearch {
      * @throws MeterNotFoundException if there is no match.
      */
     public TimeGauge timeGauge() {
-        return findOne(TimeGauge.class);
+        return getOne(TimeGauge.class);
     }
 
     /**
@@ -156,7 +156,7 @@ public final class RequiredSearch {
      * @throws MeterNotFoundException if there is no match.
      */
     public FunctionTimer functionTimer() {
-        return findOne(FunctionTimer.class);
+        return getOne(FunctionTimer.class);
     }
 
     /**
@@ -164,7 +164,7 @@ public final class RequiredSearch {
      * @throws MeterNotFoundException if there is no match.
      */
     public DistributionSummary summary() {
-        return findOne(DistributionSummary.class);
+        return getOne(DistributionSummary.class);
     }
 
     /**
@@ -172,7 +172,7 @@ public final class RequiredSearch {
      * @throws MeterNotFoundException if there is no match.
      */
     public LongTaskTimer longTaskTimer() {
-        return findOne(LongTaskTimer.class);
+        return getOne(LongTaskTimer.class);
     }
 
     /**
@@ -180,10 +180,10 @@ public final class RequiredSearch {
      * @throws MeterNotFoundException if there is no match.
      */
     public Meter meter() {
-        return findOne(Meter.class);
+        return getOne(Meter.class);
     }
 
-    private <M extends Meter> M findOne(Class<M> clazz) {
+    private <M extends Meter> M getOne(Class<M> clazz) {
         Optional<M> meter = meterStream().filter(clazz::isInstance).findAny().map(clazz::cast);
 
         if (meter.isPresent()) {
