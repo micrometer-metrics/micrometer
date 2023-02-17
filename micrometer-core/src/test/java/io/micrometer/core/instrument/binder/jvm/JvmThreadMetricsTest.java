@@ -39,20 +39,20 @@ class JvmThreadMetricsTest {
     void threadMetrics() {
         MeterRegistry registry = new SimpleMeterRegistry();
         new JvmThreadMetrics().bindTo(registry);
-        double initialThreadCount = registry.get("jvm.threads.started").gauge().value();
+        double initialThreadCount = registry.get("jvm.threads.started").functionCounter().count();
 
-        assertThat(registry.get("jvm.threads.live").gauge().value()).isGreaterThan(0);
-        assertThat(registry.get("jvm.threads.daemon").gauge().value()).isGreaterThan(0);
-        assertThat(registry.get("jvm.threads.peak").gauge().value()).isGreaterThan(0);
-        assertThat(registry.get("jvm.threads.states").tag("state", "runnable").gauge().value()).isGreaterThan(0);
+        assertThat(registry.get("jvm.threads.live").gauge().value()).isPositive();
+        assertThat(registry.get("jvm.threads.daemon").gauge().value()).isPositive();
+        assertThat(registry.get("jvm.threads.peak").gauge().value()).isPositive();
+        assertThat(registry.get("jvm.threads.states").tag("state", "runnable").gauge().value()).isPositive();
 
         createBlockedThread();
-        assertThat(registry.get("jvm.threads.states").tag("state", "blocked").gauge().value()).isGreaterThan(0);
-        assertThat(registry.get("jvm.threads.states").tag("state", "waiting").gauge().value()).isGreaterThan(0);
+        assertThat(registry.get("jvm.threads.states").tag("state", "blocked").gauge().value()).isPositive();
+        assertThat(registry.get("jvm.threads.states").tag("state", "waiting").gauge().value()).isPositive();
 
         createTimedWaitingThread();
-        assertThat(registry.get("jvm.threads.states").tag("state", "timed-waiting").gauge().value()).isGreaterThan(0);
-        assertThat(registry.get("jvm.threads.started").gauge().value()).isGreaterThan(initialThreadCount);
+        assertThat(registry.get("jvm.threads.states").tag("state", "timed-waiting").gauge().value()).isPositive();
+        assertThat(registry.get("jvm.threads.started").functionCounter().count()).isGreaterThan(initialThreadCount);
     }
 
     @Test

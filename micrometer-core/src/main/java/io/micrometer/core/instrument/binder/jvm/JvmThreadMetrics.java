@@ -17,10 +17,7 @@ package io.micrometer.core.instrument.binder.jvm;
 
 import io.micrometer.common.lang.NonNullApi;
 import io.micrometer.common.lang.NonNullFields;
-import io.micrometer.core.instrument.Gauge;
-import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Tag;
-import io.micrometer.core.instrument.Tags;
+import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.binder.MeterBinder;
 
@@ -66,9 +63,9 @@ public class JvmThreadMetrics implements MeterBinder {
                 .description("The current number of live threads including both daemon and non-daemon threads")
                 .baseUnit(BaseUnits.THREADS).register(registry);
 
-        Gauge.builder("jvm.threads.started", threadBean, ThreadMXBean::getTotalStartedThreadCount).tags(tags)
+        FunctionCounter.builder("jvm.threads.started", threadBean, ThreadMXBean::getTotalStartedThreadCount).tags(tags)
                 .description(
-                        "The total number of threads created and also started since the Java virtual machine started")
+                        "The total number of application threads started in the JVM")
                 .baseUnit(BaseUnits.THREADS).register(registry);
 
         try {
