@@ -15,6 +15,14 @@
  */
 package io.micrometer.core.instrument.binder.jvm;
 
+import java.lang.management.ManagementFactory;
+import java.lang.management.ThreadInfo;
+import java.lang.management.ThreadMXBean;
+import java.util.Arrays;
+import java.util.EnumMap;
+import java.util.Map;
+import java.util.stream.Collectors;
+
 import io.micrometer.common.lang.NonNullApi;
 import io.micrometer.common.lang.NonNullFields;
 import io.micrometer.core.instrument.FunctionCounter;
@@ -24,10 +32,6 @@ import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.binder.MeterBinder;
-
-import java.lang.management.ManagementFactory;
-import java.lang.management.ThreadMXBean;
-import java.util.Arrays;
 
 import static java.util.Collections.emptyList;
 
@@ -72,9 +76,13 @@ public class JvmThreadMetrics implements MeterBinder {
                 .register(registry);
 
         try {
-            threadBean.getAllThreadIds();
+            long[] allThreadIds = threadBean.getAllThreadIds();
+            Map<Thread.State, Long> stateCountGroup = Arrays.stream(threadBean.getThreadInfo(allThreadIds))
+                    .collect(Collectors.groupingBy(ThreadInfo::getThreadState, () -> new EnumMap<>(Thread.State.class),
+                            Collectors.counting()));
+
             for (Thread.State state : Thread.State.values()) {
-                Gauge.builder("jvm.threads.states", threadBean, (bean) -> getThreadStateCount(bean, state))
+                Gauge.builder("jvm.threads.states", () -> stateCountGroup.get(state))
                         .tags(Tags.concat(tags, "state", getStateTagValue(state)))
                         .description("The current number of threads").baseUnit(BaseUnits.THREADS).register(registry);
             }
@@ -83,12 +91,6 @@ public class JvmThreadMetrics implements MeterBinder {
             // An error will be thrown for unsupported operations
             // e.g. SubstrateVM does not support getAllThreadIds
         }
-    }
-
-    // VisibleForTesting
-    static long getThreadStateCount(ThreadMXBean threadBean, Thread.State state) {
-        return Arrays.stream(threadBean.getThreadInfo(threadBean.getAllThreadIds()))
-                .filter(threadInfo -> threadInfo != null && threadInfo.getThreadState() == state).count();
     }
 
     private static String getStateTagValue(Thread.State state) {
