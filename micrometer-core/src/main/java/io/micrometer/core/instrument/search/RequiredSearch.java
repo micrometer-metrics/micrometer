@@ -112,7 +112,7 @@ public final class RequiredSearch {
     }
 
     /**
-     * @return The first matching {@link Timer}
+     * @return Any matching {@link Timer}
      * @throws MeterNotFoundException if there is no match.
      */
     public Timer timer() {
@@ -120,7 +120,7 @@ public final class RequiredSearch {
     }
 
     /**
-     * @return The first matching {@link Counter}.
+     * @return Any matching {@link Counter}.
      * @throws MeterNotFoundException if there is no match.
      */
     public Counter counter() {
@@ -128,7 +128,7 @@ public final class RequiredSearch {
     }
 
     /**
-     * @return The first matching {@link Gauge}.
+     * @return Any matching {@link Gauge}.
      * @throws MeterNotFoundException if there is no match.
      */
     public Gauge gauge() {
@@ -136,7 +136,7 @@ public final class RequiredSearch {
     }
 
     /**
-     * @return The first matching {@link FunctionCounter}.
+     * @return Any matching {@link FunctionCounter}.
      * @throws MeterNotFoundException if there is no match.
      */
     public FunctionCounter functionCounter() {
@@ -144,7 +144,7 @@ public final class RequiredSearch {
     }
 
     /**
-     * @return The first matching {@link TimeGauge}.
+     * @return Any matching {@link TimeGauge}.
      * @throws MeterNotFoundException if there is no match.
      */
     public TimeGauge timeGauge() {
@@ -152,7 +152,7 @@ public final class RequiredSearch {
     }
 
     /**
-     * @return The first matching {@link FunctionTimer}.
+     * @return Any matching {@link FunctionTimer}.
      * @throws MeterNotFoundException if there is no match.
      */
     public FunctionTimer functionTimer() {
@@ -160,7 +160,7 @@ public final class RequiredSearch {
     }
 
     /**
-     * @return The first matching {@link DistributionSummary}.
+     * @return Any matching {@link DistributionSummary}.
      * @throws MeterNotFoundException if there is no match.
      */
     public DistributionSummary summary() {
@@ -168,7 +168,7 @@ public final class RequiredSearch {
     }
 
     /**
-     * @return The first matching {@link LongTaskTimer}.
+     * @return Any matching {@link LongTaskTimer}.
      * @throws MeterNotFoundException if there is no match.
      */
     public LongTaskTimer longTaskTimer() {
@@ -176,7 +176,7 @@ public final class RequiredSearch {
     }
 
     /**
-     * @return The first matching {@link Meter}.
+     * @return Any matching {@link Meter}.
      * @throws MeterNotFoundException if there is no match.
      */
     public Meter meter() {
