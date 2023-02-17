@@ -74,7 +74,8 @@ public class JvmThreadMetrics implements MeterBinder {
         try {
             long[] allThreadIds = threadBean.getAllThreadIds();
             EnumMap<Thread.State, Long> stateCountGroup = Arrays.stream(threadBean.getThreadInfo(allThreadIds))
-                    .collect(Collectors.groupingBy(ThreadInfo::getThreadState, () -> new EnumMap<>(Thread.State.class),Collectors.counting()));
+                    .collect(Collectors.groupingBy(ThreadInfo::getThreadState, () -> new EnumMap<>(Thread.State.class),
+                            Collectors.counting()));
             for (Thread.State state : Thread.State.values()) {
                 Gauge.builder("jvm.threads.states", () -> stateCountGroup.get(state))
                         .tags(Tags.concat(tags, "state", getStateTagValue(state)))
