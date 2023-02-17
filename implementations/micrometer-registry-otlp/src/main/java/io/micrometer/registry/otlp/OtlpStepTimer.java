@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 VMware, Inc.
+ * Copyright 2023 VMware, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,7 +57,7 @@ class OtlpStepTimer extends StepTimer {
     protected void recordNonNegative(long amount, TimeUnit unit) {
         super.recordNonNegative(amount, unit);
         if (this.countBucketHistogram != null) {
-            this.countBucketHistogram.recordLong((long) TimeUtils.convert(amount, unit, TimeUnit.NANOSECONDS));
+            this.countBucketHistogram.recordLong((long) TimeUtils.convert((double) amount, unit, TimeUnit.NANOSECONDS));
         }
     }
 
