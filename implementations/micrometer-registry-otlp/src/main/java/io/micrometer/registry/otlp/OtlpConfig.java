@@ -95,7 +95,7 @@ public interface OtlpConfig extends PushRegistryConfig {
      * @see <a href=
      * "https://opentelemetry.io/docs/reference/specification/metrics/data-model/#temporality">Temporality</a>
      */
-    default AggregationTemporality getAggregationTemporality() {
+    default AggregationTemporality aggregationTemporality() {
         return getEnum(this, AggregationTemporality.class, "aggregationTemporality")
                 .orElse(AggregationTemporality.AGGREGATION_TEMPORALITY_CUMULATIVE);
     }
@@ -139,7 +139,8 @@ public interface OtlpConfig extends PushRegistryConfig {
     @Override
     default Validated<?> validate() {
         return checkAll(this, c -> PushRegistryConfig.validate(c), checkRequired("url", OtlpConfig::url),
-                check("resourceAttributes", OtlpConfig::resourceAttributes));
+                check("resourceAttributes", OtlpConfig::resourceAttributes),
+                check("aggregationTemporality", OtlpConfig::aggregationTemporality));
     }
 
 }

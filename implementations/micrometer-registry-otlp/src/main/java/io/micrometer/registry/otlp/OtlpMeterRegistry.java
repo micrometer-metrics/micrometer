@@ -87,7 +87,7 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
         this.httpSender = httpSender;
         this.resource = Resource.newBuilder().addAllAttributes(getResourceAttributes()).build();
         this.isDeltaAggregationTemporality = config
-                .getAggregationTemporality() == AggregationTemporality.AGGREGATION_TEMPORALITY_DELTA;
+                .aggregationTemporality() == AggregationTemporality.AGGREGATION_TEMPORALITY_DELTA;
         config().namingConvention(NamingConvention.dot);
         start(DEFAULT_THREAD_FACTORY);
     }
@@ -222,7 +222,7 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
                 .addDataPoints(NumberDataPoint.newBuilder().setStartTimeUnixNano(getStartTimeNanos(meter))
                         .setTimeUnixNano(getEndTimeNanos()).setAsDouble(count.getAsDouble())
                         .addAllAttributes(getTagsForId(meter.getId())).build())
-                .setIsMonotonic(true).setAggregationTemporality(config.getAggregationTemporality()).build()).build();
+                .setIsMonotonic(true).setAggregationTemporality(config.aggregationTemporality()).build()).build();
     }
 
     // VisibleForTesting
@@ -254,7 +254,7 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
                 .setStartTimeUnixNano(startTimeNanos).setTimeUnixNano(endTimeNanos).setSum(total).setCount(count);
 
         if (isDeltaAggregationTemporality) {
-            histogramDataPoint.setMax(histogramSnapshot.max(getBaseTimeUnit()));
+            histogramDataPoint.setMax(isTimeBased ? histogramSnapshot.max(getBaseTimeUnit()) : histogramSnapshot.max());
         }
         // if histogram enabled, add histogram buckets
         if (histogramSnapshot.histogramCounts().length != 0) {
@@ -263,14 +263,13 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
                         isTimeBased ? countAtBucket.bucket(getBaseTimeUnit()) : countAtBucket.bucket());
                 histogramDataPoint.addBucketCounts((long) countAtBucket.count());
             }
-            metricBuilder.setHistogram(Histogram.newBuilder()
-                    .setAggregationTemporality(config.getAggregationTemporality()).addDataPoints(histogramDataPoint));
+            metricBuilder.setHistogram(Histogram.newBuilder().setAggregationTemporality(config.aggregationTemporality())
+                    .addDataPoints(histogramDataPoint));
             return metricBuilder.build();
         }
 
         return metricBuilder.setHistogram(Histogram.newBuilder()
-                .setAggregationTemporality(config.getAggregationTemporality()).addDataPoints(histogramDataPoint))
-                .build();
+                .setAggregationTemporality(config.aggregationTemporality()).addDataPoints(histogramDataPoint)).build();
     }
 
     // VisibleForTesting
@@ -278,8 +277,8 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
         return getMetricBuilder(functionTimer.getId()).setHistogram(Histogram.newBuilder()
                 .addDataPoints(HistogramDataPoint.newBuilder().addAllAttributes(getTagsForId(functionTimer.getId()))
                         .setStartTimeUnixNano(getStartTimeNanos((functionTimer))).setTimeUnixNano(getEndTimeNanos())
-                        .setSum(functionTimer.totalTime(getBaseTimeUnit())).setCount((long) functionTimer.count())))
-                .build();
+                        .setSum(functionTimer.totalTime(getBaseTimeUnit())).setCount((long) functionTimer.count()))
+                .setAggregationTemporality(config.aggregationTemporality())).build();
     }
 
     private long getStartTimeNanos(Meter meter) {
