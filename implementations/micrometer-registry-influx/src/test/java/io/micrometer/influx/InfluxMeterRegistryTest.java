@@ -16,6 +16,9 @@
 package io.micrometer.influx;
 
 import io.micrometer.core.instrument.*;
+
+import java.util.Set;
+
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
@@ -121,6 +124,29 @@ class InfluxMeterRegistryTest {
         final Gauge gauge = meterRegistry.find("my.gauge").gauge();
         assertThat(meterRegistry.writeGauge(gauge.getId(), 1d)).hasSize(1)
                 .allSatisfy(s -> assertThat(s).contains("foo=bar").doesNotContain("baz"));
+    }
+
+    @Test
+    void mapOneTagAsInfluxField() {
+        String expectedInfluxLine = "my_gauge,tagA=valA,tagC=valC,metric_type=gauge value=42.1,tagB=\"valB\",tagWithQuote=\"strange-string-with-\\\"-quote\" 1";
+
+        var shouldBeField = Set.of("tagB", "tagWithQuote");
+
+        InfluxTagMapper mapper = (id, tag) -> {
+            if (shouldBeField.contains(tag.getKey()))
+                return InfluxTagMapper.ValueType.FIELD;
+            else
+                return InfluxTagMapper.ValueType.TAG;
+        };
+        InfluxMeterRegistry meterRegistry = new InfluxMeterRegistry.Builder(config).clock(clock).tagMapper(mapper)
+                .build();
+        var micrometerTags = Tags.of("tagA", "valA").and("tagB", "valB").and("tagC", "valC").and("tagWithQuote",
+                "strange-string-with-\"-quote");
+        meterRegistry.gauge("my.gauge", micrometerTags, 42.0);
+        final Gauge gauge = meterRegistry.find("my.gauge").gauge();
+
+        assertThat(meterRegistry.writeGauge(gauge.getId(), 42.1).collect(Collectors.joining()))
+                .isEqualTo(expectedInfluxLine);
     }
 
     @Test
