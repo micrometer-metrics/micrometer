@@ -62,8 +62,8 @@ public class JettyClientMetrics implements Request.Listener {
     private final BiFunction<Request, Result, String> uriPatternFunction;
 
     /**
-     * @deprecated use {@link JettyClientMetrics#builder(MeterRegistry, BiFunction)}
-     * instead.
+     * @deprecated since 1.11.0 in favor of
+     * {@link JettyClientMetrics#builder(MeterRegistry, BiFunction)}
      */
     @Deprecated
     protected JettyClientMetrics(MeterRegistry registry, JettyClientTagsProvider tagsProvider, String timingMetricName,
@@ -121,7 +121,7 @@ public class JettyClientMetrics implements Request.Listener {
      * @param registry meter registry to use
      * @param tagsProvider tags provider for customizing tagging
      * @return builder
-     * @deprecated use {@link #builder(MeterRegistry, BiFunction)} instead;
+     * @deprecated since 1.11.0 in favor of {@link #builder(MeterRegistry, BiFunction)};
      * {@link Builder#tagsProvider(JettyClientTagsProvider)} can be used to provide a
      * custom tags provider
      */

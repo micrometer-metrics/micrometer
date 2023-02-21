@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 VMware, Inc.
+ * Copyright 2023 VMware, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,7 +49,7 @@ public final class JettyClientKeyValues {
 
     private static final KeyValue HOST_UNKNOWN = KeyValue.of("host", "UNKNOWN");
 
-    public static final KeyValue STATUS_UNKNOWN = KeyValue.of("status", "UNKNOWN");
+    private static final KeyValue STATUS_UNKNOWN = KeyValue.of("status", "UNKNOWN");
 
     private static final Pattern TRAILING_SLASH_PATTERN = Pattern.compile("/$");
 
@@ -75,7 +75,6 @@ public final class JettyClientKeyValues {
      * {@code request}.
      * @param request the request
      * @return the host KeyValue derived from request
-     * @since 1.7.0
      */
     public static KeyValue host(Request request) {
         return (request != null) ? KeyValue.of("host", request.getHost()) : HOST_UNKNOWN;
@@ -94,9 +93,10 @@ public final class JettyClientKeyValues {
     /**
      * Creates a {@code uri} KeyValue based on the URI of the given {@code result}.
      * {@code REDIRECTION} for 3xx responses, {@code NOT_FOUND} for 404 responses.
+     * @param request the request
      * @param result the request result
      * @param successfulUriPattern successful URI pattern
-     * @return the uri KeyValue derived from the request result
+     * @return the uri KeyValue derived from the request and its result
      */
     public static KeyValue uri(Request request, @Nullable Result result,
             BiFunction<Request, Result, String> successfulUriPattern) {
