@@ -32,7 +32,8 @@ import java.net.URI;
 class ApacheHttpClientTimingInstrumentationVerificationTests extends HttpClientTimingInstrumentationVerificationTests {
 
     private final HttpClient httpClient = HttpClientBuilder.create()
-            .setRequestExecutor(MicrometerHttpRequestExecutor.builder(getRegistry()).build()).build();
+        .setRequestExecutor(MicrometerHttpRequestExecutor.builder(getRegistry()).build())
+        .build();
 
     @Override
     protected String timerName() {

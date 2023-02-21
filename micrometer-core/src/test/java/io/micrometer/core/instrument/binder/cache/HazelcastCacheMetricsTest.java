@@ -153,7 +153,7 @@ class HazelcastCacheMetricsTest extends AbstractCacheMetricsTest {
     @Test
     void nonIMapCacheFails() {
         assertThatExceptionOfType(RuntimeException.class)
-                .isThrownBy(() -> new HazelcastCacheMetrics(new HashMap<String, String>(), Tags.empty()));
+            .isThrownBy(() -> new HazelcastCacheMetrics(new HashMap<String, String>(), Tags.empty()));
     }
 
     @BeforeAll

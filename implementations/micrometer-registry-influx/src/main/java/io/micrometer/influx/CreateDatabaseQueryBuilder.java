@@ -85,8 +85,9 @@ class CreateDatabaseQueryBuilder {
     String build() {
         StringBuilder queryStringBuilder = new StringBuilder(String.format(QUERY_MANDATORY_TEMPLATE, databaseName));
         if (hasAnyRetentionPolicy()) {
-            String retentionPolicyClause = Stream.of(retentionPolicyClauses).filter(Objects::nonNull)
-                    .reduce(RETENTION_POLICY_INTRODUCTION, String::concat);
+            String retentionPolicyClause = Stream.of(retentionPolicyClauses)
+                .filter(Objects::nonNull)
+                .reduce(RETENTION_POLICY_INTRODUCTION, String::concat);
             queryStringBuilder.append(retentionPolicyClause);
         }
         return queryStringBuilder.toString();

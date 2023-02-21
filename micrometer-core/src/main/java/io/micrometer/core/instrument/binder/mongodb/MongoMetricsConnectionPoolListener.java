@@ -159,8 +159,10 @@ public class MongoMetricsConnectionPoolListener implements ConnectionPoolListene
             Map<ServerId, AtomicInteger> metrics) {
         AtomicInteger value = new AtomicInteger();
         metrics.put(event.getServerId(), value);
-        return Gauge.builder(metricName, value, AtomicInteger::doubleValue).description(description)
-                .tags(tagsProvider.connectionPoolTags(event)).register(registry);
+        return Gauge.builder(metricName, value, AtomicInteger::doubleValue)
+            .description(description)
+            .tags(tagsProvider.connectionPoolTags(event))
+            .register(registry);
     }
 
 }

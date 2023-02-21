@@ -111,8 +111,10 @@ class MetricsRequestEventListenerTimedTest extends JerseyTest {
         assertThat(registry.find(METRIC_NAME).tags(tagsFrom("/timed", 200)).timer()).isNull();
 
         // the long running task is timed
-        assertThat(registry.get("long.task.in.request").tags(Tags.of("method", "GET", "uri", "/long-timed"))
-                .longTaskTimer().activeTasks()).isEqualTo(1);
+        assertThat(registry.get("long.task.in.request")
+            .tags(Tags.of("method", "GET", "uri", "/long-timed"))
+            .longTaskTimer()
+            .activeTasks()).isEqualTo(1);
 
         // finish the long running request
         longTaskRequestReleaseLatch.countDown();
@@ -135,8 +137,10 @@ class MetricsRequestEventListenerTimedTest extends JerseyTest {
         longTaskRequestStartedLatch.await(5, TimeUnit.SECONDS);
 
         // the long running task is timed
-        assertThat(registry.get("long.task.in.request").tags(Tags.of("method", "GET", "uri", "/just-long-timed"))
-                .longTaskTimer().activeTasks()).isEqualTo(1);
+        assertThat(registry.get("long.task.in.request")
+            .tags(Tags.of("method", "GET", "uri", "/just-long-timed"))
+            .longTaskTimer()
+            .activeTasks()).isEqualTo(1);
 
         // finish the long running request
         longTaskRequestReleaseLatch.countDown();
@@ -149,8 +153,8 @@ class MetricsRequestEventListenerTimedTest extends JerseyTest {
     @Test
     void unnamedLongTaskTimerIsNotSupported() {
         assertThatExceptionOfType(ProcessingException.class)
-                .isThrownBy(() -> target("long-timed-unnamed").request().get())
-                .withCauseInstanceOf(IllegalArgumentException.class);
+            .isThrownBy(() -> target("long-timed-unnamed").request().get())
+            .withCauseInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
@@ -158,8 +162,9 @@ class MetricsRequestEventListenerTimedTest extends JerseyTest {
         target("/class/inherited").request().get();
 
         assertThat(registry.get(METRIC_NAME)
-                .tags(Tags.concat(tagsFrom("/class/inherited", 200), Tags.of("on", "class"))).timer().count())
-                        .isEqualTo(1);
+            .tags(Tags.concat(tagsFrom("/class/inherited", 200), Tags.of("on", "class")))
+            .timer()
+            .count()).isEqualTo(1);
     }
 
     @Test
@@ -167,8 +172,9 @@ class MetricsRequestEventListenerTimedTest extends JerseyTest {
         target("/class/on-method").request().get();
 
         assertThat(registry.get(METRIC_NAME)
-                .tags(Tags.concat(tagsFrom("/class/on-method", 200), Tags.of("on", "method"))).timer().count())
-                        .isEqualTo(1);
+            .tags(Tags.concat(tagsFrom("/class/on-method", 200), Tags.of("on", "method")))
+            .timer()
+            .count()).isEqualTo(1);
 
         // class level annotation is not picked up
         assertThat(registry.getMeters()).hasSize(1);

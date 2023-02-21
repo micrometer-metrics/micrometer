@@ -109,8 +109,10 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
 
     // VisibleForTesting
     void sendMetricData(List<MetricDatum> metricData) throws InterruptedException {
-        PutMetricDataRequest putMetricDataRequest = PutMetricDataRequest.builder().namespace(config.namespace())
-                .metricData(metricData).build();
+        PutMetricDataRequest putMetricDataRequest = PutMetricDataRequest.builder()
+            .namespace(config.namespace())
+            .metricData(metricData)
+            .build();
         CountDownLatch latch = new CountDownLatch(1);
         cloudWatchAsyncClient.putMetricData(putMetricDataRequest).whenComplete((response, t) -> {
             if (t != null) {
@@ -175,8 +177,8 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
         // VisibleForTesting
         Stream<MetricDatum> timerData(Timer timer) {
             Stream.Builder<MetricDatum> metrics = Stream.builder();
-            metrics.add(
-                    metricDatum(timer.getId(), "sum", getBaseTimeUnit().name(), timer.totalTime(getBaseTimeUnit())));
+            metrics
+                .add(metricDatum(timer.getId(), "sum", getBaseTimeUnit().name(), timer.totalTime(getBaseTimeUnit())));
             long count = timer.count();
             metrics.add(metricDatum(timer.getId(), "count", StandardUnit.COUNT, count));
             if (count > 0) {
@@ -242,8 +244,8 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
         // VisibleForTesting
         Stream<MetricDatum> metricData(Meter m) {
             return stream(m.measure().spliterator(), false)
-                    .map(ms -> metricDatum(m.getId().withTag(ms.getStatistic()), ms.getValue()))
-                    .filter(Objects::nonNull);
+                .map(ms -> metricDatum(m.getId().withTag(ms.getStatistic()), ms.getValue()))
+                .filter(Objects::nonNull);
         }
 
         @Nullable
@@ -268,9 +270,14 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
             }
 
             List<Tag> tags = id.getConventionTags(config().namingConvention());
-            return MetricDatum.builder().storageResolution(config.highResolution() ? 1 : 60)
-                    .metricName(getMetricName(id, suffix)).dimensions(toDimensions(tags)).timestamp(timestamp)
-                    .value(CloudWatchUtils.clampMetricValue(value)).unit(standardUnit).build();
+            return MetricDatum.builder()
+                .storageResolution(config.highResolution() ? 1 : 60)
+                .metricName(getMetricName(id, suffix))
+                .dimensions(toDimensions(tags))
+                .timestamp(timestamp)
+                .value(CloudWatchUtils.clampMetricValue(value))
+                .unit(standardUnit)
+                .build();
         }
 
         // VisibleForTesting
@@ -289,14 +296,16 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
         }
 
         private List<Dimension> toDimensions(List<Tag> tags) {
-            return tags.stream().filter(this::isAcceptableTag)
-                    .map(tag -> Dimension.builder().name(tag.getKey()).value(tag.getValue()).build()).collect(toList());
+            return tags.stream()
+                .filter(this::isAcceptableTag)
+                .map(tag -> Dimension.builder().name(tag.getKey()).value(tag.getValue()).build())
+                .collect(toList());
         }
 
         private boolean isAcceptableTag(Tag tag) {
             if (StringUtils.isBlank(tag.getValue())) {
                 warnThenDebugLogger
-                        .log(() -> "Dropping a tag with key '" + tag.getKey() + "' because its value is blank.");
+                    .log(() -> "Dropping a tag with key '" + tag.getKey() + "' because its value is blank.");
                 return false;
             }
             return true;

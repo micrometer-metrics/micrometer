@@ -81,10 +81,11 @@ public class MicrometerHttpRequestExecutor extends HttpRequestExecutor {
     private MicrometerHttpRequestExecutor(int waitForContinue, MeterRegistry registry,
             Function<HttpRequest, String> uriMapper, Iterable<Tag> extraTags, boolean exportTagsForRoute) {
         super(waitForContinue);
-        this.registry = Optional.ofNullable(registry).orElseThrow(
-                () -> new IllegalArgumentException("registry is required but has been initialized with null"));
-        this.uriMapper = Optional.ofNullable(uriMapper).orElseThrow(
-                () -> new IllegalArgumentException("uriMapper is required but has been initialized with null"));
+        this.registry = Optional.ofNullable(registry)
+            .orElseThrow(() -> new IllegalArgumentException("registry is required but has been initialized with null"));
+        this.uriMapper = Optional.ofNullable(uriMapper)
+            .orElseThrow(
+                    () -> new IllegalArgumentException("uriMapper is required but has been initialized with null"));
         this.extraTags = Optional.ofNullable(extraTags).orElse(Collections.emptyList());
         this.exportTagsForRoute = exportTagsForRoute;
     }
@@ -123,8 +124,10 @@ public class MicrometerHttpRequestExecutor extends HttpRequestExecutor {
         finally {
             Iterable<Tag> tags = Tags.of(extraTags).and(routeTags).and(uri, method, status);
 
-            timerSample.stop(Timer.builder(METER_NAME).description("Duration of Apache HttpClient request execution")
-                    .tags(tags).register(registry));
+            timerSample.stop(Timer.builder(METER_NAME)
+                .description("Duration of Apache HttpClient request execution")
+                .tags(tags)
+                .register(registry));
         }
     }
 

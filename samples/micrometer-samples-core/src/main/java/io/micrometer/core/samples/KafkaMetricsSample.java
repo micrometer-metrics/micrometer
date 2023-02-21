@@ -47,8 +47,9 @@ public class KafkaMetricsSample {
 
         consumer.subscribe(singletonList(TOPIC));
 
-        Flux.interval(Duration.ofMillis(10)).doOnEach(n -> producer.send(new ProducerRecord<>(TOPIC, "hello", "world")))
-                .subscribe();
+        Flux.interval(Duration.ofMillis(10))
+            .doOnEach(n -> producer.send(new ProducerRecord<>(TOPIC, "hello", "world")))
+            .subscribe();
 
         for (;;) {
             consumer.poll(Duration.ofMillis(100));

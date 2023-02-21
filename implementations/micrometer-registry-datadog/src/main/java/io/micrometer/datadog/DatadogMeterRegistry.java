@@ -97,8 +97,8 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
     public void start(ThreadFactory threadFactory) {
         if (config.enabled()) {
             if (config.applicationKey() == null) {
-                logger.info(
-                        "An application key must be configured in order for unit information to be sent to Datadog.");
+                logger
+                    .info("An application key must be configured in order for unit information to be sent to Datadog.");
             }
         }
         super.start(threadFactory);
@@ -140,9 +140,11 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
 
                 logger.trace("sending metrics batch to datadog:{}{}", System.lineSeparator(), body);
 
-                httpClient.post(datadogEndpoint).withJsonContent(body).send()
-                        .onSuccess(response -> logger.debug("successfully sent {} metrics to datadog", batch.size()))
-                        .onError(response -> logger.error("failed to send metrics to datadog: {}", response.body()));
+                httpClient.post(datadogEndpoint)
+                    .withJsonContent(body)
+                    .send()
+                    .onSuccess(response -> logger.debug("successfully sent {} metrics to datadog", batch.size()))
+                    .onError(response -> logger.error("failed to send metrics to datadog: {}", response.body()));
             }
         }
         catch (Throwable e) {
@@ -239,8 +241,10 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
 
         // Create host attribute
         String host = config.hostTag() == null ? ""
-                : stream(tags.spliterator(), false).filter(t -> config.hostTag().equals(t.getKey())).findAny()
-                        .map(t -> ",\"host\":\"" + escapeJson(t.getValue()) + "\"").orElse("");
+                : stream(tags.spliterator(), false).filter(t -> config.hostTag().equals(t.getKey()))
+                    .findAny()
+                    .map(t -> ",\"host\":\"" + escapeJson(t.getValue()) + "\"")
+                    .orElse("");
         // Create type attribute
         String type = ",\"type\":\"" + DatadogMetricMetadata.sanitizeType(statistic) + "\"";
         // Create unit attribute
@@ -248,8 +252,8 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
         String unit = baseUnit != null ? ",\"unit\":\"" + baseUnit + "\"" : "";
         // Create tags attribute
         String tagsArray = tags.iterator().hasNext() ? stream(tags.spliterator(), false)
-                .map(t -> "\"" + escapeJson(t.getKey()) + ":" + escapeJson(t.getValue()) + "\"")
-                .collect(joining(",", ",\"tags\":[", "]")) : "";
+            .map(t -> "\"" + escapeJson(t.getKey()) + ":" + escapeJson(t.getValue()) + "\"")
+            .collect(joining(",", ",\"tags\":[", "]")) : "";
 
         return "{\"metric\":\"" + escapeJson(getConventionName(fullId)) + "\"," + "\"points\":[[" + (wallTime / 1000)
                 + ", " + value + "]]" + host + type + unit + tagsArray + "}";
@@ -267,25 +271,27 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
 
         try {
             httpClient
-                    .put(config.uri() + "/api/v1/metrics/" + URLEncoder.encode(metricName, "UTF-8") + "?api_key="
-                            + config.apiKey() + "&application_key=" + config.applicationKey())
-                    .withJsonContent(metadata.editMetadataBody()).send()
-                    .onSuccess(response -> verifiedMetadata.add(metricName)).onError(response -> {
-                        if (logger.isErrorEnabled()) {
-                            String msg = response.body();
+                .put(config.uri() + "/api/v1/metrics/" + URLEncoder.encode(metricName, "UTF-8") + "?api_key="
+                        + config.apiKey() + "&application_key=" + config.applicationKey())
+                .withJsonContent(metadata.editMetadataBody())
+                .send()
+                .onSuccess(response -> verifiedMetadata.add(metricName))
+                .onError(response -> {
+                    if (logger.isErrorEnabled()) {
+                        String msg = response.body();
 
-                            // Ignore when the response content contains "metric_name not
-                            // found".
-                            // Metrics that are newly created in Datadog are not
-                            // immediately available
-                            // for metadata modification. We will keep trying this request
-                            // on subsequent publishes,
-                            // where it will eventually succeed.
-                            if (!msg.contains("metric_name not found")) {
-                                logger.error("failed to send metric metadata to datadog: {}", msg);
-                            }
+                        // Ignore when the response content contains "metric_name not
+                        // found".
+                        // Metrics that are newly created in Datadog are not
+                        // immediately available
+                        // for metadata modification. We will keep trying this request
+                        // on subsequent publishes,
+                        // where it will eventually succeed.
+                        if (!msg.contains("metric_name not found")) {
+                            logger.error("failed to send metric metadata to datadog: {}", msg);
                         }
-                    });
+                    }
+                });
         }
         catch (Throwable e) {
             logger.warn("failed to send metric metadata to datadog", e);

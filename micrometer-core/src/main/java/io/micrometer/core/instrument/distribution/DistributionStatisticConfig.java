@@ -37,8 +37,12 @@ import java.util.stream.LongStream;
 public class DistributionStatisticConfig implements Mergeable<DistributionStatisticConfig> {
 
     public static final DistributionStatisticConfig DEFAULT = builder().percentilesHistogram(false)
-            .percentilePrecision(1).minimumExpectedValue(1.0).maximumExpectedValue(Double.POSITIVE_INFINITY)
-            .expiry(Duration.ofMinutes(2)).bufferLength(3).build();
+        .percentilePrecision(1)
+        .minimumExpectedValue(1.0)
+        .maximumExpectedValue(Double.POSITIVE_INFINITY)
+        .expiry(Duration.ofMinutes(2))
+        .bufferLength(3)
+        .build();
 
     public static final DistributionStatisticConfig NONE = builder().build();
 
@@ -80,19 +84,20 @@ public class DistributionStatisticConfig implements Mergeable<DistributionStatis
     @Override
     public DistributionStatisticConfig merge(DistributionStatisticConfig parent) {
         return DistributionStatisticConfig.builder()
-                .percentilesHistogram(
-                        this.percentileHistogram == null ? parent.percentileHistogram : this.percentileHistogram)
-                .percentiles(this.percentiles == null ? parent.percentiles : this.percentiles)
-                .serviceLevelObjectives(this.serviceLevelObjectives == null ? parent.serviceLevelObjectives
-                        : this.serviceLevelObjectives)
-                .percentilePrecision(
-                        this.percentilePrecision == null ? parent.percentilePrecision : this.percentilePrecision)
-                .minimumExpectedValue(
-                        this.minimumExpectedValue == null ? parent.minimumExpectedValue : this.minimumExpectedValue)
-                .maximumExpectedValue(
-                        this.maximumExpectedValue == null ? parent.maximumExpectedValue : this.maximumExpectedValue)
-                .expiry(this.expiry == null ? parent.expiry : this.expiry)
-                .bufferLength(this.bufferLength == null ? parent.bufferLength : this.bufferLength).build();
+            .percentilesHistogram(
+                    this.percentileHistogram == null ? parent.percentileHistogram : this.percentileHistogram)
+            .percentiles(this.percentiles == null ? parent.percentiles : this.percentiles)
+            .serviceLevelObjectives(
+                    this.serviceLevelObjectives == null ? parent.serviceLevelObjectives : this.serviceLevelObjectives)
+            .percentilePrecision(
+                    this.percentilePrecision == null ? parent.percentilePrecision : this.percentilePrecision)
+            .minimumExpectedValue(
+                    this.minimumExpectedValue == null ? parent.minimumExpectedValue : this.minimumExpectedValue)
+            .maximumExpectedValue(
+                    this.maximumExpectedValue == null ? parent.maximumExpectedValue : this.maximumExpectedValue)
+            .expiry(this.expiry == null ? parent.expiry : this.expiry)
+            .bufferLength(this.bufferLength == null ? parent.bufferLength : this.bufferLength)
+            .build();
     }
 
     /**

@@ -159,7 +159,8 @@ public class AtlasMeterRegistry extends MeterRegistry {
 
     private Id spectatorId(Meter.Id id) {
         List<com.netflix.spectator.api.Tag> tags = getConventionTags(id).stream()
-                .map(t -> new BasicTag(t.getKey(), t.getValue())).collect(toList());
+            .map(t -> new BasicTag(t.getKey(), t.getValue()))
+            .collect(toList());
         return registry.createId(getConventionName(id), tags);
     }
 
@@ -175,8 +176,9 @@ public class AtlasMeterRegistry extends MeterRegistry {
     @Override
     protected <T> FunctionCounter newFunctionCounter(Meter.Id id, T obj, ToDoubleFunction<T> countFunction) {
         FunctionCounter fc = new StepFunctionCounter<>(id, clock, atlasConfig.step().toMillis(), obj, countFunction);
-        PolledMeter.using(registry).withId(spectatorId(id)).monitorMonotonicCounter(obj,
-                obj2 -> (long) countFunction.applyAsDouble(obj2));
+        PolledMeter.using(registry)
+            .withId(spectatorId(id))
+            .monitorMonotonicCounter(obj, obj2 -> (long) countFunction.applyAsDouble(obj2));
         return fc;
     }
 
@@ -231,8 +233,10 @@ public class AtlasMeterRegistry extends MeterRegistry {
 
     @Override
     protected DistributionStatisticConfig defaultHistogramConfig() {
-        return DistributionStatisticConfig.builder().expiry(atlasConfig.step()).build()
-                .merge(DistributionStatisticConfig.DEFAULT);
+        return DistributionStatisticConfig.builder()
+            .expiry(atlasConfig.step())
+            .build()
+            .merge(DistributionStatisticConfig.DEFAULT);
     }
 
 }

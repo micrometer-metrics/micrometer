@@ -330,8 +330,8 @@ public interface Meter {
          */
         public List<Tag> getConventionTags(NamingConvention namingConvention) {
             return StreamSupport.stream(tags.spliterator(), false)
-                    .map(t -> Tag.of(namingConvention.tagKey(t.getKey()), namingConvention.tagValue(t.getValue())))
-                    .collect(Collectors.toList());
+                .map(t -> Tag.of(namingConvention.tagKey(t.getKey()), namingConvention.tagValue(t.getValue())))
+                .collect(Collectors.toList());
         }
 
         /**

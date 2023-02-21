@@ -70,14 +70,15 @@ public interface OtlpConfig extends PushRegistryConfig {
     default Map<String, String> resourceAttributes() {
         Map<String, String> env = System.getenv();
         String resourceAttributesConfig = getString(this, "resourceAttributes")
-                .orElse(env.get("OTEL_RESOURCE_ATTRIBUTES"));
+            .orElse(env.get("OTEL_RESOURCE_ATTRIBUTES"));
         String[] splitResourceAttributesString = resourceAttributesConfig == null ? new String[] {}
                 : resourceAttributesConfig.trim().split(",");
 
-        Map<String, String> resourceAttributes = Arrays.stream(splitResourceAttributesString).map(String::trim)
-                .filter(keyValue -> keyValue.length() > 2 && keyValue.indexOf('=') > 0)
-                .collect(Collectors.toMap(keyvalue -> keyvalue.substring(0, keyvalue.indexOf('=')).trim(),
-                        keyValue -> keyValue.substring(keyValue.indexOf('=') + 1).trim()));
+        Map<String, String> resourceAttributes = Arrays.stream(splitResourceAttributesString)
+            .map(String::trim)
+            .filter(keyValue -> keyValue.length() > 2 && keyValue.indexOf('=') > 0)
+            .collect(Collectors.toMap(keyvalue -> keyvalue.substring(0, keyvalue.indexOf('=')).trim(),
+                    keyValue -> keyValue.substring(keyValue.indexOf('=') + 1).trim()));
 
         if (env.containsKey("OTEL_SERVICE_NAME") && !resourceAttributes.containsKey("service.name")) {
             resourceAttributes.put("service.name", env.get("OTEL_SERVICE_NAME"));

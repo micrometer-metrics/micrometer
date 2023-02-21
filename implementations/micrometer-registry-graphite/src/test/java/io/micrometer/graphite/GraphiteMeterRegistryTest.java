@@ -91,17 +91,23 @@ class GraphiteMeterRegistryTest {
             }
         }, mockClock);
 
-        Connection server = UdpServer.create().option(ChannelOption.SO_REUSEADDR, true).host("localhost").port(PORT)
-                .handle((in, out) -> {
-                    in.receive().asString().subscribe(line -> {
-                        assertThat(line).startsWith("APPNAME.myTimer");
-                        receiveLatch.countDown();
-                    });
-                    return Flux.never();
-                }).bind().doOnSuccess(v -> {
-                    registry.timer("my.timer", "application", "APPNAME").record(1, TimeUnit.MILLISECONDS);
-                    registry.close();
-                }).block(Duration.ofSeconds(10));
+        Connection server = UdpServer.create()
+            .option(ChannelOption.SO_REUSEADDR, true)
+            .host("localhost")
+            .port(PORT)
+            .handle((in, out) -> {
+                in.receive().asString().subscribe(line -> {
+                    assertThat(line).startsWith("APPNAME.myTimer");
+                    receiveLatch.countDown();
+                });
+                return Flux.never();
+            })
+            .bind()
+            .doOnSuccess(v -> {
+                registry.timer("my.timer", "application", "APPNAME").record(1, TimeUnit.MILLISECONDS);
+                registry.close();
+            })
+            .block(Duration.ofSeconds(10));
 
         assertTrue(receiveLatch.await(10, TimeUnit.SECONDS), "line was received");
         server.dispose();
@@ -152,17 +158,23 @@ class GraphiteMeterRegistryTest {
             }
         }, mockClock);
 
-        Connection server = UdpServer.create().option(ChannelOption.SO_REUSEADDR, true).host("localhost").port(PORT)
-                .handle((in, out) -> {
-                    in.receive().asString().subscribe(line -> {
-                        assertThat(line).startsWith("my.timer;key=value;metricattribute=max ");
-                        receiveLatch.countDown();
-                    });
-                    return Flux.never();
-                }).bind().doOnSuccess(v -> {
-                    registry.timer("my.timer", "key", "value").record(1, TimeUnit.MILLISECONDS);
-                    registry.close();
-                }).block(Duration.ofSeconds(10));
+        Connection server = UdpServer.create()
+            .option(ChannelOption.SO_REUSEADDR, true)
+            .host("localhost")
+            .port(PORT)
+            .handle((in, out) -> {
+                in.receive().asString().subscribe(line -> {
+                    assertThat(line).startsWith("my.timer;key=value;metricattribute=max ");
+                    receiveLatch.countDown();
+                });
+                return Flux.never();
+            })
+            .bind()
+            .doOnSuccess(v -> {
+                registry.timer("my.timer", "key", "value").record(1, TimeUnit.MILLISECONDS);
+                registry.close();
+            })
+            .block(Duration.ofSeconds(10));
 
         assertTrue(receiveLatch.await(10, TimeUnit.SECONDS), "line was received");
         server.dispose();

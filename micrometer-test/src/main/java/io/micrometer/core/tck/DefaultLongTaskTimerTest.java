@@ -42,8 +42,8 @@ public class DefaultLongTaskTimerTest {
     void histogram() {
         MeterRegistry registry = new SimpleMeterRegistry(SimpleConfig.DEFAULT, new MockClock());
         LongTaskTimer t = LongTaskTimer.builder("my.timer")
-                .serviceLevelObjectives(Duration.ofSeconds(10), Duration.ofSeconds(40), Duration.ofMinutes(1))
-                .register(registry);
+            .serviceLevelObjectives(Duration.ofSeconds(10), Duration.ofSeconds(40), Duration.ofMinutes(1))
+            .register(registry);
 
         List<Integer> samples = Arrays.asList(48, 42, 40, 35, 22, 16, 13, 8, 6, 4, 2);
         int prior = samples.get(0);

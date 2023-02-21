@@ -152,20 +152,40 @@ class MetricsTurboFilter extends TurboFilter {
     private final Counter traceCounter;
 
     MetricsTurboFilter(MeterRegistry registry, Iterable<Tag> tags) {
-        errorCounter = Counter.builder(METER_NAME).tags(tags).tags("level", "error").description(METER_DESCRIPTION)
-                .baseUnit(BaseUnits.EVENTS).register(registry);
+        errorCounter = Counter.builder(METER_NAME)
+            .tags(tags)
+            .tags("level", "error")
+            .description(METER_DESCRIPTION)
+            .baseUnit(BaseUnits.EVENTS)
+            .register(registry);
 
-        warnCounter = Counter.builder(METER_NAME).tags(tags).tags("level", "warn").description(METER_DESCRIPTION)
-                .baseUnit(BaseUnits.EVENTS).register(registry);
+        warnCounter = Counter.builder(METER_NAME)
+            .tags(tags)
+            .tags("level", "warn")
+            .description(METER_DESCRIPTION)
+            .baseUnit(BaseUnits.EVENTS)
+            .register(registry);
 
-        infoCounter = Counter.builder(METER_NAME).tags(tags).tags("level", "info").description(METER_DESCRIPTION)
-                .baseUnit(BaseUnits.EVENTS).register(registry);
+        infoCounter = Counter.builder(METER_NAME)
+            .tags(tags)
+            .tags("level", "info")
+            .description(METER_DESCRIPTION)
+            .baseUnit(BaseUnits.EVENTS)
+            .register(registry);
 
-        debugCounter = Counter.builder(METER_NAME).tags(tags).tags("level", "debug").description(METER_DESCRIPTION)
-                .baseUnit(BaseUnits.EVENTS).register(registry);
+        debugCounter = Counter.builder(METER_NAME)
+            .tags(tags)
+            .tags("level", "debug")
+            .description(METER_DESCRIPTION)
+            .baseUnit(BaseUnits.EVENTS)
+            .register(registry);
 
-        traceCounter = Counter.builder(METER_NAME).tags(tags).tags("level", "trace").description(METER_DESCRIPTION)
-                .baseUnit(BaseUnits.EVENTS).register(registry);
+        traceCounter = Counter.builder(METER_NAME)
+            .tags(tags)
+            .tags("level", "trace")
+            .description(METER_DESCRIPTION)
+            .baseUnit(BaseUnits.EVENTS)
+            .register(registry);
     }
 
     @Override

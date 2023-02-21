@@ -61,9 +61,11 @@ public abstract class CacheMeterBinder<C> implements MeterBinder {
             Gauge.builder("cache.size", cache, c -> {
                 Long size = size();
                 return size == null ? 0 : size;
-            }).tags(tags).description(
-                    "The number of entries in this cache. This may be an approximation, depending on the type of cache.")
-                    .register(registry);
+            })
+                .tags(tags)
+                .description(
+                        "The number of entries in this cache. This may be an approximation, depending on the type of cache.")
+                .register(registry);
         }
 
         if (missCount() != null) {
@@ -73,11 +75,16 @@ public abstract class CacheMeterBinder<C> implements MeterBinder {
             }).tags(tags).tag("result", "miss").description(DESCRIPTION_CACHE_GETS).register(registry);
         }
 
-        FunctionCounter.builder("cache.gets", cache, c -> hitCount()).tags(tags).tag("result", "hit")
-                .description(DESCRIPTION_CACHE_GETS).register(registry);
+        FunctionCounter.builder("cache.gets", cache, c -> hitCount())
+            .tags(tags)
+            .tag("result", "hit")
+            .description(DESCRIPTION_CACHE_GETS)
+            .register(registry);
 
-        FunctionCounter.builder("cache.puts", cache, c -> putCount()).tags(tags)
-                .description("The number of entries added to the cache").register(registry);
+        FunctionCounter.builder("cache.puts", cache, c -> putCount())
+            .tags(tags)
+            .description("The number of entries added to the cache")
+            .register(registry);
 
         if (evictionCount() != null) {
             FunctionCounter.builder("cache.evictions", cache, c -> {

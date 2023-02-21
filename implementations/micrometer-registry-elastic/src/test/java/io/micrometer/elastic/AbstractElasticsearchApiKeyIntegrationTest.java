@@ -37,13 +37,14 @@ abstract class AbstractElasticsearchApiKeyIntegrationTest extends AbstractElasti
         // Create API key
         try {
             HttpSender.Response response = httpSender.post(host + "/_security/api_key")
-                    .withBasicAuthentication(USER, PASSWORD)
-                    .withJsonContent("{\"name\": \"my-api-key\",\"expiration\": \"1h\"}").send();
+                .withBasicAuthentication(USER, PASSWORD)
+                .withJsonContent("{\"name\": \"my-api-key\",\"expiration\": \"1h\"}")
+                .send();
             String body = response.body();
             String id = JsonPath.parse(body).read("$.id");
             String apiKey = JsonPath.parse(body).read("$.api_key");
             apiKeyCredentials = Base64.getEncoder()
-                    .encodeToString((id + ":" + apiKey).getBytes(StandardCharsets.UTF_8));
+                .encodeToString((id + ":" + apiKey).getBytes(StandardCharsets.UTF_8));
         }
         catch (Throwable e) {
             throw new RuntimeException(e);

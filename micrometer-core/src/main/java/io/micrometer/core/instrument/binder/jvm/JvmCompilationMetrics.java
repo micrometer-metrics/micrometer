@@ -53,9 +53,10 @@ public class JvmCompilationMetrics implements MeterBinder {
         CompilationMXBean compilationBean = ManagementFactory.getCompilationMXBean();
         if (compilationBean != null && compilationBean.isCompilationTimeMonitoringSupported()) {
             FunctionCounter.builder("jvm.compilation.time", compilationBean, CompilationMXBean::getTotalCompilationTime)
-                    .tags(Tags.concat(tags, "compiler", compilationBean.getName()))
-                    .description("The approximate accumulated elapsed time spent in compilation")
-                    .baseUnit(BaseUnits.MILLISECONDS).register(registry);
+                .tags(Tags.concat(tags, "compiler", compilationBean.getName()))
+                .description("The approximate accumulated elapsed time spent in compilation")
+                .baseUnit(BaseUnits.MILLISECONDS)
+                .register(registry);
         }
     }
 

@@ -68,13 +68,15 @@ public class MicrometerHttpClientInterceptor {
     public MicrometerHttpClientInterceptor(MeterRegistry meterRegistry, Function<HttpRequest, String> uriMapper,
             Iterable<Tag> extraTags, boolean exportTagsForRoute) {
         this.requestInterceptor = (request, context) -> timerByHttpContext.put(context,
-                Timer.resource(meterRegistry, METER_NAME).tags("method", request.getRequestLine().getMethod(), "uri",
-                        uriMapper.apply(request)));
+                Timer.resource(meterRegistry, METER_NAME)
+                    .tags("method", request.getRequestLine().getMethod(), "uri", uriMapper.apply(request)));
 
         this.responseInterceptor = (response, context) -> {
-            timerByHttpContext.remove(context).tag("status", Integer.toString(response.getStatusLine().getStatusCode()))
-                    .tags(exportTagsForRoute ? HttpContextUtils.generateTagsForRoute(context) : Tags.empty())
-                    .tags(extraTags).close();
+            timerByHttpContext.remove(context)
+                .tag("status", Integer.toString(response.getStatusLine().getStatusCode()))
+                .tags(exportTagsForRoute ? HttpContextUtils.generateTagsForRoute(context) : Tags.empty())
+                .tags(extraTags)
+                .close();
         };
     }
 

@@ -227,8 +227,9 @@ public final class RequiredSearch {
     }
 
     private Stream<Meter> meterStream() {
-        Stream<Meter> meterStream = registry.getMeters().stream()
-                .filter(m -> nameMatches == null || nameMatches.test(m.getId().getName()));
+        Stream<Meter> meterStream = registry.getMeters()
+            .stream()
+            .filter(m -> nameMatches == null || nameMatches.test(m.getId().getName()));
 
         if (!requiredTags.isEmpty() || !requiredTagKeys.isEmpty()) {
             meterStream = meterStream.filter(m -> {

@@ -76,28 +76,45 @@ public class JettyConnectionMetrics extends AbstractLifeCycle implements Connect
         this.registry = registry;
         this.tags = tags;
 
-        this.messagesIn = Counter.builder("jetty.connections.messages.in").baseUnit(BaseUnits.MESSAGES)
-                .description("Messages received by tracked connections").tags(tags).register(registry);
+        this.messagesIn = Counter.builder("jetty.connections.messages.in")
+            .baseUnit(BaseUnits.MESSAGES)
+            .description("Messages received by tracked connections")
+            .tags(tags)
+            .register(registry);
 
-        this.messagesOut = Counter.builder("jetty.connections.messages.out").baseUnit(BaseUnits.MESSAGES)
-                .description("Messages sent by tracked connections").tags(tags).register(registry);
+        this.messagesOut = Counter.builder("jetty.connections.messages.out")
+            .baseUnit(BaseUnits.MESSAGES)
+            .description("Messages sent by tracked connections")
+            .tags(tags)
+            .register(registry);
 
-        this.bytesIn = DistributionSummary.builder("jetty.connections.bytes.in").baseUnit(BaseUnits.BYTES)
-                .description("Bytes received by tracked connections").tags(tags).register(registry);
+        this.bytesIn = DistributionSummary.builder("jetty.connections.bytes.in")
+            .baseUnit(BaseUnits.BYTES)
+            .description("Bytes received by tracked connections")
+            .tags(tags)
+            .register(registry);
 
-        this.bytesOut = DistributionSummary.builder("jetty.connections.bytes.out").baseUnit(BaseUnits.BYTES)
-                .description("Bytes sent by tracked connections").tags(tags).register(registry);
+        this.bytesOut = DistributionSummary.builder("jetty.connections.bytes.out")
+            .baseUnit(BaseUnits.BYTES)
+            .description("Bytes sent by tracked connections")
+            .tags(tags)
+            .register(registry);
 
         this.maxConnections = new TimeWindowMax(registry.config().clock(), DistributionStatisticConfig.DEFAULT);
 
-        Gauge.builder("jetty.connections.max", this, jcm -> jcm.maxConnections.poll()).strongReference(true)
-                .baseUnit(BaseUnits.CONNECTIONS)
-                .description("The maximum number of observed connections over a rolling 2-minute interval").tags(tags)
-                .register(registry);
+        Gauge.builder("jetty.connections.max", this, jcm -> jcm.maxConnections.poll())
+            .strongReference(true)
+            .baseUnit(BaseUnits.CONNECTIONS)
+            .description("The maximum number of observed connections over a rolling 2-minute interval")
+            .tags(tags)
+            .register(registry);
 
-        Gauge.builder("jetty.connections.current", this, jcm -> jcm.connectionSamples.size()).strongReference(true)
-                .baseUnit(BaseUnits.CONNECTIONS).description("The current number of open Jetty connections").tags(tags)
-                .register(registry);
+        Gauge.builder("jetty.connections.current", this, jcm -> jcm.connectionSamples.size())
+            .strongReference(true)
+            .baseUnit(BaseUnits.CONNECTIONS)
+            .description("The current number of open Jetty connections")
+            .tags(tags)
+            .register(registry);
     }
 
     /**
@@ -146,8 +163,11 @@ public class JettyConnectionMetrics extends AbstractLifeCycle implements Connect
 
         if (sample != null) {
             String serverOrClient = connection instanceof HttpConnection ? "server" : "client";
-            sample.stop(Timer.builder("jetty.connections.request").description("Jetty client or server requests")
-                    .tag("type", serverOrClient).tags(tags).register(registry));
+            sample.stop(Timer.builder("jetty.connections.request")
+                .description("Jetty client or server requests")
+                .tag("type", serverOrClient)
+                .tags(tags)
+                .register(registry));
         }
 
         messagesIn.increment(connection.getMessagesIn());

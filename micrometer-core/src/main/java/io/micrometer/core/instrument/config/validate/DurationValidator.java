@@ -63,7 +63,7 @@ public enum DurationValidator {
             long multipliedResult = amount.longValue();
             long multipliedFactor = (long) Math.pow(10, e);
             return validateChronoUnit(property, value, unit)
-                    .map(cu -> Duration.of(multipliedResult, cu).dividedBy(multipliedFactor));
+                .map(cu -> Duration.of(multipliedResult, cu).dividedBy(multipliedFactor));
         }
     },
 

@@ -88,8 +88,10 @@ public class FixedBoundaryVictoriaMetricsHistogram implements Histogram {
                 String end = String.format("%.1fe%d", m, e10);
                 VMRANGES[idx] = start + "..." + end;
 
-                UPPER_BOUNDS[idx] = BigDecimal.valueOf(m).setScale(1, RoundingMode.HALF_UP)
-                        .multiply(BigDecimal.TEN.pow(e10, MathContext.DECIMAL128)).doubleValue();
+                UPPER_BOUNDS[idx] = BigDecimal.valueOf(m)
+                    .setScale(1, RoundingMode.HALF_UP)
+                    .multiply(BigDecimal.TEN.pow(e10, MathContext.DECIMAL128))
+                    .doubleValue();
 
                 idx++;
                 start = end;

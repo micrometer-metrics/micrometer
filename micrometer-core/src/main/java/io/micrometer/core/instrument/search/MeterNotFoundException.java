@@ -62,8 +62,14 @@ public class MeterNotFoundException extends RuntimeException {
             if (search.nameMatches == null)
                 return null;
 
-            Collection<String> matchingName = Search.in(search.registry).name(search.nameMatches).meters().stream()
-                    .map(m -> m.getId().getName()).distinct().sorted().collect(toList());
+            Collection<String> matchingName = Search.in(search.registry)
+                .name(search.nameMatches)
+                .meters()
+                .stream()
+                .map(m -> m.getId().getName())
+                .distinct()
+                .sorted()
+                .collect(toList());
 
             if (!matchingName.isEmpty()) {
                 if (matchingName.size() == 1) {
@@ -90,9 +96,16 @@ public class MeterNotFoundException extends RuntimeException {
             List<String> details = new ArrayList<>();
 
             for (String requiredKey : search.requiredTagKeys) {
-                Collection<String> matchingRequiredKey = Search.in(search.registry).name(search.nameMatches)
-                        .tagKeys(requiredKey).meters().stream().filter(requiredMeterType::isInstance)
-                        .map(m -> m.getId().getName()).distinct().sorted().collect(toList());
+                Collection<String> matchingRequiredKey = Search.in(search.registry)
+                    .name(search.nameMatches)
+                    .tagKeys(requiredKey)
+                    .meters()
+                    .stream()
+                    .filter(requiredMeterType::isInstance)
+                    .map(m -> m.getId().getName())
+                    .distinct()
+                    .sorted()
+                    .collect(toList());
 
                 String requiredTagDetail = "the required tag '" + requiredKey + "'.";
                 if (matchingRequiredKey.isEmpty()) {
@@ -110,17 +123,30 @@ public class MeterNotFoundException extends RuntimeException {
             }
 
             for (Tag requiredTag : search.requiredTags) {
-                Collection<String> matchingRequiredTag = Search.in(search.registry).name(search.nameMatches)
-                        .tag(requiredTag.getKey(), requiredTag.getValue()).meters().stream()
-                        .filter(requiredMeterType::isInstance).map(m -> m.getId().getName()).distinct().sorted()
-                        .collect(toList());
+                Collection<String> matchingRequiredTag = Search.in(search.registry)
+                    .name(search.nameMatches)
+                    .tag(requiredTag.getKey(), requiredTag.getValue())
+                    .meters()
+                    .stream()
+                    .filter(requiredMeterType::isInstance)
+                    .map(m -> m.getId().getName())
+                    .distinct()
+                    .sorted()
+                    .collect(toList());
 
                 String requiredTagDetail = "a tag '" + requiredTag.getKey() + "' with value '" + requiredTag.getValue()
                         + "'.";
                 if (matchingRequiredTag.isEmpty()) {
-                    Collection<String> nonMatchingValues = Search.in(search.registry).name(search.nameMatches)
-                            .tagKeys(requiredTag.getKey()).meters().stream().filter(requiredMeterType::isInstance)
-                            .map(m -> m.getId().getTag(requiredTag.getKey())).distinct().sorted().collect(toList());
+                    Collection<String> nonMatchingValues = Search.in(search.registry)
+                        .name(search.nameMatches)
+                        .tagKeys(requiredTag.getKey())
+                        .meters()
+                        .stream()
+                        .filter(requiredMeterType::isInstance)
+                        .map(m -> m.getId().getTag(requiredTag.getKey()))
+                        .distinct()
+                        .sorted()
+                        .collect(toList());
 
                     if (nonMatchingValues.isEmpty()) {
                         details.add(NOT_OK + " No meters have the required tag '" + requiredTag.getKey() + "'.");
@@ -164,8 +190,11 @@ public class MeterNotFoundException extends RuntimeException {
 
                 if (!matchesName.isEmpty()) {
                     Collection<String> nonMatchingTypes = matchesName.stream()
-                            .filter(m -> !requiredMeterType.isInstance(m)).map(m -> meterTypeName(m.getClass()))
-                            .distinct().sorted().collect(toList());
+                        .filter(m -> !requiredMeterType.isInstance(m))
+                        .map(m -> meterTypeName(m.getClass()))
+                        .distinct()
+                        .sorted()
+                        .collect(toList());
 
                     if (nonMatchingTypes.size() == 1) {
                         return NOT_OK + " Expected to find a " + meterTypeName(requiredMeterType)

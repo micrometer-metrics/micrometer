@@ -95,7 +95,8 @@ public class HibernateQueryMetrics implements MeterBinder {
     public void bindTo(MeterRegistry meterRegistry) {
         if (sessionFactory instanceof SessionFactoryImplementor) {
             EventListenerRegistry eventListenerRegistry = ((SessionFactoryImplementor) sessionFactory)
-                    .getServiceRegistry().getService(EventListenerRegistry.class);
+                .getServiceRegistry()
+                .getService(EventListenerRegistry.class);
             MetricsEventHandler metricsEventHandler = new MetricsEventHandler(meterRegistry);
             eventListenerRegistry.appendListeners(EventType.POST_LOAD, metricsEventHandler);
         }
@@ -119,42 +120,56 @@ public class HibernateQueryMetrics implements MeterBinder {
                 QueryStatistics queryStatistics = statistics.getQueryStatistics(query);
 
                 FunctionCounter
-                        .builder("hibernate.query.cache.requests", queryStatistics, QueryStatistics::getCacheHitCount)
-                        .tags(tags).tags("result", "hit", "query", query).description("Number of query cache hits")
-                        .register(meterRegistry);
+                    .builder("hibernate.query.cache.requests", queryStatistics, QueryStatistics::getCacheHitCount)
+                    .tags(tags)
+                    .tags("result", "hit", "query", query)
+                    .description("Number of query cache hits")
+                    .register(meterRegistry);
 
                 FunctionCounter
-                        .builder("hibernate.query.cache.requests", queryStatistics, QueryStatistics::getCacheMissCount)
-                        .tags(tags).tags("result", "miss", "query", query).description("Number of query cache misses")
-                        .register(meterRegistry);
+                    .builder("hibernate.query.cache.requests", queryStatistics, QueryStatistics::getCacheMissCount)
+                    .tags(tags)
+                    .tags("result", "miss", "query", query)
+                    .description("Number of query cache misses")
+                    .register(meterRegistry);
 
                 FunctionCounter
-                        .builder("hibernate.query.cache.puts", queryStatistics, QueryStatistics::getCachePutCount)
-                        .tags(tags).tags("query", query).description("Number of cache puts for a query")
-                        .register(meterRegistry);
+                    .builder("hibernate.query.cache.puts", queryStatistics, QueryStatistics::getCachePutCount)
+                    .tags(tags)
+                    .tags("query", query)
+                    .description("Number of cache puts for a query")
+                    .register(meterRegistry);
 
                 FunctionTimer
-                        .builder("hibernate.query.execution.total", queryStatistics, QueryStatistics::getExecutionCount,
-                                QueryStatistics::getExecutionTotalTime, TimeUnit.MILLISECONDS)
-                        .tags(tags).tags("query", query).description("Query executions").register(meterRegistry);
+                    .builder("hibernate.query.execution.total", queryStatistics, QueryStatistics::getExecutionCount,
+                            QueryStatistics::getExecutionTotalTime, TimeUnit.MILLISECONDS)
+                    .tags(tags)
+                    .tags("query", query)
+                    .description("Query executions")
+                    .register(meterRegistry);
 
                 TimeGauge
-                        .builder("hibernate.query.execution.max", queryStatistics, TimeUnit.MILLISECONDS,
-                                QueryStatistics::getExecutionMaxTime)
-                        .tags(tags).tags("query", query).description("Query maximum execution time")
-                        .register(meterRegistry);
+                    .builder("hibernate.query.execution.max", queryStatistics, TimeUnit.MILLISECONDS,
+                            QueryStatistics::getExecutionMaxTime)
+                    .tags(tags)
+                    .tags("query", query)
+                    .description("Query maximum execution time")
+                    .register(meterRegistry);
 
                 TimeGauge
-                        .builder("hibernate.query.execution.min", queryStatistics, TimeUnit.MILLISECONDS,
-                                QueryStatistics::getExecutionMinTime)
-                        .tags(tags).tags("query", query).description("Query minimum execution time")
-                        .register(meterRegistry);
+                    .builder("hibernate.query.execution.min", queryStatistics, TimeUnit.MILLISECONDS,
+                            QueryStatistics::getExecutionMinTime)
+                    .tags(tags)
+                    .tags("query", query)
+                    .description("Query minimum execution time")
+                    .register(meterRegistry);
 
                 FunctionCounter
-                        .builder("hibernate.query.execution.rows", queryStatistics,
-                                QueryStatistics::getExecutionRowCount)
-                        .tags(tags).tags("query", query).description("Number of rows processed for a query")
-                        .register(meterRegistry);
+                    .builder("hibernate.query.execution.rows", queryStatistics, QueryStatistics::getExecutionRowCount)
+                    .tags(tags)
+                    .tags("query", query)
+                    .description("Number of rows processed for a query")
+                    .register(meterRegistry);
             }
         }
 

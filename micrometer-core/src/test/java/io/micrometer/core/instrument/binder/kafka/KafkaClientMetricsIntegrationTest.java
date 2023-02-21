@@ -115,16 +115,20 @@ class KafkaClientMetricsIntegrationTest {
 
         // see gh-3300
         assertThat(registry.getMeters().stream().filter(meter -> meter.getId().getName().endsWith(".count")))
-                .allMatch(meter -> meter instanceof Gauge);
+            .allMatch(meter -> meter instanceof Gauge);
 
         // Printing out for discovery purposes
         out.println("All meters from producer and consumer:");
         printMeters(registry);
 
-        List<Meter> metersEndingWithTotal = registry.getMeters().stream()
-                .filter(meter -> meter.getId().getName().endsWith(".total")).collect(Collectors.toList());
-        List<Meter> functionCounters = registry.getMeters().stream().filter(meter -> meter instanceof FunctionCounter)
-                .collect(Collectors.toList());
+        List<Meter> metersEndingWithTotal = registry.getMeters()
+            .stream()
+            .filter(meter -> meter.getId().getName().endsWith(".total"))
+            .collect(Collectors.toList());
+        List<Meter> functionCounters = registry.getMeters()
+            .stream()
+            .filter(meter -> meter instanceof FunctionCounter)
+            .collect(Collectors.toList());
         assertThat(metersEndingWithTotal).isEqualTo(functionCounters);
 
         producerKafkaMetrics.close();

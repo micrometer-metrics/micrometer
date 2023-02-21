@@ -520,10 +520,12 @@ public class SampleRegistries {
                 public Duration step() {
                     return Duration.ofSeconds(10);
                 }
-            }).metricServiceSettings(() -> MetricServiceSettings.newBuilder()
+            })
+                .metricServiceSettings(() -> MetricServiceSettings.newBuilder()
                     .setCredentialsProvider(
                             FixedCredentialsProvider.create(ServiceAccountCredentials.fromStream(credentials)))
-                    .build()).build();
+                    .build())
+                .build();
         }
         catch (IOException e) {
             throw new UncheckedIOException(e);

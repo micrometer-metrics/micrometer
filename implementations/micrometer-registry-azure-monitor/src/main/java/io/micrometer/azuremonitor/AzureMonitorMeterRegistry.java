@@ -194,8 +194,8 @@ public class AzureMonitorMeterRegistry extends StepMeterRegistry {
         MetricTelemetry mt = new MetricTelemetry();
 
         Meter.Id id = meter.getId();
-        mt.setName(config().namingConvention().name(id.getName() + (suffix == null ? "" : "." + suffix), id.getType(),
-                id.getBaseUnit()));
+        mt.setName(config().namingConvention()
+            .name(id.getName() + (suffix == null ? "" : "." + suffix), id.getType(), id.getBaseUnit()));
 
         for (Tag tag : getConventionTags(meter.getId())) {
             mt.getContext().getProperties().putIfAbsent(tag.getKey(), tag.getValue());

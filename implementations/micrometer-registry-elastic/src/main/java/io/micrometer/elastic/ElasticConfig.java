@@ -184,19 +184,19 @@ public interface ElasticConfig extends StepRegistryConfig {
                 checkRequired("index", ElasticConfig::index),
                 checkRequired("timestampFieldName", ElasticConfig::timestampFieldName),
                 checkRequired("indexDateFormat", ElasticConfig::indexDateFormat)
-                        .andThen(v -> v.invalidateWhen(format -> {
-                            if (format == null) {
-                                return true;
-                            }
+                    .andThen(v -> v.invalidateWhen(format -> {
+                        if (format == null) {
+                            return true;
+                        }
 
-                            try {
-                                DateTimeFormatter.ofPattern(format);
-                                return false;
-                            }
-                            catch (IllegalArgumentException ignored) {
-                                return true;
-                            }
-                        }, "invalid date format", InvalidReason.MALFORMED)),
+                        try {
+                            DateTimeFormatter.ofPattern(format);
+                            return false;
+                        }
+                        catch (IllegalArgumentException ignored) {
+                            return true;
+                        }
+                    }, "invalid date format", InvalidReason.MALFORMED)),
                 checkRequired("indexDateSeparator", ElasticConfig::indexDateSeparator),
                 checkRequired("documentType", ElasticConfig::documentType));
     }

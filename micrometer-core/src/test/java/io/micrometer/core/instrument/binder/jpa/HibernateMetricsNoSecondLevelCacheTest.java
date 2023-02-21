@@ -52,7 +52,7 @@ class HibernateMetricsNoSecondLevelCacheTest {
         doReturn(new String[] { "region1", "region2" }).when(stats).getSecondLevelCacheRegionNames();
         doReturn(null).when(stats).getDomainDataRegionStatistics("region1");
         doThrow(new IllegalArgumentException("Mocked: Unknown region")).when(stats)
-                .getDomainDataRegionStatistics("region2");
+            .getDomainDataRegionStatistics("region2");
         when(sf.getStatistics()).thenReturn(stats);
         return sf;
     }
@@ -70,9 +70,9 @@ class HibernateMetricsNoSecondLevelCacheTest {
         assertThat(registry.get("hibernate.sessions.open").functionCounter().count()).isEqualTo(42.0);
 
         assertThatThrownBy(() -> registry.get("hibernate.second.level.cache.requests").functionCounters())
-                .isInstanceOf(MeterNotFoundException.class);
+            .isInstanceOf(MeterNotFoundException.class);
         assertThatThrownBy(() -> registry.get("hibernate.second.level.cache.puts").functionCounters())
-                .isInstanceOf(MeterNotFoundException.class);
+            .isInstanceOf(MeterNotFoundException.class);
     }
 
 }

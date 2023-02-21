@@ -168,12 +168,14 @@ public class HealthMeterRegistry extends SimpleMeterRegistry {
     }
 
     public Collection<ServiceLevelObjective> getServiceLevelObjectives() {
-        return serviceLevelObjectives.stream().filter(slo -> accept(slo.getId()))
-                .map(slo -> serviceLevelObjectiveFilters.stream().reduce(slo,
+        return serviceLevelObjectives.stream()
+            .filter(slo -> accept(slo.getId()))
+            .map(slo -> serviceLevelObjectiveFilters.stream()
+                .reduce(slo,
                         (filtered, filter) -> new ServiceLevelObjective.FilteredServiceLevelObjective(
                                 filter.map(filtered.getId()), filtered),
                         (obj1, obj2) -> obj2))
-                .collect(Collectors.toList());
+            .collect(Collectors.toList());
     }
 
     private boolean accept(Meter.Id id) {

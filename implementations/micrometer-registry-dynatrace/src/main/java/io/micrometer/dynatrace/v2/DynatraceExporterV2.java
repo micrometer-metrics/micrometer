@@ -82,8 +82,8 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
         logger.info("Exporting to endpoint {}", config.uri());
 
         MetricBuilderFactory.MetricBuilderFactoryBuilder factoryBuilder = MetricBuilderFactory.builder()
-                .withPrefix(config.metricKeyPrefix())
-                .withDefaultDimensions(parseDefaultDimensions(config.defaultDimensions()));
+            .withPrefix(config.metricKeyPrefix())
+            .withDefaultDimensions(parseDefaultDimensions(config.defaultDimensions()));
 
         if (config.enrichWithDynatraceMetadata()) {
             factoryBuilder.withDynatraceMetadata();
@@ -109,9 +109,9 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
             return true;
         }
         if (config.uri().equals(DynatraceMetricApiConstants.getDefaultOneAgentEndpoint())) {
-            logger.warn(
-                    "Potential misconfiguration detected: Token is provided, but the endpoint is set to the local OneAgent endpoint, "
-                            + "thus the token will be ignored. If exporting to the cluster API endpoint is intended, its URI has to be provided explicitly.");
+            logger
+                .warn("Potential misconfiguration detected: Token is provided, but the endpoint is set to the local OneAgent endpoint, "
+                        + "thus the token will be ignored. If exporting to the cluster API endpoint is intended, its URI has to be provided explicitly.");
             return true;
         }
         return false;
@@ -119,8 +119,9 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
 
     private DimensionList parseDefaultDimensions(Map<String, String> defaultDimensions) {
         List<Dimension> dimensions = Stream
-                .concat(defaultDimensions.entrySet().stream(), staticDimensions.entrySet().stream())
-                .map(entry -> Dimension.create(entry.getKey(), entry.getValue())).collect(Collectors.toList());
+            .concat(defaultDimensions.entrySet().stream(), staticDimensions.entrySet().stream())
+            .map(entry -> Dimension.create(entry.getKey(), entry.getValue()))
+            .collect(Collectors.toList());
         return DimensionList.fromCollection(dimensions);
     }
 
@@ -203,7 +204,7 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
         }
 
         DynatraceSummarySnapshot snapshot = ((DynatraceSummarySnapshotSupport) meter)
-                .takeSummarySnapshotAndReset(getBaseTimeUnit());
+            .takeSummarySnapshotAndReset(getBaseTimeUnit());
 
         if (snapshot.getCount() == 0) {
             return Stream.empty();
@@ -290,12 +291,13 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
 
     private Stream<String> toMeterLine(Meter meter, BiFunction<Meter, Measurement, String> measurementConverter) {
         return streamOf(meter.measure()).map(measurement -> measurementConverter.apply(meter, measurement))
-                .filter(Objects::nonNull);
+            .filter(Objects::nonNull);
     }
 
     private Metric.Builder createMetricBuilder(Meter meter) {
         return metricBuilderFactory.newMetricBuilder(meter.getId().getName())
-                .setDimensions(fromTags(meter.getId().getTags())).setTimestamp(Instant.ofEpochMilli(clock.wallTime()));
+            .setDimensions(fromTags(meter.getId().getTags()))
+            .setTimestamp(Instant.ofEpochMilli(clock.wallTime()));
     }
 
     private DimensionList fromTags(List<Tag> tags) {
@@ -324,10 +326,12 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
                 requestBuilder.withHeader("Authorization", "Api-Token " + config.apiToken());
             }
 
-            requestBuilder.withHeader("User-Agent", "micrometer").withPlainText(body).send()
-                    .onSuccess(response -> handleSuccess(metricLines.size(), response))
-                    .onError(response -> logger.error("Failed metric ingestion: Error Code={}, Response Body={}",
-                            response.code(), getTruncatedBody(response)));
+            requestBuilder.withHeader("User-Agent", "micrometer")
+                .withPlainText(body)
+                .send()
+                .onSuccess(response -> handleSuccess(metricLines.size(), response))
+                .onError(response -> logger.error("Failed metric ingestion: Error Code={}, Response Body={}",
+                        response.code(), getTruncatedBody(response)));
         }
         catch (Throwable throwable) {
             logger.warn("Failed metric ingestion: " + throwable);

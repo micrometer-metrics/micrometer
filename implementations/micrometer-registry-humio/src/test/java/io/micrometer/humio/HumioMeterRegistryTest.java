@@ -66,7 +66,7 @@ class HumioMeterRegistryTest {
         server.stubFor(any(anyUrl()));
         registry.publish();
         server.verify(postRequestedFor(urlMatching("/api/v1/ingest/humio-structured"))
-                .withRequestBody(containing("\"tags\":{\"name\": \"micrometer\"}")));
+            .withRequestBody(containing("\"tags\":{\"name\": \"micrometer\"}")));
     }
 
     @Test
@@ -143,7 +143,7 @@ class HumioMeterRegistryTest {
     @Test
     void writeFunctionCounterShouldDropPositiveInfiniteValue() {
         FunctionCounter counter = FunctionCounter.builder("myCounter", Double.POSITIVE_INFINITY, Number::doubleValue)
-                .register(meterRegistry);
+            .register(meterRegistry);
         clock.add(config.step());
         assertThat(createBatch().writeFunctionCounter(counter)).isNull();
     }
@@ -151,7 +151,7 @@ class HumioMeterRegistryTest {
     @Test
     void writeFunctionCounterShouldDropNegativeInfiniteValue() {
         FunctionCounter counter = FunctionCounter.builder("myCounter", Double.NEGATIVE_INFINITY, Number::doubleValue)
-                .register(meterRegistry);
+            .register(meterRegistry);
         clock.add(config.step());
         assertThat(createBatch().writeFunctionCounter(counter)).isNull();
     }

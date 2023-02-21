@@ -273,21 +273,21 @@ class NewRelicMeterRegistryTest {
 
     private void writeGaugeWithTimeGaugeShouldDropInfiniteValues(NewRelicInsightsApiClientProvider clientProvider) {
         TimeGauge timeGauge = TimeGauge.builder("my.timeGauge", () -> Double.POSITIVE_INFINITY, TimeUnit.SECONDS)
-                .register(registry);
+            .register(registry);
         assertThat(clientProvider.writeTimeGauge(timeGauge)).isEmpty();
 
         timeGauge = TimeGauge.builder("my.timeGauge", () -> Double.NEGATIVE_INFINITY, TimeUnit.SECONDS)
-                .register(registry);
+            .register(registry);
         assertThat(clientProvider.writeTimeGauge(timeGauge)).isEmpty();
     }
 
     private void writeGaugeWithTimeGaugeShouldDropInfiniteValues(NewRelicInsightsAgentClientProvider clientProvider) {
         TimeGauge timeGauge = TimeGauge.builder("my.timeGauge2", () -> Double.POSITIVE_INFINITY, TimeUnit.SECONDS)
-                .register(registry);
+            .register(registry);
         assertThat(clientProvider.writeTimeGauge(timeGauge)).isEmpty();
 
         timeGauge = TimeGauge.builder("my.timeGauge2", () -> Double.NEGATIVE_INFINITY, TimeUnit.SECONDS)
-                .register(registry);
+            .register(registry);
         assertThat(clientProvider.writeTimeGauge(timeGauge)).isEmpty();
     }
 
@@ -337,12 +337,12 @@ class NewRelicMeterRegistryTest {
     private void writeCounterWithFunctionCounterShouldDropInfiniteValues(
             NewRelicInsightsApiClientProvider clientProvider) {
         FunctionCounter counter = FunctionCounter.builder("myCounter", Double.POSITIVE_INFINITY, Number::doubleValue)
-                .register(registry);
+            .register(registry);
         clock.add(insightsApiConfig.step());
         assertThat(clientProvider.writeFunctionCounter(counter)).isEmpty();
 
         counter = FunctionCounter.builder("myCounter", Double.NEGATIVE_INFINITY, Number::doubleValue)
-                .register(registry);
+            .register(registry);
         clock.add(insightsApiConfig.step());
         assertThat(clientProvider.writeFunctionCounter(counter)).isEmpty();
     }
@@ -350,12 +350,12 @@ class NewRelicMeterRegistryTest {
     private void writeCounterWithFunctionCounterShouldDropInfiniteValues(
             NewRelicInsightsAgentClientProvider clientProvider) {
         FunctionCounter counter = FunctionCounter.builder("myCounter", Double.POSITIVE_INFINITY, Number::doubleValue)
-                .register(registry);
+            .register(registry);
         clock.add(insightsAgentConfig.step());
         assertThat(clientProvider.writeFunctionCounter(counter)).isEmpty();
 
         counter = FunctionCounter.builder("myCounter", Double.NEGATIVE_INFINITY, Number::doubleValue)
-                .register(registry);
+            .register(registry);
         clock.add(insightsAgentConfig.step());
         assertThat(clientProvider.writeFunctionCounter(counter)).isEmpty();
     }
@@ -625,7 +625,7 @@ class NewRelicMeterRegistryTest {
         apiProvider.sendEvents(apiProvider.writeGauge(gauge));
 
         assertThat(new String(mockHttpClient.getRequest().getEntity()))
-                .contains("{\"eventType\":\"myGauge2\",\"value\":1}");
+            .contains("{\"eventType\":\"myGauge2\",\"value\":1}");
     }
 
     @Test
@@ -642,9 +642,9 @@ class NewRelicMeterRegistryTest {
         agentProvider.sendEvents(gauge.getId(), agentProvider.writeGauge(gauge));
 
         assertThat(((MockNewRelicInsights) mockNewRelicAgent.getInsights()).getInsightData().getEventType())
-                .isEqualTo("MicrometerSample");
+            .isEqualTo("MicrometerSample");
         assertThat(((MockNewRelicInsights) mockNewRelicAgent.getInsights()).getInsightData().getAttributes())
-                .hasSize(3);
+            .hasSize(3);
 
         // test meterNameEventTypeEnabledConfig = true
         mockNewRelicAgent = new MockNewRelicAgent();
@@ -656,9 +656,9 @@ class NewRelicMeterRegistryTest {
         agentProvider.sendEvents(gauge.getId(), agentProvider.writeGauge(gauge));
 
         assertThat(((MockNewRelicInsights) mockNewRelicAgent.getInsights()).getInsightData().getEventType())
-                .isEqualTo("myGauge2");
+            .isEqualTo("myGauge2");
         assertThat(((MockNewRelicInsights) mockNewRelicAgent.getInsights()).getInsightData().getAttributes())
-                .hasSize(1);
+            .hasSize(1);
     }
 
     @Test
@@ -703,9 +703,9 @@ class NewRelicMeterRegistryTest {
 
         // should delegate to the Agent one at a time
         assertThat(((MockNewRelicInsights) mockNewRelicAgent.getInsights()).getInsightData().getEventType())
-                .isEqualTo("MicrometerSample");
+            .isEqualTo("MicrometerSample");
         assertThat(((MockNewRelicInsights) mockNewRelicAgent.getInsights()).getInsightData().getAttributes())
-                .hasSize(4);
+            .hasSize(4);
     }
 
     @Test
@@ -724,7 +724,7 @@ class NewRelicMeterRegistryTest {
         assertThat(registry.clientProvider).isInstanceOf(NewRelicInsightsApiClientProvider.class);
 
         assertThat(((NewRelicInsightsApiClientProvider) registry.clientProvider).namingConvention)
-                .isInstanceOf(NewRelicNamingConvention.class);
+            .isInstanceOf(NewRelicNamingConvention.class);
         assertThat(registry.config().namingConvention()).isInstanceOf(NewRelicNamingConvention.class);
     }
 
@@ -738,7 +738,7 @@ class NewRelicMeterRegistryTest {
         assertThat(registry.clientProvider).isInstanceOf(NewRelicInsightsApiClientProvider.class);
 
         assertThat(((NewRelicInsightsApiClientProvider) registry.clientProvider).namingConvention)
-                .isSameAs(customNamingConvention);
+            .isSameAs(customNamingConvention);
         assertThat(registry.config().namingConvention()).isSameAs(customNamingConvention);
     }
 
@@ -749,7 +749,7 @@ class NewRelicMeterRegistryTest {
         assertThat(registry.clientProvider).isInstanceOf(NewRelicInsightsAgentClientProvider.class);
 
         assertThat(((NewRelicInsightsAgentClientProvider) registry.clientProvider).namingConvention)
-                .isInstanceOf(NewRelicNamingConvention.class);
+            .isInstanceOf(NewRelicNamingConvention.class);
         assertThat(registry.config().namingConvention()).isInstanceOf(NewRelicNamingConvention.class);
     }
 
@@ -763,7 +763,7 @@ class NewRelicMeterRegistryTest {
         assertThat(registry.clientProvider).isInstanceOf(NewRelicInsightsAgentClientProvider.class);
 
         assertThat(((NewRelicInsightsAgentClientProvider) registry.clientProvider).namingConvention)
-                .isSameAs(customNamingConvention);
+            .isSameAs(customNamingConvention);
         assertThat(registry.config().namingConvention()).isSameAs(customNamingConvention);
     }
 
@@ -782,7 +782,7 @@ class NewRelicMeterRegistryTest {
         };
 
         assertThatThrownBy(() -> getInsightsApiClientProvider(config)).isExactlyInstanceOf(ValidationException.class)
-                .hasMessageContaining("eventType");
+            .hasMessageContaining("eventType");
     }
 
     @Test
@@ -837,7 +837,7 @@ class NewRelicMeterRegistryTest {
         };
 
         assertThatThrownBy(() -> getInsightsApiClientProvider(config)).isExactlyInstanceOf(ValidationException.class)
-                .hasMessageContaining("accountId");
+            .hasMessageContaining("accountId");
     }
 
     @Test
@@ -865,7 +865,7 @@ class NewRelicMeterRegistryTest {
         };
 
         assertThatThrownBy(() -> getInsightsApiClientProvider(config)).isExactlyInstanceOf(ValidationException.class)
-                .hasMessageContaining("apiKey");
+            .hasMessageContaining("apiKey");
     }
 
     @Test
@@ -898,7 +898,7 @@ class NewRelicMeterRegistryTest {
         };
 
         assertThatThrownBy(() -> getInsightsApiClientProvider(config)).isExactlyInstanceOf(ValidationException.class)
-                .hasMessageContaining("uri");
+            .hasMessageContaining("uri");
     }
 
     @Test
@@ -916,7 +916,7 @@ class NewRelicMeterRegistryTest {
         };
 
         assertThatThrownBy(() -> getInsightsAgentClientProvider(config)).isExactlyInstanceOf(ValidationException.class)
-                .hasMessageContaining("eventType");
+            .hasMessageContaining("eventType");
     }
 
     @Test
@@ -951,8 +951,9 @@ class NewRelicMeterRegistryTest {
     @Test
     void canCustomizeHttpSenderViaBuilder_deprecated() {
         HttpSender httpSender = mock(HttpSender.class);
-        NewRelicClientProvider clientProvider = NewRelicMeterRegistry.builder(insightsApiConfig).httpClient(httpSender)
-                .build().clientProvider;
+        NewRelicClientProvider clientProvider = NewRelicMeterRegistry.builder(insightsApiConfig)
+            .httpClient(httpSender)
+            .build().clientProvider;
         assertThat(clientProvider).isInstanceOf(NewRelicInsightsApiClientProvider.class);
         assertThat(((NewRelicInsightsApiClientProvider) clientProvider).httpClient).isEqualTo(httpSender);
     }
@@ -960,9 +961,10 @@ class NewRelicMeterRegistryTest {
     @Test
     void canCustomizeHttpSenderViaBuilder() {
         HttpSender httpSender = mock(HttpSender.class);
-        NewRelicClientProvider clientProvider = NewRelicMeterRegistry.builder(insightsApiConfig).clientProvider(
-                new NewRelicInsightsApiClientProvider(insightsApiConfig, httpSender, new NewRelicNamingConvention()))
-                .build().clientProvider;
+        NewRelicClientProvider clientProvider = NewRelicMeterRegistry.builder(insightsApiConfig)
+            .clientProvider(new NewRelicInsightsApiClientProvider(insightsApiConfig, httpSender,
+                    new NewRelicNamingConvention()))
+            .build().clientProvider;
         assertThat(clientProvider).isInstanceOf(NewRelicInsightsApiClientProvider.class);
         assertThat(((NewRelicInsightsApiClientProvider) clientProvider).httpClient).isEqualTo(httpSender);
     }
@@ -972,25 +974,28 @@ class NewRelicMeterRegistryTest {
         NamingConvention namingConvention1 = mock(NamingConvention.class);
         NamingConvention namingConvention2 = mock(NamingConvention.class);
         NewRelicMeterRegistry meterRegistry = NewRelicMeterRegistry.builder(insightsApiConfig)
-                .namingConvention(namingConvention1).build();
+            .namingConvention(namingConvention1)
+            .build();
 
         assertThat(meterRegistry.config().namingConvention()).isEqualTo(namingConvention1);
         assertThat(meterRegistry.clientProvider).isInstanceOf(NewRelicInsightsApiClientProvider.class);
         assertThat(((NewRelicInsightsApiClientProvider) meterRegistry.clientProvider).namingConvention)
-                .isEqualTo(namingConvention1);
+            .isEqualTo(namingConvention1);
 
         meterRegistry.config().namingConvention(namingConvention2);
         assertThat(meterRegistry.config().namingConvention()).isEqualTo(namingConvention2);
         assertThat(((NewRelicInsightsApiClientProvider) meterRegistry.clientProvider).namingConvention)
-                .isEqualTo(namingConvention2);
+            .isEqualTo(namingConvention2);
     }
 
     @SuppressWarnings("deprecation")
     @Test
     void builderBuildWhenBothHttpClientAndClientProviderAreSetShouldThrowIllegalStateException() {
         NewRelicConfig config = key -> null;
-        assertThatIllegalStateException().isThrownBy(() -> new NewRelicMeterRegistry.Builder(config)
-                .httpClient(mock(HttpSender.class)).clientProvider(mock(NewRelicClientProvider.class)).build());
+        assertThatIllegalStateException()
+            .isThrownBy(() -> new NewRelicMeterRegistry.Builder(config).httpClient(mock(HttpSender.class))
+                .clientProvider(mock(NewRelicClientProvider.class))
+                .build());
     }
 
     static class MockHttpSender implements HttpSender {

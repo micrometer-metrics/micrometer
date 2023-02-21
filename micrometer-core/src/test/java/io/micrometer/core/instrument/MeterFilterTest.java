@@ -45,8 +45,8 @@ class MeterFilterTest {
 
     private static Condition<Meter.Id> tag(String tagKey, @Nullable String tagValue) {
         return new Condition<>(
-                id -> stream(id.getTagsAsIterable().spliterator(), false).anyMatch(
-                        t -> t.getKey().equals(tagKey) && (tagValue == null || t.getValue().equals(tagValue))),
+                id -> stream(id.getTagsAsIterable().spliterator(), false)
+                    .anyMatch(t -> t.getKey().equals(tagKey) && (tagValue == null || t.getValue().equals(tagValue))),
                 "Must have a tag with key '" + tagKey + "'");
     }
 
@@ -66,7 +66,7 @@ class MeterFilterTest {
         Meter.Id id = new Meter.Id("name", Tags.of("k1", "m1", "k2", "m2", "k3", "m3"), null, null, Meter.Type.COUNTER);
         Meter.Id filteredId = filter.map(id);
         assertThat(filteredId.getTags())
-                .containsExactlyElementsOf(Tags.of("k0", "c0", "k1", "m1", "k2", "m2", "k3", "m3"));
+            .containsExactlyElementsOf(Tags.of("k0", "c0", "k1", "m1", "k2", "m2", "k3", "m3"));
     }
 
     @Test
@@ -197,7 +197,7 @@ class MeterFilterTest {
         Meter.Id timer = new Meter.Id("name", Tags.empty(), null, null, Meter.Type.DISTRIBUTION_SUMMARY);
 
         assertThat(filter.configure(timer, DistributionStatisticConfig.DEFAULT))
-                .satisfies(conf -> assertThat(conf.getMinimumExpectedValueAsDouble()).isEqualTo(100));
+            .satisfies(conf -> assertThat(conf.getMinimumExpectedValueAsDouble()).isEqualTo(100));
     }
 
     @Test
@@ -206,7 +206,7 @@ class MeterFilterTest {
         Meter.Id timer = new Meter.Id("name", Tags.empty(), null, null, Meter.Type.DISTRIBUTION_SUMMARY);
 
         assertThat(filter.configure(timer, DistributionStatisticConfig.DEFAULT))
-                .satisfies(conf -> assertThat(conf.getMaximumExpectedValueAsDouble()).isEqualTo(100));
+            .satisfies(conf -> assertThat(conf.getMaximumExpectedValueAsDouble()).isEqualTo(100));
     }
 
     @Test
@@ -215,7 +215,7 @@ class MeterFilterTest {
         Meter.Id timer = new Meter.Id("name", Tags.empty(), null, null, Meter.Type.TIMER);
 
         assertThat(filter.configure(timer, DistributionStatisticConfig.DEFAULT))
-                .satisfies(conf -> assertThat(conf.getMinimumExpectedValueAsDouble()).isEqualTo(100));
+            .satisfies(conf -> assertThat(conf.getMinimumExpectedValueAsDouble()).isEqualTo(100));
     }
 
     @Test
@@ -224,7 +224,7 @@ class MeterFilterTest {
         Meter.Id timer = new Meter.Id("name", Tags.empty(), null, null, Meter.Type.TIMER);
 
         assertThat(filter.configure(timer, DistributionStatisticConfig.DEFAULT))
-                .satisfies(conf -> assertThat(conf.getMaximumExpectedValueAsDouble()).isEqualTo(100));
+            .satisfies(conf -> assertThat(conf.getMaximumExpectedValueAsDouble()).isEqualTo(100));
     }
 
     @Test

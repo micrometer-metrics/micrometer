@@ -70,8 +70,9 @@ class StepMeterRegistryTest {
     @Issue("#370")
     @Test
     void serviceLevelObjectivesOnlyNoPercentileHistogram() {
-        DistributionSummary summary = DistributionSummary.builder("my.summary").serviceLevelObjectives(1.0, 2)
-                .register(registry);
+        DistributionSummary summary = DistributionSummary.builder("my.summary")
+            .serviceLevelObjectives(1.0, 2)
+            .register(registry);
 
         summary.record(1);
 
@@ -104,14 +105,20 @@ class StepMeterRegistryTest {
     @Issue("#1993")
     @Test
     void timerMaxValueDecays() {
-        Timer timerStep1Length2 = Timer.builder("timer1x2").distributionStatisticBufferLength(2)
-                .distributionStatisticExpiry(config.step()).register(registry);
+        Timer timerStep1Length2 = Timer.builder("timer1x2")
+            .distributionStatisticBufferLength(2)
+            .distributionStatisticExpiry(config.step())
+            .register(registry);
 
-        Timer timerStep2Length2 = Timer.builder("timer2x2").distributionStatisticBufferLength(2)
-                .distributionStatisticExpiry(config.step().multipliedBy(2)).register(registry);
+        Timer timerStep2Length2 = Timer.builder("timer2x2")
+            .distributionStatisticBufferLength(2)
+            .distributionStatisticExpiry(config.step().multipliedBy(2))
+            .register(registry);
 
-        Timer timerStep1Length6 = Timer.builder("timer1x6").distributionStatisticBufferLength(6)
-                .distributionStatisticExpiry(config.step()).register(registry);
+        Timer timerStep1Length6 = Timer.builder("timer1x6")
+            .distributionStatisticBufferLength(6)
+            .distributionStatisticExpiry(config.step())
+            .register(registry);
 
         List<Timer> timers = Arrays.asList(timerStep1Length2, timerStep2Length2, timerStep1Length6);
 

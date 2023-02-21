@@ -113,8 +113,9 @@ public interface HttpSender {
 
         @Override
         public String toString() {
-            StringBuilder printed = new StringBuilder(method.toString()).append(' ').append(url.toString())
-                    .append("\n");
+            StringBuilder printed = new StringBuilder(method.toString()).append(' ')
+                .append(url.toString())
+                .append("\n");
             if (entity.length == 0) {
                 printed.append("<no request body>");
             }
@@ -171,8 +172,8 @@ public interface HttpSender {
             public final Builder withBasicAuthentication(@Nullable String user, @Nullable String password) {
                 if (StringUtils.isNotBlank(user)) {
                     String encoded = Base64.getEncoder()
-                            .encodeToString((user.trim() + ":" + (password == null ? "" : password.trim()))
-                                    .getBytes(StandardCharsets.UTF_8));
+                        .encodeToString((user.trim() + ":" + (password == null ? "" : password.trim()))
+                            .getBytes(StandardCharsets.UTF_8));
                     withAuthentication("Basic", encoded);
                 }
                 return this;

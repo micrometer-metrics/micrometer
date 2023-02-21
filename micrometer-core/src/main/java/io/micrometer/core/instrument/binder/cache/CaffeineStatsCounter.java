@@ -95,20 +95,35 @@ public final class CaffeineStatsCounter implements StatsCounter {
         this.registry = registry;
         this.tags = Tags.concat(extraTags, "cache", cacheName);
 
-        hitCount = Counter.builder("cache.gets").tag("result", "hit").tags(tags).description(DESCRIPTION_CACHE_GETS)
-                .register(registry);
-        missCount = Counter.builder("cache.gets").tag("result", "miss").tags(tags).description(DESCRIPTION_CACHE_GETS)
-                .register(registry);
-        loadSuccesses = Timer.builder("cache.loads").tag("result", "success").tags(tags)
-                .description(DESCRIPTION_CACHE_LOADS).register(registry);
-        loadFailures = Timer.builder("cache.loads").tag("result", "failure").tags(tags)
-                .description(DESCRIPTION_CACHE_LOADS).register(registry);
+        hitCount = Counter.builder("cache.gets")
+            .tag("result", "hit")
+            .tags(tags)
+            .description(DESCRIPTION_CACHE_GETS)
+            .register(registry);
+        missCount = Counter.builder("cache.gets")
+            .tag("result", "miss")
+            .tags(tags)
+            .description(DESCRIPTION_CACHE_GETS)
+            .register(registry);
+        loadSuccesses = Timer.builder("cache.loads")
+            .tag("result", "success")
+            .tags(tags)
+            .description(DESCRIPTION_CACHE_LOADS)
+            .register(registry);
+        loadFailures = Timer.builder("cache.loads")
+            .tag("result", "failure")
+            .tags(tags)
+            .description(DESCRIPTION_CACHE_LOADS)
+            .register(registry);
 
         evictionMetrics = new EnumMap<>(RemovalCause.class);
         Arrays.stream(RemovalCause.values())
-                .forEach(cause -> evictionMetrics.put(cause,
-                        DistributionSummary.builder("cache.evictions").tag("cause", cause.name()).tags(tags)
-                                .description("The number of times the cache was evicted.").register(registry)));
+            .forEach(cause -> evictionMetrics.put(cause,
+                    DistributionSummary.builder("cache.evictions")
+                        .tag("cause", cause.name())
+                        .tags(tags)
+                        .description("The number of times the cache was evicted.")
+                        .register(registry)));
     }
 
     /**
@@ -116,8 +131,10 @@ public final class CaffeineStatsCounter implements StatsCounter {
      * @param cache cache to register a gauge for its size
      */
     public void registerSizeMetric(Cache<?, ?> cache) {
-        Gauge.builder("cache.size", cache, Cache::estimatedSize).tags(tags)
-                .description("The approximate number of entries in this cache.").register(registry);
+        Gauge.builder("cache.size", cache, Cache::estimatedSize)
+            .tags(tags)
+            .description("The approximate number of entries in this cache.")
+            .register(registry);
     }
 
     @Override

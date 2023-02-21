@@ -54,7 +54,7 @@ public class CommonsObjectPool2Metrics implements MeterBinder, AutoCloseable {
     private static final String[] TYPES = new String[] { "GenericObjectPool", "GenericKeyedObjectPool" };
 
     private final ExecutorService executor = Executors
-            .newSingleThreadExecutor(new NamedThreadFactory("commons-pool-metrics-updater"));
+        .newSingleThreadExecutor(new NamedThreadFactory("commons-pool-metrics-updater"));
 
     private final MBeanServer mBeanServer;
 
@@ -231,27 +231,33 @@ public class CommonsObjectPool2Metrics implements MeterBinder, AutoCloseable {
             Tags allTags, String description, @Nullable String baseUnit) {
         final AtomicReference<Gauge> gauge = new AtomicReference<>();
         gauge.set(Gauge
-                .builder(METRIC_NAME_PREFIX + meterName, mBeanServer,
-                        getJmxAttribute(registry, gauge, o, jmxMetricName))
-                .description(description).baseUnit(baseUnit).tags(allTags).register(registry));
+            .builder(METRIC_NAME_PREFIX + meterName, mBeanServer, getJmxAttribute(registry, gauge, o, jmxMetricName))
+            .description(description)
+            .baseUnit(baseUnit)
+            .tags(allTags)
+            .register(registry));
     }
 
     private void registerFunctionCounterForObject(MeterRegistry registry, ObjectName o, String jmxMetricName,
             String meterName, Tags allTags, String description, @Nullable String baseUnit) {
         final AtomicReference<FunctionCounter> counter = new AtomicReference<>();
         counter.set(FunctionCounter
-                .builder(METRIC_NAME_PREFIX + meterName, mBeanServer,
-                        getJmxAttribute(registry, counter, o, jmxMetricName))
-                .description(description).baseUnit(baseUnit).tags(allTags).register(registry));
+            .builder(METRIC_NAME_PREFIX + meterName, mBeanServer, getJmxAttribute(registry, counter, o, jmxMetricName))
+            .description(description)
+            .baseUnit(baseUnit)
+            .tags(allTags)
+            .register(registry));
     }
 
     private void registerTimeGaugeForObject(MeterRegistry registry, ObjectName o, String jmxMetricName,
             String meterName, Tags allTags, String description) {
         final AtomicReference<TimeGauge> timeGauge = new AtomicReference<>();
         timeGauge.set(TimeGauge
-                .builder(METRIC_NAME_PREFIX + meterName, mBeanServer, TimeUnit.MILLISECONDS,
-                        getJmxAttribute(registry, timeGauge, o, jmxMetricName))
-                .description(description).tags(allTags).register(registry));
+            .builder(METRIC_NAME_PREFIX + meterName, mBeanServer, TimeUnit.MILLISECONDS,
+                    getJmxAttribute(registry, timeGauge, o, jmxMetricName))
+            .description(description)
+            .tags(allTags)
+            .register(registry));
     }
 
     private ToDoubleFunction<MBeanServer> getJmxAttribute(MeterRegistry registry,

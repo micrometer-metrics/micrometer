@@ -45,7 +45,7 @@ class ElasticMeterRegistryTest {
     @Test
     void timestampFormat() {
         assertThat(ElasticMeterRegistry.TIMESTAMP_FORMATTER.format(Instant.ofEpochMilli(1)))
-                .contains("1970-01-01T00:00:00.001Z");
+            .contains("1970-01-01T00:00:00.001Z");
     }
 
     @Test
@@ -75,7 +75,7 @@ class ElasticMeterRegistryTest {
     @Test
     void nanFunctionCounterShouldNotBeWritten() {
         FunctionCounter counter = FunctionCounter.builder("myCounter", Double.NaN, Number::doubleValue)
-                .register(registry);
+            .register(registry);
         clock.add(config.step());
         assertThat(registry.writeFunctionCounter(counter)).isEmpty();
     }
@@ -83,8 +83,8 @@ class ElasticMeterRegistryTest {
     @Test
     void nanFunctionTimerShouldNotBeWritten() {
         FunctionTimer timer = FunctionTimer
-                .builder("myFunctionTimer", Double.NaN, Number::longValue, Number::doubleValue, TimeUnit.MILLISECONDS)
-                .register(registry);
+            .builder("myFunctionTimer", Double.NaN, Number::longValue, Number::doubleValue, TimeUnit.MILLISECONDS)
+            .register(registry);
         clock.add(config.step());
         assertThat(registry.writeFunctionTimer(timer)).isEmpty();
     }
@@ -99,7 +99,7 @@ class ElasticMeterRegistryTest {
     @Test
     void writeTimeGauge() {
         TimeGauge gauge = TimeGauge.builder("myGauge", 123.0, TimeUnit.MILLISECONDS, Number::doubleValue)
-                .register(registry);
+            .register(registry);
         assertThat(registry.writeTimeGauge(gauge)).contains(
                 "{ \"create\" : {} }\n{\"@timestamp\":\"1970-01-01T00:00:00.001Z\",\"name\":\"myGauge\",\"type\":\"gauge\",\"value\":123.0}");
     }
@@ -192,8 +192,8 @@ class ElasticMeterRegistryTest {
     @Test
     void infinityTimeGaugeShouldNotBeWritten() {
         TimeGauge gauge = TimeGauge
-                .builder("myGauge", Double.NEGATIVE_INFINITY, TimeUnit.MILLISECONDS, Number::doubleValue)
-                .register(registry);
+            .builder("myGauge", Double.NEGATIVE_INFINITY, TimeUnit.MILLISECONDS, Number::doubleValue)
+            .register(registry);
         assertThat(registry.writeTimeGauge(gauge)).isNotPresent();
     }
 

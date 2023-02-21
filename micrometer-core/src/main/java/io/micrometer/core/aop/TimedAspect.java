@@ -232,12 +232,14 @@ public class TimedAspect {
     private void record(ProceedingJoinPoint pjp, Timed timed, String metricName, Timer.Sample sample,
             String exceptionClass) {
         try {
-            sample.stop(
-                    Timer.builder(metricName).description(timed.description().isEmpty() ? null : timed.description())
-                            .tags(timed.extraTags()).tags(EXCEPTION_TAG, exceptionClass)
-                            .tags(tagsBasedOnJoinPoint.apply(pjp)).publishPercentileHistogram(timed.histogram())
-                            .publishPercentiles(timed.percentiles().length == 0 ? null : timed.percentiles())
-                            .register(registry));
+            sample.stop(Timer.builder(metricName)
+                .description(timed.description().isEmpty() ? null : timed.description())
+                .tags(timed.extraTags())
+                .tags(EXCEPTION_TAG, exceptionClass)
+                .tags(tagsBasedOnJoinPoint.apply(pjp))
+                .publishPercentileHistogram(timed.histogram())
+                .publishPercentiles(timed.percentiles().length == 0 ? null : timed.percentiles())
+                .register(registry));
         }
         catch (Exception e) {
             // ignoring on purpose
@@ -265,7 +267,7 @@ public class TimedAspect {
         if (stopWhenCompleted) {
             try {
                 return ((CompletionStage<?>) pjp.proceed())
-                        .whenComplete((result, throwable) -> sample.ifPresent(this::stopTimer));
+                    .whenComplete((result, throwable) -> sample.ifPresent(this::stopTimer));
             }
             catch (Exception ex) {
                 sample.ifPresent(this::stopTimer);
@@ -297,8 +299,10 @@ public class TimedAspect {
     private Optional<LongTaskTimer> buildLongTaskTimer(ProceedingJoinPoint pjp, Timed timed, String metricName) {
         try {
             return Optional.of(LongTaskTimer.builder(metricName)
-                    .description(timed.description().isEmpty() ? null : timed.description()).tags(timed.extraTags())
-                    .tags(tagsBasedOnJoinPoint.apply(pjp)).register(registry));
+                .description(timed.description().isEmpty() ? null : timed.description())
+                .tags(timed.extraTags())
+                .tags(tagsBasedOnJoinPoint.apply(pjp))
+                .register(registry));
         }
         catch (Exception e) {
             return Optional.empty();

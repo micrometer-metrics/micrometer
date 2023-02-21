@@ -69,11 +69,12 @@ class JvmGcMetricsTest {
     @Test
     void noJvmImplementationSpecificApiSignatures() {
         JavaClasses importedClasses = new ClassFileImporter()
-                .importPackages("io.micrometer.core.instrument.binder.jvm");
+            .importPackages("io.micrometer.core.instrument.binder.jvm");
 
         ArchRule noSunManagementInMethodSignatures = methods().should()
-                .notHaveRawReturnType(resideInAPackage("com.sun.management..")).andShould()
-                .notHaveRawParameterTypes(DescribedPredicate.anyElementThat(resideInAPackage("com.sun.management..")));
+            .notHaveRawReturnType(resideInAPackage("com.sun.management.."))
+            .andShould()
+            .notHaveRawParameterTypes(DescribedPredicate.anyElementThat(resideInAPackage("com.sun.management..")));
 
         noSunManagementInMethodSignatures.check(importedClasses);
     }
@@ -81,8 +82,9 @@ class JvmGcMetricsTest {
     @Test
     void gcMetricsAvailableAfterGc() {
         System.gc();
-        await().timeout(200, TimeUnit.MILLISECONDS).alias("NotificationListener takes time after GC")
-                .untilAsserted(() -> assertThat(registry.find("jvm.gc.live.data.size").gauge().value()).isPositive());
+        await().timeout(200, TimeUnit.MILLISECONDS)
+            .alias("NotificationListener takes time after GC")
+            .untilAsserted(() -> assertThat(registry.find("jvm.gc.live.data.size").gauge().value()).isPositive());
         assertThat(registry.find("jvm.gc.memory.allocated").counter().count()).isPositive();
         assertThat(registry.find("jvm.gc.max.data.size").gauge().value()).isPositive();
 
@@ -113,8 +115,8 @@ class JvmGcMetricsTest {
                 concurrentPhaseCount += mbean.getCollectionCount();
                 concurrentTimeMs += mbean.getCollectionTime();
             }
-            System.out.println(
-                    mbean.getName() + " (" + mbean.getCollectionCount() + ") " + mbean.getCollectionTime() + "ms");
+            System.out
+                .println(mbean.getName() + " (" + mbean.getCollectionCount() + ") " + mbean.getCollectionTime() + "ms");
         }
         checkPhaseCount(pausePhaseCount, concurrentPhaseCount);
         checkCollectionTime(pauseTimeMs, concurrentTimeMs);
@@ -134,7 +136,7 @@ class JvmGcMetricsTest {
             }
             NotificationEmitter notificationEmitter = (NotificationEmitter) gcBean;
             notificationEmitter.addNotificationListener(capturingListener, notification -> notification.getType()
-                    .equals(GarbageCollectionNotificationInfo.GARBAGE_COLLECTION_NOTIFICATION), null);
+                .equals(GarbageCollectionNotificationInfo.GARBAGE_COLLECTION_NOTIFICATION), null);
             notificationListenerCleanUpRunnables.add(() -> {
                 try {
                     notificationEmitter.removeNotificationListener(capturingListener);
@@ -187,8 +189,11 @@ class JvmGcMetricsTest {
     private void checkPhaseCount(long expectedPauseCount, long expectedConcurrentCount) {
         await().atMost(200, TimeUnit.MILLISECONDS).untilAsserted(() -> {
             long observedPauseCount = registry.find("jvm.gc.pause").timers().stream().mapToLong(Timer::count).sum();
-            long observedConcurrentCount = registry.find("jvm.gc.concurrent.phase.time").timers().stream()
-                    .mapToLong(Timer::count).sum();
+            long observedConcurrentCount = registry.find("jvm.gc.concurrent.phase.time")
+                .timers()
+                .stream()
+                .mapToLong(Timer::count)
+                .sum();
             assertThat(observedPauseCount).isEqualTo(expectedPauseCount);
             assertThat(observedConcurrentCount).isEqualTo(expectedConcurrentCount);
         });
@@ -196,10 +201,16 @@ class JvmGcMetricsTest {
 
     private void checkCollectionTime(long expectedPauseTimeMs, long expectedConcurrentTimeMs) {
         await().atMost(200, TimeUnit.MILLISECONDS).untilAsserted(() -> {
-            double observedPauseTimeMs = registry.find("jvm.gc.pause").timers().stream()
-                    .mapToDouble(timer -> timer.totalTime(TimeUnit.MILLISECONDS)).sum();
-            double observedConcurrentTimeMs = registry.find("jvm.gc.concurrent.phase.time").timers().stream()
-                    .mapToDouble(timer -> timer.totalTime(TimeUnit.MILLISECONDS)).sum();
+            double observedPauseTimeMs = registry.find("jvm.gc.pause")
+                .timers()
+                .stream()
+                .mapToDouble(timer -> timer.totalTime(TimeUnit.MILLISECONDS))
+                .sum();
+            double observedConcurrentTimeMs = registry.find("jvm.gc.concurrent.phase.time")
+                .timers()
+                .stream()
+                .mapToDouble(timer -> timer.totalTime(TimeUnit.MILLISECONDS))
+                .sum();
             // small difference can happen when less than 1ms timing gets rounded
             assertThat(observedPauseTimeMs).isCloseTo(expectedPauseTimeMs, within(1d));
             assertThat(observedConcurrentTimeMs).isCloseTo(expectedConcurrentTimeMs, within(1d));
