@@ -50,8 +50,9 @@ public interface JettyClientTagsProvider {
      * that goes to a certain endpoint, regardless of the parameters to that endpoint.
      * @param result The result which also contains the original request.
      * @return A URI pattern with path variables and query parameter unsubstituted.
-     * @deprecated use {@link JettyClientMetrics#builder(MeterRegistry, BiFunction)}
-     * instead to configure the uri pattern function
+     * @deprecated since 1.11.0 in favor of
+     * {@link JettyClientMetrics#builder(MeterRegistry, BiFunction)} to configure the uri
+     * pattern function
      */
     @Deprecated
     String uriPattern(Result result);
