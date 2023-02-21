@@ -95,6 +95,13 @@ public class JvmThreadMetrics implements MeterBinder {
     private Long getThreadStateCount(Thread.State state) {
         Map<Thread.State, Long> stateCountGroup = threadStateGroupLocal.get();
         Long count = stateCountGroup.remove(state);
+        if (count == null) {
+            // Avoid fetching only specific state metrics at a time instead of all state,
+            // resulting in reading old state from ThreadLocal.
+            threadStateGroupLocal.remove();
+            stateCountGroup = threadStateGroupLocal.get();
+            count = stateCountGroup.remove(state);
+        }
         if (stateCountGroup.isEmpty()) {
             threadStateGroupLocal.remove();
         }

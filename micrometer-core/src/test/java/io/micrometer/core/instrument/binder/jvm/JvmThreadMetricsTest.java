@@ -46,6 +46,7 @@ class JvmThreadMetricsTest {
         // assertThat(registry.get("jvm.threads.states").tag("state",
         // "blocked").gauge().value()).isPositive();
         assertThat(registry.get("jvm.threads.states").tag("state", "waiting").gauge().value()).isPositive();
+        assertThat(registry.get("jvm.threads.states").tag("state", "waiting").gauge().value()).isPositive();
 
         createTimedWaitingThread();
         assertThat(registry.get("jvm.threads.states").tag("state", "timed-waiting").gauge().value()).isPositive();
