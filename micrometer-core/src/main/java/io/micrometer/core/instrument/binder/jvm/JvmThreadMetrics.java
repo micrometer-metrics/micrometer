@@ -108,7 +108,7 @@ public class JvmThreadMetrics implements MeterBinder {
                 .collect(Collectors.groupingBy(ThreadInfo::getThreadState, () -> new EnumMap<>(Thread.State.class),
                         Collectors.counting()));
         for (Thread.State state : Thread.State.values()) {
-            stateCountGroup.putIfAbsent(state, null);
+            stateCountGroup.putIfAbsent(state, 0L);
         }
         return stateCountGroup;
     }
