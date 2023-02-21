@@ -47,6 +47,9 @@ public class JvmThreadMetrics implements MeterBinder {
 
     private final Iterable<Tag> tags;
 
+    private final ThreadLocal<EnumMap<Thread.State, Long>> threadStateGroupLocal = ThreadLocal
+            .withInitial(this::getThreadStatesGroup);
+
     public JvmThreadMetrics() {
         this(emptyList());
     }
@@ -76,13 +79,9 @@ public class JvmThreadMetrics implements MeterBinder {
                 .register(registry);
 
         try {
-            long[] allThreadIds = threadBean.getAllThreadIds();
-            Map<Thread.State, Long> stateCountGroup = Arrays.stream(threadBean.getThreadInfo(allThreadIds))
-                    .collect(Collectors.groupingBy(ThreadInfo::getThreadState, () -> new EnumMap<>(Thread.State.class),
-                            Collectors.counting()));
-
+            threadBean.getAllThreadIds();
             for (Thread.State state : Thread.State.values()) {
-                Gauge.builder("jvm.threads.states", () -> stateCountGroup.get(state))
+                Gauge.builder("jvm.threads.states", () -> getThreadStateCount(state))
                         .tags(Tags.concat(tags, "state", getStateTagValue(state)))
                         .description("The current number of threads").baseUnit(BaseUnits.THREADS).register(registry);
             }
@@ -95,6 +94,22 @@ public class JvmThreadMetrics implements MeterBinder {
 
     private static String getStateTagValue(Thread.State state) {
         return state.name().toLowerCase().replace("_", "-");
+    }
+
+    private Long getThreadStateCount(Thread.State state) {
+        EnumMap<Thread.State, Long> stateCountGroup = threadStateGroupLocal.get();
+        Long count = stateCountGroup.remove(state);
+        if (stateCountGroup.isEmpty()) {
+            threadStateGroupLocal.remove();
+        }
+        return count;
+    }
+
+    private EnumMap<Thread.State, Long> getThreadStatesGroup() {
+        ThreadMXBean threadBean = ManagementFactory.getThreadMXBean();
+        long[] allThreadIds = threadBean.getAllThreadIds();
+        return Arrays.stream(threadBean.getThreadInfo(allThreadIds)).collect(Collectors.groupingBy(
+                ThreadInfo::getThreadState, () -> new EnumMap<>(Thread.State.class), Collectors.counting()));
     }
 
 }
