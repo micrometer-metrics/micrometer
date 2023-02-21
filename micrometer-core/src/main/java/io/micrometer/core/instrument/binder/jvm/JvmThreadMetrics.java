@@ -26,6 +26,7 @@ import java.lang.management.ThreadInfo;
 import java.lang.management.ThreadMXBean;
 import java.util.Arrays;
 import java.util.EnumMap;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import static java.util.Collections.emptyList;
@@ -42,7 +43,7 @@ public class JvmThreadMetrics implements MeterBinder {
 
     private final Iterable<Tag> tags;
 
-    private final ThreadLocal<EnumMap<Thread.State, Long>> threadStateGroupLocal = ThreadLocal
+    private final ThreadLocal<Map<Thread.State, Long>> threadStateGroupLocal = ThreadLocal
             .withInitial(this::getThreadStatesGroup);
 
     public JvmThreadMetrics() {
@@ -92,7 +93,7 @@ public class JvmThreadMetrics implements MeterBinder {
     }
 
     private Long getThreadStateCount(Thread.State state) {
-        EnumMap<Thread.State, Long> stateCountGroup = threadStateGroupLocal.get();
+        Map<Thread.State, Long> stateCountGroup = threadStateGroupLocal.get();
         Long count = stateCountGroup.remove(state);
         if (stateCountGroup.isEmpty()) {
             threadStateGroupLocal.remove();
@@ -100,10 +101,10 @@ public class JvmThreadMetrics implements MeterBinder {
         return count;
     }
 
-    private EnumMap<Thread.State, Long> getThreadStatesGroup() {
+    private Map<Thread.State, Long> getThreadStatesGroup() {
         ThreadMXBean threadBean = ManagementFactory.getThreadMXBean();
         long[] allThreadIds = threadBean.getAllThreadIds();
-        EnumMap<Thread.State, Long> stateCountGroup = Arrays.stream(threadBean.getThreadInfo(allThreadIds))
+        Map<Thread.State, Long> stateCountGroup = Arrays.stream(threadBean.getThreadInfo(allThreadIds))
                 .collect(Collectors.groupingBy(ThreadInfo::getThreadState, () -> new EnumMap<>(Thread.State.class),
                         Collectors.counting()));
         for (Thread.State state : Thread.State.values()) {
