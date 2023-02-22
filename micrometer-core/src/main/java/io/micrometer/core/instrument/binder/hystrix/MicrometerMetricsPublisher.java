@@ -44,7 +44,7 @@ public class MicrometerMetricsPublisher extends HystrixMetricsPublisher {
     public HystrixMetricsPublisherThreadPool getMetricsPublisherForThreadPool(HystrixThreadPoolKey threadPoolKey,
             HystrixThreadPoolMetrics metrics, HystrixThreadPoolProperties properties) {
         final HystrixMetricsPublisherThreadPool metricsPublisherForThreadPool = metricsPublisher
-                .getMetricsPublisherForThreadPool(threadPoolKey, metrics, properties);
+            .getMetricsPublisherForThreadPool(threadPoolKey, metrics, properties);
         return new MicrometerMetricsPublisherThreadPool(registry, threadPoolKey, metrics, properties,
                 metricsPublisherForThreadPool);
     }
@@ -60,7 +60,7 @@ public class MicrometerMetricsPublisher extends HystrixMetricsPublisher {
             HystrixCommandGroupKey commandGroupKey, HystrixCommandMetrics metrics, HystrixCircuitBreaker circuitBreaker,
             HystrixCommandProperties properties) {
         HystrixMetricsPublisherCommand metricsPublisherForCommand = metricsPublisher
-                .getMetricsPublisherForCommand(commandKey, commandGroupKey, metrics, circuitBreaker, properties);
+            .getMetricsPublisherForCommand(commandKey, commandGroupKey, metrics, circuitBreaker, properties);
         return new MicrometerMetricsPublisherCommand(registry, commandKey, commandGroupKey, metrics, circuitBreaker,
                 metricsPublisherForCommand);
     }

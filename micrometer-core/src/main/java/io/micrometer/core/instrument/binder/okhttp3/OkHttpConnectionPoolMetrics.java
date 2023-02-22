@@ -122,22 +122,29 @@ public class OkHttpConnectionPoolMetrics implements MeterBinder {
                 cs.set(new ConnectionPoolConnectionStats());
             }
             return cs.get().getActiveCount();
-        }).baseUnit(BaseUnits.CONNECTIONS).description("The state of connections in the OkHttp connection pool")
-                .tags(Tags.of(tags).and(TAG_STATE, "active")).register(registry);
+        })
+            .baseUnit(BaseUnits.CONNECTIONS)
+            .description("The state of connections in the OkHttp connection pool")
+            .tags(Tags.of(tags).and(TAG_STATE, "active"))
+            .register(registry);
 
         Gauge.builder(connectionCountName, connectionStats, cs -> {
             if (cs.get() == null) {
                 cs.set(new ConnectionPoolConnectionStats());
             }
             return cs.get().getIdleConnectionCount();
-        }).baseUnit(BaseUnits.CONNECTIONS).description("The state of connections in the OkHttp connection pool")
-                .tags(Tags.of(tags).and(TAG_STATE, "idle")).register(registry);
+        })
+            .baseUnit(BaseUnits.CONNECTIONS)
+            .description("The state of connections in the OkHttp connection pool")
+            .tags(Tags.of(tags).and(TAG_STATE, "idle"))
+            .register(registry);
 
         if (this.maxIdleConnectionCount != null) {
             Gauge.builder(namePrefix + ".connection.limit", () -> this.maxIdleConnectionCount)
-                    .baseUnit(BaseUnits.CONNECTIONS)
-                    .description("The maximum idle connection count in an OkHttp connection pool.")
-                    .tags(Tags.concat(tags)).register(registry);
+                .baseUnit(BaseUnits.CONNECTIONS)
+                .description("The maximum idle connection count in an OkHttp connection pool.")
+                .tags(Tags.concat(tags))
+                .register(registry);
         }
     }
 

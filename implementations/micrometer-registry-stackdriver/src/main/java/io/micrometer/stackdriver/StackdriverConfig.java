@@ -97,8 +97,8 @@ public interface StackdriverConfig extends StepRegistryConfig {
 
             try {
                 FixedCredentialsProvider provider = FixedCredentialsProvider
-                        .create(GoogleCredentials.fromStream(new FileInputStream(credentials))
-                                .createScoped(MetricServiceSettings.getDefaultServiceScopes()));
+                    .create(GoogleCredentials.fromStream(new FileInputStream(credentials))
+                        .createScoped(MetricServiceSettings.getDefaultServiceScopes()));
                 return Validated.valid(valid.getProperty(), provider);
             }
             catch (IOException t) {

@@ -945,8 +945,9 @@ public abstract class MeterRegistry {
          */
         public <T> FunctionTimer timer(String name, Iterable<Tag> tags, T obj, ToLongFunction<T> countFunction,
                 ToDoubleFunction<T> totalTimeFunction, TimeUnit totalTimeFunctionUnit) {
-            return FunctionTimer.builder(name, obj, countFunction, totalTimeFunction, totalTimeFunctionUnit).tags(tags)
-                    .register(MeterRegistry.this);
+            return FunctionTimer.builder(name, obj, countFunction, totalTimeFunction, totalTimeFunctionUnit)
+                .tags(tags)
+                .register(MeterRegistry.this);
         }
 
         /**

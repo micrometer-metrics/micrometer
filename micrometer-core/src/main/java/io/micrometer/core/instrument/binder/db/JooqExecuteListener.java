@@ -104,9 +104,14 @@ class JooqExecuteListener extends DefaultExecuteListener {
         }
 
         // noinspection unchecked
-        sample.stop(Timer.builder("jooq.query").description("Execution time of a SQL query performed with JOOQ")
-                .tags(queryTags).tag("type", ctx.type().name().toLowerCase()).tag("exception", exceptionName)
-                .tag("exception.subclass", exceptionSubclass).tags(tags).register(registry));
+        sample.stop(Timer.builder("jooq.query")
+            .description("Execution time of a SQL query performed with JOOQ")
+            .tags(queryTags)
+            .tag("type", ctx.type().name().toLowerCase())
+            .tag("exception", exceptionName)
+            .tag("exception.subclass", exceptionSubclass)
+            .tags(tags)
+            .register(registry));
     }
 
 }

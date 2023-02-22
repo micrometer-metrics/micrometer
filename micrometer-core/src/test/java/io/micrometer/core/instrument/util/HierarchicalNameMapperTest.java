@@ -42,7 +42,7 @@ class HierarchicalNameMapperTest {
     @Test
     void noTags() {
         assertThat(mapper.toHierarchicalName(id("http.requests"), NamingConvention.camelCase))
-                .isEqualTo("httpRequests");
+            .isEqualTo("httpRequests");
     }
 
     private Meter.Id id(String name, String... tags) {

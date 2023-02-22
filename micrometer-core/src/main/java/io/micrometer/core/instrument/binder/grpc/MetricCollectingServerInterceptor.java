@@ -110,15 +110,17 @@ public class MetricCollectingServerInterceptor extends AbstractMetricCollectingI
 
     @Override
     protected Counter newRequestCounterFor(final MethodDescriptor<?, ?> method) {
-        return this.counterCustomizer.apply(prepareCounterFor(method, METRIC_NAME_SERVER_REQUESTS_RECEIVED,
-                "The total number of requests received")).register(this.registry);
+        return this.counterCustomizer
+            .apply(prepareCounterFor(method, METRIC_NAME_SERVER_REQUESTS_RECEIVED,
+                    "The total number of requests received"))
+            .register(this.registry);
     }
 
     @Override
     protected Counter newResponseCounterFor(final MethodDescriptor<?, ?> method) {
-        return this.counterCustomizer.apply(
-                prepareCounterFor(method, METRIC_NAME_SERVER_RESPONSES_SENT, "The total number of responses sent"))
-                .register(this.registry);
+        return this.counterCustomizer
+            .apply(prepareCounterFor(method, METRIC_NAME_SERVER_RESPONSES_SENT, "The total number of responses sent"))
+            .register(this.registry);
     }
 
     @Override

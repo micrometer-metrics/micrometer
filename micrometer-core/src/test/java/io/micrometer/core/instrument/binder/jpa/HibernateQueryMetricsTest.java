@@ -56,21 +56,29 @@ class HibernateQueryMetricsTest {
 
         eventHandler.registerQueryMetric(statistics);
 
-        assertThat(registry.get("hibernate.query.cache.requests").tags("result", "hit", "query", query)
-                .functionCounter().count()).isEqualTo(43.0d);
-        assertThat(registry.get("hibernate.query.cache.requests").tags("result", "miss", "query", query)
-                .functionCounter().count()).isEqualTo(43.0d);
+        assertThat(registry.get("hibernate.query.cache.requests")
+            .tags("result", "hit", "query", query)
+            .functionCounter()
+            .count()).isEqualTo(43.0d);
+        assertThat(registry.get("hibernate.query.cache.requests")
+            .tags("result", "miss", "query", query)
+            .functionCounter()
+            .count()).isEqualTo(43.0d);
         assertThat(registry.get("hibernate.query.cache.puts").tags("query", query).functionCounter().count())
-                .isEqualTo(43.0d);
+            .isEqualTo(43.0d);
         FunctionTimer timer = registry.get("hibernate.query.execution.total").tags("query", query).functionTimer();
         assertThat(timer.count()).isEqualTo(43.0d);
         assertThat(timer.totalTime(TimeUnit.MILLISECONDS)).isEqualTo(43.0d);
-        assertThat(registry.get("hibernate.query.execution.max").tags("query", query).timeGauge()
-                .value(TimeUnit.MILLISECONDS)).isEqualTo(43.0d);
-        assertThat(registry.get("hibernate.query.execution.min").tags("query", query).timeGauge()
-                .value(TimeUnit.MILLISECONDS)).isEqualTo(43.0d);
+        assertThat(registry.get("hibernate.query.execution.max")
+            .tags("query", query)
+            .timeGauge()
+            .value(TimeUnit.MILLISECONDS)).isEqualTo(43.0d);
+        assertThat(registry.get("hibernate.query.execution.min")
+            .tags("query", query)
+            .timeGauge()
+            .value(TimeUnit.MILLISECONDS)).isEqualTo(43.0d);
         assertThat(registry.get("hibernate.query.execution.rows").tags("query", query).functionCounter().count())
-                .isEqualTo(43.0);
+            .isEqualTo(43.0);
     }
 
     private Statistics createQueryStatisticsMock(String query) {

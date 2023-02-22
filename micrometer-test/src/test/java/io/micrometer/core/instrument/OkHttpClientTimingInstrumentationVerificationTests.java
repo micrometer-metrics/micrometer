@@ -28,14 +28,16 @@ import java.net.URI;
 class OkHttpClientTimingInstrumentationVerificationTests extends HttpClientTimingInstrumentationVerificationTests {
 
     OkHttpClient httpClient = new OkHttpClient.Builder()
-            .eventListener(OkHttpMetricsEventListener.builder(getRegistry(), timerName()).build()).build();
+        .eventListener(OkHttpMetricsEventListener.builder(getRegistry(), timerName()).build())
+        .build();
 
     @Override
     protected void sendHttpRequest(HttpMethod method, @Nullable byte[] body, URI baseUri, String templatedPath,
             String... pathVariables) {
         Request request = new Request.Builder().method(method.name(), body == null ? null : RequestBody.create(body))
-                .url(baseUri + substitutePathVariables(templatedPath, pathVariables))
-                .header(OkHttpMetricsEventListener.URI_PATTERN, templatedPath).build();
+            .url(baseUri + substitutePathVariables(templatedPath, pathVariables))
+            .header(OkHttpMetricsEventListener.URI_PATTERN, templatedPath)
+            .build();
         try (Response ignored = httpClient.newCall(request).execute()) {
         }
         catch (IOException e) {

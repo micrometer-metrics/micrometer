@@ -28,11 +28,13 @@ public class OperatingSystemServiceLevelObjectives {
 
     public static final ServiceLevelObjective[] DISK = new ServiceLevelObjective[] {
             ServiceLevelObjective.build("os.file.descriptors")
-                    .failedMessage("Too many file descriptors are open. When the max is reached, "
-                            + "further attempts to retrieve a file descriptor will block indefinitely.")
-                    .baseUnit("used / available (percent)").requires(new FileDescriptorMetrics())
-                    .value(s -> s.name("process.open.fds"))
-                    .dividedBy(denom -> denom.value(s -> s.name("process.max.fds"))).isLessThan(0.8) };
+                .failedMessage("Too many file descriptors are open. When the max is reached, "
+                        + "further attempts to retrieve a file descriptor will block indefinitely.")
+                .baseUnit("used / available (percent)")
+                .requires(new FileDescriptorMetrics())
+                .value(s -> s.name("process.open.fds"))
+                .dividedBy(denom -> denom.value(s -> s.name("process.max.fds")))
+                .isLessThan(0.8) };
 
     private OperatingSystemServiceLevelObjectives() {
     }

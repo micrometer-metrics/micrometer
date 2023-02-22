@@ -70,8 +70,11 @@ class DatadogMeterRegistryTest {
 
         server.stubFor(any(anyUrl()));
 
-        Counter.builder("my.counter#abc").baseUnit(TimeUnit.MICROSECONDS.toString().toLowerCase())
-                .description("metric description").register(registry).increment(Math.PI);
+        Counter.builder("my.counter#abc")
+            .baseUnit(TimeUnit.MICROSECONDS.toString().toLowerCase())
+            .description("metric description")
+            .register(registry)
+            .increment(Math.PI);
         registry.publish();
 
         server.verify(postRequestedFor(urlEqualTo("/api/v1/series?api_key=fake")).withRequestBody(equalToJson(
@@ -117,16 +120,19 @@ class DatadogMeterRegistryTest {
 
         server.stubFor(any(anyUrl()));
 
-        Counter.builder("my.counter#abc").baseUnit(TimeUnit.MICROSECONDS.toString().toLowerCase())
-                .description("metric description").register(registry).increment(Math.PI);
+        Counter.builder("my.counter#abc")
+            .baseUnit(TimeUnit.MICROSECONDS.toString().toLowerCase())
+            .description("metric description")
+            .register(registry)
+            .increment(Math.PI);
         registry.publish();
 
         server.verify(postRequestedFor(urlEqualTo("/api/v1/series?api_key=fake")).withRequestBody(equalToJson(
                 "{\"series\":[{\"metric\":\"my.counter#abc\",\"points\":[[0,0.0]],\"type\":\"count\",\"unit\":\"microsecond\",\"tags\":[\"statistic:count\"]}]}")));
 
         server.verify(putRequestedFor(urlEqualTo("/api/v1/metrics/my.counter%23abc?api_key=fake&application_key=fake"))
-                .withRequestBody(equalToJson(
-                        "{\"type\":\"count\",\"unit\":\"microsecond\",\"description\":\"metric description\"}")));
+            .withRequestBody(equalToJson(
+                    "{\"type\":\"count\",\"unit\":\"microsecond\",\"description\":\"metric description\"}")));
 
         registry.close();
     }

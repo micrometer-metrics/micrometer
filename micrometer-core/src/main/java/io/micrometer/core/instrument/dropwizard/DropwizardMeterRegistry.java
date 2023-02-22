@@ -170,8 +170,10 @@ public abstract class DropwizardMeterRegistry extends MeterRegistry {
 
     @Override
     protected DistributionStatisticConfig defaultHistogramConfig() {
-        return DistributionStatisticConfig.builder().expiry(dropwizardConfig.step()).build()
-                .merge(DistributionStatisticConfig.DEFAULT);
+        return DistributionStatisticConfig.builder()
+            .expiry(dropwizardConfig.step())
+            .build()
+            .merge(DistributionStatisticConfig.DEFAULT);
     }
 
     /**

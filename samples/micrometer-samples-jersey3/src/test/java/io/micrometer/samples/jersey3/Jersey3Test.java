@@ -47,8 +47,9 @@ class Jersey3Test extends JerseyTest {
     void helloResourceIsTimed() {
         String response = target("hello/Jersey").request().get(String.class);
         assertThat(response).isEqualTo("Hello, Jersey");
-        Timer timer = registry.get(TIMER_METRIC_NAME).tags("method", "GET", "uri", "/hello/{name}", "status", "200",
-                "exception", "None", "outcome", "SUCCESS").timer();
+        Timer timer = registry.get(TIMER_METRIC_NAME)
+            .tags("method", "GET", "uri", "/hello/{name}", "status", "200", "exception", "None", "outcome", "SUCCESS")
+            .timer();
         assertThat(timer.count()).isEqualTo(1);
         assertThat(timer.totalTime(TimeUnit.NANOSECONDS)).isPositive();
     }

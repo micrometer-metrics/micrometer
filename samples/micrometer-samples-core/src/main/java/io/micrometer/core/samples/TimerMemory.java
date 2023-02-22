@@ -31,11 +31,15 @@ public class TimerMemory {
         Timer t = null;
 
         for (Integer i = 0; i < 80; i++) {
-            t = Timer.builder("my.timer").tag("index", i.toString())
-                    // .publishPercentileHistogram()
-                    .serviceLevelObjectives(Stream.of(1, 150, 300, 500, 900, 1000, 1200, 1500, 2000, 3000, 4000)
-                            .map(Duration::ofMillis).toArray(Duration[]::new))
-                    .publishPercentiles(0.95).percentilePrecision(1).register(registry);
+            t = Timer.builder("my.timer")
+                .tag("index", i.toString())
+                // .publishPercentileHistogram()
+                .serviceLevelObjectives(Stream.of(1, 150, 300, 500, 900, 1000, 1200, 1500, 2000, 3000, 4000)
+                    .map(Duration::ofMillis)
+                    .toArray(Duration[]::new))
+                .publishPercentiles(0.95)
+                .percentilePrecision(1)
+                .register(registry);
         }
 
         // Breakpoint somewhere after the first couple outputs to test pause detection

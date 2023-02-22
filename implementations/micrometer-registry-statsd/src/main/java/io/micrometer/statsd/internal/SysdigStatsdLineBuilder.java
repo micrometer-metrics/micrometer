@@ -62,9 +62,10 @@ public class SysdigStatsdLineBuilder extends FlavorStatsdLineBuilder {
             this.name = sanitize(next.name(id.getName(), id.getType(), id.getBaseUnit()));
             synchronized (conventionTagsLock) {
                 this.tags.clear();
-                this.conventionTags = id.getTagsAsIterable().iterator().hasNext() ? id.getConventionTags(next).stream()
-                        .map(t -> sanitize(t.getKey()) + "=" + sanitize(t.getValue())).collect(Collectors.joining(","))
-                        : null;
+                this.conventionTags = id.getTagsAsIterable().iterator().hasNext() ? id.getConventionTags(next)
+                    .stream()
+                    .map(t -> sanitize(t.getKey()) + "=" + sanitize(t.getValue()))
+                    .collect(Collectors.joining(",")) : null;
             }
             this.tagsNoStat = tags(null, conventionTags, "=", "#");
             this.namingConvention = next;

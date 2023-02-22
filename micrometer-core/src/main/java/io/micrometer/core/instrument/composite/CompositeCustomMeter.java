@@ -28,8 +28,11 @@ class CompositeCustomMeter extends DefaultMeter implements CompositeMeter {
 
     @Override
     public void add(MeterRegistry registry) {
-        Meter.builder(getId().getName(), getType(), measure()).tags(getId().getTagsAsIterable())
-                .description(getId().getDescription()).baseUnit(getId().getBaseUnit()).register(registry);
+        Meter.builder(getId().getName(), getType(), measure())
+            .tags(getId().getTagsAsIterable())
+            .description(getId().getDescription())
+            .baseUnit(getId().getBaseUnit())
+            .register(registry);
     }
 
     @Override

@@ -34,7 +34,7 @@ class KairosConfigTest {
         props.put("kairos.uri", "bad");
 
         assertThat(config.validate().failures().stream().map(Validated.Invalid::getMessage))
-                .containsExactly("must be a valid URL");
+            .containsExactly("must be a valid URL");
     }
 
     @Test

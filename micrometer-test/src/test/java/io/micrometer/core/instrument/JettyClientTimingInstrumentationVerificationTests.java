@@ -37,8 +37,10 @@ class JettyClientTimingInstrumentationVerificationTests extends HttpClientTiming
 
     @BeforeEach
     void setup() throws Exception {
-        httpClient.getRequestListeners().add(JettyClientMetrics
-                .builder(getRegistry(), result -> result.getRequest().getHeaders().get(HEADER_URI_PATTERN)).build());
+        httpClient.getRequestListeners()
+            .add(JettyClientMetrics
+                .builder(getRegistry(), result -> result.getRequest().getHeaders().get(HEADER_URI_PATTERN))
+                .build());
         httpClient.start();
     }
 
@@ -47,7 +49,8 @@ class JettyClientTimingInstrumentationVerificationTests extends HttpClientTiming
             String... pathVariables) {
         try {
             Request request = httpClient.newRequest(baseUri + substitutePathVariables(templatedPath, pathVariables))
-                    .method(method.name()).header(HEADER_URI_PATTERN, templatedPath);
+                .method(method.name())
+                .header(HEADER_URI_PATTERN, templatedPath);
             if (body != null) {
                 request.content(new BytesContentProvider(body));
             }

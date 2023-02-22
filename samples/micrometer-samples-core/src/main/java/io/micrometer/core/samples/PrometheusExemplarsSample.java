@@ -46,7 +46,8 @@ public class PrometheusExemplarsSample {
         timer.record(Duration.ofSeconds(60));
 
         DistributionSummary distributionSummary = DistributionSummary.builder("test.distribution")
-                .publishPercentileHistogram().register(registry);
+            .publishPercentileHistogram()
+            .register(registry);
         distributionSummary.record(0.15);
         distributionSummary.record(15);
         distributionSummary.record(5E18);

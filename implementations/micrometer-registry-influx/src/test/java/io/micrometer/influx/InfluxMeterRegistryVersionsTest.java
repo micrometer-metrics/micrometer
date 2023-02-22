@@ -52,8 +52,8 @@ class InfluxMeterRegistryVersionsTest {
         publishSimpleStat(InfluxApiVersion.V1, server);
 
         server.verify(postRequestedFor(urlEqualTo("/write?consistency=one&precision=ms&db=my-db"))
-                .withRequestBody(equalTo("my_counter,metric_type=counter value=0 1"))
-                .withHeader("Authorization", equalTo("Bearer my-token")));
+            .withRequestBody(equalTo("my_counter,metric_type=counter value=0 1"))
+            .withHeader("Authorization", equalTo("Bearer my-token")));
     }
 
     private void stubForV1(WireMockServer server) {
@@ -74,8 +74,8 @@ class InfluxMeterRegistryVersionsTest {
         publishSimpleStat(config);
 
         server.verify(postRequestedFor(urlEqualTo("/write?consistency=one&precision=ms&db=mydb"))
-                .withRequestBody(equalTo("my_counter,metric_type=counter value=0 1"))
-                .withBasicAuth(new BasicCredentials("user", "pass")));
+            .withRequestBody(equalTo("my_counter,metric_type=counter value=0 1"))
+            .withBasicAuth(new BasicCredentials("user", "pass")));
     }
 
     @Test
@@ -92,8 +92,8 @@ class InfluxMeterRegistryVersionsTest {
         publishSimpleStat(config);
 
         server.verify(postRequestedFor(urlEqualTo("/write?consistency=one&precision=ms&db=mydb"))
-                .withRequestBody(equalTo("my_counter,metric_type=counter value=0 1"))
-                .withHeader("Authorization", equalTo("Bearer some-token")));
+            .withRequestBody(equalTo("my_counter,metric_type=counter value=0 1"))
+            .withHeader("Authorization", equalTo("Bearer some-token")));
     }
 
     @Test
@@ -103,8 +103,8 @@ class InfluxMeterRegistryVersionsTest {
         publishSimpleStat(InfluxApiVersion.V2, server);
 
         server.verify(postRequestedFor(urlEqualTo("/api/v2/write?precision=ms&bucket=my-bucket&org=my-org"))
-                .withRequestBody(equalTo("my_counter,metric_type=counter value=0 1"))
-                .withHeader("Authorization", equalTo("Token my-token")));
+            .withRequestBody(equalTo("my_counter,metric_type=counter value=0 1"))
+            .withHeader("Authorization", equalTo("Token my-token")));
     }
 
     private void stubForV2(WireMockServer server) {
@@ -125,8 +125,8 @@ class InfluxMeterRegistryVersionsTest {
         publishSimpleStat(config);
 
         server.verify(postRequestedFor(urlEqualTo("/write?consistency=one&precision=ms&db=my-db&rp=one_day_only"))
-                .withRequestBody(equalTo("my_counter,metric_type=counter value=0 1"))
-                .withHeader("Authorization", equalTo("Bearer my-token")));
+            .withRequestBody(equalTo("my_counter,metric_type=counter value=0 1"))
+            .withHeader("Authorization", equalTo("Bearer my-token")));
     }
 
     @Test
@@ -156,8 +156,8 @@ class InfluxMeterRegistryVersionsTest {
         };
 
         assertThatThrownBy(() -> publishSimpleStat(config))
-                .hasMessage("influx.apiVersion was 'V2' but it requires 'token' is also configured")
-                .isInstanceOf(ValidationException.class);
+            .hasMessage("influx.apiVersion was 'V2' but it requires 'token' is also configured")
+            .isInstanceOf(ValidationException.class);
 
         server.verify(0, postRequestedFor(anyUrl()));
     }
@@ -194,8 +194,8 @@ class InfluxMeterRegistryVersionsTest {
         };
 
         assertThatThrownBy(() -> publishSimpleStat(config))
-                .hasMessage("influx.apiVersion was 'V2' but it requires 'token' is also configured")
-                .isInstanceOf(ValidationException.class);
+            .hasMessage("influx.apiVersion was 'V2' but it requires 'token' is also configured")
+            .isInstanceOf(ValidationException.class);
 
         server.verify(0, postRequestedFor(anyUrl()));
     }
@@ -227,8 +227,8 @@ class InfluxMeterRegistryVersionsTest {
         };
 
         assertThatThrownBy(() -> publishSimpleStat(config))
-                .hasMessage("influx.apiVersion was 'V2' but it requires 'org' is also configured")
-                .isInstanceOf(ValidationException.class);
+            .hasMessage("influx.apiVersion was 'V2' but it requires 'org' is also configured")
+            .isInstanceOf(ValidationException.class);
 
         server.verify(0, postRequestedFor(anyUrl()));
     }
@@ -265,8 +265,8 @@ class InfluxMeterRegistryVersionsTest {
         };
 
         assertThatThrownBy(() -> publishSimpleStat(config))
-                .hasMessage("influx.apiVersion was 'V2' but it requires 'org' is also configured")
-                .isInstanceOf(ValidationException.class);
+            .hasMessage("influx.apiVersion was 'V2' but it requires 'org' is also configured")
+            .isInstanceOf(ValidationException.class);
 
         server.verify(0, postRequestedFor(anyUrl()));
     }
@@ -285,13 +285,13 @@ class InfluxMeterRegistryVersionsTest {
         props.put("influx.db", "");
 
         assertThat(config.validate().failures().stream().map(Validated.Invalid::getMessage))
-                .containsExactly("db or bucket should be specified");
+            .containsExactly("db or bucket should be specified");
     }
 
     @Test
     void createStorageV1(@Wiremock WireMockServer server) {
         server.stubFor(any(urlPathEqualTo("/query"))
-                .willReturn(aResponse().withStatus(200).withBody("{\"results\":[{\"statement_id\":0}]}")));
+            .willReturn(aResponse().withStatus(200).withBody("{\"results\":[{\"statement_id\":0}]}")));
         stubForV1(server);
 
         Map<String, String> props = new HashMap<>();
@@ -306,8 +306,8 @@ class InfluxMeterRegistryVersionsTest {
         server.verify(postRequestedFor(urlEqualTo("/query?q=CREATE+DATABASE+%22my-db%22")).withHeader("Authorization",
                 equalTo("Bearer my-token")));
         server.verify(postRequestedFor(urlEqualTo("/write?consistency=one&precision=ms&db=my-db"))
-                .withRequestBody(equalTo("my_counter,metric_type=counter value=0 1"))
-                .withHeader("Authorization", equalTo("Bearer my-token")));
+            .withRequestBody(equalTo("my_counter,metric_type=counter value=0 1"))
+            .withHeader("Authorization", equalTo("Bearer my-token")));
     }
 
     @Test
@@ -385,8 +385,11 @@ class InfluxMeterRegistryVersionsTest {
     private void publishSimpleStat(InfluxConfig config) {
         InfluxMeterRegistry registry = new InfluxMeterRegistry(config, new MockClock());
 
-        Counter.builder("my.counter").baseUnit(TimeUnit.MICROSECONDS.name().toLowerCase())
-                .description("metric description").register(registry).increment(Math.PI);
+        Counter.builder("my.counter")
+            .baseUnit(TimeUnit.MICROSECONDS.name().toLowerCase())
+            .description("metric description")
+            .register(registry)
+            .increment(Math.PI);
         registry.publish();
     }
 

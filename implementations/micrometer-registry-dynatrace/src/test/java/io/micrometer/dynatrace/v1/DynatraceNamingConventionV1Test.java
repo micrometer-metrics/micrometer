@@ -54,7 +54,7 @@ class DynatraceNamingConventionV1Test {
     @Test
     void nameWithSystemLoadAverageOneMintueShouldSanitize() {
         assertThat(convention.name("system.load.average.1m", Meter.Type.COUNTER, null))
-                .isEqualTo("custom:system.load.average.oneminute");
+            .isEqualTo("custom:system.load.average.oneminute");
     }
 
     @Test

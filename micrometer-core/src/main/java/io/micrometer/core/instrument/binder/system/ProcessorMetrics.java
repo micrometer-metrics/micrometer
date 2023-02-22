@@ -88,27 +88,31 @@ public class ProcessorMetrics implements MeterBinder {
     @Override
     public void bindTo(MeterRegistry registry) {
         Runtime runtime = Runtime.getRuntime();
-        Gauge.builder("system.cpu.count", runtime, Runtime::availableProcessors).tags(tags)
-                .description("The number of processors available to the Java virtual machine").register(registry);
+        Gauge.builder("system.cpu.count", runtime, Runtime::availableProcessors)
+            .tags(tags)
+            .description("The number of processors available to the Java virtual machine")
+            .register(registry);
 
         if (operatingSystemBean.getSystemLoadAverage() >= 0) {
             Gauge.builder("system.load.average.1m", operatingSystemBean, OperatingSystemMXBean::getSystemLoadAverage)
-                    .tags(tags)
-                    .description(
-                            "The sum of the number of runnable entities queued to available processors and the number "
-                                    + "of runnable entities running on the available processors averaged over a period of time")
-                    .register(registry);
+                .tags(tags)
+                .description("The sum of the number of runnable entities queued to available processors and the number "
+                        + "of runnable entities running on the available processors averaged over a period of time")
+                .register(registry);
         }
 
         if (systemCpuUsage != null) {
-            Gauge.builder("system.cpu.usage", operatingSystemBean, x -> invoke(systemCpuUsage)).tags(tags)
-                    .description("The \"recent cpu usage\" of the system the application is running in")
-                    .register(registry);
+            Gauge.builder("system.cpu.usage", operatingSystemBean, x -> invoke(systemCpuUsage))
+                .tags(tags)
+                .description("The \"recent cpu usage\" of the system the application is running in")
+                .register(registry);
         }
 
         if (processCpuUsage != null) {
-            Gauge.builder("process.cpu.usage", operatingSystemBean, x -> invoke(processCpuUsage)).tags(tags)
-                    .description("The \"recent cpu usage\" for the Java Virtual Machine process").register(registry);
+            Gauge.builder("process.cpu.usage", operatingSystemBean, x -> invoke(processCpuUsage))
+                .tags(tags)
+                .description("The \"recent cpu usage\" for the Java Virtual Machine process")
+                .register(registry);
         }
     }
 

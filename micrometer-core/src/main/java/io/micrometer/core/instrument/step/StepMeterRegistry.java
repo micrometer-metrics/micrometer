@@ -98,8 +98,10 @@ public abstract class StepMeterRegistry extends PushMeterRegistry {
 
     @Override
     protected DistributionStatisticConfig defaultHistogramConfig() {
-        return DistributionStatisticConfig.builder().expiry(config.step()).build()
-                .merge(DistributionStatisticConfig.DEFAULT);
+        return DistributionStatisticConfig.builder()
+            .expiry(config.step())
+            .build()
+            .merge(DistributionStatisticConfig.DEFAULT);
     }
 
 }

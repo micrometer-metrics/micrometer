@@ -61,13 +61,16 @@ class CommonsObjectPool2MetricsTest {
             registry.get("commons.pool2.num.idle").tags(tags).gauge();
             registry.get("commons.pool2.num.waiters").tags(tags).gauge();
 
-            Arrays.asList("commons.pool2.created", "commons.pool2.borrowed", "commons.pool2.returned",
-                    "commons.pool2.destroyed", "commons.pool2.destroyed.by.evictor",
-                    "commons.pool2.destroyed.by.borrow.validation")
-                    .forEach(name -> registry.get(name).tags(tags).functionCounter());
+            Arrays
+                .asList("commons.pool2.created", "commons.pool2.borrowed", "commons.pool2.returned",
+                        "commons.pool2.destroyed", "commons.pool2.destroyed.by.evictor",
+                        "commons.pool2.destroyed.by.borrow.validation")
+                .forEach(name -> registry.get(name).tags(tags).functionCounter());
 
-            Arrays.asList("commons.pool2.max.borrow.wait", "commons.pool2.mean.active", "commons.pool2.mean.idle",
-                    "commons.pool2.mean.borrow.wait").forEach(name -> registry.get(name).tags(tags).timeGauge());
+            Arrays
+                .asList("commons.pool2.max.borrow.wait", "commons.pool2.mean.active", "commons.pool2.mean.idle",
+                        "commons.pool2.mean.borrow.wait")
+                .forEach(name -> registry.get(name).tags(tags).timeGauge());
         }
     }
 
@@ -78,15 +81,18 @@ class CommonsObjectPool2MetricsTest {
             commonsObjectPool2Metrics.bindTo(registry);
 
             Arrays.asList("commons.pool2.num.idle", "commons.pool2.num.waiters")
-                    .forEach(name -> registry.get(name).tags(tagsToMatch).gauge());
+                .forEach(name -> registry.get(name).tags(tagsToMatch).gauge());
 
-            Arrays.asList("commons.pool2.created", "commons.pool2.borrowed", "commons.pool2.returned",
-                    "commons.pool2.destroyed", "commons.pool2.destroyed.by.evictor",
-                    "commons.pool2.destroyed.by.borrow.validation")
-                    .forEach(name -> registry.get(name).tags(tagsToMatch).functionCounter());
+            Arrays
+                .asList("commons.pool2.created", "commons.pool2.borrowed", "commons.pool2.returned",
+                        "commons.pool2.destroyed", "commons.pool2.destroyed.by.evictor",
+                        "commons.pool2.destroyed.by.borrow.validation")
+                .forEach(name -> registry.get(name).tags(tagsToMatch).functionCounter());
 
-            Arrays.asList("commons.pool2.max.borrow.wait", "commons.pool2.mean.active", "commons.pool2.mean.idle",
-                    "commons.pool2.mean.borrow.wait").forEach(name -> registry.get(name).tags(tagsToMatch).timeGauge());
+            Arrays
+                .asList("commons.pool2.max.borrow.wait", "commons.pool2.mean.active", "commons.pool2.mean.idle",
+                        "commons.pool2.mean.borrow.wait")
+                .forEach(name -> registry.get(name).tags(tagsToMatch).timeGauge());
         }
     }
 

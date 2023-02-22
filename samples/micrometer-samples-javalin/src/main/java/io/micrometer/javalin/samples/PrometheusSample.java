@@ -129,12 +129,16 @@ class MicrometerPlugin implements Plugin {
                 String exceptionName = response.getHeader(EXCEPTION_HEADER);
                 response.setHeader(EXCEPTION_HEADER, null);
 
-                String uri = app.javalinServlet().getMatcher()
-                        .findEntries(HandlerType.valueOf(request.getMethod()), request.getPathInfo()).stream().findAny()
-                        .map(HandlerEntry::getPath)
-                        .map(path -> path.equals("/") || StringUtils.isBlank(path) ? "root" : path)
-                        .map(path -> response.getStatus() >= 300 && response.getStatus() < 400 ? "REDIRECTION" : path)
-                        .map(path -> response.getStatus() == 404 ? "NOT_FOUND" : path).orElse("unknown");
+                String uri = app.javalinServlet()
+                    .getMatcher()
+                    .findEntries(HandlerType.valueOf(request.getMethod()), request.getPathInfo())
+                    .stream()
+                    .findAny()
+                    .map(HandlerEntry::getPath)
+                    .map(path -> path.equals("/") || StringUtils.isBlank(path) ? "root" : path)
+                    .map(path -> response.getStatus() >= 300 && response.getStatus() < 400 ? "REDIRECTION" : path)
+                    .map(path -> response.getStatus() == 404 ? "NOT_FOUND" : path)
+                    .orElse("unknown");
 
                 return Tags.concat(super.getTags(request, response), "uri", uri, "exception",
                         exceptionName == null ? "None" : exceptionName);

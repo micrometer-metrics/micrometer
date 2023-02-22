@@ -72,16 +72,18 @@ public interface NewRelicConfig extends StepRegistryConfig {
 
     @Nullable
     default String apiKey() {
-        return getSecret(this, "apiKey").invalidateWhen(
-                secret -> isBlank(secret) && ClientProviderType.INSIGHTS_API.equals(clientProviderType()),
-                "is required when publishing to Insights API", InvalidReason.MISSING).orElse(null);
+        return getSecret(this, "apiKey")
+            .invalidateWhen(secret -> isBlank(secret) && ClientProviderType.INSIGHTS_API.equals(clientProviderType()),
+                    "is required when publishing to Insights API", InvalidReason.MISSING)
+            .orElse(null);
     }
 
     @Nullable
     default String accountId() {
-        return getSecret(this, "accountId").invalidateWhen(
-                secret -> isBlank(secret) && ClientProviderType.INSIGHTS_API.equals(clientProviderType()),
-                "is required when publishing to Insights API", InvalidReason.MISSING).orElse(null);
+        return getSecret(this, "accountId")
+            .invalidateWhen(secret -> isBlank(secret) && ClientProviderType.INSIGHTS_API.equals(clientProviderType()),
+                    "is required when publishing to Insights API", InvalidReason.MISSING)
+            .orElse(null);
     }
 
     /**
@@ -95,11 +97,9 @@ public interface NewRelicConfig extends StepRegistryConfig {
 
     @Override
     default Validated<?> validate() {
-        return checkAll(this, c -> StepRegistryConfig.validate(c),
-                check("eventType", NewRelicConfig::eventType)
-                        .andThen(v -> v.invalidateWhen(type -> isBlank(type) && !meterNameEventTypeEnabled(),
-                                "event type is required when not using the meter name as the event type",
-                                InvalidReason.MISSING)),
+        return checkAll(this, c -> StepRegistryConfig.validate(c), check("eventType", NewRelicConfig::eventType)
+            .andThen(v -> v.invalidateWhen(type -> isBlank(type) && !meterNameEventTypeEnabled(),
+                    "event type is required when not using the meter name as the event type", InvalidReason.MISSING)),
                 checkRequired("clientProviderType", NewRelicConfig::clientProviderType));
     }
 

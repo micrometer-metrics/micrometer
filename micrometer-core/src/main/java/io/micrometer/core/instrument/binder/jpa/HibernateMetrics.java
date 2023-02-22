@@ -147,8 +147,11 @@ public class HibernateMetrics implements MeterBinder {
             return;
         }
 
-        FunctionCounter.builder(name, statistics, f).tags(tags).tags(extraTags).description(description)
-                .register(registry);
+        FunctionCounter.builder(name, statistics, f)
+            .tags(tags)
+            .tags(extraTags)
+            .description(description)
+            .register(registry);
     }
 
     @Override
@@ -186,21 +189,21 @@ public class HibernateMetrics implements MeterBinder {
 
         // Second Level Caching
 
-        Arrays.stream(statistics.getSecondLevelCacheRegionNames()).filter(this::hasDomainDataRegionStatistics)
-                .forEach(regionName -> {
-                    counter(registry, "hibernate.second.level.cache.requests",
-                            "The number of cacheable entities/collections successfully retrieved from the cache",
-                            stats -> stats.getDomainDataRegionStatistics(regionName).getHitCount(), "region",
-                            regionName, "result", "hit");
-                    counter(registry, "hibernate.second.level.cache.requests",
-                            "The number of cacheable entities/collections not found in the cache and loaded from the database",
-                            stats -> stats.getDomainDataRegionStatistics(regionName).getMissCount(), "region",
-                            regionName, "result", "miss");
-                    counter(registry, "hibernate.second.level.cache.puts",
-                            "The number of cacheable entities/collections put in the cache",
-                            stats -> stats.getDomainDataRegionStatistics(regionName).getPutCount(), "region",
-                            regionName);
-                });
+        Arrays.stream(statistics.getSecondLevelCacheRegionNames())
+            .filter(this::hasDomainDataRegionStatistics)
+            .forEach(regionName -> {
+                counter(registry, "hibernate.second.level.cache.requests",
+                        "The number of cacheable entities/collections successfully retrieved from the cache",
+                        stats -> stats.getDomainDataRegionStatistics(regionName).getHitCount(), "region", regionName,
+                        "result", "hit");
+                counter(registry, "hibernate.second.level.cache.requests",
+                        "The number of cacheable entities/collections not found in the cache and loaded from the database",
+                        stats -> stats.getDomainDataRegionStatistics(regionName).getMissCount(), "region", regionName,
+                        "result", "miss");
+                counter(registry, "hibernate.second.level.cache.puts",
+                        "The number of cacheable entities/collections put in the cache",
+                        stats -> stats.getDomainDataRegionStatistics(regionName).getPutCount(), "region", regionName);
+            });
 
         // Entity information
         counter(registry, "hibernate.entities.deletes", "The number of entity deletes",
@@ -240,19 +243,22 @@ public class HibernateMetrics implements MeterBinder {
                 Statistics::getNaturalIdQueryExecutionCount);
 
         TimeGauge
-                .builder("hibernate.query.natural.id.executions.max", statistics, TimeUnit.MILLISECONDS,
-                        Statistics::getNaturalIdQueryExecutionMaxTime)
-                .description("The maximum query time for naturalId queries executed against the database").tags(tags)
-                .register(registry);
+            .builder("hibernate.query.natural.id.executions.max", statistics, TimeUnit.MILLISECONDS,
+                    Statistics::getNaturalIdQueryExecutionMaxTime)
+            .description("The maximum query time for naturalId queries executed against the database")
+            .tags(tags)
+            .register(registry);
 
         // Query statistics
         counter(registry, "hibernate.query.executions", "The number of executed queries",
                 Statistics::getQueryExecutionCount);
 
         TimeGauge
-                .builder("hibernate.query.executions.max", statistics, TimeUnit.MILLISECONDS,
-                        Statistics::getQueryExecutionMaxTime)
-                .description("The time of the slowest query").tags(tags).register(registry);
+            .builder("hibernate.query.executions.max", statistics, TimeUnit.MILLISECONDS,
+                    Statistics::getQueryExecutionMaxTime)
+            .description("The time of the slowest query")
+            .tags(tags)
+            .register(registry);
 
         // Update timestamp cache
         counter(registry, "hibernate.cache.update.timestamps.requests",

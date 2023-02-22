@@ -60,7 +60,7 @@ public class SimpleMeterRegistry extends MeterRegistry {
     protected DistributionSummary newDistributionSummary(Meter.Id id,
             DistributionStatisticConfig distributionStatisticConfig, double scale) {
         DistributionStatisticConfig merged = distributionStatisticConfig
-                .merge(DistributionStatisticConfig.builder().expiry(config.step()).build());
+            .merge(DistributionStatisticConfig.builder().expiry(config.step()).build());
 
         DistributionSummary summary;
         switch (config.mode()) {
@@ -87,7 +87,7 @@ public class SimpleMeterRegistry extends MeterRegistry {
     protected Timer newTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig,
             PauseDetector pauseDetector) {
         DistributionStatisticConfig merged = distributionStatisticConfig
-                .merge(DistributionStatisticConfig.builder().expiry(config.step()).build());
+            .merge(DistributionStatisticConfig.builder().expiry(config.step()).build());
 
         Timer timer;
         switch (config.mode()) {
@@ -164,8 +164,10 @@ public class SimpleMeterRegistry extends MeterRegistry {
 
     @Override
     protected DistributionStatisticConfig defaultHistogramConfig() {
-        return DistributionStatisticConfig.builder().expiry(config.step()).build()
-                .merge(DistributionStatisticConfig.DEFAULT);
+        return DistributionStatisticConfig.builder()
+            .expiry(config.step())
+            .build()
+            .merge(DistributionStatisticConfig.DEFAULT);
     }
 
     /**
@@ -177,8 +179,11 @@ public class SimpleMeterRegistry extends MeterRegistry {
      */
     @Incubating(since = "1.9.0")
     public String getMetersAsString() {
-        return this.getMeters().stream().sorted(Comparator.comparing(meter -> meter.getId().getName()))
-                .map(this::toString).collect(Collectors.joining("\n"));
+        return this.getMeters()
+            .stream()
+            .sorted(Comparator.comparing(meter -> meter.getId().getName()))
+            .map(this::toString)
+            .collect(Collectors.joining("\n"));
     }
 
     private String toString(Meter meter) {
@@ -187,7 +192,8 @@ public class SimpleMeterRegistry extends MeterRegistry {
         String baseUnit = id.getBaseUnit();
         String meterUnitSuffix = baseUnit != null ? " " + baseUnit : "";
         String measurements = StreamSupport.stream(meter.measure().spliterator(), false)
-                .map((measurement) -> toString(measurement, meterUnitSuffix)).collect(Collectors.joining(", "));
+            .map((measurement) -> toString(measurement, meterUnitSuffix))
+            .collect(Collectors.joining(", "));
         return String.format("%s(%s)[%s]; %s", id.getName(), id.getType(), tags, measurements);
     }
 

@@ -219,8 +219,10 @@ public class StatsdMeterRegistry extends MeterRegistry {
             else {
                 final Publisher<String> publisher;
                 if (statsdConfig.buffered()) {
-                    publisher = BufferingFlux.create(Flux.from(this.processor), "\n", statsdConfig.maxPacketLength(),
-                            statsdConfig.pollingFrequency().toMillis()).onBackpressureLatest();
+                    publisher = BufferingFlux
+                        .create(Flux.from(this.processor), "\n", statsdConfig.maxPacketLength(),
+                                statsdConfig.pollingFrequency().toMillis())
+                        .onBackpressureLatest();
                 }
                 else {
                     publisher = this.processor;
@@ -241,28 +243,33 @@ public class StatsdMeterRegistry extends MeterRegistry {
 
     private void prepareUdpClient(Publisher<String> publisher, Supplier<SocketAddress> remoteAddress) {
         AtomicReference<UdpClient> udpClientReference = new AtomicReference<>();
-        UdpClient udpClient = UdpClient.create().remoteAddress(remoteAddress)
-                .handle((in, out) -> out.sendString(publisher).neverComplete().retryWhen(
-                        Retry.indefinitely().filter(throwable -> throwable instanceof PortUnreachableException)))
-                .doOnDisconnected(connection -> {
-                    Boolean connectionDisposed = connection.channel().attr(CONNECTION_DISPOSED).getAndSet(Boolean.TRUE);
-                    if (connectionDisposed == null || !connectionDisposed) {
-                        connectAndSubscribe(udpClientReference.get());
-                    }
-                });
+        UdpClient udpClient = UdpClient.create()
+            .remoteAddress(remoteAddress)
+            .handle((in, out) -> out.sendString(publisher)
+                .neverComplete()
+                .retryWhen(Retry.indefinitely().filter(throwable -> throwable instanceof PortUnreachableException)))
+            .doOnDisconnected(connection -> {
+                Boolean connectionDisposed = connection.channel().attr(CONNECTION_DISPOSED).getAndSet(Boolean.TRUE);
+                if (connectionDisposed == null || !connectionDisposed) {
+                    connectAndSubscribe(udpClientReference.get());
+                }
+            });
         udpClientReference.set(udpClient);
         connectAndSubscribe(udpClient);
     }
 
     private void prepareTcpClient(Publisher<String> publisher) {
         AtomicReference<TcpClient> tcpClientReference = new AtomicReference<>();
-        TcpClient tcpClient = TcpClient.create().host(statsdConfig.host()).port(statsdConfig.port())
-                .handle((in, out) -> out.sendString(publisher).neverComplete()).doOnDisconnected(connection -> {
-                    Boolean connectionDisposed = connection.channel().attr(CONNECTION_DISPOSED).getAndSet(Boolean.TRUE);
-                    if (connectionDisposed == null || !connectionDisposed) {
-                        connectAndSubscribe(tcpClientReference.get());
-                    }
-                });
+        TcpClient tcpClient = TcpClient.create()
+            .host(statsdConfig.host())
+            .port(statsdConfig.port())
+            .handle((in, out) -> out.sendString(publisher).neverComplete())
+            .doOnDisconnected(connection -> {
+                Boolean connectionDisposed = connection.channel().attr(CONNECTION_DISPOSED).getAndSet(Boolean.TRUE);
+                if (connectionDisposed == null || !connectionDisposed) {
+                    connectAndSubscribe(tcpClientReference.get());
+                }
+            });
         tcpClientReference.set(tcpClient);
         connectAndSubscribe(tcpClient);
     }
@@ -287,13 +294,13 @@ public class StatsdMeterRegistry extends MeterRegistry {
 
     private void retryReplaceClient(Mono<? extends Connection> connectMono) {
         connectMono.retryWhen(Retry.backoff(Long.MAX_VALUE, Duration.ofSeconds(1)).maxBackoff(Duration.ofMinutes(1)))
-                .subscribe(connection -> {
-                    this.statsdConnection.replace(connection);
+            .subscribe(connection -> {
+                this.statsdConnection.replace(connection);
 
-                    // now that we're connected, start polling gauges and other pollable
-                    // meter types
-                    startPolling();
-                });
+                // now that we're connected, start polling gauges and other pollable
+                // meter types
+                startPolling();
+            });
     }
 
     private void startPolling() {
@@ -353,10 +360,14 @@ public class StatsdMeterRegistry extends MeterRegistry {
     private DistributionStatisticConfig addInfBucket(DistributionStatisticConfig config) {
         double[] serviceLevelObjectives = config.getServiceLevelObjectiveBoundaries() == null
                 ? new double[] { Double.POSITIVE_INFINITY }
-                : DoubleStream.concat(Arrays.stream(config.getServiceLevelObjectiveBoundaries()),
-                        DoubleStream.of(Double.POSITIVE_INFINITY)).toArray();
-        return DistributionStatisticConfig.builder().serviceLevelObjectives(serviceLevelObjectives).build()
-                .merge(config);
+                : DoubleStream
+                    .concat(Arrays.stream(config.getServiceLevelObjectiveBoundaries()),
+                            DoubleStream.of(Double.POSITIVE_INFINITY))
+                    .toArray();
+        return DistributionStatisticConfig.builder()
+            .serviceLevelObjectives(serviceLevelObjectives)
+            .build()
+            .merge(config);
     }
 
     @Override
@@ -448,8 +459,10 @@ public class StatsdMeterRegistry extends MeterRegistry {
 
     @Override
     protected DistributionStatisticConfig defaultHistogramConfig() {
-        return DistributionStatisticConfig.builder().expiry(statsdConfig.step()).build()
-                .merge(DistributionStatisticConfig.DEFAULT);
+        return DistributionStatisticConfig.builder()
+            .expiry(statsdConfig.step())
+            .build()
+            .merge(DistributionStatisticConfig.DEFAULT);
     }
 
     /**

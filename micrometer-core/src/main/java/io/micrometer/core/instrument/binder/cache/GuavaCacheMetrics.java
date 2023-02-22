@@ -32,7 +32,7 @@ import java.util.function.ToLongFunction;
  */
 @NonNullApi
 @NonNullFields
-public class GuavaCacheMetrics<K, V, C extends Cache<K, V>> extends CacheMeterBinder<C> {
+public class GuavaCacheMetrics<K, V, C extends Cache<K, V>>extends CacheMeterBinder<C> {
 
     private static final String DESCRIPTION_CACHE_LOAD = "The number of times cache lookup methods have successfully loaded a new value or failed to load a new value because an exception was thrown while loading";
 
@@ -111,15 +111,21 @@ public class GuavaCacheMetrics<K, V, C extends Cache<K, V>> extends CacheMeterBi
         if (cache instanceof LoadingCache) {
             // dividing these gives you a measure of load latency
             TimeGauge.builder("cache.load.duration", cache, TimeUnit.NANOSECONDS, c -> c.stats().totalLoadTime())
-                    .tags(getTagsWithCacheName()).description("The time the cache has spent loading new values")
-                    .register(registry);
+                .tags(getTagsWithCacheName())
+                .description("The time the cache has spent loading new values")
+                .register(registry);
 
-            FunctionCounter.builder("cache.load", cache, c -> c.stats().loadSuccessCount()).tags(getTagsWithCacheName())
-                    .tags("result", "success").description(DESCRIPTION_CACHE_LOAD).register(registry);
+            FunctionCounter.builder("cache.load", cache, c -> c.stats().loadSuccessCount())
+                .tags(getTagsWithCacheName())
+                .tags("result", "success")
+                .description(DESCRIPTION_CACHE_LOAD)
+                .register(registry);
 
             FunctionCounter.builder("cache.load", cache, c -> c.stats().loadExceptionCount())
-                    .tags(getTagsWithCacheName()).tags("result", "failure").description(DESCRIPTION_CACHE_LOAD)
-                    .register(registry);
+                .tags(getTagsWithCacheName())
+                .tags("result", "failure")
+                .description(DESCRIPTION_CACHE_LOAD)
+                .register(registry);
         }
     }
 

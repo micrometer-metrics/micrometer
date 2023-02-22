@@ -50,11 +50,14 @@ class PrometheusHistogram extends TimeWindowFixedBoundaryHistogram {
 
     PrometheusHistogram(Clock clock, DistributionStatisticConfig config,
             @Nullable HistogramExemplarSampler exemplarSampler) {
-        super(clock, DistributionStatisticConfig.builder().expiry(Duration.ofDays(1825)) // effectively
-                                                                                         // never
-                                                                                         // roll
-                                                                                         // over
-                .bufferLength(1).build().merge(config), true);
+        super(clock, DistributionStatisticConfig.builder()
+            .expiry(Duration.ofDays(1825)) // effectively
+                                           // never
+                                           // roll
+                                           // over
+            .bufferLength(1)
+            .build()
+            .merge(config), true);
 
         this.exemplarSampler = exemplarSampler;
         if (isExemplarsEnabled()) {

@@ -158,7 +158,7 @@ class TomcatMetricsTest {
                 CloseableHttpResponse response1 = httpClient.execute(post);
 
                 CloseableHttpResponse response2 = httpClient
-                        .execute(new HttpGet("http://localhost:" + this.port + "/0/no-get"));
+                    .execute(new HttpGet("http://localhost:" + this.port + "/0/no-get"));
 
                 long expectedSentBytes = response1.getEntity().getContentLength()
                         + response2.getEntity().getContentLength();
@@ -191,7 +191,7 @@ class TomcatMetricsTest {
                 CloseableHttpResponse response1 = httpClient.execute(post);
 
                 CloseableHttpResponse response2 = httpClient
-                        .execute(new HttpGet("http://localhost:" + this.port + "/0/no-get"));
+                    .execute(new HttpGet("http://localhost:" + this.port + "/0/no-get"));
 
                 long expectedSentBytes = response1.getEntity().getContentLength()
                         + response2.getEntity().getContentLength();
@@ -233,7 +233,7 @@ class TomcatMetricsTest {
                 CloseableHttpResponse response1 = httpClient.execute(post);
 
                 CloseableHttpResponse response2 = httpClient
-                        .execute(new HttpGet("http://localhost:" + this.port + "/1"));
+                    .execute(new HttpGet("http://localhost:" + this.port + "/1"));
 
                 FunctionTimer servlet0 = registry.get("tomcat.servlet.request").tag("name", "servlet0").functionTimer();
                 FunctionTimer servlet1 = registry.get("tomcat.servlet.request").tag("name", "servlet1").functionTimer();
@@ -294,7 +294,7 @@ class TomcatMetricsTest {
                 CloseableHttpResponse response1 = httpClient.execute(post);
 
                 CloseableHttpResponse response2 = httpClient
-                        .execute(new HttpGet("http://localhost:" + this.port + "/1"));
+                    .execute(new HttpGet("http://localhost:" + this.port + "/1"));
 
                 FunctionTimer servlet0 = registry.get("tomcat.servlet.request").tag("name", "servlet0").functionTimer();
                 FunctionTimer servlet1 = registry.get("tomcat.servlet.request").tag("name", "servlet1").functionTimer();
@@ -347,7 +347,7 @@ class TomcatMetricsTest {
         assertThat(registry.get("tomcat.global.error").functionCounter().count()).isEqualTo(0.0);
         assertThat(registry.get("tomcat.global.request").functionTimer().count()).isEqualTo(0.0);
         assertThat(registry.get("tomcat.global.request").functionTimer().totalTime(TimeUnit.MILLISECONDS))
-                .isEqualTo(0.0);
+            .isEqualTo(0.0);
         assertThat(registry.get("tomcat.global.request.max").timeGauge().value(TimeUnit.MILLISECONDS)).isEqualTo(0.0);
         assertThat(registry.get("tomcat.threads.config.max").gauge().value()).isGreaterThan(0.0);
         assertThat(registry.get("tomcat.threads.busy").gauge().value()).isGreaterThanOrEqualTo(0.0);
@@ -362,14 +362,14 @@ class TomcatMetricsTest {
 
     private void checkMbeansAfterRequests(long expectedSentBytes) {
         await().atMost(5, TimeUnit.SECONDS)
-                .until(() -> registry.get("tomcat.global.sent").functionCounter().count() == expectedSentBytes);
+            .until(() -> registry.get("tomcat.global.sent").functionCounter().count() == expectedSentBytes);
         assertThat(registry.get("tomcat.global.received").functionCounter().count()).isEqualTo(10.0);
         assertThat(registry.get("tomcat.global.error").functionCounter().count()).isEqualTo(1.0);
         assertThat(registry.get("tomcat.global.request").functionTimer().count()).isEqualTo(2.0);
         assertThat(registry.get("tomcat.global.request").functionTimer().totalTime(TimeUnit.MILLISECONDS))
-                .isGreaterThanOrEqualTo(PROCESSING_TIME_IN_MILLIS);
+            .isGreaterThanOrEqualTo(PROCESSING_TIME_IN_MILLIS);
         assertThat(registry.get("tomcat.global.request.max").timeGauge().value(TimeUnit.MILLISECONDS))
-                .isGreaterThanOrEqualTo(PROCESSING_TIME_IN_MILLIS);
+            .isGreaterThanOrEqualTo(PROCESSING_TIME_IN_MILLIS);
         assertThat(registry.get("tomcat.threads.config.max").gauge().value()).isGreaterThan(0.0);
         assertThat(registry.get("tomcat.threads.busy").gauge().value()).isGreaterThanOrEqualTo(0.0);
         assertThat(registry.get("tomcat.threads.current").gauge().value()).isGreaterThan(0.0);

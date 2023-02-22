@@ -155,17 +155,20 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
         long partitionSize = Math.min(config.batchSize(), TIMESERIES_PER_REQUEST_LIMIT);
 
         Collection<List<TimeSeries>> series = getMeters().stream()
-                .flatMap(meter -> meter.match(m -> createGauge(publishBatch, m), m -> createCounter(publishBatch, m),
-                        m -> createTimer(publishBatch, m), m -> createSummary(publishBatch, m),
-                        m -> createLongTaskTimer(publishBatch, m), m -> createTimeGauge(publishBatch, m),
-                        m -> createFunctionCounter(publishBatch, m), m -> createFunctionTimer(publishBatch, m),
-                        m -> createMeter(publishBatch, m)))
-                .collect(groupingBy(o -> partitioningCounter.incrementAndGet() / partitionSize)).values();
+            .flatMap(meter -> meter.match(m -> createGauge(publishBatch, m), m -> createCounter(publishBatch, m),
+                    m -> createTimer(publishBatch, m), m -> createSummary(publishBatch, m),
+                    m -> createLongTaskTimer(publishBatch, m), m -> createTimeGauge(publishBatch, m),
+                    m -> createFunctionCounter(publishBatch, m), m -> createFunctionTimer(publishBatch, m),
+                    m -> createMeter(publishBatch, m)))
+            .collect(groupingBy(o -> partitioningCounter.incrementAndGet() / partitionSize))
+            .values();
 
         for (List<TimeSeries> partition : series) {
             try {
                 CreateTimeSeriesRequest request = CreateTimeSeriesRequest.newBuilder()
-                        .setName("projects/" + config.projectId()).addAllTimeSeries(partition).build();
+                    .setName("projects/" + config.projectId())
+                    .addAllTimeSeries(partition)
+                    .build();
 
                 logger.trace("publishing batch to Stackdriver:{}{}", System.lineSeparator(), request);
 
@@ -180,18 +183,20 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
 
     // VisibleForTesting
     Stream<TimeSeries> createMeter(Batch batch, Meter m) {
-        return stream(m.measure().spliterator(), false).map(
-                ms -> batch.createTimeSeries(m, ms.getValue(), ms.getStatistic().getTagValueRepresentation(), GAUGE));
+        return stream(m.measure().spliterator(), false)
+            .map(ms -> batch.createTimeSeries(m, ms.getValue(), ms.getStatistic().getTagValueRepresentation(), GAUGE));
     }
 
     // VisibleForTesting
     Stream<TimeSeries> createFunctionTimer(Batch batch, FunctionTimer timer) {
         long count = (long) timer.count();
-        Distribution.Builder distribution = Distribution.newBuilder().setMean(timer.mean(getBaseTimeUnit()))
-                .setCount(count)
-                .setBucketOptions(Distribution.BucketOptions.newBuilder()
-                        .setExplicitBuckets(Distribution.BucketOptions.Explicit.newBuilder().addBounds(0.0).build()))
-                .addBucketCounts(0).addBucketCounts(count);
+        Distribution.Builder distribution = Distribution.newBuilder()
+            .setMean(timer.mean(getBaseTimeUnit()))
+            .setCount(count)
+            .setBucketOptions(Distribution.BucketOptions.newBuilder()
+                .setExplicitBuckets(Distribution.BucketOptions.Explicit.newBuilder().addBounds(0.0).build()))
+            .addBucketCounts(0)
+            .addBucketCounts(count);
 
         return Stream.of(batch.createTimeSeries(timer, distribution.build(), null, GAUGE));
     }
@@ -341,9 +346,9 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
                             createTimeSeries(histogramSupport, snapshot.count(), "count",
                                     config.useSemanticMetricTypes() ? CUMULATIVE : GAUGE)),
                     Arrays.stream(snapshot.percentileValues())
-                            .map(valueAtP -> createTimeSeries(histogramSupport,
-                                    timeDomain ? valueAtP.value(getBaseTimeUnit()) : valueAtP.value(),
-                                    "p" + DoubleFormat.wholeOrDecimal(valueAtP.percentile() * 100), GAUGE)));
+                        .map(valueAtP -> createTimeSeries(histogramSupport,
+                                timeDomain ? valueAtP.value(getBaseTimeUnit()) : valueAtP.value(),
+                                "p" + DoubleFormat.wholeOrDecimal(valueAtP.percentile() * 100), GAUGE)));
         }
 
         private TimeSeries createTimeSeries(Meter meter, TypedValue typedValue, MetricDescriptor.ValueType valueType,
@@ -355,16 +360,19 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
             String metricType = metricType(id, statistic);
 
             Map<String, String> metricLabels = getConventionTags(id).stream()
-                    .collect(Collectors.toMap(Tag::getKey, Tag::getValue));
+                .collect(Collectors.toMap(Tag::getKey, Tag::getValue));
 
             return TimeSeries.newBuilder()
-                    .setMetric(Metric.newBuilder().setType(metricType).putAllLabels(metricLabels).build())
-                    .setResource(MonitoredResource.newBuilder().setType(config.resourceType())
-                            .putLabels("project_id", config.projectId()).putAllLabels(config.resourceLabels()).build())
-                    .setMetricKind(metricKind) // https://cloud.google.com/monitoring/api/v3/metrics-details#metric-kinds
-                    .setValueType(valueType)
-                    .addPoints(Point.newBuilder().setInterval(interval(metricKind)).setValue(typedValue).build())
-                    .build();
+                .setMetric(Metric.newBuilder().setType(metricType).putAllLabels(metricLabels).build())
+                .setResource(MonitoredResource.newBuilder()
+                    .setType(config.resourceType())
+                    .putLabels("project_id", config.projectId())
+                    .putAllLabels(config.resourceLabels())
+                    .build())
+                .setMetricKind(metricKind) // https://cloud.google.com/monitoring/api/v3/metrics-details#metric-kinds
+                .setValueType(valueType)
+                .addPoints(Point.newBuilder().setInterval(interval(metricKind)).setValue(typedValue).build())
+                .build();
         }
 
         private void createMetricDescriptorIfNecessary(MetricServiceClient client, Meter.Id id,
@@ -377,14 +385,19 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
 
             final String metricType = metricType(id, statistic);
             if (!verifiedDescriptors.contains(metricType)) {
-                MetricDescriptor descriptor = MetricDescriptor.newBuilder().setType(metricType)
-                        .setDescription(id.getDescription() == null ? "" : id.getDescription())
-                        .setMetricKind(metricKind).setValueType(valueType).build();
+                MetricDescriptor descriptor = MetricDescriptor.newBuilder()
+                    .setType(metricType)
+                    .setDescription(id.getDescription() == null ? "" : id.getDescription())
+                    .setMetricKind(metricKind)
+                    .setValueType(valueType)
+                    .build();
 
                 ProjectName name = ProjectName.of(config.projectId());
 
                 CreateMetricDescriptorRequest request = CreateMetricDescriptorRequest.newBuilder()
-                        .setName(name.toString()).setMetricDescriptor(descriptor).build();
+                    .setName(name.toString())
+                    .setMetricDescriptor(descriptor)
+                    .build();
 
                 logger.trace("creating metric descriptor:{}{}", System.lineSeparator(), request);
 
@@ -407,12 +420,15 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
                     final String projectName = "projects/" + config.projectId();
 
                     final ListMetricDescriptorsRequest listMetricDescriptorsRequest = ListMetricDescriptorsRequest
-                            .newBuilder().setName(projectName).setFilter(filter).build();
+                        .newBuilder()
+                        .setName(projectName)
+                        .setFilter(filter)
+                        .build();
 
                     final MetricServiceClient.ListMetricDescriptorsPagedResponse listMetricDescriptorsPagedResponse = client
-                            .listMetricDescriptors(listMetricDescriptorsRequest);
+                        .listMetricDescriptors(listMetricDescriptorsRequest);
                     listMetricDescriptorsPagedResponse.iterateAll()
-                            .forEach(metricDescriptor -> verifiedDescriptors.add(metricDescriptor.getType()));
+                        .forEach(metricDescriptor -> verifiedDescriptors.add(metricDescriptor.getType()));
 
                     logger.trace(
                             "Pre populated verified descriptors for project: {}, with filter: {}, existing metrics: {}",
@@ -475,8 +491,8 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
             bucketCounts.add(Math.max(0, snapshot.count() - truncatedSum.get()));
 
             List<Double> bucketBoundaries = Arrays.stream(histogram)
-                    .map(countAtBucket -> timeDomain ? countAtBucket.bucket(getBaseTimeUnit()) : countAtBucket.bucket())
-                    .collect(toCollection(ArrayList::new));
+                .map(countAtBucket -> timeDomain ? countAtBucket.bucket(getBaseTimeUnit()) : countAtBucket.bucket())
+                .collect(toCollection(ArrayList::new));
 
             if (bucketBoundaries.size() != bucketCounts.size() - 1) {
                 bucketBoundaries = bucketBoundaries.subList(0, bucketCounts.size() - 1);
@@ -487,13 +503,15 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
                 bucketBoundaries.add(0.0);
             }
 
-            return Distribution.newBuilder().setMean(timeDomain ? snapshot.mean(getBaseTimeUnit()) : snapshot.mean())
-                    .setCount(snapshot.count())
-                    .setBucketOptions(Distribution.BucketOptions.newBuilder()
-                            .setExplicitBuckets(Distribution.BucketOptions.Explicit.newBuilder()
-                                    .addAllBounds(bucketBoundaries).build())
-                            .build())
-                    .addAllBucketCounts(bucketCounts).build();
+            return Distribution.newBuilder()
+                .setMean(timeDomain ? snapshot.mean(getBaseTimeUnit()) : snapshot.mean())
+                .setCount(snapshot.count())
+                .setBucketOptions(Distribution.BucketOptions.newBuilder()
+                    .setExplicitBuckets(
+                            Distribution.BucketOptions.Explicit.newBuilder().addAllBounds(bucketBoundaries).build())
+                    .build())
+                .addAllBucketCounts(bucketCounts)
+                .build();
         }
 
     }

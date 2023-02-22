@@ -80,7 +80,7 @@ public interface GangliaConfig extends StepRegistryConfig {
 
     default GMetric.UDPAddressingMode addressingMode() {
         return getEnum(this, GMetric.UDPAddressingMode.class, "addressingMode")
-                .orElse(GMetric.UDPAddressingMode.MULTICAST);
+            .orElse(GMetric.UDPAddressingMode.MULTICAST);
     }
 
     default int ttl() {

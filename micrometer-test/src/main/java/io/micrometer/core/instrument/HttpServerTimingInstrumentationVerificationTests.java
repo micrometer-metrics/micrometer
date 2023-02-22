@@ -91,15 +91,17 @@ public abstract class HttpServerTimingInstrumentationVerificationTests extends I
     @Test
     void uriTemplateIsTagged() throws Throwable {
         sender.get(baseUri + "hello/world").send();
-        checkTimer(rs -> rs.tags("uri", InstrumentedRoutes.TEMPLATED_ROUTE, "status", "200", "method", "GET").timer()
-                .count() == 1);
+        checkTimer(rs -> rs.tags("uri", InstrumentedRoutes.TEMPLATED_ROUTE, "status", "200", "method", "GET")
+            .timer()
+            .count() == 1);
     }
 
     @Test
     void redirect() throws Throwable {
         sender.get(baseUri + "foundRedirect").send();
-        checkTimer(rs -> rs.tags("uri", InstrumentedRoutes.REDIRECT, "status", "302", "method", "GET").timer()
-                .count() == 1);
+        checkTimer(rs -> rs.tags("uri", InstrumentedRoutes.REDIRECT, "status", "302", "method", "GET")
+            .timer()
+            .count() == 1);
     }
 
     @Test
@@ -111,8 +113,9 @@ public abstract class HttpServerTimingInstrumentationVerificationTests extends I
 
     private void checkTimer(Function<RequiredSearch, Boolean> timerCheck) {
         // jersey instrumentation finishes after response is sent, creating a race
-        await().atLeast(Duration.ofMillis(25)).atMost(Duration.ofMillis(150))
-                .until(() -> timerCheck.apply(getRegistry().get(timerName())));
+        await().atLeast(Duration.ofMillis(25))
+            .atMost(Duration.ofMillis(150))
+            .until(() -> timerCheck.apply(getRegistry().get(timerName())));
     }
 
     /**

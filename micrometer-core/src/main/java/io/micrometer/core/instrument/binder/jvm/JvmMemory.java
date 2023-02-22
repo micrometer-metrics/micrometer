@@ -30,8 +30,10 @@ class JvmMemory {
     }
 
     static Stream<MemoryPoolMXBean> getLongLivedHeapPools() {
-        return ManagementFactory.getMemoryPoolMXBeans().stream().filter(JvmMemory::isHeap)
-                .filter(mem -> isLongLivedPool(mem.getName()));
+        return ManagementFactory.getMemoryPoolMXBeans()
+            .stream()
+            .filter(JvmMemory::isHeap)
+            .filter(mem -> isLongLivedPool(mem.getName()));
     }
 
     static boolean isConcurrentPhase(String cause, String name) {

@@ -163,7 +163,7 @@ public abstract class AbstractTimerBuilder<B extends AbstractTimerBuilder<B>> {
     public B serviceLevelObjectives(@Nullable Duration... slos) {
         if (slos != null) {
             this.distributionConfigBuilder
-                    .serviceLevelObjectives(Arrays.stream(slos).mapToDouble(Duration::toNanos).toArray());
+                .serviceLevelObjectives(Arrays.stream(slos).mapToDouble(Duration::toNanos).toArray());
         }
         return (B) this;
     }

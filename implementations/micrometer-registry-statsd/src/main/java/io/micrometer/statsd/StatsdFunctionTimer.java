@@ -23,7 +23,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.ToDoubleFunction;
 import java.util.function.ToLongFunction;
 
-public class StatsdFunctionTimer<T> extends CumulativeFunctionTimer<T> implements StatsdPollable {
+public class StatsdFunctionTimer<T>extends CumulativeFunctionTimer<T> implements StatsdPollable {
 
     private final StatsdLineBuilder lineBuilder;
 

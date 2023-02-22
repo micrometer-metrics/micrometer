@@ -39,7 +39,10 @@ public final class DynatraceDistributionSummary extends AbstractDistributionSumm
     // Configuration that will set the Histogram in AbstractDistributionSummary to a
     // NoopHistogram.
     private static final DistributionStatisticConfig NOOP_HISTOGRAM_CONFIG = DistributionStatisticConfig.builder()
-            .percentilesHistogram(false).percentiles().serviceLevelObjectives().build();
+        .percentilesHistogram(false)
+        .percentiles()
+        .serviceLevelObjectives()
+        .build();
 
     private final DynatraceSummary summary = new DynatraceSummary();
 

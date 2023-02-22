@@ -35,7 +35,7 @@ class AppOpticsConfigTest {
         props.put("appoptics.batchSize", Integer.toString(AppOpticsConfig.MAX_BATCH_SIZE * 2));
 
         assertThat(config.validate().failures().stream().map(Validated.Invalid::getMessage))
-                .containsExactlyInAnyOrder("must be a valid URL", "is required");
+            .containsExactlyInAnyOrder("must be a valid URL", "is required");
     }
 
     @Test
@@ -65,7 +65,7 @@ class AppOpticsConfigTest {
         }.validate();
 
         assertThat(validate.failures().stream().map(Validated.Invalid::getMessage))
-                .containsOnly("cannot be greater than " + AppOpticsConfig.MAX_BATCH_SIZE);
+            .containsOnly("cannot be greater than " + AppOpticsConfig.MAX_BATCH_SIZE);
     }
 
 }

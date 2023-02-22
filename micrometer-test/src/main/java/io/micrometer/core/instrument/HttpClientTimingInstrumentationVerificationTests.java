@@ -106,8 +106,9 @@ public abstract class HttpClientTimingInstrumentationVerificationTests extends I
         String templatedPath = "/customers/{customerId}/carts/{cartId}";
         sendHttpRequest(HttpMethod.GET, null, URI.create(wmRuntimeInfo.getHttpBaseUrl()), templatedPath, "112", "5");
 
-        Timer timer = getRegistry().get(timerName()).tags("method", "GET", "status", "200", "uri", templatedPath)
-                .timer();
+        Timer timer = getRegistry().get(timerName())
+            .tags("method", "GET", "status", "200", "uri", templatedPath)
+            .timer();
         assertThat(timer.count()).isEqualTo(1);
         assertThat(timer.totalTime(TimeUnit.NANOSECONDS)).isPositive();
     }

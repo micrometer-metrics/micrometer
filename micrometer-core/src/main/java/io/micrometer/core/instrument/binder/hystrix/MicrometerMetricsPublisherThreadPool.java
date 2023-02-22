@@ -61,56 +61,71 @@ public class MicrometerMetricsPublisherThreadPool implements HystrixMetricsPubli
         metricsPublisherForThreadPool.initialize();
 
         Gauge.builder(metricName("threads.active.current.count"), metrics::getCurrentActiveCount)
-                .description("The approximate number of threads that are actively executing tasks.").tags(tags)
-                .register(meterRegistry);
+            .description("The approximate number of threads that are actively executing tasks.")
+            .tags(tags)
+            .register(meterRegistry);
 
         FunctionCounter
-                .builder(metricName("threads.cumulative.count"), metrics,
-                        HystrixThreadPoolMetrics::getCumulativeCountThreadsExecuted)
-                .description("Cumulative count of number of threads since the start of the application.")
-                .tags(tags.and(Tag.of("type", "executed"))).register(meterRegistry);
+            .builder(metricName("threads.cumulative.count"), metrics,
+                    HystrixThreadPoolMetrics::getCumulativeCountThreadsExecuted)
+            .description("Cumulative count of number of threads since the start of the application.")
+            .tags(tags.and(Tag.of("type", "executed")))
+            .register(meterRegistry);
 
         FunctionCounter
-                .builder(metricName("threads.cumulative.count"), metrics,
-                        HystrixThreadPoolMetrics::getCumulativeCountThreadsRejected)
-                .description("Cumulative count of number of threads since the start of the application.")
-                .tags(tags.and(Tag.of("type", "rejected"))).register(meterRegistry);
+            .builder(metricName("threads.cumulative.count"), metrics,
+                    HystrixThreadPoolMetrics::getCumulativeCountThreadsRejected)
+            .description("Cumulative count of number of threads since the start of the application.")
+            .tags(tags.and(Tag.of("type", "rejected")))
+            .register(meterRegistry);
 
         Gauge.builder(metricName("threads.pool.current.size"), metrics::getCurrentPoolSize)
-                .description("The current number of threads in the pool.").tags(tags).register(meterRegistry);
+            .description("The current number of threads in the pool.")
+            .tags(tags)
+            .register(meterRegistry);
 
         Gauge.builder(metricName("threads.largest.pool.current.size"), metrics::getCurrentLargestPoolSize)
-                .description("The largest number of threads that have ever simultaneously been in the pool.").tags(tags)
-                .register(meterRegistry);
+            .description("The largest number of threads that have ever simultaneously been in the pool.")
+            .tags(tags)
+            .register(meterRegistry);
 
         Gauge.builder(metricName("threads.max.pool.current.size"), metrics::getCurrentMaximumPoolSize)
-                .description("The maximum allowed number of threads.").tags(tags).register(meterRegistry);
+            .description("The maximum allowed number of threads.")
+            .tags(tags)
+            .register(meterRegistry);
 
         Gauge.builder(metricName("threads.core.pool.current.size"), metrics::getCurrentCorePoolSize)
-                .description("The core number of threads.").tags(tags).register(meterRegistry);
+            .description("The core number of threads.")
+            .tags(tags)
+            .register(meterRegistry);
 
         FunctionCounter
-                .builder(metricName("tasks.cumulative.count"), metrics,
-                        m -> m.getCurrentCompletedTaskCount().longValue())
-                .description("The approximate total number of tasks since the start of the application.")
-                .tags(tags.and(Tag.of("type", "completed"))).register(meterRegistry);
+            .builder(metricName("tasks.cumulative.count"), metrics, m -> m.getCurrentCompletedTaskCount().longValue())
+            .description("The approximate total number of tasks since the start of the application.")
+            .tags(tags.and(Tag.of("type", "completed")))
+            .register(meterRegistry);
 
         FunctionCounter.builder(metricName("tasks.cumulative.count"), metrics, m -> m.getCurrentTaskCount().longValue())
-                .description("The approximate total number of tasks since the start of the application.")
-                .tags(tags.and(Tag.of("type", "scheduled"))).register(meterRegistry);
+            .description("The approximate total number of tasks since the start of the application.")
+            .tags(tags.and(Tag.of("type", "scheduled")))
+            .register(meterRegistry);
 
         Gauge.builder(metricName("queue.current.size"), metrics::getCurrentQueueSize)
-                .description("Current size of BlockingQueue used by the thread-pool.").tags(tags)
-                .register(meterRegistry);
+            .description("Current size of BlockingQueue used by the thread-pool.")
+            .tags(tags)
+            .register(meterRegistry);
 
         Gauge.builder(metricName("queue.max.size"), () -> properties.maxQueueSize().get())
-                .description("Max size of BlockingQueue used by the thread-pool.").tags(tags).register(meterRegistry);
+            .description("Max size of BlockingQueue used by the thread-pool.")
+            .tags(tags)
+            .register(meterRegistry);
 
-        Gauge.builder(metricName("queue.rejection.threshold.size"),
-                () -> properties.queueSizeRejectionThreshold().get())
-                .description(
-                        "Artificial max size at which rejections will occur even if maxQueueSize has not been reached.")
-                .tags(tags).register(meterRegistry);
+        Gauge
+            .builder(metricName("queue.rejection.threshold.size"), () -> properties.queueSizeRejectionThreshold().get())
+            .description(
+                    "Artificial max size at which rejections will occur even if maxQueueSize has not been reached.")
+            .tags(tags)
+            .register(meterRegistry);
     }
 
     private static String metricName(String name) {

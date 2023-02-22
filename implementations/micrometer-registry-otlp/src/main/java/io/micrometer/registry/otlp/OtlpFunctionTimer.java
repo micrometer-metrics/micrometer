@@ -22,7 +22,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.ToDoubleFunction;
 import java.util.function.ToLongFunction;
 
-class OtlpFunctionTimer<T> extends CumulativeFunctionTimer<T> implements StartTimeAwareMeter {
+class OtlpFunctionTimer<T>extends CumulativeFunctionTimer<T> implements StartTimeAwareMeter {
 
     private final long startTimeNanos;
 

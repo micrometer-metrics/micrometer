@@ -127,17 +127,19 @@ class CompositeTimer extends AbstractCompositeMeter<Timer> implements Timer {
     @SuppressWarnings("ConstantConditions")
     @Override
     Timer registerNewMeter(MeterRegistry registry) {
-        Timer.Builder builder = Timer.builder(getId().getName()).tags(getId().getTagsAsIterable())
-                .description(getId().getDescription())
-                .maximumExpectedValue(
-                        Duration.ofNanos(distributionStatisticConfig.getMaximumExpectedValueAsDouble().longValue()))
-                .minimumExpectedValue(
-                        Duration.ofNanos(distributionStatisticConfig.getMinimumExpectedValueAsDouble().longValue()))
-                .publishPercentiles(distributionStatisticConfig.getPercentiles())
-                .publishPercentileHistogram(distributionStatisticConfig.isPercentileHistogram())
-                .distributionStatisticBufferLength(distributionStatisticConfig.getBufferLength())
-                .distributionStatisticExpiry(distributionStatisticConfig.getExpiry())
-                .percentilePrecision(distributionStatisticConfig.getPercentilePrecision()).pauseDetector(pauseDetector);
+        Timer.Builder builder = Timer.builder(getId().getName())
+            .tags(getId().getTagsAsIterable())
+            .description(getId().getDescription())
+            .maximumExpectedValue(
+                    Duration.ofNanos(distributionStatisticConfig.getMaximumExpectedValueAsDouble().longValue()))
+            .minimumExpectedValue(
+                    Duration.ofNanos(distributionStatisticConfig.getMinimumExpectedValueAsDouble().longValue()))
+            .publishPercentiles(distributionStatisticConfig.getPercentiles())
+            .publishPercentileHistogram(distributionStatisticConfig.isPercentileHistogram())
+            .distributionStatisticBufferLength(distributionStatisticConfig.getBufferLength())
+            .distributionStatisticExpiry(distributionStatisticConfig.getExpiry())
+            .percentilePrecision(distributionStatisticConfig.getPercentilePrecision())
+            .pauseDetector(pauseDetector);
 
         final double[] sloNanos = distributionStatisticConfig.getServiceLevelObjectiveBoundaries();
         if (sloNanos != null) {

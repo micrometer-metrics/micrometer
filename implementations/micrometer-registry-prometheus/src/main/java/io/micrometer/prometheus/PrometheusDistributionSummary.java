@@ -51,8 +51,13 @@ public class PrometheusDistributionSummary extends AbstractDistributionSummary {
 
     PrometheusDistributionSummary(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig,
             double scale, HistogramFlavor histogramFlavor, @Nullable HistogramExemplarSampler exemplarSampler) {
-        super(id, clock, DistributionStatisticConfig.builder().percentilesHistogram(false).serviceLevelObjectives()
-                .build().merge(distributionStatisticConfig), scale, false);
+        super(id, clock,
+                DistributionStatisticConfig.builder()
+                    .percentilesHistogram(false)
+                    .serviceLevelObjectives()
+                    .build()
+                    .merge(distributionStatisticConfig),
+                scale, false);
 
         this.histogramFlavor = histogramFlavor;
         this.max = new TimeWindowMax(clock, distributionStatisticConfig);

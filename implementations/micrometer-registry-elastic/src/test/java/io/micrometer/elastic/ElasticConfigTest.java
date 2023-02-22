@@ -35,7 +35,7 @@ class ElasticConfigTest {
         props.put("elastic.indexDateFormat", "invalid");
 
         assertThat(config.validate().failures().stream().map(Validated.Invalid::getMessage))
-                .containsExactlyInAnyOrder("must be a valid URL", "invalid date format");
+            .containsExactlyInAnyOrder("must be a valid URL", "invalid date format");
     }
 
     @Test
@@ -53,7 +53,7 @@ class ElasticConfigTest {
         }.validate();
 
         assertThat(validate.failures().stream().map(Validated.Invalid::getMessage))
-                .containsExactly("invalid date format");
+            .containsExactly("invalid date format");
     }
 
     @Test

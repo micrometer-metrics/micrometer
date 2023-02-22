@@ -17,7 +17,7 @@ buildscript {
         classpath 'io.github.gradle-nexus:publish-plugin:1.1.0'
         classpath 'me.champeau.gradle:japicmp-gradle-plugin:0.4.1'
         classpath 'de.undercouch:gradle-download-task:5.2.1'
-        classpath 'io.spring.javaformat:spring-javaformat-gradle-plugin:0.0.35'
+        classpath 'io.spring.javaformat:spring-javaformat-gradle-plugin:0.0.36'
 
         constraints {
             classpath('org.ow2.asm:asm:7.3.1') {

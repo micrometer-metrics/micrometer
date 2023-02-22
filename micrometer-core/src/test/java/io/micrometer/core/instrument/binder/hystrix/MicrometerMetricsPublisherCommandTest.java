@@ -39,10 +39,12 @@ class MicrometerMetricsPublisherCommandTest {
     @BeforeEach
     void init() {
         Hystrix.reset();
-        propertiesSetter = HystrixCommandProperties.Setter().withCircuitBreakerEnabled(true)
-                .withCircuitBreakerRequestVolumeThreshold(20).withCircuitBreakerSleepWindowInMilliseconds(10_000)
-                .withExecutionIsolationStrategy(HystrixCommandProperties.ExecutionIsolationStrategy.THREAD)
-                .withExecutionTimeoutInMilliseconds(100);
+        propertiesSetter = HystrixCommandProperties.Setter()
+            .withCircuitBreakerEnabled(true)
+            .withCircuitBreakerRequestVolumeThreshold(20)
+            .withCircuitBreakerSleepWindowInMilliseconds(10_000)
+            .withExecutionIsolationStrategy(HystrixCommandProperties.ExecutionIsolationStrategy.THREAD)
+            .withExecutionTimeoutInMilliseconds(100);
     }
 
     @AfterEach
@@ -55,7 +57,7 @@ class MicrometerMetricsPublisherCommandTest {
         HystrixMetricsPublisher metricsPublisher = HystrixPlugins.getInstance().getMetricsPublisher();
         HystrixPlugins.reset();
         HystrixPlugins.getInstance()
-                .registerMetricsPublisher(new MicrometerMetricsPublisher(registry, metricsPublisher));
+            .registerMetricsPublisher(new MicrometerMetricsPublisher(registry, metricsPublisher));
         HystrixCommandKey key = HystrixCommandKey.Factory.asKey("MicrometerCOMMAND-A");
 
         for (int i = 0; i < 3; i++) {
@@ -94,7 +96,7 @@ class MicrometerMetricsPublisherCommandTest {
         HystrixMetricsPublisher metricsPublisher = HystrixPlugins.getInstance().getMetricsPublisher();
         HystrixPlugins.reset();
         HystrixPlugins.getInstance()
-                .registerMetricsPublisher(new MicrometerMetricsPublisher(registry, metricsPublisher));
+            .registerMetricsPublisher(new MicrometerMetricsPublisher(registry, metricsPublisher));
         HystrixCommandKey key = HystrixCommandKey.Factory.asKey("MicrometerCOMMAND-B");
 
         propertiesSetter.withCircuitBreakerForceOpen(true);

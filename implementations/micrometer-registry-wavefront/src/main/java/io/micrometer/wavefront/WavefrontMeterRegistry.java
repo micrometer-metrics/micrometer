@@ -305,7 +305,7 @@ public class WavefrontMeterRegistry extends PushMeterRegistry {
 
     private Map<String, String> getTagsAsMap(Meter.Id id) {
         return getConventionTags(id).stream()
-                .collect(Collectors.toMap(Tag::getKey, Tag::getValue, (tag1, tag2) -> tag2));
+            .collect(Collectors.toMap(Tag::getKey, Tag::getValue, (tag1, tag2) -> tag2));
     }
 
     private Meter.Id idWithSuffix(Meter.Id id, String suffix) {
@@ -319,8 +319,10 @@ public class WavefrontMeterRegistry extends PushMeterRegistry {
 
     @Override
     protected DistributionStatisticConfig defaultHistogramConfig() {
-        return DistributionStatisticConfig.builder().expiry(config.step()).build()
-                .merge(DistributionStatisticConfig.DEFAULT);
+        return DistributionStatisticConfig.builder()
+            .expiry(config.step())
+            .build()
+            .merge(DistributionStatisticConfig.DEFAULT);
     }
 
     @Override
@@ -352,7 +354,8 @@ public class WavefrontMeterRegistry extends PushMeterRegistry {
      */
     public static WavefrontClient.Builder getDefaultSenderBuilder(WavefrontConfig config) {
         return new WavefrontClient.Builder(getWavefrontReportingUri(config), config.apiToken())
-                .batchSize(config.batchSize()).flushInterval((int) config.step().toMillis(), TimeUnit.MILLISECONDS);
+            .batchSize(config.batchSize())
+            .flushInterval((int) config.step().toMillis(), TimeUnit.MILLISECONDS);
     }
 
     public static Builder builder(WavefrontConfig config) {

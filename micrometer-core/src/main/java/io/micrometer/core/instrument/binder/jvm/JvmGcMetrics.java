@@ -116,27 +116,37 @@ public class JvmGcMetrics implements MeterBinder, AutoCloseable {
         gcNotificationListener = new GcMetricsNotificationListener(registry);
 
         double maxLongLivedPoolBytes = getLongLivedHeapPools()
-                .mapToDouble(mem -> getUsageValue(mem, MemoryUsage::getMax)).sum();
+            .mapToDouble(mem -> getUsageValue(mem, MemoryUsage::getMax))
+            .sum();
 
         maxDataSize = new AtomicLong((long) maxLongLivedPoolBytes);
-        Gauge.builder("jvm.gc.max.data.size", maxDataSize, AtomicLong::get).tags(tags)
-                .description("Max size of long-lived heap memory pool").baseUnit(BaseUnits.BYTES).register(registry);
+        Gauge.builder("jvm.gc.max.data.size", maxDataSize, AtomicLong::get)
+            .tags(tags)
+            .description("Max size of long-lived heap memory pool")
+            .baseUnit(BaseUnits.BYTES)
+            .register(registry);
 
         liveDataSize = new AtomicLong();
 
-        Gauge.builder("jvm.gc.live.data.size", liveDataSize, AtomicLong::get).tags(tags)
-                .description("Size of long-lived heap memory pool after reclamation").baseUnit(BaseUnits.BYTES)
-                .register(registry);
+        Gauge.builder("jvm.gc.live.data.size", liveDataSize, AtomicLong::get)
+            .tags(tags)
+            .description("Size of long-lived heap memory pool after reclamation")
+            .baseUnit(BaseUnits.BYTES)
+            .register(registry);
 
-        allocatedBytes = Counter.builder("jvm.gc.memory.allocated").tags(tags).baseUnit(BaseUnits.BYTES).description(
-                "Incremented for an increase in the size of the (young) heap memory pool after one GC to before the next")
-                .register(registry);
+        allocatedBytes = Counter.builder("jvm.gc.memory.allocated")
+            .tags(tags)
+            .baseUnit(BaseUnits.BYTES)
+            .description(
+                    "Incremented for an increase in the size of the (young) heap memory pool after one GC to before the next")
+            .register(registry);
 
-        promotedBytes = (isGenerationalGc) ? Counter.builder("jvm.gc.memory.promoted").tags(tags)
-                .baseUnit(BaseUnits.BYTES)
-                .description(
-                        "Count of positive increases in the size of the old generation memory pool before GC to after GC")
-                .register(registry) : null;
+        promotedBytes = (isGenerationalGc) ? Counter.builder("jvm.gc.memory.promoted")
+            .tags(tags)
+            .baseUnit(BaseUnits.BYTES)
+            .description(
+                    "Count of positive increases in the size of the old generation memory pool before GC to after GC")
+            .register(registry) : null;
 
         allocationPoolSizeAfter = new AtomicLong(0L);
 
@@ -146,7 +156,7 @@ public class JvmGcMetrics implements MeterBinder, AutoCloseable {
             }
             NotificationEmitter notificationEmitter = (NotificationEmitter) gcBean;
             notificationEmitter.addNotificationListener(gcNotificationListener, notification -> notification.getType()
-                    .equals(GarbageCollectionNotificationInfo.GARBAGE_COLLECTION_NOTIFICATION), null);
+                .equals(GarbageCollectionNotificationInfo.GARBAGE_COLLECTION_NOTIFICATION), null);
             notificationListenerCleanUpRunnables.add(() -> {
                 try {
                     notificationEmitter.removeNotificationListener(gcNotificationListener);
@@ -175,14 +185,20 @@ public class JvmGcMetrics implements MeterBinder, AutoCloseable {
             GcInfo gcInfo = notificationInfo.getGcInfo();
             long duration = gcInfo.getDuration();
             if (isConcurrentPhase(gcCause, notificationInfo.getGcName())) {
-                Timer.builder("jvm.gc.concurrent.phase.time").tags(tags).tags("action", gcAction, "cause", gcCause)
-                        .description("Time spent in concurrent phase").register(registry)
-                        .record(duration, TimeUnit.MILLISECONDS);
+                Timer.builder("jvm.gc.concurrent.phase.time")
+                    .tags(tags)
+                    .tags("action", gcAction, "cause", gcCause)
+                    .description("Time spent in concurrent phase")
+                    .register(registry)
+                    .record(duration, TimeUnit.MILLISECONDS);
             }
             else {
-                Timer.builder("jvm.gc.pause").tags(tags).tags("action", gcAction, "cause", gcCause)
-                        .description("Time spent in GC pause").register(registry)
-                        .record(duration, TimeUnit.MILLISECONDS);
+                Timer.builder("jvm.gc.pause")
+                    .tags(tags)
+                    .tags("action", gcAction, "cause", gcCause)
+                    .description("Time spent in GC pause")
+                    .register(registry)
+                    .record(duration, TimeUnit.MILLISECONDS);
             }
 
             final Map<String, MemoryUsage> before = gcInfo.getMemoryUsageBeforeGc();
@@ -190,8 +206,9 @@ public class JvmGcMetrics implements MeterBinder, AutoCloseable {
 
             countPoolSizeDelta(before, after);
 
-            final long longLivedBefore = longLivedPoolNames.stream().mapToLong(pool -> before.get(pool).getUsed())
-                    .sum();
+            final long longLivedBefore = longLivedPoolNames.stream()
+                .mapToLong(pool -> before.get(pool).getUsed())
+                .sum();
             final long longLivedAfter = longLivedPoolNames.stream().mapToLong(pool -> after.get(pool).getUsed()).sum();
             if (isGenerationalGc) {
                 final long delta = longLivedAfter - longLivedBefore;
@@ -242,8 +259,12 @@ public class JvmGcMetrics implements MeterBinder, AutoCloseable {
     }
 
     private boolean isGenerationalGcConfigured() {
-        return ManagementFactory.getMemoryPoolMXBeans().stream().filter(JvmMemory::isHeap)
-                .map(MemoryPoolMXBean::getName).filter(name -> !name.contains("tenured")).count() > 1;
+        return ManagementFactory.getMemoryPoolMXBeans()
+            .stream()
+            .filter(JvmMemory::isHeap)
+            .map(MemoryPoolMXBean::getName)
+            .filter(name -> !name.contains("tenured"))
+            .count() > 1;
     }
 
     private static boolean isManagementExtensionsPresent() {

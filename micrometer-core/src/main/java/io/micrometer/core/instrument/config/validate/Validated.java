@@ -41,7 +41,7 @@ import static java.util.stream.StreamSupport.stream;
  * @since 1.5.0
  */
 @Incubating(since = "1.5.0")
-public interface Validated<T> extends Iterable<Validated<T>> {
+public interface Validated<T>extends Iterable<Validated<T>> {
 
     boolean isValid();
 
@@ -50,8 +50,9 @@ public interface Validated<T> extends Iterable<Validated<T>> {
     }
 
     default List<Invalid<?>> failures() {
-        return stream(spliterator(), false).filter(Validated::isInvalid).map(v -> (Invalid<T>) v)
-                .collect(Collectors.toList());
+        return stream(spliterator(), false).filter(Validated::isInvalid)
+            .map(v -> (Invalid<T>) v)
+            .collect(Collectors.toList());
     }
 
     static Secret validSecret(String property, String value) {
@@ -389,8 +390,10 @@ public interface Validated<T> extends Iterable<Validated<T>> {
         @NonNull
         @Override
         public Iterator<Validated<Object>> iterator() {
-            return Stream.concat(stream(left.spliterator(), false).map(v -> v.map(o -> (Object) o)),
-                    stream(right.spliterator(), false).map(v -> v.map(o -> (Object) o))).iterator();
+            return Stream
+                .concat(stream(left.spliterator(), false).map(v -> v.map(o -> (Object) o)),
+                        stream(right.spliterator(), false).map(v -> v.map(o -> (Object) o)))
+                .iterator();
         }
 
     }

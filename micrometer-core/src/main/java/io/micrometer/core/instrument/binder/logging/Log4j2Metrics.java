@@ -77,24 +77,28 @@ public class Log4j2Metrics implements MeterBinder, AutoCloseable {
         LoggerConfig rootLoggerConfig = configuration.getRootLogger();
         rootLoggerConfig.addFilter(createMetricsFilterAndStart(registry, rootLoggerConfig));
 
-        loggerContext.getConfiguration().getLoggers().values().stream()
-                .filter(loggerConfig -> !loggerConfig.isAdditive()).forEach(loggerConfig -> {
-                    if (loggerConfig == rootLoggerConfig) {
-                        return;
-                    }
-                    Filter logFilter = loggerConfig.getFilter();
+        loggerContext.getConfiguration()
+            .getLoggers()
+            .values()
+            .stream()
+            .filter(loggerConfig -> !loggerConfig.isAdditive())
+            .forEach(loggerConfig -> {
+                if (loggerConfig == rootLoggerConfig) {
+                    return;
+                }
+                Filter logFilter = loggerConfig.getFilter();
 
-                    if ((logFilter instanceof CompositeFilter
-                            && Arrays.stream(((CompositeFilter) logFilter).getFiltersArray())
-                                    .anyMatch(innerFilter -> innerFilter instanceof MetricsFilter))) {
-                        return;
-                    }
+                if ((logFilter instanceof CompositeFilter
+                        && Arrays.stream(((CompositeFilter) logFilter).getFiltersArray())
+                            .anyMatch(innerFilter -> innerFilter instanceof MetricsFilter))) {
+                    return;
+                }
 
-                    if (logFilter instanceof MetricsFilter) {
-                        return;
-                    }
-                    loggerConfig.addFilter(createMetricsFilterAndStart(registry, loggerConfig));
-                });
+                if (logFilter instanceof MetricsFilter) {
+                    return;
+                }
+                loggerConfig.addFilter(createMetricsFilterAndStart(registry, loggerConfig));
+            });
 
         loggerContext.updateLoggers(configuration);
     }
@@ -113,12 +117,16 @@ public class Log4j2Metrics implements MeterBinder, AutoCloseable {
             LoggerConfig rootLoggerConfig = configuration.getRootLogger();
             metricsFilters.forEach(rootLoggerConfig::removeFilter);
 
-            loggerContext.getConfiguration().getLoggers().values().stream()
-                    .filter(loggerConfig -> !loggerConfig.isAdditive()).forEach(loggerConfig -> {
-                        if (loggerConfig != rootLoggerConfig) {
-                            metricsFilters.forEach(loggerConfig::removeFilter);
-                        }
-                    });
+            loggerContext.getConfiguration()
+                .getLoggers()
+                .values()
+                .stream()
+                .filter(loggerConfig -> !loggerConfig.isAdditive())
+                .forEach(loggerConfig -> {
+                    if (loggerConfig != rootLoggerConfig) {
+                        metricsFilters.forEach(loggerConfig::removeFilter);
+                    }
+                });
 
             loggerContext.updateLoggers(configuration);
             metricsFilters.forEach(MetricsFilter::stop);
@@ -145,23 +153,47 @@ public class Log4j2Metrics implements MeterBinder, AutoCloseable {
 
         MetricsFilter(MeterRegistry registry, Iterable<Tag> tags, boolean isAsyncLogger) {
             this.isAsyncLogger = isAsyncLogger;
-            fatalCounter = Counter.builder(METER_NAME).tags(tags).tags("level", "fatal")
-                    .description("Number of fatal level log events").baseUnit(BaseUnits.EVENTS).register(registry);
+            fatalCounter = Counter.builder(METER_NAME)
+                .tags(tags)
+                .tags("level", "fatal")
+                .description("Number of fatal level log events")
+                .baseUnit(BaseUnits.EVENTS)
+                .register(registry);
 
-            errorCounter = Counter.builder(METER_NAME).tags(tags).tags("level", "error")
-                    .description("Number of error level log events").baseUnit(BaseUnits.EVENTS).register(registry);
+            errorCounter = Counter.builder(METER_NAME)
+                .tags(tags)
+                .tags("level", "error")
+                .description("Number of error level log events")
+                .baseUnit(BaseUnits.EVENTS)
+                .register(registry);
 
-            warnCounter = Counter.builder(METER_NAME).tags(tags).tags("level", "warn")
-                    .description("Number of warn level log events").baseUnit(BaseUnits.EVENTS).register(registry);
+            warnCounter = Counter.builder(METER_NAME)
+                .tags(tags)
+                .tags("level", "warn")
+                .description("Number of warn level log events")
+                .baseUnit(BaseUnits.EVENTS)
+                .register(registry);
 
-            infoCounter = Counter.builder(METER_NAME).tags(tags).tags("level", "info")
-                    .description("Number of info level log events").baseUnit(BaseUnits.EVENTS).register(registry);
+            infoCounter = Counter.builder(METER_NAME)
+                .tags(tags)
+                .tags("level", "info")
+                .description("Number of info level log events")
+                .baseUnit(BaseUnits.EVENTS)
+                .register(registry);
 
-            debugCounter = Counter.builder(METER_NAME).tags(tags).tags("level", "debug")
-                    .description("Number of debug level log events").baseUnit(BaseUnits.EVENTS).register(registry);
+            debugCounter = Counter.builder(METER_NAME)
+                .tags(tags)
+                .tags("level", "debug")
+                .description("Number of debug level log events")
+                .baseUnit(BaseUnits.EVENTS)
+                .register(registry);
 
-            traceCounter = Counter.builder(METER_NAME).tags(tags).tags("level", "trace")
-                    .description("Number of trace level log events").baseUnit(BaseUnits.EVENTS).register(registry);
+            traceCounter = Counter.builder(METER_NAME)
+                .tags(tags)
+                .tags("level", "trace")
+                .description("Number of trace level log events")
+                .baseUnit(BaseUnits.EVENTS)
+                .register(registry);
         }
 
         @Override
