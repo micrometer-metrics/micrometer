@@ -31,7 +31,7 @@ import java.util.function.ToDoubleFunction;
  * @author Jon Schneider
  * @author Johnny Lim
  */
-public class DefaultGauge<T>extends AbstractMeter implements Gauge {
+public class DefaultGauge<T> extends AbstractMeter implements Gauge {
 
     private static final WarnThenDebugLogger logger = new WarnThenDebugLogger(DefaultGauge.class);
 

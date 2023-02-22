@@ -36,7 +36,7 @@ import java.util.function.ToLongFunction;
  * @author Jon Schneider
  * @author Johnny Lim
  */
-public class DropwizardFunctionTimer<T>extends AbstractMeter implements FunctionTimer {
+public class DropwizardFunctionTimer<T> extends AbstractMeter implements FunctionTimer {
 
     private final WeakReference<T> ref;
 

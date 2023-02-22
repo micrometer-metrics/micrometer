@@ -27,7 +27,7 @@ import java.util.function.ToDoubleFunction;
 /**
  * @author Jon Schneider
  */
-public class DropwizardFunctionCounter<T>extends AbstractMeter implements FunctionCounter {
+public class DropwizardFunctionCounter<T> extends AbstractMeter implements FunctionCounter {
 
     private final WeakReference<T> ref;
 
