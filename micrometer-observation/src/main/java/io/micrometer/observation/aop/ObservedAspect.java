@@ -136,7 +136,7 @@ public class ObservedAspect {
             Observation.Scope scope = observation.openScope();
             try {
                 return ((CompletionStage<?>) pjp.proceed())
-                        .whenComplete((result, error) -> stopObservation(observation, scope, error));
+                    .whenComplete((result, error) -> stopObservation(observation, scope, error));
             }
             catch (Throwable error) {
                 stopObservation(observation, scope, error);

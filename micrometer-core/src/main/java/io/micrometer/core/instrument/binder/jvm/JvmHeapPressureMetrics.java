@@ -77,8 +77,9 @@ public class JvmHeapPressureMetrics implements MeterBinder, AutoCloseable {
         this.lookback = lookback;
         this.gcPauseSum = new TimeWindowSum((int) lookback.dividedBy(testEvery.toMillis()).toMillis(), testEvery);
 
-        longLivedPoolNames = JvmMemory.getLongLivedHeapPools().map(MemoryPoolMXBean::getName)
-                .collect(Collectors.toSet());
+        longLivedPoolNames = JvmMemory.getLongLivedHeapPools()
+            .map(MemoryPoolMXBean::getName)
+            .collect(Collectors.toSet());
 
         monitor();
     }
@@ -86,19 +87,24 @@ public class JvmHeapPressureMetrics implements MeterBinder, AutoCloseable {
     @Override
     public void bindTo(@NonNull MeterRegistry registry) {
         if (!longLivedPoolNames.isEmpty()) {
-            Gauge.builder("jvm.memory.usage.after.gc", lastLongLivedPoolUsageAfterGc, AtomicReference::get).tags(tags)
-                    .tag("area", "heap").tag("pool", "long-lived")
-                    .description(
-                            "The percentage of long-lived heap pool used after the last GC event, in the range [0..1]")
-                    .baseUnit(BaseUnits.PERCENT).register(registry);
+            Gauge.builder("jvm.memory.usage.after.gc", lastLongLivedPoolUsageAfterGc, AtomicReference::get)
+                .tags(tags)
+                .tag("area", "heap")
+                .tag("pool", "long-lived")
+                .description("The percentage of long-lived heap pool used after the last GC event, in the range [0..1]")
+                .baseUnit(BaseUnits.PERCENT)
+                .register(registry);
         }
 
         Gauge.builder("jvm.gc.overhead", gcPauseSum, pauseSum -> {
             double overIntervalMillis = Math.min(System.nanoTime() - startOfMonitoring, lookback.toNanos()) / 1e6;
             return gcPauseSum.poll() / overIntervalMillis;
-        }).tags(tags).description(
-                "An approximation of the percent of CPU time used by GC activities over the last lookback period or since monitoring began, whichever is shorter, in the range [0..1]")
-                .baseUnit(BaseUnits.PERCENT).register(registry);
+        })
+            .tags(tags)
+            .description(
+                    "An approximation of the percent of CPU time used by GC activities over the last lookback period or since monitoring began, whichever is shorter, in the range [0..1]")
+            .baseUnit(BaseUnits.PERCENT)
+            .register(registry);
     }
 
     private void monitor() {
@@ -121,15 +127,16 @@ public class JvmHeapPressureMetrics implements MeterBinder, AutoCloseable {
                 Map<String, MemoryUsage> after = gcInfo.getMemoryUsageAfterGc();
 
                 if (!longLivedPoolNames.isEmpty()) {
-                    final long usedAfter = longLivedPoolNames.stream().mapToLong(pool -> after.get(pool).getUsed())
-                            .sum();
+                    final long usedAfter = longLivedPoolNames.stream()
+                        .mapToLong(pool -> after.get(pool).getUsed())
+                        .sum();
                     double maxAfter = longLivedPoolNames.stream().mapToLong(pool -> after.get(pool).getMax()).sum();
                     lastLongLivedPoolUsageAfterGc.set(usedAfter / maxAfter);
                 }
             };
             NotificationEmitter notificationEmitter = (NotificationEmitter) mbean;
             notificationEmitter.addNotificationListener(notificationListener, notification -> notification.getType()
-                    .equals(GarbageCollectionNotificationInfo.GARBAGE_COLLECTION_NOTIFICATION), null);
+                .equals(GarbageCollectionNotificationInfo.GARBAGE_COLLECTION_NOTIFICATION), null);
             notificationListenerCleanUpRunnables.add(() -> {
                 try {
                     notificationEmitter.removeNotificationListener(notificationListener);

@@ -32,7 +32,7 @@ class DatadogConfigTest {
     @Test
     void invalid() {
         assertThat(config.validate().failures().stream().map(Validated.Invalid::getMessage))
-                .containsExactly("is required");
+            .containsExactly("is required");
     }
 
     @Test

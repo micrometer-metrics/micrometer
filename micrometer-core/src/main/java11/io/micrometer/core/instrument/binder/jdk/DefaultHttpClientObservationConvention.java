@@ -45,10 +45,10 @@ public class DefaultHttpClientObservationConvention implements HttpClientObserva
         KeyValues keyValues = KeyValues.of(
                 HttpClientObservationDocumentation.LowCardinalityKeys.METHOD.withValue(httpRequest.method()),
                 HttpClientObservationDocumentation.LowCardinalityKeys.URI
-                        .withValue(getUriTag(httpRequest, context.getResponse(), context.getUriMapper())));
+                    .withValue(getUriTag(httpRequest, context.getResponse(), context.getUriMapper())));
         if (context.getResponse() != null) {
             keyValues = keyValues.and(HttpClientObservationDocumentation.LowCardinalityKeys.STATUS
-                    .withValue(String.valueOf(context.getResponse().statusCode())));
+                .withValue(String.valueOf(context.getResponse().statusCode())));
         }
         return keyValues;
     }

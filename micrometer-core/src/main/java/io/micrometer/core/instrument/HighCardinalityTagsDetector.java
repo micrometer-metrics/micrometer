@@ -107,7 +107,7 @@ public class HighCardinalityTagsDetector implements AutoCloseable {
         this.delay = delay;
         this.meterNameConsumer = meterNameConsumer != null ? meterNameConsumer : this::logWarning;
         this.scheduledExecutorService = Executors
-                .newSingleThreadScheduledExecutor(new NamedThreadFactory("high-cardinality-tags-detector"));
+            .newSingleThreadScheduledExecutor(new NamedThreadFactory("high-cardinality-tags-detector"));
     }
 
     /**

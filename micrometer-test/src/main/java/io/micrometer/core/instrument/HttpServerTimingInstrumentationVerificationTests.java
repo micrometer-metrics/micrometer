@@ -130,16 +130,18 @@ public abstract class HttpServerTimingInstrumentationVerificationTests extends I
     @EnumSource(TestType.class)
     void uriTemplateIsTagged(TestType testType) throws Throwable {
         sender.get(baseUri + "hello/world").send();
-        checkTimer(rs -> rs.tags("uri", InstrumentedRoutes.TEMPLATED_ROUTE, "status", "200", "method", "GET").timer()
-                .count() == 1);
+        checkTimer(rs -> rs.tags("uri", InstrumentedRoutes.TEMPLATED_ROUTE, "status", "200", "method", "GET")
+            .timer()
+            .count() == 1);
     }
 
     @ParameterizedTest
     @EnumSource(TestType.class)
     void redirect(TestType testType) throws Throwable {
         sender.get(baseUri + "foundRedirect").send();
-        checkTimer(rs -> rs.tags("uri", InstrumentedRoutes.REDIRECT, "status", "302", "method", "GET").timer()
-                .count() == 1);
+        checkTimer(rs -> rs.tags("uri", InstrumentedRoutes.REDIRECT, "status", "302", "method", "GET")
+            .timer()
+            .count() == 1);
     }
 
     @ParameterizedTest
@@ -161,9 +163,9 @@ public abstract class HttpServerTimingInstrumentationVerificationTests extends I
         assumeTrue(testType == TestType.METRICS_VIA_OBSERVATIONS_WITH_METRICS_HANDLER);
 
         assertThat(getObservationRegistry()).hasSingleObservationThat()
-                .has(new Condition<>(
-                        context -> "someValue".contentEquals((CharSequence) context.getRequired("Test-Propagation")),
-                        "has Test-Propagation in context with value 'someValue'"));
+            .has(new Condition<>(
+                    context -> "someValue".contentEquals((CharSequence) context.getRequired("Test-Propagation")),
+                    "has Test-Propagation in context with value 'someValue'"));
     }
 
     @Override
@@ -194,8 +196,9 @@ public abstract class HttpServerTimingInstrumentationVerificationTests extends I
 
     private void checkTimer(Function<RequiredSearch, Boolean> timerCheck) {
         // jersey instrumentation finishes after response is sent, creating a race
-        await().atLeast(Duration.ofMillis(25)).atMost(Duration.ofMillis(150))
-                .until(() -> timerCheck.apply(getRegistry().get(timerName())));
+        await().atLeast(Duration.ofMillis(25))
+            .atMost(Duration.ofMillis(150))
+            .until(() -> timerCheck.apply(getRegistry().get(timerName())));
     }
 
     /**

@@ -40,8 +40,9 @@ class ObservationDocumentationTests {
         ObservationRegistry registry = observationRegistry();
 
         thenThrownBy(() -> TestConventionObservation.NOT_OVERRIDDEN_METHODS.observation(null, null,
-                Observation.Context::new, registry)).isInstanceOf(IllegalStateException.class)
-                        .hasMessageContaining("You've decided to use convention based naming yet this observation");
+                Observation.Context::new, registry))
+            .isInstanceOf(IllegalStateException.class)
+            .hasMessageContaining("You've decided to use convention based naming yet this observation");
     }
 
     @Test
@@ -50,8 +51,8 @@ class ObservationDocumentationTests {
 
         thenThrownBy(
                 () -> TestConventionObservation.OVERRIDDEN.observation(null, null, Observation.Context::new, registry))
-                        .isInstanceOf(NullPointerException.class).hasMessageContaining(
-                                "You have not provided a default convention in the Observation factory method");
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("You have not provided a default convention in the Observation factory method");
     }
 
     @Test
@@ -59,8 +60,9 @@ class ObservationDocumentationTests {
         ObservationRegistry registry = observationRegistry();
 
         thenThrownBy(() -> TestConventionObservation.OVERRIDDEN.observation(null, new SecondObservationConvention(),
-                Observation.Context::new, registry)).isInstanceOf(IllegalArgumentException.class)
-                        .hasMessageContaining("but you have provided an incompatible one of type");
+                Observation.Context::new, registry))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("but you have provided an incompatible one of type");
     }
 
     @Test
@@ -69,7 +71,9 @@ class ObservationDocumentationTests {
         Observation.Context context = new Observation.Context();
 
         TestConventionObservation.OVERRIDDEN
-                .observation(null, new ThirdObservationConvention(), () -> context, registry).start().stop();
+            .observation(null, new ThirdObservationConvention(), () -> context, registry)
+            .start()
+            .stop();
 
         then(context.getName()).isEqualTo("three");
         then(context.getContextualName()).isEqualTo("contextual");
@@ -83,7 +87,9 @@ class ObservationDocumentationTests {
         Observation.Context context = new Observation.Context();
 
         TestConventionObservation.CONTEXTUAL_NAME
-                .observation(null, new ContextualObservationConvention(), () -> context, registry).start().stop();
+            .observation(null, new ContextualObservationConvention(), () -> context, registry)
+            .start()
+            .stop();
 
         then(context.getName()).isEqualTo("technical name");
         then(context.getContextualName()).isEqualTo("contextual name");
@@ -96,7 +102,9 @@ class ObservationDocumentationTests {
         Observation.Context context = new Observation.Context();
 
         TestConventionObservation.CONTEXTUAL_NAME
-                .observation(null, new FirstObservationConvention(), () -> context, registry).start().stop();
+            .observation(null, new FirstObservationConvention(), () -> context, registry)
+            .start()
+            .stop();
 
         then(context.getName()).isEqualTo("global name");
         then(context.getContextualName()).isEqualTo("global contextual name");
@@ -112,7 +120,9 @@ class ObservationDocumentationTests {
         Observation.Context context = new Observation.Context();
 
         TestConventionObservation.CONTEXTUAL_NAME
-                .observation(null, new FirstObservationConvention(), () -> context, registry).start().stop();
+            .observation(null, new FirstObservationConvention(), () -> context, registry)
+            .start()
+            .stop();
 
         then(context.getName()).isEqualTo("global name");
         then(context.getContextualName()).isEqualTo("global contextual name");

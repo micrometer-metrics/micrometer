@@ -108,8 +108,8 @@ class DynatraceMetricDefinition {
         Count;
 
         private static Map<String, DynatraceUnit> UNITS_MAPPING = Collections
-                .unmodifiableMap(Stream.of(DynatraceUnit.values())
-                        .collect(Collectors.toMap(k -> k.toString().toLowerCase() + "s", Function.identity())));
+            .unmodifiableMap(Stream.of(DynatraceUnit.values())
+                .collect(Collectors.toMap(k -> k.toString().toLowerCase() + "s", Function.identity())));
 
         @Nullable
         static DynatraceUnit fromPlural(@Nullable String plural) {

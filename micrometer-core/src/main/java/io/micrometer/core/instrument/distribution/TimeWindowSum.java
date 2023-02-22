@@ -28,7 +28,7 @@ import java.util.concurrent.atomic.AtomicLong;
 public class TimeWindowSum {
 
     private static final AtomicIntegerFieldUpdater<TimeWindowSum> rotatingUpdater = AtomicIntegerFieldUpdater
-            .newUpdater(TimeWindowSum.class, "rotating");
+        .newUpdater(TimeWindowSum.class, "rotating");
 
     private final long durationBetweenRotatesMillis;
 

@@ -64,7 +64,8 @@ public class CompareHistogramsWithOtherLibraries {
         public void setup() {
             final Random r = new Random(1234567891L);
             dataIterator = Iterators.cycle(Stream.generate(() -> Math.round(Math.exp(2.0 + r.nextGaussian())))
-                    .limit(1048576).collect(Collectors.toList()));
+                .limit(1048576)
+                .collect(Collectors.toList()));
         }
 
     }
@@ -145,11 +146,15 @@ public class CompareHistogramsWithOtherLibraries {
 
         @Setup(Level.Trial)
         public void setup() {
-            double[] micrometerBuckets = Doubles.toArray(
-                    PercentileHistogramBuckets.buckets(DistributionStatisticConfig.builder().minimumExpectedValue(0.0)
-                            .maximumExpectedValue(Double.POSITIVE_INFINITY).percentilesHistogram(true).build()));
-            histogram = io.prometheus.client.Histogram.build("histogram", "A histogram").buckets(micrometerBuckets)
-                    .create();
+            double[] micrometerBuckets = Doubles
+                .toArray(PercentileHistogramBuckets.buckets(DistributionStatisticConfig.builder()
+                    .minimumExpectedValue(0.0)
+                    .maximumExpectedValue(Double.POSITIVE_INFINITY)
+                    .percentilesHistogram(true)
+                    .build()));
+            histogram = io.prometheus.client.Histogram.build("histogram", "A histogram")
+                .buckets(micrometerBuckets)
+                .create();
         }
 
         @TearDown(Level.Iteration)

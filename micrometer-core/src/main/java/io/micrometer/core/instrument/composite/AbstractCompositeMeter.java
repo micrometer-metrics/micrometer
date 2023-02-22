@@ -26,7 +26,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-abstract class AbstractCompositeMeter<T extends Meter> extends AbstractMeter implements CompositeMeter {
+abstract class AbstractCompositeMeter<T extends Meter>extends AbstractMeter implements CompositeMeter {
 
     private final AtomicBoolean childrenGuard = new AtomicBoolean();
 

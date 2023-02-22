@@ -58,21 +58,29 @@ public class JvmThreadMetrics implements MeterBinder {
     public void bindTo(MeterRegistry registry) {
         ThreadMXBean threadBean = ManagementFactory.getThreadMXBean();
 
-        Gauge.builder("jvm.threads.peak", threadBean, ThreadMXBean::getPeakThreadCount).tags(tags)
-                .description("The peak live thread count since the Java virtual machine started or peak was reset")
-                .baseUnit(BaseUnits.THREADS).register(registry);
+        Gauge.builder("jvm.threads.peak", threadBean, ThreadMXBean::getPeakThreadCount)
+            .tags(tags)
+            .description("The peak live thread count since the Java virtual machine started or peak was reset")
+            .baseUnit(BaseUnits.THREADS)
+            .register(registry);
 
-        Gauge.builder("jvm.threads.daemon", threadBean, ThreadMXBean::getDaemonThreadCount).tags(tags)
-                .description("The current number of live daemon threads").baseUnit(BaseUnits.THREADS)
-                .register(registry);
+        Gauge.builder("jvm.threads.daemon", threadBean, ThreadMXBean::getDaemonThreadCount)
+            .tags(tags)
+            .description("The current number of live daemon threads")
+            .baseUnit(BaseUnits.THREADS)
+            .register(registry);
 
-        Gauge.builder("jvm.threads.live", threadBean, ThreadMXBean::getThreadCount).tags(tags)
-                .description("The current number of live threads including both daemon and non-daemon threads")
-                .baseUnit(BaseUnits.THREADS).register(registry);
+        Gauge.builder("jvm.threads.live", threadBean, ThreadMXBean::getThreadCount)
+            .tags(tags)
+            .description("The current number of live threads including both daemon and non-daemon threads")
+            .baseUnit(BaseUnits.THREADS)
+            .register(registry);
 
-        FunctionCounter.builder("jvm.threads.started", threadBean, ThreadMXBean::getTotalStartedThreadCount).tags(tags)
-                .description("The total number of application threads started in the JVM").baseUnit(BaseUnits.THREADS)
-                .register(registry);
+        FunctionCounter.builder("jvm.threads.started", threadBean, ThreadMXBean::getTotalStartedThreadCount)
+            .tags(tags)
+            .description("The total number of application threads started in the JVM")
+            .baseUnit(BaseUnits.THREADS)
+            .register(registry);
 
         try {
             threadBean.getAllThreadIds();

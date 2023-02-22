@@ -176,11 +176,11 @@ public interface ObservationDocumentation {
             throw new IllegalStateException("You've decided to use convention based naming yet this observation ["
                     + getClass() + "] has not defined any default convention");
         }
-        if (!getDefaultConvention()
-                .isAssignableFrom(Objects
-                        .requireNonNull(defaultConvention,
-                                "You have not provided a default convention in the Observation factory method")
-                        .getClass())) {
+        if (!getDefaultConvention().isAssignableFrom(
+                Objects
+                    .requireNonNull(defaultConvention,
+                            "You have not provided a default convention in the Observation factory method")
+                    .getClass())) {
             throw new IllegalArgumentException("Observation [" + getClass()
                     + "] defined default convention to be of type [" + getDefaultConvention()
                     + "] but you have provided an incompatible one of type [" + defaultConvention.getClass() + "]");

@@ -30,17 +30,20 @@ class JdkHttpClientTimingInstrumentationVerificationTests
 
     @Override
     protected HttpClient clientInstrumentedWithMetrics() {
-        return MicrometerHttpClient.instrumentationBuilder(
-                HttpClient.newBuilder().connectTimeout(Duration.ofMillis(100)).build(), getRegistry()).build();
+        return MicrometerHttpClient
+            .instrumentationBuilder(HttpClient.newBuilder().connectTimeout(Duration.ofMillis(100)).build(),
+                    getRegistry())
+            .build();
     }
 
     @Nullable
     @Override
     protected HttpClient clientInstrumentedWithObservations() {
         return MicrometerHttpClient
-                .instrumentationBuilder(HttpClient.newBuilder().connectTimeout(Duration.ofMillis(100)).build(),
-                        getRegistry())
-                .observationRegistry(getObservationRegistry()).build();
+            .instrumentationBuilder(HttpClient.newBuilder().connectTimeout(Duration.ofMillis(100)).build(),
+                    getRegistry())
+            .observationRegistry(getObservationRegistry())
+            .build();
     }
 
     @Override
@@ -63,11 +66,11 @@ class JdkHttpClientTimingInstrumentationVerificationTests
     private HttpRequest makeRequest(HttpMethod method, @Nullable byte[] body, URI baseUri, String templatedPath,
             String... pathVariables) {
         return HttpRequest.newBuilder()
-                .method(method.name(),
-                        body != null ? HttpRequest.BodyPublishers.ofByteArray(body)
-                                : HttpRequest.BodyPublishers.noBody())
-                .uri(URI.create(baseUri + substitutePathVariables(templatedPath, pathVariables)))
-                .setHeader(MicrometerHttpClient.URI_PATTERN_HEADER, templatedPath).build();
+            .method(method.name(),
+                    body != null ? HttpRequest.BodyPublishers.ofByteArray(body) : HttpRequest.BodyPublishers.noBody())
+            .uri(URI.create(baseUri + substitutePathVariables(templatedPath, pathVariables)))
+            .setHeader(MicrometerHttpClient.URI_PATTERN_HEADER, templatedPath)
+            .build();
     }
 
 }

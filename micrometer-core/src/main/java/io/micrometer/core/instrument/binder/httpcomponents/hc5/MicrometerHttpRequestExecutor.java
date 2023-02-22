@@ -76,10 +76,11 @@ public class MicrometerHttpRequestExecutor extends HttpRequestExecutor {
             Function<HttpRequest, String> uriMapper, Iterable<Tag> extraTags, boolean exportTagsForRoute,
             ObservationRegistry observationRegistry, @Nullable ApacheHttpClientObservationConvention convention) {
         super(waitForContinue, null, null);
-        this.registry = Optional.ofNullable(registry).orElseThrow(
-                () -> new IllegalArgumentException("registry is required but has been initialized with null"));
-        this.uriMapper = Optional.ofNullable(uriMapper).orElseThrow(
-                () -> new IllegalArgumentException("uriMapper is required but has been initialized with null"));
+        this.registry = Optional.ofNullable(registry)
+            .orElseThrow(() -> new IllegalArgumentException("registry is required but has been initialized with null"));
+        this.uriMapper = Optional.ofNullable(uriMapper)
+            .orElseThrow(
+                    () -> new IllegalArgumentException("uriMapper is required but has been initialized with null"));
         this.extraTags = Optional.ofNullable(extraTags).orElse(Collections.emptyList());
         this.exportTagsForRoute = exportTagsForRoute;
         this.observationRegistry = observationRegistry;
@@ -100,9 +101,9 @@ public class MicrometerHttpRequestExecutor extends HttpRequestExecutor {
     public ClassicHttpResponse execute(ClassicHttpRequest request, HttpClientConnection conn, HttpContext context)
             throws IOException, HttpException {
         ObservationOrTimerCompatibleInstrumentation<ApacheHttpClientContext> sample = ObservationOrTimerCompatibleInstrumentation
-                .start(registry, observationRegistry,
-                        () -> new ApacheHttpClientContext(request, context, uriMapper, exportTagsForRoute), convention,
-                        DefaultApacheHttpClientObservationConvention.INSTANCE);
+            .start(registry, observationRegistry,
+                    () -> new ApacheHttpClientContext(request, context, uriMapper, exportTagsForRoute), convention,
+                    DefaultApacheHttpClientObservationConvention.INSTANCE);
         String statusCodeOrError = "UNKNOWN";
 
         try {
@@ -118,11 +119,12 @@ public class MicrometerHttpRequestExecutor extends HttpRequestExecutor {
         }
         finally {
             String status = statusCodeOrError;
-            sample.stop(METER_NAME, "Duration of Apache HttpClient request execution", () -> Tags
-                    .of("method", DefaultApacheHttpClientObservationConvention.INSTANCE.getMethodString(request), "uri",
-                            uriMapper.apply(request), "status", status)
-                    .and(exportTagsForRoute ? HttpContextUtils.generateTagsForRoute(context) : Tags.empty())
-                    .and(extraTags));
+            sample.stop(METER_NAME, "Duration of Apache HttpClient request execution",
+                    () -> Tags
+                        .of("method", DefaultApacheHttpClientObservationConvention.INSTANCE.getMethodString(request),
+                                "uri", uriMapper.apply(request), "status", status)
+                        .and(exportTagsForRoute ? HttpContextUtils.generateTagsForRoute(context) : Tags.empty())
+                        .and(extraTags));
         }
     }
 

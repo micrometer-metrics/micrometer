@@ -31,11 +31,15 @@ public class FunctionCounterSample {
 
         AtomicInteger n = new AtomicInteger();
 
-        FunctionCounter.builder("my.fcounter", n, AtomicInteger::get).baseUnit("happiness")
-                .description("A counter derived from a monotonically increasing value").register(registry);
+        FunctionCounter.builder("my.fcounter", n, AtomicInteger::get)
+            .baseUnit("happiness")
+            .description("A counter derived from a monotonically increasing value")
+            .register(registry);
 
-        Counter counter = Counter.builder("my.counter").baseUnit("happiness").description("A normal counter")
-                .register(registry);
+        Counter counter = Counter.builder("my.counter")
+            .baseUnit("happiness")
+            .description("A normal counter")
+            .register(registry);
 
         Flux.interval(Duration.ofMillis(10)).doOnEach(i -> {
             n.incrementAndGet();

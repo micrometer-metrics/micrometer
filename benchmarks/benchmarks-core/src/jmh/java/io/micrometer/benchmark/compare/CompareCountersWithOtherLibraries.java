@@ -123,8 +123,11 @@ public class CompareCountersWithOtherLibraries {
         @Setup(Level.Trial)
         public void setup() {
             counter = io.prometheus.client.Counter.build().name("counter").help("A counter").create();
-            counterWithTags = io.prometheus.client.Counter.build().name("counter")
-                    .help("Counter with two tags declared").labelNames("key1", "key2").register();
+            counterWithTags = io.prometheus.client.Counter.build()
+                .name("counter")
+                .help("Counter with two tags declared")
+                .labelNames("key1", "key2")
+                .register();
         }
 
     }
@@ -174,7 +177,8 @@ public class CompareCountersWithOtherLibraries {
 
     public static void main(String[] args) throws RunnerException {
         Options opt = new OptionsBuilder().include(CompareCountersWithOtherLibraries.class.getSimpleName())
-                .addProfiler(GCProfiler.class).build();
+            .addProfiler(GCProfiler.class)
+            .build();
         new Runner(opt).run();
     }
 

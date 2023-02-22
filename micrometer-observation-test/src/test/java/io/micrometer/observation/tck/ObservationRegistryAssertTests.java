@@ -44,21 +44,21 @@ class ObservationRegistryAssertTests {
 
         try (Observation.Scope scope = observation.openScope()) {
             assertThatThrownBy(() -> registryAssert.doesNotHaveAnyRemainingCurrentObservation())
-                    .isInstanceOf(AssertionError.class)
-                    .hasMessageContaining("Expected no current observation in the registry but found one");
+                .isInstanceOf(AssertionError.class)
+                .hasMessageContaining("Expected no current observation in the registry but found one");
         }
     }
 
     @Test
     void noAssertionErrorThrownWhenNoCurrentObservation() {
         assertThatCode(() -> this.registryAssert.doesNotHaveAnyRemainingCurrentObservation())
-                .doesNotThrowAnyException();
+            .doesNotThrowAnyException();
     }
 
     @Test
     void assertionErrorThrownWhenRemainingObservationNotFound() {
         assertThatThrownBy(() -> registryAssert.hasRemainingCurrentObservation()).isInstanceOf(AssertionError.class)
-                .hasMessageContaining("Expected an observation in the registry but found none");
+            .hasMessageContaining("Expected an observation in the registry but found none");
     }
 
     @Test
@@ -75,8 +75,8 @@ class ObservationRegistryAssertTests {
         Observation observation = Observation.createNotStarted("foo", this.registry);
 
         assertThatThrownBy(() -> this.registryAssert.hasRemainingCurrentObservationSameAs(observation))
-                .isInstanceOf(AssertionError.class)
-                .hasMessageContaining("Expected current observation in the registry to be same as <{name=foo");
+            .isInstanceOf(AssertionError.class)
+            .hasMessageContaining("Expected current observation in the registry to be same as <{name=foo");
     }
 
     @Test
@@ -85,7 +85,7 @@ class ObservationRegistryAssertTests {
 
         try (Observation.Scope scope = observation.openScope()) {
             assertThatCode(() -> this.registryAssert.hasRemainingCurrentObservationSameAs(observation))
-                    .doesNotThrowAnyException();
+                .doesNotThrowAnyException();
         }
     }
 
@@ -95,8 +95,8 @@ class ObservationRegistryAssertTests {
 
         try (Observation.Scope scope = observation.openScope()) {
             assertThatThrownBy(() -> this.registryAssert.doesNotHaveRemainingCurrentObservationSameAs(observation))
-                    .isInstanceOf(AssertionError.class)
-                    .hasMessageContaining("Expected current observation in the registry to be different than");
+                .isInstanceOf(AssertionError.class)
+                .hasMessageContaining("Expected current observation in the registry to be different than");
         }
     }
 
@@ -105,7 +105,7 @@ class ObservationRegistryAssertTests {
         Observation noop = Observation.start("noop", registry);
 
         assertThatCode(() -> this.registryAssert.doesNotHaveRemainingCurrentObservationSameAs(noop))
-                .doesNotThrowAnyException();
+            .doesNotThrowAnyException();
     }
 
     @Test
@@ -114,8 +114,9 @@ class ObservationRegistryAssertTests {
         try (Observation.Scope scope = o.openScope()) {
             assertThatExceptionOfType(AssertionError.class).isThrownBy(() -> {
                 this.registryAssert.doesNotHaveAnyRemainingCurrentScope();
-            }).withMessage(
-                    "Expected no current Scope in the registry but found one tied to observation named <active>");
+            })
+                .withMessage(
+                        "Expected no current Scope in the registry but found one tied to observation named <active>");
         }
     }
 
@@ -129,7 +130,7 @@ class ObservationRegistryAssertTests {
     @Test
     void failsHasRemainingCurrentScope() {
         assertThatExceptionOfType(AssertionError.class).isThrownBy(() -> this.registryAssert.hasRemainingCurrentScope())
-                .withMessage("Expected a current Scope in the registry but found none");
+            .withMessage("Expected a current Scope in the registry but found none");
     }
 
     @Test
@@ -148,9 +149,10 @@ class ObservationRegistryAssertTests {
         scope1.close();
         try (Observation.Scope scope2 = o2.openScope()) {
             assertThatExceptionOfType(AssertionError.class)
-                    .isThrownBy(() -> this.registryAssert.hasRemainingCurrentScopeSameAs(scope1)).withMessage(
-                            "Expected current Scope in the registry to be same as a provided Scope tied to observation named <old>"
-                                    + " but was a different one (tied to observation named <new>)");
+                .isThrownBy(() -> this.registryAssert.hasRemainingCurrentScopeSameAs(scope1))
+                .withMessage(
+                        "Expected current Scope in the registry to be same as a provided Scope tied to observation named <old>"
+                                + " but was a different one (tied to observation named <new>)");
         }
     }
 
@@ -161,9 +163,10 @@ class ObservationRegistryAssertTests {
         closed.close();
 
         assertThatExceptionOfType(AssertionError.class)
-                .isThrownBy(() -> this.registryAssert.hasRemainingCurrentScopeSameAs(closed)).withMessage(
-                        "Expected current Scope in the registry to be same as a provided Scope tied to observation named <old>"
-                                + " but there was no current scope");
+            .isThrownBy(() -> this.registryAssert.hasRemainingCurrentScopeSameAs(closed))
+            .withMessage(
+                    "Expected current Scope in the registry to be same as a provided Scope tied to observation named <old>"
+                            + " but there was no current scope");
     }
 
     @Test
@@ -182,9 +185,9 @@ class ObservationRegistryAssertTests {
         scope1.close();
         try (Observation.Scope scope2 = o2.openScope()) {
             assertThatExceptionOfType(AssertionError.class)
-                    .isThrownBy(() -> this.registryAssert.doesNotHaveRemainingCurrentScopeSameAs(scope2))
-                    .withMessage("Expected current Scope in the registry to be different from a provided Scope "
-                            + "tied to observation named <new> but was the same");
+                .isThrownBy(() -> this.registryAssert.doesNotHaveRemainingCurrentScopeSameAs(scope2))
+                .withMessage("Expected current Scope in the registry to be different from a provided Scope "
+                        + "tied to observation named <new> but was the same");
         }
     }
 
@@ -196,7 +199,7 @@ class ObservationRegistryAssertTests {
         scope1.close();
         try (Observation.Scope scope2 = o2.openScope()) {
             assertThatNoException()
-                    .isThrownBy(() -> this.registryAssert.doesNotHaveRemainingCurrentScopeSameAs(scope1));
+                .isThrownBy(() -> this.registryAssert.doesNotHaveRemainingCurrentScopeSameAs(scope1));
         }
     }
 

@@ -147,8 +147,9 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
                 return;
             }
 
-            connect(HttpSender.Method.PUT, uri).withJsonContent(getTemplateBody()).send().onError(
-                    response -> logger.error("failed to add metrics template to elastic: {}", response.body()));
+            connect(HttpSender.Method.PUT, uri).withJsonContent(getTemplateBody())
+                .send()
+                .onError(response -> logger.error("failed to add metrics template to elastic: {}", response.body()));
         }
         catch (Throwable e) {
             logger.error("could not create index in elastic", e);
@@ -183,10 +184,12 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
         for (List<Meter> batch : MeterPartition.partition(this, config.batchSize())) {
             try {
                 String requestBody = batch.stream()
-                        .map(m -> m.match(this::writeGauge, this::writeCounter, this::writeTimer, this::writeSummary,
-                                this::writeLongTaskTimer, this::writeTimeGauge, this::writeFunctionCounter,
-                                this::writeFunctionTimer, this::writeMeter))
-                        .filter(Optional::isPresent).map(Optional::get).collect(joining("\n", "", "\n"));
+                    .map(m -> m.match(this::writeGauge, this::writeCounter, this::writeTimer, this::writeSummary,
+                            this::writeLongTaskTimer, this::writeTimeGauge, this::writeFunctionCounter,
+                            this::writeFunctionTimer, this::writeMeter))
+                    .filter(Optional::isPresent)
+                    .map(Optional::get)
+                    .collect(joining("\n", "", "\n"));
                 connect(HttpSender.Method.POST, uri).withJsonContent(requestBody).send().onSuccess(response -> {
                     int numberOfSentItems = batch.size();
                     String responseBody = response.body();
@@ -363,14 +366,25 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
         String timestamp = generateTimestamp();
         String name = getConventionName(meter.getId());
         String type = meter.getId().getType().toString().toLowerCase();
-        sb.append("{\"").append(config.timestampFieldName()).append("\":\"").append(timestamp).append('"')
-                .append(",\"name\":\"").append(escapeJson(name)).append('"').append(",\"type\":\"").append(type)
-                .append('"');
+        sb.append("{\"")
+            .append(config.timestampFieldName())
+            .append("\":\"")
+            .append(timestamp)
+            .append('"')
+            .append(",\"name\":\"")
+            .append(escapeJson(name))
+            .append('"')
+            .append(",\"type\":\"")
+            .append(type)
+            .append('"');
 
         List<Tag> tags = getConventionTags(meter.getId());
         for (Tag tag : tags) {
-            sb.append(",\"").append(escapeJson(tag.getKey())).append("\":\"").append(escapeJson(tag.getValue()))
-                    .append('"');
+            sb.append(",\"")
+                .append(escapeJson(tag.getKey()))
+                .append("\":\"")
+                .append(escapeJson(tag.getValue()))
+                .append('"');
         }
 
         consumer.accept(sb);

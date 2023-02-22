@@ -45,7 +45,7 @@ class CloudWatchConfigTest {
         props.put("cloudwatch.batchSize", Integer.toString(CloudWatchConfig.MAX_BATCH_SIZE * 2));
 
         assertThat(config.validate().failures().stream().map(Validated.Invalid::getMessage))
-                .containsExactly("is required");
+            .containsExactly("is required");
 
         // automatically clamped back down to max batch size
         assertThat(config.batchSize()).isEqualTo(CloudWatchConfig.MAX_BATCH_SIZE);
@@ -71,7 +71,7 @@ class CloudWatchConfigTest {
         }.validate();
 
         assertThat(validate.failures().stream().map(Validated.Invalid::getMessage))
-                .containsOnly("cannot be greater than " + CloudWatchConfig.MAX_BATCH_SIZE);
+            .containsOnly("cannot be greater than " + CloudWatchConfig.MAX_BATCH_SIZE);
     }
 
     @Test

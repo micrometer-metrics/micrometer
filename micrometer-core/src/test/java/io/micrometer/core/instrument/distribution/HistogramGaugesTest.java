@@ -55,8 +55,10 @@ class HistogramGaugesTest {
             }
         });
 
-        Timer.builder("my.timer").serviceLevelObjectives(Duration.ofMillis(1)).publishPercentiles(0.95)
-                .register(registry);
+        Timer.builder("my.timer")
+            .serviceLevelObjectives(Duration.ofMillis(1))
+            .publishPercentiles(0.95)
+            .register(registry);
 
         registry.get("MYPREFIX.my.timer.percentile").tag("phi", "0.95").gauge();
         registry.get("MYPREFIX.my.timer.histogram").tag("le", "0.001").gauge();
@@ -66,11 +68,13 @@ class HistogramGaugesTest {
     void histogramsContainLongMaxValue() {
         MeterRegistry registry = new SimpleMeterRegistry();
 
-        Timer timer = Timer.builder("my.timer").serviceLevelObjectives(Duration.ofNanos(Long.MAX_VALUE))
-                .register(registry);
+        Timer timer = Timer.builder("my.timer")
+            .serviceLevelObjectives(Duration.ofNanos(Long.MAX_VALUE))
+            .register(registry);
 
         DistributionSummary distributionSummary = DistributionSummary.builder("my.distribution")
-                .serviceLevelObjectives(Double.POSITIVE_INFINITY).register(registry);
+            .serviceLevelObjectives(Double.POSITIVE_INFINITY)
+            .register(registry);
 
         HistogramGauges distributionGauges = HistogramGauges.registerWithCommonFormat(distributionSummary, registry);
 

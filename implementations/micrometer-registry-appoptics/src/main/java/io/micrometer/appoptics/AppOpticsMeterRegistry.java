@@ -174,8 +174,8 @@ public class AppOpticsMeterRegistry extends StepMeterRegistry {
         }
         StringJoiner joiner = new StringJoiner(",");
         for (int i = 0; i < statistics.size(); i++) {
-            joiner.add(
-                    write(meter.getId().withTag(statistics.get(i)), null, Fields.Value.tag(), decimal(values.get(i))));
+            joiner
+                .add(write(meter.getId().withTag(statistics.get(i)), null, Fields.Value.tag(), decimal(values.get(i))));
         }
         return Optional.of(joiner.toString());
     }
@@ -240,9 +240,9 @@ public class AppOpticsMeterRegistry extends StepMeterRegistry {
     private Optional<String> writeSummary(DistributionSummary summary) {
         HistogramSnapshot snapshot = summary.takeSnapshot();
         if (snapshot.count() > 0) {
-            return Optional.of(write(summary.getId(), "distributionSummary", Fields.Count.tag(),
-                    decimal(summary.count()), Fields.Sum.tag(), decimal(summary.totalAmount()), Fields.Max.tag(),
-                    decimal(summary.max())));
+            return Optional
+                .of(write(summary.getId(), "distributionSummary", Fields.Count.tag(), decimal(summary.count()),
+                        Fields.Sum.tag(), decimal(summary.totalAmount()), Fields.Max.tag(), decimal(summary.max())));
         }
         return Optional.empty();
     }
@@ -258,8 +258,10 @@ public class AppOpticsMeterRegistry extends StepMeterRegistry {
 
     private String write(Meter.Id id, @Nullable String type, String... statistics) {
         StringBuilder sb = new StringBuilder();
-        sb.append("{\"name\":\"").append(escapeJson(getConventionName(id))).append("\",\"period\":")
-                .append(config.step().getSeconds());
+        sb.append("{\"name\":\"")
+            .append(escapeJson(getConventionName(id)))
+            .append("\",\"period\":")
+            .append(config.step().getSeconds());
 
         if (!Fields.Value.tag().equals(statistics[0])) {
             sb.append(",\"attributes\":{\"aggregate\":false}");

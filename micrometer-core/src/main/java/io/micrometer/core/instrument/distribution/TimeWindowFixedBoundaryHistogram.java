@@ -60,7 +60,7 @@ public class TimeWindowFixedBoundaryHistogram
         this.cumulativeBucketCounts = cumulativeBucketCounts;
 
         NavigableSet<Double> histogramBuckets = distributionStatisticConfig
-                .getHistogramBuckets(supportsAggregablePercentiles);
+            .getHistogramBuckets(supportsAggregablePercentiles);
 
         Boolean percentileHistogram = distributionStatisticConfig.isPercentileHistogram();
         if (percentileHistogram != null && percentileHistogram) {

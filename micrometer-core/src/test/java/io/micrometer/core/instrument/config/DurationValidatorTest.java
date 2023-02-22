@@ -50,7 +50,7 @@ class DurationValidatorTest {
         assertThat(validate("dur", "PT10H").get()).isEqualByComparingTo(Duration.ofHours(10));
         assertThat(validate("dur", "P2D").get()).isEqualByComparingTo(Duration.ofDays(2));
         assertThat(validate("dur", "P2DT3H4M").get())
-                .isEqualByComparingTo(Duration.ofDays(2).plus(Duration.ofHours(3)).plus(Duration.ofMinutes(4)));
+            .isEqualByComparingTo(Duration.ofDays(2).plus(Duration.ofHours(3)).plus(Duration.ofMinutes(4)));
     }
 
 }

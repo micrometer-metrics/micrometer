@@ -38,7 +38,10 @@ public final class DynatraceTimer extends AbstractTimer implements DynatraceSumm
 
     // Configuration that will set the Histogram in AbstractTimer to a NoopHistogram.
     private static final DistributionStatisticConfig NOOP_HISTOGRAM_CONFIG = DistributionStatisticConfig.builder()
-            .percentilesHistogram(false).percentiles().serviceLevelObjectives().build();
+        .percentilesHistogram(false)
+        .percentiles()
+        .serviceLevelObjectives()
+        .build();
 
     private final DynatraceSummary summary = new DynatraceSummary();
 

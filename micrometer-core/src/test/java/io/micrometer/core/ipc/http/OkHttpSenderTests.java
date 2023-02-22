@@ -37,7 +37,7 @@ class OkHttpSenderTests {
         stubFor(any(urlEqualTo("/metrics")).willReturn(ok().withFixedDelay(5)));
 
         assertThatExceptionOfType(SocketTimeoutException.class)
-                .isThrownBy(() -> httpSender.post(wmInfo.getHttpBaseUrl() + "/metrics").send());
+            .isThrownBy(() -> httpSender.post(wmInfo.getHttpBaseUrl() + "/metrics").send());
     }
 
     @Test

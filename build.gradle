@@ -12,7 +12,6 @@ buildscript {
 
     dependencies {
         classpath 'gradle.plugin.com.hierynomus.gradle.plugins:license-gradle-plugin:0.16.1'
-        classpath 'com.netflix.nebula:gradle-info-plugin:12.0.1'
         classpath 'com.netflix.nebula:nebula-release-plugin:17.1.0'
         classpath 'com.netflix.nebula:nebula-publishing-plugin:20.0.0'
         classpath 'com.netflix.nebula:nebula-project-plugin:10.1.2'
@@ -20,7 +19,7 @@ buildscript {
         classpath 'io.github.gradle-nexus:publish-plugin:1.1.0'
         classpath 'me.champeau.gradle:japicmp-gradle-plugin:0.4.1'
         classpath 'de.undercouch:gradle-download-task:5.2.1'
-        classpath 'io.spring.javaformat:spring-javaformat-gradle-plugin:0.0.35'
+        classpath 'io.spring.javaformat:spring-javaformat-gradle-plugin:0.0.36'
         classpath 'com.diffplug.spotless:spotless-plugin-gradle:6.15.0'
 
         constraints {

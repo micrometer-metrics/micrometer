@@ -73,8 +73,10 @@ class WavefrontMeterRegistryTest {
 
     private final WavefrontSender wavefrontSender = spy(WavefrontSender.class);
 
-    private final WavefrontMeterRegistry registry = WavefrontMeterRegistry.builder(config).clock(clock)
-            .wavefrontSender(wavefrontSender).build();
+    private final WavefrontMeterRegistry registry = WavefrontMeterRegistry.builder(config)
+        .clock(clock)
+        .wavefrontSender(wavefrontSender)
+        .build();
 
     @Test
     void publishMetric() throws IOException {
@@ -128,7 +130,7 @@ class WavefrontMeterRegistryTest {
         long time = System.currentTimeMillis();
         List<Pair<Double, Integer>> centroids = Arrays.asList(new Pair<>(1d, 1));
         List<WavefrontHistogramImpl.Distribution> distributions = Arrays
-                .asList(new WavefrontHistogramImpl.Distribution(time, centroids));
+            .asList(new WavefrontHistogramImpl.Distribution(time, centroids));
         registry.publishDistribution(id, distributions);
         verify(wavefrontSender, times(1)).sendDistribution("name", centroids,
                 Collections.singleton(HistogramGranularity.MINUTE), time, "host", Collections.emptyMap());
@@ -176,8 +178,8 @@ class WavefrontMeterRegistryTest {
         assertThat(builder).hasFieldOrPropertyWithValue("flushInterval", 15_000L);
         assertThat(builder).hasFieldOrPropertyWithValue("flushIntervalTimeUnit", TimeUnit.MILLISECONDS);
         assertThat(sender).extracting("metricsReportingService")
-                .hasFieldOrPropertyWithValue("uri", URI.create("https://example.com"))
-                .hasFieldOrPropertyWithValue("token", "apiToken");
+            .hasFieldOrPropertyWithValue("uri", URI.create("https://example.com"))
+            .hasFieldOrPropertyWithValue("token", "apiToken");
         assertThat(sender).hasFieldOrPropertyWithValue("batchSize", 20);
     }
 
@@ -196,7 +198,7 @@ class WavefrontMeterRegistryTest {
         };
 
         assertThatExceptionOfType(ValidationException.class)
-                .isThrownBy(() -> WavefrontMeterRegistry.builder(missingUriConfig).build());
+            .isThrownBy(() -> WavefrontMeterRegistry.builder(missingUriConfig).build());
     }
 
     @Test
@@ -204,7 +206,7 @@ class WavefrontMeterRegistryTest {
         WavefrontConfig missingApiTokenDirectConfig = WavefrontConfig.DEFAULT_DIRECT;
 
         assertThatExceptionOfType(ValidationException.class)
-                .isThrownBy(() -> WavefrontMeterRegistry.builder(missingApiTokenDirectConfig).build());
+            .isThrownBy(() -> WavefrontMeterRegistry.builder(missingApiTokenDirectConfig).build());
     }
 
     @Test
@@ -222,7 +224,8 @@ class WavefrontMeterRegistryTest {
         };
 
         assertThatCode(() -> WavefrontMeterRegistry.builder(missingUriConfig)
-                .wavefrontSender(mock(WavefrontSender.class)).build()).doesNotThrowAnyException();
+            .wavefrontSender(mock(WavefrontSender.class))
+            .build()).doesNotThrowAnyException();
     }
 
     @Test
@@ -230,7 +233,8 @@ class WavefrontMeterRegistryTest {
         WavefrontConfig missingApiTokenDirectConfig = WavefrontConfig.DEFAULT_DIRECT;
 
         assertThatCode(() -> WavefrontMeterRegistry.builder(missingApiTokenDirectConfig)
-                .wavefrontSender(mock(WavefrontSender.class)).build()).doesNotThrowAnyException();
+            .wavefrontSender(mock(WavefrontSender.class))
+            .build()).doesNotThrowAnyException();
     }
 
     @Test
@@ -238,19 +242,19 @@ class WavefrontMeterRegistryTest {
         WavefrontConfig missingApiTokenProxyConfig = WavefrontConfig.DEFAULT_PROXY;
 
         assertThatCode(() -> WavefrontMeterRegistry.builder(missingApiTokenProxyConfig).build())
-                .doesNotThrowAnyException();
+            .doesNotThrowAnyException();
     }
 
     @Test
     void proxyUriConvertedToHttp() {
         assertThat(WavefrontMeterRegistry.getWavefrontReportingUri(WavefrontConfig.DEFAULT_PROXY))
-                .startsWith("http://");
+            .startsWith("http://");
     }
 
     @Test
     void directApiUriUnchanged() {
         assertThat(WavefrontMeterRegistry.getWavefrontReportingUri(WavefrontConfig.DEFAULT_DIRECT))
-                .isEqualTo(WavefrontConfig.DEFAULT_DIRECT.uri());
+            .isEqualTo(WavefrontConfig.DEFAULT_DIRECT.uri());
     }
 
     @Test

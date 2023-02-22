@@ -47,11 +47,11 @@ enum ObservedAspectObservationDocumentation implements ObservationDocumentation 
                 ? signature.getDeclaringType().getSimpleName() + "#" + signature.getName() : observed.contextualName();
 
         Observation observation = Observation
-                .createNotStarted(name, () -> new ObservedAspect.ObservedAspectContext(pjp), registry)
-                .contextualName(contextualName)
-                .lowCardinalityKeyValue(CLASS_NAME.asString(), signature.getDeclaringTypeName())
-                .lowCardinalityKeyValue(METHOD_NAME.asString(), signature.getName())
-                .lowCardinalityKeyValues(KeyValues.of(observed.lowCardinalityKeyValues()));
+            .createNotStarted(name, () -> new ObservedAspect.ObservedAspectContext(pjp), registry)
+            .contextualName(contextualName)
+            .lowCardinalityKeyValue(CLASS_NAME.asString(), signature.getDeclaringTypeName())
+            .lowCardinalityKeyValue(METHOD_NAME.asString(), signature.getName())
+            .lowCardinalityKeyValues(KeyValues.of(observed.lowCardinalityKeyValues()));
 
         if (observationConvention != null) {
             observation.observationConvention(observationConvention);

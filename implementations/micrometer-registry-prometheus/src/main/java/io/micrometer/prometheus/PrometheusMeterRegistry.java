@@ -284,7 +284,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
                             for (CountAtBucket c : histogramCounts) {
                                 final List<String> histogramValuesVM = new ArrayList<>(tagValues);
                                 histogramValuesVM
-                                        .add(FixedBoundaryVictoriaMetricsHistogram.getRangeTagValue(c.bucket()));
+                                    .add(FixedBoundaryVictoriaMetricsHistogram.getRangeTagValue(c.bucket()));
                                 samples.add(new Collector.MetricFamilySamples.Sample(sampleName, histogramKeys,
                                         histogramValuesVM, c.count()));
                             }
@@ -326,9 +326,9 @@ public class PrometheusMeterRegistry extends MeterRegistry {
         Gauge gauge = new DefaultGauge<>(id, obj, valueFunction);
         applyToCollector(id, (collector) -> {
             List<String> tagValues = tagValues(id);
-            collector.add(tagValues, (conventionName, tagKeys) -> Stream.of(new MicrometerCollector.Family(
-                    Collector.Type.GAUGE, conventionName,
-                    new Collector.MetricFamilySamples.Sample(conventionName, tagKeys, tagValues, gauge.value()))));
+            collector.add(tagValues, (conventionName, tagKeys) -> Stream
+                .of(new MicrometerCollector.Family(Collector.Type.GAUGE, conventionName,
+                        new Collector.MetricFamilySamples.Sample(conventionName, tagKeys, tagValues, gauge.value()))));
         });
         return gauge;
     }
@@ -576,8 +576,10 @@ public class PrometheusMeterRegistry extends MeterRegistry {
 
     @Override
     protected DistributionStatisticConfig defaultHistogramConfig() {
-        return DistributionStatisticConfig.builder().expiry(prometheusConfig.step()).build()
-                .merge(DistributionStatisticConfig.DEFAULT);
+        return DistributionStatisticConfig.builder()
+            .expiry(prometheusConfig.step())
+            .build()
+            .merge(DistributionStatisticConfig.DEFAULT);
     }
 
     /**

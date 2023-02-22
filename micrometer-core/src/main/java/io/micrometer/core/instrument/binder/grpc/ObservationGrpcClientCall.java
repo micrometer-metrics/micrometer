@@ -28,7 +28,7 @@ import io.micrometer.observation.Observation.Scope;
  * @param <ReqT> type of message sent one or more times to the server.
  * @param <RespT> type of message received one or more times from the server.
  */
-class ObservationGrpcClientCall<ReqT, RespT> extends SimpleForwardingClientCall<ReqT, RespT> {
+class ObservationGrpcClientCall<ReqT, RespT>extends SimpleForwardingClientCall<ReqT, RespT> {
 
     private final Observation observation;
 

@@ -42,8 +42,11 @@ import java.util.Optional;
 @Configuration
 public class HttpMetricsTagConfiguration {
 
-    private final Map<HttpServletResponse, Tags> responseTags = CacheBuilder.newBuilder().maximumSize(10_000)
-            .expireAfterWrite(Duration.ofSeconds(10)).<HttpServletResponse, Tags>build().asMap();
+    private final Map<HttpServletResponse, Tags> responseTags = CacheBuilder.newBuilder()
+        .maximumSize(10_000)
+        .expireAfterWrite(Duration.ofSeconds(10))
+        .<HttpServletResponse, Tags>build()
+        .asMap();
 
     @Bean
     OncePerRequestFilter extractCountry() {

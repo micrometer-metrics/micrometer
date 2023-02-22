@@ -28,7 +28,7 @@ import java.util.List;
  * @author Jon Schneider
  * @since 1.2.2
  */
-public abstract class AbstractPartition<T> extends AbstractList<List<T>> {
+public abstract class AbstractPartition<T>extends AbstractList<List<T>> {
 
     final List<T> delegate;
 

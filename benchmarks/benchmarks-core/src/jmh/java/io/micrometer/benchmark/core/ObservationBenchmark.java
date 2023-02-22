@@ -52,7 +52,7 @@ public class ObservationBenchmark {
         this.timer = Timer.builder("cached.timer").tag("abc", "123").register(meterRegistry);
         this.observationRegistry = ObservationRegistry.create();
         this.observationRegistry.observationConfig()
-                .observationHandler(new DefaultMeterObservationHandler(meterRegistry));
+            .observationHandler(new DefaultMeterObservationHandler(meterRegistry));
         this.noopRegistry = ObservationRegistry.create();
     }
 
@@ -90,8 +90,10 @@ public class ObservationBenchmark {
 
     @Benchmark
     public long builtTimerAndLongTaskTimer() {
-        LongTaskTimer.Sample longTaskSample = LongTaskTimer.builder("built.timer.active").tag("abc", "123")
-                .register(meterRegistry).start();
+        LongTaskTimer.Sample longTaskSample = LongTaskTimer.builder("built.timer.active")
+            .tag("abc", "123")
+            .register(meterRegistry)
+            .start();
         Timer.Sample sample = Timer.start(meterRegistry);
 
         long latencyWithTimer = sample.stop(Timer.builder("built.timer").tag("abc", "123").register(meterRegistry));
@@ -104,7 +106,8 @@ public class ObservationBenchmark {
     @Benchmark
     public Observation observationWithoutThreadContention() {
         Observation observation = Observation.createNotStarted("test.obs", observationRegistry)
-                .lowCardinalityKeyValue("abc", "123").start();
+            .lowCardinalityKeyValue("abc", "123")
+            .start();
         observation.stop();
 
         return observation;
@@ -113,7 +116,8 @@ public class ObservationBenchmark {
     @Benchmark
     public Observation observation() {
         Observation observation = Observation.createNotStarted("test.obs", observationRegistry)
-                .lowCardinalityKeyValue("abc", "123").start();
+            .lowCardinalityKeyValue("abc", "123")
+            .start();
         observation.stop();
 
         return observation;
@@ -122,7 +126,7 @@ public class ObservationBenchmark {
     @Benchmark
     public ObservationOrTimerCompatibleInstrumentation<Observation.Context> observationOrTimer() {
         ObservationOrTimerCompatibleInstrumentation<Observation.Context> instrumentation = ObservationOrTimerCompatibleInstrumentation
-                .start(meterRegistry, noopRegistry, null, null, null);
+            .start(meterRegistry, noopRegistry, null, null, null);
         instrumentation.stop("test.obs-or-timer", null, () -> Tags.of("abc", "123"));
 
         return instrumentation;
@@ -133,7 +137,8 @@ public class ObservationBenchmark {
         // This might not measure anything if JIT figures it out that the registry is
         // always noop
         Observation observation = Observation.createNotStarted("test.obs", noopRegistry)
-                .lowCardinalityKeyValue("abc", "123").start();
+            .lowCardinalityKeyValue("abc", "123")
+            .start();
         observation.stop();
 
         return observation;
@@ -141,7 +146,8 @@ public class ObservationBenchmark {
 
     public static void main(String[] args) throws RunnerException {
         new Runner(new OptionsBuilder().include(ObservationBenchmark.class.getSimpleName())
-                .addProfiler(GCProfiler.class).build()).run();
+            .addProfiler(GCProfiler.class)
+            .build()).run();
     }
 
 }

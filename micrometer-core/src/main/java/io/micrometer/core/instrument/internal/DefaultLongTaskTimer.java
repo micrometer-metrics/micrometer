@@ -141,7 +141,8 @@ public class DefaultLongTaskTimer extends AbstractMeter implements LongTaskTimer
         CountAtBucket[] countAtBucketsArr = new CountAtBucket[0];
 
         List<Double> percentilesAboveInterpolatableLine = percentilesRequested.stream()
-                .filter(p -> p * (activeTasks.size() + 1) > activeTasks.size()).collect(Collectors.toList());
+            .filter(p -> p * (activeTasks.size() + 1) > activeTasks.size())
+            .collect(Collectors.toList());
 
         percentilesRequested.removeAll(percentilesAboveInterpolatableLine);
 
@@ -158,8 +159,10 @@ public class DefaultLongTaskTimer extends AbstractMeter implements LongTaskTimer
 
             // Make snapshot of active task durations
             List<Double> youngestToOldestDurations = StreamSupport
-                    .stream(((Iterable<SampleImpl>) activeTasks::descendingIterator).spliterator(), false).sequential()
-                    .map(task -> task.duration(TimeUnit.NANOSECONDS)).collect(Collectors.toList());
+                .stream(((Iterable<SampleImpl>) activeTasks::descendingIterator).spliterator(), false)
+                .sequential()
+                .map(task -> task.duration(TimeUnit.NANOSECONDS))
+                .collect(Collectors.toList());
             for (Double activeTaskDuration : youngestToOldestDurations) {
                 while (bucket != null && activeTaskDuration > bucket) {
                     countAtBuckets.add(new CountAtBucket(bucket, count));

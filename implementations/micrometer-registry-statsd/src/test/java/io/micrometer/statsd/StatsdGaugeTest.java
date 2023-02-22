@@ -31,10 +31,11 @@ class StatsdGaugeTest {
     void shouldAlwaysPublishValue() {
         AtomicInteger lines = new AtomicInteger();
         MeterRegistry registry = StatsdMeterRegistry.builder(StatsdConfig.DEFAULT)
-                .lineSink(l -> lines.incrementAndGet()).build();
+            .lineSink(l -> lines.incrementAndGet())
+            .build();
 
         StatsdGauge<?> alwaysPublishingGauge = (StatsdGauge<?>) Gauge.builder("test", value, AtomicInteger::get)
-                .register(registry);
+            .register(registry);
 
         alwaysPublishingGauge.poll();
         alwaysPublishingGauge.poll();
@@ -58,7 +59,7 @@ class StatsdGaugeTest {
         }).lineSink(l -> lines.incrementAndGet()).build();
 
         StatsdGauge<?> gaugePublishingOnChange = (StatsdGauge<?>) Gauge.builder("test", value, AtomicInteger::get)
-                .register(registry);
+            .register(registry);
 
         gaugePublishingOnChange.poll();
         gaugePublishingOnChange.poll();

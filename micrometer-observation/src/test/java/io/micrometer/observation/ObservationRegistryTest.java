@@ -84,10 +84,10 @@ class ObservationRegistryTest {
         registry.observationConfig().observationHandler(c -> true);
         assertThat(Observation.start("test.timer", registry)).isInstanceOf(SimpleObservation.class);
         assertThat(Observation.start("test.timer", Observation.Context::new, registry))
-                .isInstanceOf(SimpleObservation.class);
+            .isInstanceOf(SimpleObservation.class);
         assertThat(Observation.createNotStarted("test.timer", registry)).isInstanceOf(SimpleObservation.class);
         assertThat(Observation.createNotStarted("test.timer", Observation.Context::new, registry))
-                .isInstanceOf(SimpleObservation.class);
+            .isInstanceOf(SimpleObservation.class);
     }
 
     @Test
@@ -103,11 +103,16 @@ class ObservationRegistryTest {
                 messagingConvention);
 
         Observation.createNotStarted("observation", () -> myContext, registry)
-                .observationConvention(messagingObservationConvention).start().stop();
+            .observationConvention(messagingObservationConvention)
+            .start()
+            .stop();
 
-        then(myContext.getLowCardinalityKeyValues().stream().filter(keyValue -> keyValue.getKey().equals("baz"))
-                .findFirst().orElseThrow(() -> new AssertionError("No <baz> key value found")).getValue())
-                        .isEqualTo("hello bar");
+        then(myContext.getLowCardinalityKeyValues()
+            .stream()
+            .filter(keyValue -> keyValue.getKey().equals("baz"))
+            .findFirst()
+            .orElseThrow(() -> new AssertionError("No <baz> key value found"))
+            .getValue()).isEqualTo("hello bar");
         then(myContext.getName()).isEqualTo("new name");
     }
 

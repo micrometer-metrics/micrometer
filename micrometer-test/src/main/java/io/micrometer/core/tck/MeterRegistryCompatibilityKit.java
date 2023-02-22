@@ -167,8 +167,10 @@ public abstract class MeterRegistryCompatibilityKit {
     @Test
     @DisplayName("meters with synthetics can be removed without causing deadlocks")
     void removeMeterWithSynthetic() {
-        Timer timer = Timer.builder("my.timer").publishPercentiles(0.95).serviceLevelObjectives(Duration.ofMillis(10))
-                .register(registry);
+        Timer timer = Timer.builder("my.timer")
+            .publishPercentiles(0.95)
+            .serviceLevelObjectives(Duration.ofMillis(10))
+            .register(registry);
 
         registry.remove(timer);
     }
@@ -284,8 +286,9 @@ public abstract class MeterRegistryCompatibilityKit {
         @Deprecated
         @Test
         void histogramCounts() {
-            DistributionSummary s = DistributionSummary.builder("my.summmary").serviceLevelObjectives(1.0)
-                    .register(registry);
+            DistributionSummary s = DistributionSummary.builder("my.summmary")
+                .serviceLevelObjectives(1.0)
+                .register(registry);
 
             s.record(1);
             assertThat(s.histogramCountAtValue(1)).isEqualTo(1);
@@ -346,7 +349,7 @@ public abstract class MeterRegistryCompatibilityKit {
         void garbageCollectedSourceObject() {
             registry.gauge("my.gauge", emptyList(), (Map) null, Map::size);
             assertThat(registry.get("my.gauge").gauge().value())
-                    .matches(val -> val == null || Double.isNaN(val) || val == 0.0);
+                .matches(val -> val == null || Double.isNaN(val) || val == 0.0);
         }
 
         @Test
@@ -400,8 +403,9 @@ public abstract class MeterRegistryCompatibilityKit {
         @Test
         @DisplayName("supports sending the Nth percentile active task duration")
         void percentiles() {
-            LongTaskTimer t = LongTaskTimer.builder("my.timer").publishPercentiles(0.5, 0.7, 0.91, 0.999, 1)
-                    .register(registry);
+            LongTaskTimer t = LongTaskTimer.builder("my.timer")
+                .publishPercentiles(0.5, 0.7, 0.91, 0.999, 1)
+                .register(registry);
 
             // Using the example of percentile interpolation from
             // https://statisticsbyjim.com/basics/percentiles/
@@ -440,8 +444,8 @@ public abstract class MeterRegistryCompatibilityKit {
         @DisplayName("supports sending histograms of active task duration")
         void histogram() {
             LongTaskTimer t = LongTaskTimer.builder("my.timer")
-                    .serviceLevelObjectives(Duration.ofSeconds(10), Duration.ofSeconds(40), Duration.ofMinutes(1))
-                    .register(registry);
+                .serviceLevelObjectives(Duration.ofSeconds(10), Duration.ofSeconds(40), Duration.ofMinutes(1))
+                .register(registry);
 
             List<Integer> samples = Arrays.asList(48, 42, 40, 35, 22, 16, 13, 8, 6, 4, 2);
             int prior = samples.get(0);
@@ -495,8 +499,9 @@ public abstract class MeterRegistryCompatibilityKit {
         @CsvSource({ "success", "error" })
         @Issue("#1425")
         void closeable(String outcome) {
-            try (Timer.ResourceSample sample = Timer.resource(registry, "requests").description("This is an operation")
-                    .publishPercentileHistogram()) {
+            try (Timer.ResourceSample sample = Timer.resource(registry, "requests")
+                .description("This is an operation")
+                .publishPercentileHistogram()) {
                 try {
                     if (outcome.equals("error")) {
                         throw new IllegalArgumentException("boom");
@@ -636,7 +641,8 @@ public abstract class MeterRegistryCompatibilityKit {
         @DisplayName("record with stateful Observation instance")
         void recordWithObservation() {
             Observation observation = Observation.createNotStarted("myObservation", observationRegistry)
-                    .lowCardinalityKeyValue("staticTag", "42").start();
+                .lowCardinalityKeyValue("staticTag", "42")
+                .start();
 
             // created after start, LongTaskTimer won't have it
             observation.lowCardinalityKeyValue("dynamicTag", "24");
@@ -693,7 +699,7 @@ public abstract class MeterRegistryCompatibilityKit {
 
             // noinspection ConstantConditions
             clock(registry)
-                    .add(Duration.ofMillis(step().toMillis() * DistributionStatisticConfig.DEFAULT.getBufferLength()));
+                .add(Duration.ofMillis(step().toMillis() * DistributionStatisticConfig.DEFAULT.getBufferLength()));
             assertThat(timer.max(TimeUnit.SECONDS)).isEqualTo(0);
         }
 

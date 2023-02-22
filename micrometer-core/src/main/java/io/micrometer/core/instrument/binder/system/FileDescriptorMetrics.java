@@ -91,13 +91,19 @@ public class FileDescriptorMetrics implements MeterBinder {
     @Override
     public void bindTo(MeterRegistry registry) {
         if (openFilesMethod != null) {
-            Gauge.builder("process.files.open", osBean, x -> invoke(openFilesMethod)).tags(tags)
-                    .description("The open file descriptor count").baseUnit(BaseUnits.FILES).register(registry);
+            Gauge.builder("process.files.open", osBean, x -> invoke(openFilesMethod))
+                .tags(tags)
+                .description("The open file descriptor count")
+                .baseUnit(BaseUnits.FILES)
+                .register(registry);
         }
 
         if (maxFilesMethod != null) {
-            Gauge.builder("process.files.max", osBean, x -> invoke(maxFilesMethod)).tags(tags)
-                    .description("The maximum file descriptor count").baseUnit(BaseUnits.FILES).register(registry);
+            Gauge.builder("process.files.max", osBean, x -> invoke(maxFilesMethod))
+                .tags(tags)
+                .description("The maximum file descriptor count")
+                .baseUnit(BaseUnits.FILES)
+                .register(registry);
         }
     }
 
