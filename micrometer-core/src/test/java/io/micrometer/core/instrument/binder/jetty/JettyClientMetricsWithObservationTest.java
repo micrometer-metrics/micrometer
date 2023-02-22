@@ -36,20 +36,27 @@ class JettyClientMetricsWithObservationTest extends JettyClientMetricsTest {
         observationRegistry.observationConfig().observationHandler(new DefaultMeterObservationHandler(registry));
         this.httpClient.getRequestListeners().removeIf(listener -> true);
         this.httpClient.getRequestListeners()
-                .add(JettyClientMetrics.builder(registry, (request, result) -> request.getURI().getPath())
-                        .observationRegistry(observationRegistry).build());
+            .add(JettyClientMetrics.builder(registry, (request, result) -> request.getURI().getPath())
+                .observationRegistry(observationRegistry)
+                .build());
     }
 
     @Test
     void activeTimer() throws Exception {
         httpClient.GET("http://localhost:" + connector.getLocalPort() + "/ok");
-        assertThat(registry.get("jetty.client.requests.active").tags("uri", "/ok", "method", "GET").longTaskTimer()
-                .activeTasks()).isOne();
+        assertThat(registry.get("jetty.client.requests.active")
+            .tags("uri", "/ok", "method", "GET")
+            .longTaskTimer()
+            .activeTasks()).isOne();
         httpClient.stop();
 
         assertTrue(singleRequestLatch.await(10, SECONDS));
-        assertThat(registry.get("jetty.client.requests").tag("outcome", "SUCCESS").tag("status", "200")
-                .tag("uri", "/ok").timer().count()).isEqualTo(1);
+        assertThat(registry.get("jetty.client.requests")
+            .tag("outcome", "SUCCESS")
+            .tag("status", "200")
+            .tag("uri", "/ok")
+            .timer()
+            .count()).isEqualTo(1);
     }
 
 }

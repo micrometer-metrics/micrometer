@@ -56,8 +56,9 @@ class JettyClientTimingInstrumentationVerificationTests
             String templatedPath, String... pathVariables) {
         try {
             Request request = instrumentedClient
-                    .newRequest(baseUri + substitutePathVariables(templatedPath, pathVariables)).method(method.name())
-                    .header(HEADER_URI_PATTERN, templatedPath);
+                .newRequest(baseUri + substitutePathVariables(templatedPath, pathVariables))
+                .method(method.name())
+                .header(HEADER_URI_PATTERN, templatedPath);
             if (body != null) {
                 request.content(new BytesContentProvider(body));
             }

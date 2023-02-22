@@ -32,17 +32,29 @@ public class SimulatedEndpointInstrumentation {
     public static void main(String[] args) {
         MeterRegistry registry = SampleConfig.myMonitoringSystem();
 
-        Timer e1Success = Timer.builder("http.server.requests").tags("uri", "/api/bar").tags("response", "200")
-                .publishPercentiles(0.5, 0.95).register(registry);
+        Timer e1Success = Timer.builder("http.server.requests")
+            .tags("uri", "/api/bar")
+            .tags("response", "200")
+            .publishPercentiles(0.5, 0.95)
+            .register(registry);
 
-        Timer e2Success = Timer.builder("http.server.requests").tags("uri", "/api/foo").tags("response", "200")
-                .publishPercentiles(0.5, 0.95).register(registry);
+        Timer e2Success = Timer.builder("http.server.requests")
+            .tags("uri", "/api/foo")
+            .tags("response", "200")
+            .publishPercentiles(0.5, 0.95)
+            .register(registry);
 
-        Timer e1Fail = Timer.builder("http.server.requests").tags("uri", "/api/bar").tags("response", "500")
-                .publishPercentiles(0.5, 0.95).register(registry);
+        Timer e1Fail = Timer.builder("http.server.requests")
+            .tags("uri", "/api/bar")
+            .tags("response", "500")
+            .publishPercentiles(0.5, 0.95)
+            .register(registry);
 
-        Timer e2Fail = Timer.builder("http.server.requests").tags("uri", "/api/foo").tags("response", "500")
-                .publishPercentiles(0.5, 0.95).register(registry);
+        Timer e2Fail = Timer.builder("http.server.requests")
+            .tags("uri", "/api/foo")
+            .tags("response", "500")
+            .publishPercentiles(0.5, 0.95)
+            .register(registry);
 
         RandomEngine r = new MersenneTwister64(0);
         Normal incomingRequests = new Normal(0, 1, r);

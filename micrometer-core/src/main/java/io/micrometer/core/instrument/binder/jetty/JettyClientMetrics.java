@@ -89,27 +89,30 @@ public class JettyClientMetrics implements Request.Listener {
         MeterFilter contentSizeMetricDenyFilter = new OnlyOnceLoggingDenyMeterFilter(
                 () -> String.format("Reached the maximum number of URI tags for '%s'.", contentSizeMetricName));
         registry.config()
-                .meterFilter(MeterFilter.maximumAllowableTags(this.timingMetricName, "uri", maxUriTags,
-                        timingMetricDenyFilter))
-                .meterFilter(MeterFilter.maximumAllowableTags(this.contentSizeMetricName, "uri", maxUriTags,
-                        contentSizeMetricDenyFilter));
+            .meterFilter(
+                    MeterFilter.maximumAllowableTags(this.timingMetricName, "uri", maxUriTags, timingMetricDenyFilter))
+            .meterFilter(MeterFilter.maximumAllowableTags(this.contentSizeMetricName, "uri", maxUriTags,
+                    contentSizeMetricDenyFilter));
     }
 
     @Override
     public void onQueued(Request request) {
         ObservationOrTimerCompatibleInstrumentation<JettyClientContext> sample = ObservationOrTimerCompatibleInstrumentation
-                .start(registry, observationRegistry, () -> new JettyClientContext(request, uriPatternFunction),
-                        convention, DefaultJettyClientObservationConvention.INSTANCE);
+            .start(registry, observationRegistry, () -> new JettyClientContext(request, uriPatternFunction), convention,
+                    DefaultJettyClientObservationConvention.INSTANCE);
 
         request.onComplete(result -> {
             sample.setResponse(result);
-            long requestLength = Optional.ofNullable(result.getRequest().getContent()).map(ContentProvider::getLength)
-                    .orElse(0L);
+            long requestLength = Optional.ofNullable(result.getRequest().getContent())
+                .map(ContentProvider::getLength)
+                .orElse(0L);
             Iterable<Tag> httpRequestTags = tagsProvider.httpRequestTags(result);
             if (requestLength >= 0) {
                 DistributionSummary.builder(contentSizeMetricName)
-                        .description("Content sizes for Jetty HTTP client requests").tags(httpRequestTags)
-                        .register(registry).record(requestLength);
+                    .description("Content sizes for Jetty HTTP client requests")
+                    .tags(httpRequestTags)
+                    .register(registry)
+                    .record(requestLength);
             }
 
             sample.stop(timingMetricName, "Jetty HTTP client request timing", () -> httpRequestTags);

@@ -57,7 +57,7 @@ public class SpectatorDistributionSummary extends AbstractDistributionSummary {
     public double max() {
         for (Measurement measurement : summary.measure()) {
             if (stream(measurement.id().tags().spliterator(), false)
-                    .anyMatch(tag -> tag.key().equals("statistic") && tag.value().equals(Statistic.max.toString()))) {
+                .anyMatch(tag -> tag.key().equals("statistic") && tag.value().equals(Statistic.max.toString()))) {
                 return measurement.value();
             }
         }

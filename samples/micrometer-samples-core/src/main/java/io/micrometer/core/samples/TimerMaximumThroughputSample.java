@@ -36,11 +36,13 @@ public class TimerMaximumThroughputSample {
 
     public static void main(String[] args) {
         MeterRegistry registry = SampleConfig.myMonitoringSystem();
-        Timer timer = Timer.builder("timer").publishPercentileHistogram()
-                // .publishPercentiles(0.5, 0.95, 0.99)
-                .serviceLevelObjectives(Duration.ofMillis(275), Duration.ofMillis(300), Duration.ofMillis(500))
-                .distributionStatisticExpiry(Duration.ofSeconds(10)).distributionStatisticBufferLength(3)
-                .register(registry);
+        Timer timer = Timer.builder("timer")
+            .publishPercentileHistogram()
+            // .publishPercentiles(0.5, 0.95, 0.99)
+            .serviceLevelObjectives(Duration.ofMillis(275), Duration.ofMillis(300), Duration.ofMillis(500))
+            .distributionStatisticExpiry(Duration.ofSeconds(10))
+            .distributionStatisticBufferLength(3)
+            .register(registry);
 
         RandomEngine r = new MersenneTwister64(0);
         Normal duration = new Normal(250, 50, r);
@@ -49,8 +51,11 @@ public class TimerMaximumThroughputSample {
         Flux.interval(Duration.ofSeconds(1)).doOnEach(d -> latencyForThisSecond.set(duration.nextInt())).subscribe();
 
         Stream<Integer> infiniteStream = Stream.iterate(0, i -> (i + 1) % 1000);
-        Flux.fromStream(infiniteStream).parallel(4).runOn(Schedulers.parallel())
-                .doOnEach(d -> timer.record(latencyForThisSecond.get(), TimeUnit.MILLISECONDS)).subscribe();
+        Flux.fromStream(infiniteStream)
+            .parallel(4)
+            .runOn(Schedulers.parallel())
+            .doOnEach(d -> timer.record(latencyForThisSecond.get(), TimeUnit.MILLISECONDS))
+            .subscribe();
 
         Flux.never().blockLast();
     }

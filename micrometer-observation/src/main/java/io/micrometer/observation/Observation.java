@@ -1141,13 +1141,16 @@ public interface Observation extends ObservationView {
         }
 
         private String toString(KeyValues keyValues) {
-            return keyValues.stream().map(keyValue -> String.format("%s='%s'", keyValue.getKey(), keyValue.getValue()))
-                    .collect(Collectors.joining(", ", "[", "]"));
+            return keyValues.stream()
+                .map(keyValue -> String.format("%s='%s'", keyValue.getKey(), keyValue.getValue()))
+                .collect(Collectors.joining(", ", "[", "]"));
         }
 
         private String toString(Map<Object, Object> map) {
-            return map.entrySet().stream().map(entry -> String.format("%s='%s'", entry.getKey(), entry.getValue()))
-                    .collect(Collectors.joining(", ", "[", "]"));
+            return map.entrySet()
+                .stream()
+                .map(entry -> String.format("%s='%s'", entry.getKey(), entry.getValue()))
+                .collect(Collectors.joining(", ", "[", "]"));
         }
 
     }

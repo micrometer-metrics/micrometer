@@ -29,7 +29,7 @@ import java.util.Objects;
  * @since 1.10.0
  * @param <C> type of the carrier object
  */
-public class ReceiverContext<C> extends Observation.Context {
+public class ReceiverContext<C>extends Observation.Context {
 
     private final Propagator.Getter<C> getter;
 

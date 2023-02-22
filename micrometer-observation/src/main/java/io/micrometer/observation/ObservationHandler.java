@@ -129,8 +129,9 @@ public interface ObservationHandler<T extends Observation.Context> {
         @SuppressWarnings("unchecked")
         public FirstMatchingCompositeObservationHandler(
                 List<? extends ObservationHandler<? extends Observation.Context>> handlers) {
-            this.handlers = handlers.stream().map(handler -> (ObservationHandler<Observation.Context>) handler)
-                    .collect(Collectors.toList());
+            this.handlers = handlers.stream()
+                .map(handler -> (ObservationHandler<Observation.Context>) handler)
+                .collect(Collectors.toList());
         }
 
         @Override
@@ -208,8 +209,9 @@ public interface ObservationHandler<T extends Observation.Context> {
         @SuppressWarnings("unchecked")
         public AllMatchingCompositeObservationHandler(
                 List<? extends ObservationHandler<? extends Observation.Context>> handlers) {
-            this.handlers = handlers.stream().map(handler -> (ObservationHandler<Observation.Context>) handler)
-                    .collect(Collectors.toList());
+            this.handlers = handlers.stream()
+                .map(handler -> (ObservationHandler<Observation.Context>) handler)
+                .collect(Collectors.toList());
         }
 
         @Override

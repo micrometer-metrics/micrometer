@@ -50,16 +50,16 @@ class MongoMetricsConnectionPoolListenerTest extends AbstractMongoDbTest {
     void shouldCreatePoolMetrics() {
         AtomicReference<String> clusterId = new AtomicReference<>();
         MongoClientSettings settings = MongoClientSettings.builder()
-                .applyToConnectionPoolSettings(builder -> builder.minSize(2)
-                        .addConnectionPoolListener(new MongoMetricsConnectionPoolListener(registry)))
-                .applyToClusterSettings(builder -> builder.hosts(singletonList(new ServerAddress(host, port)))
-                        .addClusterListener(new ClusterListener() {
-                            @Override
-                            public void clusterOpening(ClusterOpeningEvent event) {
-                                clusterId.set(event.getClusterId().getValue());
-                            }
-                        }))
-                .build();
+            .applyToConnectionPoolSettings(builder -> builder.minSize(2)
+                .addConnectionPoolListener(new MongoMetricsConnectionPoolListener(registry)))
+            .applyToClusterSettings(builder -> builder.hosts(singletonList(new ServerAddress(host, port)))
+                .addClusterListener(new ClusterListener() {
+                    @Override
+                    public void clusterOpening(ClusterOpeningEvent event) {
+                        clusterId.set(event.getClusterId().getValue());
+                    }
+                }))
+            .build();
         MongoClient mongo = MongoClients.create(settings);
 
         mongo.getDatabase("test").createCollection("testCol");
@@ -73,7 +73,8 @@ class MongoMetricsConnectionPoolListenerTest extends AbstractMongoDbTest {
         mongo.close();
 
         assertThat(registry.find("mongodb.driver.pool.size").tags(tags).gauge())
-                .describedAs("metrics should be removed when the connection pool is closed").isNull();
+            .describedAs("metrics should be removed when the connection pool is closed")
+            .isNull();
     }
 
     @Test
@@ -84,16 +85,16 @@ class MongoMetricsConnectionPoolListenerTest extends AbstractMongoDbTest {
                 e -> Tags.of("cluster.id", e.getServerId().getClusterId().getValue(), "server.address",
                         e.getServerId().getAddress().toString(), "my.custom.connection.pool.identifier", "custom"));
         MongoClientSettings settings = MongoClientSettings.builder()
-                .applyToConnectionPoolSettings(
-                        builder -> builder.minSize(2).addConnectionPoolListener(connectionPoolListener))
-                .applyToClusterSettings(builder -> builder.hosts(singletonList(new ServerAddress(host, port)))
-                        .addClusterListener(new ClusterListener() {
-                            @Override
-                            public void clusterOpening(ClusterOpeningEvent event) {
-                                clusterId.set(event.getClusterId().getValue());
-                            }
-                        }))
-                .build();
+            .applyToConnectionPoolSettings(
+                    builder -> builder.minSize(2).addConnectionPoolListener(connectionPoolListener))
+            .applyToClusterSettings(builder -> builder.hosts(singletonList(new ServerAddress(host, port)))
+                .addClusterListener(new ClusterListener() {
+                    @Override
+                    public void clusterOpening(ClusterOpeningEvent event) {
+                        clusterId.set(event.getClusterId().getValue());
+                    }
+                }))
+            .build();
         MongoClient mongo = MongoClients.create(settings);
 
         mongo.getDatabase("test").createCollection("testCol");
@@ -108,7 +109,8 @@ class MongoMetricsConnectionPoolListenerTest extends AbstractMongoDbTest {
         mongo.close();
 
         assertThat(registry.find("mongodb.driver.pool.size").tags(tags).gauge())
-                .describedAs("metrics should be removed when the connection pool is closed").isNull();
+            .describedAs("metrics should be removed when the connection pool is closed")
+            .isNull();
     }
 
     @Issue("#2384")
@@ -116,12 +118,12 @@ class MongoMetricsConnectionPoolListenerTest extends AbstractMongoDbTest {
         ServerId serverId = new ServerId(new ClusterId(), new ServerAddress(host, port));
         ConnectionId connectionId = new ConnectionId(serverId);
         MongoMetricsConnectionPoolListener listener = new MongoMetricsConnectionPoolListener(registry);
-        listener.connectionPoolCreated(
-                new ConnectionPoolCreatedEvent(serverId, ConnectionPoolSettings.builder().build()));
+        listener
+            .connectionPoolCreated(new ConnectionPoolCreatedEvent(serverId, ConnectionPoolSettings.builder().build()));
         listener.connectionCheckedOut(new ConnectionCheckedOutEvent(connectionId));
         listener.connectionPoolClosed(new ConnectionPoolClosedEvent(serverId));
         assertThatCode(() -> listener.connectionCheckedIn(new ConnectionCheckedInEvent(connectionId)))
-                .doesNotThrowAnyException();
+            .doesNotThrowAnyException();
     }
 
 }

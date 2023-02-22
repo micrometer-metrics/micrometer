@@ -50,10 +50,10 @@ public class CumulativeHistogramLongTaskTimer extends DefaultLongTaskTimer {
         snapshot = new HistogramSnapshot(snapshot.count(), snapshot.total(), snapshot.max(),
                 snapshot.percentileValues(),
                 Arrays.stream(snapshot.histogramCounts())
-                        .map(countAtBucket -> lastSnapshot == null ? countAtBucket
-                                : new CountAtBucket(countAtBucket.bucket(),
-                                        countAtBucket.count() + lastSnapshot[i.getAndIncrement()].count()))
-                        .toArray(CountAtBucket[]::new),
+                    .map(countAtBucket -> lastSnapshot == null ? countAtBucket
+                            : new CountAtBucket(countAtBucket.bucket(),
+                                    countAtBucket.count() + lastSnapshot[i.getAndIncrement()].count()))
+                    .toArray(CountAtBucket[]::new),
                 snapshot::outputSummary);
 
         lastSnapshot = snapshot.histogramCounts();

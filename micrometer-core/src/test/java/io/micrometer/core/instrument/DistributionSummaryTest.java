@@ -29,8 +29,9 @@ class DistributionSummaryTest {
     void histogramsInCumulativeMode() {
         MockClock clock = new MockClock();
         MeterRegistry registry = new SimpleMeterRegistry(SimpleConfig.DEFAULT, clock);
-        DistributionSummary summary = DistributionSummary.builder("my.summary").serviceLevelObjectives(1.0)
-                .register(registry);
+        DistributionSummary summary = DistributionSummary.builder("my.summary")
+            .serviceLevelObjectives(1.0)
+            .register(registry);
 
         summary.record(1);
 
@@ -55,8 +56,9 @@ class DistributionSummaryTest {
             }
         }, clock);
 
-        DistributionSummary summary = DistributionSummary.builder("my.summary").serviceLevelObjectives(1.0)
-                .register(registry);
+        DistributionSummary summary = DistributionSummary.builder("my.summary")
+            .serviceLevelObjectives(1.0)
+            .register(registry);
 
         summary.record(1);
 

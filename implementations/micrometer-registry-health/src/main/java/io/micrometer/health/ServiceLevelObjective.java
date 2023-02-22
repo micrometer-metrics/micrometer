@@ -296,9 +296,12 @@ public abstract class ServiceLevelObjective {
                             }
 
                             ValueAtPercentile[] valueAtPercentiles = ((HistogramSupport) m).takeSnapshot()
-                                    .percentileValues();
-                            return Arrays.stream(valueAtPercentiles).filter(vap -> vap.percentile() == percentile)
-                                    .map(ValueAtPercentile::value).findAny().orElse(Double.NaN);
+                                .percentileValues();
+                            return Arrays.stream(valueAtPercentiles)
+                                .filter(vap -> vap.percentile() == percentile)
+                                .map(ValueAtPercentile::value)
+                                .findAny()
+                                .orElse(Double.NaN);
                         }).reduce(Double.NaN, MAX_OR_NAN));
             }
 

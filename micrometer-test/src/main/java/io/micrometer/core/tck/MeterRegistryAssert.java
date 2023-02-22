@@ -63,8 +63,10 @@ public class MeterRegistryAssert extends AbstractAssert<MeterRegistryAssert, Met
      */
     public MeterRegistryAssert hasNoMetrics() {
         isNotNull();
-        List<String> metricsNames = actual.getMeters().stream().map(meter -> meter.getId().getName())
-                .collect(Collectors.toList());
+        List<String> metricsNames = actual.getMeters()
+            .stream()
+            .map(meter -> meter.getId().getName())
+            .collect(Collectors.toList());
         if (!metricsNames.isEmpty()) {
             failWithMessage("Expected no metrics, but got metrics with following names <%s>",
                     String.join(",", metricsNames));
@@ -357,9 +359,15 @@ public class MeterRegistryAssert extends AbstractAssert<MeterRegistryAssert, Met
 
     private String allMetrics() {
         StringBuilder stringBuilder = new StringBuilder();
-        actual.forEachMeter(meter -> stringBuilder.append("\n\tMeter with name <").append(meter.getId().getName())
-                .append(">").append(" and type <").append(meter.getId().getType()).append(">")
-                .append(" \n\t\thas the following tags <").append(meter.getId().getTags()).append(">\n"));
+        actual.forEachMeter(meter -> stringBuilder.append("\n\tMeter with name <")
+            .append(meter.getId().getName())
+            .append(">")
+            .append(" and type <")
+            .append(meter.getId().getType())
+            .append(">")
+            .append(" \n\t\thas the following tags <")
+            .append(meter.getId().getTags())
+            .append(">\n"));
         return stringBuilder.toString();
     }
 

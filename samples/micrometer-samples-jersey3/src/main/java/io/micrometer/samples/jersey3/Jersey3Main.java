@@ -52,8 +52,8 @@ public class Jersey3Main {
         HttpServer server = HttpServer.create(new InetSocketAddress(8080), 0);
         Runtime.getRuntime().addShutdownHook(new Thread(() -> server.stop(0)));
         Application application = new ResourceConfig(HelloWorldResource.class)
-                .register(new MetricsApplicationEventListener(registry, new DefaultJerseyTagsProvider(),
-                        "http.server.requests", true));
+            .register(new MetricsApplicationEventListener(registry, new DefaultJerseyTagsProvider(),
+                    "http.server.requests", true));
         server.createContext("/", RuntimeDelegate.getInstance().createEndpoint(application, HttpHandler.class));
 
         server.start();

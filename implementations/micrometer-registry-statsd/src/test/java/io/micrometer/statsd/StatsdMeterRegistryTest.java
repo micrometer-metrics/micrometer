@@ -100,11 +100,15 @@ class StatsdMeterRegistryTest {
         }
 
         final Processor<String, String> lines = lineProcessor();
-        registry = StatsdMeterRegistry.builder(configWithFlavor(flavor)).clock(clock).lineSink(toLineSink(lines))
-                .build();
+        registry = StatsdMeterRegistry.builder(configWithFlavor(flavor))
+            .clock(clock)
+            .lineSink(toLineSink(lines))
+            .build();
 
-        StepVerifier.create(lines).then(() -> registry.counter("my.counter", "my.tag", "val").increment(2.1))
-                .expectNext(line).verifyComplete();
+        StepVerifier.create(lines)
+            .then(() -> registry.counter("my.counter", "my.tag", "val").increment(2.1))
+            .expectNext(line)
+            .verifyComplete();
     }
 
     @ParameterizedTest
@@ -162,12 +166,15 @@ class StatsdMeterRegistryTest {
         }
 
         final Processor<String, String> lines = lineProcessor();
-        registry = StatsdMeterRegistry.builder(configWithFlavor(flavor)).clock(clock).lineSink(toLineSink(lines))
-                .build();
+        registry = StatsdMeterRegistry.builder(configWithFlavor(flavor))
+            .clock(clock)
+            .lineSink(toLineSink(lines))
+            .build();
 
         StepVerifier.create(lines)
-                .then(() -> registry.timer("my.timer", "my.tag", "val").record(1, TimeUnit.MILLISECONDS))
-                .expectNext(line).verifyComplete();
+            .then(() -> registry.timer("my.timer", "my.tag", "val").record(1, TimeUnit.MILLISECONDS))
+            .expectNext(line)
+            .verifyComplete();
     }
 
     @ParameterizedTest
@@ -192,11 +199,15 @@ class StatsdMeterRegistryTest {
         }
 
         final Processor<String, String> lines = lineProcessor();
-        registry = StatsdMeterRegistry.builder(configWithFlavor(flavor)).clock(clock).lineSink(toLineSink(lines))
-                .build();
+        registry = StatsdMeterRegistry.builder(configWithFlavor(flavor))
+            .clock(clock)
+            .lineSink(toLineSink(lines))
+            .build();
 
-        StepVerifier.create(lines).then(() -> registry.summary("my.summary", "my.tag", "val").record(1))
-                .expectNext(line).verifyComplete();
+        StepVerifier.create(lines)
+            .then(() -> registry.summary("my.summary", "my.tag", "val").record(1))
+            .expectNext(line)
+            .verifyComplete();
     }
 
     @ParameterizedTest
@@ -236,19 +247,28 @@ class StatsdMeterRegistryTest {
 
             ltt.set(registry.more().longTaskTimer("my.long.task", "my.tag", "val"));
             return lines;
-        }).then(() -> sample.set(ltt.get().start())).then(() -> clock.add(config.step())).thenAwait(config.step())
-                .expectNext(expectLines[0]).expectNext(expectLines[1]).verifyComplete();
+        })
+            .then(() -> sample.set(ltt.get().start()))
+            .then(() -> clock.add(config.step()))
+            .thenAwait(config.step())
+            .expectNext(expectLines[0])
+            .expectNext(expectLines[1])
+            .verifyComplete();
     }
 
     @Test
     void customNamingConvention() {
         final Processor<String, String> lines = lineProcessor();
         registry = StatsdMeterRegistry.builder(configWithFlavor(StatsdFlavor.ETSY))
-                .nameMapper((id, convention) -> id.getName().toUpperCase()).clock(clock).lineSink(toLineSink(lines))
-                .build();
+            .nameMapper((id, convention) -> id.getName().toUpperCase())
+            .clock(clock)
+            .lineSink(toLineSink(lines))
+            .build();
 
-        StepVerifier.create(lines).then(() -> registry.counter("my.counter", "my.tag", "val").increment(2.1))
-                .expectNext("MY.COUNTER:2|c").verifyComplete();
+        StepVerifier.create(lines)
+            .then(() -> registry.counter("my.counter", "my.tag", "val").increment(2.1))
+            .expectNext("MY.COUNTER:2|c")
+            .verifyComplete();
     }
 
     @Issue("#411")
@@ -271,8 +291,9 @@ class StatsdMeterRegistryTest {
     void serviceLevelObjectivesOnlyNoPercentileHistogram(StatsdFlavor flavor) {
         StatsdConfig config = configWithFlavor(flavor);
         registry = new StatsdMeterRegistry(config, clock);
-        DistributionSummary summary = DistributionSummary.builder("my.summary").serviceLevelObjectives(1.0, 2)
-                .register(registry);
+        DistributionSummary summary = DistributionSummary.builder("my.summary")
+            .serviceLevelObjectives(1.0, 2)
+            .register(registry);
         summary.record(1);
 
         Timer timer = Timer.builder("my.timer").serviceLevelObjectives(Duration.ofMillis(1)).register(registry);
@@ -312,8 +333,9 @@ class StatsdMeterRegistryTest {
     @Test
     void distributionSummariesWithServiceLevelObjectivesHaveInfBucket() {
         registry = new StatsdMeterRegistry(configWithFlavor(StatsdFlavor.ETSY), clock);
-        DistributionSummary summary = DistributionSummary.builder("my.distribution").serviceLevelObjectives(1.0)
-                .register(registry);
+        DistributionSummary summary = DistributionSummary.builder("my.distribution")
+            .serviceLevelObjectives(1.0)
+            .register(registry);
 
         // A io.micrometer.core.instrument.search.MeterNotFoundException is thrown if the
         // gauge isn't present
@@ -353,8 +375,10 @@ class StatsdMeterRegistryTest {
 
         StepVerifier.create(lines).then(() -> {
             Timer.builder("my.timer").publishPercentileHistogram(true).register(registry).record(2, TimeUnit.SECONDS);
-            Timer.builder("my.timer2").publishPercentileHistogram(false).register(registry).record(20,
-                    TimeUnit.SECONDS);
+            Timer.builder("my.timer2")
+                .publishPercentileHistogram(false)
+                .register(registry)
+                .record(20, TimeUnit.SECONDS);
         }).expectNext("my.timer:2000|d").expectNext("my.timer2:20000|ms").verifyComplete();
     }
 
@@ -417,7 +441,7 @@ class StatsdMeterRegistryTest {
 
         AtomicReference<Double> value = new AtomicReference<>(1.0);
         StatsdGauge<?> gauge = (StatsdGauge<?>) Gauge.builder("my.gauge", value, AtomicReference::get)
-                .register(registry);
+            .register(registry);
 
         gauge.poll();
         assertThat(lineCount.get()).isEqualTo(1);
@@ -464,16 +488,16 @@ class StatsdMeterRegistryTest {
         }).build();
 
         Meter custom = Meter
-                .builder("custom", Meter.Type.COUNTER, singletonList(new Measurement(() -> 1.0, Statistic.COUNT)))
-                .register(registry);
+            .builder("custom", Meter.Type.COUNTER, singletonList(new Measurement(() -> 1.0, Statistic.COUNT)))
+            .register(registry);
         registry.poll();
         registry.remove(custom);
         registry.poll();
         assertThat(lines.get("custom")).isEqualTo(1);
 
         AtomicInteger tgObj = new AtomicInteger(1);
-        registry.more().timeGauge("timegauge", Tags.empty(), tgObj, TimeUnit.MILLISECONDS,
-                AtomicInteger::incrementAndGet);
+        registry.more()
+            .timeGauge("timegauge", Tags.empty(), tgObj, TimeUnit.MILLISECONDS, AtomicInteger::incrementAndGet);
         registry.poll();
         registry.remove(registry.get("timegauge").timeGauge());
         registry.poll();
@@ -513,8 +537,9 @@ class StatsdMeterRegistryTest {
                                                    // for each poll
 
         AtomicInteger ftObj = new AtomicInteger(1);
-        registry.more().timer("functiontimer", Tags.empty(), ftObj, AtomicInteger::incrementAndGet, AtomicInteger::get,
-                TimeUnit.MILLISECONDS);
+        registry.more()
+            .timer("functiontimer", Tags.empty(), ftObj, AtomicInteger::incrementAndGet, AtomicInteger::get,
+                    TimeUnit.MILLISECONDS);
         registry.poll();
         registry.remove(registry.get("functiontimer").functionTimer());
         registry.poll();

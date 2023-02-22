@@ -63,16 +63,17 @@ class MetricSchemaCompatibilityTest {
         assertSchemaCompatibility(Collections.singletonList(new Pair(GAUGE, DOUBLE)), registry.createFunctionCounter(
                 batch, FunctionCounter.builder("functionCounter", 1, value -> 1).register(registry)));
         assertSchemaCompatibility(Collections.singletonList(new Pair(GAUGE, DISTRIBUTION)),
-                registry.createFunctionTimer(batch, FunctionTimer
-                        .builder("functionTimer", 1, value -> 1, value -> 1, TimeUnit.SECONDS).register(registry)));
+                registry.createFunctionTimer(batch,
+                        FunctionTimer.builder("functionTimer", 1, value -> 1, value -> 1, TimeUnit.SECONDS)
+                            .register(registry)));
         assertSchemaCompatibility(
-                Collections.singletonList(new Pair(GAUGE, DOUBLE)), registry
-                        .createMeter(
-                                batch, Meter
-                                        .builder("gauge", Meter.Type.OTHER,
-                                                Collections
-                                                        .singletonList(new Measurement(() -> 1.0, Statistic.UNKNOWN)))
-                                        .register(registry)));
+                Collections.singletonList(new Pair(GAUGE,
+                        DOUBLE)),
+                registry.createMeter(batch,
+                        Meter
+                            .builder("gauge", Meter.Type.OTHER,
+                                    Collections.singletonList(new Measurement(() -> 1.0, Statistic.UNKNOWN)))
+                            .register(registry)));
     }
 
     /**
@@ -101,16 +102,17 @@ class MetricSchemaCompatibilityTest {
                 registry.createFunctionCounter(batch,
                         FunctionCounter.builder("functionCounter", 1, value -> 1).register(registry)));
         assertSchemaCompatibility(Collections.singletonList(new Pair(GAUGE, DISTRIBUTION)),
-                registry.createFunctionTimer(batch, FunctionTimer
-                        .builder("functionTimer", 1, value -> 1, value -> 1, TimeUnit.SECONDS).register(registry)));
+                registry.createFunctionTimer(batch,
+                        FunctionTimer.builder("functionTimer", 1, value -> 1, value -> 1, TimeUnit.SECONDS)
+                            .register(registry)));
         assertSchemaCompatibility(
-                Collections.singletonList(new Pair(GAUGE, DOUBLE)), registry
-                        .createMeter(
-                                batch, Meter
-                                        .builder("gauge", Meter.Type.OTHER,
-                                                Collections
-                                                        .singletonList(new Measurement(() -> 1.0, Statistic.UNKNOWN)))
-                                        .register(registry)));
+                Collections.singletonList(new Pair(GAUGE,
+                        DOUBLE)),
+                registry.createMeter(batch,
+                        Meter
+                            .builder("gauge", Meter.Type.OTHER,
+                                    Collections.singletonList(new Measurement(() -> 1.0, Statistic.UNKNOWN)))
+                            .register(registry)));
     }
 
     private void assertSchemaCompatibility(List<Pair> expectedValues, Stream<TimeSeries> timeSeriesStream) {

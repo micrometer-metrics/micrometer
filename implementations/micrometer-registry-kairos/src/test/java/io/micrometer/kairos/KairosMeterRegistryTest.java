@@ -102,12 +102,12 @@ class KairosMeterRegistryTest {
     @Test
     void writeFunctionCounterShouldDropInfiniteValues() {
         FunctionCounter counter = FunctionCounter.builder("myCounter", Double.POSITIVE_INFINITY, Number::doubleValue)
-                .register(meterRegistry);
+            .register(meterRegistry);
         clock.add(config.step());
         assertThat(meterRegistry.writeFunctionCounter(counter)).isEmpty();
 
         counter = FunctionCounter.builder("myCounter", Double.NEGATIVE_INFINITY, Number::doubleValue)
-                .register(meterRegistry);
+            .register(meterRegistry);
         clock.add(config.step());
         assertThat(meterRegistry.writeFunctionCounter(counter)).isEmpty();
     }

@@ -35,7 +35,7 @@ class TelegrafStatsdLineBuilderTest {
         Counter c = registry.counter("hikari.pools", "pool", "poolname = abc,::hikari");
         TelegrafStatsdLineBuilder lineBuilder = new TelegrafStatsdLineBuilder(c.getId(), registry.config());
         assertThat(lineBuilder.count(1, Statistic.COUNT))
-                .isEqualTo("hikari_pools,statistic=count,pool=poolname_=_abc___hikari:1|c");
+            .isEqualTo("hikari_pools,statistic=count,pool=poolname_=_abc___hikari:1|c");
     }
 
     @Test

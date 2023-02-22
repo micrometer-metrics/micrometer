@@ -97,9 +97,10 @@ public class HumioMeterRegistry extends StepMeterRegistry {
                 String tags = "";
                 Map<String, String> datasourceTags = config.tags();
                 if (datasourceTags != null && !datasourceTags.isEmpty()) {
-                    tags = datasourceTags.entrySet().stream()
-                            .map(tag -> "\"" + tag.getKey() + "\": \"" + tag.getValue() + "\"")
-                            .collect(joining(",", "\"tags\":{", "},"));
+                    tags = datasourceTags.entrySet()
+                        .stream()
+                        .map(tag -> "\"" + tag.getKey() + "\": \"" + tag.getValue() + "\"")
+                        .collect(joining(",", "\"tags\":{", "},"));
                 }
 
                 post.withJsonContent(meters.stream()
@@ -282,12 +283,17 @@ public class HumioMeterRegistry extends StepMeterRegistry {
 
             String name = getConventionName(meter.getId());
 
-            sb.append("{\"timestamp\":\"").append(timestamp).append("\",\"attributes\":{\"name\":\"")
-                    .append(escapeJson(name)).append('"');
+            sb.append("{\"timestamp\":\"")
+                .append(timestamp)
+                .append("\",\"attributes\":{\"name\":\"")
+                .append(escapeJson(name))
+                .append('"');
 
             for (Attribute attribute : attributes) {
-                sb.append(",\"").append(attribute.name).append("\":")
-                        .append(DoubleFormat.wholeOrDecimal(attribute.value));
+                sb.append(",\"")
+                    .append(attribute.name)
+                    .append("\":")
+                    .append(DoubleFormat.wholeOrDecimal(attribute.value));
             }
 
             List<Tag> tags = getConventionTags(meter.getId());

@@ -39,13 +39,13 @@ import static java.util.Objects.requireNonNull;
 public class MetricsRequestEventListener implements RequestEventListener {
 
     private final Map<ContainerRequest, Timer.Sample> shortTaskSample = Collections
-            .synchronizedMap(new IdentityHashMap<>());
+        .synchronizedMap(new IdentityHashMap<>());
 
     private final Map<ContainerRequest, Collection<LongTaskTimer.Sample>> longTaskSamples = Collections
-            .synchronizedMap(new IdentityHashMap<>());
+        .synchronizedMap(new IdentityHashMap<>());
 
     private final Map<ContainerRequest, Set<Timed>> timedAnnotationsOnRequest = Collections
-            .synchronizedMap(new IdentityHashMap<>());
+        .synchronizedMap(new IdentityHashMap<>());
 
     private final MeterRegistry registry;
 
@@ -83,7 +83,8 @@ public class MetricsRequestEventListener implements RequestEventListener {
                 shortTaskSample.put(containerRequest, Timer.start(registry));
 
                 List<LongTaskTimer.Sample> longTaskSamples = longTaskTimers(timedAnnotations, event).stream()
-                        .map(LongTaskTimer::start).collect(Collectors.toList());
+                    .map(LongTaskTimer::start)
+                    .collect(Collectors.toList());
                 if (!longTaskSamples.isEmpty()) {
                     this.longTaskSamples.put(containerRequest, longTaskSamples);
                 }
@@ -130,15 +131,18 @@ public class MetricsRequestEventListener implements RequestEventListener {
             return Collections.emptySet();
         }
 
-        return timed.stream().filter(annotation -> !annotation.longTask())
-                .map(t -> Timer.builder(t, metricName).tags(tagsProvider.httpRequestTags(event)).register(registry))
-                .collect(Collectors.toSet());
+        return timed.stream()
+            .filter(annotation -> !annotation.longTask())
+            .map(t -> Timer.builder(t, metricName).tags(tagsProvider.httpRequestTags(event)).register(registry))
+            .collect(Collectors.toSet());
     }
 
     private Set<LongTaskTimer> longTaskTimers(Set<Timed> timed, RequestEvent event) {
-        return timed.stream().filter(Timed::longTask).map(LongTaskTimer::builder)
-                .map(b -> b.tags(tagsProvider.httpLongRequestTags(event)).register(registry))
-                .collect(Collectors.toSet());
+        return timed.stream()
+            .filter(Timed::longTask)
+            .map(LongTaskTimer::builder)
+            .map(b -> b.tags(tagsProvider.httpLongRequestTags(event)).register(registry))
+            .collect(Collectors.toSet());
     }
 
     private Set<Timed> annotations(RequestEvent event) {

@@ -23,7 +23,7 @@ import io.micrometer.core.instrument.noop.NoopFunctionCounter;
 import java.lang.ref.WeakReference;
 import java.util.function.ToDoubleFunction;
 
-public class CompositeFunctionCounter<T> extends AbstractCompositeMeter<FunctionCounter> implements FunctionCounter {
+public class CompositeFunctionCounter<T>extends AbstractCompositeMeter<FunctionCounter> implements FunctionCounter {
 
     private final WeakReference<T> ref;
 
@@ -53,8 +53,11 @@ public class CompositeFunctionCounter<T> extends AbstractCompositeMeter<Function
             return null;
         }
 
-        return FunctionCounter.builder(getId().getName(), obj, f).tags(getId().getTagsAsIterable())
-                .description(getId().getDescription()).baseUnit(getId().getBaseUnit()).register(registry);
+        return FunctionCounter.builder(getId().getName(), obj, f)
+            .tags(getId().getTagsAsIterable())
+            .description(getId().getDescription())
+            .baseUnit(getId().getBaseUnit())
+            .register(registry);
     }
 
 }

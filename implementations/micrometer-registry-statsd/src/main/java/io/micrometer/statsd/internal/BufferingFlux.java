@@ -51,14 +51,15 @@ public class BufferingFlux {
 
             final DirectProcessor<Void> intervalEnd = DirectProcessor.create();
 
-            final Flux<String> heartbeat = Flux.interval(Duration.ofMillis(maxMillisecondsBetweenEmits)).map(l -> "")
-                    .takeUntilOther(intervalEnd);
+            final Flux<String> heartbeat = Flux.interval(Duration.ofMillis(maxMillisecondsBetweenEmits))
+                .map(l -> "")
+                .takeUntilOther(intervalEnd);
 
             // Create a stream that emits at least once every
             // $maxMillisecondsBetweenEmits, to avoid long pauses between
             // buffer flushes when the source doesn't emit for a while.
             final Flux<String> sourceWithEmptyStringKeepAlive = source.doOnTerminate(intervalEnd::onComplete)
-                    .mergeWith(heartbeat);
+                .mergeWith(heartbeat);
 
             return sourceWithEmptyStringKeepAlive.bufferUntil(line -> {
                 final int bytesLength = line.getBytes().length;
@@ -93,7 +94,9 @@ public class BufferingFlux {
                 }
 
                 return false;
-            }, true).map(lines -> lines.stream().filter(line -> !line.isEmpty())
+            }, true)
+                .map(lines -> lines.stream()
+                    .filter(line -> !line.isEmpty())
                     .collect(Collectors.joining(delimiter, "", delimiter)));
         });
     }

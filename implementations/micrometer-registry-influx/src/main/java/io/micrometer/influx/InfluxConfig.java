@@ -218,10 +218,10 @@ public interface InfluxConfig extends StepRegistryConfig {
         return checkAll(this, c -> StepRegistryConfig.validate(c), checkRequired("db", InfluxConfig::db),
                 checkRequired("bucket", InfluxConfig::bucket), checkRequired("consistency", InfluxConfig::consistency),
                 checkRequired("apiVersion", InfluxConfig::apiVersion)
-                        .andThen(v -> v.invalidateWhen(a -> a == InfluxApiVersion.V2 && StringUtils.isBlank(org()),
-                                "requires 'org' is also configured", InvalidReason.MISSING))
-                        .andThen(v -> v.invalidateWhen(a -> a == InfluxApiVersion.V2 && StringUtils.isBlank(token()),
-                                "requires 'token' is also configured", InvalidReason.MISSING)),
+                    .andThen(v -> v.invalidateWhen(a -> a == InfluxApiVersion.V2 && StringUtils.isBlank(org()),
+                            "requires 'org' is also configured", InvalidReason.MISSING))
+                    .andThen(v -> v.invalidateWhen(a -> a == InfluxApiVersion.V2 && StringUtils.isBlank(token()),
+                            "requires 'token' is also configured", InvalidReason.MISSING)),
                 checkRequired("uri", InfluxConfig::uri));
     }
 

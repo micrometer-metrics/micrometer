@@ -33,15 +33,18 @@ public class TimerSample {
 
     public static void main(String[] args) {
         MeterRegistry registry = SampleConfig.myMonitoringSystem();
-        Timer timer = Timer.builder("timer").publishPercentileHistogram().publishPercentiles(0.5, 0.95, 0.99)
-                .serviceLevelObjectives(Duration.ofMillis(275), Duration.ofMillis(300), Duration.ofMillis(500))
-                .distributionStatisticExpiry(Duration.ofSeconds(10)).distributionStatisticBufferLength(3)
-                .register(registry);
+        Timer timer = Timer.builder("timer")
+            .publishPercentileHistogram()
+            .publishPercentiles(0.5, 0.95, 0.99)
+            .serviceLevelObjectives(Duration.ofMillis(275), Duration.ofMillis(300), Duration.ofMillis(500))
+            .distributionStatisticExpiry(Duration.ofSeconds(10))
+            .distributionStatisticBufferLength(3)
+            .register(registry);
 
         AtomicLong totalCount = new AtomicLong();
         AtomicLong totalTime = new AtomicLong();
         FunctionTimer.builder("ftimer", totalCount, t -> totalCount.get(), t -> totalTime.get(), TimeUnit.MILLISECONDS)
-                .register(registry);
+            .register(registry);
 
         RandomEngine r = new MersenneTwister64(0);
         Normal incomingRequests = new Normal(0, 1, r);

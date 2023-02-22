@@ -68,16 +68,19 @@ class DropwizardMeterRegistryTest {
 
     @Test
     void customMeasurementsThatDifferOnlyInTagValue() {
-        Meter.builder("my.custom", Meter.Type.GAUGE,
-                Arrays.asList(new Measurement(() -> 1.0, Statistic.COUNT), new Measurement(() -> 2.0, Statistic.TOTAL)))
-                .register(registry);
+        Meter
+            .builder("my.custom", Meter.Type.GAUGE,
+                    Arrays.asList(new Measurement(() -> 1.0, Statistic.COUNT),
+                            new Measurement(() -> 2.0, Statistic.TOTAL)))
+            .register(registry);
     }
 
     @Issue("#370")
     @Test
     void serviceLevelObjectivesOnlyNoPercentileHistogram() {
-        DistributionSummary summary = DistributionSummary.builder("my.summary").serviceLevelObjectives(1.0, 2)
-                .register(registry);
+        DistributionSummary summary = DistributionSummary.builder("my.summary")
+            .serviceLevelObjectives(1.0, 2)
+            .register(registry);
 
         summary.record(1);
 

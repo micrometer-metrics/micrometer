@@ -71,7 +71,9 @@ public abstract class FlavorStatsdLineBuilder implements StatsdLineBuilder {
     protected String tags(@Nullable Statistic stat, @Nullable String otherTags, String keyValueSeparator,
             String preamble) {
         String tags = of(stat == null ? null : "statistic" + keyValueSeparator + stat.getTagValueRepresentation(),
-                otherTags).filter(Objects::nonNull).collect(Collectors.joining(","));
+                otherTags)
+            .filter(Objects::nonNull)
+            .collect(Collectors.joining(","));
 
         if (!tags.isEmpty())
             tags = preamble + tags;

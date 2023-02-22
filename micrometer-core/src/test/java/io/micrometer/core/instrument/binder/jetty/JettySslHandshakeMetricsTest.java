@@ -62,8 +62,9 @@ class JettySslHandshakeMetricsTest {
         SslHandshakeListener.Event event = new SslHandshakeListener.Event(engine);
         sslHandshakeMetrics.handshakeFailed(event, new javax.net.ssl.SSLHandshakeException(""));
         assertThat(registry.get("jetty.ssl.handshakes")
-                .tags("id", "0", "protocol", "unknown", "ciphersuite", "unknown", "result", "failed").counter().count())
-                        .isEqualTo(1.0);
+            .tags("id", "0", "protocol", "unknown", "ciphersuite", "unknown", "result", "failed")
+            .counter()
+            .count()).isEqualTo(1.0);
     }
 
     @Test
@@ -74,16 +75,19 @@ class JettySslHandshakeMetricsTest {
         when(session.getCipherSuite()).thenReturn("RSA_XYZZY");
         sslHandshakeMetrics.handshakeSucceeded(event);
         assertThat(registry.get("jetty.ssl.handshakes")
-                .tags("id", "0", "protocol", "TLSv1.3", "ciphersuite", "RSA_XYZZY", "result", "succeeded").counter()
-                .count()).isEqualTo(1.0);
+            .tags("id", "0", "protocol", "TLSv1.3", "ciphersuite", "RSA_XYZZY", "result", "succeeded")
+            .counter()
+            .count()).isEqualTo(1.0);
     }
 
     @Test
     void connectorTagAdded() {
         Connector connector = mock(Connector.class);
         new JettySslHandshakeMetrics(registry, connector, tags);
-        assertThatCode(() -> registry.get("jetty.ssl.handshakes").tags("id", "0", "protocol", "unknown", "ciphersuite",
-                "unknown", "result", "failed", "connector.name", "unnamed").counter()).doesNotThrowAnyException();
+        assertThatCode(() -> registry.get("jetty.ssl.handshakes")
+            .tags("id", "0", "protocol", "unknown", "ciphersuite", "unknown", "result", "failed", "connector.name",
+                    "unnamed")
+            .counter()).doesNotThrowAnyException();
     }
 
     @Test
@@ -91,8 +95,10 @@ class JettySslHandshakeMetricsTest {
         Connector connector = mock(Connector.class);
         when(connector.getName()).thenReturn("my-connector");
         new JettySslHandshakeMetrics(registry, connector, tags);
-        assertThatCode(() -> registry.get("jetty.ssl.handshakes").tags("id", "0", "protocol", "unknown", "ciphersuite",
-                "unknown", "result", "failed", "connector.name", "my-connector").counter()).doesNotThrowAnyException();
+        assertThatCode(() -> registry.get("jetty.ssl.handshakes")
+            .tags("id", "0", "protocol", "unknown", "ciphersuite", "unknown", "result", "failed", "connector.name",
+                    "my-connector")
+            .counter()).doesNotThrowAnyException();
     }
 
 }

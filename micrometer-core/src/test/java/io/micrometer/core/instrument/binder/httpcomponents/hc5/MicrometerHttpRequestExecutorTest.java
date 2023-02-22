@@ -108,11 +108,11 @@ class MicrometerHttpRequestExecutorTest {
         execute(client, new HttpGet(server.baseUrl() + "/notfound"));
         execute(client, new HttpGet(server.baseUrl() + "/error"));
         assertThat(registry.get(EXPECTED_METER_NAME).tags("method", "GET", "status", "200").timer().count())
-                .isEqualTo(2L);
+            .isEqualTo(2L);
         assertThat(registry.get(EXPECTED_METER_NAME).tags("method", "GET", "status", "404").timer().count())
-                .isEqualTo(1L);
+            .isEqualTo(1L);
         assertThat(registry.get(EXPECTED_METER_NAME).tags("method", "GET", "status", "500").timer().count())
-                .isEqualTo(1L);
+            .isEqualTo(1L);
     }
 
     @ParameterizedTest
@@ -148,8 +148,13 @@ class MicrometerHttpRequestExecutorTest {
         server.stubFor(any(anyUrl()));
         CloseableHttpClient client = client(executor(false, configureObservationRegistry));
         execute(client, new HttpGet(server.baseUrl()));
-        List<String> tagKeys = registry.get(EXPECTED_METER_NAME).timer().getId().getTags().stream().map(Tag::getKey)
-                .collect(Collectors.toList());
+        List<String> tagKeys = registry.get(EXPECTED_METER_NAME)
+            .timer()
+            .getId()
+            .getTags()
+            .stream()
+            .map(Tag::getKey)
+            .collect(Collectors.toList());
         assertThat(tagKeys).doesNotContain("target.scheme", "target.host", "target.port");
         assertThat(tagKeys).contains("status", "method");
     }
@@ -161,15 +166,21 @@ class MicrometerHttpRequestExecutorTest {
         server.stubFor(any(anyUrl()));
         CloseableHttpClient client = client(executor(true, configureObservationRegistry));
         execute(client, new HttpGet(server.baseUrl()));
-        List<String> tagKeys = registry.get(EXPECTED_METER_NAME).timer().getId().getTags().stream().map(Tag::getKey)
-                .collect(Collectors.toList());
+        List<String> tagKeys = registry.get(EXPECTED_METER_NAME)
+            .timer()
+            .getId()
+            .getTags()
+            .stream()
+            .map(Tag::getKey)
+            .collect(Collectors.toList());
         assertThat(tagKeys).contains("target.scheme", "target.host", "target.port");
     }
 
     @Test
     void waitForContinueGetsPassedToSuper() {
         MicrometerHttpRequestExecutor requestExecutor = MicrometerHttpRequestExecutor.builder(registry)
-                .waitForContinue(Timeout.ofMilliseconds(1000)).build();
+            .waitForContinue(Timeout.ofMilliseconds(1000))
+            .build();
         assertThat(requestExecutor).hasFieldOrPropertyWithValue("waitForContinue", Timeout.ofMilliseconds(1000));
     }
 
@@ -179,7 +190,7 @@ class MicrometerHttpRequestExecutorTest {
             @WiremockResolver.Wiremock WireMockServer server) throws IOException {
         server.stubFor(any(anyUrl()));
         MicrometerHttpRequestExecutor.Builder executorBuilder = MicrometerHttpRequestExecutor.builder(registry)
-                .uriMapper(request -> request.getRequestUri());
+            .uriMapper(request -> request.getRequestUri());
         if (configureObservationRegistry) {
             executorBuilder.observationRegistry(createObservationRegistry());
         }
@@ -198,11 +209,15 @@ class MicrometerHttpRequestExecutorTest {
     void additionalTagsAreExposed(@WiremockResolver.Wiremock WireMockServer server) throws IOException {
         server.stubFor(any(anyUrl()));
         MicrometerHttpRequestExecutor executor = MicrometerHttpRequestExecutor.builder(registry)
-                .tags(Tags.of("foo", "bar", "some.key", "value")).exportTagsForRoute(true).build();
+            .tags(Tags.of("foo", "bar", "some.key", "value"))
+            .exportTagsForRoute(true)
+            .build();
         CloseableHttpClient client = client(executor);
         execute(client, new HttpGet(server.baseUrl()));
-        assertThat(registry.get(EXPECTED_METER_NAME).tags("foo", "bar", "some.key", "value", "target.host", "localhost")
-                .timer().count()).isEqualTo(1L);
+        assertThat(registry.get(EXPECTED_METER_NAME)
+            .tags("foo", "bar", "some.key", "value", "target.host", "localhost")
+            .timer()
+            .count()).isEqualTo(1L);
     }
 
     @Test
@@ -232,7 +247,8 @@ class MicrometerHttpRequestExecutorTest {
         ObservationRegistry observationRegistry = createObservationRegistry();
         observationRegistry.observationConfig().observationConvention(new CustomGlobalApacheHttpConvention());
         MicrometerHttpRequestExecutor micrometerHttpRequestExecutor = MicrometerHttpRequestExecutor.builder(registry)
-                .observationRegistry(observationRegistry).build();
+            .observationRegistry(observationRegistry)
+            .build();
         CloseableHttpClient client = client(micrometerHttpRequestExecutor);
         execute(client, new HttpGet(server.baseUrl()));
         assertThat(registry.get("custom.apache.http.client.requests")).isNotNull();
@@ -245,12 +261,14 @@ class MicrometerHttpRequestExecutorTest {
         ObservationRegistry observationRegistry = createObservationRegistry();
         observationRegistry.observationConfig().observationConvention(new CustomGlobalApacheHttpConvention());
         MicrometerHttpRequestExecutor micrometerHttpRequestExecutor = MicrometerHttpRequestExecutor.builder(registry)
-                .observationRegistry(observationRegistry).observationConvention(new CustomGlobalApacheHttpConvention() {
-                    @Override
-                    public String getName() {
-                        return "local." + super.getName();
-                    }
-                }).build();
+            .observationRegistry(observationRegistry)
+            .observationConvention(new CustomGlobalApacheHttpConvention() {
+                @Override
+                public String getName() {
+                    return "local." + super.getName();
+                }
+            })
+            .build();
         CloseableHttpClient client = client(micrometerHttpRequestExecutor);
         execute(client, new HttpGet(server.baseUrl()));
         assertThat(registry.get("local.custom.apache.http.client.requests")).isNotNull();
@@ -261,8 +279,9 @@ class MicrometerHttpRequestExecutorTest {
         server.stubFor(any(anyUrl()));
         ObservationRegistry observationRegistry = createObservationRegistry();
         MicrometerHttpRequestExecutor micrometerHttpRequestExecutor = MicrometerHttpRequestExecutor.builder(registry)
-                .observationRegistry(observationRegistry).observationConvention(new CustomGlobalApacheHttpConvention())
-                .build();
+            .observationRegistry(observationRegistry)
+            .observationConvention(new CustomGlobalApacheHttpConvention())
+            .build();
         CloseableHttpClient client = client(micrometerHttpRequestExecutor);
         execute(client, new HttpGet(server.baseUrl()));
         assertThat(registry.get("custom.apache.http.client.requests")).isNotNull();
@@ -275,7 +294,8 @@ class MicrometerHttpRequestExecutorTest {
         server.stubFor(any(anyUrl()));
         TestObservationRegistry observationRegistry = TestObservationRegistry.create();
         MicrometerHttpRequestExecutor micrometerHttpRequestExecutor = MicrometerHttpRequestExecutor.builder(registry)
-                .observationRegistry(observationRegistry).build();
+            .observationRegistry(observationRegistry)
+            .build();
         CloseableHttpClient client = client(micrometerHttpRequestExecutor);
         switch (method) {
             case "get":
@@ -290,8 +310,9 @@ class MicrometerHttpRequestExecutorTest {
                 execute(client, new HttpUriRequestBase(method, URI.create(server.baseUrl())));
                 break;
         }
-        TestObservationRegistryAssert.assertThat(observationRegistry).hasSingleObservationThat()
-                .hasContextualNameEqualToIgnoringCase("http " + method);
+        TestObservationRegistryAssert.assertThat(observationRegistry)
+            .hasSingleObservationThat()
+            .hasContextualNameEqualToIgnoringCase("http " + method);
     }
 
     @ParameterizedTest
@@ -301,9 +322,9 @@ class MicrometerHttpRequestExecutorTest {
         server.stubFor(any(urlEqualTo("/error")).willReturn(aResponse().withStatus(1)));
         CloseableHttpClient client = client(executor(false, configureObservationRegistry));
         assertThatThrownBy(() -> execute(client, new HttpGet(server.baseUrl() + "/error")))
-                .isInstanceOf(ClientProtocolException.class);
+            .isInstanceOf(ClientProtocolException.class);
         assertThat(registry.get(EXPECTED_METER_NAME).tags("method", "GET", "status", "IO_ERROR").timer().count())
-                .isEqualTo(1L);
+            .isEqualTo(1L);
     }
 
     static class CustomGlobalApacheHttpConvention extends DefaultApacheHttpClientObservationConvention

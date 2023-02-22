@@ -95,9 +95,9 @@ public class KairosMeterRegistry extends StepMeterRegistry {
                                 ).collect(Collectors.joining(",", "[", "]"))
                         )
                         // @formatter:on
-                        .send()
-                        .onSuccess(response -> logger.debug("successfully sent {} metrics to kairos.", batch.size()))
-                        .onError(response -> logger.error("failed to send metrics to kairos: {}", response.body()));
+                    .send()
+                    .onSuccess(response -> logger.debug("successfully sent {} metrics to kairos.", batch.size()))
+                    .onError(response -> logger.error("failed to send metrics to kairos: {}", response.body()));
             }
             catch (Throwable t) {
                 logger.warn("failed to send metrics to kairos", t);
@@ -176,14 +176,18 @@ public class KairosMeterRegistry extends StepMeterRegistry {
                 continue;
             }
             metrics.add(new KairosMetricBuilder().field("name", measurement.getStatistic().getTagValueRepresentation())
-                    .datapoints(wallTime, value).tags(tags).build());
+                .datapoints(wallTime, value)
+                .tags(tags)
+                .build());
         }
         return metrics.stream();
     }
 
     String writeMetric(Meter.Id id, long wallTime, double value) {
-        return new KairosMetricBuilder().field("name", getConventionName(id)).datapoints(wallTime, value)
-                .tags(getConventionTags(id)).build();
+        return new KairosMetricBuilder().field("name", getConventionName(id))
+            .datapoints(wallTime, value)
+            .tags(getConventionTags(id))
+            .build();
     }
 
     private Meter.Id idWithSuffix(Meter.Id id, String suffix) {
@@ -208,8 +212,11 @@ public class KairosMeterRegistry extends StepMeterRegistry {
         }
 
         KairosMetricBuilder datapoints(long wallTime, double value) {
-            sb.append(",\"datapoints\":[[").append(wallTime).append(',').append(DoubleFormat.wholeOrDecimal(value))
-                    .append("]]");
+            sb.append(",\"datapoints\":[[")
+                .append(wallTime)
+                .append(',')
+                .append(DoubleFormat.wholeOrDecimal(value))
+                .append("]]");
             return this;
         }
 

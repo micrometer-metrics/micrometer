@@ -45,17 +45,21 @@ public class GrpcObservationSample {
         SimpleMeterRegistry meterRegistry = new SimpleMeterRegistry();
 
         ObservationRegistry observationRegistry = ObservationRegistry.create();
-        observationRegistry.observationConfig().observationHandler(new ObservationTextPublisher())
-                .observationHandler(new DefaultMeterObservationHandler(meterRegistry));
+        observationRegistry.observationConfig()
+            .observationHandler(new ObservationTextPublisher())
+            .observationHandler(new DefaultMeterObservationHandler(meterRegistry));
 
         HealthStatusManager service = new HealthStatusManager();
 
-        Server server = InProcessServerBuilder.forName("sample").addService(service.getHealthService())
-                .intercept(new ObservationGrpcServerInterceptor(observationRegistry)).build();
+        Server server = InProcessServerBuilder.forName("sample")
+            .addService(service.getHealthService())
+            .intercept(new ObservationGrpcServerInterceptor(observationRegistry))
+            .build();
         server.start();
 
         ManagedChannel channel = InProcessChannelBuilder.forName("sample")
-                .intercept(new ObservationGrpcClientInterceptor(observationRegistry)).build();
+            .intercept(new ObservationGrpcClientInterceptor(observationRegistry))
+            .build();
 
         HealthBlockingStub healthClient = HealthGrpc.newBlockingStub(channel);
 

@@ -45,8 +45,11 @@ class CompositeCounter extends AbstractCompositeMeter<Counter> implements Counte
 
     @Override
     Counter registerNewMeter(MeterRegistry registry) {
-        return Counter.builder(getId().getName()).tags(getId().getTagsAsIterable())
-                .description(getId().getDescription()).baseUnit(getId().getBaseUnit()).register(registry);
+        return Counter.builder(getId().getName())
+            .tags(getId().getTagsAsIterable())
+            .description(getId().getDescription())
+            .baseUnit(getId().getBaseUnit())
+            .register(registry);
     }
 
 }

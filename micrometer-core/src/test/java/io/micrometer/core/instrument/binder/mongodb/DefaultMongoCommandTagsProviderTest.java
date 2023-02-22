@@ -98,13 +98,13 @@ class DefaultMongoCommandTagsProviderTest {
         @Test
         void withNameInAllowList() {
             assertThat(tagsProvider.determineCollectionName("find", new BsonDocument("find", new BsonString(" bar "))))
-                    .hasValue("bar");
+                .hasValue("bar");
         }
 
         @Test
         void withNameNotInAllowList() {
             assertThat(tagsProvider.determineCollectionName("cmd", new BsonDocument("cmd", new BsonString(" bar "))))
-                    .isEmpty();
+                .isEmpty();
         }
 
         @Test
@@ -115,19 +115,20 @@ class DefaultMongoCommandTagsProviderTest {
         @Test
         void withNonStringCommand() {
             assertThat(tagsProvider.determineCollectionName("find", new BsonDocument("find", BsonBoolean.TRUE)))
-                    .isEmpty();
+                .isEmpty();
         }
 
         @Test
         void withEmptyStringCommand() {
             assertThat(tagsProvider.determineCollectionName("find", new BsonDocument("find", new BsonString("  "))))
-                    .isEmpty();
+                .isEmpty();
         }
 
         @Test
         void withCollectionFieldOnly() {
             assertThat(tagsProvider.determineCollectionName("find",
-                    new BsonDocument("collection", new BsonString(" bar ")))).hasValue("bar");
+                    new BsonDocument("collection", new BsonString(" bar "))))
+                .hasValue("bar");
         }
 
         @Test

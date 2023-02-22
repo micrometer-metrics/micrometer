@@ -67,7 +67,8 @@ class PushMeterRegistryTest {
     void whenUncaughtExceptionInPublish_taskStillScheduled() throws InterruptedException {
         pushMeterRegistry.start(threadFactory);
         assertThat(latch.await(500, TimeUnit.MILLISECONDS))
-                .as("publish should continue to be scheduled even if an uncaught exception is thrown").isTrue();
+            .as("publish should continue to be scheduled even if an uncaught exception is thrown")
+            .isTrue();
     }
 
     @Test

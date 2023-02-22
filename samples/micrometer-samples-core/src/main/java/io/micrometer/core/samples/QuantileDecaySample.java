@@ -27,8 +27,9 @@ public class QuantileDecaySample {
     public static void main(String[] args) {
         MeterRegistry registry = SampleConfig.myMonitoringSystem();
 
-        DistributionSummary summary = DistributionSummary.builder("my.summary").publishPercentiles(0.9)
-                .register(registry);
+        DistributionSummary summary = DistributionSummary.builder("my.summary")
+            .publishPercentiles(0.9)
+            .register(registry);
 
         range(1, 10).forEach(summary::record);
 

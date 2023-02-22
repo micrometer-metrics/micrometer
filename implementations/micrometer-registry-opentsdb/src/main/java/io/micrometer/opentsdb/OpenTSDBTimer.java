@@ -48,19 +48,27 @@ public class OpenTSDBTimer extends AbstractTimer {
 
     OpenTSDBTimer(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig,
             PauseDetector pauseDetector, @Nullable OpenTSDBFlavor flavor) {
-        super(id, clock, DistributionStatisticConfig.builder().percentilesHistogram(false).serviceLevelObjectives()
-                .build().merge(distributionStatisticConfig), pauseDetector, TimeUnit.SECONDS, false);
+        super(id, clock,
+                DistributionStatisticConfig.builder()
+                    .percentilesHistogram(false)
+                    .serviceLevelObjectives()
+                    .build()
+                    .merge(distributionStatisticConfig),
+                pauseDetector, TimeUnit.SECONDS, false);
 
         this.max = new TimeWindowMax(clock, distributionStatisticConfig);
 
         if (distributionStatisticConfig.isPublishingHistogram()) {
             if (flavor == null) {
                 histogram = new TimeWindowFixedBoundaryHistogram(clock,
-                        DistributionStatisticConfig.builder().expiry(Duration.ofDays(1825)) // effectively
-                                                                                            // never
-                                                                                            // roll
-                                                                                            // over
-                                .bufferLength(1).build().merge(distributionStatisticConfig),
+                        DistributionStatisticConfig.builder()
+                            .expiry(Duration.ofDays(1825)) // effectively
+                                                           // never
+                                                           // roll
+                                                           // over
+                            .bufferLength(1)
+                            .build()
+                            .merge(distributionStatisticConfig),
                         true);
             }
             else if (OpenTSDBFlavor.VictoriaMetrics.equals(flavor)) {

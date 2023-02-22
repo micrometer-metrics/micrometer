@@ -24,7 +24,7 @@ import io.micrometer.common.KeyValues;
  * @author Marcin Grzejszczak
  * @since 1.10.0
  */
-public interface HttpServerKeyValuesConvention<REQ, RES> extends HttpKeyValuesConvention<REQ, RES> {
+public interface HttpServerKeyValuesConvention<REQ, RES>extends HttpKeyValuesConvention<REQ, RES> {
 
     /**
      * The primary server name of the matched virtual host. This should be obtained via

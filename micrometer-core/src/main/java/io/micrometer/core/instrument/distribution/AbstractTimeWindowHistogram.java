@@ -39,7 +39,7 @@ abstract class AbstractTimeWindowHistogram<T, U> implements Histogram {
 
     @SuppressWarnings("rawtypes")
     private static final AtomicIntegerFieldUpdater<AbstractTimeWindowHistogram> rotatingUpdater = AtomicIntegerFieldUpdater
-            .newUpdater(AbstractTimeWindowHistogram.class, "rotating");
+        .newUpdater(AbstractTimeWindowHistogram.class, "rotating");
 
     final DistributionStatisticConfig distributionStatisticConfig;
 
@@ -203,7 +203,7 @@ abstract class AbstractTimeWindowHistogram<T, U> implements Histogram {
         }
 
         final Set<Double> monitoredValues = distributionStatisticConfig
-                .getHistogramBuckets(supportsAggregablePercentiles);
+            .getHistogramBuckets(supportsAggregablePercentiles);
         if (monitoredValues.isEmpty()) {
             return null;
         }

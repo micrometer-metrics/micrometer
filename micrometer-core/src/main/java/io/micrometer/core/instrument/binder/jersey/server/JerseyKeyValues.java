@@ -30,22 +30,22 @@ import org.glassfish.jersey.server.monitoring.RequestEvent;
 class JerseyKeyValues {
 
     private static final KeyValue URI_NOT_FOUND = JerseyObservationDocumentation.JerseyLegacyLowCardinalityTags.URI
-            .withValue("NOT_FOUND");
+        .withValue("NOT_FOUND");
 
     private static final KeyValue URI_REDIRECTION = JerseyObservationDocumentation.JerseyLegacyLowCardinalityTags.URI
-            .withValue("REDIRECTION");
+        .withValue("REDIRECTION");
 
     private static final KeyValue URI_ROOT = JerseyObservationDocumentation.JerseyLegacyLowCardinalityTags.URI
-            .withValue("root");
+        .withValue("root");
 
     private static final KeyValue EXCEPTION_NONE = JerseyObservationDocumentation.JerseyLegacyLowCardinalityTags.EXCEPTION
-            .withValue("None");
+        .withValue("None");
 
     private static final KeyValue STATUS_SERVER_ERROR = JerseyObservationDocumentation.JerseyLegacyLowCardinalityTags.STATUS
-            .withValue("500");
+        .withValue("500");
 
     private static final KeyValue METHOD_UNKNOWN = JerseyObservationDocumentation.JerseyLegacyLowCardinalityTags.METHOD
-            .withValue("UNKNOWN");
+        .withValue("UNKNOWN");
 
     private JerseyKeyValues() {
     }
@@ -71,7 +71,7 @@ class JerseyKeyValues {
     static KeyValue status(ContainerResponse response) {
         /* In case there is no response we are dealing with an unmapped exception. */
         return (response != null) ? JerseyObservationDocumentation.JerseyLegacyLowCardinalityTags.STATUS
-                .withValue(Integer.toString(response.getStatus())) : STATUS_SERVER_ERROR;
+            .withValue(Integer.toString(response.getStatus())) : STATUS_SERVER_ERROR;
     }
 
     /**
@@ -122,7 +122,7 @@ class JerseyKeyValues {
         }
         String simpleName = exception.getClass().getSimpleName();
         return JerseyObservationDocumentation.JerseyLegacyLowCardinalityTags.EXCEPTION
-                .withValue(StringUtils.isNotEmpty(simpleName) ? simpleName : exception.getClass().getName());
+            .withValue(StringUtils.isNotEmpty(simpleName) ? simpleName : exception.getClass().getName());
     }
 
     /**
@@ -138,7 +138,7 @@ class JerseyKeyValues {
         }
         /* In case there is no response we are dealing with an unmapped exception. */
         return JerseyObservationDocumentation.JerseyLegacyLowCardinalityTags.OUTCOME
-                .withValue(Outcome.SERVER_ERROR.name());
+            .withValue(Outcome.SERVER_ERROR.name());
     }
 
 }

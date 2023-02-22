@@ -79,30 +79,36 @@ abstract class InstrumentationTimingVerificationTests extends InstrumentationVer
         if (testType == TestType.METRICS_VIA_OBSERVATIONS_WITH_METRICS_HANDLER) {
             if (observationDocumentation.getDefaultConvention() == null) {
                 TestObservationRegistryAssert.assertThat(getObservationRegistry())
-                        .hasObservationWithNameEqualTo(observationDocumentation.getName()).that()
-                        .hasContextualNameEqualTo(observationDocumentation.getContextualName());
+                    .hasObservationWithNameEqualTo(observationDocumentation.getName())
+                    .that()
+                    .hasContextualNameEqualTo(observationDocumentation.getContextualName());
             }
             TestObservationRegistryAssert.assertThat(getObservationRegistry())
-                    .hasObservationWithNameEqualTo(timerName()).that()
-                    .hasSubsetOfKeys(getAllKeyNames(observationDocumentation));
+                .hasObservationWithNameEqualTo(timerName())
+                .that()
+                .hasSubsetOfKeys(getAllKeyNames(observationDocumentation));
         }
     }
 
     private Set<String> getRequiredLowCardinalityKeyNames(ObservationDocumentation observationDocumentation) {
-        return Arrays.stream(observationDocumentation.getLowCardinalityKeyNames()).filter(KeyName::isRequired)
-                .map(KeyName::asString).collect(Collectors.toSet());
+        return Arrays.stream(observationDocumentation.getLowCardinalityKeyNames())
+            .filter(KeyName::isRequired)
+            .map(KeyName::asString)
+            .collect(Collectors.toSet());
     }
 
     private Set<String> getLowCardinalityKeyNames(ObservationDocumentation observationDocumentation) {
-        return Arrays.stream(observationDocumentation.getLowCardinalityKeyNames()).map(KeyName::asString)
-                .collect(Collectors.toSet());
+        return Arrays.stream(observationDocumentation.getLowCardinalityKeyNames())
+            .map(KeyName::asString)
+            .collect(Collectors.toSet());
     }
 
     private String[] getAllKeyNames(ObservationDocumentation observationDocumentation) {
         return Stream
-                .concat(Arrays.stream(observationDocumentation.getLowCardinalityKeyNames()),
-                        Arrays.stream(observationDocumentation.getHighCardinalityKeyNames()))
-                .map(KeyName::asString).toArray(String[]::new);
+            .concat(Arrays.stream(observationDocumentation.getLowCardinalityKeyNames()),
+                    Arrays.stream(observationDocumentation.getHighCardinalityKeyNames()))
+            .map(KeyName::asString)
+            .toArray(String[]::new);
     }
 
 }
