@@ -41,7 +41,7 @@ class JvmThreadMetricsTest {
         assertThat(registry.get("jvm.threads.daemon").gauge().value()).isPositive();
         assertThat(registry.get("jvm.threads.peak").gauge().value()).isPositive();
         assertThat(registry.get("jvm.threads.states").tag("state", "runnable").gauge().value()).isPositive();
-
+        assertThat(registry.get("jvm.threads.states").tag("state", "blocked").gauge().value()).isZero();
         createBlockedThread();
         assertThat(registry.get("jvm.threads.states").tag("state", "blocked").gauge().value()).isPositive();
         assertThat(registry.get("jvm.threads.states").tag("state", "waiting").gauge().value()).isPositive();

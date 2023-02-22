@@ -15,6 +15,12 @@
  */
 package io.micrometer.core.instrument.binder.jvm;
 
+import io.micrometer.common.lang.NonNullApi;
+import io.micrometer.common.lang.NonNullFields;
+import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.binder.BaseUnits;
+import io.micrometer.core.instrument.binder.MeterBinder;
+
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadInfo;
 import java.lang.management.ThreadMXBean;
@@ -22,16 +28,6 @@ import java.util.Arrays;
 import java.util.EnumMap;
 import java.util.Map;
 import java.util.stream.Collectors;
-
-import io.micrometer.common.lang.NonNullApi;
-import io.micrometer.common.lang.NonNullFields;
-import io.micrometer.core.instrument.FunctionCounter;
-import io.micrometer.core.instrument.Gauge;
-import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Tag;
-import io.micrometer.core.instrument.Tags;
-import io.micrometer.core.instrument.binder.BaseUnits;
-import io.micrometer.core.instrument.binder.MeterBinder;
 
 import static java.util.Collections.emptyList;
 
@@ -46,6 +42,9 @@ import static java.util.Collections.emptyList;
 public class JvmThreadMetrics implements MeterBinder {
 
     private final Iterable<Tag> tags;
+
+    private final ThreadLocal<Map<Thread.State, Long>> threadStateGroupLocal = ThreadLocal
+        .withInitial(this::getThreadStatesGroup);
 
     public JvmThreadMetrics() {
         this(emptyList());
@@ -84,13 +83,9 @@ public class JvmThreadMetrics implements MeterBinder {
             .register(registry);
 
         try {
-            long[] allThreadIds = threadBean.getAllThreadIds();
-            Map<Thread.State, Long> stateCountGroup = Arrays.stream(threadBean.getThreadInfo(allThreadIds))
-                .collect(Collectors.groupingBy(ThreadInfo::getThreadState, () -> new EnumMap<>(Thread.State.class),
-                        Collectors.counting()));
-
+            threadBean.getAllThreadIds();
             for (Thread.State state : Thread.State.values()) {
-                Gauge.builder("jvm.threads.states", () -> stateCountGroup.get(state))
+                Gauge.builder("jvm.threads.states", () -> getThreadStateCount(state))
                     .tags(Tags.concat(tags, "state", getStateTagValue(state)))
                     .description("The current number of threads")
                     .baseUnit(BaseUnits.THREADS)
@@ -105,6 +100,34 @@ public class JvmThreadMetrics implements MeterBinder {
 
     private static String getStateTagValue(Thread.State state) {
         return state.name().toLowerCase().replace("_", "-");
+    }
+
+    private Long getThreadStateCount(Thread.State state) {
+        Map<Thread.State, Long> stateCountGroup = threadStateGroupLocal.get();
+        Long count = stateCountGroup.remove(state);
+        if (count == null) {
+            // Avoid fetching only specific state metrics at a time instead of all state,
+            // resulting in reading old state from ThreadLocal.
+            threadStateGroupLocal.remove();
+            stateCountGroup = threadStateGroupLocal.get();
+            count = stateCountGroup.remove(state);
+        }
+        if (stateCountGroup.isEmpty()) {
+            threadStateGroupLocal.remove();
+        }
+        return count;
+    }
+
+    private Map<Thread.State, Long> getThreadStatesGroup() {
+        ThreadMXBean threadBean = ManagementFactory.getThreadMXBean();
+        long[] allThreadIds = threadBean.getAllThreadIds();
+        Map<Thread.State, Long> stateCountGroup = Arrays.stream(threadBean.getThreadInfo(allThreadIds))
+            .collect(Collectors.groupingBy(ThreadInfo::getThreadState, () -> new EnumMap<>(Thread.State.class),
+                    Collectors.counting()));
+        for (Thread.State state : Thread.State.values()) {
+            stateCountGroup.putIfAbsent(state, 0L);
+        }
+        return stateCountGroup;
     }
 
 }
