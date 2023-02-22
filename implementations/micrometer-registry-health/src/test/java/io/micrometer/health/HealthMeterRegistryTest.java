@@ -38,16 +38,21 @@ class HealthMeterRegistryTest {
 
     @Test
     void healthFromServiceLevelObjective() {
-        HealthMeterRegistry registry = HealthMeterRegistry.builder(HealthConfig.DEFAULT).clock(new MockClock())
-                .serviceLevelObjectives(ServiceLevelObjective.build("api.error.ratio").failedMessage("API error ratio")
-                        .errorRatio(search -> search.name("http.server.requests").tag("uri", "$ENDPOINT"),
-                                all -> all.tag("outcome", "SERVER_ERROR"))
-                        .isLessThan(0.01))
-                .build();
+        HealthMeterRegistry registry = HealthMeterRegistry.builder(HealthConfig.DEFAULT)
+            .clock(new MockClock())
+            .serviceLevelObjectives(ServiceLevelObjective.build("api.error.ratio")
+                .failedMessage("API error ratio")
+                .errorRatio(search -> search.name("http.server.requests").tag("uri", "$ENDPOINT"),
+                        all -> all.tag("outcome", "SERVER_ERROR"))
+                .isLessThan(0.01))
+            .build();
 
         for (int i = 0; i < 100; i++) {
-            Timer.builder("http.server.requests").tag("outcome", i == 0 ? "SERVER_ERROR" : "SUCCESS")
-                    .tag("uri", "$ENDPOINT").register(registry).record(10, TimeUnit.MILLISECONDS);
+            Timer.builder("http.server.requests")
+                .tag("outcome", i == 0 ? "SERVER_ERROR" : "SUCCESS")
+                .tag("uri", "$ENDPOINT")
+                .register(registry)
+                .record(10, TimeUnit.MILLISECONDS);
         }
 
         clock(registry).add(Duration.ofSeconds(10));
@@ -56,8 +61,11 @@ class HealthMeterRegistryTest {
         assertThat(registry.getServiceLevelObjectives().iterator().next().healthy(registry)).isFalse();
 
         for (int i = 0; i < 100; i++) {
-            Timer.builder("http.server.requests").tag("outcome", "SUCCESS").tag("uri", "$ENDPOINT").register(registry)
-                    .record(10, TimeUnit.MILLISECONDS);
+            Timer.builder("http.server.requests")
+                .tag("outcome", "SUCCESS")
+                .tag("uri", "$ENDPOINT")
+                .register(registry)
+                .record(10, TimeUnit.MILLISECONDS);
         }
 
         clock(registry).add(Duration.ofSeconds(10));
@@ -68,20 +76,24 @@ class HealthMeterRegistryTest {
 
     @Test
     void unmatchedServiceLevelObjectiveReportsHealthy() {
-        HealthMeterRegistry registry = HealthMeterRegistry
-                .builder(HealthConfig.DEFAULT).clock(new MockClock()).serviceLevelObjectives(ServiceLevelObjective
-                        .build("counter.throughput").count(search -> search.name("my.counter")).isGreaterThan(1))
-                .build();
+        HealthMeterRegistry registry = HealthMeterRegistry.builder(HealthConfig.DEFAULT)
+            .clock(new MockClock())
+            .serviceLevelObjectives(ServiceLevelObjective.build("counter.throughput")
+                .count(search -> search.name("my.counter"))
+                .isGreaterThan(1))
+            .build();
 
         assertThat(registry.getServiceLevelObjectives().iterator().next().healthy(registry)).isTrue();
     }
 
     @Test
     void onlyMetricsThatAreServiceLevelIndicatorsAreRegistered() {
-        HealthMeterRegistry registry = HealthMeterRegistry
-                .builder(HealthConfig.DEFAULT).clock(new MockClock()).serviceLevelObjectives(ServiceLevelObjective
-                        .build("counter.throughput").count(search -> search.name("my.counter")).isGreaterThan(1))
-                .build();
+        HealthMeterRegistry registry = HealthMeterRegistry.builder(HealthConfig.DEFAULT)
+            .clock(new MockClock())
+            .serviceLevelObjectives(ServiceLevelObjective.build("counter.throughput")
+                .count(search -> search.name("my.counter"))
+                .isGreaterThan(1))
+            .build();
 
         assertThat(registry.getMeters()).isEmpty();
 
@@ -94,29 +106,34 @@ class HealthMeterRegistryTest {
 
     @Test
     void applyRequiredBinders() {
-        HealthMeterRegistry registry = HealthMeterRegistry.builder(HealthConfig.DEFAULT).clock(new MockClock())
-                .serviceLevelObjectives(
-                        ServiceLevelObjective.build("counter.throughput").requires(new JvmMemoryMetrics())
-                                .value(search -> search.name("jvm.memory.used")).isGreaterThan(1))
-                .build();
+        HealthMeterRegistry registry = HealthMeterRegistry.builder(HealthConfig.DEFAULT)
+            .clock(new MockClock())
+            .serviceLevelObjectives(ServiceLevelObjective.build("counter.throughput")
+                .requires(new JvmMemoryMetrics())
+                .value(search -> search.name("jvm.memory.used"))
+                .isGreaterThan(1))
+            .build();
 
         assertThat(registry.getMeters().stream().map(m -> m.getId().getName())).containsOnly("jvm.memory.used");
     }
 
     @Test
     void meterFiltersAffectServiceLevelObjectives() {
-        HealthMeterRegistry registry = HealthMeterRegistry.builder(HealthConfig.DEFAULT).clock(new MockClock())
-                .serviceLevelObjectives(JvmServiceLevelObjectives.MEMORY)
-                .serviceLevelObjectiveFilter(MeterFilter.denyNameStartsWith("jvm.pool"))
-                .serviceLevelObjectiveFilter(new MeterFilter() {
-                    @Override
-                    public Meter.Id map(Meter.Id id) {
-                        return id.getName().equals("jvm.gc.load") ? id.withName("jvm.collection.load") : id;
-                    }
-                }).build();
+        HealthMeterRegistry registry = HealthMeterRegistry.builder(HealthConfig.DEFAULT)
+            .clock(new MockClock())
+            .serviceLevelObjectives(JvmServiceLevelObjectives.MEMORY)
+            .serviceLevelObjectiveFilter(MeterFilter.denyNameStartsWith("jvm.pool"))
+            .serviceLevelObjectiveFilter(new MeterFilter() {
+                @Override
+                public Meter.Id map(Meter.Id id) {
+                    return id.getName().equals("jvm.gc.load") ? id.withName("jvm.collection.load") : id;
+                }
+            })
+            .build();
 
         assertThat(registry.getServiceLevelObjectives().stream().map(ServiceLevelObjective::getName))
-                .contains("jvm.collection.load").doesNotContain("jvm.pool.memory");
+            .contains("jvm.collection.load")
+            .doesNotContain("jvm.pool.memory");
     }
 
 }

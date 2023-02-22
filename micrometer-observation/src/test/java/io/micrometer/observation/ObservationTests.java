@@ -103,8 +103,9 @@ class ObservationTests {
 
         Observation.start("foo", () -> context, registry).stop();
 
-        assertThat(context.getHighCardinalityKeyValue("foo")).isNotNull().extracting(KeyValue::getValue)
-                .isEqualTo("FOO-modified");
+        assertThat(context.getHighCardinalityKeyValue("foo")).isNotNull()
+            .extracting(KeyValue::getValue)
+            .isEqualTo("FOO-modified");
     }
 
     @Test
@@ -116,7 +117,8 @@ class ObservationTests {
 
         Observation.Context childContext = new Observation.Context();
         Observation child = Observation.createNotStarted("child", () -> childContext, registry)
-                .parentObservation(parent).start();
+            .parentObservation(parent)
+            .start();
 
         parent.stop();
         child.stop();
@@ -134,7 +136,8 @@ class ObservationTests {
         Observation parent = Observation.start("parent", registry);
         Observation parent2 = Observation.start("parent2", registry);
         Observation childOutsideOfScope = Observation.createNotStarted("childOutsideOfScope", registry)
-                .parentObservation(parent2).start();
+            .parentObservation(parent2)
+            .start();
         parent.scoped(() -> {
             Observation child = Observation.start("child", registry);
             assertThat(child.getContextView().getParentObservation()).isSameAs(parent);
@@ -161,7 +164,10 @@ class ObservationTests {
 
         Observation.Context context = new Observation.Context();
         Observation.createNotStarted(new CustomConvention(), new DefaultConvention(), () -> context, registry)
-                .lowCardinalityKeyValue("local", "present").lowCardinalityKeyValue("low", "local").start().stop();
+            .lowCardinalityKeyValue("local", "present")
+            .lowCardinalityKeyValue("low", "local")
+            .start()
+            .stop();
 
         assertThat(context.getName()).isEqualTo("custom.name");
         assertThat(context.getContextualName()).isEqualTo("custom.contextualName");
@@ -176,7 +182,10 @@ class ObservationTests {
 
         Observation.Context context = new Observation.Context();
         Observation.createNotStarted(new CustomConvention(), new DefaultConvention(), () -> context, registry)
-                .lowCardinalityKeyValue("local", "present").lowCardinalityKeyValue("low", "local").start().stop();
+            .lowCardinalityKeyValue("local", "present")
+            .lowCardinalityKeyValue("low", "local")
+            .start()
+            .stop();
 
         assertThat(context.getName()).isEqualTo("custom.name");
         assertThat(context.getContextualName()).isEqualTo("custom.contextualName");
@@ -190,7 +199,10 @@ class ObservationTests {
 
         Observation.Context context = new Observation.Context();
         Observation.createNotStarted(null, new DefaultConvention(), () -> context, registry)
-                .lowCardinalityKeyValue("local", "present").lowCardinalityKeyValue("low", "local").start().stop();
+            .lowCardinalityKeyValue("local", "present")
+            .lowCardinalityKeyValue("low", "local")
+            .start()
+            .stop();
 
         assertThat(context.getName()).isEqualTo("default.name");
         assertThat(context.getContextualName()).isEqualTo("default.contextualName");
@@ -205,7 +217,10 @@ class ObservationTests {
 
         Observation.Context context = new Observation.Context();
         Observation.createNotStarted(null, new DefaultConvention(), () -> context, registry)
-                .lowCardinalityKeyValue("local", "present").lowCardinalityKeyValue("low", "local").start().stop();
+            .lowCardinalityKeyValue("local", "present")
+            .lowCardinalityKeyValue("low", "local")
+            .start()
+            .stop();
 
         assertThat(context.getName()).isEqualTo("global.name");
         assertThat(context.getContextualName()).isEqualTo("global.contextualName");
@@ -219,7 +234,10 @@ class ObservationTests {
 
         Observation.Context context = new Observation.Context();
         Observation.createNotStarted(new CustomConvention(), () -> context, registry)
-                .lowCardinalityKeyValue("local", "present").lowCardinalityKeyValue("low", "local").start().stop();
+            .lowCardinalityKeyValue("local", "present")
+            .lowCardinalityKeyValue("low", "local")
+            .start()
+            .stop();
 
         assertThat(context.getName()).isEqualTo("custom.name");
         assertThat(context.getContextualName()).isEqualTo("custom.contextualName");
@@ -234,7 +252,10 @@ class ObservationTests {
 
         Observation.Context context = new Observation.Context();
         Observation.createNotStarted(new CustomConvention(), () -> context, registry)
-                .lowCardinalityKeyValue("local", "present").lowCardinalityKeyValue("low", "local").start().stop();
+            .lowCardinalityKeyValue("local", "present")
+            .lowCardinalityKeyValue("low", "local")
+            .start()
+            .stop();
 
         assertThat(context.getName()).isEqualTo("custom.name");
         assertThat(context.getContextualName()).isEqualTo("custom.contextualName");
@@ -247,8 +268,12 @@ class ObservationTests {
         registry.observationConfig().observationHandler(context -> true);
 
         Observation.Context context = new Observation.Context();
-        Observation.createNotStarted("local.name", () -> context, registry).contextualName("local.contextualName")
-                .lowCardinalityKeyValue("local", "present").lowCardinalityKeyValue("low", "local").start().stop();
+        Observation.createNotStarted("local.name", () -> context, registry)
+            .contextualName("local.contextualName")
+            .lowCardinalityKeyValue("local", "present")
+            .lowCardinalityKeyValue("low", "local")
+            .start()
+            .stop();
 
         assertThat(context.getName()).isEqualTo("local.name");
         assertThat(context.getContextualName()).isEqualTo("local.contextualName");
@@ -262,8 +287,12 @@ class ObservationTests {
         registry.observationConfig().observationConvention(new GlobalConvention());
 
         Observation.Context context = new Observation.Context();
-        Observation.createNotStarted("local.name", () -> context, registry).contextualName("local.contextualName")
-                .lowCardinalityKeyValue("local", "present").lowCardinalityKeyValue("low", "local").start().stop();
+        Observation.createNotStarted("local.name", () -> context, registry)
+            .contextualName("local.contextualName")
+            .lowCardinalityKeyValue("local", "present")
+            .lowCardinalityKeyValue("low", "local")
+            .start()
+            .stop();
 
         assertThat(context.getName()).isEqualTo("global.name");
         assertThat(context.getContextualName()).isEqualTo("global.contextualName");
@@ -278,8 +307,11 @@ class ObservationTests {
 
         Observation.Context context = new Observation.Context();
         Observation.createNotStarted(new CustomConvention(), new DefaultConvention(), () -> context, registry)
-                .lowCardinalityKeyValue("local", "present").lowCardinalityKeyValue("low", "local")
-                .observationConvention(new InstrumentationConvention()).start().stop();
+            .lowCardinalityKeyValue("local", "present")
+            .lowCardinalityKeyValue("low", "local")
+            .observationConvention(new InstrumentationConvention())
+            .start()
+            .stop();
 
         assertThat(context.getName()).isEqualTo("instrumentation.name");
         assertThat(context.getContextualName()).isEqualTo("instrumentation.contextualName");

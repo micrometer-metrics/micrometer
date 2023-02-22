@@ -81,7 +81,8 @@ public class LoggingMeterRegistry extends StepMeterRegistry {
 
     private Function<Meter, String> defaultMeterIdPrinter() {
         return (meter) -> getConventionName(meter.getId()) + getConventionTags(meter.getId()).stream()
-                .map(t -> t.getKey() + "=" + t.getValue()).collect(joining(",", "{", "}"));
+            .map(t -> t.getKey() + "=" + t.getValue())
+            .collect(joining(",", "{", "}"));
     }
 
     @Override
@@ -189,7 +190,7 @@ public class LoggingMeterRegistry extends StepMeterRegistry {
 
         String time(double time) {
             return TimeUtils
-                    .format(Duration.ofNanos((long) TimeUtils.convert(time, getBaseTimeUnit(), TimeUnit.NANOSECONDS)));
+                .format(Duration.ofNanos((long) TimeUtils.convert(time, getBaseTimeUnit(), TimeUnit.NANOSECONDS)));
         }
 
         String rate(double rate) {

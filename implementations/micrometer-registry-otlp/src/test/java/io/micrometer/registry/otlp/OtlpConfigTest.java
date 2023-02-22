@@ -46,10 +46,12 @@ class OtlpConfigTest {
     @Test
     void resourceAttributesFromEnvironmentVariables() throws Exception {
         withEnvironmentVariables("OTEL_RESOURCE_ATTRIBUTES", "a=1,b=2", "OTEL_SERVICE_NAME", "my-service")
-                .execute(() -> {
-                    assertThat(OtlpConfig.DEFAULT.resourceAttributes()).hasSize(3).containsEntry("a", "1")
-                            .containsEntry("b", "2").containsEntry("service.name", "my-service");
-                });
+            .execute(() -> {
+                assertThat(OtlpConfig.DEFAULT.resourceAttributes()).hasSize(3)
+                    .containsEntry("a", "1")
+                    .containsEntry("b", "2")
+                    .containsEntry("service.name", "my-service");
+            });
     }
 
     @Test
@@ -58,10 +60,11 @@ class OtlpConfigTest {
                 "a=100,service.name=your-service");
         OtlpConfig config = map::get;
         withEnvironmentVariables("OTEL_RESOURCE_ATTRIBUTES", "a=1,b=2", "OTEL_SERVICE_NAME", "my-service")
-                .execute(() -> {
-                    assertThat(config.resourceAttributes()).hasSize(2).containsEntry("a", "100")
-                            .containsEntry("service.name", "your-service");
-                });
+            .execute(() -> {
+                assertThat(config.resourceAttributes()).hasSize(2)
+                    .containsEntry("a", "100")
+                    .containsEntry("service.name", "your-service");
+            });
     }
 
 }

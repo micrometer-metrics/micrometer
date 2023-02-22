@@ -88,10 +88,12 @@ abstract class InstrumentationVerificationTests {
 
         @Override
         public void invokeBeforeEachMethod(ExtensionContext context, ExtensionRegistry registry) {
-            Optional<ParameterResolver> resolverOptional = registry.getExtensions(ParameterResolver.class).stream()
-                    .filter(parameterResolver -> parameterResolver.getClass().getName()
-                            .contains("ParameterizedTestParameterResolver"))
-                    .findFirst();
+            Optional<ParameterResolver> resolverOptional = registry.getExtensions(ParameterResolver.class)
+                .stream()
+                .filter(parameterResolver -> parameterResolver.getClass()
+                    .getName()
+                    .contains("ParameterizedTestParameterResolver"))
+                .findFirst();
             if (!resolverOptional.isPresent()) {
                 throw new IllegalStateException(
                         "ParameterizedTestParameterResolver missed in the registry. Probably it's not a Parameterized Test");
@@ -115,7 +117,7 @@ abstract class InstrumentationVerificationTests {
         public Object resolveParameter(ParameterContext parameterContext, ExtensionContext extensionContext)
                 throws ParameterResolutionException {
             return parameterisedTestParameterResolver
-                    .resolveParameter(getMappedContext(parameterContext, extensionContext), extensionContext);
+                .resolveParameter(getMappedContext(parameterContext, extensionContext), extensionContext);
         }
 
         private MappedParameterContext getMappedContext(ParameterContext parameterContext,
@@ -127,7 +129,7 @@ abstract class InstrumentationVerificationTests {
 
         private boolean isExecutedOnAfterOrBeforeMethod(ParameterContext parameterContext) {
             return Arrays.stream(parameterContext.getDeclaringExecutable().getDeclaredAnnotations())
-                    .anyMatch(this::isAfterEachOrBeforeEachAnnotation);
+                .anyMatch(this::isAfterEachOrBeforeEachAnnotation);
         }
 
         private boolean isAfterEachOrBeforeEachAnnotation(Annotation annotation) {

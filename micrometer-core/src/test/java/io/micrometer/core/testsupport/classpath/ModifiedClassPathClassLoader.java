@@ -115,7 +115,7 @@ final class ModifiedClassPathClassLoader extends URLClassLoader {
             return Stream.of(urlClassLoader.getURLs());
         }
         return Stream.of(ManagementFactory.getRuntimeMXBean().getClassPath().split(File.pathSeparator))
-                .map(ModifiedClassPathClassLoader::toURL);
+            .map(ModifiedClassPathClassLoader::toURL);
     }
 
     private static URL toURL(String entry) {
@@ -198,7 +198,8 @@ final class ModifiedClassPathClassLoader extends URLClassLoader {
         DefaultRepositorySystemSession session = MavenRepositorySystemUtils.newSession();
         LocalRepository localRepository = new LocalRepository(System.getProperty("user.home") + "/.m2/repository");
         RemoteRepository remoteRepository = new RemoteRepository.Builder("central", "default",
-                "https://repo.maven.apache.org/maven2").build();
+                "https://repo.maven.apache.org/maven2")
+            .build();
         session.setLocalRepositoryManager(repositorySystem.newLocalRepositoryManager(session, localRepository));
         for (int i = 0; i < MAX_RESOLUTION_ATTEMPTS; i++) {
             CollectRequest collectRequest = new CollectRequest(null, Arrays.asList(remoteRepository));
@@ -238,8 +239,9 @@ final class ModifiedClassPathClassLoader extends URLClassLoader {
         private final AntPathMatcher matcher = new AntPathMatcher();
 
         private ClassPathEntryFilter(MergedAnnotation<ClassPathExclusions> annotation) {
-            this.exclusions = annotation.getValue(MergedAnnotation.VALUE, String[].class).map(Arrays::asList)
-                    .orElse(Collections.emptyList());
+            this.exclusions = annotation.getValue(MergedAnnotation.VALUE, String[].class)
+                .map(Arrays::asList)
+                .orElse(Collections.emptyList());
         }
 
         private boolean isExcluded(URL url) {

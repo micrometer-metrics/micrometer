@@ -89,8 +89,11 @@ class AtlasMeterRegistryTest {
             AtlasRegistry r = (AtlasRegistry) registry.getSpectatorRegistry();
             PolledMeter.update(r);
             clock.add(Duration.ofMinutes(1));
-            return r.measurements().filter(m -> m.id().name().equals("test")).findFirst().map(Measurement::value)
-                    .orElse(Double.NaN);
+            return r.measurements()
+                .filter(m -> m.id().name().equals("test"))
+                .findFirst()
+                .map(Measurement::value)
+                .orElse(Double.NaN);
         };
 
         count.addAndGet(60);

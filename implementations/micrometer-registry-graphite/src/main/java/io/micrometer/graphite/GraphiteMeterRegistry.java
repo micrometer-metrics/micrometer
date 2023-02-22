@@ -59,9 +59,12 @@ public class GraphiteMeterRegistry extends DropwizardMeterRegistry {
 
     private static GraphiteReporter defaultGraphiteReporter(GraphiteConfig config, Clock clock,
             MetricRegistry metricRegistry) {
-        return GraphiteReporter.forRegistry(metricRegistry).withClock(new DropwizardClock(clock))
-                .convertRatesTo(config.rateUnits()).convertDurationsTo(config.durationUnits())
-                .addMetricAttributesAsTags(config.graphiteTagsEnabled()).build(getGraphiteSender(config));
+        return GraphiteReporter.forRegistry(metricRegistry)
+            .withClock(new DropwizardClock(clock))
+            .convertRatesTo(config.rateUnits())
+            .convertDurationsTo(config.durationUnits())
+            .addMetricAttributesAsTags(config.graphiteTagsEnabled())
+            .build(getGraphiteSender(config));
     }
 
     private static GraphiteSender getGraphiteSender(GraphiteConfig config) {

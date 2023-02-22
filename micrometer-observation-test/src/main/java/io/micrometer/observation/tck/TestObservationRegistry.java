@@ -84,8 +84,10 @@ public final class TestObservationRegistry implements ObservationRegistry {
 
         @Override
         public void onStop(Observation.Context context) {
-            this.contexts.stream().filter(testContext -> testContext.getContext() == context).findFirst()
-                    .ifPresent(testContext -> testContext.setObservationStopped(true));
+            this.contexts.stream()
+                .filter(testContext -> testContext.getContext() == context)
+                .findFirst()
+                .ifPresent(testContext -> testContext.setObservationStopped(true));
         }
 
         @Override

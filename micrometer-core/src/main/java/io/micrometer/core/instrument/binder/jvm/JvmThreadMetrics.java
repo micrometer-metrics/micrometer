@@ -54,24 +54,32 @@ public class JvmThreadMetrics implements MeterBinder {
     public void bindTo(MeterRegistry registry) {
         ThreadMXBean threadBean = ManagementFactory.getThreadMXBean();
 
-        Gauge.builder("jvm.threads.peak", threadBean, ThreadMXBean::getPeakThreadCount).tags(tags)
-                .description("The peak live thread count since the Java virtual machine started or peak was reset")
-                .baseUnit(BaseUnits.THREADS).register(registry);
+        Gauge.builder("jvm.threads.peak", threadBean, ThreadMXBean::getPeakThreadCount)
+            .tags(tags)
+            .description("The peak live thread count since the Java virtual machine started or peak was reset")
+            .baseUnit(BaseUnits.THREADS)
+            .register(registry);
 
-        Gauge.builder("jvm.threads.daemon", threadBean, ThreadMXBean::getDaemonThreadCount).tags(tags)
-                .description("The current number of live daemon threads").baseUnit(BaseUnits.THREADS)
-                .register(registry);
+        Gauge.builder("jvm.threads.daemon", threadBean, ThreadMXBean::getDaemonThreadCount)
+            .tags(tags)
+            .description("The current number of live daemon threads")
+            .baseUnit(BaseUnits.THREADS)
+            .register(registry);
 
-        Gauge.builder("jvm.threads.live", threadBean, ThreadMXBean::getThreadCount).tags(tags)
-                .description("The current number of live threads including both daemon and non-daemon threads")
-                .baseUnit(BaseUnits.THREADS).register(registry);
+        Gauge.builder("jvm.threads.live", threadBean, ThreadMXBean::getThreadCount)
+            .tags(tags)
+            .description("The current number of live threads including both daemon and non-daemon threads")
+            .baseUnit(BaseUnits.THREADS)
+            .register(registry);
 
         try {
             threadBean.getAllThreadIds();
             for (Thread.State state : Thread.State.values()) {
                 Gauge.builder("jvm.threads.states", threadBean, (bean) -> getThreadStateCount(bean, state))
-                        .tags(Tags.concat(tags, "state", getStateTagValue(state)))
-                        .description("The current number of threads").baseUnit(BaseUnits.THREADS).register(registry);
+                    .tags(Tags.concat(tags, "state", getStateTagValue(state)))
+                    .description("The current number of threads")
+                    .baseUnit(BaseUnits.THREADS)
+                    .register(registry);
             }
         }
         catch (Error error) {
@@ -83,7 +91,8 @@ public class JvmThreadMetrics implements MeterBinder {
     // VisibleForTesting
     static long getThreadStateCount(ThreadMXBean threadBean, Thread.State state) {
         return Arrays.stream(threadBean.getThreadInfo(threadBean.getAllThreadIds()))
-                .filter(threadInfo -> threadInfo != null && threadInfo.getThreadState() == state).count();
+            .filter(threadInfo -> threadInfo != null && threadInfo.getThreadState() == state)
+            .count();
     }
 
     private static String getStateTagValue(Thread.State state) {

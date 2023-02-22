@@ -95,11 +95,13 @@ public class TestObservationRegistryAssert
             failForNoObservations();
         }
         TestObservationRegistry.TestObservationContext testObservationContext = contexts.stream()
-                .filter(mock -> Objects.equals(name, mock.getContext().getName())).findFirst().orElseGet(() -> {
-                    failWithMessage("There are no observations with name equal to <%s>. Available names are <%s>", name,
-                            observationNames(contexts));
-                    return null;
-                });
+            .filter(mock -> Objects.equals(name, mock.getContext().getName()))
+            .findFirst()
+            .orElseGet(() -> {
+                failWithMessage("There are no observations with name equal to <%s>. Available names are <%s>", name,
+                        observationNames(contexts));
+                return null;
+            });
         return new That(testObservationContext, this);
     }
 
@@ -123,13 +125,14 @@ public class TestObservationRegistryAssert
             failForNoObservations();
         }
         TestObservationRegistry.TestObservationContext testObservationContext = contexts.stream()
-                .filter(mock -> name != null && name.equalsIgnoreCase(mock.getContext().getName())).findFirst()
-                .orElseGet(() -> {
-                    failWithMessage(
-                            "There are no observations with name equal to ignoring case <%s>. Available names are <%s>",
-                            name, observationNames(contexts));
-                    return null;
-                });
+            .filter(mock -> name != null && name.equalsIgnoreCase(mock.getContext().getName()))
+            .findFirst()
+            .orElseGet(() -> {
+                failWithMessage(
+                        "There are no observations with name equal to ignoring case <%s>. Available names are <%s>",
+                        name, observationNames(contexts));
+                return null;
+            });
         return new That(testObservationContext, this);
     }
 
@@ -153,8 +156,10 @@ public class TestObservationRegistryAssert
     public TestObservationRegistryAssert hasHandledContextsThatSatisfy(
             ThrowingConsumer<List<Observation.Context>> contextConsumer) {
         isNotNull();
-        contextConsumer.accept(actual.getContexts().stream()
-                .map(TestObservationRegistry.TestObservationContext::getContext).collect(Collectors.toList()));
+        contextConsumer.accept(actual.getContexts()
+            .stream()
+            .map(TestObservationRegistry.TestObservationContext::getContext)
+            .collect(Collectors.toList()));
         return this;
     }
 
@@ -179,8 +184,10 @@ public class TestObservationRegistryAssert
             Consumer<ObservationContextAssert> observationConsumer) {
         isNotNull();
         hasObservationWithNameEqualTo(name);
-        this.actual.getContexts().stream().filter(f -> name.equals(f.getContext().getName()))
-                .forEach(f -> observationConsumer.accept(ObservationContextAssert.then(f.getContext())));
+        this.actual.getContexts()
+            .stream()
+            .filter(f -> name.equals(f.getContext().getName()))
+            .forEach(f -> observationConsumer.accept(ObservationContextAssert.then(f.getContext())));
         return this;
     }
 
@@ -206,8 +213,10 @@ public class TestObservationRegistryAssert
             Consumer<ObservationContextAssert> observationConsumer) {
         isNotNull();
         hasObservationWithNameEqualToIgnoringCase(name);
-        this.actual.getContexts().stream().filter(f -> name.equalsIgnoreCase(f.getContext().getName()))
-                .forEach(f -> observationConsumer.accept(ObservationContextAssert.then(f.getContext())));
+        this.actual.getContexts()
+            .stream()
+            .filter(f -> name.equalsIgnoreCase(f.getContext().getName()))
+            .forEach(f -> observationConsumer.accept(ObservationContextAssert.then(f.getContext())));
         return this;
     }
 
@@ -254,8 +263,10 @@ public class TestObservationRegistryAssert
     public TestObservationRegistryAssert hasNumberOfObservationsWithNameEqualTo(String observationName,
             int expectedNumberOfObservations) {
         isNotNull();
-        long observationsWithNameSize = this.actual.getContexts().stream()
-                .filter(f -> observationName.equals(f.getContext().getName())).count();
+        long observationsWithNameSize = this.actual.getContexts()
+            .stream()
+            .filter(f -> observationName.equals(f.getContext().getName()))
+            .count();
         if (observationsWithNameSize != expectedNumberOfObservations) {
             failWithMessage(
                     "There should be <%s> Observations with name <%s> but there were <%s>. Found following Observations:\n%s",
@@ -285,8 +296,10 @@ public class TestObservationRegistryAssert
     public TestObservationRegistryAssert hasNumberOfObservationsWithNameEqualToIgnoreCase(String observationName,
             int expectedNumberOfObservations) {
         isNotNull();
-        long observationsWithNameSize = this.actual.getContexts().stream()
-                .filter(f -> observationName.equalsIgnoreCase(f.getContext().getName())).count();
+        long observationsWithNameSize = this.actual.getContexts()
+            .stream()
+            .filter(f -> observationName.equalsIgnoreCase(f.getContext().getName()))
+            .count();
         if (observationsWithNameSize != expectedNumberOfObservations) {
             failWithMessage(
                     "There should be <%s> Observations with name (ignoring case) <%s> but there were <%s>. Found following Observations:\n%s",
@@ -312,14 +325,17 @@ public class TestObservationRegistryAssert
      */
     public TestObservationRegistryAssert hasAnObservationWithAKeyValue(String key, String value) {
         isNotNull();
-        this.actual.getContexts().stream().flatMap(f -> f.getContext().getAllKeyValues().stream())
-                .filter(keyValue -> keyValue.getKey().equals(key) && keyValue.getValue().equals(value)).findFirst()
-                .orElseThrow(() -> {
-                    failWithMessage(
-                            "There should be at least one Observation with key name <%s> and value <%s> but found none. Found following Observations:\n%s",
-                            key, value, observations());
-                    return new AssertionError();
-                });
+        this.actual.getContexts()
+            .stream()
+            .flatMap(f -> f.getContext().getAllKeyValues().stream())
+            .filter(keyValue -> keyValue.getKey().equals(key) && keyValue.getValue().equals(value))
+            .findFirst()
+            .orElseThrow(() -> {
+                failWithMessage(
+                        "There should be at least one Observation with key name <%s> and value <%s> but found none. Found following Observations:\n%s",
+                        key, value, observations());
+                return new AssertionError();
+            });
         return this;
     }
 
@@ -338,13 +354,17 @@ public class TestObservationRegistryAssert
      */
     public TestObservationRegistryAssert hasAnObservationWithAKeyName(String key) {
         isNotNull();
-        this.actual.getContexts().stream().flatMap(f -> f.getContext().getAllKeyValues().stream())
-                .filter(keyValue -> keyValue.getKey().equals(key)).findFirst().orElseThrow(() -> {
-                    failWithMessage(
-                            "There should be at least one Observation with key name <%s> but found none. Found following Observations:\n%s",
-                            key, observations());
-                    return new AssertionError();
-                });
+        this.actual.getContexts()
+            .stream()
+            .flatMap(f -> f.getContext().getAllKeyValues().stream())
+            .filter(keyValue -> keyValue.getKey().equals(key))
+            .findFirst()
+            .orElseThrow(() -> {
+                failWithMessage(
+                        "There should be at least one Observation with key name <%s> but found none. Found following Observations:\n%s",
+                        key, observations());
+                return new AssertionError();
+            });
         return this;
     }
 

@@ -27,7 +27,7 @@ import java.util.function.ToDoubleFunction;
  * @param <T> the type of the state object from which the counter value is extracted
  * @author Jon Schneider
  */
-public class StatsdFunctionCounter<T> extends CumulativeFunctionCounter<T> implements StatsdPollable {
+public class StatsdFunctionCounter<T>extends CumulativeFunctionCounter<T> implements StatsdPollable {
 
     private final StatsdLineBuilder lineBuilder;
 

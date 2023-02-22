@@ -34,7 +34,7 @@ class NewRelicConfigTest {
         props.put("newrelic.clientProviderType", "bad");
 
         assertThat(config.validate().failures().stream().map(Validated.Invalid::getMessage))
-                .containsExactly("should be one of 'INSIGHTS_API', 'INSIGHTS_AGENT'");
+            .containsExactly("should be one of 'INSIGHTS_API', 'INSIGHTS_AGENT'");
     }
 
     @Test
@@ -42,7 +42,7 @@ class NewRelicConfigTest {
         props.put("newrelic.clientProviderType", "insights_api");
 
         assertThat(config.validateForInsightsApi().failures().stream().map(Validated.Invalid::getProperty))
-                .containsExactlyInAnyOrder("newrelic.apiKey", "newrelic.accountId");
+            .containsExactlyInAnyOrder("newrelic.apiKey", "newrelic.accountId");
     }
 
     @Test

@@ -86,17 +86,19 @@ public class DefaultOkHttpObservationConvention implements OkHttpObservationConv
         boolean includeHostTag = context.isIncludeHostTag();
         // TODO: Tags to key values and back - maybe we can improve this?
         KeyValues keyValues = KeyValues
-                .of(METHOD.withValue(requestAvailable ? request.method() : TAG_VALUE_UNKNOWN),
-                        URI.withValue(getUriTag(urlMapper, state, request)),
-                        STATUS.withValue(getStatusMessage(state.response, state.exception)))
-                .and(extraTags)
-                .and(stream(contextSpecificTags.spliterator(), false)
-                        .map(contextTag -> contextTag.apply(request, state.response))
-                        .map(tag -> KeyValue.of(tag.getKey(), tag.getValue())).collect(toList()))
-                .and(getRequestTags(request, unknownRequestTags)).and(generateTagsForRoute(request));
+            .of(METHOD.withValue(requestAvailable ? request.method() : TAG_VALUE_UNKNOWN),
+                    URI.withValue(getUriTag(urlMapper, state, request)),
+                    STATUS.withValue(getStatusMessage(state.response, state.exception)))
+            .and(extraTags)
+            .and(stream(contextSpecificTags.spliterator(), false)
+                .map(contextTag -> contextTag.apply(request, state.response))
+                .map(tag -> KeyValue.of(tag.getKey(), tag.getValue()))
+                .collect(toList()))
+            .and(getRequestTags(request, unknownRequestTags))
+            .and(generateTagsForRoute(request));
         if (includeHostTag) {
             keyValues = KeyValues.of(keyValues)
-                    .and(HOST.withValue(requestAvailable ? request.url().host() : TAG_VALUE_UNKNOWN));
+                .and(HOST.withValue(requestAvailable ? request.url().host() : TAG_VALUE_UNKNOWN));
         }
         return keyValues;
     }

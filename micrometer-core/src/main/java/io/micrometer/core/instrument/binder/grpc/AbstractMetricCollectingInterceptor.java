@@ -203,8 +203,9 @@ public abstract class AbstractMetricCollectingInterceptor {
      */
     protected Function<Code, Timer> asTimerFunction(final Supplier<Timer.Builder> timerTemplate) {
         final Map<Code, Timer> cache = new EnumMap<>(Code.class);
-        final Function<Code, Timer> creator = code -> timerTemplate.get().tag(TAG_STATUS_CODE, code.name())
-                .register(this.registry);
+        final Function<Code, Timer> creator = code -> timerTemplate.get()
+            .tag(TAG_STATUS_CODE, code.name())
+            .register(this.registry);
         final Function<Code, Timer> cacheResolver = code -> cache.computeIfAbsent(code, creator);
         // Eager initialize
         for (final Code code : this.eagerInitializedCodes) {

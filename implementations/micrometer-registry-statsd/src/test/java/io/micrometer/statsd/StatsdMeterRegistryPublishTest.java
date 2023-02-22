@@ -271,8 +271,9 @@ class StatsdMeterRegistryPublishTest {
         ((Connection) meterRegistry.statsdConnection.get()).removeHandler("writeFailure");
         IntStream.range(1, 4).forEach(counter::increment);
         assertThat(serverLatch.await(3, TimeUnit.SECONDS)).isTrue();
-        await().pollDelay(Duration.ofSeconds(1)).atMost(Duration.ofSeconds(3))
-                .until(() -> serverMetricReadCount.get() == 3);
+        await().pollDelay(Duration.ofSeconds(1))
+            .atMost(Duration.ofSeconds(3))
+            .until(() -> serverMetricReadCount.get() == 3);
     }
 
     @Issue("#2880")
@@ -310,15 +311,14 @@ class StatsdMeterRegistryPublishTest {
         if (protocol == StatsdProtocol.UDP) {
             await().until(() -> meterRegistry.statsdConnection.get() != null);
             ((Connection) meterRegistry.statsdConnection.get())
-                    .addHandlerFirst(new LoggingHandler("testudpclient", LogLevel.INFO))
-                    .addHandlerFirst(new ChannelOutboundHandlerAdapter() {
-                        @Override
-                        public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise)
-                                throws Exception {
-                            writeCount.incrementAndGet();
-                            super.write(ctx, msg, promise);
-                        }
-                    });
+                .addHandlerFirst(new LoggingHandler("testudpclient", LogLevel.INFO))
+                .addHandlerFirst(new ChannelOutboundHandlerAdapter() {
+                    @Override
+                    public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
+                        writeCount.incrementAndGet();
+                        super.write(ctx, msg, promise);
+                    }
+                });
         }
     }
 
@@ -334,31 +334,40 @@ class StatsdMeterRegistryPublishTest {
     private DisposableChannel startServer(StatsdProtocol protocol, int port) {
         if (protocol == StatsdProtocol.UDP || protocol == StatsdProtocol.UDS_DATAGRAM) {
             return UdpServer.create()
-                    .bindAddress(() -> protocol == StatsdProtocol.UDP
-                            ? InetSocketAddress.createUnresolved("localhost", port) : newDomainSocketAddress())
-                    .handle((in, out) -> in.receive().asString().flatMap(packet -> {
-                        serverLatch.countDown();
-                        serverMetricReadCount.getAndIncrement();
-                        return Flux.never();
-                    })).doOnBound((server) -> bound = true).doOnUnbound((server) -> bound = false)
-                    .wiretap("udpserver", LogLevel.INFO).bindNow(Duration.ofSeconds(2));
+                .bindAddress(() -> protocol == StatsdProtocol.UDP
+                        ? InetSocketAddress.createUnresolved("localhost", port) : newDomainSocketAddress())
+                .handle((in, out) -> in.receive().asString().flatMap(packet -> {
+                    serverLatch.countDown();
+                    serverMetricReadCount.getAndIncrement();
+                    return Flux.never();
+                }))
+                .doOnBound((server) -> bound = true)
+                .doOnUnbound((server) -> bound = false)
+                .wiretap("udpserver", LogLevel.INFO)
+                .bindNow(Duration.ofSeconds(2));
         }
         else if (protocol == StatsdProtocol.TCP) {
             AtomicReference<DisposableChannel> channel = new AtomicReference<>();
-            return TcpServer.create().host("localhost").port(port)
-                    .handle((in, out) -> in.receive().asString().flatMap(packet -> {
-                        IntStream.range(0, packet.split("my.counter").length - 1).forEach(i -> {
-                            serverLatch.countDown();
-                            serverMetricReadCount.getAndIncrement();
-                        });
-                        in.withConnection(channel::set);
-                        return Flux.never();
-                    })).doOnBound((server) -> bound = true).doOnUnbound((server) -> {
-                        bound = false;
-                        if (channel.get() != null) {
-                            channel.get().dispose();
-                        }
-                    }).wiretap("tcpserver", LogLevel.INFO).bindNow(Duration.ofSeconds(5));
+            return TcpServer.create()
+                .host("localhost")
+                .port(port)
+                .handle((in, out) -> in.receive().asString().flatMap(packet -> {
+                    IntStream.range(0, packet.split("my.counter").length - 1).forEach(i -> {
+                        serverLatch.countDown();
+                        serverMetricReadCount.getAndIncrement();
+                    });
+                    in.withConnection(channel::set);
+                    return Flux.never();
+                }))
+                .doOnBound((server) -> bound = true)
+                .doOnUnbound((server) -> {
+                    bound = false;
+                    if (channel.get() != null) {
+                        channel.get().dispose();
+                    }
+                })
+                .wiretap("tcpserver", LogLevel.INFO)
+                .bindNow(Duration.ofSeconds(5));
         }
         else {
             throw new IllegalArgumentException(

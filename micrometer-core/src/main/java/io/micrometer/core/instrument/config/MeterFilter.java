@@ -311,8 +311,10 @@ public interface MeterFilter {
             @Override
             public DistributionStatisticConfig configure(Meter.Id id, DistributionStatisticConfig config) {
                 if (id.getType() == Meter.Type.TIMER && id.getName().startsWith(prefix)) {
-                    return DistributionStatisticConfig.builder().maximumExpectedValue((double) max.toNanos()).build()
-                            .merge(config);
+                    return DistributionStatisticConfig.builder()
+                        .maximumExpectedValue((double) max.toNanos())
+                        .build()
+                        .merge(config);
                 }
                 return config;
             }
@@ -366,8 +368,10 @@ public interface MeterFilter {
             @Override
             public DistributionStatisticConfig configure(Meter.Id id, DistributionStatisticConfig config) {
                 if (id.getType() == Meter.Type.TIMER && id.getName().startsWith(prefix)) {
-                    return DistributionStatisticConfig.builder().minimumExpectedValue((double) min.toNanos()).build()
-                            .merge(config);
+                    return DistributionStatisticConfig.builder()
+                        .minimumExpectedValue((double) min.toNanos())
+                        .build()
+                        .merge(config);
                 }
                 return config;
             }

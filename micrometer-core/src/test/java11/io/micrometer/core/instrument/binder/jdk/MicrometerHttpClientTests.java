@@ -53,15 +53,18 @@ class MicrometerHttpClientTests {
     void shouldInstrumentHttpClientWithObservation(WireMockRuntimeInfo wmInfo)
             throws IOException, InterruptedException {
         ObservationRegistry observationRegistry = TestObservationRegistry.create();
-        observationRegistry.observationConfig().observationHandler(
-                new ObservationHandler.AllMatchingCompositeObservationHandler(headerSettingHandler(),
-                        new DefaultMeterObservationHandler(meterRegistry)));
+        observationRegistry.observationConfig()
+            .observationHandler(new ObservationHandler.AllMatchingCompositeObservationHandler(headerSettingHandler(),
+                    new DefaultMeterObservationHandler(meterRegistry)));
 
-        HttpRequest request = HttpRequest.newBuilder().GET().uri(URI.create(wmInfo.getHttpBaseUrl() + "/metrics"))
-                .build();
+        HttpRequest request = HttpRequest.newBuilder()
+            .GET()
+            .uri(URI.create(wmInfo.getHttpBaseUrl() + "/metrics"))
+            .build();
 
         HttpClient observedClient = MicrometerHttpClient.instrumentationBuilder(httpClient, meterRegistry)
-                .observationRegistry(observationRegistry).build();
+            .observationRegistry(observationRegistry)
+            .build();
         observedClient.send(request, HttpResponse.BodyHandlers.ofString());
 
         verify(anyRequestedFor(urlEqualTo("/metrics")).withHeader("foo", equalTo("bar")));
@@ -70,8 +73,10 @@ class MicrometerHttpClientTests {
 
     @Test
     void shouldInstrumentHttpClientWithTimer(WireMockRuntimeInfo wmInfo) throws IOException, InterruptedException {
-        HttpRequest request = HttpRequest.newBuilder().GET().uri(URI.create(wmInfo.getHttpBaseUrl() + "/metrics"))
-                .build();
+        HttpRequest request = HttpRequest.newBuilder()
+            .GET()
+            .uri(URI.create(wmInfo.getHttpBaseUrl() + "/metrics"))
+            .build();
 
         HttpClient observedClient = MicrometerHttpClient.instrumentationBuilder(httpClient, meterRegistry).build();
         observedClient.send(request, HttpResponse.BodyHandlers.ofString());
@@ -80,8 +85,11 @@ class MicrometerHttpClientTests {
     }
 
     private void thenMeterRegistryContainsHttpClientTags() {
-        then(meterRegistry.find("http.client.requests").tag("method", "GET").tag("status", "200").tag("uri", "UNKNOWN")
-                .timer()).isNotNull();
+        then(meterRegistry.find("http.client.requests")
+            .tag("method", "GET")
+            .tag("status", "200")
+            .tag("uri", "UNKNOWN")
+            .timer()).isNotNull();
     }
 
     private ObservationHandler<HttpClientContext> headerSettingHandler() {

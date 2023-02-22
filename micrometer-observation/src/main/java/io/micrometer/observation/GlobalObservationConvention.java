@@ -21,6 +21,6 @@ package io.micrometer.observation;
  * @author Marcin Grzejszczak
  * @since 1.10.0
  */
-public interface GlobalObservationConvention<T extends Observation.Context> extends ObservationConvention<T> {
+public interface GlobalObservationConvention<T extends Observation.Context>extends ObservationConvention<T> {
 
 }

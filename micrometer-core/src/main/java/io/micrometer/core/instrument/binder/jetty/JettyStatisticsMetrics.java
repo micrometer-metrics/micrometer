@@ -66,8 +66,10 @@ public class JettyStatisticsMetrics implements MeterBinder {
         bindCounter(registry, "jetty.async.expires", "Total number of async requests that have expired",
                 StatisticsHandler::getExpires);
         FunctionCounter.builder("jetty.responses.size", statisticsHandler, StatisticsHandler::getResponsesBytesTotal)
-                .description("Total number of bytes across all responses").baseUnit(BaseUnits.BYTES).tags(tags)
-                .register(registry);
+            .description("Total number of bytes across all responses")
+            .baseUnit(BaseUnits.BYTES)
+            .tags(tags)
+            .register(registry);
 
         bindGauge(registry, "jetty.requests.active", "Number of requests currently active",
                 StatisticsHandler::getRequestsActive);
@@ -106,14 +108,18 @@ public class JettyStatisticsMetrics implements MeterBinder {
 
     private void bindTimer(MeterRegistry registry, String name, String desc,
             ToLongFunction<StatisticsHandler> countFunc, ToDoubleFunction<StatisticsHandler> consumer) {
-        FunctionTimer.builder(name, statisticsHandler, countFunc, consumer, TimeUnit.MILLISECONDS).tags(tags)
-                .description(desc).register(registry);
+        FunctionTimer.builder(name, statisticsHandler, countFunc, consumer, TimeUnit.MILLISECONDS)
+            .tags(tags)
+            .description(desc)
+            .register(registry);
     }
 
     private void bindTimeGauge(MeterRegistry registry, String name, String desc,
             ToDoubleFunction<StatisticsHandler> consumer) {
-        TimeGauge.builder(name, statisticsHandler, TimeUnit.MILLISECONDS, consumer).tags(tags).description(desc)
-                .register(registry);
+        TimeGauge.builder(name, statisticsHandler, TimeUnit.MILLISECONDS, consumer)
+            .tags(tags)
+            .description(desc)
+            .register(registry);
     }
 
     private void bindCounter(MeterRegistry registry, String name, String desc,
@@ -123,8 +129,11 @@ public class JettyStatisticsMetrics implements MeterBinder {
 
     private void buildStatusCounter(MeterRegistry registry, String status,
             ToDoubleFunction<StatisticsHandler> consumer) {
-        FunctionCounter.builder("jetty.responses", statisticsHandler, consumer).tags(tags)
-                .description("Number of requests with response status").tags("status", status).register(registry);
+        FunctionCounter.builder("jetty.responses", statisticsHandler, consumer)
+            .tags(tags)
+            .description("Number of requests with response status")
+            .tags("status", status)
+            .register(registry);
     }
 
 }

@@ -44,11 +44,13 @@ class OtlpMeterRegistryTest {
 
     @Test
     void gauge() {
-        Gauge cpus = Gauge.builder("cpus", ManagementFactory.getOperatingSystemMXBean(),
-                OperatingSystemMXBean::getAvailableProcessors).register(registry);
+        Gauge cpus = Gauge
+            .builder("cpus", ManagementFactory.getOperatingSystemMXBean(),
+                    OperatingSystemMXBean::getAvailableProcessors)
+            .register(registry);
         assertThat(registry.writeGauge(cpus).toString())
-                .matches("name: \"cpus\"\n" + "gauge \\{\n" + "  data_points \\{\n" + "    time_unix_nano: 1000000\n"
-                        + "    as_double: \\d+\\.0\n" + "  }\n" + "}\n");
+            .matches("name: \"cpus\"\n" + "gauge \\{\n" + "  data_points \\{\n" + "    time_unix_nano: 1000000\n"
+                    + "    as_double: \\d+\\.0\n" + "  }\n" + "}\n");
     }
 
     @Test
@@ -56,8 +58,8 @@ class OtlpMeterRegistryTest {
         TimeGauge timeGauge = TimeGauge.builder("gauge.time", this, TimeUnit.MICROSECONDS, o -> 24).register(registry);
 
         assertThat(registry.writeGauge(timeGauge).toString())
-                .isEqualTo("name: \"gauge.time\"\n" + "unit: \"milliseconds\"\n" + "gauge {\n" + "  data_points {\n"
-                        + "    time_unix_nano: 1000000\n" + "    as_double: 0.024\n" + "  }\n" + "}\n");
+            .isEqualTo("name: \"gauge.time\"\n" + "unit: \"milliseconds\"\n" + "gauge {\n" + "  data_points {\n"
+                    + "    time_unix_nano: 1000000\n" + "    as_double: 0.024\n" + "  }\n" + "}\n");
     }
 
     @Test
@@ -76,9 +78,11 @@ class OtlpMeterRegistryTest {
 
     @Test
     void functionCounter() {
-        FunctionCounter counter = FunctionCounter.builder("jvm.compilation.time",
-                ManagementFactory.getCompilationMXBean(), CompilationMXBean::getTotalCompilationTime)
-                .baseUnit("milliseconds").register(registry);
+        FunctionCounter counter = FunctionCounter
+            .builder("jvm.compilation.time", ManagementFactory.getCompilationMXBean(),
+                    CompilationMXBean::getTotalCompilationTime)
+            .baseUnit("milliseconds")
+            .register(registry);
 
         assertThat(registry.writeFunctionCounter(counter).toString()).matches("name: \"jvm.compilation.time\"\n"
                 + "unit: \"milliseconds\"\n" + "sum \\{\n" + "  data_points \\{\n"
@@ -111,67 +115,67 @@ class OtlpMeterRegistryTest {
         clock.add(OtlpConfig.DEFAULT.step());
         timer.record(4, TimeUnit.MILLISECONDS);
 
-        assertThat(registry.writeHistogramSupport(timer).toString()).isEqualTo(
-                "name: \"http.client.requests\"\n" + "unit: \"milliseconds\"\n" + "histogram {\n" + "  data_points {\n"
-                        + "    start_time_unix_nano: 1000000\n" + "    time_unix_nano: 60001000000\n" + "    count: 4\n"
-                        + "    sum: 202.0\n" + "    bucket_counts: 0\n" + "    bucket_counts: 0\n"
-                        + "    bucket_counts: 0\n" + "    bucket_counts: 0\n" + "    bucket_counts: 0\n"
-                        + "    bucket_counts: 0\n" + "    bucket_counts: 0\n" + "    bucket_counts: 0\n"
-                        + "    bucket_counts: 0\n" + "    bucket_counts: 0\n" + "    bucket_counts: 1\n"
-                        + "    bucket_counts: 0\n" + "    bucket_counts: 0\n" + "    bucket_counts: 0\n"
-                        + "    bucket_counts: 0\n" + "    bucket_counts: 1\n" + "    bucket_counts: 0\n"
-                        + "    bucket_counts: 0\n" + "    bucket_counts: 0\n" + "    bucket_counts: 0\n"
-                        + "    bucket_counts: 0\n" + "    bucket_counts: 0\n" + "    bucket_counts: 0\n"
-                        + "    bucket_counts: 0\n" + "    bucket_counts: 0\n" + "    bucket_counts: 0\n"
-                        + "    bucket_counts: 0\n" + "    bucket_counts: 0\n" + "    bucket_counts: 0\n"
-                        + "    bucket_counts: 1\n" + "    bucket_counts: 1\n" + "    bucket_counts: 0\n"
-                        + "    bucket_counts: 0\n" + "    bucket_counts: 0\n" + "    bucket_counts: 0\n"
-                        + "    bucket_counts: 0\n" + "    bucket_counts: 0\n" + "    bucket_counts: 0\n"
-                        + "    bucket_counts: 0\n" + "    bucket_counts: 0\n" + "    bucket_counts: 0\n"
-                        + "    bucket_counts: 0\n" + "    bucket_counts: 0\n" + "    bucket_counts: 0\n"
-                        + "    bucket_counts: 0\n" + "    bucket_counts: 0\n" + "    bucket_counts: 0\n"
-                        + "    bucket_counts: 0\n" + "    bucket_counts: 0\n" + "    bucket_counts: 0\n"
-                        + "    bucket_counts: 0\n" + "    bucket_counts: 0\n" + "    bucket_counts: 0\n"
-                        + "    bucket_counts: 0\n" + "    bucket_counts: 0\n" + "    bucket_counts: 0\n"
-                        + "    bucket_counts: 0\n" + "    bucket_counts: 0\n" + "    bucket_counts: 0\n"
-                        + "    bucket_counts: 0\n" + "    bucket_counts: 0\n" + "    bucket_counts: 0\n"
-                        + "    bucket_counts: 0\n" + "    bucket_counts: 0\n" + "    bucket_counts: 0\n"
-                        + "    bucket_counts: 0\n" + "    bucket_counts: 0\n" + "    bucket_counts: 0\n"
-                        + "    explicit_bounds: 1.0\n" + "    explicit_bounds: 1.048576\n"
-                        + "    explicit_bounds: 1.398101\n" + "    explicit_bounds: 1.747626\n"
-                        + "    explicit_bounds: 2.097151\n" + "    explicit_bounds: 2.446676\n"
-                        + "    explicit_bounds: 2.796201\n" + "    explicit_bounds: 3.145726\n"
-                        + "    explicit_bounds: 3.495251\n" + "    explicit_bounds: 3.844776\n"
-                        + "    explicit_bounds: 4.194304\n" + "    explicit_bounds: 5.592405\n"
-                        + "    explicit_bounds: 6.990506\n" + "    explicit_bounds: 8.388607\n"
-                        + "    explicit_bounds: 9.786708\n" + "    explicit_bounds: 11.184809\n"
-                        + "    explicit_bounds: 12.58291\n" + "    explicit_bounds: 13.981011\n"
-                        + "    explicit_bounds: 15.379112\n" + "    explicit_bounds: 16.777216\n"
-                        + "    explicit_bounds: 22.369621\n" + "    explicit_bounds: 27.962026\n"
-                        + "    explicit_bounds: 33.554431\n" + "    explicit_bounds: 39.146836\n"
-                        + "    explicit_bounds: 44.739241\n" + "    explicit_bounds: 50.331646\n"
-                        + "    explicit_bounds: 55.924051\n" + "    explicit_bounds: 61.516456\n"
-                        + "    explicit_bounds: 67.108864\n" + "    explicit_bounds: 89.478485\n"
-                        + "    explicit_bounds: 111.848106\n" + "    explicit_bounds: 134.217727\n"
-                        + "    explicit_bounds: 156.587348\n" + "    explicit_bounds: 178.956969\n"
-                        + "    explicit_bounds: 201.32659\n" + "    explicit_bounds: 223.696211\n"
-                        + "    explicit_bounds: 246.065832\n" + "    explicit_bounds: 268.435456\n"
-                        + "    explicit_bounds: 357.913941\n" + "    explicit_bounds: 447.392426\n"
-                        + "    explicit_bounds: 536.870911\n" + "    explicit_bounds: 626.349396\n"
-                        + "    explicit_bounds: 715.827881\n" + "    explicit_bounds: 805.306366\n"
-                        + "    explicit_bounds: 894.784851\n" + "    explicit_bounds: 984.263336\n"
-                        + "    explicit_bounds: 1073.741824\n" + "    explicit_bounds: 1431.655765\n"
-                        + "    explicit_bounds: 1789.569706\n" + "    explicit_bounds: 2147.483647\n"
-                        + "    explicit_bounds: 2505.397588\n" + "    explicit_bounds: 2863.311529\n"
-                        + "    explicit_bounds: 3221.22547\n" + "    explicit_bounds: 3579.139411\n"
-                        + "    explicit_bounds: 3937.053352\n" + "    explicit_bounds: 4294.967296\n"
-                        + "    explicit_bounds: 5726.623061\n" + "    explicit_bounds: 7158.278826\n"
-                        + "    explicit_bounds: 8589.934591\n" + "    explicit_bounds: 10021.590356\n"
-                        + "    explicit_bounds: 11453.246121\n" + "    explicit_bounds: 12884.901886\n"
-                        + "    explicit_bounds: 14316.557651\n" + "    explicit_bounds: 15748.213416\n"
-                        + "    explicit_bounds: 17179.869184\n" + "    explicit_bounds: 22906.492245\n"
-                        + "    explicit_bounds: 28633.115306\n" + "    explicit_bounds: 30000.0\n" + "  }\n"
-                        + "  aggregation_temporality: AGGREGATION_TEMPORALITY_CUMULATIVE\n" + "}\n");
+        assertThat(registry.writeHistogramSupport(timer).toString())
+            .isEqualTo("name: \"http.client.requests\"\n" + "unit: \"milliseconds\"\n" + "histogram {\n"
+                    + "  data_points {\n" + "    start_time_unix_nano: 1000000\n" + "    time_unix_nano: 60001000000\n"
+                    + "    count: 4\n" + "    sum: 202.0\n" + "    bucket_counts: 0\n" + "    bucket_counts: 0\n"
+                    + "    bucket_counts: 0\n" + "    bucket_counts: 0\n" + "    bucket_counts: 0\n"
+                    + "    bucket_counts: 0\n" + "    bucket_counts: 0\n" + "    bucket_counts: 0\n"
+                    + "    bucket_counts: 0\n" + "    bucket_counts: 0\n" + "    bucket_counts: 1\n"
+                    + "    bucket_counts: 0\n" + "    bucket_counts: 0\n" + "    bucket_counts: 0\n"
+                    + "    bucket_counts: 0\n" + "    bucket_counts: 1\n" + "    bucket_counts: 0\n"
+                    + "    bucket_counts: 0\n" + "    bucket_counts: 0\n" + "    bucket_counts: 0\n"
+                    + "    bucket_counts: 0\n" + "    bucket_counts: 0\n" + "    bucket_counts: 0\n"
+                    + "    bucket_counts: 0\n" + "    bucket_counts: 0\n" + "    bucket_counts: 0\n"
+                    + "    bucket_counts: 0\n" + "    bucket_counts: 0\n" + "    bucket_counts: 0\n"
+                    + "    bucket_counts: 1\n" + "    bucket_counts: 1\n" + "    bucket_counts: 0\n"
+                    + "    bucket_counts: 0\n" + "    bucket_counts: 0\n" + "    bucket_counts: 0\n"
+                    + "    bucket_counts: 0\n" + "    bucket_counts: 0\n" + "    bucket_counts: 0\n"
+                    + "    bucket_counts: 0\n" + "    bucket_counts: 0\n" + "    bucket_counts: 0\n"
+                    + "    bucket_counts: 0\n" + "    bucket_counts: 0\n" + "    bucket_counts: 0\n"
+                    + "    bucket_counts: 0\n" + "    bucket_counts: 0\n" + "    bucket_counts: 0\n"
+                    + "    bucket_counts: 0\n" + "    bucket_counts: 0\n" + "    bucket_counts: 0\n"
+                    + "    bucket_counts: 0\n" + "    bucket_counts: 0\n" + "    bucket_counts: 0\n"
+                    + "    bucket_counts: 0\n" + "    bucket_counts: 0\n" + "    bucket_counts: 0\n"
+                    + "    bucket_counts: 0\n" + "    bucket_counts: 0\n" + "    bucket_counts: 0\n"
+                    + "    bucket_counts: 0\n" + "    bucket_counts: 0\n" + "    bucket_counts: 0\n"
+                    + "    bucket_counts: 0\n" + "    bucket_counts: 0\n" + "    bucket_counts: 0\n"
+                    + "    bucket_counts: 0\n" + "    bucket_counts: 0\n" + "    bucket_counts: 0\n"
+                    + "    explicit_bounds: 1.0\n" + "    explicit_bounds: 1.048576\n"
+                    + "    explicit_bounds: 1.398101\n" + "    explicit_bounds: 1.747626\n"
+                    + "    explicit_bounds: 2.097151\n" + "    explicit_bounds: 2.446676\n"
+                    + "    explicit_bounds: 2.796201\n" + "    explicit_bounds: 3.145726\n"
+                    + "    explicit_bounds: 3.495251\n" + "    explicit_bounds: 3.844776\n"
+                    + "    explicit_bounds: 4.194304\n" + "    explicit_bounds: 5.592405\n"
+                    + "    explicit_bounds: 6.990506\n" + "    explicit_bounds: 8.388607\n"
+                    + "    explicit_bounds: 9.786708\n" + "    explicit_bounds: 11.184809\n"
+                    + "    explicit_bounds: 12.58291\n" + "    explicit_bounds: 13.981011\n"
+                    + "    explicit_bounds: 15.379112\n" + "    explicit_bounds: 16.777216\n"
+                    + "    explicit_bounds: 22.369621\n" + "    explicit_bounds: 27.962026\n"
+                    + "    explicit_bounds: 33.554431\n" + "    explicit_bounds: 39.146836\n"
+                    + "    explicit_bounds: 44.739241\n" + "    explicit_bounds: 50.331646\n"
+                    + "    explicit_bounds: 55.924051\n" + "    explicit_bounds: 61.516456\n"
+                    + "    explicit_bounds: 67.108864\n" + "    explicit_bounds: 89.478485\n"
+                    + "    explicit_bounds: 111.848106\n" + "    explicit_bounds: 134.217727\n"
+                    + "    explicit_bounds: 156.587348\n" + "    explicit_bounds: 178.956969\n"
+                    + "    explicit_bounds: 201.32659\n" + "    explicit_bounds: 223.696211\n"
+                    + "    explicit_bounds: 246.065832\n" + "    explicit_bounds: 268.435456\n"
+                    + "    explicit_bounds: 357.913941\n" + "    explicit_bounds: 447.392426\n"
+                    + "    explicit_bounds: 536.870911\n" + "    explicit_bounds: 626.349396\n"
+                    + "    explicit_bounds: 715.827881\n" + "    explicit_bounds: 805.306366\n"
+                    + "    explicit_bounds: 894.784851\n" + "    explicit_bounds: 984.263336\n"
+                    + "    explicit_bounds: 1073.741824\n" + "    explicit_bounds: 1431.655765\n"
+                    + "    explicit_bounds: 1789.569706\n" + "    explicit_bounds: 2147.483647\n"
+                    + "    explicit_bounds: 2505.397588\n" + "    explicit_bounds: 2863.311529\n"
+                    + "    explicit_bounds: 3221.22547\n" + "    explicit_bounds: 3579.139411\n"
+                    + "    explicit_bounds: 3937.053352\n" + "    explicit_bounds: 4294.967296\n"
+                    + "    explicit_bounds: 5726.623061\n" + "    explicit_bounds: 7158.278826\n"
+                    + "    explicit_bounds: 8589.934591\n" + "    explicit_bounds: 10021.590356\n"
+                    + "    explicit_bounds: 11453.246121\n" + "    explicit_bounds: 12884.901886\n"
+                    + "    explicit_bounds: 14316.557651\n" + "    explicit_bounds: 15748.213416\n"
+                    + "    explicit_bounds: 17179.869184\n" + "    explicit_bounds: 22906.492245\n"
+                    + "    explicit_bounds: 28633.115306\n" + "    explicit_bounds: 30000.0\n" + "  }\n"
+                    + "  aggregation_temporality: AGGREGATION_TEMPORALITY_CUMULATIVE\n" + "}\n");
     }
 
     @Test
@@ -182,29 +186,31 @@ class OtlpMeterRegistryTest {
         timer.record(111, TimeUnit.MILLISECONDS);
 
         assertThat(registry.writeHistogramSupport(timer).toString())
-                .isEqualTo("name: \"service.requests\"\n" + "unit: \"milliseconds\"\n" + "summary {\n"
-                        + "  data_points {\n" + "    start_time_unix_nano: 1000000\n" + "    time_unix_nano: 1000000\n"
-                        + "    count: 3\n" + "    sum: 198.0\n" + "    quantile_values {\n" + "      quantile: 0.5\n"
-                        + "      value: 79.167488\n" + "    }\n" + "    quantile_values {\n" + "      quantile: 0.9\n"
-                        + "      value: 112.72192\n" + "    }\n" + "    quantile_values {\n" + "      quantile: 0.99\n"
-                        + "      value: 112.72192\n" + "    }\n" + "  }\n" + "}\n");
+            .isEqualTo("name: \"service.requests\"\n" + "unit: \"milliseconds\"\n" + "summary {\n" + "  data_points {\n"
+                    + "    start_time_unix_nano: 1000000\n" + "    time_unix_nano: 1000000\n" + "    count: 3\n"
+                    + "    sum: 198.0\n" + "    quantile_values {\n" + "      quantile: 0.5\n"
+                    + "      value: 79.167488\n" + "    }\n" + "    quantile_values {\n" + "      quantile: 0.9\n"
+                    + "      value: 112.72192\n" + "    }\n" + "    quantile_values {\n" + "      quantile: 0.99\n"
+                    + "      value: 112.72192\n" + "    }\n" + "  }\n" + "}\n");
     }
 
     @Test
     void functionTimer() {
         FunctionTimer functionTimer = FunctionTimer
-                .builder("function.timer", this, o -> 5, o -> 127, TimeUnit.MILLISECONDS).register(registry);
+            .builder("function.timer", this, o -> 5, o -> 127, TimeUnit.MILLISECONDS)
+            .register(registry);
 
         assertThat(registry.writeFunctionTimer(functionTimer).toString())
-                .isEqualTo("name: \"function.timer\"\n" + "unit: \"milliseconds\"\n" + "histogram {\n"
-                        + "  data_points {\n" + "    start_time_unix_nano: 1000000\n" + "    time_unix_nano: 1000000\n"
-                        + "    count: 5\n" + "    sum: 127.0\n" + "  }\n" + "}\n");
+            .isEqualTo("name: \"function.timer\"\n" + "unit: \"milliseconds\"\n" + "histogram {\n" + "  data_points {\n"
+                    + "    start_time_unix_nano: 1000000\n" + "    time_unix_nano: 1000000\n" + "    count: 5\n"
+                    + "    sum: 127.0\n" + "  }\n" + "}\n");
     }
 
     @Test
     void distributionSummary() {
-        DistributionSummary size = DistributionSummary.builder("http.response.size").baseUnit("bytes")
-                .register(registry);
+        DistributionSummary size = DistributionSummary.builder("http.response.size")
+            .baseUnit("bytes")
+            .register(registry);
         size.record(100);
         size.record(15);
         size.record(2233);
@@ -219,8 +225,10 @@ class OtlpMeterRegistryTest {
 
     @Test
     void distributionSummaryWithHistogramBuckets() {
-        DistributionSummary size = DistributionSummary.builder("http.request.size").baseUnit("bytes")
-                .publishPercentileHistogram().register(registry);
+        DistributionSummary size = DistributionSummary.builder("http.request.size")
+            .baseUnit("bytes")
+            .publishPercentileHistogram()
+            .register(registry);
         size.record(100);
         size.record(15);
         size.record(2233);
@@ -484,10 +492,10 @@ class OtlpMeterRegistryTest {
         this.clock.add(OtlpConfig.DEFAULT.step().multipliedBy(3));
 
         assertThat(registry.writeHistogramSupport(taskTimer).toString())
-                .isEqualTo("name: \"checkout.batch\"\n" + "unit: \"milliseconds\"\n" + "histogram {\n"
-                        + "  data_points {\n" + "    start_time_unix_nano: 1000000\n"
-                        + "    time_unix_nano: 180001000000\n" + "    count: 2\n" + "    sum: 360000.0\n" + "  }\n"
-                        + "  aggregation_temporality: AGGREGATION_TEMPORALITY_CUMULATIVE\n" + "}\n");
+            .isEqualTo("name: \"checkout.batch\"\n" + "unit: \"milliseconds\"\n" + "histogram {\n" + "  data_points {\n"
+                    + "    start_time_unix_nano: 1000000\n" + "    time_unix_nano: 180001000000\n" + "    count: 2\n"
+                    + "    sum: 360000.0\n" + "  }\n"
+                    + "  aggregation_temporality: AGGREGATION_TEMPORALITY_CUMULATIVE\n" + "}\n");
 
         task1.stop();
         task2.stop();
@@ -495,17 +503,17 @@ class OtlpMeterRegistryTest {
 
         // this is not right that count/sum reset, but it's the same thing we do with
         // prometheus
-        assertThat(registry.writeHistogramSupport(taskTimer).toString()).isEqualTo("name: \"checkout.batch\"\n"
-                + "unit: \"milliseconds\"\n" + "histogram {\n" + "  data_points {\n"
-                + "    start_time_unix_nano: 1000000\n" + "    time_unix_nano: 240001000000\n" + "    sum: 0.0\n"
-                + "  }\n" + "  aggregation_temporality: AGGREGATION_TEMPORALITY_CUMULATIVE\n" + "}\n");
+        assertThat(registry.writeHistogramSupport(taskTimer).toString())
+            .isEqualTo("name: \"checkout.batch\"\n" + "unit: \"milliseconds\"\n" + "histogram {\n" + "  data_points {\n"
+                    + "    start_time_unix_nano: 1000000\n" + "    time_unix_nano: 240001000000\n" + "    sum: 0.0\n"
+                    + "  }\n" + "  aggregation_temporality: AGGREGATION_TEMPORALITY_CUMULATIVE\n" + "}\n");
     }
 
     // If the service.name was not specified, SDKs MUST fallback to 'unknown_service'
     @Test
     void unknownServiceByDefault() {
         assertThat(registry.getResourceAttributes())
-                .contains(OtlpMeterRegistry.createKeyValue("service.name", "unknown_service"));
+            .contains(OtlpMeterRegistry.createKeyValue("service.name", "unknown_service"));
     }
 
     @Test
@@ -523,7 +531,7 @@ class OtlpMeterRegistryTest {
         }, Clock.SYSTEM);
 
         assertThat(registry.getResourceAttributes())
-                .contains(OtlpMeterRegistry.createKeyValue("service.name", "myService"));
+            .contains(OtlpMeterRegistry.createKeyValue("service.name", "myService"));
     }
 
     @Test
@@ -538,11 +546,11 @@ class OtlpMeterRegistryTest {
     @Test
     void setResourceAttributesFromEnvironmentVariables() throws Exception {
         withEnvironmentVariables("OTEL_RESOURCE_ATTRIBUTES", "a=1,b=2", "OTEL_SERVICE_NAME", "my-service")
-                .execute(() -> {
-                    assertThat(registry.getResourceAttributes()).contains(OtlpMeterRegistry.createKeyValue("a", "1"),
-                            OtlpMeterRegistry.createKeyValue("b", "2"),
-                            OtlpMeterRegistry.createKeyValue("service.name", "my-service"));
-                });
+            .execute(() -> {
+                assertThat(registry.getResourceAttributes()).contains(OtlpMeterRegistry.createKeyValue("a", "1"),
+                        OtlpMeterRegistry.createKeyValue("b", "2"),
+                        OtlpMeterRegistry.createKeyValue("service.name", "my-service"));
+            });
     }
 
 }

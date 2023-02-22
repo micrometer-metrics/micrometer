@@ -125,7 +125,7 @@ class JettyConnectionMetricsTest {
         new JettyConnectionMetrics(registry, connector);
 
         assertThat(registry.get("jetty.connections.messages.in").counter().getId().getTag("connector.name"))
-                .isEqualTo("unnamed");
+            .isEqualTo("unnamed");
     }
 
     @Test
@@ -134,7 +134,7 @@ class JettyConnectionMetricsTest {
         new JettyConnectionMetrics(registry, connector);
 
         assertThat(registry.get("jetty.connections.messages.in").counter().getId().getTag("connector.name"))
-                .isEqualTo("super-fast-connector");
+            .isEqualTo("super-fast-connector");
     }
 
 }

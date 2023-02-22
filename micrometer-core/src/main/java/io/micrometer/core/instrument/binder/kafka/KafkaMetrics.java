@@ -97,7 +97,7 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
     private final Duration refreshInterval;
 
     private final ScheduledExecutorService scheduler = Executors
-            .newSingleThreadScheduledExecutor(new NamedThreadFactory("micrometer-kafka-metrics"));
+        .newSingleThreadScheduledExecutor(new NamedThreadFactory("micrometer-kafka-metrics"));
 
     @Nullable
     private Iterable<Tag> commonTags;
@@ -191,7 +191,8 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
 
             if (!currentMeters.equals(currentMetrics.keySet())) {
                 Set<MetricName> metricsToRemove = currentMeters.stream()
-                        .filter(metricName -> !currentMetrics.containsKey(metricName)).collect(Collectors.toSet());
+                    .filter(metricName -> !currentMetrics.containsKey(metricName))
+                    .collect(Collectors.toSet());
 
                 for (MetricName metricName : metricsToRemove) {
                     Meter.Id id = meterIdForComparison(metricName);
@@ -201,8 +202,9 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
 
                 currentMeters = new HashSet<>(currentMetrics.keySet());
 
-                Map<String, List<Meter>> registryMetersByNames = registry.getMeters().stream()
-                        .collect(Collectors.groupingBy(meter -> meter.getId().getName()));
+                Map<String, List<Meter>> registryMetersByNames = registry.getMeters()
+                    .stream()
+                    .collect(Collectors.groupingBy(meter -> meter.getId().getName()));
 
                 currentMetrics.forEach((name, metric) -> {
                     // Filter out non-numeric values
@@ -294,14 +296,18 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
     }
 
     private Gauge registerGauge(MeterRegistry registry, MetricName metricName, String meterName, Iterable<Tag> tags) {
-        return Gauge.builder(meterName, this.metrics, toMetricValue(metricName)).tags(tags)
-                .description(metricName.description()).register(registry);
+        return Gauge.builder(meterName, this.metrics, toMetricValue(metricName))
+            .tags(tags)
+            .description(metricName.description())
+            .register(registry);
     }
 
     private FunctionCounter registerCounter(MeterRegistry registry, MetricName metricName, String meterName,
             Iterable<Tag> tags) {
-        return FunctionCounter.builder(meterName, this.metrics, toMetricValue(metricName)).tags(tags)
-                .description(metricName.description()).register(registry);
+        return FunctionCounter.builder(meterName, this.metrics, toMetricValue(metricName))
+            .tags(tags)
+            .description(metricName.description())
+            .register(registry);
     }
 
     private ToDoubleFunction<AtomicReference<Map<MetricName, ? extends Metric>>> toMetricValue(MetricName metricName) {

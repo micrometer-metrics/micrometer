@@ -112,7 +112,7 @@ public class PropertyValidator {
 
         try {
             return Validated.valid(prefixedProperty, value == null ? null : URI.create(value).toURL())
-                    .map(url -> value);
+                .map(url -> value);
         }
         catch (MalformedURLException | IllegalArgumentException ex) {
             return Validated.invalid(prefixedProperty, value, "must be a valid URL", InvalidReason.MALFORMED, ex);

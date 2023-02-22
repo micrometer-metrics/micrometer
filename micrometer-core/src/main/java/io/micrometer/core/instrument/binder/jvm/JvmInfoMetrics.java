@@ -29,11 +29,13 @@ public class JvmInfoMetrics implements MeterBinder {
 
     @Override
     public void bindTo(MeterRegistry registry) {
-        Gauge.builder("jvm.info", () -> 1L).description("JVM version info")
-                .tags("version", System.getProperty("java.runtime.version", "unknown"), "vendor",
-                        System.getProperty("java.vm.vendor", "unknown"), "runtime",
-                        System.getProperty("java.runtime.name", "unknown"))
-                .strongReference(true).register(registry);
+        Gauge.builder("jvm.info", () -> 1L)
+            .description("JVM version info")
+            .tags("version", System.getProperty("java.runtime.version", "unknown"), "vendor",
+                    System.getProperty("java.vm.vendor", "unknown"), "runtime",
+                    System.getProperty("java.runtime.name", "unknown"))
+            .strongReference(true)
+            .register(registry);
     }
 
 }

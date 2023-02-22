@@ -57,8 +57,12 @@ class OkHttpMetricsEventListenerTest {
 
     private MeterRegistry registry = new SimpleMeterRegistry(SimpleConfig.DEFAULT, new MockClock());
 
-    private OkHttpClient client = new OkHttpClient.Builder().eventListener(OkHttpMetricsEventListener
-            .builder(registry, "okhttp.requests").tags(Tags.of("foo", "bar")).uriMapper(URI_MAPPER).build()).build();
+    private OkHttpClient client = new OkHttpClient.Builder()
+        .eventListener(OkHttpMetricsEventListener.builder(registry, "okhttp.requests")
+            .tags(Tags.of("foo", "bar"))
+            .uriMapper(URI_MAPPER)
+            .build())
+        .build();
 
     @Test
     void timeSuccessful(@WiremockResolver.Wiremock WireMockServer server) throws IOException {
@@ -68,9 +72,10 @@ class OkHttpMetricsEventListenerTest {
         client.newCall(request).execute().close();
 
         assertThat(registry.get("okhttp.requests")
-                .tags("foo", "bar", "status", "200", "uri", URI_EXAMPLE_VALUE, "target.host", "localhost",
-                        "target.port", String.valueOf(server.port()), "target.scheme", "http")
-                .timer().count()).isEqualTo(1L);
+            .tags("foo", "bar", "status", "200", "uri", URI_EXAMPLE_VALUE, "target.host", "localhost", "target.port",
+                    String.valueOf(server.port()), "target.scheme", "http")
+            .timer()
+            .count()).isEqualTo(1L);
     }
 
     @Test
@@ -80,11 +85,11 @@ class OkHttpMetricsEventListenerTest {
 
         client.newCall(request).execute().close();
 
-        assertThat(
-                registry.get("okhttp.requests")
-                        .tags("foo", "bar", "status", "404", "uri", "NOT_FOUND", "target.host", "localhost",
-                                "target.port", String.valueOf(server.port()), "target.scheme", "http")
-                        .timer().count()).isEqualTo(1L);
+        assertThat(registry.get("okhttp.requests")
+            .tags("foo", "bar", "status", "404", "uri", "NOT_FOUND", "target.host", "localhost", "target.port",
+                    String.valueOf(server.port()), "target.scheme", "http")
+            .timer()
+            .count()).isEqualTo(1L);
     }
 
     @Test
@@ -93,10 +98,12 @@ class OkHttpMetricsEventListenerTest {
 
         server.stop();
 
-        OkHttpClient client = new OkHttpClient.Builder()
-                .connectTimeout(1, TimeUnit.MILLISECONDS).eventListener(OkHttpMetricsEventListener
-                        .builder(registry, "okhttp.requests").tags(Tags.of("foo", "bar")).uriMapper(URI_MAPPER).build())
-                .build();
+        OkHttpClient client = new OkHttpClient.Builder().connectTimeout(1, TimeUnit.MILLISECONDS)
+            .eventListener(OkHttpMetricsEventListener.builder(registry, "okhttp.requests")
+                .tags(Tags.of("foo", "bar"))
+                .uriMapper(URI_MAPPER)
+                .build())
+            .build();
 
         try {
             client.newCall(request).execute().close();
@@ -107,52 +114,61 @@ class OkHttpMetricsEventListenerTest {
         }
 
         assertThat(registry.get("okhttp.requests")
-                .tags("foo", "bar", "uri", URI_EXAMPLE_VALUE, "status", "IO_ERROR", "target.host", "localhost").timer()
-                .count()).isEqualTo(1L);
+            .tags("foo", "bar", "uri", URI_EXAMPLE_VALUE, "status", "IO_ERROR", "target.host", "localhost")
+            .timer()
+            .count()).isEqualTo(1L);
     }
 
     @Test
     void uriTagWorksWithUriPatternHeader(@WiremockResolver.Wiremock WireMockServer server) throws IOException {
         server.stubFor(any(anyUrl()));
         Request request = new Request.Builder().url(server.baseUrl() + "/helloworld.txt")
-                .header(OkHttpMetricsEventListener.URI_PATTERN, "/").build();
+            .header(OkHttpMetricsEventListener.URI_PATTERN, "/")
+            .build();
 
-        client = new OkHttpClient.Builder().eventListener(
-                OkHttpMetricsEventListener.builder(registry, "okhttp.requests").tags(Tags.of("foo", "bar")).build())
-                .build();
+        client = new OkHttpClient.Builder()
+            .eventListener(
+                    OkHttpMetricsEventListener.builder(registry, "okhttp.requests").tags(Tags.of("foo", "bar")).build())
+            .build();
 
         client.newCall(request).execute().close();
 
-        assertThat(registry.get("okhttp.requests").tags("foo", "bar", "uri", "/", "status", "200", "target.host",
-                "localhost", "target.port", String.valueOf(server.port()), "target.scheme", "http").timer().count())
-                        .isEqualTo(1L);
+        assertThat(registry.get("okhttp.requests")
+            .tags("foo", "bar", "uri", "/", "status", "200", "target.host", "localhost", "target.port",
+                    String.valueOf(server.port()), "target.scheme", "http")
+            .timer()
+            .count()).isEqualTo(1L);
     }
 
     @Test
     void uriTagWorksWithUriMapper(@WiremockResolver.Wiremock WireMockServer server) throws IOException {
         server.stubFor(any(anyUrl()));
         OkHttpClient client = new OkHttpClient.Builder()
-                .eventListener(OkHttpMetricsEventListener.builder(registry, "okhttp.requests")
-                        .uriMapper(req -> req.url().encodedPath()).tags(Tags.of("foo", "bar")).build())
-                .build();
+            .eventListener(OkHttpMetricsEventListener.builder(registry, "okhttp.requests")
+                .uriMapper(req -> req.url().encodedPath())
+                .tags(Tags.of("foo", "bar"))
+                .build())
+            .build();
 
         Request request = new Request.Builder().url(server.baseUrl() + "/helloworld.txt").build();
 
         client.newCall(request).execute().close();
 
         assertThat(registry.get("okhttp.requests")
-                .tags("foo", "bar", "uri", "/helloworld.txt", "status", "200", "target.host", "localhost",
-                        "target.port", String.valueOf(server.port()), "target.scheme", "http")
-                .timer().count()).isEqualTo(1L);
+            .tags("foo", "bar", "uri", "/helloworld.txt", "status", "200", "target.host", "localhost", "target.port",
+                    String.valueOf(server.port()), "target.scheme", "http")
+            .timer()
+            .count()).isEqualTo(1L);
     }
 
     @Test
     void contextSpecificTags(@WiremockResolver.Wiremock WireMockServer server) throws IOException {
         server.stubFor(any(anyUrl()));
         OkHttpClient client = new OkHttpClient.Builder()
-                .eventListener(OkHttpMetricsEventListener.builder(registry, "okhttp.requests")
-                        .tag((req, res) -> Tag.of("another.uri", req.url().encodedPath())).build())
-                .build();
+            .eventListener(OkHttpMetricsEventListener.builder(registry, "okhttp.requests")
+                .tag((req, res) -> Tag.of("another.uri", req.url().encodedPath()))
+                .build())
+            .build();
 
         Request request = new Request.Builder().url(server.baseUrl() + "/helloworld.txt").build();
 
@@ -160,7 +176,7 @@ class OkHttpMetricsEventListenerTest {
 
         assertThat(
                 registry.get("okhttp.requests").tags("another.uri", "/helloworld.txt", "status", "200").timer().count())
-                        .isEqualTo(1L);
+            .isEqualTo(1L);
     }
 
     @Test
@@ -168,7 +184,8 @@ class OkHttpMetricsEventListenerTest {
             throws IOException {
         OkHttpMetricsEventListener listener = OkHttpMetricsEventListener.builder(registry, "okhttp.requests").build();
         OkHttpClient clientWithCache = new OkHttpClient.Builder().eventListener(listener)
-                .cache(new Cache(tempDir.toFile(), 55555)).build();
+            .cache(new Cache(tempDir.toFile(), 55555))
+            .build();
         server.stubFor(any(anyUrl()).willReturn(aResponse().withHeader("Cache-Control", "max-age=9600")));
         Request request = new Request.Builder().url(server.baseUrl()).build();
 
@@ -184,7 +201,8 @@ class OkHttpMetricsEventListenerTest {
     @Test
     void requestTagsWithClass(@WiremockResolver.Wiremock WireMockServer server) throws IOException {
         Request request = new Request.Builder().url(server.baseUrl() + "/helloworld.txt")
-                .tag(Tags.class, Tags.of("requestTag1", "tagValue1")).build();
+            .tag(Tags.class, Tags.of("requestTag1", "tagValue1"))
+            .build();
 
         testRequestTags(server, request);
     }
@@ -192,7 +210,8 @@ class OkHttpMetricsEventListenerTest {
     @Test
     void requestTagsWithoutClass(@WiremockResolver.Wiremock WireMockServer server) throws IOException {
         Request request = new Request.Builder().url(server.baseUrl() + "/helloworld.txt")
-                .tag(Tags.of("requestTag1", "tagValue1")).build();
+            .tag(Tags.of("requestTag1", "tagValue1"))
+            .build();
 
         testRequestTags(server, request);
     }
@@ -201,18 +220,19 @@ class OkHttpMetricsEventListenerTest {
     void hostTagCanBeDisabled(@WiremockResolver.Wiremock WireMockServer server) throws IOException {
         server.stubFor(any(anyUrl()));
         OkHttpClient client = new OkHttpClient.Builder()
-                .eventListener(
-                        OkHttpMetricsEventListener.builder(registry, "okhttp.requests").includeHostTag(false).build())
-                .build();
+            .eventListener(
+                    OkHttpMetricsEventListener.builder(registry, "okhttp.requests").includeHostTag(false).build())
+            .build();
         Request request = new Request.Builder().url(server.baseUrl()).build();
 
         client.newCall(request).execute().close();
 
-        assertThat(
-                registry.get("okhttp.requests")
-                        .tags("status", "200", "target.host", "localhost", "target.port", String.valueOf(server.port()),
-                                "target.scheme", "http")
-                        .timer().getId().getTags()).doesNotContain(Tag.of("host", "localhost"));
+        assertThat(registry.get("okhttp.requests")
+            .tags("status", "200", "target.host", "localhost", "target.port", String.valueOf(server.port()),
+                    "target.scheme", "http")
+            .timer()
+            .getId()
+            .getTags()).doesNotContain(Tag.of("host", "localhost"));
     }
 
     @Test
@@ -223,36 +243,42 @@ class OkHttpMetricsEventListenerTest {
         listener.time(state);
 
         assertThat(registry.get("okhttp.requests")
-                .tags("uri", "UNKNOWN", "target.host", "UNKNOWN", "target.port", "UNKNOWN", "target.scheme", "UNKNOWN")
-                .timer().count()).isEqualTo(1L);
+            .tags("uri", "UNKNOWN", "target.host", "UNKNOWN", "target.port", "UNKNOWN", "target.scheme", "UNKNOWN")
+            .timer()
+            .count()).isEqualTo(1L);
     }
 
     @Test
     void timeWhenRequestIsNullAndRequestTagKeysAreGiven() {
         OkHttpMetricsEventListener listener = OkHttpMetricsEventListener.builder(registry, "okhttp.requests")
-                .requestTagKeys("tag1", "tag2").build();
+            .requestTagKeys("tag1", "tag2")
+            .build();
         OkHttpMetricsEventListener.CallState state = new OkHttpMetricsEventListener.CallState(
                 registry.config().clock().monotonicTime(), null);
         listener.time(state);
 
-        assertThat(registry.get("okhttp.requests").tags("uri", "UNKNOWN", "tag1", "UNKNOWN", "tag2", "UNKNOWN").timer()
-                .count()).isEqualTo(1L);
+        assertThat(registry.get("okhttp.requests")
+            .tags("uri", "UNKNOWN", "tag1", "UNKNOWN", "tag2", "UNKNOWN")
+            .timer()
+            .count()).isEqualTo(1L);
     }
 
     private void testRequestTags(@WiremockResolver.Wiremock WireMockServer server, Request request) throws IOException {
         server.stubFor(any(anyUrl()));
         OkHttpClient client = new OkHttpClient.Builder()
-                .eventListener(OkHttpMetricsEventListener.builder(registry, "okhttp.requests")
-                        .uriMapper(req -> req.url().encodedPath()).tags(Tags.of("foo", "bar")).build())
-                .build();
+            .eventListener(OkHttpMetricsEventListener.builder(registry, "okhttp.requests")
+                .uriMapper(req -> req.url().encodedPath())
+                .tags(Tags.of("foo", "bar"))
+                .build())
+            .build();
 
         client.newCall(request).execute().close();
 
         assertThat(registry.get("okhttp.requests")
-                .tags("foo", "bar", "uri", "/helloworld.txt", "status", "200", "requestTag1", "tagValue1",
-                        "target.host", "localhost", "target.port", String.valueOf(server.port()), "target.scheme",
-                        "http")
-                .timer().count()).isEqualTo(1L);
+            .tags("foo", "bar", "uri", "/helloworld.txt", "status", "200", "requestTag1", "tagValue1", "target.host",
+                    "localhost", "target.port", String.valueOf(server.port()), "target.scheme", "http")
+            .timer()
+            .count()).isEqualTo(1L);
     }
 
 }

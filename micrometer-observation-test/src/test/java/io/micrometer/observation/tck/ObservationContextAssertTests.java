@@ -105,7 +105,7 @@ class ObservationContextAssertTests {
         context.setContextualName("foo");
 
         thenThrownBy(() -> assertThat(context).doesNotHaveContextualNameEqualTo("foo"))
-                .isInstanceOf(AssertionError.class);
+            .isInstanceOf(AssertionError.class);
     }
 
     @Test
@@ -134,7 +134,7 @@ class ObservationContextAssertTests {
         context.setName("BAR");
 
         thenThrownBy(() -> assertThat(context).doesNotHaveNameEqualToIgnoringCase("bar"))
-                .isInstanceOf(AssertionError.class);
+            .isInstanceOf(AssertionError.class);
     }
 
     @Test
@@ -149,7 +149,7 @@ class ObservationContextAssertTests {
         context.setContextualName("foo");
 
         thenThrownBy(() -> assertThat(context).hasContextualNameEqualToIgnoringCase("bar"))
-                .isInstanceOf(AssertionError.class);
+            .isInstanceOf(AssertionError.class);
     }
 
     @Test
@@ -164,7 +164,7 @@ class ObservationContextAssertTests {
         context.setContextualName("BAR");
 
         thenThrownBy(() -> assertThat(context).doesNotHaveContextualNameEqualToIgnoringCase("bar"))
-                .isInstanceOf(AssertionError.class);
+            .isInstanceOf(AssertionError.class);
     }
 
     @Test
@@ -183,10 +183,10 @@ class ObservationContextAssertTests {
         observation.highCardinalityKeyValue("high", "bar");
 
         thenThrownBy(() -> assertThat(context).hasKeyValuesCount(1)).isInstanceOf(AssertionError.class)
-                .hasMessage("Observation expected to have <1> keys but has <2>.");
+            .hasMessage("Observation expected to have <1> keys but has <2>.");
 
         thenThrownBy(() -> assertThat(context).hasKeyValuesCount(3)).isInstanceOf(AssertionError.class)
-                .hasMessage("Observation expected to have <3> keys but has <2>.");
+            .hasMessage("Observation expected to have <3> keys but has <2>.");
     }
 
     @Test
@@ -204,7 +204,8 @@ class ObservationContextAssertTests {
         observation.lowCardinalityKeyValue("found", "foo");
 
         thenThrownBy(() -> ObservationContextAssert.assertThat(context).hasOnlyKeys("found", "low", "high"))
-                .isInstanceOf(AssertionError.class).hasMessage("Observation is missing expected keys [low, high].");
+            .isInstanceOf(AssertionError.class)
+            .hasMessage("Observation is missing expected keys [low, high].");
     }
 
     @Test
@@ -215,7 +216,8 @@ class ObservationContextAssertTests {
         observation.highCardinalityKeyValue("high", "foo");
 
         thenThrownBy(() -> ObservationContextAssert.assertThat(context).hasOnlyKeys("found"))
-                .isInstanceOf(AssertionError.class).hasMessage("Observation has unexpected keys [low, high].");
+            .isInstanceOf(AssertionError.class)
+            .hasMessage("Observation has unexpected keys [low, high].");
     }
 
     @Test
@@ -226,8 +228,8 @@ class ObservationContextAssertTests {
         observation.highCardinalityKeyValue("high", "foo");
 
         thenThrownBy(() -> ObservationContextAssert.assertThat(context).hasOnlyKeys("notfound", "found"))
-                .isInstanceOf(AssertionError.class)
-                .hasMessage("Observation has unexpected keys [low, high] and misses expected keys [notfound].");
+            .isInstanceOf(AssertionError.class)
+            .hasMessage("Observation has unexpected keys [low, high] and misses expected keys [notfound].");
     }
 
     @Test
@@ -244,9 +246,9 @@ class ObservationContextAssertTests {
         observation.lowCardinalityKeyValue("foo", "bar");
 
         thenThrownBy(() -> assertThat(context).hasLowCardinalityKeyValue("foo", "baz"))
-                .isInstanceOf(AssertionError.class);
+            .isInstanceOf(AssertionError.class);
         thenThrownBy(() -> assertThat(context).hasLowCardinalityKeyValueWithKey("bar"))
-                .isInstanceOf(AssertionError.class);
+            .isInstanceOf(AssertionError.class);
     }
 
     @Test
@@ -263,9 +265,9 @@ class ObservationContextAssertTests {
         observation.highCardinalityKeyValue("foo", "bar");
 
         thenThrownBy(() -> assertThat(context).hasHighCardinalityKeyValue("foo", "baz"))
-                .isInstanceOf(AssertionError.class);
+            .isInstanceOf(AssertionError.class);
         thenThrownBy(() -> assertThat(context).hasHighCardinalityKeyValueWithKey("bar"))
-                .isInstanceOf(AssertionError.class);
+            .isInstanceOf(AssertionError.class);
     }
 
     @Test
@@ -279,9 +281,9 @@ class ObservationContextAssertTests {
         observation.highCardinalityKeyValue("foo", "bar");
 
         thenThrownBy(() -> assertThat(context).doesNotHaveHighCardinalityKeyValue("foo", "bar"))
-                .isInstanceOf(AssertionError.class);
+            .isInstanceOf(AssertionError.class);
         thenThrownBy(() -> assertThat(context).doesNotHaveHighCardinalityKeyValueWithKey("foo"))
-                .isInstanceOf(AssertionError.class);
+            .isInstanceOf(AssertionError.class);
     }
 
     @Test
@@ -292,7 +294,7 @@ class ObservationContextAssertTests {
         thenNoException().isThrownBy(() -> assertThat(context).doesNotHaveHighCardinalityKeyValue("foo", "bar"));
 
         thenThrownBy(() -> assertThat(context).doesNotHaveHighCardinalityKeyValueWithKey("foo"))
-                .isInstanceOf(AssertionError.class);
+            .isInstanceOf(AssertionError.class);
     }
 
     @Test
@@ -308,7 +310,7 @@ class ObservationContextAssertTests {
         thenNoException().isThrownBy(() -> assertThat(context).doesNotHaveLowCardinalityKeyValue("foo", "bar"));
 
         thenThrownBy(() -> assertThat(context).doesNotHaveLowCardinalityKeyValueWithKey("foo"))
-                .isInstanceOf(AssertionError.class);
+            .isInstanceOf(AssertionError.class);
     }
 
     @Test
@@ -317,9 +319,9 @@ class ObservationContextAssertTests {
         observation.lowCardinalityKeyValue("foo", "bar");
 
         thenThrownBy(() -> assertThat(context).doesNotHaveLowCardinalityKeyValue("foo", "bar"))
-                .isInstanceOf(AssertionError.class);
+            .isInstanceOf(AssertionError.class);
         thenThrownBy(() -> assertThat(context).doesNotHaveLowCardinalityKeyValueWithKey("foo"))
-                .isInstanceOf(AssertionError.class);
+            .isInstanceOf(AssertionError.class);
     }
 
     @Test
@@ -403,7 +405,7 @@ class ObservationContextAssertTests {
     @Test
     void should_throw_when_has_error_missing() {
         thenThrownBy(() -> assertThat(context).hasError())
-                .hasMessageContaining("Observation should have an error, but none was found");
+            .hasMessageContaining("Observation should have an error, but none was found");
     }
 
     @Test
@@ -421,7 +423,7 @@ class ObservationContextAssertTests {
         Throwable expected = new IllegalStateException("test");
 
         thenThrownBy(() -> assertThat(context).hasError(expected))
-                .hasMessageContaining("Observation should have an error, but none was found");
+            .hasMessageContaining("Observation should have an error, but none was found");
     }
 
     @Test
@@ -432,9 +434,9 @@ class ObservationContextAssertTests {
         Observation observation = Observation.start("foo", context, registry);
         observation.error(actual);
 
-        thenThrownBy(() -> assertThat(context).hasError(expected)).hasMessageContaining(
-                "Observation expected to have error <java.lang.IllegalStateException: test expected>,"
-                        + " but has <java.lang.IllegalArgumentException: test actual>");
+        thenThrownBy(() -> assertThat(context).hasError(expected))
+            .hasMessageContaining("Observation expected to have error <java.lang.IllegalStateException: test expected>,"
+                    + " but has <java.lang.IllegalArgumentException: test actual>");
     }
 
     @Test
@@ -442,8 +444,11 @@ class ObservationContextAssertTests {
         context.setName("foo");
         context.setError(new RuntimeException("bar"));
 
-        thenNoException().isThrownBy(() -> assertThat(context).hasNameEqualTo("foo").thenError().hasMessage("bar")
-                .backToContext().hasNameEqualTo("foo"));
+        thenNoException().isThrownBy(() -> assertThat(context).hasNameEqualTo("foo")
+            .thenError()
+            .hasMessage("bar")
+            .backToContext()
+            .hasNameEqualTo("foo"));
     }
 
     private Observation mockParent() {
@@ -484,7 +489,7 @@ class ObservationContextAssertTests {
         context.setParentObservation(parent);
 
         thenThrownBy(() -> assertThat(context).doesNotHaveParentObservation())
-                .hasMessage("Observation should not have a parent but has <PARENT_OBSERVATION>");
+            .hasMessage("Observation should not have a parent but has <PARENT_OBSERVATION>");
     }
 
     @Test
@@ -502,7 +507,7 @@ class ObservationContextAssertTests {
         Observation notParent = mockNotParent();
 
         thenThrownBy(() -> assertThat(context).hasParentObservationEqualTo(notParent))
-                .hasMessage("Observation should have parent <NOT_PARENT_OBSERVATION> but has <PARENT_OBSERVATION>");
+            .hasMessage("Observation should have parent <NOT_PARENT_OBSERVATION> but has <PARENT_OBSERVATION>");
     }
 
     @Test
@@ -510,7 +515,7 @@ class ObservationContextAssertTests {
         Observation notParent = mockNotParent();
 
         thenThrownBy(() -> assertThat(context).hasParentObservationEqualTo(notParent))
-                .hasMessage("Observation should have parent <NOT_PARENT_OBSERVATION> but has none");
+            .hasMessage("Observation should have parent <NOT_PARENT_OBSERVATION> but has none");
     }
 
     @Test
@@ -520,7 +525,7 @@ class ObservationContextAssertTests {
         context.setParentObservation(parent);
 
         thenNoException().isThrownBy(() -> assertThat(context)
-                .hasParentObservationContextMatching(c -> "expected".equals(c.getContextualName())));
+            .hasParentObservationContextMatching(c -> "expected".equals(c.getContextualName())));
     }
 
     @Test
@@ -529,8 +534,8 @@ class ObservationContextAssertTests {
         context.setParentObservation(parent);
 
         thenThrownBy(() -> assertThat(context)
-                .hasParentObservationContextMatching(c -> "notExpected".equals(c.getContextualName()))).hasMessage(
-                        "Observation should have parent that matches given predicate but <PARENT_OBSERVATION> didn't");
+            .hasParentObservationContextMatching(c -> "notExpected".equals(c.getContextualName())))
+            .hasMessage("Observation should have parent that matches given predicate but <PARENT_OBSERVATION> didn't");
     }
 
     @Test
@@ -540,7 +545,7 @@ class ObservationContextAssertTests {
         context.setParentObservation(parent);
 
         thenNoException().isThrownBy(() -> assertThat(context)
-                .hasParentObservationContextMatching(c -> "expected".equals(c.getContextualName()), "withDescription"));
+            .hasParentObservationContextMatching(c -> "expected".equals(c.getContextualName()), "withDescription"));
     }
 
     @Test
@@ -548,9 +553,10 @@ class ObservationContextAssertTests {
         Observation parent = mockParent();
         context.setParentObservation(parent);
 
-        thenThrownBy(() -> assertThat(context).hasParentObservationContextMatching(
-                c -> "notExpected".equals(c.getContextualName()), "withDescription")).hasMessage(
-                        "Observation should have parent that matches 'withDescription' predicate but <PARENT_OBSERVATION> didn't");
+        thenThrownBy(() -> assertThat(context)
+            .hasParentObservationContextMatching(c -> "notExpected".equals(c.getContextualName()), "withDescription"))
+            .hasMessage(
+                    "Observation should have parent that matches 'withDescription' predicate but <PARENT_OBSERVATION> didn't");
     }
 
     @Test
@@ -559,7 +565,7 @@ class ObservationContextAssertTests {
         context.setParentObservation(parent);
 
         thenNoException().isThrownBy(() -> assertThat(context)
-                .hasParentObservationContextSatisfying(c -> assertThat(c).hasContextualNameEqualTo("expected")));
+            .hasParentObservationContextSatisfying(c -> assertThat(c).hasContextualNameEqualTo("expected")));
     }
 
     @Test
@@ -567,20 +573,21 @@ class ObservationContextAssertTests {
         Observation parent = mockParent();
         context.setParentObservation(parent);
 
-        thenThrownBy(() -> assertThat(context).hasParentObservationContextSatisfying(
-                c -> assertThat(c).hasContextualNameEqualTo("notExpected"))).hasMessage(
-                        "Parent observation does not satisfy given assertion: Observation should have contextual name equal to <notExpected> but has <expected>");
+        thenThrownBy(() -> assertThat(context)
+            .hasParentObservationContextSatisfying(c -> assertThat(c).hasContextualNameEqualTo("notExpected")))
+            .hasMessage(
+                    "Parent observation does not satisfy given assertion: Observation should have contextual name equal to <notExpected> but has <expected>");
 
         thenThrownBy(() -> assertThat(context).hasParentObservationContextSatisfying(c -> assertThat(c).hasError()))
-                .hasMessage(
-                        "Parent observation does not satisfy given assertion: Observation should have an error, but none was found");
+            .hasMessage(
+                    "Parent observation does not satisfy given assertion: Observation should have an error, but none was found");
     }
 
     @Test
     void hasSubsetOfKeys() {
         context.addLowCardinalityKeyValues(KeyValues.of("a", "1", "b", "2", "c", "3", "d", "4"));
         thenThrownBy(() -> assertThat(context).hasSubsetOfKeys("a", "b"))
-                .hasMessage("Observation keys are not a subset of [a, b]. Found extra keys: [c, d]");
+            .hasMessage("Observation keys are not a subset of [a, b]. Found extra keys: [c, d]");
     }
 
 }

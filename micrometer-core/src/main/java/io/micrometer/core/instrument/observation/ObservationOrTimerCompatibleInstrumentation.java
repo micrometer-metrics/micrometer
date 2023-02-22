@@ -143,8 +143,10 @@ public class ObservationOrTimerCompatibleInstrumentation<T extends Observation.C
      */
     public void stop(String timerName, @Nullable String timerDescription, Supplier<Iterable<Tag>> tagsSupplier) {
         if (observationRegistry.isNoop() && timerSample != null) {
-            timerSample.stop(Timer.builder(timerName).description(timerDescription).tags(tagsSupplier.get())
-                    .register(meterRegistry));
+            timerSample.stop(Timer.builder(timerName)
+                .description(timerDescription)
+                .tags(tagsSupplier.get())
+                .register(meterRegistry));
         }
         else if (observation != null) {
             if (throwable != null) {

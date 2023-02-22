@@ -41,7 +41,7 @@ class MissingHdrHistogramTest {
     @Test
     void throwsClassNotFoundExceptionWhenPercentilesAreUsed() {
         assertThatThrownBy(() -> Timer.builder("my.timer").publishPercentiles(0.5d, 0.9d).register(registry))
-                .hasCauseExactlyInstanceOf(ClassNotFoundException.class);
+            .hasCauseExactlyInstanceOf(ClassNotFoundException.class);
     }
 
 }

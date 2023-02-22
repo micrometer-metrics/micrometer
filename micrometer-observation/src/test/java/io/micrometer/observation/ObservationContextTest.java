@@ -73,8 +73,9 @@ class ObservationContextTest {
         context.put(String.class, "42");
         assertThat((String) context.getRequired(String.class)).isEqualTo("42");
         Assertions.assertThatThrownBy(() -> context.getRequired(Integer.class))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("Context does not have an entry for key [class java.lang.Integer]").hasNoCause();
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessage("Context does not have an entry for key [class java.lang.Integer]")
+            .hasNoCause();
     }
 
     @Test

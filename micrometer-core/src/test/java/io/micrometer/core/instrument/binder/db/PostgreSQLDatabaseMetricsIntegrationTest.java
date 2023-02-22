@@ -107,7 +107,7 @@ class PostgreSQLDatabaseMetricsIntegrationTest {
 
         for (String name : COUNTERS) {
             assertThat(get(name).functionCounter().count()).withFailMessage("Counter " + name + " is zero.")
-                    .isGreaterThan(0);
+                .isGreaterThan(0);
         }
     }
 

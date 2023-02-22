@@ -78,24 +78,28 @@ public abstract class HttpSenderCompatibilityKit {
             throws Throwable {
         server.stubFor(any(urlEqualTo("/metrics")).willReturn(ok("a body")));
 
-        HttpSender.Response response = httpSender.newRequest(server.baseUrl() + "/metrics").withMethod(method)
-                .accept("customAccept").withContent("custom/type", "this is a line").send();
+        HttpSender.Response response = httpSender.newRequest(server.baseUrl() + "/metrics")
+            .withMethod(method)
+            .accept("customAccept")
+            .withContent("custom/type", "this is a line")
+            .send();
 
         assertThat(response.code()).isEqualTo(200);
         assertThat(response.body()).isEqualTo("a body");
 
         server.verify(WireMock
-                .requestMadeFor(request -> MatchResult.aggregate(
-                        MatchResult.of(request.getMethod().getName().equals(method.name())),
-                        MatchResult.of(request.getUrl().equals("/metrics"))))
-                .withHeader("Accept", equalTo("customAccept")).withHeader("Content-Type", containing("custom/type")) // charset
-                                                                                                                     // may
-                                                                                                                     // be
-                                                                                                                     // added
-                                                                                                                     // to
-                                                                                                                     // the
-                                                                                                                     // type
-                .withRequestBody(equalTo("this is a line")));
+            .requestMadeFor(request -> MatchResult.aggregate(
+                    MatchResult.of(request.getMethod().getName().equals(method.name())),
+                    MatchResult.of(request.getUrl().equals("/metrics"))))
+            .withHeader("Accept", equalTo("customAccept"))
+            .withHeader("Content-Type", containing("custom/type")) // charset
+                                                                   // may
+                                                                   // be
+                                                                   // added
+                                                                   // to
+                                                                   // the
+                                                                   // type
+            .withRequestBody(equalTo("this is a line")));
     }
 
     @ParameterizedTest
@@ -121,16 +125,18 @@ public abstract class HttpSenderCompatibilityKit {
     void basicAuth(HttpSender.Method method, @WiremockResolver.Wiremock WireMockServer server) throws Throwable {
         server.stubFor(any(urlEqualTo("/metrics")).willReturn(unauthorized()));
 
-        HttpSender.Response response = httpSender.newRequest(server.baseUrl() + "/metrics").withMethod(method)
-                .withBasicAuthentication("superuser", "superpassword").send();
+        HttpSender.Response response = httpSender.newRequest(server.baseUrl() + "/metrics")
+            .withMethod(method)
+            .withBasicAuthentication("superuser", "superpassword")
+            .send();
 
         assertThat(response.code()).isEqualTo(401);
 
         server.verify(WireMock
-                .requestMadeFor(request -> MatchResult.aggregate(
-                        MatchResult.of(request.getMethod().getName().equals(method.name())),
-                        MatchResult.of(request.getUrl().equals("/metrics"))))
-                .withBasicAuth(new BasicCredentials("superuser", "superpassword")));
+            .requestMadeFor(request -> MatchResult.aggregate(
+                    MatchResult.of(request.getMethod().getName().equals(method.name())),
+                    MatchResult.of(request.getUrl().equals("/metrics"))))
+            .withBasicAuth(new BasicCredentials("superuser", "superpassword")));
     }
 
     @ParameterizedTest
@@ -138,16 +144,18 @@ public abstract class HttpSenderCompatibilityKit {
     void customHeader(HttpSender.Method method, @WiremockResolver.Wiremock WireMockServer server) throws Throwable {
         server.stubFor(any(urlEqualTo("/metrics")).willReturn(unauthorized()));
 
-        HttpSender.Response response = httpSender.newRequest(server.baseUrl() + "/metrics").withMethod(method)
-                .withHeader("customHeader", "customHeaderValue").send();
+        HttpSender.Response response = httpSender.newRequest(server.baseUrl() + "/metrics")
+            .withMethod(method)
+            .withHeader("customHeader", "customHeaderValue")
+            .send();
 
         assertThat(response.code()).isEqualTo(401);
 
         server.verify(WireMock
-                .requestMadeFor(request -> MatchResult.aggregate(
-                        MatchResult.of(request.getMethod().getName().equals(method.name())),
-                        MatchResult.of(request.getUrl().equals("/metrics"))))
-                .withHeader("customHeader", equalTo("customHeaderValue")));
+            .requestMadeFor(request -> MatchResult.aggregate(
+                    MatchResult.of(request.getMethod().getName().equals(method.name())),
+                    MatchResult.of(request.getUrl().equals("/metrics"))))
+            .withHeader("customHeader", equalTo("customHeaderValue")));
     }
 
     @Test
@@ -155,15 +163,17 @@ public abstract class HttpSenderCompatibilityKit {
         server.stubFor(any(urlEqualTo("/metrics")).willReturn(unauthorized()));
 
         HttpSender.Response response = httpSender.newRequest(server.baseUrl() + "/metrics")
-                .withMethod(HttpSender.Method.POST).withAuthentication("Bearer", "mF_9.B5f-4.1JqM").send();
+            .withMethod(HttpSender.Method.POST)
+            .withAuthentication("Bearer", "mF_9.B5f-4.1JqM")
+            .send();
 
         assertThat(response.code()).isEqualTo(401);
 
         server.verify(WireMock
-                .requestMadeFor(
-                        request -> MatchResult.aggregate(MatchResult.of(request.getMethod().getName().equals("POST")),
-                                MatchResult.of(request.getUrl().equals("/metrics"))))
-                .withHeader("Authorization", equalTo("Bearer mF_9.B5f-4.1JqM")));
+            .requestMadeFor(
+                    request -> MatchResult.aggregate(MatchResult.of(request.getMethod().getName().equals("POST")),
+                            MatchResult.of(request.getUrl().equals("/metrics"))))
+            .withHeader("Authorization", equalTo("Bearer mF_9.B5f-4.1JqM")));
     }
 
 }

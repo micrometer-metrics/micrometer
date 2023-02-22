@@ -30,8 +30,10 @@ class TimeWindowPercentileHistogramTest {
     @Test
     void histogramsAreCumulative() {
         try (TimeWindowPercentileHistogram histogram = new TimeWindowPercentileHistogram(new MockClock(),
-                DistributionStatisticConfig.builder().serviceLevelObjectives(3.0, 6, 7).build()
-                        .merge(DistributionStatisticConfig.DEFAULT),
+                DistributionStatisticConfig.builder()
+                    .serviceLevelObjectives(3.0, 6, 7)
+                    .build()
+                    .merge(DistributionStatisticConfig.DEFAULT),
                 false)) {
 
             histogram.recordDouble(3);
@@ -52,8 +54,11 @@ class TimeWindowPercentileHistogramTest {
     @Test
     void sampleValueAboveMaximumExpectedValue() {
         try (TimeWindowPercentileHistogram histogram = new TimeWindowPercentileHistogram(new MockClock(),
-                DistributionStatisticConfig.builder().serviceLevelObjectives(3.0).maximumExpectedValue(2.0).build()
-                        .merge(DistributionStatisticConfig.DEFAULT),
+                DistributionStatisticConfig.builder()
+                    .serviceLevelObjectives(3.0)
+                    .maximumExpectedValue(2.0)
+                    .build()
+                    .merge(DistributionStatisticConfig.DEFAULT),
                 false)) {
 
             histogram.recordDouble(3);
@@ -64,8 +69,10 @@ class TimeWindowPercentileHistogramTest {
     @Test
     void recordValuesThatExceedTheDynamicRange() {
         try (TimeWindowPercentileHistogram histogram = new TimeWindowPercentileHistogram(new MockClock(),
-                DistributionStatisticConfig.builder().serviceLevelObjectives(Double.POSITIVE_INFINITY).build()
-                        .merge(DistributionStatisticConfig.DEFAULT),
+                DistributionStatisticConfig.builder()
+                    .serviceLevelObjectives(Double.POSITIVE_INFINITY)
+                    .build()
+                    .merge(DistributionStatisticConfig.DEFAULT),
                 false)) {
 
             // Regardless of the imputed dynamic bound for the underlying histogram,
@@ -74,17 +81,19 @@ class TimeWindowPercentileHistogramTest {
             histogram.recordDouble(Double.MAX_VALUE);
 
             assertThat(histogram.takeSnapshot(0, 0, 0).histogramCounts())
-                    .containsExactly(new CountAtBucket(Double.POSITIVE_INFINITY, 0));
+                .containsExactly(new CountAtBucket(Double.POSITIVE_INFINITY, 0));
         }
     }
 
     @Test
     void percentiles() {
         try (TimeWindowPercentileHistogram histogram = new TimeWindowPercentileHistogram(new MockClock(),
-                DistributionStatisticConfig.builder().percentiles(0.5, 0.9, 0.95)
-                        .minimumExpectedValue(millisToUnit(1, TimeUnit.NANOSECONDS))
-                        .maximumExpectedValue(secondsToUnit(30, TimeUnit.NANOSECONDS)).build()
-                        .merge(DistributionStatisticConfig.DEFAULT),
+                DistributionStatisticConfig.builder()
+                    .percentiles(0.5, 0.9, 0.95)
+                    .minimumExpectedValue(millisToUnit(1, TimeUnit.NANOSECONDS))
+                    .maximumExpectedValue(secondsToUnit(30, TimeUnit.NANOSECONDS))
+                    .build()
+                    .merge(DistributionStatisticConfig.DEFAULT),
                 false)) {
 
             for (long i = 1; i <= 10; i++) {
@@ -92,16 +101,18 @@ class TimeWindowPercentileHistogramTest {
             }
 
             assertThat(histogram.takeSnapshot(0, 0, 0).percentileValues())
-                    .anyMatch(p -> percentileValueIsApproximately(p, 0.5, 5e6))
-                    .anyMatch(p -> percentileValueIsApproximately(p, 0.9, 9e6))
-                    .anyMatch(p -> percentileValueIsApproximately(p, 0.95, 10e6));
+                .anyMatch(p -> percentileValueIsApproximately(p, 0.5, 5e6))
+                .anyMatch(p -> percentileValueIsApproximately(p, 0.9, 9e6))
+                .anyMatch(p -> percentileValueIsApproximately(p, 0.95, 10e6));
         }
     }
 
     @Test
     void percentilesWithNoSamples() {
-        DistributionStatisticConfig config = DistributionStatisticConfig.builder().percentiles(0.5).build()
-                .merge(DistributionStatisticConfig.DEFAULT);
+        DistributionStatisticConfig config = DistributionStatisticConfig.builder()
+            .percentiles(0.5)
+            .build()
+            .merge(DistributionStatisticConfig.DEFAULT);
 
         try (TimeWindowPercentileHistogram histogram = new TimeWindowPercentileHistogram(new MockClock(), config,
                 false)) {
@@ -114,8 +125,10 @@ class TimeWindowPercentileHistogramTest {
 
     @Test
     void percentilesChangeWithMoreRecentSamples() {
-        DistributionStatisticConfig config = DistributionStatisticConfig.builder().percentiles(0.5).build()
-                .merge(DistributionStatisticConfig.DEFAULT);
+        DistributionStatisticConfig config = DistributionStatisticConfig.builder()
+            .percentiles(0.5)
+            .build()
+            .merge(DistributionStatisticConfig.DEFAULT);
 
         try (TimeWindowPercentileHistogram histogram = new TimeWindowPercentileHistogram(new MockClock(), config,
                 false)) {
@@ -126,7 +139,7 @@ class TimeWindowPercentileHistogramTest {
 
             // baseline median
             assertThat(histogram.takeSnapshot(0, 0, 0).percentileValues())
-                    .anyMatch(p -> percentileValueIsApproximately(p, 0.5, 5e6));
+                .anyMatch(p -> percentileValueIsApproximately(p, 0.5, 5e6));
 
             for (int i = 11; i <= 20; i++) {
                 histogram.recordLong((long) millisToUnit(i, TimeUnit.NANOSECONDS));
@@ -134,7 +147,7 @@ class TimeWindowPercentileHistogramTest {
 
             // median should have moved after seeing 10 more samples
             assertThat(histogram.takeSnapshot(0, 0, 0).percentileValues())
-                    .anyMatch(p -> percentileValueIsApproximately(p, 0.5, 10e6));
+                .anyMatch(p -> percentileValueIsApproximately(p, 0.5, 10e6));
         }
     }
 
@@ -148,8 +161,11 @@ class TimeWindowPercentileHistogramTest {
     @Test
     void timeBasedSlidingWindow() {
         final DistributionStatisticConfig config = DistributionStatisticConfig.builder()
-                .percentiles(0.0, 0.5, 0.75, 0.9, 0.99, 0.999, 1.0).expiry(Duration.ofSeconds(4)).bufferLength(4)
-                .build().merge(DistributionStatisticConfig.DEFAULT);
+            .percentiles(0.0, 0.5, 0.75, 0.9, 0.99, 0.999, 1.0)
+            .expiry(Duration.ofSeconds(4))
+            .bufferLength(4)
+            .build()
+            .merge(DistributionStatisticConfig.DEFAULT);
 
         MockClock clock = new MockClock();
         // Start from 0 for more comprehensive timing calculation.

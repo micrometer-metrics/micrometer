@@ -61,9 +61,10 @@ public class TelegrafStatsdLineBuilder extends FlavorStatsdLineBuilder {
                     return;
                 }
                 this.tags.clear();
-                this.conventionTags = id.getTagsAsIterable().iterator().hasNext() ? id.getConventionTags(next).stream()
-                        .map(t -> telegrafEscape(t.getKey()) + "=" + telegrafEscape(t.getValue()))
-                        .collect(Collectors.joining(",")) : null;
+                this.conventionTags = id.getTagsAsIterable().iterator().hasNext() ? id.getConventionTags(next)
+                    .stream()
+                    .map(t -> telegrafEscape(t.getKey()) + "=" + telegrafEscape(t.getValue()))
+                    .collect(Collectors.joining(",")) : null;
             }
             this.name = telegrafEscape(next.name(id.getName(), id.getType(), id.getBaseUnit()));
             this.tagsNoStat = tags(null, conventionTags, "=", ",");

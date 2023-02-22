@@ -59,7 +59,7 @@ class SearchTest {
         assertThat(Search.in(registry).tags("k", "v", "k2", "v2").meters()).hasSize(1);
 
         assertThatThrownBy(() -> Search.in(registry).tags("k", "k2", "k3"))
-                .isInstanceOf(IllegalArgumentException.class);
+            .isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test

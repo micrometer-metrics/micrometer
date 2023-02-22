@@ -86,8 +86,9 @@ class KafkaConsumerMetricsTest {
 
             // fetch metrics
             registry.get("kafka.consumer.fetch.total").tag("client.id", "consumer-" + consumerCount).functionCounter();
-            registry.get("kafka.consumer.fetch.total").tag("client.id", "consumer-" + (consumerCount - 1))
-                    .functionCounter();
+            registry.get("kafka.consumer.fetch.total")
+                .tag("client.id", "consumer-" + (consumerCount - 1))
+                .functionCounter();
         }
     }
 

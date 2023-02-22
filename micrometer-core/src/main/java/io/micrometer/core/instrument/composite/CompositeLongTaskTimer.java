@@ -78,17 +78,18 @@ class CompositeLongTaskTimer extends AbstractCompositeMeter<LongTaskTimer> imple
     @SuppressWarnings("ConstantConditions")
     @Override
     LongTaskTimer registerNewMeter(MeterRegistry registry) {
-        LongTaskTimer.Builder builder = LongTaskTimer.builder(getId().getName()).tags(getId().getTagsAsIterable())
-                .description(getId().getDescription())
-                .maximumExpectedValue(
-                        Duration.ofNanos(distributionStatisticConfig.getMaximumExpectedValueAsDouble().longValue()))
-                .minimumExpectedValue(
-                        Duration.ofNanos(distributionStatisticConfig.getMinimumExpectedValueAsDouble().longValue()))
-                .publishPercentiles(distributionStatisticConfig.getPercentiles())
-                .publishPercentileHistogram(distributionStatisticConfig.isPercentileHistogram())
-                .distributionStatisticBufferLength(distributionStatisticConfig.getBufferLength())
-                .distributionStatisticExpiry(distributionStatisticConfig.getExpiry())
-                .percentilePrecision(distributionStatisticConfig.getPercentilePrecision());
+        LongTaskTimer.Builder builder = LongTaskTimer.builder(getId().getName())
+            .tags(getId().getTagsAsIterable())
+            .description(getId().getDescription())
+            .maximumExpectedValue(
+                    Duration.ofNanos(distributionStatisticConfig.getMaximumExpectedValueAsDouble().longValue()))
+            .minimumExpectedValue(
+                    Duration.ofNanos(distributionStatisticConfig.getMinimumExpectedValueAsDouble().longValue()))
+            .publishPercentiles(distributionStatisticConfig.getPercentiles())
+            .publishPercentileHistogram(distributionStatisticConfig.isPercentileHistogram())
+            .distributionStatisticBufferLength(distributionStatisticConfig.getBufferLength())
+            .distributionStatisticExpiry(distributionStatisticConfig.getExpiry())
+            .percentilePrecision(distributionStatisticConfig.getPercentilePrecision());
 
         final double[] sloNanos = distributionStatisticConfig.getServiceLevelObjectiveBoundaries();
         if (sloNanos != null) {

@@ -88,7 +88,7 @@ abstract class AbstractElasticsearchMeterRegistryIntegrationTest {
 
     protected ElasticsearchContainer getContainer() {
         return new ElasticsearchContainer(DockerImageName.parse(getDockerImageName(getVersion())))
-                .withPassword(PASSWORD);
+            .withPassword(PASSWORD);
     }
 
     protected ElasticConfig getConfig() {

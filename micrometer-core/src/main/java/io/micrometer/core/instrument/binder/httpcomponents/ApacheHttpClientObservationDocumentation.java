@@ -22,6 +22,7 @@ import io.micrometer.observation.docs.ObservationDocumentation;
 
 /**
  * {@link ObservationDocumentation} for Apache HTTP client instrumentation.
+ *
  * @since 1.10.0
  * @see MicrometerHttpRequestExecutor
  */
