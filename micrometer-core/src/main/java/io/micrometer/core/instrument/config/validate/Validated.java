@@ -41,7 +41,7 @@ import static java.util.stream.StreamSupport.stream;
  * @since 1.5.0
  */
 @Incubating(since = "1.5.0")
-public interface Validated<T>extends Iterable<Validated<T>> {
+public interface Validated<T> extends Iterable<Validated<T>> {
 
     boolean isValid();
 
