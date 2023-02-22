@@ -26,7 +26,7 @@ import java.util.function.ToDoubleFunction;
  * identical to com.netflix.spectator.api.ObjectGauge which is not accessible in
  * Spectator.
  */
-class SpectatorToDoubleGauge<T>extends AbstractMeter<T> implements Gauge {
+class SpectatorToDoubleGauge<T> extends AbstractMeter<T> implements Gauge {
 
     private final ToDoubleFunction<T> f;
 

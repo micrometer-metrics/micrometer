@@ -32,7 +32,7 @@ import java.util.function.ToLongFunction;
  */
 @NonNullApi
 @NonNullFields
-public class GuavaCacheMetrics<K, V, C extends Cache<K, V>>extends CacheMeterBinder<C> {
+public class GuavaCacheMetrics<K, V, C extends Cache<K, V>> extends CacheMeterBinder<C> {
 
     private static final String DESCRIPTION_CACHE_LOAD = "The number of times cache lookup methods have successfully loaded a new value or failed to load a new value because an exception was thrown while loading";
 

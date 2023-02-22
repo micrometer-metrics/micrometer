@@ -41,7 +41,7 @@ import java.util.List;
  */
 @NonNullApi
 @NonNullFields
-public class JCacheMetrics<K, V, C extends Cache<K, V>>extends CacheMeterBinder<C> {
+public class JCacheMetrics<K, V, C extends Cache<K, V>> extends CacheMeterBinder<C> {
 
     // VisibleForTesting
     @Nullable

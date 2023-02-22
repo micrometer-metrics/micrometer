@@ -22,7 +22,7 @@ import io.micrometer.core.instrument.Meter;
 import java.lang.ref.WeakReference;
 import java.util.function.ToDoubleFunction;
 
-public class CumulativeFunctionCounter<T>extends AbstractMeter implements FunctionCounter {
+public class CumulativeFunctionCounter<T> extends AbstractMeter implements FunctionCounter {
 
     private final WeakReference<T> ref;
 
