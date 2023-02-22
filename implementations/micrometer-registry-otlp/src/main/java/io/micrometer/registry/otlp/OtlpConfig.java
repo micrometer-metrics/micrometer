@@ -17,7 +17,6 @@ package io.micrometer.registry.otlp;
 
 import io.micrometer.core.instrument.config.validate.Validated;
 import io.micrometer.core.instrument.push.PushRegistryConfig;
-import io.opentelemetry.proto.metrics.v1.AggregationTemporality;
 
 import java.util.Arrays;
 import java.util.Map;

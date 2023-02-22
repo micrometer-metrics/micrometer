@@ -15,7 +15,6 @@
  */
 package io.micrometer.registry.otlp;
 
-import io.opentelemetry.proto.metrics.v1.AggregationTemporality;
 import org.junit.jupiter.api.Test;
 
 import java.util.Collections;

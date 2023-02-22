@@ -23,6 +23,7 @@ import org.junit.jupiter.api.Test;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
+import static io.micrometer.registry.otlp.AggregationTemporality.AGGREGATION_TEMPORALITY_DELTA;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class DeltaOtlpMeterRegistryTest {
@@ -38,7 +39,7 @@ class DeltaOtlpMeterRegistryTest {
     OtlpConfig otlpConfig = new OtlpConfig() {
         @Override
         public AggregationTemporality aggregationTemporality() {
-            return AggregationTemporality.AGGREGATION_TEMPORALITY_DELTA;
+            return AGGREGATION_TEMPORALITY_DELTA;
         }
 
         @Override
@@ -186,7 +187,7 @@ class DeltaOtlpMeterRegistryTest {
         assertThat(histogram.getAttributes(0).getKey()).hasToString(meterTag.getKey());
         assertThat(histogram.getAttributes(0).getValue().getStringValue()).hasToString(meterTag.getValue());
         assertThat(metric.getHistogram().getAggregationTemporality())
-                .isEqualTo(AggregationTemporality.AGGREGATION_TEMPORALITY_DELTA);
+                .isEqualTo(AggregationTemporality.mapToOtlp(AGGREGATION_TEMPORALITY_DELTA));
     }
 
     private void assertSum(Metric metric, long startTime, long endTime, double expectedValue) {
@@ -200,7 +201,7 @@ class DeltaOtlpMeterRegistryTest {
         assertThat(sumDataPoint.getAttributes(0).getKey()).hasToString(meterTag.getKey());
         assertThat(sumDataPoint.getAttributes(0).getValue().getStringValue()).hasToString(meterTag.getValue());
         assertThat(metric.getSum().getAggregationTemporality())
-                .isEqualTo(AggregationTemporality.AGGREGATION_TEMPORALITY_DELTA);
+                .isEqualTo(AggregationTemporality.mapToOtlp(AGGREGATION_TEMPORALITY_DELTA));
     }
 
     private void stepOverNStep(int numStepsToSkip) {
