@@ -32,15 +32,12 @@ import java.util.concurrent.TimeUnit;
 public class TimerBenchmark {
 
     public static void main(String[] args) throws RunnerException {
-        // @formatter:off
-        Options opt = new OptionsBuilder()
-                .include(TimerBenchmark.class.getSimpleName())
-                .warmupIterations(5)
-                .measurementIterations(10)
-                .mode(Mode.SampleTime)
-                .forks(1)
-                .build();
-        // @formatter:on
+        Options opt = new OptionsBuilder().include(TimerBenchmark.class.getSimpleName())
+            .warmupIterations(5)
+            .measurementIterations(10)
+            .mode(Mode.SampleTime)
+            .forks(1)
+            .build();
 
         new Runner(opt).run();
     }

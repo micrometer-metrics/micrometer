@@ -111,18 +111,18 @@ public class SignalFxMeterRegistry extends StepMeterRegistry {
             try (AggregateMetricSender.Session session = metricSender.createSession()) {
                 // @formatter:off
                 batch.stream()
-                        .map(meter -> meter.match(
-                                this::addGauge,
-                                this::addCounter,
-                                this::addTimer,
-                                this::addDistributionSummary,
-                                this::addLongTaskTimer,
-                                this::addTimeGauge,
-                                this::addFunctionCounter,
-                                this::addFunctionTimer,
-                                this::addMeter))
-                        .flatMap(builders -> builders.map(builder -> builder.setTimestamp(timestamp).build()))
-                        .forEach(session::setDatapoint);
+                    .map(meter -> meter.match(
+                            this::addGauge,
+                            this::addCounter,
+                            this::addTimer,
+                            this::addDistributionSummary,
+                            this::addLongTaskTimer,
+                            this::addTimeGauge,
+                            this::addFunctionCounter,
+                            this::addFunctionTimer,
+                            this::addMeter))
+                    .flatMap(builders -> builders.map(builder -> builder.setTimestamp(timestamp).build()))
+                    .forEach(session::setDatapoint);
                 // @formatter:on
 
                 logger.debug("successfully sent {} metrics to SignalFx.", batch.size());

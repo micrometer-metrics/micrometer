@@ -104,17 +104,18 @@ public class NewRelicInsightsApiClientProvider implements NewRelicClientProvider
         // New Relic's Insights API limits us to 1000 events per call
         // 1:1 mapping between Micrometer meters and New Relic events
         for (List<Meter> batch : MeterPartition.partition(meterRegistry, Math.min(config.batchSize(), 1000))) {
-            sendEvents(batch.stream().flatMap(meter -> meter.match(
             // @formatter:off
-                    this::writeGauge,
-                    this::writeCounter,
-                    this::writeTimer,
-                    this::writeSummary,
-                    this::writeLongTaskTimer,
-                    this::writeTimeGauge,
-                    this::writeFunctionCounter,
-                    this::writeFunctionTimer,
-                    this::writeMeter)));
+            sendEvents(batch.stream()
+                .flatMap(meter -> meter.match(
+                        this::writeGauge,
+                        this::writeCounter,
+                        this::writeTimer,
+                        this::writeSummary,
+                        this::writeLongTaskTimer,
+                        this::writeTimeGauge,
+                        this::writeFunctionCounter,
+                        this::writeFunctionTimer,
+                        this::writeMeter)));
             // @formatter:on
         }
     }
