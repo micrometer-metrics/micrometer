@@ -25,7 +25,7 @@ import io.micrometer.observation.KeyValuesConvention;
  * @author Marcin Grzejszczak
  * @since 1.10.0
  */
-public interface HttpKeyValuesConvention<REQ, RES>extends KeyValuesConvention {
+public interface HttpKeyValuesConvention<REQ, RES> extends KeyValuesConvention {
 
     /**
      * HTTP request method.

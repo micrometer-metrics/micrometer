@@ -30,7 +30,7 @@ import java.util.function.Supplier;
  * @param <Q> The type of message received one or more times from the client.
  * @author Daniel Theuke (daniel.theuke@heuboe.de)
  */
-class MetricCollectingServerCallListener<Q>extends SimpleForwardingServerCallListener<Q> {
+class MetricCollectingServerCallListener<Q> extends SimpleForwardingServerCallListener<Q> {
 
     private final Counter requestCounter;
 

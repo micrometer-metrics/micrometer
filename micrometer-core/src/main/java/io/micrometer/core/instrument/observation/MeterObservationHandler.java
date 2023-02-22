@@ -25,7 +25,7 @@ import io.micrometer.observation.ObservationHandler;
  * @param <T> type of context
  * @since 1.10.0
  */
-public interface MeterObservationHandler<T extends Observation.Context>extends ObservationHandler<T> {
+public interface MeterObservationHandler<T extends Observation.Context> extends ObservationHandler<T> {
 
     @Override
     default boolean supportsContext(Observation.Context context) {

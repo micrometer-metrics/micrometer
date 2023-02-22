@@ -24,7 +24,7 @@ import io.micrometer.core.instrument.noop.NoopGauge;
 import java.lang.ref.WeakReference;
 import java.util.function.ToDoubleFunction;
 
-class CompositeGauge<T>extends AbstractCompositeMeter<Gauge> implements Gauge {
+class CompositeGauge<T> extends AbstractCompositeMeter<Gauge> implements Gauge {
 
     private final WeakReference<T> ref;
 

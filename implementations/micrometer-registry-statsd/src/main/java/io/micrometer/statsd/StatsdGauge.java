@@ -24,7 +24,7 @@ import java.lang.ref.WeakReference;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.ToDoubleFunction;
 
-public class StatsdGauge<T>extends AbstractMeter implements Gauge, StatsdPollable {
+public class StatsdGauge<T> extends AbstractMeter implements Gauge, StatsdPollable {
 
     private final StatsdLineBuilder lineBuilder;
 

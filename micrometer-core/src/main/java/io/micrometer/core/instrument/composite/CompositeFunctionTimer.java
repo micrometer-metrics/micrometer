@@ -25,7 +25,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.ToDoubleFunction;
 import java.util.function.ToLongFunction;
 
-class CompositeFunctionTimer<T>extends AbstractCompositeMeter<FunctionTimer> implements FunctionTimer {
+class CompositeFunctionTimer<T> extends AbstractCompositeMeter<FunctionTimer> implements FunctionTimer {
 
     private final WeakReference<T> ref;
 

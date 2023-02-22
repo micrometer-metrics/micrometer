@@ -24,7 +24,7 @@ import io.micrometer.common.KeyValues;
  * @author Marcin Grzejszczak
  * @since 1.10.0
  */
-public interface HttpClientKeyValuesConvention<REQ, RES>extends HttpKeyValuesConvention<REQ, RES> {
+public interface HttpClientKeyValuesConvention<REQ, RES> extends HttpKeyValuesConvention<REQ, RES> {
 
     /**
      * Remote hostname or similar, see note below.

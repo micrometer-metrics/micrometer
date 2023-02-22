@@ -29,7 +29,7 @@ import java.util.function.Consumer;
  * @param <A> The type of message received one or more times from the server.
  * @author Daniel Theuke (daniel.theuke@heuboe.de)
  */
-class MetricCollectingClientCallListener<A>extends SimpleForwardingClientCallListener<A> {
+class MetricCollectingClientCallListener<A> extends SimpleForwardingClientCallListener<A> {
 
     private final Counter responseCounter;
 

@@ -25,7 +25,7 @@ import io.micrometer.common.lang.Nullable;
  * @author Marcin Grzejszczak
  * @since 1.10.0
  */
-public interface ObservationConvention<T extends Observation.Context>extends KeyValuesConvention {
+public interface ObservationConvention<T extends Observation.Context> extends KeyValuesConvention {
 
     /**
      * Empty instance of the convention.
