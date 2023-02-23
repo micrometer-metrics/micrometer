@@ -71,6 +71,8 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
 
     private final boolean isDeltaAggregationTemporality;
 
+    private long publishTimeNanos;
+
     private final io.opentelemetry.proto.metrics.v1.AggregationTemporality otlpAggregationTemporality;
 
     public OtlpMeterRegistry() {
@@ -91,6 +93,7 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
         this.isDeltaAggregationTemporality = config
                 .aggregationTemporality() == AggregationTemporality.AGGREGATION_TEMPORALITY_DELTA;
         this.otlpAggregationTemporality = AggregationTemporality.mapToOtlp(config.aggregationTemporality());
+        this.setPublishTimeNano();
         config().namingConvention(NamingConvention.dot);
         start(DEFAULT_THREAD_FACTORY);
     }
@@ -98,6 +101,7 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
     @Override
     protected void publish() {
         for (List<Meter> batch : MeterPartition.partition(this, config.batchSize())) {
+            this.setPublishTimeNano();
             List<Metric> metrics = batch.stream()
                     .map(meter -> meter.match(this::writeGauge, this::writeCounter, this::writeHistogramSupport,
                             this::writeHistogramSupport, this::writeHistogramSupport, this::writeGauge,
@@ -195,7 +199,8 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
                 .merge(DistributionStatisticConfig.DEFAULT);
     }
 
-    private Metric writeMeter(Meter meter) {
+    // VisibleForTesting
+    Metric writeMeter(Meter meter) {
         // TODO support writing custom meters
         // one gauge per measurement
         return getMetricBuilder(meter.getId()).build();
@@ -205,7 +210,7 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
     Metric writeGauge(Gauge gauge) {
         return getMetricBuilder(gauge.getId())
                 .setGauge(io.opentelemetry.proto.metrics.v1.Gauge.newBuilder()
-                        .addDataPoints(NumberDataPoint.newBuilder().setTimeUnixNano(getEndTimeNanos())
+                        .addDataPoints(NumberDataPoint.newBuilder().setTimeUnixNano(publishTimeNanos)
                                 .setAsDouble(gauge.value()).addAllAttributes(getTagsForId(gauge.getId())).build()))
                 .build();
     }
@@ -223,7 +228,7 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
     private Metric writeSum(Meter meter, DoubleSupplier count) {
         return getMetricBuilder(meter.getId()).setSum(Sum.newBuilder()
                 .addDataPoints(NumberDataPoint.newBuilder().setStartTimeUnixNano(getStartTimeNanos(meter))
-                        .setTimeUnixNano(getEndTimeNanos()).setAsDouble(count.getAsDouble())
+                        .setTimeUnixNano(publishTimeNanos).setAsDouble(count.getAsDouble())
                         .addAllAttributes(getTagsForId(meter.getId())).build())
                 .setIsMonotonic(true).setAggregationTemporality(otlpAggregationTemporality).build()).build();
     }
@@ -236,14 +241,14 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
 
         Iterable<? extends KeyValue> tags = getTagsForId(histogramSupport.getId());
         long startTimeNanos = getStartTimeNanos(histogramSupport);
-        long endTimeNanos = getEndTimeNanos();
         double total = isTimeBased ? histogramSnapshot.total(getBaseTimeUnit()) : histogramSnapshot.total();
         long count = histogramSnapshot.count();
 
         // if percentiles configured, use summary
         if (histogramSnapshot.percentileValues().length != 0) {
             SummaryDataPoint.Builder summaryData = SummaryDataPoint.newBuilder().addAllAttributes(tags)
-                    .setStartTimeUnixNano(startTimeNanos).setTimeUnixNano(endTimeNanos).setSum(total).setCount(count);
+                    .setStartTimeUnixNano(startTimeNanos).setTimeUnixNano(publishTimeNanos).setSum(total)
+                    .setCount(count);
             for (ValueAtPercentile percentile : histogramSnapshot.percentileValues()) {
                 summaryData.addQuantileValues(
                         SummaryDataPoint.ValueAtQuantile.newBuilder().setQuantile(percentile.percentile()).setValue(
@@ -254,7 +259,7 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
         }
 
         HistogramDataPoint.Builder histogramDataPoint = HistogramDataPoint.newBuilder().addAllAttributes(tags)
-                .setStartTimeUnixNano(startTimeNanos).setTimeUnixNano(endTimeNanos).setSum(total).setCount(count);
+                .setStartTimeUnixNano(startTimeNanos).setTimeUnixNano(publishTimeNanos).setSum(total).setCount(count);
 
         if (isDeltaAggregationTemporality) {
             histogramDataPoint.setMax(isTimeBased ? histogramSnapshot.max(getBaseTimeUnit()) : histogramSnapshot.max());
@@ -279,19 +284,21 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
     Metric writeFunctionTimer(FunctionTimer functionTimer) {
         return getMetricBuilder(functionTimer.getId()).setHistogram(Histogram.newBuilder()
                 .addDataPoints(HistogramDataPoint.newBuilder().addAllAttributes(getTagsForId(functionTimer.getId()))
-                        .setStartTimeUnixNano(getStartTimeNanos((functionTimer))).setTimeUnixNano(getEndTimeNanos())
+                        .setStartTimeUnixNano(getStartTimeNanos((functionTimer))).setTimeUnixNano(publishTimeNanos)
                         .setSum(functionTimer.totalTime(getBaseTimeUnit())).setCount((long) functionTimer.count()))
                 .setAggregationTemporality(otlpAggregationTemporality)).build();
     }
 
-    private long getStartTimeNanos(Meter meter) {
-        return isDeltaAggregationTemporality ? getEndTimeNanos() - config.step().toNanos()
-                : ((StartTimeAwareMeter) meter).getStartTimeNanos();
+    // VisibleForTesting
+    void setPublishTimeNano() {
+        this.publishTimeNanos = isDeltaAggregationTemporality
+                ? (clock.wallTime() / config.step().toMillis()) * config.step().toNanos()
+                : TimeUnit.MILLISECONDS.toNanos(clock.wallTime());
     }
 
-    private long getEndTimeNanos() {
-        return isDeltaAggregationTemporality ? (clock.wallTime() / config.step().toMillis()) * config.step().toNanos()
-                : TimeUnit.MILLISECONDS.toNanos(clock.wallTime());
+    private long getStartTimeNanos(Meter meter) {
+        return isDeltaAggregationTemporality ? publishTimeNanos - config.step().toNanos()
+                : ((StartTimeAwareMeter) meter).getStartTimeNanos();
     }
 
     private Metric.Builder getMetricBuilder(Meter.Id id) {

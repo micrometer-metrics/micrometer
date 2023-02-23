@@ -64,13 +64,13 @@ class DeltaOtlpMeterRegistryTest {
                 .register(registry);
         counter.increment();
         counter.increment();
-        assertSum(registry.writeCounter(counter), 0, TimeUnit.MINUTES.toNanos(1), 0);
+        assertSum(publishTimeAwareWrite(counter), 0, TimeUnit.MINUTES.toNanos(1), 0);
         this.stepOverNStep(1);
-        assertSum(registry.writeCounter(counter), TimeUnit.MINUTES.toNanos(1), TimeUnit.MINUTES.toNanos(2), 2);
+        assertSum(publishTimeAwareWrite(counter), TimeUnit.MINUTES.toNanos(1), TimeUnit.MINUTES.toNanos(2), 2);
 
         this.stepOverNStep(1);
         counter.increment();
-        assertSum(registry.writeCounter(counter), TimeUnit.MINUTES.toNanos(2), TimeUnit.MINUTES.toNanos(3), 1);
+        assertSum(publishTimeAwareWrite(counter), TimeUnit.MINUTES.toNanos(2), TimeUnit.MINUTES.toNanos(3), 1);
     }
 
     @Test
@@ -80,11 +80,11 @@ class DeltaOtlpMeterRegistryTest {
         FunctionCounter counter = FunctionCounter.builder(METER_NAME, atomicLong, AtomicLong::get)
                 .description(METER_DESCRIPTION).tags(Tags.of(meterTag)).baseUnit("milliseconds").register(registry);
 
-        assertSum(registry.writeFunctionCounter(counter), 0, TimeUnit.MINUTES.toNanos(1), 0);
+        assertSum(publishTimeAwareWrite(counter), 0, TimeUnit.MINUTES.toNanos(1), 0);
         this.stepOverNStep(1);
-        assertSum(registry.writeFunctionCounter(counter), TimeUnit.MINUTES.toNanos(1), TimeUnit.MINUTES.toNanos(2), 10);
+        assertSum(publishTimeAwareWrite(counter), TimeUnit.MINUTES.toNanos(1), TimeUnit.MINUTES.toNanos(2), 10);
         this.stepOverNStep(1);
-        assertSum(registry.writeFunctionCounter(counter), TimeUnit.MINUTES.toNanos(2), TimeUnit.MINUTES.toNanos(3), 0);
+        assertSum(publishTimeAwareWrite(counter), TimeUnit.MINUTES.toNanos(2), TimeUnit.MINUTES.toNanos(3), 0);
     }
 
     @Test
@@ -97,24 +97,24 @@ class DeltaOtlpMeterRegistryTest {
 
         // This is where TimeWindowMax can be painful and make no sense at all. Need to
         // re-visit this. Probably StepMax is what might fit good for OTLP.
-        assertHistogram(registry.writeHistogramSupport(timer), 0, TimeUnit.MINUTES.toNanos(1), "milliseconds", 0, 0,
+        assertHistogram(publishTimeAwareWrite(timer), 0, TimeUnit.MINUTES.toNanos(1), "milliseconds", 0, 0,
                 111);
         this.stepOverNStep(1);
-        assertHistogram(registry.writeHistogramSupport(timer), TimeUnit.MINUTES.toNanos(1), TimeUnit.MINUTES.toNanos(2),
+        assertHistogram(publishTimeAwareWrite(timer), TimeUnit.MINUTES.toNanos(1), TimeUnit.MINUTES.toNanos(2),
                 "milliseconds", 3, 198, 111);
         timer.record(4, TimeUnit.MILLISECONDS);
-        assertHistogram(registry.writeHistogramSupport(timer), TimeUnit.MINUTES.toNanos(1), TimeUnit.MINUTES.toNanos(2),
+        assertHistogram(publishTimeAwareWrite(timer), TimeUnit.MINUTES.toNanos(1), TimeUnit.MINUTES.toNanos(2),
                 "milliseconds", 3, 198, 111);
         this.stepOverNStep(1);
-        assertHistogram(registry.writeHistogramSupport(timer), TimeUnit.MINUTES.toNanos(2), TimeUnit.MINUTES.toNanos(3),
+        assertHistogram(publishTimeAwareWrite(timer), TimeUnit.MINUTES.toNanos(2), TimeUnit.MINUTES.toNanos(3),
                 "milliseconds", 1, 4, 111);
 
         this.stepOverNStep(2);
-        assertHistogram(registry.writeHistogramSupport(timer), TimeUnit.MINUTES.toNanos(4), TimeUnit.MINUTES.toNanos(5),
+        assertHistogram(publishTimeAwareWrite(timer), TimeUnit.MINUTES.toNanos(4), TimeUnit.MINUTES.toNanos(5),
                 "milliseconds", 0, 0, 0);
         timer.record(1, TimeUnit.MILLISECONDS);
         this.stepOverNStep(1);
-        assertHistogram(registry.writeHistogramSupport(timer), TimeUnit.MINUTES.toNanos(5), TimeUnit.MINUTES.toNanos(6),
+        assertHistogram(publishTimeAwareWrite(timer), TimeUnit.MINUTES.toNanos(5), TimeUnit.MINUTES.toNanos(6),
                 "milliseconds", 1, 1, 1);
     }
 
@@ -122,13 +122,13 @@ class DeltaOtlpMeterRegistryTest {
     void functionTimer() {
         FunctionTimer functionTimer = FunctionTimer.builder(METER_NAME, this, o -> 5, o -> 127, TimeUnit.MILLISECONDS)
                 .description(METER_DESCRIPTION).tags(Tags.of(meterTag)).register(registry);
-        assertHistogram(registry.writeFunctionTimer(functionTimer), 0, TimeUnit.MINUTES.toNanos(1), "milliseconds", 0,
+        assertHistogram(publishTimeAwareWrite(functionTimer), 0, TimeUnit.MINUTES.toNanos(1), "milliseconds", 0,
                 0, 0);
         this.stepOverNStep(1);
-        assertHistogram(registry.writeFunctionTimer(functionTimer), TimeUnit.MINUTES.toNanos(1),
+        assertHistogram(publishTimeAwareWrite(functionTimer), TimeUnit.MINUTES.toNanos(1),
                 TimeUnit.MINUTES.toNanos(2), "milliseconds", 5, 127, 0);
         this.stepOverNStep(1);
-        assertHistogram(registry.writeFunctionTimer(functionTimer), TimeUnit.MINUTES.toNanos(2),
+        assertHistogram(publishTimeAwareWrite(functionTimer), TimeUnit.MINUTES.toNanos(2),
                 TimeUnit.MINUTES.toNanos(3), "milliseconds", 0, 0, 0);
     }
 
@@ -142,15 +142,15 @@ class DeltaOtlpMeterRegistryTest {
 
         // This is where TimeWindowMax can be painful and make no sense at all. Need to
         // re-visit this. Probably StepMax is what might fit good for OTLP.
-        assertHistogram(registry.writeHistogramSupport(size), 0, TimeUnit.MINUTES.toNanos(1), "bytes", 0, 0, 2233);
+        assertHistogram(publishTimeAwareWrite(size), 0, TimeUnit.MINUTES.toNanos(1), "bytes", 0, 0, 2233);
         this.stepOverNStep(1);
-        assertHistogram(registry.writeHistogramSupport(size), TimeUnit.MINUTES.toNanos(1), TimeUnit.MINUTES.toNanos(2),
+        assertHistogram(publishTimeAwareWrite(size), TimeUnit.MINUTES.toNanos(1), TimeUnit.MINUTES.toNanos(2),
                 "bytes", 3, 2348, 2233);
         size.record(204);
-        assertHistogram(registry.writeHistogramSupport(size), TimeUnit.MINUTES.toNanos(1), TimeUnit.MINUTES.toNanos(2),
+        assertHistogram(publishTimeAwareWrite(size), TimeUnit.MINUTES.toNanos(1), TimeUnit.MINUTES.toNanos(2),
                 "bytes", 3, 2348, 2233);
         this.stepOverNStep(1);
-        assertHistogram(registry.writeHistogramSupport(size), TimeUnit.MINUTES.toNanos(2), TimeUnit.MINUTES.toNanos(3),
+        assertHistogram(publishTimeAwareWrite(size), TimeUnit.MINUTES.toNanos(2), TimeUnit.MINUTES.toNanos(3),
                 "bytes", 1, 204, 2233);
     }
 
@@ -161,15 +161,15 @@ class DeltaOtlpMeterRegistryTest {
         LongTaskTimer.Sample task1 = taskTimer.start();
         LongTaskTimer.Sample task2 = taskTimer.start();
         this.stepOverNStep(3);
-        assertHistogram(registry.writeHistogramSupport(taskTimer), TimeUnit.MINUTES.toNanos(3),
+        assertHistogram(publishTimeAwareWrite(taskTimer), TimeUnit.MINUTES.toNanos(3),
                 TimeUnit.MINUTES.toNanos(4), "milliseconds", 2, 360000, 180000);
 
         task1.stop();
-        assertHistogram(registry.writeHistogramSupport(taskTimer), TimeUnit.MINUTES.toNanos(3),
+        assertHistogram(publishTimeAwareWrite(taskTimer), TimeUnit.MINUTES.toNanos(3),
                 TimeUnit.MINUTES.toNanos(4), "milliseconds", 1, 180000, 180000);
         task2.stop();
         this.stepOverNStep(1);
-        assertHistogram(registry.writeHistogramSupport(taskTimer), TimeUnit.MINUTES.toNanos(4),
+        assertHistogram(publishTimeAwareWrite(taskTimer), TimeUnit.MINUTES.toNanos(4),
                 TimeUnit.MINUTES.toNanos(5), "milliseconds", 0, 0, 0);
     }
 
@@ -208,4 +208,10 @@ class DeltaOtlpMeterRegistryTest {
         clock.addSeconds(OtlpConfig.DEFAULT.step().getSeconds() * numStepsToSkip);
     }
 
+    private Metric publishTimeAwareWrite(Meter meter) {
+        registry.setPublishTimeNano();
+        return meter.match(registry::writeGauge, registry::writeCounter, registry::writeHistogramSupport,
+                registry::writeHistogramSupport, registry::writeHistogramSupport, registry::writeGauge,
+                registry::writeFunctionCounter, registry::writeFunctionTimer, registry::writeMeter);
+    }
 }
