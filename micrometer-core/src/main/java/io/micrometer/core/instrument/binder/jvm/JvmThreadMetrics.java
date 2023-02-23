@@ -43,8 +43,9 @@ public class JvmThreadMetrics implements MeterBinder {
 
     private final Iterable<Tag> tags;
 
-    private final ThreadLocal<Map<Thread.State, Long>> threadStateGroupLocal = ThreadLocal
-        .withInitial(this::getThreadStatesGroup);
+    private final ThreadMXBean threadBean;
+
+    private final ThreadLocal<Map<Thread.State, Long>> threadCountsByStateThreadLocal;
 
     public JvmThreadMetrics() {
         this(emptyList());
@@ -52,12 +53,12 @@ public class JvmThreadMetrics implements MeterBinder {
 
     public JvmThreadMetrics(Iterable<Tag> tags) {
         this.tags = tags;
+        this.threadBean = ManagementFactory.getThreadMXBean();
+        this.threadCountsByStateThreadLocal = ThreadLocal.withInitial(this::getThreadCountsByStateSnapshot);
     }
 
     @Override
     public void bindTo(MeterRegistry registry) {
-        ThreadMXBean threadBean = ManagementFactory.getThreadMXBean();
-
         Gauge.builder("jvm.threads.peak", threadBean, ThreadMXBean::getPeakThreadCount)
             .tags(tags)
             .description("The peak live thread count since the Java virtual machine started or peak was reset")
@@ -85,7 +86,7 @@ public class JvmThreadMetrics implements MeterBinder {
         try {
             threadBean.getAllThreadIds();
             for (Thread.State state : Thread.State.values()) {
-                Gauge.builder("jvm.threads.states", () -> getThreadStateCount(state))
+                Gauge.builder("jvm.threads.states", () -> getThreadCountByState(state))
                     .tags(Tags.concat(tags, "state", getStateTagValue(state)))
                     .description("The current number of threads")
                     .baseUnit(BaseUnits.THREADS)
@@ -102,32 +103,41 @@ public class JvmThreadMetrics implements MeterBinder {
         return state.name().toLowerCase().replace("_", "-");
     }
 
-    private Long getThreadStateCount(Thread.State state) {
-        Map<Thread.State, Long> stateCountGroup = threadStateGroupLocal.get();
-        Long count = stateCountGroup.remove(state);
+    private Long getThreadCountByState(Thread.State state) {
+        // If the thread-local is empty, this will also trigger populating it
+        // i.e.: getting a new snapshots for thread counts by thread state.
+        Map<Thread.State, Long> threadCountsByState = threadCountsByStateThreadLocal.get();
+        Long count = threadCountsByState.remove(state);
+
+        // This means that this state was already queried. Assuming that a Gauge will be
+        // queried once per publication, this should mean that we need a new snapshot.
+        // This always happens if a MeterFilter denies a Gauge that tracks a state.
         if (count == null) {
-            // Avoid fetching only specific state metrics at a time instead of all state,
-            // resulting in reading old state from ThreadLocal.
-            threadStateGroupLocal.remove();
-            stateCountGroup = threadStateGroupLocal.get();
-            count = stateCountGroup.remove(state);
+            threadCountsByStateThreadLocal.remove();
+            threadCountsByState = threadCountsByStateThreadLocal.get();
+            count = threadCountsByState.remove(state);
         }
-        if (stateCountGroup.isEmpty()) {
-            threadStateGroupLocal.remove();
+        // This means that all the states were queried so next time the method is called,
+        // we need a new snapshot.
+        // This never happens if a MeterFilter denies a Gauge that tracks a state.
+        if (threadCountsByState.isEmpty()) {
+            threadCountsByStateThreadLocal.remove();
         }
+
         return count;
     }
 
-    private Map<Thread.State, Long> getThreadStatesGroup() {
-        ThreadMXBean threadBean = ManagementFactory.getThreadMXBean();
-        long[] allThreadIds = threadBean.getAllThreadIds();
-        Map<Thread.State, Long> stateCountGroup = Arrays.stream(threadBean.getThreadInfo(allThreadIds))
+    private Map<Thread.State, Long> getThreadCountsByStateSnapshot() {
+        Map<Thread.State, Long> countByThreadState = Arrays
+            .stream(threadBean.getThreadInfo(threadBean.getAllThreadIds()))
             .collect(Collectors.groupingBy(ThreadInfo::getThreadState, () -> new EnumMap<>(Thread.State.class),
                     Collectors.counting()));
+
         for (Thread.State state : Thread.State.values()) {
-            stateCountGroup.putIfAbsent(state, 0L);
+            countByThreadState.putIfAbsent(state, 0L);
         }
-        return stateCountGroup;
+
+        return countByThreadState;
     }
 
 }

@@ -15,11 +15,11 @@
  */
 package io.micrometer.core.instrument.binder.jvm;
 
-import java.util.concurrent.TimeUnit;
-
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
+
+import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
@@ -42,6 +42,7 @@ class JvmThreadMetricsTest {
         assertThat(registry.get("jvm.threads.peak").gauge().value()).isPositive();
         assertThat(registry.get("jvm.threads.states").tag("state", "runnable").gauge().value()).isPositive();
         assertThat(registry.get("jvm.threads.states").tag("state", "blocked").gauge().value()).isZero();
+
         createBlockedThread();
         assertThat(registry.get("jvm.threads.states").tag("state", "blocked").gauge().value()).isPositive();
         assertThat(registry.get("jvm.threads.states").tag("state", "waiting").gauge().value()).isPositive();
