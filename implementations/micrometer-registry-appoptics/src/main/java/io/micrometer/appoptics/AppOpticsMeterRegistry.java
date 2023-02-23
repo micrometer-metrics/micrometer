@@ -100,40 +100,39 @@ public class AppOpticsMeterRegistry extends StepMeterRegistry {
         try {
             String bodyMeasurementsPrefix = getBodyMeasurementsPrefix();
             for (List<Meter> batch : MeterPartition.partition(this, config.batchSize())) {
-                final List<String> meters = batch.stream()
                 // @formatter:off
-                        .map(meter -> meter.match(
-                                this::writeGauge,
-                                this::writeCounter,
-                                this::writeTimer,
-                                this::writeSummary,
-                                this::writeLongTaskTimer,
-                                this::writeTimeGauge,
-                                this::writeFunctionCounter,
-                                this::writeFunctionTimer,
-                                this::writeMeter)
-                        )
-                        .filter(Optional::isPresent)
-                        .map(Optional::get)
-                        .collect(Collectors.toList());
+                final List<String> meters = batch.stream()
+                    .map(meter -> meter.match(
+                            this::writeGauge,
+                            this::writeCounter,
+                            this::writeTimer,
+                            this::writeSummary,
+                            this::writeLongTaskTimer,
+                            this::writeTimeGauge,
+                            this::writeFunctionCounter,
+                            this::writeFunctionTimer,
+                            this::writeMeter))
+                    .filter(Optional::isPresent)
+                    .map(Optional::get)
+                    .collect(Collectors.toList());
+                // @formatter:on
                 if (meters.isEmpty()) {
                     continue;
                 }
                 httpClient.post(config.uri())
-                        .withBasicAuthentication(config.apiToken(), "")
-                        .withJsonContent(
-                                meters.stream().collect(joining(",", bodyMeasurementsPrefix, BODY_MEASUREMENTS_SUFFIX)))
-                        .send()
-                        .onSuccess(response -> {
-                            if (!response.body().contains("\"failed\":0")) {
-                                logger.error("failed to send at least some metrics to appoptics: {}", response.body());
-                            }
-                            else {
-                                logger.debug("successfully sent {} metrics to appoptics", batch.size());
-                            }
-                        })
-                        .onError(response -> logger.error("failed to send metrics to appoptics: {}", response.body()));
-                // @formatter:on
+                    .withBasicAuthentication(config.apiToken(), "")
+                    .withJsonContent(
+                            meters.stream().collect(joining(",", bodyMeasurementsPrefix, BODY_MEASUREMENTS_SUFFIX)))
+                    .send()
+                    .onSuccess(response -> {
+                        if (!response.body().contains("\"failed\":0")) {
+                            logger.error("failed to send at least some metrics to appoptics: {}", response.body());
+                        }
+                        else {
+                            logger.debug("successfully sent {} metrics to appoptics", batch.size());
+                        }
+                    })
+                    .onError(response -> logger.error("failed to send metrics to appoptics: {}", response.body()));
             }
         }
         catch (Throwable t) {

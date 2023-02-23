@@ -80,24 +80,23 @@ public class KairosMeterRegistry extends StepMeterRegistry {
             try {
                 // @formatter:off
                 httpClient.post(config.uri())
-                        .withBasicAuthentication(config.userName(), config.password())
-                        .withJsonContent(
-                                batch.stream().flatMap(m -> m.match(
-                                        this::writeGauge,
-                                        this::writeCounter,
-                                        this::writeTimer,
-                                        this::writeSummary,
-                                        this::writeLongTaskTimer,
-                                        this::writeTimeGauge,
-                                        this::writeFunctionCounter,
-                                        this::writeFunctionTimer,
-                                        this::writeCustomMetric)
-                                ).collect(Collectors.joining(",", "[", "]"))
-                        )
-                        // @formatter:on
+                    .withBasicAuthentication(config.userName(), config.password())
+                    .withJsonContent(batch.stream()
+                        .flatMap(m -> m.match(
+                                this::writeGauge,
+                                this::writeCounter,
+                                this::writeTimer,
+                                this::writeSummary,
+                                this::writeLongTaskTimer,
+                                this::writeTimeGauge,
+                                this::writeFunctionCounter,
+                                this::writeFunctionTimer,
+                                this::writeCustomMetric))
+                        .collect(Collectors.joining(",", "[", "]")))
                     .send()
                     .onSuccess(response -> logger.debug("successfully sent {} metrics to kairos.", batch.size()))
                     .onError(response -> logger.error("failed to send metrics to kairos: {}", response.body()));
+                // @formatter:on
             }
             catch (Throwable t) {
                 logger.warn("failed to send metrics to kairos", t);

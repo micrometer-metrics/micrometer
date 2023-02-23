@@ -82,29 +82,33 @@ public class AzureMonitorMeterRegistry extends StepMeterRegistry {
     protected void publish() {
         for (Meter meter : getMeters()) {
             // @formatter:off
-            meter.match(
-                    this::trackGauge,
-                    this::trackCounter,
-                    this::trackTimer,
-                    this::trackDistributionSummary,
-                    this::trackLongTaskTimer,
-                    this::trackTimeGauge,
-                    this::trackFunctionCounter,
-                    this::trackFunctionTimer,
-                    this::trackMeter
-            ).forEach(telemetry -> {
-                try {
-                    client.track(telemetry);
-                } catch (Throwable e) {
-                    logger.warn("failed to track metric {} in azure monitor", meter.getId());
-                    TraceTelemetry traceTelemetry = new TraceTelemetry("failed to track metric " + meter.getId());
-                    traceTelemetry.getContext().getOperation().setSyntheticSource(SDK_TELEMETRY_SYNTHETIC_SOURCE_NAME);
-                    traceTelemetry.setSeverityLevel(SeverityLevel.Warning);
-                    client.trackTrace(traceTelemetry);
-                    client.flush();
-                }
-                // @formatter:on
-            });
+            meter
+                .match(
+                        this::trackGauge,
+                        this::trackCounter,
+                        this::trackTimer,
+                        this::trackDistributionSummary,
+                        this::trackLongTaskTimer,
+                        this::trackTimeGauge,
+                        this::trackFunctionCounter,
+                        this::trackFunctionTimer,
+                        this::trackMeter)
+                .forEach(telemetry -> {
+                    try {
+                        client.track(telemetry);
+                    }
+                    catch (Throwable e) {
+                        logger.warn("failed to track metric {} in azure monitor", meter.getId());
+                        TraceTelemetry traceTelemetry = new TraceTelemetry("failed to track metric " + meter.getId());
+                        traceTelemetry.getContext()
+                            .getOperation()
+                            .setSyntheticSource(SDK_TELEMETRY_SYNTHETIC_SOURCE_NAME);
+                        traceTelemetry.setSeverityLevel(SeverityLevel.Warning);
+                        client.trackTrace(traceTelemetry);
+                        client.flush();
+                    }
+                });
+            // @formatter:on
         }
     }
 

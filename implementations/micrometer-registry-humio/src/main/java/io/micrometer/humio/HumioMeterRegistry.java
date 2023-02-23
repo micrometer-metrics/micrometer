@@ -103,23 +103,22 @@ public class HumioMeterRegistry extends StepMeterRegistry {
                         .collect(joining(",", "\"tags\":{", "},"));
                 }
 
-                post.withJsonContent(meters.stream()
                 // @formatter:off
-                        .map(m -> m.match(
-                                batch::writeGauge,
-                                batch::writeCounter,
-                                batch::writeTimer,
-                                batch::writeSummary,
-                                batch::writeLongTaskTimer,
-                                batch::writeTimeGauge,
-                                batch::writeFunctionCounter,
-                                batch::writeFunctionTimer,
-                                batch::writeMeter)
-                        )
-                        .collect(joining(",", "[{" + tags + "\"events\": [", "]}]")))
-                        .send()
-                        .onSuccess(response -> logger.debug("successfully sent {} metrics to humio.", meters.size()))
-                        .onError(response -> logger.error("failed to send metrics to humio: {}", response.body()));
+                post.withJsonContent(meters.stream()
+                    .map(m -> m.match(
+                            batch::writeGauge,
+                            batch::writeCounter,
+                            batch::writeTimer,
+                            batch::writeSummary,
+                            batch::writeLongTaskTimer,
+                            batch::writeTimeGauge,
+                            batch::writeFunctionCounter,
+                            batch::writeFunctionTimer,
+                            batch::writeMeter))
+                    .collect(joining(",", "[{" + tags + "\"events\": [", "]}]")))
+                    .send()
+                    .onSuccess(response -> logger.debug("successfully sent {} metrics to humio.", meters.size()))
+                    .onError(response -> logger.error("failed to send metrics to humio: {}", response.body()));
                 // @formatter:on
             }
             catch (Throwable e) {
