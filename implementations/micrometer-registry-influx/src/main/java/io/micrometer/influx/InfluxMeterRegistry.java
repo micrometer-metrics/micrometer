@@ -133,25 +133,25 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
                 config.apiVersion().addHeaderToken(config, requestBuilder);
                 // @formatter:off
                 requestBuilder
-                        .withPlainText(batch.stream()
-                                .flatMap(m -> m.match(
-                                        gauge -> writeGauge(gauge.getId(), gauge.value()),
-                                        counter -> writeCounter(counter.getId(), counter.count()),
-                                        this::writeTimer,
-                                        this::writeSummary,
-                                        this::writeLongTaskTimer,
-                                        gauge -> writeGauge(gauge.getId(), gauge.value(getBaseTimeUnit())),
-                                        counter -> writeCounter(counter.getId(), counter.count()),
-                                        this::writeFunctionTimer,
-                                        this::writeMeter))
-                                .collect(joining("\n")))
-                        .compressWhen(config::compressed)
-                        .send()
-                        .onSuccess(response -> {
-                            logger.debug("successfully sent {} metrics to InfluxDB.", batch.size());
-                            databaseExists = true;
-                        })
-                        .onError(response -> logger.error("failed to send metrics to influx: {}", response.body()));
+                    .withPlainText(batch.stream()
+                        .flatMap(m -> m.match(
+                                gauge -> writeGauge(gauge.getId(), gauge.value()),
+                                counter -> writeCounter(counter.getId(), counter.count()),
+                                this::writeTimer,
+                                this::writeSummary,
+                                this::writeLongTaskTimer,
+                                gauge -> writeGauge(gauge.getId(), gauge.value(getBaseTimeUnit())),
+                                counter -> writeCounter(counter.getId(), counter.count()),
+                                this::writeFunctionTimer,
+                                this::writeMeter))
+                        .collect(joining("\n")))
+                    .compressWhen(config::compressed)
+                    .send()
+                    .onSuccess(response -> {
+                        logger.debug("successfully sent {} metrics to InfluxDB.", batch.size());
+                        databaseExists = true;
+                    })
+                    .onError(response -> logger.error("failed to send metrics to influx: {}", response.body()));
                 // @formatter:on
             }
         }

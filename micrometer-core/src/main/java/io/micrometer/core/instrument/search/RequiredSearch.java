@@ -193,13 +193,10 @@ public final class RequiredSearch {
     }
 
     private <M extends Meter> M getOne(Class<M> clazz) {
-        // @formatter:off
-        return meterStream()
-                .filter(clazz::isInstance)
-                .findAny()
-                .map(clazz::cast)
-                .orElseThrow(() -> MeterNotFoundException.forSearch(this, clazz));
-        // @formatter:on
+        return meterStream().filter(clazz::isInstance)
+            .findAny()
+            .map(clazz::cast)
+            .orElseThrow(() -> MeterNotFoundException.forSearch(this, clazz));
     }
 
     private <M extends Meter> Collection<M> findAll(Class<M> clazz) {
