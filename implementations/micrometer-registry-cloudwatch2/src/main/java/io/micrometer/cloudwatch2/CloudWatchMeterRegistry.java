@@ -149,17 +149,18 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
     List<MetricDatum> metricData() {
         Batch batch = new Batch();
         // @formatter:off
-        return getMeters().stream().flatMap(m -> m.match(
-                batch::gaugeData,
-                batch::counterData,
-                batch::timerData,
-                batch::summaryData,
-                batch::longTaskTimerData,
-                batch::timeGaugeData,
-                batch::functionCounterData,
-                batch::functionTimerData,
-                batch::metricData)
-        ).collect(toList());
+        return getMeters().stream()
+            .flatMap(m -> m.match(
+                    batch::gaugeData,
+                    batch::counterData,
+                    batch::timerData,
+                    batch::summaryData,
+                    batch::longTaskTimerData,
+                    batch::timeGaugeData,
+                    batch::functionCounterData,
+                    batch::functionTimerData,
+                    batch::metricData))
+            .collect(toList());
         // @formatter:on
     }
 
