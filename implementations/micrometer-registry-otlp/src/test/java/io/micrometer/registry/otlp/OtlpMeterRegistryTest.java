@@ -17,6 +17,7 @@ package io.micrometer.registry.otlp;
 
 import io.micrometer.core.instrument.*;
 import io.opentelemetry.proto.metrics.v1.Metric;
+import io.opentelemetry.proto.metrics.v1.NumberDataPoint;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -27,6 +28,7 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static uk.org.webcompere.systemstubs.SystemStubs.withEnvironmentVariables;
@@ -547,10 +549,28 @@ class OtlpMeterRegistryTest {
                 });
     }
 
+    @Test
+    void testMetricsStartAndEndTime() {
+        Counter counter = Counter.builder("test_publish_time").register(registry);
+        final long startTime = ((StartTimeAwareMeter) counter).getStartTimeNanos();
+        Function<Meter, NumberDataPoint> getDataPoint = (Meter meter) -> {
+            return publishTimeAwareWrite(meter).getSum().getDataPoints(0);
+        };
+        assertThat(getDataPoint.apply(counter).getStartTimeUnixNano()).isEqualTo(startTime);
+        assertThat(getDataPoint.apply(counter).getTimeUnixNano()).isEqualTo(1000000L);
+        clock.addSeconds(59);
+        assertThat(getDataPoint.apply(counter).getStartTimeUnixNano()).isEqualTo(startTime);
+        assertThat(getDataPoint.apply(counter).getTimeUnixNano()).isEqualTo(59001000000L);
+        clock.addSeconds(1);
+        assertThat(getDataPoint.apply(counter).getStartTimeUnixNano()).isEqualTo(startTime);
+        assertThat(getDataPoint.apply(counter).getTimeUnixNano()).isEqualTo(60001000000L);
+    }
+
     private Metric publishTimeAwareWrite(Meter meter) {
         registry.setPublishTimeNano();
         return meter.match(registry::writeGauge, registry::writeCounter, registry::writeHistogramSupport,
                 registry::writeHistogramSupport, registry::writeHistogramSupport, registry::writeGauge,
                 registry::writeFunctionCounter, registry::writeFunctionTimer, registry::writeMeter);
     }
+
 }
