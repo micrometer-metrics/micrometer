@@ -40,7 +40,9 @@ import static uk.org.webcompere.systemstubs.SystemStubs.withEnvironmentVariables
 @Tag("docker")
 class OTelCollectorIntegrationTest {
 
-    private static final String OPENMETRICS_100 = "application/openmetrics-text; version=1.0.0; charset=utf-8";
+    // TODO: The OTel Prometheus exporter does not support openmetrics-text 1.0.0 yet
+    // see: https://github.com/open-telemetry/opentelemetry-collector-contrib/issues/18913
+    private static final String OPENMETRICS_001 = "application/openmetrics-text; version=0.0.1; charset=utf-8";
 
     private static final String CONFIG_FILE_NAME = "collector-config.yml";
 
@@ -58,27 +60,33 @@ class OTelCollectorIntegrationTest {
         Timer.builder("test.timer").register(registry).record(Duration.ofMillis(123));
         DistributionSummary.builder("test.distributionsummary").register(registry).record(24);
 
+        // @formatter:off
         await().atMost(Duration.ofSeconds(5))
             .pollDelay(Duration.ofMillis(100))
             .pollInterval(Duration.ofMillis(100))
-            .untilAsserted(() -> whenPrometheusScraped().then().statusCode(200).body(not(blankOrNullString())));
+            .untilAsserted(() -> whenPrometheusScraped().then()
+                    .statusCode(200)
+                    .contentType(OPENMETRICS_001)
+                    .body(endsWith("# EOF\n"))
+            );
 
-        // @formatter:off
         // tags can vary depending on where you run your tests:
         //  - IDE: no telemetry_sdk_version tag
         //  - Gradle: telemetry_sdk_version has the version number
         whenPrometheusScraped().then().body(
             containsString("{job=\"test\",service_name=\"test\",telemetry_sdk_language=\"java\",telemetry_sdk_name=\"io.micrometer\""),
 
-            matchesPattern("(?s)^.*test_counter\\{.+} 42\\n.*$"),
-            matchesPattern("(?s)^.*test_gauge\\{.+} 12\\n.*$"),
+            matchesPattern("(?s)^.*test_counter\\{.+} 42\\.0\\n.*$"),
+            matchesPattern("(?s)^.*test_gauge\\{.+} 12\\.0\\n.*$"),
 
             matchesPattern("(?s)^.*test_timer_count\\{.+} 1\\n.*$"),
-            matchesPattern("(?s)^.*test_timer_sum\\{.+} 123\\n.*$"),
+            // TODO: this should be 123ms (0.123) not 123s (123)
+            // see: https://github.com/open-telemetry/opentelemetry-collector-contrib/issues/18903
+            matchesPattern("(?s)^.*test_timer_sum\\{.+} 123\\.0\\n.*$"),
             matchesPattern("(?s)^.*test_timer_bucket\\{.+,le=\"\\+Inf\"} 1\\n.*$"),
 
             matchesPattern("(?s)^.*test_distributionsummary_count\\{.+} 1\\n.*$"),
-            matchesPattern("(?s)^.*test_distributionsummary_sum\\{.+} 24\\n.*$"),
+            matchesPattern("(?s)^.*test_distributionsummary_sum\\{.+} 24\\.0\\n.*$"),
             matchesPattern("(?s)^.*test_distributionsummary_bucket\\{.+,le=\"\\+Inf\"} 1\\n.*$")
         );
         // @formatter:on
@@ -112,7 +120,7 @@ class OTelCollectorIntegrationTest {
         // @formatter:off
         return given()
             .port(container.getMappedPort(9090))
-            .accept(OPENMETRICS_100)
+            .accept(OPENMETRICS_001)
             .when()
             .get("/metrics");
         // @formatter:on
