@@ -58,8 +58,9 @@ class OTelCollectorIntegrationTest {
         Timer.builder("test.timer").register(registry).record(Duration.ofMillis(123));
         DistributionSummary.builder("test.distributionsummary").register(registry).record(24);
 
-        await().atMost(Duration.ofMillis(2_000))
+        await().atMost(Duration.ofSeconds(5))
             .pollDelay(Duration.ofMillis(100))
+            .pollInterval(Duration.ofMillis(100))
             .untilAsserted(() -> whenPrometheusScraped().then().body(not(empty())));
 
         // @formatter:off
