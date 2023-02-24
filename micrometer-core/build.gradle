@@ -34,6 +34,7 @@ Import-Package: \
     org.eclipse.jetty.*;resolution:=dynamic;version="${@}",\
     org.glassfish.jersey.*;resolution:=dynamic;version="${@}",\
     io.grpc.*;resolution:=dynamic,\
+    org.apache.hc.*;resolution:=dynamic,\
     org.apache.http.*;resolution:=dynamic,\
     com.netflix.hystrix.*;resolution:=dynamic;version="${@}",\
     ch.qos.logback.*;resolution:=dynamic;version="${@}",\
