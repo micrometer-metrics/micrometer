@@ -38,6 +38,7 @@ def VERSIONS = [
         'info.ganglia.gmetric4j:gmetric4j:latest.release',
         'io.prometheus:simpleclient_common:0.15.+',
         'io.prometheus:simpleclient_pushgateway:0.15.+',
+        'io.rest-assured:rest-assured:latest.release',
         'javax.cache:cache-api:latest.release',
         'javax.inject:javax.inject:1',
         'javax.xml.bind:jaxb-api:2.3.+',

@@ -8,6 +8,9 @@ dependencies {
 
     testImplementation project(':micrometer-test')
     testImplementation 'uk.org.webcompere:system-stubs-jupiter:latest.release'
+    testImplementation 'io.rest-assured:rest-assured'
+    testImplementation 'org.testcontainers:junit-jupiter'
+    testImplementation 'org.awaitility:awaitility'
 }
 
 // new module in 1.9. This should be removed in later branches.
