@@ -109,23 +109,20 @@ class OtlpConfigTest {
 
         OtlpConfig otlpConfig = properties::get;
         assertThat(otlpConfig.validate().isValid()).isTrue();
-        assertThat(otlpConfig.aggregationTemporality())
-                .isSameAs(AggregationTemporality.AGGREGATION_TEMPORALITY_CUMULATIVE);
+        assertThat(otlpConfig.aggregationTemporality()).isSameAs(AggregationTemporality.CUMULATIVE);
 
-        properties.put("otlp.aggregationTemporality",
-                AggregationTemporality.AGGREGATION_TEMPORALITY_CUMULATIVE.toString());
-        assertThat(otlpConfig.aggregationTemporality())
-                .isSameAs(AggregationTemporality.AGGREGATION_TEMPORALITY_CUMULATIVE);
+        properties.put("otlp.aggregationTemporality", AggregationTemporality.CUMULATIVE.toString());
+        assertThat(otlpConfig.aggregationTemporality()).isSameAs(AggregationTemporality.CUMULATIVE);
     }
 
     @Test
     void aggregationTemporalityDelta() {
         Map<String, String> properties = new HashMap<>();
-        properties.put("otlp.aggregationTemporality", AggregationTemporality.AGGREGATION_TEMPORALITY_DELTA.toString());
+        properties.put("otlp.aggregationTemporality", AggregationTemporality.DELTA.toString());
 
         OtlpConfig otlpConfig = properties::get;
         assertThat(otlpConfig.validate().isValid()).isTrue();
-        assertThat(otlpConfig.aggregationTemporality()).isSameAs(AggregationTemporality.AGGREGATION_TEMPORALITY_DELTA);
+        assertThat(otlpConfig.aggregationTemporality()).isSameAs(AggregationTemporality.DELTA);
     }
 
     @Test

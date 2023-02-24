@@ -90,9 +90,8 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
         this.config = config;
         this.httpSender = httpSender;
         this.resource = Resource.newBuilder().addAllAttributes(getResourceAttributes()).build();
-        this.isDeltaAggregationTemporality = config
-                .aggregationTemporality() == AggregationTemporality.AGGREGATION_TEMPORALITY_DELTA;
         this.otlpAggregationTemporality = AggregationTemporality.mapToOtlp(config.aggregationTemporality());
+        this.isDeltaAggregationTemporality = this.otlpAggregationTemporality == io.opentelemetry.proto.metrics.v1.AggregationTemporality.AGGREGATION_TEMPORALITY_DELTA;
         this.setPublishTimeNano();
         config().namingConvention(NamingConvention.dot);
         start(DEFAULT_THREAD_FACTORY);

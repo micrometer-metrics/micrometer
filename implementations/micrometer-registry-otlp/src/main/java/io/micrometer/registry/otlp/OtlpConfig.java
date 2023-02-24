@@ -96,7 +96,7 @@ public interface OtlpConfig extends PushRegistryConfig {
      */
     default AggregationTemporality aggregationTemporality() {
         return getEnum(this, AggregationTemporality.class, "aggregationTemporality")
-                .orElse(AggregationTemporality.AGGREGATION_TEMPORALITY_CUMULATIVE);
+                .orElse(AggregationTemporality.CUMULATIVE);
     }
 
     /**

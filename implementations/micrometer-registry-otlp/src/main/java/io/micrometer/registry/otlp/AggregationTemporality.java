@@ -17,14 +17,14 @@ package io.micrometer.registry.otlp;
 
 public enum AggregationTemporality {
 
-    AGGREGATION_TEMPORALITY_DELTA, AGGREGATION_TEMPORALITY_CUMULATIVE;
+    DELTA, CUMULATIVE;
 
     public static io.opentelemetry.proto.metrics.v1.AggregationTemporality mapToOtlp(
             AggregationTemporality aggregationTemporality) {
         switch (aggregationTemporality) {
-            case AGGREGATION_TEMPORALITY_DELTA:
+            case DELTA:
                 return io.opentelemetry.proto.metrics.v1.AggregationTemporality.AGGREGATION_TEMPORALITY_DELTA;
-            case AGGREGATION_TEMPORALITY_CUMULATIVE:
+            case CUMULATIVE:
                 return io.opentelemetry.proto.metrics.v1.AggregationTemporality.AGGREGATION_TEMPORALITY_CUMULATIVE;
             default:
                 return io.opentelemetry.proto.metrics.v1.AggregationTemporality.UNRECOGNIZED;
