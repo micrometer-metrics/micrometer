@@ -61,7 +61,7 @@ class OTelCollectorIntegrationTest {
         await().atMost(Duration.ofSeconds(5))
             .pollDelay(Duration.ofMillis(100))
             .pollInterval(Duration.ofMillis(100))
-            .untilAsserted(() -> whenPrometheusScraped().then().body(not(empty())));
+            .untilAsserted(() -> whenPrometheusScraped().then().statusCode(200).body(not(blankOrNullString())));
 
         // @formatter:off
         // tags can vary depending on where you run your tests:
