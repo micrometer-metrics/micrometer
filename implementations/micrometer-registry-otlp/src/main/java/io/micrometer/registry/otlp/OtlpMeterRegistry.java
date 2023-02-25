@@ -42,6 +42,7 @@ import io.opentelemetry.proto.metrics.v1.Histogram;
 import io.opentelemetry.proto.metrics.v1.*;
 import io.opentelemetry.proto.resource.v1.Resource;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -150,19 +151,15 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
     @Override
     protected Timer newTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig,
             PauseDetector pauseDetector) {
-        return isCumulative()
-                ? new OtlpCumulativeTimer(id, this.clock, distributionStatisticConfig, pauseDetector, getBaseTimeUnit())
-                : new OtlpStepTimer(id, clock, distributionStatisticConfig, pauseDetector, getBaseTimeUnit(),
-                        config.step().toMillis());
+        return new OtlpTimer(id, clock, distributionStatisticConfig, config.step().toMillis(), pauseDetector,
+                getBaseTimeUnit(), otlpAggregationTemporality);
     }
 
     @Override
     protected DistributionSummary newDistributionSummary(Meter.Id id,
             DistributionStatisticConfig distributionStatisticConfig, double scale) {
-        return isCumulative()
-                ? new OtlpCumulativeDistributionSummary(id, this.clock, distributionStatisticConfig, scale, true)
-                : new OtlpStepDistributionSummary(id, clock, distributionStatisticConfig, scale,
-                        config.step().toMillis());
+        return new OtlpDistributionSummary(id, clock, distributionStatisticConfig, scale, config.step().toMillis(),
+                otlpAggregationTemporality);
     }
 
     @Override
@@ -387,6 +384,34 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
             attributes.add(createKeyValue("service.name", "unknown_service"));
         }
         return attributes;
+    }
+
+    static io.micrometer.core.instrument.distribution.Histogram getHistogram(Clock clock, long stepMillis,
+            DistributionStatisticConfig distributionStatisticConfig,
+            io.opentelemetry.proto.metrics.v1.AggregationTemporality aggregationTemporality) {
+        // While publishing to OTLP, we export either Histogram datapoint / Summary
+        // datapoint. So, we will make the histogram either of them and not both.
+        // Though AbstractTimer/Distribution Summary prefers publishing percentiles,
+        // exporting of histograms over percentiles is preferred in OTLP.
+        if (distributionStatisticConfig.isPublishingHistogram()) {
+            if (AggregationTemporality.isCumulative(aggregationTemporality)) {
+                return new TimeWindowFixedBoundaryHistogram(clock, DistributionStatisticConfig.builder()
+                    // effectively never roll over
+                    .expiry(Duration.ofDays(1825))
+                    .percentiles()
+                    .bufferLength(1)
+                    .build()
+                    .merge(distributionStatisticConfig), true, false);
+            }
+            else if (AggregationTemporality.isDelta(aggregationTemporality)) {
+                return new StepHistogram(clock, stepMillis, distributionStatisticConfig);
+            }
+        }
+
+        if (distributionStatisticConfig.isPublishingPercentiles()) {
+            return new TimeWindowPercentileHistogram(clock, distributionStatisticConfig, false);
+        }
+        return NoopHistogram.INSTANCE;
     }
 
 }

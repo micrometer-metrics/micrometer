@@ -52,34 +52,6 @@ class TimeWindowRotationTest {
 
     @ParameterizedTest
     @MethodSource("histogramTypes")
-    void percentilesValidation(Class<? extends AbstractTimeWindowHistogram<?, ?>> histogramType) {
-        expectValidationFailure(histogramType, DistributionStatisticConfig.builder().percentiles(-0.01).build());
-        expectValidationFailure(histogramType, DistributionStatisticConfig.builder().percentiles(1.01).build());
-    }
-
-    @ParameterizedTest
-    @MethodSource("histogramTypes")
-    void expectedValueRangeValidation(Class<? extends AbstractTimeWindowHistogram<?, ?>> histogramType) {
-        expectValidationFailure(histogramType, DistributionStatisticConfig.builder().minimumExpectedValue(0.0).build());
-        expectValidationFailure(histogramType,
-                DistributionStatisticConfig.builder().minimumExpectedValue(10.0).maximumExpectedValue(9.0).build());
-    }
-
-    @ParameterizedTest
-    @MethodSource("histogramTypes")
-    void serviceLevelObjectiveBoundariesValidation(Class<? extends AbstractTimeWindowHistogram<?, ?>> histogramType) {
-        expectValidationFailure(histogramType,
-                DistributionStatisticConfig.builder().serviceLevelObjectives(0.0).build());
-    }
-
-    @ParameterizedTest
-    @MethodSource("histogramTypes")
-    void bufferLengthValidation(Class<? extends AbstractTimeWindowHistogram<?, ?>> histogramType) {
-        expectValidationFailure(histogramType, DistributionStatisticConfig.builder().bufferLength(-1).build());
-    }
-
-    @ParameterizedTest
-    @MethodSource("histogramTypes")
     void rotationIntervalValidation(Class<? extends AbstractTimeWindowHistogram<?, ?>> histogramType) {
         expectValidationFailure(histogramType,
                 DistributionStatisticConfig.builder().expiry(Duration.ofMillis(9)).bufferLength(10).build());

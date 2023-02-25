@@ -48,4 +48,12 @@ public enum AggregationTemporality {
         }
     }
 
+    static boolean isDelta(io.opentelemetry.proto.metrics.v1.AggregationTemporality aggregationTemporality) {
+        return aggregationTemporality == io.opentelemetry.proto.metrics.v1.AggregationTemporality.AGGREGATION_TEMPORALITY_DELTA;
+    }
+
+    static boolean isCumulative(io.opentelemetry.proto.metrics.v1.AggregationTemporality aggregationTemporality) {
+        return aggregationTemporality == io.opentelemetry.proto.metrics.v1.AggregationTemporality.AGGREGATION_TEMPORALITY_CUMULATIVE;
+    }
+
 }

@@ -24,42 +24,55 @@ import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 
 import static io.micrometer.registry.otlp.AggregationTemporality.DELTA;
 import static org.assertj.core.api.Assertions.assertThat;
 
-class DeltaOtlpMeterRegistryTest {
+class OtlpDeltaMeterRegistryTest extends OtlpMeterRegistryTest {
 
-    private static final String METER_NAME = "test.meter";
-
-    private static final String METER_DESCRIPTION = "Sample meter description";
-
-    private static final Tag meterTag = Tag.of("key", "value");
-
-    MockClock clock;
-
-    OtlpConfig otlpConfig = new OtlpConfig() {
-        @Override
-        public AggregationTemporality aggregationTemporality() {
-            return DELTA;
-        }
-
-        @Override
-        public String get(String key) {
-            return null;
-        }
-    };
-
-    OtlpMeterRegistry registry;
-
+    @Override
     @BeforeEach
     void init() {
-        clock = new MockClock();
-        registry = new OtlpMeterRegistry(otlpConfig, clock);
-        // Always assume that atleast one step is completed.
-        this.stepOverNStep(1);
+        super.init();
+        // Always assume that at least one step is completed.
+        stepOverNStep(1);
+    }
+
+    @Override
+    protected OtlpConfig otlpConfig() {
+        return new OtlpConfig() {
+            @Override
+            public AggregationTemporality aggregationTemporality() {
+                return DELTA;
+            }
+
+            @Override
+            public String get(String key) {
+                return null;
+            }
+        };
+    };
+
+    @Test
+    void gauge() {
+        Gauge gauge = Gauge.builder(METER_NAME, new AtomicInteger(5), AtomicInteger::doubleValue).register(registry);
+        Metric metric = publishTimeAwareWrite(gauge);
+        assertThat(metric.getGauge()).isNotNull();
+        assertThat(metric.getGauge().getDataPoints(0).getAsDouble()).isEqualTo(5);
+        assertThat(metric.getGauge().getDataPoints(0).getTimeUnixNano()).isEqualTo(TimeUnit.MINUTES.toNanos(1));
+    }
+
+    @Test
+    void timeGauge() {
+        TimeGauge timeGauge = TimeGauge.builder("gauge.time", this, TimeUnit.MICROSECONDS, o -> 24).register(registry);
+
+        Metric metric = publishTimeAwareWrite(timeGauge);
+        assertThat(metric.getGauge()).isNotNull();
+        assertThat(metric.getGauge().getDataPoints(0).getAsDouble()).isEqualTo(0.024);
+        assertThat(metric.getGauge().getDataPoints(0).getTimeUnixNano()).isEqualTo(TimeUnit.MINUTES.toNanos(1));
     }
 
     @Test
@@ -106,9 +119,7 @@ class DeltaOtlpMeterRegistryTest {
         timer.record(77, TimeUnit.MILLISECONDS);
         timer.record(111, TimeUnit.MILLISECONDS);
 
-        // This is where TimeWindowMax can be painful and make no sense at all. Need to
-        // re-visit this. Probably StepMax is what might fit good for OTLP.
-        assertHistogram(publishTimeAwareWrite(timer), 0, TimeUnit.MINUTES.toNanos(1), "milliseconds", 0, 0, 111);
+        assertHistogram(publishTimeAwareWrite(timer), 0, TimeUnit.MINUTES.toNanos(1), "milliseconds", 0, 0, 0);
         this.stepOverNStep(1);
         assertHistogram(publishTimeAwareWrite(timer), TimeUnit.MINUTES.toNanos(1), TimeUnit.MINUTES.toNanos(2),
                 "milliseconds", 3, 198, 111);
@@ -117,7 +128,7 @@ class DeltaOtlpMeterRegistryTest {
                 "milliseconds", 3, 198, 111);
         this.stepOverNStep(1);
         assertHistogram(publishTimeAwareWrite(timer), TimeUnit.MINUTES.toNanos(2), TimeUnit.MINUTES.toNanos(3),
-                "milliseconds", 1, 4, 111);
+                "milliseconds", 1, 4, 4);
 
         this.stepOverNStep(2);
         assertHistogram(publishTimeAwareWrite(timer), TimeUnit.MINUTES.toNanos(4), TimeUnit.MINUTES.toNanos(5),
@@ -130,11 +141,6 @@ class DeltaOtlpMeterRegistryTest {
 
     @Test
     void timerWithHistogram() {
-        // Crazy hack. I don't think the Default TimeWindowPercentileHistogram was ever
-        // accurate for Step based measurements. This just makes sure that we test it in
-        // an ideal world.
-        clock.add(Duration.ofSeconds(5));
-
         Timer timer = Timer.builder(METER_NAME)
             .description(METER_DESCRIPTION)
             .tags(Tags.of(meterTag))
@@ -145,12 +151,14 @@ class DeltaOtlpMeterRegistryTest {
         timer.record(10, TimeUnit.MILLISECONDS);
         timer.record(77, TimeUnit.MILLISECONDS);
         timer.record(111, TimeUnit.MILLISECONDS);
-        clock.addSeconds(otlpConfig.step().getSeconds() - 5);
 
+        HistogramDataPoint histogramDataPoint = publishTimeAwareWrite(timer).getHistogram().getDataPoints(0);
+        assertThat(histogramDataPoint.getExplicitBoundsCount()).isZero();
+        this.stepOverNStep(1);
         assertHistogram(publishTimeAwareWrite(timer), TimeUnit.MINUTES.toNanos(1), TimeUnit.MINUTES.toNanos(2),
                 "milliseconds", 3, 198, 111);
 
-        HistogramDataPoint histogramDataPoint = publishTimeAwareWrite(timer).getHistogram().getDataPoints(0);
+        histogramDataPoint = publishTimeAwareWrite(timer).getHistogram().getDataPoints(0);
         assertThat(histogramDataPoint.getExplicitBoundsCount()).isEqualTo(4);
 
         assertThat(histogramDataPoint.getExplicitBounds(0)).isEqualTo(10.0);
@@ -162,15 +170,22 @@ class DeltaOtlpMeterRegistryTest {
         assertThat(histogramDataPoint.getExplicitBounds(3)).isEqualTo(500.0);
         assertThat(histogramDataPoint.getBucketCounts(3)).isEqualTo(1);
 
-        clock.add(Duration.ofSeconds(5));
         timer.record(4, TimeUnit.MILLISECONDS);
-        clock.addSeconds(otlpConfig.step().getSeconds() - 5);
+        this.stepOverNStep(1);
 
         histogramDataPoint = publishTimeAwareWrite(timer).getHistogram().getDataPoints(0);
         assertHistogram(publishTimeAwareWrite(timer), TimeUnit.MINUTES.toNanos(2), TimeUnit.MINUTES.toNanos(3),
-                "milliseconds", 1, 4, 111);
+                "milliseconds", 1, 4, 4);
 
         assertThat(histogramDataPoint.getBucketCounts(0)).isEqualTo(1);
+        assertThat(histogramDataPoint.getBucketCounts(1)).isZero();
+        assertThat(histogramDataPoint.getBucketCounts(2)).isZero();
+        assertThat(histogramDataPoint.getBucketCounts(3)).isZero();
+
+        timer.record(4, TimeUnit.MILLISECONDS);
+        this.stepOverNStep(2);
+        histogramDataPoint = publishTimeAwareWrite(timer).getHistogram().getDataPoints(0);
+        assertThat(histogramDataPoint.getBucketCounts(0)).isZero();
         assertThat(histogramDataPoint.getBucketCounts(1)).isZero();
         assertThat(histogramDataPoint.getBucketCounts(2)).isZero();
         assertThat(histogramDataPoint.getBucketCounts(3)).isZero();
@@ -202,9 +217,7 @@ class DeltaOtlpMeterRegistryTest {
         size.record(15);
         size.record(2233);
 
-        // This is where TimeWindowMax can be painful and make no sense at all. Need to
-        // re-visit this. Probably StepMax is what might fit good for OTLP.
-        assertHistogram(publishTimeAwareWrite(size), 0, TimeUnit.MINUTES.toNanos(1), "bytes", 0, 0, 2233);
+        assertHistogram(publishTimeAwareWrite(size), 0, TimeUnit.MINUTES.toNanos(1), "bytes", 0, 0, 0);
         this.stepOverNStep(1);
         assertHistogram(publishTimeAwareWrite(size), TimeUnit.MINUTES.toNanos(1), TimeUnit.MINUTES.toNanos(2), "bytes",
                 3, 2348, 2233);
@@ -213,16 +226,11 @@ class DeltaOtlpMeterRegistryTest {
                 3, 2348, 2233);
         this.stepOverNStep(1);
         assertHistogram(publishTimeAwareWrite(size), TimeUnit.MINUTES.toNanos(2), TimeUnit.MINUTES.toNanos(3), "bytes",
-                1, 204, 2233);
+                1, 204, 204);
     }
 
     @Test
     void distributionSummaryWithHistogram() {
-        // Crazy hack. I don't think the Default TimeWindowPercentileHistogram was ever
-        // accurate for Step based measurements. This just makes sure that we test it in
-        // an ideal world.
-        clock.add(Duration.ofSeconds(5));
-
         DistributionSummary ds = DistributionSummary.builder(METER_NAME)
             .description(METER_DESCRIPTION)
             .tags(Tags.of(meterTag))
@@ -230,14 +238,19 @@ class DeltaOtlpMeterRegistryTest {
             .serviceLevelObjectives(10, 50, 100, 500)
             .register(registry);
 
+        assertHistogram(publishTimeAwareWrite(ds), 0, TimeUnit.MINUTES.toNanos(1), "bytes", 0, 0, 0);
         ds.record(10);
         ds.record(77);
         ds.record(111);
-        clock.addSeconds(otlpConfig.step().getSeconds() - 5);
+        assertHistogram(publishTimeAwareWrite(ds), 0, TimeUnit.MINUTES.toNanos(1), "bytes", 0, 0, 0);
+
+        HistogramDataPoint histogramDataPoint = publishTimeAwareWrite(ds).getHistogram().getDataPoints(0);
+        assertThat(histogramDataPoint.getExplicitBoundsCount()).isZero();
+        this.stepOverNStep(1);
         assertHistogram(publishTimeAwareWrite(ds), TimeUnit.MINUTES.toNanos(1), TimeUnit.MINUTES.toNanos(2), "bytes", 3,
                 198, 111);
 
-        HistogramDataPoint histogramDataPoint = publishTimeAwareWrite(ds).getHistogram().getDataPoints(0);
+        histogramDataPoint = publishTimeAwareWrite(ds).getHistogram().getDataPoints(0);
         assertThat(histogramDataPoint.getExplicitBoundsCount()).isEqualTo(4);
 
         assertThat(histogramDataPoint.getExplicitBounds(0)).isEqualTo(10);
@@ -249,13 +262,13 @@ class DeltaOtlpMeterRegistryTest {
         assertThat(histogramDataPoint.getExplicitBounds(3)).isEqualTo(500);
         assertThat(histogramDataPoint.getBucketCounts(3)).isEqualTo(1);
 
-        clock.add(Duration.ofSeconds(5));
+        this.stepOverNStep(1);
         ds.record(4);
-        clock.addSeconds(otlpConfig.step().getSeconds() - 5);
+        clock.addSeconds(otlpConfig().step().getSeconds() - 5);
 
         histogramDataPoint = publishTimeAwareWrite(ds).getHistogram().getDataPoints(0);
         assertHistogram(publishTimeAwareWrite(ds), TimeUnit.MINUTES.toNanos(2), TimeUnit.MINUTES.toNanos(3), "bytes", 1,
-                4, 111);
+                4, 4);
 
         assertThat(histogramDataPoint.getBucketCounts(0)).isEqualTo(1);
         assertThat(histogramDataPoint.getBucketCounts(1)).isZero();
@@ -299,49 +312,6 @@ class DeltaOtlpMeterRegistryTest {
         clock.addSeconds(1);
         assertThat(getDataPoint.apply(counter).getStartTimeUnixNano()).isEqualTo(60000000000L);
         assertThat(getDataPoint.apply(counter).getTimeUnixNano()).isEqualTo(120000000000L);
-    }
-
-    private void assertHistogram(Metric metric, long startTime, long endTime, String unit, long count, double sum,
-            double max) {
-        HistogramDataPoint histogram = metric.getHistogram().getDataPoints(0);
-        assertThat(metric.getName()).hasToString(METER_NAME);
-        assertThat(metric.getDescription()).hasToString(METER_DESCRIPTION);
-        assertThat(metric.getUnit()).hasToString(unit);
-        assertThat(histogram.getStartTimeUnixNano()).isEqualTo(startTime);
-        assertThat(histogram.getTimeUnixNano()).isEqualTo(endTime);
-        assertThat(histogram.getCount()).isEqualTo(count);
-        assertThat(histogram.getSum()).isEqualTo(sum);
-        assertThat(histogram.getMax()).isEqualTo(max);
-        assertThat(histogram.getAttributesCount()).isEqualTo(1);
-        assertThat(histogram.getAttributes(0).getKey()).hasToString(meterTag.getKey());
-        assertThat(histogram.getAttributes(0).getValue().getStringValue()).hasToString(meterTag.getValue());
-        assertThat(metric.getHistogram().getAggregationTemporality())
-            .isEqualTo(AggregationTemporality.toOtlpAggregationTemporality(DELTA));
-    }
-
-    private void assertSum(Metric metric, long startTime, long endTime, double expectedValue) {
-        NumberDataPoint sumDataPoint = metric.getSum().getDataPoints(0);
-        assertThat(metric.getName()).hasToString(METER_NAME);
-        assertThat(metric.getDescription()).hasToString(METER_DESCRIPTION);
-        assertThat(sumDataPoint.getStartTimeUnixNano()).isEqualTo(startTime);
-        assertThat(sumDataPoint.getTimeUnixNano()).isEqualTo(endTime);
-        assertThat(sumDataPoint.getAsDouble()).isEqualTo(expectedValue);
-        assertThat(sumDataPoint.getAttributesCount()).isEqualTo(1);
-        assertThat(sumDataPoint.getAttributes(0).getKey()).hasToString(meterTag.getKey());
-        assertThat(sumDataPoint.getAttributes(0).getValue().getStringValue()).hasToString(meterTag.getValue());
-        assertThat(metric.getSum().getAggregationTemporality())
-            .isEqualTo(AggregationTemporality.toOtlpAggregationTemporality(DELTA));
-    }
-
-    private void stepOverNStep(int numStepsToSkip) {
-        clock.addSeconds(OtlpConfig.DEFAULT.step().getSeconds() * numStepsToSkip);
-    }
-
-    private Metric publishTimeAwareWrite(Meter meter) {
-        registry.setDeltaAggregationTimeUnixNano();
-        return meter.match(registry::writeGauge, registry::writeCounter, registry::writeHistogramSupport,
-                registry::writeHistogramSupport, registry::writeHistogramSupport, registry::writeGauge,
-                registry::writeFunctionCounter, registry::writeFunctionTimer, registry::writeMeter);
     }
 
 }

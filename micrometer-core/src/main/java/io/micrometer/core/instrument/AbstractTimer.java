@@ -40,7 +40,7 @@ public abstract class AbstractTimer extends AbstractMeter implements Timer {
 
     protected final Clock clock;
 
-    protected final Histogram histogram;
+    private final Histogram histogram;
 
     private final TimeUnit baseTimeUnit;
 
@@ -82,27 +82,32 @@ public abstract class AbstractTimer extends AbstractMeter implements Timer {
      */
     protected AbstractTimer(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig,
             PauseDetector pauseDetector, TimeUnit baseTimeUnit, boolean supportsAggregablePercentiles) {
+        this(id, clock, pauseDetector, baseTimeUnit,
+                defaultHistogram(clock, distributionStatisticConfig, supportsAggregablePercentiles));
+    }
+
+    protected AbstractTimer(Id id, Clock clock, PauseDetector pauseDetector, TimeUnit baseTimeUnit,
+            @Nullable Histogram histogram) {
         super(id);
         this.clock = clock;
         this.baseTimeUnit = baseTimeUnit;
-
         initPauseDetector(pauseDetector);
+        this.histogram = histogram == null ? NoopHistogram.INSTANCE : histogram;
+    }
 
+    protected static Histogram defaultHistogram(Clock clock, DistributionStatisticConfig distributionStatisticConfig,
+            boolean supportsAggregablePercentiles) {
         if (distributionStatisticConfig.isPublishingPercentiles()) {
             // hdr-based histogram
-            this.histogram = new TimeWindowPercentileHistogram(clock, distributionStatisticConfig,
-                    supportsAggregablePercentiles);
+            return new TimeWindowPercentileHistogram(clock, distributionStatisticConfig, supportsAggregablePercentiles);
         }
         else if (distributionStatisticConfig.isPublishingHistogram()) {
             // fixed boundary histograms, which have a slightly better memory footprint
             // when we don't need Micrometer-computed percentiles
-            this.histogram = new TimeWindowFixedBoundaryHistogram(clock, distributionStatisticConfig,
+            return new TimeWindowFixedBoundaryHistogram(clock, distributionStatisticConfig,
                     supportsAggregablePercentiles);
         }
-        else {
-            // noop histogram
-            this.histogram = NoopHistogram.INSTANCE;
-        }
+        return NoopHistogram.INSTANCE;
     }
 
     private void initPauseDetector(PauseDetector pauseDetectorType) {
