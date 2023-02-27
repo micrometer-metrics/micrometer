@@ -36,6 +36,7 @@ Test-Cases: \${classes;HIERARCHY_INDIRECTLY_ANNOTATED;org.junit.platform.commons
 
 def resolveTask = tasks.register("resolve", Resolve) {
     dependsOn jar, testingBundle
+    project.ext.osgiRunee="JavaSE-${JavaVersion.current().getMajorVersion()}"
     bundles = files(sourceSets.test.runtimeClasspath, configurations.archives.artifacts.files)
     bndrun = file("test.bndrun")
     outputBndrun = layout.buildDirectory.file("resolved-test.bndrun")
@@ -54,10 +55,6 @@ tasks.test.configure {
     actions.clear()
     dependsOn testOSGi
 }
-
-//tasks.named('check') {
-//    dependsOn testOSGi
-//}
 
 artifacts {
     archives testingBundle

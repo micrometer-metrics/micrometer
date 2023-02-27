@@ -1,6 +1,6 @@
 -tester: biz.aQute.tester.junit-platform
 -runfw: org.apache.felix.framework;
--runee: JavaSE-11
+-runee: ${project.osgiRunee}
 -runtrace: true
 
 #uncomment to remote debug
