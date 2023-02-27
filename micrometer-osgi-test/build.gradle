@@ -41,6 +41,8 @@ def resolveTask = tasks.register("resolve", Resolve) {
     outputBndrun = layout.buildDirectory.file("resolved-test.bndrun")
 }
 
+
+
 tasks.register("testOSGi", TestOSGi) {
     group = "verification"
     description = "Run OSGi tests"
@@ -48,9 +50,14 @@ tasks.register("testOSGi", TestOSGi) {
     bndrun = resolveTask.flatMap { it.outputBndrun }
 }
 
-tasks.named('check') {
+tasks.test.configure {
+    actions.clear()
     dependsOn testOSGi
 }
+
+//tasks.named('check') {
+//    dependsOn testOSGi
+//}
 
 artifacts {
     archives testingBundle

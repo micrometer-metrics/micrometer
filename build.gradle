@@ -333,7 +333,7 @@ subprojects {
 
             check.dependsOn("testModules")
 
-            if (!(project.name in [])) {
+            if (!(project.name in ['micrometer-osgi-test'])) {
                 apply plugin: 'me.champeau.gradle.japicmp'
                 apply plugin: 'de.undercouch.download'
 
