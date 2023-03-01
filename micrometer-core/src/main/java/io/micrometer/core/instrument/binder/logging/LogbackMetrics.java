@@ -37,6 +37,10 @@ import java.util.Map;
 import static java.util.Collections.emptyList;
 
 /**
+ * Metrics instrumentation of Logback log events. Counts the log events with a log level
+ * equal to or higher than the corresponding logger's effective log level. A filter added
+ * to an appender will not affect the metrics.
+ *
  * @author Jon Schneider
  */
 @NonNullApi
@@ -145,7 +149,7 @@ class MetricsTurboFilter extends TurboFilter {
 
     private static final String METER_NAME = "logback.events";
 
-    private static final String METER_DESCRIPTION = "Number of events that made it to the logs";
+    private static final String METER_DESCRIPTION = "Number of log events that were enabled by the effective log level";
 
     private final Counter errorCounter;
 
