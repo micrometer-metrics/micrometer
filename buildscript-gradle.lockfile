@@ -2,12 +2,12 @@
 # Manual edits can break the build and are not advised.
 # This file is expected to be part of source control.
 antlr:antlr:2.7.7=classpath
-biz.aQute.bnd:biz.aQute.bnd.embedded-repo:6.3.1=classpath
-biz.aQute.bnd:biz.aQute.bnd.gradle:6.3.1=classpath
-biz.aQute.bnd:biz.aQute.bnd.util:6.3.1=classpath
-biz.aQute.bnd:biz.aQute.bndlib:6.3.1=classpath
-biz.aQute.bnd:biz.aQute.repository:6.3.1=classpath
-biz.aQute.bnd:biz.aQute.resolve:6.3.1=classpath
+biz.aQute.bnd:biz.aQute.bnd.embedded-repo:6.4.0=classpath
+biz.aQute.bnd:biz.aQute.bnd.gradle:6.4.0=classpath
+biz.aQute.bnd:biz.aQute.bnd.util:6.4.0=classpath
+biz.aQute.bnd:biz.aQute.bndlib:6.4.0=classpath
+biz.aQute.bnd:biz.aQute.repository:6.4.0=classpath
+biz.aQute.bnd:biz.aQute.resolve:6.4.0=classpath
 ch.qos.logback:logback-classic:1.2.3=classpath
 ch.qos.logback:logback-core:1.2.3=classpath
 com.diffplug.durian:durian-collect:1.2.0=classpath
