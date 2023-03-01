@@ -51,6 +51,12 @@ public class LogbackMetrics implements MeterBinder, AutoCloseable {
 
     private final Map<MeterRegistry, MetricsTurboFilter> metricsTurboFilters = new HashMap<>();
 
+    static {
+        // see gh-2868. Without this called statically, the same call in the constructor
+        // may return SubstituteLoggerFactory and fail to cast.
+        LoggerFactory.getILoggerFactory();
+    }
+
     public LogbackMetrics() {
         this(emptyList());
     }
