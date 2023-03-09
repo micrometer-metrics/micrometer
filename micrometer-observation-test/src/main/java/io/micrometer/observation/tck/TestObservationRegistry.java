@@ -35,7 +35,7 @@ public final class TestObservationRegistry implements ObservationRegistry {
 
     private final ObservationRegistry delegate = ObservationRegistry.create();
 
-    private final ArrayListObservationHandler handler = new ArrayListObservationHandler();
+    private final StoringObservationHandler handler = new StoringObservationHandler();
 
     private TestObservationRegistry() {
         observationConfig().observationHandler(this.handler);
@@ -73,7 +73,7 @@ public final class TestObservationRegistry implements ObservationRegistry {
         return this.handler.contexts;
     }
 
-    private static class ArrayListObservationHandler implements ObservationHandler<Observation.Context> {
+    private static class StoringObservationHandler implements ObservationHandler<Observation.Context> {
 
         final Queue<TestObservationContext> contexts = new ConcurrentLinkedQueue<>();
 
