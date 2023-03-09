@@ -354,6 +354,25 @@ class TestObservationRegistryAssertTests {
     }
 
     @Test
+    void should_fail_when_no_observation_matches_assertion() {
+        Observation.createNotStarted("FOO", registry).lowCardinalityKeyValue("aaa", "bar").start().stop();
+
+        thenThrownBy(() -> TestObservationRegistryAssert.assertThat(registry)
+            .hasAnObservation(observationContextAssert -> observationContextAssert.hasNameEqualTo("FOO")
+                .hasLowCardinalityKeyValue("bbb", "bar")))
+            .isInstanceOf(AssertionError.class);
+    }
+
+    @Test
+    void should_not_fail_when_one_observation_matches_assertion() {
+        Observation.createNotStarted("FOO", registry).lowCardinalityKeyValue("foo", "bar").start().stop();
+
+        thenNoException().isThrownBy(() -> TestObservationRegistryAssert.assertThat(registry)
+            .hasAnObservation(observationContextAssert -> observationContextAssert.hasNameEqualTo("FOO")
+                .hasLowCardinalityKeyValue("foo", "bar")));
+    }
+
+    @Test
     void should_jump_to_and_back_from_context_assert() {
         new Example(registry).run();
 
