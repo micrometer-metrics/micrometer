@@ -66,8 +66,8 @@ public class FixedBoundaryVictoriaMetricsHistogram implements Histogram {
     static {
         VMRANGES = new String[3 + BUCKETS_COUNT * BUCKET_SIZE];
         VMRANGES[0] = "0...0";
-        VMRANGES[1] = String.format("0...%.1fe%d", 1.0, E10MIN);
-        VMRANGES[2] = String.format("%.1fe%d...+Inf", 1.0, E10MAX);
+        VMRANGES[1] = String.format(Locale.US, "0...%.1fe%d", 1.0, E10MIN);
+        VMRANGES[2] = String.format(Locale.US, "%.1fe%d...+Inf", 1.0, E10MAX);
 
         UPPER_BOUNDS = new double[3 + BUCKETS_COUNT * BUCKET_SIZE];
         UPPER_BOUNDS[0] = 0.0;
@@ -75,7 +75,7 @@ public class FixedBoundaryVictoriaMetricsHistogram implements Histogram {
         UPPER_BOUNDS[2] = Double.POSITIVE_INFINITY;
 
         int idx = 3;
-        String start = String.format("%.1fe%d", 1.0, E10MIN);
+        String start = String.format(Locale.US, "%.1fe%d", 1.0, E10MIN);
 
         for (int bucketIdx = 0; bucketIdx < BUCKETS_COUNT; bucketIdx++) {
             for (int offset = 0; offset < BUCKET_SIZE; offset++) {
@@ -85,7 +85,7 @@ public class FixedBoundaryVictoriaMetricsHistogram implements Histogram {
                     m = 1;
                     e10++;
                 }
-                String end = String.format("%.1fe%d", m, e10);
+                String end = String.format(Locale.US, "%.1fe%d", m, e10);
                 VMRANGES[idx] = start + "..." + end;
 
                 UPPER_BOUNDS[idx] = BigDecimal.valueOf(m)
