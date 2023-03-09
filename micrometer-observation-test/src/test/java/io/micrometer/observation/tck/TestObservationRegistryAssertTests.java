@@ -34,6 +34,17 @@ class TestObservationRegistryAssertTests {
     TestObservationRegistry registry = TestObservationRegistry.create();
 
     @Test
+    void should_clear_context_entries() {
+        Observation.createNotStarted("FOO", registry).start().stop();
+
+        BDDAssertions.then(registry.getContexts()).hasSize(1);
+
+        registry.clear();
+
+        BDDAssertions.then(registry.getContexts()).isEmpty();
+    }
+
+    @Test
     void should_not_break_on_multiple_threads() {
         Observation o1 = Observation.createNotStarted("o1", registry);
         Observation o2 = Observation.createNotStarted("o2", registry);
@@ -43,10 +54,11 @@ class TestObservationRegistryAssertTests {
         new Thread(() -> o2.start().stop()).start();
         new Thread(() -> o3.start().stop()).start();
 
-        Awaitility.await()
-            .pollDelay(Duration.ofMillis(10))
-            .atMost(Duration.ofMillis(50))
-            .untilAsserted(() -> BDDAssertions.then(registry.getContexts()).hasSize(3));
+        Awaitility.await().pollDelay(Duration.ofMillis(10)).atMost(Duration.ofMillis(50)).untilAsserted(() -> {
+            // System.out.println("Registry size [" + registry.getContexts().size() +
+            // "]");
+            BDDAssertions.then(registry.getContexts()).hasSize(3);
+        });
     }
 
     @Test
@@ -351,6 +363,25 @@ class TestObservationRegistryAssertTests {
 
         thenNoException().isThrownBy(
                 () -> TestObservationRegistryAssert.assertThat(registry).hasAnObservationWithAKeyName(MyKeyName.FOO));
+    }
+
+    @Test
+    void should_fail_when_no_observation_matches_assertion() {
+        Observation.createNotStarted("FOO", registry).lowCardinalityKeyValue("aaa", "bar").start().stop();
+
+        thenThrownBy(() -> TestObservationRegistryAssert.assertThat(registry)
+            .hasAnObservation(observationContextAssert -> observationContextAssert.hasNameEqualTo("FOO")
+                .hasLowCardinalityKeyValue("bbb", "bar")))
+            .isInstanceOf(AssertionError.class);
+    }
+
+    @Test
+    void should_not_fail_when_one_observation_matches_assertion() {
+        Observation.createNotStarted("FOO", registry).lowCardinalityKeyValue("foo", "bar").start().stop();
+
+        thenNoException().isThrownBy(() -> TestObservationRegistryAssert.assertThat(registry)
+            .hasAnObservation(observationContextAssert -> observationContextAssert.hasNameEqualTo("FOO")
+                .hasLowCardinalityKeyValue("foo", "bar")));
     }
 
     @Test
