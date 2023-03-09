@@ -15,7 +15,10 @@
  */
 package io.micrometer.core.instrument.distribution;
 
+import io.micrometer.core.Issue;
 import org.junit.jupiter.api.Test;
+
+import java.util.Locale;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -28,6 +31,25 @@ class FixedBoundaryVictoriaMetricsHistogramTest {
             assertThat(histogram.getRangeTagValue(1e-9d)).isEqualTo("0...1.0e-9");
             assertThat(histogram.getRangeTagValue(Double.POSITIVE_INFINITY)).isEqualTo("1.0e18...+Inf");
             assertThat(histogram.getRangeTagValue(1e18d)).isEqualTo("9.5e17...1.0e18");
+        }
+    }
+
+    @Test
+    @Issue("#3676")
+    void localeDoesNotChangeOutput() {
+        Locale defaultLocale = Locale.getDefault();
+        try {
+            // set a Locale that uses a comma for the decimal separator
+            Locale.setDefault(Locale.FRANCE);
+            try (FixedBoundaryVictoriaMetricsHistogram histogram = new FixedBoundaryVictoriaMetricsHistogram()) {
+                assertThat(histogram.getRangeTagValue(0.0d)).isEqualTo("0...0");
+                assertThat(histogram.getRangeTagValue(1e-9d)).isEqualTo("0...1.0e-9");
+                assertThat(histogram.getRangeTagValue(Double.POSITIVE_INFINITY)).isEqualTo("1.0e18...+Inf");
+                assertThat(histogram.getRangeTagValue(1e18d)).isEqualTo("9.5e17...1.0e18");
+            }
+        }
+        finally {
+            Locale.setDefault(defaultLocale);
         }
     }
 
