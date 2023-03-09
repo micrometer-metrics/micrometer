@@ -73,6 +73,13 @@ public final class TestObservationRegistry implements ObservationRegistry {
         return this.handler.contexts;
     }
 
+    /**
+     * Clears the stored {@link Observation.Context}.
+     */
+    public void clear() {
+        getContexts().clear();
+    }
+
     private static class StoringObservationHandler implements ObservationHandler<Observation.Context> {
 
         final Queue<TestObservationContext> contexts = new ConcurrentLinkedQueue<>();

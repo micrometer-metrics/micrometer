@@ -34,6 +34,17 @@ class TestObservationRegistryAssertTests {
     TestObservationRegistry registry = TestObservationRegistry.create();
 
     @Test
+    void should_clear_context_entries() {
+        Observation.createNotStarted("FOO", registry).start().stop();
+
+        BDDAssertions.then(registry.getContexts()).hasSize(1);
+
+        registry.clear();
+
+        BDDAssertions.then(registry.getContexts()).isEmpty();
+    }
+
+    @Test
     void should_not_break_on_multiple_threads() {
         Observation o1 = Observation.createNotStarted("o1", registry);
         Observation o2 = Observation.createNotStarted("o2", registry);
