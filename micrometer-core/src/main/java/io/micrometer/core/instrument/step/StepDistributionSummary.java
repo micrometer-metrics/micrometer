@@ -32,7 +32,7 @@ import java.util.concurrent.atomic.LongAdder;
  * @author Jon Schneider
  * @author Johnny Lim
  */
-public class StepDistributionSummary extends AbstractDistributionSummary {
+public class StepDistributionSummary extends AbstractDistributionSummary implements StepMeter {
 
     private final LongAdder count = new LongAdder();
 
@@ -84,6 +84,11 @@ public class StepDistributionSummary extends AbstractDistributionSummary {
     public Iterable<Measurement> measure() {
         return Arrays.asList(new Measurement(() -> (double) count(), Statistic.COUNT),
                 new Measurement(this::totalAmount, Statistic.TOTAL), new Measurement(this::max, Statistic.MAX));
+    }
+
+    @Override
+    public void _manualRollover() {
+        countTotal.manualRollover();
     }
 
 }
