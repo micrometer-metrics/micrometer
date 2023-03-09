@@ -311,9 +311,9 @@ subprojects {
                     // workaround for multi-version JARs
                     //  see https://github.com/bndtools/bnd/issues/2227
                     bnd '''\
--fixupmessages: '^Classes found in the wrong directory: .*'
--exportcontents: io.micrometer.*
-'''
+                        -fixupmessages: '^Classes found in the wrong directory: .*'
+                        -exportcontents: io.micrometer.*
+                        '''.stripIndent()
                 }
             }
 
