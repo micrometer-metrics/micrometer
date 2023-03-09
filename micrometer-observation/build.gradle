@@ -1,5 +1,17 @@
 description 'Module containing Observation related code'
 
+jar {
+    bundle {
+        bnd '''\
+Import-Package: \
+    javax.servlet.*;resolution:=optional,\
+    io.micrometer.context.*;resolution:=optional,\
+    org.aspectj.*;resolution:=optional,\
+    *
+'''
+    }
+}
+
 dependencies {
     api project(":micrometer-commons")
 

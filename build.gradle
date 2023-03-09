@@ -21,6 +21,7 @@ buildscript {
         classpath 'de.undercouch:gradle-download-task:5.2.1'
         classpath 'io.spring.javaformat:spring-javaformat-gradle-plugin:0.0.38'
         classpath 'com.diffplug.spotless:spotless-plugin-gradle:6.15.0'
+        classpath 'biz.aQute.bnd:biz.aQute.bnd.gradle:6.4.0'
 
         constraints {
             classpath('org.ow2.asm:asm:7.3.1') {
@@ -297,11 +298,22 @@ subprojects {
         apply plugin: 'com.netflix.nebula.project'
 
         if (project.name != 'micrometer-bom') {
+            apply plugin: 'biz.aQute.bnd.builder'
+
             jar {
                 manifest.attributes.put('Automatic-Module-Name', project.name.replace('-', '.'))
                 metaInf {
                     from "$rootDir/LICENSE"
                     from "$rootDir/NOTICE"
+                }
+
+                bundle {
+                    // workaround for multi-version JARs
+                    //  see https://github.com/bndtools/bnd/issues/2227
+                    bnd '''\
+-fixupmessages: '^Classes found in the wrong directory: .*'
+-exportcontents: io.micrometer.*
+'''
                 }
             }
 
@@ -321,7 +333,7 @@ subprojects {
 
             check.dependsOn("testModules")
 
-            if (!(project.name in [])) {
+            if (!(project.name in ['micrometer-osgi-test'])) {
                 apply plugin: 'me.champeau.gradle.japicmp'
                 apply plugin: 'de.undercouch.download'
 
