@@ -116,4 +116,4 @@ org.reflections:reflections:0.10.2=checkstyle
 org.slf4j:slf4j-api:1.7.26=nohttp,nohttp-cli
 org.slf4j:slf4j-api:1.7.36=jmh,jmhCompileClasspath,jmhRuntimeClasspath
 org.slf4j:slf4j-api:2.0.0=spotless-1972451482,spotless-1972451484
-empty=annotationProcessor,archives,default,signatures,testAnnotationProcessor
+empty=annotationProcessor,archives,signatures,testAnnotationProcessor
