@@ -75,6 +75,7 @@ public final class TestObservationRegistry implements ObservationRegistry {
 
     /**
      * Clears the stored {@link Observation.Context}.
+     * @since 1.11.0
      */
     public void clear() {
         getContexts().clear();
