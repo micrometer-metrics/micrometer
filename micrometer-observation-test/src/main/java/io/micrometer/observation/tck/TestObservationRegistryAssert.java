@@ -406,35 +406,33 @@ public class TestObservationRegistryAssert
     /**
      * Provides verification for all Observations.
      * <p>
-     * Examples: <pre><code class='java'> // assertions succeed
-     * assertThat(testObservationRegistry).hasAnObservation(ObservationContextAssert -&gt; ObservationContextAssert.hasNameEqualTo("foo").hasError());
+     * Examples: <pre><code class='java'>
+     * // assertions succeed
+     * assertThat(testObservationRegistry).hasAnObservation(observationContextAssert -&gt; observationContextAssert.hasNameEqualTo("foo").hasError());
      *
      * // assertions fail - assuming that there was a foo observation but none had errors
-     * assertThat(testObservationRegistry).hasAnObservation(ObservationContextAssert -&gt; ObservationContextAssert.hasError());</code></pre>
+     * assertThat(testObservationRegistry).hasAnObservation(observationContextAssert -&gt; observationContextAssert.hasNameEqualTo("foo").hasError());</code></pre>
      * @param observationConsumer assertion to be executed for each Observation
      * @return {@code this} assertion object.
      * @throws AssertionError if the actual value is {@code null}.
      * @throws AssertionError if there is no Observation that passes the assertion
+     * @since 1.11.0
      */
     public TestObservationRegistryAssert hasAnObservation(Consumer<ObservationContextAssert> observationConsumer) {
         isNotNull();
-        boolean atLeastOneIsPassing = false;
         Queue<TestObservationRegistry.TestObservationContext> contexts = this.actual.getContexts();
         for (TestObservationRegistry.TestObservationContext context : contexts) {
             try {
                 observationConsumer.accept(ObservationContextAssert.then(context.getContext()));
-                atLeastOneIsPassing = true;
-                break;
+                return this;
             }
             catch (AssertionError error) {
                 // ignore
             }
         }
-        if (!atLeastOneIsPassing) {
-            failWithMessage(
-                    "There should be at least one Observation that matches the assertion. Found following Observations:\n%s",
-                    observations());
-        }
+        failWithMessage(
+                "There should be at least one Observation that matches the assertion. Found following Observations:\n%s",
+                observations());
         return this;
     }
 
