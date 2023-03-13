@@ -166,11 +166,12 @@ public class TestObservationRegistryAssert
     /**
      * Provides verification for all Observations having the given name.
      * <p>
-     * Examples: <pre><code class='java'> // assertions succeed
-     * assertThat(testObservationRegistry).forAllObservationsWithNameEqualTo("foo", ObservationContextAssert -&gt; ObservationContextAssert.hasError());
+     * Examples: <pre><code class='java'>
+     * // assertions succeed
+     * assertThat(testObservationRegistry).forAllObservationsWithNameEqualTo("foo", observationContextAssert -&gt; observationContextAssert.hasError());
      *
      * // assertions fail - assuming that there was a foo observation but none had errors
-     * assertThat(testObservationRegistry).forAllObservationsWithNameEqualTo("foo", ObservationContextAssert -&gt; ObservationContextAssert.hasError());</code></pre>
+     * assertThat(testObservationRegistry).forAllObservationsWithNameEqualTo("foo", observationContextAssert -&gt; observationContextAssert.hasError());</code></pre>
      * @param name searched Observation name
      * @param observationConsumer assertion to be executed for each Observation
      * @return {@code this} assertion object.
@@ -194,11 +195,12 @@ public class TestObservationRegistryAssert
     /**
      * Provides verification for all Observations having the given name (ignoring case).
      * <p>
-     * Examples: <pre><code class='java'> // assertions succeed
-     * assertThat(testObservationRegistry).forAllObservationsWithNameEqualTo("foo", ObservationContextAssert -&gt; ObservationContextAssert.hasError());
+     * Examples: <pre><code class='java'>
+     * // assertions succeed
+     * assertThat(testObservationRegistry).forAllObservationsWithNameEqualTo("foo", observationContextAssert -&gt; observationContextAssert.hasError());
      *
      * // assertions fail - assuming that there was a foo observation but none had errors
-     * assertThat(testObservationRegistry).forAllObservationsWithNameEqualTo("foo", ObservationContextAssert -&gt; ObservationContextAssert.hasError());</code></pre>
+     * assertThat(testObservationRegistry).forAllObservationsWithNameEqualTo("foo", observationContextAssert -&gt; observationContextAssert.hasError());</code></pre>
      * @param name searched Observation name (ignoring case)
      * @param observationConsumer assertion to be executed for each Observation
      * @return {@code this} assertion object.
@@ -223,7 +225,8 @@ public class TestObservationRegistryAssert
     /**
      * Verifies that there is a proper number of Observations.
      * <p>
-     * Examples: <pre><code class='java'> // assertions succeed
+     * Examples: <pre><code class='java'>
+     * // assertions succeed
      * assertThat(testObservationRegistry).hasNumberOfObservationsEqualTo(1);
      *
      * // assertions fail - assuming that there was only 1 observation
@@ -247,7 +250,8 @@ public class TestObservationRegistryAssert
     /**
      * Verifies that there is a proper number of Observations with the given name.
      * <p>
-     * Examples: <pre><code class='java'> // assertions succeed
+     * Examples: <pre><code class='java'>
+     * // assertions succeed
      * assertThat(testObservationRegistry).hasNumberOfObservationsWithNameEqualTo("foo", 1);
      *
      * // assertions fail - assuming that there is only 1 observation with that name
@@ -280,7 +284,8 @@ public class TestObservationRegistryAssert
      * Verifies that there is a proper number of Observations with the given name
      * (ignoring case).
      * <p>
-     * Examples: <pre><code class='java'> // assertions succeed
+     * Examples: <pre><code class='java'>
+     * // assertions succeed
      * assertThat(testObservationRegistry).hasNumberOfObservationsWithNameEqualToIgnoreCase("foo", 1);
      *
      * // assertions fail - assuming that there's only 1 such observation
@@ -312,7 +317,8 @@ public class TestObservationRegistryAssert
     /**
      * Verifies that there is an Observation with a key value.
      * <p>
-     * Examples: <pre><code class='java'> // assertions succeed
+     * Examples: <pre><code class='java'>
+     * // assertions succeed
      * assertThat(testObservationRegistry).hasAnObservationWithAKeyValue("foo", "bar");
      *
      * // assertions fail - assuming that there is no such a key value in any observation
@@ -342,7 +348,8 @@ public class TestObservationRegistryAssert
     /**
      * Verifies that there is an Observation with a key name.
      * <p>
-     * Examples: <pre><code class='java'> // assertions succeed
+     * Examples: <pre><code class='java'>
+     * // assertions succeed
      * assertThat(testObservationRegistry).hasAnObservationWithAKeyName("foo");
      *
      * // assertions fail - assuming that there are no observations with such a key name
@@ -371,7 +378,8 @@ public class TestObservationRegistryAssert
     /**
      * Verifies that there is an Observation with a key value.
      * <p>
-     * Examples: <pre><code class='java'> // assertions succeed
+     * Examples: <pre><code class='java'>
+     * // assertions succeed
      * assertThat(testObservationRegistry).hasAnObservationWithAKeyValue(SomeKeyName.FOO, "bar");
      *
      * // assertions fail - assuming that there are no observations with such a key value
@@ -389,7 +397,8 @@ public class TestObservationRegistryAssert
     /**
      * Verifies that there is an Observation with a key name.
      * <p>
-     * Examples: <pre><code class='java'> // assertions succeed
+     * Examples: <pre><code class='java'>
+     * // assertions succeed
      * assertThat(testObservationRegistry).hasAnObservationWithAKeyName(SomeKeyName.FOO);
      *
      * // assertions fail - assuming that there are no observation with such a key name

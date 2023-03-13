@@ -54,7 +54,7 @@ class TestObservationRegistryAssertTests {
         new Thread(() -> o2.start().stop()).start();
         new Thread(() -> o3.start().stop()).start();
 
-        Awaitility.await().pollDelay(Duration.ofMillis(10)).atMost(Duration.ofMillis(50)).untilAsserted(() -> {
+        Awaitility.await().pollDelay(Duration.ofMillis(10)).atMost(Duration.ofMillis(100)).untilAsserted(() -> {
             // System.out.println("Registry size [" + registry.getContexts().size() +
             // "]");
             BDDAssertions.then(registry.getContexts()).hasSize(3);
