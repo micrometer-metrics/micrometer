@@ -68,4 +68,14 @@ class StepCounterTest {
         assertThat(counter.count()).isEqualTo(0);
     }
 
+    @Test
+    void manualRolloverPartialStep() {
+        StepCounter counter = (StepCounter) registry.counter("my.counter");
+        counter.increment(2.5);
+
+        assertThat(counter.count()).isZero();
+        counter._manualRollover();
+        assertThat(counter.count()).isEqualTo(2.5);
+    }
+
 }
