@@ -104,4 +104,16 @@ public abstract class StepMeterRegistry extends PushMeterRegistry {
             .merge(DistributionStatisticConfig.DEFAULT);
     }
 
+    @Override
+    public void close() {
+        stop();
+        if (!isPublishing()) {
+            getMeters().stream()
+                .filter(StepMeter.class::isInstance)
+                .map(StepMeter.class::cast)
+                .forEach(StepMeter::_closingRollover);
+        }
+        super.close();
+    }
+
 }

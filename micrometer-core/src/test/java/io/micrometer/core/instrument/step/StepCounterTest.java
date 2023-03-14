@@ -68,4 +68,17 @@ class StepCounterTest {
         assertThat(counter.count()).isEqualTo(0);
     }
 
+    @Test
+    void closingRolloverPartialStep() {
+        StepCounter counter = (StepCounter) registry.counter("my.counter");
+        counter.increment(2.5);
+
+        assertThat(counter.count()).isZero();
+        counter._closingRollover();
+        assertThat(counter.count()).isEqualTo(2.5);
+
+        clock.add(config.step());
+        assertThat(counter.count()).isEqualTo(2.5);
+    }
+
 }
