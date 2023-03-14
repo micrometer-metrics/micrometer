@@ -21,6 +21,7 @@ import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.core.importer.ClassFileImporter;
 import com.tngtech.archunit.lang.ArchRule;
 import io.micrometer.core.Issue;
+import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.binder.jvm.JvmGcMetrics.GcMetricsNotificationListener;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
@@ -40,12 +41,12 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 import static com.tngtech.archunit.core.domain.JavaClass.Predicates.resideInAPackage;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.methods;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.within;
+import static org.assertj.core.api.Assertions.*;
 import static org.awaitility.Awaitility.await;
 
 /**
@@ -56,13 +57,15 @@ import static org.awaitility.Awaitility.await;
 @GcTest
 class JvmGcMetricsTest {
 
+    private static final Tags DEFAULT_TAGS = Tags.of("key", "value");
+
     SimpleMeterRegistry registry = new SimpleMeterRegistry();
 
     JvmGcMetrics binder;
 
     @BeforeEach
     void beforeEach() {
-        this.binder = new JvmGcMetrics();
+        this.binder = new JvmGcMetrics(DEFAULT_TAGS);
         binder.bindTo(registry);
     }
 
@@ -87,6 +90,17 @@ class JvmGcMetricsTest {
             .untilAsserted(() -> assertThat(registry.find("jvm.gc.live.data.size").gauge().value()).isPositive());
         assertThat(registry.find("jvm.gc.memory.allocated").counter().count()).isPositive();
         assertThat(registry.find("jvm.gc.max.data.size").gauge().value()).isPositive();
+        Optional<Timer> optionalGcTimer = registry.find("jvm.gc.pause")
+            .timers()
+            .stream()
+            .filter(timer -> "System.gc()".equals(timer.getId().getTag("cause")))
+            .findFirst();
+        assertThat(optionalGcTimer).isPresent();
+        Timer gcTimer = optionalGcTimer.get();
+        assertThat(gcTimer.count()).isPositive();
+        assertThat(gcTimer.getId().getTag("gc")).isNotBlank();
+        assertThat(gcTimer.getId().getTag("key")).hasToString("value");
+        assertThat(gcTimer.getId().getTag("action")).isIn("end of major GC", "end of GC pause");
 
         if (!binder.isGenerationalGc) {
             return;

@@ -190,22 +190,23 @@ public class JvmGcMetrics implements MeterBinder, AutoCloseable {
             CompositeData cd = (CompositeData) notification.getUserData();
             GarbageCollectionNotificationInfo notificationInfo = GarbageCollectionNotificationInfo.from(cd);
 
+            String gcName = notificationInfo.getGcName();
             String gcCause = notificationInfo.getGcCause();
             String gcAction = notificationInfo.getGcAction();
             GcInfo gcInfo = notificationInfo.getGcInfo();
             long duration = gcInfo.getDuration();
-            if (isConcurrentPhase(gcCause, notificationInfo.getGcName())) {
+
+            Tags gcTags = Tags.of("gc", gcName, "action", gcAction, "cause", gcCause).and(tags);
+            if (isConcurrentPhase(gcCause, gcName)) {
                 Timer.builder("jvm.gc.concurrent.phase.time")
-                    .tags(tags)
-                    .tags("action", gcAction, "cause", gcCause)
+                    .tags(gcTags)
                     .description("Time spent in concurrent phase")
                     .register(registry)
                     .record(duration, TimeUnit.MILLISECONDS);
             }
             else {
                 Timer.builder("jvm.gc.pause")
-                    .tags(tags)
-                    .tags("action", gcAction, "cause", gcCause)
+                    .tags(gcTags)
                     .description("Time spent in GC pause")
                     .register(registry)
                     .record(duration, TimeUnit.MILLISECONDS);
@@ -232,7 +233,7 @@ public class JvmGcMetrics implements MeterBinder, AutoCloseable {
             // live data size we record the value if we see a reduction in the long-lived
             // heap size or
             // after a major/non-generational GC.
-            if (longLivedAfter < longLivedBefore || shouldUpdateDataSizeMetrics(notificationInfo.getGcName())) {
+            if (longLivedAfter < longLivedBefore || shouldUpdateDataSizeMetrics(gcName)) {
                 liveDataSize.set(longLivedAfter);
                 maxDataSize.set(longLivedPoolNames.stream().mapToLong(pool -> after.get(pool).getMax()).sum());
             }
