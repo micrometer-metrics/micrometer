@@ -29,6 +29,8 @@ import org.slf4j.LoggerFactory;
  */
 class LegacyIndexTemplateCreator implements IndexTemplateCreator {
 
+    private static final String INDEX_TEMPLATE_PATH = "/_template/metrics_template";
+
     private final Logger logger = LoggerFactory.getLogger(LegacyIndexTemplateCreator.class);
 
     private final String indexTemplateRequest = "{\n" + "  \"index_patterns\": [\"%s*\"],\n" + "  \"mappings\": {\n"
@@ -52,16 +54,16 @@ class LegacyIndexTemplateCreator implements IndexTemplateCreator {
 
     @Override
     public IndexTemplateStatus fetchIndexTemplateStatus(ElasticConfig configuration) {
-        HttpSender.Request.Builder request = this.httpClient.head(configuration.host() + "/_template/metrics_template");
+        HttpSender.Request.Builder request = this.httpClient.head(configuration.host() + INDEX_TEMPLATE_PATH);
         configureAuthentication(configuration, request);
         try {
             HttpSender.Response response = request.send();
             switch (response.code()) {
                 case 200:
-                    logger.debug("Metrics index template already exists at '/_template/metrics_template'");
+                    logger.debug("Metrics index template already exists at '{}'", INDEX_TEMPLATE_PATH);
                     return IndexTemplateStatus.EXISTS;
                 case 404:
-                    logger.debug("Metrics index template is missing from '/_template/metrics_template'");
+                    logger.debug("Metrics index template is missing from '{}'", INDEX_TEMPLATE_PATH);
                     return IndexTemplateStatus.MISSING;
                 default:
                     logger.error("Could not create index template in Elastic (HTTP {}): {}", response.code(),
@@ -76,9 +78,9 @@ class LegacyIndexTemplateCreator implements IndexTemplateCreator {
     }
 
     @Override
-    public void createIndex(ElasticConfig configuration) throws Throwable {
+    public void createIndexTemplate(ElasticConfig configuration) throws Throwable {
         String indexPattern = configuration.index() + configuration.indexDateSeparator();
-        HttpSender.Request.Builder request = this.httpClient.put(configuration.host() + "/_template/metrics_template");
+        HttpSender.Request.Builder request = this.httpClient.put(configuration.host() + INDEX_TEMPLATE_PATH);
         configureAuthentication(configuration, request);
         request.withJsonContent(String.format(indexTemplateRequest, indexPattern))
             .send()
