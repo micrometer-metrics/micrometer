@@ -28,7 +28,7 @@ import java.util.concurrent.atomic.LongAdder;
 /**
  * @author Jon Schneider
  */
-public class StepTimer extends AbstractTimer {
+public class StepTimer extends AbstractTimer implements StepMeter {
 
     private final LongAdder count = new LongAdder();
 
@@ -77,6 +77,11 @@ public class StepTimer extends AbstractTimer {
     @Override
     public double max(final TimeUnit unit) {
         return TimeUtils.nanosToUnit(max.poll(), unit);
+    }
+
+    @Override
+    public void _manualRollover() {
+        countTotal.manualRollover();
     }
 
 }
