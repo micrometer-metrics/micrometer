@@ -73,4 +73,11 @@ public abstract class StepValue<V> {
         return previous;
     }
 
+    /**
+     * internal use only; intentionally left package-private
+     */
+    void manualRollover() {
+        previous = valueSupplier().get();
+    }
+
 }

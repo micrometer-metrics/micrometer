@@ -74,6 +74,15 @@ public class StepTuple2<T1, T2> {
     }
 
     /**
+     * Intended for internal use. Rolls the values regardless of the clock or current
+     * time.
+     */
+    void manualRollover() {
+        t1Previous = t1Supplier.get();
+        t2Previous = t2Supplier.get();
+    }
+
+    /**
      * @return The value for the last completed interval.
      */
     public T1 poll1() {
