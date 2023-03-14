@@ -165,7 +165,7 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
         switch (indexTemplateStatus) {
             case MISSING:
                 try {
-                    creator.createIndex(this.config);
+                    creator.createIndexTemplate(this.config);
                     this.checkedForIndexTemplate = true;
                 }
                 catch (Throwable exc) {

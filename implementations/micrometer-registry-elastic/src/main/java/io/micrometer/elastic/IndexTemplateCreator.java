@@ -19,7 +19,7 @@ import io.micrometer.common.util.StringUtils;
 import io.micrometer.core.ipc.http.HttpSender;
 
 /**
- * Internal strategy for create Elasticsearch index templates for metrics indices.
+ * Internal strategy to create Elasticsearch index templates for metrics indices.
  *
  * @author Brian Clozel
  */
@@ -37,7 +37,7 @@ interface IndexTemplateCreator {
      * Create the index template.
      * @param configuration the elastic configuration
      */
-    void createIndex(ElasticConfig configuration) throws Throwable;
+    void createIndexTemplate(ElasticConfig configuration) throws Throwable;
 
     /**
      * Configure the authentication information on the HTTP request.
