@@ -30,19 +30,15 @@ import org.osgi.framework.BundleContext;
 import org.osgi.framework.FrameworkUtil;
 import org.osgi.test.junit5.context.BundleContextExtension;
 import org.osgi.test.junit5.service.ServiceExtension;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 @ExtendWith({ ServiceExtension.class, BundleContextExtension.class })
-public class OsgiTest {
+class OsgiTest {
 
     private final BundleContext context = FrameworkUtil.getBundle(this.getClass()).getBundleContext();
-
-    private final Logger logger = LoggerFactory.getLogger(OsgiTest.class);
 
     private final MockClock clock = new MockClock();
 
@@ -58,15 +54,13 @@ public class OsgiTest {
     @Test
     void testPrometheusMeterRegistryResolves() {
         PrometheusMeterRegistry registry = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT);
-        assertThat(registry).isNotNull();
         testMetrics(registry);
-        logger.info(registry.scrape());
+        assertThat(registry.scrape()).contains("micrometer_test_counter").contains(" micrometer_test_timer");
     }
 
     @Test
     void testJmxMeterRegistryResolves() {
         JmxMeterRegistry registry = new JmxMeterRegistry(JmxConfig.DEFAULT, clock);
-        assertThat(registry).isNotNull();
         testMetrics(registry);
     }
 
