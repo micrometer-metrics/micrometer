@@ -1,7 +1,7 @@
 -tester: biz.aQute.tester.junit-platform
 -runfw: org.apache.felix.framework;
 -runee: ${project.osgiRunee}
--runtrace: true
+-runtrace: false
 
 #uncomment to remote debug
 # -runjdb: 5005
