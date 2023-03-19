@@ -262,6 +262,15 @@ class StepMeterRegistryTest {
         timerCount.set(5);
         timerTotalTime.set(77);
 
+        assertThat(registry.publishedCounterCounts).isEmpty();
+        assertThat(registry.publishedTimerCounts).isEmpty();
+        assertThat(registry.publishedTimerSumMilliseconds).isEmpty();
+        assertThat(registry.publishedSummaryCounts).isEmpty();
+        assertThat(registry.publishedSummaryTotals).isEmpty();
+        assertThat(registry.publishedFunctionCounterCounts).isEmpty();
+        assertThat(registry.publishedFunctionTimerCounts).isEmpty();
+        assertThat(registry.publishedFunctionTimerTotals).isEmpty();
+
         // shutdown
         registry.close();
 
@@ -302,7 +311,7 @@ class StepMeterRegistryTest {
 
         Deque<Double> publishedFunctionTimerTotals = new ArrayDeque<>();
 
-        public MyStepMeterRegistry() {
+        MyStepMeterRegistry() {
             super(StepMeterRegistryTest.this.config, StepMeterRegistryTest.this.clock);
         }
 
