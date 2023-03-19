@@ -92,6 +92,9 @@ class StepFunctionTimerTest {
         StepFunctionTimer<Object> timer = new StepFunctionTimer<>(mock(Meter.Id.class), clock, stepDuration.toMillis(),
                 new Object(), (o) -> counts.poll(), (o) -> totalTimes.poll(), TimeUnit.SECONDS, TimeUnit.SECONDS);
 
+        assertThat(timer.count()).isZero();
+        assertThat(timer.totalTime(TimeUnit.SECONDS)).isZero();
+
         timer._manualRollover();
 
         assertThat(timer.count()).isEqualTo(2);
