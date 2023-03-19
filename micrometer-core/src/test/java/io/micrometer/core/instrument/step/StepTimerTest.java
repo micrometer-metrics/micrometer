@@ -60,6 +60,9 @@ class StepTimerTest {
         timer.record(75, TimeUnit.MILLISECONDS);
         timer.record(25, TimeUnit.MILLISECONDS);
 
+        assertThat(timer.count()).isZero();
+        assertThat(timer.totalTime(TimeUnit.MILLISECONDS)).isZero();
+
         timer._manualRollover();
 
         assertThat(timer.count()).isEqualTo(2);
