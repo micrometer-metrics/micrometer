@@ -37,7 +37,7 @@ import static java.util.Objects.requireNonNull;
 public class ObservationRequestEventListener implements RequestEventListener {
 
     private final Map<ContainerRequest, ObservationScopeAndContext> observations = Collections
-            .synchronizedMap(new IdentityHashMap<>());
+        .synchronizedMap(new IdentityHashMap<>());
 
     private final ObservationRegistry registry;
 

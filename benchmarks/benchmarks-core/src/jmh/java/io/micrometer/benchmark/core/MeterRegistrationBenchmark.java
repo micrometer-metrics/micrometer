@@ -30,16 +30,13 @@ import java.util.concurrent.TimeUnit;
 public class MeterRegistrationBenchmark {
 
     public static void main(String[] args) throws RunnerException {
-        // @formatter:off
-        Options opt = new OptionsBuilder()
-                .include(MeterRegistrationBenchmark.class.getSimpleName())
-                .warmupIterations(2)
-                .measurementIterations(5)
-                .mode(Mode.SampleTime)
-                .timeUnit(TimeUnit.SECONDS)
-                .forks(1)
-                .build();
-        // @formatter:on
+        Options opt = new OptionsBuilder().include(MeterRegistrationBenchmark.class.getSimpleName())
+            .warmupIterations(2)
+            .measurementIterations(5)
+            .mode(Mode.SampleTime)
+            .timeUnit(TimeUnit.SECONDS)
+            .forks(1)
+            .build();
 
         new Runner(opt).run();
     }

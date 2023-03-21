@@ -73,6 +73,7 @@ public interface ObservationHandler<T extends Observation.Context> {
      * Reacts to resetting of scopes. If your handler uses a {@link ThreadLocal} value,
      * this method should clear that {@link ThreadLocal}.
      * @param context an {@link Observation.Context}
+     * @since 1.10.4
      */
     default void onScopeReset(T context) {
     }
@@ -128,8 +129,9 @@ public interface ObservationHandler<T extends Observation.Context> {
         @SuppressWarnings("unchecked")
         public FirstMatchingCompositeObservationHandler(
                 List<? extends ObservationHandler<? extends Observation.Context>> handlers) {
-            this.handlers = handlers.stream().map(handler -> (ObservationHandler<Observation.Context>) handler)
-                    .collect(Collectors.toList());
+            this.handlers = handlers.stream()
+                .map(handler -> (ObservationHandler<Observation.Context>) handler)
+                .collect(Collectors.toList());
         }
 
         @Override
@@ -207,8 +209,9 @@ public interface ObservationHandler<T extends Observation.Context> {
         @SuppressWarnings("unchecked")
         public AllMatchingCompositeObservationHandler(
                 List<? extends ObservationHandler<? extends Observation.Context>> handlers) {
-            this.handlers = handlers.stream().map(handler -> (ObservationHandler<Observation.Context>) handler)
-                    .collect(Collectors.toList());
+            this.handlers = handlers.stream()
+                .map(handler -> (ObservationHandler<Observation.Context>) handler)
+                .collect(Collectors.toList());
         }
 
         @Override

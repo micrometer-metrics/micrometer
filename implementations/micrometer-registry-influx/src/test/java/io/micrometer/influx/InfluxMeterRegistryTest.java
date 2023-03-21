@@ -105,12 +105,12 @@ class InfluxMeterRegistryTest {
     @Test
     void writeCounterWithFunctionCounterShouldDropInfiniteValues() {
         FunctionCounter counter = FunctionCounter.builder("myCounter", Double.POSITIVE_INFINITY, Number::doubleValue)
-                .register(meterRegistry);
+            .register(meterRegistry);
         clock.add(config.step());
         assertThat(meterRegistry.writeCounter(counter.getId(), Double.POSITIVE_INFINITY)).isEmpty();
 
         counter = FunctionCounter.builder("myCounter", Double.NEGATIVE_INFINITY, Number::doubleValue)
-                .register(meterRegistry);
+            .register(meterRegistry);
         clock.add(config.step());
         assertThat(meterRegistry.writeCounter(counter.getId(), Double.NEGATIVE_INFINITY)).isEmpty();
     }
@@ -120,7 +120,7 @@ class InfluxMeterRegistryTest {
         meterRegistry.gauge("my.gauge", Tags.of("foo", "bar").and("baz", ""), 1d);
         final Gauge gauge = meterRegistry.find("my.gauge").gauge();
         assertThat(meterRegistry.writeGauge(gauge.getId(), 1d)).hasSize(1)
-                .allSatisfy(s -> assertThat(s).contains("foo=bar").doesNotContain("baz"));
+            .allSatisfy(s -> assertThat(s).contains("foo=bar").doesNotContain("baz"));
     }
 
     @Test
@@ -161,8 +161,8 @@ class InfluxMeterRegistryTest {
     @Test
     void nanFunctionTimerShouldNotBeWritten() {
         FunctionTimer timer = FunctionTimer
-                .builder("myFunctionTimer", Double.NaN, Number::longValue, Number::doubleValue, TimeUnit.MILLISECONDS)
-                .register(meterRegistry);
+            .builder("myFunctionTimer", Double.NaN, Number::longValue, Number::doubleValue, TimeUnit.MILLISECONDS)
+            .register(meterRegistry);
         clock.add(config.step());
         assertThat(meterRegistry.writeFunctionTimer(timer)).isEmpty();
     }
@@ -196,7 +196,7 @@ class InfluxMeterRegistryTest {
             }
         };
         assertThat(meterRegistry.writeFunctionTimer(functionTimer))
-                .containsOnly("func_timer,metric_type=histogram sum=1,count=1 1");
+            .containsOnly("func_timer,metric_type=histogram sum=1,count=1 1");
     }
 
 }

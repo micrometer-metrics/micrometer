@@ -155,23 +155,27 @@ public class OpenTSDBMeterRegistry extends PushMeterRegistry {
 
     @Override
     protected DistributionStatisticConfig defaultHistogramConfig() {
-        return DistributionStatisticConfig.builder().expiry(config.step()).build()
-                .merge(DistributionStatisticConfig.DEFAULT);
+        return DistributionStatisticConfig.builder()
+            .expiry(config.step())
+            .build()
+            .merge(DistributionStatisticConfig.DEFAULT);
     }
 
     @Override
     protected void publish() {
         for (List<Meter> batch : MeterPartition.partition(this, config.batchSize())) {
             try {
-                httpClient.post(config.uri()).withBasicAuthentication(config.userName(), config.password())
-                        .withJsonContent(batch.stream()
-                                .flatMap(m -> m.match(this::writeGauge, this::writeCounter, this::writeTimer,
-                                        this::writeSummary, this::writeLongTaskTimer, this::writeTimeGauge,
-                                        this::writeFunctionCounter, this::writeFunctionTimer, this::writeCustomMetric))
-                                .collect(Collectors.joining(",", "[", "]")))
-                        .compress().send()
-                        .onSuccess(response -> logger.debug("successfully sent {} metrics to opentsdb.", batch.size()))
-                        .onError(response -> logger.error("failed to send metrics to opentsdb: {}", response.body()));
+                httpClient.post(config.uri())
+                    .withBasicAuthentication(config.userName(), config.password())
+                    .withJsonContent(batch.stream()
+                        .flatMap(m -> m.match(this::writeGauge, this::writeCounter, this::writeTimer,
+                                this::writeSummary, this::writeLongTaskTimer, this::writeTimeGauge,
+                                this::writeFunctionCounter, this::writeFunctionTimer, this::writeCustomMetric))
+                        .collect(Collectors.joining(",", "[", "]")))
+                    .compress()
+                    .send()
+                    .onSuccess(response -> logger.debug("successfully sent {} metrics to opentsdb.", batch.size()))
+                    .onError(response -> logger.error("failed to send metrics to opentsdb: {}", response.body()));
             }
             catch (Throwable t) {
                 logger.warn("failed to send metrics to opentsdb", t);
@@ -244,9 +248,9 @@ public class OpenTSDBMeterRegistry extends PushMeterRegistry {
         boolean forTimer = meter instanceof Timer;
         // satisfies https://prometheus.io/docs/concepts/metric_types/#summary
         for (ValueAtPercentile v : percentileValues) {
-            metrics.add(
-                    writeMetric(meter.getId().withTag(new ImmutableTag("quantile", doubleToGoString(v.percentile()))),
-                            wallTime, (forTimer ? v.value(getBaseTimeUnit()) : v.value())));
+            metrics
+                .add(writeMetric(meter.getId().withTag(new ImmutableTag("quantile", doubleToGoString(v.percentile()))),
+                        wallTime, (forTimer ? v.value(getBaseTimeUnit()) : v.value())));
         }
 
         return metrics;
@@ -263,8 +267,8 @@ public class OpenTSDBMeterRegistry extends PushMeterRegistry {
             for (CountAtBucket c : histogramCounts) {
                 metrics.add(writeMetricWithSuffix(
                         meter.getId()
-                                .withTag(new ImmutableTag("le",
-                                        doubleToGoString(timeUnit == null ? c.bucket() : c.bucket(timeUnit)))),
+                            .withTag(new ImmutableTag("le",
+                                    doubleToGoString(timeUnit == null ? c.bucket() : c.bucket(timeUnit)))),
                         "bucket", wallTime, c.count()));
             }
 
@@ -276,8 +280,8 @@ public class OpenTSDBMeterRegistry extends PushMeterRegistry {
             for (CountAtBucket c : histogramCounts) {
                 metrics.add(writeMetricWithSuffix(
                         meter.getId()
-                                .withTag(Tag.of("vmrange",
-                                        getRangeTagValue(timeUnit == null ? c.bucket() : c.bucket(timeUnit)))),
+                            .withTag(Tag.of("vmrange",
+                                    getRangeTagValue(timeUnit == null ? c.bucket() : c.bucket(timeUnit)))),
                         "bucket", wallTime, c.count()));
             }
         }
@@ -366,8 +370,10 @@ public class OpenTSDBMeterRegistry extends PushMeterRegistry {
                     break;
             }
 
-            return new OpenTSDBMetricBuilder().field("metric", name).datapoints(wallTime, ms.getValue()).tags(localTags)
-                    .build();
+            return new OpenTSDBMetricBuilder().field("metric", name)
+                .datapoints(wallTime, ms.getValue())
+                .tags(localTags)
+                .build();
         });
     }
 
@@ -375,10 +381,12 @@ public class OpenTSDBMeterRegistry extends PushMeterRegistry {
         // usually tagKeys and metricNames naming rules are the same
         // but we can't call getConventionName again after adding suffix
         return new OpenTSDBMetricBuilder()
-                .field("metric",
-                        suffix.isEmpty() ? getConventionName(id)
-                                : config().namingConvention().tagKey(getConventionName(id) + "." + suffix))
-                .datapoints(wallTime, value).tags(getConventionTags(id)).build();
+            .field("metric",
+                    suffix.isEmpty() ? getConventionName(id)
+                            : config().namingConvention().tagKey(getConventionName(id) + "." + suffix))
+            .datapoints(wallTime, value)
+            .tags(getConventionTags(id))
+            .build();
     }
 
     String writeMetric(Meter.Id id, long wallTime, double value) {
@@ -398,8 +406,10 @@ public class OpenTSDBMeterRegistry extends PushMeterRegistry {
         }
 
         OpenTSDBMetricBuilder datapoints(long wallTime, double value) {
-            sb.append(",\"timestamp\":").append(wallTime).append(",\"value\":")
-                    .append(DoubleFormat.wholeOrDecimal(value));
+            sb.append(",\"timestamp\":")
+                .append(wallTime)
+                .append(",\"value\":")
+                .append(DoubleFormat.wholeOrDecimal(value));
             return this;
         }
 

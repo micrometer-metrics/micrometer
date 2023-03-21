@@ -19,7 +19,11 @@ import io.micrometer.common.docs.KeyName;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
 import org.assertj.core.api.Assertions;
+import org.assertj.core.api.BDDAssertions;
+import org.awaitility.Awaitility;
 import org.junit.jupiter.api.Test;
+
+import java.time.Duration;
 
 import static io.micrometer.observation.tck.TestObservationRegistryAssert.assertThat;
 import static org.assertj.core.api.BDDAssertions.thenNoException;
@@ -30,13 +34,41 @@ class TestObservationRegistryAssertTests {
     TestObservationRegistry registry = TestObservationRegistry.create();
 
     @Test
+    void should_clear_context_entries() {
+        Observation.createNotStarted("FOO", registry).start().stop();
+
+        BDDAssertions.then(registry.getContexts()).hasSize(1);
+
+        registry.clear();
+
+        BDDAssertions.then(registry.getContexts()).isEmpty();
+    }
+
+    @Test
+    void should_not_break_on_multiple_threads() {
+        Observation o1 = Observation.createNotStarted("o1", registry);
+        Observation o2 = Observation.createNotStarted("o2", registry);
+        Observation o3 = Observation.createNotStarted("o3", registry);
+
+        new Thread(() -> o1.start().stop()).start();
+        new Thread(() -> o2.start().stop()).start();
+        new Thread(() -> o3.start().stop()).start();
+
+        Awaitility.await().pollDelay(Duration.ofMillis(10)).atMost(Duration.ofMillis(100)).untilAsserted(() -> {
+            // System.out.println("Registry size [" + registry.getContexts().size() +
+            // "]");
+            BDDAssertions.then(registry.getContexts()).hasSize(3);
+        });
+    }
+
+    @Test
     void should_fail_when_observation_not_started() {
         Observation.createNotStarted("foo", registry).stop();
 
         thenThrownBy(
                 () -> TestObservationRegistryAssert.assertThat(registry).hasSingleObservationThat().hasBeenStarted())
-                        .isInstanceOf(AssertionError.class)
-                        .hasMessageContaining("You have forgotten to start your observation");
+            .isInstanceOf(AssertionError.class)
+            .hasMessageContaining("You have forgotten to start your observation");
     }
 
     @Test
@@ -53,7 +85,8 @@ class TestObservationRegistryAssertTests {
 
         thenThrownBy(
                 () -> TestObservationRegistryAssert.assertThat(registry).hasSingleObservationThat().hasBeenStopped())
-                        .isInstanceOf(AssertionError.class).hasMessageContaining("Observation is not stopped");
+            .isInstanceOf(AssertionError.class)
+            .hasMessageContaining("Observation is not stopped");
     }
 
     @Test
@@ -69,7 +102,8 @@ class TestObservationRegistryAssertTests {
         Observation.createNotStarted("foo", registry).start().stop();
 
         thenThrownBy(() -> TestObservationRegistryAssert.assertThat(registry).hasSingleObservationThat().isNotStopped())
-                .isInstanceOf(AssertionError.class).hasMessageContaining("Observation is stopped");
+            .isInstanceOf(AssertionError.class)
+            .hasMessageContaining("Observation is stopped");
     }
 
     @Test
@@ -85,7 +119,8 @@ class TestObservationRegistryAssertTests {
         Observation.createNotStarted("foo", registry).start().stop();
 
         thenThrownBy(() -> TestObservationRegistryAssert.assertThat(registry).hasObservationWithNameEqualTo("bar"))
-                .isInstanceOf(AssertionError.class).hasMessageContaining("Available names are <foo>");
+            .isInstanceOf(AssertionError.class)
+            .hasMessageContaining("Available names are <foo>");
     }
 
     @Test
@@ -93,7 +128,9 @@ class TestObservationRegistryAssertTests {
         Observation.createNotStarted("foo", registry).start().stop();
 
         thenNoException().isThrownBy(() -> TestObservationRegistryAssert.assertThat(registry)
-                .hasObservationWithNameEqualTo("foo").that().hasBeenStarted());
+            .hasObservationWithNameEqualTo("foo")
+            .that()
+            .hasBeenStarted());
     }
 
     @Test
@@ -101,8 +138,8 @@ class TestObservationRegistryAssertTests {
         Observation.createNotStarted("foo", registry).start().stop();
 
         thenThrownBy(() -> TestObservationRegistryAssert.assertThat(registry)
-                .hasObservationWithNameEqualToIgnoringCase("bar")).isInstanceOf(AssertionError.class)
-                        .hasMessageContaining("Available names are <foo>");
+            .hasObservationWithNameEqualToIgnoringCase("bar")).isInstanceOf(AssertionError.class)
+            .hasMessageContaining("Available names are <foo>");
     }
 
     @Test
@@ -110,7 +147,9 @@ class TestObservationRegistryAssertTests {
         Observation.createNotStarted("FOO", registry).start().stop();
 
         thenNoException().isThrownBy(() -> TestObservationRegistryAssert.assertThat(registry)
-                .hasObservationWithNameEqualToIgnoringCase("foo").that().hasBeenStarted());
+            .hasObservationWithNameEqualToIgnoringCase("foo")
+            .that()
+            .hasBeenStarted());
     }
 
     @Test
@@ -118,8 +157,8 @@ class TestObservationRegistryAssertTests {
         Observation.createNotStarted("foo", registry).start().stop();
 
         thenThrownBy(() -> TestObservationRegistryAssert.assertThat(registry)
-                .hasHandledContextsThatSatisfy(contexts -> Assertions.assertThat(contexts).hasSize(2)))
-                        .isInstanceOf(AssertionError.class);
+            .hasHandledContextsThatSatisfy(contexts -> Assertions.assertThat(contexts).hasSize(2)))
+            .isInstanceOf(AssertionError.class);
     }
 
     @Test
@@ -127,7 +166,7 @@ class TestObservationRegistryAssertTests {
         Observation.createNotStarted("FOO", registry).start().stop();
 
         thenNoException().isThrownBy(() -> TestObservationRegistryAssert.assertThat(registry)
-                .hasHandledContextsThatSatisfy(contexts -> Assertions.assertThat(contexts).hasSize(1)));
+            .hasHandledContextsThatSatisfy(contexts -> Assertions.assertThat(contexts).hasSize(1)));
     }
 
     @Test
@@ -135,29 +174,31 @@ class TestObservationRegistryAssertTests {
         Observation.createNotStarted("foo", registry).start().stop();
 
         thenThrownBy(() -> TestObservationRegistryAssert.assertThat(registry).doesNotHaveAnyObservation())
-                .isInstanceOf(AssertionError.class);
+            .isInstanceOf(AssertionError.class);
     }
 
     @Test
     void should_not_fail_when_there_are_no_observations() {
         thenNoException()
-                .isThrownBy(() -> TestObservationRegistryAssert.assertThat(registry).doesNotHaveAnyObservation());
+            .isThrownBy(() -> TestObservationRegistryAssert.assertThat(registry).doesNotHaveAnyObservation());
     }
 
     @Test
     void should_fail_when_there_is_no_observation_with_name() {
         Observation.createNotStarted("foo", registry).start().stop();
 
-        thenThrownBy(() -> TestObservationRegistryAssert.assertThat(registry).forAllObservationsWithNameEqualTo("bar",
-                ObservationContextAssert::doesNotHaveError)).isInstanceOf(AssertionError.class);
+        thenThrownBy(() -> TestObservationRegistryAssert.assertThat(registry)
+            .forAllObservationsWithNameEqualTo("bar", ObservationContextAssert::doesNotHaveError))
+            .isInstanceOf(AssertionError.class);
     }
 
     @Test
     void should_fail_when_all_observations_do_not_match_the_assertion() {
         Observation.createNotStarted("foo", registry).start().stop();
 
-        thenThrownBy(() -> TestObservationRegistryAssert.assertThat(registry).forAllObservationsWithNameEqualTo("foo",
-                ObservationContextAssert::hasError)).isInstanceOf(AssertionError.class);
+        thenThrownBy(() -> TestObservationRegistryAssert.assertThat(registry)
+            .forAllObservationsWithNameEqualTo("foo", ObservationContextAssert::hasError))
+            .isInstanceOf(AssertionError.class);
     }
 
     @Test
@@ -165,7 +206,7 @@ class TestObservationRegistryAssertTests {
         Observation.createNotStarted("foo", registry).start().stop();
 
         thenNoException().isThrownBy(() -> TestObservationRegistryAssert.assertThat(registry)
-                .forAllObservationsWithNameEqualTo("foo", ObservationContextAssert::doesNotHaveError));
+            .forAllObservationsWithNameEqualTo("foo", ObservationContextAssert::doesNotHaveError));
     }
 
     @Test
@@ -173,8 +214,8 @@ class TestObservationRegistryAssertTests {
         Observation.createNotStarted("FOO", registry).start().stop();
 
         thenThrownBy(() -> TestObservationRegistryAssert.assertThat(registry)
-                .forAllObservationsWithNameEqualToIgnoreCase("bar", ObservationContextAssert::doesNotHaveError))
-                        .isInstanceOf(AssertionError.class);
+            .forAllObservationsWithNameEqualToIgnoreCase("bar", ObservationContextAssert::doesNotHaveError))
+            .isInstanceOf(AssertionError.class);
     }
 
     @Test
@@ -182,8 +223,8 @@ class TestObservationRegistryAssertTests {
         Observation.createNotStarted("FOO", registry).start().stop();
 
         thenThrownBy(() -> TestObservationRegistryAssert.assertThat(registry)
-                .forAllObservationsWithNameEqualToIgnoreCase("foo", ObservationContextAssert::hasError))
-                        .isInstanceOf(AssertionError.class);
+            .forAllObservationsWithNameEqualToIgnoreCase("foo", ObservationContextAssert::hasError))
+            .isInstanceOf(AssertionError.class);
     }
 
     @Test
@@ -191,7 +232,7 @@ class TestObservationRegistryAssertTests {
         Observation.createNotStarted("FOO", registry).start().stop();
 
         thenNoException().isThrownBy(() -> TestObservationRegistryAssert.assertThat(registry)
-                .forAllObservationsWithNameEqualToIgnoreCase("foo", ObservationContextAssert::doesNotHaveError));
+            .forAllObservationsWithNameEqualToIgnoreCase("foo", ObservationContextAssert::doesNotHaveError));
     }
 
     @Test
@@ -199,7 +240,7 @@ class TestObservationRegistryAssertTests {
         Observation.createNotStarted("FOO", registry).start().stop();
 
         thenThrownBy(() -> TestObservationRegistryAssert.assertThat(registry).hasNumberOfObservationsEqualTo(0))
-                .isInstanceOf(AssertionError.class);
+            .isInstanceOf(AssertionError.class);
     }
 
     @Test
@@ -207,7 +248,7 @@ class TestObservationRegistryAssertTests {
         Observation.createNotStarted("FOO", registry).start().stop();
 
         thenNoException()
-                .isThrownBy(() -> TestObservationRegistryAssert.assertThat(registry).hasNumberOfObservationsEqualTo(1));
+            .isThrownBy(() -> TestObservationRegistryAssert.assertThat(registry).hasNumberOfObservationsEqualTo(1));
     }
 
     @Test
@@ -215,7 +256,7 @@ class TestObservationRegistryAssertTests {
         Observation.createNotStarted("foo", registry).start().stop();
 
         thenThrownBy(() -> TestObservationRegistryAssert.assertThat(registry)
-                .hasNumberOfObservationsWithNameEqualTo("foo", 0)).isInstanceOf(AssertionError.class);
+            .hasNumberOfObservationsWithNameEqualTo("foo", 0)).isInstanceOf(AssertionError.class);
     }
 
     @Test
@@ -223,7 +264,7 @@ class TestObservationRegistryAssertTests {
         Observation.createNotStarted("foo", registry).start().stop();
 
         thenThrownBy(() -> TestObservationRegistryAssert.assertThat(registry)
-                .hasNumberOfObservationsWithNameEqualTo("bar", 1)).isInstanceOf(AssertionError.class);
+            .hasNumberOfObservationsWithNameEqualTo("bar", 1)).isInstanceOf(AssertionError.class);
     }
 
     @Test
@@ -231,7 +272,7 @@ class TestObservationRegistryAssertTests {
         Observation.createNotStarted("foo", registry).start().stop();
 
         thenNoException().isThrownBy(() -> TestObservationRegistryAssert.assertThat(registry)
-                .hasNumberOfObservationsWithNameEqualTo("foo", 1));
+            .hasNumberOfObservationsWithNameEqualTo("foo", 1));
     }
 
     @Test
@@ -239,7 +280,7 @@ class TestObservationRegistryAssertTests {
         Observation.createNotStarted("FOO", registry).start().stop();
 
         thenThrownBy(() -> TestObservationRegistryAssert.assertThat(registry)
-                .hasNumberOfObservationsWithNameEqualToIgnoreCase("foo", 0)).isInstanceOf(AssertionError.class);
+            .hasNumberOfObservationsWithNameEqualToIgnoreCase("foo", 0)).isInstanceOf(AssertionError.class);
     }
 
     @Test
@@ -247,7 +288,7 @@ class TestObservationRegistryAssertTests {
         Observation.createNotStarted("FOO", registry).start().stop();
 
         thenThrownBy(() -> TestObservationRegistryAssert.assertThat(registry)
-                .hasNumberOfObservationsWithNameEqualToIgnoreCase("bar", 1)).isInstanceOf(AssertionError.class);
+            .hasNumberOfObservationsWithNameEqualToIgnoreCase("bar", 1)).isInstanceOf(AssertionError.class);
     }
 
     @Test
@@ -255,7 +296,7 @@ class TestObservationRegistryAssertTests {
         Observation.createNotStarted("FOO", registry).start().stop();
 
         thenNoException().isThrownBy(() -> TestObservationRegistryAssert.assertThat(registry)
-                .hasNumberOfObservationsWithNameEqualToIgnoreCase("foo", 1));
+            .hasNumberOfObservationsWithNameEqualToIgnoreCase("foo", 1));
     }
 
     @Test
@@ -264,7 +305,7 @@ class TestObservationRegistryAssertTests {
 
         thenThrownBy(
                 () -> TestObservationRegistryAssert.assertThat(registry).hasAnObservationWithAKeyValue("key", "value"))
-                        .isInstanceOf(AssertionError.class);
+            .isInstanceOf(AssertionError.class);
     }
 
     @Test
@@ -280,15 +321,15 @@ class TestObservationRegistryAssertTests {
         Observation.createNotStarted("FOO", registry).lowCardinalityKeyValue("foo", "bar").start().stop();
 
         thenThrownBy(() -> TestObservationRegistryAssert.assertThat(registry).hasAnObservationWithAKeyName("key"))
-                .isInstanceOf(AssertionError.class);
+            .isInstanceOf(AssertionError.class);
     }
 
     @Test
     void should_not_fail_when_key_matched() {
         Observation.createNotStarted("FOO", registry).lowCardinalityKeyValue("foo", "bar").start().stop();
 
-        thenNoException().isThrownBy(
-                () -> TestObservationRegistryAssert.assertThat(registry).hasAnObservationWithAKeyName("foo"));
+        thenNoException()
+            .isThrownBy(() -> TestObservationRegistryAssert.assertThat(registry).hasAnObservationWithAKeyName("foo"));
     }
 
     @Test
@@ -296,7 +337,7 @@ class TestObservationRegistryAssertTests {
         Observation.createNotStarted("FOO", registry).lowCardinalityKeyValue("foo", "bar").start().stop();
 
         thenThrownBy(() -> TestObservationRegistryAssert.assertThat(registry)
-                .hasAnObservationWithAKeyValue(MyKeyName.FOO, "value")).isInstanceOf(AssertionError.class);
+            .hasAnObservationWithAKeyValue(MyKeyName.FOO, "value")).isInstanceOf(AssertionError.class);
     }
 
     @Test
@@ -304,7 +345,7 @@ class TestObservationRegistryAssertTests {
         Observation.createNotStarted("FOO", registry).lowCardinalityKeyValue("foo", "bar").start().stop();
 
         thenNoException().isThrownBy(() -> TestObservationRegistryAssert.assertThat(registry)
-                .hasAnObservationWithAKeyValue(MyKeyName.FOO, "bar"));
+            .hasAnObservationWithAKeyValue(MyKeyName.FOO, "bar"));
     }
 
     @Test
@@ -313,7 +354,7 @@ class TestObservationRegistryAssertTests {
 
         thenThrownBy(
                 () -> TestObservationRegistryAssert.assertThat(registry).hasAnObservationWithAKeyName(MyKeyName.FOO))
-                        .isInstanceOf(AssertionError.class);
+            .isInstanceOf(AssertionError.class);
     }
 
     @Test
@@ -325,13 +366,36 @@ class TestObservationRegistryAssertTests {
     }
 
     @Test
+    void should_fail_when_no_observation_matches_assertion() {
+        Observation.createNotStarted("FOO", registry).lowCardinalityKeyValue("aaa", "bar").start().stop();
+
+        thenThrownBy(() -> TestObservationRegistryAssert.assertThat(registry)
+            .hasAnObservation(observationContextAssert -> observationContextAssert.hasNameEqualTo("FOO")
+                .hasLowCardinalityKeyValue("bbb", "bar")))
+            .isInstanceOf(AssertionError.class);
+    }
+
+    @Test
+    void should_not_fail_when_one_observation_matches_assertion() {
+        Observation.createNotStarted("FOO", registry).lowCardinalityKeyValue("foo", "bar").start().stop();
+
+        thenNoException().isThrownBy(() -> TestObservationRegistryAssert.assertThat(registry)
+            .hasAnObservation(observationContextAssert -> observationContextAssert.hasNameEqualTo("FOO")
+                .hasLowCardinalityKeyValue("foo", "bar")));
+    }
+
+    @Test
     void should_jump_to_and_back_from_context_assert() {
         new Example(registry).run();
 
-        thenNoException().isThrownBy(() -> assertThat(registry).hasObservationWithNameEqualTo("foo").that()
-                .hasHighCardinalityKeyValue("highTag", "highTagValue")
-                .hasLowCardinalityKeyValue("lowTag", "lowTagValue").hasBeenStarted().hasBeenStopped()
-                .backToTestObservationRegistry().doesNotHaveAnyRemainingCurrentObservation());
+        thenNoException().isThrownBy(() -> assertThat(registry).hasObservationWithNameEqualTo("foo")
+            .that()
+            .hasHighCardinalityKeyValue("highTag", "highTagValue")
+            .hasLowCardinalityKeyValue("lowTag", "lowTagValue")
+            .hasBeenStarted()
+            .hasBeenStopped()
+            .backToTestObservationRegistry()
+            .doesNotHaveAnyRemainingCurrentObservation());
     }
 
     static class Example {
@@ -343,8 +407,10 @@ class TestObservationRegistryAssertTests {
         }
 
         void run() {
-            Observation.createNotStarted("foo", registry).lowCardinalityKeyValue("lowTag", "lowTagValue")
-                    .highCardinalityKeyValue("highTag", "highTagValue").observe(() -> System.out.println("Hello"));
+            Observation.createNotStarted("foo", registry)
+                .lowCardinalityKeyValue("lowTag", "lowTagValue")
+                .highCardinalityKeyValue("highTag", "highTagValue")
+                .observe(() -> System.out.println("Hello"));
         }
 
     }

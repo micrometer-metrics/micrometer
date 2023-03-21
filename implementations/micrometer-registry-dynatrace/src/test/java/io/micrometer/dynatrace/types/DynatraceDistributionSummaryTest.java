@@ -44,28 +44,44 @@ class DynatraceDistributionSummaryTest {
     private static final Clock CLOCK = new MockClock();
 
     @Test
-    void testHasValues() {
+    void testSummaryCount() {
         DynatraceDistributionSummary ds = new DynatraceDistributionSummary(ID, CLOCK, DISTRIBUTION_STATISTIC_CONFIG, 1);
-        assertThat(ds.hasValues()).isFalse();
+
+        assertThat(ds.count()).isZero();
         ds.record(3.14);
-        assertThat(ds.hasValues()).isTrue();
+        assertThat(ds.count()).isEqualTo(1);
+        ds.record(5.6);
+        assertThat(ds.count()).isEqualTo(2);
 
-        // reset, hasValues should be initially false
         ds.takeSummarySnapshotAndReset();
-        assertThat(ds.hasValues()).isFalse();
-
-        // add invalid value, hasValues stays false
-        ds.record(-1.234);
-        assertThat(ds.hasValues()).isFalse();
+        assertThat(ds.count()).isZero();
     }
 
     @Test
-    void testDynatraceDistributionSummary() {
+    void testDynatraceDistributionSummaryValuesAreRecorded() {
         DynatraceDistributionSummary ds = new DynatraceDistributionSummary(ID, CLOCK, DISTRIBUTION_STATISTIC_CONFIG, 1);
         ds.record(3.14);
         ds.record(4.76);
 
         assertMinMaxSumCount(ds, 3.14, 4.76, 7.9, 2);
+    }
+
+    @Test
+    void testDynatraceDistributionSummary_NegativeValuesAreIgnored() {
+        DynatraceDistributionSummary ds = new DynatraceDistributionSummary(ID, CLOCK, DISTRIBUTION_STATISTIC_CONFIG, 1);
+        ds.record(-1.23);
+        ds.record(-100.3);
+
+        assertMinMaxSumCount(ds, 0.0, 0.0, 0.0, 0);
+    }
+
+    @Test
+    void testDynatraceDistributionSummary_NaNValuesAreIgnored() {
+        DynatraceDistributionSummary ds = new DynatraceDistributionSummary(ID, CLOCK, DISTRIBUTION_STATISTIC_CONFIG, 1);
+
+        ds.record(Double.NaN);
+
+        assertMinMaxSumCount(ds, 0.0, 0.0, 0.0, 0);
     }
 
     @Test
@@ -91,6 +107,29 @@ class DynatraceDistributionSummaryTest {
     }
 
     @Test
+    void testUnitsAreIgnored() {
+        DynatraceDistributionSummary ds = new DynatraceDistributionSummary(ID, CLOCK, DISTRIBUTION_STATISTIC_CONFIG, 1);
+
+        ds.record(100);
+        DynatraceSummarySnapshot microsecondsSnapshot = ds.takeSummarySnapshot(TimeUnit.MICROSECONDS);
+        DynatraceSummarySnapshot daysSnapshot = ds.takeSummarySnapshot(TimeUnit.DAYS);
+
+        // both the microseconds and the days snapshot return the same values.
+        assertMinMaxSumCount(microsecondsSnapshot, daysSnapshot.getMin(), daysSnapshot.getMax(),
+                daysSnapshot.getTotal(), daysSnapshot.getCount());
+    }
+
+    @Test
+    void testUnitsAreIgnoredButResetWorks() {
+        DynatraceDistributionSummary ds = new DynatraceDistributionSummary(ID, CLOCK, DISTRIBUTION_STATISTIC_CONFIG, 1);
+
+        ds.record(100);
+        DynatraceSummarySnapshot microsecondsSnapshot = ds.takeSummarySnapshotAndReset(TimeUnit.MICROSECONDS);
+        assertMinMaxSumCount(microsecondsSnapshot, 100, 100, 100, 1);
+        assertMinMaxSumCount(ds.takeSummarySnapshot(TimeUnit.DAYS), 0, 0, 0, 0);
+    }
+
+    @Test
     void testMinMaxAreOverwritten() {
         DynatraceDistributionSummary ds = new DynatraceDistributionSummary(ID, CLOCK, DISTRIBUTION_STATISTIC_CONFIG, 1);
         ds.record(3.14);
@@ -108,19 +147,8 @@ class DynatraceDistributionSummaryTest {
         ds.record(4.76);
 
         assertMinMaxSumCount(ds.takeSummarySnapshot(), 3.14, 4.76, 7.9, 2);
-        // run twice to make sure it's not reset in between
-        assertMinMaxSumCount(ds.takeSummarySnapshot(), 3.14, 4.76, 7.9, 2);
-    }
-
-    @Test
-    void testGetSnapshotNoResetWithTimeUnitIgnored() {
-        DynatraceDistributionSummary ds = new DynatraceDistributionSummary(ID, CLOCK, DISTRIBUTION_STATISTIC_CONFIG, 1);
-        ds.record(3.14);
-        ds.record(4.76);
-
-        assertMinMaxSumCount(ds.takeSummarySnapshot(TimeUnit.MINUTES), 3.14, 4.76, 7.9, 2);
-        // run twice to make sure it's not reset in between
-        assertMinMaxSumCount(ds.takeSummarySnapshot(TimeUnit.MINUTES), 3.14, 4.76, 7.9, 2);
+        // check the distribution summary was reset.
+        assertMinMaxSumCount(ds, 3.14, 4.76, 7.9, 2);
     }
 
     @Test
@@ -130,17 +158,7 @@ class DynatraceDistributionSummaryTest {
         ds.record(4.76);
 
         assertMinMaxSumCount(ds.takeSummarySnapshotAndReset(), 3.14, 4.76, 7.9, 2);
-        assertMinMaxSumCount(ds.takeSummarySnapshotAndReset(), 0d, 0d, 0d, 0);
-    }
-
-    @Test
-    void testGetSnapshotAndResetWithTimeUnitIgnored() {
-        DynatraceDistributionSummary ds = new DynatraceDistributionSummary(ID, CLOCK, DISTRIBUTION_STATISTIC_CONFIG, 1);
-        ds.record(3.14);
-        ds.record(4.76);
-
-        assertMinMaxSumCount(ds.takeSummarySnapshotAndReset(TimeUnit.MINUTES), 3.14, 4.76, 7.9, 2);
-        assertMinMaxSumCount(ds.takeSummarySnapshotAndReset(TimeUnit.MINUTES), 0d, 0d, 0d, 0);
+        assertMinMaxSumCount(ds, 0d, 0d, 0d, 0);
     }
 
     private void assertMinMaxSumCount(DynatraceDistributionSummary ds, double expMin, double expMax, double expTotal,

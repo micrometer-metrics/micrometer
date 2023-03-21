@@ -67,8 +67,10 @@ class DynatraceExporterV1Test {
 
     private final DynatraceExporterV1 exporter = FACTORY.injectLogger(() -> createExporter(httpClient));
 
-    private final DynatraceMeterRegistry meterRegistry = DynatraceMeterRegistry.builder(config).clock(clock)
-            .httpClient(httpClient).build();
+    private final DynatraceMeterRegistry meterRegistry = DynatraceMeterRegistry.builder(config)
+        .clock(clock)
+        .httpClient(httpClient)
+        .build();
 
     private final ObjectMapper mapper = new ObjectMapper();
 
@@ -250,7 +252,7 @@ class DynatraceExporterV1Test {
         Gauge gauge = meterRegistry.find("my.gauge").gauge();
         Stream<DynatraceCustomMetric> series = exporter.writeMeter(gauge);
         List<DynatraceTimeSeries> timeSeries = series.map(DynatraceCustomMetric::getTimeSeries)
-                .collect(Collectors.toList());
+            .collect(Collectors.toList());
         List<DynatraceBatchedPayload> entries = exporter.createPostMessages("my.type", null, timeSeries);
         assertThat(entries).hasSize(1);
         assertThat(entries.get(0).metricCount).isEqualTo(1);
@@ -343,8 +345,9 @@ class DynatraceExporterV1Test {
 
         clock.add(config.step());
 
-        List<String> metrics = exporter.writeSummary(summary).map((metric) -> metric.getTimeSeries().asJson())
-                .collect(Collectors.toList());
+        List<String> metrics = exporter.writeSummary(summary)
+            .map((metric) -> metric.getTimeSeries().asJson())
+            .collect(Collectors.toList());
 
         assertThat(metrics).containsExactlyInAnyOrder(
                 "{\"timeseriesId\":\"custom:my.distribution.summary.sum\",\"dataPoints\":[[60001,6]]}",
@@ -387,12 +390,12 @@ class DynatraceExporterV1Test {
         assertThat(LOGGER.getLogEvents()).hasSize(3);
         assertThat(LOGGER.getLogEvents().get(0).getLevel()).isSameAs(DEBUG);
         assertThat(LOGGER.getLogEvents().get(0).getMessage())
-                .isEqualTo("created custom:my.gauge as custom metric in Dynatrace");
+            .isEqualTo("created custom:my.gauge as custom metric in Dynatrace");
         assertThat(LOGGER.getLogEvents().get(0).getCause()).isNull();
 
         assertThat(LOGGER.getLogEvents().get(1).getLevel()).isSameAs(ERROR);
         assertThat(LOGGER.getLogEvents().get(1).getMessage())
-                .isEqualTo("failed to send metrics to Dynatrace: Error Code=500, Response Body=simulated");
+            .isEqualTo("failed to send metrics to Dynatrace: Error Code=500, Response Body=simulated");
         assertThat(LOGGER.getLogEvents().get(1).getCause()).isNull();
     }
 
@@ -411,12 +414,13 @@ class DynatraceExporterV1Test {
         exporter.export(Collections.singletonList(gauge));
 
         assertThat(LOGGER.getLogEvents())
-                // map to only keep the message strings
-                .extracting(LogEvent::getMessage).containsExactly("failed to build request")
-                // this is different from doesNotContain, as doesNotContain checks for
-                // whole strings in all log messages whereas this checks that none of the
-                // log messages contain the token.
-                .noneMatch(x -> x.contains(apiToken));
+            // map to only keep the message strings
+            .extracting(LogEvent::getMessage)
+            .containsExactly("failed to build request")
+            // this is different from doesNotContain, as doesNotContain checks for
+            // whole strings in all log messages whereas this checks that none of the
+            // log messages contain the token.
+            .noneMatch(x -> x.contains(apiToken));
     }
 
     @Test
@@ -439,13 +443,14 @@ class DynatraceExporterV1Test {
         exporter.export(Collections.singletonList(gauge));
 
         assertThat(LOGGER.getLogEvents())
-                // map to only keep the message strings
-                .extracting(LogEvent::getMessage).containsExactly(
-                        // the custom metric was created, meaning the PUT call succeeded
-                        "created custom:my.gauge as custom metric in Dynatrace",
-                        // the error message from the post call contains no token
-                        "failed to build request")
-                .noneMatch(x -> x.contains(apiToken));
+            // map to only keep the message strings
+            .extracting(LogEvent::getMessage)
+            .containsExactly(
+                    // the custom metric was created, meaning the PUT call succeeded
+                    "created custom:my.gauge as custom metric in Dynatrace",
+                    // the error message from the post call contains no token
+                    "failed to build request")
+            .noneMatch(x -> x.contains(apiToken));
     }
 
     @Test
@@ -489,17 +494,19 @@ class DynatraceExporterV1Test {
         // Simulate that sending throws an exception AND adds the token to the message,
         // which shouldn't happen.
         when(reqBuilder.send())
-                .thenThrow(new NullPointerException(String.format("Header key is null for value %s", apiToken)));
+            .thenThrow(new NullPointerException(String.format("Header key is null for value %s", apiToken)));
 
         exporter.trySendHttpRequest(reqBuilder);
         verify(reqBuilder).send();
         // assert that an error is logged that does not contain the token.
-        assertThat(LOGGER.getLogEvents()).hasSize(1).extracting(LogEvent::getMessage)
-                .containsExactlyInAnyOrder("failed to send metrics to Dynatrace").noneMatch(x -> x.contains(apiToken));
+        assertThat(LOGGER.getLogEvents()).hasSize(1)
+            .extracting(LogEvent::getMessage)
+            .containsExactly("failed to send metrics to Dynatrace")
+            .noneMatch(x -> x.contains(apiToken));
     }
 
     private DynatraceExporterV1 getDynatraceExporterV1(HttpSender httpClient, String url, String apiToken) {
-        DynatraceExporterV1 exporter = FACTORY.injectLogger(() -> new DynatraceExporterV1(new DynatraceConfig() {
+        return FACTORY.injectLogger(() -> new DynatraceExporterV1(new DynatraceConfig() {
             @Override
             public String get(String key) {
                 return null;
@@ -515,7 +522,6 @@ class DynatraceExporterV1Test {
                 return url;
             }
         }, clock, httpClient));
-        return exporter;
     }
 
     private DynatraceExporterV1 createExporter(HttpSender httpClient) {

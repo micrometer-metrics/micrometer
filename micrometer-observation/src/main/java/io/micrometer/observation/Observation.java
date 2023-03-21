@@ -584,14 +584,15 @@ public interface Observation extends ObservationView {
      * </ul>
      *
      * NOTE: When the {@link ObservationRegistry} is a noop, this function receives a
-     * default {@link Context} instance which is not the one that have passed at
+     * default {@link Context} instance which is not the one that has been passed at
      * {@link Observation} creation.
      * @param function the {@link Function} to call
      * @return the result from {@link Function#apply(Object)}
      * @param <C> the type of input {@link Context} to the function
      * @param <T> the type parameter of the {@link Function} return
+     * @since 1.11.0
      */
-    @SuppressWarnings({ "unchecked" })
+    @SuppressWarnings({ "unused", "unchecked" })
     @Nullable
     default <C extends Context, T> T observeWithContext(Function<C, T> function) {
         start();
@@ -621,14 +622,14 @@ public interface Observation extends ObservationView {
      * </ul>
      *
      * NOTE: When the {@link ObservationRegistry} is a noop, this function receives a
-     * default {@link Context} instance which is not the one that have passed at
+     * default {@link Context} instance which is not the one that has been passed at
      * {@link Observation} creation.
      * @param function the {@link CheckedFunction} to call
      * @return the result from {@link Function#apply(Object)}
      * @param <C> the type of input {@link Context} to the function
      * @param <T> the type of return to the function
      * @param <E> type of exception {@link CheckedFunction} throws
-     * @param <E> type of exception thrown
+     * @since 1.11.0
      */
     @SuppressWarnings({ "unused", "unchecked" })
     @Nullable
@@ -798,7 +799,7 @@ public interface Observation extends ObservationView {
 
         /**
          * Clears the current scope and notifies the handlers that the scope was closed.
-         * You don't need to call this method manually, if you use try-with-resource, it
+         * You don't need to call this method manually. If you use try-with-resource, it
          * will call this for you. Please only call this method if you know what you are
          * doing and your use-case demands the usage of it.
          */
@@ -807,9 +808,10 @@ public interface Observation extends ObservationView {
 
         /**
          * Clears the current scope and notifies the handlers that the scope was reset.
-         * You don't need to call this method in most of the cases, please only call this
+         * You don't need to call this method in most of the cases. Please only call this
          * method if you know what you are doing and your use-case demands the usage of
          * it.
+         * @since 1.10.4
          */
         void reset();
 
@@ -1139,13 +1141,16 @@ public interface Observation extends ObservationView {
         }
 
         private String toString(KeyValues keyValues) {
-            return keyValues.stream().map(keyValue -> String.format("%s='%s'", keyValue.getKey(), keyValue.getValue()))
-                    .collect(Collectors.joining(", ", "[", "]"));
+            return keyValues.stream()
+                .map(keyValue -> String.format("%s='%s'", keyValue.getKey(), keyValue.getValue()))
+                .collect(Collectors.joining(", ", "[", "]"));
         }
 
         private String toString(Map<Object, Object> map) {
-            return map.entrySet().stream().map(entry -> String.format("%s='%s'", entry.getKey(), entry.getValue()))
-                    .collect(Collectors.joining(", ", "[", "]"));
+            return map.entrySet()
+                .stream()
+                .map(entry -> String.format("%s='%s'", entry.getKey(), entry.getValue()))
+                .collect(Collectors.joining(", ", "[", "]"));
         }
 
     }
@@ -1349,6 +1354,8 @@ public interface Observation extends ObservationView {
 
     /**
      * A functional interface like {@link Function} but it can throw a {@link Throwable}.
+     *
+     * @since 1.11.0
      */
     @FunctionalInterface
     interface CheckedFunction<T, R, E extends Throwable> {

@@ -161,8 +161,9 @@ public interface ObservationRegistry {
         <T extends Observation.Context> ObservationConvention<T> getObservationConvention(T context,
                 ObservationConvention<T> defaultConvention) {
             return (ObservationConvention<T>) this.observationConventions.stream()
-                    .filter(convention -> convention.supportsContext(context)).findFirst().orElse(Objects
-                            .requireNonNull(defaultConvention, "Default ObservationConvention must not be null"));
+                .filter(convention -> convention.supportsContext(context))
+                .findFirst()
+                .orElse(Objects.requireNonNull(defaultConvention, "Default ObservationConvention must not be null"));
         }
 
         /**

@@ -51,47 +51,47 @@ class DefaultJerseyTagsProviderTest {
     @Test
     void testRootPath() {
         assertThat(tagsProvider.httpRequestTags(event(200, null, "/", (String[]) null)))
-                .containsExactlyInAnyOrder(tagsFrom("root", 200, null, "SUCCESS"));
+            .containsExactlyInAnyOrder(tagsFrom("root", 200, null, "SUCCESS"));
     }
 
     @Test
     void templatedPathsAreReturned() {
         assertThat(tagsProvider.httpRequestTags(event(200, null, "/", "/", "/hello/{name}")))
-                .containsExactlyInAnyOrder(tagsFrom("/hello/{name}", 200, null, "SUCCESS"));
+            .containsExactlyInAnyOrder(tagsFrom("/hello/{name}", 200, null, "SUCCESS"));
     }
 
     @Test
     void applicationPathIsPresent() {
         assertThat(tagsProvider.httpRequestTags(event(200, null, "/app", "/", "/hello")))
-                .containsExactlyInAnyOrder(tagsFrom("/app/hello", 200, null, "SUCCESS"));
+            .containsExactlyInAnyOrder(tagsFrom("/app/hello", 200, null, "SUCCESS"));
     }
 
     @Test
     void notFoundsAreShunted() {
         assertThat(tagsProvider.httpRequestTags(event(404, null, "/app", "/", "/not-found")))
-                .containsExactlyInAnyOrder(tagsFrom("NOT_FOUND", 404, null, "CLIENT_ERROR"));
+            .containsExactlyInAnyOrder(tagsFrom("NOT_FOUND", 404, null, "CLIENT_ERROR"));
     }
 
     @Test
     void redirectsAreShunted() {
         assertThat(tagsProvider.httpRequestTags(event(301, null, "/app", "/", "/redirect301")))
-                .containsExactlyInAnyOrder(tagsFrom("REDIRECTION", 301, null, "REDIRECTION"));
+            .containsExactlyInAnyOrder(tagsFrom("REDIRECTION", 301, null, "REDIRECTION"));
         assertThat(tagsProvider.httpRequestTags(event(302, null, "/app", "/", "/redirect302")))
-                .containsExactlyInAnyOrder(tagsFrom("REDIRECTION", 302, null, "REDIRECTION"));
+            .containsExactlyInAnyOrder(tagsFrom("REDIRECTION", 302, null, "REDIRECTION"));
         assertThat(tagsProvider.httpRequestTags(event(399, null, "/app", "/", "/redirect399")))
-                .containsExactlyInAnyOrder(tagsFrom("REDIRECTION", 399, null, "REDIRECTION"));
+            .containsExactlyInAnyOrder(tagsFrom("REDIRECTION", 399, null, "REDIRECTION"));
     }
 
     @Test
     @SuppressWarnings("serial")
     void exceptionsAreMappedCorrectly() {
         assertThat(tagsProvider.httpRequestTags(event(500, new IllegalArgumentException(), "/app", (String[]) null)))
-                .containsExactlyInAnyOrder(tagsFrom("/app", 500, "IllegalArgumentException", "SERVER_ERROR"));
+            .containsExactlyInAnyOrder(tagsFrom("/app", 500, "IllegalArgumentException", "SERVER_ERROR"));
         assertThat(tagsProvider.httpRequestTags(
                 event(500, new IllegalArgumentException(new NullPointerException()), "/app", (String[]) null)))
-                        .containsExactlyInAnyOrder(tagsFrom("/app", 500, "NullPointerException", "SERVER_ERROR"));
+            .containsExactlyInAnyOrder(tagsFrom("/app", 500, "NullPointerException", "SERVER_ERROR"));
         assertThat(tagsProvider.httpRequestTags(event(406, new NotAcceptableException(), "/app", (String[]) null)))
-                .containsExactlyInAnyOrder(tagsFrom("/app", 406, "NotAcceptableException", "CLIENT_ERROR"));
+            .containsExactlyInAnyOrder(tagsFrom("/app", 406, "NotAcceptableException", "CLIENT_ERROR"));
         assertThat(tagsProvider.httpRequestTags(event(500, new Exception("anonymous") {
         }, "/app", (String[]) null))).containsExactlyInAnyOrder(tagsFrom("/app", 500,
                 "io.micrometer.core.instrument.binder.jersey.server.DefaultJerseyTagsProviderTest$1", "SERVER_ERROR"));
@@ -100,7 +100,7 @@ class DefaultJerseyTagsProviderTest {
     @Test
     void longRequestTags() {
         assertThat(tagsProvider.httpLongRequestTags(event(0, null, "/app", (String[]) null)))
-                .containsExactlyInAnyOrder(Tag.of("method", "GET"), Tag.of("uri", "/app"));
+            .containsExactlyInAnyOrder(Tag.of("method", "GET"), Tag.of("uri", "/app"));
     }
 
     private static RequestEvent event(Integer status, Exception exception, String baseUri,
@@ -119,7 +119,7 @@ class DefaultJerseyTagsProviderTest {
 
         ExtendedUriInfo extendedUriInfo = mock(ExtendedUriInfo.class);
         when(extendedUriInfo.getBaseUri())
-                .thenReturn(URI.create("http://localhost:8080" + (baseUri == null ? "/" : baseUri)));
+            .thenReturn(URI.create("http://localhost:8080" + (baseUri == null ? "/" : baseUri)));
         List<UriTemplate> uriTemplates = uriTemplateStrings == null ? Collections.emptyList()
                 : Arrays.stream(uriTemplateStrings).map(uri -> new UriTemplate(uri)).collect(Collectors.toList());
         // UriTemplate are returned in reverse order

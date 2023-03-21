@@ -56,39 +56,45 @@ class OtlpConfigTest {
     void headersConfigTakesPrecedenceOverEnvVars() throws Exception {
         OtlpConfig config = k -> "header1=value1";
         withEnvironmentVariable("OTEL_EXPORTER_OTLP_HEADERS", "header2=value")
-                .execute(() -> assertThat(config.headers()).containsEntry("header1", "value1").hasSize(1));
+            .execute(() -> assertThat(config.headers()).containsEntry("header1", "value1").hasSize(1));
     }
 
     @Test
     void headersUseEnvVarWhenConfigNotSet() throws Exception {
         OtlpConfig config = k -> null;
         withEnvironmentVariable("OTEL_EXPORTER_OTLP_HEADERS", "header2=value")
-                .execute(() -> assertThat(config.headers()).containsEntry("header2", "value").hasSize(1));
+            .execute(() -> assertThat(config.headers()).containsEntry("header2", "value").hasSize(1));
     }
 
     @Test
     void combineHeadersFromEnvVars() throws Exception {
         OtlpConfig config = k -> null;
         withEnvironmentVariables().set("OTEL_EXPORTER_OTLP_HEADERS", "common=v")
-                .set("OTEL_EXPORTER_OTLP_METRICS_HEADERS", "metrics=m").execute(() -> assertThat(config.headers())
-                        .containsEntry("common", "v").containsEntry("metrics", "m").hasSize(2));
+            .set("OTEL_EXPORTER_OTLP_METRICS_HEADERS", "metrics=m")
+            .execute(() -> assertThat(config.headers()).containsEntry("common", "v")
+                .containsEntry("metrics", "m")
+                .hasSize(2));
     }
 
     @Test
     void metricsHeadersEnvVarOverwritesGenericHeadersEnvVar() throws Exception {
         OtlpConfig config = k -> null;
         withEnvironmentVariables().set("OTEL_EXPORTER_OTLP_HEADERS", "metrics=m,auth=token")
-                .set("OTEL_EXPORTER_OTLP_METRICS_HEADERS", "metrics=t").execute(() -> assertThat(config.headers())
-                        .containsEntry("auth", "token").containsEntry("metrics", "t").hasSize(2));
+            .set("OTEL_EXPORTER_OTLP_METRICS_HEADERS", "metrics=t")
+            .execute(() -> assertThat(config.headers()).containsEntry("auth", "token")
+                .containsEntry("metrics", "t")
+                .hasSize(2));
     }
 
     @Test
     void resourceAttributesFromEnvironmentVariables() throws Exception {
         withEnvironmentVariables("OTEL_RESOURCE_ATTRIBUTES", "a=1,b=2", "OTEL_SERVICE_NAME", "my-service")
-                .execute(() -> {
-                    assertThat(OtlpConfig.DEFAULT.resourceAttributes()).hasSize(3).containsEntry("a", "1")
-                            .containsEntry("b", "2").containsEntry("service.name", "my-service");
-                });
+            .execute(() -> {
+                assertThat(OtlpConfig.DEFAULT.resourceAttributes()).hasSize(3)
+                    .containsEntry("a", "1")
+                    .containsEntry("b", "2")
+                    .containsEntry("service.name", "my-service");
+            });
     }
 
     @Test
@@ -97,10 +103,11 @@ class OtlpConfigTest {
                 "a=100,service.name=your-service");
         OtlpConfig config = map::get;
         withEnvironmentVariables("OTEL_RESOURCE_ATTRIBUTES", "a=1,b=2", "OTEL_SERVICE_NAME", "my-service")
-                .execute(() -> {
-                    assertThat(config.resourceAttributes()).hasSize(2).containsEntry("a", "100")
-                            .containsEntry("service.name", "your-service");
-                });
+            .execute(() -> {
+                assertThat(config.resourceAttributes()).hasSize(2)
+                    .containsEntry("a", "100")
+                    .containsEntry("service.name", "your-service");
+            });
     }
 
     @Test

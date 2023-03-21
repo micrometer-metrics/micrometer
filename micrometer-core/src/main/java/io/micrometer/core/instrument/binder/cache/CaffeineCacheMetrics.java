@@ -167,21 +167,28 @@ public class CaffeineCacheMetrics<K, V, C extends Cache<K, V>> extends CacheMete
     protected void bindImplementationSpecificMetrics(MeterRegistry registry) {
         C cache = getCache();
         FunctionCounter.builder("cache.eviction.weight", cache, c -> c.stats().evictionWeight())
-                .tags(getTagsWithCacheName())
-                .description("The sum of weights of evicted entries. This total does not include manual invalidations.")
-                .register(registry);
+            .tags(getTagsWithCacheName())
+            .description("The sum of weights of evicted entries. This total does not include manual invalidations.")
+            .register(registry);
 
         if (cache instanceof LoadingCache) {
             // dividing these gives you a measure of load latency
             TimeGauge.builder("cache.load.duration", cache, TimeUnit.NANOSECONDS, c -> c.stats().totalLoadTime())
-                    .tags(getTagsWithCacheName()).description("The time the cache has spent loading new values")
-                    .register(registry);
+                .tags(getTagsWithCacheName())
+                .description("The time the cache has spent loading new values")
+                .register(registry);
 
-            FunctionCounter.builder("cache.load", cache, c -> c.stats().loadSuccessCount()).tags(getTagsWithCacheName())
-                    .tags("result", "success").description(DESCRIPTION_CACHE_LOAD).register(registry);
+            FunctionCounter.builder("cache.load", cache, c -> c.stats().loadSuccessCount())
+                .tags(getTagsWithCacheName())
+                .tags("result", "success")
+                .description(DESCRIPTION_CACHE_LOAD)
+                .register(registry);
 
-            FunctionCounter.builder("cache.load", cache, c -> c.stats().loadFailureCount()).tags(getTagsWithCacheName())
-                    .tags("result", "failure").description(DESCRIPTION_CACHE_LOAD).register(registry);
+            FunctionCounter.builder("cache.load", cache, c -> c.stats().loadFailureCount())
+                .tags(getTagsWithCacheName())
+                .tags("result", "failure")
+                .description(DESCRIPTION_CACHE_LOAD)
+                .register(registry);
         }
     }
 

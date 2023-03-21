@@ -42,14 +42,18 @@ class ApacheHttpClient5TimingInstrumentationVerificationTests
     @Override
     protected CloseableHttpClient clientInstrumentedWithMetrics() {
         return HttpClientBuilder.create()
-                .setRequestExecutor(MicrometerHttpRequestExecutor.builder(getRegistry()).build()).build();
+            .setRequestExecutor(MicrometerHttpRequestExecutor.builder(getRegistry()).build())
+            .build();
     }
 
     @Nullable
     @Override
     protected CloseableHttpClient clientInstrumentedWithObservations() {
-        return HttpClientBuilder.create().setRequestExecutor(MicrometerHttpRequestExecutor.builder(getRegistry())
-                .observationRegistry(getObservationRegistry()).build()).build();
+        return HttpClientBuilder.create()
+            .setRequestExecutor(MicrometerHttpRequestExecutor.builder(getRegistry())
+                .observationRegistry(getObservationRegistry())
+                .build())
+            .build();
     }
 
     @Override
@@ -67,8 +71,8 @@ class ApacheHttpClient5TimingInstrumentationVerificationTests
             URI baseUri, String templatedPath, String... pathVariables) {
         try {
             EntityUtils.consume(instrumentedClient
-                    .execute(makeRequest(method, body, baseUri, templatedPath, pathVariables), NOOP_RESPONSE_HANDLER)
-                    .getEntity());
+                .execute(makeRequest(method, body, baseUri, templatedPath, pathVariables), NOOP_RESPONSE_HANDLER)
+                .getEntity());
         }
         catch (IOException e) {
             throw new RuntimeException(e);

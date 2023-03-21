@@ -15,6 +15,7 @@
  */
 package io.micrometer.core.instrument.binder.http;
 
+import io.micrometer.common.KeyValue;
 import io.micrometer.core.instrument.Tag;
 
 /**
@@ -57,8 +58,11 @@ public enum Outcome {
 
     private final Tag tag;
 
+    private final KeyValue keyValue;
+
     Outcome() {
         this.tag = Tag.of("outcome", name());
+        this.keyValue = KeyValue.of("outcome", name());
     }
 
     /**
@@ -67,6 +71,15 @@ public enum Outcome {
      */
     public Tag asTag() {
         return this.tag;
+    }
+
+    /**
+     * Returns the {@code Outcome} as a {@link KeyValue} named {@code outcome}.
+     * @return the {@code outcome} {@code KeyValue}
+     * @since 1.11.0
+     */
+    public KeyValue asKeyValue() {
+        return this.keyValue;
     }
 
     /**

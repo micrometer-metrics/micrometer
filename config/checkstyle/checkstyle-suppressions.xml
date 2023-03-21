@@ -16,6 +16,8 @@
 	<suppress checks="JavadocPackageCheck" files="[\\/]src[\\/]test[\\/].*" />
 
 	<suppress id="SLF4JIllegalImportCheck" files="implementations[\\/].+" />
+	<suppress id="SLF4JIllegalImportCheck" files="benchmarks[\\/].+" />
+	<suppress id="SLF4JIllegalImportCheck" files="micrometer-osgi-test" />
 
 	<suppress id="sysout" files="ClearCustomMetricDescriptors.java"/>
 	<suppress id="sysout" files="HttpSender.java"/>

@@ -66,7 +66,7 @@ public class SignalFxMeterRegistry extends StepMeterRegistry {
     private final HttpEventProtobufReceiverFactory eventReceiverFactory;
 
     private final Set<OnSendErrorHandler> onSendErrorHandlerCollection = Collections
-            .singleton(metricError -> this.logger.warn("failed to send metrics: {}", metricError.getMessage()));
+        .singleton(metricError -> this.logger.warn("failed to send metrics: {}", metricError.getMessage()));
 
     private final boolean publishCumulativeHistogram;
 
@@ -114,18 +114,18 @@ public class SignalFxMeterRegistry extends StepMeterRegistry {
             try (AggregateMetricSender.Session session = metricSender.createSession()) {
                 // @formatter:off
                 batch.stream()
-                        .map(meter -> meter.match(
-                                this::addGauge,
-                                this::addCounter,
-                                this::addTimer,
-                                this::addDistributionSummary,
-                                this::addLongTaskTimer,
-                                this::addTimeGauge,
-                                this::addFunctionCounter,
-                                this::addFunctionTimer,
-                                this::addMeter))
-                        .flatMap(builders -> builders.map(builder -> builder.setTimestamp(timestamp).build()))
-                        .forEach(session::setDatapoint);
+                    .map(meter -> meter.match(
+                            this::addGauge,
+                            this::addCounter,
+                            this::addTimer,
+                            this::addDistributionSummary,
+                            this::addLongTaskTimer,
+                            this::addTimeGauge,
+                            this::addFunctionCounter,
+                            this::addFunctionTimer,
+                            this::addMeter))
+                    .flatMap(builders -> builders.map(builder -> builder.setTimestamp(timestamp).build()))
+                    .forEach(session::setDatapoint);
                 // @formatter:on
 
                 logger.debug("successfully sent {} metrics to SignalFx.", batch.size());
@@ -183,18 +183,23 @@ public class SignalFxMeterRegistry extends StepMeterRegistry {
             SignalFxProtocolBuffers.MetricType metricType, @Nullable String statSuffix, Number value) {
         SignalFxProtocolBuffers.Datum.Builder datumBuilder = SignalFxProtocolBuffers.Datum.newBuilder();
         SignalFxProtocolBuffers.Datum datum = (value instanceof Double ? datumBuilder.setDoubleValue((Double) value)
-                : datumBuilder.setIntValue(value.longValue())).build();
+                : datumBuilder.setIntValue(value.longValue()))
+            .build();
 
-        String metricName = config().namingConvention().name(
-                statSuffix == null ? meter.getId().getName() : meter.getId().getName() + "." + statSuffix,
-                meter.getId().getType(), meter.getId().getBaseUnit());
+        String metricName = config().namingConvention()
+            .name(statSuffix == null ? meter.getId().getName() : meter.getId().getName() + "." + statSuffix,
+                    meter.getId().getType(), meter.getId().getBaseUnit());
 
         SignalFxProtocolBuffers.DataPoint.Builder dataPointBuilder = SignalFxProtocolBuffers.DataPoint.newBuilder()
-                .setMetric(metricName).setMetricType(metricType).setValue(datum);
+            .setMetric(metricName)
+            .setMetricType(metricType)
+            .setValue(datum);
 
         for (Tag tag : getConventionTags(meter.getId())) {
-            dataPointBuilder.addDimensions(SignalFxProtocolBuffers.Dimension.newBuilder().setKey(tag.getKey())
-                    .setValue(tag.getValue()).build());
+            dataPointBuilder.addDimensions(SignalFxProtocolBuffers.Dimension.newBuilder()
+                .setKey(tag.getKey())
+                .setValue(tag.getValue())
+                .build());
         }
 
         return dataPointBuilder;

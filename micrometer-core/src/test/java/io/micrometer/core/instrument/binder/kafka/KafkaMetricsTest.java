@@ -245,8 +245,8 @@ class KafkaMetricsTest {
         kafkaMetrics.bindTo(registry);
         assertThat(registry.getMeters()).hasSize(1);
         assertThat(registry.getMeters().get(0).getId().getTags())
-                .containsExactlyInAnyOrder(Tag.of("kafka.version", "unknown"), Tag.of("common", "value")); // only
-                                                                                                           // version
+            .containsExactlyInAnyOrder(Tag.of("kafka.version", "unknown"), Tag.of("common", "value")); // only
+                                                                                                       // version
 
         tags.put("key0", "value0");
         kafkaMetrics.checkAndBindMetrics(registry);
@@ -279,8 +279,13 @@ class KafkaMetricsTest {
         kafkaMetrics = new KafkaMetrics(supplier);
         MeterRegistry registry = new SimpleMeterRegistry();
         // simulate PrometheusMeterRegistry restriction
-        registry.config().onMeterAdded(meter -> registry.find(meter.getId().getName()).meters().stream()
-                .filter(m -> m.getId().getTags().size() != meter.getId().getTags().size()).findAny().ifPresent(m -> {
+        registry.config()
+            .onMeterAdded(meter -> registry.find(meter.getId().getName())
+                .meters()
+                .stream()
+                .filter(m -> m.getId().getTags().size() != meter.getId().getTags().size())
+                .findAny()
+                .ifPresent(m -> {
                     throw new RuntimeException("meter exists with different number of tags");
                 }));
         // When
@@ -312,7 +317,8 @@ class KafkaMetricsTest {
         kafkaMetrics.checkAndBindMetrics(registry);
         // Then
         assertThat(registry.getMeters()).hasSize(2);
-        registry.getMeters().forEach(meter -> assertThat(meter.getId().getTags()).extracting(Tag::getKey)
+        registry.getMeters()
+            .forEach(meter -> assertThat(meter.getId().getTags()).extracting(Tag::getKey)
                 .containsOnly("key0", "key1", "client.id", "kafka.version"));
     }
 
@@ -339,9 +345,11 @@ class KafkaMetricsTest {
         metrics.put(metricName, newMetricInstance);
 
         kafkaMetrics.checkAndBindMetrics(registry);
-        assertThat(registry.getMeters()).singleElement().extracting(Meter::measure)
-                .satisfies(measurements -> assertThat(measurements).singleElement().extracting(Measurement::getValue)
-                        .isEqualTo(2.0));
+        assertThat(registry.getMeters()).singleElement()
+            .extracting(Meter::measure)
+            .satisfies(measurements -> assertThat(measurements).singleElement()
+                .extracting(Measurement::getValue)
+                .isEqualTo(2.0));
     }
 
     @Issue("#2801")
@@ -362,9 +370,11 @@ class KafkaMetricsTest {
         kafkaMetrics.bindTo(registry);
         assertThat(registry.getMeters()).hasSize(1);
 
-        assertThat(registry.getMeters()).singleElement().extracting(Meter::measure)
-                .satisfies(measurements -> assertThat(measurements).singleElement().extracting(Measurement::getValue)
-                        .isEqualTo(1.0));
+        assertThat(registry.getMeters()).singleElement()
+            .extracting(Meter::measure)
+            .satisfies(measurements -> assertThat(measurements).singleElement()
+                .extracting(Measurement::getValue)
+                .isEqualTo(1.0));
 
         metricsReference.set(new HashMap<>());
         MetricName newMetricName = new MetricName("a0", "b0", "c0", new LinkedHashMap<>());
@@ -373,16 +383,20 @@ class KafkaMetricsTest {
         KafkaMetric newMetricInstance = new KafkaMetric(this, newMetricName, newValue, new MetricConfig(), Time.SYSTEM);
         metricsReference.get().put(newMetricName, newMetricInstance);
 
-        assertThat(registry.getMeters()).singleElement().extracting(Meter::measure)
-                .satisfies(measurements -> assertThat(measurements).singleElement().extracting(Measurement::getValue)
-                        .isEqualTo(1.0)); // still referencing the old value since the map
-                                          // is only updated in checkAndBindMetrics
+        assertThat(registry.getMeters()).singleElement()
+            .extracting(Meter::measure)
+            .satisfies(measurements -> assertThat(measurements).singleElement()
+                .extracting(Measurement::getValue)
+                .isEqualTo(1.0)); // still referencing the old value since the map
+                                  // is only updated in checkAndBindMetrics
 
         kafkaMetrics.checkAndBindMetrics(registry);
-        assertThat(registry.getMeters()).singleElement().extracting(Meter::measure)
-                .satisfies(measurements -> assertThat(measurements).singleElement().extracting(Measurement::getValue)
-                        .isEqualTo(2.0)); // referencing the new value since the map was
-                                          // updated in checkAndBindMetrics
+        assertThat(registry.getMeters()).singleElement()
+            .extracting(Meter::measure)
+            .satisfies(measurements -> assertThat(measurements).singleElement()
+                .extracting(Measurement::getValue)
+                .isEqualTo(2.0)); // referencing the new value since the map was
+                                  // updated in checkAndBindMetrics
     }
 
     @Issue("#2843")

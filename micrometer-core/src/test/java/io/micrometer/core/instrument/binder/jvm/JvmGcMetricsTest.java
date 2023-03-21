@@ -21,6 +21,7 @@ import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.core.importer.ClassFileImporter;
 import com.tngtech.archunit.lang.ArchRule;
 import io.micrometer.core.Issue;
+import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.binder.jvm.JvmGcMetrics.GcMetricsNotificationListener;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
@@ -40,12 +41,12 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 import static com.tngtech.archunit.core.domain.JavaClass.Predicates.resideInAPackage;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.methods;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.within;
+import static org.assertj.core.api.Assertions.*;
 import static org.awaitility.Awaitility.await;
 
 /**
@@ -56,24 +57,27 @@ import static org.awaitility.Awaitility.await;
 @GcTest
 class JvmGcMetricsTest {
 
+    private static final Tags DEFAULT_TAGS = Tags.of("key", "value");
+
     SimpleMeterRegistry registry = new SimpleMeterRegistry();
 
     JvmGcMetrics binder;
 
     @BeforeEach
     void beforeEach() {
-        this.binder = new JvmGcMetrics();
+        this.binder = new JvmGcMetrics(DEFAULT_TAGS);
         binder.bindTo(registry);
     }
 
     @Test
     void noJvmImplementationSpecificApiSignatures() {
         JavaClasses importedClasses = new ClassFileImporter()
-                .importPackages("io.micrometer.core.instrument.binder.jvm");
+            .importPackages("io.micrometer.core.instrument.binder.jvm");
 
         ArchRule noSunManagementInMethodSignatures = methods().should()
-                .notHaveRawReturnType(resideInAPackage("com.sun.management..")).andShould()
-                .notHaveRawParameterTypes(DescribedPredicate.anyElementThat(resideInAPackage("com.sun.management..")));
+            .notHaveRawReturnType(resideInAPackage("com.sun.management.."))
+            .andShould()
+            .notHaveRawParameterTypes(DescribedPredicate.anyElementThat(resideInAPackage("com.sun.management..")));
 
         noSunManagementInMethodSignatures.check(importedClasses);
     }
@@ -81,10 +85,22 @@ class JvmGcMetricsTest {
     @Test
     void gcMetricsAvailableAfterGc() {
         System.gc();
-        await().timeout(200, TimeUnit.MILLISECONDS).alias("NotificationListener takes time after GC")
-                .untilAsserted(() -> assertThat(registry.find("jvm.gc.live.data.size").gauge().value()).isPositive());
+        await().timeout(200, TimeUnit.MILLISECONDS)
+            .alias("NotificationListener takes time after GC")
+            .untilAsserted(() -> assertThat(registry.find("jvm.gc.live.data.size").gauge().value()).isPositive());
         assertThat(registry.find("jvm.gc.memory.allocated").counter().count()).isPositive();
         assertThat(registry.find("jvm.gc.max.data.size").gauge().value()).isPositive();
+        Optional<Timer> optionalGcTimer = registry.find("jvm.gc.pause")
+            .timers()
+            .stream()
+            .filter(timer -> "System.gc()".equals(timer.getId().getTag("cause")))
+            .findFirst();
+        assertThat(optionalGcTimer).isPresent();
+        Timer gcTimer = optionalGcTimer.get();
+        assertThat(gcTimer.count()).isPositive();
+        assertThat(gcTimer.getId().getTag("gc")).isNotBlank();
+        assertThat(gcTimer.getId().getTag("key")).hasToString("value");
+        assertThat(gcTimer.getId().getTag("action")).isIn("end of major GC", "end of GC pause");
 
         if (!binder.isGenerationalGc) {
             return;
@@ -113,8 +129,8 @@ class JvmGcMetricsTest {
                 concurrentPhaseCount += mbean.getCollectionCount();
                 concurrentTimeMs += mbean.getCollectionTime();
             }
-            System.out.println(
-                    mbean.getName() + " (" + mbean.getCollectionCount() + ") " + mbean.getCollectionTime() + "ms");
+            System.out
+                .println(mbean.getName() + " (" + mbean.getCollectionCount() + ") " + mbean.getCollectionTime() + "ms");
         }
         checkPhaseCount(pausePhaseCount, concurrentPhaseCount);
         checkCollectionTime(pauseTimeMs, concurrentTimeMs);
@@ -134,7 +150,7 @@ class JvmGcMetricsTest {
             }
             NotificationEmitter notificationEmitter = (NotificationEmitter) gcBean;
             notificationEmitter.addNotificationListener(capturingListener, notification -> notification.getType()
-                    .equals(GarbageCollectionNotificationInfo.GARBAGE_COLLECTION_NOTIFICATION), null);
+                .equals(GarbageCollectionNotificationInfo.GARBAGE_COLLECTION_NOTIFICATION), null);
             notificationListenerCleanUpRunnables.add(() -> {
                 try {
                     notificationEmitter.removeNotificationListener(capturingListener);
@@ -187,8 +203,11 @@ class JvmGcMetricsTest {
     private void checkPhaseCount(long expectedPauseCount, long expectedConcurrentCount) {
         await().atMost(200, TimeUnit.MILLISECONDS).untilAsserted(() -> {
             long observedPauseCount = registry.find("jvm.gc.pause").timers().stream().mapToLong(Timer::count).sum();
-            long observedConcurrentCount = registry.find("jvm.gc.concurrent.phase.time").timers().stream()
-                    .mapToLong(Timer::count).sum();
+            long observedConcurrentCount = registry.find("jvm.gc.concurrent.phase.time")
+                .timers()
+                .stream()
+                .mapToLong(Timer::count)
+                .sum();
             assertThat(observedPauseCount).isEqualTo(expectedPauseCount);
             assertThat(observedConcurrentCount).isEqualTo(expectedConcurrentCount);
         });
@@ -196,10 +215,16 @@ class JvmGcMetricsTest {
 
     private void checkCollectionTime(long expectedPauseTimeMs, long expectedConcurrentTimeMs) {
         await().atMost(200, TimeUnit.MILLISECONDS).untilAsserted(() -> {
-            double observedPauseTimeMs = registry.find("jvm.gc.pause").timers().stream()
-                    .mapToDouble(timer -> timer.totalTime(TimeUnit.MILLISECONDS)).sum();
-            double observedConcurrentTimeMs = registry.find("jvm.gc.concurrent.phase.time").timers().stream()
-                    .mapToDouble(timer -> timer.totalTime(TimeUnit.MILLISECONDS)).sum();
+            double observedPauseTimeMs = registry.find("jvm.gc.pause")
+                .timers()
+                .stream()
+                .mapToDouble(timer -> timer.totalTime(TimeUnit.MILLISECONDS))
+                .sum();
+            double observedConcurrentTimeMs = registry.find("jvm.gc.concurrent.phase.time")
+                .timers()
+                .stream()
+                .mapToDouble(timer -> timer.totalTime(TimeUnit.MILLISECONDS))
+                .sum();
             // small difference can happen when less than 1ms timing gets rounded
             assertThat(observedPauseTimeMs).isCloseTo(expectedPauseTimeMs, within(1d));
             assertThat(observedConcurrentTimeMs).isCloseTo(expectedConcurrentTimeMs, within(1d));

@@ -142,12 +142,12 @@ class AppOpticsMeterRegistryTest {
     @Test
     void writeFunctionCounterShouldDropInfiniteValues() {
         FunctionCounter counter = FunctionCounter.builder("myCounter", Double.POSITIVE_INFINITY, Number::doubleValue)
-                .register(meterRegistry);
+            .register(meterRegistry);
         clock.add(config.step());
         assertThat(meterRegistry.writeFunctionCounter(counter).isPresent()).isFalse();
 
         counter = FunctionCounter.builder("myCounter", Double.NEGATIVE_INFINITY, Number::doubleValue)
-                .register(meterRegistry);
+            .register(meterRegistry);
         clock.add(config.step());
         assertThat(meterRegistry.writeFunctionCounter(counter).isPresent()).isFalse();
     }
@@ -188,7 +188,7 @@ class AppOpticsMeterRegistryTest {
         clock.add(Duration.ofSeconds(63));
 
         assertThat(meterRegistry.getBodyMeasurementsPrefix())
-                .isEqualTo(String.format(AppOpticsMeterRegistry.BODY_MEASUREMENTS_PREFIX, 63));
+            .isEqualTo(String.format(AppOpticsMeterRegistry.BODY_MEASUREMENTS_PREFIX, 63));
     }
 
     @Test
@@ -198,17 +198,17 @@ class AppOpticsMeterRegistryTest {
         clock.add(Duration.ofSeconds(63));
 
         assertThat(meterRegistry.getBodyMeasurementsPrefix())
-                .isEqualTo(String.format(AppOpticsMeterRegistry.BODY_MEASUREMENTS_PREFIX, 60));
+            .isEqualTo(String.format(AppOpticsMeterRegistry.BODY_MEASUREMENTS_PREFIX, 60));
 
         clock.addSeconds(56); // 119
 
         assertThat(meterRegistry.getBodyMeasurementsPrefix())
-                .isEqualTo(String.format(AppOpticsMeterRegistry.BODY_MEASUREMENTS_PREFIX, 60));
+            .isEqualTo(String.format(AppOpticsMeterRegistry.BODY_MEASUREMENTS_PREFIX, 60));
 
         clock.addSeconds(1); // 120
 
         assertThat(meterRegistry.getBodyMeasurementsPrefix())
-                .isEqualTo(String.format(AppOpticsMeterRegistry.BODY_MEASUREMENTS_PREFIX, 120));
+            .isEqualTo(String.format(AppOpticsMeterRegistry.BODY_MEASUREMENTS_PREFIX, 120));
     }
 
 }

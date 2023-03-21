@@ -101,15 +101,23 @@ class OkHttpConnectionPoolMetricsTest {
         when(connectionPool.connectionCount()).thenReturn(17);
         when(connectionPool.idleConnectionCount()).thenReturn(10, 9);
 
-        assertThat(registry.get("okhttp.pool.connection.count").tags(Tags.of("foo", "bar", "state", "active")).gauge()
-                .value()).isEqualTo(7.0);
-        assertThat(registry.get("okhttp.pool.connection.count").tags(Tags.of("foo", "bar", "state", "idle")).gauge()
-                .value()).isEqualTo(10.0);
+        assertThat(registry.get("okhttp.pool.connection.count")
+            .tags(Tags.of("foo", "bar", "state", "active"))
+            .gauge()
+            .value()).isEqualTo(7.0);
+        assertThat(registry.get("okhttp.pool.connection.count")
+            .tags(Tags.of("foo", "bar", "state", "idle"))
+            .gauge()
+            .value()).isEqualTo(10.0);
 
-        assertThat(registry.get("okhttp.pool.connection.count").tags(Tags.of("foo", "bar", "state", "active")).gauge()
-                .value()).isEqualTo(8.0);
-        assertThat(registry.get("okhttp.pool.connection.count").tags(Tags.of("foo", "bar", "state", "idle")).gauge()
-                .value()).isEqualTo(9.0);
+        assertThat(registry.get("okhttp.pool.connection.count")
+            .tags(Tags.of("foo", "bar", "state", "active"))
+            .gauge()
+            .value()).isEqualTo(8.0);
+        assertThat(registry.get("okhttp.pool.connection.count")
+            .tags(Tags.of("foo", "bar", "state", "idle"))
+            .gauge()
+            .value()).isEqualTo(9.0);
     }
 
     @Test
@@ -118,7 +126,7 @@ class OkHttpConnectionPoolMetricsTest {
                 Tags.of("foo", "bar"), 1234);
         instance.bindTo(registry);
         assertThat(registry.get("huge.pool.connection.limit").tags(Tags.of("foo", "bar")).gauge().value())
-                .isEqualTo(1234.0);
+            .isEqualTo(1234.0);
     }
 
     @Test

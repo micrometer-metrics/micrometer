@@ -77,9 +77,11 @@ public class MongoMetricsCommandListener implements CommandListener {
     }
 
     private void timeCommand(CommandEvent event, long elapsedTimeInNanoseconds) {
-        Timer.builder("mongodb.driver.commands").description("Timer of mongodb commands")
-                .tags(tagsProvider.commandTags(event)).register(registry)
-                .record(elapsedTimeInNanoseconds, TimeUnit.NANOSECONDS);
+        Timer.builder("mongodb.driver.commands")
+            .description("Timer of mongodb commands")
+            .tags(tagsProvider.commandTags(event))
+            .register(registry)
+            .record(elapsedTimeInNanoseconds, TimeUnit.NANOSECONDS);
     }
 
 }

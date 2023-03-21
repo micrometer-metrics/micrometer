@@ -19,6 +19,7 @@ import io.micrometer.core.instrument.Clock;
 
 import java.io.PrintStream;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.Locale;
 import java.util.NavigableSet;
 import java.util.Objects;
@@ -60,7 +61,7 @@ public class TimeWindowFixedBoundaryHistogram
         this.cumulativeBucketCounts = cumulativeBucketCounts;
 
         NavigableSet<Double> histogramBuckets = distributionStatisticConfig
-                .getHistogramBuckets(supportsAggregablePercentiles);
+            .getHistogramBuckets(supportsAggregablePercentiles);
 
         Boolean percentileHistogram = distributionStatisticConfig.isPercentileHistogram();
         if (percentileHistogram != null && percentileHistogram) {
@@ -111,9 +112,28 @@ public class TimeWindowFixedBoundaryHistogram
     }
 
     @Override
-    double countAtValue(double value) {
-        return this.cumulativeBucketCounts ? currentHistogram().countAtValueCumulative(value)
-                : currentHistogram().countAtValue(value);
+    Iterator<CountAtBucket> countsAtValues(Iterator<Double> values) {
+        return new Iterator<CountAtBucket>() {
+            private double cumulativeCount = 0.0;
+
+            @Override
+            public boolean hasNext() {
+                return values.hasNext();
+            }
+
+            @Override
+            public CountAtBucket next() {
+                double value = values.next();
+                double count = currentHistogram().countAtValue(value);
+                if (cumulativeBucketCounts) {
+                    cumulativeCount += count;
+                    return new CountAtBucket(value, cumulativeCount);
+                }
+                else {
+                    return new CountAtBucket(value, count);
+                }
+            }
+        };
     }
 
     @Override
@@ -143,22 +163,12 @@ public class TimeWindowFixedBoundaryHistogram
 
         /**
          * For recording efficiency, this is a normal histogram. We turn these values into
-         * cumulative counts only on calls to {@link #countAtValueCumulative(double)}.
+         * cumulative counts only on calls to {@link #countsAtValues(Iterator<Double>)}.
          */
         final AtomicLongArray values;
 
         FixedBoundaryHistogram() {
             this.values = new AtomicLongArray(buckets.length);
-        }
-
-        long countAtValueCumulative(double value) {
-            int index = Arrays.binarySearch(buckets, value);
-            if (index < 0)
-                return 0;
-            long count = 0;
-            for (int i = 0; i <= index; i++)
-                count += values.get(i);
-            return count;
         }
 
         long countAtValue(double value) {

@@ -71,14 +71,12 @@ public abstract class AbstractMetricCollectingInterceptor {
      */
     protected static Counter.Builder prepareCounterFor(final MethodDescriptor<?, ?> method, final String name,
             final String description) {
-        // @formatter:off
         return Counter.builder(name)
-                .description(description)
-                .baseUnit(BaseUnits.MESSAGES)
-                .tag(TAG_SERVICE_NAME, method.getServiceName())
-                .tag(TAG_METHOD_NAME, method.getBareMethodName())
-                .tag(TAG_METHOD_TYPE, method.getType().name());
-        // @formatter:on
+            .description(description)
+            .baseUnit(BaseUnits.MESSAGES)
+            .tag(TAG_SERVICE_NAME, method.getServiceName())
+            .tag(TAG_METHOD_NAME, method.getBareMethodName())
+            .tag(TAG_METHOD_TYPE, method.getType().name());
     }
 
     /**
@@ -90,13 +88,11 @@ public abstract class AbstractMetricCollectingInterceptor {
      */
     protected static Timer.Builder prepareTimerFor(final MethodDescriptor<?, ?> method, final String name,
             final String description) {
-        // @formatter:off
         return Timer.builder(name)
-                .description(description)
-                .tag(TAG_SERVICE_NAME, method.getServiceName())
-                .tag(TAG_METHOD_NAME, method.getBareMethodName())
-                .tag(TAG_METHOD_TYPE, method.getType().name());
-        // @formatter:on
+            .description(description)
+            .tag(TAG_SERVICE_NAME, method.getServiceName())
+            .tag(TAG_METHOD_NAME, method.getBareMethodName())
+            .tag(TAG_METHOD_TYPE, method.getType().name());
     }
 
     private final Map<MethodDescriptor<?, ?>, MetricSet> metricsForMethods = new ConcurrentHashMap<>();
@@ -203,8 +199,9 @@ public abstract class AbstractMetricCollectingInterceptor {
      */
     protected Function<Code, Timer> asTimerFunction(final Supplier<Timer.Builder> timerTemplate) {
         final Map<Code, Timer> cache = new EnumMap<>(Code.class);
-        final Function<Code, Timer> creator = code -> timerTemplate.get().tag(TAG_STATUS_CODE, code.name())
-                .register(this.registry);
+        final Function<Code, Timer> creator = code -> timerTemplate.get()
+            .tag(TAG_STATUS_CODE, code.name())
+            .register(this.registry);
         final Function<Code, Timer> cacheResolver = code -> cache.computeIfAbsent(code, creator);
         // Eager initialize
         for (final Code code : this.eagerInitializedCodes) {

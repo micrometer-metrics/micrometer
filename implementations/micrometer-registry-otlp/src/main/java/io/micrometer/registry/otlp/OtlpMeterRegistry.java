@@ -102,23 +102,25 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
         for (List<Meter> batch : MeterPartition.partition(this, config.batchSize())) {
             this.setPublishTimeNano();
             List<Metric> metrics = batch.stream()
-                    .map(meter -> meter.match(this::writeGauge, this::writeCounter, this::writeHistogramSupport,
-                            this::writeHistogramSupport, this::writeHistogramSupport, this::writeGauge,
-                            this::writeFunctionCounter, this::writeFunctionTimer, this::writeMeter))
-                    .collect(Collectors.toList());
+                .map(meter -> meter.match(this::writeGauge, this::writeCounter, this::writeHistogramSupport,
+                        this::writeHistogramSupport, this::writeHistogramSupport, this::writeGauge,
+                        this::writeFunctionCounter, this::writeFunctionTimer, this::writeMeter))
+                .collect(Collectors.toList());
 
             try {
                 ExportMetricsServiceRequest request = ExportMetricsServiceRequest.newBuilder()
-                        .addResourceMetrics(ResourceMetrics.newBuilder().setResource(this.resource)
-                                .addScopeMetrics(ScopeMetrics.newBuilder()
-                                        // we don't have instrumentation library/version
-                                        // attached to meters; leave unknown for now
-                                        // .setScope(InstrumentationScope.newBuilder().setName("").setVersion("").build())
-                                        .addAllMetrics(metrics).build())
-                                .build())
-                        .build();
+                    .addResourceMetrics(ResourceMetrics.newBuilder()
+                        .setResource(this.resource)
+                        .addScopeMetrics(ScopeMetrics.newBuilder()
+                            // we don't have instrumentation library/version
+                            // attached to meters; leave unknown for now
+                            // .setScope(InstrumentationScope.newBuilder().setName("").setVersion("").build())
+                            .addAllMetrics(metrics)
+                            .build())
+                        .build())
+                    .build();
                 HttpSender.Request.Builder httpRequest = this.httpSender.post(this.config.url())
-                        .withContent("application/x-protobuf", request.toByteArray());
+                    .withContent("application/x-protobuf", request.toByteArray());
                 this.config.headers().forEach(httpRequest::withHeader);
                 httpRequest.send();
             }
@@ -194,8 +196,10 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
 
     @Override
     protected DistributionStatisticConfig defaultHistogramConfig() {
-        return DistributionStatisticConfig.builder().expiry(this.config.step()).build()
-                .merge(DistributionStatisticConfig.DEFAULT);
+        return DistributionStatisticConfig.builder()
+            .expiry(this.config.step())
+            .build()
+            .merge(DistributionStatisticConfig.DEFAULT);
     }
 
     // VisibleForTesting
@@ -208,10 +212,13 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
     // VisibleForTesting
     Metric writeGauge(Gauge gauge) {
         return getMetricBuilder(gauge.getId())
-                .setGauge(io.opentelemetry.proto.metrics.v1.Gauge.newBuilder()
-                        .addDataPoints(NumberDataPoint.newBuilder().setTimeUnixNano(publishTimeNanos)
-                                .setAsDouble(gauge.value()).addAllAttributes(getTagsForId(gauge.getId())).build()))
-                .build();
+            .setGauge(io.opentelemetry.proto.metrics.v1.Gauge.newBuilder()
+                .addDataPoints(NumberDataPoint.newBuilder()
+                .setTimeUnixNano(publishTimeNanos)
+                .setAsDouble(gauge.value())
+                .addAllAttributes(getTagsForId(gauge.getId()))
+                .build()))
+            .build();
     }
 
     // VisibleForTesting
@@ -225,11 +232,18 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
     }
 
     private Metric writeSum(Meter meter, DoubleSupplier count) {
-        return getMetricBuilder(meter.getId()).setSum(Sum.newBuilder()
-                .addDataPoints(NumberDataPoint.newBuilder().setStartTimeUnixNano(getStartTimeNanos(meter))
-                        .setTimeUnixNano(publishTimeNanos).setAsDouble(count.getAsDouble())
-                        .addAllAttributes(getTagsForId(meter.getId())).build())
-                .setIsMonotonic(true).setAggregationTemporality(otlpAggregationTemporality).build()).build();
+        return getMetricBuilder(meter.getId())
+            .setSum(Sum.newBuilder()
+                .addDataPoints(NumberDataPoint.newBuilder()
+                    .setStartTimeUnixNano(getStartTimeNanos(meter))
+                    .setTimeUnixNano(publishTimeNanos)
+                    .setAsDouble(count.getAsDouble())
+                    .addAllAttributes(getTagsForId(meter.getId()))
+                    .build())
+                .setIsMonotonic(true)
+                .setAggregationTemporality(otlpAggregationTemporality)
+                .build())
+            .build();
     }
 
     // VisibleForTesting
@@ -245,20 +259,27 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
 
         // if percentiles configured, use summary
         if (histogramSnapshot.percentileValues().length != 0) {
-            SummaryDataPoint.Builder summaryData = SummaryDataPoint.newBuilder().addAllAttributes(tags)
-                    .setStartTimeUnixNano(startTimeNanos).setTimeUnixNano(publishTimeNanos).setSum(total)
-                    .setCount(count);
+            SummaryDataPoint.Builder summaryData = SummaryDataPoint.newBuilder()
+                .addAllAttributes(tags)
+                .setStartTimeUnixNano(startTimeNanos)
+                .setTimeUnixNano(publishTimeNanos)
+                .setSum(total)
+                .setCount(count);
             for (ValueAtPercentile percentile : histogramSnapshot.percentileValues()) {
-                summaryData.addQuantileValues(
-                        SummaryDataPoint.ValueAtQuantile.newBuilder().setQuantile(percentile.percentile()).setValue(
-                                TimeUtils.convert(percentile.value(), TimeUnit.NANOSECONDS, getBaseTimeUnit())));
+                summaryData.addQuantileValues(SummaryDataPoint.ValueAtQuantile.newBuilder()
+                    .setQuantile(percentile.percentile())
+                    .setValue(TimeUtils.convert(percentile.value(), TimeUnit.NANOSECONDS, getBaseTimeUnit())));
             }
             metricBuilder.setSummary(Summary.newBuilder().addDataPoints(summaryData));
             return metricBuilder.build();
         }
 
-        HistogramDataPoint.Builder histogramDataPoint = HistogramDataPoint.newBuilder().addAllAttributes(tags)
-                .setStartTimeUnixNano(startTimeNanos).setTimeUnixNano(publishTimeNanos).setSum(total).setCount(count);
+        HistogramDataPoint.Builder histogramDataPoint = HistogramDataPoint.newBuilder()
+            .addAllAttributes(tags)
+            .setStartTimeUnixNano(startTimeNanos)
+            .setTimeUnixNano(publishTimeNanos)
+            .setSum(total)
+            .setCount(count);
 
         if (isDeltaAggregationTemporality) {
             histogramDataPoint.setMax(isTimeBased ? histogramSnapshot.max(getBaseTimeUnit()) : histogramSnapshot.max());
@@ -266,26 +287,35 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
         // if histogram enabled, add histogram buckets
         if (histogramSnapshot.histogramCounts().length != 0) {
             for (CountAtBucket countAtBucket : histogramSnapshot.histogramCounts()) {
-                histogramDataPoint.addExplicitBounds(
-                        isTimeBased ? countAtBucket.bucket(getBaseTimeUnit()) : countAtBucket.bucket());
+                histogramDataPoint
+                    .addExplicitBounds(isTimeBased ? countAtBucket.bucket(getBaseTimeUnit()) : countAtBucket.bucket());
                 histogramDataPoint.addBucketCounts((long) countAtBucket.count());
             }
-            metricBuilder.setHistogram(Histogram.newBuilder().setAggregationTemporality(otlpAggregationTemporality)
-                    .addDataPoints(histogramDataPoint));
+            metricBuilder.setHistogram(Histogram.newBuilder()
+                .setAggregationTemporality(otlpAggregationTemporality)
+                .addDataPoints(histogramDataPoint));
             return metricBuilder.build();
         }
 
-        return metricBuilder.setHistogram(Histogram.newBuilder().setAggregationTemporality(otlpAggregationTemporality)
-                .addDataPoints(histogramDataPoint)).build();
+        return metricBuilder
+            .setHistogram(Histogram.newBuilder()
+                .setAggregationTemporality(otlpAggregationTemporality)
+                .addDataPoints(histogramDataPoint))
+            .build();
     }
 
     // VisibleForTesting
     Metric writeFunctionTimer(FunctionTimer functionTimer) {
-        return getMetricBuilder(functionTimer.getId()).setHistogram(Histogram.newBuilder()
-                .addDataPoints(HistogramDataPoint.newBuilder().addAllAttributes(getTagsForId(functionTimer.getId()))
-                        .setStartTimeUnixNano(getStartTimeNanos((functionTimer))).setTimeUnixNano(publishTimeNanos)
-                        .setSum(functionTimer.totalTime(getBaseTimeUnit())).setCount((long) functionTimer.count()))
-                .setAggregationTemporality(otlpAggregationTemporality)).build();
+        return getMetricBuilder(functionTimer.getId())
+            .setHistogram(Histogram.newBuilder()
+                .addDataPoints(HistogramDataPoint.newBuilder()
+                    .addAllAttributes(getTagsForId(functionTimer.getId()))
+                    .setStartTimeUnixNano(getStartTimeNanos((functionTimer)))
+                    .setTimeUnixNano(publishTimeNanos)
+                    .setSum(functionTimer.totalTime(getBaseTimeUnit()))
+                    .setCount((long) functionTimer.count()))
+                    .setAggregationTemporality(otlpAggregationTemporality))
+                    .build();
     }
 
     // VisibleForTesting
@@ -312,8 +342,10 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
     }
 
     private Iterable<? extends KeyValue> getTagsForId(Meter.Id id) {
-        return id.getTags().stream().map(tag -> createKeyValue(tag.getKey(), tag.getValue()))
-                .collect(Collectors.toList());
+        return id.getTags()
+            .stream()
+            .map(tag -> createKeyValue(tag.getKey(), tag.getValue()))
+            .collect(Collectors.toList());
     }
 
     // VisibleForTesting

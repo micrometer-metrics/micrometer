@@ -47,8 +47,9 @@ class SimpleMeterRegistryTest {
     @Issue("#370")
     @Test
     void serviceLevelObjectivesOnlyNoPercentileHistogram() {
-        DistributionSummary summary = DistributionSummary.builder("my.summary").serviceLevelObjectives(1.0, 2)
-                .register(registry);
+        DistributionSummary summary = DistributionSummary.builder("my.summary")
+            .serviceLevelObjectives(1.0, 2)
+            .register(registry);
 
         summary.record(1);
 
@@ -117,11 +118,15 @@ class SimpleMeterRegistryTest {
         Counter incorrectAnswers = Counter.builder("answers").tag("correct", "false").register(registry);
         incorrectAnswers.increment();
 
-        Timer latency = Timer.builder("latency").tag("service", "test").tag("method", "GET").tag("uri", "/api/people")
-                .register(registry);
+        Timer latency = Timer.builder("latency")
+            .tag("service", "test")
+            .tag("method", "GET")
+            .tag("uri", "/api/people")
+            .register(registry);
 
-        DistributionSummary requestSize = DistributionSummary.builder("request.size").baseUnit("bytes")
-                .register(registry);
+        DistributionSummary requestSize = DistributionSummary.builder("request.size")
+            .baseUnit("bytes")
+            .register(registry);
 
         for (int i = 0; i < 10; i++) {
             latency.record(Duration.ofMillis(20 + i * 2));
@@ -140,10 +145,13 @@ class SimpleMeterRegistryTest {
 
         AtomicLong cacheLatency = new AtomicLong(100);
         FunctionTimer.builder("cache.latency", cacheLatency, obj -> 5, AtomicLong::doubleValue, MILLISECONDS)
-                .register(registry);
+            .register(registry);
 
-        Meter.builder("custom.meter", Meter.Type.OTHER, Arrays.asList(new Measurement(() -> 42d, Statistic.VALUE),
-                new Measurement(() -> 21d, Statistic.UNKNOWN))).register(registry);
+        Meter
+            .builder("custom.meter", Meter.Type.OTHER,
+                    Arrays.asList(new Measurement(() -> 42d, Statistic.VALUE),
+                            new Measurement(() -> 21d, Statistic.UNKNOWN)))
+            .register(registry);
 
         assertThat(registry.getMetersAsString()).isEqualTo("answers(COUNTER)[correct='true']; count=2.0\n"
                 + "answers(COUNTER)[correct='false']; count=1.0\n"

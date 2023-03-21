@@ -78,7 +78,7 @@ class ProcessorMetricsTest {
         assertThat(registry.get("system.cpu.usage").gauge().value()).isPositive();
         assertThat(registry.get("process.cpu.usage").gauge().value()).isGreaterThanOrEqualTo(-1);
         await().atMost(Duration.ofMillis(200))
-                .untilAsserted(() -> assertThat(registry.get("process.cpu.usage").gauge().value()).isPositive());
+            .untilAsserted(() -> assertThat(registry.get("process.cpu.usage").gauge().value()).isPositive());
     }
 
     private boolean isOpenJ9() {

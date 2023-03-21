@@ -54,8 +54,13 @@ public class PrometheusTimer extends AbstractTimer {
     PrometheusTimer(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig,
             PauseDetector pauseDetector, HistogramFlavor histogramFlavor,
             @Nullable HistogramExemplarSampler exemplarSampler) {
-        super(id, clock, DistributionStatisticConfig.builder().percentilesHistogram(false).serviceLevelObjectives()
-                .build().merge(distributionStatisticConfig), pauseDetector, TimeUnit.SECONDS, false);
+        super(id, clock,
+                DistributionStatisticConfig.builder()
+                    .percentilesHistogram(false)
+                    .serviceLevelObjectives()
+                    .build()
+                    .merge(distributionStatisticConfig),
+                pauseDetector, TimeUnit.SECONDS, false);
 
         this.histogramFlavor = histogramFlavor;
         this.max = new TimeWindowMax(clock, distributionStatisticConfig);

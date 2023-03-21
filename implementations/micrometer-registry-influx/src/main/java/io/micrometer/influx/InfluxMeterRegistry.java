@@ -99,13 +99,15 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
 
         try {
             String createDatabaseQuery = new CreateDatabaseQueryBuilder(config.db())
-                    .setRetentionDuration(config.retentionDuration()).setRetentionPolicyName(config.retentionPolicy())
-                    .setRetentionReplicationFactor(config.retentionReplicationFactor())
-                    .setRetentionShardDuration(config.retentionShardDuration()).build();
+                .setRetentionDuration(config.retentionDuration())
+                .setRetentionPolicyName(config.retentionPolicy())
+                .setRetentionReplicationFactor(config.retentionReplicationFactor())
+                .setRetentionShardDuration(config.retentionShardDuration())
+                .build();
 
             HttpSender.Request.Builder requestBuilder = httpClient
-                    .post(config.uri() + "/query?q=" + URLEncoder.encode(createDatabaseQuery, "UTF-8"))
-                    .withBasicAuthentication(config.userName(), config.password());
+                .post(config.uri() + "/query?q=" + URLEncoder.encode(createDatabaseQuery, "UTF-8"))
+                .withBasicAuthentication(config.userName(), config.password());
             config.apiVersion().addHeaderToken(config, requestBuilder);
 
             requestBuilder.send().onSuccess(response -> {
@@ -127,29 +129,29 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
 
             for (List<Meter> batch : MeterPartition.partition(this, config.batchSize())) {
                 HttpSender.Request.Builder requestBuilder = httpClient.post(influxEndpoint)
-                        .withBasicAuthentication(config.userName(), config.password());
+                    .withBasicAuthentication(config.userName(), config.password());
                 config.apiVersion().addHeaderToken(config, requestBuilder);
                 // @formatter:off
                 requestBuilder
-                        .withPlainText(batch.stream()
-                                .flatMap(m -> m.match(
-                                        gauge -> writeGauge(gauge.getId(), gauge.value()),
-                                        counter -> writeCounter(counter.getId(), counter.count()),
-                                        this::writeTimer,
-                                        this::writeSummary,
-                                        this::writeLongTaskTimer,
-                                        gauge -> writeGauge(gauge.getId(), gauge.value(getBaseTimeUnit())),
-                                        counter -> writeCounter(counter.getId(), counter.count()),
-                                        this::writeFunctionTimer,
-                                        this::writeMeter))
-                                .collect(joining("\n")))
-                        .compressWhen(config::compressed)
-                        .send()
-                        .onSuccess(response -> {
-                            logger.debug("successfully sent {} metrics to InfluxDB.", batch.size());
-                            databaseExists = true;
-                        })
-                        .onError(response -> logger.error("failed to send metrics to influx: {}", response.body()));
+                    .withPlainText(batch.stream()
+                        .flatMap(m -> m.match(
+                                gauge -> writeGauge(gauge.getId(), gauge.value()),
+                                counter -> writeCounter(counter.getId(), counter.count()),
+                                this::writeTimer,
+                                this::writeSummary,
+                                this::writeLongTaskTimer,
+                                gauge -> writeGauge(gauge.getId(), gauge.value(getBaseTimeUnit())),
+                                counter -> writeCounter(counter.getId(), counter.count()),
+                                this::writeFunctionTimer,
+                                this::writeMeter))
+                        .collect(joining("\n")))
+                    .compressWhen(config::compressed)
+                    .send()
+                    .onSuccess(response -> {
+                        logger.debug("successfully sent {} metrics to InfluxDB.", batch.size());
+                        databaseExists = true;
+                    })
+                    .onError(response -> logger.error("failed to send metrics to influx: {}", response.body()));
                 // @formatter:on
             }
         }
@@ -170,8 +172,10 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
             if (!Double.isFinite(value)) {
                 continue;
             }
-            String fieldKey = measurement.getStatistic().getTagValueRepresentation()
-                    .replaceAll("(.)(\\p{Upper})", "$1_$2").toLowerCase();
+            String fieldKey = measurement.getStatistic()
+                .getTagValueRepresentation()
+                .replaceAll("(.)(\\p{Upper})", "$1_$2")
+                .toLowerCase();
             fields.add(new Field(fieldKey, value));
         }
         if (fields.isEmpty()) {
@@ -236,8 +240,10 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
     }
 
     private String influxLineProtocol(Meter.Id id, String metricType, Stream<Field> fields) {
-        String tags = getConventionTags(id).stream().filter(t -> StringUtils.isNotBlank(t.getValue()))
-                .map(t -> "," + t.getKey() + "=" + t.getValue()).collect(joining(""));
+        String tags = getConventionTags(id).stream()
+            .filter(t -> StringUtils.isNotBlank(t.getValue()))
+            .map(t -> "," + t.getKey() + "=" + t.getValue())
+            .collect(joining(""));
 
         return getConventionName(id) + tags + ",metric_type=" + metricType + " "
                 + fields.map(Field::toString).collect(joining(",")) + " " + clock.wallTime();

@@ -60,7 +60,7 @@ class MetricsDSLContextTest {
 
             assertThat(
                     meterRegistry.get("jooq.query").tag("name", "selectAllAuthors").tag("type", "read").timer().count())
-                            .isEqualTo(1);
+                .isEqualTo(1);
         }
     }
 
@@ -76,7 +76,7 @@ class MetricsDSLContextTest {
 
             assertThat(
                     meterRegistry.get("jooq.query").tag("name", "selectAllAuthors").tag("type", "read").timer().count())
-                            .isEqualTo(1);
+                .isEqualTo(1);
         }
     }
 
@@ -91,9 +91,13 @@ class MetricsDSLContextTest {
         catch (DataAccessException ignored) {
         }
 
-        assertThat(meterRegistry.get("jooq.query").tag("name", "selectAllAuthors").tag("type", "read")
-                .tag("exception", "c42 syntax error or access rule violation").tag("exception.subclass", "none").timer()
-                .count()).isEqualTo(1);
+        assertThat(meterRegistry.get("jooq.query")
+            .tag("name", "selectAllAuthors")
+            .tag("type", "read")
+            .tag("exception", "c42 syntax error or access rule violation")
+            .tag("exception.subclass", "none")
+            .timer()
+            .count()).isEqualTo(1);
     }
 
     @Test
@@ -134,8 +138,10 @@ class MetricsDSLContextTest {
         try (Connection conn = DriverManager.getConnection("jdbc:h2:mem:fluentSelect")) {
             MetricsDSLContext jooq = createDatabase(conn);
 
-            jooq.tag("name", "batch").batch(jooq.insertInto(table("author")).values("3", "jon", "schneider"),
-                    jooq.insertInto(table("author")).values("4", "jon", "schneider")).execute();
+            jooq.tag("name", "batch")
+                .batch(jooq.insertInto(table("author")).values("3", "jon", "schneider"),
+                        jooq.insertInto(table("author")).values("4", "jon", "schneider"))
+                .execute();
 
             assertThat(meterRegistry.find("jooq.query").timer()).isNull();
         }
@@ -151,8 +157,9 @@ class MetricsDSLContextTest {
             MetricsDSLContext jooq = createDatabase(conn);
 
             SelectJoinStep<Record> select1 = jooq.tag("name", "selectAllAuthors").select(asterisk()).from("author");
-            SelectJoinStep<Record1<Object>> select2 = jooq.tag("name", "selectAllAuthors2").select(field("first_name"))
-                    .from("author");
+            SelectJoinStep<Record1<Object>> select2 = jooq.tag("name", "selectAllAuthors2")
+                .select(field("first_name"))
+                .from("author");
 
             select1.fetch();
             select2.fetch();

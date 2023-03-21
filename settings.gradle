@@ -5,8 +5,9 @@ pluginManagement {
 }
 
 plugins {
-    id 'com.gradle.enterprise' version '3.12.3'
+    id 'com.gradle.enterprise' version '3.12.4'
     id 'io.spring.ge.conventions' version '0.0.13'
+    id 'org.gradle.toolchains.foojay-resolver-convention' version '0.4.0'
 }
 
 rootProject.name = 'micrometer'
@@ -43,3 +44,5 @@ include 'micrometer-test', 'micrometer-observation-test'
 
 include 'micrometer-bom'
 include 'micrometer-jetty11'
+
+include 'micrometer-osgi-test'

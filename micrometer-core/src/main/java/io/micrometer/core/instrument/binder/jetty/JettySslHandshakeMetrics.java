@@ -75,9 +75,14 @@ public class JettySslHandshakeMetrics implements SslHandshakeListener {
         this.registry = registry;
         this.tags = tags;
 
-        this.handshakesFailed = Counter.builder(METER_NAME).baseUnit(BaseUnits.EVENTS).description(DESCRIPTION)
-                .tag(TAG_RESULT, "failed").tag(TAG_PROTOCOL, TAG_VALUE_UNKNOWN).tag(TAG_CIPHER_SUITE, TAG_VALUE_UNKNOWN)
-                .tags(tags).register(registry);
+        this.handshakesFailed = Counter.builder(METER_NAME)
+            .baseUnit(BaseUnits.EVENTS)
+            .description(DESCRIPTION)
+            .tag(TAG_RESULT, "failed")
+            .tag(TAG_PROTOCOL, TAG_VALUE_UNKNOWN)
+            .tag(TAG_CIPHER_SUITE, TAG_VALUE_UNKNOWN)
+            .tags(tags)
+            .register(registry);
     }
 
     /**
@@ -111,9 +116,15 @@ public class JettySslHandshakeMetrics implements SslHandshakeListener {
     @Override
     public void handshakeSucceeded(Event event) {
         SSLSession session = event.getSSLEngine().getSession();
-        Counter.builder(METER_NAME).baseUnit(BaseUnits.EVENTS).description(DESCRIPTION).tag(TAG_RESULT, "succeeded")
-                .tag(TAG_PROTOCOL, session.getProtocol()).tag(TAG_CIPHER_SUITE, session.getCipherSuite()).tags(tags)
-                .register(registry).increment();
+        Counter.builder(METER_NAME)
+            .baseUnit(BaseUnits.EVENTS)
+            .description(DESCRIPTION)
+            .tag(TAG_RESULT, "succeeded")
+            .tag(TAG_PROTOCOL, session.getProtocol())
+            .tag(TAG_CIPHER_SUITE, session.getCipherSuite())
+            .tags(tags)
+            .register(registry)
+            .increment();
     }
 
     @Override

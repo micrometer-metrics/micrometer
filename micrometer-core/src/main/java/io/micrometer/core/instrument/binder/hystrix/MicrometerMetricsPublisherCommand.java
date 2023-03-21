@@ -37,7 +37,7 @@ import java.util.concurrent.TimeUnit;
 public class MicrometerMetricsPublisherCommand implements HystrixMetricsPublisherCommand {
 
     private static final InternalLogger LOG = InternalLoggerFactory
-            .getInstance(MicrometerMetricsPublisherCommand.class);
+        .getInstance(MicrometerMetricsPublisherCommand.class);
 
     private static final String NAME_HYSTRIX_CIRCUIT_BREAKER_OPEN = "hystrix.circuit.breaker.open";
 
@@ -84,8 +84,9 @@ public class MicrometerMetricsPublisherCommand implements HystrixMetricsPublishe
     @Override
     public void initialize() {
         metricsPublisherForCommand.initialize();
-        Gauge.builder(NAME_HYSTRIX_CIRCUIT_BREAKER_OPEN, circuitBreaker, c -> c.isOpen() ? 1 : 0).tags(tags)
-                .register(meterRegistry);
+        Gauge.builder(NAME_HYSTRIX_CIRCUIT_BREAKER_OPEN, circuitBreaker, c -> c.isOpen() ? 1 : 0)
+            .tags(tags)
+            .register(meterRegistry);
 
         // initialize all commands counters and timers with zero
         final Map<HystrixEventType, Counter> eventCounters = new HashMap<>();
@@ -94,8 +95,9 @@ public class MicrometerMetricsPublisherCommand implements HystrixMetricsPublishe
         });
 
         Counter terminalEventCounterTotal = Counter.builder(NAME_HYSTRIX_EXECUTION_TERMINAL_TOTAL)
-                .description(DESCRIPTION_HYSTRIX_EXECUTION_TERMINAL_TOTAL).tags(Tags.concat(tags))
-                .register(meterRegistry);
+            .description(DESCRIPTION_HYSTRIX_EXECUTION_TERMINAL_TOTAL)
+            .tags(Tags.concat(tags))
+            .register(meterRegistry);
 
         final Timer latencyExecution = Timer.builder(NAME_HYSTRIX_LATENCY_EXECUTION).tags(tags).register(meterRegistry);
         final Timer latencyTotal = Timer.builder(NAME_HYSTRIX_LATENCY_TOTAL).tags(tags).register(meterRegistry);
@@ -141,18 +143,25 @@ public class MicrometerMetricsPublisherCommand implements HystrixMetricsPublishe
             }
         });
 
-        Gauge.builder(NAME_HYSTRIX_CONCURRENT_EXECUTION_CURRENT, metrics,
-                HystrixCommandMetrics::getCurrentConcurrentExecutionCount).tags(tags).register(meterRegistry);
+        Gauge
+            .builder(NAME_HYSTRIX_CONCURRENT_EXECUTION_CURRENT, metrics,
+                    HystrixCommandMetrics::getCurrentConcurrentExecutionCount)
+            .tags(tags)
+            .register(meterRegistry);
 
-        Gauge.builder(NAME_HYSTRIX_CONCURRENT_EXECUTION_ROLLING_MAX, metrics,
-                HystrixCommandMetrics::getRollingMaxConcurrentExecutions).tags(tags).register(meterRegistry);
+        Gauge
+            .builder(NAME_HYSTRIX_CONCURRENT_EXECUTION_ROLLING_MAX, metrics,
+                    HystrixCommandMetrics::getRollingMaxConcurrentExecutions)
+            .tags(tags)
+            .register(meterRegistry);
     }
 
     private Counter getCounter(HystrixEventType hystrixEventType) {
-        return Counter.builder(NAME_HYSTRIX_EXECUTION).description(DESCRIPTION_HYSTRIX_EXECUTION)
-                .tags(Tags.concat(tags, "event", hystrixEventType.name().toLowerCase(), "terminal",
-                        Boolean.toString(hystrixEventType.isTerminal())))
-                .register(meterRegistry);
+        return Counter.builder(NAME_HYSTRIX_EXECUTION)
+            .description(DESCRIPTION_HYSTRIX_EXECUTION)
+            .tags(Tags.concat(tags, "event", hystrixEventType.name().toLowerCase(), "terminal",
+                    Boolean.toString(hystrixEventType.isTerminal())))
+            .register(meterRegistry);
     }
 
 }

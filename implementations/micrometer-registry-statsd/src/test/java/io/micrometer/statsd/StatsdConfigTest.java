@@ -37,9 +37,9 @@ class StatsdConfigTest {
         props.put("statsd.step", "1w");
 
         assertThat(config.validate().failures().stream().map(Validated.Invalid::getMessage))
-                .containsOnly("should be one of 'ETSY', 'DATADOG', 'TELEGRAF', 'SYSDIG'",
-                        "should be one of 'UDP', 'UDS_DATAGRAM', 'TCP'", "must contain a valid time unit")
-                .hasSize(4);
+            .containsOnly("should be one of 'ETSY', 'DATADOG', 'TELEGRAF', 'SYSDIG'",
+                    "should be one of 'UDP', 'UDS_DATAGRAM', 'TCP'", "must contain a valid time unit")
+            .hasSize(4);
     }
 
     @Test

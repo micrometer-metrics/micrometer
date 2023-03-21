@@ -321,8 +321,8 @@ public class Metrics {
          */
         public <T> FunctionTimer timer(String name, Iterable<Tag> tags, T obj, ToLongFunction<T> countFunction,
                 ToDoubleFunction<T> totalTimeFunction, TimeUnit totalTimeFunctionUnit) {
-            return globalRegistry.more().timer(name, tags, obj, countFunction, totalTimeFunction,
-                    totalTimeFunctionUnit);
+            return globalRegistry.more()
+                .timer(name, tags, obj, countFunction, totalTimeFunction, totalTimeFunctionUnit);
         }
 
     }

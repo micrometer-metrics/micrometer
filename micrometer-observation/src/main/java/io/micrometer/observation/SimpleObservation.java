@@ -83,13 +83,20 @@ class SimpleObservation implements Observation {
 
     @Nullable
     private static ObservationConvention getConventionFromConfig(ObservationRegistry registry, Context context) {
-        return registry.observationConfig().getObservationConventions().stream()
-                .filter(convention -> convention.supportsContext(context)).findFirst().orElse(null);
+        return registry.observationConfig()
+            .getObservationConventions()
+            .stream()
+            .filter(convention -> convention.supportsContext(context))
+            .findFirst()
+            .orElse(null);
     }
 
     private static Deque<ObservationHandler> getHandlersFromConfig(ObservationRegistry registry, Context context) {
-        return registry.observationConfig().getObservationHandlers().stream()
-                .filter(handler -> handler.supportsContext(context)).collect(Collectors.toCollection(ArrayDeque::new));
+        return registry.observationConfig()
+            .getObservationHandlers()
+            .stream()
+            .filter(handler -> handler.supportsContext(context))
+            .collect(Collectors.toCollection(ArrayDeque::new));
     }
 
     @Override

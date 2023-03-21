@@ -30,8 +30,8 @@ class TimeGaugeTest {
         MeterRegistry registry = new SimpleMeterRegistry();
 
         AtomicLong n = new AtomicLong();
-        TimeGauge g = registry.more().timeGauge("my.time.gauge", Tags.empty(), n, TimeUnit.SECONDS,
-                AtomicLong::doubleValue);
+        TimeGauge g = registry.more()
+            .timeGauge("my.time.gauge", Tags.empty(), n, TimeUnit.SECONDS, AtomicLong::doubleValue);
 
         assertThat(g.getId().getBaseUnit()).isEqualTo("seconds");
     }

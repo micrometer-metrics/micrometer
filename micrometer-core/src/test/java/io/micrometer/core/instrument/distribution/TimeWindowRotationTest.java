@@ -38,16 +38,16 @@ class TimeWindowRotationTest {
             DistributionStatisticConfig badConfig) {
         assertThatThrownBy(() -> newHistogram(histogramType, new MockClock(),
                 badConfig.merge(DistributionStatisticConfig.DEFAULT)))
-                        .hasRootCauseExactlyInstanceOf(InvalidConfigurationException.class)
-                        .satisfies(cause -> assertThat(cause.getCause())
-                                .hasMessageStartingWith("Invalid distribution configuration:"));
+            .hasRootCauseExactlyInstanceOf(InvalidConfigurationException.class)
+            .satisfies(cause -> assertThat(cause.getCause())
+                .hasMessageStartingWith("Invalid distribution configuration:"));
     }
 
     private static AbstractTimeWindowHistogram<?, ?> newHistogram(
             Class<? extends AbstractTimeWindowHistogram<?, ?>> histogramType, MockClock clock,
             DistributionStatisticConfig config) throws Exception {
         return histogramType.getDeclaredConstructor(Clock.class, DistributionStatisticConfig.class, Boolean.TYPE)
-                .newInstance(clock, config, false);
+            .newInstance(clock, config, false);
     }
 
     @ParameterizedTest

@@ -118,9 +118,13 @@ public class DatabaseTableMetrics implements MeterBinder {
             }
         };
 
-        Gauge.builder("db.table.size", dataSource, totalRows).tags(tags).tag("db", dataSourceName)
-                .tag("table", tableName).description("Number of rows in a database table").baseUnit(BaseUnits.ROWS)
-                .register(registry);
+        Gauge.builder("db.table.size", dataSource, totalRows)
+            .tags(tags)
+            .tag("db", dataSourceName)
+            .tag("table", tableName)
+            .description("Number of rows in a database table")
+            .baseUnit(BaseUnits.ROWS)
+            .register(registry);
     }
 
 }

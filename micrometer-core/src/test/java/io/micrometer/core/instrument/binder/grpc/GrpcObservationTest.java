@@ -82,9 +82,11 @@ class GrpcObservationTest {
 
         MeterRegistry meterRegistry = new SimpleMeterRegistry();
         ObservationRegistry observationRegistry = ObservationRegistry.create();
-        observationRegistry.observationConfig().observationHandler(new ObservationTextPublisher())
-                .observationHandler(new DefaultMeterObservationHandler(meterRegistry)).observationHandler(serverHandler)
-                .observationHandler(clientHandler);
+        observationRegistry.observationConfig()
+            .observationHandler(new ObservationTextPublisher())
+            .observationHandler(new DefaultMeterObservationHandler(meterRegistry))
+            .observationHandler(serverHandler)
+            .observationHandler(clientHandler);
 
         this.serverInterceptor = new ObservationGrpcServerInterceptor(observationRegistry);
         this.clientInterceptor = new ObservationGrpcClientInterceptor(observationRegistry);
@@ -106,8 +108,10 @@ class GrpcObservationTest {
         @BeforeEach
         void setUpEchoService() throws Exception {
             EchoService echoService = new EchoService();
-            server = InProcessServerBuilder.forName("sample").addService(echoService).intercept(serverInterceptor)
-                    .build();
+            server = InProcessServerBuilder.forName("sample")
+                .addService(echoService)
+                .intercept(serverInterceptor)
+                .build();
             server.start();
 
             channel = InProcessChannelBuilder.forName("sample").intercept(clientInterceptor).build();
@@ -281,8 +285,10 @@ class GrpcObservationTest {
         @BeforeEach
         void setUpExceptionService() throws Exception {
             ExceptionService exceptionService = new ExceptionService();
-            server = InProcessServerBuilder.forName("exception").addService(exceptionService)
-                    .intercept(serverInterceptor).build();
+            server = InProcessServerBuilder.forName("exception")
+                .addService(exceptionService)
+                .intercept(serverInterceptor)
+                .build();
             server.start();
 
             channel = InProcessChannelBuilder.forName("exception").intercept(clientInterceptor).build();
@@ -422,8 +428,9 @@ class GrpcObservationTest {
         // echo the request message
         @Override
         public void unaryRpc(SimpleRequest request, StreamObserver<SimpleResponse> responseObserver) {
-            SimpleResponse response = SimpleResponse.newBuilder().setResponseMessage(request.getRequestMessage())
-                    .build();
+            SimpleResponse response = SimpleResponse.newBuilder()
+                .setResponseMessage(request.getRequestMessage())
+                .build();
             responseObserver.onNext(response);
             responseObserver.onCompleted();
         }

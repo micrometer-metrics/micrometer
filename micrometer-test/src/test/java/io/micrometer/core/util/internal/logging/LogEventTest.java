@@ -30,9 +30,10 @@ class LogEventTest {
     @Test
     void logLevelShouldBeMandatory() {
         assertThatCode(() -> new LogEvent(io.micrometer.core.util.internal.logging.InternalLogLevel.INFO, null, null))
-                .doesNotThrowAnyException();
+            .doesNotThrowAnyException();
         assertThatThrownBy(() -> new LogEvent(null, null, null)).isInstanceOf(NullPointerException.class)
-                .hasMessage(null).hasNoCause();
+            .hasMessage(null)
+            .hasNoCause();
     }
 
     @Test

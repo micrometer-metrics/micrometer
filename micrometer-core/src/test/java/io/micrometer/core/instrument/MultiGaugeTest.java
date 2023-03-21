@@ -49,12 +49,12 @@ class MultiGaugeTest {
         colorGauges.register(Stream.of(RED, GREEN).map(c -> c.toRow(1.0)).collect(toList()));
 
         assertThat(registry.get("colors").gauges().stream().map(g -> g.getId().getTag("color")))
-                .containsExactlyInAnyOrder("red", "green");
+            .containsExactlyInAnyOrder("red", "green");
 
         colorGauges.register(Stream.of(RED, BLUE).map(c -> c.toRow(1.0)).collect(toList()));
 
         assertThat(registry.get("colors").gauges().stream().map(g -> g.getId().getTag("color")))
-                .containsExactlyInAnyOrder("red", "blue");
+            .containsExactlyInAnyOrder("red", "blue");
     }
 
     /**
@@ -117,26 +117,30 @@ class MultiGaugeTest {
 
         MultiGauge gauge = MultiGauge.builder(meterName).register(registry);
 
-        List<Row<?>> rows = map.entrySet().stream()
-                .map(row -> Row.of(Tags.of(testTagKey, row.getKey()), row.getValue())).collect(Collectors.toList());
+        List<Row<?>> rows = map.entrySet()
+            .stream()
+            .map(row -> Row.of(Tags.of(testTagKey, row.getKey()), row.getValue()))
+            .collect(Collectors.toList());
         gauge.register(rows, true);
         assertThat(registry.getMeters()).hasSize(2);
         assertThat(registry.get(mappedMeterName).tag(testTagKey, testKey1).gauge().value())
-                .isEqualTo(testValue1.intValue());
+            .isEqualTo(testValue1.intValue());
         assertThat(registry.get(mappedMeterName).tag(testTagKey, testKey2).gauge().value())
-                .isEqualTo(testValue2.intValue());
+            .isEqualTo(testValue2.intValue());
 
         testValue1 = new AtomicInteger(100);
         map.put(testKey1, testValue1);
         map.remove(testKey2);
 
-        rows = map.entrySet().stream().map(t -> Row.of(Tags.of(testTagKey, t.getKey()), t.getValue()))
-                .collect(Collectors.toList());
+        rows = map.entrySet()
+            .stream()
+            .map(t -> Row.of(Tags.of(testTagKey, t.getKey()), t.getValue()))
+            .collect(Collectors.toList());
         gauge.register(rows, true);
 
         assertThat(registry.getMeters()).hasSize(1);
         assertThat(registry.get(mappedMeterName).tag(testTagKey, testKey1).gauge().value())
-                .isEqualTo(testValue1.intValue());
+            .isEqualTo(testValue1.intValue());
     }
 
     @Test

@@ -80,27 +80,38 @@ public class PoolingHttpClientConnectionManagerMetricsBinder implements MeterBin
     }
 
     private void registerTotalMetrics(MeterRegistry registry) {
-        Gauge.builder("httpcomponents.httpclient.pool.total.max", connPoolControl,
-                (connPoolControl) -> connPoolControl.getTotalStats().getMax())
-                .description("The configured maximum number of allowed persistent connections for all routes.")
-                .tags(tags).register(registry);
-        Gauge.builder("httpcomponents.httpclient.pool.total.connections", connPoolControl,
-                (connPoolControl) -> connPoolControl.getTotalStats().getAvailable())
-                .description("The number of persistent and available connections for all routes.").tags(tags)
-                .tag("state", "available").register(registry);
-        Gauge.builder("httpcomponents.httpclient.pool.total.connections", connPoolControl,
-                (connPoolControl) -> connPoolControl.getTotalStats().getLeased())
-                .description("The number of persistent and leased connections for all routes.").tags(tags)
-                .tag("state", "leased").register(registry);
-        Gauge.builder("httpcomponents.httpclient.pool.total.pending", connPoolControl,
-                (connPoolControl) -> connPoolControl.getTotalStats().getPending())
-                .description(
-                        "The number of connection requests being blocked awaiting a free connection for all routes.")
-                .tags(tags).register(registry);
-        Gauge.builder("httpcomponents.httpclient.pool.route.max.default", connPoolControl,
-                ConnPoolControl::getDefaultMaxPerRoute)
-                .description("The configured default maximum number of allowed persistent connections per route.")
-                .tags(tags).register(registry);
+        Gauge
+            .builder("httpcomponents.httpclient.pool.total.max", connPoolControl,
+                    (connPoolControl) -> connPoolControl.getTotalStats().getMax())
+            .description("The configured maximum number of allowed persistent connections for all routes.")
+            .tags(tags)
+            .register(registry);
+        Gauge
+            .builder("httpcomponents.httpclient.pool.total.connections", connPoolControl,
+                    (connPoolControl) -> connPoolControl.getTotalStats().getAvailable())
+            .description("The number of persistent and available connections for all routes.")
+            .tags(tags)
+            .tag("state", "available")
+            .register(registry);
+        Gauge
+            .builder("httpcomponents.httpclient.pool.total.connections", connPoolControl,
+                    (connPoolControl) -> connPoolControl.getTotalStats().getLeased())
+            .description("The number of persistent and leased connections for all routes.")
+            .tags(tags)
+            .tag("state", "leased")
+            .register(registry);
+        Gauge
+            .builder("httpcomponents.httpclient.pool.total.pending", connPoolControl,
+                    (connPoolControl) -> connPoolControl.getTotalStats().getPending())
+            .description("The number of connection requests being blocked awaiting a free connection for all routes.")
+            .tags(tags)
+            .register(registry);
+        Gauge
+            .builder("httpcomponents.httpclient.pool.route.max.default", connPoolControl,
+                    ConnPoolControl::getDefaultMaxPerRoute)
+            .description("The configured default maximum number of allowed persistent connections per route.")
+            .tags(tags)
+            .register(registry);
     }
 
 }

@@ -39,7 +39,7 @@ abstract class AbstractTimeWindowHistogram<T, U> implements Histogram {
 
     @SuppressWarnings("rawtypes")
     private static final AtomicIntegerFieldUpdater<AbstractTimeWindowHistogram> rotatingUpdater = AtomicIntegerFieldUpdater
-            .newUpdater(AbstractTimeWindowHistogram.class, "rotating");
+        .newUpdater(AbstractTimeWindowHistogram.class, "rotating");
 
     final DistributionStatisticConfig distributionStatisticConfig;
 
@@ -152,11 +152,7 @@ abstract class AbstractTimeWindowHistogram<T, U> implements Histogram {
 
     abstract double valueAtPercentile(double percentile);
 
-    abstract double countAtValue(double value);
-
-    double countAtValue(long value) {
-        return countAtValue((double) value);
-    }
+    abstract Iterator<CountAtBucket> countsAtValues(Iterator<Double> values);
 
     void outputSummary(PrintStream out, double bucketScaling) {
     }
@@ -203,16 +199,15 @@ abstract class AbstractTimeWindowHistogram<T, U> implements Histogram {
         }
 
         final Set<Double> monitoredValues = distributionStatisticConfig
-                .getHistogramBuckets(supportsAggregablePercentiles);
+            .getHistogramBuckets(supportsAggregablePercentiles);
         if (monitoredValues.isEmpty()) {
             return null;
         }
 
         final CountAtBucket[] counts = new CountAtBucket[monitoredValues.size()];
-        final Iterator<Double> iterator = monitoredValues.iterator();
+        final Iterator<CountAtBucket> iterator = countsAtValues(monitoredValues.iterator());
         for (int i = 0; i < counts.length; i++) {
-            final double v = iterator.next();
-            counts[i] = new CountAtBucket(v, countAtValue(v));
+            counts[i] = iterator.next();
         }
         return counts;
     }

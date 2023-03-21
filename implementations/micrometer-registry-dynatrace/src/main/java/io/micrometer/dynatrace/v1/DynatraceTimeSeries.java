@@ -49,9 +49,10 @@ class DynatraceTimeSeries {
                 + DoubleFormat.wholeOrDecimal(value) + "]]";
 
         if (dimensions != null && !dimensions.isEmpty()) {
-            body += ",\"dimensions\":{" + dimensions.entrySet().stream()
-                    .map(t -> "\"" + t.getKey() + "\":\"" + StringEscapeUtils.escapeJson(t.getValue()) + "\"")
-                    .collect(Collectors.joining(",")) + "}";
+            body += ",\"dimensions\":{" + dimensions.entrySet()
+                .stream()
+                .map(t -> "\"" + t.getKey() + "\":\"" + StringEscapeUtils.escapeJson(t.getValue()) + "\"")
+                .collect(Collectors.joining(",")) + "}";
         }
         body += "}";
         return body;

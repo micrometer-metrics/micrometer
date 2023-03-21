@@ -26,6 +26,7 @@ public class ArchitectureTests {
 
     @ArchTest
     public static final ArchRule should_not_contain_any_micrometer_core_dependencies = noClasses().should()
-            .dependOnClassesThat().resideInAPackage("..io.micrometer.core..");
+        .dependOnClassesThat()
+        .resideInAPackage("..io.micrometer.core..");
 
 }

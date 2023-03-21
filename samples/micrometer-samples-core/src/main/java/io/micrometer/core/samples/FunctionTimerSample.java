@@ -44,8 +44,8 @@ public class FunctionTimerSample {
         AtomicLong totalCount = new AtomicLong();
 
         FunctionTimer
-                .builder("ftimer", placeholder, p -> totalCount.get(), p -> totalTimeNanos.get(), TimeUnit.NANOSECONDS)
-                .register(registry);
+            .builder("ftimer", placeholder, p -> totalCount.get(), p -> totalTimeNanos.get(), TimeUnit.NANOSECONDS)
+            .register(registry);
 
         RandomEngine r = new MersenneTwister64(0);
         Normal incomingRequests = new Normal(0, 1, r);
@@ -62,7 +62,7 @@ public class FunctionTimerSample {
                 timer.record(latencyForThisSecond.get(), TimeUnit.MILLISECONDS);
                 totalCount.incrementAndGet();
                 totalTimeNanos
-                        .addAndGet((long) TimeUtils.millisToUnit(latencyForThisSecond.get(), TimeUnit.NANOSECONDS));
+                    .addAndGet((long) TimeUtils.millisToUnit(latencyForThisSecond.get(), TimeUnit.NANOSECONDS));
             }
         }).blockLast();
     }

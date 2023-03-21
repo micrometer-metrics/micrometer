@@ -35,7 +35,7 @@ class GraphiteConfigTest {
         props.put("graphite.durationUnits", "bad duration");
 
         assertThat(config.validate().failures().stream().map(Validated.Invalid::getMessage))
-                .containsOnly("must contain a valid time unit");
+            .containsOnly("must contain a valid time unit");
     }
 
     @Test

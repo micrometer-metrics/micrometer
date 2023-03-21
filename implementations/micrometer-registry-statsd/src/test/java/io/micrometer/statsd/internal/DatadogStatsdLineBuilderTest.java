@@ -89,7 +89,7 @@ class DatadogStatsdLineBuilderTest {
 
         registry.config().namingConvention(NamingConvention.dot);
         assertThat(lb.line("1", Statistic.COUNT, "c"))
-                .isEqualTo("my_counter:1|c|#statistic:count,mytag:myvalue,dd.internal.entity_id:test-entity-id");
+            .isEqualTo("my_counter:1|c|#statistic:count,mytag:myvalue,dd.internal.entity_id:test-entity-id");
     }
 
     @Issue("#1998")

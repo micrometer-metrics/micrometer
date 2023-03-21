@@ -100,40 +100,39 @@ public class AppOpticsMeterRegistry extends StepMeterRegistry {
         try {
             String bodyMeasurementsPrefix = getBodyMeasurementsPrefix();
             for (List<Meter> batch : MeterPartition.partition(this, config.batchSize())) {
-                final List<String> meters = batch.stream()
                 // @formatter:off
-                        .map(meter -> meter.match(
-                                this::writeGauge,
-                                this::writeCounter,
-                                this::writeTimer,
-                                this::writeSummary,
-                                this::writeLongTaskTimer,
-                                this::writeTimeGauge,
-                                this::writeFunctionCounter,
-                                this::writeFunctionTimer,
-                                this::writeMeter)
-                        )
-                        .filter(Optional::isPresent)
-                        .map(Optional::get)
-                        .collect(Collectors.toList());
+                final List<String> meters = batch.stream()
+                    .map(meter -> meter.match(
+                            this::writeGauge,
+                            this::writeCounter,
+                            this::writeTimer,
+                            this::writeSummary,
+                            this::writeLongTaskTimer,
+                            this::writeTimeGauge,
+                            this::writeFunctionCounter,
+                            this::writeFunctionTimer,
+                            this::writeMeter))
+                    .filter(Optional::isPresent)
+                    .map(Optional::get)
+                    .collect(Collectors.toList());
+                // @formatter:on
                 if (meters.isEmpty()) {
                     continue;
                 }
                 httpClient.post(config.uri())
-                        .withBasicAuthentication(config.apiToken(), "")
-                        .withJsonContent(
-                                meters.stream().collect(joining(",", bodyMeasurementsPrefix, BODY_MEASUREMENTS_SUFFIX)))
-                        .send()
-                        .onSuccess(response -> {
-                            if (!response.body().contains("\"failed\":0")) {
-                                logger.error("failed to send at least some metrics to appoptics: {}", response.body());
-                            }
-                            else {
-                                logger.debug("successfully sent {} metrics to appoptics", batch.size());
-                            }
-                        })
-                        .onError(response -> logger.error("failed to send metrics to appoptics: {}", response.body()));
-                // @formatter:on
+                    .withBasicAuthentication(config.apiToken(), "")
+                    .withJsonContent(
+                            meters.stream().collect(joining(",", bodyMeasurementsPrefix, BODY_MEASUREMENTS_SUFFIX)))
+                    .send()
+                    .onSuccess(response -> {
+                        if (!response.body().contains("\"failed\":0")) {
+                            logger.error("failed to send at least some metrics to appoptics: {}", response.body());
+                        }
+                        else {
+                            logger.debug("successfully sent {} metrics to appoptics", batch.size());
+                        }
+                    })
+                    .onError(response -> logger.error("failed to send metrics to appoptics: {}", response.body()));
             }
         }
         catch (Throwable t) {
@@ -174,8 +173,8 @@ public class AppOpticsMeterRegistry extends StepMeterRegistry {
         }
         StringJoiner joiner = new StringJoiner(",");
         for (int i = 0; i < statistics.size(); i++) {
-            joiner.add(
-                    write(meter.getId().withTag(statistics.get(i)), null, Fields.Value.tag(), decimal(values.get(i))));
+            joiner
+                .add(write(meter.getId().withTag(statistics.get(i)), null, Fields.Value.tag(), decimal(values.get(i))));
         }
         return Optional.of(joiner.toString());
     }
@@ -240,9 +239,9 @@ public class AppOpticsMeterRegistry extends StepMeterRegistry {
     private Optional<String> writeSummary(DistributionSummary summary) {
         HistogramSnapshot snapshot = summary.takeSnapshot();
         if (snapshot.count() > 0) {
-            return Optional.of(write(summary.getId(), "distributionSummary", Fields.Count.tag(),
-                    decimal(summary.count()), Fields.Sum.tag(), decimal(summary.totalAmount()), Fields.Max.tag(),
-                    decimal(summary.max())));
+            return Optional
+                .of(write(summary.getId(), "distributionSummary", Fields.Count.tag(), decimal(summary.count()),
+                        Fields.Sum.tag(), decimal(summary.totalAmount()), Fields.Max.tag(), decimal(summary.max())));
         }
         return Optional.empty();
     }
@@ -258,8 +257,10 @@ public class AppOpticsMeterRegistry extends StepMeterRegistry {
 
     private String write(Meter.Id id, @Nullable String type, String... statistics) {
         StringBuilder sb = new StringBuilder();
-        sb.append("{\"name\":\"").append(escapeJson(getConventionName(id))).append("\",\"period\":")
-                .append(config.step().getSeconds());
+        sb.append("{\"name\":\"")
+            .append(escapeJson(getConventionName(id)))
+            .append("\",\"period\":")
+            .append(config.step().getSeconds());
 
         if (!Fields.Value.tag().equals(statistics[0])) {
             sb.append(",\"attributes\":{\"aggregate\":false}");

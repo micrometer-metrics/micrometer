@@ -39,7 +39,10 @@ public final class DynatraceDistributionSummary extends AbstractDistributionSumm
     // Configuration that will set the Histogram in AbstractDistributionSummary to a
     // NoopHistogram.
     private static final DistributionStatisticConfig NOOP_HISTOGRAM_CONFIG = DistributionStatisticConfig.builder()
-            .percentilesHistogram(false).percentiles().serviceLevelObjectives().build();
+        .percentilesHistogram(false)
+        .percentiles()
+        .serviceLevelObjectives()
+        .build();
 
     private final DynatraceSummary summary = new DynatraceSummary();
 
@@ -80,14 +83,18 @@ public final class DynatraceDistributionSummary extends AbstractDistributionSumm
         return summary.getMin();
     }
 
+    /**
+     * @deprecated see {@link DynatraceSummarySnapshotSupport#hasValues()}.
+     */
     @Override
+    @Deprecated
     public boolean hasValues() {
         return count() > 0;
     }
 
     @Override
     public DynatraceSummarySnapshot takeSummarySnapshot() {
-        return new DynatraceSummarySnapshot(min(), max(), totalAmount(), count());
+        return summary.takeSummarySnapshot();
     }
 
     @Override
@@ -98,9 +105,7 @@ public final class DynatraceDistributionSummary extends AbstractDistributionSumm
 
     @Override
     public DynatraceSummarySnapshot takeSummarySnapshotAndReset() {
-        DynatraceSummarySnapshot snapshot = takeSummarySnapshot();
-        summary.reset();
-        return snapshot;
+        return summary.takeSummarySnapshotAndReset();
     }
 
     @Override

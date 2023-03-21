@@ -52,14 +52,17 @@ public class ServiceLevelObjectiveConfiguration {
     @Bean
     HealthMeterRegistry healthMeterRegistry() {
         HealthMeterRegistry registry = HealthMeterRegistry.builder(HealthConfig.DEFAULT)
-                .serviceLevelObjectives(JvmServiceLevelObjectives.MEMORY)
-                .serviceLevelObjectives(OperatingSystemServiceLevelObjectives.DISK)
-                .serviceLevelObjectives(ServiceLevelObjective.build("api.error.ratio").failedMessage("API error ratio")
-                        .baseUnit(BaseUnits.PERCENT).tag("uri.matches", "/api/**").tag("error.outcome", "SERVER_ERROR")
-                        .errorRatio(s -> s.name("http.server.requests").tag("uri", uri -> uri.startsWith("/api")),
-                                all -> all.tag("outcome", "SERVER_ERROR"))
-                        .isLessThan(0.01))
-                .build();
+            .serviceLevelObjectives(JvmServiceLevelObjectives.MEMORY)
+            .serviceLevelObjectives(OperatingSystemServiceLevelObjectives.DISK)
+            .serviceLevelObjectives(ServiceLevelObjective.build("api.error.ratio")
+                .failedMessage("API error ratio")
+                .baseUnit(BaseUnits.PERCENT)
+                .tag("uri.matches", "/api/**")
+                .tag("error.outcome", "SERVER_ERROR")
+                .errorRatio(s -> s.name("http.server.requests").tag("uri", uri -> uri.startsWith("/api")),
+                        all -> all.tag("outcome", "SERVER_ERROR"))
+                .isLessThan(0.01))
+            .build();
 
         for (ServiceLevelObjective slo : registry.getServiceLevelObjectives()) {
             applicationContext.registerBean(camelCasedHealthIndicatorNames.name(slo.getName(), Type.GAUGE),
@@ -76,8 +79,8 @@ public class ServiceLevelObjectiveConfiguration {
                 protected void doHealthCheck(Health.Builder builder) {
                     ServiceLevelObjective.SingleIndicator singleIndicator = (ServiceLevelObjective.SingleIndicator) slo;
                     builder.status(slo.healthy(registry) ? Status.UP : Status.OUT_OF_SERVICE)
-                            .withDetail("value", singleIndicator.getValueAsString(registry))
-                            .withDetail("mustBe", singleIndicator.getTestDescription());
+                        .withDetail("value", singleIndicator.getValueAsString(registry))
+                        .withDetail("mustBe", singleIndicator.getTestDescription());
 
                     for (Tag tag : slo.getTags()) {
                         builder.withDetail(camelCasedHealthIndicatorNames.tagKey(tag.getKey()), tag.getValue());
@@ -92,9 +95,9 @@ public class ServiceLevelObjectiveConfiguration {
         else {
             ServiceLevelObjective.MultipleIndicator multipleIndicator = (ServiceLevelObjective.MultipleIndicator) slo;
             Map<String, HealthContributor> objectiveIndicators = Arrays.stream(multipleIndicator.getObjectives())
-                    .collect(Collectors.toMap(
-                            indicator -> camelCasedHealthIndicatorNames.name(indicator.getName(), Type.GAUGE),
-                            indicator -> toHealthContributor(registry, indicator)));
+                .collect(Collectors.toMap(
+                        indicator -> camelCasedHealthIndicatorNames.name(indicator.getName(), Type.GAUGE),
+                        indicator -> toHealthContributor(registry, indicator)));
             return CompositeHealthContributor.fromMap(objectiveIndicators);
         }
     }
