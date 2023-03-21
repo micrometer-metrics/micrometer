@@ -214,10 +214,10 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
         return getMetricBuilder(gauge.getId())
             .setGauge(io.opentelemetry.proto.metrics.v1.Gauge.newBuilder()
                 .addDataPoints(NumberDataPoint.newBuilder()
-                .setTimeUnixNano(publishTimeNanos)
-                .setAsDouble(gauge.value())
-                .addAllAttributes(getTagsForId(gauge.getId()))
-                .build()))
+                    .setTimeUnixNano(publishTimeNanos)
+                    .setAsDouble(gauge.value())
+                    .addAllAttributes(getTagsForId(gauge.getId()))
+                    .build()))
             .build();
     }
 
@@ -314,8 +314,8 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
                     .setTimeUnixNano(publishTimeNanos)
                     .setSum(functionTimer.totalTime(getBaseTimeUnit()))
                     .setCount((long) functionTimer.count()))
-                    .setAggregationTemporality(otlpAggregationTemporality))
-                    .build();
+                .setAggregationTemporality(otlpAggregationTemporality))
+            .build();
     }
 
     // VisibleForTesting

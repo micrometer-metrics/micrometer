@@ -32,20 +32,15 @@ class OtlpCumulativeDistributionSummary extends CumulativeDistributionSummary im
     @Nullable
     private final Histogram monotonicBucketCountHistogram;
 
-    OtlpCumulativeDistributionSummary(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig, double scale, boolean supportsAggregablePercentiles) {
-        super(
-            id,
-            clock,
-            DistributionStatisticConfig.builder()
-                // avoid a histogram for percentiles/SLOs in the super
-                .percentilesHistogram(false)
-                // we will use a different implementation here instead
-                .serviceLevelObjectives()
-                .build()
-                .merge(distributionStatisticConfig),
-            scale,
-            false
-        );
+    OtlpCumulativeDistributionSummary(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig,
+            double scale, boolean supportsAggregablePercentiles) {
+        super(id, clock, DistributionStatisticConfig.builder()
+            // avoid a histogram for percentiles/SLOs in the super
+            .percentilesHistogram(false)
+            // we will use a different implementation here instead
+            .serviceLevelObjectives()
+            .build()
+            .merge(distributionStatisticConfig), scale, false);
         this.startTimeNanos = TimeUnit.MILLISECONDS.toNanos(clock.wallTime());
         // CumulativeDistributionSummary doesn't produce monotonic histogram counts; maybe
         // it should

@@ -40,8 +40,13 @@ class OtlpStepTimer extends StepTimer {
      */
     public OtlpStepTimer(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig,
             PauseDetector pauseDetector, TimeUnit baseTimeUnit, long stepDurationMillis) {
-        super(id, clock, DistributionStatisticConfig.builder().percentilesHistogram(false).serviceLevelObjectives()
-                .build().merge(distributionStatisticConfig), pauseDetector, baseTimeUnit, stepDurationMillis, false);
+        super(id, clock,
+                DistributionStatisticConfig.builder()
+                    .percentilesHistogram(false)
+                    .serviceLevelObjectives()
+                    .build()
+                    .merge(distributionStatisticConfig),
+                pauseDetector, baseTimeUnit, stepDurationMillis, false);
         if (distributionStatisticConfig.isPublishingHistogram()) {
             this.countBucketHistogram = new TimeWindowFixedBoundaryHistogram(clock, distributionStatisticConfig, true,
                     false);

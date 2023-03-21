@@ -62,8 +62,10 @@ class DeltaOtlpMeterRegistryTest {
 
     @Test
     void counter() {
-        Counter counter = Counter.builder(METER_NAME).description(METER_DESCRIPTION).tags(Tags.of(meterTag))
-                .register(registry);
+        Counter counter = Counter.builder(METER_NAME)
+            .description(METER_DESCRIPTION)
+            .tags(Tags.of(meterTag))
+            .register(registry);
         counter.increment();
         counter.increment();
         assertSum(publishTimeAwareWrite(counter), 0, TimeUnit.MINUTES.toNanos(1), 0);
@@ -80,7 +82,10 @@ class DeltaOtlpMeterRegistryTest {
         AtomicLong atomicLong = new AtomicLong(10);
 
         FunctionCounter counter = FunctionCounter.builder(METER_NAME, atomicLong, AtomicLong::get)
-                .description(METER_DESCRIPTION).tags(Tags.of(meterTag)).baseUnit("milliseconds").register(registry);
+            .description(METER_DESCRIPTION)
+            .tags(Tags.of(meterTag))
+            .baseUnit("milliseconds")
+            .register(registry);
 
         assertSum(publishTimeAwareWrite(counter), 0, TimeUnit.MINUTES.toNanos(1), 0);
         this.stepOverNStep(1);
@@ -91,8 +96,10 @@ class DeltaOtlpMeterRegistryTest {
 
     @Test
     void timer() {
-        Timer timer = Timer.builder(METER_NAME).description(METER_DESCRIPTION).tags(Tags.of(meterTag))
-                .register(registry);
+        Timer timer = Timer.builder(METER_NAME)
+            .description(METER_DESCRIPTION)
+            .tags(Tags.of(meterTag))
+            .register(registry);
         timer.record(10, TimeUnit.MILLISECONDS);
         timer.record(77, TimeUnit.MILLISECONDS);
         timer.record(111, TimeUnit.MILLISECONDS);
@@ -126,10 +133,12 @@ class DeltaOtlpMeterRegistryTest {
         // an ideal world.
         clock.add(Duration.ofSeconds(5));
 
-        Timer timer = Timer.builder(METER_NAME).description(METER_DESCRIPTION).tags(Tags.of(meterTag))
-                .serviceLevelObjectives(Duration.ofMillis(10), Duration.ofMillis(50), Duration.ofMillis(100),
-                        Duration.ofMillis(500))
-                .register(registry);
+        Timer timer = Timer.builder(METER_NAME)
+            .description(METER_DESCRIPTION)
+            .tags(Tags.of(meterTag))
+            .serviceLevelObjectives(Duration.ofMillis(10), Duration.ofMillis(50), Duration.ofMillis(100),
+                    Duration.ofMillis(500))
+            .register(registry);
 
         timer.record(10, TimeUnit.MILLISECONDS);
         timer.record(77, TimeUnit.MILLISECONDS);
@@ -168,7 +177,9 @@ class DeltaOtlpMeterRegistryTest {
     @Test
     void functionTimer() {
         FunctionTimer functionTimer = FunctionTimer.builder(METER_NAME, this, o -> 5, o -> 127, TimeUnit.MILLISECONDS)
-                .description(METER_DESCRIPTION).tags(Tags.of(meterTag)).register(registry);
+            .description(METER_DESCRIPTION)
+            .tags(Tags.of(meterTag))
+            .register(registry);
         assertHistogram(publishTimeAwareWrite(functionTimer), 0, TimeUnit.MINUTES.toNanos(1), "milliseconds", 0, 0, 0);
         this.stepOverNStep(1);
         assertHistogram(publishTimeAwareWrite(functionTimer), TimeUnit.MINUTES.toNanos(1), TimeUnit.MINUTES.toNanos(2),
@@ -180,8 +191,11 @@ class DeltaOtlpMeterRegistryTest {
 
     @Test
     void distributionSummary() {
-        DistributionSummary size = DistributionSummary.builder(METER_NAME).baseUnit("bytes")
-                .description(METER_DESCRIPTION).tags(Tags.of(meterTag)).register(registry);
+        DistributionSummary size = DistributionSummary.builder(METER_NAME)
+            .baseUnit("bytes")
+            .description(METER_DESCRIPTION)
+            .tags(Tags.of(meterTag))
+            .register(registry);
         size.record(100);
         size.record(15);
         size.record(2233);
@@ -207,8 +221,12 @@ class DeltaOtlpMeterRegistryTest {
         // an ideal world.
         clock.add(Duration.ofSeconds(5));
 
-        DistributionSummary ds = DistributionSummary.builder(METER_NAME).description(METER_DESCRIPTION)
-                .tags(Tags.of(meterTag)).baseUnit("bytes").serviceLevelObjectives(10, 50, 100, 500).register(registry);
+        DistributionSummary ds = DistributionSummary.builder(METER_NAME)
+            .description(METER_DESCRIPTION)
+            .tags(Tags.of(meterTag))
+            .baseUnit("bytes")
+            .serviceLevelObjectives(10, 50, 100, 500)
+            .register(registry);
 
         ds.record(10);
         ds.record(77);
@@ -245,8 +263,10 @@ class DeltaOtlpMeterRegistryTest {
 
     @Test
     void longTaskTimer() {
-        LongTaskTimer taskTimer = LongTaskTimer.builder(METER_NAME).description(METER_DESCRIPTION)
-                .tags(Tags.of(meterTag)).register(registry);
+        LongTaskTimer taskTimer = LongTaskTimer.builder(METER_NAME)
+            .description(METER_DESCRIPTION)
+            .tags(Tags.of(meterTag))
+            .register(registry);
         LongTaskTimer.Sample task1 = taskTimer.start();
         LongTaskTimer.Sample task2 = taskTimer.start();
         this.stepOverNStep(3);
@@ -294,7 +314,7 @@ class DeltaOtlpMeterRegistryTest {
         assertThat(histogram.getAttributes(0).getKey()).hasToString(meterTag.getKey());
         assertThat(histogram.getAttributes(0).getValue().getStringValue()).hasToString(meterTag.getValue());
         assertThat(metric.getHistogram().getAggregationTemporality())
-                .isEqualTo(AggregationTemporality.mapToOtlp(DELTA));
+            .isEqualTo(AggregationTemporality.mapToOtlp(DELTA));
     }
 
     private void assertSum(Metric metric, long startTime, long endTime, double expectedValue) {

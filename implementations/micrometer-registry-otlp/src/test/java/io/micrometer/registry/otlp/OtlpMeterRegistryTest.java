@@ -206,7 +206,8 @@ class OtlpMeterRegistryTest {
         assertThat(publishTimeAwareWrite(functionTimer).toString())
             .isEqualTo("name: \"function.timer\"\n" + "unit: \"milliseconds\"\n" + "histogram {\n" + "  data_points {\n"
                     + "    start_time_unix_nano: 1000000\n" + "    time_unix_nano: 1000000\n" + "    count: 5\n"
-                    + "    sum: 127.0\n" + "  }\n" + "  aggregation_temporality: AGGREGATION_TEMPORALITY_CUMULATIVE\n" + "}\n");
+                    + "    sum: 127.0\n" + "  }\n" + "  aggregation_temporality: AGGREGATION_TEMPORALITY_CUMULATIVE\n"
+                    + "}\n");
     }
 
     @Test

@@ -32,21 +32,15 @@ class OtlpCumulativeTimer extends CumulativeTimer implements StartTimeAwareMeter
     @Nullable
     private final Histogram monotonicCountBucketHistogram;
 
-    OtlpCumulativeTimer(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig, PauseDetector pauseDetector, TimeUnit baseTimeUnit) {
-        super(
-            id,
-            clock,
-            DistributionStatisticConfig.builder()
-                // avoid a histogram for percentiles/SLOs in the super
-                .percentilesHistogram(false)
-                // we will use a different implementation here instead
-                .serviceLevelObjectives()
-                .build()
-                .merge(distributionStatisticConfig),
-            pauseDetector,
-            baseTimeUnit,
-            false
-        );
+    OtlpCumulativeTimer(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig,
+            PauseDetector pauseDetector, TimeUnit baseTimeUnit) {
+        super(id, clock, DistributionStatisticConfig.builder()
+            // avoid a histogram for percentiles/SLOs in the super
+            .percentilesHistogram(false)
+            // we will use a different implementation here instead
+            .serviceLevelObjectives()
+            .build()
+            .merge(distributionStatisticConfig), pauseDetector, baseTimeUnit, false);
         this.startTimeNanos = TimeUnit.MILLISECONDS.toNanos(clock.wallTime());
         // CumulativeTimer doesn't produce monotonic histogram counts; maybe it should
         // Also, we need to customize the histogram behavior to not return cumulative

@@ -35,8 +35,13 @@ class OtlpStepDistributionSummary extends StepDistributionSummary {
      */
     public OtlpStepDistributionSummary(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig,
             double scale, long stepMillis) {
-        super(id, clock, DistributionStatisticConfig.builder().percentilesHistogram(false).serviceLevelObjectives()
-                .build().merge(distributionStatisticConfig), scale, stepMillis, false);
+        super(id, clock,
+                DistributionStatisticConfig.builder()
+                    .percentilesHistogram(false)
+                    .serviceLevelObjectives()
+                    .build()
+                    .merge(distributionStatisticConfig),
+                scale, stepMillis, false);
         if (distributionStatisticConfig.isPublishingHistogram()) {
             this.countBucketHistogram = new TimeWindowFixedBoundaryHistogram(clock, distributionStatisticConfig, true,
                     false);
