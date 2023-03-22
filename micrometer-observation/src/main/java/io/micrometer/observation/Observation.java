@@ -1295,6 +1295,18 @@ public interface Observation extends ObservationView {
         <T> T getOrDefault(Object key, T defaultObject);
 
         /**
+         * Returns an element or default if not present.
+         * @param key key
+         * @param defaultObjectSupplier supplier for default object to return
+         * @param <T> value type
+         * @return object or default if not present
+         */
+        default <T> T getOrDefault(Object key, Supplier<T> defaultObjectSupplier) {
+            T value = get(key);
+            return value != null ? value : defaultObjectSupplier.get();
+        }
+
+        /**
          * Returns low cardinality key values.
          * @return low cardinality key values
          */
