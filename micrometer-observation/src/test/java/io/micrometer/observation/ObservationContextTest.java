@@ -21,7 +21,10 @@ import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.util.function.Supplier;
+
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.*;
 
 /**
  * Tests for {@link Observation.Context}.
@@ -66,6 +69,30 @@ class ObservationContextTest {
         context.put(String.class, "42");
         assertThat(context.getOrDefault(String.class, "abc")).isEqualTo("42");
         assertThat(context.getOrDefault(Integer.class, 123)).isEqualTo(123);
+    }
+
+    @Test
+    void getOrDefaultSupplierWhenKeyIsPresent() {
+        context.put(String.class, "42");
+
+        @SuppressWarnings("unchecked")
+        Supplier<String> defaultSupplier = mock(Supplier.class);
+        when(defaultSupplier.get()).thenReturn("abc");
+
+        assertThat(context.getOrDefault(String.class, defaultSupplier)).isEqualTo("42");
+        verifyNoInteractions(defaultSupplier);
+    }
+
+    @Test
+    void getOrDefaultSupplierWhenKeyIsMissing() {
+        context.put(String.class, "42");
+
+        @SuppressWarnings("unchecked")
+        Supplier<Integer> defaultSupplier = mock(Supplier.class);
+        when(defaultSupplier.get()).thenReturn(123);
+
+        assertThat(context.getOrDefault(Integer.class, defaultSupplier)).isEqualTo(123);
+        verify(defaultSupplier, times(1)).get();
     }
 
     @Test
