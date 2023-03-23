@@ -48,6 +48,7 @@ import static java.util.stream.Collectors.joining;
  * Logging {@link io.micrometer.core.instrument.MeterRegistry}.
  *
  * @author Jon Schneider
+ * @author Matthieu Borgraeve
  * @since 1.1.0
  */
 @Incubating(since = "1.1.0")
@@ -75,8 +76,8 @@ public class LoggingMeterRegistry extends StepMeterRegistry {
     }
 
     /**
-     * Constructor allowing custom sink instead of a default `log::info`
-     * @param loggingSink the custom sink that will be called for each metric.
+     * Constructor allowing custom sink instead of a default {@code log::info}.
+     * @param loggingSink the custom sink that will be called for each time series.
      */
     public LoggingMeterRegistry(Consumer<String> loggingSink) {
         this(LoggingRegistryConfig.DEFAULT, Clock.SYSTEM, loggingSink);
@@ -86,7 +87,7 @@ public class LoggingMeterRegistry extends StepMeterRegistry {
      * Constructor allowing a custom sink, clock and configuration.
      * @param config the LoggingRegistryConfig
      * @param clock the Clock
-     * @param loggingSink the custom sink that will be called for each metric.
+     * @param loggingSink the custom sink that will be called for each time series.
      */
     public LoggingMeterRegistry(LoggingRegistryConfig config, Clock clock, Consumer<String> loggingSink) {
         this(config, clock, new NamedThreadFactory("logging-metrics-publisher"), loggingSink, null);

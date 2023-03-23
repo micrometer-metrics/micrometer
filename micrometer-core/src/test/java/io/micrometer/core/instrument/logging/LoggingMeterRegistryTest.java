@@ -21,7 +21,6 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
@@ -33,6 +32,7 @@ import static org.mockito.Mockito.*;
  *
  * @author Jon Schneider
  * @author Johnny Lim
+ * @author Matthieu Borgraeve
  */
 class LoggingMeterRegistryTest {
 
@@ -48,34 +48,30 @@ class LoggingMeterRegistryTest {
     }
 
     @Test
-    void publishUsesProvidedSinkFromConstructor() {
+    void providedSinkFromConstructorShouldBeUsed() {
         String expectedString = "my.gauage{tag-1=tag-2} value=1";
-
         Consumer<String> mockConsumer = mock(Consumer.class);
         doNothing().when(mockConsumer).accept(expectedString);
         AtomicInteger gaugeValue = new AtomicInteger(1);
-        {
-            LoggingMeterRegistry registry = new LoggingMeterRegistry(LoggingRegistryConfig.DEFAULT, Clock.SYSTEM,
-                    mockConsumer);
-            registry.gauge("my.gauage", List.of(Tag.of("tag-1", "tag-2")), gaugeValue);
-            registry.publish();
-            verify(mockConsumer, times(1)).accept(expectedString);
-        }
+        LoggingMeterRegistry registry = new LoggingMeterRegistry(LoggingRegistryConfig.DEFAULT, Clock.SYSTEM,
+                mockConsumer);
+        registry.gauge("my.gauage", Tags.of("tag-1", "tag-2"), gaugeValue);
+
+        registry.publish();
+        verify(mockConsumer, times(1)).accept(expectedString);
     }
 
     @Test
-    void publishUsesProvidedSinkFromConstructorWithDefault() {
+    void providedSinkFromConstructorShouldBeUsedWithDefaults() {
         String expectedString = "my.gauage{tag-1=tag-2} value=1";
-
         Consumer<String> mockConsumer = mock(Consumer.class);
         doNothing().when(mockConsumer).accept(expectedString);
         AtomicInteger gaugeValue = new AtomicInteger(1);
-        {
-            LoggingMeterRegistry registry = new LoggingMeterRegistry(mockConsumer);
-            registry.gauge("my.gauage", List.of(Tag.of("tag-1", "tag-2")), gaugeValue);
-            registry.publish();
-            verify(mockConsumer, times(1)).accept(expectedString);
-        }
+        LoggingMeterRegistry registry = new LoggingMeterRegistry(mockConsumer);
+        registry.gauge("my.gauage", Tags.of("tag-1", "tag-2"), gaugeValue);
+
+        registry.publish();
+        verify(mockConsumer, times(1)).accept(expectedString);
     }
 
     @Test
