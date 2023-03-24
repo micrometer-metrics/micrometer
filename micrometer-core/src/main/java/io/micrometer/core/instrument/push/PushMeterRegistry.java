@@ -92,7 +92,7 @@ public abstract class PushMeterRegistry extends MeterRegistry {
 
     @Override
     public void close() {
-        if (config.enabled()) {
+        if (config.enabled() && !isClosed()) {
             publishSafely();
         }
         stop();
