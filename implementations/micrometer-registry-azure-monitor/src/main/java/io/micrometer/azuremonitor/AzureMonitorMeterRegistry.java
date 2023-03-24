@@ -63,9 +63,16 @@ public class AzureMonitorMeterRegistry extends StepMeterRegistry {
         super(config, clock);
 
         config().namingConvention(new AzureMonitorNamingConvention());
+
         if (StringUtils.isEmpty(telemetryConfiguration.getInstrumentationKey())) {
             checkRequired("instrumentationKey", AzureMonitorConfig::instrumentationKey).apply(config).orThrow();
             telemetryConfiguration.setInstrumentationKey(config.instrumentationKey());
+        }
+
+        // Connection string overrides instrumentation key when present
+        if (StringUtils.isEmpty(telemetryConfiguration.getConnectionString())) {
+            checkRequired("connectionString", AzureMonitorConfig::connectionString).apply(config).orThrow();
+            telemetryConfiguration.setConnectionString(config.connectionString());
         }
 
         client = new TelemetryClient(telemetryConfiguration);

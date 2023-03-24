@@ -25,6 +25,7 @@ import io.micrometer.appoptics.AppOpticsMeterRegistry;
 import io.micrometer.atlas.AtlasMeterRegistry;
 import io.micrometer.azuremonitor.AzureMonitorConfig;
 import io.micrometer.azuremonitor.AzureMonitorMeterRegistry;
+import io.micrometer.azuremonitor.AzureMonitorUtils;
 import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -415,6 +416,35 @@ public class SampleRegistries {
             }
 
             @Override
+            public String connectionString() {
+                return String.format("InstrumentationKey=%s", apiKey);
+            }
+
+            @Override
+            public String get(String key) {
+                return null;
+            }
+
+            @Override
+            public Duration step() {
+                return Duration.ofSeconds(10);
+            }
+        }, Clock.SYSTEM);
+    }
+
+    public static AzureMonitorMeterRegistry azureWithConnectionString(String connectionString) {
+        return new AzureMonitorMeterRegistry(new AzureMonitorConfig() {
+            @Override
+            public String instrumentationKey() {
+                return AzureMonitorUtils.extractInstrumentationKeyFromConnectionString(connectionString);
+            }
+
+            @Override
+            public String connectionString() {
+                return connectionString;
+            }
+
+            @Override
             public String get(String key) {
                 return null;
             }
@@ -498,10 +528,10 @@ public class SampleRegistries {
      * service account's JSON.
      * @param projectId The Google Cloud project id found on the dropdown at the top of
      * the Google Cloud console.
+     * @return A Stackdriver registry.
      * @see <a href=
      * "https://cloud.google.com/monitoring/docs/reference/libraries#setting_up_authentication">Google
      * Cloud authentication</a>
-     * @return A Stackdriver registry.
      */
     public static StackdriverMeterRegistry stackdriver(String serviceAccountJson, String projectId) {
         try (InputStream credentials = new FileInputStream(new File(serviceAccountJson))) {
