@@ -71,7 +71,7 @@ public abstract class PushMeterRegistry extends MeterRegistry {
     }
 
     /**
-     * @return - true if registry is publishing metrics
+     * Returns - true if registry is publishing metrics.
      */
     public boolean isPublishing() {
         return publishing.get();
