@@ -15,7 +15,10 @@
  */
 package io.micrometer.core.instrument.push;
 
-import io.micrometer.core.instrument.MockClock;
+import io.micrometer.core.Issue;
+import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
+import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.step.StepRegistryConfig;
 import io.micrometer.core.instrument.util.NamedThreadFactory;
@@ -26,6 +29,9 @@ import java.time.Duration;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.ToDoubleFunction;
+import java.util.function.ToLongFunction;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
@@ -74,6 +80,79 @@ class PushMeterRegistryTest {
     @Test
     void whenUncaughtExceptionInPublish_closeRegistrySuccessful() {
         assertThatCode(() -> pushMeterRegistry.close()).doesNotThrowAnyException();
+    }
+
+    @Test
+    @Issue("#3712")
+    void publishOnlyHappensOnceWithMultipleClose() {
+        pushMeterRegistry = new CountingPushMeterRegistry(config, Clock.SYSTEM);
+        pushMeterRegistry.close();
+        assertThat(((CountingPushMeterRegistry) pushMeterRegistry).publishCount.get()).isOne();
+        pushMeterRegistry.close();
+        assertThat(((CountingPushMeterRegistry) pushMeterRegistry).publishCount.get()).isOne();
+    }
+
+    static class CountingPushMeterRegistry extends PushMeterRegistry {
+
+        AtomicInteger publishCount = new AtomicInteger();
+
+        protected CountingPushMeterRegistry(PushRegistryConfig config, Clock clock) {
+            super(config, clock);
+        }
+
+        @Override
+        protected <T> Gauge newGauge(Meter.Id id, T obj, ToDoubleFunction<T> valueFunction) {
+            return null;
+        }
+
+        @Override
+        protected Counter newCounter(Meter.Id id) {
+            return null;
+        }
+
+        @Override
+        protected Timer newTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig,
+                PauseDetector pauseDetector) {
+            return null;
+        }
+
+        @Override
+        protected DistributionSummary newDistributionSummary(Meter.Id id,
+                DistributionStatisticConfig distributionStatisticConfig, double scale) {
+            return null;
+        }
+
+        @Override
+        protected Meter newMeter(Meter.Id id, Meter.Type type, Iterable<Measurement> measurements) {
+            return null;
+        }
+
+        @Override
+        protected <T> FunctionTimer newFunctionTimer(Meter.Id id, T obj, ToLongFunction<T> countFunction,
+                ToDoubleFunction<T> totalTimeFunction, TimeUnit totalTimeFunctionUnit) {
+            return null;
+        }
+
+        @Override
+        protected <T> FunctionCounter newFunctionCounter(Meter.Id id, T obj, ToDoubleFunction<T> countFunction) {
+            return null;
+        }
+
+        @Override
+        protected TimeUnit getBaseTimeUnit() {
+            return null;
+        }
+
+        @Override
+        protected DistributionStatisticConfig defaultHistogramConfig() {
+            return null;
+        }
+
+        @Override
+        protected void publish() {
+            publishCount.incrementAndGet();
+        }
+
     }
 
     static class ThrowingPushMeterRegistry extends StepMeterRegistry {
