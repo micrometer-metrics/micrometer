@@ -528,10 +528,10 @@ public class SampleRegistries {
      * service account's JSON.
      * @param projectId The Google Cloud project id found on the dropdown at the top of
      * the Google Cloud console.
-     * @return A Stackdriver registry.
      * @see <a href=
      * "https://cloud.google.com/monitoring/docs/reference/libraries#setting_up_authentication">Google
      * Cloud authentication</a>
+     * @return A Stackdriver registry.
      */
     public static StackdriverMeterRegistry stackdriver(String serviceAccountJson, String projectId) {
         try (InputStream credentials = new FileInputStream(new File(serviceAccountJson))) {
