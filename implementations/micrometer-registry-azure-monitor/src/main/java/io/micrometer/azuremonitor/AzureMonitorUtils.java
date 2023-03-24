@@ -16,12 +16,13 @@
 package io.micrometer.azuremonitor;
 
 import java.util.Arrays;
+import java.util.Objects;
 
 public final class AzureMonitorUtils {
 
     public static String extractInstrumentationKeyFromConnectionString(final String connectionString) {
         return Arrays.stream(connectionString.split(";"))
-            .filter(s -> "InstrumentationKey".equals(s.split("=")[0]))
+            .filter(s -> Objects.equals("InstrumentationKey", s.split("=")[0]))
             .map(s -> s.split("=")[1])
             .findFirst()
             .orElse("");
