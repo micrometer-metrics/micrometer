@@ -43,10 +43,19 @@ public interface AzureMonitorConfig extends StepRegistryConfig {
         return getSecret(this, "instrumentationKey").get();
     }
 
+    /**
+     * default implementation to get the connection string from the config
+     * @return Connection String
+     */
+    default String connectionString() {
+        return getSecret(this, "connectionString").get();
+    }
+
     @Override
     default Validated<?> validate() {
         return checkAll(this, c -> StepRegistryConfig.validate(c),
-                check("instrumentationKey", AzureMonitorConfig::instrumentationKey));
+                check("instrumentationKey", AzureMonitorConfig::instrumentationKey),
+                check("connectionString", AzureMonitorConfig::connectionString));
     }
 
 }

@@ -30,6 +30,11 @@ class AzureMonitorMeterRegistryCompatibilityKit extends MeterRegistryCompatibili
         }
 
         @Override
+        public String connectionString() {
+            return "InstrumentationKey=fakeKey";
+        }
+
+        @Override
         public String get(String key) {
             return null;
         }

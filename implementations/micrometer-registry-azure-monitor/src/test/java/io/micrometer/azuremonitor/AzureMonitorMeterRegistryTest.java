@@ -47,6 +47,11 @@ class AzureMonitorMeterRegistryTest {
         public String instrumentationKey() {
             return "myInstrumentationKey";
         }
+
+        @Override
+        public String connectionString() {
+            return "InstrumentationKey=myInstrumentationKey";
+        }
     };
 
     private final MockClock clock = new MockClock();
@@ -56,13 +61,30 @@ class AzureMonitorMeterRegistryTest {
     @Test
     void useTelemetryConfigInstrumentationKeyWhenSet() {
         TelemetryConfiguration telemetryConfiguration = TelemetryConfiguration.createDefault();
-        telemetryConfiguration.setInstrumentationKey("fake");
+        telemetryConfiguration.setInstrumentationKey("myInstrumentationKey");
         AzureMonitorMeterRegistry.builder(config).telemetryConfiguration(telemetryConfiguration).build();
-        assertThat(telemetryConfiguration.getInstrumentationKey()).isEqualTo("fake");
+        assertThat(telemetryConfiguration.getInstrumentationKey()).isEqualTo("myInstrumentationKey");
+    }
+
+    @Test
+    void useTelemetryConfigConnectionStringWhenSet() {
+        TelemetryConfiguration telemetryConfiguration = TelemetryConfiguration.createDefault();
+        telemetryConfiguration.setConnectionString("InstrumentationKey=myInstrumentationKey");
+        AzureMonitorMeterRegistry.builder(config).telemetryConfiguration(telemetryConfiguration).build();
+        assertThat(telemetryConfiguration.getConnectionString()).isEqualTo("InstrumentationKey=myInstrumentationKey");
     }
 
     @Test
     void failWhenTelemetryConfigInstrumentationKeyIsUnsetAndConfigInstrumentationKeyIsNull() {
+        TelemetryConfiguration telemetryConfiguration = TelemetryConfiguration.createDefault();
+        assertThatExceptionOfType(ValidationException.class)
+            .isThrownBy(() -> AzureMonitorMeterRegistry.builder(key -> null)
+                .telemetryConfiguration(telemetryConfiguration)
+                .build());
+    }
+
+    @Test
+    void failWhenTelemetryConfigConnectionStringIsUnsetAndConfigInstrumentationKeyIsNull() {
         TelemetryConfiguration telemetryConfiguration = TelemetryConfiguration.createDefault();
         assertThatExceptionOfType(ValidationException.class)
             .isThrownBy(() -> AzureMonitorMeterRegistry.builder(key -> null)

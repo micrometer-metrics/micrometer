@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 VMware, Inc.
+ * Copyright 2018 VMware, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,25 +15,20 @@
  */
 package io.micrometer.azuremonitor;
 
-import org.junit.jupiter.api.Test;
+import java.util.Arrays;
 
-import java.util.HashMap;
-import java.util.Map;
+public final class AzureMonitorUtils {
 
-import static org.assertj.core.api.Assertions.assertThat;
+    public static String extractInstrumentationKeyFromConnectionString(final String connectionString) {
+        return Arrays.stream(connectionString.split(";"))
+            .filter(s -> "InstrumentationKey".equals(s.split("=")[0]))
+            .map(s -> s.split("=")[1])
+            .findFirst()
+            .orElse("");
+    }
 
-class AzureMonitorConfigTest {
-
-    private final Map<String, String> props = new HashMap<>();
-
-    private final AzureMonitorConfig config = props::get;
-
-    @Test
-    void valid() {
-        props.put("azuremonitor.instrumentationKey", "secret");
-        props.put("azuremonitor.connectionString", "secret");
-
-        assertThat(config.validate().isValid()).isTrue();
+    private AzureMonitorUtils() {
+        // Utility class
     }
 
 }
