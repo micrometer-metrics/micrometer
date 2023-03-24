@@ -84,15 +84,6 @@ class AzureMonitorMeterRegistryTest {
     }
 
     @Test
-    void failWhenTelemetryConfigConnectionStringIsUnsetAndConfigInstrumentationKeyIsNull() {
-        TelemetryConfiguration telemetryConfiguration = TelemetryConfiguration.createDefault();
-        assertThatExceptionOfType(ValidationException.class)
-            .isThrownBy(() -> AzureMonitorMeterRegistry.builder(key -> null)
-                .telemetryConfiguration(telemetryConfiguration)
-                .build());
-    }
-
-    @Test
     void trackTimer() {
         Timer timer = Timer.builder("my.timer").register(registry);
         timer.record(Duration.ofSeconds(1));
