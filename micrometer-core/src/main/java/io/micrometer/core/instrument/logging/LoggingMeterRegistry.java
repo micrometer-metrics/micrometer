@@ -78,6 +78,7 @@ public class LoggingMeterRegistry extends StepMeterRegistry {
     /**
      * Constructor allowing custom sink instead of a default {@code log::info}.
      * @param loggingSink the custom sink that will be called for each time series.
+     * @since 1.11.0
      */
     public LoggingMeterRegistry(Consumer<String> loggingSink) {
         this(LoggingRegistryConfig.DEFAULT, Clock.SYSTEM, loggingSink);
@@ -88,6 +89,7 @@ public class LoggingMeterRegistry extends StepMeterRegistry {
      * @param config the LoggingRegistryConfig
      * @param clock the Clock
      * @param loggingSink the custom sink that will be called for each time series.
+     * @since 1.11.0
      */
     public LoggingMeterRegistry(LoggingRegistryConfig config, Clock clock, Consumer<String> loggingSink) {
         this(config, clock, new NamedThreadFactory("logging-metrics-publisher"), loggingSink, null);
