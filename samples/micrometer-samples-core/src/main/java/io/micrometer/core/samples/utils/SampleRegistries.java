@@ -25,7 +25,6 @@ import io.micrometer.appoptics.AppOpticsMeterRegistry;
 import io.micrometer.atlas.AtlasMeterRegistry;
 import io.micrometer.azuremonitor.AzureMonitorConfig;
 import io.micrometer.azuremonitor.AzureMonitorMeterRegistry;
-import io.micrometer.azuremonitor.AzureMonitorUtils;
 import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -411,37 +410,8 @@ public class SampleRegistries {
     public static AzureMonitorMeterRegistry azure(String apiKey) {
         return new AzureMonitorMeterRegistry(new AzureMonitorConfig() {
             @Override
-            public String instrumentationKey() {
-                return apiKey;
-            }
-
-            @Override
             public String connectionString() {
                 return String.format("InstrumentationKey=%s", apiKey);
-            }
-
-            @Override
-            public String get(String key) {
-                return null;
-            }
-
-            @Override
-            public Duration step() {
-                return Duration.ofSeconds(10);
-            }
-        }, Clock.SYSTEM);
-    }
-
-    public static AzureMonitorMeterRegistry azureWithConnectionString(String connectionString) {
-        return new AzureMonitorMeterRegistry(new AzureMonitorConfig() {
-            @Override
-            public String instrumentationKey() {
-                return AzureMonitorUtils.extractInstrumentationKeyFromConnectionString(connectionString);
-            }
-
-            @Override
-            public String connectionString() {
-                return connectionString;
             }
 
             @Override
