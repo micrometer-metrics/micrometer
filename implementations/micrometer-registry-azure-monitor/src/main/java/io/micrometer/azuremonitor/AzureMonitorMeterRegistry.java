@@ -100,15 +100,15 @@ public class AzureMonitorMeterRegistry extends StepMeterRegistry {
             // @formatter:off
             meter
                 .match(
-                    this::trackGauge,
-                    this::trackCounter,
-                    this::trackTimer,
-                    this::trackDistributionSummary,
-                    this::trackLongTaskTimer,
-                    this::trackTimeGauge,
-                    this::trackFunctionCounter,
-                    this::trackFunctionTimer,
-                    this::trackMeter)
+                        this::trackGauge,
+                        this::trackCounter,
+                        this::trackTimer,
+                        this::trackDistributionSummary,
+                        this::trackLongTaskTimer,
+                        this::trackTimeGauge,
+                        this::trackFunctionCounter,
+                        this::trackFunctionTimer,
+                        this::trackMeter)
                 .forEach(telemetry -> {
                     try {
                         client.track(telemetry);
