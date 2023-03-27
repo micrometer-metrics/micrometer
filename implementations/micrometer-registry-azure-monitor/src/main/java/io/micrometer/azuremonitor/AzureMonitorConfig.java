@@ -38,7 +38,9 @@ public interface AzureMonitorConfig extends StepRegistryConfig {
     /**
      * default implementation to get the instrumentation key from the config
      * @return Instrumentation Key
+     * @deprecated use {@link #connectionString()} instead
      */
+    @Deprecated
     default String instrumentationKey() {
         return getSecret(this, "instrumentationKey").get();
     }
@@ -54,7 +56,6 @@ public interface AzureMonitorConfig extends StepRegistryConfig {
     @Override
     default Validated<?> validate() {
         return checkAll(this, c -> StepRegistryConfig.validate(c),
-                check("instrumentationKey", AzureMonitorConfig::instrumentationKey),
                 check("connectionString", AzureMonitorConfig::connectionString));
     }
 

@@ -44,11 +44,6 @@ class AzureMonitorMeterRegistryTest {
         }
 
         @Override
-        public String instrumentationKey() {
-            return "myInstrumentationKey";
-        }
-
-        @Override
         public String connectionString() {
             return "InstrumentationKey=myInstrumentationKey";
         }
