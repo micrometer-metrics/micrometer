@@ -18,16 +18,13 @@ package io.micrometer.core.instrument.logging;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.BaseUnits;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Consumer;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.*;
 
 /**
  * Tests for {@link LoggingMeterRegistry}.
@@ -55,7 +52,7 @@ class LoggingMeterRegistryTest {
         AtomicReference<String> actual = new AtomicReference<>();
         AtomicInteger gaugeValue = new AtomicInteger(1);
         LoggingMeterRegistry registry = new LoggingMeterRegistry(LoggingRegistryConfig.DEFAULT, Clock.SYSTEM,
-            actual::set);
+                actual::set);
         registry.gauge("my.gauage", Tags.of("tag-1", "tag-2"), gaugeValue);
 
         registry.publish();
