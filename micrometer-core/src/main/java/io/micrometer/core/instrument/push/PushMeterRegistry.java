@@ -52,7 +52,8 @@ public abstract class PushMeterRegistry extends MeterRegistry {
     /**
      * Catch uncaught exceptions thrown from {@link #publish()}.
      */
-    private void publishSafely() {
+    // VisibleForTesting
+    void publishSafely() {
         if (this.publishing.compareAndSet(false, true)) {
             try {
                 publish();
