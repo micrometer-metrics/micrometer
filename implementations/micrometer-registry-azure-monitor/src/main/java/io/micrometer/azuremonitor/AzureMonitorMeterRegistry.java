@@ -63,10 +63,26 @@ public class AzureMonitorMeterRegistry extends StepMeterRegistry {
         super(config, clock);
 
         config().namingConvention(new AzureMonitorNamingConvention());
-        if (StringUtils.isEmpty(telemetryConfiguration.getConnectionString())) {
-            checkRequired("connectionString", AzureMonitorConfig::connectionString).apply(config).orThrow();
-            telemetryConfiguration.setConnectionString(config.connectionString());
+
+        final AzureMonitorConfig innerConfig;
+        if (StringUtils.isEmpty(config.connectionString()) && StringUtils.isNotEmpty(config.instrumentationKey())) {
+            innerConfig = new AzureMonitorConfig() {
+                @Override
+                public String connectionString() {
+                    return String.format("InstrumentationKey=%s", config.instrumentationKey());
+                }
+
+                @Override
+                public String get(String key) {
+                    return null;
+                }
+            };
         }
+        else {
+            innerConfig = config;
+        }
+        checkRequired("connectionString", AzureMonitorConfig::connectionString).apply(innerConfig).orThrow();
+        telemetryConfiguration.setConnectionString(innerConfig.connectionString());
 
         client = new TelemetryClient(telemetryConfiguration);
         client.getContext().getInternal().setSdkVersion(SDK_VERSION);
@@ -84,15 +100,15 @@ public class AzureMonitorMeterRegistry extends StepMeterRegistry {
             // @formatter:off
             meter
                 .match(
-                        this::trackGauge,
-                        this::trackCounter,
-                        this::trackTimer,
-                        this::trackDistributionSummary,
-                        this::trackLongTaskTimer,
-                        this::trackTimeGauge,
-                        this::trackFunctionCounter,
-                        this::trackFunctionTimer,
-                        this::trackMeter)
+                    this::trackGauge,
+                    this::trackCounter,
+                    this::trackTimer,
+                    this::trackDistributionSummary,
+                    this::trackLongTaskTimer,
+                    this::trackTimeGauge,
+                    this::trackFunctionCounter,
+                    this::trackFunctionTimer,
+                    this::trackMeter)
                 .forEach(telemetry -> {
                     try {
                         client.track(telemetry);

@@ -45,7 +45,19 @@ class AzureMonitorMeterRegistryTest {
 
         @Override
         public String connectionString() {
-            return "InstrumentationKey=myInstrumentationKey";
+            return "InstrumentationKey=myInstrumentationKey1";
+        }
+    };
+
+    private final AzureMonitorConfig configWithInstrumentationKey = new AzureMonitorConfig() {
+        @Override
+        public String get(String key) {
+            return null;
+        }
+
+        @Override
+        public String instrumentationKey() {
+            return "myInstrumentationKey2";
         }
     };
 
@@ -54,19 +66,21 @@ class AzureMonitorMeterRegistryTest {
     private final AzureMonitorMeterRegistry registry = new AzureMonitorMeterRegistry(config, clock);
 
     @Test
-    void useTelemetryConfigInstrumentationKeyWhenSet() {
+    void useTelemetryConfigConnectionStringWhenSet() {
         TelemetryConfiguration telemetryConfiguration = TelemetryConfiguration.createDefault();
-        telemetryConfiguration.setInstrumentationKey("myInstrumentationKey");
+        telemetryConfiguration.setConnectionString("InstrumentationKey=myInstrumentationKey1");
         AzureMonitorMeterRegistry.builder(config).telemetryConfiguration(telemetryConfiguration).build();
-        assertThat(telemetryConfiguration.getInstrumentationKey()).isEqualTo("myInstrumentationKey");
+        assertThat(telemetryConfiguration.getConnectionString()).isEqualTo("InstrumentationKey=myInstrumentationKey1");
     }
 
     @Test
-    void useTelemetryConfigConnectionStringWhenSet() {
+    void useTelemetryConfigInstrumentationKeyWhenSet() {
         TelemetryConfiguration telemetryConfiguration = TelemetryConfiguration.createDefault();
-        telemetryConfiguration.setConnectionString("InstrumentationKey=myInstrumentationKey");
-        AzureMonitorMeterRegistry.builder(config).telemetryConfiguration(telemetryConfiguration).build();
-        assertThat(telemetryConfiguration.getConnectionString()).isEqualTo("InstrumentationKey=myInstrumentationKey");
+        telemetryConfiguration.setInstrumentationKey("myInstrumentationKey2");
+        AzureMonitorMeterRegistry.builder(configWithInstrumentationKey)
+            .telemetryConfiguration(telemetryConfiguration)
+            .build();
+        assertThat(telemetryConfiguration.getInstrumentationKey()).isEqualTo("myInstrumentationKey2");
     }
 
     @Test

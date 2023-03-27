@@ -426,6 +426,25 @@ public class SampleRegistries {
         }, Clock.SYSTEM);
     }
 
+    public static AzureMonitorMeterRegistry azureWithConnectionString(String connectionString) {
+        return new AzureMonitorMeterRegistry(new AzureMonitorConfig() {
+            @Override
+            public String connectionString() {
+                return connectionString;
+            }
+
+            @Override
+            public String get(String key) {
+                return null;
+            }
+
+            @Override
+            public Duration step() {
+                return Duration.ofSeconds(10);
+            }
+        }, Clock.SYSTEM);
+    }
+
     public static DynatraceMeterRegistry dynatrace(String apiToken, String uri) {
         return new DynatraceMeterRegistry(new DynatraceConfig() {
             @Override
