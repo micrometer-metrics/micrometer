@@ -128,7 +128,7 @@ final class ModifiedClassPathClassLoader extends URLClassLoader {
             List<AnnotatedElement> annotatedClasses) {
         List<MergedAnnotations> annotations = annotatedClasses.stream()
             .map((source) -> MergedAnnotations.from(source, MergedAnnotations.SearchStrategy.TYPE_HIERARCHY))
-            .toList();
+            .collect(Collectors.toList());
         return new ModifiedClassPathClassLoader(processUrls(extractUrls(classLoader), annotations),
                 classLoader.getParent(), classLoader);
     }
@@ -147,7 +147,8 @@ final class ModifiedClassPathClassLoader extends URLClassLoader {
     }
 
     private static Stream<URL> doExtractUrls(ClassLoader classLoader) {
-        if (classLoader instanceof URLClassLoader urlClassLoader) {
+        if (classLoader instanceof URLClassLoader) {
+            URLClassLoader urlClassLoader = (URLClassLoader) classLoader;
             return Stream.of(urlClassLoader.getURLs());
         }
         return Stream.of(ManagementFactory.getRuntimeMXBean().getClassPath().split(File.pathSeparator))
@@ -226,7 +227,7 @@ final class ModifiedClassPathClassLoader extends URLClassLoader {
                 urls.addAll(resolveCoordinates(annotation.getStringArray(MergedAnnotation.VALUE)));
             }
         }
-        return urls.stream().toList();
+        return urls.stream().collect(Collectors.toList());
     }
 
     private static List<URL> resolveCoordinates(String[] coordinates) {
@@ -286,7 +287,7 @@ final class ModifiedClassPathClassLoader extends URLClassLoader {
                     exclusions.addAll(Arrays.asList(annotation.getStringArray(MergedAnnotation.VALUE)));
                 }
             }
-            this.exclusions = exclusions.stream().toList();
+            this.exclusions = exclusions.stream().collect(Collectors.toList());
         }
 
         private boolean isExcluded(URL url) {
