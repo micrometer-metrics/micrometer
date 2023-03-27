@@ -67,14 +67,14 @@ public abstract class PushMeterRegistry extends MeterRegistry {
             }
         }
         else {
-            logger.warn("Publishing is already in progress.");
+            logger.warn("Publishing is already in progress. Skipping duplicate call to publishSafely().");
         }
     }
 
     /**
-     * Returns - true if registry is publishing metrics.
+     * Returns - true if scheduled publishing of metrics is in progress.
      */
-    public boolean isPublishing() {
+    protected boolean isPublishing() {
         return publishing.get();
     }
 
