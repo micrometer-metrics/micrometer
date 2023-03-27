@@ -18,10 +18,12 @@ package io.micrometer.core.instrument.logging;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.BaseUnits;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -50,28 +52,26 @@ class LoggingMeterRegistryTest {
     @Test
     void providedSinkFromConstructorShouldBeUsed() {
         String expectedString = "my.gauage{tag-1=tag-2} value=1";
-        Consumer<String> mockConsumer = mock(Consumer.class);
-        doNothing().when(mockConsumer).accept(expectedString);
+        AtomicReference<String> actual = new AtomicReference<>();
         AtomicInteger gaugeValue = new AtomicInteger(1);
         LoggingMeterRegistry registry = new LoggingMeterRegistry(LoggingRegistryConfig.DEFAULT, Clock.SYSTEM,
-                mockConsumer);
+            actual::set);
         registry.gauge("my.gauage", Tags.of("tag-1", "tag-2"), gaugeValue);
 
         registry.publish();
-        verify(mockConsumer, times(1)).accept(expectedString);
+        assertThat(actual.get()).isEqualTo(expectedString);
     }
 
     @Test
     void providedSinkFromConstructorShouldBeUsedWithDefaults() {
         String expectedString = "my.gauage{tag-1=tag-2} value=1";
-        Consumer<String> mockConsumer = mock(Consumer.class);
-        doNothing().when(mockConsumer).accept(expectedString);
+        AtomicReference<String> actual = new AtomicReference<>();
         AtomicInteger gaugeValue = new AtomicInteger(1);
-        LoggingMeterRegistry registry = new LoggingMeterRegistry(mockConsumer);
+        LoggingMeterRegistry registry = new LoggingMeterRegistry(actual::set);
         registry.gauge("my.gauage", Tags.of("tag-1", "tag-2"), gaugeValue);
 
         registry.publish();
-        verify(mockConsumer, times(1)).accept(expectedString);
+        assertThat(actual.get()).isEqualTo(expectedString);
     }
 
     @Test
