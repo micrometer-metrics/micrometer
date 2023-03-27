@@ -38,6 +38,9 @@ public interface AzureMonitorConfig extends StepRegistryConfig {
     /**
      * default implementation to get the instrumentation key from the config
      * @return Instrumentation Key
+     * @see <a href=
+     * "https://learn.microsoft.com/en-us/azure/azure-monitor/app/sdk-connection-string">Connection
+     * strings</a>
      * @deprecated use {@link #connectionString()} instead
      */
     @Deprecated
