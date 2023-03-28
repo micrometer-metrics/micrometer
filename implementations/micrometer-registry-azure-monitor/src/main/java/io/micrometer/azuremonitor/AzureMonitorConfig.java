@@ -15,6 +15,7 @@
  */
 package io.micrometer.azuremonitor;
 
+import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.config.validate.Validated;
 import io.micrometer.core.instrument.step.StepRegistryConfig;
 
@@ -36,17 +37,39 @@ public interface AzureMonitorConfig extends StepRegistryConfig {
     }
 
     /**
-     * default implementation to get the instrumentation key from the config
+     * Instrumentation key to use when sending metrics.
      * @return Instrumentation Key
+     * @deprecated use {@link #connectionString()} instead. This method is only called as
+     * a fallback in the default implementation if a connectionString is not configured.
      */
+    @Nullable
+    @Deprecated
     default String instrumentationKey() {
         return getSecret(this, "instrumentationKey").get();
+    }
+
+    /**
+     * Connection string to use when configuring sending metrics.
+     * @return Connection String
+     * @see <a
+     * href=https://learn.microsoft.com/en-us/azure/azure-monitor/app/sdk-connection-string">Connection
+     * strings</a>
+     */
+    @Nullable
+    default String connectionString() {
+        return getSecret(this, "connectionString").orElseGet(() -> {
+            String instrumentationKey = instrumentationKey();
+            if (instrumentationKey == null) {
+                return null;
+            }
+            return "InstrumentationKey=" + instrumentationKey;
+        });
     }
 
     @Override
     default Validated<?> validate() {
         return checkAll(this, c -> StepRegistryConfig.validate(c),
-                check("instrumentationKey", AzureMonitorConfig::instrumentationKey));
+                check("connectionString", AzureMonitorConfig::connectionString));
     }
 
 }

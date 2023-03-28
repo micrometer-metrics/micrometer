@@ -44,6 +44,19 @@ class AzureMonitorMeterRegistryTest {
         }
 
         @Override
+        public String connectionString() {
+            return "InstrumentationKey=connectionStringKey";
+        }
+    };
+
+    private final AzureMonitorConfig configWithInstrumentationKey = new AzureMonitorConfig() {
+        @Override
+        public String get(String key) {
+            return null;
+        }
+
+        @SuppressWarnings("deprecation")
+        @Override
         public String instrumentationKey() {
             return "myInstrumentationKey";
         }
@@ -54,11 +67,22 @@ class AzureMonitorMeterRegistryTest {
     private final AzureMonitorMeterRegistry registry = new AzureMonitorMeterRegistry(config, clock);
 
     @Test
-    void useTelemetryConfigInstrumentationKeyWhenSet() {
+    void useTelemetryConfigConnectionStringWhenSet() {
         TelemetryConfiguration telemetryConfiguration = TelemetryConfiguration.createDefault();
-        telemetryConfiguration.setInstrumentationKey("fake");
+        telemetryConfiguration.setConnectionString("InstrumentationKey=direct");
         AzureMonitorMeterRegistry.builder(config).telemetryConfiguration(telemetryConfiguration).build();
-        assertThat(telemetryConfiguration.getInstrumentationKey()).isEqualTo("fake");
+        assertThat(telemetryConfiguration.getConnectionString()).isEqualTo("InstrumentationKey=direct");
+        assertThat(telemetryConfiguration.getInstrumentationKey()).isEqualTo("direct");
+    }
+
+    @Test
+    void configInstrumentationKeyStillSetsTelemetryConfigInstrumentationKey() {
+        TelemetryConfiguration telemetryConfiguration = TelemetryConfiguration.createDefault();
+        AzureMonitorMeterRegistry.builder(configWithInstrumentationKey)
+            .telemetryConfiguration(telemetryConfiguration)
+            .build();
+        assertThat(telemetryConfiguration.getConnectionString()).isEqualTo("InstrumentationKey=myInstrumentationKey");
+        assertThat(telemetryConfiguration.getInstrumentationKey()).isEqualTo("myInstrumentationKey");
     }
 
     @Test
