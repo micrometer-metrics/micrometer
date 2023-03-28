@@ -25,8 +25,8 @@ class AzureMonitorMeterRegistryCompatibilityKit extends MeterRegistryCompatibili
 
     private final AzureMonitorConfig config = new AzureMonitorConfig() {
         @Override
-        public String instrumentationKey() {
-            return "fakeKey";
+        public String connectionString() {
+            return "InstrumentationKey=fakeKey";
         }
 
         @Override

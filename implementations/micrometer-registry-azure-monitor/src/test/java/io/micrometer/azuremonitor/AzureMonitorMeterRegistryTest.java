@@ -44,8 +44,21 @@ class AzureMonitorMeterRegistryTest {
         }
 
         @Override
+        public String connectionString() {
+            return "InstrumentationKey=myInstrumentationKey1";
+        }
+    };
+
+    private final AzureMonitorConfig configWithInstrumentationKey = new AzureMonitorConfig() {
+        @Override
+        public String get(String key) {
+            return null;
+        }
+
+        @SuppressWarnings("deprecation")
+        @Override
         public String instrumentationKey() {
-            return "myInstrumentationKey";
+            return "myInstrumentationKey2";
         }
     };
 
@@ -54,11 +67,21 @@ class AzureMonitorMeterRegistryTest {
     private final AzureMonitorMeterRegistry registry = new AzureMonitorMeterRegistry(config, clock);
 
     @Test
+    void useTelemetryConfigConnectionStringWhenSet() {
+        TelemetryConfiguration telemetryConfiguration = TelemetryConfiguration.createDefault();
+        telemetryConfiguration.setConnectionString("InstrumentationKey=myInstrumentationKey1");
+        AzureMonitorMeterRegistry.builder(config).telemetryConfiguration(telemetryConfiguration).build();
+        assertThat(telemetryConfiguration.getConnectionString()).isEqualTo("InstrumentationKey=myInstrumentationKey1");
+    }
+
+    @Test
     void useTelemetryConfigInstrumentationKeyWhenSet() {
         TelemetryConfiguration telemetryConfiguration = TelemetryConfiguration.createDefault();
-        telemetryConfiguration.setInstrumentationKey("fake");
-        AzureMonitorMeterRegistry.builder(config).telemetryConfiguration(telemetryConfiguration).build();
-        assertThat(telemetryConfiguration.getInstrumentationKey()).isEqualTo("fake");
+        telemetryConfiguration.setInstrumentationKey("myInstrumentationKey2");
+        AzureMonitorMeterRegistry.builder(configWithInstrumentationKey)
+            .telemetryConfiguration(telemetryConfiguration)
+            .build();
+        assertThat(telemetryConfiguration.getInstrumentationKey()).isEqualTo("myInstrumentationKey2");
     }
 
     @Test

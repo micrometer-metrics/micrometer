@@ -30,7 +30,7 @@ class AzureMonitorConfigTest {
 
     @Test
     void valid() {
-        props.put("azuremonitor.instrumentationKey", "secret");
+        props.put("azuremonitor.connectionString", "secret");
 
         assertThat(config.validate().isValid()).isTrue();
     }
