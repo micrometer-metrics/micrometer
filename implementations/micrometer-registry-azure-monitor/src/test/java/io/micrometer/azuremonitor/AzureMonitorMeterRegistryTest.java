@@ -55,6 +55,7 @@ class AzureMonitorMeterRegistryTest {
             return null;
         }
 
+        @SuppressWarnings("deprecation")
         @Override
         public String instrumentationKey() {
             return "myInstrumentationKey2";
