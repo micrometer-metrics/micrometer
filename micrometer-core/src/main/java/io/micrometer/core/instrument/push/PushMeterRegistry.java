@@ -26,12 +26,15 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public abstract class PushMeterRegistry extends MeterRegistry {
 
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(PushMeterRegistry.class);
 
     private final PushRegistryConfig config;
+
+    private final AtomicBoolean publishing = new AtomicBoolean(false);
 
     @Nullable
     private ScheduledExecutorService scheduledExecutorService;
@@ -49,13 +52,30 @@ public abstract class PushMeterRegistry extends MeterRegistry {
     /**
      * Catch uncaught exceptions thrown from {@link #publish()}.
      */
-    private void publishSafely() {
-        try {
-            publish();
+    // VisibleForTesting
+    void publishSafely() {
+        if (this.publishing.compareAndSet(false, true)) {
+            try {
+                publish();
+            }
+            catch (Throwable e) {
+                logger.warn("Unexpected exception thrown while publishing metrics for " + getClass().getSimpleName(),
+                        e);
+            }
+            finally {
+                this.publishing.set(false);
+            }
         }
-        catch (Throwable e) {
-            logger.warn("Unexpected exception thrown while publishing metrics for " + getClass().getSimpleName(), e);
+        else {
+            logger.warn("Publishing is already in progress. Skipping duplicate call to publishSafely().");
         }
+    }
+
+    /**
+     * Returns - true if scheduled publishing of metrics is in progress.
+     */
+    protected boolean isPublishing() {
+        return publishing.get();
     }
 
     /**
@@ -92,10 +112,10 @@ public abstract class PushMeterRegistry extends MeterRegistry {
 
     @Override
     public void close() {
+        stop();
         if (config.enabled() && !isClosed()) {
             publishSafely();
         }
-        stop();
         super.close();
     }
 
