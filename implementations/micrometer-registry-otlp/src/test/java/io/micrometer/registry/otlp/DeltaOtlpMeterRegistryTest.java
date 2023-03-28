@@ -16,7 +16,9 @@
 package io.micrometer.registry.otlp;
 
 import io.micrometer.core.instrument.*;
-import io.opentelemetry.proto.metrics.v1.*;
+import io.opentelemetry.proto.metrics.v1.HistogramDataPoint;
+import io.opentelemetry.proto.metrics.v1.Metric;
+import io.opentelemetry.proto.metrics.v1.NumberDataPoint;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -314,7 +316,7 @@ class DeltaOtlpMeterRegistryTest {
         assertThat(histogram.getAttributes(0).getKey()).hasToString(meterTag.getKey());
         assertThat(histogram.getAttributes(0).getValue().getStringValue()).hasToString(meterTag.getValue());
         assertThat(metric.getHistogram().getAggregationTemporality())
-            .isEqualTo(AggregationTemporality.mapToOtlp(DELTA));
+            .isEqualTo(AggregationTemporality.toOtlpAggregationTemporality(DELTA));
     }
 
     private void assertSum(Metric metric, long startTime, long endTime, double expectedValue) {
@@ -327,7 +329,8 @@ class DeltaOtlpMeterRegistryTest {
         assertThat(sumDataPoint.getAttributesCount()).isEqualTo(1);
         assertThat(sumDataPoint.getAttributes(0).getKey()).hasToString(meterTag.getKey());
         assertThat(sumDataPoint.getAttributes(0).getValue().getStringValue()).hasToString(meterTag.getValue());
-        assertThat(metric.getSum().getAggregationTemporality()).isEqualTo(AggregationTemporality.mapToOtlp(DELTA));
+        assertThat(metric.getSum().getAggregationTemporality())
+            .isEqualTo(AggregationTemporality.toOtlpAggregationTemporality(DELTA));
     }
 
     private void stepOverNStep(int numStepsToSkip) {
@@ -335,7 +338,7 @@ class DeltaOtlpMeterRegistryTest {
     }
 
     private Metric publishTimeAwareWrite(Meter meter) {
-        registry.setPublishTimeNano();
+        registry.setPublishTimeNanos();
         return meter.match(registry::writeGauge, registry::writeCounter, registry::writeHistogramSupport,
                 registry::writeHistogramSupport, registry::writeHistogramSupport, registry::writeGauge,
                 registry::writeFunctionCounter, registry::writeFunctionTimer, registry::writeMeter);

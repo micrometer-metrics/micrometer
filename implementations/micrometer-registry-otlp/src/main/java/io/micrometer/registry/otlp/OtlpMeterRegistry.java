@@ -27,7 +27,9 @@ import io.micrometer.core.instrument.internal.DefaultGauge;
 import io.micrometer.core.instrument.internal.DefaultLongTaskTimer;
 import io.micrometer.core.instrument.internal.DefaultMeter;
 import io.micrometer.core.instrument.push.PushMeterRegistry;
-import io.micrometer.core.instrument.step.*;
+import io.micrometer.core.instrument.step.StepCounter;
+import io.micrometer.core.instrument.step.StepFunctionCounter;
+import io.micrometer.core.instrument.step.StepFunctionTimer;
 import io.micrometer.core.instrument.util.MeterPartition;
 import io.micrometer.core.instrument.util.NamedThreadFactory;
 import io.micrometer.core.instrument.util.TimeUtils;
@@ -50,6 +52,9 @@ import java.util.function.ToDoubleFunction;
 import java.util.function.ToLongFunction;
 import java.util.stream.Collectors;
 
+import static io.micrometer.registry.otlp.AggregationTemporality.CUMULATIVE;
+import static io.micrometer.registry.otlp.AggregationTemporality.DELTA;
+
 /**
  * Publishes meters in OTLP (OpenTelemetry Protocol) format. HTTP with Protobuf encoding
  * is the only option currently supported.
@@ -69,9 +74,9 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
 
     private final Resource resource;
 
-    private final boolean isDeltaAggregationTemporality;
-
     private long publishTimeNanos;
+
+    private final AggregationTemporality aggregationTemporality;
 
     private final io.opentelemetry.proto.metrics.v1.AggregationTemporality otlpAggregationTemporality;
 
@@ -90,9 +95,9 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
         this.config = config;
         this.httpSender = httpSender;
         this.resource = Resource.newBuilder().addAllAttributes(getResourceAttributes()).build();
-        this.otlpAggregationTemporality = AggregationTemporality.mapToOtlp(config.aggregationTemporality());
-        this.isDeltaAggregationTemporality = this.otlpAggregationTemporality == io.opentelemetry.proto.metrics.v1.AggregationTemporality.AGGREGATION_TEMPORALITY_DELTA;
-        this.setPublishTimeNano();
+        this.aggregationTemporality = config.aggregationTemporality();
+        this.otlpAggregationTemporality = AggregationTemporality.toOtlpAggregationTemporality(aggregationTemporality);
+        this.setPublishTimeNanos();
         config().namingConvention(NamingConvention.dot);
         start(DEFAULT_THREAD_FACTORY);
     }
@@ -100,7 +105,7 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
     @Override
     protected void publish() {
         for (List<Meter> batch : MeterPartition.partition(this, config.batchSize())) {
-            this.setPublishTimeNano();
+            this.setPublishTimeNanos();
             List<Metric> metrics = batch.stream()
                 .map(meter -> meter.match(this::writeGauge, this::writeCounter, this::writeHistogramSupport,
                         this::writeHistogramSupport, this::writeHistogramSupport, this::writeGauge,
@@ -137,27 +142,26 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
 
     @Override
     protected Counter newCounter(Meter.Id id) {
-        return isDeltaAggregationTemporality ? new StepCounter(id, this.clock, config.step().toMillis())
-                : new OtlpCounter(id, this.clock);
+        return isCumulative() ? new OtlpCounter(id, this.clock)
+                : new StepCounter(id, this.clock, config.step().toMillis());
     }
 
     @Override
     protected Timer newTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig,
             PauseDetector pauseDetector) {
-        return isDeltaAggregationTemporality
-                ? new OtlpStepTimer(id, clock, distributionStatisticConfig, pauseDetector, getBaseTimeUnit(),
-                        config.step().toMillis())
-                : new OtlpCumulativeTimer(id, this.clock, distributionStatisticConfig, pauseDetector,
-                        getBaseTimeUnit());
+        return isCumulative()
+                ? new OtlpCumulativeTimer(id, this.clock, distributionStatisticConfig, pauseDetector, getBaseTimeUnit())
+                : new OtlpStepTimer(id, clock, distributionStatisticConfig, pauseDetector, getBaseTimeUnit(),
+                        config.step().toMillis());
     }
 
     @Override
     protected DistributionSummary newDistributionSummary(Meter.Id id,
             DistributionStatisticConfig distributionStatisticConfig, double scale) {
-        return isDeltaAggregationTemporality
-                ? new OtlpStepDistributionSummary(id, clock, distributionStatisticConfig, scale,
-                        config.step().toMillis())
-                : new OtlpCumulativeDistributionSummary(id, this.clock, distributionStatisticConfig, scale, true);
+        return isCumulative()
+                ? new OtlpCumulativeDistributionSummary(id, this.clock, distributionStatisticConfig, scale, true)
+                : new OtlpStepDistributionSummary(id, clock, distributionStatisticConfig, scale,
+                        config.step().toMillis());
     }
 
     @Override
@@ -168,25 +172,23 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
     @Override
     protected <T> FunctionTimer newFunctionTimer(Meter.Id id, T obj, ToLongFunction<T> countFunction,
             ToDoubleFunction<T> totalTimeFunction, TimeUnit totalTimeFunctionUnit) {
-        return isDeltaAggregationTemporality
-                ? new StepFunctionTimer<>(id, clock, config.step().toMillis(), obj, countFunction, totalTimeFunction,
-                        totalTimeFunctionUnit, getBaseTimeUnit())
-                : new OtlpFunctionTimer<>(id, obj, countFunction, totalTimeFunction, totalTimeFunctionUnit,
-                        getBaseTimeUnit(), this.clock);
+        return isCumulative()
+                ? new OtlpFunctionTimer<>(id, obj, countFunction, totalTimeFunction, totalTimeFunctionUnit,
+                        getBaseTimeUnit(), this.clock)
+                : new StepFunctionTimer<>(id, clock, config.step().toMillis(), obj, countFunction, totalTimeFunction,
+                        totalTimeFunctionUnit, getBaseTimeUnit());
     }
 
     @Override
     protected <T> FunctionCounter newFunctionCounter(Meter.Id id, T obj, ToDoubleFunction<T> countFunction) {
-        return isDeltaAggregationTemporality
-                ? new StepFunctionCounter<>(id, clock, config.step().toMillis(), obj, countFunction)
-                : new OtlpFunctionCounter<>(id, obj, countFunction, this.clock);
+        return isCumulative() ? new OtlpFunctionCounter<>(id, obj, countFunction, this.clock)
+                : new StepFunctionCounter<>(id, clock, config.step().toMillis(), obj, countFunction);
     }
 
     @Override
     protected LongTaskTimer newLongTaskTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig) {
-        return isDeltaAggregationTemporality
-                ? new DefaultLongTaskTimer(id, clock, getBaseTimeUnit(), distributionStatisticConfig, false)
-                : new OtlpLongTaskTimer(id, this.clock, getBaseTimeUnit(), distributionStatisticConfig);
+        return isCumulative() ? new OtlpLongTaskTimer(id, this.clock, getBaseTimeUnit(), distributionStatisticConfig)
+                : new DefaultLongTaskTimer(id, clock, getBaseTimeUnit(), distributionStatisticConfig, false);
     }
 
     @Override
@@ -281,7 +283,7 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
             .setSum(total)
             .setCount(count);
 
-        if (isDeltaAggregationTemporality) {
+        if (isDelta()) {
             histogramDataPoint.setMax(isTimeBased ? histogramSnapshot.max(getBaseTimeUnit()) : histogramSnapshot.max());
         }
         // if histogram enabled, add histogram buckets
@@ -318,16 +320,23 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
             .build();
     }
 
+    private boolean isCumulative() {
+        return this.aggregationTemporality == CUMULATIVE;
+    }
+
+    private boolean isDelta() {
+        return this.aggregationTemporality == DELTA;
+    }
+
     // VisibleForTesting
-    void setPublishTimeNano() {
-        this.publishTimeNanos = isDeltaAggregationTemporality
-                ? (clock.wallTime() / config.step().toMillis()) * config.step().toNanos()
-                : TimeUnit.MILLISECONDS.toNanos(clock.wallTime());
+    void setPublishTimeNanos() {
+        this.publishTimeNanos = isCumulative() ? TimeUnit.MILLISECONDS.toNanos(clock.wallTime())
+                : (clock.wallTime() / config.step().toMillis()) * config.step().toNanos();
     }
 
     private long getStartTimeNanos(Meter meter) {
-        return isDeltaAggregationTemporality ? publishTimeNanos - config.step().toNanos()
-                : ((StartTimeAwareMeter) meter).getStartTimeNanos();
+        return isCumulative() ? ((StartTimeAwareMeter) meter).getStartTimeNanos()
+                : publishTimeNanos - config.step().toNanos();
     }
 
     private Metric.Builder getMetricBuilder(Meter.Id id) {

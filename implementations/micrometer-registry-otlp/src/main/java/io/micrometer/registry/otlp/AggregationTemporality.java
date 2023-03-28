@@ -15,11 +15,28 @@
  */
 package io.micrometer.registry.otlp;
 
+/**
+ * AggregationTemporality defines the way additive values are expressed.
+ *
+ * @see <a href=
+ * "https://opentelemetry.io/docs/reference/specification/metrics/data-model/#temporality">OTLP
+ * Temporality</a>
+ * @author Lenin Jaganathan
+ * @since 1.11.0
+ */
 public enum AggregationTemporality {
 
-    DELTA, CUMULATIVE;
+    /**
+     * Reported values do not incorporate previous measurements.
+     */
+    DELTA,
 
-    public static io.opentelemetry.proto.metrics.v1.AggregationTemporality mapToOtlp(
+    /**
+     * Reported values incorporate previous measurements.
+     */
+    CUMULATIVE;
+
+    public static io.opentelemetry.proto.metrics.v1.AggregationTemporality toOtlpAggregationTemporality(
             AggregationTemporality aggregationTemporality) {
         switch (aggregationTemporality) {
             case DELTA:

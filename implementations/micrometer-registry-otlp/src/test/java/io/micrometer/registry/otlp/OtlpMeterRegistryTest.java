@@ -575,7 +575,7 @@ class OtlpMeterRegistryTest {
     }
 
     private Metric publishTimeAwareWrite(Meter meter) {
-        registry.setPublishTimeNano();
+        registry.setPublishTimeNanos();
         return meter.match(registry::writeGauge, registry::writeCounter, registry::writeHistogramSupport,
                 registry::writeHistogramSupport, registry::writeHistogramSupport, registry::writeGauge,
                 registry::writeFunctionCounter, registry::writeFunctionTimer, registry::writeMeter);
