@@ -45,7 +45,7 @@ class AzureMonitorMeterRegistryTest {
 
         @Override
         public String connectionString() {
-            return "InstrumentationKey=myInstrumentationKey1";
+            return "InstrumentationKey=connectionStringKey";
         }
     };
 
@@ -58,7 +58,7 @@ class AzureMonitorMeterRegistryTest {
         @SuppressWarnings("deprecation")
         @Override
         public String instrumentationKey() {
-            return "myInstrumentationKey2";
+            return "myInstrumentationKey";
         }
     };
 
@@ -69,19 +69,20 @@ class AzureMonitorMeterRegistryTest {
     @Test
     void useTelemetryConfigConnectionStringWhenSet() {
         TelemetryConfiguration telemetryConfiguration = TelemetryConfiguration.createDefault();
-        telemetryConfiguration.setConnectionString("InstrumentationKey=myInstrumentationKey1");
+        telemetryConfiguration.setConnectionString("InstrumentationKey=direct");
         AzureMonitorMeterRegistry.builder(config).telemetryConfiguration(telemetryConfiguration).build();
-        assertThat(telemetryConfiguration.getConnectionString()).isEqualTo("InstrumentationKey=myInstrumentationKey1");
+        assertThat(telemetryConfiguration.getConnectionString()).isEqualTo("InstrumentationKey=direct");
+        assertThat(telemetryConfiguration.getInstrumentationKey()).isEqualTo("direct");
     }
 
     @Test
-    void useTelemetryConfigInstrumentationKeyWhenSet() {
+    void configInstrumentationKeyStillSetsTelemetryConfigInstrumentationKey() {
         TelemetryConfiguration telemetryConfiguration = TelemetryConfiguration.createDefault();
-        telemetryConfiguration.setInstrumentationKey("myInstrumentationKey2");
         AzureMonitorMeterRegistry.builder(configWithInstrumentationKey)
             .telemetryConfiguration(telemetryConfiguration)
             .build();
-        assertThat(telemetryConfiguration.getInstrumentationKey()).isEqualTo("myInstrumentationKey2");
+        assertThat(telemetryConfiguration.getConnectionString()).isEqualTo("InstrumentationKey=myInstrumentationKey");
+        assertThat(telemetryConfiguration.getInstrumentationKey()).isEqualTo("myInstrumentationKey");
     }
 
     @Test

@@ -29,10 +29,32 @@ class AzureMonitorConfigTest {
     private final AzureMonitorConfig config = props::get;
 
     @Test
-    void valid() {
+    void validWithInstrumentationKey() {
+        props.put("azuremonitor.instrumentationKey", "key");
+
+        assertThat(config.validate().isValid()).isTrue();
+    }
+
+    @Test
+    void validWithConnectionString() {
         props.put("azuremonitor.connectionString", "secret");
 
         assertThat(config.validate().isValid()).isTrue();
+    }
+
+    @Test
+    void connectionStringUsesInstrumentationKeyIfUnset() {
+        props.put("azuremonitor.instrumentationKey", "key");
+
+        assertThat(config.connectionString()).isEqualTo("InstrumentationKey=key");
+    }
+
+    @Test
+    void connectionStringIgnoresInstrumentationKeyIfSet() {
+        props.put("azuremonitor.instrumentationKey", "key");
+        props.put("azuremonitor.connectionString", "InstrumentationKey=another");
+
+        assertThat(config.connectionString()).isEqualTo("InstrumentationKey=another");
     }
 
 }
