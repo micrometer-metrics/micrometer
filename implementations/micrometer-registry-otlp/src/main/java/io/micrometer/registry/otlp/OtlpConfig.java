@@ -24,7 +24,9 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.*;
-import static io.micrometer.core.instrument.config.validate.PropertyValidator.*;
+import static io.micrometer.core.instrument.config.validate.PropertyValidator.getString;
+import static io.micrometer.core.instrument.config.validate.PropertyValidator.getUrlString;
+import static io.micrometer.core.instrument.config.validate.PropertyValidator.getEnum;
 
 /**
  * Config for {@link OtlpMeterRegistry}.
