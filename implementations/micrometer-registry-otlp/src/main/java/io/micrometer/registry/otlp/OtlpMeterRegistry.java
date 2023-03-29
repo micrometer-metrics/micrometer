@@ -60,6 +60,7 @@ import static io.micrometer.registry.otlp.AggregationTemporality.DELTA;
  * is the only option currently supported.
  *
  * @author Tommy Ludwig
+ * @author Lenin Jaganathan
  * @since 1.9.0
  */
 public class OtlpMeterRegistry extends PushMeterRegistry {
