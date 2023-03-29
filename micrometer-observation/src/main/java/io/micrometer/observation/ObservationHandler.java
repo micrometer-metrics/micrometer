@@ -16,10 +16,12 @@
 package io.micrometer.observation;
 
 import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import java.util.function.Consumer;
+
+import io.micrometer.observation.Observation.Context;
 
 /**
  * Handler for an {@link Observation}. Hooks in to the lifecycle of an observation.
@@ -129,9 +131,11 @@ public interface ObservationHandler<T extends Observation.Context> {
         @SuppressWarnings("unchecked")
         public FirstMatchingCompositeObservationHandler(
                 List<? extends ObservationHandler<? extends Observation.Context>> handlers) {
-            this.handlers = handlers.stream()
-                .map(handler -> (ObservationHandler<Observation.Context>) handler)
-                .collect(Collectors.toList());
+            List<ObservationHandler<Observation.Context>> castedHandlers = new ArrayList<>(handlers.size());
+            for (ObservationHandler<? extends Observation.Context> handler : handlers) {
+                castedHandlers.add((ObservationHandler<Observation.Context>) handler);
+            }
+            this.handlers = castedHandlers;
         }
 
         @Override
@@ -181,7 +185,12 @@ public interface ObservationHandler<T extends Observation.Context> {
 
         private Optional<ObservationHandler<Observation.Context>> getFirstApplicableHandler(
                 Observation.Context context) {
-            return this.handlers.stream().filter(handler -> handler.supportsContext(context)).findFirst();
+            for (ObservationHandler<Context> handler : this.handlers) {
+                if (handler.supportsContext(context)) {
+                    return Optional.of(handler);
+                }
+            }
+            return Optional.empty();
         }
 
     }
@@ -209,9 +218,11 @@ public interface ObservationHandler<T extends Observation.Context> {
         @SuppressWarnings("unchecked")
         public AllMatchingCompositeObservationHandler(
                 List<? extends ObservationHandler<? extends Observation.Context>> handlers) {
-            this.handlers = handlers.stream()
-                .map(handler -> (ObservationHandler<Observation.Context>) handler)
-                .collect(Collectors.toList());
+            List<ObservationHandler<Observation.Context>> castedHandlers = new ArrayList<>(handlers.size());
+            for (ObservationHandler<? extends Observation.Context> handler : handlers) {
+                castedHandlers.add((ObservationHandler<Observation.Context>) handler);
+            }
+            this.handlers = castedHandlers;
         }
 
         @Override
@@ -221,46 +232,56 @@ public interface ObservationHandler<T extends Observation.Context> {
 
         @Override
         public void onStart(Observation.Context context) {
-            getAllApplicableHandlers(context).forEach(handler -> handler.onStart(context));
+            forEachApplicableHandler(context, handler -> handler.onStart(context));
         }
 
         @Override
         public void onError(Observation.Context context) {
-            getAllApplicableHandlers(context).forEach(handler -> handler.onError(context));
+            forEachApplicableHandler(context, handler -> handler.onError(context));
         }
 
         @Override
         public void onEvent(Observation.Event event, Observation.Context context) {
-            getAllApplicableHandlers(context).forEach(handler -> handler.onEvent(event, context));
+            forEachApplicableHandler(context, handler -> handler.onEvent(event, context));
         }
 
         @Override
         public void onScopeOpened(Observation.Context context) {
-            getAllApplicableHandlers(context).forEach(handler -> handler.onScopeOpened(context));
+            forEachApplicableHandler(context, handler -> handler.onScopeOpened(context));
         }
 
         @Override
         public void onScopeClosed(Observation.Context context) {
-            getAllApplicableHandlers(context).forEach(handler -> handler.onScopeClosed(context));
+            forEachApplicableHandler(context, handler -> handler.onScopeClosed(context));
         }
 
         @Override
         public void onScopeReset(Observation.Context context) {
-            getAllApplicableHandlers(context).forEach(handler -> handler.onScopeReset(context));
+            forEachApplicableHandler(context, handler -> handler.onScopeReset(context));
         }
 
         @Override
         public void onStop(Observation.Context context) {
-            getAllApplicableHandlers(context).forEach(handler -> handler.onStop(context));
+            forEachApplicableHandler(context, handler -> handler.onStop(context));
         }
 
         @Override
         public boolean supportsContext(Observation.Context context) {
-            return getAllApplicableHandlers(context).findAny().isPresent();
+            for (ObservationHandler<Context> handler : this.handlers) {
+                if (handler.supportsContext(context)) {
+                    return true;
+                }
+            }
+            return false;
         }
 
-        private Stream<ObservationHandler<Observation.Context>> getAllApplicableHandlers(Observation.Context context) {
-            return this.handlers.stream().filter(handler -> handler.supportsContext(context));
+        private void forEachApplicableHandler(Observation.Context context,
+                Consumer<? super ObservationHandler<Observation.Context>> action) {
+            for (ObservationHandler<Context> handler : this.handlers) {
+                if (handler.supportsContext(context)) {
+                    action.accept(handler);
+                }
+            }
         }
 
     }
