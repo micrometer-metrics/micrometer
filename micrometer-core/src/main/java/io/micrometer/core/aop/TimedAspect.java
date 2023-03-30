@@ -98,6 +98,8 @@ public class TimedAspect {
 
     private final Predicate<ProceedingJoinPoint> shouldSkip;
 
+    private MetricsTagAnnotationHandler metricsTagAnnotationHandler;
+
     /**
      * Creates a {@code TimedAspect} instance with {@link Metrics#globalRegistry}.
      *
@@ -232,18 +234,26 @@ public class TimedAspect {
     private void record(ProceedingJoinPoint pjp, Timed timed, String metricName, Timer.Sample sample,
             String exceptionClass) {
         try {
-            sample.stop(Timer.builder(metricName)
-                .description(timed.description().isEmpty() ? null : timed.description())
-                .tags(timed.extraTags())
-                .tags(EXCEPTION_TAG, exceptionClass)
-                .tags(tagsBasedOnJoinPoint.apply(pjp))
-                .publishPercentileHistogram(timed.histogram())
-                .publishPercentiles(timed.percentiles().length == 0 ? null : timed.percentiles())
-                .register(registry));
+            sample.stop(recordBuilder(pjp, timed, metricName, exceptionClass).register(registry));
         }
         catch (Exception e) {
             // ignoring on purpose
         }
+    }
+
+    private Timer.Builder recordBuilder(ProceedingJoinPoint pjp, Timed timed, String metricName,
+            String exceptionClass) {
+        Timer.Builder builder = Timer.builder(metricName)
+            .description(timed.description().isEmpty() ? null : timed.description())
+            .tags(timed.extraTags())
+            .tags(EXCEPTION_TAG, exceptionClass)
+            .tags(tagsBasedOnJoinPoint.apply(pjp))
+            .publishPercentileHistogram(timed.histogram())
+            .publishPercentiles(timed.percentiles().length == 0 ? null : timed.percentiles());
+        if (metricsTagAnnotationHandler != null) {
+            metricsTagAnnotationHandler.addAnnotatedParameters(builder, pjp);
+        }
+        return builder;
     }
 
     private String getExceptionTag(Throwable throwable) {
@@ -307,6 +317,10 @@ public class TimedAspect {
         catch (Exception e) {
             return Optional.empty();
         }
+    }
+
+    public void setMetricsTagAnnotationHandler(MetricsTagAnnotationHandler metricsTagAnnotationHandler) {
+        this.metricsTagAnnotationHandler = metricsTagAnnotationHandler;
     }
 
 }

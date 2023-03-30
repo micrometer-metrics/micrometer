@@ -4,6 +4,9 @@ dependencies {
     // log monitoring
     optionalApi 'ch.qos.logback:logback-classic'
 
+    // Aspects
+    optionalApi 'org.aspectj:aspectjweaver'
+
     // JUnit 5
     testImplementation 'org.junit.jupiter:junit-jupiter'
     testImplementation 'com.tngtech.archunit:archunit-junit5'
