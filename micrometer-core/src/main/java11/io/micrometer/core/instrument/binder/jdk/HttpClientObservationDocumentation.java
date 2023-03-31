@@ -60,6 +60,13 @@ enum HttpClientObservationDocumentation implements ObservationDocumentation {
             }
         },
 
+        OUTCOME {
+            @Override
+            public String asString() {
+                return "outcome";
+            }
+        },
+
         /**
          * HTTP URI.
          */

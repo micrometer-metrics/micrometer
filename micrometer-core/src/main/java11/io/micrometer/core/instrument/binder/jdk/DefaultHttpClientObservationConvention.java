@@ -51,7 +51,8 @@ public class DefaultHttpClientObservationConvention implements HttpClientObserva
             keyValues = keyValues
                 .and(HttpClientObservationDocumentation.LowCardinalityKeys.STATUS
                     .withValue(String.valueOf(context.getResponse().statusCode())))
-                .and(Outcome.forStatus(context.getResponse().statusCode()).asKeyValue());
+                .and(HttpClientObservationDocumentation.LowCardinalityKeys.OUTCOME
+                    .withValue(Outcome.forStatus(context.getResponse().statusCode()).name()));
         }
         return keyValues;
     }

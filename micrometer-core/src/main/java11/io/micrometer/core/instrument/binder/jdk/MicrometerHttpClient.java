@@ -239,9 +239,11 @@ public class MicrometerHttpClient extends HttpClient {
                             request.method(), HttpClientObservationDocumentation.LowCardinalityKeys.URI.asString(),
                             DefaultHttpClientObservationConvention.INSTANCE.getUriTag(request, res, uriMapper));
                     if (res != null) {
-                        tags = tags.and(Tag.of(HttpClientObservationDocumentation.LowCardinalityKeys.STATUS.asString(),
-                                String.valueOf(res.statusCode())))
-                            .and(Outcome.forStatus(res.statusCode()).asTag());
+                        tags = tags
+                            .and(Tag.of(HttpClientObservationDocumentation.LowCardinalityKeys.STATUS.asString(),
+                                    String.valueOf(res.statusCode())))
+                            .and(Tag.of(HttpClientObservationDocumentation.LowCardinalityKeys.OUTCOME.asString(),
+                                    Outcome.forStatus(res.statusCode()).name()));
                     }
                     return tags;
                 });
