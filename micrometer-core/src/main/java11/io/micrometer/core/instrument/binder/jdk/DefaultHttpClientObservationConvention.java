@@ -48,8 +48,9 @@ public class DefaultHttpClientObservationConvention implements HttpClientObserva
                 HttpClientObservationDocumentation.LowCardinalityKeys.URI
                     .withValue(getUriTag(httpRequest, context.getResponse(), context.getUriMapper())));
         if (context.getResponse() != null) {
-            keyValues = keyValues.and(HttpClientObservationDocumentation.LowCardinalityKeys.STATUS
-                .withValue(String.valueOf(context.getResponse().statusCode())))
+            keyValues = keyValues
+                .and(HttpClientObservationDocumentation.LowCardinalityKeys.STATUS
+                    .withValue(String.valueOf(context.getResponse().statusCode())))
                 .and(Outcome.forStatus(context.getResponse().statusCode()).asKeyValue());
         }
         return keyValues;
