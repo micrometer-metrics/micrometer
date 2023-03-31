@@ -15,10 +15,12 @@
  */
 package io.micrometer.core.instrument.step;
 
+import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.MockClock;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
 
@@ -69,8 +71,39 @@ class StepValueTest {
         aLong.set(27);
         assertThat(stepValue.poll()).isEqualTo(24L);
 
-        stepValue.manualRollover();
+        stepValue.closingRollover();
         assertThat(stepValue.poll()).isEqualTo(27L);
+    }
+
+    @Test
+    @Issue("#3720")
+    void testManualRolloverDropsDataOnStepCompletion() {
+        final MockClock clock = new MockClock();
+        final long stepTime = 60;
+        final AtomicLong aLong = new AtomicLong(10);
+        final StepValue<Long> stepValue = new StepValue<Long>(clock, stepTime) {
+            @Override
+            public Supplier<Long> valueSupplier() {
+                return () -> aLong.getAndSet(0);
+            }
+
+            @Override
+            public Long noValue() {
+                return 0L;
+            }
+        };
+        clock.add(Duration.ofMillis(1));
+        assertThat(stepValue.poll()).isZero();
+        clock.add(Duration.ofMillis(59));
+        assertThat(stepValue.poll()).isEqualTo(10);
+        clock.add(Duration.ofMillis(stepTime - 1));
+        aLong.set(5);
+        stepValue.closingRollover();
+        assertThat(stepValue.poll()).isEqualTo(5);
+        clock.add(Duration.ofMillis(1));
+        assertThat(stepValue.poll()).isEqualTo(5L);
+        clock.add(stepTime, TimeUnit.MILLISECONDS);
+        assertThat(stepValue.poll()).isEqualTo(5L);
     }
 
 }

@@ -15,6 +15,7 @@
  */
 package io.micrometer.core.instrument.step;
 
+import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.*;
 import org.junit.jupiter.api.Test;
@@ -293,6 +294,54 @@ class StepMeterRegistryTest {
         assertThat(registry.publishedFunctionTimerTotals.pop()).isEqualTo(24);
     }
 
+    @Issue("#3720")
+    @Test
+    void publishOnCloseCrossesStepBoundary() {
+        Counter counter = Counter.builder("counter").register(registry);
+        counter.increment();
+        Timer timer = Timer.builder("timer").register(registry);
+        timer.record(5, MILLISECONDS);
+        DistributionSummary summary = DistributionSummary.builder("summary").register(registry);
+        summary.record(7);
+        FunctionCounter functionCounter = FunctionCounter.builder("counter.function", this, obj -> 15)
+            .register(registry);
+        FunctionTimer functionTimer = FunctionTimer.builder("timer.function", this, obj -> 3, obj -> 53, MILLISECONDS)
+            .register(registry);
+
+        // before rollover
+        assertThat(counter.count()).isZero();
+        assertThat(timer.count()).isZero();
+        assertThat(timer.totalTime(MILLISECONDS)).isZero();
+        assertThat(summary.count()).isZero();
+        assertThat(summary.totalAmount()).isZero();
+        assertThat(functionCounter.count()).isZero();
+        assertThat(functionTimer.count()).isZero();
+        assertThat(functionTimer.totalTime(MILLISECONDS)).isZero();
+
+        // before publishing, simulate a step boundary being crossed after forced rollover
+        // on close and before/during publishing
+        registry.setPrePublishAction(() -> clock.add(config.step()));
+        // force rollover and publish on close
+        registry.close();
+
+        assertThat(registry.publishedCounterCounts).hasSize(1);
+        assertThat(registry.publishedCounterCounts.pop()).isOne();
+        assertThat(registry.publishedTimerCounts).hasSize(1);
+        assertThat(registry.publishedTimerCounts.pop()).isOne();
+        assertThat(registry.publishedTimerSumMilliseconds).hasSize(1);
+        assertThat(registry.publishedTimerSumMilliseconds.pop()).isEqualTo(5.0);
+        assertThat(registry.publishedSummaryCounts).hasSize(1);
+        assertThat(registry.publishedSummaryCounts.pop()).isOne();
+        assertThat(registry.publishedSummaryTotals).hasSize(1);
+        assertThat(registry.publishedSummaryTotals.pop()).isEqualTo(7);
+        assertThat(registry.publishedFunctionCounterCounts).hasSize(1);
+        assertThat(registry.publishedFunctionCounterCounts.pop()).isEqualTo(15);
+        assertThat(registry.publishedFunctionTimerCounts).hasSize(1);
+        assertThat(registry.publishedFunctionTimerCounts.pop()).isEqualTo(3);
+        assertThat(registry.publishedFunctionTimerTotals).hasSize(1);
+        assertThat(registry.publishedFunctionTimerTotals.pop()).isEqualTo(53);
+    }
+
     private class MyStepMeterRegistry extends StepMeterRegistry {
 
         Deque<Double> publishedCounterCounts = new ArrayDeque<>();
@@ -311,12 +360,22 @@ class StepMeterRegistryTest {
 
         Deque<Double> publishedFunctionTimerTotals = new ArrayDeque<>();
 
+        @Nullable
+        Runnable prePublishAction;
+
         MyStepMeterRegistry() {
             super(StepMeterRegistryTest.this.config, StepMeterRegistryTest.this.clock);
         }
 
+        void setPrePublishAction(Runnable prePublishAction) {
+            this.prePublishAction = prePublishAction;
+        }
+
         @Override
         protected void publish() {
+            if (prePublishAction != null) {
+                prePublishAction.run();
+            }
             publishes.incrementAndGet();
             getMeters().stream()
                 .map(meter -> meter.match(null, this::publishCounter, this::publishTimer, this::publishSummary, null,

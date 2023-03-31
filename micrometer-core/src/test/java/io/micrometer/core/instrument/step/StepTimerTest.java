@@ -52,7 +52,7 @@ class StepTimerTest {
     }
 
     @Test
-    void manualRolloverPartialStep() {
+    void closingRolloverPartialStep() {
         Duration stepDuration = Duration.ofMillis(10);
         StepTimer timer = new StepTimer(mock(Meter.Id.class), clock,
                 DistributionStatisticConfig.builder().expiry(stepDuration).bufferLength(2).build(),
@@ -63,7 +63,12 @@ class StepTimerTest {
         assertThat(timer.count()).isZero();
         assertThat(timer.totalTime(TimeUnit.MILLISECONDS)).isZero();
 
-        timer._manualRollover();
+        timer._closingRollover();
+
+        assertThat(timer.count()).isEqualTo(2);
+        assertThat(timer.totalTime(TimeUnit.MILLISECONDS)).isEqualTo(100);
+
+        clock.add(stepDuration);
 
         assertThat(timer.count()).isEqualTo(2);
         assertThat(timer.totalTime(TimeUnit.MILLISECONDS)).isEqualTo(100);

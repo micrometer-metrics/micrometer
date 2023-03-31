@@ -87,8 +87,8 @@ public class StepDistributionSummary extends AbstractDistributionSummary impleme
     }
 
     @Override
-    public void _manualRollover() {
-        countTotal.manualRollover();
+    public void _closingRollover() {
+        countTotal.closingRollover();
     }
 
 }

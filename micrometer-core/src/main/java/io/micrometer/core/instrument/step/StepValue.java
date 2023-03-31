@@ -76,7 +76,9 @@ public abstract class StepValue<V> {
     /**
      * internal use only; intentionally left package-private
      */
-    void manualRollover() {
+    void closingRollover() {
+        // make sure value does not rollover again if passing a step boundary
+        lastInitPos.set(Long.MAX_VALUE);
         previous = valueSupplier().get();
     }
 
