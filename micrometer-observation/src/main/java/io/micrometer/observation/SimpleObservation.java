@@ -275,7 +275,12 @@ class SimpleObservation implements Observation {
         @Override
         public void reset() {
             this.registry.setCurrentObservationScope(null);
-            this.currentObservation.notifyOnScopeReset();
+            Scope scope = this;
+            while (scope != null) {
+                scope.close();
+                SimpleScope simpleScope = (SimpleScope) scope;
+                scope = simpleScope.previousObservationScope;
+            }
         }
 
         @Override
