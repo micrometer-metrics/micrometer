@@ -88,6 +88,7 @@ class MicrometerHttpClientTests {
         then(meterRegistry.find("http.client.requests")
             .tag("method", "GET")
             .tag("status", "200")
+            .tag("outcome", "SUCCESS")
             .tag("uri", "UNKNOWN")
             .timer()).isNotNull();
     }

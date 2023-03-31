@@ -18,6 +18,7 @@ package io.micrometer.core.instrument.binder.jdk;
 import io.micrometer.common.KeyValues;
 import io.micrometer.common.lang.NonNull;
 import io.micrometer.common.lang.Nullable;
+import io.micrometer.core.instrument.binder.http.Outcome;
 
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
@@ -48,7 +49,8 @@ public class DefaultHttpClientObservationConvention implements HttpClientObserva
                     .withValue(getUriTag(httpRequest, context.getResponse(), context.getUriMapper())));
         if (context.getResponse() != null) {
             keyValues = keyValues.and(HttpClientObservationDocumentation.LowCardinalityKeys.STATUS
-                .withValue(String.valueOf(context.getResponse().statusCode())));
+                .withValue(String.valueOf(context.getResponse().statusCode())))
+                .and(Outcome.forStatus(context.getResponse().statusCode()).asKeyValue());
         }
         return keyValues;
     }

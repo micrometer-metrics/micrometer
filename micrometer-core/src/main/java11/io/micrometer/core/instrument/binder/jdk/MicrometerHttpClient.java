@@ -19,6 +19,7 @@ import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
+import io.micrometer.core.instrument.binder.http.Outcome;
 import io.micrometer.core.instrument.observation.ObservationOrTimerCompatibleInstrumentation;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
@@ -239,7 +240,8 @@ public class MicrometerHttpClient extends HttpClient {
                             DefaultHttpClientObservationConvention.INSTANCE.getUriTag(request, res, uriMapper));
                     if (res != null) {
                         tags = tags.and(Tag.of(HttpClientObservationDocumentation.LowCardinalityKeys.STATUS.asString(),
-                                String.valueOf(res.statusCode())));
+                                String.valueOf(res.statusCode())))
+                            .and(Outcome.forStatus(res.statusCode()).asTag());
                     }
                     return tags;
                 });
