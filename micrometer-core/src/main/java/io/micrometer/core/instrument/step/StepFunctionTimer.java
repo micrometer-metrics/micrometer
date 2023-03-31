@@ -119,9 +119,9 @@ public class StepFunctionTimer<T> implements FunctionTimer, StepMeter {
     }
 
     @Override
-    public void _manualRollover() {
+    public void _closingRollover() {
         accumulateCountAndTotal();
-        countTotal.manualRollover();
+        countTotal.closingRollover();
     }
 
 }
