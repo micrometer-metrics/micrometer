@@ -235,7 +235,7 @@ class SimpleObservation implements Observation {
 
     @SuppressWarnings("unchecked")
     private void notifyOnScopeMakeCurrent() {
-        this.handlers.forEach(handler -> handler.onScopeMakeCurrent(this.context));
+        this.handlers.forEach(handler -> handler.onScopeOpened(this.context));
     }
 
     @SuppressWarnings("unchecked")

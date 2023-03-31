@@ -81,14 +81,6 @@ public interface ObservationHandler<T extends Observation.Context> {
     }
 
     /**
-     * Reacts to making the stored {@link Observation.Scope} current.
-     * @param context an {@link Observation.Context}
-     * @since 1.10.5
-     */
-    default void onScopeMakeCurrent(T context) {
-    }
-
-    /**
      * Reacts to stopping of an {@link Observation}.
      * @param context an {@link Observation.Context}
      */
