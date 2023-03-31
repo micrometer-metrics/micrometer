@@ -143,7 +143,7 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
 
     @Override
     protected Counter newCounter(Meter.Id id) {
-        return isCumulative() ? new OtlpCounter(id, this.clock)
+        return isCumulative() ? new OtlpCumulativeCounter(id, this.clock)
                 : new StepCounter(id, this.clock, config.step().toMillis());
     }
 
@@ -174,7 +174,7 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
     protected <T> FunctionTimer newFunctionTimer(Meter.Id id, T obj, ToLongFunction<T> countFunction,
             ToDoubleFunction<T> totalTimeFunction, TimeUnit totalTimeFunctionUnit) {
         return isCumulative()
-                ? new OtlpFunctionTimer<>(id, obj, countFunction, totalTimeFunction, totalTimeFunctionUnit,
+                ? new OtlpCumulativeFunctionTimer<>(id, obj, countFunction, totalTimeFunction, totalTimeFunctionUnit,
                         getBaseTimeUnit(), this.clock)
                 : new StepFunctionTimer<>(id, clock, config.step().toMillis(), obj, countFunction, totalTimeFunction,
                         totalTimeFunctionUnit, getBaseTimeUnit());
@@ -182,13 +182,14 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
 
     @Override
     protected <T> FunctionCounter newFunctionCounter(Meter.Id id, T obj, ToDoubleFunction<T> countFunction) {
-        return isCumulative() ? new OtlpFunctionCounter<>(id, obj, countFunction, this.clock)
+        return isCumulative() ? new OtlpCumulativeFunctionCounter<>(id, obj, countFunction, this.clock)
                 : new StepFunctionCounter<>(id, clock, config.step().toMillis(), obj, countFunction);
     }
 
     @Override
     protected LongTaskTimer newLongTaskTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig) {
-        return isCumulative() ? new OtlpLongTaskTimer(id, this.clock, getBaseTimeUnit(), distributionStatisticConfig)
+        return isCumulative()
+                ? new OtlpCumulativeLongTaskTimer(id, this.clock, getBaseTimeUnit(), distributionStatisticConfig)
                 : new DefaultLongTaskTimer(id, clock, getBaseTimeUnit(), distributionStatisticConfig, false);
     }
 

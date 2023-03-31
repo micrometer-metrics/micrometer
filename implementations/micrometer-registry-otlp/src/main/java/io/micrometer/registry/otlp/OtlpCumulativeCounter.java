@@ -20,11 +20,11 @@ import io.micrometer.core.instrument.cumulative.CumulativeCounter;
 
 import java.util.concurrent.TimeUnit;
 
-class OtlpCounter extends CumulativeCounter implements StartTimeAwareMeter {
+class OtlpCumulativeCounter extends CumulativeCounter implements StartTimeAwareMeter {
 
     private final long startTimeNanos;
 
-    OtlpCounter(Id id, Clock clock) {
+    OtlpCumulativeCounter(Id id, Clock clock) {
         super(id);
         this.startTimeNanos = TimeUnit.MILLISECONDS.toNanos(clock.wallTime());
     }
