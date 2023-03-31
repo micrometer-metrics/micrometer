@@ -777,12 +777,11 @@ public interface Observation extends ObservationView {
         void reset();
 
         /**
-         * Makes this scope current again. That can lead to additional work such as injecting
-         * variables to MDC.
-         * You don't need to call this method in most of the cases. Please only call this
-         * method if you know what you are doing and your use-case demands the usage of
-         * it.
-         * @since 1.10.5
+         * Makes this scope current again. That can lead to additional work such as
+         * injecting variables to MDC. You don't need to call this method in most of the
+         * cases. Please only call this method if you know what you are doing and your
+         * use-case demands the usage of it.
+         * @since 1.10.6
          */
         void makeCurrent();
 

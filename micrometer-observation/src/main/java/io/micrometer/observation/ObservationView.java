@@ -15,6 +15,7 @@
  */
 package io.micrometer.observation;
 
+import io.micrometer.common.lang.Nullable;
 import io.micrometer.observation.Observation.ContextView;
 
 /**
@@ -29,5 +30,15 @@ public interface ObservationView {
      * @return corresponding context
      */
     ContextView getContextView();
+
+    /**
+     * Returns the last scope attached to this {@link ObservationView} in this thread.
+     * @return scope for this {@link ObservationView}, {@code null} if there was no scope
+     * @since 1.10.6
+     */
+    @Nullable
+    default Observation.Scope getEnclosingScope() {
+        return Observation.Scope.NOOP;
+    }
 
 }

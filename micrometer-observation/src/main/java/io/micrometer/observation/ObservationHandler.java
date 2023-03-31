@@ -75,8 +75,12 @@ public interface ObservationHandler<T extends Observation.Context> {
      * Reacts to resetting of scopes. If your handler uses a {@link ThreadLocal} value,
      * this method should clear that {@link ThreadLocal}.
      * @param context an {@link Observation.Context}
+     * @deprecated we're favouring resetting of scope by calling
+     * {@link #onScopeClosed(Observation.Context)} on the whole hierarchy. See
+     * {@link Observation.Scope#reset()}
      * @since 1.10.4
      */
+    @Deprecated
     default void onScopeReset(T context) {
     }
 

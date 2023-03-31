@@ -134,6 +134,7 @@ final class NoopObservation implements Observation {
         public void makeCurrent() {
 
         }
+
     }
 
 }

@@ -46,6 +46,8 @@ class SimpleObservation implements Observation {
 
     private final Collection<ObservationFilter> filters;
 
+    private final ThreadLocal<Scope> scopeThreadLocal = new ThreadLocal<>();
+
     SimpleObservation(@Nullable String name, ObservationRegistry registry, Context context) {
         this.registry = registry;
         this.context = context;
@@ -190,9 +192,16 @@ class SimpleObservation implements Observation {
 
     @Override
     public Scope openScope() {
+        scopeThreadLocal.set(registry.getCurrentObservationScope());
         Scope scope = new SimpleScope(this.registry, this);
         notifyOnScopeOpened();
         return scope;
+    }
+
+    @Nullable
+    @Override
+    public Scope getEnclosingScope() {
+        return scopeThreadLocal.get();
     }
 
     @Override
@@ -226,11 +235,6 @@ class SimpleObservation implements Observation {
         // We're closing from end till the beginning - e.g. we opened scope with handlers
         // with ids 1,2,3 and we need to close the scope in order 3,2,1
         this.handlers.descendingIterator().forEachRemaining(handler -> handler.onScopeClosed(this.context));
-    }
-
-    @SuppressWarnings("unchecked")
-    private void notifyOnScopeReset() {
-        this.handlers.forEach(handler -> handler.onScopeReset(this.context));
     }
 
     @SuppressWarnings("unchecked")
@@ -285,8 +289,17 @@ class SimpleObservation implements Observation {
 
         @Override
         public void makeCurrent() {
-            this.currentObservation.notifyOnScopeMakeCurrent();
+            Deque<SimpleScope> scopes = new ArrayDeque<>();
+            SimpleScope scope = this;
+            while (scope != null) {
+                scopes.addFirst(scope);
+                scope = (SimpleScope) scope.previousObservationScope;
+            }
+            for (SimpleScope simpleScope : scopes) {
+                simpleScope.currentObservation.notifyOnScopeMakeCurrent();
+            }
         }
+
     }
 
 }
