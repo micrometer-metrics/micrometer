@@ -56,7 +56,7 @@ class OTelCollectorDeltaIntegrationTest extends OTelCollectorIntegrationTest {
         DistributionSummary.builder("test.distributionsummary").register(registry).record(24);
 
         // @formatter:off
-        await().atMost(Duration.ofSeconds(5))
+        await().atMost(Duration.ofSeconds(10))
             .pollDelay(Duration.ofMillis(100))
             .pollInterval(Duration.ofMillis(100))
             .untilAsserted(() -> whenPrometheusScraped().then()
