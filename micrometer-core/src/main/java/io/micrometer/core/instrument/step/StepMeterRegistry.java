@@ -111,7 +111,7 @@ public abstract class StepMeterRegistry extends PushMeterRegistry {
             getMeters().stream()
                 .filter(StepMeter.class::isInstance)
                 .map(StepMeter.class::cast)
-                .forEach(StepMeter::_manualRollover);
+                .forEach(StepMeter::_closingRollover);
         }
         super.close();
     }
