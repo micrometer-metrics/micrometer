@@ -39,8 +39,9 @@ public interface AzureMonitorConfig extends StepRegistryConfig {
     /**
      * Instrumentation key to use when sending metrics.
      * @return Instrumentation Key
-     * @deprecated use {@link #connectionString()} instead. This method is only called as
-     * a fallback in the default implementation if a connectionString is not configured.
+     * @deprecated since 1.11.0, use {@link #connectionString()} instead. This method is
+     * only called as a fallback in the default implementation if a connectionString is
+     * not configured.
      */
     @Nullable
     @Deprecated
@@ -54,6 +55,7 @@ public interface AzureMonitorConfig extends StepRegistryConfig {
      * @see <a
      * href=https://learn.microsoft.com/en-us/azure/azure-monitor/app/sdk-connection-string">Connection
      * strings</a>
+     * @since 1.11.0
      */
     @Nullable
     default String connectionString() {
