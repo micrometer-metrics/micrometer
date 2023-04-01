@@ -561,9 +561,8 @@ class OtlpMeterRegistryTest {
     void testMetricsStartAndEndTime() {
         Counter counter = Counter.builder("test_publish_time").register(registry);
         final long startTime = ((StartTimeAwareMeter) counter).getStartTimeNanos();
-        Function<Meter, NumberDataPoint> getDataPoint = (Meter meter) -> {
-            return publishTimeAwareWrite(meter).getSum().getDataPoints(0);
-        };
+        Function<Meter, NumberDataPoint> getDataPoint = (Meter meter) -> publishTimeAwareWrite(meter).getSum()
+            .getDataPoints(0);
         assertThat(getDataPoint.apply(counter).getStartTimeUnixNano()).isEqualTo(startTime);
         assertThat(getDataPoint.apply(counter).getTimeUnixNano()).isEqualTo(1000000L);
         clock.addSeconds(59);
@@ -575,7 +574,6 @@ class OtlpMeterRegistryTest {
     }
 
     private Metric publishTimeAwareWrite(Meter meter) {
-        registry.setPublishTimeNanos();
         return meter.match(registry::writeGauge, registry::writeCounter, registry::writeHistogramSupport,
                 registry::writeHistogramSupport, registry::writeHistogramSupport, registry::writeGauge,
                 registry::writeFunctionCounter, registry::writeFunctionTimer, registry::writeMeter);

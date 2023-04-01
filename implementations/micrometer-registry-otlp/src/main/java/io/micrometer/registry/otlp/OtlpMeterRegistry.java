@@ -52,8 +52,8 @@ import java.util.function.ToDoubleFunction;
 import java.util.function.ToLongFunction;
 import java.util.stream.Collectors;
 
-import static io.micrometer.registry.otlp.AggregationTemporality.CUMULATIVE;
-import static io.micrometer.registry.otlp.AggregationTemporality.DELTA;
+import static io.opentelemetry.proto.metrics.v1.AggregationTemporality.AGGREGATION_TEMPORALITY_CUMULATIVE;
+import static io.opentelemetry.proto.metrics.v1.AggregationTemporality.AGGREGATION_TEMPORALITY_DELTA;
 
 /**
  * Publishes meters in OTLP (OpenTelemetry Protocol) format. HTTP with Protobuf encoding
@@ -75,9 +75,7 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
 
     private final Resource resource;
 
-    private long publishTimeNanos;
-
-    private final AggregationTemporality aggregationTemporality;
+    private long deltaAggregationTimeUnixNano = 0L;
 
     private final io.opentelemetry.proto.metrics.v1.AggregationTemporality otlpAggregationTemporality;
 
@@ -96,17 +94,19 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
         this.config = config;
         this.httpSender = httpSender;
         this.resource = Resource.newBuilder().addAllAttributes(getResourceAttributes()).build();
-        this.aggregationTemporality = config.aggregationTemporality();
-        this.otlpAggregationTemporality = AggregationTemporality.toOtlpAggregationTemporality(aggregationTemporality);
-        this.setPublishTimeNanos();
+        this.otlpAggregationTemporality = AggregationTemporality
+            .toOtlpAggregationTemporality(config.aggregationTemporality());
+        this.setDeltaAggregationTimeUnixNano();
         config().namingConvention(NamingConvention.dot);
         start(DEFAULT_THREAD_FACTORY);
     }
 
     @Override
     protected void publish() {
+        if (isDelta()) {
+            this.setDeltaAggregationTimeUnixNano();
+        }
         for (List<Meter> batch : MeterPartition.partition(this, config.batchSize())) {
-            this.setPublishTimeNanos();
             List<Metric> metrics = batch.stream()
                 .map(meter -> meter.match(this::writeGauge, this::writeCounter, this::writeHistogramSupport,
                         this::writeHistogramSupport, this::writeHistogramSupport, this::writeGauge,
@@ -218,7 +218,7 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
         return getMetricBuilder(gauge.getId())
             .setGauge(io.opentelemetry.proto.metrics.v1.Gauge.newBuilder()
                 .addDataPoints(NumberDataPoint.newBuilder()
-                    .setTimeUnixNano(publishTimeNanos)
+                    .setTimeUnixNano(getTimeUnixNano())
                     .setAsDouble(gauge.value())
                     .addAllAttributes(getTagsForId(gauge.getId()))
                     .build()))
@@ -240,7 +240,7 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
             .setSum(Sum.newBuilder()
                 .addDataPoints(NumberDataPoint.newBuilder()
                     .setStartTimeUnixNano(getStartTimeNanos(meter))
-                    .setTimeUnixNano(publishTimeNanos)
+                    .setTimeUnixNano(getTimeUnixNano())
                     .setAsDouble(count.getAsDouble())
                     .addAllAttributes(getTagsForId(meter.getId()))
                     .build())
@@ -266,7 +266,7 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
             SummaryDataPoint.Builder summaryData = SummaryDataPoint.newBuilder()
                 .addAllAttributes(tags)
                 .setStartTimeUnixNano(startTimeNanos)
-                .setTimeUnixNano(publishTimeNanos)
+                .setTimeUnixNano(getTimeUnixNano())
                 .setSum(total)
                 .setCount(count);
             for (ValueAtPercentile percentile : histogramSnapshot.percentileValues()) {
@@ -281,7 +281,7 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
         HistogramDataPoint.Builder histogramDataPoint = HistogramDataPoint.newBuilder()
             .addAllAttributes(tags)
             .setStartTimeUnixNano(startTimeNanos)
-            .setTimeUnixNano(publishTimeNanos)
+            .setTimeUnixNano(getTimeUnixNano())
             .setSum(total)
             .setCount(count);
 
@@ -315,7 +315,7 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
                 .addDataPoints(HistogramDataPoint.newBuilder()
                     .addAllAttributes(getTagsForId(functionTimer.getId()))
                     .setStartTimeUnixNano(getStartTimeNanos((functionTimer)))
-                    .setTimeUnixNano(publishTimeNanos)
+                    .setTimeUnixNano(getTimeUnixNano())
                     .setSum(functionTimer.totalTime(getBaseTimeUnit()))
                     .setCount((long) functionTimer.count()))
                 .setAggregationTemporality(otlpAggregationTemporality))
@@ -323,22 +323,25 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
     }
 
     private boolean isCumulative() {
-        return this.aggregationTemporality == CUMULATIVE;
+        return this.otlpAggregationTemporality == AGGREGATION_TEMPORALITY_CUMULATIVE;
     }
 
     private boolean isDelta() {
-        return this.aggregationTemporality == DELTA;
+        return this.otlpAggregationTemporality == AGGREGATION_TEMPORALITY_DELTA;
     }
 
     // VisibleForTesting
-    void setPublishTimeNanos() {
-        this.publishTimeNanos = isCumulative() ? TimeUnit.MILLISECONDS.toNanos(clock.wallTime())
-                : (clock.wallTime() / config.step().toMillis()) * config.step().toNanos();
+    void setDeltaAggregationTimeUnixNano() {
+        this.deltaAggregationTimeUnixNano = (clock.wallTime() / config.step().toMillis()) * config.step().toNanos();
+    }
+
+    private long getTimeUnixNano() {
+        return isCumulative() ? TimeUnit.MILLISECONDS.toNanos(this.clock.wallTime()) : deltaAggregationTimeUnixNano;
     }
 
     private long getStartTimeNanos(Meter meter) {
         return isCumulative() ? ((StartTimeAwareMeter) meter).getStartTimeNanos()
-                : publishTimeNanos - config.step().toNanos();
+                : deltaAggregationTimeUnixNano - config.step().toNanos();
     }
 
     private Metric.Builder getMetricBuilder(Meter.Id id) {
