@@ -33,7 +33,6 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.ToDoubleFunction;
 import java.util.function.ToLongFunction;
-import java.util.stream.Collectors;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
@@ -123,13 +122,13 @@ class PushMeterRegistryTest {
 
     private static class OverlappingStepMeterRegistry extends StepMeterRegistry {
 
-        private final AtomicInteger numberOfPublish = new AtomicInteger();
+        private final AtomicInteger numberOfPublishes = new AtomicInteger();
 
         private final Map<Integer, Deque<Double>> publishes = new ConcurrentHashMap<>();
 
         private final CyclicBarrier barrier;
 
-        public OverlappingStepMeterRegistry(StepRegistryConfig config, Clock clock, CyclicBarrier barrier) {
+        OverlappingStepMeterRegistry(StepRegistryConfig config, Clock clock, CyclicBarrier barrier) {
             super(config, clock);
             this.barrier = barrier;
         }
@@ -147,16 +146,15 @@ class PushMeterRegistryTest {
             catch (InterruptedException | BrokenBarrierException | TimeoutException e) {
                 throw new RuntimeException(e);
             }
-            int publishIndex = numberOfPublish.getAndIncrement();
-            for (Counter counter : getMeters().stream()
+            int publishIndex = numberOfPublishes.getAndIncrement();
+            getMeters().stream()
                 .filter(meter -> meter instanceof Counter)
                 .map(meter -> (Counter) meter)
-                .collect(Collectors.toSet())) {
-                publishes.merge(publishIndex, new ArrayDeque<>(Arrays.asList(counter.count())), (l1, l2) -> {
-                    l1.addAll(l2);
-                    return l1;
-                });
-            }
+                .forEach(counter -> publishes.merge(publishIndex, new ArrayDeque<>(Arrays.asList(counter.count())),
+                        (l1, l2) -> {
+                            l1.addAll(l2);
+                            return l1;
+                        }));
         }
 
         @Override

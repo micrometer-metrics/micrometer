@@ -67,12 +67,14 @@ public abstract class PushMeterRegistry extends MeterRegistry {
             }
         }
         else {
-            logger.warn("Publishing is already in progress. Skipping duplicate call to publishSafely().");
+            logger.warn("Publishing is already in progress. Skipping duplicate call to publish().");
         }
     }
 
     /**
-     * Returns - true if scheduled publishing of metrics is in progress.
+     * Returns if scheduled publishing of metrics is in progress.
+     * @return if scheduled publishing of metrics is in progress
+     * @since 1.11.0
      */
     protected boolean isPublishing() {
         return publishing.get();
