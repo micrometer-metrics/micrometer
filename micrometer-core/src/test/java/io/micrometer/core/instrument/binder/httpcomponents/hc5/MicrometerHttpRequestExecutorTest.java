@@ -184,6 +184,17 @@ class MicrometerHttpRequestExecutorTest {
         assertThat(requestExecutor).hasFieldOrPropertyWithValue("waitForContinue", Timeout.ofMilliseconds(1000));
     }
 
+    @Test
+    void overridesDefaultMeterName(@WiremockResolver.Wiremock WireMockServer server) throws IOException {
+        String meterName = "http.client.requests";
+        MicrometerHttpRequestExecutor executor = MicrometerHttpRequestExecutor.builder(registry)
+            .meterName(meterName)
+            .build();
+        CloseableHttpClient client = client(executor);
+        execute(client, new HttpGet(server.baseUrl() + "/foo"));
+        assertThat(registry.get(meterName).timer().count()).isEqualTo(1L);
+    }
+
     @ParameterizedTest
     @ValueSource(booleans = { false, true })
     void uriMapperWorksAsExpected(boolean configureObservationRegistry,
