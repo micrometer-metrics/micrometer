@@ -23,7 +23,7 @@ interface StepMeter {
     /**
      * This is an internal method not meant for general use.
      * <p>
-     * Force a rollover of the values returned by a step meter and never rollover again
+     * Force a rollover of the values returned by a step meter and never roll over again
      * after.
      */
     void _closingRollover();
