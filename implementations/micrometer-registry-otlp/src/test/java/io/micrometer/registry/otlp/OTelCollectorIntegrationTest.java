@@ -17,6 +17,7 @@ package io.micrometer.registry.otlp;
 
 import io.micrometer.core.instrument.*;
 import io.restassured.response.Response;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.junit.jupiter.Container;
@@ -36,21 +37,20 @@ import static uk.org.webcompere.systemstubs.SystemStubs.withEnvironmentVariables
  * @author Jonatan Ivanov
  */
 @Testcontainers
-abstract class OTelCollectorIntegrationTest {
+@Tag("docker")
+class OTelCollectorIntegrationTest {
 
     // TODO: The OTel Prometheus exporter does not support openmetrics-text 1.0.0 yet
     // see: https://github.com/open-telemetry/opentelemetry-collector-contrib/issues/18913
-    static final String OPENMETRICS_001 = "application/openmetrics-text; version=0.0.1; charset=utf-8";
+    private static final String OPENMETRICS_001 = "application/openmetrics-text; version=0.0.1; charset=utf-8";
 
-    static final String CONFIG_FILE_NAME = "collector-config.yml";
+    private static final String CONFIG_FILE_NAME = "collector-config.yml";
 
     @Container
-    final GenericContainer<?> container = new GenericContainer("otel/opentelemetry-collector-contrib")
+    private final GenericContainer<?> container = new GenericContainer("otel/opentelemetry-collector-contrib")
         .withCommand("--config=/etc/" + CONFIG_FILE_NAME)
         .withClasspathResourceMapping(CONFIG_FILE_NAME, "/etc/" + CONFIG_FILE_NAME, READ_ONLY)
         .withExposedPorts(4318, 9090); // HTTP receiver, Prometheus exporter
-
-    abstract AggregationTemporality getAggregationTemporality();
 
     @Test
     void collectorShouldExportMetrics() throws Exception {
@@ -65,12 +65,9 @@ abstract class OTelCollectorIntegrationTest {
             .pollDelay(Duration.ofMillis(100))
             .pollInterval(Duration.ofMillis(100))
             .untilAsserted(() -> whenPrometheusScraped().then()
-                .statusCode(200)
-                .contentType(OPENMETRICS_001)
-                .body(
-                    containsString("test_counter"),
-                    endsWith("# EOF\n")
-                )
+                    .statusCode(200)
+                    .contentType(OPENMETRICS_001)
+                    .body(endsWith("# EOF\n"))
             );
 
         // tags can vary depending on where you run your tests:
@@ -95,12 +92,12 @@ abstract class OTelCollectorIntegrationTest {
         // @formatter:on
     }
 
-    OtlpMeterRegistry createOtlpMeterRegistryForContainer(GenericContainer<?> container) throws Exception {
+    private OtlpMeterRegistry createOtlpMeterRegistryForContainer(GenericContainer<?> container) throws Exception {
         return withEnvironmentVariables("OTEL_SERVICE_NAME", "test")
             .execute(() -> new OtlpMeterRegistry(createOtlpConfigForContainer(container), Clock.SYSTEM));
     }
 
-    OtlpConfig createOtlpConfigForContainer(GenericContainer<?> container) {
+    private OtlpConfig createOtlpConfigForContainer(GenericContainer<?> container) {
         return new OtlpConfig() {
             @Override
             public String url() {
@@ -109,12 +106,7 @@ abstract class OTelCollectorIntegrationTest {
 
             @Override
             public Duration step() {
-                return Duration.ofSeconds(2);
-            }
-
-            @Override
-            public AggregationTemporality aggregationTemporality() {
-                return getAggregationTemporality();
+                return Duration.ofSeconds(1);
             }
 
             @Override
@@ -124,7 +116,7 @@ abstract class OTelCollectorIntegrationTest {
         };
     }
 
-    Response whenPrometheusScraped() {
+    private Response whenPrometheusScraped() {
         // @formatter:off
         return given()
             .port(container.getMappedPort(9090))
