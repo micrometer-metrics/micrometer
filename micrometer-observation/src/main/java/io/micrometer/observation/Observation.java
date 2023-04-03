@@ -768,19 +768,22 @@ public interface Observation extends ObservationView {
         void close();
 
         /**
-         * Clears the current scope and notifies the handlers that the scope was reset.
-         * You don't need to call this method in most of the cases. Please only call this
-         * method if you know what you are doing and your use-case demands the usage of
-         * it.
+         * Clears the current scope. You don't need to call this method in most of the
+         * cases. Please only call this method if you know what you are doing and your
+         * use-case demands the usage of it.
          * @since 1.10.4
          */
         void reset();
 
         /**
-         * Makes this scope current again. That can lead to additional work such as
-         * injecting variables to MDC. You don't need to call this method in most of the
-         * cases. Please only call this method if you know what you are doing and your
-         * use-case demands the usage of it.
+         * This method assumes that all previous scopes got {@link #reset()}. That means
+         * that in thread locals there are no more entries and now we can make this scope
+         * current.
+         *
+         * Making this scope current can lead to additional work such as injecting
+         * variables to MDC. You don't need to call this method in most of the cases.
+         * Please only call this method if you know what you are doing and your use-case
+         * demands the usage of it.
          * @since 1.10.6
          */
         void makeCurrent();
