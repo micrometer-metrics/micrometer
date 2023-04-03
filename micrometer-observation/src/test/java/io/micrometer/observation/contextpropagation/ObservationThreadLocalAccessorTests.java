@@ -51,7 +51,7 @@ class ObservationThreadLocalAccessorTests {
 
     @Test
     void capturedThreadLocalValuesShouldBeCapturedRestoredAndCleared()
-        throws InterruptedException, ExecutionException, TimeoutException {
+            throws InterruptedException, ExecutionException, TimeoutException {
 
         // given
         Observation parent = Observation.start("parent", observationRegistry);

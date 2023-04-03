@@ -189,6 +189,7 @@ class SimpleObservation implements Observation {
         }
 
         notifyOnObservationStopped(modifiedContext);
+        this.enclosingScopes.remove();
     }
 
     @Override
