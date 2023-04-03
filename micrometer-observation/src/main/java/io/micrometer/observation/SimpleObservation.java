@@ -22,7 +22,6 @@ import io.micrometer.common.util.StringUtils;
 import java.util.ArrayDeque;
 import java.util.Collection;
 import java.util.Deque;
-import java.util.stream.Collectors;
 
 /**
  * Default implementation of {@link Observation}.
@@ -83,20 +82,23 @@ class SimpleObservation implements Observation {
 
     @Nullable
     private static ObservationConvention getConventionFromConfig(ObservationRegistry registry, Context context) {
-        return registry.observationConfig()
-            .getObservationConventions()
-            .stream()
-            .filter(convention -> convention.supportsContext(context))
-            .findFirst()
-            .orElse(null);
+        for (ObservationConvention<?> convention : registry.observationConfig().getObservationConventions()) {
+            if (convention.supportsContext(context)) {
+                return convention;
+            }
+        }
+        return null;
     }
 
     private static Deque<ObservationHandler> getHandlersFromConfig(ObservationRegistry registry, Context context) {
-        return registry.observationConfig()
-            .getObservationHandlers()
-            .stream()
-            .filter(handler -> handler.supportsContext(context))
-            .collect(Collectors.toCollection(ArrayDeque::new));
+        Collection<ObservationHandler<?>> handlers = registry.observationConfig().getObservationHandlers();
+        Deque<ObservationHandler> deque = new ArrayDeque<>(handlers.size());
+        for (ObservationHandler handler : handlers) {
+            if (handler.supportsContext(context)) {
+                deque.add(handler);
+            }
+        }
+        return deque;
     }
 
     @Override

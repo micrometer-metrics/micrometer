@@ -20,7 +20,6 @@ import io.micrometer.common.KeyValues;
 import io.micrometer.common.lang.NonNull;
 import io.micrometer.common.lang.Nullable;
 
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -367,7 +366,9 @@ public interface Observation extends ObservationView {
      * @return this
      */
     default Observation lowCardinalityKeyValues(KeyValues keyValues) {
-        keyValues.stream().forEach(this::lowCardinalityKeyValue);
+        for (KeyValue keyValue : keyValues) {
+            lowCardinalityKeyValue(keyValue);
+        }
         return this;
     }
 
@@ -400,7 +401,9 @@ public interface Observation extends ObservationView {
      * @return this
      */
     default Observation highCardinalityKeyValues(KeyValues keyValues) {
-        keyValues.stream().forEach(this::highCardinalityKeyValue);
+        for (KeyValue keyValue : keyValues) {
+            highCardinalityKeyValue(keyValue);
+        }
         return this;
     }
 
@@ -1068,7 +1071,9 @@ public interface Observation extends ObservationView {
          * @return this context
          */
         public Context addLowCardinalityKeyValues(KeyValues keyValues) {
-            keyValues.stream().forEach(this::addLowCardinalityKeyValue);
+            for (KeyValue keyValue : keyValues) {
+                addLowCardinalityKeyValue(keyValue);
+            }
             return this;
         }
 
@@ -1078,7 +1083,9 @@ public interface Observation extends ObservationView {
          * @return this context
          */
         public Context addHighCardinalityKeyValues(KeyValues keyValues) {
-            keyValues.stream().forEach(this::addHighCardinalityKeyValue);
+            for (KeyValue keyValue : keyValues) {
+                addHighCardinalityKeyValue(keyValue);
+            }
             return this;
         }
 
@@ -1089,7 +1096,9 @@ public interface Observation extends ObservationView {
          * @since 1.10.1
          */
         public Context removeLowCardinalityKeyValues(String... keyNames) {
-            Arrays.stream(keyNames).forEach(this::removeLowCardinalityKeyValue);
+            for (String keyName : keyNames) {
+                removeLowCardinalityKeyValue(keyName);
+            }
             return this;
         }
 
@@ -1100,7 +1109,9 @@ public interface Observation extends ObservationView {
          * @since 1.10.1
          */
         public Context removeHighCardinalityKeyValues(String... keyNames) {
-            Arrays.stream(keyNames).forEach(this::removeHighCardinalityKeyValue);
+            for (String keyName : keyNames) {
+                removeHighCardinalityKeyValue(keyName);
+            }
             return this;
         }
 
