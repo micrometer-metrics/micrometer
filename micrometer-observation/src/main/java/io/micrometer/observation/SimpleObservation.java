@@ -18,6 +18,7 @@ package io.micrometer.observation;
 import io.micrometer.common.KeyValue;
 import io.micrometer.common.lang.Nullable;
 import io.micrometer.common.util.StringUtils;
+import io.micrometer.observation.contextpropagation.ObservationThreadLocalAccessor;
 
 import java.util.ArrayDeque;
 import java.util.Collection;
@@ -46,7 +47,7 @@ class SimpleObservation implements Observation {
 
     private final Collection<ObservationFilter> filters;
 
-    private final ThreadLocal<Scope> scopeThreadLocal = new ThreadLocal<>();
+    private final ThreadLocal<Deque<Scope>> enclosingScopes = ThreadLocal.withInitial(ArrayDeque::new);
 
     SimpleObservation(@Nullable String name, ObservationRegistry registry, Context context) {
         this.registry = registry;
@@ -192,7 +193,11 @@ class SimpleObservation implements Observation {
 
     @Override
     public Scope openScope() {
-        scopeThreadLocal.set(registry.getCurrentObservationScope());
+        Deque<Scope> scopes = enclosingScopes.get();
+        Scope currentScope = registry.getCurrentObservationScope();
+        if (currentScope != null) {
+            scopes.addFirst(currentScope);
+        }
         Scope scope = new SimpleScope(this.registry, this);
         notifyOnScopeOpened();
         return scope;
@@ -201,7 +206,11 @@ class SimpleObservation implements Observation {
     @Nullable
     @Override
     public Scope getEnclosingScope() {
-        return scopeThreadLocal.get();
+        Deque<Scope> scopes = enclosingScopes.get();
+        if (!scopes.isEmpty()) {
+            return scopes.getFirst();
+        }
+        return null;
     }
 
     @Override
@@ -243,6 +252,11 @@ class SimpleObservation implements Observation {
     }
 
     @SuppressWarnings("unchecked")
+    private void notifyOnScopeReset() {
+        this.handlers.forEach(handler -> handler.onScopeReset(this.context));
+    }
+
+    @SuppressWarnings("unchecked")
     private void notifyOnObservationStopped(Observation.Context context) {
         // We're closing from end till the beginning - e.g. we started with handlers with
         // ids 1,2,3 and we need to call close on 3,2,1
@@ -272,6 +286,13 @@ class SimpleObservation implements Observation {
 
         @Override
         public void close() {
+            Deque<Scope> enclosingScopes = this.currentObservation.enclosingScopes.get();
+            if (!enclosingScopes.isEmpty()) {
+                Scope scope = enclosingScopes.peek();
+                if (scope == this) {
+                    enclosingScopes.removeFirst();
+                }
+            }
             this.registry.setCurrentObservationScope(previousObservationScope);
             this.currentObservation.notifyOnScopeClosed();
         }
@@ -279,16 +300,34 @@ class SimpleObservation implements Observation {
         @Override
         public void reset() {
             this.registry.setCurrentObservationScope(null);
-            Scope scope = this;
+            SimpleScope scope = this;
             while (scope != null) {
                 scope.close();
-                SimpleScope simpleScope = (SimpleScope) scope;
-                scope = simpleScope.previousObservationScope;
+                SimpleScope simpleScope = scope;
+                scope = (SimpleScope) simpleScope.previousObservationScope;
             }
         }
 
+        /**
+         * This method is called e.g. via
+         * {@link ObservationThreadLocalAccessor#restore(Observation)}. In that case,
+         * we're calling {@link ObservationThreadLocalAccessor#reset()} first, and we're
+         * closing all the scopes, HOWEVER those are called on the Observation scope that
+         * was present there in thread local at the time of calling the method, NOT on the
+         * scope that we want to make current (that one can contain some leftovers from
+         * previous scope openings like creation of e.g. Brave scope in the TracingContext
+         * that is there inside the Observation's Context.
+         *
+         * When we want to go back to the enclosing scope and want to make that scope
+         * current we need to be sure that there are no remaining scoped objects inside
+         * Observation's context. This is why BEFORE rebuilding the scope structure we
+         * need to notify the handlers to clear them first (again this is a separate scope
+         * to the one that was cleared by the reset method) via calling
+         * {@link ObservationHandler#onScopeReset(Context)}.
+         */
         @Override
         public void makeCurrent() {
+            this.currentObservation.notifyOnScopeReset();
             Deque<SimpleScope> scopes = new ArrayDeque<>();
             SimpleScope scope = this;
             while (scope != null) {
