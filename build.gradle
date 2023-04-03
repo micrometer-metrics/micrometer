@@ -402,6 +402,14 @@ subprojects {
 
     repositories {
         mavenCentral()
+        maven {
+            // TODO remove before releasing GA
+            url "https://repo.spring.io/milestone/"
+            content {
+                // for context-propagation milestone versions
+                includeModule 'io.micrometer', 'context-propagation'
+            }
+        }
     }
 
     def check = tasks.findByName('check')
