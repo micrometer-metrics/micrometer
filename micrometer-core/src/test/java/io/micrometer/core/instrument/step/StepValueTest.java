@@ -77,7 +77,7 @@ class StepValueTest {
 
     @Test
     @Issue("#3720")
-    void testManualRolloverDropsDataOnStepCompletion() {
+    void closingRolloverShouldNotDropDataOnStepCompletion() {
         final MockClock clock = new MockClock();
         final long stepTime = 60;
         final AtomicLong aLong = new AtomicLong(10);
