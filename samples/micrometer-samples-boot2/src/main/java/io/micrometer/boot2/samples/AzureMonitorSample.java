@@ -33,7 +33,7 @@ public class AzureMonitorSample {
 
     @Bean
     AzureMonitorMeterRegistry azureMonitorMeterRegistry(Environment environment) {
-        // will need an application property `azure.instrumentationKey` to be set
+        // will need an environment variable `azuremonitor.instrumentationKey` to be set
         return AzureMonitorMeterRegistry.builder(environment::getProperty).build();
     }
 
