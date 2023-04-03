@@ -33,7 +33,7 @@ public class AzureMonitorSample {
 
     @Bean
     AzureMonitorMeterRegistry azureMonitorMeterRegistry(Environment environment) {
-        // will need an application property `azure.connectionString` to be set
+        // will need an application property `azuremonitor.connectionString` to be set
         return AzureMonitorMeterRegistry.builder(environment::getProperty).build();
     }
 
