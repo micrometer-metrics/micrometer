@@ -410,8 +410,27 @@ public class SampleRegistries {
     public static AzureMonitorMeterRegistry azure(String apiKey) {
         return new AzureMonitorMeterRegistry(new AzureMonitorConfig() {
             @Override
-            public String instrumentationKey() {
-                return apiKey;
+            public String connectionString() {
+                return String.format("InstrumentationKey=%s", apiKey);
+            }
+
+            @Override
+            public String get(String key) {
+                return null;
+            }
+
+            @Override
+            public Duration step() {
+                return Duration.ofSeconds(10);
+            }
+        }, Clock.SYSTEM);
+    }
+
+    public static AzureMonitorMeterRegistry azureWithConnectionString(String connectionString) {
+        return new AzureMonitorMeterRegistry(new AzureMonitorConfig() {
+            @Override
+            public String connectionString() {
+                return connectionString;
             }
 
             @Override

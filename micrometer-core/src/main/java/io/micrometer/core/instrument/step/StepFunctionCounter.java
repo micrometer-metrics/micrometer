@@ -51,9 +51,9 @@ public class StepFunctionCounter<T> extends AbstractMeter implements FunctionCou
     }
 
     @Override
-    public void _manualRollover() {
+    public void _closingRollover() {
         count(); // add any difference from last count
-        count.manualRollover();
+        count.closingRollover();
     }
 
 }

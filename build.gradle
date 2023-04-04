@@ -403,10 +403,10 @@ subprojects {
     repositories {
         mavenCentral()
         maven {
-            // TODO remove before releasing
-            url "https://repo.spring.io/snapshot/"
+            // TODO remove before releasing GA
+            url "https://repo.spring.io/milestone/"
             content {
-                // for context-propagation snapshots
+                // for context-propagation milestone versions
                 includeModule 'io.micrometer', 'context-propagation'
             }
         }

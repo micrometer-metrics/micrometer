@@ -96,12 +96,18 @@ class MicrometerHttpRequestExecutorTest {
         EntityUtils.consume(client.execute(new HttpGet(server.baseUrl() + "/ok")).getEntity());
         EntityUtils.consume(client.execute(new HttpGet(server.baseUrl() + "/notfound")).getEntity());
         EntityUtils.consume(client.execute(new HttpGet(server.baseUrl() + "/error")).getEntity());
-        assertThat(registry.get(EXPECTED_METER_NAME).tags("method", "GET", "status", "200").timer().count())
-            .isEqualTo(2L);
-        assertThat(registry.get(EXPECTED_METER_NAME).tags("method", "GET", "status", "404").timer().count())
-            .isEqualTo(1L);
-        assertThat(registry.get(EXPECTED_METER_NAME).tags("method", "GET", "status", "500").timer().count())
-            .isEqualTo(1L);
+        assertThat(registry.get(EXPECTED_METER_NAME)
+            .tags("method", "GET", "status", "200", "outcome", "SUCCESS")
+            .timer()
+            .count()).isEqualTo(2L);
+        assertThat(registry.get(EXPECTED_METER_NAME)
+            .tags("method", "GET", "status", "404", "outcome", "CLIENT_ERROR")
+            .timer()
+            .count()).isEqualTo(1L);
+        assertThat(registry.get(EXPECTED_METER_NAME)
+            .tags("method", "GET", "status", "500", "outcome", "SERVER_ERROR")
+            .timer()
+            .count()).isEqualTo(1L);
     }
 
     @ParameterizedTest
@@ -340,8 +346,10 @@ class MicrometerHttpRequestExecutorTest {
         assertThatThrownBy(
                 () -> EntityUtils.consume(client.execute(new HttpGet(server.baseUrl() + "/error")).getEntity()))
             .isInstanceOf(ClientProtocolException.class);
-        assertThat(registry.get(EXPECTED_METER_NAME).tags("method", "GET", "status", "IO_ERROR").timer().count())
-            .isEqualTo(1L);
+        assertThat(registry.get(EXPECTED_METER_NAME)
+            .tags("method", "GET", "status", "IO_ERROR", "outcome", "UNKNOWN")
+            .timer()
+            .count()).isEqualTo(1L);
     }
 
     static class CustomGlobalApacheHttpConvention extends DefaultApacheHttpClientObservationConvention

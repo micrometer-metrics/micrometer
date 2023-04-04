@@ -50,7 +50,7 @@ class StepDistributionSummaryTest {
     }
 
     @Test
-    void manualRolloverPartialStep() {
+    void closingRolloverPartialStep() {
         Duration stepDuration = Duration.ofMillis(10);
         StepDistributionSummary summary = new StepDistributionSummary(mock(Meter.Id.class), clock,
                 DistributionStatisticConfig.builder().expiry(stepDuration).bufferLength(2).build(), 1.0,
@@ -61,7 +61,13 @@ class StepDistributionSummaryTest {
 
         assertThat(summary.count()).isZero();
 
-        summary._manualRollover();
+        summary._closingRollover();
+
+        assertThat(summary.count()).isEqualTo(2);
+        assertThat(summary.totalAmount()).isEqualTo(300);
+        assertThat(summary.mean()).isEqualTo(150);
+
+        clock.add(stepDuration);
 
         assertThat(summary.count()).isEqualTo(2);
         assertThat(summary.totalAmount()).isEqualTo(300);

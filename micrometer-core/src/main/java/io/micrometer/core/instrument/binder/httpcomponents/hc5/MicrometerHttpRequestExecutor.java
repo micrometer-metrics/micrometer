@@ -20,6 +20,7 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.instrument.binder.http.Outcome;
 import io.micrometer.core.instrument.observation.ObservationOrTimerCompatibleInstrumentation;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
@@ -108,11 +109,13 @@ public class MicrometerHttpRequestExecutor extends HttpRequestExecutor {
                     () -> new ApacheHttpClientContext(request, context, uriMapper, exportTagsForRoute), convention,
                     DefaultApacheHttpClientObservationConvention.INSTANCE);
         String statusCodeOrError = "UNKNOWN";
+        Outcome statusOutcome = Outcome.UNKNOWN;
 
         try {
             ClassicHttpResponse response = super.execute(request, conn, context);
             sample.setResponse(response);
             statusCodeOrError = DefaultApacheHttpClientObservationConvention.INSTANCE.getStatusValue(response, null);
+            statusOutcome = DefaultApacheHttpClientObservationConvention.INSTANCE.getStatusOutcome(response);
             return response;
         }
         catch (IOException | HttpException | RuntimeException e) {
@@ -122,10 +125,11 @@ public class MicrometerHttpRequestExecutor extends HttpRequestExecutor {
         }
         finally {
             String status = statusCodeOrError;
+            String outcome = statusOutcome.name();
             sample.stop(meterName, "Duration of Apache HttpClient request execution",
                     () -> Tags
                         .of("method", DefaultApacheHttpClientObservationConvention.INSTANCE.getMethodString(request),
-                                "uri", uriMapper.apply(request), "status", status)
+                                "uri", uriMapper.apply(request), "status", status, "outcome", outcome)
                         .and(exportTagsForRoute ? HttpContextUtils.generateTagsForRoute(context) : Tags.empty())
                         .and(extraTags));
         }

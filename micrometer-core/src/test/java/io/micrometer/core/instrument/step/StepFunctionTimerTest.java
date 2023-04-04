@@ -77,7 +77,7 @@ class StepFunctionTimerTest {
     }
 
     @Test
-    void manualRolloverPartialStep() {
+    void closingRolloverPartialStep() {
         Queue<Long> counts = new ArrayDeque<>();
         counts.add(2L);
         counts.add(5L);
@@ -95,7 +95,12 @@ class StepFunctionTimerTest {
         assertThat(timer.count()).isZero();
         assertThat(timer.totalTime(TimeUnit.SECONDS)).isZero();
 
-        timer._manualRollover();
+        timer._closingRollover();
+
+        assertThat(timer.count()).isEqualTo(2);
+        assertThat(timer.totalTime(TimeUnit.SECONDS)).isEqualTo(150);
+
+        clock.add(stepDuration);
 
         assertThat(timer.count()).isEqualTo(2);
         assertThat(timer.totalTime(TimeUnit.SECONDS)).isEqualTo(150);

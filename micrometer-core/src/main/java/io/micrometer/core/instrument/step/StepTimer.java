@@ -80,8 +80,8 @@ public class StepTimer extends AbstractTimer implements StepMeter {
     }
 
     @Override
-    public void _manualRollover() {
-        countTotal.manualRollover();
+    public void _closingRollover() {
+        countTotal.closingRollover();
     }
 
 }
