@@ -201,6 +201,22 @@ class MicrometerHttpRequestExecutorTest {
         assertThat(registry.get(meterName).timer().count()).isEqualTo(1L);
     }
 
+    @Test
+    void overridesDefaultMeterNameShouldNotWorkWhenObservationRegistryIsConfigured(
+            @WiremockResolver.Wiremock WireMockServer server) throws IOException {
+        String meterName = "http.client.requests";
+        ObservationRegistry observationRegistry = createObservationRegistry();
+        observationRegistry.observationConfig().observationConvention(new CustomGlobalApacheHttpConvention());
+        MicrometerHttpRequestExecutor executor = MicrometerHttpRequestExecutor.builder(registry)
+            .observationRegistry(observationRegistry)
+            .meterName(meterName)
+            .build();
+        CloseableHttpClient client = client(executor);
+        execute(client, new HttpGet(server.baseUrl()));
+        assertThrows(MeterNotFoundException.class, () -> registry.get(meterName).timer());
+        assertThat(registry.get("custom.apache.http.client.requests")).isNotNull();
+    }
+
     @ParameterizedTest
     @ValueSource(booleans = { false, true })
     void uriMapperWorksAsExpected(boolean configureObservationRegistry,
