@@ -22,6 +22,7 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.instrument.binder.http.Outcome;
 import okhttp3.EventListener;
 import okhttp3.*;
 
@@ -168,6 +169,7 @@ public class OkHttpMetricsEventListener extends EventListener {
         Iterable<Tag> tags = Tags
             .of("method", requestAvailable ? request.method() : TAG_VALUE_UNKNOWN, "uri", getUriTag(state, request),
                     "status", getStatusMessage(state.response, state.exception))
+            .and(getStatusOutcome(state.response).asTag())
             .and(extraTags)
             .and(stream(contextSpecificTags.spliterator(), false)
                 .map(contextTag -> contextTag.apply(request, state.response))
@@ -217,6 +219,14 @@ public class OkHttpMetricsEventListener extends EventListener {
             return (Tags) requestTag;
         }
         return Tags.empty();
+    }
+
+    private Outcome getStatusOutcome(@Nullable Response response) {
+        if (response == null) {
+            return Outcome.UNKNOWN;
+        }
+
+        return Outcome.forStatus(response.code());
     }
 
     private String getStatusMessage(@Nullable Response response, @Nullable IOException exception) {
