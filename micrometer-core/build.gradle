@@ -57,6 +57,7 @@ jar {
             org.bson.*;resolution:=dynamic;version="${@}",\
             rx.*;resolution:=dynamic;version="${@}",\
             javax.persistence.*;resolution:=dynamic;version="${@}",\
+            io.netty.*;resolution:=dynamic;version="${@}",\
             *
         '''.stripIndent()
     }
@@ -98,6 +99,7 @@ dependencies {
     optionalApi 'org.apache.tomcat.embed:tomcat-embed-core'
     optionalApi 'org.glassfish.jersey.core:jersey-server'
     optionalApi 'io.grpc:grpc-api'
+	optionalApi 'io.netty:netty-transport'
 
     // apache httpcomponents monitoring
     optionalApi 'org.apache.httpcomponents:httpclient'
