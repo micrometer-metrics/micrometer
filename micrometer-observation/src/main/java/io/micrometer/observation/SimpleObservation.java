@@ -288,6 +288,8 @@ class SimpleObservation implements Observation {
         @Override
         public void close() {
             Deque<Scope> enclosingScopes = this.currentObservation.enclosingScopes.get();
+            // If we're closing an enclosing scope then we have to remove it from the
+            // deque
             if (!enclosingScopes.isEmpty()) {
                 Scope scope = enclosingScopes.peek();
                 if (scope == this) {
@@ -303,7 +305,11 @@ class SimpleObservation implements Observation {
             this.registry.setCurrentObservationScope(null);
             SimpleScope scope = this;
             while (scope != null) {
-                scope.close();
+                // We don't want to remove any enclosing scopes when resetting
+                // we just want to remove any scopes if they are present (that's why we're
+                // not calling scope#close)
+                this.registry.setCurrentObservationScope(scope.previousObservationScope);
+                scope.currentObservation.notifyOnScopeReset();
                 SimpleScope simpleScope = scope;
                 scope = (SimpleScope) simpleScope.previousObservationScope;
             }
@@ -329,6 +335,16 @@ class SimpleObservation implements Observation {
         @Override
         public void makeCurrent() {
             this.currentObservation.notifyOnScopeReset();
+            // When we make an enclosing scope current we must remove it from the top of
+            // the
+            // deque of enclosing scopes (since it will no longer be enclosing)
+            Deque<Scope> scopeDeque = this.currentObservation.enclosingScopes.get();
+            if (!scopeDeque.isEmpty()) {
+                Scope first = scopeDeque.getFirst();
+                if (this == first) {
+                    scopeDeque.removeFirst();
+                }
+            }
             Deque<SimpleScope> scopes = new ArrayDeque<>();
             SimpleScope scope = this;
             while (scope != null) {
