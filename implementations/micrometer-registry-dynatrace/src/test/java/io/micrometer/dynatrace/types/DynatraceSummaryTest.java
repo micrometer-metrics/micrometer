@@ -18,6 +18,10 @@ package io.micrometer.dynatrace.types;
 import org.assertj.core.data.Offset;
 import org.junit.jupiter.api.Test;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 
 /**
@@ -69,6 +73,46 @@ class DynatraceSummaryTest {
         summary.recordNonNegative(8.93);
 
         assertMinMaxSumCount(summary, 0.123, 8.93, 16.953, 4);
+    }
+
+    @Test
+    void testConcurrentAdds() throws InterruptedException {
+        DynatraceSummary summary = new DynatraceSummary();
+
+        int valueRecordedNTimes = 100;
+        ExecutorService executorService = Executors.newFixedThreadPool(3);
+        double expMin = 1.234;
+        double expMax = 123.456;
+        double expAvg = (expMin + expMax) / 2;
+
+        // first executor adds the min 100 times
+        executorService.submit(() -> {
+            for (int i = 0; i < valueRecordedNTimes; i++) {
+                summary.recordNonNegative(expMin);
+            }
+        });
+
+        // second executor records the avg 100 times
+        executorService.submit(() -> {
+            for (int i = 0; i < valueRecordedNTimes; i++) {
+                summary.recordNonNegative(expAvg);
+            }
+        });
+
+        // third executor records the max 100 times
+        executorService.submit(() -> {
+            for (int i = 0; i < valueRecordedNTimes; i++) {
+                summary.recordNonNegative(expMax);
+            }
+        });
+
+        executorService.shutdown();
+        boolean terminated = executorService.awaitTermination(1000, TimeUnit.MILLISECONDS);
+        assertThat(terminated).isTrue();
+
+        double expTotal = (valueRecordedNTimes * expMin) + (valueRecordedNTimes * expAvg)
+                + (valueRecordedNTimes * expMax);
+        assertMinMaxSumCount(summary, expMin, expMax, expTotal, 300);
     }
 
     private void assertMinMaxSumCount(DynatraceSummary summary, Double expMin, Double expMax, Double expTotal,
