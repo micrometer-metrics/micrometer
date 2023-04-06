@@ -130,6 +130,11 @@ final class NoopObservation implements Observation {
         public void reset() {
         }
 
+        @Override
+        public void makeCurrent() {
+
+        }
+
     }
 
 }

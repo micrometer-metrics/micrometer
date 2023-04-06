@@ -15,13 +15,13 @@
  */
 package io.micrometer.observation;
 
-import java.util.Arrays;
+import io.micrometer.observation.Observation.Context;
+
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
-
-import io.micrometer.observation.Observation.Context;
 
 /**
  * Handler for an {@link Observation}. Hooks in to the lifecycle of an observation.
@@ -73,7 +73,7 @@ public interface ObservationHandler<T extends Observation.Context> {
 
     /**
      * Reacts to resetting of scopes. If your handler uses a {@link ThreadLocal} value,
-     * this method should clear that {@link ThreadLocal}.
+     * this method should clear that {@link ThreadLocal} or any other scoped variable.
      * @param context an {@link Observation.Context}
      * @since 1.10.4
      */
