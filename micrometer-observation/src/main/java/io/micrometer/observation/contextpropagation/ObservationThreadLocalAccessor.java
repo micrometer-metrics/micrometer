@@ -32,8 +32,6 @@ public class ObservationThreadLocalAccessor implements ThreadLocalAccessor<Obser
      */
     public static final String KEY = "micrometer.observation";
 
-    private static final String SCOPE_KEY = KEY + ".scope";
-
     private static final ObservationRegistry observationRegistry = ObservationRegistry.create();
 
     @Override
@@ -43,15 +41,7 @@ public class ObservationThreadLocalAccessor implements ThreadLocalAccessor<Obser
 
     @Override
     public Observation getValue() {
-        Observation.Scope scope = observationRegistry.getCurrentObservationScope();
-        if (scope != null) {
-            Observation observation = scope.getCurrentObservation();
-            observation.getContext().put(SCOPE_KEY, scope);
-            return observation;
-        }
-        else {
-            return null;
-        }
+        return observationRegistry.getCurrentObservation();
     }
 
     @Override
@@ -72,14 +62,10 @@ public class ObservationThreadLocalAccessor implements ThreadLocalAccessor<Obser
     @Override
     public void restore(Observation value) {
         reset();
-        Observation.Scope observationScope = value.getContext().get(SCOPE_KEY);
-        if (observationScope != null) {
-            // We close the previous scope - it will put its parent as current and call
-            // all handlers.
-            observationScope.close();
+        Observation.Scope enclosingScope = value.getEnclosingScope();
+        if (enclosingScope != null) {
+            enclosingScope.makeCurrent();
         }
-        // We open the previous scope again, however this time in TL we have the whole
-        // hierarchy of scopes re-attached via handlers.
         setValue(value);
     }
 
