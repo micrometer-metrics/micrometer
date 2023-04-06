@@ -22,11 +22,11 @@ import static org.assertj.core.api.BDDAssertions.then;
 /**
  * @author Marcin Grzejszczak
  */
-class NoOpTagValueResolverTests {
+class NoOpValueResolverTests {
 
     @Test
     void should_return_null() throws Exception {
-        then(new NoOpTagValueResolver().resolve("")).isNull();
+        then(new NoOpValueResolver().resolve("")).isNull();
     }
 
 }

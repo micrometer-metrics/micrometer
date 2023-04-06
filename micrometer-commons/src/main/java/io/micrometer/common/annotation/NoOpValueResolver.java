@@ -16,12 +16,12 @@
 package io.micrometer.common.annotation;
 
 /**
- * A no-op implementation of a {@link TagValueResolver}.
+ * A no-op implementation of a {@link ValueResolver}.
  *
  * @author Marcin Grzejszczak
  * @since 1.11.0
  */
-public class NoOpTagValueResolver implements TagValueResolver {
+public class NoOpValueResolver implements ValueResolver {
 
     @Override
     public String resolve(Object parameter) {

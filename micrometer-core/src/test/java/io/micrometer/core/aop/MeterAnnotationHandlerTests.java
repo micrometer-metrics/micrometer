@@ -15,8 +15,8 @@
  */
 package io.micrometer.core.aop;
 
-import io.micrometer.common.annotation.TagValueExpressionResolver;
-import io.micrometer.common.annotation.TagValueResolver;
+import io.micrometer.common.annotation.ValueExpressionResolver;
+import io.micrometer.common.annotation.ValueResolver;
 import io.micrometer.core.annotation.Timed;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -27,27 +27,26 @@ import java.lang.reflect.Method;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
-class MetricsTagAnnotationHandlerTests {
+class MeterAnnotationHandlerTests {
 
-    TagValueResolver tagValueResolver = parameter -> "Value from myCustomTagValueResolver";
+    ValueResolver valueResolver = parameter -> "Value from myCustomTagValueResolver";
 
-    TagValueExpressionResolver tagValueExpressionResolver = new SpelTagValueExpressionResolver();
+    ValueExpressionResolver valueExpressionResolver = new SpelValueExpressionResolver();
 
-    MetricsTagAnnotationHandler handler;
+    MeterAnnotationHandler handler;
 
     @BeforeEach
     void setup() {
-        this.handler = new MetricsTagAnnotationHandler(aClass -> tagValueResolver,
-                aClass -> tagValueExpressionResolver);
+        this.handler = new MeterAnnotationHandler(aClass -> valueResolver, aClass -> valueExpressionResolver);
     }
 
     @Test
     void shouldUseCustomTagValueResolver() throws NoSuchMethodException, SecurityException {
         Method method = AnnotationMockClass.class.getMethod("getAnnotationForTagValueResolver", String.class);
         Annotation annotation = method.getParameterAnnotations()[0][0];
-        if (annotation instanceof MetricTag) {
-            String resolvedValue = this.handler.resolveTagValue((MetricTag) annotation, "test",
-                    aClass -> tagValueResolver, aClass -> tagValueExpressionResolver);
+        if (annotation instanceof MeterTag) {
+            String resolvedValue = this.handler.resolveTagValue((MeterTag) annotation, "test", aClass -> valueResolver,
+                    aClass -> valueExpressionResolver);
             assertThat(resolvedValue).isEqualTo("Value from myCustomTagValueResolver");
         }
         else {
@@ -59,9 +58,9 @@ class MetricsTagAnnotationHandlerTests {
     void shouldUseTagValueExpression() throws NoSuchMethodException, SecurityException {
         Method method = AnnotationMockClass.class.getMethod("getAnnotationForTagValueExpression", String.class);
         Annotation annotation = method.getParameterAnnotations()[0][0];
-        if (annotation instanceof MetricTag) {
-            String resolvedValue = this.handler.resolveTagValue((MetricTag) annotation, "test",
-                    aClass -> tagValueResolver, aClass -> tagValueExpressionResolver);
+        if (annotation instanceof MeterTag) {
+            String resolvedValue = this.handler.resolveTagValue((MeterTag) annotation, "test", aClass -> valueResolver,
+                    aClass -> valueExpressionResolver);
 
             assertThat(resolvedValue).isEqualTo("hello characters");
         }
@@ -74,9 +73,9 @@ class MetricsTagAnnotationHandlerTests {
     void shouldReturnArgumentToString() throws NoSuchMethodException, SecurityException {
         Method method = AnnotationMockClass.class.getMethod("getAnnotationForArgumentToString", Long.class);
         Annotation annotation = method.getParameterAnnotations()[0][0];
-        if (annotation instanceof MetricTag) {
-            String resolvedValue = this.handler.resolveTagValue((MetricTag) annotation, 15, aClass -> tagValueResolver,
-                    aClass -> tagValueExpressionResolver);
+        if (annotation instanceof MeterTag) {
+            String resolvedValue = this.handler.resolveTagValue((MeterTag) annotation, 15, aClass -> valueResolver,
+                    aClass -> valueExpressionResolver);
             assertThat(resolvedValue).isEqualTo("15");
         }
         else {
@@ -88,16 +87,16 @@ class MetricsTagAnnotationHandlerTests {
 
         @Timed
         public void getAnnotationForTagValueResolver(
-                @MetricTag(key = "test", resolver = TagValueResolver.class) String test) {
+                @MeterTag(key = "test", resolver = ValueResolver.class) String test) {
         }
 
         @Timed
         public void getAnnotationForTagValueExpression(
-                @MetricTag(key = "test", expression = "'hello' + ' characters'") String test) {
+                @MeterTag(key = "test", expression = "'hello' + ' characters'") String test) {
         }
 
         @Timed
-        public void getAnnotationForArgumentToString(@MetricTag("test") Long param) {
+        public void getAnnotationForArgumentToString(@MeterTag("test") Long param) {
         }
 
     }

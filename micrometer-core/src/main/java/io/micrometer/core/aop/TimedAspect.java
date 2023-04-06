@@ -67,6 +67,9 @@ import java.util.function.Predicate;
  * }
  * </pre>
  *
+ * To add support for {@link MeterTag} annotations set the {@link MeterAnnotationHandler}
+ * via {@link TimedAspect#setMetricsTagAnnotationHandler(MeterAnnotationHandler)}.
+ *
  * @author David J. M. Karlsen
  * @author Jon Schneider
  * @author Johnny Lim
@@ -98,7 +101,7 @@ public class TimedAspect {
 
     private final Predicate<ProceedingJoinPoint> shouldSkip;
 
-    private MetricsTagAnnotationHandler metricsTagAnnotationHandler;
+    private MeterAnnotationHandler meterTagAnnotationHandler;
 
     /**
      * Creates a {@code TimedAspect} instance with {@link Metrics#globalRegistry}.
@@ -250,8 +253,8 @@ public class TimedAspect {
             .tags(tagsBasedOnJoinPoint.apply(pjp))
             .publishPercentileHistogram(timed.histogram())
             .publishPercentiles(timed.percentiles().length == 0 ? null : timed.percentiles());
-        if (metricsTagAnnotationHandler != null) {
-            metricsTagAnnotationHandler.addAnnotatedParameters(builder, pjp);
+        if (meterTagAnnotationHandler != null) {
+            meterTagAnnotationHandler.addAnnotatedParameters(builder, pjp);
         }
         return builder;
     }
@@ -319,8 +322,12 @@ public class TimedAspect {
         }
     }
 
-    public void setMetricsTagAnnotationHandler(MetricsTagAnnotationHandler metricsTagAnnotationHandler) {
-        this.metricsTagAnnotationHandler = metricsTagAnnotationHandler;
+    /**
+     * Setting this enables support for {@link MeterTag}.
+     * @param meterTagAnnotationHandler metrics tag annotation handler
+     */
+    public void setMetricsTagAnnotationHandler(MeterAnnotationHandler meterTagAnnotationHandler) {
+        this.meterTagAnnotationHandler = meterTagAnnotationHandler;
     }
 
 }

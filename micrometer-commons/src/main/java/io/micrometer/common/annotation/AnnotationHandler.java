@@ -35,48 +35,67 @@ import java.util.function.Function;
  * Micrometer annotations then this class is capable of finding both of them and merging
  * into one set of information.
  * <p>
- * This information is then used to add proper tags to objects such as span or timer from
- * the method arguments that are annotated with a tag related annotation.
+ * This information is then used to add proper key-values to objects such as span or timer
+ * from the method arguments that are annotated with a proper annotation.
  *
  * Code ported from Spring Cloud Sleuth.
  *
+ * @param <T> type which should be enriched with {@link KeyValue} information
  * @author Christian Schwerdtfeger
  * @since 1.11.0
  */
-public class TagAnnotationHandler<T> {
+public class AnnotationHandler<T> {
 
-    private static final InternalLogger log = InternalLoggerFactory.getInstance(TagAnnotationHandler.class);
+    private static final InternalLogger log = InternalLoggerFactory.getInstance(AnnotationHandler.class);
 
-    private final BiConsumer<KeyValue, T> tagConsumer;
+    private final BiConsumer<KeyValue, T> keyValueConsumer;
 
-    private final Function<Class<? extends TagValueResolver>, ? extends TagValueResolver> resolverProvider;
+    private final Function<Class<? extends ValueResolver>, ? extends ValueResolver> resolverProvider;
 
-    private final Function<Class<? extends TagValueExpressionResolver>, ? extends TagValueExpressionResolver> expressionResolverProvider;
+    private final Function<Class<? extends ValueExpressionResolver>, ? extends ValueExpressionResolver> expressionResolverProvider;
 
-    private final Class<? extends Annotation> tagClass;
+    private final Class<? extends Annotation> annotationClass;
 
     private final BiFunction<Annotation, Object, KeyValue> toKeyValue;
 
-    public TagAnnotationHandler(BiConsumer<KeyValue, T> tagConsumer,
-            Function<Class<? extends TagValueResolver>, ? extends TagValueResolver> resolverProvider,
-            Function<Class<? extends TagValueExpressionResolver>, ? extends TagValueExpressionResolver> expressionResolverProvider,
-            Class<? extends Annotation> tagClass, BiFunction<Annotation, Object, KeyValue> toKeyValue) {
-        this.tagConsumer = tagConsumer;
+    /**
+     * Creates a new instance of {@link AnnotationHandler}.
+     * @param keyValueConsumer consumer that takes a {@link KeyValue} and mutates the
+     * {@code <T>} type
+     * @param resolverProvider function converting a class extending a
+     * {@link ValueResolver} to an instance of that class
+     * @param expressionResolverProvider function converting a class extending a
+     * {@link ValueExpressionResolver} to an instance of that class
+     * @param annotation annotation containing {@link KeyValue} related information
+     * @param toKeyValue function converting the annotation and the expression or
+     * annotation value to a {@link KeyValue}
+     */
+    public AnnotationHandler(BiConsumer<KeyValue, T> keyValueConsumer,
+            Function<Class<? extends ValueResolver>, ? extends ValueResolver> resolverProvider,
+            Function<Class<? extends ValueExpressionResolver>, ? extends ValueExpressionResolver> expressionResolverProvider,
+            Class<? extends Annotation> annotation, BiFunction<Annotation, Object, KeyValue> toKeyValue) {
+        this.keyValueConsumer = keyValueConsumer;
         this.resolverProvider = resolverProvider;
         this.expressionResolverProvider = expressionResolverProvider;
-        this.tagClass = tagClass;
+        this.annotationClass = annotation;
         this.toKeyValue = toKeyValue;
     }
 
-    public void addAnnotatedParameters(T objectToTag, ProceedingJoinPoint pjp) {
+    /**
+     * Modifies the object with {@link KeyValue} related information.
+     * @param objectToModify object to modify
+     * @param pjp proceeding join point
+     */
+    public void addAnnotatedParameters(T objectToModify, ProceedingJoinPoint pjp) {
         try {
             Method method = ((MethodSignature) pjp.getSignature()).getMethod();
-            List<AnnotatedParameter> annotatedParameters = AnnotationUtils.findAnnotatedParameters(tagClass, method,
-                    pjp.getArgs());
+            method = pjp.getTarget().getClass().getMethod(method.getName(), method.getParameterTypes());
+            List<AnnotatedParameter> annotatedParameters = AnnotationUtils.findAnnotatedParameters(annotationClass,
+                    method, pjp.getArgs());
             getAnnotationsFromInterfaces(pjp, method, annotatedParameters);
-            addAnnotatedArguments(objectToTag, annotatedParameters);
+            addAnnotatedArguments(objectToModify, annotatedParameters);
         }
-        catch (SecurityException ex) {
+        catch (Exception ex) {
             log.error("Exception occurred while trying to add annotated parameters", ex);
         }
     }
@@ -89,7 +108,7 @@ public class TagAnnotationHandler<T> {
                 for (Method methodFromInterface : implementedInterface.getMethods()) {
                     if (methodsAreTheSame(mostSpecificMethod, methodFromInterface)) {
                         List<AnnotatedParameter> annotatedParametersForActualMethod = AnnotationUtils
-                            .findAnnotatedParameters(tagClass, methodFromInterface, pjp.getArgs());
+                            .findAnnotatedParameters(annotationClass, methodFromInterface, pjp.getArgs());
                         mergeAnnotatedParameters(annotatedParameters, annotatedParametersForActualMethod);
                     }
                 }
@@ -122,15 +141,15 @@ public class TagAnnotationHandler<T> {
     private void addAnnotatedArguments(T objectToTag, List<AnnotatedParameter> toBeAdded) {
         for (AnnotatedParameter container : toBeAdded) {
             KeyValue keyValue = toKeyValue.apply(container.annotation, container.argument);
-            tagConsumer.accept(keyValue, objectToTag);
+            keyValueConsumer.accept(keyValue, objectToTag);
         }
     }
 
-    public Function<Class<? extends TagValueResolver>, ? extends TagValueResolver> getResolverProvider() {
+    public Function<Class<? extends ValueResolver>, ? extends ValueResolver> getResolverProvider() {
         return resolverProvider;
     }
 
-    public Function<Class<? extends TagValueExpressionResolver>, ? extends TagValueExpressionResolver> getExpressionResolverProvider() {
+    public Function<Class<? extends ValueExpressionResolver>, ? extends ValueExpressionResolver> getExpressionResolverProvider() {
         return expressionResolverProvider;
     }
 

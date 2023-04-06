@@ -15,18 +15,21 @@
  */
 package io.micrometer.common.annotation;
 
+import io.micrometer.common.KeyValue;
+
 /**
- * Resolves the tag value for the given parameter.
+ * Resolves the {@link KeyValue} value for the given parameter.
  *
  * @author Christian Schwerdtfeger
+ * @author Marcin Grzejszczak
  * @since 1.11.0
  */
-public interface TagValueResolver {
+public interface ValueResolver {
 
     /**
-     * Returns the tag value for the given parameter.
-     * @param parameter parameter annotated with a tag annotation
-     * @return the value of the tag
+     * Returns the {@link KeyValue} value for the given parameter.
+     * @param parameter annotated parameter
+     * @return the value of the {@link KeyValue}
      */
     String resolve(Object parameter);
 

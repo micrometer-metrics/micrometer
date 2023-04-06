@@ -22,7 +22,7 @@ import java.util.List;
 
 /**
  * Utility class that can verify whether the method is annotated with the Micrometer
- * Tracing annotations.
+ * annotations.
  *
  * Code ported from Spring Cloud Sleuth.
  *

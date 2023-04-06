@@ -15,7 +15,7 @@
  */
 package io.micrometer.core.aop;
 
-import io.micrometer.common.annotation.TagValueExpressionResolver;
+import io.micrometer.common.annotation.ValueExpressionResolver;
 import io.micrometer.common.util.internal.logging.InternalLogger;
 import io.micrometer.common.util.internal.logging.InternalLoggerFactory;
 import org.springframework.expression.Expression;
@@ -23,9 +23,9 @@ import org.springframework.expression.ExpressionParser;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
 import org.springframework.expression.spel.support.SimpleEvaluationContext;
 
-class SpelTagValueExpressionResolver implements TagValueExpressionResolver {
+class SpelValueExpressionResolver implements ValueExpressionResolver {
 
-    private static final InternalLogger log = InternalLoggerFactory.getInstance(SpelTagValueExpressionResolver.class);
+    private static final InternalLogger log = InternalLoggerFactory.getInstance(SpelValueExpressionResolver.class);
 
     @Override
     public String resolve(String expression, Object parameter) {
