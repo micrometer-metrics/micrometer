@@ -288,13 +288,10 @@ class SimpleObservation implements Observation {
         @Override
         public void close() {
             Deque<Scope> enclosingScopes = this.currentObservation.enclosingScopes.get();
-            // If we're closing an enclosing scope then we have to remove it from the
+            // If we're closing a scope then we have to remove an enclosing scope from the
             // deque
             if (!enclosingScopes.isEmpty()) {
-                Scope scope = enclosingScopes.peek();
-                if (scope == this) {
-                    enclosingScopes.removeFirst();
-                }
+                enclosingScopes.removeFirst();
             }
             this.registry.setCurrentObservationScope(previousObservationScope);
             this.currentObservation.notifyOnScopeClosed();
@@ -340,10 +337,7 @@ class SimpleObservation implements Observation {
             // deque of enclosing scopes (since it will no longer be enclosing)
             Deque<Scope> scopeDeque = this.currentObservation.enclosingScopes.get();
             if (!scopeDeque.isEmpty()) {
-                Scope first = scopeDeque.getFirst();
-                if (this == first) {
-                    scopeDeque.removeFirst();
-                }
+                scopeDeque.removeFirst();
             }
             Deque<SimpleScope> scopes = new ArrayDeque<>();
             SimpleScope scope = this;
