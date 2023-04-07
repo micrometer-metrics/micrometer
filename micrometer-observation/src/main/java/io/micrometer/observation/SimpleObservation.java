@@ -23,6 +23,7 @@ import io.micrometer.observation.contextpropagation.ObservationThreadLocalAccess
 import java.util.ArrayDeque;
 import java.util.Collection;
 import java.util.Deque;
+import java.util.Iterator;
 
 /**
  * Default implementation of {@link Observation}.
@@ -222,39 +223,55 @@ class SimpleObservation implements Observation {
 
     @SuppressWarnings("unchecked")
     private void notifyOnObservationStarted() {
-        this.handlers.forEach(handler -> handler.onStart(this.context));
+        for (ObservationHandler handler : this.handlers) {
+            handler.onStart(this.context);
+        }
     }
 
     @SuppressWarnings("unchecked")
     private void notifyOnError() {
-        this.handlers.forEach(handler -> handler.onError(this.context));
+        for (ObservationHandler handler : this.handlers) {
+            handler.onError(this.context);
+        }
     }
 
     @SuppressWarnings("unchecked")
     private void notifyOnEvent(Event event) {
-        this.handlers.forEach(handler -> handler.onEvent(event, this.context));
+        for (ObservationHandler handler : this.handlers) {
+            handler.onEvent(event, this.context);
+        }
     }
 
     @SuppressWarnings("unchecked")
     private void notifyOnScopeOpened() {
-        this.handlers.forEach(handler -> handler.onScopeOpened(this.context));
+        for (ObservationHandler handler : this.handlers) {
+            handler.onScopeOpened(this.context);
+        }
     }
 
     @SuppressWarnings("unchecked")
     private void notifyOnScopeClosed() {
         // We're closing from end till the beginning - e.g. we opened scope with handlers
         // with ids 1,2,3 and we need to close the scope in order 3,2,1
-        this.handlers.descendingIterator().forEachRemaining(handler -> handler.onScopeClosed(this.context));
+        Iterator<ObservationHandler> iterator = this.handlers.descendingIterator();
+        while (iterator.hasNext()) {
+            ObservationHandler handler = iterator.next();
+            handler.onScopeClosed(this.context);
+        }
     }
 
     @SuppressWarnings("unchecked")
     private void notifyOnScopeMakeCurrent() {
-        this.handlers.forEach(handler -> handler.onScopeOpened(this.context));
+        for (ObservationHandler handler : this.handlers) {
+            handler.onScopeOpened(this.context);
+        }
     }
 
     @SuppressWarnings("unchecked")
     private void notifyOnScopeReset() {
-        this.handlers.forEach(handler -> handler.onScopeReset(this.context));
+        for (ObservationHandler handler : this.handlers) {
+            handler.onScopeReset(this.context);
+        }
     }
 
     @SuppressWarnings("unchecked")
