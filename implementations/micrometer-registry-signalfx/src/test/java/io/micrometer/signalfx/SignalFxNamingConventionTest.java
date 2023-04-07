@@ -31,8 +31,11 @@ class SignalFxNamingConventionTest {
 
     @Test
     void tagKey() {
-        assertThat(convention.tagKey("_boo")).isEqualTo("boo");
-        assertThat(convention.tagKey("sf_boo")).isEqualTo("boo");
+        assertThat(convention.tagKey("_boo")).isEqualTo("a_boo");
+        assertThat(convention.tagKey("__boo")).isEqualTo("a__boo");
+        assertThat(convention.tagKey("sf_boo")).isEqualTo("asf_boo");
+        assertThat(convention.tagKey("sf__boo")).isEqualTo("asf__boo");
+        assertThat(convention.tagKey("sf_sf_boo")).isEqualTo("asf_sf_boo");
 
         assertThat(convention.tagKey("123")).isEqualTo("a123");
     }

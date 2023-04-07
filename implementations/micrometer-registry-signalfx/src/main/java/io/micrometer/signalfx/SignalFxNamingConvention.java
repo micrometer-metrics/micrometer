@@ -37,15 +37,7 @@ public class SignalFxNamingConvention implements NamingConvention {
 
     private static final WarnThenDebugLogger logger = new WarnThenDebugLogger(SignalFxNamingConvention.class);
 
-    private static final Pattern START_UNDERSCORE_PATTERN = Pattern.compile("^_");
-
-    private static final Pattern SF_PATTERN = Pattern.compile("^sf_");
-
-    private static final Pattern START_LETTERS_PATTERN = Pattern.compile("^[a-zA-Z].*");
-
     private static final Pattern PATTERN_TAG_KEY_DENYLISTED_CHARS = Pattern.compile("[^\\w_\\-]");
-
-    private static final Pattern PATTERN_TAG_KEY_DENYLISTED_PREFIX = Pattern.compile("^(aws|gcp|azure)_.*");
 
     private static final int NAME_MAX_LENGTH = 256;
 
@@ -81,21 +73,14 @@ public class SignalFxNamingConvention implements NamingConvention {
     public String tagKey(String key) {
         String conventionKey = delegate.tagKey(key);
 
-        conventionKey = START_UNDERSCORE_PATTERN.matcher(conventionKey).replaceAll(""); // 2
-        conventionKey = SF_PATTERN.matcher(conventionKey).replaceAll(""); // 2
-
-        conventionKey = PATTERN_TAG_KEY_DENYLISTED_CHARS.matcher(conventionKey).replaceAll("_");
-        if (!START_LETTERS_PATTERN.matcher(conventionKey).matches()) { // 3
+        if (conventionKey.startsWith("sf_") || !isAlphabet(conventionKey.charAt(0))) {
+            logger.log(conventionKey
+                    + " doesn't adhere to SignalFx naming standards. Appending 'a' to the tag/dimension key.");
             conventionKey = "a" + conventionKey;
         }
-        if (PATTERN_TAG_KEY_DENYLISTED_PREFIX.matcher(conventionKey).matches()) {
-            String finalConventionKey = conventionKey;
-            logger.log(() -> "'" + finalConventionKey + "' (original name: '" + key + "') is not a valid tag key. "
-                    + "Must not start with any of these prefixes: aws_, gcp_, or azure_. "
-                    + "Please rename it to conform to the constraints. "
-                    + "If it comes from a third party, please use MeterFilter to rename it.");
-        }
-        return StringUtils.truncate(conventionKey, KEY_MAX_LENGTH); // 1
+
+        conventionKey = PATTERN_TAG_KEY_DENYLISTED_CHARS.matcher(conventionKey).replaceAll("_");
+        return StringUtils.truncate(conventionKey, KEY_MAX_LENGTH);
     }
 
     // Dimension value can be any non-empty UTF-8 string, with a maximum length <= 256
@@ -104,6 +89,10 @@ public class SignalFxNamingConvention implements NamingConvention {
     public String tagValue(String value) {
         String formattedValue = StringEscapeUtils.escapeJson(delegate.tagValue(value));
         return StringUtils.truncate(formattedValue, TAG_VALUE_MAX_LENGTH);
+    }
+
+    private static boolean isAlphabet(char c) {
+        return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
     }
 
 }
