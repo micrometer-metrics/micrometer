@@ -15,13 +15,12 @@
  */
 package io.micrometer.observation;
 
+import io.micrometer.common.lang.Nullable;
 import io.micrometer.observation.Observation.Context;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
-import java.util.function.Consumer;
 
 /**
  * Handler for an {@link Observation}. Hooks in to the lifecycle of an observation.
@@ -145,52 +144,74 @@ public interface ObservationHandler<T extends Observation.Context> {
 
         @Override
         public void onStart(Observation.Context context) {
-            getFirstApplicableHandler(context).ifPresent(handler -> handler.onStart(context));
+            ObservationHandler<Observation.Context> handler = getFirstApplicableHandler(context);
+            if (handler != null) {
+                handler.onStart(context);
+            }
         }
 
         @Override
         public void onError(Observation.Context context) {
-            getFirstApplicableHandler(context).ifPresent(handler -> handler.onError(context));
+            ObservationHandler<Observation.Context> handler = getFirstApplicableHandler(context);
+            if (handler != null) {
+                handler.onError(context);
+            }
         }
 
         @Override
         public void onEvent(Observation.Event event, Observation.Context context) {
-            getFirstApplicableHandler(context).ifPresent(handler -> handler.onEvent(event, context));
+            ObservationHandler<Observation.Context> handler = getFirstApplicableHandler(context);
+            if (handler != null) {
+                handler.onEvent(event, context);
+            }
         }
 
         @Override
         public void onScopeOpened(Observation.Context context) {
-            getFirstApplicableHandler(context).ifPresent(handler -> handler.onScopeOpened(context));
+            ObservationHandler<Observation.Context> handler = getFirstApplicableHandler(context);
+            if (handler != null) {
+                handler.onScopeOpened(context);
+            }
         }
 
         @Override
         public void onScopeClosed(Observation.Context context) {
-            getFirstApplicableHandler(context).ifPresent(handler -> handler.onScopeClosed(context));
+            ObservationHandler<Observation.Context> handler = getFirstApplicableHandler(context);
+            if (handler != null) {
+                handler.onScopeClosed(context);
+            }
         }
 
         @Override
         public void onScopeReset(Observation.Context context) {
-            getFirstApplicableHandler(context).ifPresent(handler -> handler.onScopeReset(context));
+            ObservationHandler<Observation.Context> handler = getFirstApplicableHandler(context);
+            if (handler != null) {
+                handler.onScopeReset(context);
+            }
         }
 
         @Override
         public void onStop(Observation.Context context) {
-            getFirstApplicableHandler(context).ifPresent(handler -> handler.onStop(context));
+            ObservationHandler<Observation.Context> handler = getFirstApplicableHandler(context);
+            if (handler != null) {
+                handler.onStop(context);
+            }
         }
 
         @Override
         public boolean supportsContext(Observation.Context context) {
-            return getFirstApplicableHandler(context).isPresent();
+            ObservationHandler<Observation.Context> handler = getFirstApplicableHandler(context);
+            return handler != null;
         }
 
-        private Optional<ObservationHandler<Observation.Context>> getFirstApplicableHandler(
-                Observation.Context context) {
+        @Nullable
+        private ObservationHandler<Observation.Context> getFirstApplicableHandler(Observation.Context context) {
             for (ObservationHandler<Context> handler : this.handlers) {
                 if (handler.supportsContext(context)) {
-                    return Optional.of(handler);
+                    return handler;
                 }
             }
-            return Optional.empty();
+            return null;
         }
 
     }
@@ -232,37 +253,65 @@ public interface ObservationHandler<T extends Observation.Context> {
 
         @Override
         public void onStart(Observation.Context context) {
-            forEachApplicableHandler(context, handler -> handler.onStart(context));
+            for (ObservationHandler<Context> handler : this.handlers) {
+                if (handler.supportsContext(context)) {
+                    handler.onStart(context);
+                }
+            }
         }
 
         @Override
         public void onError(Observation.Context context) {
-            forEachApplicableHandler(context, handler -> handler.onError(context));
+            for (ObservationHandler<Context> handler : this.handlers) {
+                if (handler.supportsContext(context)) {
+                    handler.onError(context);
+                }
+            }
         }
 
         @Override
         public void onEvent(Observation.Event event, Observation.Context context) {
-            forEachApplicableHandler(context, handler -> handler.onEvent(event, context));
+            for (ObservationHandler<Context> handler : this.handlers) {
+                if (handler.supportsContext(context)) {
+                    handler.onEvent(event, context);
+                }
+            }
         }
 
         @Override
         public void onScopeOpened(Observation.Context context) {
-            forEachApplicableHandler(context, handler -> handler.onScopeOpened(context));
+            for (ObservationHandler<Context> handler : this.handlers) {
+                if (handler.supportsContext(context)) {
+                    handler.onScopeOpened(context);
+                }
+            }
         }
 
         @Override
         public void onScopeClosed(Observation.Context context) {
-            forEachApplicableHandler(context, handler -> handler.onScopeClosed(context));
+            for (ObservationHandler<Context> handler : this.handlers) {
+                if (handler.supportsContext(context)) {
+                    handler.onScopeClosed(context);
+                }
+            }
         }
 
         @Override
         public void onScopeReset(Observation.Context context) {
-            forEachApplicableHandler(context, handler -> handler.onScopeReset(context));
+            for (ObservationHandler<Context> handler : this.handlers) {
+                if (handler.supportsContext(context)) {
+                    handler.onScopeReset(context);
+                }
+            }
         }
 
         @Override
         public void onStop(Observation.Context context) {
-            forEachApplicableHandler(context, handler -> handler.onStop(context));
+            for (ObservationHandler<Context> handler : this.handlers) {
+                if (handler.supportsContext(context)) {
+                    handler.onStop(context);
+                }
+            }
         }
 
         @Override
@@ -273,15 +322,6 @@ public interface ObservationHandler<T extends Observation.Context> {
                 }
             }
             return false;
-        }
-
-        private void forEachApplicableHandler(Observation.Context context,
-                Consumer<? super ObservationHandler<Observation.Context>> action) {
-            for (ObservationHandler<Context> handler : this.handlers) {
-                if (handler.supportsContext(context)) {
-                    action.accept(handler);
-                }
-            }
         }
 
     }
