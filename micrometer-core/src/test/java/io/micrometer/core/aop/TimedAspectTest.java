@@ -15,6 +15,8 @@
  */
 package io.micrometer.core.aop;
 
+import io.micrometer.common.annotation.TagValueExpressionResolver;
+import io.micrometer.common.annotation.TagValueResolver;
 import io.micrometer.common.lang.NonNull;
 import io.micrometer.core.annotation.Timed;
 import io.micrometer.core.instrument.LongTaskTimer;
@@ -38,6 +40,10 @@ import static java.util.concurrent.CompletableFuture.supplyAsync;
 import static org.assertj.core.api.Assertions.*;
 
 class TimedAspectTest {
+
+    TagValueResolver tagValueResolver = parameter -> "Value from myCustomTagValueResolver [" + parameter + "]";
+
+    TagValueExpressionResolver tagValueExpressionResolver = new SpelTagValueExpressionResolver();
 
     @Test
     void timeMethod() {
@@ -370,6 +376,59 @@ class TimedAspectTest {
         });
     }
 
+    @Test
+    void metricTagsWithText() {
+        MeterRegistry registry = new SimpleMeterRegistry();
+        TimedAspect timedAspect = new TimedAspect(registry);
+        timedAspect.setMetricsTagAnnotationHandler(
+                new MetricsTagAnnotationHandler(aClass -> tagValueResolver, aClass -> tagValueExpressionResolver));
+
+        AspectJProxyFactory pf = new AspectJProxyFactory(new MetricTagClass());
+        pf.addAspect(timedAspect);
+
+        MetricTagClass service = pf.getProxy();
+
+        service.getAnnotationForArgumentToString(15L);
+
+        assertThat(registry.get("method.timed").tag("test", "15").timer().count()).isEqualTo(1);
+    }
+
+    @Test
+    void metricTagsWithResolver() {
+        MeterRegistry registry = new SimpleMeterRegistry();
+        TimedAspect timedAspect = new TimedAspect(registry);
+        timedAspect.setMetricsTagAnnotationHandler(
+                new MetricsTagAnnotationHandler(aClass -> tagValueResolver, aClass -> tagValueExpressionResolver));
+
+        AspectJProxyFactory pf = new AspectJProxyFactory(new MetricTagClass());
+        pf.addAspect(timedAspect);
+
+        MetricTagClass service = pf.getProxy();
+
+        service.getAnnotationForTagValueResolver("foo");
+
+        assertThat(
+                registry.get("method.timed").tag("test", "Value from myCustomTagValueResolver [foo]").timer().count())
+            .isEqualTo(1);
+    }
+
+    @Test
+    void metricTagsWithExpression() {
+        MeterRegistry registry = new SimpleMeterRegistry();
+        TimedAspect timedAspect = new TimedAspect(registry);
+        timedAspect.setMetricsTagAnnotationHandler(
+                new MetricsTagAnnotationHandler(aClass -> tagValueResolver, aClass -> tagValueExpressionResolver));
+
+        AspectJProxyFactory pf = new AspectJProxyFactory(new MetricTagClass());
+        pf.addAspect(timedAspect);
+
+        MetricTagClass service = pf.getProxy();
+
+        service.getAnnotationForTagValueExpression("15L");
+
+        assertThat(registry.get("method.timed").tag("test", "hello characters").timer().count()).isEqualTo(1);
+    }
+
     private final class FailingMeterRegistry extends SimpleMeterRegistry {
 
         private FailingMeterRegistry() {
@@ -472,6 +531,24 @@ class TimedAspectTest {
 
         @Override
         public void call() {
+        }
+
+    }
+
+    protected class MetricTagClass {
+
+        @Timed
+        public void getAnnotationForTagValueResolver(
+                @MetricTag(key = "test", resolver = TagValueResolver.class) String test) {
+        }
+
+        @Timed
+        public void getAnnotationForTagValueExpression(
+                @MetricTag(key = "test", expression = "'hello' + ' characters'") String test) {
+        }
+
+        @Timed
+        public void getAnnotationForArgumentToString(@MetricTag("test") Long param) {
         }
 
     }

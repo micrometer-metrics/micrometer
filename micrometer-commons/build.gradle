@@ -4,6 +4,9 @@ dependencies {
     // log monitoring
     optionalApi 'ch.qos.logback:logback-classic'
 
+    // Aspects
+    optionalApi 'org.aspectj:aspectjweaver'
+
     // JUnit 5
     testImplementation 'org.junit.jupiter:junit-jupiter'
     testImplementation 'com.tngtech.archunit:archunit-junit5'
@@ -12,4 +15,15 @@ dependencies {
 
     testImplementation 'org.assertj:assertj-core'
     testImplementation 'org.awaitility:awaitility'
+}
+
+jar {
+    bundle {
+
+        bnd '''\
+        Import-Package: \
+            org.aspectj.*;resolution:=dynamic,\
+            *
+        '''.stripIndent()
+    }
 }
