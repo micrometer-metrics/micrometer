@@ -41,7 +41,7 @@ import static org.assertj.core.api.Assertions.*;
 
 class TimedAspectTest {
 
-    TagValueResolver tagValueResolver = parameter -> "Value from myCustomTagValueResolver";
+    TagValueResolver tagValueResolver = parameter -> "Value from myCustomTagValueResolver [" + parameter + "]";
 
     TagValueExpressionResolver tagValueExpressionResolver = new SpelTagValueExpressionResolver();
 
@@ -407,7 +407,8 @@ class TimedAspectTest {
 
         service.getAnnotationForTagValueResolver("foo");
 
-        assertThat(registry.get("method.timed").tag("test", "Value from myCustomTagValueResolver").timer().count())
+        assertThat(
+                registry.get("method.timed").tag("test", "Value from myCustomTagValueResolver [foo]").timer().count())
             .isEqualTo(1);
     }
 
