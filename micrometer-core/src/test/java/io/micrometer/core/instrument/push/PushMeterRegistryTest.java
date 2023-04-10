@@ -17,6 +17,7 @@ package io.micrometer.core.instrument.push;
 
 import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
@@ -25,17 +26,16 @@ import io.micrometer.core.instrument.util.NamedThreadFactory;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
-import java.util.ArrayDeque;
-import java.util.Arrays;
-import java.util.Deque;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.ToDoubleFunction;
 import java.util.function.ToLongFunction;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+import java.util.stream.LongStream;
 
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static java.util.concurrent.TimeUnit.SECONDS;
+import static java.util.concurrent.TimeUnit.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 
@@ -44,12 +44,13 @@ import static org.assertj.core.api.Assertions.assertThatCode;
  */
 class PushMeterRegistryTest {
 
+    static final Duration STEP_DURATION = Duration.ofMillis(10);
     static ThreadFactory threadFactory = new NamedThreadFactory("PushMeterRegistryTest");
 
     StepRegistryConfig config = new StepRegistryConfig() {
         @Override
         public Duration step() {
-            return Duration.ofMillis(10);
+            return STEP_DURATION;
         }
 
         @Override
@@ -118,6 +119,32 @@ class PushMeterRegistryTest {
         Deque<Double> firstPublishValues = overlappingStepMeterRegistry.publishes.get(0);
         assertThat(firstPublishValues.pop()).isEqualTo(1);
         assertThat(firstPublishValues.pop()).isEqualTo(2.5);
+    }
+
+    @Test
+    @Issue("#2818")
+    void publishTimeIsRandomizedWithinStep() {
+        Duration startTime = Duration.ofMillis(4);
+        MockClock clock = new MockClock();
+        clock.add(-1, MILLISECONDS); // set time to 0
+        clock.add(startTime);
+        PushMeterRegistry registry = new CountingPushMeterRegistry(config, clock);
+        long minOffsetMillis = STEP_DURATION.minus(startTime).toMillis() + 2;
+        long maxOffsetMillis = minOffsetMillis
+                + STEP_DURATION.multipliedBy((long) (PushMeterRegistry.PERCENT_RANGE_OF_RANDOM_PUBLISHING_OFFSET * 100))
+                    .dividedBy(100)
+                    .toMillis();
+        Set<Long> observedDelays = new HashSet<>((int) (maxOffsetMillis - minOffsetMillis));
+        IntStream.range(0, 10_000).forEach(i -> {
+            long delay = registry.calculateInitialDelay();
+            assertThat(delay).isBetween(minOffsetMillis, maxOffsetMillis);
+            observedDelays.add(delay);
+        });
+        Long[] expectedDelays = LongStream.range(minOffsetMillis, maxOffsetMillis)
+            .boxed()
+            .collect(Collectors.toList())
+            .toArray(new Long[0]);
+        assertThat(observedDelays).containsExactly(expectedDelays);
     }
 
     private static class OverlappingStepMeterRegistry extends StepMeterRegistry {

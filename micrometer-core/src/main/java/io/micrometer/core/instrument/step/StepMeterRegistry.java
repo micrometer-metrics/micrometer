@@ -25,6 +25,9 @@ import io.micrometer.core.instrument.internal.DefaultLongTaskTimer;
 import io.micrometer.core.instrument.internal.DefaultMeter;
 import io.micrometer.core.instrument.push.PushMeterRegistry;
 
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.function.ToDoubleFunction;
 import java.util.function.ToLongFunction;
@@ -38,6 +41,9 @@ import java.util.function.ToLongFunction;
 public abstract class StepMeterRegistry extends PushMeterRegistry {
 
     private final StepRegistryConfig config;
+
+    @Nullable
+    private ScheduledExecutorService meterPollingService;
 
     public StepMeterRegistry(StepRegistryConfig config, Clock clock) {
         super(config, clock);
@@ -105,6 +111,26 @@ public abstract class StepMeterRegistry extends PushMeterRegistry {
     }
 
     @Override
+    public void start(ThreadFactory threadFactory) {
+        super.start(threadFactory);
+
+        if (config.enabled()) {
+            this.meterPollingService = Executors.newSingleThreadScheduledExecutor(threadFactory);
+
+            this.meterPollingService.scheduleAtFixedRate(this::pollMetersToRollover, getInitialDelay(),
+                    config.step().toMillis(), TimeUnit.MILLISECONDS);
+        }
+    }
+
+    @Override
+    public void stop() {
+        super.stop();
+        if (this.meterPollingService != null) {
+            this.meterPollingService.shutdown();
+        }
+    }
+
+    @Override
     public void close() {
         stop();
         if (!isPublishing()) {
@@ -114,6 +140,24 @@ public abstract class StepMeterRegistry extends PushMeterRegistry {
                 .forEach(StepMeter::_closingRollover);
         }
         super.close();
+    }
+
+    /**
+     * This will poll the values from meters, which will cause a roll over for Step-meters
+     * if past the step boundary. This gives some control over when roll over happens
+     * separate from when publishing happens.
+     */
+    // VisibleForTesting
+    void pollMetersToRollover() {
+        this.getMeters()
+            .forEach(m -> m.match(gauge -> null, Counter::count, Timer::count, DistributionSummary::count,
+                    meter -> null, meter -> null, FunctionCounter::count, FunctionTimer::count, meter -> null));
+    }
+
+    private long getInitialDelay() {
+        long stepMillis = config.step().toMillis();
+        // schedule one millisecond into the next step
+        return stepMillis - clock.wallTime() % stepMillis + 1;
     }
 
 }
