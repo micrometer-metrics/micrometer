@@ -8,7 +8,7 @@ def VERSIONS = [
         'com.github.charithe:kafka-junit:latest.release',
         // pinned to avoid issues with shaded slf4j version - see gh-3414
         'com.github.tomakehurst:wiremock-jre8-standalone:2.33.+',
-        'com.google.auth:google-auth-library-oauth2-http:latest.release',
+        'com.google.auth:google-auth-library-oauth2-http:1.12.+',
         'com.google.cloud:google-cloud-monitoring:3.6.+',
         'com.google.dagger:dagger:2.11',
         'com.google.dagger:dagger-compiler:2.11',
