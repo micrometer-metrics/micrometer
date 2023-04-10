@@ -52,6 +52,11 @@ public enum ApacheHttpClientObservationDocumentation implements ObservationDocum
                 return "status";
             }
         },
+
+        /**
+         * Key name for outcome.
+         * @since 1.11.0
+         */
         OUTCOME {
             @Override
             public String asString() {
