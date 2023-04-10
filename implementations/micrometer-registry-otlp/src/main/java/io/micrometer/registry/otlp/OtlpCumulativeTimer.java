@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 VMware, Inc.
+ * Copyright 2023 VMware, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,26 +25,20 @@ import io.micrometer.core.instrument.util.TimeUtils;
 import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 
-class OtlpTimer extends CumulativeTimer implements StartTimeAwareMeter {
+class OtlpCumulativeTimer extends CumulativeTimer implements StartTimeAwareMeter {
 
     private final long startTimeNanos;
 
     @Nullable
     private final Histogram monotonicCountBucketHistogram;
 
-    OtlpTimer(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig, PauseDetector pauseDetector,
-            TimeUnit baseTimeUnit) {
+    OtlpCumulativeTimer(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig,
+            PauseDetector pauseDetector, TimeUnit baseTimeUnit) {
         super(id, clock, DistributionStatisticConfig.builder()
-            .percentilesHistogram(false) // avoid
-                                         // a
-                                         // histogram
-                                         // for
-                                         // percentiles/SLOs
-                                         // in
-                                         // the
-                                         // super
-            .serviceLevelObjectives() // we will use a different implementation here
-                                      // instead
+            // avoid a histogram for percentiles/SLOs in the super
+            .percentilesHistogram(false)
+            // we will use a different implementation here instead
+            .serviceLevelObjectives()
             .build()
             .merge(distributionStatisticConfig), pauseDetector, baseTimeUnit, false);
         this.startTimeNanos = TimeUnit.MILLISECONDS.toNanos(clock.wallTime());
@@ -54,10 +48,8 @@ class OtlpTimer extends CumulativeTimer implements StartTimeAwareMeter {
         if (distributionStatisticConfig.isPublishingHistogram()) {
             this.monotonicCountBucketHistogram = new TimeWindowFixedBoundaryHistogram(clock,
                     DistributionStatisticConfig.builder()
-                        .expiry(Duration.ofDays(1825)) // effectively
-                                                       // never
-                                                       // roll
-                                                       // over
+                        // effectively never roll over
+                        .expiry(Duration.ofDays(1825))
                         .bufferLength(1)
                         .build()
                         .merge(distributionStatisticConfig),

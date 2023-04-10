@@ -18,6 +18,7 @@ package io.micrometer.registry.otlp;
 import org.junit.jupiter.api.Test;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Stream;
 
@@ -107,6 +108,37 @@ class OtlpConfigTest {
                     .containsEntry("a", "100")
                     .containsEntry("service.name", "your-service");
             });
+    }
+
+    @Test
+    void aggregationTemporalityDefault() {
+        Map<String, String> properties = new HashMap<>();
+
+        OtlpConfig otlpConfig = properties::get;
+        assertThat(otlpConfig.validate().isValid()).isTrue();
+        assertThat(otlpConfig.aggregationTemporality()).isSameAs(AggregationTemporality.CUMULATIVE);
+
+        properties.put("otlp.aggregationTemporality", AggregationTemporality.CUMULATIVE.toString());
+        assertThat(otlpConfig.aggregationTemporality()).isSameAs(AggregationTemporality.CUMULATIVE);
+    }
+
+    @Test
+    void aggregationTemporalityDelta() {
+        Map<String, String> properties = new HashMap<>();
+        properties.put("otlp.aggregationTemporality", AggregationTemporality.DELTA.toString());
+
+        OtlpConfig otlpConfig = properties::get;
+        assertThat(otlpConfig.validate().isValid()).isTrue();
+        assertThat(otlpConfig.aggregationTemporality()).isSameAs(AggregationTemporality.DELTA);
+    }
+
+    @Test
+    void inValidAggregationTemporalityShouldBeCaptured() {
+        Map<String, String> properties = new HashMap<>();
+        properties.put("otlp.aggregationTemporality", "some_random_thing");
+
+        OtlpConfig otlpConfig = properties::get;
+        assertThat(otlpConfig.validate().isValid()).isFalse();
     }
 
 }

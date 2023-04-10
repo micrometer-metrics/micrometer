@@ -26,11 +26,13 @@ import java.util.stream.Collectors;
 import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.*;
 import static io.micrometer.core.instrument.config.validate.PropertyValidator.getString;
 import static io.micrometer.core.instrument.config.validate.PropertyValidator.getUrlString;
+import static io.micrometer.core.instrument.config.validate.PropertyValidator.getEnum;
 
 /**
  * Config for {@link OtlpMeterRegistry}.
  *
  * @author Tommy Ludwig
+ * @author Lenin Jaganathan
  * @since 1.9.0
  */
 public interface OtlpConfig extends PushRegistryConfig {
@@ -89,6 +91,21 @@ public interface OtlpConfig extends PushRegistryConfig {
     }
 
     /**
+     * {@link AggregationTemporality} of the OtlpMeterRegistry. This determines whether
+     * the meters should be cumulative(AGGREGATION_TEMPORALITY_CUMULATIVE) or
+     * step/delta(AGGREGATION_TEMPORALITY_DELTA).
+     * @return the aggregationTemporality for OtlpRegistry
+     * @see <a href=
+     * "https://opentelemetry.io/docs/reference/specification/metrics/data-model/#temporality">OTLP
+     * Temporality</a>
+     * @since 1.11.0
+     */
+    default AggregationTemporality aggregationTemporality() {
+        return getEnum(this, AggregationTemporality.class, "aggregationTemporality")
+            .orElse(AggregationTemporality.CUMULATIVE);
+    }
+
+    /**
      * Additional headers to send with exported metrics. This may be needed for
      * authorization headers, for example.
      * <p>
@@ -128,7 +145,8 @@ public interface OtlpConfig extends PushRegistryConfig {
     @Override
     default Validated<?> validate() {
         return checkAll(this, c -> PushRegistryConfig.validate(c), checkRequired("url", OtlpConfig::url),
-                check("resourceAttributes", OtlpConfig::resourceAttributes));
+                check("resourceAttributes", OtlpConfig::resourceAttributes),
+                check("aggregationTemporality", OtlpConfig::aggregationTemporality));
     }
 
 }

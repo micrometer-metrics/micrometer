@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 VMware, Inc.
+ * Copyright 2023 VMware, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ import io.micrometer.core.instrument.distribution.*;
 import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 
-class OtlpDistributionSummary extends CumulativeDistributionSummary implements StartTimeAwareMeter {
+class OtlpCumulativeDistributionSummary extends CumulativeDistributionSummary implements StartTimeAwareMeter {
 
     private static final CountAtBucket[] EMPTY_HISTOGRAM = new CountAtBucket[0];
 
@@ -32,19 +32,13 @@ class OtlpDistributionSummary extends CumulativeDistributionSummary implements S
     @Nullable
     private final Histogram monotonicBucketCountHistogram;
 
-    OtlpDistributionSummary(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig, double scale,
-            boolean supportsAggregablePercentiles) {
+    OtlpCumulativeDistributionSummary(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig,
+            double scale, boolean supportsAggregablePercentiles) {
         super(id, clock, DistributionStatisticConfig.builder()
-            .percentilesHistogram(false) // avoid
-                                         // a
-                                         // histogram
-                                         // for
-                                         // percentiles/SLOs
-                                         // in
-                                         // the
-                                         // super
-            .serviceLevelObjectives() // we will use a different implementation here
-                                      // instead
+            // avoid a histogram for percentiles/SLOs in the super
+            .percentilesHistogram(false)
+            // we will use a different implementation here instead
+            .serviceLevelObjectives()
             .build()
             .merge(distributionStatisticConfig), scale, false);
         this.startTimeNanos = TimeUnit.MILLISECONDS.toNanos(clock.wallTime());
@@ -55,10 +49,8 @@ class OtlpDistributionSummary extends CumulativeDistributionSummary implements S
         if (distributionStatisticConfig.isPublishingHistogram()) {
             this.monotonicBucketCountHistogram = new TimeWindowFixedBoundaryHistogram(clock,
                     DistributionStatisticConfig.builder()
-                        .expiry(Duration.ofDays(1825)) // effectively
-                                                       // never
-                                                       // roll
-                                                       // over
+                        // effectively never roll over
+                        .expiry(Duration.ofDays(1825))
                         .bufferLength(1)
                         .build()
                         .merge(distributionStatisticConfig),
@@ -84,13 +76,9 @@ class OtlpDistributionSummary extends CumulativeDistributionSummary implements S
             return snapshot;
         }
 
+        CountAtBucket[] histogramCounts = this.monotonicBucketCountHistogram.takeSnapshot(0, 0, 0).histogramCounts();
         return new HistogramSnapshot(snapshot.count(), snapshot.total(), snapshot.max(), snapshot.percentileValues(),
-                histogramCounts(), snapshot::outputSummary);
-    }
-
-    private CountAtBucket[] histogramCounts() {
-        return this.monotonicBucketCountHistogram == null ? EMPTY_HISTOGRAM
-                : this.monotonicBucketCountHistogram.takeSnapshot(0, 0, 0).histogramCounts();
+                histogramCounts, snapshot::outputSummary);
     }
 
     @Override

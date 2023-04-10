@@ -16,17 +16,18 @@
 package io.micrometer.registry.otlp;
 
 import io.micrometer.core.instrument.Clock;
-import io.micrometer.core.instrument.cumulative.CumulativeFunctionCounter;
+import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
+import io.micrometer.core.instrument.internal.CumulativeHistogramLongTaskTimer;
 
 import java.util.concurrent.TimeUnit;
-import java.util.function.ToDoubleFunction;
 
-class OtlpFunctionCounter<T> extends CumulativeFunctionCounter<T> implements StartTimeAwareMeter {
+class OtlpCumulativeLongTaskTimer extends CumulativeHistogramLongTaskTimer implements StartTimeAwareMeter {
 
     private final long startTimeNanos;
 
-    OtlpFunctionCounter(Id id, T obj, ToDoubleFunction<T> f, Clock clock) {
-        super(id, obj, f);
+    OtlpCumulativeLongTaskTimer(Id id, Clock clock, TimeUnit baseTimeUnit,
+            DistributionStatisticConfig distributionStatisticConfig) {
+        super(id, clock, baseTimeUnit, distributionStatisticConfig);
         this.startTimeNanos = TimeUnit.MILLISECONDS.toNanos(clock.wallTime());
     }
 

@@ -16,6 +16,8 @@
 package io.micrometer.registry.otlp;
 
 import io.micrometer.core.instrument.*;
+import io.opentelemetry.proto.metrics.v1.Metric;
+import io.opentelemetry.proto.metrics.v1.NumberDataPoint;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -26,6 +28,7 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static uk.org.webcompere.systemstubs.SystemStubs.withEnvironmentVariables;
@@ -48,7 +51,7 @@ class OtlpMeterRegistryTest {
             .builder("cpus", ManagementFactory.getOperatingSystemMXBean(),
                     OperatingSystemMXBean::getAvailableProcessors)
             .register(registry);
-        assertThat(registry.writeGauge(cpus).toString())
+        assertThat(publishTimeAwareWrite(cpus).toString())
             .matches("name: \"cpus\"\n" + "gauge \\{\n" + "  data_points \\{\n" + "    time_unix_nano: 1000000\n"
                     + "    as_double: \\d+\\.0\n" + "  }\n" + "}\n");
     }
@@ -57,7 +60,7 @@ class OtlpMeterRegistryTest {
     void timeGauge() {
         TimeGauge timeGauge = TimeGauge.builder("gauge.time", this, TimeUnit.MICROSECONDS, o -> 24).register(registry);
 
-        assertThat(registry.writeGauge(timeGauge).toString())
+        assertThat(publishTimeAwareWrite(timeGauge).toString())
             .isEqualTo("name: \"gauge.time\"\n" + "unit: \"milliseconds\"\n" + "gauge {\n" + "  data_points {\n"
                     + "    time_unix_nano: 1000000\n" + "    as_double: 0.024\n" + "  }\n" + "}\n");
     }
@@ -69,7 +72,7 @@ class OtlpMeterRegistryTest {
         counter.increment();
         clock.add(OtlpConfig.DEFAULT.step());
         counter.increment();
-        assertThat(registry.writeCounter(counter).toString()).isEqualTo("name: \"log.event\"\n" + "sum {\n"
+        assertThat(publishTimeAwareWrite(counter).toString()).isEqualTo("name: \"log.event\"\n" + "sum {\n"
                 + "  data_points {\n" + "    start_time_unix_nano: 1000000\n" + "    time_unix_nano: 60001000000\n"
                 + "    as_double: 3.0\n" + "    attributes {\n" + "      key: \"level\"\n" + "      value {\n"
                 + "        string_value: \"info\"\n" + "      }\n" + "    }\n" + "  }\n"
@@ -84,7 +87,7 @@ class OtlpMeterRegistryTest {
             .baseUnit("milliseconds")
             .register(registry);
 
-        assertThat(registry.writeFunctionCounter(counter).toString()).matches("name: \"jvm.compilation.time\"\n"
+        assertThat(publishTimeAwareWrite(counter).toString()).matches("name: \"jvm.compilation.time\"\n"
                 + "unit: \"milliseconds\"\n" + "sum \\{\n" + "  data_points \\{\n"
                 + "    start_time_unix_nano: 1000000\n" + "    time_unix_nano: 1000000\n" + "    as_double: \\d+\\.0\n"
                 + "  }\n" + "  aggregation_temporality: AGGREGATION_TEMPORALITY_CUMULATIVE\n" + "  is_monotonic: true\n"
@@ -99,7 +102,7 @@ class OtlpMeterRegistryTest {
         timer.record(111, TimeUnit.MILLISECONDS);
         clock.add(OtlpConfig.DEFAULT.step());
         timer.record(4, TimeUnit.MILLISECONDS);
-        assertThat(registry.writeHistogramSupport(timer).toString()).isEqualTo(
+        assertThat(publishTimeAwareWrite(timer).toString()).isEqualTo(
                 "name: \"web.requests\"\n" + "description: \"timing web requests\"\n" + "unit: \"milliseconds\"\n"
                         + "histogram {\n" + "  data_points {\n" + "    start_time_unix_nano: 1000000\n"
                         + "    time_unix_nano: 60001000000\n" + "    count: 4\n" + "    sum: 202.0\n" + "  }\n"
@@ -115,7 +118,7 @@ class OtlpMeterRegistryTest {
         clock.add(OtlpConfig.DEFAULT.step());
         timer.record(4, TimeUnit.MILLISECONDS);
 
-        assertThat(registry.writeHistogramSupport(timer).toString())
+        assertThat(publishTimeAwareWrite(timer).toString())
             .isEqualTo("name: \"http.client.requests\"\n" + "unit: \"milliseconds\"\n" + "histogram {\n"
                     + "  data_points {\n" + "    start_time_unix_nano: 1000000\n" + "    time_unix_nano: 60001000000\n"
                     + "    count: 4\n" + "    sum: 202.0\n" + "    bucket_counts: 0\n" + "    bucket_counts: 0\n"
@@ -185,7 +188,7 @@ class OtlpMeterRegistryTest {
         timer.record(77, TimeUnit.MILLISECONDS);
         timer.record(111, TimeUnit.MILLISECONDS);
 
-        assertThat(registry.writeHistogramSupport(timer).toString())
+        assertThat(publishTimeAwareWrite(timer).toString())
             .isEqualTo("name: \"service.requests\"\n" + "unit: \"milliseconds\"\n" + "summary {\n" + "  data_points {\n"
                     + "    start_time_unix_nano: 1000000\n" + "    time_unix_nano: 1000000\n" + "    count: 3\n"
                     + "    sum: 198.0\n" + "    quantile_values {\n" + "      quantile: 0.5\n"
@@ -200,10 +203,11 @@ class OtlpMeterRegistryTest {
             .builder("function.timer", this, o -> 5, o -> 127, TimeUnit.MILLISECONDS)
             .register(registry);
 
-        assertThat(registry.writeFunctionTimer(functionTimer).toString())
+        assertThat(publishTimeAwareWrite(functionTimer).toString())
             .isEqualTo("name: \"function.timer\"\n" + "unit: \"milliseconds\"\n" + "histogram {\n" + "  data_points {\n"
                     + "    start_time_unix_nano: 1000000\n" + "    time_unix_nano: 1000000\n" + "    count: 5\n"
-                    + "    sum: 127.0\n" + "  }\n" + "}\n");
+                    + "    sum: 127.0\n" + "  }\n" + "  aggregation_temporality: AGGREGATION_TEMPORALITY_CUMULATIVE\n"
+                    + "}\n");
     }
 
     @Test
@@ -217,7 +221,7 @@ class OtlpMeterRegistryTest {
         clock.add(OtlpConfig.DEFAULT.step());
         size.record(204);
 
-        assertThat(registry.writeHistogramSupport(size).toString()).isEqualTo("name: \"http.response.size\"\n"
+        assertThat(publishTimeAwareWrite(size).toString()).isEqualTo("name: \"http.response.size\"\n"
                 + "unit: \"bytes\"\n" + "histogram {\n" + "  data_points {\n" + "    start_time_unix_nano: 1000000\n"
                 + "    time_unix_nano: 60001000000\n" + "    count: 4\n" + "    sum: 2552.0\n" + "  }\n"
                 + "  aggregation_temporality: AGGREGATION_TEMPORALITY_CUMULATIVE\n" + "}\n");
@@ -458,7 +462,7 @@ class OtlpMeterRegistryTest {
                 + "    explicit_bounds: Infinity\n" + "  }\n"
                 + "  aggregation_temporality: AGGREGATION_TEMPORALITY_CUMULATIVE\n" + "}\n";
         String[] expectedLines = expected.split("\n");
-        String actual = registry.writeHistogramSupport(size).toString();
+        String actual = publishTimeAwareWrite(size).toString();
         String[] actualLines = actual.split("\n");
         assertThat(actualLines).hasSameSizeAs(expectedLines);
         for (int i = 0; i < actualLines.length; i++) {
@@ -491,7 +495,7 @@ class OtlpMeterRegistryTest {
         LongTaskTimer.Sample task2 = taskTimer.start();
         this.clock.add(OtlpConfig.DEFAULT.step().multipliedBy(3));
 
-        assertThat(registry.writeHistogramSupport(taskTimer).toString())
+        assertThat(publishTimeAwareWrite(taskTimer).toString())
             .isEqualTo("name: \"checkout.batch\"\n" + "unit: \"milliseconds\"\n" + "histogram {\n" + "  data_points {\n"
                     + "    start_time_unix_nano: 1000000\n" + "    time_unix_nano: 180001000000\n" + "    count: 2\n"
                     + "    sum: 360000.0\n" + "  }\n"
@@ -503,7 +507,7 @@ class OtlpMeterRegistryTest {
 
         // this is not right that count/sum reset, but it's the same thing we do with
         // prometheus
-        assertThat(registry.writeHistogramSupport(taskTimer).toString())
+        assertThat(publishTimeAwareWrite(taskTimer).toString())
             .isEqualTo("name: \"checkout.batch\"\n" + "unit: \"milliseconds\"\n" + "histogram {\n" + "  data_points {\n"
                     + "    start_time_unix_nano: 1000000\n" + "    time_unix_nano: 240001000000\n" + "    sum: 0.0\n"
                     + "  }\n" + "  aggregation_temporality: AGGREGATION_TEMPORALITY_CUMULATIVE\n" + "}\n");
@@ -551,6 +555,28 @@ class OtlpMeterRegistryTest {
                         OtlpMeterRegistry.createKeyValue("b", "2"),
                         OtlpMeterRegistry.createKeyValue("service.name", "my-service"));
             });
+    }
+
+    @Test
+    void testMetricsStartAndEndTime() {
+        Counter counter = Counter.builder("test_publish_time").register(registry);
+        final long startTime = ((StartTimeAwareMeter) counter).getStartTimeNanos();
+        Function<Meter, NumberDataPoint> getDataPoint = (Meter meter) -> publishTimeAwareWrite(meter).getSum()
+            .getDataPoints(0);
+        assertThat(getDataPoint.apply(counter).getStartTimeUnixNano()).isEqualTo(startTime);
+        assertThat(getDataPoint.apply(counter).getTimeUnixNano()).isEqualTo(1000000L);
+        clock.addSeconds(59);
+        assertThat(getDataPoint.apply(counter).getStartTimeUnixNano()).isEqualTo(startTime);
+        assertThat(getDataPoint.apply(counter).getTimeUnixNano()).isEqualTo(59001000000L);
+        clock.addSeconds(1);
+        assertThat(getDataPoint.apply(counter).getStartTimeUnixNano()).isEqualTo(startTime);
+        assertThat(getDataPoint.apply(counter).getTimeUnixNano()).isEqualTo(60001000000L);
+    }
+
+    private Metric publishTimeAwareWrite(Meter meter) {
+        return meter.match(registry::writeGauge, registry::writeCounter, registry::writeHistogramSupport,
+                registry::writeHistogramSupport, registry::writeHistogramSupport, registry::writeGauge,
+                registry::writeFunctionCounter, registry::writeFunctionTimer, registry::writeMeter);
     }
 
 }
