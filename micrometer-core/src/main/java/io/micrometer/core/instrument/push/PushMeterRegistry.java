@@ -35,7 +35,6 @@ public abstract class PushMeterRegistry extends MeterRegistry {
 
     // Schedule publishing in the beginning X percent of the step to avoid spill-over into
     // the next step.
-    // VisibleForTesting
     private static final double PERCENT_RANGE_OF_RANDOM_PUBLISHING_OFFSET = 0.8;
 
     private final PushRegistryConfig config;
