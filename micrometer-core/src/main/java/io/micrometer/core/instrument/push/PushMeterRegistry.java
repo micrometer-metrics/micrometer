@@ -22,6 +22,7 @@ import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.util.TimeUtils;
 
+import java.util.Random;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
@@ -31,6 +32,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public abstract class PushMeterRegistry extends MeterRegistry {
 
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(PushMeterRegistry.class);
+
+    // Schedule publishing in the beginning X percent of the step to avoid spill-over into
+    // the next step.
+    private static final double PERCENT_RANGE_OF_RANDOM_PUBLISHING_OFFSET = 0.8;
 
     private final PushRegistryConfig config;
 
@@ -97,9 +102,8 @@ public abstract class PushMeterRegistry extends MeterRegistry {
                     + TimeUtils.format(config.step()));
 
             scheduledExecutorService = Executors.newSingleThreadScheduledExecutor(threadFactory);
-            // time publication to happen just after StepValue finishes the step
             long stepMillis = config.step().toMillis();
-            long initialDelayMillis = stepMillis - (clock.wallTime() % stepMillis) + 1;
+            long initialDelayMillis = calculateInitialDelay();
             scheduledExecutorService.scheduleAtFixedRate(this::publishSafely, initialDelayMillis, stepMillis,
                     TimeUnit.MILLISECONDS);
         }
@@ -119,6 +123,18 @@ public abstract class PushMeterRegistry extends MeterRegistry {
             publishSafely();
         }
         super.close();
+    }
+
+    // VisibleForTesting
+    long calculateInitialDelay() {
+        long stepMillis = config.step().toMillis();
+        Random random = new Random();
+        // in range of [0, X% of step - 2)
+        long randomOffsetWithinStep = Math.max(0,
+                (long) (stepMillis * random.nextDouble() * PERCENT_RANGE_OF_RANDOM_PUBLISHING_OFFSET) - 2);
+        long offsetToStartOfNextStep = stepMillis - (clock.wallTime() % stepMillis);
+        // at least 2ms into step, so it is after StepMeterRegistry's meterPollingService
+        return offsetToStartOfNextStep + 2 + randomOffsetWithinStep;
     }
 
 }

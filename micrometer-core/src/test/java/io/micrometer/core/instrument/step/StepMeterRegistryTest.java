@@ -342,6 +342,62 @@ class StepMeterRegistryTest {
         assertThat(registry.publishedFunctionTimerTotals.pop()).isEqualTo(53);
     }
 
+    @Test
+    @Issue("#2818")
+    void scheduledRollOver() {
+        Counter counter = Counter.builder("counter").register(registry);
+        counter.increment();
+        Timer timer = Timer.builder("timer").register(registry);
+        timer.record(5, MILLISECONDS);
+        DistributionSummary summary = DistributionSummary.builder("summary").register(registry);
+        summary.record(7);
+        FunctionCounter functionCounter = FunctionCounter.builder("counter.function", this, obj -> 15)
+            .register(registry);
+        FunctionTimer functionTimer = FunctionTimer.builder("timer.function", this, obj -> 3, obj -> 53, MILLISECONDS)
+            .register(registry);
+        Gauge.builder("gauge", () -> 12).register(registry);
+
+        // before rollover
+        assertThat(counter.count()).isZero();
+        assertThat(timer.count()).isZero();
+        assertThat(timer.totalTime(MILLISECONDS)).isZero();
+        assertThat(summary.count()).isZero();
+        assertThat(summary.totalAmount()).isZero();
+        assertThat(functionCounter.count()).isZero();
+        assertThat(functionTimer.count()).isZero();
+        assertThat(functionTimer.totalTime(MILLISECONDS)).isZero();
+
+        clock.addSeconds(60);
+        // simulate this being scheduled at the start of the step
+        registry.pollMetersToRollover();
+
+        clock.addSeconds(1);
+        // these recordings belong to the current step and should not be published
+        counter.increment();
+        timer.record(5, MILLISECONDS);
+        summary.record(8);
+        clock.addSeconds(10);
+
+        // recordings that happened in the previous step should be published
+        registry.publish();
+        assertThat(registry.publishedCounterCounts).hasSize(1);
+        assertThat(registry.publishedCounterCounts.pop()).isOne();
+        assertThat(registry.publishedTimerCounts).hasSize(1);
+        assertThat(registry.publishedTimerCounts.pop()).isOne();
+        assertThat(registry.publishedTimerSumMilliseconds).hasSize(1);
+        assertThat(registry.publishedTimerSumMilliseconds.pop()).isEqualTo(5.0);
+        assertThat(registry.publishedSummaryCounts).hasSize(1);
+        assertThat(registry.publishedSummaryCounts.pop()).isOne();
+        assertThat(registry.publishedSummaryTotals).hasSize(1);
+        assertThat(registry.publishedSummaryTotals.pop()).isEqualTo(7);
+        assertThat(registry.publishedFunctionCounterCounts).hasSize(1);
+        assertThat(registry.publishedFunctionCounterCounts.pop()).isEqualTo(15);
+        assertThat(registry.publishedFunctionTimerCounts).hasSize(1);
+        assertThat(registry.publishedFunctionTimerCounts.pop()).isEqualTo(3);
+        assertThat(registry.publishedFunctionTimerTotals).hasSize(1);
+        assertThat(registry.publishedFunctionTimerTotals.pop()).isEqualTo(53);
+    }
+
     private class MyStepMeterRegistry extends StepMeterRegistry {
 
         Deque<Double> publishedCounterCounts = new ArrayDeque<>();
@@ -378,8 +434,8 @@ class StepMeterRegistryTest {
             }
             publishes.incrementAndGet();
             getMeters().stream()
-                .map(meter -> meter.match(null, this::publishCounter, this::publishTimer, this::publishSummary, null,
-                        null, this::publishFunctionCounter, this::publishFunctionTimer, null))
+                .map(meter -> meter.match(g -> null, this::publishCounter, this::publishTimer, this::publishSummary,
+                        null, tg -> null, this::publishFunctionCounter, this::publishFunctionTimer, m -> null))
                 .collect(Collectors.toList());
         }
 
