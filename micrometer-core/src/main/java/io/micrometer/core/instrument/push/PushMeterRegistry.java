@@ -132,7 +132,7 @@ public abstract class PushMeterRegistry extends MeterRegistry {
         Random random = new Random();
         long randomOffsetWithinStep = (long) (stepMillis * random.nextDouble()
                 * PERCENT_RANGE_OF_RANDOM_PUBLISHING_OFFSET);
-        long offsetToStartOfNextStep = stepMillis - clock.wallTime() % stepMillis;
+        long offsetToStartOfNextStep = stepMillis - (clock.wallTime() % stepMillis);
         return offsetToStartOfNextStep + 2 + randomOffsetWithinStep;
     }
 
