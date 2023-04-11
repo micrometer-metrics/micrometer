@@ -67,8 +67,8 @@ public final class DynatraceDistributionSummary extends AbstractDistributionSumm
     /**
      * Using this method is not synchronized and might give inconsistent results when
      * multiple getters are called sequentially. It is recommended to
-     * {@link DynatraceDistributionSummary#takeSummarySnapshot() take a snapshot} and use
-     * the getters on the {@link DynatraceSummarySnapshot} instead.
+     * {@link #takeSummarySnapshot() take a snapshot} and use the getters on the
+     * {@link DynatraceSummarySnapshot} instead.
      */
     @Override
     public long count() {
@@ -78,8 +78,8 @@ public final class DynatraceDistributionSummary extends AbstractDistributionSumm
     /**
      * Using this method is not synchronized and might give inconsistent results when
      * multiple getters are called sequentially. It is recommended to
-     * {@link DynatraceDistributionSummary#takeSummarySnapshot() take a snapshot} and use
-     * the getters on the {@link DynatraceSummarySnapshot} instead.
+     * {@link #takeSummarySnapshot() take a snapshot} and use the getters on the
+     * {@link DynatraceSummarySnapshot} instead.
      */
     @Override
     public double totalAmount() {
@@ -89,8 +89,8 @@ public final class DynatraceDistributionSummary extends AbstractDistributionSumm
     /**
      * Using this method is not synchronized and might give inconsistent results when
      * multiple getters are called sequentially. It is recommended to
-     * {@link DynatraceDistributionSummary#takeSummarySnapshot() take a snapshot} and use
-     * the getters on the {@link DynatraceSummarySnapshot} instead.
+     * {@link #takeSummarySnapshot() take a snapshot} and use the getters on the
+     * {@link DynatraceSummarySnapshot} instead.
      */
     @Override
     public double max() {
@@ -100,8 +100,8 @@ public final class DynatraceDistributionSummary extends AbstractDistributionSumm
     /**
      * @deprecated since 1.9.10. Using this method is not synchronized and might give
      * inconsistent results when multiple getters are called sequentially. It is
-     * recommended to {@link DynatraceDistributionSummary#takeSummarySnapshot() take a
-     * snapshot} and use the getters on the {@link DynatraceSummarySnapshot} instead.
+     * recommended to {@link #takeSummarySnapshot() take a snapshot} and use the getters
+     * on the {@link DynatraceSummarySnapshot} instead.
      */
     @Deprecated
     public double min() {
