@@ -129,15 +129,15 @@ class PushMeterRegistryTest {
         clock.add(-1, MILLISECONDS); // set time to 0
         clock.add(startTime);
         PushMeterRegistry registry = new CountingPushMeterRegistry(config, clock);
-        long minOffsetMillis = STEP_DURATION.minus(startTime).toMillis() + 2;
-        long maxOffsetMillis = minOffsetMillis
-                + STEP_DURATION.multipliedBy((long) (PushMeterRegistry.PERCENT_RANGE_OF_RANDOM_PUBLISHING_OFFSET * 100))
-                    .dividedBy(100)
-                    .toMillis();
+        long minOffsetMillis = 8; // 4 (start) + 8 (offset) = 12 (2ms into next step)
+        // exclusive upper bound
+        long maxOffsetMillis = 14; // 4 (start) + 14 (offset) = 18 (8ms into next step;
+                                   // 80% of step is 8ms)
         Set<Long> observedDelays = new HashSet<>((int) (maxOffsetMillis - minOffsetMillis));
         IntStream.range(0, 10_000).forEach(i -> {
             long delay = registry.calculateInitialDelay();
-            assertThat(delay).isBetween(minOffsetMillis, maxOffsetMillis);
+            // isBetween is inclusive; subtract 1 from exclusive max offset
+            assertThat(delay).isBetween(minOffsetMillis, maxOffsetMillis - 1);
             observedDelays.add(delay);
         });
         Long[] expectedDelays = LongStream.range(minOffsetMillis, maxOffsetMillis)

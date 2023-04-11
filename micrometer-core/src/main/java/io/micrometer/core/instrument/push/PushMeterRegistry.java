@@ -33,10 +33,10 @@ public abstract class PushMeterRegistry extends MeterRegistry {
 
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(PushMeterRegistry.class);
 
-    // Make sure we do not schedule publishing at the end of a step interval by only
-    // scheduling in the beginning X percent of the interval.
+    // Schedule publishing in the beginning X percent of the step to avoid spill-over into
+    // the next step.
     // VisibleForTesting
-    static final double PERCENT_RANGE_OF_RANDOM_PUBLISHING_OFFSET = 0.8;
+    private static final double PERCENT_RANGE_OF_RANDOM_PUBLISHING_OFFSET = 0.8;
 
     private final PushRegistryConfig config;
 
@@ -130,9 +130,11 @@ public abstract class PushMeterRegistry extends MeterRegistry {
     long calculateInitialDelay() {
         long stepMillis = config.step().toMillis();
         Random random = new Random();
-        long randomOffsetWithinStep = (long) (stepMillis * random.nextDouble()
-                * PERCENT_RANGE_OF_RANDOM_PUBLISHING_OFFSET);
+        // in range of [0, X% of step - 2)
+        long randomOffsetWithinStep = Math.max(0,
+                (long) (stepMillis * random.nextDouble() * PERCENT_RANGE_OF_RANDOM_PUBLISHING_OFFSET) - 2);
         long offsetToStartOfNextStep = stepMillis - (clock.wallTime() % stepMillis);
+        // at least 2ms into step, so it is after StepMeterRegistry's meterPollingService
         return offsetToStartOfNextStep + 2 + randomOffsetWithinStep;
     }
 
