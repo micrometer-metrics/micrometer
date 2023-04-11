@@ -205,7 +205,9 @@ class DynatraceTimerTest {
 
     private void assertMinMaxSumCount(DynatraceTimer timer, double expMin, double expMax, double expTotal,
             long expCount) {
-        assertThat(timer.min(BASE_TIME_UNIT)).isCloseTo(expMin, OFFSET);
+        @SuppressWarnings("deprecation")
+        double min = timer.min(BASE_TIME_UNIT);
+        assertThat(min).isCloseTo(expMin, OFFSET);
         assertThat(timer.max(BASE_TIME_UNIT)).isCloseTo(expMax, OFFSET);
         assertThat(timer.totalTime(BASE_TIME_UNIT)).isCloseTo(expTotal, OFFSET);
         assertThat(timer.count()).isEqualTo(expCount);

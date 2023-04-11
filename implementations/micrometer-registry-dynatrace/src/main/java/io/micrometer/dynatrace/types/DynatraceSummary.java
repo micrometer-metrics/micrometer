@@ -93,9 +93,9 @@ final class DynatraceSummary {
 
     void reset() {
         synchronized (this) {
-            min = 0.;
-            max = 0.;
-            total = 0.;
+            min = 0.0;
+            max = 0.0;
+            total = 0.0;
             count = 0;
         }
     }

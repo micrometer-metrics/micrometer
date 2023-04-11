@@ -107,8 +107,8 @@ public final class DynatraceTimer extends AbstractTimer implements DynatraceSumm
     /**
      * Using this method is not synchronized and might give inconsistent results when
      * multiple getters are called sequentially. It is recommended to
-     * {@link DynatraceDistributionSummary#takeSummarySnapshot(TimeUnit) take a snapshot}
-     * and use the getters on the {@link DynatraceSummarySnapshot} instead.
+     * {@link #takeSummarySnapshot(TimeUnit) take a snapshot} and use the getters on the
+     * {@link DynatraceSummarySnapshot} instead.
      */
     @Override
     public long count() {
@@ -118,8 +118,8 @@ public final class DynatraceTimer extends AbstractTimer implements DynatraceSumm
     /**
      * Using this method is not synchronized and might give inconsistent results when
      * multiple getters are called sequentially. It is recommended to
-     * {@link DynatraceDistributionSummary#takeSummarySnapshot(TimeUnit) take a snapshot}
-     * and use the getters on the {@link DynatraceSummarySnapshot} instead.
+     * {@link #takeSummarySnapshot(TimeUnit) take a snapshot} and use the getters on the
+     * {@link DynatraceSummarySnapshot} instead.
      */
     @Override
     public double totalTime(TimeUnit unit) {
@@ -129,8 +129,8 @@ public final class DynatraceTimer extends AbstractTimer implements DynatraceSumm
     /**
      * Using this method is not synchronized and might give inconsistent results when
      * multiple getters are called sequentially. It is recommended to
-     * {@link DynatraceDistributionSummary#takeSummarySnapshot(TimeUnit) take a snapshot}
-     * and use the getters on the {@link DynatraceSummarySnapshot} instead.
+     * {@link #takeSummarySnapshot(TimeUnit) take a snapshot} and use the getters on the
+     * {@link DynatraceSummarySnapshot} instead.
      */
     @Override
     public double max(TimeUnit unit) {
@@ -140,9 +140,8 @@ public final class DynatraceTimer extends AbstractTimer implements DynatraceSumm
     /**
      * @deprecated since 1.9.10. Using this method is not synchronized and might give
      * inconsistent results when multiple getters are called sequentially. It is
-     * recommended to {@link DynatraceDistributionSummary#takeSummarySnapshot(TimeUnit)
-     * take a snapshot} and use the getters on the {@link DynatraceSummarySnapshot}
-     * instead.
+     * recommended to {@link #takeSummarySnapshot(TimeUnit) take a snapshot} and use the
+     * getters on the {@link DynatraceSummarySnapshot} instead.
      */
     @Deprecated
     public double min(TimeUnit unit) {

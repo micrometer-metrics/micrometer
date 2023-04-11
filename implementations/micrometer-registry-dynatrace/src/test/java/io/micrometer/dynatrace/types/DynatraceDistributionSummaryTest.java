@@ -163,7 +163,9 @@ class DynatraceDistributionSummaryTest {
 
     private void assertMinMaxSumCount(DynatraceDistributionSummary ds, double expMin, double expMax, double expTotal,
             long expCount) {
-        assertThat(ds.min()).isCloseTo(expMin, OFFSET);
+        @SuppressWarnings("deprecation")
+        double min = ds.min();
+        assertThat(min).isCloseTo(expMin, OFFSET);
         assertThat(ds.max()).isCloseTo(expMax, OFFSET);
         assertThat(ds.totalAmount()).isCloseTo(expTotal, OFFSET);
         assertThat(ds.count()).isEqualTo(expCount);
