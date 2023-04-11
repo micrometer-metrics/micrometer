@@ -157,7 +157,7 @@ public abstract class StepMeterRegistry extends PushMeterRegistry {
     private long getInitialDelay() {
         long stepMillis = config.step().toMillis();
         // schedule one millisecond into the next step
-        return stepMillis - clock.wallTime() % stepMillis + 1;
+        return stepMillis - (clock.wallTime() % stepMillis) + 1;
     }
 
 }
