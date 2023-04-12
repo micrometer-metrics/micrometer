@@ -17,9 +17,9 @@ package io.micrometer.dynatrace.v2;
 
 import com.dynatrace.metric.util.*;
 import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.distribution.HistogramSnapshot;
 import io.micrometer.core.instrument.distribution.ValueAtPercentile;
-import io.micrometer.core.instrument.util.AbstractPartition;
 import io.micrometer.core.instrument.util.StringUtils;
 import io.micrometer.core.ipc.http.HttpSender;
 import io.micrometer.core.util.internal.logging.InternalLogger;
@@ -33,10 +33,7 @@ import io.micrometer.dynatrace.types.DynatraceSummarySnapshotSupport;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.time.Instant;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
 import java.util.regex.Matcher;
@@ -136,12 +133,27 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
      */
     @Override
     public void export(List<Meter> meters) {
-        // Lines that are too long to be ingested into Dynatrace, as well as lines that
-        // contain NaN or Inf values are not returned from "toMetricLines", and are
-        // therefore dropped.
-        List<String> metricLines = meters.stream().flatMap(this::toMetricLines).collect(Collectors.toList());
+        int partitionSize = Math.min(config.batchSize(), DynatraceMetricApiConstants.getPayloadLinesLimit());
+        List<String> batch = new ArrayList<>(partitionSize);
 
-        sendInBatches(metricLines);
+        for (Meter meter : meters) {
+            // Lines that are too long to be ingested into Dynatrace, as well as lines
+            // that contain NaN or Inf values are not returned from "toMetricLines",
+            // and are therefore dropped.
+            Stream<String> metricLines = toMetricLines(meter);
+
+            metricLines.forEach(line -> {
+                batch.add(line);
+                if (batch.size() == partitionSize) {
+                    send(batch);
+                    batch.clear();
+                }
+            });
+        }
+
+        if (!batch.isEmpty()) {
+            send(batch);
+        }
     }
 
     private Stream<String> toMetricLines(Meter meter) {
@@ -316,7 +328,8 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
             return;
         }
         try {
-            logger.debug("Sending {} lines to {}", metricLines.size(), endpoint);
+            int lineCount = metricLines.size();
+            logger.debug("Sending {} lines to {}", lineCount, endpoint);
 
             String body = String.join("\n", metricLines);
             logger.debug("Sending lines:\n{}", body);
@@ -329,7 +342,7 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
             requestBuilder.withHeader("User-Agent", "micrometer")
                 .withPlainText(body)
                 .send()
-                .onSuccess(response -> handleSuccess(metricLines.size(), response))
+                .onSuccess(response -> handleSuccess(lineCount, response))
                 .onError(response -> logger.error("Failed metric ingestion: Error Code={}, Response Body={}",
                         response.code(), getTruncatedBody(response)));
         }
@@ -367,23 +380,6 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
                     "Expected status code 202, got {}.\nResponse Body={}\nDid you specify the ingest path (e.g.: /api/v2/metrics/ingest)?",
                     response.code(), getTruncatedBody(response));
         }
-    }
-
-    private void sendInBatches(List<String> metricLines) {
-        int partitionSize = Math.min(config.batchSize(), DynatraceMetricApiConstants.getPayloadLinesLimit());
-        MetricLinePartition.partition(metricLines, partitionSize).forEach(this::send);
-    }
-
-    static class MetricLinePartition extends AbstractPartition<String> {
-
-        private MetricLinePartition(List<String> list, int partitionSize) {
-            super(list, partitionSize);
-        }
-
-        static List<List<String>> partition(List<String> list, int partitionSize) {
-            return new MetricLinePartition(list, partitionSize);
-        }
-
     }
 
 }
