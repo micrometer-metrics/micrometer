@@ -52,4 +52,5 @@ public class StepMax extends StepValue<Double> implements StepMeter {
     public void _closingRollover() {
         super.closingRollover();
     }
+
 }
