@@ -520,6 +520,10 @@ public interface Observation extends ObservationView {
         });
     }
 
+    default <E extends Throwable> void observeCheckedRunnable(CheckedRunnable<E> checkedRunnable) throws E {
+        observeChecked(checkedRunnable);
+    }
+
     default <E extends Throwable> CheckedRunnable<E> wrapChecked(CheckedRunnable<E> checkedRunnable) throws E {
         return () -> observeChecked(checkedRunnable);
     }
@@ -567,6 +571,11 @@ public interface Observation extends ObservationView {
     @Nullable
     default <T, E extends Throwable> T observeChecked(CheckedCallable<T, E> checkedCallable) throws E {
         return observeCheckedWithContext((context) -> checkedCallable.call());
+    }
+
+    @Nullable
+    default <T, E extends Throwable> T observeCheckedCallable(CheckedCallable<T, E> checkedCallable) throws E {
+        return observeChecked(checkedCallable);
     }
 
     default <T, E extends Throwable> CheckedCallable<T, E> wrapChecked(CheckedCallable<T, E> checkedCallable) throws E {
