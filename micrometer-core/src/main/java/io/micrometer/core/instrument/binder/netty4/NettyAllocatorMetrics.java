@@ -48,19 +48,19 @@ public class NettyAllocatorMetrics implements MeterBinder {
         int allocatorId = this.allocator.hashCode();
 
         ByteBufAllocatorMetric allocatorMetric = this.allocator.metric();
-        Tags tags = Tags.of(NettyMeters.AllocatorMeterTags.ID.asString(), String.valueOf(allocatorId),
-                NettyMeters.AllocatorMeterTags.ALLOCATOR_TYPE.asString(), this.allocator.getClass().getSimpleName());
+        Tags tags = Tags.of(NettyMeters.AllocatorKeyNames.ID.asString(), String.valueOf(allocatorId),
+                NettyMeters.AllocatorKeyNames.ALLOCATOR_TYPE.asString(), this.allocator.getClass().getSimpleName());
 
         Gauge
             .builder(NettyMeters.ALLOCATOR_MEMORY_USED.getName(), allocatorMetric,
                     ByteBufAllocatorMetric::usedHeapMemory)
-            .tags(tags.and(NettyMeters.AllocatorMemoryMeterTags.MEMORY_TYPE.asString(), "heap"))
+            .tags(tags.and(NettyMeters.AllocatorMemoryKeyNames.MEMORY_TYPE.asString(), "heap"))
             .register(registry);
 
         Gauge
             .builder(NettyMeters.ALLOCATOR_MEMORY_USED.getName(), allocatorMetric,
                     ByteBufAllocatorMetric::usedDirectMemory)
-            .tags(tags.and(NettyMeters.AllocatorMemoryMeterTags.MEMORY_TYPE.asString(), "direct"))
+            .tags(tags.and(NettyMeters.AllocatorMemoryKeyNames.MEMORY_TYPE.asString(), "direct"))
             .register(registry);
 
         if (this.allocator instanceof PooledByteBufAllocator) {
@@ -70,35 +70,35 @@ public class NettyAllocatorMetrics implements MeterBinder {
             Gauge
                 .builder(NettyMeters.ALLOCATOR_MEMORY_PINNED.getName(), pooledByteBufAllocator,
                         PooledByteBufAllocator::pinnedHeapMemory)
-                .tags(tags.and(NettyMeters.AllocatorMemoryMeterTags.MEMORY_TYPE.asString(), "heap"))
+                .tags(tags.and(NettyMeters.AllocatorMemoryKeyNames.MEMORY_TYPE.asString(), "heap"))
                 .register(registry);
 
             Gauge
                 .builder(NettyMeters.ALLOCATOR_MEMORY_PINNED.getName(), pooledByteBufAllocator,
                         PooledByteBufAllocator::pinnedDirectMemory)
-                .tags(tags.and(NettyMeters.AllocatorMemoryMeterTags.MEMORY_TYPE.asString(), "direct"))
+                .tags(tags.and(NettyMeters.AllocatorMemoryKeyNames.MEMORY_TYPE.asString(), "direct"))
                 .register(registry);
 
             Gauge
                 .builder(NettyMeters.ALLOCATOR_POOLED_ARENAS.getName(), pooledAllocatorMetric,
                         PooledByteBufAllocatorMetric::numHeapArenas)
-                .tags(tags.and(NettyMeters.AllocatorMemoryMeterTags.MEMORY_TYPE.asString(), "heap"))
+                .tags(tags.and(NettyMeters.AllocatorMemoryKeyNames.MEMORY_TYPE.asString(), "heap"))
                 .register(registry);
             Gauge
                 .builder(NettyMeters.ALLOCATOR_POOLED_ARENAS.getName(), pooledAllocatorMetric,
                         PooledByteBufAllocatorMetric::numDirectArenas)
-                .tags(tags.and(NettyMeters.AllocatorMemoryMeterTags.MEMORY_TYPE.asString(), "direct"))
+                .tags(tags.and(NettyMeters.AllocatorMemoryKeyNames.MEMORY_TYPE.asString(), "direct"))
                 .register(registry);
 
             Gauge
                 .builder(NettyMeters.ALLOCATOR_POOLED_CACHE_SIZE.getName(), pooledAllocatorMetric,
                         PooledByteBufAllocatorMetric::normalCacheSize)
-                .tags(tags.and(NettyMeters.AllocatorPooledCacheMeterTags.CACHE_TYPE.asString(), "normal"))
+                .tags(tags.and(NettyMeters.AllocatorPooledCacheKeyNames.CACHE_TYPE.asString(), "normal"))
                 .register(registry);
             Gauge
                 .builder(NettyMeters.ALLOCATOR_POOLED_CACHE_SIZE.getName(), pooledAllocatorMetric,
                         PooledByteBufAllocatorMetric::smallCacheSize)
-                .tags(tags.and(NettyMeters.AllocatorPooledCacheMeterTags.CACHE_TYPE.asString(), "small"))
+                .tags(tags.and(NettyMeters.AllocatorPooledCacheKeyNames.CACHE_TYPE.asString(), "small"))
                 .register(registry);
 
             Gauge

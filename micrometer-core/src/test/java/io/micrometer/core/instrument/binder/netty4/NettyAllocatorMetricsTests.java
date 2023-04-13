@@ -15,9 +15,7 @@
  */
 package io.micrometer.core.instrument.binder.netty4;
 
-import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.Tags;
-import io.micrometer.core.instrument.simple.SimpleConfig;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.PooledByteBufAllocator;
@@ -33,7 +31,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 class NettyAllocatorMetricsTests {
 
-    private SimpleMeterRegistry registry = new SimpleMeterRegistry(SimpleConfig.DEFAULT, new MockClock());
+    private final SimpleMeterRegistry registry = new SimpleMeterRegistry();
 
     @Test
     void shouldHaveHeapMemoryUsedMetricsForUnpooledAllocator() {

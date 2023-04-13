@@ -17,6 +17,7 @@ package io.micrometer.core.instrument.binder.netty4;
 
 import io.micrometer.common.docs.KeyName;
 import io.micrometer.core.instrument.Meter;
+import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.docs.MeterDocumentation;
 
 /**
@@ -45,12 +46,12 @@ public enum NettyMeters implements MeterDocumentation {
 
         @Override
         public String getBaseUnit() {
-            return "bytes";
+            return BaseUnits.BYTES;
         }
 
         @Override
         public KeyName[] getKeyNames() {
-            return KeyName.merge(AllocatorMeterTags.values(), AllocatorMemoryMeterTags.values());
+            return KeyName.merge(AllocatorKeyNames.values(), AllocatorMemoryKeyNames.values());
         }
     },
 
@@ -70,17 +71,17 @@ public enum NettyMeters implements MeterDocumentation {
 
         @Override
         public String getBaseUnit() {
-            return "bytes";
+            return BaseUnits.BYTES;
         }
 
         @Override
         public KeyName[] getKeyNames() {
-            return KeyName.merge(AllocatorMeterTags.values(), AllocatorMemoryMeterTags.values());
+            return KeyName.merge(AllocatorKeyNames.values(), AllocatorMemoryKeyNames.values());
         }
     },
 
     /**
-     * Number of Arenas for a pooled allocator.
+     * Number of arenas for a pooled allocator.
      */
     ALLOCATOR_POOLED_ARENAS {
         @Override
@@ -95,7 +96,7 @@ public enum NettyMeters implements MeterDocumentation {
 
         @Override
         public KeyName[] getKeyNames() {
-            return KeyName.merge(AllocatorMeterTags.values(), AllocatorMemoryMeterTags.values());
+            return KeyName.merge(AllocatorKeyNames.values(), AllocatorMemoryKeyNames.values());
         }
     },
 
@@ -115,12 +116,12 @@ public enum NettyMeters implements MeterDocumentation {
 
         @Override
         public String getBaseUnit() {
-            return "bytes";
+            return BaseUnits.BYTES;
         }
 
         @Override
         public KeyName[] getKeyNames() {
-            return KeyName.merge(AllocatorMeterTags.values(), AllocatorPooledCacheMeterTags.values());
+            return KeyName.merge(AllocatorKeyNames.values(), AllocatorPooledCacheKeyNames.values());
         }
     },
 
@@ -140,7 +141,7 @@ public enum NettyMeters implements MeterDocumentation {
 
         @Override
         public KeyName[] getKeyNames() {
-            return AllocatorMeterTags.values();
+            return AllocatorKeyNames.values();
         }
     },
 
@@ -160,12 +161,12 @@ public enum NettyMeters implements MeterDocumentation {
 
         @Override
         public String getBaseUnit() {
-            return "bytes";
+            return BaseUnits.BYTES;
         }
 
         @Override
         public KeyName[] getKeyNames() {
-            return AllocatorMeterTags.values();
+            return AllocatorKeyNames.values();
         }
     },
 
@@ -185,11 +186,11 @@ public enum NettyMeters implements MeterDocumentation {
 
         @Override
         public KeyName[] getKeyNames() {
-            return EventLoopTasksPendingMeterTags.values();
+            return EventExecutorTasksPendingKeyNames.values();
         }
     };
 
-    public enum AllocatorMeterTags implements KeyName {
+    enum AllocatorKeyNames implements KeyName {
 
         /**
          * Unique runtime identifier for the allocator.
@@ -201,7 +202,7 @@ public enum NettyMeters implements MeterDocumentation {
             }
         },
         /**
-         * Type of memory allocation strategy (pooled, unpooled).
+         * Allocator's class simple name.
          */
         ALLOCATOR_TYPE {
             @Override
@@ -212,7 +213,7 @@ public enum NettyMeters implements MeterDocumentation {
 
     }
 
-    public enum AllocatorMemoryMeterTags implements KeyName {
+    enum AllocatorMemoryKeyNames implements KeyName {
 
         /**
          * Type of memory allocated: {@code "heap"} memory or {@code "direct"} memory.
@@ -226,7 +227,7 @@ public enum NettyMeters implements MeterDocumentation {
 
     }
 
-    public enum AllocatorPooledCacheMeterTags implements KeyName {
+    enum AllocatorPooledCacheKeyNames implements KeyName {
 
         /**
          * Type of cache pages for this cache.
@@ -240,10 +241,10 @@ public enum NettyMeters implements MeterDocumentation {
 
     }
 
-    public enum EventLoopTasksPendingMeterTags implements KeyName {
+    enum EventExecutorTasksPendingKeyNames implements KeyName {
 
         /**
-         * Event Loop name.
+         * Event loop name.
          */
         NAME {
             @Override

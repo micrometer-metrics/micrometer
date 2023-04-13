@@ -15,9 +15,7 @@
  */
 package io.micrometer.core.instrument.binder.netty4;
 
-import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.Tags;
-import io.micrometer.core.instrument.simple.SimpleConfig;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.netty.channel.DefaultEventLoopGroup;
 import io.netty.channel.EventLoop;
@@ -37,10 +35,10 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 class NettyEventExecutorMetricsTests {
 
-    private SimpleMeterRegistry registry = new SimpleMeterRegistry(SimpleConfig.DEFAULT, new MockClock());
+    private final SimpleMeterRegistry registry = new SimpleMeterRegistry();
 
     @Test
-    void shouldHaveTaskPendingMetricForEachEventLoop() throws Exception {
+    void shouldHaveTasksPendingMetricForEachEventLoop() throws Exception {
         Set<String> names = new LinkedHashSet<>();
         DefaultEventLoopGroup eventExecutors = new DefaultEventLoopGroup();
         new NettyEventExecutorMetrics(eventExecutors).bindTo(this.registry);
@@ -50,6 +48,7 @@ class NettyEventExecutorMetricsTests {
                 names.add(singleThreadEventExecutor.threadProperties().name());
             }
         });
+        assertThat(names).isNotEmpty();
         names.forEach(name -> {
             assertThat(this.registry.get(NettyMeters.EVENT_EXECUTOR_TASKS_PENDING.getName())
                 .tags(Tags.of("name", name))
@@ -60,18 +59,17 @@ class NettyEventExecutorMetricsTests {
     }
 
     @Test
-    void shouldHaveTaskPendingMetricForSingleEventLoop() throws Exception {
+    void shouldHaveTasksPendingMetricForSingleEventLoop() throws Exception {
         DefaultEventLoopGroup eventExecutors = new DefaultEventLoopGroup();
         EventLoop eventLoop = eventExecutors.next();
         new NettyEventExecutorMetrics(eventLoop).bindTo(this.registry);
-        if (eventLoop instanceof SingleThreadEventExecutor) {
-            SingleThreadEventExecutor singleThreadEventExecutor = (SingleThreadEventExecutor) eventLoop;
-            String eventLoopName = singleThreadEventExecutor.threadProperties().name();
-            assertThat(this.registry.get(NettyMeters.EVENT_EXECUTOR_TASKS_PENDING.getName())
-                .tags(Tags.of("name", eventLoopName))
-                .gauge()
-                .value()).isZero();
-        }
+        assertThat(eventLoop).isInstanceOf(SingleThreadEventExecutor.class);
+        SingleThreadEventExecutor singleThreadEventExecutor = (SingleThreadEventExecutor) eventLoop;
+        String eventLoopName = singleThreadEventExecutor.threadProperties().name();
+        assertThat(this.registry.get(NettyMeters.EVENT_EXECUTOR_TASKS_PENDING.getName())
+            .tags(Tags.of("name", eventLoopName))
+            .gauge()
+            .value()).isZero();
         eventExecutors.shutdownGracefully().get(5, TimeUnit.SECONDS);
     }
 
