@@ -75,7 +75,7 @@ public class SignalFxNamingConvention implements NamingConvention {
 
         if (conventionKey.startsWith("sf_") || !isAlphabet(conventionKey.charAt(0))) {
             logger.log(conventionKey
-                    + " doesn't adhere to SignalFx naming standards. Appending 'a' to the tag/dimension key.");
+                    + " doesn't adhere to SignalFx naming standards. Prefixing the tag/dimension key with 'a'.");
             conventionKey = "a" + conventionKey;
         }
 
