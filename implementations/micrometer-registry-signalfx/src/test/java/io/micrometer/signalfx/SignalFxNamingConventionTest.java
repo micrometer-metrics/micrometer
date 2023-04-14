@@ -43,6 +43,9 @@ class SignalFxNamingConventionTest {
     @Test
     void tagKeyWhenKeyHasDenylistedCharShouldSanitize() {
         assertThat(convention.tagKey("a.b")).isEqualTo("a_b");
+        assertThat(convention.tagKey("sf.boo")).isEqualTo("asf_boo");
+        assertThat(convention.tagKey("àboo")).isEqualTo("a_boo");
+        assertThat(convention.tagKey("sf_àboo")).isEqualTo("asf__boo");
     }
 
 }

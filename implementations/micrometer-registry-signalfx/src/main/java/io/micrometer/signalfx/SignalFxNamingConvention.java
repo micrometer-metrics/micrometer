@@ -27,8 +27,8 @@ import java.util.regex.Pattern;
 /**
  * {@link NamingConvention} for SignalFx.
  *
- * See
- * https://developers.signalfx.com/metrics/data_ingest_overview.html#_criteria_for_metric_and_dimension_names_and_values
+ * @see <a href="https://docs.splunk.com/Observability/metrics-and-metadata/metric-names.html">
+ *     Naming conventions for metrics and dimensions</a>
  *
  * @author Jon Schneider
  * @author Johnny Lim
@@ -72,14 +72,14 @@ public class SignalFxNamingConvention implements NamingConvention {
     @Override
     public String tagKey(String key) {
         String conventionKey = delegate.tagKey(key);
+        conventionKey = PATTERN_TAG_KEY_DENYLISTED_CHARS.matcher(conventionKey).replaceAll("_");
 
-        if (conventionKey.startsWith("sf_") || !isAlphabet(conventionKey.charAt(0))) {
+        if (conventionKey.startsWith("sf_") || !Character.isLetter(conventionKey.charAt(0))) {
             logger.log(conventionKey
                     + " doesn't adhere to SignalFx naming standards. Prefixing the tag/dimension key with 'a'.");
             conventionKey = "a" + conventionKey;
         }
 
-        conventionKey = PATTERN_TAG_KEY_DENYLISTED_CHARS.matcher(conventionKey).replaceAll("_");
         return StringUtils.truncate(conventionKey, KEY_MAX_LENGTH);
     }
 
@@ -89,10 +89,6 @@ public class SignalFxNamingConvention implements NamingConvention {
     public String tagValue(String value) {
         String formattedValue = StringEscapeUtils.escapeJson(delegate.tagValue(value));
         return StringUtils.truncate(formattedValue, TAG_VALUE_MAX_LENGTH);
-    }
-
-    private static boolean isAlphabet(char c) {
-        return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
     }
 
 }
