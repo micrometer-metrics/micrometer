@@ -28,19 +28,19 @@ import java.util.function.Function;
 /**
  * Annotation handler for {@link MeterTag}. To add support for {@link MeterTag} on
  * {@link TimedAspect} check the
- * {@link TimedAspect#setMetricsTagAnnotationHandler(MeterAnnotationHandler)} method.
+ * {@link TimedAspect#setMeterTagAnnotationHandler(MeterTagAnnotationHandler)} method.
  *
  * @since 1.11.0
  */
-public class MeterAnnotationHandler extends AnnotationHandler<Timer.Builder> {
+public class MeterTagAnnotationHandler extends AnnotationHandler<Timer.Builder> {
 
     /**
-     * Creates a new instance of {@link MeterAnnotationHandler}.
+     * Creates a new instance of {@link MeterTagAnnotationHandler}.
      * @param resolverProvider function to retrieve a {@link ValueResolver}
      * @param expressionResolverProvider function to retrieve a
      * {@link ValueExpressionResolver}
      */
-    public MeterAnnotationHandler(Function<Class<? extends ValueResolver>, ? extends ValueResolver> resolverProvider,
+    public MeterTagAnnotationHandler(Function<Class<? extends ValueResolver>, ? extends ValueResolver> resolverProvider,
             Function<Class<? extends ValueExpressionResolver>, ? extends ValueExpressionResolver> expressionResolverProvider) {
         super((keyValue, builder) -> builder.tag(keyValue.getKey(), keyValue.getValue()), resolverProvider,
                 expressionResolverProvider, MeterTag.class, (annotation, o) -> {

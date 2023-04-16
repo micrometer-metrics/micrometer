@@ -103,45 +103,43 @@ public class AnnotationHandler<T> {
     private void getAnnotationsFromInterfaces(ProceedingJoinPoint pjp, Method mostSpecificMethod,
             List<AnnotatedParameter> annotatedParameters) {
         Class<?>[] implementedInterfaces = pjp.getThis().getClass().getInterfaces();
-        if (implementedInterfaces.length > 0) {
-            for (Class<?> implementedInterface : implementedInterfaces) {
-                for (Method methodFromInterface : implementedInterface.getMethods()) {
-                    if (methodsAreTheSame(mostSpecificMethod, methodFromInterface)) {
-                        List<AnnotatedParameter> annotatedParametersForActualMethod = AnnotationUtils
-                            .findAnnotatedParameters(annotationClass, methodFromInterface, pjp.getArgs());
-                        mergeAnnotatedParameters(annotatedParameters, annotatedParametersForActualMethod);
-                    }
+        for (Class<?> implementedInterface : implementedInterfaces) {
+            for (Method methodFromInterface : implementedInterface.getMethods()) {
+                if (methodsAreTheSame(mostSpecificMethod, methodFromInterface)) {
+                    List<AnnotatedParameter> annotatedParametersForActualMethod = AnnotationUtils
+                        .findAnnotatedParameters(annotationClass, methodFromInterface, pjp.getArgs());
+                    mergeAnnotatedParameters(annotatedParameters, annotatedParametersForActualMethod);
                 }
             }
         }
     }
 
-    private boolean methodsAreTheSame(Method mostSpecificMethod, Method method1) {
-        return method1.getName().equals(mostSpecificMethod.getName())
-                && Arrays.equals(method1.getParameterTypes(), mostSpecificMethod.getParameterTypes());
+    private boolean methodsAreTheSame(Method mostSpecificMethod, Method method) {
+        return method.getName().equals(mostSpecificMethod.getName())
+                && Arrays.equals(method.getParameterTypes(), mostSpecificMethod.getParameterTypes());
     }
 
-    private void mergeAnnotatedParameters(List<AnnotatedParameter> annotatedParametersIndices,
-            List<AnnotatedParameter> annotatedParametersIndicesForActualMethod) {
-        for (AnnotatedParameter container : annotatedParametersIndicesForActualMethod) {
+    private void mergeAnnotatedParameters(List<AnnotatedParameter> annotatedParameters,
+            List<AnnotatedParameter> annotatedParametersForActualMethod) {
+        for (AnnotatedParameter container : annotatedParametersForActualMethod) {
             final int index = container.parameterIndex;
             boolean parameterContained = false;
-            for (AnnotatedParameter parameterContainer : annotatedParametersIndices) {
+            for (AnnotatedParameter parameterContainer : annotatedParameters) {
                 if (parameterContainer.parameterIndex == index) {
                     parameterContained = true;
                     break;
                 }
             }
             if (!parameterContained) {
-                annotatedParametersIndices.add(container);
+                annotatedParameters.add(container);
             }
         }
     }
 
-    private void addAnnotatedArguments(T objectToTag, List<AnnotatedParameter> toBeAdded) {
+    private void addAnnotatedArguments(T objectToModify, List<AnnotatedParameter> toBeAdded) {
         for (AnnotatedParameter container : toBeAdded) {
             KeyValue keyValue = toKeyValue.apply(container.annotation, container.argument);
-            keyValueConsumer.accept(keyValue, objectToTag);
+            keyValueConsumer.accept(keyValue, objectToModify);
         }
     }
 

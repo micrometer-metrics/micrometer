@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 VMware, Inc.
+ * Copyright 2023 VMware, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,7 @@ class SpelValueExpressionResolver implements ValueExpressionResolver {
             return expressionToEvaluate.getValue(context, parameter, String.class);
         }
         catch (Exception ex) {
-            log.error("Exception occurred while tying to evaluate the SPEL expression [" + expression + "]", ex);
+            log.error("Exception occurred while trying to evaluate the SpEL expression [" + expression + "]", ex);
         }
         return parameter.toString();
     }

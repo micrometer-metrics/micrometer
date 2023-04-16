@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 the original author or authors.
+ * Copyright 2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,8 +28,8 @@ import java.lang.annotation.*;
  * expression just return a {@code toString()} value of the parameter.
  *
  * IMPORTANT: Provided tag values MUST BE of LOW-CARDINALITY. If you fail to provide
- * low-cardinality values, that can lead to performance issues of your metrics back end.
- * Values should not come from the end-user since those most likely be high-cardinality.
+ * low-cardinality values, that can lead to performance issues of your metrics backend.
+ * Values should not come from the end-user since those could be high-cardinality.
  *
  * @author Christian Schwerdtfeger
  * @author Marcin Grzejszczak
@@ -42,22 +42,22 @@ public @interface MeterTag {
 
     /**
      * The name of the key of the tag which should be created. This is an alias for
-     * {@link MeterTag#key()}.
-     * @return the tag key
+     * {@link #key()}.
+     * @return the tag key name
      */
     String value() default "";
 
     /**
      * The name of the key of the tag which should be created.
-     * @return the tag value
+     * @return the tag key name
      */
     String key() default "";
 
     /**
-     * Execute this expression to calculate the tag value. Will be analyzed if no value of
-     * the {@link MeterTag#resolver()} was set. You need to have a
-     * {@link ValueExpressionResolver} registered on the {@link MeterAnnotationHandler} to
-     * provide the expression resolution engine.
+     * Execute this expression to calculate the tag value. Will be evaluated if no value
+     * of the {@link #resolver()} was set. You need to have a
+     * {@link ValueExpressionResolver} registered on the {@link MeterTagAnnotationHandler}
+     * to provide the expression resolution engine.
      * @return an expression
      */
     String expression() default "";

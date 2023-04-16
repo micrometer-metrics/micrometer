@@ -24,61 +24,44 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.fail;
 
-class NullMeterAnnotationHandlerTests {
+class NullMeterTagAnnotationHandlerTests {
 
     ValueResolver valueResolver = parameter -> null;
 
-    ValueExpressionResolver valueExpressionResolver = (expression, parameter) -> "";
-
-    MeterAnnotationHandler handler = new MeterAnnotationHandler(aClass -> valueResolver,
-            aClass -> valueExpressionResolver);
+    ValueExpressionResolver valueExpressionResolver = (expression, parameter) -> null;
 
     @Test
-    void shouldUseEmptyStringWheCustomTagValueResolverReturnsNull() throws NoSuchMethodException, SecurityException {
+    void shouldUseEmptyStringWhenCustomTagValueResolverReturnsNull() throws NoSuchMethodException, SecurityException {
         Method method = AnnotationMockClass.class.getMethod("getAnnotationForTagValueResolver", String.class);
         Annotation annotation = method.getParameterAnnotations()[0][0];
-        if (annotation instanceof MeterTag) {
-            String resolvedValue = this.handler.resolveTagValue((MeterTag) annotation, "test", aClass -> valueResolver,
-                    aClass -> valueExpressionResolver);
-            assertThat(resolvedValue).isEqualTo("");
-        }
-        else {
-            fail("Annotation was not MetricTag");
-        }
+        assertThat(annotation).isInstanceOf(MeterTag.class);
+        String resolvedValue = MeterTagAnnotationHandler.resolveTagValue((MeterTag) annotation, "test",
+                aClass -> valueResolver, aClass -> valueExpressionResolver);
+        assertThat(resolvedValue).isEmpty();
     }
 
     @Test
     void shouldUseEmptyStringWhenTagValueExpressionReturnNull() throws NoSuchMethodException, SecurityException {
         Method method = AnnotationMockClass.class.getMethod("getAnnotationForTagValueExpression", String.class);
         Annotation annotation = method.getParameterAnnotations()[0][0];
-        if (annotation instanceof MeterTag) {
-            String resolvedValue = this.handler.resolveTagValue((MeterTag) annotation, "test", aClass -> valueResolver,
-                    aClass -> valueExpressionResolver);
-
-            assertThat(resolvedValue).isEqualTo("");
-        }
-        else {
-            fail("Annotation was not MetricTag");
-        }
+        assertThat(annotation).isInstanceOf(MeterTag.class);
+        String resolvedValue = MeterTagAnnotationHandler.resolveTagValue((MeterTag) annotation, "test",
+                aClass -> valueResolver, aClass -> valueExpressionResolver);
+        assertThat(resolvedValue).isEmpty();
     }
 
     @Test
     void shouldUseEmptyStringWhenArgumentIsNull() throws NoSuchMethodException, SecurityException {
         Method method = AnnotationMockClass.class.getMethod("getAnnotationForArgumentToString", Long.class);
         Annotation annotation = method.getParameterAnnotations()[0][0];
-        if (annotation instanceof MeterTag) {
-            String resolvedValue = this.handler.resolveTagValue((MeterTag) annotation, null, aClass -> valueResolver,
-                    aClass -> valueExpressionResolver);
-            assertThat(resolvedValue).isEqualTo("");
-        }
-        else {
-            fail("Annotation was not SpanTag");
-        }
+        assertThat(annotation).isInstanceOf(MeterTag.class);
+        String resolvedValue = MeterTagAnnotationHandler.resolveTagValue((MeterTag) annotation, null,
+                aClass -> valueResolver, aClass -> valueExpressionResolver);
+        assertThat(resolvedValue).isEmpty();
     }
 
-    protected class AnnotationMockClass {
+    static class AnnotationMockClass {
 
         @Timed
         public void getAnnotationForTagValueResolver(

@@ -380,18 +380,20 @@ class TimedAspectTest {
 
         ValueExpressionResolver valueExpressionResolver = new SpelValueExpressionResolver();
 
+        MeterTagAnnotationHandler meterTagAnnotationHandler = new MeterTagAnnotationHandler(aClass -> valueResolver,
+                aClass -> valueExpressionResolver);
+
         @ParameterizedTest
         @EnumSource(AnnotatedTestClass.class)
-        void metricTagsWithText(AnnotatedTestClass annotatedClass) {
+        void meterTagsWithText(AnnotatedTestClass annotatedClass) {
             MeterRegistry registry = new SimpleMeterRegistry();
             TimedAspect timedAspect = new TimedAspect(registry);
-            timedAspect.setMetricsTagAnnotationHandler(
-                    new MeterAnnotationHandler(aClass -> valueResolver, aClass -> valueExpressionResolver));
+            timedAspect.setMeterTagAnnotationHandler(meterTagAnnotationHandler);
 
             AspectJProxyFactory pf = new AspectJProxyFactory(annotatedClass.newInstance());
             pf.addAspect(timedAspect);
 
-            MetricTagClassInterface service = pf.getProxy();
+            MeterTagClassInterface service = pf.getProxy();
 
             service.getAnnotationForArgumentToString(15L);
 
@@ -400,16 +402,15 @@ class TimedAspectTest {
 
         @ParameterizedTest
         @EnumSource(AnnotatedTestClass.class)
-        void metricTagsWithResolver(AnnotatedTestClass annotatedClass) {
+        void meterTagsWithResolver(AnnotatedTestClass annotatedClass) {
             MeterRegistry registry = new SimpleMeterRegistry();
             TimedAspect timedAspect = new TimedAspect(registry);
-            timedAspect.setMetricsTagAnnotationHandler(
-                    new MeterAnnotationHandler(aClass -> valueResolver, aClass -> valueExpressionResolver));
+            timedAspect.setMeterTagAnnotationHandler(meterTagAnnotationHandler);
 
             AspectJProxyFactory pf = new AspectJProxyFactory(annotatedClass.newInstance());
             pf.addAspect(timedAspect);
 
-            MetricTagClassInterface service = pf.getProxy();
+            MeterTagClassInterface service = pf.getProxy();
 
             service.getAnnotationForTagValueResolver("foo");
 
@@ -421,16 +422,15 @@ class TimedAspectTest {
 
         @ParameterizedTest
         @EnumSource(AnnotatedTestClass.class)
-        void metricTagsWithExpression(AnnotatedTestClass annotatedClass) {
+        void meterTagsWithExpression(AnnotatedTestClass annotatedClass) {
             MeterRegistry registry = new SimpleMeterRegistry();
             TimedAspect timedAspect = new TimedAspect(registry);
-            timedAspect.setMetricsTagAnnotationHandler(
-                    new MeterAnnotationHandler(aClass -> valueResolver, aClass -> valueExpressionResolver));
+            timedAspect.setMeterTagAnnotationHandler(meterTagAnnotationHandler);
 
             AspectJProxyFactory pf = new AspectJProxyFactory(annotatedClass.newInstance());
             pf.addAspect(timedAspect);
 
-            MetricTagClassInterface service = pf.getProxy();
+            MeterTagClassInterface service = pf.getProxy();
 
             service.getAnnotationForTagValueExpression("15L");
 
@@ -439,16 +439,16 @@ class TimedAspectTest {
 
         enum AnnotatedTestClass {
 
-            CLASS_WITHOUT_INTERFACE(MetricTagClass.class), CLASS_WITH_INTERFACE(MetricTagClassChild.class);
+            CLASS_WITHOUT_INTERFACE(MeterTagClass.class), CLASS_WITH_INTERFACE(MeterTagClassChild.class);
 
-            private final Class<? extends MetricTagClassInterface> clazz;
+            private final Class<? extends MeterTagClassInterface> clazz;
 
-            AnnotatedTestClass(Class<? extends MetricTagClassInterface> clazz) {
+            AnnotatedTestClass(Class<? extends MeterTagClassInterface> clazz) {
                 this.clazz = clazz;
             }
 
             @SuppressWarnings("unchecked")
-            <T extends MetricTagClassInterface> T newInstance() {
+            <T extends MeterTagClassInterface> T newInstance() {
                 try {
                     return (T) clazz.getDeclaredConstructor().newInstance();
                 }
@@ -459,7 +459,7 @@ class TimedAspectTest {
 
         }
 
-        protected interface MetricTagClassInterface {
+        interface MeterTagClassInterface {
 
             @Timed
             void getAnnotationForTagValueResolver(@MeterTag(key = "test", resolver = ValueResolver.class) String test);
@@ -473,7 +473,7 @@ class TimedAspectTest {
 
         }
 
-        protected static class MetricTagClass implements MetricTagClassInterface {
+        static class MeterTagClass implements MeterTagClassInterface {
 
             @Timed
             @Override
@@ -494,17 +494,20 @@ class TimedAspectTest {
 
         }
 
-        protected static class MetricTagClassChild implements MetricTagClassInterface {
+        static class MeterTagClassChild implements MeterTagClassInterface {
 
             @Timed
+            @Override
             public void getAnnotationForTagValueResolver(String test) {
             }
 
             @Timed
+            @Override
             public void getAnnotationForTagValueExpression(String test) {
             }
 
             @Timed
+            @Override
             public void getAnnotationForArgumentToString(Long param) {
             }
 
