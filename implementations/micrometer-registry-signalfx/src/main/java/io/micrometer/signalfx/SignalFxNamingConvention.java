@@ -27,9 +27,9 @@ import java.util.regex.Pattern;
 /**
  * {@link NamingConvention} for SignalFx.
  *
- * @see <a href="https://docs.splunk.com/Observability/metrics-and-metadata/metric-names.html">
- *     Naming conventions for metrics and dimensions</a>
- *
+ * @see <a href=
+ * "https://docs.splunk.com/Observability/metrics-and-metadata/metric-names.html"> Naming
+ * conventions for metrics and dimensions</a>
  * @author Jon Schneider
  * @author Johnny Lim
  */
@@ -74,10 +74,42 @@ public class SignalFxNamingConvention implements NamingConvention {
         String conventionKey = delegate.tagKey(key);
         conventionKey = PATTERN_TAG_KEY_DENYLISTED_CHARS.matcher(conventionKey).replaceAll("_");
 
-        if (conventionKey.startsWith("sf_") || !Character.isLetter(conventionKey.charAt(0))) {
+        if (conventionKey.length() < 1) {
+            return conventionKey;
+        }
+
+        int i = 0;
+        while (conventionKey.length() > i) {
+            if (conventionKey.startsWith("sf_", i)) {
+                i += 3;
+                continue;
+            }
+            if (conventionKey.startsWith("_", i)) {
+                i += 1;
+                continue;
+            }
+            break;
+        }
+
+        if (i > 0) {
+            conventionKey = conventionKey.substring(i);
+            if (conventionKey.length() < 1) {
+                return conventionKey;
+            }
+        }
+
+        if (!Character.isLetter(conventionKey.charAt(0))) {
             logger.log(conventionKey
                     + " doesn't adhere to SignalFx naming standards. Prefixing the tag/dimension key with 'a'.");
             conventionKey = "a" + conventionKey;
+        }
+
+        if (conventionKey.startsWith("aws_") || conventionKey.startsWith("gcp_")
+                || conventionKey.startsWith("azure_")) {
+            logger.log("'" + conventionKey + "' (original name: '" + key + "') is not a valid tag key. "
+                    + "Must not start with any of these prefixes: aws_, gcp_, or azure_. "
+                    + "Please rename it to conform to the constraints. "
+                    + "If it comes from a third party, please use MeterFilter to rename it.");
         }
 
         return StringUtils.truncate(conventionKey, KEY_MAX_LENGTH);
