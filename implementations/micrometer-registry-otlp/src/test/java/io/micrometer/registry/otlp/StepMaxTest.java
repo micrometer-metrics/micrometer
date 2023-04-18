@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.core.instrument.step;
+package io.micrometer.registry.otlp;
 
 import io.micrometer.core.instrument.MockClock;
 import org.junit.jupiter.api.BeforeEach;
@@ -45,27 +45,12 @@ class StepMaxTest {
         assertThat(max.poll()).isEqualTo(10);
         max.record(1.0);
         max.record(11);
-        clock.add(step.minusMillis(1));
+        clock.add(Duration.ofMillis(5));
         assertThat(max.poll()).isEqualTo(10);
-        clock.add(Duration.ofMillis(1));
+        clock.add(Duration.ofMillis(5));
         assertThat(max.poll()).isEqualTo(11);
         clock.add(step);
         assertThat(max.poll()).isZero();
-    }
-
-    @Test
-    void shouldPreserveCurrentAfterManualRollover() {
-        StepMax max = new StepMax(clock, step.toMillis());
-
-        max.record(11);
-        clock.add(step);
-        assertThat(max.poll()).isEqualTo(11);
-        max._closingRollover();
-        clock.add(step);
-        assertThat(max.poll()).isEqualTo(11);
-        max.record(100);
-        clock.add(step);
-        assertThat(max.poll()).isEqualTo(11);
     }
 
 }

@@ -20,7 +20,6 @@ import io.micrometer.core.instrument.AbstractTimer;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.distribution.*;
 import io.micrometer.core.instrument.distribution.pause.PauseDetector;
-import io.micrometer.core.instrument.step.StepMax;
 import io.micrometer.core.instrument.step.StepTuple2;
 import io.micrometer.core.instrument.util.TimeUtils;
 

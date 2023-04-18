@@ -20,7 +20,6 @@ import io.micrometer.core.instrument.AbstractDistributionSummary;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.StepHistogram;
-import io.micrometer.core.instrument.step.StepMax;
 import io.micrometer.core.instrument.step.StepTuple2;
 
 import java.util.concurrent.TimeUnit;

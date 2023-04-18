@@ -13,9 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.core.instrument.step;
+package io.micrometer.registry.otlp;
 
 import io.micrometer.core.instrument.Clock;
+import io.micrometer.core.instrument.step.StepValue;
 
 import java.util.concurrent.atomic.DoubleAccumulator;
 import java.util.function.Supplier;
@@ -26,7 +27,7 @@ import java.util.function.Supplier;
  * @author Lenin Jaganathan
  * @since 1.11.0
  */
-public class StepMax extends StepValue<Double> implements StepMeter {
+class StepMax extends StepValue<Double> {
 
     private final DoubleAccumulator current = new DoubleAccumulator(Double::max, 0);
 
@@ -46,11 +47,6 @@ public class StepMax extends StepValue<Double> implements StepMeter {
 
     public void record(double value) {
         current.accumulate(value);
-    }
-
-    @Override
-    public void _closingRollover() {
-        super.closingRollover();
     }
 
 }
