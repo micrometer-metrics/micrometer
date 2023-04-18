@@ -41,7 +41,7 @@ final class AnnotationUtils {
         int i = 0;
         for (Annotation[] parameter : parameters) {
             for (Annotation parameter2 : parameter) {
-                if (annotationClazz.isAssignableFrom(parameter2.getClass())) {
+                if (annotationClazz.isAssignableFrom(parameter2.annotationType())) {
                     result.add(new AnnotatedParameter(i, parameter2, args[i]));
                 }
             }
