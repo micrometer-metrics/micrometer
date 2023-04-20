@@ -19,6 +19,7 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 
 import io.micrometer.common.docs.KeyName;
+import io.micrometer.common.docs.Type;
 
 /**
  * Key/value pair representing a dimension of a meter used to classify and drill into
@@ -38,6 +39,14 @@ public interface KeyValue extends Comparable<KeyValue> {
 
     String getValue();
 
+    default Type getType() {
+        return Type.STRING;
+    }
+
+    default Object getTypedValue() {
+        return getValue();
+    }
+
     /**
      * Creates a {@link KeyValue} for the given key and value.
      * @param key key of the KeyValue
@@ -45,7 +54,67 @@ public interface KeyValue extends Comparable<KeyValue> {
      * @return KeyValue
      */
     static KeyValue of(String key, String value) {
-        return new ImmutableKeyValue(key, value);
+        return new TypedKeyValue<>(key, value, Type.STRING);
+    }
+
+    /**
+     * Creates a {@link KeyValue} for the given key and value.
+     * @param key key of the KeyValue
+     * @param value value for key
+     * @return KeyValue
+     */
+    static TypedKeyValue<Boolean> of(String key, boolean value) {
+        return new TypedKeyValue<>(key, value, Type.BOOLEAN);
+    }
+
+    /**
+     * Creates a {@link KeyValue} for the given key and value.
+     * @param key key of the KeyValue
+     * @param value value for key
+     * @return KeyValue
+     */
+    static TypedKeyValue<Double> of(String key, double value) {
+        return new TypedKeyValue<>(key, value, Type.DOUBLE);
+    }
+
+    /**
+     * Creates a {@link KeyValue} for the given key and value.
+     * @param key key of the KeyValue
+     * @param value value for key
+     * @return KeyValue
+     */
+    static TypedKeyValue<Long> of(String key, long value) {
+        return new TypedKeyValue<>(key, value, Type.LONG);
+    }
+
+    /**
+     * Creates a {@link KeyValue} for the given {@link KeyName} and value.
+     * @param keyName name of the key of the KeyValue
+     * @param value value for key
+     * @return KeyValue
+     */
+    static KeyValue of(KeyName keyName, double value) {
+        return KeyValue.of(keyName.asString(), value);
+    }
+
+    /**
+     * Creates a {@link KeyValue} for the given {@link KeyName} and value.
+     * @param keyName name of the key of the KeyValue
+     * @param value value for key
+     * @return KeyValue
+     */
+    static KeyValue of(KeyName keyName, long value) {
+        return KeyValue.of(keyName.asString(), value);
+    }
+
+    /**
+     * Creates a {@link KeyValue} for the given {@link KeyName} and value.
+     * @param keyName name of the key of the KeyValue
+     * @param value value for key
+     * @return KeyValue
+     */
+    static KeyValue of(KeyName keyName, boolean value) {
+        return KeyValue.of(keyName.asString(), value);
     }
 
     /**

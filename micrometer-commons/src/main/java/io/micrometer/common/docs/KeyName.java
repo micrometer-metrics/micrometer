@@ -49,6 +49,33 @@ public interface KeyName {
     /**
      * Creates a key value for the given key name.
      * @param value value for key
+     * @return key value
+     */
+    default KeyValue withValue(double value) {
+        return KeyValue.of(this, value);
+    }
+
+    /**
+     * Creates a key value for the given key name.
+     * @param value value for key
+     * @return key value
+     */
+    default KeyValue withValue(long value) {
+        return KeyValue.of(this, value);
+    }
+
+    /**
+     * Creates a key value for the given key name.
+     * @param value value for key
+     * @return key value
+     */
+    default KeyValue withValue(boolean value) {
+        return KeyValue.of(this, value);
+    }
+
+    /**
+     * Creates a key value for the given key name.
+     * @param value value for key
      * @param validator value validator
      * @return key value
      */
