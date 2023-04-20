@@ -151,15 +151,19 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
     @Override
     protected Timer newTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig,
             PauseDetector pauseDetector) {
-        return new OtlpTimer(id, clock, distributionStatisticConfig, config.step().toMillis(), pauseDetector,
-                getBaseTimeUnit(), otlpAggregationTemporality);
+        return isCumulative()
+                ? new OtlpCumulativeTimer(id, this.clock, distributionStatisticConfig, pauseDetector, getBaseTimeUnit())
+                : new OtlpStepTimer(id, clock, distributionStatisticConfig, pauseDetector, getBaseTimeUnit(),
+                        config.step().toMillis());
     }
 
     @Override
     protected DistributionSummary newDistributionSummary(Meter.Id id,
             DistributionStatisticConfig distributionStatisticConfig, double scale) {
-        return new OtlpDistributionSummary(id, clock, distributionStatisticConfig, scale, config.step().toMillis(),
-                otlpAggregationTemporality);
+        return isCumulative()
+                ? new OtlpCumulativeDistributionSummary(id, this.clock, distributionStatisticConfig, scale, true)
+                : new OtlpStepDistributionSummary(id, clock, distributionStatisticConfig, scale,
+                        config.step().toMillis());
     }
 
     @Override
@@ -386,9 +390,14 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
         return attributes;
     }
 
-    static io.micrometer.core.instrument.distribution.Histogram getHistogram(Clock clock, long stepMillis,
-            DistributionStatisticConfig distributionStatisticConfig,
-            io.opentelemetry.proto.metrics.v1.AggregationTemporality aggregationTemporality) {
+    static io.micrometer.core.instrument.distribution.Histogram getHistogram(Clock clock,
+            DistributionStatisticConfig distributionStatisticConfig, AggregationTemporality aggregationTemporality) {
+        return getHistogram(clock, distributionStatisticConfig, aggregationTemporality, 0);
+    }
+
+    static io.micrometer.core.instrument.distribution.Histogram getHistogram(Clock clock,
+            DistributionStatisticConfig distributionStatisticConfig, AggregationTemporality aggregationTemporality,
+            long stepMillis) {
         // While publishing to OTLP, we export either Histogram datapoint / Summary
         // datapoint. So, we will make the histogram either of them and not both.
         // Though AbstractTimer/Distribution Summary prefers publishing percentiles,
@@ -403,7 +412,7 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
                     .build()
                     .merge(distributionStatisticConfig), true, false);
             }
-            else if (AggregationTemporality.isDelta(aggregationTemporality)) {
+            else if (AggregationTemporality.isDelta(aggregationTemporality) && stepMillis > 0) {
                 return new StepHistogram(clock, stepMillis, distributionStatisticConfig);
             }
         }

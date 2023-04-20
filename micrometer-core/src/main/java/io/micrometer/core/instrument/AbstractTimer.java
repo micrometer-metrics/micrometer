@@ -87,12 +87,12 @@ public abstract class AbstractTimer extends AbstractMeter implements Timer {
     }
 
     protected AbstractTimer(Id id, Clock clock, PauseDetector pauseDetector, TimeUnit baseTimeUnit,
-            @Nullable Histogram histogram) {
+            Histogram histogram) {
         super(id);
         this.clock = clock;
         this.baseTimeUnit = baseTimeUnit;
         initPauseDetector(pauseDetector);
-        this.histogram = histogram == null ? NoopHistogram.INSTANCE : histogram;
+        this.histogram = histogram;
     }
 
     protected static Histogram defaultHistogram(Clock clock, DistributionStatisticConfig distributionStatisticConfig,
