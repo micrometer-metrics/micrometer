@@ -55,6 +55,8 @@ class ObservationThreadLocalAccessorTests {
 
         // given
         Observation parent = Observation.start("parent", observationRegistry);
+        Observation other1 = Observation.start("other1", observationRegistry);
+        Observation other2 = Observation.start("other2", observationRegistry);
         Observation child = Observation.createNotStarted("foo", observationRegistry).parentObservation(parent).start();
         thenCurrentObservationIsNull();
 
@@ -63,18 +65,37 @@ class ObservationThreadLocalAccessorTests {
         try (Observation.Scope scope = child.openScope()) {
             thenCurrentObservationHasParent(parent, child);
             thenCurrentScopeHasParent(null);
-            container = ContextSnapshot.captureAllUsing(key -> true, registry);
+            then(child.getEnclosingScope()).isNull();
         }
 
+        try (Observation.Scope scope = other1.openScope()) {
+            try (Observation.Scope scope2 = child.openScope()) {
+                thenCurrentObservationHasParent(parent, child);
+                then(child.getEnclosingScope()).isSameAs(scope);
+            }
+        }
+
+        try (Observation.Scope scope = other2.openScope()) {
+            try (Observation.Scope scope2 = child.openScope()) {
+                thenCurrentObservationHasParent(parent, child);
+                then(child.getEnclosingScope()).isSameAs(scope);
+                container = ContextSnapshot.captureAllUsing(key -> true, registry);
+            }
+        }
+
+        then(child.getEnclosingScope()).isNull();
         thenCurrentObservationIsNull();
 
         // when first scope created
         try (ContextSnapshot.Scope scope = container.setThreadLocals()) {
             thenCurrentObservationHasParent(parent, child);
             Scope inScope = thenCurrentScopeHasParent(null);
+            then(child.getEnclosingScope()).isNull();
+            Observation.Scope observationScope = observationRegistry.getCurrentObservationScope();
 
             // when second, nested scope created
             try (ContextSnapshot.Scope scope2 = container.setThreadLocals()) {
+                then(child.getEnclosingScope()).isSameAs(observationScope);
                 thenCurrentObservationHasParent(parent, child);
                 Scope inSecondScope = thenCurrentScopeHasParent(inScope);
 
@@ -91,8 +112,14 @@ class ObservationThreadLocalAccessorTests {
 
         thenCurrentObservationIsNull();
 
+        then(child.getEnclosingScope()).isNull();
+        then(parent.getEnclosingScope()).isNull();
+
         child.stop();
         parent.stop();
+
+        then(child.getEnclosingScope()).isNull();
+        then(parent.getEnclosingScope()).isNull();
     }
 
     private void thenCurrentObservationHasParent(Observation parent, Observation observation) {

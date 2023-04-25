@@ -32,7 +32,7 @@ public interface ObservationView {
     ContextView getContextView();
 
     /**
-     * Returns the last scope attached to this {@link ObservationView} in this thread.
+     * Pops the last scope attached to this {@link ObservationView} in this thread.
      * @return scope for this {@link ObservationView}, {@code null} if there was no scope
      * @since 1.10.6
      */
