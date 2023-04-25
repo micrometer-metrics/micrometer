@@ -24,6 +24,8 @@ import java.util.ArrayDeque;
 import java.util.Collection;
 import java.util.Deque;
 import java.util.Iterator;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Default implementation of {@link Observation}.
@@ -48,7 +50,7 @@ class SimpleObservation implements Observation {
 
     private final Collection<ObservationFilter> filters;
 
-    private final ThreadLocal<Deque<Scope>> enclosingScopes = ThreadLocal.withInitial(ArrayDeque::new);
+    private final Map<Thread, Deque<Scope>> enclosingScopes = new ConcurrentHashMap<>();
 
     SimpleObservation(@Nullable String name, ObservationRegistry registry, Context context) {
         this.registry = registry;
@@ -190,12 +192,15 @@ class SimpleObservation implements Observation {
         }
 
         notifyOnObservationStopped(modifiedContext);
-        this.enclosingScopes.remove();
     }
 
     @Override
     public Scope openScope() {
-        Deque<Scope> scopes = enclosingScopes.get();
+        Deque<Scope> scopes = enclosingScopes.get(Thread.currentThread());
+        if (scopes == null) {
+            scopes = new ArrayDeque<>();
+            enclosingScopes.put(Thread.currentThread(), scopes);
+        }
         Scope currentScope = registry.getCurrentObservationScope();
         if (currentScope != null) {
             scopes.addFirst(currentScope);
@@ -208,9 +213,9 @@ class SimpleObservation implements Observation {
     @Nullable
     @Override
     public Scope getEnclosingScope() {
-        Deque<Scope> scopes = enclosingScopes.get();
-        if (!scopes.isEmpty()) {
-            return scopes.getFirst();
+        Deque<Scope> scopes = enclosingScopes.get(Thread.currentThread());
+        if (scopes != null && !scopes.isEmpty()) {
+            return scopes.pop();
         }
         return null;
     }
@@ -304,10 +309,10 @@ class SimpleObservation implements Observation {
 
         @Override
         public void close() {
-            Deque<Scope> enclosingScopes = this.currentObservation.enclosingScopes.get();
+            Deque<Scope> enclosingScopes = this.currentObservation.enclosingScopes.get(Thread.currentThread());
             // If we're closing a scope then we have to remove an enclosing scope from the
             // deque
-            if (!enclosingScopes.isEmpty()) {
+            if (enclosingScopes != null && !enclosingScopes.isEmpty()) {
                 enclosingScopes.removeFirst();
             }
             this.registry.setCurrentObservationScope(previousObservationScope);
@@ -327,6 +332,7 @@ class SimpleObservation implements Observation {
                 scope = (SimpleScope) scope.previousObservationScope;
             }
             while (scope != null);
+            this.registry.setCurrentObservationScope(null);
         }
 
         /**
@@ -349,12 +355,6 @@ class SimpleObservation implements Observation {
         @Override
         public void makeCurrent() {
             this.currentObservation.notifyOnScopeReset();
-            // When we make an enclosing scope current we must remove it from the top of
-            // the deque of enclosing scopes (since it will no longer be enclosing)
-            Deque<Scope> scopeDeque = this.currentObservation.enclosingScopes.get();
-            if (!scopeDeque.isEmpty()) {
-                scopeDeque.removeFirst();
-            }
             Deque<SimpleScope> scopes = new ArrayDeque<>();
             SimpleScope scope = this;
             do {
