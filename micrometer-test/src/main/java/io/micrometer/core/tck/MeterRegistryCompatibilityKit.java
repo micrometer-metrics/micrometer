@@ -293,7 +293,7 @@ public abstract class MeterRegistryCompatibilityKit {
             // ensure time-window based histograms are not fully rotated when we assert
             clock(registry).add(step().dividedBy(2));
             s.record(1);
-            // accommodate StepHistogram
+            // accommodate StepBucketHistogram
             clock(registry).add(step().dividedBy(2));
             assertThat(s.histogramCountAtValue(1)).isEqualTo(1);
             assertThat(s.histogramCountAtValue(2)).isNaN();
@@ -743,7 +743,7 @@ public abstract class MeterRegistryCompatibilityKit {
             // ensure time-window based histograms are not fully rotated when we assert
             clock(registry).add(step().dividedBy(2));
             t.record(1, TimeUnit.MILLISECONDS);
-            // accommodate StepHistogram
+            // accommodate StepBucketHistogram
             clock(registry).add(step().dividedBy(2));
             assertThat(t.histogramCountAtValue((long) millisToUnit(1, TimeUnit.NANOSECONDS))).isEqualTo(1);
             assertThat(t.histogramCountAtValue(1)).isNaN();

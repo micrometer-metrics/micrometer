@@ -30,7 +30,7 @@ import java.util.function.Supplier;
  * @author Lenin Jaganathan
  * @since 1.11.0
  */
-public class StepHistogram extends StepValue<CountAtBucket[]> implements Histogram {
+public class StepBucketHistogram extends StepValue<CountAtBucket[]> implements Histogram {
 
     private static final CountAtBucket[] EMPTY_COUNTS = new CountAtBucket[0];
 
@@ -38,7 +38,8 @@ public class StepHistogram extends StepValue<CountAtBucket[]> implements Histogr
 
     private final double[] buckets;
 
-    public StepHistogram(Clock clock, long stepMillis, DistributionStatisticConfig distributionStatisticConfig) {
+    public StepBucketHistogram(Clock clock, long stepMillis, DistributionStatisticConfig distributionStatisticConfig,
+            boolean supportsAggregablePercentiles) {
         super(clock, stepMillis);
 
         if (distributionStatisticConfig.getMaximumExpectedValueAsDouble() == null
@@ -46,7 +47,8 @@ public class StepHistogram extends StepValue<CountAtBucket[]> implements Histogr
             throw new InvalidConfigurationException(
                     "minimumExpectedValue and maximumExpectedValue should be greater than 0.");
         }
-        NavigableSet<Double> histogramBuckets = distributionStatisticConfig.getHistogramBuckets(true);
+        NavigableSet<Double> histogramBuckets = distributionStatisticConfig
+            .getHistogramBuckets(supportsAggregablePercentiles);
 
         this.buckets = histogramBuckets.stream().filter(Objects::nonNull).mapToDouble(Double::doubleValue).toArray();
         this.fixedBoundaryHistogram = new FixedBoundaryHistogram(buckets);
