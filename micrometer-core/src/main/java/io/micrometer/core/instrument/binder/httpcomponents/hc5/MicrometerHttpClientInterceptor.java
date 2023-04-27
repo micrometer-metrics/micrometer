@@ -19,6 +19,7 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.instrument.binder.http.Outcome;
 import org.apache.hc.core5.http.HttpRequest;
 import org.apache.hc.core5.http.HttpRequestInterceptor;
 import org.apache.hc.core5.http.HttpResponseInterceptor;
@@ -72,6 +73,7 @@ public class MicrometerHttpClientInterceptor {
         this.responseInterceptor = (response, entityDetails, context) -> {
             timerByHttpContext.remove(context)
                 .tag("status", Integer.toString(response.getCode()))
+                .tag("outcome", Outcome.forStatus(response.getCode()).name())
                 .tags(exportTagsForRoute ? HttpContextUtils.generateTagsForRoute(context) : Tags.empty())
                 .tags(extraTags)
                 .close();
