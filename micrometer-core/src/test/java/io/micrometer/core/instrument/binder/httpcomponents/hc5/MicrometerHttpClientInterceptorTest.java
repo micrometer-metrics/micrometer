@@ -72,7 +72,8 @@ class MicrometerHttpClientInterceptorTest {
                 .tag("method", "GET")
                 .tag("status", "200")
                 .tag("outcome", "SUCCESS")
-                .timer().count()).isEqualTo(1);
+                .timer()
+                .count()).isEqualTo(1);
         }).doesNotThrowAnyException();
 
         client.close();
