@@ -48,6 +48,7 @@ dependencies {
     testImplementation 'com.hazelcast:hazelcast'
     testImplementation 'com.squareup.okhttp3:okhttp'
     testImplementation 'org.apache.httpcomponents:httpclient'
+    testImplementation 'org.apache.httpcomponents:httpasyncclient'
     testImplementation 'org.apache.httpcomponents.client5:httpclient5'
     testImplementation 'org.eclipse.jetty:jetty-client'
     testImplementation 'org.eclipse.jetty:jetty-server'

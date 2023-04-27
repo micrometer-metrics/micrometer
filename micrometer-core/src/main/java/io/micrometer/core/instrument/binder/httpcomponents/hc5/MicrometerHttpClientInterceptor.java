@@ -15,7 +15,6 @@
  */
 package io.micrometer.core.instrument.binder.httpcomponents.hc5;
 
-import io.micrometer.common.KeyValue;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
@@ -72,10 +71,9 @@ public class MicrometerHttpClientInterceptor {
                     .tags("method", request.getMethod(), "uri", uriMapper.apply(request)));
 
         this.responseInterceptor = (response, entityDetails, context) -> {
-            final KeyValue outcome = Outcome.forStatus(response.getCode()).asKeyValue();
             timerByHttpContext.remove(context)
                 .tag("status", Integer.toString(response.getCode()))
-                .tag(outcome.getKey(), outcome.getValue())
+                .tag("outcome", Outcome.forStatus(response.getCode()).name())
                 .tags(exportTagsForRoute ? HttpContextUtils.generateTagsForRoute(context) : Tags.empty())
                 .tags(extraTags)
                 .close();
