@@ -33,10 +33,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class OtlpDeltaMeterRegistryTest extends OtlpMeterRegistryTest {
 
-    @Override
     @BeforeEach
     void init() {
-        super.init();
         // Always assume that at least one step is completed.
         stepOverNStep(1);
     }
@@ -59,7 +57,7 @@ class OtlpDeltaMeterRegistryTest extends OtlpMeterRegistryTest {
     @Test
     void gauge() {
         Gauge gauge = Gauge.builder(METER_NAME, new AtomicInteger(5), AtomicInteger::doubleValue).register(registry);
-        Metric metric = publishTimeAwareWrite(gauge);
+        Metric metric = writeToMetric(gauge);
         assertThat(metric.getGauge()).isNotNull();
         assertThat(metric.getGauge().getDataPoints(0).getAsDouble()).isEqualTo(5);
         assertThat(metric.getGauge().getDataPoints(0).getTimeUnixNano()).isEqualTo(TimeUnit.MINUTES.toNanos(1));
@@ -69,7 +67,7 @@ class OtlpDeltaMeterRegistryTest extends OtlpMeterRegistryTest {
     void timeGauge() {
         TimeGauge timeGauge = TimeGauge.builder("gauge.time", this, TimeUnit.MICROSECONDS, o -> 24).register(registry);
 
-        Metric metric = publishTimeAwareWrite(timeGauge);
+        Metric metric = writeToMetric(timeGauge);
         assertThat(metric.getGauge()).isNotNull();
         assertThat(metric.getGauge().getDataPoints(0).getAsDouble()).isEqualTo(0.024);
         assertThat(metric.getGauge().getDataPoints(0).getTimeUnixNano()).isEqualTo(TimeUnit.MINUTES.toNanos(1));
@@ -83,13 +81,13 @@ class OtlpDeltaMeterRegistryTest extends OtlpMeterRegistryTest {
             .register(registry);
         counter.increment();
         counter.increment();
-        assertSum(publishTimeAwareWrite(counter), 0, TimeUnit.MINUTES.toNanos(1), 0);
+        assertSum(writeToMetric(counter), 0, TimeUnit.MINUTES.toNanos(1), 0);
         this.stepOverNStep(1);
-        assertSum(publishTimeAwareWrite(counter), TimeUnit.MINUTES.toNanos(1), TimeUnit.MINUTES.toNanos(2), 2);
+        assertSum(writeToMetric(counter), TimeUnit.MINUTES.toNanos(1), TimeUnit.MINUTES.toNanos(2), 2);
 
         this.stepOverNStep(1);
         counter.increment();
-        assertSum(publishTimeAwareWrite(counter), TimeUnit.MINUTES.toNanos(2), TimeUnit.MINUTES.toNanos(3), 1);
+        assertSum(writeToMetric(counter), TimeUnit.MINUTES.toNanos(2), TimeUnit.MINUTES.toNanos(3), 1);
     }
 
     @Test
@@ -102,11 +100,11 @@ class OtlpDeltaMeterRegistryTest extends OtlpMeterRegistryTest {
             .baseUnit("milliseconds")
             .register(registry);
 
-        assertSum(publishTimeAwareWrite(counter), 0, TimeUnit.MINUTES.toNanos(1), 0);
+        assertSum(writeToMetric(counter), 0, TimeUnit.MINUTES.toNanos(1), 0);
         this.stepOverNStep(1);
-        assertSum(publishTimeAwareWrite(counter), TimeUnit.MINUTES.toNanos(1), TimeUnit.MINUTES.toNanos(2), 10);
+        assertSum(writeToMetric(counter), TimeUnit.MINUTES.toNanos(1), TimeUnit.MINUTES.toNanos(2), 10);
         this.stepOverNStep(1);
-        assertSum(publishTimeAwareWrite(counter), TimeUnit.MINUTES.toNanos(2), TimeUnit.MINUTES.toNanos(3), 0);
+        assertSum(writeToMetric(counter), TimeUnit.MINUTES.toNanos(2), TimeUnit.MINUTES.toNanos(3), 0);
     }
 
     @Test
@@ -119,24 +117,24 @@ class OtlpDeltaMeterRegistryTest extends OtlpMeterRegistryTest {
         timer.record(77, TimeUnit.MILLISECONDS);
         timer.record(111, TimeUnit.MILLISECONDS);
 
-        assertHistogram(publishTimeAwareWrite(timer), 0, TimeUnit.MINUTES.toNanos(1), "milliseconds", 0, 0, 0);
+        assertHistogram(writeToMetric(timer), 0, TimeUnit.MINUTES.toNanos(1), "milliseconds", 0, 0, 0);
         this.stepOverNStep(1);
-        assertHistogram(publishTimeAwareWrite(timer), TimeUnit.MINUTES.toNanos(1), TimeUnit.MINUTES.toNanos(2),
-                "milliseconds", 3, 198, 111);
+        assertHistogram(writeToMetric(timer), TimeUnit.MINUTES.toNanos(1), TimeUnit.MINUTES.toNanos(2), "milliseconds",
+                3, 198, 111);
         timer.record(4, TimeUnit.MILLISECONDS);
-        assertHistogram(publishTimeAwareWrite(timer), TimeUnit.MINUTES.toNanos(1), TimeUnit.MINUTES.toNanos(2),
-                "milliseconds", 3, 198, 111);
+        assertHistogram(writeToMetric(timer), TimeUnit.MINUTES.toNanos(1), TimeUnit.MINUTES.toNanos(2), "milliseconds",
+                3, 198, 111);
         this.stepOverNStep(1);
-        assertHistogram(publishTimeAwareWrite(timer), TimeUnit.MINUTES.toNanos(2), TimeUnit.MINUTES.toNanos(3),
-                "milliseconds", 1, 4, 4);
+        assertHistogram(writeToMetric(timer), TimeUnit.MINUTES.toNanos(2), TimeUnit.MINUTES.toNanos(3), "milliseconds",
+                1, 4, 4);
 
         this.stepOverNStep(2);
-        assertHistogram(publishTimeAwareWrite(timer), TimeUnit.MINUTES.toNanos(4), TimeUnit.MINUTES.toNanos(5),
-                "milliseconds", 0, 0, 0);
+        assertHistogram(writeToMetric(timer), TimeUnit.MINUTES.toNanos(4), TimeUnit.MINUTES.toNanos(5), "milliseconds",
+                0, 0, 0);
         timer.record(1, TimeUnit.MILLISECONDS);
         this.stepOverNStep(1);
-        assertHistogram(publishTimeAwareWrite(timer), TimeUnit.MINUTES.toNanos(5), TimeUnit.MINUTES.toNanos(6),
-                "milliseconds", 1, 1, 1);
+        assertHistogram(writeToMetric(timer), TimeUnit.MINUTES.toNanos(5), TimeUnit.MINUTES.toNanos(6), "milliseconds",
+                1, 1, 1);
     }
 
     @Test
@@ -152,13 +150,13 @@ class OtlpDeltaMeterRegistryTest extends OtlpMeterRegistryTest {
         timer.record(77, TimeUnit.MILLISECONDS);
         timer.record(111, TimeUnit.MILLISECONDS);
 
-        HistogramDataPoint histogramDataPoint = publishTimeAwareWrite(timer).getHistogram().getDataPoints(0);
+        HistogramDataPoint histogramDataPoint = writeToMetric(timer).getHistogram().getDataPoints(0);
         assertThat(histogramDataPoint.getExplicitBoundsCount()).isZero();
         this.stepOverNStep(1);
-        assertHistogram(publishTimeAwareWrite(timer), TimeUnit.MINUTES.toNanos(1), TimeUnit.MINUTES.toNanos(2),
-                "milliseconds", 3, 198, 111);
+        assertHistogram(writeToMetric(timer), TimeUnit.MINUTES.toNanos(1), TimeUnit.MINUTES.toNanos(2), "milliseconds",
+                3, 198, 111);
 
-        histogramDataPoint = publishTimeAwareWrite(timer).getHistogram().getDataPoints(0);
+        histogramDataPoint = writeToMetric(timer).getHistogram().getDataPoints(0);
         assertThat(histogramDataPoint.getExplicitBoundsCount()).isEqualTo(4);
 
         assertThat(histogramDataPoint.getExplicitBounds(0)).isEqualTo(10.0);
@@ -173,9 +171,9 @@ class OtlpDeltaMeterRegistryTest extends OtlpMeterRegistryTest {
         timer.record(4, TimeUnit.MILLISECONDS);
         this.stepOverNStep(1);
 
-        histogramDataPoint = publishTimeAwareWrite(timer).getHistogram().getDataPoints(0);
-        assertHistogram(publishTimeAwareWrite(timer), TimeUnit.MINUTES.toNanos(2), TimeUnit.MINUTES.toNanos(3),
-                "milliseconds", 1, 4, 4);
+        histogramDataPoint = writeToMetric(timer).getHistogram().getDataPoints(0);
+        assertHistogram(writeToMetric(timer), TimeUnit.MINUTES.toNanos(2), TimeUnit.MINUTES.toNanos(3), "milliseconds",
+                1, 4, 4);
 
         assertThat(histogramDataPoint.getBucketCounts(0)).isEqualTo(1);
         assertThat(histogramDataPoint.getBucketCounts(1)).isZero();
@@ -184,7 +182,7 @@ class OtlpDeltaMeterRegistryTest extends OtlpMeterRegistryTest {
 
         timer.record(4, TimeUnit.MILLISECONDS);
         this.stepOverNStep(2);
-        histogramDataPoint = publishTimeAwareWrite(timer).getHistogram().getDataPoints(0);
+        histogramDataPoint = writeToMetric(timer).getHistogram().getDataPoints(0);
         assertThat(histogramDataPoint.getBucketCounts(0)).isZero();
         assertThat(histogramDataPoint.getBucketCounts(1)).isZero();
         assertThat(histogramDataPoint.getBucketCounts(2)).isZero();
@@ -197,12 +195,12 @@ class OtlpDeltaMeterRegistryTest extends OtlpMeterRegistryTest {
             .description(METER_DESCRIPTION)
             .tags(Tags.of(meterTag))
             .register(registry);
-        assertHistogram(publishTimeAwareWrite(functionTimer), 0, TimeUnit.MINUTES.toNanos(1), "milliseconds", 0, 0, 0);
+        assertHistogram(writeToMetric(functionTimer), 0, TimeUnit.MINUTES.toNanos(1), "milliseconds", 0, 0, 0);
         this.stepOverNStep(1);
-        assertHistogram(publishTimeAwareWrite(functionTimer), TimeUnit.MINUTES.toNanos(1), TimeUnit.MINUTES.toNanos(2),
+        assertHistogram(writeToMetric(functionTimer), TimeUnit.MINUTES.toNanos(1), TimeUnit.MINUTES.toNanos(2),
                 "milliseconds", 5, 127, 0);
         this.stepOverNStep(1);
-        assertHistogram(publishTimeAwareWrite(functionTimer), TimeUnit.MINUTES.toNanos(2), TimeUnit.MINUTES.toNanos(3),
+        assertHistogram(writeToMetric(functionTimer), TimeUnit.MINUTES.toNanos(2), TimeUnit.MINUTES.toNanos(3),
                 "milliseconds", 0, 0, 0);
     }
 
@@ -217,16 +215,16 @@ class OtlpDeltaMeterRegistryTest extends OtlpMeterRegistryTest {
         size.record(15);
         size.record(2233);
 
-        assertHistogram(publishTimeAwareWrite(size), 0, TimeUnit.MINUTES.toNanos(1), "bytes", 0, 0, 0);
+        assertHistogram(writeToMetric(size), 0, TimeUnit.MINUTES.toNanos(1), "bytes", 0, 0, 0);
         this.stepOverNStep(1);
-        assertHistogram(publishTimeAwareWrite(size), TimeUnit.MINUTES.toNanos(1), TimeUnit.MINUTES.toNanos(2), "bytes",
-                3, 2348, 2233);
+        assertHistogram(writeToMetric(size), TimeUnit.MINUTES.toNanos(1), TimeUnit.MINUTES.toNanos(2), "bytes", 3, 2348,
+                2233);
         size.record(204);
-        assertHistogram(publishTimeAwareWrite(size), TimeUnit.MINUTES.toNanos(1), TimeUnit.MINUTES.toNanos(2), "bytes",
-                3, 2348, 2233);
+        assertHistogram(writeToMetric(size), TimeUnit.MINUTES.toNanos(1), TimeUnit.MINUTES.toNanos(2), "bytes", 3, 2348,
+                2233);
         this.stepOverNStep(1);
-        assertHistogram(publishTimeAwareWrite(size), TimeUnit.MINUTES.toNanos(2), TimeUnit.MINUTES.toNanos(3), "bytes",
-                1, 204, 204);
+        assertHistogram(writeToMetric(size), TimeUnit.MINUTES.toNanos(2), TimeUnit.MINUTES.toNanos(3), "bytes", 1, 204,
+                204);
     }
 
     @Test
@@ -238,19 +236,19 @@ class OtlpDeltaMeterRegistryTest extends OtlpMeterRegistryTest {
             .serviceLevelObjectives(10, 50, 100, 500)
             .register(registry);
 
-        assertHistogram(publishTimeAwareWrite(ds), 0, TimeUnit.MINUTES.toNanos(1), "bytes", 0, 0, 0);
+        assertHistogram(writeToMetric(ds), 0, TimeUnit.MINUTES.toNanos(1), "bytes", 0, 0, 0);
         ds.record(10);
         ds.record(77);
         ds.record(111);
-        assertHistogram(publishTimeAwareWrite(ds), 0, TimeUnit.MINUTES.toNanos(1), "bytes", 0, 0, 0);
+        assertHistogram(writeToMetric(ds), 0, TimeUnit.MINUTES.toNanos(1), "bytes", 0, 0, 0);
 
-        HistogramDataPoint histogramDataPoint = publishTimeAwareWrite(ds).getHistogram().getDataPoints(0);
+        HistogramDataPoint histogramDataPoint = writeToMetric(ds).getHistogram().getDataPoints(0);
         assertThat(histogramDataPoint.getExplicitBoundsCount()).isZero();
         this.stepOverNStep(1);
-        assertHistogram(publishTimeAwareWrite(ds), TimeUnit.MINUTES.toNanos(1), TimeUnit.MINUTES.toNanos(2), "bytes", 3,
-                198, 111);
+        assertHistogram(writeToMetric(ds), TimeUnit.MINUTES.toNanos(1), TimeUnit.MINUTES.toNanos(2), "bytes", 3, 198,
+                111);
 
-        histogramDataPoint = publishTimeAwareWrite(ds).getHistogram().getDataPoints(0);
+        histogramDataPoint = writeToMetric(ds).getHistogram().getDataPoints(0);
         assertThat(histogramDataPoint.getExplicitBoundsCount()).isEqualTo(4);
 
         assertThat(histogramDataPoint.getExplicitBounds(0)).isEqualTo(10);
@@ -266,9 +264,8 @@ class OtlpDeltaMeterRegistryTest extends OtlpMeterRegistryTest {
         ds.record(4);
         clock.addSeconds(otlpConfig().step().getSeconds() - 5);
 
-        histogramDataPoint = publishTimeAwareWrite(ds).getHistogram().getDataPoints(0);
-        assertHistogram(publishTimeAwareWrite(ds), TimeUnit.MINUTES.toNanos(2), TimeUnit.MINUTES.toNanos(3), "bytes", 1,
-                4, 4);
+        histogramDataPoint = writeToMetric(ds).getHistogram().getDataPoints(0);
+        assertHistogram(writeToMetric(ds), TimeUnit.MINUTES.toNanos(2), TimeUnit.MINUTES.toNanos(3), "bytes", 1, 4, 4);
 
         assertThat(histogramDataPoint.getBucketCounts(0)).isEqualTo(1);
         assertThat(histogramDataPoint.getBucketCounts(1)).isZero();
@@ -285,15 +282,15 @@ class OtlpDeltaMeterRegistryTest extends OtlpMeterRegistryTest {
         LongTaskTimer.Sample task1 = taskTimer.start();
         LongTaskTimer.Sample task2 = taskTimer.start();
         this.stepOverNStep(3);
-        assertHistogram(publishTimeAwareWrite(taskTimer), TimeUnit.MINUTES.toNanos(3), TimeUnit.MINUTES.toNanos(4),
+        assertHistogram(writeToMetric(taskTimer), TimeUnit.MINUTES.toNanos(3), TimeUnit.MINUTES.toNanos(4),
                 "milliseconds", 2, 360000, 180000);
 
         task1.stop();
-        assertHistogram(publishTimeAwareWrite(taskTimer), TimeUnit.MINUTES.toNanos(3), TimeUnit.MINUTES.toNanos(4),
+        assertHistogram(writeToMetric(taskTimer), TimeUnit.MINUTES.toNanos(3), TimeUnit.MINUTES.toNanos(4),
                 "milliseconds", 1, 180000, 180000);
         task2.stop();
         this.stepOverNStep(1);
-        assertHistogram(publishTimeAwareWrite(taskTimer), TimeUnit.MINUTES.toNanos(4), TimeUnit.MINUTES.toNanos(5),
+        assertHistogram(writeToMetric(taskTimer), TimeUnit.MINUTES.toNanos(4), TimeUnit.MINUTES.toNanos(5),
                 "milliseconds", 0, 0, 0);
     }
 
@@ -302,7 +299,7 @@ class OtlpDeltaMeterRegistryTest extends OtlpMeterRegistryTest {
         Counter counter = Counter.builder("test_publish_time").register(registry);
 
         Function<Meter, NumberDataPoint> getDataPoint = (Meter meter) -> {
-            return publishTimeAwareWrite(meter).getSum().getDataPoints(0);
+            return writeToMetric(meter).getSum().getDataPoints(0);
         };
         assertThat(getDataPoint.apply(counter).getStartTimeUnixNano()).isEqualTo(0);
         assertThat(getDataPoint.apply(counter).getTimeUnixNano()).isEqualTo(60000000000L);

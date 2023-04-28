@@ -29,14 +29,6 @@ class FixedBoundaryHistogram {
         this.values = new AtomicLongArray(buckets.length);
     }
 
-    long[] atomicReadAndReset() {
-        long[] snapshot = new long[values.length()];
-        for (int i = 0; i < buckets.length; i++) {
-            snapshot[i] = values.getAndSet(i, 0);
-        }
-        return snapshot;
-    }
-
     long countAtValue(double value) {
         int index = Arrays.binarySearch(buckets, value);
         if (index < 0)

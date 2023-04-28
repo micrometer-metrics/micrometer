@@ -19,7 +19,6 @@ import io.micrometer.core.instrument.*;
 import io.opentelemetry.proto.metrics.v1.HistogramDataPoint;
 import io.opentelemetry.proto.metrics.v1.Metric;
 import io.opentelemetry.proto.metrics.v1.NumberDataPoint;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -46,17 +45,11 @@ abstract class OtlpMeterRegistryTest {
 
     protected static final Tag meterTag = Tag.of("key", "value");
 
-    protected MockClock clock;
+    protected MockClock clock = new MockClock();
 
-    protected OtlpMeterRegistry registry;
+    protected OtlpMeterRegistry registry = new OtlpMeterRegistry(otlpConfig(), clock);
 
     abstract OtlpConfig otlpConfig();
-
-    @BeforeEach
-    void init() {
-        clock = new MockClock();
-        registry = new OtlpMeterRegistry(otlpConfig(), clock);
-    }
 
     // If the service.name was not specified, SDKs MUST fallback to 'unknown_service'
     @Test
@@ -106,7 +99,7 @@ abstract class OtlpMeterRegistryTest {
     void timeGauge() {
         TimeGauge timeGauge = TimeGauge.builder("gauge.time", this, TimeUnit.MICROSECONDS, o -> 24).register(registry);
 
-        assertThat(publishTimeAwareWrite(timeGauge).toString())
+        assertThat(writeToMetric(timeGauge).toString())
             .isEqualTo("name: \"gauge.time\"\n" + "unit: \"milliseconds\"\n" + "gauge {\n" + "  data_points {\n"
                     + "    time_unix_nano: 1000000\n" + "    as_double: 0.024\n" + "  }\n" + "}\n");
     }
@@ -125,9 +118,8 @@ abstract class OtlpMeterRegistryTest {
             .publishPercentiles(0.5, 0.9)
             .register(registry);
 
-        assertThat(publishTimeAwareWrite(timer).getDataCase().getNumber())
-            .isEqualTo(Metric.DataCase.SUMMARY.getNumber());
-        assertThat(publishTimeAwareWrite(ds).getDataCase().getNumber()).isEqualTo(Metric.DataCase.SUMMARY.getNumber());
+        assertThat(writeToMetric(timer).getDataCase().getNumber()).isEqualTo(Metric.DataCase.SUMMARY.getNumber());
+        assertThat(writeToMetric(ds).getDataCase().getNumber()).isEqualTo(Metric.DataCase.SUMMARY.getNumber());
     }
 
     @Test
@@ -148,10 +140,8 @@ abstract class OtlpMeterRegistryTest {
             .serviceLevelObjectives(1.0)
             .register(registry);
 
-        assertThat(publishTimeAwareWrite(timer).getDataCase().getNumber())
-            .isEqualTo(Metric.DataCase.HISTOGRAM.getNumber());
-        assertThat(publishTimeAwareWrite(ds).getDataCase().getNumber())
-            .isEqualTo(Metric.DataCase.HISTOGRAM.getNumber());
+        assertThat(writeToMetric(timer).getDataCase().getNumber()).isEqualTo(Metric.DataCase.HISTOGRAM.getNumber());
+        assertThat(writeToMetric(ds).getDataCase().getNumber()).isEqualTo(Metric.DataCase.HISTOGRAM.getNumber());
     }
 
     @Test
@@ -167,16 +157,14 @@ abstract class OtlpMeterRegistryTest {
             .serviceLevelObjectives(1.0)
             .register(registry);
 
-        assertThat(publishTimeAwareWrite(timer).getDataCase().getNumber())
-            .isEqualTo(Metric.DataCase.HISTOGRAM.getNumber());
-        assertThat(publishTimeAwareWrite(ds).getDataCase().getNumber())
-            .isEqualTo(Metric.DataCase.HISTOGRAM.getNumber());
+        assertThat(writeToMetric(timer).getDataCase().getNumber()).isEqualTo(Metric.DataCase.HISTOGRAM.getNumber());
+        assertThat(writeToMetric(ds).getDataCase().getNumber()).isEqualTo(Metric.DataCase.HISTOGRAM.getNumber());
     }
 
     @Test
     abstract void testMetricsStartAndEndTime();
 
-    protected Metric publishTimeAwareWrite(Meter meter) {
+    protected Metric writeToMetric(Meter meter) {
         registry.setDeltaAggregationTimeUnixNano();
         return meter.match(registry::writeGauge, registry::writeCounter, registry::writeHistogramSupport,
                 registry::writeHistogramSupport, registry::writeHistogramSupport, registry::writeGauge,
