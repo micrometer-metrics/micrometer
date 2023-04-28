@@ -42,6 +42,7 @@ import io.opentelemetry.proto.metrics.v1.Histogram;
 import io.opentelemetry.proto.metrics.v1.*;
 import io.opentelemetry.proto.resource.v1.Resource;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -387,6 +388,39 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
             attributes.add(createKeyValue("service.name", "unknown_service"));
         }
         return attributes;
+    }
+
+    static io.micrometer.core.instrument.distribution.Histogram getHistogram(Clock clock,
+            DistributionStatisticConfig distributionStatisticConfig, AggregationTemporality aggregationTemporality) {
+        return getHistogram(clock, distributionStatisticConfig, aggregationTemporality, 0);
+    }
+
+    static io.micrometer.core.instrument.distribution.Histogram getHistogram(Clock clock,
+            DistributionStatisticConfig distributionStatisticConfig, AggregationTemporality aggregationTemporality,
+            long stepMillis) {
+        // While publishing to OTLP, we export either Histogram datapoint / Summary
+        // datapoint. So, we will make the histogram either of them and not both.
+        // Though AbstractTimer/Distribution Summary prefers publishing percentiles,
+        // exporting of histograms over percentiles is preferred in OTLP.
+        if (distributionStatisticConfig.isPublishingHistogram()) {
+            if (AggregationTemporality.isCumulative(aggregationTemporality)) {
+                return new TimeWindowFixedBoundaryHistogram(clock, DistributionStatisticConfig.builder()
+                    // effectively never roll over
+                    .expiry(Duration.ofDays(1825))
+                    .percentiles()
+                    .bufferLength(1)
+                    .build()
+                    .merge(distributionStatisticConfig), true, false);
+            }
+            else if (AggregationTemporality.isDelta(aggregationTemporality) && stepMillis > 0) {
+                return new StepBucketHistogram(clock, stepMillis, distributionStatisticConfig, true);
+            }
+        }
+
+        if (distributionStatisticConfig.isPublishingPercentiles()) {
+            return new TimeWindowPercentileHistogram(clock, distributionStatisticConfig, false);
+        }
+        return NoopHistogram.INSTANCE;
     }
 
 }

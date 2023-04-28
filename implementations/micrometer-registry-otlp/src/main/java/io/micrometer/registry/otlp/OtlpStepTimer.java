@@ -15,19 +15,25 @@
  */
 package io.micrometer.registry.otlp;
 
-import io.micrometer.common.lang.Nullable;
+import io.micrometer.core.instrument.AbstractTimer;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.distribution.*;
 import io.micrometer.core.instrument.distribution.pause.PauseDetector;
-import io.micrometer.core.instrument.step.StepTimer;
+import io.micrometer.core.instrument.step.StepTuple2;
 import io.micrometer.core.instrument.util.TimeUtils;
 
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.LongAdder;
 
-class OtlpStepTimer extends StepTimer {
+class OtlpStepTimer extends AbstractTimer {
 
-    @Nullable
-    private final Histogram countBucketHistogram;
+    private final LongAdder count = new LongAdder();
+
+    private final LongAdder total = new LongAdder();
+
+    private final StepTuple2<Long, Long> countTotal;
+
+    private final StepMax max;
 
     /**
      * Create a new {@code StepTimer}.
@@ -40,40 +46,33 @@ class OtlpStepTimer extends StepTimer {
      */
     public OtlpStepTimer(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig,
             PauseDetector pauseDetector, TimeUnit baseTimeUnit, long stepDurationMillis) {
-        super(id, clock,
-                DistributionStatisticConfig.builder()
-                    .percentilesHistogram(false)
-                    .serviceLevelObjectives()
-                    .build()
-                    .merge(distributionStatisticConfig),
-                pauseDetector, baseTimeUnit, stepDurationMillis, false);
-        if (distributionStatisticConfig.isPublishingHistogram()) {
-            this.countBucketHistogram = new TimeWindowFixedBoundaryHistogram(clock, distributionStatisticConfig, true,
-                    false);
-        }
-        else {
-            this.countBucketHistogram = null;
-        }
+        super(id, clock, pauseDetector, baseTimeUnit, OtlpMeterRegistry.getHistogram(clock, distributionStatisticConfig,
+                AggregationTemporality.DELTA, stepDurationMillis));
+        countTotal = new StepTuple2<>(clock, stepDurationMillis, 0L, 0L, count::sumThenReset, total::sumThenReset);
+        max = new StepMax(clock, stepDurationMillis);
     }
 
     @Override
-    protected void recordNonNegative(long amount, TimeUnit unit) {
-        super.recordNonNegative(amount, unit);
-        if (this.countBucketHistogram != null) {
-            this.countBucketHistogram.recordLong((long) TimeUtils.convert((double) amount, unit, TimeUnit.NANOSECONDS));
-        }
+    protected void recordNonNegative(final long amount, final TimeUnit unit) {
+        final long nanoAmount = (long) TimeUtils.convert(amount, unit, TimeUnit.NANOSECONDS);
+        count.add(1);
+        total.add(nanoAmount);
+        max.record(nanoAmount);
     }
 
     @Override
-    public HistogramSnapshot takeSnapshot() {
-        HistogramSnapshot snapshot = super.takeSnapshot();
-        if (countBucketHistogram == null) {
-            return snapshot;
-        }
+    public long count() {
+        return countTotal.poll1();
+    }
 
-        CountAtBucket[] histogramCounts = this.countBucketHistogram.takeSnapshot(0, 0, 0).histogramCounts();
-        return new HistogramSnapshot(snapshot.count(), snapshot.total(), snapshot.max(), snapshot.percentileValues(),
-                histogramCounts, snapshot::outputSummary);
+    @Override
+    public double totalTime(final TimeUnit unit) {
+        return TimeUtils.nanosToUnit(countTotal.poll2(), unit);
+    }
+
+    @Override
+    public double max(final TimeUnit unit) {
+        return TimeUtils.nanosToUnit(max.poll(), unit);
     }
 
 }

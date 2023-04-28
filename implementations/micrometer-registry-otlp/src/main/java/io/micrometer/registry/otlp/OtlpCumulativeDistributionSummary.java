@@ -15,70 +15,21 @@
  */
 package io.micrometer.registry.otlp;
 
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.cumulative.CumulativeDistributionSummary;
 import io.micrometer.core.instrument.distribution.*;
 
-import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 
 class OtlpCumulativeDistributionSummary extends CumulativeDistributionSummary implements StartTimeAwareMeter {
 
-    private static final CountAtBucket[] EMPTY_HISTOGRAM = new CountAtBucket[0];
-
     private final long startTimeNanos;
-
-    @Nullable
-    private final Histogram monotonicBucketCountHistogram;
 
     OtlpCumulativeDistributionSummary(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig,
             double scale, boolean supportsAggregablePercentiles) {
-        super(id, clock, DistributionStatisticConfig.builder()
-            // avoid a histogram for percentiles/SLOs in the super
-            .percentilesHistogram(false)
-            // we will use a different implementation here instead
-            .serviceLevelObjectives()
-            .build()
-            .merge(distributionStatisticConfig), scale, false);
+        super(id, clock, distributionStatisticConfig, scale,
+                OtlpMeterRegistry.getHistogram(clock, distributionStatisticConfig, AggregationTemporality.CUMULATIVE));
         this.startTimeNanos = TimeUnit.MILLISECONDS.toNanos(clock.wallTime());
-        // CumulativeDistributionSummary doesn't produce monotonic histogram counts; maybe
-        // it should
-        // Also, we need to customize the histogram behavior to not return cumulative
-        // counts across buckets
-        if (distributionStatisticConfig.isPublishingHistogram()) {
-            this.monotonicBucketCountHistogram = new TimeWindowFixedBoundaryHistogram(clock,
-                    DistributionStatisticConfig.builder()
-                        // effectively never roll over
-                        .expiry(Duration.ofDays(1825))
-                        .bufferLength(1)
-                        .build()
-                        .merge(distributionStatisticConfig),
-                    true, false);
-        }
-        else {
-            this.monotonicBucketCountHistogram = null;
-        }
-    }
-
-    @Override
-    protected void recordNonNegative(double amount) {
-        super.recordNonNegative(amount);
-        if (this.monotonicBucketCountHistogram != null) {
-            this.monotonicBucketCountHistogram.recordDouble(amount);
-        }
-    }
-
-    @Override
-    public HistogramSnapshot takeSnapshot() {
-        HistogramSnapshot snapshot = super.takeSnapshot();
-        if (monotonicBucketCountHistogram == null) {
-            return snapshot;
-        }
-
-        CountAtBucket[] histogramCounts = this.monotonicBucketCountHistogram.takeSnapshot(0, 0, 0).histogramCounts();
-        return new HistogramSnapshot(snapshot.count(), snapshot.total(), snapshot.max(), snapshot.percentileValues(),
-                histogramCounts, snapshot::outputSummary);
     }
 
     @Override
