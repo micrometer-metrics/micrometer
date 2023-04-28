@@ -32,8 +32,10 @@ class StepHistogramTest {
     DistributionStatisticConfig distributionStatisticConfig = getConfig(true);
 
     private static DistributionStatisticConfig getConfig(boolean percentilesHistogram) {
-        return DistributionStatisticConfig.builder().percentilesHistogram(percentilesHistogram).build()
-                .merge(DistributionStatisticConfig.DEFAULT);
+        return DistributionStatisticConfig.builder()
+            .percentilesHistogram(percentilesHistogram)
+            .build()
+            .merge(DistributionStatisticConfig.DEFAULT);
     }
 
     @Test
@@ -63,8 +65,10 @@ class StepHistogramTest {
     @Test
     void sloWithAggregablePercentilesFalse_onlySloBucket() {
         boolean supportsAggregablePercentiles = false;
-        DistributionStatisticConfig config = DistributionStatisticConfig.builder().serviceLevelObjectives(4).build()
-                .merge(distributionStatisticConfig);
+        DistributionStatisticConfig config = DistributionStatisticConfig.builder()
+            .serviceLevelObjectives(4)
+            .build()
+            .merge(distributionStatisticConfig);
         try (StepBucketHistogram histogram = new StepBucketHistogram(clock, step.toMillis(), config,
                 supportsAggregablePercentiles)) {
             // TODO I don't think we should need this to have the correct buckets (even if
@@ -79,8 +83,10 @@ class StepHistogramTest {
         boolean supportsAggregablePercentiles = true;
         // intentional SLO that is not in the percentile histogram buckets
         double slo = 15.0;
-        DistributionStatisticConfig config = DistributionStatisticConfig.builder().serviceLevelObjectives(slo).build()
-                .merge(distributionStatisticConfig);
+        DistributionStatisticConfig config = DistributionStatisticConfig.builder()
+            .serviceLevelObjectives(slo)
+            .build()
+            .merge(distributionStatisticConfig);
         try (StepBucketHistogram histogram = new StepBucketHistogram(clock, step.toMillis(), config,
                 supportsAggregablePercentiles)) {
             // TODO I don't think we should need this to have the correct buckets (even if
@@ -95,8 +101,10 @@ class StepHistogramTest {
         boolean supportsAggregablePercentiles = true;
         // intentional SLO that is not in the percentile histogram buckets
         double slo = 15.0;
-        DistributionStatisticConfig config = DistributionStatisticConfig.builder().serviceLevelObjectives(slo).build()
-                .merge(getConfig(false));
+        DistributionStatisticConfig config = DistributionStatisticConfig.builder()
+            .serviceLevelObjectives(slo)
+            .build()
+            .merge(getConfig(false));
         try (StepBucketHistogram histogram = new StepBucketHistogram(clock, step.toMillis(), config,
                 supportsAggregablePercentiles)) {
             // TODO I don't think we should need this to have the correct buckets (even if
@@ -110,8 +118,10 @@ class StepHistogramTest {
     void bucketCountRollover() {
         boolean supportsAggregablePercentiles = true;
         double slo = 15.0;
-        DistributionStatisticConfig config = DistributionStatisticConfig.builder().serviceLevelObjectives(slo).build()
-                .merge(distributionStatisticConfig);
+        DistributionStatisticConfig config = DistributionStatisticConfig.builder()
+            .serviceLevelObjectives(slo)
+            .build()
+            .merge(distributionStatisticConfig);
         try (StepBucketHistogram histogram = new StepBucketHistogram(clock, step.toMillis(), config,
                 supportsAggregablePercentiles)) {
             histogram.recordDouble(slo - 1);
@@ -134,7 +144,10 @@ class StepHistogramTest {
 
     @Test
     void doesNotSupportPercentiles() {
-        DistributionStatisticConfig config = DistributionStatisticConfig.builder().percentiles(0.5, 0.9).build().merge(distributionStatisticConfig);
+        DistributionStatisticConfig config = DistributionStatisticConfig.builder()
+            .percentiles(0.5, 0.9)
+            .build()
+            .merge(distributionStatisticConfig);
         try (StepBucketHistogram histogram = new StepBucketHistogram(clock, step.toMillis(), config, false)) {
             histogram.recordDouble(10.0);
             clock.add(step);
