@@ -16,6 +16,7 @@
 package io.micrometer.core.instrument.distribution;
 
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.concurrent.atomic.AtomicLongArray;
 
 class FixedBoundaryHistogram {
@@ -24,9 +25,12 @@ class FixedBoundaryHistogram {
 
     private final double[] buckets;
 
-    FixedBoundaryHistogram(double[] buckets) {
+    private final boolean isCumulativeBucketCounts;
+
+    FixedBoundaryHistogram(double[] buckets, boolean isCumulativeBucketCounts) {
         this.buckets = buckets;
         this.values = new AtomicLongArray(buckets.length);
+        this.isCumulativeBucketCounts = isCumulativeBucketCounts;
     }
 
     long countAtValue(double value) {
@@ -66,6 +70,30 @@ class FixedBoundaryHistogram {
         }
 
         return low < buckets.length ? low : -1;
+    }
+
+    Iterator<CountAtBucket> countsAtValues(Iterator<Double> values) {
+        return new Iterator<CountAtBucket>() {
+            private double cumulativeCount = 0.0;
+
+            @Override
+            public boolean hasNext() {
+                return values.hasNext();
+            }
+
+            @Override
+            public CountAtBucket next() {
+                double value = values.next();
+                double count = countAtValue(value);
+                if (isCumulativeBucketCounts) {
+                    cumulativeCount += count;
+                    return new CountAtBucket(value, cumulativeCount);
+                }
+                else {
+                    return new CountAtBucket(value, count);
+                }
+            }
+        };
     }
 
 }

@@ -36,7 +36,7 @@ public class TimeWindowFixedBoundaryHistogram extends AbstractTimeWindowHistogra
 
     private final double[] buckets;
 
-    private final boolean cumulativeBucketCounts;
+    private final boolean isCumulativeBucketCounts;
 
     public TimeWindowFixedBoundaryHistogram(Clock clock, DistributionStatisticConfig config,
             boolean supportsAggregablePercentiles) {
@@ -48,14 +48,14 @@ public class TimeWindowFixedBoundaryHistogram extends AbstractTimeWindowHistogra
      * @param clock clock
      * @param config distribution statistic configuration
      * @param supportsAggregablePercentiles whether it supports aggregable percentiles
-     * @param cumulativeBucketCounts whether it uses cumulative bucket counts
+     * @param isCumulativeBucketCounts whether it uses cumulative bucket counts
      * @since 1.9.0
      */
     public TimeWindowFixedBoundaryHistogram(Clock clock, DistributionStatisticConfig config,
-            boolean supportsAggregablePercentiles, boolean cumulativeBucketCounts) {
+            boolean supportsAggregablePercentiles, boolean isCumulativeBucketCounts) {
         super(clock, config, FixedBoundaryHistogram.class, supportsAggregablePercentiles);
 
-        this.cumulativeBucketCounts = cumulativeBucketCounts;
+        this.isCumulativeBucketCounts = isCumulativeBucketCounts;
 
         NavigableSet<Double> histogramBuckets = distributionStatisticConfig
             .getHistogramBuckets(supportsAggregablePercentiles);
@@ -71,7 +71,7 @@ public class TimeWindowFixedBoundaryHistogram extends AbstractTimeWindowHistogra
 
     @Override
     FixedBoundaryHistogram newBucket() {
-        return new FixedBoundaryHistogram(this.buckets);
+        return new FixedBoundaryHistogram(this.buckets, isCumulativeBucketCounts);
     }
 
     @Override
@@ -114,27 +114,7 @@ public class TimeWindowFixedBoundaryHistogram extends AbstractTimeWindowHistogra
      */
     @Override
     Iterator<CountAtBucket> countsAtValues(Iterator<Double> values) {
-        return new Iterator<CountAtBucket>() {
-            private double cumulativeCount = 0.0;
-
-            @Override
-            public boolean hasNext() {
-                return values.hasNext();
-            }
-
-            @Override
-            public CountAtBucket next() {
-                double value = values.next();
-                double count = currentHistogram().countAtValue(value);
-                if (cumulativeBucketCounts) {
-                    cumulativeCount += count;
-                    return new CountAtBucket(value, cumulativeCount);
-                }
-                else {
-                    return new CountAtBucket(value, count);
-                }
-            }
-        };
+        return currentHistogram().countsAtValues(values);
     }
 
     @Override
