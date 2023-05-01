@@ -413,7 +413,7 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
                     .merge(distributionStatisticConfig), true, false);
             }
             else if (AggregationTemporality.isDelta(aggregationTemporality) && stepMillis > 0) {
-                return new StepBucketHistogram(clock, stepMillis, distributionStatisticConfig, true);
+                return new StepBucketHistogram(clock, stepMillis, distributionStatisticConfig, true, false);
             }
         }
 

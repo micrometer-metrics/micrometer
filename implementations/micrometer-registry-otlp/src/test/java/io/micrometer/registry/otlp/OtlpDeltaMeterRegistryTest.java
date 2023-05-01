@@ -151,7 +151,7 @@ class OtlpDeltaMeterRegistryTest extends OtlpMeterRegistryTest {
         timer.record(111, TimeUnit.MILLISECONDS);
 
         HistogramDataPoint histogramDataPoint = writeToMetric(timer).getHistogram().getDataPoints(0);
-        assertThat(histogramDataPoint.getExplicitBoundsCount()).isZero();
+        assertThat(histogramDataPoint.getExplicitBoundsCount()).isEqualTo(4);
         this.stepOverNStep(1);
         assertHistogram(writeToMetric(timer), TimeUnit.MINUTES.toNanos(1), TimeUnit.MINUTES.toNanos(2), "milliseconds",
                 3, 198, 111);
@@ -243,7 +243,7 @@ class OtlpDeltaMeterRegistryTest extends OtlpMeterRegistryTest {
         assertHistogram(writeToMetric(ds), 0, TimeUnit.MINUTES.toNanos(1), "bytes", 0, 0, 0);
 
         HistogramDataPoint histogramDataPoint = writeToMetric(ds).getHistogram().getDataPoints(0);
-        assertThat(histogramDataPoint.getExplicitBoundsCount()).isZero();
+        assertThat(histogramDataPoint.getExplicitBoundsCount()).isEqualTo(4);
         this.stepOverNStep(1);
         assertHistogram(writeToMetric(ds), TimeUnit.MINUTES.toNanos(1), TimeUnit.MINUTES.toNanos(2), "bytes", 3, 198,
                 111);

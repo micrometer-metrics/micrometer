@@ -42,11 +42,10 @@ class StepHistogramTest {
     void aggregablePercentilesTrue_AddsBuckets() {
         boolean supportsAggregablePercentiles = true;
         try (StepBucketHistogram histogram = new StepBucketHistogram(clock, step.toMillis(),
-                distributionStatisticConfig, supportsAggregablePercentiles)) {
-            // TODO I don't think we should need this to have the correct buckets (even if
-            // their counts are all 0)
+                distributionStatisticConfig, supportsAggregablePercentiles, true)) {
+            assertThat(histogram.takeSnapshot(0, 0, 0).histogramCounts()).isNotEmpty();
             clock.add(step);
-            assertThat(histogram.takeSnapshot(0, 0, 0).histogramCounts().length).isGreaterThan(0);
+            assertThat(histogram.takeSnapshot(0, 0, 0).histogramCounts()).isNotEmpty();
         }
     }
 
@@ -54,11 +53,10 @@ class StepHistogramTest {
     void aggregablePercentilesFalse_NoBuckets() {
         boolean supportsAggregablePercentiles = false;
         try (StepBucketHistogram histogram = new StepBucketHistogram(clock, step.toMillis(),
-                distributionStatisticConfig, supportsAggregablePercentiles)) {
-            // TODO I don't think we should need this to have the correct buckets (even if
-            // their counts are all 0)
+                distributionStatisticConfig, supportsAggregablePercentiles, true)) {
+            assertThat(histogram.takeSnapshot(0, 0, 0).histogramCounts()).isEmpty();
             clock.add(step);
-            assertThat(histogram.takeSnapshot(0, 0, 0).histogramCounts().length).isZero();
+            assertThat(histogram.takeSnapshot(0, 0, 0).histogramCounts()).isEmpty();
         }
     }
 
@@ -70,9 +68,8 @@ class StepHistogramTest {
             .build()
             .merge(distributionStatisticConfig);
         try (StepBucketHistogram histogram = new StepBucketHistogram(clock, step.toMillis(), config,
-                supportsAggregablePercentiles)) {
-            // TODO I don't think we should need this to have the correct buckets (even if
-            // their counts are all 0)
+                supportsAggregablePercentiles, true)) {
+            assertThat(histogram.takeSnapshot(0, 0, 0).histogramCounts().length).isOne();
             clock.add(step);
             assertThat(histogram.takeSnapshot(0, 0, 0).histogramCounts().length).isOne();
         }
@@ -88,9 +85,8 @@ class StepHistogramTest {
             .build()
             .merge(distributionStatisticConfig);
         try (StepBucketHistogram histogram = new StepBucketHistogram(clock, step.toMillis(), config,
-                supportsAggregablePercentiles)) {
-            // TODO I don't think we should need this to have the correct buckets (even if
-            // their counts are all 0)
+                supportsAggregablePercentiles, true)) {
+            assertThat(histogram.takeSnapshot(0, 0, 0).histogramCounts()).contains(new CountAtBucket(slo, 0));
             clock.add(step);
             assertThat(histogram.takeSnapshot(0, 0, 0).histogramCounts()).contains(new CountAtBucket(slo, 0));
         }
@@ -106,9 +102,8 @@ class StepHistogramTest {
             .build()
             .merge(getConfig(false));
         try (StepBucketHistogram histogram = new StepBucketHistogram(clock, step.toMillis(), config,
-                supportsAggregablePercentiles)) {
-            // TODO I don't think we should need this to have the correct buckets (even if
-            // their counts are all 0)
+                supportsAggregablePercentiles, true)) {
+            assertThat(histogram.takeSnapshot(0, 0, 0).histogramCounts()).contains(new CountAtBucket(slo, 0));
             clock.add(step);
             assertThat(histogram.takeSnapshot(0, 0, 0).histogramCounts()).contains(new CountAtBucket(slo, 0));
         }
@@ -123,7 +118,7 @@ class StepHistogramTest {
             .build()
             .merge(distributionStatisticConfig);
         try (StepBucketHistogram histogram = new StepBucketHistogram(clock, step.toMillis(), config,
-                supportsAggregablePercentiles)) {
+                supportsAggregablePercentiles, false)) {
             histogram.recordDouble(slo - 1);
             histogram.recordDouble(slo);
             histogram.recordDouble(slo + 1);
@@ -143,12 +138,48 @@ class StepHistogramTest {
     }
 
     @Test
+    void bucketCountRolloverCumulativeBucket() {
+        boolean supportsAggregablePercentiles = true;
+        double slo = 15.0;
+        DistributionStatisticConfig config = DistributionStatisticConfig.builder()
+            .serviceLevelObjectives(slo)
+            .build()
+            .merge(distributionStatisticConfig);
+        try (StepBucketHistogram histogram = new StepBucketHistogram(clock, step.toMillis(), config,
+                supportsAggregablePercentiles, true)) {
+            histogram.recordDouble(slo - 1);
+            histogram.recordDouble(slo);
+            histogram.recordDouble(slo + 1);
+            assertThat(histogram.takeSnapshot(0, 0, 0).histogramCounts()).allMatch(bucket -> bucket.count() == 0);
+            clock.add(step);
+            Arrays.stream(histogram.takeSnapshot(0, 0, 0).histogramCounts()).forEach(bucket -> {
+                // In case of cumulative buckets, value at bucket denotes 0 to bucket and
+                // not between 2 buckets.
+                if (bucket.bucket() < slo - 1) {
+                    assertThat(bucket.count()).isZero();
+                }
+                else if (bucket.bucket() == slo - 1) {
+                    assertThat(bucket.count()).isOne();
+                }
+                else if (bucket.bucket() == slo) {
+                    assertThat(bucket.count()).isEqualTo(2);
+                }
+                else {
+                    assertThat(bucket.count()).isEqualTo(3);
+                }
+            });
+            clock.add(step);
+            assertThat(histogram.takeSnapshot(0, 0, 0).histogramCounts()).allMatch(bucket -> bucket.count() == 0);
+        }
+    }
+
+    @Test
     void doesNotSupportPercentiles() {
         DistributionStatisticConfig config = DistributionStatisticConfig.builder()
             .percentiles(0.5, 0.9)
             .build()
             .merge(distributionStatisticConfig);
-        try (StepBucketHistogram histogram = new StepBucketHistogram(clock, step.toMillis(), config, false)) {
+        try (StepBucketHistogram histogram = new StepBucketHistogram(clock, step.toMillis(), config, false, true)) {
             histogram.recordDouble(10.0);
             clock.add(step);
             assertThat(histogram.takeSnapshot(0, 0, 0).percentileValues()).isEmpty();

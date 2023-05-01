@@ -19,6 +19,8 @@ import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.config.InvalidConfigurationException;
 import io.micrometer.core.instrument.step.StepValue;
 
+import java.util.Arrays;
+import java.util.Iterator;
 import java.util.NavigableSet;
 import java.util.Objects;
 import java.util.function.Supplier;
@@ -32,26 +34,18 @@ import java.util.function.Supplier;
  */
 public class StepBucketHistogram extends StepValue<CountAtBucket[]> implements Histogram {
 
-    private static final CountAtBucket[] EMPTY_COUNTS = new CountAtBucket[0];
-
     private final FixedBoundaryHistogram fixedBoundaryHistogram;
 
     private final double[] buckets;
 
     public StepBucketHistogram(Clock clock, long stepMillis, DistributionStatisticConfig distributionStatisticConfig,
-            boolean supportsAggregablePercentiles) {
-        super(clock, stepMillis);
+            boolean supportsAggregablePercentiles, boolean isCumulativeBucketCounts) {
+        super(clock, stepMillis, getEmptyCounts(
+                getBucketsFromDistributionStatisticConfig(distributionStatisticConfig, supportsAggregablePercentiles)));
 
-        if (distributionStatisticConfig.getMaximumExpectedValueAsDouble() == null
-                || distributionStatisticConfig.getMinimumExpectedValueAsDouble() == null) {
-            throw new InvalidConfigurationException(
-                    "minimumExpectedValue and maximumExpectedValue should be greater than 0.");
-        }
-        NavigableSet<Double> histogramBuckets = distributionStatisticConfig
-            .getHistogramBuckets(supportsAggregablePercentiles);
-
-        this.buckets = histogramBuckets.stream().filter(Objects::nonNull).mapToDouble(Double::doubleValue).toArray();
-        this.fixedBoundaryHistogram = new FixedBoundaryHistogram(buckets);
+        this.buckets = getBucketsFromDistributionStatisticConfig(distributionStatisticConfig,
+                supportsAggregablePercentiles);
+        this.fixedBoundaryHistogram = new FixedBoundaryHistogram(buckets, isCumulativeBucketCounts);
     }
 
     @Override
@@ -74,8 +68,10 @@ public class StepBucketHistogram extends StepValue<CountAtBucket[]> implements H
         return () -> {
             CountAtBucket[] countAtBuckets = new CountAtBucket[buckets.length];
             synchronized (fixedBoundaryHistogram) {
-                for (int i = 0; i < buckets.length; i++) {
-                    countAtBuckets[i] = new CountAtBucket(buckets[i], fixedBoundaryHistogram.countAtValue(buckets[i]));
+                final Iterator<CountAtBucket> iterator = fixedBoundaryHistogram
+                    .countsAtValues(Arrays.stream(buckets).iterator());
+                for (int i = 0; i < countAtBuckets.length; i++) {
+                    countAtBuckets[i] = iterator.next();
                 }
                 fixedBoundaryHistogram.reset();
             }
@@ -85,13 +81,28 @@ public class StepBucketHistogram extends StepValue<CountAtBucket[]> implements H
 
     @Override
     protected CountAtBucket[] noValue() {
-        if (buckets == null)
-            return EMPTY_COUNTS;
+        return getEmptyCounts(buckets);
+    }
+
+    private static CountAtBucket[] getEmptyCounts(double[] buckets) {
         CountAtBucket[] countAtBuckets = new CountAtBucket[buckets.length];
         for (int i = 0; i < buckets.length; i++) {
             countAtBuckets[i] = new CountAtBucket(buckets[i], 0);
         }
         return countAtBuckets;
+    }
+
+    private static double[] getBucketsFromDistributionStatisticConfig(
+            DistributionStatisticConfig distributionStatisticConfig, boolean supportsAggregablePercentiles) {
+        if (distributionStatisticConfig.getMaximumExpectedValueAsDouble() == null
+                || distributionStatisticConfig.getMinimumExpectedValueAsDouble() == null) {
+            throw new InvalidConfigurationException(
+                    "minimumExpectedValue and maximumExpectedValue should be greater than 0.");
+        }
+        NavigableSet<Double> histogramBuckets = distributionStatisticConfig
+            .getHistogramBuckets(supportsAggregablePercentiles);
+
+        return histogramBuckets.stream().filter(Objects::nonNull).mapToDouble(Double::doubleValue).toArray();
     }
 
 }
