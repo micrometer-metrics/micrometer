@@ -76,14 +76,16 @@ class OTelCollectorIntegrationTest {
         whenPrometheusScraped().then().body(
             containsString("{job=\"test\",service_name=\"test\",telemetry_sdk_language=\"java\",telemetry_sdk_name=\"io.micrometer\""),
 
-            matchesPattern("(?s)^.*test_counter\\{.+} 42\\.0\\n.*$"),
+            matchesPattern("(?s)^.*test_counter_total\\{.+} 42\\.0\\n.*$"),
             matchesPattern("(?s)^.*test_gauge\\{.+} 12\\.0\\n.*$"),
 
-            matchesPattern("(?s)^.*test_timer_count\\{.+} 1\\n.*$"),
-            // TODO: this should be 123ms (0.123) not 123s (123)
+            matchesPattern("(?s)^.*test_timer_milliseconds_count\\{.+} 1\\n.*$"),
+            // TODO: Earlier this was 123s (123), should have been 123ms (0.123)
             // see: https://github.com/open-telemetry/opentelemetry-collector-contrib/issues/18903
-            matchesPattern("(?s)^.*test_timer_sum\\{.+} 123\\.0\\n.*$"),
-            matchesPattern("(?s)^.*test_timer_bucket\\{.+,le=\"\\+Inf\"} 1\\n.*$"),
+            // it seems units are still not converted but at least the unit is in the name now (breaking change)
+            // see: https://github.com/open-telemetry/opentelemetry-collector-contrib/pull/20519
+            matchesPattern("(?s)^.*test_timer_milliseconds_sum\\{.+} 123\\.0\\n.*$"),
+            matchesPattern("(?s)^.*test_timer_milliseconds_bucket\\{.+,le=\"\\+Inf\"} 1\\n.*$"),
 
             matchesPattern("(?s)^.*test_distributionsummary_count\\{.+} 1\\n.*$"),
             matchesPattern("(?s)^.*test_distributionsummary_sum\\{.+} 24\\.0\\n.*$"),
