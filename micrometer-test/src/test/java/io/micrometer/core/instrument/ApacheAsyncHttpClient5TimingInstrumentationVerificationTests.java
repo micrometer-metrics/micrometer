@@ -17,11 +17,12 @@ package io.micrometer.core.instrument;
 
 import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.binder.httpcomponents.DefaultUriMapper;
-import io.micrometer.core.instrument.binder.httpcomponents.hc5.MicrometerHttpClientInterceptor;
+import io.micrometer.core.instrument.binder.httpcomponents.hc5.ApacheHttpClientMetricsBinder;
 import org.apache.hc.client5.http.async.methods.SimpleHttpRequest;
 import org.apache.hc.client5.http.async.methods.SimpleHttpResponse;
 import org.apache.hc.client5.http.async.methods.SimpleRequestBuilder;
 import org.apache.hc.client5.http.impl.async.CloseableHttpAsyncClient;
+import org.apache.hc.client5.http.impl.async.HttpAsyncClientBuilder;
 import org.apache.hc.client5.http.impl.async.HttpAsyncClients;
 import org.apache.hc.core5.http.ContentType;
 
@@ -34,12 +35,12 @@ class ApacheAsyncHttpClient5TimingInstrumentationVerificationTests
 
     @Override
     protected CloseableHttpAsyncClient clientInstrumentedWithMetrics() {
-        MicrometerHttpClientInterceptor interceptor = new MicrometerHttpClientInterceptor(getRegistry(), Tags.empty(),
-                true);
-        CloseableHttpAsyncClient client = HttpAsyncClients.custom()
-            .addRequestInterceptorFirst(interceptor.getRequestInterceptor())
-            .addResponseInterceptorLast(interceptor.getResponseInterceptor())
-            .build();
+
+        HttpAsyncClientBuilder clientBuilder = HttpAsyncClients.custom();
+
+        ApacheHttpClientMetricsBinder.builder(getRegistry()).build().instrument(clientBuilder);
+
+        CloseableHttpAsyncClient client = clientBuilder.build();
         client.start();
         return client;
     }

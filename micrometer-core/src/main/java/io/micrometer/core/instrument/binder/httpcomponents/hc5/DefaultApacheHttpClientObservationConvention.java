@@ -17,6 +17,7 @@ package io.micrometer.core.instrument.binder.httpcomponents.hc5;
 
 import io.micrometer.common.KeyValues;
 import io.micrometer.common.lang.Nullable;
+import io.micrometer.core.instrument.binder.http.HttpRequestTags;
 import io.micrometer.core.instrument.binder.http.Outcome;
 import org.apache.hc.core5.http.HttpException;
 import org.apache.hc.core5.http.HttpRequest;
@@ -44,7 +45,7 @@ public class DefaultApacheHttpClientObservationConvention implements ApacheHttpC
 
     @Override
     public String getName() {
-        return MicrometerHttpRequestExecutor.METER_NAME;
+        return ApacheHttpClientMetricsBinder.DEFAULT_METER_NAME;
     }
 
     @Override
@@ -62,7 +63,9 @@ public class DefaultApacheHttpClientObservationConvention implements ApacheHttpC
                 ApacheHttpClientObservationDocumentation.ApacheHttpClientKeyNames.STATUS
                     .withValue(getStatusValue(context.getResponse(), context.getError())),
                 ApacheHttpClientObservationDocumentation.ApacheHttpClientKeyNames.OUTCOME
-                    .withValue(getStatusOutcome(context.getResponse()).name()));
+                    .withValue(getStatusOutcome(context.getResponse()).name()),
+                ApacheHttpClientObservationDocumentation.ApacheHttpClientKeyNames.EXCEPTION
+                    .withValue(getExceptionString(context.getError())));
         if (context.shouldExportTagsForRoute()) {
             keyValues = keyValues.and(HttpContextUtils.generateTagStringsForRoute(context.getApacheHttpContext()));
         }
@@ -83,6 +86,10 @@ public class DefaultApacheHttpClientObservationConvention implements ApacheHttpC
 
     String getMethodString(@Nullable HttpRequest request) {
         return request != null && request.getMethod() != null ? request.getMethod() : "UNKNOWN";
+    }
+
+    String getExceptionString(@Nullable Throwable exception) {
+        return HttpRequestTags.exception(exception).getValue();
     }
 
 }
