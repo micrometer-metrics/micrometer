@@ -13,40 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package io.micrometer.registry.otlp;
 
 import io.micrometer.core.instrument.Clock;
-import io.micrometer.core.instrument.step.StepValue;
+import io.micrometer.core.instrument.step.StepTuple2;
 
-import java.util.concurrent.atomic.DoubleAccumulator;
 import java.util.function.Supplier;
 
 /**
- * A {@link StepValue} implementation that tracks max over a Step Interval.
- *
- * @author Lenin Jaganathan
- * @since 1.11.0
+ * This is an internal class not meant for general use. The only reason to have this class
+ * so that {@code OtlpMeterRegistry} can call {@code _closingRollover} on
+ * {@code StepTuple2} and the method does not need to be public.
  */
-class StepMax extends StepValue<Double> {
+class OtlpStepTuple2<T1, T2> extends StepTuple2<T1, T2> {
 
-    private final DoubleAccumulator current = new DoubleAccumulator(Double::max, 0);
-
-    public StepMax(Clock clock, long stepMillis) {
-        super(clock, stepMillis);
-    }
-
-    @Override
-    protected Supplier<Double> valueSupplier() {
-        return current::getThenReset;
-    }
-
-    @Override
-    protected Double noValue() {
-        return 0.0;
-    }
-
-    public void record(double value) {
-        current.accumulate(value);
+    OtlpStepTuple2(Clock clock, long stepMillis, T1 t1NoValue, T2 t2NoValue, Supplier<T1> t1Supplier,
+            Supplier<T2> t2Supplier) {
+        super(clock, stepMillis, t1NoValue, t2NoValue, t1Supplier, t2Supplier);
     }
 
     @Override

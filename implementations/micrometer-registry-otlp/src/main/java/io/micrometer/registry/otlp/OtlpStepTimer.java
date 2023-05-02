@@ -17,9 +17,8 @@ package io.micrometer.registry.otlp;
 
 import io.micrometer.core.instrument.AbstractTimer;
 import io.micrometer.core.instrument.Clock;
-import io.micrometer.core.instrument.distribution.*;
+import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.pause.PauseDetector;
-import io.micrometer.core.instrument.step.StepTuple2;
 import io.micrometer.core.instrument.util.TimeUtils;
 
 import java.util.concurrent.TimeUnit;
@@ -31,7 +30,7 @@ class OtlpStepTimer extends AbstractTimer {
 
     private final LongAdder total = new LongAdder();
 
-    private final StepTuple2<Long, Long> countTotal;
+    private final OtlpStepTuple2<Long, Long> countTotal;
 
     private final StepMax max;
 
@@ -48,7 +47,7 @@ class OtlpStepTimer extends AbstractTimer {
             PauseDetector pauseDetector, TimeUnit baseTimeUnit, long stepDurationMillis) {
         super(id, clock, pauseDetector, baseTimeUnit, OtlpMeterRegistry.getHistogram(clock, distributionStatisticConfig,
                 AggregationTemporality.DELTA, stepDurationMillis));
-        countTotal = new StepTuple2<>(clock, stepDurationMillis, 0L, 0L, count::sumThenReset, total::sumThenReset);
+        countTotal = new OtlpStepTuple2<>(clock, stepDurationMillis, 0L, 0L, count::sumThenReset, total::sumThenReset);
         max = new StepMax(clock, stepDurationMillis);
     }
 
@@ -73,6 +72,20 @@ class OtlpStepTimer extends AbstractTimer {
     @Override
     public double max(final TimeUnit unit) {
         return TimeUtils.nanosToUnit(max.poll(), unit);
+    }
+
+    /**
+     * This is an internal method not meant for general use.
+     * <p>
+     * Force a rollover of the values returned by a step meter and never roll over again
+     * after. See: {@code StepMeter} and {@code StepTimer}
+     */
+    void _closingRollover() {
+        countTotal._closingRollover();
+        max._closingRollover();
+        if (histogram instanceof OtlpStepBucketHistogram) { // can be noop
+            ((OtlpStepBucketHistogram) histogram)._closingRollover();
+        }
     }
 
 }
