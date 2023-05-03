@@ -50,6 +50,7 @@ import org.apache.hc.core5.util.TimeValue;
  *     CloseableHttpAsyncClient httpAsyncClient = HttpAsyncClients.custom()
  *                 .addRequestInterceptorFirst(interceptor.getRequestInterceptor())
  *                 .addResponseInterceptorLast(interceptor.getResponseInterceptor())
+ *                 .setRetryStrategy(interceptor.getRequestRetryStrategy())
  *                 .build();
  * }</pre>
  *
@@ -95,32 +96,17 @@ public class MicrometerHttpClientInterceptor {
                 .close();
         };
 
-        this.requestRetryStrategy = new HttpRequestRetryStrategy() {
+        this.requestRetryStrategy = new MicrometerRequestRetryStrategy(retryStrategy) {
             @Override
-            public boolean retryRequest(HttpRequest request, IOException exception, int execCount,
-                    HttpContext context) {
-                boolean retry = retryStrategy.retryRequest(request, exception, execCount, context);
-                if (!retry) {
-                    // record after last retry.
-                    timerByHttpContext.remove(context)
-                        .tag("status", "IO_ERROR")
-                        .tag("outcome", "UNKNOWN")
-                        .tag("exception", HttpRequestTags.exception(exception).getValue())
-                        .tags(exportTagsForRoute ? HttpContextUtils.generateTagsForRoute(context) : Tags.empty())
-                        .tags(extraTags)
-                        .close();
-                }
-                return retry;
-            }
-
-            @Override
-            public boolean retryRequest(HttpResponse response, int execCount, HttpContext context) {
-                return retryStrategy.retryRequest(response, execCount, context);
-            }
-
-            @Override
-            public TimeValue getRetryInterval(HttpResponse response, int execCount, HttpContext context) {
-                return retryStrategy.getRetryInterval(response, execCount, context);
+            void lastError(HttpRequest request, IOException exception, int execCount, HttpContext context) {
+                // record error after last retry.
+                timerByHttpContext.remove(context)
+                    .tag("status", "IO_ERROR")
+                    .tag("outcome", "UNKNOWN")
+                    .tag("exception", HttpRequestTags.exception(exception).getValue())
+                    .tags(exportTagsForRoute ? HttpContextUtils.generateTagsForRoute(context) : Tags.empty())
+                    .tags(extraTags)
+                    .close();
             }
         };
     }
@@ -147,6 +133,37 @@ public class MicrometerHttpClientInterceptor {
 
     public HttpRequestRetryStrategy getRequestRetryStrategy() {
         return requestRetryStrategy;
+    }
+
+    private abstract static class MicrometerRequestRetryStrategy implements HttpRequestRetryStrategy {
+
+        private final HttpRequestRetryStrategy retryStrategy;
+
+        public MicrometerRequestRetryStrategy(HttpRequestRetryStrategy retryStrategy) {
+            this.retryStrategy = retryStrategy;
+        }
+
+        abstract void lastError(HttpRequest request, IOException exception, int execCount, HttpContext context);
+
+        @Override
+        public boolean retryRequest(HttpRequest request, IOException exception, int execCount, HttpContext context) {
+            boolean retry = retryStrategy.retryRequest(request, exception, execCount, context);
+            if (!retry) {
+                lastError(request, exception, execCount, context);
+            }
+            return retry;
+        }
+
+        @Override
+        public boolean retryRequest(HttpResponse response, int execCount, HttpContext context) {
+            return retryStrategy.retryRequest(response, execCount, context);
+        }
+
+        @Override
+        public TimeValue getRetryInterval(HttpResponse response, int execCount, HttpContext context) {
+            return retryStrategy.getRetryInterval(response, execCount, context);
+        }
+
     }
 
 }
