@@ -41,8 +41,7 @@ import ru.lanwen.wiremock.ext.WiremockResolver;
 import java.util.concurrent.Future;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.assertj.core.api.Assertions.*;
 
 /**
  * Tests for {@link MicrometerHttpClientInterceptor}.
@@ -101,7 +100,7 @@ class MicrometerHttpClientInterceptorTest {
                 .tag("method", "GET")
                 .tag("status", "IO_ERROR")
                 .tag("outcome", "UNKNOWN")
-                // .tag("exception", "SocketTimeoutException")
+                .tag("exception", "SocketTimeoutException")
                 .timer()
                 .count()).isEqualTo(1);
         }).doesNotThrowAnyException();
@@ -139,6 +138,7 @@ class MicrometerHttpClientInterceptorTest {
 
     private CloseableHttpAsyncClient asyncClient(MicrometerHttpClientInterceptor interceptor) {
         return HttpAsyncClients.custom()
+            .setRetryStrategy(interceptor.getRequestRetryStrategy())
             .addRequestInterceptorFirst(interceptor.getRequestInterceptor())
             .addResponseInterceptorLast(interceptor.getResponseInterceptor())
             .setDefaultRequestConfig(RequestConfig.custom().setResponseTimeout(1000L, TimeUnit.MILLISECONDS).build())

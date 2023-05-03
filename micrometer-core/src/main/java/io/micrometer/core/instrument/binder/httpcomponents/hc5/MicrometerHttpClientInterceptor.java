@@ -19,15 +19,24 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.instrument.binder.http.HttpRequestTags;
 import io.micrometer.core.instrument.binder.http.Outcome;
+
+import java.io.IOException;
+
+import org.apache.hc.client5.http.HttpRequestRetryStrategy;
+import org.apache.hc.client5.http.impl.DefaultHttpRequestRetryStrategy;
 import org.apache.hc.core5.http.HttpRequest;
 import org.apache.hc.core5.http.HttpRequestInterceptor;
+import org.apache.hc.core5.http.HttpResponse;
 import org.apache.hc.core5.http.HttpResponseInterceptor;
 import org.apache.hc.core5.http.protocol.HttpContext;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
+
+import org.apache.hc.core5.util.TimeValue;
 
 /**
  * Provides {@link HttpRequestInterceptor} and {@link HttpResponseInterceptor} for
@@ -57,6 +66,8 @@ public class MicrometerHttpClientInterceptor {
 
     private final HttpResponseInterceptor responseInterceptor;
 
+    private final HttpRequestRetryStrategy requestRetryStrategy;
+
     /**
      * Create a {@code MicrometerHttpClientInterceptor} instance.
      * @param meterRegistry meter registry to bind
@@ -66,6 +77,11 @@ public class MicrometerHttpClientInterceptor {
      */
     public MicrometerHttpClientInterceptor(MeterRegistry meterRegistry, Function<HttpRequest, String> uriMapper,
             Iterable<Tag> extraTags, boolean exportTagsForRoute) {
+        this(meterRegistry, uriMapper, extraTags, exportTagsForRoute, new DefaultHttpRequestRetryStrategy());
+    }
+
+    public MicrometerHttpClientInterceptor(MeterRegistry meterRegistry, Function<HttpRequest, String> uriMapper,
+            Iterable<Tag> extraTags, boolean exportTagsForRoute, HttpRequestRetryStrategy retryStrategy) {
         this.requestInterceptor = (request, entityDetails, context) -> timerByHttpContext.put(context,
                 Timer.resource(meterRegistry, METER_NAME)
                     .tags("method", request.getMethod(), "uri", uriMapper.apply(request)));
@@ -77,6 +93,35 @@ public class MicrometerHttpClientInterceptor {
                 .tags(exportTagsForRoute ? HttpContextUtils.generateTagsForRoute(context) : Tags.empty())
                 .tags(extraTags)
                 .close();
+        };
+
+        this.requestRetryStrategy = new HttpRequestRetryStrategy() {
+            @Override
+            public boolean retryRequest(HttpRequest request, IOException exception, int execCount,
+                    HttpContext context) {
+                boolean retry = retryStrategy.retryRequest(request, exception, execCount, context);
+                if (!retry) {
+                    // record after last retry.
+                    timerByHttpContext.remove(context)
+                        .tag("status", "IO_ERROR")
+                        .tag("outcome", "UNKNOWN")
+                        .tag("exception", HttpRequestTags.exception(exception).getValue())
+                        .tags(exportTagsForRoute ? HttpContextUtils.generateTagsForRoute(context) : Tags.empty())
+                        .tags(extraTags)
+                        .close();
+                }
+                return retry;
+            }
+
+            @Override
+            public boolean retryRequest(HttpResponse response, int execCount, HttpContext context) {
+                return retryStrategy.retryRequest(response, execCount, context);
+            }
+
+            @Override
+            public TimeValue getRetryInterval(HttpResponse response, int execCount, HttpContext context) {
+                return retryStrategy.getRetryInterval(response, execCount, context);
+            }
         };
     }
 
@@ -98,6 +143,10 @@ public class MicrometerHttpClientInterceptor {
 
     public HttpResponseInterceptor getResponseInterceptor() {
         return responseInterceptor;
+    }
+
+    public HttpRequestRetryStrategy getRequestRetryStrategy() {
+        return requestRetryStrategy;
     }
 
 }
