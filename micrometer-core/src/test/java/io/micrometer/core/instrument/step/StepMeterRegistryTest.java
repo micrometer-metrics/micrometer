@@ -15,9 +15,9 @@
  */
 package io.micrometer.core.instrument.step;
 
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.*;
+import io.micrometer.core.lang.Nullable;
 import org.junit.jupiter.api.Test;
 import org.testcontainers.shaded.com.google.common.util.concurrent.AtomicDouble;
 
