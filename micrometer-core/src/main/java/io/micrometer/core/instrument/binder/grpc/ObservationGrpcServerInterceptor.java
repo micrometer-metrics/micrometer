@@ -101,7 +101,7 @@ public class ObservationGrpcServerInterceptor implements ServerInterceptor {
 
         try {
             Listener<ReqT> result = next.startCall(serverCall, headers);
-            return new ObservationGrpcServerCallListener<>(result, scope);
+            return new ObservationGrpcServerCallListener<>(result, scope, this.registry);
         }
         catch (Exception ex) {
             scope.close();

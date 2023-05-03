@@ -20,6 +20,7 @@ import io.grpc.ServerCall.Listener;
 import io.micrometer.core.instrument.binder.grpc.GrpcObservationDocumentation.GrpcServerEvents;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.Observation.Scope;
+import io.micrometer.observation.ObservationRegistry;
 
 /**
  * A simple forwarding client call listener for {@link Observation}.
@@ -30,19 +31,30 @@ class ObservationGrpcServerCallListener<RespT> extends SimpleForwardingServerCal
 
     private final Scope scope;
 
-    ObservationGrpcServerCallListener(Listener<RespT> delegate, Scope scope) {
+    private final ObservationRegistry registry;
+
+    ObservationGrpcServerCallListener(Listener<RespT> delegate, Scope scope, ObservationRegistry registry) {
         super(delegate);
         this.scope = scope;
+        this.registry = registry;
     }
 
     @Override
     public void onMessage(RespT message) {
+        if (this.scope != this.registry.getCurrentObservationScope()) {
+            this.scope.makeCurrent();
+            this.registry.setCurrentObservationScope(this.scope);
+        }
         this.scope.getCurrentObservation().event(GrpcServerEvents.MESSAGE_RECEIVED);
         super.onMessage(message);
     }
 
     @Override
     public void onHalfClose() {
+        if (this.scope != this.registry.getCurrentObservationScope()) {
+            this.scope.makeCurrent();
+            this.registry.setCurrentObservationScope(this.scope);
+        }
         try {
             super.onHalfClose();
         }
