@@ -365,6 +365,7 @@ class SimpleObservation implements Observation {
             for (SimpleScope simpleScope : scopes) {
                 simpleScope.currentObservation.notifyOnScopeMakeCurrent();
             }
+            this.registry.setCurrentObservationScope(this);
         }
 
     }
