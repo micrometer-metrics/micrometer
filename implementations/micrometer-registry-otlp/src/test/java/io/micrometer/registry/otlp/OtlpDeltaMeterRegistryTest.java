@@ -29,6 +29,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 
 import static io.micrometer.registry.otlp.AggregationTemporality.DELTA;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class OtlpDeltaMeterRegistryTest extends OtlpMeterRegistryTest {
@@ -309,6 +310,121 @@ class OtlpDeltaMeterRegistryTest extends OtlpMeterRegistryTest {
         clock.addSeconds(1);
         assertThat(getDataPoint.apply(counter).getStartTimeUnixNano()).isEqualTo(60000000000L);
         assertThat(getDataPoint.apply(counter).getTimeUnixNano()).isEqualTo(120000000000L);
+    }
+
+    @Test
+    void scheduledRollOver() {
+        Counter counter = Counter.builder(METER_NAME)
+            .description(METER_DESCRIPTION)
+            .tags(Tags.of(meterTag))
+            .register(registry);
+
+        AtomicLong functionCount = new AtomicLong(15);
+        FunctionCounter functionCounter = FunctionCounter.builder("counter.function", functionCount, AtomicLong::get)
+            .register(registry);
+        FunctionTimer functionTimer = FunctionTimer
+            .builder("timer.function", functionCount, AtomicLong::get, AtomicLong::get, MILLISECONDS)
+            .register(registry);
+
+        counter.increment();
+        functionCount.incrementAndGet();
+        // before rollover
+        assertSum(writeToMetric(counter), 0, TimeUnit.MINUTES.toNanos(1), 0);
+        assertThat(functionCounter.count()).isZero();
+        assertThat(functionTimer.count()).isZero();
+        assertThat(functionTimer.totalTime(MILLISECONDS)).isZero();
+
+        this.stepOverNStep(1);
+        // simulate this being scheduled at the start of the step
+        registry.pollMetersToRollover();
+
+        // these recordings belong to the current step and should not be published
+        counter.increment(10);
+        functionCount.addAndGet(10);
+        assertSum(writeToMetric(counter), TimeUnit.MINUTES.toNanos(1), TimeUnit.MINUTES.toNanos(2), 1);
+        assertThat(writeToMetric(functionCounter).getSum().getDataPoints(0).getAsDouble()).isEqualTo(16);
+        assertThat(writeToMetric(functionTimer).getHistogram().getDataPoints(0).getSum()).isEqualTo(16);
+        assertThat(writeToMetric(functionTimer).getHistogram().getDataPoints(0).getCount()).isEqualTo(16);
+
+        clock.addSeconds(otlpConfig().step().getSeconds() / 2);
+        registry.pollMetersToRollover(); // pollMeters should be idempotent within a time
+                                         // window
+        assertSum(writeToMetric(counter), TimeUnit.MINUTES.toNanos(1), TimeUnit.MINUTES.toNanos(2), 1);
+        assertThat(writeToMetric(functionCounter).getSum().getDataPoints(0).getAsDouble()).isEqualTo(16);
+        assertThat(writeToMetric(functionTimer).getHistogram().getDataPoints(0).getSum()).isEqualTo(16);
+        assertThat(writeToMetric(functionTimer).getHistogram().getDataPoints(0).getCount()).isEqualTo(16);
+
+        clock.addSeconds(otlpConfig().step().getSeconds() / 2);
+        registry.pollMetersToRollover();
+        assertSum(writeToMetric(counter), TimeUnit.MINUTES.toNanos(2), TimeUnit.MINUTES.toNanos(3), 10);
+        assertThat(writeToMetric(functionCounter).getSum().getDataPoints(0).getAsDouble()).isEqualTo(10);
+        assertThat(writeToMetric(functionTimer).getHistogram().getDataPoints(0).getSum()).isEqualTo(10);
+        assertThat(writeToMetric(functionTimer).getHistogram().getDataPoints(0).getCount()).isEqualTo(10);
+    }
+
+    @Test
+    void scheduledRolloverTimer() {
+        Timer timer = Timer.builder(METER_NAME)
+            .tags(Tags.of(meterTag))
+            .description(METER_DESCRIPTION)
+            .serviceLevelObjectives(Duration.ofMillis(10), Duration.ofMillis(100))
+            .register(registry);
+
+        registry.pollMetersToRollover();
+        assertHistogram(writeToMetric(timer), 0, TimeUnit.MINUTES.toNanos(1), "milliseconds", 0, 0, 0);
+        timer.record(Duration.ofMillis(5));
+        timer.record(Duration.ofMillis(15));
+        timer.record(Duration.ofMillis(150));
+
+        assertHistogram(writeToMetric(timer), 0, TimeUnit.MINUTES.toNanos(1), "milliseconds", 0, 0, 0);
+        assertThat(writeToMetric(timer).getHistogram().getDataPoints(0).getBucketCountsList()).allMatch(e -> e == 0);
+        this.stepOverNStep(1);
+
+        registry.pollMetersToRollover(); // This should roll over the entire Meter to next
+                                         // step.
+        assertHistogram(writeToMetric(timer), TimeUnit.MINUTES.toNanos(1), TimeUnit.MINUTES.toNanos(2), "milliseconds",
+                3, 170, 150);
+        assertThat(writeToMetric(timer).getHistogram().getDataPoints(0).getBucketCountsList()).allMatch(e -> e == 1);
+        clock.addSeconds(1);
+
+        timer.record(Duration.ofMillis(160)); // This belongs to current step.
+        assertThat(writeToMetric(timer).getHistogram().getDataPoints(0).getBucketCountsList()).allMatch(e -> e == 1);
+        assertHistogram(writeToMetric(timer), TimeUnit.MINUTES.toNanos(1), TimeUnit.MINUTES.toNanos(2), "milliseconds",
+                3, 170, 150);
+
+    }
+
+    @Test
+    void scheduledRolloverDistributionSummary() {
+        DistributionSummary ds = DistributionSummary.builder(METER_NAME)
+            .tags(Tags.of(meterTag))
+            .baseUnit("bytes")
+            .description(METER_DESCRIPTION)
+            .serviceLevelObjectives(10, 100)
+            .register(registry);
+
+        registry.pollMetersToRollover();
+        assertHistogram(writeToMetric(ds), 0, TimeUnit.MINUTES.toNanos(1), "bytes", 0, 0, 0);
+        ds.record(5);
+        ds.record(15);
+        ds.record(150);
+
+        assertHistogram(writeToMetric(ds), 0, TimeUnit.MINUTES.toNanos(1), "bytes", 0, 0, 0);
+        assertThat(writeToMetric(ds).getHistogram().getDataPoints(0).getBucketCountsList()).allMatch(e -> e == 0);
+        this.stepOverNStep(1);
+
+        registry.pollMetersToRollover(); // This should roll over the entire Meter to next
+        // step.
+        assertHistogram(writeToMetric(ds), TimeUnit.MINUTES.toNanos(1), TimeUnit.MINUTES.toNanos(2), "bytes", 3, 170,
+                150);
+        assertThat(writeToMetric(ds).getHistogram().getDataPoints(0).getBucketCountsList()).allMatch(e -> e == 1);
+        clock.addSeconds(1);
+
+        ds.record(160); // This belongs to current step.
+        assertThat(writeToMetric(ds).getHistogram().getDataPoints(0).getBucketCountsList()).allMatch(e -> e == 1);
+        assertHistogram(writeToMetric(ds), TimeUnit.MINUTES.toNanos(1), TimeUnit.MINUTES.toNanos(2), "bytes", 3, 170,
+                150);
+
     }
 
 }
