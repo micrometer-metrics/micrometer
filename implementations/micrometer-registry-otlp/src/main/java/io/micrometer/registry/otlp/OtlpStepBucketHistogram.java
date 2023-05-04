@@ -13,40 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package io.micrometer.registry.otlp;
 
 import io.micrometer.core.instrument.Clock;
-import io.micrometer.core.instrument.step.StepValue;
-
-import java.util.concurrent.atomic.DoubleAccumulator;
-import java.util.function.Supplier;
+import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
+import io.micrometer.core.instrument.distribution.StepBucketHistogram;
 
 /**
- * A {@link StepValue} implementation that tracks max over a Step Interval.
- *
- * @author Lenin Jaganathan
- * @since 1.11.0
+ * This is an internal class not meant for general use. The only reason to have this class
+ * so that components in this package can call {@code _closingRollover} on
+ * {@code StepBucketHistogram} and the method does not need to be public.
  */
-class StepMax extends StepValue<Double> {
+class OtlpStepBucketHistogram extends StepBucketHistogram {
 
-    private final DoubleAccumulator current = new DoubleAccumulator(Double::max, 0);
-
-    public StepMax(Clock clock, long stepMillis) {
-        super(clock, stepMillis);
-    }
-
-    @Override
-    protected Supplier<Double> valueSupplier() {
-        return current::getThenReset;
-    }
-
-    @Override
-    protected Double noValue() {
-        return 0.0;
-    }
-
-    public void record(double value) {
-        current.accumulate(value);
+    OtlpStepBucketHistogram(Clock clock, long stepMillis, DistributionStatisticConfig distributionStatisticConfig,
+            boolean supportsAggregablePercentiles, boolean isCumulativeBucketCounts) {
+        super(clock, stepMillis, distributionStatisticConfig, supportsAggregablePercentiles, isCumulativeBucketCounts);
     }
 
     @Override

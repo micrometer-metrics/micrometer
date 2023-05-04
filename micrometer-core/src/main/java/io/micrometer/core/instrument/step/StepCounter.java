@@ -47,7 +47,7 @@ public class StepCounter extends AbstractMeter implements Counter, StepMeter {
 
     @Override
     public void _closingRollover() {
-        value.closingRollover();
+        value._closingRollover();
     }
 
 }

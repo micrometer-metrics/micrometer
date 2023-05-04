@@ -40,7 +40,7 @@ public abstract class AbstractTimer extends AbstractMeter implements Timer {
 
     protected final Clock clock;
 
-    private final Histogram histogram;
+    protected final Histogram histogram;
 
     private final TimeUnit baseTimeUnit;
 
