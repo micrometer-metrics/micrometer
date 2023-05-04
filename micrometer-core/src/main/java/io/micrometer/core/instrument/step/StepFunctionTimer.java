@@ -32,7 +32,7 @@ import java.util.function.ToLongFunction;
  * @author Jon Schneider
  * @author Johnny Lim
  */
-public class StepFunctionTimer<T> implements FunctionTimer {
+public class StepFunctionTimer<T> implements FunctionTimer, StepMeter {
 
     private final Id id;
 
@@ -116,6 +116,12 @@ public class StepFunctionTimer<T> implements FunctionTimer {
 
     public Type type() {
         return Type.TIMER;
+    }
+
+    @Override
+    public void _closingRollover() {
+        accumulateCountAndTotal();
+        countTotal.closingRollover();
     }
 
 }

@@ -28,11 +28,12 @@ import static org.mockito.Mockito.mock;
 
 class StepDistributionSummaryTest {
 
+    MockClock clock = new MockClock();
+
     @Issue("#1814")
     @Test
     void meanShouldWorkIfTotalNotCalled() {
         Duration stepDuration = Duration.ofMillis(10);
-        MockClock clock = new MockClock();
         StepDistributionSummary summary = new StepDistributionSummary(mock(Meter.Id.class), clock,
                 DistributionStatisticConfig.builder().expiry(stepDuration).bufferLength(2).build(), 1.0,
                 stepDuration.toMillis(), false);
@@ -46,6 +47,31 @@ class StepDistributionSummaryTest {
 
         clock.add(stepDuration);
         assertThat(summary.mean()).isEqualTo(75.0);
+    }
+
+    @Test
+    void closingRolloverPartialStep() {
+        Duration stepDuration = Duration.ofMillis(10);
+        StepDistributionSummary summary = new StepDistributionSummary(mock(Meter.Id.class), clock,
+                DistributionStatisticConfig.builder().expiry(stepDuration).bufferLength(2).build(), 1.0,
+                stepDuration.toMillis(), false);
+
+        summary.record(100);
+        summary.record(200);
+
+        assertThat(summary.count()).isZero();
+
+        summary._closingRollover();
+
+        assertThat(summary.count()).isEqualTo(2);
+        assertThat(summary.totalAmount()).isEqualTo(300);
+        assertThat(summary.mean()).isEqualTo(150);
+
+        clock.add(stepDuration);
+
+        assertThat(summary.count()).isEqualTo(2);
+        assertThat(summary.totalAmount()).isEqualTo(300);
+        assertThat(summary.mean()).isEqualTo(150);
     }
 
 }
