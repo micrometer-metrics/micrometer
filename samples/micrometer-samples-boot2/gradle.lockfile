@@ -4,9 +4,9 @@
 antlr:antlr:2.7.7=nohttp
 ch.qos.logback:logback-classic:1.2.11=checkstyle,compileClasspath,nohttp,nohttp-cli,productionRuntimeClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
 ch.qos.logback:logback-core:1.2.11=checkstyle,compileClasspath,nohttp,nohttp-cli,productionRuntimeClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
-com.amazonaws:aws-java-sdk-cloudwatch:1.12.445=compileClasspath,productionRuntimeClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
-com.amazonaws:aws-java-sdk-core:1.12.445=compileClasspath,productionRuntimeClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
-com.amazonaws:jmespath-java:1.12.445=compileClasspath,productionRuntimeClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
+com.amazonaws:aws-java-sdk-cloudwatch:1.12.463=compileClasspath,productionRuntimeClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
+com.amazonaws:aws-java-sdk-core:1.12.463=compileClasspath,productionRuntimeClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
+com.amazonaws:jmespath-java:1.12.463=compileClasspath,productionRuntimeClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
 com.dynatrace.metric.util:dynatrace-metric-utils-java:1.5.0=productionRuntimeClasspath,runtimeClasspath,testRuntimeClasspath
 com.fasterxml.jackson.core:jackson-annotations:2.13.5=compileClasspath,productionRuntimeClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
 com.fasterxml.jackson.core:jackson-core:2.13.5=compileClasspath,productionRuntimeClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
