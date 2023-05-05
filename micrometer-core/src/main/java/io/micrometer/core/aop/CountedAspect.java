@@ -69,6 +69,7 @@ import java.util.function.Predicate;
  * @author Ali Dehghani
  * @author Jonatan Ivanov
  * @author Johnny Lim
+ * @author Yanming Zhou
  * @since 1.2.0
  * @see Counted
  */
@@ -166,7 +167,7 @@ public class CountedAspect {
         this.shouldSkip = shouldSkip;
     }
 
-    @Around("@within(io.micrometer.core.annotation.Counted)")
+    @Around("@within(io.micrometer.core.annotation.Counted) and not @annotation(io.micrometer.core.annotation.Counted)")
     @Nullable
     public Object countedClass(ProceedingJoinPoint pjp) throws Throwable {
         if (shouldSkip.test(pjp)) {

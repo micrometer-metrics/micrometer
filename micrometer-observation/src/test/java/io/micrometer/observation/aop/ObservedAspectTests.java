@@ -335,6 +335,23 @@ class ObservedAspectTests {
         TestObservationRegistryAssert.assertThat(registry).doesNotHaveAnyObservation();
     }
 
+    @Test
+    void ignoreClassLevelAnnotationIfMethodLevelPresent() {
+        registry.observationConfig().observationHandler(new ObservationTextPublisher());
+
+        AspectJProxyFactory pf = new AspectJProxyFactory(new ObservedClassLevelAnnotatedService());
+        pf.addAspect(new ObservedAspect(registry));
+
+        ObservedClassLevelAnnotatedService service = pf.getProxy();
+        service.annotatedOnMethod();
+        TestObservationRegistryAssert.assertThat(registry)
+            .doesNotHaveAnyRemainingCurrentObservation()
+            .hasSingleObservationThat()
+            .hasBeenStopped()
+            .hasNameEqualTo("test.class")
+            .hasContextualNameEqualTo("test.class#annotatedOnMethod");
+    }
+
     static class ObservedService {
 
         @Observed(name = "test.call", contextualName = "test#call",
@@ -385,6 +402,10 @@ class ObservedAspectTests {
                 .captureAll();
             return CompletableFuture.supplyAsync(fakeAsyncTask,
                     contextSnapshot.wrapExecutor(Executors.newSingleThreadExecutor()));
+        }
+
+        @Observed(name = "test.class", contextualName = "test.class#annotatedOnMethod")
+        void annotatedOnMethod() {
         }
 
     }
