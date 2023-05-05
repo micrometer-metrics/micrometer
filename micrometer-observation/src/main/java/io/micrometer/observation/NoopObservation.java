@@ -103,6 +103,11 @@ final class NoopObservation implements Observation {
         return NoopScope.INSTANCE;
     }
 
+    @Override
+    public DeferredScope deferredScope() {
+        return NoopDeferredScope.INSTANCE;
+    }
+
     /**
      * Scope that does nothing.
      */
@@ -132,6 +137,37 @@ final class NoopObservation implements Observation {
 
         @Override
         public void makeCurrent() {
+
+        }
+
+    }
+
+    static final class NoopDeferredScope implements DeferredScope {
+
+        static final DeferredScope INSTANCE = new NoopDeferredScope();
+
+        @Override
+        public Observation getCurrentObservation() {
+            return NoopObservation.INSTANCE;
+        }
+
+        @Override
+        public void close() {
+
+        }
+
+        @Override
+        public void reset() {
+
+        }
+
+        @Override
+        public void makeCurrent() {
+
+        }
+
+        @Override
+        public void open() {
 
         }
 

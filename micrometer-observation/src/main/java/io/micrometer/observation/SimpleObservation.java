@@ -20,11 +20,7 @@ import io.micrometer.common.lang.Nullable;
 import io.micrometer.common.util.StringUtils;
 import io.micrometer.observation.contextpropagation.ObservationThreadLocalAccessor;
 
-import java.util.ArrayDeque;
-import java.util.Collection;
-import java.util.Deque;
-import java.util.Iterator;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -210,6 +206,11 @@ class SimpleObservation implements Observation {
         return scope;
     }
 
+    @Override
+    public DeferredScope deferredScope() {
+        return new SimpleDeferredScope(this);
+    }
+
     @Nullable
     @Override
     public Scope getEnclosingScope() {
@@ -284,6 +285,57 @@ class SimpleObservation implements Observation {
         // We're closing from end till the beginning - e.g. we started with handlers with
         // ids 1,2,3 and we need to call close on 3,2,1
         this.handlers.descendingIterator().forEachRemaining(handler -> handler.onStop(context));
+    }
+
+    static class SimpleDeferredScope implements DeferredScope {
+
+        private final SimpleObservation currentObservation;
+
+        @Nullable
+        private Scope delegate;
+
+        private boolean closed;
+
+        public SimpleDeferredScope(SimpleObservation current) {
+            this.currentObservation = current;
+        }
+
+        @Override
+        public void open() {
+            if (this.closed || this.delegate != null) {
+                return;
+            }
+            this.delegate = this.currentObservation.openScope();
+        }
+
+        @Override
+        public Observation getCurrentObservation() {
+            return this.currentObservation;
+        }
+
+        @Override
+        public void close() {
+            if (this.closed || this.delegate == null) {
+                return;
+            }
+            this.delegate.close();
+            this.closed = true;
+        }
+
+        @Override
+        public void reset() {
+            if (this.delegate != null) {
+                this.delegate.reset();
+            }
+        }
+
+        @Override
+        public void makeCurrent() {
+            if (this.delegate != null) {
+                this.delegate.makeCurrent();
+            }
+        }
+
     }
 
     static class SimpleScope implements Scope {

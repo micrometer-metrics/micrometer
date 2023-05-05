@@ -475,6 +475,8 @@ public interface Observation extends ObservationView {
      */
     Scope openScope();
 
+    DeferredScope deferredScope();
+
     /**
      * Observes the passed {@link Runnable}, this means the followings:
      *
@@ -840,6 +842,12 @@ public interface Observation extends ObservationView {
         default boolean isNoop() {
             return this == NOOP;
         }
+
+    }
+
+    interface DeferredScope extends Scope {
+
+        void open();
 
     }
 
