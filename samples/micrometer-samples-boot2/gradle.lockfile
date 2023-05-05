@@ -2,10 +2,8 @@
 # Manual edits can break the build and are not advised.
 # This file is expected to be part of source control.
 antlr:antlr:2.7.7=nohttp
-ch.qos.logback:logback-classic:1.2.11=spotless-1972451482,spotless-1972451484
-ch.qos.logback:logback-classic:1.2.12=checkstyle,compileClasspath,nohttp,nohttp-cli,productionRuntimeClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
-ch.qos.logback:logback-core:1.2.11=spotless-1972451482,spotless-1972451484
-ch.qos.logback:logback-core:1.2.12=checkstyle,compileClasspath,nohttp,nohttp-cli,productionRuntimeClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
+ch.qos.logback:logback-classic:1.2.12=checkstyle,compileClasspath,nohttp,nohttp-cli,productionRuntimeClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath,spotless-1972451482,spotless-1972451484
+ch.qos.logback:logback-core:1.2.12=checkstyle,compileClasspath,nohttp,nohttp-cli,productionRuntimeClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath,spotless-1972451482,spotless-1972451484
 com.amazonaws:aws-java-sdk-cloudwatch:1.12.463=compileClasspath,productionRuntimeClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
 com.amazonaws:aws-java-sdk-core:1.12.463=compileClasspath,productionRuntimeClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
 com.amazonaws:jmespath-java:1.12.463=compileClasspath,productionRuntimeClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
