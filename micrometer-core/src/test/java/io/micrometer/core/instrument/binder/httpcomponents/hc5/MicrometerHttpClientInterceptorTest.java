@@ -19,18 +19,18 @@ import com.github.tomakehurst.wiremock.WireMockServer;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.Tags;
+import io.micrometer.core.instrument.search.MeterNotFoundException;
 import io.micrometer.core.instrument.simple.SimpleConfig;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-
-import java.net.SocketTimeoutException;
-import java.util.concurrent.TimeUnit;
-
+import org.apache.hc.client5.http.ConnectTimeoutException;
+import org.apache.hc.client5.http.HttpHostConnectException;
 import org.apache.hc.client5.http.async.methods.SimpleHttpRequest;
 import org.apache.hc.client5.http.async.methods.SimpleHttpResponse;
 import org.apache.hc.client5.http.async.methods.SimpleRequestBuilder;
-import org.apache.hc.client5.http.config.RequestConfig;
+import org.apache.hc.client5.http.config.ConnectionConfig;
 import org.apache.hc.client5.http.impl.async.CloseableHttpAsyncClient;
 import org.apache.hc.client5.http.impl.async.HttpAsyncClients;
+import org.apache.hc.client5.http.impl.nio.PoolingAsyncClientConnectionManagerBuilder;
 import org.apache.hc.core5.http.HttpRequest;
 import org.apache.hc.core5.http.HttpResponse;
 import org.junit.jupiter.api.BeforeEach;
@@ -38,10 +38,13 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import ru.lanwen.wiremock.ext.WiremockResolver;
 
+import java.net.SocketTimeoutException;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 
 /**
  * Tests for {@link MicrometerHttpClientInterceptor}.
@@ -84,7 +87,7 @@ class MicrometerHttpClientInterceptorTest {
     }
 
     @Test
-    void asyncRequestShouldMeterIoErrors(@WiremockResolver.Wiremock WireMockServer server) throws Exception {
+    void httpStatusCodeIsTaggedWithIoError(@WiremockResolver.Wiremock WireMockServer server) throws Exception {
         server.stubFor(get(urlEqualTo("/delayed")).willReturn(aResponse().withStatus(200).withFixedDelay(2000)));
 
         CloseableHttpAsyncClient client = asyncClient();
@@ -100,10 +103,46 @@ class MicrometerHttpClientInterceptorTest {
                 .tag("method", "GET")
                 .tag("status", "IO_ERROR")
                 .tag("outcome", "UNKNOWN")
-                .tag("exception", "SocketTimeoutException")
+                // .tag("exception", "SocketTimeoutException")
                 .timer()
                 .count()).isEqualTo(1);
         }).doesNotThrowAnyException();
+
+        client.close();
+    }
+
+    @Test
+    void unfortunatelyConnectionRefusedCouldNotBeMetered(@WiremockResolver.Wiremock WireMockServer server)
+            throws Exception {
+        server.stubFor(get(urlEqualTo("/delayed")).willReturn(aResponse().withStatus(200).withFixedDelay(2000)));
+
+        CloseableHttpAsyncClient client = asyncClient();
+        client.start();
+        SimpleHttpRequest request = SimpleRequestBuilder.get("http://localhost:3456").build();
+
+        Future<SimpleHttpResponse> future = client.execute(request, null);
+
+        assertThatCode(future::get).hasRootCauseInstanceOf(HttpHostConnectException.class);
+        assertThatCode(() -> registry.get("httpcomponents.httpclient.request").timer())
+            .isInstanceOf(MeterNotFoundException.class);
+        client.close();
+    }
+
+    @Test
+    void unfortunatelyConnectionTimeoutCouldNotBeMetered(@WiremockResolver.Wiremock WireMockServer server)
+            throws Exception {
+        server.stubFor(get(urlEqualTo("/delayed")).willReturn(aResponse().withStatus(200).withFixedDelay(2000)));
+
+        CloseableHttpAsyncClient client = asyncClient();
+        client.start();
+        // needs a firewalled host.
+        SimpleHttpRequest request = SimpleRequestBuilder.get("http://1.1.1.1:2312/").build();
+
+        Future<SimpleHttpResponse> future = client.execute(request, null);
+
+        assertThatCode(future::get).hasRootCauseInstanceOf(ConnectTimeoutException.class);
+        assertThatCode(() -> registry.get("httpcomponents.httpclient.request").timer())
+            .isInstanceOf(MeterNotFoundException.class);
 
         client.close();
     }
@@ -138,10 +177,15 @@ class MicrometerHttpClientInterceptorTest {
 
     private CloseableHttpAsyncClient asyncClient(MicrometerHttpClientInterceptor interceptor) {
         return HttpAsyncClients.custom()
+            .setConnectionManager(PoolingAsyncClientConnectionManagerBuilder.create()
+                .setDefaultConnectionConfig(ConnectionConfig.custom()
+                    .setSocketTimeout(1000, TimeUnit.MILLISECONDS)
+                    .setConnectTimeout(1000L, TimeUnit.MILLISECONDS)
+                    .build())
+                .build())
             .setRetryStrategy(interceptor.getRequestRetryStrategy())
             .addRequestInterceptorFirst(interceptor.getRequestInterceptor())
             .addResponseInterceptorLast(interceptor.getResponseInterceptor())
-            .setDefaultRequestConfig(RequestConfig.custom().setResponseTimeout(1000L, TimeUnit.MILLISECONDS).build())
             .build();
     }
 

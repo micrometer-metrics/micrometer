@@ -24,6 +24,8 @@ import io.micrometer.core.instrument.binder.http.Outcome;
 
 import java.io.IOException;
 
+import java.util.Optional;
+
 import org.apache.hc.client5.http.HttpRequestRetryStrategy;
 import org.apache.hc.client5.http.impl.DefaultHttpRequestRetryStrategy;
 import org.apache.hc.core5.http.HttpRequest;
@@ -37,6 +39,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
 import org.apache.hc.core5.util.TimeValue;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Provides {@link HttpRequestInterceptor} and {@link HttpResponseInterceptor} for
@@ -58,6 +62,8 @@ import org.apache.hc.core5.util.TimeValue;
  * @since 1.11.0
  */
 public class MicrometerHttpClientInterceptor {
+
+    private static final Logger log = LoggerFactory.getLogger(MicrometerHttpClientInterceptor.class);
 
     private static final String METER_NAME = "httpcomponents.httpclient.request";
 
@@ -99,14 +105,15 @@ public class MicrometerHttpClientInterceptor {
         this.requestRetryStrategy = new MicrometerRequestRetryStrategy(retryStrategy) {
             @Override
             void lastError(HttpRequest request, IOException exception, int execCount, HttpContext context) {
-                // record error after last retry.
-                timerByHttpContext.remove(context)
-                    .tag("status", "IO_ERROR")
+                // might be null because the requestInterceptor is never called for io
+                // errors before a connection is established.
+                Optional<Timer.ResourceSample> sample = Optional.ofNullable(timerByHttpContext.remove(context));
+                sample.ifPresent(s -> s.tag("status", "IO_ERROR")
                     .tag("outcome", "UNKNOWN")
-                    .tag("exception", HttpRequestTags.exception(exception).getValue())
+                    // .tag("exception", HttpRequestTags.exception(exception).getValue())
                     .tags(exportTagsForRoute ? HttpContextUtils.generateTagsForRoute(context) : Tags.empty())
                     .tags(extraTags)
-                    .close();
+                    .close());
             }
         };
     }
@@ -149,7 +156,14 @@ public class MicrometerHttpClientInterceptor {
         public boolean retryRequest(HttpRequest request, IOException exception, int execCount, HttpContext context) {
             boolean retry = retryStrategy.retryRequest(request, exception, execCount, context);
             if (!retry) {
-                lastError(request, exception, execCount, context);
+                try {
+                    lastError(request, exception, execCount, context);
+                }
+                catch (Exception ex) {
+                    // retry must not throw, otherwise caller is deadlocked.
+                    log.warn("could not meter last error {}", ex.getMessage(), ex);
+                    return false;
+                }
             }
             return retry;
         }

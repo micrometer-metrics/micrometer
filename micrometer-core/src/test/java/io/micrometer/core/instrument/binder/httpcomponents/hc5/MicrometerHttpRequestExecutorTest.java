@@ -26,10 +26,16 @@ import io.micrometer.observation.GlobalObservationConvention;
 import io.micrometer.observation.ObservationRegistry;
 import io.micrometer.observation.tck.TestObservationRegistry;
 import io.micrometer.observation.tck.TestObservationRegistryAssert;
+
+import java.util.concurrent.TimeUnit;
+
 import org.apache.hc.client5.http.ClientProtocolException;
+import org.apache.hc.client5.http.ConnectTimeoutException;
+import org.apache.hc.client5.http.HttpHostConnectException;
 import org.apache.hc.client5.http.classic.methods.HttpGet;
 import org.apache.hc.client5.http.classic.methods.HttpPost;
 import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
+import org.apache.hc.client5.http.config.RequestConfig;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
 import org.apache.hc.client5.http.impl.classic.HttpClientBuilder;
 import org.apache.hc.core5.http.ClassicHttpRequest;
@@ -50,8 +56,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
@@ -335,6 +340,32 @@ class MicrometerHttpRequestExecutorTest {
             .count()).isEqualTo(1L);
     }
 
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    void unfortunatelyConnectionRefusedCouldNotBeMetered(boolean configureObservationRegistry,
+            @WiremockResolver.Wiremock WireMockServer server) {
+        server.stubFor(any(urlEqualTo("/error")).willReturn(aResponse().withStatus(1)));
+        CloseableHttpClient client = client(executor(false, configureObservationRegistry));
+        // assertThatThrownBy(() -> execute(client, new HttpGet(server.baseUrl() +
+        // "/error")))
+        assertThatThrownBy(() -> execute(client, new HttpGet("http://localhost:3456")))
+            .isInstanceOf(HttpHostConnectException.class);
+        assertThatThrownBy(() -> registry.get(EXPECTED_METER_NAME).timer()).isInstanceOf(MeterNotFoundException.class);
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    void unfortunatelyConnectionTimeoutCouldNotBeMetered(boolean configureObservationRegistry,
+            @WiremockResolver.Wiremock WireMockServer server) {
+        server.stubFor(any(urlEqualTo("/error")).willReturn(aResponse().withStatus(1)));
+        CloseableHttpClient client = client(executor(false, configureObservationRegistry));
+        // assertThatThrownBy(() -> execute(client, new HttpGet(server.baseUrl() +
+        // "/error")))
+        assertThatThrownBy(() -> execute(client, new HttpGet("http://1.1.1.1:2312/")))
+            .isInstanceOf(ConnectTimeoutException.class);
+        assertThatThrownBy(() -> registry.get(EXPECTED_METER_NAME).timer()).isInstanceOf(MeterNotFoundException.class);
+    }
+
     static class CustomGlobalApacheHttpConvention extends DefaultApacheHttpClientObservationConvention
             implements GlobalObservationConvention<ApacheHttpClientContext> {
 
@@ -346,7 +377,10 @@ class MicrometerHttpRequestExecutorTest {
     }
 
     private CloseableHttpClient client(HttpRequestExecutor executor) {
-        return HttpClientBuilder.create().setRequestExecutor(executor).build();
+        return HttpClientBuilder.create()
+            .setDefaultRequestConfig(RequestConfig.custom().setConnectTimeout(1000L, TimeUnit.MILLISECONDS).build())
+            .setRequestExecutor(executor)
+            .build();
     }
 
     private HttpRequestExecutor executor(boolean exportRoutes, boolean configureObservationRegistry) {
