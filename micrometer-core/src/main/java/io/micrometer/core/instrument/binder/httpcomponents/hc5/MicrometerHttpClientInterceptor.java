@@ -15,6 +15,8 @@
  */
 package io.micrometer.core.instrument.binder.httpcomponents.hc5;
 
+import io.micrometer.common.util.internal.logging.InternalLogger;
+import io.micrometer.common.util.internal.logging.InternalLoggerFactory;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
@@ -28,8 +30,6 @@ import org.apache.hc.core5.http.HttpResponse;
 import org.apache.hc.core5.http.HttpResponseInterceptor;
 import org.apache.hc.core5.http.protocol.HttpContext;
 import org.apache.hc.core5.util.TimeValue;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Map;
@@ -58,7 +58,7 @@ import java.util.function.Function;
  */
 public class MicrometerHttpClientInterceptor {
 
-    private static final Logger log = LoggerFactory.getLogger(MicrometerHttpClientInterceptor.class);
+    private static final InternalLogger log = InternalLoggerFactory.getInstance(MicrometerHttpClientInterceptor.class);
 
     private static final String METER_NAME = "httpcomponents.httpclient.request";
 
