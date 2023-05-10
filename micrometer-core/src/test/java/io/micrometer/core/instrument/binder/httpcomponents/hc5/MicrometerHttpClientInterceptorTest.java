@@ -136,7 +136,7 @@ class MicrometerHttpClientInterceptorTest {
         CloseableHttpAsyncClient client = asyncClient();
         client.start();
         // needs a firewalled host.
-        SimpleHttpRequest request = SimpleRequestBuilder.get("http://1.1.1.1:2312/").build();
+        SimpleHttpRequest request = SimpleRequestBuilder.get("https://1.1.1.1:2312/").build();
 
         Future<SimpleHttpResponse> future = client.execute(request, null);
 

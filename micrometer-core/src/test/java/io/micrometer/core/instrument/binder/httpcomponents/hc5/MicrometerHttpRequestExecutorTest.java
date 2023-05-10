@@ -361,7 +361,7 @@ class MicrometerHttpRequestExecutorTest {
         CloseableHttpClient client = client(executor(false, configureObservationRegistry));
         // assertThatThrownBy(() -> execute(client, new HttpGet(server.baseUrl() +
         // "/error")))
-        assertThatThrownBy(() -> execute(client, new HttpGet("http://1.1.1.1:2312/")))
+        assertThatThrownBy(() -> execute(client, new HttpGet("https://1.1.1.1:2312/")))
             .isInstanceOf(ConnectTimeoutException.class);
         assertThatThrownBy(() -> registry.get(EXPECTED_METER_NAME).timer()).isInstanceOf(MeterNotFoundException.class);
     }
