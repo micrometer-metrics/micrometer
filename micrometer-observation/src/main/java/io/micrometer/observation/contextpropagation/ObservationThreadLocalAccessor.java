@@ -129,8 +129,10 @@ public class ObservationThreadLocalAccessor implements ThreadLocalAccessor<Obser
             log.warn(msg);
             assert false : msg;
         }
-        else if (value != scope.getPreviousObservationScope().getCurrentObservation()) {
-            Observation previousObservation = scope.getPreviousObservationScope().getCurrentObservation();
+        Observation.Scope previousObservationScope = scope.getPreviousObservationScope();
+        if (previousObservationScope == null || value != previousObservationScope.getCurrentObservation()) {
+            Observation previousObservation = previousObservationScope != null
+                    ? previousObservationScope.getCurrentObservation() : null;
             String msg = "Observation <" + value
                     + "> to which we're restoring is not the same as the one set as this scope's parent observation <"
                     + previousObservation
