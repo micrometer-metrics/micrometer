@@ -37,8 +37,7 @@ class ApacheAsyncHttpClient5TimingInstrumentationVerificationTests
         MicrometerHttpClientInterceptor interceptor = new MicrometerHttpClientInterceptor(getRegistry(), Tags.empty(),
                 true);
         CloseableHttpAsyncClient client = HttpAsyncClients.custom()
-            .addRequestInterceptorFirst(interceptor.getRequestInterceptor())
-            .addResponseInterceptorLast(interceptor.getResponseInterceptor())
+            .addExecInterceptorFirst("custom", interceptor.getExecChainHandler())
             .build();
         client.start();
         return client;
