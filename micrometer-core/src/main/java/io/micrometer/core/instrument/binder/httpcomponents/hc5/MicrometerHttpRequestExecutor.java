@@ -24,10 +24,10 @@ import io.micrometer.core.instrument.binder.http.Outcome;
 import io.micrometer.core.instrument.observation.ObservationOrTimerCompatibleInstrumentation;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
+import org.apache.hc.client5.http.classic.ExecChain;
+import org.apache.hc.client5.http.classic.ExecChainHandler;
 import org.apache.hc.core5.http.*;
 import org.apache.hc.core5.http.impl.io.HttpRequestExecutor;
-import org.apache.hc.core5.http.io.HttpClientConnection;
-import org.apache.hc.core5.http.protocol.HttpContext;
 import org.apache.hc.core5.util.Timeout;
 
 import java.io.IOException;
@@ -53,7 +53,7 @@ import java.util.function.Function;
  * @author Tommy Ludwig
  * @since 1.11.0
  */
-public class MicrometerHttpRequestExecutor extends HttpRequestExecutor {
+public class MicrometerHttpRequestExecutor implements ExecChainHandler {
 
     static final String METER_NAME = "httpcomponents.httpclient.request";
 
@@ -76,7 +76,6 @@ public class MicrometerHttpRequestExecutor extends HttpRequestExecutor {
     private MicrometerHttpRequestExecutor(Timeout waitForContinue, MeterRegistry registry,
             Function<HttpRequest, String> uriMapper, Iterable<Tag> extraTags, boolean exportTagsForRoute,
             ObservationRegistry observationRegistry, @Nullable ApacheHttpClientObservationConvention convention) {
-        super(waitForContinue, null, null);
         this.registry = Optional.ofNullable(registry)
             .orElseThrow(() -> new IllegalArgumentException("registry is required but has been initialized with null"));
         this.uriMapper = Optional.ofNullable(uriMapper)
@@ -99,17 +98,17 @@ public class MicrometerHttpRequestExecutor extends HttpRequestExecutor {
     }
 
     @Override
-    public ClassicHttpResponse execute(ClassicHttpRequest request, HttpClientConnection conn, HttpContext context)
+    public ClassicHttpResponse execute(ClassicHttpRequest request, ExecChain.Scope scope, ExecChain chain)
             throws IOException, HttpException {
         ObservationOrTimerCompatibleInstrumentation<ApacheHttpClientContext> sample = ObservationOrTimerCompatibleInstrumentation
             .start(registry, observationRegistry,
-                    () -> new ApacheHttpClientContext(request, context, uriMapper, exportTagsForRoute), convention,
-                    DefaultApacheHttpClientObservationConvention.INSTANCE);
+                    () -> new ApacheHttpClientContext(request, scope.clientContext, uriMapper, exportTagsForRoute),
+                    convention, DefaultApacheHttpClientObservationConvention.INSTANCE);
         String statusCodeOrError = "UNKNOWN";
         Outcome statusOutcome = Outcome.UNKNOWN;
 
         try {
-            ClassicHttpResponse response = super.execute(request, conn, context);
+            ClassicHttpResponse response = chain.proceed(request, scope);
             sample.setResponse(response);
             statusCodeOrError = DefaultApacheHttpClientObservationConvention.INSTANCE.getStatusValue(response, null);
             statusOutcome = DefaultApacheHttpClientObservationConvention.INSTANCE.getStatusOutcome(response);
@@ -123,12 +122,11 @@ public class MicrometerHttpRequestExecutor extends HttpRequestExecutor {
         finally {
             String status = statusCodeOrError;
             String outcome = statusOutcome.name();
-            sample.stop(METER_NAME, "Duration of Apache HttpClient request execution",
-                    () -> Tags
-                        .of("method", DefaultApacheHttpClientObservationConvention.INSTANCE.getMethodString(request),
-                                "uri", uriMapper.apply(request), "status", status, "outcome", outcome)
-                        .and(exportTagsForRoute ? HttpContextUtils.generateTagsForRoute(context) : Tags.empty())
-                        .and(extraTags));
+            sample.stop(METER_NAME, "Duration of Apache HttpClient request execution", () -> Tags
+                .of("method", DefaultApacheHttpClientObservationConvention.INSTANCE.getMethodString(request), "uri",
+                        uriMapper.apply(request), "status", status, "outcome", outcome)
+                .and(exportTagsForRoute ? HttpContextUtils.generateTagsForRoute(scope.clientContext) : Tags.empty())
+                .and(extraTags));
         }
     }
 

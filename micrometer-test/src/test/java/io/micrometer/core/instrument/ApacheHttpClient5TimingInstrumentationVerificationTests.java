@@ -42,7 +42,7 @@ class ApacheHttpClient5TimingInstrumentationVerificationTests
     @Override
     protected CloseableHttpClient clientInstrumentedWithMetrics() {
         return HttpClientBuilder.create()
-            .setRequestExecutor(MicrometerHttpRequestExecutor.builder(getRegistry()).build())
+            .addExecInterceptorFirst("custom", MicrometerHttpRequestExecutor.builder(getRegistry()).build())
             .build();
     }
 
@@ -50,9 +50,10 @@ class ApacheHttpClient5TimingInstrumentationVerificationTests
     @Override
     protected CloseableHttpClient clientInstrumentedWithObservations() {
         return HttpClientBuilder.create()
-            .setRequestExecutor(MicrometerHttpRequestExecutor.builder(getRegistry())
-                .observationRegistry(getObservationRegistry())
-                .build())
+            .addExecInterceptorFirst("custom",
+                    MicrometerHttpRequestExecutor.builder(getRegistry())
+                        .observationRegistry(getObservationRegistry())
+                        .build())
             .build();
     }
 
