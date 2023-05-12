@@ -380,19 +380,20 @@ class MicrometerHttpRequestExecutorTest {
             .setDefaultRequestConfig(RequestConfig.custom().setConnectTimeout(1000L, TimeUnit.MILLISECONDS).build())
             .setRequestExecutor(executor)
             // TODO
-//            .addExecInterceptorFirst("micrometer", new ExecChainHandler() {
-//                @Override
-//                public ClassicHttpResponse execute(ClassicHttpRequest request, ExecChain.Scope scope, ExecChain chain) throws IOException, HttpException {
-//                    try (ClassicHttpResponse proceed = chain.proceed(request, scope)) {
-//                        return proceed;
-//                    } catch (Exception ex) {
-//                        System.out.println("EX: " + ex.getMessage());
-//                        throw ex;
-//                    } finally {
-//                        ;
-//                    }
-//                }
-//            })
+            // .addExecInterceptorFirst("micrometer", new ExecChainHandler() {
+            // @Override
+            // public ClassicHttpResponse execute(ClassicHttpRequest request,
+            // ExecChain.Scope scope, ExecChain chain) throws IOException, HttpException {
+            // try (ClassicHttpResponse proceed = chain.proceed(request, scope)) {
+            // return proceed;
+            // } catch (Exception ex) {
+            // System.out.println("EX: " + ex.getMessage());
+            // throw ex;
+            // } finally {
+            // ;
+            // }
+            // }
+            // })
             .build();
     }
 

@@ -207,6 +207,7 @@ class MicrometerHttpClientInterceptorTest {
 
         client.close();
     }
+
     private CloseableHttpAsyncClient asyncClient() {
         MicrometerHttpClientInterceptor interceptor = new MicrometerHttpClientInterceptor(registry,
                 HttpRequest::getRequestUri, Tags.empty(), true);

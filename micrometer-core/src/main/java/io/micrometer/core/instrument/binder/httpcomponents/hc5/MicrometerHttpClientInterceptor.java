@@ -30,8 +30,8 @@ import java.util.function.Function;
 
 /**
  * Provides {@link AsyncExecChainHandler} for instrumenting async Apache HTTP Client 5.
- * Configure the handler
- * {@link org.apache.hc.client5.http.async.HttpAsyncClient}. Usage example: <pre>{@code
+ * Configure the handler {@link org.apache.hc.client5.http.async.HttpAsyncClient}. Usage
+ * example: <pre>{@code
  *     MicrometerHttpClientInterceptor interceptor = new MicrometerHttpClientInterceptor(registry,
  *             HttpRequest::getRequestUri,
  *             Tags.empty(),
@@ -47,6 +47,7 @@ import java.util.function.Function;
  * @since 1.11.0
  */
 public class MicrometerHttpClientInterceptor {
+
     private static final String METER_NAME = "httpcomponents.httpclient.request";
 
     private final AsyncExecChainHandler execChainHandler;
@@ -67,10 +68,12 @@ public class MicrometerHttpClientInterceptor {
                 .tags("method", request.getMethod(), "uri", uriMapper.apply(request));
             chain.proceed(request, entityProducer, scope, new AsyncExecCallback() {
                 @Override
-                public AsyncDataConsumer handleResponse(HttpResponse response, EntityDetails entityDetails) throws HttpException, IOException {
+                public AsyncDataConsumer handleResponse(HttpResponse response, EntityDetails entityDetails)
+                        throws HttpException, IOException {
                     sample.tag("status", Integer.toString(response.getCode()))
                         .tag("outcome", Outcome.forStatus(response.getCode()).name())
-                        .tags(exportTagsForRoute ? HttpContextUtils.generateTagsForRoute(scope.clientContext) : Tags.empty())
+                        .tags(exportTagsForRoute ? HttpContextUtils.generateTagsForRoute(scope.clientContext)
+                                : Tags.empty())
                         .tags(extraTags)
                         .close();
                     return asyncExecCallback.handleResponse(response, entityDetails);
@@ -88,11 +91,12 @@ public class MicrometerHttpClientInterceptor {
 
                 @Override
                 public void failed(Exception cause) {
-                    sample
-                        .tag("status", "IO_ERROR")
+                    sample.tag("status", "IO_ERROR")
                         .tag("outcome", "UNKNOWN")
-                        // .tag("exception", HttpRequestTags.exception(exception).getValue())
-                        .tags(exportTagsForRoute ? HttpContextUtils.generateTagsForRoute(scope.clientContext) : Tags.empty())
+                        // .tag("exception",
+                        // HttpRequestTags.exception(exception).getValue())
+                        .tags(exportTagsForRoute ? HttpContextUtils.generateTagsForRoute(scope.clientContext)
+                                : Tags.empty())
                         .tags(extraTags)
                         .close();
                     asyncExecCallback.failed(cause);
