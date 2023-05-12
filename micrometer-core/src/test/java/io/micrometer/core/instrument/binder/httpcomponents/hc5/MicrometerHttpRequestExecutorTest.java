@@ -26,9 +26,6 @@ import io.micrometer.observation.GlobalObservationConvention;
 import io.micrometer.observation.ObservationRegistry;
 import io.micrometer.observation.tck.TestObservationRegistry;
 import io.micrometer.observation.tck.TestObservationRegistryAssert;
-
-import java.util.concurrent.TimeUnit;
-
 import org.apache.hc.client5.http.ClientProtocolException;
 import org.apache.hc.client5.http.ConnectTimeoutException;
 import org.apache.hc.client5.http.HttpHostConnectException;
@@ -53,10 +50,12 @@ import ru.lanwen.wiremock.ext.WiremockResolver;
 import java.io.IOException;
 import java.net.URI;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
@@ -380,6 +379,20 @@ class MicrometerHttpRequestExecutorTest {
         return HttpClientBuilder.create()
             .setDefaultRequestConfig(RequestConfig.custom().setConnectTimeout(1000L, TimeUnit.MILLISECONDS).build())
             .setRequestExecutor(executor)
+            // TODO
+//            .addExecInterceptorFirst("micrometer", new ExecChainHandler() {
+//                @Override
+//                public ClassicHttpResponse execute(ClassicHttpRequest request, ExecChain.Scope scope, ExecChain chain) throws IOException, HttpException {
+//                    try (ClassicHttpResponse proceed = chain.proceed(request, scope)) {
+//                        return proceed;
+//                    } catch (Exception ex) {
+//                        System.out.println("EX: " + ex.getMessage());
+//                        throw ex;
+//                    } finally {
+//                        ;
+//                    }
+//                }
+//            })
             .build();
     }
 

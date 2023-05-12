@@ -15,31 +15,22 @@
  */
 package io.micrometer.core.instrument.binder.httpcomponents.hc5;
 
-import io.micrometer.common.util.internal.logging.InternalLogger;
-import io.micrometer.common.util.internal.logging.InternalLoggerFactory;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.binder.http.Outcome;
-import org.apache.hc.client5.http.HttpRequestRetryStrategy;
-import org.apache.hc.client5.http.impl.DefaultHttpRequestRetryStrategy;
-import org.apache.hc.core5.http.HttpRequest;
-import org.apache.hc.core5.http.HttpRequestInterceptor;
-import org.apache.hc.core5.http.HttpResponse;
-import org.apache.hc.core5.http.HttpResponseInterceptor;
-import org.apache.hc.core5.http.protocol.HttpContext;
-import org.apache.hc.core5.util.TimeValue;
+import org.apache.hc.client5.http.async.AsyncExecCallback;
+import org.apache.hc.client5.http.async.AsyncExecChainHandler;
+import org.apache.hc.core5.http.*;
+import org.apache.hc.core5.http.nio.AsyncDataConsumer;
 
 import java.io.IOException;
-import java.util.Map;
-import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
 /**
- * Provides {@link HttpRequestInterceptor} and {@link HttpResponseInterceptor} for
- * instrumenting async Apache HTTP Client 5. Configure the interceptors on an
+ * Provides {@link AsyncExecChainHandler} for instrumenting async Apache HTTP Client 5.
+ * Configure the handler
  * {@link org.apache.hc.client5.http.async.HttpAsyncClient}. Usage example: <pre>{@code
  *     MicrometerHttpClientInterceptor interceptor = new MicrometerHttpClientInterceptor(registry,
  *             HttpRequest::getRequestUri,
@@ -47,28 +38,18 @@ import java.util.function.Function;
  *             true);
  *
  *     CloseableHttpAsyncClient httpAsyncClient = HttpAsyncClients.custom()
- *                 .addRequestInterceptorFirst(interceptor.getRequestInterceptor())
- *                 .addResponseInterceptorLast(interceptor.getResponseInterceptor())
- *                 .setRetryStrategy(interceptor.getRequestRetryStrategy())
+ *                 .addExecInterceptorFirst("custom", interceptor.getExecChainHandler())
  *                 .build();
  * }</pre>
  *
  * @author Jon Schneider
+ * @author Lars Uffmann
  * @since 1.11.0
  */
 public class MicrometerHttpClientInterceptor {
-
-    private static final InternalLogger log = InternalLoggerFactory.getInstance(MicrometerHttpClientInterceptor.class);
-
     private static final String METER_NAME = "httpcomponents.httpclient.request";
 
-    private final Map<HttpContext, Timer.ResourceSample> timerByHttpContext = new ConcurrentHashMap<>();
-
-    private final HttpRequestInterceptor requestInterceptor;
-
-    private final HttpResponseInterceptor responseInterceptor;
-
-    private final HttpRequestRetryStrategy requestRetryStrategy;
+    private final AsyncExecChainHandler execChainHandler;
 
     /**
      * Create a {@code MicrometerHttpClientInterceptor} instance.
@@ -79,37 +60,44 @@ public class MicrometerHttpClientInterceptor {
      */
     public MicrometerHttpClientInterceptor(MeterRegistry meterRegistry, Function<HttpRequest, String> uriMapper,
             Iterable<Tag> extraTags, boolean exportTagsForRoute) {
-        this(meterRegistry, uriMapper, extraTags, exportTagsForRoute, new DefaultHttpRequestRetryStrategy());
-    }
 
-    public MicrometerHttpClientInterceptor(MeterRegistry meterRegistry, Function<HttpRequest, String> uriMapper,
-            Iterable<Tag> extraTags, boolean exportTagsForRoute, HttpRequestRetryStrategy retryStrategy) {
-        this.requestInterceptor = (request, entityDetails, context) -> timerByHttpContext.put(context,
-                Timer.resource(meterRegistry, METER_NAME)
-                    .tags("method", request.getMethod(), "uri", uriMapper.apply(request)));
+        this.execChainHandler = (request, entityProducer, scope, chain, asyncExecCallback) -> {
 
-        this.responseInterceptor = (response, entityDetails, context) -> {
-            timerByHttpContext.remove(context)
-                .tag("status", Integer.toString(response.getCode()))
-                .tag("outcome", Outcome.forStatus(response.getCode()).name())
-                .tags(exportTagsForRoute ? HttpContextUtils.generateTagsForRoute(context) : Tags.empty())
-                .tags(extraTags)
-                .close();
-        };
+            final Timer.ResourceSample sample = Timer.resource(meterRegistry, METER_NAME)
+                .tags("method", request.getMethod(), "uri", uriMapper.apply(request));
+            chain.proceed(request, entityProducer, scope, new AsyncExecCallback() {
+                @Override
+                public AsyncDataConsumer handleResponse(HttpResponse response, EntityDetails entityDetails) throws HttpException, IOException {
+                    sample.tag("status", Integer.toString(response.getCode()))
+                        .tag("outcome", Outcome.forStatus(response.getCode()).name())
+                        .tags(exportTagsForRoute ? HttpContextUtils.generateTagsForRoute(scope.clientContext) : Tags.empty())
+                        .tags(extraTags)
+                        .close();
+                    return asyncExecCallback.handleResponse(response, entityDetails);
+                }
 
-        this.requestRetryStrategy = new MicrometerRequestRetryStrategy(retryStrategy) {
-            @Override
-            void lastError(HttpRequest request, IOException exception, int execCount, HttpContext context) {
-                // might be null because the requestInterceptor is never called for io
-                // errors before a connection is established.
-                Optional<Timer.ResourceSample> sample = Optional.ofNullable(timerByHttpContext.remove(context));
-                sample.ifPresent(s -> s.tag("status", "IO_ERROR")
-                    .tag("outcome", "UNKNOWN")
-                    // .tag("exception", HttpRequestTags.exception(exception).getValue())
-                    .tags(exportTagsForRoute ? HttpContextUtils.generateTagsForRoute(context) : Tags.empty())
-                    .tags(extraTags)
-                    .close());
-            }
+                @Override
+                public void handleInformationResponse(HttpResponse response) throws HttpException, IOException {
+                    asyncExecCallback.handleInformationResponse(response);
+                }
+
+                @Override
+                public void completed() {
+                    asyncExecCallback.completed();
+                }
+
+                @Override
+                public void failed(Exception cause) {
+                    sample
+                        .tag("status", "IO_ERROR")
+                        .tag("outcome", "UNKNOWN")
+                        // .tag("exception", HttpRequestTags.exception(exception).getValue())
+                        .tags(exportTagsForRoute ? HttpContextUtils.generateTagsForRoute(scope.clientContext) : Tags.empty())
+                        .tags(extraTags)
+                        .close();
+                    asyncExecCallback.failed(cause);
+                }
+            });
         };
     }
 
@@ -125,54 +113,8 @@ public class MicrometerHttpClientInterceptor {
         this(meterRegistry, new DefaultUriMapper(), extraTags, exportTagsForRoute);
     }
 
-    public HttpRequestInterceptor getRequestInterceptor() {
-        return requestInterceptor;
-    }
-
-    public HttpResponseInterceptor getResponseInterceptor() {
-        return responseInterceptor;
-    }
-
-    public HttpRequestRetryStrategy getRequestRetryStrategy() {
-        return requestRetryStrategy;
-    }
-
-    private abstract static class MicrometerRequestRetryStrategy implements HttpRequestRetryStrategy {
-
-        private final HttpRequestRetryStrategy retryStrategy;
-
-        public MicrometerRequestRetryStrategy(HttpRequestRetryStrategy retryStrategy) {
-            this.retryStrategy = retryStrategy;
-        }
-
-        abstract void lastError(HttpRequest request, IOException exception, int execCount, HttpContext context);
-
-        @Override
-        public boolean retryRequest(HttpRequest request, IOException exception, int execCount, HttpContext context) {
-            boolean retry = retryStrategy.retryRequest(request, exception, execCount, context);
-            if (!retry) {
-                try {
-                    lastError(request, exception, execCount, context);
-                }
-                catch (Exception ex) {
-                    // retry must not throw, otherwise caller is deadlocked.
-                    log.warn("could not meter last error {}", ex.getMessage(), ex);
-                    return false;
-                }
-            }
-            return retry;
-        }
-
-        @Override
-        public boolean retryRequest(HttpResponse response, int execCount, HttpContext context) {
-            return retryStrategy.retryRequest(response, execCount, context);
-        }
-
-        @Override
-        public TimeValue getRetryInterval(HttpResponse response, int execCount, HttpContext context) {
-            return retryStrategy.getRetryInterval(response, execCount, context);
-        }
-
+    public AsyncExecChainHandler getExecChainHandler() {
+        return execChainHandler;
     }
 
 }
