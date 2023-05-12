@@ -138,7 +138,7 @@ class MicrometerHttpClientInterceptorTest {
 
     @Test
     void connectionRefusedIsTaggedWithIoError(@WiremockResolver.Wiremock WireMockServer server) throws Exception {
-        server.stubFor(get(urlEqualTo("/delayed")).willReturn(aResponse().withStatus(200).withFixedDelay(2000)));
+        server.stubFor(get(urlEqualTo("/delayed")).willReturn(aResponse().withStatus(200).withFixedDelay(2500)));
 
         CloseableHttpAsyncClient client = asyncClient();
         client.start();
@@ -163,7 +163,7 @@ class MicrometerHttpClientInterceptorTest {
 
     @Test
     void connectionTimeoutIsTaggedWithIoError(@WiremockResolver.Wiremock WireMockServer server) throws Exception {
-        server.stubFor(get(urlEqualTo("/delayed")).willReturn(aResponse().withStatus(200).withFixedDelay(2000)));
+        server.stubFor(get(urlEqualTo("/delayed")).willReturn(aResponse().withStatus(200).withFixedDelay(2500)));
 
         CloseableHttpAsyncClient client = asyncClient();
         client.start();
@@ -218,8 +218,8 @@ class MicrometerHttpClientInterceptorTest {
         return HttpAsyncClients.custom()
             .setConnectionManager(PoolingAsyncClientConnectionManagerBuilder.create()
                 .setDefaultConnectionConfig(ConnectionConfig.custom()
-                    .setSocketTimeout(1000, TimeUnit.MILLISECONDS)
-                    .setConnectTimeout(1000L, TimeUnit.MILLISECONDS)
+                    .setSocketTimeout(2000, TimeUnit.MILLISECONDS)
+                    .setConnectTimeout(2000L, TimeUnit.MILLISECONDS)
                     .build())
                 .build())
             .addExecInterceptorFirst("custom", interceptor.getExecChainHandler())
