@@ -196,11 +196,7 @@ class SimpleObservation implements Observation {
 
     @Override
     public Scope openScope() {
-        Deque<Scope> scopes = enclosingScopes.get(Thread.currentThread());
-        if (scopes == null) {
-            scopes = new ArrayDeque<>();
-            enclosingScopes.put(Thread.currentThread(), scopes);
-        }
+        Deque<Scope> scopes = enclosingScopes.computeIfAbsent(Thread.currentThread(), (k) -> new ArrayDeque<>());
         Scope currentScope = registry.getCurrentObservationScope();
         if (currentScope != null) {
             scopes.addFirst(currentScope);
