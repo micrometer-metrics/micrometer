@@ -22,7 +22,6 @@ import io.grpc.MethodDescriptor.MethodType;
 import io.grpc.ServerCall.Listener;
 import io.micrometer.common.lang.Nullable;
 import io.micrometer.observation.Observation;
-import io.micrometer.observation.Observation.Scope;
 import io.micrometer.observation.ObservationRegistry;
 
 import java.util.Map;
@@ -88,23 +87,22 @@ public class ObservationGrpcServerInterceptor implements ServerInterceptor {
             return context;
         };
 
-        Observation observation = GrpcObservationDocumentation.SERVER.observation(this.customConvention,
-                DEFAULT_CONVENTION, contextSupplier, this.registry);
+        Observation observation = GrpcObservationDocumentation.SERVER
+            .observation(this.customConvention, DEFAULT_CONVENTION, contextSupplier, this.registry)
+            .start();
 
         if (observation.isNoop()) {
             // do not instrument anymore
             return next.startCall(call, headers);
         }
 
-        Scope scope = observation.start().openScope();
-        ObservationGrpcServerCall<ReqT, RespT> serverCall = new ObservationGrpcServerCall<>(call, scope);
+        ObservationGrpcServerCall<ReqT, RespT> serverCall = new ObservationGrpcServerCall<>(call, observation);
 
         try {
             Listener<ReqT> result = next.startCall(serverCall, headers);
-            return new ObservationGrpcServerCallListener<>(result, scope);
+            return new ObservationGrpcServerCallListener<>(result, observation);
         }
         catch (Exception ex) {
-            scope.close();
             observation.error(ex).stop();
             throw ex;
         }
