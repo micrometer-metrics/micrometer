@@ -95,7 +95,7 @@ public class MicrometerHttpClientInterceptor {
         return execChainHandler;
     }
 
-    private class AsyncMeteringExecChainHandler implements AsyncExecChainHandler {
+    private static class AsyncMeteringExecChainHandler implements AsyncExecChainHandler {
 
         private final MeterRegistry meterRegistry;
 
