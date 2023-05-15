@@ -160,10 +160,10 @@ subprojects {
                 excludeTags 'docker'
             }
 
-            retry {
-                maxFailures = 5
-                maxRetries = 3
-            }
+//            retry {
+//                maxFailures = 5
+//                maxRetries = 3
+//            }
         }
 
         task dockerTest(type: Test) {

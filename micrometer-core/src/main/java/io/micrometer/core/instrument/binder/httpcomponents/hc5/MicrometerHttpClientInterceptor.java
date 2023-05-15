@@ -15,15 +15,23 @@
  */
 package io.micrometer.core.instrument.binder.httpcomponents.hc5;
 
+import io.micrometer.common.util.internal.logging.InternalLogger;
+import io.micrometer.common.util.internal.logging.InternalLoggerFactory;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.instrument.binder.http.HttpRequestTags;
 import io.micrometer.core.instrument.binder.http.Outcome;
 import org.apache.hc.client5.http.async.AsyncExecCallback;
+import org.apache.hc.client5.http.async.AsyncExecChain;
 import org.apache.hc.client5.http.async.AsyncExecChainHandler;
-import org.apache.hc.core5.http.*;
+import org.apache.hc.core5.http.EntityDetails;
+import org.apache.hc.core5.http.HttpException;
+import org.apache.hc.core5.http.HttpRequest;
+import org.apache.hc.core5.http.HttpResponse;
 import org.apache.hc.core5.http.nio.AsyncDataConsumer;
+import org.apache.hc.core5.http.nio.AsyncEntityProducer;
 
 import java.io.IOException;
 import java.util.function.Function;
@@ -48,6 +56,9 @@ import java.util.function.Function;
  */
 public class MicrometerHttpClientInterceptor {
 
+    private static final InternalLogger logger = InternalLoggerFactory
+        .getInstance(MicrometerHttpClientInterceptor.class);
+
     private static final String METER_NAME = "httpcomponents.httpclient.request";
 
     private final AsyncExecChainHandler execChainHandler;
@@ -58,24 +69,75 @@ public class MicrometerHttpClientInterceptor {
      * @param uriMapper URI mapper to create {@code uri} tag
      * @param extraTags extra tags
      * @param exportTagsForRoute whether to export tags for route
+     * @param meterRetries whether to meter retries individually
+     *
      */
     public MicrometerHttpClientInterceptor(MeterRegistry meterRegistry, Function<HttpRequest, String> uriMapper,
-            Iterable<Tag> extraTags, boolean exportTagsForRoute) {
+            Iterable<Tag> extraTags, boolean exportTagsForRoute, boolean meterRetries) {
+        this.execChainHandler = new AsyncMeteringExecChainHandler(meterRegistry, uriMapper, exportTagsForRoute,
+                extraTags, meterRetries);
+    }
 
-        this.execChainHandler = (request, entityProducer, scope, chain, asyncExecCallback) -> {
+    /**
+     * Create a {@code MicrometerHttpClientInterceptor} instance with
+     * {@link DefaultUriMapper}.
+     * @param meterRegistry meter registry to bind
+     * @param extraTags extra tags
+     * @param exportTagsForRoute whether to export tags for route
+     * @param meterRetries whether to meter retries individually
+     */
+    public MicrometerHttpClientInterceptor(MeterRegistry meterRegistry, Iterable<Tag> extraTags,
+            boolean exportTagsForRoute, boolean meterRetries) {
+        this(meterRegistry, new DefaultUriMapper(), extraTags, exportTagsForRoute, meterRetries);
+    }
+
+    public AsyncExecChainHandler getExecChainHandler() {
+        return execChainHandler;
+    }
+
+    private class AsyncMeteringExecChainHandler implements AsyncExecChainHandler {
+
+        private final MeterRegistry meterRegistry;
+
+        private final Function<HttpRequest, String> uriMapper;
+
+        private final boolean exportTagsForRoute;
+
+        private final Iterable<Tag> extraTags;
+
+        private final boolean meterRetries;
+
+        public AsyncMeteringExecChainHandler(MeterRegistry meterRegistry, Function<HttpRequest, String> uriMapper,
+                boolean exportTagsForRoute, Iterable<Tag> extraTags, boolean meterRetries) {
+            this.meterRegistry = meterRegistry;
+            this.uriMapper = uriMapper;
+            this.exportTagsForRoute = exportTagsForRoute;
+            this.extraTags = extraTags;
+            this.meterRetries = meterRetries;
+        }
+
+        public void meterExecution(HttpRequest request, AsyncEntityProducer entityProducer, AsyncExecChain.Scope scope,
+                AsyncExecChain chain, AsyncExecCallback asyncExecCallback) throws HttpException, IOException {
 
             final Timer.ResourceSample sample = Timer.resource(meterRegistry, METER_NAME)
                 .tags("method", request.getMethod(), "uri", uriMapper.apply(request));
+
+            logger.trace("Start Sample: {} execCount {}", sample, scope.execCount.get());
+
             chain.proceed(request, entityProducer, scope, new AsyncExecCallback() {
                 @Override
                 public AsyncDataConsumer handleResponse(HttpResponse response, EntityDetails entityDetails)
                         throws HttpException, IOException {
                     sample.tag("status", Integer.toString(response.getCode()))
                         .tag("outcome", Outcome.forStatus(response.getCode()).name())
+                        .tag("exception", "None")
                         .tags(exportTagsForRoute ? HttpContextUtils.generateTagsForRoute(scope.clientContext)
                                 : Tags.empty())
                         .tags(extraTags)
                         .close();
+
+                    logger.trace("handleResponse: {} execCount {}", sample, scope.execCount.get());
+
                     return asyncExecCallback.handleResponse(response, entityDetails);
                 }
 
@@ -86,6 +148,8 @@ public class MicrometerHttpClientInterceptor {
 
                 @Override
                 public void completed() {
+                    logger.trace("completed: {}", sample);
+
                     asyncExecCallback.completed();
                 }
 
@@ -93,32 +157,35 @@ public class MicrometerHttpClientInterceptor {
                 public void failed(Exception cause) {
                     sample.tag("status", "IO_ERROR")
                         .tag("outcome", "UNKNOWN")
-                        // .tag("exception",
-                        // HttpRequestTags.exception(exception).getValue())
+                        .tag("exception", HttpRequestTags.exception(cause).getValue())
                         .tags(exportTagsForRoute ? HttpContextUtils.generateTagsForRoute(scope.clientContext)
                                 : Tags.empty())
                         .tags(extraTags)
                         .close();
+
+                    logger.trace("failed: {} execCount {}", sample, scope.execCount.get());
+
                     asyncExecCallback.failed(cause);
                 }
             });
-        };
-    }
+        }
 
-    /**
-     * Create a {@code MicrometerHttpClientInterceptor} instance with
-     * {@link DefaultUriMapper}.
-     * @param meterRegistry meter registry to bind
-     * @param extraTags extra tags
-     * @param exportTagsForRoute whether to export tags for route
-     */
-    public MicrometerHttpClientInterceptor(MeterRegistry meterRegistry, Iterable<Tag> extraTags,
-            boolean exportTagsForRoute) {
-        this(meterRegistry, new DefaultUriMapper(), extraTags, exportTagsForRoute);
-    }
+        @Override
+        public void execute(HttpRequest request, AsyncEntityProducer entityProducer, AsyncExecChain.Scope scope,
+                AsyncExecChain chain, AsyncExecCallback asyncExecCallback) throws HttpException, IOException {
+            if (meterRetries) {
+                meterExecution(request, entityProducer, scope, chain, asyncExecCallback);
+            }
+            else {
+                if (scope.execCount.get() == 1) {
+                    meterExecution(request, entityProducer, scope, chain, asyncExecCallback);
+                }
+                else {
+                    chain.proceed(request, entityProducer, scope, asyncExecCallback);
+                }
+            }
+        }
 
-    public AsyncExecChainHandler getExecChainHandler() {
-        return execChainHandler;
     }
 
 }

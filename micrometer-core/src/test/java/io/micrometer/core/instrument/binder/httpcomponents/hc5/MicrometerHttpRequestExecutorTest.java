@@ -16,9 +16,12 @@
 package io.micrometer.core.instrument.binder.httpcomponents.hc5;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
+import io.micrometer.common.util.internal.logging.InternalLogger;
+import io.micrometer.common.util.internal.logging.InternalLoggerFactory;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
+import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.observation.DefaultMeterObservationHandler;
 import io.micrometer.core.instrument.search.MeterNotFoundException;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
@@ -26,6 +29,10 @@ import io.micrometer.observation.GlobalObservationConvention;
 import io.micrometer.observation.ObservationRegistry;
 import io.micrometer.observation.tck.TestObservationRegistry;
 import io.micrometer.observation.tck.TestObservationRegistryAssert;
+
+import java.time.Duration;
+import java.time.Instant;
+
 import org.apache.hc.client5.http.ClientProtocolException;
 import org.apache.hc.client5.http.ConnectTimeoutException;
 import org.apache.hc.client5.http.HttpHostConnectException;
@@ -34,6 +41,7 @@ import org.apache.hc.client5.http.classic.methods.HttpGet;
 import org.apache.hc.client5.http.classic.methods.HttpPost;
 import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 import org.apache.hc.client5.http.config.RequestConfig;
+import org.apache.hc.client5.http.impl.ChainElement;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
 import org.apache.hc.client5.http.impl.classic.HttpClientBuilder;
 import org.apache.hc.core5.http.ClassicHttpRequest;
@@ -66,6 +74,9 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 @ExtendWith(WiremockResolver.class)
 class MicrometerHttpRequestExecutorTest {
 
+    private static final InternalLogger logger = InternalLoggerFactory
+        .getInstance(MicrometerHttpRequestExecutorTest.class);
+
     private static final String EXPECTED_METER_NAME = "httpcomponents.httpclient.request";
 
     private static final HttpClientResponseHandler<ClassicHttpResponse> NOOP_RESPONSE_HANDLER = (response) -> response;
@@ -79,7 +90,9 @@ class MicrometerHttpRequestExecutorTest {
         server.stubFor(any(anyUrl()));
         CloseableHttpClient client = client(executor(false, configureObservationRegistry));
         execute(client, new HttpGet(server.baseUrl()));
-        assertThat(registry.get(EXPECTED_METER_NAME).timer().count()).isEqualTo(1L);
+        Timer timer = registry.get(EXPECTED_METER_NAME).timer();
+        logStats("timeSuccessful", timer);
+        assertThat(timer.count()).isEqualTo(1L);
     }
 
     private void execute(CloseableHttpClient client, ClassicHttpRequest request) throws IOException {
@@ -357,7 +370,7 @@ class MicrometerHttpRequestExecutorTest {
 
     @ParameterizedTest
     @ValueSource(booleans = { false, true })
-    void connectionTimeoutIsTaggedWithIoError(boolean configureObservationRegistry,
+    void connectTimeoutIsTaggedWithIoError(boolean configureObservationRegistry,
             @WiremockResolver.Wiremock WireMockServer server) {
         server.stubFor(any(urlEqualTo("/error")).willReturn(aResponse().withStatus(1)));
         CloseableHttpClient client = client(executor(false, configureObservationRegistry));
@@ -367,6 +380,61 @@ class MicrometerHttpRequestExecutorTest {
             .tags("method", "GET", "status", "IO_ERROR", "outcome", "UNKNOWN")
             .timer()
             .count()).isEqualTo(1L);
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    void retriesAreMetered_overall(boolean configureObservationRegistry,
+            @WiremockResolver.Wiremock WireMockServer server) throws IOException {
+        server.stubFor(get(urlEqualTo("/err")).willReturn(aResponse().withStatus(503)));
+
+        CloseableHttpClient client = client(executor(false, configureObservationRegistry));
+        Instant start = Instant.now();
+        execute(client, new HttpGet(server.baseUrl() + "/err"));
+
+        Instant end = Instant.now();
+        Duration duration = Duration.between(start, end);
+        logger.info("retriesAreMetered_overall: total duration {}", duration.toMillis());
+
+        Timer timer = registry.get(EXPECTED_METER_NAME)
+            .tags("method", "GET", "status", "503", "outcome", "SERVER_ERROR")
+            .timer();
+
+        logStats("retriesAreMetered_overall", timer);
+        assertThat(timer.count()).isEqualTo(1L);
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    void retriesAreMetered_individually(boolean configureObservationRegistry,
+            @WiremockResolver.Wiremock WireMockServer server) throws IOException {
+        server.stubFor(get(urlEqualTo("/err")).willReturn(aResponse().withStatus(503)));
+
+        CloseableHttpClient client = clientMeterRetries(executor(false, configureObservationRegistry));
+
+        Instant start = Instant.now();
+        execute(client, new HttpGet(server.baseUrl() + "/err"));
+
+        Instant end = Instant.now();
+        Duration duration = Duration.between(start, end);
+
+        logger.info("retriesAreMetered_individually: total duration {}", duration.toMillis());
+
+        Timer timer = registry.get(EXPECTED_METER_NAME)
+            .tags("method", "GET", "status", "503", "outcome", "SERVER_ERROR")
+            .timer();
+
+        logStats("retriesAreMetered_individually", timer);
+
+        assertThat(timer.count()).isEqualTo(2L);
+
+    }
+
+    void logStats(String testCase, Timer timer) {
+        long count = timer.count();
+        double total = timer.totalTime(TimeUnit.MILLISECONDS);
+        double max = timer.max(TimeUnit.MILLISECONDS);
+        logger.info("{}: count {} total {} max {}", testCase, count, total, max);
     }
 
     static class CustomGlobalApacheHttpConvention extends DefaultApacheHttpClientObservationConvention
@@ -383,6 +451,13 @@ class MicrometerHttpRequestExecutorTest {
         return HttpClientBuilder.create()
             .setDefaultRequestConfig(RequestConfig.custom().setConnectTimeout(1000L, TimeUnit.MILLISECONDS).build())
             .addExecInterceptorFirst("custom", execChainHandler)
+            .build();
+    }
+
+    private CloseableHttpClient clientMeterRetries(ExecChainHandler execChainHandler) {
+        return HttpClientBuilder.create()
+            .setDefaultRequestConfig(RequestConfig.custom().setConnectTimeout(1000L, TimeUnit.MILLISECONDS).build())
+            .addExecInterceptorAfter(ChainElement.RETRY.name(), "custom", execChainHandler)
             .build();
     }
 
