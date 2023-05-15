@@ -43,7 +43,4 @@
     <logger name="org.springframework" level="warn"/>
 
     <logger name="org.eclipse.jetty" level="error"/>
-
-    <logger name="org.apache.hc.client5.http" level="debug"/>
-    <logger name="io.micrometer.core.instrument.binder.httpcomponents.hc5" level="trace"/>
 </configuration>
