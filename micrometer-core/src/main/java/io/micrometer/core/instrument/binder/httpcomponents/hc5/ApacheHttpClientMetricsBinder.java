@@ -265,8 +265,9 @@ public class ApacheHttpClientMetricsBinder {
         }
 
         /**
-         * @return Creates an instance of {@link ApacheHttpClientMetricsBinder} with all
-         * the configured properties.
+         * Creates an instance of {@link ApacheHttpClientMetricsBinder} with all the
+         * configured properties.
+         * @return the fully configured ApacheHttpClientMetricsBinder instance
          */
         public ApacheHttpClientMetricsBinder build() {
             return new ApacheHttpClientMetricsBinder(meterName, registry, uriMapper, extraTags, exportTagsForRoute,

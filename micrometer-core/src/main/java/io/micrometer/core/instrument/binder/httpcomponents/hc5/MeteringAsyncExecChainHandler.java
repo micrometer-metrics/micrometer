@@ -67,7 +67,7 @@ class MeteringAsyncExecChainHandler implements AsyncExecChainHandler {
 
     private final boolean meterRetries;
 
-    public MeteringAsyncExecChainHandler(MeterRegistry meterRegistry, ObservationRegistry observationRegistry,
+    MeteringAsyncExecChainHandler(MeterRegistry meterRegistry, ObservationRegistry observationRegistry,
             @Nullable ApacheHttpClientObservationConvention convention, String meterName,
             Function<HttpRequest, String> uriMapper, boolean exportTagsForRoute, Iterable<Tag> extraTags,
             boolean meterRetries) {
@@ -76,7 +76,7 @@ class MeteringAsyncExecChainHandler implements AsyncExecChainHandler {
         this.convention = convention;
         this.meterName = Objects.requireNonNull(meterName);
         this.uriMapper = Objects.requireNonNull(uriMapper);
-        this.exportTagsForRoute = Objects.requireNonNull(exportTagsForRoute);
+        this.exportTagsForRoute = exportTagsForRoute;
         this.extraTags = Objects.requireNonNull(extraTags);
         this.meterRetries = meterRetries;
     }
