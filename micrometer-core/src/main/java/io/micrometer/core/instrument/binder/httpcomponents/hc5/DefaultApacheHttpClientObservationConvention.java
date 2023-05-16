@@ -44,7 +44,7 @@ public class DefaultApacheHttpClientObservationConvention implements ApacheHttpC
 
     @Override
     public String getName() {
-        return MicrometerHttpRequestExecutor.METER_NAME;
+        return ApacheHttpClientMetricsBinder.DEFAULT_METER_NAME;
     }
 
     @Override

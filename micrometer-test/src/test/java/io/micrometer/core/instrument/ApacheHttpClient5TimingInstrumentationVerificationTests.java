@@ -16,9 +16,9 @@
 package io.micrometer.core.instrument;
 
 import io.micrometer.common.lang.Nullable;
+import io.micrometer.core.instrument.binder.httpcomponents.hc5.ApacheHttpClientMetricsBinder;
 import io.micrometer.core.instrument.binder.httpcomponents.hc5.ApacheHttpClientObservationDocumentation;
 import io.micrometer.core.instrument.binder.httpcomponents.hc5.DefaultUriMapper;
-import io.micrometer.core.instrument.binder.httpcomponents.hc5.MicrometerHttpRequestExecutor;
 import io.micrometer.observation.docs.ObservationDocumentation;
 import org.apache.hc.client5.http.classic.methods.HttpUriRequest;
 import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
@@ -41,20 +41,20 @@ class ApacheHttpClient5TimingInstrumentationVerificationTests
 
     @Override
     protected CloseableHttpClient clientInstrumentedWithMetrics() {
-        return HttpClientBuilder.create()
-            .addExecInterceptorFirst("custom", MicrometerHttpRequestExecutor.builder(getRegistry()).build())
-            .build();
+        HttpClientBuilder clientBuilder = HttpClientBuilder.create();
+        ApacheHttpClientMetricsBinder.builder(getRegistry()).build().instrument(clientBuilder);
+        return clientBuilder.build();
     }
 
     @Nullable
     @Override
     protected CloseableHttpClient clientInstrumentedWithObservations() {
-        return HttpClientBuilder.create()
-            .addExecInterceptorFirst("custom",
-                    MicrometerHttpRequestExecutor.builder(getRegistry())
-                        .observationRegistry(getObservationRegistry())
-                        .build())
-            .build();
+        HttpClientBuilder clientBuilder = HttpClientBuilder.create();
+        ApacheHttpClientMetricsBinder.builder(getRegistry())
+            .observationRegistry(getObservationRegistry())
+            .build()
+            .instrument(clientBuilder);
+        return clientBuilder.build();
     }
 
     @Override

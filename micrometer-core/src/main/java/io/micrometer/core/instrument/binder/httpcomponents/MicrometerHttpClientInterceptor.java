@@ -21,6 +21,7 @@ import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.binder.http.Outcome;
+import io.micrometer.core.instrument.binder.httpcomponents.hc5.ApacheHttpClientMetricsBinder;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpRequestInterceptor;
 import org.apache.http.HttpResponseInterceptor;
@@ -45,9 +46,7 @@ import java.util.function.Function;
  *             .build();
  * }</pre>
  * <p>
- * See
- * {@link io.micrometer.core.instrument.binder.httpcomponents.hc5.MicrometerHttpClientInterceptor}
- * for Apache HTTP client 5 support.
+ * See {@link ApacheHttpClientMetricsBinder} for Apache HTTP client 5 support.
  *
  * @author Jon Schneider
  * @since 1.4.0

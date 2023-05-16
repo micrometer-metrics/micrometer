@@ -24,7 +24,7 @@ import io.micrometer.observation.docs.ObservationDocumentation;
  * {@link ObservationDocumentation} for Apache HTTP Client 5 instrumentation.
  *
  * @since 1.11.0
- * @see MicrometerHttpRequestExecutor
+ * @see ApacheHttpClientMetricsBinder
  */
 public enum ApacheHttpClientObservationDocumentation implements ObservationDocumentation {
 
