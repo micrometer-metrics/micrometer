@@ -15,6 +15,7 @@
  */
 package io.micrometer.core.instrument.binder.http;
 
+import io.micrometer.common.lang.Nullable;
 import io.micrometer.common.util.StringUtils;
 import io.micrometer.core.annotation.Incubating;
 import io.micrometer.core.instrument.Tag;
@@ -87,7 +88,7 @@ public class HttpRequestTags {
      * @param exception the exception, may be {@code null}
      * @return the exception tag derived from the exception
      */
-    public static Tag exception(Throwable exception) {
+    public static Tag exception(@Nullable Throwable exception) {
         if (exception != null) {
             String simpleName = exception.getClass().getSimpleName();
             return Tag.of("exception",

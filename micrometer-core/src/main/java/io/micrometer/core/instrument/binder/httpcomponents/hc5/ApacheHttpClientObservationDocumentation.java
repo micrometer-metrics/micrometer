@@ -71,6 +71,16 @@ public enum ApacheHttpClientObservationDocumentation implements ObservationDocum
                 return "uri";
             }
         },
+        /**
+         * Key name for exception.
+         * @since 1.11.0
+         */
+        EXCEPTION {
+            @Override
+            public String asString() {
+                return "exception";
+            }
+        },
         TARGET_SCHEME {
             @Override
             public String asString() {

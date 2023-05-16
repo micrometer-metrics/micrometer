@@ -175,7 +175,8 @@ class ApacheHttpClientMetricsBinderTest {
             }
         }
 
-        assertThat(registry.get(DEFAULT_METER_NAME).tags("method", "GET").timer().count()).isEqualTo(2L);
+        assertThat(registry.get(DEFAULT_METER_NAME).tag("method", "GET").tag("exception", "None").timer().count())
+            .isEqualTo(2L);
         assertThat(registry.get(DEFAULT_METER_NAME).tags("method", "POST").timer().count()).isEqualTo(1L);
     }
 
@@ -210,14 +211,17 @@ class ApacheHttpClientMetricsBinderTest {
         }
         assertThat(registry.get(DEFAULT_METER_NAME)
             .tags("method", "GET", "status", "200", "outcome", "SUCCESS")
+            .tag("exception", "None")
             .timer()
             .count()).isEqualTo(2L);
         assertThat(registry.get(DEFAULT_METER_NAME)
             .tags("method", "GET", "status", "404", "outcome", "CLIENT_ERROR")
+            .tag("exception", "None")
             .timer()
             .count()).isEqualTo(1L);
         assertThat(registry.get(DEFAULT_METER_NAME)
             .tags("method", "GET", "status", "500", "outcome", "SERVER_ERROR")
+            .tag("exception", "None")
             .timer()
             .count()).isEqualTo(1L);
     }
@@ -516,6 +520,7 @@ class ApacheHttpClientMetricsBinderTest {
         }
         assertThat(registry.get(DEFAULT_METER_NAME)
             .tags("method", "GET", "status", "IO_ERROR", "outcome", "UNKNOWN")
+            .tag("exception", "ProtocolException")
             .timer()
             .count()).isEqualTo(1L);
     }
@@ -551,7 +556,7 @@ class ApacheHttpClientMetricsBinderTest {
                 .tag("method", "GET")
                 .tag("status", "IO_ERROR")
                 .tag("outcome", "UNKNOWN")
-                // .tag("exception", "SocketTimeoutException")
+                .tag("exception", "SocketTimeoutException")
                 .timer();
             logStats("httpStatusCodeIsTaggedWithIoError", timer);
             assertThat(timer.count()).isEqualTo(1);
@@ -580,6 +585,7 @@ class ApacheHttpClientMetricsBinderTest {
         }
         assertThat(registry.get(DEFAULT_METER_NAME)
             .tags("method", "GET", "status", "IO_ERROR", "outcome", "UNKNOWN")
+            .tag("exception", "HttpHostConnectException")
             .timer()
             .count()).isEqualTo(1L);
     }
@@ -606,6 +612,7 @@ class ApacheHttpClientMetricsBinderTest {
         }
         assertThat(registry.get(DEFAULT_METER_NAME)
             .tags("method", "GET", "status", "IO_ERROR", "outcome", "UNKNOWN")
+            .tag("exception", "ConnectTimeoutException")
             .timer()
             .count()).isEqualTo(1L);
     }

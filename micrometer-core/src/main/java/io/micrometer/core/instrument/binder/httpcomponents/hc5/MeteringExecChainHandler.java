@@ -84,25 +84,30 @@ class MeteringExecChainHandler implements ExecChainHandler {
                     convention, DefaultApacheHttpClientObservationConvention.INSTANCE);
         String statusCodeOrError = "UNKNOWN";
         Outcome statusOutcome = Outcome.UNKNOWN;
+        String exceptionName = "None";
 
         try {
             ClassicHttpResponse response = chain.proceed(request, scope);
             sample.setResponse(response);
             statusCodeOrError = DefaultApacheHttpClientObservationConvention.INSTANCE.getStatusValue(response, null);
             statusOutcome = DefaultApacheHttpClientObservationConvention.INSTANCE.getStatusOutcome(response);
+            exceptionName = DefaultApacheHttpClientObservationConvention.INSTANCE.getExceptionString(null);
             return response;
         }
         catch (IOException | HttpException | RuntimeException e) {
             statusCodeOrError = "IO_ERROR";
+            exceptionName = DefaultApacheHttpClientObservationConvention.INSTANCE.getExceptionString(e);
             sample.setThrowable(e);
             throw e;
         }
         finally {
             String status = statusCodeOrError;
             String outcome = statusOutcome.name();
+            String exception = exceptionName;
             sample.stop(meterName, "Duration of Apache HttpClient request execution", () -> Tags
                 .of("method", DefaultApacheHttpClientObservationConvention.INSTANCE.getMethodString(request), "uri",
                         uriMapper.apply(request), "status", status, "outcome", outcome)
+                .and("exception", exception)
                 .and(exportTagsForRoute ? HttpContextUtils.generateTagsForRoute(scope.clientContext) : Tags.empty())
                 .and(extraTags));
         }

@@ -104,6 +104,7 @@ class MeteringAsyncExecChainHandler implements AsyncExecChainHandler {
                 sample.stop(meterName, "Duration of Apache HttpClient request execution", () -> Tags
                     .of("method", DefaultApacheHttpClientObservationConvention.INSTANCE.getMethodString(request), "uri",
                             uriMapper.apply(request), "status", statusCodeOrError, "outcome", statusOutcome.name())
+                    .and("exception", DefaultApacheHttpClientObservationConvention.INSTANCE.getExceptionString(null))
                     .and(exportTagsForRoute ? HttpContextUtils.generateTagsForRoute(scope.clientContext) : Tags.empty())
                     .and(extraTags));
 
@@ -131,6 +132,7 @@ class MeteringAsyncExecChainHandler implements AsyncExecChainHandler {
                 sample.stop(meterName, "Duration of Apache HttpClient request execution", () -> Tags
                     .of("method", DefaultApacheHttpClientObservationConvention.INSTANCE.getMethodString(request), "uri",
                             uriMapper.apply(request), "status", statusCodeOrError, "outcome", statusOutcome.name())
+                    .and("exception", DefaultApacheHttpClientObservationConvention.INSTANCE.getExceptionString(cause))
                     .and(exportTagsForRoute ? HttpContextUtils.generateTagsForRoute(scope.clientContext) : Tags.empty())
                     .and(extraTags));
                 logger.trace("failed: {} execCount {}", sample, scope.execCount.get());
