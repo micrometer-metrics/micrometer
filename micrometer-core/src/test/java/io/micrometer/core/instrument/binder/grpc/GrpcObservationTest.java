@@ -15,6 +15,9 @@
  */
 package io.micrometer.core.instrument.binder.grpc;
 
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 import io.grpc.ManagedChannel;
 import io.grpc.MethodDescriptor.MethodType;
 import io.grpc.Server;
@@ -27,6 +30,7 @@ import io.grpc.testing.protobuf.SimpleRequest;
 import io.grpc.testing.protobuf.SimpleResponse;
 import io.grpc.testing.protobuf.SimpleServiceGrpc;
 import io.grpc.testing.protobuf.SimpleServiceGrpc.SimpleServiceBlockingStub;
+import io.grpc.testing.protobuf.SimpleServiceGrpc.SimpleServiceFutureStub;
 import io.grpc.testing.protobuf.SimpleServiceGrpc.SimpleServiceImplBase;
 import io.grpc.testing.protobuf.SimpleServiceGrpc.SimpleServiceStub;
 import io.micrometer.common.lang.Nullable;
@@ -48,6 +52,8 @@ import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -135,6 +141,36 @@ class GrpcObservationTest {
                     GrpcServerEvents.MESSAGE_SENT);
             assertThat(clientHandler.getEvents()).containsExactly(GrpcClientEvents.MESSAGE_SENT,
                     GrpcClientEvents.MESSAGE_RECEIVED);
+        }
+
+        @Test
+        void unaryRpcAsync() {
+            SimpleServiceFutureStub stub = SimpleServiceGrpc.newFutureStub(channel);
+            List<String> messages = new ArrayList<>();
+            List<String> responses = new ArrayList<>();
+            List<ListenableFuture<SimpleResponse>> futures = new ArrayList<>();
+            int count = 40;
+            for (int i = 0; i < count; i++) {
+                String message = "Hello-" + i;
+                messages.add(message);
+                SimpleRequest request = SimpleRequest.newBuilder().setRequestMessage(message).build();
+                ListenableFuture<SimpleResponse> future = stub.unaryRpc(request);
+                Futures.addCallback(future, new FutureCallback<>() {
+                    @Override
+                    public void onSuccess(SimpleResponse result) {
+                        responses.add(result.getResponseMessage());
+                    }
+
+                    @Override
+                    public void onFailure(Throwable t) {
+
+                    }
+                }, Executors.newCachedThreadPool());
+                futures.add(stub.unaryRpc(request));
+            }
+
+            await().until(() -> futures.stream().allMatch(Future::isDone));
+            assertThat(responses).hasSize(count).containsExactlyInAnyOrderElementsOf(messages);
         }
 
         @Test
