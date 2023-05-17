@@ -18,5 +18,4 @@ https://stackoverflow.com/help/how-to-ask[advice on how to ask a good question].
 
 == Slack
 If you want to discuss something or have a question that isn't suited to Stack Overflow,
-the Micrometer community chat in the
-https://join.slack.com/t/micrometer-metrics/shared_invite/zt-ewo3kcs0-Ji3aOAqTxnjYPEFBBI5HqQ[micrometer-metrics Slack].
+the Micrometer community chat in the https://slack.micrometer.io[micrometer-metrics Slack].
