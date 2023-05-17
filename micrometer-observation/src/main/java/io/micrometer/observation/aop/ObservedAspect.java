@@ -68,6 +68,7 @@ import java.util.function.Predicate;
  * </pre>
  *
  * @author Jonatan Ivanov
+ * @author Yanming Zhou
  * @since 1.10.0
  */
 @Aspect
@@ -131,6 +132,9 @@ public class ObservedAspect {
     private Object observe(ProceedingJoinPoint pjp, Method method, Observed observed) throws Throwable {
         Observation observation = ObservedAspectObservationDocumentation.of(pjp, observed, this.registry,
                 this.observationConvention);
+        if (observed.withParentOnly() && observation.getContextView().getParentObservation() == null) {
+            return pjp.proceed();
+        }
         if (CompletionStage.class.isAssignableFrom(method.getReturnType())) {
             observation.start();
             Observation.Scope scope = observation.openScope();

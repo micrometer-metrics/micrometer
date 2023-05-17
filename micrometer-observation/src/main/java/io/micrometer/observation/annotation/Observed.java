@@ -27,6 +27,7 @@ import io.micrometer.observation.Observation;
  * Annotation to mark classes and methods that you want to observe.
  *
  * @author Jonatan Ivanov
+ * @author Yanming Zhou
  * @since 1.10.0
  */
 @Target({ ElementType.ANNOTATION_TYPE, ElementType.TYPE, ElementType.METHOD })
@@ -51,5 +52,11 @@ public @interface Observed {
      * @return an array of low cardinality key values.
      */
     String[] lowCardinalityKeyValues() default {};
+
+    /**
+     * Returns {@code true} if {@link Observation} should not be started without parent.
+     * @return {@code true} if {@link Observation} should not be started without parent.
+     */
+    boolean withParentOnly() default false;
 
 }

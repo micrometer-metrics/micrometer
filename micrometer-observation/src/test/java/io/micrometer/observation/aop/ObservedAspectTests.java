@@ -334,6 +334,35 @@ class ObservedAspectTests {
         TestObservationRegistryAssert.assertThat(registry).doesNotHaveAnyObservation();
     }
 
+    @Test
+    void withParentOnlyObservationShouldNotBeStartedWithoutParent() {
+        registry.observationConfig().observationHandler(new ObservationTextPublisher());
+
+        AspectJProxyFactory pf = new AspectJProxyFactory(new InternalService());
+        pf.addAspect(new ObservedAspect(registry));
+
+        InternalService internalService = pf.getProxy();
+        internalService.call();
+
+        TestObservationRegistryAssert.assertThat(registry).doesNotHaveAnyObservation();
+    }
+
+    @Test
+    void withParentOnlyObservationShouldBeStartedIfParentPresent() {
+        registry.observationConfig().observationHandler(new ObservationTextPublisher());
+
+        AspectJProxyFactory pf = new AspectJProxyFactory(new InternalService());
+        pf.addAspect(new ObservedAspect(registry));
+        InternalService internalService = pf.getProxy();
+        pf = new AspectJProxyFactory(new ExternalService(internalService));
+        pf.addAspect(new ObservedAspect(registry));
+
+        ExternalService externalService = pf.getProxy();
+        externalService.call();
+
+        TestObservationRegistryAssert.assertThat(registry).hasNumberOfObservationsEqualTo(2);
+    }
+
     static class ObservedService {
 
         @Observed(name = "test.call", contextualName = "test#call",
@@ -439,6 +468,30 @@ class ObservedAspectTests {
         @Override
         public boolean supportsContext(@NonNull Observation.Context context) {
             return context instanceof ObservedAspect.ObservedAspectContext;
+        }
+
+    }
+
+    static class ExternalService {
+
+        private final InternalService internalService;
+
+        ExternalService(InternalService internalService) {
+            this.internalService = internalService;
+        }
+
+        @Observed
+        void call() {
+            internalService.call();
+        }
+
+    }
+
+    static class InternalService {
+
+        @Observed(withParentOnly = true)
+        void call() {
+            System.out.println("call");
         }
 
     }
