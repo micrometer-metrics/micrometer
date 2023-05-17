@@ -20,6 +20,7 @@ import io.micrometer.core.instrument.AbstractTimer;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.HistogramSnapshot;
+import io.micrometer.core.instrument.distribution.StepBucketHistogram;
 import io.micrometer.core.instrument.distribution.TimeWindowMax;
 import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import io.micrometer.core.instrument.step.StepTuple2;
@@ -48,25 +49,35 @@ final class SignalfxTimer extends AbstractTimer {
     private final TimeWindowMax max;
 
     @Nullable
-    private final DeltaHistogramCounts deltaHistogramCounts;
+    private final StepBucketHistogram stepBucketHistogram;
 
     SignalfxTimer(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig,
             PauseDetector pauseDetector, TimeUnit baseTimeUnit, long stepMillis, boolean isDelta) {
-        super(id, clock, CumulativeHistogramConfigUtil.updateConfig(distributionStatisticConfig), pauseDetector,
-                baseTimeUnit, false);
+        super(id, clock, CumulativeHistogramConfigUtil.updateConfig(distributionStatisticConfig, isDelta),
+                pauseDetector, baseTimeUnit, false);
         countTotal = new StepTuple2<>(clock, stepMillis, 0L, 0L, count::sumThenReset, total::sumThenReset);
         max = new TimeWindowMax(clock, distributionStatisticConfig);
+
         if (distributionStatisticConfig.isPublishingHistogram() && isDelta) {
-            deltaHistogramCounts = new DeltaHistogramCounts();
+            stepBucketHistogram = new StepBucketHistogram(clock, stepMillis,
+                    DistributionStatisticConfig.builder()
+                        .serviceLevelObjectives(CumulativeHistogramConfigUtil
+                            .addPositiveInfBucket(distributionStatisticConfig.getServiceLevelObjectiveBoundaries()))
+                        .build()
+                        .merge(distributionStatisticConfig),
+                    false, true);
         }
         else {
-            deltaHistogramCounts = null;
+            stepBucketHistogram = null;
         }
     }
 
     @Override
     protected void recordNonNegative(long amount, TimeUnit unit) {
         final long nanoAmount = (long) TimeUtils.convert(amount, unit, TimeUnit.NANOSECONDS);
+        if (stepBucketHistogram != null) {
+            stepBucketHistogram.recordLong(nanoAmount);
+        }
         count.increment();
         total.add(nanoAmount);
         max.record(amount, unit);
@@ -90,17 +101,11 @@ final class SignalfxTimer extends AbstractTimer {
     @Override
     public HistogramSnapshot takeSnapshot() {
         HistogramSnapshot currentSnapshot = super.takeSnapshot();
-        if (deltaHistogramCounts == null) {
+        if (stepBucketHistogram == null) {
             return currentSnapshot;
         }
-        return new HistogramSnapshot(currentSnapshot.count(), // Already delta in sfx
-                                                              // implementation
-                currentSnapshot.total(), // Already delta in sfx implementation
-                currentSnapshot.max(), // Max cannot be calculated as delta, keep the
-                                       // current.
-                currentSnapshot.percentileValues(), // No changes to the percentile
-                                                    // values.
-                deltaHistogramCounts.calculate(currentSnapshot.histogramCounts()), currentSnapshot::outputSummary);
+        return new HistogramSnapshot(currentSnapshot.count(), currentSnapshot.total(), currentSnapshot.max(),
+                currentSnapshot.percentileValues(), stepBucketHistogram.poll(), currentSnapshot::outputSummary);
     }
 
 }

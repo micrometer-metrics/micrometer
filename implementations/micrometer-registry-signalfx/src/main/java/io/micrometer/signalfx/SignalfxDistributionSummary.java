@@ -20,6 +20,7 @@ import io.micrometer.core.instrument.AbstractDistributionSummary;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.HistogramSnapshot;
+import io.micrometer.core.instrument.distribution.StepBucketHistogram;
 import io.micrometer.core.instrument.distribution.TimeWindowMax;
 import io.micrometer.core.instrument.step.StepTuple2;
 
@@ -47,23 +48,33 @@ final class SignalfxDistributionSummary extends AbstractDistributionSummary {
     private final TimeWindowMax max;
 
     @Nullable
-    private final DeltaHistogramCounts deltaHistogramCounts;
+    private final StepBucketHistogram stepBucketHistogram;
 
     SignalfxDistributionSummary(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig,
             double scale, long stepMillis, boolean isDelta) {
-        super(id, clock, CumulativeHistogramConfigUtil.updateConfig(distributionStatisticConfig), scale, false);
+        super(id, clock, CumulativeHistogramConfigUtil.updateConfig(distributionStatisticConfig, isDelta), scale,
+                false);
         this.countTotal = new StepTuple2<>(clock, stepMillis, 0L, 0.0, count::sumThenReset, total::sumThenReset);
         max = new TimeWindowMax(clock, distributionStatisticConfig);
         if (distributionStatisticConfig.isPublishingHistogram() && isDelta) {
-            deltaHistogramCounts = new DeltaHistogramCounts();
+            stepBucketHistogram = new StepBucketHistogram(clock, stepMillis,
+                    DistributionStatisticConfig.builder()
+                        .serviceLevelObjectives(CumulativeHistogramConfigUtil
+                            .addPositiveInfBucket(distributionStatisticConfig.getServiceLevelObjectiveBoundaries()))
+                        .build()
+                        .merge(distributionStatisticConfig),
+                    false, true);
         }
         else {
-            deltaHistogramCounts = null;
+            stepBucketHistogram = null;
         }
     }
 
     @Override
     protected void recordNonNegative(double amount) {
+        if (stepBucketHistogram != null) {
+            stepBucketHistogram.recordDouble(amount);
+        }
         count.increment();
         total.add(amount);
         max.record(amount);
@@ -87,17 +98,11 @@ final class SignalfxDistributionSummary extends AbstractDistributionSummary {
     @Override
     public HistogramSnapshot takeSnapshot() {
         HistogramSnapshot currentSnapshot = super.takeSnapshot();
-        if (deltaHistogramCounts == null) {
+        if (stepBucketHistogram == null) {
             return currentSnapshot;
         }
-        return new HistogramSnapshot(currentSnapshot.count(), // Already delta in sfx
-                                                              // implementation.
-                currentSnapshot.total(), // Already delta in sfx implementation.
-                currentSnapshot.max(), // Max cannot be calculated as delta, keep the
-                                       // current.
-                currentSnapshot.percentileValues(), // No changes to the percentile
-                                                    // values.
-                deltaHistogramCounts.calculate(currentSnapshot.histogramCounts()), currentSnapshot::outputSummary);
+        return new HistogramSnapshot(currentSnapshot.count(), currentSnapshot.total(), currentSnapshot.max(),
+                currentSnapshot.percentileValues(), stepBucketHistogram.poll(), currentSnapshot::outputSummary);
     }
 
 }

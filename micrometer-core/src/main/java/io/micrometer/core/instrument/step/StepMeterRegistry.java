@@ -147,8 +147,7 @@ public abstract class StepMeterRegistry extends PushMeterRegistry {
      * if past the step boundary. This gives some control over when roll over happens
      * separate from when publishing happens.
      */
-    // VisibleForTesting
-    void pollMetersToRollover() {
+    protected void pollMetersToRollover() {
         this.getMeters()
             .forEach(m -> m.match(gauge -> null, Counter::count, Timer::count, DistributionSummary::count,
                     meter -> null, meter -> null, FunctionCounter::count, FunctionTimer::count, meter -> null));
