@@ -40,7 +40,7 @@ final class SignalfxDistributionSummary extends StepDistributionSummary {
     SignalfxDistributionSummary(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig,
             double scale, long stepMillis, boolean isDelta) {
         super(id, clock, distributionStatisticConfig, scale, stepMillis, defaultHistogram(clock,
-            CumulativeHistogramConfigUtil.updateConfig(distributionStatisticConfig, isDelta), false));
+                CumulativeHistogramConfigUtil.updateConfig(distributionStatisticConfig, isDelta), false));
 
         if (distributionStatisticConfig.isPublishingHistogram() && isDelta) {
             stepBucketHistogram = new StepBucketHistogram(clock, stepMillis,

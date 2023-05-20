@@ -42,7 +42,8 @@ final class SignalfxTimer extends StepTimer {
 
     SignalfxTimer(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig,
             PauseDetector pauseDetector, TimeUnit baseTimeUnit, long stepMillis, boolean isDelta) {
-        super(id, clock, distributionStatisticConfig, pauseDetector, baseTimeUnit, stepMillis, defaultHistogram(clock, CumulativeHistogramConfigUtil.updateConfig(distributionStatisticConfig, isDelta), false));
+        super(id, clock, distributionStatisticConfig, pauseDetector, baseTimeUnit, stepMillis, defaultHistogram(clock,
+                CumulativeHistogramConfigUtil.updateConfig(distributionStatisticConfig, isDelta), false));
 
         if (distributionStatisticConfig.isPublishingHistogram() && isDelta) {
             stepBucketHistogram = new StepBucketHistogram(clock, stepMillis,
