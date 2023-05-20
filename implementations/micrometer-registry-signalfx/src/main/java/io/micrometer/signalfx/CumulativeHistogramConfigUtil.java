@@ -43,7 +43,7 @@ final class CumulativeHistogramConfigUtil {
             // Without this, the counts are reset every expiry duration.
             .expiry(Duration.ofNanos(Long.MAX_VALUE)) // effectively infinite
             .bufferLength(1)
-            // If delta Histograms are enabled, empty slo and use
+            // If delta Histograms are enabled, empty the slo's and use
             // StepBucketHistogram.
             .serviceLevelObjectives(isDelta ? EMPTY_SLO : addPositiveInfBucket(sloBoundaries))
             .build()

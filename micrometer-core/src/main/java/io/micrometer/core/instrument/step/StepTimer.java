@@ -18,6 +18,7 @@ package io.micrometer.core.instrument.step;
 import io.micrometer.core.instrument.AbstractTimer;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
+import io.micrometer.core.instrument.distribution.Histogram;
 import io.micrometer.core.instrument.distribution.TimeWindowMax;
 import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import io.micrometer.core.instrument.util.TimeUtils;
@@ -51,7 +52,14 @@ public class StepTimer extends AbstractTimer implements StepMeter {
     public StepTimer(final Id id, final Clock clock, final DistributionStatisticConfig distributionStatisticConfig,
             final PauseDetector pauseDetector, final TimeUnit baseTimeUnit, final long stepDurationMillis,
             final boolean supportsAggregablePercentiles) {
-        super(id, clock, distributionStatisticConfig, pauseDetector, baseTimeUnit, supportsAggregablePercentiles);
+        this(id, clock, distributionStatisticConfig, pauseDetector, baseTimeUnit, stepDurationMillis,
+                defaultHistogram(clock, distributionStatisticConfig, supportsAggregablePercentiles));
+    }
+
+    protected StepTimer(final Id id, final Clock clock, final DistributionStatisticConfig distributionStatisticConfig,
+            final PauseDetector pauseDetector, final TimeUnit baseTimeUnit, final long stepDurationMillis,
+            Histogram histogram) {
+        super(id, clock, pauseDetector, baseTimeUnit, histogram);
         countTotal = new StepTuple2<>(clock, stepDurationMillis, 0L, 0L, count::sumThenReset, total::sumThenReset);
         max = new TimeWindowMax(clock, distributionStatisticConfig);
     }

@@ -16,18 +16,15 @@
 package io.micrometer.signalfx;
 
 import io.micrometer.common.lang.Nullable;
-import io.micrometer.core.instrument.AbstractTimer;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.HistogramSnapshot;
 import io.micrometer.core.instrument.distribution.StepBucketHistogram;
-import io.micrometer.core.instrument.distribution.TimeWindowMax;
 import io.micrometer.core.instrument.distribution.pause.PauseDetector;
-import io.micrometer.core.instrument.step.StepTuple2;
+import io.micrometer.core.instrument.step.StepTimer;
 import io.micrometer.core.instrument.util.TimeUtils;
 
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.LongAdder;
 
 /**
  * This class is mostly the same as {@link io.micrometer.core.instrument.step.StepTimer},
@@ -38,25 +35,14 @@ import java.util.concurrent.atomic.LongAdder;
  * @author Bogdan Drutu
  * @author Mateusz Rzeszutek
  */
-final class SignalfxTimer extends AbstractTimer {
-
-    private final LongAdder count = new LongAdder();
-
-    private final LongAdder total = new LongAdder();
-
-    private final StepTuple2<Long, Long> countTotal;
-
-    private final TimeWindowMax max;
+final class SignalfxTimer extends StepTimer {
 
     @Nullable
     private final StepBucketHistogram stepBucketHistogram;
 
     SignalfxTimer(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig,
             PauseDetector pauseDetector, TimeUnit baseTimeUnit, long stepMillis, boolean isDelta) {
-        super(id, clock, CumulativeHistogramConfigUtil.updateConfig(distributionStatisticConfig, isDelta),
-                pauseDetector, baseTimeUnit, false);
-        countTotal = new StepTuple2<>(clock, stepMillis, 0L, 0L, count::sumThenReset, total::sumThenReset);
-        max = new TimeWindowMax(clock, distributionStatisticConfig);
+        super(id, clock, distributionStatisticConfig, pauseDetector, baseTimeUnit, stepMillis, defaultHistogram(clock, CumulativeHistogramConfigUtil.updateConfig(distributionStatisticConfig, isDelta), false));
 
         if (distributionStatisticConfig.isPublishingHistogram() && isDelta) {
             stepBucketHistogram = new StepBucketHistogram(clock, stepMillis,
@@ -74,28 +60,11 @@ final class SignalfxTimer extends AbstractTimer {
 
     @Override
     protected void recordNonNegative(long amount, TimeUnit unit) {
-        final long nanoAmount = (long) TimeUtils.convert(amount, unit, TimeUnit.NANOSECONDS);
         if (stepBucketHistogram != null) {
+            final long nanoAmount = (long) TimeUtils.convert(amount, unit, TimeUnit.NANOSECONDS);
             stepBucketHistogram.recordLong(nanoAmount);
         }
-        count.increment();
-        total.add(nanoAmount);
-        max.record(amount, unit);
-    }
-
-    @Override
-    public long count() {
-        return countTotal.poll1();
-    }
-
-    @Override
-    public double totalTime(TimeUnit unit) {
-        return TimeUtils.nanosToUnit(countTotal.poll2(), unit);
-    }
-
-    @Override
-    public double max(TimeUnit unit) {
-        return max.poll(unit);
+        super.recordNonNegative(amount, unit);
     }
 
     @Override
