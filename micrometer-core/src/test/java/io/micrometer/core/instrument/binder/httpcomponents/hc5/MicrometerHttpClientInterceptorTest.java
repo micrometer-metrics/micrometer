@@ -38,7 +38,6 @@ import java.util.concurrent.Future;
 import static com.github.tomakehurst.wiremock.client.WireMock.any;
 import static com.github.tomakehurst.wiremock.client.WireMock.anyUrl;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatCode;
 
 /**
  * Tests for {@link MicrometerHttpClientInterceptor}.
@@ -67,14 +66,12 @@ class MicrometerHttpClientInterceptorTest {
         HttpResponse response = future.get();
 
         assertThat(response.getCode()).isEqualTo(200);
-        assertThatCode(() -> {
-            assertThat(registry.get("httpcomponents.httpclient.request")
-                .tag("method", "GET")
-                .tag("status", "200")
-                .tag("outcome", "SUCCESS")
-                .timer()
-                .count()).isEqualTo(1);
-        }).doesNotThrowAnyException();
+        assertThat(registry.get("httpcomponents.httpclient.request")
+            .tag("method", "GET")
+            .tag("status", "200")
+            .tag("outcome", "SUCCESS")
+            .timer()
+            .count()).isEqualTo(1);
 
         client.close();
     }
