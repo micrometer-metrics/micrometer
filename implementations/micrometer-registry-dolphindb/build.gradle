@@ -1,0 +1,11 @@
+dependencies {
+    api project(':micrometer-core')
+
+    implementation 'org.slf4j:slf4j-api'
+
+    // https://mvnrepository.com/artifact/com.dolphindb/dolphindb-javaapi
+    implementation group: 'com.dolphindb', name: 'dolphindb-javaapi', version: '1.30.21.1'
+
+    testImplementation project(':micrometer-test')
+}
+

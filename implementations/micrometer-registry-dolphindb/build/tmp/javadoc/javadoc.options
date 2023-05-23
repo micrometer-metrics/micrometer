@@ -1,0 +1,17 @@
+-Xdoclint:all,-missing 
+-classpath 'D:\\Java_code\\profile\\micrometer\\implementations\\micrometer-registry-dolphindb\\build\\classes\\java\\main;D:\\Java_code\\profile\\micrometer\\implementations\\micrometer-registry-dolphindb\\build\\resources\\main;D:\\Java_code\\profile\\micrometer\\micrometer-core\\build\\libs\\micrometer-core-1.12.0-SNAPSHOT.jar;D:\\Java_code\\profile\\micrometer\\micrometer-observation\\build\\libs\\micrometer-observation-1.12.0-SNAPSHOT.jar;D:\\Java_code\\profile\\micrometer\\micrometer-commons\\build\\libs\\micrometer-commons-1.12.0-SNAPSHOT.jar;C:\\Users\\bwliu\\.gradle\\caches\\modules-2\\files-2.1\\org.slf4j\\slf4j-api\\1.7.36\\6c62681a2f655b49963a5983b8b0950a6120ae14\\slf4j-api-1.7.36.jar;C:\\Users\\bwliu\\.gradle\\caches\\modules-2\\files-2.1\\com.dolphindb\\dolphindb-javaapi\\1.30.21.1\\c05fa293d267c26e04cb00466b75bd705508683b\\dolphindb-javaapi-1.30.21.1.jar;C:\\Users\\bwliu\\.gradle\\caches\\modules-2\\files-2.1\\com.google.code.findbugs\\jsr305\\3.0.2\\25ea2e8b0c338a877313bd4672d3fe056ea78f0d\\jsr305-3.0.2.jar;C:\\Users\\bwliu\\.gradle\\caches\\modules-2\\files-2.1\\junit\\junit\\4.12\\2973d150c0dc1fefe998f834810d68f278ea58ec\\junit-4.12.jar;C:\\Users\\bwliu\\.gradle\\caches\\modules-2\\files-2.1\\org.lz4\\lz4-java\\1.7.1\\c4d931ef8ad2c9c35d65b231a33e61428472d0da\\lz4-java-1.7.1.jar;C:\\Users\\bwliu\\.gradle\\caches\\modules-2\\files-2.1\\com.alibaba\\fastjson\\1.2.2\\b3cd06ff3f21c8cf487c241ed145154fbae6b4e2\\fastjson-1.2.2.jar;C:\\Users\\bwliu\\.gradle\\caches\\modules-2\\files-2.1\\org.javatuples\\javatuples\\1.2\\507312ac4b601204a72a83380badbca82683dd36\\javatuples-1.2.jar;C:\\Users\\bwliu\\.gradle\\caches\\modules-2\\files-2.1\\org.apache.commons\\commons-lang3\\3.12.0\\c6842c86792ff03b9f1d1fe2aab8dc23aa6c6f0e\\commons-lang3-3.12.0.jar;C:\\Users\\bwliu\\.gradle\\caches\\modules-2\\files-2.1\\org.hamcrest\\hamcrest-core\\1.3\\42a25dc3219429f0e5d060061f71acb49bf010a0\\hamcrest-core-1.3.jar'
+-d 'D:\\Java_code\\profile\\micrometer\\implementations\\micrometer-registry-dolphindb\\build\\docs\\javadoc'
+-doctitle 'micrometer-registry-dolphindb 1.12.0-SNAPSHOT API'
+-notimestamp 
+-quiet 
+-tag 'apiNote:a:API Note:'
+-tag 'implSpec:a:Implementation Requirements:'
+-tag 'implNote:a:Implementation Note:'
+-windowtitle 'micrometer-registry-dolphindb 1.12.0-SNAPSHOT API'
+'D:\\Java_code\\profile\\micrometer\\implementations\\micrometer-registry-dolphindb\\src\\main\\java\\io\\micrometer\\dolphindb\\CreateDolphinDBScriptBuilder.java'
+'D:\\Java_code\\profile\\micrometer\\implementations\\micrometer-registry-dolphindb\\src\\main\\java\\io\\micrometer\\dolphindb\\DolphinDBConfig.java'
+'D:\\Java_code\\profile\\micrometer\\implementations\\micrometer-registry-dolphindb\\src\\main\\java\\io\\micrometer\\dolphindb\\DolphinDBDistributionSummary.java'
+'D:\\Java_code\\profile\\micrometer\\implementations\\micrometer-registry-dolphindb\\src\\main\\java\\io\\micrometer\\dolphindb\\DolphinDBMeterRegistry.java'
+'D:\\Java_code\\profile\\micrometer\\implementations\\micrometer-registry-dolphindb\\src\\main\\java\\io\\micrometer\\dolphindb\\DolphinDBNamingConvention.java'
+'D:\\Java_code\\profile\\micrometer\\implementations\\micrometer-registry-dolphindb\\src\\main\\java\\io\\micrometer\\dolphindb\\DolphinDBSession.java'
+'D:\\Java_code\\profile\\micrometer\\implementations\\micrometer-registry-dolphindb\\src\\main\\java\\io\\micrometer\\dolphindb\\DolphinDBTimer.java'

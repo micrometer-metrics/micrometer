@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>io.micrometer</groupId>
+  <artifactId>micrometer-registry-dolphindb</artifactId>
+  <version>1.12.0-SNAPSHOT</version>
+  <name>micrometer-registry-dolphindb</name>
+  <description>Application monitoring instrumentation facade</description>
+  <url>https://github.com/micrometer-metrics/micrometer</url>
+  <licenses>
+    <license>
+      <name>The Apache Software License, Version 2.0</name>
+      <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+      <distribution>repo</distribution>
+    </license>
+  </licenses>
+  <developers>
+    <developer>
+      <id>shakuzen</id>
+      <name>Tommy Ludwig</name>
+      <email>tludwig@vmware.com</email>
+    </developer>
+  </developers>
+  <scm>
+    <url>https://github.com/micrometer-metrics/micrometer.git</url>
+  </scm>
+  <dependencies>
+    <dependency>
+      <groupId>io.micrometer</groupId>
+      <artifactId>micrometer-core</artifactId>
+      <version>1.12.0-SNAPSHOT</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
+      <version>1.7.36</version>
+      <scope>runtime</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.dolphindb</groupId>
+      <artifactId>dolphindb-javaapi</artifactId>
+      <version>1.30.21.1</version>
+      <scope>runtime</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.google.code.findbugs</groupId>
+      <artifactId>jsr305</artifactId>
+      <version>3.0.2</version>
+      <scope>compile</scope>
+      <optional>true</optional>
+    </dependency>
+  </dependencies>
+  <properties>
+    <nebula_Manifest_Version>1.0</nebula_Manifest_Version>
+    <nebula_Implementation_Title>io.micrometer#micrometer-registry-dolphindb;1.12.0-SNAPSHOT</nebula_Implementation_Title>
+    <nebula_Implementation_Version>1.12.0-SNAPSHOT</nebula_Implementation_Version>
+    <nebula_Built_Status>integration</nebula_Built_Status>
+    <nebula_Built_By>bwliu</nebula_Built_By>
+    <nebula_Built_OS>Windows 10</nebula_Built_OS>
+    <nebula_Build_Timezone>Asia/Shanghai</nebula_Build_Timezone>
+    <nebula_Build_Date_UTC>2023-05-23T09:27:58.067034100Z</nebula_Build_Date_UTC>
+    <nebula_Build_Date>2023-05-23_17:27:58</nebula_Build_Date>
+    <nebula_Gradle_Version>8.1.1</nebula_Gradle_Version>
+    <nebula_Module_Source>/implementations/micrometer-registry-dolphindb</nebula_Module_Source>
+    <nebula_Module_Origin>https://github.com/micrometer-metrics/micrometer.git</nebula_Module_Origin>
+    <nebula_Change>cb4f455</nebula_Change>
+    <nebula_Full_Change>cb4f455b5d276f188d49ea7168175cbe11e268c3</nebula_Full_Change>
+    <nebula_Branch>main</nebula_Branch>
+    <nebula_Build_Host>DESKTOP-H3K6CMQ</nebula_Build_Host>
+    <nebula_Build_Job>LOCAL</nebula_Build_Job>
+    <nebula_Build_Number>LOCAL</nebula_Build_Number>
+    <nebula_Build_Id>LOCAL</nebula_Build_Id>
+    <nebula_Build_Url>DESKTOP-H3K6CMQ/LOCAL</nebula_Build_Url>
+    <nebula_Created_By>17.0.6+9-LTS-190 (Oracle Corporation)</nebula_Created_By>
+    <nebula_Module_Owner>tludwig@vmware.com</nebula_Module_Owner>
+    <nebula_Module_Email>tludwig@vmware.com</nebula_Module_Email>
+    <nebula_X_Compile_Target_JDK>1.8</nebula_X_Compile_Target_JDK>
+    <nebula_X_Compile_Source_JDK>1.8</nebula_X_Compile_Source_JDK>
+    <nebula_Build_Java_Version>17</nebula_Build_Java_Version>
+  </properties>
+</project>
