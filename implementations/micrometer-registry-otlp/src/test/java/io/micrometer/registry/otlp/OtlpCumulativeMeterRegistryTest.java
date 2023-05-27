@@ -505,7 +505,7 @@ class OtlpCumulativeMeterRegistryTest extends OtlpMeterRegistryTest {
     void testMetricsStartAndEndTime() {
         Counter counter = Counter.builder("test_publish_time").register(registry);
         final long startTime = ((StartTimeAwareMeter) counter).getStartTimeNanos();
-        Function<Meter, NumberDataPoint> getDataPoint = (Meter meter) -> writeToMetric(meter).getSum().getDataPoints(0);
+        Function<Meter, NumberDataPoint> getDataPoint = (meter) -> writeToMetric(meter).getSum().getDataPoints(0);
         assertThat(getDataPoint.apply(counter).getStartTimeUnixNano()).isEqualTo(startTime);
         assertThat(getDataPoint.apply(counter).getTimeUnixNano()).isEqualTo(1000000L);
         clock.addSeconds(59);
