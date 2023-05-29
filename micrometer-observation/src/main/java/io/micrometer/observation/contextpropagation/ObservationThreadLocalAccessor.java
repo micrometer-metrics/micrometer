@@ -94,22 +94,21 @@ public class ObservationThreadLocalAccessor implements ThreadLocalAccessor<Obser
 
     @Override
     public void setValue(Observation value) {
-        if (value == null) {
-            // Not closing a scope (we're not resetting)
-            // Creating a new one with empty context and opens a new scope)
-            // This scope will remember the previously created one to
-            // which we will revert once "null scope" is closed
-            new NullObservation(observationRegistry).start().openScope();
-        }
-        else {
-            // Iterate over all handlers and open a new scope. The created scope will put
-            // itself to TL.
-            value.openScope();
-        }
+        // Iterate over all handlers and open a new scope. The created scope will put
+        // itself to TL.
+        value.openScope();
     }
 
     @Override
-    public void reset() {
+    public void setValue() {
+        // Not closing a scope (we're not resetting)
+        // Creating a new one with empty context and opens a new scope)
+        // This scope will remember the previously created one to
+        // which we will revert once "null scope" is closed
+        new NullObservation(observationRegistry).start().openScope();
+    }
+
+    private void closeCurrentScope() {
         Observation.Scope scope = observationRegistry.getCurrentObservationScope();
         if (scope != null) {
             scope.close();
@@ -117,12 +116,13 @@ public class ObservationThreadLocalAccessor implements ThreadLocalAccessor<Obser
     }
 
     @Override
+    public void restore() {
+        log.warn("Restore called with <null> observation. This should not happen. Will fallback to reset");
+        closeCurrentScope();
+    }
+
+    @Override
     public void restore(Observation value) {
-        if (value == null) {
-            log.warn("Restore called with <null> observation. This should not happen. Will fallback to reset");
-            reset();
-            return;
-        }
         Observation.Scope scope = observationRegistry.getCurrentObservationScope();
         if (scope == null) {
             String msg = "There is no current scope in thread local. This situation should not happen";
@@ -140,7 +140,7 @@ public class ObservationThreadLocalAccessor implements ThreadLocalAccessor<Obser
             log.warn(msg);
             assert false : msg;
         }
-        reset();
+        closeCurrentScope();
     }
 
 }
