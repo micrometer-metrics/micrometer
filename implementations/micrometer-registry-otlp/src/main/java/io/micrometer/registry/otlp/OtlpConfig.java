@@ -94,7 +94,7 @@ public interface OtlpConfig extends PushRegistryConfig {
      * {@link AggregationTemporality} of the OtlpMeterRegistry. This determines whether
      * the meters should be cumulative(AGGREGATION_TEMPORALITY_CUMULATIVE) or
      * step/delta(AGGREGATION_TEMPORALITY_DELTA).
-     * @return the aggregationTemporality for OtlpRegistry
+     * @return the aggregationTemporality for OtlpMeterRegistry
      * @see <a href=
      * "https://opentelemetry.io/docs/reference/specification/metrics/data-model/#temporality">OTLP
      * Temporality</a>

@@ -35,7 +35,7 @@ class OtlpStepTimer extends AbstractTimer {
     private final StepMax max;
 
     /**
-     * Create a new {@code StepTimer}.
+     * Create a new {@code OtlpStepTimer}.
      * @param id ID
      * @param clock clock
      * @param distributionStatisticConfig distribution statistic configuration
@@ -43,7 +43,7 @@ class OtlpStepTimer extends AbstractTimer {
      * @param baseTimeUnit base time unit
      * @param stepDurationMillis step in milliseconds
      */
-    public OtlpStepTimer(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig,
+    OtlpStepTimer(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig,
             PauseDetector pauseDetector, TimeUnit baseTimeUnit, long stepDurationMillis) {
         super(id, clock, pauseDetector, baseTimeUnit, OtlpMeterRegistry.getHistogram(clock, distributionStatisticConfig,
                 AggregationTemporality.DELTA, stepDurationMillis));
