@@ -220,7 +220,7 @@ class StepMeterRegistryTest {
         assertBeforeRollover(counter, timer, summary, functionCounter, functionTimer);
 
         addTimeWithRolloverOnStepStart(clock, registry, config, config.step());
-        registry.publish();
+        registry.scheduledPublish();
 
         assertThat(registry.publishedCounterCounts).hasSize(1);
         assertThat(registry.publishedCounterCounts.pop()).isOne();
@@ -398,7 +398,7 @@ class StepMeterRegistryTest {
         addTimeWithRolloverOnStepStart(clock, registry, config, Duration.ofSeconds(10));
 
         // recordings that happened in the previous step should be published
-        registry.publish();
+        registry.scheduledPublish();
         assertThat(registry.publishedCounterCounts).hasSize(1);
         assertThat(registry.publishedCounterCounts.pop()).isOne();
         assertThat(registry.publishedTimerCounts).hasSize(1);
@@ -435,6 +435,8 @@ class StepMeterRegistryTest {
 
         Deque<Double> publishedFunctionTimerTotals = new ArrayDeque<>();
 
+        private long lastScheduledPublishStartTime = 0L;
+
         @Nullable
         Runnable prePublishAction;
 
@@ -456,6 +458,16 @@ class StepMeterRegistryTest {
                 .map(meter -> meter.match(g -> null, this::publishCounter, this::publishTimer, this::publishSummary,
                         null, tg -> null, this::publishFunctionCounter, this::publishFunctionTimer, m -> null))
                 .collect(Collectors.toList());
+        }
+
+        private void scheduledPublish() {
+            this.lastScheduledPublishStartTime = clock.wallTime();
+            this.publish();
+        }
+
+        @Override
+        protected long getLastScheduledPublishStartTime() {
+            return lastScheduledPublishStartTime;
         }
 
         private Timer publishTimer(Timer timer) {

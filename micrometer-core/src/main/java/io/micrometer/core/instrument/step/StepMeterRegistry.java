@@ -139,7 +139,7 @@ public abstract class StepMeterRegistry extends PushMeterRegistry {
         stop();
 
         if (!isPublishing()) {
-            if (isDataPublishedForCurrentStep()) {
+            if (!isDataPublishedForCurrentStep()) {
                 // Data was not published for the current step. So, we should flush that
                 // first.
                 try {
@@ -158,7 +158,7 @@ public abstract class StepMeterRegistry extends PushMeterRegistry {
 
     private boolean isDataPublishedForCurrentStep() {
         long currentTimeInMillis = clock.wallTime();
-        return (getLastScheduledPublishStartTime() / config.step().toMillis()) < (currentTimeInMillis
+        return (getLastScheduledPublishStartTime() / config.step().toMillis()) >= (currentTimeInMillis
                 / config.step().toMillis());
     }
 
