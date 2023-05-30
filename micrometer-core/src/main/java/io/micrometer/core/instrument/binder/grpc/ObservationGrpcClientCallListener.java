@@ -21,7 +21,6 @@ import io.grpc.Metadata;
 import io.grpc.Status;
 import io.micrometer.core.instrument.binder.grpc.GrpcObservationDocumentation.GrpcClientEvents;
 import io.micrometer.observation.Observation;
-import io.micrometer.observation.Observation.Scope;
 
 /**
  * A simple forwarding client call listener for {@link Observation}.
@@ -30,32 +29,28 @@ import io.micrometer.observation.Observation.Scope;
  */
 class ObservationGrpcClientCallListener<RespT> extends SimpleForwardingClientCallListener<RespT> {
 
-    private final Scope scope;
+    private final Observation observation;
 
-    ObservationGrpcClientCallListener(ClientCall.Listener<RespT> delegate, Scope scope) {
+    ObservationGrpcClientCallListener(ClientCall.Listener<RespT> delegate, Observation observation) {
         super(delegate);
-        this.scope = scope;
+        this.observation = observation;
     }
 
     @Override
     public void onClose(Status status, Metadata metadata) {
-        Observation observation = this.scope.getCurrentObservation();
-        GrpcClientObservationContext context = (GrpcClientObservationContext) observation.getContext();
+        GrpcClientObservationContext context = (GrpcClientObservationContext) this.observation.getContext();
         context.setStatusCode(status.getCode());
         if (status.getCause() != null) {
             observation.error(status.getCause());
         }
-
-        this.scope.close();
-        observation.stop();
-
+        this.observation.stop();
         // We do not catch exception from the delegate. (following Brave design)
         super.onClose(status, metadata);
     }
 
     @Override
     public void onMessage(RespT message) {
-        this.scope.getCurrentObservation().event(GrpcClientEvents.MESSAGE_RECEIVED);
+        this.observation.event(GrpcClientEvents.MESSAGE_RECEIVED);
         super.onMessage(message);
     }
 
