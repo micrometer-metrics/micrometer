@@ -550,7 +550,7 @@ class OtlpDeltaMeterRegistryTest extends OtlpMeterRegistryTest {
         assertThat(functionTimer.totalTime(MILLISECONDS)).isZero();
 
         stepOverNStep(1);
-        registry.publish();
+        registry.scheduledPublish();
 
         assertThat(registry.publishedCounterCounts).hasSize(1);
         assertThat(registry.publishedCounterCounts.pop()).isOne();
@@ -684,6 +684,8 @@ class OtlpDeltaMeterRegistryTest extends OtlpMeterRegistryTest {
 
         Deque<Double> publishedFunctionTimerTotals = new ArrayDeque<>();
 
+        private long lastScheduledPublishStartTime = 0L;
+
         public TestOtlpMeterRegistry() {
             super(OtlpDeltaMeterRegistryTest.this.otlpConfig(), OtlpDeltaMeterRegistryTest.this.clock);
         }
@@ -694,6 +696,16 @@ class OtlpDeltaMeterRegistryTest extends OtlpMeterRegistryTest {
                 .map(meter -> meter.match(null, this::publishCounter, this::publishTimer, this::publishSummary, null,
                         null, this::publishFunctionCounter, this::publishFunctionTimer, null))
                 .collect(Collectors.toList());
+        }
+
+        private void scheduledPublish() {
+            this.lastScheduledPublishStartTime = clock.wallTime();
+            this.publish();
+        }
+
+        @Override
+        protected long getLastScheduledPublishStartTime() {
+            return lastScheduledPublishStartTime;
         }
 
         private Timer publishTimer(Timer timer) {

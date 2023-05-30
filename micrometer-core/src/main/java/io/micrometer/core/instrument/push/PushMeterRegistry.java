@@ -89,7 +89,7 @@ public abstract class PushMeterRegistry extends MeterRegistry {
     }
 
     /**
-     *Returns the time when the last scheduled publish was started by
+     * Returns the time when the last scheduled publish was started by
      * {@link PushMeterRegistry#publishSafely()}.
      */
     protected long getLastScheduledPublishStartTime() {
