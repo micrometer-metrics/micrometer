@@ -237,9 +237,27 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
     public void close() {
         stop();
         if (!isPublishing() && isDelta()) {
+            if (!isDataPublishedForCurrentStep()) {
+                // Data was not published for the current step. So, we should flush that
+                // first.
+                try {
+                    this.publish();
+                }
+                catch (Throwable e) {
+                    logger.warn(
+                            "Unexpected exception thrown while publishing metrics for " + getClass().getSimpleName(),
+                            e);
+                }
+            }
             getMeters().forEach(this::closingRollover);
         }
         super.close();
+    }
+
+    private boolean isDataPublishedForCurrentStep() {
+        long currentTimeInMillis = clock.wallTime();
+        return (getLastScheduledPublishStartTime() / config.step().toMillis()) >= (currentTimeInMillis
+                / config.step().toMillis());
     }
 
     // Either we do this or make StepMeter public
