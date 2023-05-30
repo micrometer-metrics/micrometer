@@ -41,7 +41,7 @@ class ObservationThreadLocalAccessorTests {
     @BeforeEach
     void setup() {
         observationRegistry.observationConfig().observationHandler(new TracingHandler());
-        registry.registerThreadLocalAccessor(new ObservationThreadLocalAccessor());
+        registry.registerThreadLocalAccessor(new ObservationThreadLocalAccessor(observationRegistry));
     }
 
     @AfterEach
@@ -60,25 +60,32 @@ class ObservationThreadLocalAccessorTests {
         Observation child = Observation.createNotStarted("foo", observationRegistry).parentObservation(parent).start();
         thenCurrentObservationIsNull();
 
-        // when context captured
-        ContextSnapshot container;
         try (Observation.Scope scope = child.openScope()) {
             thenCurrentObservationHasParent(parent, child);
             thenCurrentScopeHasParent(null);
-            then(child.getEnclosingScope()).isNull();
+            then(child.getEnclosingScope()).isSameAs(scope);
         }
+        then(child.getEnclosingScope()).isNull();
+        thenCurrentObservationIsNull();
 
         try (Observation.Scope scope = other1.openScope()) {
             try (Observation.Scope scope2 = child.openScope()) {
                 thenCurrentObservationHasParent(parent, child);
-                then(child.getEnclosingScope()).isSameAs(scope);
+                then(child.getEnclosingScope()).isSameAs(scope2);
             }
+            then(child.getEnclosingScope()).isNull();
+            then(other1.getEnclosingScope()).isSameAs(scope);
         }
 
+        then(child.getEnclosingScope()).isNull();
+        thenCurrentObservationIsNull();
+
+        // when context captured
+        ContextSnapshot container;
         try (Observation.Scope scope = other2.openScope()) {
             try (Observation.Scope scope2 = child.openScope()) {
                 thenCurrentObservationHasParent(parent, child);
-                then(child.getEnclosingScope()).isSameAs(scope);
+                then(child.getEnclosingScope()).isSameAs(scope2);
                 container = ContextSnapshot.captureAllUsing(key -> true, registry);
             }
         }
@@ -90,12 +97,11 @@ class ObservationThreadLocalAccessorTests {
         try (ContextSnapshot.Scope scope = container.setThreadLocals()) {
             thenCurrentObservationHasParent(parent, child);
             Scope inScope = thenCurrentScopeHasParent(null);
-            then(child.getEnclosingScope()).isNull();
-            Observation.Scope observationScope = observationRegistry.getCurrentObservationScope();
+            then(child.getEnclosingScope()).isNotNull();
 
             // when second, nested scope created
             try (ContextSnapshot.Scope scope2 = container.setThreadLocals()) {
-                then(child.getEnclosingScope()).isSameAs(observationScope);
+                then(child.getEnclosingScope()).isNotNull();
                 thenCurrentObservationHasParent(parent, child);
                 Scope inSecondScope = thenCurrentScopeHasParent(inScope);
 
@@ -154,16 +160,16 @@ class ObservationThreadLocalAccessorTests {
         @Override
         public void onScopeOpened(Observation.Context context) {
             Scope currentScope = value.get();
-            Scope newScope = new Scope(currentScope);
+            Scope newScope = new Scope(currentScope, context.getName());
             context.put(Scope.class, newScope);
-            System.out.println("\ton open scope [" + context + "]");
+            System.out.println("\ton open scope [" + context + "]. Hashchode [" + newScope + "]");
         }
 
         @Override
         public void onScopeClosed(Observation.Context context) {
             Scope scope = context.get(Scope.class);
             scope.close();
-            System.out.println("\ton scope remove [" + context + "]");
+            System.out.println("\ton scope close [" + context + "]. Hashcode [" + scope + "]");
         }
 
         @Override
@@ -175,6 +181,7 @@ class ObservationThreadLocalAccessorTests {
         @Override
         public void onScopeReset(Observation.Context context) {
             value.remove();
+            System.out.println("on reset [" + context.getName() + "]");
         }
 
         @Override
@@ -188,8 +195,11 @@ class ObservationThreadLocalAccessorTests {
 
         private final Scope previous;
 
-        Scope(Scope previous) {
+        private final String obsName;
+
+        Scope(Scope previous, String obsName) {
             this.previous = previous;
+            this.obsName = obsName;
             TracingHandler.value.set(this);
         }
 
@@ -200,6 +210,11 @@ class ObservationThreadLocalAccessorTests {
 
         Scope parent() {
             return this.previous;
+        }
+
+        @Override
+        public String toString() {
+            return "Scope{" + "previous=" + previous + ", obsName='" + obsName + '\'' + '}';
         }
 
     }
