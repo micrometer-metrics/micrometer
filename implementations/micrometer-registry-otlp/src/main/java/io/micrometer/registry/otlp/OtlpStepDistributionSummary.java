@@ -33,14 +33,14 @@ class OtlpStepDistributionSummary extends AbstractDistributionSummary {
     private final StepMax max;
 
     /**
-     * Create a new {@code StepDistributionSummary}.
+     * Create a new {@code OtlpStepDistributionSummary}.
      * @param id ID
      * @param clock clock
-     * @param distributionStatisticConfig distribution static configuration
+     * @param distributionStatisticConfig distribution statistic configuration
      * @param scale scale
      * @param stepMillis step in milliseconds
      */
-    public OtlpStepDistributionSummary(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig,
+    OtlpStepDistributionSummary(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig,
             double scale, long stepMillis) {
         super(id, scale, OtlpMeterRegistry.getHistogram(clock, distributionStatisticConfig,
                 AggregationTemporality.DELTA, stepMillis));

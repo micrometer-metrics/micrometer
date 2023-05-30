@@ -104,7 +104,7 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
         this.resource = Resource.newBuilder().addAllAttributes(getResourceAttributes()).build();
         this.otlpAggregationTemporality = AggregationTemporality
             .toOtlpAggregationTemporality(config.aggregationTemporality());
-        this.setDeltaAggregationTimeUnixNano();
+        setDeltaAggregationTimeUnixNano();
         config().namingConvention(NamingConvention.dot);
         start(DEFAULT_THREAD_FACTORY);
     }
@@ -131,7 +131,7 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
     @Override
     protected void publish() {
         if (isDelta()) {
-            this.setDeltaAggregationTimeUnixNano();
+            setDeltaAggregationTimeUnixNano();
         }
         for (List<Meter> batch : MeterPartition.partition(this, config.batchSize())) {
             List<Metric> metrics = batch.stream()

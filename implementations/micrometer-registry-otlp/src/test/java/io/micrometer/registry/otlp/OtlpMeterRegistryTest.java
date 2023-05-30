@@ -178,31 +178,31 @@ abstract class OtlpMeterRegistryTest {
     protected void assertHistogram(Metric metric, long startTime, long endTime, String unit, long count, double sum,
             double max) {
         HistogramDataPoint histogram = metric.getHistogram().getDataPoints(0);
-        assertThat(metric.getName()).hasToString(METER_NAME);
-        assertThat(metric.getDescription()).hasToString(METER_DESCRIPTION);
-        assertThat(metric.getUnit()).hasToString(unit);
+        assertThat(metric.getName()).isEqualTo(METER_NAME);
+        assertThat(metric.getDescription()).isEqualTo(METER_DESCRIPTION);
+        assertThat(metric.getUnit()).isEqualTo(unit);
         assertThat(histogram.getStartTimeUnixNano()).isEqualTo(startTime);
         assertThat(histogram.getTimeUnixNano()).isEqualTo(endTime);
         assertThat(histogram.getCount()).isEqualTo(count);
         assertThat(histogram.getSum()).isEqualTo(sum);
         assertThat(histogram.getMax()).isEqualTo(max);
         assertThat(histogram.getAttributesCount()).isEqualTo(1);
-        assertThat(histogram.getAttributes(0).getKey()).hasToString(meterTag.getKey());
-        assertThat(histogram.getAttributes(0).getValue().getStringValue()).hasToString(meterTag.getValue());
+        assertThat(histogram.getAttributes(0).getKey()).isEqualTo(meterTag.getKey());
+        assertThat(histogram.getAttributes(0).getValue().getStringValue()).isEqualTo(meterTag.getValue());
         assertThat(metric.getHistogram().getAggregationTemporality())
             .isEqualTo(AggregationTemporality.toOtlpAggregationTemporality(otlpConfig().aggregationTemporality()));
     }
 
     protected void assertSum(Metric metric, long startTime, long endTime, double expectedValue) {
         NumberDataPoint sumDataPoint = metric.getSum().getDataPoints(0);
-        assertThat(metric.getName()).hasToString(METER_NAME);
-        assertThat(metric.getDescription()).hasToString(METER_DESCRIPTION);
+        assertThat(metric.getName()).isEqualTo(METER_NAME);
+        assertThat(metric.getDescription()).isEqualTo(METER_DESCRIPTION);
         assertThat(sumDataPoint.getStartTimeUnixNano()).isEqualTo(startTime);
         assertThat(sumDataPoint.getTimeUnixNano()).isEqualTo(endTime);
         assertThat(sumDataPoint.getAsDouble()).isEqualTo(expectedValue);
         assertThat(sumDataPoint.getAttributesCount()).isEqualTo(1);
-        assertThat(sumDataPoint.getAttributes(0).getKey()).hasToString(meterTag.getKey());
-        assertThat(sumDataPoint.getAttributes(0).getValue().getStringValue()).hasToString(meterTag.getValue());
+        assertThat(sumDataPoint.getAttributes(0).getKey()).isEqualTo(meterTag.getKey());
+        assertThat(sumDataPoint.getAttributes(0).getValue().getStringValue()).isEqualTo(meterTag.getValue());
         assertThat(metric.getSum().getAggregationTemporality())
             .isEqualTo(AggregationTemporality.toOtlpAggregationTemporality(otlpConfig().aggregationTemporality()));
     }
