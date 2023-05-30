@@ -15,7 +15,11 @@
  */
 package io.micrometer.observation.contextpropagation;
 
+import io.micrometer.common.util.internal.logging.InternalLogger;
+import io.micrometer.common.util.internal.logging.InternalLoggerFactory;
+import io.micrometer.context.ContextRegistry;
 import io.micrometer.context.ThreadLocalAccessor;
+import io.micrometer.observation.NullObservation;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
 
@@ -27,12 +31,56 @@ import io.micrometer.observation.ObservationRegistry;
  */
 public class ObservationThreadLocalAccessor implements ThreadLocalAccessor<Observation> {
 
+    private static final InternalLogger log = InternalLoggerFactory.getInstance(ObservationThreadLocalAccessor.class);
+
     /**
      * Key under which Micrometer Observation is being registered.
      */
     public static final String KEY = "micrometer.observation";
 
-    private static final ObservationRegistry observationRegistry = ObservationRegistry.create();
+    private ObservationRegistry observationRegistry = ObservationRegistry.create();
+
+    public static ObservationThreadLocalAccessor instance;
+
+    /**
+     * Creates a new instance of this class and stores a static handle to it. Remember to
+     * call {@link ContextRegistry#getInstance()} to load all accessors which will call
+     * this constructor.
+     */
+    public ObservationThreadLocalAccessor() {
+        instance = this;
+        if (log.isDebugEnabled()) {
+            log.debug("Remember to set the ObservationRegistry on this accessor!");
+        }
+    }
+
+    /**
+     * Creates a new instance of this class and stores a static handle to it.
+     * @param observationRegistry observation registry
+     */
+    public ObservationThreadLocalAccessor(ObservationRegistry observationRegistry) {
+        this.observationRegistry = observationRegistry;
+    }
+
+    /**
+     * Provide an {@link ObservationRegistry} to be used by
+     * {@link ObservationThreadLocalAccessor}.
+     * @param observationRegistry observation registry
+     */
+    public void setObservationRegistry(ObservationRegistry observationRegistry) {
+        this.observationRegistry = observationRegistry;
+    }
+
+    /**
+     * Return the singleton instance of this {@link ObservationThreadLocalAccessor}.
+     * @return instance
+     */
+    public static ObservationThreadLocalAccessor getInstance() {
+        if (instance == null) {
+            ContextRegistry.getInstance(); // this loads the instance
+        }
+        return instance;
+    }
 
     @Override
     public Object key() {
@@ -52,21 +100,46 @@ public class ObservationThreadLocalAccessor implements ThreadLocalAccessor<Obser
     }
 
     @Override
-    public void reset() {
+    public void setValue() {
+        // Not closing a scope (we're not resetting)
+        // Creating a new one with empty context and opens a new scope)
+        // This scope will remember the previously created one to
+        // which we will revert once "null scope" is closed
+        new NullObservation(observationRegistry).start().openScope();
+    }
+
+    private void closeCurrentScope() {
         Observation.Scope scope = observationRegistry.getCurrentObservationScope();
         if (scope != null) {
-            scope.reset();
+            scope.close();
         }
     }
 
     @Override
+    public void restore() {
+        closeCurrentScope();
+    }
+
+    @Override
     public void restore(Observation value) {
-        reset();
-        Observation.Scope enclosingScope = value.getEnclosingScope();
-        if (enclosingScope != null) {
-            enclosingScope.makeCurrent();
+        Observation.Scope scope = observationRegistry.getCurrentObservationScope();
+        if (scope == null) {
+            String msg = "There is no current scope in thread local. This situation should not happen";
+            log.warn(msg);
+            assert false : msg;
         }
-        setValue(value);
+        Observation.Scope previousObservationScope = scope.getPreviousObservationScope();
+        if (previousObservationScope == null || value != previousObservationScope.getCurrentObservation()) {
+            Observation previousObservation = previousObservationScope != null
+                    ? previousObservationScope.getCurrentObservation() : null;
+            String msg = "Observation <" + value
+                    + "> to which we're restoring is not the same as the one set as this scope's parent observation <"
+                    + previousObservation
+                    + "> . Most likely a manually created Observation has a scope opened that was never closed. This may lead to thread polluting and memory leaks";
+            log.warn(msg);
+            assert false : msg;
+        }
+        closeCurrentScope();
     }
 
 }

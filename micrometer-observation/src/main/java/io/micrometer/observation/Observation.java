@@ -759,6 +759,16 @@ public interface Observation extends ObservationView {
         Observation getCurrentObservation();
 
         /**
+         * Parent scope.
+         * @return previously opened scope when this one was created
+         * @since 1.10.8
+         */
+        @Nullable
+        default Observation.Scope getPreviousObservationScope() {
+            return null;
+        }
+
+        /**
          * Clears the current scope and notifies the handlers that the scope was closed.
          * You don't need to call this method manually. If you use try-with-resource, it
          * will call this for you. Please only call this method if you know what you are
@@ -784,9 +794,11 @@ public interface Observation extends ObservationView {
          * current.
          *
          * Making this scope current can lead to additional work such as injecting
-         * variables to MDC. You don't need to call this method in most of the cases.
-         * Please only call this method if you know what you are doing and your use-case
-         * demands the usage of it.
+         * variables to MDC.
+         *
+         * You don't need to call this method in most of the cases. Please only call this
+         * method if you know what you are doing and your use-case demands the usage of
+         * it.
          * @since 1.10.6
          */
         void makeCurrent();
