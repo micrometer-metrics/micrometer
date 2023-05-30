@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 VMware, Inc.
+ * Copyright 2023 VMware, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,12 +18,9 @@ package io.micrometer.observation;
 import io.micrometer.observation.contextpropagation.ObservationThreadLocalAccessor;
 
 /**
- * A special {@link Observation} that should be only in special cases where clearing of
- * scopes is important. {@link NullObservation} is almost noop except for scoping related
- * methods.
- *
- * When {@link NullObservation} opens a scope, a "null scope" is created that has
- * reference to a previous, nullable {@link Observation.Scope}.
+ * A special {@link Observation} that should be used only in special cases where clearing
+ * of scopes is important. It will not call any handler methods except for scope related
+ * ones.
  *
  * @since 1.10.8
  * @see ObservationThreadLocalAccessor
@@ -67,11 +64,6 @@ public class NullObservation extends SimpleObservation {
     @Override
     public Observation start() {
         return this;
-    }
-
-    @Override
-    SimpleScope createScope() {
-        return new NullScope(registry, this);
     }
 
 }

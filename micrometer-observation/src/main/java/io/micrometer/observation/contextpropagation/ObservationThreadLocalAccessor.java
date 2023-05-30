@@ -117,7 +117,6 @@ public class ObservationThreadLocalAccessor implements ThreadLocalAccessor<Obser
 
     @Override
     public void restore() {
-        log.warn("Restore called with <null> observation. This should not happen. Will fallback to reset");
         closeCurrentScope();
     }
 

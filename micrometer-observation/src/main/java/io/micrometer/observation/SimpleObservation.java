@@ -18,6 +18,8 @@ package io.micrometer.observation;
 import io.micrometer.common.KeyValue;
 import io.micrometer.common.lang.Nullable;
 import io.micrometer.common.util.StringUtils;
+import io.micrometer.common.util.internal.logging.InternalLogger;
+import io.micrometer.common.util.internal.logging.InternalLoggerFactory;
 import io.micrometer.observation.contextpropagation.ObservationThreadLocalAccessor;
 
 import java.util.ArrayDeque;
@@ -196,14 +198,10 @@ class SimpleObservation implements Observation {
 
     @Override
     public Scope openScope() {
-        Scope scope = createScope();
+        Scope scope = new SimpleScope(this.registry, this);
         notifyOnScopeOpened();
         lastScope.put(Thread.currentThread(), scope);
         return scope;
-    }
-
-    SimpleScope createScope() {
-        return new SimpleScope(this.registry, this);
     }
 
     @Nullable
@@ -280,6 +278,8 @@ class SimpleObservation implements Observation {
 
     static class SimpleScope implements Scope {
 
+        private static final InternalLogger log = InternalLoggerFactory.getInstance(SimpleScope.class);
+
         final ObservationRegistry registry;
 
         private final Observation currentObservation;
@@ -314,7 +314,7 @@ class SimpleObservation implements Observation {
                 observation.notifyOnScopeClosed();
             }
             else {
-                // TODO:
+                log.debug("Custom observation type was used in combination with SimpleScope - that's unexpected");
             }
             this.registry.setCurrentObservationScope(previousObservationScope);
         }
