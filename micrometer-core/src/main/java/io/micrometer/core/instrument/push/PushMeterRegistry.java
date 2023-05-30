@@ -41,6 +41,8 @@ public abstract class PushMeterRegistry extends MeterRegistry {
 
     private final AtomicBoolean publishing = new AtomicBoolean(false);
 
+    private long lastScheduledPublishStartTime = 0L;
+
     @Nullable
     private ScheduledExecutorService scheduledExecutorService;
 
@@ -60,6 +62,7 @@ public abstract class PushMeterRegistry extends MeterRegistry {
     // VisibleForTesting
     void publishSafely() {
         if (this.publishing.compareAndSet(false, true)) {
+            this.lastScheduledPublishStartTime = clock.wallTime();
             try {
                 publish();
             }
@@ -83,6 +86,14 @@ public abstract class PushMeterRegistry extends MeterRegistry {
      */
     protected boolean isPublishing() {
         return publishing.get();
+    }
+
+    /**
+     * @return The time when the last scheduled published was started by
+     * {@link PushMeterRegistry#publishSafely()}.
+     */
+    protected long getLastScheduledPublishStartTime() {
+        return lastScheduledPublishStartTime;
     }
 
     /**

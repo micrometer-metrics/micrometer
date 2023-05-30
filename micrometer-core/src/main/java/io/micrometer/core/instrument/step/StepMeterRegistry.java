@@ -16,6 +16,8 @@
 package io.micrometer.core.instrument.step;
 
 import io.micrometer.common.lang.Nullable;
+import io.micrometer.common.util.internal.logging.InternalLogger;
+import io.micrometer.common.util.internal.logging.InternalLoggerFactory;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.HistogramGauges;
@@ -39,6 +41,8 @@ import java.util.function.ToLongFunction;
  * @author Jon Schneider
  */
 public abstract class StepMeterRegistry extends PushMeterRegistry {
+
+    private static final InternalLogger logger = InternalLoggerFactory.getInstance(StepMeterRegistry.class);
 
     private final StepRegistryConfig config;
 
@@ -133,13 +137,41 @@ public abstract class StepMeterRegistry extends PushMeterRegistry {
     @Override
     public void close() {
         stop();
+
         if (!isPublishing()) {
-            getMeters().stream()
-                .filter(StepMeter.class::isInstance)
-                .map(StepMeter.class::cast)
-                .forEach(StepMeter::_closingRollover);
+            if (isDataPublishedForCurrentStep()) {
+                // Data was not published for the current step. So, we should flush that
+                // first.
+                try {
+                    this.publish();
+                }
+                catch (Throwable e) {
+                    logger.warn(
+                            "Unexpected exception thrown while publishing metrics for " + getClass().getSimpleName(),
+                            e);
+                }
+            }
+            closeStepMeters();
         }
         super.close();
+    }
+
+    private boolean isDataPublishedForCurrentStep() {
+        long currentTimeInMillis = clock.wallTime();
+        return (getLastScheduledPublishStartTime() / config.step().toMillis()) < (currentTimeInMillis
+                / config.step().toMillis());
+    }
+
+    /**
+     * Performs closing rollover on StepMeters. StepRegistries that use a custom
+     * implementation of StepMeters can override this method to provide a custom
+     * implementation of closing rollovers.
+     */
+    protected void closeStepMeters() {
+        getMeters().stream()
+            .filter(StepMeter.class::isInstance)
+            .map(StepMeter.class::cast)
+            .forEach(StepMeter::_closingRollover);
     }
 
     /**
