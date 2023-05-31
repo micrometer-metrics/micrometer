@@ -355,7 +355,6 @@ class StepMeterRegistryTest {
             .register(registry);
         FunctionTimer functionTimer = FunctionTimer.builder("timer.function", this, obj -> 3, obj -> 53, MILLISECONDS)
             .register(registry);
-        Gauge.builder("gauge", () -> 12).register(registry);
 
         // before rollover
         assertThat(counter.count()).isZero();
