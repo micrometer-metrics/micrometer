@@ -35,6 +35,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author Jonatan Ivanov
  * @author Tommy Ludwig
  * @author Marcin Grzejszczak
+ * @author Yanming Zhou
  * @since 1.10.0
  */
 class SimpleObservation implements Observation {
@@ -61,7 +62,6 @@ class SimpleObservation implements Observation {
         this.convention = getConventionFromConfig(registry, context);
         this.handlers = getHandlersFromConfig(registry, context);
         this.filters = registry.observationConfig().getObservationFilters();
-        setParentFromCurrentObservation();
     }
 
     SimpleObservation(ObservationConvention<? extends Context> convention, ObservationRegistry registry,
@@ -77,14 +77,6 @@ class SimpleObservation implements Observation {
         else {
             throw new IllegalStateException(
                     "Convention [" + convention + "] doesn't support context [" + context + "]");
-        }
-        setParentFromCurrentObservation();
-    }
-
-    private void setParentFromCurrentObservation() {
-        Observation currentObservation = this.registry.getCurrentObservation();
-        if (currentObservation != null) {
-            this.context.setParentObservation(currentObservation);
         }
     }
 

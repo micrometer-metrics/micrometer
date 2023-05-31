@@ -45,6 +45,7 @@ import java.util.stream.Collectors;
  * @author Jonatan Ivanov
  * @author Tommy Ludwig
  * @author Marcin Grzejszczak
+ * @author Yanming Zhou
  * @since 1.10.0
  */
 public interface Observation extends ObservationView {
@@ -125,10 +126,11 @@ public interface Observation extends ObservationView {
             return NOOP;
         }
         Context context = contextSupplier.get();
+        context.setParentFromCurrentObservation(registry);
         if (!registry.observationConfig().isObservationEnabled(name, context)) {
             return NOOP;
         }
-        return new SimpleObservation(name, registry, context == null ? new Context() : context);
+        return new SimpleObservation(name, registry, context);
     }
 
     // @formatter:off
@@ -168,6 +170,7 @@ public interface Observation extends ObservationView {
         }
         ObservationConvention<T> convention;
         T context = contextSupplier.get();
+        context.setParentFromCurrentObservation(registry);
         if (customConvention != null) {
             convention = customConvention;
         }
@@ -177,7 +180,7 @@ public interface Observation extends ObservationView {
         if (!registry.observationConfig().isObservationEnabled(convention.getName(), context)) {
             return NOOP;
         }
-        return new SimpleObservation(convention, registry, context == null ? new Context() : context);
+        return new SimpleObservation(convention, registry, context);
     }
 
     /**
@@ -311,10 +314,11 @@ public interface Observation extends ObservationView {
             return NOOP;
         }
         T context = contextSupplier.get();
+        context.setParentFromCurrentObservation(registry);
         if (!registry.observationConfig().isObservationEnabled(observationConvention.getName(), context)) {
             return NOOP;
         }
-        return new SimpleObservation(observationConvention, registry, context == null ? new Context() : context);
+        return new SimpleObservation(observationConvention, registry, context);
     }
 
     /**
@@ -975,6 +979,20 @@ public interface Observation extends ObservationView {
          */
         public void setParentObservation(@Nullable ObservationView parentObservation) {
             this.parentObservation = parentObservation;
+        }
+
+        /**
+         * Sets the parent {@link ObservationView} to current one if parent is null and
+         * current one exists.
+         * @param registry the {@link ObservationRegistry} in using
+         */
+        void setParentFromCurrentObservation(ObservationRegistry registry) {
+            if (this.parentObservation == null) {
+                Observation currentObservation = registry.getCurrentObservation();
+                if (currentObservation != null) {
+                    setParentObservation(currentObservation);
+                }
+            }
         }
 
         /**
