@@ -140,11 +140,10 @@ class PushMeterRegistryTest {
             assertThat(delay).isBetween(minOffsetMillis, maxOffsetMillis - 1);
             observedDelays.add(delay);
         });
-        Long[] expectedDelays = LongStream.range(minOffsetMillis, maxOffsetMillis)
+        List<Long> expectedDelays = LongStream.range(minOffsetMillis, maxOffsetMillis)
             .boxed()
-            .collect(Collectors.toList())
-            .toArray(new Long[0]);
-        assertThat(observedDelays).containsExactly(expectedDelays);
+            .collect(Collectors.toList());
+        assertThat(observedDelays).containsExactlyElementsOf(expectedDelays);
     }
 
     private static class OverlappingStepMeterRegistry extends StepMeterRegistry {
