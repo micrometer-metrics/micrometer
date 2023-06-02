@@ -71,7 +71,7 @@ class StepValueTest {
         aLong.set(27);
         assertThat(stepValue.poll()).isEqualTo(24L);
 
-        stepValue.closingRollover();
+        stepValue._closingRollover();
         assertThat(stepValue.poll()).isEqualTo(27L);
     }
 
@@ -98,7 +98,7 @@ class StepValueTest {
         assertThat(stepValue.poll()).isEqualTo(10);
         clock.add(Duration.ofMillis(stepTime - 1));
         aLong.set(5);
-        stepValue.closingRollover();
+        stepValue._closingRollover();
         assertThat(stepValue.poll()).isEqualTo(5);
         clock.add(Duration.ofMillis(1));
         assertThat(stepValue.poll()).isEqualTo(5L);

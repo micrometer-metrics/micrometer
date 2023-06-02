@@ -18,6 +18,7 @@ package io.micrometer.core.instrument.cumulative;
 import io.micrometer.core.instrument.AbstractTimer;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
+import io.micrometer.core.instrument.distribution.Histogram;
 import io.micrometer.core.instrument.distribution.TimeWindowMax;
 import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import io.micrometer.core.instrument.util.TimeUtils;
@@ -43,7 +44,13 @@ public class CumulativeTimer extends AbstractTimer {
 
     public CumulativeTimer(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig,
             PauseDetector pauseDetector, TimeUnit baseTimeUnit, boolean supportsAggregablePercentiles) {
-        super(id, clock, distributionStatisticConfig, pauseDetector, baseTimeUnit, supportsAggregablePercentiles);
+        this(id, clock, distributionStatisticConfig, pauseDetector, baseTimeUnit,
+                AbstractTimer.defaultHistogram(clock, distributionStatisticConfig, supportsAggregablePercentiles));
+    }
+
+    protected CumulativeTimer(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig,
+            PauseDetector pauseDetector, TimeUnit baseTimeUnit, Histogram histogram) {
+        super(id, clock, pauseDetector, baseTimeUnit, histogram);
         this.count = new AtomicLong();
         this.total = new AtomicLong();
         this.max = new TimeWindowMax(clock, distributionStatisticConfig);

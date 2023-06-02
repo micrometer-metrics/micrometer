@@ -71,9 +71,6 @@ abstract class AbstractTimeWindowHistogram<T, U> implements Histogram {
         this.supportsAggregablePercentiles = supportsAggregablePercentiles;
 
         final int ageBuckets = distributionStatisticConfig.getBufferLength();
-        if (ageBuckets <= 0) {
-            rejectHistogramConfig("bufferLength (" + ageBuckets + ") must be greater than 0.");
-        }
 
         ringBuffer = (T[]) Array.newInstance(bucketType, ageBuckets);
 
@@ -89,39 +86,15 @@ abstract class AbstractTimeWindowHistogram<T, U> implements Histogram {
 
     private static DistributionStatisticConfig validateDistributionConfig(
             DistributionStatisticConfig distributionStatisticConfig) {
-        if (distributionStatisticConfig.getPercentiles() != null) {
-            for (double p : distributionStatisticConfig.getPercentiles()) {
-                if (p < 0 || p > 1) {
-                    rejectHistogramConfig(
-                            "percentiles must contain only the values between 0.0 and 1.0. " + "Found " + p);
-                }
-            }
-
-            if (distributionStatisticConfig.getPercentilePrecision() == null) {
-                rejectHistogramConfig("when publishing percentiles a precision must be specified.");
-            }
+        if (distributionStatisticConfig.getPercentiles() != null
+                && distributionStatisticConfig.getPercentilePrecision() == null) {
+            rejectHistogramConfig("when publishing percentiles a precision must be specified.");
         }
 
-        final Double minimumExpectedValue = distributionStatisticConfig.getMinimumExpectedValueAsDouble();
-        final Double maximumExpectedValue = distributionStatisticConfig.getMaximumExpectedValueAsDouble();
-        if (minimumExpectedValue == null || minimumExpectedValue <= 0) {
-            rejectHistogramConfig("minimumExpectedValue (" + minimumExpectedValue + ") must be greater than 0.");
+        if (distributionStatisticConfig.getMinimumExpectedValueAsDouble() == null
+                || distributionStatisticConfig.getMaximumExpectedValueAsDouble() == null) {
+            rejectHistogramConfig("minimumExpectedValue and maximumExpectedValue must be non null");
         }
-        if (maximumExpectedValue == null || maximumExpectedValue < minimumExpectedValue) {
-            rejectHistogramConfig("maximumExpectedValue (" + maximumExpectedValue
-                    + ") must be equal to or greater than minimumExpectedValue (" + minimumExpectedValue + ").");
-        }
-
-        if (distributionStatisticConfig.getServiceLevelObjectiveBoundaries() != null) {
-            for (double slo : distributionStatisticConfig.getServiceLevelObjectiveBoundaries()) {
-                if (slo <= 0) {
-                    rejectHistogramConfig(
-                            "serviceLevelObjectiveBoundaries must contain only the values greater than 0. " + "Found "
-                                    + slo);
-                }
-            }
-        }
-
         return distributionStatisticConfig;
     }
 

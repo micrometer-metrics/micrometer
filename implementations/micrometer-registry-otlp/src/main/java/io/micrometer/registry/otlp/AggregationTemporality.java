@@ -48,4 +48,12 @@ public enum AggregationTemporality {
         }
     }
 
+    static boolean isDelta(AggregationTemporality aggregationTemporality) {
+        return aggregationTemporality == AggregationTemporality.DELTA;
+    }
+
+    static boolean isCumulative(AggregationTemporality aggregationTemporality) {
+        return aggregationTemporality == AggregationTemporality.CUMULATIVE;
+    }
+
 }

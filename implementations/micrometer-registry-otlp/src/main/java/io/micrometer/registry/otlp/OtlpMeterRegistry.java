@@ -30,6 +30,7 @@ import io.micrometer.core.instrument.push.PushMeterRegistry;
 import io.micrometer.core.instrument.step.StepCounter;
 import io.micrometer.core.instrument.step.StepFunctionCounter;
 import io.micrometer.core.instrument.step.StepFunctionTimer;
+import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.util.MeterPartition;
 import io.micrometer.core.instrument.util.NamedThreadFactory;
 import io.micrometer.core.instrument.util.TimeUtils;
@@ -42,9 +43,12 @@ import io.opentelemetry.proto.metrics.v1.Histogram;
 import io.opentelemetry.proto.metrics.v1.*;
 import io.opentelemetry.proto.resource.v1.Resource;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.function.DoubleSupplier;
@@ -61,6 +65,7 @@ import static io.opentelemetry.proto.metrics.v1.AggregationTemporality.AGGREGATI
  *
  * @author Tommy Ludwig
  * @author Lenin Jaganathan
+ * @author Jonatan Ivanov
  * @since 1.9.0
  */
 public class OtlpMeterRegistry extends PushMeterRegistry {
@@ -75,9 +80,12 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
 
     private final Resource resource;
 
+    private final io.opentelemetry.proto.metrics.v1.AggregationTemporality otlpAggregationTemporality;
+
     private long deltaAggregationTimeUnixNano = 0L;
 
-    private final io.opentelemetry.proto.metrics.v1.AggregationTemporality otlpAggregationTemporality;
+    @Nullable
+    private ScheduledExecutorService meterPollingService;
 
     public OtlpMeterRegistry() {
         this(OtlpConfig.DEFAULT, Clock.SYSTEM);
@@ -96,15 +104,34 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
         this.resource = Resource.newBuilder().addAllAttributes(getResourceAttributes()).build();
         this.otlpAggregationTemporality = AggregationTemporality
             .toOtlpAggregationTemporality(config.aggregationTemporality());
-        this.setDeltaAggregationTimeUnixNano();
+        setDeltaAggregationTimeUnixNano();
         config().namingConvention(NamingConvention.dot);
         start(DEFAULT_THREAD_FACTORY);
     }
 
     @Override
+    public void start(ThreadFactory threadFactory) {
+        super.start(threadFactory);
+
+        if (config.enabled() && isDelta()) {
+            this.meterPollingService = Executors.newSingleThreadScheduledExecutor(threadFactory);
+            this.meterPollingService.scheduleAtFixedRate(this::pollMetersToRollover, getInitialDelay(),
+                    config.step().toMillis(), TimeUnit.MILLISECONDS);
+        }
+    }
+
+    @Override
+    public void stop() {
+        super.stop();
+        if (this.meterPollingService != null) {
+            this.meterPollingService.shutdown();
+        }
+    }
+
+    @Override
     protected void publish() {
         if (isDelta()) {
-            this.setDeltaAggregationTimeUnixNano();
+            setDeltaAggregationTimeUnixNano();
         }
         for (List<Meter> batch : MeterPartition.partition(this, config.batchSize())) {
             List<Metric> metrics = batch.stream()
@@ -206,6 +233,35 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
             .merge(DistributionStatisticConfig.DEFAULT);
     }
 
+    @Override
+    public void close() {
+        stop();
+        if (!isPublishing() && isDelta()) {
+            getMeters().forEach(this::closingRollover);
+        }
+        super.close();
+    }
+
+    // Either we do this or make StepMeter public
+    // and still call OtlpStepTimer and OtlpStepDistributionSummary separately.
+    private void closingRollover(Meter meter) {
+        if (meter instanceof StepCounter) {
+            ((StepCounter) meter)._closingRollover();
+        }
+        if (meter instanceof StepFunctionCounter) {
+            ((StepFunctionCounter<?>) meter)._closingRollover();
+        }
+        if (meter instanceof StepFunctionTimer) {
+            ((StepFunctionTimer<?>) meter)._closingRollover();
+        }
+        if (meter instanceof OtlpStepTimer) {
+            ((OtlpStepTimer) meter)._closingRollover();
+        }
+        if (meter instanceof OtlpStepDistributionSummary) {
+            ((OtlpStepDistributionSummary) meter)._closingRollover();
+        }
+    }
+
     // VisibleForTesting
     Metric writeMeter(Meter meter) {
         // TODO support writing custom meters
@@ -248,6 +304,27 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
                 .setAggregationTemporality(otlpAggregationTemporality)
                 .build())
             .build();
+    }
+
+    /**
+     * This will poll the values from meters, which will cause a roll over for Step-meters
+     * if past the step boundary. This gives some control over when roll over happens
+     * separate from when publishing happens. This method is almost the same as the one in
+     * {@link StepMeterRegistry} it is subtly different from it in that this uses
+     * {@code takeSnapshot()} to roll over the timers/summaries as OtlpDeltaTimer is using
+     * a {@code StepValue} for maintaining distributions.
+     */
+    // VisibleForTesting
+    void pollMetersToRollover() {
+        this.getMeters()
+            .forEach(m -> m.match(gauge -> null, Counter::count, Timer::takeSnapshot, DistributionSummary::takeSnapshot,
+                    meter -> null, meter -> null, FunctionCounter::count, FunctionTimer::count, meter -> null));
+    }
+
+    private long getInitialDelay() {
+        long stepMillis = config.step().toMillis();
+        // schedule one millisecond into the next step
+        return stepMillis - (clock.wallTime() % stepMillis) + 1;
     }
 
     // VisibleForTesting
@@ -387,6 +464,39 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
             attributes.add(createKeyValue("service.name", "unknown_service"));
         }
         return attributes;
+    }
+
+    static io.micrometer.core.instrument.distribution.Histogram getHistogram(Clock clock,
+            DistributionStatisticConfig distributionStatisticConfig, AggregationTemporality aggregationTemporality) {
+        return getHistogram(clock, distributionStatisticConfig, aggregationTemporality, 0);
+    }
+
+    static io.micrometer.core.instrument.distribution.Histogram getHistogram(Clock clock,
+            DistributionStatisticConfig distributionStatisticConfig, AggregationTemporality aggregationTemporality,
+            long stepMillis) {
+        // While publishing to OTLP, we export either Histogram datapoint / Summary
+        // datapoint. So, we will make the histogram either of them and not both.
+        // Though AbstractTimer/Distribution Summary prefers publishing percentiles,
+        // exporting of histograms over percentiles is preferred in OTLP.
+        if (distributionStatisticConfig.isPublishingHistogram()) {
+            if (AggregationTemporality.isCumulative(aggregationTemporality)) {
+                return new TimeWindowFixedBoundaryHistogram(clock, DistributionStatisticConfig.builder()
+                    // effectively never roll over
+                    .expiry(Duration.ofDays(1825))
+                    .percentiles()
+                    .bufferLength(1)
+                    .build()
+                    .merge(distributionStatisticConfig), true, false);
+            }
+            else if (AggregationTemporality.isDelta(aggregationTemporality) && stepMillis > 0) {
+                return new OtlpStepBucketHistogram(clock, stepMillis, distributionStatisticConfig, true, false);
+            }
+        }
+
+        if (distributionStatisticConfig.isPublishingPercentiles()) {
+            return new TimeWindowPercentileHistogram(clock, distributionStatisticConfig, false);
+        }
+        return NoopHistogram.INSTANCE;
     }
 
 }

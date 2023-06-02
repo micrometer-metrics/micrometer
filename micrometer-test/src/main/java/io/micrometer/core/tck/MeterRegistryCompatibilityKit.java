@@ -273,7 +273,7 @@ public abstract class MeterRegistryCompatibilityKit {
             assertThat(ds.totalAmount()).isEqualTo(2.0);
         }
 
-        @Deprecated
+        @SuppressWarnings("deprecation")
         @Test
         void percentiles() {
             DistributionSummary s = DistributionSummary.builder("my.summary").publishPercentiles(1).register(registry);
@@ -283,14 +283,18 @@ public abstract class MeterRegistryCompatibilityKit {
             assertThat(s.percentile(0.5)).isNaN();
         }
 
-        @Deprecated
+        @SuppressWarnings("deprecation")
         @Test
         void histogramCounts() {
             DistributionSummary s = DistributionSummary.builder("my.summmary")
                 .serviceLevelObjectives(1.0)
                 .register(registry);
 
+            // ensure time-window based histograms are not fully rotated when we assert
+            clock(registry).add(step().dividedBy(2));
             s.record(1);
+            // accommodate StepBucketHistogram
+            clock(registry).add(step().dividedBy(2));
             assertThat(s.histogramCountAtValue(1)).isEqualTo(1);
             assertThat(s.histogramCountAtValue(2)).isNaN();
         }
@@ -721,7 +725,7 @@ public abstract class MeterRegistryCompatibilityKit {
                     () -> assertEquals(10, t.totalTime(TimeUnit.NANOSECONDS), 1.0e-12));
         }
 
-        @Deprecated
+        @SuppressWarnings("deprecation")
         @Test
         void percentiles() {
             Timer t = Timer.builder("my.timer").publishPercentiles(1).register(registry);
@@ -731,12 +735,16 @@ public abstract class MeterRegistryCompatibilityKit {
             assertThat(t.percentile(0.5, TimeUnit.MILLISECONDS)).isNaN();
         }
 
-        @Deprecated
+        @SuppressWarnings("deprecation")
         @Test
         void histogramCounts() {
             Timer t = Timer.builder("my.timer").serviceLevelObjectives(Duration.ofMillis(1)).register(registry);
 
+            // ensure time-window based histograms are not fully rotated when we assert
+            clock(registry).add(step().dividedBy(2));
             t.record(1, TimeUnit.MILLISECONDS);
+            // accommodate StepBucketHistogram
+            clock(registry).add(step().dividedBy(2));
             assertThat(t.histogramCountAtValue((long) millisToUnit(1, TimeUnit.NANOSECONDS))).isEqualTo(1);
             assertThat(t.histogramCountAtValue(1)).isNaN();
         }

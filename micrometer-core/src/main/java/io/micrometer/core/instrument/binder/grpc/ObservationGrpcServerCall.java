@@ -21,7 +21,6 @@ import io.grpc.ServerCall;
 import io.grpc.Status;
 import io.micrometer.core.instrument.binder.grpc.GrpcObservationDocumentation.GrpcServerEvents;
 import io.micrometer.observation.Observation;
-import io.micrometer.observation.Observation.Scope;
 
 /**
  * A simple forwarding server call for {@link Observation}.
@@ -31,33 +30,27 @@ import io.micrometer.observation.Observation.Scope;
  */
 class ObservationGrpcServerCall<ReqT, RespT> extends SimpleForwardingServerCall<ReqT, RespT> {
 
-    private final Scope scope;
+    private final Observation observation;
 
-    ObservationGrpcServerCall(ServerCall<ReqT, RespT> delegate, Scope scope) {
+    ObservationGrpcServerCall(ServerCall<ReqT, RespT> delegate, Observation observation) {
         super(delegate);
-        this.scope = scope;
+        this.observation = observation;
     }
 
     @Override
     public void sendMessage(RespT message) {
-        this.scope.getCurrentObservation().event(GrpcServerEvents.MESSAGE_SENT);
+        this.observation.event(GrpcServerEvents.MESSAGE_SENT);
         super.sendMessage(message);
     }
 
     @Override
     public void close(Status status, Metadata trailers) {
-        Observation observation = this.scope.getCurrentObservation();
-
         if (status.getCause() != null) {
-            observation.error(status.getCause());
+            this.observation.error(status.getCause());
         }
 
-        GrpcServerObservationContext context = (GrpcServerObservationContext) observation.getContext();
+        GrpcServerObservationContext context = (GrpcServerObservationContext) this.observation.getContext();
         context.setStatusCode(status.getCode());
-
-        this.scope.close();
-        observation.stop();
-
         super.close(status, trailers);
     }
 

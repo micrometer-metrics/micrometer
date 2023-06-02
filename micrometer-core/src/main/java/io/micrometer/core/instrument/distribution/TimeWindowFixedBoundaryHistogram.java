@@ -18,12 +18,10 @@ package io.micrometer.core.instrument.distribution;
 import io.micrometer.core.instrument.Clock;
 
 import java.io.PrintStream;
-import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Locale;
 import java.util.NavigableSet;
 import java.util.Objects;
-import java.util.concurrent.atomic.AtomicLongArray;
 
 /**
  * A histogram implementation that does not support precomputed percentiles but supports
@@ -34,12 +32,11 @@ import java.util.concurrent.atomic.AtomicLongArray;
  * @author Jon Schneider
  * @since 1.0.3
  */
-public class TimeWindowFixedBoundaryHistogram
-        extends AbstractTimeWindowHistogram<TimeWindowFixedBoundaryHistogram.FixedBoundaryHistogram, Void> {
+public class TimeWindowFixedBoundaryHistogram extends AbstractTimeWindowHistogram<FixedBoundaryHistogram, Void> {
 
     private final double[] buckets;
 
-    private final boolean cumulativeBucketCounts;
+    private final boolean isCumulativeBucketCounts;
 
     public TimeWindowFixedBoundaryHistogram(Clock clock, DistributionStatisticConfig config,
             boolean supportsAggregablePercentiles) {
@@ -51,14 +48,14 @@ public class TimeWindowFixedBoundaryHistogram
      * @param clock clock
      * @param config distribution statistic configuration
      * @param supportsAggregablePercentiles whether it supports aggregable percentiles
-     * @param cumulativeBucketCounts whether it uses cumulative bucket counts
+     * @param isCumulativeBucketCounts whether it uses cumulative bucket counts
      * @since 1.9.0
      */
     public TimeWindowFixedBoundaryHistogram(Clock clock, DistributionStatisticConfig config,
-            boolean supportsAggregablePercentiles, boolean cumulativeBucketCounts) {
+            boolean supportsAggregablePercentiles, boolean isCumulativeBucketCounts) {
         super(clock, config, FixedBoundaryHistogram.class, supportsAggregablePercentiles);
 
-        this.cumulativeBucketCounts = cumulativeBucketCounts;
+        this.isCumulativeBucketCounts = isCumulativeBucketCounts;
 
         NavigableSet<Double> histogramBuckets = distributionStatisticConfig
             .getHistogramBuckets(supportsAggregablePercentiles);
@@ -74,7 +71,7 @@ public class TimeWindowFixedBoundaryHistogram
 
     @Override
     FixedBoundaryHistogram newBucket() {
-        return new FixedBoundaryHistogram();
+        return new FixedBoundaryHistogram(this.buckets, isCumulativeBucketCounts);
     }
 
     @Override
@@ -111,29 +108,13 @@ public class TimeWindowFixedBoundaryHistogram
         return 0;
     }
 
+    /**
+     * For recording efficiency, We turn normal histogram into cumulative count histogram
+     * only on calls to {@link #countsAtValues(Iterator<Double>)}.
+     */
     @Override
     Iterator<CountAtBucket> countsAtValues(Iterator<Double> values) {
-        return new Iterator<CountAtBucket>() {
-            private double cumulativeCount = 0.0;
-
-            @Override
-            public boolean hasNext() {
-                return values.hasNext();
-            }
-
-            @Override
-            public CountAtBucket next() {
-                double value = values.next();
-                double count = currentHistogram().countAtValue(value);
-                if (cumulativeBucketCounts) {
-                    cumulativeCount += count;
-                    return new CountAtBucket(value, cumulativeCount);
-                }
-                else {
-                    return new CountAtBucket(value, count);
-                }
-            }
-        };
+        return currentHistogram().countsAtValues(values);
     }
 
     @Override
@@ -157,60 +138,6 @@ public class TimeWindowFixedBoundaryHistogram
      */
     protected double[] getBuckets() {
         return this.buckets;
-    }
-
-    class FixedBoundaryHistogram {
-
-        /**
-         * For recording efficiency, this is a normal histogram. We turn these values into
-         * cumulative counts only on calls to {@link #countsAtValues(Iterator<Double>)}.
-         */
-        final AtomicLongArray values;
-
-        FixedBoundaryHistogram() {
-            this.values = new AtomicLongArray(buckets.length);
-        }
-
-        long countAtValue(double value) {
-            int index = Arrays.binarySearch(buckets, value);
-            if (index < 0)
-                return 0;
-            return values.get(index);
-        }
-
-        void reset() {
-            for (int i = 0; i < values.length(); i++) {
-                values.set(i, 0);
-
-            }
-        }
-
-        void record(long value) {
-            int index = leastLessThanOrEqualTo(value);
-            if (index > -1)
-                values.incrementAndGet(index);
-        }
-
-        /**
-         * The least bucket that is less than or equal to a sample.
-         */
-        int leastLessThanOrEqualTo(long key) {
-            int low = 0;
-            int high = buckets.length - 1;
-
-            while (low <= high) {
-                int mid = (low + high) >>> 1;
-                if (buckets[mid] < key)
-                    low = mid + 1;
-                else if (buckets[mid] > key)
-                    high = mid - 1;
-                else
-                    return mid; // exact match
-            }
-
-            return low < buckets.length ? low : -1;
-        }
-
     }
 
 }

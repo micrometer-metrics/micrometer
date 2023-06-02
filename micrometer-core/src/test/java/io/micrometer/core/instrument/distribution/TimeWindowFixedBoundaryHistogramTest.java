@@ -38,7 +38,7 @@ class TimeWindowFixedBoundaryHistogramTest {
             .build();
         try (TimeWindowFixedBoundaryHistogram histogram = new TimeWindowFixedBoundaryHistogram(Clock.SYSTEM,
                 statisticConfig.merge(DistributionStatisticConfig.DEFAULT), false)) {
-            TimeWindowFixedBoundaryHistogram.FixedBoundaryHistogram bucket = histogram.newBucket();
+            FixedBoundaryHistogram bucket = histogram.newBucket();
             assertThat(bucket.leastLessThanOrEqualTo(search)).isEqualTo(expectedIndex);
         }
     }

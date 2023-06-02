@@ -15,60 +15,73 @@
  */
 package io.micrometer.registry.otlp;
 
-import io.micrometer.common.lang.Nullable;
+import io.micrometer.core.instrument.AbstractDistributionSummary;
 import io.micrometer.core.instrument.Clock;
-import io.micrometer.core.instrument.distribution.*;
-import io.micrometer.core.instrument.step.StepDistributionSummary;
+import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 
-class OtlpStepDistributionSummary extends StepDistributionSummary {
+import java.util.concurrent.atomic.DoubleAdder;
+import java.util.concurrent.atomic.LongAdder;
 
-    @Nullable
-    private final Histogram countBucketHistogram;
+class OtlpStepDistributionSummary extends AbstractDistributionSummary {
+
+    private final LongAdder count = new LongAdder();
+
+    private final DoubleAdder total = new DoubleAdder();
+
+    private final OtlpStepTuple2<Long, Double> countTotal;
+
+    private final StepMax max;
 
     /**
-     * Create a new {@code StepDistributionSummary}.
+     * Create a new {@code OtlpStepDistributionSummary}.
      * @param id ID
      * @param clock clock
-     * @param distributionStatisticConfig distribution static configuration
+     * @param distributionStatisticConfig distribution statistic configuration
      * @param scale scale
      * @param stepMillis step in milliseconds
      */
-    public OtlpStepDistributionSummary(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig,
+    OtlpStepDistributionSummary(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig,
             double scale, long stepMillis) {
-        super(id, clock,
-                DistributionStatisticConfig.builder()
-                    .percentilesHistogram(false)
-                    .serviceLevelObjectives()
-                    .build()
-                    .merge(distributionStatisticConfig),
-                scale, stepMillis, false);
-        if (distributionStatisticConfig.isPublishingHistogram()) {
-            this.countBucketHistogram = new TimeWindowFixedBoundaryHistogram(clock, distributionStatisticConfig, true,
-                    false);
-        }
-        else {
-            this.countBucketHistogram = null;
-        }
+        super(id, scale, OtlpMeterRegistry.getHistogram(clock, distributionStatisticConfig,
+                AggregationTemporality.DELTA, stepMillis));
+        this.countTotal = new OtlpStepTuple2<>(clock, stepMillis, 0L, 0.0, count::sumThenReset, total::sumThenReset);
+        this.max = new StepMax(clock, stepMillis);
     }
 
     @Override
     protected void recordNonNegative(double amount) {
-        super.recordNonNegative(amount);
-        if (this.countBucketHistogram != null) {
-            this.countBucketHistogram.recordDouble(amount);
-        }
+        count.add(1);
+        total.add(amount);
+        max.record(amount);
     }
 
     @Override
-    public HistogramSnapshot takeSnapshot() {
-        HistogramSnapshot snapshot = super.takeSnapshot();
-        if (countBucketHistogram == null) {
-            return snapshot;
-        }
+    public long count() {
+        return countTotal.poll1();
+    }
 
-        CountAtBucket[] histogramCounts = this.countBucketHistogram.takeSnapshot(0, 0, 0).histogramCounts();
-        return new HistogramSnapshot(snapshot.count(), snapshot.total(), snapshot.max(), snapshot.percentileValues(),
-                histogramCounts, snapshot::outputSummary);
+    @Override
+    public double totalAmount() {
+        return countTotal.poll2();
+    }
+
+    @Override
+    public double max() {
+        return max.poll();
+    }
+
+    /**
+     * This is an internal method not meant for general use.
+     * <p>
+     * Force a rollover of the values returned by a step meter and never roll over again
+     * after. See: {@code StepMeter} and {@code StepDistributionSummary}
+     */
+    void _closingRollover() {
+        countTotal._closingRollover();
+        max._closingRollover();
+        if (histogram instanceof OtlpStepBucketHistogram) { // can be noop
+            ((OtlpStepBucketHistogram) histogram)._closingRollover();
+        }
     }
 
 }

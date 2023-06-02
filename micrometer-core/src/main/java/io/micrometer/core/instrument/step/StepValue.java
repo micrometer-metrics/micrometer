@@ -15,6 +15,7 @@
  */
 package io.micrometer.core.instrument.step;
 
+import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.Clock;
 
 import java.util.concurrent.atomic.AtomicLong;
@@ -34,13 +35,18 @@ public abstract class StepValue<V> {
 
     private final long stepMillis;
 
-    private AtomicLong lastInitPos;
+    private final AtomicLong lastInitPos;
 
-    private volatile V previous = noValue();
+    private volatile V previous;
 
     public StepValue(final Clock clock, final long stepMillis) {
+        this(clock, stepMillis, null);
+    }
+
+    protected StepValue(final Clock clock, final long stepMillis, @Nullable final V initValue) {
         this.clock = clock;
         this.stepMillis = stepMillis;
+        this.previous = initValue == null ? noValue() : initValue;
         lastInitPos = new AtomicLong(clock.wallTime() / stepMillis);
     }
 
@@ -74,9 +80,12 @@ public abstract class StepValue<V> {
     }
 
     /**
-     * internal use only; intentionally left package-private
+     * This is an internal method not meant for general use.
+     * <p>
+     * Rolls the values regardless of the clock or current time and ensures the value will
+     * never roll over again after.
      */
-    void closingRollover() {
+    protected void _closingRollover() {
         // make sure value does not roll over again if passing a step boundary
         lastInitPos.set(Long.MAX_VALUE);
         previous = valueSupplier().get();

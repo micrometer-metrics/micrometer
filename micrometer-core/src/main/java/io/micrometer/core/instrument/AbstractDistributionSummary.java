@@ -15,6 +15,7 @@
  */
 package io.micrometer.core.instrument;
 
+import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.distribution.*;
 
 public abstract class AbstractDistributionSummary extends AbstractMeter implements DistributionSummary {
@@ -25,24 +26,28 @@ public abstract class AbstractDistributionSummary extends AbstractMeter implemen
 
     protected AbstractDistributionSummary(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig,
             double scale, boolean supportsAggregablePercentiles) {
+        this(id, scale, defaultHistogram(clock, distributionStatisticConfig, supportsAggregablePercentiles));
+    }
+
+    protected AbstractDistributionSummary(Id id, double scale, @Nullable Histogram histogram) {
         super(id);
         this.scale = scale;
+        this.histogram = histogram == null ? NoopHistogram.INSTANCE : histogram;
+    }
 
+    protected static Histogram defaultHistogram(Clock clock, DistributionStatisticConfig distributionStatisticConfig,
+            boolean supportsAggregablePercentiles) {
         if (distributionStatisticConfig.isPublishingPercentiles()) {
             // hdr-based histogram
-            this.histogram = new TimeWindowPercentileHistogram(clock, distributionStatisticConfig,
-                    supportsAggregablePercentiles);
+            return new TimeWindowPercentileHistogram(clock, distributionStatisticConfig, supportsAggregablePercentiles);
         }
         else if (distributionStatisticConfig.isPublishingHistogram()) {
             // fixed boundary histograms, which have a slightly better memory footprint
             // when we don't need Micrometer-computed percentiles
-            this.histogram = new TimeWindowFixedBoundaryHistogram(clock, distributionStatisticConfig,
+            return new TimeWindowFixedBoundaryHistogram(clock, distributionStatisticConfig,
                     supportsAggregablePercentiles);
         }
-        else {
-            // noop histogram
-            this.histogram = NoopHistogram.INSTANCE;
-        }
+        return NoopHistogram.INSTANCE;
     }
 
     @Override
