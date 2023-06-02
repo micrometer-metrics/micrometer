@@ -76,7 +76,6 @@ import static com.github.tomakehurst.wiremock.stubbing.Scenario.STARTED;
 import static io.micrometer.core.instrument.binder.httpcomponents.hc5.ApacheHttpClientMetricsBinder.DEFAULT_METER_NAME;
 import static io.micrometer.core.instrument.binder.httpcomponents.hc5.ApacheHttpClientMetricsBinder.builder;
 import static org.assertj.core.api.Assertions.*;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
 
 /**
@@ -281,8 +280,8 @@ class ApacheHttpClientMetricsBinderTest {
             }
         }
         assertThat(registry.get(DEFAULT_METER_NAME).tags("uri", "/some/pattern").timer().count()).isEqualTo(1L);
-        assertThrows(MeterNotFoundException.class,
-                () -> registry.get(DEFAULT_METER_NAME).tags("uri", "UNKNOWN").timer());
+        assertThatCode(() -> registry.get(DEFAULT_METER_NAME).tags("uri", "UNKNOWN").timer())
+            .isInstanceOf(MeterNotFoundException.class);
     }
 
     @ParameterizedTest
@@ -403,12 +402,12 @@ class ApacheHttpClientMetricsBinderTest {
 
     @Test
     void settingNullRegistryThrowsException() {
-        assertThrows(NullPointerException.class, () -> builder(null).build());
+        assertThatCode(() -> builder(null).build()).isInstanceOf(NullPointerException.class);
     }
 
     @Test
     void overridingUriMapperWithNullThrowsException() {
-        assertThrows(NullPointerException.class, () -> builder(registry).uriMapper(null).build());
+        assertThatCode(() -> builder(registry).uriMapper(null).build()).isInstanceOf(NullPointerException.class);
     }
 
     @Test
@@ -551,17 +550,14 @@ class ApacheHttpClientMetricsBinderTest {
             }
         }
 
-        assertThatCode(() -> {
-            Timer timer = registry.get(DEFAULT_METER_NAME)
-                .tag("method", "GET")
-                .tag("status", "IO_ERROR")
-                .tag("outcome", "UNKNOWN")
-                .tag("exception", "SocketTimeoutException")
-                .timer();
-            logStats("httpStatusCodeIsTaggedWithIoError", timer);
-            assertThat(timer.count()).isEqualTo(1);
-        }).doesNotThrowAnyException();
-
+        Timer timer = registry.get(DEFAULT_METER_NAME)
+            .tag("method", "GET")
+            .tag("status", "IO_ERROR")
+            .tag("outcome", "UNKNOWN")
+            .tag("exception", "SocketTimeoutException")
+            .timer();
+        logStats("httpStatusCodeIsTaggedWithIoError", timer);
+        assertThat(timer.count()).isEqualTo(1);
     }
 
     @ParameterizedTest
@@ -732,18 +728,15 @@ class ApacheHttpClientMetricsBinderTest {
 
         server.verify(exactly(2), getRequestedFor(urlEqualTo("/retry")));
 
-        assertThatCode(() -> {
-            Timer timer = registry.get("httpcomponents.httpclient.request")
-                .tag("method", "GET")
-                .tag("status", "200")
-                .tag("outcome", "SUCCESS")
-                .timer();
+        Timer timer = registry.get("httpcomponents.httpclient.request")
+            .tag("method", "GET")
+            .tag("status", "200")
+            .tag("outcome", "SUCCESS")
+            .timer();
 
-            logStats("testPositiveOutcomeAfterRetry_overall", timer);
+        logStats("testPositiveOutcomeAfterRetry_overall", timer);
 
-            assertThat(timer.count()).isEqualTo(1);
-        }).doesNotThrowAnyException();
-
+        assertThat(timer.count()).isEqualTo(1);
     }
 
     @ParameterizedTest
@@ -788,26 +781,23 @@ class ApacheHttpClientMetricsBinderTest {
 
         server.verify(exactly(2), getRequestedFor(urlEqualTo("/retry")));
 
-        assertThatCode(() -> {
-            Timer timer1 = registry.get("httpcomponents.httpclient.request")
-                .tag("method", "GET")
-                .tag("status", "503")
-                .tag("outcome", "SERVER_ERROR")
-                .timer();
-            assertThat(timer1.count()).isEqualTo(1);
+        Timer timer1 = registry.get("httpcomponents.httpclient.request")
+            .tag("method", "GET")
+            .tag("status", "503")
+            .tag("outcome", "SERVER_ERROR")
+            .timer();
+        assertThat(timer1.count()).isEqualTo(1);
 
-            logStats("testPositiveOutcomeAfterRetry_individual timer1", timer1);
+        logStats("testPositiveOutcomeAfterRetry_individual timer1", timer1);
 
-            Timer timer = registry.get("httpcomponents.httpclient.request")
-                .tag("method", "GET")
-                .tag("status", "200")
-                .tag("outcome", "SUCCESS")
-                .timer();
+        Timer timer = registry.get("httpcomponents.httpclient.request")
+            .tag("method", "GET")
+            .tag("status", "200")
+            .tag("outcome", "SUCCESS")
+            .timer();
 
-            logStats("testPositiveOutcomeAfterRetry_individual timer2", timer);
-            assertThat(timer.count()).isEqualTo(1);
-        }).doesNotThrowAnyException();
-
+        logStats("testPositiveOutcomeAfterRetry_individual timer2", timer);
+        assertThat(timer.count()).isEqualTo(1);
     }
 
     void logStats(String testCase, Timer timer) {
