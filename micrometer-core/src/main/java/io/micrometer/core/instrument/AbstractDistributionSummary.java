@@ -29,19 +29,34 @@ public abstract class AbstractDistributionSummary extends AbstractMeter implemen
         this(id, scale, defaultHistogram(clock, distributionStatisticConfig, supportsAggregablePercentiles));
     }
 
+    /**
+     * Creates an {@code AbstractDistributionSummary} instance.
+     * @param id meter ID
+     * @param scale scale
+     * @param histogram histogram
+     * @since 1.11.0
+     */
     protected AbstractDistributionSummary(Id id, double scale, @Nullable Histogram histogram) {
         super(id);
         this.scale = scale;
         this.histogram = histogram == null ? NoopHistogram.INSTANCE : histogram;
     }
 
+    /**
+     * Creates a default histogram.
+     * @param clock clock
+     * @param distributionStatisticConfig distribution statistic configuration
+     * @param supportsAggregablePercentiles whether to support aggregable percentiles
+     * @return a default histogram
+     * @since 1.11.0
+     */
     protected static Histogram defaultHistogram(Clock clock, DistributionStatisticConfig distributionStatisticConfig,
             boolean supportsAggregablePercentiles) {
         if (distributionStatisticConfig.isPublishingPercentiles()) {
             // hdr-based histogram
             return new TimeWindowPercentileHistogram(clock, distributionStatisticConfig, supportsAggregablePercentiles);
         }
-        else if (distributionStatisticConfig.isPublishingHistogram()) {
+        if (distributionStatisticConfig.isPublishingHistogram()) {
             // fixed boundary histograms, which have a slightly better memory footprint
             // when we don't need Micrometer-computed percentiles
             return new TimeWindowFixedBoundaryHistogram(clock, distributionStatisticConfig,

@@ -477,7 +477,7 @@ public class DistributionStatisticConfig implements Mergeable<DistributionStatis
             }
 
             if (config.maximumExpectedValue != null && config.maximumExpectedValue <= 0) {
-                rejectConfig("maximumExpectedValue (" + config.minimumExpectedValue + ") must be greater than 0.");
+                rejectConfig("maximumExpectedValue (" + config.maximumExpectedValue + ") must be greater than 0.");
             }
 
             if ((config.minimumExpectedValue != null && config.maximumExpectedValue != null)

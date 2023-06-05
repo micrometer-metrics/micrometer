@@ -109,7 +109,7 @@ public class TimeWindowFixedBoundaryHistogram extends AbstractTimeWindowHistogra
     }
 
     /**
-     * For recording efficiency, We turn normal histogram into cumulative count histogram
+     * For recording efficiency, we turn normal histogram into cumulative count histogram
      * only on calls to {@link #countsAtValues(Iterator<Double>)}.
      */
     @Override

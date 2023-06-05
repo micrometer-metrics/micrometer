@@ -26,8 +26,8 @@ import java.util.Objects;
 import java.util.function.Supplier;
 
 /**
- * A Histogram implementation which inherits the behaviour of Step Meters i,e this
- * histogram exhibits read and reset behaviour.
+ * A Histogram implementation which inherits the behaviour of step meters, i.e. read and
+ * reset behaviour.
  *
  * @author Lenin Jaganathan
  * @since 1.11.0
@@ -60,7 +60,7 @@ public class StepBucketHistogram extends StepValue<CountAtBucket[]> implements H
 
     @Override
     public HistogramSnapshot takeSnapshot(long count, double total, double max) {
-        return new HistogramSnapshot(count, total, max, null, this.poll(), null);
+        return new HistogramSnapshot(count, total, max, null, poll(), null);
     }
 
     @Override
@@ -95,7 +95,9 @@ public class StepBucketHistogram extends StepValue<CountAtBucket[]> implements H
     private static double[] getBucketsFromDistributionStatisticConfig(
             DistributionStatisticConfig distributionStatisticConfig, boolean supportsAggregablePercentiles) {
         if (distributionStatisticConfig.getMaximumExpectedValueAsDouble() == null
-                || distributionStatisticConfig.getMinimumExpectedValueAsDouble() == null) {
+                || distributionStatisticConfig.getMinimumExpectedValueAsDouble() == null
+                || distributionStatisticConfig.getMaximumExpectedValueAsDouble() <= 0
+                || distributionStatisticConfig.getMinimumExpectedValueAsDouble() <= 0) {
             throw new InvalidConfigurationException(
                     "minimumExpectedValue and maximumExpectedValue should be greater than 0.");
         }

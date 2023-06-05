@@ -16,6 +16,7 @@
 package io.micrometer.registry.otlp;
 
 import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.binder.BaseUnits;
 import io.opentelemetry.proto.metrics.v1.NumberDataPoint;
 import org.junit.jupiter.api.Test;
 
@@ -201,7 +202,7 @@ class OtlpCumulativeMeterRegistryTest extends OtlpMeterRegistryTest {
     @Test
     void distributionSummary() {
         DistributionSummary size = DistributionSummary.builder("http.response.size")
-            .baseUnit("bytes")
+            .baseUnit(BaseUnits.BYTES)
             .register(registry);
         size.record(100);
         size.record(15);
@@ -218,7 +219,7 @@ class OtlpCumulativeMeterRegistryTest extends OtlpMeterRegistryTest {
     @Test
     void distributionSummaryWithHistogramBuckets() {
         DistributionSummary size = DistributionSummary.builder("http.request.size")
-            .baseUnit("bytes")
+            .baseUnit(BaseUnits.BYTES)
             .publishPercentileHistogram()
             .register(registry);
         size.record(100);

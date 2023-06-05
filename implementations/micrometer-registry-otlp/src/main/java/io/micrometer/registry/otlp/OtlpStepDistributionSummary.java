@@ -50,7 +50,7 @@ class OtlpStepDistributionSummary extends AbstractDistributionSummary {
 
     @Override
     protected void recordNonNegative(double amount) {
-        count.add(1);
+        count.add(1L);
         total.add(amount);
         max.record(amount);
     }

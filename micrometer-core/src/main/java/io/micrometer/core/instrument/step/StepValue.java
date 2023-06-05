@@ -43,6 +43,13 @@ public abstract class StepValue<V> {
         this(clock, stepMillis, null);
     }
 
+    /**
+     * Creates a {@code StepValue} instance.
+     * @param clock clock
+     * @param stepMillis step in milliseconds
+     * @param initValue initial value
+     * @since 1.11.0
+     */
     protected StepValue(final Clock clock, final long stepMillis, @Nullable final V initValue) {
         this.clock = clock;
         this.stepMillis = stepMillis;
