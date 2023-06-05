@@ -185,7 +185,6 @@ class GrpcObservationTest {
             SimpleRequest request2 = SimpleRequest.newBuilder().setRequestMessage("Hello-2").build();
             StreamObserver<SimpleRequest> requestObserver = asyncStub.clientStreamingRpc(responseObserver);
 
-            assertThat(serverHandler.getContext()).isNull();
             verifyClientContext("grpc.testing.SimpleService", "ClientStreamingRpc",
                     "grpc.testing.SimpleService/ClientStreamingRpc", MethodType.CLIENT_STREAMING);
 

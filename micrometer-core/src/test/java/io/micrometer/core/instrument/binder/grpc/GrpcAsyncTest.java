@@ -17,9 +17,8 @@
 package io.micrometer.core.instrument.binder.grpc;
 
 import com.google.common.util.concurrent.ListenableFuture;
-import io.grpc.ManagedChannel;
-import io.grpc.Metadata;
-import io.grpc.Server;
+import io.grpc.*;
+import io.grpc.ForwardingClientCall.SimpleForwardingClientCall;
 import io.grpc.inprocess.InProcessChannelBuilder;
 import io.grpc.inprocess.InProcessServerBuilder;
 import io.grpc.stub.MetadataUtils;
@@ -29,10 +28,11 @@ import io.grpc.testing.protobuf.SimpleResponse;
 import io.grpc.testing.protobuf.SimpleServiceGrpc;
 import io.grpc.testing.protobuf.SimpleServiceGrpc.SimpleServiceFutureStub;
 import io.grpc.testing.protobuf.SimpleServiceGrpc.SimpleServiceImplBase;
+import io.grpc.testing.protobuf.SimpleServiceGrpc.SimpleServiceStub;
+import io.micrometer.observation.Observation;
 import io.micrometer.observation.Observation.Context;
 import io.micrometer.observation.ObservationHandler;
 import io.micrometer.observation.ObservationRegistry;
-import io.micrometer.observation.ObservationTextPublisher;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -41,10 +41,16 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
+import static org.mockito.Mockito.mock;
 
 /**
  * @author Tadaya Tsuyukubo
@@ -57,22 +63,17 @@ class GrpcAsyncTest {
 
     ManagedChannel channel;
 
+    ObservationRegistry observationRegistry;
+
     @BeforeEach
     void setUp() throws Exception {
-        ObservationRegistry observationRegistry = ObservationRegistry.create();
-        observationRegistry.observationConfig()
-            .observationHandler(new ObservationTextPublisher())
-            .observationHandler(new StoreRequestIdInScopeObservationHandler());
+        this.observationRegistry = ObservationRegistry.create();
 
         this.server = InProcessServerBuilder.forName("sample")
             .addService(new MyService())
             .intercept(new ObservationGrpcServerInterceptor(observationRegistry))
             .build();
         this.server.start();
-
-        this.channel = InProcessChannelBuilder.forName("sample")
-            .intercept(new ObservationGrpcClientInterceptor(observationRegistry))
-            .build();
     }
 
     @AfterEach
@@ -87,6 +88,12 @@ class GrpcAsyncTest {
 
     @Test
     void simulate_trace_in_async_requests() {
+        this.observationRegistry.observationConfig().observationHandler(new StoreRequestIdInScopeObservationHandler());
+
+        this.channel = InProcessChannelBuilder.forName("sample")
+            .intercept(new ObservationGrpcClientInterceptor(this.observationRegistry))
+            .build();
+
         // Send requests asynchronously with request-id in metadata.
         // The request-id is stored in threadlocal in server when scope is opened.
         // The main logic retrieves the request-id from threadlocal and include it as
@@ -117,6 +124,77 @@ class GrpcAsyncTest {
             String expectedRequestId = requestIds.get(future);
             assertThat(future.get().getResponseMessage()).contains("request-id=" + expectedRequestId);
         });
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void multi_thread_client() throws Exception {
+        AtomicReference<Observation> onStart = new AtomicReference<>();
+        AtomicReference<Observation> onMessage = new AtomicReference<>();
+        AtomicReference<Observation> halfClose = new AtomicReference<>();
+        ClientInterceptor clientInterceptor = new ClientInterceptor() {
+            @Override
+            public <ReqT, RespT> ClientCall<ReqT, RespT> interceptCall(MethodDescriptor<ReqT, RespT> method,
+                    CallOptions callOptions, Channel next) {
+                return new SimpleForwardingClientCall<>(next.newCall(method, callOptions)) {
+
+                    @Override
+                    public void start(Listener<RespT> responseListener, Metadata headers) {
+                        onStart.set(observationRegistry.getCurrentObservation());
+                        super.start(responseListener, headers);
+                    }
+
+                    @Override
+                    public void sendMessage(ReqT message) {
+                        onMessage.set(observationRegistry.getCurrentObservation());
+                        super.sendMessage(message);
+                    }
+
+                    @Override
+                    public void halfClose() {
+                        halfClose.set(observationRegistry.getCurrentObservation());
+                        super.halfClose();
+                    }
+                };
+            }
+        };
+
+        this.observationRegistry.observationConfig().observationHandler(context -> true);
+        this.channel = InProcessChannelBuilder.forName("sample")
+            .intercept(clientInterceptor)
+            .intercept(new ObservationGrpcClientInterceptor(this.observationRegistry))
+            .build();
+
+        SimpleServiceStub asyncStub = SimpleServiceGrpc.newStub(this.channel);
+        StreamObserver<SimpleResponse> responseObserver = mock(StreamObserver.class);
+        SimpleRequest request = SimpleRequest.newBuilder().setRequestMessage("Hello").build();
+
+        Observation ob = Observation.start("foo", this.observationRegistry);
+        ob.observeChecked(() -> {
+            StreamObserver<SimpleRequest> requestObserver = asyncStub.clientStreamingRpc(responseObserver);
+
+            // perform onNext on a separate thread
+            CountDownLatch onNextDone = new CountDownLatch(1);
+            CompletableFuture.runAsync(() -> {
+                requestObserver.onNext(request);
+                onNextDone.countDown();
+            }).join();
+            assertThat(onNextDone.await(100, TimeUnit.MILLISECONDS)).isTrue();
+
+            // perform onCompleted on a separate thread
+            CountDownLatch onCompletedDone = new CountDownLatch(1);
+            CompletableFuture.runAsync(() -> {
+                requestObserver.onCompleted();
+                onCompletedDone.countDown();
+            }).join();
+            assertThat(onNextDone.await(100, TimeUnit.MILLISECONDS)).isTrue();
+        });
+
+        assertThat(Stream.of(onStart, onMessage, halfClose))
+            .allSatisfy((reference) -> assertThat(reference).hasValueSatisfying((value) -> assertThat(value).isNotNull()
+                .extracting(Observation::getContext)
+                .extracting(Observation.Context::getParentObservation)
+                .isSameAs(ob)));
     }
 
     static class StoreRequestIdInScopeObservationHandler implements ObservationHandler<GrpcServerObservationContext> {
@@ -157,6 +235,30 @@ class GrpcAsyncTest {
             SimpleResponse response = SimpleResponse.newBuilder().setResponseMessage(sb.toString()).build();
             responseObserver.onNext(response);
             responseObserver.onCompleted();
+        }
+
+        @Override
+        public StreamObserver<SimpleRequest> clientStreamingRpc(StreamObserver<SimpleResponse> responseObserver) {
+            return new StreamObserver<>() {
+                final List<String> messages = new ArrayList<>();
+
+                @Override
+                public void onNext(SimpleRequest value) {
+                    this.messages.add(value.getRequestMessage());
+                }
+
+                @Override
+                public void onError(Throwable t) {
+                    throw new RuntimeException("Encountered error", t);
+                }
+
+                @Override
+                public void onCompleted() {
+                    String message = String.join(",", this.messages);
+                    responseObserver.onNext(SimpleResponse.newBuilder().setResponseMessage(message).build());
+                    responseObserver.onCompleted();
+                }
+            };
         }
 
     }
