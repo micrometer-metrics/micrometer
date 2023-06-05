@@ -36,7 +36,7 @@ def testingBundle = tasks.register('testingBundle', Bundle) {
 
 def resolveTask = tasks.register("resolve", Resolve) {
     dependsOn jar, testingBundle
-    project.ext.osgiRunee="JavaSE-${JavaVersion.current().getMajorVersion()}"
+    project.ext.osgiRunee="JavaSE-${javaLanguageVersion.asInt()}"
     bundles = files(sourceSets.test.runtimeClasspath, configurations.archives.artifacts.files)
     bndrun = file("test.bndrun")
     outputBndrun = layout.buildDirectory.file("resolved-test.bndrun")
