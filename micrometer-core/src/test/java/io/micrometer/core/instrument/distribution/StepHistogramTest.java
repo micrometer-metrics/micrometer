@@ -86,9 +86,10 @@ class StepHistogramTest {
             .merge(distributionStatisticConfig);
         try (StepBucketHistogram histogram = new StepBucketHistogram(clock, step.toMillis(), config,
                 supportsAggregablePercentiles, true)) {
-            assertThat(histogram.takeSnapshot(0, 0, 0).histogramCounts()).contains(new CountAtBucket(slo, 0));
+            CountAtBucket sloBucket = new CountAtBucket(slo, 0);
+            assertThat(histogram.takeSnapshot(0, 0, 0).histogramCounts()).hasSizeGreaterThan(1).contains(sloBucket);
             clock.add(step);
-            assertThat(histogram.takeSnapshot(0, 0, 0).histogramCounts()).contains(new CountAtBucket(slo, 0));
+            assertThat(histogram.takeSnapshot(0, 0, 0).histogramCounts()).hasSizeGreaterThan(1).contains(sloBucket);
         }
     }
 
@@ -103,9 +104,10 @@ class StepHistogramTest {
             .merge(getConfig(false));
         try (StepBucketHistogram histogram = new StepBucketHistogram(clock, step.toMillis(), config,
                 supportsAggregablePercentiles, true)) {
-            assertThat(histogram.takeSnapshot(0, 0, 0).histogramCounts()).contains(new CountAtBucket(slo, 0));
+            CountAtBucket sloBucket = new CountAtBucket(slo, 0);
+            assertThat(histogram.takeSnapshot(0, 0, 0).histogramCounts()).containsExactly(sloBucket);
             clock.add(step);
-            assertThat(histogram.takeSnapshot(0, 0, 0).histogramCounts()).contains(new CountAtBucket(slo, 0));
+            assertThat(histogram.takeSnapshot(0, 0, 0).histogramCounts()).containsExactly(sloBucket);
         }
     }
 

@@ -22,16 +22,15 @@ import java.util.concurrent.atomic.DoubleAccumulator;
 import java.util.function.Supplier;
 
 /**
- * A {@link StepValue} implementation that tracks max over a Step Interval.
+ * A {@link StepValue} implementation that tracks max over a step interval.
  *
  * @author Lenin Jaganathan
- * @since 1.11.0
  */
 class StepMax extends StepValue<Double> {
 
-    private final DoubleAccumulator current = new DoubleAccumulator(Double::max, 0);
+    private final DoubleAccumulator current = new DoubleAccumulator(Double::max, 0d);
 
-    public StepMax(Clock clock, long stepMillis) {
+    StepMax(Clock clock, long stepMillis) {
         super(clock, stepMillis);
     }
 
@@ -45,7 +44,7 @@ class StepMax extends StepValue<Double> {
         return 0.0;
     }
 
-    public void record(double value) {
+    void record(double value) {
         current.accumulate(value);
     }
 

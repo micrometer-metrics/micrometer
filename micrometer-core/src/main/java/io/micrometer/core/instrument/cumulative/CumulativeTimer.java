@@ -48,6 +48,16 @@ public class CumulativeTimer extends AbstractTimer {
                 AbstractTimer.defaultHistogram(clock, distributionStatisticConfig, supportsAggregablePercentiles));
     }
 
+    /**
+     * Creates a {@code CumulativeTimer} instance.
+     * @param id meter ID
+     * @param clock clock
+     * @param distributionStatisticConfig distribution statistic configuration
+     * @param pauseDetector pause detector
+     * @param baseTimeUnit base time unit
+     * @param histogram histogram
+     * @since 1.11.0
+     */
     protected CumulativeTimer(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig,
             PauseDetector pauseDetector, TimeUnit baseTimeUnit, Histogram histogram) {
         super(id, clock, pauseDetector, baseTimeUnit, histogram);

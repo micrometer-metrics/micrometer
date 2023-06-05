@@ -54,6 +54,15 @@ public class CumulativeDistributionSummary extends AbstractDistributionSummary {
                 distributionStatisticConfig, supportsAggregablePercentiles));
     }
 
+    /**
+     * Creates a {@code CumulativeDistributionSummary} instance.
+     * @param id meter ID
+     * @param clock clock
+     * @param distributionStatisticConfig distribution statistic configuration
+     * @param scale scale
+     * @param histogram histogram
+     * @since 1.11.0
+     */
     protected CumulativeDistributionSummary(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig,
             double scale, Histogram histogram) {
         super(id, scale, histogram);
