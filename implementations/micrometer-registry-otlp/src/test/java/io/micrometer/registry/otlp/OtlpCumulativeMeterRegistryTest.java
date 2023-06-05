@@ -49,8 +49,8 @@ class OtlpCumulativeMeterRegistryTest extends OtlpMeterRegistryTest {
         TimeGauge timeGauge = TimeGauge.builder("gauge.time", this, TimeUnit.MICROSECONDS, o -> 24).register(registry);
 
         assertThat(writeToMetric(timeGauge).toString())
-            .isEqualTo("name: \"gauge.time\"\n" + "unit: \"milliseconds\"\n" + "gauge {\n" + "  data_points {\n"
-                    + "    time_unix_nano: 1000000\n" + "    as_double: 0.024\n" + "  }\n" + "}\n");
+            .isEqualTo("name: \"gauge.time\"\n" + "unit: \"seconds\"\n" + "gauge {\n" + "  data_points {\n"
+                    + "    time_unix_nano: 1000000\n" + "    as_double: 2.4E-5\n" + "  }\n" + "}\n");
     }
 
     @Test
@@ -91,9 +91,9 @@ class OtlpCumulativeMeterRegistryTest extends OtlpMeterRegistryTest {
         clock.add(otlpConfig().step());
         timer.record(4, TimeUnit.MILLISECONDS);
         assertThat(writeToMetric(timer).toString()).isEqualTo(
-                "name: \"web.requests\"\n" + "description: \"timing web requests\"\n" + "unit: \"milliseconds\"\n"
+                "name: \"web.requests\"\n" + "description: \"timing web requests\"\n" + "unit: \"seconds\"\n"
                         + "histogram {\n" + "  data_points {\n" + "    start_time_unix_nano: 1000000\n"
-                        + "    time_unix_nano: 60001000000\n" + "    count: 4\n" + "    sum: 202.0\n" + "  }\n"
+                        + "    time_unix_nano: 60001000000\n" + "    count: 4\n" + "    sum: 0.202\n" + "  }\n"
                         + "  aggregation_temporality: AGGREGATION_TEMPORALITY_CUMULATIVE\n" + "}\n");
     }
 
@@ -107,9 +107,9 @@ class OtlpCumulativeMeterRegistryTest extends OtlpMeterRegistryTest {
         timer.record(4, TimeUnit.MILLISECONDS);
 
         assertThat(writeToMetric(timer).toString())
-            .isEqualTo("name: \"http.client.requests\"\n" + "unit: \"milliseconds\"\n" + "histogram {\n"
+            .isEqualTo("name: \"http.client.requests\"\n" + "unit: \"seconds\"\n" + "histogram {\n"
                     + "  data_points {\n" + "    start_time_unix_nano: 1000000\n" + "    time_unix_nano: 60001000000\n"
-                    + "    count: 4\n" + "    sum: 202.0\n" + "    bucket_counts: 0\n" + "    bucket_counts: 0\n"
+                    + "    count: 4\n" + "    sum: 0.202\n" + "    bucket_counts: 0\n" + "    bucket_counts: 0\n"
                     + "    bucket_counts: 0\n" + "    bucket_counts: 0\n" + "    bucket_counts: 0\n"
                     + "    bucket_counts: 0\n" + "    bucket_counts: 0\n" + "    bucket_counts: 0\n"
                     + "    bucket_counts: 0\n" + "    bucket_counts: 0\n" + "    bucket_counts: 1\n"
@@ -177,12 +177,12 @@ class OtlpCumulativeMeterRegistryTest extends OtlpMeterRegistryTest {
         timer.record(111, TimeUnit.MILLISECONDS);
 
         assertThat(writeToMetric(timer).toString())
-            .isEqualTo("name: \"service.requests\"\n" + "unit: \"milliseconds\"\n" + "summary {\n" + "  data_points {\n"
+            .isEqualTo("name: \"service.requests\"\n" + "unit: \"seconds\"\n" + "summary {\n" + "  data_points {\n"
                     + "    start_time_unix_nano: 1000000\n" + "    time_unix_nano: 1000000\n" + "    count: 3\n"
-                    + "    sum: 198.0\n" + "    quantile_values {\n" + "      quantile: 0.5\n"
-                    + "      value: 79.167488\n" + "    }\n" + "    quantile_values {\n" + "      quantile: 0.9\n"
-                    + "      value: 112.72192\n" + "    }\n" + "    quantile_values {\n" + "      quantile: 0.99\n"
-                    + "      value: 112.72192\n" + "    }\n" + "  }\n" + "}\n");
+                    + "    sum: 0.198\n" + "    quantile_values {\n" + "      quantile: 0.5\n"
+                    + "      value: 0.079167488\n" + "    }\n" + "    quantile_values {\n" + "      quantile: 0.9\n"
+                    + "      value: 0.11272192\n" + "    }\n" + "    quantile_values {\n" + "      quantile: 0.99\n"
+                    + "      value: 0.11272192\n" + "    }\n" + "  }\n" + "}\n");
     }
 
     @Test
@@ -192,9 +192,9 @@ class OtlpCumulativeMeterRegistryTest extends OtlpMeterRegistryTest {
             .register(registry);
 
         assertThat(writeToMetric(functionTimer).toString())
-            .isEqualTo("name: \"function.timer\"\n" + "unit: \"milliseconds\"\n" + "histogram {\n" + "  data_points {\n"
+            .isEqualTo("name: \"function.timer\"\n" + "unit: \"seconds\"\n" + "histogram {\n" + "  data_points {\n"
                     + "    start_time_unix_nano: 1000000\n" + "    time_unix_nano: 1000000\n" + "    count: 5\n"
-                    + "    sum: 127.0\n" + "  }\n" + "  aggregation_temporality: AGGREGATION_TEMPORALITY_CUMULATIVE\n"
+                    + "    sum: 0.127\n" + "  }\n" + "  aggregation_temporality: AGGREGATION_TEMPORALITY_CUMULATIVE\n"
                     + "}\n");
     }
 
@@ -484,9 +484,9 @@ class OtlpCumulativeMeterRegistryTest extends OtlpMeterRegistryTest {
         this.clock.add(otlpConfig().step().multipliedBy(3));
 
         assertThat(writeToMetric(taskTimer).toString())
-            .isEqualTo("name: \"checkout.batch\"\n" + "unit: \"milliseconds\"\n" + "histogram {\n" + "  data_points {\n"
+            .isEqualTo("name: \"checkout.batch\"\n" + "unit: \"seconds\"\n" + "histogram {\n" + "  data_points {\n"
                     + "    start_time_unix_nano: 1000000\n" + "    time_unix_nano: 180001000000\n" + "    count: 2\n"
-                    + "    sum: 360000.0\n" + "  }\n"
+                    + "    sum: 360.0\n" + "  }\n"
                     + "  aggregation_temporality: AGGREGATION_TEMPORALITY_CUMULATIVE\n" + "}\n");
 
         task1.stop();
@@ -496,7 +496,7 @@ class OtlpCumulativeMeterRegistryTest extends OtlpMeterRegistryTest {
         // this is not right that count/sum reset, but it's the same thing we do with
         // prometheus
         assertThat(writeToMetric(taskTimer).toString())
-            .isEqualTo("name: \"checkout.batch\"\n" + "unit: \"milliseconds\"\n" + "histogram {\n" + "  data_points {\n"
+            .isEqualTo("name: \"checkout.batch\"\n" + "unit: \"seconds\"\n" + "histogram {\n" + "  data_points {\n"
                     + "    start_time_unix_nano: 1000000\n" + "    time_unix_nano: 240001000000\n" + "    sum: 0.0\n"
                     + "  }\n" + "  aggregation_temporality: AGGREGATION_TEMPORALITY_CUMULATIVE\n" + "}\n");
     }
