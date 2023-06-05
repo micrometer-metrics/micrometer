@@ -22,6 +22,7 @@ import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.distribution.*;
+import io.micrometer.core.instrument.distribution.Histogram;
 import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import io.micrometer.core.instrument.internal.DefaultGauge;
 import io.micrometer.core.instrument.internal.DefaultLongTaskTimer;
@@ -39,7 +40,6 @@ import io.micrometer.core.ipc.http.HttpUrlConnectionSender;
 import io.opentelemetry.proto.collector.metrics.v1.ExportMetricsServiceRequest;
 import io.opentelemetry.proto.common.v1.AnyValue;
 import io.opentelemetry.proto.common.v1.KeyValue;
-import io.opentelemetry.proto.metrics.v1.Histogram;
 import io.opentelemetry.proto.metrics.v1.*;
 import io.opentelemetry.proto.resource.v1.Resource;
 
@@ -372,14 +372,14 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
                     .addExplicitBounds(isTimeBased ? countAtBucket.bucket(getBaseTimeUnit()) : countAtBucket.bucket());
                 histogramDataPoint.addBucketCounts((long) countAtBucket.count());
             }
-            metricBuilder.setHistogram(Histogram.newBuilder()
+            metricBuilder.setHistogram(io.opentelemetry.proto.metrics.v1.Histogram.newBuilder()
                 .setAggregationTemporality(otlpAggregationTemporality)
                 .addDataPoints(histogramDataPoint));
             return metricBuilder.build();
         }
 
         return metricBuilder
-            .setHistogram(Histogram.newBuilder()
+            .setHistogram(io.opentelemetry.proto.metrics.v1.Histogram.newBuilder()
                 .setAggregationTemporality(otlpAggregationTemporality)
                 .addDataPoints(histogramDataPoint))
             .build();
@@ -388,7 +388,7 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
     // VisibleForTesting
     Metric writeFunctionTimer(FunctionTimer functionTimer) {
         return getMetricBuilder(functionTimer.getId())
-            .setHistogram(Histogram.newBuilder()
+            .setHistogram(io.opentelemetry.proto.metrics.v1.Histogram.newBuilder()
                 .addDataPoints(HistogramDataPoint.newBuilder()
                     .addAllAttributes(getTagsForId(functionTimer.getId()))
                     .setStartTimeUnixNano(getStartTimeNanos((functionTimer)))
@@ -466,14 +466,13 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
         return attributes;
     }
 
-    static io.micrometer.core.instrument.distribution.Histogram getHistogram(Clock clock,
-            DistributionStatisticConfig distributionStatisticConfig, AggregationTemporality aggregationTemporality) {
+    static Histogram getHistogram(Clock clock, DistributionStatisticConfig distributionStatisticConfig,
+            AggregationTemporality aggregationTemporality) {
         return getHistogram(clock, distributionStatisticConfig, aggregationTemporality, 0);
     }
 
-    static io.micrometer.core.instrument.distribution.Histogram getHistogram(Clock clock,
-            DistributionStatisticConfig distributionStatisticConfig, AggregationTemporality aggregationTemporality,
-            long stepMillis) {
+    static Histogram getHistogram(Clock clock, DistributionStatisticConfig distributionStatisticConfig,
+            AggregationTemporality aggregationTemporality, long stepMillis) {
         // While publishing to OTLP, we export either Histogram datapoint / Summary
         // datapoint. So, we will make the histogram either of them and not both.
         // Though AbstractTimer/Distribution Summary prefers publishing percentiles,
@@ -488,7 +487,7 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
                     .build()
                     .merge(distributionStatisticConfig), true, false);
             }
-            else if (AggregationTemporality.isDelta(aggregationTemporality) && stepMillis > 0) {
+            if (AggregationTemporality.isDelta(aggregationTemporality) && stepMillis > 0) {
                 return new OtlpStepBucketHistogram(clock, stepMillis, distributionStatisticConfig, true, false);
             }
         }

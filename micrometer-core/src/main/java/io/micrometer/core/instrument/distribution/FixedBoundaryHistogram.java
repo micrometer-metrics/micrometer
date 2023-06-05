@@ -55,15 +55,16 @@ class FixedBoundaryHistogram {
     /**
      * The least bucket that is less than or equal to a sample.
      */
-    int leastLessThanOrEqualTo(long key) {
+    int leastLessThanOrEqualTo(double key) {
         int low = 0;
         int high = buckets.length - 1;
 
         while (low <= high) {
             int mid = (low + high) >>> 1;
-            if (buckets[mid] < key)
+            double value = buckets[mid];
+            if (value < key)
                 low = mid + 1;
-            else if (buckets[mid] > key)
+            else if (value > key)
                 high = mid - 1;
             else
                 return mid; // exact match

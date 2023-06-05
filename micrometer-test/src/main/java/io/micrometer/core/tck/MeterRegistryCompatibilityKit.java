@@ -291,10 +291,11 @@ public abstract class MeterRegistryCompatibilityKit {
                 .register(registry);
 
             // ensure time-window based histograms are not fully rotated when we assert
-            clock(registry).add(step().dividedBy(2));
+            Duration halfStep = step().dividedBy(2);
+            clock(registry).add(halfStep);
             s.record(1);
             // accommodate StepBucketHistogram
-            clock(registry).add(step().dividedBy(2));
+            clock(registry).add(halfStep);
             assertThat(s.histogramCountAtValue(1)).isEqualTo(1);
             assertThat(s.histogramCountAtValue(2)).isNaN();
         }
@@ -741,10 +742,11 @@ public abstract class MeterRegistryCompatibilityKit {
             Timer t = Timer.builder("my.timer").serviceLevelObjectives(Duration.ofMillis(1)).register(registry);
 
             // ensure time-window based histograms are not fully rotated when we assert
-            clock(registry).add(step().dividedBy(2));
+            Duration halfStep = step().dividedBy(2);
+            clock(registry).add(halfStep);
             t.record(1, TimeUnit.MILLISECONDS);
             // accommodate StepBucketHistogram
-            clock(registry).add(step().dividedBy(2));
+            clock(registry).add(halfStep);
             assertThat(t.histogramCountAtValue((long) millisToUnit(1, TimeUnit.NANOSECONDS))).isEqualTo(1);
             assertThat(t.histogramCountAtValue(1)).isNaN();
         }

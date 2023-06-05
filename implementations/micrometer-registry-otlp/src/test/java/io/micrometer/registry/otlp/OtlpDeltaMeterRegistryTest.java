@@ -65,7 +65,7 @@ class OtlpDeltaMeterRegistryTest extends OtlpMeterRegistryTest {
                 return null;
             }
         };
-    };
+    }
 
     @Test
     void gauge() {
@@ -321,7 +321,7 @@ class OtlpDeltaMeterRegistryTest extends OtlpMeterRegistryTest {
         Function<Meter, NumberDataPoint> getDataPoint = (meter) -> writeToMetric(meter).getSum().getDataPoints(0);
         assertThat(getDataPoint.apply(counter).getStartTimeUnixNano()).isEqualTo(0);
         assertThat(getDataPoint.apply(counter).getTimeUnixNano()).isEqualTo(60000000000L);
-        clock.addSeconds(59);
+        clock.addSeconds(otlpConfig().step().getSeconds() - 1);
         assertThat(getDataPoint.apply(counter).getStartTimeUnixNano()).isEqualTo(0);
         assertThat(getDataPoint.apply(counter).getTimeUnixNano()).isEqualTo(60000000000L);
         clock.addSeconds(1);

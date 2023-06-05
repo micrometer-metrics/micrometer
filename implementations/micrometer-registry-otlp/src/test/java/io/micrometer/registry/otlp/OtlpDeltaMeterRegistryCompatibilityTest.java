@@ -21,7 +21,7 @@ import io.micrometer.core.tck.MeterRegistryCompatibilityKit;
 
 import java.time.Duration;
 
-public class OtlpDeltaMeterRegistryCompatibilityTest extends MeterRegistryCompatibilityKit {
+class OtlpDeltaMeterRegistryCompatibilityTest extends MeterRegistryCompatibilityKit {
 
     @Override
     public MeterRegistry registry() {
