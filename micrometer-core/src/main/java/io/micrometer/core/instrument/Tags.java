@@ -79,7 +79,7 @@ public final class Tags implements Iterable<Tag> {
     /**
      * Return a new {@code Tags} instance by merging this collection and the specified
      * key/value pairs.
-     * @param keyValues the key/value pairs to add
+     * @param keyValues the key/value pairs to add, elements mustn't be null
      * @return a new {@code Tags} instance
      */
     public Tags and(@Nullable String... keyValues) {
@@ -92,7 +92,7 @@ public final class Tags implements Iterable<Tag> {
     /**
      * Return a new {@code Tags} instance by merging this collection and the specified
      * tags.
-     * @param tags the tags to add
+     * @param tags the tags to add, elements mustn't be null
      * @return a new {@code Tags} instance
      */
     public Tags and(@Nullable Tag... tags) {
@@ -108,7 +108,7 @@ public final class Tags implements Iterable<Tag> {
     /**
      * Return a new {@code Tags} instance by merging this collection and the specified
      * tags.
-     * @param tags the tags to add
+     * @param tags the tags to add, elements mustn't be null
      * @return a new {@code Tags} instance
      */
     public Tags and(@Nullable Iterable<? extends Tag> tags) {
@@ -190,8 +190,8 @@ public final class Tags implements Iterable<Tag> {
     /**
      * Return a new {@code Tags} instance by concatenating the specified collections of
      * tags.
-     * @param tags the first set of tags
-     * @param otherTags the second set of tags
+     * @param tags the first set of tags, elements mustn't be null
+     * @param otherTags the second set of tags, elements mustn't be null
      * @return the merged tags
      */
     public static Tags concat(@Nullable Iterable<? extends Tag> tags, @Nullable Iterable<Tag> otherTags) {
@@ -201,8 +201,8 @@ public final class Tags implements Iterable<Tag> {
     /**
      * Return a new {@code Tags} instance by concatenating the specified tags and
      * key/value pairs.
-     * @param tags the first set of tags
-     * @param keyValues the additional key/value pairs to add
+     * @param tags the first set of tags, elements mustn't be null
+     * @param keyValues the additional key/value pairs to add, elements mustn't be null
      * @return the merged tags
      */
     public static Tags concat(@Nullable Iterable<? extends Tag> tags, @Nullable String... keyValues) {
@@ -212,7 +212,7 @@ public final class Tags implements Iterable<Tag> {
     /**
      * Return a new {@code Tags} instance containing tags constructed from the specified
      * source tags.
-     * @param tags the tags to add
+     * @param tags the tags to add, elements mustn't be null
      * @return a new {@code Tags} instance
      */
     public static Tags of(@Nullable Iterable<? extends Tag> tags) {
@@ -245,7 +245,7 @@ public final class Tags implements Iterable<Tag> {
     /**
      * Return a new {@code Tags} instance containing tags constructed from the specified
      * key/value pairs.
-     * @param keyValues the key/value pairs to add
+     * @param keyValues the key/value pairs to add, elements mustn't be null
      * @return a new {@code Tags} instance
      */
     public static Tags of(@Nullable String... keyValues) {
@@ -269,7 +269,7 @@ public final class Tags implements Iterable<Tag> {
     /**
      * Return a new {@code Tags} instance containing tags constructed from the specified
      * tags.
-     * @param tags the tags to add
+     * @param tags the tags to add, elements mustn't be null
      * @return a new {@code Tags} instance
      */
     public static Tags of(@Nullable Tag... tags) {
