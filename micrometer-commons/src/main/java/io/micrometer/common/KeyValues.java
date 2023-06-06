@@ -81,11 +81,11 @@ public final class KeyValues implements Iterable<KeyValue> {
     /**
      * Return a new {@code KeyValues} instance by merging this collection and the
      * specified key/value pairs.
-     * @param keyValues the key/value pairs to add
+     * @param keyValues the key/value pairs to add, elements mustn't be null
      * @return a new {@code KeyValues} instance
      */
     public KeyValues and(@Nullable String... keyValues) {
-        if (keyValues == null || keyValues.length == 0) {
+        if (blankVarargs(keyValues)) {
             return this;
         }
         return and(KeyValues.of(keyValues));
@@ -94,11 +94,11 @@ public final class KeyValues implements Iterable<KeyValue> {
     /**
      * Return a new {@code KeyValues} instance by merging this collection and the
      * specified key values.
-     * @param keyValues the key values to add
+     * @param keyValues the key values to add, elements mustn't be null
      * @return a new {@code KeyValues} instance
      */
     public KeyValues and(@Nullable KeyValue... keyValues) {
-        if (keyValues == null || keyValues.length == 0) {
+        if (blankVarargs(keyValues)) {
             return this;
         }
         KeyValue[] newKeyValues = new KeyValue[last + keyValues.length];
@@ -128,7 +128,7 @@ public final class KeyValues implements Iterable<KeyValue> {
     /**
      * Return a new {@code KeyValues} instance by merging this collection and the
      * specified key values.
-     * @param keyValues the key values to add
+     * @param keyValues the key values to add, elements mustn't be null
      * @return a new {@code KeyValues} instance
      */
     public KeyValues and(@Nullable Iterable<? extends KeyValue> keyValues) {
@@ -215,8 +215,8 @@ public final class KeyValues implements Iterable<KeyValue> {
     /**
      * Return a new {@code KeyValues} instance by concatenating the specified collections
      * of key values.
-     * @param keyValues the first set of key values
-     * @param otherKeyValues the second set of key values
+     * @param keyValues the first set of key values, elements mustn't be null
+     * @param otherKeyValues the second set of key values, elements mustn't be null
      * @return the merged key values
      */
     public static KeyValues concat(@Nullable Iterable<? extends KeyValue> keyValues,
@@ -227,8 +227,9 @@ public final class KeyValues implements Iterable<KeyValue> {
     /**
      * Return a new {@code KeyValues} instance by concatenating the specified key values
      * and key/value pairs.
-     * @param keyValues the first set of key values
-     * @param otherKeyValues the additional key/value pairs to add
+     * @param keyValues the first set of key values, elements mustn't be null
+     * @param otherKeyValues the additional key/value pairs to add, elements mustn't be
+     * null
      * @return the merged key values
      */
     public static KeyValues concat(@Nullable Iterable<? extends KeyValue> keyValues,
@@ -252,7 +253,7 @@ public final class KeyValues implements Iterable<KeyValue> {
     /**
      * Return a new {@code KeyValues} instance containing key values constructed from the
      * specified source key values.
-     * @param keyValues the key values to add
+     * @param keyValues the key values to add, elements mustn't be null
      * @return a new {@code KeyValues} instance
      */
     public static KeyValues of(@Nullable Iterable<? extends KeyValue> keyValues) {
@@ -285,11 +286,11 @@ public final class KeyValues implements Iterable<KeyValue> {
     /**
      * Return a new {@code KeyValues} instance containing key values constructed from the
      * specified key/value pairs.
-     * @param keyValues the key/value pairs to add
+     * @param keyValues the key/value pairs to add, elements mustn't be null
      * @return a new {@code KeyValues} instance
      */
     public static KeyValues of(@Nullable String... keyValues) {
-        if (keyValues == null || keyValues.length == 0) {
+        if (blankVarargs(keyValues)) {
             return empty();
         }
         if (keyValues.length % 2 == 1) {
@@ -302,10 +303,14 @@ public final class KeyValues implements Iterable<KeyValue> {
         return new KeyValues(keyValueArray);
     }
 
+    private static boolean blankVarargs(@Nullable Object[] args) {
+        return args == null || args.length == 0 || (args.length == 1 && args[0] == null);
+    }
+
     /**
      * Return a new {@code KeyValues} instance containing key values constructed from the
      * specified key values.
-     * @param keyValues the key values to add
+     * @param keyValues the key values to add, elements mustn't be null
      * @return a new {@code KeyValues} instance
      */
     public static KeyValues of(@Nullable KeyValue... keyValues) {
