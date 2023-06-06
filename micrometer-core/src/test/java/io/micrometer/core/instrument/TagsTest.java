@@ -90,9 +90,21 @@ class TagsTest {
         assertThat(Tags.of((String[]) null)).isSameAs(Tags.empty());
     }
 
+    @Issue("#3851")
+    @Test
+    void nullKeyValuesShouldProduceEmptyTags() {
+        assertThat(Tags.of((String) null)).isSameAs(Tags.empty());
+    }
+
     @Test
     void nullTagArrayShouldProduceEmptyTags() {
         assertThat(Tags.of((Tag[]) null)).isSameAs(Tags.empty());
+    }
+
+    @Issue("#3851")
+    @Test
+    void nullTagShouldProduceEmptyTags() {
+        assertThat(Tags.of((Tag) null)).isSameAs(Tags.empty());
     }
 
     @Test
@@ -116,6 +128,14 @@ class TagsTest {
     void concatOnTwoTagsWithSameKeyAreMergedIntoOneTag() {
         Iterable<Tag> tags = Tags.concat(Tags.of("k", "v1"), "k", "v2");
         assertThat(tags).containsExactly(Tag.of("k", "v2"));
+    }
+
+    @Issue("#3851")
+    @Test
+    void concatWhenKeyValuesAreNullShouldReturnCurrentInstance() {
+        Tags source = Tags.of("k", "v1");
+        Tags concatenated = Tags.concat(source, (String) null);
+        assertThat(source).isSameAs(concatenated);
     }
 
     @Test
@@ -155,9 +175,17 @@ class TagsTest {
     }
 
     @Test
-    void andKeyValuesWhenKeyValuesAreNullShouldReturnCurrentInstance() {
+    void andKeyValuesWhenKeyValuesArrayIsNullShouldReturnCurrentInstance() {
         Tags source = Tags.of("t1", "v1");
         Tags merged = source.and((String[]) null);
+        assertThat(source).isSameAs(merged);
+    }
+
+    @Issue("#3851")
+    @Test
+    void andKeyValuesWhenKeyValuesAreNullShouldReturnCurrentInstance() {
+        Tags source = Tags.of("t1", "v1");
+        Tags merged = source.and((String) null);
         assertThat(source).isSameAs(merged);
     }
 
@@ -181,6 +209,14 @@ class TagsTest {
     void andTagsWhenTagsAreNullShouldReturnCurrentInstance() {
         Tags source = Tags.of("t1", "v1");
         Tags merged = source.and((Tag[]) null);
+        assertThat(source).isSameAs(merged);
+    }
+
+    @Issue("#3851")
+    @Test
+    void andTagsWhenTagIsNullShouldReturnCurrentInstance() {
+        Tags source = Tags.of("t1", "v1");
+        Tags merged = source.and((Tag) null);
         assertThat(source).isSameAs(merged);
     }
 

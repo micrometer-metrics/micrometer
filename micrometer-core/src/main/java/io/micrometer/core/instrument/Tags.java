@@ -83,7 +83,7 @@ public final class Tags implements Iterable<Tag> {
      * @return a new {@code Tags} instance
      */
     public Tags and(@Nullable String... keyValues) {
-        if (keyValues == null || keyValues.length == 0) {
+        if (blankVarargs(keyValues)) {
             return this;
         }
         return and(Tags.of(keyValues));
@@ -96,7 +96,7 @@ public final class Tags implements Iterable<Tag> {
      * @return a new {@code Tags} instance
      */
     public Tags and(@Nullable Tag... tags) {
-        if (tags == null || tags.length == 0) {
+        if (blankVarargs(tags)) {
             return this;
         }
         Tag[] newTags = new Tag[last + tags.length];
@@ -249,7 +249,7 @@ public final class Tags implements Iterable<Tag> {
      * @return a new {@code Tags} instance
      */
     public static Tags of(@Nullable String... keyValues) {
-        if (keyValues == null || keyValues.length == 0) {
+        if (blankVarargs(keyValues)) {
             return empty();
         }
         if (keyValues.length % 2 == 1) {
@@ -260,6 +260,10 @@ public final class Tags implements Iterable<Tag> {
             tags[i / 2] = Tag.of(keyValues[i], keyValues[i + 1]);
         }
         return new Tags(tags);
+    }
+
+    private static boolean blankVarargs(@Nullable Object[] args) {
+        return args == null || args.length == 0 || (args.length == 1 && args[0] == null);
     }
 
     /**
