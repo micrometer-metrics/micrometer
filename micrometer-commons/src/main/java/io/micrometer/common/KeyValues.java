@@ -85,7 +85,7 @@ public final class KeyValues implements Iterable<KeyValue> {
      * @return a new {@code KeyValues} instance
      */
     public KeyValues and(@Nullable String... keyValues) {
-        if (keyValues == null || keyValues.length == 0) {
+        if (blankVarargs(keyValues)) {
             return this;
         }
         return and(KeyValues.of(keyValues));
@@ -98,7 +98,7 @@ public final class KeyValues implements Iterable<KeyValue> {
      * @return a new {@code KeyValues} instance
      */
     public KeyValues and(@Nullable KeyValue... keyValues) {
-        if (keyValues == null || keyValues.length == 0) {
+        if (blankVarargs(keyValues)) {
             return this;
         }
         KeyValue[] newKeyValues = new KeyValue[last + keyValues.length];
@@ -289,7 +289,7 @@ public final class KeyValues implements Iterable<KeyValue> {
      * @return a new {@code KeyValues} instance
      */
     public static KeyValues of(@Nullable String... keyValues) {
-        if (keyValues == null || keyValues.length == 0) {
+        if (blankVarargs(keyValues)) {
             return empty();
         }
         if (keyValues.length % 2 == 1) {
@@ -300,6 +300,10 @@ public final class KeyValues implements Iterable<KeyValue> {
             keyValueArray[i / 2] = KeyValue.of(keyValues[i], keyValues[i + 1]);
         }
         return new KeyValues(keyValueArray);
+    }
+
+    private static boolean blankVarargs(@Nullable Object[] args) {
+        return args == null || args.length == 0 || (args.length == 1 && args[0] == null);
     }
 
     /**
