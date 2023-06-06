@@ -44,6 +44,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class OtlpDeltaMeterRegistryTest extends OtlpMeterRegistryTest {
 
     private static final String UNIT_MILLISECONDS = "milliseconds";
+
     private static final String UNIT_SECONDS = "seconds";
 
     @BeforeEach
@@ -132,22 +133,22 @@ class OtlpDeltaMeterRegistryTest extends OtlpMeterRegistryTest {
 
         assertHistogram(writeToMetric(timer), 0, TimeUnit.MINUTES.toNanos(1), UNIT_SECONDS, 0, 0, 0);
         stepOverNStep(1);
-        assertHistogram(writeToMetric(timer), TimeUnit.MINUTES.toNanos(1), TimeUnit.MINUTES.toNanos(2),
-                UNIT_SECONDS, 3, 0.198, 0.111);
+        assertHistogram(writeToMetric(timer), TimeUnit.MINUTES.toNanos(1), TimeUnit.MINUTES.toNanos(2), UNIT_SECONDS, 3,
+                0.198, 0.111);
         timer.record(4, MILLISECONDS);
-        assertHistogram(writeToMetric(timer), TimeUnit.MINUTES.toNanos(1), TimeUnit.MINUTES.toNanos(2),
-                UNIT_SECONDS, 3, 0.198, 0.111);
+        assertHistogram(writeToMetric(timer), TimeUnit.MINUTES.toNanos(1), TimeUnit.MINUTES.toNanos(2), UNIT_SECONDS, 3,
+                0.198, 0.111);
         stepOverNStep(1);
-        assertHistogram(writeToMetric(timer), TimeUnit.MINUTES.toNanos(2), TimeUnit.MINUTES.toNanos(3),
-                UNIT_SECONDS, 1, 0.004, 0.004);
+        assertHistogram(writeToMetric(timer), TimeUnit.MINUTES.toNanos(2), TimeUnit.MINUTES.toNanos(3), UNIT_SECONDS, 1,
+                0.004, 0.004);
 
         stepOverNStep(2);
-        assertHistogram(writeToMetric(timer), TimeUnit.MINUTES.toNanos(4), TimeUnit.MINUTES.toNanos(5),
-                UNIT_SECONDS, 0, 0, 0);
+        assertHistogram(writeToMetric(timer), TimeUnit.MINUTES.toNanos(4), TimeUnit.MINUTES.toNanos(5), UNIT_SECONDS, 0,
+                0, 0);
         timer.record(1, MILLISECONDS);
         stepOverNStep(1);
-        assertHistogram(writeToMetric(timer), TimeUnit.MINUTES.toNanos(5), TimeUnit.MINUTES.toNanos(6),
-                UNIT_SECONDS, 1, 0.001, 0.001);
+        assertHistogram(writeToMetric(timer), TimeUnit.MINUTES.toNanos(5), TimeUnit.MINUTES.toNanos(6), UNIT_SECONDS, 1,
+                0.001, 0.001);
     }
 
     @Test
@@ -187,7 +188,8 @@ class OtlpDeltaMeterRegistryTest extends OtlpMeterRegistryTest {
         stepOverNStep(1);
 
         metric = writeToMetric(timer);
-        assertHistogram(metric, TimeUnit.MINUTES.toNanos(2), TimeUnit.MINUTES.toNanos(3), UNIT_SECONDS, 1, 0.004, 0.004);
+        assertHistogram(metric, TimeUnit.MINUTES.toNanos(2), TimeUnit.MINUTES.toNanos(3), UNIT_SECONDS, 1, 0.004,
+                0.004);
 
         histogramDataPoint = metric.getHistogram().getDataPoints(0);
 
@@ -399,15 +401,15 @@ class OtlpDeltaMeterRegistryTest extends OtlpMeterRegistryTest {
 
         // This should roll over the entire Meter to next step.
         registry.pollMetersToRollover();
-        assertHistogram(writeToMetric(timer), TimeUnit.MINUTES.toNanos(1), TimeUnit.MINUTES.toNanos(2),
-                UNIT_SECONDS, 3, 0.170, 0.150);
+        assertHistogram(writeToMetric(timer), TimeUnit.MINUTES.toNanos(1), TimeUnit.MINUTES.toNanos(2), UNIT_SECONDS, 3,
+                0.170, 0.150);
         assertThat(writeToMetric(timer).getHistogram().getDataPoints(0).getBucketCountsList()).allMatch(e -> e == 1);
         clock.addSeconds(1);
 
         timer.record(Duration.ofMillis(160)); // This belongs to current step.
         assertThat(writeToMetric(timer).getHistogram().getDataPoints(0).getBucketCountsList()).allMatch(e -> e == 1);
-        assertHistogram(writeToMetric(timer), TimeUnit.MINUTES.toNanos(1), TimeUnit.MINUTES.toNanos(2),
-                UNIT_SECONDS, 3, 0.170, 0.150);
+        assertHistogram(writeToMetric(timer), TimeUnit.MINUTES.toNanos(1), TimeUnit.MINUTES.toNanos(2), UNIT_SECONDS, 3,
+                0.170, 0.150);
 
     }
 
@@ -727,6 +729,7 @@ class OtlpDeltaMeterRegistryTest extends OtlpMeterRegistryTest {
             publishedSummaryHistogramSnapshots.add(summary.takeSnapshot());
             return summary;
         }
+
     }
 
 }

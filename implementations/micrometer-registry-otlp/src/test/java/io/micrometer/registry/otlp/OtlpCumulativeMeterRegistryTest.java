@@ -90,11 +90,11 @@ class OtlpCumulativeMeterRegistryTest extends OtlpMeterRegistryTest {
         timer.record(111, TimeUnit.MILLISECONDS);
         clock.add(otlpConfig().step());
         timer.record(4, TimeUnit.MILLISECONDS);
-        assertThat(writeToMetric(timer).toString()).isEqualTo(
-                "name: \"web.requests\"\n" + "description: \"timing web requests\"\n" + "unit: \"seconds\"\n"
-                        + "histogram {\n" + "  data_points {\n" + "    start_time_unix_nano: 1000000\n"
-                        + "    time_unix_nano: 60001000000\n" + "    count: 4\n" + "    sum: 0.202\n" + "  }\n"
-                        + "  aggregation_temporality: AGGREGATION_TEMPORALITY_CUMULATIVE\n" + "}\n");
+        assertThat(writeToMetric(timer).toString())
+            .isEqualTo("name: \"web.requests\"\n" + "description: \"timing web requests\"\n" + "unit: \"seconds\"\n"
+                    + "histogram {\n" + "  data_points {\n" + "    start_time_unix_nano: 1000000\n"
+                    + "    time_unix_nano: 60001000000\n" + "    count: 4\n" + "    sum: 0.202\n" + "  }\n"
+                    + "  aggregation_temporality: AGGREGATION_TEMPORALITY_CUMULATIVE\n" + "}\n");
     }
 
     @Test
@@ -106,68 +106,68 @@ class OtlpCumulativeMeterRegistryTest extends OtlpMeterRegistryTest {
         clock.add(otlpConfig().step());
         timer.record(4, TimeUnit.MILLISECONDS);
 
-        assertThat(writeToMetric(timer).toString())
-            .isEqualTo("name: \"http.client.requests\"\n" + "unit: \"seconds\"\n" + "histogram {\n"
-                    + "  data_points {\n" + "    start_time_unix_nano: 1000000\n" + "    time_unix_nano: 60001000000\n"
-                    + "    count: 4\n" + "    sum: 0.202\n" + "    bucket_counts: 0\n" + "    bucket_counts: 0\n"
-                    + "    bucket_counts: 0\n" + "    bucket_counts: 0\n" + "    bucket_counts: 0\n"
-                    + "    bucket_counts: 0\n" + "    bucket_counts: 0\n" + "    bucket_counts: 0\n"
-                    + "    bucket_counts: 0\n" + "    bucket_counts: 0\n" + "    bucket_counts: 1\n"
-                    + "    bucket_counts: 0\n" + "    bucket_counts: 0\n" + "    bucket_counts: 0\n"
-                    + "    bucket_counts: 0\n" + "    bucket_counts: 1\n" + "    bucket_counts: 0\n"
-                    + "    bucket_counts: 0\n" + "    bucket_counts: 0\n" + "    bucket_counts: 0\n"
-                    + "    bucket_counts: 0\n" + "    bucket_counts: 0\n" + "    bucket_counts: 0\n"
-                    + "    bucket_counts: 0\n" + "    bucket_counts: 0\n" + "    bucket_counts: 0\n"
-                    + "    bucket_counts: 0\n" + "    bucket_counts: 0\n" + "    bucket_counts: 0\n"
-                    + "    bucket_counts: 1\n" + "    bucket_counts: 1\n" + "    bucket_counts: 0\n"
-                    + "    bucket_counts: 0\n" + "    bucket_counts: 0\n" + "    bucket_counts: 0\n"
-                    + "    bucket_counts: 0\n" + "    bucket_counts: 0\n" + "    bucket_counts: 0\n"
-                    + "    bucket_counts: 0\n" + "    bucket_counts: 0\n" + "    bucket_counts: 0\n"
-                    + "    bucket_counts: 0\n" + "    bucket_counts: 0\n" + "    bucket_counts: 0\n"
-                    + "    bucket_counts: 0\n" + "    bucket_counts: 0\n" + "    bucket_counts: 0\n"
-                    + "    bucket_counts: 0\n" + "    bucket_counts: 0\n" + "    bucket_counts: 0\n"
-                    + "    bucket_counts: 0\n" + "    bucket_counts: 0\n" + "    bucket_counts: 0\n"
-                    + "    bucket_counts: 0\n" + "    bucket_counts: 0\n" + "    bucket_counts: 0\n"
-                    + "    bucket_counts: 0\n" + "    bucket_counts: 0\n" + "    bucket_counts: 0\n"
-                    + "    bucket_counts: 0\n" + "    bucket_counts: 0\n" + "    bucket_counts: 0\n"
-                    + "    bucket_counts: 0\n" + "    bucket_counts: 0\n" + "    bucket_counts: 0\n"
-                    + "    bucket_counts: 0\n" + "    bucket_counts: 0\n" + "    bucket_counts: 0\n"
-                    + "    explicit_bounds: 0.001\n" + "    explicit_bounds: 0.001048576\n"
-                    + "    explicit_bounds: 0.001398101\n" + "    explicit_bounds: 0.001747626\n"
-                    + "    explicit_bounds: 0.002097151\n" + "    explicit_bounds: 0.002446676\n"
-                    + "    explicit_bounds: 0.002796201\n" + "    explicit_bounds: 0.003145726\n"
-                    + "    explicit_bounds: 0.003495251\n" + "    explicit_bounds: 0.003844776\n"
-                    + "    explicit_bounds: 0.004194304\n" + "    explicit_bounds: 0.005592405\n"
-                    + "    explicit_bounds: 0.006990506\n" + "    explicit_bounds: 0.008388607\n"
-                    + "    explicit_bounds: 0.009786708\n" + "    explicit_bounds: 0.011184809\n"
-                    + "    explicit_bounds: 0.01258291\n" + "    explicit_bounds: 0.013981011\n"
-                    + "    explicit_bounds: 0.015379112\n" + "    explicit_bounds: 0.016777216\n"
-                    + "    explicit_bounds: 0.022369621\n" + "    explicit_bounds: 0.027962026\n"
-                    + "    explicit_bounds: 0.033554431\n" + "    explicit_bounds: 0.039146836\n"
-                    + "    explicit_bounds: 0.044739241\n" + "    explicit_bounds: 0.050331646\n"
-                    + "    explicit_bounds: 0.055924051\n" + "    explicit_bounds: 0.061516456\n"
-                    + "    explicit_bounds: 0.067108864\n" + "    explicit_bounds: 0.089478485\n"
-                    + "    explicit_bounds: 0.111848106\n" + "    explicit_bounds: 0.134217727\n"
-                    + "    explicit_bounds: 0.156587348\n" + "    explicit_bounds: 0.178956969\n"
-                    + "    explicit_bounds: 0.20132659\n" + "    explicit_bounds: 0.223696211\n"
-                    + "    explicit_bounds: 0.246065832\n" + "    explicit_bounds: 0.268435456\n"
-                    + "    explicit_bounds: 0.357913941\n" + "    explicit_bounds: 0.447392426\n"
-                    + "    explicit_bounds: 0.536870911\n" + "    explicit_bounds: 0.626349396\n"
-                    + "    explicit_bounds: 0.715827881\n" + "    explicit_bounds: 0.805306366\n"
-                    + "    explicit_bounds: 0.894784851\n" + "    explicit_bounds: 0.984263336\n"
-                    + "    explicit_bounds: 1.073741824\n" + "    explicit_bounds: 1.431655765\n"
-                    + "    explicit_bounds: 1.789569706\n" + "    explicit_bounds: 2.147483647\n"
-                    + "    explicit_bounds: 2.505397588\n" + "    explicit_bounds: 2.863311529\n"
-                    + "    explicit_bounds: 3.22122547\n" + "    explicit_bounds: 3.579139411\n"
-                    + "    explicit_bounds: 3.937053352\n" + "    explicit_bounds: 4.294967296\n"
-                    + "    explicit_bounds: 5.726623061\n" + "    explicit_bounds: 7.158278826\n"
-                    + "    explicit_bounds: 8.589934591\n" + "    explicit_bounds: 10.021590356\n"
-                    + "    explicit_bounds: 11.453246121\n" + "    explicit_bounds: 12.884901886\n"
-                    + "    explicit_bounds: 14.316557651\n" + "    explicit_bounds: 15.748213416\n"
-                    + "    explicit_bounds: 17.179869184\n" + "    explicit_bounds: 22.906492245\n"
-                    + "    explicit_bounds: 28.633115306\n" + "    explicit_bounds: 30.0\n" + "  }\n"
-                    + "  aggregation_temporality: AGGREGATION_TEMPORALITY_CUMULATIVE\n" + "}\n");
+        assertThat(writeToMetric(timer).toString()).isEqualTo("name: \"http.client.requests\"\n" + "unit: \"seconds\"\n"
+                + "histogram {\n" + "  data_points {\n" + "    start_time_unix_nano: 1000000\n"
+                + "    time_unix_nano: 60001000000\n" + "    count: 4\n" + "    sum: 0.202\n" + "    bucket_counts: 0\n"
+                + "    bucket_counts: 0\n" + "    bucket_counts: 0\n" + "    bucket_counts: 0\n"
+                + "    bucket_counts: 0\n" + "    bucket_counts: 0\n" + "    bucket_counts: 0\n"
+                + "    bucket_counts: 0\n" + "    bucket_counts: 0\n" + "    bucket_counts: 0\n"
+                + "    bucket_counts: 1\n" + "    bucket_counts: 0\n" + "    bucket_counts: 0\n"
+                + "    bucket_counts: 0\n" + "    bucket_counts: 0\n" + "    bucket_counts: 1\n"
+                + "    bucket_counts: 0\n" + "    bucket_counts: 0\n" + "    bucket_counts: 0\n"
+                + "    bucket_counts: 0\n" + "    bucket_counts: 0\n" + "    bucket_counts: 0\n"
+                + "    bucket_counts: 0\n" + "    bucket_counts: 0\n" + "    bucket_counts: 0\n"
+                + "    bucket_counts: 0\n" + "    bucket_counts: 0\n" + "    bucket_counts: 0\n"
+                + "    bucket_counts: 0\n" + "    bucket_counts: 1\n" + "    bucket_counts: 1\n"
+                + "    bucket_counts: 0\n" + "    bucket_counts: 0\n" + "    bucket_counts: 0\n"
+                + "    bucket_counts: 0\n" + "    bucket_counts: 0\n" + "    bucket_counts: 0\n"
+                + "    bucket_counts: 0\n" + "    bucket_counts: 0\n" + "    bucket_counts: 0\n"
+                + "    bucket_counts: 0\n" + "    bucket_counts: 0\n" + "    bucket_counts: 0\n"
+                + "    bucket_counts: 0\n" + "    bucket_counts: 0\n" + "    bucket_counts: 0\n"
+                + "    bucket_counts: 0\n" + "    bucket_counts: 0\n" + "    bucket_counts: 0\n"
+                + "    bucket_counts: 0\n" + "    bucket_counts: 0\n" + "    bucket_counts: 0\n"
+                + "    bucket_counts: 0\n" + "    bucket_counts: 0\n" + "    bucket_counts: 0\n"
+                + "    bucket_counts: 0\n" + "    bucket_counts: 0\n" + "    bucket_counts: 0\n"
+                + "    bucket_counts: 0\n" + "    bucket_counts: 0\n" + "    bucket_counts: 0\n"
+                + "    bucket_counts: 0\n" + "    bucket_counts: 0\n" + "    bucket_counts: 0\n"
+                + "    bucket_counts: 0\n" + "    bucket_counts: 0\n" + "    bucket_counts: 0\n"
+                + "    bucket_counts: 0\n" + "    explicit_bounds: 0.001\n" + "    explicit_bounds: 0.001048576\n"
+                + "    explicit_bounds: 0.001398101\n" + "    explicit_bounds: 0.001747626\n"
+                + "    explicit_bounds: 0.002097151\n" + "    explicit_bounds: 0.002446676\n"
+                + "    explicit_bounds: 0.002796201\n" + "    explicit_bounds: 0.003145726\n"
+                + "    explicit_bounds: 0.003495251\n" + "    explicit_bounds: 0.003844776\n"
+                + "    explicit_bounds: 0.004194304\n" + "    explicit_bounds: 0.005592405\n"
+                + "    explicit_bounds: 0.006990506\n" + "    explicit_bounds: 0.008388607\n"
+                + "    explicit_bounds: 0.009786708\n" + "    explicit_bounds: 0.011184809\n"
+                + "    explicit_bounds: 0.01258291\n" + "    explicit_bounds: 0.013981011\n"
+                + "    explicit_bounds: 0.015379112\n" + "    explicit_bounds: 0.016777216\n"
+                + "    explicit_bounds: 0.022369621\n" + "    explicit_bounds: 0.027962026\n"
+                + "    explicit_bounds: 0.033554431\n" + "    explicit_bounds: 0.039146836\n"
+                + "    explicit_bounds: 0.044739241\n" + "    explicit_bounds: 0.050331646\n"
+                + "    explicit_bounds: 0.055924051\n" + "    explicit_bounds: 0.061516456\n"
+                + "    explicit_bounds: 0.067108864\n" + "    explicit_bounds: 0.089478485\n"
+                + "    explicit_bounds: 0.111848106\n" + "    explicit_bounds: 0.134217727\n"
+                + "    explicit_bounds: 0.156587348\n" + "    explicit_bounds: 0.178956969\n"
+                + "    explicit_bounds: 0.20132659\n" + "    explicit_bounds: 0.223696211\n"
+                + "    explicit_bounds: 0.246065832\n" + "    explicit_bounds: 0.268435456\n"
+                + "    explicit_bounds: 0.357913941\n" + "    explicit_bounds: 0.447392426\n"
+                + "    explicit_bounds: 0.536870911\n" + "    explicit_bounds: 0.626349396\n"
+                + "    explicit_bounds: 0.715827881\n" + "    explicit_bounds: 0.805306366\n"
+                + "    explicit_bounds: 0.894784851\n" + "    explicit_bounds: 0.984263336\n"
+                + "    explicit_bounds: 1.073741824\n" + "    explicit_bounds: 1.431655765\n"
+                + "    explicit_bounds: 1.789569706\n" + "    explicit_bounds: 2.147483647\n"
+                + "    explicit_bounds: 2.505397588\n" + "    explicit_bounds: 2.863311529\n"
+                + "    explicit_bounds: 3.22122547\n" + "    explicit_bounds: 3.579139411\n"
+                + "    explicit_bounds: 3.937053352\n" + "    explicit_bounds: 4.294967296\n"
+                + "    explicit_bounds: 5.726623061\n" + "    explicit_bounds: 7.158278826\n"
+                + "    explicit_bounds: 8.589934591\n" + "    explicit_bounds: 10.021590356\n"
+                + "    explicit_bounds: 11.453246121\n" + "    explicit_bounds: 12.884901886\n"
+                + "    explicit_bounds: 14.316557651\n" + "    explicit_bounds: 15.748213416\n"
+                + "    explicit_bounds: 17.179869184\n" + "    explicit_bounds: 22.906492245\n"
+                + "    explicit_bounds: 28.633115306\n" + "    explicit_bounds: 30.0\n" + "  }\n"
+                + "  aggregation_temporality: AGGREGATION_TEMPORALITY_CUMULATIVE\n" + "}\n");
     }
+
     @Test
     void timerWithPercentiles() {
         Timer timer = Timer.builder("service.requests").publishPercentiles(0.5, 0.9, 0.99).register(registry);
@@ -175,13 +175,12 @@ class OtlpCumulativeMeterRegistryTest extends OtlpMeterRegistryTest {
         timer.record(77, TimeUnit.MILLISECONDS);
         timer.record(111, TimeUnit.MILLISECONDS);
 
-        assertThat(writeToMetric(timer).toString())
-            .isEqualTo("name: \"service.requests\"\n" + "unit: \"seconds\"\n" + "summary {\n" + "  data_points {\n"
-                    + "    start_time_unix_nano: 1000000\n" + "    time_unix_nano: 1000000\n" + "    count: 3\n"
-                    + "    sum: 0.198\n" + "    quantile_values {\n" + "      quantile: 0.5\n"
-                    + "      value: 0.079167488\n" + "    }\n" + "    quantile_values {\n" + "      quantile: 0.9\n"
-                    + "      value: 0.11272192\n" + "    }\n" + "    quantile_values {\n" + "      quantile: 0.99\n"
-                    + "      value: 0.11272192\n" + "    }\n" + "  }\n" + "}\n");
+        assertThat(writeToMetric(timer).toString()).isEqualTo("name: \"service.requests\"\n" + "unit: \"seconds\"\n"
+                + "summary {\n" + "  data_points {\n" + "    start_time_unix_nano: 1000000\n"
+                + "    time_unix_nano: 1000000\n" + "    count: 3\n" + "    sum: 0.198\n" + "    quantile_values {\n"
+                + "      quantile: 0.5\n" + "      value: 0.079167488\n" + "    }\n" + "    quantile_values {\n"
+                + "      quantile: 0.9\n" + "      value: 0.11272192\n" + "    }\n" + "    quantile_values {\n"
+                + "      quantile: 0.99\n" + "      value: 0.11272192\n" + "    }\n" + "  }\n" + "}\n");
     }
 
     @Test
@@ -190,11 +189,10 @@ class OtlpCumulativeMeterRegistryTest extends OtlpMeterRegistryTest {
             .builder("function.timer", this, o -> 5, o -> 127, TimeUnit.MILLISECONDS)
             .register(registry);
 
-        assertThat(writeToMetric(functionTimer).toString())
-            .isEqualTo("name: \"function.timer\"\n" + "unit: \"seconds\"\n" + "histogram {\n" + "  data_points {\n"
-                    + "    start_time_unix_nano: 1000000\n" + "    time_unix_nano: 1000000\n" + "    count: 5\n"
-                    + "    sum: 0.127\n" + "  }\n" + "  aggregation_temporality: AGGREGATION_TEMPORALITY_CUMULATIVE\n"
-                    + "}\n");
+        assertThat(writeToMetric(functionTimer).toString()).isEqualTo("name: \"function.timer\"\n"
+                + "unit: \"seconds\"\n" + "histogram {\n" + "  data_points {\n" + "    start_time_unix_nano: 1000000\n"
+                + "    time_unix_nano: 1000000\n" + "    count: 5\n" + "    sum: 0.127\n" + "  }\n"
+                + "  aggregation_temporality: AGGREGATION_TEMPORALITY_CUMULATIVE\n" + "}\n");
     }
 
     @Test
@@ -482,11 +480,10 @@ class OtlpCumulativeMeterRegistryTest extends OtlpMeterRegistryTest {
         LongTaskTimer.Sample task2 = taskTimer.start();
         this.clock.add(otlpConfig().step().multipliedBy(3));
 
-        assertThat(writeToMetric(taskTimer).toString())
-            .isEqualTo("name: \"checkout.batch\"\n" + "unit: \"seconds\"\n" + "histogram {\n" + "  data_points {\n"
-                    + "    start_time_unix_nano: 1000000\n" + "    time_unix_nano: 180001000000\n" + "    count: 2\n"
-                    + "    sum: 360.0\n" + "  }\n"
-                    + "  aggregation_temporality: AGGREGATION_TEMPORALITY_CUMULATIVE\n" + "}\n");
+        assertThat(writeToMetric(taskTimer).toString()).isEqualTo("name: \"checkout.batch\"\n" + "unit: \"seconds\"\n"
+                + "histogram {\n" + "  data_points {\n" + "    start_time_unix_nano: 1000000\n"
+                + "    time_unix_nano: 180001000000\n" + "    count: 2\n" + "    sum: 360.0\n" + "  }\n"
+                + "  aggregation_temporality: AGGREGATION_TEMPORALITY_CUMULATIVE\n" + "}\n");
 
         task1.stop();
         task2.stop();
