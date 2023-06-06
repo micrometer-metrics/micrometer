@@ -16,16 +16,16 @@
 
 package io.micrometer.common;
 
-import java.lang.management.ManagementFactory;
-import java.util.*;
-import java.util.stream.Stream;
-
 import com.sun.management.ThreadMXBean;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
 import org.junit.jupiter.api.condition.EnabledForJreRange;
 import org.junit.jupiter.api.condition.EnabledIf;
 import org.junit.jupiter.api.condition.JRE;
+
+import java.lang.management.ManagementFactory;
+import java.util.*;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -105,9 +105,21 @@ class KeyValuesTest {
         assertThat(KeyValues.of((String[]) null)).isSameAs(KeyValues.empty());
     }
 
+    // @Issue("#3851")
+    @Test
+    void nullKeyValuesShouldProduceEmptyTags() {
+        assertThat(KeyValues.of((String) null)).isSameAs(KeyValues.empty());
+    }
+
     @Test
     void nullKeyValueArrayShouldProduceEmptyKeyValues() {
         assertThat(KeyValues.of((KeyValue[]) null)).isSameAs(KeyValues.empty());
+    }
+
+    // @Issue("#3851")
+    @Test
+    void nullKeyValueShouldProduceEmptyKeyValues() {
+        assertThat(KeyValues.of((KeyValue) null)).isSameAs(KeyValues.empty());
     }
 
     @Test
@@ -131,6 +143,14 @@ class KeyValuesTest {
     void concatOnTwoKeyValuesWithSameKeyAreMergedIntoOneKeyValue() {
         Iterable<KeyValue> keyValues = KeyValues.concat(KeyValues.of("k", "v1"), "k", "v2");
         assertThat(keyValues).containsExactly(KeyValue.of("k", "v2"));
+    }
+
+    // @Issue("#3851")
+    @Test
+    void concatWhenKeyValuesAreNullShouldReturnCurrentInstance() {
+        KeyValues source = KeyValues.of("k", "v1");
+        KeyValues concatenated = KeyValues.concat(source, (String) null);
+        assertThat(source).isSameAs(concatenated);
     }
 
     @Test
@@ -170,9 +190,17 @@ class KeyValuesTest {
     }
 
     @Test
-    void andKeyValuesStringArrayWhenKeyValuesAreNullShouldReturnCurrentInstance() {
+    void andKeyValuesStringArrayWhenKeyValuesArrayIsNullShouldReturnCurrentInstance() {
         KeyValues source = KeyValues.of("t1", "v1");
         KeyValues merged = source.and((String[]) null);
+        assertThat(source).isSameAs(merged);
+    }
+
+    // @Issue("#3851")
+    @Test
+    void andKeyValuesStringArrayWhenKeyValuesAreNullShouldReturnCurrentInstance() {
+        KeyValues source = KeyValues.of("t1", "v1");
+        KeyValues merged = source.and((String) null);
         assertThat(source).isSameAs(merged);
     }
 
@@ -193,9 +221,17 @@ class KeyValuesTest {
     }
 
     @Test
-    void andKeyValuesWhenKeyValuesAreNullShouldReturnCurrentInstance() {
+    void andKeyValuesWhenKeyValuesArrayIsNullShouldReturnCurrentInstance() {
         KeyValues source = KeyValues.of("t1", "v1");
         KeyValues merged = source.and((KeyValue[]) null);
+        assertThat(source).isSameAs(merged);
+    }
+
+    // @Issue("#3851")
+    @Test
+    void andKeyValuesWhenKeyValueIsNullShouldReturnCurrentInstance() {
+        KeyValues source = KeyValues.of("t1", "v1");
+        KeyValues merged = source.and((KeyValue) null);
         assertThat(source).isSameAs(merged);
     }
 
