@@ -163,11 +163,9 @@ public abstract class StepMeterRegistry extends PushMeterRegistry {
     }
 
     /**
-     * Performs closing rollover on StepMeters. StepRegistries that use a custom
-     * implementation of StepMeters can override this method to provide a custom
-     * implementation of closing rollovers.
+     * Performs closing rollover on StepMeters.
      */
-    protected void closeStepMeters() {
+    private void closeStepMeters() {
         getMeters().stream()
             .filter(StepMeter.class::isInstance)
             .map(StepMeter.class::cast)
