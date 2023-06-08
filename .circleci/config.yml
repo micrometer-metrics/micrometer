@@ -40,8 +40,7 @@ commands:
     steps:
       - checkout
       - restore_cache:
-          keys:
-            - gradle-dependencies-{{ .Branch }}-{{ checksum "build.gradle" }}-{{ checksum ".circleci/config.yml" }}
+          key: gradle-dependencies-{{ .Branch }}-{{ checksum "build.gradle" }}-{{ checksum ".circleci/config.yml" }}
       - run:
           name: downloadDependencies
           command: ./gradlew downloadDependencies --console=plain
@@ -97,7 +96,7 @@ jobs:
     steps:
       - checkout
       - restore_cache:
-          key: gradle-dependencies-{{ checksum "build.gradle" }}-{{ checksum ".circleci/config.yml" }}
+          key: gradle-dependencies-{{ .Branch }}-{{ checksum "build.gradle" }}-{{ checksum ".circleci/config.yml" }}
       - deploy:
           name: Deployment
           command: sh ./gradle/deploy.sh
