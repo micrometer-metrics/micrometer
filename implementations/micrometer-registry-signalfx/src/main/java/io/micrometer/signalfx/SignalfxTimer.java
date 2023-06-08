@@ -44,11 +44,11 @@ final class SignalfxTimer extends StepTimer {
         super(id, clock, distributionStatisticConfig, pauseDetector, baseTimeUnit, stepMillis, defaultHistogram(clock,
                 CumulativeHistogramConfigUtil.updateConfig(distributionStatisticConfig, isDelta), false));
 
-        if (distributionStatisticConfig.isPublishingHistogram() && isDelta) {
+        double[] slo = distributionStatisticConfig.getServiceLevelObjectiveBoundaries();
+        if (slo != null && slo.length > 0 && isDelta) {
             stepBucketHistogram = new StepBucketHistogram(clock, stepMillis,
                     DistributionStatisticConfig.builder()
-                        .serviceLevelObjectives(CumulativeHistogramConfigUtil
-                            .addPositiveInfBucket(distributionStatisticConfig.getServiceLevelObjectiveBoundaries()))
+                        .serviceLevelObjectives(CumulativeHistogramConfigUtil.addPositiveInfBucket(slo))
                         .build()
                         .merge(distributionStatisticConfig),
                     false, true);
