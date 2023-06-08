@@ -21,6 +21,7 @@ import io.micrometer.core.instrument.DistributionSummary;
 import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.distribution.CountAtBucket;
+import io.micrometer.core.instrument.step.PollingAwareMockStepClock;
 import io.micrometer.core.instrument.util.DoubleFormat;
 import org.assertj.core.api.Condition;
 import org.assertj.core.util.Arrays;
@@ -525,7 +526,7 @@ class SignalFxMeterRegistryTest {
     @Test
     @Issue("3774")
     void deltaHistogramCountsShouldMatchWithTimerCount() {
-        MockClock mockClock = new MockClock();
+        PollingAwareMockStepClock mockClock = new PollingAwareMockStepClock(cumulativeDeltaConfig);
         SignalFxMeterRegistry registry = new SignalFxMeterRegistry(cumulativeDeltaConfig, mockClock);
         Duration[] buckets = new Duration[] { Duration.ofMillis(10), Duration.ofMillis(50), Duration.ofMillis(100) };
         Timer timer = Timer.builder("my.timer").serviceLevelObjectives(buckets).register(registry);
@@ -537,10 +538,8 @@ class SignalFxMeterRegistryTest {
 
         // Advance time, so we are in the "next" step where currently recorded values will
         // be reported.
-        mockClock.add(config.step());
-        registry.pollMetersToRollover(); // Poll service rolls the step meters.
-
-        mockClock.add(config.step().dividedBy(2));
+        mockClock.add(config.step(), registry);
+        mockClock.add(config.step().dividedBy(2), registry);
         // Recording for next step has started. But these values should be reported only
         // in then next step.
         timer.record(5, TimeUnit.MILLISECONDS);
@@ -565,8 +564,7 @@ class SignalFxMeterRegistryTest {
 
         // Advance time, so we are in the "next" step where currently recorded values will
         // be reported.
-        mockClock.add(config.step());
-        registry.pollMetersToRollover();
+        mockClock.add(config.step(), registry);
 
         dataPoints = getDataPoints(registry, mockClock.wallTime());
         // Assert that data recorded for previous step is available.

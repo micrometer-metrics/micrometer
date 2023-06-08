@@ -260,20 +260,4 @@ public class SignalFxMeterRegistry extends StepMeterRegistry {
         return TimeUnit.SECONDS;
     }
 
-    @Override
-    protected void pollMetersToRollover() {
-        if (config.publishDeltaHistogram()) {
-            // When delta histogram is enabled, force a takeSnapShot on the timer to roll
-            // Over the count, total and
-            // histograms altogether.
-            this.getMeters()
-                .forEach(m -> m.match(gauge -> null, Counter::count, Timer::takeSnapshot,
-                        DistributionSummary::takeSnapshot, meter -> null, meter -> null, FunctionCounter::count,
-                        FunctionTimer::count, meter -> null));
-        }
-        else {
-            super.pollMetersToRollover();
-        }
-    }
-
 }

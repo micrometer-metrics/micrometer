@@ -64,6 +64,14 @@ final class SignalfxDistributionSummary extends StepDistributionSummary {
     }
 
     @Override
+    public long count() {
+        if (stepBucketHistogram != null) {
+            stepBucketHistogram.poll();
+        }
+        return super.count();
+    }
+
+    @Override
     public HistogramSnapshot takeSnapshot() {
         HistogramSnapshot currentSnapshot = super.takeSnapshot();
         if (stepBucketHistogram == null) {
