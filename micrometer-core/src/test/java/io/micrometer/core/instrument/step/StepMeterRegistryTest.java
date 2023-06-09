@@ -323,7 +323,7 @@ class StepMeterRegistryTest {
 
     @Test
     @Issue("#3863")
-    void shouldPublishLastCompletedStepOnClosingRollover() {
+    void shouldPublishLastCompletedStepWhenClosingBeforeScheduledPublish() {
         Counter counter = Counter.builder("counter_3863").register(registry);
         Timer timer = Timer.builder("timer_3863").register(registry);
         DistributionSummary summary = DistributionSummary.builder("summary_3863").register(registry);
