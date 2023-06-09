@@ -66,6 +66,9 @@ final class SignalfxDistributionSummary extends StepDistributionSummary {
     @Override
     public long count() {
         if (stepBucketHistogram != null) {
+            // Force the stepBucketHistogram to be aligned to step by calling count. This
+            // ensures that all
+            // values exported by the Timer are measured for the same step.
             stepBucketHistogram.poll();
         }
         return super.count();

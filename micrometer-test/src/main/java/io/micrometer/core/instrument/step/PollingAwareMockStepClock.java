@@ -20,6 +20,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 
+import io.micrometer.core.annotation.Incubating;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.util.TimeUtils;
 
@@ -28,6 +29,7 @@ import io.micrometer.core.instrument.util.TimeUtils;
  * {@link StepMeterRegistry#pollMetersToRollover()} whenever the step is crossed thus
  * simulating the expected behaviour of step meters.
  */
+@Incubating(since = "1.11.1")
 public class PollingAwareMockStepClock implements Clock {
 
     private final Duration step;
