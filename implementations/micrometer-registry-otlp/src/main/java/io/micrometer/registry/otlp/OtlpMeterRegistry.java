@@ -82,6 +82,8 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
 
     private final io.opentelemetry.proto.metrics.v1.AggregationTemporality otlpAggregationTemporality;
 
+    private final TimeUnit baseTimeUnit;
+
     private long deltaAggregationTimeUnixNano = 0L;
 
     @Nullable
@@ -100,6 +102,7 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
     private OtlpMeterRegistry(OtlpConfig config, Clock clock, HttpSender httpSender) {
         super(config, clock);
         this.config = config;
+        this.baseTimeUnit = config.baseTimeUnit();
         this.httpSender = httpSender;
         this.resource = Resource.newBuilder().addAllAttributes(getResourceAttributes()).build();
         this.otlpAggregationTemporality = AggregationTemporality
@@ -222,7 +225,7 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
 
     @Override
     protected TimeUnit getBaseTimeUnit() {
-        return TimeUnit.MILLISECONDS;
+        return baseTimeUnit;
     }
 
     @Override
