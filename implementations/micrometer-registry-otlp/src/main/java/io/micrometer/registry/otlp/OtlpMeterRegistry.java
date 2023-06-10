@@ -81,6 +81,7 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
     private final Resource resource;
 
     private final io.opentelemetry.proto.metrics.v1.AggregationTemporality otlpAggregationTemporality;
+
     private final TimeUnit baseTimeUnit;
 
     private long deltaAggregationTimeUnixNano = 0L;
