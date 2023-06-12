@@ -72,6 +72,14 @@ public class ObservationThreadLocalAccessor implements ThreadLocalAccessor<Obser
     }
 
     /**
+     * Returns the provided {@link ObservationRegistry}.
+     * @return observation registry
+     */
+    public ObservationRegistry getObservationRegistry() {
+        return this.observationRegistry;
+    }
+
+    /**
      * Return the singleton instance of this {@link ObservationThreadLocalAccessor}.
      * @return instance
      */
