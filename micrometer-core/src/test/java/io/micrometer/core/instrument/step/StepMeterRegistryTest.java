@@ -175,14 +175,7 @@ class StepMeterRegistryTest {
             .register(registry);
 
         // before step rollover
-        assertThat(counter.count()).isZero();
-        assertThat(timer.count()).isZero();
-        assertThat(timer.totalTime(MILLISECONDS)).isZero();
-        assertThat(summary.count()).isZero();
-        assertThat(summary.totalAmount()).isZero();
-        assertThat(functionCounter.count()).isZero();
-        assertThat(functionTimer.count()).isZero();
-        assertThat(functionTimer.totalTime(MILLISECONDS)).isZero();
+        assertBeforeRollover(counter, timer, summary, functionCounter, functionTimer);
 
         registry.close();
 
@@ -224,17 +217,10 @@ class StepMeterRegistryTest {
             .register(registry);
 
         // before step rollover
-        assertThat(counter.count()).isZero();
-        assertThat(timer.count()).isZero();
-        assertThat(timer.totalTime(MILLISECONDS)).isZero();
-        assertThat(summary.count()).isZero();
-        assertThat(summary.totalAmount()).isZero();
-        assertThat(functionCounter.count()).isZero();
-        assertThat(functionTimer.count()).isZero();
-        assertThat(functionTimer.totalTime(MILLISECONDS)).isZero();
+        assertBeforeRollover(counter, timer, summary, functionCounter, functionTimer);
 
-        clock.add(config.step());
-        registry.publish();
+        addTimeWithRolloverOnStepStart(clock, registry, config, config.step());
+        registry.scheduledPublish();
 
         assertThat(registry.publishedCounterCounts).hasSize(1);
         assertThat(registry.publishedCounterCounts.pop()).isOne();
@@ -254,7 +240,7 @@ class StepMeterRegistryTest {
         assertThat(registry.publishedFunctionTimerTotals.pop()).isEqualTo(53);
 
         // set clock to middle of second step
-        clock.add(config.step().dividedBy(2));
+        addTimeWithRolloverOnStepStart(clock, registry, config, config.step().dividedBy(2));
         // record some more values in new step interval
         counter.increment(2);
         timer.record(6, MILLISECONDS);
@@ -309,14 +295,7 @@ class StepMeterRegistryTest {
             .register(registry);
 
         // before rollover
-        assertThat(counter.count()).isZero();
-        assertThat(timer.count()).isZero();
-        assertThat(timer.totalTime(MILLISECONDS)).isZero();
-        assertThat(summary.count()).isZero();
-        assertThat(summary.totalAmount()).isZero();
-        assertThat(functionCounter.count()).isZero();
-        assertThat(functionTimer.count()).isZero();
-        assertThat(functionTimer.totalTime(MILLISECONDS)).isZero();
+        assertBeforeRollover(counter, timer, summary, functionCounter, functionTimer);
 
         // before publishing, simulate a step boundary being crossed after forced rollover
         // on close and before/during publishing
@@ -343,6 +322,57 @@ class StepMeterRegistryTest {
     }
 
     @Test
+    @Issue("#3863")
+    void shouldPublishLastCompletedStepWhenClosingBeforeScheduledPublish() {
+        Counter counter = Counter.builder("counter_3863").register(registry);
+        Timer timer = Timer.builder("timer_3863").register(registry);
+        DistributionSummary summary = DistributionSummary.builder("summary_3863").register(registry);
+
+        AtomicLong functionValue = new AtomicLong(0);
+        FunctionCounter functionCounter = FunctionCounter
+            .builder("counter.function_3863", functionValue, AtomicLong::get)
+            .register(registry);
+        FunctionTimer functionTimer = FunctionTimer
+            .builder("timer.function_3863", this, obj -> 3, obj -> 53, MILLISECONDS)
+            .register(registry);
+
+        counter.increment();
+        timer.record(5, MILLISECONDS);
+        summary.record(5);
+        functionValue.set(1);
+
+        // before rollover
+        assertBeforeRollover(counter, timer, summary, functionCounter, functionTimer);
+
+        addTimeWithRolloverOnStepStart(clock, registry, config, Duration.ofSeconds(60));
+
+        // All new recordings now belong to next step.
+        counter.increment(2);
+        timer.record(10, MILLISECONDS);
+        summary.record(10);
+        functionValue.incrementAndGet();
+
+        // Simulating the application close behaviour before actual publishing happens.
+        registry.close();
+
+        assertThat(registry.publishedCounterCounts).hasSize(2);
+        assertThat(registry.sumAllPublishedValues(registry.publishedCounterCounts)).isEqualTo(3);
+        assertThat(registry.publishedTimerCounts).hasSize(2);
+        assertThat(registry.sumAllPublishedValues(registry.publishedTimerCounts)).isEqualTo(2);
+        assertThat(registry.sumAllPublishedValues(registry.publishedTimerSumMilliseconds)).isEqualTo(15);
+        assertThat(registry.publishedSummaryCounts).hasSize(2);
+        assertThat(registry.sumAllPublishedValues(registry.publishedSummaryCounts)).isEqualTo(2);
+        assertThat(registry.sumAllPublishedValues(registry.publishedSummaryTotals)).isEqualTo(15);
+
+        assertThat(registry.publishedFunctionCounterCounts).hasSize(2);
+        assertThat(registry.sumAllPublishedValues(registry.publishedFunctionCounterCounts)).isEqualTo(2);
+
+        assertThat(registry.publishedFunctionTimerCounts).hasSize(2);
+        assertThat(registry.sumAllPublishedValues(registry.publishedFunctionTimerCounts)).isEqualTo(3);
+        assertThat(registry.sumAllPublishedValues(registry.publishedFunctionTimerTotals)).isEqualTo(53);
+    }
+
+    @Test
     @Issue("#2818")
     void scheduledRollOver() {
         Counter counter = Counter.builder("counter").register(registry);
@@ -357,28 +387,17 @@ class StepMeterRegistryTest {
             .register(registry);
 
         // before rollover
-        assertThat(counter.count()).isZero();
-        assertThat(timer.count()).isZero();
-        assertThat(timer.totalTime(MILLISECONDS)).isZero();
-        assertThat(summary.count()).isZero();
-        assertThat(summary.totalAmount()).isZero();
-        assertThat(functionCounter.count()).isZero();
-        assertThat(functionTimer.count()).isZero();
-        assertThat(functionTimer.totalTime(MILLISECONDS)).isZero();
+        assertBeforeRollover(counter, timer, summary, functionCounter, functionTimer);
 
-        clock.addSeconds(60);
-        // simulate this being scheduled at the start of the step
-        registry.pollMetersToRollover();
-
-        clock.addSeconds(1);
+        addTimeWithRolloverOnStepStart(clock, registry, config, Duration.ofSeconds(60));
         // these recordings belong to the current step and should not be published
         counter.increment();
         timer.record(5, MILLISECONDS);
         summary.record(8);
-        clock.addSeconds(10);
+        addTimeWithRolloverOnStepStart(clock, registry, config, Duration.ofSeconds(10));
 
         // recordings that happened in the previous step should be published
-        registry.publish();
+        registry.scheduledPublish();
         assertThat(registry.publishedCounterCounts).hasSize(1);
         assertThat(registry.publishedCounterCounts.pop()).isOne();
         assertThat(registry.publishedTimerCounts).hasSize(1);
@@ -415,6 +434,8 @@ class StepMeterRegistryTest {
 
         Deque<Double> publishedFunctionTimerTotals = new ArrayDeque<>();
 
+        private long lastScheduledPublishStartTime = 0L;
+
         @Nullable
         Runnable prePublishAction;
 
@@ -436,6 +457,16 @@ class StepMeterRegistryTest {
                 .map(meter -> meter.match(g -> null, this::publishCounter, this::publishTimer, this::publishSummary,
                         null, tg -> null, this::publishFunctionCounter, this::publishFunctionTimer, m -> null))
                 .collect(Collectors.toList());
+        }
+
+        private void scheduledPublish() {
+            this.lastScheduledPublishStartTime = clock.wallTime();
+            this.publish();
+        }
+
+        @Override
+        protected long getLastScheduledPublishStartTime() {
+            return lastScheduledPublishStartTime;
         }
 
         private Timer publishTimer(Timer timer) {
@@ -466,11 +497,52 @@ class StepMeterRegistryTest {
             return summary;
         }
 
+        <T extends Number> double sumAllPublishedValues(Deque<T> deque) {
+            double sum = 0;
+            while (!deque.isEmpty()) {
+                sum += deque.pop().doubleValue();
+            }
+            return sum;
+        }
+
         @Override
         protected TimeUnit getBaseTimeUnit() {
             return TimeUnit.SECONDS;
         }
 
+    }
+
+    private static void assertBeforeRollover(final Counter counter, final Timer timer,
+            final DistributionSummary summary, final FunctionCounter functionCounter,
+            final FunctionTimer functionTimer) {
+        assertThat(counter.count()).isZero();
+        assertThat(timer.count()).isZero();
+        assertThat(timer.totalTime(MILLISECONDS)).isZero();
+        assertThat(summary.count()).isZero();
+        assertThat(summary.totalAmount()).isZero();
+        assertThat(functionCounter.count()).isZero();
+        assertThat(functionTimer.count()).isZero();
+        assertThat(functionTimer.totalTime(MILLISECONDS)).isZero();
+    }
+
+    /**
+     * This method simulates the behaviour StepRegistry will exhibit when rollOver is
+     * scheduled on a thread. This calls {@link StepMeterRegistry#pollMetersToRollover()}
+     * as soon as the step is crossed.
+     */
+    private void addTimeWithRolloverOnStepStart(MockClock clock, StepMeterRegistry registry, StepRegistryConfig config,
+            Duration timeToAdd) {
+
+        long currentTime = clock.wallTime();
+        long boundaryForNextStep = ((currentTime / config.step().toMillis()) + 1) * config.step().toMillis();
+        long timeToNextStep = boundaryForNextStep - currentTime;
+        if (timeToAdd.toMillis() >= timeToNextStep) {
+            clock.add(timeToNextStep, MILLISECONDS);
+            registry.pollMetersToRollover();
+            clock.add((timeToAdd.toMillis() - timeToNextStep), MILLISECONDS);
+            return;
+        }
+        clock.add(timeToAdd);
     }
 
 }
