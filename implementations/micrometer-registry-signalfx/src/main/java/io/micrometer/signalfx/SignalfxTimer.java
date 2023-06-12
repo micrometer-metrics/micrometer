@@ -70,8 +70,8 @@ final class SignalfxTimer extends StepTimer {
     public long count() {
         if (stepBucketHistogram != null) {
             // Force the stepBucketHistogram to be aligned to step by calling count. This
-            // ensures that all
-            // values exported by the Timer are measured for the same step.
+            // ensures that all values exported by the Timer are measured for the same
+            // step. See StepMeterRegistry#pollMetersToRollover.
             stepBucketHistogram.poll();
         }
         return super.count();
