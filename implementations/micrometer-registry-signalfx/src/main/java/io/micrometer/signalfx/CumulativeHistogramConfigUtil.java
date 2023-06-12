@@ -28,16 +28,13 @@ import java.util.Arrays;
  */
 final class CumulativeHistogramConfigUtil {
 
-    static DistributionStatisticConfig updateConfig(DistributionStatisticConfig distributionStatisticConfig) {
+    private static final double[] EMPTY_SLO = new double[0];
+
+    static DistributionStatisticConfig updateConfig(DistributionStatisticConfig distributionStatisticConfig,
+            boolean isDelta) {
         double[] sloBoundaries = distributionStatisticConfig.getServiceLevelObjectiveBoundaries();
         if (sloBoundaries == null || sloBoundaries.length == 0) {
             return distributionStatisticConfig;
-        }
-        double[] newSloBoundaries = sloBoundaries;
-        // Add the +Inf bucket since the "count" resets every export.
-        if (!isPositiveInf(sloBoundaries[sloBoundaries.length - 1])) {
-            newSloBoundaries = Arrays.copyOf(sloBoundaries, sloBoundaries.length + 1);
-            newSloBoundaries[newSloBoundaries.length - 1] = Double.MAX_VALUE;
         }
 
         return DistributionStatisticConfig.builder()
@@ -46,9 +43,21 @@ final class CumulativeHistogramConfigUtil {
             // Without this, the counts are reset every expiry duration.
             .expiry(Duration.ofNanos(Long.MAX_VALUE)) // effectively infinite
             .bufferLength(1)
-            .serviceLevelObjectives(newSloBoundaries)
+            // If delta Histograms are enabled, empty the slo's and use
+            // StepBucketHistogram.
+            .serviceLevelObjectives(isDelta ? EMPTY_SLO : addPositiveInfBucket(sloBoundaries))
             .build()
             .merge(distributionStatisticConfig);
+    }
+
+    static double[] addPositiveInfBucket(double[] sloBoundaries) {
+        double[] newSloBoundaries = sloBoundaries;
+        // Add the +Inf bucket since the "count" resets every export.
+        if (!isPositiveInf(sloBoundaries[sloBoundaries.length - 1])) {
+            newSloBoundaries = Arrays.copyOf(sloBoundaries, sloBoundaries.length + 1);
+            newSloBoundaries[newSloBoundaries.length - 1] = Double.MAX_VALUE;
+        }
+        return newSloBoundaries;
     }
 
     private static boolean isPositiveInf(double bucket) {
