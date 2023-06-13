@@ -151,6 +151,7 @@ public class ObservationThreadLocalAccessor implements ThreadLocalAccessor<Obser
     }
 
     @Override
+    @Deprecated
     public void reset() {
         ThreadLocalAccessor.super.reset();
     }
