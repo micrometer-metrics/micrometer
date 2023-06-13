@@ -150,4 +150,9 @@ public class ObservationThreadLocalAccessor implements ThreadLocalAccessor<Obser
         closeCurrentScope();
     }
 
+    @Override
+    public void reset() {
+        ThreadLocalAccessor.super.reset();
+    }
+
 }
