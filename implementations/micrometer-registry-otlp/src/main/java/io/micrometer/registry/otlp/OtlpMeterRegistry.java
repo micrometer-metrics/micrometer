@@ -269,16 +269,16 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
         if (meter instanceof StepCounter) {
             ((StepCounter) meter)._closingRollover();
         }
-        if (meter instanceof StepFunctionCounter) {
+        else if (meter instanceof StepFunctionCounter) {
             ((StepFunctionCounter<?>) meter)._closingRollover();
         }
-        if (meter instanceof StepFunctionTimer) {
+        else if (meter instanceof StepFunctionTimer) {
             ((StepFunctionTimer<?>) meter)._closingRollover();
         }
-        if (meter instanceof OtlpStepTimer) {
+        else if (meter instanceof OtlpStepTimer) {
             ((OtlpStepTimer) meter)._closingRollover();
         }
-        if (meter instanceof OtlpStepDistributionSummary) {
+        else if (meter instanceof OtlpStepDistributionSummary) {
             ((OtlpStepDistributionSummary) meter)._closingRollover();
         }
     }
