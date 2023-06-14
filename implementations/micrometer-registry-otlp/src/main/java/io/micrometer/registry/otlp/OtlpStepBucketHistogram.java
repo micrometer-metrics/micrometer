@@ -22,7 +22,7 @@ import io.micrometer.core.instrument.distribution.StepBucketHistogram;
 
 /**
  * This is an internal class not meant for general use. The only reason to have this class
- * so that components in this package can call {@code _closingRollover} on
+ * is that components in this package can call {@code _closingRollover} on
  * {@code StepBucketHistogram} and the method does not need to be public.
  */
 class OtlpStepBucketHistogram extends StepBucketHistogram {
