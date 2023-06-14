@@ -20,6 +20,7 @@ import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.distribution.CountAtBucket;
 import io.micrometer.core.instrument.distribution.HistogramSnapshot;
+import io.micrometer.core.instrument.util.TimeUtils;
 import io.opentelemetry.proto.metrics.v1.HistogramDataPoint;
 import io.opentelemetry.proto.metrics.v1.Metric;
 import io.opentelemetry.proto.metrics.v1.NumberDataPoint;
@@ -35,7 +36,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import static io.micrometer.registry.otlp.AggregationTemporality.DELTA;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
@@ -443,7 +443,7 @@ class OtlpDeltaMeterRegistryTest extends OtlpMeterRegistryTest {
                 170, 150);
     }
 
-    @Issue("#1882")
+    @Issue("#3773")
     @Test
     void shortLivedPublish() {
         clock.add(-1 * clock.monotonicTime() + 1, NANOSECONDS); // set clock back to 1
@@ -489,7 +489,7 @@ class OtlpDeltaMeterRegistryTest extends OtlpMeterRegistryTest {
         assertThat(registry.publishedTimerMaxMilliseconds.pop()).isEqualTo(5.0);
         assertThat(registry.publishedTimerHistogramSnapshots).hasSize(1);
         assertHistogramContains(registry.publishedTimerHistogramSnapshots.pop(), MILLISECONDS, 5.0, 5.0,
-                new CountAtBucket(5.0, 1.0));
+                new CountAtBucket(TimeUtils.millisToUnit(5.0, NANOSECONDS), 1.0));
         assertThat(registry.publishedSummaryCounts).hasSize(1);
         assertThat(registry.publishedSummaryCounts.pop()).isOne();
         assertThat(registry.publishedSummaryTotals).hasSize(1);
@@ -507,7 +507,7 @@ class OtlpDeltaMeterRegistryTest extends OtlpMeterRegistryTest {
         assertThat(registry.publishedFunctionTimerTotals.pop()).isEqualTo(53);
     }
 
-    @Issue("#1882")
+    @Issue("#3773")
     @Test
     void finalPushHasPartialStep() {
         clock.add(-1 * clock.monotonicTime() + 1, NANOSECONDS); // set clock back to 1
@@ -562,7 +562,7 @@ class OtlpDeltaMeterRegistryTest extends OtlpMeterRegistryTest {
         assertThat(registry.publishedTimerMaxMilliseconds.pop()).isEqualTo(5.0);
         assertThat(registry.publishedTimerHistogramSnapshots).hasSize(1);
         assertHistogramContains(registry.publishedTimerHistogramSnapshots.pop(), MILLISECONDS, 5.0, 5.0,
-                new CountAtBucket(5.0, 1.0));
+                new CountAtBucket(TimeUtils.millisToUnit(5.0, NANOSECONDS), 1.0));
         assertThat(registry.publishedSummaryCounts).hasSize(1);
         assertThat(registry.publishedSummaryCounts.pop()).isOne();
         assertThat(registry.publishedSummaryTotals).hasSize(1);
@@ -610,7 +610,7 @@ class OtlpDeltaMeterRegistryTest extends OtlpMeterRegistryTest {
         assertThat(registry.publishedTimerSumMilliseconds.pop()).isEqualTo(4.0);
         assertThat(registry.publishedTimerMaxMilliseconds.pop()).isEqualTo(4.0);
         assertHistogramContains(registry.publishedTimerHistogramSnapshots.pop(), MILLISECONDS, 4.0, 4.0,
-                new CountAtBucket(4.0, 1.0));
+                new CountAtBucket(TimeUtils.millisToUnit(4.0, NANOSECONDS), 1.0));
         assertThat(registry.publishedSummaryCounts.pop()).isOne();
         assertThat(registry.publishedSummaryTotals.pop()).isEqualTo(6);
         assertThat(registry.publishedSummaryMaxes.pop()).isEqualTo(6);
@@ -629,32 +629,38 @@ class OtlpDeltaMeterRegistryTest extends OtlpMeterRegistryTest {
     }
 
     private void assertHistogramContains(HistogramSnapshot snapshot, TimeUnit unit, double total, double max,
-            CountAtBucket... countAtBuckets) {
-        assertThat(snapshot.count()).isEqualTo(countAtBuckets.length);
+            CountAtBucket... expectedCountAtBuckets) {
+        assertThat(snapshot.count()).isEqualTo(expectedCountAtBuckets.length);
         assertThat(snapshot.total(unit)).isEqualTo(total);
         assertThat(snapshot.max(unit)).isEqualTo(max);
-        for (int i = 0; i < snapshot.histogramCounts().length; i++) {
-            CountAtBucket countAtBucket = snapshot.histogramCounts()[i];
-            Arrays.stream(countAtBuckets)
-                .filter(cb -> countAtBucket.bucket(unit) == cb.bucket())
+        CountAtBucket[] countAtBuckets = snapshot.histogramCounts();
+        for (int i = 0; i < countAtBuckets.length; i++) {
+            CountAtBucket countAtBucket = countAtBuckets[i];
+            double bucket = countAtBucket.bucket(unit);
+            double count = countAtBucket.count();
+            Arrays.stream(expectedCountAtBuckets)
+                .filter(expectedCountAtBucket -> bucket == expectedCountAtBucket.bucket(unit))
                 .findFirst()
-                .ifPresentOrElse(cb -> assertThat(countAtBucket.count()).isEqualTo(cb.count()),
-                        () -> assertThat(countAtBucket.count()).isZero());
+                .ifPresentOrElse(expectedCountAtBucket -> assertThat(count).isEqualTo(expectedCountAtBucket.count()),
+                        () -> assertThat(count).isZero());
         }
     }
 
     private void assertHistogramContains(HistogramSnapshot snapshot, double total, double max,
-            CountAtBucket... countAtBuckets) {
-        assertThat(snapshot.count()).isEqualTo(countAtBuckets.length);
+            CountAtBucket... expectedCountAtBuckets) {
+        assertThat(snapshot.count()).isEqualTo(expectedCountAtBuckets.length);
         assertThat(snapshot.total()).isEqualTo(total);
         assertThat(snapshot.max()).isEqualTo(max);
-        for (int i = 0; i < snapshot.histogramCounts().length; i++) {
-            CountAtBucket countAtBucket = snapshot.histogramCounts()[i];
-            Arrays.stream(countAtBuckets)
-                .filter(cb -> countAtBucket.bucket() == cb.bucket())
+        CountAtBucket[] countAtBuckets = snapshot.histogramCounts();
+        for (int i = 0; i < countAtBuckets.length; i++) {
+            CountAtBucket countAtBucket = countAtBuckets[i];
+            double bucket = countAtBucket.bucket();
+            double count = countAtBucket.count();
+            Arrays.stream(expectedCountAtBuckets)
+                .filter(expectedCountAtBucket -> bucket == expectedCountAtBucket.bucket())
                 .findFirst()
-                .ifPresentOrElse(cb -> assertThat(countAtBucket.count()).isEqualTo(cb.count()),
-                        () -> assertThat(countAtBucket.count()).isZero());
+                .ifPresentOrElse(expectedCountAtBucket -> assertThat(count).isEqualTo(expectedCountAtBucket.count()),
+                        () -> assertThat(count).isZero());
         }
     }
 
@@ -686,21 +692,19 @@ class OtlpDeltaMeterRegistryTest extends OtlpMeterRegistryTest {
 
         private long lastScheduledPublishStartTime = 0L;
 
-        public TestOtlpMeterRegistry() {
-            super(OtlpDeltaMeterRegistryTest.this.otlpConfig(), OtlpDeltaMeterRegistryTest.this.clock);
+        TestOtlpMeterRegistry() {
+            super(otlpConfig(), OtlpDeltaMeterRegistryTest.this.clock);
         }
 
         @Override
         protected void publish() {
-            getMeters().stream()
-                .map(meter -> meter.match(null, this::publishCounter, this::publishTimer, this::publishSummary, null,
-                        null, this::publishFunctionCounter, this::publishFunctionTimer, null))
-                .collect(Collectors.toList());
+            forEachMeter(meter -> meter.match(null, this::publishCounter, this::publishTimer, this::publishSummary,
+                    null, null, this::publishFunctionCounter, this::publishFunctionTimer, null));
         }
 
         private void scheduledPublish() {
             this.lastScheduledPublishStartTime = clock.wallTime();
-            this.publish();
+            publish();
         }
 
         @Override
