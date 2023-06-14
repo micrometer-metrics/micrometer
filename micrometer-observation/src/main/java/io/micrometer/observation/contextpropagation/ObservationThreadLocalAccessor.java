@@ -57,6 +57,7 @@ public class ObservationThreadLocalAccessor implements ThreadLocalAccessor<Obser
     /**
      * Creates a new instance of this class and stores a static handle to it.
      * @param observationRegistry observation registry
+     * @since 1.10.8
      */
     public ObservationThreadLocalAccessor(ObservationRegistry observationRegistry) {
         this.observationRegistry = observationRegistry;
@@ -66,6 +67,7 @@ public class ObservationThreadLocalAccessor implements ThreadLocalAccessor<Obser
      * Provide an {@link ObservationRegistry} to be used by
      * {@link ObservationThreadLocalAccessor}.
      * @param observationRegistry observation registry
+     * @since 1.10.8
      */
     public void setObservationRegistry(ObservationRegistry observationRegistry) {
         this.observationRegistry = observationRegistry;
@@ -74,6 +76,7 @@ public class ObservationThreadLocalAccessor implements ThreadLocalAccessor<Obser
     /**
      * Returns the provided {@link ObservationRegistry}.
      * @return observation registry
+     * @since 1.10.8
      */
     public ObservationRegistry getObservationRegistry() {
         return this.observationRegistry;
@@ -82,6 +85,7 @@ public class ObservationThreadLocalAccessor implements ThreadLocalAccessor<Obser
     /**
      * Return the singleton instance of this {@link ObservationThreadLocalAccessor}.
      * @return instance
+     * @since 1.10.8
      */
     public static ObservationThreadLocalAccessor getInstance() {
         if (instance == null) {
