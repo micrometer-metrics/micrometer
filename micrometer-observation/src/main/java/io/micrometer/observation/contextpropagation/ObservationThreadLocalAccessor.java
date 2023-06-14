@@ -40,7 +40,7 @@ public class ObservationThreadLocalAccessor implements ThreadLocalAccessor<Obser
 
     private ObservationRegistry observationRegistry = ObservationRegistry.create();
 
-    public static ObservationThreadLocalAccessor instance;
+    private static ObservationThreadLocalAccessor instance;
 
     /**
      * Creates a new instance of this class and stores a static handle to it. Remember to
