@@ -37,10 +37,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
@@ -96,12 +93,11 @@ class GrpcAsyncTest {
 
         // Send requests asynchronously with request-id in metadata.
         // The request-id is stored in threadlocal in server when scope is opened.
-        // The main logic retrieves the request-id from threadlocal and include it as
+        // The main logic retrieves the request-id from threadlocal and includes it as
         // part of the response message.
         // This simulates a tracer with span.
         SimpleServiceFutureStub stub = SimpleServiceGrpc.newFutureStub(this.channel);
         Map<ListenableFuture<SimpleResponse>, String> requestIds = new HashMap<>();
-        List<ListenableFuture<SimpleResponse>> futures = new ArrayList<>();
         int max = 40;
         for (int i = 0; i < max; i++) {
             String message = "Hello-" + i;
@@ -115,8 +111,8 @@ class GrpcAsyncTest {
                 .unaryRpc(request);
 
             requestIds.put(future, requestId);
-            futures.add(future);
         }
+        Set<ListenableFuture<SimpleResponse>> futures = requestIds.keySet();
         await().until(() -> futures.stream().allMatch(Future::isDone));
         assertThat(futures).allSatisfy((future) -> {
             // Make sure the request-id in the response message matches with the one sent
