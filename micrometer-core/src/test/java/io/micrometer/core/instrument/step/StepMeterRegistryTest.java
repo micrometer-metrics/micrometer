@@ -45,11 +45,9 @@ import static org.assertj.core.api.SoftAssertions.assertSoftly;
  */
 class StepMeterRegistryTest {
 
-    private AtomicInteger publishes = new AtomicInteger();
+    private final AtomicInteger publishes = new AtomicInteger();
 
-    private MockClock clock = new MockClock();
-
-    private StepRegistryConfig config = new StepRegistryConfig() {
+    private final StepRegistryConfig config = new StepRegistryConfig() {
         @Override
         public String prefix() {
             return "test";
@@ -61,7 +59,9 @@ class StepMeterRegistryTest {
         }
     };
 
-    private MyStepMeterRegistry registry = new MyStepMeterRegistry();
+    private final PollingAwareMockStepClock clock = new PollingAwareMockStepClock(config);
+
+    private final MyStepMeterRegistry registry = new MyStepMeterRegistry();
 
     @Issue("#370")
     @Test
@@ -83,7 +83,7 @@ class StepMeterRegistryTest {
         assertThat(summaryHist2.value()).isEqualTo(1);
         assertThat(timerHist.value()).isEqualTo(1);
 
-        clock.add(config.step());
+        clock.add(config.step(), registry);
 
         assertThat(summaryHist1.value()).isEqualTo(0);
         assertThat(summaryHist2.value()).isEqualTo(0);
@@ -126,8 +126,8 @@ class StepMeterRegistryTest {
             softly.assertThat(timerStep1Length6.max(MILLISECONDS)).isEqualTo(15L);
         });
 
-        clock.add(config.step().plus(Duration.ofMillis(1)));
-        clock.add(config.step());
+        clock.add(config.step().plus(Duration.ofMillis(1)), registry);
+        clock.add(config.step(), registry);
         timers.forEach(t -> t.record(ofMillis(10)));
 
         assertSoftly(softly -> {
@@ -136,7 +136,7 @@ class StepMeterRegistryTest {
             softly.assertThat(timerStep1Length6.max(MILLISECONDS)).isEqualTo(15L);
         });
 
-        clock.add(config.step());
+        clock.add(config.step(), registry);
         timers.forEach(t -> t.record(ofMillis(5)));
 
         assertSoftly(softly -> {
@@ -145,14 +145,14 @@ class StepMeterRegistryTest {
             softly.assertThat(timerStep1Length6.max(MILLISECONDS)).isEqualTo(15L);
         });
 
-        clock.add(config.step());
+        clock.add(config.step(), registry);
         assertSoftly(softly -> {
             softly.assertThat(timerStep1Length2.max(MILLISECONDS)).isEqualTo(5L);
             softly.assertThat(timerStep2Length2.max(MILLISECONDS)).isEqualTo(10L);
             softly.assertThat(timerStep1Length6.max(MILLISECONDS)).isEqualTo(15L);
         });
 
-        clock.add(config.step().multipliedBy(5));
+        clock.add(config.step().multipliedBy(5), registry);
         assertSoftly(softly -> {
             softly.assertThat(timerStep1Length2.max(MILLISECONDS)).isEqualTo(0L);
             softly.assertThat(timerStep2Length2.max(MILLISECONDS)).isEqualTo(0L);
@@ -219,7 +219,7 @@ class StepMeterRegistryTest {
         // before step rollover
         assertBeforeRollover(counter, timer, summary, functionCounter, functionTimer);
 
-        addTimeWithRolloverOnStepStart(clock, registry, config, config.step());
+        clock.add(config.step(), registry);
         registry.scheduledPublish();
 
         assertThat(registry.publishedCounterCounts).hasSize(1);
@@ -240,7 +240,7 @@ class StepMeterRegistryTest {
         assertThat(registry.publishedFunctionTimerTotals.pop()).isEqualTo(53);
 
         // set clock to middle of second step
-        addTimeWithRolloverOnStepStart(clock, registry, config, config.step().dividedBy(2));
+        clock.add(config.step().dividedBy(2), registry);
         // record some more values in new step interval
         counter.increment(2);
         timer.record(6, MILLISECONDS);
@@ -299,7 +299,7 @@ class StepMeterRegistryTest {
 
         // before publishing, simulate a step boundary being crossed after forced rollover
         // on close and before/during publishing
-        registry.setPrePublishAction(() -> clock.add(config.step()));
+        registry.setPrePublishAction(() -> clock.add(config.step(), registry));
         // force rollover and publish on close
         registry.close();
 
@@ -344,7 +344,8 @@ class StepMeterRegistryTest {
         // before rollover
         assertBeforeRollover(counter, timer, summary, functionCounter, functionTimer);
 
-        addTimeWithRolloverOnStepStart(clock, registry, config, Duration.ofSeconds(60));
+        clock.add(config.step(), registry);
+        ;
 
         // All new recordings now belong to next step.
         counter.increment(2);
@@ -389,12 +390,13 @@ class StepMeterRegistryTest {
         // before rollover
         assertBeforeRollover(counter, timer, summary, functionCounter, functionTimer);
 
-        addTimeWithRolloverOnStepStart(clock, registry, config, Duration.ofSeconds(60));
+        clock.add(config.step(), registry);
         // these recordings belong to the current step and should not be published
         counter.increment();
         timer.record(5, MILLISECONDS);
         summary.record(8);
-        addTimeWithRolloverOnStepStart(clock, registry, config, Duration.ofSeconds(10));
+        clock.add(Duration.ofSeconds(10), registry);
+        ;
 
         // recordings that happened in the previous step should be published
         registry.scheduledPublish();
@@ -414,6 +416,46 @@ class StepMeterRegistryTest {
         assertThat(registry.publishedFunctionTimerCounts.pop()).isEqualTo(3);
         assertThat(registry.publishedFunctionTimerTotals).hasSize(1);
         assertThat(registry.publishedFunctionTimerTotals.pop()).isEqualTo(53);
+    }
+
+    @Test
+    @Issue("3914")
+    void publishShouldNotHappenWhenRegistryIsClosedOrDisabled() {
+        StepRegistryConfig disabledStepRegistryConfig = new StepRegistryConfig() {
+            @Override
+            public String prefix() {
+                return "test";
+            }
+
+            @Override
+            public boolean enabled() {
+                return false;
+            }
+
+            @Nullable
+            @Override
+            public String get(String key) {
+                return null;
+            }
+        };
+        PollingAwareMockStepClock pollingAwareMockStepClock = new PollingAwareMockStepClock(disabledStepRegistryConfig);
+
+        MyStepMeterRegistry disabledStepMeterRegistry = new MyStepMeterRegistry(disabledStepRegistryConfig,
+                pollingAwareMockStepClock);
+        Counter counter = Counter.builder("closed_counter").register(disabledStepMeterRegistry);
+        counter.increment();
+        pollingAwareMockStepClock.add(config.step(), disabledStepMeterRegistry);
+        long publishCount = publishes.get();
+        disabledStepMeterRegistry.close();
+        assertThat(publishes.get())
+            .withFailMessage("Publishing should not happen on close when config is disabled for publishing.")
+            .isEqualTo(publishCount);
+
+        pollingAwareMockStepClock.add(config.step(), disabledStepMeterRegistry);
+        disabledStepMeterRegistry.close();
+        assertThat(publishes.get())
+            .withFailMessage("Closing a already closed StepRegistry should not publish data on close.")
+            .isEqualTo(publishCount);
     }
 
     private class MyStepMeterRegistry extends StepMeterRegistry {
@@ -440,7 +482,11 @@ class StepMeterRegistryTest {
         Runnable prePublishAction;
 
         MyStepMeterRegistry() {
-            super(StepMeterRegistryTest.this.config, StepMeterRegistryTest.this.clock);
+            this(StepMeterRegistryTest.this.config, StepMeterRegistryTest.this.clock);
+        }
+
+        MyStepMeterRegistry(StepRegistryConfig config, Clock clock) {
+            super(config, clock);
         }
 
         void setPrePublishAction(Runnable prePublishAction) {
@@ -523,26 +569,6 @@ class StepMeterRegistryTest {
         assertThat(functionCounter.count()).isZero();
         assertThat(functionTimer.count()).isZero();
         assertThat(functionTimer.totalTime(MILLISECONDS)).isZero();
-    }
-
-    /**
-     * This method simulates the behaviour StepRegistry will exhibit when rollOver is
-     * scheduled on a thread. This calls {@link StepMeterRegistry#pollMetersToRollover()}
-     * as soon as the step is crossed.
-     */
-    private void addTimeWithRolloverOnStepStart(MockClock clock, StepMeterRegistry registry, StepRegistryConfig config,
-            Duration timeToAdd) {
-
-        long currentTime = clock.wallTime();
-        long boundaryForNextStep = ((currentTime / config.step().toMillis()) + 1) * config.step().toMillis();
-        long timeToNextStep = boundaryForNextStep - currentTime;
-        if (timeToAdd.toMillis() >= timeToNextStep) {
-            clock.add(timeToNextStep, MILLISECONDS);
-            registry.pollMetersToRollover();
-            clock.add((timeToAdd.toMillis() - timeToNextStep), MILLISECONDS);
-            return;
-        }
-        clock.add(timeToAdd);
     }
 
 }
