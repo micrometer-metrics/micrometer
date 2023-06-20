@@ -61,7 +61,7 @@ public class TimeWindowFixedBoundaryHistogram extends AbstractTimeWindowHistogra
             .getHistogramBuckets(supportsAggregablePercentiles);
 
         Boolean percentileHistogram = distributionStatisticConfig.isPercentileHistogram();
-        if (percentileHistogram != null && percentileHistogram) {
+        if (percentileHistogram != null && percentileHistogram && supportsAggregablePercentiles) {
             histogramBuckets.addAll(PercentileHistogramBuckets.buckets(distributionStatisticConfig));
         }
 
@@ -110,7 +110,7 @@ public class TimeWindowFixedBoundaryHistogram extends AbstractTimeWindowHistogra
 
     /**
      * For recording efficiency, we turn normal histogram into cumulative count histogram
-     * only on calls to {@link #countsAtValues(Iterator<Double>)}.
+     * only on calls to {@link FixedBoundaryHistogram#countsAtValues(Iterator)}.
      */
     @Override
     Iterator<CountAtBucket> countsAtValues(Iterator<Double> values) {

@@ -21,6 +21,7 @@ import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.distribution.CountAtBucket;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
+import io.micrometer.core.instrument.distribution.HistogramSnapshot;
 import io.micrometer.core.instrument.distribution.ValueAtPercentile;
 import io.micrometer.core.instrument.internal.CumulativeHistogramLongTaskTimer;
 import io.micrometer.core.instrument.observation.DefaultMeterObservationHandler;
@@ -300,6 +301,68 @@ public abstract class MeterRegistryCompatibilityKit {
             assertThat(s.histogramCountAtValue(2)).isNaN();
         }
 
+        @Issue("#3904")
+        @Test
+        void histogramCountsPublishPercentileHistogramAndSlos() {
+            DistributionSummary summary = DistributionSummary.builder("my.summmary")
+                .serviceLevelObjectives(5, 50, 95)
+                .publishPercentileHistogram()
+                .register(registry);
+
+            // ensure time-window based histograms are not fully rotated when we assert
+            Duration halfStep = step().dividedBy(2);
+            clock(registry).add(halfStep);
+
+            for (int val : new int[] { 22, 55, 66, 98 }) {
+                summary.record(val);
+            }
+            // accommodate StepBucketHistogram
+            clock(registry).add(halfStep);
+
+            HistogramSnapshot snapshot = summary.takeSnapshot();
+            CountAtBucket[] countAtBuckets = snapshot.histogramCounts();
+
+            assertThat(countAtBuckets).satisfiesAnyOf(
+                    MeterRegistryCompatibilityKit.this::assertHistogramNotSupportingPercentileHistogramBuckets,
+                    MeterRegistryCompatibilityKit.this::assertHistogramSupportingPercentileHistogramBuckets);
+        }
+
+    }
+
+    private void assertHistogramNotSupportingPercentileHistogramBuckets(CountAtBucket[] countAtBuckets) {
+        // only SLO buckets added because percentile histogram buckets are not supported
+        assertThat(countAtBuckets).extracting(CountAtBucket::bucket).containsExactly(5.0, 50.0, 95.0);
+
+        assertThat(countAtBuckets).extracting(CountAtBucket::count).containsExactly(0.0, 1.0, 3.0);
+    }
+
+    private void assertHistogramSupportingPercentileHistogramBuckets(CountAtBucket[] countAtBuckets) {
+        // percentile histogram buckets will be there, but assert SLO buckets are present
+        assertThat(countAtBuckets).extracting(CountAtBucket::bucket).contains(5.0, 50.0, 95.0);
+
+        assertThat(countAtBuckets).satisfiesAnyOf(
+                // we can directly check the count of cumulative SLO buckets
+                bucketCounts -> assertThat(Arrays.stream(bucketCounts)
+                    .filter(countAtBucket -> Arrays.asList(5.0, 50.0, 95.0).contains(countAtBucket.bucket())))
+                    .extracting(CountAtBucket::count)
+                    .containsExactly(0.0, 1.0, 3.0),
+                // if not cumulative buckets, we need to add up buckets in range.
+                bucketCounts -> {
+                    assertThat(nonCumulativeBucketCountForValueRange(bucketCounts, 0, 5)).isEqualTo(0);
+                    assertThat(nonCumulativeBucketCountForValueRange(bucketCounts, 5, 50)).isEqualTo(1);
+                    assertThat(nonCumulativeBucketCountForValueRange(bucketCounts, 50, 95)).isEqualTo(2);
+                });
+    }
+
+    private double nonCumulativeBucketCountForValueRange(CountAtBucket[] countAtBuckets, double exclusiveMinBucket,
+            double inclusiveMaxBucket) {
+        double count = 0;
+        for (CountAtBucket countAtBucket : countAtBuckets) {
+            if (countAtBucket.bucket() > exclusiveMinBucket && countAtBucket.bucket() <= inclusiveMaxBucket) {
+                count += countAtBucket.count();
+            }
+        }
+        return count;
     }
 
     @DisplayName("gauges")
@@ -749,6 +812,32 @@ public abstract class MeterRegistryCompatibilityKit {
             clock(registry).add(halfStep);
             assertThat(t.histogramCountAtValue((long) millisToUnit(1, TimeUnit.NANOSECONDS))).isEqualTo(1);
             assertThat(t.histogramCountAtValue(1)).isNaN();
+        }
+
+        @Issue("#3904")
+        @Test
+        void histogramCountsPublishPercentileHistogramAndSlos() {
+            Timer timer = Timer.builder("my.timer")
+                .serviceLevelObjectives(Duration.ofNanos(5), Duration.ofNanos(50), Duration.ofNanos(95))
+                .publishPercentileHistogram()
+                .register(registry);
+
+            // ensure time-window based histograms are not fully rotated when we assert
+            Duration halfStep = step().dividedBy(2);
+            clock(registry).add(halfStep);
+
+            for (int val : new int[] { 22, 55, 66, 98 }) {
+                timer.record(Duration.ofNanos(val));
+            }
+            // accommodate StepBucketHistogram
+            clock(registry).add(halfStep);
+
+            HistogramSnapshot snapshot = timer.takeSnapshot();
+            CountAtBucket[] countAtBuckets = snapshot.histogramCounts();
+
+            assertThat(countAtBuckets).satisfiesAnyOf(
+                    MeterRegistryCompatibilityKit.this::assertHistogramNotSupportingPercentileHistogramBuckets,
+                    MeterRegistryCompatibilityKit.this::assertHistogramSupportingPercentileHistogramBuckets);
         }
 
     }
