@@ -322,22 +322,13 @@ public abstract class MeterRegistryCompatibilityKit {
             HistogramSnapshot snapshot = summary.takeSnapshot();
             CountAtBucket[] countAtBuckets = snapshot.histogramCounts();
 
-            assertThat(countAtBuckets).satisfiesAnyOf(
-                    MeterRegistryCompatibilityKit.this::assertHistogramNotSupportingPercentileHistogramBuckets,
-                    MeterRegistryCompatibilityKit.this::assertHistogramSupportingPercentileHistogramBuckets);
+            assertHistogramBuckets(countAtBuckets);
         }
 
     }
 
-    private void assertHistogramNotSupportingPercentileHistogramBuckets(CountAtBucket[] countAtBuckets) {
-        // only SLO buckets added because percentile histogram buckets are not supported
-        assertThat(countAtBuckets).extracting(CountAtBucket::bucket).containsExactly(5.0, 50.0, 95.0);
-
-        assertThat(countAtBuckets).extracting(CountAtBucket::count).containsExactly(0.0, 1.0, 3.0);
-    }
-
-    private void assertHistogramSupportingPercentileHistogramBuckets(CountAtBucket[] countAtBuckets) {
-        // percentile histogram buckets will be there, but assert SLO buckets are present
+    private void assertHistogramBuckets(CountAtBucket[] countAtBuckets) {
+        // percentile histogram buckets may be there, assert SLO buckets are present
         assertThat(countAtBuckets).extracting(CountAtBucket::bucket).contains(5.0, 50.0, 95.0);
 
         assertThat(countAtBuckets).satisfiesAnyOf(
@@ -835,9 +826,7 @@ public abstract class MeterRegistryCompatibilityKit {
             HistogramSnapshot snapshot = timer.takeSnapshot();
             CountAtBucket[] countAtBuckets = snapshot.histogramCounts();
 
-            assertThat(countAtBuckets).satisfiesAnyOf(
-                    MeterRegistryCompatibilityKit.this::assertHistogramNotSupportingPercentileHistogramBuckets,
-                    MeterRegistryCompatibilityKit.this::assertHistogramSupportingPercentileHistogramBuckets);
+            assertHistogramBuckets(countAtBuckets);
         }
 
     }
