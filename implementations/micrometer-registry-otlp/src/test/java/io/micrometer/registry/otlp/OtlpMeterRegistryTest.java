@@ -15,10 +15,7 @@
  */
 package io.micrometer.registry.otlp;
 
-import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.*;
-import io.micrometer.core.instrument.distribution.CountAtBucket;
-import io.micrometer.core.instrument.distribution.HistogramSnapshot;
 import io.opentelemetry.proto.metrics.v1.HistogramDataPoint;
 import io.opentelemetry.proto.metrics.v1.Metric;
 import io.opentelemetry.proto.metrics.v1.NumberDataPoint;
@@ -31,7 +28,6 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 
-import static io.micrometer.core.instrument.MockClock.clock;
 import static org.assertj.core.api.Assertions.assertThat;
 import static uk.org.webcompere.systemstubs.SystemStubs.withEnvironmentVariables;
 
@@ -163,46 +159,6 @@ abstract class OtlpMeterRegistryTest {
 
         assertThat(writeToMetric(timer).getDataCase().getNumber()).isEqualTo(Metric.DataCase.HISTOGRAM.getNumber());
         assertThat(writeToMetric(ds).getDataCase().getNumber()).isEqualTo(Metric.DataCase.HISTOGRAM.getNumber());
-    }
-
-    @Issue("#3904")
-    @Test
-    void histogramCountsPublishPercentileHistogramAndSlos() {
-        DistributionSummary summary = DistributionSummary.builder("my.summmary")
-            .serviceLevelObjectives(5, 50, 95)
-            .publishPercentileHistogram()
-            .register(registry);
-
-        // ensure time-window based histograms are not fully rotated when we assert
-        Duration halfStep = otlpConfig().step().dividedBy(2);
-        clock(registry).add(halfStep);
-
-        for (int val : new int[] { 22, 55, 66, 98 }) {
-            summary.record(val);
-        }
-        // accommodate StepBucketHistogram
-        clock(registry).add(halfStep);
-
-        HistogramSnapshot snapshot = summary.takeSnapshot();
-        CountAtBucket[] countAtBuckets = snapshot.histogramCounts();
-
-        // May have more buckets, but must have at least the configured SLOs
-        assertThat(countAtBuckets).extracting(CountAtBucket::bucket).contains(5.0, 50.0, 95.0);
-        // Assert the count of the SLO buckets only
-        assertThat(nonCumulativeBucketCountForBucketRange(countAtBuckets, 0, 5)).isEqualTo(0);
-        assertThat(nonCumulativeBucketCountForBucketRange(countAtBuckets, 5, 50)).isEqualTo(1);
-        assertThat(nonCumulativeBucketCountForBucketRange(countAtBuckets, 50, 95)).isEqualTo(2);
-    }
-
-    private double nonCumulativeBucketCountForBucketRange(CountAtBucket[] countAtBuckets, double exclusiveMinBucket,
-            double inclusiveMaxBucket) {
-        double count = 0;
-        for (CountAtBucket countAtBucket : countAtBuckets) {
-            if (countAtBucket.bucket() > exclusiveMinBucket && countAtBucket.bucket() <= inclusiveMaxBucket) {
-                count += countAtBucket.count();
-            }
-        }
-        return count;
     }
 
     @Test

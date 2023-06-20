@@ -60,11 +60,6 @@ public class TimeWindowFixedBoundaryHistogram extends AbstractTimeWindowHistogra
         NavigableSet<Double> histogramBuckets = distributionStatisticConfig
             .getHistogramBuckets(supportsAggregablePercentiles);
 
-        Boolean percentileHistogram = distributionStatisticConfig.isPercentileHistogram();
-        if (percentileHistogram != null && percentileHistogram && supportsAggregablePercentiles) {
-            histogramBuckets.addAll(PercentileHistogramBuckets.buckets(distributionStatisticConfig));
-        }
-
         this.buckets = histogramBuckets.stream().filter(Objects::nonNull).mapToDouble(Double::doubleValue).toArray();
         initRingBuffer();
     }

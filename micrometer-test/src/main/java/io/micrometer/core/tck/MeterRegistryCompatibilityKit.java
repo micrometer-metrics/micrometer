@@ -339,13 +339,13 @@ public abstract class MeterRegistryCompatibilityKit {
                     .containsExactly(0.0, 1.0, 3.0),
                 // if not cumulative buckets, we need to add up buckets in range.
                 bucketCounts -> {
-                    assertThat(nonCumulativeBucketCountForValueRange(bucketCounts, 0, 5)).isEqualTo(0);
-                    assertThat(nonCumulativeBucketCountForValueRange(bucketCounts, 5, 50)).isEqualTo(1);
-                    assertThat(nonCumulativeBucketCountForValueRange(bucketCounts, 50, 95)).isEqualTo(2);
+                    assertThat(nonCumulativeBucketCountForRange(bucketCounts, 0, 5)).isEqualTo(0);
+                    assertThat(nonCumulativeBucketCountForRange(bucketCounts, 5, 50)).isEqualTo(1);
+                    assertThat(nonCumulativeBucketCountForRange(bucketCounts, 50, 95)).isEqualTo(2);
                 });
     }
 
-    private double nonCumulativeBucketCountForValueRange(CountAtBucket[] countAtBuckets, double exclusiveMinBucket,
+    private double nonCumulativeBucketCountForRange(CountAtBucket[] countAtBuckets, double exclusiveMinBucket,
             double inclusiveMaxBucket) {
         double count = 0;
         for (CountAtBucket countAtBucket : countAtBuckets) {
