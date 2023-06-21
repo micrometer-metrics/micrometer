@@ -77,18 +77,16 @@ class DynatraceMeterRegistryTest {
 
         meterRegistry.publish();
 
-        ArgumentCaptor<HttpSender.Request> argumentCaptor = ArgumentCaptor.forClass(HttpSender.Request.class);
-        verify(httpClient).send(argumentCaptor.capture());
-        HttpSender.Request request = argumentCaptor.getValue();
-
-        assertThat(request.getRequestHeaders()).containsOnly(entry("Content-Type", "text/plain"),
-                entry("User-Agent", "micrometer"), entry("Authorization", "Api-Token apiToken"));
-        assertThat(request.getEntity()).asString()
-            .hasLineCount(3)
-            .contains("my.counter,dt.metrics.source=micrometer count,delta=12.0 " + clock.wallTime())
-            .contains("my.gauge,dt.metrics.source=micrometer gauge," + gauge + " " + clock.wallTime())
-            .contains("my.timer,dt.metrics.source=micrometer gauge,min=12.0,max=42.0,sum=108.0,count=4 "
-                    + clock.wallTime());
+        verify(httpClient).send(assertArg((request -> {
+            assertThat(request.getRequestHeaders()).containsOnly(entry("Content-Type", "text/plain"),
+                    entry("User-Agent", "micrometer"), entry("Authorization", "Api-Token apiToken"));
+            assertThat(request.getEntity()).asString()
+                .hasLineCount(3)
+                .contains("my.counter,dt.metrics.source=micrometer count,delta=12.0 " + clock.wallTime())
+                .contains("my.gauge,dt.metrics.source=micrometer gauge," + gauge + " " + clock.wallTime())
+                .contains("my.timer,dt.metrics.source=micrometer gauge,min=12.0,max=42.0,sum=108.0,count=4 "
+                        + clock.wallTime());
+        })));
     }
 
     @Test
@@ -144,14 +142,10 @@ class DynatraceMeterRegistryTest {
         clock.add(config.step());
         meterRegistry.publish();
 
-        ArgumentCaptor<HttpSender.Request> argumentCaptor = ArgumentCaptor.forClass(HttpSender.Request.class);
-        verify(httpClient).send(argumentCaptor.capture());
-        HttpSender.Request request = argumentCaptor.getValue();
-
-        assertThat(request.getEntity()).asString()
+        verify(httpClient).send(assertArg((request -> assertThat(request.getEntity()).asString()
             .hasLineCount(1)
             .contains("my.timer,dt.metrics.source=micrometer gauge,min=22.0,max=55.0,sum=77.0,count=2 "
-                    + clock.wallTime());
+                    + clock.wallTime()))));
     }
 
     @Test
@@ -165,14 +159,10 @@ class DynatraceMeterRegistryTest {
         clock.add(config.step());
         meterRegistry.publish();
 
-        ArgumentCaptor<HttpSender.Request> argumentCaptor = ArgumentCaptor.forClass(HttpSender.Request.class);
-        verify(httpClient).send(argumentCaptor.capture());
-        HttpSender.Request request = argumentCaptor.getValue();
-
-        assertThat(request.getEntity()).asString()
+        verify(httpClient).send(assertArg(request -> assertThat(request.getEntity()).asString()
             .hasLineCount(1)
             .contains("my.timer,dt.metrics.source=micrometer gauge,min=44.0,max=44.0,sum=44.0,count=1 "
-                    + clock.wallTime());
+                    + clock.wallTime())));
 
         // reset for next export interval
         reset(httpClient);
@@ -194,14 +184,10 @@ class DynatraceMeterRegistryTest {
         clock.add(config.step());
         meterRegistry.publish();
 
-        ArgumentCaptor<HttpSender.Request> argumentCaptor2 = ArgumentCaptor.forClass(HttpSender.Request.class);
-        verify(httpClient).send(argumentCaptor2.capture());
-        HttpSender.Request request2 = argumentCaptor2.getValue();
-
-        assertThat(request2.getEntity()).asString()
+        verify(httpClient).send(assertArg(request -> assertThat(request.getEntity()).asString()
             .hasLineCount(1)
             .contains("my.timer,dt.metrics.source=micrometer gauge,min=33.0,max=33.0,sum=33.0,count=1 "
-                    + clock.wallTime());
+                    + clock.wallTime())));
     }
 
     private DynatraceConfig createDefaultDynatraceConfig() {
