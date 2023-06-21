@@ -1,5 +1,5 @@
 plugins {
-    id "me.champeau.jmh" version "0.6.8"
+    id "me.champeau.jmh" version "0.7.1"
 }
 
 dependencies {
@@ -22,7 +22,6 @@ dependencies {
 }
 
 jmh {
-    jmhVersion = '1.36'
     fork = 1
     warmupIterations = 1
     iterations = 1

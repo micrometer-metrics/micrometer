@@ -12,3 +12,7 @@ dependencies {
     testImplementation 'org.testcontainers:junit-jupiter'
     testImplementation 'org.awaitility:awaitility'
 }
+
+dockerTest {
+    systemProperty 'otel-collector-image.version', '0.79.0'
+}

@@ -487,18 +487,16 @@ class DynatraceExporterV2Test {
 
         exporter.export(Arrays.asList(counter, gauge, timer));
 
-        ArgumentCaptor<HttpSender.Request> argumentCaptor = ArgumentCaptor.forClass(HttpSender.Request.class);
-        verify(httpClient).send(argumentCaptor.capture());
-        HttpSender.Request request = argumentCaptor.getValue();
-
-        assertThat(request.getRequestHeaders()).containsOnly(entry("Content-Type", "text/plain"),
-                entry("User-Agent", "micrometer"), entry("Authorization", "Api-Token apiToken"));
-        assertThat(request.getEntity()).asString()
-            .hasLineCount(3)
-            .contains("my.counter,dt.metrics.source=micrometer count,delta=12.0 " + clock.wallTime())
-            .contains("my.gauge,dt.metrics.source=micrometer gauge,42.0 " + clock.wallTime())
-            .contains("my.timer,dt.metrics.source=micrometer gauge,min=22.0,max=22.0,sum=22.0,count=1 "
-                    + clock.wallTime());
+        verify(httpClient).send(assertArg(request -> {
+            assertThat(request.getRequestHeaders()).containsOnly(entry("Content-Type", "text/plain"),
+                    entry("User-Agent", "micrometer"), entry("Authorization", "Api-Token apiToken"));
+            assertThat(request.getEntity()).asString()
+                .hasLineCount(3)
+                .contains("my.counter,dt.metrics.source=micrometer count,delta=12.0 " + clock.wallTime())
+                .contains("my.gauge,dt.metrics.source=micrometer gauge,42.0 " + clock.wallTime())
+                .contains("my.timer,dt.metrics.source=micrometer gauge,min=22.0,max=22.0,sum=22.0,count=1 "
+                        + clock.wallTime());
+        }));
     }
 
     @Test
