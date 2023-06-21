@@ -125,9 +125,6 @@ dependencies {
     optionalApi project(':micrometer-observation')
     optionalApi 'io.micrometer:context-propagation'
 
-    // Common Tests
-    testImplementation project(':micrometer-test')
-
     // kotlin
     optionalApi 'org.jetbrains.kotlin:kotlin-reflect'
     optionalApi 'org.jetbrains.kotlin:kotlin-stdlib-jdk8'
