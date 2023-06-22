@@ -45,11 +45,11 @@ import static org.assertj.core.api.SoftAssertions.assertSoftly;
  */
 class StepMeterRegistryTest {
 
-    private AtomicInteger publishes = new AtomicInteger();
+    private final AtomicInteger publishes = new AtomicInteger();
 
-    private MockClock clock = new MockClock();
+    private final MockClock clock = new MockClock();
 
-    private StepRegistryConfig config = new StepRegistryConfig() {
+    private final StepRegistryConfig config = new StepRegistryConfig() {
         @Override
         public String prefix() {
             return "test";
@@ -61,7 +61,7 @@ class StepMeterRegistryTest {
         }
     };
 
-    private MyStepMeterRegistry registry = new MyStepMeterRegistry();
+    private final MyStepMeterRegistry registry = new MyStepMeterRegistry();
 
     @Issue("#370")
     @Test
@@ -416,6 +416,40 @@ class StepMeterRegistryTest {
         assertThat(registry.publishedFunctionTimerTotals.pop()).isEqualTo(53);
     }
 
+    @Test
+    @Issue("3914")
+    void publishShouldNotHappenWhenRegistryIsClosedOrDisabled() {
+        StepRegistryConfig disabledStepRegistryConfig = new StepRegistryConfig() {
+            @Override
+            public String prefix() {
+                return "test";
+            }
+
+            @Override
+            public boolean enabled() {
+                return false;
+            }
+
+            @Nullable
+            @Override
+            public String get(String key) {
+                return null;
+            }
+        };
+
+        MyStepMeterRegistry disabledStepMeterRegistry = new MyStepMeterRegistry(disabledStepRegistryConfig, clock);
+        Counter.builder("publish_disabled_counter").register(disabledStepMeterRegistry).increment();
+
+        clock.add(config.step());
+        long publishCountBeforeClose = publishes.get();
+        disabledStepMeterRegistry.close();
+        assertThat(publishes.get()).isEqualTo(publishCountBeforeClose);
+
+        clock.add(config.step());
+        disabledStepMeterRegistry.close();
+        assertThat(publishes.get()).isEqualTo(publishCountBeforeClose);
+    }
+
     private class MyStepMeterRegistry extends StepMeterRegistry {
 
         Deque<Double> publishedCounterCounts = new ArrayDeque<>();
@@ -440,7 +474,11 @@ class StepMeterRegistryTest {
         Runnable prePublishAction;
 
         MyStepMeterRegistry() {
-            super(StepMeterRegistryTest.this.config, StepMeterRegistryTest.this.clock);
+            this(StepMeterRegistryTest.this.config, StepMeterRegistryTest.this.clock);
+        }
+
+        MyStepMeterRegistry(StepRegistryConfig config, Clock clock) {
+            super(config, clock);
         }
 
         void setPrePublishAction(Runnable prePublishAction) {
