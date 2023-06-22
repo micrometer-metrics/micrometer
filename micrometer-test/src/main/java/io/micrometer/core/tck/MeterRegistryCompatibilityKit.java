@@ -21,6 +21,7 @@ import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.distribution.CountAtBucket;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
+import io.micrometer.core.instrument.distribution.HistogramSnapshot;
 import io.micrometer.core.instrument.distribution.ValueAtPercentile;
 import io.micrometer.core.instrument.internal.CumulativeHistogramLongTaskTimer;
 import io.micrometer.core.instrument.observation.DefaultMeterObservationHandler;
@@ -300,6 +301,64 @@ public abstract class MeterRegistryCompatibilityKit {
             assertThat(s.histogramCountAtValue(2)).isNaN();
         }
 
+        @Issue("#3904")
+        @Test
+        void histogramCountsPublishPercentileHistogramAndSlos() {
+            DistributionSummary summary = DistributionSummary.builder("my.summmary")
+                .serviceLevelObjectives(5, 50, 95)
+                .publishPercentileHistogram()
+                .register(registry);
+
+            // ensure time-window based histograms are not fully rotated when we assert
+            Duration halfStep = step().dividedBy(2);
+            clock(registry).add(halfStep);
+
+            for (int val : new int[] { 22, 55, 66, 98 }) {
+                summary.record(val);
+            }
+            // accommodate StepBucketHistogram
+            clock(registry).add(halfStep);
+
+            HistogramSnapshot snapshot = summary.takeSnapshot();
+            CountAtBucket[] countAtBuckets = snapshot.histogramCounts();
+
+            assertHistogramBuckets(countAtBuckets);
+        }
+
+    }
+
+    private void assertHistogramBuckets(CountAtBucket[] countAtBuckets) {
+        assertHistogramBuckets(countAtBuckets, TimeUnit.NANOSECONDS);
+    }
+
+    private void assertHistogramBuckets(CountAtBucket[] countAtBuckets, TimeUnit timeUnit) {
+        // percentile histogram buckets may be there, assert SLO buckets are present
+        assertThat(countAtBuckets).extracting(c -> c.bucket(timeUnit)).contains(5.0, 50.0, 95.0);
+
+        assertThat(countAtBuckets).satisfiesAnyOf(
+                // we can directly check the count of cumulative SLO buckets
+                bucketCounts -> assertThat(Arrays.stream(bucketCounts)
+                    .filter(countAtBucket -> Arrays.asList(5.0, 50.0, 95.0).contains(countAtBucket.bucket(timeUnit))))
+                    .extracting(CountAtBucket::count)
+                    .containsExactly(0.0, 1.0, 3.0),
+                // if not cumulative buckets, we need to add up buckets in range.
+                bucketCounts -> {
+                    assertThat(nonCumulativeBucketCountForRange(bucketCounts, timeUnit, 0, 5)).isEqualTo(0);
+                    assertThat(nonCumulativeBucketCountForRange(bucketCounts, timeUnit, 5, 50)).isEqualTo(1);
+                    assertThat(nonCumulativeBucketCountForRange(bucketCounts, timeUnit, 50, 95)).isEqualTo(2);
+                });
+    }
+
+    private double nonCumulativeBucketCountForRange(CountAtBucket[] countAtBuckets, TimeUnit timeUnit,
+            double exclusiveMinBucket, double inclusiveMaxBucket) {
+        double count = 0;
+        for (CountAtBucket countAtBucket : countAtBuckets) {
+            if (countAtBucket.bucket(timeUnit) > exclusiveMinBucket
+                    && countAtBucket.bucket(timeUnit) <= inclusiveMaxBucket) {
+                count += countAtBucket.count();
+            }
+        }
+        return count;
     }
 
     @DisplayName("gauges")
@@ -749,6 +808,30 @@ public abstract class MeterRegistryCompatibilityKit {
             clock(registry).add(halfStep);
             assertThat(t.histogramCountAtValue((long) millisToUnit(1, TimeUnit.NANOSECONDS))).isEqualTo(1);
             assertThat(t.histogramCountAtValue(1)).isNaN();
+        }
+
+        @Issue("#3904")
+        @Test
+        void histogramCountsPublishPercentileHistogramAndSlos() {
+            Timer timer = Timer.builder("my.timer")
+                .serviceLevelObjectives(Duration.ofMillis(5), Duration.ofMillis(50), Duration.ofMillis(95))
+                .publishPercentileHistogram()
+                .register(registry);
+
+            // ensure time-window based histograms are not fully rotated when we assert
+            Duration halfStep = step().dividedBy(2);
+            clock(registry).add(halfStep);
+
+            for (int val : new int[] { 22, 55, 66, 98 }) {
+                timer.record(Duration.ofMillis(val));
+            }
+            // accommodate StepBucketHistogram
+            clock(registry).add(halfStep);
+
+            HistogramSnapshot snapshot = timer.takeSnapshot();
+            CountAtBucket[] countAtBuckets = snapshot.histogramCounts();
+
+            assertHistogramBuckets(countAtBuckets, TimeUnit.MILLISECONDS);
         }
 
     }
