@@ -138,7 +138,7 @@ public abstract class StepMeterRegistry extends PushMeterRegistry {
     public void close() {
         stop();
 
-        if (!isPublishing()) {
+        if (!isPublishing() && config.enabled() && !isClosed()) {
             if (!isDataPublishedForCurrentStep()) {
                 // Data was not published for the current step. So, we should flush that
                 // first.
