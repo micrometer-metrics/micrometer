@@ -328,28 +328,33 @@ public abstract class MeterRegistryCompatibilityKit {
     }
 
     private void assertHistogramBuckets(CountAtBucket[] countAtBuckets) {
+        assertHistogramBuckets(countAtBuckets, TimeUnit.NANOSECONDS);
+    }
+
+    private void assertHistogramBuckets(CountAtBucket[] countAtBuckets, TimeUnit timeUnit) {
         // percentile histogram buckets may be there, assert SLO buckets are present
-        assertThat(countAtBuckets).extracting(CountAtBucket::bucket).contains(5.0, 50.0, 95.0);
+        assertThat(countAtBuckets).extracting(c -> c.bucket(timeUnit)).contains(5.0, 50.0, 95.0);
 
         assertThat(countAtBuckets).satisfiesAnyOf(
                 // we can directly check the count of cumulative SLO buckets
                 bucketCounts -> assertThat(Arrays.stream(bucketCounts)
-                    .filter(countAtBucket -> Arrays.asList(5.0, 50.0, 95.0).contains(countAtBucket.bucket())))
+                    .filter(countAtBucket -> Arrays.asList(5.0, 50.0, 95.0).contains(countAtBucket.bucket(timeUnit))))
                     .extracting(CountAtBucket::count)
                     .containsExactly(0.0, 1.0, 3.0),
                 // if not cumulative buckets, we need to add up buckets in range.
                 bucketCounts -> {
-                    assertThat(nonCumulativeBucketCountForRange(bucketCounts, 0, 5)).isEqualTo(0);
-                    assertThat(nonCumulativeBucketCountForRange(bucketCounts, 5, 50)).isEqualTo(1);
-                    assertThat(nonCumulativeBucketCountForRange(bucketCounts, 50, 95)).isEqualTo(2);
+                    assertThat(nonCumulativeBucketCountForRange(bucketCounts, timeUnit, 0, 5)).isEqualTo(0);
+                    assertThat(nonCumulativeBucketCountForRange(bucketCounts, timeUnit, 5, 50)).isEqualTo(1);
+                    assertThat(nonCumulativeBucketCountForRange(bucketCounts, timeUnit, 50, 95)).isEqualTo(2);
                 });
     }
 
-    private double nonCumulativeBucketCountForRange(CountAtBucket[] countAtBuckets, double exclusiveMinBucket,
-            double inclusiveMaxBucket) {
+    private double nonCumulativeBucketCountForRange(CountAtBucket[] countAtBuckets, TimeUnit timeUnit,
+            double exclusiveMinBucket, double inclusiveMaxBucket) {
         double count = 0;
         for (CountAtBucket countAtBucket : countAtBuckets) {
-            if (countAtBucket.bucket() > exclusiveMinBucket && countAtBucket.bucket() <= inclusiveMaxBucket) {
+            if (countAtBucket.bucket(timeUnit) > exclusiveMinBucket
+                    && countAtBucket.bucket(timeUnit) <= inclusiveMaxBucket) {
                 count += countAtBucket.count();
             }
         }
@@ -809,7 +814,7 @@ public abstract class MeterRegistryCompatibilityKit {
         @Test
         void histogramCountsPublishPercentileHistogramAndSlos() {
             Timer timer = Timer.builder("my.timer")
-                .serviceLevelObjectives(Duration.ofNanos(5), Duration.ofNanos(50), Duration.ofNanos(95))
+                .serviceLevelObjectives(Duration.ofMillis(5), Duration.ofMillis(50), Duration.ofMillis(95))
                 .publishPercentileHistogram()
                 .register(registry);
 
@@ -818,7 +823,7 @@ public abstract class MeterRegistryCompatibilityKit {
             clock(registry).add(halfStep);
 
             for (int val : new int[] { 22, 55, 66, 98 }) {
-                timer.record(Duration.ofNanos(val));
+                timer.record(Duration.ofMillis(val));
             }
             // accommodate StepBucketHistogram
             clock(registry).add(halfStep);
@@ -826,7 +831,7 @@ public abstract class MeterRegistryCompatibilityKit {
             HistogramSnapshot snapshot = timer.takeSnapshot();
             CountAtBucket[] countAtBuckets = snapshot.histogramCounts();
 
-            assertHistogramBuckets(countAtBuckets);
+            assertHistogramBuckets(countAtBuckets, TimeUnit.MILLISECONDS);
         }
 
     }
