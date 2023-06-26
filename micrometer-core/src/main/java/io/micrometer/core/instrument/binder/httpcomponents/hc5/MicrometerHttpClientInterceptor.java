@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 VMware, Inc.
+ * Copyright 2023 VMware, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,19 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.core.instrument.binder.httpcomponents;
+package io.micrometer.core.instrument.binder.httpcomponents.hc5;
 
-import io.micrometer.core.annotation.Incubating;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.binder.http.Outcome;
-import io.micrometer.core.instrument.binder.httpcomponents.hc5.ObservationExecChainHandler;
-import org.apache.http.HttpRequest;
-import org.apache.http.HttpRequestInterceptor;
-import org.apache.http.HttpResponseInterceptor;
-import org.apache.http.protocol.HttpContext;
+import org.apache.hc.core5.http.HttpRequest;
+import org.apache.hc.core5.http.HttpRequestInterceptor;
+import org.apache.hc.core5.http.HttpResponseInterceptor;
+import org.apache.hc.core5.http.protocol.HttpContext;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -33,25 +31,24 @@ import java.util.function.Function;
 
 /**
  * Provides {@link HttpRequestInterceptor} and {@link HttpResponseInterceptor} for
- * configuring with an {@link org.apache.http.nio.client.HttpAsyncClient}. Usage example:
- * <pre>{@code
+ * instrumenting async Apache HTTP Client 5. Configure the interceptors on an
+ * {@link org.apache.hc.client5.http.async.HttpAsyncClient}. Usage example: <pre>{@code
  *     MicrometerHttpClientInterceptor interceptor = new MicrometerHttpClientInterceptor(registry,
- *             request -> request.getRequestLine().getUri(),
+ *             HttpRequest::getRequestUri,
  *             Tags.empty(),
  *             true);
  *
  *     CloseableHttpAsyncClient httpAsyncClient = HttpAsyncClients.custom()
- *             .addInterceptorFirst(interceptor.getRequestInterceptor())
- *             .addInterceptorLast(interceptor.getResponseInterceptor())
- *             .build();
+ *                 .addRequestInterceptorFirst(interceptor.getRequestInterceptor())
+ *                 .addResponseInterceptorLast(interceptor.getResponseInterceptor())
+ *                 .build();
  * }</pre>
- * <p>
- * See {@link ObservationExecChainHandler} for Apache HTTP client 5 support.
  *
  * @author Jon Schneider
- * @since 1.4.0
+ * @since 1.11.0
+ * @deprecated since 1.12.0 in favor of {@link ObservationExecChainHandler}.
  */
-@Incubating(since = "1.4.0")
+@Deprecated
 public class MicrometerHttpClientInterceptor {
 
     private static final String METER_NAME = "httpcomponents.httpclient.request";
@@ -71,14 +68,14 @@ public class MicrometerHttpClientInterceptor {
      */
     public MicrometerHttpClientInterceptor(MeterRegistry meterRegistry, Function<HttpRequest, String> uriMapper,
             Iterable<Tag> extraTags, boolean exportTagsForRoute) {
-        this.requestInterceptor = (request, context) -> timerByHttpContext.put(context,
+        this.requestInterceptor = (request, entityDetails, context) -> timerByHttpContext.put(context,
                 Timer.resource(meterRegistry, METER_NAME)
-                    .tags("method", request.getRequestLine().getMethod(), "uri", uriMapper.apply(request)));
+                    .tags("method", request.getMethod(), "uri", uriMapper.apply(request)));
 
-        this.responseInterceptor = (response, context) -> {
+        this.responseInterceptor = (response, entityDetails, context) -> {
             timerByHttpContext.remove(context)
-                .tag("status", Integer.toString(response.getStatusLine().getStatusCode()))
-                .tag("outcome", Outcome.forStatus(response.getStatusLine().getStatusCode()).name())
+                .tag("status", Integer.toString(response.getCode()))
+                .tag("outcome", Outcome.forStatus(response.getCode()).name())
                 .tags(exportTagsForRoute ? HttpContextUtils.generateTagsForRoute(context) : Tags.empty())
                 .tags(extraTags)
                 .close();

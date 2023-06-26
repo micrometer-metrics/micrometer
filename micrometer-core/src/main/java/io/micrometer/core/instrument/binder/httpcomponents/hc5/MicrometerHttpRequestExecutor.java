@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 VMware, Inc.
+ * Copyright 2023 VMware, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,25 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.core.instrument.binder.httpcomponents;
+package io.micrometer.core.instrument.binder.httpcomponents.hc5;
 
 import io.micrometer.common.lang.Nullable;
-import io.micrometer.core.annotation.Incubating;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.binder.http.Outcome;
-import io.micrometer.core.instrument.binder.httpcomponents.hc5.ObservationExecChainHandler;
 import io.micrometer.core.instrument.observation.ObservationOrTimerCompatibleInstrumentation;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
-import org.apache.http.HttpClientConnection;
-import org.apache.http.HttpException;
-import org.apache.http.HttpRequest;
-import org.apache.http.HttpResponse;
-import org.apache.http.protocol.HttpContext;
-import org.apache.http.protocol.HttpRequestExecutor;
+import org.apache.hc.client5.http.protocol.HttpClientContext;
+import org.apache.hc.core5.http.*;
+import org.apache.hc.core5.http.impl.io.HttpRequestExecutor;
+import org.apache.hc.core5.http.io.HttpClientConnection;
+import org.apache.hc.core5.http.protocol.HttpContext;
+import org.apache.hc.core5.util.Timeout;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -39,9 +37,10 @@ import java.util.Optional;
 import java.util.function.Function;
 
 /**
- * This HttpRequestExecutor tracks the request duration of every request, that goes
- * through an {@link org.apache.http.client.HttpClient}. It must be registered as request
- * executor when creating the HttpClient instance. For example:
+ * This instruments the execution of every request that goes through an
+ * {@link org.apache.hc.client5.http.classic.HttpClient} on which it is configured. It
+ * must be registered as request executor when creating the HttpClient instance. For
+ * example:
  *
  * <pre>
  *     HttpClientBuilder.create()
@@ -50,22 +49,14 @@ import java.util.function.Function;
  *                 .build())
  *         .build();
  * </pre>
- * <p>
- * See {@link ObservationExecChainHandler} for Apache HTTP client 5 support.
  *
  * @author Benjamin Hubert (benjamin.hubert@willhaben.at)
  * @author Tommy Ludwig
- * @since 1.2.0
+ * @since 1.11.0
+ * @deprecated since 1.12.0 in favor of {@link ObservationExecChainHandler}.
  */
-@Incubating(since = "1.2.0")
+@Deprecated
 public class MicrometerHttpRequestExecutor extends HttpRequestExecutor {
-
-    /**
-     * Default header name for URI pattern.
-     * @deprecated use {@link DefaultUriMapper#URI_PATTERN_HEADER} since 1.4.0
-     */
-    @Deprecated
-    public static final String DEFAULT_URI_PATTERN_HEADER = DefaultUriMapper.URI_PATTERN_HEADER;
 
     static final String METER_NAME = "httpcomponents.httpclient.request";
 
@@ -85,10 +76,10 @@ public class MicrometerHttpRequestExecutor extends HttpRequestExecutor {
     /**
      * Use {@link #builder(MeterRegistry)} to create an instance of this class.
      */
-    private MicrometerHttpRequestExecutor(int waitForContinue, MeterRegistry registry,
+    private MicrometerHttpRequestExecutor(Timeout waitForContinue, MeterRegistry registry,
             Function<HttpRequest, String> uriMapper, Iterable<Tag> extraTags, boolean exportTagsForRoute,
             ObservationRegistry observationRegistry, @Nullable ApacheHttpClientObservationConvention convention) {
-        super(waitForContinue);
+        super(waitForContinue, null, null);
         this.registry = Optional.ofNullable(registry)
             .orElseThrow(() -> new IllegalArgumentException("registry is required but has been initialized with null"));
         this.uriMapper = Optional.ofNullable(uriMapper)
@@ -111,17 +102,17 @@ public class MicrometerHttpRequestExecutor extends HttpRequestExecutor {
     }
 
     @Override
-    public HttpResponse execute(HttpRequest request, HttpClientConnection conn, HttpContext context)
+    public ClassicHttpResponse execute(ClassicHttpRequest request, HttpClientConnection conn, HttpContext context)
             throws IOException, HttpException {
         ObservationOrTimerCompatibleInstrumentation<ApacheHttpClientContext> sample = ObservationOrTimerCompatibleInstrumentation
-            .start(registry, observationRegistry,
-                    () -> new ApacheHttpClientContext(request, context, uriMapper, exportTagsForRoute), convention,
+            .start(registry, observationRegistry, () -> new ApacheHttpClientContext(request,
+                    HttpClientContext.adapt(context), uriMapper, exportTagsForRoute), convention,
                     DefaultApacheHttpClientObservationConvention.INSTANCE);
         String statusCodeOrError = "UNKNOWN";
         Outcome statusOutcome = Outcome.UNKNOWN;
 
         try {
-            HttpResponse response = super.execute(request, conn, context);
+            ClassicHttpResponse response = super.execute(request, conn, context);
             sample.setResponse(response);
             statusCodeOrError = DefaultApacheHttpClientObservationConvention.INSTANCE.getStatusValue(response, null);
             statusOutcome = DefaultApacheHttpClientObservationConvention.INSTANCE.getStatusOutcome(response);
@@ -150,7 +141,7 @@ public class MicrometerHttpRequestExecutor extends HttpRequestExecutor {
 
         private ObservationRegistry observationRegistry = ObservationRegistry.NOOP;
 
-        private int waitForContinue = HttpRequestExecutor.DEFAULT_WAIT_FOR_CONTINUE;
+        private Timeout waitForContinue = HttpRequestExecutor.DEFAULT_WAIT_FOR_CONTINUE;
 
         private Iterable<Tag> extraTags = Collections.emptyList();
 
@@ -170,7 +161,7 @@ public class MicrometerHttpRequestExecutor extends HttpRequestExecutor {
          * executor. See {@link HttpRequestExecutor} for details.
          * @return This builder instance.
          */
-        public Builder waitForContinue(int waitForContinue) {
+        public Builder waitForContinue(Timeout waitForContinue) {
             this.waitForContinue = waitForContinue;
             return this;
         }
@@ -228,7 +219,6 @@ public class MicrometerHttpRequestExecutor extends HttpRequestExecutor {
          * API instead of directly with a {@link Timer}.
          * @param observationRegistry registry with which to instrument
          * @return This builder instance.
-         * @since 1.10.0
          */
         public Builder observationRegistry(ObservationRegistry observationRegistry) {
             this.observationRegistry = observationRegistry;
@@ -242,7 +232,6 @@ public class MicrometerHttpRequestExecutor extends HttpRequestExecutor {
          * @param convention semantic convention to use
          * @return This builder instance.
          * @see #observationRegistry(ObservationRegistry)
-         * @since 1.10.0
          */
         public Builder observationConvention(ApacheHttpClientObservationConvention convention) {
             this.observationConvention = convention;
@@ -250,9 +239,8 @@ public class MicrometerHttpRequestExecutor extends HttpRequestExecutor {
         }
 
         /**
-         * Creates an instance of {@link MicrometerHttpRequestExecutor} with all the
-         * configured properties.
-         * @return an instance of {@link MicrometerHttpRequestExecutor}
+         * @return Creates an instance of {@link MicrometerHttpRequestExecutor} with all
+         * the configured properties.
          */
         public MicrometerHttpRequestExecutor build() {
             return new MicrometerHttpRequestExecutor(waitForContinue, registry, uriMapper, extraTags,
