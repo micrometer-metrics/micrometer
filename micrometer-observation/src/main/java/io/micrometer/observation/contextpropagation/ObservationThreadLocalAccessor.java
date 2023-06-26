@@ -55,7 +55,7 @@ public class ObservationThreadLocalAccessor implements ThreadLocalAccessor<Obser
     }
 
     /**
-     * Creates a new instance of this class and stores a static handle to it.
+     * Creates a new instance of this class.
      * @param observationRegistry observation registry
      * @since 1.10.8
      */
