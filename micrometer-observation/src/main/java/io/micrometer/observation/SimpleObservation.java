@@ -301,10 +301,9 @@ class SimpleObservation implements Observation {
 
         @Override
         public void close() {
-            SimpleScope lastScopeForThisObservation = getLastScope(this);
-
             if (currentObservation instanceof SimpleObservation) {
                 SimpleObservation observation = (SimpleObservation) currentObservation;
+                SimpleScope lastScopeForThisObservation = getLastScope(this);
                 if (lastScopeForThisObservation != null) {
                     observation.lastScope.put(Thread.currentThread(), lastScopeForThisObservation);
                 }
@@ -337,8 +336,7 @@ class SimpleObservation implements Observation {
                 do {
                     // We don't want to remove any enclosing scopes when resetting
                     // we just want to remove any scopes if they are present (that's why
-                    // we're
-                    // not calling scope#close)
+                    // we're not calling scope#close)
                     simpleObservation.notifyOnScopeReset();
                     scope = (SimpleScope) scope.previousObservationScope;
                 }
