@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 VMware, Inc.
+ * Copyright 2023 VMware, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,21 +15,23 @@
  */
 package io.micrometer.core.instrument.binder.http;
 
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+
+import io.micrometer.common.lang.Nullable;
 import io.micrometer.common.util.StringUtils;
 import io.micrometer.core.annotation.Incubating;
 import io.micrometer.core.instrument.Tag;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
 /**
- * Tags for HTTP requests.
+ * Tags for {@link jakarta.servlet.http.HttpServletRequest HTTP Jakarta requests}.
  *
  * @author Jon Schneider
- * @since 1.4.0
+ * @author Brian Clozel
+ * @since 1.12.0
  */
-@Incubating(since = "1.4.0")
-public class HttpRequestTags {
+@Incubating(since = "1.12.0")
+public class HttpJakartaServletRequestTags {
 
     private static final Tag EXCEPTION_NONE = Tag.of("exception", "None");
 
@@ -37,7 +39,7 @@ public class HttpRequestTags {
 
     private static final Tag METHOD_UNKNOWN = Tag.of("method", "UNKNOWN");
 
-    private HttpRequestTags() {
+    private HttpJakartaServletRequestTags() {
     }
 
     /**
@@ -46,45 +48,17 @@ public class HttpRequestTags {
      * @param request the request
      * @return the method tag whose value is a capitalized method (e.g. GET).
      */
-    public static Tag method(HttpServletRequest request) {
+    public static Tag method(@Nullable HttpServletRequest request) {
         return (request != null) ? Tag.of("method", request.getMethod()) : METHOD_UNKNOWN;
     }
 
     /**
-     * Creates a {@code method} tag based on the
-     * {@link jakarta.servlet.http.HttpServletRequest#getMethod() method} of the given
-     * {@code request}.
-     * @param request the request
-     * @return the method tag whose value is a capitalized method (e.g. GET).
-     * @since 1.10.0
-     * @deprecated since 1.12.0 in favor of
-     * {@link HttpJakartaServletRequestTags#method(jakarta.servlet.http.HttpServletRequest)}
-     */
-    @Deprecated
-    public static Tag method(jakarta.servlet.http.HttpServletRequest request) {
-        return HttpJakartaServletRequestTags.method(request);
-    }
-
-    /**
      * Creates a {@code status} tag based on the status of the given {@code response}.
      * @param response the HTTP response
      * @return the status tag derived from the status of the response
      */
-    public static Tag status(HttpServletResponse response) {
+    public static Tag status(@Nullable HttpServletResponse response) {
         return (response != null) ? Tag.of("status", Integer.toString(response.getStatus())) : STATUS_UNKNOWN;
-    }
-
-    /**
-     * Creates a {@code status} tag based on the status of the given {@code response}.
-     * @param response the HTTP response
-     * @return the status tag derived from the status of the response
-     * @since 1.10.0
-     * @deprecated since 1.12.0 in favor of
-     * {@link HttpJakartaServletRequestTags#status(jakarta.servlet.http.HttpServletResponse)}
-     */
-    @Deprecated
-    public static Tag status(jakarta.servlet.http.HttpServletResponse response) {
-        return HttpJakartaServletRequestTags.status(response);
     }
 
     /**
@@ -93,7 +67,7 @@ public class HttpRequestTags {
      * @param exception the exception, may be {@code null}
      * @return the exception tag derived from the exception
      */
-    public static Tag exception(Throwable exception) {
+    public static Tag exception(@Nullable Throwable exception) {
         if (exception != null) {
             String simpleName = exception.getClass().getSimpleName();
             return Tag.of("exception",
@@ -107,22 +81,9 @@ public class HttpRequestTags {
      * @param response the HTTP response
      * @return the outcome tag derived from the status of the response
      */
-    public static Tag outcome(HttpServletResponse response) {
+    public static Tag outcome(@Nullable HttpServletResponse response) {
         Outcome outcome = (response != null) ? Outcome.forStatus(response.getStatus()) : Outcome.UNKNOWN;
         return outcome.asTag();
-    }
-
-    /**
-     * Creates an {@code outcome} tag based on the status of the given {@code response}.
-     * @param response the HTTP response
-     * @return the outcome tag derived from the status of the response
-     * @since 1.10.0
-     * @deprecated since 1.12.0 in favor of
-     * {@link HttpJakartaServletRequestTags#outcome(jakarta.servlet.http.HttpServletResponse)}
-     */
-    @Deprecated
-    public static Tag outcome(jakarta.servlet.http.HttpServletResponse response) {
-        return HttpJakartaServletRequestTags.outcome(response);
     }
 
 }
