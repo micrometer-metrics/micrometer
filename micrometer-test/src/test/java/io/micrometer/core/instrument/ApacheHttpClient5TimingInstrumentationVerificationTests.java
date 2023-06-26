@@ -16,9 +16,7 @@
 package io.micrometer.core.instrument;
 
 import io.micrometer.common.lang.Nullable;
-import io.micrometer.core.instrument.binder.httpcomponents.hc5.ApacheHttpClientMetricsBinder;
-import io.micrometer.core.instrument.binder.httpcomponents.hc5.ApacheHttpClientObservationDocumentation;
-import io.micrometer.core.instrument.binder.httpcomponents.hc5.DefaultUriMapper;
+import io.micrometer.core.instrument.binder.httpcomponents.hc5.*;
 import io.micrometer.observation.docs.ObservationDocumentation;
 import org.apache.hc.client5.http.classic.methods.HttpUriRequest;
 import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
@@ -40,21 +38,19 @@ class ApacheHttpClient5TimingInstrumentationVerificationTests
     private static final HttpClientResponseHandler<ClassicHttpResponse> NOOP_RESPONSE_HANDLER = (response) -> response;
 
     @Override
+    @SuppressWarnings("deprecation")
     protected CloseableHttpClient clientInstrumentedWithMetrics() {
-        HttpClientBuilder clientBuilder = HttpClientBuilder.create();
-        ApacheHttpClientMetricsBinder.builder(getRegistry()).build().instrument(clientBuilder);
-        return clientBuilder.build();
+        return HttpClientBuilder.create()
+            .setRequestExecutor(MicrometerHttpRequestExecutor.builder(getRegistry()).build())
+            .build();
     }
 
     @Nullable
     @Override
     protected CloseableHttpClient clientInstrumentedWithObservations() {
-        HttpClientBuilder clientBuilder = HttpClientBuilder.create();
-        ApacheHttpClientMetricsBinder.builder(getRegistry())
-            .observationRegistry(getObservationRegistry())
-            .build()
-            .instrument(clientBuilder);
-        return clientBuilder.build();
+        return HttpClientBuilder.create()
+            .addExecInterceptorFirst("micrometer", new ObservationExecChainHandler(getObservationRegistry()))
+            .build();
     }
 
     @Override
@@ -80,6 +76,7 @@ class ApacheHttpClient5TimingInstrumentationVerificationTests
         }
     }
 
+    @SuppressWarnings("deprecation")
     private HttpUriRequest makeRequest(HttpMethod method, @Nullable byte[] body, URI baseUri, String templatedPath,
             String... pathVariables) {
         HttpUriRequestBase request = new HttpUriRequestBase(method.name(),

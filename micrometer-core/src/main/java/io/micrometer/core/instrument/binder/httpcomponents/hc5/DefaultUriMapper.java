@@ -26,7 +26,11 @@ import java.util.function.Function;
  *
  * @author Benjamin Hubert
  * @since 1.11.0
+ * @deprecated as of 1.12.0 in favor of an
+ * {@link org.apache.hc.client5.http.protocol.HttpClientContext} value with
+ * {@link ApacheHttpClientObservationConvention#URI_TEMPLATE_ATTRIBUTE} as key name.
  */
+@Deprecated
 public class DefaultUriMapper implements Function<HttpRequest, String> {
 
     /**
