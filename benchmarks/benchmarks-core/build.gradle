@@ -5,6 +5,7 @@ plugins {
 dependencies {
     jmh project(':micrometer-core')
     jmh project(':micrometer-registry-prometheus')
+    jmh project(':micrometer-registry-otlp')
 
     jmh 'io.dropwizard.metrics5:metrics-core:latest.release'
     jmh 'io.prometheus:simpleclient_common:latest.release'

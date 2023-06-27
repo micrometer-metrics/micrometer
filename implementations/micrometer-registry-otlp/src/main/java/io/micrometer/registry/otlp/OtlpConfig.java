@@ -141,6 +141,52 @@ public interface OtlpConfig extends PushRegistryConfig {
                     keyValue -> keyValue.substring(keyValue.indexOf('=') + 1).trim(), (l, r) -> r));
     }
 
+    /**
+     * Histogram type to be preferred when histogram publishing is enabled. By default
+     * {@link HistogramFlavour#EXPLICIT_BUCKET_HISTOGRAM} is used for the supported
+     * meters. When this is set to
+     * {@link HistogramFlavour#BASE2_EXPONENTIAL_BUCKET_HISTOGRAM} and publishPercentiles
+     * are enabled {@link io.micrometer.registry.otlp.internal.Base2ExponentialHistogram}
+     * is used for recording distributions.
+     * <p>
+     * Note: If specific SLO's are added as part of meters, this property is not honored
+     * and {@link HistogramFlavour#EXPLICIT_BUCKET_HISTOGRAM} is used for those meters.
+     * </p>
+     * @return - histogram flavour to be used
+     *
+     * @since 1.12.0
+     */
+    default HistogramFlavour histogramFlavour() {
+        String histogramPreference = System.getenv().get("OTEL_EXPORTER_OTLP_METRICS_DEFAULT_HISTOGRAM_AGGREGATION");
+        if (histogramPreference == null) {
+            return getEnum(this, HistogramFlavour.class, "histogramFlavour")
+                .orElse(HistogramFlavour.EXPLICIT_BUCKET_HISTOGRAM);
+        }
+        return HistogramFlavour.fromString(histogramPreference);
+    }
+
+    /**
+     * Max scale to use for
+     * {@link io.micrometer.registry.otlp.internal.Base2ExponentialHistogram}
+     * @return maxScale
+     *
+     * @since 1.12.0
+     */
+    default int maxScale() {
+        return getInteger(this, "maxScale").orElse(20);
+    }
+
+    /**
+     * Maximum number of buckets to be used for
+     * {@link io.micrometer.registry.otlp.internal.Base2ExponentialHistogram}
+     * @return - maxBuckets
+     *
+     * @since 1.12.0
+     */
+    default int maxBucketCount() {
+        return getInteger(this, "maxBucketCount").orElse(160);
+    }
+
     @Override
     default Validated<?> validate() {
         return checkAll(this, c -> PushRegistryConfig.validate(c), checkRequired("url", OtlpConfig::url),

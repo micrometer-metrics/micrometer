@@ -15,16 +15,21 @@
  */
 package io.micrometer.registry.otlp;
 
+import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.AbstractTimer;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import io.micrometer.core.instrument.util.TimeUtils;
+import io.micrometer.registry.otlp.internal.Base2ExponentialHistogram;
+import io.micrometer.registry.otlp.internal.ExponentialHistogramSnapShot;
 
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.LongAdder;
 
-class OtlpStepTimer extends AbstractTimer {
+class OtlpStepTimer extends AbstractTimer implements OtlpHistogramSupport {
+
+    private final HistogramFlavour histogramFlavour;
 
     private final LongAdder count = new LongAdder();
 
@@ -41,14 +46,17 @@ class OtlpStepTimer extends AbstractTimer {
      * @param distributionStatisticConfig distribution statistic configuration
      * @param pauseDetector pause detector
      * @param baseTimeUnit base time unit
-     * @param stepDurationMillis step in milliseconds
+     * @param otlpConfig config of the registry
      */
     OtlpStepTimer(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig,
-            PauseDetector pauseDetector, TimeUnit baseTimeUnit, long stepDurationMillis) {
-        super(id, clock, pauseDetector, baseTimeUnit, OtlpMeterRegistry.getHistogram(clock, distributionStatisticConfig,
-                AggregationTemporality.DELTA, stepDurationMillis));
-        countTotal = new OtlpStepTuple2<>(clock, stepDurationMillis, 0L, 0L, count::sumThenReset, total::sumThenReset);
-        max = new StepMax(clock, stepDurationMillis);
+            PauseDetector pauseDetector, TimeUnit baseTimeUnit, OtlpConfig otlpConfig) {
+        super(id, clock, pauseDetector, otlpConfig.baseTimeUnit(),
+                OtlpMeterRegistry.getHistogram(clock, distributionStatisticConfig, otlpConfig, baseTimeUnit));
+        countTotal = new OtlpStepTuple2<>(clock, otlpConfig.step().toMillis(), 0L, 0L, count::sumThenReset,
+                total::sumThenReset);
+        max = new StepMax(clock, otlpConfig.step().toMillis());
+        this.histogramFlavour = OtlpMeterRegistry.histogramFlavour(otlpConfig.histogramFlavour(),
+                distributionStatisticConfig);
     }
 
     @Override
@@ -86,6 +94,15 @@ class OtlpStepTimer extends AbstractTimer {
         if (histogram instanceof OtlpStepBucketHistogram) { // can be noop
             ((OtlpStepBucketHistogram) histogram)._closingRollover();
         }
+    }
+
+    @Override
+    @Nullable
+    public ExponentialHistogramSnapShot getExponentialHistogramSnapShot() {
+        if (histogramFlavour == HistogramFlavour.BASE2_EXPONENTIAL_BUCKET_HISTOGRAM) {
+            return ((Base2ExponentialHistogram) histogram).getLatestExponentialHistogramSnapshot();
+        }
+        return null;
     }
 
 }
