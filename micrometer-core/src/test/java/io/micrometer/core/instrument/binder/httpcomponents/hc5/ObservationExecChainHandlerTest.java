@@ -123,7 +123,7 @@ class ObservationExecChainHandlerTest {
         void setup() throws Exception {
             this.scope = new AsyncExecChain.Scope("id", new HttpRoute(HttpHost.create("https://example.org:8080")),
                     asyncRequest, cancellable, clientContext, mock(AsyncExecRuntime.class),
-                    mock(AsyncExecChain.Scheduler.class), new AtomicInteger(0));
+                    mock(AsyncExecChain.Scheduler.class), new AtomicInteger(1));
         }
 
         @Test

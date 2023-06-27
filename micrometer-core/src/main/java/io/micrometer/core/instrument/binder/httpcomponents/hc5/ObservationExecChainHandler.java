@@ -23,6 +23,7 @@ import org.apache.hc.client5.http.async.AsyncExecChain;
 import org.apache.hc.client5.http.async.AsyncExecChainHandler;
 import org.apache.hc.client5.http.classic.ExecChain;
 import org.apache.hc.client5.http.classic.ExecChainHandler;
+import org.apache.hc.client5.http.impl.ChainElement;
 import org.apache.hc.core5.concurrent.Cancellable;
 import org.apache.hc.core5.concurrent.CancellableDependency;
 import org.apache.hc.core5.http.*;
@@ -42,15 +43,17 @@ import java.util.concurrent.atomic.AtomicMarkableReference;
  * <p>
  * For a "classic" client, it can be configured as an interceptor in the chain: <pre>
  * CloseableHttpClient client = HttpClientBuilder.create()
- *   .addExecInterceptorFirst("micrometer", new ObservationExecChainHandler(observationRegistry))
+ *   .addExecInterceptorLast("micrometer", new ObservationExecChainHandler(observationRegistry))
  *   .build()
  * </pre>
  * <p>
  * For an "async" client, it can also be configured as an interceptor in the chain: <pre>
  * CloseableHttpAsyncClient client = HttpAsyncClients.custom()
- *   .addExecInterceptorFirst("micrometer", new ObservationExecChainHandler(observationRegistry))
+ *   .addExecInterceptorLast("micrometer", new ObservationExecChainHandler(observationRegistry))
  *   .build();
  * </pre>
+ * <p>Note that the {@link ObservationExecChainHandler} must always be inserted after the
+ * {@link ChainElement#RETRY retry interceptor}, preferably last.
  *
  * @author Brian Clozel
  * @since 1.12.0
@@ -62,6 +65,7 @@ public class ObservationExecChainHandler implements ExecChainHandler, AsyncExecC
     @Nullable
     private final ApacheHttpClientObservationConvention observationConvention;
 
+
     public ObservationExecChainHandler(ObservationRegistry observationRegistry,
             @Nullable ApacheHttpClientObservationConvention observationConvention) {
         this.observationRegistry = observationRegistry;
@@ -72,20 +76,21 @@ public class ObservationExecChainHandler implements ExecChainHandler, AsyncExecC
         this(observationRegistry, null);
     }
 
+
     @Override
     public void execute(HttpRequest request, AsyncEntityProducer entityProducer, AsyncExecChain.Scope scope,
             AsyncExecChain chain, AsyncExecCallback asyncExecCallback) throws HttpException, IOException {
         ApacheHttpClientContext observationContext = new ApacheHttpClientContext(request, scope.clientContext);
         Observation observation = ApacheHttpClientObservationDocumentation.DEFAULT
             .observation(observationConvention, DefaultApacheHttpClientObservationConvention.INSTANCE,
-                    () -> observationContext, observationRegistry)
+                () -> observationContext, observationRegistry)
             .start();
         ObervableCancellableDependency cancellable = new ObervableCancellableDependency(observation);
         chain.proceed(request, entityProducer, cancellable.wrapScope(scope), new AsyncExecCallback() {
 
             @Override
             public AsyncDataConsumer handleResponse(HttpResponse response, EntityDetails entityDetails)
-                    throws HttpException, IOException {
+                throws HttpException, IOException {
                 observationContext.setResponse(response);
                 observation.stop();
                 return asyncExecCallback.handleResponse(response, entityDetails);
@@ -109,7 +114,6 @@ public class ObservationExecChainHandler implements ExecChainHandler, AsyncExecC
             }
 
         });
-
     }
 
     @Override
