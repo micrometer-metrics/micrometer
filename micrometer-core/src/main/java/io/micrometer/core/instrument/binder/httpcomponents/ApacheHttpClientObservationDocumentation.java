@@ -29,7 +29,10 @@ import io.micrometer.observation.docs.ObservationDocumentation;
  *
  * @since 1.10.0
  * @see MicrometerHttpRequestExecutor
+ * @deprecated as of 1.12.0 in favor of HttpComponents 5.x and
+ * {@link io.micrometer.core.instrument.binder.httpcomponents.hc5.ApacheHttpClientObservationDocumentation}.
  */
+@Deprecated
 public enum ApacheHttpClientObservationDocumentation implements ObservationDocumentation {
 
     DEFAULT {

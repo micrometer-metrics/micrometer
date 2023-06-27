@@ -31,7 +31,10 @@ import java.util.function.Function;
  * for Apache HTTP client 5 support.
  *
  * @since 1.10.0
+ * @deprecated as of 1.12.0 in favor of HttpComponents 5.x and
+ * {@link io.micrometer.core.instrument.binder.httpcomponents.hc5.ApacheHttpClientContext}.
  */
+@Deprecated
 public class ApacheHttpClientContext extends RequestReplySenderContext<HttpRequest, HttpResponse> {
 
     private final HttpContext apacheHttpContext;

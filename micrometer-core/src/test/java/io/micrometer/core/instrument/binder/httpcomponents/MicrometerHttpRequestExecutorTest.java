@@ -55,6 +55,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
  * @author Benjamin Hubert (benjamin.hubert@willhaben.at)
  */
 @ExtendWith(WiremockResolver.class)
+@Deprecated
 class MicrometerHttpRequestExecutorTest {
 
     private static final String EXPECTED_METER_NAME = "httpcomponents.httpclient.request";
