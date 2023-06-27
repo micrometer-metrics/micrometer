@@ -20,7 +20,6 @@ import io.micrometer.common.lang.Nullable;
 import io.micrometer.common.util.StringUtils;
 import io.micrometer.common.util.internal.logging.InternalLogger;
 import io.micrometer.common.util.internal.logging.InternalLoggerFactory;
-import io.micrometer.observation.contextpropagation.ObservationThreadLocalAccessor;
 
 import java.util.ArrayDeque;
 import java.util.Collection;
@@ -348,15 +347,6 @@ class SimpleObservation implements Observation {
         }
 
         /**
-         * This method is called e.g. via
-         * {@link ObservationThreadLocalAccessor#restore(Observation)}. In that case,
-         * we're calling {@link ObservationThreadLocalAccessor#reset()} first, and we're
-         * closing all the scopes, HOWEVER those are called on the Observation scope that
-         * was present there in thread local at the time of calling the method, NOT on the
-         * scope that we want to make current (that one can contain some leftovers from
-         * previous scope openings like creation of e.g. Brave scope in the TracingContext
-         * that is there inside the Observation's Context.
-         *
          * When we want to go back to the enclosing scope and want to make that scope
          * current we need to be sure that there are no remaining scoped objects inside
          * Observation's context. This is why BEFORE rebuilding the scope structure we
@@ -366,29 +356,22 @@ class SimpleObservation implements Observation {
          */
         @Override
         public void makeCurrent() {
+            Deque<SimpleObservation> observations = new ArrayDeque<>();
             SimpleScope scope = this;
             do {
                 // We don't want to remove any enclosing scopes when resetting
                 // we just want to remove any scopes if they are present (that's why we're
                 // not calling scope#close)
                 if (scope.currentObservation instanceof SimpleObservation) {
-                    ((SimpleObservation) scope.currentObservation).notifyOnScopeReset();
+                    SimpleObservation observation = (SimpleObservation) scope.currentObservation;
+                    observations.addFirst(observation);
+                    observation.notifyOnScopeReset();
                 }
                 scope = (SimpleScope) scope.previousObservationScope;
             }
             while (scope != null);
-
-            Deque<SimpleScope> scopes = new ArrayDeque<>();
-            scope = this;
-            do {
-                scopes.addFirst(scope);
-                scope = (SimpleScope) scope.previousObservationScope;
-            }
-            while (scope != null);
-            for (SimpleScope simpleScope : scopes) {
-                if (simpleScope.currentObservation instanceof SimpleObservation) {
-                    ((SimpleObservation) simpleScope.currentObservation).notifyOnScopeMakeCurrent();
-                }
+            for (SimpleObservation observation : observations) {
+                observation.notifyOnScopeMakeCurrent();
             }
             this.registry.setCurrentObservationScope(this);
         }
