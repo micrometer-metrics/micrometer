@@ -15,27 +15,43 @@
  */
 package io.micrometer.registry.otlp;
 
+import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.cumulative.CumulativeTimer;
 import io.micrometer.core.instrument.distribution.*;
 import io.micrometer.core.instrument.distribution.pause.PauseDetector;
+import io.micrometer.registry.otlp.internal.Base2ExponentialHistogram;
+import io.micrometer.registry.otlp.internal.ExponentialHistogramSnapShot;
 
 import java.util.concurrent.TimeUnit;
 
-class OtlpCumulativeTimer extends CumulativeTimer implements StartTimeAwareMeter {
+class OtlpCumulativeTimer extends CumulativeTimer implements StartTimeAwareMeter, OtlpHistogramSupport {
+
+    private final HistogramFlavour histogramFlavour;
 
     private final long startTimeNanos;
 
     OtlpCumulativeTimer(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig,
-            PauseDetector pauseDetector, TimeUnit baseTimeUnit) {
+            PauseDetector pauseDetector, TimeUnit baseTimeUnit, OtlpConfig otlpConfig) {
         super(id, clock, distributionStatisticConfig, pauseDetector, baseTimeUnit,
-                OtlpMeterRegistry.getHistogram(clock, distributionStatisticConfig, AggregationTemporality.CUMULATIVE));
+                OtlpMeterRegistry.getHistogram(clock, distributionStatisticConfig, otlpConfig, baseTimeUnit));
+        this.histogramFlavour = OtlpMeterRegistry.histogramFlavour(otlpConfig.histogramFlavour(),
+                distributionStatisticConfig);
         this.startTimeNanos = TimeUnit.MILLISECONDS.toNanos(clock.wallTime());
     }
 
     @Override
     public long getStartTimeNanos() {
         return this.startTimeNanos;
+    }
+
+    @Override
+    @Nullable
+    public ExponentialHistogramSnapShot getExponentialHistogramSnapShot() {
+        if (histogramFlavour == HistogramFlavour.BASE2_EXPONENTIAL_BUCKET_HISTOGRAM) {
+            return ((Base2ExponentialHistogram) histogram).getLatestExponentialHistogramSnapshot();
+        }
+        return null;
     }
 
 }
