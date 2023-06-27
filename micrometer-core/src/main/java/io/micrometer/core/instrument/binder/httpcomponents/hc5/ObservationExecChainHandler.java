@@ -72,8 +72,7 @@ public class ObservationExecChainHandler implements ExecChainHandler, AsyncExecC
         this(observationRegistry, null);
     }
 
-    @Override
-    public void execute(HttpRequest request, AsyncEntityProducer entityProducer, AsyncExecChain.Scope scope,
+    public void observeExecution(HttpRequest request, AsyncEntityProducer entityProducer, AsyncExecChain.Scope scope,
             AsyncExecChain chain, AsyncExecCallback asyncExecCallback) throws HttpException, IOException {
         ApacheHttpClientContext observationContext = new ApacheHttpClientContext(request, scope.clientContext);
         Observation observation = ApacheHttpClientObservationDocumentation.DEFAULT
@@ -110,6 +109,15 @@ public class ObservationExecChainHandler implements ExecChainHandler, AsyncExecC
 
         });
 
+    }
+
+    @Override
+    public void execute(HttpRequest request, AsyncEntityProducer entityProducer, AsyncExecChain.Scope scope, AsyncExecChain chain, AsyncExecCallback asyncExecCallback) throws HttpException, IOException {
+        if (scope.execCount.get() == 1) {
+            observeExecution(request, entityProducer, scope, chain, asyncExecCallback);
+        } else {
+            chain.proceed(request, entityProducer, scope, asyncExecCallback);
+        }
     }
 
     @Override
