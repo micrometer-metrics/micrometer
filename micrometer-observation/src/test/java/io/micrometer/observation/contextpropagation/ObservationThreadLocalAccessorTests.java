@@ -162,7 +162,7 @@ class ObservationThreadLocalAccessorTests {
             Scope currentScope = value.get();
             Scope newScope = new Scope(currentScope, context.getName());
             context.put(Scope.class, newScope);
-            System.out.println("\ton open scope [" + context + "]. Hashchode [" + newScope + "]");
+            System.out.println("\ton open scope [" + context + "]. Hashcode [" + newScope + "]");
         }
 
         @Override
@@ -195,11 +195,11 @@ class ObservationThreadLocalAccessorTests {
 
         private final Scope previous;
 
-        private final String obsName;
+        private final String observationName;
 
-        Scope(Scope previous, String obsName) {
+        Scope(Scope previous, String observationName) {
             this.previous = previous;
-            this.obsName = obsName;
+            this.observationName = observationName;
             TracingHandler.value.set(this);
         }
 
@@ -214,7 +214,7 @@ class ObservationThreadLocalAccessorTests {
 
         @Override
         public String toString() {
-            return "Scope{" + "previous=" + previous + ", obsName='" + obsName + '\'' + '}';
+            return "Scope{" + "previous=" + previous + ", observationName='" + observationName + '\'' + '}';
         }
 
     }

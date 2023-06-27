@@ -49,9 +49,7 @@ public class ObservationThreadLocalAccessor implements ThreadLocalAccessor<Obser
      */
     public ObservationThreadLocalAccessor() {
         instance = this;
-        if (log.isDebugEnabled()) {
-            log.debug("Remember to set the ObservationRegistry on this accessor!");
-        }
+        log.debug("Remember to set the ObservationRegistry on this accessor!");
     }
 
     /**
@@ -65,7 +63,7 @@ public class ObservationThreadLocalAccessor implements ThreadLocalAccessor<Obser
 
     /**
      * Provide an {@link ObservationRegistry} to be used by
-     * {@link ObservationThreadLocalAccessor}.
+     * {@code ObservationThreadLocalAccessor}.
      * @param observationRegistry observation registry
      * @since 1.10.8
      */
@@ -83,7 +81,7 @@ public class ObservationThreadLocalAccessor implements ThreadLocalAccessor<Obser
     }
 
     /**
-     * Return the singleton instance of this {@link ObservationThreadLocalAccessor}.
+     * Return the singleton instance of this {@code ObservationThreadLocalAccessor}.
      * @return instance
      * @since 1.10.8
      */
@@ -114,7 +112,7 @@ public class ObservationThreadLocalAccessor implements ThreadLocalAccessor<Obser
     @Override
     public void setValue() {
         // Not closing a scope (we're not resetting)
-        // Creating a new one with empty context and opens a new scope)
+        // Creating a new one with empty context and opens a new scope
         // This scope will remember the previously created one to
         // which we will revert once "null scope" is closed
         new NullObservation(observationRegistry).start().openScope();
@@ -147,7 +145,7 @@ public class ObservationThreadLocalAccessor implements ThreadLocalAccessor<Obser
             String msg = "Observation <" + value
                     + "> to which we're restoring is not the same as the one set as this scope's parent observation <"
                     + previousObservation
-                    + "> . Most likely a manually created Observation has a scope opened that was never closed. This may lead to thread polluting and memory leaks";
+                    + ">. Most likely a manually created Observation has a scope opened that was never closed. This may lead to thread polluting and memory leaks.";
             log.warn(msg);
             assert false : msg;
         }
