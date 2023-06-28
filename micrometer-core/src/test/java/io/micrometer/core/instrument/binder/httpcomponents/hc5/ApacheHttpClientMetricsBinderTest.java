@@ -22,7 +22,6 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.observation.DefaultMeterObservationHandler;
-import io.micrometer.core.instrument.search.MeterNotFoundException;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.micrometer.observation.GlobalObservationConvention;
 import io.micrometer.observation.ObservationRegistry;
@@ -204,59 +203,6 @@ class ApacheHttpClientMetricsBinderTest {
 
     @ParameterizedTest
     @ValueSource(booleans = { true, false })
-    void uriIsUnknownByDefault(boolean async, @WiremockResolver.Wiremock WireMockServer server)
-            throws IOException, ExecutionException, InterruptedException {
-        server.stubFor(any(anyUrl()));
-
-        ApacheHttpClientMetricsBinder metricsBinder = builder(observationRegistry).build();
-
-        if (async) {
-            try (CloseableHttpAsyncClient client = asyncClient(metricsBinder)) {
-                execute(client, SimpleRequestBuilder.get(server.baseUrl()).build());
-                execute(client, SimpleRequestBuilder.get(server.baseUrl() + "/someuri").build());
-                execute(client, SimpleRequestBuilder.get(server.baseUrl() + "/otheruri").build());
-            }
-        }
-        else {
-            try (CloseableHttpClient client = client(metricsBinder)) {
-                execute(client, new HttpGet(server.baseUrl()));
-                execute(client, new HttpGet(server.baseUrl() + "/someuri"));
-                execute(client, new HttpGet(server.baseUrl() + "/otheruri"));
-            }
-        }
-        assertThat(registry.get(DEFAULT_METER_NAME).tags("uri", "UNKNOWN").timer().count()).isEqualTo(3L);
-    }
-
-    @ParameterizedTest
-    @ValueSource(booleans = { true, false })
-    void uriIsReadFromHttpHeader(boolean async, @WiremockResolver.Wiremock WireMockServer server)
-            throws IOException, ExecutionException, InterruptedException {
-        server.stubFor(any(anyUrl()));
-
-        ApacheHttpClientMetricsBinder metricsBinder = builder(observationRegistry).build();
-
-        if (async) {
-            try (CloseableHttpAsyncClient client = asyncClient(metricsBinder)) {
-                execute(client,
-                        SimpleRequestBuilder.get(server.baseUrl())
-                            .addHeader(DefaultUriMapper.URI_PATTERN_HEADER, "/some/pattern")
-                            .build());
-            }
-        }
-        else {
-            try (CloseableHttpClient client = client(metricsBinder)) {
-                HttpGet getWithHeader = new HttpGet(server.baseUrl());
-                getWithHeader.addHeader(DefaultUriMapper.URI_PATTERN_HEADER, "/some/pattern");
-                execute(client, getWithHeader);
-            }
-        }
-        assertThat(registry.get(DEFAULT_METER_NAME).tags("uri", "/some/pattern").timer().count()).isEqualTo(1L);
-        assertThatCode(() -> registry.get(DEFAULT_METER_NAME).tags("uri", "UNKNOWN").timer())
-            .isInstanceOf(MeterNotFoundException.class);
-    }
-
-    @ParameterizedTest
-    @ValueSource(booleans = { true, false })
     @Disabled
     void routeNotTaggedByDefault(boolean async, @WiremockResolver.Wiremock WireMockServer server)
             throws IOException, ExecutionException, InterruptedException {
@@ -314,38 +260,6 @@ class ApacheHttpClientMetricsBinderTest {
     }
 
     @ParameterizedTest
-    @ValueSource(booleans = { true, false })
-    @Disabled
-    void uriMapperWorksAsExpected(boolean async, @WiremockResolver.Wiremock WireMockServer server)
-            throws IOException, ExecutionException, InterruptedException {
-        server.stubFor(any(anyUrl()));
-        ApacheHttpClientMetricsBinder metricsBinder = builder(observationRegistry)
-            // FIXME
-            // .uriMapper(HttpRequest::getRequestUri)
-            .build();
-
-        if (async) {
-            try (CloseableHttpAsyncClient client = asyncClient(metricsBinder, 1)) {
-                execute(client, SimpleRequestBuilder.get(server.baseUrl()).build());
-                execute(client, SimpleRequestBuilder.get(server.baseUrl() + "/foo").build());
-                execute(client, SimpleRequestBuilder.get(server.baseUrl() + "/bar").build());
-                execute(client, SimpleRequestBuilder.get(server.baseUrl() + "/foo").build());
-            }
-        }
-        else {
-            try (CloseableHttpClient client = client(metricsBinder)) {
-                execute(client, new HttpGet(server.baseUrl()));
-                execute(client, new HttpGet(server.baseUrl() + "/foo"));
-                execute(client, new HttpGet(server.baseUrl() + "/bar"));
-                execute(client, new HttpGet(server.baseUrl() + "/foo"));
-            }
-        }
-        assertThat(registry.get(DEFAULT_METER_NAME).tags("uri", "/").timer().count()).isEqualTo(1L);
-        assertThat(registry.get(DEFAULT_METER_NAME).tags("uri", "/foo").timer().count()).isEqualTo(2L);
-        assertThat(registry.get(DEFAULT_METER_NAME).tags("uri", "/bar").timer().count()).isEqualTo(1L);
-    }
-
-    @ParameterizedTest
     @ValueSource(booleans = { false, true })
     @Disabled
     void additionalTagsAreExposed(boolean async, @WiremockResolver.Wiremock WireMockServer server)
@@ -375,19 +289,6 @@ class ApacheHttpClientMetricsBinderTest {
     @Test
     void settingNullRegistryThrowsException() {
         assertThatCode(() -> builder(null).build()).isInstanceOf(NullPointerException.class);
-    }
-
-    @Test
-    @Disabled
-    void overrideExtraTagsDoesNotThrowAnException(@WiremockResolver.Wiremock WireMockServer server) throws IOException {
-        server.stubFor(any(anyUrl()));
-        ApacheHttpClientMetricsBinder executor = builder(observationRegistry)
-            // FIXME
-            // .tags(null)
-            .build();
-        CloseableHttpClient client = client(executor);
-        execute(client, new HttpGet(server.baseUrl()));
-        assertThat(registry.get(DEFAULT_METER_NAME)).isNotNull();
     }
 
     @Test
@@ -441,17 +342,9 @@ class ApacheHttpClientMetricsBinderTest {
         ApacheHttpClientMetricsBinder micrometerHttpRequestExecutor = builder(observationRegistry).build();
         CloseableHttpClient client = client(micrometerHttpRequestExecutor);
         switch (method) {
-            case "get":
-                execute(client, new HttpGet(server.baseUrl()));
-                break;
-
-            case "post":
-                execute(client, new HttpPost(server.baseUrl()));
-                break;
-
-            default:
-                execute(client, new HttpUriRequestBase(method, URI.create(server.baseUrl())));
-                break;
+            case "get" -> execute(client, new HttpGet(server.baseUrl()));
+            case "post" -> execute(client, new HttpPost(server.baseUrl()));
+            default -> execute(client, new HttpUriRequestBase(method, URI.create(server.baseUrl())));
         }
         TestObservationRegistryAssert.assertThat(observationRegistry)
             .hasSingleObservationThat()
