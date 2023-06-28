@@ -46,9 +46,9 @@ public class DefaultApacheHttpClientObservationConvention implements ApacheHttpC
 
     private static final KeyValue URI_UNKNOWN = KeyValue.of(ApacheHttpClientKeyNames.URI, "UNKNOWN");
 
-    private static final KeyValue STATUS_IOERROR = KeyValue.of(ApacheHttpClientKeyNames.STATUS, "IO_ERROR");
+    private static final KeyValue STATUS_IO_ERROR = KeyValue.of(ApacheHttpClientKeyNames.STATUS, "IO_ERROR");
 
-    private static final KeyValue STATUS_CLIENTERROR = KeyValue.of(ApacheHttpClientKeyNames.STATUS, "CLIENT_ERROR");
+    private static final KeyValue STATUS_CLIENT_ERROR = KeyValue.of(ApacheHttpClientKeyNames.STATUS, "CLIENT_ERROR");
 
     private static final KeyValue EXCEPTION_NONE = KeyValue.of(ApacheHttpClientKeyNames.EXCEPTION, KeyValue.NONE_VALUE);
 
@@ -106,10 +106,10 @@ public class DefaultApacheHttpClientObservationConvention implements ApacheHttpC
         Throwable error = context.getError();
         HttpResponse response = context.getResponse();
         if (error instanceof IOException || error instanceof HttpException || error instanceof RuntimeException) {
-            return STATUS_IOERROR;
+            return STATUS_IO_ERROR;
         }
         else if (response == null) {
-            return STATUS_CLIENTERROR;
+            return STATUS_CLIENT_ERROR;
         }
         return KeyValue.of(ApacheHttpClientKeyNames.STATUS, Integer.toString(response.getCode()));
     }
