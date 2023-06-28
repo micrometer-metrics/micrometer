@@ -17,6 +17,8 @@ package io.micrometer.core.instrument.binder.httpcomponents.hc5;
 
 import io.micrometer.common.lang.Nullable;
 import io.micrometer.observation.ObservationRegistry;
+import org.apache.hc.client5.http.async.AsyncExecChainHandler;
+import org.apache.hc.client5.http.classic.ExecChainHandler;
 import org.apache.hc.client5.http.impl.ChainElement;
 import org.apache.hc.client5.http.impl.async.CloseableHttpAsyncClient;
 import org.apache.hc.client5.http.impl.async.HttpAsyncClientBuilder;
@@ -25,6 +27,38 @@ import org.apache.hc.client5.http.impl.classic.HttpClientBuilder;
 
 import java.util.Objects;
 
+/**
+ * Instruments the Apache HTTP Client 5 for both classic and async variants using the
+ * {@link ExecChainHandler} and {@link AsyncExecChainHandler} contracts. This
+ * instrumentation accepts {@link ApacheHttpClientObservationConvention custom convetion
+ * implementations} and will use {@link DefaultApacheHttpClientObservationConvention the
+ * default one} if none was provided.
+ * <p>
+ * For a "classic" client, observations can be enabled by instrumenting the
+ * {@link HttpClientBuilder}:
+ *
+ * <pre>{@code
+ *         HttpClientBuilder clientBuilder = HttpClients.custom();
+ *         ApacheHttpClientMetricsBinder.builder(observationRegistry)
+ *             .build()
+ *             .instrument(clientBuilder);
+ *         CloseableHttpClient httpClient = clientBuilder.build();
+ *}</pre>
+ * <p>
+ * For an "async" client, observations can be enabled by instrumenting the
+ * {@link HttpAsyncClientBuilder}: <pre>
+ * {@code
+ *         HttpAsyncClientBuilder asyncClientBuilder = HttpAsyncClients.custom();
+ *         ApacheHttpClientMetricsBinder.builder(observationRegistry)
+ *             .build()
+ *             .instrument(asyncClientBuilder);
+ *
+ *         CloseableHttpAsyncClient httpAsyncClient = asyncClientBuilder.build();
+ * }</pre>
+ *
+ * @author Lars Uffmann
+ * @since 1.12.0
+ */
 public class ApacheHttpClientMetricsBinder {
 
     public static final String INTERCEPTOR_NAME = "micrometer";

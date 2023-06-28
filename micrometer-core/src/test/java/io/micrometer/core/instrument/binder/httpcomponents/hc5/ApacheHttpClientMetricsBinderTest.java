@@ -44,6 +44,7 @@ import org.apache.hc.client5.http.impl.async.HttpAsyncClientBuilder;
 import org.apache.hc.client5.http.impl.async.HttpAsyncClients;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
 import org.apache.hc.client5.http.impl.classic.HttpClientBuilder;
+import org.apache.hc.client5.http.impl.classic.HttpClients;
 import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManagerBuilder;
 import org.apache.hc.client5.http.impl.nio.PoolingAsyncClientConnectionManagerBuilder;
 import org.apache.hc.core5.http.ClassicHttpRequest;
@@ -124,17 +125,6 @@ class ApacheHttpClientMetricsBinderTest {
         Timer timer = registry.get(DEFAULT_METER_NAME).timer();
         logStats("timeSuccessful", timer);
         assertThat(timer.count()).isEqualTo(1L);
-    }
-
-    private void execute(CloseableHttpAsyncClient client, SimpleHttpRequest request)
-            throws IOException, ExecutionException, InterruptedException {
-        client.start();
-        Future<SimpleHttpResponse> responseFuture = client.execute(request, null);
-        responseFuture.get();
-    }
-
-    private void execute(CloseableHttpClient client, ClassicHttpRequest request) throws IOException {
-        EntityUtils.consume(client.execute(request, NOOP_RESPONSE_HANDLER).getEntity());
     }
 
     @ParameterizedTest
@@ -797,6 +787,12 @@ class ApacheHttpClientMetricsBinderTest {
 
     }
 
+    private ObservationRegistry createObservationRegistry() {
+        ObservationRegistry observationRegistry = ObservationRegistry.create();
+        observationRegistry.observationConfig().observationHandler(new DefaultMeterObservationHandler(registry));
+        return observationRegistry;
+    }
+
     // classic
     private CloseableHttpClient client(ApacheHttpClientMetricsBinder metricsBinder) {
         return client(metricsBinder, 1);
@@ -811,7 +807,7 @@ class ApacheHttpClientMetricsBinderTest {
             .setConnectTimeout(2000L, TimeUnit.MILLISECONDS)
             .build();
 
-        HttpClientBuilder clientBuilder = HttpClientBuilder.create()
+        HttpClientBuilder clientBuilder = HttpClients.custom()
             .setRetryStrategy(retryStrategy)
             .setConnectionManager(PoolingHttpClientConnectionManagerBuilder.create()
                 .setDefaultConnectionConfig(connectionConfig)
@@ -820,10 +816,11 @@ class ApacheHttpClientMetricsBinderTest {
         return metricsBinder.instrumentAndGet(clientBuilder);
     }
 
-    private ObservationRegistry createObservationRegistry() {
-        ObservationRegistry observationRegistry = ObservationRegistry.create();
-        observationRegistry.observationConfig().observationHandler(new DefaultMeterObservationHandler(registry));
-        return observationRegistry;
+    private void execute(CloseableHttpAsyncClient client, SimpleHttpRequest request)
+        throws ExecutionException, InterruptedException {
+        client.start();
+        Future<SimpleHttpResponse> responseFuture = client.execute(request, null);
+        responseFuture.get();
     }
 
     // async
@@ -849,6 +846,10 @@ class ApacheHttpClientMetricsBinderTest {
                 .build());
 
         return metricsBinder.instrumentAndGet(clientBuilder);
+    }
+
+    private void execute(CloseableHttpClient client, ClassicHttpRequest request) throws IOException {
+        EntityUtils.consume(client.execute(request, NOOP_RESPONSE_HANDLER).getEntity());
     }
 
 }
