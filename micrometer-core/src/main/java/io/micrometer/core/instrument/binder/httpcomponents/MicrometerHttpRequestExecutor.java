@@ -56,8 +56,11 @@ import java.util.function.Function;
  * @author Benjamin Hubert (benjamin.hubert@willhaben.at)
  * @author Tommy Ludwig
  * @since 1.2.0
+ * @deprecated as of 1.12.0 in favor of HttpComponents 5.x and
+ * {@link ObservationExecChainHandler}.
  */
 @Incubating(since = "1.2.0")
+@Deprecated
 public class MicrometerHttpRequestExecutor extends HttpRequestExecutor {
 
     /**

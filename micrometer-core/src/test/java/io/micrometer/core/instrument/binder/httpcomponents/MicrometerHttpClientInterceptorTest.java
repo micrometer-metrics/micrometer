@@ -43,6 +43,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @author Johnny Lim
  */
 @ExtendWith(WiremockResolver.class)
+@Deprecated
 class MicrometerHttpClientInterceptorTest {
 
     private MeterRegistry registry;
