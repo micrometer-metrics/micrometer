@@ -817,7 +817,7 @@ class ApacheHttpClientMetricsBinderTest {
     }
 
     private void execute(CloseableHttpAsyncClient client, SimpleHttpRequest request)
-        throws ExecutionException, InterruptedException {
+            throws ExecutionException, InterruptedException {
         client.start();
         Future<SimpleHttpResponse> responseFuture = client.execute(request, null);
         responseFuture.get();
