@@ -136,9 +136,9 @@ public class ObservationThreadLocalAccessor implements ThreadLocalAccessor<Obser
         if (scope == null) {
             String msg = "There is no current scope in thread local. This situation should not happen";
             log.warn(msg);
-            assert false : msg;
+            assertFalse(msg);
         }
-        Observation.Scope previousObservationScope = scope.getPreviousObservationScope();
+        Observation.Scope previousObservationScope = scope != null ? scope.getPreviousObservationScope() : null;
         if (previousObservationScope == null || value != previousObservationScope.getCurrentObservation()) {
             Observation previousObservation = previousObservationScope != null
                     ? previousObservationScope.getCurrentObservation() : null;
@@ -147,9 +147,13 @@ public class ObservationThreadLocalAccessor implements ThreadLocalAccessor<Obser
                     + previousObservation
                     + ">. Most likely a manually created Observation has a scope opened that was never closed. This may lead to thread polluting and memory leaks.";
             log.warn(msg);
-            assert false : msg;
+            assertFalse(msg);
         }
         closeCurrentScope();
+    }
+
+    void assertFalse(String msg) {
+        assert false : msg;
     }
 
     @Override

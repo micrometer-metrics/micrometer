@@ -29,6 +29,7 @@ import java.io.Closeable;
 import java.util.concurrent.*;
 
 import static org.assertj.core.api.BDDAssertions.then;
+import static org.assertj.core.api.BDDAssertions.thenNoException;
 
 class ObservationThreadLocalAccessorTests {
 
@@ -126,6 +127,16 @@ class ObservationThreadLocalAccessorTests {
 
         then(child.getEnclosingScope()).isNull();
         then(parent.getEnclosingScope()).isNull();
+    }
+
+    @Test
+    void acceptsANullCurrentScopeOnRestore() {
+        thenNoException().isThrownBy(() -> new ObservationThreadLocalAccessor(observationRegistry) {
+            @Override
+            void assertFalse(String message) {
+
+            }
+        }.restore(null));
     }
 
     private void thenCurrentObservationHasParent(Observation parent, Observation observation) {
