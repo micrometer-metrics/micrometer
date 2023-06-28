@@ -52,7 +52,8 @@ import java.util.concurrent.atomic.AtomicMarkableReference;
  *   .addExecInterceptorLast("micrometer", new ObservationExecChainHandler(observationRegistry))
  *   .build();
  * </pre>
- * <p>Note that the {@link ObservationExecChainHandler} must always be inserted after the
+ * <p>
+ * Note that the {@link ObservationExecChainHandler} must always be inserted after the
  * {@link ChainElement#RETRY retry interceptor}, preferably last.
  *
  * @author Brian Clozel
@@ -65,7 +66,6 @@ public class ObservationExecChainHandler implements ExecChainHandler, AsyncExecC
     @Nullable
     private final ApacheHttpClientObservationConvention observationConvention;
 
-
     public ObservationExecChainHandler(ObservationRegistry observationRegistry,
             @Nullable ApacheHttpClientObservationConvention observationConvention) {
         this.observationRegistry = observationRegistry;
@@ -76,21 +76,20 @@ public class ObservationExecChainHandler implements ExecChainHandler, AsyncExecC
         this(observationRegistry, null);
     }
 
-
     @Override
     public void execute(HttpRequest request, AsyncEntityProducer entityProducer, AsyncExecChain.Scope scope,
             AsyncExecChain chain, AsyncExecCallback asyncExecCallback) throws HttpException, IOException {
         ApacheHttpClientContext observationContext = new ApacheHttpClientContext(request, scope.clientContext);
         Observation observation = ApacheHttpClientObservationDocumentation.DEFAULT
             .observation(observationConvention, DefaultApacheHttpClientObservationConvention.INSTANCE,
-                () -> observationContext, observationRegistry)
+                    () -> observationContext, observationRegistry)
             .start();
         ObervableCancellableDependency cancellable = new ObervableCancellableDependency(observation);
         chain.proceed(request, entityProducer, cancellable.wrapScope(scope), new AsyncExecCallback() {
 
             @Override
             public AsyncDataConsumer handleResponse(HttpResponse response, EntityDetails entityDetails)
-                throws HttpException, IOException {
+                    throws HttpException, IOException {
                 observationContext.setResponse(response);
                 observation.stop();
                 return asyncExecCallback.handleResponse(response, entityDetails);
