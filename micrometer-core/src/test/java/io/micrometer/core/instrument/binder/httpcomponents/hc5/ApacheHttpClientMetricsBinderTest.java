@@ -16,6 +16,7 @@
 package io.micrometer.core.instrument.binder.httpcomponents.hc5;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
+import io.micrometer.common.KeyValues;
 import io.micrometer.common.util.internal.logging.InternalLogger;
 import io.micrometer.common.util.internal.logging.InternalLoggerFactory;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -203,11 +204,20 @@ class ApacheHttpClientMetricsBinderTest {
 
     @ParameterizedTest
     @ValueSource(booleans = { true, false })
-    @Disabled
-    void routeNotTaggedByDefault(boolean async, @WiremockResolver.Wiremock WireMockServer server)
+    void shouldSkipExportTagsForRoute(boolean async, @WiremockResolver.Wiremock WireMockServer server)
             throws IOException, ExecutionException, InterruptedException {
         server.stubFor(any(anyUrl()));
-        ApacheHttpClientMetricsBinder metricsBinder = builder(observationRegistry).build();
+        ApacheHttpClientMetricsBinder metricsBinder = builder(observationRegistry)
+            // FIXME
+            // .exportTagsForRoute(false)
+            .observationConvention(new DefaultApacheHttpClientObservationConvention() {
+                @Override
+                public KeyValues getLowCardinalityKeyValues(ApacheHttpClientContext context) {
+                    return KeyValues.of(exception(context), method(context), outcome(context), status(context),
+                            uri(context));
+                }
+            })
+            .build();
 
         if (async) {
             try (CloseableHttpAsyncClient client = asyncClient(metricsBinder)) {
@@ -226,19 +236,16 @@ class ApacheHttpClientMetricsBinderTest {
             .stream()
             .map(Tag::getKey)
             .collect(Collectors.toList());
-        assertThat(tagKeys).doesNotContain("target.scheme", "target.host", "target.port").contains("status", "method");
+        assertThat(tagKeys).doesNotContain("target.scheme", "target.host", "target.port")
+            .contains("status", "method", "outcome", "exception");
     }
 
     @ParameterizedTest
     @ValueSource(booleans = { true, false })
-    @Disabled
-    void routeTaggedIfEnabled(boolean async, @WiremockResolver.Wiremock WireMockServer server)
+    void shouldExportTagsForRouteByDefault(boolean async, @WiremockResolver.Wiremock WireMockServer server)
             throws IOException, ExecutionException, InterruptedException {
         server.stubFor(any(anyUrl()));
-        ApacheHttpClientMetricsBinder metricsBinder = builder(observationRegistry)
-            // FIXME
-            // .exportTagsForRoute(true)
-            .build();
+        ApacheHttpClientMetricsBinder metricsBinder = builder(observationRegistry).build();
         if (async) {
             try (CloseableHttpAsyncClient client = asyncClient(metricsBinder, 1)) {
                 execute(client, SimpleRequestBuilder.get(server.baseUrl()).build());
@@ -261,14 +268,18 @@ class ApacheHttpClientMetricsBinderTest {
 
     @ParameterizedTest
     @ValueSource(booleans = { false, true })
-    @Disabled
     void additionalTagsAreExposed(boolean async, @WiremockResolver.Wiremock WireMockServer server)
             throws IOException, ExecutionException, InterruptedException {
         server.stubFor(any(anyUrl()));
         ApacheHttpClientMetricsBinder metricsBinder = builder(observationRegistry)
             // FIXME
             // .tags(Tags.of("foo", "bar", "some.key", "value"))
-            // .exportTagsForRoute(true)
+            .observationConvention(new DefaultApacheHttpClientObservationConvention() {
+                @Override
+                public KeyValues getLowCardinalityKeyValues(ApacheHttpClientContext context) {
+                    return super.getLowCardinalityKeyValues(context).and("foo", "bar", "some.key", "value");
+                }
+            })
             .build();
         if (async) {
             try (CloseableHttpAsyncClient client = asyncClient(metricsBinder, 1)) {
