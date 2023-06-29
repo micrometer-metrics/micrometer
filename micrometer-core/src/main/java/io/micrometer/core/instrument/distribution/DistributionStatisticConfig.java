@@ -72,7 +72,11 @@ public class DistributionStatisticConfig implements Mergeable<DistributionStatis
     private Integer bufferLength;
 
     public static Builder builder() {
-        return new Builder();
+        return new Builder(new DistributionStatisticConfig());
+    }
+
+    public Builder toBuilder() {
+        return new Builder(this);
     }
 
     /**
@@ -271,7 +275,11 @@ public class DistributionStatisticConfig implements Mergeable<DistributionStatis
 
     public static class Builder {
 
-        private final DistributionStatisticConfig config = new DistributionStatisticConfig();
+        private final DistributionStatisticConfig config;
+
+        public Builder(DistributionStatisticConfig config) {
+            this.config = config;
+        }
 
         public Builder percentilesHistogram(@Nullable Boolean enabled) {
             config.percentileHistogram = enabled;
