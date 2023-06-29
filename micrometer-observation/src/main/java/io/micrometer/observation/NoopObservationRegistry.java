@@ -38,7 +38,7 @@ final class NoopObservationRegistry implements ObservationRegistry {
 
     @Override
     public Observation getCurrentObservation() {
-        return NoopObservation.INSTANCE;
+        return Observation.NOOP;
     }
 
     @Override
