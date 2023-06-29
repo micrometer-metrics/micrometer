@@ -387,7 +387,7 @@ class ObservationTests {
                 passedContextHolder.set(ctx);
                 return "World";
             });
-        assertThat(passedContextHolder).as("passed a noop context").hasValue(NoopObservation.INSTANCE.getContext());
+        assertThat(passedContextHolder).as("passed a noop context").hasValue(Observation.NOOP.getContext());
         assertThat(contextCreated).isFalse();
         assertThat(result).isEqualTo("World");
     }

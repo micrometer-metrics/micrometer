@@ -51,7 +51,7 @@ public interface Observation extends ObservationView {
     /**
      * No-op observation.
      */
-    Observation NOOP = NoopObservation.INSTANCE;
+    Observation NOOP = new NoopObservation();
 
     /**
      * Create and start an {@link Observation} with the given name. All Observations of
