@@ -22,6 +22,7 @@ import io.micrometer.core.instrument.internal.Mergeable;
 import java.time.Duration;
 import java.util.NavigableSet;
 import java.util.TreeSet;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.LongStream;
 
 /**
@@ -71,31 +72,37 @@ public class DistributionStatisticConfig implements Mergeable<DistributionStatis
     @Nullable
     private Integer bufferLength;
 
+    private TimeUnit baseTimeUnit = TimeUnit.MILLISECONDS;
+
     public static Builder builder() {
-        return new Builder();
+        return new Builder(new DistributionStatisticConfig());
+    }
+
+    public Builder toBuilder() {
+        return new Builder(this);
     }
 
     /**
      * Merges two configurations. Any options that are non-null in this configuration take
      * precedence. Any options that are non-null in the parent are used otherwise.
      * @param parent The configuration to merge with. The parent takes lower precedence
-     * than this configuration.
+     *               than this configuration.
      * @return A new, merged, immutable configuration.
      */
     @Override
     public DistributionStatisticConfig merge(DistributionStatisticConfig parent) {
         return DistributionStatisticConfig.builder()
             .percentilesHistogram(
-                    this.percentileHistogram == null ? parent.percentileHistogram : this.percentileHistogram)
+                this.percentileHistogram == null ? parent.percentileHistogram : this.percentileHistogram)
             .percentiles(this.percentiles == null ? parent.percentiles : this.percentiles)
             .serviceLevelObjectives(
-                    this.serviceLevelObjectives == null ? parent.serviceLevelObjectives : this.serviceLevelObjectives)
+                this.serviceLevelObjectives == null ? parent.serviceLevelObjectives : this.serviceLevelObjectives)
             .percentilePrecision(
-                    this.percentilePrecision == null ? parent.percentilePrecision : this.percentilePrecision)
+                this.percentilePrecision == null ? parent.percentilePrecision : this.percentilePrecision)
             .minimumExpectedValue(
-                    this.minimumExpectedValue == null ? parent.minimumExpectedValue : this.minimumExpectedValue)
+                this.minimumExpectedValue == null ? parent.minimumExpectedValue : this.minimumExpectedValue)
             .maximumExpectedValue(
-                    this.maximumExpectedValue == null ? parent.maximumExpectedValue : this.maximumExpectedValue)
+                this.maximumExpectedValue == null ? parent.maximumExpectedValue : this.maximumExpectedValue)
             .expiry(this.expiry == null ? parent.expiry : this.expiry)
             .bufferLength(this.bufferLength == null ? parent.bufferLength : this.bufferLength)
             .build();
@@ -110,7 +117,11 @@ public class DistributionStatisticConfig implements Mergeable<DistributionStatis
         NavigableSet<Double> buckets = new TreeSet<>();
 
         if (percentileHistogram != null && percentileHistogram && supportsAggregablePercentiles) {
-            buckets.addAll(PercentileHistogramBuckets.buckets(this));
+            long scale = baseTimeUnit.toMillis(1);
+            PercentileHistogramBuckets.buckets(this).forEach(bucket -> {
+                buckets.add(bucket / scale);
+                //todo add unit test
+            });
             buckets.add(minimumExpectedValue);
             buckets.add(maximumExpectedValue);
         }
@@ -237,6 +248,10 @@ public class DistributionStatisticConfig implements Mergeable<DistributionStatis
         return bufferLength;
     }
 
+    public TimeUnit getBaseTimeUnit() {
+        return baseTimeUnit;
+    }
+
     /**
      * Publish at a minimum a histogram containing your defined SLA boundaries. When used
      * in conjunction with {@link #percentileHistogram}, the boundaries defined here are
@@ -271,7 +286,11 @@ public class DistributionStatisticConfig implements Mergeable<DistributionStatis
 
     public static class Builder {
 
-        private final DistributionStatisticConfig config = new DistributionStatisticConfig();
+        private final DistributionStatisticConfig config;
+
+        public Builder(DistributionStatisticConfig config) {
+            this.config = config;
+        }
 
         public Builder percentilesHistogram(@Nullable Boolean enabled) {
             config.percentileHistogram = enabled;
@@ -285,7 +304,7 @@ public class DistributionStatisticConfig implements Mergeable<DistributionStatis
          * {@link #percentileHistogram} to publish a histogram that can be used to
          * generate aggregable percentile approximations.
          * @param percentiles Percentiles to compute and publish. The 95th percentile
-         * should be expressed as {@code 0.95}.
+         *                    should be expressed as {@code 0.95}.
          * @return This builder.
          */
         public Builder percentiles(@Nullable double... percentiles) {
@@ -298,7 +317,7 @@ public class DistributionStatisticConfig implements Mergeable<DistributionStatis
          * histogram used to compute percentile approximations. The higher the degrees of
          * precision, the more accurate the approximation is at the cost of more memory.
          * @param digitsOfPrecision The digits of precision to maintain for percentile
-         * approximations.
+         *                          approximations.
          * @return This builder.
          */
         public Builder percentilePrecision(@Nullable Integer digitsOfPrecision) {
@@ -314,7 +333,7 @@ public class DistributionStatisticConfig implements Mergeable<DistributionStatis
          * If the {@link DistributionStatisticConfig} is meant for use with a
          * {@link io.micrometer.core.instrument.Timer}, the SLO unit is in nanoseconds.
          * @param slos The SLO boundaries to include the set of histogram buckets shipped
-         * to the monitoring system.
+         *             to the monitoring system.
          * @return This builder.
          * @since 1.5.0
          */
@@ -331,7 +350,7 @@ public class DistributionStatisticConfig implements Mergeable<DistributionStatis
          * for use with a {@link io.micrometer.core.instrument.Timer}, the SLA unit is in
          * nanoseconds.
          * @param sla The SLA boundaries to include the set of histogram buckets shipped
-         * to the monitoring system.
+         *            to the monitoring system.
          * @return This builder.
          * @since 1.4.0
          * @deprecated Use {@link #serviceLevelObjectives(double...)} instead. "Service
@@ -354,7 +373,7 @@ public class DistributionStatisticConfig implements Mergeable<DistributionStatis
          * for use with a {@link io.micrometer.core.instrument.Timer}, the SLA unit is in
          * nanoseconds.
          * @param sla The SLA boundaries to include the set of histogram buckets shipped
-         * to the monitoring system.
+         *            to the monitoring system.
          * @return This builder.
          * @deprecated Use {@link #serviceLevelObjectives(double...)} instead. "Service
          * Level Agreement" is more formally the agreement between an engineering
@@ -374,7 +393,7 @@ public class DistributionStatisticConfig implements Mergeable<DistributionStatis
          * aggregable percentile approximations.
          * @deprecated Use {@link #minimumExpectedValue(Double)} instead since 1.4.0.
          * @param min The minimum value that this distribution summary is expected to
-         * observe.
+         *            observe.
          * @return This builder.
          */
         @Deprecated
@@ -386,8 +405,8 @@ public class DistributionStatisticConfig implements Mergeable<DistributionStatis
          * The minimum value that the meter is expected to observe. Sets a lower bound on
          * histogram buckets that are shipped to monitoring systems that support
          * aggregable percentile approximations.
-         * @param min The minimum value that this distribution summary is expected to
-         * observe.
+         * @param min The minimum value that this distribution summary is expected to observe.
+         *            The value is in milliseconds regardless of the base time unit that is used.
          * @return This builder.
          * @since 1.3.10
          */
@@ -402,6 +421,7 @@ public class DistributionStatisticConfig implements Mergeable<DistributionStatis
          * aggregable percentile approximations.
          * @deprecated Use {@link #maximumExpectedValue(Double)} instead since 1.4.0.
          * @param max The maximum value that the meter is expected to observe.
+         *            The value is in milliseconds regardless of the base time unit that is used.
          * @return This builder.
          */
         @Deprecated
@@ -429,7 +449,7 @@ public class DistributionStatisticConfig implements Mergeable<DistributionStatis
          * accumulated to such statistics in ring buffers which rotate after this expiry,
          * with a buffer length of {@link #bufferLength}.
          * @param expiry The amount of time samples are accumulated to decaying
-         * distribution statistics before they are reset and rotated.
+         *               distribution statistics before they are reset and rotated.
          * @return This builder.
          */
         public Builder expiry(@Nullable Duration expiry) {
@@ -448,6 +468,11 @@ public class DistributionStatisticConfig implements Mergeable<DistributionStatis
          */
         public Builder bufferLength(@Nullable Integer bufferLength) {
             config.bufferLength = bufferLength;
+            return this;
+        }
+
+        public Builder baseTimeUnit(TimeUnit timeUnit) {
+            config.baseTimeUnit = timeUnit;
             return this;
         }
 
@@ -481,17 +506,17 @@ public class DistributionStatisticConfig implements Mergeable<DistributionStatis
             }
 
             if ((config.minimumExpectedValue != null && config.maximumExpectedValue != null)
-                    && config.minimumExpectedValue > config.maximumExpectedValue) {
+                && config.minimumExpectedValue > config.maximumExpectedValue) {
                 rejectConfig("maximumExpectedValue (" + config.maximumExpectedValue
-                        + ") must be equal to or greater than minimumExpectedValue (" + config.minimumExpectedValue
-                        + ").");
+                    + ") must be equal to or greater than minimumExpectedValue (" + config.minimumExpectedValue
+                    + ").");
             }
 
             if (distributionStatisticConfig.getServiceLevelObjectiveBoundaries() != null) {
                 for (double slo : distributionStatisticConfig.getServiceLevelObjectiveBoundaries()) {
                     if (slo <= 0) {
                         rejectConfig("serviceLevelObjectiveBoundaries must contain only the values greater than 0. "
-                                + "Found " + slo);
+                            + "Found " + slo);
                     }
                 }
             }
@@ -509,7 +534,7 @@ public class DistributionStatisticConfig implements Mergeable<DistributionStatis
 
     public boolean isPublishingHistogram() {
         return (percentileHistogram != null && percentileHistogram)
-                || (serviceLevelObjectives != null && serviceLevelObjectives.length > 0);
+            || (serviceLevelObjectives != null && serviceLevelObjectives.length > 0);
     }
 
 }

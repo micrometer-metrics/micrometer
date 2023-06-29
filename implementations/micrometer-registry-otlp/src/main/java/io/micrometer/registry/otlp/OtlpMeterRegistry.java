@@ -233,7 +233,7 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
         return DistributionStatisticConfig.builder()
             .expiry(this.config.step())
             .build()
-            .merge(DistributionStatisticConfig.DEFAULT);
+            .merge(DistributionStatisticConfig.DEFAULT.toBuilder().baseTimeUnit(baseTimeUnit).build());
     }
 
     @Override
