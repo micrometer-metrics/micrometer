@@ -29,14 +29,9 @@ import io.micrometer.common.lang.Nullable;
  */
 final class NoopObservation implements Observation {
 
-    /**
-     * Instance of {@link NoopObservation}.
-     */
-    static final NoopObservation INSTANCE = new NoopObservation();
-
     private static final Context CONTEXT = new Context();
 
-    private NoopObservation() {
+    NoopObservation() {
     }
 
     @Override
@@ -119,7 +114,7 @@ final class NoopObservation implements Observation {
 
         @Override
         public Observation getCurrentObservation() {
-            return NoopObservation.INSTANCE;
+            return Observation.NOOP;
         }
 
         @Override
