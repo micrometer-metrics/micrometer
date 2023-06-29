@@ -312,8 +312,11 @@ class SimpleObservation implements Observation {
                 }
                 observation.notifyOnScopeClosed();
             }
-            else {
+            else if (currentObservation != null && !currentObservation.isNoop()) {
                 log.debug("Custom observation type was used in combination with SimpleScope - that's unexpected");
+            }
+            else {
+                log.trace("NoOp observation used with SimpleScope");
             }
             this.registry.setCurrentObservationScope(previousObservationScope);
         }

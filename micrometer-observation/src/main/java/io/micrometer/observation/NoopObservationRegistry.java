@@ -31,6 +31,8 @@ final class NoopObservationRegistry implements ObservationRegistry {
      */
     static final NoopObservationRegistry INSTANCE = new NoopObservationRegistry();
 
+    static final ObservationRegistry FOR_SCOPES = ObservationRegistry.create();
+
     private final ObservationConfig observationConfig = NoopObservationConfig.INSTANCE;
 
     private NoopObservationRegistry() {
@@ -38,17 +40,17 @@ final class NoopObservationRegistry implements ObservationRegistry {
 
     @Override
     public Observation getCurrentObservation() {
-        return Observation.NOOP;
+        return FOR_SCOPES.getCurrentObservation();
     }
 
     @Override
     public Observation.Scope getCurrentObservationScope() {
-        return NoopObservation.NoopScope.INSTANCE;
+        return FOR_SCOPES.getCurrentObservationScope();
     }
 
     @Override
     public void setCurrentObservationScope(Observation.Scope current) {
-
+        FOR_SCOPES.setCurrentObservationScope(current);
     }
 
     @Override
