@@ -31,9 +31,6 @@ final class NoopObservation implements Observation {
 
     private static final Context CONTEXT = new Context();
 
-    NoopObservation() {
-    }
-
     @Override
     public Observation contextualName(@Nullable String contextualName) {
         return this;
@@ -95,7 +92,7 @@ final class NoopObservation implements Observation {
 
     @Override
     public Scope openScope() {
-        return NoopScope.INSTANCE;
+        return new SimpleObservation.SimpleScope(NoopObservationRegistry.FOR_SCOPES, this);
     }
 
     /**
