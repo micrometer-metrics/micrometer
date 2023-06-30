@@ -45,6 +45,7 @@ import io.opentelemetry.proto.resource.v1.Resource;
 
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executors;
@@ -393,10 +394,11 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
                     .addExplicitBounds(isTimeBased ? countAtBucket.bucket(getBaseTimeUnit()) : countAtBucket.bucket());
                 histogramDataPoint.addBucketCounts((long) countAtBucket.count());
             }
-            metricBuilder.setHistogram(io.opentelemetry.proto.metrics.v1.Histogram.newBuilder()
-                .setAggregationTemporality(otlpAggregationTemporality)
-                .addDataPoints(histogramDataPoint));
-            return metricBuilder.build();
+        }
+        // else treat as single bucket histogram
+        else {
+            histogramDataPoint.addAllExplicitBounds(Collections.emptyList());
+            histogramDataPoint.addBucketCounts(count);
         }
 
         return metricBuilder
@@ -415,7 +417,9 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
                     .setStartTimeUnixNano(getStartTimeNanos((functionTimer)))
                     .setTimeUnixNano(getTimeUnixNano())
                     .setSum(functionTimer.totalTime(getBaseTimeUnit()))
-                    .setCount((long) functionTimer.count()))
+                    .setCount((long) functionTimer.count())
+                    .addAllExplicitBounds(Collections.emptyList())
+                    .addBucketCounts((long) functionTimer.count()))
                 .setAggregationTemporality(otlpAggregationTemporality))
             .build();
     }

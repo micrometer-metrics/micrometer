@@ -91,11 +91,11 @@ class OtlpCumulativeMeterRegistryTest extends OtlpMeterRegistryTest {
         timer.record(111, TimeUnit.MILLISECONDS);
         clock.add(otlpConfig().step());
         timer.record(4, TimeUnit.MILLISECONDS);
-        assertThat(writeToMetric(timer).toString()).isEqualTo(
-                "name: \"web.requests\"\n" + "description: \"timing web requests\"\n" + "unit: \"milliseconds\"\n"
-                        + "histogram {\n" + "  data_points {\n" + "    start_time_unix_nano: 1000000\n"
-                        + "    time_unix_nano: 60001000000\n" + "    count: 4\n" + "    sum: 202.0\n" + "  }\n"
-                        + "  aggregation_temporality: AGGREGATION_TEMPORALITY_CUMULATIVE\n" + "}\n");
+        assertThat(writeToMetric(timer).toString()).isEqualTo("name: \"web.requests\"\n"
+                + "description: \"timing web requests\"\n" + "unit: \"milliseconds\"\n" + "histogram {\n"
+                + "  data_points {\n" + "    start_time_unix_nano: 1000000\n" + "    time_unix_nano: 60001000000\n"
+                + "    count: 4\n" + "    sum: 202.0\n" + "    bucket_counts: 4\n" + "  }\n"
+                + "  aggregation_temporality: AGGREGATION_TEMPORALITY_CUMULATIVE\n" + "}\n");
     }
 
     @Test
@@ -195,8 +195,8 @@ class OtlpCumulativeMeterRegistryTest extends OtlpMeterRegistryTest {
         assertThat(writeToMetric(functionTimer).toString())
             .isEqualTo("name: \"function.timer\"\n" + "unit: \"milliseconds\"\n" + "histogram {\n" + "  data_points {\n"
                     + "    start_time_unix_nano: 1000000\n" + "    time_unix_nano: 1000000\n" + "    count: 5\n"
-                    + "    sum: 127.0\n" + "  }\n" + "  aggregation_temporality: AGGREGATION_TEMPORALITY_CUMULATIVE\n"
-                    + "}\n");
+                    + "    sum: 127.0\n" + "    bucket_counts: 5\n" + "  }\n"
+                    + "  aggregation_temporality: AGGREGATION_TEMPORALITY_CUMULATIVE\n" + "}\n");
     }
 
     @Test
@@ -210,10 +210,11 @@ class OtlpCumulativeMeterRegistryTest extends OtlpMeterRegistryTest {
         clock.add(otlpConfig().step());
         size.record(204);
 
-        assertThat(writeToMetric(size).toString()).isEqualTo("name: \"http.response.size\"\n" + "unit: \"bytes\"\n"
-                + "histogram {\n" + "  data_points {\n" + "    start_time_unix_nano: 1000000\n"
-                + "    time_unix_nano: 60001000000\n" + "    count: 4\n" + "    sum: 2552.0\n" + "  }\n"
-                + "  aggregation_temporality: AGGREGATION_TEMPORALITY_CUMULATIVE\n" + "}\n");
+        assertThat(writeToMetric(size).toString())
+            .isEqualTo("name: \"http.response.size\"\n" + "unit: \"bytes\"\n" + "histogram {\n" + "  data_points {\n"
+                    + "    start_time_unix_nano: 1000000\n" + "    time_unix_nano: 60001000000\n" + "    count: 4\n"
+                    + "    sum: 2552.0\n" + "    bucket_counts: 4\n" + "  }\n"
+                    + "  aggregation_temporality: AGGREGATION_TEMPORALITY_CUMULATIVE\n" + "}\n");
     }
 
     @Test
@@ -487,7 +488,7 @@ class OtlpCumulativeMeterRegistryTest extends OtlpMeterRegistryTest {
         assertThat(writeToMetric(taskTimer).toString())
             .isEqualTo("name: \"checkout.batch\"\n" + "unit: \"milliseconds\"\n" + "histogram {\n" + "  data_points {\n"
                     + "    start_time_unix_nano: 1000000\n" + "    time_unix_nano: 180001000000\n" + "    count: 2\n"
-                    + "    sum: 360000.0\n" + "  }\n"
+                    + "    sum: 360000.0\n" + "    bucket_counts: 2\n" + "  }\n"
                     + "  aggregation_temporality: AGGREGATION_TEMPORALITY_CUMULATIVE\n" + "}\n");
 
         task1.stop();
@@ -499,7 +500,8 @@ class OtlpCumulativeMeterRegistryTest extends OtlpMeterRegistryTest {
         assertThat(writeToMetric(taskTimer).toString())
             .isEqualTo("name: \"checkout.batch\"\n" + "unit: \"milliseconds\"\n" + "histogram {\n" + "  data_points {\n"
                     + "    start_time_unix_nano: 1000000\n" + "    time_unix_nano: 240001000000\n" + "    sum: 0.0\n"
-                    + "  }\n" + "  aggregation_temporality: AGGREGATION_TEMPORALITY_CUMULATIVE\n" + "}\n");
+                    + "    bucket_counts: 0\n" + "  }\n"
+                    + "  aggregation_temporality: AGGREGATION_TEMPORALITY_CUMULATIVE\n" + "}\n");
     }
 
     @Override
