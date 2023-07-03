@@ -12,7 +12,7 @@ def VERSIONS = [
         'com.google.cloud:google-cloud-monitoring:latest.release',
         'com.google.dagger:dagger:2.11',
         'com.google.dagger:dagger-compiler:2.11',
-        'com.google.guava:guava:latest.release',
+        'com.google.guava:guava:32.0.0-jre',
         'com.google.inject:guice:5.+',
         'com.hazelcast:hazelcast:latest.release',
         'com.h2database:h2:latest.release',
