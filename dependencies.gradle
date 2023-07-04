@@ -8,11 +8,9 @@ def VERSIONS = [
         'com.github.charithe:kafka-junit:latest.release',
         // pinned to avoid issues with shaded slf4j version - see gh-3414
         'com.github.tomakehurst:wiremock-jre8-standalone:2.33.+',
-        'com.google.auth:google-auth-library-oauth2-http:latest.release',
-        'com.google.cloud:google-cloud-monitoring:latest.release',
         'com.google.dagger:dagger:2.11',
         'com.google.dagger:dagger-compiler:2.11',
-        'com.google.guava:guava:32.0.0-jre',
+        'com.google.guava:guava:latest.release',
         'com.google.inject:guice:5.+',
         'com.hazelcast:hazelcast:latest.release',
         'com.h2database:h2:latest.release',
@@ -94,7 +92,7 @@ def VERSIONS = [
 def PLATFORM_BOMS = [
         'io.projectreactor:reactor-bom:2020.0.+',
         'io.netty:netty-bom:4.1.+',
-        'org.junit:junit-bom:5.9.+' // Not using latest.release to avoid using a milestone version.
+        'org.junit:junit-bom:5.9.+', // Not using latest.release to avoid using a milestone version.
 ]
 
 subprojects {
