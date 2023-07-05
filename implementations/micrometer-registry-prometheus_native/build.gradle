@@ -1,0 +1,15 @@
+repositories {
+    mavenLocal()
+    mavenCentral()
+}
+
+dependencies {
+    api project(':micrometer-core')
+
+    api 'io.prometheus:prometheus-metrics-core:1.0.0-alpha-1'
+    api 'io.prometheus:prometheus-metrics-model:1.0.0-alpha-1'
+    api 'io.prometheus:prometheus-metrics-exposition-formats:1.0.0-alpha-1'
+    api 'io.prometheus:prometheus-metrics-exporter-servlet-jakarta:1.0.0-alpha-1'
+
+    testImplementation project(':micrometer-test')
+}
