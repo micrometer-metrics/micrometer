@@ -45,6 +45,7 @@ import io.opentelemetry.proto.resource.v1.Resource;
 
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executors;
@@ -71,6 +72,8 @@ import static io.opentelemetry.proto.metrics.v1.AggregationTemporality.AGGREGATI
 public class OtlpMeterRegistry extends PushMeterRegistry {
 
     private static final ThreadFactory DEFAULT_THREAD_FACTORY = new NamedThreadFactory("otlp-metrics-publisher");
+
+    private static final double[] EMPTY_SLO_WITH_POSITIVE_INF = new double[] { Double.POSITIVE_INFINITY };
 
     private final InternalLogger logger = InternalLoggerFactory.getInstance(OtlpMeterRegistry.class);
 
@@ -386,8 +389,14 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
         // if histogram enabled, add histogram buckets
         if (histogramSnapshot.histogramCounts().length != 0) {
             for (CountAtBucket countAtBucket : histogramSnapshot.histogramCounts()) {
-                histogramDataPoint
-                    .addExplicitBounds(isTimeBased ? countAtBucket.bucket(getBaseTimeUnit()) : countAtBucket.bucket());
+                if (countAtBucket.bucket() != Double.POSITIVE_INFINITY) {
+                    // OTLP expects explicit bounds to not contain POSITIVE_INFINITY but
+                    // there should be a
+                    // bucket count representing values between last bucket and
+                    // POSITIVE_INFINITY.
+                    histogramDataPoint.addExplicitBounds(
+                            isTimeBased ? countAtBucket.bucket(getBaseTimeUnit()) : countAtBucket.bucket());
+                }
                 histogramDataPoint.addBucketCounts((long) countAtBucket.count());
             }
             metricBuilder.setHistogram(io.opentelemetry.proto.metrics.v1.Histogram.newBuilder()
@@ -496,17 +505,24 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
         // Though AbstractTimer/Distribution Summary prefers publishing percentiles,
         // exporting of histograms over percentiles is preferred in OTLP.
         if (distributionStatisticConfig.isPublishingHistogram()) {
+            double[] sloWithPositiveInf = getSloWithPositiveInf(distributionStatisticConfig);
             if (AggregationTemporality.isCumulative(aggregationTemporality)) {
                 return new TimeWindowFixedBoundaryHistogram(clock, DistributionStatisticConfig.builder()
                     // effectively never roll over
                     .expiry(Duration.ofDays(1825))
+                    .serviceLevelObjectives(sloWithPositiveInf)
                     .percentiles()
                     .bufferLength(1)
                     .build()
                     .merge(distributionStatisticConfig), true, false);
             }
             if (AggregationTemporality.isDelta(aggregationTemporality) && stepMillis > 0) {
-                return new OtlpStepBucketHistogram(clock, stepMillis, distributionStatisticConfig, true, false);
+                return new OtlpStepBucketHistogram(clock, stepMillis,
+                        DistributionStatisticConfig.builder()
+                            .serviceLevelObjectives(sloWithPositiveInf)
+                            .build()
+                            .merge(distributionStatisticConfig),
+                        true, false);
             }
         }
 
@@ -514,6 +530,27 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
             return new TimeWindowPercentileHistogram(clock, distributionStatisticConfig, false);
         }
         return NoopHistogram.INSTANCE;
+    }
+
+    // VisibleForTesting
+    static double[] getSloWithPositiveInf(DistributionStatisticConfig distributionStatisticConfig) {
+        double[] sloBoundaries = distributionStatisticConfig.getServiceLevelObjectiveBoundaries();
+        if (sloBoundaries == null || sloBoundaries.length == 0) {
+            // When there are no SLO's associated with DistributionStatisticConfig we will
+            // add one with Positive
+            // Infinity. This will make sure we always have POSITIVE_INFINITY, and the
+            // NavigableSet will make sure
+            // duplicates if any will be ignored.
+            return EMPTY_SLO_WITH_POSITIVE_INF;
+        }
+
+        boolean containsPositiveInf = Arrays.stream(sloBoundaries).anyMatch(value -> value == Double.POSITIVE_INFINITY);
+        if (containsPositiveInf)
+            return sloBoundaries;
+
+        double[] sloWithPositiveInf = Arrays.copyOf(sloBoundaries, sloBoundaries.length + 1);
+        sloWithPositiveInf[sloWithPositiveInf.length - 1] = Double.POSITIVE_INFINITY;
+        return sloWithPositiveInf;
     }
 
 }
