@@ -19,6 +19,8 @@ import io.micrometer.common.KeyValue;
 import io.micrometer.common.KeyValues;
 import io.micrometer.common.lang.NonNull;
 import io.micrometer.common.lang.Nullable;
+import io.micrometer.common.util.internal.logging.InternalLogger;
+import io.micrometer.common.util.internal.logging.InternalLoggerFactory;
 
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -47,6 +49,8 @@ import java.util.stream.Collectors;
  * @since 1.10.0
  */
 public interface Observation extends ObservationView {
+
+    InternalLogger logger = InternalLoggerFactory.getInstance(Observation.class);
 
     /**
      * No-op observation.
@@ -489,10 +493,17 @@ public interface Observation extends ObservationView {
      * @param runnable the {@link Runnable} to run
      */
     default void observe(Runnable runnable) {
-        observeWithContext((context) -> {
+        start();
+        try (Scope scope = openScope()) {
             runnable.run();
-            return null; // returned value is ignored
-        });
+        }
+        catch (Throwable error) {
+            error(error);
+            throw error;
+        }
+        finally {
+            stop();
+        }
     }
 
     default Runnable wrap(Runnable runnable) {
@@ -514,10 +525,17 @@ public interface Observation extends ObservationView {
      * @param <E> type of exception thrown
      */
     default <E extends Throwable> void observeChecked(CheckedRunnable<E> checkedRunnable) throws E {
-        observeCheckedWithContext((context) -> {
+        start();
+        try (Scope scope = openScope()) {
             checkedRunnable.run();
-            return null; // returned value is ignored
-        });
+        }
+        catch (Throwable error) {
+            error(error);
+            throw error;
+        }
+        finally {
+            stop();
+        }
     }
 
     default <E extends Throwable> CheckedRunnable<E> wrapChecked(CheckedRunnable<E> checkedRunnable) throws E {
@@ -541,7 +559,17 @@ public interface Observation extends ObservationView {
      */
     @Nullable
     default <T> T observe(Supplier<T> supplier) {
-        return observeWithContext((context) -> supplier.get());
+        start();
+        try (Scope scope = openScope()) {
+            return supplier.get();
+        }
+        catch (Throwable error) {
+            error(error);
+            throw error;
+        }
+        finally {
+            stop();
+        }
     }
 
     default <T> Supplier<T> wrap(Supplier<T> supplier) {
@@ -566,7 +594,17 @@ public interface Observation extends ObservationView {
      */
     @Nullable
     default <T, E extends Throwable> T observeChecked(CheckedCallable<T, E> checkedCallable) throws E {
-        return observeCheckedWithContext((context) -> checkedCallable.call());
+        start();
+        try (Scope scope = openScope()) {
+            return checkedCallable.call();
+        }
+        catch (Throwable error) {
+            error(error);
+            throw error;
+        }
+        finally {
+            stop();
+        }
     }
 
     default <T, E extends Throwable> CheckedCallable<T, E> wrapChecked(CheckedCallable<T, E> checkedCallable) throws E {
@@ -594,10 +632,13 @@ public interface Observation extends ObservationView {
      * @param <C> the type of input {@link Context} to the function
      * @param <T> the type parameter of the {@link Function} return
      * @since 1.11.0
+     * @deprecated scheduled for removal in 1.15.0, use {@code observe(...)} directly
      */
     @SuppressWarnings({ "unused", "unchecked" })
     @Nullable
+    @Deprecated
     default <C extends Context, T> T observeWithContext(Function<C, T> function) {
+        logger.warn("This method is deprecated. Please migrate to observation.observe(...)");
         start();
         try (Scope scope = openScope()) {
             return function.apply((C) getContext());
@@ -633,11 +674,15 @@ public interface Observation extends ObservationView {
      * @param <T> the type of return to the function
      * @param <E> type of exception {@link CheckedFunction} throws
      * @since 1.11.0
+     * @deprecated scheduled for removal in 1.15.0, use {@code observeChecked(...)}
+     * directly
      */
     @SuppressWarnings({ "unused", "unchecked" })
     @Nullable
+    @Deprecated
     default <C extends Context, T, E extends Throwable> T observeCheckedWithContext(CheckedFunction<C, T, E> function)
             throws E {
+        logger.warn("This method is deprecated. Please migrate to observation.observeChecked(...)");
         start();
         try (Scope scope = openScope()) {
             return function.apply((C) getContext());
