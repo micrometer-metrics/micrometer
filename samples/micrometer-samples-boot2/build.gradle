@@ -33,6 +33,11 @@ dependencies {
 
 }
 
+configurations.all {
+    // see: https://github.com/micrometer-metrics/micrometer/issues/3954
+    exclude group: 'com.google.guava', module: 'listenablefuture'
+}
+
 bootJar {
     enabled = false
 }
