@@ -43,7 +43,7 @@ def VERSIONS = [
         'javax.inject:javax.inject:1',
         'javax.servlet:javax.servlet-api:latest.release',
         'javax.xml.bind:jaxb-api:2.3.+',
-        'io.micrometer:context-propagation:1.1.0-M3',
+        'io.micrometer:context-propagation:1.1.+',
         'org.jetbrains.kotlinx:kotlinx-coroutines-core:latest.release',
         'net.sf.ehcache:ehcache:latest.release',
         'org.apache.felix:org.apache.felix.framework:7.0.5',
