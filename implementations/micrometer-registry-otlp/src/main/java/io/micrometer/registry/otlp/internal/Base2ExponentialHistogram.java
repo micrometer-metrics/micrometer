@@ -22,6 +22,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.LongAdder;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
 
 import io.micrometer.common.lang.Nullable;
@@ -48,6 +49,21 @@ import io.micrometer.registry.otlp.internal.ExponentialHistogramSnapShot.Exponen
  * @since 1.14.0
  */
 public abstract class Base2ExponentialHistogram implements Histogram {
+
+    /*
+     * This is an alternative to full-blown synchronization on the Histogram which would
+     * severely affect the performance under high concurrent cases.
+     *
+     * Read lock guards adding data into histogram i,e multiple values can be recorded at
+     * the same time for a given scale. If scale needs to be changed, write-lock need to
+     * be acquired and all the operations are blocked until new scale is determined and
+     * updated with.
+     */
+    private final ReentrantReadWriteLock reentrantReadWriteLock = new ReentrantReadWriteLock();
+
+    private final ReentrantReadWriteLock.ReadLock readLock = reentrantReadWriteLock.readLock();
+
+    private final ReentrantReadWriteLock.WriteLock writeLock = reentrantReadWriteLock.writeLock();
 
     private final int maxScale;
 
@@ -131,10 +147,24 @@ public abstract class Base2ExponentialHistogram implements Histogram {
     }
 
     /**
-     * Returns the snapshot of current recorded values.
+     * Returns the snapshot of current recorded values. This method is thread-safe and
+     * block concurrent recordings to the underlying histogram.
      */
-    ExponentialHistogramSnapShot getCurrentValuesSnapshot() {
-        return (circularCountHolder.isEmpty() && zeroCount.longValue() == 0)
+    ExponentialHistogramSnapShot getCurrentValuesSnapshot(final boolean shouldResetHistogram) {
+        writeLock.lock();
+        try {
+            ExponentialHistogramSnapShot exponentialHistogramSnapShot = getCurrentValuesSnapshot();
+            if (shouldResetHistogram)
+                reset();
+            return exponentialHistogramSnapShot;
+        }
+        finally {
+            writeLock.unlock();
+        }
+    }
+
+    private ExponentialHistogramSnapShot getCurrentValuesSnapshot() {
+        return circularCountHolder.isEmpty() && zeroCount.longValue() == 0
                 ? DefaultExponentialHistogramSnapShot.getEmptySnapshotForScale(scale)
                 : new DefaultExponentialHistogramSnapShot(scale, zeroCount.longValue(), zeroThreshold,
                         new ExponentialBuckets(getOffset(), getBucketCounts()), EMPTY_EXPONENTIAL_BUCKET);
@@ -168,15 +198,36 @@ public abstract class Base2ExponentialHistogram implements Histogram {
             return;
         }
 
-        int index = base2IndexProvider.getIndexForValue(value);
-        if (!circularCountHolder.increment(index, 1)) {
-            synchronized (this) {
-                int downScaleFactor = getDownScaleFactor(index);
+        recordInternal(value);
+    }
+
+    private void recordInternal(double value) {
+        boolean hasRecorded;
+        readLock.lock();
+        try {
+            hasRecorded = incrementValue(value);
+        }
+        finally {
+            readLock.unlock();
+        }
+
+        if (!hasRecorded) {
+            // If recording fails, then we MIGHT have to re-scale. Try re-scaling.
+            writeLock.lock();
+            try {
+                final int downScaleFactor = getDownScaleFactor(base2IndexProvider.getIndexForValue(value));
                 downScale(downScaleFactor);
-                index = base2IndexProvider.getIndexForValue(value);
-                circularCountHolder.increment(index, 1);
+                // Record the value within the write lock to guarantee write.
+                incrementValue(value);
+            }
+            finally {
+                writeLock.unlock();
             }
         }
+    }
+
+    private boolean incrementValue(final double value) {
+        return circularCountHolder.increment(base2IndexProvider.getIndexForValue(value), 1);
     }
 
     /**
@@ -186,6 +237,7 @@ public abstract class Base2ExponentialHistogram implements Histogram {
      */
     private void downScale(int downScaleFactor) {
         if (downScaleFactor == 0) {
+            // Should never happen.
             return;
         }
 
@@ -286,12 +338,12 @@ public abstract class Base2ExponentialHistogram implements Histogram {
      * Reset the current values and possibly increase the scale based on current recorded
      * values;
      */
-    synchronized void reset() {
+    // VisibleForTesting
+    void reset() {
         int upscaleFactor = getUpscaleFactor();
         if (upscaleFactor > 0) {
             this.updateScale(this.scale + upscaleFactor);
         }
-
         this.circularCountHolder.reset();
         this.zeroCount.reset();
     }
