@@ -43,7 +43,9 @@ public interface PushRegistryConfig extends MeterRegistryConfig {
     /**
      * @return The step time alignment. The default is {@code false}.
      */
-    default boolean stepAlignment() { return getBoolean(this, "stepAlignment").orElse(false); }
+    default boolean stepAlignment() {
+        return getBoolean(this, "stepAlignment").orElse(false);
+    }
 
     /**
      * @return {@code true} if publishing is enabled. Default is {@code true}.

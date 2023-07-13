@@ -17,6 +17,7 @@ package io.micrometer.influx;
 
 import io.micrometer.common.util.StringUtils;
 import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.util.DoubleFormat;
 import io.micrometer.core.instrument.util.MeterPartition;
@@ -28,13 +29,11 @@ import org.slf4j.LoggerFactory;
 
 import java.net.MalformedURLException;
 import java.net.URLEncoder;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static java.util.Collections.emptySet;
@@ -77,10 +76,12 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
      */
     @Deprecated
     public InfluxMeterRegistry(InfluxConfig config, Clock clock, ThreadFactory threadFactory) {
-        this(config, clock, threadFactory, new HttpUrlConnectionSender(config.connectTimeout(), config.readTimeout()), emptySet());
+        this(config, clock, threadFactory, new HttpUrlConnectionSender(config.connectTimeout(), config.readTimeout()),
+                emptySet());
     }
 
-    private InfluxMeterRegistry(InfluxConfig config, Clock clock, ThreadFactory threadFactory, HttpSender httpClient, Set<String> prefixes) {
+    private InfluxMeterRegistry(InfluxConfig config, Clock clock, ThreadFactory threadFactory, HttpSender httpClient,
+            Set<String> prefixes) {
         super(config, clock);
         config().namingConvention(new InfluxNamingConvention());
         this.config = config;
@@ -138,12 +139,16 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
             if (prefixes == null || prefixes.isEmpty()) {
                 logger.info("prefixes are empty");
                 publishMetrics(influxEndpoint, getMeters());
-            } else {
+            }
+            else {
                 splitAndPublishMetrics(influxEndpoint);
             }
-        } catch (MalformedURLException e) {
-            throw new IllegalArgumentException("Malformed InfluxDB publishing endpoint, see '" + config.prefix() + ".uri'", e);
-        } catch (Throwable e) {
+        }
+        catch (MalformedURLException e) {
+            throw new IllegalArgumentException(
+                    "Malformed InfluxDB publishing endpoint, see '" + config.prefix() + ".uri'", e);
+        }
+        catch (Throwable e) {
             logger.error("failed to send metrics to influx", e);
         }
     }
@@ -156,7 +161,8 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
             final MeterKey key = createKeyIfMatched(meter);
             if (key != null) {
                 matchedMetersMap.computeIfAbsent(key, k -> new ArrayList<>()).add(meter);
-            } else {
+            }
+            else {
                 unmatchedMeters.add(meter);
             }
         }
@@ -171,62 +177,96 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
             final Meter.Id meterId = meter.getId();
             final String meterName = meterId.getName();
             final String baseUnit = meterId.getBaseUnit();
-            final Predicate<String> matchedPredicate = prefix -> meterName.length() > prefix.concat(".").length() && meterName.startsWith(prefix + ".");
+            final Predicate<String> matchedPredicate = prefix -> meterName.length() > prefix.concat(".").length()
+                    && meterName.startsWith(prefix + ".");
 
             return prefixes.stream()
-                    .filter(matchedPredicate)
-                    .findFirst()
-                    .map(matchedPrefix -> new MeterKey(meterId.getType(), matchedPrefix, meterId.getTags(), baseUnit))
-                    .orElse(null);
+                .filter(matchedPredicate)
+                .findFirst()
+                .map(matchedPrefix -> new MeterKey(meterId.getType(), matchedPrefix, meterId.getTags(), baseUnit))
+                .orElse(null);
         }
         return null;
     }
 
     private void publishMetrics(String influxEndpoint, List<Meter> meters) throws Throwable {
         logger.debug("publish meters without prefixes");
-        for (List<Meter> batch : InfluxMeterPartition.partition(meters, config.batchSize())) {
-            publishMetrics(influxEndpoint, batch.size(), batch.stream()
-                    .flatMap(m -> m.match(
-                            gauge -> writeGauge(gauge.getId(), gauge.value()),
-                            counter -> writeCounter(counter.getId(), counter.count()),
-                            this::writeTimer,
-                            this::writeSummary,
-                            this::writeLongTaskTimer,
-                            gauge -> writeGauge(gauge.getId(), gauge.value(getBaseTimeUnit())),
-                            counter -> writeCounter(counter.getId(), counter.count()),
-                            this::writeFunctionTimer,
-                            this::writeMeter))
-                    .collect(joining("\n")));
-        }
-    }
-
-    private void publishMetrics(String influxEndpoint, Map<MeterKey, List<Meter>> metersMap) throws Throwable {
-        logger.debug("publish meters with prefixes");
-        for (List<MeterKey> batch : InfluxMeterPartition.partition(metersMap.keySet().stream().collect(Collectors.toList()), config.batchSize())) {
-            publishMetrics(influxEndpoint, batch.size(), batch.stream()
-                    .flatMap(k -> writeMetersAsSingleMultiFieldLine(metersMap.get(k),
-                            meter -> match(meter,
-                                    Gauge::value,
-                                    Counter::count,
-                                    timeGauge -> timeGauge.value(getBaseTimeUnit()),
-                                    FunctionCounter::count),
-                            getConventionName(k)))
-                    .collect(joining("\n")));
+        for (List<Meter> batch : new MeterPartition(meters, config.batchSize())) {
+            // @formatter:off
+            final String content = batch.stream()
+                .flatMap(m -> m.match(
+                    gauge -> writeGauge(gauge.getId(), gauge.value()),
+                    counter -> writeCounter(counter.getId(), counter.count()),
+                    this::writeTimer,
+                    this::writeSummary,
+                    this::writeLongTaskTimer,
+                    gauge -> writeGauge(gauge.getId(), gauge.value(getBaseTimeUnit())),
+                    counter -> writeCounter(counter.getId(), counter.count()),
+                    this::writeFunctionTimer,
+                    this::writeMeter))
+                .collect(joining("\n"));
+            // @formatter:on
+            publishMetrics(influxEndpoint, batch.size(), content);
         }
     }
 
     private void publishMetrics(String influxEndpoint, int metersCount, String content) throws Throwable {
         logger.debug("send to InfluxDB metrics: {}", content);
-        httpClient.post(influxEndpoint)
-                .withBasicAuthentication(config.userName(), config.password())
-                .withPlainText(content)
-                .compressWhen(config::compressed)
-                .send()
-                .onSuccess(response -> {
-                    logger.debug("successfully sent {} metrics to InfluxDB.", metersCount);
-                    databaseExists = true;
-                })
-                .onError(response -> logger.error("failed to send metrics to influx: {}", response.body()));
+        HttpSender.Request.Builder requestBuilder = httpClient.post(influxEndpoint)
+            .withBasicAuthentication(config.userName(), config.password());
+        config.apiVersion().addHeaderToken(config, requestBuilder);
+        // @formatter:off
+        requestBuilder
+            .withPlainText(content)
+            .compressWhen(config::compressed)
+            .send()
+            .onSuccess(response -> {
+                logger.debug("successfully sent {} metrics to InfluxDB.", metersCount);
+                databaseExists = true;
+            })
+            .onError(response -> logger.error("failed to send metrics to influx: {}", response.body()));
+        // @formatter:on
+    }
+
+    private void publishMetrics(String influxEndpoint, Map<MeterKey, List<Meter>> metersMap) throws Throwable {
+        logger.debug("publish meters with prefixes");
+        for (List<MeterKey> batch : InfluxMeterPartition.partition(new ArrayList<>(metersMap.keySet()),
+                config.batchSize())) {
+            // @formatter:off
+            final String content = batch.stream()
+                .flatMap(meterKey ->
+                    writeMetersAsSingleMultiFieldLine(
+                        metersMap.get(meterKey),
+                        meter -> match(
+                            meter,
+                            Gauge::value,
+                            Counter::count,
+                            timeGauge -> timeGauge.value(getBaseTimeUnit()),
+                            FunctionCounter::count),
+                        getConventionName(meterKey)))
+                .collect(joining("\n"));
+            // @formatter:on
+            publishMetrics(influxEndpoint, batch.size(), content);
+        }
+    }
+
+    // VisibleForTesting
+    Stream<String> writeMetersAsSingleMultiFieldLine(List<Meter> meters, Function<Meter, Double> meterMeasurement,
+            String meterName) {
+        final List<Field> fields = new ArrayList<>();
+        for (Meter meter : meters) {
+            final Field field = createFieldForMeter(meterMeasurement, meterName, meter);
+            if (field != null) {
+                fields.add(field);
+            }
+        }
+        if (fields.isEmpty()) {
+            return Stream.empty();
+        }
+        final Meter.Id id = meters.get(0).getId(); // get first from list, because all
+        // have
+        // the same tags
+        return Stream.of(influxLineProtocol(id, id.getType().name().toLowerCase(), fields.stream(), meterName));
     }
 
     // VisibleForTesting
@@ -261,18 +301,18 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
         return Stream.of(influxLineProtocol(timer.getId(), "long_task_timer", fields));
     }
 
-    private <T> T match(Meter meter,
-                        Function<Gauge, T> visitGauge,
-                        Function<Counter, T> visitCounter,
-                        Function<TimeGauge, T> visitTimeGauge,
-                        Function<FunctionCounter, T> visitFunctionCounter) {
+    private <T> T match(Meter meter, Function<Gauge, T> visitGauge, Function<Counter, T> visitCounter,
+            Function<TimeGauge, T> visitTimeGauge, Function<FunctionCounter, T> visitFunctionCounter) {
         if (meter instanceof TimeGauge) {
             return visitTimeGauge.apply((TimeGauge) meter);
-        } else if (meter instanceof Gauge) {
+        }
+        else if (meter instanceof Gauge) {
             return visitGauge.apply((Gauge) meter);
-        } else if (meter instanceof FunctionCounter) {
+        }
+        else if (meter instanceof FunctionCounter) {
             return visitFunctionCounter.apply((FunctionCounter) meter);
-        }  else {
+        }
+        else {
             return visitCounter.apply((Counter) meter);
         }
     }
@@ -291,22 +331,6 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
             return Stream.of(influxLineProtocol(id, "gauge", Stream.of(new Field("value", value))));
         }
         return Stream.empty();
-    }
-
-    // VisibleForTesting
-    Stream<String> writeMetersAsSingleMultiFieldLine(List<Meter> meters, Function<Meter, Double> meterMeasurement, String meterName) {
-        final List<Field> fields = new ArrayList<>();
-        for (Meter meter : meters) {
-            final Field field = createFieldForMeter(meterMeasurement, meterName, meter);
-            if (field != null) {
-                fields.add(field);
-            }
-        }
-        if (fields.isEmpty()) {
-            return Stream.empty();
-        }
-        final Meter.Id id = meters.get(0).getId();//get first from list, because all have the same tags
-        return Stream.of(influxLineProtocol(id, id.getType().name().toLowerCase(), fields.stream(), meterName));
     }
 
     private Field createFieldForMeter(Function<Meter, Double> meterMeasurement, String meterName, Meter meter) {
@@ -360,8 +384,7 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
             .collect(joining(""));
 
         return metricName + tags + ",metric_type=" + metricType + " "
-                + fields.map(Field::toString).collect(joining(","))
-                + " " + clock.wallTime();
+                + fields.map(Field::toString).collect(joining(",")) + " " + clock.wallTime();
     }
 
     private String influxLineProtocol(Meter.Id id, String metricType, Stream<Field> fields) {
@@ -442,8 +465,11 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
     static class MeterKey {
 
         private final Meter.Type meterType;
+
         private final String prefix;
+
         private final List<Tag> tags;
+
         private final String baseUnit;
 
         private MeterKey(Meter.Type meterType, String prefix, List<Tag> tags, String baseUnit) {
@@ -471,18 +497,20 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
 
         @Override
         public boolean equals(Object o) {
-            if (this == o) return true;
-            if (!(o instanceof MeterKey)) return false;
+            if (this == o)
+                return true;
+            if (!(o instanceof MeterKey))
+                return false;
             MeterKey meterKey = (MeterKey) o;
-            return meterType == meterKey.meterType &&
-                    Objects.equals(prefix, meterKey.prefix) &&
-                    Objects.equals(tags, meterKey.tags) &&
-                    Objects.equals(baseUnit, meterKey.baseUnit);
+            return meterType == meterKey.meterType && Objects.equals(prefix, meterKey.prefix)
+                    && Objects.equals(tags, meterKey.tags) && Objects.equals(baseUnit, meterKey.baseUnit);
         }
 
         @Override
         public int hashCode() {
             return Objects.hash(meterType, prefix, tags, baseUnit);
         }
+
     }
+
 }
