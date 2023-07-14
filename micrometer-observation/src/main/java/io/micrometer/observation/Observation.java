@@ -19,7 +19,6 @@ import io.micrometer.common.KeyValue;
 import io.micrometer.common.KeyValues;
 import io.micrometer.common.lang.NonNull;
 import io.micrometer.common.lang.Nullable;
-import io.micrometer.common.util.internal.logging.InternalLogger;
 import io.micrometer.common.util.internal.logging.InternalLoggerFactory;
 
 import java.util.HashMap;
@@ -49,8 +48,6 @@ import java.util.stream.Collectors;
  * @since 1.10.0
  */
 public interface Observation extends ObservationView {
-
-    InternalLogger logger = InternalLoggerFactory.getInstance(Observation.class);
 
     /**
      * No-op observation.
@@ -638,7 +635,8 @@ public interface Observation extends ObservationView {
     @Nullable
     @Deprecated
     default <C extends Context, T> T observeWithContext(Function<C, T> function) {
-        logger.warn("This method is deprecated. Please migrate to observation.observe(...)");
+        InternalLoggerFactory.getInstance(Observation.class)
+            .warn("This method is deprecated. Please migrate to observation.observe(...)");
         start();
         try (Scope scope = openScope()) {
             return function.apply((C) getContext());
@@ -682,7 +680,8 @@ public interface Observation extends ObservationView {
     @Deprecated
     default <C extends Context, T, E extends Throwable> T observeCheckedWithContext(CheckedFunction<C, T, E> function)
             throws E {
-        logger.warn("This method is deprecated. Please migrate to observation.observeChecked(...)");
+        InternalLoggerFactory.getInstance(Observation.class)
+            .warn("This method is deprecated. Please migrate to observation.observeChecked(...)");
         start();
         try (Scope scope = openScope()) {
             return function.apply((C) getContext());
