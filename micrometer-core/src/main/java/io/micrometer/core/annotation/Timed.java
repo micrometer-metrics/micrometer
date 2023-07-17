@@ -17,6 +17,20 @@ package io.micrometer.core.annotation;
 
 import java.lang.annotation.*;
 
+/**
+ * Annotated methods are instrumented using a {@code Timer} or a {@code LongTaskTimer}
+ * ({@code longTask} flag).
+ *
+ * <p>
+ * If the instrumented method completes exceptionally, the exception will be recorded in a
+ * separate tag. When the annotated method returns a
+ * {@link java.util.concurrent.CompletionStage} or any of its subclasses, the
+ * {@code Timer}/{@code LongTaskTimer} will be stopped only when the
+ * {@link java.util.concurrent.CompletionStage} is completed.
+ *
+ * @author Jon Schneider
+ * @see io.micrometer.core.aop.TimedAspect
+ */
 @Target({ ElementType.ANNOTATION_TYPE, ElementType.TYPE, ElementType.METHOD })
 @Repeatable(TimedSet.class)
 @Retention(RetentionPolicy.RUNTIME)
