@@ -26,6 +26,15 @@ import io.micrometer.observation.Observation.ContextView;
 public interface ObservationView {
 
     /**
+     * Returns the {@link ObservationRegistry} attached to this observation.
+     * @return corresponding observation registry
+     * @since 1.10.10
+     */
+    default ObservationRegistry getObservationRegistry() {
+        return ObservationRegistry.NOOP;
+    }
+
+    /**
      * Returns the {@link ContextView} attached to this observation.
      * @return corresponding context
      */
