@@ -80,7 +80,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
 
     @Override
     protected <T> Gauge newGauge(Meter.Id id, T obj, ToDoubleFunction<T> valueFunction) {
-        if ("jvm.info".equals(id.getName())) {
+        if (id.getName().equals("jvm.info")) {
             // Micrometer does not have info metrics, so info metrics are represented as
             // Gauge.
             // This is a hack to represent JvmInfoMetrics as an Info rather than a Gauge.

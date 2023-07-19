@@ -24,6 +24,8 @@ import io.prometheus.metrics.model.snapshots.DistributionDataPointSnapshot;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static io.prometheus.metrics.model.snapshots.Unit.nanosToSeconds;
+
 /**
  * @param <T> {@link io.prometheus.metrics.core.metrics.Histogram Histogram} or
  * {@link io.prometheus.metrics.core.metrics.Summary Summary}.
@@ -54,7 +56,7 @@ public class PrometheusLongTaskTimer<T extends Collector, S extends Distribution
 
         private final long startTimeNanos;
 
-        private volatile long duration = 0;
+        private volatile double durationSeconds = 0;
 
         Sample() {
             this.startTimeNanos = System.nanoTime();
@@ -62,16 +64,17 @@ public class PrometheusLongTaskTimer<T extends Collector, S extends Distribution
 
         @Override
         public long stop() {
-            duration = System.nanoTime() - startTimeNanos;
-            dataPoint.observe(duration);
-            max.observe(duration);
+            long durationNanos = System.nanoTime() - startTimeNanos;
+            durationSeconds = nanosToSeconds(durationNanos);
+            dataPoint.observe(durationSeconds);
+            max.observe(durationSeconds);
             activeTasksCount.decrementAndGet();
-            return duration;
+            return durationNanos;
         }
 
         @Override
         public double duration(TimeUnit unit) {
-            return duration / (double) unit.toNanos(1);
+            return toUnit(durationSeconds, unit);
         }
 
     }
