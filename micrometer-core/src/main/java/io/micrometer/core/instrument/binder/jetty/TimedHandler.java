@@ -1,12 +1,12 @@
-/**
+/*
  * Copyright 2019 VMware, Inc.
- * <p>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
+ *
  * https://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,12 +15,12 @@
  */
 package io.micrometer.core.instrument.binder.jetty;
 
+import io.micrometer.common.lang.NonNullApi;
+import io.micrometer.common.lang.NonNullFields;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.binder.http.DefaultHttpServletRequestTagsProvider;
 import io.micrometer.core.instrument.binder.http.HttpServletRequestTagsProvider;
-import io.micrometer.core.lang.NonNullApi;
-import io.micrometer.core.lang.NonNullFields;
 import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.server.AsyncContextEvent;
 import org.eclipse.jetty.server.Handler;
@@ -40,7 +40,8 @@ import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * Adapted from Jetty's <a href="https://github.com/eclipse/jetty.project/blob/jetty-9.4.x/jetty-server/src/main/java/org/eclipse/jetty/server/handler/StatisticsHandler.java">StatisticsHandler</a>.
+ * Adapted from Jetty's <a href=
+ * "https://github.com/eclipse/jetty.project/blob/jetty-9.4.x/jetty-server/src/main/java/org/eclipse/jetty/server/handler/StatisticsHandler.java">StatisticsHandler</a>.
  *
  * @author Jon Schneider
  * @since 1.4.0
@@ -48,11 +49,15 @@ import java.util.concurrent.atomic.AtomicInteger;
 @NonNullApi
 @NonNullFields
 public class TimedHandler extends HandlerWrapper implements Graceful {
+
     private static final String SAMPLE_REQUEST_TIMER_ATTRIBUTE = "__micrometer_timer_sample";
+
     private static final String SAMPLE_REQUEST_LONG_TASK_TIMER_ATTRIBUTE = "__micrometer_ltt_sample";
 
     private final MeterRegistry registry;
+
     private final Iterable<Tag> tags;
+
     private final HttpServletRequestTagsProvider tagsProvider;
 
     private final Shutdown shutdown = new Shutdown() {
@@ -63,8 +68,11 @@ public class TimedHandler extends HandlerWrapper implements Graceful {
     };
 
     private final LongTaskTimer openRequests;
+
     private final Counter asyncDispatches;
+
     private final Counter asyncExpires;
+
     private final AtomicInteger asyncWaits = new AtomicInteger();
 
     public TimedHandler(MeterRegistry registry, Iterable<Tag> tags) {
@@ -77,29 +85,30 @@ public class TimedHandler extends HandlerWrapper implements Graceful {
         this.tagsProvider = tagsProvider;
 
         this.openRequests = LongTaskTimer.builder("jetty.server.dispatches.open")
-                .description("Jetty dispatches that are currently in progress")
-                .tags(tags)
-                .register(registry);
+            .description("Jetty dispatches that are currently in progress")
+            .tags(tags)
+            .register(registry);
 
         this.asyncDispatches = Counter.builder("jetty.server.async.dispatches")
-                .description("Asynchronous dispatches")
-                .tags(tags)
-                .register(registry);
+            .description("Asynchronous dispatches")
+            .tags(tags)
+            .register(registry);
 
         this.asyncExpires = Counter.builder("jetty.server.async.expires")
-                .description("Asynchronous operations that timed out before completing")
-                .tags(tags)
-                .register(registry);
+            .description("Asynchronous operations that timed out before completing")
+            .tags(tags)
+            .register(registry);
 
         Gauge.builder("jetty.server.async.waits", asyncWaits, AtomicInteger::doubleValue)
-                .description("Pending asynchronous wait operations")
-                .baseUnit(BaseUnits.OPERATIONS)
-                .tags(tags)
-                .register(registry);
+            .description("Pending asynchronous wait operations")
+            .baseUnit(BaseUnits.OPERATIONS)
+            .tags(tags)
+            .register(registry);
     }
 
     @Override
-    public void handle(String path, Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
+    public void handle(String path, Request baseRequest, HttpServletRequest request, HttpServletResponse response)
+            throws IOException, ServletException {
         Timer.Sample sample = Timer.start(registry);
         LongTaskTimer.Sample requestSample;
 
@@ -108,7 +117,8 @@ public class TimedHandler extends HandlerWrapper implements Graceful {
             requestSample = openRequests.start();
             request.setAttribute(SAMPLE_REQUEST_TIMER_ATTRIBUTE, sample);
             request.setAttribute(SAMPLE_REQUEST_LONG_TASK_TIMER_ATTRIBUTE, requestSample);
-        } else {
+        }
+        else {
             asyncDispatches.increment();
             request.setAttribute(SAMPLE_REQUEST_TIMER_ATTRIBUTE, sample);
             requestSample = (LongTaskTimer.Sample) request.getAttribute(SAMPLE_REQUEST_LONG_TASK_TIMER_ATTRIBUTE);
@@ -118,7 +128,8 @@ public class TimedHandler extends HandlerWrapper implements Graceful {
             Handler handler = getHandler();
             if (handler != null && !shutdown.isShutdown() && isStarted()) {
                 handler.handle(path, baseRequest, request, response);
-            } else {
+            }
+            else {
                 if (!baseRequest.isHandled()) {
                     baseRequest.setHandled(true);
                 }
@@ -126,18 +137,20 @@ public class TimedHandler extends HandlerWrapper implements Graceful {
                     response.sendError(HttpStatus.SERVICE_UNAVAILABLE_503);
                 }
             }
-        } finally {
+        }
+        finally {
             if (state.isSuspended()) {
                 if (state.isInitial()) {
                     state.addListener(onCompletion);
                     asyncWaits.incrementAndGet();
                 }
-            } else if (state.isInitial()) {
+            }
+            else if (state.isInitial()) {
                 sample.stop(Timer.builder("jetty.server.requests")
-                        .description("HTTP requests to the Jetty server")
-                        .tags(tagsProvider.getTags(request, response))
-                        .tags(tags)
-                        .register(registry));
+                    .description("HTTP requests to the Jetty server")
+                    .tags(tagsProvider.getTags(request, response))
+                    .tags(tags)
+                    .register(registry));
 
                 requestSample.stop();
 
@@ -184,7 +197,8 @@ public class TimedHandler extends HandlerWrapper implements Graceful {
         HttpChannelState state = ((AsyncContextEvent) event).getHttpChannelState();
         Request request = state.getBaseRequest();
 
-        LongTaskTimer.Sample lttSample = (LongTaskTimer.Sample) request.getAttribute(SAMPLE_REQUEST_LONG_TASK_TIMER_ATTRIBUTE);
+        LongTaskTimer.Sample lttSample = (LongTaskTimer.Sample) request
+            .getAttribute(SAMPLE_REQUEST_LONG_TASK_TIMER_ATTRIBUTE);
         lttSample.stop();
     }
 
@@ -193,14 +207,15 @@ public class TimedHandler extends HandlerWrapper implements Graceful {
 
         Request request = state.getBaseRequest();
         Timer.Sample sample = (Timer.Sample) request.getAttribute(SAMPLE_REQUEST_TIMER_ATTRIBUTE);
-        LongTaskTimer.Sample lttSample = (LongTaskTimer.Sample) request.getAttribute(SAMPLE_REQUEST_LONG_TASK_TIMER_ATTRIBUTE);
+        LongTaskTimer.Sample lttSample = (LongTaskTimer.Sample) request
+            .getAttribute(SAMPLE_REQUEST_LONG_TASK_TIMER_ATTRIBUTE);
 
         if (sample != null) {
             sample.stop(Timer.builder("jetty.server.requests")
-                    .description("HTTP requests to the Jetty server")
-                    .tags(tagsProvider.getTags(request, request.getResponse()))
-                    .tags(tags)
-                    .register(registry));
+                .description("HTTP requests to the Jetty server")
+                .tags(tagsProvider.getTags(request, request.getResponse()))
+                .tags(tags)
+                .register(registry));
 
             lttSample.stop();
         }

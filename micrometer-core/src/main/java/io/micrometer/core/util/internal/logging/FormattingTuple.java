@@ -1,12 +1,12 @@
-/**
+/*
  * Copyright 2019 VMware, Inc.
- * <p>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
+ *
  * https://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -58,10 +58,15 @@ package io.micrometer.core.util.internal.logging;
  * NOTE: This file has been copied from {io.netty.util.internal.logging}.
  *
  * Holds the results of formatting done by {@link MessageFormatter}.
+ *
+ * @deprecated Please use
+ * {@code io.micrometer.common.util.internal.logging.FormattingTuple} instead
  */
+@Deprecated
 final class FormattingTuple {
 
     private final String message;
+
     private final Throwable throwable;
 
     FormattingTuple(String message, Throwable throwable) {
@@ -76,4 +81,5 @@ final class FormattingTuple {
     public Throwable getThrowable() {
         return throwable;
     }
+
 }

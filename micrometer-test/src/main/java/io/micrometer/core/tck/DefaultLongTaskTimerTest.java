@@ -1,12 +1,12 @@
-/**
+/*
  * Copyright 2020 VMware, Inc.
- * <p>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
+ *
  * https://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -42,8 +42,8 @@ public class DefaultLongTaskTimerTest {
     void histogram() {
         MeterRegistry registry = new SimpleMeterRegistry(SimpleConfig.DEFAULT, new MockClock());
         LongTaskTimer t = LongTaskTimer.builder("my.timer")
-                .serviceLevelObjectives(Duration.ofSeconds(10), Duration.ofSeconds(40), Duration.ofMinutes(1))
-                .register(registry);
+            .serviceLevelObjectives(Duration.ofSeconds(10), Duration.ofSeconds(40), Duration.ofMinutes(1))
+            .register(registry);
 
         List<Integer> samples = Arrays.asList(48, 42, 40, 35, 22, 16, 13, 8, 6, 4, 2);
         int prior = samples.get(0);
@@ -71,8 +71,10 @@ public class DefaultLongTaskTimerTest {
         MockClock clock = new MockClock();
         MeterRegistry registry = new SimpleMeterRegistry(SimpleConfig.DEFAULT, clock) {
             @Override
-            protected LongTaskTimer newLongTaskTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig) {
-                // supportsAggregablePercentiles true for using pre-defined histogram buckets
+            protected LongTaskTimer newLongTaskTimer(Meter.Id id,
+                    DistributionStatisticConfig distributionStatisticConfig) {
+                // supportsAggregablePercentiles true for using pre-defined histogram
+                // buckets
                 return new DefaultLongTaskTimer(id, clock, getBaseTimeUnit(), distributionStatisticConfig, true);
             }
         };
@@ -94,4 +96,5 @@ public class DefaultLongTaskTimerTest {
             assertThat(countAtBuckets[index++].count()).isEqualTo(2);
         }
     }
+
 }

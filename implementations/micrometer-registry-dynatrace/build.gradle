@@ -7,4 +7,5 @@ dependencies {
 
     testImplementation project(':micrometer-test')
     testImplementation 'com.fasterxml.jackson.core:jackson-databind'
+    testImplementation 'org.awaitility:awaitility'
 }

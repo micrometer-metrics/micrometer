@@ -1,12 +1,12 @@
-/**
+/*
  * Copyright 2019 VMware, Inc.
- * <p>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
+ *
  * https://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -37,15 +37,22 @@ import static org.slf4j.spi.LocationAwareLogger.*;
 /**
  * NOTE: This file has been copied from {io.netty.util.internal.logging}.
  *
- * <a href="https://www.slf4j.org/">SLF4J</a> logger which is location aware and so will log the correct origin of the
- * logging event by filter out the wrapper itself.
+ * <a href="https://www.slf4j.org/">SLF4J</a> logger which is location aware and so will
+ * log the correct origin of the logging event by filter out the wrapper itself.
+ *
+ * @deprecated Please use
+ * {@code io.micrometer.common.util.internal.logging.LocationAwareSlf4JLogger} instead.
  */
+@Deprecated
 final class LocationAwareSlf4JLogger extends AbstractInternalLogger {
 
-    // IMPORTANT: All our log methods first check if the log level is enabled before call the wrapped
-    // LocationAwareLogger.log(...) method. This is done to reduce GC creation that is caused by varargs.
+    // IMPORTANT: All our log methods first check if the log level is enabled before call
+    // the wrapped
+    // LocationAwareLogger.log(...) method. This is done to reduce GC creation that is
+    // caused by varargs.
 
     static final String FQCN = LocationAwareSlf4JLogger.class.getName();
+
     private static final long serialVersionUID = -8292030083201538180L;
 
     private final transient LocationAwareLogger logger;
@@ -266,4 +273,5 @@ final class LocationAwareSlf4JLogger extends AbstractInternalLogger {
             log(ERROR_INT, msg, t);
         }
     }
+
 }

@@ -1,12 +1,12 @@
-/**
+/*
  * Copyright 2020 VMware, Inc.
- * <p>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
+ *
  * https://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -44,6 +44,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 @ExtendWith(WiremockResolver.class)
 class MicrometerHttpClientInterceptorTest {
+
     private MeterRegistry registry;
 
     @BeforeEach
@@ -62,7 +63,12 @@ class MicrometerHttpClientInterceptorTest {
         HttpResponse response = future.get();
 
         assertThat(response.getStatusLine().getStatusCode()).isEqualTo(200);
-        assertThat(registry.get("httpcomponents.httpclient.request").timer().count()).isEqualTo(1);
+        assertThat(registry.get("httpcomponents.httpclient.request")
+            .tag("method", "GET")
+            .tag("status", "200")
+            .tag("outcome", "SUCCESS")
+            .timer()
+            .count()).isEqualTo(1);
 
         client.close();
     }
@@ -80,24 +86,26 @@ class MicrometerHttpClientInterceptorTest {
         HttpResponse response = future.get();
 
         assertThat(response.getStatusLine().getStatusCode()).isEqualTo(200);
-        assertThat(registry.get("httpcomponents.httpclient.request").tag("uri", "/some/pattern").tag("status", "200").timer().count())
-                .isEqualTo(1);
+        assertThat(registry.get("httpcomponents.httpclient.request")
+            .tag("uri", "/some/pattern")
+            .tag("status", "200")
+            .timer()
+            .count()).isEqualTo(1);
 
         client.close();
     }
 
     private CloseableHttpAsyncClient asyncClient() {
         MicrometerHttpClientInterceptor interceptor = new MicrometerHttpClientInterceptor(registry,
-                request -> request.getRequestLine().getUri(),
-                Tags.empty(),
-                true);
+                request -> request.getRequestLine().getUri(), Tags.empty(), true);
         return asyncClient(interceptor);
     }
 
     private CloseableHttpAsyncClient asyncClient(MicrometerHttpClientInterceptor interceptor) {
         return HttpAsyncClients.custom()
-                .addInterceptorFirst(interceptor.getRequestInterceptor())
-                .addInterceptorLast(interceptor.getResponseInterceptor())
-                .build();
+            .addInterceptorFirst(interceptor.getRequestInterceptor())
+            .addInterceptorLast(interceptor.getResponseInterceptor())
+            .build();
     }
+
 }

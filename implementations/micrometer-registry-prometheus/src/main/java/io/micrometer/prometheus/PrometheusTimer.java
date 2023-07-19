@@ -1,12 +1,12 @@
-/**
+/*
  * Copyright 2017 VMware, Inc.
- * <p>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
+ *
  * https://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,22 +15,33 @@
  */
 package io.micrometer.prometheus;
 
+import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.AbstractTimer;
 import io.micrometer.core.instrument.Clock;
+import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.distribution.*;
 import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import io.micrometer.core.instrument.util.TimeUtils;
-import io.micrometer.core.lang.Nullable;
+import io.prometheus.client.exemplars.Exemplar;
+import io.prometheus.client.exemplars.HistogramExemplarSampler;
 
-import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.LongAdder;
 
+/**
+ * {@link Timer} for Prometheus.
+ *
+ * @author Jon Schneider
+ * @author Jonatan Ivanov
+ */
 public class PrometheusTimer extends AbstractTimer {
+
     private static final CountAtBucket[] EMPTY_HISTOGRAM = new CountAtBucket[0];
 
     private final LongAdder count = new LongAdder();
+
     private final LongAdder totalTime = new LongAdder();
+
     private final TimeWindowMax max;
 
     private final HistogramFlavor histogramFlavor;
@@ -38,13 +49,17 @@ public class PrometheusTimer extends AbstractTimer {
     @Nullable
     private final Histogram histogram;
 
-    PrometheusTimer(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig, PauseDetector pauseDetector, HistogramFlavor histogramFlavor) {
+    private boolean exemplarsEnabled = false;
+
+    PrometheusTimer(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig,
+            PauseDetector pauseDetector, HistogramFlavor histogramFlavor,
+            @Nullable HistogramExemplarSampler exemplarSampler) {
         super(id, clock,
                 DistributionStatisticConfig.builder()
-                        .percentilesHistogram(false)
-                        .serviceLevelObjectives()
-                        .build()
-                        .merge(distributionStatisticConfig),
+                    .percentilesHistogram(false)
+                    .serviceLevelObjectives()
+                    .build()
+                    .merge(distributionStatisticConfig),
                 pauseDetector, TimeUnit.SECONDS, false);
 
         this.histogramFlavor = histogramFlavor;
@@ -53,21 +68,21 @@ public class PrometheusTimer extends AbstractTimer {
         if (distributionStatisticConfig.isPublishingHistogram()) {
             switch (histogramFlavor) {
                 case Prometheus:
-                    histogram = new TimeWindowFixedBoundaryHistogram(clock, DistributionStatisticConfig.builder()
-                            .expiry(Duration.ofDays(1825)) // effectively never roll over
-                            .bufferLength(1)
-                            .build()
-                            .merge(distributionStatisticConfig), true);
+                    PrometheusHistogram prometheusHistogram = new PrometheusHistogram(clock,
+                            distributionStatisticConfig, exemplarSampler);
+                    this.histogram = prometheusHistogram;
+                    this.exemplarsEnabled = prometheusHistogram.isExemplarsEnabled();
                     break;
                 case VictoriaMetrics:
-                    histogram = new FixedBoundaryVictoriaMetricsHistogram();
+                    this.histogram = new FixedBoundaryVictoriaMetricsHistogram();
                     break;
                 default:
-                    histogram = null;
+                    this.histogram = null;
                     break;
             }
-        } else {
-            histogram = null;
+        }
+        else {
+            this.histogram = null;
         }
     }
 
@@ -78,8 +93,19 @@ public class PrometheusTimer extends AbstractTimer {
         totalTime.add(nanoAmount);
         max.record(nanoAmount, TimeUnit.NANOSECONDS);
 
-        if (histogram != null)
+        if (histogram != null) {
             histogram.recordLong(TimeUnit.NANOSECONDS.convert(amount, unit));
+        }
+    }
+
+    @Nullable
+    Exemplar[] exemplars() {
+        if (exemplarsEnabled) {
+            return ((PrometheusHistogram) histogram).exemplars();
+        }
+        else {
+            return null;
+        }
     }
 
     @Override
@@ -102,9 +128,9 @@ public class PrometheusTimer extends AbstractTimer {
     }
 
     /**
-     * For Prometheus we cannot use the histogram counts from HistogramSnapshot, as it is based on a
-     * rolling histogram. Prometheus requires a histogram that accumulates values over the lifetime of the app.
-     *
+     * For Prometheus we cannot use the histogram counts from HistogramSnapshot, as it is
+     * based on a rolling histogram. Prometheus requires a histogram that accumulates
+     * values over the lifetime of the app.
      * @return Cumulative histogram buckets.
      */
     public CountAtBucket[] histogramCounts() {
@@ -119,11 +145,8 @@ public class PrometheusTimer extends AbstractTimer {
             return snapshot;
         }
 
-        return new HistogramSnapshot(snapshot.count(),
-                snapshot.total(),
-                snapshot.max(),
-                snapshot.percentileValues(),
-                histogramCounts(),
-                snapshot::outputSummary);
+        return new HistogramSnapshot(snapshot.count(), snapshot.total(), snapshot.max(), snapshot.percentileValues(),
+                histogramCounts(), snapshot::outputSummary);
     }
+
 }

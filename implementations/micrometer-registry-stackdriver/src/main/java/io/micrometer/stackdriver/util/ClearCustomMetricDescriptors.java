@@ -1,12 +1,12 @@
-/**
+/*
  * Copyright 2018 VMware, Inc.
- * <p>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
+ *
  * https://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,24 +27,30 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 
 /**
- * When running this as a main method, supply an environment variable GOOGLE_APPLICATION_CREDENTIALS with a service
- * account JSON. Your service account must have the "monitoring.editor" role at least.
+ * When running this as a main method, supply an environment variable
+ * GOOGLE_APPLICATION_CREDENTIALS with a service account JSON. Your service account must
+ * have the "monitoring.editor" role at least.
  *
- * @see <a href="https://cloud.google.com/monitoring/docs/reference/libraries#setting_up_authentication">Google Cloud authentication</a>
- * @see <a href="https://cloud.google.com/monitoring/access-control">Google Cloud access control</a>
- *
+ * @see <a href=
+ * "https://cloud.google.com/monitoring/docs/reference/libraries#setting_up_authentication">Google
+ * Cloud authentication</a>
+ * @see <a href="https://cloud.google.com/monitoring/access-control">Google Cloud access
+ * control</a>
  * @author Jon Schneider
  * @since 1.1.0
  */
 public class ClearCustomMetricDescriptors {
+
     public static void clearCustomMetricDescriptors(MetricServiceSettings settings, String projectId) {
         try {
             MetricServiceClient client = MetricServiceClient.create(settings);
 
-            Iterable<MetricServiceClient.ListMetricDescriptorsPage> listMetricDescriptorsPages = client.listMetricDescriptors(ListMetricDescriptorsRequest.newBuilder()
+            Iterable<MetricServiceClient.ListMetricDescriptorsPage> listMetricDescriptorsPages = client
+                .listMetricDescriptors(ListMetricDescriptorsRequest.newBuilder()
                     .setName("projects/" + projectId)
                     .setFilter("metric.type = starts_with(\"custom.googleapis.com/\")")
-                    .build()).iteratePages();
+                    .build())
+                .iteratePages();
 
             int deleted = 0;
             for (MetricServiceClient.ListMetricDescriptorsPage page : listMetricDescriptorsPages) {
@@ -56,7 +62,8 @@ public class ClearCustomMetricDescriptors {
             }
 
             System.out.println("Deleted " + deleted + " custom metric descriptors");
-        } catch (IOException e) {
+        }
+        catch (IOException e) {
             throw new UncheckedIOException(e);
         }
     }
@@ -68,7 +75,7 @@ public class ClearCustomMetricDescriptors {
             throw new IllegalArgumentException("Must provide a project id");
         }
 
-        ClearCustomMetricDescriptors.clearCustomMetricDescriptors(MetricServiceSettings.newBuilder()
-                .build(), args[0]);
+        ClearCustomMetricDescriptors.clearCustomMetricDescriptors(MetricServiceSettings.newBuilder().build(), args[0]);
     }
+
 }

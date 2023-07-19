@@ -1,12 +1,12 @@
-/**
+/*
  * Copyright 2017 VMware, Inc.
- * <p>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
+ *
  * https://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,42 +30,40 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class TimerSample {
+
     public static void main(String[] args) {
         MeterRegistry registry = SampleConfig.myMonitoringSystem();
         Timer timer = Timer.builder("timer")
-                .publishPercentileHistogram()
-                .publishPercentiles(0.5, 0.95, 0.99)
-                .serviceLevelObjectives(Duration.ofMillis(275), Duration.ofMillis(300), Duration.ofMillis(500))
-                .distributionStatisticExpiry(Duration.ofSeconds(10))
-                .distributionStatisticBufferLength(3)
-                .register(registry);
+            .publishPercentileHistogram()
+            .publishPercentiles(0.5, 0.95, 0.99)
+            .serviceLevelObjectives(Duration.ofMillis(275), Duration.ofMillis(300), Duration.ofMillis(500))
+            .distributionStatisticExpiry(Duration.ofSeconds(10))
+            .distributionStatisticBufferLength(3)
+            .register(registry);
 
         AtomicLong totalCount = new AtomicLong();
         AtomicLong totalTime = new AtomicLong();
         FunctionTimer.builder("ftimer", totalCount, t -> totalCount.get(), t -> totalTime.get(), TimeUnit.MILLISECONDS)
-                .register(registry);
+            .register(registry);
 
         RandomEngine r = new MersenneTwister64(0);
         Normal incomingRequests = new Normal(0, 1, r);
         Normal duration = new Normal(250, 50, r);
 
         AtomicInteger latencyForThisSecond = new AtomicInteger(duration.nextInt());
-        Flux.interval(Duration.ofSeconds(1))
-                .doOnEach(d -> latencyForThisSecond.set(duration.nextInt()))
-                .subscribe();
+        Flux.interval(Duration.ofSeconds(1)).doOnEach(d -> latencyForThisSecond.set(duration.nextInt())).subscribe();
 
         // the potential for an "incoming request" every 10 ms
-        Flux.interval(Duration.ofMillis(10))
-                .doOnEach(d -> {
-                    if (incomingRequests.nextDouble() + 0.4 > 0) {
-                        // pretend the request took some amount of time, such that the time is
-                        // distributed normally with a mean of 250ms
-                        int latency = latencyForThisSecond.get();
-                        timer.record(latency, TimeUnit.MILLISECONDS);
-                        totalTime.addAndGet(latency);
-                        totalCount.incrementAndGet();
-                    }
-                })
-                .blockLast();
+        Flux.interval(Duration.ofMillis(10)).doOnEach(d -> {
+            if (incomingRequests.nextDouble() + 0.4 > 0) {
+                // pretend the request took some amount of time, such that the time is
+                // distributed normally with a mean of 250ms
+                int latency = latencyForThisSecond.get();
+                timer.record(latency, TimeUnit.MILLISECONDS);
+                totalTime.addAndGet(latency);
+                totalCount.incrementAndGet();
+            }
+        }).blockLast();
     }
+
 }

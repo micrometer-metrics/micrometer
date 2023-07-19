@@ -1,12 +1,12 @@
-/**
+/*
  * Copyright 2020 VMware, Inc.
- * <p>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
+ *
  * https://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,6 +27,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class PushRegistryConfigTest {
+
     private final Map<String, String> props = new HashMap<>();
 
     private final PushRegistryConfig config = new PushRegistryConfig() {
@@ -43,7 +44,8 @@ class PushRegistryConfigTest {
 
     @Test
     void invalid() {
-        props.put("push.enabled", "nope"); // anything but "true" results in false but is still valid
+        props.put("push.enabled", "nope"); // anything but "true" results in false but is
+                                           // still valid
         props.put("push.numThreads", "1.1");
         props.put("push.connectTimeout", "1w");
         props.put("push.readTimeout", "1w");
@@ -57,12 +59,8 @@ class PushRegistryConfigTest {
         List<Validated.Invalid<?>> failures = config.validate().failures();
 
         assertThat(failures.size()).isEqualTo(5);
-        assertThat(failures.stream().map(Validated.Invalid::getMessage))
-                .containsOnly(
-                        "must be a valid duration",
-                        "must contain a valid time unit",
-                        "must be an integer"
-                );
+        assertThat(failures.stream().map(Validated.Invalid::getMessage)).containsOnly("must be a valid duration",
+                "must contain a valid time unit", "must be an integer");
 
         assertThatThrownBy(config::batchSize).isInstanceOf(ValidationException.class);
     }
@@ -77,4 +75,5 @@ class PushRegistryConfigTest {
 
         assertThat(config.validate().isValid()).isTrue();
     }
+
 }

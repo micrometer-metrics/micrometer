@@ -1,12 +1,12 @@
-/**
+/*
  * Copyright 2017 VMware, Inc.
- * <p>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
+ *
  * https://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,9 +15,9 @@
  */
 package io.micrometer.core.instrument.binder.jersey.server;
 
+import io.micrometer.common.util.StringUtils;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.binder.http.Outcome;
-import io.micrometer.core.instrument.util.StringUtils;
 import org.glassfish.jersey.server.ContainerRequest;
 import org.glassfish.jersey.server.ContainerResponse;
 import org.glassfish.jersey.server.ExtendedUriInfo;
@@ -49,9 +49,9 @@ public final class JerseyTags {
 
     private static final Tag METHOD_UNKNOWN = Tag.of("method", "UNKNOWN");
 
-    private static final Pattern TRAILING_SLASH_PATTERN = Pattern.compile("/$");
+    static final Pattern TRAILING_SLASH_PATTERN = Pattern.compile("/$");
 
-    private static final Pattern MULTIPLE_SLASH_PATTERN = Pattern.compile("//+");
+    static final Pattern MULTIPLE_SLASH_PATTERN = Pattern.compile("//+");
 
     private JerseyTags() {
     }
@@ -73,15 +73,13 @@ public final class JerseyTags {
      */
     public static Tag status(ContainerResponse response) {
         /* In case there is no response we are dealing with an unmapped exception. */
-        return (response != null)
-                ? Tag.of("status", Integer.toString(response.getStatus()))
-                : STATUS_SERVER_ERROR;
+        return (response != null) ? Tag.of("status", Integer.toString(response.getStatus())) : STATUS_SERVER_ERROR;
     }
 
     /**
      * Creates a {@code uri} tag based on the URI of the given {@code event}. Uses the
-     * {@link ExtendedUriInfo#getMatchedTemplates()} if
-     * available. {@code REDIRECTION} for 3xx responses, {@code NOT_FOUND} for 404 responses.
+     * {@link ExtendedUriInfo#getMatchedTemplates()} if available. {@code REDIRECTION} for
+     * 3xx responses, {@code NOT_FOUND} for 404 responses.
      * @param event the request event
      * @return the uri tag derived from the request event
      */
@@ -89,7 +87,7 @@ public final class JerseyTags {
         ContainerResponse response = event.getContainerResponse();
         if (response != null) {
             int status = response.getStatus();
-            if (isRedirection(status)) {
+            if (isRedirection(status) && event.getUriInfo().getMatchedResourceMethod() == null) {
                 return URI_REDIRECTION;
             }
             if (status == 404 && event.getUriInfo().getMatchedResourceMethod() == null) {
@@ -103,11 +101,11 @@ public final class JerseyTags {
         return Tag.of("uri", matchingPattern);
     }
 
-    private static boolean isRedirection(int status) {
+    static boolean isRedirection(int status) {
         return 300 <= status && status < 400;
     }
 
-    private static String getMatchingPattern(RequestEvent event) {
+    static String getMatchingPattern(RequestEvent event) {
         ExtendedUriInfo uriInfo = event.getUriInfo();
         List<UriTemplate> templates = uriInfo.getMatchedTemplates();
 
@@ -124,7 +122,7 @@ public final class JerseyTags {
     }
 
     /**
-     * Creates a {@code exception} tag based on the {@link Class#getSimpleName() simple
+     * Creates an {@code exception} tag based on the {@link Class#getSimpleName() simple
      * name} of the class of the given {@code exception}.
      * @param event the request event
      * @return the exception tag derived from the exception
@@ -145,8 +143,7 @@ public final class JerseyTags {
             exception = exception.getCause();
         }
         String simpleName = exception.getClass().getSimpleName();
-        return Tag.of("exception", StringUtils.isNotEmpty(simpleName) ? simpleName
-                : exception.getClass().getName());
+        return Tag.of("exception", StringUtils.isNotEmpty(simpleName) ? simpleName : exception.getClass().getName());
     }
 
     /**

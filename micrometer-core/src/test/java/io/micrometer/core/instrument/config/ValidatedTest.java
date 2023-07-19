@@ -1,12 +1,12 @@
-/**
+/*
  * Copyright 2020 VMware, Inc.
- * <p>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
+ *
  * https://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,16 +26,16 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class ValidatedTest {
+
     @Test
     void mapInvalid() {
-        Validated.invalid("prop", "val", "bad", InvalidReason.MALFORMED)
-                .map(v -> "good");
+        Validated.invalid("prop", "val", "bad", InvalidReason.MALFORMED).map(v -> "good");
     }
 
     @Test
     void combine() {
         Validated<?> validated = Validated.valid("simple.step", Duration.ofSeconds(1))
-                .and(Validated.invalid("simple.mode", "BAD", "must be 'STEP' or 'CUMULATIVE'", InvalidReason.MALFORMED));
+            .and(Validated.invalid("simple.mode", "BAD", "must be 'STEP' or 'CUMULATIVE'", InvalidReason.MALFORMED));
 
         assertThat(validated.isValid()).isFalse();
     }
@@ -43,10 +43,10 @@ class ValidatedTest {
     @Test
     void orThrowOnEitherWithInvalidThrows() {
         Validated<?> valid = Validated.valid("prop", "good")
-                .and(Validated.invalid("prop2", "bad", "must be good", InvalidReason.MALFORMED));
+            .and(Validated.invalid("prop2", "bad", "must be good", InvalidReason.MALFORMED));
 
-        assertThatThrownBy(valid::orThrow)
-                .isInstanceOf(ValidationException.class)
-                .hasMessage("prop2 was 'bad' but it must be good");
+        assertThatThrownBy(valid::orThrow).isInstanceOf(ValidationException.class)
+            .hasMessage("prop2 was 'bad' but it must be good");
     }
+
 }

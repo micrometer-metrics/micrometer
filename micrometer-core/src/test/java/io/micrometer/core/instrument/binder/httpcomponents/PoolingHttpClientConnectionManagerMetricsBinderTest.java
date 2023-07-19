@@ -1,12 +1,12 @@
 /*
  * Copyright 2017 VMware, Inc.
- * <p>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
+ *
  * https://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -37,7 +37,9 @@ import static org.mockito.Mockito.when;
 class PoolingHttpClientConnectionManagerMetricsBinderTest {
 
     private MeterRegistry registry = new SimpleMeterRegistry(SimpleConfig.DEFAULT, new MockClock());
+
     private ConnPoolControl<HttpRoute> connPoolControl;
+
     private PoolingHttpClientConnectionManagerMetricsBinder binder;
 
     @BeforeEach
@@ -53,9 +55,8 @@ class PoolingHttpClientConnectionManagerMetricsBinderTest {
         PoolStats poolStats = mock(PoolStats.class);
         when(poolStats.getMax()).thenReturn(13);
         when(connPoolControl.getTotalStats()).thenReturn(poolStats);
-        assertThat(registry.get("httpcomponents.httpclient.pool.total.max")
-            .tags("httpclient", "test")
-            .gauge().value()).isEqualTo(13.0);
+        assertThat(registry.get("httpcomponents.httpclient.pool.total.max").tags("httpclient", "test").gauge().value())
+            .isEqualTo(13.0);
     }
 
     @Test
@@ -65,7 +66,8 @@ class PoolingHttpClientConnectionManagerMetricsBinderTest {
         when(connPoolControl.getTotalStats()).thenReturn(poolStats);
         assertThat(registry.get("httpcomponents.httpclient.pool.total.connections")
             .tags("httpclient", "test", "state", "available")
-            .gauge().value()).isEqualTo(17.0);
+            .gauge()
+            .value()).isEqualTo(17.0);
     }
 
     @Test
@@ -75,7 +77,8 @@ class PoolingHttpClientConnectionManagerMetricsBinderTest {
         when(connPoolControl.getTotalStats()).thenReturn(poolStats);
         assertThat(registry.get("httpcomponents.httpclient.pool.total.connections")
             .tags("httpclient", "test", "state", "leased")
-            .gauge().value()).isEqualTo(23.0);
+            .gauge()
+            .value()).isEqualTo(23.0);
     }
 
     @Test
@@ -83,9 +86,9 @@ class PoolingHttpClientConnectionManagerMetricsBinderTest {
         PoolStats poolStats = mock(PoolStats.class);
         when(poolStats.getPending()).thenReturn(37);
         when(connPoolControl.getTotalStats()).thenReturn(poolStats);
-        assertThat(registry.get("httpcomponents.httpclient.pool.total.pending")
-            .tags("httpclient", "test")
-            .gauge().value()).isEqualTo(37.0);
+        assertThat(
+                registry.get("httpcomponents.httpclient.pool.total.pending").tags("httpclient", "test").gauge().value())
+            .isEqualTo(37.0);
     }
 
     @Test
@@ -93,7 +96,8 @@ class PoolingHttpClientConnectionManagerMetricsBinderTest {
         when(connPoolControl.getDefaultMaxPerRoute()).thenReturn(7);
         assertThat(registry.get("httpcomponents.httpclient.pool.route.max.default")
             .tags("httpclient", "test")
-            .gauge().value()).isEqualTo(7.0);
+            .gauge()
+            .value()).isEqualTo(7.0);
     }
 
 }

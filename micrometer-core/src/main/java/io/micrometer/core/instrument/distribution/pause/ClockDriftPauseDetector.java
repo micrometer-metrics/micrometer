@@ -1,12 +1,12 @@
-/**
+/*
  * Copyright 2017 VMware, Inc.
- * <p>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
+ *
  * https://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,7 +23,9 @@ import java.time.Duration;
  * @author Jon Schneider
  */
 public class ClockDriftPauseDetector implements PauseDetector {
+
     private final Duration sleepInterval;
+
     private final Duration pauseThreshold;
 
     public ClockDriftPauseDetector(Duration sleepInterval, Duration pauseThreshold) {
@@ -38,4 +40,5 @@ public class ClockDriftPauseDetector implements PauseDetector {
     public Duration getPauseThreshold() {
         return pauseThreshold;
     }
+
 }

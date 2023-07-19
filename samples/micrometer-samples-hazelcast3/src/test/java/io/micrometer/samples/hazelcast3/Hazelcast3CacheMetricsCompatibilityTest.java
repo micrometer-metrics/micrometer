@@ -1,12 +1,12 @@
-/**
+/*
  * Copyright 2020 VMware, Inc.
- * <p>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
+ *
  * https://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,7 +27,9 @@ import org.junit.jupiter.api.BeforeEach;
 import static java.util.Collections.emptyList;
 
 class Hazelcast3CacheMetricsCompatibilityTest extends CacheMeterBinderCompatibilityKit<Object> {
+
     private Config config = new Config("hazelcast3-cache-test");
+
     private IMap<String, String> cache;
 
     @BeforeEach
@@ -67,4 +69,5 @@ class Hazelcast3CacheMetricsCompatibilityTest extends CacheMeterBinderCompatibil
     public String get(String key) {
         return this.cache.get(key);
     }
+
 }

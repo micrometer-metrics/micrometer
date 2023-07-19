@@ -32,7 +32,8 @@ You can use a Git client to clone the source code to your local machine.
 
 ## Building
 
-Micrometer requires JDK 8 or later to build.
+Micrometer targets Java 8 but requires JDK 11 or later to build.
+If you are not running Gradle with JDK 11 or later and Gradle cannot detect an existing JDK 17 installation, it will download one.
 
 The Gradle wrapper is provided and should be used for building with a consistent version of Gradle.
 
@@ -41,6 +42,13 @@ The wrapper can be used with a command, for example, `./gradlew check` to build 
 ## Importing into an IDE
 
 This repository should be imported as a Gradle project into your IDE of choice.
+
+## Code formatting
+
+The [spring-javaformat plugin](https://github.com/spring-io/spring-javaformat) is configured to check and apply consistent formatting in the codebase through the build.
+The `checkFormat` task checks the formatting as part of the `check` task.
+Apply formatting with the `format` task.
+You should rely on the formatting the `format` task applies instead of your IDE's configured formatting.
 
 ## Testing changes locally
 

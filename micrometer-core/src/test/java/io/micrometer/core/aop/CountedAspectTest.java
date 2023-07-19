@@ -1,12 +1,12 @@
-/**
+/*
  * Copyright 2017 VMware, Inc.
- * <p>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
+ *
  * https://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -39,15 +39,16 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class CountedAspectTest {
 
     private final MeterRegistry meterRegistry = new SimpleMeterRegistry();
+
     private final CountedService countedService = getAdvisedService(new CountedService());
+
     private final AsyncCountedService asyncCountedService = getAdvisedService(new AsyncCountedService());
 
     @Test
     void countedWithoutSuccessfulMetrics() {
         countedService.succeedWithoutMetrics();
 
-        assertThatThrownBy(() -> meterRegistry.get("metric.none").counter())
-                .isInstanceOf(MeterNotFoundException.class);
+        assertThatThrownBy(() -> meterRegistry.get("metric.none").counter()).isInstanceOf(MeterNotFoundException.class);
     }
 
     @Test
@@ -55,10 +56,11 @@ class CountedAspectTest {
         countedService.succeedWithMetrics();
 
         Counter counter = meterRegistry.get("metric.success")
-                .tag("method", "succeedWithMetrics")
-                .tag("class", "io.micrometer.core.aop.CountedAspectTest$CountedService")
-                .tag("extra", "tag")
-                .tag("result", "success").counter();
+            .tag("method", "succeedWithMetrics")
+            .tag("class", getClass().getName() + "$CountedService")
+            .tag("extra", "tag")
+            .tag("result", "success")
+            .counter();
 
         assertThat(counter.count()).isOne();
         assertThat(counter.getId().getDescription()).isNull();
@@ -66,10 +68,8 @@ class CountedAspectTest {
 
     @Test
     void countedWithSkipPredicate() {
-        CountedService countedService = getAdvisedService(
-                new CountedService(),
-                new CountedAspect(meterRegistry, (Predicate<ProceedingJoinPoint>) proceedingJoinPoint -> true)
-        );
+        CountedService countedService = getAdvisedService(new CountedService(),
+                new CountedAspect(meterRegistry, (Predicate<ProceedingJoinPoint>) proceedingJoinPoint -> true));
 
         countedService.succeedWithMetrics();
 
@@ -80,14 +80,16 @@ class CountedAspectTest {
     void countedWithFailure() {
         try {
             countedService.fail();
-        } catch (Exception ignored) {
+        }
+        catch (Exception ignored) {
         }
 
         Counter counter = meterRegistry.get("metric.failing")
-                .tag("method", "fail")
-                .tag("class", "io.micrometer.core.aop.CountedAspectTest$CountedService")
-                .tag("exception", "RuntimeException")
-                .tag("result", "failure").counter();
+            .tag("method", "fail")
+            .tag("class", getClass().getName() + "$CountedService")
+            .tag("exception", "RuntimeException")
+            .tag("result", "failure")
+            .counter();
 
         assertThat(counter.count()).isOne();
         assertThat(counter.getId().getDescription()).isEqualTo("To record something");
@@ -98,7 +100,8 @@ class CountedAspectTest {
         countedService.emptyMetricName();
         try {
             countedService.emptyMetricNameWithException();
-        } catch (Exception ignored) {
+        }
+        catch (Exception ignored) {
         }
 
         assertThat(meterRegistry.get("method.counted").counters()).hasSize(2);
@@ -113,8 +116,7 @@ class CountedAspectTest {
         guardedResult.complete();
         completableFuture.join();
 
-        assertThatThrownBy(() -> meterRegistry.get("metric.none").counter())
-                .isInstanceOf(MeterNotFoundException.class);
+        assertThatThrownBy(() -> meterRegistry.get("metric.none").counter()).isInstanceOf(MeterNotFoundException.class);
     }
 
     @Test
@@ -123,21 +125,23 @@ class CountedAspectTest {
         CompletableFuture<?> completableFuture = asyncCountedService.succeedWithMetrics(guardedResult);
 
         assertThat(meterRegistry.find("metric.success")
-                .tag("method", "succeedWithMetrics")
-                .tag("class", "io.micrometer.core.aop.CountedAspectTest$AsyncCountedService")
-                .tag("extra", "tag")
-                .tag("exception", "none")
-                .tag("result", "success").counter()).isNull();
+            .tag("method", "succeedWithMetrics")
+            .tag("class", getClass().getName() + "$AsyncCountedService")
+            .tag("extra", "tag")
+            .tag("exception", "none")
+            .tag("result", "success")
+            .counter()).isNull();
 
         guardedResult.complete();
         completableFuture.join();
 
         Counter counterAfterCompletion = meterRegistry.get("metric.success")
-                .tag("method", "succeedWithMetrics")
-                .tag("class", "io.micrometer.core.aop.CountedAspectTest$AsyncCountedService")
-                .tag("extra", "tag")
-                .tag("exception", "none")
-                .tag("result", "success").counter();
+            .tag("method", "succeedWithMetrics")
+            .tag("class", getClass().getName() + "$AsyncCountedService")
+            .tag("extra", "tag")
+            .tag("exception", "none")
+            .tag("result", "success")
+            .counter();
 
         assertThat(counterAfterCompletion.count()).isOne();
         assertThat(counterAfterCompletion.getId().getDescription()).isNull();
@@ -149,19 +153,21 @@ class CountedAspectTest {
         CompletableFuture<?> completableFuture = asyncCountedService.fail(guardedResult);
 
         assertThat(meterRegistry.find("metric.failing")
-                .tag("method", "fail")
-                .tag("class", "io.micrometer.core.aop.CountedAspectTest$AsyncCountedService")
-                .tag("exception", "RuntimeException")
-                .tag("result", "failure").counter()).isNull();
+            .tag("method", "fail")
+            .tag("class", getClass().getName() + "$AsyncCountedService")
+            .tag("exception", "RuntimeException")
+            .tag("result", "failure")
+            .counter()).isNull();
 
         guardedResult.complete(new RuntimeException());
         assertThatThrownBy(completableFuture::join).isInstanceOf(RuntimeException.class);
 
         Counter counter = meterRegistry.get("metric.failing")
-                .tag("method", "fail")
-                .tag("class", "io.micrometer.core.aop.CountedAspectTest$AsyncCountedService")
-                .tag("exception", "RuntimeException")
-                .tag("result", "failure").counter();
+            .tag("method", "fail")
+            .tag("class", getClass().getName() + "$AsyncCountedService")
+            .tag("exception", "RuntimeException")
+            .tag("result", "failure")
+            .counter();
 
         assertThat(counter.count()).isOne();
         assertThat(counter.getId().getDescription()).isEqualTo("To record something");
@@ -172,7 +178,8 @@ class CountedAspectTest {
         GuardedResult emptyMetricNameResult = new GuardedResult();
         GuardedResult emptyMetricNameWithExceptionResult = new GuardedResult();
         CompletableFuture<?> emptyMetricNameFuture = asyncCountedService.emptyMetricName(emptyMetricNameResult);
-        CompletableFuture<?> emptyMetricNameWithExceptionFuture = asyncCountedService.emptyMetricName(emptyMetricNameWithExceptionResult);
+        CompletableFuture<?> emptyMetricNameWithExceptionFuture = asyncCountedService
+            .emptyMetricName(emptyMetricNameWithExceptionResult);
 
         assertThat(meterRegistry.find("method.counted").counters()).hasSize(0);
 
@@ -186,7 +193,6 @@ class CountedAspectTest {
         assertThat(meterRegistry.get("method.counted").tag("result", "failure").counter().count()).isOne();
     }
 
-
     static class CountedService {
 
         @Counted(value = "metric.none", recordFailuresOnly = true)
@@ -194,7 +200,7 @@ class CountedAspectTest {
 
         }
 
-        @Counted(value = "metric.success", extraTags = {"extra", "tag"})
+        @Counted(value = "metric.success", extraTags = { "extra", "tag" })
         void succeedWithMetrics() {
 
         }
@@ -213,7 +219,6 @@ class CountedAspectTest {
         void emptyMetricNameWithException() {
             throw new RuntimeException("This is it");
         }
-
 
     }
 
@@ -234,7 +239,7 @@ class CountedAspectTest {
             return supplyAsync(guardedResult::get);
         }
 
-        @Counted(value = "metric.success", extraTags = {"extra", "tag"})
+        @Counted(value = "metric.success", extraTags = { "extra", "tag" })
         CompletableFuture<?> succeedWithMetrics(GuardedResult guardedResult) {
             return supplyAsync(guardedResult::get);
         }
@@ -254,13 +259,15 @@ class CountedAspectTest {
     static class GuardedResult {
 
         private boolean complete;
+
         private RuntimeException withException;
 
         synchronized Object get() {
             while (!complete) {
                 try {
                     wait();
-                } catch (InterruptedException e) {
+                }
+                catch (InterruptedException e) {
                     // Intentionally empty
                 }
             }

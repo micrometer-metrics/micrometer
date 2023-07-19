@@ -1,12 +1,12 @@
-/**
+/*
  * Copyright 2017 VMware, Inc.
- * <p>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
+ *
  * https://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,20 +15,16 @@
  */
 package io.micrometer.core.instrument.binder.jvm;
 
+import io.micrometer.common.lang.NonNullApi;
+import io.micrometer.common.lang.NonNullFields;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.binder.MeterBinder;
-import io.micrometer.core.lang.NonNullApi;
-import io.micrometer.core.lang.NonNullFields;
 
-import java.lang.management.BufferPoolMXBean;
-import java.lang.management.ManagementFactory;
-import java.lang.management.MemoryPoolMXBean;
-import java.lang.management.MemoryType;
-import java.lang.management.MemoryUsage;
+import java.lang.management.*;
 
 import static io.micrometer.core.instrument.binder.jvm.JvmMemory.getUsageValue;
 import static java.util.Collections.emptyList;
@@ -44,6 +40,7 @@ import static java.util.Collections.emptyList;
 @NonNullApi
 @NonNullFields
 public class JvmMemoryMetrics implements MeterBinder {
+
     private final Iterable<Tag> tags;
 
     public JvmMemoryMetrics() {
@@ -60,10 +57,10 @@ public class JvmMemoryMetrics implements MeterBinder {
             Iterable<Tag> tagsWithId = Tags.concat(tags, "id", bufferPoolBean.getName());
 
             Gauge.builder("jvm.buffer.count", bufferPoolBean, BufferPoolMXBean::getCount)
-                    .tags(tagsWithId)
-                    .description("An estimate of the number of buffers in the pool")
-                    .baseUnit(BaseUnits.BUFFERS)
-                    .register(registry);
+                .tags(tagsWithId)
+                .description("An estimate of the number of buffers in the pool")
+                .baseUnit(BaseUnits.BUFFERS)
+                .register(registry);
 
             Gauge.builder("jvm.buffer.memory.used", bufferPoolBean, BufferPoolMXBean::getMemoryUsed)
                 .tags(tagsWithId)
@@ -88,7 +85,8 @@ public class JvmMemoryMetrics implements MeterBinder {
                 .baseUnit(BaseUnits.BYTES)
                 .register(registry);
 
-            Gauge.builder("jvm.memory.committed", memoryPoolBean, (mem) -> getUsageValue(mem, MemoryUsage::getCommitted))
+            Gauge
+                .builder("jvm.memory.committed", memoryPoolBean, (mem) -> getUsageValue(mem, MemoryUsage::getCommitted))
                 .tags(tagsWithId)
                 .description("The amount of memory in bytes that is committed for the Java virtual machine to use")
                 .baseUnit(BaseUnits.BYTES)

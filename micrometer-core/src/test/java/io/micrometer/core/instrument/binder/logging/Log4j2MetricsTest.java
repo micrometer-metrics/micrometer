@@ -1,12 +1,12 @@
-/**
+/*
  * Copyright 2017 VMware, Inc.
- * <p>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
+ *
  * https://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,7 +20,6 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.simple.SimpleConfig;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -104,7 +103,8 @@ class Log4j2MetricsTest {
     @Issue("#1466")
     @Test
     void filterWhenRootLoggerAdditivityIsFalseShouldWork() throws IOException {
-        ConfigurationSource source = new ConfigurationSource(getClass().getResourceAsStream("/binder/logging/log4j2-root-logger-additivity-false.xml"));
+        ConfigurationSource source = new ConfigurationSource(
+                getClass().getResourceAsStream("/binder/logging/log4j2-root-logger-additivity-false.xml"));
         Configurator.initialize(null, source);
 
         Logger logger = LogManager.getLogger(Log4j2MetricsTest.class);
@@ -164,7 +164,8 @@ class Log4j2MetricsTest {
     @Issue("#2176")
     @Test
     void asyncLogShouldNotBeDuplicated() throws IOException {
-        ConfigurationSource source = new ConfigurationSource(getClass().getResourceAsStream("/binder/logging/log4j2-async-logger.xml"));
+        ConfigurationSource source = new ConfigurationSource(
+                getClass().getResourceAsStream("/binder/logging/log4j2-async-logger.xml"));
         Configurator.initialize(null, source);
 
         Logger logger = LogManager.getLogger(Log4j2MetricsTest.class);
@@ -174,7 +175,7 @@ class Log4j2MetricsTest {
         assertThat(registry.get("log4j2.events").tags("level", "info").counter().count()).isEqualTo(0);
         logger.info("Hello, world!");
         await().atMost(Duration.ofSeconds(1))
-                .until(() -> registry.get("log4j2.events").tags("level", "info").counter().count() == 1);
+            .until(() -> registry.get("log4j2.events").tags("level", "info").counter().count() == 1);
     }
 
 }

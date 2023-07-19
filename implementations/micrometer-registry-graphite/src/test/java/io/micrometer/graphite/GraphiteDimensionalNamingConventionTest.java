@@ -1,12 +1,12 @@
-/**
+/*
  * Copyright 2020 VMware, Inc.
- * <p>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
+ *
  * https://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,6 +29,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @author Andrew Fitzgerald
  */
 class GraphiteDimensionalNamingConventionTest {
+
     private GraphiteDimensionalNamingConvention convention = new GraphiteDimensionalNamingConvention();
 
     @Test
@@ -40,7 +41,8 @@ class GraphiteDimensionalNamingConventionTest {
     void respectDelegateNamingConvention() {
         CustomNamingConvention delegateNamingConvention = new CustomNamingConvention();
 
-        GraphiteDimensionalNamingConvention convention = new GraphiteDimensionalNamingConvention(delegateNamingConvention);
+        GraphiteDimensionalNamingConvention convention = new GraphiteDimensionalNamingConvention(
+                delegateNamingConvention);
 
         assertThat(convention.name("my.name", Meter.Type.TIMER)).isEqualTo("name-my.name");
         assertThat(convention.tagKey("my_tag_key")).isEqualTo("key-my_tag_key");
@@ -171,7 +173,6 @@ class GraphiteDimensionalNamingConventionTest {
     void tagValueShouldHaveLengthGreaterThanZero() {
         assertThat(convention.tagValue("")).isEqualTo("unspecified");
     }
-
 
     private static class CustomNamingConvention implements NamingConvention {
 

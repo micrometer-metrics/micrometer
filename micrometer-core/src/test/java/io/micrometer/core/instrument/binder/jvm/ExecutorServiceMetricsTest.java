@@ -1,12 +1,12 @@
-/**
+/*
  * Copyright 2017 VMware, Inc.
- * <p>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
+ *
  * https://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -43,7 +43,9 @@ import static org.assertj.core.api.AssertionsForClassTypes.*;
  * @author Sebastian Lövdahl
  */
 class ExecutorServiceMetricsTest {
+
     private MeterRegistry registry = new SimpleMeterRegistry(SimpleConfig.DEFAULT, new MockClock());
+
     private Iterable<Tag> userTags = Tags.of("userTagKey", "userTagValue");
 
     @DisplayName("Normal executor can be instrumented after being initialized")
@@ -59,10 +61,14 @@ class ExecutorServiceMetricsTest {
         executor.execute(() -> System.out.println("hello"));
         lock.await();
 
-        assertThat(registry.get(expectedMetricPrefix + "executor.execution").tags(userTags).tag("name", "exec").timer()
-                           .count()).isEqualTo(1L);
-        assertThat(registry.get(expectedMetricPrefix + "executor.idle").tags(userTags).tag("name", "exec").timer()
-                           .count()).isEqualTo(1L);
+        assertThat(registry.get(expectedMetricPrefix + "executor.execution")
+            .tags(userTags)
+            .tag("name", "exec")
+            .timer()
+            .count()).isEqualTo(1L);
+        assertThat(
+                registry.get(expectedMetricPrefix + "executor.idle").tags(userTags).tag("name", "exec").timer().count())
+            .isEqualTo(1L);
     }
 
     @DisplayName("ExecutorService is casted from Executor when necessary")
@@ -111,12 +117,12 @@ class ExecutorServiceMetricsTest {
     }
 
     @DisplayName("ExecutorService can be monitored with a default set of metrics")
-    @DisabledForJreRange(min = JRE.JAVA_16, disabledReason = "See gh-2317 for why we can't run this full test on Java 16+")
+    @DisabledForJreRange(min = JRE.JAVA_16,
+            disabledReason = "See gh-2317 for why we can't run this full test on Java 16+")
     @ParameterizedTest
     @CsvSource({ "custom,custom.", "custom.,custom.", ",''", "' ',''" })
     void monitorExecutorService(String metricPrefix, String expectedMetricPrefix) throws InterruptedException {
-        ExecutorService pool = monitorExecutorService("beep.pool", metricPrefix,
-                                                      Executors.newSingleThreadExecutor());
+        ExecutorService pool = monitorExecutorService("beep.pool", metricPrefix, Executors.newSingleThreadExecutor());
         CountDownLatch taskStart = new CountDownLatch(1);
         CountDownLatch taskComplete = new CountDownLatch(1);
 
@@ -130,8 +136,11 @@ class ExecutorServiceMetricsTest {
 
         assertThat(taskStart.await(1, TimeUnit.SECONDS)).isTrue();
 
-        assertThat(registry.get(expectedMetricPrefix + "executor.queued").tags(userTags).tag("name", "beep.pool")
-                           .gauge().value()).isEqualTo(1.0);
+        assertThat(registry.get(expectedMetricPrefix + "executor.queued")
+            .tags(userTags)
+            .tag("name", "beep.pool")
+            .gauge()
+            .value()).isEqualTo(1.0);
 
         taskComplete.countDown();
 
@@ -140,7 +149,8 @@ class ExecutorServiceMetricsTest {
 
         assertThat(registry.get(expectedMetricPrefix + "executor").tags(userTags).timer().count()).isEqualTo(2L);
         assertThat(registry.get(expectedMetricPrefix + "executor.idle").tags(userTags).timer().count()).isEqualTo(2L);
-        assertThat(registry.get(expectedMetricPrefix + "executor.queued").tags(userTags).gauge().value()).isEqualTo(0.0);
+        assertThat(registry.get(expectedMetricPrefix + "executor.queued").tags(userTags).gauge().value())
+            .isEqualTo(0.0);
     }
 
     @DisplayName("No exception thrown trying to monitor Executors private class")
@@ -148,7 +158,7 @@ class ExecutorServiceMetricsTest {
     @Issue("#2447") // Note: only reproduces on Java 16+ or with --illegal-access=deny
     void monitorExecutorsExecutorServicePrivateClass() {
         assertThatCode(() -> ExecutorServiceMetrics.monitor(registry, Executors.newSingleThreadExecutor(), ""))
-                .doesNotThrowAnyException();
+            .doesNotThrowAnyException();
     }
 
     @DisplayName("ScheduledExecutorService can be monitored with a default set of metrics")
@@ -157,7 +167,7 @@ class ExecutorServiceMetricsTest {
     void monitorScheduledExecutorService(String metricPrefix, String expectedMetricPrefix)
             throws TimeoutException, ExecutionException, InterruptedException {
         ScheduledExecutorService pool = monitorExecutorService("scheduled.pool", metricPrefix,
-                                                               Executors.newScheduledThreadPool(2));
+                Executors.newScheduledThreadPool(2));
 
         CountDownLatch callableTaskStart = new CountDownLatch(1);
         CountDownLatch runnableTaskStart = new CountDownLatch(1);
@@ -169,21 +179,24 @@ class ExecutorServiceMetricsTest {
             assertThat(callableTaskComplete.await(1, TimeUnit.SECONDS)).isTrue();
             return 1;
         };
-        ScheduledFuture<Integer> callableResult = pool.schedule(scheduledBeepCallable, 10,
-                                                                TimeUnit.MILLISECONDS);
+        ScheduledFuture<Integer> callableResult = pool.schedule(scheduledBeepCallable, 10, TimeUnit.MILLISECONDS);
 
         Runnable scheduledBeepRunnable = () -> {
             runnableTaskStart.countDown();
             try {
                 assertThat(runnableTaskComplete.await(1, TimeUnit.SECONDS)).isTrue();
-            } catch (InterruptedException e) {
+            }
+            catch (InterruptedException e) {
                 throw new IllegalStateException("scheduled runnable interrupted before completion");
             }
         };
         ScheduledFuture<?> runnableResult = pool.schedule(scheduledBeepRunnable, 15, TimeUnit.MILLISECONDS);
 
         assertThat(registry.get(expectedMetricPrefix + "executor.scheduled.once")
-                .tags(userTags).tag("name", "scheduled.pool").counter().count()).isEqualTo(2);
+            .tags(userTags)
+            .tag("name", "scheduled.pool")
+            .counter()
+            .count()).isEqualTo(2);
 
         assertThat(callableTaskStart.await(1, TimeUnit.SECONDS)).isTrue();
         assertThat(runnableTaskStart.await(1, TimeUnit.SECONDS)).isTrue();
@@ -204,14 +217,16 @@ class ExecutorServiceMetricsTest {
     @DisplayName("ScheduledExecutorService repetitive tasks can be monitored with a default set of metrics")
     @ParameterizedTest
     @CsvSource({ "custom,custom.", "custom.,custom.", ",''", "' ',''" })
-    void monitorScheduledExecutorServiceWithRepetitiveTasks(String metricPrefix, String expectedMetricPrefix) throws InterruptedException {
+    void monitorScheduledExecutorServiceWithRepetitiveTasks(String metricPrefix, String expectedMetricPrefix)
+            throws InterruptedException {
         ScheduledExecutorService pool = monitorExecutorService("scheduled.pool", metricPrefix,
-                                                               Executors.newScheduledThreadPool(1));
+                Executors.newScheduledThreadPool(1));
         CountDownLatch fixedRateInvocations = new CountDownLatch(3);
         CountDownLatch fixedDelayInvocations = new CountDownLatch(3);
 
-        assertThat(registry.get(expectedMetricPrefix + "executor.scheduled.repetitively").tags(userTags).counter().count()).isEqualTo(
-                0);
+        assertThat(
+                registry.get(expectedMetricPrefix + "executor.scheduled.repetitively").tags(userTags).counter().count())
+            .isEqualTo(0);
         assertThat(registry.get(expectedMetricPrefix + "executor").tags(userTags).timer().count()).isEqualTo(0L);
 
         Runnable repeatedAtFixedRate = () -> {
@@ -230,8 +245,9 @@ class ExecutorServiceMetricsTest {
         };
         pool.scheduleWithFixedDelay(repeatedWithFixedDelay, 5, 15, TimeUnit.MILLISECONDS);
 
-        assertThat(registry.get(expectedMetricPrefix + "executor.scheduled.repetitively").tags(userTags).counter().count()).isEqualTo(
-                2);
+        assertThat(
+                registry.get(expectedMetricPrefix + "executor.scheduled.repetitively").tags(userTags).counter().count())
+            .isEqualTo(2);
 
         assertThat(fixedRateInvocations.await(5, TimeUnit.SECONDS)).isTrue();
         assertThat(fixedDelayInvocations.await(5, TimeUnit.SECONDS)).isTrue();
@@ -247,7 +263,8 @@ class ExecutorServiceMetricsTest {
     private <T extends Executor> T monitorExecutorService(String executorName, String metricPrefix, T exec) {
         if (metricPrefix == null) {
             return (T) ExecutorServiceMetrics.monitor(registry, exec, executorName, userTags);
-        } else {
+        }
+        else {
             return (T) ExecutorServiceMetrics.monitor(registry, exec, executorName, metricPrefix, userTags);
         }
     }
@@ -270,7 +287,9 @@ class ExecutorServiceMetricsTest {
         ExecutorServiceMetrics.monitor(registry, Executors.newSingleThreadScheduledExecutor(), executorServiceName);
         // timer metrics still available, even on Java 16+
         registry.get("executor").tag("name", executorServiceName).timer();
-        if (isJava16OrLater()) return; // see gh-2317; ExecutorServiceMetrics not available for inaccessible JDK internal types
+        if (isJava16OrLater())
+            return; // see gh-2317; ExecutorServiceMetrics not available for inaccessible
+                    // JDK internal types
         registry.get("executor.completed").tag("name", executorServiceName).functionCounter();
     }
 
@@ -285,7 +304,7 @@ class ExecutorServiceMetricsTest {
         ExecutorServiceMetrics.monitor(registry, Executors.newSingleThreadScheduledExecutor(), executorServiceName);
         registry.get("executor").tag("name", executorServiceName).timer();
         assertThatThrownBy(() -> registry.get("executor.completed").tag("name", executorServiceName).functionCounter())
-                .isExactlyInstanceOf(MeterNotFoundException.class);
+            .isExactlyInstanceOf(MeterNotFoundException.class);
     }
 
 }

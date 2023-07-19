@@ -1,12 +1,12 @@
-/**
+/*
  * Copyright 2017 VMware, Inc.
- * <p>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
+ *
  * https://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,11 +20,11 @@ import com.netflix.spectator.api.Measurement;
 import com.netflix.spectator.api.patterns.PolledMeter;
 import com.netflix.spectator.atlas.AtlasConfig;
 import com.netflix.spectator.atlas.AtlasRegistry;
+import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.FunctionCounter;
 import io.micrometer.core.instrument.MockClock;
-import io.micrometer.core.lang.Nullable;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import ru.lanwen.wiremock.ext.WiremockResolver;
@@ -38,6 +38,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @ExtendWith(WiremockResolver.class)
 class AtlasMeterRegistryTest {
+
     @Issue("#484")
     @Test
     void publishOneLastTimeOnClose(@WiremockResolver.Wiremock WireMockServer server) {
@@ -89,10 +90,10 @@ class AtlasMeterRegistryTest {
             PolledMeter.update(r);
             clock.add(Duration.ofMinutes(1));
             return r.measurements()
-                    .filter(m -> m.id().name().equals("test"))
-                    .findFirst()
-                    .map(Measurement::value)
-                    .orElse(Double.NaN);
+                .filter(m -> m.id().name().equals("test"))
+                .findFirst()
+                .map(Measurement::value)
+                .orElse(Double.NaN);
         };
 
         count.addAndGet(60);
@@ -104,4 +105,5 @@ class AtlasMeterRegistryTest {
         count.addAndGet(90);
         assertThat(valueSupplier.get()).isEqualTo(1.5);
     }
+
 }

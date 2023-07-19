@@ -1,12 +1,12 @@
-/**
+/*
  * Copyright 2017 VMware, Inc.
- * <p>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
+ *
  * https://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -35,20 +35,24 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @author Johnny Lim
  */
 class ElasticMeterRegistryTest {
+
     private final MockClock clock = new MockClock();
+
     private final ElasticConfig config = ElasticConfig.DEFAULT;
 
     private final ElasticMeterRegistry registry = new ElasticMeterRegistry(config, clock);
 
     @Test
     void timestampFormat() {
-        assertThat(ElasticMeterRegistry.TIMESTAMP_FORMATTER.format(Instant.ofEpochMilli(1))).contains("1970-01-01T00:00:00.001Z");
+        assertThat(ElasticMeterRegistry.TIMESTAMP_FORMATTER.format(Instant.ofEpochMilli(1)))
+            .contains("1970-01-01T00:00:00.001Z");
     }
 
     @Test
     void writeTimer() {
         Timer timer = Timer.builder("myTimer").register(registry);
-        assertThat(registry.writeTimer(timer)).contains("{ \"index\" : {} }\n{\"@timestamp\":\"1970-01-01T00:00:00.001Z\",\"name\":\"myTimer\",\"type\":\"timer\",\"count\":0,\"sum\":0.0,\"mean\":0.0,\"max\":0.0}");
+        assertThat(registry.writeTimer(timer)).contains(
+                "{ \"create\" : {} }\n{\"@timestamp\":\"1970-01-01T00:00:00.001Z\",\"name\":\"myTimer\",\"type\":\"timer\",\"count\":0,\"sum\":0.0,\"mean\":0.0,\"max\":0.0}");
     }
 
     @Test
@@ -56,28 +60,31 @@ class ElasticMeterRegistryTest {
         Counter counter = Counter.builder("myCounter").register(registry);
         counter.increment();
         clock.add(config.step());
-        assertThat(registry.writeCounter(counter))
-                .contains("{ \"index\" : {} }\n{\"@timestamp\":\"1970-01-01T00:01:00.001Z\",\"name\":\"myCounter\",\"type\":\"counter\",\"count\":1.0}");
+        assertThat(registry.writeCounter(counter)).contains(
+                "{ \"create\" : {} }\n{\"@timestamp\":\"1970-01-01T00:01:00.001Z\",\"name\":\"myCounter\",\"type\":\"counter\",\"count\":1.0}");
     }
 
     @Test
     void writeFunctionCounter() {
         FunctionCounter counter = FunctionCounter.builder("myCounter", 123.0, Number::doubleValue).register(registry);
         clock.add(config.step());
-        assertThat(registry.writeFunctionCounter(counter))
-                .contains("{ \"index\" : {} }\n{\"@timestamp\":\"1970-01-01T00:01:00.001Z\",\"name\":\"myCounter\",\"type\":\"counter\",\"count\":123.0}");
+        assertThat(registry.writeFunctionCounter(counter)).contains(
+                "{ \"create\" : {} }\n{\"@timestamp\":\"1970-01-01T00:01:00.001Z\",\"name\":\"myCounter\",\"type\":\"counter\",\"count\":123.0}");
     }
 
     @Test
     void nanFunctionCounterShouldNotBeWritten() {
-        FunctionCounter counter = FunctionCounter.builder("myCounter", Double.NaN, Number::doubleValue).register(registry);
+        FunctionCounter counter = FunctionCounter.builder("myCounter", Double.NaN, Number::doubleValue)
+            .register(registry);
         clock.add(config.step());
         assertThat(registry.writeFunctionCounter(counter)).isEmpty();
     }
 
     @Test
     void nanFunctionTimerShouldNotBeWritten() {
-        FunctionTimer timer = FunctionTimer.builder("myFunctionTimer", Double.NaN, Number::longValue, Number::doubleValue, TimeUnit.MILLISECONDS).register(registry);
+        FunctionTimer timer = FunctionTimer
+            .builder("myFunctionTimer", Double.NaN, Number::longValue, Number::doubleValue, TimeUnit.MILLISECONDS)
+            .register(registry);
         clock.add(config.step());
         assertThat(registry.writeFunctionTimer(timer)).isEmpty();
     }
@@ -85,22 +92,23 @@ class ElasticMeterRegistryTest {
     @Test
     void writeGauge() {
         Gauge gauge = Gauge.builder("myGauge", 123.0, Number::doubleValue).register(registry);
-        assertThat(registry.writeGauge(gauge))
-                .contains("{ \"index\" : {} }\n{\"@timestamp\":\"1970-01-01T00:00:00.001Z\",\"name\":\"myGauge\",\"type\":\"gauge\",\"value\":123.0}");
+        assertThat(registry.writeGauge(gauge)).contains(
+                "{ \"create\" : {} }\n{\"@timestamp\":\"1970-01-01T00:00:00.001Z\",\"name\":\"myGauge\",\"type\":\"gauge\",\"value\":123.0}");
     }
 
     @Test
     void writeTimeGauge() {
-        TimeGauge gauge = TimeGauge.builder("myGauge", 123.0, TimeUnit.MILLISECONDS, Number::doubleValue).register(registry);
-        assertThat(registry.writeTimeGauge(gauge))
-                .contains("{ \"index\" : {} }\n{\"@timestamp\":\"1970-01-01T00:00:00.001Z\",\"name\":\"myGauge\",\"type\":\"gauge\",\"value\":123.0}");
+        TimeGauge gauge = TimeGauge.builder("myGauge", 123.0, TimeUnit.MILLISECONDS, Number::doubleValue)
+            .register(registry);
+        assertThat(registry.writeTimeGauge(gauge)).contains(
+                "{ \"create\" : {} }\n{\"@timestamp\":\"1970-01-01T00:00:00.001Z\",\"name\":\"myGauge\",\"type\":\"gauge\",\"value\":123.0}");
     }
 
     @Test
     void writeLongTaskTimer() {
         LongTaskTimer timer = LongTaskTimer.builder("longTaskTimer").register(registry);
-        assertThat(registry.writeLongTaskTimer(timer))
-                .contains("{ \"index\" : {} }\n{\"@timestamp\":\"1970-01-01T00:00:00.001Z\",\"name\":\"longTaskTimer\",\"type\":\"long_task_timer\",\"activeTasks\":0,\"duration\":0.0}");
+        assertThat(registry.writeLongTaskTimer(timer)).contains(
+                "{ \"create\" : {} }\n{\"@timestamp\":\"1970-01-01T00:00:00.001Z\",\"name\":\"longTaskTimer\",\"type\":\"long_task_timer\",\"activeTasks\":0,\"duration\":0.0}");
     }
 
     @Test
@@ -109,15 +117,15 @@ class ElasticMeterRegistryTest {
         summary.record(123);
         summary.record(456);
         clock.add(config.step());
-        assertThat(registry.writeSummary(summary))
-                .contains("{ \"index\" : {} }\n{\"@timestamp\":\"1970-01-01T00:01:00.001Z\",\"name\":\"summary\",\"type\":\"distribution_summary\",\"count\":2,\"sum\":579.0,\"mean\":289.5,\"max\":456.0}");
+        assertThat(registry.writeSummary(summary)).contains(
+                "{ \"create\" : {} }\n{\"@timestamp\":\"1970-01-01T00:01:00.001Z\",\"name\":\"summary\",\"type\":\"distribution_summary\",\"count\":2,\"sum\":579.0,\"mean\":289.5,\"max\":456.0}");
     }
 
     @Test
     void writeMeter() {
         Timer timer = Timer.builder("myTimer").register(registry);
-        assertThat(registry.writeMeter(timer))
-                .contains("{ \"index\" : {} }\n{\"@timestamp\":\"1970-01-01T00:00:00.001Z\",\"name\":\"myTimer\",\"type\":\"timer\",\"count\":\"0.0\",\"total\":\"0.0\",\"max\":\"0.0\"}");
+        assertThat(registry.writeMeter(timer)).contains(
+                "{ \"create\" : {} }\n{\"@timestamp\":\"1970-01-01T00:00:00.001Z\",\"name\":\"myTimer\",\"type\":\"timer\",\"count\":\"0.0\",\"total\":\"0.0\",\"max\":\"0.0\"}");
     }
 
     @Test
@@ -137,10 +145,11 @@ class ElasticMeterRegistryTest {
         Measurement measurement3 = new Measurement(() -> Double.NaN, Statistic.VALUE);
         Measurement measurement4 = new Measurement(() -> 1d, Statistic.VALUE);
         Measurement measurement5 = new Measurement(() -> 2d, Statistic.VALUE);
-        List<Measurement> measurements = Arrays.asList(measurement1, measurement2, measurement3, measurement4, measurement5);
+        List<Measurement> measurements = Arrays.asList(measurement1, measurement2, measurement3, measurement4,
+                measurement5);
         Meter meter = Meter.builder("my.meter", Meter.Type.GAUGE, measurements).register(this.registry);
-        assertThat(registry.writeMeter(meter)).contains("{ \"index\" : {} }\n" +
-                "{\"@timestamp\":\"1970-01-01T00:00:00.001Z\",\"name\":\"my_meter\",\"type\":\"gauge\",\"value\":\"1.0\",\"value\":\"2.0\"}");
+        assertThat(registry.writeMeter(meter)).contains("{ \"create\" : {} }\n"
+                + "{\"@timestamp\":\"1970-01-01T00:00:00.001Z\",\"name\":\"my_meter\",\"type\":\"gauge\",\"value\":\"1.0\",\"value\":\"2.0\"}");
     }
 
     @Test
@@ -148,8 +157,8 @@ class ElasticMeterRegistryTest {
         Counter counter = Counter.builder("myCounter").tag("foo", "bar").tag("spam", "eggs").register(registry);
         counter.increment();
         clock.add(config.step());
-        assertThat(registry.writeCounter(counter)).contains("{ \"index\" : {} }\n" +
-                "{\"@timestamp\":\"1970-01-01T00:01:00.001Z\",\"name\":\"myCounter\",\"type\":\"counter\",\"foo\":\"bar\",\"spam\":\"eggs\",\"count\":1.0}");
+        assertThat(registry.writeCounter(counter)).contains("{ \"create\" : {} }\n"
+                + "{\"@timestamp\":\"1970-01-01T00:01:00.001Z\",\"name\":\"myCounter\",\"type\":\"counter\",\"foo\":\"bar\",\"spam\":\"eggs\",\"count\":1.0}");
     }
 
     @Issue("#497")
@@ -168,8 +177,8 @@ class ElasticMeterRegistryTest {
         Counter c = Counter.builder("counter").register(registry);
         c.increment(10);
         clock.add(config.step());
-        assertThat(registry.writeCounter(c)).contains("{ \"index\" : {} }\n" +
-                "{\"@timestamp\":\"1970-01-01T00:01:00.001Z\",\"name\":\"counter\",\"type\":\"counter\",\"count\":10.0}");
+        assertThat(registry.writeCounter(c)).contains("{ \"create\" : {} }\n"
+                + "{\"@timestamp\":\"1970-01-01T00:01:00.001Z\",\"name\":\"counter\",\"type\":\"counter\",\"count\":10.0}");
     }
 
     @Issue("#1134")
@@ -182,7 +191,9 @@ class ElasticMeterRegistryTest {
     @Issue("#1134")
     @Test
     void infinityTimeGaugeShouldNotBeWritten() {
-        TimeGauge gauge = TimeGauge.builder("myGauge", Double.NEGATIVE_INFINITY, TimeUnit.MILLISECONDS, Number::doubleValue).register(registry);
+        TimeGauge gauge = TimeGauge
+            .builder("myGauge", Double.NEGATIVE_INFINITY, TimeUnit.MILLISECONDS, Number::doubleValue)
+            .register(registry);
         assertThat(registry.writeTimeGauge(gauge)).isNotPresent();
     }
 
@@ -194,63 +205,38 @@ class ElasticMeterRegistryTest {
 
     @Test
     void getVersionWhenVersionIs7() {
-        String responseBody = "{\n" +
-                "  \"name\" : \"AL01187277.local\",\n" +
-                "  \"cluster_name\" : \"elasticsearch\",\n" +
-                "  \"cluster_uuid\" : \"xwKhDd2ITqK4VanwGDmoDQ\",\n" +
-                "  \"version\" : {\n" +
-                "    \"number\" : \"7.0.1\",\n" +
-                "    \"build_flavor\" : \"default\",\n" +
-                "    \"build_type\" : \"tar\",\n" +
-                "    \"build_hash\" : \"e4efcb5\",\n" +
-                "    \"build_date\" : \"2019-04-29T12:56:03.145736Z\",\n" +
-                "    \"build_snapshot\" : false,\n" +
-                "    \"lucene_version\" : \"8.0.0\",\n" +
-                "    \"minimum_wire_compatibility_version\" : \"6.7.0\",\n" +
-                "    \"minimum_index_compatibility_version\" : \"6.0.0-beta1\"\n" +
-                "  },\n" +
-                "  \"tagline\" : \"You Know, for Search\"\n" +
-                "}";
+        String responseBody = "{\n" + "  \"name\" : \"AL01187277.local\",\n"
+                + "  \"cluster_name\" : \"elasticsearch\",\n" + "  \"cluster_uuid\" : \"xwKhDd2ITqK4VanwGDmoDQ\",\n"
+                + "  \"version\" : {\n" + "    \"number\" : \"7.0.1\",\n" + "    \"build_flavor\" : \"default\",\n"
+                + "    \"build_type\" : \"tar\",\n" + "    \"build_hash\" : \"e4efcb5\",\n"
+                + "    \"build_date\" : \"2019-04-29T12:56:03.145736Z\",\n" + "    \"build_snapshot\" : false,\n"
+                + "    \"lucene_version\" : \"8.0.0\",\n" + "    \"minimum_wire_compatibility_version\" : \"6.7.0\",\n"
+                + "    \"minimum_index_compatibility_version\" : \"6.0.0-beta1\"\n" + "  },\n"
+                + "  \"tagline\" : \"You Know, for Search\"\n" + "}";
         assertThat(ElasticMeterRegistry.getMajorVersion(responseBody)).isEqualTo(7);
     }
 
     @Test
     void getVersionWhenVersionIs6() {
-        String responseBody = "{\n" +
-                "  \"name\" : \"AgISpaH\",\n" +
-                "  \"cluster_name\" : \"elasticsearch\",\n" +
-                "  \"cluster_uuid\" : \"Pycih38FRn-SJBOeaVniog\",\n" +
-                "  \"version\" : {\n" +
-                "    \"number\" : \"6.7.2\",\n" +
-                "    \"build_flavor\" : \"default\",\n" +
-                "    \"build_type\" : \"tar\",\n" +
-                "    \"build_hash\" : \"56c6e48\",\n" +
-                "    \"build_date\" : \"2019-04-29T09:05:50.290371Z\",\n" +
-                "    \"build_snapshot\" : false,\n" +
-                "    \"lucene_version\" : \"7.7.0\",\n" +
-                "    \"minimum_wire_compatibility_version\" : \"5.6.0\",\n" +
-                "    \"minimum_index_compatibility_version\" : \"5.0.0\"\n" +
-                "  },\n" +
-                "  \"tagline\" : \"You Know, for Search\"\n" +
-                "}";
+        String responseBody = "{\n" + "  \"name\" : \"AgISpaH\",\n" + "  \"cluster_name\" : \"elasticsearch\",\n"
+                + "  \"cluster_uuid\" : \"Pycih38FRn-SJBOeaVniog\",\n" + "  \"version\" : {\n"
+                + "    \"number\" : \"6.7.2\",\n" + "    \"build_flavor\" : \"default\",\n"
+                + "    \"build_type\" : \"tar\",\n" + "    \"build_hash\" : \"56c6e48\",\n"
+                + "    \"build_date\" : \"2019-04-29T09:05:50.290371Z\",\n" + "    \"build_snapshot\" : false,\n"
+                + "    \"lucene_version\" : \"7.7.0\",\n" + "    \"minimum_wire_compatibility_version\" : \"5.6.0\",\n"
+                + "    \"minimum_index_compatibility_version\" : \"5.0.0\"\n" + "  },\n"
+                + "  \"tagline\" : \"You Know, for Search\"\n" + "}";
         assertThat(ElasticMeterRegistry.getMajorVersion(responseBody)).isEqualTo(6);
     }
 
     @Test
     void getVersionWhenVersionIs5() {
-        String responseBody = "{\n" +
-                "  \"name\" : \"kDfH9w4\",\n" +
-                "  \"cluster_name\" : \"elasticsearch\",\n" +
-                "  \"cluster_uuid\" : \"tUrOevi-RcaMGV2250XAnQ\",\n" +
-                "  \"version\" : {\n" +
-                "    \"number\" : \"5.6.15\",\n" +
-                "    \"build_hash\" : \"fe7575a\",\n" +
-                "    \"build_date\" : \"2019-02-13T16:21:45.880Z\",\n" +
-                "    \"build_snapshot\" : false,\n" +
-                "    \"lucene_version\" : \"6.6.1\"\n" +
-                "  },\n" +
-                "  \"tagline\" : \"You Know, for Search\"\n" +
-                "}";
+        String responseBody = "{\n" + "  \"name\" : \"kDfH9w4\",\n" + "  \"cluster_name\" : \"elasticsearch\",\n"
+                + "  \"cluster_uuid\" : \"tUrOevi-RcaMGV2250XAnQ\",\n" + "  \"version\" : {\n"
+                + "    \"number\" : \"5.6.15\",\n" + "    \"build_hash\" : \"fe7575a\",\n"
+                + "    \"build_date\" : \"2019-02-13T16:21:45.880Z\",\n" + "    \"build_snapshot\" : false,\n"
+                + "    \"lucene_version\" : \"6.6.1\"\n" + "  },\n" + "  \"tagline\" : \"You Know, for Search\"\n"
+                + "}";
         assertThat(ElasticMeterRegistry.getMajorVersion(responseBody)).isEqualTo(5);
     }
 
@@ -287,7 +273,7 @@ class ElasticMeterRegistryTest {
         String responseBody = "{\"status\":200,\"name\":\"Sematext-Logsene\",\"cluster_name\":\"elasticsearch\",\"cluster_uuid\":\"anything\",\"version\":{\"number\":\"5.3.0\",\"build_hash\":\"3adb13b\",\"build_date\":\"2017-03-23T03:31:50.652Z\",\"build_snapshot\":false,\"lucene_version\":\"6.4.1\"},\"tagline\":\"You Know, for Search\"}";
         assertThat(ElasticMeterRegistry.getMajorVersion(responseBody)).isEqualTo(5);
     }
-    
+
     @Test
     void canExtendElasticMeterRegistry() {
         ElasticMeterRegistry registry = new ElasticMeterRegistry(config, clock) {
@@ -298,4 +284,5 @@ class ElasticMeterRegistryTest {
         };
         assertThat(registry.indexName()).isEqualTo("my-metrics");
     }
+
 }

@@ -1,12 +1,12 @@
-/**
+/*
  * Copyright 2020 VMware, Inc.
- * <p>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
+ *
  * https://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,15 +26,19 @@ import java.util.concurrent.atomic.AtomicLong;
  * @since 1.4.0
  */
 public class TimeWindowSum {
-    private static final AtomicIntegerFieldUpdater<TimeWindowSum> rotatingUpdater =
-            AtomicIntegerFieldUpdater.newUpdater(TimeWindowSum.class, "rotating");
+
+    private static final AtomicIntegerFieldUpdater<TimeWindowSum> rotatingUpdater = AtomicIntegerFieldUpdater
+        .newUpdater(TimeWindowSum.class, "rotating");
 
     private final long durationBetweenRotatesMillis;
-    private AtomicLong[] ringBuffer;
+
+    private final AtomicLong[] ringBuffer;
+
     private int currentBucket;
+
     private volatile long lastRotateTimestampMillis;
 
-    @SuppressWarnings({"unused", "FieldCanBeLocal"})
+    @SuppressWarnings({ "unused", "FieldCanBeLocal" })
     private volatile int rotating; // 0 - not rotating, 1 - rotating
 
     public TimeWindowSum(int bufferLength, Duration expiry) {
@@ -50,7 +54,6 @@ public class TimeWindowSum {
 
     /**
      * For use by timer implementations.
-     *
      * @param sampleMillis The value to record, in milliseconds.
      */
     public void record(long sampleMillis) {
@@ -92,10 +95,13 @@ public class TimeWindowSum {
                     }
                     timeSinceLastRotateMillis -= durationBetweenRotatesMillis;
                     lastRotateTimestampMillis += durationBetweenRotatesMillis;
-                } while (timeSinceLastRotateMillis >= durationBetweenRotatesMillis && ++iterations < ringBuffer.length);
+                }
+                while (timeSinceLastRotateMillis >= durationBetweenRotatesMillis && ++iterations < ringBuffer.length);
             }
-        } finally {
+        }
+        finally {
             rotating = 0;
         }
     }
+
 }

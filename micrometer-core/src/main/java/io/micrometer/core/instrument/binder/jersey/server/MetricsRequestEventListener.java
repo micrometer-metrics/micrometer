@@ -1,12 +1,12 @@
-/**
+/*
  * Copyright 2017 VMware, Inc.
- * <p>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
+ *
  * https://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -48,13 +48,17 @@ public class MetricsRequestEventListener implements RequestEventListener {
         .synchronizedMap(new IdentityHashMap<>());
 
     private final MeterRegistry registry;
+
     private final JerseyTagsProvider tagsProvider;
+
     private boolean autoTimeRequests;
+
     private final TimedFinder timedFinder;
+
     private final String metricName;
 
-    public MetricsRequestEventListener(MeterRegistry registry, JerseyTagsProvider tagsProvider,
-                                       String metricName, boolean autoTimeRequests, AnnotationFinder annotationFinder) {
+    public MetricsRequestEventListener(MeterRegistry registry, JerseyTagsProvider tagsProvider, String metricName,
+            boolean autoTimeRequests, AnnotationFinder annotationFinder) {
         this.registry = requireNonNull(registry);
         this.tagsProvider = requireNonNull(tagsProvider);
         this.metricName = requireNonNull(metricName);
@@ -78,7 +82,9 @@ public class MetricsRequestEventListener implements RequestEventListener {
                 timedAnnotationsOnRequest.put(containerRequest, timedAnnotations);
                 shortTaskSample.put(containerRequest, Timer.start(registry));
 
-                List<LongTaskTimer.Sample> longTaskSamples = longTaskTimers(timedAnnotations, event).stream().map(LongTaskTimer::start).collect(Collectors.toList());
+                List<LongTaskTimer.Sample> longTaskSamples = longTaskTimers(timedAnnotations, event).stream()
+                    .map(LongTaskTimer::start)
+                    .collect(Collectors.toList());
                 if (!longTaskSamples.isEmpty()) {
                     this.longTaskSamples.put(containerRequest, longTaskSamples);
                 }
@@ -109,15 +115,13 @@ public class MetricsRequestEventListener implements RequestEventListener {
             return false;
         }
         String className = t.getClass().getCanonicalName();
-        return className.equals("jakarta.ws.rs.NotFoundException")
-            || className.equals("javax.ws.rs.NotFoundException");
+        return className.equals("jakarta.ws.rs.NotFoundException") || className.equals("javax.ws.rs.NotFoundException");
     }
 
     private Set<Timer> shortTimers(Set<Timed> timed, RequestEvent event) {
         /*
-         * Given we didn't find any matching resource method, 404s will be only
-         * recorded when auto-time-requests is enabled. On par with WebMVC
-         * instrumentation.
+         * Given we didn't find any matching resource method, 404s will be only recorded
+         * when auto-time-requests is enabled. On par with WebMVC instrumentation.
          */
         if ((timed == null || timed.isEmpty()) && autoTimeRequests) {
             return Collections.singleton(registry.timer(metricName, tagsProvider.httpRequestTags(event)));
@@ -128,6 +132,7 @@ public class MetricsRequestEventListener implements RequestEventListener {
         }
 
         return timed.stream()
+            .filter(annotation -> !annotation.longTask())
             .map(t -> Timer.builder(t, metricName).tags(tagsProvider.httpRequestTags(event)).register(registry))
             .collect(Collectors.toSet());
     }
@@ -150,10 +155,11 @@ public class MetricsRequestEventListener implements RequestEventListener {
 
             // fallback on class level
             if (timed.isEmpty()) {
-                timed.addAll(timedFinder.findTimedAnnotations(matchingResourceMethod.getInvocable().getHandlingMethod()
-                    .getDeclaringClass()));
+                timed.addAll(timedFinder.findTimedAnnotations(
+                        matchingResourceMethod.getInvocable().getHandlingMethod().getDeclaringClass()));
             }
         }
         return timed;
     }
+
 }

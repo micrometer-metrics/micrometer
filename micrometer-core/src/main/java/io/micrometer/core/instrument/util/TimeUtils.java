@@ -1,12 +1,12 @@
-/**
+/*
  * Copyright 2017 VMware, Inc.
- * <p>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
+ *
  * https://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -34,11 +34,17 @@ public final class TimeUtils {
     private static final Pattern PARSE_PATTERN = Pattern.compile("[,_ ]");
 
     private static final long C0 = 1L;
+
     private static final long C1 = C0 * 1000L;
+
     private static final long C2 = C1 * 1000L;
+
     private static final long C3 = C2 * 1000L;
+
     private static final long C4 = C3 * 60L;
+
     private static final long C5 = C4 * 60L;
+
     private static final long C6 = C5 * 24L;
 
     private TimeUtils() {
@@ -207,22 +213,28 @@ public final class TimeUtils {
     /**
      * @param time A time string ending in human readable suffixes like 'ns', 'ms', 's'.
      * @return A duration
-     * @deprecated Use {@link DurationValidator#validate(String, String)} instead since 1.5.0.
+     * @deprecated Use {@link DurationValidator#validate(String, String)} instead since
+     * 1.5.0.
      */
     @Deprecated
     public static Duration simpleParse(String time) {
         String timeLower = PARSE_PATTERN.matcher(time.toLowerCase()).replaceAll("");
         if (timeLower.endsWith("ns")) {
             return Duration.ofNanos(Long.parseLong(timeLower.substring(0, timeLower.length() - 2)));
-        } else if (timeLower.endsWith("ms")) {
+        }
+        else if (timeLower.endsWith("ms")) {
             return Duration.ofMillis(Long.parseLong(timeLower.substring(0, timeLower.length() - 2)));
-        } else if (timeLower.endsWith("s")) {
+        }
+        else if (timeLower.endsWith("s")) {
             return Duration.ofSeconds(Long.parseLong(timeLower.substring(0, timeLower.length() - 1)));
-        } else if (timeLower.endsWith("m")) {
+        }
+        else if (timeLower.endsWith("m")) {
             return Duration.ofMinutes(Long.parseLong(timeLower.substring(0, timeLower.length() - 1)));
-        } else if (timeLower.endsWith("h")) {
+        }
+        else if (timeLower.endsWith("h")) {
             return Duration.ofHours(Long.parseLong(timeLower.substring(0, timeLower.length() - 1)));
-        } else if (timeLower.endsWith("d")) {
+        }
+        else if (timeLower.endsWith("d")) {
             return Duration.of(Long.parseLong(timeLower.substring(0, timeLower.length() - 1)), ChronoUnit.DAYS);
         }
         throw new DateTimeParseException("Unable to parse " + time + " into duration", timeLower, 0);
@@ -260,4 +272,5 @@ public final class TimeUtils {
         }
         return sb.toString();
     }
+
 }

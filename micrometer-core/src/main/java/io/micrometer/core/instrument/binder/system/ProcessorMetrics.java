@@ -1,12 +1,12 @@
-/**
+/*
  * Copyright 2017 VMware, Inc.
- * <p>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
+ *
  * https://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,13 +15,13 @@
  */
 package io.micrometer.core.instrument.binder.system;
 
+import io.micrometer.common.lang.NonNullApi;
+import io.micrometer.common.lang.NonNullFields;
+import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.binder.MeterBinder;
-import io.micrometer.core.lang.NonNullApi;
-import io.micrometer.core.lang.NonNullFields;
-import io.micrometer.core.lang.Nullable;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.OperatingSystemMXBean;
@@ -38,8 +38,8 @@ import static java.util.Objects.requireNonNull;
  * <p>
  * Supported JVM implementations:
  * <ul>
- *     <li>HotSpot</li>
- *     <li>J9</li>
+ * <li>HotSpot</li>
+ * <li>J9</li>
  * </ul>
  *
  * @author Jon Schneider
@@ -51,10 +51,12 @@ import static java.util.Objects.requireNonNull;
 @NonNullFields
 public class ProcessorMetrics implements MeterBinder {
 
-    /** List of public, exported interface class names from supported JVM implementations. */
+    /**
+     * List of public, exported interface class names from supported JVM implementations.
+     */
     private static final List<String> OPERATING_SYSTEM_BEAN_CLASS_NAMES = Arrays.asList(
-        "com.ibm.lang.management.OperatingSystemMXBean", // J9
-        "com.sun.management.OperatingSystemMXBean" // HotSpot
+            "com.ibm.lang.management.OperatingSystemMXBean", // J9
+            "com.sun.management.OperatingSystemMXBean" // HotSpot
     );
 
     private final Iterable<Tag> tags;
@@ -94,15 +96,15 @@ public class ProcessorMetrics implements MeterBinder {
         if (operatingSystemBean.getSystemLoadAverage() >= 0) {
             Gauge.builder("system.load.average.1m", operatingSystemBean, OperatingSystemMXBean::getSystemLoadAverage)
                 .tags(tags)
-                .description("The sum of the number of runnable entities queued to available processors and the number " +
-                    "of runnable entities running on the available processors averaged over a period of time")
+                .description("The sum of the number of runnable entities queued to available processors and the number "
+                        + "of runnable entities running on the available processors averaged over a period of time")
                 .register(registry);
         }
 
         if (systemCpuUsage != null) {
             Gauge.builder("system.cpu.usage", operatingSystemBean, x -> invoke(systemCpuUsage))
                 .tags(tags)
-                .description("The \"recent cpu usage\" for the whole system")
+                .description("The \"recent cpu usage\" of the system the application is running in")
                 .register(registry);
         }
 
@@ -117,7 +119,8 @@ public class ProcessorMetrics implements MeterBinder {
     private double invoke(@Nullable Method method) {
         try {
             return method != null ? (double) method.invoke(operatingSystemBean) : Double.NaN;
-        } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+        }
+        catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
             return Double.NaN;
         }
     }
@@ -131,8 +134,9 @@ public class ProcessorMetrics implements MeterBinder {
         try {
             // ensure the Bean we have is actually an instance of the interface
             operatingSystemBeanClass.cast(operatingSystemBean);
-            return operatingSystemBeanClass.getDeclaredMethod(name);
-        } catch (ClassCastException | NoSuchMethodException | SecurityException e) {
+            return operatingSystemBeanClass.getMethod(name);
+        }
+        catch (ClassCastException | NoSuchMethodException | SecurityException e) {
             return null;
         }
     }
@@ -142,9 +146,11 @@ public class ProcessorMetrics implements MeterBinder {
         for (String className : classNames) {
             try {
                 return Class.forName(className);
-            } catch (ClassNotFoundException ignore) {
+            }
+            catch (ClassNotFoundException ignore) {
             }
         }
         return null;
     }
+
 }

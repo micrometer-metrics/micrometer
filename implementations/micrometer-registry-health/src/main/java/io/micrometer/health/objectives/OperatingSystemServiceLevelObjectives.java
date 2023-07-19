@@ -1,12 +1,12 @@
-/**
+/*
  * Copyright 2020 VMware, Inc.
- * <p>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
+ *
  * https://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,17 +25,18 @@ import io.micrometer.health.ServiceLevelObjective;
  * @since 1.6.0
  */
 public class OperatingSystemServiceLevelObjectives {
+
     public static final ServiceLevelObjective[] DISK = new ServiceLevelObjective[] {
             ServiceLevelObjective.build("os.file.descriptors")
-                    .failedMessage("Too many file descriptors are open. When the max is reached, " +
-                            "further attempts to retrieve a file descriptor will block indefinitely.")
-                    .baseUnit("used / available (percent)")
-                    .requires(new FileDescriptorMetrics())
-                    .value(s -> s.name("process.open.fds"))
-                    .dividedBy(denom -> denom.value(s -> s.name("process.max.fds")))
-                    .isLessThan(0.8)
-    };
+                .failedMessage("Too many file descriptors are open. When the max is reached, "
+                        + "further attempts to retrieve a file descriptor will block indefinitely.")
+                .baseUnit("used / available (percent)")
+                .requires(new FileDescriptorMetrics())
+                .value(s -> s.name("process.open.fds"))
+                .dividedBy(denom -> denom.value(s -> s.name("process.max.fds")))
+                .isLessThan(0.8) };
 
     private OperatingSystemServiceLevelObjectives() {
     }
+
 }

@@ -1,12 +1,12 @@
-/**
+/*
  * Copyright 2017 VMware, Inc.
- * <p>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
+ *
  * https://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,30 +15,54 @@
  */
 package io.micrometer.core.instrument;
 
+import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.distribution.*;
-import io.micrometer.core.instrument.util.MeterEquivalence;
-import io.micrometer.core.lang.Nullable;
 
 public abstract class AbstractDistributionSummary extends AbstractMeter implements DistributionSummary {
+
     protected final Histogram histogram;
+
     private final double scale;
 
-    protected AbstractDistributionSummary(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig, double scale,
-                                          boolean supportsAggregablePercentiles) {
+    protected AbstractDistributionSummary(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig,
+            double scale, boolean supportsAggregablePercentiles) {
+        this(id, scale, defaultHistogram(clock, distributionStatisticConfig, supportsAggregablePercentiles));
+    }
+
+    /**
+     * Creates an {@code AbstractDistributionSummary} instance.
+     * @param id meter ID
+     * @param scale scale
+     * @param histogram histogram
+     * @since 1.11.0
+     */
+    protected AbstractDistributionSummary(Id id, double scale, @Nullable Histogram histogram) {
         super(id);
         this.scale = scale;
+        this.histogram = histogram == null ? NoopHistogram.INSTANCE : histogram;
+    }
 
+    /**
+     * Creates a default histogram.
+     * @param clock clock
+     * @param distributionStatisticConfig distribution statistic configuration
+     * @param supportsAggregablePercentiles whether to support aggregable percentiles
+     * @return a default histogram
+     * @since 1.11.0
+     */
+    protected static Histogram defaultHistogram(Clock clock, DistributionStatisticConfig distributionStatisticConfig,
+            boolean supportsAggregablePercentiles) {
         if (distributionStatisticConfig.isPublishingPercentiles()) {
             // hdr-based histogram
-            this.histogram = new TimeWindowPercentileHistogram(clock, distributionStatisticConfig, supportsAggregablePercentiles);
-        } else if (distributionStatisticConfig.isPublishingHistogram()) {
+            return new TimeWindowPercentileHistogram(clock, distributionStatisticConfig, supportsAggregablePercentiles);
+        }
+        if (distributionStatisticConfig.isPublishingHistogram()) {
             // fixed boundary histograms, which have a slightly better memory footprint
             // when we don't need Micrometer-computed percentiles
-            this.histogram = new TimeWindowFixedBoundaryHistogram(clock, distributionStatisticConfig, supportsAggregablePercentiles);
-        } else {
-            // noop histogram
-            this.histogram = NoopHistogram.INSTANCE;
+            return new TimeWindowFixedBoundaryHistogram(clock, distributionStatisticConfig,
+                    supportsAggregablePercentiles);
         }
+        return NoopHistogram.INSTANCE;
     }
 
     @Override
@@ -57,14 +81,4 @@ public abstract class AbstractDistributionSummary extends AbstractMeter implemen
         return histogram.takeSnapshot(count(), totalAmount(), max());
     }
 
-    @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
-    @Override
-    public boolean equals(@Nullable Object o) {
-        return MeterEquivalence.equals(this, o);
-    }
-
-    @Override
-    public int hashCode() {
-        return MeterEquivalence.hashCode(this);
-    }
 }

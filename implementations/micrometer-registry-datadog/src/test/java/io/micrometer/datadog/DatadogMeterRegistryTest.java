@@ -1,12 +1,12 @@
-/**
+/*
  * Copyright 2017 VMware, Inc.
- * <p>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
+ *
  * https://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,12 +17,7 @@ package io.micrometer.datadog;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
 import io.micrometer.core.Issue;
-import io.micrometer.core.instrument.Clock;
-import io.micrometer.core.instrument.Counter;
-import io.micrometer.core.instrument.Meter;
-import io.micrometer.core.instrument.MockClock;
-import io.micrometer.core.instrument.Statistic;
-import io.micrometer.core.instrument.Tags;
+import io.micrometer.core.instrument.*;
 import io.micrometer.core.ipc.http.HttpSender;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -82,10 +77,8 @@ class DatadogMeterRegistryTest {
             .increment(Math.PI);
         registry.publish();
 
-        server.verify(postRequestedFor(
-                urlEqualTo("/api/v1/series?api_key=fake"))
-                .withRequestBody(equalToJson("{\"series\":[{\"metric\":\"my.counter#abc\",\"points\":[[0,0.0]],\"type\":\"count\",\"unit\":\"microsecond\",\"tags\":[\"statistic:count\"]}]}")
-                ));
+        server.verify(postRequestedFor(urlEqualTo("/api/v1/series?api_key=fake")).withRequestBody(equalToJson(
+                "{\"series\":[{\"metric\":\"my.counter#abc\",\"points\":[[0,0.0]],\"type\":\"count\",\"unit\":\"microsecond\",\"tags\":[\"statistic:count\"]}]}")));
 
         registry.close();
     }
@@ -128,21 +121,18 @@ class DatadogMeterRegistryTest {
         server.stubFor(any(anyUrl()));
 
         Counter.builder("my.counter#abc")
-                .baseUnit(TimeUnit.MICROSECONDS.toString().toLowerCase())
-                .description("metric description")
-                .register(registry)
-                .increment(Math.PI);
+            .baseUnit(TimeUnit.MICROSECONDS.toString().toLowerCase())
+            .description("metric description")
+            .register(registry)
+            .increment(Math.PI);
         registry.publish();
 
-        server.verify(postRequestedFor(
-                urlEqualTo("/api/v1/series?api_key=fake"))
-                .withRequestBody(equalToJson("{\"series\":[{\"metric\":\"my.counter#abc\",\"points\":[[0,0.0]],\"type\":\"count\",\"unit\":\"microsecond\",\"tags\":[\"statistic:count\"]}]}")
-                ));
+        server.verify(postRequestedFor(urlEqualTo("/api/v1/series?api_key=fake")).withRequestBody(equalToJson(
+                "{\"series\":[{\"metric\":\"my.counter#abc\",\"points\":[[0,0.0]],\"type\":\"count\",\"unit\":\"microsecond\",\"tags\":[\"statistic:count\"]}]}")));
 
-        server.verify(putRequestedFor(
-                urlEqualTo("/api/v1/metrics/my.counter%23abc?api_key=fake&application_key=fake"))
-                .withRequestBody(equalToJson("{\"type\":\"count\",\"unit\":\"microsecond\",\"description\":\"metric description\"}")
-                ));
+        server.verify(putRequestedFor(urlEqualTo("/api/v1/metrics/my.counter%23abc?api_key=fake&application_key=fake"))
+            .withRequestBody(equalToJson(
+                    "{\"type\":\"count\",\"unit\":\"microsecond\",\"description\":\"metric description\"}")));
 
         registry.close();
     }
@@ -168,4 +158,5 @@ class DatadogMeterRegistryTest {
         registry.postMetricMetadata("my.meter", new DatadogMetricMetadata(id, Statistic.COUNT, true, null));
         verifyNoInteractions(httpSender);
     }
+
 }

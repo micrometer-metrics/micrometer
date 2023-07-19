@@ -1,12 +1,12 @@
-/**
+/*
  * Copyright 2017 VMware, Inc.
- * <p>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
+ *
  * https://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,6 +28,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 class CompositeLongTaskTimer extends AbstractCompositeMeter<LongTaskTimer> implements LongTaskTimer {
+
     private final DistributionStatisticConfig distributionStatisticConfig;
 
     CompositeLongTaskTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig) {
@@ -38,7 +39,9 @@ class CompositeLongTaskTimer extends AbstractCompositeMeter<LongTaskTimer> imple
     @Override
     public Sample start() {
         List<Sample> samples = new ArrayList<>();
-        forEachChild(ltt -> samples.add(ltt.start()));
+        for (LongTaskTimer ltt : getChildren()) {
+            samples.add(ltt.start());
+        }
         return new CompositeSample(samples);
     }
 
@@ -76,15 +79,17 @@ class CompositeLongTaskTimer extends AbstractCompositeMeter<LongTaskTimer> imple
     @Override
     LongTaskTimer registerNewMeter(MeterRegistry registry) {
         LongTaskTimer.Builder builder = LongTaskTimer.builder(getId().getName())
-                .tags(getId().getTagsAsIterable())
-                .description(getId().getDescription())
-                .maximumExpectedValue(Duration.ofNanos(distributionStatisticConfig.getMaximumExpectedValueAsDouble().longValue()))
-                .minimumExpectedValue(Duration.ofNanos(distributionStatisticConfig.getMinimumExpectedValueAsDouble().longValue()))
-                .publishPercentiles(distributionStatisticConfig.getPercentiles())
-                .publishPercentileHistogram(distributionStatisticConfig.isPercentileHistogram())
-                .distributionStatisticBufferLength(distributionStatisticConfig.getBufferLength())
-                .distributionStatisticExpiry(distributionStatisticConfig.getExpiry())
-                .percentilePrecision(distributionStatisticConfig.getPercentilePrecision());
+            .tags(getId().getTagsAsIterable())
+            .description(getId().getDescription())
+            .maximumExpectedValue(
+                    Duration.ofNanos(distributionStatisticConfig.getMaximumExpectedValueAsDouble().longValue()))
+            .minimumExpectedValue(
+                    Duration.ofNanos(distributionStatisticConfig.getMinimumExpectedValueAsDouble().longValue()))
+            .publishPercentiles(distributionStatisticConfig.getPercentiles())
+            .publishPercentileHistogram(distributionStatisticConfig.isPercentileHistogram())
+            .distributionStatisticBufferLength(distributionStatisticConfig.getBufferLength())
+            .distributionStatisticExpiry(distributionStatisticConfig.getExpiry())
+            .percentilePrecision(distributionStatisticConfig.getPercentilePrecision());
 
         final double[] sloNanos = distributionStatisticConfig.getServiceLevelObjectiveBoundaries();
         if (sloNanos != null) {
@@ -99,6 +104,7 @@ class CompositeLongTaskTimer extends AbstractCompositeMeter<LongTaskTimer> imple
     }
 
     static class CompositeSample extends Sample {
+
         private final List<Sample> samples;
 
         private CompositeSample(List<Sample> samples) {
@@ -107,19 +113,14 @@ class CompositeLongTaskTimer extends AbstractCompositeMeter<LongTaskTimer> imple
 
         @Override
         public long stop() {
-            return samples.stream()
-                    .reduce(
-                            0L,
-                            (stopped, sample) -> sample.stop(),
-                            (s1, s2) -> s1
-                    );
+            return samples.stream().reduce(0L, (stopped, sample) -> sample.stop(), (s1, s2) -> s1);
         }
 
         @Override
         public double duration(TimeUnit unit) {
-            return samples.stream().findAny()
-                    .map(s -> s.duration(unit))
-                    .orElse(0.0);
+            return samples.stream().findAny().map(s -> s.duration(unit)).orElse(0.0);
         }
+
     }
+
 }

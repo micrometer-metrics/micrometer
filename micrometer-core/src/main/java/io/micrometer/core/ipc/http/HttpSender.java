@@ -1,12 +1,12 @@
-/**
+/*
  * Copyright 2018 VMware, Inc.
- * <p>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
+ *
  * https://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,8 +15,8 @@
  */
 package io.micrometer.core.ipc.http;
 
-import io.micrometer.core.instrument.util.StringUtils;
-import io.micrometer.core.lang.Nullable;
+import io.micrometer.common.lang.Nullable;
+import io.micrometer.common.util.StringUtils;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -33,14 +33,17 @@ import java.util.function.Supplier;
 import java.util.zip.GZIPOutputStream;
 
 /**
- * A general-purpose interface for controlling how {@link io.micrometer.core.instrument.MeterRegistry} implementations
- * perform HTTP calls for various purposes. This interface can be used to inject more advanced customization like SSL
- * verification, key loading, etc. without requiring further additions to registry configurations.
+ * A general-purpose interface for controlling how
+ * {@link io.micrometer.core.instrument.MeterRegistry} implementations perform HTTP calls
+ * for various purposes. This interface can be used to inject more advanced customization
+ * like SSL verification, key loading, etc. without requiring further additions to
+ * registry configurations.
  *
  * @author Jon Schneider
  * @since 1.1.0
  */
 public interface HttpSender {
+
     Response send(Request request) throws Throwable;
 
     default Request.Builder post(String uri) {
@@ -72,9 +75,13 @@ public interface HttpSender {
     }
 
     class Request {
+
         private final URL url;
+
         private final byte[] entity;
+
         private final Method method;
+
         private final Map<String, String> requestHeaders;
 
         public Request(URL url, byte[] entity, Method method, Map<String, String> requestHeaders) {
@@ -107,30 +114,38 @@ public interface HttpSender {
         @Override
         public String toString() {
             StringBuilder printed = new StringBuilder(method.toString()).append(' ')
-                    .append(url.toString()).append("\n");
+                .append(url.toString())
+                .append("\n");
             if (entity.length == 0) {
                 printed.append("<no request body>");
-            } else {
+            }
+            else {
                 printed.append(new String(entity));
             }
             return printed.toString();
         }
 
         public static class Builder {
+
             private static final String APPLICATION_JSON = "application/json";
+
             private static final String TEXT_PLAIN = "text/plain";
 
             private final URL url;
+
             private final HttpSender sender;
 
             private byte[] entity = new byte[0];
+
             private Method method;
+
             private Map<String, String> requestHeaders = new LinkedHashMap<>();
 
             Builder(String uri, HttpSender sender) {
                 try {
                     this.url = URI.create(uri).toURL();
-                } catch (MalformedURLException ex) {
+                }
+                catch (MalformedURLException ex) {
                     throw new UncheckedIOException(ex);
                 }
                 this.sender = sender;
@@ -138,8 +153,7 @@ public interface HttpSender {
 
             /**
              * Add a header to the request.
-             *
-             * @param name  The name of the header.
+             * @param name The name of the header.
              * @param value The value of the header.
              * @return This request builder.
              */
@@ -149,35 +163,36 @@ public interface HttpSender {
             }
 
             /**
-             * If user and password are non-empty, set basic authentication on the request.
-             *
-             * @param user     A user name, if available.
+             * If user and password are non-empty, set basic authentication on the
+             * request.
+             * @param user A user name, if available.
              * @param password A password, if available.
              * @return This request builder.
              */
             public final Builder withBasicAuthentication(@Nullable String user, @Nullable String password) {
-                if (user != null && StringUtils.isNotBlank(user)) {
-                    String encoded = Base64.getEncoder().encodeToString((user.trim() + ":" + (password == null ? "" : password.trim()))
+                if (StringUtils.isNotBlank(user)) {
+                    String encoded = Base64.getEncoder()
+                        .encodeToString((user.trim() + ":" + (password == null ? "" : password.trim()))
                             .getBytes(StandardCharsets.UTF_8));
-                    withHeader("Authorization", "Basic " + encoded);
+                    withAuthentication("Basic", encoded);
                 }
                 return this;
             }
 
             /**
-             * Configures the {@code Authentication} HTTP header with the given type and credentials.
-             * The format will be:
-             * <pre>{@code Authorization: <type> <credentials>}</pre>
-             * No encoding will be performed on the {@code credentials}, so if the authentication scheme
-             * expects {@code credentials} to be encoded, encode them before passing them to this method.
-             *
+             * Configures the {@code Authorization} HTTP header with the given type and
+             * credentials. The format will be:
+             * <pre>{@code Authorization: <type> <credentials>}</pre> No encoding will be
+             * performed on the {@code credentials}, so if the authentication scheme
+             * expects {@code credentials} to be encoded, encode them before passing them
+             * to this method.
              * @param type authentication type
              * @param credentials authentication credentials
              * @return This request builder.
              * @since 1.8.0
              */
             public final Builder withAuthentication(String type, @Nullable String credentials) {
-                if (credentials != null && StringUtils.isNotBlank(credentials)) {
+                if (StringUtils.isNotBlank(credentials)) {
                     withHeader("Authorization", type + " " + credentials);
                 }
                 return this;
@@ -185,7 +200,6 @@ public interface HttpSender {
 
             /**
              * Set the request body as JSON content type.
-             *
              * @param content The request body.
              * @return This request builder.
              */
@@ -195,7 +209,6 @@ public interface HttpSender {
 
             /**
              * Set the request body as plain text content type.
-             *
              * @param content The request body.
              * @return This request builder.
              */
@@ -205,8 +218,7 @@ public interface HttpSender {
 
             /**
              * Set the request body.
-             *
-             * @param type    The value of the "Content-Type" header to add.
+             * @param type The value of the "Content-Type" header to add.
              * @param content The request body.
              * @return This request builder.
              */
@@ -216,8 +228,7 @@ public interface HttpSender {
 
             /**
              * Set the request body.
-             *
-             * @param type    The value of the "Content-Type" header to add.
+             * @param type The value of the "Content-Type" header to add.
              * @param content The request body.
              * @return This request builder.
              */
@@ -229,7 +240,6 @@ public interface HttpSender {
 
             /**
              * Add header to accept {@code application/json} data.
-             *
              * @return This request builder.
              */
             public Builder acceptJson() {
@@ -238,7 +248,6 @@ public interface HttpSender {
 
             /**
              * Add accept header.
-             *
              * @param type The value of the "Accept" header to add.
              * @return This request builder.
              */
@@ -248,7 +257,6 @@ public interface HttpSender {
 
             /**
              * Set the request method.
-             *
              * @param method An HTTP method.
              * @return This request builder.
              */
@@ -259,7 +267,6 @@ public interface HttpSender {
 
             /**
              * Add a "Content-Encoding" header of "gzip" and compress the request body.
-             *
              * @return This request builder.
              * @throws IOException If compression fails.
              */
@@ -270,9 +277,8 @@ public interface HttpSender {
             }
 
             /**
-             * Add a "Content-Encoding" header of "gzip" and compress the request body when the supplied
-             * condition is true.
-             *
+             * Add a "Content-Encoding" header of "gzip" and compress the request body
+             * when the supplied condition is true.
              * @param when Condition that governs when to compress the request body.
              * @return This request builder.
              * @throws IOException If compression fails.
@@ -299,12 +305,17 @@ public interface HttpSender {
             public Response send() throws Throwable {
                 return sender.send(new Request(url, entity, method, requestHeaders));
             }
+
         }
+
     }
 
     class Response {
+
         public static final String NO_RESPONSE_BODY = "<no response body>";
+
         private final int code;
+
         private final String body;
 
         public Response(int code, @Nullable String body) {
@@ -347,9 +358,13 @@ public interface HttpSender {
                     return false;
             }
         }
+
     }
 
     enum Method {
+
         GET, HEAD, POST, PUT, DELETE, OPTIONS
+
     }
+
 }

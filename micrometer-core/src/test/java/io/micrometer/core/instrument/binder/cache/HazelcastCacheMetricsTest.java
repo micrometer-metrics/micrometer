@@ -1,12 +1,12 @@
-/**
+/*
  * Copyright 2018 VMware, Inc.
- * <p>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
+ *
  * https://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,28 +16,23 @@
 package io.micrometer.core.instrument.binder.cache;
 
 import com.hazelcast.core.Hazelcast;
+import com.hazelcast.internal.monitor.impl.LocalMapStatsImpl;
+import com.hazelcast.internal.monitor.impl.NearCacheStatsImpl;
 import com.hazelcast.map.IMap;
 import com.hazelcast.map.LocalMapStats;
 import com.hazelcast.nearcache.NearCacheStats;
-import com.hazelcast.internal.monitor.impl.LocalMapStatsImpl;
-import com.hazelcast.internal.monitor.impl.NearCacheStatsImpl;
-
-import io.micrometer.core.instrument.FunctionCounter;
-import io.micrometer.core.instrument.FunctionTimer;
-import io.micrometer.core.instrument.Gauge;
-import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Tags;
+import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 import java.util.HashMap;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
-
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -151,13 +146,14 @@ class HazelcastCacheMetricsTest extends AbstractCacheMetricsTest {
 
     @Test
     void returnPutCount() {
-        assertThat(metrics.putCount()).isEqualTo(cache.getLocalMapStats().getPutOperationCount());
+        assertThat(metrics.putCount()).isEqualTo(
+                cache.getLocalMapStats().getPutOperationCount() + cache.getLocalMapStats().getSetOperationCount());
     }
 
     @Test
     void nonIMapCacheFails() {
         assertThatExceptionOfType(RuntimeException.class)
-                .isThrownBy(() -> new HazelcastCacheMetrics(new HashMap<String, String>(), Tags.empty()));
+            .isThrownBy(() -> new HazelcastCacheMetrics(new HashMap<String, String>(), Tags.empty()));
     }
 
     @BeforeAll
@@ -180,6 +176,7 @@ class HazelcastCacheMetricsTest extends AbstractCacheMetricsTest {
         localMapStats.setOwnedEntryMemoryCost(random.nextInt(valueBound));
         localMapStats.incrementGetLatencyNanos(random.nextInt(valueBound));
         localMapStats.incrementPutLatencyNanos(random.nextInt(valueBound));
+        localMapStats.incrementSetLatencyNanos(random.nextInt(valueBound));
         localMapStats.incrementRemoveLatencyNanos(random.nextInt(valueBound));
     }
 

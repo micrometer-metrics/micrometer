@@ -1,12 +1,12 @@
-/**
+/*
  * Copyright 2017 VMware, Inc.
- * <p>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
+ *
  * https://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,10 +20,15 @@ import org.HdrHistogram.DoubleHistogram;
 import org.HdrHistogram.DoubleRecorder;
 
 import java.io.PrintStream;
+import java.util.Iterator;
 
 /**
- * A histogram implementation that supports the computation of percentiles by Micrometer for
- * publishing to a monitoring system.
+ * <b>NOTE: This class is intended for internal use as an implementation detail. You
+ * should not compile against its API. Please contact the project maintainers if you need
+ * this as public API.</b>
+ * <p>
+ * A histogram implementation that supports the computation of percentiles by Micrometer
+ * for publishing to a monitoring system.
  *
  * @author Jon Schneider
  * @author Trustin Heuiseung Lee
@@ -33,7 +38,7 @@ public class TimeWindowPercentileHistogram extends AbstractTimeWindowHistogram<D
     private final DoubleHistogram intervalHistogram;
 
     public TimeWindowPercentileHistogram(Clock clock, DistributionStatisticConfig distributionStatisticConfig,
-                                         boolean supportsAggregablePercentiles) {
+            boolean supportsAggregablePercentiles) {
         super(clock, distributionStatisticConfig, DoubleRecorder.class, supportsAggregablePercentiles);
         intervalHistogram = new DoubleHistogram(percentilePrecision(distributionStatisticConfig));
         initRingBuffer();
@@ -81,8 +86,26 @@ public class TimeWindowPercentileHistogram extends AbstractTimeWindowHistogram<D
     }
 
     @Override
-    double countAtValue(double value) {
-        return accumulatedHistogram().getCountBetweenValues(0, value);
+    Iterator<CountAtBucket> countsAtValues(Iterator<Double> values) {
+        return new Iterator<CountAtBucket>() {
+            private double cumulativeCount = 0.0;
+
+            private double lowerBoundValue = 0.0;
+
+            @Override
+            public boolean hasNext() {
+                return values.hasNext();
+            }
+
+            @Override
+            public CountAtBucket next() {
+                double higherBoundValue = values.next();
+                double count = accumulatedHistogram().getCountBetweenValues(lowerBoundValue, higherBoundValue);
+                lowerBoundValue = accumulatedHistogram().nextNonEquivalentValue(higherBoundValue);
+                cumulativeCount += count;
+                return new CountAtBucket(higherBoundValue, cumulativeCount);
+            }
+        };
     }
 
     private int percentilePrecision(DistributionStatisticConfig config) {
@@ -93,4 +116,5 @@ public class TimeWindowPercentileHistogram extends AbstractTimeWindowHistogram<D
     void outputSummary(PrintStream out, double bucketScaling) {
         accumulatedHistogram().outputPercentileDistribution(out, bucketScaling);
     }
+
 }

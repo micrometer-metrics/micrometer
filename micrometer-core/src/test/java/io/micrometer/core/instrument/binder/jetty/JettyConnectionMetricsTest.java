@@ -1,12 +1,12 @@
-/**
+/*
  * Copyright 2019 VMware, Inc.
- * <p>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
+ *
  * https://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,7 +29,6 @@ import org.eclipse.jetty.client.util.StringContentProvider;
 import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
-import org.eclipse.jetty.util.component.AbstractLifeCycle;
 import org.eclipse.jetty.util.component.LifeCycle;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -41,14 +40,18 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class JettyConnectionMetricsTest {
+
     private SimpleMeterRegistry registry = new SimpleMeterRegistry(SimpleConfig.DEFAULT, new MockClock());
+
     private Server server = new Server(0);
+
     private ServerConnector connector = new ServerConnector(server);
+
     private CloseableHttpClient client = HttpClients.createDefault();
 
     void setup() throws Exception {
         connector.addBean(new JettyConnectionMetrics(registry));
-        server.setConnectors(new Connector[]{connector});
+        server.setConnectors(new Connector[] { connector });
         server.start();
     }
 
@@ -73,19 +76,19 @@ class JettyConnectionMetricsTest {
         }
 
         CountDownLatch latch = new CountDownLatch(1);
-        connector.addLifeCycleListener(new AbstractLifeCycle.AbstractLifeCycleListener() {
+        connector.addLifeCycleListener(new LifeCycle.Listener() {
             @Override
             public void lifeCycleStopped(LifeCycle event) {
                 latch.countDown();
             }
         });
-        // Convenient way to get Jetty to flush its connections, which is required to update the sent/received bytes metrics
+        // Convenient way to get Jetty to flush its connections, which is required to
+        // update the sent/received bytes metrics
         server.stop();
 
         assertTrue(latch.await(10, SECONDS));
         assertThat(registry.get("jetty.connections.max").gauge().value()).isEqualTo(2.0);
-        assertThat(registry.get("jetty.connections.request").tag("type", "server").timer().count())
-                .isEqualTo(2);
+        assertThat(registry.get("jetty.connections.request").tag("type", "server").timer().count()).isEqualTo(2);
         assertThat(registry.get("jetty.connections.bytes.in").summary().totalAmount()).isGreaterThan(1);
     }
 
@@ -97,7 +100,7 @@ class JettyConnectionMetricsTest {
         httpClient.addBean(new JettyConnectionMetrics(registry));
 
         CountDownLatch latch = new CountDownLatch(1);
-        httpClient.addLifeCycleListener(new AbstractLifeCycle.AbstractLifeCycleListener() {
+        httpClient.addLifeCycleListener(new LifeCycle.Listener() {
             @Override
             public void lifeCycleStopped(LifeCycle event) {
                 latch.countDown();
@@ -113,8 +116,7 @@ class JettyConnectionMetricsTest {
 
         assertTrue(latch.await(10, SECONDS));
         assertThat(registry.get("jetty.connections.max").gauge().value()).isEqualTo(1.0);
-        assertThat(registry.get("jetty.connections.request").tag("type", "client").timer().count())
-                .isEqualTo(1);
+        assertThat(registry.get("jetty.connections.request").tag("type", "client").timer().count()).isEqualTo(1);
         assertThat(registry.get("jetty.connections.bytes.out").summary().totalAmount()).isGreaterThan(1);
     }
 
@@ -123,7 +125,7 @@ class JettyConnectionMetricsTest {
         new JettyConnectionMetrics(registry, connector);
 
         assertThat(registry.get("jetty.connections.messages.in").counter().getId().getTag("connector.name"))
-                .isEqualTo("unnamed");
+            .isEqualTo("unnamed");
     }
 
     @Test
@@ -132,6 +134,7 @@ class JettyConnectionMetricsTest {
         new JettyConnectionMetrics(registry, connector);
 
         assertThat(registry.get("jetty.connections.messages.in").counter().getId().getTag("connector.name"))
-                .isEqualTo("super-fast-connector");
+            .isEqualTo("super-fast-connector");
     }
+
 }

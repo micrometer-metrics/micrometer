@@ -1,12 +1,12 @@
-/**
+/*
  * Copyright 2020 VMware, Inc.
- * <p>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
+ *
  * https://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,7 +25,9 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class CloudWatchConfigTest {
+
     private final Map<String, String> props = new HashMap<>();
+
     private final CloudWatchConfig config = props::get;
 
     @Issue("#2088")
@@ -43,7 +45,7 @@ class CloudWatchConfigTest {
         props.put("cloudwatch.batchSize", Integer.toString(CloudWatchConfig.MAX_BATCH_SIZE * 2));
 
         assertThat(config.validate().failures().stream().map(Validated.Invalid::getMessage))
-                .containsExactly("is required");
+            .containsExactly("is required");
 
         // automatically clamped back down to max batch size
         assertThat(config.batchSize()).isEqualTo(CloudWatchConfig.MAX_BATCH_SIZE);
@@ -69,7 +71,7 @@ class CloudWatchConfigTest {
         }.validate();
 
         assertThat(validate.failures().stream().map(Validated.Invalid::getMessage))
-                .containsOnly("cannot be greater than " + CloudWatchConfig.MAX_BATCH_SIZE);
+            .containsOnly("cannot be greater than " + CloudWatchConfig.MAX_BATCH_SIZE);
     }
 
     @Test
@@ -87,8 +89,7 @@ class CloudWatchConfigTest {
         };
         Validated<?> validate = config.validate();
 
-        assertThat(validate.failures().stream().map(Validated.Invalid::getMessage))
-                .containsExactly("is required");
+        assertThat(validate.failures().stream().map(Validated.Invalid::getMessage)).containsExactly("is required");
     }
 
     @Test
@@ -97,4 +98,5 @@ class CloudWatchConfigTest {
 
         assertThat(config.validate().isValid()).isTrue();
     }
+
 }

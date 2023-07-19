@@ -1,12 +1,12 @@
-/**
+/*
  * Copyright 2021 VMware, Inc.
- * <p>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
+ *
  * https://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 package io.micrometer.core.instrument.binder.mongodb;
-
-import java.util.Arrays;
 
 import com.mongodb.ServerAddress;
 import com.mongodb.connection.ClusterId;
@@ -30,6 +28,8 @@ import org.bson.BsonElement;
 import org.bson.BsonString;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+
+import java.util.Arrays;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -49,13 +49,9 @@ class DefaultMongoCommandTagsProviderTest {
     void defaultCommandTags() {
         CommandSucceededEvent event = commandSucceededEvent(5150);
         Iterable<Tag> tags = tagsProvider.commandTags(event);
-        assertThat(tags).containsExactlyInAnyOrder(
-                Tag.of("command", "find"),
-                Tag.of("collection", "unknown"),
+        assertThat(tags).containsExactlyInAnyOrder(Tag.of("command", "find"), Tag.of("collection", "unknown"),
                 Tag.of("cluster.id", connectionDesc.getConnectionId().getServerId().getClusterId().getValue()),
-                Tag.of("server.address", "localhost:5150"),
-                Tag.of("status", "SUCCESS")
-        );
+                Tag.of("server.address", "localhost:5150"), Tag.of("status", "SUCCESS"));
     }
 
     @Test
@@ -88,21 +84,12 @@ class DefaultMongoCommandTagsProviderTest {
     }
 
     private CommandStartedEvent commandStartedEvent(int requestId) {
-        return new CommandStartedEvent(
-                requestId,
-                connectionDesc,
-                "db1",
-                "find",
+        return new CommandStartedEvent(requestId, connectionDesc, "db1", "find",
                 new BsonDocument("find", new BsonString("collection-" + requestId)));
     }
 
     private CommandSucceededEvent commandSucceededEvent(int requestId) {
-        return new CommandSucceededEvent(
-                requestId,
-                connectionDesc,
-                "find",
-                new BsonDocument(),
-                1200L);
+        return new CommandSucceededEvent(requestId, connectionDesc, "find", new BsonDocument(), 1200L);
     }
 
     @Nested
@@ -110,12 +97,14 @@ class DefaultMongoCommandTagsProviderTest {
 
         @Test
         void withNameInAllowList() {
-            assertThat(tagsProvider.determineCollectionName("find", new BsonDocument("find", new BsonString(" bar ")))).hasValue("bar");
+            assertThat(tagsProvider.determineCollectionName("find", new BsonDocument("find", new BsonString(" bar "))))
+                .hasValue("bar");
         }
 
         @Test
         void withNameNotInAllowList() {
-            assertThat(tagsProvider.determineCollectionName("cmd", new BsonDocument("cmd", new BsonString(" bar ")))).isEmpty();
+            assertThat(tagsProvider.determineCollectionName("cmd", new BsonDocument("cmd", new BsonString(" bar "))))
+                .isEmpty();
         }
 
         @Test
@@ -125,36 +114,37 @@ class DefaultMongoCommandTagsProviderTest {
 
         @Test
         void withNonStringCommand() {
-            assertThat(tagsProvider.determineCollectionName("find", new BsonDocument("find", BsonBoolean.TRUE))).isEmpty();
+            assertThat(tagsProvider.determineCollectionName("find", new BsonDocument("find", BsonBoolean.TRUE)))
+                .isEmpty();
         }
 
         @Test
         void withEmptyStringCommand() {
-            assertThat(tagsProvider.determineCollectionName("find", new BsonDocument("find", new BsonString("  ")))).isEmpty();
+            assertThat(tagsProvider.determineCollectionName("find", new BsonDocument("find", new BsonString("  "))))
+                .isEmpty();
         }
 
         @Test
         void withCollectionFieldOnly() {
-            assertThat(tagsProvider.determineCollectionName("find", new BsonDocument("collection", new BsonString(" bar ")))).hasValue("bar");
+            assertThat(tagsProvider.determineCollectionName("find",
+                    new BsonDocument("collection", new BsonString(" bar "))))
+                .hasValue("bar");
         }
 
         @Test
         void withCollectionFieldAndAllowListedCommand() {
-            BsonDocument command = new BsonDocument(Arrays.asList(
-                    new BsonElement("collection", new BsonString("coll")),
-                    new BsonElement("find", new BsonString("bar"))
-            ));
+            BsonDocument command = new BsonDocument(Arrays.asList(new BsonElement("collection", new BsonString("coll")),
+                    new BsonElement("find", new BsonString("bar"))));
             assertThat(tagsProvider.determineCollectionName("find", command)).hasValue("bar");
         }
 
         @Test
         void withCollectionFieldAndNotAllowListedCommand() {
-            BsonDocument command = new BsonDocument(Arrays.asList(
-                    new BsonElement("collection", new BsonString("coll")),
-                    new BsonElement("cmd", new BsonString("bar"))
-            ));
+            BsonDocument command = new BsonDocument(Arrays.asList(new BsonElement("collection", new BsonString("coll")),
+                    new BsonElement("cmd", new BsonString("bar"))));
             assertThat(tagsProvider.determineCollectionName("find", command)).hasValue("coll");
         }
+
     }
 
 }

@@ -1,12 +1,12 @@
-/**
+/*
  * Copyright 2017 VMware, Inc.
- * <p>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
+ *
  * https://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,8 +17,9 @@ package io.micrometer.cloudwatch;
 
 /**
  * Utilities for cloudwatch registry
- * @deprecated the micrometer-registry-cloudwatch implementation has been deprecated in favour of
- *             micrometer-registry-cloudwatch2, which uses AWS SDK for Java 2.x
+ *
+ * @deprecated the micrometer-registry-cloudwatch implementation has been deprecated in
+ * favour of micrometer-registry-cloudwatch2, which uses AWS SDK for Java 2.x
  */
 @Deprecated
 final class CloudWatchUtils {
@@ -42,7 +43,6 @@ final class CloudWatchUtils {
     /**
      * Clean up metric to be within the allowable range as specified in
      * {@link com.amazonaws.services.cloudwatch.model.MetricDatum#setValue(Double)}
-     *
      * @param value unsanitized value
      * @return value clamped to allowable range
      */

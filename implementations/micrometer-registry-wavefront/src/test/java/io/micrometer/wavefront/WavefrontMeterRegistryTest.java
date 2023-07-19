@@ -1,12 +1,12 @@
-/**
+/*
  * Copyright 2017 VMware, Inc.
- * <p>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
+ *
  * https://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -46,6 +46,7 @@ import static org.mockito.Mockito.*;
  * @author Stephane Nicoll
  */
 class WavefrontMeterRegistryTest {
+
     private final WavefrontConfig config = new WavefrontConfig() {
         @Override
         public String get(String key) {
@@ -69,11 +70,13 @@ class WavefrontMeterRegistryTest {
     };
 
     private final MockClock clock = new MockClock();
+
     private final WavefrontSender wavefrontSender = spy(WavefrontSender.class);
+
     private final WavefrontMeterRegistry registry = WavefrontMeterRegistry.builder(config)
-            .clock(clock)
-            .wavefrontSender(wavefrontSender)
-            .build();
+        .clock(clock)
+        .wavefrontSender(wavefrontSender)
+        .build();
 
     @Test
     void publishMetric() throws IOException {
@@ -110,11 +113,14 @@ class WavefrontMeterRegistryTest {
         Measurement measurement3 = new Measurement(() -> Double.NaN, Statistic.VALUE);
         Measurement measurement4 = new Measurement(() -> 1d, Statistic.VALUE);
         Measurement measurement5 = new Measurement(() -> 2d, Statistic.VALUE);
-        List<Measurement> measurements = Arrays.asList(measurement1, measurement2, measurement3, measurement4, measurement5);
+        List<Measurement> measurements = Arrays.asList(measurement1, measurement2, measurement3, measurement4,
+                measurement5);
         Meter meter = Meter.builder("my.meter", Meter.Type.GAUGE, measurements).register(this.registry);
         registry.publishMeter(meter);
-        verify(wavefrontSender, times(1)).sendMetric("my.meter", 1d, clock.wallTime(), "host", Collections.singletonMap("statistic", "value"));
-        verify(wavefrontSender, times(1)).sendMetric("my.meter", 2d, clock.wallTime(), "host", Collections.singletonMap("statistic", "value"));
+        verify(wavefrontSender, times(1)).sendMetric("my.meter", 1d, clock.wallTime(), "host",
+                Collections.singletonMap("statistic", "value"));
+        verify(wavefrontSender, times(1)).sendMetric("my.meter", 2d, clock.wallTime(), "host",
+                Collections.singletonMap("statistic", "value"));
         verifyNoMoreInteractions(wavefrontSender);
     }
 
@@ -123,9 +129,8 @@ class WavefrontMeterRegistryTest {
         Meter.Id id = registry.summary("name").getId();
         long time = System.currentTimeMillis();
         List<Pair<Double, Integer>> centroids = Arrays.asList(new Pair<>(1d, 1));
-        List<WavefrontHistogramImpl.Distribution> distributions = Arrays.asList(
-                new WavefrontHistogramImpl.Distribution(time, centroids)
-        );
+        List<WavefrontHistogramImpl.Distribution> distributions = Arrays
+            .asList(new WavefrontHistogramImpl.Distribution(time, centroids));
         registry.publishDistribution(id, distributions);
         verify(wavefrontSender, times(1)).sendDistribution("name", centroids,
                 Collections.singleton(HistogramGranularity.MINUTE), time, "host", Collections.emptyMap());
@@ -173,8 +178,8 @@ class WavefrontMeterRegistryTest {
         assertThat(builder).hasFieldOrPropertyWithValue("flushInterval", 15_000L);
         assertThat(builder).hasFieldOrPropertyWithValue("flushIntervalTimeUnit", TimeUnit.MILLISECONDS);
         assertThat(sender).extracting("metricsReportingService")
-                .hasFieldOrPropertyWithValue("uri", URI.create("https://example.com"))
-                .hasFieldOrPropertyWithValue("token", "apiToken");
+            .hasFieldOrPropertyWithValue("uri", URI.create("https://example.com"))
+            .hasFieldOrPropertyWithValue("token", "apiToken");
         assertThat(sender).hasFieldOrPropertyWithValue("batchSize", 20);
     }
 
@@ -193,7 +198,7 @@ class WavefrontMeterRegistryTest {
         };
 
         assertThatExceptionOfType(ValidationException.class)
-                .isThrownBy(() -> WavefrontMeterRegistry.builder(missingUriConfig).build());
+            .isThrownBy(() -> WavefrontMeterRegistry.builder(missingUriConfig).build());
     }
 
     @Test
@@ -201,7 +206,7 @@ class WavefrontMeterRegistryTest {
         WavefrontConfig missingApiTokenDirectConfig = WavefrontConfig.DEFAULT_DIRECT;
 
         assertThatExceptionOfType(ValidationException.class)
-                .isThrownBy(() -> WavefrontMeterRegistry.builder(missingApiTokenDirectConfig).build());
+            .isThrownBy(() -> WavefrontMeterRegistry.builder(missingApiTokenDirectConfig).build());
     }
 
     @Test
@@ -219,8 +224,8 @@ class WavefrontMeterRegistryTest {
         };
 
         assertThatCode(() -> WavefrontMeterRegistry.builder(missingUriConfig)
-                .wavefrontSender(mock(WavefrontSender.class)).build())
-                .doesNotThrowAnyException();
+            .wavefrontSender(mock(WavefrontSender.class))
+            .build()).doesNotThrowAnyException();
     }
 
     @Test
@@ -228,8 +233,8 @@ class WavefrontMeterRegistryTest {
         WavefrontConfig missingApiTokenDirectConfig = WavefrontConfig.DEFAULT_DIRECT;
 
         assertThatCode(() -> WavefrontMeterRegistry.builder(missingApiTokenDirectConfig)
-                .wavefrontSender(mock(WavefrontSender.class)).build())
-                .doesNotThrowAnyException();
+            .wavefrontSender(mock(WavefrontSender.class))
+            .build()).doesNotThrowAnyException();
     }
 
     @Test
@@ -237,16 +242,26 @@ class WavefrontMeterRegistryTest {
         WavefrontConfig missingApiTokenProxyConfig = WavefrontConfig.DEFAULT_PROXY;
 
         assertThatCode(() -> WavefrontMeterRegistry.builder(missingApiTokenProxyConfig).build())
-                .doesNotThrowAnyException();
+            .doesNotThrowAnyException();
     }
 
     @Test
     void proxyUriConvertedToHttp() {
-        assertThat(WavefrontMeterRegistry.getWavefrontReportingUri(WavefrontConfig.DEFAULT_PROXY)).startsWith("http://");
+        assertThat(WavefrontMeterRegistry.getWavefrontReportingUri(WavefrontConfig.DEFAULT_PROXY))
+            .startsWith("http://");
     }
 
     @Test
     void directApiUriUnchanged() {
-        assertThat(WavefrontMeterRegistry.getWavefrontReportingUri(WavefrontConfig.DEFAULT_DIRECT)).isEqualTo(WavefrontConfig.DEFAULT_DIRECT.uri());
+        assertThat(WavefrontMeterRegistry.getWavefrontReportingUri(WavefrontConfig.DEFAULT_DIRECT))
+            .isEqualTo(WavefrontConfig.DEFAULT_DIRECT.uri());
     }
+
+    @Test
+    @Issue("#3196")
+    void wavefrontClientShouldBeClosedOnRegistryClose() throws IOException {
+        registry.close();
+        verify(wavefrontSender).close();
+    }
+
 }

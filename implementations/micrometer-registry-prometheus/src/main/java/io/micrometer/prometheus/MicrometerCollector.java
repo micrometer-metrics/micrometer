@@ -1,12 +1,12 @@
-/**
+/*
  * Copyright 2017 VMware, Inc.
- * <p>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
+ *
  * https://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -33,10 +33,15 @@ import static java.util.stream.Collectors.toList;
  * @author Johnny Lim
  */
 class MicrometerCollector extends Collector implements Collector.Describable {
+
     private final Meter.Id id;
+
     private final Map<List<String>, Child> children = new ConcurrentHashMap<>();
+
     private final String conventionName;
+
     private final List<String> tagKeys;
+
     private final String help;
 
     public MicrometerCollector(Meter.Id id, NamingConvention convention, PrometheusConfig config) {
@@ -68,14 +73,15 @@ class MicrometerCollector extends Collector implements Collector.Describable {
 
         for (Child child : children.values()) {
             child.samples(conventionName, tagKeys).forEach(family -> {
-                families.compute(family.getConventionName(), (name, matchingFamily) -> matchingFamily != null ?
-                        matchingFamily.addSamples(family.samples) : family);
+                families.compute(family.getConventionName(), (name, matchingFamily) -> matchingFamily != null
+                        ? matchingFamily.addSamples(family.samples) : family);
             });
         }
 
-        return families.values().stream()
-                .map(family -> new MetricFamilySamples(family.conventionName, family.type, help, family.samples))
-                .collect(toList());
+        return families.values()
+            .stream()
+            .map(family -> new MetricFamilySamples(family.conventionName, family.type, help, family.samples))
+            .collect(toList());
     }
 
     @Override
@@ -86,8 +92,8 @@ class MicrometerCollector extends Collector implements Collector.Describable {
                         new MetricFamilySamples(conventionName, Type.COUNTER, help, Collections.emptyList()));
 
             case GAUGE:
-                return Collections.singletonList(
-                        new MetricFamilySamples(conventionName, Type.GAUGE, help, Collections.emptyList()));
+                return Collections
+                    .singletonList(new MetricFamilySamples(conventionName, Type.GAUGE, help, Collections.emptyList()));
 
             case TIMER:
             case DISTRIBUTION_SUMMARY:
@@ -103,12 +109,17 @@ class MicrometerCollector extends Collector implements Collector.Describable {
     }
 
     interface Child {
+
         Stream<Family> samples(String conventionName, List<String> tagKeys);
+
     }
 
     static class Family {
+
         final Type type;
+
         final String conventionName;
+
         final List<MetricFamilySamples.Sample> samples = new ArrayList<>();
 
         Family(Type type, String conventionName, MetricFamilySamples.Sample... samples) {
@@ -131,5 +142,7 @@ class MicrometerCollector extends Collector implements Collector.Describable {
             this.samples.addAll(samples);
             return this;
         }
+
     }
+
 }

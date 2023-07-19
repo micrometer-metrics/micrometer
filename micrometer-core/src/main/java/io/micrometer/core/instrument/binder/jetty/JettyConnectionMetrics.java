@@ -1,12 +1,12 @@
-/**
+/*
  * Copyright 2019 VMware, Inc.
- * <p>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
+ *
  * https://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,26 +15,22 @@
  */
 package io.micrometer.core.instrument.binder.jetty;
 
-import io.micrometer.core.instrument.Counter;
-import io.micrometer.core.instrument.DistributionSummary;
-import io.micrometer.core.instrument.Gauge;
-import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Tag;
-import io.micrometer.core.instrument.Tags;
-import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.TimeWindowMax;
-import java.util.HashMap;
-import java.util.Map;
 import org.eclipse.jetty.io.Connection;
 import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.HttpConnection;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.util.component.AbstractLifeCycle;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
- * Jetty connection metrics.<br><br>
+ * Jetty connection metrics.<br>
+ * <br>
  * <p>
  * Usage example:
  *
@@ -46,21 +42,28 @@ import org.eclipse.jetty.util.component.AbstractLifeCycle;
  * server.setConnectors(new Connector[] { connector });
  * }</pre>
  *
- * Alternatively, configure on all connectors with {@link JettyConnectionMetrics#addToAllConnectors(Server, MeterRegistry, Iterable)}.
+ * Alternatively, configure on all connectors with
+ * {@link JettyConnectionMetrics#addToAllConnectors(Server, MeterRegistry, Iterable)}.
  *
  * @author Jon Schneider
  * @since 1.4.0
  */
 public class JettyConnectionMetrics extends AbstractLifeCycle implements Connection.Listener {
+
     private final MeterRegistry registry;
+
     private final Iterable<Tag> tags;
 
     private final Object connectionSamplesLock = new Object();
+
     private final Map<Connection, Timer.Sample> connectionSamples = new HashMap<>();
 
     private final Counter messagesIn;
+
     private final Counter messagesOut;
+
     private final DistributionSummary bytesIn;
+
     private final DistributionSummary bytesOut;
 
     private final TimeWindowMax maxConnections;
@@ -74,50 +77,49 @@ public class JettyConnectionMetrics extends AbstractLifeCycle implements Connect
         this.tags = tags;
 
         this.messagesIn = Counter.builder("jetty.connections.messages.in")
-                .baseUnit(BaseUnits.MESSAGES)
-                .description("Messages received by tracked connections")
-                .tags(tags)
-                .register(registry);
+            .baseUnit(BaseUnits.MESSAGES)
+            .description("Messages received by tracked connections")
+            .tags(tags)
+            .register(registry);
 
         this.messagesOut = Counter.builder("jetty.connections.messages.out")
-                .baseUnit(BaseUnits.MESSAGES)
-                .description("Messages sent by tracked connections")
-                .tags(tags)
-                .register(registry);
+            .baseUnit(BaseUnits.MESSAGES)
+            .description("Messages sent by tracked connections")
+            .tags(tags)
+            .register(registry);
 
         this.bytesIn = DistributionSummary.builder("jetty.connections.bytes.in")
-                .baseUnit(BaseUnits.BYTES)
-                .description("Bytes received by tracked connections")
-                .tags(tags)
-                .register(registry);
+            .baseUnit(BaseUnits.BYTES)
+            .description("Bytes received by tracked connections")
+            .tags(tags)
+            .register(registry);
 
         this.bytesOut = DistributionSummary.builder("jetty.connections.bytes.out")
-                .baseUnit(BaseUnits.BYTES)
-                .description("Bytes sent by tracked connections")
-                .tags(tags)
-                .register(registry);
+            .baseUnit(BaseUnits.BYTES)
+            .description("Bytes sent by tracked connections")
+            .tags(tags)
+            .register(registry);
 
         this.maxConnections = new TimeWindowMax(registry.config().clock(), DistributionStatisticConfig.DEFAULT);
 
         Gauge.builder("jetty.connections.max", this, jcm -> jcm.maxConnections.poll())
-                .strongReference(true)
-                .baseUnit(BaseUnits.CONNECTIONS)
-                .description("The maximum number of observed connections over a rolling 2-minute interval")
-                .tags(tags)
-                .register(registry);
+            .strongReference(true)
+            .baseUnit(BaseUnits.CONNECTIONS)
+            .description("The maximum number of observed connections over a rolling 2-minute interval")
+            .tags(tags)
+            .register(registry);
 
         Gauge.builder("jetty.connections.current", this, jcm -> jcm.connectionSamples.size())
-                .strongReference(true)
-                .baseUnit(BaseUnits.CONNECTIONS)
-                .description("The current number of open Jetty connections")
-                .tags(tags)
-                .register(registry);
+            .strongReference(true)
+            .baseUnit(BaseUnits.CONNECTIONS)
+            .description("The current number of open Jetty connections")
+            .tags(tags)
+            .register(registry);
     }
 
     /**
-     * Create a {@code JettyConnectionMetrics} instance. {@link Connector#getName()} will be used for
-     * {@literal connector.name} tag.
-     *
+     * Create a {@code JettyConnectionMetrics} instance. {@link Connector#getName()} will
+     * be used for {@literal connector.name} tag.
      * @param registry registry to use
      * @param connector connector to instrument
      * @since 1.8.0
@@ -127,9 +129,8 @@ public class JettyConnectionMetrics extends AbstractLifeCycle implements Connect
     }
 
     /**
-     * Create a {@code JettyConnectionMetrics} instance. {@link Connector#getName()} will be used for
-     * {@literal connector.name} tag.
-     *
+     * Create a {@code JettyConnectionMetrics} instance. {@link Connector#getName()} will
+     * be used for {@literal connector.name} tag.
      * @param registry registry to use
      * @param connector connector to instrument
      * @param tags tags to add to metrics
@@ -163,10 +164,10 @@ public class JettyConnectionMetrics extends AbstractLifeCycle implements Connect
         if (sample != null) {
             String serverOrClient = connection instanceof HttpConnection ? "server" : "client";
             sample.stop(Timer.builder("jetty.connections.request")
-                    .description("Jetty client or server requests")
-                    .tag("type", serverOrClient)
-                    .tags(tags)
-                    .register(registry));
+                .description("Jetty client or server requests")
+                .tag("type", serverOrClient)
+                .tags(tags)
+                .register(registry));
         }
 
         messagesIn.increment(connection.getMessagesIn());
@@ -187,4 +188,5 @@ public class JettyConnectionMetrics extends AbstractLifeCycle implements Connect
     public static void addToAllConnectors(Server server, MeterRegistry registry) {
         addToAllConnectors(server, registry, Tags.empty());
     }
+
 }

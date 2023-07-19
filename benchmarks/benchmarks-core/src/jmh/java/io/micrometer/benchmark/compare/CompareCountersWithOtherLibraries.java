@@ -1,12 +1,12 @@
-/**
+/*
  * Copyright 2018 VMware, Inc.
- * <p>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
+ *
  * https://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -37,9 +37,12 @@ import java.util.concurrent.TimeUnit;
 @OutputTimeUnit(TimeUnit.NANOSECONDS)
 @Threads(16)
 public class CompareCountersWithOtherLibraries {
+
     @State(Scope.Benchmark)
     public static class DropwizardState {
+
         com.codahale.metrics.MetricRegistry registry;
+
         com.codahale.metrics.Counter counter;
 
         @Setup(Level.Trial)
@@ -52,12 +55,16 @@ public class CompareCountersWithOtherLibraries {
         public void tearDown(Blackhole hole) {
             hole.consume(counter.getCount());
         }
+
     }
 
     @State(Scope.Benchmark)
     public static class MicrometerState {
+
         io.micrometer.core.instrument.MeterRegistry registry;
+
         io.micrometer.core.instrument.Counter counter;
+
         io.micrometer.core.instrument.Counter counterWithTags;
 
         @Setup(Level.Trial)
@@ -75,13 +82,16 @@ public class CompareCountersWithOtherLibraries {
                 }
             }
         }
+
     }
 
     @State(Scope.Benchmark)
     public static class Dropwizard5State {
 
         io.dropwizard.metrics5.MetricRegistry registry;
+
         io.dropwizard.metrics5.Counter counter;
+
         io.dropwizard.metrics5.Counter counterWithTags;
 
         @Setup(Level.Trial)
@@ -100,31 +110,39 @@ public class CompareCountersWithOtherLibraries {
                 hole.consume(c.getCount());
             }
         }
+
     }
 
     @State(Scope.Benchmark)
     public static class PrometheusState {
+
         io.prometheus.client.Counter counter;
+
         io.prometheus.client.Counter counterWithTags;
 
         @Setup(Level.Trial)
         public void setup() {
             counter = io.prometheus.client.Counter.build().name("counter").help("A counter").create();
-            counterWithTags = io.prometheus.client.Counter.build().name("counter").help("Counter with two tags declared").labelNames("key1", "key2").register();
+            counterWithTags = io.prometheus.client.Counter.build()
+                .name("counter")
+                .help("Counter with two tags declared")
+                .labelNames("key1", "key2")
+                .register();
         }
+
     }
 
-//    @Benchmark
+    // @Benchmark
     public void dropwizard5Counter(Dropwizard5State state) {
         state.counter.inc();
     }
 
-//    @Benchmark
+    // @Benchmark
     public void dropwizard5CounterFixedTags(Dropwizard5State state) {
         state.counterWithTags.inc();
     }
 
-//    @Benchmark
+    // @Benchmark
     public void dropwizard5CounterTags(Dropwizard5State state) {
         Map<String, String> tags = new HashMap<>();
         tags.put("key1", "value1");
@@ -132,7 +150,7 @@ public class CompareCountersWithOtherLibraries {
         state.registry.counter(new io.dropwizard.metrics5.MetricName("tagged", tags)).inc();
     }
 
-//    @Benchmark
+    // @Benchmark
     public void micrometerCounter(MicrometerState state) {
         state.counter.increment();
     }
@@ -142,12 +160,12 @@ public class CompareCountersWithOtherLibraries {
         state.registry.counter("dynamicTags", "key1", "value1", "key2", "value2").increment();
     }
 
-//    @Benchmark
+    // @Benchmark
     public void micrometerCounterFixedTags(MicrometerState state) {
         state.counterWithTags.increment();
     }
 
-//    @Benchmark
+    // @Benchmark
     public void prometheusCounter(PrometheusState state) {
         state.counter.inc();
     }
@@ -158,10 +176,10 @@ public class CompareCountersWithOtherLibraries {
     }
 
     public static void main(String[] args) throws RunnerException {
-        Options opt = new OptionsBuilder()
-                .include(CompareCountersWithOtherLibraries.class.getSimpleName())
-                .addProfiler(GCProfiler.class)
-                .build();
+        Options opt = new OptionsBuilder().include(CompareCountersWithOtherLibraries.class.getSimpleName())
+            .addProfiler(GCProfiler.class)
+            .build();
         new Runner(opt).run();
     }
+
 }

@@ -1,12 +1,12 @@
-/**
+/*
  * Copyright 2017 VMware, Inc.
- * <p>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
+ *
  * https://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,16 +20,16 @@ import io.micrometer.core.instrument.LongTaskTimer;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.internal.DefaultLongTaskTimer;
-import io.micrometer.core.instrument.util.MeterEquivalence;
 import io.micrometer.core.instrument.util.TimeUtils;
 
 import java.util.concurrent.TimeUnit;
 
 public class SpectatorLongTaskTimer extends DefaultLongTaskTimer implements LongTaskTimer {
+
     private final com.netflix.spectator.api.LongTaskTimer timer;
 
     SpectatorLongTaskTimer(Meter.Id id, com.netflix.spectator.api.LongTaskTimer timer, Clock clock,
-                           DistributionStatisticConfig distributionStatisticConfig) {
+            DistributionStatisticConfig distributionStatisticConfig) {
         super(id, clock, TimeUnit.NANOSECONDS, distributionStatisticConfig, true);
         this.timer = timer;
     }
@@ -49,19 +49,10 @@ public class SpectatorLongTaskTimer extends DefaultLongTaskTimer implements Long
         return timer.activeTasks();
     }
 
-    @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
-    @Override
-    public boolean equals(Object o) {
-        return MeterEquivalence.equals(this, o);
-    }
-
-    @Override
-    public int hashCode() {
-        return MeterEquivalence.hashCode(this);
-    }
-
     class SpectatorSample extends Sample {
+
         private final Sample delegate;
+
         private final long taskId;
 
         public SpectatorSample(Sample delegate, long taskId) {
@@ -79,5 +70,7 @@ public class SpectatorLongTaskTimer extends DefaultLongTaskTimer implements Long
         public double duration(TimeUnit unit) {
             return TimeUtils.nanosToUnit(timer.duration(taskId), unit);
         }
+
     }
+
 }

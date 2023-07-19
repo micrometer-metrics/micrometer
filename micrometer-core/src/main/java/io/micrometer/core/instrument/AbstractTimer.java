@@ -1,12 +1,12 @@
-/**
+/*
  * Copyright 2017 VMware, Inc.
- * <p>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
+ *
  * https://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,11 +15,11 @@
  */
 package io.micrometer.core.instrument;
 
+import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.distribution.*;
 import io.micrometer.core.instrument.distribution.pause.ClockDriftPauseDetector;
+import io.micrometer.core.instrument.distribution.pause.NoPauseDetector;
 import io.micrometer.core.instrument.distribution.pause.PauseDetector;
-import io.micrometer.core.instrument.util.MeterEquivalence;
-import io.micrometer.core.lang.Nullable;
 import org.LatencyUtils.IntervalEstimator;
 import org.LatencyUtils.SimplePauseDetector;
 import org.LatencyUtils.TimeCappedMovingAverageIntervalEstimator;
@@ -28,89 +28,127 @@ import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BooleanSupplier;
+import java.util.function.DoubleSupplier;
+import java.util.function.IntSupplier;
+import java.util.function.LongSupplier;
 import java.util.function.Supplier;
 
 public abstract class AbstractTimer extends AbstractMeter implements Timer {
-    private static Map<PauseDetector, org.LatencyUtils.PauseDetector> pauseDetectorCache =
-            new ConcurrentHashMap<>();
+
+    private static final Map<PauseDetector, Object> pauseDetectorCache = new ConcurrentHashMap<>();
 
     protected final Clock clock;
+
     protected final Histogram histogram;
+
     private final TimeUnit baseTimeUnit;
 
     // Only used when pause detection is enabled
     @Nullable
-    private IntervalEstimator intervalEstimator = null;
+    private Object intervalEstimator;
 
     @Nullable
     private org.LatencyUtils.PauseDetector pauseDetector;
 
     /**
      * Creates a new timer.
-     *
-     * @param id                          The timer's name and tags.
-     * @param clock                       The clock used to measure latency.
-     * @param distributionStatisticConfig Configuration determining which distribution statistics are sent.
-     * @param pauseDetector               Compensation for coordinated omission.
-     * @param baseTimeUnit                The time scale of this timer.
-     * @deprecated Timer implementations should now declare at construction time whether they support aggregable percentiles or not.
-     * By declaring it up front, Micrometer can memory optimize the histogram structure used to store distribution statistics.
+     * @param id The timer's name and tags.
+     * @param clock The clock used to measure latency.
+     * @param distributionStatisticConfig Configuration determining which distribution
+     * statistics are sent.
+     * @param pauseDetector Compensation for coordinated omission.
+     * @param baseTimeUnit The time scale of this timer.
+     * @deprecated Timer implementations should now declare at construction time whether
+     * they support aggregable percentiles or not. By declaring it up front, Micrometer
+     * can memory optimize the histogram structure used to store distribution statistics.
      */
     @Deprecated
-    protected AbstractTimer(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig, PauseDetector pauseDetector,
-                            TimeUnit baseTimeUnit) {
+    protected AbstractTimer(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig,
+            PauseDetector pauseDetector, TimeUnit baseTimeUnit) {
         this(id, clock, distributionStatisticConfig, pauseDetector, baseTimeUnit, false);
     }
 
     /**
      * Creates a new timer.
-     *
-     * @param id                            The timer's name and tags.
-     * @param clock                         The clock used to measure latency.
-     * @param distributionStatisticConfig   Configuration determining which distribution statistics are sent.
-     * @param pauseDetector                 Compensation for coordinated omission.
-     * @param baseTimeUnit                  The time scale of this timer.
-     * @param supportsAggregablePercentiles Indicates whether the registry supports percentile approximations from histograms.
+     * @param id The timer's name and tags.
+     * @param clock The clock used to measure latency.
+     * @param distributionStatisticConfig Configuration determining which distribution
+     * statistics are sent.
+     * @param pauseDetector Compensation for coordinated omission.
+     * @param baseTimeUnit The time scale of this timer.
+     * @param supportsAggregablePercentiles Indicates whether the registry supports
+     * percentile approximations from histograms.
      */
     protected AbstractTimer(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig,
-                            PauseDetector pauseDetector, TimeUnit baseTimeUnit, boolean supportsAggregablePercentiles) {
+            PauseDetector pauseDetector, TimeUnit baseTimeUnit, boolean supportsAggregablePercentiles) {
+        this(id, clock, pauseDetector, baseTimeUnit,
+                defaultHistogram(clock, distributionStatisticConfig, supportsAggregablePercentiles));
+    }
+
+    /**
+     * Creates a new timer.
+     * @param id The timer's name and tags.
+     * @param clock The clock used to measure latency.
+     * @param pauseDetector Compensation for coordinated omission.
+     * @param baseTimeUnit The time scale of this timer.
+     * @param histogram Histogram.
+     * @since 1.11.0
+     */
+    protected AbstractTimer(Id id, Clock clock, PauseDetector pauseDetector, TimeUnit baseTimeUnit,
+            Histogram histogram) {
         super(id);
         this.clock = clock;
         this.baseTimeUnit = baseTimeUnit;
-
         initPauseDetector(pauseDetector);
+        this.histogram = histogram;
+    }
 
+    /**
+     * Creates a default histogram.
+     * @param clock The clock used to measure latency.
+     * @param distributionStatisticConfig Configuration determining which distribution
+     * statistics are sent.
+     * @param supportsAggregablePercentiles Indicates whether the registry supports
+     * percentile approximations from histograms.
+     * @return a default histogram
+     * @since 1.11.0
+     */
+    protected static Histogram defaultHistogram(Clock clock, DistributionStatisticConfig distributionStatisticConfig,
+            boolean supportsAggregablePercentiles) {
         if (distributionStatisticConfig.isPublishingPercentiles()) {
             // hdr-based histogram
-            this.histogram = new TimeWindowPercentileHistogram(clock, distributionStatisticConfig, supportsAggregablePercentiles);
-        } else if (distributionStatisticConfig.isPublishingHistogram()) {
+            return new TimeWindowPercentileHistogram(clock, distributionStatisticConfig, supportsAggregablePercentiles);
+        }
+        if (distributionStatisticConfig.isPublishingHistogram()) {
             // fixed boundary histograms, which have a slightly better memory footprint
             // when we don't need Micrometer-computed percentiles
-            this.histogram = new TimeWindowFixedBoundaryHistogram(clock, distributionStatisticConfig, supportsAggregablePercentiles);
-        } else {
-            // noop histogram
-            this.histogram = NoopHistogram.INSTANCE;
+            return new TimeWindowFixedBoundaryHistogram(clock, distributionStatisticConfig,
+                    supportsAggregablePercentiles);
         }
+        return NoopHistogram.INSTANCE;
     }
 
     private void initPauseDetector(PauseDetector pauseDetectorType) {
-        pauseDetector = pauseDetectorCache.computeIfAbsent(pauseDetectorType, detector -> {
-            if (detector instanceof ClockDriftPauseDetector) {
-                ClockDriftPauseDetector clockDriftPauseDetector = (ClockDriftPauseDetector) detector;
-                return new SimplePauseDetector(clockDriftPauseDetector.getSleepInterval().toNanos(),
-                        clockDriftPauseDetector.getPauseThreshold().toNanos(), 1, false);
-            }
-            return null;
-        });
+        if (pauseDetectorType instanceof NoPauseDetector) {
+            return;
+        }
+        pauseDetector = (org.LatencyUtils.PauseDetector) pauseDetectorCache.computeIfAbsent(pauseDetectorType,
+                detector -> {
+                    if (detector instanceof ClockDriftPauseDetector) {
+                        ClockDriftPauseDetector clockDriftPauseDetector = (ClockDriftPauseDetector) detector;
+                        return new SimplePauseDetector(clockDriftPauseDetector.getSleepInterval().toNanos(),
+                                clockDriftPauseDetector.getPauseThreshold().toNanos(), 1, false);
+                    }
+                    return null;
+                });
 
         if (pauseDetector instanceof SimplePauseDetector) {
-            this.intervalEstimator = new TimeCappedMovingAverageIntervalEstimator(128,
-                    10000000000L, pauseDetector);
+            this.intervalEstimator = new TimeCappedMovingAverageIntervalEstimator(128, 10000000000L, pauseDetector);
 
             pauseDetector.addListener((pauseLength, pauseEndTime) -> {
-//            System.out.println("Pause of length " + (pauseLength / 1e6) + "ms, end time " + pauseEndTime);
                 if (intervalEstimator != null) {
-                    long estimatedInterval = intervalEstimator.getEstimatedInterval(pauseEndTime);
+                    long estimatedInterval = ((IntervalEstimator) intervalEstimator).getEstimatedInterval(pauseEndTime);
                     long observedLatencyMinbar = pauseLength - estimatedInterval;
                     if (observedLatencyMinbar >= estimatedInterval) {
                         recordValueWithExpectedInterval(observedLatencyMinbar, estimatedInterval);
@@ -124,9 +162,8 @@ public abstract class AbstractTimer extends AbstractMeter implements Timer {
         record(nanoValue, TimeUnit.NANOSECONDS);
         if (expectedIntervalBetweenValueSamples <= 0)
             return;
-        for (long missingValue = nanoValue - expectedIntervalBetweenValueSamples;
-             missingValue >= expectedIntervalBetweenValueSamples;
-             missingValue -= expectedIntervalBetweenValueSamples) {
+        for (long missingValue = nanoValue
+                - expectedIntervalBetweenValueSamples; missingValue >= expectedIntervalBetweenValueSamples; missingValue -= expectedIntervalBetweenValueSamples) {
             record(missingValue, TimeUnit.NANOSECONDS);
         }
     }
@@ -136,7 +173,8 @@ public abstract class AbstractTimer extends AbstractMeter implements Timer {
         final long s = clock.monotonicTime();
         try {
             return f.call();
-        } finally {
+        }
+        finally {
             final long e = clock.monotonicTime();
             record(e - s, TimeUnit.NANOSECONDS);
         }
@@ -147,7 +185,56 @@ public abstract class AbstractTimer extends AbstractMeter implements Timer {
         final long s = clock.monotonicTime();
         try {
             return f.get();
-        } finally {
+        }
+        finally {
+            final long e = clock.monotonicTime();
+            record(e - s, TimeUnit.NANOSECONDS);
+        }
+    }
+
+    @Override
+    public boolean record(BooleanSupplier f) {
+        final long s = clock.monotonicTime();
+        try {
+            return f.getAsBoolean();
+        }
+        finally {
+            final long e = clock.monotonicTime();
+            record(e - s, TimeUnit.NANOSECONDS);
+        }
+    }
+
+    @Override
+    public int record(IntSupplier f) {
+        final long s = clock.monotonicTime();
+        try {
+            return f.getAsInt();
+        }
+        finally {
+            final long e = clock.monotonicTime();
+            record(e - s, TimeUnit.NANOSECONDS);
+        }
+    }
+
+    @Override
+    public long record(LongSupplier f) {
+        final long s = clock.monotonicTime();
+        try {
+            return f.getAsLong();
+        }
+        finally {
+            final long e = clock.monotonicTime();
+            record(e - s, TimeUnit.NANOSECONDS);
+        }
+    }
+
+    @Override
+    public double record(DoubleSupplier f) {
+        final long s = clock.monotonicTime();
+        try {
+            return f.getAsDouble();
+        }
+        finally {
             final long e = clock.monotonicTime();
             record(e - s, TimeUnit.NANOSECONDS);
         }
@@ -158,7 +245,8 @@ public abstract class AbstractTimer extends AbstractMeter implements Timer {
         final long s = clock.monotonicTime();
         try {
             f.run();
-        } finally {
+        }
+        finally {
             final long e = clock.monotonicTime();
             record(e - s, TimeUnit.NANOSECONDS);
         }
@@ -171,7 +259,7 @@ public abstract class AbstractTimer extends AbstractMeter implements Timer {
             recordNonNegative(amount, unit);
 
             if (intervalEstimator != null) {
-                intervalEstimator.recordInterval(clock.monotonicTime());
+                ((IntervalEstimator) intervalEstimator).recordInterval(clock.monotonicTime());
             }
         }
     }
@@ -188,17 +276,6 @@ public abstract class AbstractTimer extends AbstractMeter implements Timer {
         return baseTimeUnit;
     }
 
-    @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
-    @Override
-    public boolean equals(@Nullable Object o) {
-        return MeterEquivalence.equals(this, o);
-    }
-
-    @Override
-    public int hashCode() {
-        return MeterEquivalence.hashCode(this);
-    }
-
     @Override
     public void close() {
         histogram.close();
@@ -206,4 +283,5 @@ public abstract class AbstractTimer extends AbstractMeter implements Timer {
             pauseDetector.shutdown();
         }
     }
+
 }

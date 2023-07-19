@@ -1,12 +1,12 @@
-/**
+/*
  * Copyright 2017 VMware, Inc.
- * <p>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
+ *
  * https://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,11 +16,12 @@
 package io.micrometer.dynatrace.v1;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.micrometer.common.util.internal.logging.LogEvent;
+import io.micrometer.common.util.internal.logging.MockLogger;
+import io.micrometer.common.util.internal.logging.MockLoggerFactory;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.config.validate.ValidationException;
 import io.micrometer.core.ipc.http.HttpSender;
-import io.micrometer.core.util.internal.logging.MockLogger;
-import io.micrometer.core.util.internal.logging.MockLoggerFactory;
 import io.micrometer.dynatrace.DynatraceApiVersion;
 import io.micrometer.dynatrace.DynatraceConfig;
 import io.micrometer.dynatrace.DynatraceMeterRegistry;
@@ -37,14 +38,13 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-import static io.micrometer.core.util.internal.logging.InternalLogLevel.DEBUG;
-import static io.micrometer.core.util.internal.logging.InternalLogLevel.ERROR;
+import static io.micrometer.common.util.internal.logging.InternalLogLevel.DEBUG;
+import static io.micrometer.common.util.internal.logging.InternalLogLevel.ERROR;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.isA;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 /**
  * Tests for {@link DynatraceExporterV1}.
@@ -52,20 +52,25 @@ import static org.mockito.Mockito.when;
  * @author Johnny Lim
  */
 class DynatraceExporterV1Test {
+
     private static final MockLoggerFactory FACTORY = new MockLoggerFactory();
+
     private static final MockLogger LOGGER = FACTORY.getLogger(DynatraceExporterV1.class);
+
     private static final Double GAUGE_VALUE = 1.0;
 
     private final DynatraceConfig config = createDynatraceConfig();
+
     private final MockClock clock = new MockClock();
 
     private final HttpSender httpClient = request -> new HttpSender.Response(200, null);
+
     private final DynatraceExporterV1 exporter = FACTORY.injectLogger(() -> createExporter(httpClient));
 
     private final DynatraceMeterRegistry meterRegistry = DynatraceMeterRegistry.builder(config)
-            .clock(clock)
-            .httpClient(httpClient)
-            .build();
+        .clock(clock)
+        .httpClient(httpClient)
+        .build();
 
     private final ObjectMapper mapper = new ObjectMapper();
 
@@ -151,14 +156,16 @@ class DynatraceExporterV1Test {
     }
 
     @Test
-    void putCustomMetricOnSuccessShouldAddMetricIdToCreatedCustomMetrics() throws NoSuchFieldException, IllegalAccessException {
+    void putCustomMetricOnSuccessShouldAddMetricIdToCreatedCustomMetrics()
+            throws NoSuchFieldException, IllegalAccessException {
         Field createdCustomMetricsField = DynatraceExporterV1.class.getDeclaredField("createdCustomMetrics");
         createdCustomMetricsField.setAccessible(true);
         @SuppressWarnings("unchecked")
         Set<String> createdCustomMetrics = (Set<String>) createdCustomMetricsField.get(exporter);
         assertThat(createdCustomMetrics).isEmpty();
 
-        DynatraceMetricDefinition customMetric = new DynatraceMetricDefinition("metricId", null, null, null, new String[]{"type"}, null);
+        DynatraceMetricDefinition customMetric = new DynatraceMetricDefinition("metricId", null, null, null,
+                new String[] { "type" }, null);
         exporter.putCustomMetric(customMetric);
         assertThat(createdCustomMetrics).containsExactly("metricId");
     }
@@ -192,7 +199,8 @@ class DynatraceExporterV1Test {
             Map<String, Object> map = mapper.readValue(timeSeries.asJson(), Map.class);
             List<List<Number>> dataPoints = (List<List<Number>>) map.get("dataPoints");
             assertThat(dataPoints.get(0).get(1).doubleValue()).isEqualTo(GAUGE_VALUE);
-        } catch (IOException ex) {
+        }
+        catch (IOException ex) {
             throw new RuntimeException(ex);
         }
     }
@@ -243,9 +251,8 @@ class DynatraceExporterV1Test {
         meterRegistry.gauge("my.gauge", number);
         Gauge gauge = meterRegistry.find("my.gauge").gauge();
         Stream<DynatraceCustomMetric> series = exporter.writeMeter(gauge);
-        List<DynatraceTimeSeries> timeSeries = series
-                .map(DynatraceCustomMetric::getTimeSeries)
-                .collect(Collectors.toList());
+        List<DynatraceTimeSeries> timeSeries = series.map(DynatraceCustomMetric::getTimeSeries)
+            .collect(Collectors.toList());
         List<DynatraceBatchedPayload> entries = exporter.createPostMessages("my.type", null, timeSeries);
         assertThat(entries).hasSize(1);
         assertThat(entries.get(0).metricCount).isEqualTo(1);
@@ -254,20 +261,28 @@ class DynatraceExporterV1Test {
 
     @Test
     void whenAllTsTooLargeEmptyMessageListReturned() {
-        List<DynatraceBatchedPayload> messages = exporter.createPostMessages("my.type", null, Collections.singletonList(createTimeSeriesWithDimensions(10_000)));
+        List<DynatraceBatchedPayload> messages = exporter.createPostMessages("my.type", null,
+                Collections.singletonList(createTimeSeriesWithDimensions(10_000)));
         assertThat(messages).isEmpty();
     }
 
     @Test
     void splitsWhenExactlyExceedingMaxByComma() {
+        // @formatter:off
         // comma needs to be considered when there is more than one time series
-        List<DynatraceBatchedPayload> messages = exporter.createPostMessages("my.type", "my.group",
+        List<DynatraceBatchedPayload> messages = exporter.createPostMessages(
+                "my.type",
+                "my.group",
                 // Max bytes: 15330 (excluding header/footer, 15360 with header/footer)
-                Arrays.asList(createTimeSeriesWithDimensions(750), // 14861 bytes
-                        createTimeSeriesWithDimensions(23, "asdfg"), // 469 bytes (overflows due to comma)
+                Arrays.asList(
+                        createTimeSeriesWithDimensions(750), // 14861 bytes
+                        // 469 bytes (overflows due to comma)
+                        createTimeSeriesWithDimensions(23, "asdfg"),
                         createTimeSeriesWithDimensions(750), // 14861 bytes
                         createTimeSeriesWithDimensions(22, "asd") // 468 bytes + comma
-                ));
+                )
+        );
+        // @formatter:on
         assertThat(messages).hasSize(3);
         assertThat(messages.get(0).metricCount).isEqualTo(1);
         assertThat(messages.get(1).metricCount).isEqualTo(1);
@@ -278,12 +293,19 @@ class DynatraceExporterV1Test {
 
     @Test
     void countsPreviousAndNextComma() {
-        List<DynatraceBatchedPayload> messages = exporter.createPostMessages("my.type", null,
+        // @formatter:off
+        List<DynatraceBatchedPayload> messages = exporter.createPostMessages(
+                "my.type",
+                null,
                 // Max bytes: 15330 (excluding header/footer, 15360 with header/footer)
-                Arrays.asList(createTimeSeriesWithDimensions(750), // 14861 bytes
+                Arrays.asList(
+                        createTimeSeriesWithDimensions(750), // 14861 bytes
                         createTimeSeriesWithDimensions(10, "asdf"), // 234 bytes + comma
-                        createTimeSeriesWithDimensions(10, "asdf") // 234 bytes + comma = 15331 bytes (overflow)
-                ));
+                        // 234 bytes + comma = 15331 bytes (overflow)
+                        createTimeSeriesWithDimensions(10, "asdf")
+                )
+        );
+        // @formatter:on
         assertThat(messages).hasSize(2);
         assertThat(messages.get(0).metricCount).isEqualTo(2);
         assertThat(messages.get(1).metricCount).isEqualTo(1);
@@ -307,7 +329,8 @@ class DynatraceExporterV1Test {
         Measurement measurement3 = new Measurement(() -> Double.NaN, Statistic.VALUE);
         Measurement measurement4 = new Measurement(() -> 1d, Statistic.VALUE);
         Measurement measurement5 = new Measurement(() -> 2d, Statistic.VALUE);
-        List<Measurement> measurements = Arrays.asList(measurement1, measurement2, measurement3, measurement4, measurement5);
+        List<Measurement> measurements = Arrays.asList(measurement1, measurement2, measurement3, measurement4,
+                measurement5);
         Meter meter = Meter.builder("my.meter", Meter.Type.GAUGE, measurements).register(this.meterRegistry);
         assertThat(exporter.writeMeter(meter)).hasSize(2);
     }
@@ -323,8 +346,8 @@ class DynatraceExporterV1Test {
         clock.add(config.step());
 
         List<String> metrics = exporter.writeSummary(summary)
-                .map((metric) -> metric.getTimeSeries().asJson())
-                .collect(Collectors.toList());
+            .map((metric) -> metric.getTimeSeries().asJson())
+            .collect(Collectors.toList());
 
         assertThat(metrics).containsExactlyInAnyOrder(
                 "{\"timeseriesId\":\"custom:my.distribution.summary.sum\",\"dataPoints\":[[60001,6]]}",
@@ -344,7 +367,8 @@ class DynatraceExporterV1Test {
 
         assertThat(LOGGER.getLogEvents()).hasSize(1);
         assertThat(LOGGER.getLogEvents().get(0).getLevel()).isSameAs(ERROR);
-        assertThat(LOGGER.getLogEvents().get(0).getMessage()).isEqualTo("failed to create custom metric custom:my.gauge in Dynatrace: Error Code=500, Response Body=simulated");
+        assertThat(LOGGER.getLogEvents().get(0).getMessage()).isEqualTo(
+                "failed to create custom metric custom:my.gauge in Dynatrace: Error Code=500, Response Body=simulated");
         assertThat(LOGGER.getLogEvents().get(0).getCause()).isNull();
     }
 
@@ -354,10 +378,8 @@ class DynatraceExporterV1Test {
         HttpSender.Request.Builder builder = HttpSender.Request.build("https://test", httpClient);
         when(httpClient.put(isA(String.class))).thenReturn(builder);
         when(httpClient.post(isA(String.class))).thenReturn(builder);
-        when(httpClient.send(isA(HttpSender.Request.class))).thenReturn(
-                new HttpSender.Response(200, null),
-                new HttpSender.Response(500, "simulated")
-        );
+        when(httpClient.send(isA(HttpSender.Request.class))).thenReturn(new HttpSender.Response(200, null),
+                new HttpSender.Response(500, "simulated"));
 
         DynatraceExporterV1 exporter = FACTORY.injectLogger(() -> createExporter(httpClient));
 
@@ -367,12 +389,139 @@ class DynatraceExporterV1Test {
 
         assertThat(LOGGER.getLogEvents()).hasSize(3);
         assertThat(LOGGER.getLogEvents().get(0).getLevel()).isSameAs(DEBUG);
-        assertThat(LOGGER.getLogEvents().get(0).getMessage()).isEqualTo("created custom:my.gauge as custom metric in Dynatrace");
+        assertThat(LOGGER.getLogEvents().get(0).getMessage())
+            .isEqualTo("created custom:my.gauge as custom metric in Dynatrace");
         assertThat(LOGGER.getLogEvents().get(0).getCause()).isNull();
 
         assertThat(LOGGER.getLogEvents().get(1).getLevel()).isSameAs(ERROR);
-        assertThat(LOGGER.getLogEvents().get(1).getMessage()).isEqualTo("failed to send metrics to Dynatrace: Error Code=500, Response Body=simulated");
+        assertThat(LOGGER.getLogEvents().get(1).getMessage())
+            .isEqualTo("failed to send metrics to Dynatrace: Error Code=500, Response Body=simulated");
         assertThat(LOGGER.getLogEvents().get(1).getCause()).isNull();
+    }
+
+    @Test
+    void testTokenShouldNotShowUpInPutFailureErrorMessage() {
+        HttpSender httpClient = spy(HttpSender.class);
+
+        String invalidUrl = "http://localhost###";
+        String apiToken = "this.is.a.fake.apiToken";
+
+        DynatraceExporterV1 exporter = getDynatraceExporterV1(httpClient, invalidUrl, apiToken);
+
+        meterRegistry.gauge("my.gauge", GAUGE_VALUE);
+        Gauge gauge = meterRegistry.find("my.gauge").gauge();
+
+        exporter.export(Collections.singletonList(gauge));
+
+        assertThat(LOGGER.getLogEvents())
+            // map to only keep the message strings
+            .extracting(LogEvent::getMessage)
+            .containsExactly("failed to build request")
+            // this is different from doesNotContain, as doesNotContain checks for
+            // whole strings in all log messages whereas this checks that none of the
+            // log messages contain the token.
+            .noneMatch(x -> x.contains(apiToken));
+    }
+
+    @Test
+    void testTokenShouldNotShowUpInPostFailureErrorMessage() throws Throwable {
+        HttpSender httpClient = spy(HttpSender.class);
+
+        String invalidUrl = "http://localhost###";
+        String apiToken = "this.is.a.fake.apiToken";
+
+        HttpSender.Request.Builder builder = HttpSender.Request.build("http://localhost", httpClient);
+        // mock the PUT call, so we can even run the post call
+        doReturn(builder).when(httpClient).put(anyString());
+        doReturn(new HttpSender.Response(200, "")).when(httpClient).send(any(HttpSender.Request.class));
+
+        DynatraceExporterV1 exporter = getDynatraceExporterV1(httpClient, invalidUrl, apiToken);
+
+        meterRegistry.gauge("my.gauge", GAUGE_VALUE);
+        Gauge gauge = meterRegistry.find("my.gauge").gauge();
+
+        exporter.export(Collections.singletonList(gauge));
+
+        assertThat(LOGGER.getLogEvents())
+            // map to only keep the message strings
+            .extracting(LogEvent::getMessage)
+            .containsExactly(
+                    // the custom metric was created, meaning the PUT call succeeded
+                    "created custom:my.gauge as custom metric in Dynatrace",
+                    // the error message from the post call contains no token
+                    "failed to build request")
+            .noneMatch(x -> x.contains(apiToken));
+    }
+
+    @Test
+    void trySendHttpRequestSuccess() throws Throwable {
+        HttpSender httpClient = mock(HttpSender.class);
+        DynatraceExporterV1 exporter = FACTORY.injectLogger(() -> createExporter(httpClient));
+        HttpSender.Request.Builder reqBuilder = mock(HttpSender.Request.Builder.class);
+
+        // simulate a success response
+        when(reqBuilder.send()).thenReturn(new HttpSender.Response(200, ""));
+
+        // test that everything works and no error is logged
+        exporter.trySendHttpRequest(reqBuilder);
+        verify(reqBuilder).send();
+        assertThat(LOGGER.getLogEvents()).isEmpty();
+    }
+
+    @Test
+    void trySendHttpRequestErrorCode() throws Throwable {
+        HttpSender httpClient = mock(HttpSender.class);
+        DynatraceExporterV1 exporter = FACTORY.injectLogger(() -> createExporter(httpClient));
+        HttpSender.Request.Builder reqBuilder = mock(HttpSender.Request.Builder.class);
+
+        // simulate a failure response, errors are handled elsewhere
+        when(reqBuilder.send()).thenReturn(new HttpSender.Response(400, ""));
+
+        // test that everything works and no error is logged
+        exporter.trySendHttpRequest(reqBuilder);
+        verify(reqBuilder).send();
+        assertThat(LOGGER.getLogEvents()).isEmpty();
+    }
+
+    @Test
+    void trySendHttpRequestThrows() throws Throwable {
+        HttpSender httpClient = mock(HttpSender.class);
+        String apiToken = "this.is.a.fake.apiToken";
+        DynatraceExporterV1 exporter = getDynatraceExporterV1(httpClient, "http://localhost", apiToken);
+
+        HttpSender.Request.Builder reqBuilder = mock(HttpSender.Request.Builder.class);
+
+        // Simulate that sending throws an exception AND adds the token to the message,
+        // which shouldn't happen.
+        when(reqBuilder.send())
+            .thenThrow(new NullPointerException(String.format("Header key is null for value %s", apiToken)));
+
+        exporter.trySendHttpRequest(reqBuilder);
+        verify(reqBuilder).send();
+        // assert that an error is logged that does not contain the token.
+        assertThat(LOGGER.getLogEvents()).hasSize(1)
+            .extracting(LogEvent::getMessage)
+            .containsExactly("failed to send metrics to Dynatrace")
+            .noneMatch(x -> x.contains(apiToken));
+    }
+
+    private DynatraceExporterV1 getDynatraceExporterV1(HttpSender httpClient, String url, String apiToken) {
+        return FACTORY.injectLogger(() -> new DynatraceExporterV1(new DynatraceConfig() {
+            @Override
+            public String get(String key) {
+                return null;
+            }
+
+            @Override
+            public String apiToken() {
+                return apiToken;
+            }
+
+            @Override
+            public String uri() {
+                return url;
+            }
+        }, clock, httpClient));
     }
 
     private DynatraceExporterV1 createExporter(HttpSender httpClient) {
@@ -384,7 +533,8 @@ class DynatraceExporterV1Test {
     }
 
     private DynatraceTimeSeries createTimeSeriesWithDimensions(int numberOfDimensions, String metricId) {
-        return new DynatraceTimeSeries(metricId, System.currentTimeMillis(), 1.23, createDimensionsMap(numberOfDimensions));
+        return new DynatraceTimeSeries(metricId, System.currentTimeMillis(), 1.23,
+                createDimensionsMap(numberOfDimensions));
     }
 
     private Map<String, String> createDimensionsMap(int numberOfDimensions) {
@@ -426,8 +576,10 @@ class DynatraceExporterV1Test {
         try {
             mapper.readTree(json);
             return true;
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             return false;
         }
     }
+
 }

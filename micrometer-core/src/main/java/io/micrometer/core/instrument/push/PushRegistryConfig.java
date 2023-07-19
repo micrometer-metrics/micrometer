@@ -1,12 +1,12 @@
-/**
+/*
  * Copyright 2018 VMware, Inc.
- * <p>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
+ *
  * https://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,17 +21,18 @@ import io.micrometer.core.ipc.http.HttpSender;
 
 import java.time.Duration;
 
-import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.checkAll;
 import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.check;
+import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.checkAll;
 import static io.micrometer.core.instrument.config.validate.PropertyValidator.*;
 
 /**
- * Common configuration settings for any registry that pushes aggregated
- * metrics on a regular interval.
+ * Common configuration settings for any registry that pushes aggregated metrics on a
+ * regular interval.
  *
  * @author Jon Schneider
  */
 public interface PushRegistryConfig extends MeterRegistryConfig {
+
     /**
      * @return The step size (reporting frequency) to use. The default is 1 minute.
      */
@@ -42,7 +43,9 @@ public interface PushRegistryConfig extends MeterRegistryConfig {
     /**
      * @return The step time alignment. The default is {@code false}.
      */
-    default boolean stepAlignment() { return getBoolean(this, "stepAlignment").orElse(false); }
+    default boolean stepAlignment() {
+        return getBoolean(this, "stepAlignment").orElse(false);
+    }
 
     /**
      * @return {@code true} if publishing is enabled. Default is {@code true}.
@@ -55,9 +58,7 @@ public interface PushRegistryConfig extends MeterRegistryConfig {
      * Return the number of threads to use with the scheduler.
      * <p>
      * Note that this configuration is NOT supported.
-     *
-     * @return The number of threads to use with the scheduler. The default is
-     * 2 threads.
+     * @return The number of threads to use with the scheduler. The default is 2 threads.
      * @deprecated since 1.1.13 because this configuration is not used
      */
     @Deprecated
@@ -66,10 +67,11 @@ public interface PushRegistryConfig extends MeterRegistryConfig {
     }
 
     /**
-     * @return The connection timeout for requests to the backend. The default is
-     * 1 second.
-     * @deprecated Connect timeout and read timeout have different meanings depending on the HTTP client. Configure
-     * timeout options on your {@link HttpSender} of choice instead.
+     * @return The connection timeout for requests to the backend. The default is 1
+     * second.
+     * @deprecated Connect timeout and read timeout have different meanings depending on
+     * the HTTP client. Configure timeout options on your {@link HttpSender} of choice
+     * instead.
      */
     @Deprecated
     default Duration connectTimeout() {
@@ -77,10 +79,10 @@ public interface PushRegistryConfig extends MeterRegistryConfig {
     }
 
     /**
-     * @return The read timeout for requests to the backend. The default is
-     * 10 seconds.
-     * @deprecated Connect timeout and read timeout have different meanings depending on the HTTP client. Configure
-     * timeout options on your {@link HttpSender} of choice instead.
+     * @return The read timeout for requests to the backend. The default is 10 seconds.
+     * @deprecated Connect timeout and read timeout have different meanings depending on
+     * the HTTP client. Configure timeout options on your {@link HttpSender} of choice
+     * instead.
      */
     @Deprecated
     default Duration readTimeout() {
@@ -89,8 +91,7 @@ public interface PushRegistryConfig extends MeterRegistryConfig {
 
     /**
      * @return The number of measurements per request to use for the backend. If more
-     * measurements are found, then multiple requests will be made. The default is
-     * 10,000.
+     * measurements are found, then multiple requests will be made. The default is 10,000.
      */
     default int batchSize() {
         return getInteger(this, "batchSize").orElse(10000);
@@ -103,19 +104,16 @@ public interface PushRegistryConfig extends MeterRegistryConfig {
 
     /**
      * Validate a provided configuration.
-     *
      * @param config configuration to validate
      * @return validation result
      * @since 1.5.0
      */
     static Validated<?> validate(PushRegistryConfig config) {
-        return checkAll(config,
-                check("step", PushRegistryConfig::step),
+        return checkAll(config, check("step", PushRegistryConfig::step),
                 check("stepAlignment", PushRegistryConfig::stepAlignment),
                 check("connectTimeout", PushRegistryConfig::connectTimeout),
                 check("readTimeout", PushRegistryConfig::readTimeout),
-                check("batchSize", PushRegistryConfig::batchSize),
-                check("numThreads", PushRegistryConfig::numThreads)
-        );
+                check("batchSize", PushRegistryConfig::batchSize), check("numThreads", PushRegistryConfig::numThreads));
     }
+
 }

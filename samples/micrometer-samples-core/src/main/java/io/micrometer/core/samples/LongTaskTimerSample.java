@@ -1,12 +1,12 @@
-/**
+/*
  * Copyright 2017 VMware, Inc.
- * <p>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
+ *
  * https://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,6 +30,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class LongTaskTimerSample {
+
     public static void main(String[] args) {
         MeterRegistry registry = SampleConfig.myMonitoringSystem();
         LongTaskTimer timer = registry.more().longTaskTimer("longTaskTimer");
@@ -39,33 +40,31 @@ public class LongTaskTimerSample {
         Normal duration = new Normal(30, 50, r);
 
         AtomicInteger latencyForThisSecond = new AtomicInteger(duration.nextInt());
-        Flux.interval(Duration.ofSeconds(1))
-                .doOnEach(d -> latencyForThisSecond.set(duration.nextInt()))
-                .subscribe();
+        Flux.interval(Duration.ofSeconds(1)).doOnEach(d -> latencyForThisSecond.set(duration.nextInt())).subscribe();
 
         final Map<LongTaskTimer.Sample, CountDownLatch> tasks = new ConcurrentHashMap<>();
 
         // the potential for an "incoming request" every 10 ms
-        Flux.interval(Duration.ofSeconds(1))
-                .doOnEach(d -> {
-                    if (incomingRequests.nextDouble() + 0.4 > 0 && tasks.isEmpty()) {
-                        int taskDur;
-                        while ((taskDur = duration.nextInt()) < 0);
-                        synchronized (tasks) {
-                            tasks.put(timer.start(), new CountDownLatch(taskDur));
-                        }
-                    }
+        Flux.interval(Duration.ofSeconds(1)).doOnEach(d -> {
+            if (incomingRequests.nextDouble() + 0.4 > 0 && tasks.isEmpty()) {
+                int taskDur;
+                while ((taskDur = duration.nextInt()) < 0)
+                    ;
+                synchronized (tasks) {
+                    tasks.put(timer.start(), new CountDownLatch(taskDur));
+                }
+            }
 
-                    synchronized (tasks) {
-                        for (Map.Entry<LongTaskTimer.Sample, CountDownLatch> e : tasks.entrySet()) {
-                            e.getValue().countDown();
-                            if (e.getValue().getCount() == 0) {
-                                e.getKey().stop();
-                                tasks.remove(e.getKey());
-                            }
-                        }
+            synchronized (tasks) {
+                for (Map.Entry<LongTaskTimer.Sample, CountDownLatch> e : tasks.entrySet()) {
+                    e.getValue().countDown();
+                    if (e.getValue().getCount() == 0) {
+                        e.getKey().stop();
+                        tasks.remove(e.getKey());
                     }
-                })
-                .blockLast();
+                }
+            }
+        }).blockLast();
     }
+
 }

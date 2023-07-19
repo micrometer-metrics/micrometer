@@ -1,12 +1,12 @@
-/**
+/*
  * Copyright 2018 VMware, Inc.
- * <p>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
+ *
  * https://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,10 +15,10 @@
  */
 package io.micrometer.appoptics;
 
+import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.config.validate.InvalidReason;
 import io.micrometer.core.instrument.config.validate.Validated;
 import io.micrometer.core.instrument.step.StepRegistryConfig;
-import io.micrometer.core.lang.Nullable;
 
 import java.time.Duration;
 
@@ -33,8 +33,9 @@ import static io.micrometer.core.instrument.config.validate.PropertyValidator.*;
  */
 public interface AppOpticsConfig extends StepRegistryConfig {
 
-    //https://docs.appoptics.com/api/#create-a-measurement
+    // https://docs.appoptics.com/api/#create-a-measurement
     int MAX_BATCH_SIZE = 1000;
+
     int DEFAULT_BATCH_SIZE = 500;
 
     @Override
@@ -50,7 +51,8 @@ public interface AppOpticsConfig extends StepRegistryConfig {
     }
 
     /**
-     * @return The tag that will be mapped to {@literal @host} when shipping metrics to AppOptics.
+     * @return The tag that will be mapped to {@literal @host} when shipping metrics to
+     * AppOptics.
      */
     @Nullable
     default String hostTag() {
@@ -65,7 +67,8 @@ public interface AppOpticsConfig extends StepRegistryConfig {
     }
 
     /**
-     * @return whether or not to ship a floored time - floors time to the multiple of the {@link #step()}
+     * @return whether or not to ship a floored time - floors time to the multiple of the
+     * {@link #step()}
      */
     default boolean floorTimes() {
         return getBoolean(this, "floorTimes").orElse(false);
@@ -85,13 +88,10 @@ public interface AppOpticsConfig extends StepRegistryConfig {
 
     @Override
     default Validated<?> validate() {
-        return checkAll(this,
-                c -> StepRegistryConfig.validate(c),
-                checkRequired("apiToken", AppOpticsConfig::apiToken),
+        return checkAll(this, c -> StepRegistryConfig.validate(c), checkRequired("apiToken", AppOpticsConfig::apiToken),
                 checkRequired("uri", AppOpticsConfig::uri),
-                check("batchSize", AppOpticsConfig::batchSize)
-                        .andThen(v -> v.invalidateWhen(b -> b > MAX_BATCH_SIZE, "cannot be greater than " + MAX_BATCH_SIZE,
-                                InvalidReason.MALFORMED))
-        );
+                check("batchSize", AppOpticsConfig::batchSize).andThen(v -> v.invalidateWhen(b -> b > MAX_BATCH_SIZE,
+                        "cannot be greater than " + MAX_BATCH_SIZE, InvalidReason.MALFORMED)));
     }
+
 }

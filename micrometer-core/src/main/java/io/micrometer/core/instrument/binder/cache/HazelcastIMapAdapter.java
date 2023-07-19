@@ -1,12 +1,12 @@
-/**
+/*
  * Copyright 2020 VMware, Inc.
- * <p>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
+ *
  * https://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,6 +15,10 @@
  */
 package io.micrometer.core.instrument.binder.cache;
 
+import io.micrometer.common.lang.Nullable;
+import io.micrometer.common.util.internal.logging.InternalLogger;
+import io.micrometer.common.util.internal.logging.InternalLoggerFactory;
+
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
@@ -22,19 +26,27 @@ import java.lang.ref.WeakReference;
 
 import static java.lang.invoke.MethodType.methodType;
 
-import io.micrometer.core.lang.Nullable;
-
 /**
- * Adapter for Hazelcast {@code IMap} class created to provide support for both Hazelcast 3 and Hazelcast 4 at the
- * same time. Dynamically checks which Hazelcast version is on the classpath and resolves the right classes.
+ * Adapter for Hazelcast {@code IMap} class created to provide support for both Hazelcast
+ * 3 and Hazelcast 4 at the same time. Dynamically checks which Hazelcast version is on
+ * the classpath and resolves the right classes.
  *
  * @implNote Note that {@link MethodHandle} is used, so the performance does not suffer.
  */
 class HazelcastIMapAdapter {
+
+    private static final InternalLogger log = InternalLoggerFactory.getInstance(HazelcastIMapAdapter.class);
+
     private static final Class<?> CLASS_I_MAP = resolveOneOf("com.hazelcast.map.IMap", "com.hazelcast.core.IMap");
-    private static final Class<?> CLASS_LOCAL_MAP = resolveOneOf("com.hazelcast.map.LocalMapStats", "com.hazelcast.monitor.LocalMapStats");
-    private static final Class<?> CLASS_NEAR_CACHE_STATS = resolveOneOf("com.hazelcast.nearcache.NearCacheStats", "com.hazelcast.monitor.NearCacheStats");
+
+    private static final Class<?> CLASS_LOCAL_MAP = resolveOneOf("com.hazelcast.map.LocalMapStats",
+            "com.hazelcast.monitor.LocalMapStats");
+
+    private static final Class<?> CLASS_NEAR_CACHE_STATS = resolveOneOf("com.hazelcast.nearcache.NearCacheStats",
+            "com.hazelcast.monitor.NearCacheStats");
+
     private static final MethodHandle GET_NAME;
+
     private static final MethodHandle GET_LOCAL_MAP_STATS;
 
     static {
@@ -51,7 +63,8 @@ class HazelcastIMapAdapter {
     static String nameOf(Object cache) {
         try {
             return (String) GET_NAME.invoke(cache);
-        } catch (Throwable t) {
+        }
+        catch (Throwable t) {
             throw new RuntimeException(t);
         }
     }
@@ -68,18 +81,32 @@ class HazelcastIMapAdapter {
     }
 
     static class LocalMapStats {
+
         private static final MethodHandle GET_NEAR_CACHE_STATS;
 
         private static final MethodHandle GET_OWNED_ENTRY_COUNT;
+
         private static final MethodHandle GET_HITS;
+
         private static final MethodHandle GET_PUT_OPERATION_COUNT;
+
+        @Nullable
+        private static final MethodHandle GET_SET_OPERATION_COUNT;
+
         private static final MethodHandle GET_BACKUP_ENTRY_COUNT;
+
         private static final MethodHandle GET_BACKUP_ENTRY_MEMORY_COST;
+
         private static final MethodHandle GET_OWNED_ENTRY_MEMORY_COST;
+
         private static final MethodHandle GET_GET_OPERATION_COUNT;
+
         private static final MethodHandle GET_TOTAL_GET_LATENCY;
+
         private static final MethodHandle GET_TOTAL_PUT_LATENCY;
+
         private static final MethodHandle GET_REMOVE_OPERATION_COUNT;
+
         private static final MethodHandle GET_TOTAL_REMOVE_LATENCY;
 
         static {
@@ -88,6 +115,7 @@ class HazelcastIMapAdapter {
             GET_OWNED_ENTRY_COUNT = resolveMethod("getOwnedEntryCount", methodType(long.class));
             GET_HITS = resolveMethod("getHits", methodType(long.class));
             GET_PUT_OPERATION_COUNT = resolveMethod("getPutOperationCount", methodType(long.class));
+            GET_SET_OPERATION_COUNT = resolveMethod("getSetOperationCount", methodType(long.class));
             GET_BACKUP_ENTRY_COUNT = resolveMethod("getBackupEntryCount", methodType(long.class));
             GET_BACKUP_ENTRY_MEMORY_COST = resolveMethod("getBackupEntryMemoryCost", methodType(long.class));
             GET_OWNED_ENTRY_MEMORY_COST = resolveMethod("getOwnedEntryMemoryCost", methodType(long.class));
@@ -114,6 +142,14 @@ class HazelcastIMapAdapter {
 
         long getPutOperationCount() {
             return (long) invoke(GET_PUT_OPERATION_COUNT, localMapStats);
+        }
+
+        long getSetOperationCount() {
+            if (GET_SET_OPERATION_COUNT == null) {
+                return 0L;
+            }
+
+            return (long) invoke(GET_SET_OPERATION_COUNT, localMapStats);
         }
 
         double getBackupEntryCount() {
@@ -153,19 +189,27 @@ class HazelcastIMapAdapter {
             return (long) invoke(GET_TOTAL_REMOVE_LATENCY, localMapStats);
         }
 
+        @Nullable
         private static MethodHandle resolveMethod(String name, MethodType mt) {
             try {
                 return MethodHandles.publicLookup().findVirtual(CLASS_LOCAL_MAP, name, mt);
-            } catch (NoSuchMethodException | IllegalAccessException e) {
-                throw new IllegalStateException(e);
+            }
+            catch (NoSuchMethodException | IllegalAccessException e) {
+                log.debug("Failed to resolve method: " + name, e);
+                return null;
             }
         }
+
     }
 
     static class NearCacheStats {
+
         private static final MethodHandle GET_HITS;
+
         private static final MethodHandle GET_MISSES;
+
         private static final MethodHandle GET_EVICTIONS;
+
         private static final MethodHandle GET_PERSISTENCE_COUNT;
 
         static {
@@ -200,16 +244,19 @@ class HazelcastIMapAdapter {
         private static MethodHandle resolveMethod(String name, MethodType mt) {
             try {
                 return MethodHandles.publicLookup().findVirtual(CLASS_NEAR_CACHE_STATS, name, mt);
-            } catch (NoSuchMethodException | IllegalAccessException e) {
+            }
+            catch (NoSuchMethodException | IllegalAccessException e) {
                 throw new IllegalStateException(e);
             }
         }
+
     }
 
     private static MethodHandle resolveIMapMethod(String name, MethodType mt) {
         try {
             return MethodHandles.publicLookup().findVirtual(CLASS_I_MAP, name, mt);
-        } catch (NoSuchMethodException | IllegalAccessException e) {
+        }
+        catch (NoSuchMethodException | IllegalAccessException e) {
             throw new IllegalStateException(e);
         }
     }
@@ -217,10 +264,12 @@ class HazelcastIMapAdapter {
     private static Class<?> resolveOneOf(String class1, String class2) {
         try {
             return Class.forName(class1);
-        } catch (ClassNotFoundException e) {
+        }
+        catch (ClassNotFoundException e) {
             try {
                 return Class.forName(class2);
-            } catch (ClassNotFoundException ex) {
+            }
+            catch (ClassNotFoundException ex) {
                 throw new IllegalStateException(ex);
             }
         }
@@ -229,8 +278,10 @@ class HazelcastIMapAdapter {
     private static Object invoke(MethodHandle mh, Object object) {
         try {
             return mh.invoke(object);
-        } catch (Throwable t) {
+        }
+        catch (Throwable t) {
             throw new RuntimeException(t);
         }
     }
+
 }

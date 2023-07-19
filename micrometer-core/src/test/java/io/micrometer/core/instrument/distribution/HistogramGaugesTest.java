@@ -1,12 +1,12 @@
-/**
+/*
  * Copyright 2017 VMware, Inc.
- * <p>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
+ *
  * https://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -34,9 +34,7 @@ class HistogramGaugesTest {
     void snapshotRollsOverAfterEveryPublish() {
         MeterRegistry registry = new SimpleMeterRegistry();
 
-        Timer timer = Timer.builder("my.timer")
-                .serviceLevelObjectives(Duration.ofMillis(1))
-                .register(registry);
+        Timer timer = Timer.builder("my.timer").serviceLevelObjectives(Duration.ofMillis(1)).register(registry);
 
         HistogramGauges gauges = HistogramGauges.registerWithCommonFormat(timer, registry);
 
@@ -58,9 +56,9 @@ class HistogramGaugesTest {
         });
 
         Timer.builder("my.timer")
-             .serviceLevelObjectives(Duration.ofMillis(1))
-             .publishPercentiles(0.95)
-             .register(registry);
+            .serviceLevelObjectives(Duration.ofMillis(1))
+            .publishPercentiles(0.95)
+            .register(registry);
 
         registry.get("MYPREFIX.my.timer.percentile").tag("phi", "0.95").gauge();
         registry.get("MYPREFIX.my.timer.histogram").tag("le", "0.001").gauge();
@@ -71,12 +69,12 @@ class HistogramGaugesTest {
         MeterRegistry registry = new SimpleMeterRegistry();
 
         Timer timer = Timer.builder("my.timer")
-                .serviceLevelObjectives(Duration.ofNanos(Long.MAX_VALUE))
-                .register(registry);
+            .serviceLevelObjectives(Duration.ofNanos(Long.MAX_VALUE))
+            .register(registry);
 
         DistributionSummary distributionSummary = DistributionSummary.builder("my.distribution")
-                .serviceLevelObjectives(Double.POSITIVE_INFINITY)
-                .register(registry);
+            .serviceLevelObjectives(Double.POSITIVE_INFINITY)
+            .register(registry);
 
         HistogramGauges distributionGauges = HistogramGauges.registerWithCommonFormat(distributionSummary, registry);
 
@@ -85,4 +83,5 @@ class HistogramGaugesTest {
         assertThat(registry.get("my.distribution.histogram").tag("le", "+Inf").gauge()).isNotNull();
         assertThat(registry.get("my.timer.histogram").tag("le", "+Inf").gauge()).isNotNull();
     }
+
 }

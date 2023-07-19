@@ -1,12 +1,12 @@
-/**
+/*
  * Copyright 2017 VMware, Inc.
- * <p>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
+ *
  * https://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,6 +15,7 @@
  */
 package io.micrometer.core.instrument;
 
+import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 
 /**
@@ -22,13 +23,27 @@ import java.util.function.Supplier;
  *
  * @author Clint Checketts
  * @author Jon Schneider
+ * @author Philippe Marschall
  */
 public class Measurement {
-    private final Supplier<Double> f;
+
+    private final DoubleSupplier f;
+
     private final Statistic statistic;
 
-    public Measurement(Supplier<Double> valueFunction, Statistic statistic) {
+    /**
+     * Create a {@code Measurement} instance.
+     * @param valueFunction value function
+     * @param statistic statistic type
+     * @since 1.10.0
+     */
+    public Measurement(DoubleSupplier valueFunction, Statistic statistic) {
         this.f = valueFunction;
+        this.statistic = statistic;
+    }
+
+    public Measurement(Supplier<Double> valueFunction, Statistic statistic) {
+        this.f = valueFunction::get;
         this.statistic = statistic;
     }
 
@@ -36,7 +51,7 @@ public class Measurement {
      * @return Value for the measurement.
      */
     public double getValue() {
-        return f.get();
+        return f.getAsDouble();
     }
 
     public Statistic getStatistic() {
@@ -45,9 +60,7 @@ public class Measurement {
 
     @Override
     public String toString() {
-        return "Measurement{" +
-                "statistic='" + statistic + '\'' +
-                ", value=" + getValue() +
-                '}';
+        return "Measurement{" + "statistic='" + statistic + '\'' + ", value=" + getValue() + '}';
     }
+
 }

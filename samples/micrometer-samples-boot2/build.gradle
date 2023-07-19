@@ -1,13 +1,19 @@
 plugins {
     id 'java'
-    id 'org.springframework.boot' version '2.6.0-M3'
+    id 'org.springframework.boot' version '2.7.12'
 }
 
 apply plugin: 'io.spring.dependency-management'
 
 repositories {
     mavenCentral()
-    maven { url "https://repo.spring.io/milestone" }
+}
+
+configurations {
+    implementation {
+        // see gh-1599; pause detection is not configured so this dependency can be excluded
+        exclude module: 'LatencyUtils'
+    }
 }
 
 dependencies {
@@ -20,6 +26,11 @@ dependencies {
     implementation('org.springframework.boot:spring-boot-starter-actuator') {
         exclude group: 'io.micrometer', module: 'micrometer-core'
     }
+
+    implementation platform('org.springframework.cloud:spring-cloud-dependencies:2021.0.+')
+    implementation 'org.springframework.cloud:spring-cloud-starter-sleuth'
+    implementation 'org.springframework.cloud:spring-cloud-sleuth-zipkin'
+
 }
 
 bootJar {

@@ -1,12 +1,12 @@
-/**
+/*
  * Copyright 2017 VMware, Inc.
- * <p>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
+ *
  * https://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,9 +20,14 @@ import io.micrometer.core.instrument.distribution.HistogramSnapshot;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BooleanSupplier;
+import java.util.function.DoubleSupplier;
+import java.util.function.IntSupplier;
+import java.util.function.LongSupplier;
 import java.util.function.Supplier;
 
 public class NoopTimer extends NoopMeter implements Timer {
+
     public NoopTimer(Id id) {
         super(id);
     }
@@ -34,6 +39,26 @@ public class NoopTimer extends NoopMeter implements Timer {
     @Override
     public <T> T record(Supplier<T> f) {
         return f.get();
+    }
+
+    @Override
+    public boolean record(BooleanSupplier f) {
+        return f.getAsBoolean();
+    }
+
+    @Override
+    public int record(IntSupplier f) {
+        return f.getAsInt();
+    }
+
+    @Override
+    public long record(LongSupplier f) {
+        return f.getAsLong();
+    }
+
+    @Override
+    public double record(DoubleSupplier f) {
+        return f.getAsDouble();
     }
 
     @Override
@@ -70,4 +95,5 @@ public class NoopTimer extends NoopMeter implements Timer {
     public HistogramSnapshot takeSnapshot() {
         return HistogramSnapshot.empty(0, 0, 0);
     }
+
 }

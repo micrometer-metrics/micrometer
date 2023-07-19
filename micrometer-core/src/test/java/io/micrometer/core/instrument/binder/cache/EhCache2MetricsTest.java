@@ -1,12 +1,12 @@
-/**
+/*
  * Copyright 2018 VMware, Inc.
- * <p>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
+ *
  * https://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,21 +20,17 @@ import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-
-import java.util.Random;
-
 import net.sf.ehcache.Cache;
 import net.sf.ehcache.CacheManager;
 import net.sf.ehcache.statistics.StatisticsGateway;
-
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
+import java.util.Random;
+
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 /**
  * Tests for {@link EhCache2Metrics}.
@@ -44,6 +40,7 @@ import static org.mockito.Mockito.when;
 class EhCache2MetricsTest extends AbstractCacheMetricsTest {
 
     private static CacheManager cacheManager;
+
     private static Cache cache;
 
     private EhCache2Metrics metrics = new EhCache2Metrics(cache, expectedTag);
@@ -101,7 +98,7 @@ class EhCache2MetricsTest extends AbstractCacheMetricsTest {
         // rollback transaction metrics
         String xaRollbacks = "cache.xa.rollbacks";
         FunctionCounter exceptionRollback = fetch(registry, xaRollbacks, Tags.of("result", "exception"))
-                .functionCounter();
+            .functionCounter();
         assertThat(exceptionRollback.count()).isEqualTo(stats.xaRollbackExceptionCount());
 
         FunctionCounter successRollback = fetch(registry, xaRollbacks, Tags.of("result", "success")).functionCounter();
@@ -110,11 +107,11 @@ class EhCache2MetricsTest extends AbstractCacheMetricsTest {
         // recovery transaction metrics
         String xaRecoveries = "cache.xa.recoveries";
         FunctionCounter nothingRecovered = fetch(registry, xaRecoveries, Tags.of("result", "nothing"))
-                .functionCounter();
+            .functionCounter();
         assertThat(nothingRecovered.count()).isEqualTo(stats.xaRecoveryNothingCount());
 
         FunctionCounter successRecoveries = fetch(registry, xaRecoveries, Tags.of("result", "success"))
-                .functionCounter();
+            .functionCounter();
         assertThat(successRecoveries.count()).isEqualTo(stats.xaRecoveryRecoveredCount());
     }
 

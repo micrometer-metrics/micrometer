@@ -1,17 +1,18 @@
 pluginManagement {
     repositories {
         gradlePluginPortal()
-        maven { url 'https://repo.spring.io/release' }
-        maven { url "https://repo.spring.io/milestone" }
     }
 }
 
 plugins {
-    id 'com.gradle.enterprise' version '3.7.1'
-    id 'io.spring.ge.conventions' version '0.0.8'
+    id 'com.gradle.enterprise' version '3.13.3'
+    id 'io.spring.ge.conventions' version '0.0.13'
+    id 'org.gradle.toolchains.foojay-resolver-convention' version '0.4.0'
 }
 
 rootProject.name = 'micrometer'
+
+enableFeaturePreview("STABLE_CONFIGURATION_CACHE")
 
 buildCache {
     remote(HttpBuildCache) {
@@ -22,17 +23,16 @@ gradleEnterprise {
     server = 'https://ge.micrometer.io'
 }
 
-include 'micrometer-core'
-include 'micrometer-jersey2'
+include 'micrometer-commons', 'micrometer-core', 'micrometer-observation'
 
 ['core', 'boot2', 'boot2-reactive', 'spring-integration', 'hazelcast', 'hazelcast3', 'javalin', 'jersey3'].each { sample ->
     include "micrometer-samples-$sample"
     project(":micrometer-samples-$sample").projectDir = new File(rootProject.projectDir, "samples/micrometer-samples-$sample")
 }
 
-include 'micrometer-test'
+include 'micrometer-test', 'micrometer-observation-test'
 
-['atlas', 'prometheus', 'datadog', 'elastic', 'ganglia', 'graphite', 'health', 'jmx', 'influx', 'statsd', 'new-relic', 'cloudwatch', 'cloudwatch2', 'signalfx', 'wavefront', 'dynatrace', 'azure-monitor', 'humio', 'appoptics', 'kairos', 'stackdriver', 'opentsdb'].each { sys ->
+['atlas', 'prometheus', 'datadog', 'elastic', 'ganglia', 'graphite', 'health', 'jmx', 'influx', 'otlp', 'statsd', 'new-relic', 'cloudwatch', 'cloudwatch2', 'signalfx', 'wavefront', 'dynatrace', 'azure-monitor', 'humio', 'appoptics', 'kairos', 'stackdriver', 'opentsdb'].each { sys ->
     include "micrometer-registry-$sys"
     project(":micrometer-registry-$sys").projectDir = new File(rootProject.projectDir, "implementations/micrometer-registry-$sys")
 }
@@ -43,3 +43,6 @@ include 'micrometer-test'
 }
 
 include 'micrometer-bom'
+include 'micrometer-jetty11'
+
+include 'micrometer-osgi-test'

@@ -1,12 +1,12 @@
-/**
+/*
  * Copyright 2017 VMware, Inc.
- * <p>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
+ *
  * https://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -36,8 +36,7 @@ public class TimedResource {
 
     private final CountDownLatch longTaskRequestReleaseLatch;
 
-    public TimedResource(CountDownLatch longTaskRequestStartedLatch,
-            CountDownLatch longTaskRequestReleaseLatch) {
+    public TimedResource(CountDownLatch longTaskRequestStartedLatch, CountDownLatch longTaskRequestReleaseLatch) {
         this.longTaskRequestStartedLatch = requireNonNull(longTaskRequestStartedLatch);
         this.longTaskRequestReleaseLatch = requireNonNull(longTaskRequestReleaseLatch);
     }
@@ -64,8 +63,8 @@ public class TimedResource {
     }
 
     /*
-     * Async server side processing (AsyncResponse) is not supported in the
-     * in-memory test container.
+     * Async server side processing (AsyncResponse) is not supported in the in-memory test
+     * container.
      */
     @GET
     @Path("long-timed")
@@ -75,7 +74,22 @@ public class TimedResource {
         longTaskRequestStartedLatch.countDown();
         try {
             longTaskRequestReleaseLatch.await();
-        } catch (InterruptedException e) {
+        }
+        catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+        return "long-timed";
+    }
+
+    @GET
+    @Path("just-long-timed")
+    @Timed(value = "long.task.in.request", longTask = true)
+    public String justLongTimed() {
+        longTaskRequestStartedLatch.countDown();
+        try {
+            longTaskRequestReleaseLatch.await();
+        }
+        catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
         return "long-timed";
@@ -88,4 +102,5 @@ public class TimedResource {
     public String longTimedUnnamed() {
         return "long-timed-unnamed";
     }
+
 }

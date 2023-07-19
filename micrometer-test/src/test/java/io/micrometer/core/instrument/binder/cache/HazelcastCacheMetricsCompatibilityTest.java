@@ -1,12 +1,12 @@
-/**
+/*
  * Copyright 2017 VMware, Inc.
- * <p>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
+ *
  * https://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,7 +28,9 @@ import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class HazelcastCacheMetricsCompatibilityTest extends CacheMeterBinderCompatibilityKit<Object> {
+
     private Config config = new Config();
+
     private IMap<String, String> cache;
 
     @BeforeEach
@@ -50,8 +52,10 @@ class HazelcastCacheMetricsCompatibilityTest extends CacheMeterBinderCompatibili
     void multiInstanceMissCount() {
         IMap<String, String> cache2 = Hazelcast.newHazelcastInstance(config).getMap("mycache");
 
-        // Since each member owns 1/N (N being the number of members in the cluster) entries of a distributed map,
-        // we add two entries so we can deterministically say that each cache will "own" one entry.
+        // Since each member owns 1/N (N being the number of members in the cluster)
+        // entries of a distributed map,
+        // we add two entries so we can deterministically say that each cache will "own"
+        // one entry.
         cache.put("k1", "v");
         cache.put("k2", "v");
 
@@ -92,4 +96,5 @@ class HazelcastCacheMetricsCompatibilityTest extends CacheMeterBinderCompatibili
     public String get(String key) {
         return this.cache.get(key);
     }
+
 }

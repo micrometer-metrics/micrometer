@@ -1,13 +1,12 @@
 plugins {
     id 'java'
-    id 'org.springframework.boot' version '2.6.0-M3'
+    id 'org.springframework.boot' version '2.7.12'
 }
 
 apply plugin: 'io.spring.dependency-management'
 
 repositories {
     mavenCentral()
-    maven { url "https://repo.spring.io/milestone" }
 }
 
 dependencies {

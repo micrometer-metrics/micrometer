@@ -1,12 +1,12 @@
-/**
+/*
  * Copyright 2017 VMware, Inc.
- * <p>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
+ *
  * https://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,12 +15,13 @@
  */
 package io.micrometer.core.instrument;
 
+import com.sun.management.ThreadMXBean;
+import io.micrometer.core.Issue;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.*;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Iterator;
+import java.lang.management.ManagementFactory;
+import java.util.*;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -36,6 +37,9 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  */
 class TagsTest {
 
+    // Should match "Eclipse OpenJ9 VM" and "IBM J9 VM"
+    private static final String JAVA_VM_NAME_J9_REGEX = ".*J9 VM$";
+
     @Test
     void dedup() {
         assertThat(Tags.of("k1", "v1", "k2", "v2")).containsExactly(Tag.of("k1", "v1"), Tag.of("k2", "v2"));
@@ -48,6 +52,15 @@ class TagsTest {
     void stream() {
         Tags tags = Tags.of(Tag.of("k1", "v1"), Tag.of("k1", "v1"), Tag.of("k2", "v2"));
         assertThat(tags.stream()).hasSize(2);
+    }
+
+    @Test
+    void spliterator() {
+        Tags tags = Tags.of("k1", "v1", "k2", "v2", "k3", "v4");
+        Spliterator<Tag> spliterator = tags.spliterator();
+        assertThat(spliterator).hasCharacteristics(Spliterator.IMMUTABLE, Spliterator.ORDERED, Spliterator.SORTED,
+                Spliterator.DISTINCT);
+        assertThat(spliterator.getExactSizeIfKnown()).isEqualTo(3);
     }
 
     @Test
@@ -86,9 +99,21 @@ class TagsTest {
         assertThat(Tags.of((String[]) null)).isSameAs(Tags.empty());
     }
 
+    @Issue("#3851")
+    @Test
+    void nullKeyValuesShouldProduceEmptyTags() {
+        assertThat(Tags.of((String) null)).isSameAs(Tags.empty());
+    }
+
     @Test
     void nullTagArrayShouldProduceEmptyTags() {
         assertThat(Tags.of((Tag[]) null)).isSameAs(Tags.empty());
+    }
+
+    @Issue("#3851")
+    @Test
+    void nullTagShouldProduceEmptyTags() {
+        assertThat(Tags.of((Tag) null)).isSameAs(Tags.empty());
     }
 
     @Test
@@ -112,6 +137,14 @@ class TagsTest {
     void concatOnTwoTagsWithSameKeyAreMergedIntoOneTag() {
         Iterable<Tag> tags = Tags.concat(Tags.of("k", "v1"), "k", "v2");
         assertThat(tags).containsExactly(Tag.of("k", "v2"));
+    }
+
+    @Issue("#3851")
+    @Test
+    void concatWhenKeyValuesAreNullShouldReturnCurrentInstance() {
+        Tags source = Tags.of("k", "v1");
+        Tags concatenated = Tags.concat(source, (String) null);
+        assertThat(source).isSameAs(concatenated);
     }
 
     @Test
@@ -151,9 +184,17 @@ class TagsTest {
     }
 
     @Test
-    void andKeyValuesWhenKeyValuesAreNullShouldReturnCurrentInstance() {
+    void andKeyValuesWhenKeyValuesArrayIsNullShouldReturnCurrentInstance() {
         Tags source = Tags.of("t1", "v1");
         Tags merged = source.and((String[]) null);
+        assertThat(source).isSameAs(merged);
+    }
+
+    @Issue("#3851")
+    @Test
+    void andKeyValuesWhenKeyValuesAreNullShouldReturnCurrentInstance() {
+        Tags source = Tags.of("t1", "v1");
+        Tags merged = source.and((String) null);
         assertThat(source).isSameAs(merged);
     }
 
@@ -177,6 +218,14 @@ class TagsTest {
     void andTagsWhenTagsAreNullShouldReturnCurrentInstance() {
         Tags source = Tags.of("t1", "v1");
         Tags merged = source.and((Tag[]) null);
+        assertThat(source).isSameAs(merged);
+    }
+
+    @Issue("#3851")
+    @Test
+    void andTagsWhenTagIsNullShouldReturnCurrentInstance() {
+        Tags source = Tags.of("t1", "v1");
+        Tags merged = source.and((Tag) null);
         assertThat(source).isSameAs(merged);
     }
 
@@ -285,6 +334,75 @@ class TagsTest {
         assertThat(Tags.empty().iterator()).isExhausted();
     }
 
+    @Test
+    @Issue("#3313")
+    @DisabledIfSystemProperty(named = "java.vm.name", matches = JAVA_VM_NAME_J9_REGEX,
+            disabledReason = "Sun ThreadMXBean with allocation counter not available")
+    @EnabledForJreRange(max = JRE.JAVA_18)
+    void andEmptyDoesNotAllocate() {
+        andEmptyDoesNotAllocate(0);
+    }
+
+    // See https://github.com/micrometer-metrics/micrometer/issues/3436
+    @Test
+    @Issue("#3313")
+    @DisabledIfSystemProperty(named = "java.vm.name", matches = JAVA_VM_NAME_J9_REGEX,
+            disabledReason = "Sun ThreadMXBean with allocation counter not available")
+    @EnabledIf("java19")
+    void andEmptyDoesNotAllocateOnJava19() {
+        andEmptyDoesNotAllocate(16);
+    }
+
+    static boolean java19() {
+        return "19".equals(System.getProperty("java.version"));
+    }
+
+    private void andEmptyDoesNotAllocate(int expectedAllocatedBytes) {
+        ThreadMXBean threadMXBean = (ThreadMXBean) ManagementFactory.getThreadMXBean();
+        long currentThreadId = Thread.currentThread().getId();
+        Tags tags = Tags.of("a", "b");
+        Tags extraTags = Tags.empty();
+
+        long allocatedBytesBefore = threadMXBean.getThreadAllocatedBytes(currentThreadId);
+        Tags combined = tags.and(extraTags);
+        long allocatedBytes = threadMXBean.getThreadAllocatedBytes(currentThreadId) - allocatedBytesBefore;
+
+        assertThat(combined).isEqualTo(tags);
+        assertThat(allocatedBytes).isEqualTo(expectedAllocatedBytes);
+    }
+
+    @Test
+    @Issue("#3313")
+    @DisabledIfSystemProperty(named = "java.vm.name", matches = JAVA_VM_NAME_J9_REGEX,
+            disabledReason = "Sun ThreadMXBean with allocation counter not available")
+    @EnabledForJreRange(max = JRE.JAVA_18)
+    void ofEmptyDoesNotAllocate() {
+        ofEmptyDoesNotAllocate(0);
+    }
+
+    // See https://github.com/micrometer-metrics/micrometer/issues/3436
+    @Test
+    @Issue("#3313")
+    @DisabledIfSystemProperty(named = "java.vm.name", matches = JAVA_VM_NAME_J9_REGEX,
+            disabledReason = "Sun ThreadMXBean with allocation counter not available")
+    @EnabledIf("java19")
+    void ofEmptyDoesNotAllocateOnJava19() {
+        ofEmptyDoesNotAllocate(16);
+    }
+
+    private void ofEmptyDoesNotAllocate(int expectedAllocatedBytes) {
+        ThreadMXBean threadMXBean = (ThreadMXBean) ManagementFactory.getThreadMXBean();
+        long currentThreadId = Thread.currentThread().getId();
+        Tags extraTags = Tags.empty();
+
+        long allocatedBytesBefore = threadMXBean.getThreadAllocatedBytes(currentThreadId);
+        Tags of = Tags.of(extraTags);
+        long allocatedBytes = threadMXBean.getThreadAllocatedBytes(currentThreadId) - allocatedBytesBefore;
+
+        assertThat(of).isEqualTo(Tags.empty());
+        assertThat(allocatedBytes).isEqualTo(expectedAllocatedBytes);
+    }
+
     private void assertTags(Tags tags, String... keyValues) {
         Iterator<Tag> actual = tags.iterator();
         Iterator<String> expected = Arrays.asList(keyValues).iterator();
@@ -295,4 +413,5 @@ class TagsTest {
         }
         assertThat(expected.hasNext()).isFalse();
     }
+
 }

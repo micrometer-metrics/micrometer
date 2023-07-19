@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      https://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -13,14 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package io.micrometer.core.instrument.internal;
 
+import io.micrometer.common.util.internal.logging.InternalLogger;
+import io.micrometer.common.util.internal.logging.InternalLoggerFactory;
 import io.micrometer.core.instrument.Meter.Id;
 import io.micrometer.core.instrument.config.MeterFilter;
 import io.micrometer.core.instrument.config.MeterFilterReply;
-import io.micrometer.core.util.internal.logging.InternalLogger;
-import io.micrometer.core.util.internal.logging.InternalLoggerFactory;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
@@ -34,7 +33,8 @@ import java.util.function.Supplier;
  */
 public final class OnlyOnceLoggingDenyMeterFilter implements MeterFilter {
 
-    private static final InternalLogger logger = InternalLoggerFactory.getInstance(OnlyOnceLoggingDenyMeterFilter.class);
+    private static final InternalLogger logger = InternalLoggerFactory
+        .getInstance(OnlyOnceLoggingDenyMeterFilter.class);
 
     private final AtomicBoolean alreadyWarned = new AtomicBoolean();
 

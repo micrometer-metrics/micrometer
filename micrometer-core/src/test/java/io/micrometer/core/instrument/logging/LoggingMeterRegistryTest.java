@@ -1,12 +1,12 @@
-/**
+/*
  * Copyright 2018 VMware, Inc.
- * <p>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
+ *
  * https://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,6 +21,8 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -29,14 +31,15 @@ import static org.assertj.core.api.Assertions.assertThat;
  *
  * @author Jon Schneider
  * @author Johnny Lim
+ * @author Matthieu Borgraeve
  */
 class LoggingMeterRegistryTest {
+
     private final LoggingMeterRegistry registry = new LoggingMeterRegistry();
 
     @Test
     void defaultMeterIdPrinter() {
-        LoggingMeterRegistry registry = LoggingMeterRegistry.builder(LoggingRegistryConfig.DEFAULT)
-                .build();
+        LoggingMeterRegistry registry = LoggingMeterRegistry.builder(LoggingRegistryConfig.DEFAULT).build();
         Counter counter = registry.counter("my.gauage", "tag-1", "tag-2");
         LoggingMeterRegistry.Printer printer = registry.new Printer(counter);
 
@@ -44,10 +47,35 @@ class LoggingMeterRegistryTest {
     }
 
     @Test
+    void providedSinkFromConstructorShouldBeUsed() {
+        String expectedString = "my.gauage{tag-1=tag-2} value=1";
+        AtomicReference<String> actual = new AtomicReference<>();
+        AtomicInteger gaugeValue = new AtomicInteger(1);
+        LoggingMeterRegistry registry = new LoggingMeterRegistry(LoggingRegistryConfig.DEFAULT, Clock.SYSTEM,
+                actual::set);
+        registry.gauge("my.gauage", Tags.of("tag-1", "tag-2"), gaugeValue);
+
+        registry.publish();
+        assertThat(actual.get()).isEqualTo(expectedString);
+    }
+
+    @Test
+    void providedSinkFromConstructorShouldBeUsedWithDefaults() {
+        String expectedString = "my.gauage{tag-1=tag-2} value=1";
+        AtomicReference<String> actual = new AtomicReference<>();
+        AtomicInteger gaugeValue = new AtomicInteger(1);
+        LoggingMeterRegistry registry = new LoggingMeterRegistry(actual::set);
+        registry.gauge("my.gauage", Tags.of("tag-1", "tag-2"), gaugeValue);
+
+        registry.publish();
+        assertThat(actual.get()).isEqualTo(expectedString);
+    }
+
+    @Test
     void customMeterIdPrinter() {
         LoggingMeterRegistry registry = LoggingMeterRegistry.builder(LoggingRegistryConfig.DEFAULT)
-                .meterIdPrinter(meter -> meter.getId().getName())
-                .build();
+            .meterIdPrinter(meter -> meter.getId().getName())
+            .build();
         Counter counter = registry.counter("my.gauage", "tag-1", "tag-2");
         LoggingMeterRegistry.Printer printer = registry.new Printer(counter);
 
@@ -56,9 +84,8 @@ class LoggingMeterRegistryTest {
 
     @Test
     void humanReadableByteCount() {
-        LoggingMeterRegistry.Printer printer = registry.new Printer(DistributionSummary.builder("my.summary")
-                .baseUnit(BaseUnits.BYTES)
-                .register(registry));
+        LoggingMeterRegistry.Printer printer = registry.new Printer(
+                DistributionSummary.builder("my.summary").baseUnit(BaseUnits.BYTES).register(registry));
 
         assertThat(printer.humanReadableBaseUnit(Double.NaN)).isEqualTo("NaN B");
         assertThat(printer.humanReadableBaseUnit(1.0)).isEqualTo("1 B");
@@ -68,9 +95,8 @@ class LoggingMeterRegistryTest {
 
     @Test
     void otherUnit() {
-        LoggingMeterRegistry.Printer printer = registry.new Printer(DistributionSummary.builder("my.summary")
-                .baseUnit("things")
-                .register(registry));
+        LoggingMeterRegistry.Printer printer = registry.new Printer(
+                DistributionSummary.builder("my.summary").baseUnit("things").register(registry));
 
         assertThat(printer.humanReadableBaseUnit(1.0)).isEqualTo("1 things");
         assertThat(printer.humanReadableBaseUnit(1024)).isEqualTo("1024 things");
@@ -87,8 +113,7 @@ class LoggingMeterRegistryTest {
         final String expectedResult = "meter.1{} value=0";
 
         Measurement m1 = new Measurement(() -> 0d, Statistic.VALUE);
-        Meter meter = Meter.builder("meter.1", Meter.Type.OTHER, Collections.singletonList(m1))
-                .register(registry);
+        Meter meter = Meter.builder("meter.1", Meter.Type.OTHER, Collections.singletonList(m1)).register(registry);
         LoggingMeterRegistry.Printer printer = registry.new Printer(meter);
         assertThat(registry.writeMeter(meter, printer)).isEqualTo(expectedResult);
     }
@@ -101,10 +126,10 @@ class LoggingMeterRegistryTest {
         Measurement m2 = new Measurement(() -> 1023d, Statistic.MAX);
         Measurement m3 = new Measurement(() -> 1100d, Statistic.TOTAL_TIME);
         Meter meter = Meter.builder("sheepWatch", Meter.Type.OTHER, Arrays.asList(m1, m2, m3))
-                .tag("color", "black")
-                .description("Meter for shepherds.")
-                .baseUnit("sheep")
-                .register(registry);
+            .tag("color", "black")
+            .description("Meter for shepherds.")
+            .baseUnit("sheep")
+            .register(registry);
         LoggingMeterRegistry.Printer printer = registry.new Printer(meter);
         assertThat(registry.writeMeter(meter, printer)).isEqualTo(expectedResult);
     }
@@ -119,8 +144,8 @@ class LoggingMeterRegistryTest {
         Measurement m4 = new Measurement(() -> (double) (1 << 23), Statistic.VALUE);
         Measurement m5 = new Measurement(() -> (double) (1 << 30), Statistic.VALUE);
         Meter meter = Meter.builder("bus-throughput", Meter.Type.OTHER, Arrays.asList(m1, m2, m3, m4, m5))
-                .baseUnit(BaseUnits.BYTES)
-                .register(registry);
+            .baseUnit(BaseUnits.BYTES)
+            .register(registry);
         LoggingMeterRegistry.Printer printer = registry.new Printer(meter);
         assertThat(registry.writeMeter(meter, printer)).isEqualTo(expectedResult);
     }

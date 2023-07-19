@@ -1,12 +1,12 @@
-/**
+/*
  * Copyright 2017 VMware, Inc.
- * <p>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
+ *
  * https://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,39 +23,48 @@ import io.micrometer.core.instrument.distribution.CountAtBucket;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.HistogramSnapshot;
 import io.micrometer.core.instrument.distribution.ValueAtPercentile;
-import io.micrometer.core.instrument.util.MeterEquivalence;
 import io.micrometer.core.instrument.util.TimeUtils;
 
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.ConcurrentLinkedDeque;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 public class DefaultLongTaskTimer extends AbstractMeter implements LongTaskTimer {
+
     /**
-     * Preferring {@link ConcurrentLinkedDeque} over {@link CopyOnWriteArrayList} here because...
+     * Preferring {@link ConcurrentLinkedDeque} over {@link CopyOnWriteArrayList} here
+     * because...
      * <p>
-     * Retrieval of percentile values will be O(N) but starting/stopping tasks will be O(1). Starting/stopping
-     * tasks happen in the same thread as the main application code, where publishing generally happens in a separate
-     * thread. Also, shipping client-side percentiles should be relatively uncommon.
+     * Retrieval of percentile values will be O(N) but starting/stopping tasks will be
+     * O(1). Starting/stopping tasks happen in the same thread as the main application
+     * code, where publishing generally happens in a separate thread. Also, shipping
+     * client-side percentiles should be relatively uncommon.
      * <p>
-     * Histogram creation is O(N) for both the queue and list options, because we have to consider which bucket each
-     * active task belongs.
+     * Histogram creation is O(N) for both the queue and list options, because we have to
+     * consider which bucket each active task belongs.
      */
     private final Deque<SampleImpl> activeTasks = new ConcurrentLinkedDeque<>();
 
     private final Clock clock;
+
     private final TimeUnit baseTimeUnit;
+
     private final DistributionStatisticConfig distributionStatisticConfig;
+
     private final boolean supportsAggregablePercentiles;
 
     /**
      * Create a {@code DefaultLongTaskTimer} instance.
-     *
      * @param id ID
      * @param clock clock
-     * @deprecated Use {@link #DefaultLongTaskTimer(Meter.Id, Clock, TimeUnit, DistributionStatisticConfig, boolean)} instead.
+     * @deprecated Use
+     * {@link #DefaultLongTaskTimer(Meter.Id, Clock, TimeUnit, DistributionStatisticConfig, boolean)}
+     * instead.
      */
     @Deprecated
     public DefaultLongTaskTimer(Id id, Clock clock) {
@@ -64,7 +73,6 @@ public class DefaultLongTaskTimer extends AbstractMeter implements LongTaskTimer
 
     /**
      * Create a {@code DefaultLongTaskTimer} instance.
-     *
      * @param id ID
      * @param clock clock
      * @param baseTimeUnit base time unit
@@ -72,8 +80,8 @@ public class DefaultLongTaskTimer extends AbstractMeter implements LongTaskTimer
      * @param supportsAggregablePercentiles whether it supports aggregable percentiles
      * @since 1.5.0
      */
-    public DefaultLongTaskTimer(Id id, Clock clock, TimeUnit baseTimeUnit, DistributionStatisticConfig distributionStatisticConfig,
-                                boolean supportsAggregablePercentiles) {
+    public DefaultLongTaskTimer(Id id, Clock clock, TimeUnit baseTimeUnit,
+            DistributionStatisticConfig distributionStatisticConfig, boolean supportsAggregablePercentiles) {
         super(id);
         this.clock = clock;
         this.baseTimeUnit = baseTimeUnit;
@@ -118,21 +126,11 @@ public class DefaultLongTaskTimer extends AbstractMeter implements LongTaskTimer
         return baseTimeUnit;
     }
 
-    @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
-    @Override
-    public boolean equals(Object o) {
-        return MeterEquivalence.equals(this, o);
-    }
-
-    @Override
-    public int hashCode() {
-        return MeterEquivalence.hashCode(this);
-    }
-
     @Override
     public HistogramSnapshot takeSnapshot() {
-        Queue<Double> percentilesRequested = new ArrayBlockingQueue<>(distributionStatisticConfig.getPercentiles() == null ? 1 :
-                distributionStatisticConfig.getPercentiles().length);
+        Queue<Double> percentilesRequested = new ArrayBlockingQueue<>(
+                distributionStatisticConfig.getPercentiles() == null ? 1
+                        : distributionStatisticConfig.getPercentiles().length);
         double[] percentilesRequestedArr = distributionStatisticConfig.getPercentiles();
         if (percentilesRequestedArr != null && percentilesRequestedArr.length > 0) {
             Arrays.stream(percentilesRequestedArr).sorted().boxed().forEach(percentilesRequested::add);
@@ -143,8 +141,8 @@ public class DefaultLongTaskTimer extends AbstractMeter implements LongTaskTimer
         CountAtBucket[] countAtBucketsArr = new CountAtBucket[0];
 
         List<Double> percentilesAboveInterpolatableLine = percentilesRequested.stream()
-                .filter(p -> p * (activeTasks.size() + 1) > activeTasks.size())
-                .collect(Collectors.toList());
+            .filter(p -> p * (activeTasks.size() + 1) > activeTasks.size())
+            .collect(Collectors.toList());
 
         percentilesRequested.removeAll(percentilesAboveInterpolatableLine);
 
@@ -160,10 +158,11 @@ public class DefaultLongTaskTimer extends AbstractMeter implements LongTaskTimer
             int count = 0;
 
             // Make snapshot of active task durations
-            List<Double> youngestToOldestDurations = StreamSupport.stream(((Iterable<SampleImpl>) activeTasks::descendingIterator).spliterator(), false)
-                    .sequential()
-                    .map(task -> task.duration(TimeUnit.NANOSECONDS))
-                    .collect(Collectors.toList());
+            List<Double> youngestToOldestDurations = StreamSupport
+                .stream(((Iterable<SampleImpl>) activeTasks::descendingIterator).spliterator(), false)
+                .sequential()
+                .map(task -> task.duration(TimeUnit.NANOSECONDS))
+                .collect(Collectors.toList());
             for (Double activeTaskDuration : youngestToOldestDurations) {
                 while (bucket != null && activeTaskDuration > bucket) {
                     countAtBuckets.add(new CountAtBucket(bucket, count));
@@ -177,10 +176,11 @@ public class DefaultLongTaskTimer extends AbstractMeter implements LongTaskTimer
                     if (count >= rank) {
                         double percentileValue = activeTaskDuration;
                         if (count != rank && priorActiveTaskDuration != null) {
-                            // interpolate the percentile value when the active task rank is non-integral
+                            // interpolate the percentile value when the active task rank
+                            // is non-integral
                             double priorPercentileValue = priorActiveTaskDuration;
-                            percentileValue = priorPercentileValue +
-                                    ((percentileValue - priorPercentileValue) * (rank - (int) rank));
+                            percentileValue = priorPercentileValue
+                                    + ((percentileValue - priorPercentileValue) * (rank - (int) rank));
                         }
 
                         valueAtPercentiles.add(new ValueAtPercentile(percentile, percentileValue));
@@ -203,25 +203,22 @@ public class DefaultLongTaskTimer extends AbstractMeter implements LongTaskTimer
         double duration = duration(TimeUnit.NANOSECONDS);
         double max = max(TimeUnit.NANOSECONDS);
 
-        // we wouldn't need to iterate over all the active tasks just to calculate the 100th percentile, which is just the max.
+        // we wouldn't need to iterate over all the active tasks just to calculate the
+        // 100th percentile, which is just the max.
         for (Double percentile : percentilesAboveInterpolatableLine) {
             valueAtPercentiles.add(new ValueAtPercentile(percentile, max));
         }
 
         ValueAtPercentile[] valueAtPercentilesArr = valueAtPercentiles.toArray(new ValueAtPercentile[0]);
 
-        return new HistogramSnapshot(
-                activeTasks.size(),
-                duration,
-                max,
-                valueAtPercentilesArr,
-                countAtBucketsArr,
-                (ps, scaling) -> ps.print("Summary output for LongTaskTimer histograms is not supported.")
-        );
+        return new HistogramSnapshot(activeTasks.size(), duration, max, valueAtPercentilesArr, countAtBucketsArr,
+                (ps, scaling) -> ps.print("Summary output for LongTaskTimer histograms is not supported."));
     }
 
     class SampleImpl extends Sample {
+
         private final long startTime;
+
         private volatile boolean stopped;
 
         private SampleImpl() {
@@ -248,11 +245,10 @@ public class DefaultLongTaskTimer extends AbstractMeter implements LongTaskTimer
         @Override
         public String toString() {
             double durationInNanoseconds = duration(TimeUnit.NANOSECONDS);
-            return "SampleImpl{" +
-                    "duration(seconds)=" + TimeUtils.nanosToUnit(durationInNanoseconds, TimeUnit.SECONDS) + ", " +
-                    "duration(nanos)=" + durationInNanoseconds + ", " +
-                    "startTimeNanos=" + startTime +
-                    '}';
+            return "SampleImpl{" + "duration(seconds)=" + TimeUtils.nanosToUnit(durationInNanoseconds, TimeUnit.SECONDS)
+                    + ", " + "duration(nanos)=" + durationInNanoseconds + ", " + "startTimeNanos=" + startTime + '}';
         }
+
     }
+
 }

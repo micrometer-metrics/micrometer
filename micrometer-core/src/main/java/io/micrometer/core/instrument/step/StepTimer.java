@@ -1,12 +1,12 @@
-/**
+/*
  * Copyright 2017 VMware, Inc.
- * <p>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
+ *
  * https://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,6 +18,7 @@ package io.micrometer.core.instrument.step;
 import io.micrometer.core.instrument.AbstractTimer;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
+import io.micrometer.core.instrument.distribution.Histogram;
 import io.micrometer.core.instrument.distribution.TimeWindowMax;
 import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import io.micrometer.core.instrument.util.TimeUtils;
@@ -28,28 +29,37 @@ import java.util.concurrent.atomic.LongAdder;
 /**
  * @author Jon Schneider
  */
-public class StepTimer extends AbstractTimer {
+public class StepTimer extends AbstractTimer implements StepMeter {
+
     private final LongAdder count = new LongAdder();
+
     private final LongAdder total = new LongAdder();
+
     private final StepTuple2<Long, Long> countTotal;
+
     private final TimeWindowMax max;
 
     /**
      * Create a new {@code StepTimer}.
-     *
-     * @param id                            ID
-     * @param clock                         clock
-     * @param distributionStatisticConfig   distribution statistic configuration
-     * @param pauseDetector                 pause detector
-     * @param baseTimeUnit                  base time unit
-     * @param stepDurationMillis                    step in milliseconds
+     * @param id ID
+     * @param clock clock
+     * @param distributionStatisticConfig distribution statistic configuration
+     * @param pauseDetector pause detector
+     * @param baseTimeUnit base time unit
+     * @param stepDurationMillis step in milliseconds
      * @param supportsAggregablePercentiles whether it supports aggregable percentiles
      */
     public StepTimer(final Id id, final Clock clock, final DistributionStatisticConfig distributionStatisticConfig,
-        final PauseDetector pauseDetector, final TimeUnit baseTimeUnit, final long stepDurationMillis,
-        final boolean supportsAggregablePercentiles
-    ) {
-        super(id, clock, distributionStatisticConfig, pauseDetector, baseTimeUnit, supportsAggregablePercentiles);
+            final PauseDetector pauseDetector, final TimeUnit baseTimeUnit, final long stepDurationMillis,
+            final boolean supportsAggregablePercentiles) {
+        this(id, clock, distributionStatisticConfig, pauseDetector, baseTimeUnit, stepDurationMillis,
+                defaultHistogram(clock, distributionStatisticConfig, supportsAggregablePercentiles));
+    }
+
+    protected StepTimer(final Id id, final Clock clock, final DistributionStatisticConfig distributionStatisticConfig,
+            final PauseDetector pauseDetector, final TimeUnit baseTimeUnit, final long stepDurationMillis,
+            Histogram histogram) {
+        super(id, clock, pauseDetector, baseTimeUnit, histogram);
         countTotal = new StepTuple2<>(clock, stepDurationMillis, 0L, 0L, count::sumThenReset, total::sumThenReset);
         max = new TimeWindowMax(clock, distributionStatisticConfig);
     }
@@ -76,4 +86,10 @@ public class StepTimer extends AbstractTimer {
     public double max(final TimeUnit unit) {
         return TimeUtils.nanosToUnit(max.poll(), unit);
     }
+
+    @Override
+    public void _closingRollover() {
+        countTotal._closingRollover();
+    }
+
 }

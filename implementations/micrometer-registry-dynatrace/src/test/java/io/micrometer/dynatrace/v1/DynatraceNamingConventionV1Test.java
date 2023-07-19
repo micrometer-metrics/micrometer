@@ -1,12 +1,12 @@
-/**
+/*
  * Copyright 2021 VMware, Inc.
- * <p>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
+ *
  * https://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,6 +31,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @author Johnny Lim
  */
 class DynatraceNamingConventionV1Test {
+
     private final DynatraceNamingConventionV1 convention = new DynatraceNamingConventionV1();
 
     @Test
@@ -53,7 +54,7 @@ class DynatraceNamingConventionV1Test {
     @Test
     void nameWithSystemLoadAverageOneMintueShouldSanitize() {
         assertThat(convention.name("system.load.average.1m", Meter.Type.COUNTER, null))
-                .isEqualTo("custom:system.load.average.oneminute");
+            .isEqualTo("custom:system.load.average.oneminute");
     }
 
     @Test
@@ -66,5 +67,5 @@ class DynatraceNamingConventionV1Test {
         String expected = String.join("", Collections.nCopies(128, "a"));
         assertThat(convention.tagValue(String.join("", Collections.nCopies(130, "a")))).isEqualTo(expected);
     }
-}
 
+}

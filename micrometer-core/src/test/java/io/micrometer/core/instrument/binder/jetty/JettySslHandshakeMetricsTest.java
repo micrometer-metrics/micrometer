@@ -1,12 +1,12 @@
-/**
+/*
  * Copyright 2020 VMware, Inc.
- * <p>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
+ *
  * https://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -40,11 +40,15 @@ import static org.mockito.Mockito.when;
  * @author Johnny Lim
  */
 class JettySslHandshakeMetricsTest {
+
     private SimpleMeterRegistry registry = new SimpleMeterRegistry(SimpleConfig.DEFAULT, new MockClock());
+
     private JettySslHandshakeMetrics sslHandshakeMetrics;
+
     Iterable<Tag> tags = Tags.of("id", "0");
 
     SSLSession session = mock(SSLSession.class);
+
     SSLEngine engine = mock(SSLEngine.class);
 
     @BeforeEach
@@ -58,8 +62,9 @@ class JettySslHandshakeMetricsTest {
         SslHandshakeListener.Event event = new SslHandshakeListener.Event(engine);
         sslHandshakeMetrics.handshakeFailed(event, new javax.net.ssl.SSLHandshakeException(""));
         assertThat(registry.get("jetty.ssl.handshakes")
-                           .tags("id", "0", "protocol", "unknown", "ciphersuite", "unknown", "result", "failed")
-                           .counter().count()).isEqualTo(1.0);
+            .tags("id", "0", "protocol", "unknown", "ciphersuite", "unknown", "result", "failed")
+            .counter()
+            .count()).isEqualTo(1.0);
     }
 
     @Test
@@ -70,8 +75,9 @@ class JettySslHandshakeMetricsTest {
         when(session.getCipherSuite()).thenReturn("RSA_XYZZY");
         sslHandshakeMetrics.handshakeSucceeded(event);
         assertThat(registry.get("jetty.ssl.handshakes")
-                           .tags("id", "0", "protocol", "TLSv1.3", "ciphersuite", "RSA_XYZZY", "result", "succeeded")
-                           .counter().count()).isEqualTo(1.0);
+            .tags("id", "0", "protocol", "TLSv1.3", "ciphersuite", "RSA_XYZZY", "result", "succeeded")
+            .counter()
+            .count()).isEqualTo(1.0);
     }
 
     @Test
@@ -79,9 +85,9 @@ class JettySslHandshakeMetricsTest {
         Connector connector = mock(Connector.class);
         new JettySslHandshakeMetrics(registry, connector, tags);
         assertThatCode(() -> registry.get("jetty.ssl.handshakes")
-                .tags("id", "0", "protocol", "unknown", "ciphersuite", "unknown", "result", "failed",
-                        "connector.name", "unnamed")
-                .counter()).doesNotThrowAnyException();
+            .tags("id", "0", "protocol", "unknown", "ciphersuite", "unknown", "result", "failed", "connector.name",
+                    "unnamed")
+            .counter()).doesNotThrowAnyException();
     }
 
     @Test
@@ -90,8 +96,9 @@ class JettySslHandshakeMetricsTest {
         when(connector.getName()).thenReturn("my-connector");
         new JettySslHandshakeMetrics(registry, connector, tags);
         assertThatCode(() -> registry.get("jetty.ssl.handshakes")
-                .tags("id", "0", "protocol", "unknown", "ciphersuite", "unknown", "result", "failed",
-                        "connector.name", "my-connector")
-                .counter()).doesNotThrowAnyException();
+            .tags("id", "0", "protocol", "unknown", "ciphersuite", "unknown", "result", "failed", "connector.name",
+                    "my-connector")
+            .counter()).doesNotThrowAnyException();
     }
+
 }

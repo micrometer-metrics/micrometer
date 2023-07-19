@@ -1,12 +1,12 @@
-/**
+/*
  * Copyright 2017 VMware, Inc.
- * <p>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
+ *
  * https://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,8 +30,10 @@ import static io.micrometer.core.instrument.config.validate.PropertyValidator.ge
  * @author Jon Schneider
  */
 public interface DropwizardConfig extends MeterRegistryConfig {
+
     /**
-     * @return The step size (reporting frequency, max decaying) to use. The default is 1 minute.
+     * @return The step size (reporting frequency, max decaying) to use. The default is 1
+     * minute.
      */
     default Duration step() {
         return getDuration(this, "step").orElse(Duration.ofMinutes(1));
@@ -44,14 +46,12 @@ public interface DropwizardConfig extends MeterRegistryConfig {
 
     /**
      * Validate a provided configuration.
-     *
      * @param config configuration to validate
      * @return validation result
      * @since 1.5.0
      */
     static Validated<?> validate(DropwizardConfig config) {
-        return checkAll(config,
-                check("step", DropwizardConfig::step)
-        );
+        return checkAll(config, check("step", DropwizardConfig::step));
     }
+
 }

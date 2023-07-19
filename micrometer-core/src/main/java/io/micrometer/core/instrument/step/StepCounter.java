@@ -1,12 +1,12 @@
-/**
+/*
  * Copyright 2017 VMware, Inc.
- * <p>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
+ *
  * https://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,13 +20,14 @@ import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.Counter;
 
 /**
- * Counter that reports a rate per step interval to a monitoring system. Note that {@link #count()}
- * will report the number of events in the last complete interval rather than the total for
- * the life of the process.
+ * Counter that reports a rate per step interval to a monitoring system. Note that
+ * {@link #count()} will report the number of events in the last complete interval rather
+ * than the total for the life of the process.
  *
  * @author Jon Schneider
  */
-public class StepCounter extends AbstractMeter implements Counter {
+public class StepCounter extends AbstractMeter implements Counter, StepMeter {
+
     private final StepDouble value;
 
     public StepCounter(Id id, Clock clock, long stepMillis) {
@@ -43,4 +44,10 @@ public class StepCounter extends AbstractMeter implements Counter {
     public double count() {
         return value.poll();
     }
+
+    @Override
+    public void _closingRollover() {
+        value._closingRollover();
+    }
+
 }

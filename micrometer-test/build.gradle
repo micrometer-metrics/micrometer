@@ -1,13 +1,41 @@
+plugins {
+    id 'me.champeau.mrjar' version "0.1.1"
+}
+
+description 'Test compatibility kit for extensions of Micrometer'
+
+multiRelease {
+    targetVersions 8, 11
+}
+
+// Otherwise java11 tests will not see java11 code
+sourceSets {
+    java11Test {
+        compileClasspath += sourceSets.java11.output
+        runtimeClasspath += sourceSets.java11.output
+    }
+}
+
 dependencies {
     api project(':micrometer-core')
+    api project(':micrometer-observation')
+    api project(':micrometer-observation-test')
+
+    java11TestImplementation project(":micrometer-core").sourceSets.java11.output
 
     api 'org.assertj:assertj-core'
 
     api 'org.junit.jupiter:junit-jupiter'
+    api 'org.junit.jupiter:junit-jupiter-engine'
 
     api 'ru.lanwen.wiremock:wiremock-junit5'
     api 'com.github.tomakehurst:wiremock-jre8-standalone'
+    java11TestImplementation 'com.github.tomakehurst:wiremock-jre8-standalone'
+
     api 'org.mockito:mockito-core'
+    implementation 'org.awaitility:awaitility'
+
+    testImplementation project(':micrometer-observation-test')
 
     testImplementation 'org.jsr107.ri:cache-ri-impl'
 
@@ -19,5 +47,32 @@ dependencies {
     testImplementation 'javax.cache:cache-api'
     testImplementation 'com.hazelcast:hazelcast'
     testImplementation 'com.squareup.okhttp3:okhttp'
-    testImplementation 'io.projectreactor.netty:reactor-netty-http'
+    testImplementation 'org.apache.httpcomponents:httpclient'
+    testImplementation 'org.apache.httpcomponents:httpasyncclient'
+    testImplementation 'org.apache.httpcomponents.client5:httpclient5'
+    testImplementation 'org.eclipse.jetty:jetty-client'
+    testImplementation 'org.eclipse.jetty:jetty-server'
+    testImplementation 'org.eclipse.jetty:jetty-servlet'
+    testImplementation 'org.glassfish.jersey.core:jersey-server'
+    testImplementation 'org.glassfish.jersey.test-framework.providers:jersey-test-framework-provider-jdk-http:2.+'
+    // necessary for Jersey test framework
+    testRuntimeOnly 'org.glassfish.jersey.inject:jersey-hk2'
+}
+
+java11Test {
+    // set heap size for the test JVM(s)
+    maxHeapSize = "1500m"
+
+    useJUnitPlatform {
+        excludeTags 'docker'
+    }
+
+    include {
+        it.getFile().getAbsolutePath().contains("java11Test")
+    }
+
+    retry {
+        maxFailures = 5
+        maxRetries = 3
+    }
 }

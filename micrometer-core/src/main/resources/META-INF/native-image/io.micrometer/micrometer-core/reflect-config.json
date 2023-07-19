@@ -1,5 +1,12 @@
 [
   {
+    "condition": { "typeReachable" : "java.io.Serial" },
+    "name":"com.sun.management.OperatingSystemMXBean",
+    "methods":[
+      {"name":"getCpuLoad","parameterTypes":[] }
+    ]
+  },
+  {
     "name":"com.sun.management.OperatingSystemMXBean",
     "methods":[
       {"name":"getProcessCpuLoad","parameterTypes":[] },
@@ -12,5 +19,13 @@
       {"name":"getMaxFileDescriptorCount","parameterTypes":[] },
       {"name":"getOpenFileDescriptorCount","parameterTypes":[] }
     ]
+  },
+  {
+    "name":"org.HdrHistogram.ConcurrentHistogram",
+    "methods":[{"name":"<init>","parameterTypes":["long","long","int"] }]
+  },
+  {
+    "name":"org.HdrHistogram.Histogram",
+    "methods":[{"name":"<init>","parameterTypes":["long","long","int"] }]
   }
 ]

@@ -1,12 +1,12 @@
-/**
+/*
  * Copyright 2019 VMware, Inc.
- * <p>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
+ *
  * https://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,8 +21,8 @@ import java.util.Collections;
 import java.util.Map;
 
 /**
- * Provides the User-Agent header to signal to the Google Cloud Client Libraries that requests originate from a
- * Micrometer Stackdriver Registry.
+ * Provides the User-Agent header to signal to the Google Cloud Client Libraries that
+ * requests originate from a Micrometer Stackdriver Registry.
  *
  * @author João André Martins
  * @author Chengyuan Zhao
@@ -35,7 +35,6 @@ class UserAgentHeaderProvider implements HeaderProvider {
 
     /**
      * Default constructor.
-     *
      * @param component The component
      */
     UserAgentHeaderProvider(String component) {
@@ -44,8 +43,9 @@ class UserAgentHeaderProvider implements HeaderProvider {
     }
 
     /**
-     * Returns the "User-Agent" header whose value should be added to the google-cloud-java REST API calls.
-     * e.g., {@code User-Agent: Micrometer/1.0.0.RELEASE micrometer-registry-stackdriver/1.0.0.RELEASE}.
+     * Returns the "User-Agent" header whose value should be added to the
+     * google-cloud-java REST API calls. e.g.,
+     * {@code User-Agent: Micrometer/1.0.0.RELEASE micrometer-registry-stackdriver/1.0.0.RELEASE}.
      */
     @Override
     public Map<String, String> getHeaders() {
@@ -58,4 +58,5 @@ class UserAgentHeaderProvider implements HeaderProvider {
 
         return "Micrometer/" + version + " " + library + "/" + version;
     }
+
 }

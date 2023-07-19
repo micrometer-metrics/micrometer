@@ -1,12 +1,12 @@
-/**
+/*
  * Copyright 2017 VMware, Inc.
- * <p>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
+ *
  * https://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,11 +27,11 @@ import java.util.concurrent.TimeUnit;
 public final class CountAtBucket {
 
     private final double bucket;
+
     private final double count;
 
     /**
      * Create a {@code CountAtBucket} instance.
-     *
      * @param bucket bucket
      * @param count count
      * @deprecated Use {@link #CountAtBucket(double, double)} instead since 1.4.0.
@@ -43,7 +43,6 @@ public final class CountAtBucket {
 
     /**
      * Create a {@code CountAtBucket} instance.
-     *
      * @param bucket bucket
      * @param count count
      * @since 1.4.0
@@ -67,9 +66,7 @@ public final class CountAtBucket {
 
     boolean isPositiveInf() {
         // check for Long.MAX_VALUE to maintain backwards compatibility
-        return bucket == Double.POSITIVE_INFINITY ||
-                bucket == Double.MAX_VALUE ||
-                (long) bucket == Long.MAX_VALUE;
+        return bucket == Double.POSITIVE_INFINITY || bucket == Double.MAX_VALUE || (long) bucket == Long.MAX_VALUE;
     }
 
     @Override
@@ -79,8 +76,10 @@ public final class CountAtBucket {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
 
         CountAtBucket that = (CountAtBucket) o;
 
@@ -95,4 +94,5 @@ public final class CountAtBucket {
         result = 31 * result + (int) (tempCount ^ (tempCount >>> 32));
         return result;
     }
+
 }

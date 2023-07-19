@@ -1,12 +1,12 @@
-/**
+/*
  * Copyright 2020 VMware, Inc.
- * <p>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
+ *
  * https://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,6 +15,7 @@
  */
 package io.micrometer.health;
 
+import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.MeterBinder;
@@ -23,7 +24,6 @@ import io.micrometer.core.instrument.config.MeterFilter;
 import io.micrometer.core.instrument.distribution.HistogramSupport;
 import io.micrometer.core.instrument.distribution.ValueAtPercentile;
 import io.micrometer.core.instrument.search.Search;
-import io.micrometer.core.lang.Nullable;
 
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
@@ -48,12 +48,14 @@ import static io.micrometer.health.QueryUtils.SUM_OR_NAN;
  * @since 1.6.0
  */
 public abstract class ServiceLevelObjective {
+
     private static final ThreadLocal<DecimalFormat> WHOLE_OR_SHORT_DECIMAL = ThreadLocal.withInitial(() -> {
         DecimalFormatSymbols otherSymbols = new DecimalFormatSymbols(Locale.US);
         return new DecimalFormat("##0.##", otherSymbols);
     });
 
     private final String name;
+
     private final Tags tags;
 
     @Nullable
@@ -114,9 +116,13 @@ public abstract class ServiceLevelObjective {
     }
 
     public static class SingleIndicator extends ServiceLevelObjective {
+
         private final NumericQuery query;
+
         private final Collection<MeterBinder> requires;
+
         private final String testDescription;
+
         private final Predicate<Double> test;
 
         protected SingleIndicator(NumericQuery query, String testDescription, Predicate<Double> test) {
@@ -154,10 +160,10 @@ public abstract class ServiceLevelObjective {
 
         public String getValueAsString(MeterRegistry registry) {
             double value = getValue(registry);
-            return Double.isNaN(value) ? "no value available" :
-                    getBaseUnit() != null && getBaseUnit().toLowerCase().contains("percent") ?
-                            WHOLE_OR_SHORT_DECIMAL.get().format(value * 100) + "%" :
-                            WHOLE_OR_SHORT_DECIMAL.get().format(value);
+            return Double.isNaN(value) ? "no value available"
+                    : getBaseUnit() != null && getBaseUnit().toLowerCase().contains("percent")
+                            ? WHOLE_OR_SHORT_DECIMAL.get().format(value * 100) + "%"
+                            : WHOLE_OR_SHORT_DECIMAL.get().format(value);
         }
 
         public String getTestDescription() {
@@ -169,11 +175,14 @@ public abstract class ServiceLevelObjective {
         }
 
         static SingleIndicator testDuration(NumericQuery query, String testDescription, Predicate<Duration> test) {
-            return new SingleIndicator(query, testDescription, valueNanos -> valueNanos.isNaN() || test.test(Duration.ofNanos(valueNanos.longValue())));
+            return new SingleIndicator(query, testDescription,
+                    valueNanos -> valueNanos.isNaN() || test.test(Duration.ofNanos(valueNanos.longValue())));
         }
 
         public static class Builder {
+
             private final String name;
+
             private Tags tags = Tags.empty();
 
             @Nullable
@@ -210,7 +219,8 @@ public abstract class ServiceLevelObjective {
             }
 
             /**
-             * @param tags Must be an even number of arguments representing key/value pairs of tags.
+             * @param tags Must be an even number of arguments representing key/value
+             * pairs of tags.
              * @return This builder.
              */
             public final Builder tags(String... tags) {
@@ -227,7 +237,7 @@ public abstract class ServiceLevelObjective {
             }
 
             /**
-             * @param key   The tag key.
+             * @param key The tag key.
              * @param value The tag value.
              * @return The single indicator builder with a single added tag.
              */
@@ -237,79 +247,78 @@ public abstract class ServiceLevelObjective {
             }
 
             public final NumericQuery count(Function<Search, Search> search) {
-                return new Instant(name, tags, baseUnit, failedMessage, requires, search, s -> s.meters().stream()
-                        .map(m -> {
+                return new Instant(name, tags, baseUnit, failedMessage, requires, search,
+                        s -> s.meters().stream().map(m -> {
                             if (m instanceof Counter) {
                                 return ((Counter) m).count();
-                            } else if (m instanceof Timer) {
+                            }
+                            else if (m instanceof Timer) {
                                 return (double) ((Timer) m).count();
-                            } else if (m instanceof FunctionTimer) {
+                            }
+                            else if (m instanceof FunctionTimer) {
                                 return ((FunctionTimer) m).count();
-                            } else if (m instanceof FunctionCounter) {
+                            }
+                            else if (m instanceof FunctionCounter) {
                                 return ((FunctionCounter) m).count();
-                            } else if (m instanceof LongTaskTimer) {
+                            }
+                            else if (m instanceof LongTaskTimer) {
                                 return (double) ((LongTaskTimer) m).activeTasks();
                             }
                             return Double.NaN;
-                        })
-                        .reduce(Double.NaN, SUM_OR_NAN)
-                );
+                        }).reduce(Double.NaN, SUM_OR_NAN));
             }
 
-            public NumericQuery errorRatio(Function<Search, Search> searchAll,
-                                           Function<Search, Search> searchErrors) {
-                return count(searchAll.andThen(searchErrors))
-                        .dividedBy(over -> over.count(searchAll));
+            public NumericQuery errorRatio(Function<Search, Search> searchAll, Function<Search, Search> searchErrors) {
+                return count(searchAll.andThen(searchErrors)).dividedBy(over -> over.count(searchAll));
             }
 
             public final NumericQuery total(Function<Search, Search> search) {
-                return new Instant(name, tags, baseUnit, failedMessage, requires, search, s -> s.meters().stream()
-                        .map(m -> {
+                return new Instant(name, tags, baseUnit, failedMessage, requires, search,
+                        s -> s.meters().stream().map(m -> {
                             if (m instanceof DistributionSummary) {
                                 return ((DistributionSummary) m).totalAmount();
-                            } else if (m instanceof Timer) {
+                            }
+                            else if (m instanceof Timer) {
                                 return ((Timer) m).totalTime(TimeUnit.NANOSECONDS);
-                            } else if (m instanceof LongTaskTimer) {
+                            }
+                            else if (m instanceof LongTaskTimer) {
                                 return ((LongTaskTimer) m).duration(TimeUnit.NANOSECONDS);
                             }
                             return Double.NaN;
-                        })
-                        .reduce(Double.NaN, SUM_OR_NAN)
-                );
+                        }).reduce(Double.NaN, SUM_OR_NAN));
             }
 
             public final NumericQuery maxPercentile(Function<Search, Search> search, double percentile) {
-                return new Instant(name, tags, baseUnit, failedMessage, requires, search, s -> s.meters().stream()
-                        .map(m -> {
+                return new Instant(name, tags, baseUnit, failedMessage, requires, search,
+                        s -> s.meters().stream().map(m -> {
                             if (!(m instanceof HistogramSupport)) {
                                 return Double.NaN;
                             }
 
-                            ValueAtPercentile[] valueAtPercentiles = ((HistogramSupport) m).takeSnapshot().percentileValues();
+                            ValueAtPercentile[] valueAtPercentiles = ((HistogramSupport) m).takeSnapshot()
+                                .percentileValues();
                             return Arrays.stream(valueAtPercentiles)
-                                    .filter(vap -> vap.percentile() == percentile)
-                                    .map(ValueAtPercentile::value)
-                                    .findAny()
-                                    .orElse(Double.NaN);
-                        })
-                        .reduce(Double.NaN, MAX_OR_NAN)
-                );
+                                .filter(vap -> vap.percentile() == percentile)
+                                .map(ValueAtPercentile::value)
+                                .findAny()
+                                .orElse(Double.NaN);
+                        }).reduce(Double.NaN, MAX_OR_NAN));
             }
 
             public final NumericQuery max(Function<Search, Search> search) {
-                return new Instant(name, tags, baseUnit, failedMessage, requires, search, s -> s.meters().stream()
-                        .map(m -> {
+                return new Instant(name, tags, baseUnit, failedMessage, requires, search,
+                        s -> s.meters().stream().map(m -> {
                             if (m instanceof DistributionSummary) {
                                 return ((DistributionSummary) m).max();
-                            } else if (m instanceof Timer) {
+                            }
+                            else if (m instanceof Timer) {
                                 return ((Timer) m).max(TimeUnit.NANOSECONDS);
-                            } else if (m instanceof LongTaskTimer) {
+                            }
+                            else if (m instanceof LongTaskTimer) {
                                 return ((LongTaskTimer) m).max(TimeUnit.NANOSECONDS);
                             }
                             return Double.NaN;
-                        })
-                        .reduce(Double.NaN, MAX_OR_NAN)
-                );
+                        }).reduce(Double.NaN, MAX_OR_NAN));
             }
 
             /**
@@ -317,24 +326,24 @@ public abstract class ServiceLevelObjective {
              * @return The value of the first matching gauge time series.
              */
             public final NumericQuery value(Function<Search, Search> search) {
-                return new Instant(name, tags, baseUnit, failedMessage, requires, search, s -> s.meters().stream()
-                        .map(m -> {
+                return new Instant(name, tags, baseUnit, failedMessage, requires, search,
+                        s -> s.meters().stream().map(m -> {
                             if (m instanceof TimeGauge) {
                                 return ((TimeGauge) m).value(TimeUnit.NANOSECONDS);
-                            } else if (m instanceof Gauge) {
+                            }
+                            else if (m instanceof Gauge) {
                                 return ((Gauge) m).value();
                             }
                             return Double.NaN;
-                        })
-                        .filter(n -> !Double.isNaN(n))
-                        .findAny()
-                        .orElse(Double.NaN)
-                );
+                        }).filter(n -> !Double.isNaN(n)).findAny().orElse(Double.NaN));
             }
+
         }
 
         public abstract static class NumericQuery {
+
             protected final String name;
+
             private final Tags tags;
 
             @Nullable
@@ -344,9 +353,9 @@ public abstract class ServiceLevelObjective {
             private final String failedMessage;
 
             private final Collection<MeterBinder> requires;
-            
-            NumericQuery(String name, Tags tags, @Nullable String baseUnit,
-                         @Nullable String failedMessage, Collection<MeterBinder> requires) {
+
+            NumericQuery(String name, Tags tags, @Nullable String baseUnit, @Nullable String failedMessage,
+                    Collection<MeterBinder> requires) {
                 this.name = name;
                 this.tags = tags;
                 this.baseUnit = baseUnit;
@@ -357,69 +366,49 @@ public abstract class ServiceLevelObjective {
             abstract Double getValue(MeterRegistry registry);
 
             private String thresholdString(double threshold) {
-                return baseUnit != null && baseUnit.toLowerCase().contains("percent") ?
-                        WHOLE_OR_SHORT_DECIMAL.get().format(threshold * 100) + "%" :
-                        WHOLE_OR_SHORT_DECIMAL.get().format(threshold);
+                return baseUnit != null && baseUnit.toLowerCase().contains("percent")
+                        ? WHOLE_OR_SHORT_DECIMAL.get().format(threshold * 100) + "%"
+                        : WHOLE_OR_SHORT_DECIMAL.get().format(threshold);
             }
 
             public final SingleIndicator isLessThan(double threshold) {
-                return SingleIndicator.testNumeric(this,
-                        "<" + thresholdString(threshold),
-                        v -> v < threshold);
+                return SingleIndicator.testNumeric(this, "<" + thresholdString(threshold), v -> v < threshold);
             }
 
             public final SingleIndicator isLessThanOrEqualTo(double threshold) {
-                return SingleIndicator.testNumeric(this,
-                        "<=" + thresholdString(threshold),
-                        v -> v <= threshold);
+                return SingleIndicator.testNumeric(this, "<=" + thresholdString(threshold), v -> v <= threshold);
             }
 
             public final SingleIndicator isGreaterThan(double threshold) {
-                return SingleIndicator.testNumeric(this,
-                        ">" + thresholdString(threshold),
-                        v -> v > threshold);
+                return SingleIndicator.testNumeric(this, ">" + thresholdString(threshold), v -> v > threshold);
             }
 
             public final SingleIndicator isGreaterThanOrEqualTo(double threshold) {
-                return SingleIndicator.testNumeric(this,
-                        ">=" + thresholdString(threshold),
-                        v -> v >= threshold);
+                return SingleIndicator.testNumeric(this, ">=" + thresholdString(threshold), v -> v >= threshold);
             }
 
             public final SingleIndicator isEqualTo(double threshold) {
-                return SingleIndicator.testNumeric(this,
-                        "==" + thresholdString(threshold),
-                        v -> v == threshold);
+                return SingleIndicator.testNumeric(this, "==" + thresholdString(threshold), v -> v == threshold);
             }
 
             public final SingleIndicator isLessThan(Duration threshold) {
-                return SingleIndicator.testDuration(this,
-                        "<" + threshold,
-                        v -> v.compareTo(threshold) < 0);
+                return SingleIndicator.testDuration(this, "<" + threshold, v -> v.compareTo(threshold) < 0);
             }
 
             public final SingleIndicator isLessThanOrEqualTo(Duration threshold) {
-                return SingleIndicator.testDuration(this,
-                        "<=" + threshold,
-                        v -> v.compareTo(threshold) <= 0);
+                return SingleIndicator.testDuration(this, "<=" + threshold, v -> v.compareTo(threshold) <= 0);
             }
 
             public final SingleIndicator isGreaterThan(Duration threshold) {
-                return SingleIndicator.testDuration(this,
-                        ">" + threshold,
-                        v -> v.compareTo(threshold) > 0);
+                return SingleIndicator.testDuration(this, ">" + threshold, v -> v.compareTo(threshold) > 0);
             }
 
             public final SingleIndicator isGreaterThanOrEqualTo(Duration threshold) {
-                return SingleIndicator.testDuration(this,
-                        ">=" + threshold,
-                        v -> v.compareTo(threshold) >= 0);
+                return SingleIndicator.testDuration(this, ">=" + threshold, v -> v.compareTo(threshold) >= 0);
             }
 
             public final SingleIndicator isEqualTo(Duration threshold) {
-                return SingleIndicator.testDuration(this,
-                        "==" + threshold,
-                        v -> v.compareTo(threshold) == 0);
+                return SingleIndicator.testDuration(this, "==" + threshold, v -> v.compareTo(threshold) == 0);
             }
 
             public final SingleIndicator test(String thresholdDescription, Predicate<Double> threshold) {
@@ -431,11 +420,13 @@ public abstract class ServiceLevelObjective {
             }
 
             public final NumericQuery dividedBy(Function<SingleIndicator.Builder, NumericQuery> over) {
-                return new ArithmeticOp(this, over.apply(new Builder(name, failedMessage, requires)), (v1, v2) -> v1 / v2);
+                return new ArithmeticOp(this, over.apply(new Builder(name, failedMessage, requires)),
+                        (v1, v2) -> v1 / v2);
             }
 
             public final NumericQuery multipliedBy(Function<SingleIndicator.Builder, NumericQuery> by) {
-                return new ArithmeticOp(this, by.apply(new Builder(name, failedMessage, requires)), (v1, v2) -> v1 * v2);
+                return new ArithmeticOp(this, by.apply(new Builder(name, failedMessage, requires)),
+                        (v1, v2) -> v1 * v2);
             }
 
             public final NumericQuery plus(Function<SingleIndicator.Builder, NumericQuery> with) {
@@ -443,11 +434,12 @@ public abstract class ServiceLevelObjective {
             }
 
             public final NumericQuery minus(Function<SingleIndicator.Builder, NumericQuery> with) {
-                return new ArithmeticOp(this, with.apply(new Builder(name, failedMessage, requires)), (v1, v2) -> v1 - v2);
+                return new ArithmeticOp(this, with.apply(new Builder(name, failedMessage, requires)),
+                        (v1, v2) -> v1 - v2);
             }
 
             public final NumericQuery combineWith(Function<SingleIndicator.Builder, NumericQuery> with,
-                                                  BinaryOperator<Double> combiner) {
+                    BinaryOperator<Double> combiner) {
                 return new ArithmeticOp(this, with.apply(new Builder(name, failedMessage, requires)), combiner);
             }
 
@@ -470,17 +462,20 @@ public abstract class ServiceLevelObjective {
             abstract Collection<MeterFilter> acceptFilters();
 
             abstract void tick(MeterRegistry registry);
+
         }
 
         static class Instant extends NumericQuery {
+
             private static final CompositeMeterRegistry NOOP_REGISTRY = new CompositeMeterRegistry(Clock.SYSTEM);
 
             private final Function<Search, Search> search;
+
             private final Function<Search, Double> toValue;
 
-            Instant(String name, Tags tags, @Nullable String baseUnit,
-                    @Nullable String failedMessage, Collection<MeterBinder> requires,
-                    Function<Search, Search> search, Function<Search, Double> toValue) {
+            Instant(String name, Tags tags, @Nullable String baseUnit, @Nullable String failedMessage,
+                    Collection<MeterBinder> requires, Function<Search, Search> search,
+                    Function<Search, Double> toValue) {
                 super(name, tags, baseUnit, failedMessage, requires);
                 this.search = search;
                 this.toValue = toValue;
@@ -497,13 +492,18 @@ public abstract class ServiceLevelObjective {
 
             @Override
             public void tick(MeterRegistry registry) {
-                // do nothing because the value is always determined from the current instant
+                // do nothing because the value is always determined from the current
+                // instant
             }
+
         }
 
         static class ArithmeticOp extends NumericQuery {
+
             private final NumericQuery left;
+
             private final NumericQuery right;
+
             private BinaryOperator<Double> combiner;
 
             ArithmeticOp(NumericQuery left, NumericQuery right, BinaryOperator<Double> combiner) {
@@ -531,13 +531,17 @@ public abstract class ServiceLevelObjective {
                 left.tick(registry);
                 right.tick(registry);
             }
+
         }
 
         static class OverInterval extends NumericQuery {
+
             private final Deque<Sample> samples = new ConcurrentLinkedDeque<>();
 
             private final NumericQuery numericQuery;
+
             private final Duration interval;
+
             private final Function<DoubleStream, Double> collector;
 
             OverInterval(NumericQuery q, Duration interval, Function<DoubleStream, Double> collector) {
@@ -548,20 +552,21 @@ public abstract class ServiceLevelObjective {
             }
 
             private static class Sample {
+
                 private final long tick;
+
                 private final double sample;
 
                 private Sample(long tick, double sample) {
                     this.tick = tick;
                     this.sample = sample;
                 }
+
             }
 
             @Override
             protected Double getValue(MeterRegistry registry) {
-                return collector.apply(samples.stream()
-                        .mapToDouble(s -> s.sample)
-                        .filter(n -> !Double.isNaN(n)));
+                return collector.apply(samples.stream().mapToDouble(s -> s.sample).filter(n -> !Double.isNaN(n)));
             }
 
             @Override
@@ -580,16 +585,19 @@ public abstract class ServiceLevelObjective {
 
                 samples.addLast(new Sample(time, numericQuery.getValue(registry)));
             }
+
         }
+
     }
 
     public static class MultipleIndicator extends ServiceLevelObjective {
+
         private final ServiceLevelObjective[] objectives;
+
         private final BinaryOperator<Boolean> combiner;
 
-        MultipleIndicator(String name, Tags tags, @Nullable String failedMessage,
-                          ServiceLevelObjective[] objectives,
-                          BinaryOperator<Boolean> combiner) {
+        MultipleIndicator(String name, Tags tags, @Nullable String failedMessage, ServiceLevelObjective[] objectives,
+                BinaryOperator<Boolean> combiner) {
             super(name, tags, null, failedMessage);
             this.objectives = objectives;
             this.combiner = combiner;
@@ -602,9 +610,7 @@ public abstract class ServiceLevelObjective {
 
         @Override
         public Collection<MeterBinder> getRequires() {
-            return Arrays.stream(objectives)
-                    .flatMap(o -> o.getRequires().stream())
-                    .collect(Collectors.toList());
+            return Arrays.stream(objectives).flatMap(o -> o.getRequires().stream()).collect(Collectors.toList());
         }
 
         public ServiceLevelObjective[] getObjectives() {
@@ -613,9 +619,7 @@ public abstract class ServiceLevelObjective {
 
         @Override
         public Collection<MeterFilter> getAcceptFilters() {
-            return Arrays.stream(objectives)
-                    .flatMap(o -> o.getAcceptFilters().stream())
-                    .collect(Collectors.toList());
+            return Arrays.stream(objectives).flatMap(o -> o.getAcceptFilters().stream()).collect(Collectors.toList());
         }
 
         @Override
@@ -626,8 +630,11 @@ public abstract class ServiceLevelObjective {
         }
 
         public static class Builder {
+
             private final String name;
+
             private Tags tags = Tags.empty();
+
             private final ServiceLevelObjective[] objectives;
 
             @Nullable
@@ -644,7 +651,8 @@ public abstract class ServiceLevelObjective {
             }
 
             /**
-             * @param tags Must be an even number of arguments representing key/value pairs of tags.
+             * @param tags Must be an even number of arguments representing key/value
+             * pairs of tags.
              * @return This builder.
              */
             public Builder tags(String... tags) {
@@ -661,7 +669,7 @@ public abstract class ServiceLevelObjective {
             }
 
             /**
-             * @param key   The tag key.
+             * @param key The tag key.
              * @param value The tag value.
              * @return The builder with a single added tag.
              */
@@ -679,19 +687,23 @@ public abstract class ServiceLevelObjective {
             }
 
             /**
-             * Combine {@link ServiceLevelObjective ServiceLevelObjectives} with the provided {@code combiner}.
-             *
-             * @param combiner combiner to combine {@link ServiceLevelObjective ServiceLevelObjectives}
+             * Combine {@link ServiceLevelObjective ServiceLevelObjectives} with the
+             * provided {@code combiner}.
+             * @param combiner combiner to combine {@link ServiceLevelObjective
+             * ServiceLevelObjectives}
              * @return combined {@code MultipleIndicator}
              * @since 1.6.5
              */
             public final MultipleIndicator combine(BinaryOperator<Boolean> combiner) {
                 return new MultipleIndicator(name, tags, failedMessage, objectives, combiner);
             }
+
         }
+
     }
 
     static class FilteredServiceLevelObjective extends ServiceLevelObjective {
+
         private final ServiceLevelObjective delegate;
 
         FilteredServiceLevelObjective(Meter.Id id, ServiceLevelObjective delegate) {
@@ -718,5 +730,7 @@ public abstract class ServiceLevelObjective {
         public boolean healthy(MeterRegistry registry) {
             return delegate.healthy(registry);
         }
+
     }
+
 }

@@ -1,12 +1,12 @@
-/**
+/*
  * Copyright 2017 VMware, Inc.
- * <p>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
+ *
  * https://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,6 +15,9 @@
  */
 package io.micrometer.core.instrument.step;
 
+import io.micrometer.common.lang.Nullable;
+import io.micrometer.common.util.internal.logging.InternalLogger;
+import io.micrometer.common.util.internal.logging.InternalLoggerFactory;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.HistogramGauges;
@@ -23,19 +26,28 @@ import io.micrometer.core.instrument.internal.DefaultGauge;
 import io.micrometer.core.instrument.internal.DefaultLongTaskTimer;
 import io.micrometer.core.instrument.internal.DefaultMeter;
 import io.micrometer.core.instrument.push.PushMeterRegistry;
-import io.micrometer.core.lang.Nullable;
 
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.function.ToDoubleFunction;
 import java.util.function.ToLongFunction;
 
 /**
- * Registry that step-normalizes counts and sums to a rate/second over the publishing interval.
+ * Registry that step-normalizes counts and sums to a rate/second over the publishing
+ * interval.
  *
  * @author Jon Schneider
  */
 public abstract class StepMeterRegistry extends PushMeterRegistry {
+
+    private static final InternalLogger logger = InternalLoggerFactory.getInstance(StepMeterRegistry.class);
+
     private final StepRegistryConfig config;
+
+    @Nullable
+    private ScheduledExecutorService meterPollingService;
 
     public StepMeterRegistry(StepRegistryConfig config, Clock clock) {
         super(config, clock);
@@ -60,24 +72,28 @@ public abstract class StepMeterRegistry extends PushMeterRegistry {
     }
 
     @Override
-    protected Timer newTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig, PauseDetector pauseDetector) {
+    protected Timer newTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig,
+            PauseDetector pauseDetector) {
         Timer timer = new StepTimer(id, clock, distributionStatisticConfig, pauseDetector, getBaseTimeUnit(),
-            this.config.step().toMillis(), false);
+                this.config.step().toMillis(), false);
         HistogramGauges.registerWithCommonFormat(timer, this);
         return timer;
     }
 
     @Override
-    protected DistributionSummary newDistributionSummary(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig, double scale) {
+    protected DistributionSummary newDistributionSummary(Meter.Id id,
+            DistributionStatisticConfig distributionStatisticConfig, double scale) {
         DistributionSummary summary = new StepDistributionSummary(id, clock, distributionStatisticConfig, scale,
-            config.step().toMillis(), false);
+                config.step().toMillis(), false);
         HistogramGauges.registerWithCommonFormat(summary, this);
         return summary;
     }
 
     @Override
-    protected <T> FunctionTimer newFunctionTimer(Meter.Id id, T obj, ToLongFunction<T> countFunction, ToDoubleFunction<T> totalTimeFunction, TimeUnit totalTimeFunctionUnit) {
-        return new StepFunctionTimer<>(id, clock, config.step().toMillis(), obj, countFunction, totalTimeFunction, totalTimeFunctionUnit, getBaseTimeUnit());
+    protected <T> FunctionTimer newFunctionTimer(Meter.Id id, T obj, ToLongFunction<T> countFunction,
+            ToDoubleFunction<T> totalTimeFunction, TimeUnit totalTimeFunctionUnit) {
+        return new StepFunctionTimer<>(id, clock, config.step().toMillis(), obj, countFunction, totalTimeFunction,
+                totalTimeFunctionUnit, getBaseTimeUnit());
     }
 
     @Override
@@ -93,8 +109,85 @@ public abstract class StepMeterRegistry extends PushMeterRegistry {
     @Override
     protected DistributionStatisticConfig defaultHistogramConfig() {
         return DistributionStatisticConfig.builder()
-                .expiry(config.step())
-                .build()
-                .merge(DistributionStatisticConfig.DEFAULT);
+            .expiry(config.step())
+            .build()
+            .merge(DistributionStatisticConfig.DEFAULT);
     }
+
+    @Override
+    public void start(ThreadFactory threadFactory) {
+        super.start(threadFactory);
+
+        if (config.enabled()) {
+            this.meterPollingService = Executors.newSingleThreadScheduledExecutor(threadFactory);
+
+            this.meterPollingService.scheduleAtFixedRate(this::pollMetersToRollover, getInitialDelay(),
+                    config.step().toMillis(), TimeUnit.MILLISECONDS);
+        }
+    }
+
+    @Override
+    public void stop() {
+        super.stop();
+        if (this.meterPollingService != null) {
+            this.meterPollingService.shutdown();
+        }
+    }
+
+    @Override
+    public void close() {
+        stop();
+
+        if (!isPublishing()) {
+            if (!isDataPublishedForCurrentStep()) {
+                // Data was not published for the current step. So, we should flush that
+                // first.
+                try {
+                    this.publish();
+                }
+                catch (Throwable e) {
+                    logger.warn(
+                            "Unexpected exception thrown while publishing metrics for " + getClass().getSimpleName(),
+                            e);
+                }
+            }
+            closeStepMeters();
+        }
+        super.close();
+    }
+
+    private boolean isDataPublishedForCurrentStep() {
+        long currentTimeInMillis = clock.wallTime();
+        return (getLastScheduledPublishStartTime() / config.step().toMillis()) >= (currentTimeInMillis
+                / config.step().toMillis());
+    }
+
+    /**
+     * Performs closing rollover on StepMeters.
+     */
+    private void closeStepMeters() {
+        getMeters().stream()
+            .filter(StepMeter.class::isInstance)
+            .map(StepMeter.class::cast)
+            .forEach(StepMeter::_closingRollover);
+    }
+
+    /**
+     * This will poll the values from meters, which will cause a roll over for Step-meters
+     * if past the step boundary. This gives some control over when roll over happens
+     * separate from when publishing happens.
+     */
+    // VisibleForTesting
+    void pollMetersToRollover() {
+        this.getMeters()
+            .forEach(m -> m.match(gauge -> null, Counter::count, Timer::count, DistributionSummary::count,
+                    meter -> null, meter -> null, FunctionCounter::count, FunctionTimer::count, meter -> null));
+    }
+
+    private long getInitialDelay() {
+        long stepMillis = config.step().toMillis();
+        // schedule one millisecond into the next step
+        return stepMillis - (clock.wallTime() % stepMillis) + 1;
+    }
+
 }

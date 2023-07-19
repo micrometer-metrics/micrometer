@@ -8,10 +8,7 @@
         <property name="lineSeparator" value="lf"/>
     </module>
 
-    <!-- Suppressions -->
-    <module name="SuppressionFilter">
-        <property name="file" value="${config_loc}/checkstyle-suppressions.xml"/>
-    </module>
+    <module name="com.puppycrawl.tools.checkstyle.checks.javadoc.JavadocPackageCheck"/>
 
     <!-- TreeWalker Checks -->
     <module name="TreeWalker">
@@ -19,7 +16,7 @@
         <!-- Imports -->
         <module name="IllegalImportCheck" >
             <property name="id" value="GeneralIllegalImportCheck"/>
-            <property name="illegalPkgs" value="com.google.common.(?!cache).*,org.apache.commons.text.*,org.jetbrains.*,jdk.internal.jline.internal.*,reactor.util.annotation.*,org.checkerframework.checker.*,javax.ws.*"/>
+            <property name="illegalPkgs" value="com.google.common.(?![cache|concurrent]).*,org.apache.commons.text.*,org.jetbrains.*,jdk.internal.jline.internal.*,reactor.util.annotation.*,org.checkerframework.checker.*,javax.ws.*"/>
             <property name="illegalClasses" value="org\.assertj\.core\.api\.Java6Assertions\..*,javax.annotation.Nullable"/>
             <property name="regexp" value="true"/>
         </module>
@@ -59,9 +56,10 @@
         <module name="SuppressionCommentFilter"/>
     </module>
 
-    <module name="SuppressionFilter">
-        <property name="file" value="${config_loc}/suppressions.xml"/>
-    </module>
-
     <module name="io.spring.nohttp.checkstyle.check.NoHttpCheck"/>
+
+    <!-- Suppressions -->
+    <module name="SuppressionFilter">
+        <property name="file" value="${config_loc}/checkstyle-suppressions.xml"/>
+    </module>
 </module>

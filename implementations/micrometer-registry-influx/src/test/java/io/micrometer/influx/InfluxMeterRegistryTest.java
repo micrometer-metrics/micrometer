@@ -1,12 +1,12 @@
-/**
+/*
  * Copyright 2019 VMware, Inc.
- * <p>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
+ *
  * https://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -36,7 +36,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 class InfluxMeterRegistryTest {
 
     private final InfluxConfig config = InfluxConfig.DEFAULT;
+
     private final MockClock clock = new MockClock();
+
     private final InfluxMeterRegistry meterRegistry = new InfluxMeterRegistry(config, clock);
 
     @Test
@@ -102,11 +104,13 @@ class InfluxMeterRegistryTest {
 
     @Test
     void writeCounterWithFunctionCounterShouldDropInfiniteValues() {
-        FunctionCounter counter = FunctionCounter.builder("myCounter", Double.POSITIVE_INFINITY, Number::doubleValue).register(meterRegistry);
+        FunctionCounter counter = FunctionCounter.builder("myCounter", Double.POSITIVE_INFINITY, Number::doubleValue)
+            .register(meterRegistry);
         clock.add(config.step());
         assertThat(meterRegistry.writeCounter(counter.getId(), Double.POSITIVE_INFINITY)).isEmpty();
 
-        counter = FunctionCounter.builder("myCounter", Double.NEGATIVE_INFINITY, Number::doubleValue).register(meterRegistry);
+        counter = FunctionCounter.builder("myCounter", Double.NEGATIVE_INFINITY, Number::doubleValue)
+            .register(meterRegistry);
         clock.add(config.step());
         assertThat(meterRegistry.writeCounter(counter.getId(), Double.NEGATIVE_INFINITY)).isEmpty();
     }
@@ -115,11 +119,8 @@ class InfluxMeterRegistryTest {
     void writeShouldDropTagWithBlankValue() {
         meterRegistry.gauge("my.gauge", Tags.of("foo", "bar").and("baz", ""), 1d);
         final Gauge gauge = meterRegistry.find("my.gauge").gauge();
-        assertThat(meterRegistry.writeGauge(gauge.getId(), 1d))
-                .hasSize(1)
-                .allSatisfy(s -> assertThat(s)
-                        .contains("foo=bar")
-                        .doesNotContain("baz"));
+        assertThat(meterRegistry.writeGauge(gauge.getId(), 1d)).hasSize(1)
+            .allSatisfy(s -> assertThat(s).contains("foo=bar").doesNotContain("baz"));
     }
 
     @Test
@@ -151,14 +152,17 @@ class InfluxMeterRegistryTest {
         Measurement measurement3 = new Measurement(() -> Double.NaN, Statistic.VALUE);
         Measurement measurement4 = new Measurement(() -> 1d, Statistic.VALUE);
         Measurement measurement5 = new Measurement(() -> 2d, Statistic.VALUE);
-        List<Measurement> measurements = Arrays.asList(measurement1, measurement2, measurement3, measurement4, measurement5);
+        List<Measurement> measurements = Arrays.asList(measurement1, measurement2, measurement3, measurement4,
+                measurement5);
         Meter meter = Meter.builder("my.meter", Meter.Type.GAUGE, measurements).register(this.meterRegistry);
         assertThat(meterRegistry.writeMeter(meter)).containsExactly("my_meter,metric_type=gauge value=1,value=2 1");
     }
 
     @Test
     void nanFunctionTimerShouldNotBeWritten() {
-        FunctionTimer timer = FunctionTimer.builder("myFunctionTimer", Double.NaN, Number::longValue, Number::doubleValue, TimeUnit.MILLISECONDS).register(meterRegistry);
+        FunctionTimer timer = FunctionTimer
+            .builder("myFunctionTimer", Double.NaN, Number::longValue, Number::doubleValue, TimeUnit.MILLISECONDS)
+            .register(meterRegistry);
         clock.add(config.step());
         assertThat(meterRegistry.writeFunctionTimer(timer)).isEmpty();
     }
@@ -192,6 +196,7 @@ class InfluxMeterRegistryTest {
             }
         };
         assertThat(meterRegistry.writeFunctionTimer(functionTimer))
-                .containsOnly("func_timer,metric_type=histogram sum=1,count=1 1");
+            .containsOnly("func_timer,metric_type=histogram sum=1,count=1 1");
     }
+
 }

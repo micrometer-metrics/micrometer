@@ -1,12 +1,12 @@
-/**
+/*
  * Copyright 2017 VMware, Inc.
- * <p>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
+ *
  * https://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,7 +15,7 @@
  */
 package io.micrometer.core.instrument;
 
-import io.micrometer.core.lang.Nullable;
+import io.micrometer.common.lang.Nullable;
 
 import java.util.Collections;
 import java.util.function.ToDoubleFunction;
@@ -26,6 +26,7 @@ import java.util.function.ToDoubleFunction;
  * @author Jon Schneider
  */
 public interface FunctionCounter extends Meter {
+
     static <T> Builder<T> builder(String name, @Nullable T obj, ToDoubleFunction<T> f) {
         return new Builder<>(name, obj, f);
     }
@@ -46,8 +47,11 @@ public interface FunctionCounter extends Meter {
      * @param <T> The type of the state object from which the counter value is extracted.
      */
     class Builder<T> {
+
         private final String name;
+
         private final ToDoubleFunction<T> f;
+
         private Tags tags = Tags.empty();
 
         @Nullable
@@ -66,7 +70,8 @@ public interface FunctionCounter extends Meter {
         }
 
         /**
-         * @param tags Must be an even number of arguments representing key/value pairs of tags.
+         * @param tags Must be an even number of arguments representing key/value pairs of
+         * tags.
          * @return The function counter builder with added tags.
          */
         public Builder<T> tags(String... tags) {
@@ -83,7 +88,7 @@ public interface FunctionCounter extends Meter {
         }
 
         /**
-         * @param key   The tag key.
+         * @param key The tag key.
          * @param value The tag value.
          * @return The function counter builder with a single added tag.
          */
@@ -111,15 +116,18 @@ public interface FunctionCounter extends Meter {
         }
 
         /**
-         * Add the function counter to a single registry, or return an existing function counter in that registry. The returned
-         * function counter will be unique for each registry, but each registry is guaranteed to only create one function counter
+         * Add the function counter to a single registry, or return an existing function
+         * counter in that registry. The returned function counter will be unique for each
+         * registry, but each registry is guaranteed to only create one function counter
          * for the same combination of name and tags.
-         *
-         * @param registry A registry to add the function counter to, if it doesn't already exist.
+         * @param registry A registry to add the function counter to, if it doesn't
+         * already exist.
          * @return A new or existing function counter.
          */
         public FunctionCounter register(MeterRegistry registry) {
             return registry.more().counter(new Meter.Id(name, tags, baseUnit, description, Type.COUNTER), obj, f);
         }
+
     }
+
 }

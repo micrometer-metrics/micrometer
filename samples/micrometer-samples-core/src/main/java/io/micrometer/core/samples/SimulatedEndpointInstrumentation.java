@@ -1,12 +1,12 @@
-/**
+/*
  * Copyright 2017 VMware, Inc.
- * <p>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
+ *
  * https://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,6 +28,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class SimulatedEndpointInstrumentation {
+
     public static void main(String[] args) {
         MeterRegistry registry = SampleConfig.myMonitoringSystem();
 
@@ -63,48 +64,40 @@ public class SimulatedEndpointInstrumentation {
         Normal duration2 = new Normal(250, 50, r);
 
         AtomicInteger latencyForThisSecond = new AtomicInteger(duration.nextInt());
-        Flux.interval(Duration.ofSeconds(1))
-            .doOnEach(d -> latencyForThisSecond.set(duration.nextInt()))
-            .subscribe();
+        Flux.interval(Duration.ofSeconds(1)).doOnEach(d -> latencyForThisSecond.set(duration.nextInt())).subscribe();
 
         AtomicInteger latencyForThisSecond2 = new AtomicInteger(duration2.nextInt());
-        Flux.interval(Duration.ofSeconds(1))
-            .doOnEach(d -> latencyForThisSecond2.set(duration2.nextInt()))
-            .subscribe();
+        Flux.interval(Duration.ofSeconds(1)).doOnEach(d -> latencyForThisSecond2.set(duration2.nextInt())).subscribe();
 
         // the potential for an "incoming request" every 10 ms
-        Flux.interval(Duration.ofMillis(10))
-            .doOnEach(d -> {
-                // are we going to receive a request for /api/foo?
-                if (incomingRequests.nextDouble() + 0.4 > 0) {
-                    if (successOrFail.nextDouble() + 0.8 > 0) {
-                        // pretend the request took some amount of time, such that the time is
-                        // distributed normally with a mean of 250ms
-                        e1Success.record(latencyForThisSecond.get(), TimeUnit.MILLISECONDS);
-                    }
-                    else {
-                        e1Fail.record(latencyForThisSecond.get(), TimeUnit.MILLISECONDS);
-                    }
+        Flux.interval(Duration.ofMillis(10)).doOnEach(d -> {
+            // are we going to receive a request for /api/foo?
+            if (incomingRequests.nextDouble() + 0.4 > 0) {
+                if (successOrFail.nextDouble() + 0.8 > 0) {
+                    // pretend the request took some amount of time, such that the time is
+                    // distributed normally with a mean of 250ms
+                    e1Success.record(latencyForThisSecond.get(), TimeUnit.MILLISECONDS);
                 }
-            })
-            .subscribe();
+                else {
+                    e1Fail.record(latencyForThisSecond.get(), TimeUnit.MILLISECONDS);
+                }
+            }
+        }).subscribe();
 
         // the potential for an "incoming request" every 1 ms
-        Flux.interval(Duration.ofMillis(1))
-            .doOnEach(d -> {
-                // are we going to receive a request for /api/bar?
-                if (incomingRequests.nextDouble() + 0.4 > 0) {
-                    if (successOrFail.nextDouble() + 0.8 > 0) {
-                        // pretend the request took some amount of time, such that the time is
-                        // distributed normally with a mean of 250ms
-                        e2Success.record(latencyForThisSecond2.get(), TimeUnit.MILLISECONDS);
-                    }
-                    else {
-                        e2Fail.record(latencyForThisSecond2.get(), TimeUnit.MILLISECONDS);
-                    }
+        Flux.interval(Duration.ofMillis(1)).doOnEach(d -> {
+            // are we going to receive a request for /api/bar?
+            if (incomingRequests.nextDouble() + 0.4 > 0) {
+                if (successOrFail.nextDouble() + 0.8 > 0) {
+                    // pretend the request took some amount of time, such that the time is
+                    // distributed normally with a mean of 250ms
+                    e2Success.record(latencyForThisSecond2.get(), TimeUnit.MILLISECONDS);
                 }
-            })
-            .blockLast();
+                else {
+                    e2Fail.record(latencyForThisSecond2.get(), TimeUnit.MILLISECONDS);
+                }
+            }
+        }).blockLast();
     }
 
 }

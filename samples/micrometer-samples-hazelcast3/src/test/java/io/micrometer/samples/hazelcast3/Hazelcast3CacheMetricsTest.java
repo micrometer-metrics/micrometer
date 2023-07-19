@@ -1,12 +1,12 @@
-/**
+/*
  * Copyright 2020 VMware, Inc.
- * <p>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
+ *
  * https://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -36,15 +36,21 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 /**
- * Copied from micrometer-core test HazelcastCacheMetricsTest here to ensure cache metrics work with Hazelcast 3.
+ * Copied from micrometer-core test HazelcastCacheMetricsTest here to ensure cache metrics
+ * work with Hazelcast 3.
  */
 class Hazelcast3CacheMetricsTest {
 
     HazelcastInstance hazelcastInstance = Hazelcast.newHazelcastInstance();
+
     IMap<String, String> cache = hazelcastInstance.getMap("mycache");
+
     HazelcastCacheMetrics metrics = new HazelcastCacheMetrics(cache, Tags.empty());
+
     LocalMapStats localMapStats = cache.getLocalMapStats();
+
     NearCacheStats nearCacheStats = mock(NearCacheStats.class);
+
     MeterRegistry meterRegistry = new SimpleMeterRegistry();
 
     @BeforeEach
@@ -125,4 +131,5 @@ class Hazelcast3CacheMetricsTest {
     private RequiredSearch fetch(MeterRegistry meterRegistry, String name, Iterable<Tag> tags) {
         return meterRegistry.get(name).tags(tags);
     }
+
 }

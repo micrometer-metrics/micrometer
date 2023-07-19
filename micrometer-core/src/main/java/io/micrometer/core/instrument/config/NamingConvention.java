@@ -1,12 +1,12 @@
-/**
+/*
  * Copyright 2017 VMware, Inc.
- * <p>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
+ *
  * https://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,9 +15,9 @@
  */
 package io.micrometer.core.instrument.config;
 
+import io.micrometer.common.lang.Nullable;
+import io.micrometer.common.util.StringUtils;
 import io.micrometer.core.instrument.Meter;
-import io.micrometer.core.instrument.util.StringUtils;
-import io.micrometer.core.lang.Nullable;
 
 import java.util.Arrays;
 import java.util.Objects;
@@ -26,21 +26,22 @@ import java.util.stream.Collectors;
 /**
  * Monitoring systems make different recommendations regarding naming convention.
  * <p>
- * Also, many systems have constraints on valid characters that may appear
- * in a tag key/value or metric name. While it is recommended to choose tag
- * keys/values that are absent special characters that are invalid on any
- * common metrics backend, sometimes this is hard to avoid (as in the format
- * of the URI template for parameterized URIs like /api/person/{id} emanating
- * from Spring Web).
+ * Also, many systems have constraints on valid characters that may appear in a tag
+ * key/value or metric name. While it is recommended to choose tag keys/values that are
+ * absent special characters that are invalid on any common metrics backend, sometimes
+ * this is hard to avoid (as in the format of the URI template for parameterized URIs like
+ * /api/person/{id} emanating from Spring Web).
  *
  * @author Jon Schneider
  * @author Johnny Lim
  */
 public interface NamingConvention {
+
     NamingConvention identity = (name, type, baseUnit) -> name;
 
     /**
-     * This maps to identity because we suggest using dot notation everywhere in Micrometer-instrumented code
+     * This maps to identity because we suggest using dot notation everywhere in
+     * Micrometer-instrumented code
      */
     NamingConvention dot = identity;
 
@@ -81,11 +82,13 @@ public interface NamingConvention {
 
                 if (i == 0) {
                     conventionName.append(str);
-                } else {
+                }
+                else {
                     final char firstChar = str.charAt(0);
                     if (Character.isUpperCase(firstChar)) {
                         conventionName.append(str); // already capitalized
-                    } else {
+                    }
+                    else {
                         conventionName.append(Character.toUpperCase(firstChar)).append(str, 1, str.length());
                     }
                 }
@@ -148,4 +151,5 @@ public interface NamingConvention {
     default String tagValue(String value) {
         return value;
     }
+
 }

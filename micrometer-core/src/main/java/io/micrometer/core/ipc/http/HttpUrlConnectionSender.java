@@ -1,12 +1,12 @@
-/**
+/*
  * Copyright 2018 VMware, Inc.
- * <p>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
+ *
  * https://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -34,15 +34,17 @@ import java.util.Map;
 public class HttpUrlConnectionSender implements HttpSender {
 
     private static final int DEFAULT_CONNECT_TIMEOUT_MS = 1000;
+
     private static final int DEFAULT_READ_TIMEOUT_MS = 10000;
 
     private final int connectTimeoutMs;
+
     private final int readTimeoutMs;
+
     private final Proxy proxy;
 
     /**
      * Creates a sender with the specified timeouts but uses the default proxy settings.
-     *
      * @param connectTimeout connect timeout when establishing a connection
      * @param readTimeout read timeout when receiving a response
      */
@@ -52,7 +54,6 @@ public class HttpUrlConnectionSender implements HttpSender {
 
     /**
      * Creates a sender with the specified timeouts and proxy settings.
-     *
      * @param connectTimeout connect timeout when establishing a connection
      * @param readTimeout read timeout when receiving a response
      * @param proxy proxy to use when establishing a connection
@@ -77,9 +78,10 @@ public class HttpUrlConnectionSender implements HttpSender {
     public Response send(Request request) throws IOException {
         HttpURLConnection con = null;
         try {
-            if (proxy != null ) {
+            if (proxy != null) {
                 con = (HttpURLConnection) request.getUrl().openConnection(proxy);
-            } else {
+            }
+            else {
                 con = (HttpURLConnection) request.getUrl().openConnection();
             }
             con.setConnectTimeout(connectTimeoutMs);
@@ -105,20 +107,25 @@ public class HttpUrlConnectionSender implements HttpSender {
             try {
                 if (con.getErrorStream() != null) {
                     body = IOUtils.toString(con.getErrorStream());
-                } else if (con.getInputStream() != null) {
+                }
+                else if (con.getInputStream() != null) {
                     body = IOUtils.toString(con.getInputStream());
                 }
-            } catch (IOException ignored) {
+            }
+            catch (IOException ignored) {
             }
 
             return new Response(status, body);
-        } finally {
+        }
+        finally {
             try {
                 if (con != null) {
                     con.disconnect();
                 }
-            } catch (Exception ignore) {
+            }
+            catch (Exception ignore) {
             }
         }
     }
+
 }

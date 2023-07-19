@@ -1,12 +1,12 @@
-/**
+/*
  * Copyright 2017 VMware, Inc.
- * <p>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
+ *
  * https://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,13 +15,13 @@
  */
 package io.micrometer.cloudwatch2;
 
+import io.micrometer.common.lang.Nullable;
+import io.micrometer.common.util.StringUtils;
+import io.micrometer.common.util.internal.logging.WarnThenDebugLogger;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.util.NamedThreadFactory;
-import io.micrometer.core.instrument.util.StringUtils;
-import io.micrometer.core.lang.Nullable;
-import io.micrometer.core.util.internal.logging.WarnThenDebugLogger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.core.exception.AbortedException;
@@ -54,6 +54,9 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
 
     private static final Map<String, StandardUnit> STANDARD_UNIT_BY_LOWERCASE_VALUE;
 
+    // https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_Dimension.html
+    private static final int MAX_DIMENSIONS_SIZE = 30;
+
     static {
         Map<String, StandardUnit> standardUnitByLowercaseValue = new HashMap<>();
         for (StandardUnit standardUnit : StandardUnit.values()) {
@@ -65,21 +68,26 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
     }
 
     private final CloudWatchConfig config;
-    private final CloudWatchAsyncClient cloudWatchAsyncClient;
-    private final Logger logger = LoggerFactory.getLogger(CloudWatchMeterRegistry.class);
-    private static final WarnThenDebugLogger warnThenDebugLogger = new WarnThenDebugLogger(CloudWatchMeterRegistry.class);
 
-    public CloudWatchMeterRegistry(CloudWatchConfig config, Clock clock,
-                                   CloudWatchAsyncClient cloudWatchAsyncClient) {
+    private final CloudWatchAsyncClient cloudWatchAsyncClient;
+
+    private final Logger logger = LoggerFactory.getLogger(CloudWatchMeterRegistry.class);
+
+    private static final WarnThenDebugLogger blankTagValueLogger = new WarnThenDebugLogger(
+            CloudWatchMeterRegistry.class);
+
+    private static final WarnThenDebugLogger tooManyTagsLogger = new WarnThenDebugLogger(CloudWatchMeterRegistry.class);
+
+    public CloudWatchMeterRegistry(CloudWatchConfig config, Clock clock, CloudWatchAsyncClient cloudWatchAsyncClient) {
         this(config, clock, cloudWatchAsyncClient, new NamedThreadFactory("cloudwatch-metrics-publisher"));
     }
 
-    public CloudWatchMeterRegistry(CloudWatchConfig config, Clock clock,
-                                   CloudWatchAsyncClient cloudWatchAsyncClient, ThreadFactory threadFactory) {
+    public CloudWatchMeterRegistry(CloudWatchConfig config, Clock clock, CloudWatchAsyncClient cloudWatchAsyncClient,
+            ThreadFactory threadFactory) {
         super(config, clock);
         this.cloudWatchAsyncClient = cloudWatchAsyncClient;
         this.config = config;
-        
+
         config().namingConvention(new CloudWatchNamingConvention());
         start(threadFactory);
     }
@@ -91,7 +99,8 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
             for (List<MetricDatum> batch : MetricDatumPartition.partition(metricData(), config.batchSize())) {
                 try {
                     sendMetricData(batch);
-                } catch (InterruptedException ex) {
+                }
+                catch (InterruptedException ex) {
                     interrupted = true;
                 }
             }
@@ -106,19 +115,22 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
     // VisibleForTesting
     void sendMetricData(List<MetricDatum> metricData) throws InterruptedException {
         PutMetricDataRequest putMetricDataRequest = PutMetricDataRequest.builder()
-                .namespace(config.namespace())
-                .metricData(metricData)
-                .build();
+            .namespace(config.namespace())
+            .metricData(metricData)
+            .build();
         CountDownLatch latch = new CountDownLatch(1);
         cloudWatchAsyncClient.putMetricData(putMetricDataRequest).whenComplete((response, t) -> {
             if (t != null) {
                 if (t instanceof AbortedException) {
                     logger.warn("sending metric data was aborted: {}", t.getMessage());
-                } else {
+                }
+                else {
                     logger.error("error sending metric data.", t);
                 }
-            } else {
-                logger.debug("published metric with namespace:{}", putMetricDataRequest.namespace());
+            }
+            else {
+                logger.debug("published {} metrics with namespace:{}", metricData.size(),
+                        putMetricDataRequest.namespace());
             }
             latch.countDown();
         });
@@ -126,30 +138,35 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
             @SuppressWarnings("deprecation")
             long readTimeoutMillis = config.readTimeout().toMillis();
             latch.await(readTimeoutMillis, TimeUnit.MILLISECONDS);
-        } catch (InterruptedException e) {
+        }
+        catch (InterruptedException e) {
             logger.warn("metrics push to cloudwatch took longer than expected");
             throw e;
         }
     }
 
-    //VisibleForTesting
+    // VisibleForTesting
     List<MetricDatum> metricData() {
         Batch batch = new Batch();
-        return getMeters().stream().flatMap(m -> m.match(
-                batch::gaugeData,
-                batch::counterData,
-                batch::timerData,
-                batch::summaryData,
-                batch::longTaskTimerData,
-                batch::timeGaugeData,
-                batch::functionCounterData,
-                batch::functionTimerData,
-                batch::metricData)
-        ).collect(toList());
+        // @formatter:off
+        return getMeters().stream()
+            .flatMap(m -> m.match(
+                    batch::gaugeData,
+                    batch::counterData,
+                    batch::timerData,
+                    batch::summaryData,
+                    batch::longTaskTimerData,
+                    batch::timeGaugeData,
+                    batch::functionCounterData,
+                    batch::functionTimerData,
+                    batch::metricData))
+            .collect(toList());
+        // @formatter:on
     }
 
     // VisibleForTesting
     class Batch {
+
         private final Instant timestamp = Instant.ofEpochMilli(clock.wallTime());
 
         private Stream<MetricDatum> gaugeData(Gauge gauge) {
@@ -167,7 +184,8 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
         // VisibleForTesting
         Stream<MetricDatum> timerData(Timer timer) {
             Stream.Builder<MetricDatum> metrics = Stream.builder();
-            metrics.add(metricDatum(timer.getId(), "sum", getBaseTimeUnit().name(), timer.totalTime(getBaseTimeUnit())));
+            metrics
+                .add(metricDatum(timer.getId(), "sum", getBaseTimeUnit().name(), timer.totalTime(getBaseTimeUnit())));
             long count = timer.count();
             metrics.add(metricDatum(timer.getId(), "count", StandardUnit.COUNT, count));
             if (count > 0) {
@@ -191,8 +209,7 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
         }
 
         private Stream<MetricDatum> longTaskTimerData(LongTaskTimer longTaskTimer) {
-            return Stream.of(
-                    metricDatum(longTaskTimer.getId(), "activeTasks", longTaskTimer.activeTasks()),
+            return Stream.of(metricDatum(longTaskTimer.getId(), "activeTasks", longTaskTimer.activeTasks()),
                     metricDatum(longTaskTimer.getId(), "duration", longTaskTimer.duration(getBaseTimeUnit())));
         }
 
@@ -215,7 +232,8 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
 
         // VisibleForTesting
         Stream<MetricDatum> functionTimerData(FunctionTimer timer) {
-            // we can't know anything about max and percentiles originating from a function timer
+            // we can't know anything about max and percentiles originating from a
+            // function timer
             double sum = timer.totalTime(getBaseTimeUnit());
             if (!Double.isFinite(sum)) {
                 return Stream.empty();
@@ -233,8 +251,8 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
         // VisibleForTesting
         Stream<MetricDatum> metricData(Meter m) {
             return stream(m.measure().spliterator(), false)
-                    .map(ms -> metricDatum(m.getId().withTag(ms.getStatistic()), ms.getValue()))
-                    .filter(Objects::nonNull);
+                .map(ms -> metricDatum(m.getId().withTag(ms.getStatistic()), ms.getValue()))
+                .filter(Objects::nonNull);
         }
 
         @Nullable
@@ -259,14 +277,19 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
             }
 
             List<Tag> tags = id.getConventionTags(config().namingConvention());
+            if (tags.size() > MAX_DIMENSIONS_SIZE) {
+                tooManyTagsLogger.log(() -> "Meter " + id.getName() + " has more tags (" + tags.size()
+                        + ") than the max supported by CloudWatch (" + MAX_DIMENSIONS_SIZE
+                        + "). Some tags will be dropped.");
+            }
             return MetricDatum.builder()
-                    .storageResolution(config.highResolution() ? 1 : 60)
-                    .metricName(getMetricName(id, suffix))
-                    .dimensions(toDimensions(tags))
-                    .timestamp(timestamp)
-                    .value(CloudWatchUtils.clampMetricValue(value))
-                    .unit(standardUnit)
-                    .build();
+                .storageResolution(config.highResolution() ? 1 : 60)
+                .metricName(getMetricName(id, suffix))
+                .dimensions(toDimensions(tags))
+                .timestamp(timestamp)
+                .value(CloudWatchUtils.clampMetricValue(value))
+                .unit(standardUnit)
+                .build();
         }
 
         // VisibleForTesting
@@ -286,22 +309,26 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
 
         private List<Dimension> toDimensions(List<Tag> tags) {
             return tags.stream()
-                    .filter(this::isAcceptableTag)
-                    .map(tag -> Dimension.builder().name(tag.getKey()).value(tag.getValue()).build())
-                    .collect(toList());
+                .filter(this::isAcceptableTag)
+                .limit(MAX_DIMENSIONS_SIZE)
+                .map(tag -> Dimension.builder().name(tag.getKey()).value(tag.getValue()).build())
+                .collect(toList());
         }
 
         private boolean isAcceptableTag(Tag tag) {
             if (StringUtils.isBlank(tag.getValue())) {
-                warnThenDebugLogger.log("Dropping a tag with key '" + tag.getKey() + "' because its value is blank.");
+                blankTagValueLogger
+                    .log(() -> "Dropping a tag with key '" + tag.getKey() + "' because its value is blank.");
                 return false;
             }
             return true;
         }
+
     }
 
     @Override
     protected TimeUnit getBaseTimeUnit() {
         return TimeUnit.MILLISECONDS;
     }
+
 }

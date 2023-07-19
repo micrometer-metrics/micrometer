@@ -1,12 +1,12 @@
-/**
+/*
  * Copyright 2017 VMware, Inc.
- * <p>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
+ *
  * https://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,13 +17,16 @@ package io.micrometer.core.tck;
 
 import io.micrometer.core.Issue;
 import io.micrometer.core.annotation.Timed;
-import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.distribution.CountAtBucket;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.ValueAtPercentile;
 import io.micrometer.core.instrument.internal.CumulativeHistogramLongTaskTimer;
+import io.micrometer.core.instrument.observation.DefaultMeterObservationHandler;
 import io.micrometer.core.instrument.util.TimeUtils;
+import io.micrometer.observation.Observation;
+import io.micrometer.observation.ObservationRegistry;
 import org.assertj.core.data.Offset;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -40,21 +43,22 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
 
 import static io.micrometer.core.instrument.MockClock.clock;
+import static io.micrometer.core.instrument.Statistic.ACTIVE_TASKS;
+import static io.micrometer.core.instrument.Statistic.DURATION;
 import static io.micrometer.core.instrument.util.TimeUtils.millisToUnit;
 import static java.util.Collections.emptyList;
 import static java.util.Objects.requireNonNull;
 import static org.assertj.core.api.Assertions.*;
-import static org.assertj.core.api.Assertions.within;
 import static org.junit.jupiter.api.Assertions.*;
-import static org.junit.jupiter.api.Assertions.assertAll;
 
 /**
- * Base class for {@link MeterRegistry} compatibility tests.
- * To run a {@link MeterRegistry} implementation against this TCK, make a test class that extends this
- * and implement the abstract methods.
+ * Base class for {@link MeterRegistry} compatibility tests. To run a
+ * {@link MeterRegistry} implementation against this TCK, make a test class that extends
+ * this and implement the abstract methods.
  *
  * @author Jon Schneider
  * @author Johnny Lim
+ * @author Jonatan Ivanov
  */
 public abstract class MeterRegistryCompatibilityKit {
 
@@ -63,13 +67,18 @@ public abstract class MeterRegistryCompatibilityKit {
 
     protected MeterRegistry registry;
 
+    protected ObservationRegistry observationRegistry = ObservationRegistry.create();
+
     public abstract MeterRegistry registry();
+
     public abstract Duration step();
 
     @BeforeEach
     void setup() {
-        // assigned here rather than at initialization so subclasses can use fields in their registry() implementation
+        // assigned here rather than at initialization so subclasses can use fields in
+        // their registry() implementation
         registry = registry();
+        observationRegistry.observationConfig().observationHandler(new DefaultMeterObservationHandler(registry));
     }
 
     @Test
@@ -144,26 +153,24 @@ public abstract class MeterRegistryCompatibilityKit {
     @Test
     @DisplayName("function timers respect the base unit of an underlying registry")
     void functionTimerUnits() {
-        registry.more().timer("function.timer", emptyList(),
-            this.o, o2 -> 1, o2 -> 1, TimeUnit.MILLISECONDS);
+        registry.more().timer("function.timer", emptyList(), this.o, o2 -> 1, o2 -> 1, TimeUnit.MILLISECONDS);
 
         FunctionTimer ft = registry.get("function.timer").functionTimer();
         clock(registry).add(step());
-        assertThat(ft.measure())
-            .anySatisfy(ms -> {
-                TimeUnit baseUnit = TimeUnit.valueOf(requireNonNull(ft.getId().getBaseUnit()).toUpperCase());
-                assertThat(ms.getStatistic()).isEqualTo(Statistic.TOTAL_TIME);
-                assertThat(TimeUtils.convert(ms.getValue(), baseUnit, TimeUnit.MILLISECONDS)).isEqualTo(1);
-            });
+        assertThat(ft.measure()).anySatisfy(ms -> {
+            TimeUnit baseUnit = TimeUnit.valueOf(requireNonNull(ft.getId().getBaseUnit()).toUpperCase());
+            assertThat(ms.getStatistic()).isEqualTo(Statistic.TOTAL_TIME);
+            assertThat(TimeUtils.convert(ms.getValue(), baseUnit, TimeUnit.MILLISECONDS)).isEqualTo(1);
+        });
     }
 
     @Test
     @DisplayName("meters with synthetics can be removed without causing deadlocks")
     void removeMeterWithSynthetic() {
         Timer timer = Timer.builder("my.timer")
-                .publishPercentiles(0.95)
-                .serviceLevelObjectives(Duration.ofMillis(10))
-                .register(registry);
+            .publishPercentiles(0.95)
+            .serviceLevelObjectives(Duration.ofMillis(10))
+            .register(registry);
 
         registry.remove(timer);
     }
@@ -171,6 +178,7 @@ public abstract class MeterRegistryCompatibilityKit {
     @DisplayName("counters")
     @Nested
     class CounterTck {
+
         @DisplayName("multiple increments are maintained")
         @Test
         void increment() {
@@ -208,11 +216,13 @@ public abstract class MeterRegistryCompatibilityKit {
             registry.forEachMeter(Meter::measure);
             assertThat(registry.get("tracking").functionCounter().count()).isEqualTo(1.0);
         }
+
     }
 
     @DisplayName("distribution summaries")
     @Nested
     class DistributionSummaryTck {
+
         @Test
         @DisplayName("multiple recordings are maintained")
         void record() {
@@ -223,15 +233,13 @@ public abstract class MeterRegistryCompatibilityKit {
 
             ds.count();
 
-            assertAll(() -> assertEquals(1L, ds.count()),
-                    () -> assertEquals(10L, ds.totalAmount()));
+            assertAll(() -> assertEquals(1L, ds.count()), () -> assertEquals(10L, ds.totalAmount()));
 
             ds.record(10);
             ds.record(10);
             clock(registry).add(step());
 
-            assertAll(() -> assertTrue(ds.count() >= 2L),
-                    () -> assertTrue(ds.totalAmount() >= 20L));
+            assertAll(() -> assertTrue(ds.count() >= 2L), () -> assertTrue(ds.totalAmount() >= 20L));
         }
 
         @Test
@@ -240,8 +248,7 @@ public abstract class MeterRegistryCompatibilityKit {
             DistributionSummary ds = registry.summary("my.summary");
 
             ds.record(-10);
-            assertAll(() -> assertEquals(0, ds.count()),
-                    () -> assertEquals(0L, ds.totalAmount()));
+            assertAll(() -> assertEquals(0, ds.count()), () -> assertEquals(0L, ds.totalAmount()));
         }
 
         @Test
@@ -252,16 +259,13 @@ public abstract class MeterRegistryCompatibilityKit {
             ds.record(0);
             clock(registry).add(step());
 
-            assertAll(() -> assertEquals(1L, ds.count()),
-                    () -> assertEquals(0L, ds.totalAmount()));
+            assertAll(() -> assertEquals(1L, ds.count()), () -> assertEquals(0L, ds.totalAmount()));
         }
 
         @Test
         @DisplayName("scale samples by a fixed factor")
         void scale() {
-            DistributionSummary ds = DistributionSummary.builder("my.summary")
-                    .scale(2.0)
-                    .register(registry);
+            DistributionSummary ds = DistributionSummary.builder("my.summary").scale(2.0).register(registry);
 
             ds.record(1);
 
@@ -269,34 +273,39 @@ public abstract class MeterRegistryCompatibilityKit {
             assertThat(ds.totalAmount()).isEqualTo(2.0);
         }
 
-        @Deprecated
+        @SuppressWarnings("deprecation")
         @Test
         void percentiles() {
-            DistributionSummary s = DistributionSummary.builder("my.summary")
-                    .publishPercentiles(1)
-                    .register(registry);
+            DistributionSummary s = DistributionSummary.builder("my.summary").publishPercentiles(1).register(registry);
 
             s.record(1);
             assertThat(s.percentile(1)).isEqualTo(1, Offset.offset(0.3));
             assertThat(s.percentile(0.5)).isNaN();
         }
 
-        @Deprecated
+        @SuppressWarnings("deprecation")
         @Test
         void histogramCounts() {
             DistributionSummary s = DistributionSummary.builder("my.summmary")
-                    .serviceLevelObjectives(1.0)
-                    .register(registry);
+                .serviceLevelObjectives(1.0)
+                .register(registry);
 
+            // ensure time-window based histograms are not fully rotated when we assert
+            Duration halfStep = step().dividedBy(2);
+            clock(registry).add(halfStep);
             s.record(1);
+            // accommodate StepBucketHistogram
+            clock(registry).add(halfStep);
             assertThat(s.histogramCountAtValue(1)).isEqualTo(1);
             assertThat(s.histogramCountAtValue(2)).isNaN();
         }
+
     }
 
     @DisplayName("gauges")
     @Nested
     class GaugeTck {
+
         @Test
         @DisplayName("gauges attached to a number are updated when their values are observed")
         void numericGauge() {
@@ -344,27 +353,28 @@ public abstract class MeterRegistryCompatibilityKit {
         @DisplayName("gauges that reference an object that is garbage collected report NaN")
         void garbageCollectedSourceObject() {
             registry.gauge("my.gauge", emptyList(), (Map) null, Map::size);
-            assertThat(registry.get("my.gauge").gauge().value()).matches(val -> val == null || Double.isNaN(val) || val == 0.0);
+            assertThat(registry.get("my.gauge").gauge().value())
+                .matches(val -> val == null || Double.isNaN(val) || val == 0.0);
         }
 
         @Test
         @DisplayName("strong reference gauges")
         void strongReferenceGauges() {
             Gauge.builder("weak.ref", 1.0, n -> n).register(registry);
-            Gauge.builder("strong.ref", 1.0, n -> n)
-                    .strongReference(true)
-                    .register(registry);
+            Gauge.builder("strong.ref", 1.0, n -> n).strongReference(true).register(registry);
 
             System.gc();
 
             assertThat(registry.get("weak.ref").gauge().value()).isNaN();
             assertThat(registry.get("strong.ref").gauge().value()).isEqualTo(1.0);
         }
+
     }
 
     @DisplayName("long task timers")
     @Nested
     class LongTaskTimerTck {
+
         @Test
         @DisplayName("total time is preserved for a single timing")
         void record() {
@@ -379,6 +389,14 @@ public abstract class MeterRegistryCompatibilityKit {
                     () -> assertEquals(0.01, sample.duration(TimeUnit.MICROSECONDS)),
                     () -> assertEquals(1, t.activeTasks()));
 
+            assertThat(t.measure()).satisfiesExactlyInAnyOrder(measurement -> assertThat(measurement).satisfies(m -> {
+                assertThat(m.getValue()).isEqualTo(1.0);
+                assertThat(m.getStatistic()).isSameAs(ACTIVE_TASKS);
+            }), measurement -> assertThat(measurement).satisfies(m -> {
+                assertThat(m.getValue()).isEqualTo(TimeUtils.convert(10, TimeUnit.NANOSECONDS, t.baseTimeUnit()));
+                assertThat(m.getStatistic()).isSameAs(DURATION);
+            }));
+
             clock(registry).add(10, TimeUnit.NANOSECONDS);
             sample.stop();
 
@@ -391,10 +409,11 @@ public abstract class MeterRegistryCompatibilityKit {
         @DisplayName("supports sending the Nth percentile active task duration")
         void percentiles() {
             LongTaskTimer t = LongTaskTimer.builder("my.timer")
-                    .publishPercentiles(0.5, 0.7, 0.91, 0.999, 1)
-                    .register(registry);
+                .publishPercentiles(0.5, 0.7, 0.91, 0.999, 1)
+                .register(registry);
 
-            // Using the example of percentile interpolation from https://statisticsbyjim.com/basics/percentiles/
+            // Using the example of percentile interpolation from
+            // https://statisticsbyjim.com/basics/percentiles/
             List<Integer> samples = Arrays.asList(48, 42, 40, 35, 22, 16, 13, 8, 6, 4, 2);
             int prior = samples.get(0);
             for (Integer value : samples) {
@@ -414,7 +433,8 @@ public abstract class MeterRegistryCompatibilityKit {
             assertThat(percentiles[1].percentile()).isEqualTo(0.7);
             assertThat(percentiles[1].value(TimeUnit.SECONDS)).isEqualTo(37, within(0.001));
 
-            // a value close-to the highest value that is available for interpolation (11 / 12)
+            // a value close-to the highest value that is available for interpolation (11
+            // / 12)
             assertThat(percentiles[2].percentile()).isEqualTo(0.91);
             assertThat(percentiles[2].value(TimeUnit.SECONDS)).isEqualTo(47.5, within(0.1));
 
@@ -429,8 +449,8 @@ public abstract class MeterRegistryCompatibilityKit {
         @DisplayName("supports sending histograms of active task duration")
         void histogram() {
             LongTaskTimer t = LongTaskTimer.builder("my.timer")
-                    .serviceLevelObjectives(Duration.ofSeconds(10), Duration.ofSeconds(40), Duration.ofMinutes(1))
-                    .register(registry);
+                .serviceLevelObjectives(Duration.ofSeconds(10), Duration.ofSeconds(40), Duration.ofMinutes(1))
+                .register(registry);
 
             List<Integer> samples = Arrays.asList(48, 42, 40, 35, 22, 16, 13, 8, 6, 4, 2);
             int prior = samples.get(0);
@@ -467,35 +487,39 @@ public abstract class MeterRegistryCompatibilityKit {
             }
         }
 
-        @Timed(value = "my.name", longTask = true, extraTags = {"a", "tag"},
-                description = "some description", histogram = true)
-        class AnnotationHolder { }
+        @Timed(value = "my.name", longTask = true, extraTags = { "a", "tag" }, description = "some description",
+                histogram = true)
+        class AnnotationHolder {
+
+        }
+
     }
 
     @DisplayName("timers")
     @Nested
     class TimerTck {
+
         @DisplayName("autocloseable sample")
         @ParameterizedTest(name = "when outcome is \"{0}\"")
-        @CsvSource({"success", "error"})
+        @CsvSource({ "success", "error" })
         @Issue("#1425")
         void closeable(String outcome) {
             try (Timer.ResourceSample sample = Timer.resource(registry, "requests")
-                    .description("This is an operation")
-                    .publishPercentileHistogram()) {
+                .description("This is an operation")
+                .publishPercentileHistogram()) {
                 try {
                     if (outcome.equals("error")) {
                         throw new IllegalArgumentException("boom");
                     }
                     sample.tag("outcome", "success");
-                } catch (Throwable t) {
+                }
+                catch (Throwable t) {
                     sample.tag("outcome", "error");
                 }
             }
 
             clock(registry).add(step());
-            assertThat(registry.get("requests").tag("outcome", outcome).timer().count())
-                    .isEqualTo(1);
+            assertThat(registry.get("requests").tag("outcome", outcome).timer().count()).isEqualTo(1);
         }
 
         @DisplayName("record callable")
@@ -543,8 +567,7 @@ public abstract class MeterRegistryCompatibilityKit {
             t.record(0, TimeUnit.MILLISECONDS);
             clock(registry).add(step());
 
-            assertAll(() -> assertEquals(1L, t.count()),
-                    () -> assertEquals(0L, t.totalTime(TimeUnit.NANOSECONDS)));
+            assertAll(() -> assertEquals(1L, t.count()), () -> assertEquals(0L, t.totalTime(TimeUnit.NANOSECONDS)));
         }
 
         @Test
@@ -558,7 +581,8 @@ public abstract class MeterRegistryCompatibilityKit {
             try {
                 t.record(r);
                 clock(registry).add(step());
-            } finally {
+            }
+            finally {
                 assertAll(() -> assertEquals(1L, t.count()),
                         () -> assertEquals(10, t.totalTime(TimeUnit.NANOSECONDS), 1.0e-12));
             }
@@ -577,7 +601,8 @@ public abstract class MeterRegistryCompatibilityKit {
                 String supplierResult = t.record(supplier);
                 assertEquals(expectedResult, supplierResult);
                 clock(registry).add(step());
-            } finally {
+            }
+            finally {
                 assertAll(() -> assertEquals(1L, t.count()),
                         () -> assertEquals(10, t.totalTime(TimeUnit.NANOSECONDS), 1.0e-12));
             }
@@ -596,7 +621,8 @@ public abstract class MeterRegistryCompatibilityKit {
                 Supplier<String> wrappedSupplier = timer.wrap(supplier);
                 assertEquals(expectedResult, wrappedSupplier.get());
                 clock(registry).add(step());
-            } finally {
+            }
+            finally {
                 assertAll(() -> assertEquals(1L, timer.count()),
                         () -> assertEquals(10, timer.totalTime(TimeUnit.NANOSECONDS), 1.0e-12));
             }
@@ -617,17 +643,68 @@ public abstract class MeterRegistryCompatibilityKit {
         }
 
         @Test
+        @DisplayName("record with stateful Observation instance")
+        void recordWithObservation() {
+            Observation observation = Observation.createNotStarted("myObservation", observationRegistry)
+                .lowCardinalityKeyValue("staticTag", "42")
+                .start();
+
+            // created after start, LongTaskTimer won't have it
+            observation.lowCardinalityKeyValue("dynamicTag", "24");
+
+            clock(registry).add(1, TimeUnit.SECONDS);
+            observation.event(Observation.Event.of("testEvent", "event for testing"));
+
+            LongTaskTimer longTaskTimer = registry.more().longTaskTimer("myObservation.active", "staticTag", "42");
+            assertThat(longTaskTimer.activeTasks()).isEqualTo(1);
+
+            observation.stop();
+            clock(registry).add(step());
+
+            assertThat(longTaskTimer.activeTasks()).isEqualTo(0);
+
+            Timer timer = registry.timer("myObservation", "error", "none", "staticTag", "42", "dynamicTag", "24");
+            assertAll(() -> assertEquals(1L, timer.count()),
+                    () -> assertEquals(1, timer.totalTime(TimeUnit.SECONDS), 1.0e-12));
+
+            Counter counter = registry.counter("myObservation.testEvent", "staticTag", "42", "dynamicTag", "24");
+            assertThat(counter.count()).isEqualTo(1.0);
+        }
+
+        @Test
+        @DisplayName("record with stateful Observation and Scope instances")
+        void recordWithObservationAndScope() {
+            Observation observation = Observation.start("myObservation", observationRegistry);
+            try (Observation.Scope scope = observation.openScope()) {
+                assertThat(scope.getCurrentObservation()).isSameAs(observation);
+                clock(registry).add(10, TimeUnit.NANOSECONDS);
+                observation.event(Observation.Event.of("testEvent", "event for testing"));
+            }
+            observation.stop();
+            clock(registry).add(step());
+
+            Timer timer = registry.timer("myObservation", "error", "none");
+            assertAll(() -> assertEquals(1L, timer.count()),
+                    () -> assertEquals(10, timer.totalTime(TimeUnit.NANOSECONDS), 1.0e-12));
+
+            Counter counter = registry.counter("myObservation.testEvent");
+            assertThat(counter.count()).isEqualTo(1.0);
+        }
+
+        @Test
         void recordMax() {
             Timer timer = registry.timer("my.timer");
             timer.record(10, TimeUnit.MILLISECONDS);
             timer.record(1, TimeUnit.SECONDS);
 
-            clock(registry).add(step()); // for Atlas, which is step rather than ring-buffer based
+            clock(registry).add(step()); // for Atlas, which is step rather than
+                                         // ring-buffer based
             assertThat(timer.max(TimeUnit.SECONDS)).isEqualTo(1);
             assertThat(timer.max(TimeUnit.MILLISECONDS)).isEqualTo(1000);
 
-            //noinspection ConstantConditions
-            clock(registry).add(Duration.ofMillis(step().toMillis() * DistributionStatisticConfig.DEFAULT.getBufferLength()));
+            // noinspection ConstantConditions
+            clock(registry)
+                .add(Duration.ofMillis(step().toMillis() * DistributionStatisticConfig.DEFAULT.getBufferLength()));
             assertThat(timer.max(TimeUnit.SECONDS)).isEqualTo(0);
         }
 
@@ -649,29 +726,31 @@ public abstract class MeterRegistryCompatibilityKit {
                     () -> assertEquals(10, t.totalTime(TimeUnit.NANOSECONDS), 1.0e-12));
         }
 
-        @Deprecated
+        @SuppressWarnings("deprecation")
         @Test
         void percentiles() {
-            Timer t = Timer.builder("my.timer")
-                    .publishPercentiles(1)
-                    .register(registry);
+            Timer t = Timer.builder("my.timer").publishPercentiles(1).register(registry);
 
             t.record(1, TimeUnit.MILLISECONDS);
             assertThat(t.percentile(1, TimeUnit.MILLISECONDS)).isEqualTo(1, Offset.offset(0.3));
             assertThat(t.percentile(0.5, TimeUnit.MILLISECONDS)).isNaN();
         }
 
-        @Deprecated
+        @SuppressWarnings("deprecation")
         @Test
         void histogramCounts() {
-            Timer t = Timer.builder("my.timer")
-                    .serviceLevelObjectives(Duration.ofMillis(1))
-                    .register(registry);
+            Timer t = Timer.builder("my.timer").serviceLevelObjectives(Duration.ofMillis(1)).register(registry);
 
+            // ensure time-window based histograms are not fully rotated when we assert
+            Duration halfStep = step().dividedBy(2);
+            clock(registry).add(halfStep);
             t.record(1, TimeUnit.MILLISECONDS);
+            // accommodate StepBucketHistogram
+            clock(registry).add(halfStep);
             assertThat(t.histogramCountAtValue((long) millisToUnit(1, TimeUnit.NANOSECONDS))).isEqualTo(1);
             assertThat(t.histogramCountAtValue(1)).isNaN();
         }
-    }
-}
 
+    }
+
+}

@@ -1,5 +1,5 @@
 plugins {
-    id "me.champeau.jmh" version "0.6.6"
+    id "me.champeau.jmh" version "0.6.8"
 }
 
 dependencies {
@@ -14,12 +14,15 @@ dependencies {
 
     jmh 'org.openjdk.jmh:jmh-core:latest.release'
 
+    jmh 'ch.qos.logback:logback-classic'
+
     // Nebula doesn't like having jmhAnnotationProcessor without jmh so we just add it twice.
     jmh 'org.openjdk.jmh:jmh-generator-annprocess:latest.release'
     jmhAnnotationProcessor 'org.openjdk.jmh:jmh-generator-annprocess:latest.release'
 }
 
 jmh {
+    jmhVersion = '1.36'
     fork = 1
     warmupIterations = 1
     iterations = 1

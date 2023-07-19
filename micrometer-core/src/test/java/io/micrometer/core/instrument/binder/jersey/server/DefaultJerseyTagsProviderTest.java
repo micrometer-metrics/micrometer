@@ -1,12 +1,12 @@
-/**
+/*
  * Copyright 2017 VMware, Inc.
- * <p>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
+ *
  * https://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -85,18 +85,16 @@ class DefaultJerseyTagsProviderTest {
     @Test
     @SuppressWarnings("serial")
     void exceptionsAreMappedCorrectly() {
-        assertThat(tagsProvider.httpRequestTags(
-            event(500, new IllegalArgumentException(), "/app", (String[]) null)))
+        assertThat(tagsProvider.httpRequestTags(event(500, new IllegalArgumentException(), "/app", (String[]) null)))
             .containsExactlyInAnyOrder(tagsFrom("/app", 500, "IllegalArgumentException", "SERVER_ERROR"));
-        assertThat(tagsProvider.httpRequestTags(event(500,
-            new IllegalArgumentException(new NullPointerException()), "/app", (String[]) null)))
+        assertThat(tagsProvider.httpRequestTags(
+                event(500, new IllegalArgumentException(new NullPointerException()), "/app", (String[]) null)))
             .containsExactlyInAnyOrder(tagsFrom("/app", 500, "NullPointerException", "SERVER_ERROR"));
-        assertThat(tagsProvider.httpRequestTags(
-            event(406, new NotAcceptableException(), "/app", (String[]) null)))
+        assertThat(tagsProvider.httpRequestTags(event(406, new NotAcceptableException(), "/app", (String[]) null)))
             .containsExactlyInAnyOrder(tagsFrom("/app", 406, "NotAcceptableException", "CLIENT_ERROR"));
-        assertThat(tagsProvider.httpRequestTags(
-            event(500, new Exception("anonymous") { }, "/app", (String[]) null)))
-            .containsExactlyInAnyOrder(tagsFrom("/app", 500, "io.micrometer.core.instrument.binder.jersey.server.DefaultJerseyTagsProviderTest$1", "SERVER_ERROR"));
+        assertThat(tagsProvider.httpRequestTags(event(500, new Exception("anonymous") {
+        }, "/app", (String[]) null))).containsExactlyInAnyOrder(tagsFrom("/app", 500,
+                "io.micrometer.core.instrument.binder.jersey.server.DefaultJerseyTagsProviderTest$1", "SERVER_ERROR"));
     }
 
     @Test
@@ -105,7 +103,8 @@ class DefaultJerseyTagsProviderTest {
             .containsExactlyInAnyOrder(Tag.of("method", "GET"), Tag.of("uri", "/app"));
     }
 
-    private static RequestEvent event(Integer status, Exception exception, String baseUri, String... uriTemplateStrings) {
+    private static RequestEvent event(Integer status, Exception exception, String baseUri,
+            String... uriTemplateStrings) {
         Builder builder = new Builder();
 
         ContainerRequest containerRequest = mock(ContainerRequest.class);
@@ -119,11 +118,10 @@ class DefaultJerseyTagsProviderTest {
         builder.setException(exception, null);
 
         ExtendedUriInfo extendedUriInfo = mock(ExtendedUriInfo.class);
-        when(extendedUriInfo.getBaseUri()).thenReturn(
-            URI.create("http://localhost:8080" + (baseUri == null ? "/" : baseUri)));
+        when(extendedUriInfo.getBaseUri())
+            .thenReturn(URI.create("http://localhost:8080" + (baseUri == null ? "/" : baseUri)));
         List<UriTemplate> uriTemplates = uriTemplateStrings == null ? Collections.emptyList()
-            : Arrays.stream(uriTemplateStrings).map(uri -> new UriTemplate(uri))
-            .collect(Collectors.toList());
+                : Arrays.stream(uriTemplateStrings).map(uri -> new UriTemplate(uri)).collect(Collectors.toList());
         // UriTemplate are returned in reverse order
         Collections.reverse(uriTemplates);
         when(extendedUriInfo.getMatchedTemplates()).thenReturn(uriTemplates);
@@ -133,15 +131,10 @@ class DefaultJerseyTagsProviderTest {
     }
 
     private static Tag[] tagsFrom(String uri, int status, String exception, String outcome) {
-        Iterable<Tag> expectedTags = Tags.of(
-            "method", "GET",
-            "uri", uri,
-            "status", String.valueOf(status),
-            "exception", exception == null ? "None" : exception,
-            "outcome", outcome
-        );
+        Iterable<Tag> expectedTags = Tags.of("method", "GET", "uri", uri, "status", String.valueOf(status), "exception",
+                exception == null ? "None" : exception, "outcome", outcome);
 
-        return stream(expectedTags.spliterator(), false)
-            .toArray(Tag[]::new);
+        return stream(expectedTags.spliterator(), false).toArray(Tag[]::new);
     }
+
 }

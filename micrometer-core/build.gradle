@@ -1,16 +1,87 @@
 plugins {
-    id 'idea'
+    id "org.jetbrains.kotlin.jvm" version "1.7.10"
+    id 'me.champeau.mrjar' version "0.1.1"
+}
+
+description 'Core module of Micrometer containing instrumentation API and implementation'
+
+multiRelease {
+    targetVersions 8, 11
+}
+
+tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).all {
+    kotlinOptions {
+        jvmTarget = javaTargetVersion
+    }
+}
+
+tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinTest).all {
+    kotlinOptions {
+        jvmTarget = JavaVersion.toVersion(javaLanguageVersion)
+    }
+}
+
+jar {
+    bundle {
+
+        bnd '''\
+        Import-Package: \
+            org.aspectj.*;resolution:=dynamic,\
+            com.github.benmanes.caffeine.*;resolution:=dynamic;version="${@}",\
+            net.sf.ehcache.*;resolution:=dynamic;version="${@}",\
+            javax.cache.*;resolution:=dynamic;version="${@}",\
+            org.hibernate.*;resolution:=dynamic;version="${@}",\
+            org.eclipse.jetty.*;resolution:=dynamic;version="${@}",\
+            org.glassfish.jersey.*;resolution:=dynamic;version="${@}",\
+            io.grpc.*;resolution:=dynamic,\
+            org.apache.hc.*;resolution:=dynamic,\
+            org.apache.http.*;resolution:=dynamic,\
+            com.netflix.hystrix.*;resolution:=dynamic;version="${@}",\
+            ch.qos.logback.*;resolution:=dynamic;version="${@}",\
+            org.apache.logging.log4j.*;resolution:=dynamic;version="${@}",\
+            okhttp3.*;resolution:=dynamic;version="${@}",\
+            com.mongodb.*;resolution:=dynamic;version="${@}",\
+            org.jooq.*;resolution:=dynamic;version="${@}",\
+            org.apache.kafka.*;resolution:=dynamic,\
+            com.codahale.metrics.*;resolution:=dynamic;version="${@}",\
+            com.google.common.cache.*;resolution:=dynamic;version="${@}",\
+            jakarta.servlet.*;resolution:=dynamic;version="${@}",\
+            javax.servlet.*;resolution:=dynamic;version="${@}",\
+            io.micrometer.context.*;resolution:=dynamic,\
+            io.micrometer.observation.*;resolution:=dynamic;version="${@}",\
+            kotlin.*;resolution:=dynamic,\
+            kotlinx.coroutines.*;resolution:=dynamic,\
+            org.LatencyUtils.*;resolution:=dynamic,\
+            org.HdrHistogram.*;resolution:=dynamic;version="${@}",\
+            org.apache.catalina.*;resolution:=dynamic,\
+            org.bson.*;resolution:=dynamic;version="${@}",\
+            rx.*;resolution:=dynamic;version="${@}",\
+            javax.persistence.*;resolution:=dynamic;version="${@}",\
+            io.netty.*;resolution:=dynamic;version="${@}",\
+            *
+        '''.stripIndent()
+    }
 }
 
 dependencies {
-    // TODO(anuraaga): HdrHistogram is exposed in the micrometer API but probably shouldn't be
-    api 'org.hdrhistogram:HdrHistogram'
+    api project(":micrometer-commons")
+    api project(":micrometer-observation")
+
+    java11Api project(":micrometer-commons")
+    java11Api project(":micrometer-observation")
+
+    // HdrHistogram is needed at runtime when client-side percentiles are configured
+    implementation 'org.hdrhistogram:HdrHistogram'
+    // LatencyUtils is needed at runtime when pause detection is enabled
     implementation('org.latencyutils:LatencyUtils') {
         exclude group: 'org.hdrhistogram', module: 'HdrHistogram'
     }
 
+    // Aspects
+    optionalApi 'org.aspectj:aspectjweaver'
+
     // instrumentation options
-    optionalApi 'io.dropwizard.metrics:metrics-core'
+    optionalApi 'io.dropwizard.metrics:metrics-core' // TODO move dropwizard out of core module? DropwizardMeterRegistry for e.g. JMX registry
 
     // cache monitoring
     optionalApi 'com.google.guava:guava'
@@ -22,14 +93,18 @@ dependencies {
 
     // server runtime monitoring
     optionalApi 'org.eclipse.jetty:jetty-server'
+    // jakarta servlet
+    optionalApi 'jakarta.servlet:jakarta.servlet-api:5.+'
     optionalApi 'org.eclipse.jetty:jetty-client'
     optionalApi 'org.apache.tomcat.embed:tomcat-embed-core'
     optionalApi 'org.glassfish.jersey.core:jersey-server'
     optionalApi 'io.grpc:grpc-api'
+    optionalApi 'io.netty:netty-transport'
 
     // apache httpcomponents monitoring
     optionalApi 'org.apache.httpcomponents:httpclient'
     optionalApi 'org.apache.httpcomponents:httpasyncclient'
+    optionalApi 'org.apache.httpcomponents.client5:httpclient5'
 
     // hystrix monitoring
     optionalApi 'com.netflix.hystrix:hystrix-core'
@@ -37,13 +112,6 @@ dependencies {
     // log monitoring
     optionalApi 'ch.qos.logback:logback-classic'
     optionalApi 'org.apache.logging.log4j:log4j-core'
-
-    // reactor
-    optionalApi 'io.projectreactor:reactor-core'
-    optionalApi 'io.projectreactor.netty:reactor-netty-http'
-
-    // @Timed AOP
-    optionalApi 'org.aspectj:aspectjweaver'
 
     optionalApi 'com.squareup.okhttp3:okhttp'
 
@@ -54,31 +122,38 @@ dependencies {
     optionalApi 'org.apache.kafka:kafka-clients'
     optionalApi 'org.apache.kafka:kafka-streams'
 
+    optionalApi project(':micrometer-observation')
+    optionalApi 'io.micrometer:context-propagation'
+
+    // kotlin
+    optionalApi 'org.jetbrains.kotlin:kotlin-reflect'
+    optionalApi 'org.jetbrains.kotlin:kotlin-stdlib-jdk8'
+    optionalApi 'org.jetbrains.kotlinx:kotlinx-coroutines-core'
+
     testImplementation 'io.projectreactor:reactor-test'
-
-    // JUnit 5
-    testImplementation 'org.junit.jupiter:junit-jupiter'
-    testImplementation 'com.tngtech.archunit:archunit-junit5'
-
-    // Eclipse still needs this (as of 4.7.1a)
-    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
-
-    testImplementation 'org.mockito:mockito-inline'
-
-    testImplementation 'org.hsqldb:hsqldb'
+    testImplementation project(":micrometer-observation-test")
+    java11TestImplementation project(":micrometer-observation-test")
 
     // dependency injection tests
     testImplementation 'javax.inject:javax.inject'
     testImplementation 'org.springframework:spring-context'
     testImplementation 'com.google.inject:guice'
 
+    // Uncomment these if you are interested in testing injection with dagger in MeterRegistryInjectionTest
+    // testImplementation 'com.google.dagger:dagger'
+    // testAnnotationProcessor 'com.google.dagger:dagger-compiler'
+
+    // JUnit 5
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testImplementation 'com.tngtech.archunit:archunit-junit5'
+
+    testImplementation 'org.mockito:mockito-inline'
+
+    testImplementation 'org.hsqldb:hsqldb'
     testImplementation 'com.h2database:h2'
 
-    // Uncomment these if you are interested in testing injection with dagger in MeterRegistryInjectionTest
-//    testImplementation 'com.google.dagger:dagger'
-//    testAnnotationProcessor 'com.google.dagger:dagger-compiler'
-
     testImplementation 'org.assertj:assertj-core'
+    java11TestImplementation 'org.assertj:assertj-core'
     testImplementation 'org.awaitility:awaitility'
 
     testImplementation 'org.ehcache:ehcache'
@@ -92,8 +167,7 @@ dependencies {
 
     testImplementation 'ru.lanwen.wiremock:wiremock-junit5'
     testImplementation 'com.github.tomakehurst:wiremock-jre8-standalone'
-
-    testImplementation 'de.flapdoodle.embed:de.flapdoodle.embed.mongo'
+    java11TestImplementation 'com.github.tomakehurst:wiremock-jre8-standalone'
 
     // Log4j2 Async dependency
     testImplementation 'com.lmax:disruptor:3.4.+'
@@ -102,6 +176,27 @@ dependencies {
     testImplementation 'org.testcontainers:testcontainers'
     testImplementation 'org.testcontainers:junit-jupiter'
     testImplementation 'org.testcontainers:kafka'
+
+    // Postgres Binder IT dependencies
+    testImplementation 'org.testcontainers:postgresql'
+    testImplementation 'org.postgresql:postgresql'
+
+    testImplementation 'org.testcontainers:mongodb'
+
+    // Dependencies for @ClassPathExclusions
+    testImplementation("org.junit.platform:junit-platform-engine")
+    testImplementation("org.junit.platform:junit-platform-launcher")
+    testImplementation("org.apache.maven.resolver:maven-resolver-connector-basic:latest.release")
+    testImplementation("org.apache.maven:maven-resolver-provider:3.+") {
+        exclude(group: "javax.inject", module: "javax.inject")
+    }
+    testImplementation("org.apache.maven.resolver:maven-resolver-transport-http:latest.release") {
+        exclude group: "org.slf4j", module: "jcl-over-slf4j"
+    }
+    testImplementation("org.apache.maven.resolver:maven-resolver-connector-basic:latest.release")
+    // gRPC
+    testImplementation("io.grpc:grpc-core")
+    testImplementation("io.grpc:grpc-testing-proto")
 }
 
 task shenandoahTest(type: Test) {
@@ -146,4 +241,22 @@ task openj9ConcurrentScavengeTest(type: Test) {
     }
 
     jvmArgs '-Xgc:concurrentScavenge'
+}
+
+java11Test {
+    // set heap size for the test JVM(s)
+    maxHeapSize = "1500m"
+
+    useJUnitPlatform {
+        excludeTags 'docker'
+    }
+
+    include {
+        it.getFile().getAbsolutePath().contains("java11Test")
+    }
+
+    retry {
+        maxFailures = 5
+        maxRetries = 3
+    }
 }

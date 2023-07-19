@@ -1,12 +1,12 @@
-/**
+/*
  * Copyright 2017 VMware, Inc.
- * <p>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
+ *
  * https://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,24 +25,21 @@ import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
 public class LatencySample {
+
     public static void main(String[] args) {
         new LatencySample().run();
     }
 
     private MeterRegistry registry = SampleConfig.myMonitoringSystem();
+
     private Random r = new Random();
-    private Timer timer = Timer.builder("request")
-        .publishPercentileHistogram()
-        .register(registry);
+
+    private Timer timer = Timer.builder("request").publishPercentileHistogram().register(registry);
 
     void run() {
-        Flux.interval(Duration.ofMillis(1))
-            .doOnEach(n -> recordGaussian(10))
-            .subscribe();
+        Flux.interval(Duration.ofMillis(1)).doOnEach(n -> recordGaussian(10)).subscribe();
 
-        Flux.interval(Duration.ofSeconds(1))
-            .doOnEach(n -> recordGaussian(300))
-            .blockLast();
+        Flux.interval(Duration.ofSeconds(1)).doOnEach(n -> recordGaussian(300)).blockLast();
     }
 
     private void recordGaussian(long center) {
@@ -52,4 +49,5 @@ public class LatencySample {
     private long simulatedLatency(long center) {
         return (long) (r.nextGaussian() * 10) + center;
     }
+
 }

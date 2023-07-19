@@ -1,12 +1,12 @@
-/**
+/*
  * Copyright 2017 VMware, Inc.
- * <p>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
+ *
  * https://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,6 +31,7 @@ import static io.micrometer.core.instrument.config.validate.PropertyValidator.ge
  * @author Jon Schneider
  */
 public interface SimpleConfig extends MeterRegistryConfig {
+
     SimpleConfig DEFAULT = k -> null;
 
     @Override
@@ -46,8 +47,9 @@ public interface SimpleConfig extends MeterRegistryConfig {
     }
 
     /**
-     * @return A mode that determines whether the registry reports cumulative values over all time or
-     * a rate normalized form representing changes in the last {@link #step()}.
+     * @return A mode that determines whether the registry reports cumulative values over
+     * all time or a rate normalized form representing changes in the last
+     * {@link #step()}.
      */
     default CountingMode mode() {
         return getEnum(this, CountingMode.class, "mode").orElse(CountingMode.CUMULATIVE);
@@ -55,9 +57,7 @@ public interface SimpleConfig extends MeterRegistryConfig {
 
     @Override
     default Validated<?> validate() {
-        return checkAll(this,
-                check("step", SimpleConfig::step),
-                check("mode", SimpleConfig::mode)
-        );
+        return checkAll(this, check("step", SimpleConfig::step), check("mode", SimpleConfig::mode));
     }
+
 }

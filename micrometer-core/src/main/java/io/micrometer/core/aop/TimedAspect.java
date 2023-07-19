@@ -1,12 +1,12 @@
-/**
+/*
  * Copyright 2017 VMware, Inc.
- * <p>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
+ *
  * https://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,15 +15,11 @@
  */
 package io.micrometer.core.aop;
 
+import io.micrometer.common.lang.NonNullApi;
+import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.annotation.Incubating;
 import io.micrometer.core.annotation.Timed;
-import io.micrometer.core.instrument.LongTaskTimer;
-import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Tag;
-import io.micrometer.core.instrument.Tags;
-import io.micrometer.core.instrument.Timer;
-import io.micrometer.core.instrument.Metrics;
-import io.micrometer.core.lang.NonNullApi;
+import io.micrometer.core.instrument.*;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
@@ -37,23 +33,28 @@ import java.util.function.Predicate;
 
 /**
  * <p>
- * AspectJ aspect for intercepting types or methods annotated with {@link Timed @Timed}.<br>
- * The aspect supports programmatic customizations through constructor-injectable custom logic.
+ * AspectJ aspect for intercepting types or methods annotated with
+ * {@link Timed @Timed}.<br>
+ * The aspect supports programmatic customizations through constructor-injectable custom
+ * logic.
  * </p>
  * <p>
  * You might want to add tags programmatically to the {@link Timer}.<br>
- * In this case, the tags provider function (<code>Function&lt;ProceedingJoinPoint, Iterable&lt;Tag&gt;&gt;</code>) can help.
- * It receives a {@link ProceedingJoinPoint} and returns the {@link Tag}s that will be attached to the {@link Timer}.
+ * In this case, the tags provider function
+ * (<code>Function&lt;ProceedingJoinPoint, Iterable&lt;Tag&gt;&gt;</code>) can help. It
+ * receives a {@link ProceedingJoinPoint} and returns the {@link Tag}s that will be
+ * attached to the {@link Timer}.
  * </p>
  * <p>
  * You might also want to skip the {@link Timer} creation programmatically.<br>
- * One use-case can be having another component in your application that already processes the {@link Timed @Timed} annotation
- * in some cases so that {@code TimedAspect} should not intercept these methods. E.g.: Spring Boot does this for its controllers.
- * By using the skip predicate (<code>Predicate&lt;ProceedingJoinPoint&gt;</code>)
- * you can tell the {@code TimedAspect} when not to create a {@link Timer}.
+ * One use-case can be having another component in your application that already processes
+ * the {@link Timed @Timed} annotation in some cases so that {@code TimedAspect} should
+ * not intercept these methods. E.g.: Spring Boot does this for its controllers. By using
+ * the skip predicate (<code>Predicate&lt;ProceedingJoinPoint&gt;</code>) you can tell the
+ * {@code TimedAspect} when not to create a {@link Timer}.
  *
  * Here's an example to disable {@link Timer} creation for Spring controllers:
- *</p>
+ * </p>
  * <pre>
  * &#064;Bean
  * public TimedAspect timedAspect(MeterRegistry meterRegistry) {
@@ -66,6 +67,10 @@ import java.util.function.Predicate;
  * }
  * </pre>
  *
+ * To add support for {@link MeterTag} annotations set the
+ * {@link MeterTagAnnotationHandler} via
+ * {@link TimedAspect#setMeterTagAnnotationHandler(MeterTagAnnotationHandler)}.
+ *
  * @author David J. M. Karlsen
  * @author Jon Schneider
  * @author Johnny Lim
@@ -77,8 +82,11 @@ import java.util.function.Predicate;
 @NonNullApi
 @Incubating(since = "1.0.0")
 public class TimedAspect {
+
     private static final Predicate<ProceedingJoinPoint> DONT_SKIP_ANYTHING = pjp -> false;
+
     public static final String DEFAULT_METRIC_NAME = "method.timed";
+
     public static final String DEFAULT_EXCEPTION_TAG_VALUE = "none";
 
     /**
@@ -89,8 +97,12 @@ public class TimedAspect {
     public static final String EXCEPTION_TAG = "exception";
 
     private final MeterRegistry registry;
+
     private final Function<ProceedingJoinPoint, Iterable<Tag>> tagsBasedOnJoinPoint;
+
     private final Predicate<ProceedingJoinPoint> shouldSkip;
+
+    private MeterTagAnnotationHandler meterTagAnnotationHandler;
 
     /**
      * Creates a {@code TimedAspect} instance with {@link Metrics#globalRegistry}.
@@ -103,7 +115,6 @@ public class TimedAspect {
 
     /**
      * Creates a {@code TimedAspect} instance with the given {@code registry}.
-     *
      * @param registry Where we're going to register metrics.
      */
     public TimedAspect(MeterRegistry registry) {
@@ -111,8 +122,8 @@ public class TimedAspect {
     }
 
     /**
-     * Creates a {@code TimedAspect} instance with the given {@code registry} and tags provider function.
-     *
+     * Creates a {@code TimedAspect} instance with the given {@code registry} and tags
+     * provider function.
      * @param registry Where we're going to register metrics.
      * @param tagsBasedOnJoinPoint A function to generate tags given a join point.
      */
@@ -121,36 +132,53 @@ public class TimedAspect {
     }
 
     /**
-     * Creates a {@code TimedAspect} instance with the given {@code registry} and skip predicate.
-     *
+     * Creates a {@code TimedAspect} instance with the given {@code registry} and skip
+     * predicate.
      * @param registry Where we're going to register metrics.
-     * @param shouldSkip A predicate to decide if creating the timer should be skipped or not.
+     * @param shouldSkip A predicate to decide if creating the timer should be skipped or
+     * not.
      * @since 1.7.0
      */
     public TimedAspect(MeterRegistry registry, Predicate<ProceedingJoinPoint> shouldSkip) {
-        this(
-                registry,
-                pjp -> Tags.of("class", pjp.getStaticPart().getSignature().getDeclaringTypeName(),
-                        "method", pjp.getStaticPart().getSignature().getName()),
-                shouldSkip
-        );
+        this(registry, pjp -> Tags.of("class", pjp.getStaticPart().getSignature().getDeclaringTypeName(), "method",
+                pjp.getStaticPart().getSignature().getName()), shouldSkip);
     }
 
     /**
-     * Creates a {@code TimedAspect} instance with the given {@code registry}, tags provider function and skip predicate.
-     *
+     * Creates a {@code TimedAspect} instance with the given {@code registry}, tags
+     * provider function and skip predicate.
      * @param registry Where we're going to register metrics.
      * @param tagsBasedOnJoinPoint A function to generate tags given a join point.
-     * @param shouldSkip A predicate to decide if creating the timer should be skipped or not.
+     * @param shouldSkip A predicate to decide if creating the timer should be skipped or
+     * not.
      * @since 1.7.0
      */
-    public TimedAspect(MeterRegistry registry, Function<ProceedingJoinPoint, Iterable<Tag>> tagsBasedOnJoinPoint, Predicate<ProceedingJoinPoint> shouldSkip) {
+    public TimedAspect(MeterRegistry registry, Function<ProceedingJoinPoint, Iterable<Tag>> tagsBasedOnJoinPoint,
+            Predicate<ProceedingJoinPoint> shouldSkip) {
         this.registry = registry;
         this.tagsBasedOnJoinPoint = tagsBasedOnJoinPoint;
         this.shouldSkip = shouldSkip;
     }
 
+    @Around("@within(io.micrometer.core.annotation.Timed)")
+    @Nullable
+    public Object timedClass(ProceedingJoinPoint pjp) throws Throwable {
+        if (shouldSkip.test(pjp)) {
+            return pjp.proceed();
+        }
+
+        Method method = ((MethodSignature) pjp.getSignature()).getMethod();
+        Class<?> declaringClass = method.getDeclaringClass();
+        if (!declaringClass.isAnnotationPresent(Timed.class)) {
+            declaringClass = pjp.getTarget().getClass();
+        }
+        Timed timed = declaringClass.getAnnotation(Timed.class);
+
+        return perform(pjp, timed, method);
+    }
+
     @Around("execution (@io.micrometer.core.annotation.Timed * *.*(..))")
+    @Nullable
     public Object timedMethod(ProceedingJoinPoint pjp) throws Throwable {
         if (shouldSkip.test(pjp)) {
             return pjp.proceed();
@@ -163,25 +191,32 @@ public class TimedAspect {
             timed = method.getAnnotation(Timed.class);
         }
 
+        return perform(pjp, timed, method);
+    }
+
+    private Object perform(ProceedingJoinPoint pjp, Timed timed, Method method) throws Throwable {
         final String metricName = timed.value().isEmpty() ? DEFAULT_METRIC_NAME : timed.value();
         final boolean stopWhenCompleted = CompletionStage.class.isAssignableFrom(method.getReturnType());
 
         if (!timed.longTask()) {
             return processWithTimer(pjp, timed, metricName, stopWhenCompleted);
-        } else {
+        }
+        else {
             return processWithLongTaskTimer(pjp, timed, metricName, stopWhenCompleted);
         }
     }
 
-    private Object processWithTimer(ProceedingJoinPoint pjp, Timed timed, String metricName, boolean stopWhenCompleted) throws Throwable {
+    private Object processWithTimer(ProceedingJoinPoint pjp, Timed timed, String metricName, boolean stopWhenCompleted)
+            throws Throwable {
 
         Timer.Sample sample = Timer.start(registry);
 
         if (stopWhenCompleted) {
             try {
-                return ((CompletionStage<?>) pjp.proceed()).whenComplete((result, throwable) ->
-                        record(pjp, timed, metricName, sample, getExceptionTag(throwable)));
-            } catch (Exception ex) {
+                return ((CompletionStage<?>) pjp.proceed()).whenComplete(
+                        (result, throwable) -> record(pjp, timed, metricName, sample, getExceptionTag(throwable)));
+            }
+            catch (Exception ex) {
                 record(pjp, timed, metricName, sample, ex.getClass().getSimpleName());
                 throw ex;
             }
@@ -190,27 +225,39 @@ public class TimedAspect {
         String exceptionClass = DEFAULT_EXCEPTION_TAG_VALUE;
         try {
             return pjp.proceed();
-        } catch (Exception ex) {
+        }
+        catch (Exception ex) {
             exceptionClass = ex.getClass().getSimpleName();
             throw ex;
-        } finally {
+        }
+        finally {
             record(pjp, timed, metricName, sample, exceptionClass);
         }
     }
 
-    private void record(ProceedingJoinPoint pjp, Timed timed, String metricName, Timer.Sample sample, String exceptionClass) {
+    private void record(ProceedingJoinPoint pjp, Timed timed, String metricName, Timer.Sample sample,
+            String exceptionClass) {
         try {
-            sample.stop(Timer.builder(metricName)
-                    .description(timed.description().isEmpty() ? null : timed.description())
-                    .tags(timed.extraTags())
-                    .tags(EXCEPTION_TAG, exceptionClass)
-                    .tags(tagsBasedOnJoinPoint.apply(pjp))
-                    .publishPercentileHistogram(timed.histogram())
-                    .publishPercentiles(timed.percentiles().length == 0 ? null : timed.percentiles())
-                    .register(registry));
-        } catch (Exception e) {
+            sample.stop(recordBuilder(pjp, timed, metricName, exceptionClass).register(registry));
+        }
+        catch (Exception e) {
             // ignoring on purpose
         }
+    }
+
+    private Timer.Builder recordBuilder(ProceedingJoinPoint pjp, Timed timed, String metricName,
+            String exceptionClass) {
+        Timer.Builder builder = Timer.builder(metricName)
+            .description(timed.description().isEmpty() ? null : timed.description())
+            .tags(timed.extraTags())
+            .tags(EXCEPTION_TAG, exceptionClass)
+            .tags(tagsBasedOnJoinPoint.apply(pjp))
+            .publishPercentileHistogram(timed.histogram())
+            .publishPercentiles(timed.percentiles().length == 0 ? null : timed.percentiles());
+        if (meterTagAnnotationHandler != null) {
+            meterTagAnnotationHandler.addAnnotatedParameters(builder, pjp);
+        }
+        return builder;
     }
 
     private String getExceptionTag(Throwable throwable) {
@@ -226,14 +273,17 @@ public class TimedAspect {
         return throwable.getCause().getClass().getSimpleName();
     }
 
-    private Object processWithLongTaskTimer(ProceedingJoinPoint pjp, Timed timed, String metricName, boolean stopWhenCompleted) throws Throwable {
+    private Object processWithLongTaskTimer(ProceedingJoinPoint pjp, Timed timed, String metricName,
+            boolean stopWhenCompleted) throws Throwable {
 
         Optional<LongTaskTimer.Sample> sample = buildLongTaskTimer(pjp, timed, metricName).map(LongTaskTimer::start);
 
         if (stopWhenCompleted) {
             try {
-                return ((CompletionStage<?>) pjp.proceed()).whenComplete((result, throwable) -> sample.ifPresent(this::stopTimer));
-            } catch (Exception ex) {
+                return ((CompletionStage<?>) pjp.proceed())
+                    .whenComplete((result, throwable) -> sample.ifPresent(this::stopTimer));
+            }
+            catch (Exception ex) {
                 sample.ifPresent(this::stopTimer);
                 throw ex;
             }
@@ -241,7 +291,8 @@ public class TimedAspect {
 
         try {
             return pjp.proceed();
-        } finally {
+        }
+        finally {
             sample.ifPresent(this::stopTimer);
         }
     }
@@ -249,23 +300,35 @@ public class TimedAspect {
     private void stopTimer(LongTaskTimer.Sample sample) {
         try {
             sample.stop();
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             // ignoring on purpose
         }
     }
 
     /**
-     * Secure long task timer creation - it should not disrupt the application flow in case of exception
+     * Secure long task timer creation - it should not disrupt the application flow in
+     * case of exception
      */
     private Optional<LongTaskTimer> buildLongTaskTimer(ProceedingJoinPoint pjp, Timed timed, String metricName) {
         try {
             return Optional.of(LongTaskTimer.builder(metricName)
-                                       .description(timed.description().isEmpty() ? null : timed.description())
-                                       .tags(timed.extraTags())
-                                       .tags(tagsBasedOnJoinPoint.apply(pjp))
-                                       .register(registry));
-        } catch (Exception e) {
+                .description(timed.description().isEmpty() ? null : timed.description())
+                .tags(timed.extraTags())
+                .tags(tagsBasedOnJoinPoint.apply(pjp))
+                .register(registry));
+        }
+        catch (Exception e) {
             return Optional.empty();
         }
     }
+
+    /**
+     * Setting this enables support for {@link MeterTag}.
+     * @param meterTagAnnotationHandler meter tag annotation handler
+     */
+    public void setMeterTagAnnotationHandler(MeterTagAnnotationHandler meterTagAnnotationHandler) {
+        this.meterTagAnnotationHandler = meterTagAnnotationHandler;
+    }
+
 }

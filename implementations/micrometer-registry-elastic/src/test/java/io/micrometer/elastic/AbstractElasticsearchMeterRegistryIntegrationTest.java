@@ -1,12 +1,12 @@
-/**
+/*
  * Copyright 2019 VMware, Inc.
- * <p>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
+ *
  * https://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -40,7 +40,16 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Tag("docker")
 abstract class AbstractElasticsearchMeterRegistryIntegrationTest {
 
+    // Testing against a pre-7.8 version to verify behavior without
+    // composable index templates support.
+    // See
+    // https://www.elastic.co/guide/en/elasticsearch/reference/7.8/index-templates.html
+    protected static final String VERSION_7 = "7.7.1";
+
+    protected static final String VERSION_8 = "8.6.2";
+
     protected static final String USER = "elastic";
+
     protected static final String PASSWORD = "changeme";
 
     @Container
@@ -49,6 +58,7 @@ abstract class AbstractElasticsearchMeterRegistryIntegrationTest {
     protected final HttpSender httpSender = new HttpUrlConnectionSender();
 
     protected String host;
+
     private ElasticMeterRegistry registry;
 
     protected abstract String getVersion();
@@ -82,7 +92,7 @@ abstract class AbstractElasticsearchMeterRegistryIntegrationTest {
 
     protected ElasticsearchContainer getContainer() {
         return new ElasticsearchContainer(DockerImageName.parse(getDockerImageName(getVersion())))
-                .withPassword(PASSWORD);
+            .withPassword(PASSWORD);
     }
 
     protected ElasticConfig getConfig() {

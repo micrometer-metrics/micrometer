@@ -1,12 +1,12 @@
-/**
+/*
  * Copyright 2017 VMware, Inc.
- * <p>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
+ *
  * https://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,14 +15,14 @@
  */
 package io.micrometer.core.instrument.binder.system;
 
+import io.micrometer.common.lang.NonNullApi;
+import io.micrometer.common.lang.NonNullFields;
+import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.binder.MeterBinder;
-import io.micrometer.core.lang.NonNullApi;
-import io.micrometer.core.lang.NonNullFields;
-import io.micrometer.core.lang.Nullable;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.OperatingSystemMXBean;
@@ -58,6 +58,7 @@ public class FileDescriptorMetrics implements MeterBinder {
     );
 
     private final OperatingSystemMXBean osBean;
+
     private final Iterable<Tag> tags;
 
     @Nullable
@@ -91,25 +92,26 @@ public class FileDescriptorMetrics implements MeterBinder {
     public void bindTo(MeterRegistry registry) {
         if (openFilesMethod != null) {
             Gauge.builder("process.files.open", osBean, x -> invoke(openFilesMethod))
-                    .tags(tags)
-                    .description("The open file descriptor count")
-                    .baseUnit(BaseUnits.FILES)
-                    .register(registry);
+                .tags(tags)
+                .description("The open file descriptor count")
+                .baseUnit(BaseUnits.FILES)
+                .register(registry);
         }
 
         if (maxFilesMethod != null) {
             Gauge.builder("process.files.max", osBean, x -> invoke(maxFilesMethod))
-                    .tags(tags)
-                    .description("The maximum file descriptor count")
-                    .baseUnit(BaseUnits.FILES)
-                    .register(registry);
+                .tags(tags)
+                .description("The maximum file descriptor count")
+                .baseUnit(BaseUnits.FILES)
+                .register(registry);
         }
     }
 
     private double invoke(@Nullable Method method) {
         try {
             return method != null ? (double) (long) method.invoke(osBean) : Double.NaN;
-        } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+        }
+        catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
             return Double.NaN;
         }
     }
@@ -123,7 +125,8 @@ public class FileDescriptorMetrics implements MeterBinder {
             // ensure the Bean we have is actually an instance of the interface
             osBeanClass.cast(osBean);
             return osBeanClass.getDeclaredMethod(name);
-        } catch (ClassCastException | NoSuchMethodException | SecurityException e) {
+        }
+        catch (ClassCastException | NoSuchMethodException | SecurityException e) {
             return null;
         }
     }
@@ -133,9 +136,11 @@ public class FileDescriptorMetrics implements MeterBinder {
         for (String className : classNames) {
             try {
                 return Class.forName(className);
-            } catch (ClassNotFoundException ignore) {
+            }
+            catch (ClassNotFoundException ignore) {
             }
         }
         return null;
     }
+
 }

@@ -1,12 +1,12 @@
-/**
+/*
  * Copyright 2017 VMware, Inc.
- * <p>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
+ *
  * https://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,22 +15,26 @@
  */
 package io.micrometer.statsd.internal;
 
+import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Statistic;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.util.HierarchicalNameMapper;
-import io.micrometer.core.lang.Nullable;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 public class EtsyStatsdLineBuilder extends FlavorStatsdLineBuilder {
+
     private final HierarchicalNameMapper nameMapper;
-    @SuppressWarnings({"NullableProblems", "unused"})
+
+    @SuppressWarnings({ "NullableProblems", "unused" })
     private volatile NamingConvention namingConvention;
+
     @Nullable
     private volatile String nameNoStat;
+
     private final ConcurrentMap<Statistic, String> names = new ConcurrentHashMap<>();
 
     public EtsyStatsdLineBuilder(Meter.Id id, MeterRegistry.Config config, HierarchicalNameMapper nameMapper) {
@@ -58,7 +62,7 @@ public class EtsyStatsdLineBuilder extends FlavorStatsdLineBuilder {
             if (this.nameNoStat == null) {
                 this.nameNoStat = etsyName(null);
             }
-            //noinspection ConstantConditions
+            // noinspection ConstantConditions
             return nameNoStat;
         }
         return names.computeIfAbsent(stat, this::etsyName);
@@ -66,6 +70,7 @@ public class EtsyStatsdLineBuilder extends FlavorStatsdLineBuilder {
 
     private String etsyName(@Nullable Statistic stat) {
         return nameMapper.toHierarchicalName(stat != null ? id.withTag(stat) : id, config.namingConvention())
-                .replace(':', '_');
+            .replace(':', '_');
     }
+
 }

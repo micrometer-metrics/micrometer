@@ -1,12 +1,12 @@
-/**
+/*
  * Copyright 2018 VMware, Inc.
- * <p>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
+ *
  * https://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,16 +16,20 @@
 package io.micrometer.core.ipc.http;
 
 /**
- * The class of HTTP status. Simplification of {@code io.netty.handler.codec.http.HttpStatusClass}.
+ * The class of HTTP status. Simplification of
+ * {@code io.netty.handler.codec.http.HttpStatusClass}.
  *
  * @author Jon Schneider
  */
 enum HttpStatusClass {
+
+    // @formatter:off
     INFORMATIONAL(100, 200),
     SUCCESS(200, 300),
     REDIRECTION(300, 400),
     CLIENT_ERROR(400, 500),
     SERVER_ERROR(500, 600),
+    // @formatter:on
     UNKNOWN(0, 0) {
         @Override
         public boolean contains(int code) {
@@ -56,6 +60,7 @@ enum HttpStatusClass {
     }
 
     private final int min;
+
     private final int max;
 
     HttpStatusClass(int min, int max) {
@@ -64,9 +69,11 @@ enum HttpStatusClass {
     }
 
     /**
-     * Returns {@code true} if and only if the specified HTTP status code falls into this class.
+     * Returns {@code true} if and only if the specified HTTP status code falls into this
+     * class.
      */
     public boolean contains(int code) {
         return code >= min && code < max;
     }
+
 }

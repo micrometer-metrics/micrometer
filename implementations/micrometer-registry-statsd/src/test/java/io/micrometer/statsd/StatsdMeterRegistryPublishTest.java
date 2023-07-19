@@ -1,12 +1,12 @@
-/**
+/*
  * Copyright 2020 VMware, Inc.
- * <p>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
+ *
  * https://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -56,11 +56,15 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
  * @author Johnny Lim
  */
 class StatsdMeterRegistryPublishTest {
+
     private static final String UDS_DATAGRAM_SOCKET_PATH = "/tmp/test-server.sock";
 
     StatsdMeterRegistry meterRegistry;
+
     DisposableChannel server;
-    CountDownLatch serverLatch;
+
+    volatile CountDownLatch serverLatch;
+
     AtomicInteger serverMetricReadCount = new AtomicInteger();
 
     volatile boolean bound;
@@ -125,7 +129,8 @@ class StatsdMeterRegistryPublishTest {
         await().until(() -> bound);
 
         // Note that this guarantees this test to be passed.
-        // For TCP, this will help trigger replacing client. If this triggered replacing, this change will be lost.
+        // For TCP, this will help trigger replacing client. If this triggered replacing,
+        // this change will be lost.
         // For UDP, the first change seems to be lost frequently somehow.
         Counter.builder("another.counter").register(meterRegistry).increment();
 
@@ -250,12 +255,13 @@ class StatsdMeterRegistryPublishTest {
         final int port = getPort(protocol);
         meterRegistry = new StatsdMeterRegistry(getUnbufferedConfig(protocol, port), Clock.SYSTEM);
         startRegistryAndWaitForClient();
-        ((Connection) meterRegistry.statsdConnection.get()).addHandler("writeFailure", new ChannelOutboundHandlerAdapter() {
-            @Override
-            public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
-                throw new RuntimeException("write error for testing purposes");
-            }
-        });
+        ((Connection) meterRegistry.statsdConnection.get()).addHandlerFirst("writeFailure",
+                new ChannelOutboundHandlerAdapter() {
+                    @Override
+                    public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
+                        throw new RuntimeException("write error for testing purposes");
+                    }
+                });
         Counter counter = Counter.builder("my.counter").register(meterRegistry);
         // write will cause error
         counter.increment();
@@ -265,7 +271,29 @@ class StatsdMeterRegistryPublishTest {
         ((Connection) meterRegistry.statsdConnection.get()).removeHandler("writeFailure");
         IntStream.range(1, 4).forEach(counter::increment);
         assertThat(serverLatch.await(3, TimeUnit.SECONDS)).isTrue();
-        await().pollDelay(Duration.ofSeconds(1)).atMost(Duration.ofSeconds(3)).until(() -> serverMetricReadCount.get() == 3);
+        await().pollDelay(Duration.ofSeconds(1))
+            .atMost(Duration.ofSeconds(3))
+            .until(() -> serverMetricReadCount.get() == 3);
+    }
+
+    @Issue("#2880")
+    @ParameterizedTest
+    @EnumSource(StatsdProtocol.class)
+    void receiveParallelMetricsSuccessfully(StatsdProtocol protocol) throws InterruptedException {
+        final int n = 10;
+
+        skipUdsTestOnWindows(protocol);
+        serverLatch = new CountDownLatch(n);
+        server = startServer(protocol, 0);
+        final int port = getPort(protocol);
+
+        meterRegistry = new StatsdMeterRegistry(getUnbufferedConfig(protocol, port), Clock.SYSTEM);
+        startRegistryAndWaitForClient();
+        Counter counter = Counter.builder("my.counter").register(meterRegistry);
+
+        IntStream.range(0, n).parallel().forEach(ignored -> counter.increment());
+
+        assertThat(serverLatch.await(3, TimeUnit.SECONDS)).isTrue();
     }
 
     private void skipUdsTestOnWindows(StatsdProtocol protocol) {
@@ -274,7 +302,8 @@ class StatsdMeterRegistryPublishTest {
     }
 
     private int getPort(StatsdProtocol protocol) {
-        if (protocol == StatsdProtocol.UDS_DATAGRAM) return 0;
+        if (protocol == StatsdProtocol.UDS_DATAGRAM)
+            return 0;
         return ((InetSocketAddress) server.address()).getPort();
     }
 
@@ -282,14 +311,14 @@ class StatsdMeterRegistryPublishTest {
         if (protocol == StatsdProtocol.UDP) {
             await().until(() -> meterRegistry.statsdConnection.get() != null);
             ((Connection) meterRegistry.statsdConnection.get())
-                    .addHandler(new LoggingHandler("testudpclient", LogLevel.INFO))
-                    .addHandler(new ChannelOutboundHandlerAdapter() {
-                        @Override
-                        public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
-                            writeCount.incrementAndGet();
-                            super.write(ctx, msg, promise);
-                        }
-                    });
+                .addHandlerFirst(new LoggingHandler("testudpclient", LogLevel.INFO))
+                .addHandlerFirst(new ChannelOutboundHandlerAdapter() {
+                    @Override
+                    public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
+                        writeCount.incrementAndGet();
+                        super.write(ctx, msg, promise);
+                    }
+                });
         }
     }
 
@@ -305,45 +334,44 @@ class StatsdMeterRegistryPublishTest {
     private DisposableChannel startServer(StatsdProtocol protocol, int port) {
         if (protocol == StatsdProtocol.UDP || protocol == StatsdProtocol.UDS_DATAGRAM) {
             return UdpServer.create()
-                    .bindAddress(() -> protocol == StatsdProtocol.UDP ? InetSocketAddress.createUnresolved("localhost", port)
-                            : newDomainSocketAddress())
-                    .handle((in, out) ->
-                            in.receive().asString()
-                                    .flatMap(packet -> {
-                                        serverLatch.countDown();
-                                        serverMetricReadCount.getAndIncrement();
-                                        return Flux.never();
-                                    }))
-                    .doOnBound((server) -> bound = true)
-                    .doOnUnbound((server) -> bound = false)
-                    .wiretap("udpserver", LogLevel.INFO)
-                    .bindNow(Duration.ofSeconds(2));
-        } else if (protocol == StatsdProtocol.TCP) {
+                .bindAddress(() -> protocol == StatsdProtocol.UDP
+                        ? InetSocketAddress.createUnresolved("localhost", port) : newDomainSocketAddress())
+                .handle((in, out) -> in.receive().asString().flatMap(packet -> {
+                    serverLatch.countDown();
+                    serverMetricReadCount.getAndIncrement();
+                    return Flux.never();
+                }))
+                .doOnBound((server) -> bound = true)
+                .doOnUnbound((server) -> bound = false)
+                .wiretap("udpserver", LogLevel.INFO)
+                .bindNow(Duration.ofSeconds(2));
+        }
+        else if (protocol == StatsdProtocol.TCP) {
             AtomicReference<DisposableChannel> channel = new AtomicReference<>();
             return TcpServer.create()
-                    .host("localhost")
-                    .port(port)
-                    .handle((in, out) ->
-                            in.receive().asString()
-                                    .flatMap(packet -> {
-                                        IntStream.range(0, packet.split("my.counter").length - 1).forEach(i -> {
-                                            serverLatch.countDown();
-                                            serverMetricReadCount.getAndIncrement();
-                                        });
-                                        in.withConnection(channel::set);
-                                        return Flux.never();
-                                    }))
-                    .doOnBound((server) -> bound = true)
-                    .doOnUnbound((server) -> {
-                        bound = false;
-                        if (channel.get() != null) {
-                            channel.get().dispose();
-                        }
-                    })
-                    .wiretap("tcpserver", LogLevel.INFO)
-                    .bindNow(Duration.ofSeconds(5));
-        } else {
-            throw new IllegalArgumentException("test implementation does not currently support the protocol " + protocol);
+                .host("localhost")
+                .port(port)
+                .handle((in, out) -> in.receive().asString().flatMap(packet -> {
+                    IntStream.range(0, packet.split("my.counter").length - 1).forEach(i -> {
+                        serverLatch.countDown();
+                        serverMetricReadCount.getAndIncrement();
+                    });
+                    in.withConnection(channel::set);
+                    return Flux.never();
+                }))
+                .doOnBound((server) -> bound = true)
+                .doOnUnbound((server) -> {
+                    bound = false;
+                    if (channel.get() != null) {
+                        channel.get().dispose();
+                    }
+                })
+                .wiretap("tcpserver", LogLevel.INFO)
+                .bindNow(Duration.ofSeconds(5));
+        }
+        else {
+            throw new IllegalArgumentException(
+                    "test implementation does not currently support the protocol " + protocol);
         }
     }
 
@@ -387,4 +415,5 @@ class StatsdMeterRegistryPublishTest {
             }
         };
     }
+
 }

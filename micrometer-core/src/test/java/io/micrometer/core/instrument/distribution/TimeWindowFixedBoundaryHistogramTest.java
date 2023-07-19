@@ -1,12 +1,12 @@
-/**
+/*
  * Copyright 2017 VMware, Inc.
- * <p>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
+ *
  * https://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,6 +22,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TimeWindowFixedBoundaryHistogramTest {
+
     @Test
     void binarySearchForTail() {
         assertTailSearch(3, 1, 1.0, 5.0, 10.0);
@@ -32,10 +33,12 @@ class TimeWindowFixedBoundaryHistogramTest {
     }
 
     private void assertTailSearch(int search, int expectedIndex, double... buckets) {
-        DistributionStatisticConfig statisticConfig = DistributionStatisticConfig.builder().serviceLevelObjectives(buckets).build();
+        DistributionStatisticConfig statisticConfig = DistributionStatisticConfig.builder()
+            .serviceLevelObjectives(buckets)
+            .build();
         try (TimeWindowFixedBoundaryHistogram histogram = new TimeWindowFixedBoundaryHistogram(Clock.SYSTEM,
                 statisticConfig.merge(DistributionStatisticConfig.DEFAULT), false)) {
-            TimeWindowFixedBoundaryHistogram.FixedBoundaryHistogram bucket = histogram.newBucket();
+            FixedBoundaryHistogram bucket = histogram.newBucket();
             assertThat(bucket.leastLessThanOrEqualTo(search)).isEqualTo(expectedIndex);
         }
     }
@@ -44,29 +47,27 @@ class TimeWindowFixedBoundaryHistogramTest {
     void histogramsAreCumulative() {
         try (TimeWindowFixedBoundaryHistogram histogram = new TimeWindowFixedBoundaryHistogram(new MockClock(),
                 DistributionStatisticConfig.builder()
-                        .serviceLevelObjectives(3.0, 6, 7)
-                        .bufferLength(1)
-                        .build()
-                        .merge(DistributionStatisticConfig.DEFAULT), false)) {
+                    .serviceLevelObjectives(3.0, 6, 7)
+                    .bufferLength(1)
+                    .build()
+                    .merge(DistributionStatisticConfig.DEFAULT),
+                false)) {
 
             histogram.recordDouble(3);
-    
-            assertThat(histogram.takeSnapshot(0, 0, 0).histogramCounts()).containsExactly(
-                    new CountAtBucket(3.0, 1),
-                    new CountAtBucket(6.0, 1),
-                    new CountAtBucket(7.0, 1));
-    
+
+            assertThat(histogram.takeSnapshot(0, 0, 0).histogramCounts()).containsExactly(new CountAtBucket(3.0, 1),
+                    new CountAtBucket(6.0, 1), new CountAtBucket(7.0, 1));
+
             histogram.recordDouble(6);
-    
+
             histogram.recordDouble(7);
-    
-            // Proves that the accumulated histogram is truly cumulative, and not just a representation
+
+            // Proves that the accumulated histogram is truly cumulative, and not just a
+            // representation
             // of the last snapshot
-            assertThat(histogram.takeSnapshot(0, 0, 0).histogramCounts()).containsExactly(
-                    new CountAtBucket(3.0, 1),
-                    new CountAtBucket(6.0, 2),
-                    new CountAtBucket(7.0, 3)
-            );
+            assertThat(histogram.takeSnapshot(0, 0, 0).histogramCounts()).containsExactly(new CountAtBucket(3.0, 1),
+                    new CountAtBucket(6.0, 2), new CountAtBucket(7.0, 3));
         }
     }
+
 }

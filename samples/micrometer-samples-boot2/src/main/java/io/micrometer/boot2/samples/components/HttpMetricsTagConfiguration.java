@@ -1,12 +1,12 @@
-/**
+/*
  * Copyright 2020 VMware, Inc.
- * <p>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
+ *
  * https://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -41,11 +41,12 @@ import java.util.Optional;
  */
 @Configuration
 public class HttpMetricsTagConfiguration {
+
     private final Map<HttpServletResponse, Tags> responseTags = CacheBuilder.newBuilder()
-            .maximumSize(10_000)
-            .expireAfterWrite(Duration.ofSeconds(10))
-            .<HttpServletResponse, Tags>build()
-            .asMap();
+        .maximumSize(10_000)
+        .expireAfterWrite(Duration.ofSeconds(10))
+        .<HttpServletResponse, Tags>build()
+        .asMap();
 
     @Bean
     OncePerRequestFilter extractCountry() {
@@ -54,14 +55,16 @@ public class HttpMetricsTagConfiguration {
 
             @Override
             protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
-                                            FilterChain filterChain) throws ServletException, IOException {
+                    FilterChain filterChain) throws ServletException, IOException {
                 ContentCachingResponseWrapper cached = new ContentCachingResponseWrapper(response);
                 filterChain.doFilter(request, cached);
 
                 Object path = request.getAttribute(HandlerMapping.BEST_MATCHING_PATTERN_ATTRIBUTE);
                 if (path.equals("/api/person/{id}")) {
-                    // Prometheus requires the same tags on all `http.server.requests`. So we'll need to add
-                    // a `@Timed("person.requests") to the /api/person/{id} endpoint so it has a different name.
+                    // Prometheus requires the same tags on all `http.server.requests`. So
+                    // we'll need to add
+                    // a `@Timed("person.requests") to the /api/person/{id} endpoint so it
+                    // has a different name.
                     Person person = mapper.readValue(cached.getContentAsByteArray(), Person.class);
                     responseTags.put(response, Tags.of("country", person.getCountry()));
                 }
@@ -75,13 +78,12 @@ public class HttpMetricsTagConfiguration {
     WebMvcTagsProvider webMvcTagsProvider() {
         return new DefaultWebMvcTagsProvider() {
             @Override
-            public Iterable<Tag> getTags(HttpServletRequest request, HttpServletResponse response,
-                                         Object handler, Throwable exception) {
-                return Tags.concat(
-                        super.getTags(request, response, handler, exception),
-                        Optional.ofNullable(responseTags.remove(response)).orElse(Tags.empty())
-                );
+            public Iterable<Tag> getTags(HttpServletRequest request, HttpServletResponse response, Object handler,
+                    Throwable exception) {
+                return Tags.concat(super.getTags(request, response, handler, exception),
+                        Optional.ofNullable(responseTags.remove(response)).orElse(Tags.empty()));
             }
         };
     }
+
 }

@@ -1,12 +1,12 @@
-/**
+/*
  * Copyright 2017 VMware, Inc.
- * <p>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
+ *
  * https://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,12 +15,12 @@
  */
 package io.micrometer.core.instrument;
 
+import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.config.MeterFilter;
 import io.micrometer.core.instrument.config.MeterFilterReply;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-import io.micrometer.core.lang.Nullable;
 import org.assertj.core.api.Condition;
 import org.junit.jupiter.api.Test;
 
@@ -38,15 +38,16 @@ import static org.mockito.Mockito.*;
  * @author Johnny Lim
  */
 class MeterFilterTest {
+
     private static Condition<Meter.Id> tag(String tagKey) {
         return tag(tagKey, null);
     }
 
     private static Condition<Meter.Id> tag(String tagKey, @Nullable String tagValue) {
         return new Condition<>(
-            id -> stream(id.getTagsAsIterable().spliterator(), false)
-                .anyMatch(t -> t.getKey().equals(tagKey) && (tagValue == null || t.getValue().equals(tagValue))),
-            "Must have a tag with key '" + tagKey + "'");
+                id -> stream(id.getTagsAsIterable().spliterator(), false)
+                    .anyMatch(t -> t.getKey().equals(tagKey) && (tagValue == null || t.getValue().equals(tagValue))),
+                "Must have a tag with key '" + tagKey + "'");
     }
 
     @Test
@@ -65,7 +66,7 @@ class MeterFilterTest {
         Meter.Id id = new Meter.Id("name", Tags.of("k1", "m1", "k2", "m2", "k3", "m3"), null, null, Meter.Type.COUNTER);
         Meter.Id filteredId = filter.map(id);
         assertThat(filteredId.getTags())
-                .containsExactlyElementsOf(Tags.of("k0", "c0", "k1", "m1", "k2", "m2", "k3", "m3"));
+            .containsExactlyElementsOf(Tags.of("k0", "c0", "k1", "m1", "k2", "m2", "k3", "m3"));
     }
 
     @Test
@@ -96,7 +97,8 @@ class MeterFilterTest {
     @Issue("#329")
     void renameTags() {
         MeterFilter filter = MeterFilter.renameTag("hystrix", "group", "hystrixgroup");
-        Meter.Id id = new Meter.Id("hystrix.something", Tags.of("k", "v", "group", "mygroup"), null, null, Meter.Type.GAUGE);
+        Meter.Id id = new Meter.Id("hystrix.something", Tags.of("k", "v", "group", "mygroup"), null, null,
+                Meter.Type.GAUGE);
         assertThat(filter.map(id)).has(tag("hystrixgroup", "mygroup"));
 
         Meter.Id id2 = new Meter.Id("something.else", Tags.of("group", "mygroup"), null, null, Meter.Type.GAUGE);
@@ -129,7 +131,7 @@ class MeterFilterTest {
 
         Meter.Id id = new Meter.Id("name", Tags.of("k", "1"), null, null, Meter.Type.COUNTER);
         Meter.Id id2 = new Meter.Id("name", Tags.of("k", "2"), null, null, Meter.Type.COUNTER);
-        Meter.Id id3 = new Meter.Id("name", Tags.of("k", "3"), null, null, Meter.Type.COUNTER); 
+        Meter.Id id3 = new Meter.Id("name", Tags.of("k", "3"), null, null, Meter.Type.COUNTER);
         Meter.Id id4 = new Meter.Id("anotherName", Tags.of("tag", "4"), null, null, Meter.Type.COUNTER);
 
         filter.accept(id);
@@ -139,7 +141,7 @@ class MeterFilterTest {
         filter.accept(id3);
 
         assertThat(n.get()).isEqualTo(1);
-        
+
         filter.accept(id4);
         assertThat(n.get()).isEqualTo(1);
     }
@@ -195,7 +197,7 @@ class MeterFilterTest {
         Meter.Id timer = new Meter.Id("name", Tags.empty(), null, null, Meter.Type.DISTRIBUTION_SUMMARY);
 
         assertThat(filter.configure(timer, DistributionStatisticConfig.DEFAULT))
-                .satisfies(conf -> assertThat(conf.getMinimumExpectedValueAsDouble()).isEqualTo(100));
+            .satisfies(conf -> assertThat(conf.getMinimumExpectedValueAsDouble()).isEqualTo(100));
     }
 
     @Test
@@ -204,7 +206,7 @@ class MeterFilterTest {
         Meter.Id timer = new Meter.Id("name", Tags.empty(), null, null, Meter.Type.DISTRIBUTION_SUMMARY);
 
         assertThat(filter.configure(timer, DistributionStatisticConfig.DEFAULT))
-                .satisfies(conf -> assertThat(conf.getMaximumExpectedValueAsDouble()).isEqualTo(100));
+            .satisfies(conf -> assertThat(conf.getMaximumExpectedValueAsDouble()).isEqualTo(100));
     }
 
     @Test
@@ -213,7 +215,7 @@ class MeterFilterTest {
         Meter.Id timer = new Meter.Id("name", Tags.empty(), null, null, Meter.Type.TIMER);
 
         assertThat(filter.configure(timer, DistributionStatisticConfig.DEFAULT))
-                .satisfies(conf -> assertThat(conf.getMinimumExpectedValueAsDouble()).isEqualTo(100));
+            .satisfies(conf -> assertThat(conf.getMinimumExpectedValueAsDouble()).isEqualTo(100));
     }
 
     @Test
@@ -222,7 +224,7 @@ class MeterFilterTest {
         Meter.Id timer = new Meter.Id("name", Tags.empty(), null, null, Meter.Type.TIMER);
 
         assertThat(filter.configure(timer, DistributionStatisticConfig.DEFAULT))
-                .satisfies(conf -> assertThat(conf.getMaximumExpectedValueAsDouble()).isEqualTo(100));
+            .satisfies(conf -> assertThat(conf.getMaximumExpectedValueAsDouble()).isEqualTo(100));
     }
 
     @Test
@@ -263,4 +265,5 @@ class MeterFilterTest {
 
         assertThat(registry.getMeters()).isNotEmpty();
     }
+
 }

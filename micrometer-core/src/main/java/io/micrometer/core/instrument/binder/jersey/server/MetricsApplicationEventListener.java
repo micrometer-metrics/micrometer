@@ -1,12 +1,12 @@
-/**
+/*
  * Copyright 2017 VMware, Inc.
- * <p>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
+ *
  * https://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -33,19 +33,22 @@ import static java.util.Objects.requireNonNull;
 public class MetricsApplicationEventListener implements ApplicationEventListener {
 
     private final MeterRegistry meterRegistry;
+
     private final JerseyTagsProvider tagsProvider;
+
     private final String metricName;
+
     private final AnnotationFinder annotationFinder;
+
     private final boolean autoTimeRequests;
 
     public MetricsApplicationEventListener(MeterRegistry registry, JerseyTagsProvider tagsProvider, String metricName,
-                                           boolean autoTimeRequests) {
+            boolean autoTimeRequests) {
         this(registry, tagsProvider, metricName, autoTimeRequests, AnnotationFinder.DEFAULT);
     }
 
-    public MetricsApplicationEventListener(MeterRegistry registry, JerseyTagsProvider tagsProvider,
-                                           String metricName, boolean autoTimeRequests,
-                                           AnnotationFinder annotationFinder) {
+    public MetricsApplicationEventListener(MeterRegistry registry, JerseyTagsProvider tagsProvider, String metricName,
+            boolean autoTimeRequests, AnnotationFinder annotationFinder) {
         this.meterRegistry = requireNonNull(registry);
         this.tagsProvider = requireNonNull(tagsProvider);
         this.metricName = requireNonNull(metricName);
@@ -59,6 +62,8 @@ public class MetricsApplicationEventListener implements ApplicationEventListener
 
     @Override
     public RequestEventListener onRequest(RequestEvent requestEvent) {
-        return new MetricsRequestEventListener(meterRegistry, tagsProvider, metricName, autoTimeRequests, annotationFinder);
+        return new MetricsRequestEventListener(meterRegistry, tagsProvider, metricName, autoTimeRequests,
+                annotationFinder);
     }
+
 }

@@ -1,12 +1,12 @@
-/**
+/*
  * Copyright 2020 VMware, Inc.
- * <p>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
+ *
  * https://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,7 +24,9 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class StatsdConfigTest {
+
     private final Map<String, String> props = new HashMap<>();
+
     private final StatsdConfig config = props::get;
 
     @Test
@@ -35,16 +37,14 @@ class StatsdConfigTest {
         props.put("statsd.step", "1w");
 
         assertThat(config.validate().failures().stream().map(Validated.Invalid::getMessage))
-                .containsOnly(
-                        "should be one of 'ETSY', 'DATADOG', 'TELEGRAF', 'SYSDIG'",
-                        "should be one of 'UDP', 'UDS_DATAGRAM', 'TCP'",
-                        "must contain a valid time unit"
-                )
-                .hasSize(4);
+            .containsOnly("should be one of 'ETSY', 'DATADOG', 'TELEGRAF', 'SYSDIG'",
+                    "should be one of 'UDP', 'UDS_DATAGRAM', 'TCP'", "must contain a valid time unit")
+            .hasSize(4);
     }
 
     @Test
     void valid() {
         assertThat(config.validate().isValid()).isTrue();
     }
+
 }

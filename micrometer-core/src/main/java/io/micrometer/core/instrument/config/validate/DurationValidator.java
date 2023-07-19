@@ -1,12 +1,12 @@
-/**
+/*
  * Copyright 2020 VMware, Inc.
- * <p>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
+ *
  * https://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,9 +15,9 @@
  */
 package io.micrometer.core.instrument.config.validate;
 
+import io.micrometer.common.lang.Nullable;
+import io.micrometer.common.util.StringUtils;
 import io.micrometer.core.annotation.Incubating;
-import io.micrometer.core.instrument.util.StringUtils;
-import io.micrometer.core.lang.Nullable;
 
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
@@ -36,6 +36,7 @@ import java.util.stream.Collectors;
  */
 @Incubating(since = "1.5.0")
 public enum DurationValidator {
+
     /**
      * Human readable formatting, for example '1s'.
      */
@@ -62,7 +63,7 @@ public enum DurationValidator {
             long multipliedResult = amount.longValue();
             long multipliedFactor = (long) Math.pow(10, e);
             return validateChronoUnit(property, value, unit)
-                    .map(cu -> Duration.of(multipliedResult, cu).dividedBy(multipliedFactor));
+                .map(cu -> Duration.of(multipliedResult, cu).dividedBy(multipliedFactor));
         }
     },
 
@@ -71,8 +72,10 @@ public enum DurationValidator {
         protected Validated<Duration> doParse(String property, String value) {
             try {
                 return Validated.valid(property, Duration.parse(value));
-            } catch (Exception ex) {
-                return Validated.invalid(property, value, "must be a valid ISO-8601 duration like 'PT10S'", InvalidReason.MALFORMED, ex);
+            }
+            catch (Exception ex) {
+                return Validated.invalid(property, value, "must be a valid ISO-8601 duration like 'PT10S'",
+                        InvalidReason.MALFORMED, ex);
             }
         }
     };
@@ -85,36 +88,32 @@ public enum DurationValidator {
 
     /**
      * Detect the style then parse the value to return a duration.
-     *
      * @param property The configuration property this duration belongs to
-     * @param value    The value to parse
+     * @param value The value to parse
      * @return the parsed duration
      */
     public static Validated<Duration> validate(String property, @Nullable String value) {
-        return value == null ?
-                Validated.valid(property, null) :
-                detect(property, value).flatMap(validator -> validator.doParse(property, value));
+        return value == null ? Validated.valid(property, null)
+                : detect(property, value).flatMap(validator -> validator.doParse(property, value));
     }
 
     /**
      * Parse the given value to a duration.
-     *
      * @param property The configuration property this duration belongs to
-     * @param value    The value to parse
+     * @param value The value to parse
      * @return a duration
      */
     protected abstract Validated<Duration> doParse(String property, String value);
 
     /**
      * Detect the style from the given source value.
-     *
      * @param value the source value
      * @return the duration style
      */
     private static Validated<DurationValidator> detect(String property, @Nullable String value) {
         if (value == null || StringUtils.isBlank(value)) {
-            return Validated.invalid(property, value, "must be a valid duration value", value == null ? InvalidReason.MISSING :
-                    InvalidReason.MALFORMED);
+            return Validated.invalid(property, value, "must be a valid duration value",
+                    value == null ? InvalidReason.MISSING : InvalidReason.MALFORMED);
         }
 
         for (DurationValidator candidate : values()) {
@@ -127,19 +126,19 @@ public enum DurationValidator {
     }
 
     public static Validated<TimeUnit> validateTimeUnit(String property, @Nullable String unit) {
-        return validateChronoUnit(property, unit, unit)
-                .flatMap(cu -> toTimeUnit(property, cu));
+        return validateChronoUnit(property, unit, unit).flatMap(cu -> toTimeUnit(property, cu));
     }
 
     /**
-     * Validate a unit that is potentially part of a larger string including the magnitude of time.
-     *
+     * Validate a unit that is potentially part of a larger string including the magnitude
+     * of time.
      * @param property The property that is a {@link Duration} or unit.
-     * @param value    The whole string including magnitude.
-     * @param unit     The unit portion of the string.
+     * @param value The whole string including magnitude.
+     * @param unit The unit portion of the string.
      * @return A validated unit.
      */
-    public static Validated<ChronoUnit> validateChronoUnit(String property, @Nullable String value, @Nullable String unit) {
+    public static Validated<ChronoUnit> validateChronoUnit(String property, @Nullable String value,
+            @Nullable String unit) {
         if (unit == null) {
             return Validated.valid(property, null);
         }
@@ -206,7 +205,9 @@ public enum DurationValidator {
             case DAYS:
                 return Validated.valid(property, TimeUnit.DAYS);
             default:
-                return Validated.invalid(property, chronoUnit.toString(), "must be a valid time unit", InvalidReason.MALFORMED);
+                return Validated.invalid(property, chronoUnit.toString(), "must be a valid time unit",
+                        InvalidReason.MALFORMED);
         }
     }
+
 }

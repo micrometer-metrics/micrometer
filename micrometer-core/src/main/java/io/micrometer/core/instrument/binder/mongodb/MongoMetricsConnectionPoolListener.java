@@ -1,12 +1,12 @@
-/**
+/*
  * Copyright 2019 VMware, Inc.
- * <p>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
+ *
  * https://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,12 +18,12 @@ package io.micrometer.core.instrument.binder.mongodb;
 import com.mongodb.client.MongoClient;
 import com.mongodb.connection.ServerId;
 import com.mongodb.event.*;
+import io.micrometer.common.lang.NonNullApi;
+import io.micrometer.common.lang.NonNullFields;
 import io.micrometer.core.annotation.Incubating;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.lang.NonNullApi;
-import io.micrometer.core.lang.NonNullFields;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -32,7 +32,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * {@link ConnectionPoolListener} for collecting connection pool metrics from {@link MongoClient}.
+ * {@link ConnectionPoolListener} for collecting connection pool metrics from
+ * {@link MongoClient}.
  *
  * @author Christophe Bornet
  * @author Jonatan Ivanov
@@ -47,16 +48,19 @@ public class MongoMetricsConnectionPoolListener implements ConnectionPoolListene
     private static final String METRIC_PREFIX = "mongodb.driver.pool.";
 
     private final Map<ServerId, AtomicInteger> poolSizes = new ConcurrentHashMap<>();
+
     private final Map<ServerId, AtomicInteger> checkedOutCounts = new ConcurrentHashMap<>();
+
     private final Map<ServerId, AtomicInteger> waitQueueSizes = new ConcurrentHashMap<>();
+
     private final Map<ServerId, List<Meter>> meters = new ConcurrentHashMap<>();
 
     private final MeterRegistry registry;
+
     private final MongoConnectionPoolTagsProvider tagsProvider;
 
     /**
      * Create a new {@code MongoMetricsConnectionPoolListener}.
-     *
      * @param registry registry to use
      */
     public MongoMetricsConnectionPoolListener(MeterRegistry registry) {
@@ -65,7 +69,6 @@ public class MongoMetricsConnectionPoolListener implements ConnectionPoolListene
 
     /**
      * Create a new {@code MongoMetricsConnectionPoolListener}.
-     *
      * @param registry registry to use
      * @param tagsProvider tags provider to use
      * @since 1.7.0
@@ -152,13 +155,14 @@ public class MongoMetricsConnectionPoolListener implements ConnectionPoolListene
         }
     }
 
-    private Gauge registerGauge(ConnectionPoolCreatedEvent event, String metricName, String description, Map<ServerId, AtomicInteger> metrics) {
+    private Gauge registerGauge(ConnectionPoolCreatedEvent event, String metricName, String description,
+            Map<ServerId, AtomicInteger> metrics) {
         AtomicInteger value = new AtomicInteger();
         metrics.put(event.getServerId(), value);
         return Gauge.builder(metricName, value, AtomicInteger::doubleValue)
-                .description(description)
-                .tags(tagsProvider.connectionPoolTags(event))
-                .register(registry);
+            .description(description)
+            .tags(tagsProvider.connectionPoolTags(event))
+            .register(registry);
     }
 
 }

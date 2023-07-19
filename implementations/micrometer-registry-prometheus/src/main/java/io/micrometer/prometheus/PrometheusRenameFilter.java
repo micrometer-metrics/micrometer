@@ -1,12 +1,12 @@
-/**
+/*
  * Copyright 2017 VMware, Inc.
- * <p>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
+ *
  * https://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,7 +22,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Converts known meter names from Micrometer's preferred name to Prometheus' preferred name.
+ * Converts known meter names from Micrometer's preferred name to Prometheus' preferred
+ * name.
  *
  * @author Tommy Ludwig
  */
@@ -40,4 +41,5 @@ public class PrometheusRenameFilter implements MeterFilter {
         String convertedName = MICROMETER_TO_PROMETHEUS_NAMES.get(id.getName());
         return convertedName == null ? id : id.withName(convertedName);
     }
+
 }

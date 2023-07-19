@@ -1,12 +1,12 @@
-/**
+/*
  * Copyright 2021 VMware, Inc.
- * <p>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
+ *
  * https://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,13 +15,14 @@
  */
 package io.micrometer.dynatrace;
 
+import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.config.NamingConvention;
-import io.micrometer.core.lang.Nullable;
 import io.micrometer.dynatrace.v1.DynatraceNamingConventionV1;
 
 /**
- * {@link NamingConvention} for Dynatrace. Delegates to the API-specific naming convention.
+ * {@link NamingConvention} for Dynatrace. Delegates to the API-specific naming
+ * convention.
  *
  * @author Oriol Barcelona Palau
  * @author Jon Schneider
@@ -30,11 +31,11 @@ import io.micrometer.dynatrace.v1.DynatraceNamingConventionV1;
  * @since 1.1.0
  */
 public class DynatraceNamingConvention implements NamingConvention {
+
     private final NamingConvention versionSpecificNamingConvention;
 
     /**
      * Create a {@code DynatraceNamingConvention} instance.
-     *
      * @param delegate delegate {@link NamingConvention}
      * @param version Dynatrace API version
      * @since 1.8.0
@@ -73,5 +74,5 @@ public class DynatraceNamingConvention implements NamingConvention {
     public String tagValue(String value) {
         return versionSpecificNamingConvention.tagValue(value);
     }
-}
 
+}

@@ -1,0 +1,42 @@
+description 'Module containing Observation related code'
+
+jar {
+    bundle {
+        bnd '''\
+        Import-Package: \
+            javax.servlet.*;resolution:=optional,\
+            io.micrometer.context.*;resolution:=optional,\
+            org.aspectj.*;resolution:=optional,\
+            *
+        '''.stripIndent()
+    }
+}
+
+dependencies {
+    api project(":micrometer-commons")
+
+    optionalApi 'io.micrometer:context-propagation'
+
+    // HttpServlet KeyValueProvider
+    optionalApi 'javax.servlet:javax.servlet-api'
+
+    // Aspects
+    optionalApi 'org.aspectj:aspectjweaver'
+
+    // log monitoring
+    testImplementation 'ch.qos.logback:logback-classic'
+    testImplementation 'org.apache.logging.log4j:log4j-core'
+
+    testImplementation project(':micrometer-observation-test')
+
+    testImplementation 'org.springframework:spring-context'
+
+    // JUnit 5
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testImplementation 'com.tngtech.archunit:archunit-junit5'
+
+    testImplementation 'org.mockito:mockito-inline'
+
+    testImplementation 'org.assertj:assertj-core'
+    testImplementation 'org.awaitility:awaitility'
+}

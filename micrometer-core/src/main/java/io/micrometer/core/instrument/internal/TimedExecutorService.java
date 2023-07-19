@@ -1,12 +1,12 @@
-/**
+/*
  * Copyright 2017 VMware, Inc.
- * <p>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
+ *
  * https://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,19 +27,24 @@ import java.util.concurrent.*;
 import static java.util.stream.Collectors.toList;
 
 /**
- * An {@link java.util.concurrent.ExecutorService} that is timed. This class is for internal use.
+ * An {@link java.util.concurrent.ExecutorService} that is timed. This class is for
+ * internal use.
  *
  * @author Jon Schneider
  * @see io.micrometer.core.instrument.binder.jvm.ExecutorServiceMetrics
  */
 public class TimedExecutorService implements ExecutorService {
+
     private final MeterRegistry registry;
+
     private final ExecutorService delegate;
+
     private final Timer executionTimer;
+
     private final Timer idleTimer;
 
     public TimedExecutorService(MeterRegistry registry, ExecutorService delegate, String executorServiceName,
-                                String metricPrefix, Iterable<Tag> tags) {
+            String metricPrefix, Iterable<Tag> tags) {
         this.registry = registry;
         this.delegate = delegate;
         Tags finalTags = Tags.concat(tags, "name", executorServiceName);
@@ -93,7 +98,8 @@ public class TimedExecutorService implements ExecutorService {
     }
 
     @Override
-    public <T> List<Future<T>> invokeAll(Collection<? extends Callable<T>> tasks, long timeout, TimeUnit unit) throws InterruptedException {
+    public <T> List<Future<T>> invokeAll(Collection<? extends Callable<T>> tasks, long timeout, TimeUnit unit)
+            throws InterruptedException {
         return delegate.invokeAll(wrapAll(tasks), timeout, unit);
     }
 
@@ -103,7 +109,8 @@ public class TimedExecutorService implements ExecutorService {
     }
 
     @Override
-    public <T> T invokeAny(Collection<? extends Callable<T>> tasks, long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
+    public <T> T invokeAny(Collection<? extends Callable<T>> tasks, long timeout, TimeUnit unit)
+            throws InterruptedException, ExecutionException, TimeoutException {
         return delegate.invokeAny(wrapAll(tasks), timeout, unit);
     }
 
@@ -123,4 +130,5 @@ public class TimedExecutorService implements ExecutorService {
     private <T> Collection<? extends Callable<T>> wrapAll(Collection<? extends Callable<T>> tasks) {
         return tasks.stream().map(this::wrap).collect(toList());
     }
+
 }

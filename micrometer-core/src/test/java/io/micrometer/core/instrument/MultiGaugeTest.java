@@ -1,12 +1,12 @@
-/**
+/*
  * Copyright 2018 VMware, Inc.
- * <p>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
+ *
  * https://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -33,11 +33,15 @@ import static java.util.stream.Collectors.toList;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class MultiGaugeTest {
+
     private static final Color RED = new Color("red", "0xff0000");
+
     private static final Color GREEN = new Color("green", "0x00ff00");
+
     private static final Color BLUE = new Color("blue", "0x0000ff");
 
     private final MeterRegistry registry = new SimpleMeterRegistry();
+
     private final MultiGauge colorGauges = MultiGauge.builder("colors").register(registry);
 
     @Test
@@ -45,17 +49,18 @@ class MultiGaugeTest {
         colorGauges.register(Stream.of(RED, GREEN).map(c -> c.toRow(1.0)).collect(toList()));
 
         assertThat(registry.get("colors").gauges().stream().map(g -> g.getId().getTag("color")))
-                .containsExactlyInAnyOrder("red", "green");
+            .containsExactlyInAnyOrder("red", "green");
 
         colorGauges.register(Stream.of(RED, BLUE).map(c -> c.toRow(1.0)).collect(toList()));
 
         assertThat(registry.get("colors").gauges().stream().map(g -> g.getId().getTag("color")))
-                .containsExactlyInAnyOrder("red", "blue");
+            .containsExactlyInAnyOrder("red", "blue");
     }
 
     /**
-     * i.e. if you call {@link MultiGauge#register(Iterable)} multiple times, providing a {@link Row}
-     * with the same tags, the last row's function definition is the one that is used if overwrite = true.
+     * i.e. if you call {@link MultiGauge#register(Iterable)} multiple times, providing a
+     * {@link Row} with the same tags, the last row's function definition is the one that
+     * is used if overwrite = true.
      */
     @Test
     void overwriteFunctionDefinitions() {
@@ -112,28 +117,30 @@ class MultiGaugeTest {
 
         MultiGauge gauge = MultiGauge.builder(meterName).register(registry);
 
-        List<Row<?>> rows = map.entrySet().stream()
-                .map(row -> Row.of(Tags.of(testTagKey, row.getKey()), row.getValue()))
-                .collect(Collectors.toList());
+        List<Row<?>> rows = map.entrySet()
+            .stream()
+            .map(row -> Row.of(Tags.of(testTagKey, row.getKey()), row.getValue()))
+            .collect(Collectors.toList());
         gauge.register(rows, true);
         assertThat(registry.getMeters()).hasSize(2);
         assertThat(registry.get(mappedMeterName).tag(testTagKey, testKey1).gauge().value())
-                .isEqualTo(testValue1.intValue());
+            .isEqualTo(testValue1.intValue());
         assertThat(registry.get(mappedMeterName).tag(testTagKey, testKey2).gauge().value())
-                .isEqualTo(testValue2.intValue());
+            .isEqualTo(testValue2.intValue());
 
         testValue1 = new AtomicInteger(100);
         map.put(testKey1, testValue1);
         map.remove(testKey2);
 
-        rows = map.entrySet().stream()
-                .map(t -> Row.of(Tags.of(testTagKey, t.getKey()), t.getValue()))
-                .collect(Collectors.toList());
+        rows = map.entrySet()
+            .stream()
+            .map(t -> Row.of(Tags.of(testTagKey, t.getKey()), t.getValue()))
+            .collect(Collectors.toList());
         gauge.register(rows, true);
 
         assertThat(registry.getMeters()).hasSize(1);
         assertThat(registry.get(mappedMeterName).tag(testTagKey, testKey1).gauge().value())
-                .isEqualTo(testValue1.intValue());
+            .isEqualTo(testValue1.intValue());
     }
 
     @Test
@@ -156,7 +163,9 @@ class MultiGaugeTest {
     }
 
     private static class Color {
+
         final String name;
+
         final String hex;
 
         Color(String name, String hex) {
@@ -167,5 +176,7 @@ class MultiGaugeTest {
         Row<Color> toRow(double frequency) {
             return Row.of(Tags.of("color", name, "hex", hex), this, c -> frequency);
         }
+
     }
+
 }

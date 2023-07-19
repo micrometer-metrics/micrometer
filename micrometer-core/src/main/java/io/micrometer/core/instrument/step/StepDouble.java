@@ -1,12 +1,12 @@
-/**
+/*
  * Copyright 2017 VMware, Inc.
- * <p>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
+ *
  * https://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,12 +21,13 @@ import java.util.concurrent.atomic.DoubleAdder;
 import java.util.function.Supplier;
 
 /**
- * Subtly different from {@code com.netflix.spectator.impl.StepDouble} in that we want to be able
- * to increment BEFORE rolling over the interval.
+ * Subtly different from {@code com.netflix.spectator.impl.StepDouble} in that we want to
+ * be able to increment BEFORE rolling over the interval.
  *
  * @author Jon Schneider
  */
 public class StepDouble extends StepValue<Double> {
+
     private final DoubleAdder current = new DoubleAdder();
 
     public StepDouble(Clock clock, long stepMillis) {
@@ -46,4 +47,5 @@ public class StepDouble extends StepValue<Double> {
     public DoubleAdder getCurrent() {
         return current;
     }
+
 }

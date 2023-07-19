@@ -1,26 +1,28 @@
-/**
+/*
  * Copyright 2021 VMware, Inc.
- * <p>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
+ *
  * https://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package io.micrometer.dynatrace.v2;
 
+import com.dynatrace.file.util.DynatraceFileBasedConfigurationProvider;
+import io.micrometer.common.lang.Nullable;
+import io.micrometer.common.util.internal.logging.LogEvent;
+import io.micrometer.common.util.internal.logging.MockLogger;
+import io.micrometer.common.util.internal.logging.MockLoggerFactory;
+import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.ipc.http.HttpSender;
-import io.micrometer.core.util.internal.logging.LogEvent;
-import io.micrometer.core.util.internal.logging.MockLogger;
-import io.micrometer.core.util.internal.logging.MockLoggerFactory;
 import io.micrometer.dynatrace.DynatraceApiVersion;
 import io.micrometer.dynatrace.DynatraceConfig;
 import io.micrometer.dynatrace.DynatraceMeterRegistry;
@@ -29,28 +31,25 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
+import static io.micrometer.common.util.internal.logging.InternalLogLevel.ERROR;
 import static io.micrometer.core.instrument.MockClock.clock;
-import static io.micrometer.core.util.internal.logging.InternalLogLevel.ERROR;
-import static java.lang.Double.NaN;
-import static java.lang.Double.POSITIVE_INFINITY;
-import static java.lang.Double.NEGATIVE_INFINITY;
+import static java.lang.Double.*;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.entry;
+import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.isA;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 /**
  * Tests for {@link DynatraceExporterV2}.
@@ -59,27 +58,34 @@ import static org.mockito.Mockito.when;
  * @author Jonatan Ivanov
  */
 class DynatraceExporterV2Test {
+
     private static final MockLoggerFactory FACTORY = new MockLoggerFactory();
+
     private static final MockLogger LOGGER = FACTORY.getLogger(DynatraceExporterV2.class);
 
     private DynatraceConfig config;
+
     private MockClock clock;
+
     private HttpSender httpClient;
+
     private DynatraceMeterRegistry meterRegistry;
+
     private DynatraceExporterV2 exporter;
 
     @BeforeEach
     void setUp() {
         this.config = createDefaultDynatraceConfig();
         this.clock = new MockClock();
-        this.clock.add(System.currentTimeMillis(), MILLISECONDS); // Set the clock to something recent so that the Dynatrace library will not complain.
+        this.clock.add(System.currentTimeMillis(), MILLISECONDS); // Set the clock to
+                                                                  // something recent so
+                                                                  // that the Dynatrace
+                                                                  // library will not
+                                                                  // complain.
         this.httpClient = mock(HttpSender.class);
         this.exporter = FACTORY.injectLogger(() -> createExporter(httpClient));
 
-        this.meterRegistry = DynatraceMeterRegistry.builder(config)
-                .clock(clock)
-                .httpClient(httpClient)
-                .build();
+        this.meterRegistry = DynatraceMeterRegistry.builder(config).clock(clock).httpClient(httpClient).build();
     }
 
     @AfterEach
@@ -156,7 +162,8 @@ class DynatraceExporterV2Test {
 
         List<String> lines = exporter.toCounterLine(counter).collect(Collectors.toList());
         assertThat(lines).hasSize(1);
-        assertThat(lines.get(0)).isEqualTo("my.counter,dt.metrics.source=micrometer count,delta=3.0 " + clock.wallTime());
+        assertThat(lines.get(0))
+            .isEqualTo("my.counter,dt.metrics.source=micrometer count,delta=3.0 " + clock.wallTime());
     }
 
     @Test
@@ -189,7 +196,8 @@ class DynatraceExporterV2Test {
 
         List<String> lines = exporter.toFunctionCounterLine(functionCounter).collect(Collectors.toList());
         assertThat(lines).hasSize(1);
-        assertThat(lines.get(0)).isEqualTo("my.functionCounter,dt.metrics.source=micrometer count,delta=2.3 " + clock.wallTime());
+        assertThat(lines.get(0))
+            .isEqualTo("my.functionCounter,dt.metrics.source=micrometer count,delta=2.3 " + clock.wallTime());
     }
 
     @Test
@@ -228,7 +236,25 @@ class DynatraceExporterV2Test {
 
         List<String> lines = exporter.toTimerLine(timer).collect(Collectors.toList());
         assertThat(lines).hasSize(1);
-        assertThat(lines.get(0)).isEqualTo("my.timer,dt.metrics.source=micrometer gauge,min=0.0,max=60.0,sum=90.0,count=3 " + clock.wallTime());
+        assertThat(lines.get(0)).isEqualTo(
+                "my.timer,dt.metrics.source=micrometer gauge,min=10.0,max=60.0,sum=90.0,count=3 " + clock.wallTime());
+    }
+
+    @Test
+    void toTimerLine_DropIfCountIsZero() {
+        Timer timer = meterRegistry.timer("my.timer");
+        timer.record(Duration.ofMillis(60));
+        clock.add(config.step());
+
+        List<String> lines = exporter.toTimerLine(timer).collect(Collectors.toList());
+        assertThat(lines).hasSize(1);
+        assertThat(lines.get(0)).isEqualTo(
+                "my.timer,dt.metrics.source=micrometer gauge,min=60.0,max=60.0,sum=60.0,count=1 " + clock.wallTime());
+
+        clock.add(config.step());
+        // Before the update to drop zero count lines, this would contain 1 line (with
+        // count=0), which is not desired.
+        assertThat(exporter.toTimerLine(timer)).isEmpty();
     }
 
     @Test
@@ -296,7 +322,9 @@ class DynatraceExporterV2Test {
 
         List<String> lines = exporter.toFunctionTimerLine(functionTimer).collect(Collectors.toList());
         assertThat(lines).hasSize(1);
-        assertThat(lines.get(0)).isEqualTo("my.functionTimer,dt.metrics.source=micrometer gauge,min=10.0,max=10.0,sum=5000.0,count=500 " + clock.wallTime());
+        assertThat(lines.get(0))
+            .isEqualTo("my.functionTimer,dt.metrics.source=micrometer gauge,min=10.0,max=10.0,sum=5000.0,count=500 "
+                    + clock.wallTime());
     }
 
     @Test
@@ -313,7 +341,9 @@ class DynatraceExporterV2Test {
 
         List<String> lines = exporter.toLongTaskTimerLine(longTaskTimer).collect(Collectors.toList());
         assertThat(lines).hasSize(1);
-        assertThat(lines.get(0)).isEqualTo("my.longTaskTimer,dt.metrics.source=micrometer gauge,min=2000.0,max=48000.0,sum=236000.0,count=11 " + clock.wallTime());
+        assertThat(lines.get(0)).isEqualTo(
+                "my.longTaskTimer,dt.metrics.source=micrometer gauge,min=2000.0,max=48000.0,sum=236000.0,count=11 "
+                        + clock.wallTime());
     }
 
     @Test
@@ -327,7 +357,25 @@ class DynatraceExporterV2Test {
 
         List<String> lines = exporter.toDistributionSummaryLine(summary).collect(Collectors.toList());
         assertThat(lines).hasSize(1);
-        assertThat(lines.get(0)).isEqualTo("my.summary,dt.metrics.source=micrometer gauge,min=0.0,max=5.4,sum=10.9,count=4 " + clock.wallTime());
+        assertThat(lines.get(0)).isEqualTo(
+                "my.summary,dt.metrics.source=micrometer gauge,min=0.1,max=5.4,sum=10.9,count=4 " + clock.wallTime());
+    }
+
+    @Test
+    void testToDistributionSummaryLine_DropsLineIfCountIsZero() {
+        DistributionSummary summary = DistributionSummary.builder("my.summary").register(meterRegistry);
+        summary.record(3.1);
+        clock.add(config.step());
+
+        List<String> nonEmptyLines = exporter.toDistributionSummaryLine(summary).collect(Collectors.toList());
+        assertThat(nonEmptyLines).hasSize(1);
+        assertThat(nonEmptyLines.get(0)).isEqualTo(
+                "my.summary,dt.metrics.source=micrometer gauge,min=3.1,max=3.1,sum=3.1,count=1 " + clock.wallTime());
+
+        clock.add(config.step());
+        // Before the update to drop zero count lines, this would contain 1 line (with
+        // count=0), which is not desired.
+        assertThat(exporter.toDistributionSummaryLine(summary)).isEmpty();
     }
 
     @Test
@@ -360,7 +408,8 @@ class DynatraceExporterV2Test {
 
         List<String> lines = exporter.toGaugeLine(gauge).collect(Collectors.toList());
         assertThat(lines).hasSize(1);
-        assertThat(lines.get(0)).isEqualTo("my.gauge,tag1=value1,dt.metrics.source=micrometer,tag2=value2 gauge,1.23 " + clock.wallTime());
+        assertThat(lines.get(0))
+            .isEqualTo("my.gauge,tag1=value1,dt.metrics.source=micrometer,tag2=value2 gauge,1.23 " + clock.wallTime());
     }
 
     @Test
@@ -371,7 +420,8 @@ class DynatraceExporterV2Test {
 
         List<String> lines = exporter.toGaugeLine(gauge).collect(Collectors.toList());
         assertThat(lines).hasSize(1);
-        assertThat(lines.get(0)).isEqualTo("my.gauge,tag1=value1,dt.metrics.source=micrometer,tag2= gauge,1.23 " + clock.wallTime());
+        assertThat(lines.get(0))
+            .isEqualTo("my.gauge,tag1=value1,dt.metrics.source=micrometer,tag2= gauge,1.23 " + clock.wallTime());
     }
 
     @Test
@@ -390,7 +440,8 @@ class DynatraceExporterV2Test {
 
         List<String> lines = exporter.toCounterLine(counter).collect(Collectors.toList());
         assertThat(lines).hasSize(1);
-        assertThat(lines.get(0)).isEqualTo("my.counter,tag1=value1,dt.metrics.source=micrometer,tag2=value2 count,delta=0.0 " + clock.wallTime());
+        assertThat(lines.get(0)).isEqualTo(
+                "my.counter,tag1=value1,dt.metrics.source=micrometer,tag2=value2 count,delta=0.0 " + clock.wallTime());
     }
 
     @Test
@@ -401,18 +452,18 @@ class DynatraceExporterV2Test {
 
         List<String> lines = exporter.toCounterLine(counter).collect(Collectors.toList());
         assertThat(lines).hasSize(1);
-        assertThat(lines.get(0)).isEqualTo("my.counter,tag1=value1,dt.metrics.source=micrometer,tag2= count,delta=0.0 " + clock.wallTime());
+        assertThat(lines.get(0))
+            .isEqualTo("my.counter,tag1=value1,dt.metrics.source=micrometer,tag2= count,delta=0.0 " + clock.wallTime());
     }
 
     @Test
     void linesExceedingLengthLimitDiscardedGracefully() {
         List<Tag> tagList = new ArrayList<>();
-        for (int i = 0; i < 250; i++) {
+        for (int i = 0; i < 3300; i++) {
             tagList.add(Tag.of(String.format("key%d", i), String.format("val%d", i)));
         }
-        Tags tags = Tags.concat(tagList);
 
-        meterRegistry.gauge("serialized.as.too.long.line", tags, 1.23);
+        meterRegistry.gauge("serialized.as.too.long.line", tagList, 1.23);
         Gauge gauge = meterRegistry.find("serialized.as.too.long.line").gauge();
         assertThat(gauge).isNotNull();
 
@@ -423,9 +474,8 @@ class DynatraceExporterV2Test {
     void shouldSendHeadersAndBody() throws Throwable {
         HttpSender.Request.Builder builder = HttpSender.Request.build(config.uri(), httpClient);
         when(httpClient.post(config.uri())).thenReturn(builder);
-        when(httpClient.send(isA(HttpSender.Request.class))).thenReturn(new HttpSender.Response(202,
-                "{ \"linesOk\": 3, \"linesInvalid\": 0, \"error\": null }"
-        ));
+        when(httpClient.send(isA(HttpSender.Request.class)))
+            .thenReturn(new HttpSender.Response(202, "{ \"linesOk\": 3, \"linesInvalid\": 0, \"error\": null }"));
 
         Counter counter = meterRegistry.counter("my.counter");
         counter.increment(12d);
@@ -441,16 +491,14 @@ class DynatraceExporterV2Test {
         verify(httpClient).send(argumentCaptor.capture());
         HttpSender.Request request = argumentCaptor.getValue();
 
-        assertThat(request.getRequestHeaders()).containsOnly(
-                entry("Content-Type", "text/plain"),
-                entry("User-Agent", "micrometer"),
-                entry("Authorization", "Api-Token apiToken")
-        );
+        assertThat(request.getRequestHeaders()).containsOnly(entry("Content-Type", "text/plain"),
+                entry("User-Agent", "micrometer"), entry("Authorization", "Api-Token apiToken"));
         assertThat(request.getEntity()).asString()
-                .hasLineCount(3)
-                .contains("my.counter,dt.metrics.source=micrometer count,delta=12.0 " + clock.wallTime())
-                .contains("my.gauge,dt.metrics.source=micrometer gauge,42.0 " + clock.wallTime())
-                .contains("my.timer,dt.metrics.source=micrometer gauge,min=22.0,max=22.0,sum=22.0,count=1 " + clock.wallTime());
+            .hasLineCount(3)
+            .contains("my.counter,dt.metrics.source=micrometer count,delta=12.0 " + clock.wallTime())
+            .contains("my.gauge,dt.metrics.source=micrometer gauge,42.0 " + clock.wallTime())
+            .contains("my.timer,dt.metrics.source=micrometer gauge,min=22.0,max=22.0,sum=22.0,count=1 "
+                    + clock.wallTime());
     }
 
     @Test
@@ -463,7 +511,90 @@ class DynatraceExporterV2Test {
         Gauge gauge = meterRegistry.find("my.gauge").gauge();
         exporter.export(Collections.singletonList(gauge));
 
-        assertThat(LOGGER.getLogEvents()).contains(new LogEvent(ERROR, "Failed metric ingestion: Error Code=500, Response Body=simulated", null));
+        assertThat(LOGGER.getLogEvents())
+            .contains(new LogEvent(ERROR, "Failed metric ingestion: Error Code=500, Response Body=simulated", null));
+    }
+
+    @Test
+    void endpointPickedUpBetweenExportsAndChangedPropertiesFile() throws Throwable {
+        String randomUuid = UUID.randomUUID().toString();
+        final Path tempFile = Files.createTempFile(randomUuid, ".properties");
+
+        DynatraceConfig config = new DynatraceConfig() {
+            // if nothing is set for uri and token, read from the file watcher
+            @Override
+            public DynatraceApiVersion apiVersion() {
+                return DynatraceApiVersion.V2;
+            }
+
+            @Nullable
+            @Override
+            public String get(String key) {
+                return null;
+            }
+        };
+
+        // set up mocks
+        HttpSender httpSender = mock(HttpSender.class);
+        MockClock clock = new MockClock();
+        DynatraceExporterV2 exporter = new DynatraceExporterV2(config, clock, httpSender);
+        DynatraceMeterRegistry meterRegistry = DynatraceMeterRegistry.builder(config)
+            .httpClient(httpSender)
+            .clock(clock)
+            .build();
+
+        when(httpSender.post(anyString())).thenCallRealMethod();
+        when(httpSender.newRequest(anyString())).thenCallRealMethod();
+        when(httpSender.send(any())).thenReturn(new HttpSender.Response(202, "{\n" + "  \"linesOk\": 1,\n"
+                + "  \"linesInvalid\": 0,\n" + "  \"error\": null,\n" + "  \"warnings\": null\n" + "}"));
+
+        // fill the file with content
+        final String baseUri = "https://your-dynatrace-ingest-url/api/v2/metrics/ingest/";
+        final String firstUri = baseUri + "first";
+        final String secondUri = baseUri + "second";
+
+        Files.write(tempFile, ("DT_METRICS_INGEST_URL = " + firstUri + "\n"
+                + "DT_METRICS_INGEST_API_TOKEN = YOUR.DYNATRACE.TOKEN.FIRST")
+            .getBytes());
+
+        DynatraceFileBasedConfigurationProvider.getInstance()
+            .forceOverwriteConfig(tempFile.toString(), Duration.ofMillis(50));
+        await().atMost(1_000, MILLISECONDS).until(() -> config.uri().equals(firstUri));
+        Counter counter = meterRegistry.counter("test.counter");
+        counter.increment(10);
+        clock.add(config.step());
+        exporter.export(Collections.singletonList(counter));
+
+        ArgumentCaptor<HttpSender.Request> firstRequestCaptor = ArgumentCaptor.forClass(HttpSender.Request.class);
+        verify(httpSender, times(1)).send(firstRequestCaptor.capture());
+        HttpSender.Request firstRequest = firstRequestCaptor.getValue();
+
+        assertThat(firstRequest.getUrl()).hasToString(firstUri);
+        assertThat(firstRequest.getRequestHeaders()).containsOnly(entry("Content-Type", "text/plain"),
+                entry("User-Agent", "micrometer"), entry("Authorization", "Api-Token YOUR.DYNATRACE.TOKEN.FIRST"));
+        String firstReqBody = new String(firstRequest.getEntity(), StandardCharsets.UTF_8);
+        assertThat(firstReqBody).isEqualTo("test.counter,dt.metrics.source=micrometer count,delta=10.0");
+
+        counter.increment(30);
+        clock.add(config.step());
+
+        // overwrite the file content to use the second uri
+        Files.write(tempFile, ("DT_METRICS_INGEST_URL = " + secondUri + "\n"
+                + "DT_METRICS_INGEST_API_TOKEN = YOUR.DYNATRACE.TOKEN.SECOND")
+            .getBytes());
+
+        await().atMost(1_000, MILLISECONDS).until(() -> config.uri().equals(secondUri));
+        exporter.export(Collections.singletonList(counter));
+
+        ArgumentCaptor<HttpSender.Request> secondRequestCaptor = ArgumentCaptor.forClass(HttpSender.Request.class);
+        verify(httpSender, times(2)).send(secondRequestCaptor.capture());
+        HttpSender.Request secondRequest = secondRequestCaptor.getValue();
+
+        assertThat(secondRequest.getUrl()).hasToString(secondUri);
+        assertThat(secondRequest.getRequestHeaders()).containsOnly(entry("Content-Type", "text/plain"),
+                entry("User-Agent", "micrometer"), entry("Authorization", "Api-Token YOUR.DYNATRACE.TOKEN.SECOND"));
+        String secondReqBody = new String(secondRequest.getEntity(), StandardCharsets.UTF_8);
+        assertThat(secondReqBody).isEqualTo("test.counter,dt.metrics.source=micrometer count,delta=30.0");
     }
 
     private DynatraceExporterV2 createExporter(HttpSender httpClient) {
@@ -497,4 +628,5 @@ class DynatraceExporterV2Test {
             }
         };
     }
+
 }
