@@ -26,6 +26,7 @@ import io.micrometer.observation.Observation.Context;
 import io.micrometer.observation.ObservationHandler;
 import io.micrometer.observation.ObservationRegistry;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -53,12 +54,14 @@ class ObservationThreadLocalAccessorTests {
 
     ContextRegistry registry = new ContextRegistry();
 
+    @BeforeAll
+    static void beforeAll() {
+        ContextRegistry.getInstance().registerContextAccessor(mapContextAccessor);
+    }
+
     @BeforeEach
     void setup() {
         registry.registerThreadLocalAccessor(new ObservationThreadLocalAccessor());
-
-        ContextRegistry.getInstance().removeContextAccessor(mapContextAccessor);
-        ContextRegistry.getInstance().registerContextAccessor(mapContextAccessor);
     }
 
     @AfterEach
@@ -169,11 +172,11 @@ class ObservationThreadLocalAccessorTests {
 
     @Test
     void uses2DifferentObservationRegistries() {
-        AtomicReference<String> reference = new AtomicReference<>("");
+        AtomicReference<String> calledHandler = new AtomicReference<>("");
 
-        TestHandler testHandlerForOR1 = new TestHandler("handler 1", reference);
+        TestHandler testHandlerForOR1 = new TestHandler("handler 1", calledHandler);
         observationRegistry.observationConfig().observationHandler(testHandlerForOR1);
-        TestHandler testHandlerForOR2 = new TestHandler("handler 2", reference);
+        TestHandler testHandlerForOR2 = new TestHandler("handler 2", calledHandler);
         observationRegistry2.observationConfig().observationHandler(testHandlerForOR2);
 
         // given
@@ -193,9 +196,9 @@ class ObservationThreadLocalAccessorTests {
             try (Observation.Scope scope2 = child2.openScope()) {
                 thenCurrentObservationHasParent(parent2, child2);
             }
-            then(reference.get()).isEqualTo("handler 2");
+            then(calledHandler.get()).isEqualTo("handler 2");
         }
-        then(reference.get()).isEqualTo("handler 1");
+        then(calledHandler.get()).isEqualTo("handler 1");
 
         then(child.getEnclosingScope()).isNull();
         thenCurrentObservationIsNull();
