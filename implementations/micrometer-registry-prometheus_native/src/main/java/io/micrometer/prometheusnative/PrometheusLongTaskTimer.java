@@ -27,6 +27,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static io.prometheus.metrics.model.snapshots.Unit.nanosToSeconds;
 
 /**
+ * Long task timer that can either be backed by a Prometheus histogram or by a Prometheus
+ * summary.
+ *
  * @param <T> {@link io.prometheus.metrics.core.metrics.Histogram Histogram} or
  * {@link io.prometheus.metrics.core.metrics.Summary Summary}.
  * @param <S>
