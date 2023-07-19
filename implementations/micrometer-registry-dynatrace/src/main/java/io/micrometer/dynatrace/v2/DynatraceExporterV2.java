@@ -16,8 +16,8 @@
 package io.micrometer.dynatrace.v2;
 
 import com.dynatrace.metric.util.*;
-import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.distribution.HistogramSnapshot;
 import io.micrometer.core.instrument.distribution.ValueAtPercentile;
 import io.micrometer.core.instrument.util.StringUtils;
@@ -274,7 +274,23 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
     }
 
     Stream<String> toLongTaskTimerLine(LongTaskTimer meter) {
-        return toSummaryLine(meter, meter.takeSnapshot(), getBaseTimeUnit());
+        HistogramSnapshot snapshot = meter.takeSnapshot();
+
+        long count = snapshot.count();
+        if (count == 0) {
+            return Stream.empty();
+        }
+        else if (count == 1) {
+            // in cases where the snapshot has only one value, often the min/max and sum
+            // are not the same due to how this data is recorded. In the Dynatrace API
+            // this might lead to rejections, because the ingested data's validity is
+            // checked. It is not possible to have a dynatrace summary object with a
+            // single value where min/max and sum are not equal.
+            double total = snapshot.total(getBaseTimeUnit());
+            return createSummaryLine(meter, total, total, total, 1);
+        }
+
+        return toSummaryLine(meter, snapshot, getBaseTimeUnit());
     }
 
     Stream<String> toTimeGaugeLine(TimeGauge meter) {
@@ -286,15 +302,21 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
     }
 
     Stream<String> toFunctionTimerLine(FunctionTimer meter) {
-        long count = (long) meter.count();
-        if (count < 1) {
+        double count = meter.count();
+        double total = meter.totalTime(getBaseTimeUnit());
+
+        long countLong = (long) count;
+
+        if (countLong < 1) {
             logger.debug("Timer with 0 count dropped: {}", meter.getId().getName());
             return Stream.empty();
         }
-        double total = meter.totalTime(getBaseTimeUnit());
-        double average = meter.mean(getBaseTimeUnit());
+        else if (countLong == 1) {
+            return createSummaryLine(meter, total, total, total, 1);
+        }
 
-        return createSummaryLine(meter, average, average, total, count);
+        double average = total / countLong;
+        return createSummaryLine(meter, average, average, total, countLong);
     }
 
     Stream<String> toMeterLine(Meter meter) {

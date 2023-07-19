@@ -36,6 +36,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
@@ -258,7 +260,7 @@ class DynatraceExporterV2Test {
     }
 
     @Test
-    void toFunctionTimerLineShouldDropNanMean() {
+    void toFunctionTimerLineShouldDropNanTotal() {
         FunctionTimer functionTimer = new FunctionTimer() {
             @Override
             public double count() {
@@ -268,7 +270,7 @@ class DynatraceExporterV2Test {
             @Override
             @SuppressWarnings("NullableProblems")
             public double totalTime(TimeUnit unit) {
-                return 5000;
+                return NaN;
             }
 
             @Override
@@ -283,11 +285,6 @@ class DynatraceExporterV2Test {
                 return new Id("my.functionTimer", Tags.empty(), null, null, Type.TIMER);
             }
 
-            @Override
-            @SuppressWarnings("NullableProblems")
-            public double mean(TimeUnit unit) {
-                return NaN;
-            }
         };
 
         assertThat(exporter.toFunctionTimerLine(functionTimer)).isEmpty();
@@ -344,6 +341,115 @@ class DynatraceExporterV2Test {
         assertThat(lines.get(0)).isEqualTo(
                 "my.longTaskTimer,dt.metrics.source=micrometer gauge,min=2000.0,max=48000.0,sum=236000.0,count=11 "
                         + clock.wallTime());
+    }
+
+    private static void busyWait(LongTaskTimer ltt) {
+        ltt.record(() -> {
+            while (!Thread.currentThread().isInterrupted()) {
+                try {
+                    Thread.sleep(200);
+                }
+                catch (InterruptedException ignored) {
+                }
+            }
+        });
+    }
+
+    @Test
+    void longTaskTimerWithSingleValueExportsConsistentData() throws InterruptedException {
+        // In the past, there were problems with the LongTaskTimer: In cases where only
+        // one value was exported, the max and duration were read sequentially while the
+        // clock continued to tick in the background. Since the Dynatrace API checks this
+        // data strictly, data where the sum and max were not exactly the same when the
+        // count was 1 were rejected. The discrepancy is only caused by the non-atomicity
+        // of retrieving max and sum. As soon as there is more than 1 observation, this
+        // problem should disappear since the Dynatrace API checks for min <= mean <= max,
+        // and that should always be the case when there is more than 1 value. If it is
+        // not the case, the underlying data collection is really broken. For example, we
+        // saw this issue with the metric 'http.server.requests.active', when there was
+        // exactly one request in-flight. The retrieval of max and total are not
+        // synchronized, so the clock continues to tick and results in two different
+        // values (e.g., max=0.764418,sum=0.700539,count=1, which is invalid according to
+        // the Dynatrace specification). Therefore, for this test we need to use the
+        // system clock.
+        Clock clock = Clock.SYSTEM;
+        DynatraceConfig config = createDefaultDynatraceConfig();
+        DynatraceMeterRegistry registry = DynatraceMeterRegistry.builder(config).clock(clock).build();
+        DynatraceExporterV2 exporter = new DynatraceExporterV2(config, clock, httpClient);
+
+        LongTaskTimer ltt = LongTaskTimer.builder("my.ltt").register(registry);
+
+        // This will run in the background until it is interrupted down below.
+        ExecutorService executorService = Executors.newSingleThreadExecutor();
+        executorService.submit(() -> busyWait(ltt));
+
+        // wait for a little bit to ensure there is something to measure
+        Thread.sleep(500);
+
+        List<String> lines = exporter.toLongTaskTimerLine(ltt).collect(Collectors.toList());
+
+        // export complete, can shut down active background thread.
+        executorService.shutdownNow();
+
+        // assertions
+        assertThat(lines).hasSize(1);
+
+        // A String[]: "min=1", "max=1", "sum=1", "count=1"
+        String[] gaugeComponents = lines.get(0).split(" ")[1].split(",");
+        // trim the "min=", "max=", etc. prefixes and keep only the string representations
+        // of the values.
+        String min = gaugeComponents[1].split("=")[1];
+        String max = gaugeComponents[2].split("=")[1];
+        String sum = gaugeComponents[3].split("=")[1];
+        String count = gaugeComponents[4].split("=")[1];
+
+        assertThat(min).isEqualTo(sum).isEqualTo(max);
+
+        assertThat(count).isEqualTo("1");
+    }
+
+    @Test
+    void longTaskTimerWithMultipleValuesExportsConsistentData() throws InterruptedException {
+        // For this test we need to use the system clock. See
+        // longTaskTimerWithSingleValueExportsConsistentData for
+        // more info
+        Clock clock = Clock.SYSTEM;
+        DynatraceConfig config = createDefaultDynatraceConfig();
+        DynatraceMeterRegistry registry = DynatraceMeterRegistry.builder(config).clock(clock).build();
+        DynatraceExporterV2 exporter = new DynatraceExporterV2(config, clock, httpClient);
+
+        LongTaskTimer ltt = LongTaskTimer.builder("my.ltt").register(registry);
+
+        // This will run in the background until it is interrupted down below.
+        ExecutorService executorService = Executors.newFixedThreadPool(2);
+        executorService.submit(() -> busyWait(ltt));
+        Thread.sleep(500);
+        executorService.submit(() -> busyWait(ltt));
+
+        Thread.sleep(500);
+
+        List<String> lines = exporter.toLongTaskTimerLine(ltt).collect(Collectors.toList());
+
+        // export complete, can shut down active background thread.
+        executorService.shutdownNow();
+
+        // assertions
+        assertThat(lines).hasSize(1);
+
+        // A String[]: "min=x", "max=x", "sum=x", "count=x"
+        String[] gaugeComponents = lines.get(0).split(" ")[1].split(",");
+
+        // trim the "min=", "max=", etc. prefixes and keep only the string representations
+        // of the values.
+        double min = Double.parseDouble(gaugeComponents[1].split("=")[1]);
+        double max = Double.parseDouble(gaugeComponents[2].split("=")[1]);
+        double sum = Double.parseDouble(gaugeComponents[3].split("=")[1]);
+        int count = Integer.parseInt(gaugeComponents[4].split("=")[1]);
+        double mean = sum / count;
+
+        assertThat(min).isLessThanOrEqualTo(mean);
+        assertThat(mean).isLessThanOrEqualTo(max);
+        assertThat(count).isEqualTo(2);
     }
 
     @Test
