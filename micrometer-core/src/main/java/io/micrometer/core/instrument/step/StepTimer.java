@@ -56,6 +56,17 @@ public class StepTimer extends AbstractTimer implements StepMeter {
                 defaultHistogram(clock, distributionStatisticConfig, supportsAggregablePercentiles));
     }
 
+    /**
+     * Create a new {@code StepTimer}.
+     * @param id ID
+     * @param clock clock
+     * @param distributionStatisticConfig distribution statistic configuration
+     * @param pauseDetector pause detector
+     * @param baseTimeUnit base time unit
+     * @param stepDurationMillis step in milliseconds
+     * @param histogram histogram
+     * @since 1.11.1
+     */
     protected StepTimer(final Id id, final Clock clock, final DistributionStatisticConfig distributionStatisticConfig,
             final PauseDetector pauseDetector, final TimeUnit baseTimeUnit, final long stepDurationMillis,
             Histogram histogram) {

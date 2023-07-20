@@ -58,6 +58,16 @@ public class StepDistributionSummary extends AbstractDistributionSummary impleme
                 defaultHistogram(clock, distributionStatisticConfig, supportsAggregablePercentiles));
     }
 
+    /**
+     * Create a new {@code StepDistributionSummary}.
+     * @param id ID
+     * @param clock clock
+     * @param distributionStatisticConfig distribution static configuration
+     * @param scale scale
+     * @param stepMillis step in milliseconds
+     * @param histogram histogram
+     * @since 1.11.1
+     */
     protected StepDistributionSummary(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig,
             double scale, long stepMillis, Histogram histogram) {
         super(id, scale, histogram);
