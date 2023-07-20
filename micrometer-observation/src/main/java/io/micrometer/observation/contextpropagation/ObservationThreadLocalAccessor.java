@@ -49,7 +49,6 @@ public class ObservationThreadLocalAccessor implements ThreadLocalAccessor<Obser
      */
     public ObservationThreadLocalAccessor() {
         instance = this;
-        log.debug("Remember to set the ObservationRegistry on this accessor!");
     }
 
     /**
@@ -111,11 +110,16 @@ public class ObservationThreadLocalAccessor implements ThreadLocalAccessor<Obser
 
     @Override
     public void setValue() {
+        Observation currentObservation = observationRegistry.getCurrentObservation();
+        if (currentObservation == null) {
+            return;
+        }
+        ObservationRegistry registry = currentObservation.getObservationRegistry();
         // Not closing a scope (we're not resetting)
         // Creating a new one with empty context and opens a new scope
         // This scope will remember the previously created one to
         // which we will revert once "null scope" is closed
-        new NullObservation(observationRegistry).start().openScope();
+        new NullObservation(registry).start().openScope();
     }
 
     private void closeCurrentScope() {

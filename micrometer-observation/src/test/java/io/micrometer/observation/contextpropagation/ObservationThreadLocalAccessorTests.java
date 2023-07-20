@@ -15,34 +15,53 @@
  */
 package io.micrometer.observation.contextpropagation;
 
+import io.micrometer.context.ContextAccessor;
 import io.micrometer.context.ContextExecutorService;
 import io.micrometer.context.ContextRegistry;
 import io.micrometer.context.ContextSnapshot;
+import io.micrometer.context.ContextSnapshotFactory;
+import io.micrometer.observation.NullObservation;
 import io.micrometer.observation.Observation;
+import io.micrometer.observation.Observation.Context;
 import io.micrometer.observation.ObservationHandler;
 import io.micrometer.observation.ObservationRegistry;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.Closeable;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Predicate;
 
 import static org.assertj.core.api.BDDAssertions.then;
 import static org.assertj.core.api.BDDAssertions.thenNoException;
 
 class ObservationThreadLocalAccessorTests {
 
+    static ObservationRegistry globalObservationRegistry = ObservationRegistry.create();
+
+    static MapContextAccessor mapContextAccessor = new MapContextAccessor();
+
     ExecutorService executorService = Executors.newSingleThreadExecutor();
 
     ObservationRegistry observationRegistry = ObservationRegistry.create();
 
+    ObservationRegistry observationRegistry2 = ObservationRegistry.create();
+
     ContextRegistry registry = new ContextRegistry();
+
+    @BeforeAll
+    static void beforeAll() {
+        ContextRegistry.getInstance().registerContextAccessor(mapContextAccessor);
+    }
 
     @BeforeEach
     void setup() {
-        observationRegistry.observationConfig().observationHandler(new TracingHandler());
-        registry.registerThreadLocalAccessor(new ObservationThreadLocalAccessor(observationRegistry));
+        registry.registerThreadLocalAccessor(new ObservationThreadLocalAccessor());
     }
 
     @AfterEach
@@ -53,6 +72,7 @@ class ObservationThreadLocalAccessorTests {
     @Test
     void capturedThreadLocalValuesShouldBeCapturedRestoredAndCleared()
             throws InterruptedException, ExecutionException, TimeoutException {
+        observationRegistry.observationConfig().observationHandler(new TracingHandler());
 
         // given
         Observation parent = Observation.start("parent", observationRegistry);
@@ -113,11 +133,32 @@ class ObservationThreadLocalAccessorTests {
                 }).get(5, TimeUnit.SECONDS);
 
                 then(scopeParent(inSecondScope)).isSameAs(inScope);
+
+                // when we're going through the null scope when there was a previous value
+                // in TL
+                ContextSnapshot withClearing = ContextSnapshotFactory.builder()
+                    .clearMissing(true)
+                    .build()
+                    .captureFrom(new HashMap<>());
+                withClearing.wrap(this::thenCurrentObservationIsNullObservation).run();
+
+                then(child.getEnclosingScope()).isNotNull();
+                thenCurrentObservationHasParent(parent, child);
             }
             then(scopeParent(inScope)).isSameAs(null);
         }
 
         thenCurrentObservationIsNull();
+
+        then(child.getEnclosingScope()).isNull();
+        then(parent.getEnclosingScope()).isNull();
+
+        // when we're going through the null scope when there was no previous value in TL
+        ContextSnapshot withClearing = ContextSnapshotFactory.builder()
+            .clearMissing(true)
+            .build()
+            .captureFrom(new HashMap<>());
+        withClearing.wrap(this::thenCurrentObservationIsNull).run();
 
         then(child.getEnclosingScope()).isNull();
         then(parent.getEnclosingScope()).isNull();
@@ -130,8 +171,51 @@ class ObservationThreadLocalAccessorTests {
     }
 
     @Test
+    void uses2DifferentObservationRegistries() {
+        AtomicReference<String> calledHandler = new AtomicReference<>("");
+
+        TestHandler testHandlerForOR1 = new TestHandler("handler 1", calledHandler);
+        observationRegistry.observationConfig().observationHandler(testHandlerForOR1);
+        TestHandler testHandlerForOR2 = new TestHandler("handler 2", calledHandler);
+        observationRegistry2.observationConfig().observationHandler(testHandlerForOR2);
+
+        // given
+        Observation parent = Observation.start("parent", observationRegistry);
+        Observation child = Observation.createNotStarted("child2", observationRegistry)
+            .parentObservation(parent)
+            .start();
+        thenCurrentObservationIsNull();
+
+        Observation parent2 = Observation.start("parent2", observationRegistry2);
+        Observation child2 = Observation.createNotStarted("child2", observationRegistry2)
+            .parentObservation(parent2)
+            .start();
+        thenCurrentObservationIsNull();
+
+        try (Observation.Scope scope = child.openScope()) {
+            try (Observation.Scope scope2 = child2.openScope()) {
+                thenCurrentObservationHasParent(parent2, child2);
+            }
+            then(calledHandler.get()).isEqualTo("handler 2");
+        }
+        then(calledHandler.get()).isEqualTo("handler 1");
+
+        then(child.getEnclosingScope()).isNull();
+        thenCurrentObservationIsNull();
+
+        child.stop();
+        child2.stop();
+        parent.stop();
+        parent2.stop();
+
+        thenCurrentObservationIsNull();
+    }
+
+    @Test
     void acceptsANullCurrentScopeOnRestore() {
-        thenNoException().isThrownBy(() -> new ObservationThreadLocalAccessor(observationRegistry) {
+        observationRegistry.observationConfig().observationHandler(new TracingHandler());
+
+        thenNoException().isThrownBy(() -> new ObservationThreadLocalAccessor() {
             @Override
             void assertFalse(String message) {
 
@@ -140,8 +224,9 @@ class ObservationThreadLocalAccessorTests {
     }
 
     private void thenCurrentObservationHasParent(Observation parent, Observation observation) {
-        then(observationRegistry.getCurrentObservation()).isSameAs(observation);
-        then(observationRegistry.getCurrentObservation().getContextView().getParentObservation()).isSameAs(parent);
+        then(globalObservationRegistry.getCurrentObservation()).isSameAs(observation);
+        then(globalObservationRegistry.getCurrentObservation().getContextView().getParentObservation())
+            .isSameAs(parent);
     }
 
     private Scope thenCurrentScopeHasParent(Scope first) {
@@ -151,8 +236,14 @@ class ObservationThreadLocalAccessorTests {
     }
 
     private void thenCurrentObservationIsNull() {
-        then(observationRegistry.getCurrentObservation()).isNull();
+        then(ObservationRegistry.create().getCurrentObservation()).isNull();
         then(TracingHandler.value.get()).isSameAs(null);
+    }
+
+    private void thenCurrentObservationIsNullObservation() {
+        then(globalObservationRegistry.getCurrentObservation()).isInstanceOf(NullObservation.class);
+        then(TracingHandler.value.get()).isNotNull();
+        then(TracingHandler.value.get().observationName).isEqualTo("null");
     }
 
     private Scope scopeParent(Scope scope) {
@@ -202,6 +293,29 @@ class ObservationThreadLocalAccessorTests {
 
     }
 
+    static class TestHandler implements ObservationHandler<Observation.Context> {
+
+        final String name;
+
+        final AtomicReference<String> reference;
+
+        TestHandler(String name, AtomicReference<String> reference) {
+            this.name = name;
+            this.reference = reference;
+        }
+
+        @Override
+        public void onScopeClosed(Context context) {
+            this.reference.set(name);
+        }
+
+        @Override
+        public boolean supportsContext(Context context) {
+            return true;
+        }
+
+    }
+
     static class Scope implements Closeable {
 
         private final Scope previous;
@@ -226,6 +340,36 @@ class ObservationThreadLocalAccessorTests {
         @Override
         public String toString() {
             return "Scope{" + "previous=" + previous + ", observationName='" + observationName + '\'' + '}';
+        }
+
+    }
+
+    static class MapContextAccessor implements ContextAccessor<Map, Map> {
+
+        @Override
+        public Class<? extends Map> readableType() {
+            return Map.class;
+        }
+
+        @Override
+        public void readValues(Map sourceContext, Predicate<Object> keyPredicate, Map<Object, Object> readValues) {
+
+        }
+
+        @Override
+        public <T> T readValue(Map sourceContext, Object key) {
+            return (T) sourceContext.get(key);
+        }
+
+        @Override
+        public Class<? extends Map> writeableType() {
+            return Map.class;
+        }
+
+        @Override
+        public Map writeValues(Map<Object, Object> valuesToWrite, Map targetContext) {
+            targetContext.putAll(valuesToWrite);
+            return targetContext;
         }
 
     }
