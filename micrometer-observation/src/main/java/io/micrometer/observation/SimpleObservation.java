@@ -276,6 +276,11 @@ class SimpleObservation implements Observation {
         this.handlers.descendingIterator().forEachRemaining(handler -> handler.onStop(context));
     }
 
+    @Override
+    public ObservationRegistry getObservationRegistry() {
+        return this.registry;
+    }
+
     static class SimpleScope implements Scope {
 
         private static final InternalLogger log = InternalLoggerFactory.getInstance(SimpleScope.class);
