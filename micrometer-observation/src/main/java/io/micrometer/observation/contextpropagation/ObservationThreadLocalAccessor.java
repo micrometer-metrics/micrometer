@@ -38,6 +38,14 @@ public class ObservationThreadLocalAccessor implements ThreadLocalAccessor<Obser
      */
     public static final String KEY = "micrometer.observation";
 
+    /**
+     * The default implementation of {@link ObservationRegistry} that Micrometer provides
+     * comes with a static {@link ThreadLocal} instance for accessing the
+     * {@link Observation.Scope}. That's why we can create an instance of the default
+     * implementation of the registry just to call its
+     * {@link ObservationRegistry#getCurrentObservation()} because that in turn will look
+     * at the static ThreadLocal and will always return the proper scope.
+     */
     private ObservationRegistry observationRegistry = ObservationRegistry.create();
 
     private static ObservationThreadLocalAccessor instance;
@@ -114,12 +122,18 @@ public class ObservationThreadLocalAccessor implements ThreadLocalAccessor<Obser
         if (currentObservation == null) {
             return;
         }
-        ObservationRegistry registry = currentObservation.getObservationRegistry();
+        // Since we can't fully rely on using the observation registry static instance
+        // because you can have multiple ones being created in your code (e.g. tests,
+        // production code, multiple contexts etc.) we need a way to use an existing,
+        // pre-configured observation registry. What we're doing then is getting an OR
+        // from an existing observation, and we pass it to the NullObservation. That
+        // way we'll reuse its handlers.
+        ObservationRegistry registryAttachedToCurrentObservation = currentObservation.getObservationRegistry();
         // Not closing a scope (we're not resetting)
         // Creating a new one with empty context and opens a new scope
         // This scope will remember the previously created one to
         // which we will revert once "null scope" is closed
-        new NullObservation(registry).start().openScope();
+        new NullObservation(registryAttachedToCurrentObservation).start().openScope();
     }
 
     private void closeCurrentScope() {
