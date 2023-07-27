@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 VMware, Inc.
+ * Copyright 2024 VMware, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package io.micrometer.core.instrument.binder.jetty;
 
+import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
@@ -38,6 +39,9 @@ public class InstrumentedQueuedThreadPool extends QueuedThreadPool {
     private final MeterRegistry registry;
 
     private final Iterable<Tag> tags;
+
+    @Nullable
+    private JettyServerThreadPoolMetrics threadPoolMetrics;
 
     /**
      * Default values for the instrumented thread pool.
@@ -112,8 +116,16 @@ public class InstrumentedQueuedThreadPool extends QueuedThreadPool {
     @Override
     protected void doStart() throws Exception {
         super.doStart();
-        JettyServerThreadPoolMetrics threadPoolMetrics = new JettyServerThreadPoolMetrics(this, tags);
+        threadPoolMetrics = new JettyServerThreadPoolMetrics(this, tags);
         threadPoolMetrics.bindTo(registry);
+    }
+
+    @Override
+    protected void doStop() throws Exception {
+        if (threadPoolMetrics != null) {
+            threadPoolMetrics.close();
+        }
+        super.doStop();
     }
 
 }

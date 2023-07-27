@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 VMware, Inc.
+ * Copyright 2024 VMware, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,13 +15,18 @@
  */
 package io.micrometer.core.instrument.binder.jetty;
 
+import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.Gauge;
+import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.binder.MeterBinder;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
 import org.eclipse.jetty.util.thread.ThreadPool;
 import org.eclipse.jetty.util.thread.ThreadPool.SizedThreadPool;
+
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * {@link MeterBinder} for Jetty {@link ThreadPool}.
@@ -41,11 +46,28 @@ import org.eclipse.jetty.util.thread.ThreadPool.SizedThreadPool;
  * @since 1.1.0
  * @see InstrumentedQueuedThreadPool
  */
-public class JettyServerThreadPoolMetrics implements MeterBinder {
+public class JettyServerThreadPoolMetrics implements MeterBinder, AutoCloseable {
 
     private final ThreadPool threadPool;
 
     private final Iterable<Tag> tags;
+
+    private final String MIN = "jetty.threads.config.min";
+
+    private final String MAX = "jetty.threads.config.max";
+
+    private final String BUSY = "jetty.threads.busy";
+
+    private final String JOBS = "jetty.threads.jobs";
+
+    private final String CURRENT = "jetty.threads.current";
+
+    private final String IDLE = "jetty.threads.idle";
+
+    private final Set<Meter.Id> registeredMeterIds = ConcurrentHashMap.newKeySet();
+
+    @Nullable
+    private MeterRegistry registry;
 
     public JettyServerThreadPoolMetrics(ThreadPool threadPool, Iterable<Tag> tags) {
         this.threadPool = threadPool;
@@ -54,36 +76,51 @@ public class JettyServerThreadPoolMetrics implements MeterBinder {
 
     @Override
     public void bindTo(MeterRegistry registry) {
+        this.registry = registry;
         if (threadPool instanceof SizedThreadPool) {
             SizedThreadPool sizedThreadPool = (SizedThreadPool) threadPool;
-            Gauge.builder("jetty.threads.config.min", sizedThreadPool, SizedThreadPool::getMinThreads)
+            Gauge minGauge = Gauge.builder(MIN, sizedThreadPool, SizedThreadPool::getMinThreads)
                 .description("The minimum number of threads in the pool")
                 .tags(tags)
                 .register(registry);
-            Gauge.builder("jetty.threads.config.max", sizedThreadPool, SizedThreadPool::getMaxThreads)
+            registeredMeterIds.add(minGauge.getId());
+            Gauge maxGauge = Gauge.builder(MAX, sizedThreadPool, SizedThreadPool::getMaxThreads)
                 .description("The maximum number of threads in the pool")
                 .tags(tags)
                 .register(registry);
+            registeredMeterIds.add(maxGauge.getId());
             if (threadPool instanceof QueuedThreadPool) {
                 QueuedThreadPool queuedThreadPool = (QueuedThreadPool) threadPool;
-                Gauge.builder("jetty.threads.busy", queuedThreadPool, QueuedThreadPool::getBusyThreads)
+                Gauge busyGauge = Gauge.builder(BUSY, queuedThreadPool, QueuedThreadPool::getBusyThreads)
                     .description("The number of busy threads in the pool")
                     .tags(tags)
                     .register(registry);
-                Gauge.builder("jetty.threads.jobs", queuedThreadPool, QueuedThreadPool::getQueueSize)
+                registeredMeterIds.add(busyGauge.getId());
+                Gauge jobsGauge = Gauge.builder(JOBS, queuedThreadPool, QueuedThreadPool::getQueueSize)
                     .description("Number of jobs queued waiting for a thread")
                     .tags(tags)
                     .register(registry);
+                registeredMeterIds.add(jobsGauge.getId());
             }
         }
-        Gauge.builder("jetty.threads.current", threadPool, ThreadPool::getThreads)
+        Gauge currentGauge = Gauge.builder(CURRENT, threadPool, ThreadPool::getThreads)
             .description("The total number of threads in the pool")
             .tags(tags)
             .register(registry);
-        Gauge.builder("jetty.threads.idle", threadPool, ThreadPool::getIdleThreads)
+        registeredMeterIds.add(currentGauge.getId());
+        Gauge idleGauge = Gauge.builder(IDLE, threadPool, ThreadPool::getIdleThreads)
             .description("The number of idle threads in the pool")
             .tags(tags)
             .register(registry);
+        registeredMeterIds.add(idleGauge.getId());
+    }
+
+    @Override
+    public void close() throws Exception {
+        if (registry != null) {
+            registeredMeterIds.forEach(registry::remove);
+            registeredMeterIds.clear();
+        }
     }
 
 }
