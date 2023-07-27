@@ -174,7 +174,7 @@ public class DefaultLongTaskTimer extends AbstractMeter implements LongTaskTimer
 
         int percentilesInterpolatableLine = percentilesInterpolatableLine(snapshot.size());
 
-        List<ValueAtPercentile> valueAtPercentiles = new ArrayList<>(percentilesInterpolatableLine);
+        ValueAtPercentile[] valueAtPercentiles = new ValueAtPercentile[percentiles.length];
 
         if (percentilesInterpolatableLine > 0 || !buckets.isEmpty()) {
             int currentPercentileIdx = 0;
@@ -209,7 +209,7 @@ public class DefaultLongTaskTimer extends AbstractMeter implements LongTaskTimer
                                     + ((percentileValue - priorPercentileValue) * (rank - (int) rank));
                         }
 
-                        valueAtPercentiles.add(new ValueAtPercentile(percentile, percentileValue));
+                        valueAtPercentiles[currentPercentileIdx] = new ValueAtPercentile(percentile, percentileValue);
                         ++currentPercentileIdx;
                     }
                 }
@@ -232,12 +232,10 @@ public class DefaultLongTaskTimer extends AbstractMeter implements LongTaskTimer
         // we wouldn't need to iterate over all the active tasks just to calculate the
         // 100th percentile, which is just the max.
         for (int currentPercentileIdx = percentilesInterpolatableLine; currentPercentileIdx < percentiles.length; ++currentPercentileIdx) {
-            valueAtPercentiles.add(new ValueAtPercentile(percentiles[currentPercentileIdx], max));
+            valueAtPercentiles[currentPercentileIdx] = new ValueAtPercentile(percentiles[currentPercentileIdx], max);
         }
 
-        ValueAtPercentile[] valueAtPercentilesArr = valueAtPercentiles.toArray(new ValueAtPercentile[0]);
-
-        return new HistogramSnapshot(activeTasks.size(), duration, max, valueAtPercentilesArr, countAtBucketsArr,
+        return new HistogramSnapshot(activeTasks.size(), duration, max, valueAtPercentiles, countAtBucketsArr,
                 (ps, scaling) -> ps.print("Summary output for LongTaskTimer histograms is not supported."));
     }
 
