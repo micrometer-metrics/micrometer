@@ -182,7 +182,7 @@ public class DefaultLongTaskTimer extends AbstractMeter implements LongTaskTimer
 
             List<CountAtBucket> countAtBuckets = new ArrayList<>(buckets.size());
 
-            Double priorActiveTaskDuration = null;
+            double priorActiveTaskDuration = -1;
             int count = 0;
 
             double[] youngestToOldestDurations = snapshot.durations();
@@ -201,7 +201,7 @@ public class DefaultLongTaskTimer extends AbstractMeter implements LongTaskTimer
 
                     if (count >= rank) {
                         double percentileValue = activeTaskDuration;
-                        if (count != rank && priorActiveTaskDuration != null) {
+                        if (count != rank && priorActiveTaskDuration >= 0) {
                             // interpolate the percentile value when the active task rank
                             // is non-integral
                             double priorPercentileValue = priorActiveTaskDuration;
