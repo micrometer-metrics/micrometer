@@ -328,17 +328,18 @@ public abstract class MeterRegistryCompatibilityKit {
     }
 
     private void assertHistogramBuckets(CountAtBucket[] countAtBuckets) {
-        assertHistogramBuckets(countAtBuckets, TimeUnit.NANOSECONDS);
+        assertHistogramBuckets(countAtBuckets, null);
     }
 
     private void assertHistogramBuckets(CountAtBucket[] countAtBuckets, TimeUnit timeUnit) {
         // percentile histogram buckets may be there, assert SLO buckets are present
-        assertThat(countAtBuckets).extracting(c -> c.bucket(timeUnit)).contains(5.0, 50.0, 95.0);
+        assertThat(countAtBuckets).extracting(c -> getCount(c, timeUnit)).contains(5.0, 50.0, 95.0);
 
         assertThat(countAtBuckets).satisfiesAnyOf(
                 // we can directly check the count of cumulative SLO buckets
                 bucketCounts -> assertThat(Arrays.stream(bucketCounts)
-                    .filter(countAtBucket -> Arrays.asList(5.0, 50.0, 95.0).contains(countAtBucket.bucket(timeUnit))))
+                    .filter(countAtBucket -> Arrays.asList(5.0, 50.0, 95.0)
+                        .contains(getCount(countAtBucket, timeUnit))))
                     .extracting(CountAtBucket::count)
                     .containsExactly(0.0, 1.0, 3.0),
                 // if not cumulative buckets, we need to add up buckets in range.
@@ -349,12 +350,16 @@ public abstract class MeterRegistryCompatibilityKit {
                 });
     }
 
+    private double getCount(CountAtBucket countAtBucket, TimeUnit timeUnit) {
+        return timeUnit != null ? countAtBucket.bucket(timeUnit) : countAtBucket.bucket();
+    }
+
     private double nonCumulativeBucketCountForRange(CountAtBucket[] countAtBuckets, TimeUnit timeUnit,
             double exclusiveMinBucket, double inclusiveMaxBucket) {
         double count = 0;
         for (CountAtBucket countAtBucket : countAtBuckets) {
-            if (countAtBucket.bucket(timeUnit) > exclusiveMinBucket
-                    && countAtBucket.bucket(timeUnit) <= inclusiveMaxBucket) {
+            double c = getCount(countAtBucket, timeUnit);
+            if (c > exclusiveMinBucket && c <= inclusiveMaxBucket) {
                 count += countAtBucket.count();
             }
         }
