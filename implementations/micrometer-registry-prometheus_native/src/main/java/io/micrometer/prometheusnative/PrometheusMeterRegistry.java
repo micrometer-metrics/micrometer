@@ -310,14 +310,14 @@ public class PrometheusMeterRegistry extends MeterRegistry {
 
     @SuppressWarnings("unchecked")
     private <T extends MetricWithFixedMetadata.Builder<?, ?>> T init(Meter.Id id, T builder) {
-        return (T) builder.withName(MetricMetadata.sanitizeMetricName(id.getName()))
+        return (T) builder.withName(PrometheusNaming.sanitizeMetricName(id.getName()))
             .withHelp(id.getDescription())
             .withUnit(id.getBaseUnit() != null ? new Unit(id.getBaseUnit()) : null)
             .withLabelNames(getLabelNames(id.getTags()));
     }
 
     private String[] getLabelNames(List<Tag> tags) {
-        return tags.stream().map(Tag::getKey).map(Labels::sanitizeLabelName).toArray(String[]::new);
+        return tags.stream().map(Tag::getKey).map(PrometheusNaming::sanitizeLabelName).toArray(String[]::new);
     }
 
     private String[] getLabelValues(List<Tag> tags) {

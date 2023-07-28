@@ -21,6 +21,7 @@ import io.prometheus.metrics.model.registry.Collector;
 import io.prometheus.metrics.model.snapshots.DataPointSnapshot;
 import io.prometheus.metrics.model.snapshots.Labels;
 import io.prometheus.metrics.model.snapshots.MetricSnapshot;
+import io.prometheus.metrics.model.snapshots.PrometheusNaming;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -59,7 +60,7 @@ abstract class PrometheusMeter<T extends Collector, S extends DataPointSnapshot>
     private Labels makeLabels(List<Tag> tags) {
         Labels.Builder builder = Labels.newBuilder();
         for (Tag tag : tags) {
-            builder.addLabel(Labels.sanitizeLabelName(tag.getKey()), tag.getValue());
+            builder.addLabel(PrometheusNaming.sanitizeLabelName(tag.getKey()), tag.getValue());
         }
         return builder.build();
     }
