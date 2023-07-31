@@ -16,13 +16,11 @@
 package io.micrometer.wavefront;
 
 import io.micrometer.common.lang.Nullable;
-import io.micrometer.core.instrument.config.MeterRegistryConfig;
 import io.micrometer.core.instrument.config.validate.InvalidReason;
 import io.micrometer.core.instrument.config.validate.Validated;
 import io.micrometer.core.instrument.push.PushRegistryConfig;
 
 import java.net.InetAddress;
-import java.net.URI;
 import java.net.UnknownHostException;
 
 import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.*;
@@ -174,19 +172,6 @@ public interface WavefrontConfig extends PushRegistryConfig {
                 check("apiToken", WavefrontConfig::apiToken)
                     .andThen(v -> v.invalidateWhen(token -> token == null && WavefrontMeterRegistry.isDirectToApi(this),
                             "must be set whenever publishing directly to the Wavefront API", InvalidReason.MISSING)));
-    }
-
-    // different from getUrlString for gh-3903
-    static Validated<String> getUriString(MeterRegistryConfig config, String property) {
-        String prefixedProperty = config.prefix() + '.' + property;
-        String value = config.get(prefixedProperty);
-
-        try {
-            return Validated.valid(prefixedProperty, value == null ? null : URI.create(value)).map(url -> value);
-        }
-        catch (IllegalArgumentException ex) {
-            return Validated.invalid(prefixedProperty, value, "must be a valid URI", InvalidReason.MALFORMED, ex);
-        }
     }
 
 }

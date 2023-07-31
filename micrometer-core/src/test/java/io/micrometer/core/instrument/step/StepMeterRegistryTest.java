@@ -499,7 +499,7 @@ class StepMeterRegistryTest {
 
         private void scheduledPublish() {
             this.lastScheduledPublishStartTime = clock.wallTime();
-            this.publish();
+            publish();
         }
 
         @Override
@@ -536,11 +536,7 @@ class StepMeterRegistryTest {
         }
 
         <T extends Number> double sumAllPublishedValues(Deque<T> deque) {
-            double sum = 0;
-            while (!deque.isEmpty()) {
-                sum += deque.pop().doubleValue();
-            }
-            return sum;
+            return deque.stream().mapToDouble(Number::doubleValue).sum();
         }
 
         @Override
@@ -550,9 +546,8 @@ class StepMeterRegistryTest {
 
     }
 
-    private static void assertBeforeRollover(final Counter counter, final Timer timer,
-            final DistributionSummary summary, final FunctionCounter functionCounter,
-            final FunctionTimer functionTimer) {
+    private static void assertBeforeRollover(Counter counter, Timer timer, DistributionSummary summary,
+            FunctionCounter functionCounter, FunctionTimer functionTimer) {
         assertThat(counter.count()).isZero();
         assertThat(timer.count()).isZero();
         assertThat(timer.totalTime(MILLISECONDS)).isZero();
@@ -570,7 +565,6 @@ class StepMeterRegistryTest {
      */
     private void addTimeWithRolloverOnStepStart(MockClock clock, StepMeterRegistry registry, StepRegistryConfig config,
             Duration timeToAdd) {
-
         long currentTime = clock.wallTime();
         long boundaryForNextStep = ((currentTime / config.step().toMillis()) + 1) * config.step().toMillis();
         long timeToNextStep = boundaryForNextStep - currentTime;

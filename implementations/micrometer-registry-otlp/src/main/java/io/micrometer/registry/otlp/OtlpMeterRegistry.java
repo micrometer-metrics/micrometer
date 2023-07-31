@@ -247,7 +247,7 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
                 // Data was not published for the current step. So, we should flush that
                 // first.
                 try {
-                    this.publish();
+                    publish();
                 }
                 catch (Throwable e) {
                     logger.warn(
@@ -261,8 +261,7 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
     }
 
     private boolean isDataPublishedForCurrentStep() {
-        long currentTimeInMillis = clock.wallTime();
-        return (getLastScheduledPublishStartTime() / config.step().toMillis()) >= (currentTimeInMillis
+        return (getLastScheduledPublishStartTime() / config.step().toMillis()) == (clock.wallTime()
                 / config.step().toMillis());
     }
 
