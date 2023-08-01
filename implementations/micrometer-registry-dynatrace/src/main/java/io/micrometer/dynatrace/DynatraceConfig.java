@@ -158,7 +158,7 @@ public interface DynatraceConfig extends StepRegistryConfig {
         if (apiVersion() == V1) {
             return false;
         }
-        return getBoolean(this, "exportDynatraceMetadata").orElse(true);
+        return getBoolean(this, "exportMeterMetadata").orElse(true);
     }
 
     @Override
