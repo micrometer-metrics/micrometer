@@ -125,6 +125,9 @@ public interface DynatraceConfig extends StepRegistryConfig {
      * @since 1.8.0
      */
     default boolean enrichWithDynatraceMetadata() {
+        if (apiVersion() == V1) {
+            return false;
+        }
         return getBoolean(this, "enrichWithDynatraceMetadata").orElse(true);
     }
 
@@ -141,6 +144,21 @@ public interface DynatraceConfig extends StepRegistryConfig {
             return false;
         }
         return getBoolean(this, "useDynatraceSummaryInstruments").orElse(true);
+    }
+
+    /**
+     * Toggle whether to export metadata (unit and description) to the Dynatrace backend
+     * for the V2 version of this exporter. Metadata will be exported by default from
+     * Micrometer version 1.12.0. This setting has no effect for the (legacy) Dynatrace
+     * Exporter v1
+     * @return true if metadata should be exported, false otherwise.
+     * @since 1.12.0
+     */
+    default boolean exportMeterMetadata() {
+        if (apiVersion() == V1) {
+            return false;
+        }
+        return getBoolean(this, "exportDynatraceMetadata").orElse(true);
     }
 
     @Override
