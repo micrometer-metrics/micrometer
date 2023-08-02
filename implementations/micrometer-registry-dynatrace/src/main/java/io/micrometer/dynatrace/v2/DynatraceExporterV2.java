@@ -149,7 +149,7 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
 
             metricLines.forEach(line -> {
                 batch.add(line);
-                trySendBatch(batch, partitionSize);
+                sendBatchIfFull(batch, partitionSize);
             });
         }
 
@@ -159,7 +159,7 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
             seenMetadata.values().forEach(line -> {
                 if (line != null) {
                     batch.add(line);
-                    trySendBatch(batch, partitionSize);
+                    sendBatchIfFull(batch, partitionSize);
                 }
             });
         }
@@ -170,7 +170,7 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
         }
     }
 
-    private void trySendBatch(List<String> batch, int partitionSize) {
+    private void sendBatchIfFull(List<String> batch, int partitionSize) {
         if (batch.size() == partitionSize) {
             send(batch);
             batch.clear();
@@ -220,46 +220,6 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
         }
 
         return null;
-    }
-
-    private void storeMetadataLine(Metric.Builder metricBuilder, Map<String, String> seenMetadata)
-            throws MetricException {
-        // if the config to export metadata is turned off, the seenMetadata map will be
-        // null.
-        if (seenMetadata == null) {
-            return;
-        }
-
-        String key = metricBuilder.getNormalizedMetricKey();
-
-        if (!seenMetadata.containsKey(key)) {
-            // if there is no metadata associated with the key, add it.
-            seenMetadata.put(key, metricBuilder.serializeMetadataLine());
-        }
-        else {
-            // get the previously stored metadata line
-            String previousMetadataLine = seenMetadata.get(key);
-            // if the previous line is not null, a metadata object had already been set in
-            // the past and no conflicting metadata lines had been added thereafter.
-            if (previousMetadataLine != null) {
-                String newMetadataLine = metricBuilder.serializeMetadataLine();
-                // if the new metadata line conflicts with the old one, we don't know
-                // which one is the correct metadata and will not export any.
-                // the map entry is set to null to ensure other metadata lines cannot be
-                // set for this metric key.
-                if (!previousMetadataLine.equals(newMetadataLine)) {
-                    seenMetadata.put(key, null);
-                    logger.warn(
-                            "Metadata discrepancy detected:\n" + "original metadata:\t{}\n" + "tried to set new:\t{}\n"
-                                    + "Metadata for metric key {} will not be sent.",
-                            previousMetadataLine, newMetadataLine, key);
-                }
-            }
-            // else:
-            // the key exists, but the value is null, so a conflicting state has been
-            // identified before. we will ignore any other metadata for this key, so there
-            // is nothing to do here.
-        }
     }
 
     Stream<String> toCounterLine(Counter counter, Map<String, String> seenMetadata) {
@@ -461,6 +421,46 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
             logger.error(
                     "Expected status code 202, got {}.\nResponse Body={}\nDid you specify the ingest path (e.g.: /api/v2/metrics/ingest)?",
                     response.code(), getTruncatedBody(response));
+        }
+    }
+
+    private void storeMetadataLine(Metric.Builder metricBuilder, Map<String, String> seenMetadata)
+            throws MetricException {
+        // if the config to export metadata is turned off, the seenMetadata map will be
+        // null.
+        if (seenMetadata == null) {
+            return;
+        }
+
+        String key = metricBuilder.getNormalizedMetricKey();
+
+        if (!seenMetadata.containsKey(key)) {
+            // if there is no metadata associated with the key, add it.
+            seenMetadata.put(key, metricBuilder.serializeMetadataLine());
+        }
+        else {
+            // get the previously stored metadata line
+            String previousMetadataLine = seenMetadata.get(key);
+            // if the previous line is not null, a metadata object had already been set in
+            // the past and no conflicting metadata lines had been added thereafter.
+            if (previousMetadataLine != null) {
+                String newMetadataLine = metricBuilder.serializeMetadataLine();
+                // if the new metadata line conflicts with the old one, we don't know
+                // which one is the correct metadata and will not export any.
+                // the map entry is set to null to ensure other metadata lines cannot be
+                // set for this metric key.
+                if (!previousMetadataLine.equals(newMetadataLine)) {
+                    seenMetadata.put(key, null);
+                    logger.warn(
+                            "Metadata discrepancy detected:\n" + "original metadata:\t{}\n" + "tried to set new:\t{}\n"
+                                    + "Metadata for metric key {} will not be sent.",
+                            previousMetadataLine, newMetadataLine, key);
+                }
+            }
+            // else:
+            // the key exists, but the value is null, so a conflicting state has been
+            // identified before. we will ignore any other metadata for this key, so there
+            // is nothing to do here.
         }
     }
 
