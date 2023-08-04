@@ -418,7 +418,7 @@ class StepMeterRegistryTest {
 
     @Test
     @Issue("3914")
-    void publishShouldNotHappenWhenRegistryIsClosedOrDisabled() {
+    void publishShouldNotHappenWhenRegistryIsDisabled() {
         StepRegistryConfig disabledStepRegistryConfig = new StepRegistryConfig() {
             @Override
             public String prefix() {
@@ -441,13 +441,27 @@ class StepMeterRegistryTest {
         Counter.builder("publish_disabled_counter").register(disabledStepMeterRegistry).increment();
 
         clock.add(config.step());
-        long publishCountBeforeClose = publishes.get();
+        assertThat(publishes.get()).isZero();
         disabledStepMeterRegistry.close();
-        assertThat(publishes.get()).isEqualTo(publishCountBeforeClose);
+        assertThat(publishes.get()).isZero();
+    }
+
+    @Test
+    @Issue("3914")
+    void publishShouldNotHappenWhenRegistryIsClosed() {
+        Counter.builder("my.counter").register(registry).increment();
 
         clock.add(config.step());
-        disabledStepMeterRegistry.close();
-        assertThat(publishes.get()).isEqualTo(publishCountBeforeClose);
+        assertThat(publishes.get()).isZero();
+        registry.close();
+        assertThat(publishes.get()).isEqualTo(2);
+        assertThat(registry.publishedCounterCounts).hasSize(2);
+        assertThat(registry.publishedCounterCounts.getFirst()).isOne();
+        assertThat(registry.publishedCounterCounts.getLast()).isZero();
+
+        clock.add(config.step());
+        registry.close();
+        assertThat(publishes.get()).isEqualTo(2);
     }
 
     private class MyStepMeterRegistry extends StepMeterRegistry {
