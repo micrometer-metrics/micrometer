@@ -29,6 +29,8 @@ import io.micrometer.common.KeyValues;
 public class DefaultHttpJakartaClientRequestObservationConvention extends
         AbstractDefaultHttpClientRequestObservationConvention implements HttpJakartaClientRequestObservationConvention {
 
+    public static DefaultHttpJakartaClientRequestObservationConvention INSTANCE = new DefaultHttpJakartaClientRequestObservationConvention();
+
     private static final String DEFAULT_NAME = "http.client.requests";
 
     private final String name;
@@ -62,7 +64,7 @@ public class DefaultHttpJakartaClientRequestObservationConvention extends
 
     @Override
     public KeyValues getLowCardinalityKeyValues(HttpJakartaClientRequestObservationContext context) {
-        URI uri = context.getCarrier() != null ? context.getCarrier().getUriInfo().getRequestUri() : null;
+        URI uri = context.getCarrier() != null ? context.getCarrier().getUri() : null;
         Throwable throwable = context.getError();
         String methodName = context.getCarrier() != null ? context.getCarrier().getMethod() : null;
         Integer statusCode = context.getResponse() != null ? context.getResponse().getStatus() : null;
@@ -72,7 +74,7 @@ public class DefaultHttpJakartaClientRequestObservationConvention extends
 
     @Override
     public KeyValues getHighCardinalityKeyValues(HttpJakartaClientRequestObservationContext context) {
-        URI uri = context.getCarrier() != null ? context.getCarrier().getUriInfo().getRequestUri() : null;
+        URI uri = context.getCarrier() != null ? context.getCarrier().getUri() : null;
         String userAgent = context.getCarrier() != null ? context.getCarrier().getHeaderString("User-Agent") : null;
         return getHighCardinalityKeyValues(uri, userAgent);
     }

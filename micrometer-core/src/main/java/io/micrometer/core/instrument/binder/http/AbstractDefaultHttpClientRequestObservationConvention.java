@@ -15,6 +15,9 @@
  */
 package io.micrometer.core.instrument.binder.http;
 
+import java.net.URI;
+import java.util.regex.Pattern;
+
 import io.micrometer.common.KeyValue;
 import io.micrometer.common.KeyValues;
 import io.micrometer.common.lang.Nullable;
@@ -22,9 +25,6 @@ import io.micrometer.common.util.StringUtils;
 import io.micrometer.core.instrument.binder.http.HttpObservationDocumentation.ClientLowCardinalityKeys;
 import io.micrometer.core.instrument.binder.http.HttpObservationDocumentation.CommonHighCardinalityKeys;
 import io.micrometer.core.instrument.binder.http.HttpObservationDocumentation.CommonLowCardinalityKeys;
-
-import java.net.URI;
-import java.util.regex.Pattern;
 
 class AbstractDefaultHttpClientRequestObservationConvention {
 
@@ -35,10 +35,6 @@ class AbstractDefaultHttpClientRequestObservationConvention {
     private static final KeyValue METHOD_NONE = KeyValue.of(CommonLowCardinalityKeys.METHOD, KeyValue.NONE_VALUE);
 
     private static final KeyValue STATUS_CLIENT_ERROR = KeyValue.of(CommonLowCardinalityKeys.STATUS, "CLIENT_ERROR");
-
-    private static final KeyValue HTTP_OUTCOME_SUCCESS = KeyValue.of(CommonLowCardinalityKeys.OUTCOME, "SUCCESS");
-
-    private static final KeyValue HTTP_OUTCOME_UNKNOWN = KeyValue.of(CommonLowCardinalityKeys.OUTCOME, "UNKNOWN");
 
     private static final KeyValue CLIENT_NAME_NONE = KeyValue.of(ClientLowCardinalityKeys.CLIENT_NAME,
             KeyValue.NONE_VALUE);
@@ -106,9 +102,9 @@ class AbstractDefaultHttpClientRequestObservationConvention {
 
     private KeyValue outcome(@Nullable Integer statusCode) {
         if (statusCode != null) {
-            return HttpOutcome.forStatus(statusCode);
+            return HttpOutcome.forStatus(false, statusCode);
         }
-        return HTTP_OUTCOME_UNKNOWN;
+        return HttpOutcome.forStatus(false, statusCode);
     }
 
     protected KeyValues getHighCardinalityKeyValues(@Nullable URI uri, @Nullable String userAgent) {
@@ -129,19 +125,6 @@ class AbstractDefaultHttpClientRequestObservationConvention {
             return KeyValue.of(CommonHighCardinalityKeys.USER_AGENT_ORIGINAL, userAgent);
         }
         return USER_AGENT_NONE;
-    }
-
-    static class HttpOutcome {
-
-        static KeyValue forStatus(int statusCode) {
-            if (statusCode >= 200 && statusCode < 300) {
-                return HTTP_OUTCOME_SUCCESS;
-            }
-            else {
-                return HTTP_OUTCOME_UNKNOWN;
-            }
-        }
-
     }
 
 }

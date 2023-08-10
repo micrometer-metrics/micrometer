@@ -27,6 +27,8 @@ import io.micrometer.common.KeyValues;
 public class DefaultHttpJakartaServerRequestObservationConvention extends
         AbstractDefaultHttpServerRequestObservationConvention implements HttpJakartaServerRequestObservationConvention {
 
+    public static DefaultHttpJakartaServerRequestObservationConvention INSTANCE = new DefaultHttpJakartaServerRequestObservationConvention();
+
     private static final String DEFAULT_NAME = "http.server.requests";
 
     private final String name;
@@ -61,13 +63,15 @@ public class DefaultHttpJakartaServerRequestObservationConvention extends
         String method = context.getCarrier() != null ? context.getCarrier().getMethod() : null;
         Integer status = context.getResponse() != null ? context.getResponse().getStatus() : null;
         String pathPattern = context.getPathPattern();
-        String requestUri = context.getCarrier() != null ? context.getCarrier().getRequestURI() : null;
+        String requestUri = context.getCarrier() != null ? context.getCarrier().getUriInfo().getRequestUri().toString()
+                : null;
         return getLowCardinalityKeyValues(context.getError(), method, status, pathPattern, requestUri);
     }
 
     @Override
     public KeyValues getHighCardinalityKeyValues(HttpJakartaServerRequestObservationContext context) {
-        String requestUri = context.getCarrier() != null ? context.getCarrier().getRequestURI() : null;
+        String requestUri = context.getCarrier() != null ? context.getCarrier().getUriInfo().getRequestUri().toString()
+                : null;
         return getHighCardinalityKeyValues(requestUri);
     }
 

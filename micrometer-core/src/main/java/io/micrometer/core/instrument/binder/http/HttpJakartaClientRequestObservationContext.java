@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 VMware, Inc.
+ * Copyright 2023 VMware, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,10 +17,8 @@ package io.micrometer.core.instrument.binder.http;
 
 import io.micrometer.common.lang.Nullable;
 import io.micrometer.observation.transport.RequestReplySenderContext;
-
-import javax.ws.rs.container.ContainerRequestContext;
-import javax.ws.rs.container.ContainerRequestFilter;
-import javax.ws.rs.container.ContainerResponseContext;
+import jakarta.ws.rs.client.ClientRequestContext;
+import jakarta.ws.rs.client.ClientResponseContext;
 
 /**
  * Context that holds information for metadata collection during the client HTTP exchanges
@@ -34,21 +32,21 @@ import javax.ws.rs.container.ContainerResponseContext;
  * @since 1.12.0
  */
 public class HttpJakartaClientRequestObservationContext
-        extends RequestReplySenderContext<ContainerRequestContext, ContainerResponseContext> {
+        extends RequestReplySenderContext<ClientRequestContext, ClientResponseContext> {
 
     @Nullable
     private String uriTemplate;
 
     /**
      * Create an observation context for HTTP client observations.
-     * @param containerRequestContext the context for a {@link ContainerRequestFilter}
+     * @param containerRequestContext the context for a {@link ClientRequestContext}
      */
-    public HttpJakartaClientRequestObservationContext(ContainerRequestContext containerRequestContext) {
+    public HttpJakartaClientRequestObservationContext(ClientRequestContext containerRequestContext) {
         super(HttpJakartaClientRequestObservationContext::setRequestHeader);
         this.setCarrier(containerRequestContext);
     }
 
-    private static void setRequestHeader(@Nullable ContainerRequestContext context, String name, String value) {
+    private static void setRequestHeader(@Nullable ClientRequestContext context, String name, String value) {
         if (context != null) {
             context.getHeaders().add(name, value);
         }

@@ -129,7 +129,7 @@ class AbstractDefaultHttpServerRequestObservationConvention {
 
     private KeyValue outcome(@Nullable Integer status) {
         if (status != null) {
-            return HttpOutcome.forStatus(status);
+            return HttpOutcome.forStatus(true, status);
         }
         return HTTP_OUTCOME_UNKNOWN;
     }
@@ -139,19 +139,6 @@ class AbstractDefaultHttpServerRequestObservationConvention {
             return KeyValue.of(CommonHighCardinalityKeys.HTTP_URL, requestUri);
         }
         return HTTP_URL_UNKNOWN;
-    }
-
-    static class HttpOutcome {
-
-        static KeyValue forStatus(int statusCode) {
-            if (statusCode >= 200 && statusCode < 300) {
-                return HTTP_OUTCOME_SUCCESS;
-            }
-            else {
-                return HTTP_OUTCOME_UNKNOWN;
-            }
-        }
-
     }
 
 }

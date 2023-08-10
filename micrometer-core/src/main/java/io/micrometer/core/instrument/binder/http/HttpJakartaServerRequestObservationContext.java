@@ -17,8 +17,8 @@ package io.micrometer.core.instrument.binder.http;
 
 import io.micrometer.common.lang.Nullable;
 import io.micrometer.observation.transport.RequestReplyReceiverContext;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
+import jakarta.ws.rs.container.ContainerRequestContext;
+import jakarta.ws.rs.container.ContainerResponseContext;
 
 /**
  * Context that holds information for metadata collection regarding Servlet HTTP requests
@@ -32,15 +32,14 @@ import jakarta.servlet.http.HttpServletResponse;
  * @since 1.12.0
  */
 public class HttpJakartaServerRequestObservationContext
-        extends RequestReplyReceiverContext<HttpServletRequest, HttpServletResponse> {
+        extends RequestReplyReceiverContext<ContainerRequestContext, ContainerResponseContext> {
 
     @Nullable
     private String pathPattern;
 
-    public HttpJakartaServerRequestObservationContext(HttpServletRequest request, HttpServletResponse response) {
-        super(HttpServletRequest::getHeader);
+    public HttpJakartaServerRequestObservationContext(ContainerRequestContext request) {
+        super(ContainerRequestContext::getHeaderString);
         setCarrier(request);
-        setResponse(response);
     }
 
     @Nullable
