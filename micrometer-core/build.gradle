@@ -45,6 +45,7 @@ jar {
             org.apache.kafka.*;resolution:=dynamic,\
             com.codahale.metrics.*;resolution:=dynamic;version="${@}",\
             com.google.common.cache.*;resolution:=dynamic;version="${@}",\
+            jakarta.jms.*;resolution:=dynamic;version="${@}",\
             jakarta.servlet.*;resolution:=dynamic;version="${@}",\
             javax.servlet.*;resolution:=dynamic;version="${@}",\
             io.micrometer.context.*;resolution:=dynamic,\
@@ -100,6 +101,8 @@ dependencies {
     optionalApi 'org.glassfish.jersey.core:jersey-server'
     optionalApi 'io.grpc:grpc-api'
     optionalApi 'io.netty:netty-transport'
+    // jakarta JMS
+    optionalApi 'jakarta.jms:jakarta.jms-api'
 
     // apache httpcomponents monitoring
     optionalApi 'org.apache.httpcomponents:httpclient'
