@@ -90,6 +90,21 @@ class HighCardinalityTagsDetectorTests {
         assertThat(highCardinalityTagsDetector.findFirst()).isEmpty();
     }
 
+    @Test
+    void addsCustomMeterNameConsumer() {
+        TestCustomMeterNameConsumer customMeterNameConsumer = new TestCustomMeterNameConsumer();
+        this.highCardinalityTagsDetector = new HighCardinalityTagsDetector(registry, 3, Duration.ofMinutes(1),
+                customMeterNameConsumer);
+
+        for (int i = 0; i < 4; i++) {
+            Counter.builder("test.counter").tag("index", String.valueOf(i)).register(registry).increment();
+        }
+        highCardinalityTagsDetector.start();
+
+        await().atMost(Duration.ofSeconds(1))
+            .until(() -> "test.counter_customized".equals(customMeterNameConsumer.getName()));
+    }
+
     private static class TestMeterNameConsumer implements Consumer<String> {
 
         @Nullable
@@ -98,6 +113,23 @@ class HighCardinalityTagsDetectorTests {
         @Override
         public void accept(String name) {
             this.name = name;
+        }
+
+        @Nullable
+        public String getName() {
+            return this.name;
+        }
+
+    }
+
+    private static class TestCustomMeterNameConsumer implements Consumer<String> {
+
+        @Nullable
+        private String name;
+
+        @Override
+        public void accept(String name) {
+            this.name = name + "_customized";
         }
 
         @Nullable

@@ -963,6 +963,24 @@ public abstract class MeterRegistry {
                     new HighCardinalityTagsDetector(MeterRegistry.this, threshold, delay));
         }
 
+        /**
+         * Creates and starts a new {@link HighCardinalityTagsDetector} for this registry.
+         * @param threshold The threshold to use to detect high cardinality tags (if the
+         * number of Meters with the same name is higher than this value, that's a high
+         * cardinality tag).
+         * @param delay The delay between the termination of one check and the
+         * commencement of the next.
+         * @param meterNameConsumer A consumer that will be called for each high
+         * cardinality tag detected.
+         * @return This configuration instance.
+         * @since 1.12.0
+         */
+        public Config withHighCardinalityTagsDetector(long threshold, Duration delay,
+                Consumer<String> meterNameConsumer) {
+            return withHighCardinalityTagsDetector(
+                    new HighCardinalityTagsDetector(MeterRegistry.this, threshold, delay, meterNameConsumer));
+        }
+
         private Config withHighCardinalityTagsDetector(HighCardinalityTagsDetector newHighCardinalityTagsDetector) {
             if (highCardinalityTagsDetector != null) {
                 highCardinalityTagsDetector.close();
