@@ -199,7 +199,7 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
         metrics.add(writeMetric(id, "max", wallTime, timer.max(getBaseTimeUnit()), Statistic.MAX, null));
 
         addToMetadataList(metadata, id, "sum", Statistic.DURATION, null);
-        addToMetadataList(metadata, id, "count", Statistic.ACTIVE_TASKS, "occurrence");
+        addToMetadataList(metadata, id, "active", Statistic.ACTIVE_TASKS, "occurrence");
         addToMetadataList(metadata, id, "avg", Statistic.VALUE, null);
         addToMetadataList(metadata, id, "max", Statistic.MAX, null);
 
