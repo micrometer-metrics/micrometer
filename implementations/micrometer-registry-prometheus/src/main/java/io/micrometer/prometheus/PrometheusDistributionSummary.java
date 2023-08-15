@@ -15,14 +15,17 @@
  */
 package io.micrometer.prometheus;
 
+import io.micrometer.common.lang.NonNull;
 import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.AbstractDistributionSummary;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.DistributionSummary;
 import io.micrometer.core.instrument.distribution.*;
+import io.prometheus.client.exemplars.CounterExemplarSampler;
 import io.prometheus.client.exemplars.Exemplar;
-import io.prometheus.client.exemplars.HistogramExemplarSampler;
+import io.prometheus.client.exemplars.ExemplarSampler;
 
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.atomic.DoubleAdder;
 import java.util.concurrent.atomic.LongAdder;
 
@@ -47,10 +50,16 @@ public class PrometheusDistributionSummary extends AbstractDistributionSummary {
     @Nullable
     private final Histogram histogram;
 
-    private boolean exemplarsEnabled = false;
+    @Nullable
+    private final ExemplarSampler exemplarSampler;
+
+    @Nullable
+    private final AtomicReference<Exemplar> lastExemplar;
+
+    private boolean histogramExemplarsEnabled = false;
 
     PrometheusDistributionSummary(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig,
-            double scale, HistogramFlavor histogramFlavor, @Nullable HistogramExemplarSampler exemplarSampler) {
+            double scale, HistogramFlavor histogramFlavor, @Nullable ExemplarSampler exemplarSampler) {
         super(id, clock,
                 DistributionStatisticConfig.builder()
                     .percentilesHistogram(false)
@@ -68,7 +77,7 @@ public class PrometheusDistributionSummary extends AbstractDistributionSummary {
                     PrometheusHistogram prometheusHistogram = new PrometheusHistogram(clock,
                             distributionStatisticConfig, exemplarSampler);
                     this.histogram = prometheusHistogram;
-                    this.exemplarsEnabled = prometheusHistogram.isExemplarsEnabled();
+                    this.histogramExemplarsEnabled = prometheusHistogram.isExemplarsEnabled();
                     break;
                 case VictoriaMetrics:
                     this.histogram = new FixedBoundaryVictoriaMetricsHistogram();
@@ -81,6 +90,15 @@ public class PrometheusDistributionSummary extends AbstractDistributionSummary {
         else {
             this.histogram = null;
         }
+
+        if (!this.histogramExemplarsEnabled && exemplarSampler != null) {
+            this.exemplarSampler = exemplarSampler;
+            this.lastExemplar = new AtomicReference<>();
+        }
+        else {
+            this.exemplarSampler = null;
+            this.lastExemplar = null;
+        }
     }
 
     @Override
@@ -89,17 +107,42 @@ public class PrometheusDistributionSummary extends AbstractDistributionSummary {
         this.amount.add(amount);
         max.record(amount);
 
-        if (histogram != null)
+        if (histogram != null) {
             histogram.recordDouble(amount);
+        }
+        if (!histogramExemplarsEnabled && exemplarSampler != null) {
+            updateLastExemplar(amount, exemplarSampler);
+        }
+    }
+
+    // Similar to exemplar.updateAndGet(...) but it does nothing if the next value is null
+    private void updateLastExemplar(double amount, @NonNull CounterExemplarSampler exemplarSampler) {
+        Exemplar prev;
+        Exemplar next;
+        do {
+            prev = lastExemplar.get();
+            next = exemplarSampler.sample(amount, prev);
+        }
+        while (next != null && next != prev && !lastExemplar.compareAndSet(prev, next));
     }
 
     @Nullable
-    Exemplar[] exemplars() {
-        if (exemplarsEnabled) {
+    Exemplar[] histogramExemplars() {
+        if (histogramExemplarsEnabled) {
             return ((PrometheusHistogram) histogram).exemplars();
         }
         else {
             return null;
+        }
+    }
+
+    @Nullable
+    Exemplar lastExemplar() {
+        if (histogramExemplarsEnabled) {
+            return ((PrometheusHistogram) histogram).lastExemplar();
+        }
+        else {
+            return lastExemplar != null ? lastExemplar.get() : null;
         }
     }
 

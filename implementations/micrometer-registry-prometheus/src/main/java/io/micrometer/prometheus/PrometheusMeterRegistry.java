@@ -232,6 +232,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
                     }
                 }
 
+                Exemplar lastExemplar = summary.lastExemplar();
                 Collector.Type type = Collector.Type.SUMMARY;
                 if (histogramCounts.length > 0) {
                     // Prometheus doesn't balk at a metric being BOTH a histogram and a
@@ -244,7 +245,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
                         case Prometheus:
                             histogramKeys.add("le");
 
-                            Exemplar[] exemplars = summary.exemplars();
+                            Exemplar[] exemplars = summary.histogramExemplars();
 
                             // satisfies
                             // https://prometheus.io/docs/concepts/metric_types/#histogram
@@ -295,8 +296,14 @@ public class PrometheusMeterRegistry extends MeterRegistry {
 
                 }
 
-                samples.add(
-                        new Collector.MetricFamilySamples.Sample(conventionName + "_count", tagKeys, tagValues, count));
+                if (lastExemplar == null) {
+                    samples.add(new Collector.MetricFamilySamples.Sample(conventionName + "_count", tagKeys, tagValues,
+                            count));
+                }
+                else {
+                    samples.add(new Collector.MetricFamilySamples.Sample(conventionName + "_count", tagKeys, tagValues,
+                            count, copyExemplarWithNewValue(1.0, lastExemplar)));
+                }
 
                 samples.add(new Collector.MetricFamilySamples.Sample(conventionName + "_sum", tagKeys, tagValues,
                         summary.totalAmount()));
@@ -316,7 +323,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
         PrometheusTimer timer = new PrometheusTimer(id, clock, distributionStatisticConfig, pauseDetector,
                 prometheusConfig.histogramFlavor(), exemplarSampler);
         applyToCollector(id, (collector) -> addDistributionStatisticSamples(distributionStatisticConfig, collector,
-                timer, timer::exemplars, tagValues(id), false));
+                timer, timer::lastExemplar, timer::histogramExemplars, tagValues(id), false));
         return timer;
     }
 
@@ -338,7 +345,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
         LongTaskTimer ltt = new CumulativeHistogramLongTaskTimer(id, clock, getBaseTimeUnit(),
                 distributionStatisticConfig);
         applyToCollector(id, (collector) -> addDistributionStatisticSamples(distributionStatisticConfig, collector, ltt,
-                () -> null, tagValues(id), true));
+                () -> null, () -> null, tagValues(id), true));
         return ltt;
     }
 
@@ -440,8 +447,8 @@ public class PrometheusMeterRegistry extends MeterRegistry {
     }
 
     private void addDistributionStatisticSamples(DistributionStatisticConfig distributionStatisticConfig,
-            MicrometerCollector collector, HistogramSupport histogramSupport, Supplier<Exemplar[]> exemplarsSupplier,
-            List<String> tagValues, boolean forLongTaskTimer) {
+            MicrometerCollector collector, HistogramSupport histogramSupport, Supplier<Exemplar> lastExemplarSupplier,
+            Supplier<Exemplar[]> histogramExemplarsSupplier, List<String> tagValues, boolean forLongTaskTimer) {
         collector.add(tagValues, (conventionName, tagKeys) -> {
             Stream.Builder<Collector.MetricFamilySamples.Sample> samples = Stream.builder();
 
@@ -463,6 +470,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
                 }
             }
 
+            Exemplar lastExemplar = lastExemplarSupplier.get();
             Collector.Type type = distributionStatisticConfig.isPublishingHistogram() ? Collector.Type.HISTOGRAM
                     : Collector.Type.SUMMARY;
             if (histogramCounts.length > 0) {
@@ -477,7 +485,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
                     case Prometheus:
                         histogramKeys.add("le");
 
-                        Exemplar[] exemplars = exemplarsSupplier.get();
+                        Exemplar[] exemplars = histogramExemplarsSupplier.get();
 
                         // satisfies
                         // https://prometheus.io/docs/concepts/metric_types/#histogram
@@ -523,8 +531,15 @@ public class PrometheusMeterRegistry extends MeterRegistry {
 
             }
 
-            samples.add(new Collector.MetricFamilySamples.Sample(
-                    conventionName + (forLongTaskTimer ? "_active_count" : "_count"), tagKeys, tagValues, count));
+            if (lastExemplar == null) {
+                samples.add(new Collector.MetricFamilySamples.Sample(
+                        conventionName + (forLongTaskTimer ? "_active_count" : "_count"), tagKeys, tagValues, count));
+            }
+            else {
+                samples.add(new Collector.MetricFamilySamples.Sample(
+                        conventionName + (forLongTaskTimer ? "_active_count" : "_count"), tagKeys, tagValues, count,
+                        copyExemplarWithNewValue(1.0, lastExemplar)));
+            }
 
             samples.add(new Collector.MetricFamilySamples.Sample(
                     conventionName + (forLongTaskTimer ? "_duration_sum" : "_sum"), tagKeys, tagValues,
@@ -535,6 +550,15 @@ public class PrometheusMeterRegistry extends MeterRegistry {
                             Stream.of(new Collector.MetricFamilySamples.Sample(conventionName + "_max", tagKeys,
                                     tagValues, histogramSnapshot.max(getBaseTimeUnit())))));
         });
+    }
+
+    private Exemplar copyExemplarWithNewValue(double newValue, Exemplar exemplar) {
+        String[] labels = new String[exemplar.getNumberOfLabels() * 2];
+        for (int i = 0; i < exemplar.getNumberOfLabels(); i++) {
+            labels[2 * i] = exemplar.getLabelName(i);
+            labels[2 * i + 1] = exemplar.getLabelValue(i);
+        }
+        return new Exemplar(newValue, exemplar.getTimestampMs(), labels);
     }
 
     private void onMeterRemoved(Meter meter) {
