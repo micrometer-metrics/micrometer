@@ -36,6 +36,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @author Jonatan Ivanov
  * @author Tommy Ludwig
  * @author Marcin Grzejszczak
+ * @author Yanming Zhou
  */
 class ObservationTests {
 
@@ -78,6 +79,20 @@ class ObservationTests {
         Observation observation = Observation.createNotStarted("foo", registry);
 
         assertThat(observation).isNotSameAs(Observation.NOOP);
+    }
+
+    @Test
+    void usingParentObservationToMatchPredicate() {
+        registry.observationConfig().observationHandler(context -> true);
+        registry.observationConfig()
+            .observationPredicate((s, context) -> !s.equals("child") || context.getParentObservation() != null);
+
+        Observation childWithoutParent = Observation.createNotStarted("child", registry);
+        assertThat(childWithoutParent).isSameAs(Observation.NOOP);
+
+        Observation childWithParent = Observation.createNotStarted("parent", registry)
+            .observe(() -> Observation.createNotStarted("child", registry));
+        assertThat(childWithParent).isNotSameAs(Observation.NOOP);
     }
 
     @Test
