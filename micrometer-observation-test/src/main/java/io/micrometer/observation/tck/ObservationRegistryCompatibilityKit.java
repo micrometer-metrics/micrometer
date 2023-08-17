@@ -18,10 +18,10 @@ package io.micrometer.observation.tck;
 import io.micrometer.common.KeyValue;
 import io.micrometer.common.KeyValues;
 import io.micrometer.common.lang.Nullable;
+import io.micrometer.observation.GlobalObservationConvention;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationHandler;
 import io.micrometer.observation.ObservationRegistry;
-import io.micrometer.observation.GlobalObservationConvention;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -85,7 +85,12 @@ public abstract class ObservationRegistryCompatibilityKit {
 
             Observation.Event event = Observation.Event.of("testEvent", "event for testing");
             observation.event(event);
+            Observation.Event event2 = Observation.Event.of("testEvent", "event for testing",
+                    System.currentTimeMillis());
+            observation.event(event2);
+
             inOrder.verify(handler).onEvent(same(event), isA(Observation.Context.class));
+            inOrder.verify(handler).onEvent(same(event2), isA(Observation.Context.class));
 
             Throwable exception = new IOException("simulated");
             observation.error(exception);
