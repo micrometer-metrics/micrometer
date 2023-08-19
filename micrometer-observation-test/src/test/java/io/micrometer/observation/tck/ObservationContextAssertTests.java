@@ -15,6 +15,7 @@
  */
 package io.micrometer.observation.tck;
 
+import io.micrometer.common.KeyValue;
 import io.micrometer.common.KeyValues;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
@@ -237,7 +238,8 @@ class ObservationContextAssertTests {
         Observation observation = Observation.start("foo", context, registry);
         observation.lowCardinalityKeyValue("foo", "bar");
 
-        thenNoException().isThrownBy(() -> assertThat(context).hasLowCardinalityKeyValue("foo", "bar"));
+        thenNoException().isThrownBy(() -> assertThat(context).hasLowCardinalityKeyValue("foo", "bar")
+            .hasLowCardinalityKeyValue(KeyValue.of("foo", "bar")));
     }
 
     @Test
@@ -256,7 +258,8 @@ class ObservationContextAssertTests {
         Observation observation = Observation.start("foo", context, registry);
         observation.highCardinalityKeyValue("foo", "bar");
 
-        thenNoException().isThrownBy(() -> assertThat(context).hasHighCardinalityKeyValue("foo", "bar"));
+        thenNoException().isThrownBy(() -> assertThat(context).hasHighCardinalityKeyValue("foo", "bar")
+            .hasHighCardinalityKeyValue(KeyValue.of("foo", "bar")));
     }
 
     @Test
@@ -272,7 +275,8 @@ class ObservationContextAssertTests {
 
     @Test
     void should_not_throw_exception_when_high_cardinality_key_value_present() {
-        thenNoException().isThrownBy(() -> assertThat(context).doesNotHaveHighCardinalityKeyValue("foo", "bar"));
+        thenNoException().isThrownBy(() -> assertThat(context).doesNotHaveHighCardinalityKeyValue("foo", "bar")
+            .doesNotHaveHighCardinalityKeyValue(KeyValue.of("foo", "bar")));
     }
 
     @Test
@@ -299,7 +303,8 @@ class ObservationContextAssertTests {
 
     @Test
     void should_not_throw_exception_when_low_cardinality_key_value_missing() {
-        thenNoException().isThrownBy(() -> assertThat(context).doesNotHaveLowCardinalityKeyValue("foo", "bar"));
+        thenNoException().isThrownBy(() -> assertThat(context).doesNotHaveLowCardinalityKeyValue("foo", "bar")
+            .doesNotHaveLowCardinalityKeyValue(KeyValue.of("foo", "bar")));
     }
 
     @Test
