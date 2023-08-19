@@ -31,7 +31,7 @@ public interface ApacheHttpClientObservationConvention extends ObservationConven
      * that should hold the String representation of the URI template used for creating
      * the client URL.
      * <p>
-     * This value can be contributed as a {@link io.micrometer.common.KeyValue} to the
+     * This value can be contributed as an {@link io.micrometer.common.KeyValue} to the
      * recorded observations. <pre>
      * String uriTemplate = "/users/{id}";
      * HttpClientContext clientContext = ...

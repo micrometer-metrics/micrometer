@@ -18,17 +18,14 @@ package io.micrometer.core.instrument.binder.httpcomponents.hc5;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import io.micrometer.observation.tck.TestObservationRegistry;
 import org.apache.hc.client5.http.async.methods.SimpleHttpRequest;
-import org.apache.hc.client5.http.async.methods.SimpleHttpResponse;
 import org.apache.hc.client5.http.async.methods.SimpleRequestBuilder;
 import org.apache.hc.client5.http.classic.methods.HttpGet;
 import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 import org.apache.hc.client5.http.config.ConnectionConfig;
 import org.apache.hc.client5.http.impl.DefaultHttpRequestRetryStrategy;
 import org.apache.hc.client5.http.impl.async.CloseableHttpAsyncClient;
-import org.apache.hc.client5.http.impl.async.HttpAsyncClientBuilder;
 import org.apache.hc.client5.http.impl.async.HttpAsyncClients;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
-import org.apache.hc.client5.http.impl.classic.HttpClientBuilder;
 import org.apache.hc.client5.http.impl.classic.HttpClients;
 import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManagerBuilder;
 import org.apache.hc.client5.http.impl.nio.PoolingAsyncClientConnectionManagerBuilder;
@@ -49,18 +46,17 @@ import ru.lanwen.wiremock.ext.WiremockResolver;
 
 import java.io.IOException;
 import java.net.SocketTimeoutException;
-import java.net.URI;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static com.github.tomakehurst.wiremock.stubbing.Scenario.STARTED;
+import static io.micrometer.core.instrument.binder.httpcomponents.hc5.ApacheHttpClientObservationDocumentation.ApacheHttpClientKeyNames.*;
 import static io.micrometer.observation.tck.TestObservationRegistryAssert.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
- * Wiremock based integration tests for {@link ObservationExecChainHandler}.
+ * Wiremock-based integration tests for {@link ObservationExecChainHandler}.
  *
  * @author Lars Uffmann
  * @author Brian Clozel
@@ -68,7 +64,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @ExtendWith(WiremockResolver.class)
 class ObservationExecChainHandlerIntegrationTest {
 
-    public static final String DEFAULT_METER_NAME = "httpcomponents.httpclient.request";
+    private static final String DEFAULT_METER_NAME = "httpcomponents.httpclient.request";
 
     private static final HttpClientResponseHandler<ClassicHttpResponse> NOOP_RESPONSE_HANDLER = (response) -> response;
 
@@ -86,9 +82,9 @@ class ObservationExecChainHandlerIntegrationTest {
             }
             assertThat(observationRegistry).hasObservationWithNameEqualTo(DEFAULT_METER_NAME)
                 .that()
-                .hasLowCardinalityKeyValue("outcome", "SUCCESS")
-                .hasLowCardinalityKeyValue("status", "200")
-                .hasLowCardinalityKeyValue("method", "GET");
+                .hasLowCardinalityKeyValue(OUTCOME.asString(), "SUCCESS")
+                .hasLowCardinalityKeyValue(STATUS.asString(), "200")
+                .hasLowCardinalityKeyValue(METHOD.asString(), "GET");
             // end::example_classic[]
         }
 
@@ -100,9 +96,9 @@ class ObservationExecChainHandlerIntegrationTest {
             }
             assertThat(observationRegistry).hasObservationWithNameEqualTo(DEFAULT_METER_NAME)
                 .that()
-                .hasLowCardinalityKeyValue("outcome", "CLIENT_ERROR")
-                .hasLowCardinalityKeyValue("status", "404")
-                .hasLowCardinalityKeyValue("method", "GET");
+                .hasLowCardinalityKeyValue(OUTCOME.asString(), "CLIENT_ERROR")
+                .hasLowCardinalityKeyValue(STATUS.asString(), "404")
+                .hasLowCardinalityKeyValue(METHOD.asString(), "GET");
         }
 
         @Test
@@ -113,7 +109,7 @@ class ObservationExecChainHandlerIntegrationTest {
             }
             assertThat(observationRegistry).hasObservationWithNameEqualTo(DEFAULT_METER_NAME)
                 .that()
-                .hasLowCardinalityKeyValue("uri", "UNKNOWN");
+                .hasLowCardinalityKeyValue(URI.asString(), "UNKNOWN");
         }
 
         @Test
@@ -127,7 +123,7 @@ class ObservationExecChainHandlerIntegrationTest {
             }
             assertThat(observationRegistry).hasObservationWithNameEqualTo(DEFAULT_METER_NAME)
                 .that()
-                .hasLowCardinalityKeyValue("uri", "/some/{name}");
+                .hasLowCardinalityKeyValue(URI.asString(), "/some/{name}");
         }
 
         @Test
@@ -141,7 +137,7 @@ class ObservationExecChainHandlerIntegrationTest {
             }
             assertThat(observationRegistry).hasObservationWithNameEqualTo(DEFAULT_METER_NAME)
                 .that()
-                .hasLowCardinalityKeyValue("uri", "/some/{name}");
+                .hasLowCardinalityKeyValue(URI.asString(), "/some/{name}");
         }
 
         @ParameterizedTest
@@ -150,13 +146,13 @@ class ObservationExecChainHandlerIntegrationTest {
                 throws Exception {
             server.stubFor(any(anyUrl()));
             try (CloseableHttpClient client = classicClient()) {
-                HttpUriRequestBase request = new HttpUriRequestBase(methodName, URI.create(server.baseUrl()));
+                HttpUriRequestBase request = new HttpUriRequestBase(methodName, java.net.URI.create(server.baseUrl()));
                 executeClassic(client, request);
             }
             assertThat(observationRegistry).hasObservationWithNameEqualTo(DEFAULT_METER_NAME)
                 .that()
                 .hasContextualNameEqualTo("HTTP " + methodName)
-                .hasLowCardinalityKeyValue("method", methodName);
+                .hasLowCardinalityKeyValue(METHOD.asString(), methodName);
         }
 
         @Test
@@ -168,10 +164,10 @@ class ObservationExecChainHandlerIntegrationTest {
             }
             assertThat(observationRegistry).hasObservationWithNameEqualTo(DEFAULT_METER_NAME)
                 .that()
-                .hasLowCardinalityKeyValue("outcome", "UNKNOWN")
-                .hasLowCardinalityKeyValue("status", "IO_ERROR")
-                .hasLowCardinalityKeyValue("exception", "ProtocolException")
-                .hasLowCardinalityKeyValue("method", "GET");
+                .hasLowCardinalityKeyValue(OUTCOME.asString(), "UNKNOWN")
+                .hasLowCardinalityKeyValue(STATUS.asString(), "IO_ERROR")
+                .hasLowCardinalityKeyValue(EXCEPTION.asString(), "ProtocolException")
+                .hasLowCardinalityKeyValue(METHOD.asString(), "GET");
         }
 
         @Test
@@ -183,10 +179,10 @@ class ObservationExecChainHandlerIntegrationTest {
             }
             assertThat(observationRegistry).hasObservationWithNameEqualTo(DEFAULT_METER_NAME)
                 .that()
-                .hasLowCardinalityKeyValue("outcome", "UNKNOWN")
-                .hasLowCardinalityKeyValue("status", "IO_ERROR")
-                .hasLowCardinalityKeyValue("exception", "SocketTimeoutException")
-                .hasLowCardinalityKeyValue("method", "GET");
+                .hasLowCardinalityKeyValue(OUTCOME.asString(), "UNKNOWN")
+                .hasLowCardinalityKeyValue(STATUS.asString(), "IO_ERROR")
+                .hasLowCardinalityKeyValue(EXCEPTION.asString(), "SocketTimeoutException")
+                .hasLowCardinalityKeyValue(METHOD.asString(), "GET");
         }
 
         @Test
@@ -197,9 +193,9 @@ class ObservationExecChainHandlerIntegrationTest {
             }
             assertThat(observationRegistry).hasObservationWithNameEqualTo(DEFAULT_METER_NAME)
                 .that()
-                .hasLowCardinalityKeyValue("outcome", "SERVER_ERROR")
-                .hasLowCardinalityKeyValue("status", "503")
-                .hasLowCardinalityKeyValue("method", "GET");
+                .hasLowCardinalityKeyValue(OUTCOME.asString(), "SERVER_ERROR")
+                .hasLowCardinalityKeyValue(STATUS.asString(), "503")
+                .hasLowCardinalityKeyValue(METHOD.asString(), "GET");
             assertThat(observationRegistry).hasNumberOfObservationsWithNameEqualTo(DEFAULT_METER_NAME, 2);
         }
 
@@ -216,8 +212,8 @@ class ObservationExecChainHandlerIntegrationTest {
             try (CloseableHttpClient client = classicClient()) {
                 executeClassic(client, new HttpGet(server.baseUrl() + "/retry"));
             }
-            assertThat(observationRegistry).hasAnObservationWithAKeyValue("outcome", "SUCCESS")
-                .hasAnObservationWithAKeyValue("outcome", "SERVER_ERROR");
+            assertThat(observationRegistry).hasAnObservationWithAKeyValue(OUTCOME.asString(), "SUCCESS")
+                .hasAnObservationWithAKeyValue(OUTCOME.asString(), "SERVER_ERROR");
             assertThat(observationRegistry).hasNumberOfObservationsWithNameEqualTo(DEFAULT_METER_NAME, 2);
         }
 
@@ -236,9 +232,9 @@ class ObservationExecChainHandlerIntegrationTest {
             }
             assertThat(observationRegistry).hasObservationWithNameEqualTo(DEFAULT_METER_NAME)
                 .that()
-                .hasLowCardinalityKeyValue("outcome", "SUCCESS")
-                .hasLowCardinalityKeyValue("status", "200")
-                .hasLowCardinalityKeyValue("method", "GET");
+                .hasLowCardinalityKeyValue(OUTCOME.asString(), "SUCCESS")
+                .hasLowCardinalityKeyValue(STATUS.asString(), "200")
+                .hasLowCardinalityKeyValue(METHOD.asString(), "GET");
             // end::example_async[]
         }
 
@@ -251,9 +247,9 @@ class ObservationExecChainHandlerIntegrationTest {
             }
             assertThat(observationRegistry).hasObservationWithNameEqualTo(DEFAULT_METER_NAME)
                 .that()
-                .hasLowCardinalityKeyValue("outcome", "CLIENT_ERROR")
-                .hasLowCardinalityKeyValue("status", "404")
-                .hasLowCardinalityKeyValue("method", "GET");
+                .hasLowCardinalityKeyValue(OUTCOME.asString(), "CLIENT_ERROR")
+                .hasLowCardinalityKeyValue(STATUS.asString(), "404")
+                .hasLowCardinalityKeyValue(METHOD.asString(), "GET");
         }
 
         @Test
@@ -265,7 +261,7 @@ class ObservationExecChainHandlerIntegrationTest {
             }
             assertThat(observationRegistry).hasObservationWithNameEqualTo(DEFAULT_METER_NAME)
                 .that()
-                .hasLowCardinalityKeyValue("uri", "UNKNOWN");
+                .hasLowCardinalityKeyValue(URI.asString(), "UNKNOWN");
         }
 
         @Test
@@ -280,7 +276,7 @@ class ObservationExecChainHandlerIntegrationTest {
             }
             assertThat(observationRegistry).hasObservationWithNameEqualTo(DEFAULT_METER_NAME)
                 .that()
-                .hasLowCardinalityKeyValue("uri", "/some/{name}");
+                .hasLowCardinalityKeyValue(URI.asString(), "/some/{name}");
         }
 
         @Test
@@ -294,7 +290,7 @@ class ObservationExecChainHandlerIntegrationTest {
             }
             assertThat(observationRegistry).hasObservationWithNameEqualTo(DEFAULT_METER_NAME)
                 .that()
-                .hasLowCardinalityKeyValue("uri", "/some/{name}");
+                .hasLowCardinalityKeyValue(URI.asString(), "/some/{name}");
         }
 
         @ParameterizedTest
@@ -310,7 +306,7 @@ class ObservationExecChainHandlerIntegrationTest {
             assertThat(observationRegistry).hasObservationWithNameEqualTo(DEFAULT_METER_NAME)
                 .that()
                 .hasContextualNameEqualTo("HTTP " + methodName)
-                .hasLowCardinalityKeyValue("method", methodName);
+                .hasLowCardinalityKeyValue(METHOD.asString(), methodName);
         }
 
         @Test
@@ -322,10 +318,10 @@ class ObservationExecChainHandlerIntegrationTest {
             }
             assertThat(observationRegistry).hasObservationWithNameEqualTo(DEFAULT_METER_NAME)
                 .that()
-                .hasLowCardinalityKeyValue("outcome", "UNKNOWN")
-                .hasLowCardinalityKeyValue("status", "IO_ERROR")
-                .hasLowCardinalityKeyValue("exception", "ProtocolException")
-                .hasLowCardinalityKeyValue("method", "GET");
+                .hasLowCardinalityKeyValue(OUTCOME.asString(), "UNKNOWN")
+                .hasLowCardinalityKeyValue(STATUS.asString(), "IO_ERROR")
+                .hasLowCardinalityKeyValue(EXCEPTION.asString(), "ProtocolException")
+                .hasLowCardinalityKeyValue(METHOD.asString(), "GET");
         }
 
         @Test
@@ -338,10 +334,10 @@ class ObservationExecChainHandlerIntegrationTest {
             }
             assertThat(observationRegistry).hasObservationWithNameEqualTo(DEFAULT_METER_NAME)
                 .that()
-                .hasLowCardinalityKeyValue("outcome", "UNKNOWN")
-                .hasLowCardinalityKeyValue("status", "IO_ERROR")
-                .hasLowCardinalityKeyValue("exception", "SocketTimeoutException")
-                .hasLowCardinalityKeyValue("method", "GET");
+                .hasLowCardinalityKeyValue(OUTCOME.asString(), "UNKNOWN")
+                .hasLowCardinalityKeyValue(STATUS.asString(), "IO_ERROR")
+                .hasLowCardinalityKeyValue(EXCEPTION.asString(), "SocketTimeoutException")
+                .hasLowCardinalityKeyValue(METHOD.asString(), "GET");
         }
 
         @Test
@@ -353,9 +349,9 @@ class ObservationExecChainHandlerIntegrationTest {
             }
             assertThat(observationRegistry).hasObservationWithNameEqualTo(DEFAULT_METER_NAME)
                 .that()
-                .hasLowCardinalityKeyValue("outcome", "SERVER_ERROR")
-                .hasLowCardinalityKeyValue("status", "503")
-                .hasLowCardinalityKeyValue("method", "GET");
+                .hasLowCardinalityKeyValue(OUTCOME.asString(), "SERVER_ERROR")
+                .hasLowCardinalityKeyValue(STATUS.asString(), "503")
+                .hasLowCardinalityKeyValue(METHOD.asString(), "GET");
             assertThat(observationRegistry).hasNumberOfObservationsWithNameEqualTo(DEFAULT_METER_NAME, 2);
         }
 
@@ -372,8 +368,8 @@ class ObservationExecChainHandlerIntegrationTest {
                 SimpleHttpRequest request = SimpleRequestBuilder.get(server.baseUrl() + "/retry").build();
                 executeAsync(client, request);
             }
-            assertThat(observationRegistry).hasAnObservationWithAKeyValue("outcome", "SUCCESS")
-                .hasAnObservationWithAKeyValue("outcome", "SERVER_ERROR");
+            assertThat(observationRegistry).hasAnObservationWithAKeyValue(OUTCOME.asString(), "SUCCESS")
+                .hasAnObservationWithAKeyValue(OUTCOME.asString(), "SERVER_ERROR");
             assertThat(observationRegistry).hasNumberOfObservationsWithNameEqualTo(DEFAULT_METER_NAME, 2);
         }
 
@@ -410,7 +406,6 @@ class ObservationExecChainHandlerIntegrationTest {
     }
 
     private CloseableHttpAsyncClient asyncClient() {
-
         DefaultHttpRequestRetryStrategy retryStrategy = new DefaultHttpRequestRetryStrategy(1,
                 TimeValue.ofMilliseconds(500L));
 
@@ -434,15 +429,13 @@ class ObservationExecChainHandlerIntegrationTest {
     private void executeAsync(CloseableHttpAsyncClient client, SimpleHttpRequest request)
             throws ExecutionException, InterruptedException {
         client.start();
-        Future<SimpleHttpResponse> responseFuture = client.execute(request, null);
-        responseFuture.get();
+        client.execute(request, null).get();
     }
 
     private void executeAsync(CloseableHttpAsyncClient client, HttpContext context, SimpleHttpRequest request)
             throws ExecutionException, InterruptedException {
         client.start();
-        Future<SimpleHttpResponse> responseFuture = client.execute(request, context, null);
-        responseFuture.get();
+        client.execute(request, context, null).get();
     }
 
 }
