@@ -82,9 +82,9 @@ class ObservationExecChainHandlerIntegrationTest {
             }
             assertThat(observationRegistry).hasObservationWithNameEqualTo(DEFAULT_METER_NAME)
                 .that()
-                .hasLowCardinalityKeyValue(OUTCOME.asString(), "SUCCESS")
-                .hasLowCardinalityKeyValue(STATUS.asString(), "200")
-                .hasLowCardinalityKeyValue(METHOD.asString(), "GET");
+                .hasLowCardinalityKeyValue(OUTCOME.withValue("SUCCESS"))
+                .hasLowCardinalityKeyValue(STATUS.withValue("200"))
+                .hasLowCardinalityKeyValue(METHOD.withValue("GET"));
             // end::example_classic[]
         }
 
@@ -96,9 +96,9 @@ class ObservationExecChainHandlerIntegrationTest {
             }
             assertThat(observationRegistry).hasObservationWithNameEqualTo(DEFAULT_METER_NAME)
                 .that()
-                .hasLowCardinalityKeyValue(OUTCOME.asString(), "CLIENT_ERROR")
-                .hasLowCardinalityKeyValue(STATUS.asString(), "404")
-                .hasLowCardinalityKeyValue(METHOD.asString(), "GET");
+                .hasLowCardinalityKeyValue(OUTCOME.withValue("CLIENT_ERROR"))
+                .hasLowCardinalityKeyValue(STATUS.withValue("404"))
+                .hasLowCardinalityKeyValue(METHOD.withValue("GET"));
         }
 
         @Test
@@ -109,7 +109,7 @@ class ObservationExecChainHandlerIntegrationTest {
             }
             assertThat(observationRegistry).hasObservationWithNameEqualTo(DEFAULT_METER_NAME)
                 .that()
-                .hasLowCardinalityKeyValue(URI.asString(), "UNKNOWN");
+                .hasLowCardinalityKeyValue(URI.withValue("UNKNOWN"));
         }
 
         @Test
@@ -123,7 +123,7 @@ class ObservationExecChainHandlerIntegrationTest {
             }
             assertThat(observationRegistry).hasObservationWithNameEqualTo(DEFAULT_METER_NAME)
                 .that()
-                .hasLowCardinalityKeyValue(URI.asString(), "/some/{name}");
+                .hasLowCardinalityKeyValue(URI.withValue("/some/{name}"));
         }
 
         @Test
@@ -137,7 +137,7 @@ class ObservationExecChainHandlerIntegrationTest {
             }
             assertThat(observationRegistry).hasObservationWithNameEqualTo(DEFAULT_METER_NAME)
                 .that()
-                .hasLowCardinalityKeyValue(URI.asString(), "/some/{name}");
+                .hasLowCardinalityKeyValue(URI.withValue("/some/{name}"));
         }
 
         @ParameterizedTest
@@ -152,7 +152,7 @@ class ObservationExecChainHandlerIntegrationTest {
             assertThat(observationRegistry).hasObservationWithNameEqualTo(DEFAULT_METER_NAME)
                 .that()
                 .hasContextualNameEqualTo("HTTP " + methodName)
-                .hasLowCardinalityKeyValue(METHOD.asString(), methodName);
+                .hasLowCardinalityKeyValue(METHOD.withValue(methodName));
         }
 
         @Test
@@ -164,10 +164,10 @@ class ObservationExecChainHandlerIntegrationTest {
             }
             assertThat(observationRegistry).hasObservationWithNameEqualTo(DEFAULT_METER_NAME)
                 .that()
-                .hasLowCardinalityKeyValue(OUTCOME.asString(), "UNKNOWN")
-                .hasLowCardinalityKeyValue(STATUS.asString(), "IO_ERROR")
-                .hasLowCardinalityKeyValue(EXCEPTION.asString(), "ProtocolException")
-                .hasLowCardinalityKeyValue(METHOD.asString(), "GET");
+                .hasLowCardinalityKeyValue(OUTCOME.withValue("UNKNOWN"))
+                .hasLowCardinalityKeyValue(STATUS.withValue("IO_ERROR"))
+                .hasLowCardinalityKeyValue(EXCEPTION.withValue("ProtocolException"))
+                .hasLowCardinalityKeyValue(METHOD.withValue("GET"));
         }
 
         @Test
@@ -179,10 +179,10 @@ class ObservationExecChainHandlerIntegrationTest {
             }
             assertThat(observationRegistry).hasObservationWithNameEqualTo(DEFAULT_METER_NAME)
                 .that()
-                .hasLowCardinalityKeyValue(OUTCOME.asString(), "UNKNOWN")
-                .hasLowCardinalityKeyValue(STATUS.asString(), "IO_ERROR")
-                .hasLowCardinalityKeyValue(EXCEPTION.asString(), "SocketTimeoutException")
-                .hasLowCardinalityKeyValue(METHOD.asString(), "GET");
+                .hasLowCardinalityKeyValue(OUTCOME.withValue("UNKNOWN"))
+                .hasLowCardinalityKeyValue(STATUS.withValue("IO_ERROR"))
+                .hasLowCardinalityKeyValue(EXCEPTION.withValue("SocketTimeoutException"))
+                .hasLowCardinalityKeyValue(METHOD.withValue("GET"));
         }
 
         @Test
@@ -193,9 +193,9 @@ class ObservationExecChainHandlerIntegrationTest {
             }
             assertThat(observationRegistry).hasObservationWithNameEqualTo(DEFAULT_METER_NAME)
                 .that()
-                .hasLowCardinalityKeyValue(OUTCOME.asString(), "SERVER_ERROR")
-                .hasLowCardinalityKeyValue(STATUS.asString(), "503")
-                .hasLowCardinalityKeyValue(METHOD.asString(), "GET");
+                .hasLowCardinalityKeyValue(OUTCOME.withValue("SERVER_ERROR"))
+                .hasLowCardinalityKeyValue(STATUS.withValue("503"))
+                .hasLowCardinalityKeyValue(METHOD.withValue("GET"));
             assertThat(observationRegistry).hasNumberOfObservationsWithNameEqualTo(DEFAULT_METER_NAME, 2);
         }
 
@@ -232,9 +232,9 @@ class ObservationExecChainHandlerIntegrationTest {
             }
             assertThat(observationRegistry).hasObservationWithNameEqualTo(DEFAULT_METER_NAME)
                 .that()
-                .hasLowCardinalityKeyValue(OUTCOME.asString(), "SUCCESS")
-                .hasLowCardinalityKeyValue(STATUS.asString(), "200")
-                .hasLowCardinalityKeyValue(METHOD.asString(), "GET");
+                .hasLowCardinalityKeyValue(OUTCOME.withValue("SUCCESS"))
+                .hasLowCardinalityKeyValue(STATUS.withValue("200"))
+                .hasLowCardinalityKeyValue(METHOD.withValue("GET"));
             // end::example_async[]
         }
 
@@ -247,9 +247,9 @@ class ObservationExecChainHandlerIntegrationTest {
             }
             assertThat(observationRegistry).hasObservationWithNameEqualTo(DEFAULT_METER_NAME)
                 .that()
-                .hasLowCardinalityKeyValue(OUTCOME.asString(), "CLIENT_ERROR")
-                .hasLowCardinalityKeyValue(STATUS.asString(), "404")
-                .hasLowCardinalityKeyValue(METHOD.asString(), "GET");
+                .hasLowCardinalityKeyValue(OUTCOME.withValue("CLIENT_ERROR"))
+                .hasLowCardinalityKeyValue(STATUS.withValue("404"))
+                .hasLowCardinalityKeyValue(METHOD.withValue("GET"));
         }
 
         @Test
@@ -261,7 +261,7 @@ class ObservationExecChainHandlerIntegrationTest {
             }
             assertThat(observationRegistry).hasObservationWithNameEqualTo(DEFAULT_METER_NAME)
                 .that()
-                .hasLowCardinalityKeyValue(URI.asString(), "UNKNOWN");
+                .hasLowCardinalityKeyValue(URI.withValue("UNKNOWN"));
         }
 
         @Test
@@ -276,7 +276,7 @@ class ObservationExecChainHandlerIntegrationTest {
             }
             assertThat(observationRegistry).hasObservationWithNameEqualTo(DEFAULT_METER_NAME)
                 .that()
-                .hasLowCardinalityKeyValue(URI.asString(), "/some/{name}");
+                .hasLowCardinalityKeyValue(URI.withValue("/some/{name}"));
         }
 
         @Test
@@ -290,7 +290,7 @@ class ObservationExecChainHandlerIntegrationTest {
             }
             assertThat(observationRegistry).hasObservationWithNameEqualTo(DEFAULT_METER_NAME)
                 .that()
-                .hasLowCardinalityKeyValue(URI.asString(), "/some/{name}");
+                .hasLowCardinalityKeyValue(URI.withValue("/some/{name}"));
         }
 
         @ParameterizedTest
@@ -306,7 +306,7 @@ class ObservationExecChainHandlerIntegrationTest {
             assertThat(observationRegistry).hasObservationWithNameEqualTo(DEFAULT_METER_NAME)
                 .that()
                 .hasContextualNameEqualTo("HTTP " + methodName)
-                .hasLowCardinalityKeyValue(METHOD.asString(), methodName);
+                .hasLowCardinalityKeyValue(METHOD.withValue(methodName));
         }
 
         @Test
@@ -318,10 +318,10 @@ class ObservationExecChainHandlerIntegrationTest {
             }
             assertThat(observationRegistry).hasObservationWithNameEqualTo(DEFAULT_METER_NAME)
                 .that()
-                .hasLowCardinalityKeyValue(OUTCOME.asString(), "UNKNOWN")
-                .hasLowCardinalityKeyValue(STATUS.asString(), "IO_ERROR")
-                .hasLowCardinalityKeyValue(EXCEPTION.asString(), "ProtocolException")
-                .hasLowCardinalityKeyValue(METHOD.asString(), "GET");
+                .hasLowCardinalityKeyValue(OUTCOME.withValue("UNKNOWN"))
+                .hasLowCardinalityKeyValue(STATUS.withValue("IO_ERROR"))
+                .hasLowCardinalityKeyValue(EXCEPTION.withValue("ProtocolException"))
+                .hasLowCardinalityKeyValue(METHOD.withValue("GET"));
         }
 
         @Test
@@ -334,10 +334,10 @@ class ObservationExecChainHandlerIntegrationTest {
             }
             assertThat(observationRegistry).hasObservationWithNameEqualTo(DEFAULT_METER_NAME)
                 .that()
-                .hasLowCardinalityKeyValue(OUTCOME.asString(), "UNKNOWN")
-                .hasLowCardinalityKeyValue(STATUS.asString(), "IO_ERROR")
-                .hasLowCardinalityKeyValue(EXCEPTION.asString(), "SocketTimeoutException")
-                .hasLowCardinalityKeyValue(METHOD.asString(), "GET");
+                .hasLowCardinalityKeyValue(OUTCOME.withValue("UNKNOWN"))
+                .hasLowCardinalityKeyValue(STATUS.withValue("IO_ERROR"))
+                .hasLowCardinalityKeyValue(EXCEPTION.withValue("SocketTimeoutException"))
+                .hasLowCardinalityKeyValue(METHOD.withValue("GET"));
         }
 
         @Test
@@ -349,9 +349,9 @@ class ObservationExecChainHandlerIntegrationTest {
             }
             assertThat(observationRegistry).hasObservationWithNameEqualTo(DEFAULT_METER_NAME)
                 .that()
-                .hasLowCardinalityKeyValue(OUTCOME.asString(), "SERVER_ERROR")
-                .hasLowCardinalityKeyValue(STATUS.asString(), "503")
-                .hasLowCardinalityKeyValue(METHOD.asString(), "GET");
+                .hasLowCardinalityKeyValue(OUTCOME.withValue("SERVER_ERROR"))
+                .hasLowCardinalityKeyValue(STATUS.withValue("503"))
+                .hasLowCardinalityKeyValue(METHOD.withValue("GET"));
             assertThat(observationRegistry).hasNumberOfObservationsWithNameEqualTo(DEFAULT_METER_NAME, 2);
         }
 

@@ -83,7 +83,7 @@ class ObservationExecChainHandlerTest {
             handler.execute(request, this.scope, chain);
             assertThat(observationRegistry).hasObservationWithNameEqualTo("httpcomponents.httpclient.request")
                 .that()
-                .hasLowCardinalityKeyValue(OUTCOME.asString(), "SUCCESS");
+                .hasLowCardinalityKeyValue(OUTCOME.withValue("SUCCESS"));
         }
 
         @Test
@@ -95,8 +95,8 @@ class ObservationExecChainHandlerTest {
                 .isInstanceOf(IllegalArgumentException.class);
             assertThat(observationRegistry).hasObservationWithNameEqualTo("httpcomponents.httpclient.request")
                 .that()
-                .hasLowCardinalityKeyValue(OUTCOME.asString(), "UNKNOWN")
-                .hasLowCardinalityKeyValue(EXCEPTION.asString(), "IllegalArgumentException");
+                .hasLowCardinalityKeyValue(OUTCOME.withValue("UNKNOWN"))
+                .hasLowCardinalityKeyValue(EXCEPTION.withValue("IllegalArgumentException"));
         }
 
         @Test
@@ -108,8 +108,8 @@ class ObservationExecChainHandlerTest {
                 .isInstanceOf(RequestFailedException.class);
             assertThat(observationRegistry).hasObservationWithNameEqualTo("httpcomponents.httpclient.request")
                 .that()
-                .hasLowCardinalityKeyValue(OUTCOME.asString(), "UNKNOWN")
-                .hasLowCardinalityKeyValue(EXCEPTION.asString(), "RequestFailedException");
+                .hasLowCardinalityKeyValue(OUTCOME.withValue("UNKNOWN"))
+                .hasLowCardinalityKeyValue(EXCEPTION.withValue("RequestFailedException"));
         }
 
     }
@@ -138,7 +138,7 @@ class ObservationExecChainHandlerTest {
 
             assertThat(observationRegistry).hasObservationWithNameEqualTo("httpcomponents.httpclient.request")
                 .that()
-                .hasLowCardinalityKeyValue(OUTCOME.asString(), "SUCCESS");
+                .hasLowCardinalityKeyValue(OUTCOME.withValue("SUCCESS"));
         }
 
         @Test
@@ -151,8 +151,8 @@ class ObservationExecChainHandlerTest {
 
             assertThat(observationRegistry).hasObservationWithNameEqualTo("httpcomponents.httpclient.request")
                 .that()
-                .hasLowCardinalityKeyValue(OUTCOME.asString(), "UNKNOWN")
-                .hasLowCardinalityKeyValue(EXCEPTION.asString(), "IllegalArgumentException");
+                .hasLowCardinalityKeyValue(OUTCOME.withValue("UNKNOWN"))
+                .hasLowCardinalityKeyValue(EXCEPTION.withValue("IllegalArgumentException"));
         }
 
         @Test
@@ -164,8 +164,8 @@ class ObservationExecChainHandlerTest {
 
             assertThat(observationRegistry).hasObservationWithNameEqualTo("httpcomponents.httpclient.request")
                 .that()
-                .hasLowCardinalityKeyValue(OUTCOME.asString(), "UNKNOWN")
-                .hasLowCardinalityKeyValue(EXCEPTION.asString(), KeyValue.NONE_VALUE);
+                .hasLowCardinalityKeyValue(OUTCOME.withValue("UNKNOWN"))
+                .hasLowCardinalityKeyValue(EXCEPTION.withValue(KeyValue.NONE_VALUE));
         }
 
     }
