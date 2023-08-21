@@ -15,6 +15,7 @@
  */
 package io.micrometer.observation.tck;
 
+import io.micrometer.common.KeyValue;
 import io.micrometer.common.docs.KeyName;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
@@ -306,6 +307,9 @@ class TestObservationRegistryAssertTests {
         thenThrownBy(
                 () -> TestObservationRegistryAssert.assertThat(registry).hasAnObservationWithAKeyValue("key", "value"))
             .isInstanceOf(AssertionError.class);
+
+        thenThrownBy(() -> TestObservationRegistryAssert.assertThat(registry)
+            .hasAnObservationWithAKeyValue(KeyValue.of("key", "value"))).isInstanceOf(AssertionError.class);
     }
 
     @Test
@@ -314,6 +318,9 @@ class TestObservationRegistryAssertTests {
 
         thenNoException().isThrownBy(
                 () -> TestObservationRegistryAssert.assertThat(registry).hasAnObservationWithAKeyValue("foo", "bar"));
+
+        thenNoException().isThrownBy(() -> TestObservationRegistryAssert.assertThat(registry)
+            .hasAnObservationWithAKeyValue(KeyValue.of("foo", "bar")));
     }
 
     @Test
