@@ -24,8 +24,10 @@ import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 import org.apache.hc.client5.http.config.ConnectionConfig;
 import org.apache.hc.client5.http.impl.DefaultHttpRequestRetryStrategy;
 import org.apache.hc.client5.http.impl.async.CloseableHttpAsyncClient;
+import org.apache.hc.client5.http.impl.async.HttpAsyncClientBuilder;
 import org.apache.hc.client5.http.impl.async.HttpAsyncClients;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
+import org.apache.hc.client5.http.impl.classic.HttpClientBuilder;
 import org.apache.hc.client5.http.impl.classic.HttpClients;
 import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManagerBuilder;
 import org.apache.hc.client5.http.impl.nio.PoolingAsyncClientConnectionManagerBuilder;
@@ -212,8 +214,8 @@ class ObservationExecChainHandlerIntegrationTest {
             try (CloseableHttpClient client = classicClient()) {
                 executeClassic(client, new HttpGet(server.baseUrl() + "/retry"));
             }
-            assertThat(observationRegistry).hasAnObservationWithAKeyValue(OUTCOME.asString(), "SUCCESS")
-                .hasAnObservationWithAKeyValue(OUTCOME.asString(), "SERVER_ERROR");
+            assertThat(observationRegistry).hasAnObservationWithAKeyValue(OUTCOME.withValue("SUCCESS"))
+                .hasAnObservationWithAKeyValue(OUTCOME.withValue("SERVER_ERROR"));
             assertThat(observationRegistry).hasNumberOfObservationsWithNameEqualTo(DEFAULT_METER_NAME, 2);
         }
 
@@ -368,8 +370,8 @@ class ObservationExecChainHandlerIntegrationTest {
                 SimpleHttpRequest request = SimpleRequestBuilder.get(server.baseUrl() + "/retry").build();
                 executeAsync(client, request);
             }
-            assertThat(observationRegistry).hasAnObservationWithAKeyValue(OUTCOME.asString(), "SUCCESS")
-                .hasAnObservationWithAKeyValue(OUTCOME.asString(), "SERVER_ERROR");
+            assertThat(observationRegistry).hasAnObservationWithAKeyValue(OUTCOME.withValue("SUCCESS"))
+                .hasAnObservationWithAKeyValue(OUTCOME.withValue("SERVER_ERROR"));
             assertThat(observationRegistry).hasNumberOfObservationsWithNameEqualTo(DEFAULT_METER_NAME, 2);
         }
 
