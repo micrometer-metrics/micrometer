@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.core.instrument.binder.http;
+package io.micrometer.jakarta.instrument.binder.http;
 
 import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.junit5.WireMockRuntimeInfo;
@@ -21,6 +21,7 @@ import com.github.tomakehurst.wiremock.junit5.WireMockTest;
 import io.micrometer.observation.Observation.Context;
 import io.micrometer.observation.ObservationHandler;
 import io.micrometer.observation.tck.TestObservationRegistry;
+import io.micrometer.observation.tck.TestObservationRegistryAssert;
 import jakarta.ws.rs.client.Client;
 import jakarta.ws.rs.client.ClientBuilder;
 import jakarta.ws.rs.client.WebTarget;
@@ -46,6 +47,7 @@ class ObservationHttpJakartaClientFilterTests {
 
         try (Client client = ClientBuilder.newClient()) {
             client.register(new ObservationHttpJakartaClientFilter(observationRegistry, null));
+            client.register(new ObservationHttpJakartaInterceptor());
             final WebTarget target = client.target("http://localhost:" + wmRuntimeInfo.getHttpPort() + "/foo");
             try (Response response = target.request().get()) {
                 then(response.getStatus()).isEqualTo(200);
@@ -55,6 +57,31 @@ class ObservationHttpJakartaClientFilterTests {
         wmRuntimeInfo.getWireMock()
             .verifyThat(
                     WireMock.getRequestedFor(WireMock.urlEqualTo("/foo")).withHeader("foo", WireMock.equalTo("bar")));
+    }
+
+    @Test
+    void clientFilterShouldWorkWithJakartaHttpClientForExceptions(WireMockRuntimeInfo wmRuntimeInfo) {
+        wmRuntimeInfo.getWireMock()
+            .register(WireMock.get("/nonexistanturl").willReturn(WireMock.aResponse().withStatus(404)));
+
+        try (Client client = ClientBuilder.newClient()) {
+            client.register(new ObservationHttpJakartaClientFilter(observationRegistry, null));
+            final WebTarget target = client
+                .target("http://localhost:" + wmRuntimeInfo.getHttpPort() + "/nonexistanturl");
+            try (Response response = target.request().get()) {
+                then(response.getStatus()).isEqualTo(404);
+            }
+        }
+
+        wmRuntimeInfo.getWireMock()
+            .verifyThat(WireMock.getRequestedFor(WireMock.urlEqualTo("/nonexistanturl"))
+                .withHeader("foo", WireMock.equalTo("bar")));
+
+        TestObservationRegistryAssert.then(observationRegistry)
+            .hasSingleObservationThat()
+            .hasBeenStarted()
+            .hasBeenStopped()
+            .hasError();
     }
 
     static class HeaderAddingHandler implements ObservationHandler<HttpJakartaClientRequestObservationContext> {

@@ -31,48 +31,6 @@ import io.micrometer.observation.docs.ObservationDocumentation;
 public enum HttpObservationDocumentation implements ObservationDocumentation {
 
     /**
-     * Observation created when a request is sent out via Jakarta API.
-     */
-    JAKARTA_CLIENT_OBSERVATION {
-        @Override
-        public Class<? extends ObservationConvention<? extends Context>> getDefaultConvention() {
-            return DefaultHttpJakartaClientRequestObservationConvention.class;
-        }
-
-        @Override
-        public KeyName[] getLowCardinalityKeyNames() {
-            return KeyName.merge(CommonLowCardinalityKeys.values(), ClientLowCardinalityKeys.values());
-        }
-
-        @Override
-        public KeyName[] getHighCardinalityKeyNames() {
-            return KeyName.merge(CommonHighCardinalityKeys.values(), ClientHighCardinalityKeys.values());
-        }
-    },
-
-    /**
-     * Observation created when a request is received with Jakarta Http.
-     */
-    JAKARTA_SERVER_OBSERVATION {
-        @Override
-        public Class<? extends ObservationConvention<? extends Context>> getDefaultConvention() {
-            return DefaultHttpJakartaServerRequestObservationConvention.class;
-        }
-
-        @Override
-        public KeyName[] getLowCardinalityKeyNames() {
-
-            return KeyName.merge(CommonLowCardinalityKeys.values(), ServerLowCardinalityKeys.values());
-        }
-
-        @Override
-        public KeyName[] getHighCardinalityKeyNames() {
-            return CommonHighCardinalityKeys.values();
-        }
-
-    },
-
-    /**
      * Observation created when a request is received with Javax Http.
      */
     SERVER_OBSERVATION {
@@ -93,7 +51,7 @@ public enum HttpObservationDocumentation implements ObservationDocumentation {
 
     };
 
-    enum CommonLowCardinalityKeys implements KeyName {
+    public enum CommonLowCardinalityKeys implements KeyName {
 
         /**
          * HTTP request method.
@@ -221,7 +179,7 @@ public enum HttpObservationDocumentation implements ObservationDocumentation {
 
     }
 
-    enum ServerLowCardinalityKeys implements KeyName {
+    public enum ServerLowCardinalityKeys implements KeyName {
 
         /**
          * The matched route (path template in the format used by the respective server
@@ -241,7 +199,7 @@ public enum HttpObservationDocumentation implements ObservationDocumentation {
 
     }
 
-    enum ClientLowCardinalityKeys implements KeyName {
+    public enum ClientLowCardinalityKeys implements KeyName {
 
         /**
          * Client name derived from the request URI host.
@@ -255,7 +213,7 @@ public enum HttpObservationDocumentation implements ObservationDocumentation {
 
     }
 
-    enum CommonHighCardinalityKeys implements KeyName {
+    public enum CommonHighCardinalityKeys implements KeyName {
 
         /**
          * The size of the request payload body in bytes. This is the number of bytes
@@ -322,7 +280,7 @@ public enum HttpObservationDocumentation implements ObservationDocumentation {
 
     }
 
-    enum ClientHighCardinalityKeys implements KeyName {
+    public enum ClientHighCardinalityKeys implements KeyName {
 
         /**
          * Absolute URL describing a network resource according to RFC3986

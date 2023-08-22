@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 VMware, Inc.
+ * Copyright 2023 VMware, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.core.instrument.binder.http;
+package io.micrometer.jakarta.instrument.binder.http;
 
 import io.micrometer.common.lang.Nullable;
 import io.micrometer.observation.transport.RequestReplyReceiverContext;

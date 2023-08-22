@@ -22,11 +22,21 @@ import io.micrometer.common.KeyValue;
 import io.micrometer.common.KeyValues;
 import io.micrometer.common.lang.Nullable;
 import io.micrometer.common.util.StringUtils;
+import io.micrometer.core.annotation.Incubating;
 import io.micrometer.core.instrument.binder.http.HttpObservationDocumentation.ClientLowCardinalityKeys;
 import io.micrometer.core.instrument.binder.http.HttpObservationDocumentation.CommonHighCardinalityKeys;
 import io.micrometer.core.instrument.binder.http.HttpObservationDocumentation.CommonLowCardinalityKeys;
 
-class AbstractDefaultHttpClientRequestObservationConvention {
+/**
+ * Abstract convention methods to share between javax and jakarta based implementations.
+ *
+ * For internal use, do not inherit.
+ *
+ * @author Marcin Grzejsczak
+ * @since 1.12.0
+ */
+@Incubating(since = "1.12.0")
+public class AbstractDefaultHttpClientRequestObservationConvention {
 
     private static final Pattern PATTERN_BEFORE_PATH = Pattern.compile("^https?://[^/]+/");
 

@@ -1,0 +1,116 @@
+plugins {
+    id 'me.champeau.mrjar' version "0.1.1"
+}
+
+description 'Module for Jakarta based instrumentations'
+
+jar {
+    bundle {
+
+        bnd '''\
+        Import-Package: \
+            org.eclipse.jetty.*;resolution:=dynamic;version="${@}",\
+            org.glassfish.jersey.*;resolution:=dynamic;version="${@}",\
+            ch.qos.logback.*;resolution:=dynamic;version="${@}",\
+            org.apache.logging.log4j.*;resolution:=dynamic;version="${@}",\
+            jakarta.jms.*;resolution:=dynamic;version="${@}",\
+            jakarta.servlet.*;resolution:=dynamic;version="${@}",\
+            io.micrometer.context.*;resolution:=dynamic,\
+            io.micrometer.observation.*;resolution:=dynamic;version="${@}",\
+            *
+        '''.stripIndent()
+    }
+}
+
+dependencies {
+    api project(":micrometer-core")
+    api project(":micrometer-commons")
+    api project(":micrometer-observation")
+    optionalApi 'jakarta.ws.rs:jakarta.ws.rs-api:3.+' // jakarta
+
+    // Aspects
+    optionalApi 'org.aspectj:aspectjweaver'
+
+    optionalApi 'org.eclipse.jetty:jetty-server'
+    // jakarta servlet
+    optionalApi 'jakarta.servlet:jakarta.servlet-api:5.+'
+    optionalApi 'org.eclipse.jetty:jetty-client:12.0.+'
+    optionalApi 'org.apache.tomcat.embed:tomcat-embed-core:10.1.+'
+    optionalApi 'org.glassfish.jersey.core:jersey-server:3.1.+'
+    // jakarta JMS
+    optionalApi 'jakarta.jms:jakarta.jms-api'
+
+    // log monitoring
+    optionalApi 'ch.qos.logback:logback-classic'
+    optionalApi 'org.apache.logging.log4j:log4j-core'
+
+    optionalApi project(':micrometer-observation')
+    optionalApi 'io.micrometer:context-propagation'
+
+    testImplementation project(":micrometer-observation-test")
+
+    // JUnit 5
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testImplementation 'com.tngtech.archunit:archunit-junit5'
+
+    testImplementation 'org.mockito:mockito-inline'
+
+    testImplementation 'org.assertj:assertj-core'
+    testImplementation 'org.awaitility:awaitility'
+
+    testImplementation 'org.glassfish.jersey.test-framework.providers:jersey-test-framework-provider-inmemory'
+    testRuntimeOnly 'org.glassfish.jersey.inject:jersey-hk2'
+
+    testImplementation 'ru.lanwen.wiremock:wiremock-junit5'
+    testImplementation 'com.github.tomakehurst:wiremock-jre8-standalone'
+
+    // Dependencies for @ClassPathExclusions
+    testImplementation("org.junit.platform:junit-platform-engine")
+    testImplementation("org.junit.platform:junit-platform-launcher")
+    testImplementation("javax.validation:validation-api")
+    testImplementation("org.jboss.resteasy:resteasy-netty4")
+}
+
+task shenandoahTest(type: Test) {
+    // set heap size for the test JVM(s)
+    maxHeapSize = "1500m"
+
+    useJUnitPlatform {
+        includeTags 'gc'
+    }
+
+    jvmArgs '-XX:+UseShenandoahGC'
+}
+
+task zgcTest(type: Test) {
+    // set heap size for the test JVM(s)
+    maxHeapSize = "1500m"
+
+    useJUnitPlatform {
+        includeTags 'gc'
+    }
+
+    jvmArgs '-XX:+UseZGC'
+}
+
+task openj9BalancedTest(type: Test) {
+    // set heap size for the test JVM(s)
+    maxHeapSize = "1500m"
+
+    useJUnitPlatform {
+        includeTags 'gc'
+    }
+
+    jvmArgs '-Xgcpolicy:balanced'
+}
+
+task openj9ConcurrentScavengeTest(type: Test) {
+    // set heap size for the test JVM(s)
+    maxHeapSize = "1500m"
+
+    useJUnitPlatform {
+        includeTags 'gc'
+    }
+
+    jvmArgs '-Xgc:concurrentScavenge'
+}

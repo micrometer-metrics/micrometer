@@ -13,10 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.core.instrument.binder.http;
+package io.micrometer.jakarta.instrument.binder.http;
 
 import io.micrometer.common.lang.Nullable;
 import io.micrometer.observation.Observation;
+import io.micrometer.observation.Observation.Scope;
 import io.micrometer.observation.ObservationRegistry;
 import jakarta.ws.rs.container.ContainerRequestContext;
 import jakarta.ws.rs.container.ContainerRequestFilter;
@@ -28,6 +29,15 @@ import java.io.IOException;
 
 @Provider
 public class ObservationHttpJakartaServerFilter implements ContainerRequestFilter, ContainerResponseFilter {
+
+    private static final String OBSERVATION_PROPERTY = ObservationHttpJakartaServerFilter.class.getName()
+            + ".observation";
+
+    private static final String OBSERVATION_SCOPE_PROPERTY = ObservationHttpJakartaServerFilter.class.getName()
+            + ".observationScope";
+
+    private static final String OBSERVATION_FINISHED_PROPERTY = ObservationHttpJakartaServerFilter.class.getName()
+            + ".observationFinished";
 
     @Nullable
     private final String name;
@@ -64,9 +74,10 @@ public class ObservationHttpJakartaServerFilter implements ContainerRequestFilte
     public void filter(ContainerRequestContext requestContext) throws IOException {
         HttpJakartaServerRequestObservationContext context = new HttpJakartaServerRequestObservationContext(
                 requestContext);
-        Observation observation = HttpObservationDocumentation.JAKARTA_SERVER_OBSERVATION.start(convention,
+        Observation observation = JakartaHttpObservationDocumentation.JAKARTA_SERVER_OBSERVATION.start(convention,
                 defaultConvention(), () -> context, observationRegistry);
-        requestContext.setProperty(ObservationHttpJakartaServerFilter.class.getName(), observation);
+        requestContext.setProperty(OBSERVATION_PROPERTY, observation);
+        requestContext.setProperty(OBSERVATION_SCOPE_PROPERTY, observation.openScope());
     }
 
     private DefaultHttpJakartaServerRequestObservationConvention defaultConvention() {
@@ -77,10 +88,32 @@ public class ObservationHttpJakartaServerFilter implements ContainerRequestFilte
     @Override
     public void filter(ContainerRequestContext requestContext, ContainerResponseContext responseContext)
             throws IOException {
-        Observation observation = (Observation) requestContext
-            .getProperty(ObservationHttpJakartaServerFilter.class.getName());
+        Observation observation = (Observation) requestContext.getProperty(OBSERVATION_PROPERTY);
         if (observation == null) {
             return;
+        }
+        if (requestContext.getProperty(OBSERVATION_FINISHED_PROPERTY) != null) {
+            // For streaming this can be called multiple times
+            return;
+        }
+        switch (responseContext.getStatusInfo().getFamily()) {
+            case INFORMATIONAL:
+            case SUCCESSFUL:
+            case REDIRECTION:
+            case OTHER:
+                // do nothing for successful (and unknown) responses
+                break;
+            case CLIENT_ERROR:
+            case SERVER_ERROR:
+                observation.error(new IOException("An exception happened"));
+                break;
+            default:
+                break;
+        }
+        requestContext.setProperty(OBSERVATION_FINISHED_PROPERTY, true);
+        Observation.Scope scope = (Scope) requestContext.getProperty(OBSERVATION_SCOPE_PROPERTY);
+        if (scope != null) {
+            scope.close();
         }
         HttpJakartaServerRequestObservationContext context = (HttpJakartaServerRequestObservationContext) observation
             .getContext();

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.core.instrument.binder.http;
+package io.micrometer.jakarta.instrument.binder.http;
 
 import io.micrometer.common.lang.Nullable;
 import io.micrometer.observation.transport.RequestReplySenderContext;

@@ -13,29 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-<<<<<<<< HEAD:micrometer-jakarta9/src/main/java/io/micrometer/jakarta9/instrument/jms/JmsPublishObservationConvention.java
-package io.micrometer.jakarta9.instrument.jms;
-========
-package io.micrometer.jakarta.instrument.binder.jms;
->>>>>>>> aaa5c09f2 (Moved Jakarta and latest Jakarta based dependencies):micrometer-jakarta/src/main/java/io/micrometer/jakarta/instrument/binder/jms/JmsPublishObservationConvention.java
+package io.micrometer.jakarta.instrument.binder.http;
 
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationConvention;
 
 /**
- * {@link ObservationConvention} interface for
- * {@link JmsObservationDocumentation#JMS_MESSAGE_PUBLISH JMS message publication}
- * operations.
+ * Interface for an {@link ObservationConvention} for Jakarta Servlet HTTP requests.
  *
  * @author Brian Clozel
+ * @author Marcin Grzejszczak
  * @since 1.12.0
  */
-public interface JmsPublishObservationConvention extends ObservationConvention<JmsPublishObservationContext> {
+public interface HttpJakartaServerServletRequestObservationConvention
+        extends ObservationConvention<HttpJakartaServerServletRequestObservationContext> {
 
     @Override
     default boolean supportsContext(Observation.Context context) {
-        return context instanceof JmsPublishObservationContext;
+        return context instanceof HttpJakartaServerServletRequestObservationContext;
     }
 
 }

@@ -14,7 +14,11 @@
  * limitations under the License.
  */
 
+<<<<<<<< HEAD:micrometer-jakarta9/src/main/java/io/micrometer/jakarta9/instrument/jms/JmsProcessObservationContext.java
 package io.micrometer.jakarta9.instrument.jms;
+========
+package io.micrometer.jakarta.instrument.binder.jms;
+>>>>>>>> aaa5c09f2 (Moved Jakarta and latest Jakarta based dependencies):micrometer-jakarta/src/main/java/io/micrometer/jakarta/instrument/binder/jms/JmsProcessObservationContext.java
 
 import io.micrometer.observation.transport.ReceiverContext;
 import jakarta.jms.JMSException;
