@@ -247,7 +247,9 @@ public class StatsdMeterRegistry extends MeterRegistry {
             .remoteAddress(remoteAddress)
             .handle((in, out) -> out.sendString(publisher)
                 .neverComplete()
-                .retryWhen(Retry.indefinitely().filter(throwable -> throwable instanceof PortUnreachableException)))
+                .retryWhen(Retry.backoff(Long.MAX_VALUE, Duration.ofSeconds(1))
+                    .maxBackoff(Duration.ofSeconds(10))
+                    .filter(throwable -> throwable instanceof PortUnreachableException)))
             .doOnDisconnected(connection -> {
                 Boolean connectionDisposed = connection.channel().attr(CONNECTION_DISPOSED).getAndSet(Boolean.TRUE);
                 if (connectionDisposed == null || !connectionDisposed) {
