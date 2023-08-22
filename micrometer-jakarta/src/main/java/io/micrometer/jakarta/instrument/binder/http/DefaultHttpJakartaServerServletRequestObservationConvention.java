@@ -29,6 +29,11 @@ public class DefaultHttpJakartaServerServletRequestObservationConvention
         extends AbstractDefaultHttpServerRequestObservationConvention
         implements HttpJakartaServerServletRequestObservationConvention {
 
+    /**
+     * Default instance.
+     */
+    public static final DefaultHttpJakartaServerServletRequestObservationConvention INSTANCE = new DefaultHttpJakartaServerServletRequestObservationConvention();
+
     private static final String DEFAULT_NAME = "http.server.requests";
 
     private final String name;

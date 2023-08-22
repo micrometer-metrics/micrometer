@@ -38,8 +38,6 @@ import java.io.IOException;
  */
 public class ObservedValve extends ValveBase {
 
-    private static final HttpJakartaServerServletRequestObservationConvention DEFAULT_OBSERVATION_CONVENTION = new DefaultHttpJakartaServerServletRequestObservationConvention();
-
     private final ObservationRegistry observationRegistry;
 
     private final HttpJakartaServerServletRequestObservationConvention observationConvention;
@@ -73,7 +71,7 @@ public class ObservedValve extends ValveBase {
         HttpJakartaServerServletRequestObservationContext context = new HttpJakartaServerServletRequestObservationContext(
                 request, response);
         observation = JakartaHttpObservationDocumentation.JAKARTA_SERVLET_SERVER_OBSERVATION
-            .observation(this.observationConvention, DEFAULT_OBSERVATION_CONVENTION, () -> context,
+            .observation(this.observationConvention, DefaultHttpJakartaServerServletRequestObservationConvention.INSTANCE, () -> context,
                     this.observationRegistry)
             .start();
         request.setAttribute(Observation.class.getName(), observation);
