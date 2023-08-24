@@ -56,8 +56,8 @@ class PrometheusNamingConventionTest {
     @Test
     void unitsAreAppendedToCounters() {
         assertThat(convention.name("response.size", Meter.Type.COUNTER, BaseUnits.BYTES))
-            .isEqualTo("response_size_bytes_total");
-        assertThat(convention.name("counter", Meter.Type.COUNTER)).isEqualTo("counter_total");
+            .isEqualTo("response_size_bytes");
+        assertThat(convention.name("counter", Meter.Type.COUNTER)).isEqualTo("counter");
     }
 
     @Test
