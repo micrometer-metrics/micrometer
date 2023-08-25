@@ -358,8 +358,8 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
         Iterable<Tag> tags = getConventionTags(fullId);
 
         List<String> tagsList = tags.iterator().hasNext() ? stream(tags.spliterator(), false)
-                .map(t -> "\"" + escapeJson(t.getKey()) + ":" + escapeJson(t.getValue()) + "\"").collect(toList())
-                : new ArrayList<String>();
+            .map(t -> "\"" + escapeJson(t.getKey()) + ":" + escapeJson(t.getValue()) + "\"")
+            .collect(toList()) : new ArrayList<String>();
         if (config.hostTag() != null && !Objects.equals(config.hostTag(), "")) {
             tagsList.add("host:" + config.hostTag());
         }

@@ -65,8 +65,11 @@ class DatadogMeterRegistryTest {
 
         server.stubFor(any(anyUrl()));
 
-        Counter.builder("my.counter#abc").baseUnit(TimeUnit.MICROSECONDS.toString().toLowerCase())
-                .description("metric description").register(registry).increment(Math.PI);
+        Counter.builder("my.counter#abc")
+            .baseUnit(TimeUnit.MICROSECONDS.toString().toLowerCase())
+            .description("metric description")
+            .register(registry)
+            .increment(Math.PI);
         registry.publish();
 
         // statsd will be fine under this test scenario, just verify we're not sending out
@@ -108,8 +111,11 @@ class DatadogMeterRegistryTest {
 
         server.stubFor(any(anyUrl()));
 
-        Counter.builder("my.counter#abc").baseUnit(TimeUnit.MICROSECONDS.toString().toLowerCase())
-                .description("metric description").register(registry).increment(Math.PI);
+        Counter.builder("my.counter#abc")
+            .baseUnit(TimeUnit.MICROSECONDS.toString().toLowerCase())
+            .description("metric description")
+            .register(registry)
+            .increment(Math.PI);
         registry.publish();
 
         // statsd will be fine under this test scenario, just verify we're not sending out
