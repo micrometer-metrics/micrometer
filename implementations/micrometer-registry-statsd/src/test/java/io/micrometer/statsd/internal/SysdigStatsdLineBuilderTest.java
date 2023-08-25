@@ -63,8 +63,8 @@ class SysdigStatsdLineBuilderTest {
         registry.config().namingConvention(NamingConvention.dot);
         StringBuilder expected = new StringBuilder();
         expected.append("___________.__a_counter__with123_weirdChars")
-                .append("#statistic=count,___________.__a_tag__with123_weirdChars")
-                .append("=___________.__a_value__with123_weirdChars:1|c");
+            .append("#statistic=count,___________.__a_tag__with123_weirdChars")
+            .append("=___________.__a_value__with123_weirdChars:1|c");
 
         assertThat(lb.line("1", Statistic.COUNT, "c")).isEqualTo(expected.toString());
     }

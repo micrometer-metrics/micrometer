@@ -21,6 +21,7 @@ import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.distribution.CountAtBucket;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
+import io.micrometer.core.instrument.distribution.HistogramSnapshot;
 import io.micrometer.core.instrument.distribution.ValueAtPercentile;
 import io.micrometer.core.instrument.internal.CumulativeHistogramLongTaskTimer;
 import io.micrometer.core.instrument.observation.DefaultMeterObservationHandler;
@@ -167,8 +168,10 @@ public abstract class MeterRegistryCompatibilityKit {
     @Test
     @DisplayName("meters with synthetics can be removed without causing deadlocks")
     void removeMeterWithSynthetic() {
-        Timer timer = Timer.builder("my.timer").publishPercentiles(0.95).serviceLevelObjectives(Duration.ofMillis(10))
-                .register(registry);
+        Timer timer = Timer.builder("my.timer")
+            .publishPercentiles(0.95)
+            .serviceLevelObjectives(Duration.ofMillis(10))
+            .register(registry);
 
         registry.remove(timer);
     }
@@ -271,7 +274,7 @@ public abstract class MeterRegistryCompatibilityKit {
             assertThat(ds.totalAmount()).isEqualTo(2.0);
         }
 
-        @Deprecated
+        @SuppressWarnings("deprecation")
         @Test
         void percentiles() {
             DistributionSummary s = DistributionSummary.builder("my.summary").publishPercentiles(1).register(registry);
@@ -281,17 +284,86 @@ public abstract class MeterRegistryCompatibilityKit {
             assertThat(s.percentile(0.5)).isNaN();
         }
 
-        @Deprecated
+        @SuppressWarnings("deprecation")
         @Test
         void histogramCounts() {
-            DistributionSummary s = DistributionSummary.builder("my.summmary").serviceLevelObjectives(1.0)
-                    .register(registry);
+            DistributionSummary s = DistributionSummary.builder("my.summmary")
+                .serviceLevelObjectives(1.0)
+                .register(registry);
 
+            // ensure time-window based histograms are not fully rotated when we assert
+            Duration halfStep = step().dividedBy(2);
+            clock(registry).add(halfStep);
             s.record(1);
+            // accommodate StepBucketHistogram
+            clock(registry).add(halfStep);
             assertThat(s.histogramCountAtValue(1)).isEqualTo(1);
             assertThat(s.histogramCountAtValue(2)).isNaN();
         }
 
+        @Issue("#3904")
+        @Test
+        void histogramCountsPublishPercentileHistogramAndSlos() {
+            DistributionSummary summary = DistributionSummary.builder("my.summmary")
+                .serviceLevelObjectives(5, 50, 95)
+                .publishPercentileHistogram()
+                .register(registry);
+
+            // ensure time-window based histograms are not fully rotated when we assert
+            Duration halfStep = step().dividedBy(2);
+            clock(registry).add(halfStep);
+
+            for (int val : new int[] { 22, 55, 66, 98 }) {
+                summary.record(val);
+            }
+            // accommodate StepBucketHistogram
+            clock(registry).add(halfStep);
+
+            HistogramSnapshot snapshot = summary.takeSnapshot();
+            CountAtBucket[] countAtBuckets = snapshot.histogramCounts();
+
+            assertHistogramBuckets(countAtBuckets);
+        }
+
+    }
+
+    private void assertHistogramBuckets(CountAtBucket[] countAtBuckets) {
+        assertHistogramBuckets(countAtBuckets, null);
+    }
+
+    private void assertHistogramBuckets(CountAtBucket[] countAtBuckets, TimeUnit timeUnit) {
+        // percentile histogram buckets may be there, assert SLO buckets are present
+        assertThat(countAtBuckets).extracting(c -> getCount(c, timeUnit)).contains(5.0, 50.0, 95.0);
+
+        assertThat(countAtBuckets).satisfiesAnyOf(
+                // we can directly check the count of cumulative SLO buckets
+                bucketCounts -> assertThat(Arrays.stream(bucketCounts)
+                    .filter(countAtBucket -> Arrays.asList(5.0, 50.0, 95.0)
+                        .contains(getCount(countAtBucket, timeUnit))))
+                    .extracting(CountAtBucket::count)
+                    .containsExactly(0.0, 1.0, 3.0),
+                // if not cumulative buckets, we need to add up buckets in range.
+                bucketCounts -> {
+                    assertThat(nonCumulativeBucketCountForRange(bucketCounts, timeUnit, 0, 5)).isEqualTo(0);
+                    assertThat(nonCumulativeBucketCountForRange(bucketCounts, timeUnit, 5, 50)).isEqualTo(1);
+                    assertThat(nonCumulativeBucketCountForRange(bucketCounts, timeUnit, 50, 95)).isEqualTo(2);
+                });
+    }
+
+    private double getCount(CountAtBucket countAtBucket, TimeUnit timeUnit) {
+        return timeUnit != null ? countAtBucket.bucket(timeUnit) : countAtBucket.bucket();
+    }
+
+    private double nonCumulativeBucketCountForRange(CountAtBucket[] countAtBuckets, TimeUnit timeUnit,
+            double exclusiveMinBucket, double inclusiveMaxBucket) {
+        double count = 0;
+        for (CountAtBucket countAtBucket : countAtBuckets) {
+            double c = getCount(countAtBucket, timeUnit);
+            if (c > exclusiveMinBucket && c <= inclusiveMaxBucket) {
+                count += countAtBucket.count();
+            }
+        }
+        return count;
     }
 
     @DisplayName("gauges")
@@ -346,7 +418,7 @@ public abstract class MeterRegistryCompatibilityKit {
         void garbageCollectedSourceObject() {
             registry.gauge("my.gauge", emptyList(), (Map) null, Map::size);
             assertThat(registry.get("my.gauge").gauge().value())
-                    .matches(val -> val == null || Double.isNaN(val) || val == 0.0);
+                .matches(val -> val == null || Double.isNaN(val) || val == 0.0);
         }
 
         @Test
@@ -400,8 +472,9 @@ public abstract class MeterRegistryCompatibilityKit {
         @Test
         @DisplayName("supports sending the Nth percentile active task duration")
         void percentiles() {
-            LongTaskTimer t = LongTaskTimer.builder("my.timer").publishPercentiles(0.5, 0.7, 0.91, 0.999, 1)
-                    .register(registry);
+            LongTaskTimer t = LongTaskTimer.builder("my.timer")
+                .publishPercentiles(0.5, 0.7, 0.91, 0.999, 1)
+                .register(registry);
 
             // Using the example of percentile interpolation from
             // https://statisticsbyjim.com/basics/percentiles/
@@ -440,8 +513,8 @@ public abstract class MeterRegistryCompatibilityKit {
         @DisplayName("supports sending histograms of active task duration")
         void histogram() {
             LongTaskTimer t = LongTaskTimer.builder("my.timer")
-                    .serviceLevelObjectives(Duration.ofSeconds(10), Duration.ofSeconds(40), Duration.ofMinutes(1))
-                    .register(registry);
+                .serviceLevelObjectives(Duration.ofSeconds(10), Duration.ofSeconds(40), Duration.ofMinutes(1))
+                .register(registry);
 
             List<Integer> samples = Arrays.asList(48, 42, 40, 35, 22, 16, 13, 8, 6, 4, 2);
             int prior = samples.get(0);
@@ -495,8 +568,9 @@ public abstract class MeterRegistryCompatibilityKit {
         @CsvSource({ "success", "error" })
         @Issue("#1425")
         void closeable(String outcome) {
-            try (Timer.ResourceSample sample = Timer.resource(registry, "requests").description("This is an operation")
-                    .publishPercentileHistogram()) {
+            try (Timer.ResourceSample sample = Timer.resource(registry, "requests")
+                .description("This is an operation")
+                .publishPercentileHistogram()) {
                 try {
                     if (outcome.equals("error")) {
                         throw new IllegalArgumentException("boom");
@@ -636,7 +710,8 @@ public abstract class MeterRegistryCompatibilityKit {
         @DisplayName("record with stateful Observation instance")
         void recordWithObservation() {
             Observation observation = Observation.createNotStarted("myObservation", observationRegistry)
-                    .lowCardinalityKeyValue("staticTag", "42").start();
+                .lowCardinalityKeyValue("staticTag", "42")
+                .start();
 
             // created after start, LongTaskTimer won't have it
             observation.lowCardinalityKeyValue("dynamicTag", "24");
@@ -693,7 +768,7 @@ public abstract class MeterRegistryCompatibilityKit {
 
             // noinspection ConstantConditions
             clock(registry)
-                    .add(Duration.ofMillis(step().toMillis() * DistributionStatisticConfig.DEFAULT.getBufferLength()));
+                .add(Duration.ofMillis(step().toMillis() * DistributionStatisticConfig.DEFAULT.getBufferLength()));
             assertThat(timer.max(TimeUnit.SECONDS)).isEqualTo(0);
         }
 
@@ -715,7 +790,7 @@ public abstract class MeterRegistryCompatibilityKit {
                     () -> assertEquals(10, t.totalTime(TimeUnit.NANOSECONDS), 1.0e-12));
         }
 
-        @Deprecated
+        @SuppressWarnings("deprecation")
         @Test
         void percentiles() {
             Timer t = Timer.builder("my.timer").publishPercentiles(1).register(registry);
@@ -725,14 +800,43 @@ public abstract class MeterRegistryCompatibilityKit {
             assertThat(t.percentile(0.5, TimeUnit.MILLISECONDS)).isNaN();
         }
 
-        @Deprecated
+        @SuppressWarnings("deprecation")
         @Test
         void histogramCounts() {
             Timer t = Timer.builder("my.timer").serviceLevelObjectives(Duration.ofMillis(1)).register(registry);
 
+            // ensure time-window based histograms are not fully rotated when we assert
+            Duration halfStep = step().dividedBy(2);
+            clock(registry).add(halfStep);
             t.record(1, TimeUnit.MILLISECONDS);
+            // accommodate StepBucketHistogram
+            clock(registry).add(halfStep);
             assertThat(t.histogramCountAtValue((long) millisToUnit(1, TimeUnit.NANOSECONDS))).isEqualTo(1);
             assertThat(t.histogramCountAtValue(1)).isNaN();
+        }
+
+        @Issue("#3904")
+        @Test
+        void histogramCountsPublishPercentileHistogramAndSlos() {
+            Timer timer = Timer.builder("my.timer")
+                .serviceLevelObjectives(Duration.ofMillis(5), Duration.ofMillis(50), Duration.ofMillis(95))
+                .publishPercentileHistogram()
+                .register(registry);
+
+            // ensure time-window based histograms are not fully rotated when we assert
+            Duration halfStep = step().dividedBy(2);
+            clock(registry).add(halfStep);
+
+            for (int val : new int[] { 22, 55, 66, 98 }) {
+                timer.record(Duration.ofMillis(val));
+            }
+            // accommodate StepBucketHistogram
+            clock(registry).add(halfStep);
+
+            HistogramSnapshot snapshot = timer.takeSnapshot();
+            CountAtBucket[] countAtBuckets = snapshot.histogramCounts();
+
+            assertHistogramBuckets(countAtBuckets, TimeUnit.MILLISECONDS);
         }
 
     }

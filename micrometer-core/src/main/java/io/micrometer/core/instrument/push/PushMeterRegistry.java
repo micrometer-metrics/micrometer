@@ -22,16 +22,26 @@ import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.util.TimeUtils;
 
+import java.util.Random;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public abstract class PushMeterRegistry extends MeterRegistry {
 
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(PushMeterRegistry.class);
 
+    // Schedule publishing in the beginning X percent of the step to avoid spill-over into
+    // the next step.
+    private static final double PERCENT_RANGE_OF_RANDOM_PUBLISHING_OFFSET = 0.8;
+
     private final PushRegistryConfig config;
+
+    private final AtomicBoolean publishing = new AtomicBoolean(false);
+
+    private long lastScheduledPublishStartTime = 0L;
 
     @Nullable
     private ScheduledExecutorService scheduledExecutorService;
@@ -49,13 +59,42 @@ public abstract class PushMeterRegistry extends MeterRegistry {
     /**
      * Catch uncaught exceptions thrown from {@link #publish()}.
      */
-    private void publishSafely() {
-        try {
-            publish();
+    // VisibleForTesting
+    void publishSafely() {
+        if (this.publishing.compareAndSet(false, true)) {
+            this.lastScheduledPublishStartTime = clock.wallTime();
+            try {
+                publish();
+            }
+            catch (Throwable e) {
+                logger.warn("Unexpected exception thrown while publishing metrics for " + getClass().getSimpleName(),
+                        e);
+            }
+            finally {
+                this.publishing.set(false);
+            }
         }
-        catch (Throwable e) {
-            logger.warn("Unexpected exception thrown while publishing metrics for " + getClass().getSimpleName(), e);
+        else {
+            logger.warn("Publishing is already in progress. Skipping duplicate call to publish().");
         }
+    }
+
+    /**
+     * Returns if scheduled publishing of metrics is in progress.
+     * @return if scheduled publishing of metrics is in progress
+     * @since 1.11.0
+     */
+    protected boolean isPublishing() {
+        return publishing.get();
+    }
+
+    /**
+     * Returns the time, in milliseconds, when the last scheduled publish was started by
+     * {@link PushMeterRegistry#publishSafely()}.
+     * @since 1.11.1
+     */
+    protected long getLastScheduledPublishStartTime() {
+        return lastScheduledPublishStartTime;
     }
 
     /**
@@ -75,9 +114,8 @@ public abstract class PushMeterRegistry extends MeterRegistry {
                     + TimeUtils.format(config.step()));
 
             scheduledExecutorService = Executors.newSingleThreadScheduledExecutor(threadFactory);
-            // time publication to happen just after StepValue finishes the step
             long stepMillis = config.step().toMillis();
-            long initialDelayMillis = stepMillis - (clock.wallTime() % stepMillis) + 1;
+            long initialDelayMillis = calculateInitialDelay();
             scheduledExecutorService.scheduleAtFixedRate(this::publishSafely, initialDelayMillis, stepMillis,
                     TimeUnit.MILLISECONDS);
         }
@@ -92,11 +130,23 @@ public abstract class PushMeterRegistry extends MeterRegistry {
 
     @Override
     public void close() {
-        if (config.enabled()) {
+        stop();
+        if (config.enabled() && !isClosed()) {
             publishSafely();
         }
-        stop();
         super.close();
+    }
+
+    // VisibleForTesting
+    long calculateInitialDelay() {
+        long stepMillis = config.step().toMillis();
+        Random random = new Random();
+        // in range of [0, X% of step - 2)
+        long randomOffsetWithinStep = Math.max(0,
+                (long) (stepMillis * random.nextDouble() * PERCENT_RANGE_OF_RANDOM_PUBLISHING_OFFSET) - 2);
+        long offsetToStartOfNextStep = stepMillis - (clock.wallTime() % stepMillis);
+        // at least 2ms into step, so it is after StepMeterRegistry's meterPollingService
+        return offsetToStartOfNextStep + 2 + randomOffsetWithinStep;
     }
 
 }

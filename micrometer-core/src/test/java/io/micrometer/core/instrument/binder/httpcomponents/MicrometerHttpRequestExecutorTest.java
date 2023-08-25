@@ -55,6 +55,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
  * @author Benjamin Hubert (benjamin.hubert@willhaben.at)
  */
 @ExtendWith(WiremockResolver.class)
+@Deprecated
 class MicrometerHttpRequestExecutorTest {
 
     private static final String EXPECTED_METER_NAME = "httpcomponents.httpclient.request";
@@ -96,12 +97,18 @@ class MicrometerHttpRequestExecutorTest {
         EntityUtils.consume(client.execute(new HttpGet(server.baseUrl() + "/ok")).getEntity());
         EntityUtils.consume(client.execute(new HttpGet(server.baseUrl() + "/notfound")).getEntity());
         EntityUtils.consume(client.execute(new HttpGet(server.baseUrl() + "/error")).getEntity());
-        assertThat(registry.get(EXPECTED_METER_NAME).tags("method", "GET", "status", "200").timer().count())
-                .isEqualTo(2L);
-        assertThat(registry.get(EXPECTED_METER_NAME).tags("method", "GET", "status", "404").timer().count())
-                .isEqualTo(1L);
-        assertThat(registry.get(EXPECTED_METER_NAME).tags("method", "GET", "status", "500").timer().count())
-                .isEqualTo(1L);
+        assertThat(registry.get(EXPECTED_METER_NAME)
+            .tags("method", "GET", "status", "200", "outcome", "SUCCESS")
+            .timer()
+            .count()).isEqualTo(2L);
+        assertThat(registry.get(EXPECTED_METER_NAME)
+            .tags("method", "GET", "status", "404", "outcome", "CLIENT_ERROR")
+            .timer()
+            .count()).isEqualTo(1L);
+        assertThat(registry.get(EXPECTED_METER_NAME)
+            .tags("method", "GET", "status", "500", "outcome", "SERVER_ERROR")
+            .timer()
+            .count()).isEqualTo(1L);
     }
 
     @ParameterizedTest
@@ -137,8 +144,13 @@ class MicrometerHttpRequestExecutorTest {
         server.stubFor(any(anyUrl()));
         HttpClient client = client(executor(false, configureObservationRegistry));
         EntityUtils.consume(client.execute(new HttpGet(server.baseUrl())).getEntity());
-        List<String> tagKeys = registry.get(EXPECTED_METER_NAME).timer().getId().getTags().stream().map(Tag::getKey)
-                .collect(Collectors.toList());
+        List<String> tagKeys = registry.get(EXPECTED_METER_NAME)
+            .timer()
+            .getId()
+            .getTags()
+            .stream()
+            .map(Tag::getKey)
+            .collect(Collectors.toList());
         assertThat(tagKeys).doesNotContain("target.scheme", "target.host", "target.port");
         assertThat(tagKeys).contains("status", "method");
     }
@@ -150,15 +162,21 @@ class MicrometerHttpRequestExecutorTest {
         server.stubFor(any(anyUrl()));
         HttpClient client = client(executor(true, configureObservationRegistry));
         EntityUtils.consume(client.execute(new HttpGet(server.baseUrl())).getEntity());
-        List<String> tagKeys = registry.get(EXPECTED_METER_NAME).timer().getId().getTags().stream().map(Tag::getKey)
-                .collect(Collectors.toList());
+        List<String> tagKeys = registry.get(EXPECTED_METER_NAME)
+            .timer()
+            .getId()
+            .getTags()
+            .stream()
+            .map(Tag::getKey)
+            .collect(Collectors.toList());
         assertThat(tagKeys).contains("target.scheme", "target.host", "target.port");
     }
 
     @Test
     void waitForContinueGetsPassedToSuper() {
         MicrometerHttpRequestExecutor requestExecutor = MicrometerHttpRequestExecutor.builder(registry)
-                .waitForContinue(1000).build();
+            .waitForContinue(1000)
+            .build();
         assertThat(requestExecutor).hasFieldOrPropertyWithValue("waitForContinue", 1000);
     }
 
@@ -168,7 +186,7 @@ class MicrometerHttpRequestExecutorTest {
             @WiremockResolver.Wiremock WireMockServer server) throws IOException {
         server.stubFor(any(anyUrl()));
         MicrometerHttpRequestExecutor.Builder executorBuilder = MicrometerHttpRequestExecutor.builder(registry)
-                .uriMapper(request -> request.getRequestLine().getUri());
+            .uriMapper(request -> request.getRequestLine().getUri());
         if (configureObservationRegistry) {
             executorBuilder.observationRegistry(createObservationRegistry());
         }
@@ -187,11 +205,15 @@ class MicrometerHttpRequestExecutorTest {
     void additionalTagsAreExposed(@WiremockResolver.Wiremock WireMockServer server) throws IOException {
         server.stubFor(any(anyUrl()));
         MicrometerHttpRequestExecutor executor = MicrometerHttpRequestExecutor.builder(registry)
-                .tags(Tags.of("foo", "bar", "some.key", "value")).exportTagsForRoute(true).build();
+            .tags(Tags.of("foo", "bar", "some.key", "value"))
+            .exportTagsForRoute(true)
+            .build();
         HttpClient client = client(executor);
         EntityUtils.consume(client.execute(new HttpGet(server.baseUrl())).getEntity());
-        assertThat(registry.get(EXPECTED_METER_NAME).tags("foo", "bar", "some.key", "value", "target.host", "localhost")
-                .timer().count()).isEqualTo(1L);
+        assertThat(registry.get(EXPECTED_METER_NAME)
+            .tags("foo", "bar", "some.key", "value", "target.host", "localhost")
+            .timer()
+            .count()).isEqualTo(1L);
     }
 
     @Test
@@ -221,7 +243,8 @@ class MicrometerHttpRequestExecutorTest {
         ObservationRegistry observationRegistry = createObservationRegistry();
         observationRegistry.observationConfig().observationConvention(new CustomGlobalApacheHttpConvention());
         MicrometerHttpRequestExecutor micrometerHttpRequestExecutor = MicrometerHttpRequestExecutor.builder(registry)
-                .observationRegistry(observationRegistry).build();
+            .observationRegistry(observationRegistry)
+            .build();
         HttpClient client = client(micrometerHttpRequestExecutor);
         EntityUtils.consume(client.execute(new HttpGet(server.baseUrl())).getEntity());
         assertThat(registry.get("custom.apache.http.client.requests")).isNotNull();
@@ -234,12 +257,14 @@ class MicrometerHttpRequestExecutorTest {
         ObservationRegistry observationRegistry = createObservationRegistry();
         observationRegistry.observationConfig().observationConvention(new CustomGlobalApacheHttpConvention());
         MicrometerHttpRequestExecutor micrometerHttpRequestExecutor = MicrometerHttpRequestExecutor.builder(registry)
-                .observationRegistry(observationRegistry).observationConvention(new CustomGlobalApacheHttpConvention() {
-                    @Override
-                    public String getName() {
-                        return "local." + super.getName();
-                    }
-                }).build();
+            .observationRegistry(observationRegistry)
+            .observationConvention(new CustomGlobalApacheHttpConvention() {
+                @Override
+                public String getName() {
+                    return "local." + super.getName();
+                }
+            })
+            .build();
         HttpClient client = client(micrometerHttpRequestExecutor);
         EntityUtils.consume(client.execute(new HttpGet(server.baseUrl())).getEntity());
         assertThat(registry.get("local.custom.apache.http.client.requests")).isNotNull();
@@ -250,8 +275,9 @@ class MicrometerHttpRequestExecutorTest {
         server.stubFor(any(anyUrl()));
         ObservationRegistry observationRegistry = createObservationRegistry();
         MicrometerHttpRequestExecutor micrometerHttpRequestExecutor = MicrometerHttpRequestExecutor.builder(registry)
-                .observationRegistry(observationRegistry).observationConvention(new CustomGlobalApacheHttpConvention())
-                .build();
+            .observationRegistry(observationRegistry)
+            .observationConvention(new CustomGlobalApacheHttpConvention())
+            .build();
         HttpClient client = client(micrometerHttpRequestExecutor);
         EntityUtils.consume(client.execute(new HttpGet(server.baseUrl())).getEntity());
         assertThat(registry.get("custom.apache.http.client.requests")).isNotNull();
@@ -264,7 +290,8 @@ class MicrometerHttpRequestExecutorTest {
         server.stubFor(any(anyUrl()));
         TestObservationRegistry observationRegistry = TestObservationRegistry.create();
         MicrometerHttpRequestExecutor micrometerHttpRequestExecutor = MicrometerHttpRequestExecutor.builder(registry)
-                .observationRegistry(observationRegistry).build();
+            .observationRegistry(observationRegistry)
+            .build();
         HttpClient client = client(micrometerHttpRequestExecutor);
         switch (method) {
             case "get":
@@ -279,8 +306,9 @@ class MicrometerHttpRequestExecutorTest {
                 EntityUtils.consume(client.execute(new HttpCustomMethod(method, server.baseUrl())).getEntity());
                 break;
         }
-        TestObservationRegistryAssert.assertThat(observationRegistry).hasSingleObservationThat()
-                .hasContextualNameEqualToIgnoringCase("http " + method);
+        TestObservationRegistryAssert.assertThat(observationRegistry)
+            .hasSingleObservationThat()
+            .hasContextualNameEqualToIgnoringCase("http " + method);
     }
 
     private static class HttpCustomMethod extends HttpEntityEnclosingRequestBase {
@@ -307,9 +335,11 @@ class MicrometerHttpRequestExecutorTest {
         HttpClient client = client(executor(false, configureObservationRegistry));
         assertThatThrownBy(
                 () -> EntityUtils.consume(client.execute(new HttpGet(server.baseUrl() + "/error")).getEntity()))
-                        .isInstanceOf(ClientProtocolException.class);
-        assertThat(registry.get(EXPECTED_METER_NAME).tags("method", "GET", "status", "IO_ERROR").timer().count())
-                .isEqualTo(1L);
+            .isInstanceOf(ClientProtocolException.class);
+        assertThat(registry.get(EXPECTED_METER_NAME)
+            .tags("method", "GET", "status", "IO_ERROR", "outcome", "UNKNOWN")
+            .timer()
+            .count()).isEqualTo(1L);
     }
 
     static class CustomGlobalApacheHttpConvention extends DefaultApacheHttpClientObservationConvention

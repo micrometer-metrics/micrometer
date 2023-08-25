@@ -64,4 +64,22 @@ class StepFunctionCounterTest {
         assertThat(counter.count()).isEqualTo(1);
     }
 
+    @Test
+    void closingRolloverPartialStep() {
+        AtomicInteger n = new AtomicInteger(3);
+        @SuppressWarnings({ "rawtypes", "unchecked" })
+        StepFunctionCounter<AtomicInteger> counter = (StepFunctionCounter) registry.more()
+            .counter("my.counter", Tags.empty(), n);
+
+        assertThat(counter.count()).isZero();
+
+        counter._closingRollover();
+
+        assertThat(counter.count()).isEqualTo(3);
+
+        clock.add(config.step());
+
+        assertThat(counter.count()).isEqualTo(3);
+    }
+
 }

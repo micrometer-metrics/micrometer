@@ -44,6 +44,19 @@ class AzureMonitorMeterRegistryTest {
         }
 
         @Override
+        public String connectionString() {
+            return "InstrumentationKey=connectionStringKey";
+        }
+    };
+
+    private final AzureMonitorConfig configWithInstrumentationKey = new AzureMonitorConfig() {
+        @Override
+        public String get(String key) {
+            return null;
+        }
+
+        @SuppressWarnings("deprecation")
+        @Override
         public String instrumentationKey() {
             return "myInstrumentationKey";
         }
@@ -54,18 +67,31 @@ class AzureMonitorMeterRegistryTest {
     private final AzureMonitorMeterRegistry registry = new AzureMonitorMeterRegistry(config, clock);
 
     @Test
-    void useTelemetryConfigInstrumentationKeyWhenSet() {
+    void useTelemetryConfigConnectionStringWhenSet() {
         TelemetryConfiguration telemetryConfiguration = TelemetryConfiguration.createDefault();
-        telemetryConfiguration.setInstrumentationKey("fake");
+        telemetryConfiguration.setConnectionString("InstrumentationKey=direct");
         AzureMonitorMeterRegistry.builder(config).telemetryConfiguration(telemetryConfiguration).build();
-        assertThat(telemetryConfiguration.getInstrumentationKey()).isEqualTo("fake");
+        assertThat(telemetryConfiguration.getConnectionString()).isEqualTo("InstrumentationKey=direct");
+        assertThat(telemetryConfiguration.getInstrumentationKey()).isEqualTo("direct");
+    }
+
+    @Test
+    void configInstrumentationKeyStillSetsTelemetryConfigInstrumentationKey() {
+        TelemetryConfiguration telemetryConfiguration = TelemetryConfiguration.createDefault();
+        AzureMonitorMeterRegistry.builder(configWithInstrumentationKey)
+            .telemetryConfiguration(telemetryConfiguration)
+            .build();
+        assertThat(telemetryConfiguration.getConnectionString()).isEqualTo("InstrumentationKey=myInstrumentationKey");
+        assertThat(telemetryConfiguration.getInstrumentationKey()).isEqualTo("myInstrumentationKey");
     }
 
     @Test
     void failWhenTelemetryConfigInstrumentationKeyIsUnsetAndConfigInstrumentationKeyIsNull() {
         TelemetryConfiguration telemetryConfiguration = TelemetryConfiguration.createDefault();
-        assertThatExceptionOfType(ValidationException.class).isThrownBy(() -> AzureMonitorMeterRegistry
-                .builder(key -> null).telemetryConfiguration(telemetryConfiguration).build());
+        assertThatExceptionOfType(ValidationException.class)
+            .isThrownBy(() -> AzureMonitorMeterRegistry.builder(key -> null)
+                .telemetryConfiguration(telemetryConfiguration)
+                .build());
     }
 
     @Test
@@ -86,8 +112,8 @@ class AzureMonitorMeterRegistryTest {
     @Test
     void trackFunctionTimer() {
         FunctionTimer functionTimer = FunctionTimer
-                .builder("my.function.timer", 1d, Number::longValue, Number::doubleValue, TimeUnit.MILLISECONDS)
-                .register(registry);
+            .builder("my.function.timer", 1d, Number::longValue, Number::doubleValue, TimeUnit.MILLISECONDS)
+            .register(registry);
         clock.add(config.step());
         assertThat(registry.trackFunctionTimer(functionTimer)).hasSize(1);
     }
@@ -95,8 +121,8 @@ class AzureMonitorMeterRegistryTest {
     @Test
     void trackFunctionTimerWhenCountIsZeroShouldReturnEmpty() {
         FunctionTimer functionTimer = FunctionTimer
-                .builder("my.function.timer", 0d, Number::longValue, Number::doubleValue, TimeUnit.MILLISECONDS)
-                .register(registry);
+            .builder("my.function.timer", 0d, Number::longValue, Number::doubleValue, TimeUnit.MILLISECONDS)
+            .register(registry);
         clock.add(config.step());
         assertThat(registry.trackFunctionTimer(functionTimer)).isEmpty();
     }
@@ -104,7 +130,7 @@ class AzureMonitorMeterRegistryTest {
     @Test
     void trackDistributionSummary() {
         DistributionSummary distributionSummary = DistributionSummary.builder("my.distribution.summary")
-                .register(registry);
+            .register(registry);
         distributionSummary.record(1d);
         clock.add(config.step());
         assertThat(registry.trackDistributionSummary(distributionSummary)).hasSize(1);
@@ -113,7 +139,7 @@ class AzureMonitorMeterRegistryTest {
     @Test
     void trackDistributionSummaryWhenCountIsZeroShouldReturnEmpty() {
         DistributionSummary distributionSummary = DistributionSummary.builder("my.distribution.summary")
-                .register(registry);
+            .register(registry);
         clock.add(config.step());
         assertThat(registry.trackDistributionSummary(distributionSummary)).isEmpty();
     }

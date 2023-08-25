@@ -17,4 +17,7 @@
 /**
  * Meter binders for Jetty.
  */
+@NonNullApi
 package io.micrometer.core.instrument.binder.jetty;
+
+import io.micrometer.common.lang.NonNullApi;

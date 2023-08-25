@@ -32,8 +32,6 @@ class ObservationGrpcClientCall<ReqT, RespT> extends SimpleForwardingClientCall<
 
     private final Observation observation;
 
-    private Scope scope;
-
     ObservationGrpcClientCall(ClientCall<ReqT, RespT> delegate, Observation observation) {
         super(delegate);
         this.observation = observation;
@@ -42,9 +40,8 @@ class ObservationGrpcClientCall<ReqT, RespT> extends SimpleForwardingClientCall<
     @Override
     public void start(Listener<RespT> responseListener, Metadata metadata) {
         ((GrpcClientObservationContext) this.observation.getContext()).setCarrier(metadata);
-        this.scope = this.observation.start().openScope();
-        try {
-            super.start(new ObservationGrpcClientCallListener<>(responseListener, this.scope), metadata);
+        try (Scope scope = this.observation.start().openScope()) {
+            super.start(new ObservationGrpcClientCallListener<>(responseListener, this.observation), metadata);
         }
         catch (Throwable ex) {
             handleFailure(ex);
@@ -54,7 +51,7 @@ class ObservationGrpcClientCall<ReqT, RespT> extends SimpleForwardingClientCall<
 
     @Override
     public void halfClose() {
-        try {
+        try (Scope scope = this.observation.openScope()) {
             super.halfClose();
         }
         catch (Throwable ex) {
@@ -66,11 +63,12 @@ class ObservationGrpcClientCall<ReqT, RespT> extends SimpleForwardingClientCall<
     @Override
     public void sendMessage(ReqT message) {
         this.observation.event(GrpcClientEvents.MESSAGE_SENT);
-        super.sendMessage(message);
+        try (Scope scope = this.observation.openScope()) {
+            super.sendMessage(message);
+        }
     }
 
     private void handleFailure(Throwable ex) {
-        this.scope.close();
         this.observation.error(ex).stop();
     }
 

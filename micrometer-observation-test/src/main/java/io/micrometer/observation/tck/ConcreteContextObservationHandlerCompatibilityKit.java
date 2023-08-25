@@ -60,6 +60,8 @@ public abstract class ConcreteContextObservationHandlerCompatibilityKit<T extend
         assertThatCode(() -> handler.onError(context())).doesNotThrowAnyException();
         assertThatCode(() -> handler.onEvent(Observation.Event.of("testEvent"), context())).doesNotThrowAnyException();
         assertThatCode(() -> handler.onScopeOpened(context())).doesNotThrowAnyException();
+        assertThatCode(() -> handler.onScopeClosed(context())).doesNotThrowAnyException();
+        assertThatCode(() -> handler.onScopeReset(context())).doesNotThrowAnyException();
     }
 
     @Test
@@ -69,11 +71,11 @@ public abstract class ConcreteContextObservationHandlerCompatibilityKit<T extend
 
         assertThatCode(() -> handler.supportsContext(null)).doesNotThrowAnyException();
         assertThat(handler.supportsContext(null)).as("Handler supports only concrete context - no nulls accepted")
-                .isFalse();
+            .isFalse();
 
         assertThatCode(() -> handler.supportsContext(new NotMatchingContext())).doesNotThrowAnyException();
         assertThat(handler.supportsContext(new NotMatchingContext())).as("Handler supports only concrete context")
-                .isFalse();
+            .isFalse();
     }
 
     static class NotMatchingContext extends Observation.Context {

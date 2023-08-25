@@ -97,28 +97,28 @@ public class HumioMeterRegistry extends StepMeterRegistry {
                 String tags = "";
                 Map<String, String> datasourceTags = config.tags();
                 if (datasourceTags != null && !datasourceTags.isEmpty()) {
-                    tags = datasourceTags.entrySet().stream()
-                            .map(tag -> "\"" + tag.getKey() + "\": \"" + tag.getValue() + "\"")
-                            .collect(joining(",", "\"tags\":{", "},"));
+                    tags = datasourceTags.entrySet()
+                        .stream()
+                        .map(tag -> "\"" + tag.getKey() + "\": \"" + tag.getValue() + "\"")
+                        .collect(joining(",", "\"tags\":{", "},"));
                 }
 
-                post.withJsonContent(meters.stream()
                 // @formatter:off
-                        .map(m -> m.match(
-                                batch::writeGauge,
-                                batch::writeCounter,
-                                batch::writeTimer,
-                                batch::writeSummary,
-                                batch::writeLongTaskTimer,
-                                batch::writeTimeGauge,
-                                batch::writeFunctionCounter,
-                                batch::writeFunctionTimer,
-                                batch::writeMeter)
-                        )
-                        .collect(joining(",", "[{" + tags + "\"events\": [", "]}]")))
-                        .send()
-                        .onSuccess(response -> logger.debug("successfully sent {} metrics to humio.", meters.size()))
-                        .onError(response -> logger.error("failed to send metrics to humio: {}", response.body()));
+                post.withJsonContent(meters.stream()
+                    .map(m -> m.match(
+                            batch::writeGauge,
+                            batch::writeCounter,
+                            batch::writeTimer,
+                            batch::writeSummary,
+                            batch::writeLongTaskTimer,
+                            batch::writeTimeGauge,
+                            batch::writeFunctionCounter,
+                            batch::writeFunctionTimer,
+                            batch::writeMeter))
+                    .collect(joining(",", "[{" + tags + "\"events\": [", "]}]")))
+                    .send()
+                    .onSuccess(response -> logger.debug("successfully sent {} metrics to humio.", meters.size()))
+                    .onError(response -> logger.error("failed to send metrics to humio: {}", response.body()));
                 // @formatter:on
             }
             catch (Throwable e) {
@@ -282,12 +282,17 @@ public class HumioMeterRegistry extends StepMeterRegistry {
 
             String name = getConventionName(meter.getId());
 
-            sb.append("{\"timestamp\":\"").append(timestamp).append("\",\"attributes\":{\"name\":\"")
-                    .append(escapeJson(name)).append('"');
+            sb.append("{\"timestamp\":\"")
+                .append(timestamp)
+                .append("\",\"attributes\":{\"name\":\"")
+                .append(escapeJson(name))
+                .append('"');
 
             for (Attribute attribute : attributes) {
-                sb.append(",\"").append(attribute.name).append("\":")
-                        .append(DoubleFormat.wholeOrDecimal(attribute.value));
+                sb.append(",\"")
+                    .append(attribute.name)
+                    .append("\":")
+                    .append(DoubleFormat.wholeOrDecimal(attribute.value));
             }
 
             List<Tag> tags = getConventionTags(meter.getId());

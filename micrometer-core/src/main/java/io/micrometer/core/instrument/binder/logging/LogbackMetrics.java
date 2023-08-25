@@ -37,6 +37,10 @@ import java.util.Map;
 import static java.util.Collections.emptyList;
 
 /**
+ * Metrics instrumentation of Logback log events. Counts the log events with a log level
+ * equal to or higher than the corresponding logger's effective log level. A filter added
+ * to an appender will not affect the metrics.
+ *
  * @author Jon Schneider
  */
 @NonNullApi
@@ -50,6 +54,12 @@ public class LogbackMetrics implements MeterBinder, AutoCloseable {
     private final LoggerContext loggerContext;
 
     private final Map<MeterRegistry, MetricsTurboFilter> metricsTurboFilters = new HashMap<>();
+
+    static {
+        // see gh-2868. Without this called statically, the same call in the constructor
+        // may return SubstituteLoggerFactory and fail to cast.
+        LoggerFactory.getILoggerFactory();
+    }
 
     public LogbackMetrics() {
         this(emptyList());
@@ -139,7 +149,7 @@ class MetricsTurboFilter extends TurboFilter {
 
     private static final String METER_NAME = "logback.events";
 
-    private static final String METER_DESCRIPTION = "Number of events that made it to the logs";
+    private static final String METER_DESCRIPTION = "Number of log events that were enabled by the effective log level";
 
     private final Counter errorCounter;
 
@@ -152,20 +162,40 @@ class MetricsTurboFilter extends TurboFilter {
     private final Counter traceCounter;
 
     MetricsTurboFilter(MeterRegistry registry, Iterable<Tag> tags) {
-        errorCounter = Counter.builder(METER_NAME).tags(tags).tags("level", "error").description(METER_DESCRIPTION)
-                .baseUnit(BaseUnits.EVENTS).register(registry);
+        errorCounter = Counter.builder(METER_NAME)
+            .tags(tags)
+            .tags("level", "error")
+            .description(METER_DESCRIPTION)
+            .baseUnit(BaseUnits.EVENTS)
+            .register(registry);
 
-        warnCounter = Counter.builder(METER_NAME).tags(tags).tags("level", "warn").description(METER_DESCRIPTION)
-                .baseUnit(BaseUnits.EVENTS).register(registry);
+        warnCounter = Counter.builder(METER_NAME)
+            .tags(tags)
+            .tags("level", "warn")
+            .description(METER_DESCRIPTION)
+            .baseUnit(BaseUnits.EVENTS)
+            .register(registry);
 
-        infoCounter = Counter.builder(METER_NAME).tags(tags).tags("level", "info").description(METER_DESCRIPTION)
-                .baseUnit(BaseUnits.EVENTS).register(registry);
+        infoCounter = Counter.builder(METER_NAME)
+            .tags(tags)
+            .tags("level", "info")
+            .description(METER_DESCRIPTION)
+            .baseUnit(BaseUnits.EVENTS)
+            .register(registry);
 
-        debugCounter = Counter.builder(METER_NAME).tags(tags).tags("level", "debug").description(METER_DESCRIPTION)
-                .baseUnit(BaseUnits.EVENTS).register(registry);
+        debugCounter = Counter.builder(METER_NAME)
+            .tags(tags)
+            .tags("level", "debug")
+            .description(METER_DESCRIPTION)
+            .baseUnit(BaseUnits.EVENTS)
+            .register(registry);
 
-        traceCounter = Counter.builder(METER_NAME).tags(tags).tags("level", "trace").description(METER_DESCRIPTION)
-                .baseUnit(BaseUnits.EVENTS).register(registry);
+        traceCounter = Counter.builder(METER_NAME)
+            .tags(tags)
+            .tags("level", "trace")
+            .description(METER_DESCRIPTION)
+            .baseUnit(BaseUnits.EVENTS)
+            .register(registry);
     }
 
     @Override
@@ -176,7 +206,9 @@ class MetricsTurboFilter extends TurboFilter {
         // and can return immediately and
         // avoid the relatively expensive ThreadLocal access below. See also logbacks
         // Logger.callTurboFilters().
-        if (format == null) {
+        // Calling logger.isEnabledFor(level) might be sub-optimal since it cals this
+        // filter again. This behavior caused a StackOverflowError in the past.
+        if (format == null || !level.isGreaterOrEqual(logger.getEffectiveLevel())) {
             return FilterReply.NEUTRAL;
         }
 
@@ -185,29 +217,30 @@ class MetricsTurboFilter extends TurboFilter {
             return FilterReply.NEUTRAL;
         }
 
-        // cannot use logger.isEnabledFor(level), as it would cause a StackOverflowError
-        // by calling this filter again!
-        if (level.isGreaterOrEqual(logger.getEffectiveLevel())) {
-            switch (level.toInt()) {
-                case Level.ERROR_INT:
-                    errorCounter.increment();
-                    break;
-                case Level.WARN_INT:
-                    warnCounter.increment();
-                    break;
-                case Level.INFO_INT:
-                    infoCounter.increment();
-                    break;
-                case Level.DEBUG_INT:
-                    debugCounter.increment();
-                    break;
-                case Level.TRACE_INT:
-                    traceCounter.increment();
-                    break;
-            }
-        }
+        LogbackMetrics.ignoreMetrics(() -> recordMetrics(level));
 
         return FilterReply.NEUTRAL;
+    }
+
+    private void recordMetrics(Level level) {
+        switch (level.toInt()) {
+            case Level.ERROR_INT:
+                errorCounter.increment();
+                break;
+            case Level.WARN_INT:
+                warnCounter.increment();
+                break;
+            case Level.INFO_INT:
+                infoCounter.increment();
+                break;
+            case Level.DEBUG_INT:
+                debugCounter.increment();
+                break;
+            case Level.TRACE_INT:
+                traceCounter.increment();
+                break;
+        }
+
     }
 
 }

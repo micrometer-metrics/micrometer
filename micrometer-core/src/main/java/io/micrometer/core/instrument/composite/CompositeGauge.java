@@ -53,8 +53,11 @@ class CompositeGauge<T> extends AbstractCompositeMeter<Gauge> implements Gauge {
             return null;
         }
 
-        return Gauge.builder(getId().getName(), obj, f).tags(getId().getTagsAsIterable())
-                .description(getId().getDescription()).baseUnit(getId().getBaseUnit()).register(registry);
+        return Gauge.builder(getId().getName(), obj, f)
+            .tags(getId().getTagsAsIterable())
+            .description(getId().getDescription())
+            .baseUnit(getId().getBaseUnit())
+            .register(registry);
     }
 
 }

@@ -49,11 +49,21 @@ import static java.util.Collections.emptyList;
  * emanating from the MXBean and also adds information about GC causes.
  * <p>
  * This provides metrics for OpenJDK garbage collectors (serial, parallel, G1, Shenandoah,
- * ZGC) and for OpenJ9 garbage collectors (gencon, balanced, opthruput, optavgpause,
- * metronome).
+ * ZGC), OpenJ9 garbage collectors (gencon, balanced, opthruput, optavgpause, metronome)
+ * and for Azul Prime's (formerly Zing) C4 GC (formerly GPGC).
+ * <p>
+ * WARNING: Older versions of Azul Prime (Zing) did not report timing information about
+ * pauses and cycles correctly (duration of GC pauses and duration of the concurrent part
+ * of the GC which runs in parallel to application threads and is not stopping the
+ * application). See the
+ * <a href="https://docs.azul.com/prime/release-notes#prime_stream_22_12_0_0">release
+ * notes</a> and <a href="https://bugs.openjdk.org/browse/JDK-8265136">JDK-8265136</a>. If
+ * you want better accuracy, please make sure that you use a newer version and the new
+ * metrics are enabled.
  *
  * @author Jon Schneider
  * @author Tommy Ludwig
+ * @author Andrew Krasny
  * @see GarbageCollectorMXBean
  */
 @NonNullApi
@@ -116,27 +126,37 @@ public class JvmGcMetrics implements MeterBinder, AutoCloseable {
         gcNotificationListener = new GcMetricsNotificationListener(registry);
 
         double maxLongLivedPoolBytes = getLongLivedHeapPools()
-                .mapToDouble(mem -> getUsageValue(mem, MemoryUsage::getMax)).sum();
+            .mapToDouble(mem -> getUsageValue(mem, MemoryUsage::getMax))
+            .sum();
 
         maxDataSize = new AtomicLong((long) maxLongLivedPoolBytes);
-        Gauge.builder("jvm.gc.max.data.size", maxDataSize, AtomicLong::get).tags(tags)
-                .description("Max size of long-lived heap memory pool").baseUnit(BaseUnits.BYTES).register(registry);
+        Gauge.builder("jvm.gc.max.data.size", maxDataSize, AtomicLong::get)
+            .tags(tags)
+            .description("Max size of long-lived heap memory pool")
+            .baseUnit(BaseUnits.BYTES)
+            .register(registry);
 
         liveDataSize = new AtomicLong();
 
-        Gauge.builder("jvm.gc.live.data.size", liveDataSize, AtomicLong::get).tags(tags)
-                .description("Size of long-lived heap memory pool after reclamation").baseUnit(BaseUnits.BYTES)
-                .register(registry);
+        Gauge.builder("jvm.gc.live.data.size", liveDataSize, AtomicLong::get)
+            .tags(tags)
+            .description("Size of long-lived heap memory pool after reclamation")
+            .baseUnit(BaseUnits.BYTES)
+            .register(registry);
 
-        allocatedBytes = Counter.builder("jvm.gc.memory.allocated").tags(tags).baseUnit(BaseUnits.BYTES).description(
-                "Incremented for an increase in the size of the (young) heap memory pool after one GC to before the next")
-                .register(registry);
+        allocatedBytes = Counter.builder("jvm.gc.memory.allocated")
+            .tags(tags)
+            .baseUnit(BaseUnits.BYTES)
+            .description(
+                    "Incremented for an increase in the size of the (young) heap memory pool after one GC to before the next")
+            .register(registry);
 
-        promotedBytes = (isGenerationalGc) ? Counter.builder("jvm.gc.memory.promoted").tags(tags)
-                .baseUnit(BaseUnits.BYTES)
-                .description(
-                        "Count of positive increases in the size of the old generation memory pool before GC to after GC")
-                .register(registry) : null;
+        promotedBytes = (isGenerationalGc) ? Counter.builder("jvm.gc.memory.promoted")
+            .tags(tags)
+            .baseUnit(BaseUnits.BYTES)
+            .description(
+                    "Count of positive increases in the size of the old generation memory pool before GC to after GC")
+            .register(registry) : null;
 
         allocationPoolSizeAfter = new AtomicLong(0L);
 
@@ -146,7 +166,7 @@ public class JvmGcMetrics implements MeterBinder, AutoCloseable {
             }
             NotificationEmitter notificationEmitter = (NotificationEmitter) gcBean;
             notificationEmitter.addNotificationListener(gcNotificationListener, notification -> notification.getType()
-                    .equals(GarbageCollectionNotificationInfo.GARBAGE_COLLECTION_NOTIFICATION), null);
+                .equals(GarbageCollectionNotificationInfo.GARBAGE_COLLECTION_NOTIFICATION), null);
             notificationListenerCleanUpRunnables.add(() -> {
                 try {
                     notificationEmitter.removeNotificationListener(gcNotificationListener);
@@ -170,19 +190,26 @@ public class JvmGcMetrics implements MeterBinder, AutoCloseable {
             CompositeData cd = (CompositeData) notification.getUserData();
             GarbageCollectionNotificationInfo notificationInfo = GarbageCollectionNotificationInfo.from(cd);
 
+            String gcName = notificationInfo.getGcName();
             String gcCause = notificationInfo.getGcCause();
             String gcAction = notificationInfo.getGcAction();
             GcInfo gcInfo = notificationInfo.getGcInfo();
             long duration = gcInfo.getDuration();
-            if (isConcurrentPhase(gcCause, notificationInfo.getGcName())) {
-                Timer.builder("jvm.gc.concurrent.phase.time").tags(tags).tags("action", gcAction, "cause", gcCause)
-                        .description("Time spent in concurrent phase").register(registry)
-                        .record(duration, TimeUnit.MILLISECONDS);
+
+            Tags gcTags = Tags.of("gc", gcName, "action", gcAction, "cause", gcCause).and(tags);
+            if (isConcurrentPhase(gcCause, gcName)) {
+                Timer.builder("jvm.gc.concurrent.phase.time")
+                    .tags(gcTags)
+                    .description("Time spent in concurrent phase")
+                    .register(registry)
+                    .record(duration, TimeUnit.MILLISECONDS);
             }
             else {
-                Timer.builder("jvm.gc.pause").tags(tags).tags("action", gcAction, "cause", gcCause)
-                        .description("Time spent in GC pause").register(registry)
-                        .record(duration, TimeUnit.MILLISECONDS);
+                Timer.builder("jvm.gc.pause")
+                    .tags(gcTags)
+                    .description("Time spent in GC pause")
+                    .register(registry)
+                    .record(duration, TimeUnit.MILLISECONDS);
             }
 
             final Map<String, MemoryUsage> before = gcInfo.getMemoryUsageBeforeGc();
@@ -190,8 +217,9 @@ public class JvmGcMetrics implements MeterBinder, AutoCloseable {
 
             countPoolSizeDelta(before, after);
 
-            final long longLivedBefore = longLivedPoolNames.stream().mapToLong(pool -> before.get(pool).getUsed())
-                    .sum();
+            final long longLivedBefore = longLivedPoolNames.stream()
+                .mapToLong(pool -> before.get(pool).getUsed())
+                .sum();
             final long longLivedAfter = longLivedPoolNames.stream().mapToLong(pool -> after.get(pool).getUsed()).sum();
             if (isGenerationalGc) {
                 final long delta = longLivedAfter - longLivedBefore;
@@ -205,7 +233,7 @@ public class JvmGcMetrics implements MeterBinder, AutoCloseable {
             // live data size we record the value if we see a reduction in the long-lived
             // heap size or
             // after a major/non-generational GC.
-            if (longLivedAfter < longLivedBefore || shouldUpdateDataSizeMetrics(notificationInfo.getGcName())) {
+            if (longLivedAfter < longLivedBefore || shouldUpdateDataSizeMetrics(gcName)) {
                 liveDataSize.set(longLivedAfter);
                 maxDataSize.set(longLivedPoolNames.stream().mapToLong(pool -> after.get(pool).getMax()).sum());
             }
@@ -242,8 +270,25 @@ public class JvmGcMetrics implements MeterBinder, AutoCloseable {
     }
 
     private boolean isGenerationalGcConfigured() {
-        return ManagementFactory.getMemoryPoolMXBeans().stream().filter(JvmMemory::isHeap)
-                .map(MemoryPoolMXBean::getName).filter(name -> !name.contains("tenured")).count() > 1;
+        // Azul Prime's (formerly Zing) C4 GC (formerly GPGC) is always generational
+        // and having more than one non-'tenured' pools is also considered to be
+        // generational.
+        int nonTenuredPools = 0;
+        for (MemoryPoolMXBean bean : ManagementFactory.getMemoryPoolMXBeans()) {
+            if (JvmMemory.isHeap(bean)) {
+                String name = bean.getName();
+                if (!name.contains("tenured")) {
+                    nonTenuredPools++;
+                    if (nonTenuredPools == 2) {
+                        return true;
+                    }
+                }
+                if (name.contains("GPGC")) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     private static boolean isManagementExtensionsPresent() {
@@ -295,6 +340,14 @@ public class JvmGcMetrics implements MeterBinder, AutoCloseable {
                 put("partial gc", YOUNG);
                 put("global garbage collect", OLD);
                 put("Epsilon", OLD);
+                // GPGC (Azul's C4, see:
+                // https://docs.azul.com/prime/release-notes#prime_stream_22_12_0_0)
+                put("GPGC New", YOUNG); // old naming
+                put("GPGC Old", OLD); // old naming
+                put("GPGC New Cycles", YOUNG); // new naming
+                put("GPGC Old Cycles", OLD); // new naming
+                put("GPGC New Pauses", YOUNG); // new naming
+                put("GPGC Old Pauses", OLD); // new naming
             }
         };
 

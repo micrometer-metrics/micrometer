@@ -72,16 +72,18 @@ class MetricsRequestEventListenerTest extends JerseyTest {
         target("sub-resource/sub-hello/peter").request().get();
 
         assertThat(registry.get(METRIC_NAME).tags(tagsFrom("root", "200", "SUCCESS", null)).timer().count())
-                .isEqualTo(1);
+            .isEqualTo(1);
 
         assertThat(registry.get(METRIC_NAME).tags(tagsFrom("/hello", "200", "SUCCESS", null)).timer().count())
-                .isEqualTo(2);
+            .isEqualTo(2);
 
         assertThat(registry.get(METRIC_NAME).tags(tagsFrom("/hello/{name}", "200", "SUCCESS", null)).timer().count())
-                .isEqualTo(1);
+            .isEqualTo(1);
 
-        assertThat(registry.get(METRIC_NAME).tags(tagsFrom("/sub-resource/sub-hello/{name}", "200", "SUCCESS", null))
-                .timer().count()).isEqualTo(1);
+        assertThat(registry.get(METRIC_NAME)
+            .tags(tagsFrom("/sub-resource/sub-hello/{name}", "200", "SUCCESS", null))
+            .timer()
+            .count()).isEqualTo(1);
 
         // assert we are not auto-timing long task @Timed
         assertThat(registry.getMeters()).hasSize(4);
@@ -96,7 +98,7 @@ class MetricsRequestEventListenerTest extends JerseyTest {
         }
 
         assertThat(registry.get(METRIC_NAME).tags(tagsFrom("NOT_FOUND", "404", "CLIENT_ERROR", null)).timer().count())
-                .isEqualTo(1);
+            .isEqualTo(1);
     }
 
     @Test
@@ -107,8 +109,10 @@ class MetricsRequestEventListenerTest extends JerseyTest {
         catch (NotFoundException ignored) {
         }
 
-        assertThat(registry.get(METRIC_NAME).tags(tagsFrom("/throws-not-found-exception", "404", "CLIENT_ERROR", null))
-                .timer().count()).isEqualTo(1);
+        assertThat(registry.get(METRIC_NAME)
+            .tags(tagsFrom("/throws-not-found-exception", "404", "CLIENT_ERROR", null))
+            .timer()
+            .count()).isEqualTo(1);
     }
 
     @Test
@@ -116,11 +120,15 @@ class MetricsRequestEventListenerTest extends JerseyTest {
         target("redirect/302").request().get();
         target("redirect/307").request().get();
 
-        assertThat(registry.get(METRIC_NAME).tags(tagsFrom("/redirect/{status}", "302", "REDIRECTION", null)).timer()
-                .count()).isEqualTo(1);
+        assertThat(registry.get(METRIC_NAME)
+            .tags(tagsFrom("/redirect/{status}", "302", "REDIRECTION", null))
+            .timer()
+            .count()).isEqualTo(1);
 
-        assertThat(registry.get(METRIC_NAME).tags(tagsFrom("/redirect/{status}", "307", "REDIRECTION", null)).timer()
-                .count()).isEqualTo(1);
+        assertThat(registry.get(METRIC_NAME)
+            .tags(tagsFrom("/redirect/{status}", "307", "REDIRECTION", null))
+            .timer()
+            .count()).isEqualTo(1);
     }
 
     @Test
@@ -142,16 +150,19 @@ class MetricsRequestEventListenerTest extends JerseyTest {
         }
 
         assertThat(registry.get(METRIC_NAME)
-                .tags(tagsFrom("/throws-exception", "500", "SERVER_ERROR", "IllegalArgumentException")).timer().count())
-                        .isEqualTo(1);
+            .tags(tagsFrom("/throws-exception", "500", "SERVER_ERROR", "IllegalArgumentException"))
+            .timer()
+            .count()).isEqualTo(1);
 
         assertThat(registry.get(METRIC_NAME)
-                .tags(tagsFrom("/throws-webapplication-exception", "401", "CLIENT_ERROR", "NotAuthorizedException"))
-                .timer().count()).isEqualTo(1);
+            .tags(tagsFrom("/throws-webapplication-exception", "401", "CLIENT_ERROR", "NotAuthorizedException"))
+            .timer()
+            .count()).isEqualTo(1);
 
         assertThat(registry.get(METRIC_NAME)
-                .tags(tagsFrom("/throws-mappable-exception", "410", "CLIENT_ERROR", "ResourceGoneException")).timer()
-                .count()).isEqualTo(1);
+            .tags(tagsFrom("/throws-mappable-exception", "410", "CLIENT_ERROR", "ResourceGoneException"))
+            .timer()
+            .count()).isEqualTo(1);
     }
 
     private static Iterable<Tag> tagsFrom(String uri, String status, String outcome, String exception) {

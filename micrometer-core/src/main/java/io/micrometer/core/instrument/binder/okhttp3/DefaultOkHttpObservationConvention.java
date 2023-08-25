@@ -22,6 +22,7 @@ import io.micrometer.common.lang.NonNullFields;
 import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
+import io.micrometer.core.instrument.binder.http.Outcome;
 import okhttp3.Request;
 import okhttp3.Response;
 
@@ -86,17 +87,20 @@ public class DefaultOkHttpObservationConvention implements OkHttpObservationConv
         boolean includeHostTag = context.isIncludeHostTag();
         // TODO: Tags to key values and back - maybe we can improve this?
         KeyValues keyValues = KeyValues
-                .of(METHOD.withValue(requestAvailable ? request.method() : TAG_VALUE_UNKNOWN),
-                        URI.withValue(getUriTag(urlMapper, state, request)),
-                        STATUS.withValue(getStatusMessage(state.response, state.exception)))
-                .and(extraTags)
-                .and(stream(contextSpecificTags.spliterator(), false)
-                        .map(contextTag -> contextTag.apply(request, state.response))
-                        .map(tag -> KeyValue.of(tag.getKey(), tag.getValue())).collect(toList()))
-                .and(getRequestTags(request, unknownRequestTags)).and(generateTagsForRoute(request));
+            .of(METHOD.withValue(requestAvailable ? request.method() : TAG_VALUE_UNKNOWN),
+                    URI.withValue(getUriTag(urlMapper, state, request)),
+                    STATUS.withValue(getStatusMessage(state.response, state.exception)),
+                    OUTCOME.withValue(getStatusOutcome(state.response).name()))
+            .and(extraTags)
+            .and(stream(contextSpecificTags.spliterator(), false)
+                .map(contextTag -> contextTag.apply(request, state.response))
+                .map(tag -> KeyValue.of(tag.getKey(), tag.getValue()))
+                .collect(toList()))
+            .and(getRequestTags(request, unknownRequestTags))
+            .and(generateTagsForRoute(request));
         if (includeHostTag) {
             keyValues = KeyValues.of(keyValues)
-                    .and(HOST.withValue(requestAvailable ? request.url().host() : TAG_VALUE_UNKNOWN));
+                .and(HOST.withValue(requestAvailable ? request.url().host() : TAG_VALUE_UNKNOWN));
         }
         return keyValues;
     }
@@ -108,6 +112,14 @@ public class DefaultOkHttpObservationConvention implements OkHttpObservationConv
         }
         return state.response != null && (state.response.code() == 404 || state.response.code() == 301) ? "NOT_FOUND"
                 : urlMapper.apply(request);
+    }
+
+    private Outcome getStatusOutcome(@Nullable Response response) {
+        if (response == null) {
+            return Outcome.UNKNOWN;
+        }
+
+        return Outcome.forStatus(response.code());
     }
 
     private String getStatusMessage(@Nullable Response response, @Nullable IOException exception) {

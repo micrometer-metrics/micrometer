@@ -19,6 +19,7 @@ import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
+import io.micrometer.core.instrument.binder.http.Outcome;
 import io.micrometer.core.instrument.observation.ObservationOrTimerCompatibleInstrumentation;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
@@ -105,8 +106,9 @@ public class MicrometerHttpClient extends HttpClient {
         @Nullable
         private HttpClientObservationConvention customObservationConvention;
 
-        private Function<HttpRequest, String> uriMapper = request -> request.headers().firstValue(URI_PATTERN_HEADER)
-                .orElse("UNKNOWN");
+        private Function<HttpRequest, String> uriMapper = request -> request.headers()
+            .firstValue(URI_PATTERN_HEADER)
+            .orElse("UNKNOWN");
 
         /**
          * Creates a new instance of {@link InstrumentationBuilder}.
@@ -237,8 +239,11 @@ public class MicrometerHttpClient extends HttpClient {
                             request.method(), HttpClientObservationDocumentation.LowCardinalityKeys.URI.asString(),
                             DefaultHttpClientObservationConvention.INSTANCE.getUriTag(request, res, uriMapper));
                     if (res != null) {
-                        tags = tags.and(Tag.of(HttpClientObservationDocumentation.LowCardinalityKeys.STATUS.asString(),
-                                String.valueOf(res.statusCode())));
+                        tags = tags
+                            .and(Tag.of(HttpClientObservationDocumentation.LowCardinalityKeys.STATUS.asString(),
+                                    String.valueOf(res.statusCode())))
+                            .and(Tag.of(HttpClientObservationDocumentation.LowCardinalityKeys.OUTCOME.asString(),
+                                    Outcome.forStatus(res.statusCode()).name()));
                     }
                     return tags;
                 });
@@ -280,19 +285,19 @@ public class MicrometerHttpClient extends HttpClient {
         HttpRequest.Builder builder = HttpRequest.newBuilder(httpRequest.uri());
         builder.expectContinue(httpRequest.expectContinue());
         httpRequest.headers().map().forEach((key, values) -> values.forEach(value -> builder.header(key, value)));
-        httpRequest.bodyPublisher().ifPresentOrElse(publisher -> builder.method(httpRequest.method(), publisher),
-                () -> {
-                    switch (httpRequest.method()) {
-                        case "GET":
-                            builder.GET();
-                            break;
-                        case "DELETE":
-                            builder.DELETE();
-                            break;
-                        default:
-                            throw new IllegalStateException(httpRequest.method());
-                    }
-                });
+        httpRequest.bodyPublisher()
+            .ifPresentOrElse(publisher -> builder.method(httpRequest.method(), publisher), () -> {
+                switch (httpRequest.method()) {
+                    case "GET":
+                        builder.GET();
+                        break;
+                    case "DELETE":
+                        builder.DELETE();
+                        break;
+                    default:
+                        throw new IllegalStateException(httpRequest.method());
+                }
+            });
         httpRequest.timeout().ifPresent(builder::timeout);
         httpRequest.version().ifPresent(builder::version);
         return builder;

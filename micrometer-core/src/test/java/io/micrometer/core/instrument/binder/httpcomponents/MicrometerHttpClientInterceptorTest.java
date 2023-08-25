@@ -43,6 +43,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @author Johnny Lim
  */
 @ExtendWith(WiremockResolver.class)
+@Deprecated
 class MicrometerHttpClientInterceptorTest {
 
     private MeterRegistry registry;
@@ -63,7 +64,12 @@ class MicrometerHttpClientInterceptorTest {
         HttpResponse response = future.get();
 
         assertThat(response.getStatusLine().getStatusCode()).isEqualTo(200);
-        assertThat(registry.get("httpcomponents.httpclient.request").timer().count()).isEqualTo(1);
+        assertThat(registry.get("httpcomponents.httpclient.request")
+            .tag("method", "GET")
+            .tag("status", "200")
+            .tag("outcome", "SUCCESS")
+            .timer()
+            .count()).isEqualTo(1);
 
         client.close();
     }
@@ -81,8 +87,11 @@ class MicrometerHttpClientInterceptorTest {
         HttpResponse response = future.get();
 
         assertThat(response.getStatusLine().getStatusCode()).isEqualTo(200);
-        assertThat(registry.get("httpcomponents.httpclient.request").tag("uri", "/some/pattern").tag("status", "200")
-                .timer().count()).isEqualTo(1);
+        assertThat(registry.get("httpcomponents.httpclient.request")
+            .tag("uri", "/some/pattern")
+            .tag("status", "200")
+            .timer()
+            .count()).isEqualTo(1);
 
         client.close();
     }
@@ -94,8 +103,10 @@ class MicrometerHttpClientInterceptorTest {
     }
 
     private CloseableHttpAsyncClient asyncClient(MicrometerHttpClientInterceptor interceptor) {
-        return HttpAsyncClients.custom().addInterceptorFirst(interceptor.getRequestInterceptor())
-                .addInterceptorLast(interceptor.getResponseInterceptor()).build();
+        return HttpAsyncClients.custom()
+            .addInterceptorFirst(interceptor.getRequestInterceptor())
+            .addInterceptorLast(interceptor.getResponseInterceptor())
+            .build();
     }
 
 }

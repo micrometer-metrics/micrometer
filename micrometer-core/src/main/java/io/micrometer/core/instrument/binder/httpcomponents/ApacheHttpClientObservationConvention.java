@@ -20,10 +20,17 @@ import io.micrometer.observation.ObservationConvention;
 
 /**
  * {@link ObservationConvention} for Apache HTTP client instrumentation.
+ * <p>
+ * See
+ * {@link io.micrometer.core.instrument.binder.httpcomponents.hc5.ApacheHttpClientObservationConvention}
+ * for Apache HTTP client 5 support.
  *
  * @since 1.10.0
  * @see DefaultApacheHttpClientObservationConvention
+ * @deprecated as of 1.12.0 in favor of HttpComponents 5.x and
+ * {@link io.micrometer.core.instrument.binder.httpcomponents.hc5.ApacheHttpClientObservationConvention}.
  */
+@Deprecated
 public interface ApacheHttpClientObservationConvention extends ObservationConvention<ApacheHttpClientContext> {
 
     @Override

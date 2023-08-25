@@ -85,8 +85,11 @@ class MeterRegistryTest {
         registry.config().meterFilter(new MeterFilter() {
             @Override
             public DistributionStatisticConfig configure(Meter.Id mappedId, DistributionStatisticConfig config) {
-                return DistributionStatisticConfig.builder().percentiles(0.95).percentilesHistogram(true).build()
-                        .merge(config);
+                return DistributionStatisticConfig.builder()
+                    .percentiles(0.95)
+                    .percentilesHistogram(true)
+                    .build()
+                    .merge(config);
             }
         });
 
@@ -197,9 +200,9 @@ class MeterRegistryTest {
     void shouldNotLetRegisteringMetersTwice() {
         registry.counter("my.dupe.meter");
         assertThatThrownBy(() -> registry.timer("my.dupe.meter")).isInstanceOf(IllegalArgumentException.class)
-                .hasMessage(
-                        "There is already a registered meter of a different type (CumulativeCounter vs. Timer) with the same name: my.dupe.meter")
-                .hasNoCause();
+            .hasMessage(
+                    "There is already a registered meter of a different type (CumulativeCounter vs. Timer) with the same name: my.dupe.meter")
+            .hasNoCause();
     }
 
 }

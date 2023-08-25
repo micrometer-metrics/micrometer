@@ -30,6 +30,7 @@ import org.mockito.InOrder;
 import java.io.IOException;
 import java.util.UUID;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -150,7 +151,8 @@ public abstract class ObservationRegistryCompatibilityKit {
             throw new RuntimeException("simulated");
         };
         assertThatThrownBy(() -> observation.observe(runnable)).isInstanceOf(RuntimeException.class)
-                .hasMessage("simulated").hasNoCause();
+            .hasMessage("simulated")
+            .hasNoCause();
 
         assertThat(registry.getCurrentObservation()).isNull();
 
@@ -176,7 +178,8 @@ public abstract class ObservationRegistryCompatibilityKit {
             throw new RuntimeException("simulated");
         };
         assertThatThrownBy(() -> observation.wrap(runnable).run()).isInstanceOf(RuntimeException.class)
-                .hasMessage("simulated").hasNoCause();
+            .hasMessage("simulated")
+            .hasNoCause();
 
         assertThat(registry.getCurrentObservation()).isNull();
 
@@ -198,7 +201,7 @@ public abstract class ObservationRegistryCompatibilityKit {
         Observation observation = Observation.createNotStarted("myObservation", registry);
 
         Observation.CheckedRunnable<Throwable> checkedRunnable = () -> assertThat(registry.getCurrentObservation())
-                .isSameAs(observation);
+            .isSameAs(observation);
         observation.observeChecked(checkedRunnable);
         assertThat(registry.getCurrentObservation()).isNull();
 
@@ -220,7 +223,7 @@ public abstract class ObservationRegistryCompatibilityKit {
         Observation observation = Observation.createNotStarted("myObservation", registry);
 
         Observation.CheckedRunnable<Throwable> checkedRunnable = () -> assertThat(registry.getCurrentObservation())
-                .isSameAs(observation);
+            .isSameAs(observation);
         observation.wrapChecked(checkedRunnable).run();
         assertThat(registry.getCurrentObservation()).isNull();
 
@@ -246,7 +249,8 @@ public abstract class ObservationRegistryCompatibilityKit {
             throw new IOException("simulated");
         };
         assertThatThrownBy(() -> observation.observeChecked(checkedRunnable)).isInstanceOf(IOException.class)
-                .hasMessage("simulated").hasNoCause();
+            .hasMessage("simulated")
+            .hasNoCause();
 
         assertThat(registry.getCurrentObservation()).isNull();
 
@@ -272,7 +276,8 @@ public abstract class ObservationRegistryCompatibilityKit {
             throw new IOException("simulated");
         };
         assertThatThrownBy(() -> observation.wrapChecked(checkedRunnable).run()).isInstanceOf(IOException.class)
-                .hasMessage("simulated").hasNoCause();
+            .hasMessage("simulated")
+            .hasNoCause();
 
         assertThat(registry.getCurrentObservation()).isNull();
 
@@ -348,7 +353,8 @@ public abstract class ObservationRegistryCompatibilityKit {
             throw new RuntimeException("simulated");
         };
         assertThatThrownBy(() -> observation.observe(supplier)).isInstanceOf(RuntimeException.class)
-                .hasMessage("simulated").hasNoCause();
+            .hasMessage("simulated")
+            .hasNoCause();
 
         assertThat(registry.getCurrentObservation()).isNull();
 
@@ -374,7 +380,8 @@ public abstract class ObservationRegistryCompatibilityKit {
             throw new RuntimeException("simulated");
         };
         assertThatThrownBy(() -> observation.wrap(supplier).get()).isInstanceOf(RuntimeException.class)
-                .hasMessage("simulated").hasNoCause();
+            .hasMessage("simulated")
+            .hasNoCause();
 
         assertThat(registry.getCurrentObservation()).isNull();
 
@@ -450,7 +457,8 @@ public abstract class ObservationRegistryCompatibilityKit {
             throw new IOException("simulated");
         };
         assertThatThrownBy(() -> observation.observeChecked(callable)).isInstanceOf(IOException.class)
-                .hasMessage("simulated").hasNoCause();
+            .hasMessage("simulated")
+            .hasNoCause();
 
         assertThat(registry.getCurrentObservation()).isNull();
 
@@ -476,7 +484,114 @@ public abstract class ObservationRegistryCompatibilityKit {
             throw new IOException("simulated");
         };
         assertThatThrownBy(() -> observation.wrapChecked(callable).call()).isInstanceOf(IOException.class)
-                .hasMessage("simulated").hasNoCause();
+            .hasMessage("simulated")
+            .hasNoCause();
+
+        assertThat(registry.getCurrentObservation()).isNull();
+
+        InOrder inOrder = inOrder(handler);
+        inOrder.verify(handler).supportsContext(isA(Observation.Context.class));
+        inOrder.verify(handler).onStart(isA(Observation.Context.class));
+        inOrder.verify(handler).onScopeOpened(isA(Observation.Context.class));
+        inOrder.verify(handler).onScopeClosed(isA(Observation.Context.class));
+        inOrder.verify(handler).onError(isA(Observation.Context.class));
+        inOrder.verify(handler).onStop(isA(Observation.Context.class));
+    }
+
+    @Test
+    void functionShouldBeObserved() {
+        @SuppressWarnings("unchecked")
+        ObservationHandler<Observation.Context> handler = mock(ObservationHandler.class);
+        when(handler.supportsContext(isA(Observation.Context.class))).thenReturn(true);
+        registry.observationConfig().observationHandler(handler);
+        Observation observation = Observation.createNotStarted("myObservation", registry);
+
+        Function<Observation.Context, String> function = (context) -> {
+            assertThat(registry.getCurrentObservation()).isSameAs(observation);
+            assertThat(context).isSameAs(observation.getContext());
+            return "test";
+        };
+        String result = observation.observeWithContext(function);
+        assertThat(result).isEqualTo("test");
+        assertThat(registry.getCurrentObservation()).isNull();
+
+        InOrder inOrder = inOrder(handler);
+        inOrder.verify(handler).supportsContext(isA(Observation.Context.class));
+        inOrder.verify(handler).onStart(isA(Observation.Context.class));
+        inOrder.verify(handler).onScopeOpened(isA(Observation.Context.class));
+        inOrder.verify(handler).onScopeClosed(isA(Observation.Context.class));
+        inOrder.verify(handler, times(0)).onError(isA(Observation.Context.class));
+        inOrder.verify(handler).onStop(isA(Observation.Context.class));
+    }
+
+    @Test
+    void functionThrowingErrorShouldBeObserved() {
+        @SuppressWarnings("unchecked")
+        ObservationHandler<Observation.Context> handler = mock(ObservationHandler.class);
+        when(handler.supportsContext(isA(Observation.Context.class))).thenReturn(true);
+        registry.observationConfig().observationHandler(handler);
+        Observation observation = Observation.createNotStarted("myObservation", registry);
+
+        Function<Observation.Context, String> function = (context) -> {
+            assertThat(registry.getCurrentObservation()).isSameAs(observation);
+            throw new RuntimeException("simulated");
+        };
+        assertThatThrownBy(() -> observation.observeWithContext(function)).isInstanceOf(RuntimeException.class)
+            .hasMessage("simulated")
+            .hasNoCause();
+
+        assertThat(registry.getCurrentObservation()).isNull();
+
+        InOrder inOrder = inOrder(handler);
+        inOrder.verify(handler).supportsContext(isA(Observation.Context.class));
+        inOrder.verify(handler).onStart(isA(Observation.Context.class));
+        inOrder.verify(handler).onScopeOpened(isA(Observation.Context.class));
+        inOrder.verify(handler).onScopeClosed(isA(Observation.Context.class));
+        inOrder.verify(handler).onError(isA(Observation.Context.class));
+        inOrder.verify(handler).onStop(isA(Observation.Context.class));
+    }
+
+    @Test
+    void checkedFunctionShouldBeObserved() throws Throwable {
+        @SuppressWarnings("unchecked")
+        ObservationHandler<Observation.Context> handler = mock(ObservationHandler.class);
+        when(handler.supportsContext(isA(Observation.Context.class))).thenReturn(true);
+        registry.observationConfig().observationHandler(handler);
+        Observation observation = Observation.createNotStarted("myObservation", registry);
+
+        Observation.CheckedFunction<Observation.Context, String, Throwable> function = (context) -> {
+            assertThat(registry.getCurrentObservation()).isSameAs(observation);
+            assertThat(context).isSameAs(observation.getContext());
+            return "test";
+        };
+        String result = observation.observeCheckedWithContext(function);
+        assertThat(result).isEqualTo("test");
+        assertThat(registry.getCurrentObservation()).isNull();
+
+        InOrder inOrder = inOrder(handler);
+        inOrder.verify(handler).supportsContext(isA(Observation.Context.class));
+        inOrder.verify(handler).onStart(isA(Observation.Context.class));
+        inOrder.verify(handler).onScopeOpened(isA(Observation.Context.class));
+        inOrder.verify(handler).onScopeClosed(isA(Observation.Context.class));
+        inOrder.verify(handler, times(0)).onError(isA(Observation.Context.class));
+        inOrder.verify(handler).onStop(isA(Observation.Context.class));
+    }
+
+    @Test
+    void checkedFunctionThrowingErrorShouldBeObserved() {
+        @SuppressWarnings("unchecked")
+        ObservationHandler<Observation.Context> handler = mock(ObservationHandler.class);
+        when(handler.supportsContext(isA(Observation.Context.class))).thenReturn(true);
+        registry.observationConfig().observationHandler(handler);
+        Observation observation = Observation.createNotStarted("myObservation", registry);
+
+        Observation.CheckedFunction<Observation.Context, String, Throwable> function = (context) -> {
+            assertThat(registry.getCurrentObservation()).isSameAs(observation);
+            throw new IOException("simulated");
+        };
+        assertThatThrownBy(() -> observation.observeCheckedWithContext(function)).isInstanceOf(IOException.class)
+            .hasMessage("simulated")
+            .hasNoCause();
 
         assertThat(registry.getCurrentObservation()).isNull();
 
@@ -540,7 +655,7 @@ public abstract class ObservationRegistryCompatibilityKit {
         registry.observationConfig().observationHandler(handler);
         Observation observation = Observation.start("myObservation", registry);
         Observation.CheckedRunnable<Throwable> checkedRunnable = () -> assertThat(registry.getCurrentObservation())
-                .isSameAs(observation);
+            .isSameAs(observation);
         observation.scopedChecked(checkedRunnable);
         assertThat(registry.getCurrentObservation()).isNull();
         assertThat(observation.getContext().getError()).isNull();
@@ -689,7 +804,7 @@ public abstract class ObservationRegistryCompatibilityKit {
         registry.observationConfig().observationHandler(c -> true);
         Observation parent = Observation.start("myObservation", registry);
         Observation.CheckedRunnable<Throwable> checkedRunnable = () -> assertThat(registry.getCurrentObservation())
-                .isSameAs(parent);
+            .isSameAs(parent);
         Observation.tryScopedChecked(parent, checkedRunnable);
         assertThat(registry.getCurrentObservation()).isNull();
     }
@@ -697,7 +812,7 @@ public abstract class ObservationRegistryCompatibilityKit {
     @Test
     void checkedRunnableShouldNotBeParentScopedIfParentIsNull() throws Throwable {
         Observation.CheckedRunnable<Throwable> checkedRunnable = () -> assertThat(registry.getCurrentObservation())
-                .isNull();
+            .isNull();
         Observation.tryScopedChecked(null, checkedRunnable);
         assertThat(registry.getCurrentObservation()).isNull();
     }
@@ -751,21 +866,26 @@ public abstract class ObservationRegistryCompatibilityKit {
     @Test
     void observationFieldsShouldBeSetOnContext() {
         AssertingHandler assertingHandler = new AssertingHandler();
-        registry.observationConfig().observationConvention(new TestObservationConvention("global"))
-                .observationConvention(new UnsupportedObservationConvention("global"))
-                .observationHandler(assertingHandler);
+        registry.observationConfig()
+            .observationConvention(new TestObservationConvention("global"))
+            .observationConvention(new UnsupportedObservationConvention("global"))
+            .observationHandler(assertingHandler);
 
         TestContext testContext = new TestContext();
         testContext.put("context.field", "42");
         Exception exception = new IOException("simulated");
         Observation observation = Observation.createNotStarted("test.observation", () -> testContext, registry)
-                .lowCardinalityKeyValue("lcTag1", "0")
-                // should override the previous line
-                .lowCardinalityKeyValue("lcTag1", "1").lowCardinalityKeyValues(KeyValues.of("lcTag2", "2"))
-                .highCardinalityKeyValue("hcTag1", "0")
-                // should override the previous line
-                .highCardinalityKeyValue("hcTag1", "3").highCardinalityKeyValues(KeyValues.of("hcTag2", "4"))
-                .contextualName("test.observation.42").error(exception).start();
+            .lowCardinalityKeyValue("lcTag1", "0")
+            // should override the previous line
+            .lowCardinalityKeyValue("lcTag1", "1")
+            .lowCardinalityKeyValues(KeyValues.of("lcTag2", "2"))
+            .highCardinalityKeyValue("hcTag1", "0")
+            // should override the previous line
+            .highCardinalityKeyValue("hcTag1", "3")
+            .highCardinalityKeyValues(KeyValues.of("hcTag2", "4"))
+            .contextualName("test.observation.42")
+            .error(exception)
+            .start();
         observation.stop();
 
         assertingHandler.checkAssertions(context -> {
@@ -787,34 +907,38 @@ public abstract class ObservationRegistryCompatibilityKit {
             assertThat(context.getError()).isSameAs(exception);
 
             assertThat(context.toString()).containsOnlyOnce("name='test.observation'")
-                    .containsOnlyOnce("contextualName='test.observation.42'")
-                    .containsOnlyOnce("error='java.io.IOException: simulated'")
-                    .containsOnlyOnce(
-                            "lowCardinalityKeyValues=[global.context.class='TestContext', lcTag1='1', lcTag2='2']")
-                    .containsOnlyOnce(
-                            "highCardinalityKeyValues=[global.uuid='" + testContext.uuid + "', hcTag1='3', hcTag2='4']")
-                    .containsOnlyOnce("map=[context.field='42']");
+                .containsOnlyOnce("contextualName='test.observation.42'")
+                .containsOnlyOnce("error='java.io.IOException: simulated'")
+                .containsOnlyOnce(
+                        "lowCardinalityKeyValues=[global.context.class='TestContext', lcTag1='1', lcTag2='2']")
+                .containsOnlyOnce(
+                        "highCardinalityKeyValues=[global.uuid='" + testContext.uuid + "', hcTag1='3', hcTag2='4']")
+                .containsOnlyOnce("map=[context.field='42']");
         });
     }
 
     @Test
     void globallyOverriddenNameAndContextualNameShouldBeSetOnContext() {
         AssertingHandler assertingHandler = new AssertingHandler();
-        registry.observationConfig().observationConvention(new TestObservationConventionWithNameOverrides())
-                .observationHandler(assertingHandler);
+        registry.observationConfig()
+            .observationConvention(new TestObservationConventionWithNameOverrides())
+            .observationHandler(assertingHandler);
 
         TestContext testContext = new TestContext();
         Observation observation = Observation.createNotStarted("test.observation", () -> testContext, registry)
-                .contextualName("test.observation.42").start();
+            .contextualName("test.observation.42")
+            .start();
         observation.stop();
 
         assertingHandler.checkAssertions(context -> {
             assertThat(context.getName()).isEqualTo("conventionOverriddenName");
             assertThat(context.getContextualName()).isEqualTo("conventionOverriddenContextualName");
             assertThat(context.toString()).containsOnlyOnce("name='conventionOverriddenName'")
-                    .containsOnlyOnce("contextualName='conventionOverriddenContextualName'")
-                    .containsOnlyOnce("error='null'").containsOnlyOnce("lowCardinalityKeyValues=[]")
-                    .containsOnlyOnce("highCardinalityKeyValues=[]").containsOnlyOnce("map=[]");
+                .containsOnlyOnce("contextualName='conventionOverriddenContextualName'")
+                .containsOnlyOnce("error='null'")
+                .containsOnlyOnce("lowCardinalityKeyValues=[]")
+                .containsOnlyOnce("highCardinalityKeyValues=[]")
+                .containsOnlyOnce("map=[]");
         });
     }
 
@@ -825,17 +949,20 @@ public abstract class ObservationRegistryCompatibilityKit {
 
         TestContext testContext = new TestContext();
         Observation observation = Observation.createNotStarted("test.observation", () -> testContext, registry)
-                .contextualName("test.observation.42")
-                .observationConvention(new TestObservationConventionWithNameOverrides()).start();
+            .contextualName("test.observation.42")
+            .observationConvention(new TestObservationConventionWithNameOverrides())
+            .start();
         observation.stop();
 
         assertingHandler.checkAssertions(context -> {
             assertThat(context.getName()).isEqualTo("conventionOverriddenName");
             assertThat(context.getContextualName()).isEqualTo("conventionOverriddenContextualName");
             assertThat(context.toString()).containsOnlyOnce("name='conventionOverriddenName'")
-                    .containsOnlyOnce("contextualName='conventionOverriddenContextualName'")
-                    .containsOnlyOnce("error='null'").containsOnlyOnce("lowCardinalityKeyValues=[]")
-                    .containsOnlyOnce("highCardinalityKeyValues=[]").containsOnlyOnce("map=[]");
+                .containsOnlyOnce("contextualName='conventionOverriddenContextualName'")
+                .containsOnlyOnce("error='null'")
+                .containsOnlyOnce("lowCardinalityKeyValues=[]")
+                .containsOnlyOnce("highCardinalityKeyValues=[]")
+                .containsOnlyOnce("map=[]");
         });
     }
 

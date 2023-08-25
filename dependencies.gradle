@@ -9,8 +9,6 @@ def VERSIONS = [
         'com.github.charithe:kafka-junit:latest.release',
         // pinned to avoid issues with shaded slf4j version - see gh-3414
         'com.github.tomakehurst:wiremock-jre8-standalone:2.33.+',
-        'com.google.auth:google-auth-library-oauth2-http:latest.release',
-        'com.google.cloud:google-cloud-monitoring:latest.release',
         'com.google.dagger:dagger:2.11',
         'com.google.dagger:dagger-compiler:2.11',
         'com.google.guava:guava:latest.release',
@@ -41,6 +39,8 @@ def VERSIONS = [
         'info.ganglia.gmetric4j:gmetric4j:latest.release',
         'io.prometheus:simpleclient_common:latest.release',
         'io.prometheus:simpleclient_pushgateway:latest.release',
+        'io.rest-assured:rest-assured:latest.release',
+        'jakarta.jms:jakarta.jms-api:3.0.+',
         'javax.cache:cache-api:latest.release',
         'javax.inject:javax.inject:1',
         'javax.servlet:javax.servlet-api:latest.release',
@@ -48,8 +48,13 @@ def VERSIONS = [
         'io.micrometer:context-propagation:1.0.+',
         'org.jetbrains.kotlinx:kotlinx-coroutines-core:latest.release',
         'net.sf.ehcache:ehcache:latest.release',
+        'org.apache.activemq:artemis-junit-5:latest.release',
+        'org.apache.activemq:artemis-jakarta-client:latest.release',
+        'org.apache.felix:org.apache.felix.framework:7.0.5',
+        'org.apache.felix:org.apache.felix.scr:2.2.2',
         'org.apache.httpcomponents:httpasyncclient:latest.release',
         'org.apache.httpcomponents:httpclient:latest.release',
+        'org.apache.httpcomponents.client5:httpclient5:latest.release',
         'org.apache.kafka:kafka-clients:2.+',
         'org.apache.kafka:kafka-streams:2.+',
         'org.apache.logging.log4j:log4j-core:2.+',
@@ -70,11 +75,13 @@ def VERSIONS = [
         'org.jooq:jooq:3.14.+',
         'org.jsr107.ri:cache-ri-impl:1.0.0',
         'org.latencyutils:LatencyUtils:latest.release',
-        'org.mockito:mockito-core:latest.release',
-        'org.mockito:mockito-inline:latest.release',
+        'org.mockito:mockito-core:5.+', // 5.x requires JDK 11.
+        'org.mockito:mockito-inline:5.+',
         'org.mongodb:mongodb-driver-sync:latest.release',
+        'org.osgi:org.osgi.test.junit5:1.2.1',
         'org.postgresql:postgresql:latest.release',
         'org.slf4j:slf4j-api:1.7.+',
+        'org.slf4j:slf4j-simple:1.7.+',
         'org.springframework:spring-context:5.+',
         'org.springframework:spring-core:5+',
         'org.testcontainers:junit-jupiter:latest.release',
@@ -89,7 +96,7 @@ def VERSIONS = [
 def PLATFORM_BOMS = [
         'io.projectreactor:reactor-bom:2020.0.+',
         'io.netty:netty-bom:4.1.+',
-        'org.junit:junit-bom:5.9.+' // Not using latest.release to avoid using a milestone version.
+        'org.junit:junit-bom:5.10.+', // Not using latest.release to avoid using a milestone version.
 ]
 
 subprojects {
@@ -110,6 +117,13 @@ subprojects {
         compileOnly platform(bom)
         runtimeOnly platform(bom)
       }
+    }
+  }
+  configurations.configureEach {
+    // see https://github.com/google/guava/releases/tag/v32.1.0
+    // "Reporting dependencies that overlap with Guava"
+    resolutionStrategy.capabilitiesResolution.withCapability('com.google.guava:listenablefuture') {
+        select('com.google.guava:guava:0')
     }
   }
 }

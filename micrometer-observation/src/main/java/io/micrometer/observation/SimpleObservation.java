@@ -18,11 +18,16 @@ package io.micrometer.observation;
 import io.micrometer.common.KeyValue;
 import io.micrometer.common.lang.Nullable;
 import io.micrometer.common.util.StringUtils;
+import io.micrometer.common.util.internal.logging.InternalLogger;
+import io.micrometer.common.util.internal.logging.InternalLoggerFactory;
+import io.micrometer.observation.contextpropagation.ObservationThreadLocalAccessor;
 
 import java.util.ArrayDeque;
 import java.util.Collection;
 import java.util.Deque;
-import java.util.stream.Collectors;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Default implementation of {@link Observation}.
@@ -30,11 +35,12 @@ import java.util.stream.Collectors;
  * @author Jonatan Ivanov
  * @author Tommy Ludwig
  * @author Marcin Grzejszczak
+ * @author Yanming Zhou
  * @since 1.10.0
  */
 class SimpleObservation implements Observation {
 
-    private final ObservationRegistry registry;
+    final ObservationRegistry registry;
 
     private final Context context;
 
@@ -46,6 +52,8 @@ class SimpleObservation implements Observation {
     private final Deque<ObservationHandler> handlers;
 
     private final Collection<ObservationFilter> filters;
+
+    final Map<Thread, Scope> lastScope = new ConcurrentHashMap<>();
 
     SimpleObservation(@Nullable String name, ObservationRegistry registry, Context context) {
         this.registry = registry;
@@ -74,13 +82,23 @@ class SimpleObservation implements Observation {
 
     @Nullable
     private static ObservationConvention getConventionFromConfig(ObservationRegistry registry, Context context) {
-        return registry.observationConfig().getObservationConventions().stream()
-                .filter(convention -> convention.supportsContext(context)).findFirst().orElse(null);
+        for (ObservationConvention<?> convention : registry.observationConfig().getObservationConventions()) {
+            if (convention.supportsContext(context)) {
+                return convention;
+            }
+        }
+        return null;
     }
 
     private static Deque<ObservationHandler> getHandlersFromConfig(ObservationRegistry registry, Context context) {
-        return registry.observationConfig().getObservationHandlers().stream()
-                .filter(handler -> handler.supportsContext(context)).collect(Collectors.toCollection(ArrayDeque::new));
+        Collection<ObservationHandler<?>> handlers = registry.observationConfig().getObservationHandlers();
+        Deque<ObservationHandler> deque = new ArrayDeque<>(handlers.size());
+        for (ObservationHandler handler : handlers) {
+            if (handler.supportsContext(context)) {
+                deque.add(handler);
+            }
+        }
+        return deque;
     }
 
     @Override
@@ -162,7 +180,7 @@ class SimpleObservation implements Observation {
             }
         }
 
-        Observation.Context modifiedContext = this.context;
+        Context modifiedContext = this.context;
         for (ObservationFilter filter : this.filters) {
             modifiedContext = filter.map(modifiedContext);
         }
@@ -174,7 +192,14 @@ class SimpleObservation implements Observation {
     public Scope openScope() {
         Scope scope = new SimpleScope(this.registry, this);
         notifyOnScopeOpened();
+        lastScope.put(Thread.currentThread(), scope);
         return scope;
+    }
+
+    @Nullable
+    @Override
+    public Scope getEnclosingScope() {
+        return lastScope.get(Thread.currentThread());
     }
 
     @Override
@@ -184,59 +209,85 @@ class SimpleObservation implements Observation {
     }
 
     @SuppressWarnings("unchecked")
-    private void notifyOnObservationStarted() {
-        this.handlers.forEach(handler -> handler.onStart(this.context));
+    void notifyOnObservationStarted() {
+        for (ObservationHandler handler : this.handlers) {
+            handler.onStart(this.context);
+        }
     }
 
     @SuppressWarnings("unchecked")
-    private void notifyOnError() {
-        this.handlers.forEach(handler -> handler.onError(this.context));
+    void notifyOnError() {
+        for (ObservationHandler handler : this.handlers) {
+            handler.onError(this.context);
+        }
     }
 
     @SuppressWarnings("unchecked")
-    private void notifyOnEvent(Event event) {
-        this.handlers.forEach(handler -> handler.onEvent(event, this.context));
+    void notifyOnEvent(Event event) {
+        for (ObservationHandler handler : this.handlers) {
+            handler.onEvent(event, this.context);
+        }
     }
 
     @SuppressWarnings("unchecked")
-    private void notifyOnScopeOpened() {
-        this.handlers.forEach(handler -> handler.onScopeOpened(this.context));
+    void notifyOnScopeOpened() {
+        for (ObservationHandler handler : this.handlers) {
+            handler.onScopeOpened(this.context);
+        }
     }
 
     @SuppressWarnings("unchecked")
-    private void notifyOnScopeClosed() {
+    void notifyOnScopeClosed() {
         // We're closing from end till the beginning - e.g. we opened scope with handlers
         // with ids 1,2,3 and we need to close the scope in order 3,2,1
-        this.handlers.descendingIterator().forEachRemaining(handler -> handler.onScopeClosed(this.context));
+        Iterator<ObservationHandler> iterator = this.handlers.descendingIterator();
+        while (iterator.hasNext()) {
+            ObservationHandler handler = iterator.next();
+            handler.onScopeClosed(this.context);
+        }
     }
 
     @SuppressWarnings("unchecked")
-    private void notifyOnObservationStopped(Observation.Context context) {
+    void notifyOnScopeMakeCurrent() {
+        for (ObservationHandler handler : this.handlers) {
+            handler.onScopeOpened(this.context);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    void notifyOnScopeReset() {
+        for (ObservationHandler handler : this.handlers) {
+            handler.onScopeReset(this.context);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    void notifyOnObservationStopped(Context context) {
         // We're closing from end till the beginning - e.g. we started with handlers with
         // ids 1,2,3 and we need to call close on 3,2,1
         this.handlers.descendingIterator().forEachRemaining(handler -> handler.onStop(context));
     }
 
+    @Override
+    public ObservationRegistry getObservationRegistry() {
+        return this.registry;
+    }
+
     static class SimpleScope implements Scope {
 
-        private final ObservationRegistry registry;
+        private static final InternalLogger log = InternalLoggerFactory.getInstance(SimpleScope.class);
 
-        private final SimpleObservation currentObservation;
+        final ObservationRegistry registry;
+
+        private final Observation currentObservation;
 
         @Nullable
-        private final Observation.Scope previousObservationScope;
+        final Scope previousObservationScope;
 
-        @Nullable
-        private final ObservationView previousParentObservationView;
-
-        SimpleScope(ObservationRegistry registry, SimpleObservation current) {
+        SimpleScope(ObservationRegistry registry, Observation current) {
             this.registry = registry;
             this.currentObservation = current;
             this.previousObservationScope = registry.getCurrentObservationScope();
-            this.previousParentObservationView = current.context.getParentObservation();
-            if (this.previousObservationScope != null) {
-                current.context.setParentObservation(this.previousObservationScope.getCurrentObservation());
-            }
             this.registry.setCurrentObservationScope(this);
         }
 
@@ -247,9 +298,103 @@ class SimpleObservation implements Observation {
 
         @Override
         public void close() {
+            if (currentObservation instanceof SimpleObservation) {
+                SimpleObservation observation = (SimpleObservation) currentObservation;
+                SimpleScope lastScopeForThisObservation = getLastScope(this);
+                if (lastScopeForThisObservation != null) {
+                    observation.lastScope.put(Thread.currentThread(), lastScopeForThisObservation);
+                }
+                else {
+                    observation.lastScope.remove(Thread.currentThread());
+                }
+                observation.notifyOnScopeClosed();
+            }
+            else if (currentObservation != null && !currentObservation.isNoop()) {
+                log.debug("Custom observation type was used in combination with SimpleScope - that's unexpected");
+            }
+            else {
+                log.trace("NoOp observation used with SimpleScope");
+            }
             this.registry.setCurrentObservationScope(previousObservationScope);
-            this.currentObservation.notifyOnScopeClosed();
-            this.currentObservation.context.setParentObservation(this.previousParentObservationView);
+        }
+
+        @Nullable
+        private SimpleScope getLastScope(SimpleScope simpleScope) {
+            SimpleScope scope = simpleScope;
+            do {
+                scope = (SimpleScope) scope.previousObservationScope;
+            }
+            while (scope != null && !this.currentObservation.equals(scope.currentObservation));
+            return scope;
+        }
+
+        @Override
+        public void reset() {
+            SimpleScope scope = this;
+            if (scope.currentObservation instanceof SimpleObservation) {
+                SimpleObservation simpleObservation = (SimpleObservation) scope.currentObservation;
+                do {
+                    // We don't want to remove any enclosing scopes when resetting
+                    // we just want to remove any scopes if they are present (that's why
+                    // we're not calling scope#close)
+                    simpleObservation.notifyOnScopeReset();
+                    scope = (SimpleScope) scope.previousObservationScope;
+                }
+                while (scope != null);
+            }
+            registry.setCurrentObservationScope(null);
+        }
+
+        /**
+         * This method is called e.g. via
+         * {@link ObservationThreadLocalAccessor#restore(Observation)}. In that case,
+         * we're calling {@link ObservationThreadLocalAccessor#reset()} first, and we're
+         * closing all the scopes, HOWEVER those are called on the Observation scope that
+         * was present there in thread local at the time of calling the method, NOT on the
+         * scope that we want to make current (that one can contain some leftovers from
+         * previous scope openings like creation of e.g. Brave scope in the TracingContext
+         * that is there inside the Observation's Context.
+         *
+         * When we want to go back to the enclosing scope and want to make that scope
+         * current we need to be sure that there are no remaining scoped objects inside
+         * Observation's context. This is why BEFORE rebuilding the scope structure we
+         * need to notify the handlers to clear them first (again this is a separate scope
+         * to the one that was cleared by the reset method) via calling
+         * {@link ObservationHandler#onScopeReset(Context)}.
+         */
+        @Override
+        public void makeCurrent() {
+            SimpleScope scope = this;
+            do {
+                // We don't want to remove any enclosing scopes when resetting
+                // we just want to remove any scopes if they are present (that's why we're
+                // not calling scope#close)
+                if (scope.currentObservation instanceof SimpleObservation) {
+                    ((SimpleObservation) scope.currentObservation).notifyOnScopeReset();
+                }
+                scope = (SimpleScope) scope.previousObservationScope;
+            }
+            while (scope != null);
+
+            Deque<SimpleScope> scopes = new ArrayDeque<>();
+            scope = this;
+            do {
+                scopes.addFirst(scope);
+                scope = (SimpleScope) scope.previousObservationScope;
+            }
+            while (scope != null);
+            for (SimpleScope simpleScope : scopes) {
+                if (simpleScope.currentObservation instanceof SimpleObservation) {
+                    ((SimpleObservation) simpleScope.currentObservation).notifyOnScopeMakeCurrent();
+                }
+            }
+            this.registry.setCurrentObservationScope(this);
+        }
+
+        @Nullable
+        @Override
+        public Scope getPreviousObservationScope() {
+            return this.previousObservationScope;
         }
 
     }

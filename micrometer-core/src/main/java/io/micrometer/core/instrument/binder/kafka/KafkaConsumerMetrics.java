@@ -231,9 +231,12 @@ public class KafkaConsumerMetrics implements MeterBinder, AutoCloseable {
             Tags allTags, String description, @Nullable String baseUnit) {
         final AtomicReference<Gauge> gaugeReference = new AtomicReference<>();
         Gauge gauge = Gauge
-                .builder(METRIC_NAME_PREFIX + meterName, mBeanServer,
-                        getJmxAttribute(registry, gaugeReference, o, jmxMetricName))
-                .description(description).baseUnit(baseUnit).tags(allTags).register(registry);
+            .builder(METRIC_NAME_PREFIX + meterName, mBeanServer,
+                    getJmxAttribute(registry, gaugeReference, o, jmxMetricName))
+            .description(description)
+            .baseUnit(baseUnit)
+            .tags(allTags)
+            .register(registry);
         gaugeReference.set(gauge);
         return gauge;
     }
@@ -248,9 +251,12 @@ public class KafkaConsumerMetrics implements MeterBinder, AutoCloseable {
             Tags allTags, String description, @Nullable String baseUnit) {
         final AtomicReference<FunctionCounter> counterReference = new AtomicReference<>();
         FunctionCounter counter = FunctionCounter
-                .builder(METRIC_NAME_PREFIX + sanitize(jmxMetricName), mBeanServer,
-                        getJmxAttribute(registry, counterReference, o, jmxMetricName))
-                .description(description).baseUnit(baseUnit).tags(allTags).register(registry);
+            .builder(METRIC_NAME_PREFIX + sanitize(jmxMetricName), mBeanServer,
+                    getJmxAttribute(registry, counterReference, o, jmxMetricName))
+            .description(description)
+            .baseUnit(baseUnit)
+            .tags(allTags)
+            .register(registry);
         counterReference.set(counter);
         return counter;
     }
@@ -259,9 +265,11 @@ public class KafkaConsumerMetrics implements MeterBinder, AutoCloseable {
             String meterName, Tags allTags, String description, TimeUnit timeUnit) {
         final AtomicReference<TimeGauge> timeGaugeReference = new AtomicReference<>();
         TimeGauge timeGauge = TimeGauge
-                .builder(METRIC_NAME_PREFIX + meterName, mBeanServer, timeUnit,
-                        getJmxAttribute(registry, timeGaugeReference, o, jmxMetricName))
-                .description(description).tags(allTags).register(registry);
+            .builder(METRIC_NAME_PREFIX + meterName, mBeanServer, timeUnit,
+                    getJmxAttribute(registry, timeGaugeReference, o, jmxMetricName))
+            .description(description)
+            .tags(allTags)
+            .register(registry);
         timeGaugeReference.set(timeGauge);
         return timeGauge;
     }

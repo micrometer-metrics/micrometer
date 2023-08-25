@@ -39,7 +39,7 @@ abstract class AbstractTimeWindowHistogram<T, U> implements Histogram {
 
     @SuppressWarnings("rawtypes")
     private static final AtomicIntegerFieldUpdater<AbstractTimeWindowHistogram> rotatingUpdater = AtomicIntegerFieldUpdater
-            .newUpdater(AbstractTimeWindowHistogram.class, "rotating");
+        .newUpdater(AbstractTimeWindowHistogram.class, "rotating");
 
     final DistributionStatisticConfig distributionStatisticConfig;
 
@@ -71,9 +71,6 @@ abstract class AbstractTimeWindowHistogram<T, U> implements Histogram {
         this.supportsAggregablePercentiles = supportsAggregablePercentiles;
 
         final int ageBuckets = distributionStatisticConfig.getBufferLength();
-        if (ageBuckets <= 0) {
-            rejectHistogramConfig("bufferLength (" + ageBuckets + ") must be greater than 0.");
-        }
 
         ringBuffer = (T[]) Array.newInstance(bucketType, ageBuckets);
 
@@ -89,39 +86,15 @@ abstract class AbstractTimeWindowHistogram<T, U> implements Histogram {
 
     private static DistributionStatisticConfig validateDistributionConfig(
             DistributionStatisticConfig distributionStatisticConfig) {
-        if (distributionStatisticConfig.getPercentiles() != null) {
-            for (double p : distributionStatisticConfig.getPercentiles()) {
-                if (p < 0 || p > 1) {
-                    rejectHistogramConfig(
-                            "percentiles must contain only the values between 0.0 and 1.0. " + "Found " + p);
-                }
-            }
-
-            if (distributionStatisticConfig.getPercentilePrecision() == null) {
-                rejectHistogramConfig("when publishing percentiles a precision must be specified.");
-            }
+        if (distributionStatisticConfig.getPercentiles() != null
+                && distributionStatisticConfig.getPercentilePrecision() == null) {
+            rejectHistogramConfig("when publishing percentiles a precision must be specified.");
         }
 
-        final Double minimumExpectedValue = distributionStatisticConfig.getMinimumExpectedValueAsDouble();
-        final Double maximumExpectedValue = distributionStatisticConfig.getMaximumExpectedValueAsDouble();
-        if (minimumExpectedValue == null || minimumExpectedValue <= 0) {
-            rejectHistogramConfig("minimumExpectedValue (" + minimumExpectedValue + ") must be greater than 0.");
+        if (distributionStatisticConfig.getMinimumExpectedValueAsDouble() == null
+                || distributionStatisticConfig.getMaximumExpectedValueAsDouble() == null) {
+            rejectHistogramConfig("minimumExpectedValue and maximumExpectedValue must be non null");
         }
-        if (maximumExpectedValue == null || maximumExpectedValue < minimumExpectedValue) {
-            rejectHistogramConfig("maximumExpectedValue (" + maximumExpectedValue
-                    + ") must be equal to or greater than minimumExpectedValue (" + minimumExpectedValue + ").");
-        }
-
-        if (distributionStatisticConfig.getServiceLevelObjectiveBoundaries() != null) {
-            for (double slo : distributionStatisticConfig.getServiceLevelObjectiveBoundaries()) {
-                if (slo <= 0) {
-                    rejectHistogramConfig(
-                            "serviceLevelObjectiveBoundaries must contain only the values greater than 0. " + "Found "
-                                    + slo);
-                }
-            }
-        }
-
         return distributionStatisticConfig;
     }
 
@@ -152,11 +125,7 @@ abstract class AbstractTimeWindowHistogram<T, U> implements Histogram {
 
     abstract double valueAtPercentile(double percentile);
 
-    abstract double countAtValue(double value);
-
-    double countAtValue(long value) {
-        return countAtValue((double) value);
-    }
+    abstract Iterator<CountAtBucket> countsAtValues(Iterator<Double> values);
 
     void outputSummary(PrintStream out, double bucketScaling) {
     }
@@ -203,16 +172,15 @@ abstract class AbstractTimeWindowHistogram<T, U> implements Histogram {
         }
 
         final Set<Double> monitoredValues = distributionStatisticConfig
-                .getHistogramBuckets(supportsAggregablePercentiles);
+            .getHistogramBuckets(supportsAggregablePercentiles);
         if (monitoredValues.isEmpty()) {
             return null;
         }
 
         final CountAtBucket[] counts = new CountAtBucket[monitoredValues.size()];
-        final Iterator<Double> iterator = monitoredValues.iterator();
+        final Iterator<CountAtBucket> iterator = countsAtValues(monitoredValues.iterator());
         for (int i = 0; i < counts.length; i++) {
-            final double v = iterator.next();
-            counts[i] = new CountAtBucket(v, countAtValue(v));
+            counts[i] = iterator.next();
         }
         return counts;
     }

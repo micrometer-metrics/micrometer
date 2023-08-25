@@ -104,17 +104,18 @@ public class NewRelicInsightsApiClientProvider implements NewRelicClientProvider
         // New Relic's Insights API limits us to 1000 events per call
         // 1:1 mapping between Micrometer meters and New Relic events
         for (List<Meter> batch : MeterPartition.partition(meterRegistry, Math.min(config.batchSize(), 1000))) {
-            sendEvents(batch.stream().flatMap(meter -> meter.match(
             // @formatter:off
-                    this::writeGauge,
-                    this::writeCounter,
-                    this::writeTimer,
-                    this::writeSummary,
-                    this::writeLongTaskTimer,
-                    this::writeTimeGauge,
-                    this::writeFunctionCounter,
-                    this::writeFunctionTimer,
-                    this::writeMeter)));
+            sendEvents(batch.stream()
+                .flatMap(meter -> meter.match(
+                        this::writeGauge,
+                        this::writeCounter,
+                        this::writeTimer,
+                        this::writeSummary,
+                        this::writeLongTaskTimer,
+                        this::writeTimeGauge,
+                        this::writeFunctionCounter,
+                        this::writeFunctionTimer,
+                        this::writeMeter)));
             // @formatter:on
         }
     }
@@ -163,8 +164,8 @@ public class NewRelicInsightsApiClientProvider implements NewRelicClientProvider
     @Override
     public Stream<String> writeSummary(DistributionSummary summary) {
         return Stream
-                .of(event(summary.getId(), new Attribute(COUNT, summary.count()), new Attribute(AVG, summary.mean()),
-                        new Attribute(TOTAL, summary.totalAmount()), new Attribute(MAX, summary.max())));
+            .of(event(summary.getId(), new Attribute(COUNT, summary.count()), new Attribute(AVG, summary.mean()),
+                    new Attribute(TOTAL, summary.totalAmount()), new Attribute(MAX, summary.max())));
     }
 
     @Override
@@ -223,34 +224,43 @@ public class NewRelicInsightsApiClientProvider implements NewRelicClientProvider
         StringBuilder tagsJson = new StringBuilder();
 
         for (Tag tag : id.getConventionTags(namingConvention)) {
-            tagsJson.append(",\"").append(escapeJson(tag.getKey())).append("\":\"").append(escapeJson(tag.getValue()))
-                    .append("\"");
+            tagsJson.append(",\"")
+                .append(escapeJson(tag.getKey()))
+                .append("\":\"")
+                .append(escapeJson(tag.getValue()))
+                .append("\"");
         }
 
         for (Tag tag : extraTags) {
-            tagsJson.append(",\"").append(escapeJson(namingConvention.tagKey(tag.getKey()))).append("\":\"")
-                    .append(escapeJson(namingConvention.tagValue(tag.getValue()))).append("\"");
+            tagsJson.append(",\"")
+                .append(escapeJson(namingConvention.tagKey(tag.getKey())))
+                .append("\":\"")
+                .append(escapeJson(namingConvention.tagValue(tag.getValue())))
+                .append("\"");
         }
 
         String eventType = getEventType(id, config, namingConvention);
 
-        return Arrays.stream(attributes).map(attr -> (attr.getValue() instanceof Number)
-                ? ",\"" + attr.getName() + "\":" + DoubleFormat.wholeOrDecimal(((Number) attr.getValue()).doubleValue())
-                : ",\"" + attr.getName() + "\":\"" + namingConvention.tagValue(attr.getValue().toString()) + "\"")
-                .collect(Collectors.joining("", "{\"eventType\":\"" + escapeJson(eventType) + "\"", tagsJson + "}"));
+        return Arrays.stream(attributes)
+            .map(attr -> (attr.getValue() instanceof Number)
+                    ? ",\"" + attr.getName() + "\":"
+                            + DoubleFormat.wholeOrDecimal(((Number) attr.getValue()).doubleValue())
+                    : ",\"" + attr.getName() + "\":\"" + namingConvention.tagValue(attr.getValue().toString()) + "\"")
+            .collect(Collectors.joining("", "{\"eventType\":\"" + escapeJson(eventType) + "\"", tagsJson + "}"));
     }
 
     void sendEvents(Stream<String> events) {
         try {
             AtomicInteger totalEvents = new AtomicInteger();
 
-            httpClient.post(insightsEndpoint).withHeader("X-Insert-Key", config.apiKey())
-                    .withJsonContent(
-                            events.peek(ev -> totalEvents.incrementAndGet()).collect(Collectors.joining(",", "[", "]")))
-                    .send()
-                    .onSuccess(response -> logger.debug("successfully sent {} metrics to New Relic.", totalEvents))
-                    .onError(response -> logger.error("failed to send metrics to new relic: http {} {}",
-                            response.code(), response.body()));
+            httpClient.post(insightsEndpoint)
+                .withHeader("X-Insert-Key", config.apiKey())
+                .withJsonContent(
+                        events.peek(ev -> totalEvents.incrementAndGet()).collect(Collectors.joining(",", "[", "]")))
+                .send()
+                .onSuccess(response -> logger.debug("successfully sent {} metrics to New Relic.", totalEvents))
+                .onError(response -> logger.error("failed to send metrics to new relic: http {} {}", response.code(),
+                        response.body()));
         }
         catch (Throwable e) {
             logger.warn("failed to send metrics to new relic", e);

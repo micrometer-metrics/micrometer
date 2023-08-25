@@ -67,6 +67,10 @@ public class DynatraceExporterV1 extends AbstractDynatraceExporter {
 
     private final NamingConvention namingConvention;
 
+    private static final String AUTHORIZATION_HEADER_KEY = "Authorization";
+
+    private static final String AUTHORIZATION_HEADER_VALUE_TEMPLATE = "Api-Token %s";
+
     public DynatraceExporterV1(DynatraceConfig config, Clock clock, HttpSender httpClient) {
         super(config, clock, httpClient);
 
@@ -76,24 +80,27 @@ public class DynatraceExporterV1 extends AbstractDynatraceExporter {
 
     @Override
     public void export(List<Meter> meters) {
-        String customDeviceMetricEndpoint = config.uri() + "/api/v1/entity/infrastructure/custom/" + config.deviceId()
-                + "?api-token=" + config.apiToken();
+        String customDeviceMetricEndpoint = config.uri() + "/api/v1/entity/infrastructure/custom/" + config.deviceId();
 
         for (List<Meter> batch : new MeterPartition(meters, config.batchSize())) {
             final List<DynatraceCustomMetric> series = batch.stream()
-                    .flatMap(meter -> meter.match(this::writeMeter, this::writeMeter, this::writeTimer,
-                            this::writeSummary, this::writeLongTaskTimer, this::writeMeter, this::writeMeter,
-                            this::writeFunctionTimer, this::writeMeter))
-                    .collect(Collectors.toList());
+                .flatMap(meter -> meter.match(this::writeMeter, this::writeMeter, this::writeTimer, this::writeSummary,
+                        this::writeLongTaskTimer, this::writeMeter, this::writeMeter, this::writeFunctionTimer,
+                        this::writeMeter))
+                .collect(Collectors.toList());
 
             // TODO is there a way to batch submissions of multiple metrics?
-            series.stream().map(DynatraceCustomMetric::getMetricDefinition).filter(this::isCustomMetricNotCreated)
-                    .forEach(this::putCustomMetric);
+            series.stream()
+                .map(DynatraceCustomMetric::getMetricDefinition)
+                .filter(this::isCustomMetricNotCreated)
+                .forEach(this::putCustomMetric);
 
             if (!createdCustomMetrics.isEmpty() && !series.isEmpty()) {
                 postCustomMetricValues(config.technologyType(), config.group(),
-                        series.stream().map(DynatraceCustomMetric::getTimeSeries).filter(this::isCustomMetricCreated)
-                                .collect(Collectors.toList()),
+                        series.stream()
+                            .map(DynatraceCustomMetric::getTimeSeries)
+                            .filter(this::isCustomMetricCreated)
+                            .collect(Collectors.toList()),
                         customDeviceMetricEndpoint);
             }
         }
@@ -102,8 +109,10 @@ public class DynatraceExporterV1 extends AbstractDynatraceExporter {
     // VisibleForTesting
     Stream<DynatraceCustomMetric> writeMeter(Meter meter) {
         final long wallTime = clock.wallTime();
-        return StreamSupport.stream(meter.measure().spliterator(), false).map(Measurement::getValue)
-                .filter(Double::isFinite).map(value -> createCustomMetric(meter.getId(), wallTime, value));
+        return StreamSupport.stream(meter.measure().spliterator(), false)
+            .map(Measurement::getValue)
+            .filter(Double::isFinite)
+            .map(value -> createCustomMetric(meter.getId(), wallTime, value));
     }
 
     private Stream<DynatraceCustomMetric> writeLongTaskTimer(LongTaskTimer longTaskTimer) {
@@ -189,13 +198,14 @@ public class DynatraceExporterV1 extends AbstractDynatraceExporter {
     void putCustomMetric(final DynatraceMetricDefinition customMetric) {
         HttpSender.Request.Builder requestBuilder;
         try {
-            requestBuilder = httpClient
-                    .put(customMetricEndpointTemplate + customMetric.getMetricId() + "?api-token=" + config.apiToken())
-                    .withJsonContent(customMetric.asJson());
+            requestBuilder = httpClient.put(customMetricEndpointTemplate + customMetric.getMetricId())
+                .withHeader(AUTHORIZATION_HEADER_KEY,
+                        String.format(AUTHORIZATION_HEADER_VALUE_TEMPLATE, config.apiToken()))
+                .withJsonContent(customMetric.asJson());
         }
         catch (Exception ex) {
             if (logger.isErrorEnabled()) {
-                logger.error("failed to build request: {}", redactToken(ex.getMessage()));
+                logger.error("failed to build request", ex);
             }
             return; // don't try to export data points, the request can't be built
         }
@@ -206,9 +216,10 @@ public class DynatraceExporterV1 extends AbstractDynatraceExporter {
             httpResponse.onSuccess(response -> {
                 logger.debug("created {} as custom metric in Dynatrace", customMetric.getMetricId());
                 createdCustomMetrics.add(customMetric.getMetricId());
-            }).onError(response -> logger.error(
-                    "failed to create custom metric {} in Dynatrace: Error Code={}, Response Body={}",
-                    customMetric.getMetricId(), response.code(), response.body()));
+            })
+                .onError(response -> logger.error(
+                        "failed to create custom metric {} in Dynatrace: Error Code={}, Response Body={}",
+                        customMetric.getMetricId(), response.code(), response.body()));
         }
     }
 
@@ -217,11 +228,14 @@ public class DynatraceExporterV1 extends AbstractDynatraceExporter {
         for (DynatraceBatchedPayload postMessage : createPostMessages(type, group, timeSeries)) {
             HttpSender.Request.Builder requestBuilder;
             try {
-                requestBuilder = httpClient.post(customDeviceMetricEndpoint).withJsonContent(postMessage.payload);
+                requestBuilder = httpClient.post(customDeviceMetricEndpoint)
+                    .withJsonContent(postMessage.payload)
+                    .withHeader(AUTHORIZATION_HEADER_KEY,
+                            String.format(AUTHORIZATION_HEADER_VALUE_TEMPLATE, config.apiToken()));
             }
             catch (Exception ex) {
                 if (logger.isErrorEnabled()) {
-                    logger.error("failed to build request: {}", redactToken(ex.getMessage()));
+                    logger.error("failed to build request", ex);
                 }
 
                 return; // don't try to export data points, the request can't be built
@@ -251,7 +265,7 @@ public class DynatraceExporterV1 extends AbstractDynatraceExporter {
         }
         catch (Throwable e) {
             if (logger.isErrorEnabled()) {
-                logger.error("failed to send metrics to Dynatrace: {}", redactToken(e.getMessage()));
+                logger.error("failed to send metrics to Dynatrace", e);
             }
             return null;
         }
@@ -307,10 +321,6 @@ public class DynatraceExporterV1 extends AbstractDynatraceExporter {
 
     private Meter.Id idWithSuffix(Meter.Id id, String suffix) {
         return id.withName(id.getName() + "." + suffix);
-    }
-
-    private String redactToken(String message) {
-        return message.replace(config.apiToken(), "<redacted>");
     }
 
 }

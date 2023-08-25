@@ -36,16 +36,20 @@ public class ObservationHandlerSample {
     private static final ObservationRegistry observationRegistry = ObservationRegistry.create();
 
     public static void main(String[] args) throws InterruptedException {
-        observationRegistry.observationConfig().observationHandler(new ObservationTextPublisher())
-                .observationHandler(new DefaultMeterObservationHandler(registry));
-        observationRegistry.observationConfig().observationConvention(new CustomObservationConvention())
-                .observationPredicate(new IgnoringObservationPredicate());
+        observationRegistry.observationConfig()
+            .observationHandler(new ObservationTextPublisher())
+            .observationHandler(new DefaultMeterObservationHandler(registry));
+        observationRegistry.observationConfig()
+            .observationConvention(new CustomObservationConvention())
+            .observationPredicate(new IgnoringObservationPredicate());
 
         Observation observation = Observation
-                .createNotStarted("sample.operation", CustomContext::new, observationRegistry)
-                .contextualName("CALL sampleOperation").lowCardinalityKeyValue("a", "1")
-                .highCardinalityKeyValue("time", Instant.now().toString())
-                .observationConvention(new CustomLocalObservationConvention()).start();
+            .createNotStarted("sample.operation", CustomContext::new, observationRegistry)
+            .contextualName("CALL sampleOperation")
+            .lowCardinalityKeyValue("a", "1")
+            .highCardinalityKeyValue("time", Instant.now().toString())
+            .observationConvention(new CustomLocalObservationConvention())
+            .start();
 
         try (Observation.Scope scope = observation.openScope()) {
             Thread.sleep(1_000);

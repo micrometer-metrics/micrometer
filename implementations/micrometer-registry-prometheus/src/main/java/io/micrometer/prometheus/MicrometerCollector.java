@@ -78,9 +78,10 @@ class MicrometerCollector extends Collector implements Collector.Describable {
             });
         }
 
-        return families.values().stream()
-                .map(family -> new MetricFamilySamples(family.conventionName, family.type, help, family.samples))
-                .collect(toList());
+        return families.values()
+            .stream()
+            .map(family -> new MetricFamilySamples(family.conventionName, family.type, help, family.samples))
+            .collect(toList());
     }
 
     @Override
@@ -91,8 +92,8 @@ class MicrometerCollector extends Collector implements Collector.Describable {
                         new MetricFamilySamples(conventionName, Type.COUNTER, help, Collections.emptyList()));
 
             case GAUGE:
-                return Collections.singletonList(
-                        new MetricFamilySamples(conventionName, Type.GAUGE, help, Collections.emptyList()));
+                return Collections
+                    .singletonList(new MetricFamilySamples(conventionName, Type.GAUGE, help, Collections.emptyList()));
 
             case TIMER:
             case DISTRIBUTION_SUMMARY:

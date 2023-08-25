@@ -61,8 +61,10 @@ class CompositeTimeGauge<T> extends AbstractCompositeMeter<TimeGauge> implements
             return null;
         }
 
-        return TimeGauge.builder(getId().getName(), obj, fUnit, f).tags(getId().getTagsAsIterable())
-                .description(getId().getDescription()).register(registry);
+        return TimeGauge.builder(getId().getName(), obj, fUnit, f)
+            .tags(getId().getTagsAsIterable())
+            .description(getId().getDescription())
+            .register(registry);
     }
 
 }

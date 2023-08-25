@@ -27,9 +27,9 @@ import java.util.regex.Pattern;
 /**
  * {@link NamingConvention} for SignalFx.
  *
- * See
- * https://developers.signalfx.com/metrics/data_ingest_overview.html#_criteria_for_metric_and_dimension_names_and_values
- *
+ * @see <a href=
+ * "https://docs.splunk.com/Observability/metrics-and-metadata/metric-names.html"> Naming
+ * conventions for metrics and dimensions</a>
  * @author Jon Schneider
  * @author Johnny Lim
  */
@@ -37,15 +37,7 @@ public class SignalFxNamingConvention implements NamingConvention {
 
     private static final WarnThenDebugLogger logger = new WarnThenDebugLogger(SignalFxNamingConvention.class);
 
-    private static final Pattern START_UNDERSCORE_PATTERN = Pattern.compile("^_");
-
-    private static final Pattern SF_PATTERN = Pattern.compile("^sf_");
-
-    private static final Pattern START_LETTERS_PATTERN = Pattern.compile("^[a-zA-Z].*");
-
     private static final Pattern PATTERN_TAG_KEY_DENYLISTED_CHARS = Pattern.compile("[^\\w_\\-]");
-
-    private static final Pattern PATTERN_TAG_KEY_DENYLISTED_PREFIX = Pattern.compile("^(aws|gcp|azure)_.*");
 
     private static final int NAME_MAX_LENGTH = 256;
 
@@ -80,22 +72,48 @@ public class SignalFxNamingConvention implements NamingConvention {
     @Override
     public String tagKey(String key) {
         String conventionKey = delegate.tagKey(key);
-
-        conventionKey = START_UNDERSCORE_PATTERN.matcher(conventionKey).replaceAll(""); // 2
-        conventionKey = SF_PATTERN.matcher(conventionKey).replaceAll(""); // 2
-
         conventionKey = PATTERN_TAG_KEY_DENYLISTED_CHARS.matcher(conventionKey).replaceAll("_");
-        if (!START_LETTERS_PATTERN.matcher(conventionKey).matches()) { // 3
+
+        if (conventionKey.length() < 1) {
+            return conventionKey;
+        }
+
+        int i = 0;
+        while (conventionKey.length() > i) {
+            if (conventionKey.startsWith("sf_", i)) {
+                i += 3;
+                continue;
+            }
+            if (conventionKey.startsWith("_", i)) {
+                i += 1;
+                continue;
+            }
+            break;
+        }
+
+        if (i > 0) {
+            conventionKey = conventionKey.substring(i);
+            if (conventionKey.length() < 1) {
+                return conventionKey;
+            }
+        }
+
+        if (!Character.isLetter(conventionKey.charAt(0))) {
+            logger.log(conventionKey
+                    + " doesn't adhere to SignalFx naming standards. Prefixing the tag/dimension key with 'a'.");
             conventionKey = "a" + conventionKey;
         }
-        if (PATTERN_TAG_KEY_DENYLISTED_PREFIX.matcher(conventionKey).matches()) {
+
+        if (conventionKey.startsWith("aws_") || conventionKey.startsWith("gcp_")
+                || conventionKey.startsWith("azure_")) {
             String finalConventionKey = conventionKey;
             logger.log(() -> "'" + finalConventionKey + "' (original name: '" + key + "') is not a valid tag key. "
                     + "Must not start with any of these prefixes: aws_, gcp_, or azure_. "
                     + "Please rename it to conform to the constraints. "
                     + "If it comes from a third party, please use MeterFilter to rename it.");
         }
-        return StringUtils.truncate(conventionKey, KEY_MAX_LENGTH); // 1
+
+        return StringUtils.truncate(conventionKey, KEY_MAX_LENGTH);
     }
 
     // Dimension value can be any non-empty UTF-8 string, with a maximum length <= 256

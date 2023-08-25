@@ -96,6 +96,17 @@ class AllMatchingCompositeObservationHandlerTests {
     }
 
     @Test
+    void should_run_on_scope_reset_for_handlers() {
+        AllMatchingCompositeObservationHandler allMatchingHandler = new AllMatchingCompositeObservationHandler(
+                this.matchingHandler, this.matchingHandler2);
+
+        allMatchingHandler.onScopeReset(null);
+
+        assertThat(this.matchingHandler.scopeReset).isTrue();
+        assertThat(this.matchingHandler2.scopeReset).isTrue();
+    }
+
+    @Test
     void should_support_the_context_if_any_handler_supports_it() {
         AllMatchingCompositeObservationHandler allMatchingHandler = new AllMatchingCompositeObservationHandler(
                 new NotMatchingHandler(), this.matchingHandler, new NotMatchingHandler(), this.matchingHandler2);
@@ -138,6 +149,8 @@ class AllMatchingCompositeObservationHandlerTests {
 
         boolean scopeClosed;
 
+        boolean scopeReset;
+
         @Override
         public void onStart(Observation.Context context) {
             this.started = true;
@@ -161,6 +174,11 @@ class AllMatchingCompositeObservationHandlerTests {
         @Override
         public void onScopeClosed(Observation.Context context) {
             this.scopeClosed = true;
+        }
+
+        @Override
+        public void onScopeReset(Observation.Context context) {
+            this.scopeReset = true;
         }
 
         @Override

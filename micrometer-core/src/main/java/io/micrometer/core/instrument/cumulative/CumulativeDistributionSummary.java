@@ -20,6 +20,7 @@ import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.Measurement;
 import io.micrometer.core.instrument.Statistic;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
+import io.micrometer.core.instrument.distribution.Histogram;
 import io.micrometer.core.instrument.distribution.TimeWindowMax;
 
 import java.util.Arrays;
@@ -49,7 +50,22 @@ public class CumulativeDistributionSummary extends AbstractDistributionSummary {
 
     public CumulativeDistributionSummary(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig,
             double scale, boolean supportsAggregablePercentiles) {
-        super(id, clock, distributionStatisticConfig, scale, supportsAggregablePercentiles);
+        this(id, clock, distributionStatisticConfig, scale, AbstractDistributionSummary.defaultHistogram(clock,
+                distributionStatisticConfig, supportsAggregablePercentiles));
+    }
+
+    /**
+     * Creates a {@code CumulativeDistributionSummary} instance.
+     * @param id meter ID
+     * @param clock clock
+     * @param distributionStatisticConfig distribution statistic configuration
+     * @param scale scale
+     * @param histogram histogram
+     * @since 1.11.0
+     */
+    protected CumulativeDistributionSummary(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig,
+            double scale, Histogram histogram) {
+        super(id, scale, histogram);
         this.count = new AtomicLong();
         this.total = new DoubleAdder();
         this.max = new TimeWindowMax(clock, distributionStatisticConfig);

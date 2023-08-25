@@ -44,16 +44,19 @@ public class GrpcMetricsSample {
 
         final HealthStatusManager service = new HealthStatusManager();
 
-        final Server server = InProcessServerBuilder.forName("sample").addService(service.getHealthService()) // Or
-                                                                                                              // any
-                                                                                                              // other
-                                                                                                              // service(s)
-                .intercept(new MetricCollectingServerInterceptor(registry)).build();
+        final Server server = InProcessServerBuilder.forName("sample")
+            .addService(service.getHealthService()) // Or
+                                                    // any
+                                                    // other
+                                                    // service(s)
+            .intercept(new MetricCollectingServerInterceptor(registry))
+            .build();
 
         server.start();
 
         final ManagedChannel channel = InProcessChannelBuilder.forName("sample")
-                .intercept(new MetricCollectingClientInterceptor(registry)).build();
+            .intercept(new MetricCollectingClientInterceptor(registry))
+            .build();
 
         final HealthBlockingStub healthClient = HealthGrpc.newBlockingStub(channel); // Or
                                                                                      // any

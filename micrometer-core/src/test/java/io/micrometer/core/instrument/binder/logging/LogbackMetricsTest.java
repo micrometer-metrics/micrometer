@@ -32,6 +32,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.slf4j.LoggerFactory;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -78,15 +80,15 @@ class LogbackMetricsTest {
         assertThat(registry.get("logback.events").tags("level", "error").counter().count()).isEqualTo(0.0);
     }
 
-    @Issue("#411")
+    @Issue("#411, #3623")
     @Test
     void ignoringLogMetricsInsideCounters() {
         registry = new LoggingCounterMeterRegistry();
         try (LogbackMetrics logbackMetrics = new LogbackMetrics()) {
             logbackMetrics.bindTo(registry);
-            registry.counter("my.counter").increment();
+            LoggerFactory.getLogger("test").info("This should be counted once");
         }
-        assertThat(registry.get("logback.events").tags("level", "info").counter().count()).isZero();
+        assertThat(registry.get("logback.events").tags("level", "info").counter().count()).isOne();
     }
 
     @Issue("#421")
@@ -133,6 +135,40 @@ class LogbackMetricsTest {
         assertThat(infoLogCounter.count()).isEqualTo(2);
     }
 
+    @Issue("#3891")
+    @Test
+    void threadLocalNotUsedWhenLogLevelNotEnabled() {
+        ThreadLocal<Boolean> priorThreadLocal = LogbackMetrics.ignoreMetrics;
+        AtomicInteger interactions = new AtomicInteger();
+        try {
+            LogbackMetrics.ignoreMetrics = new ThreadLocal<Boolean>() {
+                @Override
+                public Boolean get() {
+                    interactions.incrementAndGet();
+                    return super.get();
+                }
+
+                @Override
+                public void set(Boolean value) {
+                    interactions.incrementAndGet();
+                    super.set(value);
+                }
+
+                @Override
+                public void remove() {
+                    interactions.incrementAndGet();
+                    super.remove();
+                }
+            };
+            logger.trace("trace");
+            logger.isErrorEnabled();
+            assertThat(interactions.get()).isZero();
+        }
+        finally {
+            LogbackMetrics.ignoreMetrics = priorThreadLocal;
+        }
+    }
+
     @NonNullApi
     private static class LoggingCounterMeterRegistry extends SimpleMeterRegistry {
 
@@ -153,10 +189,8 @@ class LogbackMetricsTest {
 
         @Override
         public void increment() {
-            LogbackMetrics.ignoreMetrics(() -> {
-                logger.info("beep");
-                super.increment();
-            });
+            logger.info("beep"); // this is necessary to test gh-3623
+            super.increment();
         }
 
     }

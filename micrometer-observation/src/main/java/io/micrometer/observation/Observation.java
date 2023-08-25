@@ -19,8 +19,8 @@ import io.micrometer.common.KeyValue;
 import io.micrometer.common.KeyValues;
 import io.micrometer.common.lang.NonNull;
 import io.micrometer.common.lang.Nullable;
+import io.micrometer.common.util.internal.logging.InternalLoggerFactory;
 
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -45,6 +45,7 @@ import java.util.stream.Collectors;
  * @author Jonatan Ivanov
  * @author Tommy Ludwig
  * @author Marcin Grzejszczak
+ * @author Yanming Zhou
  * @since 1.10.0
  */
 public interface Observation extends ObservationView {
@@ -52,7 +53,7 @@ public interface Observation extends ObservationView {
     /**
      * No-op observation.
      */
-    Observation NOOP = NoopObservation.INSTANCE;
+    Observation NOOP = new NoopObservation();
 
     /**
      * Create and start an {@link Observation} with the given name. All Observations of
@@ -125,10 +126,11 @@ public interface Observation extends ObservationView {
             return NOOP;
         }
         Context context = contextSupplier.get();
+        context.setParentFromCurrentObservation(registry);
         if (!registry.observationConfig().isObservationEnabled(name, context)) {
             return NOOP;
         }
-        return new SimpleObservation(name, registry, context == null ? new Context() : context);
+        return new SimpleObservation(name, registry, context);
     }
 
     // @formatter:off
@@ -168,6 +170,7 @@ public interface Observation extends ObservationView {
         }
         ObservationConvention<T> convention;
         T context = contextSupplier.get();
+        context.setParentFromCurrentObservation(registry);
         if (customConvention != null) {
             convention = customConvention;
         }
@@ -177,7 +180,7 @@ public interface Observation extends ObservationView {
         if (!registry.observationConfig().isObservationEnabled(convention.getName(), context)) {
             return NOOP;
         }
-        return new SimpleObservation(convention, registry, context == null ? new Context() : context);
+        return new SimpleObservation(convention, registry, context);
     }
 
     /**
@@ -311,10 +314,11 @@ public interface Observation extends ObservationView {
             return NOOP;
         }
         T context = contextSupplier.get();
+        context.setParentFromCurrentObservation(registry);
         if (!registry.observationConfig().isObservationEnabled(observationConvention.getName(), context)) {
             return NOOP;
         }
-        return new SimpleObservation(observationConvention, registry, context == null ? new Context() : context);
+        return new SimpleObservation(observationConvention, registry, context);
     }
 
     /**
@@ -367,7 +371,9 @@ public interface Observation extends ObservationView {
      * @return this
      */
     default Observation lowCardinalityKeyValues(KeyValues keyValues) {
-        keyValues.stream().forEach(this::lowCardinalityKeyValue);
+        for (KeyValue keyValue : keyValues) {
+            lowCardinalityKeyValue(keyValue);
+        }
         return this;
     }
 
@@ -400,7 +406,9 @@ public interface Observation extends ObservationView {
      * @return this
      */
     default Observation highCardinalityKeyValues(KeyValues keyValues) {
-        keyValues.stream().forEach(this::highCardinalityKeyValue);
+        for (KeyValue keyValue : keyValues) {
+            highCardinalityKeyValue(keyValue);
+        }
         return this;
     }
 
@@ -485,15 +493,14 @@ public interface Observation extends ObservationView {
      * </ul>
      * @param runnable the {@link Runnable} to run
      */
-    @SuppressWarnings("unused")
     default void observe(Runnable runnable) {
         start();
         try (Scope scope = openScope()) {
             runnable.run();
         }
-        catch (Exception exception) {
-            error(exception);
-            throw exception;
+        catch (Throwable error) {
+            error(error);
+            throw error;
         }
         finally {
             stop();
@@ -518,7 +525,6 @@ public interface Observation extends ObservationView {
      * @param checkedRunnable the {@link CheckedRunnable} to run
      * @param <E> type of exception thrown
      */
-    @SuppressWarnings("unused")
     default <E extends Throwable> void observeChecked(CheckedRunnable<E> checkedRunnable) throws E {
         start();
         try (Scope scope = openScope()) {
@@ -552,15 +558,15 @@ public interface Observation extends ObservationView {
      * @param <T> the type parameter of the {@link Supplier}
      * @return the result from {@link Supplier#get()}
      */
-    @SuppressWarnings("unused")
+    @Nullable
     default <T> T observe(Supplier<T> supplier) {
         start();
         try (Scope scope = openScope()) {
             return supplier.get();
         }
-        catch (Exception exception) {
-            error(exception);
-            throw exception;
+        catch (Throwable error) {
+            error(error);
+            throw error;
         }
         finally {
             stop();
@@ -587,7 +593,7 @@ public interface Observation extends ObservationView {
      * @param <E> type of exception checkedCallable throws
      * @return the result from {@link CheckedCallable#call()}
      */
-    @SuppressWarnings("unused")
+    @Nullable
     default <T, E extends Throwable> T observeChecked(CheckedCallable<T, E> checkedCallable) throws E {
         start();
         try (Scope scope = openScope()) {
@@ -604,6 +610,93 @@ public interface Observation extends ObservationView {
 
     default <T, E extends Throwable> CheckedCallable<T, E> wrapChecked(CheckedCallable<T, E> checkedCallable) throws E {
         return () -> observeChecked(checkedCallable);
+    }
+
+    /**
+     * Observes the passed {@link Function} which provides access to the {@link Context}.
+     *
+     * This means the followings:
+     * <ul>
+     * <li>Starts the {@code Observation}</li>
+     * <li>Opens a {@code Scope}</li>
+     * <li>Calls {@link Function#apply(Object)} where it gets a {@link Context}</li>
+     * <li>Closes the {@code Scope}</li>
+     * <li>Signals the error to the {@code Observation} if any</li>
+     * <li>Stops the {@code Observation}</li>
+     * </ul>
+     *
+     * NOTE: When the {@link ObservationRegistry} is a noop, this function receives a
+     * default {@link Context} instance which is not the one that has been passed at
+     * {@link Observation} creation.
+     * @param function the {@link Function} to call
+     * @return the result from {@link Function#apply(Object)}
+     * @param <C> the type of input {@link Context} to the function
+     * @param <T> the type parameter of the {@link Function} return
+     * @since 1.11.0
+     * @deprecated scheduled for removal in 1.15.0, use {@code observe(...)} directly
+     */
+    @SuppressWarnings({ "unused", "unchecked" })
+    @Nullable
+    @Deprecated
+    default <C extends Context, T> T observeWithContext(Function<C, T> function) {
+        InternalLoggerFactory.getInstance(Observation.class)
+            .warn("This method is deprecated. Please migrate to observation.observe(...)");
+        start();
+        try (Scope scope = openScope()) {
+            return function.apply((C) getContext());
+        }
+        catch (Throwable error) {
+            error(error);
+            throw error;
+        }
+        finally {
+            stop();
+        }
+    }
+
+    /**
+     * Observes the passed {@link Function} which provides access to the {@link Context}.
+     *
+     * This means the followings:
+     * <ul>
+     * <li>Starts the {@code Observation}</li>
+     * <li>Opens a {@code Scope}</li>
+     * <li>Calls {@link Function#apply(Object)} where it gets a {@link Context}</li>
+     * <li>Closes the {@code Scope}</li>
+     * <li>Signals the error to the {@code Observation} if any</li>
+     * <li>Stops the {@code Observation}</li>
+     * </ul>
+     *
+     * NOTE: When the {@link ObservationRegistry} is a noop, this function receives a
+     * default {@link Context} instance which is not the one that has been passed at
+     * {@link Observation} creation.
+     * @param function the {@link CheckedFunction} to call
+     * @return the result from {@link Function#apply(Object)}
+     * @param <C> the type of input {@link Context} to the function
+     * @param <T> the type of return to the function
+     * @param <E> type of exception {@link CheckedFunction} throws
+     * @since 1.11.0
+     * @deprecated scheduled for removal in 1.15.0, use {@code observeChecked(...)}
+     * directly
+     */
+    @SuppressWarnings({ "unused", "unchecked" })
+    @Nullable
+    @Deprecated
+    default <C extends Context, T, E extends Throwable> T observeCheckedWithContext(CheckedFunction<C, T, E> function)
+            throws E {
+        InternalLoggerFactory.getInstance(Observation.class)
+            .warn("This method is deprecated. Please migrate to observation.observeChecked(...)");
+        start();
+        try (Scope scope = openScope()) {
+            return function.apply((C) getContext());
+        }
+        catch (Throwable error) {
+            error(error);
+            throw error;
+        }
+        finally {
+            stop();
+        }
     }
 
     /**
@@ -755,8 +848,50 @@ public interface Observation extends ObservationView {
          */
         Observation getCurrentObservation();
 
+        /**
+         * Parent scope.
+         * @return previously opened scope when this one was created
+         * @since 1.10.8
+         */
+        @Nullable
+        default Observation.Scope getPreviousObservationScope() {
+            return null;
+        }
+
+        /**
+         * Clears the current scope and notifies the handlers that the scope was closed.
+         * You don't need to call this method manually. If you use try-with-resource, it
+         * will call this for you. Please only call this method if you know what you are
+         * doing and your use-case demands the usage of it.
+         */
         @Override
         void close();
+
+        /**
+         * Resets the current scope. The effect of calling this method should be clearing
+         * all related thread local entries.
+         *
+         * You don't need to call this method in most of the cases. Please only call this
+         * method if you know what you are doing and your use-case demands the usage of
+         * it.
+         * @since 1.10.4
+         */
+        void reset();
+
+        /**
+         * This method assumes that all previous scopes got {@link #reset()}. That means
+         * that in thread locals there are no more entries, and now we can make this scope
+         * current.
+         *
+         * Making this scope current can lead to additional work such as injecting
+         * variables to MDC.
+         *
+         * You don't need to call this method in most of the cases. Please only call this
+         * method if you know what you are doing and your use-case demands the usage of
+         * it.
+         * @since 1.10.6
+         */
+        void makeCurrent();
 
         /**
          * Checks whether this {@link Scope} is no-op.
@@ -844,6 +979,20 @@ public interface Observation extends ObservationView {
          */
         public void setParentObservation(@Nullable ObservationView parentObservation) {
             this.parentObservation = parentObservation;
+        }
+
+        /**
+         * Sets the parent {@link ObservationView} to current one if parent is null and
+         * current one exists.
+         * @param registry the {@link ObservationRegistry} in using
+         */
+        void setParentFromCurrentObservation(ObservationRegistry registry) {
+            if (this.parentObservation == null) {
+                Observation currentObservation = registry.getCurrentObservation();
+                if (currentObservation != null) {
+                    setParentObservation(currentObservation);
+                }
+            }
         }
 
         /**
@@ -1011,7 +1160,9 @@ public interface Observation extends ObservationView {
          * @return this context
          */
         public Context addLowCardinalityKeyValues(KeyValues keyValues) {
-            keyValues.stream().forEach(this::addLowCardinalityKeyValue);
+            for (KeyValue keyValue : keyValues) {
+                addLowCardinalityKeyValue(keyValue);
+            }
             return this;
         }
 
@@ -1021,7 +1172,9 @@ public interface Observation extends ObservationView {
          * @return this context
          */
         public Context addHighCardinalityKeyValues(KeyValues keyValues) {
-            keyValues.stream().forEach(this::addHighCardinalityKeyValue);
+            for (KeyValue keyValue : keyValues) {
+                addHighCardinalityKeyValue(keyValue);
+            }
             return this;
         }
 
@@ -1032,7 +1185,9 @@ public interface Observation extends ObservationView {
          * @since 1.10.1
          */
         public Context removeLowCardinalityKeyValues(String... keyNames) {
-            Arrays.stream(keyNames).forEach(this::removeLowCardinalityKeyValue);
+            for (String keyName : keyNames) {
+                removeLowCardinalityKeyValue(keyName);
+            }
             return this;
         }
 
@@ -1043,7 +1198,9 @@ public interface Observation extends ObservationView {
          * @since 1.10.1
          */
         public Context removeHighCardinalityKeyValues(String... keyNames) {
-            Arrays.stream(keyNames).forEach(this::removeHighCardinalityKeyValue);
+            for (String keyName : keyNames) {
+                removeHighCardinalityKeyValue(keyName);
+            }
             return this;
         }
 
@@ -1084,13 +1241,16 @@ public interface Observation extends ObservationView {
         }
 
         private String toString(KeyValues keyValues) {
-            return keyValues.stream().map(keyValue -> String.format("%s='%s'", keyValue.getKey(), keyValue.getValue()))
-                    .collect(Collectors.joining(", ", "[", "]"));
+            return keyValues.stream()
+                .map(keyValue -> String.format("%s='%s'", keyValue.getKey(), keyValue.getValue()))
+                .collect(Collectors.joining(", ", "[", "]"));
         }
 
         private String toString(Map<Object, Object> map) {
-            return map.entrySet().stream().map(entry -> String.format("%s='%s'", entry.getKey(), entry.getValue()))
-                    .collect(Collectors.joining(", ", "[", "]"));
+            return map.entrySet()
+                .stream()
+                .map(entry -> String.format("%s='%s'", entry.getKey(), entry.getValue()))
+                .collect(Collectors.joining(", ", "[", "]"));
         }
 
     }
@@ -1235,6 +1395,19 @@ public interface Observation extends ObservationView {
         <T> T getOrDefault(Object key, T defaultObject);
 
         /**
+         * Returns an element or default if not present.
+         * @param key key
+         * @param defaultObjectSupplier supplier for default object to return
+         * @param <T> value type
+         * @return object or default if not present
+         * @since 1.11.0
+         */
+        default <T> T getOrDefault(Object key, Supplier<T> defaultObjectSupplier) {
+            T value = get(key);
+            return value != null ? value : defaultObjectSupplier.get();
+        }
+
+        /**
          * Returns low cardinality key values.
          * @return low cardinality key values
          */
@@ -1289,6 +1462,19 @@ public interface Observation extends ObservationView {
     interface CheckedCallable<T, E extends Throwable> {
 
         T call() throws E;
+
+    }
+
+    /**
+     * A functional interface like {@link Function} but it can throw a {@link Throwable}.
+     *
+     * @since 1.11.0
+     */
+    @FunctionalInterface
+    interface CheckedFunction<T, R, E extends Throwable> {
+
+        @Nullable
+        R apply(T t) throws E;
 
     }
 

@@ -59,8 +59,9 @@ public interface LongTaskTimer extends Meter, HistogramSupport {
                     "Long tasks instrumented with @Timed require the value attribute to be non-empty");
         }
 
-        return new Builder(timed.value()).tags(timed.extraTags()).publishPercentileHistogram(timed.histogram())
-                .description(timed.description().isEmpty() ? null : timed.description());
+        return new Builder(timed.value()).tags(timed.extraTags())
+            .publishPercentileHistogram(timed.histogram())
+            .description(timed.description().isEmpty() ? null : timed.description());
     }
 
     /**
@@ -356,7 +357,7 @@ public interface LongTaskTimer extends Meter, HistogramSupport {
         public Builder serviceLevelObjectives(@Nullable Duration... slos) {
             if (slos != null) {
                 this.distributionConfigBuilder
-                        .serviceLevelObjectives(Arrays.stream(slos).mapToDouble(Duration::toNanos).toArray());
+                    .serviceLevelObjectives(Arrays.stream(slos).mapToDouble(Duration::toNanos).toArray());
             }
             return this;
         }
@@ -486,8 +487,9 @@ public interface LongTaskTimer extends Meter, HistogramSupport {
          * @return A new or existing long task timer.
          */
         public LongTaskTimer register(MeterRegistry registry) {
-            return registry.more().longTaskTimer(new Meter.Id(name, tags, null, description, Type.LONG_TASK_TIMER),
-                    distributionConfigBuilder.build());
+            return registry.more()
+                .longTaskTimer(new Meter.Id(name, tags, null, description, Type.LONG_TASK_TIMER),
+                        distributionConfigBuilder.build());
         }
 
     }

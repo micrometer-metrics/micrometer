@@ -22,6 +22,7 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.instrument.binder.http.Outcome;
 import okhttp3.EventListener;
 import okhttp3.*;
 
@@ -166,19 +167,25 @@ public class OkHttpMetricsEventListener extends EventListener {
         boolean requestAvailable = request != null;
 
         Iterable<Tag> tags = Tags
-                .of("method", requestAvailable ? request.method() : TAG_VALUE_UNKNOWN, "uri", getUriTag(state, request),
-                        "status", getStatusMessage(state.response, state.exception))
-                .and(extraTags)
-                .and(stream(contextSpecificTags.spliterator(), false)
-                        .map(contextTag -> contextTag.apply(request, state.response)).collect(toList()))
-                .and(getRequestTags(request)).and(generateTagsForRoute(request));
+            .of("method", requestAvailable ? request.method() : TAG_VALUE_UNKNOWN, "uri", getUriTag(state, request),
+                    "status", getStatusMessage(state.response, state.exception))
+            .and(getStatusOutcome(state.response).asTag())
+            .and(extraTags)
+            .and(stream(contextSpecificTags.spliterator(), false)
+                .map(contextTag -> contextTag.apply(request, state.response))
+                .collect(toList()))
+            .and(getRequestTags(request))
+            .and(generateTagsForRoute(request));
 
         if (includeHostTag) {
             tags = Tags.of(tags).and("host", requestAvailable ? request.url().host() : TAG_VALUE_UNKNOWN);
         }
 
-        Timer.builder(this.requestsMetricName).tags(tags).description("Timer of OkHttp operation").register(registry)
-                .record(registry.config().clock().monotonicTime() - state.startTime, TimeUnit.NANOSECONDS);
+        Timer.builder(this.requestsMetricName)
+            .tags(tags)
+            .description("Timer of OkHttp operation")
+            .register(registry)
+            .record(registry.config().clock().monotonicTime() - state.startTime, TimeUnit.NANOSECONDS);
     }
 
     private Tags generateTagsForRoute(@Nullable Request request) {
@@ -212,6 +219,14 @@ public class OkHttpMetricsEventListener extends EventListener {
             return (Tags) requestTag;
         }
         return Tags.empty();
+    }
+
+    private Outcome getStatusOutcome(@Nullable Response response) {
+        if (response == null) {
+            return Outcome.UNKNOWN;
+        }
+
+        return Outcome.forStatus(response.code());
     }
 
     private String getStatusMessage(@Nullable Response response, @Nullable IOException exception) {
@@ -254,7 +269,7 @@ public class OkHttpMetricsEventListener extends EventListener {
         private final String name;
 
         private Function<Request, String> uriMapper = (request) -> Optional.ofNullable(request.header(URI_PATTERN))
-                .orElse("none");
+            .orElse("none");
 
         private Tags tags = Tags.empty();
 

@@ -67,6 +67,10 @@ import java.util.function.Predicate;
  * }
  * </pre>
  *
+ * To add support for {@link MeterTag} annotations set the
+ * {@link MeterTagAnnotationHandler} via
+ * {@link TimedAspect#setMeterTagAnnotationHandler(MeterTagAnnotationHandler)}.
+ *
  * @author David J. M. Karlsen
  * @author Jon Schneider
  * @author Johnny Lim
@@ -97,6 +101,8 @@ public class TimedAspect {
     private final Function<ProceedingJoinPoint, Iterable<Tag>> tagsBasedOnJoinPoint;
 
     private final Predicate<ProceedingJoinPoint> shouldSkip;
+
+    private MeterTagAnnotationHandler meterTagAnnotationHandler;
 
     /**
      * Creates a {@code TimedAspect} instance with {@link Metrics#globalRegistry}.
@@ -232,16 +238,26 @@ public class TimedAspect {
     private void record(ProceedingJoinPoint pjp, Timed timed, String metricName, Timer.Sample sample,
             String exceptionClass) {
         try {
-            sample.stop(
-                    Timer.builder(metricName).description(timed.description().isEmpty() ? null : timed.description())
-                            .tags(timed.extraTags()).tags(EXCEPTION_TAG, exceptionClass)
-                            .tags(tagsBasedOnJoinPoint.apply(pjp)).publishPercentileHistogram(timed.histogram())
-                            .publishPercentiles(timed.percentiles().length == 0 ? null : timed.percentiles())
-                            .register(registry));
+            sample.stop(recordBuilder(pjp, timed, metricName, exceptionClass).register(registry));
         }
         catch (Exception e) {
             // ignoring on purpose
         }
+    }
+
+    private Timer.Builder recordBuilder(ProceedingJoinPoint pjp, Timed timed, String metricName,
+            String exceptionClass) {
+        Timer.Builder builder = Timer.builder(metricName)
+            .description(timed.description().isEmpty() ? null : timed.description())
+            .tags(timed.extraTags())
+            .tags(EXCEPTION_TAG, exceptionClass)
+            .tags(tagsBasedOnJoinPoint.apply(pjp))
+            .publishPercentileHistogram(timed.histogram())
+            .publishPercentiles(timed.percentiles().length == 0 ? null : timed.percentiles());
+        if (meterTagAnnotationHandler != null) {
+            meterTagAnnotationHandler.addAnnotatedParameters(builder, pjp);
+        }
+        return builder;
     }
 
     private String getExceptionTag(Throwable throwable) {
@@ -265,7 +281,7 @@ public class TimedAspect {
         if (stopWhenCompleted) {
             try {
                 return ((CompletionStage<?>) pjp.proceed())
-                        .whenComplete((result, throwable) -> sample.ifPresent(this::stopTimer));
+                    .whenComplete((result, throwable) -> sample.ifPresent(this::stopTimer));
             }
             catch (Exception ex) {
                 sample.ifPresent(this::stopTimer);
@@ -297,12 +313,22 @@ public class TimedAspect {
     private Optional<LongTaskTimer> buildLongTaskTimer(ProceedingJoinPoint pjp, Timed timed, String metricName) {
         try {
             return Optional.of(LongTaskTimer.builder(metricName)
-                    .description(timed.description().isEmpty() ? null : timed.description()).tags(timed.extraTags())
-                    .tags(tagsBasedOnJoinPoint.apply(pjp)).register(registry));
+                .description(timed.description().isEmpty() ? null : timed.description())
+                .tags(timed.extraTags())
+                .tags(tagsBasedOnJoinPoint.apply(pjp))
+                .register(registry));
         }
         catch (Exception e) {
             return Optional.empty();
         }
+    }
+
+    /**
+     * Setting this enables support for {@link MeterTag}.
+     * @param meterTagAnnotationHandler meter tag annotation handler
+     */
+    public void setMeterTagAnnotationHandler(MeterTagAnnotationHandler meterTagAnnotationHandler) {
+        this.meterTagAnnotationHandler = meterTagAnnotationHandler;
     }
 
 }

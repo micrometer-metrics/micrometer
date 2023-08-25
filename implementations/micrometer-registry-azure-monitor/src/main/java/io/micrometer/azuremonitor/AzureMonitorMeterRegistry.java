@@ -63,9 +63,9 @@ public class AzureMonitorMeterRegistry extends StepMeterRegistry {
         super(config, clock);
 
         config().namingConvention(new AzureMonitorNamingConvention());
-        if (StringUtils.isEmpty(telemetryConfiguration.getInstrumentationKey())) {
-            checkRequired("instrumentationKey", AzureMonitorConfig::instrumentationKey).apply(config).orThrow();
-            telemetryConfiguration.setInstrumentationKey(config.instrumentationKey());
+        if (StringUtils.isEmpty(telemetryConfiguration.getConnectionString())) {
+            checkRequired("connectionString", AzureMonitorConfig::connectionString).apply(config).orThrow();
+            telemetryConfiguration.setConnectionString(config.connectionString());
         }
 
         client = new TelemetryClient(telemetryConfiguration);
@@ -82,29 +82,33 @@ public class AzureMonitorMeterRegistry extends StepMeterRegistry {
     protected void publish() {
         for (Meter meter : getMeters()) {
             // @formatter:off
-            meter.match(
-                    this::trackGauge,
-                    this::trackCounter,
-                    this::trackTimer,
-                    this::trackDistributionSummary,
-                    this::trackLongTaskTimer,
-                    this::trackTimeGauge,
-                    this::trackFunctionCounter,
-                    this::trackFunctionTimer,
-                    this::trackMeter
-            ).forEach(telemetry -> {
-                try {
-                    client.track(telemetry);
-                } catch (Throwable e) {
-                    logger.warn("failed to track metric {} in azure monitor", meter.getId());
-                    TraceTelemetry traceTelemetry = new TraceTelemetry("failed to track metric " + meter.getId());
-                    traceTelemetry.getContext().getOperation().setSyntheticSource(SDK_TELEMETRY_SYNTHETIC_SOURCE_NAME);
-                    traceTelemetry.setSeverityLevel(SeverityLevel.Warning);
-                    client.trackTrace(traceTelemetry);
-                    client.flush();
-                }
-                // @formatter:on
-            });
+            meter
+                .match(
+                        this::trackGauge,
+                        this::trackCounter,
+                        this::trackTimer,
+                        this::trackDistributionSummary,
+                        this::trackLongTaskTimer,
+                        this::trackTimeGauge,
+                        this::trackFunctionCounter,
+                        this::trackFunctionTimer,
+                        this::trackMeter)
+                .forEach(telemetry -> {
+                    try {
+                        client.track(telemetry);
+                    }
+                    catch (Throwable e) {
+                        logger.warn("failed to track metric {} in azure monitor", meter.getId());
+                        TraceTelemetry traceTelemetry = new TraceTelemetry("failed to track metric " + meter.getId());
+                        traceTelemetry.getContext()
+                            .getOperation()
+                            .setSyntheticSource(SDK_TELEMETRY_SYNTHETIC_SOURCE_NAME);
+                        traceTelemetry.setSeverityLevel(SeverityLevel.Warning);
+                        client.trackTrace(traceTelemetry);
+                        client.flush();
+                    }
+                });
+            // @formatter:on
         }
     }
 
@@ -194,8 +198,8 @@ public class AzureMonitorMeterRegistry extends StepMeterRegistry {
         MetricTelemetry mt = new MetricTelemetry();
 
         Meter.Id id = meter.getId();
-        mt.setName(config().namingConvention().name(id.getName() + (suffix == null ? "" : "." + suffix), id.getType(),
-                id.getBaseUnit()));
+        mt.setName(config().namingConvention()
+            .name(id.getName() + (suffix == null ? "" : "." + suffix), id.getType(), id.getBaseUnit()));
 
         for (Tag tag : getConventionTags(meter.getId())) {
             mt.getContext().getProperties().putIfAbsent(tag.getKey(), tag.getValue());

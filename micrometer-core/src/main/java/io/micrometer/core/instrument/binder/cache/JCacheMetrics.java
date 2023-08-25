@@ -131,7 +131,9 @@ public class JCacheMetrics<K, V, C extends Cache<K, V>> extends CacheMeterBinder
     protected void bindImplementationSpecificMetrics(MeterRegistry registry) {
         if (objectName != null) {
             Gauge.builder("cache.removals", objectName, objectName -> lookupStatistic("CacheRemovals"))
-                    .tags(getTagsWithCacheName()).description("Cache removals").register(registry);
+                .tags(getTagsWithCacheName())
+                .description("Cache removals")
+                .register(registry);
         }
     }
 

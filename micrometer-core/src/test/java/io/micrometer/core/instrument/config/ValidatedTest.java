@@ -34,8 +34,8 @@ class ValidatedTest {
 
     @Test
     void combine() {
-        Validated<?> validated = Validated.valid("simple.step", Duration.ofSeconds(1)).and(
-                Validated.invalid("simple.mode", "BAD", "must be 'STEP' or 'CUMULATIVE'", InvalidReason.MALFORMED));
+        Validated<?> validated = Validated.valid("simple.step", Duration.ofSeconds(1))
+            .and(Validated.invalid("simple.mode", "BAD", "must be 'STEP' or 'CUMULATIVE'", InvalidReason.MALFORMED));
 
         assertThat(validated.isValid()).isFalse();
     }
@@ -43,10 +43,10 @@ class ValidatedTest {
     @Test
     void orThrowOnEitherWithInvalidThrows() {
         Validated<?> valid = Validated.valid("prop", "good")
-                .and(Validated.invalid("prop2", "bad", "must be good", InvalidReason.MALFORMED));
+            .and(Validated.invalid("prop2", "bad", "must be good", InvalidReason.MALFORMED));
 
         assertThatThrownBy(valid::orThrow).isInstanceOf(ValidationException.class)
-                .hasMessage("prop2 was 'bad' but it must be good");
+            .hasMessage("prop2 was 'bad' but it must be good");
     }
 
 }

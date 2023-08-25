@@ -1,0 +1,26 @@
+[
+  {
+    "condition": {
+      "typeReachable": "io.micrometer.core.instrument.binder.jms.JmsInstrumentation"
+    },
+    "interfaces": [
+      "jakarta.jms.Session"
+    ]
+  },
+  {
+    "condition": {
+      "typeReachable": "io.micrometer.core.instrument.binder.jms.JmsInstrumentation"
+    },
+    "interfaces": [
+      "jakarta.jms.MessageConsumer"
+    ]
+  },
+  {
+    "condition": {
+      "typeReachable": "io.micrometer.core.instrument.binder.jms.JmsInstrumentation"
+    },
+    "interfaces": [
+      "jakarta.jms.MessageProducer"
+    ]
+  }
+]

@@ -41,7 +41,7 @@ import static org.mockito.Mockito.*;
  * part of the Hibernate project as of version 5.4.26. See
  * https://mvnrepository.com/artifact/org.hibernate/hibernate-micrometer/
  */
-@SuppressWarnings("deprecation")
+@Deprecated
 class HibernateMetricsTest {
 
     private final MeterRegistry registry = new SimpleMeterRegistry(SimpleConfig.DEFAULT, new MockClock());
@@ -86,33 +86,41 @@ class HibernateMetricsTest {
         assertThat(registry.get("hibernate.sessions.closed").functionCounter().count()).isEqualTo(42.0);
 
         assertThat(registry.get("hibernate.transactions").tags("result", "success").functionCounter().count())
-                .isEqualTo(42.0d);
+            .isEqualTo(42.0d);
         assertThat(registry.get("hibernate.transactions").tags("result", "failure").functionCounter().count())
-                .isEqualTo(0.0d);
+            .isEqualTo(0.0d);
 
         assertThat(registry.get("hibernate.optimistic.failures").functionCounter().count()).isEqualTo(42.0d);
         assertThat(registry.get("hibernate.flushes").functionCounter().count()).isEqualTo(42.0d);
         assertThat(registry.get("hibernate.connections.obtained").functionCounter().count()).isEqualTo(42.0d);
 
         assertThat(registry.get("hibernate.statements").tags("status", "prepared").functionCounter().count())
-                .isEqualTo(42.0d);
+            .isEqualTo(42.0d);
         assertThat(registry.get("hibernate.statements").tags("status", "closed").functionCounter().count())
-                .isEqualTo(42.0d);
+            .isEqualTo(42.0d);
 
-        assertThat(registry.get("hibernate.second.level.cache.requests").tags("result", "hit", "region", "region1")
-                .functionCounter().count()).isEqualTo(42.0d);
-        assertThat(registry.get("hibernate.second.level.cache.requests").tags("result", "hit", "region", "region2")
-                .functionCounter().count()).isEqualTo(42.0d);
-        assertThat(registry.get("hibernate.second.level.cache.requests").tags("result", "miss", "region", "region1")
-                .functionCounter().count()).isEqualTo(42.0d);
-        assertThat(registry.get("hibernate.second.level.cache.requests").tags("result", "miss", "region", "region2")
-                .functionCounter().count()).isEqualTo(42.0d);
+        assertThat(registry.get("hibernate.second.level.cache.requests")
+            .tags("result", "hit", "region", "region1")
+            .functionCounter()
+            .count()).isEqualTo(42.0d);
+        assertThat(registry.get("hibernate.second.level.cache.requests")
+            .tags("result", "hit", "region", "region2")
+            .functionCounter()
+            .count()).isEqualTo(42.0d);
+        assertThat(registry.get("hibernate.second.level.cache.requests")
+            .tags("result", "miss", "region", "region1")
+            .functionCounter()
+            .count()).isEqualTo(42.0d);
+        assertThat(registry.get("hibernate.second.level.cache.requests")
+            .tags("result", "miss", "region", "region2")
+            .functionCounter()
+            .count()).isEqualTo(42.0d);
         assertThat(
                 registry.get("hibernate.second.level.cache.puts").tags("region", "region1").functionCounter().count())
-                        .isEqualTo(42.0d);
+            .isEqualTo(42.0d);
         assertThat(
                 registry.get("hibernate.second.level.cache.puts").tags("region", "region2").functionCounter().count())
-                        .isEqualTo(42.0d);
+            .isEqualTo(42.0d);
 
         assertThat(registry.get("hibernate.entities.deletes").functionCounter().count()).isEqualTo(42.0d);
         assertThat(registry.get("hibernate.entities.fetches").functionCounter().count()).isEqualTo(42.0d);
@@ -127,33 +135,37 @@ class HibernateMetricsTest {
         assertThat(registry.get("hibernate.collections.updates").functionCounter().count()).isEqualTo(42.0d);
 
         assertThat(registry.get("hibernate.cache.natural.id.requests").tags("result", "hit").functionCounter().count())
-                .isEqualTo(42.0d);
+            .isEqualTo(42.0d);
         assertThat(registry.get("hibernate.cache.natural.id.requests").tags("result", "miss").functionCounter().count())
-                .isEqualTo(42.0d);
+            .isEqualTo(42.0d);
         assertThat(registry.get("hibernate.cache.natural.id.puts").functionCounter().count()).isEqualTo(42.0d);
         assertThat(registry.get("hibernate.query.natural.id.executions").functionCounter().count()).isEqualTo(42.0d);
         assertThat(registry.get("hibernate.query.natural.id.executions.max").timeGauge().value(TimeUnit.MILLISECONDS))
-                .isEqualTo(42.0d);
+            .isEqualTo(42.0d);
 
         assertThat(registry.get("hibernate.query.executions").functionCounter().count()).isEqualTo(42.0d);
         assertThat(registry.get("hibernate.query.executions.max").timeGauge().value(TimeUnit.MILLISECONDS))
-                .isEqualTo(42.0d);
+            .isEqualTo(42.0d);
 
-        assertThat(registry.get("hibernate.cache.update.timestamps.requests").tags("result", "hit").functionCounter()
-                .count()).isEqualTo(42.0d);
-        assertThat(registry.get("hibernate.cache.update.timestamps.requests").tags("result", "miss").functionCounter()
-                .count()).isEqualTo(42.0d);
+        assertThat(registry.get("hibernate.cache.update.timestamps.requests")
+            .tags("result", "hit")
+            .functionCounter()
+            .count()).isEqualTo(42.0d);
+        assertThat(registry.get("hibernate.cache.update.timestamps.requests")
+            .tags("result", "miss")
+            .functionCounter()
+            .count()).isEqualTo(42.0d);
         assertThat(registry.get("hibernate.cache.update.timestamps.puts").functionCounter().count()).isEqualTo(42.0d);
 
         assertThat(registry.get("hibernate.cache.query.requests").tags("result", "hit").functionCounter().count())
-                .isEqualTo(42.0d);
+            .isEqualTo(42.0d);
         assertThat(registry.get("hibernate.cache.query.requests").tags("result", "miss").functionCounter().count())
-                .isEqualTo(42.0d);
+            .isEqualTo(42.0d);
         assertThat(registry.get("hibernate.cache.query.puts").functionCounter().count()).isEqualTo(42.0d);
         assertThat(registry.get("hibernate.cache.query.plan").tags("result", "hit").functionCounter().count())
-                .isEqualTo(42.0d);
+            .isEqualTo(42.0d);
         assertThat(registry.get("hibernate.cache.query.plan").tags("result", "miss").functionCounter().count())
-                .isEqualTo(42.0d);
+            .isEqualTo(42.0d);
     }
 
     @SuppressWarnings("deprecation")

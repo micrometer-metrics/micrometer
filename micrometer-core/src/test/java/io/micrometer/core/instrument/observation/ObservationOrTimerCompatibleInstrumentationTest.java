@@ -37,8 +37,8 @@ class ObservationOrTimerCompatibleInstrumentationTest {
 
     @Test
     void noObservationRegistry() {
-        ObservationOrTimerCompatibleInstrumentation.start(meterRegistry, null, null, null, null).stop("my.timer",
-                "timer description", () -> Tags.of("a", "b"));
+        ObservationOrTimerCompatibleInstrumentation.start(meterRegistry, null, null, null, null)
+            .stop("my.timer", "timer description", () -> Tags.of("a", "b"));
         assertThat(observationRegistry).doesNotHaveAnyObservation();
         Timer timer = meterRegistry.get("my.timer").timer();
         assertThat(timer).isNotNull();
@@ -48,12 +48,18 @@ class ObservationOrTimerCompatibleInstrumentationTest {
 
     @Test
     void withObservationRegistry() {
-        ObservationOrTimerCompatibleInstrumentation.start(meterRegistry, observationRegistry, Observation.Context::new,
-                null, TestDefaultConvention.INSTANCE).stop("my.timer", "timer description", () -> Tags.of("a", "b"));
+        ObservationOrTimerCompatibleInstrumentation
+            .start(meterRegistry, observationRegistry, Observation.Context::new, null, TestDefaultConvention.INSTANCE)
+            .stop("my.timer", "timer description", () -> Tags.of("a", "b"));
         assertThat(meterRegistry.find("my.timer").timer()).isNull();
-        assertThat(observationRegistry).hasSingleObservationThat().hasBeenStarted().hasBeenStopped()
-                .hasNameEqualTo("my.observation").hasContextualNameEqualTo("observation ()").hasOnlyKeys("low", "high")
-                .hasLowCardinalityKeyValue("low", "value").hasHighCardinalityKeyValue("high", "value");
+        assertThat(observationRegistry).hasSingleObservationThat()
+            .hasBeenStarted()
+            .hasBeenStopped()
+            .hasNameEqualTo("my.observation")
+            .hasContextualNameEqualTo("observation ()")
+            .hasOnlyKeys("low", "high")
+            .hasLowCardinalityKeyValue("low", "value")
+            .hasHighCardinalityKeyValue("high", "value");
     }
 
     private static class TestDefaultConvention implements ObservationConvention<Observation.Context> {

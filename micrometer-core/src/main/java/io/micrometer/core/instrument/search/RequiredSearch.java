@@ -112,85 +112,91 @@ public final class RequiredSearch {
     }
 
     /**
-     * @return The first matching {@link Timer}
+     * Performs the search and returns any matching {@link Timer}.
+     * @return Any matching {@link Timer}
      * @throws MeterNotFoundException if there is no match.
      */
     public Timer timer() {
-        return findOne(Timer.class);
+        return getOne(Timer.class);
     }
 
     /**
-     * @return The first matching {@link Counter}.
+     * Performs the search and returns any matching {@link Counter}.
+     * @return Any matching {@link Counter}.
      * @throws MeterNotFoundException if there is no match.
      */
     public Counter counter() {
-        return findOne(Counter.class);
+        return getOne(Counter.class);
     }
 
     /**
-     * @return The first matching {@link Gauge}.
+     * Performs the search and returns any matching {@link Gauge}.
+     * @return Any matching {@link Gauge}.
      * @throws MeterNotFoundException if there is no match.
      */
     public Gauge gauge() {
-        return findOne(Gauge.class);
+        return getOne(Gauge.class);
     }
 
     /**
-     * @return The first matching {@link FunctionCounter}.
+     * Performs the search and returns any matching {@link FunctionCounter}.
+     * @return Any matching {@link FunctionCounter}.
      * @throws MeterNotFoundException if there is no match.
      */
     public FunctionCounter functionCounter() {
-        return findOne(FunctionCounter.class);
+        return getOne(FunctionCounter.class);
     }
 
     /**
-     * @return The first matching {@link TimeGauge}.
+     * Performs the search and returns any matching {@link TimeGauge}.
+     * @return Any matching {@link TimeGauge}.
      * @throws MeterNotFoundException if there is no match.
      */
     public TimeGauge timeGauge() {
-        return findOne(TimeGauge.class);
+        return getOne(TimeGauge.class);
     }
 
     /**
-     * @return The first matching {@link FunctionTimer}.
+     * Performs the search and returns any matching {@link FunctionTimer}.
+     * @return Any matching {@link FunctionTimer}.
      * @throws MeterNotFoundException if there is no match.
      */
     public FunctionTimer functionTimer() {
-        return findOne(FunctionTimer.class);
+        return getOne(FunctionTimer.class);
     }
 
     /**
-     * @return The first matching {@link DistributionSummary}.
+     * Performs the search and returns any matching {@link DistributionSummary}.
+     * @return Any matching {@link DistributionSummary}.
      * @throws MeterNotFoundException if there is no match.
      */
     public DistributionSummary summary() {
-        return findOne(DistributionSummary.class);
+        return getOne(DistributionSummary.class);
     }
 
     /**
-     * @return The first matching {@link LongTaskTimer}.
+     * Performs the search and returns any matching {@link LongTaskTimer}.
+     * @return Any matching {@link LongTaskTimer}.
      * @throws MeterNotFoundException if there is no match.
      */
     public LongTaskTimer longTaskTimer() {
-        return findOne(LongTaskTimer.class);
+        return getOne(LongTaskTimer.class);
     }
 
     /**
-     * @return The first matching {@link Meter}.
+     * Performs the search and returns any matching {@link Meter}.
+     * @return Any matching {@link Meter}.
      * @throws MeterNotFoundException if there is no match.
      */
     public Meter meter() {
-        return findOne(Meter.class);
+        return getOne(Meter.class);
     }
 
-    private <M extends Meter> M findOne(Class<M> clazz) {
-        Optional<M> meter = meterStream().filter(clazz::isInstance).findAny().map(clazz::cast);
-
-        if (meter.isPresent()) {
-            return meter.get();
-        }
-
-        throw MeterNotFoundException.forSearch(this, clazz);
+    private <M extends Meter> M getOne(Class<M> clazz) {
+        return meterStream().filter(clazz::isInstance)
+            .findAny()
+            .map(clazz::cast)
+            .orElseThrow(() -> MeterNotFoundException.forSearch(this, clazz));
     }
 
     private <M extends Meter> Collection<M> findAll(Class<M> clazz) {
@@ -218,8 +224,9 @@ public final class RequiredSearch {
     }
 
     private Stream<Meter> meterStream() {
-        Stream<Meter> meterStream = registry.getMeters().stream()
-                .filter(m -> nameMatches == null || nameMatches.test(m.getId().getName()));
+        Stream<Meter> meterStream = registry.getMeters()
+            .stream()
+            .filter(m -> nameMatches == null || nameMatches.test(m.getId().getName()));
 
         if (!requiredTags.isEmpty() || !requiredTagKeys.isEmpty()) {
             meterStream = meterStream.filter(m -> {

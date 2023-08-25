@@ -40,9 +40,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Tag("docker")
 abstract class AbstractElasticsearchMeterRegistryIntegrationTest {
 
-    protected static final String VERSION_7 = "7.17.3";
+    // Testing against a pre-7.8 version to verify behavior without
+    // composable index templates support.
+    // See
+    // https://www.elastic.co/guide/en/elasticsearch/reference/7.8/index-templates.html
+    protected static final String VERSION_7 = "7.7.1";
 
-    protected static final String VERSION_8 = "8.1.3";
+    protected static final String VERSION_8 = "8.6.2";
 
     protected static final String USER = "elastic";
 
@@ -88,7 +92,7 @@ abstract class AbstractElasticsearchMeterRegistryIntegrationTest {
 
     protected ElasticsearchContainer getContainer() {
         return new ElasticsearchContainer(DockerImageName.parse(getDockerImageName(getVersion())))
-                .withPassword(PASSWORD);
+            .withPassword(PASSWORD);
     }
 
     protected ElasticConfig getConfig() {

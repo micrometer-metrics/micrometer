@@ -44,7 +44,7 @@ class MicrometerMetricsPublisherThreadPoolTest {
     private MeterRegistry registry = new SimpleMeterRegistry();
 
     private HystrixCommandProperties.Setter propertiesSetter = HystrixCommandProperties.Setter()
-            .withExecutionIsolationStrategy(HystrixCommandProperties.ExecutionIsolationStrategy.THREAD);
+        .withExecutionIsolationStrategy(HystrixCommandProperties.ExecutionIsolationStrategy.THREAD);
 
     private final HystrixCommandGroupKey groupKey = HystrixCommandGroupKey.Factory.asKey(NAME_MICROMETER_GROUP);
 
@@ -66,17 +66,18 @@ class MicrometerMetricsPublisherThreadPoolTest {
         HystrixMetricsPublisher metricsPublisher = HystrixPlugins.getInstance().getMetricsPublisher();
         HystrixPlugins.reset();
         HystrixPlugins.getInstance()
-                .registerMetricsPublisher(new MicrometerMetricsPublisher(registry, metricsPublisher));
+            .registerMetricsPublisher(new MicrometerMetricsPublisher(registry, metricsPublisher));
 
         HystrixCommandKey key = HystrixCommandKey.Factory.asKey("MicrometerCOMMAND-A");
         new SampleCommand(key).execute();
 
         final Tags tags = Tags.of("key", NAME_MICROMETER_GROUP);
 
-        final Set<MeterId> actualMeterIds = registry.getMeters().stream()
-                .map(meter -> new MeterId(meter.getId().getName(), meter.getId().getType(),
-                        Tags.of(meter.getId().getTags())))
-                .collect(Collectors.toSet());
+        final Set<MeterId> actualMeterIds = registry.getMeters()
+            .stream()
+            .map(meter -> new MeterId(meter.getId().getName(), meter.getId().getType(),
+                    Tags.of(meter.getId().getTags())))
+            .collect(Collectors.toSet());
 
         final Set<MeterId> expectedMeterIds = new HashSet<>(Arrays.asList(
                 new MeterId(metricName("threads.active.current.count"), Type.GAUGE, tags),

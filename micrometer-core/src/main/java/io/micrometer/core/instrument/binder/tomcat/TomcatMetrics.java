@@ -114,105 +114,150 @@ public class TomcatMetrics implements MeterBinder, AutoCloseable {
             return;
         }
 
-        Gauge.builder("tomcat.sessions.active.max", manager, Manager::getMaxActive).tags(tags)
-                .baseUnit(BaseUnits.SESSIONS).register(registry);
+        Gauge.builder("tomcat.sessions.active.max", manager, Manager::getMaxActive)
+            .tags(tags)
+            .baseUnit(BaseUnits.SESSIONS)
+            .register(registry);
 
-        Gauge.builder("tomcat.sessions.active.current", manager, Manager::getActiveSessions).tags(tags)
-                .baseUnit(BaseUnits.SESSIONS).register(registry);
+        Gauge.builder("tomcat.sessions.active.current", manager, Manager::getActiveSessions)
+            .tags(tags)
+            .baseUnit(BaseUnits.SESSIONS)
+            .register(registry);
 
-        FunctionCounter.builder("tomcat.sessions.created", manager, Manager::getSessionCounter).tags(tags)
-                .baseUnit(BaseUnits.SESSIONS).register(registry);
+        FunctionCounter.builder("tomcat.sessions.created", manager, Manager::getSessionCounter)
+            .tags(tags)
+            .baseUnit(BaseUnits.SESSIONS)
+            .register(registry);
 
-        FunctionCounter.builder("tomcat.sessions.expired", manager, Manager::getExpiredSessions).tags(tags)
-                .baseUnit(BaseUnits.SESSIONS).register(registry);
+        FunctionCounter.builder("tomcat.sessions.expired", manager, Manager::getExpiredSessions)
+            .tags(tags)
+            .baseUnit(BaseUnits.SESSIONS)
+            .register(registry);
 
-        FunctionCounter.builder("tomcat.sessions.rejected", manager, Manager::getRejectedSessions).tags(tags)
-                .baseUnit(BaseUnits.SESSIONS).register(registry);
+        FunctionCounter.builder("tomcat.sessions.rejected", manager, Manager::getRejectedSessions)
+            .tags(tags)
+            .baseUnit(BaseUnits.SESSIONS)
+            .register(registry);
 
         TimeGauge.builder("tomcat.sessions.alive.max", manager, TimeUnit.SECONDS, Manager::getSessionMaxAliveTime)
-                .tags(tags).register(registry);
+            .tags(tags)
+            .register(registry);
     }
 
     private void registerThreadPoolMetrics(MeterRegistry registry) {
         registerMetricsEventually(":type=ThreadPool,name=*", (name, allTags) -> {
-            Gauge.builder("tomcat.threads.config.max", mBeanServer,
-                    s -> safeDouble(() -> s.getAttribute(name, "maxThreads"))).tags(allTags).baseUnit(BaseUnits.THREADS)
-                    .register(registry);
+            Gauge
+                .builder("tomcat.threads.config.max", mBeanServer,
+                        s -> safeDouble(() -> s.getAttribute(name, "maxThreads")))
+                .tags(allTags)
+                .baseUnit(BaseUnits.THREADS)
+                .register(registry);
 
-            Gauge.builder("tomcat.threads.busy", mBeanServer,
-                    s -> safeDouble(() -> s.getAttribute(name, "currentThreadsBusy"))).tags(allTags)
-                    .baseUnit(BaseUnits.THREADS).register(registry);
+            Gauge
+                .builder("tomcat.threads.busy", mBeanServer,
+                        s -> safeDouble(() -> s.getAttribute(name, "currentThreadsBusy")))
+                .tags(allTags)
+                .baseUnit(BaseUnits.THREADS)
+                .register(registry);
 
-            Gauge.builder("tomcat.threads.current", mBeanServer,
-                    s -> safeDouble(() -> s.getAttribute(name, "currentThreadCount"))).tags(allTags)
-                    .baseUnit(BaseUnits.THREADS).register(registry);
+            Gauge
+                .builder("tomcat.threads.current", mBeanServer,
+                        s -> safeDouble(() -> s.getAttribute(name, "currentThreadCount")))
+                .tags(allTags)
+                .baseUnit(BaseUnits.THREADS)
+                .register(registry);
 
-            Gauge.builder("tomcat.connections.current", mBeanServer,
-                    s -> safeDouble(() -> s.getAttribute(name, "connectionCount"))).tags(allTags)
-                    .baseUnit(BaseUnits.CONNECTIONS).register(registry);
+            Gauge
+                .builder("tomcat.connections.current", mBeanServer,
+                        s -> safeDouble(() -> s.getAttribute(name, "connectionCount")))
+                .tags(allTags)
+                .baseUnit(BaseUnits.CONNECTIONS)
+                .register(registry);
 
-            Gauge.builder("tomcat.connections.keepalive.current", mBeanServer,
-                    s -> safeDouble(() -> s.getAttribute(name, "keepAliveCount"))).tags(allTags)
-                    .baseUnit(BaseUnits.CONNECTIONS).register(registry);
+            Gauge
+                .builder("tomcat.connections.keepalive.current", mBeanServer,
+                        s -> safeDouble(() -> s.getAttribute(name, "keepAliveCount")))
+                .tags(allTags)
+                .baseUnit(BaseUnits.CONNECTIONS)
+                .register(registry);
 
-            Gauge.builder("tomcat.connections.config.max", mBeanServer,
-                    s -> safeDouble(() -> s.getAttribute(name, "maxConnections"))).tags(allTags)
-                    .baseUnit(BaseUnits.CONNECTIONS).register(registry);
+            Gauge
+                .builder("tomcat.connections.config.max", mBeanServer,
+                        s -> safeDouble(() -> s.getAttribute(name, "maxConnections")))
+                .tags(allTags)
+                .baseUnit(BaseUnits.CONNECTIONS)
+                .register(registry);
         });
     }
 
     private void registerCacheMetrics(MeterRegistry registry) {
         registerMetricsEventually(":type=StringCache", (name, allTags) -> {
             FunctionCounter
-                    .builder("tomcat.cache.access", mBeanServer,
-                            s -> safeDouble(() -> s.getAttribute(name, "accessCount")))
-                    .tags(allTags).register(registry);
+                .builder("tomcat.cache.access", mBeanServer, s -> safeDouble(() -> s.getAttribute(name, "accessCount")))
+                .tags(allTags)
+                .register(registry);
 
             FunctionCounter
-                    .builder("tomcat.cache.hit", mBeanServer, s -> safeDouble(() -> s.getAttribute(name, "hitCount")))
-                    .tags(allTags).register(registry);
+                .builder("tomcat.cache.hit", mBeanServer, s -> safeDouble(() -> s.getAttribute(name, "hitCount")))
+                .tags(allTags)
+                .register(registry);
         });
     }
 
     private void registerServletMetrics(MeterRegistry registry) {
         registerMetricsEventually(":j2eeType=Servlet,name=*,*", (name, allTags) -> {
-            FunctionCounter.builder("tomcat.servlet.error", mBeanServer,
-                    s -> safeDouble(() -> s.getAttribute(name, "errorCount"))).tags(allTags).register(registry);
+            FunctionCounter
+                .builder("tomcat.servlet.error", mBeanServer, s -> safeDouble(() -> s.getAttribute(name, "errorCount")))
+                .tags(allTags)
+                .register(registry);
 
             FunctionTimer
-                    .builder("tomcat.servlet.request", mBeanServer,
-                            s -> safeLong(() -> s.getAttribute(name, "requestCount")),
-                            s -> safeDouble(() -> s.getAttribute(name, "processingTime")), TimeUnit.MILLISECONDS)
-                    .tags(allTags).register(registry);
+                .builder("tomcat.servlet.request", mBeanServer,
+                        s -> safeLong(() -> s.getAttribute(name, "requestCount")),
+                        s -> safeDouble(() -> s.getAttribute(name, "processingTime")), TimeUnit.MILLISECONDS)
+                .tags(allTags)
+                .register(registry);
 
-            TimeGauge.builder("tomcat.servlet.request.max", mBeanServer, TimeUnit.MILLISECONDS,
-                    s -> safeDouble(() -> s.getAttribute(name, "maxTime"))).tags(allTags).register(registry);
+            TimeGauge
+                .builder("tomcat.servlet.request.max", mBeanServer, TimeUnit.MILLISECONDS,
+                        s -> safeDouble(() -> s.getAttribute(name, "maxTime")))
+                .tags(allTags)
+                .register(registry);
         });
     }
 
     private void registerGlobalRequestMetrics(MeterRegistry registry) {
         registerMetricsEventually(":type=GlobalRequestProcessor,name=*", (name, allTags) -> {
             FunctionCounter
-                    .builder("tomcat.global.sent", mBeanServer,
-                            s -> safeDouble(() -> s.getAttribute(name, "bytesSent")))
-                    .tags(allTags).baseUnit(BaseUnits.BYTES).register(registry);
+                .builder("tomcat.global.sent", mBeanServer, s -> safeDouble(() -> s.getAttribute(name, "bytesSent")))
+                .tags(allTags)
+                .baseUnit(BaseUnits.BYTES)
+                .register(registry);
 
             FunctionCounter
-                    .builder("tomcat.global.received", mBeanServer,
-                            s -> safeDouble(() -> s.getAttribute(name, "bytesReceived")))
-                    .tags(allTags).baseUnit(BaseUnits.BYTES).register(registry);
+                .builder("tomcat.global.received", mBeanServer,
+                        s -> safeDouble(() -> s.getAttribute(name, "bytesReceived")))
+                .tags(allTags)
+                .baseUnit(BaseUnits.BYTES)
+                .register(registry);
 
-            FunctionCounter.builder("tomcat.global.error", mBeanServer,
-                    s -> safeDouble(() -> s.getAttribute(name, "errorCount"))).tags(allTags).register(registry);
+            FunctionCounter
+                .builder("tomcat.global.error", mBeanServer, s -> safeDouble(() -> s.getAttribute(name, "errorCount")))
+                .tags(allTags)
+                .register(registry);
 
             FunctionTimer
-                    .builder("tomcat.global.request", mBeanServer,
-                            s -> safeLong(() -> s.getAttribute(name, "requestCount")),
-                            s -> safeDouble(() -> s.getAttribute(name, "processingTime")), TimeUnit.MILLISECONDS)
-                    .tags(allTags).register(registry);
+                .builder("tomcat.global.request", mBeanServer,
+                        s -> safeLong(() -> s.getAttribute(name, "requestCount")),
+                        s -> safeDouble(() -> s.getAttribute(name, "processingTime")), TimeUnit.MILLISECONDS)
+                .tags(allTags)
+                .register(registry);
 
-            TimeGauge.builder("tomcat.global.request.max", mBeanServer, TimeUnit.MILLISECONDS,
-                    s -> safeDouble(() -> s.getAttribute(name, "maxTime"))).tags(allTags).register(registry);
+            TimeGauge
+                .builder("tomcat.global.request.max", mBeanServer, TimeUnit.MILLISECONDS,
+                        s -> safeDouble(() -> s.getAttribute(name, "maxTime")))
+                .tags(allTags)
+                .register(registry);
         });
     }
 

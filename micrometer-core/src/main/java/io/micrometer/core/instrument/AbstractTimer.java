@@ -82,27 +82,51 @@ public abstract class AbstractTimer extends AbstractMeter implements Timer {
      */
     protected AbstractTimer(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig,
             PauseDetector pauseDetector, TimeUnit baseTimeUnit, boolean supportsAggregablePercentiles) {
+        this(id, clock, pauseDetector, baseTimeUnit,
+                defaultHistogram(clock, distributionStatisticConfig, supportsAggregablePercentiles));
+    }
+
+    /**
+     * Creates a new timer.
+     * @param id The timer's name and tags.
+     * @param clock The clock used to measure latency.
+     * @param pauseDetector Compensation for coordinated omission.
+     * @param baseTimeUnit The time scale of this timer.
+     * @param histogram Histogram.
+     * @since 1.11.0
+     */
+    protected AbstractTimer(Id id, Clock clock, PauseDetector pauseDetector, TimeUnit baseTimeUnit,
+            Histogram histogram) {
         super(id);
         this.clock = clock;
         this.baseTimeUnit = baseTimeUnit;
-
         initPauseDetector(pauseDetector);
+        this.histogram = histogram;
+    }
 
+    /**
+     * Creates a default histogram.
+     * @param clock The clock used to measure latency.
+     * @param distributionStatisticConfig Configuration determining which distribution
+     * statistics are sent.
+     * @param supportsAggregablePercentiles Indicates whether the registry supports
+     * percentile approximations from histograms.
+     * @return a default histogram
+     * @since 1.11.0
+     */
+    protected static Histogram defaultHistogram(Clock clock, DistributionStatisticConfig distributionStatisticConfig,
+            boolean supportsAggregablePercentiles) {
         if (distributionStatisticConfig.isPublishingPercentiles()) {
             // hdr-based histogram
-            this.histogram = new TimeWindowPercentileHistogram(clock, distributionStatisticConfig,
-                    supportsAggregablePercentiles);
+            return new TimeWindowPercentileHistogram(clock, distributionStatisticConfig, supportsAggregablePercentiles);
         }
-        else if (distributionStatisticConfig.isPublishingHistogram()) {
+        if (distributionStatisticConfig.isPublishingHistogram()) {
             // fixed boundary histograms, which have a slightly better memory footprint
             // when we don't need Micrometer-computed percentiles
-            this.histogram = new TimeWindowFixedBoundaryHistogram(clock, distributionStatisticConfig,
+            return new TimeWindowFixedBoundaryHistogram(clock, distributionStatisticConfig,
                     supportsAggregablePercentiles);
         }
-        else {
-            // noop histogram
-            this.histogram = NoopHistogram.INSTANCE;
-        }
+        return NoopHistogram.INSTANCE;
     }
 
     private void initPauseDetector(PauseDetector pauseDetectorType) {

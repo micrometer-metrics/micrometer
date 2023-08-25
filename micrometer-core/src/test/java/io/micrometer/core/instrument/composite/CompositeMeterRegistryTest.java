@@ -150,7 +150,7 @@ class CompositeMeterRegistryTest {
     void commonTags() {
         simple.config().commonTags("instance", "local"); // added alongside other common
                                                          // tags in the composite
-        simple.config().commonTags("region", "us-west-1"); // overriden by the composite
+        simple.config().commonTags("region", "us-west-1"); // overridden by the composite
 
         composite.config().commonTags("region", "us-east-1");
         composite.add(simple);
@@ -379,16 +379,16 @@ class CompositeMeterRegistryTest {
         registry.add(counting);
 
         Meter custom = Meter
-                .builder("custom", Meter.Type.COUNTER, singletonList(new Measurement(() -> 1.0, Statistic.COUNT)))
-                .register(registry);
+            .builder("custom", Meter.Type.COUNTER, singletonList(new Measurement(() -> 1.0, Statistic.COUNT)))
+            .register(registry);
         counting.publish();
         registry.remove(custom);
         counting.publish();
         assertThat(counting.count(custom)).isEqualTo(1);
 
         AtomicInteger tgObj = new AtomicInteger(1);
-        registry.more().timeGauge("timegauge", Tags.empty(), tgObj, TimeUnit.MILLISECONDS,
-                AtomicInteger::incrementAndGet);
+        registry.more()
+            .timeGauge("timegauge", Tags.empty(), tgObj, TimeUnit.MILLISECONDS, AtomicInteger::incrementAndGet);
         TimeGauge timeGauge = registry.get("timegauge").timeGauge();
         counting.publish();
         registry.remove(timeGauge);
@@ -435,8 +435,9 @@ class CompositeMeterRegistryTest {
         assertThat(counting.count(ltt)).isEqualTo(1);
 
         AtomicInteger ftObj = new AtomicInteger(1);
-        registry.more().timer("functiontimer", Tags.empty(), ftObj, AtomicInteger::incrementAndGet, AtomicInteger::get,
-                TimeUnit.MILLISECONDS);
+        registry.more()
+            .timer("functiontimer", Tags.empty(), ftObj, AtomicInteger::incrementAndGet, AtomicInteger::get,
+                    TimeUnit.MILLISECONDS);
         FunctionTimer functionTimer = registry.get("functiontimer").functionTimer();
         counting.publish();
         registry.remove(functionTimer);
@@ -465,8 +466,9 @@ class CompositeMeterRegistryTest {
         for (int i = 0; i < count; i++) {
             int tagValue = i % tagCount;
             executor.execute(() -> {
-                Counter counter = Counter.builder(meterName).tag(tagName, String.valueOf(tagValue))
-                        .register(this.composite);
+                Counter counter = Counter.builder(meterName)
+                    .tag(tagName, String.valueOf(tagValue))
+                    .register(this.composite);
                 counter.increment();
             });
         }
@@ -474,7 +476,7 @@ class CompositeMeterRegistryTest {
         assertThat(executor.awaitTermination(1L, TimeUnit.SECONDS)).isTrue();
         for (int i = 0; i < tagCount; i++) {
             assertThat(this.composite.find(meterName).tag(tagName, String.valueOf(i)).counter().count())
-                    .isEqualTo(count / tagCount);
+                .isEqualTo(count / tagCount);
         }
     }
 

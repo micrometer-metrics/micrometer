@@ -52,8 +52,9 @@ class Jersey3Test extends JerseyTest {
         assertThat(response).isEqualTo("Hello, Jersey");
         // Jersey metrics are recorded asynchronously to the request completing
         Thread.sleep(10);
-        Timer timer = registry.get(TIMER_METRIC_NAME).tags("method", "GET", "uri", "/hello/{name}", "status", "200",
-                "exception", "None", "outcome", "SUCCESS").timer();
+        Timer timer = registry.get(TIMER_METRIC_NAME)
+            .tags("method", "GET", "uri", "/hello/{name}", "status", "200", "exception", "None", "outcome", "SUCCESS")
+            .timer();
         assertThat(timer.count()).isEqualTo(1);
         assertThat(timer.totalTime(TimeUnit.NANOSECONDS)).isPositive();
     }

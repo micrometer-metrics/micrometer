@@ -35,7 +35,7 @@ class InfluxConfigTest {
         props.put("influx.consistency", "bad");
 
         assertThat(config.validate().failures().stream().map(Validated.Invalid::getMessage))
-                .containsExactlyInAnyOrder("must be a valid URL", "should be one of 'ANY', 'ONE', 'QUORUM', 'ALL'");
+            .containsExactlyInAnyOrder("must be a valid URL", "should be one of 'ANY', 'ONE', 'QUORUM', 'ALL'");
     }
 
     @Test

@@ -17,6 +17,13 @@ package io.micrometer.core.annotation;
 
 import java.lang.annotation.*;
 
+/**
+ * Annotated methods can have multiple {@code Timed} annotations.
+ *
+ * @author Jon Schneider
+ * @see io.micrometer.core.annotation.Timed
+ * @see io.micrometer.core.aop.TimedAspect
+ */
 @Target({ ElementType.ANNOTATION_TYPE, ElementType.TYPE, ElementType.METHOD })
 @Retention(RetentionPolicy.RUNTIME)
 @Inherited

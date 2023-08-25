@@ -40,12 +40,16 @@ class BufferingFluxTest {
     @Test
     void bufferSingleStrings() {
         Flux<String> source = Flux.just("twelve bytes", "fourteen bytes", "twelve bytes", "fourteen bytes")
-                .delayElements(Duration.ofMillis(50));
+            .delayElements(Duration.ofMillis(50));
 
         Flux<String> buffered = BufferingFlux.create(source, "\n", 14, 200);
 
-        StepVerifier.create(buffered).expectNext("twelve bytes\n").expectNext("fourteen bytes\n")
-                .expectNext("twelve bytes\n").expectNext("fourteen bytes\n").verifyComplete();
+        StepVerifier.create(buffered)
+            .expectNext("twelve bytes\n")
+            .expectNext("fourteen bytes\n")
+            .expectNext("twelve bytes\n")
+            .expectNext("fourteen bytes\n")
+            .verifyComplete();
     }
 
     @Test
@@ -54,8 +58,10 @@ class BufferingFluxTest {
 
         Flux<String> buffered = BufferingFlux.create(source, "\n", 27, 1000);
 
-        StepVerifier.create(buffered).expectNext("twelve bytes\nfourteen bytes\n")
-                .expectNext("twelve bytes\nfourteen bytes\n").verifyComplete();
+        StepVerifier.create(buffered)
+            .expectNext("twelve bytes\nfourteen bytes\n")
+            .expectNext("twelve bytes\nfourteen bytes\n")
+            .verifyComplete();
     }
 
     @Test
@@ -73,8 +79,10 @@ class BufferingFluxTest {
 
         Flux<String> buffered = BufferingFlux.create(source, "\n", Integer.MAX_VALUE, 50);
 
-        StepVerifier.create(buffered).expectNext("twelve bytes\nfourteen bytes\ntwelve bytes\n")
-                .expectNext("fourteen bytes\n").verifyComplete();
+        StepVerifier.create(buffered)
+            .expectNext("twelve bytes\nfourteen bytes\ntwelve bytes\n")
+            .expectNext("fourteen bytes\n")
+            .verifyComplete();
     }
 
     /**

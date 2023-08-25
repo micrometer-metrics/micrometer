@@ -51,8 +51,9 @@ class KafkaClientMetricsConsumerTest {
             MeterRegistry registry = new SimpleMeterRegistry();
 
             metrics.bindTo(registry);
-            assertThat(registry.getMeters()).hasSizeGreaterThan(0).extracting(meter -> meter.getId().getName())
-                    .allMatch(s -> s.startsWith(METRIC_NAME_PREFIX));
+            assertThat(registry.getMeters()).hasSizeGreaterThan(0)
+                .extracting(meter -> meter.getId().getName())
+                .allMatch(s -> s.startsWith(METRIC_NAME_PREFIX));
         }
     }
 
@@ -64,8 +65,9 @@ class KafkaClientMetricsConsumerTest {
 
             metrics.bindTo(registry);
 
-            assertThat(registry.getMeters()).hasSizeGreaterThan(0).extracting(meter -> meter.getId().getTag("app"))
-                    .allMatch(s -> s.equals("myapp"));
+            assertThat(registry.getMeters()).hasSizeGreaterThan(0)
+                .extracting(meter -> meter.getId().getTag("app"))
+                .allMatch(s -> s.equals("myapp"));
         }
     }
 

@@ -32,10 +32,12 @@ public class ValidationException extends IllegalStateException {
     private final Validated<?> validation;
 
     public ValidationException(Validated<?> validation) {
-        super(validation.failures().stream().map(invalid -> invalid.getProperty() + " was '"
-                + (invalid.getValue() == null ? "null" : invalid.getValue()) + "' but it " + invalid.getMessage())
-                .collect(Collectors.joining("\n",
-                        validation.failures().size() > 1 ? "Multiple validation failures:\n" : "", "")));
+        super(validation.failures()
+            .stream()
+            .map(invalid -> invalid.getProperty() + " was '"
+                    + (invalid.getValue() == null ? "null" : invalid.getValue()) + "' but it " + invalid.getMessage())
+            .collect(Collectors.joining("\n", validation.failures().size() > 1 ? "Multiple validation failures:\n" : "",
+                    "")));
         this.validation = validation;
     }
 

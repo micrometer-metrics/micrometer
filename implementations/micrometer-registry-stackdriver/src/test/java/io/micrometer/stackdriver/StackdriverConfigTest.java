@@ -34,7 +34,7 @@ class StackdriverConfigTest {
         props.put("stackdriver.credentials", "bad");
 
         assertThat(config.validate().failures().stream().map(Validated.Invalid::getMessage))
-                .containsExactlyInAnyOrder("is required", "cannot read credentials file");
+            .containsExactlyInAnyOrder("is required", "cannot read credentials file");
     }
 
     @Test

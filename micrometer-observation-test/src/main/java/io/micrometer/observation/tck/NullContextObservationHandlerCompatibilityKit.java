@@ -58,6 +58,8 @@ public abstract class NullContextObservationHandlerCompatibilityKit {
         assertThatCode(() -> handler.onError(null)).doesNotThrowAnyException();
         assertThatCode(() -> handler.onEvent(null, null)).doesNotThrowAnyException();
         assertThatCode(() -> handler.onScopeOpened(null)).doesNotThrowAnyException();
+        assertThatCode(() -> handler.onScopeClosed(null)).doesNotThrowAnyException();
+        assertThatCode(() -> handler.onScopeReset(null)).doesNotThrowAnyException();
         assertThatCode(() -> handler.supportsContext(null)).doesNotThrowAnyException();
         assertThat(handler.supportsContext(null)).as("Handler supports null context").isTrue();
     }

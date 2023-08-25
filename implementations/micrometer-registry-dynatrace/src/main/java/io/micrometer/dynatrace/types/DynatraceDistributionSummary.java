@@ -39,7 +39,10 @@ public final class DynatraceDistributionSummary extends AbstractDistributionSumm
     // Configuration that will set the Histogram in AbstractDistributionSummary to a
     // NoopHistogram.
     private static final DistributionStatisticConfig NOOP_HISTOGRAM_CONFIG = DistributionStatisticConfig.builder()
-            .percentilesHistogram(false).percentiles().serviceLevelObjectives().build();
+        .percentilesHistogram(false)
+        .percentiles()
+        .serviceLevelObjectives()
+        .build();
 
     private final DynatraceSummary summary = new DynatraceSummary();
 
@@ -61,33 +64,62 @@ public final class DynatraceDistributionSummary extends AbstractDistributionSumm
         summary.recordNonNegative(amount);
     }
 
+    /**
+     * Using this method is not synchronized and might give inconsistent results when
+     * multiple getters are called sequentially. It is recommended to
+     * {@link #takeSummarySnapshot() take a snapshot} and use the getters on the
+     * {@link DynatraceSummarySnapshot} instead.
+     */
     @Override
     public long count() {
         return summary.getCount();
     }
 
+    /**
+     * Using this method is not synchronized and might give inconsistent results when
+     * multiple getters are called sequentially. It is recommended to
+     * {@link #takeSummarySnapshot() take a snapshot} and use the getters on the
+     * {@link DynatraceSummarySnapshot} instead.
+     */
     @Override
     public double totalAmount() {
         return summary.getTotal();
     }
 
+    /**
+     * Using this method is not synchronized and might give inconsistent results when
+     * multiple getters are called sequentially. It is recommended to
+     * {@link #takeSummarySnapshot() take a snapshot} and use the getters on the
+     * {@link DynatraceSummarySnapshot} instead.
+     */
     @Override
     public double max() {
         return summary.getMax();
     }
 
+    /**
+     * @deprecated since 1.9.10. Using this method is not synchronized and might give
+     * inconsistent results when multiple getters are called sequentially. It is
+     * recommended to {@link #takeSummarySnapshot() take a snapshot} and use the getters
+     * on the {@link DynatraceSummarySnapshot} instead.
+     */
+    @Deprecated
     public double min() {
         return summary.getMin();
     }
 
+    /**
+     * @deprecated see {@link DynatraceSummarySnapshotSupport#hasValues()}.
+     */
     @Override
+    @Deprecated
     public boolean hasValues() {
         return count() > 0;
     }
 
     @Override
     public DynatraceSummarySnapshot takeSummarySnapshot() {
-        return new DynatraceSummarySnapshot(min(), max(), totalAmount(), count());
+        return summary.takeSummarySnapshot();
     }
 
     @Override
@@ -98,9 +130,7 @@ public final class DynatraceDistributionSummary extends AbstractDistributionSumm
 
     @Override
     public DynatraceSummarySnapshot takeSummarySnapshotAndReset() {
-        DynatraceSummarySnapshot snapshot = takeSummarySnapshot();
-        summary.reset();
-        return snapshot;
+        return summary.takeSummarySnapshotAndReset();
     }
 
     @Override

@@ -25,37 +25,57 @@ import io.micrometer.observation.Observation.Scope;
  * A simple forwarding client call listener for {@link Observation}.
  *
  * @param <RespT> type of message received one or more times from the server.
+ * @see io.grpc.Contexts
  */
 class ObservationGrpcServerCallListener<RespT> extends SimpleForwardingServerCallListener<RespT> {
 
-    private final Scope scope;
+    private final Observation observation;
 
-    ObservationGrpcServerCallListener(Listener<RespT> delegate, Scope scope) {
+    ObservationGrpcServerCallListener(Listener<RespT> delegate, Observation observation) {
         super(delegate);
-        this.scope = scope;
+        this.observation = observation;
     }
 
     @Override
     public void onMessage(RespT message) {
-        this.scope.getCurrentObservation().event(GrpcServerEvents.MESSAGE_RECEIVED);
-        super.onMessage(message);
+        this.observation.event(GrpcServerEvents.MESSAGE_RECEIVED);
+        try (Scope scope = observation.openScope()) {
+            super.onMessage(message);
+        }
     }
 
     @Override
     public void onHalfClose() {
-        try {
+        try (Scope scope = observation.openScope()) {
             super.onHalfClose();
-        }
-        catch (Throwable ex) {
-            handleFailure(ex);
-            throw ex;
         }
     }
 
-    private void handleFailure(Throwable ex) {
-        Observation observation = this.scope.getCurrentObservation();
-        this.scope.close();
-        observation.error(ex).stop();
+    @Override
+    public void onCancel() {
+        try (Scope scope = this.observation.openScope()) {
+            super.onCancel();
+        }
+        finally {
+            this.observation.stop();
+        }
+    }
+
+    @Override
+    public void onComplete() {
+        try (Scope scope = this.observation.openScope()) {
+            super.onComplete();
+        }
+        finally {
+            this.observation.stop();
+        }
+    }
+
+    @Override
+    public void onReady() {
+        try (Scope scope = this.observation.openScope()) {
+            super.onReady();
+        }
     }
 
 }

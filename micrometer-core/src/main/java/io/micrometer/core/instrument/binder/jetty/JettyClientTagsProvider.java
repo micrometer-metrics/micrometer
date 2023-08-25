@@ -16,9 +16,12 @@
 package io.micrometer.core.instrument.binder.jetty;
 
 import io.micrometer.core.annotation.Incubating;
+import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import org.eclipse.jetty.client.api.Result;
+
+import java.util.function.BiFunction;
 
 /**
  * Provides {@link Tag Tags} for Jetty {@link org.eclipse.jetty.client.HttpClient} request
@@ -47,7 +50,11 @@ public interface JettyClientTagsProvider {
      * that goes to a certain endpoint, regardless of the parameters to that endpoint.
      * @param result The result which also contains the original request.
      * @return A URI pattern with path variables and query parameter unsubstituted.
+     * @deprecated since 1.11.0 in favor of
+     * {@link JettyClientMetrics#builder(MeterRegistry, BiFunction)} to configure the uri
+     * pattern function
      */
+    @Deprecated
     String uriPattern(Result result);
 
 }

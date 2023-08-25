@@ -42,7 +42,7 @@ class MicrometerCollectorTest {
                     singletonList("k"), singletonList(i.toString()), 1.0);
 
             collector.add(Collections.emptyList(), (conventionName, tagKeys) -> Stream
-                    .of(new MicrometerCollector.Family(Collector.Type.COUNTER, "my_counter", sample)));
+                .of(new MicrometerCollector.Family(Collector.Type.COUNTER, "my_counter", sample)));
         }
 
         // Threw StackOverflowException because of too many nested streams originally
@@ -60,9 +60,9 @@ class MicrometerCollectorTest {
                 asList("k", "k2"), asList("v2", "v1"), 1.0);
 
         collector.add(asList("v1", "v2"), (conventionName, tagKeys) -> Stream
-                .of(new MicrometerCollector.Family(Collector.Type.COUNTER, "my_counter", sample)));
+            .of(new MicrometerCollector.Family(Collector.Type.COUNTER, "my_counter", sample)));
         collector.add(asList("v2", "v1"), (conventionName, tagKeys) -> Stream
-                .of(new MicrometerCollector.Family(Collector.Type.COUNTER, "my_counter", sample2)));
+            .of(new MicrometerCollector.Family(Collector.Type.COUNTER, "my_counter", sample2)));
 
         assertThat(collector.collect().get(0).samples).hasSize(2);
     }

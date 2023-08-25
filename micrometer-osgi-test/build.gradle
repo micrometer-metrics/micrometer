@@ -1,0 +1,61 @@
+import aQute.bnd.gradle.Bundle
+import aQute.bnd.gradle.Resolve
+import aQute.bnd.gradle.TestOSGi
+
+dependencies {
+    testImplementation 'org.assertj:assertj-core'
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testImplementation 'org.osgi:org.osgi.test.junit5'
+    testImplementation 'org.slf4j:slf4j-api'
+
+    testImplementation project(':micrometer-core')
+
+    testImplementation project(':micrometer-registry-jmx')
+    testImplementation project(':micrometer-registry-prometheus')
+
+    testImplementation 'org.apache.felix:org.apache.felix.framework'
+
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
+    testRuntimeOnly 'org.apache.felix:org.apache.felix.scr'
+    testRuntimeOnly 'org.slf4j:slf4j-simple'
+}
+
+def testingBundle = tasks.register('testingBundle', Bundle) {
+    archiveClassifier = 'tests'
+    from sourceSets.test.output
+    sourceSet = sourceSets.test
+
+    bundle {
+        bnd """\
+            Bundle-SymbolicName: \${task.archiveBaseName}-\${task.archiveClassifier}
+            Test-Cases: \${classes;HIERARCHY_INDIRECTLY_ANNOTATED;org.junit.platform.commons.annotation.Testable;CONCRETE}
+            """.stripIndent()
+    }
+}
+
+def resolveTask = tasks.register("resolve", Resolve) {
+    dependsOn jar, testingBundle
+    project.ext.osgiRunee="JavaSE-${javaLanguageVersion.asInt()}"
+    bundles = files(sourceSets.test.runtimeClasspath, configurations.archives.artifacts.files)
+    bndrun = file("test.bndrun")
+    outputBndrun = layout.buildDirectory.file("resolved-test.bndrun")
+}
+
+
+
+tasks.register("testOSGi", TestOSGi) {
+    group = "verification"
+    description = "Run OSGi tests"
+    bundles = files(sourceSets.test.runtimeClasspath, configurations.archives.artifacts.files)
+    bndrun = resolveTask.flatMap { it.outputBndrun }
+}
+
+tasks.test.configure {
+    actions.clear()
+    dependsOn testOSGi
+}
+
+artifacts {
+    archives testingBundle
+}

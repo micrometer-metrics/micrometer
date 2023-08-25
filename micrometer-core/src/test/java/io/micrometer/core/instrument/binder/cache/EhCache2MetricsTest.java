@@ -98,7 +98,7 @@ class EhCache2MetricsTest extends AbstractCacheMetricsTest {
         // rollback transaction metrics
         String xaRollbacks = "cache.xa.rollbacks";
         FunctionCounter exceptionRollback = fetch(registry, xaRollbacks, Tags.of("result", "exception"))
-                .functionCounter();
+            .functionCounter();
         assertThat(exceptionRollback.count()).isEqualTo(stats.xaRollbackExceptionCount());
 
         FunctionCounter successRollback = fetch(registry, xaRollbacks, Tags.of("result", "success")).functionCounter();
@@ -107,11 +107,11 @@ class EhCache2MetricsTest extends AbstractCacheMetricsTest {
         // recovery transaction metrics
         String xaRecoveries = "cache.xa.recoveries";
         FunctionCounter nothingRecovered = fetch(registry, xaRecoveries, Tags.of("result", "nothing"))
-                .functionCounter();
+            .functionCounter();
         assertThat(nothingRecovered.count()).isEqualTo(stats.xaRecoveryNothingCount());
 
         FunctionCounter successRecoveries = fetch(registry, xaRecoveries, Tags.of("result", "success"))
-                .functionCounter();
+            .functionCounter();
         assertThat(successRecoveries.count()).isEqualTo(stats.xaRecoveryRecoveredCount());
     }
 

@@ -72,7 +72,9 @@ class CompositeFunctionTimer<T> extends AbstractCompositeMeter<FunctionTimer> im
         }
 
         return FunctionTimer.builder(getId().getName(), obj, countFunction, totalTimeFunction, totalTimeFunctionUnit)
-                .tags(getId().getTagsAsIterable()).description(getId().getDescription()).register(registry);
+            .tags(getId().getTagsAsIterable())
+            .description(getId().getDescription())
+            .register(registry);
     }
 
 }

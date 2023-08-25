@@ -95,6 +95,17 @@ public enum OkHttpObservationDocumentation implements ObservationDocumentation {
             public String asString() {
                 return "status";
             }
+        },
+
+        /**
+         * Key name for outcome.
+         * @since 1.11.0
+         */
+        OUTCOME {
+            @Override
+            public String asString() {
+                return "outcome";
+            }
         }
 
     }

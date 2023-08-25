@@ -22,9 +22,17 @@ import io.micrometer.observation.docs.ObservationDocumentation;
 
 /**
  * {@link ObservationDocumentation} for Apache HTTP client instrumentation.
+ * <p>
+ * See
+ * {@link io.micrometer.core.instrument.binder.httpcomponents.hc5.ApacheHttpClientObservationDocumentation}
+ * for Apache HTTP client 5 support.
+ *
  * @since 1.10.0
  * @see MicrometerHttpRequestExecutor
+ * @deprecated as of 1.12.0 in favor of HttpComponents 5.x and
+ * {@link io.micrometer.core.instrument.binder.httpcomponents.hc5.ApacheHttpClientObservationDocumentation}.
  */
+@Deprecated
 public enum ApacheHttpClientObservationDocumentation implements ObservationDocumentation {
 
     DEFAULT {
@@ -45,6 +53,17 @@ public enum ApacheHttpClientObservationDocumentation implements ObservationDocum
             @Override
             public String asString() {
                 return "status";
+            }
+        },
+
+        /**
+         * Key name for outcome.
+         * @since 1.11.0
+         */
+        OUTCOME {
+            @Override
+            public String asString() {
+                return "outcome";
             }
         },
         METHOD {

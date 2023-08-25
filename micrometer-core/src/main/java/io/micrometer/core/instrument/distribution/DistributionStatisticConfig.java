@@ -16,6 +16,7 @@
 package io.micrometer.core.instrument.distribution;
 
 import io.micrometer.common.lang.Nullable;
+import io.micrometer.core.instrument.config.InvalidConfigurationException;
 import io.micrometer.core.instrument.internal.Mergeable;
 
 import java.time.Duration;
@@ -37,8 +38,12 @@ import java.util.stream.LongStream;
 public class DistributionStatisticConfig implements Mergeable<DistributionStatisticConfig> {
 
     public static final DistributionStatisticConfig DEFAULT = builder().percentilesHistogram(false)
-            .percentilePrecision(1).minimumExpectedValue(1.0).maximumExpectedValue(Double.POSITIVE_INFINITY)
-            .expiry(Duration.ofMinutes(2)).bufferLength(3).build();
+        .percentilePrecision(1)
+        .minimumExpectedValue(1.0)
+        .maximumExpectedValue(Double.POSITIVE_INFINITY)
+        .expiry(Duration.ofMinutes(2))
+        .bufferLength(3)
+        .build();
 
     public static final DistributionStatisticConfig NONE = builder().build();
 
@@ -80,19 +85,20 @@ public class DistributionStatisticConfig implements Mergeable<DistributionStatis
     @Override
     public DistributionStatisticConfig merge(DistributionStatisticConfig parent) {
         return DistributionStatisticConfig.builder()
-                .percentilesHistogram(
-                        this.percentileHistogram == null ? parent.percentileHistogram : this.percentileHistogram)
-                .percentiles(this.percentiles == null ? parent.percentiles : this.percentiles)
-                .serviceLevelObjectives(this.serviceLevelObjectives == null ? parent.serviceLevelObjectives
-                        : this.serviceLevelObjectives)
-                .percentilePrecision(
-                        this.percentilePrecision == null ? parent.percentilePrecision : this.percentilePrecision)
-                .minimumExpectedValue(
-                        this.minimumExpectedValue == null ? parent.minimumExpectedValue : this.minimumExpectedValue)
-                .maximumExpectedValue(
-                        this.maximumExpectedValue == null ? parent.maximumExpectedValue : this.maximumExpectedValue)
-                .expiry(this.expiry == null ? parent.expiry : this.expiry)
-                .bufferLength(this.bufferLength == null ? parent.bufferLength : this.bufferLength).build();
+            .percentilesHistogram(
+                    this.percentileHistogram == null ? parent.percentileHistogram : this.percentileHistogram)
+            .percentiles(this.percentiles == null ? parent.percentiles : this.percentiles)
+            .serviceLevelObjectives(
+                    this.serviceLevelObjectives == null ? parent.serviceLevelObjectives : this.serviceLevelObjectives)
+            .percentilePrecision(
+                    this.percentilePrecision == null ? parent.percentilePrecision : this.percentilePrecision)
+            .minimumExpectedValue(
+                    this.minimumExpectedValue == null ? parent.minimumExpectedValue : this.minimumExpectedValue)
+            .maximumExpectedValue(
+                    this.maximumExpectedValue == null ? parent.maximumExpectedValue : this.maximumExpectedValue)
+            .expiry(this.expiry == null ? parent.expiry : this.expiry)
+            .bufferLength(this.bufferLength == null ? parent.bufferLength : this.bufferLength)
+            .build();
     }
 
     /**
@@ -449,7 +455,50 @@ public class DistributionStatisticConfig implements Mergeable<DistributionStatis
          * @return A new immutable distribution configuration.
          */
         public DistributionStatisticConfig build() {
+            validate(config);
             return config;
+        }
+
+        private void validate(DistributionStatisticConfig distributionStatisticConfig) {
+            if (config.bufferLength != null && config.bufferLength <= 0) {
+                rejectConfig("bufferLength (" + config.bufferLength + ") must be greater than zero");
+            }
+
+            if (config.percentiles != null) {
+                for (double p : config.percentiles) {
+                    if (p < 0 || p > 1) {
+                        rejectConfig("percentiles must contain only the values between 0.0 and 1.0. " + "Found " + p);
+                    }
+                }
+            }
+
+            if (config.minimumExpectedValue != null && config.minimumExpectedValue <= 0) {
+                rejectConfig("minimumExpectedValue (" + config.minimumExpectedValue + ") must be greater than 0.");
+            }
+
+            if (config.maximumExpectedValue != null && config.maximumExpectedValue <= 0) {
+                rejectConfig("maximumExpectedValue (" + config.maximumExpectedValue + ") must be greater than 0.");
+            }
+
+            if ((config.minimumExpectedValue != null && config.maximumExpectedValue != null)
+                    && config.minimumExpectedValue > config.maximumExpectedValue) {
+                rejectConfig("maximumExpectedValue (" + config.maximumExpectedValue
+                        + ") must be equal to or greater than minimumExpectedValue (" + config.minimumExpectedValue
+                        + ").");
+            }
+
+            if (distributionStatisticConfig.getServiceLevelObjectiveBoundaries() != null) {
+                for (double slo : distributionStatisticConfig.getServiceLevelObjectiveBoundaries()) {
+                    if (slo <= 0) {
+                        rejectConfig("serviceLevelObjectiveBoundaries must contain only the values greater than 0. "
+                                + "Found " + slo);
+                    }
+                }
+            }
+        }
+
+        private static void rejectConfig(String msg) {
+            throw new InvalidConfigurationException("Invalid distribution configuration: " + msg);
         }
 
     }

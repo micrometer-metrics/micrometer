@@ -38,7 +38,6 @@ import java.util.Optional;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -51,6 +50,7 @@ import static java.util.stream.Collectors.joining;
  * @author Nicolas Portmann
  * @author Jon Schneider
  * @author Johnny Lim
+ * @author Brian Clozel
  * @since 1.1.0
  * @implNote This implementation requires Elasticsearch 7 or above.
  */
@@ -58,24 +58,6 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
 
     private static final ThreadFactory DEFAULT_THREAD_FACTORY = new NamedThreadFactory("elastic-metrics-publisher");
     static final DateTimeFormatter TIMESTAMP_FORMATTER = DateTimeFormatter.ISO_INSTANT;
-
-    private static final String ES_METRICS_TEMPLATE = "/_template/metrics_template";
-
-    private static final String TEMPLATE_PROPERTIES = "\"properties\": {\n" + "  \"name\": {\n"
-            + "    \"type\": \"keyword\"\n" + "  },\n" + "  \"count\": {\n" + "    \"type\": \"double\",\n"
-            + "    \"index\": false\n" + "  },\n" + "  \"value\": {\n" + "    \"type\": \"double\",\n"
-            + "    \"index\": false\n" + "  },\n" + "  \"sum\": {\n" + "    \"type\": \"double\",\n"
-            + "    \"index\": false\n" + "  },\n" + "  \"mean\": {\n" + "    \"type\": \"double\",\n"
-            + "    \"index\": false\n" + "  },\n" + "  \"duration\": {\n" + "    \"type\": \"double\",\n"
-            + "    \"index\": false\n" + "  },\n" + "  \"max\": {\n" + "    \"type\": \"double\",\n"
-            + "    \"index\": false\n" + "  },\n" + "  \"total\": {\n" + "    \"type\": \"double\",\n"
-            + "    \"index\": false\n" + "  },\n" + "  \"unknown\": {\n" + "    \"type\": \"double\",\n"
-            + "    \"index\": false\n" + "  },\n" + "  \"active\": {\n" + "    \"type\": \"double\",\n"
-            + "    \"index\": false\n" + "  }\n" + "}";
-
-    private static final Function<String, String> TEMPLATE_BODY_AFTER_VERSION_7 = (indexPrefix) -> "{\n"
-            + "  \"index_patterns\": [\"" + indexPrefix + "*\"],\n" + "  \"mappings\": {\n" + "    \"_source\": {\n"
-            + "      \"enabled\": false\n" + "    },\n" + TEMPLATE_PROPERTIES + "  }\n" + "}";
 
     private static final Pattern MAJOR_VERSION_PATTERN = Pattern.compile("\"number\" *: *\"([\\d]+)");
 
@@ -114,13 +96,13 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
         super(config, clock);
         config().namingConvention(new ElasticNamingConvention());
         this.config = config;
-        indexDateFormatter = DateTimeFormatter.ofPattern(config.indexDateFormat());
+        this.indexDateFormatter = DateTimeFormatter.ofPattern(config.indexDateFormat());
         this.httpClient = httpClient;
         if (StringUtils.isNotEmpty(config.pipeline())) {
-            actionLine = "{ \"create\" : {\"pipeline\":\"" + config.pipeline() + "\"} }\n";
+            this.actionLine = "{ \"create\" : {\"pipeline\":\"" + config.pipeline() + "\"} }\n";
         }
         else {
-            actionLine = "{ \"create\" : {} }\n";
+            this.actionLine = "{ \"create\" : {} }\n";
         }
 
         start(threadFactory);
@@ -128,51 +110,6 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
 
     public static Builder builder(ElasticConfig config) {
         return new Builder(config);
-    }
-
-    private void createIndexTemplateIfNeeded() {
-        if (checkedForIndexTemplate || !config.autoCreateIndex()) {
-            return;
-        }
-
-        try {
-            String uri = config.host() + ES_METRICS_TEMPLATE;
-            if (connect(HttpSender.Method.HEAD, uri).send().onError(response -> {
-                if (response.code() != 404) {
-                    logger.error("could not create index in elastic (HTTP {}): {}", response.code(), response.body());
-                }
-            }).isSuccessful()) {
-                checkedForIndexTemplate = true;
-                logger.debug("metrics template already exists");
-                return;
-            }
-
-            connect(HttpSender.Method.PUT, uri).withJsonContent(getTemplateBody()).send().onError(
-                    response -> logger.error("failed to add metrics template to elastic: {}", response.body()));
-        }
-        catch (Throwable e) {
-            logger.error("could not create index in elastic", e);
-            return;
-        }
-
-        checkedForIndexTemplate = true;
-    }
-
-    private String getTemplateBody() {
-        return TEMPLATE_BODY_AFTER_VERSION_7.apply(config.index() + config.indexDateSeparator());
-    }
-
-    private HttpSender.Request.Builder connect(HttpSender.Method method, String uri) {
-        return authentication(this.httpClient.newRequest(uri).withMethod(method));
-    }
-
-    private HttpSender.Request.Builder authentication(HttpSender.Request.Builder request) {
-        if (StringUtils.isNotBlank(config.apiKeyCredentials())) {
-            return request.withAuthentication("ApiKey", config.apiKeyCredentials());
-        }
-        else {
-            return request.withBasicAuthentication(config.userName(), config.password());
-        }
     }
 
     @Override
@@ -183,10 +120,12 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
         for (List<Meter> batch : MeterPartition.partition(this, config.batchSize())) {
             try {
                 String requestBody = batch.stream()
-                        .map(m -> m.match(this::writeGauge, this::writeCounter, this::writeTimer, this::writeSummary,
-                                this::writeLongTaskTimer, this::writeTimeGauge, this::writeFunctionCounter,
-                                this::writeFunctionTimer, this::writeMeter))
-                        .filter(Optional::isPresent).map(Optional::get).collect(joining("\n", "", "\n"));
+                    .map(m -> m.match(this::writeGauge, this::writeCounter, this::writeTimer, this::writeSummary,
+                            this::writeLongTaskTimer, this::writeTimeGauge, this::writeFunctionCounter,
+                            this::writeFunctionTimer, this::writeMeter))
+                    .filter(Optional::isPresent)
+                    .map(Optional::get)
+                    .collect(joining("\n", "", "\n"));
                 connect(HttpSender.Method.POST, uri).withJsonContent(requestBody).send().onSuccess(response -> {
                     int numberOfSentItems = batch.size();
                     String responseBody = response.body();
@@ -207,6 +146,51 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
             catch (Throwable e) {
                 logger.error("failed to send metrics to elastic", e);
             }
+        }
+    }
+
+    private void createIndexTemplateIfNeeded() {
+        if (this.checkedForIndexTemplate || !this.config.autoCreateIndex()) {
+            return;
+        }
+        attemptIndexTemplateCreation(new DefaultIndexTemplateCreator(this.httpClient));
+        if (!this.checkedForIndexTemplate) {
+            logger.debug("Attempt to create index template using legacy /_template/ endpoint");
+            attemptIndexTemplateCreation(new LegacyIndexTemplateCreator(this.httpClient));
+        }
+    }
+
+    private void attemptIndexTemplateCreation(IndexTemplateCreator creator) {
+        IndexTemplateCreator.IndexTemplateStatus indexTemplateStatus = creator.fetchIndexTemplateStatus(this.config);
+        switch (indexTemplateStatus) {
+            case MISSING:
+                try {
+                    creator.createIndexTemplate(this.config);
+                    this.checkedForIndexTemplate = true;
+                }
+                catch (Throwable exc) {
+                    // in case of a network error, there will be a new creation attempt.
+                    logger.error("Could not create index template in Elastic", exc);
+                }
+                break;
+            case EXISTS:
+                this.checkedForIndexTemplate = true;
+                break;
+            case NOT_SUPPORTED:
+                break;
+        }
+    }
+
+    private HttpSender.Request.Builder connect(HttpSender.Method method, String uri) {
+        return authentication(this.httpClient.newRequest(uri).withMethod(method));
+    }
+
+    private HttpSender.Request.Builder authentication(HttpSender.Request.Builder request) {
+        if (StringUtils.isNotBlank(config.apiKeyCredentials())) {
+            return request.withAuthentication("ApiKey", config.apiKeyCredentials());
+        }
+        else {
+            return request.withBasicAuthentication(config.userName(), config.password());
         }
     }
 
@@ -363,14 +347,25 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
         String timestamp = generateTimestamp();
         String name = getConventionName(meter.getId());
         String type = meter.getId().getType().toString().toLowerCase();
-        sb.append("{\"").append(config.timestampFieldName()).append("\":\"").append(timestamp).append('"')
-                .append(",\"name\":\"").append(escapeJson(name)).append('"').append(",\"type\":\"").append(type)
-                .append('"');
+        sb.append("{\"")
+            .append(config.timestampFieldName())
+            .append("\":\"")
+            .append(timestamp)
+            .append('"')
+            .append(",\"name\":\"")
+            .append(escapeJson(name))
+            .append('"')
+            .append(",\"type\":\"")
+            .append(type)
+            .append('"');
 
         List<Tag> tags = getConventionTags(meter.getId());
         for (Tag tag : tags) {
-            sb.append(",\"").append(escapeJson(tag.getKey())).append("\":\"").append(escapeJson(tag.getValue()))
-                    .append('"');
+            sb.append(",\"")
+                .append(escapeJson(tag.getKey()))
+                .append("\":\"")
+                .append(escapeJson(tag.getValue()))
+                .append('"');
         }
 
         consumer.accept(sb);

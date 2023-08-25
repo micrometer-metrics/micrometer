@@ -34,16 +34,16 @@ class CloudWatchUtilsTest {
         assertThat(CloudWatchUtils.clampMetricValue(Double.NaN)).as("Check NaN").isNaN();
 
         assertThat(CloudWatchUtils.clampMetricValue(Double.MIN_VALUE)).as("Check minimum value")
-                .isEqualTo(EXPECTED_MIN);
+            .isEqualTo(EXPECTED_MIN);
 
         assertThat(CloudWatchUtils.clampMetricValue(Double.NEGATIVE_INFINITY)).as("Check negative infinity")
-                .isEqualTo(-EXPECTED_MAX);
+            .isEqualTo(-EXPECTED_MAX);
 
         assertThat(CloudWatchUtils.clampMetricValue(Double.POSITIVE_INFINITY)).as("Check positive infinity")
-                .isEqualTo(EXPECTED_MAX);
+            .isEqualTo(EXPECTED_MAX);
 
         assertThat(CloudWatchUtils.clampMetricValue(-Double.MAX_VALUE)).as("Check negative max value")
-                .isEqualTo(-EXPECTED_MAX);
+            .isEqualTo(-EXPECTED_MAX);
 
         assertThat(CloudWatchUtils.clampMetricValue(0)).as("Check 0").isEqualTo(0);
 

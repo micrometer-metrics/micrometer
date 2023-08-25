@@ -69,17 +69,20 @@ class CompositeDistributionSummary extends AbstractCompositeMeter<DistributionSu
     @SuppressWarnings("ConstantConditions")
     @Override
     DistributionSummary registerNewMeter(MeterRegistry registry) {
-        return DistributionSummary.builder(getId().getName()).tags(getId().getTagsAsIterable())
-                .description(getId().getDescription()).baseUnit(getId().getBaseUnit())
-                .publishPercentiles(distributionStatisticConfig.getPercentiles())
-                .publishPercentileHistogram(distributionStatisticConfig.isPercentileHistogram())
-                .maximumExpectedValue(distributionStatisticConfig.getMaximumExpectedValueAsDouble())
-                .minimumExpectedValue(distributionStatisticConfig.getMinimumExpectedValueAsDouble())
-                .distributionStatisticBufferLength(distributionStatisticConfig.getBufferLength())
-                .distributionStatisticExpiry(distributionStatisticConfig.getExpiry())
-                .percentilePrecision(distributionStatisticConfig.getPercentilePrecision())
-                .serviceLevelObjectives(distributionStatisticConfig.getServiceLevelObjectiveBoundaries()).scale(scale)
-                .register(registry);
+        return DistributionSummary.builder(getId().getName())
+            .tags(getId().getTagsAsIterable())
+            .description(getId().getDescription())
+            .baseUnit(getId().getBaseUnit())
+            .publishPercentiles(distributionStatisticConfig.getPercentiles())
+            .publishPercentileHistogram(distributionStatisticConfig.isPercentileHistogram())
+            .maximumExpectedValue(distributionStatisticConfig.getMaximumExpectedValueAsDouble())
+            .minimumExpectedValue(distributionStatisticConfig.getMinimumExpectedValueAsDouble())
+            .distributionStatisticBufferLength(distributionStatisticConfig.getBufferLength())
+            .distributionStatisticExpiry(distributionStatisticConfig.getExpiry())
+            .percentilePrecision(distributionStatisticConfig.getPercentilePrecision())
+            .serviceLevelObjectives(distributionStatisticConfig.getServiceLevelObjectiveBoundaries())
+            .scale(scale)
+            .register(registry);
     }
 
 }

@@ -112,20 +112,29 @@ public class PropertyValidator {
 
         try {
             return Validated.valid(prefixedProperty, value == null ? null : URI.create(value).toURL())
-                    .map(url -> value);
+                .map(url -> value);
         }
         catch (MalformedURLException | IllegalArgumentException ex) {
             return Validated.invalid(prefixedProperty, value, "must be a valid URL", InvalidReason.MALFORMED, ex);
         }
     }
 
+    /**
+     * Get a validated URI string.
+     * @param config config
+     * @param property property
+     * @return a validated URI string
+     * @see #getUrlString(MeterRegistryConfig, String)
+     * @see <a href=
+     * "https://github.com/micrometer-metrics/micrometer/issues/3903">gh-3903</a>
+     * @since 1.9.14
+     */
     public static Validated<String> getUriString(MeterRegistryConfig config, String property) {
         String prefixedProperty = prefixedProperty(config, property);
         String value = config.get(prefixedProperty);
 
         try {
-            return Validated.valid(prefixedProperty, value == null ? null : URI.create(value).toString())
-                    .map(url -> value);
+            return Validated.valid(prefixedProperty, value == null ? null : URI.create(value)).map(uri -> value);
         }
         catch (IllegalArgumentException ex) {
             return Validated.invalid(prefixedProperty, value, "must be a valid URI", InvalidReason.MALFORMED, ex);

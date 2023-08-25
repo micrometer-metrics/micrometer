@@ -56,97 +56,98 @@ class RequiredSearchTest {
         assertThat(RequiredSearch.in(registry).tag("k2", "v2").meters()).hasSize(1);
 
         assertThatThrownBy(() -> RequiredSearch.in(registry).tag("k2", "WRONG").meters())
-                .isInstanceOf(MeterNotFoundException.class);
+            .isInstanceOf(MeterNotFoundException.class);
 
         assertThatThrownBy(() -> RequiredSearch.in(registry).tag("WRONG", "v2").meters())
-                .isInstanceOf(MeterNotFoundException.class);
+            .isInstanceOf(MeterNotFoundException.class);
 
         assertThat(RequiredSearch.in(registry).tags("k2", "v2").meters()).hasSize(1);
         assertThat(RequiredSearch.in(registry).tags("k", "v", "k2", "v2").meters()).hasSize(1);
 
         assertThatThrownBy(() -> RequiredSearch.in(registry).tags("k", "k2", "k3"))
-                .isInstanceOf(IllegalArgumentException.class);
+            .isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
     void multipleNamesMatchMultipleWrongTypes() {
         assertThatThrownBy(() -> RequiredSearch.in(registry).name(n -> n.startsWith("my")).gauge())
-                .isInstanceOf(MeterNotFoundException.class)
-                .hasMessageContaining("Meters with names ['my.counter', 'my.other.counter', 'my.timer'] were found")
-                .hasMessageContaining("Expected to find a gauge. Types found were [counter, timer]");
+            .isInstanceOf(MeterNotFoundException.class)
+            .hasMessageContaining("Meters with names ['my.counter', 'my.other.counter', 'my.timer'] were found")
+            .hasMessageContaining("Expected to find a gauge. Types found were [counter, timer]");
     }
 
     @Test
     void nameMatchesSingleWrongType() {
         assertThatThrownBy(() -> RequiredSearch.in(registry).name(n -> n.contains("counter")).gauge())
-                .isInstanceOf(MeterNotFoundException.class)
-                .hasMessageContaining("Expected to find a gauge. The only type found was a counter");
+            .isInstanceOf(MeterNotFoundException.class)
+            .hasMessageContaining("Expected to find a gauge. The only type found was a counter");
     }
 
     @Test
     void noMatchingExactName() {
         assertThatThrownBy(() -> RequiredSearch.in(registry).name("does.not.exist").counter())
-                .isInstanceOf(MeterNotFoundException.class)
-                .hasMessageContaining("No meter with name 'does.not.exist' was found")
-                .hasMessageContaining("Meters with type counter were found");
+            .isInstanceOf(MeterNotFoundException.class)
+            .hasMessageContaining("No meter with name 'does.not.exist' was found")
+            .hasMessageContaining("Meters with type counter were found");
     }
 
     @Test
     void noMatchingNamePredicate() {
         assertThatThrownBy(() -> RequiredSearch.in(registry).name(n -> n.equals("does.not.exist")).counter())
-                .isInstanceOf(MeterNotFoundException.class)
-                .hasMessageContaining("No meter that matches the name predicate was found")
-                .hasMessageContaining("Meters with type counter were found");
+            .isInstanceOf(MeterNotFoundException.class)
+            .hasMessageContaining("No meter that matches the name predicate was found")
+            .hasMessageContaining("Meters with type counter were found");
     }
 
     @Test
     void matchingAndNoMatchingRequiredTagKey() {
         assertThatThrownBy(() -> RequiredSearch.in(registry).tagKeys("k", "k2").timer())
-                .isInstanceOf(MeterNotFoundException.class)
-                .hasMessageContaining("A meter with name 'my.timer' has the required tag 'k'")
-                .hasMessageContaining("No meters have the required tag 'k2'");
+            .isInstanceOf(MeterNotFoundException.class)
+            .hasMessageContaining("A meter with name 'my.timer' has the required tag 'k'")
+            .hasMessageContaining("No meters have the required tag 'k2'");
     }
 
     @Test
     void multipleMatchingRequiredTagKey() {
         assertThatThrownBy(() -> RequiredSearch.in(registry).tagKeys("k", "does.not.exist").counter())
-                .isInstanceOf(MeterNotFoundException.class)
-                .hasMessageContaining("Meters with names ['my.counter', 'my.other.counter'] have the required tag 'k'");
+            .isInstanceOf(MeterNotFoundException.class)
+            .hasMessageContaining("Meters with names ['my.counter', 'my.other.counter'] have the required tag 'k'");
     }
 
     @Test
     void multipleNonMatchingRequiredTag() {
         assertThatThrownBy(() -> RequiredSearch.in(registry).name("my.counter").tag("k", "does.not.exist").counter())
-                .isInstanceOf(MeterNotFoundException.class).hasMessageContaining(
-                        "No meters have a tag 'k' with value 'does.not.exist'. The only value found was 'v'");
+            .isInstanceOf(MeterNotFoundException.class)
+            .hasMessageContaining("No meters have a tag 'k' with value 'does.not.exist'. The only value found was 'v'");
     }
 
     @Test
     void multipleNonMatchingRequiredTagWithMultipleOtherValues() {
         assertThatThrownBy(() -> RequiredSearch.in(registry).tag("k2", "does.not.exist").counter())
-                .isInstanceOf(MeterNotFoundException.class).hasMessageContaining(
-                        "No meters have a tag 'k2' with value 'does.not.exist'. Tag values found were ['v2', 'v3']");
+            .isInstanceOf(MeterNotFoundException.class)
+            .hasMessageContaining(
+                    "No meters have a tag 'k2' with value 'does.not.exist'. Tag values found were ['v2', 'v3']");
     }
 
     @Test
     void singleMatchingRequiredTag() {
         assertThatThrownBy(() -> RequiredSearch.in(registry).tag("k", "v").tagKeys("does.not.exist").timer())
-                .isInstanceOf(MeterNotFoundException.class)
-                .hasMessageContaining("A meter with name 'my.timer' has a tag 'k' with value 'v'");
+            .isInstanceOf(MeterNotFoundException.class)
+            .hasMessageContaining("A meter with name 'my.timer' has a tag 'k' with value 'v'");
     }
 
     @Test
     void multipleMatchingRequiredTag() {
         assertThatThrownBy(() -> RequiredSearch.in(registry).tag("k", "v").tagKeys("does.not.exist").counter())
-                .isInstanceOf(MeterNotFoundException.class).hasMessageContaining(
-                        "Meters with names ['my.counter', 'my.other.counter'] have a tag 'k' with value 'v'");
+            .isInstanceOf(MeterNotFoundException.class)
+            .hasMessageContaining("Meters with names ['my.counter', 'my.other.counter'] have a tag 'k' with value 'v'");
     }
 
     @Test
     void noMatchingType() {
         assertThatThrownBy(() -> RequiredSearch.in(registry).functionCounter())
-                .isInstanceOf(MeterNotFoundException.class)
-                .hasMessageContaining("No meters with type function counter were found");
+            .isInstanceOf(MeterNotFoundException.class)
+            .hasMessageContaining("No meters with type function counter were found");
     }
 
     @Test

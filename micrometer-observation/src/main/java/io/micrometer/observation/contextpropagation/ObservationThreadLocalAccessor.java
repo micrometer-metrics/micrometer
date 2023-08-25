@@ -17,7 +17,9 @@ package io.micrometer.observation.contextpropagation;
 
 import io.micrometer.common.util.internal.logging.InternalLogger;
 import io.micrometer.common.util.internal.logging.InternalLoggerFactory;
+import io.micrometer.context.ContextRegistry;
 import io.micrometer.context.ThreadLocalAccessor;
+import io.micrometer.observation.NullObservation;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
 
@@ -29,16 +31,73 @@ import io.micrometer.observation.ObservationRegistry;
  */
 public class ObservationThreadLocalAccessor implements ThreadLocalAccessor<Observation> {
 
-    private static final InternalLogger LOG = InternalLoggerFactory.getInstance(ObservationThreadLocalAccessor.class);
+    private static final InternalLogger log = InternalLoggerFactory.getInstance(ObservationThreadLocalAccessor.class);
 
     /**
      * Key under which Micrometer Observation is being registered.
      */
     public static final String KEY = "micrometer.observation";
 
-    private static final ObservationRegistry observationRegistry = ObservationRegistry.create();
+    /**
+     * The default implementation of {@link ObservationRegistry} that Micrometer provides
+     * comes with a static {@link ThreadLocal} instance for accessing the
+     * {@link Observation.Scope}. That's why we can create an instance of the default
+     * implementation of the registry just to call its
+     * {@link ObservationRegistry#getCurrentObservation()} because that in turn will look
+     * at the static ThreadLocal and will always return the proper scope.
+     */
+    private ObservationRegistry observationRegistry = ObservationRegistry.create();
 
-    private static final ThreadLocal<Observation.Scope> scopes = new ThreadLocal<>();
+    private static ObservationThreadLocalAccessor instance;
+
+    /**
+     * Creates a new instance of this class and stores a static handle to it. Remember to
+     * call {@link ContextRegistry#getInstance()} to load all accessors which will call
+     * this constructor.
+     */
+    public ObservationThreadLocalAccessor() {
+        instance = this;
+    }
+
+    /**
+     * Creates a new instance of this class.
+     * @param observationRegistry observation registry
+     * @since 1.10.8
+     */
+    public ObservationThreadLocalAccessor(ObservationRegistry observationRegistry) {
+        this.observationRegistry = observationRegistry;
+    }
+
+    /**
+     * Provide an {@link ObservationRegistry} to be used by
+     * {@code ObservationThreadLocalAccessor}.
+     * @param observationRegistry observation registry
+     * @since 1.10.8
+     */
+    public void setObservationRegistry(ObservationRegistry observationRegistry) {
+        this.observationRegistry = observationRegistry;
+    }
+
+    /**
+     * Returns the provided {@link ObservationRegistry}.
+     * @return observation registry
+     * @since 1.10.8
+     */
+    public ObservationRegistry getObservationRegistry() {
+        return this.observationRegistry;
+    }
+
+    /**
+     * Return the singleton instance of this {@code ObservationThreadLocalAccessor}.
+     * @return instance
+     * @since 1.10.8
+     */
+    public static ObservationThreadLocalAccessor getInstance() {
+        if (instance == null) {
+            ContextRegistry.getInstance(); // this loads the instance
+        }
+        return instance;
+    }
 
     @Override
     public Object key() {
@@ -52,27 +111,73 @@ public class ObservationThreadLocalAccessor implements ThreadLocalAccessor<Obser
 
     @Override
     public void setValue(Observation value) {
-        Observation.Scope scope = value.openScope();
-        scopes.set(scope);
+        // Iterate over all handlers and open a new scope. The created scope will put
+        // itself to TL.
+        value.openScope();
     }
 
     @Override
-    public void reset() {
-        Observation.Scope scope = scopes.get();
-        Observation.Scope scopeFromObservationRegistry = observationRegistry.getCurrentObservationScope();
-        if (scopeFromObservationRegistry != scope) {
-            // TODO: Maybe we should throw an ISE
-            LOG.warn("Scope from ObservationThreadLocalAccessor [" + scope
-                    + "] is not the same as the one from ObservationRegistry [" + scopeFromObservationRegistry
-                    + "]. You must have created additional scopes and forgotten to close them. Will close both of them");
-            if (scopeFromObservationRegistry != null) {
-                scopeFromObservationRegistry.close();
-            }
+    public void setValue() {
+        Observation currentObservation = observationRegistry.getCurrentObservation();
+        if (currentObservation == null) {
+            return;
         }
+        // Since we can't fully rely on using the observation registry static instance
+        // because you can have multiple ones being created in your code (e.g. tests,
+        // production code, multiple contexts etc.) we need a way to use an existing,
+        // pre-configured observation registry. What we're doing then is getting an OR
+        // from an existing observation, and we pass it to the NullObservation. That
+        // way we'll reuse its handlers.
+        ObservationRegistry registryAttachedToCurrentObservation = currentObservation.getObservationRegistry();
+        // Not closing a scope (we're not resetting)
+        // Creating a new one with empty context and opens a new scope
+        // This scope will remember the previously created one to
+        // which we will revert once "null scope" is closed
+        new NullObservation(registryAttachedToCurrentObservation).start().openScope();
+    }
+
+    private void closeCurrentScope() {
+        Observation.Scope scope = observationRegistry.getCurrentObservationScope();
         if (scope != null) {
             scope.close();
-            scopes.remove();
         }
+    }
+
+    @Override
+    public void restore() {
+        closeCurrentScope();
+    }
+
+    @Override
+    public void restore(Observation value) {
+        Observation.Scope scope = observationRegistry.getCurrentObservationScope();
+        if (scope == null) {
+            String msg = "There is no current scope in thread local. This situation should not happen";
+            log.warn(msg);
+            assertFalse(msg);
+        }
+        Observation.Scope previousObservationScope = scope != null ? scope.getPreviousObservationScope() : null;
+        if (previousObservationScope == null || value != previousObservationScope.getCurrentObservation()) {
+            Observation previousObservation = previousObservationScope != null
+                    ? previousObservationScope.getCurrentObservation() : null;
+            String msg = "Observation <" + value
+                    + "> to which we're restoring is not the same as the one set as this scope's parent observation <"
+                    + previousObservation
+                    + ">. Most likely a manually created Observation has a scope opened that was never closed. This may lead to thread polluting and memory leaks.";
+            log.warn(msg);
+            assertFalse(msg);
+        }
+        closeCurrentScope();
+    }
+
+    void assertFalse(String msg) {
+        assert false : msg;
+    }
+
+    @Override
+    @Deprecated
+    public void reset() {
+        ThreadLocalAccessor.super.reset();
     }
 
 }

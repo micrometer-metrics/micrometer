@@ -30,16 +30,20 @@ class JvmMemory {
     }
 
     static Stream<MemoryPoolMXBean> getLongLivedHeapPools() {
-        return ManagementFactory.getMemoryPoolMXBeans().stream().filter(JvmMemory::isHeap)
-                .filter(mem -> isLongLivedPool(mem.getName()));
+        return ManagementFactory.getMemoryPoolMXBeans()
+            .stream()
+            .filter(JvmMemory::isHeap)
+            .filter(mem -> isLongLivedPool(mem.getName()));
     }
 
     static boolean isConcurrentPhase(String cause, String name) {
-        return "No GC".equals(cause) || "Shenandoah Cycles".equals(name) || "ZGC Cycles".equals(name);
+        return "No GC".equals(cause) || "Shenandoah Cycles".equals(name) || "ZGC Cycles".equals(name)
+                || (name.startsWith("GPGC") && !name.endsWith("Pauses"));
     }
 
     static boolean isAllocationPool(String name) {
         return name != null && (name.endsWith("Eden Space") || "Shenandoah".equals(name) || "ZHeap".equals(name)
+                || name.endsWith("New Gen") // Zing GPGC
                 || name.endsWith("nursery-allocate") || name.endsWith("-eden") // "balanced-eden"
                 || "JavaHeap".equals(name) // metronome
         );

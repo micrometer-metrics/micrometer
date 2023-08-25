@@ -65,7 +65,7 @@ public class DefaultMongoCommandTagsProvider implements MongoCommandTagsProvider
     @Override
     public void commandStarted(CommandStartedEvent event) {
         determineCollectionName(event.getCommandName(), event.getCommand())
-                .ifPresent(collectionName -> addCollectionNameForCommand(event, collectionName));
+            .ifPresent(collectionName -> addCollectionNameForCommand(event, collectionName));
     }
 
     private void addCollectionNameForCommand(CommandEvent event, String collectionName) {
@@ -118,8 +118,12 @@ public class DefaultMongoCommandTagsProvider implements MongoCommandTagsProvider
      * value was not a non-empty string
      */
     private Optional<String> getNonEmptyBsonString(BsonValue bsonValue) {
-        return Optional.ofNullable(bsonValue).filter(BsonValue::isString).map(BsonValue::asString)
-                .map(BsonString::getValue).map(String::trim).filter(StringUtils::isNotEmpty);
+        return Optional.ofNullable(bsonValue)
+            .filter(BsonValue::isString)
+            .map(BsonValue::asString)
+            .map(BsonString::getValue)
+            .map(String::trim)
+            .filter(StringUtils::isNotEmpty);
     }
 
 }

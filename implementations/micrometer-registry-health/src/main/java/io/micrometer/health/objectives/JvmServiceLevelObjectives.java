@@ -37,40 +37,48 @@ public class JvmServiceLevelObjectives {
      */
     public static final ServiceLevelObjective[] MEMORY = new ServiceLevelObjective[] {
             ServiceLevelObjective.build("jvm.pool.memory")
-                    .failedMessage("Memory usage in a single memory pool exceeds 90% after garbage collection.")
-                    .requires(new JvmHeapPressureMetrics()).baseUnit("percent used")
-                    .value(s -> s.name("jvm.memory.usage.after.gc")).isLessThan(0.9),
+                .failedMessage("Memory usage in a single memory pool exceeds 90% after garbage collection.")
+                .requires(new JvmHeapPressureMetrics())
+                .baseUnit("percent used")
+                .value(s -> s.name("jvm.memory.usage.after.gc"))
+                .isLessThan(0.9),
 
             ServiceLevelObjective.build("jvm.gc.load")
-                    .failedMessage("Memory cleaning is taking more than 50% of CPU resources on average. "
-                            + "This usually means really serious problems with memory resulting in high performance degradation.")
-                    .requires(new JvmHeapPressureMetrics()).baseUnit("percent CPU time spent")
-                    .value(s -> s.name("jvm.gc.overhead")).isLessThan(0.5),
+                .failedMessage("Memory cleaning is taking more than 50% of CPU resources on average. "
+                        + "This usually means really serious problems with memory resulting in high performance degradation.")
+                .requires(new JvmHeapPressureMetrics())
+                .baseUnit("percent CPU time spent")
+                .value(s -> s.name("jvm.gc.overhead"))
+                .isLessThan(0.5),
 
             ServiceLevelObjective
-                    .compose("jvm.total.memory", ServiceLevelObjective.build("jvm.gc.overhead")
+                .compose("jvm.total.memory",
+                        ServiceLevelObjective.build("jvm.gc.overhead")
                             .failedMessage("More than 20% of CPU resources are being consumed by garbage collection.")
-                            .baseUnit(
-                                    "percent CPU time spent")
-                            .requires(new JvmHeapPressureMetrics()).value(s -> s.name("jvm.gc.overhead"))
+                            .baseUnit("percent CPU time spent")
+                            .requires(new JvmHeapPressureMetrics())
+                            .value(s -> s.name("jvm.gc.overhead"))
                             .isLessThan(0.2),
-                            ServiceLevelObjective.build("jvm.memory.consumption")
-                                    .failedMessage(
-                                            "More than 90% of total memory has been in use during the last 5 minutes.")
-                                    .baseUnit("maximum percent used in last 5 minutes").requires(new JvmMemoryMetrics())
-                                    .value(s -> s.name("jvm.memory.used"))
-                                    .dividedBy(denom -> denom.value(s -> s.name("jvm.memory.committed")))
-                                    .maxOver(Duration.ofMinutes(5)).isLessThan(0.9))
-                    .failedMessage(
-                            "More than 90% of total memory has been in use during the last 5 minutes and more than 20% of CPU resources are being consumed by garbage collection. "
-                                    + "Lasting memory lack may result in performance degradation and server instability.")
-                    .and() };
+                        ServiceLevelObjective.build("jvm.memory.consumption")
+                            .failedMessage("More than 90% of total memory has been in use during the last 5 minutes.")
+                            .baseUnit("maximum percent used in last 5 minutes")
+                            .requires(new JvmMemoryMetrics())
+                            .value(s -> s.name("jvm.memory.used"))
+                            .dividedBy(denom -> denom.value(s -> s.name("jvm.memory.committed")))
+                            .maxOver(Duration.ofMinutes(5))
+                            .isLessThan(0.9))
+                .failedMessage(
+                        "More than 90% of total memory has been in use during the last 5 minutes and more than 20% of CPU resources are being consumed by garbage collection. "
+                                + "Lasting memory lack may result in performance degradation and server instability.")
+                .and() };
 
-    public static final ServiceLevelObjective[] ALLOCATIONS = new ServiceLevelObjective[] { ServiceLevelObjective
-            .build("jvm.allocations.g1.humongous")
-            .failedMessage("A single object was allocated that exceeded 50% of the total size of the eden space.")
-            .baseUnit("allocations").requires(new JvmGcMetrics())
-            .count(s -> s.name("jvm.gc.pause").tag("cause", "G1 Humongous Allocation")).isEqualTo(0) };
+    public static final ServiceLevelObjective[] ALLOCATIONS = new ServiceLevelObjective[] {
+            ServiceLevelObjective.build("jvm.allocations.g1.humongous")
+                .failedMessage("A single object was allocated that exceeded 50% of the total size of the eden space.")
+                .baseUnit("allocations")
+                .requires(new JvmGcMetrics())
+                .count(s -> s.name("jvm.gc.pause").tag("cause", "G1 Humongous Allocation"))
+                .isEqualTo(0) };
 
     private JvmServiceLevelObjectives() {
     }

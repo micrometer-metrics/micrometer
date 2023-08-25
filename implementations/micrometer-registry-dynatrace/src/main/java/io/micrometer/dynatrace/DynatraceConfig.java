@@ -154,7 +154,7 @@ public interface DynatraceConfig extends StepRegistryConfig {
                                         checkRequired("uri", DynatraceConfig::uri),
                                         check("deviceId", DynatraceConfig::deviceId).andThen(Validated::nonBlank),
                                         check("technologyType", DynatraceConfig::technologyType)
-                                                .andThen(Validated::nonBlank));
+                                            .andThen(Validated::nonBlank));
                             }
                             else {
                                 return checkAll(this, checkRequired("uri", DynatraceConfig::uri));

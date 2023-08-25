@@ -34,10 +34,11 @@ class TimeWindowFixedBoundaryHistogramTest {
 
     private void assertTailSearch(int search, int expectedIndex, double... buckets) {
         DistributionStatisticConfig statisticConfig = DistributionStatisticConfig.builder()
-                .serviceLevelObjectives(buckets).build();
+            .serviceLevelObjectives(buckets)
+            .build();
         try (TimeWindowFixedBoundaryHistogram histogram = new TimeWindowFixedBoundaryHistogram(Clock.SYSTEM,
                 statisticConfig.merge(DistributionStatisticConfig.DEFAULT), false)) {
-            TimeWindowFixedBoundaryHistogram.FixedBoundaryHistogram bucket = histogram.newBucket();
+            FixedBoundaryHistogram bucket = histogram.newBucket();
             assertThat(bucket.leastLessThanOrEqualTo(search)).isEqualTo(expectedIndex);
         }
     }
@@ -45,8 +46,11 @@ class TimeWindowFixedBoundaryHistogramTest {
     @Test
     void histogramsAreCumulative() {
         try (TimeWindowFixedBoundaryHistogram histogram = new TimeWindowFixedBoundaryHistogram(new MockClock(),
-                DistributionStatisticConfig.builder().serviceLevelObjectives(3.0, 6, 7).bufferLength(1).build()
-                        .merge(DistributionStatisticConfig.DEFAULT),
+                DistributionStatisticConfig.builder()
+                    .serviceLevelObjectives(3.0, 6, 7)
+                    .bufferLength(1)
+                    .build()
+                    .merge(DistributionStatisticConfig.DEFAULT),
                 false)) {
 
             histogram.recordDouble(3);

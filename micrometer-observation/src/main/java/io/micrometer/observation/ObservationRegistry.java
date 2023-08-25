@@ -160,9 +160,12 @@ public interface ObservationRegistry {
         @SuppressWarnings("unchecked")
         <T extends Observation.Context> ObservationConvention<T> getObservationConvention(T context,
                 ObservationConvention<T> defaultConvention) {
-            return (ObservationConvention<T>) this.observationConventions.stream()
-                    .filter(convention -> convention.supportsContext(context)).findFirst().orElse(Objects
-                            .requireNonNull(defaultConvention, "Default ObservationConvention must not be null"));
+            for (ObservationConvention<?> convention : this.observationConventions) {
+                if (convention.supportsContext(context)) {
+                    return (ObservationConvention<T>) convention;
+                }
+            }
+            return Objects.requireNonNull(defaultConvention, "Default ObservationConvention must not be null");
         }
 
         /**
@@ -173,7 +176,12 @@ public interface ObservationRegistry {
          * @return {@code true} when observation is enabled
          */
         boolean isObservationEnabled(String name, @Nullable Observation.Context context) {
-            return this.observationPredicates.stream().allMatch(predicate -> predicate.test(name, context));
+            for (ObservationPredicate predicate : this.observationPredicates) {
+                if (!predicate.test(name, context)) {
+                    return false;
+                }
+            }
+            return true;
         }
 
         // package-private for minimal visibility

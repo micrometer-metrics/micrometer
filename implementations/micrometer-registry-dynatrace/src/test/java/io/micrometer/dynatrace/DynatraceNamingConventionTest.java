@@ -34,15 +34,15 @@ class DynatraceNamingConventionTest {
     void testDelegate() {
         DynatraceNamingConventionV1 v1Convention = new DynatraceNamingConventionV1();
         assertThat(dynatraceConvention.name("mymetric", Meter.Type.COUNTER, null))
-                .isEqualTo(v1Convention.name("mymetric", Meter.Type.COUNTER, null));
+            .isEqualTo(v1Convention.name("mymetric", Meter.Type.COUNTER, null));
         assertThat(dynatraceConvention.name("my.name1", Meter.Type.COUNTER, null))
-                .isEqualTo(v1Convention.name("my.name1", Meter.Type.COUNTER, null));
+            .isEqualTo(v1Convention.name("my.name1", Meter.Type.COUNTER, null));
         assertThat(dynatraceConvention.name("my_name1", Meter.Type.COUNTER, null))
-                .isEqualTo(v1Convention.name("my_name1", Meter.Type.COUNTER, null));
+            .isEqualTo(v1Convention.name("my_name1", Meter.Type.COUNTER, null));
         assertThat(dynatraceConvention.name("my-name1", Meter.Type.COUNTER, null))
-                .isEqualTo(v1Convention.name("my-name1", Meter.Type.COUNTER, null));
+            .isEqualTo(v1Convention.name("my-name1", Meter.Type.COUNTER, null));
         assertThat(dynatraceConvention.name("system.load.average.1m", Meter.Type.COUNTER, null))
-                .isEqualTo(v1Convention.name("system.load.average.1m", Meter.Type.COUNTER, null));
+            .isEqualTo(v1Convention.name("system.load.average.1m", Meter.Type.COUNTER, null));
         assertThat(dynatraceConvention.tagKey("{tagTag0}.-")).isEqualTo(v1Convention.tagKey("_tagTag0_.-"));
     }
 

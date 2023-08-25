@@ -72,7 +72,7 @@ public interface SignalFxConfig extends StepRegistryConfig {
         // method 'uri', so we accept
         // either here for backwards compatibility.
         return getUrlString(this, "apiHost").flatMap((uri, valid) -> uri == null ? getUrlString(this, "uri") : valid)
-                .orElse("https://ingest.signalfx.com");
+            .orElse("https://ingest.signalfx.com");
     }
 
     /**

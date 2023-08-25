@@ -101,9 +101,9 @@ public interface Timer extends Meter, HistogramSupport {
         }
 
         return new Builder(timed.value().isEmpty() ? defaultName : timed.value()).tags(timed.extraTags())
-                .description(timed.description().isEmpty() ? null : timed.description())
-                .publishPercentileHistogram(timed.histogram())
-                .publishPercentiles(timed.percentiles().length > 0 ? timed.percentiles() : null);
+            .description(timed.description().isEmpty() ? null : timed.description())
+            .publishPercentileHistogram(timed.histogram())
+            .publishPercentiles(timed.percentiles().length > 0 ? timed.percentiles() : null);
     }
 
     /**
@@ -337,9 +337,10 @@ public interface Timer extends Meter, HistogramSupport {
         @Override
         public void close() {
             long durationNs = registry.config().clock().monotonicTime() - startTime;
-            registry.timer(new Meter.Id(name, tags, null, description, Type.TIMER), distributionConfigBuilder.build(),
-                    pauseDetector == null ? registry.config().pauseDetector() : pauseDetector)
-                    .record(durationNs, TimeUnit.NANOSECONDS);
+            registry
+                .timer(new Meter.Id(name, tags, null, description, Type.TIMER), distributionConfigBuilder.build(),
+                        pauseDetector == null ? registry.config().pauseDetector() : pauseDetector)
+                .record(durationNs, TimeUnit.NANOSECONDS);
         }
 
     }

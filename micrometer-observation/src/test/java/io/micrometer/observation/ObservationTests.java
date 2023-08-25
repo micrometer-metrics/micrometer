@@ -17,11 +17,16 @@ package io.micrometer.observation;
 
 import io.micrometer.common.KeyValue;
 import io.micrometer.common.KeyValues;
+import io.micrometer.observation.Observation.Context;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.util.Random;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -31,6 +36,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @author Jonatan Ivanov
  * @author Tommy Ludwig
  * @author Marcin Grzejszczak
+ * @author Yanming Zhou
  */
 class ObservationTests {
 
@@ -76,6 +82,20 @@ class ObservationTests {
     }
 
     @Test
+    void usingParentObservationToMatchPredicate() {
+        registry.observationConfig().observationHandler(context -> true);
+        registry.observationConfig()
+            .observationPredicate((s, context) -> !s.equals("child") || context.getParentObservation() != null);
+
+        Observation childWithoutParent = Observation.createNotStarted("child", registry);
+        assertThat(childWithoutParent).isSameAs(Observation.NOOP);
+
+        Observation childWithParent = Observation.createNotStarted("parent", registry)
+            .observe(() -> Observation.createNotStarted("child", registry));
+        assertThat(childWithParent).isNotSameAs(Observation.NOOP);
+    }
+
+    @Test
     void havingAnObservationFilterWillMutateTheContext() {
         registry.observationConfig().observationHandler(context -> true);
         registry.observationConfig().observationFilter(context -> context.put("foo", "bar"));
@@ -103,8 +123,9 @@ class ObservationTests {
 
         Observation.start("foo", () -> context, registry).stop();
 
-        assertThat(context.getHighCardinalityKeyValue("foo")).isNotNull().extracting(KeyValue::getValue)
-                .isEqualTo("FOO-modified");
+        assertThat(context.getHighCardinalityKeyValue("foo")).isNotNull()
+            .extracting(KeyValue::getValue)
+            .isEqualTo("FOO-modified");
     }
 
     @Test
@@ -116,7 +137,8 @@ class ObservationTests {
 
         Observation.Context childContext = new Observation.Context();
         Observation child = Observation.createNotStarted("child", () -> childContext, registry)
-                .parentObservation(parent).start();
+            .parentObservation(parent)
+            .start();
 
         parent.stop();
         child.stop();
@@ -128,21 +150,20 @@ class ObservationTests {
     }
 
     @Test
-    void settingScopeMakesAReferenceOnParentContext() {
+    void creatingAChildInAScopeLinksTheTwoAsParentAndChild() {
         registry.observationConfig().observationHandler(context -> true);
 
-        Observation.Context parentContext = new Observation.Context();
-        Observation parent = Observation.start("parent", () -> parentContext, registry);
-        Observation.Context childContext = new Observation.Context();
+        Observation parent = Observation.start("parent", registry);
+        Observation parent2 = Observation.start("parent2", registry);
+        Observation childOutsideOfScope = Observation.createNotStarted("childOutsideOfScope", registry)
+            .parentObservation(parent2)
+            .start();
         parent.scoped(() -> {
-            assertThat(childContext.getParentObservation()).isNull();
-            Observation.createNotStarted("child", () -> childContext, registry).observe(() -> {
-                assertThat(childContext.getParentObservation().getContextView()).isSameAs(parentContext);
-            });
-            assertThat(childContext.getParentObservation()).isNull();
+            Observation child = Observation.start("child", registry);
+            assertThat(child.getContextView().getParentObservation()).isSameAs(parent);
+            assertThat(childOutsideOfScope.getContextView().getParentObservation()).isSameAs(parent2);
         });
         parent.stop();
-        assertThat(childContext.getParentObservation()).isNull();
     }
 
     @Test
@@ -163,7 +184,10 @@ class ObservationTests {
 
         Observation.Context context = new Observation.Context();
         Observation.createNotStarted(new CustomConvention(), new DefaultConvention(), () -> context, registry)
-                .lowCardinalityKeyValue("local", "present").lowCardinalityKeyValue("low", "local").start().stop();
+            .lowCardinalityKeyValue("local", "present")
+            .lowCardinalityKeyValue("low", "local")
+            .start()
+            .stop();
 
         assertThat(context.getName()).isEqualTo("custom.name");
         assertThat(context.getContextualName()).isEqualTo("custom.contextualName");
@@ -178,7 +202,10 @@ class ObservationTests {
 
         Observation.Context context = new Observation.Context();
         Observation.createNotStarted(new CustomConvention(), new DefaultConvention(), () -> context, registry)
-                .lowCardinalityKeyValue("local", "present").lowCardinalityKeyValue("low", "local").start().stop();
+            .lowCardinalityKeyValue("local", "present")
+            .lowCardinalityKeyValue("low", "local")
+            .start()
+            .stop();
 
         assertThat(context.getName()).isEqualTo("custom.name");
         assertThat(context.getContextualName()).isEqualTo("custom.contextualName");
@@ -192,7 +219,10 @@ class ObservationTests {
 
         Observation.Context context = new Observation.Context();
         Observation.createNotStarted(null, new DefaultConvention(), () -> context, registry)
-                .lowCardinalityKeyValue("local", "present").lowCardinalityKeyValue("low", "local").start().stop();
+            .lowCardinalityKeyValue("local", "present")
+            .lowCardinalityKeyValue("low", "local")
+            .start()
+            .stop();
 
         assertThat(context.getName()).isEqualTo("default.name");
         assertThat(context.getContextualName()).isEqualTo("default.contextualName");
@@ -207,7 +237,10 @@ class ObservationTests {
 
         Observation.Context context = new Observation.Context();
         Observation.createNotStarted(null, new DefaultConvention(), () -> context, registry)
-                .lowCardinalityKeyValue("local", "present").lowCardinalityKeyValue("low", "local").start().stop();
+            .lowCardinalityKeyValue("local", "present")
+            .lowCardinalityKeyValue("low", "local")
+            .start()
+            .stop();
 
         assertThat(context.getName()).isEqualTo("global.name");
         assertThat(context.getContextualName()).isEqualTo("global.contextualName");
@@ -221,7 +254,10 @@ class ObservationTests {
 
         Observation.Context context = new Observation.Context();
         Observation.createNotStarted(new CustomConvention(), () -> context, registry)
-                .lowCardinalityKeyValue("local", "present").lowCardinalityKeyValue("low", "local").start().stop();
+            .lowCardinalityKeyValue("local", "present")
+            .lowCardinalityKeyValue("low", "local")
+            .start()
+            .stop();
 
         assertThat(context.getName()).isEqualTo("custom.name");
         assertThat(context.getContextualName()).isEqualTo("custom.contextualName");
@@ -236,7 +272,10 @@ class ObservationTests {
 
         Observation.Context context = new Observation.Context();
         Observation.createNotStarted(new CustomConvention(), () -> context, registry)
-                .lowCardinalityKeyValue("local", "present").lowCardinalityKeyValue("low", "local").start().stop();
+            .lowCardinalityKeyValue("local", "present")
+            .lowCardinalityKeyValue("low", "local")
+            .start()
+            .stop();
 
         assertThat(context.getName()).isEqualTo("custom.name");
         assertThat(context.getContextualName()).isEqualTo("custom.contextualName");
@@ -249,8 +288,12 @@ class ObservationTests {
         registry.observationConfig().observationHandler(context -> true);
 
         Observation.Context context = new Observation.Context();
-        Observation.createNotStarted("local.name", () -> context, registry).contextualName("local.contextualName")
-                .lowCardinalityKeyValue("local", "present").lowCardinalityKeyValue("low", "local").start().stop();
+        Observation.createNotStarted("local.name", () -> context, registry)
+            .contextualName("local.contextualName")
+            .lowCardinalityKeyValue("local", "present")
+            .lowCardinalityKeyValue("low", "local")
+            .start()
+            .stop();
 
         assertThat(context.getName()).isEqualTo("local.name");
         assertThat(context.getContextualName()).isEqualTo("local.contextualName");
@@ -264,8 +307,12 @@ class ObservationTests {
         registry.observationConfig().observationConvention(new GlobalConvention());
 
         Observation.Context context = new Observation.Context();
-        Observation.createNotStarted("local.name", () -> context, registry).contextualName("local.contextualName")
-                .lowCardinalityKeyValue("local", "present").lowCardinalityKeyValue("low", "local").start().stop();
+        Observation.createNotStarted("local.name", () -> context, registry)
+            .contextualName("local.contextualName")
+            .lowCardinalityKeyValue("local", "present")
+            .lowCardinalityKeyValue("low", "local")
+            .start()
+            .stop();
 
         assertThat(context.getName()).isEqualTo("global.name");
         assertThat(context.getContextualName()).isEqualTo("global.contextualName");
@@ -280,13 +327,88 @@ class ObservationTests {
 
         Observation.Context context = new Observation.Context();
         Observation.createNotStarted(new CustomConvention(), new DefaultConvention(), () -> context, registry)
-                .lowCardinalityKeyValue("local", "present").lowCardinalityKeyValue("low", "local")
-                .observationConvention(new InstrumentationConvention()).start().stop();
+            .lowCardinalityKeyValue("local", "present")
+            .lowCardinalityKeyValue("low", "local")
+            .observationConvention(new InstrumentationConvention())
+            .start()
+            .stop();
 
         assertThat(context.getName()).isEqualTo("instrumentation.name");
         assertThat(context.getContextualName()).isEqualTo("instrumentation.contextualName");
         assertThat(context.getLowCardinalityKeyValues()).containsExactlyInAnyOrder(KeyValue.of("local", "present"),
                 KeyValue.of("instrumentation", "present"), KeyValue.of("low", "instrumentation"));
+    }
+
+    @Test
+    void observe() {
+        String result;
+        // with supplier
+        result = Observation.start("service", registry).observe(() -> "foo");
+        assertThat(result).isEqualTo("foo");
+
+        // with function
+        result = Observation.start("service", registry).observeWithContext((context) -> "bar");
+        assertThat(result).isEqualTo("bar");
+
+        // with runnable
+        AtomicBoolean called = new AtomicBoolean();
+        Observation.start("service", registry).observe(() -> called.set(true));
+        assertThat(called).isTrue();
+    }
+
+    @Test
+    void observeWithFunction() {
+        CustomContext context = new CustomContext();
+        AtomicReference<CustomContext> contextHolder = new AtomicReference<>();
+        String result = new SimpleObservation("service", registry, context).observeWithContext((ctx) -> {
+            CustomContext customContext = (CustomContext) ctx;
+            customContext.hello();
+            contextHolder.set(customContext);
+            return "foo";
+        });
+        assertThat(result).isEqualTo("foo");
+        assertThat(contextHolder).hasValueSatisfying((value) -> assertThat(value).isSameAs(context));
+
+        // passing function as a method arg
+        Function<CustomContext, String> function = (customContext) -> {
+            customContext.hello(); // compilation check
+            return "bar";
+        };
+        result = new SimpleObservation("service", registry, context).observeWithContext(function);
+        assertThat(result).isEqualTo("bar");
+
+        // method reference
+        result = new SimpleObservation("service", registry, context).observeWithContext(this::convert);
+        assertThat(result).isEqualTo("Hi");
+
+        // with explicit type cast on method
+        result = new SimpleObservation("service", registry, context)
+            .<CustomContext, String>observeWithContext((ctx) -> {
+                ctx.hello(); // compilation check
+                return "Hello";
+            });
+        assertThat(result).isEqualTo("Hello");
+
+        // with Noop registry, supplier provided context will not be created
+        AtomicBoolean contextCreated = new AtomicBoolean();
+        Supplier<Context> supplier = () -> new Context() {
+            {
+                contextCreated.set(true);
+            }
+        };
+        AtomicReference<Context> passedContextHolder = new AtomicReference<>();
+        result = Observation.createNotStarted("service", supplier, NoopObservationRegistry.INSTANCE)
+            .observeWithContext((ctx) -> {
+                passedContextHolder.set(ctx);
+                return "World";
+            });
+        assertThat(passedContextHolder).as("passed a noop context").hasValue(NoopObservation.NOOP.getContext());
+        assertThat(contextCreated).isFalse();
+        assertThat(result).isEqualTo("World");
+    }
+
+    private String convert(CustomContext customContext) {
+        return "Hi";
     }
 
     static class Service {
@@ -398,6 +520,14 @@ class ObservationTests {
         @Override
         public boolean supportsContext(Observation.Context context) {
             return true;
+        }
+
+    }
+
+    static class CustomContext extends Observation.Context {
+
+        String hello() {
+            return "Hello";
         }
 
     }

@@ -25,9 +25,10 @@ import org.junit.jupiter.api.Test
 
 internal class AsContextElementKtTests {
 
+    val observationRegistry = ObservationRegistry.create()
+
     @Test
     fun `should return current observation from context`(): Unit = runBlocking {
-        val observationRegistry = ObservationRegistry.create()
         observationRegistry.observationConfig().observationHandler { true }
         val nextObservation = Observation.start("name", observationRegistry)
         val inScope = nextObservation.openScope()
@@ -52,7 +53,6 @@ internal class AsContextElementKtTests {
 
     @Test
     fun `should return observation from coroutine context when KotlinContextElement present`(): Unit = runBlocking {
-        val observationRegistry = ObservationRegistry.create()
         observationRegistry.observationConfig().observationHandler { true }
         val nextObservation = Observation.start("name", observationRegistry)
         val inScope = nextObservation.openScope()

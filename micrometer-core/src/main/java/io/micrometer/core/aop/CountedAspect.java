@@ -182,7 +182,7 @@ public class CountedAspect {
      * @return Whatever the intercepted method returns.
      * @throws Throwable When the intercepted method throws one.
      */
-    @Around("@annotation(counted)")
+    @Around(value = "@annotation(counted)", argNames = "pjp,counted")
     public Object interceptAndRecord(ProceedingJoinPoint pjp, Counted counted) throws Throwable {
         if (shouldSkip.test(pjp)) {
             return pjp.proceed();
@@ -194,7 +194,7 @@ public class CountedAspect {
         if (stopWhenCompleted) {
             try {
                 return ((CompletionStage<?>) pjp.proceed())
-                        .whenComplete((result, throwable) -> recordCompletionResult(pjp, counted, throwable));
+                    .whenComplete((result, throwable) -> recordCompletionResult(pjp, counted, throwable));
             }
             catch (Throwable e) {
                 record(pjp, counted, e.getClass().getSimpleName(), RESULT_TAG_FAILURE_VALUE);
@@ -229,8 +229,11 @@ public class CountedAspect {
     }
 
     private void record(ProceedingJoinPoint pjp, Counted counted, String exception, String result) {
-        counter(pjp, counted).tag(EXCEPTION_TAG, exception).tag(RESULT_TAG, result).tags(counted.extraTags())
-                .register(registry).increment();
+        counter(pjp, counted).tag(EXCEPTION_TAG, exception)
+            .tag(RESULT_TAG, result)
+            .tags(counted.extraTags())
+            .register(registry)
+            .increment();
     }
 
     private Counter.Builder counter(ProceedingJoinPoint pjp, Counted counted) {

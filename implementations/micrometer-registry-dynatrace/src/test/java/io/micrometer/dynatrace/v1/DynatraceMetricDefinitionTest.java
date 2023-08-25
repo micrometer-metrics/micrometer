@@ -49,7 +49,7 @@ class DynatraceMetricDefinitionTest {
                 DynatraceMetricDefinition.DynatraceUnit.Count, null, technologyTypes, null);
 
         assertThat(metric.asJson())
-                .isEqualTo("{\"displayName\":\"my test metric\",\"unit\":\"Count\",\"types\":[\"java\"]}");
+            .isEqualTo("{\"displayName\":\"my test metric\",\"unit\":\"Count\",\"types\":[\"java\"]}");
     }
 
     @Test

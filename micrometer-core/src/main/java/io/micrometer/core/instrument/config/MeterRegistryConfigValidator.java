@@ -33,8 +33,10 @@ public class MeterRegistryConfigValidator {
     @SafeVarargs
     public static <M extends MeterRegistryConfig> Validated<?> checkAll(M config,
             Function<M, ? extends Validated<?>>... validation) {
-        return Arrays.stream(validation).map(v -> v.apply(config)).map(v -> (Validated<?>) v).reduce(Validated.none(),
-                (v1, v2) -> (Validated) v1.and(v2));
+        return Arrays.stream(validation)
+            .map(v -> v.apply(config))
+            .map(v -> (Validated<?>) v)
+            .reduce(Validated.none(), (v1, v2) -> (Validated) v1.and(v2));
     }
 
     /**

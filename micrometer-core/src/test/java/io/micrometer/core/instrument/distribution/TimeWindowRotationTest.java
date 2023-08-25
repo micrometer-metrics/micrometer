@@ -38,44 +38,16 @@ class TimeWindowRotationTest {
             DistributionStatisticConfig badConfig) {
         assertThatThrownBy(() -> newHistogram(histogramType, new MockClock(),
                 badConfig.merge(DistributionStatisticConfig.DEFAULT)))
-                        .hasRootCauseExactlyInstanceOf(InvalidConfigurationException.class)
-                        .satisfies(cause -> assertThat(cause.getCause())
-                                .hasMessageStartingWith("Invalid distribution configuration:"));
+            .hasRootCauseExactlyInstanceOf(InvalidConfigurationException.class)
+            .satisfies(cause -> assertThat(cause.getCause())
+                .hasMessageStartingWith("Invalid distribution configuration:"));
     }
 
     private static AbstractTimeWindowHistogram<?, ?> newHistogram(
             Class<? extends AbstractTimeWindowHistogram<?, ?>> histogramType, MockClock clock,
             DistributionStatisticConfig config) throws Exception {
         return histogramType.getDeclaredConstructor(Clock.class, DistributionStatisticConfig.class, Boolean.TYPE)
-                .newInstance(clock, config, false);
-    }
-
-    @ParameterizedTest
-    @MethodSource("histogramTypes")
-    void percentilesValidation(Class<? extends AbstractTimeWindowHistogram<?, ?>> histogramType) {
-        expectValidationFailure(histogramType, DistributionStatisticConfig.builder().percentiles(-0.01).build());
-        expectValidationFailure(histogramType, DistributionStatisticConfig.builder().percentiles(1.01).build());
-    }
-
-    @ParameterizedTest
-    @MethodSource("histogramTypes")
-    void expectedValueRangeValidation(Class<? extends AbstractTimeWindowHistogram<?, ?>> histogramType) {
-        expectValidationFailure(histogramType, DistributionStatisticConfig.builder().minimumExpectedValue(0.0).build());
-        expectValidationFailure(histogramType,
-                DistributionStatisticConfig.builder().minimumExpectedValue(10.0).maximumExpectedValue(9.0).build());
-    }
-
-    @ParameterizedTest
-    @MethodSource("histogramTypes")
-    void serviceLevelObjectiveBoundariesValidation(Class<? extends AbstractTimeWindowHistogram<?, ?>> histogramType) {
-        expectValidationFailure(histogramType,
-                DistributionStatisticConfig.builder().serviceLevelObjectives(0.0).build());
-    }
-
-    @ParameterizedTest
-    @MethodSource("histogramTypes")
-    void bufferLengthValidation(Class<? extends AbstractTimeWindowHistogram<?, ?>> histogramType) {
-        expectValidationFailure(histogramType, DistributionStatisticConfig.builder().bufferLength(-1).build());
+            .newInstance(clock, config, false);
     }
 
     @ParameterizedTest

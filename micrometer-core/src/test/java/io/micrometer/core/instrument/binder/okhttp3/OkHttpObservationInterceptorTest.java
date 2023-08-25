@@ -64,13 +64,14 @@ class OkHttpObservationInterceptorTest {
     private TestObservationRegistry observationRegistry = TestObservationRegistry.create();
 
     private OkHttpClient client = new OkHttpClient.Builder().addInterceptor(defaultInterceptorBuilder().build())
-            .build();
+        .build();
 
     private TestHandler testHandler = new TestHandler();
 
     private OkHttpObservationInterceptor.Builder defaultInterceptorBuilder() {
         return OkHttpObservationInterceptor.builder(observationRegistry, "okhttp.requests")
-                .tags(KeyValues.of("foo", "bar")).uriMapper(URI_MAPPER);
+            .tags(KeyValues.of("foo", "bar"))
+            .uriMapper(URI_MAPPER);
     }
 
     @BeforeEach
@@ -89,9 +90,10 @@ class OkHttpObservationInterceptorTest {
         client.newCall(request).execute().close();
 
         assertThat(registry.get("okhttp.requests")
-                .tags("foo", "bar", "status", "200", "uri", URI_EXAMPLE_VALUE, "target.host", "localhost",
-                        "target.port", String.valueOf(server.port()), "target.scheme", "http")
-                .timer().count()).isEqualTo(1L);
+            .tags("foo", "bar", "status", "200", "uri", URI_EXAMPLE_VALUE, "target.host", "localhost", "target.port",
+                    String.valueOf(server.port()), "target.scheme", "http")
+            .timer()
+            .count()).isEqualTo(1L);
         assertThat(testHandler.context).isNotNull();
         assertThat(testHandler.context.getAllKeyValues()).contains(KeyValue.of("foo", "bar"),
                 KeyValue.of("status", "200"));
@@ -102,9 +104,10 @@ class OkHttpObservationInterceptorTest {
     void timeSuccessfulWithObservationConvention(@WiremockResolver.Wiremock WireMockServer server) throws IOException {
         MyConvention myConvention = new MyConvention();
         client = new OkHttpClient.Builder()
-                .addInterceptor(defaultInterceptorBuilder()
-                        .observationConvention(new StandardizedOkHttpObservationConvention(myConvention)).build())
-                .build();
+            .addInterceptor(defaultInterceptorBuilder()
+                .observationConvention(new StandardizedOkHttpObservationConvention(myConvention))
+                .build())
+            .build();
         server.stubFor(any(anyUrl()));
         Request request = new Request.Builder().url(server.baseUrl()).build();
 

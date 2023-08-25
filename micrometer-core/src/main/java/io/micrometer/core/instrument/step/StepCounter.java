@@ -26,7 +26,7 @@ import io.micrometer.core.instrument.Counter;
  *
  * @author Jon Schneider
  */
-public class StepCounter extends AbstractMeter implements Counter {
+public class StepCounter extends AbstractMeter implements Counter, StepMeter {
 
     private final StepDouble value;
 
@@ -43,6 +43,11 @@ public class StepCounter extends AbstractMeter implements Counter {
     @Override
     public double count() {
         return value.poll();
+    }
+
+    @Override
+    public void _closingRollover() {
+        value._closingRollover();
     }
 
 }

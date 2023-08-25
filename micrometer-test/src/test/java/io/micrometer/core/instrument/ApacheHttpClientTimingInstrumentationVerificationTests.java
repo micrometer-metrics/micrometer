@@ -31,20 +31,25 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.net.URI;
 
+@Deprecated
 class ApacheHttpClientTimingInstrumentationVerificationTests
         extends HttpClientTimingInstrumentationVerificationTests<HttpClient> {
 
     @Override
     protected HttpClient clientInstrumentedWithMetrics() {
         return HttpClientBuilder.create()
-                .setRequestExecutor(MicrometerHttpRequestExecutor.builder(getRegistry()).build()).build();
+            .setRequestExecutor(MicrometerHttpRequestExecutor.builder(getRegistry()).build())
+            .build();
     }
 
     @Nullable
     @Override
     protected HttpClient clientInstrumentedWithObservations() {
-        return HttpClientBuilder.create().setRequestExecutor(MicrometerHttpRequestExecutor.builder(getRegistry())
-                .observationRegistry(getObservationRegistry()).build()).build();
+        return HttpClientBuilder.create()
+            .setRequestExecutor(MicrometerHttpRequestExecutor.builder(getRegistry())
+                .observationRegistry(getObservationRegistry())
+                .build())
+            .build();
     }
 
     @Override
@@ -61,8 +66,9 @@ class ApacheHttpClientTimingInstrumentationVerificationTests
     protected void sendHttpRequest(HttpClient instrumentedClient, HttpMethod method, @Nullable byte[] body, URI baseUri,
             String templatedPath, String... pathVariables) {
         try {
-            EntityUtils.consume(instrumentedClient
-                    .execute(makeRequest(method, body, baseUri, templatedPath, pathVariables)).getEntity());
+            EntityUtils
+                .consume(instrumentedClient.execute(makeRequest(method, body, baseUri, templatedPath, pathVariables))
+                    .getEntity());
         }
         catch (IOException e) {
             throw new RuntimeException(e);

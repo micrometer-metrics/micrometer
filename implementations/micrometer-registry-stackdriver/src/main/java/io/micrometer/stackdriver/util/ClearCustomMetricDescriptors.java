@@ -46,9 +46,11 @@ public class ClearCustomMetricDescriptors {
             MetricServiceClient client = MetricServiceClient.create(settings);
 
             Iterable<MetricServiceClient.ListMetricDescriptorsPage> listMetricDescriptorsPages = client
-                    .listMetricDescriptors(ListMetricDescriptorsRequest.newBuilder().setName("projects/" + projectId)
-                            .setFilter("metric.type = starts_with(\"custom.googleapis.com/\")").build())
-                    .iteratePages();
+                .listMetricDescriptors(ListMetricDescriptorsRequest.newBuilder()
+                    .setName("projects/" + projectId)
+                    .setFilter("metric.type = starts_with(\"custom.googleapis.com/\")")
+                    .build())
+                .iteratePages();
 
             int deleted = 0;
             for (MetricServiceClient.ListMetricDescriptorsPage page : listMetricDescriptorsPages) {

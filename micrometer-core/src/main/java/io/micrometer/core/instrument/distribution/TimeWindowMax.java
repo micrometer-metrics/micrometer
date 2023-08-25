@@ -32,7 +32,7 @@ import java.util.function.DoubleSupplier;
 public class TimeWindowMax {
 
     private static final AtomicIntegerFieldUpdater<TimeWindowMax> rotatingUpdater = AtomicIntegerFieldUpdater
-            .newUpdater(TimeWindowMax.class, "rotating");
+        .newUpdater(TimeWindowMax.class, "rotating");
 
     private final Clock clock;
 

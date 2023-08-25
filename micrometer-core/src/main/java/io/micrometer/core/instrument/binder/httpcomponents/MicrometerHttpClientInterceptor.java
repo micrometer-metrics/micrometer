@@ -20,6 +20,8 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.instrument.binder.http.Outcome;
+import io.micrometer.core.instrument.binder.httpcomponents.hc5.ObservationExecChainHandler;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpRequestInterceptor;
 import org.apache.http.HttpResponseInterceptor;
@@ -43,11 +45,16 @@ import java.util.function.Function;
  *             .addInterceptorLast(interceptor.getResponseInterceptor())
  *             .build();
  * }</pre>
+ * <p>
+ * See {@link ObservationExecChainHandler} for Apache HTTP client 5 support.
  *
  * @author Jon Schneider
  * @since 1.4.0
+ * @deprecated as of 1.12.0 in favor of HttpComponents 5.x and
+ * {@link ObservationExecChainHandler}.
  */
 @Incubating(since = "1.4.0")
+@Deprecated
 public class MicrometerHttpClientInterceptor {
 
     private static final String METER_NAME = "httpcomponents.httpclient.request";
@@ -68,13 +75,16 @@ public class MicrometerHttpClientInterceptor {
     public MicrometerHttpClientInterceptor(MeterRegistry meterRegistry, Function<HttpRequest, String> uriMapper,
             Iterable<Tag> extraTags, boolean exportTagsForRoute) {
         this.requestInterceptor = (request, context) -> timerByHttpContext.put(context,
-                Timer.resource(meterRegistry, METER_NAME).tags("method", request.getRequestLine().getMethod(), "uri",
-                        uriMapper.apply(request)));
+                Timer.resource(meterRegistry, METER_NAME)
+                    .tags("method", request.getRequestLine().getMethod(), "uri", uriMapper.apply(request)));
 
         this.responseInterceptor = (response, context) -> {
-            timerByHttpContext.remove(context).tag("status", Integer.toString(response.getStatusLine().getStatusCode()))
-                    .tags(exportTagsForRoute ? HttpContextUtils.generateTagsForRoute(context) : Tags.empty())
-                    .tags(extraTags).close();
+            timerByHttpContext.remove(context)
+                .tag("status", Integer.toString(response.getStatusLine().getStatusCode()))
+                .tag("outcome", Outcome.forStatus(response.getStatusLine().getStatusCode()).name())
+                .tags(exportTagsForRoute ? HttpContextUtils.generateTagsForRoute(context) : Tags.empty())
+                .tags(extraTags)
+                .close();
         };
     }
 

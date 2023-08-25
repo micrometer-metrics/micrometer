@@ -82,7 +82,7 @@ public interface WavefrontConfig extends PushRegistryConfig {
      * proxy://HOST:PORT format.
      */
     default String uri() {
-        return getUrlString(this, "uri").required().get();
+        return getUriString(this, "uri").required().get();
     }
 
     /**
@@ -119,9 +119,9 @@ public interface WavefrontConfig extends PushRegistryConfig {
     @Nullable
     default String apiToken() {
         return getSecret(this, "apiToken")
-                .invalidateWhen(token -> token == null && WavefrontMeterRegistry.isDirectToApi(this),
-                        "must be set whenever publishing directly to the Wavefront API", InvalidReason.MISSING)
-                .orElse(null);
+            .invalidateWhen(token -> token == null && WavefrontMeterRegistry.isDirectToApi(this),
+                    "must be set whenever publishing directly to the Wavefront API", InvalidReason.MISSING)
+            .orElse(null);
     }
 
     /**
@@ -169,9 +169,9 @@ public interface WavefrontConfig extends PushRegistryConfig {
 
     default Validated<?> validateSenderConfiguration() {
         return checkAll(this, c -> validate(), checkRequired("uri", WavefrontConfig::uri),
-                check("apiToken", WavefrontConfig::apiToken).andThen(v -> v.invalidateWhen(
-                        token -> token == null && WavefrontMeterRegistry.isDirectToApi(this),
-                        "must be set whenever publishing directly to the Wavefront API", InvalidReason.MISSING)));
+                check("apiToken", WavefrontConfig::apiToken)
+                    .andThen(v -> v.invalidateWhen(token -> token == null && WavefrontMeterRegistry.isDirectToApi(this),
+                            "must be set whenever publishing directly to the Wavefront API", InvalidReason.MISSING)));
     }
 
 }

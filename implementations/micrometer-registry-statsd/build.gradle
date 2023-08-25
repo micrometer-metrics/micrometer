@@ -1,5 +1,5 @@
 plugins {
-    id 'com.github.johnrengelman.shadow' version '7.1.2'
+    id 'com.github.johnrengelman.shadow' version '8.1.1'
 }
 
 dependencies {
@@ -13,6 +13,8 @@ dependencies {
     // We need to make sure netty dns resolution works on all macs
     implementation(group: 'io.netty', name: 'netty-resolver-dns-native-macos', classifier: 'osx-x86_64')
     implementation(group: 'io.netty', name: 'netty-resolver-dns-native-macos', classifier: 'osx-aarch_64')
+    implementation(group: 'io.netty', name: 'netty-transport-native-epoll', classifier: 'linux-aarch_64')
+    implementation(group: 'io.netty', name: 'netty-transport-native-epoll', classifier: 'linux-x86_64')
 
     testImplementation project(':micrometer-test')
     testImplementation 'io.projectreactor:reactor-test'
@@ -47,6 +49,8 @@ shadowJar {
     }
     mergeServiceFiles()
 }
+
+tasks.japicmp.dependsOn(tasks.shadowJar)
 
 // The Nebula Publishing plugin automatically configures the publication of the shadow jar but
 // shadow dependencies are added to the POM as runtime so we manually clean up the POM.

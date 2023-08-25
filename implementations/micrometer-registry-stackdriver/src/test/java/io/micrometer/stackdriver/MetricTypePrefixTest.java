@@ -39,7 +39,8 @@ class MetricTypePrefixTest {
     void metricTypePrefixWhenNotConfigured() {
         StackdriverMeterRegistry.Batch batch = meterRegistry.new Batch();
         List<TimeSeries> timeSeries = meterRegistry
-                .createCounter(batch, Counter.builder("counter").register(meterRegistry)).collect(Collectors.toList());
+            .createCounter(batch, Counter.builder("counter").register(meterRegistry))
+            .collect(Collectors.toList());
         assertThat(timeSeries).hasSize(1);
         assertThat(timeSeries.get(0).getMetric().getType()).isEqualTo("custom.googleapis.com/counter");
     }
@@ -50,7 +51,8 @@ class MetricTypePrefixTest {
 
         StackdriverMeterRegistry.Batch batch = meterRegistry.new Batch();
         List<TimeSeries> timeSeries = meterRegistry
-                .createCounter(batch, Counter.builder("counter").register(meterRegistry)).collect(Collectors.toList());
+            .createCounter(batch, Counter.builder("counter").register(meterRegistry))
+            .collect(Collectors.toList());
         assertThat(timeSeries).hasSize(1);
         assertThat(timeSeries.get(0).getMetric().getType()).isEqualTo("external.googleapis.com/user/counter");
     }

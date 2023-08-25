@@ -35,8 +35,9 @@ class OkHttpClientTimingInstrumentationVerificationTests
     protected void sendHttpRequest(OkHttpClient instrumentedClient, HttpMethod method, @Nullable byte[] body,
             URI baseUri, String templatedPath, String... pathVariables) {
         Request request = new Request.Builder().method(method.name(), body == null ? null : RequestBody.create(body))
-                .url(baseUri + substitutePathVariables(templatedPath, pathVariables))
-                .header(OkHttpMetricsEventListener.URI_PATTERN, templatedPath).build();
+            .url(baseUri + substitutePathVariables(templatedPath, pathVariables))
+            .header(OkHttpMetricsEventListener.URI_PATTERN, templatedPath)
+            .build();
         try (Response ignored = instrumentedClient.newCall(request).execute()) {
         }
         catch (IOException e) {
@@ -47,14 +48,15 @@ class OkHttpClientTimingInstrumentationVerificationTests
     @Override
     protected OkHttpClient clientInstrumentedWithMetrics() {
         return new OkHttpClient.Builder()
-                .eventListener(OkHttpMetricsEventListener.builder(getRegistry(), timerName()).build()).build();
+            .eventListener(OkHttpMetricsEventListener.builder(getRegistry(), timerName()).build())
+            .build();
     }
 
     @Override
     protected OkHttpClient clientInstrumentedWithObservations() {
         return new OkHttpClient.Builder()
-                .addInterceptor(OkHttpObservationInterceptor.builder(getObservationRegistry(), timerName()).build())
-                .build();
+            .addInterceptor(OkHttpObservationInterceptor.builder(getObservationRegistry(), timerName()).build())
+            .build();
     }
 
     @Override

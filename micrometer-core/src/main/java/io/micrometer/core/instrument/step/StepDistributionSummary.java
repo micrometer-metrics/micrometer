@@ -20,6 +20,7 @@ import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.Measurement;
 import io.micrometer.core.instrument.Statistic;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
+import io.micrometer.core.instrument.distribution.Histogram;
 import io.micrometer.core.instrument.distribution.TimeWindowMax;
 
 import java.util.Arrays;
@@ -32,7 +33,7 @@ import java.util.concurrent.atomic.LongAdder;
  * @author Jon Schneider
  * @author Johnny Lim
  */
-public class StepDistributionSummary extends AbstractDistributionSummary {
+public class StepDistributionSummary extends AbstractDistributionSummary implements StepMeter {
 
     private final LongAdder count = new LongAdder();
 
@@ -53,7 +54,23 @@ public class StepDistributionSummary extends AbstractDistributionSummary {
      */
     public StepDistributionSummary(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig,
             double scale, long stepMillis, boolean supportsAggregablePercentiles) {
-        super(id, clock, distributionStatisticConfig, scale, supportsAggregablePercentiles);
+        this(id, clock, distributionStatisticConfig, scale, stepMillis,
+                defaultHistogram(clock, distributionStatisticConfig, supportsAggregablePercentiles));
+    }
+
+    /**
+     * Create a new {@code StepDistributionSummary}.
+     * @param id ID
+     * @param clock clock
+     * @param distributionStatisticConfig distribution static configuration
+     * @param scale scale
+     * @param stepMillis step in milliseconds
+     * @param histogram histogram
+     * @since 1.11.1
+     */
+    protected StepDistributionSummary(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig,
+            double scale, long stepMillis, Histogram histogram) {
+        super(id, scale, histogram);
         this.countTotal = new StepTuple2<>(clock, stepMillis, 0L, 0.0, count::sumThenReset, total::sumThenReset);
         this.max = new TimeWindowMax(clock, distributionStatisticConfig);
     }
@@ -84,6 +101,11 @@ public class StepDistributionSummary extends AbstractDistributionSummary {
     public Iterable<Measurement> measure() {
         return Arrays.asList(new Measurement(() -> (double) count(), Statistic.COUNT),
                 new Measurement(this::totalAmount, Statistic.TOTAL), new Measurement(this::max, Statistic.MAX));
+    }
+
+    @Override
+    public void _closingRollover() {
+        countTotal._closingRollover();
     }
 
 }

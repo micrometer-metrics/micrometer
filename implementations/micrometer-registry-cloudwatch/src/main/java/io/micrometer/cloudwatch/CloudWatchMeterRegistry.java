@@ -112,7 +112,7 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
     // VisibleForTesting
     void sendMetricData(List<MetricDatum> metricData) throws InterruptedException {
         PutMetricDataRequest putMetricDataRequest = new PutMetricDataRequest().withNamespace(config.namespace())
-                .withMetricData(metricData);
+            .withMetricData(metricData);
         CountDownLatch latch = new CountDownLatch(1);
         amazonCloudWatchAsync.putMetricDataAsync(putMetricDataRequest,
                 new AsyncHandler<PutMetricDataRequest, PutMetricDataResult>() {
@@ -147,11 +147,20 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
     // VisibleForTesting
     List<MetricDatum> metricData() {
         Batch batch = new Batch();
+        // @formatter:off
         return getMeters().stream()
-                .flatMap(m -> m.match(batch::gaugeData, batch::counterData, batch::timerData, batch::summaryData,
-                        batch::longTaskTimerData, batch::timeGaugeData, batch::functionCounterData,
-                        batch::functionTimerData, batch::metricData))
-                .collect(toList());
+            .flatMap(m -> m.match(
+                    batch::gaugeData,
+                    batch::counterData,
+                    batch::timerData,
+                    batch::summaryData,
+                    batch::longTaskTimerData,
+                    batch::timeGaugeData,
+                    batch::functionCounterData,
+                    batch::functionTimerData,
+                    batch::metricData))
+            .collect(toList());
+        // @formatter:on
     }
 
     // VisibleForTesting
@@ -174,8 +183,8 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
         // VisibleForTesting
         Stream<MetricDatum> timerData(Timer timer) {
             Stream.Builder<MetricDatum> metrics = Stream.builder();
-            metrics.add(
-                    metricDatum(timer.getId(), "sum", getBaseTimeUnit().name(), timer.totalTime(getBaseTimeUnit())));
+            metrics
+                .add(metricDatum(timer.getId(), "sum", getBaseTimeUnit().name(), timer.totalTime(getBaseTimeUnit())));
             long count = timer.count();
             metrics.add(metricDatum(timer.getId(), "count", StandardUnit.Count, count));
             if (count > 0) {
@@ -242,8 +251,8 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
         // VisibleForTesting
         Stream<MetricDatum> metricData(Meter m) {
             return stream(m.measure().spliterator(), false)
-                    .map(ms -> metricDatum(m.getId().withTag(ms.getStatistic()), ms.getValue()))
-                    .filter(Objects::nonNull);
+                .map(ms -> metricDatum(m.getId().withTag(ms.getStatistic()), ms.getValue()))
+                .filter(Objects::nonNull);
         }
 
         @Nullable
@@ -268,8 +277,11 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
             }
 
             List<Tag> tags = id.getConventionTags(config().namingConvention());
-            return new MetricDatum().withMetricName(getMetricName(id, suffix)).withDimensions(toDimensions(tags))
-                    .withTimestamp(timestamp).withValue(CloudWatchUtils.clampMetricValue(value)).withUnit(standardUnit);
+            return new MetricDatum().withMetricName(getMetricName(id, suffix))
+                .withDimensions(toDimensions(tags))
+                .withTimestamp(timestamp)
+                .withValue(CloudWatchUtils.clampMetricValue(value))
+                .withUnit(standardUnit);
         }
 
         // VisibleForTesting
@@ -287,14 +299,16 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
         }
 
         private List<Dimension> toDimensions(List<Tag> tags) {
-            return tags.stream().filter(this::isAcceptableTag)
-                    .map(tag -> new Dimension().withName(tag.getKey()).withValue(tag.getValue())).collect(toList());
+            return tags.stream()
+                .filter(this::isAcceptableTag)
+                .map(tag -> new Dimension().withName(tag.getKey()).withValue(tag.getValue()))
+                .collect(toList());
         }
 
         private boolean isAcceptableTag(Tag tag) {
             if (StringUtils.isBlank(tag.getValue())) {
                 warnThenDebugLogger
-                        .log(() -> "Dropping a tag with key '" + tag.getKey() + "' because its value is blank.");
+                    .log(() -> "Dropping a tag with key '" + tag.getKey() + "' because its value is blank.");
                 return false;
             }
             return true;

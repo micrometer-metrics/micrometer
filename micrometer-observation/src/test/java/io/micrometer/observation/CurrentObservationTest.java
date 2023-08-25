@@ -113,4 +113,21 @@ class CurrentObservationTest {
         assertThat(registry.getCurrentObservation()).isNull();
     }
 
+    @Test
+    void nestedScopes_makeCurrent() {
+        Observation observation = Observation.createNotStarted("test.observation", registry);
+        assertThat(registry.getCurrentObservationScope()).isNull();
+        try (Observation.Scope scopeA = observation.openScope()) {
+            assertThat(registry.getCurrentObservationScope()).isSameAs(scopeA);
+            try (Observation.Scope scopeB = observation.openScope()) {
+                assertThat(registry.getCurrentObservationScope()).isSameAs(scopeB);
+
+                scopeA.makeCurrent();
+                assertThat(registry.getCurrentObservationScope()).isSameAs(scopeA);
+            }
+            assertThat(registry.getCurrentObservationScope()).isSameAs(scopeA);
+        }
+        assertThat(registry.getCurrentObservationScope()).isNull();
+    }
+
 }

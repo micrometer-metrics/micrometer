@@ -154,8 +154,9 @@ public abstract class HttpClientTimingInstrumentationVerificationTests<CLIENT>
         sendHttpRequest(instrumentedClient(testType), HttpMethod.GET, null, URI.create(wmRuntimeInfo.getHttpBaseUrl()),
                 templatedPath, "112", "5");
 
-        Timer timer = getRegistry().get(timerName()).tags("method", "GET", "status", "200", "uri", templatedPath)
-                .timer();
+        Timer timer = getRegistry().get(timerName())
+            .tags("method", "GET", "status", "200", "outcome", "SUCCESS", "uri", templatedPath)
+            .timer();
         assertThat(timer.count()).isEqualTo(1);
         assertThat(timer.totalTime(TimeUnit.NANOSECONDS)).isPositive();
     }
@@ -194,7 +195,9 @@ public abstract class HttpClientTimingInstrumentationVerificationTests<CLIENT>
         sendHttpRequest(instrumentedClient(testType), HttpMethod.GET, null, URI.create(wmRuntimeInfo.getHttpBaseUrl()),
                 "/socks");
 
-        Timer timer = getRegistry().get(timerName()).tags("method", "GET", "status", "500").timer();
+        Timer timer = getRegistry().get(timerName())
+            .tags("method", "GET", "status", "500", "outcome", "SERVER_ERROR")
+            .timer();
         assertThat(timer.count()).isEqualTo(1);
         assertThat(timer.totalTime(TimeUnit.NANOSECONDS)).isPositive();
     }
@@ -210,7 +213,9 @@ public abstract class HttpClientTimingInstrumentationVerificationTests<CLIENT>
         sendHttpRequest(instrumentedClient(testType), HttpMethod.POST, new byte[0],
                 URI.create(wmRuntimeInfo.getHttpBaseUrl()), "/socks");
 
-        Timer timer = getRegistry().get(timerName()).tags("method", "POST", "status", "400").timer();
+        Timer timer = getRegistry().get(timerName())
+            .tags("method", "POST", "status", "400", "outcome", "CLIENT_ERROR")
+            .timer();
         assertThat(timer.count()).isEqualTo(1);
         assertThat(timer.totalTime(TimeUnit.NANOSECONDS)).isPositive();
     }

@@ -116,8 +116,12 @@ class TimedHandlerTest {
         barrier[1].await(5, TimeUnit.SECONDS);
         assertTrue(latchHandler.await());
 
-        assertThat(registry.get("jetty.server.requests").tag("outcome", Outcome.SUCCESS.name()).tag("method", "GET")
-                .tag("status", "200").timer().count()).isEqualTo(2);
+        assertThat(registry.get("jetty.server.requests")
+            .tag("outcome", Outcome.SUCCESS.name())
+            .tag("method", "GET")
+            .tag("status", "200")
+            .timer()
+            .count()).isEqualTo(2);
     }
 
     @Test
@@ -204,8 +208,12 @@ class TimedHandlerTest {
         assertTrue(latchHandler.await()); // exited timed handler
 
         barrier[2].await(5, TimeUnit.SECONDS); // onComplete called
-        assertThat(registry.get("jetty.server.requests").tag("outcome", Outcome.SUCCESS.name()).tag("method", "GET")
-                .tag("status", "200").timer().count()).isEqualTo(1);
+        assertThat(registry.get("jetty.server.requests")
+            .tag("outcome", Outcome.SUCCESS.name())
+            .tag("method", "GET")
+            .tag("status", "200")
+            .timer()
+            .count()).isEqualTo(1);
     }
 
     @Test
@@ -359,8 +367,12 @@ class TimedHandlerTest {
         asyncHolder.get().complete();
         latch.await(5, TimeUnit.SECONDS);
 
-        assertThat(registry.get("jetty.server.requests").tag("outcome", Outcome.SUCCESS.name()).tag("method", "GET")
-                .tag("status", "200").timer().count()).isEqualTo(1);
+        assertThat(registry.get("jetty.server.requests")
+            .tag("outcome", Outcome.SUCCESS.name())
+            .tag("method", "GET")
+            .tag("status", "200")
+            .timer()
+            .count()).isEqualTo(1);
     }
 
     @Test

@@ -7,4 +7,12 @@ dependencies {
     implementation 'io.opentelemetry.proto:opentelemetry-proto:latest.release'
 
     testImplementation project(':micrometer-test')
+    testImplementation 'uk.org.webcompere:system-stubs-jupiter:latest.release'
+    testImplementation 'io.rest-assured:rest-assured'
+    testImplementation 'org.testcontainers:junit-jupiter'
+    testImplementation 'org.awaitility:awaitility'
+}
+
+dockerTest {
+    systemProperty 'otel-collector-image.version', '0.79.0'
 }

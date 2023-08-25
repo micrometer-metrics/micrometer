@@ -30,11 +30,12 @@ import static org.mockito.Mockito.mock;
 
 class StepTimerTest {
 
+    MockClock clock = new MockClock();
+
     @Issue("#1814")
     @Test
     void meanShouldWorkIfTotalTimeNotCalled() {
         Duration stepDuration = Duration.ofMillis(10);
-        MockClock clock = new MockClock();
         StepTimer timer = new StepTimer(mock(Meter.Id.class), clock,
                 DistributionStatisticConfig.builder().expiry(stepDuration).bufferLength(2).build(),
                 mock(PauseDetector.class), TimeUnit.MILLISECONDS, stepDuration.toMillis(), false);
@@ -48,6 +49,29 @@ class StepTimerTest {
 
         clock.add(stepDuration);
         assertThat(timer.mean(TimeUnit.MILLISECONDS)).isEqualTo(75.0);
+    }
+
+    @Test
+    void closingRolloverPartialStep() {
+        Duration stepDuration = Duration.ofMillis(10);
+        StepTimer timer = new StepTimer(mock(Meter.Id.class), clock,
+                DistributionStatisticConfig.builder().expiry(stepDuration).bufferLength(2).build(),
+                mock(PauseDetector.class), TimeUnit.MILLISECONDS, stepDuration.toMillis(), false);
+        timer.record(75, TimeUnit.MILLISECONDS);
+        timer.record(25, TimeUnit.MILLISECONDS);
+
+        assertThat(timer.count()).isZero();
+        assertThat(timer.totalTime(TimeUnit.MILLISECONDS)).isZero();
+
+        timer._closingRollover();
+
+        assertThat(timer.count()).isEqualTo(2);
+        assertThat(timer.totalTime(TimeUnit.MILLISECONDS)).isEqualTo(100);
+
+        clock.add(stepDuration);
+
+        assertThat(timer.count()).isEqualTo(2);
+        assertThat(timer.totalTime(TimeUnit.MILLISECONDS)).isEqualTo(100);
     }
 
 }

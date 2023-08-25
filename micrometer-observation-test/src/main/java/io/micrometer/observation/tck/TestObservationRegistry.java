@@ -19,9 +19,9 @@ import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationHandler;
 import io.micrometer.observation.ObservationRegistry;
 
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Objects;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
  * Implementation of {@link ObservationRegistry} used for testing.
@@ -35,7 +35,7 @@ public final class TestObservationRegistry implements ObservationRegistry {
 
     private final ObservationRegistry delegate = ObservationRegistry.create();
 
-    private final ArrayListObservationHandler handler = new ArrayListObservationHandler();
+    private final StoringObservationHandler handler = new StoringObservationHandler();
 
     private TestObservationRegistry() {
         observationConfig().observationHandler(this.handler);
@@ -69,13 +69,21 @@ public final class TestObservationRegistry implements ObservationRegistry {
         return this.delegate.observationConfig();
     }
 
-    List<TestObservationContext> getContexts() {
+    Queue<TestObservationContext> getContexts() {
         return this.handler.contexts;
     }
 
-    private static class ArrayListObservationHandler implements ObservationHandler<Observation.Context> {
+    /**
+     * Clears the stored {@link Observation.Context}.
+     * @since 1.11.0
+     */
+    public void clear() {
+        getContexts().clear();
+    }
 
-        final List<TestObservationContext> contexts = new LinkedList<>();
+    private static class StoringObservationHandler implements ObservationHandler<Observation.Context> {
+
+        final Queue<TestObservationContext> contexts = new ConcurrentLinkedQueue<>();
 
         @Override
         public void onStart(Observation.Context context) {
@@ -84,8 +92,10 @@ public final class TestObservationRegistry implements ObservationRegistry {
 
         @Override
         public void onStop(Observation.Context context) {
-            this.contexts.stream().filter(testContext -> testContext.getContext() == context).findFirst()
-                    .ifPresent(testContext -> testContext.setObservationStopped(true));
+            this.contexts.stream()
+                .filter(testContext -> testContext.getContext() == context)
+                .findFirst()
+                .ifPresent(testContext -> testContext.setObservationStopped(true));
         }
 
         @Override

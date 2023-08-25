@@ -209,7 +209,7 @@ public class ObservationContextAssert<SELF extends ObservationContextAssert<SELF
         Set<String> expectedKeys = new LinkedHashSet<>(Arrays.asList(keys));
 
         List<String> extra = stream(actualKeys).filter(actualElement -> !expectedKeys.contains(actualElement))
-                .collect(toList());
+            .collect(toList());
 
         if (extra.size() > 0) {
             failWithMessage("Observation keys are not a subset of %s. Found extra keys: %s", expectedKeys, extra);
@@ -239,14 +239,28 @@ public class ObservationContextAssert<SELF extends ObservationContextAssert<SELF
     public SELF hasLowCardinalityKeyValue(String key, String value) {
         isNotNull();
         hasLowCardinalityKeyValueWithKey(key);
-        String tagValue = this.actual.getLowCardinalityKeyValues().stream().filter(tag -> tag.getKey().equals(key))
-                .findFirst().get().getValue();
+        String tagValue = this.actual.getLowCardinalityKeyValues()
+            .stream()
+            .filter(tag -> tag.getKey().equals(key))
+            .findFirst()
+            .get()
+            .getValue();
         if (!Objects.equals(tagValue, value)) {
             failWithMessage(
                     "Observation should have a low cardinality tag with key <%s> and value <%s>. The key is correct but the value is <%s>",
                     key, value, tagValue);
         }
         return (SELF) this;
+    }
+
+    /**
+     * Return whether it has the given low cardinality key value.
+     * @param keyValue key value
+     * @return whether it has the given low cardinality key value
+     * @since 1.12.0
+     */
+    public SELF hasLowCardinalityKeyValue(KeyValue keyValue) {
+        return hasLowCardinalityKeyValue(keyValue.getKey(), keyValue.getValue());
     }
 
     public SELF doesNotHaveLowCardinalityKeyValueWithKey(String key) {
@@ -259,8 +273,10 @@ public class ObservationContextAssert<SELF extends ObservationContextAssert<SELF
 
     public SELF doesNotHaveLowCardinalityKeyValue(String key, String value) {
         isNotNull();
-        Optional<KeyValue> optional = this.actual.getLowCardinalityKeyValues().stream()
-                .filter(tag -> tag.getKey().equals(key)).findFirst();
+        Optional<KeyValue> optional = this.actual.getLowCardinalityKeyValues()
+            .stream()
+            .filter(tag -> tag.getKey().equals(key))
+            .findFirst();
         if (!optional.isPresent()) {
             return (SELF) this;
         }
@@ -270,6 +286,16 @@ public class ObservationContextAssert<SELF extends ObservationContextAssert<SELF
                     value);
         }
         return (SELF) this;
+    }
+
+    /**
+     * Return whether it does not have the given low cardinality key value.
+     * @param keyValue key value
+     * @return whether it does not have the given low cardinality key value
+     * @since 1.12.0
+     */
+    public SELF doesNotHaveLowCardinalityKeyValue(KeyValue keyValue) {
+        return doesNotHaveLowCardinalityKeyValue(keyValue.getKey(), keyValue.getValue());
     }
 
     public SELF hasHighCardinalityKeyValueWithKey(String key) {
@@ -285,14 +311,28 @@ public class ObservationContextAssert<SELF extends ObservationContextAssert<SELF
     public SELF hasHighCardinalityKeyValue(String key, String value) {
         isNotNull();
         hasHighCardinalityKeyValueWithKey(key);
-        String tagValue = this.actual.getHighCardinalityKeyValues().stream().filter(tag -> tag.getKey().equals(key))
-                .findFirst().get().getValue();
+        String tagValue = this.actual.getHighCardinalityKeyValues()
+            .stream()
+            .filter(tag -> tag.getKey().equals(key))
+            .findFirst()
+            .get()
+            .getValue();
         if (!Objects.equals(tagValue, value)) {
             failWithMessage(
                     "Observation should have a high cardinality tag with key <%s> and value <%s>. The key is correct but the value is <%s>",
                     key, value, tagValue);
         }
         return (SELF) this;
+    }
+
+    /**
+     * Return whether it has the given high cardinality key value.
+     * @param keyValue key value
+     * @return whether it has the given high cardinality key value
+     * @since 1.12.0
+     */
+    public SELF hasHighCardinalityKeyValue(KeyValue keyValue) {
+        return hasHighCardinalityKeyValue(keyValue.getKey(), keyValue.getValue());
     }
 
     public SELF doesNotHaveHighCardinalityKeyValueWithKey(String key) {
@@ -305,8 +345,10 @@ public class ObservationContextAssert<SELF extends ObservationContextAssert<SELF
 
     public SELF doesNotHaveHighCardinalityKeyValue(String key, String value) {
         isNotNull();
-        Optional<KeyValue> optional = this.actual.getHighCardinalityKeyValues().stream()
-                .filter(tag -> tag.getKey().equals(key)).findFirst();
+        Optional<KeyValue> optional = this.actual.getHighCardinalityKeyValues()
+            .stream()
+            .filter(tag -> tag.getKey().equals(key))
+            .findFirst();
         if (!optional.isPresent()) {
             return (SELF) this;
         }
@@ -316,6 +358,16 @@ public class ObservationContextAssert<SELF extends ObservationContextAssert<SELF
                     value);
         }
         return (SELF) this;
+    }
+
+    /**
+     * Return whether it does not have the given high cardinality key value.
+     * @param keyValue key value
+     * @return whether it does not have the given high cardinality key value
+     * @since 1.12.0
+     */
+    public SELF doesNotHaveHighCardinalityKeyValue(KeyValue keyValue) {
+        return doesNotHaveHighCardinalityKeyValue(keyValue.getKey(), keyValue.getValue());
     }
 
     public SELF hasMapEntry(Object key, Object value) {
@@ -339,7 +391,7 @@ public class ObservationContextAssert<SELF extends ObservationContextAssert<SELF
 
     public SELF doesNotHaveError() {
         thenError().withFailMessage("Observation should not have an error, but found <%s>", this.actual.getError())
-                .isNull();
+            .isNull();
         return (SELF) this;
     }
 
@@ -350,8 +402,10 @@ public class ObservationContextAssert<SELF extends ObservationContextAssert<SELF
 
     public SELF hasError(Throwable expectedError) {
         hasError();
-        thenError().withFailMessage("Observation expected to have error <%s>, but has <%s>", expectedError,
-                this.actual.getError()).isEqualTo(expectedError);
+        thenError()
+            .withFailMessage("Observation expected to have error <%s>, but has <%s>", expectedError,
+                    this.actual.getError())
+            .isEqualTo(expectedError);
         return (SELF) this;
     }
 
