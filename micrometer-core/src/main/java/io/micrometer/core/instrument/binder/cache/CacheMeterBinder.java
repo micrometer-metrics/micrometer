@@ -40,6 +40,10 @@ public abstract class CacheMeterBinder<C> implements MeterBinder {
 
     private static final String DESCRIPTION_CACHE_GETS = "The number of times cache lookup methods have returned a cached (hit) or uncached (newly loaded or null) value (miss).";
 
+    // Default metric name prefix is set to an empty string, indicating no prefix by
+    // default. This constant allows subclasses to use or override it as needed.
+    private static final String DEFAULT_EMPTY_METRIC_NAME_PREFIX = "";
+
     private final WeakReference<C> cacheRef;
 
     private final Iterable<Tag> tags;
@@ -54,11 +58,22 @@ public abstract class CacheMeterBinder<C> implements MeterBinder {
         return cacheRef.get();
     }
 
+    /**
+     * For systems that adhere to unique naming conventions for metrics.
+     * @return The default is an empty string, unless it is overriden by a concrete class
+     */
+    protected String getMetricNamePrefix() {
+        return DEFAULT_EMPTY_METRIC_NAME_PREFIX;
+    }
+
     @Override
     public final void bindTo(MeterRegistry registry) {
         C cache = getCache();
+
+        String prefix = getMetricNamePrefix();
+
         if (size() != null) {
-            Gauge.builder("cache.size", cache, c -> {
+            Gauge.builder(prefix + "cache.size", cache, c -> {
                 Long size = size();
                 return size == null ? 0 : size;
             })
@@ -69,25 +84,25 @@ public abstract class CacheMeterBinder<C> implements MeterBinder {
         }
 
         if (missCount() != null) {
-            FunctionCounter.builder("cache.gets", cache, c -> {
+            FunctionCounter.builder(prefix + "cache.gets", cache, c -> {
                 Long misses = missCount();
                 return misses == null ? 0 : misses;
             }).tags(tags).tag("result", "miss").description(DESCRIPTION_CACHE_GETS).register(registry);
         }
 
-        FunctionCounter.builder("cache.gets", cache, c -> hitCount())
+        FunctionCounter.builder(prefix + "cache.gets", cache, c -> hitCount())
             .tags(tags)
             .tag("result", "hit")
             .description(DESCRIPTION_CACHE_GETS)
             .register(registry);
 
-        FunctionCounter.builder("cache.puts", cache, c -> putCount())
+        FunctionCounter.builder(prefix + "cache.puts", cache, c -> putCount())
             .tags(tags)
             .description("The number of entries added to the cache")
             .register(registry);
 
         if (evictionCount() != null) {
-            FunctionCounter.builder("cache.evictions", cache, c -> {
+            FunctionCounter.builder(prefix + "cache.evictions", cache, c -> {
                 Long evictions = evictionCount();
                 return evictions == null ? 0 : evictions;
             }).tags(tags).description("The number of times the cache was evicted.").register(registry);
