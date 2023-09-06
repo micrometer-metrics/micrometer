@@ -23,7 +23,9 @@ import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.step.StepRegistryConfig;
 import io.micrometer.core.instrument.util.NamedThreadFactory;
+import org.assertj.core.data.Offset;
 import org.junit.jupiter.api.Test;
+import org.testcontainers.shaded.com.google.common.collect.ImmutableList;
 
 import java.time.Duration;
 import java.util.*;
@@ -36,8 +38,8 @@ import java.util.stream.IntStream;
 import java.util.stream.LongStream;
 
 import static java.util.concurrent.TimeUnit.*;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
 
 /**
  * Tests for {@link PushMeterRegistry}.
@@ -91,6 +93,158 @@ class PushMeterRegistryTest {
         assertThat(pushMeterRegistry.publishCount.get()).isOne();
     }
 
+    class OverlappingStepRegistry extends StepMeterRegistry {
+
+        private final AtomicInteger numExports = new AtomicInteger(0);
+
+        private final List<Double> measurements = new ArrayList<>();
+
+        private final CyclicBarrier alignPublishStartBarrier;
+
+        private final CyclicBarrier publishFinishedBarrier;
+
+        private final StepRegistryConfig config;
+
+        public OverlappingStepRegistry(StepRegistryConfig config, Clock clock, CyclicBarrier alignPublishStartBarrier,
+                CyclicBarrier publishFinishedBarrier) {
+            super(config, clock);
+            this.config = config;
+            this.alignPublishStartBarrier = alignPublishStartBarrier;
+            this.publishFinishedBarrier = publishFinishedBarrier;
+        }
+
+        @Override
+        protected TimeUnit getBaseTimeUnit() {
+            return SECONDS;
+        }
+
+        @Override
+        protected void publish() {
+            try {
+                alignPublishStartBarrier.await(config.step().toMillis(), MILLISECONDS);
+
+                // ensure publish is still running while close is running:
+                Thread.sleep(config.step().dividedBy(2).toMillis());
+
+            }
+            catch (InterruptedException | BrokenBarrierException | TimeoutException e) {
+                throw new RuntimeException(e);
+            }
+
+            // do the actual "publishing", i.e. adding the measurements to a list in this
+            // case.
+            measurements.clear();
+            getMeters().stream()
+                .forEach(meter -> meter.measure().forEach(measurement -> measurements.add(measurement.getValue())));
+
+            numExports.incrementAndGet();
+            try {
+                publishFinishedBarrier.await(config.step().toMillis(), MILLISECONDS);
+            }
+            catch (InterruptedException | BrokenBarrierException | TimeoutException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        public List<Double> getMeasurements() {
+            return ImmutableList.copyOf(measurements);
+        }
+
+        public int getNumExports() {
+            return numExports.get();
+        }
+
+    }
+
+    @Test
+    void scheduledPublishInterruptedByCloseWillDropData()
+            throws InterruptedException, BrokenBarrierException, TimeoutException {
+
+        StepRegistryConfig config = new StepRegistryConfig() {
+            @Override
+            public Duration step() {
+                // need a longer step duration, as there is a lot of stuff happening
+                // between exports and tests get a bit flaky with a step size of 10ms
+                // (lots of waiting etc.)
+                return Duration.ofMillis(200);
+            }
+
+            @Override
+            public String prefix() {
+                return null;
+            }
+
+            @Override
+            public String get(String key) {
+                return null;
+            }
+        };
+
+        MockClock clock = new MockClock();
+        CyclicBarrier publishStartedBarrier = new CyclicBarrier(2);
+        CyclicBarrier publishFinishedBarrier = new CyclicBarrier(2);
+        Offset<Double> tolerance = Offset.offset(0.001);
+
+        OverlappingStepRegistry registry = new OverlappingStepRegistry(config, clock, publishStartedBarrier,
+                publishFinishedBarrier);
+        registry.start(threadFactory);
+
+        // first export cycle starts here
+
+        Counter counter = registry.counter("counter");
+        counter.increment(3);
+
+        // before the first export no values exported by stepmeter
+        assertThat(registry.getMeasurements()).isEmpty();
+        assertThat(registry.getNumExports()).isZero();
+
+        // # first export
+        clock.add(config.step());
+        // wait until publish has started from the timed invocation.
+        publishStartedBarrier.await(config.step().toMillis(), MILLISECONDS);
+
+        // second export cycle starts here
+
+        // wait for the publish to finish. Ensures values are processed when retrieving
+        // them from the registry
+        publishFinishedBarrier.await(config.step().toMillis(), MILLISECONDS);
+
+        assertThat(registry.getNumExports()).isOne();
+        assertThat(registry.getMeasurements()).hasSize(1);
+        assertThat(registry.getMeasurements().get(0)).isCloseTo(3, tolerance);
+
+        clock.add(config.step().dividedBy(2));
+        counter.increment(4);
+        clock.add(config.step().dividedBy(2));
+
+        // wait until the second publish starts
+        publishStartedBarrier.await(config.step().toMillis(), MILLISECONDS);
+
+        // third export cycle starts here, since we waited for the publishStartedBarrier
+        // above we know that publishing is in progress
+
+        // close registry while export is still running. When close returns, the
+        // application exits.
+        registry.close();
+
+        // value has not yet rolled over, and we export the value from the previous export
+        // and only 1 export finished
+        // THIS IS A STALE STATE, the last export was not finished.
+        assertThat(registry.getNumExports()).isOne();
+        assertThat(registry.getMeasurements()).hasSize(1);
+        assertThat(registry.getMeasurements().get(0)).isCloseTo(3, tolerance);
+
+        // This would not happen when registry.close() is called, as the app will wait for
+        // waits for close() to finish, then shut down immediately.
+        // In this test, we can see that it _would_ fix itself if we waited for the
+        // already in-progress publish to finish.
+        publishFinishedBarrier.await(config.step().toMillis(), MILLISECONDS);
+
+        assertThat(registry.getNumExports()).isEqualTo(2);
+        assertThat(registry.getMeasurements()).hasSize(1);
+        assertThat(registry.getMeasurements().get(0)).isCloseTo(4, tolerance);
+    }
+
     @Test
     @Issue("#3711")
     void scheduledPublishOverlapWithPublishOnClose() throws InterruptedException {
@@ -98,6 +252,7 @@ class PushMeterRegistryTest {
         CyclicBarrier barrier = new CyclicBarrier(2);
         OverlappingStepMeterRegistry overlappingStepMeterRegistry = new OverlappingStepMeterRegistry(config, clock,
                 barrier);
+
         Counter c1 = overlappingStepMeterRegistry.counter("c1");
         Counter c2 = overlappingStepMeterRegistry.counter("c2");
         c1.increment();
@@ -114,6 +269,7 @@ class PushMeterRegistryTest {
         onClosePublishThread.start();
         scheduledPublishingThread.join();
         onClosePublishThread.join();
+        // myThreadFactory.join();
 
         assertThat(overlappingStepMeterRegistry.publishes).as("only one publish happened").hasSize(1);
         Deque<Double> firstPublishValues = overlappingStepMeterRegistry.publishes.get(0);
