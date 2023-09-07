@@ -32,6 +32,7 @@ def VERSIONS = [
         'io.grpc:grpc-api:latest.release',
         'io.grpc:grpc-core:latest.release',
         'io.grpc:grpc-services:latest.release',
+        'io.grpc:grpc-inprocess:latest.release',
         'io.grpc:grpc-stubs:latest.release',
         'io.grpc:grpc-alts:latest.release',
         'io.grpc:grpc-testing-proto:latest.release',
