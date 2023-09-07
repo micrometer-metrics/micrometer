@@ -141,7 +141,7 @@ public abstract class PushMeterRegistry extends MeterRegistry {
                         config.overlappingShutdownWaitTimeout().toMillis());
 
                 ExecutorService executor = Executors.newSingleThreadExecutor();
-                FutureTask futureTask = new FutureTask(() -> {
+                FutureTask<Void> futureTask = new FutureTask<>(() -> {
                     while (isPublishing()) {
                         // check if the export is already finished every 50ms.
                         Thread.sleep(50);
