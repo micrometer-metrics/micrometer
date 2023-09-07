@@ -21,6 +21,7 @@ import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.config.validate.Validated;
 import io.micrometer.core.instrument.step.StepRegistryConfig;
 
+import java.time.Duration;
 import java.util.Collections;
 import java.util.Map;
 
@@ -163,6 +164,11 @@ public interface DynatraceConfig extends StepRegistryConfig {
             return false;
         }
         return getBoolean(this, "exportMeterMetadata").orElse(true);
+    }
+
+    @Override
+    default Duration overlappingShutdownWaitTimeout() {
+        return getDuration(this, "overlappingShutdownWaitTimeout").orElse(Duration.ofSeconds(5));
     }
 
     @Override
