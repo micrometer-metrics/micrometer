@@ -22,11 +22,9 @@ import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.util.TimeUtils;
 
+import java.time.Duration;
 import java.util.Random;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public abstract class PushMeterRegistry extends MeterRegistry {
@@ -128,11 +126,43 @@ public abstract class PushMeterRegistry extends MeterRegistry {
         }
     }
 
+    private static boolean isDurationPositive(Duration duration) {
+        return (!duration.isZero() && !duration.isNegative());
+    }
+
     @Override
     public void close() {
         stop();
         if (config.enabled() && !isClosed()) {
-            publishSafely();
+            if (isPublishing() && isDurationPositive(config.overlappingShutdownWaitTimeout())) {
+                logger.info(
+                        "Publishing is already in progress. "
+                                + "Waiting for up to {}ms for the export to finish before shutting down.",
+                        config.overlappingShutdownWaitTimeout().toMillis());
+
+                ExecutorService executor = Executors.newSingleThreadExecutor();
+                FutureTask futureTask = new FutureTask(() -> {
+                    while (isPublishing()) {
+                        // check if the export is already finished every 50ms.
+                        Thread.sleep(50);
+                    }
+                    return null;
+                });
+                executor.submit(futureTask);
+
+                try {
+                    futureTask.get(config.overlappingShutdownWaitTimeout().toMillis(), TimeUnit.MILLISECONDS);
+                }
+                catch (InterruptedException | ExecutionException | TimeoutException e) {
+                    logger.info("ending wait for last export to finish, took too long");
+                    futureTask.cancel(true);
+                }
+            }
+            else {
+                // if publishing is not currently in progress, export one final time on
+                // shutdown.
+                publishSafely();
+            }
         }
         super.close();
     }

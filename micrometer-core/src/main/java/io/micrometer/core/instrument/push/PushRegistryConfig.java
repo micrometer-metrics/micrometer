@@ -82,6 +82,10 @@ public interface PushRegistryConfig extends MeterRegistryConfig {
         return getDuration(this, "readTimeout").orElse(Duration.ofSeconds(10));
     }
 
+    default Duration overlappingShutdownWaitTimeout() {
+        return getDuration(this, "overlappingShutdownWaitTimeout").orElse(Duration.ZERO);
+    }
+
     /**
      * @return The number of measurements per request to use for the backend. If more
      * measurements are found, then multiple requests will be made. The default is 10,000.
@@ -105,6 +109,7 @@ public interface PushRegistryConfig extends MeterRegistryConfig {
         return checkAll(config, check("step", PushRegistryConfig::step),
                 check("connectTimeout", PushRegistryConfig::connectTimeout),
                 check("readTimeout", PushRegistryConfig::readTimeout),
+                check("overlappingShutdownWaitTimeout", PushRegistryConfig::overlappingShutdownWaitTimeout),
                 check("batchSize", PushRegistryConfig::batchSize), check("numThreads", PushRegistryConfig::numThreads));
     }
 
