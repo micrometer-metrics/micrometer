@@ -67,8 +67,6 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
     private static final Map<String, String> staticDimensions = Collections.singletonMap("dt.metrics.source",
             "micrometer");
 
-    private static final int MINIMUM_CAPACITY = 64;
-
     // This should be non-static for MockLoggerFactory.injectLogger() in tests.
     private final InternalLogger logger = InternalLoggerFactory.getInstance(DynatraceExporterV2.class);
 
@@ -127,9 +125,9 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
     }
 
     private Map<String, String> enrichWithMetricsSourceDimension(Map<String, String> defaultDimensions) {
-        LinkedHashMap<String, String> orderDimensions = new LinkedHashMap<>(defaultDimensions);
-        orderDimensions.putAll(staticDimensions);
-        return orderDimensions;
+        LinkedHashMap<String, String> orderedDimensions = new LinkedHashMap<>(defaultDimensions);
+        orderedDimensions.putAll(staticDimensions);
+        return orderedDimensions;
     }
 
     /**
@@ -531,7 +529,7 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
             return null;
         }
 
-        StringBuilder metricKey = new StringBuilder(MINIMUM_CAPACITY);
+        StringBuilder metricKey = new StringBuilder(32);
 
         for (int i = 1; i < metadataLine.length(); i++) {
             char c = metadataLine.charAt(i);
