@@ -367,7 +367,6 @@ class PushMeterRegistryTest {
         CyclicBarrier barrier = new CyclicBarrier(2);
         OverlappingStepMeterRegistry overlappingStepMeterRegistry = new OverlappingStepMeterRegistry(config, clock,
                 barrier);
-
         Counter c1 = overlappingStepMeterRegistry.counter("c1");
         Counter c2 = overlappingStepMeterRegistry.counter("c2");
         c1.increment();
@@ -384,7 +383,6 @@ class PushMeterRegistryTest {
         onClosePublishThread.start();
         scheduledPublishingThread.join();
         onClosePublishThread.join();
-        // myThreadFactory.join();
 
         assertThat(overlappingStepMeterRegistry.publishes).as("only one publish happened").hasSize(1);
         Deque<Double> firstPublishValues = overlappingStepMeterRegistry.publishes.get(0);
