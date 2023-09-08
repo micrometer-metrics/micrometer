@@ -67,6 +67,7 @@ class StepFunctionCounterTest {
     @Test
     void closingRolloverPartialStep() {
         AtomicInteger n = new AtomicInteger(3);
+        @SuppressWarnings("unchecked")
         StepFunctionCounter<AtomicInteger> counter = (StepFunctionCounter) registry.more()
             .counter("my.counter", Tags.empty(), n);
 
