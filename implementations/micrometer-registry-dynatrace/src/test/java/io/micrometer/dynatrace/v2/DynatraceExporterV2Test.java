@@ -16,6 +16,7 @@
 package io.micrometer.dynatrace.v2;
 
 import com.dynatrace.file.util.DynatraceFileBasedConfigurationProvider;
+import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.ipc.http.HttpSender;
@@ -36,10 +37,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.*;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static io.micrometer.core.instrument.MockClock.clock;
@@ -343,18 +344,7 @@ class DynatraceExporterV2Test {
                         + clock.wallTime());
     }
 
-    private static void busyWait(LongTaskTimer ltt) {
-        ltt.record(() -> {
-            while (!Thread.currentThread().isInterrupted()) {
-                try {
-                    Thread.sleep(200);
-                }
-                catch (InterruptedException ignored) {
-                }
-            }
-        });
-    }
-
+    @Issue("#3985")
     @Test
     void longTaskTimerWithSingleValueExportsConsistentData() throws InterruptedException {
         // In the past, there were problems with the LongTaskTimer: In cases where only
@@ -372,84 +362,109 @@ class DynatraceExporterV2Test {
         // values (e.g., max=0.764418,sum=0.700539,count=1, which is invalid according to
         // the Dynatrace specification). Therefore, for this test we need to use the
         // system clock.
-        Clock clock = Clock.SYSTEM;
         DynatraceConfig config = createDefaultDynatraceConfig();
-        DynatraceMeterRegistry registry = DynatraceMeterRegistry.builder(config).clock(clock).build();
+        DynatraceMeterRegistry registry = DynatraceMeterRegistry.builder(config).clock(Clock.SYSTEM).build();
         DynatraceExporterV2 exporter = new DynatraceExporterV2(config, clock, httpClient);
 
-        LongTaskTimer ltt = LongTaskTimer.builder("my.ltt").register(registry);
-
-        // This will run in the background until it is interrupted down below.
+        LongTaskTimer ltt = LongTaskTimer.builder("ltt").register(registry);
         ExecutorService executorService = Executors.newSingleThreadExecutor();
-        executorService.submit(() -> busyWait(ltt));
-
-        // wait for a little bit to ensure there is something to measure
-        Thread.sleep(500);
-
+        CountDownLatch startLatch = new CountDownLatch(1);
+        CountDownLatch stopLatch = new CountDownLatch(1);
+        executorService.submit(() -> ltt.record(sleeperTask(startLatch, stopLatch)));
+        awaitSafely(startLatch); // wait till the ExecutorService schedules the task.
+        Thread.sleep(50); // let it run a little
         List<String> lines = exporter.toLongTaskTimerLine(ltt).collect(Collectors.toList());
-
+        stopLatch.countDown(); // stop the execution
         // export complete, can shut down active background thread.
         executorService.shutdownNow();
 
-        // assertions
         assertThat(lines).hasSize(1);
-
-        // A String[]: "min=1", "max=1", "sum=1", "count=1"
-        String[] gaugeComponents = lines.get(0).split(" ")[1].split(",");
-        // trim the "min=", "max=", etc. prefixes and keep only the string representations
-        // of the values.
-        String min = gaugeComponents[1].split("=")[1];
-        String max = gaugeComponents[2].split("=")[1];
-        String sum = gaugeComponents[3].split("=")[1];
-        String count = gaugeComponents[4].split("=")[1];
-
-        assertThat(min).isEqualTo(sum).isEqualTo(max);
-
-        assertThat(count).isEqualTo("1");
+        // ltt,dt.metrics.source=micrometer gauge,min=5,max=5,sum=5,count=1 1694133659649
+        Matcher matcher = Pattern
+            .compile("^.+,.+,min=(?<min>.+),max=(?<max>.+),sum=(?<sum>.+),count=(?<count>.+) \\d+$")
+            .matcher(lines.get(0));
+        assertThat(matcher.matches()).isTrue();
+        assertThat(matcher.group("min")).isEqualTo(matcher.group("sum")).isEqualTo(matcher.group("max"));
+        assertThat(matcher.group("count")).isEqualTo("1");
     }
 
+    @Issue("#3985")
     @Test
     void longTaskTimerWithMultipleValuesExportsConsistentData() throws InterruptedException {
-        // For this test we need to use the system clock. See
-        // longTaskTimerWithSingleValueExportsConsistentData for
-        // more info
-        Clock clock = Clock.SYSTEM;
+        // For this test we need to use the system clock.
+        // See longTaskTimerWithSingleValueExportsConsistentData for more info
         DynatraceConfig config = createDefaultDynatraceConfig();
-        DynatraceMeterRegistry registry = DynatraceMeterRegistry.builder(config).clock(clock).build();
+        DynatraceMeterRegistry registry = DynatraceMeterRegistry.builder(config).clock(Clock.SYSTEM).build();
         DynatraceExporterV2 exporter = new DynatraceExporterV2(config, clock, httpClient);
 
-        LongTaskTimer ltt = LongTaskTimer.builder("my.ltt").register(registry);
+        LongTaskTimer ltt = LongTaskTimer.builder("ltt").register(registry);
 
-        // This will run in the background until it is interrupted down below.
         ExecutorService executorService = Executors.newFixedThreadPool(2);
-        executorService.submit(() -> busyWait(ltt));
-        Thread.sleep(500);
-        executorService.submit(() -> busyWait(ltt));
+        CountDownLatch startLatch1 = new CountDownLatch(1);
+        CountDownLatch startLatch2 = new CountDownLatch(1);
+        CountDownLatch stopLatch = new CountDownLatch(1);
+        executorService.submit(() -> ltt.record(sleeperTask(startLatch1, stopLatch)));
+        executorService.submit(() -> ltt.record(sleeperTask(startLatch2, stopLatch)));
 
-        Thread.sleep(500);
-
+        awaitSafely(startLatch1); // wait till the ExecutorService schedules task1.
+        awaitSafely(startLatch2); // wait till the ExecutorService schedules task2.
+        Thread.sleep(50); // let them run a little
         List<String> lines = exporter.toLongTaskTimerLine(ltt).collect(Collectors.toList());
-
+        stopLatch.countDown(); // stop the execution of both tasks
         // export complete, can shut down active background thread.
         executorService.shutdownNow();
 
-        // assertions
         assertThat(lines).hasSize(1);
 
-        // A String[]: "min=x", "max=x", "sum=x", "count=x"
-        String[] gaugeComponents = lines.get(0).split(" ")[1].split(",");
-
-        // trim the "min=", "max=", etc. prefixes and keep only the string representations
-        // of the values.
-        double min = Double.parseDouble(gaugeComponents[1].split("=")[1]);
-        double max = Double.parseDouble(gaugeComponents[2].split("=")[1]);
-        double sum = Double.parseDouble(gaugeComponents[3].split("=")[1]);
-        int count = Integer.parseInt(gaugeComponents[4].split("=")[1]);
+        // assertions
+        assertThat(lines).hasSize(1);
+        // ltt,dt.metrics.source=micrometer gauge,min=5,max=5,sum=5,count=1 1694133659649
+        Matcher matcher = Pattern
+            .compile("^.+,.+,min=(?<min>.+),max=(?<max>.+),sum=(?<sum>.+),count=(?<count>.+) \\d+$")
+            .matcher(lines.get(0));
+        assertThat(matcher.matches()).isTrue();
+        double min = Double.parseDouble(matcher.group("min"));
+        double max = Double.parseDouble(matcher.group("max"));
+        double sum = Double.parseDouble(matcher.group("sum"));
+        int count = Integer.parseInt(matcher.group("count"));
         double mean = sum / count;
-
         assertThat(min).isLessThanOrEqualTo(mean);
         assertThat(mean).isLessThanOrEqualTo(max);
         assertThat(count).isEqualTo(2);
+    }
+
+    /**
+     * A task that blocks till you call {@link CountDownLatch#countDown()} on
+     * {@code stopLatch}. It can also signal you that it started if you {@code await} on
+     * {@code startLatch}.
+     * @param startLatch The latch used to signal that the task has started.
+     * @param stopLatch The latch used to signal that the task should stop.
+     * @return a Runnable task
+     */
+    private Runnable sleeperTask(CountDownLatch startLatch, CountDownLatch stopLatch) {
+        return () -> sleep(startLatch, stopLatch);
+    }
+
+    /**
+     * Blocks till you call {@link CountDownLatch#countDown()} on {@code stopLatch}. It
+     * can also signal you that it started if you {@code await} on {@code startLatch}.
+     * @param startLatch The latch used to signal that the method was called.
+     * @param stopLatch The latch used to signal that the method should terminate.
+     */
+    private void sleep(CountDownLatch startLatch, CountDownLatch stopLatch) {
+        startLatch.countDown();
+        awaitSafely(stopLatch);
+    }
+
+    private void awaitSafely(CountDownLatch latch) {
+        try {
+            if (!latch.await(1, SECONDS)) {
+                throw new RuntimeException("Waiting on latch timed out!");
+            }
+        }
+        catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Test

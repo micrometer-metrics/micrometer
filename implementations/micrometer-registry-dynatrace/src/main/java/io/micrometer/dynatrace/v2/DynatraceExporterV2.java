@@ -278,16 +278,17 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
 
         long count = snapshot.count();
         if (count == 0) {
+            logger.debug("Timer with 0 count dropped: {}", meter.getId().getName());
             return Stream.empty();
         }
         else if (count == 1) {
-            // in cases where the snapshot has only one value, often the min/max and sum
-            // are not the same due to how this data is recorded. In the Dynatrace API
+            // In cases where the snapshot has only one value, often the min/max and sum
+            // are not the same due to how this data is recorded. In the Dynatrace API,
             // this might lead to rejections, because the ingested data's validity is
-            // checked. It is not possible to have a dynatrace summary object with a
+            // checked. It is not possible to have a Dynatrace summary object with a
             // single value where min/max and sum are not equal.
             double total = snapshot.total(getBaseTimeUnit());
-            return createSummaryLine(meter, total, total, total, 1);
+            return createSummaryLine(meter, total, total, total, count);
         }
 
         return toSummaryLine(meter, snapshot, getBaseTimeUnit());
@@ -302,21 +303,27 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
     }
 
     Stream<String> toFunctionTimerLine(FunctionTimer meter) {
-        double count = meter.count();
+        long count = (long) meter.count();
         double total = meter.totalTime(getBaseTimeUnit());
 
-        long countLong = (long) count;
-
-        if (countLong < 1) {
+        if (count == 0) {
             logger.debug("Timer with 0 count dropped: {}", meter.getId().getName());
             return Stream.empty();
         }
-        else if (countLong == 1) {
-            return createSummaryLine(meter, total, total, total, 1);
+        else if (count == 1) {
+            // Between calling count, totalTime, and mean values can be recorded so the
+            // reported values might be inconsistent. In the Dynatrace API,
+            // this might lead to rejections, because the ingested data's validity is
+            // checked. It is not possible to have a Dynatrace summary object with a
+            // single value where min/max and sum are not equal.
+            return createSummaryLine(meter, total, total, total, count);
         }
 
-        double average = total / countLong;
-        return createSummaryLine(meter, average, average, total, countLong);
+        // Similarly, to the situation above, we are calculating avg here instead of
+        // calling mean to avoid inconsistencies, i.e.: data was recorded between
+        // calling count, totalTime, and mean.
+        double average = total / count;
+        return createSummaryLine(meter, average, average, total, count);
     }
 
     Stream<String> toMeterLine(Meter meter) {
