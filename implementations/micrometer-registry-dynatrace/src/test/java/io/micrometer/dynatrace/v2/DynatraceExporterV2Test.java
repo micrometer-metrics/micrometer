@@ -20,6 +20,7 @@ import io.micrometer.common.lang.Nullable;
 import io.micrometer.common.util.internal.logging.LogEvent;
 import io.micrometer.common.util.internal.logging.MockLogger;
 import io.micrometer.common.util.internal.logging.MockLoggerFactory;
+import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.ipc.http.HttpSender;
@@ -36,8 +37,13 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.*;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static io.micrometer.common.util.internal.logging.InternalLogLevel.ERROR;
@@ -258,7 +264,7 @@ class DynatraceExporterV2Test {
     }
 
     @Test
-    void toFunctionTimerLineShouldDropNanMean() {
+    void toFunctionTimerLineShouldDropNanTotal() {
         FunctionTimer functionTimer = new FunctionTimer() {
             @Override
             public double count() {
@@ -268,7 +274,7 @@ class DynatraceExporterV2Test {
             @Override
             @SuppressWarnings("NullableProblems")
             public double totalTime(TimeUnit unit) {
-                return 5000;
+                return NaN;
             }
 
             @Override
@@ -283,11 +289,6 @@ class DynatraceExporterV2Test {
                 return new Id("my.functionTimer", Tags.empty(), null, null, Type.TIMER);
             }
 
-            @Override
-            @SuppressWarnings("NullableProblems")
-            public double mean(TimeUnit unit) {
-                return NaN;
-            }
         };
 
         assertThat(exporter.toFunctionTimerLine(functionTimer)).isEmpty();
@@ -344,6 +345,129 @@ class DynatraceExporterV2Test {
         assertThat(lines.get(0)).isEqualTo(
                 "my.longTaskTimer,dt.metrics.source=micrometer gauge,min=2000.0,max=48000.0,sum=236000.0,count=11 "
                         + clock.wallTime());
+    }
+
+    @Issue("#3985")
+    @Test
+    void longTaskTimerWithSingleValueExportsConsistentData() throws InterruptedException {
+        // In the past, there were problems with the LongTaskTimer: In cases where only
+        // one value was exported, the max and duration were read sequentially while the
+        // clock continued to tick in the background. Since the Dynatrace API checks this
+        // data strictly, data where the sum and max were not exactly the same when the
+        // count was 1 were rejected. The discrepancy is only caused by the non-atomicity
+        // of retrieving max and sum. As soon as there is more than 1 observation, this
+        // problem should disappear since the Dynatrace API checks for min <= mean <= max,
+        // and that should always be the case when there is more than 1 value. If it is
+        // not the case, the underlying data collection is really broken. For example, we
+        // saw this issue with the metric 'http.server.requests.active', when there was
+        // exactly one request in-flight. The retrieval of max and total are not
+        // synchronized, so the clock continues to tick and results in two different
+        // values (e.g., max=0.764418,sum=0.700539,count=1, which is invalid according to
+        // the Dynatrace specification). Therefore, for this test we need to use the
+        // system clock.
+        DynatraceConfig config = createDefaultDynatraceConfig();
+        DynatraceMeterRegistry registry = DynatraceMeterRegistry.builder(config).clock(Clock.SYSTEM).build();
+        DynatraceExporterV2 exporter = new DynatraceExporterV2(config, clock, httpClient);
+
+        LongTaskTimer ltt = LongTaskTimer.builder("ltt").register(registry);
+        ExecutorService executorService = Executors.newSingleThreadExecutor();
+        CountDownLatch startLatch = new CountDownLatch(1);
+        CountDownLatch stopLatch = new CountDownLatch(1);
+        executorService.submit(() -> ltt.record(sleeperTask(startLatch, stopLatch)));
+        awaitSafely(startLatch); // wait till the ExecutorService schedules the task.
+        Thread.sleep(50); // let it run a little
+        List<String> lines = exporter.toLongTaskTimerLine(ltt).collect(Collectors.toList());
+        stopLatch.countDown(); // stop the execution
+        // export complete, can shut down active background thread.
+        executorService.shutdownNow();
+
+        assertThat(lines).hasSize(1);
+        // ltt,dt.metrics.source=micrometer gauge,min=5,max=5,sum=5,count=1 1694133659649
+        Matcher matcher = Pattern
+            .compile("^.+,.+,min=(?<min>.+),max=(?<max>.+),sum=(?<sum>.+),count=(?<count>.+) \\d+$")
+            .matcher(lines.get(0));
+        assertThat(matcher.matches()).isTrue();
+        assertThat(matcher.group("min")).isEqualTo(matcher.group("sum")).isEqualTo(matcher.group("max"));
+        assertThat(matcher.group("count")).isEqualTo("1");
+    }
+
+    @Issue("#3985")
+    @Test
+    void longTaskTimerWithMultipleValuesExportsConsistentData() throws InterruptedException {
+        // For this test we need to use the system clock.
+        // See longTaskTimerWithSingleValueExportsConsistentData for more info
+        DynatraceConfig config = createDefaultDynatraceConfig();
+        DynatraceMeterRegistry registry = DynatraceMeterRegistry.builder(config).clock(Clock.SYSTEM).build();
+        DynatraceExporterV2 exporter = new DynatraceExporterV2(config, clock, httpClient);
+
+        LongTaskTimer ltt = LongTaskTimer.builder("ltt").register(registry);
+
+        ExecutorService executorService = Executors.newFixedThreadPool(2);
+        CountDownLatch startLatch1 = new CountDownLatch(1);
+        CountDownLatch startLatch2 = new CountDownLatch(1);
+        CountDownLatch stopLatch = new CountDownLatch(1);
+        executorService.submit(() -> ltt.record(sleeperTask(startLatch1, stopLatch)));
+        executorService.submit(() -> ltt.record(sleeperTask(startLatch2, stopLatch)));
+
+        awaitSafely(startLatch1); // wait till the ExecutorService schedules task1.
+        awaitSafely(startLatch2); // wait till the ExecutorService schedules task2.
+        Thread.sleep(50); // let them run a little
+        List<String> lines = exporter.toLongTaskTimerLine(ltt).collect(Collectors.toList());
+        stopLatch.countDown(); // stop the execution of both tasks
+        // export complete, can shut down active background thread.
+        executorService.shutdownNow();
+
+        assertThat(lines).hasSize(1);
+
+        // assertions
+        assertThat(lines).hasSize(1);
+        // ltt,dt.metrics.source=micrometer gauge,min=5,max=5,sum=5,count=1 1694133659649
+        Matcher matcher = Pattern
+            .compile("^.+,.+,min=(?<min>.+),max=(?<max>.+),sum=(?<sum>.+),count=(?<count>.+) \\d+$")
+            .matcher(lines.get(0));
+        assertThat(matcher.matches()).isTrue();
+        double min = Double.parseDouble(matcher.group("min"));
+        double max = Double.parseDouble(matcher.group("max"));
+        double sum = Double.parseDouble(matcher.group("sum"));
+        int count = Integer.parseInt(matcher.group("count"));
+        double mean = sum / count;
+        assertThat(min).isLessThanOrEqualTo(mean);
+        assertThat(mean).isLessThanOrEqualTo(max);
+        assertThat(count).isEqualTo(2);
+    }
+
+    /**
+     * A task that blocks till you call {@link CountDownLatch#countDown()} on
+     * {@code stopLatch}. It can also signal you that it started if you {@code await} on
+     * {@code startLatch}.
+     * @param startLatch The latch used to signal that the task has started.
+     * @param stopLatch The latch used to signal that the task should stop.
+     * @return a Runnable task
+     */
+    private Runnable sleeperTask(CountDownLatch startLatch, CountDownLatch stopLatch) {
+        return () -> sleep(startLatch, stopLatch);
+    }
+
+    /**
+     * Blocks till you call {@link CountDownLatch#countDown()} on {@code stopLatch}. It
+     * can also signal you that it started if you {@code await} on {@code startLatch}.
+     * @param startLatch The latch used to signal that the method was called.
+     * @param stopLatch The latch used to signal that the method should terminate.
+     */
+    private void sleep(CountDownLatch startLatch, CountDownLatch stopLatch) {
+        startLatch.countDown();
+        awaitSafely(stopLatch);
+    }
+
+    private void awaitSafely(CountDownLatch latch) {
+        try {
+            if (!latch.await(1, SECONDS)) {
+                throw new RuntimeException("Waiting on latch timed out!");
+            }
+        }
+        catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Test
