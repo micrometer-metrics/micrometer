@@ -385,7 +385,7 @@ task deleteLockFiles(type: Delete) {
 }
 
 wrapper {
-    gradleVersion = '8.2.1'
+    gradleVersion = '8.3'
 }
 
 defaultTasks 'build'
