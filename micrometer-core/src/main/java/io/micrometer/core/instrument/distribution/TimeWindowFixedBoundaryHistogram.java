@@ -122,9 +122,10 @@ public class TimeWindowFixedBoundaryHistogram
 
         String bucketFormatString = "%14.1f %10d\n";
 
+        FixedBoundaryHistogram currentHistogram = currentHistogram();
         for (int i = 0; i < buckets.length; i++) {
             printStream.format(Locale.US, bucketFormatString, buckets[i] / bucketScaling,
-                    currentHistogram().values.get(i));
+                    currentHistogram.values.get(i));
         }
 
         printStream.write('\n');

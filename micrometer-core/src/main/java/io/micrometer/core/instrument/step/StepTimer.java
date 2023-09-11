@@ -59,7 +59,7 @@ public class StepTimer extends AbstractTimer implements StepMeter {
     @Override
     protected void recordNonNegative(final long amount, final TimeUnit unit) {
         final long nanoAmount = (long) TimeUtils.convert(amount, unit, TimeUnit.NANOSECONDS);
-        count.add(1);
+        count.add(1L);
         total.add(nanoAmount);
         max.record(nanoAmount);
     }

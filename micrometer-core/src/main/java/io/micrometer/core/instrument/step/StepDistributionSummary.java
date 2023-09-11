@@ -46,7 +46,7 @@ public class StepDistributionSummary extends AbstractDistributionSummary impleme
      * Create a new {@code StepDistributionSummary}.
      * @param id ID
      * @param clock clock
-     * @param distributionStatisticConfig distribution static configuration
+     * @param distributionStatisticConfig distribution statistic configuration
      * @param scale scale
      * @param stepMillis step in milliseconds
      * @param supportsAggregablePercentiles whether it supports aggregable percentiles
@@ -60,7 +60,7 @@ public class StepDistributionSummary extends AbstractDistributionSummary impleme
 
     @Override
     protected void recordNonNegative(double amount) {
-        count.add(1);
+        count.add(1L);
         total.add(amount);
         max.record(amount);
     }
