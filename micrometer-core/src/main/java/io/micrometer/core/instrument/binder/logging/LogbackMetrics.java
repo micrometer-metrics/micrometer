@@ -206,7 +206,7 @@ class MetricsTurboFilter extends TurboFilter {
         // and can return immediately and
         // avoid the relatively expensive ThreadLocal access below. See also logbacks
         // Logger.callTurboFilters().
-        // Calling logger.isEnabledFor(level) might be sub-optimal since it cals this
+        // Calling logger.isEnabledFor(level) might be sub-optimal since it calls this
         // filter again. This behavior caused a StackOverflowError in the past.
         if (format == null || !level.isGreaterOrEqual(logger.getEffectiveLevel())) {
             return FilterReply.NEUTRAL;
