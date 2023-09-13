@@ -40,6 +40,7 @@ jobs:
       - name: Publish Docs
         uses: JamesIves/github-pages-deploy-action@v4
         with:
+         token: ${{ secrets.DOCS_PAGES_TOKEN }}
          repository-name: micrometer-metrics/docs-pages
          target-folder: micrometer/reference
          folder: build/site # The folder the action should deploy.
