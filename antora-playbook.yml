@@ -1,0 +1,46 @@
+antora:
+  extensions:
+    - '@springio/antora-extensions/partial-build-extension'
+    - require: '@springio/antora-extensions/latest-version-extension'
+    - require: '@springio/antora-extensions/inject-collector-cache-config-extension'
+    - '@antora/collector-extension'
+    - '@antora/atlas-extension'
+    - require: '@springio/antora-extensions/root-component-extension'
+      root_component_name: 'micrometer'
+site:
+  title: Micrometer
+  url: https://docs.micrometer.io/micrometer/reference/
+  robots: allow
+content:
+  sources:
+    - url: https://github.com/micrometer-metrics/micrometer
+      # Refname matching:
+      # https://docs.antora.org/antora/latest/playbook/content-refname-matching/
+      branches: [ main ]
+      # 1.1[3-9].[0-9] RC, M and GA (e.g. 1.13.3, 1.17.9)
+      # 1.[2-9][0-9].[0-9] RC, M and GA (e.g. 1.20.1, 1.44.6)
+      # 1.12.[0-9] RC, M and GA without 1.12.0-M[0-4]  (e.g. 1.12.0-M4, 1.12.1)
+      tags: [ '({1..9}).1({3..9}).+({0..9})?(-{RC,M}+({0..9}))', '({1..9}).({2..9})({0..9}).+({0..9})?(-{RC,M}+({0..9}))'  '1.12.({0..9})?(-{RC,M}+({0..9}))', '!1.12.0-M({0..3}))' ]
+      start_path: docs
+asciidoc:
+  attributes:
+    page-stackoverflow-url: https://stackoverflow.com/tags/micrometer
+    page-pagination: ''
+    hide-uri-scheme: '@'
+    tabs-sync-option: '@'
+    chomp: 'all'
+  extensions:
+    - '@asciidoctor/tabs'
+    - '@springio/asciidoctor-extensions'
+  sourcemap: true
+urls:
+  latest_version_segment_strategy: redirect:to
+  latest_version_segment: ''
+  redirect_facility: httpd
+runtime:
+  log:
+    failure_level: warn
+    format: pretty
+ui:
+  bundle:
+    url: https://github.com/spring-io/antora-ui-spring/releases/download/v0.3.5/ui-bundle.zip
