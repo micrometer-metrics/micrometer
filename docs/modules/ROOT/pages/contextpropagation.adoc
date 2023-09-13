@@ -1,0 +1,6 @@
+[[context-propagation-support]]
+= Context Propagation support
+
+https://github.com/micrometer-metrics/context-propagation[Context Propagation] is a library that assists with context propagation across different types of context
+mechanisms such as `ThreadLocal`, Reactor https://projectreactor.io/docs/core/release/reference/#context[Context]
+and others.

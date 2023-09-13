@@ -1,0 +1,108 @@
+= Micrometer StatsD
+:toc:
+:sectnums:
+:system: statsd
+
+StatsD is a UDP-based sidecar-driven metrics collection system. The maintainer of the original StatsD line protocol specification is Etsy. Datadog's DogStatsD and Influx's Telegraf each accept a modified version of the line protocol, having each enriched the original specification with dimensionality in different ways.
+
+If you intend to use the Datadog or Telegraf flavors, see the documentation for Micrometer's link:/docs/registry/datadog[Datadog] or link:/docs/registry/influx[Influx] support.
+
+include::_install.adoc[]
+
+== Configuring
+
+This configuration is used to ship metrics to a StatsD agent that is compatible with the original Etsy protocol. Metrics are shipped immediately over UDP to the agent.
+
+[source,java]
+----
+StatsdConfig config = new StatsdConfig() {
+    @Override
+    public String get(String k) {
+        return null;
+    }
+
+
+    @Override
+    public StatsdFlavor flavor() {
+        return StatsdFlavor.Etsy;
+    }
+};
+
+MeterRegistry registry = new StatsdMeterRegistry(config, Clock.SYSTEM);
+----
+
+NOTE: You can also configure Telegraf to accept the dogstatsd format. If you use Telegraf, configuring Micrometer to ship Telegraf-formatted StatsD lines eases the requirements of your Telegraf configuration.
+
+`StatsdConfig` is an interface with a set of default methods. If, in the implementation of `get(String k)`, rather than returning `null`, you instead bind it to a property source, you can override the default configuration. For example, Micrometer's Spring Boot support binds properties that are prefixed with `management.metrics.export.statsd` directly to the `StatsdConfig`:
+
+[source,yml]
+----
+management.metrics.export.statsd:
+    flavor: etsy
+
+    # You will probably want to conditionally disable StatsD publishing in local development.
+    enabled: true
+
+    # The interval at which metrics are sent to StatsD. The default is 1 minute.
+    step: 1m
+----
+
+== Customizing the Metrics Sink
+
+By default, Micrometer publishes StatsD line protocol over UDP, as the vast majority of existing StatsD agents are UDP servers. It is possible to fully customize how the line protocol is shipped by modifying the builder for `StatsdMeterRegistry`:
+
+[source,java]
+----
+Consumer<String> lineLogger = line -> logger.info(line); <1>
+
+MeterRegistry registry = StatsdMeterRegistry.builder(StatsdConfig.DEFAULT) <2>
+    .clock(clock)
+    .lineSink(lineLogger)
+    .build();
+----
+<1> Define what to do with lines.
+<2> The flavor configuration option determines the structure of the line for the default line builder. It has no effect if you override the line builder with a customization.
+
+=== Using Apache Kafka for Line Sink
+
+You can also use Apache Kafka for line sink, as follows:
+
+[source,java]
+----
+Properties properties = new Properties();
+properties.setProperty(BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
+properties.setProperty(KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
+properties.setProperty(VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
+
+Producer<String, String> producer = new KafkaProducer<>(properties);
+
+StatsdMeterRegistry.builder(statsdConfig)
+        .lineSink((line) -> producer.send(new ProducerRecord<>("my-metrics", line)))
+        .build();
+----
+
+Now Micrometer produces lines for metrics to the `my-metrics` topic and you can consume the lines on the topic.
+
+== Customizing the Line Format
+
+The built-in Etsy, dogstatsd, and Telegraf flavors cover most known public StatsD agents, but you can completely customize the line format to satisfy closed, proprietary agents. Again, we use the `StatsdMeterRegistry` builder to establish a line builder for each ID. Providing an instance of the builder _per ID_ offers you the opportunity to eagerly cache the serialization of the ID's name and tags to optimize the serialization of a StatsD line based on that ID as samples are recorded. The following listing defines a fictional format:
+
+[source,java]
+----
+Function<Meter.Id, StatsdLineBuilder> nameAndUnits = id -> new StatsdLineBuilder() {
+    String name = id.getName() + "/" + (id.getBaseUnit() == null ? "unknown" : id.getBaseUnit());
+
+    @Override
+    public String count(long amount, Statistic stat) {
+       return name + ":" + amount + "|c";
+    }
+
+    ... // implement gauge, histogram, and timing similarly
+}
+
+MeterRegistry registry = StatsdMeterRegistry.builder(StatsdConfig.DEFAULT) <1>
+    .clock(clock)
+    .lineBuilder(nameAndUnits)
+    .build();
+----
+<1> Because you have taken control of line building, the flavor is ignored.

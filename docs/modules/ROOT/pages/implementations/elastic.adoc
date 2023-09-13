@@ -1,0 +1,43 @@
+= Micrometer Elastic
+:toc:
+:sectnums:
+:system: elastic
+
+Elasticsearch is an open source search and analytics platform. Metrics stored in Elasticsearch can be visualized in Kibana.
+
+include::_install.adoc[]
+
+== Configuring
+
+The following example configures an ElasticSearch instance:
+
+[source,java]
+----
+ElasticConfig elasticConfig = new ElasticConfig() {
+    @Override
+    @Nullable
+    public String get(String k) {
+        return null;
+    }
+};
+MeterRegistry registry = new ElasticMeterRegistry(elasticConfig, Clock.SYSTEM);
+----
+
+`ElasticConfig` is an interface with a set of default methods. If, in the implementation of `get(String k)`, rather than returning `null`, you instead bind it to a property source, you can override the default configuration. For example, Micrometer's Spring Boot support binds properties that are prefixed with `management.metrics.export.elastic` directly to the `ElasticConfig`:
+
+[source,yml]
+----
+management.metrics.export.elastic:
+    # You will probably want disable Elastic publishing in a local development profile.
+    enabled: true
+
+    # The interval at which metrics are sent to Elastic. The default is 1 minute.
+    step: 1m
+
+    # The index to store metrics in, defaults to "micrometer-metrics"
+    index: micrometer-metrics
+----
+
+== Elastic APM agent integration
+
+If you are using the Elastic APM agent, it can collect metrics from Micrometer `MeterRegistry` instances automatically. You can use the `SimpleMeterRegistry` if you only want metrics collected by the Elastic APM agent and not shipped anywhere else. See the https://www.elastic.co/guide/en/apm/agent/java/current/metrics.html#metrics-micrometer[Elastic docs] for more details.

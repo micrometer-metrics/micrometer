@@ -95,7 +95,7 @@ def VERSIONS = [
 ]
 
 def PLATFORM_BOMS = [
-        'io.projectreactor:reactor-bom:2020.0.+',
+        'io.projectreactor:reactor-bom:2022.0.+',
         'io.netty:netty-bom:4.1.+',
         'org.junit:junit-bom:5.10.+', // Not using latest.release to avoid using a milestone version.
 ]

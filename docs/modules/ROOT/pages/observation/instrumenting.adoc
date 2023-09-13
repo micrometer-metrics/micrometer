@@ -1,0 +1,108 @@
+In this section we will see some common examples of reusing existing Micrometer and Micrometer Tracing handlers and context types to do instrumentation.
+
+IMPORTANT: Before you decide to instrument a project yourself, please double-check whether it hasn't already been instrumented!
+
+To better understand how you can do instrumentation we need to distinguish two concepts.
+
+- Context propagation
+- Creation of Observations
+
+*Context propagation* - we propagate existing context through threads or network. We're using the https://micrometer.io/docs/contextPropagation[Micrometer Context Propagation] library to define the context and to propagate it through threads. We're using dedicated `SenderContext` and `ReceiverContext` objects, together with Micrometer Tracing handlers, to create Observations that will propagate context over the wire.
+
+*Creation of Observations* - we want to wrap an operation in an Observation to get measurements. We need to know if there previously has been a parent Observation to maintain the parent-child relationship of Observations.
+
+[[instrumentation_of_thread_switching_components]]
+== Instrumentation of Thread Switching Components
+
+We might want to create an Observation around a `Runnable` or `Callable` that we're submitting through an `Executor`. For that to work we need to know if in the parent thread there was an Observation that the new thread should continue, or for which a child Observation should be created.
+
+Let's look at the following example.
+
+[source,java]
+-----
+include::{include-java}/observation/ObservationInstrumentingTests.java[tags=executor,indent=0]
+
+include::{include-java}/observation/ObservationInstrumentingTests.java[tags=thread_switching,indent=0]
+-----
+
+[[instrumentation_of_reactive_libraries]]
+== Instrumentation of Reactive Libraries
+
+In this section we'll discuss how to wrap Reactive libraries in Observations and how to use Reactor Context to safely propagate Observations between threads.
+
+[[instrumentation_of_reactive_libraries_after_reactor_3_5_3]]
+=== For Reactor 3.5.3 and After
+
+In Reactor 3.5.3 release (through this https://github.com/reactor/reactor-core/pull/3335[PR]) an option to turn on automated context propagation was added. To use this, please ensure that you're using the following projects at minimum in the following versions:
+
+- Reactor https://github.com/reactor/reactor-core/releases/tag/v3.5.7[3.5.7]
+- Micrometer Context-Propagation https://github.com/micrometer-metrics/context-propagation/releases/tag/v1.0.3[1.0.3]
+- Micrometer https://github.com/micrometer-metrics/micrometer/releases/tag/v1.10.8[1.10.8]
+- Micrometer Tracing https://github.com/micrometer-metrics/tracing/releases/tag/v1.0.7[1.0.7]
+
+To use the feature call the new Reactor's Hook method (e.g. in your `public static void main` method) like this
+
+[source,java]
+-----
+include::{include-java}/observation/ObservationInstrumentingTests.java[tags=reactor_hook,indent=0]
+-----
+
+This will automatically wrap Reactor internal mechanisms to propagate context between operators, threads etc. Usage of `tap` and `handle` or Context Propagation API is not required.
+
+Let's look at the following example.
+
+[source,java]
+-----
+include::{include-java}/observation/ObservationInstrumentingTests.java[tags=reactor_with_hook,indent=0]
+-----
+
+If performance of this approach is not satisfactory, please verify whether disabling the hook and explicitly using `handle` or `tap` operators improves the performance.
+
+[[instrumentation_of_reactive_libraries_before_reactor_3_5_3]]
+=== Before Reactor 3.5.3
+
+The preferred way of propagating elements through the Flux using Reactor is not via ``ThreadLocal``s but through Reactor Context. Reactor however gives you two operators, `tap()` and `handle()` where, if https://micrometer.io/docs/contextPropagation[Micrometer Context Propagation] library is on the classpath, it will set thread local values for you.
+
+Let's look at the following example.
+
+[source,java]
+-----
+include::{include-java}/observation/ObservationInstrumentingTests.java[tags=reactor,indent=0]
+-----
+
+[[instrumentation_of_http_communication]]
+== Instrumentation of HTTP Communication
+
+In order to instrument an HTTP-based communication we need to use the `RequestReplySenderContext` and `RequestReplyReceiverContext` for the client and server side respectively.
+
+As an example for the client side we will use a handler that instruments the HTTP request by adding a `foo:bar` header (if you have Micrometer Tracing on the classpath you could reuse the `PropagatingSenderTracingObservationHandler` and `PropagatingReceiverTracingObservationHandler` to propagate tracing context over the wire). Let's look at the example of such a handler.
+
+[source,java]
+-----
+include::{include-java}/observation/ObservationInstrumentingTests.java[tags=header_propagating_handler,indent=0]
+-----
+
+Let's look at the following of HTTP client side instrumentation that reuses the handler.
+
+[source,java]
+-----
+include::{include-java}/observation/ObservationInstrumentingTests.java[tags=http_client,indent=0]
+-----
+
+As an example for the server side we will use a handler that instruments the Observation by adding the `foo` low cardinality key with the value being the matched path from the HTTP request. Let's look at the example of such a handler.
+
+[source,java]
+-----
+include::{include-java}/observation/ObservationInstrumentingTests.java[tags=header_receiving_handler,indent=0]
+-----
+
+Let's look at the following of HTTP server side instrumentation that reuses the handler.
+
+[source,java]
+-----
+include::{include-java}/observation/ObservationInstrumentingTests.java[tags=http_server,indent=0]
+-----
+
+== Instrumentation of Messaging Communication
+
+To instrument messaging components you should proceed in the same way as you would with <<instrumentation_of_http_communication,HTTP-based communication>>, however instead of `RequestReplySenderContext` and `RequestReplyReceiverContext` you would use `SenderContext` and `ReceiverContext`. You can also set the `remoteServiceName` on a context to suggest the name of the broker (e.g. `kafka` or `rabbitmq`).

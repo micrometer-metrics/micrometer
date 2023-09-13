@@ -1,0 +1,85 @@
+= Micrometer SignalFx
+:toc:
+:sectnums:
+:system: signalfx
+
+SignalFx is a dimensional monitoring system SaaS with a full UI that operates on a push model. It has a rich set of alert "`detectors`".
+
+include::_install.adoc[]
+
+== Configuring
+
+The following example configures SignalFx:
+
+[source,java]
+----
+SignalFxConfig signalFxConfig = new SignalFxConfig() {
+    @Override
+    public String accessToken() {
+        return "MYTOKEN";
+    }
+
+    @Override
+    public String get(String k) {
+        return null; // accept the rest of the defaults
+    }
+};
+
+MeterRegistry registry = new SignalFxMeterRegistry(signalFxConfig, Clock.SYSTEM);
+----
+
+There are two distinct sources of API keys in SignalFx.
+
+`SignalFxConfig` is an interface with a set of default methods. If, in the implementation of `get(String k)`, rather than returning `null`, you  instead bind it to a property source, you can override the default configuration. For example, Micrometer's Spring Boot support binds properties that are prefixed with `management.metrics.export.signalfx` directly to the `SignalFxConfig`:
+
+[source,yml]
+----
+management.metrics.export.signalfx:
+    access-token: MYTOKEN
+
+    # The interval at which metrics are sent to Ganglia. See Duration.parse for the expected format.
+    # The default is 1 minute.
+    step: 1m
+----
+
+== Graphing
+
+This section serves as a quick start to rendering useful representations in SignalFx for metrics originating in Micrometer. See the https://docs.signalfx.com/en/latest/charts/index.html[SignalFx docs] for a far more complete reference of what is possible in SignalFx.
+
+=== Timers
+
+At each publishing interval, the SignalFx `Timer` produces several time series in SignalFx:
+
+* `$\{name}.avg`: A mean latency for the publishing interval.
+* `$\{name}.count`: Throughput per second over the publishing interval.
+* `$\{name}.totalTime`: Total time per second over the publishing interval (used with `count`) to create aggregable means.
+* `$\{name}.percentiles`: Micrometer calculated percentiles for the publishing interval. One time series is produced for each percentile, with a tag of `phi` in the range of [0,1].
+* `$\{name}.histogram`: One event is produced for each SLO boundary with a tag of 'le', indicating that it represents a cumulative count of events less than or equal to SLO boundaries over the publishing interval.
+
+To generate an aggregable view of latency in SignalFx, divide `totalTime` by `count`:
+
+image::implementations/signalfx-timer-latency-query.png[SignalFx-aggregable latency query]
+
+This is accomplished by adding signals for `$\{name}.totalTime` and `$\{name}.count`, adding a formula that divides them, and hiding the inputs to the formula.
+
+.Timer latency.
+image::implementations/signalfx-timer-latency.png[SignalFx-rendered timer]
+
+To generate a throughput chart, use the `$\{name}.count` signal:
+
+.Timer throughput.
+image::implementations/signalfx-timer-throughput.png[SignalFx-rendered timer throughput]
+
+To generate a plot of client-side percentiles, use the `$\{name}.percentiles` signal:
+
+.Timer Percentiles.
+image::implementations/signalfx-timer-percentiles.png[SignalFx-rendered percentiles]
+
+Note that these percentiles are _not aggregable_. The more dimensions you add to a timer, the less useful these values become.
+
+Finally, if you define SLO boundaries with the fluent builder for `Timer`, you can view throughput below certain SLO boundaries by using the `$\{name}.histogram` signal. In this example, we set SLO boundaries at 275 (green), 300 (blue), and 500 (purple) milliseconds for a simulated `Timer` that is recording samples normally distributed around 250 ms. These counts represent the rate/second of samples less than or equal to each SLO boundary.
+
+.Timer SLO boundaries.
+image::implementations/signalfx-timer-sla.png[SignalFx-rendered SLO boundaries]
+
+Where the lines converge at various points it is evident that no sample exceeded the 275 ms SLO boundary.
