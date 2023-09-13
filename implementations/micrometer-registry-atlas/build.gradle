@@ -1,7 +1,0 @@
-dependencies {
-    api project(':micrometer-core')
-
-    api 'com.netflix.spectator:spectator-reg-atlas'
-
-    testImplementation project(':micrometer-test')
-}

@@ -1,8 +1,0 @@
-dependencies {
-    api project(':micrometer-core')
-
-    api 'io.dropwizard.metrics:metrics-graphite'
-
-    testImplementation project(':micrometer-test')
-    testImplementation 'io.projectreactor.netty:reactor-netty-core'
-}
