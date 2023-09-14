@@ -38,5 +38,5 @@ runtime:
     format: pretty
 ui:
   bundle:
-    url: https://github.com/spring-io/antora-ui-spring/releases/download/v0.3.5/ui-bundle.zip
+    url: https://github.com/rwinch/antora-ui-micrometer/releases/download/latest/ui-bundle.zip
 
