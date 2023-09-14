@@ -23,7 +23,7 @@ gradleEnterprise {
     server = 'https://ge.micrometer.io'
 }
 
-include 'docs', 'micrometer-commons', 'micrometer-core', 'micrometer-observation'
+include 'micrometer-commons', 'micrometer-core', 'micrometer-observation'
 
 ['core', 'boot2', 'boot2-reactive', 'spring-integration', 'hazelcast', 'hazelcast3', 'javalin', 'jersey3'].each { sample ->
     include "micrometer-samples-$sample"
@@ -44,5 +44,5 @@ include 'micrometer-test', 'micrometer-observation-test'
 
 include 'micrometer-bom'
 include 'micrometer-jetty11'
-
 include 'micrometer-osgi-test'
+include 'docs'

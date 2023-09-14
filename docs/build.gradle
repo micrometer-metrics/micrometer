@@ -1,11 +1,48 @@
-plugins {
-    id 'java'
-    id 'io.spring.antora.generate-antora-yml' version '0.0.1'
-    id 'org.antora' version '1.0.0'
-    id 'java-library'
+buildscript {
+	dependencyLocking {
+		lockAllConfigurations()
+	}
+
+	repositories {
+		mavenCentral()
+		gradlePluginPortal()
+	}
+
+	dependencies {
+		classpath 'io.spring.gradle.antora:spring-antora-plugin:0.0.1'
+		classpath 'org.antora:gradle-antora-plugin:1.0.0'
+	}
 }
 
-description = "Micrometer Docs"
+apply plugin: 'java'
+apply plugin: 'io.spring.antora.generate-antora-yml'
+apply plugin: 'org.antora'
+
+description = 'Micrometer Docs'
+
+repositories {
+   mavenCentral()
+}
+
+dependencies {
+    implementation project(':micrometer-core')
+    implementation 'io.micrometer:context-propagation'
+    implementation 'ch.qos.logback:logback-classic'
+    implementation 'org.slf4j:slf4j-api'
+
+    testImplementation project(':micrometer-test')
+    testImplementation project(':micrometer-observation-test')
+    testImplementation 'org.aspectj:aspectjweaver'
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testImplementation 'org.mockito:mockito-inline'
+    testImplementation 'org.assertj:assertj-core'
+    testImplementation 'org.springframework:spring-context'
+    testImplementation 'io.projectreactor:reactor-core'
+    testImplementation 'io.projectreactor:reactor-test'
+    testImplementation 'io.netty:netty-transport'
+    testImplementation 'org.apache.httpcomponents.client5:httpclient5'
+    testImplementation 'io.javalin:javalin:latest.release'
+}
 
 antora {
 	version = '3.2.0-alpha.2'
@@ -26,23 +63,18 @@ antora {
 	]
 }
 
-
-tasks.named("generateAntoraYml") {
-    asciidocAttributes = project.provider( {
-        return  ["micrometer-version": project.version.toString()]
-    } )
+tasks.named('generateAntoraYml') {
+    asciidocAttributes = project.provider {
+        return  ['micrometer-version': project.version.toString()]
+    }
 }
 
-tasks.create("generateAntoraResources") {
+tasks.create('generateAntoraResources') {
     dependsOn 'generateAntoraYml'
 }
 
-tasks.named("antora") {
-    dependsOn "generateAntoraResources"
-}
-
-tasks.named("antora") {
-    dependsOn "test"
+tasks.named('antora') {
+    dependsOn 'generateAntoraResources', 'test'
 }
 
 jar {
@@ -53,27 +85,14 @@ javadoc {
     enabled = false
 }
 
-repositories {
-   mavenCentral()
+tasks.withType(AbstractPublishToMaven).configureEach {
+	enabled = false
 }
 
-dependencies {
-    implementation project(":micrometer-core")
-    implementation 'io.micrometer:context-propagation'
-    implementation 'ch.qos.logback:logback-classic'
-    implementation 'org.slf4j:slf4j-api'
-
-    testImplementation project(":micrometer-test")
-    testImplementation project(":micrometer-observation-test")
-    testImplementation 'org.aspectj:aspectjweaver'
-    testImplementation 'org.junit.jupiter:junit-jupiter'
-    testImplementation 'org.mockito:mockito-inline'
-    testImplementation 'org.assertj:assertj-core'
-    testImplementation 'org.springframework:spring-context'
-    testImplementation 'io.projectreactor:reactor-core'
-    testImplementation 'io.projectreactor:reactor-test'
-    testImplementation 'io.netty:netty-transport'
-    testImplementation 'org.apache.httpcomponents.client5:httpclient5'
-    testImplementation 'io.javalin:javalin:latest.release'
+downloadBaseline {
+	enabled = false
 }
 
+japicmp {
+	enabled = false
+}
