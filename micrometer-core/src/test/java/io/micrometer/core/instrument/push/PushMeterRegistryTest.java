@@ -39,7 +39,6 @@ import java.util.stream.LongStream;
 
 import static java.util.concurrent.TimeUnit.*;
 import static org.assertj.core.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
 
 /**
  * Tests for {@link PushMeterRegistry}.
