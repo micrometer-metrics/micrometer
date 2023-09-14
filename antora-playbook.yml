@@ -44,3 +44,4 @@ runtime:
 ui:
   bundle:
     url: https://github.com/rwinch/antora-ui-micrometer/releases/download/latest/ui-bundle.zip
+    snapshot: true 
