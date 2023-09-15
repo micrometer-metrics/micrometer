@@ -30,6 +30,7 @@ Micrometer Observation is used to instrument various projects. Below you can fin
 | Reactor Netty | https://projectreactor.io/docs/netty/release/reference/index.html#_tracing_3[Docs]
 | Redisson | https://github.com/redisson/redisson/issues/4976[Issue],
 https://github.com/redisson/redisson/wiki/16.-Observability#162-tracing[Docs]
+| Retrofit | https://github.com/square/retrofit/issues/3930[Issue (done via OkHttp instrumentation)]
 | RSocket | https://github.com/rsocket/rsocket-java/tree/master/rsocket-micrometer/src/main/java/io/rsocket/micrometer/observation[Repo]
 | Spring Amqp | https://docs.spring.io/spring-amqp/docs/current/reference/html/index.html#observation[Docs]
 | Spring Batch | https://docs.spring.io/spring-batch/docs/current/reference/html/monitoring-and-metrics.html#tracing[Docs]
