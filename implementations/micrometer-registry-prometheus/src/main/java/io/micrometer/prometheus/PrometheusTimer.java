@@ -111,7 +111,7 @@ public class PrometheusTimer extends AbstractTimer {
         max.record(nanoAmount, TimeUnit.NANOSECONDS);
 
         if (histogram != null) {
-            histogram.recordLong(TimeUnit.NANOSECONDS.convert(amount, unit));
+            histogram.recordLong(nanoAmount);
         }
 
         if (!histogramExemplarsEnabled && exemplarSampler != null) {

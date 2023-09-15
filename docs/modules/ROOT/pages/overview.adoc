@@ -1,0 +1,8 @@
+[[overview]]
+= Micrometer Overview
+:docinfo1:
+
+Micrometer provides a simple facade over the instrumentation clients for the most popular observability systems, allowing you to instrument your JVM-based application code without vendor lock-in.
+Think SLF4J, but for application observability! Data recorded by Micrometer are intended to be used to observe, alert, and react to the current/recent operational state of your environment.
+
+Join the discussion with any comments and feature requests on Micrometer's public https://slack.micrometer.io[Slack Workspace].

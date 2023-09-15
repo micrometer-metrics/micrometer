@@ -1,5 +1,5 @@
 plugins {
-    id "org.jetbrains.kotlin.jvm" version "1.7.10"
+    id "org.jetbrains.kotlin.jvm" version "1.7.21"
     id 'me.champeau.mrjar' version "0.1.1"
 }
 
@@ -198,8 +198,10 @@ dependencies {
     }
     testImplementation("org.apache.maven.resolver:maven-resolver-connector-basic:latest.release")
     // gRPC
-    testImplementation("io.grpc:grpc-core")
-    testImplementation("io.grpc:grpc-testing-proto")
+    testImplementation 'io.grpc:grpc-core'
+    testImplementation 'io.grpc:grpc-inprocess'
+    testImplementation 'io.grpc:grpc-testing-proto'
+    testImplementation 'com.squareup.retrofit2:retrofit'
 }
 
 task shenandoahTest(type: Test) {

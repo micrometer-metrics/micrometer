@@ -1,0 +1,31 @@
+[[context-propagation-usage-examples]]
+== Usage Examples
+
+Below you will find a list of examples of using the Context Propagation library.
+
+[[context-propagation-usage-examples-thread-local]]
+=== `ThreadLocal` Population
+
+Below you can find a holder for `ThreadLocal` values.
+
+.ObservationThreadLocalHolder
+[source,java,subs=+attributes]
+-----
+include::{include-java}/context/ObservationThreadLocalHolder.java[tags=holder,indent=0]
+-----
+
+Below you can find a `ThreadLocalAccessor` that interacts with the holder.
+
+.ObservationThreadLocalAccessor
+[source,java,subs=+attributes]
+-----
+include::{include-java}/context/ObservationThreadLocalAccessor.java[tags=accessor,indent=0]
+-----
+
+Below you can find an example of how to store and restore thread local values via `ThreadLocalAccessor`, `ContextSnapshot` and `ContextRegistry`.
+
+[source,java,subs=+attributes]
+-----
+include::{include-java}/context/DefaultContextSnapshotTests.java[tags=simple,indent=0]
+-----
+

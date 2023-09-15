@@ -1,0 +1,138 @@
+[[meter-filters]]
+= Meter Filters
+
+You can configure each registry with meter filters, which give you greater control over how and when meters are registered and what kinds of statistics they emit. Meter filters serve three basic functions:
+
+1. **Deny** (or **Accept**) meters being registered.
+2. **Transform** meter IDs (for example, changing the name, adding or removing tags, and changing description or base units).
+3. **Configure** distribution statistics for some meter types.
+
+Implementations of `MeterFilter` are added to the registry programmatically:
+
+====
+[source, java]
+----
+registry.config()
+    .meterFilter(MeterFilter.ignoreTags("too.much.information"))
+    .meterFilter(MeterFilter.denyNameStartsWith("jvm"));
+----
+====
+
+Meter filters are applied in order, and the results of transforming or configuring a meter are chained.
+
+== Deny or Accept Meters
+
+The verbose form of an accept or deny filter is:
+
+====
+[source, java]
+----
+new MeterFilter() {
+    @Override
+    public MeterFilterReply accept(Meter.Id id) {
+       if(id.getName().contains("test")) {
+          return MeterFilterReply.DENY;
+       }
+       return MeterFilterReply.NEUTRAL;
+    }
+}
+----
+====
+
+`MeterFilterReply` has three possible states:
+
+* `DENY`: Do not let this meter be registered. When you try to register a meter against a registry and the filter returns `DENY`, the registry returns a NOOP version of that meter (for example, `NoopCounter` or `NoopTimer`). Your code can continue to interact with the NOOP meter, but anything recorded to it is discarded immediately with minimal overhead.
+* `NEUTRAL`: If no other meter filter has returned `DENY`, registration of meters proceeds normally.
+* `ACCEPT`: If a filter returns `ACCEPT`, the meter is immediately registered without interrogating the accept methods of any further filters.
+
+=== Convenience Methods
+
+`MeterFilter` provides several convenience static builders for deny and accept type filters:
+
+* `accept()`: Accept every meter, overriding the decisions of any filters that follow.
+* `accept(Predicate<Meter.Id>)`: Accept any meter matching the predicate.
+* `acceptNameStartsWith(String)`: Accept every meter with a matching prefix.
+* `deny()`: Deny every meter, overriding the decisions of any filters that follow.
+* `denyNameStartsWith(String)`: Deny every meter with a matching prefix. All `MeterBinder` implementations provided by Micrometer have names with common prefixes to allow for easy grouping visualization in UIs but also to make them easy to disable or enable as a group with a prefix. For example, you can deny all JVM metrics with `MeterFilter.denyNameStartsWith("jvm")`.
+* `deny(Predicate<Meter.Id>)`: Deny any meter that matches the predicate.
+* `maximumAllowableMetrics(int)`: Deny any meter after the registry has reached a certain number of meters.
+* `maximumAllowableTags(String meterNamePrefix, String tagKey, int maximumTagValues, MeterFilter onMaxReached)`: Places an upper bound on the number of tags produced by matching series.
+
+**Whitelisting** only a certain group of metrics is a particularly common case for monitoring systems that are _expensive_. This can be achieved with a static call:
+
+* `denyUnless(Predicate<Meter.Id>)`: Deny all meters that _do not_ match the predicate.
+
+=== Chaining Deny Accept Meters
+
+Meter filters are applied in the order in which they are configured on the registry, so it is possible to stack deny and accept filters to achieve more complex rules:
+
+====
+[source, java]
+----
+registry.config()
+    .meterFilter(MeterFilter.acceptNameStartsWith("http"))
+    .meterFilter(MeterFilter.deny()); <1>
+----
+====
+
+This achieves another form of whitelisting by stacking two filters together. Only `http` metrics are allowed to exist in this registry.
+
+== Transforming metrics
+
+The following example shows a transform filter:
+
+====
+[source, java]
+----
+new MeterFilter() {
+    @Override
+    public Meter.Id map(Meter.Id id) {
+       if(id.getName().startsWith("test")) {
+          return id.withName("extra." + id.getName()).withTag("extra.tag", "value");
+       }
+       return id;
+    }
+}
+----
+====
+
+This filter adds a name prefix and an additional tag conditionally to meters starting with a name of `test`.
+
+`MeterFilter` provides convenience builders for many common transformation cases:
+
+* `commonTags(Iterable<Tag>)`: Adds a set of tags to all metrics. Adding common tags for application name, host, region, and others is a highly recommended practice.
+* `ignoreTags(String...)`: Drops matching tag keys from every meter. This is particularly useful when a tag provably comes to have
+too high cardinality and starts stressing your monitoring system or costing too much but you cannot change all the instrumentation points quickly.
+* `replaceTagValues(String tagKey, Function<String, String> replacement, String... exceptions)`: Replace tag values according to the provided mapping for all matching tag keys. You can use this to reduce the total cardinality of a tag by mapping some portion of tag values to something else.
+* `renameTag(String meterNamePrefix, String fromTagKey, String toTagKey)`: Rename a tag key for every metric that begins with a given prefix.
+
+== Configuring Distribution Statistics
+
+`Timer` and `DistributionSummary` contain a set of optional distribution statistics (in addition to the basics of count, total, and max) that you can configure through filters. These distribution statistics include pre-computed percentiles, SLOs, and histograms.
+
+====
+[source, java]
+----
+new MeterFilter() {
+    @Override
+    public DistributionStatisticConfig configure(Meter.Id id, DistributionStatisticConfig config) {
+        if (id.getName().startsWith(prefix)) {
+            return DistributionStatisticConfig.builder()
+                    .publishPercentiles(0.9, 0.95)
+                    .build()
+                    .merge(config);
+        }
+        return config;
+    }
+};
+----
+====
+
+Generally, you should create a new `DistributionStatisticConfig` with only the pieces you wish to configure and then `merge` it with the input configuration. This lets you drop down on registry-provided defaults for distribution statistics and to chain multiple filters together, each configuring some part of the distribution statistics (for example, you might want a 100ms SLO for all HTTP requests but only percentile histograms on a few critical endpoints).
+
+`MeterFilter` provides convenience builders for:
+
+* `maxExpected(Duration/long)`: Governs the upper bound of percentile histogram buckets shipped from a timer or summary.
+* `minExpected(Duration/long)`: Governs the lower bound of percentile histogram buckets shipped from a timer or summary.
+
+Spring Boot offers property-based filters for configuring SLOs, percentiles, and percentile histograms by name prefix.

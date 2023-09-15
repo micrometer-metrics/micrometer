@@ -20,8 +20,8 @@ import io.micrometer.common.util.StringUtils;
 import io.micrometer.common.util.internal.logging.InternalLogger;
 import io.micrometer.common.util.internal.logging.InternalLoggerFactory;
 import io.micrometer.common.util.internal.logging.WarnThenDebugLogger;
-import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.distribution.HistogramSnapshot;
 import io.micrometer.core.instrument.distribution.ValueAtPercentile;
 import io.micrometer.core.ipc.http.HttpSender;
@@ -314,7 +314,24 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
     }
 
     Stream<String> toLongTaskTimerLine(LongTaskTimer meter, Map<String, String> seenMetadata) {
-        return toSummaryLine(meter, seenMetadata, meter.takeSnapshot(), getBaseTimeUnit());
+        HistogramSnapshot snapshot = meter.takeSnapshot();
+
+        long count = snapshot.count();
+        if (count == 0) {
+            logger.debug("Timer with 0 count dropped: {}", meter.getId().getName());
+            return Stream.empty();
+        }
+        else if (count == 1) {
+            // In cases where the snapshot has only one value, often the min/max and sum
+            // are not the same due to how this data is recorded. In the Dynatrace API,
+            // this might lead to rejections, because the ingested data's validity is
+            // checked. It is not possible to have a Dynatrace summary object with a
+            // single value where min/max and sum are not equal.
+            double total = snapshot.total(getBaseTimeUnit());
+            return createSummaryLine(meter, seenMetadata, total, total, total, count);
+        }
+
+        return toSummaryLine(meter, seenMetadata, snapshot, getBaseTimeUnit());
     }
 
     Stream<String> toTimeGaugeLine(TimeGauge meter, Map<String, String> seenMetadata) {
@@ -327,13 +344,25 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
 
     Stream<String> toFunctionTimerLine(FunctionTimer meter, Map<String, String> seenMetadata) {
         long count = (long) meter.count();
-        if (count < 1) {
+        double total = meter.totalTime(getBaseTimeUnit());
+
+        if (count == 0) {
             logger.debug("Timer with 0 count dropped: {}", meter.getId().getName());
             return Stream.empty();
         }
-        double total = meter.totalTime(getBaseTimeUnit());
-        double average = meter.mean(getBaseTimeUnit());
+        else if (count == 1) {
+            // Between calling count, totalTime, and mean values can be recorded so the
+            // reported values might be inconsistent. In the Dynatrace API,
+            // this might lead to rejections, because the ingested data's validity is
+            // checked. It is not possible to have a Dynatrace summary object with a
+            // single value where min/max and sum are not equal.
+            return createSummaryLine(meter, seenMetadata, total, total, total, count);
+        }
 
+        // Similarly, to the situation above, we are calculating avg here instead of
+        // calling mean to avoid inconsistencies, i.e.: data was recorded between
+        // calling count, totalTime, and mean.
+        double average = total / count;
         return createSummaryLine(meter, seenMetadata, average, average, total, count);
     }
 

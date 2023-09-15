@@ -1271,22 +1271,19 @@ public interface Observation extends ObservationView {
          * @return event
          */
         static Event of(String name, String contextualName) {
-            return new Event() {
-                @Override
-                public String getName() {
-                    return name;
-                }
+            return new SimpleEvent(name, contextualName);
+        }
 
-                @Override
-                public String getContextualName() {
-                    return contextualName;
-                }
-
-                @Override
-                public String toString() {
-                    return "event.name='" + getName() + "', event.contextualName='" + getContextualName() + '\'';
-                }
-            };
+        /**
+         * Creates an {@link Event} for the given names and timestamp (wall time).
+         * @param name The name of the event (should have low cardinality).
+         * @param contextualName The contextual name of the event (can have high
+         * cardinality).
+         * @param wallTime Wall time in milliseconds since the epoch
+         * @return event
+         */
+        static Event of(String name, String contextualName, long wallTime) {
+            return new SimpleEvent(name, contextualName, wallTime);
         }
 
         /**
@@ -1303,6 +1300,16 @@ public interface Observation extends ObservationView {
          * @return the name of the event.
          */
         String getName();
+
+        /**
+         * Wall time in milliseconds since the epoch. Typically equivalent to
+         * System.currentTimeMillis. Should not be used to determine durations. Used for
+         * timestamping events that happened during Observations.
+         * @return Wall time in milliseconds since the epoch
+         */
+        default long getWallTime() {
+            return 0;
+        }
 
         /**
          * Returns the contextual name of the event. You can use {@code %s} to represent
