@@ -107,7 +107,11 @@ class ObservationThreadLocalAccessorTests {
             try (Observation.Scope scope2 = child.openScope()) {
                 thenCurrentObservationHasParent(parent, child);
                 then(child.getEnclosingScope()).isSameAs(scope2);
-                container = ContextSnapshot.captureAllUsing(key -> true, registry);
+                container = ContextSnapshotFactory.builder()
+                    .captureKeyPredicate(key -> true)
+                    .contextRegistry(registry)
+                    .build()
+                    .captureAll();
             }
         }
 

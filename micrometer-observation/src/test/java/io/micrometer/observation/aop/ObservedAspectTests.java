@@ -20,6 +20,7 @@ import io.micrometer.common.lang.NonNull;
 import io.micrometer.common.lang.Nullable;
 import io.micrometer.context.ContextRegistry;
 import io.micrometer.context.ContextSnapshot;
+import io.micrometer.context.ContextSnapshotFactory;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationConvention;
 import io.micrometer.observation.ObservationTextPublisher;
@@ -351,7 +352,11 @@ class ObservedAspectTests {
         @Observed(name = "test.async")
         CompletableFuture<String> async(FakeAsyncTask fakeAsyncTask) {
             System.out.println("async");
-            ContextSnapshot contextSnapshot = ContextSnapshot.captureAllUsing(o -> true, ContextRegistry.getInstance());
+            ContextSnapshot contextSnapshot = ContextSnapshotFactory.builder()
+                .captureKeyPredicate(key -> true)
+                .contextRegistry(ContextRegistry.getInstance())
+                .build()
+                .captureAll();
             return CompletableFuture.supplyAsync(fakeAsyncTask,
                     contextSnapshot.wrapExecutor(Executors.newSingleThreadExecutor()));
         }
@@ -373,7 +378,11 @@ class ObservedAspectTests {
 
         CompletableFuture<String> async(FakeAsyncTask fakeAsyncTask) {
             System.out.println("async");
-            ContextSnapshot contextSnapshot = ContextSnapshot.captureAllUsing(o -> true, ContextRegistry.getInstance());
+            ContextSnapshot contextSnapshot = ContextSnapshotFactory.builder()
+                .captureKeyPredicate(key -> true)
+                .contextRegistry(ContextRegistry.getInstance())
+                .build()
+                .captureAll();
             return CompletableFuture.supplyAsync(fakeAsyncTask,
                     contextSnapshot.wrapExecutor(Executors.newSingleThreadExecutor()));
         }
