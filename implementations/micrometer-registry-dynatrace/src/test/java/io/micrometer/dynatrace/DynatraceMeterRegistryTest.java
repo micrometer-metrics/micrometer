@@ -130,8 +130,7 @@ class DynatraceMeterRegistryTest {
 
         assertThat(request2.getEntity()).asString()
             .hasLineCount(2)
-            .containsIgnoringNewLines(
-                    "my.timer,dt.metrics.source=micrometer gauge,min=33,max=44,sum=77,count=2 " + clock.wallTime(),
+            .contains("my.timer,dt.metrics.source=micrometer gauge,min=33,max=44,sum=77,count=2 " + clock.wallTime(),
                     "#my.timer gauge dt.meta.unit=milliseconds");
     }
 
@@ -148,8 +147,7 @@ class DynatraceMeterRegistryTest {
 
         verify(httpClient).send(assertArg((request -> assertThat(request.getEntity()).asString()
             .hasLineCount(2)
-            .containsIgnoringNewLines(
-                    "my.timer,dt.metrics.source=micrometer gauge,min=22,max=55,sum=77,count=2 " + clock.wallTime(),
+            .contains("my.timer,dt.metrics.source=micrometer gauge,min=22,max=55,sum=77,count=2 " + clock.wallTime(),
                     "#my.timer gauge dt.meta.unit=milliseconds"))));
     }
 
@@ -166,8 +164,7 @@ class DynatraceMeterRegistryTest {
 
         verify(httpClient).send(assertArg(request -> assertThat(request.getEntity()).asString()
             .hasLineCount(2)
-            .containsIgnoringNewLines(
-                    "my.timer,dt.metrics.source=micrometer gauge,min=44,max=44,sum=44,count=1 " + clock.wallTime(),
+            .contains("my.timer,dt.metrics.source=micrometer gauge,min=44,max=44,sum=44,count=1 " + clock.wallTime(),
                     "#my.timer gauge dt.meta.unit=milliseconds")));
 
         // reset for next export interval
@@ -192,8 +189,7 @@ class DynatraceMeterRegistryTest {
 
         verify(httpClient).send(assertArg(request -> assertThat(request.getEntity()).asString()
             .hasLineCount(2)
-            .containsIgnoringNewLines(
-                    "my.timer,dt.metrics.source=micrometer gauge,min=33,max=33,sum=33,count=1 " + clock.wallTime(),
+            .contains("my.timer,dt.metrics.source=micrometer gauge,min=33,max=33,sum=33,count=1 " + clock.wallTime(),
                     "#my.timer gauge dt.meta.unit=milliseconds")));
     }
 

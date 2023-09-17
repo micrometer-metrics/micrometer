@@ -195,8 +195,8 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
     private Stream<String> toMetricLines(Meter meter, Map<String, String> seenMetadata) {
         return meter.match(m -> toGaugeLine(m, seenMetadata), m -> toCounterLine(m, seenMetadata),
                 m -> toTimerLine(m, seenMetadata), m -> toDistributionSummaryLine(m, seenMetadata),
-                m -> toLongTaskTimerLine(m, seenMetadata), m -> toTimeGaugeLine(m, seenMetadata),
-                m -> toFunctionCounterLine(m, seenMetadata), m -> toFunctionTimerLine(m, seenMetadata),
+                m -> toLongTaskTimerLine(m, seenMetadata), m -> toGaugeLine(m, seenMetadata),
+                m -> toCounterLine(m, seenMetadata), m -> toFunctionTimerLine(m, seenMetadata),
                 m -> toGaugeLine(m, seenMetadata));
     }
 
@@ -235,9 +235,8 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
         return null;
     }
 
-    Stream<String> toCounterLine(Counter counter, Map<String, String> seenMetadata) {
-        return toMeterLine(counter,
-                (Meter meter, Measurement measurement) -> this.createCounterLine(meter, seenMetadata, measurement));
+    Stream<String> toCounterLine(Meter counter, Map<String, String> seenMetadata) {
+        return toMeterLine(counter, (meter, measurement) -> createCounterLine(meter, seenMetadata, measurement));
     }
 
     private String createCounterLine(Meter meter, Map<String, String> seenMetadata, Measurement measurement) {
@@ -344,14 +343,6 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
         return toSummaryLine(meter, seenMetadata, snapshot, getBaseTimeUnit());
     }
 
-    Stream<String> toTimeGaugeLine(TimeGauge meter, Map<String, String> seenMetadata) {
-        return toMeterLine(meter, (theMeter, measurement) -> createGaugeLine(theMeter, seenMetadata, measurement));
-    }
-
-    Stream<String> toFunctionCounterLine(FunctionCounter meter, Map<String, String> seenMetadata) {
-        return toMeterLine(meter, (theMeter, measurement) -> createCounterLine(theMeter, seenMetadata, measurement));
-    }
-
     Stream<String> toFunctionTimerLine(FunctionTimer meter, Map<String, String> seenMetadata) {
         long count = (long) meter.count();
         if (count == 0) {
@@ -374,10 +365,6 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
         // calling count, totalTime, and mean.
         double average = total / count;
         return createSummaryLine(meter, seenMetadata, average, average, total, count);
-    }
-
-    Stream<String> toMeterLine(Meter meter, Map<String, String> seenMetadata) {
-        return toMeterLine(meter, (theMeter, measurement) -> createGaugeLine(theMeter, seenMetadata, measurement));
     }
 
     private Stream<String> toMeterLine(Meter meter, BiFunction<Meter, Measurement, String> measurementConverter) {
