@@ -21,8 +21,7 @@ import io.micrometer.observation.ObservationConvention;
 
 /**
  * {@link ObservationConvention} interface for
- * {@link JmsObservationDocumentation#JMS_MESSAGE_PUBLISH JMS message publications}
- * operations.
+ * {@link JmsObservationDocumentation#JMS_MESSAGE_PUBLISH JMS message process} operations.
  *
  * @author Brian Clozel
  * @since 1.12.0

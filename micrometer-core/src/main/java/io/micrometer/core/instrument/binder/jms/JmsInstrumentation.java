@@ -63,11 +63,11 @@ public abstract class JmsInstrumentation {
     }
 
     /**
-     * Instrument the {@link Session} given as argument for observability and records
+     * Instrument the {@link Session} given as argument for observability and record
      * observations using the provided Observation registry.
-     * @param session the target session to proxy for instrumentation.
+     * @param session the target session to proxy for instrumentation
      * @param registry the Observation registry to use
-     * @return the instrumented session that should be used to record observations.
+     * @return the instrumented session that should be used to record observations
      */
     public static Session instrumentSession(Session session, ObservationRegistry registry) {
         SessionInvocationHandler handler = new SessionInvocationHandler(session, registry);
