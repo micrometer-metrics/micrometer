@@ -489,8 +489,13 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
             return;
         }
 
-        String metadataLine = metadataBuilder.build();
         if (metadataBuilder == null) {
+            return;
+        }
+
+        String metadataLine = metadataBuilder.build();
+
+        if (metadataLine == null){
             return;
         }
 
