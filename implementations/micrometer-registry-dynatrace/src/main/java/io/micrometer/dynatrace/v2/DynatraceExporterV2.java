@@ -224,7 +224,7 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
             }
             MetricLineBuilder.GaugeStep metricBuilder = createMetricBuilder(meter).gauge();
 
-            storeMetadataLine(createMetadataBuilder(metricBuilder, meter), seenMetadata);
+            storeMetadataLine(createMetadataStep(metricBuilder, meter), seenMetadata);
 
             return metricBuilder.value(value).timestamp(Instant.ofEpochMilli(clock.wallTime())).build();
         }
@@ -244,7 +244,7 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
         try {
             MetricLineBuilder.CounterStep metricBuilder = createMetricBuilder(meter).count();
 
-            storeMetadataLine(createMetadataBuilder(metricBuilder, meter), seenMetadata);
+            storeMetadataLine(createMetadataStep(metricBuilder, meter), seenMetadata);
 
             return metricBuilder.delta(measurement.getValue())
                 .timestamp(Instant.ofEpochMilli(clock.wallTime()))
@@ -301,7 +301,7 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
         try {
             MetricLineBuilder.GaugeStep metricBuilder = createMetricBuilder(meter).gauge();
 
-            storeMetadataLine(createMetadataBuilder(metricBuilder, meter), seenMetadata);
+            storeMetadataLine(createMetadataStep(metricBuilder, meter), seenMetadata);
 
             return Stream.of(metricBuilder.summary(min, max, total, count)
                 .timestamp(Instant.ofEpochMilli(clock.wallTime()))
@@ -466,13 +466,13 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
         }
     }
 
-    private MetricLineBuilder.MetadataStep createMetadataBuilder(MetricLineBuilder.GaugeStep metricBuilder,
-            Meter meter) {
+    private MetricLineBuilder.MetadataStep createMetadataStep(MetricLineBuilder.GaugeStep metricBuilder,
+                                                              Meter meter) {
         return enrichMetadataBuilder(metricBuilder.metadata(), meter);
     }
 
-    private MetricLineBuilder.MetadataStep createMetadataBuilder(MetricLineBuilder.CounterStep metricBuilder,
-            Meter meter) {
+    private MetricLineBuilder.MetadataStep createMetadataStep(MetricLineBuilder.CounterStep metricBuilder,
+                                                              Meter meter) {
         return enrichMetadataBuilder(metricBuilder.metadata(), meter);
     }
 
@@ -481,7 +481,7 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
         return metadataBuilder.description(meter.getId().getDescription()).unit(meter.getId().getBaseUnit());
     }
 
-    private void storeMetadataLine(MetricLineBuilder.MetadataStep metadataBuilder, Map<String, String> seenMetadata)
+    private void storeMetadataLine(MetricLineBuilder.MetadataStep metadataStep, Map<String, String> seenMetadata)
             throws MetricException {
         // if the config to export metadata is turned off, the seenMetadata map will be
         // null.
@@ -489,11 +489,11 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
             return;
         }
 
-        if (metadataBuilder == null) {
+        if (metadataStep == null) {
             return;
         }
 
-        String metadataLine = metadataBuilder.build();
+        String metadataLine = metadataStep.build();
 
         if (metadataLine == null){
             return;
