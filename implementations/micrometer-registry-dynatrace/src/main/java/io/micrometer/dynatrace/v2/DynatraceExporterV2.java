@@ -246,9 +246,7 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
 
             storeMetadataLine(createMetadataStep(counterStep, meter), seenMetadata);
 
-            return counterStep.delta(measurement.getValue())
-                .timestamp(Instant.ofEpochMilli(clock.wallTime()))
-                .build();
+            return counterStep.delta(measurement.getValue()).timestamp(Instant.ofEpochMilli(clock.wallTime())).build();
         }
         catch (MetricException e) {
             logger.warn(METER_EXCEPTION_LOG_FORMAT, meter.getId(), e.getMessage());
@@ -466,18 +464,16 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
         }
     }
 
-    private MetricLineBuilder.MetadataStep createMetadataStep(MetricLineBuilder.GaugeStep gaugeStep,
-                                                              Meter meter) {
+    private MetricLineBuilder.MetadataStep createMetadataStep(MetricLineBuilder.GaugeStep gaugeStep, Meter meter) {
         return enrichMetadataStep(gaugeStep.metadata(), meter);
     }
 
-    private MetricLineBuilder.MetadataStep createMetadataStep(MetricLineBuilder.CounterStep counterStep,
-                                                              Meter meter) {
+    private MetricLineBuilder.MetadataStep createMetadataStep(MetricLineBuilder.CounterStep counterStep, Meter meter) {
         return enrichMetadataStep(counterStep.metadata(), meter);
     }
 
     private MetricLineBuilder.MetadataStep enrichMetadataStep(MetricLineBuilder.MetadataStep metadataStep,
-                                                              Meter meter) {
+            Meter meter) {
         return metadataStep.description(meter.getId().getDescription()).unit(meter.getId().getBaseUnit());
     }
 
@@ -495,7 +491,7 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
 
         String metadataLine = metadataStep.build();
 
-        if (metadataLine == null){
+        if (metadataLine == null) {
             return;
         }
 
