@@ -222,11 +222,11 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
                         meter.getId().getName()));
                 return null;
             }
-            MetricLineBuilder.GaugeStep metricBuilder = createMetricBuilder(meter).gauge();
+            MetricLineBuilder.GaugeStep gaugeStep = createTypeStep(meter).gauge();
 
-            storeMetadataLine(createMetadataStep(metricBuilder, meter), seenMetadata);
+            storeMetadataLine(createMetadataStep(gaugeStep, meter), seenMetadata);
 
-            return metricBuilder.value(value).timestamp(Instant.ofEpochMilli(clock.wallTime())).build();
+            return gaugeStep.value(value).timestamp(Instant.ofEpochMilli(clock.wallTime())).build();
         }
         catch (MetricException e) {
             logger.warn(METER_EXCEPTION_LOG_FORMAT, meter.getId(), e.getMessage());
@@ -242,11 +242,11 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
 
     private String createCounterLine(Meter meter, Map<String, String> seenMetadata, Measurement measurement) {
         try {
-            MetricLineBuilder.CounterStep metricBuilder = createMetricBuilder(meter).count();
+            MetricLineBuilder.CounterStep counterStep = createTypeStep(meter).count();
 
-            storeMetadataLine(createMetadataStep(metricBuilder, meter), seenMetadata);
+            storeMetadataLine(createMetadataStep(counterStep, meter), seenMetadata);
 
-            return metricBuilder.delta(measurement.getValue())
+            return counterStep.delta(measurement.getValue())
                 .timestamp(Instant.ofEpochMilli(clock.wallTime()))
                 .build();
         }
@@ -299,7 +299,7 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
     private Stream<String> createSummaryLine(Meter meter, Map<String, String> seenMetadata, double min, double max,
             double total, long count) {
         try {
-            MetricLineBuilder.GaugeStep metricBuilder = createMetricBuilder(meter).gauge();
+            MetricLineBuilder.GaugeStep metricBuilder = createTypeStep(meter).gauge();
 
             storeMetadataLine(createMetadataStep(metricBuilder, meter), seenMetadata);
 
@@ -391,14 +391,14 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
             .filter(Objects::nonNull);
     }
 
-    private MetricLineBuilder.TypeStep createMetricBuilder(Meter meter) throws MetricException {
-        MetricLineBuilder.TypeStep metricLineBuilder = MetricLineBuilder.create(preConfiguration)
+    private MetricLineBuilder.TypeStep createTypeStep(Meter meter) throws MetricException {
+        MetricLineBuilder.TypeStep typeStep = MetricLineBuilder.create(preConfiguration)
             .metricKey(meter.getId().getName());
         for (Tag tag : meter.getId().getTags()) {
-            metricLineBuilder.dimension(tag.getKey(), tag.getValue());
+            typeStep.dimension(tag.getKey(), tag.getValue());
         }
 
-        return metricLineBuilder;
+        return typeStep;
     }
 
     private <T> Stream<T> streamOf(Iterable<T> iterable) {
