@@ -536,6 +536,7 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
 
         StringBuilder metricKey = new StringBuilder(32);
 
+        // Start at index 1 as index 0 will always be '#'
         for (int i = 1; i < metadataLine.length(); i++) {
             char c = metadataLine.charAt(i);
             if (c == ' ' || c == ',') {
