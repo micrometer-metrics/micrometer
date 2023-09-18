@@ -466,19 +466,19 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
         }
     }
 
-    private MetricLineBuilder.MetadataStep createMetadataStep(MetricLineBuilder.GaugeStep metricBuilder,
+    private MetricLineBuilder.MetadataStep createMetadataStep(MetricLineBuilder.GaugeStep gaugeStep,
                                                               Meter meter) {
-        return enrichMetadataBuilder(metricBuilder.metadata(), meter);
+        return enrichMetadataStep(gaugeStep.metadata(), meter);
     }
 
-    private MetricLineBuilder.MetadataStep createMetadataStep(MetricLineBuilder.CounterStep metricBuilder,
+    private MetricLineBuilder.MetadataStep createMetadataStep(MetricLineBuilder.CounterStep counterStep,
                                                               Meter meter) {
-        return enrichMetadataBuilder(metricBuilder.metadata(), meter);
+        return enrichMetadataStep(counterStep.metadata(), meter);
     }
 
-    private MetricLineBuilder.MetadataStep enrichMetadataBuilder(MetricLineBuilder.MetadataStep metadataBuilder,
-            Meter meter) {
-        return metadataBuilder.description(meter.getId().getDescription()).unit(meter.getId().getBaseUnit());
+    private MetricLineBuilder.MetadataStep enrichMetadataStep(MetricLineBuilder.MetadataStep metadataStep,
+                                                              Meter meter) {
+        return metadataStep.description(meter.getId().getDescription()).unit(meter.getId().getBaseUnit());
     }
 
     private void storeMetadataLine(MetricLineBuilder.MetadataStep metadataStep, Map<String, String> seenMetadata)
