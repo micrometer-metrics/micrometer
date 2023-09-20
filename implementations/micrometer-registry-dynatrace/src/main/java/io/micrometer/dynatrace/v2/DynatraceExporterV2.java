@@ -304,13 +304,13 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
 
     Stream<String> toFunctionTimerLine(FunctionTimer meter) {
         long count = (long) meter.count();
-        double total = meter.totalTime(getBaseTimeUnit());
-
         if (count == 0) {
             logger.debug("Timer with 0 count dropped: {}", meter.getId().getName());
             return Stream.empty();
         }
-        else if (count == 1) {
+
+        double total = meter.totalTime(getBaseTimeUnit());
+        if (count == 1) {
             // Between calling count, totalTime, and mean values can be recorded so the
             // reported values might be inconsistent. In the Dynatrace API,
             // this might lead to rejections, because the ingested data's validity is
