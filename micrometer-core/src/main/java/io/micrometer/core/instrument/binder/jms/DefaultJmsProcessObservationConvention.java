@@ -99,7 +99,7 @@ public class DefaultJmsProcessObservationConvention implements JmsProcessObserva
             if (message.getJMSCorrelationID() == null) {
                 return MESSAGE_CONVERSATION_ID_UNKNOWN;
             }
-            return KeyValue.of(HighCardinalityKeyNames.CONVERSATION_ID, context.getCarrier().getJMSCorrelationID());
+            return KeyValue.of(HighCardinalityKeyNames.CONVERSATION_ID, message.getJMSCorrelationID());
         }
         catch (JMSException exc) {
             return MESSAGE_CONVERSATION_ID_UNKNOWN;
@@ -130,7 +130,7 @@ public class DefaultJmsProcessObservationConvention implements JmsProcessObserva
             if (message.getJMSMessageID() == null) {
                 return MESSAGE_ID_UNKNOWN;
             }
-            return KeyValue.of(HighCardinalityKeyNames.MESSAGE_ID, context.getCarrier().getJMSMessageID());
+            return KeyValue.of(HighCardinalityKeyNames.MESSAGE_ID, message.getJMSMessageID());
         }
         catch (JMSException exc) {
             return MESSAGE_ID_UNKNOWN;

@@ -43,14 +43,13 @@ class MessageProducerInvocationHandler implements InvocationHandler {
 
     private final ObservationRegistry registry;
 
-    public MessageProducerInvocationHandler(MessageProducer target, ObservationRegistry registry) {
+    MessageProducerInvocationHandler(MessageProducer target, ObservationRegistry registry) {
         this.target = target;
         this.registry = registry;
     }
 
     @Override
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-
         if ("send".equals(method.getName()) && args[0] != null) {
             Message message = findMessageArgument(args);
             Observation observation = JmsObservationDocumentation.JMS_MESSAGE_PUBLISH.observation(null,

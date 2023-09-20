@@ -82,7 +82,7 @@ public enum JmsObservationDocumentation implements ObservationDocumentation {
 
         /**
          * Name of the exception thrown during the operation, or
-         * {@value KeyValue#NONE_VALUE}} if no exception happened.
+         * {@value KeyValue#NONE_VALUE} if no exception happened.
          */
         EXCEPTION {
             @Override

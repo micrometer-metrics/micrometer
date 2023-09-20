@@ -44,7 +44,7 @@ class MessageConsumerInvocationHandler implements InvocationHandler {
 
     private final ObservationRegistry registry;
 
-    public MessageConsumerInvocationHandler(MessageConsumer target, ObservationRegistry registry) {
+    MessageConsumerInvocationHandler(MessageConsumer target, ObservationRegistry registry) {
         this.target = target;
         this.registry = registry;
     }
@@ -69,7 +69,7 @@ class MessageConsumerInvocationHandler implements InvocationHandler {
 
         private final ObservationRegistry registry;
 
-        public ObservedMessageListener(MessageListener delegate, ObservationRegistry registry) {
+        ObservedMessageListener(MessageListener delegate, ObservationRegistry registry) {
             this.delegate = delegate;
             this.registry = registry;
         }

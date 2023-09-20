@@ -100,7 +100,7 @@ public class DefaultJmsPublishObservationConvention implements JmsPublishObserva
             if (message == null || message.getJMSCorrelationID() == null) {
                 return MESSAGE_CONVERSATION_ID_UNKNOWN;
             }
-            return KeyValue.of(HighCardinalityKeyNames.CONVERSATION_ID, context.getCarrier().getJMSCorrelationID());
+            return KeyValue.of(HighCardinalityKeyNames.CONVERSATION_ID, message.getJMSCorrelationID());
         }
         catch (JMSException exc) {
             return MESSAGE_CONVERSATION_ID_UNKNOWN;
@@ -108,22 +108,21 @@ public class DefaultJmsPublishObservationConvention implements JmsPublishObserva
     }
 
     protected KeyValue destinationName(JmsPublishObservationContext context) {
-        if (context.getCarrier() == null) {
+        Message message = context.getCarrier();
+        if (message == null) {
             return DESTINATION_NAME_UNKNOWN;
         }
         try {
-            Destination jmsDestination = context.getCarrier().getJMSDestination();
+            Destination jmsDestination = message.getJMSDestination();
             if (jmsDestination instanceof Queue) {
                 Queue queue = (Queue) jmsDestination;
                 return KeyValue.of(HighCardinalityKeyNames.DESTINATION_NAME, queue.getQueueName());
             }
-            else if (jmsDestination instanceof Topic) {
+            if (jmsDestination instanceof Topic) {
                 Topic topic = (Topic) jmsDestination;
                 return KeyValue.of(HighCardinalityKeyNames.DESTINATION_NAME, topic.getTopicName());
             }
-            else {
-                return DESTINATION_NAME_UNKNOWN;
-            }
+            return DESTINATION_NAME_UNKNOWN;
         }
         catch (JMSException e) {
             return DESTINATION_NAME_UNKNOWN;

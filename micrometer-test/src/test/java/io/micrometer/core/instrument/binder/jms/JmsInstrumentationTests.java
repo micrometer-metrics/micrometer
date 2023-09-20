@@ -40,7 +40,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  *
  * @author Brian Clozel
  */
-public class JmsInstrumentationTests {
+class JmsInstrumentationTests {
 
     @RegisterExtension
     EmbeddedActiveMQExtension server = new EmbeddedActiveMQExtension();
@@ -62,14 +62,13 @@ public class JmsInstrumentationTests {
     @ParameterizedTest(name = "{index} {0}")
     @MethodSource("messageSenders")
     void shouldInstrumentSendOperations(String methodName, SessionConsumer sessionConsumer) throws Exception {
-        Session session = createInstrumentedSession();
-        // jmsConnection.close();
-        sessionConsumer.accept(session);
-        TestObservationRegistryAssert.assertThat(registry)
-            .hasObservationWithNameEqualTo("jms.message.publish")
-            .that()
-            .hasContextualNameEqualTo("test.send publish");
-        session.close();
+        try (Session session = createInstrumentedSession()) {
+            sessionConsumer.accept(session);
+            TestObservationRegistryAssert.assertThat(registry)
+                .hasObservationWithNameEqualTo("jms.message.publish")
+                .that()
+                .hasContextualNameEqualTo("test.send publish");
+        }
     }
 
     static Stream<Arguments> messageSenders() {
@@ -110,55 +109,55 @@ public class JmsInstrumentationTests {
 
     @Test
     void shouldInstrumentSendOperationWhenException() throws Exception {
-        Session session = createInstrumentedSession();
-        Topic topic = session.createTopic("test.send");
-        MessageProducer producer = session.createProducer(topic);
-        TextMessage message = session.createTextMessage("test content");
-        jmsConnection.close();
-        assertThatThrownBy(() -> producer.send(message)).isInstanceOf(jakarta.jms.IllegalStateException.class);
-        TestObservationRegistryAssert.assertThat(registry)
-            .hasObservationWithNameEqualTo("jms.message.publish")
-            .that()
-            .hasContextualNameEqualTo("test.send publish")
-            .hasLowCardinalityKeyValue("exception", "IllegalStateException");
-        session.close();
+        try (Session session = createInstrumentedSession()) {
+            Topic topic = session.createTopic("test.send");
+            MessageProducer producer = session.createProducer(topic);
+            TextMessage message = session.createTextMessage("test content");
+            jmsConnection.close();
+            assertThatThrownBy(() -> producer.send(message)).isInstanceOf(jakarta.jms.IllegalStateException.class);
+            TestObservationRegistryAssert.assertThat(registry)
+                .hasObservationWithNameEqualTo("jms.message.publish")
+                .that()
+                .hasContextualNameEqualTo("test.send publish")
+                .hasLowCardinalityKeyValue("exception", "IllegalStateException");
+        }
     }
 
     @Test
     void shouldInstrumentMessageListener() throws Exception {
-        Session session = createInstrumentedSession();
-        Topic topic = session.createTopic("test.send");
-        CountDownLatch latch = new CountDownLatch(1);
-        MessageConsumer consumer = session.createConsumer(topic);
-        consumer.setMessageListener(message -> latch.countDown());
-        MessageProducer producer = session.createProducer(topic);
-        producer.send(session.createTextMessage("test send"));
-        assertThat(latch.await(2, TimeUnit.SECONDS)).isTrue();
-        TestObservationRegistryAssert.assertThat(registry)
-            .hasObservationWithNameEqualTo("jms.message.process")
-            .that()
-            .hasContextualNameEqualTo("test.send process");
-        session.close();
+        try (Session session = createInstrumentedSession()) {
+            Topic topic = session.createTopic("test.send");
+            CountDownLatch latch = new CountDownLatch(1);
+            MessageConsumer consumer = session.createConsumer(topic);
+            consumer.setMessageListener(message -> latch.countDown());
+            MessageProducer producer = session.createProducer(topic);
+            producer.send(session.createTextMessage("test send"));
+            assertThat(latch.await(2, TimeUnit.SECONDS)).isTrue();
+            TestObservationRegistryAssert.assertThat(registry)
+                .hasObservationWithNameEqualTo("jms.message.process")
+                .that()
+                .hasContextualNameEqualTo("test.send process");
+        }
     }
 
     @Test
     void shouldInstrumentMessageListenerWhenException() throws Exception {
-        Session session = createInstrumentedSession();
-        Topic topic = session.createTopic("test.send");
-        CountDownLatch latch = new CountDownLatch(1);
-        MessageConsumer consumer = session.createConsumer(topic);
-        consumer.setMessageListener(message -> {
-            latch.countDown();
-            throw new java.lang.IllegalStateException("test error");
-        });
-        MessageProducer producer = session.createProducer(topic);
-        producer.send(session.createTextMessage("test send"));
-        assertThat(latch.await(2, TimeUnit.SECONDS)).isTrue();
-        TestObservationRegistryAssert.assertThat(registry)
-            .hasObservationWithNameEqualTo("jms.message.process")
-            .that()
-            .hasLowCardinalityKeyValue("exception", "IllegalStateException");
-        session.close();
+        try (Session session = createInstrumentedSession()) {
+            Topic topic = session.createTopic("test.send");
+            CountDownLatch latch = new CountDownLatch(1);
+            MessageConsumer consumer = session.createConsumer(topic);
+            consumer.setMessageListener(message -> {
+                latch.countDown();
+                throw new java.lang.IllegalStateException("test error");
+            });
+            MessageProducer producer = session.createProducer(topic);
+            producer.send(session.createTextMessage("test send"));
+            assertThat(latch.await(2, TimeUnit.SECONDS)).isTrue();
+            TestObservationRegistryAssert.assertThat(registry)
+                .hasObservationWithNameEqualTo("jms.message.process")
+                .that()
+                .hasLowCardinalityKeyValue("exception", "IllegalStateException");
+        }
     }
 
     private Session createInstrumentedSession() throws JMSException {
