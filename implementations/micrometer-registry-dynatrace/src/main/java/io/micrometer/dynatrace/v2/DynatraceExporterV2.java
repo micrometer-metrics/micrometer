@@ -16,6 +16,8 @@
 package io.micrometer.dynatrace.v2;
 
 import com.dynatrace.metric.util.*;
+import com.dynatrace.metric.util.MetricLineBuilder.MetadataStep;
+import io.micrometer.common.lang.NonNull;
 import io.micrometer.common.util.StringUtils;
 import io.micrometer.common.util.internal.logging.InternalLogger;
 import io.micrometer.common.util.internal.logging.InternalLoggerFactory;
@@ -91,10 +93,10 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
             preConfiguration = preConfigBuilder.build();
         }
         catch (MetricException e) {
-            // if the preconfiguration is invalid, all created metric lines would be
+            // if the pre-configuration is invalid, all created metric lines would be
             // invalid, and exporting any line becomes useless. Therefore, we log an
             // error, and don't export at all.
-            logger.error(e.getMessage());
+            logger.error("Dynatrace configuration is invalid", e);
             skipExport = true;
         }
     }
@@ -140,7 +142,7 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
      * metric lines.
      */
     @Override
-    public void export(List<Meter> meters) {
+    public void export(@NonNull List<Meter> meters) {
         if (skipExport) {
             logger.warn("Dynatrace configuration is invalid, skipping export.");
             return;
@@ -223,9 +225,7 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
                 return null;
             }
             MetricLineBuilder.GaugeStep gaugeStep = createTypeStep(meter).gauge();
-
-            storeMetadataLine(createMetadataStep(gaugeStep, meter), seenMetadata);
-
+            storeMetadata(enrichMetadata(gaugeStep.metadata(), meter), seenMetadata);
             return gaugeStep.value(value).timestamp(Instant.ofEpochMilli(clock.wallTime())).build();
         }
         catch (MetricException e) {
@@ -243,9 +243,7 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
     private String createCounterLine(Meter meter, Map<String, String> seenMetadata, Measurement measurement) {
         try {
             MetricLineBuilder.CounterStep counterStep = createTypeStep(meter).count();
-
-            storeMetadataLine(createMetadataStep(counterStep, meter), seenMetadata);
-
+            storeMetadata(enrichMetadata(counterStep.metadata(), meter), seenMetadata);
             return counterStep.delta(measurement.getValue()).timestamp(Instant.ofEpochMilli(clock.wallTime())).build();
         }
         catch (MetricException e) {
@@ -297,11 +295,9 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
     private Stream<String> createSummaryLine(Meter meter, Map<String, String> seenMetadata, double min, double max,
             double total, long count) {
         try {
-            MetricLineBuilder.GaugeStep metricBuilder = createTypeStep(meter).gauge();
-
-            storeMetadataLine(createMetadataStep(metricBuilder, meter), seenMetadata);
-
-            return Stream.of(metricBuilder.summary(min, max, total, count)
+            MetricLineBuilder.GaugeStep gaugeStep = createTypeStep(meter).gauge();
+            storeMetadata(enrichMetadata(gaugeStep.metadata(), meter), seenMetadata);
+            return Stream.of(gaugeStep.summary(min, max, total, count)
                 .timestamp(Instant.ofEpochMilli(clock.wallTime()))
                 .build());
         }
@@ -464,33 +460,23 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
         }
     }
 
-    private MetricLineBuilder.MetadataStep createMetadataStep(MetricLineBuilder.GaugeStep gaugeStep, Meter meter) {
-        return enrichMetadataStep(gaugeStep.metadata(), meter);
-    }
-
-    private MetricLineBuilder.MetadataStep createMetadataStep(MetricLineBuilder.CounterStep counterStep, Meter meter) {
-        return enrichMetadataStep(counterStep.metadata(), meter);
-    }
-
-    private MetricLineBuilder.MetadataStep enrichMetadataStep(MetricLineBuilder.MetadataStep metadataStep,
-            Meter meter) {
+    private MetricLineBuilder.MetadataStep enrichMetadata(MetricLineBuilder.MetadataStep metadataStep, Meter meter) {
         return metadataStep.description(meter.getId().getDescription()).unit(meter.getId().getBaseUnit());
     }
 
-    private void storeMetadataLine(MetricLineBuilder.MetadataStep metadataStep, Map<String, String> seenMetadata)
-            throws MetricException {
-        // if the config to export metadata is turned off, the seenMetadata map will be
-        // null.
-        if (seenMetadata == null) {
-            return;
-        }
-
-        if (metadataStep == null) {
+    /**
+     * Adds metadata found in {@link MetadataStep} to the {@code seenMetadata}
+     * @param metadataStep source of the metadata that should be added to
+     * {@code seenMetadata}
+     * @param seenMetadata destination of the metadata
+     */
+    private void storeMetadata(MetricLineBuilder.MetadataStep metadataStep, Map<String, String> seenMetadata) {
+        // if the config to export metadata is turned off, seenMetadata will be null
+        if (seenMetadata == null || metadataStep == null) {
             return;
         }
 
         String metadataLine = metadataStep.build();
-
         if (metadataLine == null) {
             return;
         }
@@ -501,7 +487,6 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
             seenMetadata.put(key, metadataLine);
         }
         else {
-            // get the previously stored metadata line
             String previousMetadataLine = seenMetadata.get(key);
             // if the previous line is not null, a metadata object had already been set in
             // the past and no conflicting metadata lines had been added thereafter.
@@ -531,7 +516,6 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
         }
 
         StringBuilder metricKey = new StringBuilder(32);
-
         // Start at index 1 as index 0 will always be '#'
         for (int i = 1; i < metadataLine.length(); i++) {
             char c = metadataLine.charAt(i);
