@@ -371,7 +371,8 @@ class DynatraceExporterV2Test {
         // the Dynatrace specification). Therefore, for this test we need to use the
         // system clock.
         DynatraceConfig config = createDefaultDynatraceConfig();
-        DynatraceMeterRegistry registry = DynatraceMeterRegistry.builder(config).clock(Clock.SYSTEM).build();
+        Clock clock = Clock.SYSTEM;
+        DynatraceMeterRegistry registry = DynatraceMeterRegistry.builder(config).clock(clock).build();
         DynatraceExporterV2 exporter = new DynatraceExporterV2(config, clock, httpClient);
 
         LongTaskTimer ltt = LongTaskTimer.builder("ltt").register(registry);
@@ -402,7 +403,8 @@ class DynatraceExporterV2Test {
         // For this test we need to use the system clock.
         // See longTaskTimerWithSingleValueExportsConsistentData for more info
         DynatraceConfig config = createDefaultDynatraceConfig();
-        DynatraceMeterRegistry registry = DynatraceMeterRegistry.builder(config).clock(Clock.SYSTEM).build();
+        Clock clock = Clock.SYSTEM;
+        DynatraceMeterRegistry registry = DynatraceMeterRegistry.builder(config).clock(clock).build();
         DynatraceExporterV2 exporter = new DynatraceExporterV2(config, clock, httpClient);
 
         LongTaskTimer ltt = LongTaskTimer.builder("ltt").register(registry);
@@ -421,8 +423,6 @@ class DynatraceExporterV2Test {
         stopLatch.countDown(); // stop the execution of both tasks
         // export complete, can shut down active background thread.
         executorService.shutdownNow();
-
-        assertThat(lines).hasSize(1);
 
         // assertions
         assertThat(lines).hasSize(1);
