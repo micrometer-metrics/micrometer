@@ -32,7 +32,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
@@ -132,35 +131,35 @@ class DynatraceExporterV2Test {
     }
 
     @Test
-    void toTimeGaugeLine() {
+    void toGaugeLineWithTimeGauge() {
         AtomicReference<Double> obj = new AtomicReference<>(2.3d);
         meterRegistry.more().timeGauge("my.timeGauge", Tags.empty(), obj, MILLISECONDS, AtomicReference::get);
         TimeGauge timeGauge = meterRegistry.find("my.timeGauge").timeGauge();
-        List<String> lines = exporter.toTimeGaugeLine(timeGauge, SEEN_METADATA).collect(Collectors.toList());
+        List<String> lines = exporter.toGaugeLine(timeGauge, SEEN_METADATA).collect(Collectors.toList());
         assertThat(lines).hasSize(1);
         assertThat(lines.get(0)).isEqualTo("my.timeGauge,dt.metrics.source=micrometer gauge,2.3 " + clock.wallTime());
     }
 
     @Test
-    void toTimeGaugeLineShouldDropNanValue() {
+    void toGaugeLineWithTimeGaugeShouldDropNanValue() {
         AtomicReference<Double> obj = new AtomicReference<>(NaN);
         meterRegistry.more().timeGauge("my.timeGauge", Tags.empty(), obj, MILLISECONDS, AtomicReference::get);
         TimeGauge timeGauge = meterRegistry.find("my.timeGauge").timeGauge();
 
-        assertThat(exporter.toTimeGaugeLine(timeGauge, SEEN_METADATA)).isEmpty();
+        assertThat(exporter.toGaugeLine(timeGauge, SEEN_METADATA)).isEmpty();
     }
 
     @Test
-    void toTimeGaugeLineShouldDropInfiniteValues() {
+    void toGaugeLineWithTimeGaugeShouldDropInfiniteValues() {
         AtomicReference<Double> obj = new AtomicReference<>(POSITIVE_INFINITY);
         meterRegistry.more().timeGauge("my.timeGauge", Tags.empty(), obj, MILLISECONDS, AtomicReference::get);
         TimeGauge timeGauge = meterRegistry.find("my.timeGauge").timeGauge();
-        assertThat(exporter.toTimeGaugeLine(timeGauge, SEEN_METADATA)).isEmpty();
+        assertThat(exporter.toGaugeLine(timeGauge, SEEN_METADATA)).isEmpty();
 
         obj = new AtomicReference<>(NEGATIVE_INFINITY);
         meterRegistry.more().timeGauge("my.timeGauge", Tags.empty(), obj, MILLISECONDS, AtomicReference::get);
         timeGauge = meterRegistry.find("my.timeGauge").timeGauge();
-        assertThat(exporter.toTimeGaugeLine(timeGauge, SEEN_METADATA)).isEmpty();
+        assertThat(exporter.toGaugeLine(timeGauge, SEEN_METADATA)).isEmpty();
     }
 
     @Test
@@ -195,7 +194,7 @@ class DynatraceExporterV2Test {
     }
 
     @Test
-    void toFunctionCounterLine() {
+    void toCounterLineWithFunctionCounter() {
         AtomicReference<Double> obj = new AtomicReference<>(0.0d);
         FunctionCounter.builder("my.functionCounter", obj, AtomicReference::get).register(meterRegistry);
         FunctionCounter functionCounter = meterRegistry.find("my.functionCounter").functionCounter();
@@ -204,15 +203,14 @@ class DynatraceExporterV2Test {
         obj.set(2.3d);
         clock.add(config.step());
 
-        List<String> lines = exporter.toFunctionCounterLine(functionCounter, SEEN_METADATA)
-            .collect(Collectors.toList());
+        List<String> lines = exporter.toCounterLine(functionCounter, SEEN_METADATA).collect(Collectors.toList());
         assertThat(lines).hasSize(1);
         assertThat(lines.get(0))
             .isEqualTo("my.functionCounter,dt.metrics.source=micrometer count,delta=2.3 " + clock.wallTime());
     }
 
     @Test
-    void toFunctionCounterLineShouldDropNanValue() {
+    void toCounterLineWithFunctionCounterShouldDropNanValue() {
         AtomicReference<Double> obj = new AtomicReference<>(0.0d);
         FunctionCounter.builder("my.functionCounter", obj, AtomicReference::get).register(meterRegistry);
         FunctionCounter functionCounter = meterRegistry.find("my.functionCounter").functionCounter();
@@ -221,11 +219,11 @@ class DynatraceExporterV2Test {
         obj.set(NaN);
         clock.add(config.step());
 
-        assertThat(exporter.toFunctionCounterLine(functionCounter, SEEN_METADATA)).isEmpty();
+        assertThat(exporter.toCounterLine(functionCounter, SEEN_METADATA)).isEmpty();
     }
 
     @Test
-    void toFunctionCounterLineShouldDropInfiniteValue() {
+    void toCounterLineWithFunctionCounterShouldDropInfiniteValue() {
         AtomicReference<Double> obj = new AtomicReference<>(0.0d);
         FunctionCounter.builder("my.functionCounter", obj, AtomicReference::get).register(meterRegistry);
         FunctionCounter functionCounter = meterRegistry.find("my.functionCounter").functionCounter();
@@ -234,7 +232,7 @@ class DynatraceExporterV2Test {
         obj.set(POSITIVE_INFINITY);
         clock.add(config.step());
 
-        assertThat(exporter.toFunctionCounterLine(functionCounter, SEEN_METADATA)).isEmpty();
+        assertThat(exporter.toCounterLine(functionCounter, SEEN_METADATA)).isEmpty();
     }
 
     @Test
@@ -509,13 +507,13 @@ class DynatraceExporterV2Test {
     }
 
     @Test
-    void toMeterLine() {
+    void toGaugeLineWithMeter() {
         Measurement m1 = new Measurement(() -> 23d, Statistic.VALUE);
         Measurement m2 = new Measurement(() -> 42d, Statistic.VALUE);
         Measurement m3 = new Measurement(() -> 5d, Statistic.VALUE);
         Meter meter = Meter.builder("my.custom", Meter.Type.OTHER, Arrays.asList(m1, m2, m3)).register(meterRegistry);
 
-        List<String> lines = exporter.toMeterLine(meter, SEEN_METADATA).collect(Collectors.toList());
+        List<String> lines = exporter.toGaugeLine(meter, SEEN_METADATA).collect(Collectors.toList());
         assertThat(lines).hasSize(3);
         assertThat(lines.get(0)).isEqualTo("my.custom,dt.metrics.source=micrometer gauge,23 " + clock.wallTime());
         assertThat(lines.get(1)).isEqualTo("my.custom,dt.metrics.source=micrometer gauge,42 " + clock.wallTime());
@@ -716,8 +714,8 @@ class DynatraceExporterV2Test {
         assertThat(firstRequest.getUrl()).hasToString(firstUri);
         assertThat(firstRequest.getRequestHeaders()).containsOnly(entry("Content-Type", "text/plain"),
                 entry("User-Agent", "micrometer"), entry("Authorization", "Api-Token YOUR.DYNATRACE.TOKEN.FIRST"));
-        String firstReqBody = new String(firstRequest.getEntity(), StandardCharsets.UTF_8);
-        assertThat(firstReqBody).isEqualTo("test.counter,dt.metrics.source=micrometer count,delta=10");
+        assertThat(firstRequest.getEntity()).asString()
+            .isEqualTo("test.counter,dt.metrics.source=micrometer count,delta=10");
 
         counter.increment(30);
         clock.add(config.step());
@@ -737,8 +735,8 @@ class DynatraceExporterV2Test {
         assertThat(secondRequest.getUrl()).hasToString(secondUri);
         assertThat(secondRequest.getRequestHeaders()).containsOnly(entry("Content-Type", "text/plain"),
                 entry("User-Agent", "micrometer"), entry("Authorization", "Api-Token YOUR.DYNATRACE.TOKEN.SECOND"));
-        String secondReqBody = new String(secondRequest.getEntity(), StandardCharsets.UTF_8);
-        assertThat(secondReqBody).isEqualTo("test.counter,dt.metrics.source=micrometer count,delta=30");
+        assertThat(secondRequest.getEntity()).asString()
+            .isEqualTo("test.counter,dt.metrics.source=micrometer count,delta=30");
     }
 
     @Test
@@ -749,14 +747,13 @@ class DynatraceExporterV2Test {
         Gauge.builder("my.gauge", () -> 1.23).description("my.description").baseUnit("Liters").register(meterRegistry);
         exporter.export(meterRegistry.getMeters());
 
-        ArgumentCaptor<String> stringArgumentCaptor = ArgumentCaptor.forClass(String.class);
-        verify(builder).withPlainText(stringArgumentCaptor.capture());
-        // get the data set to the request and split it into lines on the newline char.
-        List<String> lines = Arrays.asList(stringArgumentCaptor.getValue().split("\n"));
-
-        assertThat(lines).hasSize(2)
-            .containsExactly("my.gauge,dt.metrics.source=micrometer gauge,1.23 " + clock.wallTime(),
+        verify(builder).withPlainText(assertArg(body -> {
+            // get the data set to the request and split it into lines on the newline
+            // char.
+            assertThat(body.split("\n")).containsExactly(
+                    "my.gauge,dt.metrics.source=micrometer gauge,1.23 " + clock.wallTime(),
                     "#my.gauge gauge dt.meta.description=my.description,dt.meta.unit=Liters");
+        }));
     }
 
     @Test
@@ -772,13 +769,11 @@ class DynatraceExporterV2Test {
         clock.add(config.step());
         exporter.export(meterRegistry.getMeters());
 
-        ArgumentCaptor<String> stringArgumentCaptor = ArgumentCaptor.forClass(String.class);
-        verify(builder).withPlainText(stringArgumentCaptor.capture());
-        List<String> lines = Arrays.asList(stringArgumentCaptor.getValue().split("\n"));
-
-        assertThat(lines).hasSize(2)
-            .containsExactly("my.count,dt.metrics.source=micrometer count,delta=5.234 " + clock.wallTime(),
+        verify(builder).withPlainText(assertArg(body -> {
+            assertThat(body.split("\n")).containsExactly(
+                    "my.count,dt.metrics.source=micrometer count,delta=5.234 " + clock.wallTime(),
                     "#my.count count dt.meta.description=count\\ description,dt.meta.unit=Bytes");
+        }));
     }
 
     @Test
@@ -788,7 +783,7 @@ class DynatraceExporterV2Test {
         when(httpClient.post(anyString())).thenReturn(firstReq).thenReturn(secondReq);
 
         // create a dynatrace config (same as the one returned by
-        // createDefaultDynatraceConfig) but with a batch size of 3.
+        // createDefaultDynatraceConfig() but with a batch size of 3).
         DynatraceConfig config = new DynatraceConfig() {
             @Override
             public String get(String key) {
@@ -839,17 +834,17 @@ class DynatraceExporterV2Test {
         verify(firstReq).withPlainText(firstReqCap.capture());
         verify(secondReq).withPlainText(secondReqCap.capture());
 
-        List<String> firstReqLines = Arrays.asList(firstReqCap.getValue().split("\n"));
-        List<String> secondReqLines = Arrays.asList(secondReqCap.getValue().split("\n"));
+        String[] firstReqLines = firstReqCap.getValue().split("\n");
+        String[] secondReqLines = secondReqCap.getValue().split("\n");
 
         // the first request will contain the metric lines
-        assertThat(firstReqLines).hasSize(3)
-            .containsExactly("my.count,dt.metrics.source=micrometer count,delta=5.234 " + clock.wallTime(),
-                    "my.gauge,dt.metrics.source=micrometer gauge,1.23 " + clock.wallTime(),
-                    "#my.count count dt.meta.description=count\\ description,dt.meta.unit=Bytes");
+        assertThat(firstReqLines).containsExactly(
+                "my.count,dt.metrics.source=micrometer count,delta=5.234 " + clock.wallTime(),
+                "my.gauge,dt.metrics.source=micrometer gauge,1.23 " + clock.wallTime(),
+                "#my.count count dt.meta.description=count\\ description,dt.meta.unit=Bytes");
 
-        // the second request will the leftover metadata line
-        assertThat(secondReqLines).hasSize(1)
+        // the second request will contain the leftover metadata line
+        assertThat(secondReqLines)
             .containsExactly("#my.gauge gauge dt.meta.description=my.description,dt.meta.unit=Liters");
     }
 
@@ -875,23 +870,14 @@ class DynatraceExporterV2Test {
         clock.add(config.step());
         exporter.export(meterRegistry.getMeters());
 
-        ArgumentCaptor<String> stringArgumentCaptor = ArgumentCaptor.forClass(String.class);
-        verify(builder).withPlainText(stringArgumentCaptor.capture());
-        List<String> lines = Arrays.asList(stringArgumentCaptor.getValue().split("\n"));
-
-        List<List<String>> expectedDimes = Arrays.asList(
-                Arrays.asList("counter-number=counter1", "dt.metrics.source=micrometer"),
-                Arrays.asList("counter-number=counter2", "dt.metrics.source=micrometer"),
-                Arrays.asList("dt.meta.description=count\\ description", "dt.meta.unit=Bytes"));
-        List<String> expectedBases = Arrays.asList("my.count count,delta=5.234 " + clock.wallTime(),
-                "my.count count,delta=2.345 " + clock.wallTime(), "#my.count count");
-
-        assertThat(lines).hasSize(3)
-            .extracting(line -> extractBase(line))
-            .containsExactlyInAnyOrderElementsOf(expectedBases);
-        for (int i = 0; i < lines.size(); i++) {
-            assertThat(extractDims(lines.get(i))).containsExactlyInAnyOrderElementsOf(expectedDimes.get(i));
-        }
+        verify(builder).withPlainText(assertArg(body -> {
+            assertThat(body.split("\n")).containsExactly(
+                    "my.count,dt.metrics.source=micrometer,counter-number=counter1 count,delta=5.234 "
+                            + clock.wallTime(),
+                    "my.count,dt.metrics.source=micrometer,counter-number=counter2 count,delta=2.345 "
+                            + clock.wallTime(),
+                    "#my.count count dt.meta.description=count\\ description,dt.meta.unit=Bytes");
+        }));
     }
 
     @Test
@@ -941,7 +927,7 @@ class DynatraceExporterV2Test {
         when(httpClient.post(anyString())).thenReturn(builder);
 
         // create a dynatrace config (same as the one returned by
-        // createDefaultDynatraceConfig() but with metadata turned off
+        // createDefaultDynatraceConfig() but with metadata turned off).
         DynatraceConfig config = new DynatraceConfig() {
             @Override
             public String get(String key) {
