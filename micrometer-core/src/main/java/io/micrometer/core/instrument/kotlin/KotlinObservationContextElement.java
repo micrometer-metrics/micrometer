@@ -19,6 +19,7 @@ package io.micrometer.core.instrument.kotlin;
 import io.micrometer.common.lang.Nullable;
 import io.micrometer.context.ContextRegistry;
 import io.micrometer.context.ContextSnapshot;
+import io.micrometer.context.ContextSnapshotFactory;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
 import io.micrometer.observation.contextpropagation.ObservationThreadLocalAccessor;
@@ -41,8 +42,11 @@ class KotlinObservationContextElement implements ThreadContextElement<ContextSna
 
     KotlinObservationContextElement(ObservationRegistry observationRegistry, ContextRegistry contextRegistry) {
         this.observationRegistry = observationRegistry;
-        this.contextSnapshot = ContextSnapshot.captureAllUsing(ObservationThreadLocalAccessor.KEY::equals,
-                contextRegistry);
+        this.contextSnapshot = ContextSnapshotFactory.builder()
+            .captureKeyPredicate(ObservationThreadLocalAccessor.KEY::equals)
+            .contextRegistry(contextRegistry)
+            .build()
+            .captureAll();
     }
 
     @Override
