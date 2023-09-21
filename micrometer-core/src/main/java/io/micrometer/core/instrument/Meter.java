@@ -23,7 +23,9 @@ import io.micrometer.core.instrument.distribution.HistogramGauges;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -481,6 +483,29 @@ public interface Meter {
     }
 
     default void close() {
+    }
+
+    interface Provider<K, V> {
+
+        V get(@Nullable K key);
+
+    }
+
+    class Cache<K, V> implements Provider<K, V> {
+
+        private final Map<K, V> cache = new ConcurrentHashMap<>();
+
+        private final Function<K, V> mappingFunction;
+
+        public Cache(Function<K, V> mappingFunction) {
+            this.mappingFunction = mappingFunction;
+        }
+
+        @Override
+        public V get(@Nullable K key) {
+            return cache.computeIfAbsent(key, mappingFunction);
+        }
+
     }
 
 }
