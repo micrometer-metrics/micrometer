@@ -98,17 +98,20 @@ class PushMeterRegistryTest {
 
         private final List<Double> measurements = new ArrayList<>();
 
-        private final CyclicBarrier alignPublishStartBarrier;
+        private final CyclicBarrier publishStartBarrier;
+
+        private final CyclicBarrier publishWorkBarrier;
 
         private final CyclicBarrier publishFinishedBarrier;
 
         private final StepRegistryConfig config;
 
-        public OverlappingStepRegistry(StepRegistryConfig config, Clock clock, CyclicBarrier alignPublishStartBarrier,
-                CyclicBarrier publishFinishedBarrier) {
+        public OverlappingStepRegistry(StepRegistryConfig config, Clock clock, CyclicBarrier publishStartBarrier,
+                CyclicBarrier publishWorkBarrier, CyclicBarrier publishFinishedBarrier) {
             super(config, clock);
             this.config = config;
-            this.alignPublishStartBarrier = alignPublishStartBarrier;
+            this.publishStartBarrier = publishStartBarrier;
+            this.publishWorkBarrier = publishWorkBarrier;
             this.publishFinishedBarrier = publishFinishedBarrier;
         }
 
@@ -120,27 +123,26 @@ class PushMeterRegistryTest {
         @Override
         protected void publish() {
             try {
-                alignPublishStartBarrier.await(config.step().toMillis(), MILLISECONDS);
-
-                // ensure publish is still running while close is running:
-                Thread.sleep(config.step().dividedBy(2).toMillis());
-
+                // allows us to block before starting any work (simulated or otherwise)
+                publishStartBarrier.await();
+                // simulate publish working until we're ready to let it proceed
+                publishWorkBarrier.await();
             }
-            catch (InterruptedException | BrokenBarrierException | TimeoutException e) {
+            catch (InterruptedException | BrokenBarrierException e) {
                 throw new RuntimeException(e);
             }
 
             // do the actual "publishing", i.e. adding the measurements to a list in this
             // case.
             measurements.clear();
-            getMeters().stream()
+            getMeters()
                 .forEach(meter -> meter.measure().forEach(measurement -> measurements.add(measurement.getValue())));
 
             numExports.incrementAndGet();
             try {
-                publishFinishedBarrier.await(config.step().toMillis(), MILLISECONDS);
+                publishFinishedBarrier.await();
             }
-            catch (InterruptedException | BrokenBarrierException | TimeoutException e) {
+            catch (InterruptedException | BrokenBarrierException e) {
                 throw new RuntimeException(e);
             }
         }
@@ -185,13 +187,17 @@ class PushMeterRegistryTest {
             }
         };
 
+        // Timeout for synchronizing threads needs to be longer than the step time.
+        var barrierTimeoutMillis = 500;
+
         MockClock clock = new MockClock();
         CyclicBarrier publishStartedBarrier = new CyclicBarrier(2);
         CyclicBarrier publishFinishedBarrier = new CyclicBarrier(2);
+        CyclicBarrier publishWorkBarrier = new CyclicBarrier(2);
         Offset<Double> tolerance = Offset.offset(0.001);
 
         OverlappingStepRegistry registry = new OverlappingStepRegistry(config, clock, publishStartedBarrier,
-                publishFinishedBarrier);
+                publishWorkBarrier, publishFinishedBarrier);
         registry.start(threadFactory);
 
         // first export cycle starts here
@@ -206,13 +212,14 @@ class PushMeterRegistryTest {
         // # first export
         clock.add(config.step());
         // wait until publish has started from the timed invocation.
-        publishStartedBarrier.await(config.step().toMillis(), MILLISECONDS);
-
+        publishStartedBarrier.await(barrierTimeoutMillis, MILLISECONDS);
+        // artificial work finishes.
+        publishWorkBarrier.await(barrierTimeoutMillis, MILLISECONDS);
         // second export cycle starts here
 
         // wait for the publish to finish. Ensures values are processed when retrieving
         // them from the registry
-        publishFinishedBarrier.await(config.step().toMillis(), MILLISECONDS);
+        publishFinishedBarrier.await(barrierTimeoutMillis, MILLISECONDS);
 
         assertThat(registry.getNumExports()).isOne();
         assertThat(registry.getMeasurements()).hasSize(1);
@@ -223,7 +230,7 @@ class PushMeterRegistryTest {
         clock.add(config.step().dividedBy(2));
 
         // wait until the second publish starts
-        publishStartedBarrier.await(config.step().toMillis(), MILLISECONDS);
+        publishStartedBarrier.await(barrierTimeoutMillis, MILLISECONDS);
 
         // third export cycle starts here, since we waited for the publishStartedBarrier
         // above we know that publishing is in progress
@@ -239,11 +246,14 @@ class PushMeterRegistryTest {
         assertThat(registry.getMeasurements()).hasSize(1);
         assertThat(registry.getMeasurements().get(0)).isCloseTo(3, tolerance);
 
+        // artificial work finishes
+        publishWorkBarrier.await(barrierTimeoutMillis, MILLISECONDS);
+
         // This would not happen when registry.close() is called, as the app will wait for
         // waits for close() to finish, then shut down immediately.
         // In this test, we can see that it _would_ fix itself if we waited for the
         // already in-progress publish to finish.
-        publishFinishedBarrier.await(config.step().toMillis(), MILLISECONDS);
+        publishFinishedBarrier.await(barrierTimeoutMillis, MILLISECONDS);
 
         assertThat(registry.getNumExports()).isEqualTo(2);
         assertThat(registry.getMeasurements()).hasSize(1);
@@ -252,7 +262,7 @@ class PushMeterRegistryTest {
 
     @Test
     void scheduledPublishInterruptedByCloseWillNotDropData_whenShutdownTimeoutIsBigEnough()
-            throws InterruptedException, BrokenBarrierException, TimeoutException {
+            throws InterruptedException, BrokenBarrierException, TimeoutException, ExecutionException {
 
         StepRegistryConfig config = new StepRegistryConfig() {
             @Override
@@ -280,13 +290,18 @@ class PushMeterRegistryTest {
             }
         };
 
+        // Timeout for synchronizing threads needs to be longer than the step time and
+        // shutdown timeout.
+        var barrierTimeoutMillis = 600;
+
         MockClock clock = new MockClock();
         CyclicBarrier publishStartedBarrier = new CyclicBarrier(2);
+        CyclicBarrier publishWorkBarrier = new CyclicBarrier(2);
         CyclicBarrier publishFinishedBarrier = new CyclicBarrier(2);
         Offset<Double> tolerance = Offset.offset(0.001);
 
         OverlappingStepRegistry registry = new OverlappingStepRegistry(config, clock, publishStartedBarrier,
-                publishFinishedBarrier);
+                publishWorkBarrier, publishFinishedBarrier);
         registry.start(threadFactory);
 
         // first export cycle starts here
@@ -301,13 +316,15 @@ class PushMeterRegistryTest {
         // # first export
         clock.add(config.step());
         // wait until publish has started from the timed invocation.
-        publishStartedBarrier.await(config.step().toMillis(), MILLISECONDS);
+        publishStartedBarrier.await(barrierTimeoutMillis, MILLISECONDS);
+        // do not do any artificial work.
+        publishWorkBarrier.await(barrierTimeoutMillis, MILLISECONDS);
 
         // second export cycle starts here
 
         // wait for the publish to finish. Ensures values are processed when retrieving
         // them from the registry
-        publishFinishedBarrier.await(config.step().toMillis(), MILLISECONDS);
+        publishFinishedBarrier.await(barrierTimeoutMillis, MILLISECONDS);
 
         assertThat(registry.getNumExports()).isOne();
         assertThat(registry.getMeasurements()).hasSize(1);
@@ -318,45 +335,34 @@ class PushMeterRegistryTest {
         clock.add(config.step().dividedBy(2));
 
         // wait until the second publish starts
-        publishStartedBarrier.await(config.step().toMillis(), MILLISECONDS);
-
-        // third export cycle starts here, since we waited for the publishStartedBarrier
-        // above we know that publishing is in progress
-
-        // ensure we don't wait for the publishFinished barrier in the publish method.
-        // In close, we are waiting for publish to finish, but publish will only finish
-        // once the barrier has released. Therefore, we need to ensure the barrier will
-        // release as soon as it is hit in publish.
-        // assert that at this point we haven't yet hit the barrier in the publish method
-        // (zero waiting threads).
-        assertThat(publishFinishedBarrier.getNumberWaiting()).isZero();
-
-        // make sure that the barrier in publish will be cleared when it's hit, by waiting
-        // for it in a background thread.
-        ExecutorService waitForExportBarrier = Executors.newSingleThreadExecutor();
-        waitForExportBarrier.submit(() -> {
-            try {
-                publishFinishedBarrier.await(config.step().toMillis(), MILLISECONDS);
-            }
-            catch (InterruptedException | BrokenBarrierException | TimeoutException e) {
-                throw new RuntimeException(e);
-            }
-        });
-
-        // export is still in progress, number of finished exports is one (the previous
-        // export) at this point.
-        assertThat(registry.getNumExports()).isOne();
+        publishStartedBarrier.await(barrierTimeoutMillis, MILLISECONDS);
+        // third export cycle starts here, we're waiting for artificial work to be done
 
         // close registry while export is still running. When close returns, the
         // application exits. Since the overlappingShutdownWaitTimeout is large enough,
         // registry.close() will wait until the scheduled export is finished.
-        registry.close();
+        assertThat(registry.isPublishing()).isTrue();
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        executor.submit(registry::close);
+        var assertionFuture = executor.submit(() -> {
+            // After waiting for the export to finish in close, the data is not stale, and
+            // the values from the last export cycle have been exported. If we'd just
+            // re-publish again in close the application may have exited already before
+            // the running export has finished.
+            assertThat(registry.getNumExports()).isEqualTo(2);
+            assertThat(registry.getMeasurements()).hasSize(1);
+            assertThat(registry.getMeasurements().get(0)).isCloseTo(4, tolerance);
+        });
 
-        // After waiting for the export to finish in close, the data is not stale, and the
-        // values from the last export cycle have been exported:
-        assertThat(registry.getNumExports()).isEqualTo(2);
-        assertThat(registry.getMeasurements()).hasSize(1);
-        assertThat(registry.getMeasurements().get(0)).isCloseTo(4, tolerance);
+        // Wait a bit to ensure that we don't let the export finish before the
+        // PushMeterRegistry.close() knows that we need to wait for export, then
+        // let simulated work finish let publish return.
+        Thread.sleep(100);
+        publishWorkBarrier.await(barrierTimeoutMillis, MILLISECONDS);
+        publishFinishedBarrier.await(barrierTimeoutMillis, MILLISECONDS);
+
+        // bubble up any exceptions we got from the assertion future.
+        assertionFuture.get();
     }
 
     @Test
@@ -400,7 +406,7 @@ class PushMeterRegistryTest {
         long minOffsetMillis = 8; // 4 (start) + 8 (offset) = 12 (2ms into next step)
         // exclusive upper bound
         long maxOffsetMillis = 14; // 4 (start) + 14 (offset) = 18 (8ms into next step;
-                                   // 80% of step is 8ms)
+        // 80% of step is 8ms)
         Set<Long> observedDelays = new HashSet<>((int) (maxOffsetMillis - minOffsetMillis));
         IntStream.range(0, 10_000).forEach(i -> {
             long delay = registry.calculateInitialDelay();
