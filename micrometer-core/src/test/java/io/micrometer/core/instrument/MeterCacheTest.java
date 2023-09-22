@@ -134,4 +134,34 @@ public class MeterCacheTest {
         assertThat(secondGauge).isNotEqualTo(firstGauge);
     }
 
+    @Test
+    void provideCounterWithoutDuplicateTags() {
+        Meter.Provider<String, Counter> counterProvider = Counter.builder("my.counter")
+            .tag("my.default.tag", "my.default.value")
+            .register(registry, value -> value == null ? Tags.empty() : Tags.of("my.key", value));
+
+        assertThat(registry.getMeters()).hasSize(0);
+
+        Counter firstCounter = counterProvider.get("first.value");
+        firstCounter.increment();
+
+        assertThat(firstCounter.getId().getTags()).hasSize(2);
+        assertThat(firstCounter.getId().getTags()).contains(Tag.of("my.default.tag", "my.default.value"),
+                Tag.of("my.key", "first.value"));
+
+        Counter sameCounter = counterProvider.get("first.value");
+        sameCounter.increment();
+
+        assertThat(sameCounter.getId().getTags()).hasSize(2);
+        assertThat(sameCounter.getId().getTags()).contains(Tag.of("my.default.tag", "my.default.value"),
+                Tag.of("my.key", "first.value"));
+
+        Counter secondCounter = counterProvider.get("second.value");
+        secondCounter.increment();
+
+        assertThat(secondCounter.getId().getTags()).hasSize(2);
+        assertThat(secondCounter.getId().getTags()).contains(Tag.of("my.default.tag", "my.default.value"),
+                Tag.of("my.key", "second.value"));
+    }
+
 }
