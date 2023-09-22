@@ -7,7 +7,7 @@ dependencies {
     implementation 'io.opentelemetry.proto:opentelemetry-proto:0.16.0-alpha'
 
     testImplementation project(':micrometer-test')
-    testImplementation 'uk.org.webcompere:system-stubs-jupiter:latest.release'
+    testImplementation libs.systemStubsJupiter
     testImplementation 'io.rest-assured:rest-assured'
     testImplementation 'org.testcontainers:junit-jupiter'
     testImplementation 'org.awaitility:awaitility'

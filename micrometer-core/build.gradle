@@ -78,7 +78,7 @@ dependencies {
 
     testImplementation 'org.apache.kafka:kafka-clients'
 
-    testImplementation 'org.apache.commons:commons-pool2:2.+'
+    testImplementation libs.commonsPool2
 
     testImplementation 'org.glassfish.jersey.test-framework.providers:jersey-test-framework-provider-inmemory'
     testRuntimeOnly 'org.glassfish.jersey.inject:jersey-hk2'
@@ -87,7 +87,7 @@ dependencies {
     testImplementation 'com.github.tomakehurst:wiremock-jre8-standalone'
 
     // Log4j2 Async dependency
-    testImplementation 'com.lmax:disruptor:3.4.+'
+    testImplementation libs.lmaxDisrupter
 
     // Kafka binder IT dependencies
     testImplementation 'org.testcontainers:testcontainers'
@@ -103,14 +103,13 @@ dependencies {
     // Dependencies for @ClassPathExclusions
     testCompileOnly("org.junit.platform:junit-platform-engine")
     testCompileOnly("org.junit.platform:junit-platform-launcher")
-    testImplementation("org.apache.maven.resolver:maven-resolver-connector-basic:latest.release")
-    testImplementation("org.apache.maven:maven-resolver-provider:latest.release") {
+    testImplementation(libs.mavenResolverConnectorBasic)
+    testImplementation(libs.mavenResolverProvider) {
         exclude(group: "javax.inject", module: "javax.inject")
     }
-    testImplementation("org.apache.maven.resolver:maven-resolver-transport-http:latest.release") {
+    testImplementation(libs.mavenResolverTransportHttp) {
         exclude group: "org.slf4j", module: "jcl-over-slf4j"
     }
-    testImplementation("org.apache.maven.resolver:maven-resolver-connector-basic:latest.release")
 }
 
 task shenandoahTest(type: Test) {
