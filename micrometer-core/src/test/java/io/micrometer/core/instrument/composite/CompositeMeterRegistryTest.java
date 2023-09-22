@@ -28,18 +28,23 @@ import io.micrometer.core.instrument.step.StepRegistryConfig;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 import reactor.core.publisher.Flux;
 import reactor.core.scheduler.Schedulers;
 
 import java.time.Duration;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Stream;
 
+import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -491,6 +496,33 @@ class CompositeMeterRegistryTest {
 
         assertThat(this.composite.getMeters()).isEmpty();
         assertThat(this.simple.getMeters()).isEmpty();
+    }
+
+    @Issue("#1441")
+    @ParameterizedTest
+    @MethodSource("registriesProvider")
+    void whenMetersArePolledNoopChildrenShouldBeIgnored(List<MeterRegistry> registries) {
+        // this means that firstChild() practically should be firstNonNoopChild()
+        CompositeMeterRegistry composite = new CompositeMeterRegistry(Clock.SYSTEM, registries);
+        Counter counter = composite.counter("my.counter");
+        counter.increment();
+        assertThat(counter.count()).isEqualTo(1);
+    }
+
+    static Stream<List<MeterRegistry>> registriesProvider() {
+        // Since the order is non-deterministic, the best effort is testing both orders
+        SimpleMeterRegistry denyAllRegistry1 = new SimpleMeterRegistry();
+        denyAllRegistry1.config().meterFilter(MeterFilter.deny());
+
+        SimpleMeterRegistry denyAllRegistry2 = new SimpleMeterRegistry();
+        denyAllRegistry2.config().meterFilter(MeterFilter.deny());
+
+        // @formatter:off
+        return Stream.of(
+                asList(denyAllRegistry1, new SimpleMeterRegistry()), // denyAll,  allowAll
+                asList(new SimpleMeterRegistry(), denyAllRegistry2)  // allowAll, denyAll
+        );
+        // @formatter:on
     }
 
 }
