@@ -24,12 +24,14 @@ import io.micrometer.core.instrument.distribution.ValueAtPercentile;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 
 /**
  * Track the sample distribution of events. An example would be the response sizes for
  * requests hitting an http server.
  *
  * @author Jon Schneider
+ * @author Jonatan Ivanov
  */
 public interface DistributionSummary extends Meter, HistogramSupport {
 
@@ -386,6 +388,18 @@ public interface DistributionSummary extends Meter, HistogramSupport {
         }
 
         /**
+         * Convenience method to create new meters from the builder that only differ in
+         * tags. This method can be used for dynamic tagging by creating the builder once
+         * and applying the dynamically changing tags using the returned {@link Function}.
+         * @param registry A registry to add the meter to, if it doesn't already exist.
+         * @return A {@link Function} that returns a meter based on the provided tags.
+         * @since 1.12.0
+         */
+        public Function<Tags, DistributionSummary> with(MeterRegistry registry) {
+            return extraTags -> register(registry, tags.and(extraTags));
+        }
+
+        /**
          * Add the distribution summary to a single registry, or return an existing
          * distribution summary in that registry. The returned distribution summary will
          * be unique for each registry, but each registry is guaranteed to only create one
@@ -395,6 +409,10 @@ public interface DistributionSummary extends Meter, HistogramSupport {
          * @return A new or existing distribution summary.
          */
         public DistributionSummary register(MeterRegistry registry) {
+            return register(registry, tags);
+        }
+
+        private DistributionSummary register(MeterRegistry registry, Tags tags) {
             return registry.summary(new Meter.Id(name, tags, baseUnit, description, Type.DISTRIBUTION_SUMMARY),
                     distributionConfigBuilder.build(), scale);
         }
