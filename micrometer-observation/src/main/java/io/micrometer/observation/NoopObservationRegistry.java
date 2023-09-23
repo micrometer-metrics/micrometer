@@ -26,16 +26,11 @@ package io.micrometer.observation;
  */
 final class NoopObservationRegistry implements ObservationRegistry {
 
-    /**
-     * Instance of {@link NoopObservationRegistry}.
-     */
-    static final NoopObservationRegistry INSTANCE = new NoopObservationRegistry();
-
     static final ObservationRegistry FOR_SCOPES = ObservationRegistry.create();
 
     private final ObservationConfig observationConfig = NoopObservationConfig.INSTANCE;
 
-    private NoopObservationRegistry() {
+    NoopObservationRegistry() {
     }
 
     @Override
