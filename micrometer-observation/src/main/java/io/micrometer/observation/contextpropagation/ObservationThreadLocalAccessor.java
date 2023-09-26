@@ -21,6 +21,7 @@ import io.micrometer.context.ContextRegistry;
 import io.micrometer.context.ThreadLocalAccessor;
 import io.micrometer.observation.NullObservation;
 import io.micrometer.observation.Observation;
+import io.micrometer.observation.Observation.Scope;
 import io.micrometer.observation.ObservationRegistry;
 
 /**
@@ -113,7 +114,10 @@ public class ObservationThreadLocalAccessor implements ThreadLocalAccessor<Obser
     public void setValue(Observation value) {
         // Iterate over all handlers and open a new scope. The created scope will put
         // itself to TL.
-        value.openScope();
+        Scope scope = value.openScope();
+        if (log.isTraceEnabled()) {
+            log.trace("Called setValue(...) for Observation <{}> and opened scope <{}>", value, scope);
+        }
     }
 
     @Override
@@ -121,6 +125,10 @@ public class ObservationThreadLocalAccessor implements ThreadLocalAccessor<Obser
         Observation currentObservation = observationRegistry.getCurrentObservation();
         if (currentObservation == null) {
             return;
+        }
+        if (log.isTraceEnabled()) {
+            log.trace("Calling setValue(), currentObservation <{}> but we will open a NullObservation",
+                    currentObservation);
         }
         // Since we can't fully rely on using the observation registry static instance
         // because you can have multiple ones being created in your code (e.g. tests,
@@ -133,24 +141,39 @@ public class ObservationThreadLocalAccessor implements ThreadLocalAccessor<Obser
         // Creating a new one with empty context and opens a new scope
         // This scope will remember the previously created one to
         // which we will revert once "null scope" is closed
-        new NullObservation(registryAttachedToCurrentObservation).start().openScope();
+        Scope scope = new NullObservation(registryAttachedToCurrentObservation).start().openScope();
+        if (log.isTraceEnabled()) {
+            log.trace("Created the NullObservation scope <{}>", scope);
+        }
     }
 
     private void closeCurrentScope() {
         Observation.Scope scope = observationRegistry.getCurrentObservationScope();
+        if (log.isTraceEnabled()) {
+            log.trace("Closing current scope <{}>", scope);
+        }
         if (scope != null) {
             scope.close();
+        }
+        if (log.isTraceEnabled()) {
+            log.trace("After closing scope, current one is <{}>", observationRegistry.getCurrentObservationScope());
         }
     }
 
     @Override
     public void restore() {
+        if (log.isTraceEnabled()) {
+            log.trace("Calling restore()");
+        }
         closeCurrentScope();
     }
 
     @Override
     public void restore(Observation value) {
         Observation.Scope scope = observationRegistry.getCurrentObservationScope();
+        if (log.isTraceEnabled()) {
+            log.trace("Calling restore(...) with Observation <{}> and scope <{}>", value, scope);
+        }
         if (scope == null) {
             String msg = "There is no current scope in thread local. This situation should not happen";
             log.warn(msg);
@@ -177,6 +200,9 @@ public class ObservationThreadLocalAccessor implements ThreadLocalAccessor<Obser
     @Override
     @Deprecated
     public void reset() {
+        if (log.isTraceEnabled()) {
+            log.trace("Calling reset()");
+        }
         ThreadLocalAccessor.super.reset();
     }
 
