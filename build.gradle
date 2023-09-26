@@ -12,9 +12,10 @@ buildscript {
 
     dependencies {
         classpath 'gradle.plugin.com.hierynomus.gradle.plugins:license-gradle-plugin:0.16.1'
-        classpath 'com.netflix.nebula:nebula-release-plugin:17.1.0'
-        classpath 'com.netflix.nebula:nebula-publishing-plugin:20.1.0'
-        classpath 'com.netflix.nebula:nebula-project-plugin:10.1.2'
+        classpath 'com.netflix.nebula:nebula-release-plugin:17.2.2'
+        classpath 'com.netflix.nebula:nebula-publishing-plugin:20.3.0'
+        classpath 'com.netflix.nebula:nebula-project-plugin:10.1.5'
+        classpath 'com.netflix.nebula:gradle-info-plugin:12.1.6'
         classpath 'io.spring.nohttp:nohttp-gradle:0.0.11'
         classpath 'io.github.gradle-nexus:publish-plugin:1.3.0'
         classpath 'me.champeau.gradle:japicmp-gradle-plugin:0.4.1'
@@ -31,6 +32,15 @@ buildscript {
     }
 
     configurations.classpath.resolutionStrategy.cacheDynamicVersionsFor 0, 'minutes'
+}
+
+// Antora uses worktrees to check out branches/tags.
+// The nebula release, project, and info plugins use jgit to fetch git-related info.
+// Unfortunately jgit does not support worktrees: https://bugs.eclipse.org/bugs/show_bug.cgi?id=477475
+// TODO: remove this hack once jgit supports worktrees and nebula upgrades.
+if (project.hasProperty('antora')) {
+    'git fetch --unshallow --all --tags'.execute().text // antora shallow-clones so there is no history
+    ext['git.root'] = 'git rev-parse --path-format=absolute --git-common-dir'.execute().text.trim()
 }
 
 // TODO: remove this hack, see: https://github.com/nebula-plugins/nebula-release-plugin/issues/213
