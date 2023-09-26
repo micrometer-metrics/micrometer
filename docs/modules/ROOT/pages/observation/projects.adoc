@@ -17,7 +17,7 @@ Micrometer Observation is used to instrument various projects. Below you can fin
 | JDBC | https://github.com/jdbc-observations/datasource-micrometer[Repo]
 | JDK Http Client | https://github.com/micrometer-metrics/micrometer/blob/main/micrometer-core/src/main/java11/io/micrometer/core/instrument/binder/jdk/MicrometerHttpClient.java[Repo]
 | Jetty | https://github.com/micrometer-metrics/micrometer/pull/3416[PR]
-| Jersey | https://github.com/micrometer-metrics/micrometer/tree/main/micrometer-core/src/main/java/io/micrometer/core/instrument/binder/jersey/server[Repo]
+| Jersey | https://github.com/eclipse-ee4j/jersey/pull/5391[PR]
 | JMS | https://github.com/micrometer-metrics/micrometer/blob/main/micrometer-core/src/main/java/io/micrometer/core/instrument/binder/jms/JmsInstrumentation.java[Repo]
 | Kotlin Coroutines | https://github.com/micrometer-metrics/micrometer/pull/3256[PR]
 | Lettuce | https://github.com/lettuce-io/lettuce-core/commit/6604fbe9e9cff476806c50716e17803e11d1e0ca[Commit]
