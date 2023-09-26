@@ -1,3 +1,5 @@
+= Instrumentations
+
 Micrometer Observation is used to instrument various projects. Below you can find a table of projects that are using Micrometer Observation to _"instrument once and have multiple benefits out of it"_.
 
 .External Project Instrumentations
