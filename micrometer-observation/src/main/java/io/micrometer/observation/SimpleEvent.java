@@ -23,7 +23,6 @@ import io.micrometer.observation.Observation.Event;
  * @author Jonatan Ivanov
  * @author Tommy Ludwig
  * @author Marcin Grzejszczak
- * @since 1.12.0
  */
 class SimpleEvent implements Event {
 
