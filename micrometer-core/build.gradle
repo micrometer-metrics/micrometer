@@ -201,6 +201,7 @@ dependencies {
     testImplementation 'io.grpc:grpc-testing-proto'
     testImplementation 'com.squareup.retrofit2:retrofit'
     testImplementation 'org.jboss.resteasy:resteasy-netty4'
+    testImplementation 'javax.validation:validation-api'
 }
 
 task shenandoahTest(type: Test) {

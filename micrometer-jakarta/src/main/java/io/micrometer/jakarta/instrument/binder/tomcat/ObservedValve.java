@@ -71,7 +71,8 @@ public class ObservedValve extends ValveBase {
         HttpJakartaServerServletRequestObservationContext context = new HttpJakartaServerServletRequestObservationContext(
                 request, response);
         observation = JakartaHttpObservationDocumentation.JAKARTA_SERVLET_SERVER_OBSERVATION
-            .observation(this.observationConvention, DefaultHttpJakartaServerServletRequestObservationConvention.INSTANCE, () -> context,
+            .observation(this.observationConvention,
+                    DefaultHttpJakartaServerServletRequestObservationConvention.INSTANCE, () -> context,
                     this.observationRegistry)
             .start();
         request.setAttribute(Observation.class.getName(), observation);
