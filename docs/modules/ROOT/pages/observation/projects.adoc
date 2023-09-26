@@ -1,3 +1,5 @@
+= Instrumentations
+
 Micrometer Observation is used to instrument various projects. Below you can find a table of projects that are using Micrometer Observation to _"instrument once and have multiple benefits out of it"_.
 
 .External Project Instrumentations
@@ -11,12 +13,13 @@ Micrometer Observation is used to instrument various projects. Below you can fin
 | Apache Skywalking | https://github.com/apache/skywalking-java/pull/401[PR], https://skywalking.apache.org/docs/skywalking-java/next/en/setup/service-agent/java-agent/application-toolkit-micrometer-1.10/[Docs]
 | Armeria | https://github.com/line/armeria/pull/4980[PR]
 | Appsmith | https://github.com/appsmithorg/appsmith/commit/5e46a2f4b7bf184aba03b4b93038edce8a615366[Commit]
+| Couchbase | https://issues.couchbase.com/browse/JCBC-2046[Issue]
 | gRPC | https://github.com/micrometer-metrics/micrometer/pull/3427[PR]
 | Halo | https://github.com/halo-dev/halo/commit/d192b8c956887e4701b94e3ed302fb88e4771583[Commit]
 | JDBC | https://github.com/jdbc-observations/datasource-micrometer[Repo]
 | JDK Http Client | https://github.com/micrometer-metrics/micrometer/blob/main/micrometer-core/src/main/java11/io/micrometer/core/instrument/binder/jdk/MicrometerHttpClient.java[Repo]
 | Jetty | https://github.com/micrometer-metrics/micrometer/pull/3416[PR]
-| Jersey | https://github.com/micrometer-metrics/micrometer/tree/main/micrometer-core/src/main/java/io/micrometer/core/instrument/binder/jersey/server[Repo]
+| Jersey | https://github.com/eclipse-ee4j/jersey/pull/5391[PR]
 | JMS | https://github.com/micrometer-metrics/micrometer/blob/main/micrometer-core/src/main/java/io/micrometer/core/instrument/binder/jms/JmsInstrumentation.java[Repo]
 | Kotlin Coroutines | https://github.com/micrometer-metrics/micrometer/pull/3256[PR]
 | Lettuce | https://github.com/lettuce-io/lettuce-core/commit/6604fbe9e9cff476806c50716e17803e11d1e0ca[Commit]

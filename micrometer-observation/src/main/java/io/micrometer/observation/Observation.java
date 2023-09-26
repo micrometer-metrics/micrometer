@@ -1281,6 +1281,7 @@ public interface Observation extends ObservationView {
          * cardinality).
          * @param wallTime Wall time in milliseconds since the epoch
          * @return event
+         * @since 1.12.0
          */
         static Event of(String name, String contextualName, long wallTime) {
             return new SimpleEvent(name, contextualName, wallTime);
@@ -1303,9 +1304,10 @@ public interface Observation extends ObservationView {
 
         /**
          * Wall time in milliseconds since the epoch. Typically equivalent to
-         * System.currentTimeMillis. Should not be used to determine durations. Used for
-         * timestamping events that happened during Observations.
+         * {@link System#currentTimeMillis()}. Should not be used to determine durations.
+         * Used for timestamping events that happened during Observations.
          * @return Wall time in milliseconds since the epoch
+         * @since 1.12.0
          */
         default long getWallTime() {
             return 0;

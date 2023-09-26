@@ -397,12 +397,12 @@ class ObservationTests {
             }
         };
         AtomicReference<Context> passedContextHolder = new AtomicReference<>();
-        result = Observation.createNotStarted("service", supplier, NoopObservationRegistry.INSTANCE)
+        result = Observation.createNotStarted("service", supplier, ObservationRegistry.NOOP)
             .observeWithContext((ctx) -> {
                 passedContextHolder.set(ctx);
                 return "World";
             });
-        assertThat(passedContextHolder).as("passed a noop context").hasValue(NoopObservation.NOOP.getContext());
+        assertThat(passedContextHolder).as("passed a noop context").hasValue(Observation.NOOP.getContext());
         assertThat(contextCreated).isFalse();
         assertThat(result).isEqualTo("World");
     }

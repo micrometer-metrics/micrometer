@@ -41,8 +41,8 @@ class SessionInvocationHandler implements InvocationHandler {
 
     /**
      * Create an invocation handler to be used for proxying a {@link Session}.
-     * @param session the proxied session.
-     * @param registry the observation registry used for recording observations.
+     * @param session the proxied session
+     * @param registry the observation registry used for recording observations
      */
     SessionInvocationHandler(Session session, ObservationRegistry registry) {
         this.target = session;
@@ -60,7 +60,7 @@ class SessionInvocationHandler implements InvocationHandler {
                 return Proxy.newProxyInstance(this.target.getClass().getClassLoader(),
                         new Class[] { MessageProducer.class }, producerHandler);
             }
-            else if (result instanceof MessageConsumer) {
+            if (result instanceof MessageConsumer) {
                 MessageConsumer consumer = (MessageConsumer) result;
                 MessageConsumerInvocationHandler consumerHandler = new MessageConsumerInvocationHandler(consumer,
                         this.registry);
