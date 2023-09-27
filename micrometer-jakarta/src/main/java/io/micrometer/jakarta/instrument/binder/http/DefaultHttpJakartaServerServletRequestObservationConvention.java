@@ -79,7 +79,8 @@ public class DefaultHttpJakartaServerServletRequestObservationConvention
     @Override
     public KeyValues getHighCardinalityKeyValues(HttpJakartaServerServletRequestObservationContext context) {
         String requestUri = context.getCarrier() != null ? context.getCarrier().getRequestURI() : null;
-        return getHighCardinalityKeyValues(requestUri);
+        String userAgent = context.getCarrier() != null ? context.getCarrier().getHeader("User-Agent") : null;
+        return getHighCardinalityKeyValues(requestUri, userAgent);
     }
 
 }

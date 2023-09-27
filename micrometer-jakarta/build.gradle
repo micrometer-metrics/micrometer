@@ -26,17 +26,17 @@ dependencies {
     api project(":micrometer-core")
     api project(":micrometer-commons")
     api project(":micrometer-observation")
-    optionalApi 'jakarta.ws.rs:jakarta.ws.rs-api:3.+' // jakarta
+    optionalApi 'jakarta.ws.rs:jakarta.ws.rs-api' // jakarta
 
     // Aspects
     optionalApi 'org.aspectj:aspectjweaver'
 
     optionalApi 'org.eclipse.jetty:jetty-server'
     // jakarta servlet
-    optionalApi 'jakarta.servlet:jakarta.servlet-api:5.+'
-    optionalApi 'org.eclipse.jetty:jetty-client:12.0.+'
-    optionalApi 'org.apache.tomcat.embed:tomcat-embed-core:10.1.+'
-    optionalApi 'org.glassfish.jersey.core:jersey-server:3.1.+'
+    optionalApi 'jakarta.servlet:jakarta.servlet-api'
+    optionalApi 'org.eclipse.jetty:jetty-client:12.0.+' // can't move to dependencies.gradle, we have 2 versions of this lib (check micrometer-core)
+    optionalApi 'org.apache.tomcat.embed:tomcat-embed-core:10.1.+' // can't move to dependencies.gradle, we have 2 versions of this lib (check micrometer-core)
+    optionalApi 'org.glassfish.jersey.core:jersey-server:3.1.+' // can't move to dependencies.gradle, we have 2 versions of this lib (check micrometer-core)
     // jakarta JMS
     optionalApi 'jakarta.jms:jakarta.jms-api'
 

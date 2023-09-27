@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 VMware, Inc.
+ * Copyright 2023 VMware, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -88,10 +88,10 @@ public class AbstractDefaultHttpClientRequestObservationConvention {
     }
 
     private KeyValue status(@Nullable Integer statusCode) {
-        if (statusCode == null) {
-            return STATUS_CLIENT_ERROR;
+        if (statusCode != null) {
+            return KeyValue.of(CommonLowCardinalityKeys.STATUS, String.valueOf(statusCode));
         }
-        return KeyValue.of(CommonLowCardinalityKeys.STATUS, String.valueOf(statusCode));
+        return STATUS_CLIENT_ERROR;
     }
 
     private KeyValue clientName(@Nullable URI uri) {

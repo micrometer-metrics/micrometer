@@ -66,8 +66,8 @@ jar {
 dependencies {
     api project(":micrometer-commons")
     api project(":micrometer-observation")
-    optionalApi 'javax.ws.rs:javax.ws.rs-api:2.+' // javax
-    optionalApi 'jakarta.ws.rs:jakarta.ws.rs-api:3.+' // jakarta
+    optionalApi 'javax.ws.rs:javax.ws.rs-api' // javax
+    optionalApi 'jakarta.ws.rs:jakarta.ws.rs-api' // jakarta
 
     java11Api project(":micrometer-commons")
     java11Api project(":micrometer-observation")

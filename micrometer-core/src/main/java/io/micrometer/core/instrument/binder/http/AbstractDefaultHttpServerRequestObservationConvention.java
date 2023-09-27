@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 VMware, Inc.
+ * Copyright 2023 VMware, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,7 +42,10 @@ public class AbstractDefaultHttpServerRequestObservationConvention {
 
     private static final KeyValue STATUS_UNKNOWN = KeyValue.of(CommonLowCardinalityKeys.STATUS, "UNKNOWN");
 
-    private static final KeyValue HTTP_OUTCOME_SUCCESS = KeyValue.of(CommonLowCardinalityKeys.OUTCOME, "SUCCESS");
+    private static final KeyValue USER_AGENT_NONE = KeyValue.of(CommonHighCardinalityKeys.USER_AGENT_ORIGINAL,
+            KeyValue.NONE_VALUE);
+
+    ;
 
     private static final KeyValue HTTP_OUTCOME_UNKNOWN = KeyValue.of(CommonLowCardinalityKeys.OUTCOME, "UNKNOWN");
 
@@ -97,8 +100,8 @@ public class AbstractDefaultHttpServerRequestObservationConvention {
         }
     }
 
-    protected KeyValues getHighCardinalityKeyValues(String requestUri) {
-        return KeyValues.of(httpUrl(requestUri));
+    protected KeyValues getHighCardinalityKeyValues(String requestUri, @Nullable String userAgent) {
+        return KeyValues.of(httpUrl(requestUri), userAgent(userAgent));
     }
 
     protected KeyValue method(@Nullable String method) {
@@ -149,6 +152,13 @@ public class AbstractDefaultHttpServerRequestObservationConvention {
             return KeyValue.of(CommonHighCardinalityKeys.HTTP_URL, requestUri);
         }
         return HTTP_URL_UNKNOWN;
+    }
+
+    private KeyValue userAgent(@Nullable String userAgent) {
+        if (userAgent != null) {
+            return KeyValue.of(CommonHighCardinalityKeys.USER_AGENT_ORIGINAL, userAgent);
+        }
+        return USER_AGENT_NONE;
     }
 
 }
