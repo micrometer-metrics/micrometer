@@ -119,11 +119,20 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
 
         if (statsDClient == null && isStatsd(config.uri())) {
             NonBlockingStatsDClientBuilder builder = new NonBlockingStatsDClientBuilder();
+            builder = builder.enableTelemetry(config.enableClientSideTelemetry())
+                .enableAggregation(config.enableAggregation());
+            if (config.maxPacketSizeBytes() != -1) {
+                builder = builder.maxPacketSizeBytes(config.maxPacketSizeBytes());
+            }
+
             URI statsdURI = URI.create(config.uri());
             if (statsdURI.getScheme().equalsIgnoreCase("tcp") || statsdURI.getScheme().equalsIgnoreCase("udp")) {
-                if (!statsdURI.getHost().equalsIgnoreCase("")) {
+                // the default host is localhost, but if the config overrides this then
+                // set it explicitly
+                if (!statsdURI.getHost().isEmpty()) {
                     builder = builder.hostname(statsdURI.getHost());
                 }
+                // if a port is set, then use this.
                 if (statsdURI.getPort() != -1) {
                     builder = builder.port(statsdURI.getPort());
                 }
@@ -335,8 +344,9 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
             return; // we can't set metadata correctly without the application key
 
         Meter.Id fullId = id;
-        if (suffix != null)
+        if (suffix != null) {
             fullId = idWithSuffix(id, suffix);
+        }
 
         String metricName = getConventionName(fullId);
         if (!verifiedMetadata.contains(metricName)) {
@@ -352,8 +362,9 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
         }
 
         Meter.Id fullId = id;
-        if (suffix != null)
+        if (suffix != null) {
             fullId = idWithSuffix(id, suffix);
+        }
 
         Iterable<Tag> tags = getConventionTags(fullId);
 
@@ -392,8 +403,9 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
     String writeMetric(Meter.Id id, @Nullable String suffix, long wallTime, double value, Statistic statistic,
             @Nullable String overrideBaseUnit) {
         Meter.Id fullId = id;
-        if (suffix != null)
+        if (suffix != null) {
             fullId = idWithSuffix(id, suffix);
+        }
 
         Iterable<Tag> tags = getConventionTags(fullId);
 

@@ -80,6 +80,33 @@ public interface DatadogConfig extends StepRegistryConfig {
         return getBoolean(this, "descriptions").orElse(true);
     }
 
+    /**
+     * @return {@code true} if client-side telemetry should be enabled when in Dogstatsd
+     * mode.
+     * https://docs.datadoghq.com/developers/dogstatsd/high_throughput/?code-lang=java#client-side-telemetry
+     */
+    default boolean enableClientSideTelemetry() {
+        return getBoolean(this, "disableClientSideTelemetry").orElse(true);
+    }
+
+    /**
+     * @return The maximum packet size to buffer before sending metrics when using
+     * Dogstatsd mode.
+     * https://docs.datadoghq.com/developers/dogstatsd/high_throughput/?code-lang=java#enable-buffering-on-your-client
+     */
+    default Integer maxPacketSizeBytes() {
+        return getInteger(this, "maxPacketSizeBytes").orElse(-1);
+    }
+
+    /**
+     * @return {@code false} if client-side aggregation should be enabled when in
+     * Dogstatsd mode.
+     * https://docs.datadoghq.com/developers/dogstatsd/high_throughput/?code-lang=java#client-side-aggregation
+     */
+    default boolean enableAggregation() {
+        return getBoolean(this, "enableAggregation").orElse(false);
+    }
+
     @Override
     default Validated<?> validate() {
         return checkAll(this, c -> StepRegistryConfig.validate(c),
