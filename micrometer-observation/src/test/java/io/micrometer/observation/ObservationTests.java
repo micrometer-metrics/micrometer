@@ -17,6 +17,13 @@ package io.micrometer.observation;
 
 import io.micrometer.common.KeyValue;
 import io.micrometer.common.KeyValues;
+
+import java.util.ConcurrentModificationException;
+import java.util.concurrent.TimeUnit;
+
+import java.util.concurrent.atomic.AtomicBoolean;
+
+import org.awaitility.Awaitility;
 import io.micrometer.observation.Observation.Context;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -337,6 +344,34 @@ class ObservationTests {
         assertThat(context.getContextualName()).isEqualTo("instrumentation.contextualName");
         assertThat(context.getLowCardinalityKeyValues()).containsExactlyInAnyOrder(KeyValue.of("local", "present"),
                 KeyValue.of("instrumentation", "present"), KeyValue.of("low", "instrumentation"));
+    }
+
+    @Test
+    void contextShouldWorkOnMultipleThreads() {
+        Observation.Context context = new Observation.Context();
+        AtomicBoolean exception = new AtomicBoolean();
+
+        new Thread(() -> {
+            try {
+                for (int i = 0; i < 1000; i++) {
+                    context.computeIfAbsent("foo", o -> "bar");
+                }
+            }
+            catch (ConcurrentModificationException ex) {
+                exception.set(true);
+            }
+        }).start();
+        new Thread(() -> {
+            for (int i = 0; i < 1000; i++) {
+                context.clear();
+            }
+            context.put("thread", "done");
+        }).start();
+
+        Awaitility.await().atMost(150, TimeUnit.MILLISECONDS).pollDelay(10, TimeUnit.MILLISECONDS).untilAsserted(() -> {
+            assertThat(exception).as("ConcurrentModificationException must not be thrown").isFalse();
+            assertThat((String) context.get("thread")).isEqualTo("done");
+        });
     }
 
     @Test

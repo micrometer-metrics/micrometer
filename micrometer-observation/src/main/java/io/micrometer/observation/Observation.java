@@ -21,10 +21,10 @@ import io.micrometer.common.lang.NonNull;
 import io.micrometer.common.lang.Nullable;
 import io.micrometer.common.util.internal.logging.InternalLoggerFactory;
 
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -912,7 +912,7 @@ public interface Observation extends ObservationView {
     @SuppressWarnings("unchecked")
     class Context implements ContextView {
 
-        private final Map<Object, Object> map = new HashMap<>();
+        private final Map<Object, Object> map = new ConcurrentHashMap<>();
 
         private String name;
 
