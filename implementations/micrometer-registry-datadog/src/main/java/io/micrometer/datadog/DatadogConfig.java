@@ -107,6 +107,25 @@ public interface DatadogConfig extends StepRegistryConfig {
         return getBoolean(this, "enableAggregation").orElse(false);
     }
 
+    /**
+     * @return {@code 3000} sets the period of time in milliseconds in which the
+     * aggregator will flush its metrics into the sender when in Dogstatsd mode.
+     * https://github.com/DataDog/java-dogstatsd-client#configuration-1
+     */
+    default Integer aggregationFlushInterval() {
+        return getInteger(this, "aggregationFlushInterval").orElse(3000);
+    }
+
+    /**
+     * @return {@code 4} determines the number of shards in the aggregator, this feature
+     * is aimed at mitigating the effects of map locking in highly concurrent scenarios
+     * when in Dogstatsd mode.
+     * https://github.com/DataDog/java-dogstatsd-client#configuration-1
+     */
+    default Integer aggregationShards() {
+        return getInteger(this, "aggregationShards").orElse(4);
+    }
+
     @Override
     default Validated<?> validate() {
         return checkAll(this, c -> StepRegistryConfig.validate(c),

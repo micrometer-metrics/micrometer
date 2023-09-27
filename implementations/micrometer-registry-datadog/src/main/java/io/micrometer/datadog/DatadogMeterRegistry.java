@@ -119,12 +119,20 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
 
         if (statsDClient == null && isStatsd(config.uri())) {
             NonBlockingStatsDClientBuilder builder = new NonBlockingStatsDClientBuilder();
+
+            // performance tune-ables
             builder = builder.enableTelemetry(config.enableClientSideTelemetry())
                 .enableAggregation(config.enableAggregation());
+            if (config.enableAggregation()) {
+                builder = builder.aggregationFlushInterval(config.aggregationFlushInterval())
+                    .aggregationShards(config.aggregationShards());
+            }
+
             if (config.maxPacketSizeBytes() != -1) {
                 builder = builder.maxPacketSizeBytes(config.maxPacketSizeBytes());
             }
 
+            // where to report data
             URI statsdURI = URI.create(config.uri());
             if (statsdURI.getScheme().equalsIgnoreCase("tcp") || statsdURI.getScheme().equalsIgnoreCase("udp")) {
                 // the default host is localhost, but if the config overrides this then
