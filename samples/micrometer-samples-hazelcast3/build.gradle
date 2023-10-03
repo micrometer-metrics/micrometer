@@ -6,7 +6,7 @@ dependencies {
     implementation project(':micrometer-core')
     implementation(libs.hazelcast3) {
         version {
-            strictly '3.+'
+            strictly libs.hazelcast3.get().version
         }
     }
     implementation 'ch.qos.logback:logback-classic'
