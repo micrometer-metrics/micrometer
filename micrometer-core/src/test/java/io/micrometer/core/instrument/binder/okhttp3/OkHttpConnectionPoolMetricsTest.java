@@ -24,8 +24,7 @@ import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import okhttp3.ConnectionPool;
 import org.junit.jupiter.api.Test;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -40,23 +39,23 @@ class OkHttpConnectionPoolMetricsTest {
 
     @Test
     void creationWithNullConnectionPoolThrowsException() {
-        assertThrows(IllegalArgumentException.class, () -> new OkHttpConnectionPoolMetrics(null));
-        assertThrows(IllegalArgumentException.class, () -> new OkHttpConnectionPoolMetrics(null, Tags.empty()));
-        assertThrows(IllegalArgumentException.class,
-                () -> new OkHttpConnectionPoolMetrics(null, "irrelevant", Tags.empty()));
+        assertThatIllegalArgumentException().isThrownBy(() -> new OkHttpConnectionPoolMetrics(null));
+        assertThatIllegalArgumentException().isThrownBy(() -> new OkHttpConnectionPoolMetrics(null, Tags.empty()));
+        assertThatIllegalArgumentException()
+            .isThrownBy(() -> new OkHttpConnectionPoolMetrics(null, "irrelevant", Tags.empty()));
     }
 
     @Test
     void creationWithNullNamePrefixThrowsException() {
-        assertThrows(IllegalArgumentException.class,
-                () -> new OkHttpConnectionPoolMetrics(connectionPool, null, Tags.empty()));
+        assertThatIllegalArgumentException()
+            .isThrownBy(() -> new OkHttpConnectionPoolMetrics(connectionPool, null, Tags.empty()));
     }
 
     @Test
     void creationWithNullTagsThrowsException() {
-        assertThrows(IllegalArgumentException.class, () -> new OkHttpConnectionPoolMetrics(connectionPool, null));
-        assertThrows(IllegalArgumentException.class,
-                () -> new OkHttpConnectionPoolMetrics(connectionPool, "irrelevant.name", null));
+        assertThatIllegalArgumentException().isThrownBy(() -> new OkHttpConnectionPoolMetrics(connectionPool, null));
+        assertThatIllegalArgumentException()
+            .isThrownBy(() -> new OkHttpConnectionPoolMetrics(connectionPool, "irrelevant.name", null));
     }
 
     @Test
@@ -134,8 +133,8 @@ class OkHttpConnectionPoolMetricsTest {
         OkHttpConnectionPoolMetrics instance = new OkHttpConnectionPoolMetrics(connectionPool, "huge.pool",
                 Tags.of("foo", "bar"), null);
         instance.bindTo(registry);
-        assertThrows(MeterNotFoundException.class,
-                () -> registry.get("huge.pool.connection.limit").tags(Tags.of("foo", "bar")).gauge());
+        assertThatExceptionOfType(MeterNotFoundException.class)
+            .isThrownBy(() -> registry.get("huge.pool.connection.limit").tags(Tags.of("foo", "bar")).gauge());
     }
 
 }

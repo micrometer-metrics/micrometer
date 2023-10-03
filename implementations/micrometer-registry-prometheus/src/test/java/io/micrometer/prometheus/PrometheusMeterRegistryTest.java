@@ -40,7 +40,6 @@ import java.util.concurrent.atomic.AtomicLong;
 import static io.micrometer.core.instrument.MockClock.clock;
 import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.*;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
  * Tests for {@link PrometheusMeterRegistry}.
@@ -136,7 +135,7 @@ class PrometheusMeterRegistryTest {
     @Test
     void differentMeterTypesWithSameName() {
         registry.timer("m");
-        assertThrows(IllegalArgumentException.class, () -> registry.counter("m"));
+        assertThatIllegalArgumentException().isThrownBy(() -> registry.counter("m"));
     }
 
     @DisplayName("description text is bound to 'help' on Prometheus collectors")
