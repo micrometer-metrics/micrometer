@@ -49,7 +49,7 @@ import static io.micrometer.core.instrument.util.TimeUtils.millisToUnit;
 import static java.util.Collections.emptyList;
 import static java.util.Objects.requireNonNull;
 import static org.assertj.core.api.Assertions.*;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.SoftAssertions.assertSoftly;
 
 /**
  * Base class for {@link MeterRegistry} compatibility tests. To run a
@@ -202,7 +202,7 @@ public abstract class MeterRegistryCompatibilityKit {
             c.increment(0);
             clock(registry).add(step());
 
-            assertEquals(2L, c.count());
+            assertThat(c.count()).isEqualTo(2L);
         }
 
         @Test
@@ -233,13 +233,19 @@ public abstract class MeterRegistryCompatibilityKit {
 
             ds.count();
 
-            assertAll(() -> assertEquals(1L, ds.count()), () -> assertEquals(10L, ds.totalAmount()));
+            assertSoftly(softly -> {
+                softly.assertThat(ds.count()).isEqualTo(1L);
+                softly.assertThat(ds.totalAmount()).isEqualTo(10L);
+            });
 
             ds.record(10);
             ds.record(10);
             clock(registry).add(step());
 
-            assertAll(() -> assertTrue(ds.count() >= 2L), () -> assertTrue(ds.totalAmount() >= 20L));
+            assertSoftly(softly -> {
+                softly.assertThat(ds.count()).isGreaterThanOrEqualTo(2L);
+                softly.assertThat(ds.totalAmount()).isGreaterThanOrEqualTo(20L);
+            });
         }
 
         @Test
@@ -248,7 +254,10 @@ public abstract class MeterRegistryCompatibilityKit {
             DistributionSummary ds = registry.summary("my.summary");
 
             ds.record(-10);
-            assertAll(() -> assertEquals(0, ds.count()), () -> assertEquals(0L, ds.totalAmount()));
+            assertSoftly(softly -> {
+                softly.assertThat(ds.count()).isEqualTo(0L);
+                softly.assertThat(ds.totalAmount()).isEqualTo(0L);
+            });
         }
 
         @Test
@@ -259,7 +268,10 @@ public abstract class MeterRegistryCompatibilityKit {
             ds.record(0);
             clock(registry).add(step());
 
-            assertAll(() -> assertEquals(1L, ds.count()), () -> assertEquals(0L, ds.totalAmount()));
+            assertSoftly(softly -> {
+                softly.assertThat(ds.count()).isEqualTo(1L);
+                softly.assertThat(ds.totalAmount()).isEqualTo(0L);
+            });
         }
 
         @Test
@@ -378,11 +390,13 @@ public abstract class MeterRegistryCompatibilityKit {
             LongTaskTimer.Sample sample = t.start();
             clock(registry).add(10, TimeUnit.NANOSECONDS);
 
-            assertAll(() -> assertEquals(10, t.duration(TimeUnit.NANOSECONDS)),
-                    () -> assertEquals(0.01, t.duration(TimeUnit.MICROSECONDS)),
-                    () -> assertEquals(10, sample.duration(TimeUnit.NANOSECONDS)),
-                    () -> assertEquals(0.01, sample.duration(TimeUnit.MICROSECONDS)),
-                    () -> assertEquals(1, t.activeTasks()));
+            assertSoftly(softly -> {
+                softly.assertThat(t.duration(TimeUnit.NANOSECONDS)).isEqualTo(10);
+                softly.assertThat(t.duration(TimeUnit.MICROSECONDS)).isEqualTo(0.01);
+                softly.assertThat(sample.duration(TimeUnit.NANOSECONDS)).isEqualTo(10);
+                softly.assertThat(sample.duration(TimeUnit.MICROSECONDS)).isEqualTo(0.01);
+                softly.assertThat(t.activeTasks()).isEqualTo(1);
+            });
 
             assertThat(t.measure()).satisfiesExactlyInAnyOrder(measurement -> assertThat(measurement).satisfies(m -> {
                 assertThat(m.getValue()).isEqualTo(1.0);
@@ -395,9 +409,11 @@ public abstract class MeterRegistryCompatibilityKit {
             clock(registry).add(10, TimeUnit.NANOSECONDS);
             sample.stop();
 
-            assertAll(() -> assertEquals(0, t.duration(TimeUnit.NANOSECONDS)),
-                    () -> assertEquals(-1, sample.duration(TimeUnit.NANOSECONDS)),
-                    () -> assertEquals(0, t.activeTasks()));
+            assertSoftly(softly -> {
+                softly.assertThat(t.duration(TimeUnit.NANOSECONDS)).isEqualTo(0);
+                softly.assertThat(sample.duration(TimeUnit.NANOSECONDS)).isEqualTo(-1);
+                softly.assertThat(t.activeTasks()).isEqualTo(0);
+            });
         }
 
         @Test
@@ -530,8 +546,10 @@ public abstract class MeterRegistryCompatibilityKit {
             t.record(42, TimeUnit.MILLISECONDS);
             clock(registry).add(step());
 
-            assertAll(() -> assertEquals(1L, t.count()),
-                    () -> assertEquals(42, t.totalTime(TimeUnit.MILLISECONDS), 1.0e-12));
+            assertSoftly(softly -> {
+                softly.assertThat(t.count()).isEqualTo(1L);
+                softly.assertThat(t.totalTime(TimeUnit.MILLISECONDS)).isEqualTo(42, offset(1.0e-12));
+            });
         }
 
         @Test
@@ -541,8 +559,10 @@ public abstract class MeterRegistryCompatibilityKit {
             t.record(Duration.ofMillis(42));
             clock(registry).add(step());
 
-            assertAll(() -> assertEquals(1L, t.count()),
-                    () -> assertEquals(42, t.totalTime(TimeUnit.MILLISECONDS), 1.0e-12));
+            assertSoftly(softly -> {
+                softly.assertThat(t.count()).isEqualTo(1L);
+                softly.assertThat(t.totalTime(TimeUnit.MILLISECONDS)).isEqualTo(42, offset(1.0e-12));
+            });
         }
 
         @Test
@@ -551,8 +571,10 @@ public abstract class MeterRegistryCompatibilityKit {
             Timer t = registry.timer("myTimer");
             t.record(-42, TimeUnit.MILLISECONDS);
 
-            assertAll(() -> assertEquals(0L, t.count()),
-                    () -> assertEquals(0, t.totalTime(TimeUnit.NANOSECONDS), 1.0e-12));
+            assertSoftly(softly -> {
+                softly.assertThat(t.count()).isEqualTo(0L);
+                softly.assertThat(t.totalTime(TimeUnit.NANOSECONDS)).isEqualTo(0, offset(1.0e-12));
+            });
         }
 
         @Test
@@ -562,7 +584,10 @@ public abstract class MeterRegistryCompatibilityKit {
             t.record(0, TimeUnit.MILLISECONDS);
             clock(registry).add(step());
 
-            assertAll(() -> assertEquals(1L, t.count()), () -> assertEquals(0L, t.totalTime(TimeUnit.NANOSECONDS)));
+            assertSoftly(softly -> {
+                softly.assertThat(t.count()).isEqualTo(1L);
+                softly.assertThat(t.totalTime(TimeUnit.NANOSECONDS)).isEqualTo(0d);
+            });
         }
 
         @Test
@@ -578,8 +603,10 @@ public abstract class MeterRegistryCompatibilityKit {
                 clock(registry).add(step());
             }
             finally {
-                assertAll(() -> assertEquals(1L, t.count()),
-                        () -> assertEquals(10, t.totalTime(TimeUnit.NANOSECONDS), 1.0e-12));
+                assertSoftly(softly -> {
+                    softly.assertThat(t.count()).isEqualTo(1L);
+                    softly.assertThat(t.totalTime(TimeUnit.NANOSECONDS)).isEqualTo(10, offset(1.0e-12));
+                });
             }
         }
 
@@ -594,12 +621,14 @@ public abstract class MeterRegistryCompatibilityKit {
             };
             try {
                 String supplierResult = t.record(supplier);
-                assertEquals(expectedResult, supplierResult);
+                assertThat(supplierResult).isEqualTo(expectedResult);
                 clock(registry).add(step());
             }
             finally {
-                assertAll(() -> assertEquals(1L, t.count()),
-                        () -> assertEquals(10, t.totalTime(TimeUnit.NANOSECONDS), 1.0e-12));
+                assertSoftly(softly -> {
+                    softly.assertThat(t.count()).isEqualTo(1L);
+                    softly.assertThat(t.totalTime(TimeUnit.NANOSECONDS)).isEqualTo(10, offset(1.0e-12));
+                });
             }
         }
 
@@ -614,12 +643,14 @@ public abstract class MeterRegistryCompatibilityKit {
             };
             try {
                 Supplier<String> wrappedSupplier = timer.wrap(supplier);
-                assertEquals(expectedResult, wrappedSupplier.get());
+                assertThat(wrappedSupplier.get()).isEqualTo(expectedResult);
                 clock(registry).add(step());
             }
             finally {
-                assertAll(() -> assertEquals(1L, timer.count()),
-                        () -> assertEquals(10, timer.totalTime(TimeUnit.NANOSECONDS), 1.0e-12));
+                assertSoftly(softly -> {
+                    softly.assertThat(timer.count()).isEqualTo(1L);
+                    softly.assertThat(timer.totalTime(TimeUnit.NANOSECONDS)).isEqualTo(10, offset(1.0e-12));
+                });
             }
         }
 
@@ -633,8 +664,10 @@ public abstract class MeterRegistryCompatibilityKit {
             sample.stop(timer);
             clock(registry).add(step());
 
-            assertAll(() -> assertEquals(1L, timer.count()),
-                    () -> assertEquals(10, timer.totalTime(TimeUnit.NANOSECONDS), 1.0e-12));
+            assertSoftly(softly -> {
+                softly.assertThat(timer.count()).isEqualTo(1L);
+                softly.assertThat(timer.totalTime(TimeUnit.NANOSECONDS)).isEqualTo(10, offset(1.0e-12));
+            });
         }
 
         @Test
@@ -659,8 +692,10 @@ public abstract class MeterRegistryCompatibilityKit {
             assertThat(longTaskTimer.activeTasks()).isEqualTo(0);
 
             Timer timer = registry.timer("myObservation", "error", "none", "staticTag", "42", "dynamicTag", "24");
-            assertAll(() -> assertEquals(1L, timer.count()),
-                    () -> assertEquals(1, timer.totalTime(TimeUnit.SECONDS), 1.0e-12));
+            assertSoftly(softly -> {
+                softly.assertThat(timer.count()).isEqualTo(1L);
+                softly.assertThat(timer.totalTime(TimeUnit.SECONDS)).isEqualTo(1.0e-12);
+            });
 
             Counter counter = registry.counter("myObservation.testEvent", "staticTag", "42", "dynamicTag", "24");
             assertThat(counter.count()).isEqualTo(1.0);
@@ -679,8 +714,10 @@ public abstract class MeterRegistryCompatibilityKit {
             clock(registry).add(step());
 
             Timer timer = registry.timer("myObservation", "error", "none");
-            assertAll(() -> assertEquals(1L, timer.count()),
-                    () -> assertEquals(10, timer.totalTime(TimeUnit.NANOSECONDS), 1.0e-12));
+            assertSoftly(softly -> {
+                softly.assertThat(timer.count()).isEqualTo(1L);
+                softly.assertThat(timer.totalTime(TimeUnit.SECONDS)).isEqualTo(1.0e-12);
+            });
 
             Counter counter = registry.counter("myObservation.testEvent");
             assertThat(counter.count()).isEqualTo(1.0);
@@ -708,7 +745,7 @@ public abstract class MeterRegistryCompatibilityKit {
         void recordCallableException() {
             Timer t = registry.timer("myTimer");
 
-            assertThrows(Exception.class, () -> {
+            assertThatException().isThrownBy(() -> {
                 t.recordCallable(() -> {
                     clock(registry).add(10, TimeUnit.NANOSECONDS);
                     throw new Exception("uh oh");
@@ -717,8 +754,10 @@ public abstract class MeterRegistryCompatibilityKit {
 
             clock(registry).add(step());
 
-            assertAll(() -> assertEquals(1L, t.count()),
-                    () -> assertEquals(10, t.totalTime(TimeUnit.NANOSECONDS), 1.0e-12));
+            assertSoftly(softly -> {
+                softly.assertThat(t.count()).isEqualTo(1L);
+                softly.assertThat(t.totalTime(TimeUnit.NANOSECONDS)).isEqualTo(10, offset(1.0e-12));
+            });
         }
 
         @Deprecated
