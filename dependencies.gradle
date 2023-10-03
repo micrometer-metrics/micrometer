@@ -78,6 +78,11 @@ def VERSIONS = [
         libs.cloudwatch2
 ]
 
+def PLATFORM_BOMS = [
+        libs.reactorBom,
+        libs.nettyBom,
+]
+
 subprojects {
   plugins.withId('java-library') {
     dependencies {
@@ -91,8 +96,11 @@ subprojects {
           runtimeOnly version
         }
       }
-      implementation platform(libs.reactorBom)
-      implementation platform(libs.nettyBom)
+      PLATFORM_BOMS.each { bom ->
+        api platform(bom)
+        compileOnly platform(bom)
+        runtimeOnly platform(bom)
+      }
     }
   }
   configurations.configureEach {
