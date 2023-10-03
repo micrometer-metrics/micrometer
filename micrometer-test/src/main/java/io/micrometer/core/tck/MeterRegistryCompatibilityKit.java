@@ -27,7 +27,6 @@ import io.micrometer.core.instrument.observation.DefaultMeterObservationHandler;
 import io.micrometer.core.instrument.util.TimeUtils;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
-import org.assertj.core.data.Offset;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -185,7 +184,7 @@ public abstract class MeterRegistryCompatibilityKit {
             Counter c = registry.counter("myCounter");
             c.increment();
             clock(registry).add(step());
-            assertThat(c.count()).isEqualTo(1.0, offset(1e-12));
+            assertThat(c.count()).isCloseTo(1.0, offset(1e-12));
             c.increment();
             c.increment();
             clock(registry).add(step());
@@ -291,7 +290,7 @@ public abstract class MeterRegistryCompatibilityKit {
             DistributionSummary s = DistributionSummary.builder("my.summary").publishPercentiles(1).register(registry);
 
             s.record(1);
-            assertThat(s.percentile(1)).isEqualTo(1, Offset.offset(0.3));
+            assertThat(s.percentile(1)).isCloseTo(1, offset(0.3));
             assertThat(s.percentile(0.5)).isNaN();
         }
 
@@ -548,7 +547,7 @@ public abstract class MeterRegistryCompatibilityKit {
 
             assertSoftly(softly -> {
                 softly.assertThat(t.count()).isEqualTo(1L);
-                softly.assertThat(t.totalTime(TimeUnit.MILLISECONDS)).isEqualTo(42, offset(1.0e-12));
+                softly.assertThat(t.totalTime(TimeUnit.MILLISECONDS)).isCloseTo(42, offset(1.0e-12));
             });
         }
 
@@ -561,7 +560,7 @@ public abstract class MeterRegistryCompatibilityKit {
 
             assertSoftly(softly -> {
                 softly.assertThat(t.count()).isEqualTo(1L);
-                softly.assertThat(t.totalTime(TimeUnit.MILLISECONDS)).isEqualTo(42, offset(1.0e-12));
+                softly.assertThat(t.totalTime(TimeUnit.MILLISECONDS)).isCloseTo(42, offset(1.0e-12));
             });
         }
 
@@ -573,7 +572,7 @@ public abstract class MeterRegistryCompatibilityKit {
 
             assertSoftly(softly -> {
                 softly.assertThat(t.count()).isEqualTo(0L);
-                softly.assertThat(t.totalTime(TimeUnit.NANOSECONDS)).isEqualTo(0, offset(1.0e-12));
+                softly.assertThat(t.totalTime(TimeUnit.NANOSECONDS)).isCloseTo(0, offset(1.0e-12));
             });
         }
 
@@ -605,7 +604,7 @@ public abstract class MeterRegistryCompatibilityKit {
             finally {
                 assertSoftly(softly -> {
                     softly.assertThat(t.count()).isEqualTo(1L);
-                    softly.assertThat(t.totalTime(TimeUnit.NANOSECONDS)).isEqualTo(10, offset(1.0e-12));
+                    softly.assertThat(t.totalTime(TimeUnit.NANOSECONDS)).isCloseTo(10, offset(1.0e-12));
                 });
             }
         }
@@ -627,7 +626,7 @@ public abstract class MeterRegistryCompatibilityKit {
             finally {
                 assertSoftly(softly -> {
                     softly.assertThat(t.count()).isEqualTo(1L);
-                    softly.assertThat(t.totalTime(TimeUnit.NANOSECONDS)).isEqualTo(10, offset(1.0e-12));
+                    softly.assertThat(t.totalTime(TimeUnit.NANOSECONDS)).isCloseTo(10, offset(1.0e-12));
                 });
             }
         }
@@ -649,7 +648,7 @@ public abstract class MeterRegistryCompatibilityKit {
             finally {
                 assertSoftly(softly -> {
                     softly.assertThat(timer.count()).isEqualTo(1L);
-                    softly.assertThat(timer.totalTime(TimeUnit.NANOSECONDS)).isEqualTo(10, offset(1.0e-12));
+                    softly.assertThat(timer.totalTime(TimeUnit.NANOSECONDS)).isCloseTo(10, offset(1.0e-12));
                 });
             }
         }
@@ -666,7 +665,7 @@ public abstract class MeterRegistryCompatibilityKit {
 
             assertSoftly(softly -> {
                 softly.assertThat(timer.count()).isEqualTo(1L);
-                softly.assertThat(timer.totalTime(TimeUnit.NANOSECONDS)).isEqualTo(10, offset(1.0e-12));
+                softly.assertThat(timer.totalTime(TimeUnit.NANOSECONDS)).isCloseTo(10, offset(1.0e-12));
             });
         }
 
@@ -694,7 +693,7 @@ public abstract class MeterRegistryCompatibilityKit {
             Timer timer = registry.timer("myObservation", "error", "none", "staticTag", "42", "dynamicTag", "24");
             assertSoftly(softly -> {
                 softly.assertThat(timer.count()).isEqualTo(1L);
-                softly.assertThat(timer.totalTime(TimeUnit.SECONDS)).isEqualTo(1.0e-12);
+                softly.assertThat(timer.totalTime(TimeUnit.SECONDS)).isCloseTo(1, offset(1.0e-12));
             });
 
             Counter counter = registry.counter("myObservation.testEvent", "staticTag", "42", "dynamicTag", "24");
@@ -716,7 +715,7 @@ public abstract class MeterRegistryCompatibilityKit {
             Timer timer = registry.timer("myObservation", "error", "none");
             assertSoftly(softly -> {
                 softly.assertThat(timer.count()).isEqualTo(1L);
-                softly.assertThat(timer.totalTime(TimeUnit.SECONDS)).isEqualTo(1.0e-12);
+                softly.assertThat(timer.totalTime(TimeUnit.NANOSECONDS)).isCloseTo(10, offset(1.0e-12));
             });
 
             Counter counter = registry.counter("myObservation.testEvent");
@@ -756,7 +755,7 @@ public abstract class MeterRegistryCompatibilityKit {
 
             assertSoftly(softly -> {
                 softly.assertThat(t.count()).isEqualTo(1L);
-                softly.assertThat(t.totalTime(TimeUnit.NANOSECONDS)).isEqualTo(10, offset(1.0e-12));
+                softly.assertThat(t.totalTime(TimeUnit.NANOSECONDS)).isCloseTo(10, offset(1.0e-12));
             });
         }
 
@@ -766,7 +765,7 @@ public abstract class MeterRegistryCompatibilityKit {
             Timer t = Timer.builder("my.timer").publishPercentiles(1).register(registry);
 
             t.record(1, TimeUnit.MILLISECONDS);
-            assertThat(t.percentile(1, TimeUnit.MILLISECONDS)).isEqualTo(1, Offset.offset(0.3));
+            assertThat(t.percentile(1, TimeUnit.MILLISECONDS)).isCloseTo(1, offset(0.3));
             assertThat(t.percentile(0.5, TimeUnit.MILLISECONDS)).isNaN();
         }
 
