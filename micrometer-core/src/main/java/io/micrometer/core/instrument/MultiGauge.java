@@ -17,6 +17,7 @@ package io.micrometer.core.instrument;
 
 import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.annotation.Incubating;
+import io.micrometer.core.instrument.internal.Copyable;
 
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
@@ -124,11 +125,11 @@ public class MultiGauge {
     /**
      * Fluent builder for multi-gauges.
      */
-    public static class Builder {
+    public static class Builder implements Copyable<Builder> {
 
         private final String name;
 
-        private Tags tags = Tags.empty();
+        private Tags tags;
 
         @Nullable
         private String description;
@@ -136,8 +137,21 @@ public class MultiGauge {
         @Nullable
         private String baseUnit;
 
-        private Builder(String name) {
+        protected Builder(String name) {
             this.name = name;
+            this.tags = Tags.empty();
+        }
+
+        protected Builder(Builder builder) {
+            this.name = builder.name;
+            this.tags = builder.tags.copy();
+            this.description = builder.description;
+            this.baseUnit = builder.baseUnit;
+        }
+
+        @Override
+        public Builder copy() {
+            return new Builder(this);
         }
 
         /**

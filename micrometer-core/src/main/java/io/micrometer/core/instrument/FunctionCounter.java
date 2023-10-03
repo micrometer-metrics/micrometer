@@ -16,6 +16,7 @@
 package io.micrometer.core.instrument;
 
 import io.micrometer.common.lang.Nullable;
+import io.micrometer.core.instrument.internal.Copyable;
 
 import java.util.Collections;
 import java.util.function.ToDoubleFunction;
@@ -46,13 +47,13 @@ public interface FunctionCounter extends Meter {
      *
      * @param <T> The type of the state object from which the counter value is extracted.
      */
-    class Builder<T> {
+    class Builder<T> implements Copyable<Builder<T>> {
 
         private final String name;
 
         private final ToDoubleFunction<T> f;
 
-        private Tags tags = Tags.empty();
+        private Tags tags;
 
         @Nullable
         private final T obj;
@@ -63,10 +64,25 @@ public interface FunctionCounter extends Meter {
         @Nullable
         private String baseUnit;
 
-        private Builder(String name, @Nullable T obj, ToDoubleFunction<T> f) {
+        protected Builder(String name, @Nullable T obj, ToDoubleFunction<T> f) {
             this.name = name;
             this.obj = obj;
             this.f = f;
+            this.tags = Tags.empty();
+        }
+
+        protected Builder(Builder<T> builder) {
+            this.name = builder.name;
+            this.f = builder.f;
+            this.tags = builder.tags.copy();
+            this.obj = builder.obj;
+            this.description = builder.description;
+            this.baseUnit = builder.baseUnit;
+        }
+
+        @Override
+        public Builder<T> copy() {
+            return new Builder<>(this);
         }
 
         /**

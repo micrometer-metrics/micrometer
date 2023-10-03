@@ -328,10 +328,21 @@ public interface Timer extends Meter, HistogramSupport {
 
         private final long startTime;
 
-        ResourceSample(MeterRegistry registry, String name) {
+        protected ResourceSample(MeterRegistry registry, String name) {
             super(name);
             this.registry = registry;
             this.startTime = registry.config().clock().monotonicTime();
+        }
+
+        protected ResourceSample(ResourceSample builder) {
+            super(builder);
+            this.registry = builder.registry;
+            this.startTime = builder.startTime;
+        }
+
+        @Override
+        public ResourceSample copy() {
+            return new ResourceSample(this);
         }
 
         @Override
@@ -350,8 +361,17 @@ public interface Timer extends Meter, HistogramSupport {
      */
     class Builder extends AbstractTimerBuilder<Builder> {
 
-        Builder(String name) {
+        protected Builder(String name) {
             super(name);
+        }
+
+        protected Builder(Builder builder) {
+            super(builder);
+        }
+
+        @Override
+        public Builder copy() {
+            return new Builder(this);
         }
 
         @Override

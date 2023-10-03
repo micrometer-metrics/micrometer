@@ -16,6 +16,7 @@
 package io.micrometer.core.instrument;
 
 import io.micrometer.common.lang.Nullable;
+import io.micrometer.core.instrument.internal.Copyable;
 
 import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
@@ -73,7 +74,7 @@ public interface FunctionTimer extends Meter {
      *
      * @param <T> The type of the state object from which the timer values are extracted.
      */
-    class Builder<T> {
+    class Builder<T> implements Copyable<Builder<T>> {
 
         private final String name;
 
@@ -83,7 +84,7 @@ public interface FunctionTimer extends Meter {
 
         private final TimeUnit totalTimeFunctionUnit;
 
-        private Tags tags = Tags.empty();
+        private Tags tags;
 
         @Nullable
         private final T obj;
@@ -91,13 +92,29 @@ public interface FunctionTimer extends Meter {
         @Nullable
         private String description;
 
-        private Builder(String name, @Nullable T obj, ToLongFunction<T> countFunction,
+        protected Builder(String name, @Nullable T obj, ToLongFunction<T> countFunction,
                 ToDoubleFunction<T> totalTimeFunction, TimeUnit totalTimeFunctionUnit) {
             this.name = name;
             this.obj = obj;
             this.countFunction = countFunction;
             this.totalTimeFunction = totalTimeFunction;
             this.totalTimeFunctionUnit = totalTimeFunctionUnit;
+            this.tags = Tags.empty();
+        }
+
+        protected Builder(Builder<T> builder) {
+            this.name = builder.name;
+            this.countFunction = builder.countFunction;
+            this.totalTimeFunction = builder.totalTimeFunction;
+            this.totalTimeFunctionUnit = builder.totalTimeFunctionUnit;
+            this.tags = builder.tags.copy();
+            this.obj = builder.obj;
+            this.description = builder.description;
+        }
+
+        @Override
+        public Builder<T> copy() {
+            return new Builder<>(this);
         }
 
         /**

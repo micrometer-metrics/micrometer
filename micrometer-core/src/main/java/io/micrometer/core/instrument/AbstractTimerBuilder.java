@@ -18,6 +18,7 @@ package io.micrometer.core.instrument;
 import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.pause.PauseDetector;
+import io.micrometer.core.instrument.internal.Copyable;
 
 import java.time.Duration;
 import java.util.Arrays;
@@ -30,11 +31,11 @@ import java.util.Arrays;
  * @since 1.6.0
  */
 @SuppressWarnings("unchecked")
-public abstract class AbstractTimerBuilder<B extends AbstractTimerBuilder<B>> {
+public abstract class AbstractTimerBuilder<B extends AbstractTimerBuilder<B>> implements Copyable<B> {
 
     protected final String name;
 
-    protected Tags tags = Tags.empty();
+    protected Tags tags;
 
     protected final DistributionStatisticConfig.Builder distributionConfigBuilder;
 
@@ -46,9 +47,18 @@ public abstract class AbstractTimerBuilder<B extends AbstractTimerBuilder<B>> {
 
     protected AbstractTimerBuilder(String name) {
         this.name = name;
-        this.distributionConfigBuilder = new DistributionStatisticConfig.Builder();
+        this.tags = Tags.empty();
+        this.distributionConfigBuilder = DistributionStatisticConfig.builder();
         minimumExpectedValue(Duration.ofMillis(1));
         maximumExpectedValue(Duration.ofSeconds(30));
+    }
+
+    protected AbstractTimerBuilder(B builder) {
+        this.name = builder.name;
+        this.tags = builder.tags.copy();
+        this.distributionConfigBuilder = builder.distributionConfigBuilder.copy();
+        this.description = builder.description;
+        this.pauseDetector = builder.pauseDetector;
     }
 
     /**

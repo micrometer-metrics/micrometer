@@ -16,6 +16,7 @@
 package io.micrometer.core.instrument;
 
 import io.micrometer.common.lang.Nullable;
+import io.micrometer.core.instrument.internal.Copyable;
 
 import java.util.*;
 import java.util.stream.Stream;
@@ -32,7 +33,7 @@ import static java.util.stream.Collectors.joining;
  * @author Phillip Webb
  * @author Johnny Lim
  */
-public final class Tags implements Iterable<Tag> {
+public final class Tags implements Iterable<Tag>, Copyable<Tags> {
 
     private static final Tags EMPTY = new Tags(new Tag[] {});
 
@@ -44,6 +45,17 @@ public final class Tags implements Iterable<Tag> {
         this.tags = tags;
         Arrays.sort(this.tags);
         dedup();
+    }
+
+    private Tags(Tags tags) {
+        this.tags = new Tag[tags.last];
+        this.last = tags.last;
+        System.arraycopy(tags.tags, 0, this.tags, 0, tags.last);
+    }
+
+    @Override
+    public Tags copy() {
+        return new Tags(this);
     }
 
     private void dedup() {

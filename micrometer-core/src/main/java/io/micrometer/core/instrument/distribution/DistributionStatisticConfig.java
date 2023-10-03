@@ -17,6 +17,7 @@ package io.micrometer.core.instrument.distribution;
 
 import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.config.InvalidConfigurationException;
+import io.micrometer.core.instrument.internal.Copyable;
 import io.micrometer.core.instrument.internal.Mergeable;
 
 import java.time.Duration;
@@ -48,31 +49,45 @@ public class DistributionStatisticConfig implements Mergeable<DistributionStatis
     public static final DistributionStatisticConfig NONE = builder().build();
 
     @Nullable
-    private Boolean percentileHistogram;
+    private final Boolean percentileHistogram;
 
     @Nullable
-    private double[] percentiles;
+    private final double[] percentiles;
 
     @Nullable
-    private Integer percentilePrecision;
+    private final Integer percentilePrecision;
 
     @Nullable
-    private double[] serviceLevelObjectives;
+    private final double[] serviceLevelObjectives;
 
     @Nullable
-    private Double minimumExpectedValue;
+    private final Double minimumExpectedValue;
 
     @Nullable
-    private Double maximumExpectedValue;
+    private final Double maximumExpectedValue;
 
     @Nullable
-    private Duration expiry;
+    private final Duration expiry;
 
     @Nullable
-    private Integer bufferLength;
+    private final Integer bufferLength;
 
     public static Builder builder() {
         return new Builder();
+    }
+
+    public DistributionStatisticConfig(@Nullable Boolean percentileHistogram, @Nullable double[] percentiles,
+            @Nullable Integer percentilePrecision, @Nullable double[] serviceLevelObjectives,
+            @Nullable Double minimumExpectedValue, @Nullable Double maximumExpectedValue, @Nullable Duration expiry,
+            @Nullable Integer bufferLength) {
+        this.percentileHistogram = percentileHistogram;
+        this.percentiles = percentiles;
+        this.percentilePrecision = percentilePrecision;
+        this.serviceLevelObjectives = serviceLevelObjectives;
+        this.minimumExpectedValue = minimumExpectedValue;
+        this.maximumExpectedValue = maximumExpectedValue;
+        this.expiry = expiry;
+        this.bufferLength = bufferLength;
     }
 
     /**
@@ -269,12 +284,53 @@ public class DistributionStatisticConfig implements Mergeable<DistributionStatis
         return serviceLevelObjectives;
     }
 
-    public static class Builder {
+    public static class Builder implements Copyable<Builder> {
 
-        private final DistributionStatisticConfig config = new DistributionStatisticConfig();
+        @Nullable
+        private Boolean percentileHistogram;
+
+        @Nullable
+        private double[] percentiles;
+
+        @Nullable
+        private Integer percentilePrecision;
+
+        @Nullable
+        private double[] serviceLevelObjectives;
+
+        @Nullable
+        private Double minimumExpectedValue;
+
+        @Nullable
+        private Double maximumExpectedValue;
+
+        @Nullable
+        private Duration expiry;
+
+        @Nullable
+        private Integer bufferLength;
+
+        protected Builder() {
+        }
+
+        protected Builder(Builder builder) {
+            this.percentileHistogram = builder.percentileHistogram;
+            this.percentiles = builder.percentiles;
+            this.percentilePrecision = builder.percentilePrecision;
+            this.serviceLevelObjectives = builder.serviceLevelObjectives;
+            this.minimumExpectedValue = builder.minimumExpectedValue;
+            this.maximumExpectedValue = builder.maximumExpectedValue;
+            this.expiry = builder.expiry;
+            this.bufferLength = builder.bufferLength;
+        }
+
+        @Override
+        public Builder copy() {
+            return new Builder(this);
+        }
 
         public Builder percentilesHistogram(@Nullable Boolean enabled) {
-            config.percentileHistogram = enabled;
+            this.percentileHistogram = enabled;
             return this;
         }
 
@@ -289,7 +345,7 @@ public class DistributionStatisticConfig implements Mergeable<DistributionStatis
          * @return This builder.
          */
         public Builder percentiles(@Nullable double... percentiles) {
-            config.percentiles = percentiles;
+            this.percentiles = percentiles;
             return this;
         }
 
@@ -302,7 +358,7 @@ public class DistributionStatisticConfig implements Mergeable<DistributionStatis
          * @return This builder.
          */
         public Builder percentilePrecision(@Nullable Integer digitsOfPrecision) {
-            config.percentilePrecision = digitsOfPrecision;
+            this.percentilePrecision = digitsOfPrecision;
             return this;
         }
 
@@ -319,7 +375,7 @@ public class DistributionStatisticConfig implements Mergeable<DistributionStatis
          * @since 1.5.0
          */
         public Builder serviceLevelObjectives(@Nullable double... slos) {
-            config.serviceLevelObjectives = slos;
+            this.serviceLevelObjectives = slos;
             return this;
         }
 
@@ -392,7 +448,7 @@ public class DistributionStatisticConfig implements Mergeable<DistributionStatis
          * @since 1.3.10
          */
         public Builder minimumExpectedValue(@Nullable Double min) {
-            config.minimumExpectedValue = min;
+            this.minimumExpectedValue = min;
             return this;
         }
 
@@ -418,7 +474,7 @@ public class DistributionStatisticConfig implements Mergeable<DistributionStatis
          * @since 1.3.10
          */
         public Builder maximumExpectedValue(@Nullable Double max) {
-            config.maximumExpectedValue = max;
+            this.maximumExpectedValue = max;
             return this;
         }
 
@@ -433,7 +489,7 @@ public class DistributionStatisticConfig implements Mergeable<DistributionStatis
          * @return This builder.
          */
         public Builder expiry(@Nullable Duration expiry) {
-            config.expiry = expiry;
+            this.expiry = expiry;
             return this;
         }
 
@@ -447,7 +503,7 @@ public class DistributionStatisticConfig implements Mergeable<DistributionStatis
          * @return This builder.
          */
         public Builder bufferLength(@Nullable Integer bufferLength) {
-            config.bufferLength = bufferLength;
+            this.bufferLength = bufferLength;
             return this;
         }
 
@@ -455,40 +511,41 @@ public class DistributionStatisticConfig implements Mergeable<DistributionStatis
          * @return A new immutable distribution configuration.
          */
         public DistributionStatisticConfig build() {
-            validate(config);
-            return config;
+            validate();
+            return new DistributionStatisticConfig(percentileHistogram, percentiles, percentilePrecision,
+                    serviceLevelObjectives, minimumExpectedValue, maximumExpectedValue, expiry, bufferLength);
         }
 
-        private void validate(DistributionStatisticConfig distributionStatisticConfig) {
-            if (config.bufferLength != null && config.bufferLength <= 0) {
-                rejectConfig("bufferLength (" + config.bufferLength + ") must be greater than zero");
+        private void validate() {
+            if (this.bufferLength != null && this.bufferLength <= 0) {
+                rejectConfig("bufferLength (" + this.bufferLength + ") must be greater than zero");
             }
 
-            if (config.percentiles != null) {
-                for (double p : config.percentiles) {
+            if (this.percentiles != null) {
+                for (double p : this.percentiles) {
                     if (p < 0 || p > 1) {
                         rejectConfig("percentiles must contain only the values between 0.0 and 1.0. " + "Found " + p);
                     }
                 }
             }
 
-            if (config.minimumExpectedValue != null && config.minimumExpectedValue <= 0) {
-                rejectConfig("minimumExpectedValue (" + config.minimumExpectedValue + ") must be greater than 0.");
+            if (this.minimumExpectedValue != null && this.minimumExpectedValue <= 0) {
+                rejectConfig("minimumExpectedValue (" + this.minimumExpectedValue + ") must be greater than 0.");
             }
 
-            if (config.maximumExpectedValue != null && config.maximumExpectedValue <= 0) {
-                rejectConfig("maximumExpectedValue (" + config.maximumExpectedValue + ") must be greater than 0.");
+            if (this.maximumExpectedValue != null && this.maximumExpectedValue <= 0) {
+                rejectConfig("maximumExpectedValue (" + this.maximumExpectedValue + ") must be greater than 0.");
             }
 
-            if ((config.minimumExpectedValue != null && config.maximumExpectedValue != null)
-                    && config.minimumExpectedValue > config.maximumExpectedValue) {
-                rejectConfig("maximumExpectedValue (" + config.maximumExpectedValue
-                        + ") must be equal to or greater than minimumExpectedValue (" + config.minimumExpectedValue
+            if ((this.minimumExpectedValue != null && this.maximumExpectedValue != null)
+                    && this.minimumExpectedValue > this.maximumExpectedValue) {
+                rejectConfig("maximumExpectedValue (" + this.maximumExpectedValue
+                        + ") must be equal to or greater than minimumExpectedValue (" + this.minimumExpectedValue
                         + ").");
             }
 
-            if (distributionStatisticConfig.getServiceLevelObjectiveBoundaries() != null) {
-                for (double slo : distributionStatisticConfig.getServiceLevelObjectiveBoundaries()) {
+            if (this.serviceLevelObjectives != null) {
+                for (double slo : this.serviceLevelObjectives) {
                     if (slo <= 0) {
                         rejectConfig("serviceLevelObjectiveBoundaries must contain only the values greater than 0. "
                                 + "Found " + slo);

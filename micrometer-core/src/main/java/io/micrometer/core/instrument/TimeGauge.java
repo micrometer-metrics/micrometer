@@ -17,6 +17,7 @@ package io.micrometer.core.instrument;
 
 import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.annotation.Incubating;
+import io.micrometer.core.instrument.internal.Copyable;
 import io.micrometer.core.instrument.util.TimeUtils;
 
 import java.util.concurrent.TimeUnit;
@@ -72,7 +73,7 @@ public interface TimeGauge extends Gauge {
     /**
      * Fluent builder for time gauges.
      */
-    class Builder<T> {
+    class Builder<T> implements Copyable<Builder<T>> {
 
         private final String name;
 
@@ -80,7 +81,7 @@ public interface TimeGauge extends Gauge {
 
         private final ToDoubleFunction<T> f;
 
-        private Tags tags = Tags.empty();
+        private Tags tags;
 
         private boolean strongReference = false;
 
@@ -90,11 +91,27 @@ public interface TimeGauge extends Gauge {
         @Nullable
         private String description;
 
-        private Builder(String name, @Nullable T obj, TimeUnit fUnits, ToDoubleFunction<T> f) {
+        protected Builder(String name, @Nullable T obj, TimeUnit fUnits, ToDoubleFunction<T> f) {
             this.name = name;
             this.obj = obj;
             this.fUnits = fUnits;
             this.f = f;
+            this.tags = Tags.empty();
+        }
+
+        protected Builder(Builder<T> builder) {
+            this.name = builder.name;
+            this.fUnits = builder.fUnits;
+            this.f = builder.f;
+            this.tags = builder.tags.copy();
+            this.strongReference = builder.strongReference;
+            this.obj = builder.obj;
+            this.description = builder.description;
+        }
+
+        @Override
+        public Builder<T> copy() {
+            return new Builder<>(this);
         }
 
         /**

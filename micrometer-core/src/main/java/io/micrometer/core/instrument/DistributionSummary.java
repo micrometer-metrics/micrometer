@@ -20,6 +20,7 @@ import io.micrometer.core.instrument.distribution.CountAtBucket;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.HistogramSupport;
 import io.micrometer.core.instrument.distribution.ValueAtPercentile;
+import io.micrometer.core.instrument.internal.Copyable;
 
 import java.time.Duration;
 import java.util.Arrays;
@@ -112,13 +113,13 @@ public interface DistributionSummary extends Meter, HistogramSupport {
     /**
      * Fluent builder for distribution summaries.
      */
-    class Builder {
+    class Builder implements Copyable<Builder> {
 
         private final String name;
 
-        private Tags tags = Tags.empty();
+        private Tags tags;
 
-        private DistributionStatisticConfig.Builder distributionConfigBuilder = DistributionStatisticConfig.builder();
+        private final DistributionStatisticConfig.Builder distributionConfigBuilder;
 
         @Nullable
         private String description;
@@ -128,8 +129,24 @@ public interface DistributionSummary extends Meter, HistogramSupport {
 
         private double scale = 1.0;
 
-        private Builder(String name) {
+        protected Builder(String name) {
             this.name = name;
+            this.tags = Tags.empty();
+            this.distributionConfigBuilder = DistributionStatisticConfig.builder();
+        }
+
+        protected Builder(Builder builder) {
+            this.name = builder.name;
+            this.tags = builder.tags.copy();
+            this.distributionConfigBuilder = builder.distributionConfigBuilder.copy();
+            this.description = builder.description;
+            this.baseUnit = builder.baseUnit;
+            this.scale = builder.scale;
+        }
+
+        @Override
+        public Builder copy() {
+            return new Builder(this);
         }
 
         /**

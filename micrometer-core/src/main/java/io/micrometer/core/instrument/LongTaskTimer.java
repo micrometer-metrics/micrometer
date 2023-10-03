@@ -19,6 +19,7 @@ import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.annotation.Timed;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.HistogramSupport;
+import io.micrometer.core.instrument.internal.Copyable;
 
 import java.time.Duration;
 import java.util.Arrays;
@@ -289,21 +290,35 @@ public interface LongTaskTimer extends Meter, HistogramSupport {
     /**
      * Fluent builder for long task timers.
      */
-    class Builder {
+    class Builder implements Copyable<Builder> {
 
         private final String name;
 
-        private Tags tags = Tags.empty();
+        private Tags tags;
 
-        private final DistributionStatisticConfig.Builder distributionConfigBuilder = new DistributionStatisticConfig.Builder();
+        private final DistributionStatisticConfig.Builder distributionConfigBuilder;
 
         @Nullable
         private String description;
 
-        private Builder(String name) {
+        protected Builder(String name) {
             this.name = name;
+            this.tags = Tags.empty();
+            this.distributionConfigBuilder = DistributionStatisticConfig.builder();
             minimumExpectedValue(Duration.ofMinutes(2));
             maximumExpectedValue(Duration.ofHours(2));
+        }
+
+        protected Builder(Builder builder) {
+            this.name = builder.name;
+            this.tags = builder.tags.copy();
+            this.distributionConfigBuilder = builder.distributionConfigBuilder.copy();
+            this.description = builder.description;
+        }
+
+        @Override
+        public Builder copy() {
+            return new Builder(this);
         }
 
         /**
