@@ -39,8 +39,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.assertj.core.api.Assertions.*;
 
 /**
  * Unit tests for {@link MicrometerHttpRequestExecutor}.
@@ -114,8 +113,8 @@ class MicrometerHttpRequestExecutorTest {
         getWithHeader.addHeader(DefaultUriMapper.URI_PATTERN_HEADER, "/some/pattern");
         EntityUtils.consume(client.execute(getWithHeader).getEntity());
         assertThat(registry.get(EXPECTED_METER_NAME).tags("uri", "/some/pattern").timer().count()).isEqualTo(1L);
-        assertThrows(MeterNotFoundException.class,
-                () -> registry.get(EXPECTED_METER_NAME).tags("uri", "UNKNOWN").timer());
+        assertThatExceptionOfType(MeterNotFoundException.class)
+            .isThrownBy(() -> registry.get(EXPECTED_METER_NAME).tags("uri", "UNKNOWN").timer());
     }
 
     @Test
@@ -190,13 +189,13 @@ class MicrometerHttpRequestExecutorTest {
 
     @Test
     void settingNullRegistryThrowsException() {
-        assertThrows(IllegalArgumentException.class, () -> MicrometerHttpRequestExecutor.builder(null).build());
+        assertThatIllegalArgumentException().isThrownBy(() -> MicrometerHttpRequestExecutor.builder(null).build());
     }
 
     @Test
     void overridingUriMapperWithNullThrowsException() {
-        assertThrows(IllegalArgumentException.class,
-                () -> MicrometerHttpRequestExecutor.builder(registry).uriMapper(null).build());
+        assertThatIllegalArgumentException()
+            .isThrownBy(() -> MicrometerHttpRequestExecutor.builder(registry).uriMapper(null).build());
     }
 
     @Test

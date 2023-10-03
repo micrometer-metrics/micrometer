@@ -42,6 +42,12 @@
             <property name="illegalPattern" value="true"/>
             <property name="ignoreComments" value="true"/>
         </module>
+        <module name="com.puppycrawl.tools.checkstyle.checks.regexp.RegexpSinglelineJavaCheck">
+            <property name="maximum" value="0" />
+            <property name="format" value="org\.junit\.jupiter\.api\.Assertions" />
+            <property name="message" value="Please use AssertJ imports." />
+            <property name="ignoreComments" value="true" />
+        </module>
 
         <!-- Whitespace -->
         <module name="SingleSpaceSeparator" />
