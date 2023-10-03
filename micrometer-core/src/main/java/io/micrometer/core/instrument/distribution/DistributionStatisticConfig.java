@@ -49,34 +49,37 @@ public class DistributionStatisticConfig implements Mergeable<DistributionStatis
     public static final DistributionStatisticConfig NONE = builder().build();
 
     @Nullable
-    private final Boolean percentileHistogram;
+    private Boolean percentileHistogram;
 
     @Nullable
-    private final double[] percentiles;
+    private double[] percentiles;
 
     @Nullable
-    private final Integer percentilePrecision;
+    private Integer percentilePrecision;
 
     @Nullable
-    private final double[] serviceLevelObjectives;
+    private double[] serviceLevelObjectives;
 
     @Nullable
-    private final Double minimumExpectedValue;
+    private Double minimumExpectedValue;
 
     @Nullable
-    private final Double maximumExpectedValue;
+    private Double maximumExpectedValue;
 
     @Nullable
-    private final Duration expiry;
+    private Duration expiry;
 
     @Nullable
-    private final Integer bufferLength;
+    private Integer bufferLength;
 
     public static Builder builder() {
         return new Builder();
     }
 
-    public DistributionStatisticConfig(@Nullable Boolean percentileHistogram, @Nullable double[] percentiles,
+    public DistributionStatisticConfig() {
+    }
+
+    protected DistributionStatisticConfig(@Nullable Boolean percentileHistogram, @Nullable double[] percentiles,
             @Nullable Integer percentilePrecision, @Nullable double[] serviceLevelObjectives,
             @Nullable Double minimumExpectedValue, @Nullable Double maximumExpectedValue, @Nullable Duration expiry,
             @Nullable Integer bufferLength) {
@@ -310,7 +313,7 @@ public class DistributionStatisticConfig implements Mergeable<DistributionStatis
         @Nullable
         private Integer bufferLength;
 
-        protected Builder() {
+        public Builder() {
         }
 
         protected Builder(Builder builder) {
