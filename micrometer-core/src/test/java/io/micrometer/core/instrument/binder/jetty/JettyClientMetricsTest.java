@@ -37,7 +37,6 @@ import java.util.concurrent.CountDownLatch;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class JettyClientMetricsTest {
 
@@ -99,7 +98,7 @@ class JettyClientMetricsTest {
         post.send();
         httpClient.stop();
 
-        assertTrue(singleRequestLatch.await(10, SECONDS));
+        assertThat(singleRequestLatch.await(10, SECONDS)).isTrue();
         assertThat(registry.get("jetty.client.requests")
             .tag("outcome", "SUCCESS")
             .tag("status", "200")
@@ -114,7 +113,7 @@ class JettyClientMetricsTest {
         httpClient.GET("http://localhost:" + connector.getLocalPort() + "/ok");
         httpClient.stop();
 
-        assertTrue(singleRequestLatch.await(10, SECONDS));
+        assertThat(singleRequestLatch.await(10, SECONDS)).isTrue();
         assertThat(registry.get("jetty.client.requests")
             .tag("outcome", "SUCCESS")
             .tag("status", "200")
@@ -133,7 +132,7 @@ class JettyClientMetricsTest {
         post.send();
         httpClient.stop();
 
-        assertTrue(singleRequestLatch.await(10, SECONDS));
+        assertThat(singleRequestLatch.await(10, SECONDS)).isTrue();
         assertThat(registry.get("jetty.client.request.size")
             .tag("outcome", "SUCCESS")
             .tag("status", "200")
@@ -150,7 +149,7 @@ class JettyClientMetricsTest {
         post.send();
         httpClient.stop();
 
-        assertTrue(singleRequestLatch.await(10, SECONDS));
+        assertThat(singleRequestLatch.await(10, SECONDS)).isTrue();
         assertThat(registry.get("jetty.client.requests")
             .tag("outcome", "SERVER_ERROR")
             .tag("status", "500")
@@ -167,7 +166,7 @@ class JettyClientMetricsTest {
         post.send();
         httpClient.stop();
 
-        assertTrue(singleRequestLatch.await(10, SECONDS));
+        assertThat(singleRequestLatch.await(10, SECONDS)).isTrue();
         assertThat(registry.get("jetty.client.requests")
             .tag("outcome", "SERVER_ERROR")
             .tag("status", "500")
@@ -184,7 +183,7 @@ class JettyClientMetricsTest {
         post.send();
         httpClient.stop();
 
-        assertTrue(singleRequestLatch.await(10, SECONDS));
+        assertThat(singleRequestLatch.await(10, SECONDS)).isTrue();
         assertThat(registry.get("jetty.client.requests")
             .tag("outcome", "CLIENT_ERROR")
             .tag("status", "404")

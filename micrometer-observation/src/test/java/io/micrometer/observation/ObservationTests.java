@@ -17,19 +17,15 @@ package io.micrometer.observation;
 
 import io.micrometer.common.KeyValue;
 import io.micrometer.common.KeyValues;
-
-import java.util.ConcurrentModificationException;
-import java.util.concurrent.TimeUnit;
-
-import java.util.concurrent.atomic.AtomicBoolean;
-
-import org.awaitility.Awaitility;
 import io.micrometer.observation.Observation.Context;
+import org.awaitility.Awaitility;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
+import java.util.ConcurrentModificationException;
 import java.util.Random;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;

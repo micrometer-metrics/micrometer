@@ -29,7 +29,7 @@ import java.util.stream.Stream;
 import static com.google.api.MetricDescriptor.MetricKind.CUMULATIVE;
 import static com.google.api.MetricDescriptor.MetricKind.GAUGE;
 import static com.google.api.MetricDescriptor.ValueType.*;
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 
 class MetricSchemaCompatibilityTest {
 
@@ -117,10 +117,10 @@ class MetricSchemaCompatibilityTest {
 
     private void assertSchemaCompatibility(List<Pair> expectedValues, Stream<TimeSeries> timeSeriesStream) {
         List<TimeSeries> timeSeries = timeSeriesStream.collect(Collectors.toList());
-        assertEquals(expectedValues.size(), timeSeries.size());
+        assertThat(timeSeries.size()).isEqualTo(expectedValues.size());
         for (int i = 0; i < expectedValues.size(); i++) {
-            assertEquals(expectedValues.get(i).metricKind, timeSeries.get(i).getMetricKind());
-            assertEquals(expectedValues.get(i).valueType, timeSeries.get(i).getValueType());
+            assertThat(timeSeries.get(i).getMetricKind()).isEqualTo(expectedValues.get(i).metricKind);
+            assertThat(timeSeries.get(i).getValueType()).isEqualTo(expectedValues.get(i).valueType);
         }
     }
 
