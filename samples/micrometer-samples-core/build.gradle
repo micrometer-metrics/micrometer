@@ -3,7 +3,7 @@ plugins {
 }
 
 dependencies {
-    implementation platform('io.projectreactor:reactor-bom:2020.0.+')
+    implementation platform(libs.reactorBom)
 
     implementation project(':micrometer-core')
     implementation 'colt:colt'
