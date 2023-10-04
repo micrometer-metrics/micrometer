@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.jakarta.instrument.binder.http;
+package io.micrometer.jakarta.instrument.binder.http.jaxrs.container;
 
 import io.micrometer.observation.Observation.Context;
 import io.micrometer.observation.ObservationHandler;
@@ -40,7 +40,7 @@ import java.util.Set;
 
 import static org.assertj.core.api.BDDAssertions.then;
 
-class ObservationHttpJakartaServerFilterTests {
+class ObservationJaxRsContainerFilterTests {
 
     TestObservationRegistry observationRegistry = TestObservationRegistry.create();
 
@@ -57,7 +57,7 @@ class ObservationHttpJakartaServerFilterTests {
         netty.setSecurityDomain(null);
         deployment.setApplication(new MyApplication());
         deployment
-            .setProviders(Collections.singletonList(new ObservationHttpJakartaServerFilter(observationRegistry, null)));
+            .setProviders(Collections.singletonList(new ObservationJaxRsContainerFilter(observationRegistry, null)));
         netty.start();
     }
 
@@ -84,10 +84,10 @@ class ObservationHttpJakartaServerFilterTests {
         }
     }
 
-    static class HeaderReadingHandler implements ObservationHandler<HttpJakartaServerRequestObservationContext> {
+    static class HeaderReadingHandler implements ObservationHandler<JaxRsContainerObservationContext> {
 
         @Override
-        public void onStop(HttpJakartaServerRequestObservationContext context) {
+        public void onStop(JaxRsContainerObservationContext context) {
             List<String> foo = context.getCarrier().getHeaders().get("foo");
             then(foo).hasSize(1);
             context.getResponse().getHeaders().add("baz", foo.get(0));
@@ -95,7 +95,7 @@ class ObservationHttpJakartaServerFilterTests {
 
         @Override
         public boolean supportsContext(Context context) {
-            return context instanceof HttpJakartaServerRequestObservationContext;
+            return context instanceof JaxRsContainerObservationContext;
         }
 
     }

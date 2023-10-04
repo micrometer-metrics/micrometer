@@ -13,8 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.jakarta.instrument.binder.http;
+package io.micrometer.jakarta.instrument.binder.http.jaxrs;
 
+import io.micrometer.jakarta.instrument.binder.http.jaxrs.client.ObservationJaxRsHttpClientFilter;
+import io.micrometer.jakarta.instrument.binder.http.jaxrs.client.ObservationJerseyClientInterceptor;
 import jakarta.ws.rs.ConstrainedTo;
 import jakarta.ws.rs.RuntimeType;
 import jakarta.ws.rs.core.FeatureContext;
@@ -30,9 +32,9 @@ public class ObservationAutoDiscoverable implements AutoDiscoverable {
 
     @Override
     public void configure(FeatureContext context) {
-        if (!context.getConfiguration().isRegistered(ObservationHttpJakartaClientFilter.class)) {
-            context.register(ObservationHttpJakartaClientFilter.class, CLIENT_OBSERVABILITY_PRIORITY);
-            context.register(ObservationHttpJakartaInterceptor.class, CLIENT_OBSERVABILITY_PRIORITY);
+        if (!context.getConfiguration().isRegistered(ObservationJaxRsHttpClientFilter.class)) {
+            context.register(ObservationJaxRsHttpClientFilter.class, CLIENT_OBSERVABILITY_PRIORITY);
+            context.register(ObservationJerseyClientInterceptor.class, CLIENT_OBSERVABILITY_PRIORITY);
         }
     }
 

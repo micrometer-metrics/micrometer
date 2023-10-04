@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.jakarta.instrument.binder.http;
+package io.micrometer.jakarta.instrument.binder.http.servlet;
 
 import io.micrometer.common.lang.Nullable;
 import io.micrometer.observation.transport.RequestReplyReceiverContext;
@@ -31,13 +31,13 @@ import jakarta.servlet.http.HttpServletResponse;
  * @author Marcin Grzejszczak
  * @since 1.12.0
  */
-public class HttpJakartaServerServletRequestObservationContext
+public class HttpServletObservationContext
         extends RequestReplyReceiverContext<HttpServletRequest, HttpServletResponse> {
 
     @Nullable
     private String pathPattern;
 
-    public HttpJakartaServerServletRequestObservationContext(HttpServletRequest request, HttpServletResponse response) {
+    public HttpServletObservationContext(HttpServletRequest request, HttpServletResponse response) {
         super(HttpServletRequest::getHeader);
         setCarrier(request);
         setResponse(response);

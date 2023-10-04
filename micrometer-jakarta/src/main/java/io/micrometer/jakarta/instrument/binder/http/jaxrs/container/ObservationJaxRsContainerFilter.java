@@ -13,9 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.jakarta.instrument.binder.http;
+package io.micrometer.jakarta.instrument.binder.http.jaxrs.container;
 
 import io.micrometer.common.lang.Nullable;
+import io.micrometer.jakarta.instrument.binder.http.JakartaHttpObservationDocumentation;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.Observation.Scope;
 import io.micrometer.observation.ObservationRegistry;
@@ -28,15 +29,14 @@ import jakarta.ws.rs.ext.Provider;
 import java.io.IOException;
 
 @Provider
-public class ObservationHttpJakartaServerFilter implements ContainerRequestFilter, ContainerResponseFilter {
+public class ObservationJaxRsContainerFilter implements ContainerRequestFilter, ContainerResponseFilter {
 
-    private static final String OBSERVATION_PROPERTY = ObservationHttpJakartaServerFilter.class.getName()
-            + ".observation";
+    private static final String OBSERVATION_PROPERTY = ObservationJaxRsContainerFilter.class.getName() + ".observation";
 
-    private static final String OBSERVATION_SCOPE_PROPERTY = ObservationHttpJakartaServerFilter.class.getName()
+    private static final String OBSERVATION_SCOPE_PROPERTY = ObservationJaxRsContainerFilter.class.getName()
             + ".observationScope";
 
-    private static final String OBSERVATION_FINISHED_PROPERTY = ObservationHttpJakartaServerFilter.class.getName()
+    private static final String OBSERVATION_FINISHED_PROPERTY = ObservationJaxRsContainerFilter.class.getName()
             + ".observationFinished";
 
     @Nullable
@@ -45,7 +45,7 @@ public class ObservationHttpJakartaServerFilter implements ContainerRequestFilte
     private final ObservationRegistry observationRegistry;
 
     @Nullable
-    private final HttpJakartaServerRequestObservationConvention convention;
+    private final JaxRsContainerObservationConvention convention;
 
     /**
      * Creates a new instance of the filter.
@@ -53,8 +53,8 @@ public class ObservationHttpJakartaServerFilter implements ContainerRequestFilte
      * @param observationRegistry observation registry
      * @param convention optional convention
      */
-    public ObservationHttpJakartaServerFilter(@Nullable String name, ObservationRegistry observationRegistry,
-            @Nullable HttpJakartaServerRequestObservationConvention convention) {
+    public ObservationJaxRsContainerFilter(@Nullable String name, ObservationRegistry observationRegistry,
+            @Nullable JaxRsContainerObservationConvention convention) {
         this.name = name;
         this.observationRegistry = observationRegistry;
         this.convention = convention;
@@ -65,24 +65,23 @@ public class ObservationHttpJakartaServerFilter implements ContainerRequestFilte
      * @param observationRegistry observation registry
      * @param convention optional convention
      */
-    public ObservationHttpJakartaServerFilter(ObservationRegistry observationRegistry,
-            @Nullable HttpJakartaServerRequestObservationConvention convention) {
+    public ObservationJaxRsContainerFilter(ObservationRegistry observationRegistry,
+            @Nullable JaxRsContainerObservationConvention convention) {
         this(null, observationRegistry, convention);
     }
 
     @Override
     public void filter(ContainerRequestContext requestContext) throws IOException {
-        HttpJakartaServerRequestObservationContext context = new HttpJakartaServerRequestObservationContext(
-                requestContext);
-        Observation observation = JakartaHttpObservationDocumentation.JAKARTA_SERVER_OBSERVATION.start(convention,
+        JaxRsContainerObservationContext context = new JaxRsContainerObservationContext(requestContext);
+        Observation observation = JakartaHttpObservationDocumentation.JAX_RS_CONTAINER_OBSERVATION.start(convention,
                 defaultConvention(), () -> context, observationRegistry);
         requestContext.setProperty(OBSERVATION_PROPERTY, observation);
         requestContext.setProperty(OBSERVATION_SCOPE_PROPERTY, observation.openScope());
     }
 
-    private DefaultHttpJakartaServerRequestObservationConvention defaultConvention() {
-        return this.name != null ? new DefaultHttpJakartaServerRequestObservationConvention(this.name)
-                : DefaultHttpJakartaServerRequestObservationConvention.INSTANCE;
+    private DefaultJaxRsContainerObservationConvention defaultConvention() {
+        return this.name != null ? new DefaultJaxRsContainerObservationConvention(this.name)
+                : DefaultJaxRsContainerObservationConvention.INSTANCE;
     }
 
     @Override
@@ -115,8 +114,7 @@ public class ObservationHttpJakartaServerFilter implements ContainerRequestFilte
         if (scope != null) {
             scope.close();
         }
-        HttpJakartaServerRequestObservationContext context = (HttpJakartaServerRequestObservationContext) observation
-            .getContext();
+        JaxRsContainerObservationContext context = (JaxRsContainerObservationContext) observation.getContext();
         context.setResponse(responseContext);
         observation.stop();
     }

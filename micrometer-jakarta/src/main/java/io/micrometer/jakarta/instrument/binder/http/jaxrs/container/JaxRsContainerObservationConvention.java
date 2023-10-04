@@ -13,24 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.jakarta.instrument.binder.http;
+package io.micrometer.jakarta.instrument.binder.http.jaxrs.container;
 
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationConvention;
 
 /**
- * Interface for an {@link ObservationConvention} for Servlet HTTP requests.
+ * Interface for an {@link ObservationConvention} for JAX-RS container HTTP requests.
  *
  * @author Brian Clozel
  * @author Marcin Grzejszczak
  * @since 1.12.0
  */
-public interface HttpJakartaClientRequestObservationConvention
-        extends ObservationConvention<HttpJakartaClientRequestObservationContext> {
+public interface JaxRsContainerObservationConvention extends ObservationConvention<JaxRsContainerObservationContext> {
 
     @Override
     default boolean supportsContext(Observation.Context context) {
-        return context instanceof HttpJakartaClientRequestObservationContext;
+        return context instanceof JaxRsContainerObservationContext;
     }
 
 }

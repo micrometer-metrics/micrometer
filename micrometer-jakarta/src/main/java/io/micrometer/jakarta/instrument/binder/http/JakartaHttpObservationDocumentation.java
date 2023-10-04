@@ -17,6 +17,9 @@ package io.micrometer.jakarta.instrument.binder.http;
 
 import io.micrometer.common.docs.KeyName;
 import io.micrometer.core.instrument.binder.http.HttpObservationDocumentation.*;
+import io.micrometer.jakarta.instrument.binder.http.jaxrs.container.DefaultJaxRsContainerObservationConvention;
+import io.micrometer.jakarta.instrument.binder.http.jaxrs.client.DefaultJaxRsHttpClientObservationConvention;
+import io.micrometer.jakarta.instrument.binder.http.servlet.DefaultHttpServletObservationConvention;
 import io.micrometer.observation.Observation.Context;
 import io.micrometer.observation.ObservationConvention;
 import io.micrometer.observation.docs.ObservationDocumentation;
@@ -31,12 +34,12 @@ import io.micrometer.observation.docs.ObservationDocumentation;
 public enum JakartaHttpObservationDocumentation implements ObservationDocumentation {
 
     /**
-     * Observation created when a request is sent out via Jakarta API.
+     * Observation created when a request is sent out via a JAX-RS client.
      */
-    JAKARTA_CLIENT_OBSERVATION {
+    JAX_RS_CLIENT_OBSERVATION {
         @Override
         public Class<? extends ObservationConvention<? extends Context>> getDefaultConvention() {
-            return DefaultHttpJakartaClientRequestObservationConvention.class;
+            return DefaultJaxRsHttpClientObservationConvention.class;
         }
 
         @Override
@@ -51,12 +54,12 @@ public enum JakartaHttpObservationDocumentation implements ObservationDocumentat
     },
 
     /**
-     * Observation created when a request is received with Jakarta Http.
+     * Observation created when a request is received via JAX-RS API.
      */
-    JAKARTA_SERVER_OBSERVATION {
+    JAX_RS_CONTAINER_OBSERVATION {
         @Override
         public Class<? extends ObservationConvention<? extends Context>> getDefaultConvention() {
-            return DefaultHttpJakartaServerRequestObservationConvention.class;
+            return DefaultJaxRsContainerObservationConvention.class;
         }
 
         @Override
@@ -75,10 +78,10 @@ public enum JakartaHttpObservationDocumentation implements ObservationDocumentat
     /**
      * Observation created when a request is received with jakarta.servlet Http.
      */
-    JAKARTA_SERVLET_SERVER_OBSERVATION {
+    SERVLET_OBSERVATION {
         @Override
         public Class<? extends ObservationConvention<? extends Context>> getDefaultConvention() {
-            return DefaultHttpJakartaServerServletRequestObservationConvention.class;
+            return DefaultHttpServletObservationConvention.class;
         }
 
         @Override

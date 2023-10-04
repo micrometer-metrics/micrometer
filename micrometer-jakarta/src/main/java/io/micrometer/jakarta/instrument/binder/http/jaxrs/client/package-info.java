@@ -15,11 +15,11 @@
  */
 
 /**
- * Observation instrumentation for Jakarta HTTP APIs.
+ * Observation instrumentation for Jakarta JAX-RS clients.
  */
 @NonNullFields
 @NonNullApi
-package io.micrometer.jakarta.instrument.binder.http;
+package io.micrometer.jakarta.instrument.binder.http.jaxrs.client;
 
 import io.micrometer.common.lang.NonNullApi;
 import io.micrometer.common.lang.NonNullFields;

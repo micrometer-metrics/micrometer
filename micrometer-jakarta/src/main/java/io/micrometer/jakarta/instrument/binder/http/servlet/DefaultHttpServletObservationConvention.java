@@ -13,35 +13,32 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.jakarta.instrument.binder.http;
+package io.micrometer.jakarta.instrument.binder.http.servlet;
 
 import io.micrometer.common.KeyValues;
 import io.micrometer.core.instrument.binder.http.AbstractDefaultHttpServerRequestObservationConvention;
 
 /**
- * Default {@link HttpJakartaServerServletRequestObservationConvention}.
+ * Default {@link HttpServletObservationConvention}.
  *
  * @author Brian Clozel
  * @author Marcin Grzejszczak
  * @since 1.12.0
  */
-public class DefaultHttpJakartaServerServletRequestObservationConvention
-        extends AbstractDefaultHttpServerRequestObservationConvention
-        implements HttpJakartaServerServletRequestObservationConvention {
+public class DefaultHttpServletObservationConvention extends AbstractDefaultHttpServerRequestObservationConvention
+        implements HttpServletObservationConvention {
 
     /**
      * Default instance.
      */
-    public static final DefaultHttpJakartaServerServletRequestObservationConvention INSTANCE = new DefaultHttpJakartaServerServletRequestObservationConvention();
-
-    private static final String DEFAULT_NAME = "http.server.requests";
+    public static final DefaultHttpServletObservationConvention INSTANCE = new DefaultHttpServletObservationConvention();
 
     private final String name;
 
     /**
      * Create a convention with the default name {@code "http.server.requests"}.
      */
-    public DefaultHttpJakartaServerServletRequestObservationConvention() {
+    public DefaultHttpServletObservationConvention() {
         this(DEFAULT_NAME);
     }
 
@@ -49,7 +46,7 @@ public class DefaultHttpJakartaServerServletRequestObservationConvention
      * Create a convention with a custom name.
      * @param name the observation name
      */
-    public DefaultHttpJakartaServerServletRequestObservationConvention(String name) {
+    public DefaultHttpServletObservationConvention(String name) {
         this.name = name;
     }
 
@@ -59,7 +56,7 @@ public class DefaultHttpJakartaServerServletRequestObservationConvention
     }
 
     @Override
-    public String getContextualName(HttpJakartaServerServletRequestObservationContext context) {
+    public String getContextualName(HttpServletObservationContext context) {
         String method = context.getCarrier().getMethod();
         if (method == null) {
             return null;
@@ -68,7 +65,7 @@ public class DefaultHttpJakartaServerServletRequestObservationConvention
     }
 
     @Override
-    public KeyValues getLowCardinalityKeyValues(HttpJakartaServerServletRequestObservationContext context) {
+    public KeyValues getLowCardinalityKeyValues(HttpServletObservationContext context) {
         String method = context.getCarrier() != null ? context.getCarrier().getMethod() : null;
         Integer status = context.getResponse() != null ? context.getResponse().getStatus() : null;
         String pathPattern = context.getPathPattern();
@@ -77,7 +74,7 @@ public class DefaultHttpJakartaServerServletRequestObservationConvention
     }
 
     @Override
-    public KeyValues getHighCardinalityKeyValues(HttpJakartaServerServletRequestObservationContext context) {
+    public KeyValues getHighCardinalityKeyValues(HttpServletObservationContext context) {
         String requestUri = context.getCarrier() != null ? context.getCarrier().getRequestURI() : null;
         String userAgent = context.getCarrier() != null ? context.getCarrier().getHeader("User-Agent") : null;
         return getHighCardinalityKeyValues(requestUri, userAgent);

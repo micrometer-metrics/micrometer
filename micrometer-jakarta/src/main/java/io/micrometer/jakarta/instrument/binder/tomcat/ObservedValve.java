@@ -15,9 +15,9 @@
  */
 package io.micrometer.jakarta.instrument.binder.tomcat;
 
-import io.micrometer.jakarta.instrument.binder.http.DefaultHttpJakartaServerServletRequestObservationConvention;
-import io.micrometer.jakarta.instrument.binder.http.HttpJakartaServerServletRequestObservationContext;
-import io.micrometer.jakarta.instrument.binder.http.HttpJakartaServerServletRequestObservationConvention;
+import io.micrometer.jakarta.instrument.binder.http.servlet.DefaultHttpServletObservationConvention;
+import io.micrometer.jakarta.instrument.binder.http.servlet.HttpServletObservationContext;
+import io.micrometer.jakarta.instrument.binder.http.servlet.HttpServletObservationConvention;
 import io.micrometer.jakarta.instrument.binder.http.JakartaHttpObservationDocumentation;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
@@ -40,10 +40,10 @@ public class ObservedValve extends ValveBase {
 
     private final ObservationRegistry observationRegistry;
 
-    private final HttpJakartaServerServletRequestObservationConvention observationConvention;
+    private final HttpServletObservationConvention observationConvention;
 
     public ObservedValve(ObservationRegistry observationRegistry,
-            HttpJakartaServerServletRequestObservationConvention observationConvention) {
+            HttpServletObservationConvention observationConvention) {
         this.observationRegistry = observationRegistry;
         this.observationConvention = observationConvention;
         setAsyncSupported(true);
@@ -68,11 +68,9 @@ public class ObservedValve extends ValveBase {
                 return;
             }
         }
-        HttpJakartaServerServletRequestObservationContext context = new HttpJakartaServerServletRequestObservationContext(
-                request, response);
-        observation = JakartaHttpObservationDocumentation.JAKARTA_SERVLET_SERVER_OBSERVATION
-            .observation(this.observationConvention,
-                    DefaultHttpJakartaServerServletRequestObservationConvention.INSTANCE, () -> context,
+        HttpServletObservationContext context = new HttpServletObservationContext(request, response);
+        observation = JakartaHttpObservationDocumentation.SERVLET_OBSERVATION
+            .observation(this.observationConvention, DefaultHttpServletObservationConvention.INSTANCE, () -> context,
                     this.observationRegistry)
             .start();
         request.setAttribute(Observation.class.getName(), observation);

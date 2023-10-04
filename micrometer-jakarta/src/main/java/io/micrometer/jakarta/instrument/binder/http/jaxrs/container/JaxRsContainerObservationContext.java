@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.jakarta.instrument.binder.http;
+package io.micrometer.jakarta.instrument.binder.http.jaxrs.container;
 
 import io.micrometer.common.lang.Nullable;
 import io.micrometer.observation.transport.RequestReplyReceiverContext;
@@ -31,13 +31,13 @@ import jakarta.ws.rs.container.ContainerResponseContext;
  * @author Marcin Grzejszczak
  * @since 1.12.0
  */
-public class HttpJakartaServerRequestObservationContext
+public class JaxRsContainerObservationContext
         extends RequestReplyReceiverContext<ContainerRequestContext, ContainerResponseContext> {
 
     @Nullable
     private String pathPattern;
 
-    public HttpJakartaServerRequestObservationContext(ContainerRequestContext request) {
+    public JaxRsContainerObservationContext(ContainerRequestContext request) {
         super(ContainerRequestContext::getHeaderString);
         setCarrier(request);
     }

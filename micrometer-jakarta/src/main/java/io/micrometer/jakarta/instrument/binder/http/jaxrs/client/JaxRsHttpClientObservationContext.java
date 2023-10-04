@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.jakarta.instrument.binder.http;
+package io.micrometer.jakarta.instrument.binder.http.jaxrs.client;
 
 import io.micrometer.common.lang.Nullable;
 import io.micrometer.observation.transport.RequestReplySenderContext;
@@ -31,7 +31,7 @@ import jakarta.ws.rs.client.ClientResponseContext;
  * @author Marcin Grzejszczak
  * @since 1.12.0
  */
-public class HttpJakartaClientRequestObservationContext
+public class JaxRsHttpClientObservationContext
         extends RequestReplySenderContext<ClientRequestContext, ClientResponseContext> {
 
     @Nullable
@@ -41,8 +41,8 @@ public class HttpJakartaClientRequestObservationContext
      * Create an observation context for HTTP client observations.
      * @param containerRequestContext the context for a {@link ClientRequestContext}
      */
-    public HttpJakartaClientRequestObservationContext(ClientRequestContext containerRequestContext) {
-        super(HttpJakartaClientRequestObservationContext::setRequestHeader);
+    public JaxRsHttpClientObservationContext(ClientRequestContext containerRequestContext) {
+        super(JaxRsHttpClientObservationContext::setRequestHeader);
         this.setCarrier(containerRequestContext);
     }
 

@@ -26,8 +26,6 @@ import io.micrometer.common.KeyValues;
 public class DefaultHttpServerRequestObservationConvention extends AbstractDefaultHttpServerRequestObservationConvention
         implements HttpServerRequestObservationConvention {
 
-    private static final String DEFAULT_NAME = "http.server.requests";
-
     private final String name;
 
     /**

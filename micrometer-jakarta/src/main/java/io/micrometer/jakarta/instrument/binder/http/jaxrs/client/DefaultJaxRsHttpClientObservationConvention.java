@@ -13,24 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.jakarta.instrument.binder.http;
+package io.micrometer.jakarta.instrument.binder.http.jaxrs.client;
 
 import io.micrometer.common.KeyValues;
 import io.micrometer.core.instrument.binder.http.AbstractDefaultHttpClientRequestObservationConvention;
+import io.micrometer.jakarta.instrument.binder.http.jaxrs.container.JaxRsContainerObservationConvention;
 
 import java.net.URI;
 
 /**
- * Default {@link HttpJakartaServerRequestObservationConvention}.
+ * Default {@link JaxRsContainerObservationConvention}.
  *
  * @author Brian Clozel
  * @author Marcin Grzejszczak
  * @since 1.12.0
  */
-public class DefaultHttpJakartaClientRequestObservationConvention extends
-        AbstractDefaultHttpClientRequestObservationConvention implements HttpJakartaClientRequestObservationConvention {
+public class DefaultJaxRsHttpClientObservationConvention extends AbstractDefaultHttpClientRequestObservationConvention
+        implements JaxRsHttpClientObservationConvention {
 
-    public static DefaultHttpJakartaClientRequestObservationConvention INSTANCE = new DefaultHttpJakartaClientRequestObservationConvention();
+    public static DefaultJaxRsHttpClientObservationConvention INSTANCE = new DefaultJaxRsHttpClientObservationConvention();
 
     private static final String DEFAULT_NAME = "http.client.requests";
 
@@ -39,7 +40,7 @@ public class DefaultHttpJakartaClientRequestObservationConvention extends
     /**
      * Create a convention with the default name {@code "http.client.requests"}.
      */
-    public DefaultHttpJakartaClientRequestObservationConvention() {
+    public DefaultJaxRsHttpClientObservationConvention() {
         this(DEFAULT_NAME);
     }
 
@@ -47,7 +48,7 @@ public class DefaultHttpJakartaClientRequestObservationConvention extends
      * Create a convention with a custom name.
      * @param name the observation name
      */
-    public DefaultHttpJakartaClientRequestObservationConvention(String name) {
+    public DefaultJaxRsHttpClientObservationConvention(String name) {
         this.name = name;
     }
 
@@ -57,14 +58,14 @@ public class DefaultHttpJakartaClientRequestObservationConvention extends
     }
 
     @Override
-    public String getContextualName(HttpJakartaClientRequestObservationContext context) {
+    public String getContextualName(JaxRsHttpClientObservationContext context) {
         String method = context.getCarrier() != null
                 ? (context.getCarrier().getMethod() != null ? context.getCarrier().getMethod() : null) : null;
         return getContextualName(method);
     }
 
     @Override
-    public KeyValues getLowCardinalityKeyValues(HttpJakartaClientRequestObservationContext context) {
+    public KeyValues getLowCardinalityKeyValues(JaxRsHttpClientObservationContext context) {
         URI uri = context.getCarrier() != null ? context.getCarrier().getUri() : null;
         Throwable throwable = context.getError();
         String methodName = context.getCarrier() != null ? context.getCarrier().getMethod() : null;
@@ -74,7 +75,7 @@ public class DefaultHttpJakartaClientRequestObservationConvention extends
     }
 
     @Override
-    public KeyValues getHighCardinalityKeyValues(HttpJakartaClientRequestObservationContext context) {
+    public KeyValues getHighCardinalityKeyValues(JaxRsHttpClientObservationContext context) {
         URI uri = context.getCarrier() != null ? context.getCarrier().getUri() : null;
         String userAgent = context.getCarrier() != null ? context.getCarrier().getHeaderString("User-Agent") : null;
         return getHighCardinalityKeyValues(uri, userAgent);

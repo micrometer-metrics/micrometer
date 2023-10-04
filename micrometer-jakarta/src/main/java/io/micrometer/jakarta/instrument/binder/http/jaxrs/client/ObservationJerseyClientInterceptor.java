@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.jakarta.instrument.binder.http;
+package io.micrometer.jakarta.instrument.binder.http.jaxrs.client;
 
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.Observation.Scope;
@@ -21,17 +21,18 @@ import jakarta.ws.rs.client.ClientRequestContext;
 import jakarta.ws.rs.client.ClientResponseContext;
 import org.glassfish.jersey.client.spi.PostInvocationInterceptor;
 
-import static io.micrometer.jakarta.instrument.binder.http.ObservationHttpJakartaClientFilter.OBSERVATION_PROPERTY;
-import static io.micrometer.jakarta.instrument.binder.http.ObservationHttpJakartaClientFilter.OBSERVATION_SCOPE_PROPERTY;
+import static io.micrometer.jakarta.instrument.binder.http.jaxrs.client.ObservationJaxRsHttpClientFilter.OBSERVATION_PROPERTY;
+import static io.micrometer.jakarta.instrument.binder.http.jaxrs.client.ObservationJaxRsHttpClientFilter.OBSERVATION_SCOPE_PROPERTY;
 
 /**
- * A post-invocation client interceptor. Will stop an observation started in
- * {@link ObservationHttpJakartaClientFilter} in case of exceptions.
+ * A post-invocation client interceptor that will stop an observation started in
+ * {@link ObservationJaxRsHttpClientFilter} in case of exceptions.
  *
  * @author Marcin Grzejszczak
  * @since 1.12.0
+ * @see ObservationJaxRsHttpClientFilter
  */
-public class ObservationHttpJakartaInterceptor implements PostInvocationInterceptor {
+public class ObservationJerseyClientInterceptor implements PostInvocationInterceptor {
 
     @Override
     public void afterRequest(ClientRequestContext requestContext, ClientResponseContext responseContext) {

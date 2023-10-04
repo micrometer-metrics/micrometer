@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.jakarta.instrument.binder.http;
+package io.micrometer.jakarta.instrument.binder.http.jaxrs.client;
 
 import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.junit5.WireMockRuntimeInfo;
@@ -32,7 +32,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.BDDAssertions.then;
 
 @WireMockTest
-class ObservationHttpJakartaClientFilterTests {
+class ObservationJaxRsHttpClientFilterTests {
 
     TestObservationRegistry observationRegistry = TestObservationRegistry.create();
 
@@ -46,8 +46,8 @@ class ObservationHttpJakartaClientFilterTests {
         wmRuntimeInfo.getWireMock().register(WireMock.get("/foo").willReturn(WireMock.aResponse().withStatus(200)));
 
         try (Client client = ClientBuilder.newClient()) {
-            client.register(new ObservationHttpJakartaClientFilter(observationRegistry, null));
-            client.register(new ObservationHttpJakartaInterceptor());
+            client.register(new ObservationJaxRsHttpClientFilter(observationRegistry, null));
+            client.register(new ObservationJerseyClientInterceptor());
             final WebTarget target = client.target("http://localhost:" + wmRuntimeInfo.getHttpPort() + "/foo");
             try (Response response = target.request().get()) {
                 then(response.getStatus()).isEqualTo(200);
@@ -65,7 +65,7 @@ class ObservationHttpJakartaClientFilterTests {
             .register(WireMock.get("/nonexistanturl").willReturn(WireMock.aResponse().withStatus(404)));
 
         try (Client client = ClientBuilder.newClient()) {
-            client.register(new ObservationHttpJakartaClientFilter(observationRegistry, null));
+            client.register(new ObservationJaxRsHttpClientFilter(observationRegistry, null));
             final WebTarget target = client
                 .target("http://localhost:" + wmRuntimeInfo.getHttpPort() + "/nonexistanturl");
             try (Response response = target.request().get()) {
@@ -84,16 +84,16 @@ class ObservationHttpJakartaClientFilterTests {
             .hasError();
     }
 
-    static class HeaderAddingHandler implements ObservationHandler<HttpJakartaClientRequestObservationContext> {
+    static class HeaderAddingHandler implements ObservationHandler<JaxRsHttpClientObservationContext> {
 
         @Override
-        public void onStart(HttpJakartaClientRequestObservationContext context) {
+        public void onStart(JaxRsHttpClientObservationContext context) {
             context.getSetter().set(context.getCarrier(), "foo", "bar");
         }
 
         @Override
         public boolean supportsContext(Context context) {
-            return context instanceof HttpJakartaClientRequestObservationContext;
+            return context instanceof JaxRsHttpClientObservationContext;
         }
 
     }

@@ -13,24 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.jakarta.instrument.binder.http;
+package io.micrometer.jakarta.instrument.binder.http.servlet;
 
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationConvention;
 
 /**
- * Interface for an {@link ObservationConvention} for Servlet HTTP requests.
+ * Interface for an {@link ObservationConvention} for Jakarta Servlet HTTP requests.
  *
  * @author Brian Clozel
  * @author Marcin Grzejszczak
  * @since 1.12.0
  */
-public interface HttpJakartaServerRequestObservationConvention
-        extends ObservationConvention<HttpJakartaServerRequestObservationContext> {
+public interface HttpServletObservationConvention extends ObservationConvention<HttpServletObservationContext> {
 
     @Override
     default boolean supportsContext(Observation.Context context) {
-        return context instanceof HttpJakartaServerRequestObservationContext;
+        return context instanceof HttpServletObservationContext;
     }
 
 }
