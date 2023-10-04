@@ -141,7 +141,7 @@ kafkaClients = { module = "org.apache.kafka:kafka-clients", version.ref = "kafka
 kafkaStreams = { module = "org.apache.kafka:kafka-streams", version.ref = "kafka" }
 kafkaJunit = { module = "com.github.charithe:kafka-junit", version.ref = "kafka-junit" }
 latencyUtils = { module = "org.latencyutils:LatencyUtils", version.ref = "latency-utils" }
-lmaxDisrupter = "com.lmax:disruptor:3.4.4"
+lmaxDisruptor = "com.lmax:disruptor:3.4.4"
 logback = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
 log4j = { module = "org.apache.logging.log4j:log4j-core", version.ref = "log4j" }
 mavenResolverConnectorBasic = { module = "org.apache.maven.resolver:maven-resolver-connector-basic", version.ref = "maven-resolver" }

@@ -87,7 +87,7 @@ dependencies {
     testImplementation 'com.github.tomakehurst:wiremock-jre8-standalone'
 
     // Log4j2 Async dependency
-    testImplementation libs.lmaxDisrupter
+    testImplementation libs.lmaxDisruptor
 
     // Kafka binder IT dependencies
     testImplementation 'org.testcontainers:testcontainers'
