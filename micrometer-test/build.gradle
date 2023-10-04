@@ -54,7 +54,7 @@ dependencies {
     testImplementation 'org.eclipse.jetty:jetty-server'
     testImplementation 'org.eclipse.jetty:jetty-servlet'
     testImplementation 'org.glassfish.jersey.core:jersey-server'
-    testImplementation 'org.glassfish.jersey.test-framework.providers:jersey-test-framework-provider-jdk-http:2.+'
+    testImplementation libs.jersey2TestFrameworkJdkHttp
     // necessary for Jersey test framework
     testRuntimeOnly 'org.glassfish.jersey.inject:jersey-hk2'
 }

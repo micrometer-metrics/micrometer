@@ -6,13 +6,21 @@ dependencies {
     implementation project(":micrometer-core")
 
     // Test sample project with SLFJ4 2.x / Logback 1.4; see gh-3415
-    runtimeOnly 'ch.qos.logback:logback-classic:1.4.+'
-    testRuntimeOnly 'ch.qos.logback:logback-classic:1.4.+'
+    runtimeOnly(libs.logback14) {
+        version {
+            strictly libs.logback14.get().version
+        }
+    }
+    testRuntimeOnly(libs.logback14) {
+        version {
+            strictly libs.logback14.get().version
+        }
+    }
 
-    implementation 'org.glassfish.jersey.containers:jersey-container-jdk-http:3.0.+'
-    runtimeOnly 'org.glassfish.jersey.inject:jersey-hk2:3.0.+'
+    implementation libs.jersey3ContainerJdkHttp
+    runtimeOnly libs.jersey3Hk2
 
-    testImplementation 'org.glassfish.jersey.test-framework.providers:jersey-test-framework-provider-jdk-http:3.0.+'
+    testImplementation libs.jersey3TestFrameworkJdkHttp
     testImplementation 'org.junit.jupiter:junit-jupiter'
     testImplementation 'org.assertj:assertj-core'
 }
