@@ -1,0 +1,16 @@
+# This is a Gradle generated file for dependency locking.
+# Manual edits can break the build and are not advised.
+# This file is expected to be part of source control.
+com.fasterxml.jackson.core:jackson-annotations:2.13.2=classpath
+com.fasterxml.jackson.core:jackson-core:2.13.2=classpath
+com.fasterxml.jackson.core:jackson-databind:2.13.2.2=classpath
+com.fasterxml.jackson:jackson-bom:2.13.2=classpath
+com.github.node-gradle:gradle-node-plugin:3.5.1=classpath
+com.google.code.gson:gson:2.8.9=classpath
+com.googlecode.javaewah:JavaEWAH:1.1.13=classpath
+io.spring.gradle.antora:spring-antora-plugin:0.0.1=classpath
+org.antora:gradle-antora-plugin:1.0.0=classpath
+org.eclipse.jgit:org.eclipse.jgit:6.4.0.202211300538-r=classpath
+org.slf4j:slf4j-api:1.7.30=classpath
+org.yaml:snakeyaml:1.33=classpath
+empty=
