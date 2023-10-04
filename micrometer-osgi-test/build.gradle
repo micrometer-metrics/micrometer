@@ -5,7 +5,7 @@ import aQute.bnd.gradle.TestOSGi
 dependencies {
     testImplementation 'org.assertj:assertj-core'
     testImplementation 'org.junit.jupiter:junit-jupiter'
-    testImplementation 'org.osgi:org.osgi.test.junit5'
+    testImplementation libs.osgiJunit5
     testImplementation 'org.slf4j:slf4j-api'
 
     testImplementation project(':micrometer-core')
@@ -13,12 +13,12 @@ dependencies {
     testImplementation project(':micrometer-registry-jmx')
     testImplementation project(':micrometer-registry-prometheus')
 
-    testImplementation 'org.apache.felix:org.apache.felix.framework'
+    testImplementation libs.felixFramework
 
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
-    testRuntimeOnly 'org.apache.felix:org.apache.felix.scr'
-    testRuntimeOnly 'org.slf4j:slf4j-simple'
+    testRuntimeOnly libs.felixScr
+    testRuntimeOnly libs.slfj4Simple
 }
 
 def testingBundle = tasks.register('testingBundle', Bundle) {

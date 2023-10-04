@@ -34,6 +34,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import ru.lanwen.wiremock.ext.WiremockResolver;
 
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.any;
 import static com.github.tomakehurst.wiremock.client.WireMock.anyUrl;
@@ -87,7 +88,7 @@ class MicrometerHttpClientInterceptorTest {
         request.addHeader(DefaultUriMapper.URI_PATTERN_HEADER, "/some/pattern");
 
         Future<SimpleHttpResponse> future = client.execute(request, null);
-        HttpResponse response = future.get();
+        HttpResponse response = future.get(1, TimeUnit.SECONDS);
 
         assertThat(response.getCode()).isEqualTo(200);
         assertThat(registry.get("httpcomponents.httpclient.request")
