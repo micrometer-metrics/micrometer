@@ -66,8 +66,7 @@ jar {
 dependencies {
     api project(":micrometer-commons")
     api project(":micrometer-observation")
-    optionalApi 'javax.ws.rs:javax.ws.rs-api' // javax
-    optionalApi 'jakarta.ws.rs:jakarta.ws.rs-api' // jakarta
+    optionalApi 'javax.ws.rs:javax.ws.rs-api' // javax jax-rs
 
     java11Api project(":micrometer-commons")
     java11Api project(":micrometer-observation")
@@ -200,8 +199,6 @@ dependencies {
     testImplementation 'io.grpc:grpc-inprocess'
     testImplementation 'io.grpc:grpc-testing-proto'
     testImplementation 'com.squareup.retrofit2:retrofit'
-    testImplementation 'org.jboss.resteasy:resteasy-netty4'
-    testImplementation 'javax.validation:validation-api'
 }
 
 task shenandoahTest(type: Test) {
