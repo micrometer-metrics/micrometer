@@ -1,9 +1,6 @@
 buildscript {
     ext.javaLanguageVersion = JavaLanguageVersion.of(JavaVersion.current().isJava11Compatible() ? JavaVersion.current().getMajorVersion() : 17)
     ext.javaTargetVersion = JavaVersion.VERSION_1_8
-    dependencyLocking {
-        lockAllConfigurations()
-    }
 
     repositories {
         mavenCentral()
@@ -11,19 +8,19 @@ buildscript {
     }
 
     dependencies {
-        classpath 'gradle.plugin.com.hierynomus.gradle.plugins:license-gradle-plugin:0.16.1'
-        classpath 'com.netflix.nebula:nebula-release-plugin:17.1.0'
-        classpath 'com.netflix.nebula:nebula-publishing-plugin:20.1.0'
-        classpath 'com.netflix.nebula:nebula-project-plugin:10.1.2'
-        classpath 'io.spring.nohttp:nohttp-gradle:0.0.11'
-        classpath 'io.github.gradle-nexus:publish-plugin:1.3.0'
-        classpath 'me.champeau.gradle:japicmp-gradle-plugin:0.4.1'
-        classpath 'de.undercouch:gradle-download-task:5.2.1'
-        classpath 'io.spring.javaformat:spring-javaformat-gradle-plugin:0.0.39'
-        classpath 'com.diffplug.spotless:spotless-plugin-gradle:6.19.0'
+        classpath libs.plugin.license
+        classpath libs.plugin.nebulaRelease
+        classpath libs.plugin.nebulaPublishing
+        classpath libs.plugin.nebulaProject
+        classpath libs.plugin.noHttp
+        classpath libs.plugin.nexusPublish
+        classpath libs.plugin.javaformat
+        classpath libs.plugin.japicmp
+        classpath libs.plugin.downloadTask
+        classpath libs.plugin.spotless
 
         constraints {
-            classpath('org.ow2.asm:asm:7.3.1') {
+            classpath(libs.asmForPlugins) {
                 because 'Supports modern JDKs'
             }
         }
@@ -82,8 +79,8 @@ subprojects {
         // have to add the dependency in every project, which is tedious so just do it here.
         dependencies {
             // JSR-305 only used for non-required meta-annotations
-            optionalApi "com.google.code.findbugs:jsr305:latest.release"
-            checkstyle("io.spring.javaformat:spring-javaformat-checkstyle:latest.release")
+            optionalApi libs.jsr305
+            checkstyle libs.spring.javaformatCheckstyle
         }
 
         tasks {
@@ -262,21 +259,6 @@ subprojects {
         }
     }
 
-    dependencyLocking {
-        lockAllConfigurations()
-    }
-
-    tasks.register('resolveAndLockAll') {
-        description = 'Resolves dependencies of all configurations and writes them into the lock file.'
-        outputs.upToDateWhen { false }
-        doFirst {
-            assert gradle.startParameter.writeDependencyLocks || gradle.startParameter.lockedDependenciesToUpdate: 'Execute resolveAndLockAll --write-locks or --update-locks <dependencies>'
-        }
-        doLast {
-            project.configurations.findAll { it.canBeResolved }*.resolve()
-        }
-    }
-
     tasks.register('downloadDependencies') {
         outputs.upToDateWhen { false }
         doLast {
@@ -390,7 +372,7 @@ subprojects {
     description = 'Application monitoring instrumentation facade'
 
     repositories {
-        maven { 
+        maven {
             url 'https://repo.spring.io/snapshot/'
             content { includeGroup 'io.micrometer' }
         }
@@ -410,10 +392,6 @@ nexusPublishing {
             password = findProperty('MAVEN_CENTRAL_PASSWORD')
         }
     }
-}
-
-task deleteLockFiles(type: Delete) {
-    delete fileTree(dir: '.', include: '**/gradle.lockfile')
 }
 
 wrapper {

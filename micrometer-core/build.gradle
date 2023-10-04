@@ -52,7 +52,7 @@ dependencies {
     // server runtime monitoring
     optionalApi 'org.eclipse.jetty:jetty-server'
     // jakarta servlet
-    optionalApi 'jakarta.servlet:jakarta.servlet-api:5.+'
+    optionalApi 'jakarta.servlet:jakarta.servlet-api'
     optionalApi 'org.eclipse.jetty:jetty-client'
     optionalApi 'org.apache.tomcat.embed:tomcat-embed-core'
     optionalApi 'org.glassfish.jersey.core:jersey-server'
@@ -103,7 +103,7 @@ dependencies {
     testImplementation 'org.junit.jupiter:junit-jupiter'
     testImplementation 'com.tngtech.archunit:archunit-junit5'
 
-    testImplementation 'org.mockito:mockito-inline'
+    testImplementation 'org.mockito:mockito-core'
 
     testImplementation 'org.hsqldb:hsqldb'
     testImplementation 'com.h2database:h2'
@@ -116,7 +116,7 @@ dependencies {
 
     testImplementation 'org.apache.kafka:kafka-clients'
 
-    testImplementation 'org.apache.commons:commons-pool2:2.+'
+    testImplementation libs.commonsPool2
 
     testImplementation 'org.glassfish.jersey.test-framework.providers:jersey-test-framework-provider-inmemory'
     testRuntimeOnly 'org.glassfish.jersey.inject:jersey-hk2'
@@ -126,7 +126,7 @@ dependencies {
     java11TestImplementation 'com.github.tomakehurst:wiremock-jre8-standalone'
 
     // Log4j2 Async dependency
-    testImplementation 'com.lmax:disruptor:3.4.+'
+    testImplementation libs.lmaxDisruptor
 
     // Kafka binder IT dependencies
     testImplementation 'org.testcontainers:testcontainers'
@@ -142,14 +142,13 @@ dependencies {
     // Dependencies for @ClassPathExclusions
     testImplementation("org.junit.platform:junit-platform-engine")
     testImplementation("org.junit.platform:junit-platform-launcher")
-    testImplementation("org.apache.maven.resolver:maven-resolver-connector-basic:latest.release")
-    testImplementation("org.apache.maven:maven-resolver-provider:latest.release") {
+    testImplementation(libs.mavenResolverConnectorBasic)
+    testImplementation(libs.mavenResolverProvider) {
         exclude(group: "javax.inject", module: "javax.inject")
     }
-    testImplementation("org.apache.maven.resolver:maven-resolver-transport-http:latest.release") {
+    testImplementation(libs.mavenResolverTransportHttp) {
         exclude group: "org.slf4j", module: "jcl-over-slf4j"
     }
-    testImplementation("org.apache.maven.resolver:maven-resolver-connector-basic:latest.release")
     // gRPC
     testImplementation("io.grpc:grpc-core")
     testImplementation("io.grpc:grpc-testing-proto")
