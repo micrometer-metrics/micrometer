@@ -23,7 +23,6 @@ import org.junit.jupiter.api.Test;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class JettyClientMetricsWithObservationTest extends JettyClientMetricsTest {
 
@@ -50,7 +49,7 @@ class JettyClientMetricsWithObservationTest extends JettyClientMetricsTest {
             .activeTasks()).isOne();
         httpClient.stop();
 
-        assertTrue(singleRequestLatch.await(10, SECONDS));
+        assertThat(singleRequestLatch.await(10, SECONDS)).isTrue();
         assertThat(registry.get("jetty.client.requests")
             .tag("outcome", "SUCCESS")
             .tag("status", "200")
