@@ -53,7 +53,6 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.entry;
 import static org.awaitility.Awaitility.await;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.Mockito.*;
 
@@ -530,7 +529,6 @@ class DynatraceExporterV2Test {
 
     @Test
     void toGaugeLineShouldContainTags() {
-        String expectedBase = "my.gauge gauge,1.23 " + clock.wallTime();
         List<String> expectedDims = Arrays.asList("tag1=value1", "tag2=value2", "dt.metrics.source=micrometer");
 
         Gauge.builder("my.gauge", () -> 1.23).tags(Tags.of("tag1", "value1", "tag2", "value2")).register(meterRegistry);
@@ -540,13 +538,12 @@ class DynatraceExporterV2Test {
         List<String> lines = exporter.toGaugeLine(gauge, SEEN_METADATA).collect(Collectors.toList());
 
         assertThat(lines).hasSize(1);
-        assertEquals(expectedBase, extractBase(lines.get(0)));
+        assertThat(extractBase(lines.get(0))).isEqualTo("my.gauge gauge,1.23 " + clock.wallTime());
         assertThat(expectedDims).containsExactlyInAnyOrderElementsOf(extractDims(lines.get(0)));
     }
 
     @Test
     void toGaugeLineShouldOmitBlankTagValues() {
-        String expectedBase = "my.gauge gauge,1.23 " + clock.wallTime();
         List<String> expectedDims = Arrays.asList("tag1=value1", "dt.metrics.source=micrometer");
 
         Gauge.builder("my.gauge", () -> 1.23).tags(Tags.of("tag1", "value1", "tag2", "")).register(meterRegistry);
@@ -556,7 +553,7 @@ class DynatraceExporterV2Test {
         List<String> lines = exporter.toGaugeLine(gauge, SEEN_METADATA).collect(Collectors.toList());
 
         assertThat(lines).hasSize(1);
-        assertEquals(expectedBase, extractBase(lines.get(0)));
+        assertThat(extractBase(lines.get(0))).isEqualTo("my.gauge gauge,1.23 " + clock.wallTime());
         assertThat(expectedDims).containsExactlyInAnyOrderElementsOf(extractDims(lines.get(0)));
     }
 
@@ -570,7 +567,6 @@ class DynatraceExporterV2Test {
 
     @Test
     void toCounterLineShouldContainTags() {
-        String expectedBase = "my.counter count,delta=0 " + clock.wallTime();
         List<String> expectedDims = Arrays.asList("tag1=value1", "tag2=value2", "dt.metrics.source=micrometer");
 
         Counter.builder("my.counter").tags(Tags.of("tag1", "value1", "tag2", "value2")).register(meterRegistry);
@@ -580,13 +576,12 @@ class DynatraceExporterV2Test {
         List<String> lines = exporter.toCounterLine(counter, SEEN_METADATA).collect(Collectors.toList());
 
         assertThat(lines).hasSize(1);
-        assertEquals(expectedBase, extractBase(lines.get(0)));
+        assertThat(extractBase(lines.get(0))).isEqualTo("my.counter count,delta=0 " + clock.wallTime());
         assertThat(expectedDims).containsExactlyInAnyOrderElementsOf(extractDims(lines.get(0)));
     }
 
     @Test
     void toCounterLineShouldOmitBlankTagValues() {
-        String expectedBase = "my.counter count,delta=0 " + clock.wallTime();
         List<String> expectedDims = Arrays.asList("tag1=value1", "dt.metrics.source=micrometer");
 
         Counter.builder("my.counter").tags(Tags.of("tag1", "value1", "tag2", "")).register(meterRegistry);
@@ -596,7 +591,7 @@ class DynatraceExporterV2Test {
         List<String> lines = exporter.toCounterLine(counter, SEEN_METADATA).collect(Collectors.toList());
 
         assertThat(lines).hasSize(1);
-        assertEquals(expectedBase, extractBase(lines.get(0)));
+        assertThat(extractBase(lines.get(0))).isEqualTo("my.counter count,delta=0 " + clock.wallTime());
         assertThat(expectedDims).containsExactlyInAnyOrderElementsOf(extractDims(lines.get(0)));
     }
 
