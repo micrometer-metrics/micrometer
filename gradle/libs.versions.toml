@@ -197,4 +197,4 @@ plugin-nexusPublish = { module = "io.github.gradle-nexus:publish-plugin", versio
 plugin-javaformat = { module = "io.spring.javaformat:spring-javaformat-gradle-plugin", version.ref = "spring-javaformat" }
 plugin-japicmp = { module = "me.champeau.gradle:japicmp-gradle-plugin", version = "0.4.2" }
 plugin-downloadTask = { module = "de.undercouch:gradle-download-task", version = "5.5.0" }
-plugin-spotless = { module = "com.diffplug.spotless:spotless-plugin-gradle", version = "6.19.0" }
+plugin-spotless = { module = "com.diffplug.spotless:spotless-plugin-gradle", version = "6.22.0" }
