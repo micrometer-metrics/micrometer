@@ -115,7 +115,7 @@ httpcomponents-async = { module = "org.apache.httpcomponents:httpasyncclient", v
 httpcomponents-client = { module = "org.apache.httpcomponents:httpclient", version.ref = "httpcomponents-client" }
 hystrix = { module = "com.netflix.hystrix:hystrix-core", version.ref = "hystrix" }
 jacksonDatabind = { module = "com.fasterxml.jackson.core:jackson-databind", version.ref = "jackson-databind" }
-javalin = { module = "io.javalin:javalin", version = "4.5.0.RC0" }
+javalin = { module = "io.javalin:javalin", version = "4.5.0" }
 javax-cacheApi = { module = "javax.cache:cache-api", version.ref = "javax-cache" }
 javax-inject = { module = "javax.inject:javax.inject", version.ref = "javax-inject" }
 jaxbApi = { module = "javax.xml.bind:jaxb-api", version.ref = "jaxb" }
