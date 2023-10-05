@@ -353,7 +353,7 @@ public class WavefrontMeterRegistry extends PushMeterRegistry {
      * @since 1.5.0
      */
     public static WavefrontClient.Builder getDefaultSenderBuilder(WavefrontConfig config) {
-        return new WavefrontClient.Builder(getWavefrontReportingUri(config), config.apiToken())
+        return new WavefrontClient.Builder(getWavefrontReportingUri(config), config.apiTokenType(), config.apiToken())
             .batchSize(config.batchSize())
             .flushInterval((int) config.step().toMillis(), TimeUnit.MILLISECONDS);
     }
