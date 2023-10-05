@@ -5,19 +5,96 @@ registries:
     url: https://plugins.gradle.org/m2
     username: dummy # Required by dependabot
     password: dummy # Required by dependabot
+  maven-central:
+    type: maven-repository
+    url: https://repo1.maven.org/maven2/
+    username: dummy # Required by dependabot
+    password: dummy # Required by dependabot
 updates:
-  - package-ecosystem: "gradle"
-    directory: "/"
-    target-branch: "1.9.x" # oldest OSS supported branch
-    allow:
-      - dependency-name: "com.gradle*"
-    registries:
-      - gradle-plugin-portal
-    schedule:
-      interval: "weekly"
-    open-pull-requests-limit: 10
   - package-ecosystem: "github-actions"
     directory: "/"
-    target-branch: "1.9.x" # oldest OSS supported branch
+    target-branch: "1.9.x" # oldest supported branch
     schedule:
       interval: "weekly"
+# Build dependencies; only target the oldest supported branch
+  - package-ecosystem: "gradle"
+    directory: "/"
+    schedule:
+      interval: daily
+    target-branch: "1.9.x"
+    groups:
+      netflix-plugins:
+        patterns:
+          - "com.netflix.nebula*"
+        update-types:
+          - minor
+          - patch
+    allow:
+      - dependency-name: "gradle.plugin.com.hierynomus.gradle.plugins*"
+      - dependency-name: "com.netflix.nebula*"
+      - dependency-name: "io.spring.nohttp*"
+      - dependency-name: "io.github.gradle-nexus*"
+      - dependency-name: "io.spring.javaformat*"
+      - dependency-name: "me.champeau.gradle*"
+      - dependency-name: "de.undercouch:gradle*"
+      - dependency-name: "com.diffplug.spotless*"
+      - dependency-name: "biz.aQute.bnd:biz.aQute.bnd.gradle*"
+      - dependency-name: "io.spring.ge.conventions*"
+      - dependency-name: "com.gradle*"
+      - dependency-name: "org.gradle*"
+    ignore:
+      # only upgrade minor and patch versions for build dependencies
+      - dependency-name: "*"
+        update-types:
+          - version-update:semver-major
+    registries:
+      - gradle-plugin-portal
+      - maven-central
+# Non-build dependencies; target every supported branch
+  - package-ecosystem: gradle
+    directory: /gradle
+    schedule:
+      interval: daily
+    target-branch: 1.9.x
+    milestone: 136
+    ignore:
+      # only upgrade patch versions
+      - dependency-name: "*"
+        update-types:
+          - version-update:semver-major
+          - version-update:semver-minor
+  - package-ecosystem: gradle
+    directory: /gradle
+    schedule:
+      interval: daily
+    target-branch: 1.10.x
+    milestone: 159
+    ignore:
+      # only upgrade patch versions
+      - dependency-name: "*"
+        update-types:
+          - version-update:semver-major
+          - version-update:semver-minor
+  - package-ecosystem: gradle
+    directory: /gradle
+    schedule:
+      interval: daily
+    target-branch: 1.11.x
+    milestone: 206
+    ignore:
+      # only upgrade patch versions
+      - dependency-name: "*"
+        update-types:
+          - version-update:semver-major
+          - version-update:semver-minor
+  - package-ecosystem: gradle
+    directory: /gradle
+    schedule:
+      interval: daily
+    target-branch: main
+    milestone: 185
+    ignore:
+      # upgrade minor and patch versions on main
+      - dependency-name: "*"
+        update-types:
+          - version-update:semver-major
