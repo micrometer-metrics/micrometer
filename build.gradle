@@ -2,6 +2,10 @@ buildscript {
     ext.javaLanguageVersion = JavaLanguageVersion.of(JavaVersion.current().isJava11Compatible() ? JavaVersion.current().getMajorVersion() : 17)
     ext.javaTargetVersion = JavaVersion.VERSION_1_8
 
+    dependencyLocking {
+        lockAllConfigurations()
+    }
+
     repositories {
         mavenCentral()
         gradlePluginPortal()
@@ -12,6 +16,7 @@ buildscript {
         classpath libs.plugin.nebulaRelease
         classpath libs.plugin.nebulaPublishing
         classpath libs.plugin.nebulaProject
+        classpath libs.plugin.nebulaInfo
         classpath libs.plugin.noHttp
         classpath libs.plugin.nexusPublish
         classpath libs.plugin.javaformat
