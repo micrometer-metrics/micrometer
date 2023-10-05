@@ -7,7 +7,7 @@ aspectjweaver = "1.8.14"
 assertj = "3.24.2"
 awaitility = "4.2.0"
 # legacy SDK
-aws-cloudwatch = "1.12.563"
+aws-cloudwatch = "1.12.564"
 caffeine = "2.9.3"
 cloudwatch2 = "2.20.160"
 colt = "1.2.0"
