@@ -52,7 +52,7 @@ kafka-junit = "4.2.7"
 latency-utils = "2.0.3"
 logback = "1.2.12"
 log4j = "2.17.2"
-maven-resolver = "1.8.1"
+maven-resolver = "1.8.2"
 # 5.x requires JDK 11.
 mockito = "4.11.0"
 mongo = "4.6.1"
