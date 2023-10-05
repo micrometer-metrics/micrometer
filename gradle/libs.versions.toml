@@ -112,7 +112,7 @@ hdrhistogram = { module = "org.hdrhistogram:HdrHistogram", version.ref = "hdrhis
 hibernateEntitymanager = { module = "org.hibernate:hibernate-entitymanager", version.ref = "hibernate" }
 hsqldb = { module = "org.hsqldb:hsqldb", version.ref = "hsqldb" }
 httpcomponents-async = { module = "org.apache.httpcomponents:httpasyncclient", version.ref = "httpcomponents-async" }
-httpcomponents-client = { module = "org.apache.httpcomponents:httpclient" , version.ref = "httpcomponents-client" }
+httpcomponents-client = { module = "org.apache.httpcomponents:httpclient", version.ref = "httpcomponents-client" }
 hystrix = { module = "com.netflix.hystrix:hystrix-core", version.ref = "hystrix" }
 jacksonDatabind = { module = "com.fasterxml.jackson.core:jackson-databind", version.ref = "jackson-databind" }
 javalin = { module = "io.javalin:javalin", version = "4.5.0.RC0" }
@@ -178,9 +178,10 @@ wiremockJunit5 = { module = "ru.lanwen.wiremock:wiremock-junit5", version.ref = 
 
 # plugin dependencies
 plugin-license = { module = "gradle.plugin.com.hierynomus.gradle.plugins:license-gradle-plugin", version = "0.16.1" }
-plugin-nebulaRelease = { module = "com.netflix.nebula:nebula-release-plugin", version = "17.1.0" }
-plugin-nebulaPublishing = { module = "com.netflix.nebula:nebula-publishing-plugin", version = "20.1.0" }
+plugin-nebulaRelease = { module = "com.netflix.nebula:nebula-release-plugin", version = "17.2.2" }
+plugin-nebulaPublishing = { module = "com.netflix.nebula:nebula-publishing-plugin", version = "20.3.0" }
 plugin-nebulaProject = { module = "com.netflix.nebula:nebula-project-plugin", version = "10.1.5" }
+plugin-nebulaInfo = { module = "com.netflix.nebula:gradle-info-plugin", version = "12.1.6" }
 plugin-noHttp = { module = "io.spring.nohttp:nohttp-gradle", version = "0.0.11" }
 plugin-nexusPublish = { module = "io.github.gradle-nexus:publish-plugin", version = "1.3.0" }
 plugin-javaformat = { module = "io.spring.javaformat:spring-javaformat-gradle-plugin", version.ref = "spring-javaformat" }
