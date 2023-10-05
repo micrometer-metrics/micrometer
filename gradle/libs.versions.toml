@@ -90,7 +90,7 @@ aws-javaSdkCloudwatch = { module = "com.amazonaws:aws-java-sdk-cloudwatch", vers
 caffeine = { module = "com.github.ben-manes.caffeine:caffeine", version.ref = "caffeine" }
 cloudwatch2 = { module = "software.amazon.awssdk:cloudwatch", version.ref = "cloudwatch2" }
 colt = { module = "colt:colt", version.ref = "colt" }
-commonsPool2 = "org.apache.commons:commons-pool2:2.11.1"
+commonsPool2 = "org.apache.commons:commons-pool2:2.12.0"
 contextPropagation = { module = "io.micrometer:context-propagation", version = "1.0.6-SNAPSHOT" }
 dagger = { module = "com.google.dagger:dagger", version.ref = "dagger" }
 daggerCompiler = { module = "com.google.dagger:dagger-compiler", version.ref = "dagger" }
