@@ -18,7 +18,6 @@ package io.micrometer.core.instrument;
 import io.micrometer.common.lang.Nullable;
 
 import java.util.Collections;
-import java.util.function.Function;
 
 /**
  * Counters monitor monotonically increasing values. Counters may never be reset to a
@@ -122,14 +121,16 @@ public interface Counter extends Meter {
         }
 
         /**
-         * Convenience method to create new meters from the builder that only differ in
-         * tags. This method can be used for dynamic tagging by creating the builder once
-         * and applying the dynamically changing tags using the returned {@link Function}.
+         * Convenience method to create meters from the builder that only differ in tags.
+         * This method can be used for dynamic tagging by creating the builder once and
+         * applying the dynamically changing tags using the returned
+         * {@link MeterProvider}.
          * @param registry A registry to add the meter to, if it doesn't already exist.
-         * @return A {@link Function} that returns a meter based on the provided tags.
+         * @return A {@link MeterProvider} that returns a meter based on the provided
+         * tags.
          * @since 1.12.0
          */
-        public Function<Tags, Counter> with(MeterRegistry registry) {
+        public MeterProvider<Counter> withRegistry(MeterRegistry registry) {
             return extraTags -> register(registry, tags.and(extraTags));
         }
 

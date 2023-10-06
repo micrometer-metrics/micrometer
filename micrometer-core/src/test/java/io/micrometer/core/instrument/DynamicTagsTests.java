@@ -15,12 +15,12 @@
  */
 package io.micrometer.core.instrument;
 
+import io.micrometer.core.instrument.Meter.MeterProvider;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
-import java.util.function.Function;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -40,11 +40,13 @@ class DynamicTagsTests {
 
     @Test
     void shouldCreateCountersDynamically() {
-        Function<Tags, Counter> counterFactory = Counter.builder("test.counter").tag("static", "abc").with(registry);
+        MeterProvider<Counter> counterProvider = Counter.builder("test.counter")
+            .tag("static", "abc")
+            .withRegistry(registry);
 
-        counterFactory.apply(Tags.of("dynamic", "1")).increment();
-        counterFactory.apply(Tags.of("dynamic", "2")).increment();
-        counterFactory.apply(Tags.of("dynamic", "1")).increment();
+        counterProvider.withTags(Tags.of("dynamic", "1")).increment();
+        counterProvider.withTags(Tags.of("dynamic", "2")).increment();
+        counterProvider.withTags(Tags.of("dynamic", "1")).increment();
 
         assertThat(registry.getMeters()).hasSize(2);
         assertThat(registry.find("test.counter").tags("static", "abc", "dynamic", "1").counters()).hasSize(1);
@@ -53,9 +55,11 @@ class DynamicTagsTests {
 
     @Test
     void shouldOverrideStaticTagsWhenCreatesCountersDynamically() {
-        Function<Tags, Counter> counterFactory = Counter.builder("test.counter").tag("static", "abc").with(registry);
+        MeterProvider<Counter> counterProvider = Counter.builder("test.counter")
+            .tag("static", "abc")
+            .withRegistry(registry);
 
-        counterFactory.apply(Tags.of("static", "xyz", "dynamic", "1")).increment();
+        counterProvider.withTags(Tags.of("static", "xyz", "dynamic", "1")).increment();
 
         assertThat(registry.getMeters()).hasSize(1);
         assertThat(registry.find("test.counter").tags("static", "xyz", "dynamic", "1").counters()).hasSize(1);
@@ -63,11 +67,11 @@ class DynamicTagsTests {
 
     @Test
     void shouldCreateTimersDynamically() {
-        Function<Tags, Timer> timerFactory = Timer.builder("test.timer").tag("static", "abc").with(registry);
+        MeterProvider<Timer> timerProvider = Timer.builder("test.timer").tag("static", "abc").withRegistry(registry);
 
-        timerFactory.apply(Tags.of("dynamic", "1")).record(Duration.ofMillis(100));
-        timerFactory.apply(Tags.of("dynamic", "2")).record(Duration.ofMillis(200));
-        timerFactory.apply(Tags.of("dynamic", "1")).record(Duration.ofMillis(100));
+        timerProvider.withTags(Tags.of("dynamic", "1")).record(Duration.ofMillis(100));
+        timerProvider.withTags(Tags.of("dynamic", "2")).record(Duration.ofMillis(200));
+        timerProvider.withTags(Tags.of("dynamic", "1")).record(Duration.ofMillis(100));
 
         assertThat(registry.getMeters()).hasSize(2);
         assertThat(registry.find("test.timer").tags("static", "abc", "dynamic", "1").timers()).hasSize(1);
@@ -76,9 +80,9 @@ class DynamicTagsTests {
 
     @Test
     void shouldOverrideStaticTagsWhenCreatesTimersDynamically() {
-        Function<Tags, Timer> timerFactory = Timer.builder("test.timer").tag("static", "abc").with(registry);
+        MeterProvider<Timer> timerProvider = Timer.builder("test.timer").tag("static", "abc").withRegistry(registry);
 
-        timerFactory.apply(Tags.of("static", "xyz", "dynamic", "1")).record(Duration.ofMillis(100));
+        timerProvider.withTags(Tags.of("static", "xyz", "dynamic", "1")).record(Duration.ofMillis(100));
 
         assertThat(registry.getMeters()).hasSize(1);
         assertThat(registry.find("test.timer").tags("static", "xyz", "dynamic", "1").timers()).hasSize(1);
@@ -86,13 +90,13 @@ class DynamicTagsTests {
 
     @Test
     void shouldCreateLongTaskTimersDynamically() {
-        Function<Tags, LongTaskTimer> timerFactory = LongTaskTimer.builder("test.active.timer")
+        MeterProvider<LongTaskTimer> timeProvider = LongTaskTimer.builder("test.active.timer")
             .tag("static", "abc")
-            .with(registry);
+            .withRegistry(registry);
 
-        timerFactory.apply(Tags.of("dynamic", "1")).start().stop();
-        timerFactory.apply(Tags.of("dynamic", "2")).start().stop();
-        timerFactory.apply(Tags.of("dynamic", "1")).start().stop();
+        timeProvider.withTags(Tags.of("dynamic", "1")).start().stop();
+        timeProvider.withTags(Tags.of("dynamic", "2")).start().stop();
+        timeProvider.withTags(Tags.of("dynamic", "1")).start().stop();
 
         assertThat(registry.getMeters()).hasSize(2);
         assertThat(registry.find("test.active.timer").tags("static", "abc", "dynamic", "1").longTaskTimers())
@@ -103,11 +107,11 @@ class DynamicTagsTests {
 
     @Test
     void shouldOverrideStaticTagsWhenCreatesLongTaskTimersDynamically() {
-        Function<Tags, LongTaskTimer> timerFactory = LongTaskTimer.builder("test.active.timer")
+        MeterProvider<LongTaskTimer> timeProvider = LongTaskTimer.builder("test.active.timer")
             .tag("static", "abc")
-            .with(registry);
+            .withRegistry(registry);
 
-        timerFactory.apply(Tags.of("static", "xyz", "dynamic", "1")).start().stop();
+        timeProvider.withTags(Tags.of("static", "xyz", "dynamic", "1")).start().stop();
 
         assertThat(registry.getMeters()).hasSize(1);
         assertThat(registry.find("test.active.timer").tags("static", "xyz", "dynamic", "1").longTaskTimers())
@@ -116,13 +120,13 @@ class DynamicTagsTests {
 
     @Test
     void shouldCreateDistributionSummariesDynamically() {
-        Function<Tags, DistributionSummary> distributionFactory = DistributionSummary.builder("test.distribution")
+        MeterProvider<DistributionSummary> distributionProvider = DistributionSummary.builder("test.distribution")
             .tag("static", "abc")
-            .with(registry);
+            .withRegistry(registry);
 
-        distributionFactory.apply(Tags.of("dynamic", "1")).record(1);
-        distributionFactory.apply(Tags.of("dynamic", "2")).record(2);
-        distributionFactory.apply(Tags.of("dynamic", "1")).record(1);
+        distributionProvider.withTags(Tags.of("dynamic", "1")).record(1);
+        distributionProvider.withTags(Tags.of("dynamic", "2")).record(2);
+        distributionProvider.withTags(Tags.of("dynamic", "1")).record(1);
 
         assertThat(registry.getMeters()).hasSize(2);
         assertThat(registry.find("test.distribution").tags("static", "abc", "dynamic", "1").summaries()).hasSize(1);
@@ -131,11 +135,11 @@ class DynamicTagsTests {
 
     @Test
     void shouldOverrideStaticTagsWhenCreatesDistributionSummariesDynamically() {
-        Function<Tags, DistributionSummary> distributionFactory = DistributionSummary.builder("test.distribution")
+        MeterProvider<DistributionSummary> distributionProvider = DistributionSummary.builder("test.distribution")
             .tag("static", "abc")
-            .with(registry);
+            .withRegistry(registry);
 
-        distributionFactory.apply(Tags.of("static", "xyz", "dynamic", "1")).record(1);
+        distributionProvider.withTags(Tags.of("static", "xyz", "dynamic", "1")).record(1);
 
         assertThat(registry.getMeters()).hasSize(1);
         assertThat(registry.find("test.distribution").tags("static", "xyz", "dynamic", "1").summaries()).hasSize(1);

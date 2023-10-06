@@ -24,7 +24,6 @@ import io.micrometer.core.instrument.distribution.ValueAtPercentile;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
 
 /**
  * Track the sample distribution of events. An example would be the response sizes for
@@ -388,14 +387,16 @@ public interface DistributionSummary extends Meter, HistogramSupport {
         }
 
         /**
-         * Convenience method to create new meters from the builder that only differ in
-         * tags. This method can be used for dynamic tagging by creating the builder once
-         * and applying the dynamically changing tags using the returned {@link Function}.
+         * Convenience method to create meters from the builder that only differ in tags.
+         * This method can be used for dynamic tagging by creating the builder once and
+         * applying the dynamically changing tags using the returned
+         * {@link MeterProvider}.
          * @param registry A registry to add the meter to, if it doesn't already exist.
-         * @return A {@link Function} that returns a meter based on the provided tags.
+         * @return A {@link MeterProvider} that returns a meter based on the provided
+         * tags.
          * @since 1.12.0
          */
-        public Function<Tags, DistributionSummary> with(MeterRegistry registry) {
+        public MeterProvider<DistributionSummary> withRegistry(MeterRegistry registry) {
             return extraTags -> register(registry, tags.and(extraTags));
         }
 
