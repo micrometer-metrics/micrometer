@@ -18,7 +18,7 @@ updates:
         update-types:
           - version-update:semver-major
           - version-update:semver-minor
-    open-pull-requests-limit: 20
+    open-pull-requests-limit: 30
   - package-ecosystem: gradle
     directory: "/"
     schedule:
