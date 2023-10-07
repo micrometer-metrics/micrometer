@@ -113,6 +113,11 @@ public interface WavefrontConfig extends PushRegistryConfig {
         });
     }
 
+    /**
+     * API token type.
+     * @return API token type
+     * @since 1.12.0
+     */
     default TokenService.Type apiTokenType() {
         return getEnum(this, TokenService.Type.class, "apiTokenType")
             .invalidateWhen(tokenType -> tokenType == Type.NO_TOKEN && WavefrontMeterRegistry.isDirectToApi(this),
