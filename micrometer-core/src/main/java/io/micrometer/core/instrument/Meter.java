@@ -499,6 +499,27 @@ public interface Meter {
          */
         T withTags(Iterable<? extends Tag> tags);
 
+        /**
+         * Registers (creates a new or gets an existing one if already exists) Meters
+         * using the provided tags.
+         * @param tags Tags to attach to the Meter about to be registered
+         * @return A new or existing Meter
+         */
+        default T withTags(String... tags) {
+            return withTags(Tags.of(tags));
+        }
+
+        /**
+         * Registers (creates a new or gets an existing one if already exists) Meters
+         * using the provided tags.
+         * @param key the tag key to add
+         * @param value the tag value to add
+         * @return A new or existing Meter
+         */
+        default T withTag(String key, String value) {
+            return withTags(Tags.of(key, value));
+        }
+
     }
 
     default void close() {

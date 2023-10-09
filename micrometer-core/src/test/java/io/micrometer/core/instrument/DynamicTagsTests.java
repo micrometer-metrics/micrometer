@@ -45,8 +45,8 @@ class DynamicTagsTests {
             .withRegistry(registry);
 
         counterProvider.withTags(Tags.of("dynamic", "1")).increment();
-        counterProvider.withTags(Tags.of("dynamic", "2")).increment();
-        counterProvider.withTags(Tags.of("dynamic", "1")).increment();
+        counterProvider.withTags("dynamic", "2").increment();
+        counterProvider.withTag("dynamic", "1").increment();
 
         assertThat(registry.getMeters()).hasSize(2);
         assertThat(registry.find("test.counter").tags("static", "abc", "dynamic", "1").counters()).hasSize(1);
@@ -70,8 +70,8 @@ class DynamicTagsTests {
         MeterProvider<Timer> timerProvider = Timer.builder("test.timer").tag("static", "abc").withRegistry(registry);
 
         timerProvider.withTags(Tags.of("dynamic", "1")).record(Duration.ofMillis(100));
-        timerProvider.withTags(Tags.of("dynamic", "2")).record(Duration.ofMillis(200));
-        timerProvider.withTags(Tags.of("dynamic", "1")).record(Duration.ofMillis(100));
+        timerProvider.withTags("dynamic", "2").record(Duration.ofMillis(200));
+        timerProvider.withTag("dynamic", "1").record(Duration.ofMillis(100));
 
         assertThat(registry.getMeters()).hasSize(2);
         assertThat(registry.find("test.timer").tags("static", "abc", "dynamic", "1").timers()).hasSize(1);
@@ -95,8 +95,8 @@ class DynamicTagsTests {
             .withRegistry(registry);
 
         timeProvider.withTags(Tags.of("dynamic", "1")).start().stop();
-        timeProvider.withTags(Tags.of("dynamic", "2")).start().stop();
-        timeProvider.withTags(Tags.of("dynamic", "1")).start().stop();
+        timeProvider.withTags("dynamic", "2").start().stop();
+        timeProvider.withTag("dynamic", "1").start().stop();
 
         assertThat(registry.getMeters()).hasSize(2);
         assertThat(registry.find("test.active.timer").tags("static", "abc", "dynamic", "1").longTaskTimers())
@@ -125,8 +125,8 @@ class DynamicTagsTests {
             .withRegistry(registry);
 
         distributionProvider.withTags(Tags.of("dynamic", "1")).record(1);
-        distributionProvider.withTags(Tags.of("dynamic", "2")).record(2);
-        distributionProvider.withTags(Tags.of("dynamic", "1")).record(1);
+        distributionProvider.withTags("dynamic", "2").record(2);
+        distributionProvider.withTag("dynamic", "1").record(1);
 
         assertThat(registry.getMeters()).hasSize(2);
         assertThat(registry.find("test.distribution").tags("static", "abc", "dynamic", "1").summaries()).hasSize(1);
