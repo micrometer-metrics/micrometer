@@ -537,9 +537,10 @@ class DynatraceExporterV2Test {
 
         List<String> lines = exporter.toGaugeLine(gauge, SEEN_METADATA).collect(Collectors.toList());
 
-        assertThat(lines).hasSize(1);
-        assertThat(extractBase(lines.get(0))).isEqualTo("my.gauge gauge,1.23 " + clock.wallTime());
-        assertThat(expectedDims).containsExactlyInAnyOrderElementsOf(extractDims(lines.get(0)));
+        assertThat(lines).hasSize(1).first().satisfies(line -> {
+            assertThat(extractBase(line)).isEqualTo("my.gauge gauge,1.23 " + clock.wallTime());
+            assertThat(extractDims(line)).containsExactlyInAnyOrderElementsOf(expectedDims);
+        });
     }
 
     @Test
@@ -552,9 +553,10 @@ class DynatraceExporterV2Test {
 
         List<String> lines = exporter.toGaugeLine(gauge, SEEN_METADATA).collect(Collectors.toList());
 
-        assertThat(lines).hasSize(1);
-        assertThat(extractBase(lines.get(0))).isEqualTo("my.gauge gauge,1.23 " + clock.wallTime());
-        assertThat(expectedDims).containsExactlyInAnyOrderElementsOf(extractDims(lines.get(0)));
+        assertThat(lines).hasSize(1).first().satisfies(line -> {
+            assertThat(extractBase(line)).isEqualTo("my.gauge gauge,1.23 " + clock.wallTime());
+            assertThat(extractDims(line)).containsExactlyInAnyOrderElementsOf(expectedDims);
+        });
     }
 
     @Test
@@ -575,9 +577,10 @@ class DynatraceExporterV2Test {
 
         List<String> lines = exporter.toCounterLine(counter, SEEN_METADATA).collect(Collectors.toList());
 
-        assertThat(lines).hasSize(1);
-        assertThat(extractBase(lines.get(0))).isEqualTo("my.counter count,delta=0 " + clock.wallTime());
-        assertThat(expectedDims).containsExactlyInAnyOrderElementsOf(extractDims(lines.get(0)));
+        assertThat(lines).hasSize(1).first().satisfies(line -> {
+            assertThat(extractBase(line)).isEqualTo("my.counter count,delta=0 " + clock.wallTime());
+            assertThat(extractDims(line)).containsExactlyInAnyOrderElementsOf(expectedDims);
+        });
     }
 
     @Test
@@ -590,9 +593,10 @@ class DynatraceExporterV2Test {
 
         List<String> lines = exporter.toCounterLine(counter, SEEN_METADATA).collect(Collectors.toList());
 
-        assertThat(lines).hasSize(1);
-        assertThat(extractBase(lines.get(0))).isEqualTo("my.counter count,delta=0 " + clock.wallTime());
-        assertThat(expectedDims).containsExactlyInAnyOrderElementsOf(extractDims(lines.get(0)));
+        assertThat(lines).hasSize(1).first().satisfies(line -> {
+            assertThat(extractBase(line)).isEqualTo("my.counter count,delta=0 " + clock.wallTime());
+            assertThat(extractDims(line)).containsExactlyInAnyOrderElementsOf(expectedDims);
+        });
     }
 
     @Test
@@ -898,22 +902,22 @@ class DynatraceExporterV2Test {
         clock.add(config.step());
         exporter.export(meterRegistry.getMeters());
 
-        List<List<String>> expectedDimes = Arrays.asList(
-                Arrays.asList("counter-number=counter1", "dt.metrics.source=micrometer"),
-                Arrays.asList("counter-number=counter2", "dt.metrics.source=micrometer"));
-        List<String> expectedBases = Arrays.asList("my.count count,delta=5.234 " + clock.wallTime(),
-                "my.count count,delta=2.345 " + clock.wallTime());
+        Iterator<List<String>> expectedDims = Arrays
+            .asList(Arrays.asList("counter-number=counter1", "dt.metrics.source=micrometer"),
+                    Arrays.asList("counter-number=counter2", "dt.metrics.source=micrometer"))
+            .iterator();
+        Iterator<String> expectedBases = Arrays
+            .asList("my.count count,delta=5.234 " + clock.wallTime(), "my.count count,delta=2.345 " + clock.wallTime())
+            .iterator();
 
         ArgumentCaptor<String> stringArgumentCaptor = ArgumentCaptor.forClass(String.class);
         verify(builder).withPlainText(stringArgumentCaptor.capture());
         List<String> lines = Arrays.asList(stringArgumentCaptor.getValue().split("\n"));
 
-        assertThat(lines).hasSize(2)
-            .extracting(line -> extractBase(line))
-            .containsExactlyInAnyOrderElementsOf(expectedBases);
-        for (int i = 0; i < lines.size(); i++) {
-            assertThat(extractDims(lines.get(i))).containsExactlyInAnyOrderElementsOf(expectedDimes.get(i));
-        }
+        assertThat(lines).hasSize(2).allSatisfy(line -> {
+            assertThat(extractBase(line)).isEqualTo(expectedBases.next());
+            assertThat(extractDims(line)).containsExactlyInAnyOrderElementsOf(expectedDims.next());
+        });
     }
 
     @Test
