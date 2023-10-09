@@ -24,6 +24,7 @@ import java.util.Collections;
  * lesser value. If you need to track a value that goes up and down, use a {@link Gauge}.
  *
  * @author Jon Schneider
+ * @author Jonatan Ivanov
  */
 public interface Counter extends Meter {
 
@@ -120,6 +121,20 @@ public interface Counter extends Meter {
         }
 
         /**
+         * Convenience method to create meters from the builder that only differ in tags.
+         * This method can be used for dynamic tagging by creating the builder once and
+         * applying the dynamically changing tags using the returned
+         * {@link MeterProvider}.
+         * @param registry A registry to add the meter to, if it doesn't already exist.
+         * @return A {@link MeterProvider} that returns a meter based on the provided
+         * tags.
+         * @since 1.12.0
+         */
+        public MeterProvider<Counter> withRegistry(MeterRegistry registry) {
+            return extraTags -> register(registry, tags.and(extraTags));
+        }
+
+        /**
          * Add the counter to a single registry, or return an existing counter in that
          * registry. The returned counter will be unique for each registry, but each
          * registry is guaranteed to only create one counter for the same combination of
@@ -128,6 +143,10 @@ public interface Counter extends Meter {
          * @return A new or existing counter.
          */
         public Counter register(MeterRegistry registry) {
+            return register(registry, tags);
+        }
+
+        private Counter register(MeterRegistry registry, Tags tags) {
             return registry.counter(new Meter.Id(name, tags, baseUnit, description, Type.COUNTER));
         }
 

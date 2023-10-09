@@ -24,18 +24,14 @@ import java.time.Duration;
 import java.util.Arrays;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
-import java.util.function.BooleanSupplier;
-import java.util.function.Consumer;
-import java.util.function.DoubleSupplier;
-import java.util.function.IntSupplier;
-import java.util.function.LongSupplier;
-import java.util.function.Supplier;
+import java.util.function.*;
 
 /**
  * A long task timer is used to track the total duration of all in-flight long-running
  * tasks and the number of such tasks.
  *
  * @author Jon Schneider
+ * @author Jonatan Ivanov
  */
 public interface LongTaskTimer extends Meter, HistogramSupport {
 
@@ -478,6 +474,20 @@ public interface LongTaskTimer extends Meter, HistogramSupport {
         }
 
         /**
+         * Convenience method to create meters from the builder that only differ in tags.
+         * This method can be used for dynamic tagging by creating the builder once and
+         * applying the dynamically changing tags using the returned
+         * {@link MeterProvider}.
+         * @param registry A registry to add the meter to, if it doesn't already exist.
+         * @return A {@link MeterProvider} that returns a meter based on the provided
+         * tags.
+         * @since 1.12.0
+         */
+        public MeterProvider<LongTaskTimer> withRegistry(MeterRegistry registry) {
+            return extraTags -> register(registry, tags.and(extraTags));
+        }
+
+        /**
          * Add the long task timer to a single registry, or return an existing long task
          * timer in that registry. The returned long task timer will be unique for each
          * registry, but each registry is guaranteed to only create one long task timer
@@ -487,6 +497,10 @@ public interface LongTaskTimer extends Meter, HistogramSupport {
          * @return A new or existing long task timer.
          */
         public LongTaskTimer register(MeterRegistry registry) {
+            return register(registry, tags);
+        }
+
+        private LongTaskTimer register(MeterRegistry registry, Tags tags) {
             return registry.more()
                 .longTaskTimer(new Meter.Id(name, tags, null, description, Type.LONG_TASK_TIMER),
                         distributionConfigBuilder.build());
