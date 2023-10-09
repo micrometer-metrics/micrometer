@@ -18,6 +18,7 @@ package io.micrometer.core.instrument;
 import io.micrometer.common.lang.Nullable;
 
 import java.util.Collections;
+import java.util.function.Function;
 
 /**
  * Counters monitor monotonically increasing values. Counters may never be reset to a
@@ -128,6 +129,14 @@ public interface Counter extends Meter {
          * @return A new or existing counter.
          */
         public Counter register(MeterRegistry registry) {
+            return register(registry, tags);
+        }
+
+        public <K> Meter.Provider<K, Counter> register(MeterRegistry registry, Function<K, Tags> provider) {
+            return new Meter.Cache<>(key -> register(registry, tags.and(provider.apply(key))));
+        }
+
+        private Counter register(MeterRegistry registry, Tags tags) {
             return registry.counter(new Meter.Id(name, tags, baseUnit, description, Type.COUNTER));
         }
 

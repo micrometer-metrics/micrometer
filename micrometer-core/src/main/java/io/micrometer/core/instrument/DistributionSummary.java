@@ -24,6 +24,7 @@ import io.micrometer.core.instrument.distribution.ValueAtPercentile;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 
 /**
  * Track the sample distribution of events. An example would be the response sizes for
@@ -395,6 +396,14 @@ public interface DistributionSummary extends Meter, HistogramSupport {
          * @return A new or existing distribution summary.
          */
         public DistributionSummary register(MeterRegistry registry) {
+            return register(registry, tags);
+        }
+
+        public <K> Meter.Provider<K, DistributionSummary> register(MeterRegistry registry, Function<K, Tags> provider) {
+            return new Meter.Cache<>(key -> register(registry, tags.and(provider.apply(key))));
+        }
+
+        private DistributionSummary register(MeterRegistry registry, Tags tags) {
             return registry.summary(new Meter.Id(name, tags, baseUnit, description, Type.DISTRIBUTION_SUMMARY),
                     distributionConfigBuilder.build(), scale);
         }

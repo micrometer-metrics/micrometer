@@ -29,6 +29,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BooleanSupplier;
 import java.util.function.DoubleSupplier;
+import java.util.function.Function;
 import java.util.function.IntSupplier;
 import java.util.function.LongSupplier;
 import java.util.function.Supplier;
@@ -439,6 +440,14 @@ public interface Timer extends Meter, HistogramSupport {
          * @return A new or existing timer.
          */
         public Timer register(MeterRegistry registry) {
+            return register(registry, tags);
+        }
+
+        public <K> Meter.Provider<K, Timer> register(MeterRegistry registry, Function<K, Tags> provider) {
+            return new Meter.Cache<>(key -> register(registry, tags.and(provider.apply(key))));
+        }
+
+        private Timer register(MeterRegistry registry, Tags tags) {
             // the base unit for a timer will be determined by the monitoring system
             // implementation
             return registry.timer(new Meter.Id(name, tags, null, description, Type.TIMER),

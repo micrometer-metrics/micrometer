@@ -20,6 +20,7 @@ import io.micrometer.core.annotation.Incubating;
 import io.micrometer.core.instrument.distribution.HistogramGauges;
 
 import java.util.Collections;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.function.ToDoubleFunction;
 
@@ -192,6 +193,19 @@ public interface Gauge extends Meter {
          * @return A new or existing gauge.
          */
         public Gauge register(MeterRegistry registry) {
+            return register(registry, obj, tags);
+        }
+
+        public <K> Meter.Provider<K, T> register(MeterRegistry registry, Supplier<T> generator,
+                Function<K, Tags> provider) {
+            return new Meter.Cache<>(key -> {
+                final T obj = generator.get();
+                register(registry, obj, tags.and(provider.apply(key)));
+                return obj;
+            });
+        }
+
+        private Gauge register(MeterRegistry registry, T obj, Tags tags) {
             return registry.gauge(new Meter.Id(name, tags, baseUnit, description, Type.GAUGE, syntheticAssociation),
                     obj, strongReference ? new StrongReferenceGaugeFunction<>(obj, f) : f);
         }
