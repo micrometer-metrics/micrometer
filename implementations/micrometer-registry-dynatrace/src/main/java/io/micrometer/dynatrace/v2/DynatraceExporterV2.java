@@ -84,7 +84,7 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
         try {
             MetricLinePreConfiguration.Builder preConfigBuilder = MetricLinePreConfiguration.builder()
                 .prefix(config.metricKeyPrefix())
-                .defaultDimensions(enrichWithMetricsSourceDimension(config.defaultDimensions()));
+                .defaultDimensions(enrichWithMetricsSourceDimensions(config.defaultDimensions()));
 
             if (config.enrichWithDynatraceMetadata()) {
                 preConfigBuilder.dynatraceMetadataDimensions();
@@ -126,7 +126,7 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
         return false;
     }
 
-    private Map<String, String> enrichWithMetricsSourceDimension(Map<String, String> defaultDimensions) {
+    private Map<String, String> enrichWithMetricsSourceDimensions(Map<String, String> defaultDimensions) {
         LinkedHashMap<String, String> orderedDimensions = new LinkedHashMap<>(defaultDimensions);
         orderedDimensions.putAll(staticDimensions);
         return orderedDimensions;
@@ -452,7 +452,7 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
     }
 
     /**
-     * Adds metadata found in {@link MetadataStep} to the {@code seenMetadata}
+     * Adds metadata found in {@link MetadataStep} to the {@code seenMetadata}.
      * @param metadataStep source of the metadata that should be added to
      * {@code seenMetadata}
      * @param seenMetadata destination of the metadata
