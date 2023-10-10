@@ -13,13 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package io.micrometer.jakarta10;
 
-/**
- * Observation instrumentation for Jakarta JMS.
- */
-@NonNullFields
-@NonNullApi
-package io.micrometer.core.instrument.binder.jms;
+import com.tngtech.archunit.junit.AnalyzeClasses;
+import com.tngtech.archunit.junit.ArchTest;
+import com.tngtech.archunit.lang.ArchRule;
 
-import io.micrometer.common.lang.NonNullApi;
-import io.micrometer.common.lang.NonNullFields;
+import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
+
+@AnalyzeClasses(packages = "io.micrometer.jakarta10")
+class NoJavaxArchitectureTests {
+
+    @ArchTest
+    static final ArchRule noJavaxDependencies = noClasses().that()
+        .resideInAPackage("io.micrometer.jakarta10..")
+        .should()
+        .dependOnClassesThat()
+        .resideInAPackage("javax..");
+
+}

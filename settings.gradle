@@ -43,6 +43,7 @@ include 'micrometer-test', 'micrometer-observation-test'
 }
 
 include 'micrometer-bom'
+include 'micrometer-jakarta10'
 include 'micrometer-jetty11'
 include 'micrometer-osgi-test'
 include 'docs'

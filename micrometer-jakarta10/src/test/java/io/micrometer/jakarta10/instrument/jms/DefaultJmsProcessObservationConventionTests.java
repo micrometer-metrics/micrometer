@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.core.instrument.binder.jms;
+package io.micrometer.jakarta10.instrument.jms;
 
 import io.micrometer.common.KeyValue;
 import jakarta.jms.*;
@@ -24,42 +24,42 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 /**
- * Tests for {@link DefaultJmsPublishObservationConvention}.
+ * Tests for {@link DefaultJmsProcessObservationConvention}.
  *
  * @author Brian Clozel
  */
-class DefaultJmsPublishObservationConventionTests {
+class DefaultJmsProcessObservationConventionTests {
 
-    private final DefaultJmsPublishObservationConvention convention = new DefaultJmsPublishObservationConvention();
+    private final DefaultJmsProcessObservationConvention convention = new DefaultJmsProcessObservationConvention();
 
     @Test
     void shouldHaveObservationName() {
-        assertThat(convention.getName()).isEqualTo("jms.message.publish");
+        assertThat(convention.getName()).isEqualTo("jms.message.process");
     }
 
     @Test
     void shouldHaveQueueContextualName() throws Exception {
-        JmsPublishObservationContext context = new JmsPublishObservationContext(createMessageWithQueue());
-        assertThat(convention.getContextualName(context)).isEqualTo("micrometer.test.queue publish");
+        JmsProcessObservationContext context = new JmsProcessObservationContext(createMessageWithQueue());
+        assertThat(convention.getContextualName(context)).isEqualTo("micrometer.test.queue process");
     }
 
     @Test
     void shouldHaveTopicContextualName() throws Exception {
-        JmsPublishObservationContext context = new JmsPublishObservationContext(createMessageWithTopic());
-        assertThat(convention.getContextualName(context)).isEqualTo("micrometer.test.topic publish");
+        JmsProcessObservationContext context = new JmsProcessObservationContext(createMessageWithTopic());
+        assertThat(convention.getContextualName(context)).isEqualTo("micrometer.test.topic process");
     }
 
     @Test
     void shouldHaveOperationName() throws Exception {
-        JmsPublishObservationContext context = new JmsPublishObservationContext(createMessageWithQueue());
+        JmsProcessObservationContext context = new JmsProcessObservationContext(createMessageWithQueue());
         assertThat(convention.getLowCardinalityKeyValues(context))
-            .contains(KeyValue.of("messaging.operation", "publish"));
+            .contains(KeyValue.of("messaging.operation", "process"));
     }
 
     @Test
     void shouldHaveCorrelationIdWhenAvailable() throws Exception {
         Message message = createMessageWithQueue();
-        JmsPublishObservationContext context = new JmsPublishObservationContext(message);
+        JmsProcessObservationContext context = new JmsProcessObservationContext(message);
         when(message.getJMSCorrelationID()).thenReturn("test-correlation");
         assertThat(convention.getHighCardinalityKeyValues(context))
             .contains(KeyValue.of("messaging.message.conversation_id", "test-correlation"));
@@ -68,7 +68,7 @@ class DefaultJmsPublishObservationConventionTests {
     @Test
     void shouldHaveUnknownCorrelationIdWhenNotAvailable() throws Exception {
         Message message = createMessageWithQueue();
-        JmsPublishObservationContext context = new JmsPublishObservationContext(message);
+        JmsProcessObservationContext context = new JmsProcessObservationContext(message);
         assertThat(convention.getHighCardinalityKeyValues(context))
             .contains(KeyValue.of("messaging.message.conversation_id", "unknown"));
     }
@@ -76,7 +76,7 @@ class DefaultJmsPublishObservationConventionTests {
     @Test
     void shouldHaveUnknownCorrelationIdWhenException() throws Exception {
         Message message = createMessageWithQueue();
-        JmsPublishObservationContext context = new JmsPublishObservationContext(message);
+        JmsProcessObservationContext context = new JmsProcessObservationContext(message);
         when(message.getJMSCorrelationID()).thenThrow(new JMSException("test exception"));
         assertThat(convention.getHighCardinalityKeyValues(context))
             .contains(KeyValue.of("messaging.message.conversation_id", "unknown"));
@@ -84,14 +84,14 @@ class DefaultJmsPublishObservationConventionTests {
 
     @Test
     void shouldHaveQueueDestinationName() throws Exception {
-        JmsPublishObservationContext context = new JmsPublishObservationContext(createMessageWithQueue());
+        JmsProcessObservationContext context = new JmsProcessObservationContext(createMessageWithQueue());
         assertThat(convention.getHighCardinalityKeyValues(context))
             .contains(KeyValue.of("messaging.destination.name", "micrometer.test.queue"));
     }
 
     @Test
     void shouldHaveTopicDestinationName() throws Exception {
-        JmsPublishObservationContext context = new JmsPublishObservationContext(createMessageWithTopic());
+        JmsProcessObservationContext context = new JmsProcessObservationContext(createMessageWithTopic());
         assertThat(convention.getHighCardinalityKeyValues(context))
             .contains(KeyValue.of("messaging.destination.name", "micrometer.test.topic"));
     }
@@ -99,7 +99,7 @@ class DefaultJmsPublishObservationConventionTests {
     @Test
     void shouldHaveUnknownDestinationNameWhenException() throws Exception {
         Message message = createMessageWithQueue();
-        JmsPublishObservationContext context = new JmsPublishObservationContext(message);
+        JmsProcessObservationContext context = new JmsProcessObservationContext(message);
         when(((Queue) message.getJMSDestination()).getQueueName()).thenThrow(new JMSException("test exception"));
         assertThat(convention.getHighCardinalityKeyValues(context))
             .contains(KeyValue.of("messaging.destination.name", "unknown"));
@@ -108,7 +108,7 @@ class DefaultJmsPublishObservationConventionTests {
     @Test
     void shouldHaveMessageIdWhenAvailable() throws Exception {
         Message message = createMessageWithQueue();
-        JmsPublishObservationContext context = new JmsPublishObservationContext(message);
+        JmsProcessObservationContext context = new JmsProcessObservationContext(message);
         when(message.getJMSMessageID()).thenReturn("test-id");
         assertThat(convention.getHighCardinalityKeyValues(context))
             .contains(KeyValue.of("messaging.message.id", "test-id"));
@@ -117,7 +117,7 @@ class DefaultJmsPublishObservationConventionTests {
     @Test
     void shouldHaveUnknownMessageIdWhenNotAvailable() throws Exception {
         Message message = createMessageWithQueue();
-        JmsPublishObservationContext context = new JmsPublishObservationContext(message);
+        JmsProcessObservationContext context = new JmsProcessObservationContext(message);
         assertThat(convention.getHighCardinalityKeyValues(context))
             .contains(KeyValue.of("messaging.message.id", "unknown"));
     }
@@ -125,7 +125,7 @@ class DefaultJmsPublishObservationConventionTests {
     @Test
     void shouldHaveUnknownMessageIdWhenException() throws Exception {
         Message message = createMessageWithQueue();
-        JmsPublishObservationContext context = new JmsPublishObservationContext(message);
+        JmsProcessObservationContext context = new JmsProcessObservationContext(message);
         when(message.getJMSMessageID()).thenThrow(new JMSException("test exception"));
         assertThat(convention.getHighCardinalityKeyValues(context))
             .contains(KeyValue.of("messaging.message.id", "unknown"));
@@ -134,7 +134,7 @@ class DefaultJmsPublishObservationConventionTests {
     @Test
     void shouldHaveDurableDestinationForQueue() throws Exception {
         Message message = createMessageWithQueue();
-        JmsPublishObservationContext context = new JmsPublishObservationContext(message);
+        JmsProcessObservationContext context = new JmsProcessObservationContext(message);
         assertThat(convention.getLowCardinalityKeyValues(context))
             .contains(KeyValue.of("messaging.destination.temporary", "false"));
     }
@@ -142,7 +142,7 @@ class DefaultJmsPublishObservationConventionTests {
     @Test
     void shouldHaveTempDestinationForTemporaryQueue() throws Exception {
         Message message = createMessageWithTempQueue();
-        JmsPublishObservationContext context = new JmsPublishObservationContext(message);
+        JmsProcessObservationContext context = new JmsProcessObservationContext(message);
         assertThat(convention.getLowCardinalityKeyValues(context))
             .contains(KeyValue.of("messaging.destination.temporary", "true"));
     }
@@ -150,7 +150,7 @@ class DefaultJmsPublishObservationConventionTests {
     @Test
     void shouldHaveDurableDestinationForTopic() throws Exception {
         Message message = createMessageWithTopic();
-        JmsPublishObservationContext context = new JmsPublishObservationContext(message);
+        JmsProcessObservationContext context = new JmsProcessObservationContext(message);
         assertThat(convention.getLowCardinalityKeyValues(context))
             .contains(KeyValue.of("messaging.destination.temporary", "false"));
     }
@@ -158,7 +158,7 @@ class DefaultJmsPublishObservationConventionTests {
     @Test
     void shouldHaveTempDestinationForTemporaryTopic() throws Exception {
         Message message = createMessageWithTempTopic();
-        JmsPublishObservationContext context = new JmsPublishObservationContext(message);
+        JmsProcessObservationContext context = new JmsProcessObservationContext(message);
         assertThat(convention.getLowCardinalityKeyValues(context))
             .contains(KeyValue.of("messaging.destination.temporary", "true"));
     }

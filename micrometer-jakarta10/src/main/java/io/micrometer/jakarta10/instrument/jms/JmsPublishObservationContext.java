@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.micrometer.core.instrument.binder.jms;
+package io.micrometer.jakarta10.instrument.jms;
 
 import io.micrometer.common.lang.Nullable;
 import io.micrometer.observation.transport.SenderContext;
