@@ -36,7 +36,7 @@ dependencies {
     implementation 'org.awaitility:awaitility'
 
     testImplementation project(':micrometer-observation-test')
-    testImplementation project(':micrometer-jakarta10')
+    testImplementation project(':micrometer-jakarta9')
 
     testImplementation 'org.jsr107.ri:cache-ri-impl'
 

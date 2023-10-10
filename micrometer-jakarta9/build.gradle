@@ -1,4 +1,4 @@
-description 'Module for Jakarta 10+ based instrumentations'
+description 'Module for Jakarta 9+ based instrumentations'
 
 jar {
     bundle {

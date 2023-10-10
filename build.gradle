@@ -327,7 +327,7 @@ subprojects {
 
             check.dependsOn("testModules")
 
-            if (!(project.name in ['micrometer-jakarta10'])) {
+            if (!(project.name in ['micrometer-jakarta9'])) {
                 apply plugin: 'me.champeau.gradle.japicmp'
                 apply plugin: 'de.undercouch.download'
 
