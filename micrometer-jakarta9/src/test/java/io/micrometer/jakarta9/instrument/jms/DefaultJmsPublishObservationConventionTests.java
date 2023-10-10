@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.jakarta10.instrument.jms;
+package io.micrometer.jakarta9.instrument.jms;
 
 import io.micrometer.common.KeyValue;
 import jakarta.jms.*;

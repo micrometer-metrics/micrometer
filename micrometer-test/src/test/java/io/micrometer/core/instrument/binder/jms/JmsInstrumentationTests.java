@@ -19,7 +19,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
-import io.micrometer.jakarta10.instrument.jms.JmsInstrumentation;
+import io.micrometer.jakarta9.instrument.jms.JmsInstrumentation;
 import io.micrometer.observation.tck.TestObservationRegistry;
 import io.micrometer.observation.tck.TestObservationRegistryAssert;
 import jakarta.jms.*;

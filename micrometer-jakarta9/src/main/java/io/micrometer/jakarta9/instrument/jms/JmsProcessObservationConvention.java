@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.micrometer.jakarta10.instrument.jms;
+package io.micrometer.jakarta9.instrument.jms;
 
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationConvention;

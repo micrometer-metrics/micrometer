@@ -19,7 +19,7 @@
  */
 @NonNullFields
 @NonNullApi
-package io.micrometer.jakarta10.instrument.jms;
+package io.micrometer.jakarta9.instrument.jms;
 
 import io.micrometer.common.lang.NonNullApi;
 import io.micrometer.common.lang.NonNullFields;
