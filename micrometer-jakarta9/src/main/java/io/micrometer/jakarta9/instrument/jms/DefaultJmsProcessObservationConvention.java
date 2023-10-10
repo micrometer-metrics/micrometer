@@ -20,6 +20,8 @@ import io.micrometer.common.KeyValue;
 import io.micrometer.common.KeyValues;
 import jakarta.jms.*;
 
+import io.micrometer.jakarta9.instrument.jms.JmsObservationDocumentation.*;
+
 /**
  * Default implementation for {@link JmsProcessObservationConvention}.
  *
@@ -28,23 +30,23 @@ import jakarta.jms.*;
  */
 public class DefaultJmsProcessObservationConvention implements JmsProcessObservationConvention {
 
-    private static final KeyValue DESTINATION_TEMPORARY = KeyValue.of(JmsObservationDocumentation.LowCardinalityKeyNames.DESTINATION_TEMPORARY,
+    private static final KeyValue DESTINATION_TEMPORARY = KeyValue.of(LowCardinalityKeyNames.DESTINATION_TEMPORARY,
             "true");
 
-    private static final KeyValue DESTINATION_DURABLE = KeyValue.of(JmsObservationDocumentation.LowCardinalityKeyNames.DESTINATION_TEMPORARY,
+    private static final KeyValue DESTINATION_DURABLE = KeyValue.of(LowCardinalityKeyNames.DESTINATION_TEMPORARY,
             "false");
 
-    private static final KeyValue EXCEPTION_NONE = KeyValue.of(JmsObservationDocumentation.LowCardinalityKeyNames.EXCEPTION, KeyValue.NONE_VALUE);
+    private static final KeyValue EXCEPTION_NONE = KeyValue.of(LowCardinalityKeyNames.EXCEPTION, KeyValue.NONE_VALUE);
 
-    private static final KeyValue OPERATION_PROCESS = KeyValue.of(JmsObservationDocumentation.LowCardinalityKeyNames.OPERATION, "process");
+    private static final KeyValue OPERATION_PROCESS = KeyValue.of(LowCardinalityKeyNames.OPERATION, "process");
 
-    private static final KeyValue DESTINATION_NAME_UNKNOWN = KeyValue.of(JmsObservationDocumentation.HighCardinalityKeyNames.DESTINATION_NAME,
+    private static final KeyValue DESTINATION_NAME_UNKNOWN = KeyValue.of(HighCardinalityKeyNames.DESTINATION_NAME,
             "unknown");
 
-    private static final KeyValue MESSAGE_CONVERSATION_ID_UNKNOWN = KeyValue.of(JmsObservationDocumentation.HighCardinalityKeyNames.CONVERSATION_ID,
+    private static final KeyValue MESSAGE_CONVERSATION_ID_UNKNOWN = KeyValue.of(HighCardinalityKeyNames.CONVERSATION_ID,
             "unknown");
 
-    private static final KeyValue MESSAGE_ID_UNKNOWN = KeyValue.of(JmsObservationDocumentation.HighCardinalityKeyNames.MESSAGE_ID, "unknown");
+    private static final KeyValue MESSAGE_ID_UNKNOWN = KeyValue.of(HighCardinalityKeyNames.MESSAGE_ID, "unknown");
 
     @Override
     public String getName() {
@@ -65,7 +67,7 @@ public class DefaultJmsProcessObservationConvention implements JmsProcessObserva
         Throwable error = context.getError();
         if (error != null) {
             String simpleName = error.getClass().getSimpleName();
-            return KeyValue.of(JmsObservationDocumentation.LowCardinalityKeyNames.EXCEPTION,
+            return KeyValue.of(LowCardinalityKeyNames.EXCEPTION,
                     !simpleName.isEmpty() ? simpleName : error.getClass().getName());
         }
         return EXCEPTION_NONE;
@@ -96,7 +98,7 @@ public class DefaultJmsProcessObservationConvention implements JmsProcessObserva
             if (message.getJMSCorrelationID() == null) {
                 return MESSAGE_CONVERSATION_ID_UNKNOWN;
             }
-            return KeyValue.of(JmsObservationDocumentation.HighCardinalityKeyNames.CONVERSATION_ID, message.getJMSCorrelationID());
+            return KeyValue.of(HighCardinalityKeyNames.CONVERSATION_ID, message.getJMSCorrelationID());
         }
         catch (JMSException exc) {
             return MESSAGE_CONVERSATION_ID_UNKNOWN;
@@ -108,11 +110,11 @@ public class DefaultJmsProcessObservationConvention implements JmsProcessObserva
             Destination jmsDestination = context.getCarrier().getJMSDestination();
             if (jmsDestination instanceof Queue) {
                 Queue queue = (Queue) jmsDestination;
-                return KeyValue.of(JmsObservationDocumentation.HighCardinalityKeyNames.DESTINATION_NAME, queue.getQueueName());
+                return KeyValue.of(HighCardinalityKeyNames.DESTINATION_NAME, queue.getQueueName());
             }
             if (jmsDestination instanceof Topic) {
                 Topic topic = (Topic) jmsDestination;
-                return KeyValue.of(JmsObservationDocumentation.HighCardinalityKeyNames.DESTINATION_NAME, topic.getTopicName());
+                return KeyValue.of(HighCardinalityKeyNames.DESTINATION_NAME, topic.getTopicName());
             }
             return DESTINATION_NAME_UNKNOWN;
         }
@@ -127,7 +129,7 @@ public class DefaultJmsProcessObservationConvention implements JmsProcessObserva
             if (message.getJMSMessageID() == null) {
                 return MESSAGE_ID_UNKNOWN;
             }
-            return KeyValue.of(JmsObservationDocumentation.HighCardinalityKeyNames.MESSAGE_ID, message.getJMSMessageID());
+            return KeyValue.of(HighCardinalityKeyNames.MESSAGE_ID, message.getJMSMessageID());
         }
         catch (JMSException exc) {
             return MESSAGE_ID_UNKNOWN;
