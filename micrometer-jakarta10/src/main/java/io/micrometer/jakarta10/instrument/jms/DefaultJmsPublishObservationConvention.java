@@ -14,22 +14,21 @@
  * limitations under the License.
  */
 
-package io.micrometer.core.instrument.binder.jms;
+package io.micrometer.jakarta10.instrument.jms;
 
 import io.micrometer.common.KeyValue;
 import io.micrometer.common.KeyValues;
-import io.micrometer.core.instrument.binder.jms.JmsObservationDocumentation.LowCardinalityKeyNames;
 import jakarta.jms.*;
 
-import static io.micrometer.core.instrument.binder.jms.JmsObservationDocumentation.*;
+import static io.micrometer.jakarta10.instrument.jms.JmsObservationDocumentation.*;
 
 /**
- * Default implementation for {@link JmsProcessObservationConvention}.
+ * Default implementation for {@link JmsPublishObservationConvention}.
  *
  * @author Brian Clozel
  * @since 1.12.0
  */
-public class DefaultJmsProcessObservationConvention implements JmsProcessObservationConvention {
+public class DefaultJmsPublishObservationConvention implements JmsPublishObservationConvention {
 
     private static final KeyValue DESTINATION_TEMPORARY = KeyValue.of(LowCardinalityKeyNames.DESTINATION_TEMPORARY,
             "true");
@@ -39,32 +38,32 @@ public class DefaultJmsProcessObservationConvention implements JmsProcessObserva
 
     private static final KeyValue EXCEPTION_NONE = KeyValue.of(LowCardinalityKeyNames.EXCEPTION, KeyValue.NONE_VALUE);
 
-    private static final KeyValue OPERATION_PROCESS = KeyValue.of(LowCardinalityKeyNames.OPERATION, "process");
-
-    private static final KeyValue DESTINATION_NAME_UNKNOWN = KeyValue.of(HighCardinalityKeyNames.DESTINATION_NAME,
-            "unknown");
+    private static final KeyValue OPERATION_PUBLISH = KeyValue.of(LowCardinalityKeyNames.OPERATION, "publish");
 
     private static final KeyValue MESSAGE_CONVERSATION_ID_UNKNOWN = KeyValue.of(HighCardinalityKeyNames.CONVERSATION_ID,
+            "unknown");
+
+    private static final KeyValue DESTINATION_NAME_UNKNOWN = KeyValue.of(HighCardinalityKeyNames.DESTINATION_NAME,
             "unknown");
 
     private static final KeyValue MESSAGE_ID_UNKNOWN = KeyValue.of(HighCardinalityKeyNames.MESSAGE_ID, "unknown");
 
     @Override
     public String getName() {
-        return "jms.message.process";
+        return "jms.message.publish";
     }
 
     @Override
-    public String getContextualName(JmsProcessObservationContext context) {
-        return destinationName(context).getValue() + " process";
+    public String getContextualName(JmsPublishObservationContext context) {
+        return destinationName(context).getValue() + " publish";
     }
 
     @Override
-    public KeyValues getLowCardinalityKeyValues(JmsProcessObservationContext context) {
-        return KeyValues.of(exception(context), OPERATION_PROCESS, temporaryDestination(context));
+    public KeyValues getLowCardinalityKeyValues(JmsPublishObservationContext context) {
+        return KeyValues.of(exception(context), OPERATION_PUBLISH, temporaryDestination(context));
     }
 
-    private KeyValue exception(JmsProcessObservationContext context) {
+    private KeyValue exception(JmsPublishObservationContext context) {
         Throwable error = context.getError();
         if (error != null) {
             String simpleName = error.getClass().getSimpleName();
@@ -74,12 +73,14 @@ public class DefaultJmsProcessObservationConvention implements JmsProcessObserva
         return EXCEPTION_NONE;
     }
 
-    protected KeyValue temporaryDestination(JmsProcessObservationContext context) {
+    protected KeyValue temporaryDestination(JmsPublishObservationContext context) {
+        Message message = context.getCarrier();
         try {
-            Message message = context.getCarrier();
-            Destination destination = message.getJMSDestination();
-            if (destination instanceof TemporaryQueue || destination instanceof TemporaryTopic) {
-                return DESTINATION_TEMPORARY;
+            if (message != null) {
+                Destination destination = message.getJMSDestination();
+                if (destination instanceof TemporaryQueue || destination instanceof TemporaryTopic) {
+                    return DESTINATION_TEMPORARY;
+                }
             }
             return DESTINATION_DURABLE;
         }
@@ -89,14 +90,14 @@ public class DefaultJmsProcessObservationConvention implements JmsProcessObserva
     }
 
     @Override
-    public KeyValues getHighCardinalityKeyValues(JmsProcessObservationContext context) {
+    public KeyValues getHighCardinalityKeyValues(JmsPublishObservationContext context) {
         return KeyValues.of(correlationId(context), destinationName(context), messageId(context));
     }
 
-    protected KeyValue correlationId(JmsProcessObservationContext context) {
+    protected KeyValue correlationId(JmsPublishObservationContext context) {
         try {
             Message message = context.getCarrier();
-            if (message.getJMSCorrelationID() == null) {
+            if (message == null || message.getJMSCorrelationID() == null) {
                 return MESSAGE_CONVERSATION_ID_UNKNOWN;
             }
             return KeyValue.of(HighCardinalityKeyNames.CONVERSATION_ID, message.getJMSCorrelationID());
@@ -106,9 +107,13 @@ public class DefaultJmsProcessObservationConvention implements JmsProcessObserva
         }
     }
 
-    protected KeyValue destinationName(JmsProcessObservationContext context) {
+    protected KeyValue destinationName(JmsPublishObservationContext context) {
+        Message message = context.getCarrier();
+        if (message == null) {
+            return DESTINATION_NAME_UNKNOWN;
+        }
         try {
-            Destination jmsDestination = context.getCarrier().getJMSDestination();
+            Destination jmsDestination = message.getJMSDestination();
             if (jmsDestination instanceof Queue) {
                 Queue queue = (Queue) jmsDestination;
                 return KeyValue.of(HighCardinalityKeyNames.DESTINATION_NAME, queue.getQueueName());
@@ -124,10 +129,10 @@ public class DefaultJmsProcessObservationConvention implements JmsProcessObserva
         }
     }
 
-    protected KeyValue messageId(JmsProcessObservationContext context) {
+    protected KeyValue messageId(JmsPublishObservationContext context) {
         try {
             Message message = context.getCarrier();
-            if (message.getJMSMessageID() == null) {
+            if (message == null || message.getJMSMessageID() == null) {
                 return MESSAGE_ID_UNKNOWN;
             }
             return KeyValue.of(HighCardinalityKeyNames.MESSAGE_ID, message.getJMSMessageID());
