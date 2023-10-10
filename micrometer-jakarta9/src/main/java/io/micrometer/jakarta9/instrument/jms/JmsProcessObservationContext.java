@@ -26,7 +26,10 @@ import jakarta.jms.Message;
  * messages}.
  * <p>
  * The inbound tracing information is propagated by looking it up in
- * {@link Message#getStringProperty(String) incoming JMS message headers}.
+ * {@link Message#getStringProperty(String) incoming JMS message headers}. As the JMS spec
+ * only allows valid Java identifiers as String properties, we must escape "-" and "."
+ * characters, assuming that they are escaped as {@code "_HYPHEN_"} and {@code "_DOT_"} on
+ * the sending side.
  *
  * @author Brian Clozel
  * @since 1.12.0
@@ -36,13 +39,17 @@ public class JmsProcessObservationContext extends ReceiverContext<Message> {
     public JmsProcessObservationContext(Message receivedMessage) {
         super((message, key) -> {
             try {
-                return message.getStringProperty(key);
+                return message.getStringProperty(escapeKey(key));
             }
             catch (JMSException exc) {
                 return null;
             }
         });
         setCarrier(receivedMessage);
+    }
+
+    private static String escapeKey(String key) {
+        return key.replace("-", "_HYPHEN_").replace(".", "_DOT_");
     }
 
 }

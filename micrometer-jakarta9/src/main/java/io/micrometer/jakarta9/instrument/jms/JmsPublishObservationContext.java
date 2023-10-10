@@ -26,7 +26,10 @@ import jakarta.jms.Message;
  * {@link JmsObservationDocumentation#JMS_MESSAGE_PUBLISH publication of JMS messages}.
  * <p>
  * This propagates the tracing information with the message sent by
- * {@link Message#setStringProperty(String, String) setting a message header}.
+ * {@link Message#setStringProperty(String, String) setting a message header}. As the JMS
+ * spec only allows valid Java identifiers as String properties, we must escape "-" and
+ * "." characters as {@code "_HYPHEN_"} and {@code "_DOT_"}, assuming that they are
+ * escaped on the receiving side.
  *
  * @author Brian Clozel
  * @since 1.12.0
@@ -37,7 +40,7 @@ public class JmsPublishObservationContext extends SenderContext<Message> {
         super((message, key, value) -> {
             try {
                 if (message != null) {
-                    message.setStringProperty(key, value);
+                    message.setStringProperty(escapeKey(key), value);
                 }
             }
             catch (JMSException exc) {
@@ -45,6 +48,10 @@ public class JmsPublishObservationContext extends SenderContext<Message> {
             }
         });
         setCarrier(sendMessage);
+    }
+
+    private static String escapeKey(String key) {
+        return key.replace("-", "_HYPHEN_").replace(".", "_DOT_");
     }
 
 }
