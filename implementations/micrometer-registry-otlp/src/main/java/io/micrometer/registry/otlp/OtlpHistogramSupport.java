@@ -15,10 +15,12 @@
  */
 package io.micrometer.registry.otlp;
 
+import io.micrometer.common.lang.Nullable;
 import io.micrometer.registry.otlp.internal.ExponentialHistogramSnapShot;
 
 interface OtlpHistogramSupport {
 
+    @Nullable
     ExponentialHistogramSnapShot getExponentialHistogramSnapShot();
 
 }

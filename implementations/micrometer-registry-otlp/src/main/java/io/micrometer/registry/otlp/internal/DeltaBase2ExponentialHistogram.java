@@ -31,7 +31,7 @@ import io.micrometer.core.instrument.step.StepValue;
  */
 public class DeltaBase2ExponentialHistogram extends Base2ExponentialHistogram {
 
-    private final StepValue<ExponentialHistogramSnapShot> stepExponentialHistogramSnapShot;
+    private final StepExponentialHistogramSnapShot stepExponentialHistogramSnapShot;
 
     /**
      * Creates an Base2ExponentialHistogram that record positive values and resets for
@@ -66,6 +66,11 @@ public class DeltaBase2ExponentialHistogram extends Base2ExponentialHistogram {
         stepExponentialHistogramSnapShot.poll();
     }
 
+    @Override
+    public void close() {
+        stepExponentialHistogramSnapShot._closingRollover();
+    }
+
     private class StepExponentialHistogramSnapShot extends StepValue<ExponentialHistogramSnapShot> {
 
         public StepExponentialHistogramSnapShot(final Clock clock, final long stepMillis, final int maxScale) {
@@ -73,7 +78,7 @@ public class DeltaBase2ExponentialHistogram extends Base2ExponentialHistogram {
         }
 
         @Override
-        protected Supplier<ExponentialHistogramSnapShot> valueSupplier() {
+        protected synchronized Supplier<ExponentialHistogramSnapShot> valueSupplier() {
             return () -> {
                 ExponentialHistogramSnapShot latestSnapShot = getCurrentValuesSnapshot();
                 reset();
@@ -84,6 +89,11 @@ public class DeltaBase2ExponentialHistogram extends Base2ExponentialHistogram {
         @Override
         protected ExponentialHistogramSnapShot noValue() {
             return DefaultExponentialHistogramSnapShot.getEmptySnapshotForScale(getScale());
+        }
+
+        @Override
+        protected void _closingRollover() {
+            super._closingRollover();
         }
 
     }

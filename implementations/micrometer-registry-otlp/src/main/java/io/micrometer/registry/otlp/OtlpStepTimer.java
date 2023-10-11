@@ -15,7 +15,6 @@
  */
 package io.micrometer.registry.otlp;
 
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.AbstractTimer;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
@@ -94,10 +93,12 @@ class OtlpStepTimer extends AbstractTimer implements OtlpHistogramSupport {
         if (histogram instanceof OtlpStepBucketHistogram) { // can be noop
             ((OtlpStepBucketHistogram) histogram)._closingRollover();
         }
+        else if (histogram instanceof Base2ExponentialHistogram) {
+            histogram.close();
+        }
     }
 
     @Override
-    @Nullable
     public ExponentialHistogramSnapShot getExponentialHistogramSnapShot() {
         if (histogramFlavour == HistogramFlavour.BASE2_EXPONENTIAL_BUCKET_HISTOGRAM) {
             return ((Base2ExponentialHistogram) histogram).getLatestExponentialHistogramSnapshot();
