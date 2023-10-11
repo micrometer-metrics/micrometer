@@ -126,7 +126,7 @@ httpcomponents-client = { module = "org.apache.httpcomponents:httpclient", versi
 httpcomponents-client5 = { module = "org.apache.httpcomponents.client5:httpclient5", version.ref = "httpcomponents-client5" }
 hystrix = { module = "com.netflix.hystrix:hystrix-core", version.ref = "hystrix" }
 jacksonDatabind = { module = "com.fasterxml.jackson.core:jackson-databind", version.ref = "jackson-databind" }
-jakarta-jmsApi = { module = "jakarta.jms:jakarta.jms-api", version = "3.0.0" }
+jakarta-jmsApi = { module = "jakarta.jms:jakarta.jms-api", version = "3.1.0" }
 jakarta-servletApi = { module = "jakarta.servlet:jakarta.servlet-api", version = "5.0.0" }
 javalin = { module = "io.javalin:javalin", version = "5.6.2" }
 javax-cacheApi = { module = "javax.cache:cache-api", version.ref = "javax-cache" }
