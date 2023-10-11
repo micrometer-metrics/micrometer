@@ -16,13 +16,20 @@
 package io.micrometer.registry.otlp.internal;
 
 import java.util.Collections;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 class DefaultExponentialHistogramSnapShot implements ExponentialHistogramSnapShot {
 
-    private static final Map<Integer, ExponentialHistogramSnapShot> emptySnapshotCache = new HashMap<>();
+    private static final int MAX_ENTRIES = 50;
+
+    private static final Map<Integer, ExponentialHistogramSnapShot> emptySnapshotCache = new LinkedHashMap<Integer, ExponentialHistogramSnapShot>() {
+        @Override
+        protected boolean removeEldestEntry(final Map.Entry eldest) {
+            return size() > MAX_ENTRIES;
+        }
+    };
 
     private final int scale;
 

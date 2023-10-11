@@ -104,13 +104,13 @@ public abstract class Base2ExponentialHistogram implements Histogram {
      * Provides a bridge to Micrometer {@link HistogramSnapshot}.
      */
     @Override
-    public synchronized HistogramSnapshot takeSnapshot(final long count, final double total, final double max) {
+    public HistogramSnapshot takeSnapshot(final long count, final double total, final double max) {
         this.takeExponentialHistogramSnapShot();
         return new HistogramSnapshot(count, total, max, null, null, null);
     }
 
     /**
-     * Returns the snapshot of current recorded values..
+     * Returns the snapshot of current recorded values.
      */
     ExponentialHistogramSnapShot getCurrentValuesSnapshot() {
         return (circularCountHolder.isEmpty() && zeroCount.longValue() == 0)
@@ -149,9 +149,12 @@ public abstract class Base2ExponentialHistogram implements Histogram {
 
         int index = base2IndexProvider.getIndexForValue(value);
         if (!circularCountHolder.increment(index, 1)) {
-            downScale(getDownScaleFactor(index));
-            index = base2IndexProvider.getIndexForValue(value);
-            circularCountHolder.increment(index, 1);
+            synchronized (this) {
+                int downScaleFactor = getDownScaleFactor(index);
+                downScale(downScaleFactor);
+                index = base2IndexProvider.getIndexForValue(value);
+                circularCountHolder.increment(index, 1);
+            }
         }
     }
 
@@ -160,7 +163,7 @@ public abstract class Base2ExponentialHistogram implements Histogram {
      * align with the exponential scale.
      * @param downScaleFactor - the factor to downscale this histogram.
      */
-    private synchronized void downScale(int downScaleFactor) {
+    private void downScale(int downScaleFactor) {
         if (downScaleFactor == 0) {
             return;
         }
@@ -195,7 +198,7 @@ public abstract class Base2ExponentialHistogram implements Histogram {
      * @return a factor by which {@link Base2ExponentialHistogram#scale} should be
      * decreased.
      */
-    private synchronized int getDownScaleFactor(final long index) {
+    private int getDownScaleFactor(final long index) {
         long newStart = Math.min(index, circularCountHolder.getStartIndex());
         long newEnd = Math.max(index, circularCountHolder.getEndIndex());
 

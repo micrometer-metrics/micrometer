@@ -15,7 +15,6 @@
  */
 package io.micrometer.registry.otlp;
 
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.AbstractDistributionSummary;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
@@ -78,7 +77,6 @@ class OtlpStepDistributionSummary extends AbstractDistributionSummary implements
     }
 
     @Override
-    @Nullable
     public ExponentialHistogramSnapShot getExponentialHistogramSnapShot() {
         if (histogramFlavour == HistogramFlavour.BASE2_EXPONENTIAL_BUCKET_HISTOGRAM) {
             return ((Base2ExponentialHistogram) histogram).getLatestExponentialHistogramSnapshot();
@@ -97,6 +95,9 @@ class OtlpStepDistributionSummary extends AbstractDistributionSummary implements
         max._closingRollover();
         if (histogram instanceof OtlpStepBucketHistogram) { // can be noop
             ((OtlpStepBucketHistogram) histogram)._closingRollover();
+        }
+        else if (histogram instanceof Base2ExponentialHistogram) {
+            histogram.close();
         }
     }
 
