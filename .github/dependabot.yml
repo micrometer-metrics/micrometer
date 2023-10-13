@@ -18,7 +18,7 @@ updates:
         update-types:
           - version-update:semver-major
           - version-update:semver-minor
-    open-pull-requests-limit: 5
+    open-pull-requests-limit: 10
   - package-ecosystem: gradle
     directory: "/"
     schedule:
@@ -31,7 +31,7 @@ updates:
         update-types:
           - version-update:semver-major
           - version-update:semver-minor
-    open-pull-requests-limit: 5
+    open-pull-requests-limit: 10
   - package-ecosystem: gradle
     directory: "/"
     schedule:
@@ -44,7 +44,7 @@ updates:
         update-types:
           - version-update:semver-major
           - version-update:semver-minor
-    open-pull-requests-limit: 5
+    open-pull-requests-limit: 10
   - package-ecosystem: gradle
     directory: "/"
     schedule:
@@ -56,4 +56,4 @@ updates:
       - dependency-name: "*"
         update-types:
           - version-update:semver-major
-    open-pull-requests-limit: 5
+    open-pull-requests-limit: 10
