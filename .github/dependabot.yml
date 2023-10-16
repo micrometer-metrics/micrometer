@@ -9,7 +9,7 @@ updates:
   - package-ecosystem: gradle
     directory: "/"
     schedule:
-      interval: daily
+      interval: weekly
     target-branch: "1.9.x"
     milestone: 136
     ignore:
@@ -22,7 +22,7 @@ updates:
   - package-ecosystem: gradle
     directory: "/"
     schedule:
-      interval: daily
+      interval: weekly
     target-branch: "1.10.x"
     milestone: 159
     ignore:
@@ -35,7 +35,7 @@ updates:
   - package-ecosystem: gradle
     directory: "/"
     schedule:
-      interval: daily
+      interval: weekly
     target-branch: "1.11.x"
     milestone: 206
     ignore:
@@ -48,7 +48,7 @@ updates:
   - package-ecosystem: gradle
     directory: "/"
     schedule:
-      interval: daily
+      interval: weekly
     target-branch: "main"
     milestone: 185
     ignore:
