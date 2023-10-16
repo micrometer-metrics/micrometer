@@ -457,7 +457,7 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
         if (!config.exportMeterMetadata()) {
             return false;
         }
-        // if at least one of unit or description are set, add metadata.
+        // if at least one of unit or description are set, export metadata.
         if (id.getBaseUnit() != null && !id.getBaseUnit().isEmpty()) {
             return true;
         }
