@@ -7,8 +7,8 @@ antora {
 	version = '3.2.0-alpha.2'
 	options = [clean: true, fetch: true, stacktrace: true]
 	environment = [
-			'ALGOLIA_API_KEY': '82c7ead946afbac3cf98c32446154691',
-			'ALGOLIA_APP_ID': '244V8V9FGG',
+			'ALGOLIA_API_KEY': 'fa67bc5f5ef95be2d4563efe42c54cbc',
+			'ALGOLIA_APP_ID': 'R3TXPRVDPR',
 			'ALGOLIA_INDEX_NAME': 'micrometer'
 	]
 	dependencies = [
