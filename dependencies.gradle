@@ -33,6 +33,7 @@ def VERSIONS = [
         libs.grpcStubs,
         libs.grpcAlts,
         libs.grpcTestingProto,
+        libs.grpcKotlinStub,
         libs.gmetric4j,
         libs.prometheusClient,
         libs.prometheusPushgateway,

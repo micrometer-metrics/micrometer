@@ -63,6 +63,7 @@ import io.micrometer.observation.Observation;
 import io.micrometer.observation.Observation.Context;
 import io.micrometer.observation.Observation.Event;
 import io.micrometer.observation.ObservationHandler;
+import io.micrometer.observation.ObservationRegistry;
 import io.micrometer.observation.ObservationTextPublisher;
 import io.micrometer.observation.tck.TestObservationRegistry;
 import io.micrometer.observation.tck.TestObservationRegistryAssert;
@@ -104,8 +105,8 @@ class GrpcObservationTest {
     void setUp() {
         serverHandler = new ContextAndEventHoldingObservationHandler<>(GrpcServerObservationContext.class);
         clientHandler = new ContextAndEventHoldingObservationHandler<>(GrpcClientObservationContext.class);
-        MeterRegistry meterRegistry = new SimpleMeterRegistry();
 
+        MeterRegistry meterRegistry = new SimpleMeterRegistry();
         observationRegistry.observationConfig()
             .observationHandler(new ObservationTextPublisher())
             .observationHandler(new DefaultMeterObservationHandler(meterRegistry))
@@ -508,6 +509,41 @@ class GrpcObservationTest {
 
     }
 
+    @Nested
+    class WithObservationAwareInterceptor {
+
+        ObservationAwareServerInterceptor scopeAwareServerInterceptor;
+
+        @BeforeEach
+        void setCustomInterceptor() throws Exception {
+            scopeAwareServerInterceptor = new ObservationAwareServerInterceptor(observationRegistry);
+
+            EchoService echoService = new EchoService();
+            server = InProcessServerBuilder.forName("sample")
+                .addService(echoService)
+                .intercept(scopeAwareServerInterceptor)
+                .intercept(serverInterceptor)
+                .build();
+            server.start();
+
+            channel = InProcessChannelBuilder.forName("sample").intercept(clientInterceptor).build();
+        }
+
+        @Test
+        void observationShouldBeCapturedByInterceptor() {
+            SimpleServiceBlockingStub stub = SimpleServiceGrpc.newBlockingStub(channel);
+
+            SimpleRequest request = SimpleRequest.newBuilder().setRequestMessage("Hello").build();
+            stub.unaryRpc(request);
+
+            assertThat(scopeAwareServerInterceptor.lastObservation).isNotNull().satisfies((observation -> {
+                assertThat(observation.getContext().getContextualName())
+                    .isEqualTo("grpc.testing.SimpleService/UnaryRpc");
+            }));
+        }
+
+    }
+
     // perform server context verification on basic information
     void verifyServerContext(String serviceName, String methodName, String contextualName, MethodType methodType) {
         assertThat(serverHandler.getContext()).isNotNull().satisfies((serverContext) -> {
@@ -712,6 +748,26 @@ class GrpcObservationTest {
 
             };
             return next.startCall(serverCall, headers);
+        }
+
+    }
+
+    // Hold reference to last intercepted Observation
+    static class ObservationAwareServerInterceptor implements ServerInterceptor {
+
+        Observation lastObservation;
+
+        private final ObservationRegistry observationRegistry;
+
+        private ObservationAwareServerInterceptor(ObservationRegistry observationRegistry) {
+            this.observationRegistry = observationRegistry;
+        }
+
+        @Override
+        public <ReqT, RespT> ServerCall.Listener<ReqT> interceptCall(ServerCall<ReqT, RespT> call, Metadata headers,
+                ServerCallHandler<ReqT, RespT> next) {
+            this.lastObservation = observationRegistry.getCurrentObservation();
+            return next.startCall(call, headers);
         }
 
     }

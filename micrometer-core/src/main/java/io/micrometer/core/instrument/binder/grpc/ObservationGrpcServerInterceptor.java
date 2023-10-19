@@ -98,7 +98,7 @@ public class ObservationGrpcServerInterceptor implements ServerInterceptor {
 
         ObservationGrpcServerCall<ReqT, RespT> serverCall = new ObservationGrpcServerCall<>(call, observation);
 
-        try {
+        try (Observation.Scope scope = observation.openScope()) {
             Listener<ReqT> result = next.startCall(serverCall, headers);
             return new ObservationGrpcServerCallListener<>(result, observation);
         }

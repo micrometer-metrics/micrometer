@@ -20,6 +20,7 @@ ehcache3 = "3.10.8"
 gmetric4j = "1.0.10"
 google-cloud-monitoring = "3.32.0"
 grpc = "1.58.0"
+grpcKotlin = "1.4.0"
 guava = "32.1.2-jre"
 guice = "5.1.0"
 h2 = "2.2.224"
@@ -115,6 +116,7 @@ grpcServices = { module = "io.grpc:grpc-services", version.ref = "grpc" }
 grpcStubs = { module = "io.grpc:grpc-stubs", version.ref = "grpc" }
 grpcAlts = { module = "io.grpc:grpc-alts", version.ref = "grpc" }
 grpcTestingProto = { module = "io.grpc:grpc-testing-proto", version.ref = "grpc" }
+grpcKotlinStub = { module = "io.grpc:grpc-kotlin-stub", version.ref = "grpcKotlin" }
 guava = { module = "com.google.guava:guava", version.ref = "guava" }
 guice = { module = "com.google.inject:guice", version.ref = "guice" }
 h2 = { module = "com.h2database:h2", version.ref = "h2" }
