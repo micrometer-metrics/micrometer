@@ -66,6 +66,7 @@ jobs:
       - gradlew-build
       - run: ./gradlew shenandoahTest
       - run: ./gradlew zgcTest
+      - run: ./gradlew zgcGenerationalTest
 
   build-jdk11:
     executor: circle-jdk11-executor

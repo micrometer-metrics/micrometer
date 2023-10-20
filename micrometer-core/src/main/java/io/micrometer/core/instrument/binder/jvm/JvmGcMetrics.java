@@ -348,6 +348,8 @@ public class JvmGcMetrics implements MeterBinder, AutoCloseable {
                 put("GPGC Old Cycles", OLD); // new naming
                 put("GPGC New Pauses", YOUNG); // new naming
                 put("GPGC Old Pauses", OLD); // new naming
+                put("ZGC Major Cycles", OLD); // do not include 'ZGC Major Pauses'; see
+                                              // gh-2872
             }
         };
 

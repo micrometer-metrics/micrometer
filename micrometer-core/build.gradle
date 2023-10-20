@@ -225,6 +225,17 @@ task zgcTest(type: Test) {
     jvmArgs '-XX:+UseZGC'
 }
 
+task zgcGenerationalTest(type: Test) {
+    // set heap size for the test JVM(s)
+    maxHeapSize = "1500m"
+
+    useJUnitPlatform {
+        includeTags 'gc'
+    }
+
+    jvmArgs '-XX:+UseZGC', '-XX:+ZGenerational'
+}
+
 task openj9BalancedTest(type: Test) {
     // set heap size for the test JVM(s)
     maxHeapSize = "1500m"
