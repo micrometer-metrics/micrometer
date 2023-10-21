@@ -225,7 +225,9 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
                 return null;
             }
             MetricLineBuilder.GaugeStep gaugeStep = createTypeStep(meter).gauge();
-            storeMetadata(enrichMetadata(gaugeStep.metadata(), meter), seenMetadata);
+            if (shouldExportMetadata(meter.getId())) {
+                storeMetadata(enrichMetadata(gaugeStep.metadata(), meter), seenMetadata);
+            }
             return gaugeStep.value(value).timestamp(Instant.ofEpochMilli(clock.wallTime())).build();
         }
         catch (MetricException e) {
@@ -242,7 +244,9 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
     private String createCounterLine(Meter meter, Map<String, String> seenMetadata, Measurement measurement) {
         try {
             MetricLineBuilder.CounterStep counterStep = createTypeStep(meter).count();
-            storeMetadata(enrichMetadata(counterStep.metadata(), meter), seenMetadata);
+            if (shouldExportMetadata(meter.getId())) {
+                storeMetadata(enrichMetadata(counterStep.metadata(), meter), seenMetadata);
+            }
             return counterStep.delta(measurement.getValue()).timestamp(Instant.ofEpochMilli(clock.wallTime())).build();
         }
         catch (MetricException e) {
@@ -295,7 +299,9 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
             double total, long count) {
         try {
             MetricLineBuilder.GaugeStep gaugeStep = createTypeStep(meter).gauge();
-            storeMetadata(enrichMetadata(gaugeStep.metadata(), meter), seenMetadata);
+            if (shouldExportMetadata(meter.getId())) {
+                storeMetadata(enrichMetadata(gaugeStep.metadata(), meter), seenMetadata);
+            }
             return Stream.of(gaugeStep.summary(min, max, total, count)
                 .timestamp(Instant.ofEpochMilli(clock.wallTime()))
                 .build());
@@ -445,6 +451,17 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
                     "Expected status code 202, got {}.\nResponse Body={}\nDid you specify the ingest path (e.g.: /api/v2/metrics/ingest)?",
                     response.code(), getTruncatedBody(response));
         }
+    }
+
+    /**
+     * The metadata should be exported if it is enabled from config and at least one of
+     * unit or description are set.
+     * @param id meter Id
+     * @return whether the metadata should be exported or not
+     */
+    private boolean shouldExportMetadata(Meter.Id id) {
+        return config.exportMeterMetadata()
+                && (!StringUtils.isEmpty(id.getBaseUnit()) || !StringUtils.isEmpty(id.getDescription()));
     }
 
     private MetricLineBuilder.MetadataStep enrichMetadata(MetricLineBuilder.MetadataStep metadataStep, Meter meter) {

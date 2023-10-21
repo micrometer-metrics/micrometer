@@ -776,6 +776,28 @@ class DynatraceExporterV2Test {
     }
 
     @Test
+    void shouldAddMetadataOnlyWhenUnitOrDescriptionIsPresent() {
+        HttpSender.Request.Builder builder = spy(HttpSender.Request.build(config.uri(), httpClient));
+        when(httpClient.post(anyString())).thenReturn(builder);
+
+        Gauge.builder("gauge", () -> 10.00).register(meterRegistry);
+        Gauge.builder("gauge.d", () -> 20.00).description("temperature").register(meterRegistry);
+        Gauge.builder("gauge.u", () -> 30.00).baseUnit("kelvin").register(meterRegistry);
+        Gauge.builder("gauge.du", () -> 40.00).description("temperature").baseUnit("kelvin").register(meterRegistry);
+        exporter.export(meterRegistry.getMeters());
+
+        verify(builder).withPlainText(assertArg(body -> assertThat(body.split("\n")).containsExactlyInAnyOrder(
+                "gauge,dt.metrics.source=micrometer gauge,10 " + clock.wallTime(),
+                // no metadata since no unit nor description
+                "gauge.d,dt.metrics.source=micrometer gauge,20 " + clock.wallTime(),
+                "#gauge.d gauge dt.meta.description=temperature",
+                "gauge.u,dt.metrics.source=micrometer gauge,30 " + clock.wallTime(),
+                "#gauge.u gauge dt.meta.unit=kelvin",
+                "gauge.du,dt.metrics.source=micrometer gauge,40 " + clock.wallTime(),
+                "#gauge.du gauge dt.meta.description=temperature,dt.meta.unit=kelvin")));
+    }
+
+    @Test
     void sendsTwoRequestsWhenSizeLimitIsReachedWithMetadata() {
         HttpSender.Request.Builder firstReq = spy(HttpSender.Request.build(config.uri(), httpClient));
         HttpSender.Request.Builder secondReq = spy(HttpSender.Request.build(config.uri(), httpClient));
