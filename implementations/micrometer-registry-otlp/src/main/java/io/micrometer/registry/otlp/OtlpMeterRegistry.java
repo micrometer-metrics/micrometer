@@ -158,7 +158,11 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
                 HttpSender.Request.Builder httpRequest = this.httpSender.post(this.config.url())
                     .withContent("application/x-protobuf", request.toByteArray());
                 this.config.headers().forEach(httpRequest::withHeader);
-                httpRequest.send();
+                HttpSender.Response response = httpRequest.send();
+                if (!response.isSuccessful()) {
+                    logger.warn("Failed to publish metrics. Server responded with HTTP status code {} and body {}",
+                            response.code(), response.body());
+                }
             }
             catch (Throwable e) {
                 logger.warn("Failed to publish metrics to OTLP receiver", e);
