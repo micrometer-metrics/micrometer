@@ -62,8 +62,9 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
      * @param config Configuration options for the registry that are describable as
      * properties.
      * @param clock The clock to use for timings.
+     * @deprecated Datadog plugin is deprecated, see the Datadog guide https://docs.datadoghq.com/metrics/guide/micrometer/
      */
-    @SuppressWarnings("deprecation")
+    @Deprecated
     public DatadogMeterRegistry(DatadogConfig config, Clock clock) {
         this(config, clock, DEFAULT_THREAD_FACTORY,
                 new HttpUrlConnectionSender(config.connectTimeout(), config.readTimeout()));
@@ -74,7 +75,7 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
      * properties.
      * @param clock The clock to use for timings.
      * @param threadFactory The thread factory to use to create the publishing thread.
-     * @deprecated Use {@link #builder(DatadogConfig)} instead.
+     * @deprecated Datadog plugin is deprecated, see the Datadog guide https://docs.datadoghq.com/metrics/guide/micrometer/
      */
     @Deprecated
     public DatadogMeterRegistry(DatadogConfig config, Clock clock, ThreadFactory threadFactory) {
@@ -321,27 +322,34 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
 
         private HttpSender httpClient;
 
-        @SuppressWarnings("deprecation")
+        /*
+         * @deprecated Datadog plugin is deprecated, see the Datadog guide https://docs.datadoghq.com/metrics/guide/micrometer/
+         */
+        @Deprecated
         Builder(DatadogConfig config) {
             this.config = config;
             this.httpClient = new HttpUrlConnectionSender(config.connectTimeout(), config.readTimeout());
         }
 
+        @Deprecated
         public Builder clock(Clock clock) {
             this.clock = clock;
             return this;
         }
 
+        @Deprecated
         public Builder threadFactory(ThreadFactory threadFactory) {
             this.threadFactory = threadFactory;
             return this;
         }
 
+        @Deprecated
         public Builder httpClient(HttpSender httpClient) {
             this.httpClient = httpClient;
             return this;
         }
 
+        @Deprecated
         public DatadogMeterRegistry build() {
             return new DatadogMeterRegistry(config, clock, threadFactory, httpClient);
         }
