@@ -62,7 +62,8 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
      * @param config Configuration options for the registry that are describable as
      * properties.
      * @param clock The clock to use for timings.
-     * @deprecated Datadog plugin is deprecated, see the Datadog guide https://docs.datadoghq.com/metrics/guide/micrometer/
+     * @deprecated Datadog plugin is deprecated, see the Datadog guide
+     * https://docs.datadoghq.com/metrics/guide/micrometer/
      */
     @Deprecated
     public DatadogMeterRegistry(DatadogConfig config, Clock clock) {
@@ -75,7 +76,8 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
      * properties.
      * @param clock The clock to use for timings.
      * @param threadFactory The thread factory to use to create the publishing thread.
-     * @deprecated Datadog plugin is deprecated, see the Datadog guide https://docs.datadoghq.com/metrics/guide/micrometer/
+     * @deprecated Datadog plugin is deprecated, see the Datadog guide
+     * https://docs.datadoghq.com/metrics/guide/micrometer/
      */
     @Deprecated
     public DatadogMeterRegistry(DatadogConfig config, Clock clock, ThreadFactory threadFactory) {
@@ -323,7 +325,8 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
         private HttpSender httpClient;
 
         /*
-         * @deprecated Datadog plugin is deprecated, see the Datadog guide https://docs.datadoghq.com/metrics/guide/micrometer/
+         * @deprecated Datadog plugin is deprecated, see the Datadog guide
+         * https://docs.datadoghq.com/metrics/guide/micrometer/
          */
         @Deprecated
         Builder(DatadogConfig config) {
