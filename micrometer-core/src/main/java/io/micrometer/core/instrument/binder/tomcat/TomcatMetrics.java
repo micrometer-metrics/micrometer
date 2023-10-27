@@ -68,6 +68,35 @@ public class TomcatMetrics implements MeterBinder, AutoCloseable {
 
     private volatile String jmxDomain;
 
+    /**
+     * Similar to {@link TomcatMetrics#forStandalone(Iterable, MBeanServer)} but more
+     * convenient as it makes use of {@link TomcatMetrics#getMBeanServer()} to get the
+     * default {@link MBeanServer}
+     */
+    public static TomcatMetrics forStandalone(Iterable<Tag> tags) {
+        return new TomcatMetrics(null, tags, getMBeanServer());
+    }
+
+    /**
+     * This factory method is intended for users of a standalone Tomcat instance - i.e.
+     * build a {@code .war} artifact and deploy it into a Tomcat instance by copying it
+     * into {@code $CATALINA_HOME\webapps}
+     * <p>
+     * In this scenario applications usually do not have
+     * {@code org.apache.catalina.Manager} on the (compilation)-classpath
+     * <p>
+     * This particular constructor avoids the need of having
+     * {@code org.apache.catalina.Manager} available at compilation time e.g. by means of
+     * the {@code provided} scope in Maven
+     */
+    public static TomcatMetrics forStandalone(Iterable<Tag> tags, MBeanServer mBeanServer) {
+        return new TomcatMetrics(null, tags, mBeanServer);
+    }
+
+    public TomcatMetrics(Iterable<Tag> tags, MBeanServer mBeanServer) {
+        this(null, tags, mBeanServer);
+    }
+
     public TomcatMetrics(@Nullable Manager manager, Iterable<Tag> tags) {
         this(manager, tags, getMBeanServer());
     }
