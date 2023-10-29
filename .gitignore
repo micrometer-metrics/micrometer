@@ -1,4 +1,5 @@
 build/
+!micrometer-core/src/main/java/io/micrometer/core/instrument/binder/build
 .gradle/
 out/
 
