@@ -38,10 +38,13 @@ buildscript {
 // TODO: remove these hacks once jgit supports worktrees (nebula upgrades) and/or Antora supports full-clone
 if (project.hasProperty('antora')) {
     'git fetch --unshallow --all --tags'.execute().text // Antora shallow-clones so there is no history (we need commit history to find the last tag in the tree)
-    String tag = 'git tag --points-at HEAD'.execute().text.trim() // jgit does not able to figure out tags in Antora's worktree
-    if (tag) {
-        println "Found release tag: $tag, using it as release.version"
-        ext['release.version'] = tag.substring(1)
+    String ref = 'git rev-parse --abbrev-ref HEAD'.execute().text.trim()
+    if (ref == 'HEAD') { // if Antora checks out a tag instead of a branch
+        String tag = 'git tag --points-at HEAD'.execute().text.trim() // jgit does not able to figure out tags in Antora's worktree
+        if (tag) {
+            println "Found release tag: $tag, using it as release.version"
+            ext['release.version'] = tag.substring(1)
+        }
     }
     // We need to tell the location of the .git folder since jgit does not support worktrees
     ext['git.root'] = 'git rev-parse --path-format=absolute --git-common-dir'.execute().text.trim()
