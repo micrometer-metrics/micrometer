@@ -40,7 +40,7 @@ if (project.hasProperty('antora')) {
     'git fetch --unshallow --all --tags'.execute().text // Antora shallow-clones so there is no history (we need commit history to find the last tag in the tree)
     String ref = 'git rev-parse --abbrev-ref HEAD'.execute().text.trim()
     if (ref == 'HEAD') { // if Antora checks out a tag instead of a branch
-        String tag = 'git tag --points-at HEAD'.execute().text.trim() // jgit does not able to figure out tags in Antora's worktree
+        String tag = 'git tag --points-at HEAD'.execute().text.trim() // jgit is not able to figure out tags in Antora's worktree
         if (tag) {
             println "Found release tag: $tag, using it as release.version"
             ext['release.version'] = tag.substring(1)
