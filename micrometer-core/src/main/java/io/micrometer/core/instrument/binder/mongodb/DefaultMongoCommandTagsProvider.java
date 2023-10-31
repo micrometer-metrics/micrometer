@@ -54,7 +54,7 @@ public class DefaultMongoCommandTagsProvider implements MongoCommandTagsProvider
 
     @Override
     public Iterable<Tag> commandTags(CommandEvent event) {
-        return Tags.of(Tag.of("command", event.getCommandName()),
+        return Tags.of(Tag.of("command", event.getCommandName()), Tag.of("database", event.getDatabaseName()),
                 Tag.of("collection", getAndRemoveCollectionNameForCommand(event)),
                 Tag.of("cluster.id",
                         event.getConnectionDescription().getConnectionId().getServerId().getClusterId().getValue()),
