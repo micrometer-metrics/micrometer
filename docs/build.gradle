@@ -36,7 +36,7 @@ dependencies {
     testImplementation 'io.projectreactor:reactor-test'
     testImplementation 'io.netty:netty-transport'
     testImplementation 'org.apache.httpcomponents.client5:httpclient5'
-    testImplementation 'io.javalin:javalin:latest.release'
+    testImplementation libs.javalin
 }
 
 antora {
