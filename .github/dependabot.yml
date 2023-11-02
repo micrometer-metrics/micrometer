@@ -5,11 +5,10 @@ updates:
     target-branch: "1.9.x" # oldest supported branch
     schedule:
       interval: "weekly"
-# Non-build dependencies; target every supported branch
   - package-ecosystem: gradle
     directory: "/"
     schedule:
-      interval: weekly
+      interval: monthly
     target-branch: "1.9.x"
     milestone: 136
     ignore:
@@ -22,7 +21,7 @@ updates:
   - package-ecosystem: gradle
     directory: "/"
     schedule:
-      interval: weekly
+      interval: monthly
     target-branch: "1.10.x"
     milestone: 159
     ignore:
@@ -35,7 +34,7 @@ updates:
   - package-ecosystem: gradle
     directory: "/"
     schedule:
-      interval: weekly
+      interval: monthly
     target-branch: "1.11.x"
     milestone: 206
     ignore:
@@ -48,7 +47,7 @@ updates:
   - package-ecosystem: gradle
     directory: "/"
     schedule:
-      interval: weekly
+      interval: monthly
     target-branch: "main"
     milestone: 185
     ignore:
