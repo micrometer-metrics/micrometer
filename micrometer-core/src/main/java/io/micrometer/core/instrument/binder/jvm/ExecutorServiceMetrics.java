@@ -310,7 +310,8 @@ public class ExecutorServiceMetrics implements MeterBinder {
             if (className.equals("java.util.concurrent.Executors$DelegatedScheduledExecutorService")) {
                 monitor(registry, unwrapThreadPoolExecutor(executorService, executorService.getClass()));
             }
-            else if (className.equals("java.util.concurrent.Executors$FinalizableDelegatedExecutorService")) {
+            else if (className.equals("java.util.concurrent.Executors$FinalizableDelegatedExecutorService")
+                    || className.equals("java.util.concurrent.Executors$AutoShutdownDelegatedExecutorService")) {
                 monitor(registry,
                         unwrapThreadPoolExecutor(executorService, executorService.getClass().getSuperclass()));
             }
