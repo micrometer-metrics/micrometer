@@ -29,6 +29,7 @@ import static java.util.Objects.requireNonNull;
 public class BuildInfoMetrics implements MeterBinder {
 
     private final BuildInfo buildInfo;
+
     private final Iterable<Tag> tags;
 
     public BuildInfoMetrics(BuildInfo buildInfo) {

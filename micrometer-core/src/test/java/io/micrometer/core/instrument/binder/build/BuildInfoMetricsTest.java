@@ -63,8 +63,8 @@ class BuildInfoMetricsTest {
 
         assertThat(id.getName()).isEqualTo("build.info");
         assertThat(id.getTags()).containsExactlyInAnyOrder(Tag.of("group", "my-group"),
-            Tag.of("artifact", "my-artifact"), Tag.of("name", "my-name"), Tag.of("version", "0.0.0-version"),
-            Tag.of("timestamp", "2023-01-02T03:04:05Z"));
+                Tag.of("artifact", "my-artifact"), Tag.of("name", "my-name"), Tag.of("version", "0.0.0-version"),
+                Tag.of("timestamp", "2023-01-02T03:04:05Z"));
     }
 
     @Test
@@ -96,9 +96,8 @@ class BuildInfoMetricsTest {
 
         assertThat(id.getName()).isEqualTo("build.info");
         assertThat(id.getTags()).containsExactlyInAnyOrder(Tag.of("group", "my-group"),
-            Tag.of("artifact", "my-artifact"), Tag.of("name", "my-name"), Tag.of("version", "0.0.0-version"),
-            Tag.of("timestamp", "2023-01-02T03:04:05Z"), Tag.of("custom-tag", "custom-tag-value")
-        );
+                Tag.of("artifact", "my-artifact"), Tag.of("name", "my-name"), Tag.of("version", "0.0.0-version"),
+                Tag.of("timestamp", "2023-01-02T03:04:05Z"), Tag.of("custom-tag", "custom-tag-value"));
     }
 
     @Test
@@ -123,7 +122,7 @@ class BuildInfoMetricsTest {
 
         assertThat(id.getName()).isEqualTo("build.info");
         assertThat(id.getTags()).containsExactlyInAnyOrder(Tag.of("group", "unknown"), Tag.of("artifact", "unknown"),
-            Tag.of("name", "unknown"), Tag.of("version", "unknown"), Tag.of("timestamp", "unknown"));
+                Tag.of("name", "unknown"), Tag.of("version", "unknown"), Tag.of("timestamp", "unknown"));
     }
 
     @Test
