@@ -18,19 +18,28 @@ package io.micrometer.core.instrument.binder.build;
 
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.binder.MeterBinder;
 
 import java.time.Instant;
 
+import static java.util.Collections.emptyList;
 import static java.util.Objects.requireNonNull;
 
 public class BuildInfoMetrics implements MeterBinder {
 
     private final BuildInfo buildInfo;
+    private final Iterable<Tag> tags;
 
     public BuildInfoMetrics(BuildInfo buildInfo) {
+        this(buildInfo, emptyList());
+    }
+
+    public BuildInfoMetrics(BuildInfo buildInfo, Iterable<Tag> tags) {
         requireNonNull(buildInfo, "buildInfo");
+        requireNonNull(tags, "tags");
         this.buildInfo = buildInfo;
+        this.tags = tags;
     }
 
     @Override
@@ -44,6 +53,7 @@ public class BuildInfoMetrics implements MeterBinder {
             .tag("name", buildInfo.getName().orElse(DEFAULT_TAG_VALUE))
             .tag("version", buildInfo.getVersion().orElse(DEFAULT_TAG_VALUE))
             .tag("timestamp", buildInfo.getTimestamp().map(Instant::toString).orElse(DEFAULT_TAG_VALUE))
+            .tags(tags)
             .register(registry);
     }
 
