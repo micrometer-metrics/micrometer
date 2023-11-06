@@ -138,8 +138,8 @@ public abstract class StepMeterRegistry extends PushMeterRegistry {
     public void close() {
         stop();
 
-        if (!isPublishing() && config.enabled() && !isClosed()) {
-            if (!isDataPublishedForCurrentStep()) {
+        if (config.enabled() && !isClosed()) {
+            if (!isDataPublishedForCurrentStep() && !isPublishing()) {
                 // Data was not published for the current step. So, we should flush that
                 // first.
                 try {
@@ -150,6 +150,9 @@ public abstract class StepMeterRegistry extends PushMeterRegistry {
                             "Unexpected exception thrown while publishing metrics for " + getClass().getSimpleName(),
                             e);
                 }
+            }
+            else if (isPublishing()) {
+                waitForInProgressScheduledPublish();
             }
             closingRolloverStepMeters();
         }
