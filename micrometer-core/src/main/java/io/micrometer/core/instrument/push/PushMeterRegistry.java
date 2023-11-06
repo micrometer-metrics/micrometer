@@ -23,11 +23,7 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.util.TimeUtils;
 
 import java.util.Random;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.*;
 
 public abstract class PushMeterRegistry extends MeterRegistry {
 
@@ -39,7 +35,7 @@ public abstract class PushMeterRegistry extends MeterRegistry {
 
     private final PushRegistryConfig config;
 
-    private final AtomicBoolean publishing = new AtomicBoolean(false);
+    private final Semaphore publishingSemaphore = new Semaphore(1);
 
     private long lastScheduledPublishStartTime = 0L;
 
@@ -57,11 +53,12 @@ public abstract class PushMeterRegistry extends MeterRegistry {
     protected abstract void publish();
 
     /**
-     * Catch uncaught exceptions thrown from {@link #publish()}.
+     * Catch uncaught exceptions thrown from {@link #publish()}. Skip publishing if
+     * another call to this method is already in progress.
      */
     // VisibleForTesting
-    void publishSafely() {
-        if (this.publishing.compareAndSet(false, true)) {
+    void publishSafelyOrSkipIfInProgress() {
+        if (this.publishingSemaphore.tryAcquire()) {
             this.lastScheduledPublishStartTime = clock.wallTime();
             try {
                 publish();
@@ -71,7 +68,7 @@ public abstract class PushMeterRegistry extends MeterRegistry {
                         e);
             }
             finally {
-                this.publishing.set(false);
+                this.publishingSemaphore.release();
             }
         }
         else {
@@ -85,12 +82,12 @@ public abstract class PushMeterRegistry extends MeterRegistry {
      * @since 1.11.0
      */
     protected boolean isPublishing() {
-        return publishing.get();
+        return publishingSemaphore.availablePermits() == 0;
     }
 
     /**
      * Returns the time, in milliseconds, when the last scheduled publish was started by
-     * {@link PushMeterRegistry#publishSafely()}.
+     * {@link PushMeterRegistry#publishSafelyOrSkipIfInProgress()}.
      * @since 1.11.1
      */
     protected long getLastScheduledPublishStartTime() {
@@ -116,8 +113,8 @@ public abstract class PushMeterRegistry extends MeterRegistry {
             scheduledExecutorService = Executors.newSingleThreadScheduledExecutor(threadFactory);
             long stepMillis = config.step().toMillis();
             long initialDelayMillis = calculateInitialDelay();
-            scheduledExecutorService.scheduleAtFixedRate(this::publishSafely, initialDelayMillis, stepMillis,
-                    TimeUnit.MILLISECONDS);
+            scheduledExecutorService.scheduleAtFixedRate(this::publishSafelyOrSkipIfInProgress, initialDelayMillis,
+                    stepMillis, TimeUnit.MILLISECONDS);
         }
     }
 
@@ -132,9 +129,22 @@ public abstract class PushMeterRegistry extends MeterRegistry {
     public void close() {
         stop();
         if (config.enabled() && !isClosed()) {
-            publishSafely();
+            // do a final publish on close or wait for the in progress scheduled publish
+            publishSafelyOrSkipIfInProgress();
+            waitForInProgressScheduledPublish();
         }
         super.close();
+    }
+
+    private void waitForInProgressScheduledPublish() {
+        try {
+            // block until in progress publish finishes
+            publishingSemaphore.acquire();
+            publishingSemaphore.release();
+        }
+        catch (InterruptedException e) {
+            logger.warn("Interrupted while waiting for publish on close to finish", e);
+        }
     }
 
     // VisibleForTesting
