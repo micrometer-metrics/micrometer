@@ -243,8 +243,8 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
     @Override
     public void close() {
         stop();
-        if (!isPublishing() && isDelta()) {
-            if (!isDataPublishedForCurrentStep()) {
+        if (config.enabled() && isDelta() && !isClosed()) {
+            if (!isDataPublishedForCurrentStep() && !isPublishing()) {
                 // Data was not published for the current step. So, we should flush that
                 // first.
                 try {
@@ -255,6 +255,9 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
                             "Unexpected exception thrown while publishing metrics for " + getClass().getSimpleName(),
                             e);
                 }
+            }
+            else if (isPublishing()) {
+                waitForInProgressScheduledPublish();
             }
             getMeters().forEach(this::closingRollover);
         }

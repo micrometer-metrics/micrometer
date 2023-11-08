@@ -136,7 +136,12 @@ public abstract class PushMeterRegistry extends MeterRegistry {
         super.close();
     }
 
-    private void waitForInProgressScheduledPublish() {
+    /**
+     * Wait until scheduled publishing by {@link PushMeterRegistry} completes, if in
+     * progress.
+     * @since 1.11.6
+     */
+    protected void waitForInProgressScheduledPublish() {
         try {
             // block until in progress publish finishes
             publishingSemaphore.acquire();
