@@ -54,9 +54,9 @@ dependencies {
     testImplementation 'org.apache.httpcomponents.client5:httpclient5'
     testImplementation 'org.apache.activemq:artemis-junit-5'
     testImplementation 'org.apache.activemq:artemis-jakarta-client'
-    testImplementation 'org.eclipse.jetty:jetty-client'
-    testImplementation 'org.eclipse.jetty:jetty-server'
-    testImplementation 'org.eclipse.jetty:jetty-servlet'
+    testImplementation libs.jetty9Client
+    testImplementation libs.jetty9Server
+    testImplementation libs.jetty9Servlet
     testImplementation 'org.glassfish.jersey.core:jersey-server'
     testImplementation libs.jersey2TestFrameworkJdkHttp
     // necessary for Jersey test framework

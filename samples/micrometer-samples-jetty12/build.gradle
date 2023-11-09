@@ -1,0 +1,13 @@
+plugins {
+    id 'java'
+}
+
+dependencies {
+    implementation project(":micrometer-core")
+
+    testImplementation libs.jetty12Server
+    testImplementation libs.jetty12Client
+    testImplementation libs.httpcomponents.client
+    testImplementation libs.junitJupiter
+    testImplementation libs.assertj
+}
