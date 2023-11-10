@@ -92,10 +92,10 @@ dependencies {
     optionalApi 'org.hibernate:hibernate-entitymanager'
 
     // server runtime monitoring
-    optionalApi 'org.eclipse.jetty:jetty-server'
+    optionalApi libs.jetty9Server
     // jakarta servlet
     optionalApi 'jakarta.servlet:jakarta.servlet-api'
-    optionalApi 'org.eclipse.jetty:jetty-client'
+    optionalApi libs.jetty9Client
     optionalApi 'org.apache.tomcat.embed:tomcat-embed-core'
     optionalApi 'org.glassfish.jersey.core:jersey-server'
     optionalApi 'io.grpc:grpc-api'

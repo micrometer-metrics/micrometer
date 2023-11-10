@@ -21,7 +21,6 @@ import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.TimeWindowMax;
 import org.eclipse.jetty.io.Connection;
 import org.eclipse.jetty.server.Connector;
-import org.eclipse.jetty.server.HttpConnection;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.util.component.AbstractLifeCycle;
 
@@ -162,10 +161,16 @@ public class JettyConnectionMetrics extends AbstractLifeCycle implements Connect
         }
 
         if (sample != null) {
-            String serverOrClient = connection instanceof HttpConnection ? "server" : "client";
+            String type = "UNKNOWN";
+            if (connection.getClass().getName().contains("server")) {
+                type = "server";
+            }
+            else if (connection.getClass().getName().contains("client")) {
+                type = "client";
+            }
             sample.stop(Timer.builder("jetty.connections.request")
                 .description("Jetty client or server requests")
-                .tag("type", serverOrClient)
+                .tag("type", type)
                 .tags(tags)
                 .register(registry));
         }
