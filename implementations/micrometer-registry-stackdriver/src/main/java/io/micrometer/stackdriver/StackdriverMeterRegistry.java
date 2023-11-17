@@ -140,7 +140,8 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
     public void close() {
         try {
             super.close();
-        } finally {
+        }
+        finally {
             if (client != null) {
                 client.shutdownNow();
             }
