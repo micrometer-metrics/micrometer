@@ -137,10 +137,14 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
     }
 
     @Override
-    public void stop() {
-        if (client != null)
-            client.shutdownNow();
-        super.stop();
+    public void close() {
+        try {
+            super.close();
+        } finally {
+            if (client != null) {
+                client.shutdownNow();
+            }
+        }
     }
 
     @Override
