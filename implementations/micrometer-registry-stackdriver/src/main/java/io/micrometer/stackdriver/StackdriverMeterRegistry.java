@@ -137,6 +137,11 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
     }
 
     @Override
+    public void stop() {
+        super.stop();
+    }
+
+    @Override
     public void close() {
         try {
             super.close();
