@@ -71,7 +71,7 @@ slf4j = "1.7.36"
 spectator-atlas = "1.7.2"
 spring = "5.3.30"
 spring-javaformat = "0.0.39"
-testcontainers = "1.19.1"
+testcontainers = "1.19.2"
 tomcat = "8.5.95"
 wavefront = "3.4.3"
 # pinned to avoid issues with shaded slf4j version - see gh-3414
