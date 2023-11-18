@@ -33,9 +33,6 @@ buildscript {
 
 // Hacks because of Antora's clone/checkout/worktrees behavior
 // Antora uses shallow-clone and worktrees to check out branches/tags.
-// The nebula release, project, and info plugins use jgit to fetch git-related info.
-// Unfortunately jgit does not support worktrees: https://bugs.eclipse.org/bugs/show_bug.cgi?id=477475
-// TODO: remove these hacks once jgit supports worktrees (nebula upgrades) and/or Antora supports full-clone
 if (project.hasProperty('antora')) {
     'git fetch --unshallow --all --tags'.execute().text // Antora shallow-clones so there is no history (we need commit history to find the last tag in the tree)
     String ref = 'git rev-parse --abbrev-ref HEAD'.execute().text.trim()
@@ -46,8 +43,6 @@ if (project.hasProperty('antora')) {
             ext['release.version'] = tag.substring(1)
         }
     }
-    // We need to tell the location of the .git folder since jgit does not support worktrees
-    ext['git.root'] = 'git rev-parse --path-format=absolute --git-common-dir'.execute().text.trim()
 }
 
 // TODO: remove this hack, see: https://github.com/nebula-plugins/nebula-release-plugin/issues/213
