@@ -22,7 +22,7 @@ content:
       tags:
         - 'v1.1({2..9}).+({0..9})?(-{RC,M}*)' # 1.12 - 1.19
         - 'v1.({2..9})+({0..9}).+({0..9})?(-{RC,M}*)' # 1.20 and above on the 1.x line
-        - '!(v1.12.0-{RC,M}*)' # TODO: Remove this once 1.12.0 is released (antora will skip them)
+        - '!(v1.12.0-{RC,M}*)' # Except 1.12 milestones/rc (1.12.0 is ok)
       start_path: docs
 asciidoc:
   attributes:
