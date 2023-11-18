@@ -48,6 +48,19 @@ updates:
     directory: "/"
     schedule:
       interval: monthly
+    target-branch: "1.12.x"
+    milestone: 211
+    ignore:
+      # only upgrade patch versions
+      - dependency-name: "*"
+        update-types:
+          - version-update:semver-major
+          - version-update:semver-minor
+    open-pull-requests-limit: 10
+  - package-ecosystem: gradle
+    directory: "/"
+    schedule:
+      interval: monthly
     target-branch: "main"
     milestone: 185
     ignore:
