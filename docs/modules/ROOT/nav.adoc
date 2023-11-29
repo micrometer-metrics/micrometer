@@ -50,4 +50,3 @@
 ** xref:observation/instrumenting.adoc[Instrumenting]
 ** xref:observation/testing.adoc[Testing]
 ** xref:observation/projects.adoc[Instrumented Projects]
-* xref:support.adoc[Support]
