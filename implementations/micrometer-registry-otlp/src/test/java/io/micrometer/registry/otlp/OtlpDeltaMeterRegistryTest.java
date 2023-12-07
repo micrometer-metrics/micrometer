@@ -726,6 +726,20 @@ class OtlpDeltaMeterRegistryTest extends OtlpMeterRegistryTest {
         assertThat(registry.publishedFunctionTimerTotals.pop()).isEqualTo(24);
     }
 
+    @Test
+    @Issue("#4357")
+    void publishOnceWhenClosedWithinFirstStep() {
+        // Set the initial clock time to a valid time.
+        MockClock mockClock = new MockClock();
+        mockClock.add(otlpConfig().step().multipliedBy(5));
+
+        TestOtlpMeterRegistry stepMeterRegistry = new TestOtlpMeterRegistry(otlpConfig(), mockClock);
+
+        assertThat(stepMeterRegistry.publishCount.get()).isZero();
+        stepMeterRegistry.close();
+        assertThat(stepMeterRegistry.publishCount.get()).isEqualTo(1);
+    }
+
     private void assertEmptyHistogramSnapshot(HistogramSnapshot snapshot) {
         assertThat(snapshot.count()).isZero();
         assertThat(snapshot.total()).isZero();
@@ -771,6 +785,8 @@ class OtlpDeltaMeterRegistryTest extends OtlpMeterRegistryTest {
 
     private class TestOtlpMeterRegistry extends OtlpMeterRegistry {
 
+        private final AtomicInteger publishCount = new AtomicInteger();
+
         Deque<Double> publishedCounterCounts = new ArrayDeque<>();
 
         Deque<Long> publishedTimerCounts = new ArrayDeque<>();
@@ -795,18 +811,24 @@ class OtlpDeltaMeterRegistryTest extends OtlpMeterRegistryTest {
 
         Deque<Double> publishedFunctionTimerTotals = new ArrayDeque<>();
 
-        private long lastScheduledPublishStartTime = 0L;
+        private long lastScheduledPublishStartTime;
 
         AtomicBoolean isPublishing = new AtomicBoolean(false);
 
         CompletableFuture<Void> scheduledPublishingFuture = CompletableFuture.completedFuture(null);
 
         TestOtlpMeterRegistry() {
-            super(otlpConfig(), OtlpDeltaMeterRegistryTest.this.clock);
+            this(otlpConfig(), OtlpDeltaMeterRegistryTest.this.clock);
+        }
+
+        TestOtlpMeterRegistry(OtlpConfig otlpConfig, Clock clock) {
+            super(otlpConfig, clock);
+            this.lastScheduledPublishStartTime = super.getLastScheduledPublishStartTime();
         }
 
         @Override
         protected void publish() {
+            publishCount.incrementAndGet();
             forEachMeter(meter -> meter.match(null, this::publishCounter, this::publishTimer, this::publishSummary,
                     null, null, this::publishFunctionCounter, this::publishFunctionTimer, null));
         }
