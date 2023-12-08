@@ -7,12 +7,12 @@ aspectjweaver = "1.9.20.1"
 assertj = "3.24.2"
 awaitility = "4.2.0"
 # legacy SDK
-aws-cloudwatch = "1.12.593"
+aws-cloudwatch = "1.12.608"
 caffeine = "2.9.3"
 cloudwatch2 = "2.21.27"
 colt = "1.2.0"
 dagger = "2.48.1"
-dropwizard-metrics = "4.2.22"
+dropwizard-metrics = "4.2.23"
 dropwizard-metrics5 = "5.0.0"
 dynatrace-utils = "2.0.1"
 ehcache2 = "2.10.9.2"
@@ -31,7 +31,7 @@ hibernate = "5.6.15.Final"
 hsqldb = "2.7.2"
 httpcomponents-async = "4.1.5"
 httpcomponents-client = "4.5.14"
-httpcomponents-client5 = "5.2.1"
+httpcomponents-client5 = "5.2.3"
 # metrics are better with https://github.com/Netflix/Hystrix/pull/1568 introduced
 # in hystrix 1.5.12, but Netflix re-released 1.5.11 as 1.5.18 late in 2018.
 # <=1.5.11 or 1.5.18 doesn't break with Micrometer, but open metrics won't be correct necessarily.
@@ -52,11 +52,11 @@ jsr305 = "3.0.2"
 junit = "5.10.1"
 junit-platform = "1.10.1"
 kafka = "2.8.2"
-kafka-junit = "4.2.7"
+kafka-junit = "4.2.10"
 latency-utils = "2.0.3"
-logback = "1.2.12"
+logback = "1.2.13"
 log4j = "2.21.1"
-maven-resolver = "1.9.16"
+maven-resolver = "1.9.18"
 mockito = "5.7.0"
 mongo = "4.11.1"
 netty = "4.1.101.Final"
@@ -66,12 +66,12 @@ postgre = "42.6.0"
 prometheus = "0.16.0"
 reactor = "2022.0.13"
 rest-assured = "5.3.2"
-signalfx = "1.0.36"
+signalfx = "1.0.37"
 slf4j = "1.7.36"
 spectator-atlas = "1.7.3"
 spring = "5.3.31"
 spring-javaformat = "0.0.40"
-testcontainers = "1.19.2"
+testcontainers = "1.19.3"
 tomcat = "8.5.96"
 wavefront = "3.4.3"
 # pinned to avoid issues with shaded slf4j version - see gh-3414
@@ -167,7 +167,7 @@ logback14 = {module = "ch.qos.logback:logback-classic", version = "1.4.11" }
 log4j = { module = "org.apache.logging.log4j:log4j-core", version.ref = "log4j" }
 mavenResolverConnectorBasic = { module = "org.apache.maven.resolver:maven-resolver-connector-basic", version.ref = "maven-resolver" }
 mavenResolverTransportHttp = { module = "org.apache.maven.resolver:maven-resolver-transport-http", version.ref = "maven-resolver" }
-mavenResolverProvider = { module = "org.apache.maven:maven-resolver-provider", version = "3.9.5" }
+mavenResolverProvider = { module = "org.apache.maven:maven-resolver-provider", version = "3.9.6" }
 mockitoCore = { module = "org.mockito:mockito-core", version.ref = "mockito" }
 mongoSync = { module = "org.mongodb:mongodb-driver-sync", version.ref = "mongo" }
 nettyBom = { module = "io.netty:netty-bom", version.ref = "netty" }
@@ -203,7 +203,7 @@ wiremockJunit5 = { module = "ru.lanwen.wiremock:wiremock-junit5", version.ref = 
 
 # plugin dependencies
 plugin-license = { module = "gradle.plugin.com.hierynomus.gradle.plugins:license-gradle-plugin", version = "0.16.1" }
-plugin-nebulaRelease = { module = "com.netflix.nebula:nebula-release-plugin", version = "18.0.4" }
+plugin-nebulaRelease = { module = "com.netflix.nebula:nebula-release-plugin", version = "18.0.8" }
 plugin-nebulaPublishing = { module = "com.netflix.nebula:nebula-publishing-plugin", version = "20.3.0" }
 plugin-nebulaProject = { module = "com.netflix.nebula:nebula-project-plugin", version = "10.1.5" }
 plugin-nebulaInfo = { module = "com.netflix.nebula:gradle-info-plugin", version = "12.1.6" }
