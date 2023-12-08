@@ -6,12 +6,12 @@ aspectjweaver = "1.8.14"
 assertj = "3.24.2"
 awaitility = "4.2.0"
 # legacy SDK
-aws-cloudwatch = "1.12.593"
+aws-cloudwatch = "1.12.608"
 caffeine = "2.9.3"
 cloudwatch2 = "2.20.162"
 colt = "1.2.0"
 dagger = "2.11"
-dropwizard-metrics = "4.2.22"
+dropwizard-metrics = "4.2.23"
 dropwizard-metrics5 = "5.0.0"
 dynatrace-utils = "1.6.0"
 ehcache2 = "2.10.9.2"
@@ -50,9 +50,9 @@ jsr305 = "3.0.2"
 junit = "5.9.3"
 junit-platform = "1.9.3"
 kafka = "2.8.2"
-kafka-junit = "4.2.7"
+kafka-junit = "4.2.10"
 latency-utils = "2.0.3"
-logback = "1.2.12"
+logback = "1.2.13"
 log4j = "2.20.0"
 maven-resolver = "1.9.16"
 mockito = "5.5.0"
@@ -64,12 +64,12 @@ postgre = "42.6.0"
 prometheus = "0.16.0"
 reactor = "2020.0.38"
 rest-assured = "5.3.2"
-signalfx = "1.0.36"
+signalfx = "1.0.37"
 slf4j = "1.7.36"
 spectator-atlas = "1.6.11"
 spring = "5.3.31"
 spring-javaformat = "0.0.40"
-testcontainers = "1.19.2"
+testcontainers = "1.19.3"
 tomcat = "8.5.96"
 wavefront = "3.1.0"
 # pinned to avoid issues with shaded slf4j version - see gh-3414
@@ -194,7 +194,7 @@ wiremockJunit5 = { module = "ru.lanwen.wiremock:wiremock-junit5", version.ref = 
 
 # plugin dependencies
 plugin-license = { module = "gradle.plugin.com.hierynomus.gradle.plugins:license-gradle-plugin", version = "0.16.1" }
-plugin-nebulaRelease = { module = "com.netflix.nebula:nebula-release-plugin", version = "18.0.4" }
+plugin-nebulaRelease = { module = "com.netflix.nebula:nebula-release-plugin", version = "18.0.8" }
 plugin-nebulaPublishing = { module = "com.netflix.nebula:nebula-publishing-plugin", version = "20.3.0" }
 plugin-nebulaProject = { module = "com.netflix.nebula:nebula-project-plugin", version = "10.1.5" }
 plugin-nebulaInfo = { module = "com.netflix.nebula:gradle-info-plugin", version = "12.1.6" }
