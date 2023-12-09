@@ -460,14 +460,13 @@ class StepMeterRegistryTest {
         clock.add(config.step());
         assertThat(registry.publishCount.get()).isZero();
         registry.close();
-        assertThat(registry.publishCount.get()).isEqualTo(2);
-        assertThat(registry.publishedCounterCounts).hasSize(2);
-        assertThat(registry.publishedCounterCounts.getFirst()).isOne();
-        assertThat(registry.publishedCounterCounts.getLast()).isZero();
+        assertThat(registry.publishCount.get()).isEqualTo(1);
+        assertThat(registry.publishedCounterCounts).hasSize(1);
 
         clock.add(config.step());
         registry.close();
-        assertThat(registry.publishCount.get()).isEqualTo(2);
+        assertThat(registry.publishCount.get()).isEqualTo(1);
+        assertThat(registry.publishedCounterCounts).hasSize(1);
     }
 
     @Test

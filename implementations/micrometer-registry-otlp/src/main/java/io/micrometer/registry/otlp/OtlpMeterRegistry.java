@@ -87,6 +87,10 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
 
     private long deltaAggregationTimeUnixNano = 0L;
 
+    // Time when the last scheduled rollOver has started. Applicable only for delta
+    // flavour.
+    private long lastMeterRolloverStartTime = -1;
+
     @Nullable
     private ScheduledExecutorService meterPollingService;
 
@@ -244,7 +248,7 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
     public void close() {
         stop();
         if (config.enabled() && isDelta() && !isClosed()) {
-            if (!isDataPublishedForCurrentStep() && !isPublishing()) {
+            if (shouldPublishDataForCurrentStep() && !isPublishing()) {
                 // Data was not published for the current step. So, we should flush that
                 // first.
                 try {
@@ -264,9 +268,13 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
         super.close();
     }
 
-    private boolean isDataPublishedForCurrentStep() {
-        return (getLastScheduledPublishStartTime() / config.step().toMillis()) == (clock.wallTime()
-                / config.step().toMillis());
+    private boolean shouldPublishDataForCurrentStep() {
+        if (lastMeterRolloverStartTime < 0)
+            return false;
+
+        final long lastPublishedStep = getLastScheduledPublishStartTime() / config.step().toMillis();
+        final long lastPolledStep = lastMeterRolloverStartTime / config.step().toMillis();
+        return lastPublishedStep < lastPolledStep;
     }
 
     // Either we do this or make StepMeter public
@@ -343,6 +351,7 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
      */
     // VisibleForTesting
     void pollMetersToRollover() {
+        this.lastMeterRolloverStartTime = clock.wallTime();
         this.getMeters()
             .forEach(m -> m.match(gauge -> null, Counter::count, Timer::takeSnapshot, DistributionSummary::takeSnapshot,
                     meter -> null, meter -> null, FunctionCounter::count, FunctionTimer::count, meter -> null));
