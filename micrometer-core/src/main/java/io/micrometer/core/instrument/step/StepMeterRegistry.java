@@ -144,8 +144,7 @@ public abstract class StepMeterRegistry extends PushMeterRegistry {
         if (config.enabled() && !isClosed()) {
             if (shouldPublishDataForLastStep() && !isPublishing()) {
                 // Data was not published for the last completed step. So, we should flush
-                // that
-                // first.
+                // that first.
                 try {
                     publish();
                 }
