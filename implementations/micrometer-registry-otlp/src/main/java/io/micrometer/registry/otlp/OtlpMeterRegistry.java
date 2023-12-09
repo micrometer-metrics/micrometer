@@ -248,8 +248,8 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
     public void close() {
         stop();
         if (config.enabled() && isDelta() && !isClosed()) {
-            if (shouldPublishDataForCurrentStep() && !isPublishing()) {
-                // Data was not published for the current step. So, we should flush that
+            if (shouldPublishDataForLastStep() && !isPublishing()) {
+                // Data was not published for the last step. So, we should flush that
                 // first.
                 try {
                     publish();
@@ -268,7 +268,7 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
         super.close();
     }
 
-    private boolean shouldPublishDataForCurrentStep() {
+    private boolean shouldPublishDataForLastStep() {
         if (lastMeterRolloverStartTime < 0)
             return false;
 

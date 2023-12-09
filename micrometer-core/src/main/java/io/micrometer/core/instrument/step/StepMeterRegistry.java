@@ -49,8 +49,7 @@ public abstract class StepMeterRegistry extends PushMeterRegistry {
     @Nullable
     private ScheduledExecutorService meterPollingService;
 
-    // Time when the last scheduled rollOver has started. Applicable only for delta
-    // flavour.
+    // Time when the last scheduled rollOver has started.
     private long lastMeterRolloverStartTime = -1;
 
     public StepMeterRegistry(StepRegistryConfig config, Clock clock) {
@@ -143,8 +142,9 @@ public abstract class StepMeterRegistry extends PushMeterRegistry {
         stop();
 
         if (config.enabled() && !isClosed()) {
-            if (shouldPublishDataForCurrentStep() && !isPublishing()) {
-                // Data was not published for the current step. So, we should flush that
+            if (shouldPublishDataForLastStep() && !isPublishing()) {
+                // Data was not published for the last completed step. So, we should flush
+                // that
                 // first.
                 try {
                     publish();
@@ -163,7 +163,7 @@ public abstract class StepMeterRegistry extends PushMeterRegistry {
         super.close();
     }
 
-    private boolean shouldPublishDataForCurrentStep() {
+    private boolean shouldPublishDataForLastStep() {
         if (lastMeterRolloverStartTime < 0)
             return false;
 
