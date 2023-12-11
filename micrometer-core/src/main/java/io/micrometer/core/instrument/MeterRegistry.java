@@ -60,6 +60,18 @@ import static java.util.Objects.requireNonNull;
  */
 public abstract class MeterRegistry {
 
+    // @formatter:off
+    private static final EnumMap<TimeUnit, String> BASE_TIME_UNIT_STRING_CACHE = Arrays.stream(TimeUnit.values())
+        .collect(
+            Collectors.toMap(
+                Function.identity(),
+                (timeUnit) -> timeUnit.toString().toLowerCase(),
+                (k, v) -> { throw new IllegalStateException("Duplicate keys should not exist."); },
+                () -> new EnumMap<>(TimeUnit.class)
+            )
+        );
+    // @formatter:on
+
     protected final Clock clock;
 
     private final Object meterMapLock = new Object();
@@ -279,11 +291,6 @@ public abstract class MeterRegistry {
      * @return The default distribution statistics config.
      */
     protected abstract DistributionStatisticConfig defaultHistogramConfig();
-
-    private static final EnumMap<TimeUnit, String> BASE_TIME_UNIT_STRING_CACHE = Arrays.stream(TimeUnit.values())
-        .collect(Collectors.toMap(Function.identity(), (timeUnit) -> timeUnit.toString().toLowerCase(), (l, r) -> {
-            throw new IllegalStateException("Duplicate keys should not exist.");
-        }, () -> new EnumMap<>(TimeUnit.class)));
 
     private String getBaseTimeUnitStr() {
         return BASE_TIME_UNIT_STRING_CACHE.get(getBaseTimeUnit());
