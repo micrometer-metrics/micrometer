@@ -50,8 +50,6 @@ import static org.awaitility.Awaitility.await;
  */
 class StepMeterRegistryTest {
 
-    private final AtomicInteger publishes = new AtomicInteger();
-
     private final MockClock clock = new MockClock();
 
     private final StepRegistryConfig config = new StepRegistryConfig() {
@@ -98,9 +96,9 @@ class StepMeterRegistryTest {
     @Issue("#484")
     @Test
     void publishOneLastTimeOnClose() {
-        assertThat(publishes.get()).isEqualTo(0);
+        assertThat(registry.publishCount.get()).isZero();
         registry.close();
-        assertThat(publishes.get()).isEqualTo(1);
+        assertThat(registry.publishCount.get()).isEqualTo(1);
     }
 
     @Issue("#1993")
@@ -425,7 +423,7 @@ class StepMeterRegistryTest {
     }
 
     @Test
-    @Issue("3914")
+    @Issue("#3914")
     void publishShouldNotHappenWhenRegistryIsDisabled() {
         StepRegistryConfig disabledStepRegistryConfig = new StepRegistryConfig() {
             @Override
@@ -449,27 +447,26 @@ class StepMeterRegistryTest {
         Counter.builder("publish_disabled_counter").register(disabledStepMeterRegistry).increment();
 
         clock.add(config.step());
-        assertThat(publishes.get()).isZero();
+        assertThat(disabledStepMeterRegistry.publishCount.get()).isZero();
         disabledStepMeterRegistry.close();
-        assertThat(publishes.get()).isZero();
+        assertThat(disabledStepMeterRegistry.publishCount.get()).isZero();
     }
 
     @Test
-    @Issue("3914")
+    @Issue("#3914")
     void publishShouldNotHappenWhenRegistryIsClosed() {
         Counter.builder("my.counter").register(registry).increment();
 
         clock.add(config.step());
-        assertThat(publishes.get()).isZero();
+        assertThat(registry.publishCount.get()).isZero();
         registry.close();
-        assertThat(publishes.get()).isEqualTo(2);
-        assertThat(registry.publishedCounterCounts).hasSize(2);
-        assertThat(registry.publishedCounterCounts.getFirst()).isOne();
-        assertThat(registry.publishedCounterCounts.getLast()).isZero();
+        assertThat(registry.publishCount.get()).isEqualTo(1);
+        assertThat(registry.publishedCounterCounts).hasSize(1);
 
         clock.add(config.step());
         registry.close();
-        assertThat(publishes.get()).isEqualTo(2);
+        assertThat(registry.publishCount.get()).isEqualTo(1);
+        assertThat(registry.publishedCounterCounts).hasSize(1);
     }
 
     @Test
@@ -557,7 +554,22 @@ class StepMeterRegistryTest {
         assertThat(registry.publishedFunctionTimerTotals.pop()).isEqualTo(24);
     }
 
+    @Test
+    @Issue("#4357")
+    void publishOnceWhenClosedWithinFirstStep() {
+        // Set the initial clock time to a valid time.
+        MockClock mockClock = new MockClock();
+        mockClock.add(config.step().multipliedBy(5));
+
+        MyStepMeterRegistry stepMeterRegistry = new MyStepMeterRegistry(config, mockClock);
+        assertThat(stepMeterRegistry.publishCount.get()).isZero();
+        stepMeterRegistry.close();
+        assertThat(stepMeterRegistry.publishCount.get()).isEqualTo(1);
+    }
+
     private class MyStepMeterRegistry extends StepMeterRegistry {
+
+        private final AtomicInteger publishCount = new AtomicInteger();
 
         Deque<Double> publishedCounterCounts = new ArrayDeque<>();
 
@@ -575,7 +587,7 @@ class StepMeterRegistryTest {
 
         Deque<Double> publishedFunctionTimerTotals = new ArrayDeque<>();
 
-        private long lastScheduledPublishStartTime = 0L;
+        private long lastScheduledPublishStartTime;
 
         @Nullable
         Runnable prePublishAction;
@@ -590,6 +602,7 @@ class StepMeterRegistryTest {
 
         MyStepMeterRegistry(StepRegistryConfig config, Clock clock) {
             super(config, clock);
+            this.lastScheduledPublishStartTime = super.getLastScheduledPublishStartTime();
         }
 
         void setPrePublishAction(Runnable prePublishAction) {
@@ -601,7 +614,7 @@ class StepMeterRegistryTest {
             if (prePublishAction != null) {
                 prePublishAction.run();
             }
-            publishes.incrementAndGet();
+            publishCount.incrementAndGet();
             getMeters().stream()
                 .map(meter -> meter.match(g -> null, this::publishCounter, this::publishTimer, this::publishSummary,
                         null, tg -> null, this::publishFunctionCounter, this::publishFunctionTimer, m -> null))

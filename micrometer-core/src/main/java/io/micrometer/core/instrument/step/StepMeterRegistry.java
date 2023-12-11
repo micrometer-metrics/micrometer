@@ -49,6 +49,9 @@ public abstract class StepMeterRegistry extends PushMeterRegistry {
     @Nullable
     private ScheduledExecutorService meterPollingService;
 
+    // Time when the last scheduled rollOver has started.
+    private long lastMeterRolloverStartTime = -1;
+
     public StepMeterRegistry(StepRegistryConfig config, Clock clock) {
         super(config, clock);
         this.config = config;
@@ -139,9 +142,9 @@ public abstract class StepMeterRegistry extends PushMeterRegistry {
         stop();
 
         if (config.enabled() && !isClosed()) {
-            if (!isDataPublishedForCurrentStep() && !isPublishing()) {
-                // Data was not published for the current step. So, we should flush that
-                // first.
+            if (shouldPublishDataForLastStep() && !isPublishing()) {
+                // Data was not published for the last completed step. So, we should flush
+                // that first.
                 try {
                     publish();
                 }
@@ -159,9 +162,13 @@ public abstract class StepMeterRegistry extends PushMeterRegistry {
         super.close();
     }
 
-    private boolean isDataPublishedForCurrentStep() {
-        return (getLastScheduledPublishStartTime() / config.step().toMillis()) == (clock.wallTime()
-                / config.step().toMillis());
+    private boolean shouldPublishDataForLastStep() {
+        if (lastMeterRolloverStartTime < 0)
+            return false;
+
+        final long lastPublishedStep = getLastScheduledPublishStartTime() / config.step().toMillis();
+        final long lastPolledStep = lastMeterRolloverStartTime / config.step().toMillis();
+        return lastPublishedStep < lastPolledStep;
     }
 
     /**
@@ -181,6 +188,7 @@ public abstract class StepMeterRegistry extends PushMeterRegistry {
      */
     // VisibleForTesting
     void pollMetersToRollover() {
+        this.lastMeterRolloverStartTime = clock.wallTime();
         this.getMeters()
             .forEach(m -> m.match(gauge -> null, Counter::count, Timer::count, DistributionSummary::count,
                     meter -> null, meter -> null, FunctionCounter::count, FunctionTimer::count, meter -> null));
