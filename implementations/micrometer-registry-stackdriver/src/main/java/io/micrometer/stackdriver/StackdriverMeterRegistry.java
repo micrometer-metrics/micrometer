@@ -125,6 +125,7 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
                 logger.error("unable to start stackdriver, service settings are not available");
             }
             else {
+                shutdownClientIfNecessary(true);
                 try {
                     this.client = MetricServiceClient.create(metricServiceSettings);
                     super.start(threadFactory);
@@ -147,9 +148,45 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
             super.close();
         }
         finally {
-            if (client != null) {
-                client.shutdownNow();
+            shutdownClientIfNecessary(false);
+        }
+    }
+
+    protected void shutdownClientIfNecessary(final boolean quietly) {
+        if (client != null) {
+            if (!client.isShutdown()) {
+                try {
+                    client.shutdownNow();
+                    final boolean terminated = client.awaitTermination(10, TimeUnit.SECONDS);
+                    if (!terminated) {
+                        logger.warn("The metric service client failed to terminate within the timeout");
+                    }
+                }
+                catch (final RuntimeException e) {
+                    if (quietly) {
+                        logger.warn("Failed to shutdown the metric service client", e);
+                    }
+                    else {
+                        throw e;
+                    }
+                }
+                catch (final InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    return;
+                }
             }
+            try {
+                client.close();
+            }
+            catch (final RuntimeException e) {
+                if (quietly) {
+                    logger.warn("Failed to close metric service client", e);
+                }
+                else {
+                    throw e;
+                }
+            }
+            client = null;
         }
     }
 
