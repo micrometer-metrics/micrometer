@@ -13,24 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-package io.micrometer.jakarta9.instrument.jms;
+package io.micrometer.jakarta9.instrument.binder.http.jaxrs.container;
 
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationConvention;
 
 /**
- * {@link ObservationConvention} interface for
- * {@link JmsObservationDocumentation#JMS_MESSAGE_PUBLISH JMS message process} operations.
+ * Interface for an {@link ObservationConvention} for JAX-RS container HTTP requests.
  *
  * @author Brian Clozel
- * @since 1.12.0
+ * @author Marcin Grzejszczak
+ * @since 1.13.0
  */
-public interface JmsProcessObservationConvention extends ObservationConvention<JmsProcessObservationContext> {
+public interface JaxRsContainerObservationConvention extends ObservationConvention<JaxRsContainerObservationContext> {
 
     @Override
     default boolean supportsContext(Observation.Context context) {
-        return context instanceof JmsProcessObservationContext;
+        return context instanceof JaxRsContainerObservationContext;
     }
 
 }

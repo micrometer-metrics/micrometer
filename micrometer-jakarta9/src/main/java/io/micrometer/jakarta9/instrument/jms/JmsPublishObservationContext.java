@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 the original author or authors.
+ * Copyright 2002-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,11 +14,7 @@
  * limitations under the License.
  */
 
-<<<<<<<< HEAD:micrometer-jakarta9/src/main/java/io/micrometer/jakarta9/instrument/jms/JmsPublishObservationContext.java
 package io.micrometer.jakarta9.instrument.jms;
-========
-package io.micrometer.jakarta.instrument.binder.jms;
->>>>>>>> aaa5c09f2 (Moved Jakarta and latest Jakarta based dependencies):micrometer-jakarta/src/main/java/io/micrometer/jakarta/instrument/binder/jms/JmsPublishObservationContext.java
 
 import io.micrometer.common.lang.Nullable;
 import io.micrometer.observation.transport.SenderContext;

@@ -14,23 +14,12 @@
  * limitations under the License.
  */
 
-package io.micrometer.jakarta9.instrument.jms;
-
-import io.micrometer.observation.Observation;
-import io.micrometer.observation.ObservationConvention;
-
 /**
- * {@link ObservationConvention} interface for
- * {@link JmsObservationDocumentation#JMS_MESSAGE_PUBLISH JMS message process} operations.
- *
- * @author Brian Clozel
- * @since 1.12.0
+ * Observation instrumentation for Jakarta Servlet.
  */
-public interface JmsProcessObservationConvention extends ObservationConvention<JmsProcessObservationContext> {
+@NonNullFields
+@NonNullApi
+package io.micrometer.jakarta9.instrument.binder.http.servlet;
 
-    @Override
-    default boolean supportsContext(Observation.Context context) {
-        return context instanceof JmsProcessObservationContext;
-    }
-
-}
+import io.micrometer.common.lang.NonNullApi;
+import io.micrometer.common.lang.NonNullFields;

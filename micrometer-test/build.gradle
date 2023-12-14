@@ -61,7 +61,6 @@ dependencies {
     testImplementation libs.jersey2TestFrameworkJdkHttp
     // necessary for Jersey test framework
     testRuntimeOnly 'org.glassfish.jersey.inject:jersey-hk2'
-    testImplementation 'javax.ws.rs:javax.ws.rs-api'
 }
 
 java11Test {

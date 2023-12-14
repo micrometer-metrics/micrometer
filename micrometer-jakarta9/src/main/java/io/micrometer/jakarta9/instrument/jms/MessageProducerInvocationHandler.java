@@ -13,11 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-<<<<<<<< HEAD:micrometer-jakarta9/src/main/java/io/micrometer/jakarta9/instrument/jms/MessageProducerInvocationHandler.java
 package io.micrometer.jakarta9.instrument.jms;
-========
-package io.micrometer.jakarta.instrument.binder.jms;
->>>>>>>> aaa5c09f2 (Moved Jakarta and latest Jakarta based dependencies):micrometer-jakarta/src/main/java/io/micrometer/jakarta/instrument/binder/jms/MessageProducerInvocationHandler.java
 
 import io.micrometer.common.lang.Nullable;
 import io.micrometer.observation.Observation;

@@ -39,6 +39,7 @@ hystrix = "1.5.12"
 jackson-databind = "2.16.0"
 javax-cache = "1.1.1"
 javax-inject = "1"
+javax-rsapi = "2.1.1"
 jaxb = "2.3.1"
 jetty9 = "9.4.53.v20231009"
 jetty11 = "11.0.16"
@@ -65,6 +66,7 @@ okhttp = "5.0.0-alpha.11" # TODO is compiling against an alpha version intention
 postgre = "42.7.1"
 prometheus = "0.16.0"
 reactor = "2022.0.13"
+resteasy-netty4 = "6.2.6.Final"
 rest-assured = "5.4.0"
 signalfx = "1.0.37"
 slf4j = "1.7.36"
@@ -133,6 +135,7 @@ javalin = { module = "io.javalin:javalin", version = "5.6.3" }
 javax-cacheApi = { module = "javax.cache:cache-api", version.ref = "javax-cache" }
 javax-inject = { module = "javax.inject:javax.inject", version.ref = "javax-inject" }
 javax-servletApi = { module = "javax.servlet:javax.servlet-api", version = "4.0.1" }
+javax-rsapi = { module = "javax.ws.rs:javax.ws.rs-api", version.ref = "javax-rsapi" }
 jaxbApi = { module = "javax.xml.bind:jaxb-api", version.ref = "jaxb" }
 jetty9Client = { module = "org.eclipse.jetty:jetty-client", version.ref = "jetty9" }
 jetty9Server = { module = "org.eclipse.jetty:jetty-server", version.ref = "jetty9" }
@@ -181,6 +184,7 @@ prometheusClient = { module = "io.prometheus:simpleclient_common", version.ref =
 prometheusPushgateway = { module = "io.prometheus:simpleclient_pushgateway", version.ref = "prometheus" }
 reactorBom = { module = "io.projectreactor:reactor-bom", version.ref = "reactor" }
 restAssured = { module = "io.rest-assured:rest-assured", version.ref = "rest-assured" }
+resteasy-netty4 = { module = "org.jboss.resteasy:resteasy-netty4", version.ref = "resteasy-netty4" }
 retrofit2 = { module = "com.squareup.retrofit2:retrofit", version = "2.9.0" }
 signalfx = { module = "com.signalfx.public:signalfx-java", version.ref = "signalfx" }
 slf4jApi = { module = "org.slf4j:slf4j-api", version.ref = "slf4j" }

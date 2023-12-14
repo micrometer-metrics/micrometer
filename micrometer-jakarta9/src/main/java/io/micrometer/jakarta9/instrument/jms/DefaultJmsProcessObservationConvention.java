@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-<<<<<<<< HEAD:micrometer-jakarta9/src/main/java/io/micrometer/jakarta9/instrument/jms/DefaultJmsProcessObservationConvention.java
 package io.micrometer.jakarta9.instrument.jms;
 
 import io.micrometer.common.KeyValue;
@@ -22,16 +21,6 @@ import io.micrometer.common.KeyValues;
 import jakarta.jms.*;
 
 import io.micrometer.jakarta9.instrument.jms.JmsObservationDocumentation.*;
-========
-package io.micrometer.jakarta.instrument.binder.jms;
-
-import io.micrometer.common.KeyValue;
-import io.micrometer.common.KeyValues;
-import io.micrometer.jakarta.instrument.binder.jms.JmsObservationDocumentation.LowCardinalityKeyNames;
-import jakarta.jms.*;
-
-import static io.micrometer.jakarta.instrument.binder.jms.JmsObservationDocumentation.*;
->>>>>>>> aaa5c09f2 (Moved Jakarta and latest Jakarta based dependencies):micrometer-jakarta/src/main/java/io/micrometer/jakarta/instrument/binder/jms/DefaultJmsProcessObservationConvention.java
 
 /**
  * Default implementation for {@link JmsProcessObservationConvention}.
