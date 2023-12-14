@@ -221,6 +221,7 @@ public enum HttpObservationDocumentation implements ObservationDocumentation {
          * Content-Length header. For requests using transport encoding, this should be
          * the compressed size.
          */
+        // TODO: Currently unused
         REQUEST_BODY_SIZE {
             @Override
             public boolean isRequired() {
@@ -239,6 +240,7 @@ public enum HttpObservationDocumentation implements ObservationDocumentation {
          * Content-Length header. For requests using transport encoding, this should be
          * the compressed size.
          */
+        // TODO: Currently unused
         RESPONSE_BODY_SIZE {
             @Override
             public boolean isRequired() {

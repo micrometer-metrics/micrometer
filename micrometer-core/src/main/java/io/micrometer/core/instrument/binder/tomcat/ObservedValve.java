@@ -33,6 +33,10 @@ import io.micrometer.observation.ObservationRegistry;
 /**
  * A {@link Valve} that creates {@link Observation}.
  *
+ * Important: In order not to have double instrumentation, if you're using this class to
+ * instrument incoming requests, you should not use additional instrumentation at a higher
+ * level (e.g. through Servlet Filters).
+ *
  * @author Marcin Grzejszczak
  * @since 1.12.0
  * @see HttpObservationDocumentation
