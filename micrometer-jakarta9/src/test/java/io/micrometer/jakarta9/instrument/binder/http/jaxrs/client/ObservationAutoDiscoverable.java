@@ -13,17 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.jakarta9.instrument.binder.http.jaxrs;
+package io.micrometer.jakarta9.instrument.binder.http.jaxrs.client;
 
-import io.micrometer.jakarta9.instrument.binder.http.jaxrs.client.ObservationJaxRsHttpClientFilter;
-import io.micrometer.jakarta9.instrument.binder.http.jaxrs.client.ObservationJerseyClientInterceptor;
 import jakarta.ws.rs.ConstrainedTo;
 import jakarta.ws.rs.RuntimeType;
 import jakarta.ws.rs.core.FeatureContext;
 import org.glassfish.jersey.internal.spi.AutoDiscoverable;
 
 /**
- * Binds observation into Jersey.
+ * Example of binding observation into Jersey.
  */
 @ConstrainedTo(RuntimeType.CLIENT)
 public class ObservationAutoDiscoverable implements AutoDiscoverable {

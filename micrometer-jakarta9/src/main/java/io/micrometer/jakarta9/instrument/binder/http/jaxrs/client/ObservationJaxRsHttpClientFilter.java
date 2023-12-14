@@ -28,12 +28,10 @@ import java.io.IOException;
 
 /**
  * A {@link ClientResponseFilter} and {@link ClientResponseFilter} that is an around
- * wrapper over sending an HTTP call. For handling exceptions, configure
- * {@link ObservationJerseyClientInterceptor}.
+ * wrapper over sending an HTTP call. This interceptor does not handle exceptions.
  *
  * @author Marcin Grzejszczak
  * @since 1.13.0
- * @see ObservationJerseyClientInterceptor
  */
 public class ObservationJaxRsHttpClientFilter implements ClientRequestFilter, ClientResponseFilter {
 

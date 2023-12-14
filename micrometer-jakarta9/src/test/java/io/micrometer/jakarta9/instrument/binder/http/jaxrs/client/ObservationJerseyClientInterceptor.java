@@ -22,8 +22,8 @@ import jakarta.ws.rs.client.ClientResponseContext;
 import org.glassfish.jersey.client.spi.PostInvocationInterceptor;
 
 /**
- * A post-invocation client interceptor that will stop an observation started in
- * {@link ObservationJaxRsHttpClientFilter} in case of exceptions.
+ * Example of a post-invocation client interceptor that will stop an observation started
+ * in {@link ObservationJaxRsHttpClientFilter} in case of exceptions.
  *
  * @author Marcin Grzejszczak
  * @since 1.13.0

@@ -216,45 +216,6 @@ public enum HttpObservationDocumentation implements ObservationDocumentation {
     public enum CommonHighCardinalityKeys implements KeyName {
 
         /**
-         * The size of the request payload body in bytes. This is the number of bytes
-         * transferred excluding headers and is often, but not always, present as the
-         * Content-Length header. For requests using transport encoding, this should be
-         * the compressed size.
-         */
-        // TODO: Currently unused
-        REQUEST_BODY_SIZE {
-            @Override
-            public boolean isRequired() {
-                return false;
-            }
-
-            @Override
-            public String asString() {
-                return "http.request.body.size";
-            }
-        },
-
-        /**
-         * The size of the response payload body in bytes. This is the number of bytes
-         * transferred excluding headers and is often, but not always, present as the
-         * Content-Length header. For requests using transport encoding, this should be
-         * the compressed size.
-         */
-        // TODO: Currently unused
-        RESPONSE_BODY_SIZE {
-            @Override
-            public boolean isRequired() {
-                return false;
-            }
-
-            @Override
-            public String asString() {
-                return "http.response.body.size";
-            }
-
-        },
-
-        /**
          * Value of the HTTP User-Agent header sent by the client.
          */
         USER_AGENT_ORIGINAL {
