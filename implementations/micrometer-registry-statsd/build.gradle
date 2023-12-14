@@ -58,7 +58,7 @@ publishing {
                 asNode()
                     .dependencies
                     .dependency
-                    .findAll { ['reactor-core', 'reactor-netty-core'].contains(it.artifactId.text()) }
+                    .findAll { ['reactor-core', 'reactor-netty-core', 'netty-transport-native-epoll'].contains(it.artifactId.text()) }
                     .each { it.parent().remove(it) }
             }
         }
