@@ -18,6 +18,7 @@ package io.micrometer.core.instrument.binder.system;
 import io.micrometer.common.lang.NonNullApi;
 import io.micrometer.common.lang.NonNullFields;
 import io.micrometer.common.lang.Nullable;
+import io.micrometer.core.instrument.FunctionCounter;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
@@ -72,6 +73,9 @@ public class ProcessorMetrics implements MeterBinder {
     @Nullable
     private final Method processCpuUsage;
 
+    @Nullable
+    private final Method processCpuTime;
+
     public ProcessorMetrics() {
         this(emptyList());
     }
@@ -83,6 +87,7 @@ public class ProcessorMetrics implements MeterBinder {
         Method getCpuLoad = detectMethod("getCpuLoad");
         this.systemCpuUsage = getCpuLoad != null ? getCpuLoad : detectMethod("getSystemCpuLoad");
         this.processCpuUsage = detectMethod("getProcessCpuLoad");
+        this.processCpuTime = detectMethod("getProcessCpuTime");
     }
 
     @Override
@@ -102,26 +107,42 @@ public class ProcessorMetrics implements MeterBinder {
         }
 
         if (systemCpuUsage != null) {
-            Gauge.builder("system.cpu.usage", operatingSystemBean, x -> invoke(systemCpuUsage))
+            Gauge.builder("system.cpu.usage", operatingSystemBean, x -> invokeDoubleFunction(systemCpuUsage))
                 .tags(tags)
                 .description("The \"recent cpu usage\" of the system the application is running in")
                 .register(registry);
         }
 
         if (processCpuUsage != null) {
-            Gauge.builder("process.cpu.usage", operatingSystemBean, x -> invoke(processCpuUsage))
+            Gauge.builder("process.cpu.usage", operatingSystemBean, x -> invokeDoubleFunction(processCpuUsage))
                 .tags(tags)
                 .description("The \"recent cpu usage\" for the Java Virtual Machine process")
                 .register(registry);
         }
+
+        if (invokeLongFunction(processCpuTime) >= 0L) {
+            FunctionCounter.builder("process.cpu.time", operatingSystemBean, x -> invokeLongFunction(processCpuTime))
+                .tags(tags)
+                .description("The \"cumulated cpu time\" used by the Java Virtual Machine process")
+                .baseUnit("ns")
+                .register(registry);
+        }
     }
 
-    private double invoke(@Nullable Method method) {
+    private double invokeDoubleFunction(@Nullable Method method) {
+        return invoke(method, Double.NaN).doubleValue();
+    }
+
+    private long invokeLongFunction(@Nullable Method method) {
+        return invoke(method, -1L).longValue();
+    }
+
+    private Number invoke(@Nullable Method method, Number defaultValue) {
         try {
-            return method != null ? (double) method.invoke(operatingSystemBean) : Double.NaN;
+            return method != null ? (Number) method.invoke(operatingSystemBean) : defaultValue;
         }
         catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
-            return Double.NaN;
+            return defaultValue;
         }
     }
 

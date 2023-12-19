@@ -55,6 +55,7 @@ class ProcessorMetricsTest {
         else {
             assertThat(registry.get("system.load.average.1m").gauge().value()).isNotNegative();
         }
+        assertThat(registry.get("process.cpu.time").functionCounter().count()).isNotNegative();
     }
 
     @Test
