@@ -24,8 +24,8 @@ import io.micrometer.core.instrument.distribution.Histogram;
 import io.micrometer.core.instrument.distribution.TimeWindowMax;
 
 import java.util.Arrays;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.DoubleAdder;
+import java.util.concurrent.atomic.LongAdder;
 
 /**
  * Cumulative distribution summary.
@@ -36,7 +36,7 @@ import java.util.concurrent.atomic.DoubleAdder;
  */
 public class CumulativeDistributionSummary extends AbstractDistributionSummary {
 
-    private final AtomicLong count;
+    private final LongAdder count;
 
     private final DoubleAdder total;
 
@@ -66,21 +66,21 @@ public class CumulativeDistributionSummary extends AbstractDistributionSummary {
     protected CumulativeDistributionSummary(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig,
             double scale, Histogram histogram) {
         super(id, scale, histogram);
-        this.count = new AtomicLong();
+        this.count = new LongAdder();
         this.total = new DoubleAdder();
         this.max = new TimeWindowMax(clock, distributionStatisticConfig);
     }
 
     @Override
     protected void recordNonNegative(double amount) {
-        count.incrementAndGet();
+        count.increment();
         total.add(amount);
         max.record(amount);
     }
 
     @Override
     public long count() {
-        return count.get();
+        return count.longValue();
     }
 
     @Override
