@@ -26,6 +26,7 @@ import io.micrometer.core.instrument.internal.DefaultGauge;
 import io.micrometer.core.instrument.internal.DefaultLongTaskTimer;
 import io.micrometer.core.instrument.internal.DefaultMeter;
 import io.micrometer.core.instrument.push.PushMeterRegistry;
+import io.micrometer.core.instrument.util.NamedThreadFactory;
 
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -122,8 +123,8 @@ public abstract class StepMeterRegistry extends PushMeterRegistry {
         super.start(threadFactory);
 
         if (config.enabled()) {
-            this.meterPollingService = Executors.newSingleThreadScheduledExecutor(threadFactory);
-
+            this.meterPollingService = Executors.newSingleThreadScheduledExecutor(
+                    new NamedThreadFactory("step-meter-registry-poller-for-" + getClass().getSimpleName()));
             this.meterPollingService.scheduleAtFixedRate(this::pollMetersToRollover, getInitialDelay(),
                     config.step().toMillis(), TimeUnit.MILLISECONDS);
         }
