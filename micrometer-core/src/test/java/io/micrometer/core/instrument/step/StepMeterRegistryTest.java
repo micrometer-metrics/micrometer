@@ -18,6 +18,7 @@ package io.micrometer.core.instrument.step;
 import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.util.NamedThreadFactory;
 import org.junit.jupiter.api.Test;
 import org.testcontainers.shaded.com.google.common.util.concurrent.AtomicDouble;
 
@@ -565,6 +566,48 @@ class StepMeterRegistryTest {
         assertThat(stepMeterRegistry.publishCount.get()).isZero();
         stepMeterRegistry.close();
         assertThat(stepMeterRegistry.publishCount.get()).isEqualTo(1);
+    }
+
+    @Test
+    void startWithNamedThreadFactoryShouldUseNamedThreadFactoryForPoller() {
+        StepMeterRegistry registry = new CustomStepMeterRegistry();
+        String publisherThreadName = "custom-metrics-publisher";
+        registry.start(new NamedThreadFactory(publisherThreadName));
+        List<String> threadNames = Thread.getAllStackTraces()
+            .keySet()
+            .stream()
+            .map((thread) -> thread.getName())
+            .collect(Collectors.toList());
+        assertThat(threadNames).contains(publisherThreadName)
+            .doesNotContain(publisherThreadName + "-2")
+            .contains("step-meter-registry-poller-for-CustomStepMeterRegistry");
+    }
+
+    static class CustomStepMeterRegistry extends StepMeterRegistry {
+
+        CustomStepMeterRegistry() {
+            super(new StepRegistryConfig() {
+                @Override
+                public String prefix() {
+                    return null;
+                }
+
+                @Override
+                public String get(String key) {
+                    return null;
+                }
+            }, new MockClock());
+        }
+
+        @Override
+        protected void publish() {
+        }
+
+        @Override
+        protected TimeUnit getBaseTimeUnit() {
+            return TimeUnit.SECONDS;
+        }
+
     }
 
     private class MyStepMeterRegistry extends StepMeterRegistry {
