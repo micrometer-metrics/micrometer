@@ -35,7 +35,7 @@ import java.lang.annotation.*;
  * @see io.micrometer.core.aop.CountedAspect
  */
 @Inherited
-@Target(ElementType.METHOD)
+@Target({ ElementType.ANNOTATION_TYPE, ElementType.TYPE, ElementType.METHOD })
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Counted {
 
