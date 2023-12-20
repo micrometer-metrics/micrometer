@@ -78,6 +78,25 @@ abstract class OtlpMeterRegistryTest {
     }
 
     @Test
+    void reservedResourceAttributesAreKept() {
+        registry = new OtlpMeterRegistry(new OtlpConfig() {
+            @Override
+            public String get(String key) {
+                return null;
+            }
+
+            @Override
+            public Map<String, String> resourceAttributes() {
+                return Map.of("telemetry.sdk.language", "no", "telemetry.sdk.version", "no", "telemetry.sdk.name",
+                        "no");
+            }
+        }, Clock.SYSTEM);
+
+        assertThat(registry.getResourceAttributes())
+            .noneMatch(keyValue -> keyValue.getValue().getStringValue().equals("no"));
+    }
+
+    @Test
     void setResourceAttributesAsString() throws IOException {
         Properties propertiesConfig = new Properties();
         propertiesConfig.load(this.getClass().getResourceAsStream("/otlp-config.properties"));
