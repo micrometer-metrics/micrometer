@@ -449,9 +449,9 @@ class TimedAspectTest {
 
             MeterTagClass service = pf.getProxy();
 
-            service.getAnnotationForPackagePrivateMethod("bar");
+            service.getAnnotationForPackagePrivateMethod("baz");
 
-            assertThat(registry.get("method.timed").tag("foo", "bar").timer().count()).isEqualTo(1);
+            assertThat(registry.get("method.timed").tag("foo", "baz").timer().count()).isEqualTo(1);
         }
 
         enum AnnotatedTestClass {
