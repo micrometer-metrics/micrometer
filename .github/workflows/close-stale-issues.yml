@@ -11,12 +11,15 @@ jobs:
       - uses: actions/stale@v9
         with:
           stale-issue-message: 'If you would like us to look at this issue, please provide the requested information. If the information is not provided within the next 7 days this issue will be closed.'
-          stale-pr-message: 'If you would like us to look at this PR, please provide the requested information. If the information is not provided within the next 7 days this issue will be closed.'
+          stale-pr-message: 'If you would like us to look at this PR, please provide the requested information. If the information is not provided within the next 7 days this PR will be closed.'
           close-issue-message: 'Closing due to lack of requested feedback. If you would like us to look at this issue, please provide the requested information and we will re-open.'
+          close-pr-message: 'Closing due to lack of requested feedback. If you would like us to look at this, please provide the requested information and we will re-open.'
           close-issue-label: 'closed-as-inactive'
           days-before-stale: 7
           days-before-close: 7
           stale-issue-label: 'feedback-reminder'
+          stale-pr-label: 'feedback-reminder'
           only-labels: 'waiting for feedback'
-          exempt-issue-labels: 'feedback-provided,work-in-progress'
+          exempt-issue-labels: 'feedback-provided'
+          exempt-pr-labels: 'feedback-provided'
           exempt-all-milestones: true
