@@ -71,6 +71,11 @@ public abstract class DropwizardMeterRegistry extends MeterRegistry {
 
     private void onMeterRemoved(Meter meter) {
         registry.remove(hierarchicalName(meter.getId()));
+        if (meter instanceof LongTaskTimer) {
+            for (Statistic statistic : Statistic.values()) {
+                registry.remove(hierarchicalName(meter.getId().withTag(statistic)));
+            }
+        }
     }
 
     public MetricRegistry getDropwizardRegistry() {
