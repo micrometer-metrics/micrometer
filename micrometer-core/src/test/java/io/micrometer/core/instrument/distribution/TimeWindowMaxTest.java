@@ -16,6 +16,7 @@
 package io.micrometer.core.instrument.distribution;
 
 import io.micrometer.core.instrument.MockClock;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
@@ -66,6 +67,13 @@ class TimeWindowMaxTest {
         clock.add(Duration.ofSeconds(62));
         timeWindowMax.record(100500);
         assertThat(timeWindowMax.poll()).isEqualTo(100500); // 666 | 500 | 100500
+    }
+
+    @Test
+    void throwsExceptionWhenRotateFrequency0() {
+        Assertions.assertThatThrownBy(() -> new TimeWindowMax(clock, 0, 3))
+            .isInstanceOf(IllegalArgumentException.class)
+            .withFailMessage("Rotate frequency must be a positive number");
     }
 
 }

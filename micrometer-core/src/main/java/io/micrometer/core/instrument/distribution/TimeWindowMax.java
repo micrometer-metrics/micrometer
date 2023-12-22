@@ -54,7 +54,7 @@ public class TimeWindowMax {
 
     public TimeWindowMax(Clock clock, long rotateFrequencyMillis, int bufferLength) {
         this.clock = clock;
-        this.durationBetweenRotatesMillis = rotateFrequencyMillis;
+        this.durationBetweenRotatesMillis = checkPositive(rotateFrequencyMillis);
         this.lastRotateTimestampMillis = clock.wallTime();
         this.currentBucket = 0;
 
@@ -62,6 +62,13 @@ public class TimeWindowMax {
         for (int i = 0; i < bufferLength; i++) {
             this.ringBuffer[i] = new AtomicLong();
         }
+    }
+
+    private static long checkPositive(long rotateFrequencyMillis) {
+        if (rotateFrequencyMillis <= 0) {
+            throw new IllegalArgumentException("Rotate frequency must be a positive number");
+        }
+        return rotateFrequencyMillis;
     }
 
     /**
