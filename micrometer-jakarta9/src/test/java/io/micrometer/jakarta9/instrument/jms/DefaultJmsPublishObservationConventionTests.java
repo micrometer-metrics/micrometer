@@ -20,8 +20,7 @@ import jakarta.jms.*;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 /**
  * Tests for {@link DefaultJmsPublishObservationConvention}.
@@ -97,6 +96,13 @@ class DefaultJmsPublishObservationConventionTests {
     }
 
     @Test
+    void shouldHaveTopicNullDestinationName() throws Exception {
+        JmsPublishObservationContext context = new JmsPublishObservationContext(createMessageWithNullTopic());
+        assertThat(convention.getHighCardinalityKeyValues(context))
+            .contains(KeyValue.of("messaging.destination.name", "unknown"));
+    }
+
+    @Test
     void shouldHaveUnknownDestinationNameWhenException() throws Exception {
         Message message = createMessageWithQueue();
         JmsPublishObservationContext context = new JmsPublishObservationContext(message);
@@ -163,6 +169,23 @@ class DefaultJmsPublishObservationConventionTests {
             .contains(KeyValue.of("messaging.destination.temporary", "true"));
     }
 
+    @Test
+    void shouldHaveTopicDestinationNameEvenWhenTheTopicAlsoImplementsTheQueueInterface() throws Exception {
+        JmsPublishObservationContext context = new JmsPublishObservationContext(
+                createMessageWithTopicThatAlsoImplementsTheQueueInterface());
+
+        assertThat(convention.getHighCardinalityKeyValues(context))
+            .contains(KeyValue.of("messaging.destination.name", "micrometer.test.topic"));
+    }
+
+    private Message createMessageWithTopicThatAlsoImplementsTheQueueInterface() throws Exception {
+        Topic topic = mock(Topic.class, withSettings().extraInterfaces(Queue.class));
+        when(topic.getTopicName()).thenReturn("micrometer.test.topic");
+        Message message = mock(Message.class);
+        when(message.getJMSDestination()).thenReturn(topic);
+        return message;
+    }
+
     private Message createMessageWithQueue() throws Exception {
         Queue queue = mock(Queue.class);
         when(queue.getQueueName()).thenReturn("micrometer.test.queue");
@@ -182,6 +205,14 @@ class DefaultJmsPublishObservationConventionTests {
     private Message createMessageWithTopic() throws Exception {
         Topic topic = mock(Topic.class);
         when(topic.getTopicName()).thenReturn("micrometer.test.topic");
+        Message message = mock(Message.class);
+        when(message.getJMSDestination()).thenReturn(topic);
+        return message;
+    }
+
+    private Message createMessageWithNullTopic() throws Exception {
+        Topic topic = mock(Topic.class);
+        when(topic.getTopicName()).thenReturn(null);
         Message message = mock(Message.class);
         when(message.getJMSDestination()).thenReturn(topic);
         return message;
