@@ -116,17 +116,29 @@ public class DefaultJmsPublishObservationConvention implements JmsPublishObserva
             Destination jmsDestination = message.getJMSDestination();
             if (jmsDestination instanceof Queue) {
                 Queue queue = (Queue) jmsDestination;
-                return KeyValue.of(HighCardinalityKeyNames.DESTINATION_NAME, queue.getQueueName());
+                String queueName = queue.getQueueName();
+                if (queueName == null) {
+                    return getKeyValueTopic(jmsDestination);
+                }
+                return KeyValue.of(HighCardinalityKeyNames.DESTINATION_NAME, queueName);
             }
-            if (jmsDestination instanceof Topic) {
-                Topic topic = (Topic) jmsDestination;
-                return KeyValue.of(HighCardinalityKeyNames.DESTINATION_NAME, topic.getTopicName());
-            }
-            return DESTINATION_NAME_UNKNOWN;
+            return getKeyValueTopic(jmsDestination);
         }
         catch (JMSException e) {
             return DESTINATION_NAME_UNKNOWN;
         }
+    }
+
+    private static KeyValue getKeyValueTopic(Destination jmsDestination) throws JMSException {
+        if (jmsDestination instanceof Topic) {
+            Topic topic = (Topic) jmsDestination;
+            String topicName = topic.getTopicName();
+            if (topicName == null) {
+                return DESTINATION_NAME_UNKNOWN;
+            }
+            return KeyValue.of(HighCardinalityKeyNames.DESTINATION_NAME, topicName);
+        }
+        return DESTINATION_NAME_UNKNOWN;
     }
 
     protected KeyValue messageId(JmsPublishObservationContext context) {
