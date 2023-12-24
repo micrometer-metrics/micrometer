@@ -82,6 +82,7 @@ abstract class AbstractCompositeMeter<T extends Meter> extends AbstractMeter imp
                     childrenGuard.set(false);
                 }
             }
+            SpinLockSupport.onSpinWait();
         }
     }
 
@@ -104,6 +105,7 @@ abstract class AbstractCompositeMeter<T extends Meter> extends AbstractMeter imp
                     childrenGuard.set(false);
                 }
             }
+            SpinLockSupport.onSpinWait();
         }
     }
 

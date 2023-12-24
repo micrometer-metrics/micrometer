@@ -193,6 +193,7 @@ public class CompositeMeterRegistry extends MeterRegistry {
                     lock.set(false);
                 }
             }
+            SpinLockSupport.onSpinWait();
         }
     }
 
