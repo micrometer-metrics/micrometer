@@ -55,18 +55,10 @@ public class PrometheusNamingConvention implements NamingConvention {
 
         switch (type) {
             case COUNTER:
-            case DISTRIBUTION_SUMMARY:
-            case GAUGE:
-                if (baseUnit != null && !conventionName.endsWith("_" + baseUnit))
-                    conventionName += "_" + baseUnit;
-                break;
-        }
-
-        switch (type) {
-            case COUNTER:
                 if (!conventionName.endsWith("_total"))
                     conventionName += "_total";
                 break;
+            case DISTRIBUTION_SUMMARY:
             case TIMER:
             case LONG_TASK_TIMER:
                 if (!timerSuffix.isEmpty() && conventionName.endsWith(timerSuffix)) {
@@ -75,6 +67,10 @@ public class PrometheusNamingConvention implements NamingConvention {
                 else if (!conventionName.endsWith("_seconds")) {
                     conventionName += timerSuffix + "_seconds";
                 }
+                break;
+            case GAUGE:
+                if (baseUnit != null && !conventionName.endsWith("_" + baseUnit))
+                    conventionName += "_" + baseUnit;
                 break;
         }
 
