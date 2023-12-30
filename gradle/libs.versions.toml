@@ -1,5 +1,6 @@
 [versions]
 activemq-artemis = "2.31.2"
+appdynamics = "4.5.19.29263"
 application-insights = "2.6.4"
 archunit = "1.2.1"
 asmForPlugins = "7.3.1"
@@ -82,6 +83,7 @@ wiremock-junit5 = "1.3.1"
 activemqArtemisJakartaClient = { module = "org.apache.activemq:artemis-jakarta-client", version.ref = "activemq-artemis" }
 activemqArtemisJunit5 = { module = "org.apache.activemq:artemis-junit-5", version.ref = "activemq-artemis" }
 applicationInsights = { module = "com.microsoft.azure:applicationinsights-core", version.ref = "application-insights" }
+appdynamics = { module = "com.appdynamics.agent:agent-api", version.ref = "appdynamics" }
 archunitJunit5 = { module = "com.tngtech.archunit:archunit-junit5", version.ref = "archunit" }
 asmForPlugins = { module = "org.ow2.asm:asm", version.ref = "asmForPlugins" }
 aspectjweaver = { module = "org.aspectj:aspectjweaver", version.ref = "aspectjweaver" }

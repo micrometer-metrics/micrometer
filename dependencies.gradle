@@ -83,7 +83,8 @@ def VERSIONS = [
         libs.testcontainers.mongodb,
         libs.testcontainers,
         libs.wiremockJunit5,
-        libs.cloudwatch2
+        libs.cloudwatch2,
+        libs.appdynamics
 ]
 
 def PLATFORM_BOMS = [
