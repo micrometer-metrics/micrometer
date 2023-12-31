@@ -51,6 +51,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -147,7 +148,7 @@ class GrpcObservationTest {
         void unaryRpcAsync() {
             SimpleServiceFutureStub stub = SimpleServiceGrpc.newFutureStub(channel);
             List<String> messages = new ArrayList<>();
-            List<String> responses = new ArrayList<>();
+            List<String> responses = Collections.synchronizedList(new ArrayList<>());
             List<ListenableFuture<SimpleResponse>> futures = new ArrayList<>();
             int count = 40;
             for (int i = 0; i < count; i++) {
