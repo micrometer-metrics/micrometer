@@ -15,12 +15,32 @@
  */
 package io.micrometer.core.instrument.binder.grpc;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
+
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import io.grpc.CallOptions;
+import io.grpc.Channel;
+import io.grpc.ClientCall;
+import io.grpc.ClientInterceptor;
+import io.grpc.ForwardingClientCall.SimpleForwardingClientCall;
+import io.grpc.ForwardingServerCall.SimpleForwardingServerCall;
 import io.grpc.ManagedChannel;
+import io.grpc.Metadata;
+import io.grpc.MethodDescriptor;
 import io.grpc.MethodDescriptor.MethodType;
 import io.grpc.Server;
+import io.grpc.ServerCall;
+import io.grpc.ServerCall.Listener;
+import io.grpc.ServerCallHandler;
+import io.grpc.ServerInterceptor;
 import io.grpc.Status.Code;
 import io.grpc.StatusRuntimeException;
 import io.grpc.inprocess.InProcessChannelBuilder;
@@ -49,13 +69,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
@@ -116,11 +129,14 @@ class GrpcObservationTest {
             EchoService echoService = new EchoService();
             server = InProcessServerBuilder.forName("sample")
                 .addService(echoService)
+                .intercept(new ServerHeaderInterceptor())
                 .intercept(serverInterceptor)
                 .build();
             server.start();
 
-            channel = InProcessChannelBuilder.forName("sample").intercept(clientInterceptor).build();
+            channel = InProcessChannelBuilder.forName("sample")
+                .intercept(new ClientHeaderInterceptor(), clientInterceptor)
+                .build();
         }
 
         @Test
@@ -141,13 +157,14 @@ class GrpcObservationTest {
                     GrpcServerEvents.MESSAGE_SENT);
             assertThat(clientHandler.getEvents()).containsExactly(GrpcClientEvents.MESSAGE_SENT,
                     GrpcClientEvents.MESSAGE_RECEIVED);
+            verifyHeaders();
         }
 
         @Test
         void unaryRpcAsync() {
             SimpleServiceFutureStub stub = SimpleServiceGrpc.newFutureStub(channel);
             List<String> messages = new ArrayList<>();
-            List<String> responses = new ArrayList<>();
+            List<String> responses = Collections.synchronizedList(new ArrayList<>());
             List<ListenableFuture<SimpleResponse>> futures = new ArrayList<>();
             int count = 40;
             for (int i = 0; i < count; i++) {
@@ -171,6 +188,7 @@ class GrpcObservationTest {
 
             await().until(() -> futures.stream().allMatch(Future::isDone));
             assertThat(responses).hasSize(count).containsExactlyInAnyOrderElementsOf(messages);
+            verifyHeaders();
         }
 
         @Test
@@ -210,6 +228,7 @@ class GrpcObservationTest {
             verifyServerContext("grpc.testing.SimpleService", "ClientStreamingRpc",
                     "grpc.testing.SimpleService/ClientStreamingRpc", MethodType.CLIENT_STREAMING);
             assertThat(serverHandler.getContext().getStatusCode()).isEqualTo(Code.OK);
+            verifyHeaders();
         }
 
         @Test
@@ -241,6 +260,7 @@ class GrpcObservationTest {
             assertThat(clientHandler.getContext().getStatusCode()).isEqualTo(Code.OK);
             assertThat(clientHandler.getEvents()).containsExactly(GrpcClientEvents.MESSAGE_SENT,
                     GrpcClientEvents.MESSAGE_RECEIVED, GrpcClientEvents.MESSAGE_RECEIVED);
+            verifyHeaders();
         }
 
         @Test
@@ -290,6 +310,7 @@ class GrpcObservationTest {
 
             assertThat(serverHandler.getContext().getStatusCode()).isEqualTo(Code.OK);
             assertThat(clientHandler.getContext().getStatusCode()).isEqualTo(Code.OK);
+            verifyHeaders();
         }
 
         private StreamObserver<SimpleResponse> createResponseObserver(List<String> messages, AtomicBoolean completed) {
@@ -312,6 +333,17 @@ class GrpcObservationTest {
             };
         }
 
+        private void verifyHeaders() {
+            assertThat(clientHandler.getContext().getCarrier().containsKey(ClientHeaderInterceptor.CLIENT_KEY))
+                .isTrue();
+            assertThat(clientHandler.getContext().getHeaders().containsKey(ServerHeaderInterceptor.SERVER_KEY))
+                .isTrue();
+            assertThat(serverHandler.getContext().getCarrier().containsKey(ClientHeaderInterceptor.CLIENT_KEY))
+                .isTrue();
+            assertThat(serverHandler.getContext().getHeaders().containsKey(ServerHeaderInterceptor.SERVER_KEY))
+                .isTrue();
+        }
+
     }
 
     @Nested
@@ -322,11 +354,14 @@ class GrpcObservationTest {
             ExceptionService exceptionService = new ExceptionService();
             server = InProcessServerBuilder.forName("exception")
                 .addService(exceptionService)
+                .intercept(new ServerHeaderInterceptor())
                 .intercept(serverInterceptor)
                 .build();
             server.start();
 
-            channel = InProcessChannelBuilder.forName("exception").intercept(clientInterceptor).build();
+            channel = InProcessChannelBuilder.forName("exception")
+                .intercept(new ClientHeaderInterceptor(), clientInterceptor)
+                .build();
         }
 
         @Test
@@ -570,6 +605,53 @@ class GrpcObservationTest {
 
         List<Event> getEvents() {
             return this.events;
+        }
+
+    }
+
+    static class ClientHeaderInterceptor implements ClientInterceptor {
+
+        private static final Metadata.Key<String> CLIENT_KEY = Metadata.Key.of("client",
+                Metadata.ASCII_STRING_MARSHALLER);
+
+        @Override
+        public <ReqT, RespT> ClientCall<ReqT, RespT> interceptCall(MethodDescriptor<ReqT, RespT> method,
+                CallOptions callOptions, Channel next) {
+            ClientCall<ReqT, RespT> call = next.newCall(method, callOptions);
+            return new SimpleForwardingClientCall<>(call) {
+                @Override
+                public void start(ClientCall.Listener<RespT> responseListener, Metadata headers) {
+                    headers.put(CLIENT_KEY, "client-request");
+                    super.start(responseListener, headers);
+                }
+
+            };
+        }
+
+    }
+
+    static class ServerHeaderInterceptor implements ServerInterceptor {
+
+        private static final Metadata.Key<String> SERVER_KEY = Metadata.Key.of("server",
+                Metadata.ASCII_STRING_MARSHALLER);
+
+        @Override
+        public <ReqT, RespT> Listener<ReqT> interceptCall(ServerCall<ReqT, RespT> call, Metadata headers,
+                ServerCallHandler<ReqT, RespT> next) {
+            SimpleForwardingServerCall<ReqT, RespT> serverCall = new SimpleForwardingServerCall<>(call) {
+                @Override
+                protected ServerCall<ReqT, RespT> delegate() {
+                    return super.delegate();
+                }
+
+                @Override
+                public void sendHeaders(Metadata headers) {
+                    headers.put(SERVER_KEY, "server-response");
+                    super.sendHeaders(headers);
+                }
+
+            };
+            return next.startCall(serverCall, headers);
         }
 
     }
