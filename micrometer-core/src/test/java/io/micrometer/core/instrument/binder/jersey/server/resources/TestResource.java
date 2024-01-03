@@ -83,6 +83,13 @@ public class TestResource {
     }
 
     @GET
+    @Path("produces-text-plain")
+    @Produces(MediaType.TEXT_PLAIN)
+    public String producesTextPlain() {
+        return "hello";
+    }
+
+    @GET
     @Path("redirect/{status}")
     public Response redirect(@PathParam("status") int status) {
         if (status == 307) {
