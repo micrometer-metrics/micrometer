@@ -76,9 +76,6 @@ public class OkHttpMetricsEventListener extends EventListener {
 
     private static final String TAG_VALUE_UNKNOWN = "UNKNOWN";
 
-    private static final Tags TAGS_TARGET_UNKNOWN = Tags.of(TAG_TARGET_SCHEME, TAG_VALUE_UNKNOWN, TAG_TARGET_HOST,
-            TAG_VALUE_UNKNOWN, TAG_TARGET_PORT, TAG_VALUE_UNKNOWN);
-
     @Nullable
     private static Method getMethod(Class<?>... parameterTypes) {
         try {
@@ -101,6 +98,12 @@ public class OkHttpMetricsEventListener extends EventListener {
 
     private final Iterable<Tag> unknownRequestTags;
 
+    private final boolean includeTargetSchemeTag;
+
+    private final boolean includeTargetHostTag;
+
+    private final boolean includeTargetPortTag;
+
     private final boolean includeHostTag;
 
     // VisibleForTesting
@@ -109,18 +112,23 @@ public class OkHttpMetricsEventListener extends EventListener {
     protected OkHttpMetricsEventListener(MeterRegistry registry, String requestsMetricName,
             Function<Request, String> urlMapper, Iterable<Tag> extraTags,
             Iterable<BiFunction<Request, Response, Tag>> contextSpecificTags) {
-        this(registry, requestsMetricName, urlMapper, extraTags, contextSpecificTags, emptyList(), true);
+        this(registry, requestsMetricName, urlMapper, extraTags, contextSpecificTags, emptyList(), true, true, true,
+                true);
     }
 
     OkHttpMetricsEventListener(MeterRegistry registry, String requestsMetricName, Function<Request, String> urlMapper,
             Iterable<Tag> extraTags, Iterable<BiFunction<Request, Response, Tag>> contextSpecificTags,
-            Iterable<String> requestTagKeys, boolean includeHostTag) {
+            Iterable<String> requestTagKeys, boolean includeHostTag, boolean includeTargetSchemeTag,
+            boolean includeTargetHostTag, boolean includeTargetPortTag) {
         this.registry = registry;
         this.requestsMetricName = requestsMetricName;
         this.urlMapper = urlMapper;
         this.extraTags = extraTags;
         this.contextSpecificTags = contextSpecificTags;
         this.includeHostTag = includeHostTag;
+        this.includeTargetSchemeTag = includeTargetSchemeTag;
+        this.includeTargetHostTag = includeTargetHostTag;
+        this.includeTargetPortTag = includeTargetPortTag;
 
         List<Tag> unknownRequestTags = new ArrayList<>();
         for (String requestTagKey : requestTagKeys) {
@@ -164,10 +172,9 @@ public class OkHttpMetricsEventListener extends EventListener {
     // VisibleForTesting
     void time(CallState state) {
         Request request = state.request;
-        boolean requestAvailable = request != null;
 
         Iterable<Tag> tags = Tags
-            .of("method", requestAvailable ? request.method() : TAG_VALUE_UNKNOWN, "uri", getUriTag(state, request),
+            .of("method", request == null ? TAG_VALUE_UNKNOWN : request.method(), "uri", getUriTag(state, request),
                     "status", getStatusMessage(state.response, state.exception))
             .and(getStatusOutcome(state.response).asTag())
             .and(extraTags)
@@ -177,10 +184,6 @@ public class OkHttpMetricsEventListener extends EventListener {
             .and(getRequestTags(request))
             .and(generateTagsForRoute(request));
 
-        if (includeHostTag) {
-            tags = Tags.of(tags).and("host", requestAvailable ? request.url().host() : TAG_VALUE_UNKNOWN);
-        }
-
         Timer.builder(this.requestsMetricName)
             .tags(tags)
             .description("Timer of OkHttp operation")
@@ -189,11 +192,27 @@ public class OkHttpMetricsEventListener extends EventListener {
     }
 
     private Tags generateTagsForRoute(@Nullable Request request) {
-        if (request == null) {
-            return TAGS_TARGET_UNKNOWN;
+        Tags tags = Tags.empty();
+
+        if (includeTargetSchemeTag) {
+            tags = tags.and(Tag.of(TAG_TARGET_SCHEME, request == null ? TAG_VALUE_UNKNOWN : request.url().scheme()));
         }
-        return Tags.of(TAG_TARGET_SCHEME, request.url().scheme(), TAG_TARGET_HOST, request.url().host(),
-                TAG_TARGET_PORT, Integer.toString(request.url().port()));
+
+        if (includeTargetHostTag) {
+            tags = tags.and(Tag.of(TAG_TARGET_HOST, request == null ? TAG_VALUE_UNKNOWN : request.url().host()));
+        }
+
+        // Legacy "host" tag, the new convention is "target.host"
+        if (includeHostTag) {
+            tags = tags.and(Tag.of("host", request == null ? TAG_VALUE_UNKNOWN : request.url().host()));
+        }
+
+        if (includeTargetPortTag) {
+            tags = tags.and(Tag.of(TAG_TARGET_PORT,
+                    request == null ? TAG_VALUE_UNKNOWN : Integer.toString(request.url().port())));
+        }
+
+        return tags;
     }
 
     private String getUriTag(CallState state, @Nullable Request request) {
@@ -277,6 +296,12 @@ public class OkHttpMetricsEventListener extends EventListener {
 
         private boolean includeHostTag = true;
 
+        private boolean includeTargetSchemeTag = true;
+
+        private boolean includeTargetHostTag = true;
+
+        private boolean includeTargetPortTag = true;
+
         private Iterable<String> requestTagKeys = Collections.emptyList();
 
         Builder(MeterRegistry registry, String name) {
@@ -317,6 +342,39 @@ public class OkHttpMetricsEventListener extends EventListener {
         }
 
         /**
+         * If your client connects to many different schemes, this might lead to lots of
+         * metrics being generated. Disabling the tagging by scheme helps to keep the
+         * number of metrics low in such cases.
+         * @param includeTargetSchemeTag whether to include the {@code target.scheme} tag
+         * @return this builder
+         * @since 1.5.0
+         * @see #includeTargetHostTag(boolean)
+         * @see #includeHostTag(boolean)
+         * @see #includeTargetPortTag(boolean)
+         */
+        public Builder includeTargetSchemeTag(boolean includeTargetSchemeTag) {
+            this.includeTargetSchemeTag = includeTargetSchemeTag;
+            return this;
+        }
+
+        /**
+         * If your client connects to many different hosts, this might lead to lots of
+         * metrics being generated. Disabling the tagging by host helps to keep the number
+         * of metrics low in such cases.
+         * @param includeTargetHostTag whether to include the {@code target.host} tag
+         * @return this builder
+         * @since 1.5.0
+         * @see #includeHostTag
+         * @see #includeHostTag(boolean)
+         * @see #includeTargetSchemeTag(boolean)
+         * @see #includeTargetPortTag(boolean)
+         */
+        public Builder includeTargetHostTag(boolean includeTargetHostTag) {
+            this.includeTargetHostTag = includeTargetHostTag;
+            return this;
+        }
+
+        /**
          * Historically, OkHttp Metrics provided by {@link OkHttpMetricsEventListener}
          * included a {@code host} tag for the target host being called. To align with
          * other HTTP client metrics, this was changed to {@code target.host}, but to
@@ -325,9 +383,28 @@ public class OkHttpMetricsEventListener extends EventListener {
          * @param includeHostTag whether to include the {@code host} tag
          * @return this builder
          * @since 1.5.0
+         * @see #includeTargetHostTag(boolean)
+         * @see #includeTargetSchemeTag(boolean)
+         * @see #includeTargetPortTag(boolean)
          */
         public Builder includeHostTag(boolean includeHostTag) {
             this.includeHostTag = includeHostTag;
+            return this;
+        }
+
+        /**
+         * If your client connects to many different ports, this might lead to lots of
+         * metrics being generated. Disabling the tagging by port helps to keep the number
+         * of metrics low in such cases.
+         * @param includeTargetPortTag whether to include the {@code target.port} tag
+         * @return this builder
+         * @since 1.5.0
+         * @see #includeTargetSchemeTag(boolean)
+         * @see #includeTargetHostTag(boolean)
+         * @see #includeHostTag(boolean)
+         */
+        public Builder includeTargetPortTag(boolean includeTargetPortTag) {
+            this.includeTargetPortTag = includeTargetPortTag;
             return this;
         }
 
@@ -362,7 +439,7 @@ public class OkHttpMetricsEventListener extends EventListener {
 
         public OkHttpMetricsEventListener build() {
             return new OkHttpMetricsEventListener(registry, name, uriMapper, tags, contextSpecificTags, requestTagKeys,
-                    includeHostTag);
+                    includeHostTag, includeTargetSchemeTag, includeTargetHostTag, includeTargetPortTag);
         }
 
     }
