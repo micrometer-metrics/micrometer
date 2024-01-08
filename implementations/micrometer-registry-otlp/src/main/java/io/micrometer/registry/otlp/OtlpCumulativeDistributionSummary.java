@@ -15,26 +15,43 @@
  */
 package io.micrometer.registry.otlp;
 
+import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.cumulative.CumulativeDistributionSummary;
 import io.micrometer.core.instrument.distribution.*;
+import io.micrometer.registry.otlp.internal.Base2ExponentialHistogram;
+import io.micrometer.registry.otlp.internal.ExponentialHistogramSnapShot;
 
 import java.util.concurrent.TimeUnit;
 
-class OtlpCumulativeDistributionSummary extends CumulativeDistributionSummary implements StartTimeAwareMeter {
+class OtlpCumulativeDistributionSummary extends CumulativeDistributionSummary
+        implements StartTimeAwareMeter, OtlpHistogramSupport {
+
+    private final HistogramFlavour histogramFlavour;
 
     private final long startTimeNanos;
 
     OtlpCumulativeDistributionSummary(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig,
-            double scale, boolean supportsAggregablePercentiles) {
+            double scale, OtlpConfig otlpConfig) {
         super(id, clock, distributionStatisticConfig, scale,
-                OtlpMeterRegistry.getHistogram(clock, distributionStatisticConfig, AggregationTemporality.CUMULATIVE));
+                OtlpMeterRegistry.getHistogram(clock, distributionStatisticConfig, otlpConfig));
         this.startTimeNanos = TimeUnit.MILLISECONDS.toNanos(clock.wallTime());
+        this.histogramFlavour = OtlpMeterRegistry.histogramFlavour(otlpConfig.histogramFlavour(),
+                distributionStatisticConfig);
     }
 
     @Override
     public long getStartTimeNanos() {
         return this.startTimeNanos;
+    }
+
+    @Override
+    @Nullable
+    public ExponentialHistogramSnapShot getExponentialHistogramSnapShot() {
+        if (histogramFlavour == HistogramFlavour.BASE2_EXPONENTIAL_BUCKET_HISTOGRAM) {
+            return ((Base2ExponentialHistogram) histogram).getLatestExponentialHistogramSnapshot();
+        }
+        return null;
     }
 
 }

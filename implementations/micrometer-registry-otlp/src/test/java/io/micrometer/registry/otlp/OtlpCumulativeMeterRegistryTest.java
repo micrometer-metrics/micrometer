@@ -17,12 +17,15 @@ package io.micrometer.registry.otlp;
 
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.BaseUnits;
+import io.opentelemetry.proto.metrics.v1.ExponentialHistogramDataPoint;
+import io.opentelemetry.proto.metrics.v1.Metric;
 import io.opentelemetry.proto.metrics.v1.NumberDataPoint;
 import org.junit.jupiter.api.Test;
 
 import java.lang.management.CompilationMXBean;
 import java.lang.management.ManagementFactory;
 import java.lang.management.OperatingSystemMXBean;
+import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
@@ -33,6 +36,22 @@ class OtlpCumulativeMeterRegistryTest extends OtlpMeterRegistryTest {
     @Override
     protected OtlpConfig otlpConfig() {
         return OtlpConfig.DEFAULT;
+    }
+
+    @Override
+    OtlpConfig exponentialHistogramOtlpConfig() {
+        return new OtlpConfig() {
+
+            @Override
+            public HistogramFlavour histogramFlavour() {
+                return HistogramFlavour.BASE2_EXPONENTIAL_BUCKET_HISTOGRAM;
+            }
+
+            @Override
+            public String get(final String key) {
+                return null;
+            }
+        };
     }
 
     @Test
@@ -515,6 +534,94 @@ class OtlpCumulativeMeterRegistryTest extends OtlpMeterRegistryTest {
         clock.addSeconds(1);
         assertThat(getDataPoint.apply(counter).getStartTimeUnixNano()).isEqualTo(startTime);
         assertThat(getDataPoint.apply(counter).getTimeUnixNano()).isEqualTo(60001000000L);
+    }
+
+    @Test
+    void testExponentialHistogramWithTimer() {
+        Timer timer = Timer.builder(METER_NAME)
+            .description(METER_DESCRIPTION)
+            .tags(Tags.of(meterTag))
+            .publishPercentileHistogram()
+            .register(registryWithExponentialHistogram);
+        timer.record(Duration.ofMillis(1));
+        timer.record(Duration.ofMillis(100));
+        timer.record(Duration.ofMillis(1000));
+
+        Metric metric = writeToMetric(timer);
+        assertThat(metric.getExponentialHistogram().getDataPointsCount()).isPositive();
+
+        ExponentialHistogramDataPoint exponentialHistogramDataPoint = metric.getExponentialHistogram().getDataPoints(0);
+        assertExponentialHistogram(metric, 3, 1101, 0.0, 1, 5);
+        ExponentialHistogramDataPoint.Buckets buckets = exponentialHistogramDataPoint.getPositive();
+        assertThat(buckets.getOffset()).isEqualTo(212);
+        assertThat(buckets.getBucketCountsCount()).isEqualTo(107);
+        assertThat(buckets.getBucketCountsList().get(0)).isEqualTo(1);
+        assertThat(buckets.getBucketCountsList().get(106)).isEqualTo(1);
+        assertThat(buckets.getBucketCountsList()).filteredOn(v -> v == 0).hasSize(105);
+
+        long previousEndTime = exponentialHistogramDataPoint.getTimeUnixNano();
+
+        clock.add(exponentialHistogramOtlpConfig().step());
+        timer.record(Duration.ofMillis(10000));
+
+        metric = writeToMetric(timer);
+        exponentialHistogramDataPoint = metric.getExponentialHistogram().getDataPoints(0);
+        assertThat(exponentialHistogramDataPoint.getTimeUnixNano() - previousEndTime)
+            .isEqualTo(otlpConfig().step().toNanos());
+
+        assertExponentialHistogram(metric, 4, 11101, 0.0, 1, 4);
+
+        buckets = exponentialHistogramDataPoint.getPositive();
+        assertThat(buckets.getOffset()).isEqualTo(106);
+        assertThat(buckets.getBucketCountsCount()).isEqualTo(107);
+        assertThat(buckets.getBucketCountsList().get(0)).isEqualTo(1);
+        assertThat(buckets.getBucketCountsList().get(53)).isEqualTo(1);
+        assertThat(buckets.getBucketCountsList().get(106)).isEqualTo(1);
+        assertThat(buckets.getBucketCountsList()).filteredOn(v -> v == 0).hasSize(104);
+    }
+
+    @Test
+    void testExponentialHistogramDs() {
+        DistributionSummary ds = DistributionSummary.builder(METER_NAME)
+            .description(METER_DESCRIPTION)
+            .tags(Tags.of(meterTag))
+            .publishPercentileHistogram()
+            .register(registryWithExponentialHistogram);
+        ds.record(1);
+        ds.record(100);
+        ds.record(1000);
+
+        Metric metric = writeToMetric(ds);
+        assertThat(metric.getExponentialHistogram().getDataPointsCount()).isPositive();
+
+        ExponentialHistogramDataPoint exponentialHistogramDataPoint = metric.getExponentialHistogram().getDataPoints(0);
+        assertExponentialHistogram(metric, 3, 1101, 0.0, 1, 5);
+        ExponentialHistogramDataPoint.Buckets buckets = exponentialHistogramDataPoint.getPositive();
+        assertThat(buckets.getOffset()).isEqualTo(212);
+        assertThat(buckets.getBucketCountsCount()).isEqualTo(107);
+        assertThat(buckets.getBucketCountsList().get(0)).isEqualTo(1);
+        assertThat(buckets.getBucketCountsList().get(106)).isEqualTo(1);
+        assertThat(buckets.getBucketCountsList()).filteredOn(v -> v == 0).hasSize(105);
+
+        long previousEndTime = exponentialHistogramDataPoint.getTimeUnixNano();
+
+        clock.add(exponentialHistogramOtlpConfig().step());
+        ds.record(10000);
+
+        metric = writeToMetric(ds);
+        exponentialHistogramDataPoint = metric.getExponentialHistogram().getDataPoints(0);
+        assertThat(exponentialHistogramDataPoint.getTimeUnixNano() - previousEndTime)
+            .isEqualTo(otlpConfig().step().toNanos());
+
+        assertExponentialHistogram(metric, 4, 11101, 0.0, 1, 4);
+
+        buckets = exponentialHistogramDataPoint.getPositive();
+        assertThat(buckets.getOffset()).isEqualTo(106);
+        assertThat(buckets.getBucketCountsCount()).isEqualTo(107);
+        assertThat(buckets.getBucketCountsList().get(0)).isEqualTo(1);
+        assertThat(buckets.getBucketCountsList().get(53)).isEqualTo(1);
+        assertThat(buckets.getBucketCountsList().get(106)).isEqualTo(1);
+        assertThat(buckets.getBucketCountsList()).filteredOn(v -> v == 0).hasSize(104);
     }
 
 }
