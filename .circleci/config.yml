@@ -89,7 +89,7 @@ jobs:
       - checkout
       - restore_cache:
           key: gradle-dependencies-{{ .Branch }}-{{ checksum "build.gradle" }}-{{ checksum ".circleci/config.yml" }}
-      - deploy:
+      - run:
           name: Deployment
           command: sh ./gradle/deploy.sh
 
