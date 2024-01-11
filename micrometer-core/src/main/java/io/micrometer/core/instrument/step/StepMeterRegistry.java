@@ -51,7 +51,7 @@ public abstract class StepMeterRegistry extends PushMeterRegistry {
     private ScheduledExecutorService meterPollingService;
 
     // Time when the last scheduled rollOver has started.
-    private long lastMeterRolloverStartTime = -1;
+    private volatile long lastMeterRolloverStartTime = -1;
 
     public StepMeterRegistry(StepRegistryConfig config, Clock clock) {
         super(config, clock);
