@@ -91,7 +91,7 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
 
     // Time when the last scheduled rollOver has started. Applicable only for delta
     // flavour.
-    private long lastMeterRolloverStartTime = -1;
+    private volatile long lastMeterRolloverStartTime = -1;
 
     @Nullable
     private ScheduledExecutorService meterPollingService;
