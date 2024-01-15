@@ -41,11 +41,14 @@ import static org.mockito.Mockito.when;
 class JCacheMetricsTest extends AbstractCacheMetricsTest {
 
     @SuppressWarnings("unchecked")
-    private Cache<String, String> cache = mock(Cache.class);
+    // tag::setup[]
+    Cache<String, String> cache;
 
-    private CacheManager cacheManager = mock(CacheManager.class);
+    JCacheMetrics<String, String, Cache<String, String>> metrics;
 
-    private JCacheMetrics<String, String, Cache<String, String>> metrics;
+    // end::setup[]
+
+    private CacheManager cacheManager;
 
     private MBeanServer mbeanServer;
 
@@ -53,10 +56,14 @@ class JCacheMetricsTest extends AbstractCacheMetricsTest {
 
     @BeforeEach
     void setup() throws Exception {
+        cache = mock(Cache.class);
+        cacheManager = mock(CacheManager.class);
         when(cache.getCacheManager()).thenReturn(cacheManager);
         when(cache.getName()).thenReturn("testCache");
         when(cacheManager.getURI()).thenReturn(new URI("http://localhost"));
+        // tag::setup_2[]
         metrics = new JCacheMetrics<>(cache, expectedTag);
+        // end::setup_2[]
 
         // emulate MBean server with MBean used for statistic lookup
         mbeanServer = MBeanServerFactory.createMBeanServer();
@@ -75,8 +82,10 @@ class JCacheMetricsTest extends AbstractCacheMetricsTest {
 
     @Test
     void reportExpectedMetrics() {
+        // tag::register[]
         MeterRegistry meterRegistry = new SimpleMeterRegistry();
         metrics.bindTo(meterRegistry);
+        // end::register[]
 
         verifyCommonCacheMetrics(meterRegistry, metrics);
 
@@ -86,8 +95,10 @@ class JCacheMetricsTest extends AbstractCacheMetricsTest {
 
     @Test
     void constructInstanceViaStaticMethodMonitor() {
+        // tag::monitor[]
         MeterRegistry meterRegistry = new SimpleMeterRegistry();
         JCacheMetrics.monitor(meterRegistry, cache, expectedTag);
+        // end::monitor[]
 
         meterRegistry.get("cache.removals").tags(expectedTag).gauge();
     }
