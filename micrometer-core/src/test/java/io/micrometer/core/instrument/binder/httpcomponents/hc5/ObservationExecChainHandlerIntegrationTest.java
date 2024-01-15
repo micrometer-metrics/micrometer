@@ -174,7 +174,7 @@ class ObservationExecChainHandlerIntegrationTest {
 
         @Test
         void recordSocketTimeoutAsIoErrors(@WiremockResolver.Wiremock WireMockServer server) throws Exception {
-            server.stubFor(get(urlEqualTo("/delayed")).willReturn(aResponse().withStatus(200).withFixedDelay(2000)));
+            server.stubFor(get(urlEqualTo("/delayed")).willReturn(aResponse().withStatus(200).withFixedDelay(600)));
             try (CloseableHttpClient client = classicClient()) {
                 assertThatThrownBy(() -> executeClassic(client, new HttpGet(server.baseUrl() + "/delayed")))
                     .isInstanceOf(SocketTimeoutException.class);
@@ -326,7 +326,7 @@ class ObservationExecChainHandlerIntegrationTest {
 
         @Test
         void recordSocketTimeoutAsIoErrors(@WiremockResolver.Wiremock WireMockServer server) throws Exception {
-            server.stubFor(get(urlEqualTo("/delayed")).willReturn(aResponse().withStatus(200).withFixedDelay(2100)));
+            server.stubFor(get(urlEqualTo("/delayed")).willReturn(aResponse().withStatus(200).withFixedDelay(1600)));
             try (CloseableHttpAsyncClient client = asyncClient()) {
                 SimpleHttpRequest request = SimpleRequestBuilder.get(server.baseUrl() + "/delayed").build();
                 assertThatThrownBy(() -> executeAsync(client, request))
@@ -380,7 +380,7 @@ class ObservationExecChainHandlerIntegrationTest {
                 TimeValue.ofMilliseconds(500L));
 
         ConnectionConfig connectionConfig = ConnectionConfig.custom()
-            .setSocketTimeout(2000, TimeUnit.MILLISECONDS)
+            .setSocketTimeout(500, TimeUnit.MILLISECONDS)
             .setConnectTimeout(2000L, TimeUnit.MILLISECONDS)
             .build();
 
@@ -409,7 +409,7 @@ class ObservationExecChainHandlerIntegrationTest {
                 TimeValue.ofMilliseconds(500L));
 
         ConnectionConfig connectionConfig = ConnectionConfig.custom()
-            .setSocketTimeout(1000, TimeUnit.MILLISECONDS)
+            .setSocketTimeout(500, TimeUnit.MILLISECONDS)
             .setConnectTimeout(1000, TimeUnit.MILLISECONDS)
             .build();
 
