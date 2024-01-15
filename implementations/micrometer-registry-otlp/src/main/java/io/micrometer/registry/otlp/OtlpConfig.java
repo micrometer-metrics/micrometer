@@ -18,6 +18,7 @@ package io.micrometer.registry.otlp;
 import io.micrometer.core.instrument.config.validate.Validated;
 import io.micrometer.core.instrument.push.PushRegistryConfig;
 
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.Objects;
@@ -51,7 +52,32 @@ public interface OtlpConfig extends PushRegistryConfig {
      * @return address to where metrics will be published.
      */
     default String url() {
-        return getUrlString(this, "url").orElse("http://localhost:4318/v1/metrics");
+        return getUrlString(this, "url").orElseGet(() -> {
+            Map<String, String> env = System.getenv();
+            String endpoint = env.get("OTEL_EXPORTER_OTLP_METRICS_ENDPOINT");
+            if (endpoint == null) {
+                endpoint = env.get("OTEL_EXPORTER_OTLP_ENDPOINT");
+            }
+            if (endpoint == null) {
+                endpoint = "http://localhost:4318/v1/metrics";
+            }
+            else if (!endpoint.endsWith("/v1/metrics")) {
+                endpoint = endpoint + "/v1/metrics";
+            }
+            return endpoint;
+        });
+    }
+
+    @Override
+    default Duration step() {
+        Validated<Duration> step = getDuration(this, "step");
+        return step.orElseGet(() -> {
+            String exportInterval = System.getenv().get("OTEL_METRIC_EXPORT_INTERVAL");
+            if (exportInterval != null) {
+                return Duration.ofMillis(Long.parseLong(exportInterval));
+            }
+            return PushRegistryConfig.super.step();
+        });
     }
 
     /**
@@ -100,8 +126,13 @@ public interface OtlpConfig extends PushRegistryConfig {
      * @since 1.11.0
      */
     default AggregationTemporality aggregationTemporality() {
-        return getEnum(this, AggregationTemporality.class, "aggregationTemporality")
-            .orElse(AggregationTemporality.CUMULATIVE);
+        return getEnum(this, AggregationTemporality.class, "aggregationTemporality").orElseGet(() -> {
+            String preference = System.getenv().get("OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE");
+            if (preference != null) {
+                return AggregationTemporality.valueOf(preference.toUpperCase());
+            }
+            return AggregationTemporality.CUMULATIVE;
+        });
     }
 
     /**
