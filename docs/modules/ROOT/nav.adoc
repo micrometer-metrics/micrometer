@@ -35,6 +35,7 @@
 ** xref:implementations/statsD.adoc[statsD]
 ** xref:implementations/wavefront.adoc[Wavefront]
 * xref:reference.adoc[Reference Instrumentations]
+** xref:reference/commons-pool.adoc[Apache Commons Pool]
 ** xref:reference/jvm.adoc[JVM]
 ** xref:reference/cache.adoc[Cache]
 ** xref:reference/okhttpclient.adoc[OkHttpClient]
