@@ -1,0 +1,45 @@
+[[overview]]
+= Database Instrumentation
+
+Micrometer can instrument various libraries that interact with databases
+
+* <<db-datasource, DataSource Instrumentation>>
+* <<db-jooq, jOOQ Instrumentation>>
+* <<db-postgres, PostgreSQL Instrumentation>>
+
+[[db-datasource]]
+== DataSource Instrumentation
+
+[source,java,subs=+attributes]
+-----
+// Binding instrumentation through static method
+include::{include-core-test-java}/io/micrometer/core/instrument/binder/db/DatabaseTableMetricsTest.java[tags=monitor, indent=0]
+
+// Usage example
+include::{include-core-test-java}/io/micrometer/core/instrument/binder/db/DatabaseTableMetricsTest.java[tags=statement, indent=0]
+include::{include-core-test-java}/io/micrometer/core/instrument/binder/db/DatabaseTableMetricsTest.java[tags=result, indent=0]
+-----
+
+[[db-jooq]]
+== jOOQ Instrumentation
+
+[source,java,subs=+attributes]
+-----
+// Setting up instrumentation
+include::{include-core-test-java}/io/micrometer/core/instrument/binder/db/MetricsDSLContextTest.java[tags=setup, indent=0]
+
+// Usage example
+include::{include-core-test-java}/io/micrometer/core/instrument/binder/db/MetricsDSLContextTest.java[tags=result, indent=0]
+-----
+
+[[db-postgres]]
+== PostgresSQL Instrumentation
+
+[source,java,subs=+attributes]
+-----
+// Setting up instrumentation
+include::{include-core-test-java}/io/micrometer/core/instrument/binder/db/PostgreSQLDatabaseMetricsIntegrationTest.java[tags=setup, indent=0]
+
+// Usage example
+include::{include-core-test-java}/io/micrometer/core/instrument/binder/db/PostgreSQLDatabaseMetricsIntegrationTest.java[tags=result, indent=0]
+-----

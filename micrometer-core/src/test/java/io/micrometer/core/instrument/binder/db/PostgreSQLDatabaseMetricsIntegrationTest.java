@@ -63,12 +63,15 @@ class PostgreSQLDatabaseMetricsIntegrationTest {
         dataSource = createDataSource();
         tags = Tags.of("database", postgres.getDatabaseName());
 
+        // tag::setup[]
         new PostgreSQLDatabaseMetrics(dataSource, postgres.getDatabaseName()).bindTo(registry);
+        // end::setup[]
     }
 
     @Test
     void gaugesAreNotZero() throws Exception {
         /* create noise to increment gauges */
+        // tag::result[]
         executeSql("CREATE TABLE gauge_test_table (val varchar(255))",
                 "INSERT INTO gauge_test_table (val) VALUES ('foo')", "UPDATE gauge_test_table SET val = 'bar'",
                 "SELECT * FROM gauge_test_table", "DELETE FROM gauge_test_table");
@@ -79,6 +82,7 @@ class PostgreSQLDatabaseMetricsIntegrationTest {
         for (String name : GAUGES) {
             assertThat(get(name).gauge().value()).withFailMessage("Gauge " + name + " is zero.").isGreaterThan(0);
         }
+        // end::result[]
     }
 
     @Test
