@@ -43,8 +43,9 @@ import io.micrometer.observation.Observation;
 import io.micrometer.observation.Observation.Context;
 import io.micrometer.observation.Observation.Event;
 import io.micrometer.observation.ObservationHandler;
-import io.micrometer.observation.ObservationRegistry;
 import io.micrometer.observation.ObservationTextPublisher;
+import io.micrometer.observation.tck.TestObservationRegistry;
+import io.micrometer.observation.tck.TestObservationRegistryAssert;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -82,13 +83,14 @@ class GrpcObservationTest {
 
     ObservationGrpcClientInterceptor clientInterceptor;
 
+    TestObservationRegistry observationRegistry = TestObservationRegistry.create();
+
     @BeforeEach
     void setUp() {
         serverHandler = new ContextAndEventHoldingObservationHandler<>(GrpcServerObservationContext.class);
         clientHandler = new ContextAndEventHoldingObservationHandler<>(GrpcClientObservationContext.class);
-
         MeterRegistry meterRegistry = new SimpleMeterRegistry();
-        ObservationRegistry observationRegistry = ObservationRegistry.create();
+
         observationRegistry.observationConfig()
             .observationHandler(new ObservationTextPublisher())
             .observationHandler(new DefaultMeterObservationHandler(meterRegistry))
@@ -341,10 +343,13 @@ class GrpcObservationTest {
                     MethodType.UNARY);
             verifyClientContext("grpc.testing.SimpleService", "UnaryRpc", "grpc.testing.SimpleService/UnaryRpc",
                     MethodType.UNARY);
-            assertThat(serverHandler.getContext().getStatusCode()).isEqualTo(Code.UNIMPLEMENTED);
-            assertThat(clientHandler.getContext().getStatusCode()).isEqualTo(Code.UNIMPLEMENTED);
+            assertThat(serverHandler.getContext().getStatusCode()).isNull();
+            assertThat(clientHandler.getContext().getStatusCode()).isEqualTo(Code.UNKNOWN);
             assertThat(serverHandler.getEvents()).containsExactly(GrpcServerEvents.MESSAGE_RECEIVED);
             assertThat(clientHandler.getEvents()).containsExactly(GrpcClientEvents.MESSAGE_SENT);
+            TestObservationRegistryAssert.assertThat(observationRegistry)
+                .hasAnObservation(
+                        observationContextAssert -> observationContextAssert.hasNameEqualTo("grpc.server").hasError());
         }
 
         @Test
@@ -362,10 +367,13 @@ class GrpcObservationTest {
                     "grpc.testing.SimpleService/ClientStreamingRpc", MethodType.CLIENT_STREAMING);
             verifyServerContext("grpc.testing.SimpleService", "ClientStreamingRpc",
                     "grpc.testing.SimpleService/ClientStreamingRpc", MethodType.CLIENT_STREAMING);
-            assertThat(clientHandler.getContext().getStatusCode()).isEqualTo(Code.UNIMPLEMENTED);
-            assertThat(serverHandler.getContext().getStatusCode()).isEqualTo(Code.UNIMPLEMENTED);
+            assertThat(clientHandler.getContext().getStatusCode()).isEqualTo(Code.UNKNOWN);
+            assertThat(serverHandler.getContext().getStatusCode()).isNull();
             assertThat(clientHandler.getEvents()).isEmpty();
             assertThat(serverHandler.getEvents()).isEmpty();
+            TestObservationRegistryAssert.assertThat(observationRegistry)
+                .hasAnObservation(
+                        observationContextAssert -> observationContextAssert.hasNameEqualTo("grpc.server").hasError());
         }
 
         @Test
@@ -385,10 +393,13 @@ class GrpcObservationTest {
                     "grpc.testing.SimpleService/ServerStreamingRpc", MethodType.SERVER_STREAMING);
             verifyServerContext("grpc.testing.SimpleService", "ServerStreamingRpc",
                     "grpc.testing.SimpleService/ServerStreamingRpc", MethodType.SERVER_STREAMING);
-            assertThat(clientHandler.getContext().getStatusCode()).isEqualTo(Code.UNIMPLEMENTED);
-            assertThat(serverHandler.getContext().getStatusCode()).isEqualTo(Code.UNIMPLEMENTED);
+            assertThat(clientHandler.getContext().getStatusCode()).isEqualTo(Code.UNKNOWN);
+            assertThat(serverHandler.getContext().getStatusCode()).isNull();
             assertThat(clientHandler.getEvents()).containsExactly(GrpcClientEvents.MESSAGE_SENT);
             assertThat(serverHandler.getEvents()).containsExactly(GrpcServerEvents.MESSAGE_RECEIVED);
+            TestObservationRegistryAssert.assertThat(observationRegistry)
+                .hasAnObservation(
+                        observationContextAssert -> observationContextAssert.hasNameEqualTo("grpc.server").hasError());
         }
 
         @Test
@@ -407,10 +418,13 @@ class GrpcObservationTest {
                     "grpc.testing.SimpleService/BidiStreamingRpc", MethodType.BIDI_STREAMING);
             verifyServerContext("grpc.testing.SimpleService", "BidiStreamingRpc",
                     "grpc.testing.SimpleService/BidiStreamingRpc", MethodType.BIDI_STREAMING);
-            assertThat(clientHandler.getContext().getStatusCode()).isEqualTo(Code.UNIMPLEMENTED);
-            assertThat(serverHandler.getContext().getStatusCode()).isEqualTo(Code.UNIMPLEMENTED);
+            assertThat(clientHandler.getContext().getStatusCode()).isEqualTo(Code.UNKNOWN);
+            assertThat(serverHandler.getContext().getStatusCode()).isNull();
             assertThat(clientHandler.getEvents()).isEmpty();
             assertThat(serverHandler.getEvents()).isEmpty();
+            TestObservationRegistryAssert.assertThat(observationRegistry)
+                .hasAnObservation(
+                        observationContextAssert -> observationContextAssert.hasNameEqualTo("grpc.server").hasError());
         }
 
         private StreamObserver<SimpleResponse> createResponseObserver(AtomicBoolean errored) {
@@ -533,6 +547,26 @@ class GrpcObservationTest {
 
     // Default implementation in the parent class throws UNIMPLEMENTED error
     static class ExceptionService extends SimpleServiceImplBase {
+
+        @Override
+        public void unaryRpc(SimpleRequest request, StreamObserver<SimpleResponse> responseObserver) {
+            throw new IllegalStateException("Boom!");
+        }
+
+        @Override
+        public StreamObserver<SimpleRequest> clientStreamingRpc(StreamObserver<SimpleResponse> responseObserver) {
+            throw new IllegalStateException("Boom!");
+        }
+
+        @Override
+        public void serverStreamingRpc(SimpleRequest request, StreamObserver<SimpleResponse> responseObserver) {
+            throw new IllegalStateException("Boom!");
+        }
+
+        @Override
+        public StreamObserver<SimpleRequest> bidiStreamingRpc(StreamObserver<SimpleResponse> responseObserver) {
+            throw new IllegalStateException("Boom!");
+        }
 
     }
 
