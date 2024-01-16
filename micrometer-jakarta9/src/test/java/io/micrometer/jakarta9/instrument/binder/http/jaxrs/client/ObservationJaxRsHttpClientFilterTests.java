@@ -16,12 +16,14 @@
 package io.micrometer.jakarta9.instrument.binder.http.jaxrs.client;
 
 import com.github.tomakehurst.wiremock.client.WireMock;
+import com.github.tomakehurst.wiremock.http.Fault;
 import com.github.tomakehurst.wiremock.junit5.WireMockRuntimeInfo;
 import com.github.tomakehurst.wiremock.junit5.WireMockTest;
 import io.micrometer.observation.Observation.Context;
 import io.micrometer.observation.ObservationHandler;
 import io.micrometer.observation.tck.TestObservationRegistry;
 import io.micrometer.observation.tck.TestObservationRegistryAssert;
+import jakarta.ws.rs.ProcessingException;
 import jakarta.ws.rs.client.Client;
 import jakarta.ws.rs.client.ClientBuilder;
 import jakarta.ws.rs.client.WebTarget;
@@ -46,7 +48,6 @@ class ObservationJaxRsHttpClientFilterTests {
 
         try (Client client = ClientBuilder.newClient()) {
             client.register(new ObservationJaxRsHttpClientFilter(observationRegistry, null));
-            client.register(new ObservationJerseyClientInterceptor());
             final WebTarget target = client.target("http://localhost:" + wmRuntimeInfo.getHttpPort() + "/foo");
             try (Response response = target.request().get()) {
                 BDDAssertions.then(response.getStatus()).isEqualTo(200);
@@ -74,6 +75,37 @@ class ObservationJaxRsHttpClientFilterTests {
 
         wmRuntimeInfo.getWireMock()
             .verifyThat(WireMock.getRequestedFor(WireMock.urlEqualTo("/nonexistanturl"))
+                .withHeader("foo", WireMock.equalTo("bar")));
+
+        TestObservationRegistryAssert.then(observationRegistry)
+            .hasSingleObservationThat()
+            .hasBeenStarted()
+            .hasBeenStopped()
+            .hasError();
+    }
+
+    @Test
+    void clientFilterShouldWorkWithJakartaHttpClientForExceptionsWithoutResponse(WireMockRuntimeInfo wmRuntimeInfo) {
+        wmRuntimeInfo.getWireMock()
+            .register(WireMock.get("/connectionReset")
+                .willReturn(WireMock.aResponse().withFault(Fault.CONNECTION_RESET_BY_PEER)));
+
+        try (Client client = ClientBuilder.newClient()) {
+            client.register(new ObservationJaxRsHttpClientFilter(observationRegistry, null));
+            final WebTarget target = client
+                .target("http://localhost:" + wmRuntimeInfo.getHttpPort() + "/connectionReset");
+            Exception exception = null;
+            try (Response response = InvocationProxy.wrap(target.request(), observationRegistry).get()) {
+                BDDAssertions.fail("Response should not be returned");
+            }
+            catch (Exception e) {
+                exception = e;
+            }
+            BDDAssertions.then(exception).isNotNull().isInstanceOf(ProcessingException.class);
+        }
+
+        wmRuntimeInfo.getWireMock()
+            .verifyThat(WireMock.getRequestedFor(WireMock.urlEqualTo("/connectionReset"))
                 .withHeader("foo", WireMock.equalTo("bar")));
 
         TestObservationRegistryAssert.then(observationRegistry)
