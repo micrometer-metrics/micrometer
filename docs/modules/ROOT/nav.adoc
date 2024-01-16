@@ -36,6 +36,7 @@
 ** xref:implementations/wavefront.adoc[Wavefront]
 * xref:reference.adoc[Reference Instrumentations]
 ** xref:reference/commons-pool.adoc[Apache Commons Pool]
+** xref:reference/httpcomponents.adoc[Apache HttpComponents Client]
 ** xref:reference/jvm.adoc[JVM]
 ** xref:reference/cache.adoc[Cache]
 ** xref:reference/okhttpclient.adoc[OkHttpClient]
