@@ -20,6 +20,7 @@ import io.micrometer.common.util.internal.logging.InternalLogger;
 import io.micrometer.common.util.internal.logging.InternalLoggerFactory;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.distribution.*;
 import io.micrometer.core.instrument.distribution.Histogram;
@@ -44,10 +45,7 @@ import io.opentelemetry.proto.metrics.v1.*;
 import io.opentelemetry.proto.resource.v1.Resource;
 
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
@@ -74,6 +72,15 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
     private static final ThreadFactory DEFAULT_THREAD_FACTORY = new NamedThreadFactory("otlp-metrics-publisher");
 
     private static final double[] EMPTY_SLO_WITH_POSITIVE_INF = new double[] { Double.POSITIVE_INFINITY };
+
+    private static final String TELEMETRY_SDK_NAME = "telemetry.sdk.name";
+
+    private static final String TELEMETRY_SDK_LANGUAGE = "telemetry.sdk.language";
+
+    private static final String TELEMETRY_SDK_VERSION = "telemetry.sdk.version";
+
+    private static final Set<String> RESERVED_RESOURCE_ATTRIBUTES = new HashSet<>(
+            Arrays.asList(TELEMETRY_SDK_NAME, TELEMETRY_SDK_LANGUAGE, TELEMETRY_SDK_VERSION));
 
     private final InternalLogger logger = InternalLoggerFactory.getInstance(OtlpMeterRegistry.class);
 
@@ -493,15 +500,19 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
     Iterable<KeyValue> getResourceAttributes() {
         boolean serviceNameProvided = false;
         List<KeyValue> attributes = new ArrayList<>();
-        attributes.add(createKeyValue("telemetry.sdk.name", "io.micrometer"));
-        attributes.add(createKeyValue("telemetry.sdk.language", "java"));
+        attributes.add(createKeyValue(TELEMETRY_SDK_NAME, "io.micrometer"));
+        attributes.add(createKeyValue(TELEMETRY_SDK_LANGUAGE, "java"));
         String micrometerCoreVersion = MeterRegistry.class.getPackage().getImplementationVersion();
         if (micrometerCoreVersion != null) {
-            attributes.add(createKeyValue("telemetry.sdk.version", micrometerCoreVersion));
+            attributes.add(createKeyValue(TELEMETRY_SDK_VERSION, micrometerCoreVersion));
         }
         for (Map.Entry<String, String> keyValue : this.config.resourceAttributes().entrySet()) {
             if ("service.name".equals(keyValue.getKey())) {
                 serviceNameProvided = true;
+            }
+            if (RESERVED_RESOURCE_ATTRIBUTES.contains(keyValue.getKey())) {
+                logger.warn("Resource attribute {} is reserved and will be ignored", keyValue.getKey());
+                continue;
             }
             attributes.add(createKeyValue(keyValue.getKey(), keyValue.getValue()));
         }
