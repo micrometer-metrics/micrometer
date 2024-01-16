@@ -1,4 +1,10 @@
+[[overview]]
+= Micrometer Cache Instrumentations
+
 Micrometer supports binding metrics to a variety of different popular caching libraries. Each implementation supports basic features, such as cache hits versus misses, from which you can derive basic information about the cache hit ratio over a period of time. Micrometer uses a function tracking counter to monitor such things as hits and misses, giving you a notion not only of hits and misses over the total life of the cache (the basic metric exposed from Guava's `CacheStats`, for example) but hits and misses inside a given interval.
+
+[[cache-example]]
+== Example
 
 To demonstrate the features of cache monitoring, we start with a simple program that uses `reactor-netty` to read the entirety of Mary Shelley's _Frankenstein_ and put each word in the cache if it has not yet been seen:
 
@@ -42,3 +48,91 @@ The following image shows the miss ratio when it exceeds 10%:
 
 .Alerting when the miss ratio exceeds 10%
 image::reference/cache/grafana-guava-miss-ratio.png[Miss ratio (alerted),width=800]
+
+== Cache implementations
+
+Micrometer can instrument various cache implementations
+
+* <<cache-caffeine, Caffeine>>
+* <<cache-ehcache, EhCache>>
+* <<cache-guava, Guava>>
+* <<cache-hazelcast, Hazelcast>>
+* <<cache-jcache, JCache>>
+
+[[cache-caffeine]]
+=== Caffeine
+
+[source,java,subs=+attributes]
+-----
+// Setting up instrumentation
+include::{include-core-test-java}/io/micrometer/core/instrument/binder/cache/CaffeineCacheMetricsTest.java[tags=setup, indent=0]
+
+// Binding manually
+include::{include-core-test-java}/io/micrometer/core/instrument/binder/cache/CaffeineCacheMetricsTest.java[tags=register, indent=0]
+
+// Binding through a static method
+include::{include-core-test-java}/io/micrometer/core/instrument/binder/cache/CaffeineCacheMetricsTest.java[tags=monitor, indent=0]
+-----
+
+[[cache-ehcache]]
+=== EhCache2
+
+[source,java,subs=+attributes]
+-----
+// Setting up instrumentation
+include::{include-core-test-java}/io/micrometer/core/instrument/binder/cache/EhCache2MetricsTest.java[tags=setup, indent=0]
+
+// Binding manually
+include::{include-core-test-java}/io/micrometer/core/instrument/binder/cache/EhCache2MetricsTest.java[tags=register, indent=0]
+
+// Binding through a static method
+include::{include-core-test-java}/io/micrometer/core/instrument/binder/cache/EhCache2MetricsTest.java[tags=monitor, indent=0]
+-----
+
+[[cache-guava]]
+=== Guava
+
+[source,java,subs=+attributes]
+-----
+// Setting up instrumentation
+include::{include-core-test-java}/io/micrometer/core/instrument/binder/cache/GuavaCacheMetricsTest.java[tags=setup, indent=0]
+
+// Binding manually
+include::{include-core-test-java}/io/micrometer/core/instrument/binder/cache/GuavaCacheMetricsTest.java[tags=register, indent=0]
+
+// Binding through a static method
+include::{include-core-test-java}/io/micrometer/core/instrument/binder/cache/GuavaCacheMetricsTest.java[tags=monitor, indent=0]
+-----
+
+[[cache-hazelcast]]
+=== Hazelcast
+
+[source,java,subs=+attributes]
+-----
+// Setting up instrumentation
+include::{include-core-test-java}/io/micrometer/core/instrument/binder/cache/HazelcastCacheMetricsTest.java[tags=setup, indent=0]
+
+// Binding manually
+include::{include-core-test-java}/io/micrometer/core/instrument/binder/cache/HazelcastCacheMetricsTest.java[tags=register, indent=0]
+
+// Binding through a static method
+include::{include-core-test-java}/io/micrometer/core/instrument/binder/cache/HazelcastCacheMetricsTest.java[tags=monitor, indent=0]
+-----
+
+[[cache-jcache]]
+=== JCache
+
+[source,java,subs=+attributes]
+-----
+// Setting up instrumentation
+include::{include-core-test-java}/io/micrometer/core/instrument/binder/cache/JCacheMetricsTest.java[tags=setup, indent=0]
+
+include::{include-core-test-java}/io/micrometer/core/instrument/binder/cache/JCacheMetricsTest.java[tags=setup_2, indent=0]
+
+// Binding manually
+include::{include-core-test-java}/io/micrometer/core/instrument/binder/cache/JCacheMetricsTest.java[tags=register, indent=0]
+
+// Binding through a static method
+include::{include-core-test-java}/io/micrometer/core/instrument/binder/cache/JCacheMetricsTest.java[tags=monitor, indent=0]
+-----
+
