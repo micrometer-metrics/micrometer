@@ -38,6 +38,7 @@
 ** xref:reference/commons-pool.adoc[Apache Commons Pool]
 ** xref:reference/jvm.adoc[JVM]
 ** xref:reference/cache.adoc[Cache]
+** xref:reference/grpc.adoc[gRPC]
 ** xref:reference/okhttpclient.adoc[OkHttpClient]
 ** xref:reference/jetty.adoc[Jetty and Jersey]
 ** xref:reference/netty.adoc[Netty]
