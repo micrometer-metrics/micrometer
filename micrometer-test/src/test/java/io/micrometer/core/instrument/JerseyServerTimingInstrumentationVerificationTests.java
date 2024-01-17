@@ -44,7 +44,11 @@ class JerseyServerTimingInstrumentationVerificationTests extends HttpServerTimin
     @Nullable
     @Override
     protected URI startInstrumentedWithObservationsServer() throws Exception {
-        jerseyTest = jerseyWithListener(new ObservationApplicationEventListener(getObservationRegistry(), timerName()));
+        jerseyTest = jerseyWithListener(
+                // tag::setup[]
+                new ObservationApplicationEventListener(getObservationRegistry(), timerName())
+        // end::setup[]
+        );
         return setupUri(jerseyTest);
     }
 
@@ -57,8 +61,10 @@ class JerseyServerTimingInstrumentationVerificationTests extends HttpServerTimin
         return new JerseyTest() {
             @Override
             protected Application configure() {
+                // tag::setup_2[]
                 ResourceConfig config = new ResourceConfig();
                 config.register(listener);
+                // end::setup_2[]
                 config.register(TestResource.class);
                 return config;
             }
