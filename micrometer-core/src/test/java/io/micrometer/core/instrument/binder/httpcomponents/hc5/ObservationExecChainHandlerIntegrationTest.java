@@ -80,6 +80,7 @@ class ObservationExecChainHandlerIntegrationTest {
         @Test
         void recordSuccessfulExchanges(@WiremockResolver.Wiremock WireMockServer server) throws Exception {
             server.stubFor(any(anyUrl()));
+            // tag::example_classic[]
             try (CloseableHttpClient client = classicClient()) {
                 executeClassic(client, new HttpGet(server.baseUrl()));
             }
@@ -88,6 +89,7 @@ class ObservationExecChainHandlerIntegrationTest {
                 .hasLowCardinalityKeyValue("outcome", "SUCCESS")
                 .hasLowCardinalityKeyValue("status", "200")
                 .hasLowCardinalityKeyValue("method", "GET");
+            // end::example_classic[]
         }
 
         @Test
@@ -227,6 +229,7 @@ class ObservationExecChainHandlerIntegrationTest {
         @Test
         void recordSuccessfulExchanges(@WiremockResolver.Wiremock WireMockServer server) throws Exception {
             server.stubFor(any(anyUrl()));
+            // tag::example_async[]
             try (CloseableHttpAsyncClient client = asyncClient()) {
                 SimpleHttpRequest request = SimpleRequestBuilder.get(server.baseUrl()).build();
                 executeAsync(client, request);
@@ -236,6 +239,7 @@ class ObservationExecChainHandlerIntegrationTest {
                 .hasLowCardinalityKeyValue("outcome", "SUCCESS")
                 .hasLowCardinalityKeyValue("status", "200")
                 .hasLowCardinalityKeyValue("method", "GET");
+            // end::example_async[]
         }
 
         @Test
@@ -384,12 +388,14 @@ class ObservationExecChainHandlerIntegrationTest {
             .setConnectTimeout(2000L, TimeUnit.MILLISECONDS)
             .build();
 
+        // tag::setup_classic[]
         HttpClientBuilder clientBuilder = HttpClients.custom()
             .setRetryStrategy(retryStrategy)
             .addExecInterceptorLast("micrometer", new ObservationExecChainHandler(observationRegistry))
             .setConnectionManager(PoolingHttpClientConnectionManagerBuilder.create()
                 .setDefaultConnectionConfig(connectionConfig)
                 .build());
+        // end::setup_classic[]
 
         return clientBuilder.build();
     }
@@ -413,12 +419,14 @@ class ObservationExecChainHandlerIntegrationTest {
             .setConnectTimeout(1000, TimeUnit.MILLISECONDS)
             .build();
 
+        // tag::setup_async[]
         HttpAsyncClientBuilder clientBuilder = HttpAsyncClients.custom()
             .addExecInterceptorLast("micrometer", new ObservationExecChainHandler(observationRegistry))
             .setRetryStrategy(retryStrategy)
             .setConnectionManager(PoolingAsyncClientConnectionManagerBuilder.create()
                 .setDefaultConnectionConfig(connectionConfig)
                 .build());
+        // end::setup_async[]
 
         return clientBuilder.build();
     }
