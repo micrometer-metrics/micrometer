@@ -437,6 +437,23 @@ class TimedAspectTest {
             assertThat(registry.get("method.timed").tag("test", "hello characters").timer().count()).isEqualTo(1);
         }
 
+        @Test
+        void meterTagOnPackagePrivateMethod() {
+            MeterRegistry registry = new SimpleMeterRegistry();
+            TimedAspect timedAspect = new TimedAspect(registry);
+            timedAspect.setMeterTagAnnotationHandler(meterTagAnnotationHandler);
+
+            AspectJProxyFactory pf = new AspectJProxyFactory(new MeterTagClass());
+            pf.setProxyTargetClass(true);
+            pf.addAspect(timedAspect);
+
+            MeterTagClass service = pf.getProxy();
+
+            service.getAnnotationForPackagePrivateMethod("bar");
+
+            assertThat(registry.get("method.timed").tag("foo", "bar").timer().count()).isEqualTo(1);
+        }
+
         enum AnnotatedTestClass {
 
             CLASS_WITHOUT_INTERFACE(MeterTagClass.class), CLASS_WITH_INTERFACE(MeterTagClassChild.class);
@@ -490,6 +507,10 @@ class TimedAspectTest {
             @Timed
             @Override
             public void getAnnotationForArgumentToString(@MeterTag("test") Long param) {
+            }
+
+            @Timed
+            void getAnnotationForPackagePrivateMethod(@MeterTag("foo") String foo) {
             }
 
         }
