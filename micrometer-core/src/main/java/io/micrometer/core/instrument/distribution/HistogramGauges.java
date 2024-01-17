@@ -116,7 +116,7 @@ public class HistogramGauges {
             ToDoubleFunction<HistogramSupport> percentileValueFunction = m -> {
                 snapshotIfNecessary();
                 polledGaugesLatch.countDown();
-                return percentileValue.apply(snapshot.percentileValues()[index]);
+                return percentileValue.apply(valueAtPercentiles[index]);
             };
 
             Gauge.builder(percentileName.apply(valueAtPercentiles[i]), meter, percentileValueFunction)
