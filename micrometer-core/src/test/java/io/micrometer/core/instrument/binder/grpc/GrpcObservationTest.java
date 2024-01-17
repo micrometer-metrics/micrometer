@@ -91,9 +91,12 @@ class GrpcObservationTest {
 
     ContextAndEventHoldingObservationHandler<GrpcClientObservationContext> clientHandler;
 
+    // tag::setup[]
     ObservationGrpcServerInterceptor serverInterceptor;
 
     ObservationGrpcClientInterceptor clientInterceptor;
+
+    // end::setup[]
 
     TestObservationRegistry observationRegistry = TestObservationRegistry.create();
 
@@ -109,8 +112,10 @@ class GrpcObservationTest {
             .observationHandler(serverHandler)
             .observationHandler(clientHandler);
 
+        // tag::setup_2[]
         this.serverInterceptor = new ObservationGrpcServerInterceptor(observationRegistry);
         this.clientInterceptor = new ObservationGrpcClientInterceptor(observationRegistry);
+        // end::setup_2[]
     }
 
     @AfterEach
@@ -128,6 +133,7 @@ class GrpcObservationTest {
 
         @BeforeEach
         void setUpEchoService() throws Exception {
+            // tag::example[]
             EchoService echoService = new EchoService();
             server = InProcessServerBuilder.forName("sample")
                 .addService(echoService)
@@ -139,15 +145,18 @@ class GrpcObservationTest {
             channel = InProcessChannelBuilder.forName("sample")
                 .intercept(new ClientHeaderInterceptor(), clientInterceptor)
                 .build();
+            // end::example[]
         }
 
         @Test
         void unaryRpc() {
+            // tag::result[]
             SimpleServiceBlockingStub stub = SimpleServiceGrpc.newBlockingStub(channel);
 
             SimpleRequest request = SimpleRequest.newBuilder().setRequestMessage("Hello").build();
             SimpleResponse response = stub.unaryRpc(request);
             assertThat(response.getResponseMessage()).isEqualTo("Hello");
+            // end::result[]
 
             verifyServerContext("grpc.testing.SimpleService", "UnaryRpc", "grpc.testing.SimpleService/UnaryRpc",
                     MethodType.UNARY);
@@ -159,6 +168,11 @@ class GrpcObservationTest {
                     GrpcServerEvents.MESSAGE_SENT);
             assertThat(clientHandler.getEvents()).containsExactly(GrpcClientEvents.MESSAGE_SENT,
                     GrpcClientEvents.MESSAGE_RECEIVED);
+            // tag::assertion[]
+            TestObservationRegistryAssert.assertThat(observationRegistry)
+                .hasAnObservation(observationContextAssert -> observationContextAssert.hasNameEqualTo("grpc.client"))
+                .hasAnObservation(observationContextAssert -> observationContextAssert.hasNameEqualTo("grpc.server"));
+            // end::assertion[]
             verifyHeaders();
         }
 
@@ -190,6 +204,9 @@ class GrpcObservationTest {
 
             await().until(() -> futures.stream().allMatch(Future::isDone));
             assertThat(responses).hasSize(count).containsExactlyInAnyOrderElementsOf(messages);
+            TestObservationRegistryAssert.assertThat(observationRegistry)
+                .hasAnObservation(observationContextAssert -> observationContextAssert.hasNameEqualTo("grpc.client"))
+                .hasAnObservation(observationContextAssert -> observationContextAssert.hasNameEqualTo("grpc.server"));
             verifyHeaders();
         }
 
@@ -230,6 +247,9 @@ class GrpcObservationTest {
             verifyServerContext("grpc.testing.SimpleService", "ClientStreamingRpc",
                     "grpc.testing.SimpleService/ClientStreamingRpc", MethodType.CLIENT_STREAMING);
             assertThat(serverHandler.getContext().getStatusCode()).isEqualTo(Code.OK);
+            TestObservationRegistryAssert.assertThat(observationRegistry)
+                .hasAnObservation(observationContextAssert -> observationContextAssert.hasNameEqualTo("grpc.client"))
+                .hasAnObservation(observationContextAssert -> observationContextAssert.hasNameEqualTo("grpc.server"));
             verifyHeaders();
         }
 
@@ -262,6 +282,9 @@ class GrpcObservationTest {
             assertThat(clientHandler.getContext().getStatusCode()).isEqualTo(Code.OK);
             assertThat(clientHandler.getEvents()).containsExactly(GrpcClientEvents.MESSAGE_SENT,
                     GrpcClientEvents.MESSAGE_RECEIVED, GrpcClientEvents.MESSAGE_RECEIVED);
+            TestObservationRegistryAssert.assertThat(observationRegistry)
+                .hasAnObservation(observationContextAssert -> observationContextAssert.hasNameEqualTo("grpc.client"))
+                .hasAnObservation(observationContextAssert -> observationContextAssert.hasNameEqualTo("grpc.server"));
             verifyHeaders();
         }
 
@@ -312,6 +335,9 @@ class GrpcObservationTest {
 
             assertThat(serverHandler.getContext().getStatusCode()).isEqualTo(Code.OK);
             assertThat(clientHandler.getContext().getStatusCode()).isEqualTo(Code.OK);
+            TestObservationRegistryAssert.assertThat(observationRegistry)
+                .hasAnObservation(observationContextAssert -> observationContextAssert.hasNameEqualTo("grpc.client"))
+                .hasAnObservation(observationContextAssert -> observationContextAssert.hasNameEqualTo("grpc.server"));
             verifyHeaders();
         }
 
