@@ -39,7 +39,7 @@ jar {
             com.netflix.hystrix.*;resolution:=dynamic;version="${@}",\
             ch.qos.logback.*;resolution:=dynamic;version="${@}",\
             org.apache.logging.log4j.*;resolution:=dynamic;version="${@}",\
-            okhttp3.*;resolution:=dynamic;version="${@}",\
+            okhttp3.*;resolution:=dynamic,\
             com.mongodb.*;resolution:=dynamic;version="${@}",\
             org.jooq.*;resolution:=dynamic;version="${@}",\
             org.apache.kafka.*;resolution:=dynamic,\
