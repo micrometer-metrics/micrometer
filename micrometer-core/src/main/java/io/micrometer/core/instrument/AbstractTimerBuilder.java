@@ -199,7 +199,8 @@ public abstract class AbstractTimerBuilder<B extends AbstractTimerBuilder<B>> {
      * over time to give greater weight to recent samples (exception: histogram counts are
      * cumulative for those systems that expect cumulative histogram buckets). Samples are
      * accumulated to such statistics in ring buffers which rotate after this expiry, with
-     * a buffer length of {@link #distributionStatisticBufferLength(Integer)}.
+     * a buffer length of {@link #distributionStatisticBufferLength(Integer)}, hence
+     * complete expiry happens after this expiry * buffer length.
      * @param expiry The amount of time samples are accumulated to a histogram before it
      * is reset and rotated.
      * @return This builder.

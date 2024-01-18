@@ -61,7 +61,7 @@ mockito = "5.7.0"
 mongo = "4.11.1"
 netty = "4.1.104.Final"
 newrelic-api = "5.14.0"
-okhttp = "5.0.0-alpha.11" # TODO is compiling against an alpha version intentional?
+okhttp = "4.11.0"
 postgre = "42.6.0"
 prometheus = "0.16.0"
 reactor = "2022.0.14"
@@ -214,3 +214,7 @@ plugin-japicmp = { module = "me.champeau.gradle:japicmp-gradle-plugin", version 
 plugin-downloadTask = { module = "de.undercouch:gradle-download-task", version = "5.5.0" }
 plugin-spotless = { module = "com.diffplug.spotless:spotless-plugin-gradle", version = "6.22.0" }
 plugin-bnd = "biz.aQute.bnd:biz.aQute.bnd.gradle:6.4.0"
+
+[plugins]
+kotlin19 = { id = "org.jetbrains.kotlin.jvm", version = "1.9.22" }
+kotlin17 = { id = "org.jetbrains.kotlin.jvm", version = "1.7.22" }
