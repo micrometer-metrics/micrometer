@@ -1,3 +1,5 @@
+[[overview]]
+= Netty Instrumentation
 
 Micrometer supports binding metrics to `Netty`.
 

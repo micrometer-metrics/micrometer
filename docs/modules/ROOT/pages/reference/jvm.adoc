@@ -1,3 +1,6 @@
+[[overview]]
+= JVM Metrics
+
 Micrometer provides several binders for monitoring the JVM:
 
 [source, java]
