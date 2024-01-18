@@ -1,5 +1,5 @@
 plugins {
-    id "org.jetbrains.kotlin.jvm" version "1.9.10"
+    id "org.jetbrains.kotlin.jvm" version "1.7.22"
     id 'me.champeau.mrjar' version "0.1.1"
 }
 
@@ -16,12 +16,6 @@ tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).all {
 }
 
 tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinTest).all {
-    kotlinOptions {
-        jvmTarget = JavaVersion.toVersion(javaLanguageVersion)
-    }
-}
-
-tasks.named('compileTestKotlin', org.jetbrains.kotlin.gradle.tasks.KotlinCompile) {
     kotlinOptions {
         jvmTarget = JavaVersion.toVersion(javaLanguageVersion)
     }
