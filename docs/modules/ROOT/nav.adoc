@@ -37,6 +37,7 @@
 * xref:reference.adoc[Reference Instrumentations]
 ** xref:reference/cache.adoc[Cache]
 ** xref:reference/commons-pool.adoc[Apache Commons Pool]
+** xref:reference/db.adoc[Database]
 ** xref:reference/grpc.adoc[gRPC]
 ** xref:reference/httpcomponents.adoc[Apache HttpComponents Client]
 ** xref:reference/jetty.adoc[Jetty and Jersey]
