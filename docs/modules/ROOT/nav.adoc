@@ -42,6 +42,7 @@
 ** xref:reference/httpcomponents.adoc[HttpComponents Client]
 ** xref:reference/jetty.adoc[Jetty and Jersey]
 ** xref:reference/jvm.adoc[JVM]
+** xref:reference/logging.adoc[Logging]
 ** xref:reference/netty.adoc[Netty]
 ** xref:reference/okhttpclient.adoc[OkHttpClient]
 * xref:guides.adoc[Guides]
