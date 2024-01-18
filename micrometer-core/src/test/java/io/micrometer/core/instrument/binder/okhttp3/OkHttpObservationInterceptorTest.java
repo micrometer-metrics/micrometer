@@ -63,16 +63,18 @@ class OkHttpObservationInterceptorTest {
 
     private TestObservationRegistry observationRegistry = TestObservationRegistry.create();
 
+    private TestHandler testHandler = new TestHandler();
+
+    // tag::setup[]
     private OkHttpClient client = new OkHttpClient.Builder().addInterceptor(defaultInterceptorBuilder().build())
         .build();
-
-    private TestHandler testHandler = new TestHandler();
 
     private OkHttpObservationInterceptor.Builder defaultInterceptorBuilder() {
         return OkHttpObservationInterceptor.builder(observationRegistry, "okhttp.requests")
             .tags(KeyValues.of("foo", "bar"))
             .uriMapper(URI_MAPPER);
     }
+    // end::setup[]
 
     @BeforeEach
     void setup() {
@@ -85,6 +87,7 @@ class OkHttpObservationInterceptorTest {
     void timeSuccessfulWithDefaultObservation(@WiremockResolver.Wiremock WireMockServer server) throws IOException {
         client = new OkHttpClient.Builder().addInterceptor(defaultInterceptorBuilder().build()).build();
         server.stubFor(any(anyUrl()));
+        // tag::example[]
         Request request = new Request.Builder().url(server.baseUrl()).build();
 
         makeACall(client, request);
@@ -97,17 +100,20 @@ class OkHttpObservationInterceptorTest {
         assertThat(testHandler.context).isNotNull();
         assertThat(testHandler.context.getAllKeyValues()).contains(KeyValue.of("foo", "bar"),
                 KeyValue.of("status", "200"));
+        // end::example[]
         server.verify(WireMock.getRequestedFor(WireMock.urlEqualTo("/")).withHeader("foo", WireMock.equalTo("bar")));
     }
 
     @Test
     void timeSuccessfulWithObservationConvention(@WiremockResolver.Wiremock WireMockServer server) throws IOException {
+        // tag::custom_convention[]
         MyConvention myConvention = new MyConvention();
         client = new OkHttpClient.Builder()
             .addInterceptor(defaultInterceptorBuilder()
                 .observationConvention(new StandardizedOkHttpObservationConvention(myConvention))
                 .build())
             .build();
+        // end::custom_convention[]
         server.stubFor(any(anyUrl()));
         Request request = new Request.Builder().url(server.baseUrl()).build();
 
