@@ -52,7 +52,7 @@ subprojects {
     apply plugin: 'com.diffplug.spotless'
 
     if (project.name != 'micrometer-bom') {
-        if (project.name.contains('samples') || project.name.contains('benchmarks')) {
+        if ((project.name.contains('samples') && !project.name.contains('kotlin')) || project.name.contains('benchmarks')) {
             apply plugin: 'java'
         } else {
             apply plugin: 'java-library'

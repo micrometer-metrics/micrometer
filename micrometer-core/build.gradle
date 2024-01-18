@@ -1,5 +1,5 @@
 plugins {
-    id "org.jetbrains.kotlin.jvm" version "1.7.22"
+    alias(libs.plugins.kotlin17)
     id 'me.champeau.mrjar' version "0.1.1"
 }
 
@@ -126,6 +126,7 @@ dependencies {
     optionalApi 'io.micrometer:context-propagation'
 
     // kotlin
+    optionalApi enforcedPlatform('org.jetbrains.kotlin:kotlin-bom')
     optionalApi 'org.jetbrains.kotlin:kotlin-reflect'
     optionalApi 'org.jetbrains.kotlin:kotlin-stdlib-jdk8'
     optionalApi 'org.jetbrains.kotlinx:kotlinx-coroutines-core'
