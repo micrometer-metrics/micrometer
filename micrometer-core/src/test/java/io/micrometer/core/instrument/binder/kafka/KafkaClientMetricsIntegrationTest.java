@@ -57,6 +57,7 @@ class KafkaClientMetricsIntegrationTest {
 
         assertThat(registry.getMeters()).hasSize(0);
 
+        // tag::producer_setup[]
         Properties producerConfigs = new Properties();
         producerConfigs.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaContainer.getBootstrapServers());
         Producer<String, String> producer = new KafkaProducer<>(producerConfigs, new StringSerializer(),
@@ -64,11 +65,13 @@ class KafkaClientMetricsIntegrationTest {
 
         KafkaClientMetrics producerKafkaMetrics = new KafkaClientMetrics(producer);
         producerKafkaMetrics.bindTo(registry);
+        // end::producer_setup[]
 
         int producerMetrics = registry.getMeters().size();
         assertThat(registry.getMeters()).hasSizeGreaterThan(0);
         assertThat(registry.getMeters()).extracting(m -> m.getId().getTag("kafka.version")).allMatch(v -> !v.isEmpty());
 
+        // tag::consumer_setup[]
         Properties consumerConfigs = new Properties();
         consumerConfigs.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaContainer.getBootstrapServers());
         consumerConfigs.put(ConsumerConfig.GROUP_ID_CONFIG, "test");
@@ -77,6 +80,7 @@ class KafkaClientMetricsIntegrationTest {
 
         KafkaClientMetrics consumerKafkaMetrics = new KafkaClientMetrics(consumer);
         consumerKafkaMetrics.bindTo(registry);
+        // end::consumer_setup[]
 
         // Printing out for discovery purposes
         out.println("Meters from producer before sending:");
