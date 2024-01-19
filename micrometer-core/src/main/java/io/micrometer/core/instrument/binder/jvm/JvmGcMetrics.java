@@ -219,11 +219,11 @@ public class JvmGcMetrics implements MeterBinder, AutoCloseable {
 
             // Some GC implementations such as G1 can reduce the old gen size as part of a
             // minor GC. To track the live data size we record the value if we see a
-            // reduction in the long-lived
-            // heap size or after a major/non-generational GC. In some cases,
-            // longLivedAfter is 0, we ignore those notifications, see: gh-4497.
-            if (longLivedAfter > 0 && (longLivedAfter < longLivedBefore
-                    || shouldUpdateDataSizeMetrics(notificationInfo.getGcName()))) {
+            // reduction in the long-lived heap size or after a major/non-generational GC.
+            // ZGC Warmup notifications should be ignored since the long-lived heap size
+            // is zero there.
+            if ((longLivedAfter < longLivedBefore || shouldUpdateDataSizeMetrics(notificationInfo.getGcName()))
+                    && !isZgcWarmingUp(gcCause, longLivedAfter)) {
                 liveDataSize.set(longLivedAfter);
                 maxDataSize.set(longLivedPoolNames.stream().mapToLong(pool -> after.get(pool).getMax()).sum());
             }
@@ -240,6 +240,19 @@ public class JvmGcMetrics implements MeterBinder, AutoCloseable {
             if (delta > 0L) {
                 allocatedBytes.increment(delta);
             }
+        }
+
+        /**
+         * Sometimes ZGC emits "Warmup" notification, where longLivedAfter is 0, we should
+         * ignore those notifications, see: gh-4497. This method should detect these
+         * cases.
+         * @param gcCause The action performed by the garbage collector
+         * @param longLivedAfter Size of the long-lived pools after collection
+         * @return Whether the ZGC warmup notification is emitted with zero long-lived
+         * pools size
+         */
+        private boolean isZgcWarmingUp(String gcCause, long longLivedAfter) {
+            return longLivedAfter == 0 && "Warmup".equals(gcCause);
         }
 
         private boolean shouldUpdateDataSizeMetrics(String gcName) {
