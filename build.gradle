@@ -88,6 +88,8 @@ subprojects {
 
             toolchain {
                 languageVersion = javaLanguageVersion
+                sourceCompatibility = javaTargetVersion
+                targetCompatibility = javaTargetVersion
             }
         }
 
@@ -117,6 +119,9 @@ subprojects {
             compileTestJava {
                 options.encoding = 'UTF-8'
                 options.compilerArgs << '-Xlint:unchecked' << '-Xlint:deprecation'
+
+                sourceCompatibility = JavaVersion.VERSION_11
+                targetCompatibility = JavaVersion.VERSION_11
             }
 
 

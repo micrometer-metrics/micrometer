@@ -1,5 +1,5 @@
 plugins {
-    alias(libs.plugins.kotlin17)
+    alias(libs.plugins.kotlin19)
     id 'me.champeau.mrjar' version "0.1.1"
 }
 
@@ -12,12 +12,14 @@ multiRelease {
 tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).all {
     kotlinOptions {
         jvmTarget = javaTargetVersion
+        apiVersion = "1.7"
+        languageVersion = "1.7"
     }
 }
 
-tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinTest).all {
+compileTestKotlin {
     kotlinOptions {
-        jvmTarget = JavaVersion.toVersion(javaLanguageVersion)
+        jvmTarget = JavaVersion.VERSION_11
     }
 }
 
@@ -272,4 +274,9 @@ java11Test {
         maxFailures = 5
         maxRetries = 3
     }
+}
+
+compileJava11TestJava {
+    sourceCompatibility = JavaVersion.VERSION_11
+    targetCompatibility = JavaVersion.VERSION_11
 }

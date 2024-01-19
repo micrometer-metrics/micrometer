@@ -11,6 +11,10 @@ dependencies {
     implementation 'ch.qos.logback:logback-classic'
 }
 
+java {
+    targetCompatibility = JavaVersion.VERSION_11
+}
+
 compileJava {
     sourceCompatibility = JavaVersion.VERSION_11
     targetCompatibility = JavaVersion.VERSION_11
