@@ -1,0 +1,15 @@
+[[overview]]
+= Apache Tomcat Metrics Instrumentation
+
+The https://tomcat.apache.org/[Apache Tomcat] software is an open source implementation of the Jakarta Servlet, Jakarta Server Pages, Jakarta Expression Language, Jakarta WebSocket, Jakarta Annotations and Jakarta Authentication specifications.
+
+[source,java,subs=+attributes]
+-----
+// Setting up instrumentation
+include::{include-core-test-java}/io/micrometer/core/instrument/binder/tomcat/TomcatMetricsTest.java[tags=setup, indent=0]
+
+include::{include-core-test-java}/io/micrometer/core/instrument/binder/tomcat/TomcatMetricsTest.java[tags=monitor, indent=0]
+
+// Example of Tomcat metrics
+include::{include-core-test-java}/io/micrometer/core/instrument/binder/tomcat/TomcatMetricsTest.java[tags=example, indent=0]
+-----
