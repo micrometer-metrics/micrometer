@@ -1,0 +1,19 @@
+plugins {
+    // test with the highest version of Kotlin supported because we compile with oldest version supported
+    alias(libs.plugins.kotlin19)
+}
+
+dependencies {
+    // libraries that have Kotlin dependencies
+    implementation project(":micrometer-core")
+    implementation libs.kotlinxCoroutines
+    // force the stdlib versions to match the plugin version for this sample
+    implementation enforcedPlatform('org.jetbrains.kotlin:kotlin-bom')
+    implementation libs.okhttp
+
+    testRuntimeOnly libs.contextPropagation
+
+    testImplementation libs.junitJupiter
+    testImplementation libs.assertj
+    testImplementation project(":micrometer-test")
+}

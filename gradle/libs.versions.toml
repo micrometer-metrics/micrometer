@@ -214,3 +214,7 @@ plugin-japicmp = { module = "me.champeau.gradle:japicmp-gradle-plugin", version 
 plugin-downloadTask = { module = "de.undercouch:gradle-download-task", version = "5.5.0" }
 plugin-spotless = { module = "com.diffplug.spotless:spotless-plugin-gradle", version = "6.23.3" }
 plugin-bnd = "biz.aQute.bnd:biz.aQute.bnd.gradle:6.4.0"
+
+[plugins]
+kotlin19 = { id = "org.jetbrains.kotlin.jvm", version = "1.9.22" }
+kotlin17 = { id = "org.jetbrains.kotlin.jvm", version = "1.7.22" }

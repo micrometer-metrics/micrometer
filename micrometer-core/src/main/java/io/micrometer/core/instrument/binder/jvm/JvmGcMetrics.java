@@ -229,11 +229,11 @@ public class JvmGcMetrics implements MeterBinder, AutoCloseable {
             }
 
             // Some GC implementations such as G1 can reduce the old gen size as part of a
-            // minor GC. To track the
-            // live data size we record the value if we see a reduction in the long-lived
-            // heap size or
-            // after a major/non-generational GC.
-            if (longLivedAfter < longLivedBefore || shouldUpdateDataSizeMetrics(gcName)) {
+            // minor GC. To track the live data size we record the value if we see a
+            // reduction in the long-lived
+            // heap size or after a major/non-generational GC. In some cases,
+            // longLivedAfter is 0, we ignore those notifications, see: gh-4497.
+            if (longLivedAfter > 0 && (longLivedAfter < longLivedBefore || shouldUpdateDataSizeMetrics(gcName))) {
                 liveDataSize.set(longLivedAfter);
                 maxDataSize.set(longLivedPoolNames.stream().mapToLong(pool -> after.get(pool).getMax()).sum());
             }
