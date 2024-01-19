@@ -214,4 +214,11 @@ class MeterRegistryTest {
         assertThat(timer1.getId().getBaseUnit()).isSameAs(timer2.getId().getBaseUnit());
     }
 
+    @Test
+    @Issue("#4482")
+    void acceptPercentilesNullOrEmpty() {
+        LongTaskTimer.builder("timer.percentiles.null").publishPercentiles(null).register(registry);
+        LongTaskTimer.builder("timer.percentiles.empty").publishPercentiles(new double[] {}).register(registry);
+    }
+
 }
