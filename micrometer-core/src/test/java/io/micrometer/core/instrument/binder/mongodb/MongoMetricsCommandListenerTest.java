@@ -56,8 +56,9 @@ class MongoMetricsCommandListenerTest extends AbstractMongoDbTest {
 
     @BeforeEach
     void setup() {
-        registry = new SimpleMeterRegistry();
         clusterId = new AtomicReference<>();
+        // tag::setup[]
+        registry = new SimpleMeterRegistry();
         MongoClientSettings settings = MongoClientSettings.builder()
             .addCommandListener(new MongoMetricsCommandListener(registry))
             .applyToClusterSettings(builder -> builder.hosts(singletonList(new ServerAddress(host, port)))
@@ -69,15 +70,18 @@ class MongoMetricsCommandListenerTest extends AbstractMongoDbTest {
                 }))
             .build();
         mongo = MongoClients.create(settings);
+        // end::setup[]
     }
 
     @Test
     void shouldCreateSuccessCommandMetric() {
+        // tag::example[]
         mongo.getDatabase("test").getCollection("testCol").insertOne(new Document("testDoc", new Date()));
 
         Tags tags = Tags.of("cluster.id", clusterId.get(), "server.address", String.format("%s:%s", host, port),
                 "command", "insert", "collection", "testCol", "status", "SUCCESS");
         assertThat(registry.get("mongodb.driver.commands").tags(tags).timer().count()).isEqualTo(1);
+        // end::example[]
     }
 
     @Test
