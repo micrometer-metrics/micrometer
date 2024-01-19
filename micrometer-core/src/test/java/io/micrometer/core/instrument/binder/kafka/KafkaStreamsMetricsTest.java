@@ -46,6 +46,7 @@ class KafkaStreamsMetricsTest {
 
     @Test
     void shouldCreateMeters() {
+        // tag::example[]
         try (KafkaStreams kafkaStreams = createStreams()) {
             metrics = new KafkaStreamsMetrics(kafkaStreams);
             MeterRegistry registry = new SimpleMeterRegistry();
@@ -55,6 +56,7 @@ class KafkaStreamsMetricsTest {
                 .extracting(meter -> meter.getId().getName())
                 .allMatch(s -> s.startsWith(METRIC_NAME_PREFIX));
         }
+        // end::example[]
     }
 
     @Test
