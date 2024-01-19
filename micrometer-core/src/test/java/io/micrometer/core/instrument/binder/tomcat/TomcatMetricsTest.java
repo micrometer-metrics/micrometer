@@ -66,7 +66,10 @@ class TomcatMetricsTest {
 
     private static final int PROCESSING_TIME_IN_MILLIS = 10;
 
-    private SimpleMeterRegistry registry = new SimpleMeterRegistry(SimpleConfig.DEFAULT, new MockClock());
+    // tag::setup[]
+    SimpleMeterRegistry registry = new SimpleMeterRegistry(SimpleConfig.DEFAULT, new MockClock());
+
+    // end::setup[]
 
     private int port;
 
@@ -108,15 +111,19 @@ class TomcatMetricsTest {
         expiredSession.setCreationTime(System.currentTimeMillis() - 10_000);
         manager.remove(expiredSession, true);
 
+        // tag::monitor[]
         Iterable<Tag> tags = Tags.of("metricTag", "val1");
         TomcatMetrics.monitor(registry, manager, tags);
+        // end::monitor[]
 
+        // tag::example[]
         assertThat(registry.get("tomcat.sessions.active.max").tags(tags).gauge().value()).isEqualTo(3.0);
         assertThat(registry.get("tomcat.sessions.active.current").tags(tags).gauge().value()).isEqualTo(2.0);
         assertThat(registry.get("tomcat.sessions.expired").tags(tags).functionCounter().count()).isEqualTo(1.0);
         assertThat(registry.get("tomcat.sessions.rejected").tags(tags).functionCounter().count()).isEqualTo(1.0);
         assertThat(registry.get("tomcat.sessions.created").tags(tags).functionCounter().count()).isEqualTo(3.0);
         assertThat(registry.get("tomcat.sessions.alive.max").tags(tags).timeGauge().value()).isGreaterThan(1.0);
+        // end::example[]
     }
 
     private void sleep() {
