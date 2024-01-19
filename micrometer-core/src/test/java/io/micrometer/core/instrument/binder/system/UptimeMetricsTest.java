@@ -46,14 +46,16 @@ class UptimeMetricsTest {
 
     @Test
     void uptimeMetricsMock() {
-        MeterRegistry registry = new SimpleMeterRegistry(SimpleConfig.DEFAULT, new MockClock());
         RuntimeMXBean runtimeMXBean = mock(RuntimeMXBean.class);
         when(runtimeMXBean.getUptime()).thenReturn(1337L);
         when(runtimeMXBean.getStartTime()).thenReturn(4711L);
+        // tag::example[]
+        MeterRegistry registry = new SimpleMeterRegistry(SimpleConfig.DEFAULT, new MockClock());
         new UptimeMetrics(runtimeMXBean, emptyList()).bindTo(registry);
 
         assertThat(registry.get("process.uptime").timeGauge().value()).isEqualTo(1.337);
         assertThat(registry.get("process.start.time").timeGauge().value()).isEqualTo(4.711);
+        // end::example[]
     }
 
 }
