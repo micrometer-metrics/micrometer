@@ -47,6 +47,8 @@
 ** xref:reference/mongodb.adoc[MongoDB]
 ** xref:reference/netty.adoc[Netty]
 ** xref:reference/okhttpclient.adoc[OkHttpClient]
+** xref:reference/system.adoc[System]
+** xref:reference/tomcat.adoc[Tomcat]
 * xref:guides.adoc[Guides]
 ** xref:guides/console-reporter.adoc[Passing through to Dropwizard's console reporter]
 ** xref:guides/http-sender-resilience4j-retry.adoc[HttpSender with Resilience4j retry]
