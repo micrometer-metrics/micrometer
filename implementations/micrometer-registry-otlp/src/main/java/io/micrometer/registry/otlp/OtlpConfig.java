@@ -18,7 +18,6 @@ package io.micrometer.registry.otlp;
 import io.micrometer.core.instrument.config.validate.Validated;
 import io.micrometer.core.instrument.push.PushRegistryConfig;
 
-import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.util.Arrays;
 import java.util.Map;
@@ -137,8 +136,9 @@ public interface OtlpConfig extends PushRegistryConfig {
                 // headers are encoded as URL - see
                 // https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/protocol/exporter.md#specifying-headers-via-environment-variables
                 headersString = URLDecoder.decode(headersString, "UTF-8");
-            } catch (UnsupportedEncodingException e) {
-                throw new IllegalArgumentException("cannot decode header value: " + headersString, e);
+            }
+            catch (Exception e) {
+                throw new IllegalArgumentException("Cannot decode header value: " + headersString, e);
             }
         }
 
