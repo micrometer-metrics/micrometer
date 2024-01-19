@@ -61,10 +61,13 @@ class Log4j2MetricsTest {
 
     @Test
     void log4j2LevelMetrics() {
+        // tag::setup[]
         new Log4j2Metrics().bindTo(registry);
+        // end::setup[]
 
         assertThat(registry.get("log4j2.events").counter().count()).isEqualTo(0.0);
 
+        // tag::example[]
         Logger logger = LogManager.getLogger(Log4j2MetricsTest.class);
         Configurator.setLevel(Log4j2MetricsTest.class.getName(), Level.INFO);
         logger.info("info");
@@ -80,6 +83,7 @@ class Log4j2MetricsTest {
         assertThat(registry.get("log4j2.events").tags("level", "error").counter().count()).isEqualTo(1.0);
         assertThat(registry.get("log4j2.events").tags("level", "debug").counter().count()).isEqualTo(0.0);
         assertThat(registry.get("log4j2.events").tags("level", "trace").counter().count()).isEqualTo(0.0);
+        // end::example[]
     }
 
     @Test
