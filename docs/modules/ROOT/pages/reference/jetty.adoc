@@ -1,3 +1,6 @@
+[[overview]]
+= Eclipse Jetty and Jersey Instrumentation
+
 Micrometer supports binding metrics to `Jetty` through `Connection.Listener`.
 
 You can collect metrics from `Jetty` by adding `JettyConnectionMetrics` as follows:
@@ -24,3 +27,15 @@ resourceConfig.register(new MetricsApplicationEventListener(
                 true));
 ServletContainer servletContainer = new ServletContainer(resourceConfig);
 ----
+
+[[overview-observation]]
+== Eclipse Observation Jersey Instrumentation
+
+Below you can find an example of how to instrument Jersey with https://docs.micrometer.io/micrometer/reference/observation.html[Micrometer Observation]. That means that depending on your Observation Handler configuration you instrument once, and can have multiple benefits out of it (e.g. metrics, distributed tracing).
+
+[source,java,subs=+attributes]
+-----
+// Setting up instrumentation
+include::{include-micrometer-test-java}/io/micrometer/core/instrument/JerseyServerTimingInstrumentationVerificationTests.java[tags=setup, indent=0]
+include::{include-micrometer-test-java}/io/micrometer/core/instrument/JerseyServerTimingInstrumentationVerificationTests.java[tags=setup_2, indent=0]
+-----

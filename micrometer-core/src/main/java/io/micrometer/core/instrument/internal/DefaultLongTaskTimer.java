@@ -128,10 +128,10 @@ public class DefaultLongTaskTimer extends AbstractMeter implements LongTaskTimer
 
     @Override
     public HistogramSnapshot takeSnapshot() {
-        Queue<Double> percentilesRequested = new ArrayBlockingQueue<>(
-                distributionStatisticConfig.getPercentiles() == null ? 1
-                        : distributionStatisticConfig.getPercentiles().length);
         double[] percentilesRequestedArr = distributionStatisticConfig.getPercentiles();
+        Queue<Double> percentilesRequested = new ArrayBlockingQueue<>(
+                percentilesRequestedArr == null || percentilesRequestedArr.length == 0 ? 1
+                        : distributionStatisticConfig.getPercentiles().length);
         if (percentilesRequestedArr != null && percentilesRequestedArr.length > 0) {
             Arrays.stream(percentilesRequestedArr).sorted().boxed().forEach(percentilesRequested::add);
         }
