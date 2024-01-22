@@ -575,7 +575,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
     private void applyToCollector(Meter.Id id, Consumer<MicrometerCollector> consumer) {
         collectorMap.compute(getConventionName(id), (name, existingCollector) -> {
             if (existingCollector == null) {
-                MicrometerCollector micrometerCollector = new MicrometerCollector(id, config().namingConvention(),
+                MicrometerCollector micrometerCollector = new MicrometerCollector(name, id, config().namingConvention(),
                         prometheusConfig);
                 consumer.accept(micrometerCollector);
                 return micrometerCollector.register(registry);

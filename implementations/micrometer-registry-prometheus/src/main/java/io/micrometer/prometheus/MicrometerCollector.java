@@ -51,6 +51,13 @@ class MicrometerCollector extends Collector implements Collector.Describable {
         this.help = config.descriptions() ? Optional.ofNullable(id.getDescription()).orElse(" ") : " ";
     }
 
+    public MicrometerCollector(String name, Meter.Id id, NamingConvention convention, PrometheusConfig config) {
+        this.id = id;
+        this.conventionName = name;
+        this.tagKeys = id.getConventionTags(convention).stream().map(Tag::getKey).collect(toList());
+        this.help = config.descriptions() ? Optional.ofNullable(id.getDescription()).orElse(" ") : " ";
+    }
+
     public void add(List<String> tagValues, Child child) {
         children.put(tagValues, child);
     }
