@@ -1,5 +1,5 @@
 [[context-propagation-installing]]
-== Installing
+= Installing
 
 Snapshots are published to https://repo.spring.io/snapshot for every successful build on the `main` branch and maintenance branches.
 

@@ -1,3 +1,6 @@
+[[micrometer-observation-handler]]
+= Instrumentation
+
 In this section we will see some common examples of reusing existing Micrometer and Micrometer Tracing handlers and context types to do instrumentation.
 
 IMPORTANT: Before you decide to instrument a project yourself, please double-check whether it hasn't already been instrumented!
@@ -7,7 +10,7 @@ To better understand how you can do instrumentation we need to distinguish two c
 - Context propagation
 - Creation of Observations
 
-*Context propagation* - we propagate existing context through threads or network. We're using the https://micrometer.io/docs/contextPropagation[Micrometer Context Propagation] library to define the context and to propagate it through threads. We're using dedicated `SenderContext` and `ReceiverContext` objects, together with Micrometer Tracing handlers, to create Observations that will propagate context over the wire.
+*Context propagation* - we propagate existing context through threads or network. We're using the xref:contextpropagation.adoc[Micrometer Context Propagation] library to define the context and to propagate it through threads. We're using dedicated `SenderContext` and `ReceiverContext` objects, together with Micrometer Tracing handlers, to create Observations that will propagate context over the wire.
 
 *Creation of Observations* - we want to wrap an operation in an Observation to get measurements. We need to know if there previously has been a parent Observation to maintain the parent-child relationship of Observations.
 

@@ -1,5 +1,5 @@
 [[micrometer-observation-install]]
-== Installing
+= Installing
 
 Micrometer comes with a Bill of Materials (BOM) which is a project that manages all the project versions for consistency.
 
