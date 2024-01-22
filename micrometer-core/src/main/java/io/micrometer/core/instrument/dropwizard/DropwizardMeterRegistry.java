@@ -31,7 +31,6 @@ import io.micrometer.core.util.internal.logging.WarnThenDebugLogger;
 
 import java.lang.ref.WeakReference;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.ToDoubleFunction;
 import java.util.function.ToLongFunction;
 
@@ -52,8 +51,6 @@ public abstract class DropwizardMeterRegistry extends MeterRegistry {
     private final DropwizardClock dropwizardClock;
 
     private final DropwizardConfig dropwizardConfig;
-
-    private final AtomicBoolean warnLogged = new AtomicBoolean();
 
     public DropwizardMeterRegistry(DropwizardConfig config, MetricRegistry registry, HierarchicalNameMapper nameMapper,
             Clock clock) {
