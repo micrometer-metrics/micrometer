@@ -48,19 +48,10 @@ DatadogConfig config = new DatadogConfig() {
 MeterRegistry registry = new DatadogMeterRegistry(config, Clock.SYSTEM);
 ----
 
-`DatadogConfig` is an interface with a set of default methods. If, in the implementation of `get(String k)`, rather than returning `null`, you instead bind it to a property source, you can override the default configuration through properties. For example, Micrometer's Spring Boot support binds properties prefixed with `management.metrics.export.datadog` directly to the `DatadogConfig`:
-
-[source, yaml]
-----
-management.metrics.export.datadog:
-    apiKey: YOURKEY
-
-    # You will probably want disable Datadog publishing in a local development profile.
-    enabled: true
-
-    # The interval at which metrics are sent to Datadog. The default is 1 minute.
-    step: 1m
-----
+`DatadogConfig` is an interface with a set of default methods.
+If, in the implementation of `get(String k)`, rather than returning `null`, you instead bind it to a property source, you can override the default configuration through properties.
+For example, Spring Boot's Micrometer support binds properties directly to the `DatadogConfig`.
+See the https://docs.spring.io/spring-boot/docs/current/reference/htmlsingle/#actuator.metrics.export.datadog[Datadog] section in the Spring Boot reference documentation.
 
 `DatadogConfig.hostTag()` specifies a tag key that is mapped to https://docs.datadoghq.com/api/v1/metrics/#submit-metrics[the `host` field] when shipping metrics to Datadog.
 For example, if `DatadogConfig.hostTag()` returns `host`, the tag having `host` as its key is used.
