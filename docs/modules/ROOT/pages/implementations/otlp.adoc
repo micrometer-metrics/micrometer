@@ -33,8 +33,10 @@ management:
         # Supported configs
         url: "https://otlp.example.com:4318/v1/metrics"
         aggregationTemporality: "cumulative"
-        headers: "header1=value1"
-        resourceAttributes: "key=value"
+        headers:
+          header1: value1
+        resourceAttributes:
+          key1: value1
 ----
 
 1. `url` - The URL to which data will be reported. Defaults to `http://localhost:4318/v1/metrics`

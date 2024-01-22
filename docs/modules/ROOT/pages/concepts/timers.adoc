@@ -117,7 +117,6 @@ public class ExampleService {
 
 To support `@MeterTag` annotation on method parameters you need to configure the `@TimedAspect` to add the `MeterTagAnnotationHandler`.
 
-
 [source,java,subs=+attributes]
 -----
 include::{include-java}/metrics/TimedAspectTest.java[tags=resolvers,indent=0]
