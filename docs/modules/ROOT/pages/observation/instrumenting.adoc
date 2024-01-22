@@ -85,7 +85,7 @@ As an example for the client side we will use a handler that instruments the HTT
 include::{include-java}/observation/ObservationInstrumentingTests.java[tags=header_propagating_handler,indent=0]
 -----
 
-Let's look at the following of HTTP client side instrumentation that reuses the handler.
+Let's look at the following code of HTTP client side instrumentation that reuses the handler.
 
 [source,java]
 -----
@@ -108,4 +108,75 @@ include::{include-java}/observation/ObservationInstrumentingTests.java[tags=http
 
 == Instrumentation of Messaging Communication
 
-To instrument messaging components you should proceed in the same way as you would with <<instrumentation_of_http_communication,HTTP-based communication>>, however instead of `RequestReplySenderContext` and `RequestReplyReceiverContext` you would use `SenderContext` and `ReceiverContext`. You can also set the `remoteServiceName` on a context to suggest the name of the broker (e.g. `kafka` or `rabbitmq`).
+In order to instrument a message-based communication we need to use the `SenderContext` and `ReceiverContext` for the producer and consumer side respectively.
+
+In this section we will create a simple instrumentation for Apache Kafka.
+
+As an example for the producer side we will use a handler that instruments the message by adding a `foo:bar` header (if you have Micrometer Tracing on the classpath you could reuse the `PropagatingSenderTracingObservationHandler` and `PropagatingReceiverTracingObservationHandler` to propagate tracing context over the wire). Let's look at an example of the `KafkaSenderContext`.
+
+[source,java]
+-----
+include::{include-java}/observation/messaging/ObservationMessagingIntegrationTest.java[tags=kafka_sender_context,indent=0]
+-----
+
+Let's look at an example of the aforementioned handler.
+
+[source,java]
+-----
+include::{include-java}/observation/messaging/ObservationMessagingIntegrationTest.java[tags=header_propagating_handler,indent=0]
+-----
+
+Let's look at the code that is the `ProducerInterceptor` for Kafka.
+
+[source,java]
+-----
+include::{include-java}/observation/messaging/ProducerInterceptorConfig.java[tags=producer_interceptor_config,indent=0]
+-----
+
+Let's look at the following code of the producer side instrumentation that reuses the handler.
+
+[source,java]
+-----
+include::{include-java}/observation/messaging/ObservationMessagingIntegrationTest.java[tags=registry_setup,indent=0]
+
+include::{include-java}/observation/messaging/ObservationMessagingIntegrationTest.java[tags=producer_setup,indent=0]
+
+include::{include-java}/observation/messaging/ObservationMessagingIntegrationTest.java[tags=producer_side,indent=0]
+-----
+
+As an example for the consumer side we will use a handler that instruments the Observation by adding the `foo` low cardinality key with the value being the matched path from the message. Let's look at an example of the `KafkaReceiverContext`.
+
+[source,java]
+-----
+include::{include-java}/observation/messaging/ObservationMessagingIntegrationTest.java[tags=kafka_receiver_context,indent=0]
+-----
+
+Let's look at an example of the aforementioned handler.
+
+[source,java]
+-----
+include::{include-java}/observation/messaging/ObservationMessagingIntegrationTest.java[tags=header_receiving_handler,indent=0]
+-----
+
+Let's look at the code that is the `ConsumerInterceptor` for Kafka.
+
+[source,java]
+-----
+include::{include-java}/observation/messaging/ConsumerInterceptorConfig.java[tags=consumer_interceptor_config,indent=0]
+-----
+
+Let's look at the following code of the consumer side instrumentation that reuses the handler.
+
+[source,java]
+-----
+include::{include-java}/observation/messaging/ObservationMessagingIntegrationTest.java[tags=registry_setup,indent=0]
+
+include::{include-java}/observation/messaging/ObservationMessagingIntegrationTest.java[tags=consumer_side,indent=0]
+-----
+
+Let's look at the assertions after having sent and received a message. We should have 2 observations, 1 on the consumer and 1 on the producer side, each with proper key values as shown in the handlers.
+
+[source,java]
+-----
+include::{include-java}/observation/messaging/ObservationMessagingIntegrationTest.java[tags=test_assertions,indent=0]
+-----
