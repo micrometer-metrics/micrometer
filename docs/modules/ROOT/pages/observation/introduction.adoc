@@ -1,3 +1,6 @@
+[[micrometer-observation-introduction]]
+= Introduction
+
 For any Observation to happen, you need to register `ObservationHandler` objects through an `ObservationRegistry`. An `ObservationHandler` reacts only to supported implementations of an `Observation.Context` and can create timers, spans, and logs by reacting to the lifecycle events of an Observation such as
 
 * `start` - Observation has been started. Happens when the `Observation#start()` method gets called.
