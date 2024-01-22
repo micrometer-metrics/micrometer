@@ -28,6 +28,7 @@ Micrometer Observation is used to instrument various projects. Below you can fin
 | OkHttp | https://github.com/micrometer-metrics/micrometer/tree/main/micrometer-core/src/main/java/io/micrometer/core/instrument/binder/okhttp3[Repo]
 | OpenFeign | https://github.com/OpenFeign/feign/pull/1760[PR]
 | RabbitMQ | https://github.com/rabbitmq/rabbitmq-java-client/issues/952[Issue]
+| RabbitMQ Stream | https://github.com/rabbitmq/rabbitmq-stream-java-client/pull/384[PR]
 | Resilience4j | https://github.com/resilience4j/resilience4j/pull/1698[PR]
 | R2DBC | https://github.com/r2dbc/r2dbc-proxy/issues/122[Issue]
 | Reactor | https://micrometer.io/docs/observation#instrumentation_of_reactive_libraries[Docs]
