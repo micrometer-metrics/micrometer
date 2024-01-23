@@ -12,6 +12,7 @@ Micrometer Observation is used to instrument various projects. Below you can fin
 | Apache Dubbo | https://github.com/apache/dubbo/pull/11021[PR]
 | Apache HttpComponents | https://github.com/micrometer-metrics/micrometer/tree/main/micrometer-core/src/main/java/io/micrometer/core/instrument/binder/httpcomponents[Repo]
 | Apache Skywalking | https://github.com/apache/skywalking-java/pull/401[PR], https://skywalking.apache.org/docs/skywalking-java/next/en/setup/service-agent/java-agent/application-toolkit-micrometer-1.10/[Docs]
+| Apereo Cas | https://github.com/apereo/cas/commit/f40491020d8c303d1611b010c9842ec33d25f2f3[Commit]
 | Armeria | https://github.com/line/armeria/pull/4980[PR]
 | Appsmith | https://github.com/appsmithorg/appsmith/commit/5e46a2f4b7bf184aba03b4b93038edce8a615366[Commit]
 | Couchbase | https://issues.couchbase.com/browse/JCBC-2046[Issue]
