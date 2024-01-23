@@ -80,3 +80,8 @@ java11Test {
         maxRetries = 3
     }
 }
+
+compileJava11TestJava {
+    sourceCompatibility = JavaVersion.VERSION_11
+    targetCompatibility = JavaVersion.VERSION_11
+}
