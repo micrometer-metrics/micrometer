@@ -1,4 +1,4 @@
 [[guides]]
-== Guides
+= Guides
 
 In this section you can find guides on how to perform certain uncommon actions with Micrometer.
