@@ -13,7 +13,7 @@ Suppose we have a slightly positively biased random walk that chooses to increme
 
 image::concepts/prometheus-counter-norate.png[Absolute counter value]
 
-Representing a counter without rate aggregation over some time window is rarely useful, as the representation is a function of both the rapidity with which the counter is incremented and the longevity of the service. In the preceding example, the counter drops back to zero on service restart. The rate-aggregated graph would return back to a value around 55 as soon as the new instance (say on a production deployment) was in service.
+Representing a counter without rate aggregation over some time window is rarely useful, as the representation is a function of both the rapidity with which the counter is incremented and the longevity of the service. In the preceding example, the counter drops back to zero on service restart. The rate-aggregated graph would return back to a value of around 55 as soon as the new instance (say on a production deployment) was in service.
 
 image::concepts/prometheus-counter.png[Rate-aggregated counter]
 
@@ -25,8 +25,8 @@ IMPORTANT: For most production purposes, whether it be alerting, automated canar
 
 Two other classes of monitoring system either:
 
-. Expect rate-aggregated data. Given the key insight that for most production purposes, we should be basing our decisions off of rates rather than absolute values, such systems benefit from having to do less math to satisfy queries.
-. Have relatively little or no math operations that would let us rate-aggregate data through our queries. For these systems, publishing pre-aggregated data is the only way to build meaningful representations.
+* Expect rate-aggregated data. Given the key insight that, for most production purposes, we should be basing our decisions off of rates rather than absolute values. Such systems benefit from having to do less math to satisfy queries.
+* Have relatively little or no math operations that would let us rate-aggregate data through our queries. For these systems, publishing pre-aggregated data is the only way to build meaningful representations.
 
 Micrometer efficiently maintains rate data by means of a step value that accumulates data for the current publishing interval. When the step value is polled (when publishing, for example), if the step value detects that the current interval has elapsed, it moves current data to "`previous`" state. This previous state is what is reported until the next time current data overwrites it. The following image shows the interaction of current and previous state, along with polling:
 
@@ -39,7 +39,7 @@ Micrometer timers track at least a count and the total time as separate measurem
 . `count` = 10 seconds * (20 requests / 10 seconds) = 20 requests
 . `totalTime` = 10 seconds * (20 * 100 ms / 10 seconds) = 2 seconds
 
-The `count` statistic is meaningful by itself: It is a measure of _throughput_. `totalTime` represents the total latency of all requests in the interval. Additionally:
+The `count` statistic is meaningful by itself: It is a measure of _throughput_. `totalTime` represents the total latency of all requests in the interval. Additionally, consider:
 
 `totalTime / count` = 2 seconds / 20 requests = 0.1 seconds / request = 100 ms / request
 
@@ -47,5 +47,5 @@ This is a useful measure of _average latency_. When the same idea is applied to 
 
 Shipping the rate for the publishing interval is sufficient to reason about the rate over any time window greater than or equal to the publishing interval. In our example, if a service continues to receive 20 requests that each take 100ms for every 10 second interval in a given minute, we could say:
 
-. Micrometer reported "`20 requests`" for `count` on every 10 second interval. The monitoring system sums these six 10 second intervals and arrives at the conclusion that there are 120 requests / minute. Note that it is the monitoring system doing this summation, not Micrometer.
+. Micrometer reported "`20 requests`" for `count` on every 10-second interval. The monitoring system sums these six 10-second intervals and arrives at the conclusion that there are 120 requests / minute. Note that it is the monitoring system doing this summation, not Micrometer.
 . Micrometer reported "`2 seconds`" of `totalTime` on every 10 second interval. The monitoring system can sum all total time statistics over the minute to yield "`12 seconds`" of total time in the minute interval. Then, the average latency is as we expect: 12 seconds / 120 requests = 100 ms / request.

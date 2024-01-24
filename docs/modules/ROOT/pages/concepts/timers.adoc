@@ -5,7 +5,7 @@ Timers are intended for measuring short-duration latencies and the frequency of 
 
 As an example, consider a graph showing request latency to a typical web server. The server can be expected to respond to many requests quickly, so the timer gets updated many times per second.
 
-The appropriate base unit for timers varies by metrics backend, and for good reason. Micrometer is decidedly un-opinionated about this. However, because of the potential for confusion, Micrometer requires a `TimeUnit` when interacting with `Timer` implementations. Micrometer is aware of the preferences of each implementation and publishes your timing in the appropriate base unit based on the implementation. The following listing shows part of the `Timer` interface:
+The appropriate base unit for timers varies by metrics backend, and for good reason. Micrometer is decidedly un-opinionated about this. However, because of the potential for confusion, Micrometer requires a `TimeUnit` when interacting with `Timer` implementations. Micrometer is aware of the preferences of each implementation and publishes your timing in the appropriate base unit, based on the implementation. The following listing shows part of the `Timer` interface:
 
 [source,java]
 ----
@@ -68,9 +68,9 @@ sample.stop(registry.timer("my.timer", "response", response.status()));
 
 Note how we do not decide the timer to which to accumulate the sample until it is time to stop the sample. This lets us dynamically determine certain tags from the end state of the operation we are timing.
 
-== The `@Timed` annotation
+== The `@Timed` Annotation
 
-The `micrometer-core` modules contains a `@Timed` annotation that frameworks can use to add timing support to either specific types of methods such as those serving web request endpoints or, more generally, to all methods.
+The `micrometer-core` module contains a `@Timed` annotation that frameworks can use to add timing support to either specific types of methods such as those serving web request endpoints or, more generally, to all methods.
 
 WARNING: Micrometer's Spring Boot configuration does _not_ recognize `@Timed` on arbitrary methods.
 
@@ -115,7 +115,7 @@ public class ExampleService {
 
 === @MeterTag on Method Parameters
 
-To support `@MeterTag` annotation on method parameters you need to configure the `@TimedAspect` to add the `MeterTagAnnotationHandler`.
+To support using the `@MeterTag` annotation on method parameters, you need to configure the `@TimedAspect` to add the `MeterTagAnnotationHandler`.
 
 [source,java,subs=+attributes]
 -----
@@ -131,7 +131,7 @@ Let's assume that we have the following interface.
 include::{include-java}/metrics/TimedAspectTest.java[tags=interface,indent=0]
 -----
 
-When its implementations would be called with different arguments (remember that the implementation needs to be annotated with `@Timed` annotation too) the following timers would be created:
+When its implementations would be called with different arguments (remember that the implementation needs to be annotated with `@Timed` annotation too), the following timers would be created:
 
 [source,java,subs=+attributes]
 -----
@@ -201,7 +201,7 @@ In the future, we may provide further detector implementations. Some pauses may 
 
 == Memory Footprint Estimation
 
-Timers are the most memory-consuming meter, and their total footprint can vary dramatically, depending on which options you choose. The following table of memory consumption is based on the use of various features. These figures assume no tags and a ring buffer length of 3. Adding tags adds somewhat to the total, as does increasing the buffer length. Total storage can also vary somewhat depending on the registry implementation.
+Timers are the most memory-consuming meter, and their total footprint can vary dramatically, depending on which options you choose. The following table of memory consumption is based on the use of various features. These figures assume no tags and a ring buffer length of 3. Adding tags adds somewhat to the total, as does increasing the buffer length. Total storage can also vary somewhat, depending on the registry implementation.
 
 * R = Ring buffer length. We assume the default of 3 in all examples. R is set with `Timer.Builder#distributionStatisticBufferLength`.
 * B = Total histogram buckets. Can be SLO boundaries or percentile histogram buckets. By default, timers are clamped to a minimum expected value of 1ms and a maximum expected value of 30 seconds, yielding 66 buckets for percentile histograms, when applicable.

@@ -30,7 +30,7 @@ include::{include-core-test-java}/io/micrometer/core/instrument/binder/okhttp3/O
 
 Micrometer supports binding metrics to `OkHttpClient` through `EventListener`.
 
-You can collect metrics from `OkHttpClient` by adding `OkHttpMetricsEventListener` as follows:
+You can collect metrics from `OkHttpClient` by adding `OkHttpMetricsEventListener`, as follows:
 
 [source,java]
 ----
@@ -45,7 +45,7 @@ NOTE: The `uri` tag is usually limited to URI patterns to mitigate tag cardinali
 provide URI patterns. We provide `URI_PATTERN` header to support `uri` tag, or you can configure a URI mapper to provide
 your own tag values for `uri` tag.
 
-To configure a URI mapper, you can use `uriMapper()` as follows:
+To configure a URI mapper, you can use `uriMapper()`, as follows:
 
 [source,java]
 ----

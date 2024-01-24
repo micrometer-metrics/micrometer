@@ -1,7 +1,7 @@
 [[gauges]]
 = Gauges
 
-A gauge is a handle to get the current value. Typical examples for gauges would be the size of a collection or map or number of threads in a running state.
+A gauge is a handle to get the current value. Typical examples for gauges would be the size of a collection or map or the number of threads in a running state.
 
 TIP: Gauges are useful for monitoring things with natural upper bounds. We do not recommend using a gauge to monitor things like request count, as they can grow without bound for the duration of an application instance's life.
 

@@ -82,4 +82,4 @@ Finally, if you define SLO boundaries with the fluent builder for `Timer`, you c
 .Timer SLO boundaries.
 image::implementations/signalfx-timer-sla.png[SignalFx-rendered SLO boundaries]
 
-Where the lines converge at various points it is evident that no sample exceeded the 275 ms SLO boundary.
+Where the lines converge at various points, it is evident that no sample exceeded the 275 ms SLO boundary.
