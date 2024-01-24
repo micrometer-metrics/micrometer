@@ -1,0 +1,7 @@
+== Hierarchical name mapping
+
+Micrometer provides a `HierarchicalNameMapper` interface that governs how a dimensional meter ID is mapped to flat hierarchical names.
+
+The default (`HierarchicalNameMapper.DEFAULT`) sorts tags alphabetically by key and appends tag key/value pairs to the base meter name with '.' -- for example, `http_server_requests.method.GET.response.200`. The name and tag keys have the registry's naming convention applied to them first.
+
+If there is something special about your naming scheme that you need to honor, you can provide your own `HierarchicalNameMapper` implementation. The most common cause of a custom mapper comes from a need to prefix something to the front of every metric (generally something like `app.<name>.http_server_requests.method.GET.response.200`).

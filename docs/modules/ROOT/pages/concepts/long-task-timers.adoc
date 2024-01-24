@@ -1,0 +1,50 @@
+[[long-task-timers]]
+= Long Task Timers
+
+The long task timer is a special type of timer that lets you measure time while an event being measured is *still running*. A normal Timer only records the duration *after* the task is complete.
+
+Long task timers publish at least the following statistics:
+
+* Active task count
+* Total duration of active tasks
+* The maximum duration of active tasks
+
+Unlike a regular `Timer`, a long task timer does not publish statistics about completed tasks.
+
+Consider a background process to refresh metadata from a data store. For example, https://github.com/Netflix/edda[Edda] caches AWS resources, such as instances, volumes, auto-scaling groups, and others. Normally all data can be refreshed in a few minutes. If the AWS services have problems, it can take much longer. A long task timer can be used to track the active time for refreshing the metadata.
+
+For example, in a Spring application, it is common for such long running processes to be implemented with `@Scheduled`. Micrometer provides a special `@Timed` annotation for instrumenting these processes with a long task timer:
+
+[source, java]
+----
+@Timed(value = "aws.scrape", longTask = true)
+@Scheduled(fixedDelay = 360000)
+void scrapeResources() {
+    // find instances, volumes, auto-scaling groups, etc...
+}
+----
+
+It is up to the application framework to make something happen with `@Timed`. If your framework of choice does not support it, you can still use the long task timer:
+
+[source, java]
+----
+LongTaskTimer scrapeTimer = registry.more().longTaskTimer("scrape");
+void scrapeResources() {
+    scrapeTimer.record(() => {
+        // find instances, volumes, auto-scaling groups, etc...
+    });
+}
+----
+
+If we wanted to alert when this process exceeds a threshold, with a long task timer, we receive that alert at the first reporting interval after we have exceeded the threshold. With a regular timer, we would not receive the alert until the first reporting interval after the process completed, over an hour later!
+
+The interface contains a fluent builder for long task timers:
+
+[source, java]
+----
+LongTaskTimer longTaskTimer = LongTaskTimer
+    .builder("long.task.timer")
+    .description("a description of what this timer does") // optional
+    .tags("region", "test") // optional
+    .register(registry);
+----

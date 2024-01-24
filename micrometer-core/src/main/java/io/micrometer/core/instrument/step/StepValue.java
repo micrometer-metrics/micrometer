@@ -91,6 +91,7 @@ public abstract class StepValue<V> {
      * <p>
      * Rolls the values regardless of the clock or current time and ensures the value will
      * never roll over again after.
+     * @since 1.11.0
      */
     protected void _closingRollover() {
         // make sure value does not roll over again if passing a step boundary

@@ -37,7 +37,6 @@ import java.util.concurrent.CountDownLatch;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class JettyConnectionMetricsTest {
 
@@ -86,7 +85,7 @@ class JettyConnectionMetricsTest {
         // update the sent/received bytes metrics
         server.stop();
 
-        assertTrue(latch.await(10, SECONDS));
+        assertThat(latch.await(10, SECONDS)).isTrue();
         assertThat(registry.get("jetty.connections.max").gauge().value()).isEqualTo(2.0);
         assertThat(registry.get("jetty.connections.request").tag("type", "server").timer().count()).isEqualTo(2);
         assertThat(registry.get("jetty.connections.bytes.in").summary().totalAmount()).isGreaterThan(1);
@@ -114,7 +113,7 @@ class JettyConnectionMetricsTest {
         post.send();
         httpClient.stop();
 
-        assertTrue(latch.await(10, SECONDS));
+        assertThat(latch.await(10, SECONDS)).isTrue();
         assertThat(registry.get("jetty.connections.max").gauge().value()).isEqualTo(1.0);
         assertThat(registry.get("jetty.connections.request").tag("type", "client").timer().count()).isEqualTo(1);
         assertThat(registry.get("jetty.connections.bytes.out").summary().totalAmount()).isGreaterThan(1);

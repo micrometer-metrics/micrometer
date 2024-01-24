@@ -111,4 +111,13 @@ class DropwizardMeterRegistryTest {
         assertThat(registry.getDropwizardRegistry().getMeters()).isEmpty();
     }
 
+    @Issue("#2924")
+    @Test
+    void removeShouldWorkForLongTaskTimer() {
+        LongTaskTimer timer = LongTaskTimer.builder("foo").register(registry);
+        assertThat(registry.getDropwizardRegistry().getGauges()).hasSize(3);
+        registry.remove(timer);
+        assertThat(registry.getDropwizardRegistry().getGauges()).isEmpty();
+    }
+
 }

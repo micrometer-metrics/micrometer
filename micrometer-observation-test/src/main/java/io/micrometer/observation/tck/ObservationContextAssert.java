@@ -253,6 +253,16 @@ public class ObservationContextAssert<SELF extends ObservationContextAssert<SELF
         return (SELF) this;
     }
 
+    /**
+     * Return whether it has the given low cardinality key value.
+     * @param keyValue key value
+     * @return whether it has the given low cardinality key value
+     * @since 1.12.0
+     */
+    public SELF hasLowCardinalityKeyValue(KeyValue keyValue) {
+        return hasLowCardinalityKeyValue(keyValue.getKey(), keyValue.getValue());
+    }
+
     public SELF doesNotHaveLowCardinalityKeyValueWithKey(String key) {
         isNotNull();
         if (this.actual.getLowCardinalityKeyValues().stream().anyMatch(tag -> tag.getKey().equals(key))) {
@@ -276,6 +286,16 @@ public class ObservationContextAssert<SELF extends ObservationContextAssert<SELF
                     value);
         }
         return (SELF) this;
+    }
+
+    /**
+     * Return whether it does not have the given low cardinality key value.
+     * @param keyValue key value
+     * @return whether it does not have the given low cardinality key value
+     * @since 1.12.0
+     */
+    public SELF doesNotHaveLowCardinalityKeyValue(KeyValue keyValue) {
+        return doesNotHaveLowCardinalityKeyValue(keyValue.getKey(), keyValue.getValue());
     }
 
     public SELF hasHighCardinalityKeyValueWithKey(String key) {
@@ -305,6 +325,16 @@ public class ObservationContextAssert<SELF extends ObservationContextAssert<SELF
         return (SELF) this;
     }
 
+    /**
+     * Return whether it has the given high cardinality key value.
+     * @param keyValue key value
+     * @return whether it has the given high cardinality key value
+     * @since 1.12.0
+     */
+    public SELF hasHighCardinalityKeyValue(KeyValue keyValue) {
+        return hasHighCardinalityKeyValue(keyValue.getKey(), keyValue.getValue());
+    }
+
     public SELF doesNotHaveHighCardinalityKeyValueWithKey(String key) {
         isNotNull();
         if (this.actual.getHighCardinalityKeyValues().stream().anyMatch(tag -> tag.getKey().equals(key))) {
@@ -328,6 +358,16 @@ public class ObservationContextAssert<SELF extends ObservationContextAssert<SELF
                     value);
         }
         return (SELF) this;
+    }
+
+    /**
+     * Return whether it does not have the given high cardinality key value.
+     * @param keyValue key value
+     * @return whether it does not have the given high cardinality key value
+     * @since 1.12.0
+     */
+    public SELF doesNotHaveHighCardinalityKeyValue(KeyValue keyValue) {
+        return doesNotHaveHighCardinalityKeyValue(keyValue.getKey(), keyValue.getValue());
     }
 
     public SELF hasMapEntry(Object key, Object value) {

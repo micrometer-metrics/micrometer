@@ -47,7 +47,6 @@ import java.util.stream.Collectors;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static org.assertj.core.api.Assertions.*;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
  * Unit tests for {@link MicrometerHttpRequestExecutor}.
@@ -55,6 +54,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
  * @author Benjamin Hubert (benjamin.hubert@willhaben.at)
  */
 @ExtendWith(WiremockResolver.class)
+@Deprecated
 class MicrometerHttpRequestExecutorTest {
 
     private static final String EXPECTED_METER_NAME = "httpcomponents.httpclient.request";
@@ -132,8 +132,8 @@ class MicrometerHttpRequestExecutorTest {
         getWithHeader.addHeader(DefaultUriMapper.URI_PATTERN_HEADER, "/some/pattern");
         EntityUtils.consume(client.execute(getWithHeader).getEntity());
         assertThat(registry.get(EXPECTED_METER_NAME).tags("uri", "/some/pattern").timer().count()).isEqualTo(1L);
-        assertThrows(MeterNotFoundException.class,
-                () -> registry.get(EXPECTED_METER_NAME).tags("uri", "UNKNOWN").timer());
+        assertThatExceptionOfType(MeterNotFoundException.class)
+            .isThrownBy(() -> registry.get(EXPECTED_METER_NAME).tags("uri", "UNKNOWN").timer());
     }
 
     @ParameterizedTest
@@ -217,13 +217,13 @@ class MicrometerHttpRequestExecutorTest {
 
     @Test
     void settingNullRegistryThrowsException() {
-        assertThrows(IllegalArgumentException.class, () -> MicrometerHttpRequestExecutor.builder(null).build());
+        assertThatIllegalArgumentException().isThrownBy(() -> MicrometerHttpRequestExecutor.builder(null).build());
     }
 
     @Test
     void overridingUriMapperWithNullThrowsException() {
-        assertThrows(IllegalArgumentException.class,
-                () -> MicrometerHttpRequestExecutor.builder(registry).uriMapper(null).build());
+        assertThatIllegalArgumentException()
+            .isThrownBy(() -> MicrometerHttpRequestExecutor.builder(registry).uriMapper(null).build());
     }
 
     @Test

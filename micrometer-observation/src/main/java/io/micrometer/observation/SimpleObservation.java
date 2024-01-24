@@ -35,6 +35,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author Jonatan Ivanov
  * @author Tommy Ludwig
  * @author Marcin Grzejszczak
+ * @author Yanming Zhou
  * @since 1.10.0
  */
 class SimpleObservation implements Observation {
@@ -61,7 +62,6 @@ class SimpleObservation implements Observation {
         this.convention = getConventionFromConfig(registry, context);
         this.handlers = getHandlersFromConfig(registry, context);
         this.filters = registry.observationConfig().getObservationFilters();
-        setParentFromCurrentObservation();
     }
 
     SimpleObservation(ObservationConvention<? extends Context> convention, ObservationRegistry registry,
@@ -77,14 +77,6 @@ class SimpleObservation implements Observation {
         else {
             throw new IllegalStateException(
                     "Convention [" + convention + "] doesn't support context [" + context + "]");
-        }
-        setParentFromCurrentObservation();
-    }
-
-    private void setParentFromCurrentObservation() {
-        Observation currentObservation = this.registry.getCurrentObservation();
-        if (currentObservation != null) {
-            this.context.setParentObservation(currentObservation);
         }
     }
 
@@ -276,6 +268,11 @@ class SimpleObservation implements Observation {
         this.handlers.descendingIterator().forEachRemaining(handler -> handler.onStop(context));
     }
 
+    @Override
+    public ObservationRegistry getObservationRegistry() {
+        return this.registry;
+    }
+
     static class SimpleScope implements Scope {
 
         private static final InternalLogger log = InternalLoggerFactory.getInstance(SimpleScope.class);
@@ -301,10 +298,9 @@ class SimpleObservation implements Observation {
 
         @Override
         public void close() {
-            SimpleScope lastScopeForThisObservation = getLastScope(this);
-
             if (currentObservation instanceof SimpleObservation) {
                 SimpleObservation observation = (SimpleObservation) currentObservation;
+                SimpleScope lastScopeForThisObservation = getLastScope(this);
                 if (lastScopeForThisObservation != null) {
                     observation.lastScope.put(Thread.currentThread(), lastScopeForThisObservation);
                 }
@@ -313,8 +309,11 @@ class SimpleObservation implements Observation {
                 }
                 observation.notifyOnScopeClosed();
             }
-            else {
+            else if (currentObservation != null && !currentObservation.isNoop()) {
                 log.debug("Custom observation type was used in combination with SimpleScope - that's unexpected");
+            }
+            else {
+                log.trace("NoOp observation used with SimpleScope");
             }
             this.registry.setCurrentObservationScope(previousObservationScope);
         }
@@ -337,8 +336,7 @@ class SimpleObservation implements Observation {
                 do {
                     // We don't want to remove any enclosing scopes when resetting
                     // we just want to remove any scopes if they are present (that's why
-                    // we're
-                    // not calling scope#close)
+                    // we're not calling scope#close)
                     simpleObservation.notifyOnScopeReset();
                     scope = (SimpleScope) scope.previousObservationScope;
                 }

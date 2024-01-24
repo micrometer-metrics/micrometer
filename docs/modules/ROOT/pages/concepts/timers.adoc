@@ -1,0 +1,231 @@
+[[timers]]
+= Timers
+
+Timers are intended for measuring short-duration latencies and the frequency of such events. All implementations of `Timer` report at least the total time and the count of events as separate time series. While you can use timers for other use cases, note that negative values are not supported, and recording many longer durations could cause overflow of the total time at `Long.MAX_VALUE` nanoseconds (292.3 years).
+
+As an example, consider a graph showing request latency to a typical web server. The server can be expected to respond to many requests quickly, so the timer gets updated many times per second.
+
+The appropriate base unit for timers varies by metrics backend, and for good reason. Micrometer is decidedly un-opinionated about this. However, because of the potential for confusion, Micrometer requires a `TimeUnit` when interacting with `Timer` implementations. Micrometer is aware of the preferences of each implementation and publishes your timing in the appropriate base unit based on the implementation. The following listing shows part of the `Timer` interface:
+
+[source,java]
+----
+public interface Timer extends Meter {
+    ...
+    void record(long amount, TimeUnit unit);
+    void record(Duration duration);
+    double totalTime(TimeUnit unit);
+}
+----
+
+The interface contains a fluent builder for timers:
+
+[source,java]
+----
+Timer timer = Timer
+    .builder("my.timer")
+    .description("a description of what this timer does") // optional
+    .tags("region", "test") // optional
+    .register(registry);
+----
+
+NOTE: The maximum statistical value for basic `Timer` implementations, such as `CumulativeTimer` and `StepTimer`, is a time window maximum (`TimeWindowMax`).
+It means that its value is the maximum value during a time window.
+If no new values are recorded for the time window length, the max is reset to 0 as a new time window starts.
+Time window size is the step size of the meter registry, unless expiry in `DistributionStatisticConfig` is explicitly set to other value.
+A time window maximum is used to capture maximum latency in a subsequent interval after heavy resource pressure triggers the latency and prevents metrics from being published.
+Percentiles are also time window percentiles (`TimeWindowPercentileHistogram`).
+
+== Recording Blocks of Code
+
+The `Timer` interface exposes several convenience overloads for recording timings inline, including the following:
+
+[source,java]
+----
+timer.record(() -> dontCareAboutReturnValue());
+timer.recordCallable(() -> returnValue());
+
+Runnable r = timer.wrap(() -> dontCareAboutReturnValue()); <1>
+Callable c = timer.wrap(() -> returnValue());
+----
+<1> Wrap `Runnable` or `Callable` and return the instrumented version of it for use later.
+
+NOTE: A `Timer` is really a specialized distribution summary that is aware of how to scale durations to the base unit of time of each monitoring system and has an automatically
+determined base unit. In every case where you want to measure time, you should use a `Timer` rather than a `DistributionSummary`.
+
+== Storing Start State in `Timer.Sample`
+
+You may also store start state in a sample instance that can be stopped later. The sample records a start time based on the registry's clock. After starting a sample, execute the code to be timed and finish the operation by calling `stop(Timer)` on the sample:
+
+[source, java]
+----
+Timer.Sample sample = Timer.start(registry);
+
+// do stuff
+Response response = ...
+
+sample.stop(registry.timer("my.timer", "response", response.status()));
+----
+
+Note how we do not decide the timer to which to accumulate the sample until it is time to stop the sample. This lets us dynamically determine certain tags from the end state of the operation we are timing.
+
+== The `@Timed` annotation
+
+The `micrometer-core` modules contains a `@Timed` annotation that frameworks can use to add timing support to either specific types of methods such as those serving web request endpoints or, more generally, to all methods.
+
+WARNING: Micrometer's Spring Boot configuration does _not_ recognize `@Timed` on arbitrary methods.
+
+Also, an incubating AspectJ aspect is included in `micrometer-core`. You can use it in your application either through compile/load time AspectJ weaving or through framework facilities that interpret AspectJ aspects and proxy targeted methods in some other way, such as Spring AOP. Here is a sample Spring AOP configuration:
+
+[source,java]
+----
+@Configuration
+public class TimedConfiguration {
+   @Bean
+   public TimedAspect timedAspect(MeterRegistry registry) {
+      return new TimedAspect(registry);
+   }
+}
+----
+
+Applying `TimedAspect` makes `@Timed` usable on any arbitrary method in an AspectJ proxied instance, as the following example shows:
+
+[source,java]
+----
+@Service
+public class ExampleService {
+
+  @Timed
+  public void sync() {
+    // @Timed will record the execution time of this method,
+    // from the start and until it exits normally or exceptionally.
+    ...
+  }
+
+  @Async
+  @Timed
+  public CompletableFuture<?> async() {
+    // @Timed will record the execution time of this method,
+    // from the start and until the returned CompletableFuture
+    // completes normally or exceptionally.
+    return CompletableFuture.supplyAsync(...);
+  }
+
+}
+----
+
+=== @MeterTag on Method Parameters
+
+To support `@MeterTag` annotation on method parameters you need to configure the `@TimedAspect` to add the `MeterTagAnnotationHandler`.
+
+
+[source,java,subs=+attributes]
+-----
+include::{include-java}/metrics/TimedAspectTest.java[tags=resolvers,indent=0]
+
+include::{include-java}/metrics/TimedAspectTest.java[tags=meter_tag_annotation_handler,indent=0]
+-----
+
+Let's assume that we have the following interface.
+
+[source,java,subs=+attributes]
+-----
+include::{include-java}/metrics/TimedAspectTest.java[tags=interface,indent=0]
+-----
+
+When its implementations would be called with different arguments (remember that the implementation needs to be annotated with `@Timed` annotation too) the following timers would be created:
+
+[source,java,subs=+attributes]
+-----
+// Example for returning <toString()> on the parameter
+include::{include-java}/metrics/TimedAspectTest.java[tags=example_value_to_string,indent=0]
+
+// Example for calling the provided <ValueResolver> on the parameter
+include::{include-java}/metrics/TimedAspectTest.java[tags=example_value_resolver,indent=0]
+
+// Example for calling the provided <ValueExpressionResolver>
+include::{include-java}/metrics/TimedAspectTest.java[tags=example_value_spel,indent=0]
+-----
+
+== Function-tracking Timers
+
+Micrometer also provides a more infrequently used timer pattern that tracks two monotonically increasing functions (a function that stays the same or increases over time but never decreases): a count function and a total time function. Some monitoring systems, such as Prometheus, push cumulative values for counters (which apply to both the count and total time functions in this case) to the backend, but others publish the rate at which a counter increments over the push interval. By employing this pattern, you let the Micrometer implementation for your monitoring system choose whether to rate normalize the timer, and your timer remains portable across different types of monitoring systems.
+
+[source, java]
+-----
+IMap<?, ?> cache = ...; // suppose we have a Hazelcast cache
+registry.more().timer("cache.gets.latency", Tags.of("name", cache.getName()), cache,
+    c -> c.getLocalMapStats().getGetOperationCount(), <1>
+    c -> c.getLocalMapStats().getTotalGetLatency(),
+    TimeUnit.NANOSECONDS <2>
+);
+-----
+
+<1> `getGetOperationCount()` is a monotonically increasing function incrementing with every cache get from the beginning of its life.
+<2> This represents the unit of time represented by `getTotalGetLatency()`. Each registry implementation specifies what its expected base unit of time is, and the total time reported will be scaled to this value.
+
+The function-tracking timer, in concert with the monitoring system's rate normalizing functionality (whether this is an artifact of the query language or the way data is pushed to the system), adds a layer of richness to the cumulative value of the functions themselves. You can reason about the _rate_ of throughput and latency, whether that rate is within an acceptable bound, is increasing or decreasing over time, and so on.
+
+WARNING: Micrometer cannot guarantee the monotonicity of the count and total time functions for you. By using this signature, you are asserting their monotonicity based on what you know about their definitions.
+
+There is also a fluent builder for function timers on the `FunctionTimer` interface itself, providing access to less frequently used options, such as base units and description. You can register the timer as the last step of its construction by calling `register(MeterRegistry)`:
+
+[source, java]
+----
+IMap<?, ?> cache = ...
+
+FunctionTimer.builder("cache.gets.latency", cache,
+        c -> c.getLocalMapStats().getGetOperationCount(),
+        c -> c.getLocalMapStats().getTotalGetLatency(),
+        TimeUnit.NANOSECONDS)
+    .tags("name", cache.getName())
+    .description("Cache gets")
+    .register(registry);
+----
+
+== Pause Detection
+
+Micrometer uses the `LatencyUtils` package to compensate for https://highscalability.com/blog/2015/10/5/your-load-generator-is-probably-lying-to-you-take-the-red-pi.html[coordinated omission] -- extra latency arising from system and VM pauses that skew your latency statistics downward. Distribution statistics, such as percentiles and SLO counts, are influenced by a pause detector implementation that adds additional latency here and there to compensate for pauses.
+
+Micrometer supports two pause detector implementations: a clock-drift based detector and a no-op detector. Before Micrometer 1.0.10/1.1.4/1.2.0, a clock-drift detector was configured by default to report as-accurate-as-possible metrics without further configuration. Since 1.0.10/1.1.4/1.2.0, the no-op detector is configured by default, but the clock-drift detector can be configured as shown in the next example.
+
+The clock-drift based detector has a configurable sleep interval and pause threshold. CPU consumption is inversely proportional to `sleepInterval`, as is pause detection accuracy. 100ms for both values is a reasonable default to offer decent detection of long pause events while consuming a negligible amount of CPU time.
+
+You can customize the pause detector as follows:
+
+[source,java]
+----
+registry.config().pauseDetector(new ClockDriftPauseDetector(sleepInterval, pauseThreshold));
+registry.config().pauseDetector(new NoPauseDetector());
+----
+
+In the future, we may provide further detector implementations. Some pauses may be able to be inferred from GC logging in some circumstances, for example, without requiring a constant CPU load, however minimal. Also, a future JDK may provide direct access to pause events.
+
+== Memory Footprint Estimation
+
+Timers are the most memory-consuming meter, and their total footprint can vary dramatically, depending on which options you choose. The following table of memory consumption is based on the use of various features. These figures assume no tags and a ring buffer length of 3. Adding tags adds somewhat to the total, as does increasing the buffer length. Total storage can also vary somewhat depending on the registry implementation.
+
+* R = Ring buffer length. We assume the default of 3 in all examples. R is set with `Timer.Builder#distributionStatisticBufferLength`.
+* B = Total histogram buckets. Can be SLO boundaries or percentile histogram buckets. By default, timers are clamped to a minimum expected value of 1ms and a maximum expected value of 30 seconds, yielding 66 buckets for percentile histograms, when applicable.
+* I = Interval estimator for pause compensation. 1.7 kb.
+* M = Time-decaying max. 104 bytes.
+* Fb = Fixed boundary histogram. 8b * B * R.
+* Pp = Percentile precision. By default, it is 1. Generally in the range [0, 3]. Pp is set with `Timer.Builder#percentilePrecision`.
+* Hdr(Pp) = High dynamic range histogram.
+  - When Pp = 0: 1.9kb * R + 0.8kb
+  - When Pp = 1: 3.8kb * R + 1.1kb
+  - When Pp = 2: 18.2kb * R + 4.7kb
+  - When Pp = 3: 66kb * R + 33kb
+
+[width="80%",options="header"]
+|=========================================================
+|Pause detection |Client-side percentiles |Histogram and/or SLOs |Formula | Example
+
+|Yes |No  |No  |I + M| ~1.8kb
+|Yes |No  |Yes |I + M + Fb|For default percentile histogram, ~7.7kb
+|Yes |Yes |Yes |I + M + Hdr(Pp)|For the addition of a 0.95 percentile with defaults otherwise, ~14.3kb
+|No  |No  |No  |M| ~0.1kb
+|No  |No  |Yes |M + Fb|For default percentile histogram, ~6kb
+|No  |Yes |Yes |M + Hdr(Pp)|For the addition of a 0.95 percentile with defaults otherwise, ~12.6kb
+|=========================================================
+
+NOTE: For Prometheus, specifically, R is _always_ equal to 1, regardless of how you attempt to configure it through `Timer.Builder`. This special case exists because Prometheus expects cumulative histogram data that never rolls over.

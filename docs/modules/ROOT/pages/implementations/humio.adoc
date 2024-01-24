@@ -1,0 +1,70 @@
+= Micrometer Humio
+:toc:
+:sectnums:
+:system: humio
+
+Humio is a dimensional time-series SaaS with built-in dashboarding.
+
+include::_install.adoc[]
+
+== Configuring
+
+The following example configures a Humio instance:
+
+[source,java]
+----
+HumioConfig humioConfig = new HumioConfig() {
+    @Override
+    public String apiToken() {
+        return MY_TOKEN;
+    }
+
+    @Override
+    @Nullable
+    public String get(String k) {
+        return null;
+    }
+};
+MeterRegistry registry = new HumioMeterRegistry(humioConfig, Clock.SYSTEM);
+----
+
+`HumioConfig` is an interface with a set of default methods. If, in the implementation of `get(String k)`, rather than returning `null`, you instead bind it to a property source, you can override the default configuration. For example, Micrometer's Spring Boot support binds properties that are prefixed with `management.metrics.export.humio` directly to the `HumioConfig`:
+
+[source,yml]
+----
+management.metrics.export.humio:
+    api-token: YOURKEY
+
+    # You will probably want disable Humio publishing in a local development profile.
+    enabled: true
+
+    # The interval at which metrics are sent to Humio. The default is 1 minute.
+    step: 1m
+
+    # The cluster Micrometer will send metrics to. The default is "https://cloud.humio.com"
+    uri: https://myhumiohost
+----
+
+== Graphing
+
+This section serves as a quick start to rendering useful representations in Humio for metrics originating in Micrometer.
+
+=== Timers
+
+The Humio implementation of `Timer` produces four fields in Humio:
+
+* `sum`: Rate of calls per second.
+* `count`: Rate of total time per second.
+* `max`: A sliding window maximum amount recorded.
+* `avg`: A non-aggregable average for only this set of tag values.
+
+The following query constructs a dimensionally aggregable average latency per URI:
+
+[source, text]
+----
+name = http_server_requests
+| timechart(uri, function=max(avg))
+----
+
+.Timer over a simulated service.
+image::implementations/humio-timer.png[Humio-rendered timer]

@@ -28,6 +28,7 @@ import io.prometheus.client.exemplars.HistogramExemplarSampler;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.atomic.AtomicReferenceArray;
 
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
@@ -41,9 +42,14 @@ import static java.util.concurrent.TimeUnit.SECONDS;
  */
 class PrometheusHistogram extends TimeWindowFixedBoundaryHistogram {
 
+    @Nullable
     private final double[] buckets;
 
+    @Nullable
     private final AtomicReferenceArray<Exemplar> exemplars;
+
+    @Nullable
+    private final AtomicReference<Exemplar> lastExemplar;
 
     @Nullable
     private final HistogramExemplarSampler exemplarSampler;
@@ -51,10 +57,8 @@ class PrometheusHistogram extends TimeWindowFixedBoundaryHistogram {
     PrometheusHistogram(Clock clock, DistributionStatisticConfig config,
             @Nullable HistogramExemplarSampler exemplarSampler) {
         super(clock, DistributionStatisticConfig.builder()
-            .expiry(Duration.ofDays(1825)) // effectively
-                                           // never
-                                           // roll
-                                           // over
+            // effectively never rolls over
+            .expiry(Duration.ofDays(1825))
             .bufferLength(1)
             .build()
             .merge(config), true);
@@ -70,10 +74,12 @@ class PrometheusHistogram extends TimeWindowFixedBoundaryHistogram {
                 this.buckets = originalBuckets;
             }
             this.exemplars = new AtomicReferenceArray<>(this.buckets.length);
+            this.lastExemplar = new AtomicReference<>();
         }
         else {
             this.buckets = null;
             this.exemplars = null;
+            this.lastExemplar = null;
         }
     }
 
@@ -107,16 +113,20 @@ class PrometheusHistogram extends TimeWindowFixedBoundaryHistogram {
             int index) {
         double bucketFrom = (index == 0) ? Double.NEGATIVE_INFINITY : buckets[index - 1];
         double bucketTo = buckets[index];
-        Exemplar prev;
-        Exemplar next;
+        Exemplar previusBucketExemplar;
+        Exemplar previousLastExemplar;
+        Exemplar nextExemplar;
 
         double exemplarValue = (sourceUnit != null && destinationUnit != null)
                 ? TimeUtils.convert(value, sourceUnit, destinationUnit) : value;
         do {
-            prev = exemplars.get(index);
-            next = exemplarSampler.sample(exemplarValue, bucketFrom, bucketTo, prev);
+            previusBucketExemplar = exemplars.get(index);
+            previousLastExemplar = lastExemplar.get();
+            nextExemplar = exemplarSampler.sample(exemplarValue, bucketFrom, bucketTo, previusBucketExemplar);
         }
-        while (next != null && next != prev && !exemplars.compareAndSet(index, prev, next));
+        while (nextExemplar != null && nextExemplar != previusBucketExemplar
+                && !(exemplars.compareAndSet(index, previusBucketExemplar, nextExemplar)
+                        && lastExemplar.compareAndSet(previousLastExemplar, nextExemplar)));
     }
 
     @Nullable
@@ -132,6 +142,11 @@ class PrometheusHistogram extends TimeWindowFixedBoundaryHistogram {
         else {
             return null;
         }
+    }
+
+    @Nullable
+    Exemplar lastExemplar() {
+        return this.lastExemplar.get();
     }
 
     /**

@@ -18,11 +18,14 @@ package io.micrometer.observation;
 import io.micrometer.common.KeyValue;
 import io.micrometer.common.KeyValues;
 import io.micrometer.observation.Observation.Context;
+import org.awaitility.Awaitility;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
+import java.util.ConcurrentModificationException;
 import java.util.Random;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
@@ -36,6 +39,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @author Jonatan Ivanov
  * @author Tommy Ludwig
  * @author Marcin Grzejszczak
+ * @author Yanming Zhou
  */
 class ObservationTests {
 
@@ -78,6 +82,20 @@ class ObservationTests {
         Observation observation = Observation.createNotStarted("foo", registry);
 
         assertThat(observation).isNotSameAs(Observation.NOOP);
+    }
+
+    @Test
+    void usingParentObservationToMatchPredicate() {
+        registry.observationConfig().observationHandler(context -> true);
+        registry.observationConfig()
+            .observationPredicate((s, context) -> !s.equals("child") || context.getParentObservation() != null);
+
+        Observation childWithoutParent = Observation.createNotStarted("child", registry);
+        assertThat(childWithoutParent).isSameAs(Observation.NOOP);
+
+        Observation childWithParent = Observation.createNotStarted("parent", registry)
+            .observe(() -> Observation.createNotStarted("child", registry));
+        assertThat(childWithParent).isNotSameAs(Observation.NOOP);
     }
 
     @Test
@@ -325,6 +343,34 @@ class ObservationTests {
     }
 
     @Test
+    void contextShouldWorkOnMultipleThreads() {
+        Observation.Context context = new Observation.Context();
+        AtomicBoolean exception = new AtomicBoolean();
+
+        new Thread(() -> {
+            try {
+                for (int i = 0; i < 1000; i++) {
+                    context.computeIfAbsent("foo", o -> "bar");
+                }
+            }
+            catch (ConcurrentModificationException ex) {
+                exception.set(true);
+            }
+        }).start();
+        new Thread(() -> {
+            for (int i = 0; i < 1000; i++) {
+                context.clear();
+            }
+            context.put("thread", "done");
+        }).start();
+
+        Awaitility.await().atMost(150, TimeUnit.MILLISECONDS).pollDelay(10, TimeUnit.MILLISECONDS).untilAsserted(() -> {
+            assertThat(exception).as("ConcurrentModificationException must not be thrown").isFalse();
+            assertThat((String) context.get("thread")).isEqualTo("done");
+        });
+    }
+
+    @Test
     void observe() {
         String result;
         // with supplier
@@ -382,12 +428,12 @@ class ObservationTests {
             }
         };
         AtomicReference<Context> passedContextHolder = new AtomicReference<>();
-        result = Observation.createNotStarted("service", supplier, NoopObservationRegistry.INSTANCE)
+        result = Observation.createNotStarted("service", supplier, ObservationRegistry.NOOP)
             .observeWithContext((ctx) -> {
                 passedContextHolder.set(ctx);
                 return "World";
             });
-        assertThat(passedContextHolder).as("passed a noop context").hasValue(NoopObservation.INSTANCE.getContext());
+        assertThat(passedContextHolder).as("passed a noop context").hasValue(Observation.NOOP.getContext());
         assertThat(contextCreated).isFalse();
         assertThat(result).isEqualTo("World");
     }

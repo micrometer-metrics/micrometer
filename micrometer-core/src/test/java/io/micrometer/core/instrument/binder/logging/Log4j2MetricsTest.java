@@ -174,8 +174,10 @@ class Log4j2MetricsTest {
 
         assertThat(registry.get("log4j2.events").tags("level", "info").counter().count()).isEqualTo(0);
         logger.info("Hello, world!");
+        logger.info("Hello, world!");
+        logger.info("Hello, world!");
         await().atMost(Duration.ofSeconds(1))
-            .until(() -> registry.get("log4j2.events").tags("level", "info").counter().count() == 1);
+            .until(() -> registry.get("log4j2.events").tags("level", "info").counter().count() == 3);
     }
 
 }

@@ -16,9 +16,7 @@
 package io.micrometer.core.instrument;
 
 import io.micrometer.common.lang.Nullable;
-import io.micrometer.core.instrument.binder.httpcomponents.hc5.ApacheHttpClientObservationDocumentation;
-import io.micrometer.core.instrument.binder.httpcomponents.hc5.DefaultUriMapper;
-import io.micrometer.core.instrument.binder.httpcomponents.hc5.MicrometerHttpRequestExecutor;
+import io.micrometer.core.instrument.binder.httpcomponents.hc5.*;
 import io.micrometer.observation.docs.ObservationDocumentation;
 import org.apache.hc.client5.http.classic.methods.HttpUriRequest;
 import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
@@ -40,6 +38,7 @@ class ApacheHttpClient5TimingInstrumentationVerificationTests
     private static final HttpClientResponseHandler<ClassicHttpResponse> NOOP_RESPONSE_HANDLER = (response) -> response;
 
     @Override
+    @SuppressWarnings("deprecation")
     protected CloseableHttpClient clientInstrumentedWithMetrics() {
         return HttpClientBuilder.create()
             .setRequestExecutor(MicrometerHttpRequestExecutor.builder(getRegistry()).build())
@@ -50,9 +49,7 @@ class ApacheHttpClient5TimingInstrumentationVerificationTests
     @Override
     protected CloseableHttpClient clientInstrumentedWithObservations() {
         return HttpClientBuilder.create()
-            .setRequestExecutor(MicrometerHttpRequestExecutor.builder(getRegistry())
-                .observationRegistry(getObservationRegistry())
-                .build())
+            .addExecInterceptorFirst("micrometer", new ObservationExecChainHandler(getObservationRegistry()))
             .build();
     }
 
@@ -79,6 +76,7 @@ class ApacheHttpClient5TimingInstrumentationVerificationTests
         }
     }
 
+    @SuppressWarnings("deprecation")
     private HttpUriRequest makeRequest(HttpMethod method, @Nullable byte[] body, URI baseUri, String templatedPath,
             String... pathVariables) {
         HttpUriRequestBase request = new HttpUriRequestBase(method.name(),

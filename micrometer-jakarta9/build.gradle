@@ -1,0 +1,26 @@
+description 'Module for Jakarta 9+ based instrumentations'
+
+jar {
+    bundle {
+
+        bnd '''\
+        Import-Package: \
+            jakarta.jms.*;resolution:=dynamic;version="${@}",\
+            io.micrometer.observation.*;resolution:=dynamic;version="${@}",\
+            *
+        '''.stripIndent()
+    }
+}
+
+dependencies {
+    api project(":micrometer-core")
+    api project(":micrometer-commons")
+    api project(":micrometer-observation")
+
+    optionalApi 'jakarta.jms:jakarta.jms-api'
+
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testImplementation 'com.tngtech.archunit:archunit-junit5'
+    testImplementation 'org.mockito:mockito-core'
+    testImplementation 'org.assertj:assertj-core'
+}

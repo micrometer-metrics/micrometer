@@ -45,6 +45,7 @@ import io.opentelemetry.proto.resource.v1.Resource;
 
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executors;
@@ -72,6 +73,8 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
 
     private static final ThreadFactory DEFAULT_THREAD_FACTORY = new NamedThreadFactory("otlp-metrics-publisher");
 
+    private static final double[] EMPTY_SLO_WITH_POSITIVE_INF = new double[] { Double.POSITIVE_INFINITY };
+
     private final InternalLogger logger = InternalLoggerFactory.getInstance(OtlpMeterRegistry.class);
 
     private final OtlpConfig config;
@@ -82,7 +85,13 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
 
     private final io.opentelemetry.proto.metrics.v1.AggregationTemporality otlpAggregationTemporality;
 
+    private final TimeUnit baseTimeUnit;
+
     private long deltaAggregationTimeUnixNano = 0L;
+
+    // Time when the last scheduled rollOver has started. Applicable only for delta
+    // flavour.
+    private long lastMeterRolloverStartTime = -1;
 
     @Nullable
     private ScheduledExecutorService meterPollingService;
@@ -100,6 +109,7 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
     private OtlpMeterRegistry(OtlpConfig config, Clock clock, HttpSender httpSender) {
         super(config, clock);
         this.config = config;
+        this.baseTimeUnit = config.baseTimeUnit();
         this.httpSender = httpSender;
         this.resource = Resource.newBuilder().addAllAttributes(getResourceAttributes()).build();
         this.otlpAggregationTemporality = AggregationTemporality
@@ -155,7 +165,11 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
                 HttpSender.Request.Builder httpRequest = this.httpSender.post(this.config.url())
                     .withContent("application/x-protobuf", request.toByteArray());
                 this.config.headers().forEach(httpRequest::withHeader);
-                httpRequest.send();
+                HttpSender.Response response = httpRequest.send();
+                if (!response.isSuccessful()) {
+                    logger.warn("Failed to publish metrics. Server responded with HTTP status code {} and body {}",
+                            response.code(), response.body());
+                }
             }
             catch (Throwable e) {
                 logger.warn("Failed to publish metrics to OTLP receiver", e);
@@ -222,7 +236,7 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
 
     @Override
     protected TimeUnit getBaseTimeUnit() {
-        return TimeUnit.MILLISECONDS;
+        return baseTimeUnit;
     }
 
     @Override
@@ -236,12 +250,12 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
     @Override
     public void close() {
         stop();
-        if (!isPublishing() && isDelta()) {
-            if (!isDataPublishedForCurrentStep()) {
-                // Data was not published for the current step. So, we should flush that
+        if (config.enabled() && isDelta() && !isClosed()) {
+            if (shouldPublishDataForLastStep() && !isPublishing()) {
+                // Data was not published for the last step. So, we should flush that
                 // first.
                 try {
-                    this.publish();
+                    publish();
                 }
                 catch (Throwable e) {
                     logger.warn(
@@ -249,15 +263,21 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
                             e);
                 }
             }
+            else if (isPublishing()) {
+                waitForInProgressScheduledPublish();
+            }
             getMeters().forEach(this::closingRollover);
         }
         super.close();
     }
 
-    private boolean isDataPublishedForCurrentStep() {
-        long currentTimeInMillis = clock.wallTime();
-        return (getLastScheduledPublishStartTime() / config.step().toMillis()) >= (currentTimeInMillis
-                / config.step().toMillis());
+    private boolean shouldPublishDataForLastStep() {
+        if (lastMeterRolloverStartTime < 0)
+            return false;
+
+        final long lastPublishedStep = getLastScheduledPublishStartTime() / config.step().toMillis();
+        final long lastPolledStep = lastMeterRolloverStartTime / config.step().toMillis();
+        return lastPublishedStep < lastPolledStep;
     }
 
     // Either we do this or make StepMeter public
@@ -266,16 +286,16 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
         if (meter instanceof StepCounter) {
             ((StepCounter) meter)._closingRollover();
         }
-        if (meter instanceof StepFunctionCounter) {
+        else if (meter instanceof StepFunctionCounter) {
             ((StepFunctionCounter<?>) meter)._closingRollover();
         }
-        if (meter instanceof StepFunctionTimer) {
+        else if (meter instanceof StepFunctionTimer) {
             ((StepFunctionTimer<?>) meter)._closingRollover();
         }
-        if (meter instanceof OtlpStepTimer) {
+        else if (meter instanceof OtlpStepTimer) {
             ((OtlpStepTimer) meter)._closingRollover();
         }
-        if (meter instanceof OtlpStepDistributionSummary) {
+        else if (meter instanceof OtlpStepDistributionSummary) {
             ((OtlpStepDistributionSummary) meter)._closingRollover();
         }
     }
@@ -334,6 +354,7 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
      */
     // VisibleForTesting
     void pollMetersToRollover() {
+        this.lastMeterRolloverStartTime = clock.wallTime();
         this.getMeters()
             .forEach(m -> m.match(gauge -> null, Counter::count, Timer::takeSnapshot, DistributionSummary::takeSnapshot,
                     meter -> null, meter -> null, FunctionCounter::count, FunctionTimer::count, meter -> null));
@@ -386,8 +407,14 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
         // if histogram enabled, add histogram buckets
         if (histogramSnapshot.histogramCounts().length != 0) {
             for (CountAtBucket countAtBucket : histogramSnapshot.histogramCounts()) {
-                histogramDataPoint
-                    .addExplicitBounds(isTimeBased ? countAtBucket.bucket(getBaseTimeUnit()) : countAtBucket.bucket());
+                if (countAtBucket.bucket() != Double.POSITIVE_INFINITY) {
+                    // OTLP expects explicit bounds to not contain POSITIVE_INFINITY but
+                    // there should be a
+                    // bucket count representing values between last bucket and
+                    // POSITIVE_INFINITY.
+                    histogramDataPoint.addExplicitBounds(
+                            isTimeBased ? countAtBucket.bucket(getBaseTimeUnit()) : countAtBucket.bucket());
+                }
                 histogramDataPoint.addBucketCounts((long) countAtBucket.count());
             }
             metricBuilder.setHistogram(io.opentelemetry.proto.metrics.v1.Histogram.newBuilder()
@@ -496,17 +523,24 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
         // Though AbstractTimer/Distribution Summary prefers publishing percentiles,
         // exporting of histograms over percentiles is preferred in OTLP.
         if (distributionStatisticConfig.isPublishingHistogram()) {
+            double[] sloWithPositiveInf = getSloWithPositiveInf(distributionStatisticConfig);
             if (AggregationTemporality.isCumulative(aggregationTemporality)) {
                 return new TimeWindowFixedBoundaryHistogram(clock, DistributionStatisticConfig.builder()
                     // effectively never roll over
                     .expiry(Duration.ofDays(1825))
+                    .serviceLevelObjectives(sloWithPositiveInf)
                     .percentiles()
                     .bufferLength(1)
                     .build()
                     .merge(distributionStatisticConfig), true, false);
             }
             if (AggregationTemporality.isDelta(aggregationTemporality) && stepMillis > 0) {
-                return new OtlpStepBucketHistogram(clock, stepMillis, distributionStatisticConfig, true, false);
+                return new OtlpStepBucketHistogram(clock, stepMillis,
+                        DistributionStatisticConfig.builder()
+                            .serviceLevelObjectives(sloWithPositiveInf)
+                            .build()
+                            .merge(distributionStatisticConfig),
+                        true, false);
             }
         }
 
@@ -514,6 +548,27 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
             return new TimeWindowPercentileHistogram(clock, distributionStatisticConfig, false);
         }
         return NoopHistogram.INSTANCE;
+    }
+
+    // VisibleForTesting
+    static double[] getSloWithPositiveInf(DistributionStatisticConfig distributionStatisticConfig) {
+        double[] sloBoundaries = distributionStatisticConfig.getServiceLevelObjectiveBoundaries();
+        if (sloBoundaries == null || sloBoundaries.length == 0) {
+            // When there are no SLO's associated with DistributionStatisticConfig we will
+            // add one with Positive
+            // Infinity. This will make sure we always have POSITIVE_INFINITY, and the
+            // NavigableSet will make sure
+            // duplicates if any will be ignored.
+            return EMPTY_SLO_WITH_POSITIVE_INF;
+        }
+
+        boolean containsPositiveInf = Arrays.stream(sloBoundaries).anyMatch(value -> value == Double.POSITIVE_INFINITY);
+        if (containsPositiveInf)
+            return sloBoundaries;
+
+        double[] sloWithPositiveInf = Arrays.copyOf(sloBoundaries, sloBoundaries.length + 1);
+        sloWithPositiveInf[sloWithPositiveInf.length - 1] = Double.POSITIVE_INFINITY;
+        return sloWithPositiveInf;
     }
 
 }

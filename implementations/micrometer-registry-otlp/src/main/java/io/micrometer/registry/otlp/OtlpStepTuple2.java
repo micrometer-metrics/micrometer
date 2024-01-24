@@ -23,7 +23,7 @@ import java.util.function.Supplier;
 
 /**
  * This is an internal class not meant for general use. The only reason to have this class
- * so that {@code OtlpMeterRegistry} can call {@code _closingRollover} on
+ * is that {@code OtlpMeterRegistry} can call {@code _closingRollover} on
  * {@code StepTuple2} and the method does not need to be public.
  */
 class OtlpStepTuple2<T1, T2> extends StepTuple2<T1, T2> {

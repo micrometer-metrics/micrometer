@@ -57,9 +57,12 @@ public class HttpRequestTags {
      * @param request the request
      * @return the method tag whose value is a capitalized method (e.g. GET).
      * @since 1.10.0
+     * @deprecated since 1.12.0 in favor of
+     * {@link HttpJakartaServletRequestTags#method(jakarta.servlet.http.HttpServletRequest)}
      */
+    @Deprecated
     public static Tag method(jakarta.servlet.http.HttpServletRequest request) {
-        return (request != null) ? Tag.of("method", request.getMethod()) : METHOD_UNKNOWN;
+        return HttpJakartaServletRequestTags.method(request);
     }
 
     /**
@@ -76,9 +79,12 @@ public class HttpRequestTags {
      * @param response the HTTP response
      * @return the status tag derived from the status of the response
      * @since 1.10.0
+     * @deprecated since 1.12.0 in favor of
+     * {@link HttpJakartaServletRequestTags#status(jakarta.servlet.http.HttpServletResponse)}
      */
+    @Deprecated
     public static Tag status(jakarta.servlet.http.HttpServletResponse response) {
-        return (response != null) ? Tag.of("status", Integer.toString(response.getStatus())) : STATUS_UNKNOWN;
+        return HttpJakartaServletRequestTags.status(response);
     }
 
     /**
@@ -111,10 +117,12 @@ public class HttpRequestTags {
      * @param response the HTTP response
      * @return the outcome tag derived from the status of the response
      * @since 1.10.0
+     * @deprecated since 1.12.0 in favor of
+     * {@link HttpJakartaServletRequestTags#outcome(jakarta.servlet.http.HttpServletResponse)}
      */
+    @Deprecated
     public static Tag outcome(jakarta.servlet.http.HttpServletResponse response) {
-        Outcome outcome = (response != null) ? Outcome.forStatus(response.getStatus()) : Outcome.UNKNOWN;
-        return outcome.asTag();
+        return HttpJakartaServletRequestTags.outcome(response);
     }
 
 }

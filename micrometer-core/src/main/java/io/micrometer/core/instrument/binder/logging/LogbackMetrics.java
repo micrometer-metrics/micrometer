@@ -206,7 +206,9 @@ class MetricsTurboFilter extends TurboFilter {
         // and can return immediately and
         // avoid the relatively expensive ThreadLocal access below. See also logbacks
         // Logger.callTurboFilters().
-        if (format == null) {
+        // Calling logger.isEnabledFor(level) might be sub-optimal since it calls this
+        // filter again. This behavior caused a StackOverflowError in the past.
+        if (format == null || !level.isGreaterOrEqual(logger.getEffectiveLevel())) {
             return FilterReply.NEUTRAL;
         }
 
@@ -215,33 +217,28 @@ class MetricsTurboFilter extends TurboFilter {
             return FilterReply.NEUTRAL;
         }
 
-        LogbackMetrics.ignoreMetrics(() -> recordMetrics(logger, level));
+        LogbackMetrics.ignoreMetrics(() -> recordMetrics(level));
 
         return FilterReply.NEUTRAL;
     }
 
-    private void recordMetrics(Logger logger, Level level) {
-        // Calling logger.isEnabledFor(level) might be sub-optimal since it cals this
-        // filter again. This behavior caused a StackOverflowError in the past.
-        if (level.isGreaterOrEqual(logger.getEffectiveLevel())) {
-            switch (level.toInt()) {
-                case Level.ERROR_INT:
-                    errorCounter.increment();
-                    break;
-                case Level.WARN_INT:
-                    warnCounter.increment();
-                    break;
-                case Level.INFO_INT:
-                    infoCounter.increment();
-                    break;
-                case Level.DEBUG_INT:
-                    debugCounter.increment();
-                    break;
-                case Level.TRACE_INT:
-                    traceCounter.increment();
-                    break;
-            }
-
+    private void recordMetrics(Level level) {
+        switch (level.toInt()) {
+            case Level.ERROR_INT:
+                errorCounter.increment();
+                break;
+            case Level.WARN_INT:
+                warnCounter.increment();
+                break;
+            case Level.INFO_INT:
+                infoCounter.increment();
+                break;
+            case Level.DEBUG_INT:
+                debugCounter.increment();
+                break;
+            case Level.TRACE_INT:
+                traceCounter.increment();
+                break;
         }
 
     }

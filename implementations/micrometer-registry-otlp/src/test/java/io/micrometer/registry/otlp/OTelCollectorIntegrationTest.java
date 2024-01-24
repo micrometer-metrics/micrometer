@@ -20,8 +20,10 @@ import io.restassured.response.Response;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.testcontainers.containers.GenericContainer;
+import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
+import org.testcontainers.utility.DockerImageName;
 
 import java.time.Duration;
 
@@ -46,11 +48,24 @@ class OTelCollectorIntegrationTest {
 
     private static final String CONFIG_FILE_NAME = "collector-config.yml";
 
+    private static final DockerImageName COLLECTOR_IMAGE = DockerImageName
+        .parse("otel/opentelemetry-collector-contrib:" + getCollectorImageVersion());
+
     @Container
-    private final GenericContainer<?> container = new GenericContainer("otel/opentelemetry-collector-contrib")
+    private final GenericContainer<?> container = new GenericContainer(COLLECTOR_IMAGE)
         .withCommand("--config=/etc/" + CONFIG_FILE_NAME)
         .withClasspathResourceMapping(CONFIG_FILE_NAME, "/etc/" + CONFIG_FILE_NAME, READ_ONLY)
+        .waitingFor(Wait.forLogMessage(".*Everything is ready.*", 1))
         .withExposedPorts(4318, 9090); // HTTP receiver, Prometheus exporter
+
+    private static String getCollectorImageVersion() {
+        String version = System.getProperty("otel-collector-image.version");
+        if (version == null) {
+            throw new IllegalStateException(
+                    "System property 'otel-collector-image.version' is not set. This should be set in the build configuration for running from the command line. If you are running OTelCollectorIntegrationTest from an IDE, set the system property to the desired collector image version.");
+        }
+        return version;
+    }
 
     @Test
     void collectorShouldExportMetrics() throws Exception {
@@ -67,7 +82,7 @@ class OTelCollectorIntegrationTest {
             .untilAsserted(() -> whenPrometheusScraped().then()
                     .statusCode(200)
                     .contentType(OPENMETRICS_001)
-                    .body(endsWith("# EOF\n"))
+                    .body(endsWith("# EOF\n"), not(startsWith("# EOF\n")))
             );
 
         // tags can vary depending on where you run your tests:

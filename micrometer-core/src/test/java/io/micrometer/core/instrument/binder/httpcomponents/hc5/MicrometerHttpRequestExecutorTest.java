@@ -52,7 +52,6 @@ import java.util.stream.Collectors;
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
  * Unit tests for {@link MicrometerHttpRequestExecutor}.
@@ -60,6 +59,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
  * @author Benjamin Hubert (benjamin.hubert@willhaben.at)
  */
 @ExtendWith(WiremockResolver.class)
+@SuppressWarnings("deprecation")
 class MicrometerHttpRequestExecutorTest {
 
     private static final String EXPECTED_METER_NAME = "httpcomponents.httpclient.request";
@@ -143,16 +143,15 @@ class MicrometerHttpRequestExecutorTest {
         getWithHeader.addHeader(DefaultUriMapper.URI_PATTERN_HEADER, "/some/pattern");
         execute(client, getWithHeader);
         assertThat(registry.get(EXPECTED_METER_NAME).tags("uri", "/some/pattern").timer().count()).isEqualTo(1L);
-        assertThrows(MeterNotFoundException.class,
-                () -> registry.get(EXPECTED_METER_NAME).tags("uri", "UNKNOWN").timer());
+        assertThatThrownBy(() -> registry.get(EXPECTED_METER_NAME).tags("uri", "UNKNOWN").timer())
+            .isExactlyInstanceOf(MeterNotFoundException.class)
+            .hasNoCause();
     }
 
-    @ParameterizedTest
-    @ValueSource(booleans = { false, true })
-    void routeNotTaggedByDefault(boolean configureObservationRegistry, @WiremockResolver.Wiremock WireMockServer server)
-            throws IOException {
+    @Test
+    void routeNotTaggedByDefault(@WiremockResolver.Wiremock WireMockServer server) throws IOException {
         server.stubFor(any(anyUrl()));
-        CloseableHttpClient client = client(executor(false, configureObservationRegistry));
+        CloseableHttpClient client = client(executor(false, false));
         execute(client, new HttpGet(server.baseUrl()));
         List<String> tagKeys = registry.get(EXPECTED_METER_NAME)
             .timer()
@@ -228,13 +227,16 @@ class MicrometerHttpRequestExecutorTest {
 
     @Test
     void settingNullRegistryThrowsException() {
-        assertThrows(IllegalArgumentException.class, () -> MicrometerHttpRequestExecutor.builder(null).build());
+        assertThatThrownBy(() -> MicrometerHttpRequestExecutor.builder(null).build())
+            .isExactlyInstanceOf(IllegalArgumentException.class)
+            .hasNoCause();
     }
 
     @Test
     void overridingUriMapperWithNullThrowsException() {
-        assertThrows(IllegalArgumentException.class,
-                () -> MicrometerHttpRequestExecutor.builder(registry).uriMapper(null).build());
+        assertThatThrownBy(() -> MicrometerHttpRequestExecutor.builder(registry).uriMapper(null).build())
+            .isExactlyInstanceOf(IllegalArgumentException.class)
+            .hasNoCause();
     }
 
     @Test

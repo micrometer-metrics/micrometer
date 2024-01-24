@@ -35,6 +35,7 @@ import static java.util.Collections.singletonList;
  * A named and dimensioned producer of one or more measurements.
  *
  * @author Jon Schneider
+ * @author Jonatan Ivanov
  */
 public interface Meter {
 
@@ -476,6 +477,47 @@ public interface Meter {
          */
         public Meter register(MeterRegistry registry) {
             return registry.register(new Meter.Id(name, tags, baseUnit, description, type), type, measurements);
+        }
+
+    }
+
+    /**
+     * Convenience interface to create new meters from tags based on a common
+     * "template"/builder. See usage in Meter implementations, e.g.: {@code Timer},
+     * {@code Counter}
+     *
+     * @param <T> Meter type
+     * @since 1.12.0
+     */
+    interface MeterProvider<T extends Meter> {
+
+        /**
+         * Registers (creates a new or gets an existing one if already exists) Meters
+         * using the provided tags.
+         * @param tags Tags to attach to the Meter about to be registered
+         * @return A new or existing Meter
+         */
+        T withTags(Iterable<? extends Tag> tags);
+
+        /**
+         * Registers (creates a new or gets an existing one if already exists) Meters
+         * using the provided tags.
+         * @param tags Tags to attach to the Meter about to be registered
+         * @return A new or existing Meter
+         */
+        default T withTags(String... tags) {
+            return withTags(Tags.of(tags));
+        }
+
+        /**
+         * Registers (creates a new or gets an existing one if already exists) Meters
+         * using the provided tags.
+         * @param key the tag key to add
+         * @param value the tag value to add
+         * @return A new or existing Meter
+         */
+        default T withTag(String key, String value) {
+            return withTags(Tags.of(key, value));
         }
 
     }

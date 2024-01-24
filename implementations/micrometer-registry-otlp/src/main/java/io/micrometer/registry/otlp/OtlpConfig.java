@@ -21,12 +21,11 @@ import io.micrometer.core.instrument.push.PushRegistryConfig;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.*;
-import static io.micrometer.core.instrument.config.validate.PropertyValidator.getString;
-import static io.micrometer.core.instrument.config.validate.PropertyValidator.getUrlString;
-import static io.micrometer.core.instrument.config.validate.PropertyValidator.getEnum;
+import static io.micrometer.core.instrument.config.validate.PropertyValidator.*;
 
 /**
  * Config for {@link OtlpMeterRegistry}.
@@ -146,7 +145,12 @@ public interface OtlpConfig extends PushRegistryConfig {
     default Validated<?> validate() {
         return checkAll(this, c -> PushRegistryConfig.validate(c), checkRequired("url", OtlpConfig::url),
                 check("resourceAttributes", OtlpConfig::resourceAttributes),
+                check("baseTimeUnit", OtlpConfig::baseTimeUnit),
                 check("aggregationTemporality", OtlpConfig::aggregationTemporality));
+    }
+
+    default TimeUnit baseTimeUnit() {
+        return getTimeUnit(this, "baseTimeUnit").orElse(TimeUnit.MILLISECONDS);
     }
 
 }

@@ -166,7 +166,7 @@ class GrpcObservationTest {
 
                     }
                 }, Executors.newCachedThreadPool());
-                futures.add(stub.unaryRpc(request));
+                futures.add(future);
             }
 
             await().until(() -> futures.stream().allMatch(Future::isDone));

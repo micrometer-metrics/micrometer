@@ -1,0 +1,60 @@
+= Instrumentations
+
+Micrometer Observation is used to instrument various projects. Below you can find a table of projects that are using Micrometer Observation to _"instrument once and have multiple benefits out of it"_.
+
+.External Project Instrumentations
+|===
+|Project Name |Link
+
+| Apache Camel | https://issues.apache.org/jira/browse/CAMEL-19023[Issue]
+| Apache CXF | https://github.com/apache/cxf/pull/1346#event-10091735987[PR]
+| Apache Dubbo | https://github.com/apache/dubbo/pull/11021[PR]
+| Apache HttpComponents | https://github.com/micrometer-metrics/micrometer/tree/main/micrometer-core/src/main/java/io/micrometer/core/instrument/binder/httpcomponents[Repo]
+| Apache Skywalking | https://github.com/apache/skywalking-java/pull/401[PR], https://skywalking.apache.org/docs/skywalking-java/next/en/setup/service-agent/java-agent/application-toolkit-micrometer-1.10/[Docs]
+| Armeria | https://github.com/line/armeria/pull/4980[PR]
+| Appsmith | https://github.com/appsmithorg/appsmith/commit/5e46a2f4b7bf184aba03b4b93038edce8a615366[Commit]
+| Couchbase | https://issues.couchbase.com/browse/JCBC-2046[Issue]
+| gRPC | https://github.com/micrometer-metrics/micrometer/pull/3427[PR]
+| Halo | https://github.com/halo-dev/halo/commit/d192b8c956887e4701b94e3ed302fb88e4771583[Commit]
+| JDBC | https://github.com/jdbc-observations/datasource-micrometer[Repo]
+| JDK Http Client | https://github.com/micrometer-metrics/micrometer/blob/main/micrometer-core/src/main/java11/io/micrometer/core/instrument/binder/jdk/MicrometerHttpClient.java[Repo]
+| Jetty | https://github.com/micrometer-metrics/micrometer/pull/3416[PR]
+| Jersey | https://github.com/eclipse-ee4j/jersey/pull/5391[PR]
+| JMS | https://github.com/micrometer-metrics/micrometer/blob/main/micrometer-core/src/main/java/io/micrometer/core/instrument/binder/jms/JmsInstrumentation.java[Repo]
+| Kotlin Coroutines | https://github.com/micrometer-metrics/micrometer/pull/3256[PR]
+| Lettuce | https://github.com/lettuce-io/lettuce-core/commit/6604fbe9e9cff476806c50716e17803e11d1e0ca[Commit]
+| Micronaut | https://github.com/micronaut-projects/micronaut-micrometer/issues/492[Issue]
+| OkHttp | https://github.com/micrometer-metrics/micrometer/tree/main/micrometer-core/src/main/java/io/micrometer/core/instrument/binder/okhttp3[Repo]
+| OpenFeign | https://github.com/OpenFeign/feign/pull/1760[PR]
+| RabbitMQ | https://github.com/rabbitmq/rabbitmq-java-client/issues/952[Issue]
+| Resilience4j | https://github.com/resilience4j/resilience4j/pull/1698[PR]
+| R2DBC | https://github.com/r2dbc/r2dbc-proxy/issues/122[Issue]
+| Reactor | https://micrometer.io/docs/observation#instrumentation_of_reactive_libraries[Docs]
+| Reactor Netty | https://projectreactor.io/docs/netty/release/reference/index.html#_tracing_3[Docs]
+| Redisson | https://github.com/redisson/redisson/issues/4976[Issue],
+https://github.com/redisson/redisson/wiki/16.-Observability#162-tracing[Docs]
+| Retrofit | https://github.com/square/retrofit/issues/3930[Issue (done via OkHttp instrumentation)]
+| RSocket | https://github.com/rsocket/rsocket-java/tree/master/rsocket-micrometer/src/main/java/io/rsocket/micrometer/observation[Repo]
+| Spring Amqp | https://docs.spring.io/spring-amqp/docs/current/reference/html/index.html#observation[Docs]
+| Spring Batch | https://docs.spring.io/spring-batch/docs/current/reference/html/monitoring-and-metrics.html#tracing[Docs]
+| Spring Cloud Config | https://docs.spring.io/spring-cloud-config/docs/current/reference/html/#observability[Docs]
+| Spring Cloud CircuitBreaker | https://github.com/spring-cloud/spring-cloud-circuitbreaker/commit/4aa6883274a26b4c01b2c38e256d0b985978052e[Commit]
+| Spring Cloud Function | https://github.com/spring-cloud/spring-cloud-function/tree/main/spring-cloud-function-context/src/main/java/org/springframework/cloud/function/observability[Repo]
+| Spring Cloud Gateway | https://github.com/spring-cloud/spring-cloud-gateway/tree/main/spring-cloud-gateway-server/src/main/java/org/springframework/cloud/gateway/filter/headers/observation[Repo]
+| Spring Cloud OpenFeign | https://docs.spring.io/spring-cloud-openfeign/docs/current/reference/html/#micrometer-support[Docs]
+| Spring Cloud Task | https://docs.spring.io/spring-cloud-task/docs/current/reference/html/#enabling-observations-for-applicationrunner-and-commandlinerunner[Docs]
+| Spring Cloud Vault | https://github.com/spring-cloud/spring-cloud-vault/commit/1116f81971f16f9f9e42ad0994ee12a24404610e[Commit]
+| Spring Data Cassandra | https://docs.spring.io/spring-data/cassandra/docs/current/reference/html/#cassandra.observability[Docs]
+| Spring Data MongoDB | https://docs.spring.io/spring-data/mongodb/docs/current/reference/html/#mongodb.observability[Docs]
+| Spring Data Redis | https://docs.spring.io/spring-data-redis/docs/current/reference/html/#redis.observability[Docs]
+| Spring GraphQL | https://docs.spring.io/spring-graphql/docs/current/reference/html/#observability[Docs]
+| Spring Integration | https://docs.spring.io/spring-integration/reference/metrics.html#micrometer-observation[Docs]
+| Spring Kafka | https://docs.spring.io/spring-kafka/reference/html/#x30-obs[Docs]
+| Spring Security | https://docs.spring.io/spring-security/reference/reactive/integrations/observability.html[Docs]
+| Spring Modulith | https://docs.spring.io/spring-modulith/docs/current/reference/html/#observability[Docs]
+| Spring MVC | https://docs.spring.io/spring-framework/reference/integration/observability.html[Docs]
+| Spring Pulsar | https://docs.spring.io/spring-pulsar/docs/current/reference/html/#micrometer[Docs]
+| Spring WebFlux | https://docs.spring.io/spring-framework/reference/integration/observability.html[Docs]
+|===
+
+If your project is instrumented using Micrometer Observation, and it's not listed in the table above, https://github.com/micrometer-metrics/micrometer-docs/edit/main/src/docs/observation/observation-projects.adoc[please file a PR] to our documentation! If you want to instrument your project and need our help just mention us in your issue - https://github.com/shakuzen/[@shakuzen], https://github.com/jonatan-ivanov/[@jonatan-ivanov], https://github.com/marcingrzejszczak/[@marcingrzejszczak].

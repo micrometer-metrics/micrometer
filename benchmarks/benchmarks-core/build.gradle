@@ -1,28 +1,27 @@
 plugins {
-    id "me.champeau.jmh" version "0.6.8"
+    id "me.champeau.jmh" version "0.7.2"
 }
 
 dependencies {
     jmh project(':micrometer-core')
     jmh project(':micrometer-registry-prometheus')
 
-    jmh 'io.dropwizard.metrics5:metrics-core:latest.release'
-    jmh 'io.prometheus:simpleclient_common:latest.release'
+    jmh libs.dropwizardMetricsCore5
+    jmh libs.prometheusClient
 
     jmh 'io.dropwizard.metrics:metrics-core'
     jmh 'com.google.guava:guava'
 
-    jmh 'org.openjdk.jmh:jmh-core:latest.release'
+    jmh libs.jmhCore
 
     jmh 'ch.qos.logback:logback-classic'
 
     // Nebula doesn't like having jmhAnnotationProcessor without jmh so we just add it twice.
-    jmh 'org.openjdk.jmh:jmh-generator-annprocess:latest.release'
-    jmhAnnotationProcessor 'org.openjdk.jmh:jmh-generator-annprocess:latest.release'
+    jmh libs.jmhAnnotationProcessor
+    jmhAnnotationProcessor libs.jmhAnnotationProcessor
 }
 
 jmh {
-    jmhVersion = '1.36'
     fork = 1
     warmupIterations = 1
     iterations = 1

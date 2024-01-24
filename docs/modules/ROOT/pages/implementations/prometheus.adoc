@@ -1,0 +1,154 @@
+= Micrometer Prometheus
+:toc:
+:sectnums:
+:system: prometheus
+
+Prometheus is a dimensional time series database with a built-in UI, a custom query language, and math operations.
+Prometheus is designed to operate on a pull model, periodically scraping metrics from application instances, based on service discovery.
+
+include::_install.adoc[]
+
+== Configuring
+
+Prometheus expects to scrape or poll individual application instances for metrics.
+In addition to creating a Prometheus registry, you also need to expose an HTTP endpoint to Prometheus' scraper.
+In a Spring Boot application, a https://docs.spring.io/spring-boot/docs/current/actuator-api/htmlsingle/#prometheus[Prometheus actuator endpoint] is auto-configured in the presence of Spring Boot Actuator.
+Otherwise, you can use any JVM-based HTTP server implementation to expose scrape data to Prometheus.
+
+The following example uses the JDK's `com.sun.net.httpserver.HttpServer` to expose a scrape endpoint:
+
+[source,java]
+----
+PrometheusMeterRegistry prometheusRegistry = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT);
+
+try {
+    HttpServer server = HttpServer.create(new InetSocketAddress(8080), 0);
+    server.createContext("/prometheus", httpExchange -> {
+        String response = prometheusRegistry.scrape(); <1>
+        httpExchange.sendResponseHeaders(200, response.getBytes().length);
+        try (OutputStream os = httpExchange.getResponseBody()) {
+            os.write(response.getBytes());
+        }
+    });
+
+    new Thread(server::start).start();
+} catch (IOException e) {
+    throw new RuntimeException(e);
+}
+----
+<1> The `PrometheusMeterRegistry` has a `scrape()` function that knows how to supply the String data necessary for the scrape. All you have to do is wire it to an endpoint.
+
+You can alternatively use `io.prometheus.client.exporter.HTTPServer` that you can find in `io.prometheus:simpleclient_httpserver`:
+[source,java]
+----
+PrometheusMeterRegistry prometheusRegistry = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT);
+// you can set the daemon flag to false if you want the server to block
+new HTTPServer(new InetSocketAddress(8080), prometheusRegistry.getPrometheusRegistry(), true);
+----
+
+Another alternative can be `io.prometheus.client.exporter.MetricsServlet` that you can find in `io.prometheus:simpleclient_servlet` in case your app is running in a servlet container (e.g.: Tomcat):
+[source,java]
+----
+PrometheusMeterRegistry prometheusRegistry = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT);
+HttpServlet metricsServlet = new MetricsServlet(prometheusRegistry.getPrometheusRegistry());
+----
+
+=== Scrape format
+
+By default, the https://prometheus.io/docs/instrumenting/exposition_formats/#text-based-format[Prometheus text format] is returned from the `PrometheusMeterRegistry` `scrape()` method.
+
+The https://github.com/OpenObservability/OpenMetrics/blob/main/specification/OpenMetrics.md[OpenMetrics] format can also be produced.
+To specify the format to be returned, you can pass a content type to the `scrape` method.
+For example, to get the OpenMetrics 1.0.0 format scrape, you could use the Prometheus Java client constant for it, as follows:
+
+[source,java]
+----
+String openMetricsScrape = registry.scrape(TextFormat.CONTENT_TYPE_OPENMETRICS_100);
+----
+
+In Spring Boot applications, the https://docs.spring.io/spring-boot/docs/current/actuator-api/htmlsingle/#prometheus[Prometheus Actuator endpoint] supports scraping in either format, defaulting to the Prometheus text format in absence of a specific `Accept` header.
+
+=== The Prometheus Rename Filter
+
+In some cases, Micrometer provides instrumentation that overlaps with commonly used Prometheus simple client modules but has chosen a different naming scheme for consistency and portability.
+If you wish to use the Prometheus "standard" names, add the following filter:
+
+[source,java]
+----
+prometheusRegistry.config().meterFilter(new PrometheusRenameFilter());
+----
+
+== Graphing
+
+This section serves as a quick start to rendering useful representations in Prometheus for metrics originating in Micrometer.
+See the https://prometheus.io/docs/querying/basics[Prometheus docs] for a far more complete reference of what is possible in Prometheus.
+
+=== Grafana Dashboard
+
+A publicly available Grafana dashboard for Micrometer-sourced JVM and Tomcat metrics is available https://grafana.com/grafana/dashboards/4701-jvm-micrometer/[here].
+
+image::implementations/prometheus-dashboard.png[Grafana dashboard for JVM and Tomcat binders]
+
+The dashboard features:
+
+* JVM memory
+* Process memory (provided by https://github.com/mweirauch/micrometer-jvm-extras[micrometer-jvm-extras])
+* CPU-Usage, Load, Threads, File Descriptors, and Log Events
+* JVM Memory Pools (Heap, Non-Heap)
+* Garbage Collection
+* Classloading
+* Direct/Mapped buffer sizes
+
+Instead of using the `job` tag to distinguish different applications, this dashboard makes use of a common tag called `application`, which is applied to every metric.
+You can apply the common tag as follows:
+
+[source,java]
+----
+registry.config().commonTags("application", "MYAPPNAME");
+----
+
+In Spring Boot applications, you can use the https://docs.spring.io/spring-boot/docs/current/reference/html/actuator.html#actuator.metrics.customizing.common-tags[property support for common tags]:
+
+[source,properties]
+----
+management.metrics.tags.application=MYAPPNAME
+----
+
+=== Counters
+
+The query that generates a graph for the random-walk counter is
+`rate(counter[10s])`.
+
+.A Grafana rendered graph of the random walk counter.
+image::implementations/prometheus-counter.png[Grafana-rendered Prometheus counter]
+
+Representing a counter without rate normalization over some time window is rarely useful, as the representation is a function of both the rapidity with which the counter is incremented and the longevity of the service. It is generally most useful to rate-normalize these time series to reason about them. Since Prometheus keeps track of discrete events across all time, it has the advantage of allowing for the selection of an arbitrary time window across which to normalize at query time (for example, `rate(counter[10s])` provides a notion of requests per second over 10 second windows). The rate-normalized graph in the preceding image would return back to a value around 55 as soon as the new instance (say on a production deployment) was in service.
+
+.Counter over the same random walk, no rate normalization.
+image::implementations/prometheus-counter-norate.png[Grafana-rendered Prometheus counter (no rate)]
+
+In contrast, without rate normalization, the counter drops back to zero on service restart, and the count increases without bound for the duration of the service's uptime.
+
+=== Timers
+
+The Prometheus `Timer` produces two counter time series with different names:
+
+* `$\{name}_count`: Total number of all calls.
+* `$\{name}_sum`: Total time of all calls.
+
+Representing a counter without rate normalization over some time window is rarely useful, as the representation is a function of both the rapidity with which the counter is incremented and the longevity of the service.
+
+Using the following Prometheus queries, we can graph the most commonly used statistics about timers:
+
+* Average latency: `rate(timer_sum[10s])/rate(timer_count[10s])`
+* Throughput (requests per second): `rate(timer_count[10s])`
+
+.Timer over a simulated service.
+image::implementations/prometheus-timer.png[Grafana-rendered Prometheus timer]
+
+=== Long task timers
+
+The Prometheus query to plot the duration of a long task timer for a serial task is `long_task_timer_sum`. In Grafana, we can set an alert threshold at some fixed point.
+
+.Simulated back-to-back long tasks with a fixed alert threshold.
+image::implementations/prometheus-long-task-timer.png[Grafana-rendered Prometheus long task timer]

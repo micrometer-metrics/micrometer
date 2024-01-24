@@ -32,6 +32,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.slf4j.LoggerFactory;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -131,6 +133,40 @@ class LogbackMetricsTest {
         }
         logger.info("hi");
         assertThat(infoLogCounter.count()).isEqualTo(2);
+    }
+
+    @Issue("#3891")
+    @Test
+    void threadLocalNotUsedWhenLogLevelNotEnabled() {
+        ThreadLocal<Boolean> priorThreadLocal = LogbackMetrics.ignoreMetrics;
+        AtomicInteger interactions = new AtomicInteger();
+        try {
+            LogbackMetrics.ignoreMetrics = new ThreadLocal<Boolean>() {
+                @Override
+                public Boolean get() {
+                    interactions.incrementAndGet();
+                    return super.get();
+                }
+
+                @Override
+                public void set(Boolean value) {
+                    interactions.incrementAndGet();
+                    super.set(value);
+                }
+
+                @Override
+                public void remove() {
+                    interactions.incrementAndGet();
+                    super.remove();
+                }
+            };
+            logger.trace("trace");
+            logger.isErrorEnabled();
+            assertThat(interactions.get()).isZero();
+        }
+        finally {
+            LogbackMetrics.ignoreMetrics = priorThreadLocal;
+        }
     }
 
     @NonNullApi

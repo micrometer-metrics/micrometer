@@ -1,23 +1,58 @@
 version: 2
-registries:
-  gradle-plugin-portal:
-    type: maven-repository
-    url: https://plugins.gradle.org/m2
-    username: dummy # Required by dependabot
-    password: dummy # Required by dependabot
 updates:
-  - package-ecosystem: "gradle"
-    directory: "/"
-    target-branch: "1.9.x" # oldest OSS supported branch
-    allow:
-      - dependency-name: "com.gradle*"
-    registries:
-      - gradle-plugin-portal
-    schedule:
-      interval: "weekly"
-    open-pull-requests-limit: 10
   - package-ecosystem: "github-actions"
     directory: "/"
-    target-branch: "1.9.x" # oldest OSS supported branch
+    target-branch: "1.9.x" # oldest supported branch
     schedule:
       interval: "weekly"
+  - package-ecosystem: gradle
+    directory: "/"
+    schedule:
+      interval: monthly
+    target-branch: "1.9.x"
+    milestone: 136
+    ignore:
+      # only upgrade patch versions
+      - dependency-name: "*"
+        update-types:
+          - version-update:semver-major
+          - version-update:semver-minor
+    open-pull-requests-limit: 10
+  - package-ecosystem: gradle
+    directory: "/"
+    schedule:
+      interval: monthly
+    target-branch: "1.10.x"
+    milestone: 159
+    ignore:
+      # only upgrade patch versions
+      - dependency-name: "*"
+        update-types:
+          - version-update:semver-major
+          - version-update:semver-minor
+    open-pull-requests-limit: 10
+  - package-ecosystem: gradle
+    directory: "/"
+    schedule:
+      interval: monthly
+    target-branch: "1.11.x"
+    milestone: 206
+    ignore:
+      # only upgrade patch versions
+      - dependency-name: "*"
+        update-types:
+          - version-update:semver-major
+          - version-update:semver-minor
+    open-pull-requests-limit: 10
+  - package-ecosystem: gradle
+    directory: "/"
+    schedule:
+      interval: monthly
+    target-branch: "main"
+    milestone: 185
+    ignore:
+      # upgrade minor and patch versions on main
+      - dependency-name: "*"
+        update-types:
+          - version-update:semver-major
+    open-pull-requests-limit: 10

@@ -1,0 +1,24 @@
+plugins {
+    id 'java'
+}
+
+// skip this module when building with jdk <17
+if (!javaLanguageVersion.canCompileOrRun(17)) {
+    project.tasks.configureEach { task -> task.enabled = false }
+}
+
+dependencies {
+    implementation project(":micrometer-core")
+
+    testImplementation libs.jetty12Server
+    testImplementation libs.jetty12Client
+    testImplementation libs.httpcomponents.client
+    testImplementation libs.junitJupiter
+    testImplementation libs.assertj
+}
+
+compileJava {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+    options.release = 17
+}

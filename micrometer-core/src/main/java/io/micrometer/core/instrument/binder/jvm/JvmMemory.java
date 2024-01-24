@@ -42,7 +42,9 @@ class JvmMemory {
     }
 
     static boolean isAllocationPool(String name) {
-        return name != null && (name.endsWith("Eden Space") || "Shenandoah".equals(name) || "ZHeap".equals(name)
+        return name != null && (name.endsWith("Eden Space") || "Shenandoah".equals(name) || "ZHeap".equals(name) // ZGC
+                                                                                                                 // non-generational
+                || "ZGC Young Generation".equals(name) // generational ZGC
                 || name.endsWith("New Gen") // Zing GPGC
                 || name.endsWith("nursery-allocate") || name.endsWith("-eden") // "balanced-eden"
                 || "JavaHeap".equals(name) // metronome
@@ -51,9 +53,10 @@ class JvmMemory {
 
     static boolean isLongLivedPool(String name) {
         return name != null && (name.endsWith("Old Gen") || name.endsWith("Tenured Gen") || "Shenandoah".equals(name)
-                || "ZHeap".equals(name) || name.endsWith("balanced-old") || name.contains("tenured") // "tenured",
-                                                                                                     // "tenured-SOA",
-                                                                                                     // "tenured-LOA"
+                || "ZHeap".equals(name) // ZGC non-generational
+                || "ZGC Old Generation".equals(name) // generational ZGC
+                || name.endsWith("balanced-old") //
+                || name.contains("tenured") // "tenured", "tenured-SOA", "tenured-LOA"
                 || "JavaHeap".equals(name) // metronome
         );
     }

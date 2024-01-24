@@ -104,13 +104,14 @@ class OtlpCumulativeMeterRegistryTest extends OtlpMeterRegistryTest {
         timer.record(10, TimeUnit.MILLISECONDS);
         timer.record(77, TimeUnit.MILLISECONDS);
         timer.record(111, TimeUnit.MILLISECONDS);
+        timer.record(1, TimeUnit.MINUTES);
         clock.add(otlpConfig().step());
         timer.record(4, TimeUnit.MILLISECONDS);
 
         assertThat(writeToMetric(timer).toString())
             .isEqualTo("name: \"http.client.requests\"\n" + "unit: \"milliseconds\"\n" + "histogram {\n"
                     + "  data_points {\n" + "    start_time_unix_nano: 1000000\n" + "    time_unix_nano: 60001000000\n"
-                    + "    count: 4\n" + "    sum: 202.0\n" + "    bucket_counts: 0\n" + "    bucket_counts: 0\n"
+                    + "    count: 5\n" + "    sum: 60202.0\n" + "    bucket_counts: 0\n" + "    bucket_counts: 0\n"
                     + "    bucket_counts: 0\n" + "    bucket_counts: 0\n" + "    bucket_counts: 0\n"
                     + "    bucket_counts: 0\n" + "    bucket_counts: 0\n" + "    bucket_counts: 0\n"
                     + "    bucket_counts: 0\n" + "    bucket_counts: 0\n" + "    bucket_counts: 1\n"
@@ -133,7 +134,7 @@ class OtlpCumulativeMeterRegistryTest extends OtlpMeterRegistryTest {
                     + "    bucket_counts: 0\n" + "    bucket_counts: 0\n" + "    bucket_counts: 0\n"
                     + "    bucket_counts: 0\n" + "    bucket_counts: 0\n" + "    bucket_counts: 0\n"
                     + "    bucket_counts: 0\n" + "    bucket_counts: 0\n" + "    bucket_counts: 0\n"
-                    + "    explicit_bounds: 1.0\n" + "    explicit_bounds: 1.048576\n"
+                    + "    bucket_counts: 1\n" + "    explicit_bounds: 1.0\n" + "    explicit_bounds: 1.048576\n"
                     + "    explicit_bounds: 1.398101\n" + "    explicit_bounds: 1.747626\n"
                     + "    explicit_bounds: 2.097151\n" + "    explicit_bounds: 2.446676\n"
                     + "    explicit_bounds: 2.796201\n" + "    explicit_bounds: 3.145726\n"
@@ -448,8 +449,7 @@ class OtlpCumulativeMeterRegistryTest extends OtlpMeterRegistryTest {
                 + "    explicit_bounds: 2.305843009213694E18\n" + "    explicit_bounds: 2.6901501774159764E18\n"
                 + "    explicit_bounds: 3.0744573456182584E18\n" + "    explicit_bounds: 3.4587645138205409E18\n"
                 + "    explicit_bounds: 3.8430716820228234E18\n" + "    explicit_bounds: 4.2273788502251054E18\n"
-                + "    explicit_bounds: Infinity\n" + "  }\n"
-                + "  aggregation_temporality: AGGREGATION_TEMPORALITY_CUMULATIVE\n" + "}\n";
+                + "  }\n" + "  aggregation_temporality: AGGREGATION_TEMPORALITY_CUMULATIVE\n" + "}\n";
         String[] expectedLines = expected.split("\n");
         String actual = writeToMetric(size).toString();
         String[] actualLines = actual.split("\n");

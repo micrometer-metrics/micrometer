@@ -171,9 +171,33 @@ class DynatraceConfigTest {
         assertThat(config.apiVersion()).isEqualTo(DynatraceApiVersion.V2);
         assertThat(config.apiToken()).isEmpty();
         assertThat(config.uri()).isSameAs(DynatraceMetricApiConstants.getDefaultOneAgentEndpoint());
+        assertThat(config.deviceId()).isEmpty();
         assertThat(config.metricKeyPrefix()).isEmpty();
         assertThat(config.defaultDimensions()).isEmpty();
         assertThat(config.enrichWithDynatraceMetadata()).isTrue();
+        assertThat(config.exportMeterMetadata()).isTrue();
+
+        Validated<?> validated = config.validate();
+        assertThat(validated.isValid()).isTrue();
+    }
+
+    @Test
+    void testV1Defaults() {
+        Map<String, String> properties = new HashMap<>();
+        properties.put("dynatrace.apiVersion", "v1");
+        properties.put("dynatrace.apiToken", "my.token");
+        properties.put("dynatrace.uri", "https://my.uri.com");
+        properties.put("dynatrace.deviceId", "my.device.id");
+        DynatraceConfig config = properties::get;
+
+        assertThat(config.apiVersion()).isEqualTo(DynatraceApiVersion.V1);
+        assertThat(config.apiToken()).isEqualTo("my.token");
+        assertThat(config.uri()).isEqualTo("https://my.uri.com");
+        assertThat(config.deviceId()).isEqualTo("my.device.id");
+        assertThat(config.metricKeyPrefix()).isEmpty();
+        assertThat(config.defaultDimensions()).isEmpty();
+        assertThat(config.enrichWithDynatraceMetadata()).isFalse();
+        assertThat(config.exportMeterMetadata()).isFalse();
 
         Validated<?> validated = config.validate();
         assertThat(validated.isValid()).isTrue();

@@ -3,7 +3,7 @@ plugins {
 }
 
 dependencies {
-    implementation platform('io.projectreactor:reactor-bom:2020.0.+')
+    implementation platform(libs.reactorBom)
 
     implementation project(':micrometer-core')
     implementation project(':micrometer-observation')
@@ -19,8 +19,13 @@ dependencies {
     implementation 'io.projectreactor.netty:reactor-netty-http'
     implementation 'org.apache.kafka:kafka-clients'
     implementation 'com.github.charithe:kafka-junit'
-    implementation ('io.grpc:grpc-services') {
-        exclude module: 'io.grpc:grpc-netty-shaded'
-    }
+    implementation 'io.grpc:grpc-services'
+    implementation 'io.grpc:grpc-inprocess'
 
+}
+
+configurations.all {
+    // see: https://github.com/micrometer-metrics/micrometer/issues/3954
+    exclude group: 'com.google.guava', module: 'listenablefuture'
+    exclude group: 'io.grpc', module: 'grpc-netty-shaded'
 }

@@ -18,6 +18,7 @@ package io.micrometer.core.instrument.step;
 import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.util.NamedThreadFactory;
 import org.junit.jupiter.api.Test;
 import org.testcontainers.shaded.com.google.common.util.concurrent.AtomicDouble;
 
@@ -26,7 +27,11 @@ import java.util.ArrayDeque;
 import java.util.Arrays;
 import java.util.Deque;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
@@ -35,6 +40,7 @@ import static java.time.Duration.ofMillis;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.SoftAssertions.assertSoftly;
+import static org.awaitility.Awaitility.await;
 
 /**
  * Tests for {@link StepMeterRegistry}.
@@ -45,11 +51,9 @@ import static org.assertj.core.api.SoftAssertions.assertSoftly;
  */
 class StepMeterRegistryTest {
 
-    private AtomicInteger publishes = new AtomicInteger();
+    private final MockClock clock = new MockClock();
 
-    private MockClock clock = new MockClock();
-
-    private StepRegistryConfig config = new StepRegistryConfig() {
+    private final StepRegistryConfig config = new StepRegistryConfig() {
         @Override
         public String prefix() {
             return "test";
@@ -61,7 +65,7 @@ class StepMeterRegistryTest {
         }
     };
 
-    private MyStepMeterRegistry registry = new MyStepMeterRegistry();
+    private final MyStepMeterRegistry registry = new MyStepMeterRegistry();
 
     @Issue("#370")
     @Test
@@ -93,9 +97,9 @@ class StepMeterRegistryTest {
     @Issue("#484")
     @Test
     void publishOneLastTimeOnClose() {
-        assertThat(publishes.get()).isEqualTo(0);
+        assertThat(registry.publishCount.get()).isZero();
         registry.close();
-        assertThat(publishes.get()).isEqualTo(1);
+        assertThat(registry.publishCount.get()).isEqualTo(1);
     }
 
     @Issue("#1993")
@@ -221,6 +225,7 @@ class StepMeterRegistryTest {
 
         addTimeWithRolloverOnStepStart(clock, registry, config, config.step());
         registry.scheduledPublish();
+        registry.waitForInProgressScheduledPublish();
 
         assertThat(registry.publishedCounterCounts).hasSize(1);
         assertThat(registry.publishedCounterCounts.pop()).isOne();
@@ -398,6 +403,8 @@ class StepMeterRegistryTest {
 
         // recordings that happened in the previous step should be published
         registry.scheduledPublish();
+        registry.waitForInProgressScheduledPublish();
+
         assertThat(registry.publishedCounterCounts).hasSize(1);
         assertThat(registry.publishedCounterCounts.pop()).isOne();
         assertThat(registry.publishedTimerCounts).hasSize(1);
@@ -416,7 +423,196 @@ class StepMeterRegistryTest {
         assertThat(registry.publishedFunctionTimerTotals.pop()).isEqualTo(53);
     }
 
+    @Test
+    @Issue("#3914")
+    void publishShouldNotHappenWhenRegistryIsDisabled() {
+        StepRegistryConfig disabledStepRegistryConfig = new StepRegistryConfig() {
+            @Override
+            public String prefix() {
+                return "test";
+            }
+
+            @Override
+            public boolean enabled() {
+                return false;
+            }
+
+            @Nullable
+            @Override
+            public String get(String key) {
+                return null;
+            }
+        };
+
+        MyStepMeterRegistry disabledStepMeterRegistry = new MyStepMeterRegistry(disabledStepRegistryConfig, clock);
+        Counter.builder("publish_disabled_counter").register(disabledStepMeterRegistry).increment();
+
+        clock.add(config.step());
+        assertThat(disabledStepMeterRegistry.publishCount.get()).isZero();
+        disabledStepMeterRegistry.close();
+        assertThat(disabledStepMeterRegistry.publishCount.get()).isZero();
+    }
+
+    @Test
+    @Issue("#3914")
+    void publishShouldNotHappenWhenRegistryIsClosed() {
+        Counter.builder("my.counter").register(registry).increment();
+
+        clock.add(config.step());
+        assertThat(registry.publishCount.get()).isZero();
+        registry.close();
+        assertThat(registry.publishCount.get()).isEqualTo(1);
+        assertThat(registry.publishedCounterCounts).hasSize(1);
+
+        clock.add(config.step());
+        registry.close();
+        assertThat(registry.publishCount.get()).isEqualTo(1);
+        assertThat(registry.publishedCounterCounts).hasSize(1);
+    }
+
+    @Test
+    @Issue("gh-3846")
+    void whenCloseDuringScheduledPublish_thenPreviousStepAndCurrentPartialStepArePublished()
+            throws InterruptedException {
+        AtomicDouble counterCount = new AtomicDouble(15);
+        AtomicLong timerCount = new AtomicLong(3);
+        AtomicDouble timerTotalTime = new AtomicDouble(53);
+
+        Counter counter = Counter.builder("counter").register(registry);
+        counter.increment();
+        Timer timer = Timer.builder("timer").register(registry);
+        timer.record(5, MILLISECONDS);
+        DistributionSummary summary = DistributionSummary.builder("summary").register(registry);
+        summary.record(7);
+        FunctionCounter functionCounter = FunctionCounter.builder("counter.function", this, obj -> counterCount.get())
+            .register(registry);
+        FunctionTimer functionTimer = FunctionTimer
+            .builder("timer.function", this, obj -> timerCount.get(), obj -> timerTotalTime.get(), MILLISECONDS)
+            .register(registry);
+
+        // before step rollover
+        assertBeforeRollover(counter, timer, summary, functionCounter, functionTimer);
+
+        addTimeWithRolloverOnStepStart(clock, registry, config, config.step());
+
+        // set clock to middle of second step
+        addTimeWithRolloverOnStepStart(clock, registry, config, config.step().dividedBy(2));
+        // record some more values in new step interval
+        counter.increment(2);
+        timer.record(6, MILLISECONDS);
+        summary.record(8);
+        counterCount.set(18);
+        timerCount.set(5);
+        timerTotalTime.set(77);
+
+        // close registry during scheduled publish
+        CountDownLatch latch = new CountDownLatch(1);
+        registry.scheduledPublish(() -> {
+            try {
+                latch.await();
+            }
+            catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        });
+        await().pollDelay(1, MILLISECONDS)
+            .atMost(100, MILLISECONDS)
+            .untilAsserted(() -> assertThat(registry.isPublishing()).isTrue());
+        Thread closeThread = new Thread(registry::close, "simulatedShutdownHookThread");
+        closeThread.start();
+        latch.countDown();
+        closeThread.join();
+
+        // publish happened twice - scheduled publish of first step and closing publish of
+        // partial second step
+        assertThat(registry.publishedCounterCounts).hasSize(2);
+        assertThat(registry.publishedTimerCounts).hasSize(2);
+        assertThat(registry.publishedTimerSumMilliseconds).hasSize(2);
+        assertThat(registry.publishedSummaryCounts).hasSize(2);
+        assertThat(registry.publishedSummaryTotals).hasSize(2);
+        assertThat(registry.publishedFunctionCounterCounts).hasSize(2);
+        assertThat(registry.publishedFunctionTimerCounts).hasSize(2);
+        assertThat(registry.publishedFunctionTimerTotals).hasSize(2);
+
+        // first (full) step
+        assertThat(registry.publishedCounterCounts.pop()).isOne();
+        assertThat(registry.publishedTimerCounts.pop()).isOne();
+        assertThat(registry.publishedTimerSumMilliseconds.pop()).isEqualTo(5.0);
+        assertThat(registry.publishedSummaryCounts.pop()).isOne();
+        assertThat(registry.publishedSummaryTotals.pop()).isEqualTo(7);
+        assertThat(registry.publishedFunctionCounterCounts.pop()).isEqualTo(15);
+        assertThat(registry.publishedFunctionTimerCounts.pop()).isEqualTo(3);
+        assertThat(registry.publishedFunctionTimerTotals.pop()).isEqualTo(53);
+
+        // second step (partial)
+        assertThat(registry.publishedCounterCounts.pop()).isEqualTo(2);
+        assertThat(registry.publishedTimerCounts.pop()).isEqualTo(1);
+        assertThat(registry.publishedTimerSumMilliseconds.pop()).isEqualTo(6.0);
+        assertThat(registry.publishedSummaryCounts.pop()).isOne();
+        assertThat(registry.publishedSummaryTotals.pop()).isEqualTo(8);
+        assertThat(registry.publishedFunctionCounterCounts.pop()).isEqualTo(3);
+        assertThat(registry.publishedFunctionTimerCounts.pop()).isEqualTo(2);
+        assertThat(registry.publishedFunctionTimerTotals.pop()).isEqualTo(24);
+    }
+
+    @Test
+    @Issue("#4357")
+    void publishOnceWhenClosedWithinFirstStep() {
+        // Set the initial clock time to a valid time.
+        MockClock mockClock = new MockClock();
+        mockClock.add(config.step().multipliedBy(5));
+
+        MyStepMeterRegistry stepMeterRegistry = new MyStepMeterRegistry(config, mockClock);
+        assertThat(stepMeterRegistry.publishCount.get()).isZero();
+        stepMeterRegistry.close();
+        assertThat(stepMeterRegistry.publishCount.get()).isEqualTo(1);
+    }
+
+    @Test
+    void startWithNamedThreadFactoryShouldUseNamedThreadFactoryForPoller() {
+        StepMeterRegistry registry = new CustomStepMeterRegistry();
+        String publisherThreadName = "custom-metrics-publisher";
+        registry.start(new NamedThreadFactory(publisherThreadName));
+        List<String> threadNames = Thread.getAllStackTraces()
+            .keySet()
+            .stream()
+            .map((thread) -> thread.getName())
+            .collect(Collectors.toList());
+        assertThat(threadNames).contains(publisherThreadName)
+            .doesNotContain(publisherThreadName + "-2")
+            .contains("step-meter-registry-poller-for-CustomStepMeterRegistry");
+    }
+
+    static class CustomStepMeterRegistry extends StepMeterRegistry {
+
+        CustomStepMeterRegistry() {
+            super(new StepRegistryConfig() {
+                @Override
+                public String prefix() {
+                    return null;
+                }
+
+                @Override
+                public String get(String key) {
+                    return null;
+                }
+            }, new MockClock());
+        }
+
+        @Override
+        protected void publish() {
+        }
+
+        @Override
+        protected TimeUnit getBaseTimeUnit() {
+            return TimeUnit.SECONDS;
+        }
+
+    }
+
     private class MyStepMeterRegistry extends StepMeterRegistry {
+
+        private final AtomicInteger publishCount = new AtomicInteger();
 
         Deque<Double> publishedCounterCounts = new ArrayDeque<>();
 
@@ -434,13 +630,22 @@ class StepMeterRegistryTest {
 
         Deque<Double> publishedFunctionTimerTotals = new ArrayDeque<>();
 
-        private long lastScheduledPublishStartTime = 0L;
+        private long lastScheduledPublishStartTime;
 
         @Nullable
         Runnable prePublishAction;
 
+        AtomicBoolean isPublishing = new AtomicBoolean(false);
+
+        CompletableFuture<Void> scheduledPublishingFuture = CompletableFuture.completedFuture(null);
+
         MyStepMeterRegistry() {
-            super(StepMeterRegistryTest.this.config, StepMeterRegistryTest.this.clock);
+            this(StepMeterRegistryTest.this.config, StepMeterRegistryTest.this.clock);
+        }
+
+        MyStepMeterRegistry(StepRegistryConfig config, Clock clock) {
+            super(config, clock);
+            this.lastScheduledPublishStartTime = super.getLastScheduledPublishStartTime();
         }
 
         void setPrePublishAction(Runnable prePublishAction) {
@@ -452,7 +657,7 @@ class StepMeterRegistryTest {
             if (prePublishAction != null) {
                 prePublishAction.run();
             }
-            publishes.incrementAndGet();
+            publishCount.incrementAndGet();
             getMeters().stream()
                 .map(meter -> meter.match(g -> null, this::publishCounter, this::publishTimer, this::publishSummary,
                         null, tg -> null, this::publishFunctionCounter, this::publishFunctionTimer, m -> null))
@@ -460,8 +665,38 @@ class StepMeterRegistryTest {
         }
 
         private void scheduledPublish() {
-            this.lastScheduledPublishStartTime = clock.wallTime();
-            this.publish();
+            scheduledPublish(() -> {
+            });
+        }
+
+        private void scheduledPublish(Runnable prePublishRunnable) {
+            scheduledPublishingFuture = CompletableFuture.runAsync(() -> {
+                if (isPublishing.compareAndSet(false, true)) {
+                    this.lastScheduledPublishStartTime = clock.wallTime();
+                    try {
+                        prePublishRunnable.run();
+                        publish();
+                    }
+                    finally {
+                        isPublishing.set(false);
+                    }
+                }
+            });
+        }
+
+        @Override
+        protected boolean isPublishing() {
+            return isPublishing.get();
+        }
+
+        @Override
+        protected void waitForInProgressScheduledPublish() {
+            try {
+                scheduledPublishingFuture.get();
+            }
+            catch (InterruptedException | ExecutionException e) {
+                throw new RuntimeException(e);
+            }
         }
 
         @Override
@@ -498,11 +733,7 @@ class StepMeterRegistryTest {
         }
 
         <T extends Number> double sumAllPublishedValues(Deque<T> deque) {
-            double sum = 0;
-            while (!deque.isEmpty()) {
-                sum += deque.pop().doubleValue();
-            }
-            return sum;
+            return deque.stream().mapToDouble(Number::doubleValue).sum();
         }
 
         @Override
@@ -512,9 +743,8 @@ class StepMeterRegistryTest {
 
     }
 
-    private static void assertBeforeRollover(final Counter counter, final Timer timer,
-            final DistributionSummary summary, final FunctionCounter functionCounter,
-            final FunctionTimer functionTimer) {
+    private static void assertBeforeRollover(Counter counter, Timer timer, DistributionSummary summary,
+            FunctionCounter functionCounter, FunctionTimer functionTimer) {
         assertThat(counter.count()).isZero();
         assertThat(timer.count()).isZero();
         assertThat(timer.totalTime(MILLISECONDS)).isZero();
@@ -532,7 +762,6 @@ class StepMeterRegistryTest {
      */
     private void addTimeWithRolloverOnStepStart(MockClock clock, StepMeterRegistry registry, StepRegistryConfig config,
             Duration timeToAdd) {
-
         long currentTime = clock.wallTime();
         long boundaryForNextStep = ((currentTime / config.step().toMillis()) + 1) * config.step().toMillis();
         long timeToNextStep = boundaryForNextStep - currentTime;

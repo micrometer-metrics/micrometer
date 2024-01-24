@@ -30,6 +30,7 @@ import java.net.URI;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
+@SuppressWarnings("deprecation")
 class ApacheAsyncHttpClientTimingInstrumentationVerificationTests
         extends HttpClientTimingInstrumentationVerificationTests<CloseableHttpAsyncClient> {
 

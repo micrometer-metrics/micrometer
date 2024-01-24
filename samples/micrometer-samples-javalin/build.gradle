@@ -7,7 +7,7 @@ dependencies {
     implementation project(":micrometer-registry-prometheus")
     implementation project(":micrometer-jetty11")
 
-    implementation 'io.javalin:javalin:latest.release'
+    implementation libs.javalin
     implementation 'ch.qos.logback:logback-classic'
 }
 

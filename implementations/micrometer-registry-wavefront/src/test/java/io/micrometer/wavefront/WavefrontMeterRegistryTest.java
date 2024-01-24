@@ -18,6 +18,7 @@ package io.micrometer.wavefront;
 import com.wavefront.sdk.common.Pair;
 import com.wavefront.sdk.common.WavefrontSender;
 import com.wavefront.sdk.common.clients.WavefrontClient;
+import com.wavefront.sdk.common.clients.service.token.TokenService;
 import com.wavefront.sdk.entities.histograms.HistogramGranularity;
 import com.wavefront.sdk.entities.histograms.WavefrontHistogramImpl;
 import io.micrometer.core.Issue;
@@ -179,7 +180,9 @@ class WavefrontMeterRegistryTest {
         assertThat(builder).hasFieldOrPropertyWithValue("flushIntervalTimeUnit", TimeUnit.MILLISECONDS);
         assertThat(sender).extracting("metricsReportingService")
             .hasFieldOrPropertyWithValue("uri", URI.create("https://example.com"))
-            .hasFieldOrPropertyWithValue("token", "apiToken");
+            .extracting("tokenService")
+            .isInstanceOf(TokenService.class)
+            .returns("apiToken", tokenService -> ((TokenService) tokenService).getToken());
         assertThat(sender).hasFieldOrPropertyWithValue("batchSize", 20);
     }
 

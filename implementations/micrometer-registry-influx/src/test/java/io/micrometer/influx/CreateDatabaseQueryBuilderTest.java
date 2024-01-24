@@ -17,8 +17,8 @@ package io.micrometer.influx;
 
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
 class CreateDatabaseQueryBuilderTest {
 
@@ -36,19 +36,19 @@ class CreateDatabaseQueryBuilderTest {
 
     @Test
     void noEmptyDatabaseName() {
-        assertThrows(IllegalArgumentException.class, () -> new CreateDatabaseQueryBuilder(null));
+        assertThatIllegalArgumentException().isThrownBy(() -> new CreateDatabaseQueryBuilder(null));
     }
 
     @Test
     void noRetentionPolicy() {
         String query = createDatabaseQueryBuilder.build();
-        assertEquals("CREATE DATABASE \"dummy_database_0\"", query);
+        assertThat(query).isEqualTo("CREATE DATABASE \"dummy_database_0\"");
     }
 
     @Test
     void oneClauseInRetentionPolicy() {
         String query = createDatabaseQueryBuilder.setRetentionPolicyName("dummy_policy").build();
-        assertEquals("CREATE DATABASE \"dummy_database_0\" WITH NAME dummy_policy", query);
+        assertThat(query).isEqualTo("CREATE DATABASE \"dummy_database_0\" WITH NAME dummy_policy");
     }
 
     @Test
@@ -58,9 +58,8 @@ class CreateDatabaseQueryBuilderTest {
             .setRetentionReplicationFactor(1)
             .setRetentionShardDuration("3")
             .build();
-        assertEquals(
-                "CREATE DATABASE \"dummy_database_0\" WITH DURATION 2d REPLICATION 1 SHARD DURATION 3 NAME dummy_policy",
-                query);
+        assertThat(query).isEqualTo(
+                "CREATE DATABASE \"dummy_database_0\" WITH DURATION 2d REPLICATION 1 SHARD DURATION 3 NAME dummy_policy");
     }
 
 }

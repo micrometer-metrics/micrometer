@@ -16,6 +16,7 @@
 package io.micrometer.registry.otlp;
 
 import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.opentelemetry.proto.metrics.v1.HistogramDataPoint;
 import io.opentelemetry.proto.metrics.v1.Metric;
 import io.opentelemetry.proto.metrics.v1.NumberDataPoint;
@@ -162,6 +163,30 @@ abstract class OtlpMeterRegistryTest {
     }
 
     @Test
+    void testGetSloWithPositiveInf() {
+        DistributionStatisticConfig distributionStatisticConfig = DistributionStatisticConfig.builder()
+            .percentilesHistogram(true)
+            .build();
+
+        assertThat(OtlpMeterRegistry.getSloWithPositiveInf(distributionStatisticConfig))
+            .containsExactly(Double.POSITIVE_INFINITY);
+
+        DistributionStatisticConfig distributionStatisticConfigWithSlo = DistributionStatisticConfig.builder()
+            .serviceLevelObjectives(1, 10, 100)
+            .build();
+        assertThat(OtlpMeterRegistry.getSloWithPositiveInf(distributionStatisticConfigWithSlo))
+            .contains(Double.POSITIVE_INFINITY);
+        assertThat(OtlpMeterRegistry.getSloWithPositiveInf(distributionStatisticConfigWithSlo)).hasSize(4);
+
+        DistributionStatisticConfig distributionStatisticConfigWithInf = DistributionStatisticConfig.builder()
+            .serviceLevelObjectives(1, 10, 100, Double.POSITIVE_INFINITY)
+            .build();
+        assertThat(OtlpMeterRegistry.getSloWithPositiveInf(distributionStatisticConfigWithInf))
+            .contains(Double.POSITIVE_INFINITY);
+        assertThat(OtlpMeterRegistry.getSloWithPositiveInf(distributionStatisticConfigWithInf)).hasSize(4);
+    }
+
+    @Test
     abstract void testMetricsStartAndEndTime();
 
     protected Metric writeToMetric(Meter meter) {
@@ -177,6 +202,9 @@ abstract class OtlpMeterRegistryTest {
 
     protected void assertHistogram(Metric metric, long startTime, long endTime, String unit, long count, double sum,
             double max) {
+        assertThat(metric.getHistogram().getAggregationTemporality())
+            .isEqualTo(AggregationTemporality.toOtlpAggregationTemporality(otlpConfig().aggregationTemporality()));
+
         HistogramDataPoint histogram = metric.getHistogram().getDataPoints(0);
         assertThat(metric.getName()).isEqualTo(METER_NAME);
         assertThat(metric.getDescription()).isEqualTo(METER_DESCRIPTION);
@@ -185,12 +213,19 @@ abstract class OtlpMeterRegistryTest {
         assertThat(histogram.getTimeUnixNano()).isEqualTo(endTime);
         assertThat(histogram.getCount()).isEqualTo(count);
         assertThat(histogram.getSum()).isEqualTo(sum);
-        assertThat(histogram.getMax()).isEqualTo(max);
+
         assertThat(histogram.getAttributesCount()).isEqualTo(1);
         assertThat(histogram.getAttributes(0).getKey()).isEqualTo(meterTag.getKey());
         assertThat(histogram.getAttributes(0).getValue().getStringValue()).isEqualTo(meterTag.getValue());
-        assertThat(metric.getHistogram().getAggregationTemporality())
-            .isEqualTo(AggregationTemporality.toOtlpAggregationTemporality(otlpConfig().aggregationTemporality()));
+
+        if (histogram.getExplicitBoundsCount() > 0) {
+            assertThat(histogram.getBucketCountsList().stream().mapToLong(Long::longValue).sum()).isEqualTo(count);
+            assertThat(histogram.getExplicitBoundsCount() + 1).isEqualTo(histogram.getBucketCountsCount());
+        }
+
+        if (otlpConfig().aggregationTemporality() == AggregationTemporality.DELTA) {
+            assertThat(histogram.getMax()).isEqualTo(max);
+        }
     }
 
     protected void assertSum(Metric metric, long startTime, long endTime, double expectedValue) {

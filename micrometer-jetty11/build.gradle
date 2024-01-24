@@ -2,7 +2,7 @@ description 'Micrometer instrumentation for Jetty 11'
 
 dependencies {
     api project(":micrometer-core")
-    api 'org.eclipse.jetty:jetty-server:11.+'
+    api libs.jetty11Server
 
     testImplementation 'org.junit.jupiter:junit-jupiter'
     testImplementation 'org.assertj:assertj-core'

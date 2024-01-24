@@ -16,7 +16,7 @@
         <!-- Imports -->
         <module name="IllegalImportCheck" >
             <property name="id" value="GeneralIllegalImportCheck"/>
-            <property name="illegalPkgs" value="com.google.common.(?![cache|concurrent]).*,org.apache.commons.text.*,org.jetbrains.*,jdk.internal.jline.internal.*,reactor.util.annotation.*,org.checkerframework.checker.*,javax.ws.*"/>
+            <property name="illegalPkgs" value="com.google.common.(?!cache|util.concurrent).*,org.apache.commons.text.*,org.jetbrains.*,jdk.internal.jline.internal.*,reactor.util.annotation.*,org.checkerframework.checker.*,javax.ws.*"/>
             <property name="illegalClasses" value="org\.assertj\.core\.api\.Java6Assertions\..*,javax.annotation.Nullable"/>
             <property name="regexp" value="true"/>
         </module>
@@ -25,9 +25,7 @@
             <property name="illegalPkgs" value="org.slf4j.*"/>
             <property name="regexp" value="true"/>
         </module>
-        <module name="UnusedImports">
-            <property name="processJavadoc" value="true" />
-        </module>
+        <module name="UnusedImports" />
 
         <!-- Regexp -->
         <module name="com.puppycrawl.tools.checkstyle.checks.regexp.RegexpSinglelineJavaCheck">
@@ -41,6 +39,12 @@
             <property name="format" value="System\.out\.println"/>
             <property name="illegalPattern" value="true"/>
             <property name="ignoreComments" value="true"/>
+        </module>
+        <module name="com.puppycrawl.tools.checkstyle.checks.regexp.RegexpSinglelineJavaCheck">
+            <property name="maximum" value="0" />
+            <property name="format" value="org\.junit\.jupiter\.api\.Assertions" />
+            <property name="message" value="Please use AssertJ imports." />
+            <property name="ignoreComments" value="true" />
         </module>
 
         <!-- Whitespace -->

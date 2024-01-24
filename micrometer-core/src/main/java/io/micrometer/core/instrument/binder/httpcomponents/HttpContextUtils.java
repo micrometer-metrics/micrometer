@@ -20,6 +20,7 @@ import org.apache.http.HttpHost;
 import org.apache.http.conn.routing.HttpRoute;
 import org.apache.http.protocol.HttpContext;
 
+@Deprecated
 class HttpContextUtils {
 
     static Tags generateTagsForRoute(HttpContext context) {

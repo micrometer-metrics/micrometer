@@ -26,29 +26,26 @@ package io.micrometer.observation;
  */
 final class NoopObservationRegistry implements ObservationRegistry {
 
-    /**
-     * Instance of {@link NoopObservationRegistry}.
-     */
-    static final NoopObservationRegistry INSTANCE = new NoopObservationRegistry();
+    static final ObservationRegistry FOR_SCOPES = ObservationRegistry.create();
 
     private final ObservationConfig observationConfig = NoopObservationConfig.INSTANCE;
 
-    private NoopObservationRegistry() {
+    NoopObservationRegistry() {
     }
 
     @Override
     public Observation getCurrentObservation() {
-        return NoopObservation.INSTANCE;
+        return FOR_SCOPES.getCurrentObservation();
     }
 
     @Override
     public Observation.Scope getCurrentObservationScope() {
-        return NoopObservation.NoopScope.INSTANCE;
+        return FOR_SCOPES.getCurrentObservationScope();
     }
 
     @Override
     public void setCurrentObservationScope(Observation.Scope current) {
-
+        FOR_SCOPES.setCurrentObservationScope(current);
     }
 
     @Override

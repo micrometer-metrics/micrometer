@@ -44,8 +44,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Tests ported from
@@ -114,7 +112,7 @@ class TimedHandlerTest {
         assertThat(registry.get("jetty.server.dispatches.open").longTaskTimer().activeTasks()).isEqualTo(2);
 
         barrier[1].await(5, TimeUnit.SECONDS);
-        assertTrue(latchHandler.await());
+        assertThat(latchHandler.await()).isTrue();
 
         assertThat(registry.get("jetty.server.requests")
             .tag("outcome", Outcome.SUCCESS.name())
@@ -168,7 +166,7 @@ class TimedHandlerTest {
         assertThat(registry.get("jetty.server.dispatches.open").longTaskTimer().activeTasks()).isEqualTo(1);
 
         barrier[1].await(5, TimeUnit.SECONDS);
-        assertTrue(latchHandler.await());
+        assertThat(latchHandler.await()).isTrue();
         assertThat(asyncHolder.get()).isNotNull();
 
         latchHandler.reset();
@@ -205,7 +203,7 @@ class TimedHandlerTest {
         assertThat(registry.get("jetty.server.dispatches.open").longTaskTimer().activeTasks()).isEqualTo(1);
 
         barrier[1].await(5, TimeUnit.SECONDS); // exiting app handler
-        assertTrue(latchHandler.await()); // exited timed handler
+        assertThat(latchHandler.await()).isTrue(); // exited timed handler
 
         barrier[2].await(5, TimeUnit.SECONDS); // onComplete called
         assertThat(registry.get("jetty.server.requests")
@@ -261,7 +259,7 @@ class TimedHandlerTest {
         assertThat(registry.get("jetty.server.dispatches.open").longTaskTimer().activeTasks()).isEqualTo(1);
 
         barrier[1].await(5, TimeUnit.SECONDS);
-        assertTrue(latchHandler.await());
+        assertThat(latchHandler.await()).isTrue();
         assertThat(asyncHolder.get()).isNotNull();
 
         asyncHolder.get().addListener(new AsyncListener() {
@@ -337,7 +335,7 @@ class TimedHandlerTest {
         assertThat(registry.get("jetty.server.dispatches.open").longTaskTimer().activeTasks()).isEqualTo(1);
 
         barrier[1].await(5, TimeUnit.SECONDS);
-        assertTrue(latchHandler.await());
+        assertThat(latchHandler.await()).isTrue();
         assertThat(asyncHolder.get()).isNotNull();
 
         asyncHolder.get().addListener(new AsyncListener() {
@@ -403,16 +401,16 @@ class TimedHandlerTest {
         String request = "GET / HTTP/1.1\r\n" + "Host: localhost\r\n" + "\r\n";
         connector.executeRequest(request);
 
-        assertTrue(serverLatch.await(5, TimeUnit.SECONDS));
+        assertThat(serverLatch.await(5, TimeUnit.SECONDS)).isTrue();
 
         Future<Void> shutdown = timedHandler.shutdown();
-        assertFalse(shutdown.isDone());
+        assertThat(shutdown.isDone()).isFalse();
 
         Thread.sleep(delay / 2);
-        assertFalse(shutdown.isDone());
+        assertThat(shutdown.isDone()).isFalse();
 
         Thread.sleep(delay);
-        assertTrue(shutdown.isDone());
+        assertThat(shutdown.isDone()).isTrue();
     }
 
     private static class LatchHandler extends HandlerWrapper {

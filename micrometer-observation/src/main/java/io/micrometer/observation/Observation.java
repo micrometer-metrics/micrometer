@@ -19,11 +19,12 @@ import io.micrometer.common.KeyValue;
 import io.micrometer.common.KeyValues;
 import io.micrometer.common.lang.NonNull;
 import io.micrometer.common.lang.Nullable;
+import io.micrometer.common.util.internal.logging.InternalLoggerFactory;
 
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -44,6 +45,7 @@ import java.util.stream.Collectors;
  * @author Jonatan Ivanov
  * @author Tommy Ludwig
  * @author Marcin Grzejszczak
+ * @author Yanming Zhou
  * @since 1.10.0
  */
 public interface Observation extends ObservationView {
@@ -51,7 +53,7 @@ public interface Observation extends ObservationView {
     /**
      * No-op observation.
      */
-    Observation NOOP = NoopObservation.INSTANCE;
+    Observation NOOP = new NoopObservation();
 
     /**
      * Create and start an {@link Observation} with the given name. All Observations of
@@ -124,10 +126,11 @@ public interface Observation extends ObservationView {
             return NOOP;
         }
         Context context = contextSupplier.get();
+        context.setParentFromCurrentObservation(registry);
         if (!registry.observationConfig().isObservationEnabled(name, context)) {
             return NOOP;
         }
-        return new SimpleObservation(name, registry, context == null ? new Context() : context);
+        return new SimpleObservation(name, registry, context);
     }
 
     // @formatter:off
@@ -167,6 +170,7 @@ public interface Observation extends ObservationView {
         }
         ObservationConvention<T> convention;
         T context = contextSupplier.get();
+        context.setParentFromCurrentObservation(registry);
         if (customConvention != null) {
             convention = customConvention;
         }
@@ -176,7 +180,7 @@ public interface Observation extends ObservationView {
         if (!registry.observationConfig().isObservationEnabled(convention.getName(), context)) {
             return NOOP;
         }
-        return new SimpleObservation(convention, registry, context == null ? new Context() : context);
+        return new SimpleObservation(convention, registry, context);
     }
 
     /**
@@ -310,10 +314,11 @@ public interface Observation extends ObservationView {
             return NOOP;
         }
         T context = contextSupplier.get();
+        context.setParentFromCurrentObservation(registry);
         if (!registry.observationConfig().isObservationEnabled(observationConvention.getName(), context)) {
             return NOOP;
         }
-        return new SimpleObservation(observationConvention, registry, context == null ? new Context() : context);
+        return new SimpleObservation(observationConvention, registry, context);
     }
 
     /**
@@ -489,10 +494,17 @@ public interface Observation extends ObservationView {
      * @param runnable the {@link Runnable} to run
      */
     default void observe(Runnable runnable) {
-        observeWithContext((context) -> {
+        start();
+        try (Scope scope = openScope()) {
             runnable.run();
-            return null; // returned value is ignored
-        });
+        }
+        catch (Throwable error) {
+            error(error);
+            throw error;
+        }
+        finally {
+            stop();
+        }
     }
 
     default Runnable wrap(Runnable runnable) {
@@ -514,10 +526,17 @@ public interface Observation extends ObservationView {
      * @param <E> type of exception thrown
      */
     default <E extends Throwable> void observeChecked(CheckedRunnable<E> checkedRunnable) throws E {
-        observeCheckedWithContext((context) -> {
+        start();
+        try (Scope scope = openScope()) {
             checkedRunnable.run();
-            return null; // returned value is ignored
-        });
+        }
+        catch (Throwable error) {
+            error(error);
+            throw error;
+        }
+        finally {
+            stop();
+        }
     }
 
     default <E extends Throwable> CheckedRunnable<E> wrapChecked(CheckedRunnable<E> checkedRunnable) throws E {
@@ -541,7 +560,17 @@ public interface Observation extends ObservationView {
      */
     @Nullable
     default <T> T observe(Supplier<T> supplier) {
-        return observeWithContext((context) -> supplier.get());
+        start();
+        try (Scope scope = openScope()) {
+            return supplier.get();
+        }
+        catch (Throwable error) {
+            error(error);
+            throw error;
+        }
+        finally {
+            stop();
+        }
     }
 
     default <T> Supplier<T> wrap(Supplier<T> supplier) {
@@ -566,7 +595,17 @@ public interface Observation extends ObservationView {
      */
     @Nullable
     default <T, E extends Throwable> T observeChecked(CheckedCallable<T, E> checkedCallable) throws E {
-        return observeCheckedWithContext((context) -> checkedCallable.call());
+        start();
+        try (Scope scope = openScope()) {
+            return checkedCallable.call();
+        }
+        catch (Throwable error) {
+            error(error);
+            throw error;
+        }
+        finally {
+            stop();
+        }
     }
 
     default <T, E extends Throwable> CheckedCallable<T, E> wrapChecked(CheckedCallable<T, E> checkedCallable) throws E {
@@ -594,10 +633,14 @@ public interface Observation extends ObservationView {
      * @param <C> the type of input {@link Context} to the function
      * @param <T> the type parameter of the {@link Function} return
      * @since 1.11.0
+     * @deprecated scheduled for removal in 1.15.0, use {@code observe(...)} directly
      */
     @SuppressWarnings({ "unused", "unchecked" })
     @Nullable
+    @Deprecated
     default <C extends Context, T> T observeWithContext(Function<C, T> function) {
+        InternalLoggerFactory.getInstance(Observation.class)
+            .warn("This method is deprecated. Please migrate to observation.observe(...)");
         start();
         try (Scope scope = openScope()) {
             return function.apply((C) getContext());
@@ -633,11 +676,16 @@ public interface Observation extends ObservationView {
      * @param <T> the type of return to the function
      * @param <E> type of exception {@link CheckedFunction} throws
      * @since 1.11.0
+     * @deprecated scheduled for removal in 1.15.0, use {@code observeChecked(...)}
+     * directly
      */
     @SuppressWarnings({ "unused", "unchecked" })
     @Nullable
+    @Deprecated
     default <C extends Context, T, E extends Throwable> T observeCheckedWithContext(CheckedFunction<C, T, E> function)
             throws E {
+        InternalLoggerFactory.getInstance(Observation.class)
+            .warn("This method is deprecated. Please migrate to observation.observeChecked(...)");
         start();
         try (Scope scope = openScope()) {
             return function.apply((C) getContext());
@@ -864,7 +912,7 @@ public interface Observation extends ObservationView {
     @SuppressWarnings("unchecked")
     class Context implements ContextView {
 
-        private final Map<Object, Object> map = new HashMap<>();
+        private final Map<Object, Object> map = new ConcurrentHashMap<>();
 
         private String name;
 
@@ -931,6 +979,20 @@ public interface Observation extends ObservationView {
          */
         public void setParentObservation(@Nullable ObservationView parentObservation) {
             this.parentObservation = parentObservation;
+        }
+
+        /**
+         * Sets the parent {@link ObservationView} to current one if parent is null and
+         * current one exists.
+         * @param registry the {@link ObservationRegistry} in using
+         */
+        void setParentFromCurrentObservation(ObservationRegistry registry) {
+            if (this.parentObservation == null) {
+                Observation currentObservation = registry.getCurrentObservation();
+                if (currentObservation != null) {
+                    setParentObservation(currentObservation);
+                }
+            }
         }
 
         /**
@@ -1209,22 +1271,20 @@ public interface Observation extends ObservationView {
          * @return event
          */
         static Event of(String name, String contextualName) {
-            return new Event() {
-                @Override
-                public String getName() {
-                    return name;
-                }
+            return new SimpleEvent(name, contextualName);
+        }
 
-                @Override
-                public String getContextualName() {
-                    return contextualName;
-                }
-
-                @Override
-                public String toString() {
-                    return "event.name='" + getName() + "', event.contextualName='" + getContextualName() + '\'';
-                }
-            };
+        /**
+         * Creates an {@link Event} for the given names and timestamp (wall time).
+         * @param name The name of the event (should have low cardinality).
+         * @param contextualName The contextual name of the event (can have high
+         * cardinality).
+         * @param wallTime Wall time in milliseconds since the epoch
+         * @return event
+         * @since 1.12.0
+         */
+        static Event of(String name, String contextualName, long wallTime) {
+            return new SimpleEvent(name, contextualName, wallTime);
         }
 
         /**
@@ -1241,6 +1301,17 @@ public interface Observation extends ObservationView {
          * @return the name of the event.
          */
         String getName();
+
+        /**
+         * Wall time in milliseconds since the epoch. Typically equivalent to
+         * {@link System#currentTimeMillis()}. Should not be used to determine durations.
+         * Used for timestamping events that happened during Observations.
+         * @return Wall time in milliseconds since the epoch
+         * @since 1.12.0
+         */
+        default long getWallTime() {
+            return 0;
+        }
 
         /**
          * Returns the contextual name of the event. You can use {@code %s} to represent

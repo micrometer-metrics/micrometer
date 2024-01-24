@@ -5,9 +5,9 @@ pluginManagement {
 }
 
 plugins {
-    id 'com.gradle.enterprise' version '3.13.3'
-    id 'io.spring.ge.conventions' version '0.0.13'
-    id 'org.gradle.toolchains.foojay-resolver-convention' version '0.4.0'
+    id 'com.gradle.enterprise' version '3.16.1'
+    id 'io.spring.ge.conventions' version '0.0.14'
+    id 'org.gradle.toolchains.foojay-resolver-convention' version '0.7.0'
 }
 
 rootProject.name = 'micrometer'
@@ -25,7 +25,7 @@ gradleEnterprise {
 
 include 'micrometer-commons', 'micrometer-core', 'micrometer-observation'
 
-['core', 'boot2', 'boot2-reactive', 'spring-integration', 'hazelcast', 'hazelcast3', 'javalin', 'jersey3'].each { sample ->
+['core', 'boot2', 'boot2-reactive', 'spring-integration', 'hazelcast', 'hazelcast3', 'javalin', 'jersey3', 'jetty12'].each { sample ->
     include "micrometer-samples-$sample"
     project(":micrometer-samples-$sample").projectDir = new File(rootProject.projectDir, "samples/micrometer-samples-$sample")
 }
@@ -43,6 +43,7 @@ include 'micrometer-test', 'micrometer-observation-test'
 }
 
 include 'micrometer-bom'
+include 'micrometer-jakarta9'
 include 'micrometer-jetty11'
-
 include 'micrometer-osgi-test'
+include 'docs'

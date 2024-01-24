@@ -37,6 +37,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.*;
+import java.util.stream.Collectors;
 
 import static java.lang.String.format;
 import static java.util.Collections.emptyList;
@@ -62,6 +63,18 @@ import static java.util.Objects.requireNonNull;
  * @author Marcin Grzejszczak
  */
 public abstract class MeterRegistry {
+
+    // @formatter:off
+    private static final EnumMap<TimeUnit, String> BASE_TIME_UNIT_STRING_CACHE = Arrays.stream(TimeUnit.values())
+        .collect(
+            Collectors.toMap(
+                Function.identity(),
+                (timeUnit) -> timeUnit.toString().toLowerCase(),
+                (k, v) -> { throw new IllegalStateException("Duplicate keys should not exist."); },
+                () -> new EnumMap<>(TimeUnit.class)
+            )
+        );
+    // @formatter:on
 
     protected final Clock clock;
 
@@ -287,7 +300,7 @@ public abstract class MeterRegistry {
     protected abstract DistributionStatisticConfig defaultHistogramConfig();
 
     private String getBaseTimeUnitStr() {
-        return getBaseTimeUnit().toString().toLowerCase();
+        return BASE_TIME_UNIT_STRING_CACHE.get(getBaseTimeUnit());
     }
 
     /**

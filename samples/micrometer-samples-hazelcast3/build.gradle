@@ -4,9 +4,9 @@ plugins {
 
 dependencies {
     implementation project(':micrometer-core')
-    implementation('com.hazelcast:hazelcast') {
+    implementation(libs.hazelcast3) {
         version {
-            strictly '3.+'
+            strictly libs.hazelcast3.get().version
         }
     }
     implementation 'ch.qos.logback:logback-classic'

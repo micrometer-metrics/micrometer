@@ -15,6 +15,7 @@
  */
 package io.micrometer.observation.tck;
 
+import io.micrometer.common.KeyValue;
 import io.micrometer.common.docs.KeyName;
 import io.micrometer.observation.Observation;
 import org.assertj.core.api.ThrowingConsumer;
@@ -343,6 +344,25 @@ public class TestObservationRegistryAssert
                 return new AssertionError();
             });
         return this;
+    }
+
+    /**
+     * Verifies that there is an Observation with a key value.
+     * <p>
+     * Examples: <pre><code class='java'>
+     * // assertions succeed
+     * assertThat(testObservationRegistry).hasAnObservationWithAKeyValue(KeyValue.of("foo", "bar"));
+     *
+     * // assertions fail - assuming that there is no such a key value in any observation
+     * assertThat(testObservationRegistry).hasAnObservationWithAKeyValue(KeyValue.of("foo", "bar"));</code></pre>
+     * @param keyValue expected key value
+     * @return {@code this} assertion object.
+     * @throws AssertionError if the actual value is {@code null}.
+     * @throws AssertionError if there is no Observation with given key name and value
+     * @since 1.12.0
+     */
+    public TestObservationRegistryAssert hasAnObservationWithAKeyValue(KeyValue keyValue) {
+        return hasAnObservationWithAKeyValue(keyValue.getKey(), keyValue.getValue());
     }
 
     /**

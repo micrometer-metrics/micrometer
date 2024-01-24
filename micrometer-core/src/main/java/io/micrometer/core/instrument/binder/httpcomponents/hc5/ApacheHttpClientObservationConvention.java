@@ -26,6 +26,21 @@ import io.micrometer.observation.ObservationConvention;
  */
 public interface ApacheHttpClientObservationConvention extends ObservationConvention<ApacheHttpClientContext> {
 
+    /**
+     * Name of the {@link org.apache.hc.client5.http.protocol.HttpClientContext} attribute
+     * that should hold the String representation of the URI template used for creating
+     * the client URL.
+     * <p>
+     * This value can be contributed as a {@link io.micrometer.common.KeyValue} to the
+     * recorded observations. <pre>
+     * String uriTemplate = "/users/{id}";
+     * HttpClientContext clientContext = ...
+     * clientContext.setAttribute(ApacheHttpClientObservationConvention.URI_TEMPLATE_ATTRIBUTE, uriTemplate);
+     * </pre>
+     * @since 1.12.0
+     */
+    String URI_TEMPLATE_ATTRIBUTE = "micrometer.uri.template";
+
     @Override
     default boolean supportsContext(Observation.Context context) {
         return context instanceof ApacheHttpClientContext;

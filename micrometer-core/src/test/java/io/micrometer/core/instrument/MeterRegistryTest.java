@@ -15,6 +15,7 @@
  */
 package io.micrometer.core.instrument;
 
+import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.config.MeterFilter;
 import io.micrometer.core.instrument.config.MeterFilterReply;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
@@ -203,6 +204,14 @@ class MeterRegistryTest {
             .hasMessage(
                     "There is already a registered meter of a different type (CumulativeCounter vs. Timer) with the same name: my.dupe.meter")
             .hasNoCause();
+    }
+
+    @Test
+    @Issue("#4352")
+    void baseUnitStringShouldBeCachedAndReturnTheSameInstance() {
+        Timer timer1 = registry.timer("test.timer1");
+        Timer timer2 = registry.timer("test.timer2");
+        assertThat(timer1.getId().getBaseUnit()).isSameAs(timer2.getId().getBaseUnit());
     }
 
 }

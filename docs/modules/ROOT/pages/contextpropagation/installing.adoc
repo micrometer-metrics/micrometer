@@ -1,0 +1,28 @@
+[[context-propagation-installing]]
+== Installing
+
+Snapshots are published to https://repo.spring.io/snapshot for every successful build on the `main` branch and maintenance branches.
+
+Milestone releases are published to https://repo.spring.io/milestone. Include that as a Maven repository in your build
+configuration to use milestone releases. Note that milestone releases are for testing purposes and are not intended for
+production use.
+
+The following example shows the required dependency in Gradle:
+
+[source,groovy,subs=+attributes]
+----
+implementation 'io.micrometer:context-propagation:latest.integration'
+----
+
+The following example shows the required dependency in Maven:
+
+[source,xml,subs=+attributes]
+----
+<dependencies>
+    <dependency>
+        <groupId>io.micrometer</groupId>
+        <artifactId>context-propagation</artifactId>
+        <version>${micrometer-context-propagation.version}</version>
+    </dependency>
+</dependencies>
+----

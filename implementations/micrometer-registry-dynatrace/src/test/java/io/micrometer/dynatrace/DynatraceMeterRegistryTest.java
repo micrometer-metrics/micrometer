@@ -23,6 +23,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
+import java.nio.charset.StandardCharsets;
+
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.entry;
@@ -77,18 +79,17 @@ class DynatraceMeterRegistryTest {
 
         meterRegistry.publish();
 
-        ArgumentCaptor<HttpSender.Request> argumentCaptor = ArgumentCaptor.forClass(HttpSender.Request.class);
-        verify(httpClient).send(argumentCaptor.capture());
-        HttpSender.Request request = argumentCaptor.getValue();
+        verify(httpClient).send(assertArg((request -> {
+            assertThat(request.getRequestHeaders()).containsOnly(entry("Content-Type", "text/plain"),
+                    entry("User-Agent", "micrometer"), entry("Authorization", "Api-Token apiToken"));
 
-        assertThat(request.getRequestHeaders()).containsOnly(entry("Content-Type", "text/plain"),
-                entry("User-Agent", "micrometer"), entry("Authorization", "Api-Token apiToken"));
-        assertThat(request.getEntity()).asString()
-            .hasLineCount(3)
-            .contains("my.counter,dt.metrics.source=micrometer count,delta=12.0 " + clock.wallTime())
-            .contains("my.gauge,dt.metrics.source=micrometer gauge," + gauge + " " + clock.wallTime())
-            .contains("my.timer,dt.metrics.source=micrometer gauge,min=12.0,max=42.0,sum=108.0,count=4 "
-                    + clock.wallTime());
+            String[] lines = new String(request.getEntity(), StandardCharsets.UTF_8).trim().split("\n");
+            assertThat(lines).hasSize(4)
+                .containsExactly("my.counter,dt.metrics.source=micrometer count,delta=12 " + clock.wallTime(),
+                        "my.timer,dt.metrics.source=micrometer gauge,min=12,max=42,sum=108,count=4 " + clock.wallTime(),
+                        "my.gauge,dt.metrics.source=micrometer gauge," + formatDouble(gauge) + " " + clock.wallTime(),
+                        "#my.timer gauge dt.meta.unit=milliseconds");
+        })));
     }
 
     @Test
@@ -110,9 +111,9 @@ class DynatraceMeterRegistryTest {
         HttpSender.Request request = argumentCaptor.getValue();
 
         assertThat(request.getEntity()).asString()
-            .hasLineCount(1)
-            .contains("my.timer,dt.metrics.source=micrometer gauge,min=22.0,max=50.0,sum=72.0,count=2 "
-                    + clock.wallTime());
+            .hasLineCount(2)
+            .contains("my.timer,dt.metrics.source=micrometer gauge,min=22,max=50,sum=72,count=2 " + clock.wallTime(),
+                    "#my.timer gauge dt.meta.unit=milliseconds");
 
         // both are bigger than the previous min and smaller than the previous max. They
         // will only show up if the
@@ -128,9 +129,9 @@ class DynatraceMeterRegistryTest {
         HttpSender.Request request2 = argumentCaptor2.getValue();
 
         assertThat(request2.getEntity()).asString()
-            .hasLineCount(1)
-            .contains("my.timer,dt.metrics.source=micrometer gauge,min=33.0,max=44.0,sum=77.0,count=2 "
-                    + clock.wallTime());
+            .hasLineCount(2)
+            .contains("my.timer,dt.metrics.source=micrometer gauge,min=33,max=44,sum=77,count=2 " + clock.wallTime(),
+                    "#my.timer gauge dt.meta.unit=milliseconds");
     }
 
     @Test
@@ -144,14 +145,10 @@ class DynatraceMeterRegistryTest {
         clock.add(config.step());
         meterRegistry.publish();
 
-        ArgumentCaptor<HttpSender.Request> argumentCaptor = ArgumentCaptor.forClass(HttpSender.Request.class);
-        verify(httpClient).send(argumentCaptor.capture());
-        HttpSender.Request request = argumentCaptor.getValue();
-
-        assertThat(request.getEntity()).asString()
-            .hasLineCount(1)
-            .contains("my.timer,dt.metrics.source=micrometer gauge,min=22.0,max=55.0,sum=77.0,count=2 "
-                    + clock.wallTime());
+        verify(httpClient).send(assertArg((request -> assertThat(request.getEntity()).asString()
+            .hasLineCount(2)
+            .contains("my.timer,dt.metrics.source=micrometer gauge,min=22,max=55,sum=77,count=2 " + clock.wallTime(),
+                    "#my.timer gauge dt.meta.unit=milliseconds"))));
     }
 
     @Test
@@ -165,14 +162,10 @@ class DynatraceMeterRegistryTest {
         clock.add(config.step());
         meterRegistry.publish();
 
-        ArgumentCaptor<HttpSender.Request> argumentCaptor = ArgumentCaptor.forClass(HttpSender.Request.class);
-        verify(httpClient).send(argumentCaptor.capture());
-        HttpSender.Request request = argumentCaptor.getValue();
-
-        assertThat(request.getEntity()).asString()
-            .hasLineCount(1)
-            .contains("my.timer,dt.metrics.source=micrometer gauge,min=44.0,max=44.0,sum=44.0,count=1 "
-                    + clock.wallTime());
+        verify(httpClient).send(assertArg(request -> assertThat(request.getEntity()).asString()
+            .hasLineCount(2)
+            .contains("my.timer,dt.metrics.source=micrometer gauge,min=44,max=44,sum=44,count=1 " + clock.wallTime(),
+                    "#my.timer gauge dt.meta.unit=milliseconds")));
 
         // reset for next export interval
         reset(httpClient);
@@ -194,14 +187,10 @@ class DynatraceMeterRegistryTest {
         clock.add(config.step());
         meterRegistry.publish();
 
-        ArgumentCaptor<HttpSender.Request> argumentCaptor2 = ArgumentCaptor.forClass(HttpSender.Request.class);
-        verify(httpClient).send(argumentCaptor2.capture());
-        HttpSender.Request request2 = argumentCaptor2.getValue();
-
-        assertThat(request2.getEntity()).asString()
-            .hasLineCount(1)
-            .contains("my.timer,dt.metrics.source=micrometer gauge,min=33.0,max=33.0,sum=33.0,count=1 "
-                    + clock.wallTime());
+        verify(httpClient).send(assertArg(request -> assertThat(request.getEntity()).asString()
+            .hasLineCount(2)
+            .contains("my.timer,dt.metrics.source=micrometer gauge,min=33,max=33,sum=33,count=1 " + clock.wallTime(),
+                    "#my.timer gauge dt.meta.unit=milliseconds")));
     }
 
     private DynatraceConfig createDefaultDynatraceConfig() {
@@ -226,6 +215,14 @@ class DynatraceMeterRegistryTest {
                 return DynatraceApiVersion.V2;
             }
         };
+    }
+
+    private String formatDouble(double value) {
+        if (value == (long) value) {
+            return Long.toString((long) value);
+        }
+
+        return Double.toString(value);
     }
 
 }

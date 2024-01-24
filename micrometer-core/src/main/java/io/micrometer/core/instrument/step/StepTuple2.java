@@ -78,6 +78,7 @@ public class StepTuple2<T1, T2> {
      * <p>
      * Rolls the values regardless of the clock or current time and ensures the value will
      * never roll over again after.
+     * @since 1.11.0
      */
     protected void _closingRollover() {
         // ensure rollover does not happen again

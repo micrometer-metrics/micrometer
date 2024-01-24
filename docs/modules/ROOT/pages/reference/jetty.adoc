@@ -1,0 +1,26 @@
+Micrometer supports binding metrics to `Jetty` through `Connection.Listener`.
+
+You can collect metrics from `Jetty` by adding `JettyConnectionMetrics` as follows:
+
+[source,java]
+----
+ Server server = new Server(0);
+ Connector connector = new ServerConnector(server);
+ connector.addBean(new JettyConnectionMetrics(registry, connector, Tags.of("foo", "bar"));
+ server.setConnectors(new Connector[] { connector });
+----
+
+Micrometer also supports binding metrics to `Jersey` through `ApplicationEventListener`.
+
+You can collect metrics from `Jersey` by adding `MetricsApplicationEventListener` as follows:
+
+[source,java]
+----
+ResourceConfig resourceConfig = new ResourceConfig();
+resourceConfig.register(new MetricsApplicationEventListener(
+                registry,
+                new DefaultJerseyTagsProvider(),
+                "http.server.requests",
+                true));
+ServletContainer servletContainer = new ServletContainer(resourceConfig);
+----

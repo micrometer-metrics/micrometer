@@ -1,5 +1,5 @@
 plugins {
-    id 'com.github.johnrengelman.shadow' version '7.1.2'
+    id 'com.github.johnrengelman.shadow' version '8.1.1'
 }
 
 dependencies {
@@ -61,7 +61,7 @@ publishing {
                 asNode()
                     .dependencies
                     .dependency
-                    .findAll { ['reactor-core', 'reactor-netty-core', 'netty-resolver-dns-native-macos'].contains(it.artifactId.text()) }
+                    .findAll { ['reactor-core', 'reactor-netty-core', 'netty-resolver-dns-native-macos', 'netty-transport-native-epoll'].contains(it.artifactId.text()) }
                     .each { it.parent().remove(it) }
             }
         }

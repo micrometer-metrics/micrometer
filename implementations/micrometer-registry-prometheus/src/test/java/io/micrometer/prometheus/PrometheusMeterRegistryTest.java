@@ -40,7 +40,6 @@ import java.util.concurrent.atomic.AtomicLong;
 import static io.micrometer.core.instrument.MockClock.clock;
 import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.*;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
  * Tests for {@link PrometheusMeterRegistry}.
@@ -136,7 +135,7 @@ class PrometheusMeterRegistryTest {
     @Test
     void differentMeterTypesWithSameName() {
         registry.timer("m");
-        assertThrows(IllegalArgumentException.class, () -> registry.counter("m"));
+        assertThatIllegalArgumentException().isThrownBy(() -> registry.counter("m"));
     }
 
     @DisplayName("description text is bound to 'help' on Prometheus collectors")
@@ -611,40 +610,64 @@ class PrometheusMeterRegistryTest {
         Counter counter = Counter.builder("my.counter").register(registry);
         counter.increment();
 
-        Timer timer = Timer.builder("test.timer")
+        Timer timer = Timer.builder("timer.noHistogram").register(registry);
+        timer.record(Duration.ofMillis(100));
+        timer.record(Duration.ofMillis(200));
+        timer.record(Duration.ofMillis(150));
+
+        Timer timerWithHistogram = Timer.builder("timer.withHistogram")
             .serviceLevelObjectives(Duration.ofMillis(100), Duration.ofMillis(200), Duration.ofMillis(300))
             .register(registry);
-        timer.record(Duration.ofMillis(15));
-        timer.record(Duration.ofMillis(150));
-        timer.record(Duration.ofMillis(1_500));
+        timerWithHistogram.record(Duration.ofMillis(15));
+        timerWithHistogram.record(Duration.ofMillis(1_500));
+        timerWithHistogram.record(Duration.ofMillis(150));
 
-        DistributionSummary histogram = DistributionSummary.builder("test.histogram")
+        DistributionSummary summary = DistributionSummary.builder("summary.noHistogram").register(registry);
+        summary.record(0.10);
+        summary.record(1E18);
+        summary.record(20);
+
+        DistributionSummary summaryWithHistogram = DistributionSummary.builder("summary.withHistogram")
             .publishPercentileHistogram()
             .register(registry);
-        histogram.record(0.15);
-        histogram.record(15);
-        histogram.record(5E18);
+        summaryWithHistogram.record(0.15);
+        summaryWithHistogram.record(5E18);
+        summaryWithHistogram.record(15);
 
-        DistributionSummary slos = DistributionSummary.builder("test.slos")
+        DistributionSummary slos = DistributionSummary.builder("summary.withSlos")
             .serviceLevelObjectives(100, 200, 300)
             .register(registry);
         slos.record(10);
-        slos.record(250);
         slos.record(1_000);
+        slos.record(250);
 
         String scraped = registry.scrape(TextFormat.CONTENT_TYPE_OPENMETRICS_100);
-        assertThat(scraped).contains("my_counter_total 1.0 # {span_id=\"1\",trace_id=\"2\"} 1.0");
-        assertThat(scraped).contains("test_timer_seconds_bucket{le=\"0.1\"} 1.0 # {span_id=\"3\",trace_id=\"4\"} 0.015")
-            .contains("test_timer_seconds_bucket{le=\"0.2\"} 2.0 # {span_id=\"5\",trace_id=\"6\"} 0.15")
-            .contains("test_timer_seconds_bucket{le=\"0.3\"} 2.0\n")
-            .contains("test_timer_seconds_bucket{le=\"+Inf\"} 3.0 # {span_id=\"7\",trace_id=\"8\"} 1.5");
-        assertThat(scraped).contains("test_histogram_bucket{le=\"1.0\"} 1.0 # {span_id=\"9\",trace_id=\"10\"} 0.15")
-            .contains("test_histogram_bucket{le=\"16.0\"} 2.0 # {span_id=\"11\",trace_id=\"12\"} 15.0")
-            .contains("test_histogram_bucket{le=\"+Inf\"} 3.0 # {span_id=\"13\",trace_id=\"14\"} 5.0E18");
-        assertThat(scraped).contains("test_slos_bucket{le=\"100.0\"} 1.0 # {span_id=\"15\",trace_id=\"16\"} 10.0")
-            .contains("test_slos_bucket{le=\"200.0\"} 1.0\n")
-            .contains("test_slos_bucket{le=\"300.0\"} 2.0 # {span_id=\"17\",trace_id=\"18\"} 250.0")
-            .contains("test_slos_bucket{le=\"+Inf\"} 3.0 # {span_id=\"19\",trace_id=\"20\"} 1000.0");
+        assertThat(scraped).contains("my_counter_total 1.0 # {span_id=\"1\",trace_id=\"2\"} 1.0 ");
+
+        assertThat(scraped).contains("timer_noHistogram_seconds_count 3.0 # {span_id=\"3\",trace_id=\"4\"} 1.0 ");
+
+        assertThat(scraped)
+            .contains("timer_withHistogram_seconds_bucket{le=\"0.1\"} 1.0 # {span_id=\"5\",trace_id=\"6\"} 0.015 ")
+            .contains("timer_withHistogram_seconds_bucket{le=\"0.2\"} 2.0 # {span_id=\"9\",trace_id=\"10\"} 0.15 ")
+            .contains("timer_withHistogram_seconds_bucket{le=\"0.3\"} 2.0\n")
+            .contains("timer_withHistogram_seconds_bucket{le=\"+Inf\"} 3.0 # {span_id=\"7\",trace_id=\"8\"} 1.5 ");
+        assertThat(scraped).contains("timer_withHistogram_seconds_count 3.0 # {span_id=\"9\",trace_id=\"10\"} 1.0 ");
+
+        assertThat(scraped).contains("summary_noHistogram_count 3.0 # {span_id=\"11\",trace_id=\"12\"} 1.0 ");
+
+        assertThat(scraped)
+            .contains("summary_withHistogram_bucket{le=\"1.0\"} 1.0 # {span_id=\"13\",trace_id=\"14\"} 0.15 ")
+            .contains("summary_withHistogram_bucket{le=\"16.0\"} 2.0 # {span_id=\"17\",trace_id=\"18\"} 15.0 ")
+            .contains("summary_withHistogram_bucket{le=\"+Inf\"} 3.0 # {span_id=\"15\",trace_id=\"16\"} 5.0E18 ");
+        assertThat(scraped).contains("summary_withHistogram_count 3.0 # {span_id=\"17\",trace_id=\"18\"} 1.0 ");
+
+        assertThat(scraped)
+            .contains("summary_withSlos_bucket{le=\"100.0\"} 1.0 # {span_id=\"19\",trace_id=\"20\"} 10.0 ")
+            .contains("summary_withSlos_bucket{le=\"200.0\"} 1.0\n")
+            .contains("summary_withSlos_bucket{le=\"300.0\"} 2.0 # {span_id=\"23\",trace_id=\"24\"} 250.0 ")
+            .contains("summary_withSlos_bucket{le=\"+Inf\"} 3.0 # {span_id=\"21\",trace_id=\"22\"} 1000.0 ");
+        assertThat(scraped).contains("summary_withSlos_count 3.0 # {span_id=\"23\",trace_id=\"24\"} 1.0 ");
+
         assertThat(scraped).endsWith("# EOF\n");
     }
 

@@ -1,0 +1,93 @@
+buildscript {
+	repositories {
+		mavenCentral()
+		gradlePluginPortal()
+	}
+
+	dependencies {
+		classpath 'io.spring.gradle.antora:spring-antora-plugin:0.0.1'
+		classpath 'org.antora:gradle-antora-plugin:1.0.0'
+	}
+}
+
+apply plugin: 'java'
+apply plugin: 'io.spring.antora.generate-antora-yml'
+apply plugin: 'org.antora'
+
+description = 'Micrometer Docs'
+
+repositories {
+   mavenCentral()
+}
+
+dependencies {
+    implementation project(':micrometer-core')
+    implementation 'io.micrometer:context-propagation'
+    implementation 'ch.qos.logback:logback-classic'
+    implementation 'org.slf4j:slf4j-api'
+
+    testImplementation project(':micrometer-test')
+    testImplementation project(':micrometer-observation-test')
+    testImplementation 'org.aspectj:aspectjweaver'
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testImplementation 'org.assertj:assertj-core'
+    testImplementation 'org.springframework:spring-context'
+    testImplementation 'io.projectreactor:reactor-core'
+    testImplementation 'io.projectreactor:reactor-test'
+    testImplementation 'io.netty:netty-transport'
+    testImplementation 'org.apache.httpcomponents.client5:httpclient5'
+    testImplementation libs.javalin
+}
+
+antora {
+	version = '3.2.0-alpha.2'
+	playbook = 'antora-playbook.yml'
+	options = ['--clean', '--stacktrace']
+	environment = [
+			'ALGOLIA_API_KEY': 'da671ceec1f84f80f280884a6a91bde5',
+			'ALGOLIA_APP_ID': 'WB1FQYI187',
+			'ALGOLIA_INDEX_NAME': 'micrometer'
+	]
+
+	dependencies = [
+			'@antora/atlas-extension': '1.0.0-alpha.1',
+			'@antora/collector-extension': '1.0.0-alpha.3',
+			'@asciidoctor/tabs': '1.0.0-beta.3',
+			'@springio/antora-extensions': '1.4.2',
+			'@springio/asciidoctor-extensions': '1.0.0-alpha.8',
+	]
+}
+
+tasks.named('generateAntoraYml') {
+    asciidocAttributes = project.provider {
+        return  ['micrometer-version': project.version.toString()]
+    }
+}
+
+tasks.create('generateAntoraResources') {
+    dependsOn 'generateAntoraYml'
+}
+
+tasks.named('antora') {
+    dependsOn 'generateAntoraResources', 'test'
+}
+
+jar {
+    enabled = false
+}
+
+javadoc {
+    enabled = false
+}
+
+tasks.withType(AbstractPublishToMaven).configureEach {
+	enabled = false
+}
+
+downloadBaseline {
+	enabled = false
+}
+
+japicmp {
+	enabled = false
+}

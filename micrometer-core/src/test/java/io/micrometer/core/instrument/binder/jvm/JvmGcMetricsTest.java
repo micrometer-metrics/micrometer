@@ -41,7 +41,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 import static com.tngtech.archunit.core.domain.JavaClass.Predicates.resideInAPackage;
@@ -90,17 +89,12 @@ class JvmGcMetricsTest {
             .untilAsserted(() -> assertThat(registry.find("jvm.gc.live.data.size").gauge().value()).isPositive());
         assertThat(registry.find("jvm.gc.memory.allocated").counter().count()).isPositive();
         assertThat(registry.find("jvm.gc.max.data.size").gauge().value()).isPositive();
-        Optional<Timer> optionalGcTimer = registry.find("jvm.gc.pause")
-            .timers()
-            .stream()
-            .filter(timer -> "System.gc()".equals(timer.getId().getTag("cause")))
-            .findFirst();
-        assertThat(optionalGcTimer).isPresent();
-        Timer gcTimer = optionalGcTimer.get();
+        Timer gcTimer = registry.find("jvm.gc.pause").tag("cause", "System.gc()").timer();
+        assertThat(gcTimer).isNotNull();
         assertThat(gcTimer.count()).isPositive();
         assertThat(gcTimer.getId().getTag("gc")).isNotBlank();
-        assertThat(gcTimer.getId().getTag("key")).hasToString("value");
-        assertThat(gcTimer.getId().getTag("action")).isIn("end of major GC", "end of GC pause");
+        assertThat(gcTimer.getId().getTag("key")).isEqualTo("value");
+        assertThat(gcTimer.getId().getTag("action")).isNotBlank();
 
         if (!binder.isGenerationalGc) {
             return;

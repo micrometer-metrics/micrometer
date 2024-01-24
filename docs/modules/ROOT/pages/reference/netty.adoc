@@ -1,0 +1,19 @@
+
+Micrometer supports binding metrics to `Netty`.
+
+You can collect metrics from `ByteBuf` allocators and from `EventLoopGroup` instances.
+Instrumentation can be done once at startup, if resources are already known:
+
+[source,java,subs=+attributes]
+-----
+include::{include-java}/netty/NettyMetricsTests.java[tags=directInstrumentation,indent=0]
+-----
+
+Netty infrastructure can be configured in many ways, so you can also instrument lazily at runtime as resources are used.
+If you do so, you must ensure that you will not bind metrics for the same resource multiple times as this can have runtime drawbacks:
+
+[source,java,subs=+attributes]
+-----
+include::{include-java}/netty/NettyMetricsTests.java[tags=channelInstrumentation,indent=0]
+-----
+

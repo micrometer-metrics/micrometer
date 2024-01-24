@@ -7,6 +7,6 @@ dependencies {
     // TODO: upgrade when we figure out how to unbreak things due to this change: https://github.com/testcontainers/testcontainers-java/pull/5099
     testImplementation 'org.testcontainers:elasticsearch:1.16.3'
     testImplementation 'org.testcontainers:junit-jupiter'
-    testImplementation 'com.jayway.jsonpath:json-path:latest.release'
+    testImplementation libs.jsonPath
     testImplementation 'ch.qos.logback:logback-classic'
 }

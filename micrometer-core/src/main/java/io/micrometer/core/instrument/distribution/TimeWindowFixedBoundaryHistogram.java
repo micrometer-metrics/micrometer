@@ -60,11 +60,6 @@ public class TimeWindowFixedBoundaryHistogram extends AbstractTimeWindowHistogra
         NavigableSet<Double> histogramBuckets = distributionStatisticConfig
             .getHistogramBuckets(supportsAggregablePercentiles);
 
-        Boolean percentileHistogram = distributionStatisticConfig.isPercentileHistogram();
-        if (percentileHistogram != null && percentileHistogram) {
-            histogramBuckets.addAll(PercentileHistogramBuckets.buckets(distributionStatisticConfig));
-        }
-
         this.buckets = histogramBuckets.stream().filter(Objects::nonNull).mapToDouble(Double::doubleValue).toArray();
         initRingBuffer();
     }
@@ -110,7 +105,7 @@ public class TimeWindowFixedBoundaryHistogram extends AbstractTimeWindowHistogra
 
     /**
      * For recording efficiency, we turn normal histogram into cumulative count histogram
-     * only on calls to {@link #countsAtValues(Iterator<Double>)}.
+     * only on calls to {@link FixedBoundaryHistogram#countsAtValues(Iterator)}.
      */
     @Override
     Iterator<CountAtBucket> countsAtValues(Iterator<Double> values) {
@@ -123,9 +118,10 @@ public class TimeWindowFixedBoundaryHistogram extends AbstractTimeWindowHistogra
 
         String bucketFormatString = "%14.1f %10d\n";
 
+        FixedBoundaryHistogram currentHistogram = currentHistogram();
         for (int i = 0; i < buckets.length; i++) {
             printStream.format(Locale.US, bucketFormatString, buckets[i] / bucketScaling,
-                    currentHistogram().values.get(i));
+                    currentHistogram.values.get(i));
         }
 
         printStream.write('\n');

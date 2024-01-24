@@ -24,6 +24,7 @@ import io.micrometer.core.instrument.binder.http.Outcome;
 import io.micrometer.core.instrument.observation.ObservationOrTimerCompatibleInstrumentation;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
+import org.apache.hc.client5.http.protocol.HttpClientContext;
 import org.apache.hc.core5.http.*;
 import org.apache.hc.core5.http.impl.io.HttpRequestExecutor;
 import org.apache.hc.core5.http.io.HttpClientConnection;
@@ -52,7 +53,9 @@ import java.util.function.Function;
  * @author Benjamin Hubert (benjamin.hubert@willhaben.at)
  * @author Tommy Ludwig
  * @since 1.11.0
+ * @deprecated since 1.12.0 in favor of {@link ObservationExecChainHandler}.
  */
+@Deprecated
 public class MicrometerHttpRequestExecutor extends HttpRequestExecutor {
 
     static final String METER_NAME = "httpcomponents.httpclient.request";
@@ -102,8 +105,8 @@ public class MicrometerHttpRequestExecutor extends HttpRequestExecutor {
     public ClassicHttpResponse execute(ClassicHttpRequest request, HttpClientConnection conn, HttpContext context)
             throws IOException, HttpException {
         ObservationOrTimerCompatibleInstrumentation<ApacheHttpClientContext> sample = ObservationOrTimerCompatibleInstrumentation
-            .start(registry, observationRegistry,
-                    () -> new ApacheHttpClientContext(request, context, uriMapper, exportTagsForRoute), convention,
+            .start(registry, observationRegistry, () -> new ApacheHttpClientContext(request,
+                    HttpClientContext.adapt(context), uriMapper, exportTagsForRoute), convention,
                     DefaultApacheHttpClientObservationConvention.INSTANCE);
         String statusCodeOrError = "UNKNOWN";
         Outcome statusOutcome = Outcome.UNKNOWN;

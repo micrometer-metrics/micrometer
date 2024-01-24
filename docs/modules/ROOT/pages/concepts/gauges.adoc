@@ -1,0 +1,115 @@
+[[gauges]]
+= Gauges
+
+A gauge is a handle to get the current value. Typical examples for gauges would be the size of a collection or map or number of threads in a running state.
+
+TIP: Gauges are useful for monitoring things with natural upper bounds. We do not recommend using a gauge to monitor things like request count, as they can grow without bound for the duration of an application instance's life.
+
+TIP: Never gauge something you can count with a `Counter`!
+
+Micrometer takes the stance that gauges should be sampled and not be set, so there is no information about what might have occurred between samples. Any intermediate values set on a gauge are lost by the time the gauge value is reported to a metrics backend, so there is little value in setting those intermediate values in the first place.
+
+Think of a `Gauge` as a "`heisen-gauge`": a meter that changes only when it is observed. Every other meter type accumulates intermediate counts toward the point where the data is sent to the metrics backend.
+
+The `MeterRegistry` interface contains methods for building gauges to observe numeric values, functions, collections, and maps:
+
+[source, java]
+----
+List<String> list = registry.gauge("listGauge", Collections.emptyList(), new ArrayList<>(), List::size); <1>
+List<String> list2 = registry.gaugeCollectionSize("listSize2", Tags.empty(), new ArrayList<>()); <2>
+Map<String, Integer> map = registry.gaugeMapSize("mapGauge", Tags.empty(), new HashMap<>());
+----
+<1> A slightly more common form of gauge is one that monitors some non-numeric object. The last argument establishes the function that is used to determine the value of the gauge when the gauge is observed.
+<2> A more convenient form of (1) for when you want to monitor collection size.
+
+All of the different forms of creating a gauge maintain only a _weak reference_ to the object being observed, so as not to prevent garbage collection of the object.
+
+== Manually Incrementing or Decrementing a Gauge
+
+A gauge can be made to track any `java.lang.Number` subtype that is settable, such as `AtomicInteger` and `AtomicLong` found in `java.util.concurrent.atomic` and similar types, such as Guava's `AtomicDouble`:
+
+[source,java]
+----
+// maintain a reference to myGauge
+AtomicInteger myGauge = registry.gauge("numberGauge", new AtomicInteger(0));
+
+// ... elsewhere you can update the value it holds using the object reference
+myGauge.set(27);
+myGauge.set(11);
+----
+
+Note that, in this form, unlike other meter types, you do not get a reference to the `Gauge` when creating one. Rather, you get a reference to the thing being observed. This is because of the "`heisen-gauge`" principal: The gauge is self-sufficient once created, so you should never need to interact with it. This lets us give you back only the instrumented object, which allows for quick one-liners that both create the object to be observed and set up metrics around it.
+
+This pattern should be less common than the `DoubleFunction` form. Remember that frequent setting of the observed `Number` results in a lot of intermediate values that never get published. Only the _instantaneous value_ of the gauge at publish time is ever sent to the monitoring system.
+
+WARNING: Attempting to construct a gauge with a primitive number or one of its `java.lang` object forms is always incorrect. These numbers are immutable. Thus, the gauge cannot ever be changed. Attempting to "`re-register`" the gauge with a different number does not work, as the registry maintains only one meter for each unique combination of name and tags.
+
+== Gauge Fluent Builder
+
+The interface contains a fluent builder for gauges:
+
+[source, java]
+----
+Gauge gauge = Gauge
+    .builder("gauge", myObj, myObj::gaugeValue)
+    .description("a description of what this gauge does") // optional
+    .tags("region", "test") // optional
+    .register(registry);
+----
+
+Generally the returned `Gauge` instance is not useful except in testing, as the gauge is already set up to track a value automatically upon registration.
+
+== Why is My Gauge Reporting NaN or Disappearing?
+
+It is your responsibility to hold a strong reference to the state object that you are measuring with a `Gauge`. Micrometer is careful to not create strong references to objects that would otherwise be garbage collected. Once the object being gauged is de-referenced and is garbage collected, Micrometer starts reporting a NaN or nothing for a gauge, depending on the registry implementation.
+
+If you see your gauge reporting for a few minutes and then disappearing or reporting NaN, it almost certainly suggests that the underlying object being gauged has been garbage collected.
+
+== `TimeGauge`
+
+`TimeGauge` is a specialized gauge that tracks a time value, to be scaled to the base unit of time expected by each registry implementation.
+
+`TimeGauge` can be registered with `TimeUnit` as follows:
+
+[source, java]
+----
+AtomicInteger msTimeGauge = new AtomicInteger(4000);
+AtomicInteger usTimeGauge = new AtomicInteger(4000);
+TimeGauge.builder("my.gauge", msTimeGauge, TimeUnit.MILLISECONDS, AtomicInteger::get).register(registry);
+TimeGauge.builder("my.other.gauge", usTimeGauge, TimeUnit.MICROSECONDS, AtomicInteger::get).register(registry);
+----
+
+And for example, if the registry is Prometheus, they will be converted in seconds as follows:
+
+```
+# HELP my_gauge_seconds
+# TYPE my_gauge_seconds gauge
+my_gauge_seconds 4.0
+# HELP my_other_gauge_seconds
+# TYPE my_other_gauge_seconds gauge
+my_other_gauge_seconds 0.004
+```
+
+== Multi-gauge
+
+Micrometer supports one last special type of `Gauge`, called a `MultiGauge`, to help manage gauging a growing or shrinking list of criteria.
+This feature lets you select a set of well-bounded but slightly changing set of criteria from something like an SQL query and report some metric for each row as a `Gauge`. The following example creates a `MultiGauge`:
+
+[source, java]
+----
+// SELECT count(*) from job group by status WHERE job = 'dirty'
+MultiGauge statuses = MultiGauge.builder("statuses")
+    .tag("job", "dirty")
+    .description("The number of widgets in various statuses")
+    .baseUnit("widgets")
+    .register(registry);
+
+...
+
+// run this periodically whenever you re-run your query
+statuses.register(
+    resultSet.stream()
+        .map(result -> Row.of(Tags.of("status", result.getAsString("status")), result.getAsInt("count")))
+        .collect(toList())
+);
+----

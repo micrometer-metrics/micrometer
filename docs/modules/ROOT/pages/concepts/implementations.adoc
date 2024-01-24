@@ -1,0 +1,40 @@
+[[monitoring-systems]]
+= Supported Monitoring Systems
+
+Micrometer contains a core module with an instrumentation https://en.wikipedia.org/wiki/Service_provider_interface[SPI], a set of modules containing implementations for various monitoring systems (each is called a registry), and a test kit. You need to understand three important characteristics of monitoring systems:
+
+* *Dimensionality*. Whether the system supports metric names to be enriched with tag key/value pairs. If a system is not _dimensional_, it is _hierarchical_, which means it supports only a flat metric name. When publishing metrics to hierarchical systems, Micrometer flattens the set of tag key/value pairs and adds them to the name.
+
+[cols=2*,options="header"]
+|===
+|Dimensional
+|Hierarchical
+
+|AppOptics, Atlas, Azure Monitor, Cloudwatch, Datadog, Datadog StatsD, Dynatrace, Elastic, Humio, Influx, KairosDB, New Relic, Prometheus, SignalFx, Sysdig StatsD, Telegraf StatsD, Wavefront
+|Graphite, Ganglia, JMX, Etsy StatsD
+|===
+
+
+* *xref:concepts/rate-aggregation.adoc[Rate Aggregation]*. In this context, we mean aggregation of a set of samples over a prescribed time interval. Some monitoring systems expect some types of discrete samples (such as counts) to be converted to a rate by the application prior to being published. Other systems expect cumulative values to always be sent. Still others have no opinion on it either way.
+
+[cols=2*,options="header"]
+|===
+|Client-side
+|Server-side
+
+|AppOptics, Atlas, Azure Monitor, Datadog, Dynatrace, Elastic, Graphite, Ganglia, Humio, Influx, JMX, Kairos, New Relic, all StatsD flavors, SignalFx
+|Prometheus, Wavefront footnote:[As of 1.2.0, Micrometer sends cumulative values to Wavefront.]
+|===
+
+* *Publishing*. Some systems expect to poll applications for metrics at their leisure, while others expect metrics to be pushed to them on a regular interval.
+
+[cols=2*,options="header"]
+|===
+|Client pushes
+|Server polls
+
+|AppOptics, Atlas, Azure Monitor, Datadog, Dynatrace, Elastic, Graphite, Ganglia, Humio, Influx, JMX, Kairos, New Relic, SignalFx, Wavefront
+|Prometheus, all StatsD flavors
+|===
+
+There are other, more minor, variations in expectations from one monitoring system to another, such as their conception of base units of measurement (particularly time) and the canonical naming convention for metrics. Micrometer customizes your metrics to meet these demands on a per-registry basis.

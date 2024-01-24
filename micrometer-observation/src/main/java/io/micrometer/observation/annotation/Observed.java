@@ -15,19 +15,15 @@
  */
 package io.micrometer.observation.annotation;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Inherited;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
-
-import io.micrometer.observation.Observation;
+import java.lang.annotation.*;
 
 /**
- * Annotation to mark classes and methods that you want to observe.
+ * Annotated methods are instrumented using an
+ * {@link io.micrometer.observation.Observation}.
  *
  * @author Jonatan Ivanov
  * @since 1.10.0
+ * @see io.micrometer.observation.aop.ObservedAspect
  */
 @Target({ ElementType.ANNOTATION_TYPE, ElementType.TYPE, ElementType.METHOD })
 @Retention(RetentionPolicy.RUNTIME)
@@ -35,14 +31,14 @@ import io.micrometer.observation.Observation;
 public @interface Observed {
 
     /**
-     * Name of the {@link Observation}.
-     * @return name of the {@link Observation}
+     * Name of the {@link io.micrometer.observation.Observation}.
+     * @return name of the {@link io.micrometer.observation.Observation}
      */
     String name() default "";
 
     /**
-     * Contextual name of the {@link Observation}.
-     * @return contextual name of the {@link Observation}
+     * Contextual name of the {@link io.micrometer.observation.Observation}.
+     * @return contextual name of the {@link io.micrometer.observation.Observation}
      */
     String contextualName() default "";
 

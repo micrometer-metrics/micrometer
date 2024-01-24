@@ -20,6 +20,7 @@ import org.junit.jupiter.api.Test;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -136,6 +137,37 @@ class OtlpConfigTest {
     void invalidAggregationTemporalityShouldBeCaptured() {
         Map<String, String> properties = new HashMap<>();
         properties.put("otlp.aggregationTemporality", "some_random_thing");
+
+        OtlpConfig otlpConfig = properties::get;
+        assertThat(otlpConfig.validate().isValid()).isFalse();
+    }
+
+    @Test
+    void baseTimeUnitDefault() {
+        Map<String, String> properties = new HashMap<>();
+
+        OtlpConfig otlpConfig = properties::get;
+        assertThat(otlpConfig.validate().isValid()).isTrue();
+        assertThat(otlpConfig.baseTimeUnit()).isSameAs(TimeUnit.MILLISECONDS);
+
+        properties.put("otlp.baseTimeUnit", TimeUnit.MILLISECONDS.name());
+        assertThat(otlpConfig.baseTimeUnit()).isSameAs(TimeUnit.MILLISECONDS);
+    }
+
+    @Test
+    void baseTimeUnitSeconds() {
+        Map<String, String> properties = new HashMap<>();
+        properties.put("otlp.baseTimeUnit", TimeUnit.SECONDS.name());
+
+        OtlpConfig otlpConfig = properties::get;
+        assertThat(otlpConfig.validate().isValid()).isTrue();
+        assertThat(otlpConfig.baseTimeUnit()).isSameAs(TimeUnit.SECONDS);
+    }
+
+    @Test
+    void invalidBaseTimeUnitShouldBeCaptured() {
+        Map<String, String> properties = new HashMap<>();
+        properties.put("otlp.baseTimeUnit", "some_random_thing");
 
         OtlpConfig otlpConfig = properties::get;
         assertThat(otlpConfig.validate().isValid()).isFalse();

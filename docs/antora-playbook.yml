@@ -1,0 +1,42 @@
+# PACKAGES antora@3.2.0-alpha.2 @antora/atlas-extension:1.0.0-alpha.1 @antora/collector-extension@1.0.0-alpha.3 @springio/antora-extensions@1.1.0-alpha.2 @asciidoctor/tabs@1.0.0-alpha.12 @opendevise/antora-release-line-extension@1.0.0-alpha.2
+#
+# The purpose of this Antora playbook is to build the docs in the current branch.
+antora:
+  extensions:
+    - '@springio/antora-extensions/partial-build-extension'
+    - require: '@springio/antora-extensions/latest-version-extension'
+    - require: '@springio/antora-extensions/inject-collector-cache-config-extension'
+    - '@antora/collector-extension'
+    - '@antora/atlas-extension'
+    - require: '@springio/antora-extensions/root-component-extension'
+      root_component_name: 'micrometer'
+site:
+  title: Micrometer
+  url: https://docs.micrometer.io/micrometer/reference/
+content:
+  sources:
+    - url: ./..
+      branches: HEAD
+      start_path: docs
+      worktrees: true
+asciidoc:
+  attributes:
+    page-stackoverflow-url: https://stackoverflow.com/tags/micrometer
+    page-pagination: ''
+    hide-uri-scheme: '@'
+    tabs-sync-option: '@'
+    chomp: 'all'
+  extensions:
+    - '@asciidoctor/tabs'
+    - '@springio/asciidoctor-extensions'
+  sourcemap: true
+urls:
+  latest_version_segment: ''
+runtime:
+  log:
+    failure_level: warn
+    format: pretty
+ui:
+  bundle:
+    url: https://github.com/micrometer-metrics/antora-ui-micrometer/releases/download/latest/ui-bundle.zip
+

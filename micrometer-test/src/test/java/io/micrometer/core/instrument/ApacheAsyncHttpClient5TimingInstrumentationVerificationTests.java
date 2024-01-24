@@ -17,12 +17,15 @@ package io.micrometer.core.instrument;
 
 import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.binder.httpcomponents.DefaultUriMapper;
+import io.micrometer.core.instrument.binder.httpcomponents.hc5.ApacheHttpClientObservationConvention;
 import io.micrometer.core.instrument.binder.httpcomponents.hc5.MicrometerHttpClientInterceptor;
+import io.micrometer.core.instrument.binder.httpcomponents.hc5.ObservationExecChainHandler;
 import org.apache.hc.client5.http.async.methods.SimpleHttpRequest;
 import org.apache.hc.client5.http.async.methods.SimpleHttpResponse;
 import org.apache.hc.client5.http.async.methods.SimpleRequestBuilder;
 import org.apache.hc.client5.http.impl.async.CloseableHttpAsyncClient;
 import org.apache.hc.client5.http.impl.async.HttpAsyncClients;
+import org.apache.hc.client5.http.protocol.HttpClientContext;
 import org.apache.hc.core5.http.ContentType;
 
 import java.net.URI;
@@ -33,6 +36,7 @@ class ApacheAsyncHttpClient5TimingInstrumentationVerificationTests
         extends HttpClientTimingInstrumentationVerificationTests<CloseableHttpAsyncClient> {
 
     @Override
+    @SuppressWarnings("deprecation")
     protected CloseableHttpAsyncClient clientInstrumentedWithMetrics() {
         MicrometerHttpClientInterceptor interceptor = new MicrometerHttpClientInterceptor(getRegistry(), Tags.empty(),
                 true);
@@ -47,7 +51,11 @@ class ApacheAsyncHttpClient5TimingInstrumentationVerificationTests
     @Nullable
     @Override
     protected CloseableHttpAsyncClient clientInstrumentedWithObservations() {
-        return null;
+        CloseableHttpAsyncClient client = HttpAsyncClients.custom()
+            .addExecInterceptorFirst("micrometer", new ObservationExecChainHandler(getObservationRegistry()))
+            .build();
+        client.start();
+        return client;
     }
 
     @Override
@@ -59,8 +67,10 @@ class ApacheAsyncHttpClient5TimingInstrumentationVerificationTests
     protected void sendHttpRequest(CloseableHttpAsyncClient instrumentedClient, HttpMethod method,
             @Nullable byte[] body, URI baseUri, String templatedPath, String... pathVariables) {
         try {
+            HttpClientContext httpClientContext = HttpClientContext.create();
+            httpClientContext.setAttribute(ApacheHttpClientObservationConvention.URI_TEMPLATE_ATTRIBUTE, templatedPath);
             Future<SimpleHttpResponse> future = instrumentedClient
-                .execute(makeRequest(method, body, baseUri, templatedPath, pathVariables), null);
+                .execute(makeRequest(method, body, baseUri, templatedPath, pathVariables), httpClientContext, null);
             future.get();
         }
         catch (InterruptedException | ExecutionException e) {

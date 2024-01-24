@@ -87,7 +87,7 @@ class OkHttpObservationInterceptorTest {
         server.stubFor(any(anyUrl()));
         Request request = new Request.Builder().url(server.baseUrl()).build();
 
-        client.newCall(request).execute().close();
+        makeACall(client, request);
 
         assertThat(registry.get("okhttp.requests")
             .tags("foo", "bar", "status", "200", "uri", URI_EXAMPLE_VALUE, "target.host", "localhost", "target.port",
@@ -111,10 +111,14 @@ class OkHttpObservationInterceptorTest {
         server.stubFor(any(anyUrl()));
         Request request = new Request.Builder().url(server.baseUrl()).build();
 
-        client.newCall(request).execute().close();
+        makeACall(client, request);
 
         assertThat(registry.get("new.name").tags("peer", "name").timer().count()).isEqualTo(1L);
         server.verify(WireMock.getRequestedFor(WireMock.urlEqualTo("/")).withHeader("foo", WireMock.equalTo("bar")));
+    }
+
+    void makeACall(OkHttpClient client, Request request) throws IOException {
+        client.newCall(request).execute().close();
     }
 
     static class TestHandler implements ObservationHandler<Observation.Context> {

@@ -1,0 +1,53 @@
+[[histograms]]
+= Histograms and Percentiles
+
+Timers and distribution summaries support collecting data to observe their percentile distributions. There are two main approaches to viewing percentiles:
+
+* *Percentile histograms*: Micrometer accumulates values to an underlying histogram and ships a predetermined set of buckets to the monitoring system. The monitoring system's query language is responsible for calculating percentiles off of this histogram. Currently, only Prometheus, Atlas, and Wavefront support histogram-based percentile approximations, through `histogram_quantile`, `:percentile`, and `hs()`, respectively. If you target Prometheus, Atlas, or Wavefront, prefer this approach, since you can aggregate the histograms across dimensions (by summing the values of the buckets across a set of dimensions) and derive an aggregable percentile from the histogram.
+* *Client-side percentiles*: Micrometer computes a percentile approximation for each meter ID (set of name and tags) and ships the percentile value to the monitoring system. This is not as flexible as a percentile histogram because it is not possible to aggregate percentile approximations across tags. Nevertheless, it provides some level of insight into percentile distributions for monitoring systems that do not support server-side percentile calculation based on a histogram.
+
+The following example builds a timer with a histogram:
+
+[source,java]
+----
+Timer.builder("my.timer")
+   .publishPercentiles(0.5, 0.95) // median and 95th percentile <1>
+   .publishPercentileHistogram() // <2>
+   .serviceLevelObjectives(Duration.ofMillis(100)) // <3>
+   .minimumExpectedValue(Duration.ofMillis(1)) // <4>
+   .maximumExpectedValue(Duration.ofSeconds(10))
+----
+
+<1> `publishPercentiles`: Used to publish percentile values computed in your application. These values are non-aggregable across dimensions.
+<2> `publishPercentileHistogram`: Used to publish a histogram suitable for computing aggregable (across dimensions) percentile approximations in Prometheus (by using `histogram_quantile`), Atlas (by using `:percentile`), and Wavefront (by using `hs()`). For Prometheus and Atlas, the buckets in the resulting histogram are preset by Micrometer based on a generator that has been determined empirically by Netflix to yield a reasonable error bound on most real world timers and distribution summaries. By default, the generator yields 276 buckets, but Micrometer includes only those that are within the range set by `minimumExpectedValue` and `maximumExpectedValue`, inclusive. Micrometer clamps timers by default to a range of 1 millisecond to 1 minute, yielding 73 histogram buckets per timer dimension. `publishPercentileHistogram` has no effect on systems that do not support aggregable percentile approximations. No histogram is shipped for these systems.
+<3> `serviceLevelObjectives`: Used to publish a cumulative histogram with buckets defined by your SLOs. When used in concert with `publishPercentileHistogram` on a monitoring system that supports aggregable percentiles, this setting adds additional buckets to the published histogram. When used on a system that does not support aggregable percentiles, this setting causes a histogram to be published with only these buckets.
+<4> `minimumExpectedValue`/`maximumExpectedValue`: Controls the number of buckets shipped by `publishPercentileHistogram` and controls the accuracy and memory footprint of the underlying HdrHistogram structure.
+
+Since shipping percentiles to the monitoring system generates additional time series, it is generally preferable to *not* configure them in core libraries that are included as dependencies in applications. Instead, applications can turn on this behavior for some set of timers and distribution summaries by using a meter filter.
+
+For example, suppose we have a handful of timers in a common library. We have prefixed these timer names with `myservice`:
+
+[source,java]
+----
+registry.timer("myservice.http.requests").record(..);
+registry.timer("myservice.db.requests").record(..);
+----
+
+We can turn on client-side percentiles for both timers by using a meter filter:
+
+[source,java]
+----
+registry.config().meterFilter(
+    new MeterFilter() {
+        @Override
+        public DistributionStatisticConfig configure(Meter.Id id, DistributionStatisticConfig config) {
+            if(id.getName().startsWith("myservice")) {
+                return DistributionStatisticConfig.builder()
+                    .percentiles(0.95)
+                    .build()
+                    .merge(config);
+            }
+            return config;
+        }
+    });
+----

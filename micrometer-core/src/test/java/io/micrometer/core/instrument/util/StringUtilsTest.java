@@ -18,7 +18,7 @@ package io.micrometer.core.instrument.util;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
 /**
  * Tests for {@link StringUtils}.
@@ -60,12 +60,12 @@ class StringUtilsTest {
 
     @Test
     void truncateWithIndicatorThrowsOnInvalidLengthWhenOriginalStringIsShort() {
-        assertThrows(IllegalArgumentException.class, () -> StringUtils.truncate("12345", 7, "[abbreviated]"));
+        assertThatIllegalArgumentException().isThrownBy(() -> StringUtils.truncate("12345", 7, "[abbreviated]"));
     }
 
     @Test
     void truncateWithIndicatorThrowsOnInvalidLengthWhenOriginalStringIsLongEnough() {
-        assertThrows(IllegalArgumentException.class, () -> StringUtils.truncate("1234567890", 7, "[abbreviated]"));
+        assertThatIllegalArgumentException().isThrownBy(() -> StringUtils.truncate("1234567890", 7, "[abbreviated]"));
     }
 
     @Test

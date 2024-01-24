@@ -1,0 +1,63 @@
+= Micrometer AppOptics
+:toc:
+:sectnums:
+:system: appoptics
+
+AppOptics is a dimensional time-series SaaS with built-in dashboarding.
+
+include::_install.adoc[]
+
+== Configuring
+
+The following example configures an AppOptics instance:
+
+[source,java]
+----
+AppOpticsConfig appopticsConfig = new AppOpticsConfig() {
+    @Override
+    public String apiToken() {
+        return MY_TOKEN;
+    }
+
+    @Override
+    @Nullable
+    public String get(String k) {
+        return null;
+    }
+};
+MeterRegistry registry = new AppOpticsMeterRegistry(appopticsConfig, Clock.SYSTEM);
+----
+
+`AppOpticsConfig` is an interface with a set of default methods. If, in the implementation of `get(String k)`, rather than returning `null`, you instead bind it to a property source, you can override the default configuration. For example, Micrometer's Spring Boot support binds properties that are prefixed with `management.metrics.export.appoptics` directly to the `AppOpticsConfig`:
+
+[source,yml]
+----
+management.metrics.export.appoptics:
+    api-token: YOURKEY
+
+    # You will probably want disable AppOptics publishing in a local development profile.
+    enabled: true
+
+    # The interval at which metrics are sent to AppOptics. The default is 1 minute.
+    step: 1m
+----
+
+== Graphing
+
+This section serves as a quick start to rendering useful representations in AppOptics for metrics that originate in Micrometer.
+
+=== Timers
+
+The AppOptics implementation of `Timer` produces three fields in AppOptics:
+
+* `sum`: Rate of calls per second.
+* `count`: Rate of total time per second.
+* `max`: A sliding window maximum amount recorded.
+
+.Dimensionally aggregable average in AppOptics.
+image::implementations/appoptics-timer-average.png[AppOptics timer average]
+
+AppOptics performs the `sum/count` division dimensionally to generate aggregable averages on your behalf.
+
+.Timer over a simulated service.
+image::implementations/appoptics-timer.png[AppOptics-rendered timer]

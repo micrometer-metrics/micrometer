@@ -1,7 +1,12 @@
 dependencies {
     api project(':micrometer-core')
 
-    api 'com.google.cloud:google-cloud-monitoring'
+    api platform('com.google.cloud:libraries-bom:latest.release')
+
+    api('com.google.cloud:google-cloud-monitoring') {
+        // see gh-4010
+        exclude group: 'com.google.guava', module: 'listenablefuture'
+    }
     api 'com.google.auth:google-auth-library-oauth2-http'
     implementation 'org.slf4j:slf4j-api'
     compileOnly 'ch.qos.logback:logback-classic'

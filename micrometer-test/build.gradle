@@ -36,6 +36,7 @@ dependencies {
     implementation 'org.awaitility:awaitility'
 
     testImplementation project(':micrometer-observation-test')
+    testImplementation project(':micrometer-jakarta9')
 
     testImplementation 'org.jsr107.ri:cache-ri-impl'
 
@@ -45,16 +46,19 @@ dependencies {
     testImplementation 'com.github.ben-manes.caffeine:caffeine'
     testImplementation 'net.sf.ehcache:ehcache'
     testImplementation 'javax.cache:cache-api'
+    testImplementation 'jakarta.jms:jakarta.jms-api'
     testImplementation 'com.hazelcast:hazelcast'
     testImplementation 'com.squareup.okhttp3:okhttp'
     testImplementation 'org.apache.httpcomponents:httpclient'
     testImplementation 'org.apache.httpcomponents:httpasyncclient'
     testImplementation 'org.apache.httpcomponents.client5:httpclient5'
-    testImplementation 'org.eclipse.jetty:jetty-client'
-    testImplementation 'org.eclipse.jetty:jetty-server'
-    testImplementation 'org.eclipse.jetty:jetty-servlet'
+    testImplementation 'org.apache.activemq:artemis-junit-5'
+    testImplementation 'org.apache.activemq:artemis-jakarta-client'
+    testImplementation libs.jetty9Client
+    testImplementation libs.jetty9Server
+    testImplementation libs.jetty9Servlet
     testImplementation 'org.glassfish.jersey.core:jersey-server'
-    testImplementation 'org.glassfish.jersey.test-framework.providers:jersey-test-framework-provider-jdk-http:2.+'
+    testImplementation libs.jersey2TestFrameworkJdkHttp
     // necessary for Jersey test framework
     testRuntimeOnly 'org.glassfish.jersey.inject:jersey-hk2'
 }

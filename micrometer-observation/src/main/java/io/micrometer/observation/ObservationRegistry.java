@@ -45,7 +45,7 @@ public interface ObservationRegistry {
     /**
      * No-op implementation of {@link ObservationRegistry}.
      */
-    ObservationRegistry NOOP = NoopObservationRegistry.INSTANCE;
+    ObservationRegistry NOOP = new NoopObservationRegistry();
 
     /**
      * When previously set will allow to retrieve the {@link Observation} at any point in

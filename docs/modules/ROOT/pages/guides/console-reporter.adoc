@@ -1,0 +1,90 @@
+= Passing through to Dropwizard's Console Reporter
+
+This guide shows how to plug in less commonly used Dropwizard `Reporter` implementations -- in this case, the `ConsoleReporter`.
+
+[source,java]
+----
+	@Bean
+	public MetricRegistry dropwizardRegistry() {
+		return new MetricRegistry();
+	}
+
+	@Bean
+	public ConsoleReporter consoleReporter(MetricRegistry dropwizardRegistry) {
+		ConsoleReporter reporter = ConsoleReporter.forRegistry(dropwizardRegistry)
+				.convertRatesTo(TimeUnit.SECONDS)
+				.convertDurationsTo(TimeUnit.MILLISECONDS)
+				.build();
+		reporter.start(1, TimeUnit.SECONDS);
+		return reporter;
+	}
+
+	@Bean
+	public MeterRegistry consoleLoggingRegistry(MetricRegistry dropwizardRegistry) {
+		DropwizardConfig consoleConfig = new DropwizardConfig() {
+
+			@Override
+			public String prefix() {
+				return "console";
+			}
+
+			@Override
+			public String get(String key) {
+				return null;
+			}
+
+		};
+
+		return new DropwizardMeterRegistry(consoleConfig, dropwizardRegistry, HierarchicalNameMapper.DEFAULT, Clock.SYSTEM) {
+			@Override
+			protected Double nullGaugeValue() {
+				return null;
+			}
+		};
+	}
+----
+
+Note that, in a Spring environment, this registry is added to other implementations in a composite and is used for all metrics, both custom and
+auto-configured.
+
+[source,java]
+----
+class MyComponent {
+    private final MeterRegistry registry;
+
+    public MyComponent(MeterRegistry registry) {
+        this.registry = registry;
+    }
+
+    public void doSomeWork(String lowCardinalityInput) {
+        registry.timer("my.latency", "input", lowCardinalityInput).record(() -> {
+            // do work
+        });
+    }
+}
+----
+
+The following listing shows typical output for this custom timer:
+
+[source,txt]
+----
+3/2/18 10:14:27 AM =============================================================
+
+-- Timers ----------------------------------------------------------------------
+myLatency.lowCardinalityInput.INPUT
+             count = 1
+         mean rate = 1.02 calls/second
+     1-minute rate = 0.00 calls/second
+     5-minute rate = 0.00 calls/second
+    15-minute rate = 0.00 calls/second
+               min = 100.00 milliseconds
+               max = 100.00 milliseconds
+              mean = 100.00 milliseconds
+            stddev = 0.00 milliseconds
+            median = 100.00 milliseconds
+              75% <= 100.00 milliseconds
+              95% <= 100.00 milliseconds
+              98% <= 100.00 milliseconds
+              99% <= 100.00 milliseconds
+            99.9% <= 100.00 milliseconds
+----

@@ -46,7 +46,9 @@ import java.util.function.Function;
  *
  * @author Jon Schneider
  * @since 1.11.0
+ * @deprecated since 1.12.0 in favor of {@link ObservationExecChainHandler}.
  */
+@Deprecated
 public class MicrometerHttpClientInterceptor {
 
     private static final String METER_NAME = "httpcomponents.httpclient.request";

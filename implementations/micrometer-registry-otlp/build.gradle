@@ -3,12 +3,15 @@ description = 'Publishes Micrometer meters in OTLP format'
 dependencies {
     api project(':micrometer-core')
 
-    // some proto are marked alpha, hence the alpha version. metrics proto is what we use and it is marked stable
-    implementation 'io.opentelemetry.proto:opentelemetry-proto:latest.release'
+    implementation libs.openTelemetry.proto
 
     testImplementation project(':micrometer-test')
-    testImplementation 'uk.org.webcompere:system-stubs-jupiter:latest.release'
+    testImplementation libs.systemStubsJupiter
     testImplementation 'io.rest-assured:rest-assured'
     testImplementation 'org.testcontainers:junit-jupiter'
     testImplementation 'org.awaitility:awaitility'
+}
+
+dockerTest {
+    systemProperty 'otel-collector-image.version', '0.79.0'
 }

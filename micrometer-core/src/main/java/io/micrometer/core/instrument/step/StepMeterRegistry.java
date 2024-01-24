@@ -26,6 +26,7 @@ import io.micrometer.core.instrument.internal.DefaultGauge;
 import io.micrometer.core.instrument.internal.DefaultLongTaskTimer;
 import io.micrometer.core.instrument.internal.DefaultMeter;
 import io.micrometer.core.instrument.push.PushMeterRegistry;
+import io.micrometer.core.instrument.util.NamedThreadFactory;
 
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -48,6 +49,9 @@ public abstract class StepMeterRegistry extends PushMeterRegistry {
 
     @Nullable
     private ScheduledExecutorService meterPollingService;
+
+    // Time when the last scheduled rollOver has started.
+    private long lastMeterRolloverStartTime = -1;
 
     public StepMeterRegistry(StepRegistryConfig config, Clock clock) {
         super(config, clock);
@@ -119,8 +123,8 @@ public abstract class StepMeterRegistry extends PushMeterRegistry {
         super.start(threadFactory);
 
         if (config.enabled()) {
-            this.meterPollingService = Executors.newSingleThreadScheduledExecutor(threadFactory);
-
+            this.meterPollingService = Executors.newSingleThreadScheduledExecutor(
+                    new NamedThreadFactory("step-meter-registry-poller-for-" + getClass().getSimpleName()));
             this.meterPollingService.scheduleAtFixedRate(this::pollMetersToRollover, getInitialDelay(),
                     config.step().toMillis(), TimeUnit.MILLISECONDS);
         }
@@ -138,12 +142,12 @@ public abstract class StepMeterRegistry extends PushMeterRegistry {
     public void close() {
         stop();
 
-        if (!isPublishing()) {
-            if (!isDataPublishedForCurrentStep()) {
-                // Data was not published for the current step. So, we should flush that
-                // first.
+        if (config.enabled() && !isClosed()) {
+            if (shouldPublishDataForLastStep() && !isPublishing()) {
+                // Data was not published for the last completed step. So, we should flush
+                // that first.
                 try {
-                    this.publish();
+                    publish();
                 }
                 catch (Throwable e) {
                     logger.warn(
@@ -151,21 +155,27 @@ public abstract class StepMeterRegistry extends PushMeterRegistry {
                             e);
                 }
             }
-            closeStepMeters();
+            else if (isPublishing()) {
+                waitForInProgressScheduledPublish();
+            }
+            closingRolloverStepMeters();
         }
         super.close();
     }
 
-    private boolean isDataPublishedForCurrentStep() {
-        long currentTimeInMillis = clock.wallTime();
-        return (getLastScheduledPublishStartTime() / config.step().toMillis()) >= (currentTimeInMillis
-                / config.step().toMillis());
+    private boolean shouldPublishDataForLastStep() {
+        if (lastMeterRolloverStartTime < 0)
+            return false;
+
+        final long lastPublishedStep = getLastScheduledPublishStartTime() / config.step().toMillis();
+        final long lastPolledStep = lastMeterRolloverStartTime / config.step().toMillis();
+        return lastPublishedStep < lastPolledStep;
     }
 
     /**
      * Performs closing rollover on StepMeters.
      */
-    private void closeStepMeters() {
+    private void closingRolloverStepMeters() {
         getMeters().stream()
             .filter(StepMeter.class::isInstance)
             .map(StepMeter.class::cast)
@@ -179,6 +189,7 @@ public abstract class StepMeterRegistry extends PushMeterRegistry {
      */
     // VisibleForTesting
     void pollMetersToRollover() {
+        this.lastMeterRolloverStartTime = clock.wallTime();
         this.getMeters()
             .forEach(m -> m.match(gauge -> null, Counter::count, Timer::count, DistributionSummary::count,
                     meter -> null, meter -> null, FunctionCounter::count, FunctionTimer::count, meter -> null));

@@ -1,0 +1,76 @@
+[[counters]]
+= Counters
+
+Counters report a single metric: a count. The `Counter` interface lets you increment by a fixed amount, which must be positive.
+
+TIP: Never count something you can time with a `Timer` or summarize with a `DistributionSummary`! Both `Timer` and `DistributionSummary` always publish a count of events in addition to other measurements.
+
+When building graphs and alerts off of counters, you should generally be most interested in measuring the rate at which some event occurs over a given time interval. Consider a simple queue. You could use counters to measure various things, such as the rate at which items are being inserted and removed.
+
+It is tempting, at first, to conceive of visualizing absolute counts rather than a rate, but the absolute count is usually both a function of the rapidity with which something is used *and* the longevity of the application instance under instrumentation. Building dashboards and alerts of the rate of a counter per some interval of time disregards the longevity of the app, letting you see aberrant behavior long after the application has started.
+
+NOTE: Be sure to read through the timer section before jumping into using counters, as timers record a count of timed events as part of the suite of metrics that go into timing. For those pieces of code you intend to time, you do NOT need to add a separate counter.
+
+The following code simulates a real counter whose rate exhibits some perturbation over a short time window:
+
+[source,java]
+----
+Normal rand = ...; // a random generator
+
+MeterRegistry registry = ...
+Counter counter = registry.counter("counter"); <1>
+
+Flux.interval(Duration.ofMillis(10))
+        .doOnEach(d -> {
+            if (rand.nextDouble() + 0.1 > 0) { <2>
+                counter.increment(); <3>
+            }
+        })
+        .blockLast();
+----
+<1> Most counters can be created off of the registry itself with a name and, optionally, a set of tags.
+<2> A slightly positively biased random walk.
+<3> This is how you interact with a counter. You could also call `counter.increment(n)` to increment by more than one in a single operation.
+
+A fluent builder for counters on the `Counter` interface itself provides access to less frequently used options, such as
+base units and description. You can register the counter as the last step of its construction by calling `register`:
+
+[source, java]
+----
+Counter counter = Counter
+    .builder("counter")
+    .baseUnit("beans") // optional
+    .description("a description of what this counter does") // optional
+    .tags("region", "test") // optional
+    .register(registry);
+----
+
+== Function-tracking Counters
+
+Micrometer also provides a more infrequently used counter pattern that tracks a monotonically increasing function (a function that stays the same or increases over time but never decreases). Some monitoring systems, such as Prometheus, push cumulative values for counters to the backend, but others publish the rate at which a counter is incrementing over the push interval. By employing this pattern, you let the Micrometer implementation for your monitoring system choose whether to rate-normalize the counter, and your counter remains portable across different types of monitoring systems.
+
+[source, java]
+-----
+Cache cache = ...; // suppose we have a Guava cache with stats recording on
+registry.more().counter("evictions", tags, cache, c -> c.stats().evictionCount()); <1>
+-----
+
+<1> `evictionCount()` is a monotonically increasing function that increments with every cache eviction from the beginning of its life.
+
+The function-tracking counter, in concert with the monitoring system's rate normalizing functionality (whether this is an artifact of the query language or the way data is pushed to the system), adds a layer of richness on top of the cumulative value of the function itself. You can reason about the _rate_ at which the value is increasing, whether that rate is within an acceptable bound, is increasing or decreasing over time, and so on.
+
+WARNING: Micrometer cannot guarantee the monotonicity of the function for you. By using this signature, you are asserting its monotonicity based on what you know about its definition.
+
+A fluent builder for function counters on the `FunctionCounter` interface itself provides access to less frequently used options, such as base units and description. You can register the counter as the last step of its construction by calling `register(MeterRegistry)`.
+
+[source, java]
+----
+MyCounterState state = ...;
+
+FunctionCounter counter = FunctionCounter
+    .builder("counter", state, state -> state.count())
+    .baseUnit("beans") // optional
+    .description("a description of what this counter does") // optional
+    .tags("region", "test") // optional
+    .register(registry);
+----
