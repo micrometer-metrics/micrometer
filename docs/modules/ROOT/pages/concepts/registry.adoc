@@ -39,7 +39,7 @@ compositeCounter.increment(); <3>
 
 == Global Registry
 
-Micrometer provides a static global registry `Metrics.globalRegistry` and a set of static builders for generating meters based on this registry (note that `globalRegistry` is a composite registry):
+Micrometer provides a static global registry called `Metrics.globalRegistry` and a set of static builders for generating meters based on this registry (note that `globalRegistry` is a composite registry):
 
 ====
 [source,java]

@@ -1,7 +1,7 @@
 [[micrometer-observation-introduction]]
 = Introduction
 
-For any Observation to happen, you need to register `ObservationHandler` objects through an `ObservationRegistry`. An `ObservationHandler` reacts only to supported implementations of an `Observation.Context` and can create timers, spans, and logs by reacting to the lifecycle events of an Observation such as
+For any Observation to happen, you need to register `ObservationHandler` objects through an `ObservationRegistry`. An `ObservationHandler` reacts only to supported implementations of an `Observation.Context` and can create timers, spans, and logs by reacting to the lifecycle events of an Observation, such as:
 
 * `start` - Observation has been started. Happens when the `Observation#start()` method gets called.
 * `stop` - Observation has been stopped. Happens when the `Observation#stop()` method gets called.
@@ -12,7 +12,7 @@ For any Observation to happen, you need to register `ObservationHandler` objects
 
 Whenever any of these methods is called, an `ObservationHandler` method (such as `onStart(T extends Observation.Context ctx)`, `onStop(T extends Observation.Context ctx)`, and so on) is called. To pass state between the handler methods, you can use the `Observation.Context`.
 
-This is how Observation state diagram looks like:
+This is how the Observation state diagram looks like:
 
 [source]
 ----
@@ -21,7 +21,7 @@ This is how Observation state diagram looks like:
 Created ----------> Started ----------> Stopped
 ----
 
-This is how Observation Scope state diagram looks like:
+This is how the Observation Scope state diagram looks like:
 
 [source]
 ----
@@ -32,12 +32,11 @@ Scope Started ----------> Scope Finished
 
 To make it possible to debug production problems an Observation needs additional metadata such as key-value pairs (also known as tags). You can then query your metrics or distributed tracing backend by those tags to find the required data. Tags can be either of high or low cardinality.
 
-IMPORTANT:  *High cardinality* means that a pair will have an unbounded number of possible values. An HTTP URL is a good
-example of such a key value (e.g. `/foo/user1234`, `/foo/user2345` etc.). *Low cardinality* means that a key value will  have a bounded number of possible values. A *templated* HTTP URL is a good example of such a key value (e.g. `/foo/\{userId}`).
+IMPORTANT: *High cardinality* means that a pair will have an unbounded number of possible values. An HTTP URL is a good example of such a key value (such as `/example/user1234`, `/example/user2345` etc.). *Low cardinality* means that a key value will have a bounded number of possible values. A *templated* HTTP URL is a good example of such a key value (such as `/example/\{userId}`).
 
 To separate Observation lifecycle operations from an Observation configuration (such as names and low and high cardinality tags), you can use the `ObservationConvention` that provides an easy way of overriding the default naming conventions.
 
-Below you can find an example of using the Observation API.
+The following example uses the Observation API:
 
 [source,java]
 -----

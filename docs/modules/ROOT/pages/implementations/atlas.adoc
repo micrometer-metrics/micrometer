@@ -104,7 +104,7 @@ In the preceding example, you can see these two lines plotted on a single dual-a
 image::implementations/atlas-timer.png[Atlas-rendered timer]
 
 
-=== Long task timers
+=== Long Task Timers
 
 Suppose we had a task that took two minutes to complete when it was expected to complete in less than 70 seconds. A key benefit of long task timers is the ability to receive an alert at the first reporting interval after we have exceeded the threshold. With a regular timer, we would not receive an alert until the first reporting interval after the process completed. If we had a ten-second publishing interval, the regular timer alert would arrive almost a minute after the long task timer alert.
 

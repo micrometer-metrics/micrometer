@@ -49,7 +49,7 @@ management.metrics.export.statsd:
 
 == Customizing the Metrics Sink
 
-By default, Micrometer publishes StatsD line protocol over UDP, as the vast majority of existing StatsD agents are UDP servers. It is possible to fully customize how the line protocol is shipped by modifying the builder for `StatsdMeterRegistry`:
+By default, Micrometer publishes the StatsD line protocol over UDP, as the vast majority of existing StatsD agents are UDP servers. You can fully customize how the line protocol is shipped by modifying the builder for `StatsdMeterRegistry`:
 
 [source,java]
 ----

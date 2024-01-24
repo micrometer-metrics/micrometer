@@ -1,6 +1,6 @@
 = Custom Meter Registry
 
-Micrometer supports popular meter registries out of the box, so you should check those first.
+Micrometer includes support for popular meter registries, so you should check those first.
 For an existing meter registry, if you think that your requirements are generally useful, consider creating an issue or PR against the Micrometer issue tracker.
 For a non-existent meter registry, if it is widely-used, consider creating an issue or PR for it.
 

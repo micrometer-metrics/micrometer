@@ -1,7 +1,7 @@
 [[distribution-summaries]]
 = Distribution Summaries
 
-A distribution summary tracks the distribution of events. It is similar to a timer structurally, but records values that do not represent a unit of time. For example, you could use a distribution summary to measure the payload sizes of requests hitting a server.
+A distribution summary tracks the distribution of events. It is structurally similar to a timer but records values that do not represent a unit of time. For example, you could use a distribution summary to measure the payload sizes of requests hitting a server.
 
 The following example creates a distribution summary:
 

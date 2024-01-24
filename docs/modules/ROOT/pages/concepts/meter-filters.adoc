@@ -4,7 +4,7 @@
 You can configure each registry with meter filters, which give you greater control over how and when meters are registered and what kinds of statistics they emit. Meter filters serve three basic functions:
 
 1. **Deny** (or **Accept**) meters being registered.
-2. **Transform** meter IDs (for example, changing the name, adding or removing tags, and changing description or base units).
+2. **Transform** meter IDs (for example, changing the name, adding or removing tags, and changing the description or base units).
 3. **Configure** distribution statistics for some meter types.
 
 Implementations of `MeterFilter` are added to the registry programmatically:
@@ -56,7 +56,7 @@ new MeterFilter() {
 * `denyNameStartsWith(String)`: Deny every meter with a matching prefix. All `MeterBinder` implementations provided by Micrometer have names with common prefixes to allow for easy grouping visualization in UIs but also to make them easy to disable or enable as a group with a prefix. For example, you can deny all JVM metrics with `MeterFilter.denyNameStartsWith("jvm")`.
 * `deny(Predicate<Meter.Id>)`: Deny any meter that matches the predicate.
 * `maximumAllowableMetrics(int)`: Deny any meter after the registry has reached a certain number of meters.
-* `maximumAllowableTags(String meterNamePrefix, String tagKey, int maximumTagValues, MeterFilter onMaxReached)`: Places an upper bound on the number of tags produced by matching series.
+* `maximumAllowableTags(String meterNamePrefix, String tagKey, int maximumTagValues, MeterFilter onMaxReached)`: Places an upper bound on the number of tags produced by the matching series.
 
 **Whitelisting** only a certain group of metrics is a particularly common case for monitoring systems that are _expensive_. This can be achieved with a static call:
 
@@ -77,7 +77,7 @@ registry.config()
 
 This achieves another form of whitelisting by stacking two filters together. Only `http` metrics are allowed to exist in this registry.
 
-== Transforming metrics
+== Transforming Metrics
 
 The following example shows a transform filter:
 
