@@ -14,10 +14,10 @@ class PrometheusMeterRegistryCustomizeTest {
     private final CollectorRegistry prometheusRegistry = new CollectorRegistry(true);
 
     private final MockClock clock = new MockClock();
-    
-    private final PrometheusMeterRegistry registry = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT, prometheusRegistry,
-        clock) {
-        
+
+    private final PrometheusMeterRegistry registry = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT,
+            prometheusRegistry, clock) {
+
         @Override
         protected String getConventionName(Meter.Id id) {
             return "custom_prefix_" + super.getConventionName(id);
@@ -28,7 +28,8 @@ class PrometheusMeterRegistryCustomizeTest {
     @Test
     void customNamedCollectorName() {
         Counter.builder("counter").description("my counter").register(registry);
-        assertThat(this.registry.getPrometheusRegistry().metricFamilySamples().nextElement().name).isEqualTo("custom_prefix_counter");
+        assertThat(this.registry.getPrometheusRegistry().metricFamilySamples().nextElement().name)
+            .isEqualTo("custom_prefix_counter");
     }
-        
+
 }
