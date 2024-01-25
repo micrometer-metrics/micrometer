@@ -93,7 +93,7 @@ my_other_gauge_seconds 0.004
 == Multi-gauge
 
 Micrometer supports one last special type of `Gauge`, called a `MultiGauge`, to help manage gauging a growing or shrinking list of criteria.
-This feature lets you select a set of well-bounded but slightly changing set of criteria from something like an SQL query and report some metric for each row as a `Gauge`. The following example creates a `MultiGauge`:
+This feature lets you select a set of well-bounded but slightly changing set of criteria from something like an SQL query and report each `Row` (see the example below) as a `Gauge`. The following example creates a `MultiGauge`:
 
 [source, java]
 ----
@@ -106,10 +106,11 @@ MultiGauge statuses = MultiGauge.builder("statuses")
 
 ...
 
-// run this periodically whenever you re-run your query
+// run this whenever you re-run your query
 statuses.register(
     resultSet.stream()
         .map(result -> Row.of(Tags.of("status", result.getAsString("status")), result.getAsInt("count")))
-        .collect(toList())
+        .collect(toList()),
+    true // whether to overwrite the previous value or only record it once
 );
 ----
