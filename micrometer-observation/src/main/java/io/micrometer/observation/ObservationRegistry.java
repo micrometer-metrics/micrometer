@@ -17,11 +17,14 @@ package io.micrometer.observation;
 
 import io.micrometer.common.lang.Nullable;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Objects;
+import io.micrometer.observation.Observation.ObservationLevel;
+
+import java.util.*;
+import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 /**
  * Implementations of this interface are responsible for managing state of an
@@ -102,6 +105,8 @@ public interface ObservationRegistry {
 
         private final List<ObservationFilter> observationFilters = new CopyOnWriteArrayList<>();
 
+        private final Map<String, Level> observationLevels = new ConcurrentHashMap<>();
+
         /**
          * Register a handler for the {@link Observation observations}.
          * @param handler handler to add to the current configuration
@@ -150,6 +155,27 @@ public interface ObservationRegistry {
         }
 
         /**
+         * Sets an observation level for the given package name.
+         * @param packageName observation package name
+         * @param level observation level
+         * @return This configuration instance
+         */
+        public ObservationConfig observationLevel(String packageName, Level level) {
+            this.observationLevels.put(packageName, level);
+            return this;
+        }
+
+        /**
+         * Sets observation levels.
+         * @param levels observation levels (package to level mappings)
+         * @return This configuration instance
+         */
+        public ObservationConfig observationLevels(Map<String, Level> levels) {
+            this.observationLevels.putAll(levels);
+            return this;
+        }
+
+        /**
          * Finds an {@link ObservationConvention} for the given
          * {@link Observation.Context}.
          * @param context context
@@ -179,6 +205,32 @@ public interface ObservationRegistry {
             for (ObservationPredicate predicate : this.observationPredicates) {
                 if (!predicate.test(name, context)) {
                     return false;
+                }
+            }
+            if (context != null) {
+                ObservationLevel level = context.getLevel();
+                if (level == null) {
+                    return true;
+                }
+                Class<?> clazz = level.getClazz();
+                String classToObserveFqn = clazz.getCanonicalName();
+                String classToObservePackage = clazz.getPackage().getName();
+                // a.b.c - 2
+                // a.b.c.D - 3
+                // a.b - 1
+                // we sort by string length, that means that we will find the closest
+                // matching first
+                List<Entry<String, Level>> sortedLevels = this.observationLevels.entrySet()
+                    .stream()
+                    .sorted(Collections.reverseOrder(Comparator.comparingInt(value -> value.getKey().length())))
+                    .collect(Collectors.toList());
+                for (Entry<String, Level> levelEntry : sortedLevels) {
+                    if (classToObserveFqn.equals(levelEntry.getKey())
+                            || classToObservePackage.contains(levelEntry.getKey())) {
+                        // exact or partial match
+                        // e.g. ctx has INFO (3), configured is DEBUG (2)
+                        return level.getLevel().ordinal() >= levelEntry.getValue().ordinal();
+                    }
                 }
             }
             return true;
