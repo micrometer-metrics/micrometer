@@ -8,7 +8,7 @@ Micrometer is a metrics instrumentation library for JVM-based applications. It p
 
 Starting from Micrometer 1.10, Micrometer provides the xref:observation.adoc[Observation API] and a plugin mechanism that lets you add capabilities, including the tracing features. You can read more about tracing in the https://docs.micrometer.io/tracing/reference/[Micrometer Tracing documentation].
 
-For better understanding of the differences among these different types of systems (Metrics, Distributed Tracing, and Logging) we recommend Adrian Cole's talk, titled https://www.dotconferences.com/2017/04/adrian-cole-observability-3-ways-logging-metrics-tracing[Observability 3 Ways]. To learn more about Micrometer Observation API, we recommend Tommy Ludwig's and Marcin Grzejszczak's talk, titled https://www.youtube.com/watch?v=fh3VbrPvAjg[Observability of Your Application].
+For better understanding of the differences among these different types of systems (Metrics, Distributed Tracing, and Logging) we recommend Adrian Cole's talk, titled https://www.youtube.com/watch?v=juP9VApKy_I[Observability 3 Ways]. To learn more about Micrometer Observation API, we recommend Tommy Ludwig's and Marcin Grzejszczak's talk, titled https://www.youtube.com/watch?v=fh3VbrPvAjg[Observability of Your Application].
 
 [[concepts-dependencies]]
 == Dependencies
