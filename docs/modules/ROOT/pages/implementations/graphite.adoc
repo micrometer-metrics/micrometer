@@ -28,20 +28,7 @@ GraphiteConfig graphiteConfig = new GraphiteConfig() {
 MeterRegistry registry = new GraphiteMeterRegistry(graphiteConfig, Clock.SYSTEM, HierarchicalNameMapper.DEFAULT);
 ----
 
-Micrometer uses Dropwizard Metrics as the underlying instrumentation library when recording metrics destined for Graphite. `GraphiteConfig` is an interface with a set of default methods. If, in the implementation of `get(String k)`, rather than returning `null`, you instead bind it to a property source, you can override the default configuration. For example, Micrometer's Spring Boot support binds properties that are prefixed with `management.metrics.export.graphite` directly to the `GraphiteConfig`:
-
-[source,yml]
-----
-management.metrics.export.graphite:
-    # The location of your Graphite server
-    host: mygraphitehost
-
-    # You will probably want to conditionally disable Graphite publishing in local development.
-    enabled: true
-
-    # The interval at which metrics are sent to Graphite. The default is 1 minute.
-    step: 1m
-----
+Micrometer uses Dropwizard Metrics as the underlying instrumentation library when recording metrics destined for Graphite. `GraphiteConfig` is an interface with a set of default methods. If, in the implementation of `get(String k)`, rather than returning `null`, you instead bind it to a property source, you can override the default configuration. For example, Spring Boot's Micrometer support binds its application properties directly to the `GraphiteConfig`. See https://docs.spring.io/spring-boot/docs/current/reference/htmlsingle/#actuator.metrics.export.graphite[Spring Boot Reference Documentation] for details.
 
 == Graphite Tag Support
 

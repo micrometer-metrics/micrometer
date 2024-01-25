@@ -1,7 +1,7 @@
 [[timers]]
 = Timers
 
-Timers are intended for measuring short-duration latencies and the frequency of such events. All implementations of `Timer` report at least the total time and the count of events as separate time series. While you can use timers for other use cases, note that negative values are not supported, and recording many longer durations could cause overflow of the total time at `Long.MAX_VALUE` nanoseconds (292.3 years).
+Timers are intended for measuring short-duration latencies and the frequency of such events. All implementations of `Timer` report at least the total time and the count of events as separate time series but other time series can also be reported depending on what is supported by the backend (max, prcentiles, histograms). While you can use timers for other use cases, note that negative values are not supported, and recording many longer durations could cause overflow of the total time at `Long.MAX_VALUE` nanoseconds (292.3 years).
 
 As an example, consider a graph showing request latency to a typical web server. The server can be expected to respond to many requests quickly, so the timer gets updated many times per second.
 
@@ -31,9 +31,9 @@ Timer timer = Timer
 NOTE: The maximum statistical value for basic `Timer` implementations, such as `CumulativeTimer` and `StepTimer`, is a time window maximum (`TimeWindowMax`).
 It means that its value is the maximum value during a time window.
 If no new values are recorded for the time window length, the max is reset to 0 as a new time window starts.
-Time window size is the step size of the meter registry, unless expiry in `DistributionStatisticConfig` is explicitly set to other value.
+Time window size is the step size of the meter registry unless expiry in `DistributionStatisticConfig` is explicitly set to a different value.
 A time window maximum is used to capture maximum latency in a subsequent interval after heavy resource pressure triggers the latency and prevents metrics from being published.
-Percentiles are also time window percentiles (`TimeWindowPercentileHistogram`).
+Percentiles are also time window percentiles (`TimeWindowPercentileHistogram`). Histogram buckets usually behave like counters so depending on the backend, they can be reported as cumulative values (for example in the case of Prometheus) or as a rate at which a counter increments over the push interval.
 
 == Recording Blocks of Code
 
@@ -54,7 +54,7 @@ determined base unit. In every case where you want to measure time, you should u
 
 == Storing Start State in `Timer.Sample`
 
-You may also store start state in a sample instance that can be stopped later. The sample records a start time based on the registry's clock. After starting a sample, execute the code to be timed and finish the operation by calling `stop(Timer)` on the sample:
+You may also store the start state in a sample instance that can be stopped later. The sample records a start time based on the registry's clock. After starting a sample, execute the code to be timed and finish the operation by calling `stop(Timer)` on the sample:
 
 [source, java]
 ----
