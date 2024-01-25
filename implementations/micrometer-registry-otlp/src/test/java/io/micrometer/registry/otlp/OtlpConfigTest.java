@@ -63,8 +63,10 @@ class OtlpConfigTest {
     @Test
     void headersUseEnvVarWhenConfigNotSet() throws Exception {
         OtlpConfig config = k -> null;
-        withEnvironmentVariable("OTEL_EXPORTER_OTLP_HEADERS", "header2=va%20lue")
-            .execute(() -> assertThat(config.headers()).containsEntry("header2", "va lue").hasSize(1));
+        withEnvironmentVariable("OTEL_EXPORTER_OTLP_HEADERS", "header2=va%20lue,header3=f oo")
+            .execute(() -> assertThat(config.headers()).containsEntry("header2", "va lue")
+                .containsEntry("header3", "f oo")
+                .hasSize(2));
     }
 
     @Test
