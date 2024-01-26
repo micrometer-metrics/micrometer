@@ -48,7 +48,7 @@ This section serves as a quick start to rendering useful representations in Atla
 
 Atlas serves up graphs in the form of PNG images (and other https://github.com/Netflix/atlas/wiki/Output-Formats[output formats] as well).
 
-We use the following query to visualize the counter from Atlas. Note that the value is rate-normalized over the step interval rather than monotonically increasing. Atlas always expects link:/docs/concepts#_client_side[rate-aggregated] data for counters from Micrometer.
+We use the following query to visualize the counter from Atlas. Note that the value is rate-normalized over the step interval rather than monotonically increasing. Atlas always expects xref:/concepts/rate-aggregation.adoc#_client_side[rate-aggregated] data for counters from Micrometer.
 
 .Counter over a positive-biased random walk.
 image::implementations/atlas-counter.png[Atlas-rendered counter]

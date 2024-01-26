@@ -7,7 +7,7 @@ Datadog is a dimensional time-series SaaS with built-in dashboarding and alertin
 
 == Installation and Configuration
 
-Micrometer supports shipping metrics to Datadog directly by using its HTTP API or by using DogStatsD through the link:/docs/registry/statsD[StatsD registry].
+Micrometer supports shipping metrics to Datadog directly by using its HTTP API or by using DogStatsD through the xref:/implementations/statsD.adoc[StatsD registry].
 If you can choose between the two, the API approach is far more efficient.
 
 === Direct to Datadog API Approach
