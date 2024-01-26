@@ -17,7 +17,7 @@ Micrometer artifacts work with Java 8 or later. We're releasing a [multi-release
 
 ## Supported versions
 
-See [Micrometer's support policy](https://micrometer.io/support).
+See [Micrometer's support policy](https://micrometer.io/support/).
 
 ## Join the discussion
 

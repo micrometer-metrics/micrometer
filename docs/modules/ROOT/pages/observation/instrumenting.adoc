@@ -64,7 +64,7 @@ If the performance of this approach is not satisfactory, check whether disabling
 [[instrumentation_of_reactive_libraries_before_reactor_3_5_3]]
 === Before Reactor 3.5.3
 
-The preferred way of propagating elements through the Flux by using Reactor is not through `ThreadLocal` instances but through Reactor Context. Reactor, however, gives you two operators: `tap()` and `handle()`. With these two operators, if the https://micrometer.io/docs/contextPropagation[Micrometer Context Propagation] library is on the classpath, it sets the thread local values for you.
+The preferred way of propagating elements through the Flux by using Reactor is not through `ThreadLocal` instances but through Reactor Context. Reactor, however, gives you two operators: `tap()` and `handle()`. With these two operators, if the https://docs.micrometer.io/context-propagation/reference/[Micrometer Context Propagation] library is on the classpath, it sets the thread local values for you.
 
 Consider the following example:
 

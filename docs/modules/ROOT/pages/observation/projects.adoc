@@ -32,7 +32,7 @@ Micrometer Observation is used to instrument various projects. Below you can fin
 | RabbitMQ Stream | https://github.com/rabbitmq/rabbitmq-stream-java-client/pull/384[PR]
 | Resilience4j | https://github.com/resilience4j/resilience4j/pull/1698[PR]
 | R2DBC | https://github.com/r2dbc/r2dbc-proxy/issues/122[Issue]
-| Reactor | https://micrometer.io/docs/observation#instrumentation_of_reactive_libraries[Docs]
+| Reactor | https://docs.micrometer.io/micrometer/reference/observation/instrumenting.html#instrumentation_of_reactive_libraries[Docs]
 | Reactor Netty | https://projectreactor.io/docs/netty/release/reference/index.html#_tracing_3[Docs]
 | Redisson | https://github.com/redisson/redisson/issues/4976[Issue],
 https://github.com/redisson/redisson/wiki/16.-Observability#162-tracing[Docs]
@@ -60,4 +60,4 @@ https://github.com/redisson/redisson/wiki/16.-Observability#162-tracing[Docs]
 | Spring WebFlux | https://docs.spring.io/spring-framework/reference/integration/observability.html[Docs]
 |===
 
-If your project is instrumented with Micrometer Observation and is not listed in the table, https://github.com/micrometer-metrics/micrometer-docs/edit/main/src/docs/observation/observation-projects.adoc[please file a PR] to our documentation! If you want to instrument your project and need our help, mention us in your issue - https://github.com/shakuzen/[@shakuzen], https://github.com/jonatan-ivanov/[@jonatan-ivanov], and https://github.com/marcingrzejszczak/[@marcingrzejszczak].
+If your project is instrumented with Micrometer Observation and is not listed in the table, https://github.com/micrometer-metrics/micrometer/edit/main/docs/modules/ROOT/pages/observation/projects.adoc[please file a PR] to our documentation! If you want to instrument your project and need our help, mention us in your issue - https://github.com/shakuzen/[@shakuzen], https://github.com/jonatan-ivanov/[@jonatan-ivanov], and https://github.com/marcingrzejszczak/[@marcingrzejszczak].

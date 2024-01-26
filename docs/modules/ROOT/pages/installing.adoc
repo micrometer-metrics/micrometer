@@ -24,7 +24,7 @@ The following example adds Prometheus in Maven:
 </dependency>
 ----
 
-Through Micrometer's composite meter registry (described in greater detail in link:/docs/concepts#_composite_registries["Concepts"]), you can configure more than one registry implementation if you intend to publish metrics to more than one monitoring system.
+Through Micrometer's composite meter registry (described in greater detail in xref:/concepts/registry.adoc#_composite_registries["Concepts"]), you can configure more than one registry implementation if you intend to publish metrics to more than one monitoring system.
 
 If you have not decided on a monitoring system yet and want only to try out the instrumentation SPI, you can add a dependency on `micrometer-core` instead and configure the `SimpleMeterRegistry`.
 
