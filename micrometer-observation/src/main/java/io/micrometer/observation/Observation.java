@@ -204,6 +204,9 @@ public interface Observation extends ObservationView {
             return NOOP;
         }
         Context context = contextSupplier.get();
+        if (context.getName() == null) {
+            context.setName(name);
+        }
         context.setParentFromCurrentObservation(registry);
         context.setLevel(level != null ? level : null);
         if (!registry.observationConfig().isObservationEnabled(name, context)) {
@@ -1596,91 +1599,76 @@ public interface Observation extends ObservationView {
 
         private final Level level;
 
-        private final Class<?> clazz;
-
-        public ObservationLevel(Level level, Class<?> clazz) {
+        public ObservationLevel(Level level) {
             this.level = level;
-            this.clazz = clazz;
         }
 
         public Level getLevel() {
             return level;
         }
 
-        public Class<?> getClazz() {
-            return clazz;
-        }
-
         /**
          * Sets {@link Level#ALL} for observation of the given classs.
-         * @param clazz class to observe
          * @return observation level
          */
-        public static ObservationLevel all(Class<?> clazz) {
-            return new ObservationLevel(Level.ALL, clazz);
+        public static ObservationLevel all() {
+            return new ObservationLevel(Level.ALL);
         }
 
         /**
          * Sets {@link Level#TRACE} for observation of the given classs.
-         * @param clazz class to observe
          * @return observation level
          */
-        public static ObservationLevel trace(Class<?> clazz) {
-            return new ObservationLevel(Level.TRACE, clazz);
+        public static ObservationLevel trace() {
+            return new ObservationLevel(Level.TRACE);
         }
 
         /**
          * Sets {@link Level#DEBUG} for observation of the given classs.
-         * @param clazz class to observe
          * @return observation level
          */
-        public static ObservationLevel debug(Class<?> clazz) {
-            return new ObservationLevel(Level.DEBUG, clazz);
+        public static ObservationLevel debug() {
+            return new ObservationLevel(Level.DEBUG);
         }
 
         /**
          * Sets {@link Level#INFO} for observation of the given classs.
-         * @param clazz class to observe
          * @return observation level
          */
-        public static ObservationLevel info(Class<?> clazz) {
-            return new ObservationLevel(Level.INFO, clazz);
+        public static ObservationLevel info() {
+            return new ObservationLevel(Level.INFO);
         }
 
         /**
          * Sets {@link Level#WARN} for observation of the given classs.
-         * @param clazz class to observe
          * @return observation level
          */
-        public static ObservationLevel warn(Class<?> clazz) {
-            return new ObservationLevel(Level.WARN, clazz);
+        public static ObservationLevel warn() {
+            return new ObservationLevel(Level.WARN);
         }
 
         /**
          * Sets {@link Level#ERROR} for observation of the given classs.
-         * @param clazz class to observe
          * @return observation level
          */
-        public static ObservationLevel error(Class<?> clazz) {
-            return new ObservationLevel(Level.ERROR, clazz);
+        public static ObservationLevel error() {
+            return new ObservationLevel(Level.ERROR);
         }
 
         /**
          * Sets {@link Level#FATAL} for observation of the given classs.
-         * @param clazz class to observe
          * @return observation level
          */
-        public static ObservationLevel fatal(Class<?> clazz) {
-            return new ObservationLevel(Level.FATAL, clazz);
+        public static ObservationLevel fatal() {
+            return new ObservationLevel(Level.FATAL);
         }
 
         /**
          * Sets {@link Level#OFF} for observation of the given classs.
-         * @param clazz class to observe
          * @return observation level
          */
-        public static ObservationLevel off(Class<?> clazz) {
-            return new ObservationLevel(Level.OFF, clazz);
+        public static ObservationLevel off() {
+            return new ObservationLevel(Level.OFF);
         }
 
     }

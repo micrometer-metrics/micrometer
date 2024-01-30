@@ -24,7 +24,6 @@ import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 
 /**
  * Implementations of this interface are responsible for managing state of an
@@ -212,21 +211,9 @@ public interface ObservationRegistry {
                 if (level == null) {
                     return true;
                 }
-                Class<?> clazz = level.getClazz();
-                String classToObserveFqn = clazz.getCanonicalName();
-                String classToObservePackage = clazz.getPackage().getName();
-                // a.b.c - 2
-                // a.b.c.D - 3
-                // a.b - 1
-                // we sort by string length, that means that we will find the closest
-                // matching first
-                List<Entry<String, Level>> sortedLevels = this.observationLevels.entrySet()
-                    .stream()
-                    .sorted(Collections.reverseOrder(Comparator.comparingInt(value -> value.getKey().length())))
-                    .collect(Collectors.toList());
-                for (Entry<String, Level> levelEntry : sortedLevels) {
-                    if (classToObserveFqn.equals(levelEntry.getKey())
-                            || classToObservePackage.contains(levelEntry.getKey())) {
+                String observationName = context.getName();
+                for (Entry<String, Level> levelEntry : this.observationLevels.entrySet()) {
+                    if (levelEntry.getKey().equalsIgnoreCase(observationName)) {
                         // exact or partial match
                         // e.g. ctx has INFO (3), configured is DEBUG (2)
                         return level.getLevel().ordinal() >= levelEntry.getValue().ordinal();
