@@ -31,7 +31,8 @@ Timer timer = Timer
 NOTE: The maximum statistical value for basic `Timer` implementations, such as `CumulativeTimer` and `StepTimer`, is a time window maximum (`TimeWindowMax`).
 It means that its value is the maximum value during a time window.
 If no new values are recorded for the time window length, the max is reset to 0 as a new time window starts.
-Time window size is the step size of the meter registry unless expiry in `DistributionStatisticConfig` is explicitly set to a different value.
+The time window size until values are fully expired is the `expiry` multiplied by the `bufferLength` in `DistributionStatisticConfig`.
+`expiry` defaults to the step size of the meter registry unless is explicitly set to a different value, and `bufferLength` defaults to `3`.
 A time window maximum is used to capture maximum latency in a subsequent interval after heavy resource pressure triggers the latency and prevents metrics from being published.
 Percentiles are also time window percentiles (`TimeWindowPercentileHistogram`). Histogram buckets usually behave like counters so depending on the backend, they can be reported as cumulative values (for example in the case of Prometheus) or as a rate at which a counter increments over the push interval.
 
