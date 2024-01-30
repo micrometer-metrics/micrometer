@@ -114,6 +114,7 @@ class MongoMetricsConnectionPoolListenerTest extends AbstractMongoDbTest {
     }
 
     @Issue("#2384")
+    @Test
     void whenConnectionCheckedInAfterPoolClose_thenNoExceptionThrown() {
         ServerId serverId = new ServerId(new ClusterId(), new ServerAddress(host, port));
         ConnectionId connectionId = new ConnectionId(serverId);
