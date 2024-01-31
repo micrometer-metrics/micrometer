@@ -115,7 +115,7 @@ public class PrometheusTimer extends AbstractTimer {
         }
 
         if (!histogramExemplarsEnabled && exemplarSampler != null) {
-            updateLastExemplar(TimeUtils.nanosToUnit(amount, this.baseTimeUnit()), exemplarSampler);
+            updateLastExemplar(TimeUtils.nanosToUnit(amount, baseTimeUnit()), exemplarSampler);
         }
     }
 
