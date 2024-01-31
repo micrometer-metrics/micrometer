@@ -21,10 +21,9 @@ import io.micrometer.common.util.internal.logging.WarnThenDebugLogger;
  * This internal class holds loggers that are used in {@link DynatraceExporterV2}. They
  * are all just extending the default {@link WarnThenDebugLogger}. It is necessary to
  * extend them, because the {@link WarnThenDebugLogger} does not allow creating a new
- * logger with just a name (a class object has to be passed). If the WarnThenDebugLogger
- * is created with the same class type multiple times, the same instance will be returned.
- * This would mean that in a scenario with multiple loggers, only the first call would log
- * the warning, and all subsequent calls will log at debug.
+ * logger with just a name (a class object has to be passed). Creating the
+ * WarnThenDebugLogger with the same class multiple times makes it impossible to test, as
+ * the MockLoggerFactory will ignore multiple loggers with the same name.
  */
 class WarnThenDebugLoggers {
 
