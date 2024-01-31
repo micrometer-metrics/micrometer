@@ -15,10 +15,12 @@
  */
 package io.micrometer.registry.otlp;
 
+import io.micrometer.core.instrument.config.InvalidConfigurationException;
 import io.micrometer.core.instrument.config.validate.Validated;
 import io.micrometer.core.instrument.push.PushRegistryConfig;
 
 import java.time.Duration;
+import java.net.URLDecoder;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.Objects;
@@ -161,6 +163,14 @@ public interface OtlpConfig extends PushRegistryConfig {
             headersString = env.getOrDefault("OTEL_EXPORTER_OTLP_HEADERS", "").trim();
             String metricsHeaders = env.getOrDefault("OTEL_EXPORTER_OTLP_METRICS_HEADERS", "").trim();
             headersString = Objects.equals(headersString, "") ? metricsHeaders : headersString + "," + metricsHeaders;
+            try {
+                // headers are encoded as URL - see
+                // https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/protocol/exporter.md#specifying-headers-via-environment-variables
+                headersString = URLDecoder.decode(headersString, "UTF-8");
+            }
+            catch (Exception e) {
+                throw new InvalidConfigurationException("Cannot URL decode header value: " + headersString, e);
+            }
         }
 
         String[] keyValues = Objects.equals(headersString, "") ? new String[] {} : headersString.split(",");
