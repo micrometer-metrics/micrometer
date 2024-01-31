@@ -125,6 +125,7 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
                 logger.error("unable to start stackdriver, service settings are not available");
             }
             else {
+                shutdownClientIfNecessary(true);
                 try {
                     this.client = MetricServiceClient.create(metricServiceSettings);
                     super.start(threadFactory);
@@ -137,10 +138,51 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
     }
 
     @Override
-    public void stop() {
-        if (client != null)
-            client.shutdownNow();
-        super.stop();
+    public void close() {
+        try {
+            super.close();
+        }
+        finally {
+            shutdownClientIfNecessary(false);
+        }
+    }
+
+    private void shutdownClientIfNecessary(final boolean quietly) {
+        if (client == null)
+            return;
+        if (!client.isShutdown()) {
+            try {
+                client.shutdownNow();
+                final boolean terminated = client.awaitTermination(10, TimeUnit.SECONDS);
+                if (!terminated) {
+                    logger.warn("The metric service client failed to terminate within the timeout");
+                }
+            }
+            catch (final RuntimeException e) {
+                if (quietly) {
+                    logger.warn("Failed to shutdown the metric service client", e);
+                }
+                else {
+                    throw e;
+                }
+            }
+            catch (final InterruptedException e) {
+                Thread.currentThread().interrupt();
+                return;
+            }
+        }
+        try {
+            client.close();
+        }
+        catch (final RuntimeException e) {
+            if (quietly) {
+                logger.warn("Failed to close metric service client", e);
+            }
+            else {
+                throw e;
+            }
+        }
+        client = null;
     }
 
     @Override
