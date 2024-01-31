@@ -138,11 +138,6 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
     }
 
     @Override
-    public void stop() {
-        super.stop();
-    }
-
-    @Override
     public void close() {
         try {
             super.close();
@@ -152,42 +147,42 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
         }
     }
 
-    protected void shutdownClientIfNecessary(final boolean quietly) {
-        if (client != null) {
-            if (!client.isShutdown()) {
-                try {
-                    client.shutdownNow();
-                    final boolean terminated = client.awaitTermination(10, TimeUnit.SECONDS);
-                    if (!terminated) {
-                        logger.warn("The metric service client failed to terminate within the timeout");
-                    }
-                }
-                catch (final RuntimeException e) {
-                    if (quietly) {
-                        logger.warn("Failed to shutdown the metric service client", e);
-                    }
-                    else {
-                        throw e;
-                    }
-                }
-                catch (final InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                    return;
-                }
-            }
+    private void shutdownClientIfNecessary(final boolean quietly) {
+        if (client == null)
+            return;
+        if (!client.isShutdown()) {
             try {
-                client.close();
+                client.shutdownNow();
+                final boolean terminated = client.awaitTermination(10, TimeUnit.SECONDS);
+                if (!terminated) {
+                    logger.warn("The metric service client failed to terminate within the timeout");
+                }
             }
             catch (final RuntimeException e) {
                 if (quietly) {
-                    logger.warn("Failed to close metric service client", e);
+                    logger.warn("Failed to shutdown the metric service client", e);
                 }
                 else {
                     throw e;
                 }
             }
-            client = null;
+            catch (final InterruptedException e) {
+                Thread.currentThread().interrupt();
+                return;
+            }
         }
+        try {
+            client.close();
+        }
+        catch (final RuntimeException e) {
+            if (quietly) {
+                logger.warn("Failed to close metric service client", e);
+            }
+            else {
+                throw e;
+            }
+        }
+        client = null;
     }
 
     @Override
