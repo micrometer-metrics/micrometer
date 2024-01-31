@@ -117,10 +117,9 @@ public class DefaultJmsPublishObservationConvention implements JmsPublishObserva
             if (jmsDestination instanceof Queue) {
                 Queue queue = (Queue) jmsDestination;
                 String queueName = queue.getQueueName();
-                if (queueName == null) {
-                    return getKeyValueTopic(jmsDestination);
+                if (queueName != null) {
+                    return KeyValue.of(HighCardinalityKeyNames.DESTINATION_NAME, queueName);
                 }
-                return KeyValue.of(HighCardinalityKeyNames.DESTINATION_NAME, queueName);
             }
             return getKeyValueTopic(jmsDestination);
         }
@@ -133,10 +132,9 @@ public class DefaultJmsPublishObservationConvention implements JmsPublishObserva
         if (jmsDestination instanceof Topic) {
             Topic topic = (Topic) jmsDestination;
             String topicName = topic.getTopicName();
-            if (topicName == null) {
-                return DESTINATION_NAME_UNKNOWN;
+            if (topicName != null) {
+                return KeyValue.of(HighCardinalityKeyNames.DESTINATION_NAME, topicName);
             }
-            return KeyValue.of(HighCardinalityKeyNames.DESTINATION_NAME, topicName);
         }
         return DESTINATION_NAME_UNKNOWN;
     }
