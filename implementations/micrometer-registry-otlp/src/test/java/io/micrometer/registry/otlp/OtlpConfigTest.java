@@ -23,6 +23,7 @@ import java.util.Map;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static uk.org.webcompere.systemstubs.SystemStubs.withEnvironmentVariable;
 import static uk.org.webcompere.systemstubs.SystemStubs.withEnvironmentVariables;
 
@@ -62,8 +63,19 @@ class OtlpConfigTest {
     @Test
     void headersUseEnvVarWhenConfigNotSet() throws Exception {
         OtlpConfig config = k -> null;
-        withEnvironmentVariable("OTEL_EXPORTER_OTLP_HEADERS", "header2=value")
-            .execute(() -> assertThat(config.headers()).containsEntry("header2", "value").hasSize(1));
+        withEnvironmentVariable("OTEL_EXPORTER_OTLP_HEADERS", "header2=va%20lue,header3=f oo")
+            .execute(() -> assertThat(config.headers()).containsEntry("header2", "va lue")
+                .containsEntry("header3", "f oo")
+                .hasSize(2));
+    }
+
+    @Test
+    void headersDecodingError() throws Exception {
+        OtlpConfig config = k -> null;
+        withEnvironmentVariable("OTEL_EXPORTER_OTLP_HEADERS", "header2=%-1").execute(() -> {
+            assertThatThrownBy(config::headers).isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Cannot decode header value: header2=%-1,");
+        });
     }
 
     @Test
