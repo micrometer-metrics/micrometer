@@ -21,6 +21,20 @@ package io.micrometer.core.instrument.config;
  */
 public class InvalidConfigurationException extends IllegalStateException {
 
+    /**
+     * Construct an exception indication invalid configuration with the specified detail
+     * message and cause.
+     * @param message the detail message (which is saved for later retrieval by the
+     * {@link Throwable#getMessage()} method).
+     * @param cause the cause (which is saved for later retrieval by the
+     * {@link Throwable#getCause()} method). (A {@code null} value is permitted, and
+     * indicates that the cause is nonexistent or unknown.)
+     * @since 1.11.9
+     */
+    public InvalidConfigurationException(String message, Throwable cause) {
+        super(message, cause);
+    }
+
     public InvalidConfigurationException(String s) {
         super(s);
     }
