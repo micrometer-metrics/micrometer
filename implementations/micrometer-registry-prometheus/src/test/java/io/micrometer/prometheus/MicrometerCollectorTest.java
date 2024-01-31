@@ -31,11 +31,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class MicrometerCollectorTest {
 
+    NamingConvention convention = NamingConvention.snakeCase;
+
     @Issue("#769")
     @Test
     void manyTags() {
         Meter.Id id = Metrics.counter("my.counter").getId();
-        MicrometerCollector collector = new MicrometerCollector(id, NamingConvention.dot, PrometheusConfig.DEFAULT);
+        MicrometerCollector collector = new MicrometerCollector(id.getConventionName(convention), id, convention,
+                PrometheusConfig.DEFAULT);
 
         for (Integer i = 0; i < 20_000; i++) {
             Collector.MetricFamilySamples.Sample sample = new Collector.MetricFamilySamples.Sample("my_counter",
@@ -52,7 +55,8 @@ class MicrometerCollectorTest {
     @Test
     void sameValuesDifferentOrder() {
         Meter.Id id = Metrics.counter("my.counter").getId();
-        MicrometerCollector collector = new MicrometerCollector(id, NamingConvention.dot, PrometheusConfig.DEFAULT);
+        MicrometerCollector collector = new MicrometerCollector(id.getConventionName(convention), id, convention,
+                PrometheusConfig.DEFAULT);
 
         Collector.MetricFamilySamples.Sample sample = new Collector.MetricFamilySamples.Sample("my_counter",
                 asList("k", "k2"), asList("v1", "v2"), 1.0);
