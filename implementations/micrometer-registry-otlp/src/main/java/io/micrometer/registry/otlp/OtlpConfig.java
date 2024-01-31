@@ -15,6 +15,7 @@
  */
 package io.micrometer.registry.otlp;
 
+import io.micrometer.core.instrument.config.InvalidConfigurationException;
 import io.micrometer.core.instrument.config.validate.Validated;
 import io.micrometer.core.instrument.push.PushRegistryConfig;
 
@@ -138,7 +139,7 @@ public interface OtlpConfig extends PushRegistryConfig {
                 headersString = URLDecoder.decode(headersString, "UTF-8");
             }
             catch (Exception e) {
-                throw new IllegalArgumentException("Cannot decode header value: " + headersString, e);
+                throw new InvalidConfigurationException("Cannot URL decode header value: " + headersString, e);
             }
         }
 

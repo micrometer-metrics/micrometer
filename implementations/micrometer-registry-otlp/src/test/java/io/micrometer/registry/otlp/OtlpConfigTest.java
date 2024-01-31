@@ -15,6 +15,7 @@
  */
 package io.micrometer.registry.otlp;
 
+import io.micrometer.core.instrument.config.InvalidConfigurationException;
 import org.junit.jupiter.api.Test;
 
 import java.util.Collections;
@@ -73,8 +74,8 @@ class OtlpConfigTest {
     void headersDecodingError() throws Exception {
         OtlpConfig config = k -> null;
         withEnvironmentVariable("OTEL_EXPORTER_OTLP_HEADERS", "header2=%-1").execute(() -> {
-            assertThatThrownBy(config::headers).isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("Cannot decode header value: header2=%-1,");
+            assertThatThrownBy(config::headers).isInstanceOf(InvalidConfigurationException.class)
+                .hasMessage("Cannot URL decode header value: header2=%-1,");
         });
     }
 
