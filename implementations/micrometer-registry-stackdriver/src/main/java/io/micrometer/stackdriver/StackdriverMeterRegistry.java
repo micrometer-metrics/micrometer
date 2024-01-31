@@ -147,6 +147,11 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
         }
     }
 
+    @Override
+    public void stop() {
+        super.stop();
+    }
+
     private void shutdownClientIfNecessary(final boolean quietly) {
         if (client == null)
             return;
