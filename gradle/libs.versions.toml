@@ -7,12 +7,12 @@ aspectjweaver = "1.9.20.1"
 assertj = "3.25.0"
 awaitility = "4.2.0"
 # legacy SDK
-aws-cloudwatch = "1.12.629"
+aws-cloudwatch = "1.12.649"
 caffeine = "2.9.3"
 cloudwatch2 = "2.22.9"
 colt = "1.2.0"
 dagger = "2.50"
-dropwizard-metrics = "4.2.23"
+dropwizard-metrics = "4.2.25"
 dropwizard-metrics5 = "5.0.0"
 dynatrace-utils = "2.1.0"
 ehcache2 = "2.10.9.2"
@@ -59,21 +59,21 @@ log4j = "2.22.0"
 maven-resolver = "1.9.18"
 mockito = "5.8.0"
 mongo = "4.11.1"
-netty = "4.1.104.Final"
+netty = "4.1.106.Final"
 newrelic-api = "5.14.0"
 # Kotlin 1.7 sample will fail from OkHttp 4.12.0 due to okio dependency being a Kotlin 1.9 module
 okhttp = "4.11.0"
 postgre = "42.7.1"
 prometheus = "0.16.0"
-reactor = "2022.0.13"
+reactor = "2022.0.15"
 rest-assured = "5.4.0"
-signalfx = "1.0.37"
+signalfx = "1.0.38"
 slf4j = "1.7.36"
 spectator-atlas = "1.7.4"
 spring = "5.3.31"
-spring-javaformat = "0.0.40"
-testcontainers = "1.19.3"
-tomcat = "8.5.97"
+spring-javaformat = "0.0.41"
+testcontainers = "1.19.4"
+tomcat = "8.5.98"
 wavefront = "3.4.3"
 # pinned to avoid issues with shaded slf4j version - see gh-3414
 wiremock = "2.33.2"
@@ -104,7 +104,7 @@ dynatraceUtils = { module = "com.dynatrace.metric.util:dynatrace-metric-utils-ja
 ehcache2 = { module = "net.sf.ehcache:ehcache", version.ref = "ehcache2" }
 ehcache3 = { module = "org.ehcache:ehcache", version.ref = "ehcache3" }
 felixFramework = "org.apache.felix:org.apache.felix.framework:7.0.5"
-felixScr = "org.apache.felix:org.apache.felix.scr:2.2.6"
+felixScr = "org.apache.felix:org.apache.felix.scr:2.2.10"
 gmetric4j = { module = "info.ganglia.gmetric4j:gmetric4j", version.ref = "gmetric4j" }
 googleCloudMonitoring = { module = "com.google.cloud:google-cloud-monitoring", version.ref = "google-cloud-monitoring" }
 googleOauth2Http = { module = "com.google.auth:google-auth-library-oauth2-http", version = "1.20.0"}
@@ -191,7 +191,7 @@ spring-context = { module = "org.springframework:spring-context", version.ref = 
 spring-core = { module = "org.springframework:spring-core", version.ref = "spring" }
 spring-cloud = { module = "org.springframework.cloud:spring-cloud-dependencies", version = "2021.0.9" }
 spring-javaformatCheckstyle = { module = "io.spring.javaformat:spring-javaformat-checkstyle", version.ref = "spring-javaformat" }
-systemStubsJupiter = { module = "uk.org.webcompere:system-stubs-jupiter", version = "2.1.5" }
+systemStubsJupiter = { module = "uk.org.webcompere:system-stubs-jupiter", version = "2.1.6" }
 testcontainers-junitJupiter = { module = "org.testcontainers:junit-jupiter", version.ref = "testcontainers" }
 testcontainers-kafka = { module = "org.testcontainers:kafka", version.ref = "testcontainers" }
 testcontainers-postgresql = { module = "org.testcontainers:postgresql", version.ref = "testcontainers" }
