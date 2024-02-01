@@ -181,7 +181,7 @@ spring-context = { module = "org.springframework:spring-context", version.ref = 
 spring-core = { module = "org.springframework:spring-core", version.ref = "spring" }
 spring-cloud = { module = "org.springframework.cloud:spring-cloud-dependencies", version = "2021.0.9" }
 spring-javaformatCheckstyle = { module = "io.spring.javaformat:spring-javaformat-checkstyle", version.ref = "spring-javaformat" }
-systemStubsJupiter = { module = "uk.org.webcompere:system-stubs-jupiter", version = "2.1.5" }
+systemStubsJupiter = { module = "uk.org.webcompere:system-stubs-jupiter", version = "2.1.6" }
 testcontainers-junitJupiter = { module = "org.testcontainers:junit-jupiter", version.ref = "testcontainers" }
 testcontainers-kafka = { module = "org.testcontainers:kafka", version.ref = "testcontainers" }
 testcontainers-postgresql = { module = "org.testcontainers:postgresql", version.ref = "testcontainers" }
