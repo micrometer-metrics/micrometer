@@ -3,11 +3,11 @@ dependencies {
 
     api platform(libs.googleCloudLibrariesBom)
 
-    api('com.google.cloud:google-cloud-monitoring') {
+    api(libs.googleCloudMonitoring) {
         // see gh-4010
         exclude group: 'com.google.guava', module: 'listenablefuture'
     }
-    api 'com.google.auth:google-auth-library-oauth2-http'
+    api libs.googleOauth2Http
     implementation 'org.slf4j:slf4j-api'
     compileOnly 'ch.qos.logback:logback-classic'
 

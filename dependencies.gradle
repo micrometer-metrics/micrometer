@@ -7,8 +7,6 @@ def VERSIONS = [
         libs.caffeine,
         libs.kafkaJunit,
         libs.wiremock,
-        libs.googleOauth2Http,
-        libs.googleCloudMonitoring,
         libs.dagger,
         libs.daggerCompiler,
         libs.guava,
