@@ -101,6 +101,7 @@ dependencies {
     optionalApi 'org.apache.tomcat.embed:tomcat-embed-core'
     optionalApi 'org.glassfish.jersey.core:jersey-server'
     optionalApi 'io.grpc:grpc-api'
+    optionalApi 'io.grpc:grpc-kotlin-stub'
     optionalApi 'io.netty:netty-transport'
 
     // apache httpcomponents monitoring
