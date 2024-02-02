@@ -1,5 +1,5 @@
 def VERSIONS = [
-        libs.logback,
+        libs.logback12,
         libs.colt,
         libs.aws.javaSdkCloudwatch,
         libs.dynatraceUtils,
