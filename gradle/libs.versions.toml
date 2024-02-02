@@ -3,7 +3,7 @@ activemq-artemis = "2.31.2"
 application-insights = "2.6.4"
 archunit = "1.2.1"
 asmForPlugins = "7.3.1"
-aspectjweaver = "1.9.20.1"
+aspectjweaver = "1.9.21"
 assertj = "3.25.0"
 awaitility = "4.2.0"
 # legacy SDK
