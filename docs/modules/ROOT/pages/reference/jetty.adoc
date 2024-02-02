@@ -31,7 +31,7 @@ ServletContainer servletContainer = new ServletContainer(resourceConfig);
 [[overview-observation]]
 == Eclipse Observation Jersey Instrumentation
 
-Below you can find an example of how to instrument Jersey with https://docs.micrometer.io/micrometer/reference/observation.html[Micrometer Observation]. That means that depending on your Observation Handler configuration you instrument once, and can have multiple benefits out of it (e.g. metrics, distributed tracing).
+Below you can find an example of how to instrument Jersey with xref:observation.adoc[Micrometer Observation]. That means that depending on your Observation Handler configuration you instrument once, and can have multiple benefits out of it (e.g. metrics, distributed tracing).
 
 [source,java,subs=+attributes]
 -----
