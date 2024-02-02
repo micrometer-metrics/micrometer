@@ -106,6 +106,7 @@ ehcache3 = { module = "org.ehcache:ehcache", version.ref = "ehcache3" }
 felixFramework = "org.apache.felix:org.apache.felix.framework:7.0.5"
 felixScr = "org.apache.felix:org.apache.felix.scr:2.2.10"
 gmetric4j = { module = "info.ganglia.gmetric4j:gmetric4j", version.ref = "gmetric4j" }
+googleCloudLibrariesBom = { module = "com.google.cloud:libraries-bom", version = "26.31.0" }
 googleCloudMonitoring = { module = "com.google.cloud:google-cloud-monitoring", version.ref = "google-cloud-monitoring" }
 googleOauth2Http = { module = "com.google.auth:google-auth-library-oauth2-http", version = "1.22.0"}
 grpcApi = { module = "io.grpc:grpc-api", version.ref = "grpc" }
