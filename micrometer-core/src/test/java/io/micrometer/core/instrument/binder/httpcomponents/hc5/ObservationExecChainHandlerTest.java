@@ -15,6 +15,7 @@
  */
 package io.micrometer.core.instrument.binder.httpcomponents.hc5;
 
+import io.micrometer.common.KeyValue;
 import io.micrometer.common.lang.Nullable;
 import io.micrometer.observation.tck.TestObservationRegistry;
 import org.apache.hc.client5.http.HttpRoute;
@@ -37,6 +38,7 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static io.micrometer.core.instrument.binder.httpcomponents.hc5.ApacheHttpClientObservationDocumentation.ApacheHttpClientKeyNames.*;
 import static io.micrometer.observation.tck.TestObservationRegistryAssert.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
@@ -78,10 +80,10 @@ class ObservationExecChainHandlerTest {
         void shouldInstrumentReceivedResponses() throws Exception {
             ExecChain chain = mock(ExecChain.class);
             given(chain.proceed(any(), any())).willReturn(new BasicClassicHttpResponse(200));
-            ClassicHttpResponse response = handler.execute(request, this.scope, chain);
+            handler.execute(request, this.scope, chain);
             assertThat(observationRegistry).hasObservationWithNameEqualTo("httpcomponents.httpclient.request")
                 .that()
-                .hasLowCardinalityKeyValue("outcome", "SUCCESS");
+                .hasLowCardinalityKeyValue(OUTCOME.withValue("SUCCESS"));
         }
 
         @Test
@@ -93,8 +95,8 @@ class ObservationExecChainHandlerTest {
                 .isInstanceOf(IllegalArgumentException.class);
             assertThat(observationRegistry).hasObservationWithNameEqualTo("httpcomponents.httpclient.request")
                 .that()
-                .hasLowCardinalityKeyValue("outcome", "UNKNOWN")
-                .hasLowCardinalityKeyValue("exception", "IllegalArgumentException");
+                .hasLowCardinalityKeyValue(OUTCOME.withValue("UNKNOWN"))
+                .hasLowCardinalityKeyValue(EXCEPTION.withValue("IllegalArgumentException"));
         }
 
         @Test
@@ -106,8 +108,8 @@ class ObservationExecChainHandlerTest {
                 .isInstanceOf(RequestFailedException.class);
             assertThat(observationRegistry).hasObservationWithNameEqualTo("httpcomponents.httpclient.request")
                 .that()
-                .hasLowCardinalityKeyValue("outcome", "UNKNOWN")
-                .hasLowCardinalityKeyValue("exception", "RequestFailedException");
+                .hasLowCardinalityKeyValue(OUTCOME.withValue("UNKNOWN"))
+                .hasLowCardinalityKeyValue(EXCEPTION.withValue("RequestFailedException"));
         }
 
     }
@@ -117,7 +119,7 @@ class ObservationExecChainHandlerTest {
 
         private AsyncExecChain.Scope scope;
 
-        private TestAsyncExecChain testAsyncExecChain = new TestAsyncExecChain();
+        private final TestAsyncExecChain testAsyncExecChain = new TestAsyncExecChain();
 
         @BeforeEach
         void setup() throws Exception {
@@ -136,7 +138,7 @@ class ObservationExecChainHandlerTest {
 
             assertThat(observationRegistry).hasObservationWithNameEqualTo("httpcomponents.httpclient.request")
                 .that()
-                .hasLowCardinalityKeyValue("outcome", "SUCCESS");
+                .hasLowCardinalityKeyValue(OUTCOME.withValue("SUCCESS"));
         }
 
         @Test
@@ -149,8 +151,8 @@ class ObservationExecChainHandlerTest {
 
             assertThat(observationRegistry).hasObservationWithNameEqualTo("httpcomponents.httpclient.request")
                 .that()
-                .hasLowCardinalityKeyValue("outcome", "UNKNOWN")
-                .hasLowCardinalityKeyValue("exception", "IllegalArgumentException");
+                .hasLowCardinalityKeyValue(OUTCOME.withValue("UNKNOWN"))
+                .hasLowCardinalityKeyValue(EXCEPTION.withValue("IllegalArgumentException"));
         }
 
         @Test
@@ -162,8 +164,8 @@ class ObservationExecChainHandlerTest {
 
             assertThat(observationRegistry).hasObservationWithNameEqualTo("httpcomponents.httpclient.request")
                 .that()
-                .hasLowCardinalityKeyValue("outcome", "UNKNOWN")
-                .hasLowCardinalityKeyValue("exception", "none");
+                .hasLowCardinalityKeyValue(OUTCOME.withValue("UNKNOWN"))
+                .hasLowCardinalityKeyValue(EXCEPTION.withValue(KeyValue.NONE_VALUE));
         }
 
     }
