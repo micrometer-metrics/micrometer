@@ -274,6 +274,18 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
     }
 
     Stream<String> toLongTaskTimerLine(LongTaskTimer meter) {
+        // use Dynatrace Snapshotting to ensure consistent data
+        if (meter instanceof DynatraceSummarySnapshotSupport) {
+            DynatraceSummarySnapshot snapshot = ((DynatraceSummarySnapshotSupport) meter)
+                .takeSummarySnapshot(getBaseTimeUnit());
+            if (snapshot.getCount() == 0) {
+                return Stream.empty();
+            }
+            return createSummaryLine(meter, snapshot.getMin(), snapshot.getMax(), snapshot.getTotal(),
+                    snapshot.getCount());
+        }
+
+        // fall back to default implementation if the meter is not DynatraceLongTaskTimer
         HistogramSnapshot snapshot = meter.takeSnapshot();
 
         long count = snapshot.count();
