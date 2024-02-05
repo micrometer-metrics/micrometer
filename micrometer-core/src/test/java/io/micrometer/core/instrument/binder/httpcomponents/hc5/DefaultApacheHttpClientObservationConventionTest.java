@@ -31,6 +31,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import java.io.IOException;
 import java.util.stream.Stream;
 
+import static io.micrometer.core.instrument.binder.httpcomponents.hc5.ApacheHttpClientObservationDocumentation.ApacheHttpClientKeyNames.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
@@ -67,7 +68,7 @@ class DefaultApacheHttpClientObservationConventionTest {
         HttpClientContext clientContext = HttpClientContext.create();
         ApacheHttpClientContext context = new ApacheHttpClientContext(null, clientContext);
         assertThat(observationConvention.getLowCardinalityKeyValues(context))
-            .contains(KeyValue.of("exception", KeyValue.NONE_VALUE));
+            .contains(EXCEPTION.withValue(KeyValue.NONE_VALUE));
     }
 
     @Test
@@ -76,7 +77,7 @@ class DefaultApacheHttpClientObservationConventionTest {
         ApacheHttpClientContext context = new ApacheHttpClientContext(null, clientContext);
         context.setError(new IllegalStateException("error"));
         assertThat(observationConvention.getLowCardinalityKeyValues(context))
-            .contains(KeyValue.of("exception", "IllegalStateException"));
+            .contains(EXCEPTION.withValue("IllegalStateException"));
     }
 
     @Test
@@ -84,15 +85,14 @@ class DefaultApacheHttpClientObservationConventionTest {
         SimpleHttpRequest request = SimpleRequestBuilder.get("https://example.org/resource").build();
         HttpClientContext clientContext = HttpClientContext.create();
         ApacheHttpClientContext context = new ApacheHttpClientContext(request, clientContext);
-        assertThat(observationConvention.getLowCardinalityKeyValues(context)).contains(KeyValue.of("method", "GET"));
+        assertThat(observationConvention.getLowCardinalityKeyValues(context)).contains(METHOD.withValue("GET"));
     }
 
     @Test
     void shouldContributeDefaultHttpMethodName() {
         HttpClientContext clientContext = HttpClientContext.create();
         ApacheHttpClientContext context = new ApacheHttpClientContext(null, clientContext);
-        assertThat(observationConvention.getLowCardinalityKeyValues(context))
-            .contains(KeyValue.of("method", "UNKNOWN"));
+        assertThat(observationConvention.getLowCardinalityKeyValues(context)).contains(METHOD.withValue("UNKNOWN"));
     }
 
     @Test
@@ -101,8 +101,7 @@ class DefaultApacheHttpClientObservationConventionTest {
         HttpClientContext clientContext = HttpClientContext.create();
         ApacheHttpClientContext context = new ApacheHttpClientContext(request, clientContext);
         context.setResponse(SimpleHttpResponse.create(200));
-        assertThat(observationConvention.getLowCardinalityKeyValues(context))
-            .contains(KeyValue.of("outcome", "SUCCESS"));
+        assertThat(observationConvention.getLowCardinalityKeyValues(context)).contains(OUTCOME.withValue("SUCCESS"));
     }
 
     @Test
@@ -110,8 +109,7 @@ class DefaultApacheHttpClientObservationConventionTest {
         SimpleHttpRequest request = SimpleRequestBuilder.get("https://example.org/resource").build();
         HttpClientContext clientContext = HttpClientContext.create();
         ApacheHttpClientContext context = new ApacheHttpClientContext(request, clientContext);
-        assertThat(observationConvention.getLowCardinalityKeyValues(context))
-            .contains(KeyValue.of("outcome", "UNKNOWN"));
+        assertThat(observationConvention.getLowCardinalityKeyValues(context)).contains(OUTCOME.withValue("UNKNOWN"));
     }
 
     @ParameterizedTest
@@ -121,8 +119,7 @@ class DefaultApacheHttpClientObservationConventionTest {
         HttpClientContext clientContext = HttpClientContext.create();
         ApacheHttpClientContext context = new ApacheHttpClientContext(request, clientContext);
         context.setError(exception);
-        assertThat(observationConvention.getLowCardinalityKeyValues(context))
-            .contains(KeyValue.of("status", "IO_ERROR"));
+        assertThat(observationConvention.getLowCardinalityKeyValues(context)).contains(STATUS.withValue("IO_ERROR"));
     }
 
     static Stream<Arguments> exceptionsSource() {
@@ -136,7 +133,7 @@ class DefaultApacheHttpClientObservationConventionTest {
         HttpClientContext clientContext = HttpClientContext.create();
         ApacheHttpClientContext context = new ApacheHttpClientContext(request, clientContext);
         assertThat(observationConvention.getLowCardinalityKeyValues(context))
-            .contains(KeyValue.of("status", "CLIENT_ERROR"));
+            .contains(STATUS.withValue("CLIENT_ERROR"));
     }
 
     @Test
@@ -145,7 +142,7 @@ class DefaultApacheHttpClientObservationConventionTest {
         HttpClientContext clientContext = HttpClientContext.create();
         ApacheHttpClientContext context = new ApacheHttpClientContext(request, clientContext);
         context.setResponse(SimpleHttpResponse.create(200));
-        assertThat(observationConvention.getLowCardinalityKeyValues(context)).contains(KeyValue.of("status", "200"));
+        assertThat(observationConvention.getLowCardinalityKeyValues(context)).contains(STATUS.withValue("200"));
     }
 
     @Test
@@ -153,9 +150,8 @@ class DefaultApacheHttpClientObservationConventionTest {
         SimpleHttpRequest request = SimpleRequestBuilder.get("https://example.org/resource").build();
         HttpClientContext clientContext = HttpClientContext.create();
         ApacheHttpClientContext context = new ApacheHttpClientContext(request, clientContext);
-        assertThat(observationConvention.getLowCardinalityKeyValues(context)).contains(
-                KeyValue.of("target.host", "UNKNOWN"), KeyValue.of("target.port", "UNKNOWN"),
-                KeyValue.of("target.scheme", "UNKNOWN"));
+        assertThat(observationConvention.getLowCardinalityKeyValues(context)).contains(TARGET_HOST.withValue("UNKNOWN"),
+                TARGET_PORT.withValue("UNKNOWN"), TARGET_SCHEME.withValue("UNKNOWN"));
     }
 
     @Test
@@ -166,8 +162,7 @@ class DefaultApacheHttpClientObservationConventionTest {
         clientContext.setAttribute(HttpClientContext.HTTP_ROUTE,
                 new HttpRoute(HttpHost.create("https://example.org:80")));
         assertThat(observationConvention.getLowCardinalityKeyValues(context)).contains(
-                KeyValue.of("target.host", "example.org"), KeyValue.of("target.port", "80"),
-                KeyValue.of("target.scheme", "https"));
+                TARGET_HOST.withValue("example.org"), TARGET_PORT.withValue("80"), TARGET_SCHEME.withValue("https"));
     }
 
     @Test
@@ -175,7 +170,7 @@ class DefaultApacheHttpClientObservationConventionTest {
         SimpleHttpRequest request = SimpleRequestBuilder.get("https://example.org/resource").build();
         HttpClientContext clientContext = HttpClientContext.create();
         ApacheHttpClientContext context = new ApacheHttpClientContext(request, clientContext);
-        assertThat(observationConvention.getLowCardinalityKeyValues(context)).contains(KeyValue.of("uri", "UNKNOWN"));
+        assertThat(observationConvention.getLowCardinalityKeyValues(context)).contains(URI.withValue("UNKNOWN"));
     }
 
     @Test
@@ -186,7 +181,7 @@ class DefaultApacheHttpClientObservationConventionTest {
                 "https://example.org/{id}");
         ApacheHttpClientContext context = new ApacheHttpClientContext(request, clientContext);
         assertThat(observationConvention.getLowCardinalityKeyValues(context))
-            .contains(KeyValue.of("uri", "https://example.org/{id}"));
+            .contains(URI.withValue("https://example.org/{id}"));
     }
 
     @Test
@@ -198,7 +193,7 @@ class DefaultApacheHttpClientObservationConventionTest {
         HttpClientContext clientContext = HttpClientContext.create();
         ApacheHttpClientContext context = new ApacheHttpClientContext(request, clientContext);
         assertThat(observationConvention.getLowCardinalityKeyValues(context))
-            .contains(KeyValue.of("uri", "https://example.org/{id}"));
+            .contains(URI.withValue("https://example.org/{id}"));
     }
 
 }

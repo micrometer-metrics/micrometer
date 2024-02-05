@@ -32,6 +32,9 @@ import java.util.function.Function;
  */
 public class ApacheHttpClientContext extends RequestReplySenderContext<HttpRequest, HttpResponse> {
 
+    @SuppressWarnings("deprecation")
+    private static final DefaultUriMapper DEFAULT_URI_MAPPER = new DefaultUriMapper();
+
     private final HttpClientContext clientContext;
 
     private final Function<HttpRequest, String> uriMapper;
@@ -45,7 +48,7 @@ public class ApacheHttpClientContext extends RequestReplySenderContext<HttpReque
      * @param apacheHttpContext the HTTP client context
      * @param uriMapper the mapper that detects the URI template
      * @param exportTagsForRoute whether route tags should be contributed
-     * @deprecated in favor of
+     * @deprecated as of 1.12.0 in favor of
      * {@link #ApacheHttpClientContext(HttpRequest, HttpClientContext)}.
      */
     @Deprecated
@@ -67,10 +70,10 @@ public class ApacheHttpClientContext extends RequestReplySenderContext<HttpReque
      * context} for the Apache HTTP Client 5 instrumentation.
      * @param request the client request
      * @param apacheHttpContext the HTTP client context
+     * @since 1.12.0
      */
-    @SuppressWarnings("deprecation")
     public ApacheHttpClientContext(HttpRequest request, HttpClientContext apacheHttpContext) {
-        this(request, apacheHttpContext, new DefaultUriMapper(), true);
+        this(request, apacheHttpContext, DEFAULT_URI_MAPPER, true);
     }
 
     /**
@@ -84,6 +87,8 @@ public class ApacheHttpClientContext extends RequestReplySenderContext<HttpReque
 
     /**
      * Return the client context associated with the current HTTP request.
+     * @return HTTP client context
+     * @since 1.12.0
      */
     public HttpClientContext getHttpClientContext() {
         return this.clientContext;
@@ -92,7 +97,8 @@ public class ApacheHttpClientContext extends RequestReplySenderContext<HttpReque
     /**
      * Return the function that extracts the URI template information from the current
      * request.
-     * @deprecated as of 1.12.0 in favor of a {@link HttpClientContext} attribute.
+     * @return URI mapper
+     * @deprecated as of 1.12.0 in favor of an {@link HttpClientContext} attribute.
      * @see ApacheHttpClientObservationConvention#URI_TEMPLATE_ATTRIBUTE
      */
     @Deprecated
@@ -102,6 +108,7 @@ public class ApacheHttpClientContext extends RequestReplySenderContext<HttpReque
 
     /**
      * Whether the route information should be contributed as tags with metrics.
+     * @return whether the route information should be contributed as tags with metrics
      * @deprecated as of 1.12.0 with no replacement.
      */
     @Deprecated

@@ -42,15 +42,25 @@ public class DefaultApacheHttpClientObservationConvention implements ApacheHttpC
      */
     public static final DefaultApacheHttpClientObservationConvention INSTANCE = new DefaultApacheHttpClientObservationConvention();
 
-    private static final KeyValue METHOD_UNKNOWN = KeyValue.of(ApacheHttpClientKeyNames.METHOD, "UNKNOWN");
+    private static final String CONTEXTUAL_NAME_UNKNOWN = "HTTP UNKNOWN";
 
-    private static final KeyValue URI_UNKNOWN = KeyValue.of(ApacheHttpClientKeyNames.URI, "UNKNOWN");
+    private static final KeyValue METHOD_UNKNOWN = ApacheHttpClientKeyNames.METHOD.withValue("UNKNOWN");
 
-    private static final KeyValue STATUS_IO_ERROR = KeyValue.of(ApacheHttpClientKeyNames.STATUS, "IO_ERROR");
+    private static final KeyValue URI_UNKNOWN = ApacheHttpClientKeyNames.URI.withValue("UNKNOWN");
 
-    private static final KeyValue STATUS_CLIENT_ERROR = KeyValue.of(ApacheHttpClientKeyNames.STATUS, "CLIENT_ERROR");
+    private static final KeyValue STATUS_IO_ERROR = ApacheHttpClientKeyNames.STATUS.withValue("IO_ERROR");
 
-    private static final KeyValue EXCEPTION_NONE = KeyValue.of(ApacheHttpClientKeyNames.EXCEPTION, KeyValue.NONE_VALUE);
+    private static final KeyValue STATUS_CLIENT_ERROR = ApacheHttpClientKeyNames.STATUS.withValue("CLIENT_ERROR");
+
+    private static final KeyValue EXCEPTION_NONE = ApacheHttpClientKeyNames.EXCEPTION.withValue(KeyValue.NONE_VALUE);
+
+    private static final KeyValue OUTCOME_UNKNOWN = ApacheHttpClientKeyNames.OUTCOME.withValue(Outcome.UNKNOWN.name());
+
+    private static final KeyValue TARGET_HOST_UNKNOWN = ApacheHttpClientKeyNames.TARGET_HOST.withValue("UNKNOWN");
+
+    private static final KeyValue TARGET_PORT_UNKNOWN = ApacheHttpClientKeyNames.TARGET_PORT.withValue("UNKNOWN");
+
+    private static final KeyValue TARGET_SCHEME_UNKNOWN = ApacheHttpClientKeyNames.TARGET_SCHEME.withValue("UNKNOWN");
 
     // There is no need to instantiate this class multiple times, but it may be extended,
     // hence protected visibility.
@@ -65,11 +75,10 @@ public class DefaultApacheHttpClientObservationConvention implements ApacheHttpC
     @Override
     public String getContextualName(ApacheHttpClientContext context) {
         HttpRequest request = context.getCarrier();
-        String methodName = "UNKNOWN";
         if (request != null && request.getMethod() != null) {
-            methodName = request.getMethod();
+            return "HTTP " + request.getMethod();
         }
-        return "HTTP " + methodName;
+        return CONTEXTUAL_NAME_UNKNOWN;
     }
 
     @Override
@@ -78,14 +87,26 @@ public class DefaultApacheHttpClientObservationConvention implements ApacheHttpC
                 targetPort(context), targetScheme(context), uri(context));
     }
 
+    /**
+     * Extract {@code exception} key value from context.
+     * @param context HTTP client context
+     * @return extracted {@code exception} key value
+     * @since 1.12.0
+     */
     protected KeyValue exception(ApacheHttpClientContext context) {
         Throwable error = context.getError();
         if (error != null) {
-            return KeyValue.of(ApacheHttpClientKeyNames.EXCEPTION, error.getClass().getSimpleName());
+            return ApacheHttpClientKeyNames.EXCEPTION.withValue(error.getClass().getSimpleName());
         }
         return EXCEPTION_NONE;
     }
 
+    /**
+     * Extract {@code method} key value from context.
+     * @param context HTTP client context
+     * @return extracted {@code method} key value
+     * @since 1.12.0
+     */
     protected KeyValue method(ApacheHttpClientContext context) {
         HttpRequest request = context.getCarrier();
         if (request == null || request.getMethod() == null) {
@@ -94,52 +115,88 @@ public class DefaultApacheHttpClientObservationConvention implements ApacheHttpC
         return ApacheHttpClientKeyNames.METHOD.withValue(request.getMethod());
     }
 
+    /**
+     * Extract {@code outcome} key value from context.
+     * @param context HTTP client context
+     * @return extracted {@code outcome} key value
+     * @since 1.12.0
+     */
     protected KeyValue outcome(ApacheHttpClientContext context) {
         HttpResponse response = context.getResponse();
         if (response == null) {
-            return KeyValue.of(ApacheHttpClientKeyNames.OUTCOME, Outcome.UNKNOWN.name());
+            return OUTCOME_UNKNOWN;
         }
-        return KeyValue.of(ApacheHttpClientKeyNames.OUTCOME, Outcome.forStatus(response.getCode()).name());
+        return ApacheHttpClientKeyNames.OUTCOME.withValue(Outcome.forStatus(response.getCode()).name());
     }
 
+    /**
+     * Extract {@code status} key value from context.
+     * @param context HTTP client context
+     * @return extracted {@code status} key value
+     * @since 1.12.0
+     */
     protected KeyValue status(ApacheHttpClientContext context) {
         Throwable error = context.getError();
-        HttpResponse response = context.getResponse();
         if (error instanceof IOException || error instanceof HttpException || error instanceof RuntimeException) {
             return STATUS_IO_ERROR;
         }
-        else if (response == null) {
+        HttpResponse response = context.getResponse();
+        if (response == null) {
             return STATUS_CLIENT_ERROR;
         }
-        return KeyValue.of(ApacheHttpClientKeyNames.STATUS, Integer.toString(response.getCode()));
+        return ApacheHttpClientKeyNames.STATUS.withValue(String.valueOf(response.getCode()));
     }
 
+    /**
+     * Extract {@code target.host} key value from context.
+     * @param context HTTP client context
+     * @return extracted {@code target.host} key value
+     * @since 1.12.0
+     */
     protected KeyValue targetHost(ApacheHttpClientContext context) {
         RouteInfo httpRoute = context.getHttpClientContext().getHttpRoute();
         if (httpRoute != null) {
-            return KeyValue.of(ApacheHttpClientKeyNames.TARGET_HOST, httpRoute.getTargetHost().getHostName());
+            return ApacheHttpClientKeyNames.TARGET_HOST.withValue(httpRoute.getTargetHost().getHostName());
         }
-        return KeyValue.of(ApacheHttpClientKeyNames.TARGET_HOST, "UNKNOWN");
+        return TARGET_HOST_UNKNOWN;
     }
 
+    /**
+     * Extract {@code target.port} key value from context.
+     * @param context HTTP client context
+     * @return extracted {@code target.port} key value
+     * @since 1.12.0
+     */
     protected KeyValue targetPort(ApacheHttpClientContext context) {
         Object routeAttribute = context.getHttpClientContext().getAttribute("http.route");
         if (routeAttribute instanceof HttpRoute) {
             int port = ((HttpRoute) routeAttribute).getTargetHost().getPort();
-            return KeyValue.of(ApacheHttpClientKeyNames.TARGET_PORT, String.valueOf(port));
+            return ApacheHttpClientKeyNames.TARGET_PORT.withValue(String.valueOf(port));
         }
-        return KeyValue.of(ApacheHttpClientKeyNames.TARGET_PORT, "UNKNOWN");
+        return TARGET_PORT_UNKNOWN;
     }
 
+    /**
+     * Extract {@code target.scheme} key value from context.
+     * @param context HTTP client context
+     * @return extracted {@code target.scheme} key value
+     * @since 1.12.0
+     */
     protected KeyValue targetScheme(ApacheHttpClientContext context) {
         Object routeAttribute = context.getHttpClientContext().getAttribute("http.route");
         if (routeAttribute instanceof HttpRoute) {
-            return KeyValue.of(ApacheHttpClientKeyNames.TARGET_SCHEME,
-                    ((HttpRoute) routeAttribute).getTargetHost().getSchemeName());
+            return ApacheHttpClientKeyNames.TARGET_SCHEME
+                .withValue(((HttpRoute) routeAttribute).getTargetHost().getSchemeName());
         }
-        return KeyValue.of(ApacheHttpClientKeyNames.TARGET_SCHEME, "UNKNOWN");
+        return TARGET_SCHEME_UNKNOWN;
     }
 
+    /**
+     * Extract {@code uri} key value from context.
+     * @param context HTTP client context
+     * @return extracted {@code uri} key value
+     * @since 1.12.0
+     */
     @SuppressWarnings("deprecation")
     protected KeyValue uri(ApacheHttpClientContext context) {
         HttpClientContext clientContext = context.getHttpClientContext();
