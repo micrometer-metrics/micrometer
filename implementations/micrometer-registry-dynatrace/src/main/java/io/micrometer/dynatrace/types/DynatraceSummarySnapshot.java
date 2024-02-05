@@ -26,6 +26,8 @@ import javax.annotation.concurrent.Immutable;
 @Immutable
 public final class DynatraceSummarySnapshot {
 
+    public static final DynatraceSummarySnapshot NO_RECORDED_VALUES = new DynatraceSummarySnapshot(0, 0, 0, 0);
+
     private final double min;
 
     private final double max;

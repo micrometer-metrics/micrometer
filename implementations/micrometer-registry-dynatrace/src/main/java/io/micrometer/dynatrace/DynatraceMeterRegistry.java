@@ -15,10 +15,7 @@
  */
 package io.micrometer.dynatrace;
 
-import io.micrometer.core.instrument.Clock;
-import io.micrometer.core.instrument.DistributionSummary;
-import io.micrometer.core.instrument.Meter;
-import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.config.MeterFilter;
 import io.micrometer.core.instrument.config.MeterFilterReply;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
@@ -30,6 +27,7 @@ import io.micrometer.core.ipc.http.HttpUrlConnectionSender;
 import io.micrometer.core.util.internal.logging.InternalLogger;
 import io.micrometer.core.util.internal.logging.InternalLoggerFactory;
 import io.micrometer.dynatrace.types.DynatraceDistributionSummary;
+import io.micrometer.dynatrace.types.DynatraceLongTaskTimer;
 import io.micrometer.dynatrace.types.DynatraceTimer;
 import io.micrometer.dynatrace.v1.DynatraceExporterV1;
 import io.micrometer.dynatrace.v2.DynatraceExporterV2;
@@ -122,6 +120,15 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
                     exporter.getBaseTimeUnit());
         }
         return super.newTimer(id, distributionStatisticConfig, pauseDetector);
+    }
+
+    @Override
+    protected LongTaskTimer newLongTaskTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig) {
+        if (useDynatraceSummaryInstruments) {
+            return new DynatraceLongTaskTimer(id, clock, exporter.getBaseTimeUnit(), distributionStatisticConfig,
+                    false);
+        }
+        return super.newLongTaskTimer(id, distributionStatisticConfig);
     }
 
     /**
