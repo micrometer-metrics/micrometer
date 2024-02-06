@@ -36,7 +36,7 @@ import static io.micrometer.docs.observation.ObservationHandlerTests.TaxObservat
 import static io.micrometer.docs.observation.ObservationHandlerTests.TaxObservationDocumentation.TaxLowCardinalityKeyNames.TAX_TYPE;
 
 /**
- * Sources for observation-handler.adoc
+ * Sources for observation-components.adoc
  */
 class ObservationHandlerTests {
 
