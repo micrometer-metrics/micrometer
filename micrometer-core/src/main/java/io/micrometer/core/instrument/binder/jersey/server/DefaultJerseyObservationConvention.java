@@ -26,7 +26,9 @@ import org.glassfish.jersey.server.monitoring.RequestEvent;
  *
  * @author Marcin Grzejszczak
  * @since 1.10.0
+ * @deprecated since 1.13.0 use the jersey-micrometer module in the Jersey project instead
  */
+@Deprecated
 public class DefaultJerseyObservationConvention implements JerseyObservationConvention {
 
     private final String metricsName;

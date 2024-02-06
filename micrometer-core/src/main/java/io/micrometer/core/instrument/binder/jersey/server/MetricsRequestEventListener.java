@@ -35,7 +35,9 @@ import static java.util.Objects.requireNonNull;
  * @author Michael Weirauch
  * @author Jon Schneider
  * @since 1.8.0
+ * @deprecated since 1.13.0 use the jersey-micrometer module in the Jersey project instead
  */
+@Deprecated
 public class MetricsRequestEventListener implements RequestEventListener {
 
     private final Map<ContainerRequest, Timer.Sample> shortTaskSample = Collections

@@ -44,6 +44,7 @@ import static org.mockito.Mockito.when;
  * @author Michael Weirauch
  * @author Johnny Lim
  */
+@SuppressWarnings("deprecation")
 class DefaultJerseyTagsProviderTest {
 
     private final DefaultJerseyTagsProvider tagsProvider = new DefaultJerseyTagsProvider();

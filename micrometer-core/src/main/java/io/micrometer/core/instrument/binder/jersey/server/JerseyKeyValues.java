@@ -27,6 +27,7 @@ import org.glassfish.jersey.server.monitoring.RequestEvent;
  * Factory methods for {@link KeyValue KeyValues} associated with a request-response
  * exchange that is handled by Jersey server.
  */
+@SuppressWarnings("deprecation")
 class JerseyKeyValues {
 
     private static final KeyValue URI_NOT_FOUND = JerseyObservationDocumentation.JerseyLegacyLowCardinalityTags.URI

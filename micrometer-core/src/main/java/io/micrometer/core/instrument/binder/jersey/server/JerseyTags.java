@@ -34,7 +34,9 @@ import java.util.regex.Pattern;
  * @author Michael Weirauch
  * @author Johnny Lim
  * @since 1.8.0
+ * @deprecated since 1.13.0 use the jersey-micrometer module in the Jersey project instead
  */
+@Deprecated
 public final class JerseyTags {
 
     private static final Tag URI_NOT_FOUND = Tag.of("uri", "NOT_FOUND");

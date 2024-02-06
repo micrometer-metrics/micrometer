@@ -32,6 +32,7 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.time.Duration;
 
+@SuppressWarnings("deprecation")
 public class Jersey3Main {
 
     public static void main(String[] args) throws IOException {
