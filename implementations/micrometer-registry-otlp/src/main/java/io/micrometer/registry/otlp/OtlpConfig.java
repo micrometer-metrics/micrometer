@@ -50,8 +50,15 @@ public interface OtlpConfig extends PushRegistryConfig {
     }
 
     /**
-     * Defaults to http://localhost:4318/v1/metrics
-     * @return address to where metrics will be published.
+     * If no value is returned by {@link #get(String)}, environment variables
+     * {@code OTEL_EXPORTER_OTLP_METRICS_ENDPOINT} and {@code OTEL_EXPORTER_OTLP_ENDPOINT}
+     * environment variables will be checked, in that order, by the default
+     * implementation.
+     * @return address to where metrics will be published. Default is
+     * {@code http://localhost:4318/v1/metrics}
+     * @see <a href=
+     * "https://opentelemetry.io/docs/languages/sdk-configuration/otlp-exporter/">OTLP
+     * Exporter Configuration</a>
      */
     default String url() {
         return getUrlString(this, "url").orElseGet(() -> {
@@ -70,6 +77,14 @@ public interface OtlpConfig extends PushRegistryConfig {
         });
     }
 
+    /**
+     * Default implementation supports the environment variable
+     * {@code OTEL_METRIC_EXPORT_INTERVAL} when the step value is not provided by the
+     * {@link #get(String)} implementation.
+     * @return step size (reporting frequency) to use. The default is 1 minute.
+     * @see <a href=
+     * "https://opentelemetry.io/docs/specs/otel/configuration/sdk-environment-variables/#periodic-exporting-metricreader">OTEL_METRIC_EXPORT_INTERVAL</a>
+     */
     @Override
     default Duration step() {
         Validated<Duration> step = getDuration(this, "step");
@@ -120,11 +135,16 @@ public interface OtlpConfig extends PushRegistryConfig {
     /**
      * {@link AggregationTemporality} of the OtlpMeterRegistry. This determines whether
      * the meters should be cumulative(AGGREGATION_TEMPORALITY_CUMULATIVE) or
-     * step/delta(AGGREGATION_TEMPORALITY_DELTA).
-     * @return the aggregationTemporality for OtlpMeterRegistry
+     * step/delta(AGGREGATION_TEMPORALITY_DELTA). Default implementation supports the
+     * environment variable {@code OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE} when
+     * a value is not provided by {@link #get(String)}.
+     * @return the aggregationTemporality; default is Cumulative
      * @see <a href=
      * "https://opentelemetry.io/docs/reference/specification/metrics/data-model/#temporality">OTLP
      * Temporality</a>
+     * @see <a href=
+     * "https://opentelemetry.io/docs/specs/otel/metrics/sdk_exporters/otlp/#additional-configuration">OpenTelemetry
+     * Metrics Exporter - OTLP</a>
      * @since 1.11.0
      */
     default AggregationTemporality aggregationTemporality() {
