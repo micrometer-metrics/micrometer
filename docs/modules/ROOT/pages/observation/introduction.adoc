@@ -45,4 +45,46 @@ include::{include-java}/observation/ObservationTestingTests.java[tags=example,in
 
 TIP: Calling `observe(() -> ...)` leads to starting the Observation, putting it in scope, running the lambda, putting an error on the Observation if one took place, closing the scope and stopping the Observation.
 
-// TODO: Add a link to docs gen
+[[micrometer-observation-building-blocks]]
+== Building Blocks
+
+In this section we will describe a high overview of Micrometer Observation components. You can read more about those in xref:observation/components.adoc[this part of the documentation].
+
+Glossary
+
+- `ObservationRegistry` - registry containing `Observation` related configuration (e.g. handlers, predicates, filters)
+- `ObservationHandler` - handles lifecycle of an `Observation` (e.g. create a timer on observation start, stop it on observation stop)
+- `ObservationFilter` - mutates the `Context` before the `Observation` gets stopped (e.g. add a high cardinality key-value with the cloud server region)
+- `ObservationPredicate` - condition to disable creation of an `Observation` (e.g. don't create observations with given key-value)
+- `Context` (actually `Observation.Context`) - a mutable map attached to an `Observation`, passed between handlers (that way you can pass state without doing any thread locals)
+- `ObservationConvention` - mean to separate Observation lifecycle (starting, stopping, opening scopes) from adding meta-data (such as observation name, key-value pairs). That way the naming of observations and meta-data handling becomes a configuration problem (e.g. adding key-values do not require changing instrumentation code, but changing the convention)
+
+[[micrometer-observation-usage]]
+=== Usage Flow
+
+// https://arthursonzogni.com/Diagon/#GraphDAG
+// ObservationHandler->ObservationRegistry
+// ObservationFilter->ObservationRegistry
+// ObservationPredicate->ObservationRegistry
+// ObservationRegistry->Observation
+// Context->Observation
+// ObservationConvention->Observation
+[source,subs=+attributes]
+-----
+┌──────────────────┐┌─────────────────┐┌────────────────────┐┌───────┐┌─────────────────────┐
+│ObservationHandler││ObservationFilter││ObservationPredicate││Context││ObservationConvention│
+└┬─────────────────┘└┬────────────────┘└┬───────────────────┘└┬──────┘└┬────────────────────┘
+┌▽───────────────────▽──────────────────▽┐                    │        │
+│ObservationRegistry                     │                    │        │
+└┬───────────────────────────────────────┘                    │        │
+┌▽────────────────────────────────────────────────────────────▽────────▽┐
+│Observation                                                            │
+└───────────────────────────────────────────────────────────────────────┘
+-----
+
+* `ObservationHandler`, `ObservationFilter`, `ObservationPredicate` get registered on the `ObservationRegistry`
+** `ObservationHandler` can be composed together (e.g. via the `FirstMatchingCompositeObservationHandler` - that can be useful when you group multiple handlers of the same type, e.g. `TracingHandler` or `MeterHandler`)
+* `ObservationRegistry`, `Context` are mandatory to create an `Observation`
+** Either you create an `Observation` with name, `ObservationRegistry` and `Context`
+** Or with `ObservationRegistry`, `ObservationConvention`
+* When `Observation` calls its lifecycle methods, all `ObservationHandlers` that pass the `supportsContext` check with the corresponding `Context` will have their lifecycle methods executed (e.g. if a handler has an `instanceof SenderContext` check in `supportsContext` then it will be called only for such types of contexts)

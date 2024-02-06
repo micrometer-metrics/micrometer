@@ -61,7 +61,7 @@
 * xref:observation.adoc[Micrometer Observation]
 ** xref:observation/installing.adoc[Installing]
 ** xref:observation/introduction.adoc[Introduction]
-** xref:observation/handler.adoc[Observation Handlers]
+** xref:observation/components.adoc[Components]
 ** xref:observation/instrumenting.adoc[Instrumenting]
 ** xref:observation/testing.adoc[Testing]
 ** xref:observation/projects.adoc[Instrumented Projects]

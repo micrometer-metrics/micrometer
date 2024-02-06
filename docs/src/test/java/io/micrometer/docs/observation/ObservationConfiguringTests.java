@@ -26,7 +26,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.BDDAssertions.then;
 
 /**
- * Sources for observation-handler.adoc
+ * Sources for observation-components.adoc
  */
 class ObservationConfiguringTests {
 
