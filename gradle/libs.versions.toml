@@ -47,7 +47,10 @@ jetty12 = "12.0.3"
 jersey2 = "2.41"
 jersey3 = "3.0.11"
 jmh = "1.37"
-jooq = "3.14.16"
+# newest version of OSS jOOQ that supports Java 8
+jooqOld = "3.14.16"
+# latest version of jOOQ to run tests against
+jooqNew = "3.19.3"
 jsr107 = "1.1.1"
 jsr305 = "3.0.2"
 junit = "5.10.1"
@@ -153,7 +156,8 @@ jersey3Hk2 = { module = "org.glassfish.jersey.inject:jersey-hk2", version.ref = 
 jersey3TestFrameworkJdkHttp = { module = "org.glassfish.jersey.test-framework.providers:jersey-test-framework-provider-jdk-http", version.ref = "jersey3" }
 jmhCore = { module = "org.openjdk.jmh:jmh-core", version.ref = "jmh" }
 jmhAnnotationProcessor = { module = "org.openjdk.jmh:jmh-generator-annprocess", version.ref = "jmh" }
-jooq = { module = "org.jooq:jooq", version.ref = "jooq" }
+jooq = { module = "org.jooq:jooq", version.ref = "jooqOld" }
+jooqLatest = { module = "org.jooq:jooq", version.ref = "jooqNew" }
 jsonPath = { module = "com.jayway.jsonpath:json-path", version = "2.9.0" }
 jsr107 = { module = "org.jsr107.ri:cache-ri-impl", version.ref = "jsr107" }
 jsr305 = { module = "com.google.code.findbugs:jsr305", version.ref = "jsr305" }
