@@ -79,9 +79,9 @@ class ObservationTests {
     void notMatchingObservationLevelShouldResultInPassthroughObservation() {
         registry.observationConfig().observationHandler(context -> true);
         registry.observationConfig().observationPredicate((s, context) -> true);
-        registry.observationConfig().observationLevel("foo", Level.ERROR);
+        registry.observationConfig().observationLevel("foo", Level.BASIC);
 
-        Observation observation = Observation.createNotStarted("foo", ObservationLevel.debug(), registry);
+        Observation observation = Observation.createNotStarted("foo", ObservationLevel.detailed(), registry);
 
         assertThat(observation).isInstanceOf(PassthroughNoopObservation.class);
     }

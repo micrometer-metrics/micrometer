@@ -1551,7 +1551,7 @@ public interface Observation extends ObservationView {
          * @return observation level
          */
         default Level getObservationLevel() {
-            return Level.ALL;
+            return Level.FULL;
         }
 
     }
@@ -1608,59 +1608,27 @@ public interface Observation extends ObservationView {
         }
 
         /**
-         * Sets {@link Level#ALL} for observation of the given classs.
+         * Sets {@link Level#FULL} for observation of the given classs.
          * @return observation level
          */
-        public static ObservationLevel all() {
-            return new ObservationLevel(Level.ALL);
+        public static ObservationLevel full() {
+            return new ObservationLevel(Level.FULL);
         }
 
         /**
-         * Sets {@link Level#TRACE} for observation of the given classs.
+         * Sets {@link Level#BASIC} for observation of the given classs.
          * @return observation level
          */
-        public static ObservationLevel trace() {
-            return new ObservationLevel(Level.TRACE);
+        public static ObservationLevel basic() {
+            return new ObservationLevel(Level.BASIC);
         }
 
         /**
-         * Sets {@link Level#DEBUG} for observation of the given classs.
+         * Sets {@link Level#DETAILED} for observation of the given classs.
          * @return observation level
          */
-        public static ObservationLevel debug() {
-            return new ObservationLevel(Level.DEBUG);
-        }
-
-        /**
-         * Sets {@link Level#INFO} for observation of the given classs.
-         * @return observation level
-         */
-        public static ObservationLevel info() {
-            return new ObservationLevel(Level.INFO);
-        }
-
-        /**
-         * Sets {@link Level#WARN} for observation of the given classs.
-         * @return observation level
-         */
-        public static ObservationLevel warn() {
-            return new ObservationLevel(Level.WARN);
-        }
-
-        /**
-         * Sets {@link Level#ERROR} for observation of the given classs.
-         * @return observation level
-         */
-        public static ObservationLevel error() {
-            return new ObservationLevel(Level.ERROR);
-        }
-
-        /**
-         * Sets {@link Level#FATAL} for observation of the given classs.
-         * @return observation level
-         */
-        public static ObservationLevel fatal() {
-            return new ObservationLevel(Level.FATAL);
+        public static ObservationLevel detailed() {
+            return new ObservationLevel(Level.DETAILED);
         }
 
         /**

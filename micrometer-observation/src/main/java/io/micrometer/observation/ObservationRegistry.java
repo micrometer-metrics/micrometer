@@ -154,19 +154,19 @@ public interface ObservationRegistry {
         }
 
         /**
-         * Sets an observation level for the given package name.
-         * @param packageName observation package name
+         * Sets an observation level for the given observation name.
+         * @param observationName observation name
          * @param level observation level
          * @return This configuration instance
          */
-        public ObservationConfig observationLevel(String packageName, Level level) {
-            this.observationLevels.put(packageName, level);
+        public ObservationConfig observationLevel(String observationName, Level level) {
+            this.observationLevels.put(observationName, level);
             return this;
         }
 
         /**
          * Sets observation levels.
-         * @param levels observation levels (package to level mappings)
+         * @param levels observation levels (observation name to level mappings)
          * @return This configuration instance
          */
         public ObservationConfig observationLevels(Map<String, Level> levels) {

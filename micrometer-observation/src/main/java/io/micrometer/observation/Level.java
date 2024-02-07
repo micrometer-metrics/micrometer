@@ -23,6 +23,6 @@ package io.micrometer.observation;
  */
 public enum Level {
 
-    ALL, TRACE, DEBUG, INFO, WARN, ERROR, FATAL, OFF
+    FULL, DETAILED, BASIC, OFF
 
 }
