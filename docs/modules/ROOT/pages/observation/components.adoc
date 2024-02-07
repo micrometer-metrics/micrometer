@@ -55,7 +55,7 @@ In this section we will describe main components related to Micrometer Observati
 └─────────────────┘
 -----
 
-`Observation` through `ObservationRegistry` gets created with a mutable `Observation.Context`. To allow name and key-value customization, an `ObservationConvention` can be used instead of direct name setting. List of `ObservationPredicate` is run to verify if an `Observation` should be created instead of a no-op version.  On each Micrometer Observation lifecycle action (e.g. `start()`) a corresponding `ObservationHandler` method is called (e.g. `onStart`) with the mutable `Observation.Context` as argument. On `Observation` stop, before calling the `ObservationHandler` `onStop` methods, list of `ObservationFilter` is called to optionally further modify the `Observation.Context`.
+`Observation` through `ObservationRegistry` gets created with a mutable `Observation.Context`. To allow name and key-value customization, an `ObservationConvention` can be used instead of direct name setting. List of `ObservationPredicate` is run to verify if an `Observation` should be created instead of a no-op version.  On each xref:observation/introduction.adoc[Micrometer Observation lifecycle] action (e.g. `start()`) a corresponding `ObservationHandler` method is called (e.g. `onStart`) with the mutable `Observation.Context` as argument. On `Observation` stop, before calling the `ObservationHandler` `onStop` methods, list of `ObservationFilter` is called to optionally further modify the `Observation.Context`.
 
 [[micrometer-observation-context]]
 == Observation.Context
@@ -64,6 +64,10 @@ To pass information between the instrumented code and the handler (or between ha
 
 [[micrometer-observation-handler]]
 == Observation Handler
+
+Observation Handler allows adding capabilities to existing instrumentations (i.e. you instrument code once and depending on the Observation Handler setup, different actions, such as create spans, metrics, logs will happen). In other words, if you have instrumented code and want to add metrics around it, it's enough for you to register an Observation Handler in the Observation Registry to add that behaviour.
+
+Let's look at the following example of adding a timer behaviour to an existing instrumentation.
 
 A popular way to record Observations is storing the start state in a `Timer.Sample` instance and stopping it when the event has ended.
 Recording such measurements could look like this:
@@ -80,7 +84,7 @@ If you want to have more observation options (such as metrics and tracing -- alr
 include::{include-java}/observation/ObservationHandlerTests.java[tags=observation,indent=0]
 -----
 
-Starting with Micrometer 1.10, you can register "handlers" (`ObservationHandler` instances) that are notified about the lifecycle event of an observation (for example, you can run custom code when an observation is started or stopped).
+Starting with Micrometer 1.10, you can register "handlers" (`ObservationHandler` instances) that are notified about the xref:observation/introduction.adoc[lifecycle event] of an observation (for example, you can run custom code when an observation is started or stopped).
 Using this feature lets you add tracing capabilities to your existing metrics instrumentation (see: `DefaultTracingObservationHandler`). The implementation of these handlers does not need to be tracing related. It is completely up to you how you are going to implement them (for example, you can add logging capabilities).
 
 [[micrometer-observation-handler-example]]
