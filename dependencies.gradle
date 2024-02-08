@@ -65,7 +65,6 @@ def VERSIONS = [
         libs.hdrhistogram,
         libs.hibernateEntitymanager,
         libs.hsqldb,
-        libs.jooq,
         libs.jsr107,
         libs.junitJupiter,
         libs.junitPlatformLauncher,

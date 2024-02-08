@@ -380,6 +380,8 @@ subprojects {
                     ignoreMissingClasses = true
                     includeSynthetic = true
 
+                    // TODO remove MetricsDSLContext from excludes in 1.14 when comparing against 1.13
+                    classExcludes = [ 'io.micrometer.core.instrument.binder.db.MetricsDSLContext' ]
                     compatibilityChangeExcludes = [ "METHOD_NEW_DEFAULT" ]
 
                     packageExcludes = ['io.micrometer.shaded.*', 'io.micrometer.statsd.internal']

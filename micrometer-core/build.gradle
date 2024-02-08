@@ -120,7 +120,7 @@ dependencies {
 
     optionalApi 'org.mongodb:mongodb-driver-sync'
 
-    optionalApi 'org.jooq:jooq'
+    optionalApi libs.jooq
 
     optionalApi 'org.apache.kafka:kafka-clients'
     optionalApi 'org.apache.kafka:kafka-streams'
