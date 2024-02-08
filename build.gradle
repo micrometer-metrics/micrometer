@@ -19,3 +19,7 @@ antora {
 			'@springio/asciidoctor-extensions': '1.0.0-alpha.9',
 	]
 }
+
+wrapper {
+	gradleVersion = '8.6'
+}
