@@ -4,7 +4,7 @@ application-insights = "2.6.4"
 archunit = "1.2.1"
 asmForPlugins = "7.3.1"
 aspectjweaver = "1.9.21"
-assertj = "3.25.2"
+assertj = "3.25.3"
 awaitility = "4.2.0"
 # legacy SDK
 aws-cloudwatch = "1.12.651"
