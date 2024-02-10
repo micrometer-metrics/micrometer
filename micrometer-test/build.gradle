@@ -1,27 +1,38 @@
-plugins {
-    id 'me.champeau.mrjar' version "0.1.1"
-}
-
 description 'Test compatibility kit for extensions of Micrometer'
 
-multiRelease {
-    targetVersions 8, 11
+testing {
+    suites {
+        java11Test(JvmTestSuite) {
+            test {
+                useJUnitJupiter()
+            }
+            sources {
+                java {
+                    srcDirs = ['src/java11Test/java']
+                }
+            }
+            dependencies {
+                implementation project()
+                implementation project(':micrometer-java11')
+            }
+
+        }
+    }
 }
 
-// Otherwise java11 tests will not see java11 code
-sourceSets {
-    java11Test {
-        compileClasspath += sourceSets.java11.output
-        runtimeClasspath += sourceSets.java11.output
-    }
+compileJava11TestJava {
+    sourceCompatibility = JavaVersion.VERSION_11
+    targetCompatibility = JavaVersion.VERSION_11
+}
+
+check {
+    dependsOn(testing.suites.java11Test)
 }
 
 dependencies {
     api project(':micrometer-core')
     api project(':micrometer-observation')
     api project(':micrometer-observation-test')
-
-    java11TestImplementation project(":micrometer-core").sourceSets.java11.output
 
     api 'org.assertj:assertj-core'
 
@@ -30,7 +41,6 @@ dependencies {
 
     api 'ru.lanwen.wiremock:wiremock-junit5'
     api 'com.github.tomakehurst:wiremock-jre8-standalone'
-    java11TestImplementation 'com.github.tomakehurst:wiremock-jre8-standalone'
 
     api 'org.mockito:mockito-core'
     implementation 'org.awaitility:awaitility'
@@ -61,27 +71,4 @@ dependencies {
     testImplementation libs.jersey2TestFrameworkJdkHttp
     // necessary for Jersey test framework
     testRuntimeOnly 'org.glassfish.jersey.inject:jersey-hk2'
-}
-
-java11Test {
-    // set heap size for the test JVM(s)
-    maxHeapSize = "1500m"
-
-    useJUnitPlatform {
-        excludeTags 'docker'
-    }
-
-    include {
-        it.getFile().getAbsolutePath().contains("java11Test")
-    }
-
-    retry {
-        maxFailures = 5
-        maxRetries = 3
-    }
-}
-
-compileJava11TestJava {
-    sourceCompatibility = JavaVersion.VERSION_11
-    targetCompatibility = JavaVersion.VERSION_11
 }
