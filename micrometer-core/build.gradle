@@ -281,19 +281,3 @@ compileJava11TestJava {
     sourceCompatibility = JavaVersion.VERSION_11
     targetCompatibility = JavaVersion.VERSION_11
 }
-
-// jdk11 jar
-tasks.register("jdk11Jar", Jar) {
-    group = "build"
-    from(sourceSets.java11.allJava)
-    from(sourceSets.main.allJava)
-    archiveClassifier = "jdk11"
-}
-
-publishing {
-    publications {
-        nebula(MavenPublication) {
-            artifact jdk11Jar
-        }
-    }
-}
