@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.core.instrument.binder.jdk;
+package io.micrometer.java11.instrument.binder.jdk;
 
 import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.HttpClientTimingInstrumentationVerificationTests;

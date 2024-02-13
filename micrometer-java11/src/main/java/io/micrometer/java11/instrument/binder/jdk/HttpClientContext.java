@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 VMware, Inc.
+ * Copyright 2024 VMware, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.core.instrument.binder.jdk;
+package io.micrometer.java11.instrument.binder.jdk;
 
 import io.micrometer.observation.transport.RequestReplySenderContext;
 
@@ -27,10 +27,8 @@ import java.util.function.Function;
  * A {@link RequestReplySenderContext} for an {@link HttpClient}.
  *
  * @author Marcin Grzejszczak
- * @since 1.10.0
- * @deprecated since 1.13.0 use the same class in the micrometer-java11 module instead
+ * @since 1.13.0
  */
-@Deprecated
 public class HttpClientContext extends RequestReplySenderContext<HttpRequest.Builder, HttpResponse<?>> {
 
     private final Function<HttpRequest, String> uriMapper;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 VMware, Inc.
+ * Copyright 2024 VMware, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,13 +15,11 @@
  */
 
 /**
- * Instrumentation of JDK classes. Deprecated since 1.13.0 use the micrometer-java11
- * module instead.
+ * Instrumentation of JDK classes.
  */
-// Note we can't use the @deprecated JavaDoc tag due to compiler bug JDK-8160601
 @NonNullApi
 @NonNullFields
-package io.micrometer.core.instrument.binder.jdk;
+package io.micrometer.java11.instrument.binder.jdk;
 
 import io.micrometer.common.lang.NonNullApi;
 import io.micrometer.common.lang.NonNullFields;
