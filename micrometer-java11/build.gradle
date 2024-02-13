@@ -1,4 +1,4 @@
-description 'Micrometer instrumentation for Java 11 http client'
+description 'Micrometer core classes that require Java 11'
 
 dependencies {
     api project(":micrometer-core")
