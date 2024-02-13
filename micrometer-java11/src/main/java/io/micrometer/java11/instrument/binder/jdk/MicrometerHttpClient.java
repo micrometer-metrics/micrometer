@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 VMware, Inc.
+ * Copyright 2024 VMware, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,7 +49,7 @@ import java.util.function.Function;
  * "https://github.com/raphw/interceptable-http-client">interceptable-http-client</a>.
  *
  * @author Marcin Grzejszczak
- * @since 1.10.0
+ * @since 1.13.0
  */
 public class MicrometerHttpClient extends HttpClient {
 
