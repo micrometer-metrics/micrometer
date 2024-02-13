@@ -8,7 +8,7 @@ testing {
             }
             sources {
                 java {
-                    srcDirs = ['src/java11Test/java']
+                    srcDirs = ['src/test/java11']
                 }
             }
             dependencies {
