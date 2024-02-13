@@ -85,7 +85,30 @@ public class MetricCollectingServerInterceptor extends AbstractMetricCollectingI
     public MetricCollectingServerInterceptor(final MeterRegistry registry,
             final UnaryOperator<Counter.Builder> counterCustomizer, final UnaryOperator<Timer.Builder> timerCustomizer,
             final Code... eagerInitializedCodes) {
-        super(registry, counterCustomizer, timerCustomizer, eagerInitializedCodes);
+        this(DEFAULT_TAG_SERVICE_NAME, DEFAULT_TAG_METHOD_NAME, DEFAULT_TAG_METHOD_TYPE, DEFAULT_TAG_STATUS_CODE,
+                registry, counterCustomizer, timerCustomizer, eagerInitializedCodes);
+    }
+
+    /**
+     * Creates a new gRPC server interceptor that will collect metrics into the given
+     * {@link MeterRegistry} and uses the given customizers to configure the
+     * {@link Counter}s and {@link Timer}s.
+     * @param tagServiceName Tag name to use for service name
+     * @param tagMethodName Tag name to use for method name
+     * @param tagMethodType Tag name to use for method type
+     * @param tagStatusCode Tag name to use for status code
+     * @param registry The registry to use.
+     * @param counterCustomizer The unary function that can be used to customize the
+     * created counters.
+     * @param timerCustomizer The unary function that can be used to customize the created
+     * timers.
+     * @param eagerInitializedCodes The status codes that should be eager initialized.
+     */
+    public MetricCollectingServerInterceptor(String tagServiceName, String tagMethodName, String tagMethodType,
+            String tagStatusCode, final MeterRegistry registry, final UnaryOperator<Counter.Builder> counterCustomizer,
+            final UnaryOperator<Timer.Builder> timerCustomizer, final Code... eagerInitializedCodes) {
+        super(tagServiceName, tagMethodName, tagMethodType, tagStatusCode, registry, counterCustomizer, timerCustomizer,
+                eagerInitializedCodes);
     }
 
     /**

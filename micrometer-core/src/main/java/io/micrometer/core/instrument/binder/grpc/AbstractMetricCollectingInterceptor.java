@@ -41,25 +41,33 @@ import java.util.function.UnaryOperator;
  */
 public abstract class AbstractMetricCollectingInterceptor {
 
+    protected static final String DEFAULT_TAG_SERVICE_NAME = "service";
+
     /**
      * The metrics tag key that belongs to the called service name.
      */
-    private static final String TAG_SERVICE_NAME = "service";
+    private final String tagServiceName;
+
+    protected static final String DEFAULT_TAG_METHOD_NAME = "method";
 
     /**
      * The metrics tag key that belongs to the called method name.
      */
-    private static final String TAG_METHOD_NAME = "method";
+    private final String tagMethodName;
+
+    protected static final String DEFAULT_TAG_METHOD_TYPE = "methodType";
 
     /**
      * The metrics tag key that belongs to the type of the called method.
      */
-    private static final String TAG_METHOD_TYPE = "methodType";
+    private final String tagMethodType;
+
+    protected static final String DEFAULT_TAG_STATUS_CODE = "statusCode";
 
     /**
      * The metrics tag key that belongs to the result status code.
      */
-    private static final String TAG_STATUS_CODE = "statusCode";
+    private final String tagStatusCode;
 
     /**
      * Creates a new counter builder for the given method. By default the base unit will
@@ -69,14 +77,14 @@ public abstract class AbstractMetricCollectingInterceptor {
      * @param description The description of the counter to use.
      * @return The newly created counter builder.
      */
-    protected static Counter.Builder prepareCounterFor(final MethodDescriptor<?, ?> method, final String name,
+    protected Counter.Builder prepareCounterFor(final MethodDescriptor<?, ?> method, final String name,
             final String description) {
         return Counter.builder(name)
             .description(description)
             .baseUnit(BaseUnits.MESSAGES)
-            .tag(TAG_SERVICE_NAME, method.getServiceName())
-            .tag(TAG_METHOD_NAME, method.getBareMethodName())
-            .tag(TAG_METHOD_TYPE, method.getType().name());
+            .tag(tagServiceName, method.getServiceName())
+            .tag(tagMethodName, method.getBareMethodName())
+            .tag(tagMethodType, method.getType().name());
     }
 
     /**
@@ -86,13 +94,13 @@ public abstract class AbstractMetricCollectingInterceptor {
      * @param description The description of the timer to use.
      * @return The newly created timer builder.
      */
-    protected static Timer.Builder prepareTimerFor(final MethodDescriptor<?, ?> method, final String name,
+    protected Timer.Builder prepareTimerFor(final MethodDescriptor<?, ?> method, final String name,
             final String description) {
         return Timer.builder(name)
             .description(description)
-            .tag(TAG_SERVICE_NAME, method.getServiceName())
-            .tag(TAG_METHOD_NAME, method.getBareMethodName())
-            .tag(TAG_METHOD_TYPE, method.getType().name());
+            .tag(tagServiceName, method.getServiceName())
+            .tag(tagMethodName, method.getBareMethodName())
+            .tag(tagMethodType, method.getType().name());
     }
 
     private final Map<MethodDescriptor<?, ?>, MetricSet> metricsForMethods = new ConcurrentHashMap<>();
@@ -129,6 +137,38 @@ public abstract class AbstractMetricCollectingInterceptor {
     protected AbstractMetricCollectingInterceptor(final MeterRegistry registry,
             final UnaryOperator<Counter.Builder> counterCustomizer, final UnaryOperator<Timer.Builder> timerCustomizer,
             final Status.Code... eagerInitializedCodes) {
+        this.tagServiceName = DEFAULT_TAG_SERVICE_NAME;
+        this.tagMethodName = DEFAULT_TAG_METHOD_NAME;
+        this.tagMethodType = DEFAULT_TAG_METHOD_TYPE;
+        this.tagStatusCode = DEFAULT_TAG_STATUS_CODE;
+        this.registry = registry;
+        this.counterCustomizer = counterCustomizer;
+        this.timerCustomizer = timerCustomizer;
+        this.eagerInitializedCodes = eagerInitializedCodes;
+    }
+
+    /**
+     * Creates a new gRPC interceptor that will collect metrics into the given
+     * {@link MeterRegistry} and uses the given customizers to configure the
+     * {@link Counter}s and {@link Timer}s.
+     * @param tagServiceName Tag name to use for service name
+     * @param tagMethodName Tag name to use for method name
+     * @param tagMethodType Tag name to use for method type
+     * @param tagStatusCode Tag name to use for status code
+     * @param registry The registry to use.
+     * @param counterCustomizer The unary function that can be used to customize the
+     * created counters.
+     * @param timerCustomizer The unary function that can be used to customize the created
+     * timers.
+     * @param eagerInitializedCodes The status codes that should be eager initialized.
+     */
+    protected AbstractMetricCollectingInterceptor(String tagServiceName, String tagMethodName, String tagMethodType,
+            String tagStatusCode, final MeterRegistry registry, final UnaryOperator<Counter.Builder> counterCustomizer,
+            final UnaryOperator<Timer.Builder> timerCustomizer, final Status.Code... eagerInitializedCodes) {
+        this.tagServiceName = tagServiceName;
+        this.tagMethodName = tagMethodName;
+        this.tagMethodType = tagMethodType;
+        this.tagStatusCode = tagStatusCode;
         this.registry = registry;
         this.counterCustomizer = counterCustomizer;
         this.timerCustomizer = timerCustomizer;
@@ -200,7 +240,7 @@ public abstract class AbstractMetricCollectingInterceptor {
     protected Function<Code, Timer> asTimerFunction(final Supplier<Timer.Builder> timerTemplate) {
         final Map<Code, Timer> cache = new EnumMap<>(Code.class);
         final Function<Code, Timer> creator = code -> timerTemplate.get()
-            .tag(TAG_STATUS_CODE, code.name())
+            .tag(tagStatusCode, code.name())
             .register(this.registry);
         final Function<Code, Timer> cacheResolver = code -> cache.computeIfAbsent(code, creator);
         // Eager initialize
