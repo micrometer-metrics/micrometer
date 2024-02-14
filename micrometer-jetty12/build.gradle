@@ -1,5 +1,10 @@
 description 'Micrometer instrumentation for Jetty 12'
 
+// skip this module when building with jdk <17
+if (!javaLanguageVersion.canCompileOrRun(17)) {
+    project.tasks.configureEach { task -> task.enabled = false }
+}
+
 dependencies {
     api project(":micrometer-core")
     api libs.jetty12Server
