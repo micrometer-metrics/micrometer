@@ -1,0 +1,31 @@
+description 'Micrometer instrumentation for Jetty 12'
+
+dependencies {
+    api project(":micrometer-core")
+    api libs.jetty12Server
+
+    // Test sample project with SLFJ4 2.x / Logback 1.4
+    runtimeOnly(libs.logback14) {
+        version {
+            strictly libs.logback14.get().version
+        }
+    }
+    testRuntimeOnly(libs.logback14) {
+        version {
+            strictly libs.logback14.get().version
+        }
+    }
+
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testImplementation 'org.assertj:assertj-core'
+}
+
+java {
+    targetCompatibility = 17
+}
+
+compileJava {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+    options.release = 17
+}
