@@ -29,11 +29,12 @@ import org.eclipse.jetty.server.Request;
 @Incubating(since = "1.11.0")
 @FunctionalInterface
 public interface JettyCoreRequestTagsProvider {
+
     /**
      * Provides tags to be associated with metrics for the given {@code request}.
-     *
      * @param request the request
      * @return tags to associate with metrics for the request
      */
     Iterable<Tag> getTags(Request request);
+
 }

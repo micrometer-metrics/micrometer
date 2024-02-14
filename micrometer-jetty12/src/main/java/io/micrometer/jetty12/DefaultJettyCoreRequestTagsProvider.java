@@ -30,7 +30,9 @@ import org.eclipse.jetty.server.Request;
  */
 @Incubating(since = "1.11.0")
 public class DefaultJettyCoreRequestTagsProvider implements JettyCoreRequestTagsProvider {
+
     private static final Tag STATUS_UNKNOWN = Tag.of("status", "UNKNOWN");
+
     private static final Tag METHOD_UNKNOWN = Tag.of("method", "UNKNOWN");
 
     @Override
@@ -61,4 +63,5 @@ public class DefaultJettyCoreRequestTagsProvider implements JettyCoreRequestTags
         }
         return outcome.asTag();
     }
+
 }

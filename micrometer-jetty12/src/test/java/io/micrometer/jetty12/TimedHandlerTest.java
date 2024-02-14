@@ -75,7 +75,7 @@ class TimedHandlerTest {
 
     @Test
     void testRequest() throws Exception {
-        CyclicBarrier[] barrier = {new CyclicBarrier(3), new CyclicBarrier(3)};
+        CyclicBarrier[] barrier = { new CyclicBarrier(3), new CyclicBarrier(3) };
         latchHandler.reset(2);
 
         timedHandler.setHandler(new Handler.Abstract() {
@@ -86,7 +86,8 @@ class TimedHandlerTest {
                     barrier[0].await(5, TimeUnit.SECONDS);
                     barrier[1].await(5, TimeUnit.SECONDS);
                     response.write(true, BufferUtil.EMPTY_BUFFER, callback);
-                } catch (Exception x) {
+                }
+                catch (Exception x) {
                     Thread.currentThread().interrupt();
                     callback.failed(x);
                 }
@@ -97,8 +98,9 @@ class TimedHandlerTest {
         server.start();
 
         try (LocalConnector.LocalEndPoint endpoint1 = connector.connect();
-             LocalConnector.LocalEndPoint endpoint2 = connector.connect()) {
-            // Initiate two requests, on different endpoints to avoid HTTP/1.1 persistent connection behaviors.
+                LocalConnector.LocalEndPoint endpoint2 = connector.connect()) {
+            // Initiate two requests, on different endpoints to avoid HTTP/1.1 persistent
+            // connection behaviors.
             String request = "GET / HTTP/1.1\r\n" + "Host: localhost\r\n" + "\r\n";
             endpoint1.addInputAndExecute(request);
             endpoint2.addInputAndExecute(request);
@@ -142,7 +144,8 @@ class TimedHandlerTest {
                     try {
                         // wait on finishing the response
                         Thread.sleep(delay);
-                    } catch (InterruptedException e) {
+                    }
+                    catch (InterruptedException e) {
                         response.setStatus(HttpStatus.INTERNAL_SERVER_ERROR_500);
                         callback.failed(e);
                         return;
@@ -188,6 +191,7 @@ class TimedHandlerTest {
     }
 
     private static class LatchHandler extends Handler.Wrapper {
+
         private volatile CountDownLatch latch = new CountDownLatch(1);
 
         @Override
@@ -195,7 +199,8 @@ class TimedHandlerTest {
             System.err.println("### LatchHandler.handle");
             try {
                 return super.handle(request, response, callback);
-            } finally {
+            }
+            finally {
                 latch.countDown();
             }
         }
@@ -207,5 +212,7 @@ class TimedHandlerTest {
         private boolean await() throws InterruptedException {
             return latch.await(5, TimeUnit.SECONDS);
         }
+
     }
+
 }

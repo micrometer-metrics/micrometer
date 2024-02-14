@@ -38,12 +38,17 @@ import java.util.concurrent.CompletableFuture;
 public class TimedHandler extends EventsHandler implements Graceful {
 
     private static final String SAMPLE_TIMER_ATTRIBUTE = "__micrometer_timer_sample";
+
     private static final String SAMPLE_REQUEST_LONG_TASK_TIMER_ATTRIBUTE = "__micrometer_request_ltt_sample";
+
     private static final String SAMPLE_HANDLER_LONG_TASK_TIMER_ATTRIBUTE = "__micrometer_handler_ltt_sample";
+
     protected static final String RESPONSE_STATUS_ATTRIBUTE = "__micrometer_jetty_core_response_status";
 
     private final MeterRegistry registry;
+
     private final Iterable<Tag> tags;
+
     private final JettyCoreRequestTagsProvider tagsProvider;
 
     private final Shutdown shutdown = new Shutdown(this) {
@@ -57,6 +62,7 @@ public class TimedHandler extends EventsHandler implements Graceful {
      * Full Request LifeCycle (inside and out of Handlers)
      */
     private final LongTaskTimer timerRequest;
+
     /**
      * How many Request are inside handle() calls.
      */
@@ -66,8 +72,7 @@ public class TimedHandler extends EventsHandler implements Graceful {
         this(registry, tags, new DefaultJettyCoreRequestTagsProvider());
     }
 
-    public TimedHandler(MeterRegistry registry, Iterable<Tag> tags,
-                        JettyCoreRequestTagsProvider tagsProvider) {
+    public TimedHandler(MeterRegistry registry, Iterable<Tag> tags, JettyCoreRequestTagsProvider tagsProvider) {
         this.registry = registry;
         this.tags = tags;
         this.tagsProvider = tagsProvider;
@@ -137,7 +142,8 @@ public class TimedHandler extends EventsHandler implements Graceful {
 
     private void stopRequestTiming(Request request) {
         Timer.Sample sample = getTimerSample(request);
-        LongTaskTimer.Sample requestSample = (LongTaskTimer.Sample) request.getAttribute(SAMPLE_REQUEST_LONG_TASK_TIMER_ATTRIBUTE);
+        LongTaskTimer.Sample requestSample = (LongTaskTimer.Sample) request
+            .getAttribute(SAMPLE_REQUEST_LONG_TASK_TIMER_ATTRIBUTE);
         if (requestSample == null)
             return; // timing complete
 
@@ -161,7 +167,8 @@ public class TimedHandler extends EventsHandler implements Graceful {
 
     private void stopHandlerTiming(Request request) {
         Timer.Sample sample = getTimerSample(request);
-        LongTaskTimer.Sample handlerSample = (LongTaskTimer.Sample) request.getAttribute(SAMPLE_HANDLER_LONG_TASK_TIMER_ATTRIBUTE);
+        LongTaskTimer.Sample handlerSample = (LongTaskTimer.Sample) request
+            .getAttribute(SAMPLE_HANDLER_LONG_TASK_TIMER_ATTRIBUTE);
         if (handlerSample == null)
             return; // timing complete
 
@@ -211,4 +218,5 @@ public class TimedHandler extends EventsHandler implements Graceful {
     protected Shutdown getShutdown() {
         return shutdown;
     }
+
 }
