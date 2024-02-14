@@ -22,7 +22,9 @@ import io.micrometer.core.instrument.Timer;
 import org.eclipse.jetty.http.HttpFields;
 import org.eclipse.jetty.io.Content;
 import org.eclipse.jetty.server.Request;
+import org.eclipse.jetty.server.Response;
 import org.eclipse.jetty.server.handler.EventsHandler;
+import org.eclipse.jetty.util.Callback;
 import org.eclipse.jetty.util.component.Graceful;
 
 import java.nio.ByteBuffer;
@@ -135,7 +137,6 @@ public class TimedHandler extends EventsHandler implements Graceful {
     }
 
     private void beginRequestTiming(Request request) {
-        Timer.Sample sample = getTimerSample(request);
         LongTaskTimer.Sample requestSample = timerRequest.start();
         request.setAttribute(SAMPLE_REQUEST_LONG_TASK_TIMER_ATTRIBUTE, requestSample);
     }
@@ -155,12 +156,10 @@ public class TimedHandler extends EventsHandler implements Graceful {
 
         request.removeAttribute(SAMPLE_REQUEST_LONG_TASK_TIMER_ATTRIBUTE);
 
-        System.err.println("Create 'jetty.server.requests'");
         requestSample.stop();
     }
 
     private void beginHandlerTiming(Request request) {
-        Timer.Sample sample = getTimerSample(request);
         LongTaskTimer.Sample handlerSample = timerHandle.start();
         request.setAttribute(SAMPLE_HANDLER_LONG_TASK_TIMER_ATTRIBUTE, handlerSample);
     }
@@ -180,17 +179,18 @@ public class TimedHandler extends EventsHandler implements Graceful {
 
         request.removeAttribute(SAMPLE_HANDLER_LONG_TASK_TIMER_ATTRIBUTE);
 
-        System.err.println("Create 'jetty.server.handling'");
         handlerSample.stop();
     }
 
     private Timer.Sample getTimerSample(Request request) {
-        Timer.Sample sample = (Timer.Sample) request.getAttribute(SAMPLE_TIMER_ATTRIBUTE);
-        if (sample == null) {
-            sample = Timer.start(registry);
-            request.setAttribute(SAMPLE_TIMER_ATTRIBUTE, sample);
-        }
-        return sample;
+        return (Timer.Sample) request.getAttribute(SAMPLE_TIMER_ATTRIBUTE);
+    }
+
+    @Override
+    public boolean handle(Request request, Response response, Callback callback) throws Exception {
+        Timer.Sample sample = Timer.start(registry);
+        request.setAttribute(SAMPLE_TIMER_ATTRIBUTE, sample);
+        return super.handle(request, response, callback);
     }
 
     @Override

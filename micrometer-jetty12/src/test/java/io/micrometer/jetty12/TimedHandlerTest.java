@@ -177,14 +177,11 @@ class TimedHandlerTest {
             assertThat(shutdownFuture.isDone()).isFalse();
 
             // Read response to ensure it is done
-            System.err.println("### Read response");
             HttpTester.Response response1 = HttpTester.parseResponse(endpoint.getResponse());
             assertThat(response1.getStatus()).isEqualTo(HttpStatus.OK_200);
             assertThat(response1.getContent()).isEqualTo("");
 
-            System.err.println("### Delay last shutdown check");
             Thread.sleep(delay);
-            System.err.println("### last shutdown check");
             shutdown.check();
             assertThat(shutdownFuture.isDone()).isTrue();
         }
@@ -196,7 +193,6 @@ class TimedHandlerTest {
 
         @Override
         public boolean handle(Request request, Response response, Callback callback) throws Exception {
-            System.err.println("### LatchHandler.handle");
             try {
                 return super.handle(request, response, callback);
             }
