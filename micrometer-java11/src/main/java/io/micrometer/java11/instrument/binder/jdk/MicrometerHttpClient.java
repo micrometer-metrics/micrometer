@@ -233,11 +233,11 @@ public class MicrometerHttpClient extends HttpClient {
     private <T> void stopObservationOrTimer(
             ObservationOrTimerCompatibleInstrumentation<HttpClientContext> instrumentation, HttpRequest request,
             @Nullable HttpResponse<T> res) {
-        instrumentation.stop(DefaultHttpClientObservationConvention.INSTANCE.getName(), "Timer for JDK's HttpClient",
+        instrumentation.stop(getActiveObservationConvention().getName(), "Timer for JDK's HttpClient",
                 () -> {
                     Tags tags = Tags.of(HttpClientObservationDocumentation.LowCardinalityKeys.METHOD.asString(),
                             request.method(), HttpClientObservationDocumentation.LowCardinalityKeys.URI.asString(),
-                            DefaultHttpClientObservationConvention.INSTANCE.getUriTag(request, res, uriMapper));
+                            getActiveObservationConvention().getUriTag(request, res, uriMapper));
                     if (res != null) {
                         tags = tags
                             .and(Tag.of(HttpClientObservationDocumentation.LowCardinalityKeys.STATUS.asString(),
@@ -247,6 +247,10 @@ public class MicrometerHttpClient extends HttpClient {
                     }
                     return tags;
                 });
+    }
+
+    private HttpClientObservationConvention getActiveObservationConvention(){
+        return customObservationConvention != null ? customObservationConvention : DefaultHttpClientObservationConvention.INSTANCE;
     }
 
     private ObservationOrTimerCompatibleInstrumentation<HttpClientContext> observationOrTimer(
