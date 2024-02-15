@@ -107,9 +107,16 @@ public class AtlasMeterRegistry extends MeterRegistry {
         com.netflix.spectator.api.DistributionSummary internalSummary;
 
         if (distributionStatisticConfig.isPercentileHistogram()) {
+            long min = distributionStatisticConfig.getMinimumExpectedValueAsDouble() == null ? 0
+                    : distributionStatisticConfig.getMinimumExpectedValueAsDouble().longValue();
+            long max = distributionStatisticConfig.getMaximumExpectedValueAsDouble() == null ? Long.MAX_VALUE
+                    : distributionStatisticConfig.getMaximumExpectedValueAsDouble().longValue();
             // This doesn't report the normal count/totalTime/max stats, so we treat it as
             // additive
-            internalSummary = PercentileDistributionSummary.get(registry, spectatorId(id));
+            internalSummary = PercentileDistributionSummary.builder(registry)
+                .withId(spectatorId(id))
+                .withRange(min, max)
+                .build();
         }
         else {
             internalSummary = registry.distributionSummary(spectatorId(id));
@@ -134,9 +141,16 @@ public class AtlasMeterRegistry extends MeterRegistry {
         com.netflix.spectator.api.Timer internalTimer;
 
         if (distributionStatisticConfig.isPercentileHistogram()) {
+            long minNanos = distributionStatisticConfig.getMinimumExpectedValueAsDouble() == null ? 0
+                    : distributionStatisticConfig.getMinimumExpectedValueAsDouble().longValue();
+            long maxNanos = distributionStatisticConfig.getMaximumExpectedValueAsDouble() == null ? Long.MAX_VALUE
+                    : distributionStatisticConfig.getMaximumExpectedValueAsDouble().longValue();
             // This doesn't report the normal count/totalTime/max stats, so we treat it as
             // additive
-            internalTimer = PercentileTimer.get(registry, spectatorId(id));
+            internalTimer = PercentileTimer.builder(registry)
+                .withId(spectatorId(id))
+                .withRange(minNanos, maxNanos, TimeUnit.NANOSECONDS)
+                .build();
         }
         else {
             internalTimer = registry.timer(spectatorId(id));
