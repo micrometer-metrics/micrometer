@@ -42,7 +42,10 @@ class MicrometerHttpClientTests {
 
     MeterRegistry meterRegistry = new SimpleMeterRegistry();
 
+    // tag::setupClient[]
     HttpClient httpClient = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(2)).build();
+
+    // end::setupClient[]
 
     @BeforeEach
     void setup() {
@@ -62,9 +65,11 @@ class MicrometerHttpClientTests {
             .uri(URI.create(wmInfo.getHttpBaseUrl() + "/metrics"))
             .build();
 
+        // tag::observationInstrumentation[]
         HttpClient observedClient = MicrometerHttpClient.instrumentationBuilder(httpClient, meterRegistry)
             .observationRegistry(observationRegistry)
             .build();
+        // end::observationInstrumentation[]
         observedClient.send(request, HttpResponse.BodyHandlers.ofString());
 
         verify(anyRequestedFor(urlEqualTo("/metrics")).withHeader("foo", equalTo("bar")));
@@ -78,7 +83,9 @@ class MicrometerHttpClientTests {
             .uri(URI.create(wmInfo.getHttpBaseUrl() + "/metrics"))
             .build();
 
+        // tag::meterRegistryInstrumentation[]
         HttpClient observedClient = MicrometerHttpClient.instrumentationBuilder(httpClient, meterRegistry).build();
+        // end::meterRegistryInstrumentation[]
         observedClient.send(request, HttpResponse.BodyHandlers.ofString());
 
         thenMeterRegistryContainsHttpClientTags();
