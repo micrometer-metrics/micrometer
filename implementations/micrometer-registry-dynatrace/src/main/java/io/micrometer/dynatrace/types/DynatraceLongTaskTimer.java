@@ -26,7 +26,7 @@ import java.util.concurrent.TimeUnit;
  * exporting to Dynatrace.
  *
  * @author Georg Pirklbauer
- * @since 1.12.3
+ * @since 1.12.4
  */
 public class DynatraceLongTaskTimer extends DefaultLongTaskTimer implements DynatraceSummarySnapshotSupport {
 
