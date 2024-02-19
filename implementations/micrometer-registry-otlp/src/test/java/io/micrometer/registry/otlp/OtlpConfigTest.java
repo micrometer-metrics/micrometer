@@ -193,8 +193,8 @@ class OtlpConfigTest {
     @Test
     void aggregationTemporalityUseEnvVarWhenConfigNotSet() throws Exception {
         OtlpConfig config = k -> null;
-        withEnvironmentVariable("OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE", "CUMULATIVE")
-            .execute(() -> assertThat(config.aggregationTemporality()).isEqualTo(AggregationTemporality.CUMULATIVE));
+        withEnvironmentVariable("OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE", "DELTA")
+            .execute(() -> assertThat(config.aggregationTemporality()).isEqualTo(AggregationTemporality.DELTA));
     }
 
     @Test
