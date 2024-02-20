@@ -16,6 +16,7 @@
 package io.micrometer.core.aop;
 
 import io.micrometer.common.lang.NonNullApi;
+import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.annotation.Counted;
 import io.micrometer.core.instrument.*;
 import org.aspectj.lang.ProceedingJoinPoint;
@@ -67,6 +68,7 @@ import java.util.function.Predicate;
  *
  * @author Ali Dehghani
  * @author Jonatan Ivanov
+ * @author Johnny Lim
  * @since 1.2.0
  * @see Counted
  */
@@ -164,6 +166,23 @@ public class CountedAspect {
         this.shouldSkip = shouldSkip;
     }
 
+    @Around("@within(io.micrometer.core.annotation.Counted)")
+    @Nullable
+    public Object countedClass(ProceedingJoinPoint pjp) throws Throwable {
+        if (shouldSkip.test(pjp)) {
+            return pjp.proceed();
+        }
+
+        Method method = ((MethodSignature) pjp.getSignature()).getMethod();
+        Class<?> declaringClass = method.getDeclaringClass();
+        if (!declaringClass.isAnnotationPresent(Counted.class)) {
+            declaringClass = pjp.getTarget().getClass();
+        }
+        Counted counted = declaringClass.getAnnotation(Counted.class);
+
+        return perform(pjp, counted);
+    }
+
     /**
      * Intercept methods annotated with the {@link Counted} annotation and expose a few
      * counters about their execution status. By default, this aspect records both failed
@@ -188,6 +207,10 @@ public class CountedAspect {
             return pjp.proceed();
         }
 
+        return perform(pjp, counted);
+    }
+
+    private Object perform(ProceedingJoinPoint pjp, Counted counted) throws Throwable {
         final Method method = ((MethodSignature) pjp.getSignature()).getMethod();
         final boolean stopWhenCompleted = CompletionStage.class.isAssignableFrom(method.getReturnType());
 

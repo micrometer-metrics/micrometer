@@ -35,6 +35,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  * Unit tests for the {@link CountedAspect} aspect.
  *
  * @author Ali Dehghani
+ * @author Tommy Ludwig
+ * @author Johnny Lim
  */
 class CountedAspectTest {
 
@@ -287,6 +289,53 @@ class CountedAspectTest {
             this.complete = true;
             this.withException = withException;
             notifyAll();
+        }
+
+    }
+
+    @Test
+    void countClassWithSuccess() {
+        CountedClassService service = getAdvisedService(new CountedClassService());
+
+        service.hello();
+
+        assertThat(meterRegistry.get("class.counted")
+            .tag("class", "io.micrometer.core.aop.CountedAspectTest$CountedClassService")
+            .tag("method", "hello")
+            .tag("result", "success")
+            .tag("exception", "none")
+            .counter()
+            .count()).isEqualTo(1);
+    }
+
+    @Test
+    void countClassWithFailure() {
+        CountedClassService service = getAdvisedService(new CountedClassService());
+
+        assertThatThrownBy(() -> service.fail()).isInstanceOf(RuntimeException.class);
+
+        meterRegistry.forEachMeter((m) -> {
+            System.out.println(m.getId().getTags());
+        });
+
+        assertThat(meterRegistry.get("class.counted")
+            .tag("class", "io.micrometer.core.aop.CountedAspectTest$CountedClassService")
+            .tag("method", "fail")
+            .tag("result", "failure")
+            .tag("exception", "RuntimeException")
+            .counter()
+            .count()).isEqualTo(1);
+    }
+
+    @Counted("class.counted")
+    static class CountedClassService {
+
+        String hello() {
+            return "hello";
+        }
+
+        void fail() {
+            throw new RuntimeException("Oops");
         }
 
     }
