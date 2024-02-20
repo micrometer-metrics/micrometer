@@ -35,7 +35,7 @@ public class DefaultHttpClientObservationConvention implements HttpClientObserva
     /**
      * Instance of this {@link DefaultHttpClientObservationConvention}.
      */
-    public static DefaultHttpClientObservationConvention INSTANCE = new DefaultHttpClientObservationConvention();
+    public static final DefaultHttpClientObservationConvention INSTANCE = new DefaultHttpClientObservationConvention();
 
     @Override
     public KeyValues getLowCardinalityKeyValues(HttpClientContext context) {
