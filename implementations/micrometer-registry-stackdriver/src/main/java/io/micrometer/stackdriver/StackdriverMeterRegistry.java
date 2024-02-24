@@ -152,18 +152,18 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
         super.stop();
     }
 
-    private void shutdownClientIfNecessary(final boolean quietly) {
+    private void shutdownClientIfNecessary(boolean quietly) {
         if (client == null)
             return;
         if (!client.isShutdown()) {
             try {
                 client.shutdownNow();
-                final boolean terminated = client.awaitTermination(10, TimeUnit.SECONDS);
+                boolean terminated = client.awaitTermination(10, TimeUnit.SECONDS);
                 if (!terminated) {
                     logger.warn("The metric service client failed to terminate within the timeout");
                 }
             }
-            catch (final RuntimeException e) {
+            catch (RuntimeException e) {
                 if (quietly) {
                     logger.warn("Failed to shutdown the metric service client", e);
                 }
@@ -171,7 +171,7 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
                     throw e;
                 }
             }
-            catch (final InterruptedException e) {
+            catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 return;
             }
@@ -179,7 +179,7 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
         try {
             client.close();
         }
-        catch (final RuntimeException e) {
+        catch (RuntimeException e) {
             if (quietly) {
                 logger.warn("Failed to close metric service client", e);
             }

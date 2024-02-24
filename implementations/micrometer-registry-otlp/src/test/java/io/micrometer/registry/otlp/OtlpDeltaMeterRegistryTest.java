@@ -823,7 +823,6 @@ class OtlpDeltaMeterRegistryTest extends OtlpMeterRegistryTest {
 
         TestOtlpMeterRegistry(OtlpConfig otlpConfig, Clock clock) {
             super(otlpConfig, clock);
-            this.lastScheduledPublishStartTime = super.getLastScheduledPublishStartTime();
         }
 
         @Override

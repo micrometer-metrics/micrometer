@@ -16,13 +16,13 @@
 package io.micrometer.core.instrument.distribution;
 
 import io.micrometer.core.instrument.MockClock;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
  * Tests for {@link TimeWindowMax}
@@ -71,8 +71,7 @@ class TimeWindowMaxTest {
 
     @Test
     void throwsExceptionWhenRotateFrequency0() {
-        Assertions.assertThatThrownBy(() -> new TimeWindowMax(clock, 0, 3))
-            .isInstanceOf(IllegalArgumentException.class)
+        assertThatThrownBy(() -> new TimeWindowMax(clock, 0, 3)).isInstanceOf(IllegalArgumentException.class)
             .withFailMessage("Rotate frequency must be a positive number");
     }
 

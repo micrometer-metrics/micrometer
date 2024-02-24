@@ -120,8 +120,9 @@ public final class KeyValues implements Iterable<KeyValue> {
         if (elements == null || !elements.iterator().hasNext()) {
             return this;
         }
-        Function<E, KeyValue> mapper = element -> KeyValue.of(element, keyExtractor, valueExtractor);
-        Iterable<KeyValue> keyValues = () -> StreamSupport.stream(elements.spliterator(), false).map(mapper).iterator();
+        Iterable<KeyValue> keyValues = () -> StreamSupport.stream(elements.spliterator(), false)
+            .map(element -> KeyValue.of(element, keyExtractor, valueExtractor))
+            .iterator();
         return and(keyValues);
     }
 
