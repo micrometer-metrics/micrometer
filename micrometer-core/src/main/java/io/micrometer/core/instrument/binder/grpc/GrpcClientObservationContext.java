@@ -111,6 +111,11 @@ public class GrpcClientObservationContext extends RequestReplySenderContext<Meta
         return this.headers;
     }
 
+    /**
+     * Set response headers.
+     * @param headers response headers
+     * @since 1.13.0
+     */
     public void setHeaders(Metadata headers) {
         this.headers = headers;
     }
@@ -124,6 +129,11 @@ public class GrpcClientObservationContext extends RequestReplySenderContext<Meta
         return this.trailers;
     }
 
+    /**
+     * Set trailers.
+     * @param trailers
+     * @since 1.13.0
+     */
     public void setTrailers(Metadata trailers) {
         this.trailers = trailers;
     }
