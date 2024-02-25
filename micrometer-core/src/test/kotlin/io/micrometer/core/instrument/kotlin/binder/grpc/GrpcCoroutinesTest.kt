@@ -33,7 +33,6 @@ import io.micrometer.observation.Observation
 import io.micrometer.observation.ObservationRegistry
 import io.micrometer.observation.ObservationTextPublisher
 import org.assertj.core.api.Assertions.assertThat
-import org.assertj.core.api.ThrowingConsumer
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -74,12 +73,7 @@ class GrpcCoroutinesTest {
         stub.unaryRpc(request)
 
         assertThat<Observation>(echoServiceCoroutine.lastObservation).isNotNull()
-            .satisfies(
-                ThrowingConsumer { observation: Observation ->
-                    assertThat(observation.getContext().contextualName)
-                        .isEqualTo("grpc.testing.SimpleService/UnaryRpc")
-                },
-            )
+            .extracting { it.context.contextualName }.isEqualTo("grpc.testing.SimpleService/UnaryRpc")
     }
 
     // This service has the same rpc method that the one defined in SimpleServiceGrpc
