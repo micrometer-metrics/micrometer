@@ -365,6 +365,8 @@ subprojects {
 
                     packageExcludes = ['io.micrometer.shaded.*', 'io.micrometer.statsd.internal']
 
+                    fieldExcludes = ['io.micrometer.core.instrument.binder.jdk.DefaultHttpClientObservationConvention#INSTANCE']
+
                     onlyIf { compatibleVersion != 'SKIP' }
                 }
 
