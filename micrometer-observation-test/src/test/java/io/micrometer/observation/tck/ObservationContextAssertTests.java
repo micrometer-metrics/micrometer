@@ -254,6 +254,22 @@ class ObservationContextAssertTests {
     }
 
     @Test
+    void should_throw_exception_when_low_cardinality_key_value_missing_but_in_high_cardinality_keys() {
+        Observation observation = Observation.start("foo", context, registry);
+        observation.lowCardinalityKeyValue("low", "l");
+        observation.highCardinalityKeyValue("high", "h");
+
+        thenThrownBy(() -> assertThat(context).hasLowCardinalityKeyValue("high", "h"))
+            .isInstanceOf(AssertionError.class)
+            .hasMessage(
+                    "Observation should have a low cardinality tag with key <high> but it was in the wrong (high) cardinality keys. List of all low cardinality keys <[low]>");
+        thenThrownBy(() -> assertThat(context).hasLowCardinalityKeyValueWithKey("high"))
+            .isInstanceOf(AssertionError.class)
+            .hasMessage(
+                    "Observation should have a low cardinality tag with key <high> but it was in the wrong (high) cardinality keys. List of all low cardinality keys <[low]>");
+    }
+
+    @Test
     void should_not_throw_exception_when_high_cardinality_key_value_exists() {
         Observation observation = Observation.start("foo", context, registry);
         observation.highCardinalityKeyValue("foo", "bar");
@@ -271,6 +287,22 @@ class ObservationContextAssertTests {
             .isInstanceOf(AssertionError.class);
         thenThrownBy(() -> assertThat(context).hasHighCardinalityKeyValueWithKey("bar"))
             .isInstanceOf(AssertionError.class);
+    }
+
+    @Test
+    void should_throw_exception_when_high_cardinality_key_value_missing_but_in_low_cardinality_keys() {
+        Observation observation = Observation.start("foo", context, registry);
+        observation.lowCardinalityKeyValue("low", "l");
+        observation.highCardinalityKeyValue("high", "h");
+
+        thenThrownBy(() -> assertThat(context).hasHighCardinalityKeyValue("low", "l"))
+            .isInstanceOf(AssertionError.class)
+            .hasMessage(
+                    "Observation should have a high cardinality tag with key <low> but it was in the wrong (low) cardinality keys. List of all high cardinality keys <[high]>");
+        thenThrownBy(() -> assertThat(context).hasHighCardinalityKeyValueWithKey("low"))
+            .isInstanceOf(AssertionError.class)
+            .hasMessage(
+                    "Observation should have a high cardinality tag with key <low> but it was in the wrong (low) cardinality keys. List of all high cardinality keys <[high]>");
     }
 
     @Test

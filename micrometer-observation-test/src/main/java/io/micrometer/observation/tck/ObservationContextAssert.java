@@ -229,6 +229,11 @@ public class ObservationContextAssert<SELF extends ObservationContextAssert<SELF
     public SELF hasLowCardinalityKeyValueWithKey(String key) {
         isNotNull();
         if (this.actual.getLowCardinalityKeyValues().stream().noneMatch(tag -> tag.getKey().equals(key))) {
+            if (this.actual.getHighCardinalityKeyValue(key) != null) {
+                failWithMessage(
+                        "Observation should have a low cardinality tag with key <%s> but it was in the wrong (high) cardinality keys. List of all low cardinality keys <%s>",
+                        key, lowCardinalityKeys());
+            }
             failWithMessage(
                     "Observation should have a low cardinality tag with key <%s> but it's not there. List of all keys <%s>",
                     key, lowCardinalityKeys());
@@ -301,6 +306,11 @@ public class ObservationContextAssert<SELF extends ObservationContextAssert<SELF
     public SELF hasHighCardinalityKeyValueWithKey(String key) {
         isNotNull();
         if (this.actual.getHighCardinalityKeyValues().stream().noneMatch(tag -> tag.getKey().equals(key))) {
+            if (this.actual.getLowCardinalityKeyValue(key) != null) {
+                failWithMessage(
+                        "Observation should have a high cardinality tag with key <%s> but it was in the wrong (low) cardinality keys. List of all high cardinality keys <%s>",
+                        key, highCardinalityKeys());
+            }
             failWithMessage(
                     "Observation should have a high cardinality tag with key <%s> but it's not there. List of all keys <%s>",
                     key, highCardinalityKeys());
