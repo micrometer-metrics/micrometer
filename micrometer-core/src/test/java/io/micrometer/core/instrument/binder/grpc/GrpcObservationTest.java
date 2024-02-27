@@ -736,11 +736,6 @@ class GrpcObservationTest {
                 ServerCallHandler<ReqT, RespT> next) {
             SimpleForwardingServerCall<ReqT, RespT> serverCall = new SimpleForwardingServerCall<>(call) {
                 @Override
-                protected ServerCall<ReqT, RespT> delegate() {
-                    return super.delegate();
-                }
-
-                @Override
                 public void sendHeaders(Metadata headers) {
                     headers.put(SERVER_KEY, "server-response");
                     super.sendHeaders(headers);
