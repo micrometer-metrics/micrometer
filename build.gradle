@@ -305,16 +305,16 @@ subprojects {
                 }
 
                 src "${rootUrl}io/micrometer/${project.name}/${compatibleVersion}/${project.name}-${compatibleVersion}.jar"
-                dest "${buildDir}/baselineLibs/${project.name}-${compatibleVersion}.jar"
+                dest layout.buildDirectory.file("baselineLibs/${project.name}-${compatibleVersion}.jar")
             }
 
             task japicmp(type: me.champeau.gradle.japicmp.JapicmpTask) {
-                oldClasspath.from(files("${buildDir}/baselineLibs/${project.name}-${compatibleVersion}.jar"))
+                oldClasspath.from(layout.buildDirectory.file("baselineLibs/${project.name}-${compatibleVersion}.jar"))
                 newClasspath.from(files(jar.archiveFile, project(":${project.name}").jar))
                 onlyBinaryIncompatibleModified = true
                 failOnModification = true
                 failOnSourceIncompatibility = true
-                txtOutputFile = file("${project.buildDir}/reports/japi.txt")
+                txtOutputFile = project.layout.buildDirectory.file("reports/japi.txt")
                 ignoreMissingClasses = true
                 includeSynthetic = true
 
