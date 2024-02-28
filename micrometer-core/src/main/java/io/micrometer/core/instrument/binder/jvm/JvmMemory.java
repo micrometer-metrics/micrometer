@@ -37,13 +37,16 @@ class JvmMemory {
     }
 
     static boolean isConcurrentPhase(String cause, String name) {
-        return "No GC".equals(cause) || "Shenandoah Cycles".equals(name) || "ZGC Cycles".equals(name)
-                || (name.startsWith("GPGC") && !name.endsWith("Pauses"));
+        return "No GC".equals(cause) //
+                || "Shenandoah Cycles".equals(name) // Shenandoah
+                || (name.startsWith("ZGC") && name.endsWith("Cycles")) // ZGC
+                || (name.startsWith("GPGC") && !name.endsWith("Pauses")) // Zing GPGC
+        ;
     }
 
     static boolean isAllocationPool(String name) {
-        return name != null && (name.endsWith("Eden Space") || "Shenandoah".equals(name) || "ZHeap".equals(name) // ZGC
-                                                                                                                 // non-generational
+        return name != null && (name.endsWith("Eden Space") || "Shenandoah".equals(name) //
+                || "ZHeap".equals(name) // ZGC non-generational
                 || "ZGC Young Generation".equals(name) // generational ZGC
                 || name.endsWith("New Gen") // Zing GPGC
                 || name.endsWith("nursery-allocate") || name.endsWith("-eden") // "balanced-eden"

@@ -25,10 +25,9 @@ import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.binder.jvm.JvmGcMetrics.GcMetricsNotificationListener;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledForJreRange;
+import org.junit.jupiter.api.condition.EnabledIf;
 import org.junit.jupiter.api.condition.JRE;
 
 import javax.management.ListenerNotFoundException;
@@ -37,6 +36,7 @@ import javax.management.NotificationEmitter;
 import javax.management.NotificationListener;
 import java.lang.management.GarbageCollectorMXBean;
 import java.lang.management.ManagementFactory;
+import java.lang.management.MemoryManagerMXBean;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -60,13 +60,7 @@ class JvmGcMetricsTest {
 
     SimpleMeterRegistry registry = new SimpleMeterRegistry();
 
-    JvmGcMetrics binder;
-
-    @BeforeEach
-    void beforeEach() {
-        this.binder = new JvmGcMetrics(DEFAULT_TAGS);
-        binder.bindTo(registry);
-    }
+    JvmGcMetrics binder = new JvmGcMetrics(DEFAULT_TAGS);
 
     @Test
     void noJvmImplementationSpecificApiSignatures() {
@@ -83,6 +77,7 @@ class JvmGcMetricsTest {
 
     @Test
     void gcMetricsAvailableAfterGc() {
+        binder.bindTo(registry);
         System.gc();
         await().timeout(200, TimeUnit.MILLISECONDS)
             .alias("NotificationListener takes time after GC")
@@ -104,12 +99,35 @@ class JvmGcMetricsTest {
     }
 
     @Test
-    @Disabled("Garbage collection can happen before JvmGcMetrics are registered, making our metrics not match overall counts/timings")
+    @EnabledIf(value = "isPauseCyclesGc", disabledReason = "test only works with certain collectors")
     // available for some platforms and distributions earlier, but broadest availability
     // in an LTS is 17
     @EnabledForJreRange(min = JRE.JAVA_17)
-    void gcTimingIsCorrect() {
+    void gcTimingIsCorrectForPauseCycleCollectors() {
+        // get initial GC timing metrics from JMX, if any
+        // GC could have happened before this test due to testing infrastructure
+        // If it did, it will not be captured in the metrics
+        long initialPausePhaseCount = 0;
+        long initialPauseTimeMs = 0;
+        long initialConcurrentPhaseCount = 0;
+        long initialConcurrentTimeMs = 0;
+        for (GarbageCollectorMXBean mbean : ManagementFactory.getGarbageCollectorMXBeans()) {
+            if (mbean.getName().contains("Pauses")) {
+                initialPausePhaseCount += mbean.getCollectionCount();
+                initialPauseTimeMs += mbean.getCollectionTime();
+            }
+            else if (mbean.getName().contains("Cycles")) {
+                initialConcurrentPhaseCount += mbean.getCollectionCount();
+                initialConcurrentTimeMs += mbean.getCollectionTime();
+            }
+        }
+
+        // bind to start tracking GC metrics with Micrometer
+        binder.bindTo(registry);
+        // cause GC to record new metrics
         System.gc();
+
+        // get metrics from JMX again to obtain difference
         long pausePhaseCount = 0;
         long pauseTimeMs = 0;
         long concurrentPhaseCount = 0;
@@ -123,16 +141,29 @@ class JvmGcMetricsTest {
                 concurrentPhaseCount += mbean.getCollectionCount();
                 concurrentTimeMs += mbean.getCollectionTime();
             }
-            System.out
-                .println(mbean.getName() + " (" + mbean.getCollectionCount() + ") " + mbean.getCollectionTime() + "ms");
         }
+
+        // subtract any difference
+        pausePhaseCount -= initialPausePhaseCount;
+        pauseTimeMs -= initialPauseTimeMs;
+        concurrentPhaseCount -= initialConcurrentPhaseCount;
+        concurrentTimeMs -= initialConcurrentTimeMs;
+
         checkPhaseCount(pausePhaseCount, concurrentPhaseCount);
         checkCollectionTime(pauseTimeMs, concurrentTimeMs);
+    }
+
+    boolean isPauseCyclesGc() {
+        return ManagementFactory.getGarbageCollectorMXBeans()
+            .stream()
+            .map(MemoryManagerMXBean::getName)
+            .anyMatch(name -> name.contains("Pauses"));
     }
 
     @Test
     @Issue("gh-2872")
     void sizeMetricsNotSetToZero() throws InterruptedException {
+        binder.bindTo(registry);
         GcMetricsNotificationListener gcMetricsNotificationListener = binder.gcNotificationListener;
         NotificationCapturingListener capturingListener = new NotificationCapturingListener();
         Collection<Runnable> notificationListenerCleanUpRunnables = new ArrayList<>();
