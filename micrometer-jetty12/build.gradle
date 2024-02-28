@@ -7,8 +7,9 @@ if (!javaLanguageVersion.canCompileOrRun(17)) {
 
 dependencies {
     api project(":micrometer-core")
-    optionalApi libs.jetty12Server
 
+    optionalApi libs.jetty12Server
+    optionalApi libs.jetty12Client
 
     testRuntimeOnly(libs.logback14) {
         version {
@@ -16,8 +17,11 @@ dependencies {
         }
     }
 
-    testImplementation 'org.junit.jupiter:junit-jupiter'
-    testImplementation 'org.assertj:assertj-core'
+    testImplementation project(":micrometer-observation-test")
+    testImplementation project(":micrometer-test")
+    testImplementation libs.junitJupiter
+    testImplementation libs.assertj
+    testImplementation libs.wiremock
 }
 
 java {
