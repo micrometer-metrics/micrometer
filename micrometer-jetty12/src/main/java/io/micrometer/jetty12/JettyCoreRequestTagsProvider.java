@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 VMware, Inc.
+ * Copyright 2024 VMware, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 
 package io.micrometer.jetty12;
 
-import io.micrometer.core.annotation.Incubating;
 import io.micrometer.core.instrument.Tag;
 import org.eclipse.jetty.server.Request;
 
@@ -24,9 +23,8 @@ import org.eclipse.jetty.server.Request;
  * Provides {@link Tag Tags} for Jetty Core request handling.
  *
  * @author Joakim Erdfelt
- * @since 1.11.0
+ * @since 1.13.0
  */
-@Incubating(since = "1.11.0")
 @FunctionalInterface
 public interface JettyCoreRequestTagsProvider {
 

@@ -7,14 +7,9 @@ if (!javaLanguageVersion.canCompileOrRun(17)) {
 
 dependencies {
     api project(":micrometer-core")
-    api libs.jetty12Server
+    optionalApi libs.jetty12Server
 
-    // Test sample project with SLFJ4 2.x / Logback 1.4
-    runtimeOnly(libs.logback14) {
-        version {
-            strictly libs.logback14.get().version
-        }
-    }
+
     testRuntimeOnly(libs.logback14) {
         version {
             strictly libs.logback14.get().version
