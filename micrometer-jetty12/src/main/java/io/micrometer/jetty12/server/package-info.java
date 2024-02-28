@@ -14,25 +14,12 @@
  * limitations under the License.
  */
 
-package io.micrometer.jetty12;
-
-import io.micrometer.core.instrument.Tag;
-import org.eclipse.jetty.server.Request;
-
 /**
- * Provides {@link Tag Tags} for Jetty Core request handling.
- *
- * @author Joakim Erdfelt
- * @since 1.13.0
+ * Instrumentation for Jetty 12 server.
  */
-@FunctionalInterface
-public interface JettyCoreRequestTagsProvider {
+@NonNullApi
+@NonNullFields
+package io.micrometer.jetty12.server;
 
-    /**
-     * Provides tags to be associated with metrics for the given {@code request}.
-     * @param request the request
-     * @return tags to associate with metrics for the request
-     */
-    Iterable<Tag> getTags(Request request);
-
-}
+import io.micrometer.common.lang.NonNullApi;
+import io.micrometer.common.lang.NonNullFields;

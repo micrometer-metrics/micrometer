@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.micrometer.jetty12;
+package io.micrometer.jetty12.server;
 
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
