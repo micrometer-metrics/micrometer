@@ -645,7 +645,6 @@ class StepMeterRegistryTest {
 
         MyStepMeterRegistry(StepRegistryConfig config, Clock clock) {
             super(config, clock);
-            this.lastScheduledPublishStartTime = super.getLastScheduledPublishStartTime();
         }
 
         void setPrePublishAction(Runnable prePublishAction) {

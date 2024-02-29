@@ -107,7 +107,7 @@ class KeyValuesTest {
 
     // @Issue("#3851")
     @Test
-    void nullKeyValuesShouldProduceEmptyTags() {
+    void nullKeyValuesShouldProduceEmptyKeyValues() {
         assertThat(KeyValues.of((String) null)).isSameAs(KeyValues.empty());
     }
 
