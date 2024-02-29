@@ -60,6 +60,10 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
 
     private final boolean useDynatraceSummaryInstruments;
 
+    private final boolean shouldAddZeroPercentile;
+
+    private final DenyZeroPercentileMeterFilter zeroPercentileMeterFilter = new DenyZeroPercentileMeterFilter();
+
     private final AbstractDynatraceExporter exporter;
 
     @SuppressWarnings("deprecation")
@@ -73,17 +77,22 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
         super(config, clock);
 
         useDynatraceSummaryInstruments = config.useDynatraceSummaryInstruments();
+        // zero percentile is needed only when using the V2 exporter and not using
+        // Dynatrace summary instruments.
+        shouldAddZeroPercentile = config.apiVersion() == DynatraceApiVersion.V2 && !useDynatraceSummaryInstruments;
 
         if (config.apiVersion() == DynatraceApiVersion.V2) {
             logger.info("Exporting to Dynatrace metrics API v2");
             this.exporter = new DynatraceExporterV2(config, clock, httpClient);
-            // Not used for Timer and DistributionSummary in V2 anymore, but still used
-            // for the other timer types.
-            registerMinPercentile();
         }
         else {
             logger.info("Exporting to Dynatrace metrics API v1");
             this.exporter = new DynatraceExporterV1(config, clock, httpClient);
+        }
+
+        if (shouldAddZeroPercentile) {
+            // zero percentiles automatically added should not be exported.
+            this.config().meterFilter(zeroPercentileMeterFilter);
         }
 
         start(threadFactory);
@@ -109,7 +118,12 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
         if (useDynatraceSummaryInstruments) {
             return new DynatraceDistributionSummary(id, clock, distributionStatisticConfig, scale);
         }
-        return super.newDistributionSummary(id, distributionStatisticConfig, scale);
+
+        DistributionStatisticConfig config = distributionStatisticConfig;
+        if (shouldAddZeroPercentile) {
+            config = addZeroPercentileIfMissing(id, distributionStatisticConfig);
+        }
+        return super.newDistributionSummary(id, config, scale);
     }
 
     @Override
@@ -119,87 +133,76 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
             return new DynatraceTimer(id, clock, distributionStatisticConfig, pauseDetector,
                     exporter.getBaseTimeUnit());
         }
-        return super.newTimer(id, distributionStatisticConfig, pauseDetector);
+
+        DistributionStatisticConfig config = distributionStatisticConfig;
+        if (shouldAddZeroPercentile) {
+            config = addZeroPercentileIfMissing(id, distributionStatisticConfig);
+        }
+        return super.newTimer(id, config, pauseDetector);
     }
 
     @Override
     protected LongTaskTimer newLongTaskTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig) {
         if (useDynatraceSummaryInstruments) {
             return new DynatraceLongTaskTimer(id, clock, exporter.getBaseTimeUnit(), distributionStatisticConfig,
-                    false);
+                false);
         }
-        return super.newLongTaskTimer(id, distributionStatisticConfig);
+
+        DistributionStatisticConfig config = distributionStatisticConfig;
+        if (shouldAddZeroPercentile) {
+            config = addZeroPercentileIfMissing(id, distributionStatisticConfig);
+        }
+        return super.newLongTaskTimer(id, config);
     }
 
-    /**
-     * As the micrometer summary statistics (DistributionSummary, and a number of timer
-     * meter types) do not provide the minimum values that are required by Dynatrace to
-     * ingest summary metrics, we add the 0th percentile to each summary statistic and use
-     * that as the minimum value.
-     */
-    private void registerMinPercentile() {
-        config().meterFilter(new MeterFilter() {
-            private final Set<String> metersWithArtificialZeroPercentile = ConcurrentHashMap.newKeySet();
+    private static class DenyZeroPercentileMeterFilter implements MeterFilter {
 
-            /**
-             * Adds 0th percentile if the user hasn't already added and tracks those meter
-             * names where the 0th percentile was artificially added.
-             */
-            @Override
-            public DistributionStatisticConfig configure(Meter.Id id, DistributionStatisticConfig config) {
-                if (useDynatraceSummaryInstruments && dynatraceInstrumentTypeExists(id)) {
-                    // do not add artificial 0 percentile when using Dynatrace instruments
-                    return config;
-                }
+        private final Set<String> metersWithArtificialZeroPercentile = ConcurrentHashMap.newKeySet();
 
-                double[] percentiles;
+        private boolean hasArtificialZeroPercentile(Meter.Id id) {
+            return metersWithArtificialZeroPercentile.contains(id.getName()) && "0".equals(id.getTag("phi"));
+        }
 
-                double[] configPercentiles = config.getPercentiles();
-                if (configPercentiles == null) {
-                    percentiles = new double[] { 0 };
-                    metersWithArtificialZeroPercentile.add(id.getName() + ".percentile");
-                }
-                else if (!containsZeroPercentile(config)) {
-                    percentiles = new double[configPercentiles.length + 1];
-                    System.arraycopy(configPercentiles, 0, percentiles, 0, configPercentiles.length);
-                    percentiles[configPercentiles.length] = 0; // theoretically this is
-                                                               // already zero
-                    metersWithArtificialZeroPercentile.add(id.getName() + ".percentile");
-                }
-                else {
-                    percentiles = configPercentiles;
-                }
+        @Override
+        public MeterFilterReply accept(Meter.Id id) {
+            return hasArtificialZeroPercentile(id) ? DENY : NEUTRAL;
+        }
 
-                return DistributionStatisticConfig.builder().percentiles(percentiles).build().merge(config);
-            }
+        public void addMeterId(Meter.Id id) {
+            metersWithArtificialZeroPercentile.add(id.getName() + ".percentile");
+        }
 
-            /**
-             * Denies artificially added 0th percentile meters.
-             */
-            @Override
-            public MeterFilterReply accept(Meter.Id id) {
-                return hasArtificialZerothPercentile(id) ? DENY : NEUTRAL;
-            }
-
-            private boolean containsZeroPercentile(DistributionStatisticConfig config) {
-                return Arrays.stream(config.getPercentiles()).anyMatch(percentile -> percentile == 0);
-            }
-
-            private boolean hasArtificialZerothPercentile(Meter.Id id) {
-                return metersWithArtificialZeroPercentile.contains(id.getName()) && "0".equals(id.getTag("phi"));
-            }
-        });
     }
 
-    private boolean dynatraceInstrumentTypeExists(Meter.Id id) {
-        switch (id.getType()) {
-            case DISTRIBUTION_SUMMARY:
-            case TIMER:
-            case LONG_TASK_TIMER:
-                return true;
-            default:
-                return false;
+    private boolean containsZero(double[] percentiles) {
+        return Arrays.stream(percentiles).anyMatch(percentile -> percentile == 0);
+    }
+
+    private DistributionStatisticConfig addZeroPercentileIfMissing(Meter.Id id,
+                                                                   DistributionStatisticConfig distributionStatisticConfig) {
+        double[] percentiles;
+
+        double[] configPercentiles = distributionStatisticConfig.getPercentiles();
+        if (configPercentiles == null) {
+            percentiles = new double[] { 0. };
+            zeroPercentileMeterFilter.addMeterId(id);
         }
+        else if (!containsZero(configPercentiles)) {
+            percentiles = new double[configPercentiles.length + 1];
+            System.arraycopy(configPercentiles, 0, percentiles, 0, configPercentiles.length);
+            // theoretically this is already zero
+            percentiles[configPercentiles.length] = 0;
+            zeroPercentileMeterFilter.addMeterId(id);
+        }
+        else {
+            // Zero percentile is explicitly added to the config, no need to add it to drop list.
+            return distributionStatisticConfig;
+        }
+
+        return DistributionStatisticConfig.builder()
+            .percentiles(percentiles)
+            .build()
+            .merge(distributionStatisticConfig);
     }
 
     public static class Builder {
