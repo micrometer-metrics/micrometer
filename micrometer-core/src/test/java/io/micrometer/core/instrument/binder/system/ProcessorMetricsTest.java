@@ -55,7 +55,7 @@ class ProcessorMetricsTest {
         else {
             assertThat(registry.get("system.load.average.1m").gauge().value()).isNotNegative();
         }
-        assertThat(registry.get("process.cpu.time").functionCounter().count()).isNotNegative();
+        assertThat(registry.get("process.cpu.time").functionCounter().count()).isPositive();
     }
 
     @Test
@@ -66,6 +66,7 @@ class ProcessorMetricsTest {
         assertThat(registry.get("system.cpu.usage").gauge().value()).isNotNegative();
         assertThat(registry.get("process.cpu.usage").gauge().value()).isNotNegative();
         // end::example[]
+        assertThat(registry.get("process.cpu.time").functionCounter().count()).isPositive();
     }
 
     @Test
@@ -84,6 +85,7 @@ class ProcessorMetricsTest {
         assertThat(registry.get("process.cpu.usage").gauge().value()).isGreaterThanOrEqualTo(-1);
         await().atMost(Duration.ofMillis(200))
             .untilAsserted(() -> assertThat(registry.get("process.cpu.usage").gauge().value()).isPositive());
+        assertThat(registry.get("process.cpu.time").functionCounter().count()).isPositive();
     }
 
     private boolean isOpenJ9() {

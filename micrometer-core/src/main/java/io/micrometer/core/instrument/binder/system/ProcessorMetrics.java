@@ -107,43 +107,39 @@ public class ProcessorMetrics implements MeterBinder {
         }
 
         if (systemCpuUsage != null) {
-            Gauge.builder("system.cpu.usage", operatingSystemBean, x -> invokeDoubleFunction(systemCpuUsage))
+            Gauge.builder("system.cpu.usage", operatingSystemBean, x -> invoke(systemCpuUsage))
                 .tags(tags)
                 .description("The \"recent cpu usage\" of the system the application is running in")
                 .register(registry);
         }
 
         if (processCpuUsage != null) {
-            Gauge.builder("process.cpu.usage", operatingSystemBean, x -> invokeDoubleFunction(processCpuUsage))
+            Gauge.builder("process.cpu.usage", operatingSystemBean, x -> invoke(processCpuUsage))
                 .tags(tags)
                 .description("The \"recent cpu usage\" for the Java Virtual Machine process")
                 .register(registry);
         }
 
-        if (invokeLongFunction(processCpuTime) >= 0L) {
-            FunctionCounter.builder("process.cpu.time", operatingSystemBean, x -> invokeLongFunction(processCpuTime))
+        if (processCpuTime != null) {
+            FunctionCounter.builder("process.cpu.time", operatingSystemBean, x -> invoke(processCpuTime))
                 .tags(tags)
-                .description("The \"cumulated cpu time\" used by the Java Virtual Machine process")
+                .description("The \"cpu time\" used by the Java Virtual Machine process")
                 .baseUnit("ns")
                 .register(registry);
         }
     }
 
-    private double invokeDoubleFunction(@Nullable Method method) {
-        return invoke(method, Double.NaN).doubleValue();
-    }
-
-    private long invokeLongFunction(@Nullable Method method) {
-        return invoke(method, -1L).longValue();
-    }
-
-    private Number invoke(@Nullable Method method, Number defaultValue) {
+    private double invoke(@Nullable Method method) {
         try {
-            return method != null ? (Number) method.invoke(operatingSystemBean) : defaultValue;
+            return method != null ? toDouble((Number) method.invoke(operatingSystemBean)) : Double.NaN;
         }
         catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
-            return defaultValue;
+            return Double.NaN;
         }
+    }
+
+    private double toDouble(@Nullable Number number) {
+        return number != null ? number.doubleValue() : Double.NaN;
     }
 
     @Nullable
