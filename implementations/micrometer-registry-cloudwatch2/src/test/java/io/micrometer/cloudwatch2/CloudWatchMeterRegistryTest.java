@@ -28,8 +28,7 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -287,8 +286,9 @@ class CloudWatchMeterRegistryTest {
     @Test
     void shouldHandleAbortedExceptionDuringPutMetricDataCallWithoutFailing() {
         CloudWatchAsyncClient client = mock(CloudWatchAsyncClient.class);
-        when(client.putMetricData(isA(PutMetricDataRequest.class)))
-            .thenReturn(CompletableFuture.failedFuture(AbortedException.create("simulated")));
+        CompletableFuture<PutMetricDataResponse> future = new CompletableFuture<>();
+        future.completeExceptionally(AbortedException.create("simulated"));
+        when(client.putMetricData(isA(PutMetricDataRequest.class))).thenReturn(future);
 
         CloudWatchMeterRegistry registry = new CloudWatchMeterRegistry(config, clock, client);
         registry.counter("test").increment();
@@ -300,8 +300,9 @@ class CloudWatchMeterRegistryTest {
     @Test
     void shouldHandleExceptionsDuringPutMetricDataCallWithoutFailing() {
         CloudWatchAsyncClient client = mock(CloudWatchAsyncClient.class);
-        when(client.putMetricData(isA(PutMetricDataRequest.class)))
-            .thenReturn(CompletableFuture.failedFuture(new SocketTimeoutException("simulated")));
+        CompletableFuture<PutMetricDataResponse> future = new CompletableFuture<>();
+        future.completeExceptionally(new SocketTimeoutException("simulated"));
+        when(client.putMetricData(isA(PutMetricDataRequest.class))).thenReturn(future);
 
         CloudWatchMeterRegistry registry = new CloudWatchMeterRegistry(config, clock, client);
         registry.counter("test").increment();
@@ -311,11 +312,16 @@ class CloudWatchMeterRegistryTest {
     }
 
     @Test
-    @SuppressWarnings("deprecation")
     void shouldHandleTimeoutsDuringPutMetricDataCallWithoutFailing() {
         CloudWatchAsyncClient client = mock(CloudWatchAsyncClient.class);
-        when(client.putMetricData(isA(PutMetricDataRequest.class))).thenReturn(CompletableFuture.supplyAsync(() -> null,
-                CompletableFuture.delayedExecutor(config.readTimeout().toMillis() + 1_000, TimeUnit.MILLISECONDS)));
+        Executor nonExecutingExecutor = new Executor() {
+            @Override
+            public void execute(Runnable command) {
+                // intentionally noop
+            }
+        };
+        when(client.putMetricData(isA(PutMetricDataRequest.class)))
+            .thenReturn(CompletableFuture.supplyAsync(() -> null, nonExecutingExecutor));
 
         CloudWatchMeterRegistry registry = new CloudWatchMeterRegistry(config, clock, client);
         registry.counter("test").increment();
