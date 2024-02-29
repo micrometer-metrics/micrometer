@@ -34,7 +34,7 @@ class JettyClientMetricsWithObservationTest extends JettyClientMetricsTest {
         super.beforeEach();
         observationRegistry.observationConfig().observationHandler(new DefaultMeterObservationHandler(registry));
         this.httpClient.getRequestListeners().removeIf(listener -> true);
-        //noinspection deprecation
+        // noinspection deprecation
         this.httpClient.getRequestListeners()
             .add(JettyClientMetrics.builder(registry, (request, result) -> request.getURI().getPath())
                 .observationRegistry(observationRegistry)
