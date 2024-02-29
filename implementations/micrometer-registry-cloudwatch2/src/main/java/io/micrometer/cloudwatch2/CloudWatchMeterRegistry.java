@@ -48,6 +48,7 @@ import static java.util.stream.StreamSupport.stream;
  * @author Jon Schneider
  * @author Johnny Lim
  * @author Pierre-Yves B.
+ * @author Jonatan Ivanov
  * @since 1.2.0
  */
 public class CloudWatchMeterRegistry extends StepMeterRegistry {
@@ -131,10 +132,13 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
         try {
             @SuppressWarnings("deprecation")
             long readTimeoutMillis = config.readTimeout().toMillis();
-            latch.await(readTimeoutMillis, TimeUnit.MILLISECONDS);
+            boolean success = latch.await(readTimeoutMillis, TimeUnit.MILLISECONDS);
+            if (!success) {
+                logger.warn("metrics push to cloudwatch took longer than expected");
+            }
         }
         catch (InterruptedException e) {
-            logger.warn("metrics push to cloudwatch took longer than expected");
+            logger.warn("interrupted during sending metric data");
             throw e;
         }
     }
