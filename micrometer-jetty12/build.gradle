@@ -19,6 +19,9 @@ dependencies {
 
     testImplementation project(":micrometer-observation-test")
     testImplementation project(":micrometer-test")
+
+    testImplementation libs.httpcomponents.client
+
     testImplementation libs.junitJupiter
     testImplementation libs.assertj
     testImplementation libs.wiremock

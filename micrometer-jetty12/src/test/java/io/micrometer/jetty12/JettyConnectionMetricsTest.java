@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.samples.jetty12;
+package io.micrometer.jetty12;
 
 import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.binder.jetty.JettyConnectionMetrics;
