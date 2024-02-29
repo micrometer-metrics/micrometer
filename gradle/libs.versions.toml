@@ -185,7 +185,7 @@ restAssured = { module = "io.rest-assured:rest-assured", version.ref = "rest-ass
 retrofit2 = { module = "com.squareup.retrofit2:retrofit", version = "2.9.0" }
 signalfx = { module = "com.signalfx.public:signalfx-java", version.ref = "signalfx" }
 slf4jApi = { module = "org.slf4j:slf4j-api", version.ref = "slf4j" }
-slfj4Simple = "org.slf4j:slf4j-simple:1.7.36"
+slfj4Simple = { module = "org.slf4j:slf4j-simple", version.ref = "slf4j" }
 spectatorAtlas = { module = "com.netflix.spectator:spectator-reg-atlas", version.ref = "spectator-atlas" }
 spring-context = { module = "org.springframework:spring-context", version.ref = "spring" }
 spring-core = { module = "org.springframework:spring-core", version.ref = "spring" }
