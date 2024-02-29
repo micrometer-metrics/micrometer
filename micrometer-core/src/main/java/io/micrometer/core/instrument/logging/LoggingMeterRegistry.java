@@ -219,12 +219,12 @@ public class LoggingMeterRegistry extends StepMeterRegistry {
                 .format(Duration.ofNanos((long) TimeUtils.convert(time, getBaseTimeUnit(), TimeUnit.NANOSECONDS)));
         }
 
-        String rate(double rate) {
-            return humanReadableBaseUnit(rate / (double) config.step().getSeconds()) + "/s";
+        String rate(double value) {
+            return humanReadableBaseUnit(value / (double) config.step().getSeconds()) + "/s";
         }
 
-        String unitlessRate(double rate) {
-            return decimalOrNan(rate / (double) config.step().getSeconds()) + "/s";
+        String unitlessRate(double value) {
+            return decimalOrNan(value / (double) config.step().getSeconds()) + "/s";
         }
 
         String value(double value) {
