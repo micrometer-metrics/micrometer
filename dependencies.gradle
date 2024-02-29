@@ -19,7 +19,6 @@ def VERSIONS = [
         libs.newrelicApi,
         libs.signalfx,
         libs.okhttp,
-        libs.archunitJunit5,
         libs.wavefront,
         libs.dropwizardMetricsCore,
         libs.dropwizardMetricsGraphite,
