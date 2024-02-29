@@ -23,7 +23,9 @@ import org.eclipse.jetty.client.api.Result;
  * Default implementation of {@link JettyClientObservationConvention}.
  *
  * @since 1.11.0
+ * @deprecated since 1.13.0 in favor of the micrometer-jetty12 module
  */
+@Deprecated
 public class DefaultJettyClientObservationConvention implements JettyClientObservationConvention {
 
     public static DefaultJettyClientObservationConvention INSTANCE = new DefaultJettyClientObservationConvention();

@@ -45,9 +45,11 @@ import java.util.concurrent.atomic.AtomicInteger;
  *
  * @author Jon Schneider
  * @since 1.4.0
+ * @deprecated since 1.13.0 in favor of {@code TimedHandler} in the micrometer-jetty12 module
  */
 @NonNullApi
 @NonNullFields
+@Deprecated
 public class TimedHandler extends HandlerWrapper implements Graceful {
 
     private static final String SAMPLE_REQUEST_TIMER_ATTRIBUTE = "__micrometer_timer_sample";
