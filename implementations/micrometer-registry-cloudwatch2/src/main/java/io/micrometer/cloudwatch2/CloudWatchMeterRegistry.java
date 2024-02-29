@@ -127,6 +127,7 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
                 else {
                     logger.error("error sending metric data.", t);
                 }
+                logger.debug("failed PutMetricDataRequest: {}", putMetricDataRequest);
             }
             else {
                 logger.debug("published {} metrics with namespace:{}", metricData.size(),
