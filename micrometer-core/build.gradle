@@ -61,7 +61,12 @@ dependencies {
 
     // JUnit 5
     testImplementation 'org.junit.jupiter:junit-jupiter'
-    testImplementation 'com.tngtech.archunit:archunit-junit5'
+    testImplementation(libs.archunitJunit5) {
+        // avoid transitively pulling in slf4j 2
+        exclude group: "org.slf4j", module: "slf4j-api"
+    }
+    // Needed for LogbackMetrics tests
+    testImplementation libs.slf4jApi
 
     // Eclipse still needs this (as of 4.7.1a)
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
