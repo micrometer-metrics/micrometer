@@ -72,7 +72,7 @@ spectator-atlas = "1.7.7"
 spring = "5.3.31"
 spring-javaformat = "0.0.41"
 testcontainers = "1.19.5"
-tomcat = "8.5.98"
+tomcat = "8.5.99"
 wavefront = "3.4.3"
 # pinned to avoid issues with shaded slf4j version - see gh-3414
 wiremock = "2.33.2"
