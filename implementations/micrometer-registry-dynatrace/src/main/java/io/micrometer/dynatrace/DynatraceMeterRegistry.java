@@ -195,6 +195,7 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
         switch (id.getType()) {
             case DISTRIBUTION_SUMMARY:
             case TIMER:
+            case LONG_TASK_TIMER:
                 return true;
             default:
                 return false;
