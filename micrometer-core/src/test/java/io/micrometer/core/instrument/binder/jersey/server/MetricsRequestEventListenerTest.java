@@ -171,7 +171,7 @@ class MetricsRequestEventListenerTest extends JerseyTest {
             .count()).isEqualTo(1);
 
         assertThat(registry.get(METRIC_NAME)
-            .tags(tagsFrom("root", "406", "CLIENT_ERROR", "NotAcceptableException"))
+            .tags(tagsFrom("UNKNOWN", "406", "CLIENT_ERROR", "NotAcceptableException"))
             .timer()
             .count()).isEqualTo(1);
     }
