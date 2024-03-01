@@ -22,13 +22,13 @@ import io.micrometer.core.instrument.internal.DefaultLongTaskTimer;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Implementation of the LongTaskTimer that ensures produced data is consistent for
+ * {@code LongTaskTimer} implementation that ensures produced data is consistent for
  * exporting to Dynatrace.
  *
  * @author Georg Pirklbauer
  * @since 1.9.18
  */
-public class DynatraceLongTaskTimer extends DefaultLongTaskTimer implements DynatraceSummarySnapshotSupport {
+public final class DynatraceLongTaskTimer extends DefaultLongTaskTimer implements DynatraceSummarySnapshotSupport {
 
     public DynatraceLongTaskTimer(Id id, Clock clock, TimeUnit baseTimeUnit,
             DistributionStatisticConfig distributionStatisticConfig, boolean supportsAggregablePercentiles) {
@@ -52,18 +52,14 @@ public class DynatraceLongTaskTimer extends DefaultLongTaskTimer implements Dyna
     @Override
     public DynatraceSummarySnapshot takeSummarySnapshot(TimeUnit unit) {
         if (activeTasks() < 1) {
-            return DynatraceSummarySnapshot.NO_RECORDED_VALUES;
+            return DynatraceSummarySnapshot.EMPTY;
         }
 
         DynatraceSummary summary = new DynatraceSummary();
-
-        // iterate active samples and create a Dynatrace summary.
-        super.forEachActive(sample -> {
-            // sample.duration will return -1 if the task is already finished (only
-            // currently active tasks are measured).
-            // -1 will be ignored in recordNonNegative.
-            summary.recordNonNegative(sample.duration(unit));
-        });
+        // sample.duration(...) will return -1 if the task is already finished
+        // (only currently active tasks are measured).
+        // -1 will be ignored in recordNonNegative.
+        super.forEachActive(sample -> summary.recordNonNegative(sample.duration(unit)));
 
         return summary.takeSummarySnapshot();
     }
@@ -75,11 +71,11 @@ public class DynatraceLongTaskTimer extends DefaultLongTaskTimer implements Dyna
 
     @Override
     public DynatraceSummarySnapshot takeSummarySnapshotAndReset(TimeUnit unit) {
-        // LongTaskTimers record a snapshot of in-flight operations, e.g., the number of
+        // LongTaskTimer record a snapshot of in-flight operations, e.g.: the number of
         // active requests.
         // Therefore, the Snapshot needs to be created from scratch during the export.
-        // In takeSummarySnapshot() above, the Summary object is deleted at the end of the
-        // method, therefore effectively resetting the snapshot.
+        // In takeSummarySnapshot(TimeUnit) above, the Summary object is deleted at the
+        // end of the method, therefore effectively resetting the snapshot.
         return takeSummarySnapshot(unit);
     }
 
