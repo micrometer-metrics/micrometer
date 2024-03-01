@@ -13,7 +13,5 @@ dependencies {
 
     testRuntimeOnly libs.contextPropagation
 
-    testImplementation libs.junitJupiter
-    testImplementation libs.assertj
     testImplementation project(":micrometer-test")
 }
