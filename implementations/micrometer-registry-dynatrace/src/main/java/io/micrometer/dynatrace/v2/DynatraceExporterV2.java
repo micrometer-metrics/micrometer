@@ -282,7 +282,7 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
                 return Stream.empty();
             }
             return createSummaryLine(meter, snapshot.getMin(), snapshot.getMax(), snapshot.getTotal(),
-                snapshot.getCount());
+                    snapshot.getCount());
         }
 
         // fall back to default implementation if the meter is not DynatraceLongTaskTimer
