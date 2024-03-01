@@ -374,6 +374,26 @@ class TimedAspectTest {
         });
     }
 
+    @Test
+    void ignoreClassLevelAnnotationIfMethodLevelPresent() {
+        MeterRegistry registry = new SimpleMeterRegistry();
+
+        AspectJProxyFactory pf = new AspectJProxyFactory(new TimedClass());
+        pf.addAspect(new TimedAspect(registry));
+
+        TimedClass service = pf.getProxy();
+
+        service.annotatedOnMethod();
+
+        assertThatExceptionOfType(MeterNotFoundException.class).isThrownBy(() -> registry.get("call").timer());
+        assertThat(registry.get("annotatedOnMethod")
+            .tag("class", "io.micrometer.core.aop.TimedAspectTest$TimedClass")
+            .tag("method", "annotatedOnMethod")
+            .tag("extra", "tag2")
+            .timer()
+            .count()).isEqualTo(1);
+    }
+
     static class MeterTagsTests {
 
         ValueResolver valueResolver = parameter -> "Value from myCustomTagValueResolver [" + parameter + "]";
@@ -623,6 +643,10 @@ class TimedAspectTest {
     static class TimedClass {
 
         void call() {
+        }
+
+        @Timed(value = "annotatedOnMethod", extraTags = { "extra", "tag2" })
+        void annotatedOnMethod() {
         }
 
     }

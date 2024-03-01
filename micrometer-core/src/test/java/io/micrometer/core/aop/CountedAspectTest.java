@@ -28,8 +28,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Predicate;
 
 import static java.util.concurrent.CompletableFuture.supplyAsync;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.*;
 
 /**
  * Unit tests for the {@link CountedAspect} aspect.
@@ -37,6 +36,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  * @author Ali Dehghani
  * @author Tommy Ludwig
  * @author Johnny Lim
+ * @author Yanming Zhou
  */
 class CountedAspectTest {
 
@@ -327,6 +327,24 @@ class CountedAspectTest {
             .count()).isEqualTo(1);
     }
 
+    @Test
+    void ignoreClassLevelAnnotationIfMethodLevelPresent() {
+        CountedClassService service = getAdvisedService(new CountedClassService());
+
+        service.greet();
+
+        assertThatExceptionOfType(MeterNotFoundException.class)
+            .isThrownBy(() -> meterRegistry.get("class.counted").counter());
+
+        assertThat(meterRegistry.get("method.counted")
+            .tag("class", "io.micrometer.core.aop.CountedAspectTest$CountedClassService")
+            .tag("method", "greet")
+            .tag("result", "success")
+            .tag("exception", "none")
+            .counter()
+            .count()).isEqualTo(1);
+    }
+
     @Counted("class.counted")
     static class CountedClassService {
 
@@ -336,6 +354,11 @@ class CountedAspectTest {
 
         void fail() {
             throw new RuntimeException("Oops");
+        }
+
+        @Counted("method.counted")
+        String greet() {
+            return "hello";
         }
 
     }
