@@ -71,7 +71,7 @@ public final class DynatraceLongTaskTimer extends DefaultLongTaskTimer implement
 
     @Override
     public DynatraceSummarySnapshot takeSummarySnapshotAndReset(TimeUnit unit) {
-        // LongTaskTimer record a snapshot of in-flight operations, e.g.: the number of
+        // LongTaskTimer records a snapshot of in-flight operations, e.g.: the number of
         // active requests.
         // Therefore, the Snapshot needs to be created from scratch during the export.
         // In takeSummarySnapshot(TimeUnit) above, the Summary object is deleted at the

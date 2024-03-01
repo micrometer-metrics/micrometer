@@ -15,7 +15,6 @@
  */
 package io.micrometer.dynatrace.types;
 
-import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.Tags;
@@ -35,6 +34,8 @@ import static org.assertj.core.api.Assertions.assertThat;
  * Tests for {@link DynatraceLongTaskTimer}.
  */
 class DynatraceLongTaskTimerTest {
+
+    private static final Offset<Double> OFFSET = Offset.offset(0.0001);
 
     private static final Meter.Id ID = new Meter.Id("test.id", Tags.empty(), "1", "desc",
             Meter.Type.DISTRIBUTION_SUMMARY);
@@ -94,18 +95,26 @@ class DynatraceLongTaskTimerTest {
         // use the system clock, as it is much easier to understand than when using the
         // MockClock (When using MockClock, adding to the clock in two separate threads
         // basically means that two things happen at the same time).
-        DynatraceLongTaskTimer ltt = new DynatraceLongTaskTimer(ID, Clock.SYSTEM, TimeUnit.MILLISECONDS,
+        DynatraceLongTaskTimer ltt = new DynatraceLongTaskTimer(ID, CLOCK, TimeUnit.MILLISECONDS,
                 DISTRIBUTION_STATISTIC_CONFIG, false);
         ExecutorService executorService = Executors.newFixedThreadPool(2);
 
         // both tasks need to be running for a while before we take the snapshot
         CountDownLatch taskHasBeenRunningLatch = new CountDownLatch(2);
         CountDownLatch stopLatch = new CountDownLatch(1);
+        CountDownLatch firstTaskHasBeenRunning = new CountDownLatch(1);
 
+        // Task 1
         executorService.submit(() -> {
             ltt.record(() -> {
                 try {
-                    Thread.sleep(70);
+                    CLOCK.add(Duration.ofMillis(40));
+
+                    // task 1 starts first, runs for 40ms (see CLOCK.add(Duration) above),
+                    // then the second task starts. The second task can start after this
+                    // latch has counted down (unblocked) the other thread.
+                    firstTaskHasBeenRunning.countDown();
+
                     taskHasBeenRunningLatch.countDown();
 
                     // wait until the snapshot has been taken
@@ -117,10 +126,24 @@ class DynatraceLongTaskTimerTest {
             });
         });
 
+        // Task 1 (see above) has been running for 40ms, and is still running now (until
+        // stopLatch is unblocked).
+        assertThat(firstTaskHasBeenRunning.await(300, TimeUnit.MILLISECONDS)).isTrue();
+
+        // Task 2
         executorService.submit(() -> {
             ltt.record(() -> {
                 try {
-                    Thread.sleep(30);
+                    // At this point both tasks are running.
+                    // Adding to the clock here means that both tasks are running at the
+                    // same time and adding 30ms adds 30ms to each running task
+                    // individually.
+                    CLOCK.add(Duration.ofMillis(30));
+
+                    // unblock the taskHasBeenRunning latch. This means that both tasks
+                    // have been running and the time has been added to the clock. Both
+                    // tasks will (conceptually) continue to run until the stopLatch is
+                    // unblocked.
                     taskHasBeenRunningLatch.countDown();
 
                     // wait until the snapshot has been taken
@@ -132,22 +155,33 @@ class DynatraceLongTaskTimerTest {
             });
         });
 
+        // both tasks have been running for different lengths of time (task 1 for a total
+        // of 70ms, and task 2 for a total of 30ms).
         assertThat(taskHasBeenRunningLatch.await(300, TimeUnit.MILLISECONDS)).isTrue();
 
+        // take a snapshot of the state where both tasks are running for different lengths
+        // of time.
         DynatraceSummarySnapshot snapshot = ltt.takeSummarySnapshot();
-        // can release the background tasks
+
+        // the two running tasks are now allowed to exit.
         stopLatch.countDown();
 
-        // the first Thread has been "running" for ~30ms at the time of recording and will
-        // supply the min
-        assertThat(snapshot.getMin()).isGreaterThanOrEqualTo(30).isLessThan(100);
-        // the second Thread has been "running" for ~70ms at the time of recording and
-        // will supply the max
-        assertThat(snapshot.getMax()).isGreaterThanOrEqualTo(70).isLessThan(100);
-        // the min is greater than 30, and the max is greater than 70, so together they
-        // have to be greater than 100.
-        assertThat(snapshot.getTotal()).isGreaterThan(100);
+        // Task 1 has been "running" for 70ms at the time of recording and will
+        // supply the max
+        assertThat(snapshot.getMax()).isCloseTo(70, OFFSET);
+        // Task 2 has been "running" for only 30ms at the time of recording and
+        // will supply the min
+        assertThat(snapshot.getMin()).isCloseTo(30, OFFSET);
+        // Both tasks have been running in parallel.
+        // After the second CLOCK.add(Duration) is called, the first task has been running
+        // for 70ms, and the second task has been running for 30ms
+        // together, they have been running for 100ms in total.
+        assertThat(snapshot.getTotal()).isCloseTo(100, OFFSET);
+        // Two tasks are running in parallel.
         assertThat(snapshot.getCount()).isEqualTo(2);
+        // On the clock, 70ms have passed. Clock starts at 1, that's why the result here
+        // is 71 instead of 70.
+        assertThat(CLOCK.wallTime()).isEqualTo(71);
     }
 
 }
