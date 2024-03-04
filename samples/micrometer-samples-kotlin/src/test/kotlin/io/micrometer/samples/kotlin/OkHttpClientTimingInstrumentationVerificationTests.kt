@@ -19,7 +19,6 @@ import io.micrometer.core.instrument.HttpClientTimingInstrumentationVerification
 import io.micrometer.core.instrument.binder.okhttp3.OkHttpMetricsEventListener
 import io.micrometer.core.instrument.binder.okhttp3.OkHttpObservationDocumentation
 import io.micrometer.core.instrument.binder.okhttp3.OkHttpObservationInterceptor
-import io.micrometer.observation.docs.ObservationDocumentation
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
@@ -35,9 +34,9 @@ internal class OkHttpClientTimingInstrumentationVerificationTests :
         body: ByteArray?,
         baseUri: URI,
         templatedPath: String,
-        vararg pathVariables: String?,
+        vararg pathVariables: String,
     ) {
-        val request: Request = Request.Builder().method(method.name, body?.toRequestBody())
+        val request = Request.Builder().method(method.name, body?.toRequestBody())
             .url(baseUri.toString() + substitutePathVariables(templatedPath, *pathVariables))
             .header(OkHttpMetricsEventListener.URI_PATTERN, templatedPath)
             .build()
@@ -48,19 +47,13 @@ internal class OkHttpClientTimingInstrumentationVerificationTests :
         }
     }
 
-    override fun clientInstrumentedWithMetrics(): OkHttpClient {
-        return OkHttpClient.Builder()
-            .eventListener(OkHttpMetricsEventListener.builder(registry, timerName()).build())
-            .build()
-    }
+    override fun clientInstrumentedWithMetrics() = OkHttpClient.Builder()
+        .eventListener(OkHttpMetricsEventListener.builder(registry, timerName()).build())
+        .build()
 
-    override fun clientInstrumentedWithObservations(): OkHttpClient {
-        return OkHttpClient.Builder()
-            .addInterceptor(OkHttpObservationInterceptor.builder(observationRegistry, timerName()).build())
-            .build()
-    }
+    override fun clientInstrumentedWithObservations() = OkHttpClient.Builder()
+        .addInterceptor(OkHttpObservationInterceptor.builder(observationRegistry, timerName()).build())
+        .build()
 
-    override fun observationDocumentation(): ObservationDocumentation {
-        return OkHttpObservationDocumentation.DEFAULT
-    }
+    override fun observationDocumentation() = OkHttpObservationDocumentation.DEFAULT
 }
