@@ -75,7 +75,7 @@ public class MetricsRequestEventListener implements RequestEventListener {
 
         switch (event.getType()) {
             case ON_EXCEPTION:
-                if (!isNotFoundException(event)) {
+                if (!isClientError(event)) {
                     break;
                 }
             case REQUEST_MATCHED:
@@ -111,13 +111,14 @@ public class MetricsRequestEventListener implements RequestEventListener {
         }
     }
 
-    private boolean isNotFoundException(RequestEvent event) {
+    private boolean isClientError(RequestEvent event) {
         Throwable t = event.getException();
         if (t == null) {
             return false;
         }
-        String className = t.getClass().getCanonicalName();
-        return className.equals("jakarta.ws.rs.NotFoundException") || className.equals("javax.ws.rs.NotFoundException");
+        String className = t.getClass().getSuperclass().getCanonicalName();
+        return className.equals("jakarta.ws.rs.ClientErrorException")
+                || className.equals("javax.ws.rs.ClientErrorException");
     }
 
     private Set<Timer> shortTimers(Set<Timed> timed, RequestEvent event) {
