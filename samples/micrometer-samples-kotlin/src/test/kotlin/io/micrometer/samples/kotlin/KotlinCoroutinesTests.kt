@@ -20,7 +20,7 @@ import io.micrometer.core.instrument.kotlin.currentObservation
 import io.micrometer.observation.Observation
 import io.micrometer.observation.ObservationRegistry
 import kotlinx.coroutines.*
-import org.assertj.core.api.BDDAssertions
+import org.assertj.core.api.BDDAssertions.then
 import org.junit.jupiter.api.Test
 
 internal class KotlinCoroutinesTests {
@@ -47,7 +47,7 @@ internal class KotlinCoroutinesTests {
 
         inScope.close()
 
-        BDDAssertions.then(observationInGlobalScopeLaunch).isSameAs(nextObservation)
-        BDDAssertions.then(observationInGlobalScopeAsync).isSameAs(nextObservation)
+        then(observationInGlobalScopeLaunch).isSameAs(nextObservation)
+        then(observationInGlobalScopeAsync).isSameAs(nextObservation)
     }
 }
