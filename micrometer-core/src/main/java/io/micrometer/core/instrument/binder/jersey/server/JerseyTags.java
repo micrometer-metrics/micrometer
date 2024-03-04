@@ -18,6 +18,7 @@ package io.micrometer.core.instrument.binder.jersey.server;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.binder.http.Outcome;
 import io.micrometer.core.instrument.util.StringUtils;
+import io.micrometer.core.lang.Nullable;
 import org.glassfish.jersey.server.ContainerRequest;
 import org.glassfish.jersey.server.ContainerResponse;
 import org.glassfish.jersey.server.ExtendedUriInfo;
@@ -110,6 +111,13 @@ public final class JerseyTags {
         return 300 <= status && status < 400;
     }
 
+    /**
+     * Gets the pattern for which the request was matched and normalizes it for tagging
+     * purposes.
+     * @param event request from which to extract the pattern
+     * @return normalized matched pattern or {@code null} if nothing matched
+     */
+    @Nullable
     private static String getMatchingPattern(RequestEvent event) {
         ExtendedUriInfo uriInfo = event.getUriInfo();
         List<UriTemplate> templates = uriInfo.getMatchedTemplates();
