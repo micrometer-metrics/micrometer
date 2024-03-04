@@ -16,6 +16,7 @@
 package io.micrometer.registry.otlp;
 
 import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.opentelemetry.proto.metrics.v1.HistogramDataPoint;
 import io.opentelemetry.proto.metrics.v1.Metric;
@@ -24,9 +25,7 @@ import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.time.Duration;
-import java.util.Collections;
-import java.util.Map;
-import java.util.Properties;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -143,6 +142,80 @@ abstract class OtlpMeterRegistryTest {
     }
 
     @Test
+    void multipleMetricsWithSameMetaDataShouldBeSingleMetric() {
+        Tags firstTag = Tags.of("key", "first");
+        Tags secondTag = Tags.of("key", "second");
+
+        Gauge.builder("test.gauge", () -> 1).description("description").tags(firstTag).register(registry);
+        Gauge.builder("test.gauge", () -> 1).description("description").tags(secondTag).register(registry);
+
+        Counter.builder("test.counter").description("description").tags(firstTag).register(registry);
+        Counter.builder("test.counter").description("description").tags(secondTag).register(registry);
+
+        Timer.builder("test.timer").description("description").tags(firstTag).register(registry);
+        Timer.builder("test.timer").description("description").tags(secondTag).register(registry);
+
+        List<Metric> metrics = writeAllMeters();
+        assertThat(metrics).hasSize(3);
+
+        assertThat(metrics).filteredOn(Metric::hasGauge).hasSize(1).first().satisfies(metric -> {
+            assertThat(metric.getDescription()).isEqualTo("description");
+            assertThat(metric.getGauge().getDataPointsCount()).isEqualTo(2);
+        });
+
+        assertThat(metrics).filteredOn(Metric::hasSum).hasSize(1).first().satisfies(metric -> {
+            assertThat(metric.getDescription()).isEqualTo("description");
+            assertThat(metric.getSum().getDataPointsCount()).isEqualTo(2);
+            assertThat(metric.getSum().getAggregationTemporality())
+                .isEqualTo(AggregationTemporality.toOtlpAggregationTemporality(otlpConfig().aggregationTemporality()));
+        });
+
+        assertThat(metrics).filteredOn(Metric::hasHistogram).hasSize(1).first().satisfies(metric -> {
+            assertThat(metric.getDescription()).isEqualTo("description");
+            assertThat(metric.getHistogram().getDataPointsCount()).isEqualTo(2);
+            assertThat(metric.getHistogram().getAggregationTemporality())
+                .isEqualTo(AggregationTemporality.toOtlpAggregationTemporality(otlpConfig().aggregationTemporality()));
+        });
+    }
+
+    @Test
+    void metricsWithDifferentMetadataShouldBeMultipleMetrics() {
+        Tags firstTag = Tags.of("key", "first");
+        Tags secondTag = Tags.of("key", "second");
+
+        final String description1 = "description1";
+        final String description2 = "description2";
+        Gauge.builder("test.gauge", () -> 1).description(description1).tags(firstTag).register(registry);
+        Gauge.builder("test.gauge", () -> 1).description(description2).tags(secondTag).register(registry);
+
+        Counter.builder("test.counter").description(description1).tags(firstTag).register(registry);
+        Counter.builder("test.counter").baseUnit("xyz").description(description1).tags(secondTag).register(registry);
+
+        Timer.builder("test.timer").description(description1).tags(firstTag).register(registry);
+        Timer.builder("test.timer").description(description2).tags(secondTag).register(registry);
+
+        List<Metric> metrics = writeAllMeters();
+        assertThat(metrics).hasSize(6);
+        assertThat(metrics).filteredOn(Metric::hasGauge).hasSize(2).satisfiesExactlyInAnyOrder(metric -> {
+            assertThat(metric.getDescription()).isEqualTo(description1);
+        }, metric -> {
+            assertThat(metric.getDescription()).isEqualTo(description2);
+        });
+
+        assertThat(metrics).filteredOn(Metric::hasSum).hasSize(2).satisfiesExactlyInAnyOrder(metric -> {
+            assertThat(metric.getUnit()).isEmpty();
+        }, metric -> {
+            assertThat(metric.getUnit()).isEqualTo("xyz");
+        });
+
+        assertThat(metrics).filteredOn(Metric::hasHistogram).hasSize(2).satisfiesExactlyInAnyOrder(metric -> {
+            assertThat(metric.getDescription()).isEqualTo(description1);
+        }, metric -> {
+            assertThat(metric.getDescription()).isEqualTo(description2);
+        });
+    }
+
+    @Test
     void distributionWithPercentileAndHistogramShouldWriteHistogramDataPoint() {
         Timer timer = Timer.builder("timer")
             .description(METER_DESCRIPTION)
@@ -209,10 +282,20 @@ abstract class OtlpMeterRegistryTest {
     abstract void testMetricsStartAndEndTime();
 
     protected Metric writeToMetric(Meter meter) {
-        registry.setDeltaAggregationTimeUnixNano();
-        return meter.match(registry::writeGauge, registry::writeCounter, registry::writeHistogramSupport,
-                registry::writeHistogramSupport, registry::writeHistogramSupport, registry::writeGauge,
-                registry::writeFunctionCounter, registry::writeFunctionTimer, registry::writeMeter);
+        OtlpMetricConverter otlpMetricConverter = new OtlpMetricConverter(clock, otlpConfig().step(),
+                registry.getBaseTimeUnit(), otlpConfig().aggregationTemporality(),
+                registry.config().namingConvention());
+        otlpMetricConverter.addMeter(meter);
+        final List<Metric> metrics = otlpMetricConverter.getAllMetrics();
+        return metrics.isEmpty() ? Metric.getDefaultInstance() : metrics.get(0);
+    }
+
+    protected List<Metric> writeAllMeters() {
+        OtlpMetricConverter otlpMetricConverter = new OtlpMetricConverter(clock, otlpConfig().step(),
+                registry.getBaseTimeUnit(), otlpConfig().aggregationTemporality(),
+                registry.config().namingConvention());
+        otlpMetricConverter.addMeters(registry.getMeters());
+        return otlpMetricConverter.getAllMetrics();
     }
 
     protected void stepOverNStep(int numStepsToSkip) {
