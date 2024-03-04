@@ -21,7 +21,6 @@ import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.opentelemetry.proto.metrics.v1.HistogramDataPoint;
 import io.opentelemetry.proto.metrics.v1.Metric;
 import io.opentelemetry.proto.metrics.v1.NumberDataPoint;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -51,11 +50,6 @@ abstract class OtlpMeterRegistryTest {
     protected OtlpMeterRegistry registry = new OtlpMeterRegistry(otlpConfig(), clock);
 
     abstract OtlpConfig otlpConfig();
-
-    @AfterEach
-    void clearRegistry() {
-        registry.clear();
-    }
 
     // If the service.name was not specified, SDKs MUST fallback to 'unknown_service'
     @Test
