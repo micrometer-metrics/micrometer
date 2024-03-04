@@ -145,7 +145,7 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
     protected LongTaskTimer newLongTaskTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig) {
         if (useDynatraceSummaryInstruments) {
             return new DynatraceLongTaskTimer(id, clock, exporter.getBaseTimeUnit(), distributionStatisticConfig,
-                false);
+                    false);
         }
 
         DistributionStatisticConfig config = distributionStatisticConfig;
@@ -179,7 +179,7 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
     }
 
     private DistributionStatisticConfig addZeroPercentileIfMissing(Meter.Id id,
-                                                                   DistributionStatisticConfig distributionStatisticConfig) {
+            DistributionStatisticConfig distributionStatisticConfig) {
         double[] percentiles;
 
         double[] configPercentiles = distributionStatisticConfig.getPercentiles();
@@ -195,7 +195,8 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
             zeroPercentileMeterFilter.addMeterId(id);
         }
         else {
-            // Zero percentile is explicitly added to the config, no need to add it to drop list.
+            // Zero percentile is explicitly added to the config, no need to add it to
+            // drop list.
             return distributionStatisticConfig;
         }
 
