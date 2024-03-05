@@ -174,14 +174,25 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
                 this.config.headers().forEach(httpRequest::withHeader);
                 HttpSender.Response response = httpRequest.send();
                 if (!response.isSuccessful()) {
-                    logger.warn("Failed to publish metrics. Server responded with HTTP status code {} and body {}",
-                            response.code(), response.body());
+                    logger.warn(
+                            "Failed to publish metrics (context: {}). Server responded with HTTP status code {} and body {}",
+                            getConfigurationContext(), response.code(), response.body());
                 }
             }
             catch (Throwable e) {
-                logger.warn("Failed to publish metrics to OTLP receiver", e);
+                logger.warn("Failed to publish metrics to OTLP receiver (context: {})", getConfigurationContext(), e);
             }
         }
+    }
+
+    /**
+     * Get the configuration context.
+     * @return A message containing enough information for the log reader to figure out
+     * what configuration details may have contributed to the failure.
+     */
+    private String getConfigurationContext() {
+        // While other values may contribute to failures, these two are most common
+        return "url=" + config.url() + ", resource-attributes=" + config.resourceAttributes();
     }
 
     @Override
