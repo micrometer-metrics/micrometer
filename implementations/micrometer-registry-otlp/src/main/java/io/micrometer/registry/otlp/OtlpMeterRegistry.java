@@ -125,6 +125,15 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
             this.meterPollingService.scheduleAtFixedRate(this::pollMetersToRollover, getInitialDelay(),
                     config.step().toMillis(), TimeUnit.MILLISECONDS);
         }
+
+        if (config.enabled()) {
+            sayHello();
+        }
+    }
+
+    private void sayHello() {
+        logger.info("Publishing metrics for {} to {} with resource attributes {}", getClass().getSimpleName(),
+                config.url(), config.resourceAttributes());
     }
 
     @Override
