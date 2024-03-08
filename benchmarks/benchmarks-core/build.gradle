@@ -4,7 +4,7 @@ plugins {
 
 dependencies {
     jmh project(':micrometer-core')
-    jmh project(':micrometer-registry-prometheus')
+    jmh project(':micrometer-registry-prometheus-simpleclient')
 
     jmh libs.dropwizardMetricsCore5
     jmh libs.prometheusClient

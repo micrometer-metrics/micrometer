@@ -4,7 +4,7 @@ plugins {
 
 dependencies {
     implementation project(":micrometer-core")
-    implementation project(":micrometer-registry-prometheus")
+    implementation project(":micrometer-registry-prometheus-simpleclient")
     implementation project(":micrometer-jetty11")
 
     implementation libs.javalin
