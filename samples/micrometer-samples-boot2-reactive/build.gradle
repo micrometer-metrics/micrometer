@@ -11,7 +11,7 @@ repositories {
 
 dependencies {
     implementation project(":micrometer-core")
-    implementation project(":micrometer-registry-prometheus")
+    implementation project(":micrometer-registry-prometheus-simpleclient")
 
     implementation 'org.springframework.boot:spring-boot-starter-webflux'
     implementation('org.springframework.boot:spring-boot-starter-actuator') {

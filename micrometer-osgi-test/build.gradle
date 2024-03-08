@@ -11,7 +11,7 @@ dependencies {
     testImplementation project(':micrometer-core')
 
     testImplementation project(':micrometer-registry-jmx')
-    testImplementation project(':micrometer-registry-prometheus')
+    testImplementation project(':micrometer-registry-prometheus-simpleclient')
 
     testImplementation libs.felixFramework
 
