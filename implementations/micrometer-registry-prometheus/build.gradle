@@ -1,0 +1,7 @@
+dependencies {
+    api project(':micrometer-core')
+
+    api 'io.prometheus:simpleclient_common'
+
+    testImplementation project(':micrometer-test')
+}
