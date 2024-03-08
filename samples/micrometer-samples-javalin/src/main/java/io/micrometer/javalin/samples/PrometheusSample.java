@@ -36,7 +36,6 @@ import io.micrometer.core.instrument.binder.system.ProcessorMetrics;
 import io.micrometer.jetty11.TimedHandler;
 import io.micrometer.prometheus.PrometheusConfig;
 import io.micrometer.prometheus.PrometheusMeterRegistry;
-import io.prometheus.client.exporter.common.TextFormat;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.eclipse.jetty.server.Server;
@@ -89,7 +88,8 @@ public class PrometheusSample {
             System.out.println("hello");
         });
 
-        app.get("/prometheus", ctx -> ctx.contentType(TextFormat.CONTENT_TYPE_004).result(meterRegistry.scrape()));
+        app.get("/prometheus",
+                ctx -> ctx.contentType("text/plain; version=0.0.4; charset=utf-8").result(meterRegistry.scrape()));
     }
 
 }

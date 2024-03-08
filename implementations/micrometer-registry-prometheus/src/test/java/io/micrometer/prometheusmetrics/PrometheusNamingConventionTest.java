@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.prometheus;
+package io.micrometer.prometheusmetrics;
 
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.binder.BaseUnits;
@@ -56,8 +56,8 @@ class PrometheusNamingConventionTest {
     @Test
     void unitsAreAppendedToCounters() {
         assertThat(convention.name("response.size", Meter.Type.COUNTER, BaseUnits.BYTES))
-            .isEqualTo("response_size_bytes_total");
-        assertThat(convention.name("counter", Meter.Type.COUNTER)).isEqualTo("counter_total");
+            .isEqualTo("response_size_bytes");
+        assertThat(convention.name("counter", Meter.Type.COUNTER)).isEqualTo("counter");
     }
 
     @Test

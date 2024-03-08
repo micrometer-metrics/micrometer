@@ -13,9 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.prometheus;
+package io.micrometer.prometheusmetrics;
 
 import io.micrometer.core.instrument.Meter;
+import io.micrometer.prometheusmetrics.PrometheusDurationNamingConvention;
+import io.micrometer.prometheusmetrics.PrometheusNamingConvention;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;

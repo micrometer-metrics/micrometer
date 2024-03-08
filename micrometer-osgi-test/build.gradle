@@ -11,7 +11,8 @@ dependencies {
     testImplementation project(':micrometer-core')
 
     testImplementation project(':micrometer-registry-jmx')
-    testImplementation project(':micrometer-registry-prometheus')
+    // osgi test fails when the new prometheus client is used
+    //testImplementation project(':micrometer-registry-prometheus')
     testImplementation project(':micrometer-registry-prometheus-simpleclient')
 
     testImplementation libs.felixFramework

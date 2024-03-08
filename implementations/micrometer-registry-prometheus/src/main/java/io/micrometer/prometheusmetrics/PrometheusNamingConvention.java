@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.prometheus;
+package io.micrometer.prometheusmetrics;
 
 import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.Meter;
@@ -63,10 +63,13 @@ public class PrometheusNamingConvention implements NamingConvention {
         }
 
         switch (type) {
-            case COUNTER:
-                if (!conventionName.endsWith("_total"))
-                    conventionName += "_total";
-                break;
+            // The earlier version of this logic in prometheus-simpleclient
+            // handled the case of COUNTER and appended "_total" if conventionName did not
+            // end with it. With the new client, we mustn't do this since it appends
+            // "_total" on its own and also validates and fails if it is already there:
+            // java.lang.IllegalArgumentException: 'api_requests_total': Illegal metric
+            // name. The metric name must not include the '_total' suffix. Call
+            // PrometheusNaming.sanitizeMetricName(name) to avoid this error.
             case TIMER:
             case LONG_TASK_TIMER:
                 if (!timerSuffix.isEmpty() && conventionName.endsWith(timerSuffix)) {

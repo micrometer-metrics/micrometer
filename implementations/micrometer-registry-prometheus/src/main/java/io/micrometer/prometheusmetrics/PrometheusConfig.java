@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.prometheus;
+package io.micrometer.prometheusmetrics;
 
 import io.micrometer.core.instrument.config.MeterRegistryConfig;
 import io.micrometer.core.instrument.config.validate.Validated;
@@ -58,19 +58,9 @@ public interface PrometheusConfig extends MeterRegistryConfig {
         return getDuration(this, "step").orElse(Duration.ofMinutes(1));
     }
 
-    /**
-     * Histogram type for backing DistributionSummary and Timer
-     * @return Choose which type of histogram to use
-     * @since 1.4.0
-     */
-    default HistogramFlavor histogramFlavor() {
-        return getEnum(this, HistogramFlavor.class, "histogramFlavor").orElse(HistogramFlavor.Prometheus);
-    }
-
     @Override
     default Validated<?> validate() {
-        return checkAll(this, checkRequired("step", PrometheusConfig::step),
-                checkRequired("histogramFlavor", PrometheusConfig::histogramFlavor));
+        return checkAll(this, checkRequired("step", PrometheusConfig::step));
     }
 
 }
