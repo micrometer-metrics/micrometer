@@ -13,12 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.prometheus;
+package io.micrometer.prometheusmetrics;
 
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.tck.MeterRegistryCompatibilityKit;
-import io.prometheus.client.CollectorRegistry;
+import io.micrometer.prometheusmetrics.PrometheusConfig;
+import io.micrometer.prometheusmetrics.PrometheusMeterRegistry;
+import io.prometheus.metrics.model.registry.PrometheusRegistry;
 
 import java.time.Duration;
 
@@ -26,7 +28,7 @@ class PrometheusMeterRegistryCompatibilityTest extends MeterRegistryCompatibilit
 
     @Override
     public MeterRegistry registry() {
-        return new PrometheusMeterRegistry(PrometheusConfig.DEFAULT, new CollectorRegistry(true), new MockClock());
+        return new PrometheusMeterRegistry(PrometheusConfig.DEFAULT, new PrometheusRegistry(), new MockClock());
     }
 
     @Override

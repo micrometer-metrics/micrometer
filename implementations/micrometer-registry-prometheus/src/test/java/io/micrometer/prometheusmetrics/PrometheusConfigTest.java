@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.prometheus;
+package io.micrometer.prometheusmetrics;
 
 import io.micrometer.core.instrument.config.validate.Validated;
 import org.junit.jupiter.api.Test;
@@ -32,10 +32,9 @@ class PrometheusConfigTest {
     @Test
     void invalid() {
         props.put("prometheus.step", "1w");
-        props.put("prometheus.histogramFlavor", "bad");
 
-        assertThat(config.validate().failures().stream().map(Validated.Invalid::getMessage)).containsExactlyInAnyOrder(
-                "must contain a valid time unit", "should be one of 'Prometheus', 'VictoriaMetrics'");
+        assertThat(config.validate().failures().stream().map(Validated.Invalid::getMessage))
+            .containsExactly("must contain a valid time unit");
     }
 
     @Test

@@ -19,11 +19,13 @@ import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.DistributionSummary;
 import io.micrometer.core.instrument.Timer;
-import io.micrometer.prometheus.PrometheusConfig;
-import io.micrometer.prometheus.PrometheusMeterRegistry;
-import io.prometheus.client.CollectorRegistry;
-import io.prometheus.client.exemplars.DefaultExemplarSampler;
+import io.micrometer.prometheusmetrics.PrometheusConfig;
+import io.micrometer.prometheusmetrics.PrometheusMeterRegistry;
 import io.prometheus.client.exemplars.tracer.common.SpanContextSupplier;
+import io.prometheus.metrics.config.ExemplarsProperties;
+import io.prometheus.metrics.core.exemplars.ExemplarSampler;
+import io.prometheus.metrics.core.exemplars.ExemplarSamplerConfig;
+import io.prometheus.metrics.model.registry.PrometheusRegistry;
 
 import java.time.Duration;
 import java.util.concurrent.atomic.AtomicLong;
@@ -33,7 +35,8 @@ import static io.prometheus.client.exporter.common.TextFormat.CONTENT_TYPE_OPENM
 public class PrometheusExemplarsSample {
 
     private static final PrometheusMeterRegistry registry = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT,
-            new CollectorRegistry(), Clock.SYSTEM, new DefaultExemplarSampler(new TestSpanContextSupplier()));
+            new PrometheusRegistry(), Clock.SYSTEM,
+            new ExemplarSampler(new ExemplarSamplerConfig(ExemplarsProperties.builder().builder(), 1)));
 
     public static void main(String[] args) throws InterruptedException {
         Counter counter = registry.counter("test.counter");

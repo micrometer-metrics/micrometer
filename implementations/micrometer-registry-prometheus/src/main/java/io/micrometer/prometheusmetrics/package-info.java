@@ -13,12 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.prometheus;
+@NonNullApi
+@NonNullFields
+package io.micrometer.prometheusmetrics;
 
-public class PrometheusDurationNamingConvention extends PrometheusNamingConvention {
-
-    public PrometheusDurationNamingConvention() {
-        super("_duration");
-    }
-
-}
+import io.micrometer.common.lang.NonNullApi;
+import io.micrometer.common.lang.NonNullFields;

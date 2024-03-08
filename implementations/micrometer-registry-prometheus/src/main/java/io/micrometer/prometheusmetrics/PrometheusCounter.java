@@ -13,15 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.prometheus;
+package io.micrometer.prometheusmetrics;
 
 import io.micrometer.common.lang.NonNull;
 import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.AbstractMeter;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Meter;
-import io.prometheus.client.exemplars.CounterExemplarSampler;
-import io.prometheus.client.exemplars.Exemplar;
+import io.prometheus.metrics.core.exemplars.ExemplarSampler;
+import io.prometheus.metrics.model.snapshots.Exemplar;
 
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.atomic.DoubleAdder;
@@ -39,13 +39,13 @@ public class PrometheusCounter extends AbstractMeter implements Counter {
     private final AtomicReference<Exemplar> exemplar = new AtomicReference<>();
 
     @Nullable
-    private final CounterExemplarSampler exemplarSampler;
+    private final ExemplarSampler exemplarSampler;
 
     PrometheusCounter(Meter.Id id) {
         this(id, null);
     }
 
-    PrometheusCounter(Meter.Id id, @Nullable CounterExemplarSampler exemplarSampler) {
+    PrometheusCounter(Meter.Id id, @Nullable ExemplarSampler exemplarSampler) {
         super(id);
         this.exemplarSampler = exemplarSampler;
     }
@@ -71,14 +71,14 @@ public class PrometheusCounter extends AbstractMeter implements Counter {
     }
 
     // Similar to exemplar.updateAndGet(...) but it does nothing if the next value is null
-    private void updateExemplar(double amount, @NonNull CounterExemplarSampler exemplarSampler) {
-        Exemplar prev;
-        Exemplar next;
-        do {
-            prev = exemplar.get();
-            next = exemplarSampler.sample(amount, prev);
-        }
-        while (next != null && next != prev && !exemplar.compareAndSet(prev, next));
+    private void updateExemplar(double amount, @NonNull ExemplarSampler exemplarSampler) {
+        // Exemplar prev;
+        // Exemplar next;
+        // do {
+        // prev = exemplar.get();
+        // next = exemplarSampler.sample(amount, prev);
+        // }
+        // while (next != null && next != prev && !exemplar.compareAndSet(prev, next));
     }
 
 }

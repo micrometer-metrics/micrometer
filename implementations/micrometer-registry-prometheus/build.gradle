@@ -1,7 +1,16 @@
+description = 'MeterRegistry implementation for Prometheus using io.prometheus:prometheus-metrics-core. If you have compatibility issues with this module, you can go back to io.micrometer:micrometer-registry-prometheus-simpleclient that uses io.prometheus:simpleclient_common'
+
 dependencies {
     api project(':micrometer-core')
 
-    api 'io.prometheus:simpleclient_common'
+    api('io.prometheus:prometheus-metrics-core') {
+        // We don't need this nor some of its dependencies:
+        // io.prometheus:prometheus-metrics-tracer-otel
+        // io.prometheus:prometheus-metrics-tracer-otel-agent
+        exclude(group: 'io.prometheus', module: 'prometheus-metrics-tracer-initializer')
+    }
+    implementation 'io.prometheus:prometheus-metrics-exposition-formats'
 
+    testImplementation 'io.prometheus:prometheus-metrics-tracer-common'
     testImplementation project(':micrometer-test')
 }

@@ -14,16 +14,15 @@
  * limitations under the License.
  */
 
-package io.micrometer.prometheus;
+package io.micrometer.prometheusmetrics;
 
 import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.Histogram;
 import io.micrometer.core.instrument.distribution.TimeWindowFixedBoundaryHistogram;
-import io.micrometer.core.instrument.util.TimeUtils;
-import io.prometheus.client.exemplars.Exemplar;
-import io.prometheus.client.exemplars.HistogramExemplarSampler;
+import io.prometheus.metrics.core.exemplars.ExemplarSampler;
+import io.prometheus.metrics.model.snapshots.Exemplar;
 
 import java.time.Duration;
 import java.util.Arrays;
@@ -52,10 +51,9 @@ class PrometheusHistogram extends TimeWindowFixedBoundaryHistogram {
     private final AtomicReference<Exemplar> lastExemplar;
 
     @Nullable
-    private final HistogramExemplarSampler exemplarSampler;
+    private final ExemplarSampler exemplarSampler;
 
-    PrometheusHistogram(Clock clock, DistributionStatisticConfig config,
-            @Nullable HistogramExemplarSampler exemplarSampler) {
+    PrometheusHistogram(Clock clock, DistributionStatisticConfig config, @Nullable ExemplarSampler exemplarSampler) {
         super(clock, DistributionStatisticConfig.builder()
             // effectively never rolls over
             .expiry(Duration.ofDays(1825))
@@ -111,22 +109,24 @@ class PrometheusHistogram extends TimeWindowFixedBoundaryHistogram {
 
     private void updateExemplar(double value, @Nullable TimeUnit sourceUnit, @Nullable TimeUnit destinationUnit,
             int index) {
-        double bucketFrom = (index == 0) ? Double.NEGATIVE_INFINITY : buckets[index - 1];
-        double bucketTo = buckets[index];
-        Exemplar previusBucketExemplar;
-        Exemplar previousLastExemplar;
-        Exemplar nextExemplar;
-
-        double exemplarValue = (sourceUnit != null && destinationUnit != null)
-                ? TimeUtils.convert(value, sourceUnit, destinationUnit) : value;
-        do {
-            previusBucketExemplar = exemplars.get(index);
-            previousLastExemplar = lastExemplar.get();
-            nextExemplar = exemplarSampler.sample(exemplarValue, bucketFrom, bucketTo, previusBucketExemplar);
-        }
-        while (nextExemplar != null && nextExemplar != previusBucketExemplar
-                && !(exemplars.compareAndSet(index, previusBucketExemplar, nextExemplar)
-                        && lastExemplar.compareAndSet(previousLastExemplar, nextExemplar)));
+        // double bucketFrom = (index == 0) ? Double.NEGATIVE_INFINITY : buckets[index -
+        // 1];
+        // double bucketTo = buckets[index];
+        // Exemplar previusBucketExemplar;
+        // Exemplar previousLastExemplar;
+        // Exemplar nextExemplar;
+        //
+        // double exemplarValue = (sourceUnit != null && destinationUnit != null)
+        // ? TimeUtils.convert(value, sourceUnit, destinationUnit) : value;
+        // do {
+        // previusBucketExemplar = exemplars.get(index);
+        // previousLastExemplar = lastExemplar.get();
+        // nextExemplar = exemplarSampler.sample(exemplarValue, bucketFrom, bucketTo,
+        // previusBucketExemplar);
+        // }
+        // while (nextExemplar != null && nextExemplar != previusBucketExemplar
+        // && !(exemplars.compareAndSet(index, previusBucketExemplar, nextExemplar)
+        // && lastExemplar.compareAndSet(previousLastExemplar, nextExemplar)));
     }
 
     @Nullable
