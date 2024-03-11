@@ -8,8 +8,6 @@ https://aws.amazon.com/cloudwatch/[Amazon CloudWatch] is a dimensional time-seri
 
 include::_install.adoc[]
 
-NOTE: The `micrometer-registry-cloudwatch2` module uses AWS SDK v2. `micrometer-registry-cloudwatch` is for AWS SDK v1.
-
 == Configuring
 
 The following example configures Micrometer CloudWatch:
@@ -32,7 +30,7 @@ MeterRegistry meterRegistry = new CloudWatchMeterRegistry(cloudWatchConfig, Cloc
 
 You can provide your own `CloudWatchAsyncClient` to the constructor of the registry.
 
-`CloudWatchConfig` is an interface with a set of default methods. If, in the implementation of `get(String k)`, rather than returning `null`, you instead bind it to a property source, you can override the default configuration. For example, https://docs.awspring.io/spring-cloud-aws/docs/current/reference/html/index.html#cloudwatch-metrics[Micrometer support in Spring Cloud AWS] binds properties prefixed with `management.metrics.export.cloudwatch` directly to the `CloudWatchConfig`:
+`CloudWatchConfig` is an interface with a set of default methods. If, in the implementation of `get(String k)`, rather than returning `null`, you instead bind it to a property source, you can override the default configuration. For example, https://docs.awspring.io/spring-cloud-aws/docs/3.1.0/reference/html/index.html#cloudwatch-metrics[Micrometer support in Spring Cloud AWS] binds properties prefixed with `management.metrics.export.cloudwatch` directly to the `CloudWatchConfig`:
 
 [source,yml]
 ----
