@@ -34,9 +34,13 @@ import java.util.concurrent.atomic.LongAdder;
 /**
  * {@link Timer} for Prometheus.
  *
+ * @deprecated since 1.13.0, use the class with the same name from
+ * io.micrometer:micrometer-registry-prometheus instead:
+ * {@code io.micrometer.prometheusmetrics.PrometheusTimer}.
  * @author Jon Schneider
  * @author Jonatan Ivanov
  */
+@Deprecated
 public class PrometheusTimer extends AbstractTimer {
 
     private static final CountAtBucket[] EMPTY_HISTOGRAM = new CountAtBucket[0];

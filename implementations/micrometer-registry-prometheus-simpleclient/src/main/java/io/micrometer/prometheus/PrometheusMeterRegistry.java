@@ -50,10 +50,14 @@ import static java.util.stream.StreamSupport.stream;
 /**
  * {@link MeterRegistry} for Prometheus.
  *
+ * @deprecated since 1.13.0, use the class with the same name from
+ * io.micrometer:micrometer-registry-prometheus instead:
+ * {@code io.micrometer.prometheusmetrics.PrometheusMeterRegistry}.
  * @author Jon Schneider
  * @author Johnny Lim
  * @author Jonatan Ivanov
  */
+@Deprecated
 public class PrometheusMeterRegistry extends MeterRegistry {
 
     private final PrometheusConfig prometheusConfig;

@@ -15,6 +15,12 @@
  */
 package io.micrometer.prometheus;
 
+/**
+ * @deprecated since 1.13.0, use the class with the same name from
+ * io.micrometer:micrometer-registry-prometheus instead:
+ * {@code io.micrometer.prometheusmetrics.PrometheusDurationNamingConvention}.
+ */
+@Deprecated
 public class PrometheusDurationNamingConvention extends PrometheusNamingConvention {
 
     public PrometheusDurationNamingConvention() {

@@ -18,9 +18,12 @@ package io.micrometer.prometheus;
 /**
  * Histogram flavors.
  *
+ * @deprecated since 1.13.0, unfortunately there is no replacement right now since the new
+ * Prometheus client does not support custom histogram bucket names.
  * @author Jon Schneider
  * @since 1.4.0
  */
+@Deprecated
 public enum HistogramFlavor {
 
     Prometheus, VictoriaMetrics
