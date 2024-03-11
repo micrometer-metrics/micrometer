@@ -27,8 +27,12 @@ import static io.micrometer.core.instrument.config.validate.PropertyValidator.*;
 /**
  * Configuration for {@link PrometheusMeterRegistry}.
  *
+ * @deprecated since 1.13.0, use the class with the same name from
+ * io.micrometer:micrometer-registry-prometheus instead:
+ * {@code io.micrometer.prometheusmetrics.PrometheusConfig}.
  * @author Jon Schneider
  */
+@Deprecated
 public interface PrometheusConfig extends MeterRegistryConfig {
 
     /**

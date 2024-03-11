@@ -25,8 +25,12 @@ import java.util.Map;
  * Converts known meter names from Micrometer's preferred name to Prometheus' preferred
  * name.
  *
+ * @deprecated since 1.13.0, use the class with the same name from
+ * io.micrometer:micrometer-registry-prometheus instead:
+ * {@code io.micrometer.prometheusmetrics.PrometheusRenameFilter}.
  * @author Tommy Ludwig
  */
+@Deprecated
 public class PrometheusRenameFilter implements MeterFilter {
 
     private static final Map<String, String> MICROMETER_TO_PROMETHEUS_NAMES = new HashMap<>();

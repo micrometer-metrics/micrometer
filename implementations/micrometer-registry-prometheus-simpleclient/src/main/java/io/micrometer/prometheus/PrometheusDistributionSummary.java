@@ -32,9 +32,13 @@ import java.util.concurrent.atomic.LongAdder;
 /**
  * {@link DistributionSummary} for Prometheus.
  *
+ * @deprecated since 1.13.0, use the class with the same name from
+ * io.micrometer:micrometer-registry-prometheus instead:
+ * {@code io.micrometer.prometheusmetrics.PrometheusDistributionSummary}.
  * @author Jon Schneider
  * @author Jonatan Ivanov
  */
+@Deprecated
 public class PrometheusDistributionSummary extends AbstractDistributionSummary {
 
     private static final CountAtBucket[] EMPTY_HISTOGRAM = new CountAtBucket[0];

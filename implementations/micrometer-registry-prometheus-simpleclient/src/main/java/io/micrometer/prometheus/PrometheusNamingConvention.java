@@ -25,8 +25,12 @@ import java.util.regex.Pattern;
  * See https://prometheus.io/docs/concepts/data_model/#metric-names-and-labels for a
  * specification of the constraints on metric names and labels
  *
+ * @deprecated since 1.13.0, use the class with the same name from
+ * io.micrometer:micrometer-registry-prometheus instead:
+ * {@code io.micrometer.prometheusmetrics.PrometheusNamingConvention}.
  * @author Jon Schneider
  */
+@Deprecated
 public class PrometheusNamingConvention implements NamingConvention {
 
     private static final Pattern nameChars = Pattern.compile("[^a-zA-Z0-9_:]");
