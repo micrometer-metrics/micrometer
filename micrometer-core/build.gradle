@@ -60,6 +60,7 @@ jar {
             rx.*;resolution:=dynamic;version="${@}",\
             javax.persistence.*;resolution:=dynamic;version="${@}",\
             io.netty.*;resolution:=dynamic;version="${@}",\
+            javax.annotation.*;resolution:=optional;version="${@}",\
             *
         '''.stripIndent()
     }
