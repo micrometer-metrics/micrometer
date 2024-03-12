@@ -35,6 +35,7 @@ import io.micrometer.core.instrument.step.StepFunctionTimer;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.util.MeterPartition;
 import io.micrometer.core.instrument.util.NamedThreadFactory;
+import io.micrometer.core.instrument.util.TimeUtils;
 import io.micrometer.core.ipc.http.HttpSender;
 import io.micrometer.core.ipc.http.HttpUrlConnectionSender;
 import io.opentelemetry.proto.collector.metrics.v1.ExportMetricsServiceRequest;
@@ -125,6 +126,12 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
             this.meterPollingService.scheduleAtFixedRate(this::pollMetersToRollover, getInitialDelay(),
                     config.step().toMillis(), TimeUnit.MILLISECONDS);
         }
+    }
+
+    @Override
+    protected String startMessage() {
+        return String.format("Publishing metrics for %s every %s to %s with resource attributes %s",
+                getClass().getSimpleName(), TimeUtils.format(config.step()), config.url(), config.resourceAttributes());
     }
 
     @Override
