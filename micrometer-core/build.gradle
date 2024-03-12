@@ -135,6 +135,9 @@ dependencies {
     optionalApi 'org.jetbrains.kotlin:kotlin-stdlib-jdk8'
     optionalApi 'org.jetbrains.kotlinx:kotlinx-coroutines-core'
 
+    // reactor
+    optionalApi 'io.projectreactor:reactor-core'
+
     testImplementation 'io.projectreactor:reactor-test'
     testImplementation project(":micrometer-observation-test")
     java11TestImplementation project(":micrometer-observation-test")

@@ -21,12 +21,15 @@ import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
 import io.micrometer.observation.annotation.Observed;
 import io.micrometer.observation.ObservationConvention;
+import io.micrometer.observation.aop.applier.ObservationApplier;
+import io.micrometer.observation.aop.applier.ObservationApplierRegistry;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.reflect.MethodSignature;
 
 import java.lang.reflect.Method;
+import java.util.Optional;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Predicate;
 
@@ -84,6 +87,8 @@ public class ObservedAspect {
 
     private final Predicate<ProceedingJoinPoint> shouldSkip;
 
+    private final ObservationApplierRegistry observationApplierRegistry;
+
     public ObservedAspect(ObservationRegistry registry) {
         this(registry, null, DONT_SKIP_ANYTHING);
     }
@@ -100,9 +105,17 @@ public class ObservedAspect {
     public ObservedAspect(ObservationRegistry registry,
             @Nullable ObservationConvention<ObservedAspectContext> observationConvention,
             Predicate<ProceedingJoinPoint> shouldSkip) {
+        this(registry, observationConvention, shouldSkip, ObservationApplierRegistry.getInstance());
+    }
+
+    public ObservedAspect(ObservationRegistry registry,
+            @Nullable ObservationConvention<ObservedAspectContext> observationConvention,
+            Predicate<ProceedingJoinPoint> shouldSkip,
+            ObservationApplierRegistry observationApplierRegistry) {
         this.registry = registry;
         this.observationConvention = observationConvention;
         this.shouldSkip = shouldSkip;
+        this.observationApplierRegistry = observationApplierRegistry;
     }
 
     @Around("@within(io.micrometer.observation.annotation.Observed) and not @annotation(io.micrometer.observation.annotation.Observed)")
@@ -132,22 +145,10 @@ public class ObservedAspect {
     private Object observe(ProceedingJoinPoint pjp, Method method, Observed observed) throws Throwable {
         Observation observation = ObservedAspectObservationDocumentation.of(pjp, observed, this.registry,
                 this.observationConvention);
-        if (CompletionStage.class.isAssignableFrom(method.getReturnType())) {
-            observation.start();
-            Observation.Scope scope = observation.openScope();
-            try {
-                return ((CompletionStage<?>) pjp.proceed())
-                    .whenComplete((result, error) -> stopObservation(observation, scope, error));
-            }
-            catch (Throwable error) {
-                stopObservation(observation, scope, error);
-                throw error;
-            }
-            finally {
-                scope.close();
-            }
-        }
-        else {
+        Optional<ObservationApplier> observationApplier = observationApplierRegistry.findApplicable(pjp, method);
+        if (observationApplier.isPresent()) {
+            return observationApplier.get().applyAndProceed(pjp, method, observation);
+        } else {
             return observation.observeChecked(() -> pjp.proceed());
         }
     }
@@ -169,14 +170,6 @@ public class ObservedAspect {
         }
 
         return method;
-    }
-
-    private void stopObservation(Observation observation, Observation.Scope scope, @Nullable Throwable error) {
-        if (error != null) {
-            observation.error(error);
-        }
-        scope.close();
-        observation.stop();
     }
 
     public static class ObservedAspectContext extends Observation.Context {
