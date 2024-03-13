@@ -25,9 +25,7 @@ public interface ObservationApplier {
 
     boolean isApplicable(@NonNull ProceedingJoinPoint pjp, @NonNull Method method);
 
-    Object applyAndProceed(
-        @NonNull ProceedingJoinPoint pjp,
-        @NonNull Method method,
-        @NonNull Observation observation
-    ) throws Throwable;
+    Object applyAndProceed(@NonNull ProceedingJoinPoint pjp, @NonNull Method method, @NonNull Observation observation)
+            throws Throwable;
+
 }

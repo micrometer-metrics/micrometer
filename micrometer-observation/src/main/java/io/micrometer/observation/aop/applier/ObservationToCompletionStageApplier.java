@@ -24,26 +24,26 @@ import java.lang.reflect.Method;
 import java.util.concurrent.CompletionStage;
 
 public class ObservationToCompletionStageApplier implements ObservationApplier {
+
     @Override
     public boolean isApplicable(@NonNull ProceedingJoinPoint pjp, @NonNull Method method) {
         return CompletionStage.class.isAssignableFrom(method.getReturnType());
     }
 
     @Override
-    public Object applyAndProceed(
-        @NonNull ProceedingJoinPoint pjp,
-        @NonNull Method method,
-        @NonNull Observation observation
-    ) throws Throwable {
+    public Object applyAndProceed(@NonNull ProceedingJoinPoint pjp, @NonNull Method method,
+            @NonNull Observation observation) throws Throwable {
         observation.start();
         Observation.Scope scope = observation.openScope();
         try {
             return ((CompletionStage<?>) pjp.proceed())
                 .whenComplete((result, error) -> stopObservation(observation, scope, error));
-        } catch (Throwable error) {
+        }
+        catch (Throwable error) {
             stopObservation(observation, scope, error);
             throw error;
-        } finally {
+        }
+        finally {
             scope.close();
         }
     }
@@ -55,4 +55,5 @@ public class ObservationToCompletionStageApplier implements ObservationApplier {
         scope.close();
         observation.stop();
     }
+
 }

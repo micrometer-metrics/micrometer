@@ -49,9 +49,9 @@ public class ObservationApplierRegistry {
     public static ObservationApplierRegistry getInstance() {
         if (instance == null) {
             instance = new ObservationApplierRegistry(
-                Collections.singletonList(new ObservationToCompletionStageApplier())
-            );
+                    Collections.singletonList(new ObservationToCompletionStageApplier()));
         }
         return instance;
     }
+
 }

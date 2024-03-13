@@ -110,8 +110,7 @@ public class ObservedAspect {
 
     public ObservedAspect(ObservationRegistry registry,
             @Nullable ObservationConvention<ObservedAspectContext> observationConvention,
-            Predicate<ProceedingJoinPoint> shouldSkip,
-            ObservationApplierRegistry observationApplierRegistry) {
+            Predicate<ProceedingJoinPoint> shouldSkip, ObservationApplierRegistry observationApplierRegistry) {
         this.registry = registry;
         this.observationConvention = observationConvention;
         this.shouldSkip = shouldSkip;
@@ -148,7 +147,8 @@ public class ObservedAspect {
         Optional<ObservationApplier> observationApplier = observationApplierRegistry.findApplicable(pjp, method);
         if (observationApplier.isPresent()) {
             return observationApplier.get().applyAndProceed(pjp, method, observation);
-        } else {
+        }
+        else {
             return observation.observeChecked(() -> pjp.proceed());
         }
     }
