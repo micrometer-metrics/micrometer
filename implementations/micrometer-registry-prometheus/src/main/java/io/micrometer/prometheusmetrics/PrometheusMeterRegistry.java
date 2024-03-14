@@ -299,8 +299,8 @@ public class PrometheusMeterRegistry extends MeterRegistry {
             DistributionStatisticConfig distributionStatisticConfig, PauseDetector pauseDetector) {
         PrometheusTimer timer = new PrometheusTimer(id, clock, distributionStatisticConfig, pauseDetector,
                 exemplarSampler);
-        applyToCollector(id, (collector) -> addDistributionStatisticSamples(id, distributionStatisticConfig, collector,
-                timer, timer::lastExemplar, timer::histogramExemplars, tagValues(id), false));
+        applyToCollector(id, (collector) -> addDistributionStatisticSamples(id, collector, timer, timer::lastExemplar,
+                timer::histogramExemplars, tagValues(id)));
         return timer;
     }
 
@@ -322,8 +322,8 @@ public class PrometheusMeterRegistry extends MeterRegistry {
     protected LongTaskTimer newLongTaskTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig) {
         LongTaskTimer ltt = new CumulativeHistogramLongTaskTimer(id, clock, getBaseTimeUnit(),
                 distributionStatisticConfig);
-        applyToCollector(id, (collector) -> addDistributionStatisticSamples(id, distributionStatisticConfig, collector,
-                ltt, () -> null, () -> null, tagValues(id), true));
+        applyToCollector(id, (collector) -> addDistributionStatisticSamples(id, collector, ltt, () -> null, () -> null,
+                tagValues(id)));
         return ltt;
     }
 
@@ -429,9 +429,9 @@ public class PrometheusMeterRegistry extends MeterRegistry {
         return registry;
     }
 
-    private void addDistributionStatisticSamples(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig,
-            MicrometerCollector collector, HistogramSupport histogramSupport, Supplier<Exemplar> lastExemplarSupplier,
-            Supplier<Exemplar[]> histogramExemplarsSupplier, List<String> tagValues, boolean forLongTaskTimer) {
+    private void addDistributionStatisticSamples(Meter.Id id, MicrometerCollector collector,
+            HistogramSupport histogramSupport, Supplier<Exemplar> lastExemplarSupplier,
+            Supplier<Exemplar[]> histogramExemplarsSupplier, List<String> tagValues) {
         collector.add(tagValues, (conventionName, tagKeys) -> {
             Stream.Builder<MicrometerCollector.Family<?>> families = Stream.builder();
 
@@ -532,8 +532,8 @@ public class PrometheusMeterRegistry extends MeterRegistry {
     private void applyToCollector(Meter.Id id, Consumer<MicrometerCollector> consumer) {
         collectorMap.compute(getConventionName(id), (name, existingCollector) -> {
             if (existingCollector == null) {
-                MicrometerCollector micrometerCollector = new MicrometerCollector(name, id, config().namingConvention(),
-                        prometheusConfig);
+                MicrometerCollector micrometerCollector = new MicrometerCollector(name, id,
+                        config().namingConvention());
                 consumer.accept(micrometerCollector);
                 registry.register(micrometerCollector);
                 return micrometerCollector;

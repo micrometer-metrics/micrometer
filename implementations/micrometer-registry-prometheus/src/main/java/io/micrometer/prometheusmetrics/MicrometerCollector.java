@@ -48,7 +48,7 @@ class MicrometerCollector implements MultiCollector {
 
     // take name to avoid calling NamingConvention#name after the call-site has already
     // done it
-    MicrometerCollector(String name, Meter.Id id, NamingConvention convention, PrometheusConfig config) {
+    MicrometerCollector(String name, Meter.Id id, NamingConvention convention) {
         this.conventionName = name;
         this.tagKeys = id.getConventionTags(convention).stream().map(Tag::getKey).collect(toList());
     }
@@ -110,14 +110,6 @@ class MicrometerCollector implements MultiCollector {
             this.metricSnapshotFactory = metricSnapshotFactory;
             this.metadata = metadata;
             Collections.addAll(this.dataPointSnapshots, dataPointSnapshots);
-        }
-
-        Family(String conventionName, Function<Family<T>, MetricSnapshot> metricSnapshotFactory,
-                MetricMetadata metadata, Stream<T> dataPointSnapshots) {
-            this.conventionName = conventionName;
-            this.metricSnapshotFactory = metricSnapshotFactory;
-            this.metadata = metadata;
-            dataPointSnapshots.forEach(this.dataPointSnapshots::add);
         }
 
         String getConventionName() {

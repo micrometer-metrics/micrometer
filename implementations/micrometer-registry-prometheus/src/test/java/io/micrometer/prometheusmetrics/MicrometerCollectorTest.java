@@ -19,8 +19,6 @@ import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.Metrics;
 import io.micrometer.core.instrument.config.NamingConvention;
-import io.micrometer.prometheusmetrics.MicrometerCollector;
-import io.micrometer.prometheusmetrics.PrometheusConfig;
 import io.prometheus.metrics.model.snapshots.CounterSnapshot;
 import io.prometheus.metrics.model.snapshots.Labels;
 import io.prometheus.metrics.model.snapshots.MetricMetadata;
@@ -40,8 +38,7 @@ class MicrometerCollectorTest {
     @Test
     void manyTags() {
         Meter.Id id = Metrics.counter("my.counter").getId();
-        MicrometerCollector collector = new MicrometerCollector(id.getConventionName(convention), id, convention,
-                PrometheusConfig.DEFAULT);
+        MicrometerCollector collector = new MicrometerCollector(id.getConventionName(convention), id, convention);
 
         for (Integer i = 0; i < 20_000; i++) {
             CounterSnapshot.CounterDataPointSnapshot sample = new CounterSnapshot.CounterDataPointSnapshot(1.0,
@@ -61,8 +58,7 @@ class MicrometerCollectorTest {
     @Test
     void sameValuesDifferentOrder() {
         Meter.Id id = Metrics.counter("my.counter").getId();
-        MicrometerCollector collector = new MicrometerCollector(id.getConventionName(convention), id, convention,
-                PrometheusConfig.DEFAULT);
+        MicrometerCollector collector = new MicrometerCollector(id.getConventionName(convention), id, convention);
 
         CounterSnapshot.CounterDataPointSnapshot sample = new CounterSnapshot.CounterDataPointSnapshot(1.0,
                 Labels.of("k", "v1", "k2", "v2"), null, 0);
