@@ -62,6 +62,8 @@ public class MicrometerHttpRequestExecutor extends HttpRequestExecutor {
 
     private final MeterRegistry registry;
 
+    private final String meterName;
+
     private final ObservationRegistry observationRegistry;
 
     @Nullable
@@ -76,12 +78,13 @@ public class MicrometerHttpRequestExecutor extends HttpRequestExecutor {
     /**
      * Use {@link #builder(MeterRegistry)} to create an instance of this class.
      */
-    private MicrometerHttpRequestExecutor(Timeout waitForContinue, MeterRegistry registry,
+    private MicrometerHttpRequestExecutor(Timeout waitForContinue, MeterRegistry registry, String meterName,
             Function<HttpRequest, String> uriMapper, Iterable<Tag> extraTags, boolean exportTagsForRoute,
             ObservationRegistry observationRegistry, @Nullable ApacheHttpClientObservationConvention convention) {
         super(waitForContinue, null, null);
         this.registry = Optional.ofNullable(registry)
             .orElseThrow(() -> new IllegalArgumentException("registry is required but has been initialized with null"));
+        this.meterName = meterName;
         this.uriMapper = Optional.ofNullable(uriMapper)
             .orElseThrow(
                     () -> new IllegalArgumentException("uriMapper is required but has been initialized with null"));
@@ -126,7 +129,7 @@ public class MicrometerHttpRequestExecutor extends HttpRequestExecutor {
         finally {
             String status = statusCodeOrError;
             String outcome = statusOutcome.name();
-            sample.stop(METER_NAME, "Duration of Apache HttpClient request execution",
+            sample.stop(meterName, "Duration of Apache HttpClient request execution",
                     () -> Tags
                         .of("method", DefaultApacheHttpClientObservationConvention.INSTANCE.getMethodString(request),
                                 "uri", uriMapper.apply(request), "status", status, "outcome", outcome)
@@ -138,6 +141,8 @@ public class MicrometerHttpRequestExecutor extends HttpRequestExecutor {
     public static class Builder {
 
         private final MeterRegistry registry;
+
+        private String requestsMeterName = MicrometerHttpRequestExecutor.METER_NAME;
 
         private ObservationRegistry observationRegistry = ObservationRegistry.NOOP;
 
@@ -239,11 +244,23 @@ public class MicrometerHttpRequestExecutor extends HttpRequestExecutor {
         }
 
         /**
+         * Provide a name to override the default meter name
+         * @param name Meter name to use when instrumentation is done with Timer. This
+         * does not have any effect when an
+         * {@link #observationRegistry(ObservationRegistry)} is configured
+         * @return This builder instance
+         */
+        public Builder meterName(String name) {
+            this.requestsMeterName = name;
+            return this;
+        }
+
+        /**
          * @return Creates an instance of {@link MicrometerHttpRequestExecutor} with all
          * the configured properties.
          */
         public MicrometerHttpRequestExecutor build() {
-            return new MicrometerHttpRequestExecutor(waitForContinue, registry, uriMapper, extraTags,
+            return new MicrometerHttpRequestExecutor(waitForContinue, registry, requestsMeterName, uriMapper, extraTags,
                     exportTagsForRoute, observationRegistry, observationConvention);
         }
 
