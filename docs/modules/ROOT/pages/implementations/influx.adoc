@@ -85,11 +85,11 @@ InfluxConfig config = new InfluxConfig() {
 MeterRegistry registry = new InfluxMeterRegistry(config, Clock.SYSTEM);
 ----
 
-`InfluxConfig` is an interface with a set of default methods. If, in the implementation of `get(String k)`, rather than returning `null`, you instead bind it to a property source, you can override the default configuration. For example, Micrometer's Spring Boot support binds properties that are prefixed with `management.metrics.export.influx` directly to the `InfluxConfig`:
+`InfluxConfig` is an interface with a set of default methods. If, in the implementation of `get(String k)`, rather than returning `null`, you instead bind it to a property source, you can override the default configuration. For example, Micrometer's Spring Boot support binds properties that are prefixed with `management.influx.metrics.export` directly to the `InfluxConfig`:
 
 [source, yaml]
 ----
-management.metrics.export.influx:
+management.influx.metrics.export:
     api-version: v2 # API version of InfluxDB to use. Defaults to 'v1' unless an org is configured. If an org is configured, defaults to 'v2'.
     auto-create-db: true # Whether to create the InfluxDB database if it does not exist before attempting to publish metrics to it. InfluxDB v1 only. (Default: true)
     batch-size: 10000 # Number of measurements per request to use for this backend. If more measurements are found, then multiple requests will be made. (Default: 10000)
