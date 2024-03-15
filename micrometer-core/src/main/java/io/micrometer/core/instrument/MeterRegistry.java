@@ -94,11 +94,14 @@ public abstract class MeterRegistry {
 
     private final More more = new More();
 
-    // Even though writes are guarded by meterMapLock, iterators across value space are
-    // supported
-    // Hence, we use CHM to support that iteration without ConcurrentModificationException
-    // risk
+    /**
+     * Even though writes are guarded by meterMapLock, iterators across value space are
+     * supported. Hence, we use CHM to support that iteration without
+     * ConcurrentModificationException risk.
+     */
     private final Map<Id, Meter> meterMap = new ConcurrentHashMap<>();
+
+    private final Map<Id, Meter> preFilterIdToMeterMap = new HashMap<>();
 
     /**
      * Map of meter id whose associated meter contains synthetic counterparts to those
@@ -588,8 +591,7 @@ public abstract class MeterRegistry {
     private <M extends Meter> M registerMeterIfNecessary(Class<M> meterClass, Meter.Id id,
             @Nullable DistributionStatisticConfig config, BiFunction<Meter.Id, DistributionStatisticConfig, M> builder,
             Function<Meter.Id, M> noopBuilder) {
-        Id mappedId = getMappedId(id);
-        Meter m = getOrCreateMeter(config, builder, id, mappedId, noopBuilder);
+        Meter m = getOrCreateMeter(config, builder, id, noopBuilder);
 
         if (!meterClass.isInstance(m)) {
             throw new IllegalArgumentException(
@@ -612,8 +614,15 @@ public abstract class MeterRegistry {
 
     private Meter getOrCreateMeter(@Nullable DistributionStatisticConfig config,
             BiFunction<Id, /* Nullable Generic */ DistributionStatisticConfig, ? extends Meter> builder, Id originalId,
-            Id mappedId, Function<Meter.Id, ? extends Meter> noopBuilder) {
-        Meter m = meterMap.get(mappedId);
+            Function<Meter.Id, ? extends Meter> noopBuilder) {
+
+        Meter m = preFilterIdToMeterMap.get(originalId);
+        if (m != null) {
+            return m;
+        }
+
+        Id mappedId = getMappedId(originalId);
+        m = meterMap.get(mappedId);
 
         if (m == null) {
             if (isClosed()) {
@@ -649,6 +658,7 @@ public abstract class MeterRegistry {
                         onAdd.accept(m);
                     }
                     meterMap.put(mappedId, m);
+                    preFilterIdToMeterMap.put(originalId, m);
                 }
             }
         }
@@ -695,7 +705,8 @@ public abstract class MeterRegistry {
     @Incubating(since = "1.3.16")
     @Nullable
     public Meter removeByPreFilterId(Meter.Id preFilterId) {
-        return remove(getMappedId(preFilterId));
+        final Meter meterToRemove = preFilterIdToMeterMap.get(preFilterId);
+        return meterToRemove == null ? null : remove(meterToRemove);
     }
 
     /**
@@ -710,12 +721,11 @@ public abstract class MeterRegistry {
     @Incubating(since = "1.1.0")
     @Nullable
     public Meter remove(Meter.Id mappedId) {
-        Meter m = meterMap.get(mappedId);
-
-        if (m != null) {
+        if (meterMap.containsKey(mappedId)) {
             synchronized (meterMapLock) {
-                m = meterMap.remove(mappedId);
-                if (m != null) {
+                final Meter removedMeter = meterMap.remove(mappedId);
+                preFilterIdToMeterMap.values().removeIf(meter -> meter.equals(removedMeter));
+                if (removedMeter != null) {
                     Set<Id> synthetics = syntheticAssociations.remove(mappedId);
                     if (synthetics != null) {
                         for (Id synthetic : synthetics) {
@@ -724,10 +734,10 @@ public abstract class MeterRegistry {
                     }
 
                     for (Consumer<Meter> onRemove : meterRemovedListeners) {
-                        onRemove.accept(m);
+                        onRemove.accept(removedMeter);
                     }
 
-                    return m;
+                    return removedMeter;
                 }
             }
         }
@@ -752,6 +762,10 @@ public abstract class MeterRegistry {
         /**
          * Append a list of common tags to apply to all metrics reported to the monitoring
          * system.
+         * <p>
+         * </p>
+         * <strong>NOTE: A no-op operation if meters are already registered to the
+         * registry.</strong>
          * @param tags Tags to add to every metric.
          * @return This configuration instance.
          */
@@ -763,6 +777,10 @@ public abstract class MeterRegistry {
          * Append a list of common tags to apply to all metrics reported to the monitoring
          * system. Must be an even number of arguments representing key/value pairs of
          * tags.
+         * <p>
+         * </p>
+         * <strong>NOTE: A no-op operation if meters are already registered to the
+         * registry.</strong>
          * @param tags MUST be an even number of arguments representing key/value pairs of
          * tags.
          * @return This configuration instance.
@@ -774,6 +792,10 @@ public abstract class MeterRegistry {
         /**
          * Add a meter filter to the registry. Filters are applied in the order in which
          * they are added.
+         * <p>
+         * </p>
+         * <strong>NOTE: A no-op operation if meters are already registered to the
+         * registry.</strong>
          * @param filter The filter to add to the registry.
          * @return This configuration instance.
          */
