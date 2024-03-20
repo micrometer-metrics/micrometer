@@ -29,7 +29,7 @@ class WarnThenDebugLoggers {
 
     static class StackTraceLogger extends WarnThenDebugLogger {
 
-        public StackTraceLogger() {
+        StackTraceLogger() {
             super(StackTraceLogger.class);
         }
 
@@ -37,7 +37,7 @@ class WarnThenDebugLoggers {
 
     static class NanGaugeLogger extends WarnThenDebugLogger {
 
-        public NanGaugeLogger() {
+        NanGaugeLogger() {
             super(NanGaugeLogger.class);
         }
 
@@ -45,7 +45,7 @@ class WarnThenDebugLoggers {
 
     static class MetadataDiscrepancyLogger extends WarnThenDebugLogger {
 
-        public MetadataDiscrepancyLogger() {
+        MetadataDiscrepancyLogger() {
             super(MetadataDiscrepancyLogger.class);
         }
 
