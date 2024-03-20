@@ -16,14 +16,12 @@
 package io.micrometer.prometheusmetrics;
 
 import io.micrometer.core.Issue;
-import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.BaseUnits;
+import io.micrometer.core.instrument.binder.jvm.JvmInfoMetrics;
 import io.micrometer.core.instrument.composite.CompositeMeterRegistry;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.HistogramSnapshot;
-import io.micrometer.prometheusmetrics.PrometheusConfig;
-import io.micrometer.prometheusmetrics.PrometheusMeterRegistry;
 import io.prometheus.metrics.model.registry.PrometheusRegistry;
 import io.prometheus.metrics.model.snapshots.*;
 import io.prometheus.metrics.tracer.common.SpanContext;
@@ -32,7 +30,10 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -101,6 +102,37 @@ class PrometheusMeterRegistryTest {
 
         assertThat(prometheusRegistry.scrape()).has(withNameAndQuantile("timer_seconds"));
         assertThat(prometheusRegistry.scrape()).has(withNameAndQuantile("ds"));
+    }
+
+    @Test
+    void invalidMeterNameSuffixesShouldBeRemovedForMetadata() {
+        new JvmInfoMetrics().bindTo(registry);
+        Gauge.builder("test1.info", () -> 1).register(registry);
+        Counter.builder("test2.total").register(registry).increment(2);
+        Gauge.builder("test3.created", () -> 3).register(registry);
+        Counter.builder("test4.bucket").register(registry).increment(4);
+
+        Counter.builder("test5.info").register(registry).increment(5);
+        Gauge.builder("test6.total", () -> 6).register(registry);
+
+        String scrapeResult = registry.scrape();
+
+        assertThat(scrapeResult).contains("# HELP test1_info")
+            .contains("# TYPE test1_info gauge")
+            .contains("test1_info 1");
+        assertThat(scrapeResult).contains("# HELP test2_total")
+            .contains("# TYPE test2_total counter")
+            .contains("test2_total 2.0");
+        assertThat(scrapeResult).contains("# HELP jvm_info").contains("# TYPE jvm_info gauge").contains("jvm_info{");
+        assertThat(scrapeResult).contains("# HELP test3").contains("# TYPE test3 gauge").contains("test3 3");
+        assertThat(scrapeResult).contains("# HELP test4_total")
+            .contains("# TYPE test4_total counter")
+            .contains("test4_total 4.0");
+
+        assertThat(scrapeResult).contains("# HELP test5_total")
+            .contains("# TYPE test5_total counter")
+            .contains("test5_total 5.0");
+        assertThat(scrapeResult).contains("# HELP test6").contains("# TYPE test6 gauge").contains("test6 6");
     }
 
     @Issue("#27")
