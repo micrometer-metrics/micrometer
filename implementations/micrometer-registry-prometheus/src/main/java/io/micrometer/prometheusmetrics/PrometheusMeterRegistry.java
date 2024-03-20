@@ -15,6 +15,7 @@
  */
 package io.micrometer.prometheusmetrics;
 
+import io.micrometer.common.lang.NonNull;
 import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.cumulative.CumulativeFunctionCounter;
@@ -32,6 +33,7 @@ import io.prometheus.metrics.model.snapshots.*;
 import io.prometheus.metrics.model.snapshots.CounterSnapshot.CounterDataPointSnapshot;
 import io.prometheus.metrics.model.snapshots.GaugeSnapshot.GaugeDataPointSnapshot;
 import io.prometheus.metrics.model.snapshots.HistogramSnapshot.HistogramDataPointSnapshot;
+import io.prometheus.metrics.model.snapshots.InfoSnapshot.InfoDataPointSnapshot;
 import io.prometheus.metrics.model.snapshots.SummarySnapshot.SummaryDataPointSnapshot;
 
 import java.io.ByteArrayOutputStream;
@@ -310,10 +312,20 @@ public class PrometheusMeterRegistry extends MeterRegistry {
         Gauge gauge = new DefaultGauge<>(id, obj, valueFunction);
         applyToCollector(id, (collector) -> {
             List<String> tagValues = tagValues(id);
-            collector.add(tagValues,
-                    (conventionName, tagKeys) -> Stream.of(new MicrometerCollector.Family<>(conventionName,
-                            family -> new GaugeSnapshot(family.metadata, family.dataPointSnapshots), getMetadata(id),
-                            new GaugeDataPointSnapshot(gauge.value(), Labels.of(tagKeys, tagValues), null))));
+            if (id.getName().endsWith(".info")) {
+                collector
+                    .add(tagValues,
+                            (conventionName, tagKeys) -> Stream.of(new MicrometerCollector.Family<>(conventionName,
+                                    family -> new InfoSnapshot(family.metadata, family.dataPointSnapshots),
+                                    getMetadata(id), new InfoDataPointSnapshot(Labels.of(tagKeys, tagValues)))));
+            }
+            else {
+                collector.add(tagValues,
+                        (conventionName, tagKeys) -> Stream.of(new MicrometerCollector.Family<>(conventionName,
+                                family -> new GaugeSnapshot(family.metadata, family.dataPointSnapshots),
+                                getMetadata(id),
+                                new GaugeDataPointSnapshot(gauge.value(), Labels.of(tagKeys, tagValues), null))));
+            }
         });
         return gauge;
     }
@@ -524,9 +536,20 @@ public class PrometheusMeterRegistry extends MeterRegistry {
 
     private MetricMetadata getMetadata(Meter.Id id, String suffix) {
         String name = config().namingConvention().name(id.getName(), id.getType(), id.getBaseUnit()) + suffix;
+        String sanitizedName = sanitize(name);
         String help = prometheusConfig.descriptions() ? Optional.ofNullable(id.getDescription()).orElse(" ") : " ";
         Unit unit = id.getBaseUnit() != null ? new Unit(id.getBaseUnit()) : null;
-        return new MetricMetadata(name, help, unit);
+        return new MetricMetadata(sanitizedName, help, unit);
+    }
+
+    private String sanitize(@NonNull String name) {
+        if (name.endsWith("_info") || name.endsWith("_total") || name.endsWith("_created")
+                || name.endsWith("_bucket")) {
+            return name.substring(0, name.lastIndexOf('_'));
+        }
+        else {
+            return name;
+        }
     }
 
     private void applyToCollector(Meter.Id id, Consumer<MicrometerCollector> consumer) {
