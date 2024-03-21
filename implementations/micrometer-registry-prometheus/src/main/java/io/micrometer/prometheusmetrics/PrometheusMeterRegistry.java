@@ -15,7 +15,6 @@
  */
 package io.micrometer.prometheusmetrics;
 
-import io.micrometer.common.lang.NonNull;
 import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.cumulative.CumulativeFunctionCounter;
@@ -536,20 +535,9 @@ public class PrometheusMeterRegistry extends MeterRegistry {
 
     private MetricMetadata getMetadata(Meter.Id id, String suffix) {
         String name = config().namingConvention().name(id.getName(), id.getType(), id.getBaseUnit()) + suffix;
-        String sanitizedName = sanitize(name);
         String help = prometheusConfig.descriptions() ? Optional.ofNullable(id.getDescription()).orElse(" ") : " ";
         Unit unit = id.getBaseUnit() != null ? new Unit(id.getBaseUnit()) : null;
-        return new MetricMetadata(sanitizedName, help, unit);
-    }
-
-    private String sanitize(@NonNull String name) {
-        if (name.endsWith("_info") || name.endsWith("_total") || name.endsWith("_created")
-                || name.endsWith("_bucket")) {
-            return name.substring(0, name.lastIndexOf('_'));
-        }
-        else {
-            return name;
-        }
+        return new MetricMetadata(name, help, unit);
     }
 
     private void applyToCollector(Meter.Id id, Consumer<MicrometerCollector> consumer) {

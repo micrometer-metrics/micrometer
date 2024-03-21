@@ -18,8 +18,7 @@ package io.micrometer.prometheusmetrics;
 import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.config.NamingConvention;
-
-import java.util.regex.Pattern;
+import io.prometheus.metrics.model.snapshots.PrometheusNaming;
 
 /**
  * See https://prometheus.io/docs/concepts/data_model/#metric-names-and-labels for a
@@ -28,10 +27,6 @@ import java.util.regex.Pattern;
  * @author Jon Schneider
  */
 public class PrometheusNamingConvention implements NamingConvention {
-
-    private static final Pattern nameChars = Pattern.compile("[^a-zA-Z0-9_:]");
-
-    private static final Pattern tagKeyChars = Pattern.compile("[^a-zA-Z0-9_]");
 
     private final String timerSuffix;
 
@@ -45,9 +40,6 @@ public class PrometheusNamingConvention implements NamingConvention {
 
     /**
      * Names are snake-cased. They contain a base unit suffix when applicable.
-     * <p>
-     * Names may contain ASCII letters and digits, as well as underscores and colons. They
-     * must match the regex [a-zA-Z_:][a-zA-Z0-9_:]*
      */
     @Override
     public String name(String name, Meter.Type type, @Nullable String baseUnit) {
@@ -81,11 +73,7 @@ public class PrometheusNamingConvention implements NamingConvention {
                 break;
         }
 
-        String sanitized = nameChars.matcher(conventionName).replaceAll("_");
-        if (!Character.isLetter(sanitized.charAt(0))) {
-            sanitized = "m_" + sanitized;
-        }
-        return sanitized;
+        return PrometheusNaming.sanitizeMetricName(conventionName);
     }
 
     /**
@@ -95,13 +83,7 @@ public class PrometheusNamingConvention implements NamingConvention {
      */
     @Override
     public String tagKey(String key) {
-        String conventionKey = NamingConvention.snakeCase.tagKey(key);
-
-        String sanitized = tagKeyChars.matcher(conventionKey).replaceAll("_");
-        if (!Character.isLetter(sanitized.charAt(0))) {
-            sanitized = "m_" + sanitized;
-        }
-        return sanitized;
+        return PrometheusNaming.sanitizeLabelName(key);
     }
 
 }
