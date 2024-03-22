@@ -1,7 +1,7 @@
 [[overview]]
 = Apache HttpComponents Client Instrumentation
 
-IMPORTANT: This section requires usage of Apache HttpComponents Client at least in version 5.
+IMPORTANT: This section requires usage of Apache HttpComponents Client at least in version *5.3*.
 
 https://hc.apache.org/index.html[Apache HttpComponents Client] is an HTTP/1.1 compliant HTTP agent implementation.
 
