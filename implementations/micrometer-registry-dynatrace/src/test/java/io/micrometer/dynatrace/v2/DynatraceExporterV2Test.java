@@ -63,6 +63,8 @@ import static org.mockito.Mockito.*;
  */
 class DynatraceExporterV2Test {
 
+    private static final String SUBSEQUENT_LOGS_AS_DEBUG = "Note that subsequent logs will be logged at debug level.";
+
     private MockLoggerFactory loggerFactory;
 
     private MockLogger logger;
@@ -78,8 +80,6 @@ class DynatraceExporterV2Test {
     private DynatraceMeterRegistry meterRegistry;
 
     private DynatraceExporterV2 exporter;
-
-    private static final String subsequentLogsAsDebug = "Note that subsequent logs will be logged at debug level.";
 
     @BeforeEach
     void setUp() {
@@ -126,7 +126,7 @@ class DynatraceExporterV2Test {
 
         String expectedMessage = "Meter 'my.gauge' returned a value of NaN, which will not be exported. This can be a deliberate value or because the weak reference to the backing object expired.";
 
-        LogEvent warnEvent = new LogEvent(WARN, String.join(" ", expectedMessage, subsequentLogsAsDebug), null);
+        LogEvent warnEvent = new LogEvent(WARN, String.join(" ", expectedMessage, SUBSEQUENT_LOGS_AS_DEBUG), null);
         LogEvent debugEvent = new LogEvent(DEBUG, expectedMessage, null);
 
         meterRegistry.gauge("my.gauge", NaN);
@@ -692,15 +692,14 @@ class DynatraceExporterV2Test {
         // these two will be logged by the WarnThenDebugLogger:
         // the warning message is suffixed with "Note that subsequent logs will be logged
         // at debug level.".
-        LogEvent warnThenDebugWarningLog = new LogEvent(WARN,
-                String.join(" ", expectedWarnThenDebugMessage, expectedException.getMessage(), subsequentLogsAsDebug),
-                expectedException);
+        LogEvent warnThenDebugWarningLog = new LogEvent(WARN, String.join(" ", expectedWarnThenDebugMessage,
+                expectedException.getMessage(), SUBSEQUENT_LOGS_AS_DEBUG), expectedException);
         LogEvent warnThenDebugDebugLog = new LogEvent(DEBUG,
                 String.join(" ", expectedWarnThenDebugMessage, expectedException.getMessage()), expectedException);
 
         // this will be logged by the "general" logger in a single line (once per export)
-        LogEvent expectedExceptionLogMessage = new LogEvent(WARN,
-                "Failed metric ingestion: java.lang.RuntimeException: " + expectedException.getMessage(), null);
+        LogEvent expectedExceptionLogMessage = new LogEvent(WARN, "Failed metric ingestion: " + expectedException,
+                null);
 
         meterRegistry.gauge("my.gauge", 1d);
         Gauge gauge = meterRegistry.find("my.gauge").gauge();
@@ -712,28 +711,18 @@ class DynatraceExporterV2Test {
         // debug event.
         assertThat(logger.getLogEvents()).containsOnlyOnce(expectedExceptionLogMessage);
 
-        long countExceptionLogsFirstExport = logger.getLogEvents()
-            .stream()
-            .filter(event -> event.equals(expectedExceptionLogMessage))
-            .count();
-        assertThat(countExceptionLogsFirstExport).isEqualTo(1);
-
         // the WarnThenDebugLogger only has one event so far.
-        assertThat(stackTraceLogger.getLogEvents()).hasSize(1).containsExactly(warnThenDebugWarningLog);
+        assertThat(stackTraceLogger.getLogEvents()).containsExactly(warnThenDebugWarningLog);
 
         // second export
         exporter.export(Collections.singletonList(gauge));
 
         // after the second export, the general logger contains the warning log twice
-        long countExceptionLogsSecondExport = logger.getLogEvents()
-            .stream()
-            .filter(event -> event.equals(expectedExceptionLogMessage))
-            .count();
-        assertThat(countExceptionLogsSecondExport).isEqualTo(2);
+        assertThat(logger.getLogEvents().stream().filter(event -> event.equals(expectedExceptionLogMessage)))
+            .hasSize(2);
 
         // the WarnThenDebugLogger now has two logs.
-        assertThat(stackTraceLogger.getLogEvents()).hasSize(2)
-            .containsExactly(warnThenDebugWarningLog, warnThenDebugDebugLog);
+        assertThat(stackTraceLogger.getLogEvents()).containsExactly(warnThenDebugWarningLog, warnThenDebugDebugLog);
     }
 
     @Test
@@ -1031,7 +1020,7 @@ class DynatraceExporterV2Test {
                 + "original metadata:\t#my.count count dt.meta.description=count\\ 1\\ description,dt.meta.unit=Bytes\n"
                 + "tried to set new:\t#my.count count dt.meta.description=count\\ description\n"
                 + "Metadata for metric key my.count will not be sent.";
-        LogEvent warnEvent = new LogEvent(WARN, String.join(" ", expectedLogMessage, subsequentLogsAsDebug), null);
+        LogEvent warnEvent = new LogEvent(WARN, String.join(" ", expectedLogMessage, SUBSEQUENT_LOGS_AS_DEBUG), null);
         LogEvent debugEvent = new LogEvent(DEBUG, expectedLogMessage, null);
 
         HttpSender.Request.Builder builder = mock(HttpSender.Request.Builder.class);
@@ -1056,12 +1045,11 @@ class DynatraceExporterV2Test {
         // first export
         exporter.export(meterRegistry.getMeters());
 
-        assertThat(metadataDiscrepancyLogger.getLogEvents()).hasSize(1).containsExactly(warnEvent);
+        assertThat(metadataDiscrepancyLogger.getLogEvents()).containsExactly(warnEvent);
 
         // second export
         exporter.export(meterRegistry.getMeters());
-        assertThat(metadataDiscrepancyLogger.getLogEvents()).hasSize(2).containsExactly(warnEvent, debugEvent);
-
+        assertThat(metadataDiscrepancyLogger.getLogEvents()).containsExactly(warnEvent, debugEvent);
     }
 
     @Test
