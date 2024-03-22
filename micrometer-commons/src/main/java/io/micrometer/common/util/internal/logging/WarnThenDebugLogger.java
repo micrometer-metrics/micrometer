@@ -35,6 +35,15 @@ public class WarnThenDebugLogger {
         this.logger = InternalLoggerFactory.getInstance(clazz);
     }
 
+    /**
+     * Creates a new {@code WarnThenDebugLogger} instance with the specified name.
+     * @param name logger name
+     * @since 1.13.0
+     */
+    public WarnThenDebugLogger(String name) {
+        this.logger = InternalLoggerFactory.getInstance(name);
+    }
+
     public void log(String message, Throwable ex) {
         if (this.warnLogged.compareAndSet(false, true)) {
             log(InternalLogLevel.WARN, getWarnMessage(message), ex);
