@@ -244,7 +244,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
                         quantiles = Quantiles.of(quantileList);
                     }
 
-                    Exemplars exemplars = createExemplarsForCount(summary.lastExemplar());
+                    Exemplars exemplars = createExemplars(summary.lastExemplar());
                     families.add(new MicrometerCollector.Family<>(conventionName,
                             family -> new SummarySnapshot(family.metadata, family.dataPointSnapshots), getMetadata(id),
                             new SummaryDataPointSnapshot(count, sum, quantiles, Labels.of(tagKeys, tagValues),
@@ -468,7 +468,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
                     quantiles = Quantiles.of(quantileList);
                 }
 
-                Exemplars exemplars = createExemplarsForCount(lastExemplarSupplier.get());
+                Exemplars exemplars = createExemplarsWithScaledValue(lastExemplarSupplier.get());
                 families.add(new MicrometerCollector.Family<>(conventionName,
                         family -> new SummarySnapshot(family.metadata, family.dataPointSnapshots), getMetadata(id),
                         new SummaryDataPointSnapshot(count, sum, quantiles, Labels.of(tagKeys, tagValues), exemplars,
@@ -522,13 +522,25 @@ public class PrometheusMeterRegistry extends MeterRegistry {
         });
     }
 
-    private Exemplars createExemplarsForCount(@Nullable Exemplar exemplar) {
+    private Exemplars createExemplars(@Nullable Exemplar exemplar) {
+        return exemplar != null ? Exemplars.of(exemplar) : Exemplars.EMPTY;
+    }
+
+    private Exemplars createExemplarsWithScaledValue(@Nullable Exemplar exemplar) {
         if (exemplar != null) {
-            return Exemplars.of(createExemplarWithNewValue(1.0, exemplar));
+            return Exemplars.of(createExemplarWithNewValue(
+                    TimeUtils.convert(exemplar.getValue(), NANOSECONDS, getBaseTimeUnit()), exemplar));
         }
         else {
             return Exemplars.EMPTY;
         }
+    }
+
+    private Exemplars createExemplarsWithScaledValues(Exemplars exemplars) {
+        return Exemplars.of(StreamSupport.stream(exemplars.spliterator(), false)
+            .map(exemplar -> createExemplarWithNewValue(
+                    TimeUtils.convert(exemplar.getValue(), NANOSECONDS, getBaseTimeUnit()), exemplar))
+            .collect(toList()));
     }
 
     private Exemplar createExemplarWithNewValue(double newValue, Exemplar exemplar) {
@@ -537,13 +549,6 @@ public class PrometheusMeterRegistry extends MeterRegistry {
             .labels(exemplar.getLabels())
             .timestampMillis(exemplar.getTimestampMillis())
             .build();
-    }
-
-    private Exemplars createExemplarsWithScaledValues(Exemplars exemplars) {
-        return Exemplars.of(StreamSupport.stream(exemplars.spliterator(), false)
-            .map(exemplar -> createExemplarWithNewValue(
-                    TimeUtils.convert(exemplar.getValue(), NANOSECONDS, getBaseTimeUnit()), exemplar))
-            .collect(toList()));
     }
 
     private void onMeterRemoved(Meter meter) {

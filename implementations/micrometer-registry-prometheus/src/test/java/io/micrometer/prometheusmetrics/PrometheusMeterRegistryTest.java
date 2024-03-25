@@ -650,14 +650,21 @@ class PrometheusMeterRegistryTest {
         timer.record(Duration.ofMillis(200));
         timer.record(Duration.ofMillis(150));
 
-        Timer timerWithHistogram = Timer.builder("timer.withHistogram")
+        Timer timerWithHistogram = Timer.builder("timer.withHistogram").publishPercentileHistogram().register(registry);
+        timerWithHistogram.record(15, TimeUnit.MILLISECONDS);
+        Thread.sleep(100); // sleeping 100ms since the sample interval limit is 90ms
+        timerWithHistogram.record(150, TimeUnit.MILLISECONDS);
+        Thread.sleep(100); // sleeping 100ms since the sample interval limit is 90ms
+        timerWithHistogram.record(60, TimeUnit.SECONDS);
+
+        Timer timerWithSlos = Timer.builder("timer.withSlos")
             .serviceLevelObjectives(Duration.ofMillis(100), Duration.ofMillis(200), Duration.ofMillis(300))
             .register(registry);
-        timerWithHistogram.record(Duration.ofMillis(15));
+        timerWithSlos.record(Duration.ofMillis(15));
         Thread.sleep(100); // sleeping 100ms since the sample interval limit is 90ms
-        timerWithHistogram.record(Duration.ofMillis(1_500));
+        timerWithSlos.record(Duration.ofMillis(1_500));
         Thread.sleep(100); // sleeping 100ms since the sample interval limit is 90ms
-        timerWithHistogram.record(Duration.ofMillis(150));
+        timerWithSlos.record(Duration.ofMillis(150));
 
         DistributionSummary summary = DistributionSummary.builder("summary.noHistogram").register(registry);
         summary.record(0.10);
@@ -685,31 +692,35 @@ class PrometheusMeterRegistryTest {
         String scraped = registry.scrape("application/openmetrics-text");
         assertThat(scraped).contains("my_counter_total 1.0 # {span_id=\"1\",trace_id=\"2\"} 1.0 ");
 
-        assertThat(scraped).contains("timer_noHistogram_seconds_count 3 # {span_id=\"3\",trace_id=\"4\"} 1.0 ");
+        assertThat(scraped).contains("timer_noHistogram_seconds_count 3 # {span_id=\"3\",trace_id=\"4\"} 0.1 ");
 
         assertThat(scraped)
-            .contains("timer_withHistogram_seconds_bucket{le=\"0.1\"} 1 # {span_id=\"5\",trace_id=\"6\"} 0.015 ")
-            .contains("timer_withHistogram_seconds_bucket{le=\"0.2\"} 2 # {span_id=\"9\",trace_id=\"10\"} 0.15 ")
-            .contains("timer_withHistogram_seconds_bucket{le=\"0.3\"} 2\n")
-            .contains("timer_withHistogram_seconds_bucket{le=\"+Inf\"} 3 # {span_id=\"7\",trace_id=\"8\"} 1.5 ");
-        // Should the value be 1.0 instead of 0.15 in case of _count?
-        assertThat(scraped).contains("timer_withHistogram_seconds_count 3 # {span_id=\"9\",trace_id=\"10\"} 0.15 ");
-
-        assertThat(scraped).contains("summary_noHistogram_count 3 # {span_id=\"11\",trace_id=\"12\"} 1.0 ");
+            .contains(
+                    "timer_withHistogram_seconds_bucket{le=\"0.015379112\"} 1 # {span_id=\"5\",trace_id=\"6\"} 0.015 ")
+            .contains("timer_withHistogram_seconds_bucket{le=\"0.156587348\"} 2 # {span_id=\"7\",trace_id=\"8\"} 0.15 ")
+            .contains("timer_withHistogram_seconds_bucket{le=\"+Inf\"} 3 # {span_id=\"9\",trace_id=\"10\"} 60.0 ");
+        assertThat(scraped).contains("timer_withHistogram_seconds_count 3 # {span_id=\"9\",trace_id=\"10\"} 60.0 ");
 
         assertThat(scraped)
-            .contains("summary_withHistogram_bucket{le=\"1.0\"} 1 # {span_id=\"13\",trace_id=\"14\"} 0.15 ")
-            .contains("summary_withHistogram_bucket{le=\"16.0\"} 2 # {span_id=\"17\",trace_id=\"18\"} 15.0 ")
-            .contains("summary_withHistogram_bucket{le=\"+Inf\"} 3 # {span_id=\"15\",trace_id=\"16\"} 5.0E18 ");
-        // Should the value be 1.0 instead of 15.0 in case of _count?
-        assertThat(scraped).contains("summary_withHistogram_count 3 # {span_id=\"17\",trace_id=\"18\"} 15.0");
+            .contains("timer_withSlos_seconds_bucket{le=\"0.1\"} 1 # {span_id=\"11\",trace_id=\"12\"} 0.015 ")
+            .contains("timer_withSlos_seconds_bucket{le=\"0.2\"} 2 # {span_id=\"15\",trace_id=\"16\"} 0.15 ")
+            .contains("timer_withSlos_seconds_bucket{le=\"0.3\"} 2\n")
+            .contains("timer_withSlos_seconds_bucket{le=\"+Inf\"} 3 # {span_id=\"13\",trace_id=\"14\"} 1.5 ");
+        assertThat(scraped).contains("timer_withSlos_seconds_count 3 # {span_id=\"15\",trace_id=\"16\"} 0.15 ");
 
-        assertThat(scraped).contains("summary_withSlos_bucket{le=\"100.0\"} 1 # {span_id=\"19\",trace_id=\"20\"} 10.0 ")
+        assertThat(scraped).contains("summary_noHistogram_count 3 # {span_id=\"17\",trace_id=\"18\"} 0.1 ");
+
+        assertThat(scraped)
+            .contains("summary_withHistogram_bucket{le=\"1.0\"} 1 # {span_id=\"19\",trace_id=\"20\"} 0.15 ")
+            .contains("summary_withHistogram_bucket{le=\"16.0\"} 2 # {span_id=\"23\",trace_id=\"24\"} 15.0 ")
+            .contains("summary_withHistogram_bucket{le=\"+Inf\"} 3 # {span_id=\"21\",trace_id=\"22\"} 5.0E18 ");
+        assertThat(scraped).contains("summary_withHistogram_count 3 # {span_id=\"23\",trace_id=\"24\"} 15.0");
+
+        assertThat(scraped).contains("summary_withSlos_bucket{le=\"100.0\"} 1 # {span_id=\"25\",trace_id=\"26\"} 10.0 ")
             .contains("summary_withSlos_bucket{le=\"200.0\"} 1\n")
-            .contains("summary_withSlos_bucket{le=\"300.0\"} 2 # {span_id=\"23\",trace_id=\"24\"} 250.0 ")
-            .contains("summary_withSlos_bucket{le=\"+Inf\"} 3 # {span_id=\"21\",trace_id=\"22\"} 1000.0 ");
-        // Should the value be 1.0 instead of 250.0 in case of _count?
-        assertThat(scraped).contains("summary_withSlos_count 3 # {span_id=\"23\",trace_id=\"24\"} 250.0 ");
+            .contains("summary_withSlos_bucket{le=\"300.0\"} 2 # {span_id=\"29\",trace_id=\"30\"} 250.0 ")
+            .contains("summary_withSlos_bucket{le=\"+Inf\"} 3 # {span_id=\"27\",trace_id=\"28\"} 1000.0 ");
+        assertThat(scraped).contains("summary_withSlos_count 3 # {span_id=\"29\",trace_id=\"30\"} 250.0 ");
 
         assertThat(scraped).endsWith("# EOF\n");
     }
