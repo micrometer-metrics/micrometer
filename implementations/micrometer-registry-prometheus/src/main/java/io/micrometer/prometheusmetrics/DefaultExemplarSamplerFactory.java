@@ -31,12 +31,10 @@ import java.util.concurrent.ConcurrentMap;
  */
 public class DefaultExemplarSamplerFactory implements ExemplarSamplerFactory {
 
-    // TODO: Should we expose ExemplarsProperties and let users inject it through a ctor?
     private final ExemplarsProperties properties = ExemplarsProperties.builder().build();
 
     private final ConcurrentMap<Integer, ExemplarSamplerConfig> exemplarSamplerConfigsByNumberOfExemplars = new ConcurrentHashMap<>();
 
-    // TODO: double[] as the key of a map? :|
     private final ConcurrentMap<double[], ExemplarSamplerConfig> exemplarSamplerConfigsByHistogramUpperBounds = new ConcurrentHashMap<>();
 
     private final SpanContext spanContext;

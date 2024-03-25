@@ -638,9 +638,8 @@ class PrometheusMeterRegistryTest {
 
     @Test
     void openMetricsScrapeWithExemplars() throws InterruptedException {
-        ExemplarSamplerFactory exemplarSamplerFactory = new DefaultExemplarSamplerFactory(new TestSpanContex());
         PrometheusMeterRegistry registry = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT, prometheusRegistry,
-                clock, exemplarSamplerFactory);
+                clock, new TestSpanContex());
 
         Counter counter = Counter.builder("my.counter").register(registry);
         counter.increment();

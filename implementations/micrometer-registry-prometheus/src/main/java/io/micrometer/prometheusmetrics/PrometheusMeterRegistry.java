@@ -35,6 +35,7 @@ import io.prometheus.metrics.model.snapshots.GaugeSnapshot.GaugeDataPointSnapsho
 import io.prometheus.metrics.model.snapshots.HistogramSnapshot.HistogramDataPointSnapshot;
 import io.prometheus.metrics.model.snapshots.InfoSnapshot.InfoDataPointSnapshot;
 import io.prometheus.metrics.model.snapshots.SummarySnapshot.SummaryDataPointSnapshot;
+import io.prometheus.metrics.tracer.common.SpanContext;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -93,17 +94,17 @@ public class PrometheusMeterRegistry extends MeterRegistry {
      * @param config configuration
      * @param registry prometheus registry
      * @param clock clock
-     * @param exemplarSamplerFactory exemplar sampler factory
+     * @param spanContext span context that interacts with the used tracing library
      */
     public PrometheusMeterRegistry(PrometheusConfig config, PrometheusRegistry registry, Clock clock,
-            @Nullable ExemplarSamplerFactory exemplarSamplerFactory) {
+            @Nullable SpanContext spanContext) {
         super(clock);
 
         config.requireValid();
 
         this.prometheusConfig = config;
         this.registry = registry;
-        this.exemplarSamplerFactory = exemplarSamplerFactory;
+        this.exemplarSamplerFactory = spanContext != null ? new DefaultExemplarSamplerFactory(spanContext) : null;
 
         config().namingConvention(new PrometheusNamingConvention());
         config().onMeterRemoved(this::onMeterRemoved);

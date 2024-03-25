@@ -19,7 +19,6 @@ import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.DistributionSummary;
 import io.micrometer.core.instrument.Timer;
-import io.micrometer.prometheusmetrics.DefaultExemplarSamplerFactory;
 import io.micrometer.prometheusmetrics.PrometheusConfig;
 import io.micrometer.prometheusmetrics.PrometheusMeterRegistry;
 import io.prometheus.metrics.model.registry.PrometheusRegistry;
@@ -33,7 +32,7 @@ import static io.prometheus.client.exporter.common.TextFormat.CONTENT_TYPE_OPENM
 public class PrometheusExemplarsSample {
 
     private static final PrometheusMeterRegistry registry = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT,
-            new PrometheusRegistry(), Clock.SYSTEM, new DefaultExemplarSamplerFactory(new TestSpanContext()));
+            new PrometheusRegistry(), Clock.SYSTEM, new TestSpanContext());
 
     public static void main(String[] args) throws InterruptedException {
         Counter counter = registry.counter("test.counter");
