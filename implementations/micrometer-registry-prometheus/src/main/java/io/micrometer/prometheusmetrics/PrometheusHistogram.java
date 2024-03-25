@@ -61,14 +61,10 @@ class PrometheusHistogram extends TimeWindowFixedBoundaryHistogram {
         }
     }
 
-    boolean isExemplarsEnabled() {
-        return exemplarSampler != null;
-    }
-
     @Override
     public void recordDouble(double value) {
         super.recordDouble(value);
-        if (isExemplarsEnabled()) {
+        if (exemplarSampler != null) {
             exemplarSampler.observe(value);
         }
     }
@@ -76,18 +72,13 @@ class PrometheusHistogram extends TimeWindowFixedBoundaryHistogram {
     @Override
     public void recordLong(long value) {
         super.recordLong(value);
-        if (isExemplarsEnabled()) {
+        if (exemplarSampler != null) {
             exemplarSampler.observe(value);
         }
     }
 
     Exemplars exemplars() {
-        return isExemplarsEnabled() ? this.exemplarSampler.collect() : Exemplars.EMPTY;
-    }
-
-    @Nullable
-    Exemplar lastExemplar() {
-        return isExemplarsEnabled() ? exemplarSampler.collect().getLatest() : null;
+        return exemplarSampler != null ? this.exemplarSampler.collect() : Exemplars.EMPTY;
     }
 
 }

@@ -23,7 +23,6 @@ import io.micrometer.core.instrument.distribution.*;
 import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import io.micrometer.core.instrument.util.TimeUtils;
 import io.prometheus.metrics.core.exemplars.ExemplarSampler;
-import io.prometheus.metrics.model.snapshots.Exemplar;
 import io.prometheus.metrics.model.snapshots.Exemplars;
 
 import java.util.concurrent.TimeUnit;
@@ -51,8 +50,6 @@ public class PrometheusTimer extends AbstractTimer {
     @Nullable
     private final ExemplarSampler exemplarSampler;
 
-    private boolean histogramExemplarsEnabled = false;
-
     PrometheusTimer(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig,
             PauseDetector pauseDetector, @Nullable ExemplarSamplerFactory exemplarSamplerFactory) {
         super(id, clock,
@@ -66,20 +63,13 @@ public class PrometheusTimer extends AbstractTimer {
         this.max = new TimeWindowMax(clock, distributionStatisticConfig);
 
         if (distributionStatisticConfig.isPublishingHistogram()) {
-            PrometheusHistogram prometheusHistogram = new PrometheusHistogram(clock, distributionStatisticConfig,
-                    exemplarSamplerFactory);
-            this.histogram = prometheusHistogram;
-            this.histogramExemplarsEnabled = prometheusHistogram.isExemplarsEnabled();
+            this.histogram = new PrometheusHistogram(clock, distributionStatisticConfig, exemplarSamplerFactory);
+            this.exemplarSampler = null;
         }
         else {
             this.histogram = null;
-        }
-
-        if (!this.histogramExemplarsEnabled && exemplarSamplerFactory != null) {
-            this.exemplarSampler = exemplarSamplerFactory.createExemplarSampler(1);
-        }
-        else {
-            this.exemplarSampler = null;
+            this.exemplarSampler = exemplarSamplerFactory != null ? exemplarSamplerFactory.createExemplarSampler(1)
+                    : null;
         }
     }
 
@@ -93,29 +83,17 @@ public class PrometheusTimer extends AbstractTimer {
         if (histogram != null) {
             histogram.recordLong(nanoAmount);
         }
-
-        if (!histogramExemplarsEnabled && exemplarSampler != null) {
+        else if (exemplarSampler != null) {
             exemplarSampler.observe(nanoAmount);
         }
     }
 
-    @Nullable
-    Exemplars histogramExemplars() {
-        if (histogramExemplarsEnabled) {
+    Exemplars exemplars() {
+        if (histogram != null) {
             return ((PrometheusHistogram) histogram).exemplars();
         }
         else {
-            return Exemplars.EMPTY;
-        }
-    }
-
-    @Nullable
-    Exemplar lastExemplar() {
-        if (histogramExemplarsEnabled) {
-            return ((PrometheusHistogram) histogram).lastExemplar();
-        }
-        else {
-            return exemplarSampler != null ? exemplarSampler.collect().getLatest() : null;
+            return exemplarSampler != null ? exemplarSampler.collect() : Exemplars.EMPTY;
         }
     }
 
