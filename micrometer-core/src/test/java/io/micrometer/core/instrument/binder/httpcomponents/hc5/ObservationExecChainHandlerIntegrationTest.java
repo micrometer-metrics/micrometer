@@ -22,6 +22,7 @@ import org.apache.hc.client5.http.async.methods.SimpleRequestBuilder;
 import org.apache.hc.client5.http.classic.methods.HttpGet;
 import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 import org.apache.hc.client5.http.config.ConnectionConfig;
+import org.apache.hc.client5.http.impl.ChainElement;
 import org.apache.hc.client5.http.impl.DefaultHttpRequestRetryStrategy;
 import org.apache.hc.client5.http.impl.async.CloseableHttpAsyncClient;
 import org.apache.hc.client5.http.impl.async.HttpAsyncClientBuilder;
@@ -215,8 +216,25 @@ class ObservationExecChainHandlerIntegrationTest {
                 executeClassic(client, new HttpGet(server.baseUrl() + "/retry"));
             }
             assertThat(observationRegistry).hasAnObservationWithAKeyValue(OUTCOME.withValue("SUCCESS"))
-                .hasAnObservationWithAKeyValue(OUTCOME.withValue("SERVER_ERROR"));
-            assertThat(observationRegistry).hasNumberOfObservationsWithNameEqualTo(DEFAULT_METER_NAME, 2);
+                .hasAnObservationWithAKeyValue(OUTCOME.withValue("SERVER_ERROR"))
+                .hasNumberOfObservationsWithNameEqualTo(DEFAULT_METER_NAME, 2);
+        }
+
+        @Test
+        void recordAggregateRetriesWithSuccess(@WiremockResolver.Wiremock WireMockServer server) throws Exception {
+            server.stubFor(get(urlEqualTo("/retry")).inScenario("Retry Scenario")
+                .whenScenarioStateIs(STARTED)
+                .willReturn(aResponse().withStatus(503))
+                .willSetStateTo("Success"));
+            server.stubFor(get(urlEqualTo("/retry")).inScenario("Retry Scenario")
+                .whenScenarioStateIs("Success")
+                .willReturn(aResponse().withStatus(200)));
+
+            try (CloseableHttpClient client = classicClient_aggregateRetries()) {
+                executeClassic(client, new HttpGet(server.baseUrl() + "/retry"));
+            }
+            assertThat(observationRegistry).hasAnObservationWithAKeyValue(OUTCOME.withValue("SUCCESS"))
+                .doesNotHaveAnyRemainingCurrentObservation();
         }
 
     }
@@ -371,8 +389,25 @@ class ObservationExecChainHandlerIntegrationTest {
                 executeAsync(client, request);
             }
             assertThat(observationRegistry).hasAnObservationWithAKeyValue(OUTCOME.withValue("SUCCESS"))
-                .hasAnObservationWithAKeyValue(OUTCOME.withValue("SERVER_ERROR"));
-            assertThat(observationRegistry).hasNumberOfObservationsWithNameEqualTo(DEFAULT_METER_NAME, 2);
+                .hasAnObservationWithAKeyValue(OUTCOME.withValue("SERVER_ERROR"))
+                .hasNumberOfObservationsWithNameEqualTo(DEFAULT_METER_NAME, 2);
+        }
+
+        @Test
+        void recordAggregateRetriesWithSuccess(@WiremockResolver.Wiremock WireMockServer server) throws Exception {
+            server.stubFor(get(urlEqualTo("/retry")).inScenario("Retry Scenario")
+                .whenScenarioStateIs(STARTED)
+                .willReturn(aResponse().withStatus(503))
+                .willSetStateTo("Success"));
+            server.stubFor(get(urlEqualTo("/retry")).inScenario("Retry Scenario")
+                .whenScenarioStateIs("Success")
+                .willReturn(aResponse().withStatus(200)));
+            try (CloseableHttpAsyncClient client = asyncClient_aggregateRetries()) {
+                SimpleHttpRequest request = SimpleRequestBuilder.get(server.baseUrl() + "/retry").build();
+                executeAsync(client, request);
+            }
+            assertThat(observationRegistry).hasAnObservationWithAKeyValue(OUTCOME.withValue("SUCCESS"))
+                .doesNotHaveAnyRemainingCurrentObservation();
         }
 
     }
@@ -389,11 +424,33 @@ class ObservationExecChainHandlerIntegrationTest {
         // tag::setup_classic[]
         HttpClientBuilder clientBuilder = HttpClients.custom()
             .setRetryStrategy(retryStrategy)
-            .addExecInterceptorLast("micrometer", new ObservationExecChainHandler(observationRegistry))
+            .addExecInterceptorAfter(ChainElement.RETRY.name(), "micrometer",
+                    new ObservationExecChainHandler(observationRegistry))
             .setConnectionManager(PoolingHttpClientConnectionManagerBuilder.create()
                 .setDefaultConnectionConfig(connectionConfig)
                 .build());
         // end::setup_classic[]
+
+        return clientBuilder.build();
+    }
+
+    private CloseableHttpClient classicClient_aggregateRetries() {
+        DefaultHttpRequestRetryStrategy retryStrategy = new DefaultHttpRequestRetryStrategy(1,
+                TimeValue.ofMilliseconds(500L));
+
+        ConnectionConfig connectionConfig = ConnectionConfig.custom()
+            .setSocketTimeout(500, TimeUnit.MILLISECONDS)
+            .setConnectTimeout(2000L, TimeUnit.MILLISECONDS)
+            .build();
+
+        // tag::setup_classic_aggregate_retries[]
+        HttpClientBuilder clientBuilder = HttpClients.custom()
+            .setRetryStrategy(retryStrategy)
+            .addExecInterceptorFirst("micrometer", new ObservationExecChainHandler(observationRegistry))
+            .setConnectionManager(PoolingHttpClientConnectionManagerBuilder.create()
+                .setDefaultConnectionConfig(connectionConfig)
+                .build());
+        // end::setup_classic_aggregate_retries[]
 
         return clientBuilder.build();
     }
@@ -418,12 +475,34 @@ class ObservationExecChainHandlerIntegrationTest {
 
         // tag::setup_async[]
         HttpAsyncClientBuilder clientBuilder = HttpAsyncClients.custom()
-            .addExecInterceptorLast("micrometer", new ObservationExecChainHandler(observationRegistry))
+            .addExecInterceptorAfter(ChainElement.RETRY.name(), "micrometer",
+                    new ObservationExecChainHandler(observationRegistry))
             .setRetryStrategy(retryStrategy)
             .setConnectionManager(PoolingAsyncClientConnectionManagerBuilder.create()
                 .setDefaultConnectionConfig(connectionConfig)
                 .build());
         // end::setup_async[]
+
+        return clientBuilder.build();
+    }
+
+    private CloseableHttpAsyncClient asyncClient_aggregateRetries() {
+        ConnectionConfig connectionConfig = ConnectionConfig.custom()
+            .setSocketTimeout(500, TimeUnit.MILLISECONDS)
+            .setConnectTimeout(1000, TimeUnit.MILLISECONDS)
+            .build();
+
+        DefaultHttpRequestRetryStrategy retryStrategy = new DefaultHttpRequestRetryStrategy(1,
+                TimeValue.ofMilliseconds(500L));
+
+        // tag::setup_async_aggregate_retries[]
+        HttpAsyncClientBuilder clientBuilder = HttpAsyncClients.custom()
+            .addExecInterceptorFirst("micrometer", new ObservationExecChainHandler(observationRegistry))
+            .setRetryStrategy(retryStrategy)
+            .setConnectionManager(PoolingAsyncClientConnectionManagerBuilder.create()
+                .setDefaultConnectionConfig(connectionConfig)
+                .build());
+        // end::setup_async_aggregate_retries[]
 
         return clientBuilder.build();
     }
