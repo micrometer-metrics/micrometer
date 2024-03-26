@@ -23,7 +23,7 @@ import io.prometheus.metrics.core.exemplars.ExemplarSampler;
  * @author Jonatan Ivanov
  * @since 1.13.0
  */
-public interface ExemplarSamplerFactory {
+interface ExemplarSamplerFactory {
 
     /**
      * Creates an {@link ExemplarSampler} that stores the defined amount of exemplars.

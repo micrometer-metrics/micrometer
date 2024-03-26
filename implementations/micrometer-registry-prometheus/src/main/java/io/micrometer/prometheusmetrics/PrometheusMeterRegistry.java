@@ -66,11 +66,11 @@ import static java.util.stream.StreamSupport.stream;
  */
 public class PrometheusMeterRegistry extends MeterRegistry {
 
-    private static final ExporterProperties EXPORTER_PROPERTIES = ExporterProperties.builder()
+    private final ExporterProperties exporterProperties = ExporterProperties.builder()
         .exemplarsOnAllMetricTypes(true)
         .build();
 
-    private static final ExpositionFormats EXPOSITION_FORMATS = ExpositionFormats.init(EXPORTER_PROPERTIES);
+    private final ExpositionFormats expositionFormats = ExpositionFormats.init(exporterProperties);
 
     private final PrometheusConfig prometheusConfig;
 
@@ -163,7 +163,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
     }
 
     private void scrape(OutputStream outputStream, String contentType, MetricSnapshots snapshots) throws IOException {
-        EXPOSITION_FORMATS.findWriter(contentType).write(outputStream, snapshots);
+        expositionFormats.findWriter(contentType).write(outputStream, snapshots);
     }
 
     /**

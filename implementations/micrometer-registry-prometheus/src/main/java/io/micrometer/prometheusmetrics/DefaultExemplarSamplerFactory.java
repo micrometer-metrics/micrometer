@@ -16,6 +16,7 @@
 package io.micrometer.prometheusmetrics;
 
 import io.prometheus.metrics.config.ExemplarsProperties;
+import io.prometheus.metrics.config.PrometheusProperties;
 import io.prometheus.metrics.core.exemplars.ExemplarSampler;
 import io.prometheus.metrics.core.exemplars.ExemplarSamplerConfig;
 import io.prometheus.metrics.tracer.common.SpanContext;
@@ -29,9 +30,9 @@ import java.util.concurrent.ConcurrentMap;
  * @author Jonatan Ivanov
  * @since 1.13.0
  */
-public class DefaultExemplarSamplerFactory implements ExemplarSamplerFactory {
+class DefaultExemplarSamplerFactory implements ExemplarSamplerFactory {
 
-    private final ExemplarsProperties properties = ExemplarsProperties.builder().build();
+    private final ExemplarsProperties exemplarProperties = PrometheusProperties.get().getExemplarProperties();
 
     private final ConcurrentMap<Integer, ExemplarSamplerConfig> exemplarSamplerConfigsByNumberOfExemplars = new ConcurrentHashMap<>();
 
@@ -46,14 +47,15 @@ public class DefaultExemplarSamplerFactory implements ExemplarSamplerFactory {
     @Override
     public ExemplarSampler createExemplarSampler(int numberOfExemplars) {
         ExemplarSamplerConfig config = exemplarSamplerConfigsByNumberOfExemplars.computeIfAbsent(numberOfExemplars,
-                key -> new ExemplarSamplerConfig(properties, numberOfExemplars));
+                key -> new ExemplarSamplerConfig(exemplarProperties, numberOfExemplars));
         return new ExemplarSampler(config, spanContext);
     }
 
     @Override
     public ExemplarSampler createExemplarSampler(double[] histogramClassicUpperBounds) {
         ExemplarSamplerConfig config = exemplarSamplerConfigsByHistogramUpperBounds.computeIfAbsent(
-                histogramClassicUpperBounds, key -> new ExemplarSamplerConfig(properties, histogramClassicUpperBounds));
+                histogramClassicUpperBounds,
+                key -> new ExemplarSamplerConfig(exemplarProperties, histogramClassicUpperBounds));
         return new ExemplarSampler(config, spanContext);
     }
 
