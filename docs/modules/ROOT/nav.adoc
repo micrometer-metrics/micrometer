@@ -13,6 +13,7 @@
 ** xref:concepts/distribution-summaries.adoc[Distribution Summaries]
 ** xref:concepts/long-task-timers.adoc[Long Task Timers]
 ** xref:concepts/histogram-quantiles.adoc[Histograms and Percentiles]
+** xref:concepts/meter-provider.adoc[Meter Provider]
 * xref:implementations.adoc[Implementations]
 ** xref:implementations/appOptics.adoc[AppOptics]
 ** xref:implementations/atlas.adoc[Atlas]
