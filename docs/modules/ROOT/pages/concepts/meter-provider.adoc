@@ -23,7 +23,7 @@ This lets us dynamically determine the `status` tag from the end state of the op
 
 NOTE: In some cases you can use `registry.timer("job.execution", "job.name", "my-job", "status", result.status())` instead of using `Timer.Builder` which can save you some extra objects but this is not always possible.
 
-You can resolve both of these issues by using a `MeterProvider`. It's a convenience interface to create new meters from tags using a common "template"/"builder".
+You can resolve both of these issues by using a `MeterProvider`. It's a convenience interface to create new meters from tags using a common "template".
 
 NOTE: Not every `Meter` can do this, `MeterProvider` can be used with `Counter`, `Timer`, `LongTaskTimer`, and `DistributionSummary`.
 
