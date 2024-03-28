@@ -271,9 +271,8 @@ class PrometheusMeterRegistryTest {
 
     @Test
     void percentileHistogramWithUpperBoundContainsExactlyOneInf() {
-
-        DistributionSummary s = DistributionSummary.builder("ds") // single character
-                                                                  // names no longer valid
+        // single character names no longer valid
+        DistributionSummary s = DistributionSummary.builder("ds")
             .publishPercentileHistogram()
             .maximumExpectedValue(3.0)
             .register(registry);
@@ -505,8 +504,8 @@ class PrometheusMeterRegistryTest {
     @Issue("#1883")
     @Test
     void filteredMetricFamilySamplesWithCounter() {
-        String[] names = { "my_count" }; // fails with my_count_total since Prometheus
-                                         // client 1.x
+        // fails with my_count_total since Prometheus client 1.x
+        String[] names = { "my_count" };
 
         Counter.builder("my.count").register(registry);
         assertFilteredMetricSnapshots(names, names);
@@ -533,9 +532,8 @@ class PrometheusMeterRegistryTest {
     @Issue("#1883")
     @Test
     void filteredMetricFamilySamplesWithTimer() {
-        String[] names = { "my_timer_seconds", "my_timer_seconds_max" }; // not individual
-                                                                         // time series
-                                                                         // name
+        // not individual time series name
+        String[] names = { "my_timer_seconds", "my_timer_seconds_max" };
 
         Timer.builder("my.timer").register(registry);
         assertFilteredMetricSnapshots(names, names);
@@ -590,9 +588,8 @@ class PrometheusMeterRegistryTest {
     void scrapeWithLongTaskTimer() {
         LongTaskTimer.builder("my.long.task.timer").register(registry);
         assertThat(registry.scrape()).contains("my_long_task_timer_seconds_max")
-            .contains("my_long_task_timer_seconds_count") // since Prometheus client 1.x,
-                                                          // suffix _active_count =>
-                                                          // _count
+            // since Prometheus client 1.x, suffix _active_count => _count
+            .contains("my_long_task_timer_seconds_count")
             .contains("my_long_task_timer_seconds_sum");
     }
 
@@ -639,95 +636,93 @@ class PrometheusMeterRegistryTest {
             .endsWith("# EOF\n");
     }
 
-    // @Test
-    // void openMetricsScrapeWithExemplars() {
-    // DefaultExemplarSampler exemplarSampler = new DefaultExemplarSampler(new
-    // TestSpanContextSupplier());
-    // PrometheusMeterRegistry registry = new
-    // PrometheusMeterRegistry(PrometheusConfig.DEFAULT, prometheusRegistry,
-    // clock, exemplarSampler);
-    //
-    // Counter counter = Counter.builder("my.counter").register(registry);
-    // counter.increment();
-    //
-    // Timer timer = Timer.builder("timer.noHistogram").register(registry);
-    // timer.record(Duration.ofMillis(100));
-    // timer.record(Duration.ofMillis(200));
-    // timer.record(Duration.ofMillis(150));
-    //
-    // Timer timerWithHistogram = Timer.builder("timer.withHistogram")
-    // .serviceLevelObjectives(Duration.ofMillis(100), Duration.ofMillis(200),
-    // Duration.ofMillis(300))
-    // .register(registry);
-    // timerWithHistogram.record(Duration.ofMillis(15));
-    // timerWithHistogram.record(Duration.ofMillis(1_500));
-    // timerWithHistogram.record(Duration.ofMillis(150));
-    //
-    // DistributionSummary summary =
-    // DistributionSummary.builder("summary.noHistogram").register(registry);
-    // summary.record(0.10);
-    // summary.record(1E18);
-    // summary.record(20);
-    //
-    // DistributionSummary summaryWithHistogram =
-    // DistributionSummary.builder("summary.withHistogram")
-    // .publishPercentileHistogram()
-    // .register(registry);
-    // summaryWithHistogram.record(0.15);
-    // summaryWithHistogram.record(5E18);
-    // summaryWithHistogram.record(15);
-    //
-    // DistributionSummary slos = DistributionSummary.builder("summary.withSlos")
-    // .serviceLevelObjectives(100, 200, 300)
-    // .register(registry);
-    // slos.record(10);
-    // slos.record(1_000);
-    // slos.record(250);
-    //
-    // String scraped = registry.scrape(TextFormat.CONTENT_TYPE_OPENMETRICS_100);
-    // assertThat(scraped).contains("my_counter_total 1.0 # {span_id=\"1\",trace_id=\"2\"}
-    // 1.0 ");
-    //
-    // assertThat(scraped).contains("timer_noHistogram_seconds_count 3.0 #
-    // {span_id=\"3\",trace_id=\"4\"} 1.0 ");
-    //
-    // assertThat(scraped)
-    // .contains("timer_withHistogram_seconds_bucket{le=\"0.1\"} 1.0 #
-    // {span_id=\"5\",trace_id=\"6\"} 0.015 ")
-    // .contains("timer_withHistogram_seconds_bucket{le=\"0.2\"} 2.0 #
-    // {span_id=\"9\",trace_id=\"10\"} 0.15 ")
-    // .contains("timer_withHistogram_seconds_bucket{le=\"0.3\"} 2.0\n")
-    // .contains("timer_withHistogram_seconds_bucket{le=\"+Inf\"} 3.0 #
-    // {span_id=\"7\",trace_id=\"8\"} 1.5 ");
-    // assertThat(scraped).contains("timer_withHistogram_seconds_count 3.0 #
-    // {span_id=\"9\",trace_id=\"10\"} 1.0 ");
-    //
-    // assertThat(scraped).contains("summary_noHistogram_count 3.0 #
-    // {span_id=\"11\",trace_id=\"12\"} 1.0 ");
-    //
-    // assertThat(scraped)
-    // .contains("summary_withHistogram_bucket{le=\"1.0\"} 1.0 #
-    // {span_id=\"13\",trace_id=\"14\"} 0.15 ")
-    // .contains("summary_withHistogram_bucket{le=\"16.0\"} 2.0 #
-    // {span_id=\"17\",trace_id=\"18\"} 15.0 ")
-    // .contains("summary_withHistogram_bucket{le=\"+Inf\"} 3.0 #
-    // {span_id=\"15\",trace_id=\"16\"} 5.0E18 ");
-    // assertThat(scraped).contains("summary_withHistogram_count 3.0 #
-    // {span_id=\"17\",trace_id=\"18\"} 1.0 ");
-    //
-    // assertThat(scraped)
-    // .contains("summary_withSlos_bucket{le=\"100.0\"} 1.0 #
-    // {span_id=\"19\",trace_id=\"20\"} 10.0 ")
-    // .contains("summary_withSlos_bucket{le=\"200.0\"} 1.0\n")
-    // .contains("summary_withSlos_bucket{le=\"300.0\"} 2.0 #
-    // {span_id=\"23\",trace_id=\"24\"} 250.0 ")
-    // .contains("summary_withSlos_bucket{le=\"+Inf\"} 3.0 #
-    // {span_id=\"21\",trace_id=\"22\"} 1000.0 ");
-    // assertThat(scraped).contains("summary_withSlos_count 3.0 #
-    // {span_id=\"23\",trace_id=\"24\"} 1.0 ");
-    //
-    // assertThat(scraped).endsWith("# EOF\n");
-    // }
+    @Test
+    void openMetricsScrapeWithExemplars() throws InterruptedException {
+        PrometheusMeterRegistry registry = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT, prometheusRegistry,
+                clock, new TestSpanContex());
+
+        Counter counter = Counter.builder("my.counter").register(registry);
+        counter.increment();
+
+        Timer timer = Timer.builder("timer.noHistogram").register(registry);
+        timer.record(Duration.ofMillis(100));
+        timer.record(Duration.ofMillis(200));
+        timer.record(Duration.ofMillis(150));
+
+        Timer timerWithHistogram = Timer.builder("timer.withHistogram").publishPercentileHistogram().register(registry);
+        timerWithHistogram.record(15, TimeUnit.MILLISECONDS);
+        Thread.sleep(100); // sleeping 100ms since the sample interval limit is 90ms
+        timerWithHistogram.record(150, TimeUnit.MILLISECONDS);
+        Thread.sleep(100); // sleeping 100ms since the sample interval limit is 90ms
+        timerWithHistogram.record(60, TimeUnit.SECONDS);
+
+        Timer timerWithSlos = Timer.builder("timer.withSlos")
+            .serviceLevelObjectives(Duration.ofMillis(100), Duration.ofMillis(200), Duration.ofMillis(300))
+            .register(registry);
+        timerWithSlos.record(Duration.ofMillis(15));
+        Thread.sleep(100); // sleeping 100ms since the sample interval limit is 90ms
+        timerWithSlos.record(Duration.ofMillis(1_500));
+        Thread.sleep(100); // sleeping 100ms since the sample interval limit is 90ms
+        timerWithSlos.record(Duration.ofMillis(150));
+
+        DistributionSummary summary = DistributionSummary.builder("summary.noHistogram").register(registry);
+        summary.record(0.10);
+        summary.record(1E18);
+        summary.record(20);
+
+        DistributionSummary summaryWithHistogram = DistributionSummary.builder("summary.withHistogram")
+            .publishPercentileHistogram()
+            .register(registry);
+        summaryWithHistogram.record(0.15);
+        Thread.sleep(100); // sleeping 100ms since the sample interval limit is 90ms
+        summaryWithHistogram.record(5E18);
+        Thread.sleep(100); // sleeping 100ms since the sample interval limit is 90ms
+        summaryWithHistogram.record(15);
+
+        DistributionSummary slos = DistributionSummary.builder("summary.withSlos")
+            .serviceLevelObjectives(100, 200, 300)
+            .register(registry);
+        slos.record(10);
+        Thread.sleep(100); // sleeping 100ms since the sample interval limit is 90ms
+        slos.record(1_000);
+        Thread.sleep(100); // sleeping 100ms since the sample interval limit is 90ms
+        slos.record(250);
+
+        String scraped = registry.scrape("application/openmetrics-text");
+        assertThat(scraped).contains("my_counter_total 1.0 # {span_id=\"1\",trace_id=\"2\"} 1.0 ");
+
+        assertThat(scraped).contains("timer_noHistogram_seconds_count 3 # {span_id=\"3\",trace_id=\"4\"} 0.1 ");
+
+        assertThat(scraped)
+            .contains(
+                    "timer_withHistogram_seconds_bucket{le=\"0.015379112\"} 1 # {span_id=\"5\",trace_id=\"6\"} 0.015 ")
+            .contains("timer_withHistogram_seconds_bucket{le=\"0.156587348\"} 2 # {span_id=\"7\",trace_id=\"8\"} 0.15 ")
+            .contains("timer_withHistogram_seconds_bucket{le=\"+Inf\"} 3 # {span_id=\"9\",trace_id=\"10\"} 60.0 ");
+        assertThat(scraped).contains("timer_withHistogram_seconds_count 3 # {span_id=\"9\",trace_id=\"10\"} 60.0 ");
+
+        assertThat(scraped)
+            .contains("timer_withSlos_seconds_bucket{le=\"0.1\"} 1 # {span_id=\"11\",trace_id=\"12\"} 0.015 ")
+            .contains("timer_withSlos_seconds_bucket{le=\"0.2\"} 2 # {span_id=\"15\",trace_id=\"16\"} 0.15 ")
+            .contains("timer_withSlos_seconds_bucket{le=\"0.3\"} 2\n")
+            .contains("timer_withSlos_seconds_bucket{le=\"+Inf\"} 3 # {span_id=\"13\",trace_id=\"14\"} 1.5 ");
+        assertThat(scraped).contains("timer_withSlos_seconds_count 3 # {span_id=\"15\",trace_id=\"16\"} 0.15 ");
+
+        assertThat(scraped).contains("summary_noHistogram_count 3 # {span_id=\"17\",trace_id=\"18\"} 0.1 ");
+
+        assertThat(scraped)
+            .contains("summary_withHistogram_bucket{le=\"1.0\"} 1 # {span_id=\"19\",trace_id=\"20\"} 0.15 ")
+            .contains("summary_withHistogram_bucket{le=\"16.0\"} 2 # {span_id=\"23\",trace_id=\"24\"} 15.0 ")
+            .contains("summary_withHistogram_bucket{le=\"+Inf\"} 3 # {span_id=\"21\",trace_id=\"22\"} 5.0E18 ");
+        assertThat(scraped).contains("summary_withHistogram_count 3 # {span_id=\"23\",trace_id=\"24\"} 15.0");
+
+        assertThat(scraped).contains("summary_withSlos_bucket{le=\"100.0\"} 1 # {span_id=\"25\",trace_id=\"26\"} 10.0 ")
+            .contains("summary_withSlos_bucket{le=\"200.0\"} 1\n")
+            .contains("summary_withSlos_bucket{le=\"300.0\"} 2 # {span_id=\"29\",trace_id=\"30\"} 250.0 ")
+            .contains("summary_withSlos_bucket{le=\"+Inf\"} 3 # {span_id=\"27\",trace_id=\"28\"} 1000.0 ");
+        assertThat(scraped).contains("summary_withSlos_count 3 # {span_id=\"29\",trace_id=\"30\"} 250.0 ");
+
+        assertThat(scraped).endsWith("# EOF\n");
+    }
 
     @Test
     void noExemplarsIfNoSampler() {
@@ -763,10 +758,7 @@ class PrometheusMeterRegistryTest {
         assertThat(scraped).contains("test_timer_seconds_bucket{le=\"0.1\"} 1\n")
             .contains("test_timer_seconds_bucket{le=\"0.2\"} 2\n")
             .contains("test_timer_seconds_bucket{le=\"0.3\"} 2\n")
-            .contains("test_timer_seconds_bucket{le=\"+Inf\"} 3\n"); // fails with a count
-                                                                     // of 5 despite only
-                                                                     // 3 calls to
-                                                                     // record...
+            .contains("test_timer_seconds_bucket{le=\"+Inf\"} 3\n");
         assertThat(scraped).contains("test_histogram_bucket{le=\"1.0\"} 1\n")
             .contains("test_histogram_bucket{le=\"16.0\"} 2\n")
             .contains("test_histogram_bucket{le=\"+Inf\"} 3\n");
@@ -778,7 +770,7 @@ class PrometheusMeterRegistryTest {
         assertThat(scraped).endsWith("# EOF\n");
     }
 
-    static class TestSpanContextSupplier implements SpanContext {
+    static class TestSpanContex implements SpanContext {
 
         private final AtomicLong count = new AtomicLong();
 

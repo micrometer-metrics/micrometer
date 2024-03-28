@@ -15,16 +15,14 @@
  */
 package io.micrometer.prometheusmetrics;
 
-import io.micrometer.common.lang.NonNull;
 import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.AbstractDistributionSummary;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.DistributionSummary;
 import io.micrometer.core.instrument.distribution.*;
 import io.prometheus.metrics.core.exemplars.ExemplarSampler;
-import io.prometheus.metrics.model.snapshots.Exemplar;
+import io.prometheus.metrics.model.snapshots.Exemplars;
 
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.atomic.DoubleAdder;
 import java.util.concurrent.atomic.LongAdder;
 
@@ -50,13 +48,8 @@ public class PrometheusDistributionSummary extends AbstractDistributionSummary {
     @Nullable
     private final ExemplarSampler exemplarSampler;
 
-    @Nullable
-    private final AtomicReference<Exemplar> lastExemplar;
-
-    private boolean histogramExemplarsEnabled = false;
-
     PrometheusDistributionSummary(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig,
-            double scale, @Nullable ExemplarSampler exemplarSampler) {
+            double scale, @Nullable ExemplarSamplerFactory exemplarSamplerFactory) {
         super(id, clock,
                 DistributionStatisticConfig.builder()
                     .percentilesHistogram(false)
@@ -68,22 +61,13 @@ public class PrometheusDistributionSummary extends AbstractDistributionSummary {
         this.max = new TimeWindowMax(clock, distributionStatisticConfig);
 
         if (distributionStatisticConfig.isPublishingHistogram()) {
-            PrometheusHistogram prometheusHistogram = new PrometheusHistogram(clock, distributionStatisticConfig,
-                    exemplarSampler);
-            this.histogram = prometheusHistogram;
-            this.histogramExemplarsEnabled = prometheusHistogram.isExemplarsEnabled();
+            this.histogram = new PrometheusHistogram(clock, distributionStatisticConfig, exemplarSamplerFactory);
+            this.exemplarSampler = null;
         }
         else {
             this.histogram = null;
-        }
-
-        if (!this.histogramExemplarsEnabled && exemplarSampler != null) {
-            this.exemplarSampler = exemplarSampler;
-            this.lastExemplar = new AtomicReference<>();
-        }
-        else {
-            this.exemplarSampler = null;
-            this.lastExemplar = null;
+            this.exemplarSampler = exemplarSamplerFactory != null ? exemplarSamplerFactory.createExemplarSampler(1)
+                    : null;
         }
     }
 
@@ -96,40 +80,17 @@ public class PrometheusDistributionSummary extends AbstractDistributionSummary {
         if (histogram != null) {
             histogram.recordDouble(amount);
         }
-        if (!histogramExemplarsEnabled && exemplarSampler != null) {
-            updateLastExemplar(amount, exemplarSampler);
+        else if (exemplarSampler != null) {
+            exemplarSampler.observe(amount);
         }
     }
 
-    // Similar to exemplar.updateAndGet(...) but it does nothing if the next value is null
-    private void updateLastExemplar(double amount, @NonNull ExemplarSampler exemplarSampler) {
-        // Exemplar prev;
-        // Exemplar next;
-        // do {
-        // prev = lastExemplar.get();
-        // next = exemplarSampler.sample(amount, prev);
-        // }
-        // while (next != null && next != prev && !lastExemplar.compareAndSet(prev,
-        // next));
-    }
-
-    @Nullable
-    Exemplar[] histogramExemplars() {
-        if (histogramExemplarsEnabled) {
+    Exemplars exemplars() {
+        if (histogram != null) {
             return ((PrometheusHistogram) histogram).exemplars();
         }
         else {
-            return null;
-        }
-    }
-
-    @Nullable
-    Exemplar lastExemplar() {
-        if (histogramExemplarsEnabled) {
-            return ((PrometheusHistogram) histogram).lastExemplar();
-        }
-        else {
-            return lastExemplar != null ? lastExemplar.get() : null;
+            return exemplarSampler != null ? exemplarSampler.collect() : Exemplars.EMPTY;
         }
     }
 

@@ -25,7 +25,9 @@ import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import io.micrometer.core.instrument.internal.CumulativeHistogramLongTaskTimer;
 import io.micrometer.core.instrument.internal.DefaultGauge;
 import io.micrometer.core.instrument.internal.DefaultMeter;
-import io.prometheus.metrics.core.exemplars.ExemplarSampler;
+import io.micrometer.core.instrument.util.TimeUtils;
+import io.prometheus.metrics.config.ExporterProperties;
+import io.prometheus.metrics.config.PrometheusProperties;
 import io.prometheus.metrics.expositionformats.ExpositionFormats;
 import io.prometheus.metrics.model.registry.PrometheusRegistry;
 import io.prometheus.metrics.model.snapshots.*;
@@ -34,6 +36,7 @@ import io.prometheus.metrics.model.snapshots.GaugeSnapshot.GaugeDataPointSnapsho
 import io.prometheus.metrics.model.snapshots.HistogramSnapshot.HistogramDataPointSnapshot;
 import io.prometheus.metrics.model.snapshots.InfoSnapshot.InfoDataPointSnapshot;
 import io.prometheus.metrics.model.snapshots.SummarySnapshot.SummaryDataPointSnapshot;
+import io.prometheus.metrics.tracer.common.SpanContext;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -47,7 +50,10 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 import java.util.function.*;
 import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
+import static java.util.concurrent.TimeUnit.NANOSECONDS;
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.StreamSupport.stream;
@@ -61,7 +67,9 @@ import static java.util.stream.StreamSupport.stream;
  */
 public class PrometheusMeterRegistry extends MeterRegistry {
 
-    private static final ExpositionFormats EXPOSITION_FORMATS = ExpositionFormats.init();
+    private final ExporterProperties exporterProperties = PrometheusProperties.get().getExporterProperties();
+
+    private final ExpositionFormats expositionFormats = ExpositionFormats.init(exporterProperties);
 
     private final PrometheusConfig prometheusConfig;
 
@@ -70,7 +78,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
     private final ConcurrentMap<String, MicrometerCollector> collectorMap = new ConcurrentHashMap<>();
 
     @Nullable
-    private final ExemplarSampler exemplarSampler;
+    private final ExemplarSamplerFactory exemplarSamplerFactory;
 
     public PrometheusMeterRegistry(PrometheusConfig config) {
         this(config, new PrometheusRegistry(), Clock.SYSTEM);
@@ -85,17 +93,17 @@ public class PrometheusMeterRegistry extends MeterRegistry {
      * @param config configuration
      * @param registry prometheus registry
      * @param clock clock
-     * @param exemplarSampler exemplar sampler
+     * @param spanContext span context that interacts with the used tracing library
      */
     public PrometheusMeterRegistry(PrometheusConfig config, PrometheusRegistry registry, Clock clock,
-            @Nullable ExemplarSampler exemplarSampler) {
+            @Nullable SpanContext spanContext) {
         super(clock);
 
         config.requireValid();
 
         this.prometheusConfig = config;
         this.registry = registry;
-        this.exemplarSampler = exemplarSampler;
+        this.exemplarSamplerFactory = spanContext != null ? new DefaultExemplarSamplerFactory(spanContext) : null;
 
         config().namingConvention(new PrometheusNamingConvention());
         config().onMeterRemoved(this::onMeterRemoved);
@@ -154,7 +162,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
     }
 
     private void scrape(OutputStream outputStream, String contentType, MetricSnapshots snapshots) throws IOException {
-        EXPOSITION_FORMATS.findWriter(contentType).write(outputStream, snapshots);
+        expositionFormats.findWriter(contentType).write(outputStream, snapshots);
     }
 
     /**
@@ -198,7 +206,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
 
     @Override
     public Counter newCounter(Meter.Id id) {
-        PrometheusCounter counter = new PrometheusCounter(id, exemplarSampler);
+        PrometheusCounter counter = new PrometheusCounter(id, exemplarSamplerFactory);
         applyToCollector(id, (collector) -> {
             List<String> tagValues = tagValues(id);
             collector.add(tagValues,
@@ -215,7 +223,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
     public DistributionSummary newDistributionSummary(Meter.Id id,
             DistributionStatisticConfig distributionStatisticConfig, double scale) {
         PrometheusDistributionSummary summary = new PrometheusDistributionSummary(id, clock,
-                distributionStatisticConfig, scale, exemplarSampler);
+                distributionStatisticConfig, scale, exemplarSamplerFactory);
         applyToCollector(id, (collector) -> {
             List<String> tagValues = tagValues(id);
             collector.add(tagValues, (conventionName, tagKeys) -> {
@@ -236,8 +244,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
                         quantiles = Quantiles.of(quantileList);
                     }
 
-                    Exemplars exemplars = summary.lastExemplar() != null ? Exemplars.of(summary.lastExemplar())
-                            : Exemplars.EMPTY;
+                    Exemplars exemplars = summary.exemplars();
                     families.add(new MicrometerCollector.Family<>(conventionName,
                             family -> new SummarySnapshot(family.metadata, family.dataPointSnapshots), getMetadata(id),
                             new SummaryDataPointSnapshot(count, sum, quantiles, Labels.of(tagKeys, tagValues),
@@ -265,8 +272,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
                         counts.add(count - histogramCounts[histogramCounts.length - 1].count());
                     }
 
-                    Exemplars exemplars = summary.histogramExemplars() != null
-                            ? Exemplars.of(summary.histogramExemplars()) : Exemplars.EMPTY;
+                    Exemplars exemplars = summary.exemplars();
                     families.add(new MicrometerCollector.Family<>(conventionName,
                             family -> new io.prometheus.metrics.model.snapshots.HistogramSnapshot(family.metadata,
                                     family.dataPointSnapshots),
@@ -299,9 +305,9 @@ public class PrometheusMeterRegistry extends MeterRegistry {
     protected io.micrometer.core.instrument.Timer newTimer(Meter.Id id,
             DistributionStatisticConfig distributionStatisticConfig, PauseDetector pauseDetector) {
         PrometheusTimer timer = new PrometheusTimer(id, clock, distributionStatisticConfig, pauseDetector,
-                exemplarSampler);
-        applyToCollector(id, (collector) -> addDistributionStatisticSamples(id, collector, timer, timer::lastExemplar,
-                timer::histogramExemplars, tagValues(id)));
+                exemplarSamplerFactory);
+        applyToCollector(id,
+                (collector) -> addDistributionStatisticSamples(id, collector, timer, timer::exemplars, tagValues(id)));
         return timer;
     }
 
@@ -333,7 +339,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
     protected LongTaskTimer newLongTaskTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig) {
         LongTaskTimer ltt = new CumulativeHistogramLongTaskTimer(id, clock, getBaseTimeUnit(),
                 distributionStatisticConfig);
-        applyToCollector(id, (collector) -> addDistributionStatisticSamples(id, collector, ltt, () -> null, () -> null,
+        applyToCollector(id, (collector) -> addDistributionStatisticSamples(id, collector, ltt, () -> Exemplars.EMPTY,
                 tagValues(id)));
         return ltt;
     }
@@ -430,7 +436,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
 
     @Override
     protected TimeUnit getBaseTimeUnit() {
-        return TimeUnit.SECONDS;
+        return SECONDS;
     }
 
     /**
@@ -441,8 +447,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
     }
 
     private void addDistributionStatisticSamples(Meter.Id id, MicrometerCollector collector,
-            HistogramSupport histogramSupport, Supplier<Exemplar> lastExemplarSupplier,
-            Supplier<Exemplar[]> histogramExemplarsSupplier, List<String> tagValues) {
+            HistogramSupport histogramSupport, Supplier<Exemplars> exemplarsSupplier, List<String> tagValues) {
         collector.add(tagValues, (conventionName, tagKeys) -> {
             Stream.Builder<MicrometerCollector.Family<?>> families = Stream.builder();
 
@@ -462,8 +467,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
                     quantiles = Quantiles.of(quantileList);
                 }
 
-                Exemplars exemplars = lastExemplarSupplier.get() != null ? Exemplars.of(lastExemplarSupplier.get())
-                        : Exemplars.EMPTY;
+                Exemplars exemplars = createExemplarsWithScaledValues(exemplarsSupplier.get());
                 families.add(new MicrometerCollector.Family<>(conventionName,
                         family -> new SummarySnapshot(family.metadata, family.dataPointSnapshots), getMetadata(id),
                         new SummaryDataPointSnapshot(count, sum, quantiles, Labels.of(tagKeys, tagValues), exemplars,
@@ -491,8 +495,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
                     counts.add(count - histogramCounts[histogramCounts.length - 1].count());
                 }
 
-                Exemplars exemplars = histogramExemplarsSupplier.get() != null
-                        ? Exemplars.of(histogramExemplarsSupplier.get()) : Exemplars.EMPTY;
+                Exemplars exemplars = createExemplarsWithScaledValues(exemplarsSupplier.get());
                 families.add(new MicrometerCollector.Family<>(conventionName,
                         family -> new io.prometheus.metrics.model.snapshots.HistogramSnapshot(family.metadata,
                                 family.dataPointSnapshots),
@@ -516,6 +519,21 @@ public class PrometheusMeterRegistry extends MeterRegistry {
 
             return families.build();
         });
+    }
+
+    private Exemplars createExemplarsWithScaledValues(Exemplars exemplars) {
+        return Exemplars.of(StreamSupport.stream(exemplars.spliterator(), false)
+            .map(exemplar -> createExemplarWithNewValue(
+                    TimeUtils.convert(exemplar.getValue(), NANOSECONDS, getBaseTimeUnit()), exemplar))
+            .collect(toList()));
+    }
+
+    private Exemplar createExemplarWithNewValue(double newValue, Exemplar exemplar) {
+        return Exemplar.builder()
+            .value(newValue)
+            .labels(exemplar.getLabels())
+            .timestampMillis(exemplar.getTimestampMillis())
+            .build();
     }
 
     private void onMeterRemoved(Meter meter) {
