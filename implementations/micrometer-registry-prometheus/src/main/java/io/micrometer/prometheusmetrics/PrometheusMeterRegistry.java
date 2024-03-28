@@ -27,6 +27,7 @@ import io.micrometer.core.instrument.internal.DefaultGauge;
 import io.micrometer.core.instrument.internal.DefaultMeter;
 import io.micrometer.core.instrument.util.TimeUtils;
 import io.prometheus.metrics.config.ExporterProperties;
+import io.prometheus.metrics.config.PrometheusProperties;
 import io.prometheus.metrics.expositionformats.ExpositionFormats;
 import io.prometheus.metrics.model.registry.PrometheusRegistry;
 import io.prometheus.metrics.model.snapshots.*;
@@ -66,9 +67,7 @@ import static java.util.stream.StreamSupport.stream;
  */
 public class PrometheusMeterRegistry extends MeterRegistry {
 
-    private final ExporterProperties exporterProperties = ExporterProperties.builder()
-        .exemplarsOnAllMetricTypes(true)
-        .build();
+    private final ExporterProperties exporterProperties = PrometheusProperties.get().getExporterProperties();
 
     private final ExpositionFormats expositionFormats = ExpositionFormats.init(exporterProperties);
 
