@@ -4,12 +4,11 @@ dependencies {
     api project(':micrometer-core')
 
     api('io.prometheus:prometheus-metrics-core') {
-        // We only need SpanContext from prometheus-metrics-tracer-common so we should
-        // exclude(group: 'io.prometheus', module: 'prometheus-metrics-tracer-initializer')
-        // But right now we cannot since ExemplarSampler imports SpanContextSupplier
-        exclude(group: 'io.prometheus', module: 'prometheus-metrics-tracer-otel')
-        exclude(group: 'io.prometheus', module: 'prometheus-metrics-tracer-otel-agent')
+        // We only need SpanContext from prometheus-metrics-tracer-common, we don't need
+        // prometheus-metrics-tracer-initializer nor the dependencies it pulls in
+        exclude(group: 'io.prometheus', module: 'prometheus-metrics-tracer-initializer')
     }
+    api 'io.prometheus:prometheus-metrics-tracer-common'
     implementation 'io.prometheus:prometheus-metrics-exposition-formats'
 
     testImplementation 'io.prometheus:prometheus-metrics-tracer-common'

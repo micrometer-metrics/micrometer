@@ -16,7 +16,6 @@
 package io.micrometer.prometheusmetrics;
 
 import io.prometheus.metrics.config.ExemplarsProperties;
-import io.prometheus.metrics.config.PrometheusProperties;
 import io.prometheus.metrics.core.exemplars.ExemplarSampler;
 import io.prometheus.metrics.core.exemplars.ExemplarSamplerConfig;
 import io.prometheus.metrics.tracer.common.SpanContext;
@@ -32,7 +31,7 @@ import java.util.concurrent.ConcurrentMap;
  */
 class DefaultExemplarSamplerFactory implements ExemplarSamplerFactory {
 
-    private final ExemplarsProperties exemplarProperties = PrometheusProperties.get().getExemplarProperties();
+    private final ExemplarsProperties exemplarsProperties;
 
     private final ConcurrentMap<Integer, ExemplarSamplerConfig> exemplarSamplerConfigsByNumberOfExemplars = new ConcurrentHashMap<>();
 
@@ -40,14 +39,15 @@ class DefaultExemplarSamplerFactory implements ExemplarSamplerFactory {
 
     private final SpanContext spanContext;
 
-    public DefaultExemplarSamplerFactory(SpanContext spanContext) {
+    public DefaultExemplarSamplerFactory(SpanContext spanContext, ExemplarsProperties exemplarsProperties) {
         this.spanContext = spanContext;
+        this.exemplarsProperties = exemplarsProperties;
     }
 
     @Override
     public ExemplarSampler createExemplarSampler(int numberOfExemplars) {
         ExemplarSamplerConfig config = exemplarSamplerConfigsByNumberOfExemplars.computeIfAbsent(numberOfExemplars,
-                key -> new ExemplarSamplerConfig(exemplarProperties, numberOfExemplars));
+                key -> new ExemplarSamplerConfig(exemplarsProperties, numberOfExemplars));
         return new ExemplarSampler(config, spanContext);
     }
 
@@ -55,7 +55,7 @@ class DefaultExemplarSamplerFactory implements ExemplarSamplerFactory {
     public ExemplarSampler createExemplarSampler(double[] histogramClassicUpperBounds) {
         ExemplarSamplerConfig config = exemplarSamplerConfigsByHistogramUpperBounds.computeIfAbsent(
                 histogramClassicUpperBounds,
-                key -> new ExemplarSamplerConfig(exemplarProperties, histogramClassicUpperBounds));
+                key -> new ExemplarSamplerConfig(exemplarsProperties, histogramClassicUpperBounds));
         return new ExemplarSampler(config, spanContext);
     }
 
