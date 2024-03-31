@@ -154,3 +154,24 @@ The following example shows a Prometheus query to plot the duration of a long ta
 
 .Simulated back-to-back long tasks with a fixed alert threshold.
 image::implementations/prometheus-long-task-timer.png[Grafana-rendered Prometheus long task timer]
+
+== Limitation on same name with different set of tag keys
+
+The `PrometheusMeterRegistry` doesn't allow to create meters having the same name with a different set of tag keys, so you should guarantee that meters having the same name have the same set of tag keys.
+Otherwise, subsequent meters having the same name with a different set of tag keys will not be registered silently by default.
+You can change the default behavior by registering a meter registration failed listener.
+For example, you can register a meter registration failed listener that throws an exception as follows:
+
+[source,java]
+----
+registry.config().onMeterRegistrationFailed((id, reason) -> {
+    throw new IllegalArgumentException(reason);
+});
+----
+
+Actually, the `PrometheusMeterRegistry` has a shortcut for this, so you can do the following to achieve the same:
+
+[source,java]
+----
+registry.throwExceptionOnRegistrationFailure();
+----
