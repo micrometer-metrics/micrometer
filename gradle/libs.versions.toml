@@ -164,6 +164,7 @@ jsr107 = { module = "org.jsr107.ri:cache-ri-impl", version.ref = "jsr107" }
 jsr305 = { module = "com.google.code.findbugs:jsr305", version.ref = "jsr305" }
 junitBom = { module = "org.junit:junit-bom", version.ref = "junit" }
 junitJupiter = { module = "org.junit.jupiter:junit-jupiter", version.ref = "junit" }
+junitLoggingExtention = "com.innoq:junit5-logging-extension:0.2.0"
 junitPlatformLauncher = { module = "org.junit.platform:junit-platform-launcher", version.ref = "junit-platform" }
 kafkaClients = { module = "org.apache.kafka:kafka-clients", version.ref = "kafka" }
 kafkaStreams = { module = "org.apache.kafka:kafka-streams", version.ref = "kafka" }
