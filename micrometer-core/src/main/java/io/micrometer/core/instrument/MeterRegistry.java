@@ -101,9 +101,11 @@ public abstract class MeterRegistry {
      */
     private final Map<Id, Meter> meterMap = new ConcurrentHashMap<>();
 
+    // writes guarded by meterMapLock, reads can be stale
     private final Map<Id, Meter> preFilterIdToMeterMap = new HashMap<>();
 
-    private final Set<Id> stalePreFilterIds = ConcurrentHashMap.newKeySet();
+    // not thread safe; only needed when MeterFilter configured with Meters registered
+    private final Set<Id> stalePreFilterIds = new HashSet<>();
 
     /**
      * Map of meter id whose associated meter contains synthetic counterparts to those
@@ -619,7 +621,7 @@ public abstract class MeterRegistry {
             Function<Meter.Id, ? extends Meter> noopBuilder) {
 
         Meter m = preFilterIdToMeterMap.get(originalId);
-        if (m != null && !unmarkStaleId(originalId)) {
+        if (m != null && !isStaleId(originalId)) {
             return m;
         }
 
@@ -661,11 +663,16 @@ public abstract class MeterRegistry {
                     }
                     meterMap.put(mappedId, m);
                     preFilterIdToMeterMap.put(originalId, m);
+                    unmarkStaleId(originalId);
                 }
             }
         }
 
         return m;
+    }
+
+    private boolean isStaleId(Id originalId) {
+        return !stalePreFilterIds.isEmpty() && stalePreFilterIds.contains(originalId);
     }
 
     /**

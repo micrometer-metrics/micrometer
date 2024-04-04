@@ -289,7 +289,7 @@ subprojects {
     }
 
     // Do not publish some modules
-    if (!['samples', 'benchmarks', 'micrometer-osgi-test'].find { project.name.contains(it) }) {
+    if (!['samples', 'benchmarks', 'micrometer-osgi-test', 'concurrency-tests'].find { project.name.contains(it) }) {
         apply plugin: 'com.netflix.nebula.maven-publish'
         apply plugin: 'com.netflix.nebula.maven-manifest'
         apply plugin: 'com.netflix.nebula.maven-developer'
