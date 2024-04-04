@@ -142,6 +142,7 @@ javax-cacheApi = { module = "javax.cache:cache-api", version.ref = "javax-cache"
 javax-inject = { module = "javax.inject:javax.inject", version.ref = "javax-inject" }
 javax-servletApi = { module = "javax.servlet:javax.servlet-api", version = "4.0.1" }
 jaxbApi = { module = "javax.xml.bind:jaxb-api", version.ref = "jaxb" }
+jcstressCore = { module = "org.openjdk.jcstress:jcstress-core", version = "0.16" }
 jetty9Client = { module = "org.eclipse.jetty:jetty-client", version.ref = "jetty9" }
 jetty9Server = { module = "org.eclipse.jetty:jetty-server", version.ref = "jetty9" }
 jetty9Servlet = { module = "org.eclipse.jetty:jetty-servlet", version.ref = "jetty9" }
@@ -231,3 +232,4 @@ plugin-bnd = "biz.aQute.bnd:biz.aQute.bnd.gradle:6.4.0"
 [plugins]
 kotlin19 = { id = "org.jetbrains.kotlin.jvm", version = "1.9.23" }
 kotlin17 = { id = "org.jetbrains.kotlin.jvm", version = "1.7.22" }
+jcstress = { id = "io.github.reyerizo.gradle.jcstress", version = "0.8.15" }

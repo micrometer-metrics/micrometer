@@ -42,6 +42,7 @@ include 'micrometer-test', 'micrometer-observation-test'
     project(":micrometer-benchmarks-$benchmark").projectDir = new File(rootProject.projectDir, "benchmarks/benchmarks-$benchmark")
 }
 
+include 'concurrency-tests'
 include 'micrometer-bom'
 include 'micrometer-jakarta9'
 include 'micrometer-java11'
