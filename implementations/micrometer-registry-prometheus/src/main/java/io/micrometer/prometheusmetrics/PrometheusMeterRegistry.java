@@ -26,6 +26,7 @@ import io.micrometer.core.instrument.internal.CumulativeHistogramLongTaskTimer;
 import io.micrometer.core.instrument.internal.DefaultGauge;
 import io.micrometer.core.instrument.internal.DefaultMeter;
 import io.micrometer.core.instrument.util.TimeUtils;
+import io.prometheus.metrics.config.PrometheusProperties;
 import io.prometheus.metrics.config.PrometheusPropertiesLoader;
 import io.prometheus.metrics.expositionformats.ExpositionFormats;
 import io.prometheus.metrics.model.registry.PrometheusRegistry;
@@ -66,12 +67,11 @@ import static java.util.stream.StreamSupport.stream;
  */
 public class PrometheusMeterRegistry extends MeterRegistry {
 
-    private final ExpositionFormats expositionFormats = ExpositionFormats
-        .init(PrometheusPropertiesLoader.load().getExporterProperties());
-
     private final PrometheusConfig prometheusConfig;
 
     private final PrometheusRegistry registry;
+
+    private final ExpositionFormats expositionFormats;
 
     private final ConcurrentMap<String, MicrometerCollector> collectorMap = new ConcurrentHashMap<>();
 
@@ -101,7 +101,11 @@ public class PrometheusMeterRegistry extends MeterRegistry {
 
         this.prometheusConfig = config;
         this.registry = registry;
-        this.exemplarSamplerFactory = spanContext != null ? new DefaultExemplarSamplerFactory(spanContext) : null;
+        PrometheusProperties prometheusProperties = config.prometheusProperties() != null
+                ? PrometheusPropertiesLoader.load(config.prometheusProperties()) : PrometheusPropertiesLoader.load();
+        this.expositionFormats = ExpositionFormats.init(prometheusProperties.getExporterProperties());
+        this.exemplarSamplerFactory = spanContext != null
+                ? new DefaultExemplarSamplerFactory(spanContext, prometheusProperties.getExemplarProperties()) : null;
 
         config().namingConvention(new PrometheusNamingConvention());
         config().onMeterRemoved(this::onMeterRemoved);

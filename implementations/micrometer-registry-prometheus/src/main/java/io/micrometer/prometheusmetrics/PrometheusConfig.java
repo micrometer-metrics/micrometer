@@ -15,10 +15,12 @@
  */
 package io.micrometer.prometheusmetrics;
 
+import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.config.MeterRegistryConfig;
 import io.micrometer.core.instrument.config.validate.Validated;
 
 import java.time.Duration;
+import java.util.Properties;
 
 import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.checkAll;
 import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.checkRequired;
@@ -56,6 +58,19 @@ public interface PrometheusConfig extends MeterRegistryConfig {
      */
     default Duration step() {
         return getDuration(this, "step").orElse(Duration.ofMinutes(1));
+    }
+
+    /**
+     * @return an instance of {@link Properties} that contains Prometheus Java Client
+     * config entries, for example
+     * {@code io.prometheus.exporter.exemplarsOnAllMetricTypes=true}.
+     * @see https://prometheus.github.io/client_java/config/config/
+     */
+    @Nullable
+    default Properties prometheusProperties() {
+        Properties properties = new Properties();
+        properties.setProperty("io.prometheus.exporter.exemplarsOnAllMetricTypes", "true");
+        return properties;
     }
 
     @Override

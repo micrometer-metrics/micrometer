@@ -17,6 +17,7 @@ package io.micrometer.prometheusmetrics;
 
 import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.binder.jvm.JvmInfoMetrics;
 import io.micrometer.core.instrument.composite.CompositeMeterRegistry;
@@ -30,10 +31,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -638,8 +636,23 @@ class PrometheusMeterRegistryTest {
 
     @Test
     void openMetricsScrapeWithExemplars() throws InterruptedException {
-        PrometheusMeterRegistry registry = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT, prometheusRegistry,
-                clock, new TestSpanContex());
+        PrometheusConfig prometheusConfig = new PrometheusConfig() {
+            @Override
+            public String get(String key) {
+                return null;
+            }
+
+            @Override
+            public Properties prometheusProperties() {
+                Properties properties = new Properties();
+                properties.putAll(PrometheusConfig.super.prometheusProperties());
+                properties.setProperty("io.prometheus.exemplars.sampleIntervalMilliseconds", "1");
+                return properties;
+            }
+        };
+
+        PrometheusMeterRegistry registry = new PrometheusMeterRegistry(prometheusConfig, prometheusRegistry, clock,
+                new TestSpanContex());
 
         Counter counter = Counter.builder("my.counter").register(registry);
         counter.increment();
@@ -651,18 +664,18 @@ class PrometheusMeterRegistryTest {
 
         Timer timerWithHistogram = Timer.builder("timer.withHistogram").publishPercentileHistogram().register(registry);
         timerWithHistogram.record(15, TimeUnit.MILLISECONDS);
-        Thread.sleep(100); // sleeping 100ms since the sample interval limit is 90ms
+        Thread.sleep(5); // sleeping 5ms since the sample interval limit is 1ms
         timerWithHistogram.record(150, TimeUnit.MILLISECONDS);
-        Thread.sleep(100); // sleeping 100ms since the sample interval limit is 90ms
+        Thread.sleep(5); // sleeping 5ms since the sample interval limit is 1ms
         timerWithHistogram.record(60, TimeUnit.SECONDS);
 
         Timer timerWithSlos = Timer.builder("timer.withSlos")
             .serviceLevelObjectives(Duration.ofMillis(100), Duration.ofMillis(200), Duration.ofMillis(300))
             .register(registry);
         timerWithSlos.record(Duration.ofMillis(15));
-        Thread.sleep(100); // sleeping 100ms since the sample interval limit is 90ms
+        Thread.sleep(5); // sleeping 5ms since the sample interval limit is 1ms
         timerWithSlos.record(Duration.ofMillis(1_500));
-        Thread.sleep(100); // sleeping 100ms since the sample interval limit is 90ms
+        Thread.sleep(5); // sleeping 5ms since the sample interval limit is 1ms
         timerWithSlos.record(Duration.ofMillis(150));
 
         DistributionSummary summary = DistributionSummary.builder("summary.noHistogram").register(registry);
@@ -674,18 +687,18 @@ class PrometheusMeterRegistryTest {
             .publishPercentileHistogram()
             .register(registry);
         summaryWithHistogram.record(0.15);
-        Thread.sleep(100); // sleeping 100ms since the sample interval limit is 90ms
+        Thread.sleep(5); // sleeping 5ms since the sample interval limit is 1ms
         summaryWithHistogram.record(5E18);
-        Thread.sleep(100); // sleeping 100ms since the sample interval limit is 90ms
+        Thread.sleep(5); // sleeping 5ms since the sample interval limit is 1ms
         summaryWithHistogram.record(15);
 
         DistributionSummary slos = DistributionSummary.builder("summary.withSlos")
             .serviceLevelObjectives(100, 200, 300)
             .register(registry);
         slos.record(10);
-        Thread.sleep(100); // sleeping 100ms since the sample interval limit is 90ms
+        Thread.sleep(5); // sleeping 5ms since the sample interval limit is 1ms
         slos.record(1_000);
-        Thread.sleep(100); // sleeping 100ms since the sample interval limit is 90ms
+        Thread.sleep(5); // sleeping 5ms since the sample interval limit is 1ms
         slos.record(250);
 
         String scraped = registry.scrape("application/openmetrics-text");
