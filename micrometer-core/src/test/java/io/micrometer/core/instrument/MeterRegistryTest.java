@@ -265,14 +265,42 @@ class MeterRegistryTest {
     }
 
     @Test
-    void multiplePreFilterIdsMapToSameId() {
-        registry.config().meterFilter(MeterFilter.ignoreTags("ignore"));
+    void differentPreFilterIdsMapToSameId() {
         Counter c1 = registry.counter("counter");
+        registry.config().meterFilter(MeterFilter.ignoreTags("ignore"));
         Counter c2 = registry.counter("counter", "ignore", "value");
 
         assertThat(c1).isSameAs(c2);
         assertThat(registry.remove(c1)).isSameAs(c2);
         assertThat(registry.remove(c2)).isNull();
+        assertThat(registry.getMeters()).isEmpty();
+    }
+
+    @Test
+    void samePreFilterIdsMapToDifferentId() {
+        Counter c1 = registry.counter("counter", "ignore", "value");
+        registry.config().meterFilter(MeterFilter.ignoreTags("ignore"));
+        Counter c2 = registry.counter("counter", "ignore", "value");
+
+        assertThat(c1).isNotSameAs(c2);
+        assertThat(registry.remove(c1)).isNotSameAs(c2);
+        Counter c3 = registry.counter("counter", "ignore", "value");
+        assertThat(c3).isSameAs(c2);
+        assertThat(registry.remove(c2)).isSameAs(c2);
+        assertThat(registry.getMeters()).isEmpty();
+    }
+
+    @Test
+    void removingStaleMeterRemovesItFromAllInternalState() {
+        registry.config().commonTags("application", "abcservice");
+        Counter c1 = registry.counter("counter");
+        // make c1 marked as stale
+        registry.config().commonTags("common", "tag");
+
+        registry.remove(c1.getId());
+        assertThat(registry.getMeters()).isEmpty();
+        assertThat(registry.preFilterIdToMeterMap).isEmpty();
+        assertThat(registry.stalePreFilterIds).isEmpty();
     }
 
 }
