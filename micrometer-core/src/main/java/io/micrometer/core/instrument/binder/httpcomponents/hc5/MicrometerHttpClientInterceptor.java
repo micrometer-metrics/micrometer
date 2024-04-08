@@ -65,11 +65,12 @@ public class MicrometerHttpClientInterceptor {
      * @param uriMapper URI mapper to create {@code uri} tag
      * @param extraTags extra tags
      * @param exportTagsForRoute whether to export tags for route
+     * @param meterName meter name
      */
     public MicrometerHttpClientInterceptor(MeterRegistry meterRegistry, Function<HttpRequest, String> uriMapper,
-            Iterable<Tag> extraTags, boolean exportTagsForRoute) {
+            Iterable<Tag> extraTags, boolean exportTagsForRoute, String meterName) {
         this.requestInterceptor = (request, entityDetails, context) -> timerByHttpContext.put(context,
-                Timer.resource(meterRegistry, METER_NAME)
+                Timer.resource(meterRegistry, meterName)
                     .tags("method", request.getMethod(), "uri", uriMapper.apply(request)));
 
         this.responseInterceptor = (response, entityDetails, context) -> {
@@ -83,6 +84,31 @@ public class MicrometerHttpClientInterceptor {
     }
 
     /**
+     * Create a {@code MicrometerHttpClientInterceptor} instance.
+     * @param meterRegistry meter registry to bind
+     * @param uriMapper URI mapper to create {@code uri} tag
+     * @param extraTags extra tags
+     * @param exportTagsForRoute whether to export tags for route
+     */
+    public MicrometerHttpClientInterceptor(MeterRegistry meterRegistry, Function<HttpRequest, String> uriMapper,
+            Iterable<Tag> extraTags, boolean exportTagsForRoute) {
+        this(meterRegistry, uriMapper, extraTags, exportTagsForRoute, METER_NAME);
+    }
+
+    /**
+     * Create a {@code MicrometerHttpClientInterceptor} instance with
+     * {@link DefaultUriMapper}.
+     * @param meterRegistry meter registry to bind
+     * @param extraTags extra tags
+     * @param exportTagsForRoute whether to export tags for route
+     * @param meterName meter name
+     */
+    public MicrometerHttpClientInterceptor(MeterRegistry meterRegistry, Iterable<Tag> extraTags,
+            boolean exportTagsForRoute, String meterName) {
+        this(meterRegistry, new DefaultUriMapper(), extraTags, exportTagsForRoute, meterName);
+    }
+
+    /**
      * Create a {@code MicrometerHttpClientInterceptor} instance with
      * {@link DefaultUriMapper}.
      * @param meterRegistry meter registry to bind
@@ -91,7 +117,7 @@ public class MicrometerHttpClientInterceptor {
      */
     public MicrometerHttpClientInterceptor(MeterRegistry meterRegistry, Iterable<Tag> extraTags,
             boolean exportTagsForRoute) {
-        this(meterRegistry, new DefaultUriMapper(), extraTags, exportTagsForRoute);
+        this(meterRegistry, extraTags, exportTagsForRoute, METER_NAME);
     }
 
     public HttpRequestInterceptor getRequestInterceptor() {

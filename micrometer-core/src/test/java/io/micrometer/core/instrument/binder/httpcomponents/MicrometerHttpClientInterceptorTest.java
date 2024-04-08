@@ -96,6 +96,25 @@ class MicrometerHttpClientInterceptorTest {
         client.close();
     }
 
+    @Test
+    void overridesDefaultMeterName(@WiremockResolver.Wiremock WireMockServer server) throws Exception {
+        String meterName = "http.client.requests";
+        server.stubFor(any(anyUrl()));
+        MicrometerHttpClientInterceptor interceptor = new MicrometerHttpClientInterceptor(registry, Tags.empty(), true,
+                meterName);
+        CloseableHttpAsyncClient client = asyncClient(interceptor);
+        client.start();
+        HttpGet request = new HttpGet(server.baseUrl());
+
+        Future<HttpResponse> future = client.execute(request, null);
+        HttpResponse response = future.get();
+
+        assertThat(response.getStatusLine().getStatusCode()).isEqualTo(200);
+        assertThat(registry.get(meterName).timer().count()).isEqualTo(1);
+
+        client.close();
+    }
+
     private CloseableHttpAsyncClient asyncClient() {
         MicrometerHttpClientInterceptor interceptor = new MicrometerHttpClientInterceptor(registry,
                 request -> request.getRequestLine().getUri(), Tags.empty(), true);
