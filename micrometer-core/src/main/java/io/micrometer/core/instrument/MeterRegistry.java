@@ -102,10 +102,12 @@ public abstract class MeterRegistry {
     private final Map<Id, Meter> meterMap = new ConcurrentHashMap<>();
 
     // writes guarded by meterMapLock, reads can be stale
-    private final Map<Id, Meter> preFilterIdToMeterMap = new HashMap<>();
+    // VisibleForTesting
+    final Map<Id, Meter> preFilterIdToMeterMap = new HashMap<>();
 
     // not thread safe; only needed when MeterFilter configured with Meters registered
-    private final Set<Id> stalePreFilterIds = new HashSet<>();
+    // VisibleForTesting
+    final Set<Id> stalePreFilterIds = new HashSet<>();
 
     /**
      * Map of meter id whose associated meter contains synthetic counterparts to those
@@ -742,11 +744,11 @@ public abstract class MeterRegistry {
         if (meterMap.containsKey(mappedId)) {
             synchronized (meterMapLock) {
                 final Meter removedMeter = meterMap.remove(mappedId);
-                Iterator<Meter> iterator = preFilterIdToMeterMap.values().iterator();
+                Iterator<Map.Entry<Id, Meter>> iterator = preFilterIdToMeterMap.entrySet().iterator();
                 while (iterator.hasNext()) {
-                    Meter next = iterator.next();
-                    if (next.equals(removedMeter)) {
-                        stalePreFilterIds.remove(next.getId());
+                    Map.Entry<Id, Meter> nextEntry = iterator.next();
+                    if (nextEntry.getValue().equals(removedMeter)) {
+                        stalePreFilterIds.remove(nextEntry.getKey());
                         iterator.remove();
                     }
                 }
