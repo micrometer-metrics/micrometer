@@ -221,4 +221,14 @@ class MeterRegistryTest {
         LongTaskTimer.builder("timer.percentiles.empty").publishPercentiles(new double[] {}).register(registry);
     }
 
+    @Test
+    void removeByPreFilterIdAfterAddingFilterAndDifferentlyMappedId() {
+        Counter c1 = registry.counter("counter");
+        registry.config().commonTags("common", "tag");
+        Counter c2 = registry.counter("counter");
+
+        assertThat(registry.removeByPreFilterId(c1.getId())).isSameAs(c2).isNotSameAs(c1);
+        assertThat(registry.getMeters()).containsExactly(c1);
+    }
+
 }
