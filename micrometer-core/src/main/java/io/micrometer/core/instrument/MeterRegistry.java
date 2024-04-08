@@ -103,6 +103,8 @@ public abstract class MeterRegistry {
 
     private final Map<Id, Meter> preFilterIdToMeterMap = new HashMap<>();
 
+    private final Set<Id> stalePreFilterIds = ConcurrentHashMap.newKeySet();
+
     /**
      * Map of meter id whose associated meter contains synthetic counterparts to those
      * synthetic ids. We maintain these associations so that when we remove a meter with
@@ -617,7 +619,7 @@ public abstract class MeterRegistry {
             Function<Meter.Id, ? extends Meter> noopBuilder) {
 
         Meter m = preFilterIdToMeterMap.get(originalId);
-        if (m != null) {
+        if (m != null && !unmarkStaleId(originalId)) {
             return m;
         }
 
@@ -664,6 +666,15 @@ public abstract class MeterRegistry {
         }
 
         return m;
+    }
+
+    /**
+     * Marks the ID as no longer stale if it is stale. Otherwise, does nothing.
+     * @param originalId id before any filter mapping has been applied
+     * @return {@code true} if the id is stale
+     */
+    private boolean unmarkStaleId(Id originalId) {
+        return !stalePreFilterIds.isEmpty() && stalePreFilterIds.remove(originalId);
     }
 
     private boolean accept(Meter.Id id) {
@@ -724,7 +735,14 @@ public abstract class MeterRegistry {
         if (meterMap.containsKey(mappedId)) {
             synchronized (meterMapLock) {
                 final Meter removedMeter = meterMap.remove(mappedId);
-                preFilterIdToMeterMap.values().removeIf(meter -> meter.equals(removedMeter));
+                Iterator<Meter> iterator = preFilterIdToMeterMap.values().iterator();
+                while (iterator.hasNext()) {
+                    Meter next = iterator.next();
+                    if (next.equals(removedMeter)) {
+                        stalePreFilterIds.remove(next.getId());
+                        iterator.remove();
+                    }
+                }
                 if (removedMeter != null) {
                     Set<Id> synthetics = syntheticAssociations.remove(mappedId);
                     if (synthetics != null) {
@@ -762,10 +780,6 @@ public abstract class MeterRegistry {
         /**
          * Append a list of common tags to apply to all metrics reported to the monitoring
          * system.
-         * <p>
-         * </p>
-         * <strong>NOTE: A no-op operation if meters are already registered to the
-         * registry.</strong>
          * @param tags Tags to add to every metric.
          * @return This configuration instance.
          */
@@ -777,10 +791,6 @@ public abstract class MeterRegistry {
          * Append a list of common tags to apply to all metrics reported to the monitoring
          * system. Must be an even number of arguments representing key/value pairs of
          * tags.
-         * <p>
-         * </p>
-         * <strong>NOTE: A no-op operation if meters are already registered to the
-         * registry.</strong>
          * @param tags MUST be an even number of arguments representing key/value pairs of
          * tags.
          * @return This configuration instance.
@@ -792,16 +802,13 @@ public abstract class MeterRegistry {
         /**
          * Add a meter filter to the registry. Filters are applied in the order in which
          * they are added.
-         * <p>
-         * </p>
-         * <strong>NOTE: A no-op operation if meters are already registered to the
-         * registry.</strong>
          * @param filter The filter to add to the registry.
          * @return This configuration instance.
          */
         public synchronized Config meterFilter(MeterFilter filter) {
             if (!meterMap.isEmpty()) {
                 logWarningAboutLateFilter();
+                stalePreFilterIds.addAll(preFilterIdToMeterMap.keySet());
             }
             MeterFilter[] newFilters = new MeterFilter[filters.length + 1];
             System.arraycopy(filters, 0, newFilters, 0, filters.length);

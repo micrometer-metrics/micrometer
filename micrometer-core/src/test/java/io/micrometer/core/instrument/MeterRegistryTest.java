@@ -27,6 +27,9 @@ import org.junit.jupiter.api.Test;
 
 import javax.annotation.Nonnull;
 
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicInteger;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -229,6 +232,48 @@ class MeterRegistryTest {
 
         assertThat(registry.removeByPreFilterId(c1.getId())).isSameAs(c2).isNotSameAs(c1);
         assertThat(registry.getMeters()).containsExactly(c1);
+    }
+
+    @Test
+    void filterConfiguredAfterMeterRegistered() {
+        Counter c1 = registry.counter("counter");
+        registry.config().commonTags("common", "tag");
+        Counter c2 = registry.counter("counter");
+
+        assertThat(c1.getId().getTags()).isEmpty();
+        assertThat(c2.getId().getTags()).containsExactly(Tag.of("common", "tag"));
+    }
+
+    @Test
+    void doNotCallFiltersWhenUnnecessary() {
+        AtomicInteger filterCallCount = new AtomicInteger();
+        registry.config().meterFilter(new MeterFilter() {
+            @Override
+            public Meter.Id map(Meter.Id id) {
+                filterCallCount.incrementAndGet();
+                return id;
+            }
+        });
+        Counter c1 = registry.counter("counter");
+        assertThat(filterCallCount.get()).isOne();
+        Counter c2 = registry.counter("counter");
+        assertThat(filterCallCount.get()).isOne();
+
+        assertThat(c1).isSameAs(c2);
+
+        registry.counter("other");
+        assertThat(filterCallCount.get()).isEqualTo(2);
+    }
+
+    @Test
+    void multiplePreFilterIdsMapToSameId() {
+        registry.config().meterFilter(MeterFilter.ignoreTags("ignore"));
+        Counter c1 = registry.counter("counter");
+        Counter c2 = registry.counter("counter", "ignore", "value");
+
+        assertThat(c1).isSameAs(c2);
+        assertThat(registry.remove(c1)).isSameAs(c2);
+        assertThat(registry.remove(c2)).isNull();
     }
 
 }
