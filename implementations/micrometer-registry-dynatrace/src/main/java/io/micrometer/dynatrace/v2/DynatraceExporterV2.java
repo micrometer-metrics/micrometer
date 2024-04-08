@@ -148,6 +148,11 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
             return;
         }
 
+        if (meters.isEmpty()) {
+            logger.debug("Meter list is empty, nothing to export. Did you create any meters?");
+            return;
+        }
+
         Map<String, String> seenMetadata = null;
         if (config.exportMeterMetadata()) {
             seenMetadata = new HashMap<>();
