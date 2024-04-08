@@ -16,6 +16,8 @@
 package io.micrometer.core.instrument.binder.httpcomponents;
 
 import io.micrometer.common.lang.Nullable;
+import io.micrometer.common.util.internal.logging.InternalLogger;
+import io.micrometer.common.util.internal.logging.InternalLoggerFactory;
 import io.micrometer.core.annotation.Incubating;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
@@ -63,6 +65,8 @@ import java.util.function.Function;
 @Deprecated
 public class MicrometerHttpRequestExecutor extends HttpRequestExecutor {
 
+    private static final InternalLogger log = InternalLoggerFactory.getInstance(MicrometerHttpRequestExecutor.class);
+
     /**
      * Default header name for URI pattern.
      * @deprecated use {@link DefaultUriMapper#URI_PATTERN_HEADER} since 1.4.0
@@ -92,6 +96,10 @@ public class MicrometerHttpRequestExecutor extends HttpRequestExecutor {
             Function<HttpRequest, String> uriMapper, Iterable<Tag> extraTags, boolean exportTagsForRoute,
             ObservationRegistry observationRegistry, @Nullable ApacheHttpClientObservationConvention convention) {
         super(waitForContinue);
+
+        log.warn(
+                "This class has been deprecated. Please use ObservationExecChainHandler for Apache HTTP client 5 support instead.");
+
         this.registry = Optional.ofNullable(registry)
             .orElseThrow(() -> new IllegalArgumentException("registry is required but has been initialized with null"));
         this.uriMapper = Optional.ofNullable(uriMapper)
