@@ -16,6 +16,8 @@
 package io.micrometer.core.instrument;
 
 import io.micrometer.common.lang.Nullable;
+import io.micrometer.common.util.internal.logging.InternalLogger;
+import io.micrometer.common.util.internal.logging.InternalLoggerFactory;
 import io.micrometer.core.annotation.Incubating;
 import io.micrometer.core.instrument.Meter.Id;
 import io.micrometer.core.instrument.config.MeterFilter;
@@ -776,11 +778,29 @@ public abstract class MeterRegistry {
          * @return This configuration instance.
          */
         public synchronized Config meterFilter(MeterFilter filter) {
+            if (!meterMap.isEmpty()) {
+                logWarningAboutLateFilter();
+            }
             MeterFilter[] newFilters = new MeterFilter[filters.length + 1];
             System.arraycopy(filters, 0, newFilters, 0, filters.length);
             newFilters[filters.length] = filter;
             filters = newFilters;
             return this;
+        }
+
+        private void logWarningAboutLateFilter() {
+            InternalLogger logger = InternalLoggerFactory.getInstance(MeterRegistry.this.getClass());
+            String baseMessage = "A MeterFilter is being configured after a Meter has been registered to this registry. All MeterFilters should be configured before any Meters are registered. If that is not possible or you have a use case where it should be allowed, let the Micrometer maintainers know at https://github.com/micrometer-metrics/micrometer/issues/4920.";
+            if (logger.isDebugEnabled()) {
+                String stackTrace = Arrays.stream(Thread.currentThread().getStackTrace())
+                    .map(StackTraceElement::toString)
+                    .collect(Collectors.joining("\n\tat "));
+                logger.debug(baseMessage + "\n" + stackTrace);
+            }
+            else {
+                logger.warn(baseMessage
+                        + " Enable DEBUG level logging on this logger to see a stack trace of the call configuring this MeterFilter.");
+            }
         }
 
         /**
