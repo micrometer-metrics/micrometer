@@ -28,6 +28,7 @@ import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.Request;
 import org.eclipse.jetty.client.StringRequestContent;
 import org.eclipse.jetty.server.Connector;
+import org.eclipse.jetty.server.NetworkTrafficServerConnector;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.util.component.LifeCycle;
@@ -45,12 +46,14 @@ class JettyConnectionMetricsTest {
 
     private Server server = new Server(0);
 
-    private ServerConnector connector = new ServerConnector(server);
+    private NetworkTrafficServerConnector connector = new NetworkTrafficServerConnector(server);
 
     private CloseableHttpClient client = HttpClients.createDefault();
 
     void setup() throws Exception {
-        connector.addBean(new JettyConnectionMetrics(registry));
+        JettyConnectionMetrics metrics = new JettyConnectionMetrics(registry);
+        connector.addBean(metrics);
+        connector.setNetworkTrafficListener(metrics);
         server.setConnectors(new Connector[] { connector });
         server.start();
     }
