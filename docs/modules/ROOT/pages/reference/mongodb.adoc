@@ -3,9 +3,9 @@
 
 https://www.mongodb.com/[MongoDB] is a modern database that supports transactional, search, analytics, and mobile use cases with a flexible document data model and a unified query interface.
 
-Below you can find an example of how to instrument MongoDb with Micrometer.
+Below you can find an example of how to instrument MongoDB with Micrometer.
 
-TIP: To add more capabilities such as distributed tracing, please consider using https://docs.spring.io/spring-data/mongodb/reference/observability/observability.html[Spring Data MongoDb] which uses xref:observation.adoc[Micrometer Observation] under the hood.
+TIP: To add more capabilities such as distributed tracing, please consider using https://docs.spring.io/spring-data/mongodb/reference/observability/observability.html[Spring Data MongoDB] which uses xref:observation.adoc[Micrometer Observation] under the hood.
 
 Below you can find an example of metrics for command execution.
 

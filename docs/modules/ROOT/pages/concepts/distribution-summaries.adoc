@@ -30,7 +30,7 @@ NOTE: The maximum (which is named `max`) for basic `DistributionSummary` impleme
 It means that its value is the maximum value during a time window.
 If no new values are recorded for the time window length, the maximum is reset to 0 as a new time window starts.
 The time window size until values are fully expired is the `expiry` multiplied by the `bufferLength` in `DistributionStatisticConfig`.
-`expiry` defaults to the step size of the meter registry unless is explicitly set to a different value, and `bufferLength` defaults to `3`.
+`expiry` defaults to the step size of the meter registry unless it's explicitly set to a different value, and `bufferLength` defaults to `3`.
 A time window max is used to capture the maximum latency in a subsequent interval after heavy resource pressure triggers the latency and prevents metrics from being published.
 Percentiles are also time window percentiles (`TimeWindowPercentileHistogram`).
 

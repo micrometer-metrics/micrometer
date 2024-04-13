@@ -5,7 +5,7 @@ IMPORTANT: This section requires usage of Apache HttpComponents Client at least 
 
 https://hc.apache.org/index.html/[Apache HttpComponents Client] is an HTTP/1.1 compliant HTTP agent implementation.
 
-Below you can find an example of how to instrument Apache HttpComponents Client xref:observation.adoc[Micrometer Observation]. That means that depending on your Observation Handler configuration you instrument once, and can have multiple benefits out of it (e.g. metrics, distributed tracing).
+Below you can find an example of how to instrument Apache HttpComponents Client with xref:observation.adoc[Micrometer Observation]. That means that depending on your Observation Handler configuration you instrument once, and can have multiple benefits out of it (e.g. metrics, distributed tracing).
 
 Example of classic, blocking HTTP client.
 
