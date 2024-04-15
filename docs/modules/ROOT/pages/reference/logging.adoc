@@ -1,7 +1,7 @@
 [[overview]]
 = Logging Metrics Instrumentation
 
-Micrometer can add metrics to different loggers
+Micrometer can add metrics to different loggers:
 
 * <<logging-log4j, Log4j>>
 * <<logging-logback, Logback>>
