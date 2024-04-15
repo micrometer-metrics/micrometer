@@ -5,6 +5,7 @@ dependencies {
     optionalApi 'com.newrelic.agent.java:newrelic-api'
 
     testImplementation project(':micrometer-test')
+    testImplementation(libs.mockitoCore)
 }
 
 jar {

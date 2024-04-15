@@ -42,7 +42,6 @@ dependencies {
     api 'ru.lanwen.wiremock:wiremock-junit5'
     api 'com.github.tomakehurst:wiremock-jre8-standalone'
 
-    api 'org.mockito:mockito-core'
     implementation 'org.awaitility:awaitility'
 
     testImplementation project(':micrometer-observation-test')
