@@ -55,7 +55,7 @@ In this section we will describe main components related to Micrometer Observati
 └─────────────────┘
 -----
 
-`Observation` through `ObservationRegistry` gets created with a mutable `Observation.Context`. To allow name and key-value customization, an `ObservationConvention` can be used instead of direct name setting. List of `ObservationPredicate` is run to verify if an `Observation` should be created instead of a no-op version.  On each xref:observation/introduction.adoc[Micrometer Observation lifecycle] action (e.g. `start()`) a corresponding `ObservationHandler` method is called (e.g. `onStart`) with the mutable `Observation.Context` as argument. On `Observation` stop, before calling the `ObservationHandler` `onStop` methods, list of `ObservationFilter` is called to optionally further modify the `Observation.Context`.
+`Observation` through `ObservationRegistry` gets created with a mutable `Observation.Context`. To allow name and key-value customization, an `ObservationConvention` can be used instead of direct name setting. List of `ObservationPredicate` is run to verify if an `Observation` should be created instead of a no-op version. On each xref:observation/introduction.adoc[Micrometer Observation lifecycle] action (e.g. `start()`) a corresponding `ObservationHandler` method is called (e.g. `onStart`) with the mutable `Observation.Context` as argument. On `Observation` stop, before calling the `ObservationHandler` `onStop` methods, list of `ObservationFilter` is called to optionally further modify the `Observation.Context`.
 
 [[micrometer-observation-context]]
 == Observation.Context

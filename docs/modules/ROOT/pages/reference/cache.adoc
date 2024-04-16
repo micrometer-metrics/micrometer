@@ -51,10 +51,10 @@ image::reference/cache/grafana-guava-miss-ratio.png[Miss ratio (alerted),width=8
 
 == Cache implementations
 
-Micrometer can instrument various cache implementations
+Micrometer can instrument various cache implementations:
 
 * <<cache-caffeine, Caffeine>>
-* <<cache-ehcache, EhCache>>
+* <<cache-ehcache, Ehcache>>
 * <<cache-guava, Guava>>
 * <<cache-hazelcast, Hazelcast>>
 * <<cache-jcache, JCache>>
@@ -75,7 +75,7 @@ include::{include-core-test-java}/io/micrometer/core/instrument/binder/cache/Caf
 -----
 
 [[cache-ehcache]]
-=== EhCache2
+=== Ehcache 2
 
 [source,java,subs=+attributes]
 -----
