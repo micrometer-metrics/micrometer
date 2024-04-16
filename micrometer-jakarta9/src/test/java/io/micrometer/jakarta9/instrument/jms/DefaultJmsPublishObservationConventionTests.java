@@ -89,6 +89,13 @@ class DefaultJmsPublishObservationConventionTests {
     }
 
     @Test
+    void shouldHaveUnknownDestinationNameWhenQueueNameIsNull() throws Exception {
+        JmsPublishObservationContext context = new JmsPublishObservationContext(createMessageWithNullQueueName());
+        assertThat(convention.getHighCardinalityKeyValues(context))
+            .contains(KeyValue.of("messaging.destination.name", "unknown"));
+    }
+
+    @Test
     void shouldHaveTopicDestinationName() throws Exception {
         JmsPublishObservationContext context = new JmsPublishObservationContext(createMessageWithTopic());
         assertThat(convention.getHighCardinalityKeyValues(context))
@@ -189,6 +196,14 @@ class DefaultJmsPublishObservationConventionTests {
     private Message createMessageWithQueue() throws Exception {
         Queue queue = mock(Queue.class);
         when(queue.getQueueName()).thenReturn("micrometer.test.queue");
+        Message message = mock(Message.class);
+        when(message.getJMSDestination()).thenReturn(queue);
+        return message;
+    }
+
+    private Message createMessageWithNullQueueName() throws Exception {
+        Queue queue = mock(Queue.class);
+        when(queue.getQueueName()).thenReturn(null);
         Message message = mock(Message.class);
         when(message.getJMSDestination()).thenReturn(queue);
         return message;
