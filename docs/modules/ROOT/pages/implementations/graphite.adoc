@@ -1,5 +1,4 @@
 = Micrometer Graphite
-:toc:
 :sectnums:
 :system: graphite
 

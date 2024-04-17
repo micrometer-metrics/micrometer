@@ -1,5 +1,4 @@
 = Micrometer Wavefront
-:toc:
 :sectnums:
 :system: wavefront
 

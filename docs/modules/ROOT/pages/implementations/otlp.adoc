@@ -1,5 +1,4 @@
 = Micrometer OTLP
-:toc:
 :sectnums:
 :system: otlp
 

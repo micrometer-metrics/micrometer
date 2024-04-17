@@ -1,6 +1,5 @@
 = Micrometer CloudWatch
 Tommy Ludwig <tludwig@vmware.com>
-:toc:
 :sectnums:
 :system: cloudwatch2
 

@@ -1,5 +1,4 @@
 = Micrometer SignalFx
-:toc:
 :sectnums:
 :system: signalfx
 
