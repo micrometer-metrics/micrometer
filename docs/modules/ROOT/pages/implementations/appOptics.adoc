@@ -1,5 +1,4 @@
 = Micrometer AppOptics
-:toc:
 :sectnums:
 :system: appoptics
 
