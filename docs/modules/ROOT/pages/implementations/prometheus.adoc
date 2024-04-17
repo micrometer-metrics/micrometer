@@ -209,7 +209,7 @@ registry.throwExceptionOnRegistrationFailure();
 
 == Exemplars
 
-Exemplars are metadata that you can attach to the value of your time series. They can reference reference data outside of your metrics. A common use case is storing tracing information (`traceId`, `spanId`). Exemplars are not tags/dimensions (labels in Prometheus terminology), they will not increase cardinality since they belong to the values of the time series.
+Exemplars are metadata that you can attach to the value of your time series. They can reference data outside of your metrics. A common use case is storing tracing information (`traceId`, `spanId`). Exemplars are not tags/dimensions (labels in Prometheus terminology), they will not increase cardinality since they belong to the values of the time series.
 
 In order to setup Exemplars for `PrometheusMeterRegistry`, you will need a component that provides you the tracing information. If you use the "new" client (`micrometer-registry-prometheus`), this component is the `io.prometheus.metrics.tracer.common.SpanContext` while if you use the "legacy" client (`micrometer-registry-prometheus-simpleclient`), it is the `SpanContextSupplier`.
 
