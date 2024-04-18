@@ -18,13 +18,13 @@ package io.micrometer.core.instrument.binder.jetty;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.assertj.core.api.ListAssert;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
@@ -35,8 +35,7 @@ class InstrumentedQueuedThreadPoolTest {
     @Test
     void registeredMetricsShouldBeRemovedAfterClosingTheBinder() throws Exception {
         MeterRegistry meterRegistry = new SimpleMeterRegistry();
-        QueuedThreadPool instance = new InstrumentedQueuedThreadPool(meterRegistry,
-                Collections.singletonList(Tag.of("pool", "1")));
+        QueuedThreadPool instance = new InstrumentedQueuedThreadPool(meterRegistry, Tags.of("pool", "1"));
 
         instance.start();
 
@@ -48,17 +47,15 @@ class InstrumentedQueuedThreadPoolTest {
 
         instance.stop();
 
-        assertThatMetricsDontExist(meterRegistry);
+        assertThatMetricsDoNotExist(meterRegistry);
     }
 
     @Test
     void shouldOnlyRemoveMetricsBelongingToItsOwnPool() throws Exception {
         MeterRegistry meterRegistry = new SimpleMeterRegistry();
-        QueuedThreadPool pool1 = new InstrumentedQueuedThreadPool(meterRegistry,
-                Collections.singletonList(Tag.of("pool", "1")));
+        QueuedThreadPool pool1 = new InstrumentedQueuedThreadPool(meterRegistry, Tags.of("pool", "1"));
 
-        QueuedThreadPool pool2 = new InstrumentedQueuedThreadPool(meterRegistry,
-                Collections.singletonList(Tag.of("pool", "2")));
+        QueuedThreadPool pool2 = new InstrumentedQueuedThreadPool(meterRegistry, Tags.of("pool", "2"));
 
         pool1.start();
         pool2.start();
@@ -80,14 +77,14 @@ class InstrumentedQueuedThreadPoolTest {
 
         pool2.stop();
 
-        assertThatMetricsDontExist(meterRegistry);
+        assertThatMetricsDoNotExist(meterRegistry);
     }
 
     private void assertThatMetricsExist(MeterRegistry meterRegistry) {
         assertThatMetrics(meterRegistry, (l, a) -> a.containsAll(l));
     }
 
-    private void assertThatMetricsDontExist(MeterRegistry meterRegistry) {
+    private void assertThatMetricsDoNotExist(MeterRegistry meterRegistry) {
         assertThatMetrics(meterRegistry, (l, a) -> a.doesNotContainAnyElementsOf(l));
     }
 

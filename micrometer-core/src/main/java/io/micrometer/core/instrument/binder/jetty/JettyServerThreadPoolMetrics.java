@@ -48,21 +48,21 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class JettyServerThreadPoolMetrics implements MeterBinder, AutoCloseable {
 
+    private static final String MIN = "jetty.threads.config.min";
+
+    private static final String MAX = "jetty.threads.config.max";
+
+    private static final String BUSY = "jetty.threads.busy";
+
+    private static final String JOBS = "jetty.threads.jobs";
+
+    private static final String CURRENT = "jetty.threads.current";
+
+    private static final String IDLE = "jetty.threads.idle";
+
     private final ThreadPool threadPool;
 
     private final Iterable<Tag> tags;
-
-    private final String MIN = "jetty.threads.config.min";
-
-    private final String MAX = "jetty.threads.config.max";
-
-    private final String BUSY = "jetty.threads.busy";
-
-    private final String JOBS = "jetty.threads.jobs";
-
-    private final String CURRENT = "jetty.threads.current";
-
-    private final String IDLE = "jetty.threads.idle";
 
     private final Set<Meter.Id> registeredMeterIds = ConcurrentHashMap.newKeySet();
 
