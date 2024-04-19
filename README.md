@@ -13,7 +13,7 @@ More info and the user manual are available on [micrometer.io](https://micromete
 
 Micrometer is the instrumentation library underpinning Spring Boot 2's or later metrics collection.
 
-Micrometer artifacts work with Java 8 or later. We're releasing a [multi-release JAR](https://docs.oracle.com/javase/9/docs/specs/jar/jar.html#multi-release-jar-files) with support for JDK-version specific features (e.g. JDK 11's `HttpClient` instrumentation).
+Micrometer artifacts work with Java 8 or later with a few exceptions such as the micrometer-java11 module and micrometer-jetty11.
 
 ## Supported versions
 
