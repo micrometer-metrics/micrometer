@@ -24,6 +24,8 @@ import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.common.Metric;
 
+import java.util.concurrent.ScheduledExecutorService;
+
 /**
  * Kafka Client metrics binder. This should be closed on application shutdown to clean up
  * resources.
@@ -58,6 +60,16 @@ public class KafkaClientMetrics extends KafkaMetrics {
      */
     public KafkaClientMetrics(Producer<?, ?> kafkaProducer) {
         super(kafkaProducer::metrics);
+    }
+
+    /**
+     * Kafka {@link Consumer} metrics binder
+     * @param kafkaConsumer consumer instance to be instrumented
+     * @param tags additional tags
+     * @param scheduler scheduler to check and bind metrics
+     */
+    public KafkaClientMetrics(Consumer<?, ?> kafkaConsumer, Iterable<Tag> tags, ScheduledExecutorService scheduler) {
+        super(kafkaConsumer::metrics, tags, scheduler);
     }
 
     /**
