@@ -9,7 +9,7 @@ awaitility = "4.2.1"
 # legacy SDK
 aws-cloudwatch = "1.12.696"
 caffeine = "2.9.3"
-cloudwatch2 = "2.25.26"
+awsSdk2 = "2.25.26"
 colt = "1.2.0"
 dagger = "2.51.1"
 dropwizard-metrics = "4.2.25"
@@ -95,7 +95,8 @@ assertj = { module = "org.assertj:assertj-core", version.ref = "assertj" }
 awaitility = { module = "org.awaitility:awaitility", version.ref = "awaitility" }
 aws-javaSdkCloudwatch = { module = "com.amazonaws:aws-java-sdk-cloudwatch", version.ref = "aws-cloudwatch" }
 caffeine = { module = "com.github.ben-manes.caffeine:caffeine", version.ref = "caffeine" }
-cloudwatch2 = { module = "software.amazon.awssdk:cloudwatch", version.ref = "cloudwatch2" }
+cloudwatch2 = { module = "software.amazon.awssdk:cloudwatch", version.ref = "awsSdk2" }
+awsSdk2NettyClient = { module = "software.amazon.awssdk:netty-nio-client", version.ref = "awsSdk2" }
 colt = { module = "colt:colt", version.ref = "colt" }
 commonsPool2 = "org.apache.commons:commons-pool2:2.12.0"
 contextPropagation = { module = "io.micrometer:context-propagation", version = "1.1.1" }
@@ -209,6 +210,7 @@ testcontainers-junitJupiter = { module = "org.testcontainers:junit-jupiter", ver
 testcontainers-kafka = { module = "org.testcontainers:kafka", version.ref = "testcontainers" }
 testcontainers-postgresql = { module = "org.testcontainers:postgresql", version.ref = "testcontainers" }
 testcontainers-mongodb = { module = "org.testcontainers:mongodb", version.ref = "testcontainers" }
+testcontainers-localstack = { module = "org.testcontainers:localstack", version.ref = "testcontainers" }
 testcontainers = { module = "org.testcontainers:testcontainers", version.ref = "testcontainers" }
 tomcatEmbed = { module = "org.apache.tomcat.embed:tomcat-embed-core", version.ref = "tomcat" }
 wavefront = { module = "com.wavefront:wavefront-sdk-java", version.ref = "wavefront" }

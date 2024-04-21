@@ -8,4 +8,7 @@ dependencies {
 
     testImplementation project(':micrometer-test')
     testImplementation(libs.mockitoCore)
+    testImplementation(libs.testcontainers.localstack)
+    testImplementation(libs.awsSdk2NettyClient)
+    testImplementation(libs.logbackLatest)
 }
