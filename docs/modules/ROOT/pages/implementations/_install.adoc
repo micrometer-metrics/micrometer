@@ -1,5 +1,5 @@
-[[implementations-installing]]
-== Installing
+[id=installing-micrometer-registry-{system}]
+== Installing micrometer-registry-{system}
 
 For Gradle, add the following implementation:
 

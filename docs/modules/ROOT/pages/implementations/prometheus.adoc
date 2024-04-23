@@ -1,10 +1,15 @@
 = Micrometer Prometheus
 :sectnums:
-:system: prometheus
 
 Prometheus is a dimensional time series database with a built-in UI, a custom query language, and math operations.
 Prometheus is designed to operate on a pull model, periodically scraping metrics from application instances, based on service discovery.
 
+Micrometer uses the Prometheus Java Client under the hood; there are two versions of it and Micrometer supports both. If you want to use the "new" client (`1.x`), use `micrometer-registry-prometheus` but if you want to use the "legacy" client (`0.x`), use `micrometer-registry-prometheus-simpleclient`.
+
+:system: prometheus
+include::_install.adoc[]
+
+:system: prometheus-simpleclient
 include::_install.adoc[]
 
 == Configuring
@@ -31,13 +36,25 @@ try {
     });
 
     new Thread(server::start).start();
-} catch (IOException e) {
+}
+catch (IOException e) {
     throw new RuntimeException(e);
 }
 ----
 <1> The `PrometheusMeterRegistry` has a `scrape()` function that knows how to supply the String data necessary for the scrape. All you have to do is wire it to an endpoint.
 
-You can alternatively use `io.prometheus.client.exporter.HTTPServer`, which you can find in `io.prometheus:simpleclient_httpserver`:
+If you use the "new" client (`micrometer-registry-prometheus`), you can alternatively use `io.prometheus.metrics.exporter.httpserver.HTTPServer`, which you can find in `io.prometheus:prometheus-metrics-exporter-httpserver`:
+
+[source,java]
+----
+PrometheusMeterRegistry prometheusRegistry = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT);
+HTTPServer.builder()
+    .port(8080)
+    .registry(prometheusRegistry.getPrometheusRegistry())
+    .buildAndStart();
+----
+
+If you use the "legacy" client (`micrometer-registry-prometheus-simpleclient`), you can alternatively use `io.prometheus.client.exporter.HTTPServer`, which you can find in `io.prometheus:simpleclient_httpserver`:
 
 [source,java]
 ----
@@ -46,12 +63,20 @@ PrometheusMeterRegistry prometheusRegistry = new PrometheusMeterRegistry(Prometh
 new HTTPServer(new InetSocketAddress(8080), prometheusRegistry.getPrometheusRegistry(), true);
 ----
 
-Another alternative can be `io.prometheus.client.exporter.MetricsServlet`, which you can find in `io.prometheus:simpleclient_servlet` in case your app is running in a servlet container (such as Tomcat):
+If you use the "new" client (`micrometer-registry-prometheus`), another alternative can be `io.prometheus.metrics.exporter.servlet.jakarta.PrometheusMetricsServlet`, which you can find in `io.prometheus:prometheus-metrics-exporter-servlet-jakarta` in case your app is running in a servlet container (such as Tomcat):
 
 [source,java]
 ----
 PrometheusMeterRegistry prometheusRegistry = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT);
-HttpServlet metricsServlet = new MetricsServlet(prometheusRegistry.getPrometheusRegistry());
+HttpServlet servlet = new PrometheusMetricsServlet(prometheusRegistry.getPrometheusRegistry());
+----
+
+If you use the "legacy" client (`micrometer-registry-prometheus-simpleclient`), another alternative can be `io.prometheus.client.exporter.MetricsServlet`, which you can find in `io.prometheus:simpleclient_servlet` in case your app is running in a servlet container (such as Tomcat):
+
+[source,java]
+----
+PrometheusMeterRegistry prometheusRegistry = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT);
+HttpServlet servlet = new MetricsServlet(prometheusRegistry.getPrometheusRegistry());
 ----
 
 === Scrape Format
@@ -60,7 +85,14 @@ By default, the `PrometheusMeterRegistry` `scrape()` method returns the https://
 
 The https://github.com/OpenObservability/OpenMetrics/blob/main/specification/OpenMetrics.md[OpenMetrics] format can also be produced.
 To specify the format to be returned, you can pass a content type to the `scrape` method.
-For example, to get the OpenMetrics 1.0.0 format scrape, you could use the Prometheus Java client constant for it, as follows:
+For example, to get the OpenMetrics 1.0.0 format scrape, you could use the Prometheus Java client constant for it, as follows in case of the "new" client (`micrometer-registry-prometheus`):
+
+[source,java]
+----
+String openMetricsScrape = registry.scrape("application/openmetrics-text");
+----
+
+if you use the "legacy" client (`micrometer-registry-prometheus-simpleclient`):
 
 [source,java]
 ----
@@ -78,6 +110,34 @@ If you wish to use the Prometheus "standard" names, add the following filter:
 ----
 prometheusRegistry.config().meterFilter(new PrometheusRenameFilter());
 ----
+
+=== Prometheus Client Properties
+
+If you use the "new" client (`micrometer-registry-prometheus`), you can use some of the properties that the Prometheus Java Client supports, see the https://prometheus.github.io/client_java/config/config/[Prometheus Java Client Config docs].
+These properties can be loaded from any source that is supported by the Prometheus Java Client (Properties file, System properties, etc.) or they can be obtained through Micrometer using `PrometheusConfig`:
+[source,java]
+----
+PrometheusConfig config = new PrometheusConfig() {
+    @Override
+    public String get(String key) {
+        return null;
+    }
+
+    @Override
+    public Properties prometheusProperties() {
+        Properties properties = new Properties();
+        properties.putAll(PrometheusConfig.super.prometheusProperties()); <1>
+        properties.setProperty("io.prometheus.exemplars.sampleIntervalMilliseconds", "1"); <2>
+        return properties;
+    }
+};
+
+PrometheusMeterRegistry registry = new PrometheusMeterRegistry(config, new PrometheusRegistry(), Clock.SYSTEM);
+----
+<1> You can reuse the "default" properties defined in `PrometheusConfig`.
+<2> You can set any property from any property source.
+
+Micrometer passes these properties to the Exporters and the Examplar Sampler of the Prometheus client so you can use the https://prometheus.github.io/client_java/config/config/#exporter-properties[exporter]-, and the https://prometheus.github.io/client_java/config/config/#exemplar-properties[exemplar] properties of the Prometheus Client.
 
 == Graphing
 
@@ -179,9 +239,23 @@ registry.throwExceptionOnRegistrationFailure();
 
 Exemplars are metadata that you can attach to the value of your time series. They can reference data outside of your metrics. A common use case is storing tracing information (`traceId`, `spanId`). Exemplars are not tags/dimensions (labels in Prometheus terminology), they will not increase cardinality since they belong to the values of the time series.
 
-In order to setup Exemplars for `PrometheusMeterRegistry`, you will need a component that provides you the tracing information: `SpanContextSupplier`.
+In order to setup Exemplars for `PrometheusMeterRegistry`, you will need a component that provides you the tracing information. If you use the "new" client (`micrometer-registry-prometheus`), this component is the `io.prometheus.metrics.tracer.common.SpanContext` while if you use the "legacy" client (`micrometer-registry-prometheus-simpleclient`), it is the `SpanContextSupplier`.
 
-You can set it up as follows:
+Setting them up are somewhat similar, if you use the "new" client (`micrometer-registry-prometheus`):
+[source,java]
+----
+PrometheusMeterRegistry registry = new PrometheusMeterRegistry(
+    PrometheusConfig.DEFAULT,
+    new PrometheusRegistry(),
+    Clock.SYSTEM,
+    new MySpanContext() <1>
+);
+registry.counter("test").increment();
+System.out.println(registry.scrape("application/openmetrics-text"));
+----
+<1> You need to implement `MySpanContext` (`class MySpanContext implements SpanContext { ... }`) or use an implementation that already exists.
+
+But if you use the "legacy" client (`micrometer-registry-prometheus-simpleclient`):
 [source,java]
 ----
 PrometheusMeterRegistry registry = new PrometheusMeterRegistry(
