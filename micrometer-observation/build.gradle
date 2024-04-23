@@ -38,7 +38,7 @@ dependencies {
         exclude group: "org.slf4j", module: "slf4j-api"
     }
 
-    testImplementation 'org.mockito:mockito-core'
+    testImplementation libs.mockitoCore5
 
     testImplementation 'org.assertj:assertj-core'
     testImplementation 'org.awaitility:awaitility'
