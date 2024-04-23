@@ -174,3 +174,38 @@ Actually, the `PrometheusMeterRegistry` has a shortcut for this, so you can do t
 ----
 registry.throwExceptionOnRegistrationFailure();
 ----
+
+== Exemplars
+
+Exemplars are metadata that you can attach to the value of your time series. They can reference data outside of your metrics. A common use case is storing tracing information (`traceId`, `spanId`). Exemplars are not tags/dimensions (labels in Prometheus terminology), they will not increase cardinality since they belong to the values of the time series.
+
+In order to setup Exemplars for `PrometheusMeterRegistry`, you will need a component that provides you the tracing information: `SpanContextSupplier`.
+
+You can set it up as follows:
+[source,java]
+----
+PrometheusMeterRegistry registry = new PrometheusMeterRegistry(
+    PrometheusConfig.DEFAULT,
+    new CollectorRegistry(),
+    Clock.SYSTEM,
+    new DefaultExemplarSampler(new MySpanContextSupplier()) <1>
+);
+registry.counter("test").increment();
+System.out.println(registry.scrape(TextFormat.CONTENT_TYPE_OPENMETRICS_100));
+----
+<1> You need to implement `MySpanContextSupplier` (`class MySpanContextSupplier implements SpanContextSupplier { ... }`) or use an implementation that already exists.
+
+If your configuration is correct, you should get something like this, the `# {span_id="321",trace_id="123"} ...` section is the Exempar right after the value:
+[source]
+----
+# TYPE test counter
+# HELP test
+test_total 1.0 # {span_id="321",trace_id="123"} 1.0 1713310767.908
+# EOF
+----
+
+Exemplars are only supported in the OpenMetrics format (they will not show up in the Prometheus text format). You might need to explicitly ask for the OpenMetrics format, for example:
+[source,shell]
+----
+curl --silent -H 'Accept: application/openmetrics-text; version=1.0.0' localhost:8080/prometheus
+----
