@@ -454,6 +454,23 @@ class TimedAspectTest {
             assertThat(registry.get("method.timed").tag("foo", "bar").timer().count()).isEqualTo(1);
         }
 
+        @Test
+        void meterTagOnSuperClass() {
+            MeterRegistry registry = new SimpleMeterRegistry();
+            TimedAspect timedAspect = new TimedAspect(registry);
+            timedAspect.setMeterTagAnnotationHandler(meterTagAnnotationHandler);
+
+            AspectJProxyFactory pf = new AspectJProxyFactory(new MeterTagSub());
+            pf.setProxyTargetClass(true);
+            pf.addAspect(timedAspect);
+
+            MeterTagSub service = pf.getProxy();
+
+            service.superMethod("someValue");
+
+            assertThat(registry.get("method.timed").tag("superTag", "someValue").timer().count()).isEqualTo(1);
+        }
+
         enum AnnotatedTestClass {
 
             CLASS_WITHOUT_INTERFACE(MeterTagClass.class), CLASS_WITH_INTERFACE(MeterTagClassChild.class);
@@ -530,6 +547,22 @@ class TimedAspectTest {
             @Timed
             @Override
             public void getAnnotationForArgumentToString(Long param) {
+            }
+
+        }
+
+        static class MeterTagSuper {
+
+            @Timed
+            public void superMethod(@MeterTag("superTag") String foo) {
+            }
+
+        }
+
+        static class MeterTagSub extends MeterTagSuper {
+
+            @Timed
+            public void subMethod(@MeterTag("subTag") String foo) {
             }
 
         }
