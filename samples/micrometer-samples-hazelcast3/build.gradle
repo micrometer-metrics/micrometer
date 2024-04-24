@@ -12,4 +12,5 @@ dependencies {
     implementation 'ch.qos.logback:logback-classic'
 
     testImplementation project(':micrometer-test')
+    testImplementation libs.mockitoCore5
 }

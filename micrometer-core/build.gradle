@@ -154,7 +154,7 @@ dependencies {
     // Needed for LogbackMetrics tests
     testImplementation libs.slf4jApi
 
-    testImplementation 'org.mockito:mockito-core'
+    testImplementation libs.mockitoCore5
 
     testImplementation 'org.hsqldb:hsqldb'
     testImplementation 'com.h2database:h2'
