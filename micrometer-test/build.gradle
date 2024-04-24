@@ -32,7 +32,7 @@ dependencies {
     api 'com.github.tomakehurst:wiremock-jre8-standalone'
     java11TestImplementation 'com.github.tomakehurst:wiremock-jre8-standalone'
 
-    api 'org.mockito:mockito-core'
+    api libs.mockitoCore4
     implementation 'org.awaitility:awaitility'
 
     testImplementation project(':micrometer-observation-test')
