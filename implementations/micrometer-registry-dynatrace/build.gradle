@@ -6,7 +6,7 @@ dependencies {
     implementation 'com.dynatrace.metric.util:dynatrace-metric-utils-java'
 
     testImplementation project(':micrometer-test')
+    testImplementation libs.mockitoCore5
     testImplementation 'com.fasterxml.jackson.core:jackson-databind'
     testImplementation 'org.awaitility:awaitility'
-    testImplementation(libs.mockitoCore)
 }

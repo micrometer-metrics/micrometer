@@ -14,7 +14,7 @@ dependencies {
 
     testImplementation libs.junitJupiter
     testImplementation libs.assertj
-    testImplementation libs.mockitoCore
+    testImplementation libs.mockitoCore5
 
     testRuntimeOnly libs.h2
 }

@@ -71,7 +71,6 @@ def VERSIONS = [
         libs.junitJupiter,
         libs.junitPlatformLauncher,
         libs.latencyUtils,
-        libs.mockitoCore,
         libs.mongoSync,
         libs.postgre,
         libs.slf4jApi,
