@@ -16,6 +16,7 @@
 package io.micrometer.prometheusmetrics;
 
 import io.micrometer.core.Issue;
+import io.micrometer.core.instrument.LongTaskTimer.Sample;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.BaseUnits;
@@ -583,12 +584,231 @@ class PrometheusMeterRegistryTest {
     }
 
     @Test
-    void scrapeWithLongTaskTimer() {
-        LongTaskTimer.builder("my.long.task.timer").register(registry);
-        assertThat(registry.scrape()).contains("my_long_task_timer_seconds_max")
-            // since Prometheus client 1.x, suffix _active_count => _count
-            .contains("my_long_task_timer_seconds_count")
-            .contains("my_long_task_timer_seconds_sum");
+    @Issue("#4988")
+    void longTaskTimerRecordingsSchouldBeCorrect() {
+        LongTaskTimer ltt = LongTaskTimer.builder("test.ltt").publishPercentileHistogram().register(registry);
+
+        String result = registry.scrape();
+        // since Prometheus client 1.x, suffix _active_count => _gcount and _sum => _gsum
+        assertThat(result).contains("test_ltt_seconds_bucket{le=\"120.0\"} 0\n");
+        assertThat(result).contains("test_ltt_seconds_bucket{le=\"7200.0\"} 0\n");
+        assertThat(result).contains("test_ltt_seconds_bucket{le=\"+Inf\"} 0\n");
+        assertThat(result).contains("test_ltt_seconds_gcount 0\n");
+        assertThat(result).contains("test_ltt_seconds_gsum 0.0\n");
+        assertThat(result).contains("test_ltt_seconds_max 0.0\n");
+
+        // A task started
+        Sample sample = ltt.start();
+        clock.add(150, TimeUnit.SECONDS);
+        result = registry.scrape();
+        assertThat(result).contains("test_ltt_seconds_bucket{le=\"120.0\"} 0\n");
+        assertThat(result).contains("test_ltt_seconds_bucket{le=\"137.438953471\"} 0\n");
+        assertThat(result).contains("test_ltt_seconds_bucket{le=\"160.345445716\"} 1\n");
+        assertThat(result).contains("test_ltt_seconds_bucket{le=\"7200.0\"} 1\n");
+        assertThat(result).contains("test_ltt_seconds_bucket{le=\"+Inf\"} 1\n");
+        assertThat(result).contains("test_ltt_seconds_gcount 1\n");
+        assertThat(result).contains("test_ltt_seconds_gsum 150.0\n");
+        assertThat(result).contains("test_ltt_seconds_max 150.0\n");
+
+        // After a while another scrape happens, the task is still in progress...
+        clock.add(20, TimeUnit.SECONDS);
+        result = registry.scrape();
+        assertThat(result).contains("test_ltt_seconds_bucket{le=\"120.0\"} 0\n");
+        assertThat(result).contains("test_ltt_seconds_bucket{le=\"137.438953471\"} 0\n");
+        assertThat(result).contains("test_ltt_seconds_bucket{le=\"160.345445716\"} 0\n");
+        assertThat(result).contains("test_ltt_seconds_bucket{le=\"183.251937961\"} 1\n");
+        assertThat(result).contains("test_ltt_seconds_bucket{le=\"7200.0\"} 1\n");
+        assertThat(result).contains("test_ltt_seconds_bucket{le=\"+Inf\"} 1\n");
+        assertThat(result).contains("test_ltt_seconds_gcount 1\n");
+        assertThat(result).contains("test_ltt_seconds_gsum 170.0\n");
+        assertThat(result).contains("test_ltt_seconds_max 170.0\n");
+
+        // Another task started
+        Sample sample2 = ltt.start();
+        clock.add(10, TimeUnit.SECONDS);
+        result = registry.scrape();
+        assertThat(result).contains("test_ltt_seconds_bucket{le=\"120.0\"} 1\n");
+        assertThat(result).contains("test_ltt_seconds_bucket{le=\"137.438953471\"} 1\n");
+        assertThat(result).contains("test_ltt_seconds_bucket{le=\"160.345445716\"} 1\n");
+        assertThat(result).contains("test_ltt_seconds_bucket{le=\"183.251937961\"} 2\n");
+        assertThat(result).contains("test_ltt_seconds_bucket{le=\"7200.0\"} 2\n");
+        assertThat(result).contains("test_ltt_seconds_bucket{le=\"+Inf\"} 2\n");
+        assertThat(result).contains("test_ltt_seconds_gcount 2\n");
+        assertThat(result).contains("test_ltt_seconds_gsum 190.0\n");
+        assertThat(result).contains("test_ltt_seconds_max 180.0\n");
+
+        sample2.stop();
+
+        // After the second task stopped
+        clock.add(1, TimeUnit.SECONDS);
+        result = registry.scrape();
+        assertThat(result).contains("test_ltt_seconds_bucket{le=\"120.0\"} 0\n");
+        assertThat(result).contains("test_ltt_seconds_bucket{le=\"137.438953471\"} 0\n");
+        assertThat(result).contains("test_ltt_seconds_bucket{le=\"160.345445716\"} 0\n");
+        assertThat(result).contains("test_ltt_seconds_bucket{le=\"183.251937961\"} 1\n");
+        assertThat(result).contains("test_ltt_seconds_bucket{le=\"7200.0\"} 1\n");
+        assertThat(result).contains("test_ltt_seconds_bucket{le=\"+Inf\"} 1\n");
+        assertThat(result).contains("test_ltt_seconds_gcount 1\n");
+        assertThat(result).contains("test_ltt_seconds_gsum 181.0\n");
+        assertThat(result).contains("test_ltt_seconds_max 181.0\n");
+
+        sample.stop();
+
+        // After the first task stopped
+        clock.add(10, TimeUnit.SECONDS);
+        result = registry.scrape();
+        assertThat(result).contains("test_ltt_seconds_bucket{le=\"120.0\"} 0\n");
+        assertThat(result).contains("test_ltt_seconds_bucket{le=\"7200.0\"} 0\n");
+        assertThat(result).contains("test_ltt_seconds_bucket{le=\"+Inf\"} 0\n");
+        assertThat(result).contains("test_ltt_seconds_gcount 0\n");
+        assertThat(result).contains("test_ltt_seconds_gsum 0.0\n");
+        assertThat(result).contains("test_ltt_seconds_max 0.0\n");
+    }
+
+    @Test
+    @Issue("#4988")
+    void longTaskTimerInfBucketShouldBeCorrect() {
+        LongTaskTimer ltt = LongTaskTimer.builder("test.ltt").publishPercentileHistogram().register(registry);
+
+        String result = registry.scrape();
+        assertThat(result).contains("test_ltt_seconds_bucket{le=\"120.0\"} 0\n");
+        assertThat(result).contains("test_ltt_seconds_bucket{le=\"7200.0\"} 0\n");
+        assertThat(result).contains("test_ltt_seconds_bucket{le=\"+Inf\"} 0\n");
+        assertThat(result).contains("test_ltt_seconds_gcount 0\n");
+        assertThat(result).contains("test_ltt_seconds_gsum 0.0\n");
+        assertThat(result).contains("test_ltt_seconds_max 0.0\n");
+
+        // A task started
+        Sample sample = ltt.start();
+        clock.add(7000, TimeUnit.SECONDS);
+        result = registry.scrape();
+        assertThat(result).contains("test_ltt_seconds_bucket{le=\"120.0\"} 0\n");
+        assertThat(result).contains("test_ltt_seconds_bucket{le=\"5864.062014805\"} 0\n");
+        assertThat(result).contains("test_ltt_seconds_bucket{le=\"7200.0\"} 1\n");
+        assertThat(result).contains("test_ltt_seconds_bucket{le=\"+Inf\"} 1\n");
+        assertThat(result).contains("test_ltt_seconds_gcount 1\n");
+        assertThat(result).contains("test_ltt_seconds_gsum 7000.0\n");
+        assertThat(result).contains("test_ltt_seconds_max 7000.0\n");
+
+        // After a while another scrape happens, the task is still in progress...
+        // Now the task is in the +Inf bucket
+        clock.add(500, TimeUnit.SECONDS);
+        result = registry.scrape();
+        assertThat(result).contains("test_ltt_seconds_bucket{le=\"120.0\"} 0\n");
+        assertThat(result).contains("test_ltt_seconds_bucket{le=\"5864.062014805\"} 0\n");
+        assertThat(result).contains("test_ltt_seconds_bucket{le=\"7200.0\"} 0\n");
+        assertThat(result).contains("test_ltt_seconds_bucket{le=\"+Inf\"} 1\n");
+        assertThat(result).contains("test_ltt_seconds_gcount 1\n");
+        assertThat(result).contains("test_ltt_seconds_gsum 7500.0\n");
+        assertThat(result).contains("test_ltt_seconds_max 7500.0\n");
+
+        // Another task started
+        Sample sample2 = ltt.start();
+        clock.add(500, TimeUnit.SECONDS);
+        result = registry.scrape();
+        assertThat(result).contains("test_ltt_seconds_bucket{le=\"120.0\"} 0\n");
+        assertThat(result).contains("test_ltt_seconds_bucket{le=\"458.129844906\"} 0\n");
+        assertThat(result).contains("test_ltt_seconds_bucket{le=\"549.755813887\"} 1\n");
+        assertThat(result).contains("test_ltt_seconds_bucket{le=\"5864.062014805\"} 1\n");
+        assertThat(result).contains("test_ltt_seconds_bucket{le=\"7200.0\"} 1\n");
+        assertThat(result).contains("test_ltt_seconds_bucket{le=\"+Inf\"} 2\n");
+        assertThat(result).contains("test_ltt_seconds_gcount 2\n");
+        assertThat(result).contains("test_ltt_seconds_gsum 8500.0\n");
+        assertThat(result).contains("test_ltt_seconds_max 8000.0\n");
+
+        sample2.stop();
+
+        // After the second task stopped
+        clock.add(500, TimeUnit.SECONDS);
+        result = registry.scrape();
+        assertThat(result).contains("test_ltt_seconds_bucket{le=\"120.0\"} 0\n");
+        assertThat(result).contains("test_ltt_seconds_bucket{le=\"458.129844906\"} 0\n");
+        assertThat(result).contains("test_ltt_seconds_bucket{le=\"549.755813887\"} 0\n");
+        assertThat(result).contains("test_ltt_seconds_bucket{le=\"5864.062014805\"} 0\n");
+        assertThat(result).contains("test_ltt_seconds_bucket{le=\"7200.0\"} 0\n");
+        assertThat(result).contains("test_ltt_seconds_bucket{le=\"+Inf\"} 1\n");
+        assertThat(result).contains("test_ltt_seconds_gcount 1\n");
+        assertThat(result).contains("test_ltt_seconds_gsum 8500.0\n");
+        assertThat(result).contains("test_ltt_seconds_max 8500.0\n");
+
+        sample.stop();
+
+        // After the first task stopped
+        result = registry.scrape();
+        assertThat(result).contains("test_ltt_seconds_bucket{le=\"120.0\"} 0\n");
+        assertThat(result).contains("test_ltt_seconds_bucket{le=\"7200.0\"} 0\n");
+        assertThat(result).contains("test_ltt_seconds_bucket{le=\"+Inf\"} 0\n");
+        assertThat(result).contains("test_ltt_seconds_gcount 0\n");
+        assertThat(result).contains("test_ltt_seconds_gsum 0.0\n");
+        assertThat(result).contains("test_ltt_seconds_max 0.0\n");
+    }
+
+    @Test
+    @Issue("#4988")
+    void nonTelescopicLongTaskTimerRecordingsShouldBeCorrect() {
+        LongTaskTimer ltt = LongTaskTimer.builder("test.ltt").publishPercentileHistogram().register(registry);
+
+        String result = registry.scrape();
+        assertThat(result).contains("test_ltt_seconds_bucket{le=\"120.0\"} 0\n");
+        assertThat(result).contains("test_ltt_seconds_bucket{le=\"7200.0\"} 0\n");
+        assertThat(result).contains("test_ltt_seconds_bucket{le=\"+Inf\"} 0\n");
+        assertThat(result).contains("test_ltt_seconds_gcount 0\n");
+        assertThat(result).contains("test_ltt_seconds_gsum 0.0\n");
+        assertThat(result).contains("test_ltt_seconds_max 0.0\n");
+
+        // A task started
+        Sample sample = ltt.start();
+        clock.add(200, TimeUnit.SECONDS);
+        result = registry.scrape();
+        assertThat(result).contains("test_ltt_seconds_bucket{le=\"120.0\"} 0\n");
+        assertThat(result).contains("test_ltt_seconds_bucket{le=\"183.251937961\"} 0\n");
+        assertThat(result).contains("test_ltt_seconds_bucket{le=\"206.158430206\"} 1\n");
+        assertThat(result).contains("test_ltt_seconds_bucket{le=\"7200.0\"} 1\n");
+        assertThat(result).contains("test_ltt_seconds_bucket{le=\"+Inf\"} 1\n");
+        assertThat(result).contains("test_ltt_seconds_gcount 1\n");
+        assertThat(result).contains("test_ltt_seconds_gsum 200.0\n");
+        assertThat(result).contains("test_ltt_seconds_max 200.0\n");
+
+        // A second task started before the first stopped
+        Sample sample2 = ltt.start();
+        // The first task stopped
+        sample.stop();
+
+        clock.add(100, TimeUnit.SECONDS);
+        result = registry.scrape();
+        assertThat(result).contains("test_ltt_seconds_bucket{le=\"120.0\"} 1\n");
+        assertThat(result).contains("test_ltt_seconds_bucket{le=\"7200.0\"} 1\n");
+        assertThat(result).contains("test_ltt_seconds_bucket{le=\"+Inf\"} 1\n");
+        assertThat(result).contains("test_ltt_seconds_gcount 1\n");
+        assertThat(result).contains("test_ltt_seconds_gsum 100.0\n");
+        assertThat(result).contains("test_ltt_seconds_max 100.0\n");
+
+        // The second task stopped
+        sample2.stop();
+
+        // A third task started after the first and second stopped
+        Sample sample3 = ltt.start();
+        clock.add(300, TimeUnit.SECONDS);
+        result = registry.scrape();
+        assertThat(result).contains("test_ltt_seconds_bucket{le=\"120.0\"} 0\n");
+        assertThat(result).contains("test_ltt_seconds_bucket{le=\"274.877906944\"} 0\n");
+        assertThat(result).contains("test_ltt_seconds_bucket{le=\"366.503875925\"} 1\n");
+        assertThat(result).contains("test_ltt_seconds_bucket{le=\"7200.0\"} 1\n");
+        assertThat(result).contains("test_ltt_seconds_bucket{le=\"+Inf\"} 1\n");
+        assertThat(result).contains("test_ltt_seconds_gcount 1\n");
+        assertThat(result).contains("test_ltt_seconds_gsum 300.0\n");
+        assertThat(result).contains("test_ltt_seconds_max 300.0\n");
+
+        // The third task stopped
+        sample3.stop();
+
+        result = registry.scrape();
+        assertThat(result).contains("test_ltt_seconds_bucket{le=\"120.0\"} 0\n");
+        assertThat(result).contains("test_ltt_seconds_bucket{le=\"7200.0\"} 0\n");
+        assertThat(result).contains("test_ltt_seconds_bucket{le=\"+Inf\"} 0\n");
+        assertThat(result).contains("test_ltt_seconds_gcount 0\n");
+        assertThat(result).contains("test_ltt_seconds_gsum 0.0\n");
+        assertThat(result).contains("test_ltt_seconds_max 0.0\n");
     }
 
     @Issue("#2087")

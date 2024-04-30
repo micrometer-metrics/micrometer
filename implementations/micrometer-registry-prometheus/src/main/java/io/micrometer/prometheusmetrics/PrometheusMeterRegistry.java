@@ -22,8 +22,8 @@ import io.micrometer.core.instrument.cumulative.CumulativeFunctionTimer;
 import io.micrometer.core.instrument.distribution.HistogramSnapshot;
 import io.micrometer.core.instrument.distribution.*;
 import io.micrometer.core.instrument.distribution.pause.PauseDetector;
-import io.micrometer.core.instrument.internal.CumulativeHistogramLongTaskTimer;
 import io.micrometer.core.instrument.internal.DefaultGauge;
+import io.micrometer.core.instrument.internal.DefaultLongTaskTimer;
 import io.micrometer.core.instrument.internal.DefaultMeter;
 import io.micrometer.core.instrument.util.TimeUtils;
 import io.prometheus.metrics.config.PrometheusProperties;
@@ -308,8 +308,8 @@ public class PrometheusMeterRegistry extends MeterRegistry {
             DistributionStatisticConfig distributionStatisticConfig, PauseDetector pauseDetector) {
         PrometheusTimer timer = new PrometheusTimer(id, clock, distributionStatisticConfig, pauseDetector,
                 exemplarSamplerFactory);
-        applyToCollector(id,
-                (collector) -> addDistributionStatisticSamples(id, collector, timer, timer::exemplars, tagValues(id)));
+        applyToCollector(id, (collector) -> addDistributionStatisticSamples(id, collector, timer, timer::exemplars,
+                tagValues(id), false));
         return timer;
     }
 
@@ -339,10 +339,9 @@ public class PrometheusMeterRegistry extends MeterRegistry {
 
     @Override
     protected LongTaskTimer newLongTaskTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig) {
-        LongTaskTimer ltt = new CumulativeHistogramLongTaskTimer(id, clock, getBaseTimeUnit(),
-                distributionStatisticConfig);
+        LongTaskTimer ltt = new DefaultLongTaskTimer(id, clock, getBaseTimeUnit(), distributionStatisticConfig, true);
         applyToCollector(id, (collector) -> addDistributionStatisticSamples(id, collector, ltt, () -> Exemplars.EMPTY,
-                tagValues(id)));
+                tagValues(id), true));
         return ltt;
     }
 
@@ -449,7 +448,8 @@ public class PrometheusMeterRegistry extends MeterRegistry {
     }
 
     private void addDistributionStatisticSamples(Meter.Id id, MicrometerCollector collector,
-            HistogramSupport histogramSupport, Supplier<Exemplars> exemplarsSupplier, List<String> tagValues) {
+            HistogramSupport histogramSupport, Supplier<Exemplars> exemplarsSupplier, List<String> tagValues,
+            boolean forLongTaskTimer) {
         collector.add(tagValues, (conventionName, tagKeys) -> {
             Stream.Builder<MicrometerCollector.Family<?>> families = Stream.builder();
 
@@ -499,8 +499,8 @@ public class PrometheusMeterRegistry extends MeterRegistry {
 
                 Exemplars exemplars = createExemplarsWithScaledValues(exemplarsSupplier.get());
                 families.add(new MicrometerCollector.Family<>(conventionName,
-                        family -> new io.prometheus.metrics.model.snapshots.HistogramSnapshot(family.metadata,
-                                family.dataPointSnapshots),
+                        family -> new io.prometheus.metrics.model.snapshots.HistogramSnapshot(forLongTaskTimer,
+                                family.metadata, family.dataPointSnapshots),
                         getMetadata(id), new HistogramDataPointSnapshot(ClassicHistogramBuckets.of(buckets, counts),
                                 sum, Labels.of(tagKeys, tagValues), exemplars, 0)));
 
