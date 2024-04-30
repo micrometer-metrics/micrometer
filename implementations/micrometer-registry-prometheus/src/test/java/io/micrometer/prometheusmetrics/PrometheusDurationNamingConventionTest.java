@@ -16,8 +16,6 @@
 package io.micrometer.prometheusmetrics;
 
 import io.micrometer.core.instrument.Meter;
-import io.micrometer.prometheusmetrics.PrometheusDurationNamingConvention;
-import io.micrometer.prometheusmetrics.PrometheusNamingConvention;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -27,7 +25,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 class PrometheusDurationNamingConventionTest {
 
-    private PrometheusNamingConvention convention = new PrometheusDurationNamingConvention();
+    private final PrometheusNamingConvention convention = new PrometheusDurationNamingConvention();
 
     @Test
     void unitsAreAppendedToTimers() {

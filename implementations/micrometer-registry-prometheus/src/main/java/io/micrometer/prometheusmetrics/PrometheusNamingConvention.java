@@ -21,8 +21,9 @@ import io.micrometer.core.instrument.config.NamingConvention;
 import io.prometheus.metrics.model.snapshots.PrometheusNaming;
 
 /**
- * See https://prometheus.io/docs/concepts/data_model/#metric-names-and-labels for a
- * specification of the constraints on metric names and labels
+ * See <a href=
+ * "https://prometheus.io/docs/concepts/data_model/#metric-names-and-labels">Prometheus
+ * docs</a> for a specification of the constraints on metric names and labels
  *
  * @author Jon Schneider
  */

@@ -16,8 +16,8 @@
 package io.micrometer.prometheusmetrics;
 
 import io.micrometer.core.Issue;
-import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.binder.jvm.JvmInfoMetrics;
 import io.micrometer.core.instrument.composite.CompositeMeterRegistry;
@@ -50,12 +50,12 @@ import static org.assertj.core.api.Assertions.*;
  */
 class PrometheusMeterRegistryTest {
 
-    private PrometheusRegistry prometheusRegistry = new PrometheusRegistry();
+    private final PrometheusRegistry prometheusRegistry = new PrometheusRegistry();
 
-    private MockClock clock = new MockClock();
+    private final MockClock clock = new MockClock();
 
-    private PrometheusMeterRegistry registry = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT, prometheusRegistry,
-            clock);
+    private final PrometheusMeterRegistry registry = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT,
+            prometheusRegistry, clock);
 
     @Test
     void metersWithSameNameAndDifferentTagsContinueSilently() {
@@ -636,23 +636,9 @@ class PrometheusMeterRegistryTest {
 
     @Test
     void openMetricsScrapeWithExemplars() throws InterruptedException {
-        PrometheusConfig prometheusConfig = new PrometheusConfig() {
-            @Override
-            public String get(String key) {
-                return null;
-            }
-
-            @Override
-            public Properties prometheusProperties() {
-                Properties properties = new Properties();
-                properties.putAll(PrometheusConfig.super.prometheusProperties());
-                properties.setProperty("io.prometheus.exemplars.sampleIntervalMilliseconds", "1");
-                return properties;
-            }
-        };
-
-        PrometheusMeterRegistry registry = new PrometheusMeterRegistry(prometheusConfig, prometheusRegistry, clock,
-                new TestSpanContex());
+        Properties properties = new Properties();
+        properties.setProperty("io.prometheus.exemplars.sampleIntervalMilliseconds", "1");
+        PrometheusMeterRegistry registry = createPrometheusMeterRegistryWithProperties(properties);
 
         Counter counter = Counter.builder("my.counter").register(registry);
         counter.increment();
@@ -781,6 +767,25 @@ class PrometheusMeterRegistryTest {
             .contains("test_slos_bucket{le=\"+Inf\"} 3\n");
         assertThat(scraped).doesNotContain("span_id").doesNotContain("trace_id");
         assertThat(scraped).endsWith("# EOF\n");
+    }
+
+    private PrometheusMeterRegistry createPrometheusMeterRegistryWithProperties(Properties properties) {
+        PrometheusConfig prometheusConfig = new PrometheusConfig() {
+            @Override
+            public String get(String key) {
+                return null;
+            }
+
+            @Override
+            public Properties prometheusProperties() {
+                Properties mergedProperties = new Properties();
+                mergedProperties.putAll(PrometheusConfig.super.prometheusProperties());
+                properties.forEach((key, value) -> mergedProperties.setProperty(key.toString(), value.toString()));
+                return mergedProperties;
+            }
+        };
+
+        return new PrometheusMeterRegistry(prometheusConfig, prometheusRegistry, clock, new TestSpanContex());
     }
 
     static class TestSpanContex implements SpanContext {

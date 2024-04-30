@@ -40,9 +40,9 @@ class MicrometerCollectorTest {
         Meter.Id id = Metrics.counter("my.counter").getId();
         MicrometerCollector collector = new MicrometerCollector(id.getConventionName(convention), id, convention);
 
-        for (Integer i = 0; i < 20_000; i++) {
+        for (int i = 0; i < 20_000; i++) {
             CounterSnapshot.CounterDataPointSnapshot sample = new CounterSnapshot.CounterDataPointSnapshot(1.0,
-                    Labels.of("k", i.toString()), null, 0);
+                    Labels.of("k", Integer.toString(i)), null, 0);
 
             collector.add(Collections.emptyList(),
                     (conventionName,

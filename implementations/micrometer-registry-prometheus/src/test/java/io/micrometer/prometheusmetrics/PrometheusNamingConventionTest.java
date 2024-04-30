@@ -26,7 +26,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 class PrometheusNamingConventionTest {
 
-    private PrometheusNamingConvention convention = new PrometheusNamingConvention();
+    private final PrometheusNamingConvention convention = new PrometheusNamingConvention();
 
     @Test
     void formatName() {
