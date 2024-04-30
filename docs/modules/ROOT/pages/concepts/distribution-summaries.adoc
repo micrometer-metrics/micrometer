@@ -1,7 +1,7 @@
 [[distribution-summaries]]
 = Distribution Summaries
 
-A distribution summary tracks the distribution of events. It is similar to a timer structurally, but records values that do not represent a unit of time. For example, you could use a distribution summary to measure the payload sizes of requests hitting a server.
+A distribution summary tracks the distribution of events. It is structurally similar to a timer but records values that do not represent a unit of time. For example, you could use a distribution summary to measure the payload sizes of requests hitting a server.
 
 The following example creates a distribution summary:
 
@@ -29,7 +29,8 @@ DistributionSummary summary = DistributionSummary
 NOTE: The maximum (which is named `max`) for basic `DistributionSummary` implementations, such as `CumulativeDistributionSummary` and `StepDistributionSummary`, is a time window maximum (`TimeWindowMax`).
 It means that its value is the maximum value during a time window.
 If no new values are recorded for the time window length, the maximum is reset to 0 as a new time window starts.
-Time window size is the step size of the meter registry, unless expiry in `DistributionStatisticConfig` is explicitly set to another value.
+The time window size until values are fully expired is the `expiry` multiplied by the `bufferLength` in `DistributionStatisticConfig`.
+`expiry` defaults to the step size of the meter registry unless is explicitly set to a different value, and `bufferLength` defaults to `3`.
 A time window max is used to capture the maximum latency in a subsequent interval after heavy resource pressure triggers the latency and prevents metrics from being published.
 Percentiles are also time window percentiles (`TimeWindowPercentileHistogram`).
 

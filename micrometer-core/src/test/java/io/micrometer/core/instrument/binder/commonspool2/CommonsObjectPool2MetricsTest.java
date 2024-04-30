@@ -45,7 +45,10 @@ class CommonsObjectPool2MetricsTest {
 
     private final MeterRegistry registry = new SimpleMeterRegistry();
 
+    // tag::setup[]
     private final CommonsObjectPool2Metrics commonsObjectPool2Metrics = new CommonsObjectPool2Metrics(tags);
+
+    // end::setup[]
 
     @AfterEach
     void afterEach() {
@@ -54,6 +57,7 @@ class CommonsObjectPool2MetricsTest {
 
     @Test
     void verifyMetricsWithExpectedTags() {
+        // tag::generic_pool[]
         try (GenericObjectPool<Object> p = createGenericObjectPool()) {
             MeterRegistry registry = new SimpleMeterRegistry();
             commonsObjectPool2Metrics.bindTo(registry);
@@ -72,10 +76,12 @@ class CommonsObjectPool2MetricsTest {
                         "commons.pool2.mean.borrow.wait")
                 .forEach(name -> registry.get(name).tags(tags).timeGauge());
         }
+        // end::generic_pool[]
     }
 
     @Test
     void verifyGenericKeyedObjectPoolMetricsWithExpectedTags() {
+        // tag::generic_keyed_pool[]
         try (GenericKeyedObjectPool<Object, Object> p = createGenericKeyedObjectPool()) {
             Tags tagsToMatch = tags.and("type", "GenericKeyedObjectPool");
             commonsObjectPool2Metrics.bindTo(registry);
@@ -94,6 +100,7 @@ class CommonsObjectPool2MetricsTest {
                         "commons.pool2.mean.borrow.wait")
                 .forEach(name -> registry.get(name).tags(tagsToMatch).timeGauge());
         }
+        // end::generic_keyed_pool[]
     }
 
     @Test

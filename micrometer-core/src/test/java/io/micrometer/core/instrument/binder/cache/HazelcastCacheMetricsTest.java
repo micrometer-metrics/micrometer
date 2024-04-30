@@ -43,14 +43,19 @@ import static org.mockito.Mockito.when;
  */
 class HazelcastCacheMetricsTest extends AbstractCacheMetricsTest {
 
-    private static IMap<String, String> cache;
+    // tag::setup[]
+    static IMap<String, String> cache;
 
-    private HazelcastCacheMetrics metrics = new HazelcastCacheMetrics(cache, expectedTag);
+    HazelcastCacheMetrics metrics = new HazelcastCacheMetrics(cache, expectedTag);
+
+    // end::setup[]
 
     @Test
     void reportMetrics() {
+        // tag::register[]
         MeterRegistry meterRegistry = new SimpleMeterRegistry();
         metrics.bindTo(meterRegistry);
+        // end::register[]
 
         verifyCommonCacheMetrics(meterRegistry, metrics);
 
@@ -102,8 +107,10 @@ class HazelcastCacheMetricsTest extends AbstractCacheMetricsTest {
 
     @Test
     void constructInstanceViaStaticMethodMonitor() {
+        // tag::monitor[]
         MeterRegistry meterRegistry = new SimpleMeterRegistry();
         HazelcastCacheMetrics.monitor(meterRegistry, cache, expectedTag);
+        // end::monitor[]
 
         meterRegistry.get("cache.partition.gets").tags(expectedTag).functionCounter();
     }

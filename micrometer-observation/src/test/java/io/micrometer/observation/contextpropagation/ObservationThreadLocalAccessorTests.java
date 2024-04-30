@@ -149,7 +149,7 @@ class ObservationThreadLocalAccessorTests {
                 then(child.getEnclosingScope()).isNotNull();
                 thenCurrentObservationHasParent(parent, child);
             }
-            then(scopeParent(inScope)).isSameAs(null);
+            then(scopeParent(inScope)).isNull();
         }
 
         thenCurrentObservationIsNull();
@@ -185,7 +185,7 @@ class ObservationThreadLocalAccessorTests {
 
         // given
         Observation parent = Observation.start("parent", observationRegistry);
-        Observation child = Observation.createNotStarted("child2", observationRegistry)
+        Observation child = Observation.createNotStarted("child", observationRegistry)
             .parentObservation(parent)
             .start();
         thenCurrentObservationIsNull();
@@ -241,7 +241,7 @@ class ObservationThreadLocalAccessorTests {
 
     private void thenCurrentObservationIsNull() {
         then(ObservationRegistry.create().getCurrentObservation()).isNull();
-        then(TracingHandler.value.get()).isSameAs(null);
+        then(TracingHandler.value.get()).isNull();
     }
 
     private void thenCurrentObservationIsNullObservation() {

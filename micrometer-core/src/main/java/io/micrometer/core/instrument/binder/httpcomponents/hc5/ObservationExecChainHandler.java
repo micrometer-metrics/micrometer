@@ -29,9 +29,9 @@ import org.apache.hc.core5.concurrent.CancellableDependency;
 import org.apache.hc.core5.http.*;
 import org.apache.hc.core5.http.nio.AsyncDataConsumer;
 import org.apache.hc.core5.http.nio.AsyncEntityProducer;
-import org.apache.hc.core5.util.Args;
 
 import java.io.IOException;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicMarkableReference;
 
 /**
@@ -84,7 +84,7 @@ public class ObservationExecChainHandler implements ExecChainHandler, AsyncExecC
             .observation(observationConvention, DefaultApacheHttpClientObservationConvention.INSTANCE,
                     () -> observationContext, observationRegistry)
             .start();
-        ObervableCancellableDependency cancellable = new ObervableCancellableDependency(observation);
+        ObservableCancellableDependency cancellable = new ObservableCancellableDependency(observation);
         chain.proceed(request, entityProducer, cancellable.wrapScope(scope), new AsyncExecCallback() {
 
             @Override
@@ -123,10 +123,10 @@ public class ObservationExecChainHandler implements ExecChainHandler, AsyncExecC
             .observation(observationConvention, DefaultApacheHttpClientObservationConvention.INSTANCE,
                     () -> observationContext, observationRegistry)
             .start();
-        ClassicHttpResponse response;
         try {
-            response = chain.proceed(request, scope);
+            ClassicHttpResponse response = chain.proceed(request, scope);
             observationContext.setResponse(response);
+            return response;
         }
         catch (Throwable exc) {
             observation.error(exc);
@@ -135,16 +135,15 @@ public class ObservationExecChainHandler implements ExecChainHandler, AsyncExecC
         finally {
             observation.stop();
         }
-        return response;
     }
 
-    private static class ObervableCancellableDependency implements CancellableDependency {
+    private static class ObservableCancellableDependency implements CancellableDependency {
 
         private final Observation observation;
 
         private final AtomicMarkableReference<Cancellable> dependencyRef;
 
-        public ObervableCancellableDependency(Observation observation) {
+        ObservableCancellableDependency(Observation observation) {
             this.observation = observation;
             this.dependencyRef = new AtomicMarkableReference<>(null, false);
         }
@@ -155,9 +154,9 @@ public class ObservationExecChainHandler implements ExecChainHandler, AsyncExecC
         }
 
         @Override
-        public void setDependency(final Cancellable dependency) {
-            Args.notNull(dependency, "dependency");
-            final Cancellable actualDependency = dependencyRef.getReference();
+        public void setDependency(Cancellable dependency) {
+            Objects.requireNonNull(dependency, "dependency");
+            Cancellable actualDependency = dependencyRef.getReference();
             if (!dependencyRef.compareAndSet(actualDependency, dependency, false, false)) {
                 dependency.cancel();
             }
@@ -166,7 +165,7 @@ public class ObservationExecChainHandler implements ExecChainHandler, AsyncExecC
         @Override
         public boolean cancel() {
             while (!dependencyRef.isMarked()) {
-                final Cancellable actualDependency = dependencyRef.getReference();
+                Cancellable actualDependency = dependencyRef.getReference();
                 if (dependencyRef.compareAndSet(actualDependency, actualDependency, false, true)) {
                     if (actualDependency != null) {
                         actualDependency.cancel();

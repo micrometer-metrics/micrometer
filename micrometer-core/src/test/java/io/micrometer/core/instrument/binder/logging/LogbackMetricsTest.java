@@ -47,8 +47,10 @@ class LogbackMetricsTest {
 
     @BeforeEach
     void bindLogbackMetrics() {
+        // tag::setup[]
         logbackMetrics = new LogbackMetrics();
         logbackMetrics.bindTo(registry);
+        // end::setup[]
     }
 
     @AfterEach
@@ -62,6 +64,7 @@ class LogbackMetricsTest {
     void logbackLevelMetrics() {
         assertThat(registry.get("logback.events").counter().count()).isEqualTo(0.0);
 
+        // tag::example[]
         logger.setLevel(Level.INFO);
 
         logger.warn("warn");
@@ -70,6 +73,7 @@ class LogbackMetricsTest {
 
         assertThat(registry.get("logback.events").tags("level", "warn").counter().count()).isEqualTo(1.0);
         assertThat(registry.get("logback.events").tags("level", "debug").counter().count()).isEqualTo(0.0);
+        // end::example[]
     }
 
     @Issue("#183")

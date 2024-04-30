@@ -96,8 +96,8 @@ class DefaultJmsPublishObservationConventionTests {
     }
 
     @Test
-    void shouldHaveTopicNullDestinationName() throws Exception {
-        JmsPublishObservationContext context = new JmsPublishObservationContext(createMessageWithNullTopic());
+    void shouldHaveUnknownDestinationNameWhenTopicNameIsNull() throws Exception {
+        JmsPublishObservationContext context = new JmsPublishObservationContext(createMessageWithNullTopicName());
         assertThat(convention.getHighCardinalityKeyValues(context))
             .contains(KeyValue.of("messaging.destination.name", "unknown"));
     }
@@ -210,7 +210,7 @@ class DefaultJmsPublishObservationConventionTests {
         return message;
     }
 
-    private Message createMessageWithNullTopic() throws Exception {
+    private Message createMessageWithNullTopicName() throws Exception {
         Topic topic = mock(Topic.class);
         when(topic.getTopicName()).thenReturn(null);
         Message message = mock(Message.class);

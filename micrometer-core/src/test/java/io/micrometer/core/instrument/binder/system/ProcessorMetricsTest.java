@@ -41,7 +41,9 @@ class ProcessorMetricsTest {
 
     @BeforeEach
     void setup() {
+        // tag::setup[]
         new ProcessorMetrics().bindTo(registry);
+        // end::setup[]
     }
 
     @Test
@@ -59,8 +61,10 @@ class ProcessorMetricsTest {
     void hotspotCpuMetrics() {
         assumeTrue(!isOpenJ9());
 
+        // tag::example[]
         assertThat(registry.get("system.cpu.usage").gauge().value()).isNotNegative();
         assertThat(registry.get("process.cpu.usage").gauge().value()).isNotNegative();
+        // end::example[]
     }
 
     @Test

@@ -1,7 +1,7 @@
 [[micrometer-observation-install]]
-== Installing
+= Installing
 
-Micrometer comes with a Bill of Materials (BOM) which is a project that manages all the project versions for consistency.
+Micrometer comes with a Bill of Materials (BOM), which is a project that manages all the project versions for consistency.
 
 The following example shows the required dependency for Micrometer Observation in Gradle:
 

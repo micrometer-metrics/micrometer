@@ -1,7 +1,7 @@
 dependencies {
     api project(':micrometer-core')
 
-    api platform('com.google.cloud:libraries-bom:latest.release')
+    api platform(libs.googleCloudLibrariesBom)
 
     api('com.google.cloud:google-cloud-monitoring') {
         // see gh-4010

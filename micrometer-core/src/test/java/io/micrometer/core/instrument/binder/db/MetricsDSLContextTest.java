@@ -105,9 +105,11 @@ class MetricsDSLContextTest {
         try (Connection conn = DriverManager.getConnection("jdbc:h2:mem:fluentSelect")) {
             MetricsDSLContext jooq = createDatabase(conn);
 
+            // tag::result[]
             jooq.tag("name", "selectAllAuthors").execute("SELECT * FROM author");
 
             assertThat(meterRegistry.get("jooq.query").tag("name", "selectAllAuthors").timer().count()).isEqualTo(1);
+            // end::result[]
         }
     }
 
@@ -192,9 +194,11 @@ class MetricsDSLContextTest {
 
     @NonNull
     private MetricsDSLContext createDatabase(Connection conn) {
+        // tag::setup[]
         Configuration configuration = new DefaultConfiguration().set(conn).set(SQLDialect.H2);
 
-        MetricsDSLContext jooq = withMetrics(DSL.using(configuration), meterRegistry, Tags.empty());
+        MetricsDSLContext jooq = MetricsDSLContext.withMetrics(DSL.using(configuration), meterRegistry, Tags.empty());
+        // end::setup[]
 
         jooq.execute("CREATE TABLE author (" + "  id int NOT NULL," + "  first_name varchar(255) DEFAULT NULL,"
                 + "  last_name varchar(255) DEFAULT NULL," + "  PRIMARY KEY (id)" + ")");

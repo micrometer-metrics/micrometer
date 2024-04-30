@@ -1,5 +1,5 @@
 [[context-propagation-purpose]]
-== Purpose
+= Purpose
 
 Abstractions:
 

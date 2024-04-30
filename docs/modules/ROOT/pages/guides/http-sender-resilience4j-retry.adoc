@@ -6,7 +6,7 @@ are two implementations:
 * `HttpUrlConnectionSender`: `HttpURLConnection`-based `HttpSender`
 * `OkHttpSender`: OkHttp-based `HttpSender`
 
-There is no out-of-the-box support for retry, but you can decorate it with Resilience4j retry, as follows:
+Micrometer does not include support for retry, but you can decorate it with Resilience4j retry, as follows:
 
 [source,java]
 ----

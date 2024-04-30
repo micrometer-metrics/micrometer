@@ -43,7 +43,10 @@ import org.apache.http.pool.ConnPoolControl;
  *
  * @author Benjamin Hubert (benjamin.hubert@willhaben.at)
  * @since 1.3.0
+ * @deprecated as of 1.12.5 in favor of HttpComponents 5.x and
+ * {@link io.micrometer.core.instrument.binder.httpcomponents.hc5.PoolingHttpClientConnectionManagerMetricsBinder}.
  */
+@Deprecated
 public class PoolingHttpClientConnectionManagerMetricsBinder implements MeterBinder {
 
     private final ConnPoolControl<HttpRoute> connPoolControl;

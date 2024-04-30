@@ -1,0 +1,18 @@
+[[overview]]
+= Apache Commons Pool Instrumentation
+
+https://commons.apache.org/proper/commons-pool/[Apache Commons Pool] is an open source software library provides an object-pooling API and a number of object pool implementations.
+
+Below you can find an example of how to instrument Apache Commons Pool with Micrometer.
+
+[source,java,subs=+attributes]
+-----
+// Setting up instrumentation
+include::{include-core-test-java}/io/micrometer/core/instrument/binder/commonspool2/CommonsObjectPool2MetricsTest.java[tags=setup, indent=0]
+
+// Generic Pool instrumentation (with examples of created meters)
+include::{include-core-test-java}/io/micrometer/core/instrument/binder/commonspool2/CommonsObjectPool2MetricsTest.java[tags=generic_pool, indent=0]
+
+// Generic Keyed Pool instrumentation (with examples of created meters)
+include::{include-core-test-java}/io/micrometer/core/instrument/binder/commonspool2/CommonsObjectPool2MetricsTest.java[tags=generic_keyed_pool, indent=0]
+-----

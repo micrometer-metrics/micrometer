@@ -35,15 +35,20 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 class CaffeineCacheMetricsTest extends AbstractCacheMetricsTest {
 
-    private LoadingCache<String, String> cache = Caffeine.newBuilder().build(key -> "");
+    // tag::setup[]
+    LoadingCache<String, String> cache = Caffeine.newBuilder().build(key -> "");
 
-    private CaffeineCacheMetrics<String, String, Cache<String, String>> metrics = new CaffeineCacheMetrics<>(cache,
-            "testCache", expectedTag);
+    CaffeineCacheMetrics<String, String, Cache<String, String>> metrics = new CaffeineCacheMetrics<>(cache, "testCache",
+            expectedTag);
+
+    // end::setup[]
 
     @Test
     void reportExpectedGeneralMetrics() {
+        // tag::register[]
         MeterRegistry registry = new SimpleMeterRegistry();
         metrics.bindTo(registry);
+        // end::register[]
 
         verifyCommonCacheMetrics(registry, metrics);
 
@@ -64,8 +69,10 @@ class CaffeineCacheMetricsTest extends AbstractCacheMetricsTest {
 
     @Test
     void constructInstanceViaStaticMethodMonitor() {
+        // tag::monitor[]
         MeterRegistry meterRegistry = new SimpleMeterRegistry();
         CaffeineCacheMetrics.monitor(meterRegistry, cache, "testCache", expectedTag);
+        // end::monitor[]
 
         meterRegistry.get("cache.eviction.weight").tags(expectedTag).functionCounter();
     }

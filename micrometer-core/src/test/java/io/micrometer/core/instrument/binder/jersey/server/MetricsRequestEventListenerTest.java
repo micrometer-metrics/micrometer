@@ -27,6 +27,7 @@ import org.junit.jupiter.api.Test;
 
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.core.Application;
+import javax.ws.rs.core.MediaType;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -148,6 +149,11 @@ class MetricsRequestEventListenerTest extends JerseyTest {
         }
         catch (Exception ignored) {
         }
+        try {
+            target("produces-text-plain").request(MediaType.APPLICATION_JSON).get();
+        }
+        catch (Exception ignored) {
+        }
 
         assertThat(registry.get(METRIC_NAME)
             .tags(tagsFrom("/throws-exception", "500", "SERVER_ERROR", "IllegalArgumentException"))
@@ -161,6 +167,11 @@ class MetricsRequestEventListenerTest extends JerseyTest {
 
         assertThat(registry.get(METRIC_NAME)
             .tags(tagsFrom("/throws-mappable-exception", "410", "CLIENT_ERROR", "ResourceGoneException"))
+            .timer()
+            .count()).isEqualTo(1);
+
+        assertThat(registry.get(METRIC_NAME)
+            .tags(tagsFrom("UNKNOWN", "406", "CLIENT_ERROR", "NotAcceptableException"))
             .timer()
             .count()).isEqualTo(1);
     }

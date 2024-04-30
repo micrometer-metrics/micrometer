@@ -79,7 +79,7 @@ SELECT sum(totalTime)/sum(count) as 'Average Latency', max(max) as 'Max' FROM ti
 .Timer latency.
 image::implementations/new-relic-timer-latency.png[New Relic-rendered timer]
 
-To generate a throughput chart:
+The following example generates a throughput chart:
 
 [source,sql]
 ----
@@ -89,7 +89,7 @@ SELECT average(count) as 'Average Throughput' FROM timer since 30 minutes ago TI
 .Timer throughput.
 image::implementations/new-relic-timer-throughput.png[New Relic-rendered timer throughput]
 
-To generate a plot of client-side percentiles:
+The following example generates a plot of client-side percentiles:
 
 [source,sql]
 ----
@@ -99,7 +99,7 @@ SELECT latest(value) from timerPercentile FACET phi since 30 minutes ago TIMESER
 .Timer Percentiles.
 image::implementations/new-relic-timer-percentiles.png[New Relic-rendered percentiles]
 
-Note how these percentiles are _not aggregable_. We have selected the `latest(value)` function to display this chart (it isn't correct to `average(value)` on a percentile value). The more dimensions you add to a timer, the less useful these values become.
+Note how these percentiles are _not aggregable_. We have selected the `latest(value)` function to display this chart (it is not correct to `average(value)` on a percentile value). The more dimensions you add to a timer, the less useful these values become.
 
 Finally, if you define SLO boundaries with the fluent builder for `Timer`, you can view throughput below certain SLO boundaries. In this example, we set SLO boundaries at 275 (yellow), 300 (red), and 500 (blue) milliseconds for a simulated `Timer` that is recording samples normally distributed around 250 ms. These counts represent the rate/second of samples less than or equal to each SLO boundary.
 

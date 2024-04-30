@@ -41,14 +41,19 @@ class EhCache2MetricsTest extends AbstractCacheMetricsTest {
 
     private static CacheManager cacheManager;
 
-    private static Cache cache;
+    // tag::setup[]
+    static Cache cache;
 
-    private EhCache2Metrics metrics = new EhCache2Metrics(cache, expectedTag);
+    EhCache2Metrics metrics = new EhCache2Metrics(cache, expectedTag);
+
+    // end::setup[]
 
     @Test
     void reportMetrics() {
+        // tag::register[]
         MeterRegistry registry = new SimpleMeterRegistry();
         metrics.bindTo(registry);
+        // end::register[]
 
         verifyCommonCacheMetrics(registry, metrics);
 
@@ -117,8 +122,10 @@ class EhCache2MetricsTest extends AbstractCacheMetricsTest {
 
     @Test
     void constructInstanceViaStaticMethodMonitor() {
+        // tag::monitor[]
         MeterRegistry meterRegistry = new SimpleMeterRegistry();
         EhCache2Metrics.monitor(meterRegistry, cache, expectedTag);
+        // end::monitor[]
 
         meterRegistry.get("cache.remoteSize").tags(expectedTag).gauge();
     }

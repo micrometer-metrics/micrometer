@@ -59,9 +59,9 @@ registry.more().counter("evictions", tags, cache, c -> c.stats().evictionCount()
 
 The function-tracking counter, in concert with the monitoring system's rate normalizing functionality (whether this is an artifact of the query language or the way data is pushed to the system), adds a layer of richness on top of the cumulative value of the function itself. You can reason about the _rate_ at which the value is increasing, whether that rate is within an acceptable bound, is increasing or decreasing over time, and so on.
 
-WARNING: Micrometer cannot guarantee the monotonicity of the function for you. By using this signature, you are asserting its monotonicity based on what you know about its definition.
+WARNING: Micrometer cannot guarantee the monotonicity of the function for you. By using this signature, you assert its monotonicity based on what you know about its definition.
 
-A fluent builder for function counters on the `FunctionCounter` interface itself provides access to less frequently used options, such as base units and description. You can register the counter as the last step of its construction by calling `register(MeterRegistry)`.
+A fluent builder for function counters on the `FunctionCounter` interface itself provides access to less frequently used options, such as base units and description. You can register the counter as the last step of its construction by calling `register(MeterRegistry)`:
 
 [source, java]
 ----

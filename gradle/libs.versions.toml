@@ -3,18 +3,18 @@ activemq-artemis = "2.31.2"
 application-insights = "2.6.4"
 archunit = "1.2.1"
 asmForPlugins = "7.3.1"
-aspectjweaver = "1.9.21"
+aspectjweaver = "1.9.22"
 assertj = "3.24.2"
-awaitility = "4.2.0"
+awaitility = "4.2.1"
 # legacy SDK
-aws-cloudwatch = "1.12.629"
+aws-cloudwatch = "1.12.696"
 caffeine = "2.9.3"
 cloudwatch2 = "2.21.46"
 colt = "1.2.0"
 dagger = "2.48.1"
-dropwizard-metrics = "4.2.23"
+dropwizard-metrics = "4.2.25"
 dropwizard-metrics5 = "5.0.0"
-dynatrace-utils = "2.0.1"
+dynatrace-utils = "2.2.0"
 ehcache2 = "2.10.9.2"
 ehcache3 = "3.10.8"
 gmetric4j = "1.0.10"
@@ -36,11 +36,11 @@ httpcomponents-client5 = "5.2.3"
 # in hystrix 1.5.12, but Netflix re-released 1.5.11 as 1.5.18 late in 2018.
 # <=1.5.11 or 1.5.18 doesn't break with Micrometer, but open metrics won't be correct necessarily.
 hystrix = "1.5.12"
-jackson-databind = "2.15.3"
+jackson-databind = "2.15.4"
 javax-cache = "1.1.1"
 javax-inject = "1"
 jaxb = "2.3.1"
-jetty9 = "9.4.53.v20231009"
+jetty9 = "9.4.54.v20240208"
 jetty11 = "11.0.16"
 jetty12 = "12.0.3"
 jersey2 = "2.41"
@@ -49,30 +49,30 @@ jmh = "1.37"
 jooq = "3.14.16"
 jsr107 = "1.1.1"
 jsr305 = "3.0.2"
-junit = "5.10.1"
-junit-platform = "1.10.1"
+junit = "5.10.2"
+junit-platform = "1.10.2"
 kafka = "2.8.2"
 kafka-junit = "4.2.10"
 latency-utils = "2.0.3"
-logback = "1.2.13"
+logback12 = "1.2.13"
 log4j = "2.21.1"
 maven-resolver = "1.9.18"
 mockito = "5.7.0"
-mongo = "4.11.1"
-netty = "4.1.104.Final"
+mongo = "4.11.2"
+netty = "4.1.108.Final"
 newrelic-api = "5.14.0"
-okhttp = "5.0.0-alpha.11" # TODO is compiling against an alpha version intentional?
-postgre = "42.6.0"
+okhttp = "4.11.0"
+postgre = "42.6.2"
 prometheus = "0.16.0"
-reactor = "2022.0.14"
+reactor = "2022.0.17"
 rest-assured = "5.3.2"
-signalfx = "1.0.38"
+signalfx = "1.0.40"
 slf4j = "1.7.36"
-spectator-atlas = "1.7.4"
-spring = "5.3.31"
-spring-javaformat = "0.0.40"
-testcontainers = "1.19.3"
-tomcat = "8.5.97"
+spectator-atlas = "1.7.11"
+spring = "5.3.33"
+spring-javaformat = "0.0.41"
+testcontainers = "1.19.7"
+tomcat = "8.5.100"
 wavefront = "3.4.3"
 # pinned to avoid issues with shaded slf4j version - see gh-3414
 wiremock = "2.33.2"
@@ -92,7 +92,7 @@ caffeine = { module = "com.github.ben-manes.caffeine:caffeine", version.ref = "c
 cloudwatch2 = { module = "software.amazon.awssdk:cloudwatch", version.ref = "cloudwatch2" }
 colt = { module = "colt:colt", version.ref = "colt" }
 commonsPool2 = "org.apache.commons:commons-pool2:2.12.0"
-contextPropagation = { module = "io.micrometer:context-propagation", version = "1.1.0" }
+contextPropagation = { module = "io.micrometer:context-propagation", version = "1.1.1" }
 dagger = { module = "com.google.dagger:dagger", version.ref = "dagger" }
 daggerCompiler = { module = "com.google.dagger:dagger-compiler", version.ref = "dagger" }
 dropwizardMetricsCore = { module = "io.dropwizard.metrics:metrics-core", version.ref = "dropwizard-metrics" }
@@ -103,8 +103,9 @@ dynatraceUtils = { module = "com.dynatrace.metric.util:dynatrace-metric-utils-ja
 ehcache2 = { module = "net.sf.ehcache:ehcache", version.ref = "ehcache2" }
 ehcache3 = { module = "org.ehcache:ehcache", version.ref = "ehcache3" }
 felixFramework = "org.apache.felix:org.apache.felix.framework:7.0.5"
-felixScr = "org.apache.felix:org.apache.felix.scr:2.2.6"
+felixScr = "org.apache.felix:org.apache.felix.scr:2.2.10"
 gmetric4j = { module = "info.ganglia.gmetric4j:gmetric4j", version.ref = "gmetric4j" }
+googleCloudLibrariesBom = { module = "com.google.cloud:libraries-bom", version = "26.31.0" }
 googleCloudMonitoring = { module = "com.google.cloud:google-cloud-monitoring", version.ref = "google-cloud-monitoring" }
 googleOauth2Http = { module = "com.google.auth:google-auth-library-oauth2-http", version = "1.20.0"}
 grpcApi = { module = "io.grpc:grpc-api", version.ref = "grpc" }
@@ -129,7 +130,7 @@ hystrix = { module = "com.netflix.hystrix:hystrix-core", version.ref = "hystrix"
 jacksonDatabind = { module = "com.fasterxml.jackson.core:jackson-databind", version.ref = "jackson-databind" }
 jakarta-jmsApi = { module = "jakarta.jms:jakarta.jms-api", version = "3.0.0" }
 jakarta-servletApi = { module = "jakarta.servlet:jakarta.servlet-api", version = "5.0.0" }
-javalin = { module = "io.javalin:javalin", version = "5.6.3" }
+javalin = { module = "io.javalin:javalin", version = "5.6.4" }
 javax-cacheApi = { module = "javax.cache:cache-api", version.ref = "javax-cache" }
 javax-inject = { module = "javax.inject:javax.inject", version.ref = "javax-inject" }
 javax-servletApi = { module = "javax.servlet:javax.servlet-api", version = "4.0.1" }
@@ -162,8 +163,8 @@ kafkaJunit = { module = "com.github.charithe:kafka-junit", version.ref = "kafka-
 kotlinxCoroutines = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version = "1.7.3" }
 latencyUtils = { module = "org.latencyutils:LatencyUtils", version.ref = "latency-utils" }
 lmaxDisruptor = "com.lmax:disruptor:3.4.4"
-logback = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
-logback14 = {module = "ch.qos.logback:logback-classic", version = "1.4.11" }
+logback12 = { module = "ch.qos.logback:logback-classic", version.ref = "logback12" }
+logback14 = {module = "ch.qos.logback:logback-classic", version = "1.4.14" }
 log4j = { module = "org.apache.logging.log4j:log4j-core", version.ref = "log4j" }
 mavenResolverConnectorBasic = { module = "org.apache.maven.resolver:maven-resolver-connector-basic", version.ref = "maven-resolver" }
 mavenResolverTransportHttp = { module = "org.apache.maven.resolver:maven-resolver-transport-http", version.ref = "maven-resolver" }
@@ -184,13 +185,13 @@ restAssured = { module = "io.rest-assured:rest-assured", version.ref = "rest-ass
 retrofit2 = { module = "com.squareup.retrofit2:retrofit", version = "2.9.0" }
 signalfx = { module = "com.signalfx.public:signalfx-java", version.ref = "signalfx" }
 slf4jApi = { module = "org.slf4j:slf4j-api", version.ref = "slf4j" }
-slfj4Simple = "org.slf4j:slf4j-simple:1.7.36"
+slfj4Simple = { module = "org.slf4j:slf4j-simple", version.ref = "slf4j" }
 spectatorAtlas = { module = "com.netflix.spectator:spectator-reg-atlas", version.ref = "spectator-atlas" }
 spring-context = { module = "org.springframework:spring-context", version.ref = "spring" }
 spring-core = { module = "org.springframework:spring-core", version.ref = "spring" }
 spring-cloud = { module = "org.springframework.cloud:spring-cloud-dependencies", version = "2021.0.9" }
 spring-javaformatCheckstyle = { module = "io.spring.javaformat:spring-javaformat-checkstyle", version.ref = "spring-javaformat" }
-systemStubsJupiter = { module = "uk.org.webcompere:system-stubs-jupiter", version = "2.1.5" }
+systemStubsJupiter = { module = "uk.org.webcompere:system-stubs-jupiter", version = "2.1.6" }
 testcontainers-junitJupiter = { module = "org.testcontainers:junit-jupiter", version.ref = "testcontainers" }
 testcontainers-kafka = { module = "org.testcontainers:kafka", version.ref = "testcontainers" }
 testcontainers-postgresql = { module = "org.testcontainers:postgresql", version.ref = "testcontainers" }
@@ -212,5 +213,9 @@ plugin-nexusPublish = { module = "io.github.gradle-nexus:publish-plugin", versio
 plugin-javaformat = { module = "io.spring.javaformat:spring-javaformat-gradle-plugin", version.ref = "spring-javaformat" }
 plugin-japicmp = { module = "me.champeau.gradle:japicmp-gradle-plugin", version = "0.4.2" }
 plugin-downloadTask = { module = "de.undercouch:gradle-download-task", version = "5.5.0" }
-plugin-spotless = { module = "com.diffplug.spotless:spotless-plugin-gradle", version = "6.22.0" }
+plugin-spotless = { module = "com.diffplug.spotless:spotless-plugin-gradle", version = "6.25.0" }
 plugin-bnd = "biz.aQute.bnd:biz.aQute.bnd.gradle:6.4.0"
+
+[plugins]
+kotlin19 = { id = "org.jetbrains.kotlin.jvm", version = "1.9.23" }
+kotlin17 = { id = "org.jetbrains.kotlin.jvm", version = "1.7.22" }
