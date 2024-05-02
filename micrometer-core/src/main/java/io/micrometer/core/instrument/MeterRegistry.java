@@ -101,13 +101,15 @@ public abstract class MeterRegistry {
      */
     private final Map<Id, Meter> meterMap = new ConcurrentHashMap<>();
 
-    // writes guarded by meterMapLock, reads can be stale
-    // VisibleForTesting
-    final Map<Id, Meter> preFilterIdToMeterMap = new HashMap<>();
+    /**
+     * write/remove guarded by meterMapLock, read in
+     * {@link this#getOrCreateMeter(DistributionStatisticConfig, BiFunction, Id,
+     * Function)} is unguarded
+     */
+    private final Map<Id, Meter> preFilterIdToMeterMap = new HashMap<>();
 
-    // not thread safe; only needed when MeterFilter configured with Meters registered
-    // VisibleForTesting
-    final Set<Id> stalePreFilterIds = new HashSet<>();
+    // not thread safe; only needed when MeterFilter configured after Meters registered
+    private final Set<Id> stalePreFilterIds = new HashSet<>();
 
     /**
      * Map of meter id whose associated meter contains synthetic counterparts to those
@@ -1174,6 +1176,16 @@ public abstract class MeterRegistry {
         for (BiConsumer<Id, String> listener : meterRegistrationFailedListeners) {
             listener.accept(id, reason);
         }
+    }
+
+    // VisibleForTesting
+    Map<Id, Meter> _getPreFilterIdToMeterMap() {
+        return Collections.unmodifiableMap(preFilterIdToMeterMap);
+    }
+
+    // VisibleForTesting
+    Set<Id> _getStalePreFilterIds() {
+        return Collections.unmodifiableSet(stalePreFilterIds);
     }
 
 }

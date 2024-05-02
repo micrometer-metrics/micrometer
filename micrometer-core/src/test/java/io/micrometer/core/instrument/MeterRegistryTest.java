@@ -265,7 +265,7 @@ class MeterRegistryTest {
     }
 
     @Test
-    void differentPreFilterIdsMapToSameId() {
+    void differentPreFilterIdsMapToSameIdWithStaleId() {
         Counter c1 = registry.counter("counter");
         registry.config().meterFilter(MeterFilter.ignoreTags("ignore"));
         Counter c2 = registry.counter("counter", "ignore", "value");
@@ -277,7 +277,25 @@ class MeterRegistryTest {
     }
 
     @Test
-    void samePreFilterIdsMapToDifferentId() {
+    @Issue("#4971")
+    void differentPreFilterIdsMapToSameId_thenCacheIsBounded() {
+        registry.config().meterFilter(MeterFilter.replaceTagValues("secret", s -> "redacted"));
+        Counter c1 = registry.counter("counter", "secret", "value");
+        Counter c2 = registry.counter("counter", "secret", "value2");
+
+        assertThat(c1).isSameAs(c2);
+        // even though we have 2 different pre-filter IDs, the second should not be added
+        // to the map because it would result in a memory leak with a high cardinality tag
+        // that's otherwise limited in cardinality by a MeterFilter
+        assertThat(registry._getPreFilterIdToMeterMap()).hasSize(1);
+
+        assertThat(registry.remove(c1)).isSameAs(c2);
+        assertThat(registry.getMeters()).isEmpty();
+        assertThat(registry._getPreFilterIdToMeterMap()).isEmpty();
+    }
+
+    @Test
+    void samePreFilterIdsMapToDifferentIdWithStaleMeter() {
         Counter c1 = registry.counter("counter", "ignore", "value");
         registry.config().meterFilter(MeterFilter.ignoreTags("ignore"));
         Counter c2 = registry.counter("counter", "ignore", "value");
@@ -286,7 +304,7 @@ class MeterRegistryTest {
         assertThat(registry.remove(c1)).isNotSameAs(c2);
         Counter c3 = registry.counter("counter", "ignore", "value");
         assertThat(c3).isSameAs(c2);
-        assertThat(registry.remove(c2)).isSameAs(c2);
+        assertThat(registry.remove(c2)).isSameAs(c3);
         assertThat(registry.getMeters()).isEmpty();
     }
 
@@ -299,8 +317,8 @@ class MeterRegistryTest {
 
         registry.remove(c1.getId());
         assertThat(registry.getMeters()).isEmpty();
-        assertThat(registry.preFilterIdToMeterMap).isEmpty();
-        assertThat(registry.stalePreFilterIds).isEmpty();
+        assertThat(registry._getPreFilterIdToMeterMap()).isEmpty();
+        assertThat(registry._getStalePreFilterIds()).isEmpty();
     }
 
 }
