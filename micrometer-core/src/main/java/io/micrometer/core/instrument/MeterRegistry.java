@@ -728,7 +728,9 @@ public abstract class MeterRegistry {
     @Nullable
     public Meter removeByPreFilterId(Meter.Id preFilterId) {
         final Meter meterToRemove = preFilterIdToMeterMap.get(preFilterId);
-        return meterToRemove == null ? null : remove(meterToRemove);
+        if (meterToRemove == null)
+            return remove(getMappedId(preFilterId));
+        return remove(meterToRemove);
     }
 
     /**

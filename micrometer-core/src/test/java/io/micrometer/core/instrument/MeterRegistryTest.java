@@ -321,4 +321,16 @@ class MeterRegistryTest {
         assertThat(registry._getStalePreFilterIds()).isEmpty();
     }
 
+    @Test
+    @Issue("#5035")
+    void multiplePreFilterIdsMapToSameId_removeByPreFilterId() {
+        registry.config().meterFilter(MeterFilter.replaceTagValues("secret", s -> "redacted"));
+        Counter c1 = registry.counter("counter", "secret", "value");
+        Counter c2 = registry.counter("counter", "secret", "value2");
+
+        Meter.Id preFilterId = new Meter.Id("counter", Tags.of("secret", "value2"), null, null, Meter.Type.COUNTER);
+        assertThat(registry.removeByPreFilterId(preFilterId)).isSameAs(c1).isSameAs(c2);
+        assertThat(registry.getMeters()).isEmpty();
+    }
+
 }
