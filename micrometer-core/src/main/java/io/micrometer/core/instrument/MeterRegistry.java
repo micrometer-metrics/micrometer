@@ -632,7 +632,14 @@ public abstract class MeterRegistry {
         Id mappedId = getMappedId(originalId);
         m = meterMap.get(mappedId);
 
-        if (m == null) {
+        if (m != null) {
+            // If the mapping exists and the meter is marked stale, then this meter is no
+            // longer stale.
+            if (isStaleId(originalId)) {
+                unmarkStaleId(originalId);
+            }
+        }
+        else {
             if (isClosed()) {
                 return noopBuilder.apply(mappedId);
             }
