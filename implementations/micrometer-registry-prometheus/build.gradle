@@ -11,6 +11,9 @@ dependencies {
     api 'io.prometheus:prometheus-metrics-tracer-common'
     implementation 'io.prometheus:prometheus-metrics-exposition-formats'
 
-    testImplementation 'io.prometheus:prometheus-metrics-tracer-common'
     testImplementation project(':micrometer-test')
+    testImplementation 'io.prometheus:prometheus-metrics-tracer-common'
+    testImplementation 'io.rest-assured:rest-assured'
+    testImplementation 'org.testcontainers:junit-jupiter'
+    testImplementation 'org.awaitility:awaitility'
 }
