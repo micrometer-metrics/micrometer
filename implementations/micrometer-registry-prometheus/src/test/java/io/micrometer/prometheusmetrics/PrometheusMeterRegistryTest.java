@@ -844,13 +844,14 @@ class PrometheusMeterRegistryTest {
     void openMetricsScrape() {
         Counter.builder("my.counter").baseUnit("bytes").register(registry);
         Timer.builder("my.timer").register(registry);
-        assertThat(registry.scrape("application/openmetrics-text; version=1.0.0; charset=utf-8"))
-            .contains("# TYPE my_counter_bytes counter\n" + "# UNIT my_counter_bytes bytes\n"
-                    + "# HELP my_counter_bytes  \n" + "my_counter_bytes_total 0.0\n")
-            .contains("# TYPE my_timer_seconds_max gauge\n" + "# UNIT my_timer_seconds_max seconds\n"
-                    + "# HELP my_timer_seconds_max  \n" + "my_timer_seconds_max 0.0\n")
-            .contains("# TYPE my_timer_seconds summary\n" + "# UNIT my_timer_seconds seconds\n"
-                    + "# HELP my_timer_seconds  \n" + "my_timer_seconds_count 0\n" + "my_timer_seconds_sum 0.0\n")
+        String result = registry.scrape("application/openmetrics-text; version=1.0.0; charset=utf-8");
+        assertThat(result).doesNotContain("# UNIT")
+            .contains("# TYPE my_counter_bytes counter\n" + "# HELP my_counter_bytes  \n"
+                    + "my_counter_bytes_total 0.0\n")
+            .contains("# TYPE my_timer_seconds_max gauge\n" + "# HELP my_timer_seconds_max  \n"
+                    + "my_timer_seconds_max 0.0\n")
+            .contains("# TYPE my_timer_seconds summary\n" + "# HELP my_timer_seconds  \n" + "my_timer_seconds_count 0\n"
+                    + "my_timer_seconds_sum 0.0\n")
             .endsWith("# EOF\n");
     }
 

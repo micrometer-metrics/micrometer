@@ -556,8 +556,9 @@ public class PrometheusMeterRegistry extends MeterRegistry {
     private MetricMetadata getMetadata(Meter.Id id, String suffix) {
         String name = config().namingConvention().name(id.getName(), id.getType(), id.getBaseUnit()) + suffix;
         String help = prometheusConfig.descriptions() ? Optional.ofNullable(id.getDescription()).orElse(" ") : " ";
-        Unit unit = id.getBaseUnit() != null ? new Unit(id.getBaseUnit()) : null;
-        return new MetricMetadata(name, help, unit);
+        // Unit is intentionally not set, see:
+        // https://github.com/OpenObservability/OpenMetrics/blob/1386544931307dff279688f332890c31b6c5de36/specification/OpenMetrics.md#unit
+        return new MetricMetadata(name, help, null);
     }
 
     private void applyToCollector(Meter.Id id, Consumer<MicrometerCollector> consumer) {
