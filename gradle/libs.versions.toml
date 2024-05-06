@@ -9,7 +9,7 @@ awaitility = "4.2.1"
 # legacy SDK
 aws-cloudwatch = "1.12.713"
 caffeine = "2.9.3"
-cloudwatch2 = "2.25.43"
+cloudwatch2 = "2.25.45"
 colt = "1.2.0"
 dagger = "2.51.1"
 dropwizard-metrics = "4.2.25"
