@@ -89,6 +89,13 @@ class DefaultJmsPublishObservationConventionTests {
     }
 
     @Test
+    void shouldHaveUnknownDestinationNameWhenQueueNameIsNull() throws Exception {
+        JmsPublishObservationContext context = new JmsPublishObservationContext(createMessageWithNullQueueName());
+        assertThat(convention.getHighCardinalityKeyValues(context))
+            .contains(KeyValue.of("messaging.destination.name", "unknown"));
+    }
+
+    @Test
     void shouldHaveTopicDestinationName() throws Exception {
         JmsPublishObservationContext context = new JmsPublishObservationContext(createMessageWithTopic());
         assertThat(convention.getHighCardinalityKeyValues(context))
@@ -96,8 +103,8 @@ class DefaultJmsPublishObservationConventionTests {
     }
 
     @Test
-    void shouldHaveTopicNullDestinationName() throws Exception {
-        JmsPublishObservationContext context = new JmsPublishObservationContext(createMessageWithNullTopic());
+    void shouldHaveUnknownDestinationNameWhenTopicNameIsNull() throws Exception {
+        JmsPublishObservationContext context = new JmsPublishObservationContext(createMessageWithNullTopicName());
         assertThat(convention.getHighCardinalityKeyValues(context))
             .contains(KeyValue.of("messaging.destination.name", "unknown"));
     }
@@ -194,6 +201,14 @@ class DefaultJmsPublishObservationConventionTests {
         return message;
     }
 
+    private Message createMessageWithNullQueueName() throws Exception {
+        Queue queue = mock(Queue.class);
+        when(queue.getQueueName()).thenReturn(null);
+        Message message = mock(Message.class);
+        when(message.getJMSDestination()).thenReturn(queue);
+        return message;
+    }
+
     private Message createMessageWithTempQueue() throws Exception {
         TemporaryQueue queue = mock(TemporaryQueue.class);
         when(queue.getQueueName()).thenReturn("micrometer.test.queue");
@@ -210,7 +225,7 @@ class DefaultJmsPublishObservationConventionTests {
         return message;
     }
 
-    private Message createMessageWithNullTopic() throws Exception {
+    private Message createMessageWithNullTopicName() throws Exception {
         Topic topic = mock(Topic.class);
         when(topic.getTopicName()).thenReturn(null);
         Message message = mock(Message.class);

@@ -89,7 +89,6 @@ public class AnnotationHandler<T> {
     public void addAnnotatedParameters(T objectToModify, ProceedingJoinPoint pjp) {
         try {
             Method method = ((MethodSignature) pjp.getSignature()).getMethod();
-            method = pjp.getTarget().getClass().getMethod(method.getName(), method.getParameterTypes());
             List<AnnotatedParameter> annotatedParameters = AnnotationUtils.findAnnotatedParameters(annotationClass,
                     method, pjp.getArgs());
             getAnnotationsFromInterfaces(pjp, method, annotatedParameters);

@@ -66,7 +66,7 @@ subprojects {
     apply plugin: 'com.diffplug.spotless'
 
     if (project.name != 'micrometer-bom') {
-        if (project.name.contains('samples') || project.name.contains('benchmarks')) {
+        if ((project.name.contains('samples') && !project.name.contains('kotlin')) || project.name.contains('benchmarks')) {
             apply plugin: 'java'
         } else {
             apply plugin: 'java-library'
@@ -88,6 +88,8 @@ subprojects {
 
             toolchain {
                 languageVersion = javaLanguageVersion
+                sourceCompatibility = javaTargetVersion
+                targetCompatibility = javaTargetVersion
             }
         }
 
@@ -117,6 +119,9 @@ subprojects {
             compileTestJava {
                 options.encoding = 'UTF-8'
                 options.compilerArgs << '-Xlint:unchecked' << '-Xlint:deprecation'
+
+                sourceCompatibility = JavaVersion.VERSION_11
+                targetCompatibility = JavaVersion.VERSION_11
             }
 
 
@@ -284,7 +289,7 @@ subprojects {
     }
 
     // Do not publish some modules
-    if (!['samples', 'benchmarks', 'micrometer-osgi-test'].find { project.name.contains(it) }) {
+    if (!['samples', 'benchmarks', 'micrometer-osgi-test', 'concurrency-tests'].find { project.name.contains(it) }) {
         apply plugin: 'com.netflix.nebula.maven-publish'
         apply plugin: 'com.netflix.nebula.maven-manifest'
         apply plugin: 'com.netflix.nebula.maven-developer'
@@ -332,7 +337,7 @@ subprojects {
 
             check.dependsOn("testModules")
 
-            if (!(project.name in ['micrometer-jakarta9'])) { // add projects here that do not exist in the previous minor so should be excluded from japicmp
+            if (!(project.name in ['micrometer-registry-prometheus', 'micrometer-registry-prometheus-simpleclient', 'micrometer-jakarta9', 'micrometer-java11', 'micrometer-jetty12'])) { // add projects here that do not exist in the previous minor so should be excluded from japicmp
                 apply plugin: 'me.champeau.gradle.japicmp'
                 apply plugin: 'de.undercouch.download'
 
@@ -362,22 +367,26 @@ subprojects {
                     }
 
                     src "${rootUrl}io/micrometer/${project.name}/${compatibleVersion}/${project.name}-${compatibleVersion}.jar"
-                    dest "${buildDir}/baselineLibs/${project.name}-${compatibleVersion}.jar"
+                    dest layout.buildDirectory.file("baselineLibs/${project.name}-${compatibleVersion}.jar")
                 }
 
                 task japicmp(type: me.champeau.gradle.japicmp.JapicmpTask) {
-                    oldClasspath.from(files("${buildDir}/baselineLibs/${project.name}-${compatibleVersion}.jar"))
+                    oldClasspath.from(layout.buildDirectory.file("baselineLibs/${project.name}-${compatibleVersion}.jar"))
                     newClasspath.from(files(jar.archiveFile, project(":${project.name}").jar))
                     onlyBinaryIncompatibleModified = true
                     failOnModification = true
                     failOnSourceIncompatibility = true
-                    txtOutputFile = file("${project.buildDir}/reports/japi.txt")
+                    txtOutputFile = project.layout.buildDirectory.file("reports/japi.txt")
                     ignoreMissingClasses = true
                     includeSynthetic = true
 
+                    // TODO remove MetricsDSLContext from excludes in 1.14 when comparing against 1.13
+                    classExcludes = [ 'io.micrometer.core.instrument.binder.db.MetricsDSLContext' ]
                     compatibilityChangeExcludes = [ "METHOD_NEW_DEFAULT" ]
 
                     packageExcludes = ['io.micrometer.shaded.*', 'io.micrometer.statsd.internal']
+
+                    fieldExcludes = ['io.micrometer.core.instrument.binder.jdk.DefaultHttpClientObservationConvention#INSTANCE']
 
                     onlyIf { compatibleVersion != 'SKIP' }
                 }
@@ -418,7 +427,7 @@ nexusPublishing {
 }
 
 wrapper {
-    gradleVersion = '8.5'
+    gradleVersion = '8.6'
 }
 
 defaultTasks 'build'

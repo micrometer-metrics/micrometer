@@ -26,8 +26,12 @@ dependencies {
     optionalApi 'org.glassfish.jersey.core:jersey-server:3.1.+' // can't move to dependencies.gradle, we have 2 versions of this lib (check micrometer-core)
 
     testImplementation 'org.junit.jupiter:junit-jupiter'
-    testImplementation 'com.tngtech.archunit:archunit-junit5'
-    testImplementation 'org.mockito:mockito-core'
+    testImplementation(libs.archunitJunit5) {
+        // avoid transitively pulling in slf4j 2
+        exclude group: "org.slf4j", module: "slf4j-api"
+    }
+    testImplementation libs.slf4jApi
+    testImplementation libs.mockitoCore5
     testImplementation 'org.assertj:assertj-core'
     testImplementation 'ru.lanwen.wiremock:wiremock-junit5'
     testImplementation 'com.github.tomakehurst:wiremock-jre8-standalone'

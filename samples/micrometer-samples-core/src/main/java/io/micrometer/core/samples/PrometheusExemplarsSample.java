@@ -19,11 +19,10 @@ import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.DistributionSummary;
 import io.micrometer.core.instrument.Timer;
-import io.micrometer.prometheus.PrometheusConfig;
-import io.micrometer.prometheus.PrometheusMeterRegistry;
-import io.prometheus.client.CollectorRegistry;
-import io.prometheus.client.exemplars.DefaultExemplarSampler;
-import io.prometheus.client.exemplars.tracer.common.SpanContextSupplier;
+import io.micrometer.prometheusmetrics.PrometheusConfig;
+import io.micrometer.prometheusmetrics.PrometheusMeterRegistry;
+import io.prometheus.metrics.model.registry.PrometheusRegistry;
+import io.prometheus.metrics.tracer.common.SpanContext;
 
 import java.time.Duration;
 import java.util.concurrent.atomic.AtomicLong;
@@ -33,7 +32,7 @@ import static io.prometheus.client.exporter.common.TextFormat.CONTENT_TYPE_OPENM
 public class PrometheusExemplarsSample {
 
     private static final PrometheusMeterRegistry registry = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT,
-            new CollectorRegistry(), Clock.SYSTEM, new DefaultExemplarSampler(new TestSpanContextSupplier()));
+            new PrometheusRegistry(), Clock.SYSTEM, new TestSpanContext());
 
     public static void main(String[] args) throws InterruptedException {
         Counter counter = registry.counter("test.counter");
@@ -41,37 +40,56 @@ public class PrometheusExemplarsSample {
 
         Timer timer = Timer.builder("test.timer").publishPercentileHistogram().register(registry);
         timer.record(Duration.ofNanos(1_000 * 100));
+        sleep(); // sleeping to avoid rate-limiting
         timer.record(Duration.ofMillis(2));
+        sleep(); // sleeping to avoid rate-limiting
         timer.record(Duration.ofMillis(100));
+        sleep(); // sleeping to avoid rate-limiting
         timer.record(Duration.ofSeconds(60));
 
         DistributionSummary distributionSummary = DistributionSummary.builder("test.distribution")
             .publishPercentileHistogram()
             .register(registry);
         distributionSummary.record(0.15);
+        sleep(); // sleeping to avoid rate-limiting
         distributionSummary.record(15);
+        sleep(); // sleeping to avoid rate-limiting
         distributionSummary.record(5E18);
 
         System.out.println(registry.scrape(CONTENT_TYPE_OPENMETRICS_100));
     }
 
-    static class TestSpanContextSupplier implements SpanContextSupplier {
+    static void sleep() {
+        try {
+            // sleeping 100ms since the sample interval limit is 90ms
+            Thread.sleep(100);
+        }
+        catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    static class TestSpanContext implements SpanContext {
 
         private final AtomicLong count = new AtomicLong();
 
         @Override
-        public String getTraceId() {
+        public String getCurrentTraceId() {
+            return "42";
+        }
+
+        @Override
+        public String getCurrentSpanId() {
             return String.valueOf(count.incrementAndGet());
         }
 
         @Override
-        public String getSpanId() {
-            return String.valueOf(count.incrementAndGet());
-        }
-
-        @Override
-        public boolean isSampled() {
+        public boolean isCurrentSpanSampled() {
             return true;
+        }
+
+        @Override
+        public void markCurrentSpanAsExemplar() {
         }
 
     }

@@ -1,5 +1,4 @@
 = Micrometer Ganglia
-:toc:
 :sectnums:
 :system: ganglia
 
@@ -30,7 +29,7 @@ GangliaConfig gangliaConfig = new GangliaConfig() {
 MeterRegistry registry = new GangliaMeterRegistry(gangliaConfig, Clock.SYSTEM);
 ----
 
-Micrometer uses Dropwizard Metrics as the underlying instrumentation library when recording metrics destined for Ganglia. `GangliaConfig` is an interface with a set of default methods. If, in the implementation of `get(String k)`, rather than returning `null`, you  instead bind it to a property source, you can override the default configuration. For example, Micrometer's Spring Boot support binds properties that are prefixed with `management.metrics.export.ganglia` directly to the `GangliaConfig`:
+Micrometer uses Dropwizard Metrics as the underlying instrumentation library when recording metrics destined for Ganglia. `GangliaConfig` is an interface with a set of default methods. If, in the implementation of `get(String k)`, rather than returning `null`, you instead bind it to a property source, you can override the default configuration. For example, Micrometer's Spring Boot support binds properties that are prefixed with `management.metrics.export.ganglia` directly to the `GangliaConfig`:
 
 [source,yml]
 ----

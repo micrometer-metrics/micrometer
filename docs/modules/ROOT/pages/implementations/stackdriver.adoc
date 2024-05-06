@@ -1,6 +1,5 @@
 = Micrometer Stackdriver Monitoring
 Ray Tsang <saturnism@gmail.com>
-:toc:
 :sectnums:
 :system: stackdriver
 
@@ -70,7 +69,7 @@ gcloud iam service-accounts keys create $HOME/$APP_NAME-key.json \
 export GOOGLE_APPLICATION_CREDENTIALS=$HOME/$APP_NAME-key.json
 ----
 
-When running in managed environments (such as Google App Engine, Google Cloud Run, Google Cloud Function)
+When running in managed environments (such as Google App Engine, Google Cloud Run, and Google Cloud Function),
 you need not configure this environmental variable. In those environments, a service account is
 automatically associated with the application instance. The underlying Stackdriver Monitoring client
 library can automatically detect and use those credentials.
@@ -78,7 +77,7 @@ library can automatically detect and use those credentials.
 == Stackdriver Labels
 
 Micrometer metrics tags are mapped to https://cloud.google.com/monitoring/api/v3/metrics-details#intro-time-series[Stackdriver metrics labels]. With tags and labels, you can further filter or group
-by the tag or label. See link:/docs/concepts#_tag_naming[Micrometer Concepts] for more information on tags.
+by the tag or label. See xref:/concepts/naming.adoc#_tag_naming[Micrometer Concepts] for more information on tags.
 The following example filters by tags:
 
 [source,java]
@@ -87,13 +86,13 @@ MeterRegistry registry = StackdriverMeterRegistry.builder(stackdriverConfig).bui
 registry.config().commonTags("application", "my-application");
 ----
 
-You can also configure resource labels with the `StackdriverConfig` method `resourceLabels`. Depending on the configured `resourceType`, there will be required resource labels. See the documentation on https://cloud.google.com/monitoring/custom-metrics/creating-metrics#which-resource[choosing a monitored resource type].
+You can also configure resource labels with the `StackdriverConfig` method, `resourceLabels`. Depending on the configured `resourceType`, there will be required resource labels. See the documentation on https://cloud.google.com/monitoring/custom-metrics/creating-metrics#which-resource[choosing a monitored resource type].
 
-IMPORTANT: When using Micrometer across multiple applications/instances, it is necessary that Stackdriver labels are unique per application/instance. Otherwise, you will see errors like `One or more TimeSeries could not be written: One or more points were written more frequently than the maximum sampling period configured`. If using a resource type other than `global`, the resource labels may already make metrics unique per application instance. If not, a common tag with the hostname or platform-provided instance ID may be a good candidate for achieving this.
+IMPORTANT: When using Micrometer across multiple applications or instances, it is necessary that Stackdriver labels are unique per application or instance. Otherwise, you will see errors such as `One or more TimeSeries could not be written: One or more points were written more frequently than the maximum sampling period configured`. If using a resource type other than `global`, the resource labels may already make metrics unique per application instance. If not, a common tag with the hostname or platform-provided instance ID may be a good candidate for achieving this.
 
 == Spring Boot
 
-Spring Boot provides auto-configuration for Micrometer's StackdriverMeterRegistry. For more information, see the https://docs.spring.io/spring-boot/docs/current/reference/htmlsingle/#production-ready-metrics-export-stackdriver[Spring Boot documentation].
+Spring Boot provides auto-configuration for Micrometer's `StackdriverMeterRegistry`. For more information, see the https://docs.spring.io/spring-boot/docs/current/reference/htmlsingle/#production-ready-metrics-export-stackdriver[Spring Boot documentation].
 
 You can manually configure or register the `StackdriverMeterRegistry`.
 In addition to using Spring Boot Actuator, make sure you create the `StackdriverMeterRegistry` bean:
@@ -131,4 +130,4 @@ management.metrics.tags.application=${spring.application.name}
 
 == GraalVM native image compilation
 
-To compile an application using `micrometer-registry-stackdriver` to a https://www.graalvm.org/reference-manual/native-image/[native image using GraalVM], add the https://github.com/GoogleCloudPlatform/native-image-support-java[native-image-support-java] library as a dependency. This will ensure the correct native image configuration is available and avoid errors like `Classes that should be initialized at run time got initialized during image building`.
+To compile an application by using `micrometer-registry-stackdriver` to a https://www.graalvm.org/reference-manual/native-image/[native image using GraalVM], add the https://github.com/GoogleCloudPlatform/native-image-support-java[native-image-support-java] library as a dependency. Doing so ensures that the correct native image configuration is available and avoids errors like `Classes that should be initialized at run time got initialized during image building`.

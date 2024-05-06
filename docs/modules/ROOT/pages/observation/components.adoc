@@ -1,0 +1,183 @@
+[[micrometer-observation-components]]
+= Observation Components
+
+In this section we will describe main components related to Micrometer Observation.
+
+* <<micrometer-observation-context, Observation Context>>
+* <<micrometer-observation-handler, Observation Handler>>
+* <<micrometer-observation-events, Signaling Errors and Arbitrary Events>>
+* <<micrometer-observation-convention-example, Observation Convention>>
+* <<micrometer-observation-predicates-filters, Observation Predicates and Filters>>
+
+*Micrometer Observation basic flow*
+
+`Observation` through `ObservationRegistry` gets created with a mutable `Observation.Context`. On each Micrometer Observation lifecycle action (e.g. `start()`) a corresponding `ObservationHandler` method is called (e.g. `onStart`) with the mutable `Observation.Context` as argument.
+
+// https://arthursonzogni.com/Diagon/#GraphDAG
+// ObservationRegistry->Observation
+// Context->Observation
+// Observation->Handler
+[source,subs=+attributes]
+-----
+┌───────────────────┐┌───────┐
+│ObservationRegistry││Context│
+└┬──────────────────┘└┬──────┘
+┌▽────────────────────▽┐
+│Observation           │
+└┬─────────────────────┘
+┌▽──────┐
+│Handler│
+└───────┘
+-----
+
+*Micrometer Observation detailed flow*
+
+// https://arthursonzogni.com/Diagon/#GraphDAG
+// ObservationRegistry->Observation
+// Context->Observation
+// ObservationConvention->Observation
+// ObservationPredicate->Observation
+// Observation->Handler
+// Handler->ObservationFilter
+[source,subs=+attributes]
+-----
+┌───────────────────┐┌───────┐┌─────────────────────┐┌────────────────────┐
+│ObservationRegistry││Context││ObservationConvention││ObservationPredicate│
+└┬──────────────────┘└┬──────┘└┬────────────────────┘└┬───────────────────┘
+┌▽────────────────────▽────────▽──────────────────────▽┐
+│Observation                                           │
+└┬─────────────────────────────────────────────────────┘
+┌▽──────┐
+│Handler│
+└┬──────┘
+┌▽────────────────┐
+│ObservationFilter│
+└─────────────────┘
+-----
+
+`Observation` through `ObservationRegistry` gets created with a mutable `Observation.Context`. To allow name and key-value customization, an `ObservationConvention` can be used instead of direct name setting. List of `ObservationPredicate` is run to verify if an `Observation` should be created instead of a no-op version. On each xref:observation/introduction.adoc[Micrometer Observation lifecycle] action (e.g. `start()`) a corresponding `ObservationHandler` method is called (e.g. `onStart`) with the mutable `Observation.Context` as argument. On `Observation` stop, before calling the `ObservationHandler` `onStop` methods, list of `ObservationFilter` is called to optionally further modify the `Observation.Context`.
+
+[[micrometer-observation-context]]
+== Observation.Context
+
+To pass information between the instrumented code and the handler (or between handler methods, such as `onStart` and `onStop`), you can use an `Observation.Context`. An `Observation.Context` is a `Map`-like container that can store values for you while your handler can access the data inside the context.
+
+[[micrometer-observation-handler]]
+== Observation Handler
+
+Observation Handler allows adding capabilities to existing instrumentations (i.e. you instrument code once and depending on the Observation Handler setup, different actions, such as create spans, metrics, logs will happen). In other words, if you have instrumented code and want to add metrics around it, it's enough for you to register an Observation Handler in the Observation Registry to add that behaviour.
+
+Let's look at the following example of adding a timer behaviour to an existing instrumentation.
+
+A popular way to record Observations is storing the start state in a `Timer.Sample` instance and stopping it when the event has ended.
+Recording such measurements could look like this:
+
+[source,java,subs=+attributes]
+-----
+include::{include-java}/observation/ObservationHandlerTests.java[tags=timer,indent=0]
+-----
+
+If you want to have more observation options (such as metrics and tracing -- already included in Micrometer -- plus anything else you will plug in), you need to rewrite that code to use the `Observation` API.
+
+[source,java,subs=+attributes]
+-----
+include::{include-java}/observation/ObservationHandlerTests.java[tags=observation,indent=0]
+-----
+
+Starting with Micrometer 1.10, you can register "handlers" (`ObservationHandler` instances) that are notified about the xref:observation/introduction.adoc[lifecycle event] of an observation (for example, you can run custom code when an observation is started or stopped).
+Using this feature lets you add tracing capabilities to your existing metrics instrumentation (see: `DefaultTracingObservationHandler`). The implementation of these handlers does not need to be tracing related. It is completely up to you how you are going to implement them (for example, you can add logging capabilities).
+
+[[micrometer-observation-handler-example]]
+=== ObservationHandler Example
+
+Based on this, we can implement a simple handler that lets the users know about its invocations by printing them out to `stdout`:
+
+[source,java,subs=+attributes]
+-----
+include::{include-java}/observation/ObservationHandlerTests.java[tags=simple_handler,indent=0]
+-----
+
+You need to register the handler to the `ObservationRegistry`:
+
+[source,java,subs=+attributes]
+-----
+include::{include-java}/observation/ObservationHandlerTests.java[tags=register_handler,indent=0]
+-----
+
+You can use the `observe` method to instrument your codebase:
+
+[source,java,subs=+attributes]
+-----
+include::{include-java}/observation/ObservationHandlerTests.java[tags=instrumenting_code,indent=0]
+-----
+
+You can also take full control of the scoping mechanism:
+
+[source,java,subs=+attributes]
+-----
+include::{include-java}/observation/ObservationHandlerTests.java[tags=manual_scoping,indent=0]
+-----
+
+[[micrometer-observation-events]]
+== Signaling Errors and Arbitrary Events
+
+When **instrumenting** code, we might want to signal that an error happened or signal that an arbitrary event happened. The observation API lets us do so through its `error` and `event` methods.
+
+One use-case for signaling an arbitrary event can be attaching annotations to `Span` for Distributed Tracing, but you can also process them however you want in your own handler, such as emitting log events based on them:
+
+[source,java,subs=+attributes]
+-----
+include::{include-java}/observation/ObservationHandlerTests.java[tags=error_and_event,indent=0]
+-----
+
+[[micrometer-observation-convention-example]]
+== Observation.ObservationConvention Example
+
+When **instrumenting** code, we want to provide sensible defaults for tags, but also we want to let users easily change those defaults. An `ObservationConvention` interface is a description of what tags and name we should create for an `Observation.Context`:
+
+[source,java,subs=+attributes]
+-----
+include::{include-java}/observation/ObservationHandlerTests.java[tags=tax_example,indent=0]
+-----
+
+For a more detailed example, see the full usage example of an instrumentation together with overriding the default tags.
+
+The following example puts the whole code together:
+
+[source,java,subs=+attributes]
+-----
+include::{include-java}/observation/ObservationHandlerTests.java[tags=observation_convention_example,indent=0]
+-----
+
+[[micrometer-observation-predicates-filters]]
+== Observation Predicates and Filters
+
+To globally disable observations under given conditions, you can use an `ObservationPredicate`. To mutate the `Observation.Context`, you can use an `ObservationFilter`.
+
+To set these, call the `ObservationRegistry#observationConfig()#observationPredicate()` and `ObservationRegistry#observationConfig()#observationFilter()` methods, respectively.
+
+The following example uses predicates and filters:
+
+[source,java,subs=+attributes]
+-----
+include::{include-java}/observation/ObservationConfiguringTests.java[tags=predicate_and_filter,indent=0]
+-----
+
+[[micrometer-observation-annotations]]
+== Using Annotations With @Observed
+
+If you have turned on Aspect Oriented Programming (for example, by using `org.aspectj:aspectjweaver`), you can use the `@Observed` annotation to create observations. You can put that annotation either on a method to observe it or on a class to observe all the methods in it.
+
+The following example shows an `ObservedService` that has an annotation on a method:
+
+[source,java,subs=+attributes]
+-----
+include::{include-java}/observation/ObservationHandlerTests.java[tags=observed_service,indent=0]
+-----
+
+The following test asserts whether the proper observation gets created when a proxied `ObservedService` instance gets called:
+
+[source,java,subs=+attributes]
+-----
+include::{include-java}/observation/ObservationHandlerTests.java[tags=observed_aop,indent=0]
+-----

@@ -33,9 +33,12 @@ dependencies {
 
     // JUnit 5
     testImplementation 'org.junit.jupiter:junit-jupiter'
-    testImplementation 'com.tngtech.archunit:archunit-junit5'
+    testImplementation(libs.archunitJunit5) {
+        // avoid transitively pulling in slf4j 2
+        exclude group: "org.slf4j", module: "slf4j-api"
+    }
 
-    testImplementation 'org.mockito:mockito-core'
+    testImplementation libs.mockitoCore5
 
     testImplementation 'org.assertj:assertj-core'
     testImplementation 'org.awaitility:awaitility'

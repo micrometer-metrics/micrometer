@@ -8,6 +8,10 @@ dependencies {
     testImplementation 'org.assertj:assertj-core'
 }
 
+java {
+    targetCompatibility = 11
+}
+
 compileJava {
     sourceCompatibility = JavaVersion.VERSION_11
     targetCompatibility = JavaVersion.VERSION_11

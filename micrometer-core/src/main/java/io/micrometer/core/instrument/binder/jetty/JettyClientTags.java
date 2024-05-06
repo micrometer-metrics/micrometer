@@ -32,7 +32,9 @@ import java.util.regex.Pattern;
  *
  * @author Jon Schneider
  * @since 1.5.0
+ * @deprecated since 1.13.0 in favor of the micrometer-jetty12 module
  */
+@Deprecated
 public final class JettyClientTags {
 
     private static final Tag URI_NOT_FOUND = Tag.of("uri", "NOT_FOUND");

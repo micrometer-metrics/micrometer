@@ -37,6 +37,7 @@ import java.time.Duration;
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static org.assertj.core.api.BDDAssertions.then;
 
+@SuppressWarnings("deprecation")
 @WireMockTest
 class MicrometerHttpClientTests {
 

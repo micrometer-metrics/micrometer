@@ -16,6 +16,7 @@
 package io.micrometer.core.aop;
 
 import io.micrometer.common.lang.NonNullApi;
+import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.annotation.Counted;
 import io.micrometer.core.instrument.*;
 import org.aspectj.lang.ProceedingJoinPoint;
@@ -67,6 +68,8 @@ import java.util.function.Predicate;
  *
  * @author Ali Dehghani
  * @author Jonatan Ivanov
+ * @author Johnny Lim
+ * @author Yanming Zhou
  * @since 1.2.0
  * @see Counted
  */
@@ -103,7 +106,7 @@ public class CountedAspect {
     private final Function<ProceedingJoinPoint, Iterable<Tag>> tagsBasedOnJoinPoint;
 
     /**
-     * A predicate that decides if Timer creation should be skipped for the given join
+     * A predicate that decides if counter creation should be skipped for the given join
      * point.
      */
     private final Predicate<ProceedingJoinPoint> shouldSkip;
@@ -139,8 +142,8 @@ public class CountedAspect {
      * Creates a {@code CountedAspect} instance with the given {@code registry} and skip
      * predicate.
      * @param registry Where we're going to register metrics.
-     * @param shouldSkip A predicate to decide if creating the timer should be skipped or
-     * not.
+     * @param shouldSkip A predicate to decide if creating the counter should be skipped
+     * or not.
      * @since 1.7.0
      */
     public CountedAspect(MeterRegistry registry, Predicate<ProceedingJoinPoint> shouldSkip) {
@@ -153,8 +156,8 @@ public class CountedAspect {
      * provider function and skip predicate.
      * @param registry Where we're going to register metrics.
      * @param tagsBasedOnJoinPoint A function to generate tags given a join point.
-     * @param shouldSkip A predicate to decide if creating the timer should be skipped or
-     * not.
+     * @param shouldSkip A predicate to decide if creating the counter should be skipped
+     * or not.
      * @since 1.7.0
      */
     public CountedAspect(MeterRegistry registry, Function<ProceedingJoinPoint, Iterable<Tag>> tagsBasedOnJoinPoint,
@@ -162,6 +165,23 @@ public class CountedAspect {
         this.registry = registry;
         this.tagsBasedOnJoinPoint = tagsBasedOnJoinPoint;
         this.shouldSkip = shouldSkip;
+    }
+
+    @Around("@within(io.micrometer.core.annotation.Counted) and not @annotation(io.micrometer.core.annotation.Counted)")
+    @Nullable
+    public Object countedClass(ProceedingJoinPoint pjp) throws Throwable {
+        if (shouldSkip.test(pjp)) {
+            return pjp.proceed();
+        }
+
+        Method method = ((MethodSignature) pjp.getSignature()).getMethod();
+        Class<?> declaringClass = method.getDeclaringClass();
+        if (!declaringClass.isAnnotationPresent(Counted.class)) {
+            declaringClass = pjp.getTarget().getClass();
+        }
+        Counted counted = declaringClass.getAnnotation(Counted.class);
+
+        return perform(pjp, counted);
     }
 
     /**
@@ -183,11 +203,16 @@ public class CountedAspect {
      * @throws Throwable When the intercepted method throws one.
      */
     @Around(value = "@annotation(counted)", argNames = "pjp,counted")
+    @Nullable
     public Object interceptAndRecord(ProceedingJoinPoint pjp, Counted counted) throws Throwable {
         if (shouldSkip.test(pjp)) {
             return pjp.proceed();
         }
 
+        return perform(pjp, counted);
+    }
+
+    private Object perform(ProceedingJoinPoint pjp, Counted counted) throws Throwable {
         final Method method = ((MethodSignature) pjp.getSignature()).getMethod();
         final boolean stopWhenCompleted = CompletionStage.class.isAssignableFrom(method.getReturnType());
 

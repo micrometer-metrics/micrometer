@@ -1,0 +1,49 @@
+[[overview]]
+= Apache HttpComponents Client Instrumentation
+
+IMPORTANT: This section requires usage of Apache HttpComponents Client at least in version 5.
+
+https://hc.apache.org/index.html[Apache HttpComponents Client] is an HTTP/1.1 compliant HTTP agent implementation.
+
+Below you can find an example of how to instrument Apache HttpComponents Client with xref:observation.adoc[Micrometer Observation]. That means that depending on your Observation Handler configuration you instrument once, and can have multiple benefits out of it (e.g. metrics, distributed tracing).
+
+== Instrumentation
+
+Example of classic, blocking HTTP client.
+
+[source,java,subs=+attributes]
+-----
+// Setting up instrumentation (you need to create a client from the builder)
+include::{include-core-test-java}/io/micrometer/core/instrument/binder/httpcomponents/hc5/ObservationExecChainHandlerIntegrationTest.java[tags=setup_classic, indent=0]
+
+// Usage example
+include::{include-core-test-java}/io/micrometer/core/instrument/binder/httpcomponents/hc5/ObservationExecChainHandlerIntegrationTest.java[tags=example_classic, indent=0]
+-----
+
+Example of async HTTP client.
+
+[source,java,subs=+attributes]
+-----
+// Setting up instrumentation (you need to create a client from the builder)
+include::{include-core-test-java}/io/micrometer/core/instrument/binder/httpcomponents/hc5/ObservationExecChainHandlerIntegrationTest.java[tags=setup_async, indent=0]
+
+// Usage example
+include::{include-core-test-java}/io/micrometer/core/instrument/binder/httpcomponents/hc5/ObservationExecChainHandlerIntegrationTest.java[tags=example_async, indent=0]
+-----
+
+== Retry Strategy Considerations
+
+HttpClient supports build-in request retry handling. Like micrometer observations, this functionality is implemented as an `ExecChainHandler` named `ChainElement.RETRY`. When instrumenting the client, you'll have to decide whether to observe individual retries or not. If the `ObservationExecChainHandler` is placed _before_ the retry handler, micrometer will see the initial request and the final outcome after the last retry. Elapsed time will account for any delays imposed by the retry handler. On the other hand, if micrometer is registered _after_ the retry handler, it will be invoked for each individual retry. Elapsed time will measure the individual http requests, but *_without_* the backoff delay imposed by the retry handler. The described behaviour and related configuration are the same for both the classic and the async client - with one exception described in the following note.
+
+IMPORTANT: When using the *async client*, placing micrometer *before* the retry handler requires at least version *5.3.x* of the HttpComponents Client library. The classic client has no further restrictions.
+
+Example instrumentation code.
+
+[source,java,subs=+attributes]
+----
+// Example: setup instrumentation to meter retries individually
+include::{include-core-test-java}/io/micrometer/core/instrument/binder/httpcomponents/hc5/ObservationExecChainHandlerIntegrationTest.java[tags=setup_classic, indent=0]
+
+// Example: setup instrumentation to aggregate retries
+include::{include-core-test-java}/io/micrometer/core/instrument/binder/httpcomponents/hc5/ObservationExecChainHandlerIntegrationTest.java[tags=setup_async_aggregate_retries, indent=0]
+----

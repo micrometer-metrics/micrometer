@@ -1,3 +1,5 @@
+description = 'MeterRegistry implementation for publishing to CloudWatch using the AWS SDK v2.'
+
 dependencies {
     api project(':micrometer-core')
 
@@ -5,4 +7,5 @@ dependencies {
     implementation 'org.slf4j:slf4j-api'
 
     testImplementation project(':micrometer-test')
+    testImplementation libs.mockitoCore5
 }

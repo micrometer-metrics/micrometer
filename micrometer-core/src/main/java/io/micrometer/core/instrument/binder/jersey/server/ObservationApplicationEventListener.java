@@ -30,7 +30,9 @@ import static java.util.Objects.requireNonNull;
  *
  * @author Marcin Grzejszczak
  * @since 1.10.0
+ * @deprecated since 1.13.0 use the jersey-micrometer module in the Jersey project instead
  */
+@Deprecated
 public class ObservationApplicationEventListener implements ApplicationEventListener {
 
     private final ObservationRegistry observationRegistry;

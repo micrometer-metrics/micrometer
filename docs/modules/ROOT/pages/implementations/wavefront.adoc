@@ -1,9 +1,8 @@
 = Micrometer Wavefront
-:toc:
 :sectnums:
 :system: wavefront
 
-Wavefront is a dimensional monitoring system offered as a SaaS with a full UI, custom query language, and advanced math operations. Wavefront operates on a push model. Metrics may either be pushed through a sidecar process running on the same host (called the Wavefront proxy) or directly to the Wavefront API.
+Wavefront is a dimensional monitoring system offered as a SaaS with a full UI, custom query language, and advanced math operations. Wavefront operates on a push model. Metrics can be pushed either through a sidecar process running on the same host (called the Wavefront proxy) or directly to the Wavefront API.
 
 include::_install.adoc[]
 
@@ -54,7 +53,7 @@ The following example configures sending through a Wavefront proxy sidecar:
 MeterRegistry registry = new WavefrontMeterRegistry(WavefrontConfig.DEFAULT_PROXY, Clock.SYSTEM);
 ----
 
-The default proxy configuration pushs metrics and histogram distributions to a Wavefront proxy sitting on `localhost:2878`.
+The default proxy configuration pushes metrics and histogram distributions to a Wavefront proxy sitting on `localhost:2878`.
 
 NOTE: If publishing metrics to a Wavefront proxy, the URI must be expressed in the form of `proxy://HOST:PORT`.
 

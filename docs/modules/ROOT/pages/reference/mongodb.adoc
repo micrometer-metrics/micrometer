@@ -1,0 +1,30 @@
+[[overview]]
+= MongoDB Metrics Instrumentation
+
+https://www.mongodb.com/[MongoDB] is a modern database that supports transactional, search, analytics, and mobile use cases with a flexible document data model and a unified query interface.
+
+Below you can find an example of how to instrument MongoDB with Micrometer.
+
+TIP: To add more capabilities such as distributed tracing, please consider using https://docs.spring.io/spring-data/mongodb/reference/observability/observability.html[Spring Data MongoDB] which uses xref:observation.adoc[Micrometer Observation] under the hood.
+
+Below you can find an example of metrics for command execution.
+
+[source,java,subs=+attributes]
+-----
+// Setting up instrumentation
+include::{include-core-test-java}/io/micrometer/core/instrument/binder/mongodb/MongoMetricsCommandListenerTest.java[tags=setup, indent=0]
+
+// Usage example
+include::{include-core-test-java}/io/micrometer/core/instrument/binder/mongodb/MongoMetricsCommandListenerTest.java[tags=example, indent=0]
+-----
+
+Below you can find an example of metrics of the connection pool.
+
+[source,java,subs=+attributes]
+-----
+// Setting up instrumentation
+include::{include-core-test-java}/io/micrometer/core/instrument/binder/mongodb/MongoMetricsConnectionPoolListenerTest.java[tags=setup, indent=0]
+
+// Usage example
+include::{include-core-test-java}/io/micrometer/core/instrument/binder/mongodb/MongoMetricsConnectionPoolListenerTest.java[tags=example, indent=0]
+-----

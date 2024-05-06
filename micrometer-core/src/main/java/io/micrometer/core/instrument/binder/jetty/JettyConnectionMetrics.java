@@ -19,7 +19,12 @@ import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.TimeWindowMax;
+
+import java.net.Socket;
+import java.nio.ByteBuffer;
+
 import org.eclipse.jetty.io.Connection;
+import org.eclipse.jetty.io.NetworkTrafficListener;
 import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.util.component.AbstractLifeCycle;
@@ -47,7 +52,7 @@ import java.util.Map;
  * @author Jon Schneider
  * @since 1.4.0
  */
-public class JettyConnectionMetrics extends AbstractLifeCycle implements Connection.Listener {
+public class JettyConnectionMetrics extends AbstractLifeCycle implements Connection.Listener, NetworkTrafficListener {
 
     private final MeterRegistry registry;
 
@@ -174,12 +179,18 @@ public class JettyConnectionMetrics extends AbstractLifeCycle implements Connect
                 .tags(tags)
                 .register(registry));
         }
-
         messagesIn.increment(connection.getMessagesIn());
         messagesOut.increment(connection.getMessagesOut());
+    }
 
-        bytesIn.record(connection.getBytesIn());
-        bytesOut.record(connection.getBytesOut());
+    @Override
+    public void incoming(Socket socket, ByteBuffer bytes) {
+        bytesIn.record(bytes.limit());
+    }
+
+    @Override
+    public void outgoing(Socket socket, ByteBuffer bytes) {
+        bytesOut.record(bytes.limit());
     }
 
     public static void addToAllConnectors(Server server, MeterRegistry registry, Iterable<Tag> tags) {

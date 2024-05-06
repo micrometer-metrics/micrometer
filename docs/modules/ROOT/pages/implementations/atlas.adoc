@@ -1,5 +1,4 @@
 = Micrometer Atlas
-:toc:
 :sectnums:
 :system: atlas
 
@@ -48,7 +47,7 @@ This section serves as a quick start to rendering useful representations in Atla
 
 Atlas serves up graphs in the form of PNG images (and other https://github.com/Netflix/atlas/wiki/Output-Formats[output formats] as well).
 
-We use the following query to visualize the counter from Atlas. Note that the value is rate-normalized over the step interval rather than monotonically increasing. Atlas always expects link:/docs/concepts#_client_side[rate-aggregated] data for counters from Micrometer.
+We use the following query to visualize the counter from Atlas. Note that the value is rate-normalized over the step interval rather than monotonically increasing. Atlas always expects xref:/concepts/rate-aggregation.adoc#_client_side[rate-aggregated] data for counters from Micrometer.
 
 .Counter over a positive-biased random walk.
 image::implementations/atlas-counter.png[Atlas-rendered counter]
@@ -104,7 +103,7 @@ In the preceding example, you can see these two lines plotted on a single dual-a
 image::implementations/atlas-timer.png[Atlas-rendered timer]
 
 
-=== Long task timers
+=== Long Task Timers
 
 Suppose we had a task that took two minutes to complete when it was expected to complete in less than 70 seconds. A key benefit of long task timers is the ability to receive an alert at the first reporting interval after we have exceeded the threshold. With a regular timer, we would not receive an alert until the first reporting interval after the process completed. If we had a ten-second publishing interval, the regular timer alert would arrive almost a minute after the long task timer alert.
 

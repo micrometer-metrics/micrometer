@@ -1,11 +1,10 @@
 = Micrometer StatsD
-:toc:
 :sectnums:
 :system: statsd
 
 StatsD is a UDP-based sidecar-driven metrics collection system. The maintainer of the original StatsD line protocol specification is Etsy. Datadog's DogStatsD and Influx's Telegraf each accept a modified version of the line protocol, having each enriched the original specification with dimensionality in different ways.
 
-If you intend to use the Datadog or Telegraf flavors, see the documentation for Micrometer's link:/docs/registry/datadog[Datadog] or link:/docs/registry/influx[Influx] support.
+If you intend to use the Datadog or Telegraf flavors, see the documentation for Micrometer's xref:/implementations/datadog.adoc[Datadog] or xref:/implementations/influx.adoc[Influx] support.
 
 include::_install.adoc[]
 
@@ -49,7 +48,7 @@ management.metrics.export.statsd:
 
 == Customizing the Metrics Sink
 
-By default, Micrometer publishes StatsD line protocol over UDP, as the vast majority of existing StatsD agents are UDP servers. It is possible to fully customize how the line protocol is shipped by modifying the builder for `StatsdMeterRegistry`:
+By default, Micrometer publishes the StatsD line protocol over UDP, as the vast majority of existing StatsD agents are UDP servers. You can fully customize how the line protocol is shipped by modifying the builder for `StatsdMeterRegistry`:
 
 [source,java]
 ----

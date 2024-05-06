@@ -1,11 +1,11 @@
 [[timers]]
 = Timers
 
-Timers are intended for measuring short-duration latencies and the frequency of such events. All implementations of `Timer` report at least the total time and the count of events as separate time series. While you can use timers for other use cases, note that negative values are not supported, and recording many longer durations could cause overflow of the total time at `Long.MAX_VALUE` nanoseconds (292.3 years).
+Timers are intended for measuring short-duration latencies and the frequency of such events. All implementations of `Timer` report at least the total time and the count of events as separate time series but other time series can also be reported depending on what is supported by the backend (max, percentiles, histograms). While you can use timers for other use cases, note that negative values are not supported, and recording many longer durations could cause overflow of the total time at `Long.MAX_VALUE` nanoseconds (292.3 years).
 
 As an example, consider a graph showing request latency to a typical web server. The server can be expected to respond to many requests quickly, so the timer gets updated many times per second.
 
-The appropriate base unit for timers varies by metrics backend, and for good reason. Micrometer is decidedly un-opinionated about this. However, because of the potential for confusion, Micrometer requires a `TimeUnit` when interacting with `Timer` implementations. Micrometer is aware of the preferences of each implementation and publishes your timing in the appropriate base unit based on the implementation. The following listing shows part of the `Timer` interface:
+The appropriate base unit for timers varies by metrics backend, and for good reason. Micrometer is decidedly un-opinionated about this. However, because of the potential for confusion, Micrometer requires a `TimeUnit` when interacting with `Timer` implementations. Micrometer is aware of the preferences of each implementation and publishes your timing in the appropriate base unit, based on the implementation. The following listing shows part of the `Timer` interface:
 
 [source,java]
 ----
@@ -31,9 +31,10 @@ Timer timer = Timer
 NOTE: The maximum statistical value for basic `Timer` implementations, such as `CumulativeTimer` and `StepTimer`, is a time window maximum (`TimeWindowMax`).
 It means that its value is the maximum value during a time window.
 If no new values are recorded for the time window length, the max is reset to 0 as a new time window starts.
-Time window size is the step size of the meter registry, unless expiry in `DistributionStatisticConfig` is explicitly set to other value.
+The time window size until values are fully expired is the `expiry` multiplied by the `bufferLength` in `DistributionStatisticConfig`.
+`expiry` defaults to the step size of the meter registry unless it's explicitly set to a different value, and `bufferLength` defaults to `3`.
 A time window maximum is used to capture maximum latency in a subsequent interval after heavy resource pressure triggers the latency and prevents metrics from being published.
-Percentiles are also time window percentiles (`TimeWindowPercentileHistogram`).
+Percentiles are also time window percentiles (`TimeWindowPercentileHistogram`). Histogram buckets usually behave like counters, so depending on the backend, they can be reported as cumulative values (for example in the case of Prometheus) or as a rate at which a counter increments over the push interval.
 
 == Recording Blocks of Code
 
@@ -54,7 +55,7 @@ determined base unit. In every case where you want to measure time, you should u
 
 == Storing Start State in `Timer.Sample`
 
-You may also store start state in a sample instance that can be stopped later. The sample records a start time based on the registry's clock. After starting a sample, execute the code to be timed and finish the operation by calling `stop(Timer)` on the sample:
+You may also store the start state in a sample instance that can be stopped later. The sample records a start time based on the registry's clock. After starting a sample, execute the code to be timed and finish the operation by calling `stop(Timer)` on the sample:
 
 [source, java]
 ----
@@ -68,9 +69,9 @@ sample.stop(registry.timer("my.timer", "response", response.status()));
 
 Note how we do not decide the timer to which to accumulate the sample until it is time to stop the sample. This lets us dynamically determine certain tags from the end state of the operation we are timing.
 
-== The `@Timed` annotation
+== The `@Timed` Annotation
 
-The `micrometer-core` modules contains a `@Timed` annotation that frameworks can use to add timing support to either specific types of methods such as those serving web request endpoints or, more generally, to all methods.
+The `micrometer-core` module contains a `@Timed` annotation that frameworks can use to add timing support to either specific types of methods such as those serving web request endpoints or, more generally, to all methods.
 
 WARNING: Micrometer's Spring Boot configuration does _not_ recognize `@Timed` on arbitrary methods.
 
@@ -115,8 +116,7 @@ public class ExampleService {
 
 === @MeterTag on Method Parameters
 
-To support `@MeterTag` annotation on method parameters you need to configure the `@TimedAspect` to add the `MeterTagAnnotationHandler`.
-
+To support using the `@MeterTag` annotation on method parameters, you need to configure the `@TimedAspect` to add the `MeterTagAnnotationHandler`.
 
 [source,java,subs=+attributes]
 -----
@@ -132,7 +132,7 @@ Let's assume that we have the following interface.
 include::{include-java}/metrics/TimedAspectTest.java[tags=interface,indent=0]
 -----
 
-When its implementations would be called with different arguments (remember that the implementation needs to be annotated with `@Timed` annotation too) the following timers would be created:
+When its implementations would be called with different arguments (remember that the implementation needs to be annotated with `@Timed` annotation too), the following timers would be created:
 
 [source,java,subs=+attributes]
 -----
@@ -202,7 +202,7 @@ In the future, we may provide further detector implementations. Some pauses may 
 
 == Memory Footprint Estimation
 
-Timers are the most memory-consuming meter, and their total footprint can vary dramatically, depending on which options you choose. The following table of memory consumption is based on the use of various features. These figures assume no tags and a ring buffer length of 3. Adding tags adds somewhat to the total, as does increasing the buffer length. Total storage can also vary somewhat depending on the registry implementation.
+Timers are the most memory-consuming meter, and their total footprint can vary dramatically, depending on which options you choose. The following table of memory consumption is based on the use of various features. These figures assume no tags and a ring buffer length of 3. Adding tags adds somewhat to the total, as does increasing the buffer length. Total storage can also vary somewhat, depending on the registry implementation.
 
 * R = Ring buffer length. We assume the default of 3 in all examples. R is set with `Timer.Builder#distributionStatisticBufferLength`.
 * B = Total histogram buckets. Can be SLO boundaries or percentile histogram buckets. By default, timers are clamped to a minimum expected value of 1ms and a maximum expected value of 30 seconds, yielding 66 buckets for percentile histograms, when applicable.

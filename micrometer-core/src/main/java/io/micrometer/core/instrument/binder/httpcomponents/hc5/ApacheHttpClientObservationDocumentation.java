@@ -73,7 +73,7 @@ public enum ApacheHttpClientObservationDocumentation implements ObservationDocum
         },
         /**
          * Key name for exception.
-         * @since 1.11.0
+         * @since 1.12.0
          */
         EXCEPTION {
             @Override

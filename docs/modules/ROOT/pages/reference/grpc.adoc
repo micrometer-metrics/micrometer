@@ -1,0 +1,35 @@
+[[overview]]
+= gRPC Instrumentation
+
+https://grpc.io/[gRPC] is a modern open source high performance Remote Procedure Call (RPC) framework that can run in any environment.
+
+Below you can find an example of how to instrument gRPC with xref:observation.adoc[Micrometer Observation]. That means that depending on your Observation Handler configuration you instrument once, and can have multiple benefits out of it (e.g. metrics, distributed tracing).
+
+First, client and server side interceptors need to be setup.
+
+[source,java,subs=+attributes]
+-----
+// Setting up interceptors
+include::{include-core-test-java}/io/micrometer/core/instrument/binder/grpc/GrpcObservationTest.java[tags=setup, indent=0]
+
+include::{include-core-test-java}/io/micrometer/core/instrument/binder/grpc/GrpcObservationTest.java[tags=setup_2, indent=0]
+-----
+
+Next, server and channels need to have the interceptors added.
+
+[source,java,subs=+attributes]
+-----
+// Adding them to the server and client side
+include::{include-core-test-java}/io/micrometer/core/instrument/binder/grpc/GrpcObservationTest.java[tags=example, indent=0]
+-----
+
+Below you have an example of usage with the result assertions.
+
+[source,java,subs=+attributes]
+-----
+// Usage example
+include::{include-core-test-java}/io/micrometer/core/instrument/binder/grpc/GrpcObservationTest.java[tags=result, indent=0]
+
+// Observation outcome
+include::{include-core-test-java}/io/micrometer/core/instrument/binder/grpc/GrpcObservationTest.java[tags=assertion, indent=0]
+-----

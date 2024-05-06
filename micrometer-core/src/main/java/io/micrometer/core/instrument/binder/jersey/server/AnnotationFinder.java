@@ -18,6 +18,10 @@ package io.micrometer.core.instrument.binder.jersey.server;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.AnnotatedElement;
 
+/**
+ * @deprecated since 1.13.0 use the jersey-micrometer module in the Jersey project instead
+ */
+@Deprecated
 public interface AnnotationFinder {
 
     AnnotationFinder DEFAULT = new AnnotationFinder() {

@@ -61,9 +61,12 @@ class ObservationGrpcServerCall<ReqT, RespT> extends SimpleForwardingServerCall<
         if (status.getCause() != null) {
             this.observation.error(status.getCause());
         }
+        // Per javadoc, trailers are not thread-safe. Make a copy.
+        Metadata trailersToKeep = new Metadata();
+        trailersToKeep.merge(trailers);
         GrpcServerObservationContext context = (GrpcServerObservationContext) this.observation.getContext();
         context.setStatusCode(status.getCode());
-        context.setTrailers(trailers);
+        context.setTrailers(trailersToKeep);
         super.close(status, trailers);
     }
 

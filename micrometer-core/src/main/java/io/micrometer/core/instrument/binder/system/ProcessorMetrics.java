@@ -18,6 +18,7 @@ package io.micrometer.core.instrument.binder.system;
 import io.micrometer.common.lang.NonNullApi;
 import io.micrometer.common.lang.NonNullFields;
 import io.micrometer.common.lang.Nullable;
+import io.micrometer.core.instrument.FunctionCounter;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
@@ -72,6 +73,9 @@ public class ProcessorMetrics implements MeterBinder {
     @Nullable
     private final Method processCpuUsage;
 
+    @Nullable
+    private final Method processCpuTime;
+
     public ProcessorMetrics() {
         this(emptyList());
     }
@@ -83,6 +87,7 @@ public class ProcessorMetrics implements MeterBinder {
         Method getCpuLoad = detectMethod("getCpuLoad");
         this.systemCpuUsage = getCpuLoad != null ? getCpuLoad : detectMethod("getSystemCpuLoad");
         this.processCpuUsage = detectMethod("getProcessCpuLoad");
+        this.processCpuTime = detectMethod("getProcessCpuTime");
     }
 
     @Override
@@ -114,15 +119,27 @@ public class ProcessorMetrics implements MeterBinder {
                 .description("The \"recent cpu usage\" for the Java Virtual Machine process")
                 .register(registry);
         }
+
+        if (processCpuTime != null) {
+            FunctionCounter.builder("process.cpu.time", operatingSystemBean, x -> invoke(processCpuTime))
+                .tags(tags)
+                .description("The \"cpu time\" used by the Java Virtual Machine process")
+                .baseUnit("ns")
+                .register(registry);
+        }
     }
 
     private double invoke(@Nullable Method method) {
         try {
-            return method != null ? (double) method.invoke(operatingSystemBean) : Double.NaN;
+            return method != null ? toDouble((Number) method.invoke(operatingSystemBean)) : Double.NaN;
         }
         catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
             return Double.NaN;
         }
+    }
+
+    private double toDouble(@Nullable Number number) {
+        return number != null ? number.doubleValue() : Double.NaN;
     }
 
     @Nullable

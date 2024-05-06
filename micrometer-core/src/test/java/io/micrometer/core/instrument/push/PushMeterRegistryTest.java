@@ -191,7 +191,7 @@ class PushMeterRegistryTest {
     }
 
     @Test
-    void publishSafelyRespectsInterrupt() throws InterruptedException {
+    void publishSafelyOrSkipIfInProgressRespectsInterrupt() throws InterruptedException {
         MockClock clock = new MockClock();
         CyclicBarrier barrier = new CyclicBarrier(2);
         OverlappingStepMeterRegistry registry = new OverlappingStepMeterRegistry(config, clock, barrier);

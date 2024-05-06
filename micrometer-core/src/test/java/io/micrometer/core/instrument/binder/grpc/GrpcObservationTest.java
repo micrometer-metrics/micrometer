@@ -65,6 +65,8 @@ import io.micrometer.observation.Observation.Event;
 import io.micrometer.observation.ObservationHandler;
 import io.micrometer.observation.ObservationRegistry;
 import io.micrometer.observation.ObservationTextPublisher;
+import io.micrometer.observation.tck.TestObservationRegistry;
+import io.micrometer.observation.tck.TestObservationRegistryAssert;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -90,9 +92,14 @@ class GrpcObservationTest {
 
     ContextAndEventHoldingObservationHandler<GrpcClientObservationContext> clientHandler;
 
+    // tag::setup[]
     ObservationGrpcServerInterceptor serverInterceptor;
 
     ObservationGrpcClientInterceptor clientInterceptor;
+
+    // end::setup[]
+
+    TestObservationRegistry observationRegistry = TestObservationRegistry.create();
 
     @BeforeEach
     void setUp() {
@@ -100,15 +107,16 @@ class GrpcObservationTest {
         clientHandler = new ContextAndEventHoldingObservationHandler<>(GrpcClientObservationContext.class);
 
         MeterRegistry meterRegistry = new SimpleMeterRegistry();
-        ObservationRegistry observationRegistry = ObservationRegistry.create();
         observationRegistry.observationConfig()
             .observationHandler(new ObservationTextPublisher())
             .observationHandler(new DefaultMeterObservationHandler(meterRegistry))
             .observationHandler(serverHandler)
             .observationHandler(clientHandler);
 
+        // tag::setup_2[]
         this.serverInterceptor = new ObservationGrpcServerInterceptor(observationRegistry);
         this.clientInterceptor = new ObservationGrpcClientInterceptor(observationRegistry);
+        // end::setup_2[]
     }
 
     @AfterEach
@@ -126,6 +134,7 @@ class GrpcObservationTest {
 
         @BeforeEach
         void setUpEchoService() throws Exception {
+            // tag::example[]
             EchoService echoService = new EchoService();
             server = InProcessServerBuilder.forName("sample")
                 .addService(echoService)
@@ -137,15 +146,18 @@ class GrpcObservationTest {
             channel = InProcessChannelBuilder.forName("sample")
                 .intercept(new ClientHeaderInterceptor(), clientInterceptor)
                 .build();
+            // end::example[]
         }
 
         @Test
         void unaryRpc() {
+            // tag::result[]
             SimpleServiceBlockingStub stub = SimpleServiceGrpc.newBlockingStub(channel);
 
             SimpleRequest request = SimpleRequest.newBuilder().setRequestMessage("Hello").build();
             SimpleResponse response = stub.unaryRpc(request);
             assertThat(response.getResponseMessage()).isEqualTo("Hello");
+            // end::result[]
 
             verifyServerContext("grpc.testing.SimpleService", "UnaryRpc", "grpc.testing.SimpleService/UnaryRpc",
                     MethodType.UNARY);
@@ -157,6 +169,11 @@ class GrpcObservationTest {
                     GrpcServerEvents.MESSAGE_SENT);
             assertThat(clientHandler.getEvents()).containsExactly(GrpcClientEvents.MESSAGE_SENT,
                     GrpcClientEvents.MESSAGE_RECEIVED);
+            // tag::assertion[]
+            TestObservationRegistryAssert.assertThat(observationRegistry)
+                .hasAnObservation(observationContextAssert -> observationContextAssert.hasNameEqualTo("grpc.client"))
+                .hasAnObservation(observationContextAssert -> observationContextAssert.hasNameEqualTo("grpc.server"));
+            // end::assertion[]
             verifyHeaders();
         }
 
@@ -188,6 +205,9 @@ class GrpcObservationTest {
 
             await().until(() -> futures.stream().allMatch(Future::isDone));
             assertThat(responses).hasSize(count).containsExactlyInAnyOrderElementsOf(messages);
+            TestObservationRegistryAssert.assertThat(observationRegistry)
+                .hasAnObservation(observationContextAssert -> observationContextAssert.hasNameEqualTo("grpc.client"))
+                .hasAnObservation(observationContextAssert -> observationContextAssert.hasNameEqualTo("grpc.server"));
             verifyHeaders();
         }
 
@@ -228,6 +248,9 @@ class GrpcObservationTest {
             verifyServerContext("grpc.testing.SimpleService", "ClientStreamingRpc",
                     "grpc.testing.SimpleService/ClientStreamingRpc", MethodType.CLIENT_STREAMING);
             assertThat(serverHandler.getContext().getStatusCode()).isEqualTo(Code.OK);
+            TestObservationRegistryAssert.assertThat(observationRegistry)
+                .hasAnObservation(observationContextAssert -> observationContextAssert.hasNameEqualTo("grpc.client"))
+                .hasAnObservation(observationContextAssert -> observationContextAssert.hasNameEqualTo("grpc.server"));
             verifyHeaders();
         }
 
@@ -260,6 +283,9 @@ class GrpcObservationTest {
             assertThat(clientHandler.getContext().getStatusCode()).isEqualTo(Code.OK);
             assertThat(clientHandler.getEvents()).containsExactly(GrpcClientEvents.MESSAGE_SENT,
                     GrpcClientEvents.MESSAGE_RECEIVED, GrpcClientEvents.MESSAGE_RECEIVED);
+            TestObservationRegistryAssert.assertThat(observationRegistry)
+                .hasAnObservation(observationContextAssert -> observationContextAssert.hasNameEqualTo("grpc.client"))
+                .hasAnObservation(observationContextAssert -> observationContextAssert.hasNameEqualTo("grpc.server"));
             verifyHeaders();
         }
 
@@ -310,6 +336,9 @@ class GrpcObservationTest {
 
             assertThat(serverHandler.getContext().getStatusCode()).isEqualTo(Code.OK);
             assertThat(clientHandler.getContext().getStatusCode()).isEqualTo(Code.OK);
+            TestObservationRegistryAssert.assertThat(observationRegistry)
+                .hasAnObservation(observationContextAssert -> observationContextAssert.hasNameEqualTo("grpc.client"))
+                .hasAnObservation(observationContextAssert -> observationContextAssert.hasNameEqualTo("grpc.server"));
             verifyHeaders();
         }
 
@@ -375,10 +404,13 @@ class GrpcObservationTest {
                     MethodType.UNARY);
             verifyClientContext("grpc.testing.SimpleService", "UnaryRpc", "grpc.testing.SimpleService/UnaryRpc",
                     MethodType.UNARY);
-            assertThat(serverHandler.getContext().getStatusCode()).isEqualTo(Code.UNIMPLEMENTED);
-            assertThat(clientHandler.getContext().getStatusCode()).isEqualTo(Code.UNIMPLEMENTED);
+            assertThat(serverHandler.getContext().getStatusCode()).isNull();
+            assertThat(clientHandler.getContext().getStatusCode()).isEqualTo(Code.UNKNOWN);
             assertThat(serverHandler.getEvents()).containsExactly(GrpcServerEvents.MESSAGE_RECEIVED);
             assertThat(clientHandler.getEvents()).containsExactly(GrpcClientEvents.MESSAGE_SENT);
+            TestObservationRegistryAssert.assertThat(observationRegistry)
+                .hasAnObservation(
+                        observationContextAssert -> observationContextAssert.hasNameEqualTo("grpc.server").hasError());
         }
 
         @Test
@@ -396,10 +428,13 @@ class GrpcObservationTest {
                     "grpc.testing.SimpleService/ClientStreamingRpc", MethodType.CLIENT_STREAMING);
             verifyServerContext("grpc.testing.SimpleService", "ClientStreamingRpc",
                     "grpc.testing.SimpleService/ClientStreamingRpc", MethodType.CLIENT_STREAMING);
-            assertThat(clientHandler.getContext().getStatusCode()).isEqualTo(Code.UNIMPLEMENTED);
-            assertThat(serverHandler.getContext().getStatusCode()).isEqualTo(Code.UNIMPLEMENTED);
+            assertThat(clientHandler.getContext().getStatusCode()).isEqualTo(Code.UNKNOWN);
+            assertThat(serverHandler.getContext().getStatusCode()).isNull();
             assertThat(clientHandler.getEvents()).isEmpty();
             assertThat(serverHandler.getEvents()).isEmpty();
+            TestObservationRegistryAssert.assertThat(observationRegistry)
+                .hasAnObservation(
+                        observationContextAssert -> observationContextAssert.hasNameEqualTo("grpc.server").hasError());
         }
 
         @Test
@@ -419,10 +454,13 @@ class GrpcObservationTest {
                     "grpc.testing.SimpleService/ServerStreamingRpc", MethodType.SERVER_STREAMING);
             verifyServerContext("grpc.testing.SimpleService", "ServerStreamingRpc",
                     "grpc.testing.SimpleService/ServerStreamingRpc", MethodType.SERVER_STREAMING);
-            assertThat(clientHandler.getContext().getStatusCode()).isEqualTo(Code.UNIMPLEMENTED);
-            assertThat(serverHandler.getContext().getStatusCode()).isEqualTo(Code.UNIMPLEMENTED);
+            assertThat(clientHandler.getContext().getStatusCode()).isEqualTo(Code.UNKNOWN);
+            assertThat(serverHandler.getContext().getStatusCode()).isNull();
             assertThat(clientHandler.getEvents()).containsExactly(GrpcClientEvents.MESSAGE_SENT);
             assertThat(serverHandler.getEvents()).containsExactly(GrpcServerEvents.MESSAGE_RECEIVED);
+            TestObservationRegistryAssert.assertThat(observationRegistry)
+                .hasAnObservation(
+                        observationContextAssert -> observationContextAssert.hasNameEqualTo("grpc.server").hasError());
         }
 
         @Test
@@ -441,10 +479,13 @@ class GrpcObservationTest {
                     "grpc.testing.SimpleService/BidiStreamingRpc", MethodType.BIDI_STREAMING);
             verifyServerContext("grpc.testing.SimpleService", "BidiStreamingRpc",
                     "grpc.testing.SimpleService/BidiStreamingRpc", MethodType.BIDI_STREAMING);
-            assertThat(clientHandler.getContext().getStatusCode()).isEqualTo(Code.UNIMPLEMENTED);
-            assertThat(serverHandler.getContext().getStatusCode()).isEqualTo(Code.UNIMPLEMENTED);
+            assertThat(clientHandler.getContext().getStatusCode()).isEqualTo(Code.UNKNOWN);
+            assertThat(serverHandler.getContext().getStatusCode()).isNull();
             assertThat(clientHandler.getEvents()).isEmpty();
             assertThat(serverHandler.getEvents()).isEmpty();
+            TestObservationRegistryAssert.assertThat(observationRegistry)
+                .hasAnObservation(
+                        observationContextAssert -> observationContextAssert.hasNameEqualTo("grpc.server").hasError());
         }
 
         private StreamObserver<SimpleResponse> createResponseObserver(AtomicBoolean errored) {
@@ -464,6 +505,41 @@ class GrpcObservationTest {
                     throw new RuntimeException("Should not be successfully completed");
                 }
             };
+        }
+
+    }
+
+    @Nested
+    class WithObservationAwareInterceptor {
+
+        ObservationAwareServerInterceptor scopeAwareServerInterceptor;
+
+        @BeforeEach
+        void setCustomInterceptor() throws Exception {
+            scopeAwareServerInterceptor = new ObservationAwareServerInterceptor(observationRegistry);
+
+            EchoService echoService = new EchoService();
+            server = InProcessServerBuilder.forName("sample")
+                .addService(echoService)
+                .intercept(scopeAwareServerInterceptor)
+                .intercept(serverInterceptor)
+                .build();
+            server.start();
+
+            channel = InProcessChannelBuilder.forName("sample").intercept(clientInterceptor).build();
+        }
+
+        @Test
+        void observationShouldBeCapturedByInterceptor() {
+            SimpleServiceBlockingStub stub = SimpleServiceGrpc.newBlockingStub(channel);
+
+            SimpleRequest request = SimpleRequest.newBuilder().setRequestMessage("Hello").build();
+            stub.unaryRpc(request);
+
+            assertThat(scopeAwareServerInterceptor.lastObservation).isNotNull().satisfies((observation -> {
+                assertThat(observation.getContext().getContextualName())
+                    .isEqualTo("grpc.testing.SimpleService/UnaryRpc");
+            }));
         }
 
     }
@@ -568,6 +644,26 @@ class GrpcObservationTest {
     // Default implementation in the parent class throws UNIMPLEMENTED error
     static class ExceptionService extends SimpleServiceImplBase {
 
+        @Override
+        public void unaryRpc(SimpleRequest request, StreamObserver<SimpleResponse> responseObserver) {
+            throw new IllegalStateException("Boom!");
+        }
+
+        @Override
+        public StreamObserver<SimpleRequest> clientStreamingRpc(StreamObserver<SimpleResponse> responseObserver) {
+            throw new IllegalStateException("Boom!");
+        }
+
+        @Override
+        public void serverStreamingRpc(SimpleRequest request, StreamObserver<SimpleResponse> responseObserver) {
+            throw new IllegalStateException("Boom!");
+        }
+
+        @Override
+        public StreamObserver<SimpleRequest> bidiStreamingRpc(StreamObserver<SimpleResponse> responseObserver) {
+            throw new IllegalStateException("Boom!");
+        }
+
     }
 
     // Hold reference to the Context and Events happened in ObservationHandler
@@ -640,11 +736,6 @@ class GrpcObservationTest {
                 ServerCallHandler<ReqT, RespT> next) {
             SimpleForwardingServerCall<ReqT, RespT> serverCall = new SimpleForwardingServerCall<>(call) {
                 @Override
-                protected ServerCall<ReqT, RespT> delegate() {
-                    return super.delegate();
-                }
-
-                @Override
                 public void sendHeaders(Metadata headers) {
                     headers.put(SERVER_KEY, "server-response");
                     super.sendHeaders(headers);
@@ -652,6 +743,26 @@ class GrpcObservationTest {
 
             };
             return next.startCall(serverCall, headers);
+        }
+
+    }
+
+    // Hold reference to last intercepted Observation
+    static class ObservationAwareServerInterceptor implements ServerInterceptor {
+
+        Observation lastObservation;
+
+        private final ObservationRegistry observationRegistry;
+
+        private ObservationAwareServerInterceptor(ObservationRegistry observationRegistry) {
+            this.observationRegistry = observationRegistry;
+        }
+
+        @Override
+        public <ReqT, RespT> ServerCall.Listener<ReqT> interceptCall(ServerCall<ReqT, RespT> call, Metadata headers,
+                ServerCallHandler<ReqT, RespT> next) {
+            this.lastObservation = observationRegistry.getCurrentObservation();
+            return next.startCall(call, headers);
         }
 
     }

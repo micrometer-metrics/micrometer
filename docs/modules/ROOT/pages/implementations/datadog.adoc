@@ -1,5 +1,4 @@
 = Micrometer Datadog
-:toc:
 :sectnums:
 :system: datadog
 
@@ -7,8 +6,10 @@ Datadog is a dimensional time-series SaaS with built-in dashboarding and alertin
 
 == Installation and Configuration
 
-Micrometer supports shipping metrics to Datadog directly by using its HTTP API or by using DogStatsD through the link:/docs/registry/statsD[StatsD registry].
-The API approach is far more efficient if you need to choose between the two.
+Micrometer supports shipping metrics to Datadog directly by using its HTTP API or by using DogStatsD through the xref:/implementations/statsD.adoc[StatsD registry].
+If you can choose between the two, the API approach is far more efficient.
+
+NOTE: If you encounter a rate limit problem with the Datadog API approach, try the DogStatsD approach or one of https://docs.datadoghq.com/metrics/guide/micrometer/[alternatives that are described in the Datadog documentation].
 
 === Direct to Datadog API Approach
 
@@ -48,19 +49,10 @@ DatadogConfig config = new DatadogConfig() {
 MeterRegistry registry = new DatadogMeterRegistry(config, Clock.SYSTEM);
 ----
 
-`DatadogConfig` is an interface with a set of default methods. If, in the implementation of `get(String k)`, rather than returning `null`, you instead bind it to a property source, you can override the default configuration through properties. For example, Micrometer's Spring Boot support binds properties prefixed with `management.metrics.export.datadog` directly to the `DatadogConfig`:
-
-[source, yaml]
-----
-management.metrics.export.datadog:
-    apiKey: YOURKEY
-
-    # You will probably want disable Datadog publishing in a local development profile.
-    enabled: true
-
-    # The interval at which metrics are sent to Datadog. The default is 1 minute.
-    step: 1m
-----
+`DatadogConfig` is an interface with a set of default methods.
+If, in the implementation of `get(String k)`, rather than returning `null`, you instead bind it to a property source, you can override the default configuration through properties.
+For example, Spring Boot's Micrometer support binds properties directly to the `DatadogConfig`.
+See the https://docs.spring.io/spring-boot/docs/current/reference/htmlsingle/#actuator.metrics.export.datadog[Datadog] section in the Spring Boot reference documentation.
 
 `DatadogConfig.hostTag()` specifies a tag key that is mapped to https://docs.datadoghq.com/api/v1/metrics/#submit-metrics[the `host` field] when shipping metrics to Datadog.
 For example, if `DatadogConfig.hostTag()` returns `host`, the tag having `host` as its key is used.
@@ -76,11 +68,11 @@ The default value is `https://api.datadoghq.com`.
 Depending on the Datadog site (region), the api endpoint will be different.
 To find your the correct `uri` for your account, do the following:
 
-1. Read about https://docs.datadoghq.com/getting_started/site/[Datadog site].
-2. Go to https://docs.datadoghq.com/api/latest/metrics/[Metrics API reference] and select your own option from the "DATADOG SITE" dropdown.
+1. Read about the https://docs.datadoghq.com/getting_started/site/[Datadog site].
+2. Go to the https://docs.datadoghq.com/api/latest/metrics/[Metrics API reference] and select your own option from the "DATADOG SITE" dropdown.
 3. Check any API request's endpoint.
 
-E.g. For `US5` site, the correct API endpoint is `https://api.us5.datadoghq.com` while for `US3` site, it is `https://api.us3.datadoghq.com/`.
+For example, for the `US5` site, the correct API endpoint is `https://api.us5.datadoghq.com`. For the `US3` site, it is `https://api.us3.datadoghq.com`.
 
 === Through DogStatsD Approach
 
@@ -121,14 +113,14 @@ StatsdConfig config = new StatsdConfig() {
 MeterRegistry registry = new StatsdMeterRegistry(config, Clock.SYSTEM);
 ----
 
-Micrometer supports DogStatsD's https://docs.datadoghq.com/developers/dogstatsd/?tab=kubernetes#origin-detection-over-udp[origin detection over UDP] feature on Kubernetes if the `DD_ENTITY_ID` environment variable is properly set.
+If the `DD_ENTITY_ID` environment variable is properly set, Micrometer supports DogStatsD's https://docs.datadoghq.com/developers/dogstatsd/?tab=kubernetes#origin-detection-over-udp[origin detection over UDP] feature on Kubernetes.
 
-Micrometer, by default, publishes `Timer` meters to DogStatsD as the StatsD "timing" metric type `ms`,
-which are sent to Datadog as https://docs.datadoghq.com/metrics/types/?tab=histogram#metric-types[histogram] type metrics.
-Micrometer publishes `DistributionSummary` meters as histogram type metrics by default, also.
+Micrometer, by default, publishes `Timer` meters to DogStatsD as the StatsD "`timing`" metric type, `ms`.
+These meters are sent to Datadog as https://docs.datadoghq.com/metrics/types/?tab=histogram#metric-types[histogram] type metrics.
+Also, by default, Micrometer publishes `DistributionSummary` meters as histogram type metrics.
 
 When `percentileHistogram` is enabled for the meter, Micrometer sends `Timer` and `DistributionSummary` meters as Datadog https://docs.datadoghq.com/metrics/distributions[Distributions] to DogStatsD.
-You can make a `DistributionSummary` with `percentileHistogram` enabled as follows:
+You can make a `DistributionSummary` with `percentileHistogram` enabled, as follows:
 
 [source,java]
 ----

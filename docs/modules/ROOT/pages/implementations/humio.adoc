@@ -1,5 +1,4 @@
 = Micrometer Humio
-:toc:
 :sectnums:
 :system: humio
 
@@ -53,9 +52,9 @@ This section serves as a quick start to rendering useful representations in Humi
 
 The Humio implementation of `Timer` produces four fields in Humio:
 
-* `sum`: Rate of calls per second.
-* `count`: Rate of total time per second.
-* `max`: A sliding window maximum amount recorded.
+* `count`: Rate of total time/second.
+* `sum`: Rate of calls/second.
+* `max`: A sliding window that shows the maximum amount recorded.
 * `avg`: A non-aggregable average for only this set of tag values.
 
 The following query constructs a dimensionally aggregable average latency per URI:

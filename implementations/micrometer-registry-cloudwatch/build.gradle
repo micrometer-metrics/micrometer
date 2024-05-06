@@ -1,8 +1,0 @@
-dependencies {
-    api project(':micrometer-core')
-
-    api 'com.amazonaws:aws-java-sdk-cloudwatch'
-    implementation 'org.slf4j:slf4j-api'
-
-    testImplementation project(':micrometer-test')
-}

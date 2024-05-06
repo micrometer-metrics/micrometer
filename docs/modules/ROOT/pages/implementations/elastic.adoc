@@ -1,5 +1,4 @@
 = Micrometer Elastic
-:toc:
 :sectnums:
 :system: elastic
 
@@ -40,4 +39,4 @@ management.metrics.export.elastic:
 
 == Elastic APM agent integration
 
-If you are using the Elastic APM agent, it can collect metrics from Micrometer `MeterRegistry` instances automatically. You can use the `SimpleMeterRegistry` if you only want metrics collected by the Elastic APM agent and not shipped anywhere else. See the https://www.elastic.co/guide/en/apm/agent/java/current/metrics.html#metrics-micrometer[Elastic docs] for more details.
+If you are using the Elastic APM agent, it can automatically collect metrics from Micrometer `MeterRegistry` instances. If you want only metrics collected by the Elastic APM agent and not shipped anywhere else, you can use the `SimpleMeterRegistry`. See the https://www.elastic.co/guide/en/apm/agent/java/current/metrics.html#metrics-micrometer[Elastic docs] for more details.

@@ -28,9 +28,9 @@ import io.micrometer.core.instrument.DistributionSummary;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.PercentileHistogramBuckets;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-import io.micrometer.prometheus.PrometheusConfig;
-import io.micrometer.prometheus.PrometheusMeterRegistry;
-import io.prometheus.client.CollectorRegistry;
+import io.micrometer.prometheusmetrics.PrometheusConfig;
+import io.micrometer.prometheusmetrics.PrometheusMeterRegistry;
+import io.prometheus.metrics.model.registry.PrometheusRegistry;
 import org.openjdk.jmh.annotations.*;
 import org.openjdk.jmh.infra.Blackhole;
 import org.openjdk.jmh.runner.Runner;
@@ -108,7 +108,7 @@ public class CompareHistogramsWithOtherLibraries {
 
         @Setup(Level.Iteration)
         public void setup() {
-            registry = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT, new CollectorRegistry(), Clock.SYSTEM);
+            registry = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT, new PrometheusRegistry(), Clock.SYSTEM);
             summary = DistributionSummary.builder("summary").publishPercentileHistogram().register(registry);
         }
 
@@ -142,7 +142,7 @@ public class CompareHistogramsWithOtherLibraries {
     @State(Scope.Benchmark)
     public static class PrometheusState {
 
-        io.prometheus.client.Histogram histogram;
+        io.prometheus.metrics.core.metrics.Histogram histogram;
 
         @Setup(Level.Trial)
         public void setup() {
@@ -152,9 +152,11 @@ public class CompareHistogramsWithOtherLibraries {
                     .maximumExpectedValue(Double.POSITIVE_INFINITY)
                     .percentilesHistogram(true)
                     .build()));
-            histogram = io.prometheus.client.Histogram.build("histogram", "A histogram")
-                .buckets(micrometerBuckets)
-                .create();
+            histogram = io.prometheus.metrics.core.metrics.Histogram.builder()
+                .name("histogram")
+                .help("A histogram")
+                .classicUpperBounds(micrometerBuckets)
+                .register();
         }
 
         @TearDown(Level.Iteration)

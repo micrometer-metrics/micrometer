@@ -1,7 +1,7 @@
 [[naming-meters]]
 = Naming Meters
 
-Micrometer employs a naming convention that separates lowercase words with a `.` (dot) character. Different monitoring systems have different recommendations regarding naming convention, and some naming conventions may be incompatible between one system and another. Each Micrometer implementation for a monitoring system comes with a naming convention that transforms lowercase dot notation names to the monitoring system's recommended naming convention. Additionally, this naming convention implementation removes special characters that are disallowed by the monitoring system from the metric names and tags. You can override the default naming convention for a registry by implementing `NamingConvention` and setting it on the registry:
+Micrometer employs a naming convention that separates lowercase words with a `.` (dot) character. Different monitoring systems have different recommendations regarding naming conventions, and some naming conventions may be incompatible between one system and another. Each Micrometer implementation for a monitoring system comes with a naming convention that transforms lowercase dot notation names to the monitoring system's recommended naming convention. Additionally, this naming convention implementation removes special characters that are disallowed by the monitoring system from the metric names and tags. You can override the default naming convention for a registry by implementing `NamingConvention` and setting it on the registry:
 
 ====
 [source,java]
@@ -63,7 +63,7 @@ In this approach, if we select `calls`, we get a value that is an aggregate of t
 
 == Common Tags
 
-You can define common tags at the registry level and add them to every metric reported to the monitoring system. This is generally used for dimensional drill-down on the operating environment, such as host, instance, region, stack, and others:
+You can define common tags at the registry level and add them to every metric reported to the monitoring system. This is generally used for dimensional drill-down on the operating environment, such as host, instance, region, stack, and others. The following lines set the same tag in two equivalent ways:
 
 ====
 [source,java]
@@ -73,7 +73,7 @@ registry.config().commonTags(Arrays.asList(Tag.of("stack", "prod"), Tag.of("regi
 ----
 ====
 
-Calls to `commonTags` append additional common tags.
+Further calls to `commonTags` append additional common tags.
 
 [IMPORTANT]
 ====

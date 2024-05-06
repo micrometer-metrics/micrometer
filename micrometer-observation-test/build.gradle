@@ -6,7 +6,7 @@ dependencies {
     api 'org.assertj:assertj-core'
     api 'org.junit.jupiter:junit-jupiter'
 
-    implementation 'org.mockito:mockito-core'
+    implementation libs.mockitoCore4
 
     testImplementation 'org.awaitility:awaitility'
 }

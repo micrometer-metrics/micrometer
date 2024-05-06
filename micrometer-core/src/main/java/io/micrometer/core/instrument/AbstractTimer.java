@@ -16,6 +16,7 @@
 package io.micrometer.core.instrument;
 
 import io.micrometer.common.lang.Nullable;
+import io.micrometer.common.util.internal.logging.WarnThenDebugLogger;
 import io.micrometer.core.instrument.distribution.*;
 import io.micrometer.core.instrument.distribution.pause.ClockDriftPauseDetector;
 import io.micrometer.core.instrument.distribution.pause.NoPauseDetector;
@@ -35,6 +36,8 @@ import java.util.function.LongSupplier;
 import java.util.function.Supplier;
 
 public abstract class AbstractTimer extends AbstractMeter implements Timer {
+
+    private static final WarnThenDebugLogger log = new WarnThenDebugLogger(AbstractTimer.class);
 
     private static final Map<PauseDetector, Object> pauseDetectorCache = new ConcurrentHashMap<>();
 
@@ -261,6 +264,9 @@ public abstract class AbstractTimer extends AbstractMeter implements Timer {
             if (intervalEstimator != null) {
                 ((IntervalEstimator) intervalEstimator).recordInterval(clock.monotonicTime());
             }
+        }
+        else {
+            log.log(() -> "'amount' should not be negative but was: " + amount);
         }
     }
 

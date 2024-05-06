@@ -27,6 +27,8 @@ import org.junit.jupiter.api.Test;
 
 import javax.annotation.Nonnull;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -212,6 +214,141 @@ class MeterRegistryTest {
         Timer timer1 = registry.timer("test.timer1");
         Timer timer2 = registry.timer("test.timer2");
         assertThat(timer1.getId().getBaseUnit()).isSameAs(timer2.getId().getBaseUnit());
+    }
+
+    @Test
+    @Issue("#4482")
+    void acceptPercentilesNullOrEmpty() {
+        LongTaskTimer.builder("timer.percentiles.null").publishPercentiles(null).register(registry);
+        LongTaskTimer.builder("timer.percentiles.empty").publishPercentiles(new double[] {}).register(registry);
+    }
+
+    @Test
+    void removeByPreFilterIdAfterAddingFilterAndDifferentlyMappedId() {
+        Counter c1 = registry.counter("counter");
+        registry.config().commonTags("common", "tag");
+        Counter c2 = registry.counter("counter");
+
+        assertThat(registry.removeByPreFilterId(c1.getId())).isSameAs(c2).isNotSameAs(c1);
+        assertThat(registry.getMeters()).containsExactly(c1);
+    }
+
+    @Test
+    void filterConfiguredAfterMeterRegistered() {
+        Counter c1 = registry.counter("counter");
+        registry.config().commonTags("common", "tag");
+        Counter c2 = registry.counter("counter");
+
+        assertThat(c1.getId().getTags()).isEmpty();
+        assertThat(c2.getId().getTags()).containsExactly(Tag.of("common", "tag"));
+    }
+
+    @Test
+    void doNotCallFiltersWhenUnnecessary() {
+        AtomicInteger filterCallCount = new AtomicInteger();
+        registry.config().meterFilter(new MeterFilter() {
+            @Override
+            public Meter.Id map(Meter.Id id) {
+                filterCallCount.incrementAndGet();
+                return id;
+            }
+        });
+        Counter c1 = registry.counter("counter");
+        assertThat(filterCallCount.get()).isOne();
+        Counter c2 = registry.counter("counter");
+        assertThat(filterCallCount.get()).isOne();
+
+        assertThat(c1).isSameAs(c2);
+
+        registry.counter("other");
+        assertThat(filterCallCount.get()).isEqualTo(2);
+    }
+
+    @Test
+    void differentPreFilterIdsMapToSameIdWithStaleId() {
+        Counter c1 = registry.counter("counter");
+        registry.config().meterFilter(MeterFilter.ignoreTags("ignore"));
+        Counter c2 = registry.counter("counter", "ignore", "value");
+
+        assertThat(c1).isSameAs(c2);
+        assertThat(registry.remove(c1)).isSameAs(c2);
+        assertThat(registry.remove(c2)).isNull();
+        assertThat(registry.getMeters()).isEmpty();
+    }
+
+    @Test
+    @Issue("#4971")
+    void differentPreFilterIdsMapToSameId_thenCacheIsBounded() {
+        registry.config().meterFilter(MeterFilter.replaceTagValues("secret", s -> "redacted"));
+        Counter c1 = registry.counter("counter", "secret", "value");
+        Counter c2 = registry.counter("counter", "secret", "value2");
+
+        assertThat(c1).isSameAs(c2);
+        // even though we have 2 different pre-filter IDs, the second should not be added
+        // to the map because it would result in a memory leak with a high cardinality tag
+        // that's otherwise limited in cardinality by a MeterFilter
+        assertThat(registry._getPreFilterIdToMeterMap()).hasSize(1);
+
+        assertThat(registry.remove(c1)).isSameAs(c2);
+        assertThat(registry.getMeters()).isEmpty();
+        assertThat(registry._getPreFilterIdToMeterMap()).isEmpty();
+    }
+
+    @Test
+    void samePreFilterIdsMapToDifferentIdWithStaleMeter() {
+        Counter c1 = registry.counter("counter", "ignore", "value");
+        registry.config().meterFilter(MeterFilter.ignoreTags("ignore"));
+        Counter c2 = registry.counter("counter", "ignore", "value");
+
+        assertThat(c1).isNotSameAs(c2);
+        assertThat(registry.remove(c1)).isNotSameAs(c2);
+        Counter c3 = registry.counter("counter", "ignore", "value");
+        assertThat(c3).isSameAs(c2);
+        assertThat(registry.remove(c2)).isSameAs(c3);
+        assertThat(registry.getMeters()).isEmpty();
+    }
+
+    @Test
+    void removingStaleMeterRemovesItFromAllInternalState() {
+        registry.config().commonTags("application", "abcservice");
+        Counter c1 = registry.counter("counter");
+        // make c1 marked as stale
+        registry.config().commonTags("common", "tag");
+
+        registry.remove(c1.getId());
+        assertThat(registry.getMeters()).isEmpty();
+        assertThat(registry._getPreFilterIdToMeterMap()).isEmpty();
+        assertThat(registry._getStalePreFilterIds()).isEmpty();
+    }
+
+    @Test
+    @Issue("#5035")
+    void multiplePreFilterIdsMapToSameId_removeByPreFilterId() {
+        registry.config().meterFilter(MeterFilter.replaceTagValues("secret", s -> "redacted"));
+        Counter c1 = registry.counter("counter", "secret", "value");
+        Counter c2 = registry.counter("counter", "secret", "value2");
+
+        Meter.Id preFilterId = new Meter.Id("counter", Tags.of("secret", "value2"), null, null, Meter.Type.COUNTER);
+        assertThat(registry.removeByPreFilterId(preFilterId)).isSameAs(c1).isSameAs(c2);
+        assertThat(registry.getMeters()).isEmpty();
+    }
+
+    @Test
+    void unchangedStaleMeterShouldBeUnmarked() {
+        Counter c1 = registry.counter("counter");
+        // make c1 stale
+        registry.config().meterFilter(MeterFilter.ignoreTags("abc"));
+        // this should cause c1 (== c2) to be unmarked as stale
+        Counter c2 = registry.counter("counter");
+
+        assertThat(c1).isSameAs(c2);
+
+        assertThat(registry.getMeters()).hasSize(1);
+        assertThat(registry._getPreFilterIdToMeterMap()).hasSize(1);
+        assertThat(registry._getStalePreFilterIds())
+            .describedAs("If the meter-filter doesn't alter the meter creation, meters are never unmarked "
+                    + "from staleness and we end-up paying the additional cost everytime")
+            .isEmpty();
     }
 
 }

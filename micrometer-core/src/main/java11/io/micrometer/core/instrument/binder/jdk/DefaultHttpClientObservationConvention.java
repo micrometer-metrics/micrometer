@@ -29,13 +29,15 @@ import java.util.function.Function;
  *
  * @author Marcin Grzejszczak
  * @since 1.10.0
+ * @deprecated since 1.13.0 use the same class in the micrometer-java11 module instead
  */
+@Deprecated
 public class DefaultHttpClientObservationConvention implements HttpClientObservationConvention {
 
     /**
      * Instance of this {@link DefaultHttpClientObservationConvention}.
      */
-    public static DefaultHttpClientObservationConvention INSTANCE = new DefaultHttpClientObservationConvention();
+    public static final DefaultHttpClientObservationConvention INSTANCE = new DefaultHttpClientObservationConvention();
 
     @Override
     public KeyValues getLowCardinalityKeyValues(HttpClientContext context) {

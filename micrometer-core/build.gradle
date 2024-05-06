@@ -1,5 +1,5 @@
 plugins {
-    id "org.jetbrains.kotlin.jvm" version "1.7.22"
+    alias(libs.plugins.kotlin19)
     id 'me.champeau.mrjar' version "0.1.1"
 }
 
@@ -12,12 +12,14 @@ multiRelease {
 tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).all {
     kotlinOptions {
         jvmTarget = javaTargetVersion
+        apiVersion = "1.7"
+        languageVersion = "1.7"
     }
 }
 
-tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinTest).all {
+compileTestKotlin {
     kotlinOptions {
-        jvmTarget = JavaVersion.toVersion(javaLanguageVersion)
+        jvmTarget = JavaVersion.VERSION_11
     }
 }
 
@@ -39,7 +41,7 @@ jar {
             com.netflix.hystrix.*;resolution:=dynamic;version="${@}",\
             ch.qos.logback.*;resolution:=dynamic;version="${@}",\
             org.apache.logging.log4j.*;resolution:=dynamic;version="${@}",\
-            okhttp3.*;resolution:=dynamic;version="${@}",\
+            okhttp3.*;resolution:=dynamic,\
             com.mongodb.*;resolution:=dynamic;version="${@}",\
             org.jooq.*;resolution:=dynamic;version="${@}",\
             org.apache.kafka.*;resolution:=dynamic,\
@@ -58,6 +60,7 @@ jar {
             rx.*;resolution:=dynamic;version="${@}",\
             javax.persistence.*;resolution:=dynamic;version="${@}",\
             io.netty.*;resolution:=dynamic;version="${@}",\
+            javax.annotation.*;resolution:=optional;version="${@}",\
             *
         '''.stripIndent()
     }
@@ -99,6 +102,7 @@ dependencies {
     optionalApi 'org.apache.tomcat.embed:tomcat-embed-core'
     optionalApi 'org.glassfish.jersey.core:jersey-server'
     optionalApi 'io.grpc:grpc-api'
+    optionalApi 'io.grpc:grpc-kotlin-stub'
     optionalApi 'io.netty:netty-transport'
 
     // apache httpcomponents monitoring
@@ -117,7 +121,7 @@ dependencies {
 
     optionalApi 'org.mongodb:mongodb-driver-sync'
 
-    optionalApi 'org.jooq:jooq'
+    optionalApi libs.jooq
 
     optionalApi 'org.apache.kafka:kafka-clients'
     optionalApi 'org.apache.kafka:kafka-streams'
@@ -126,6 +130,7 @@ dependencies {
     optionalApi 'io.micrometer:context-propagation'
 
     // kotlin
+    optionalApi enforcedPlatform('org.jetbrains.kotlin:kotlin-bom')
     optionalApi 'org.jetbrains.kotlin:kotlin-reflect'
     optionalApi 'org.jetbrains.kotlin:kotlin-stdlib-jdk8'
     optionalApi 'org.jetbrains.kotlinx:kotlinx-coroutines-core'
@@ -145,9 +150,15 @@ dependencies {
 
     // JUnit 5
     testImplementation 'org.junit.jupiter:junit-jupiter'
-    testImplementation 'com.tngtech.archunit:archunit-junit5'
+    testImplementation(libs.archunitJunit5) {
+        // avoid transitively pulling in slf4j 2
+        exclude group: "org.slf4j", module: "slf4j-api"
+    }
+    // Needed for LogbackMetrics tests
+    testImplementation libs.slf4jApi
+    testImplementation(libs.junitLoggingExtention)
 
-    testImplementation 'org.mockito:mockito-core'
+    testImplementation libs.mockitoCore5
 
     testImplementation 'org.hsqldb:hsqldb'
     testImplementation 'com.h2database:h2'
@@ -271,4 +282,9 @@ java11Test {
         maxFailures = 5
         maxRetries = 3
     }
+}
+
+compileJava11TestJava {
+    sourceCompatibility = JavaVersion.VERSION_11
+    targetCompatibility = JavaVersion.VERSION_11
 }

@@ -1,5 +1,4 @@
 = Micrometer Graphite
-:toc:
 :sectnums:
 :system: graphite
 
@@ -28,20 +27,7 @@ GraphiteConfig graphiteConfig = new GraphiteConfig() {
 MeterRegistry registry = new GraphiteMeterRegistry(graphiteConfig, Clock.SYSTEM, HierarchicalNameMapper.DEFAULT);
 ----
 
-Micrometer uses Dropwizard Metrics as the underlying instrumentation library when recording metrics destined for Graphite. `GraphiteConfig` is an interface with a set of default methods. If, in the implementation of `get(String k)`, rather than returning `null`, you  instead bind it to a property source, you can override the default configuration. For example, Micrometer's Spring Boot support binds properties that are prefixed with `management.metrics.export.graphite` directly to the `GraphiteConfig`:
-
-[source,yml]
-----
-management.metrics.export.graphite:
-    # The location of your Graphite server
-    host: mygraphitehost
-
-    # You will probably want to conditionally disable Graphite publishing in local development.
-    enabled: true
-
-    # The interval at which metrics are sent to Graphite. The default is 1 minute.
-    step: 1m
-----
+Micrometer uses Dropwizard Metrics as the underlying instrumentation library when recording metrics destined for Graphite. `GraphiteConfig` is an interface with a set of default methods. If, in the implementation of `get(String k)`, rather than returning `null`, you instead bind it to a property source, you can override the default configuration. For example, Spring Boot's Micrometer support binds its application properties directly to the `GraphiteConfig`. See https://docs.spring.io/spring-boot/docs/current/reference/htmlsingle/#actuator.metrics.export.graphite[Spring Boot Reference Documentation] for details.
 
 == Graphite Tag Support
 
@@ -52,7 +38,7 @@ The following documentation sections on hierarchical name mapping and metrics pr
 
 include::hierarchical-name-mapping.adoc[]
 
-== Prefixing your metrics
+== Prefixing Your Metrics
 
 To add a prefix to all metrics that go to graphite, use the `GraphiteConfig#tagsAsPrefix` configuration option. This option applies the tag value of a set of common tags as a prefix. For example, if `tagsAsPrefix` contains `application`, and a meter named `myTimer` is created with a tag of `application=APPNAME`, it appears in Graphite as `APPNAME.myTimer`.
 
@@ -66,7 +52,7 @@ public MeterRegistryCustomizer<MeterRegistry> commonTags() {
 }
 ----
 
-We do it this way because, generally, a tag prefix in Graphite is correlated to a common tag elsewhere. Prefixes tend to be something like app name or host. By applying those values as common tags, you make your metrics more portable (that is, if you ever switch to a dimensional monitoring system, you are set).
+We do it this way because, generally, a tag prefix in Graphite is correlated to a common tag elsewhere. Prefixes tend to be something like app name or host. By applying those values as common tags, you make your metrics more portable (if you ever switch to a dimensional monitoring system, you are set).
 
 You can use this when the order of the prefix matters. Micrometer always sorts tags, but the order of tag keys in `tagsAsPrefix` is preserved, so adding `host` and `application` to `tagsAsPrefix` results in a prefixed metric, such as `HOST.APP.myCounter`.
 

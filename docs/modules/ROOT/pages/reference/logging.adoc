@@ -1,0 +1,31 @@
+[[overview]]
+= Logging Metrics Instrumentation
+
+Micrometer can add metrics to different loggers:
+
+* <<logging-log4j, Log4j>>
+* <<logging-logback, Logback>>
+
+[[logging-log4j]]
+== Log4j Instrumentation
+
+[source,java,subs=+attributes]
+-----
+// Setting up instrumentation
+include::{include-core-test-java}/io/micrometer/core/instrument/binder/logging/Log4j2MetricsTest.java[tags=setup, indent=0]
+
+// Usage example
+include::{include-core-test-java}/io/micrometer/core/instrument/binder/logging/Log4j2MetricsTest.java[tags=example, indent=0]
+-----
+
+[[logging-logback]]
+== Logback Instrumentation
+
+[source,java,subs=+attributes]
+-----
+// Setting up instrumentation
+include::{include-core-test-java}/io/micrometer/core/instrument/binder/logging/LogbackMetricsTest.java[tags=setup, indent=0]
+
+// Usage example
+include::{include-core-test-java}/io/micrometer/core/instrument/binder/logging/LogbackMetricsTest.java[tags=example, indent=0]
+-----

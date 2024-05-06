@@ -15,6 +15,8 @@
  */
 package io.micrometer.core.instrument.binder.httpcomponents;
 
+import io.micrometer.common.util.internal.logging.InternalLogger;
+import io.micrometer.common.util.internal.logging.InternalLoggerFactory;
 import io.micrometer.core.annotation.Incubating;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
@@ -57,6 +59,8 @@ import java.util.function.Function;
 @Deprecated
 public class MicrometerHttpClientInterceptor {
 
+    private static final InternalLogger log = InternalLoggerFactory.getInstance(MicrometerHttpClientInterceptor.class);
+
     private static final String METER_NAME = "httpcomponents.httpclient.request";
 
     private final Map<HttpContext, Timer.ResourceSample> timerByHttpContext = new ConcurrentHashMap<>();
@@ -74,6 +78,9 @@ public class MicrometerHttpClientInterceptor {
      */
     public MicrometerHttpClientInterceptor(MeterRegistry meterRegistry, Function<HttpRequest, String> uriMapper,
             Iterable<Tag> extraTags, boolean exportTagsForRoute) {
+        log.warn(
+                "This class has been deprecated. Please use ObservationExecChainHandler for Apache HTTP client 5 support instead.");
+
         this.requestInterceptor = (request, context) -> timerByHttpContext.put(context,
                 Timer.resource(meterRegistry, METER_NAME)
                     .tags("method", request.getRequestLine().getMethod(), "uri", uriMapper.apply(request)));

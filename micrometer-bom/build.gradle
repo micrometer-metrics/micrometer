@@ -10,12 +10,14 @@ dependencies {
             !it.name.contains('sample') &&
                     !it.name.contains('benchmark') &&
                     !it.name.contains('micrometer-bom') &&
-                    !it.name.contains('micrometer-osgi-test')
+                    !it.name.contains('micrometer-osgi-test') &&
+                    it.name != 'docs'
         }.each {
             api(group: it.group,
                     name: it.name,
                     version: it.version.toString())
         }
+        api libs.contextPropagation
     }
 }
 

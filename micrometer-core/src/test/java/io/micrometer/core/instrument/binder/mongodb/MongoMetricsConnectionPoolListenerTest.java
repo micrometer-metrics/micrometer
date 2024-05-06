@@ -79,8 +79,9 @@ class MongoMetricsConnectionPoolListenerTest extends AbstractMongoDbTest {
 
     @Test
     void shouldCreatePoolMetricsWithCustomTags() {
-        MeterRegistry registry = new SimpleMeterRegistry();
         AtomicReference<String> clusterId = new AtomicReference<>();
+        // tag::setup[]
+        MeterRegistry registry = new SimpleMeterRegistry();
         MongoMetricsConnectionPoolListener connectionPoolListener = new MongoMetricsConnectionPoolListener(registry,
                 e -> Tags.of("cluster.id", e.getServerId().getClusterId().getValue(), "server.address",
                         e.getServerId().getAddress().toString(), "my.custom.connection.pool.identifier", "custom"));
@@ -96,7 +97,9 @@ class MongoMetricsConnectionPoolListenerTest extends AbstractMongoDbTest {
                 }))
             .build();
         MongoClient mongo = MongoClients.create(settings);
+        // end::setup[]
 
+        // tag::example[]
         mongo.getDatabase("test").createCollection("testCol");
 
         Tags tags = Tags.of("cluster.id", clusterId.get(), "server.address", String.format("%s:%s", host, port),
@@ -107,6 +110,7 @@ class MongoMetricsConnectionPoolListenerTest extends AbstractMongoDbTest {
         assertThat(registry.get("mongodb.driver.pool.waitqueuesize").gauge().value()).isZero();
 
         mongo.close();
+        // end::example[]
 
         assertThat(registry.find("mongodb.driver.pool.size").tags(tags).gauge())
             .describedAs("metrics should be removed when the connection pool is closed")
@@ -114,6 +118,7 @@ class MongoMetricsConnectionPoolListenerTest extends AbstractMongoDbTest {
     }
 
     @Issue("#2384")
+    @Test
     void whenConnectionCheckedInAfterPoolClose_thenNoExceptionThrown() {
         ServerId serverId = new ServerId(new ClusterId(), new ServerAddress(host, port));
         ConnectionId connectionId = new ConnectionId(serverId);

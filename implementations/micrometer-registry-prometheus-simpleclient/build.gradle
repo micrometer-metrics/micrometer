@@ -1,0 +1,9 @@
+description = 'MeterRegistry implementation for Prometheus using io.prometheus:simpleclient_common. This module is deprecated in favor of io.micrometer:micrometer-registry-prometheus that uses io.prometheus:prometheus-metrics-core.'
+
+dependencies {
+    api project(':micrometer-core')
+
+    api 'io.prometheus:simpleclient_common'
+
+    testImplementation project(':micrometer-test')
+}

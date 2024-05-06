@@ -15,6 +15,7 @@
  */
 package io.micrometer.core.instrument.binder.jersey.server;
 
+import io.micrometer.common.lang.Nullable;
 import io.micrometer.common.util.StringUtils;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.binder.http.Outcome;
@@ -34,7 +35,9 @@ import java.util.regex.Pattern;
  * @author Michael Weirauch
  * @author Johnny Lim
  * @since 1.8.0
+ * @deprecated since 1.13.0 use the jersey-micrometer module in the Jersey project instead
  */
+@Deprecated
 public final class JerseyTags {
 
     private static final Tag URI_NOT_FOUND = Tag.of("uri", "NOT_FOUND");
@@ -42,6 +45,8 @@ public final class JerseyTags {
     private static final Tag URI_REDIRECTION = Tag.of("uri", "REDIRECTION");
 
     private static final Tag URI_ROOT = Tag.of("uri", "root");
+
+    private static final Tag URI_UNKNOWN = Tag.of("uri", "UNKNOWN");
 
     private static final Tag EXCEPTION_NONE = Tag.of("exception", "None");
 
@@ -95,7 +100,10 @@ public final class JerseyTags {
             }
         }
         String matchingPattern = getMatchingPattern(event);
-        if (matchingPattern.equals("/")) {
+        if (matchingPattern == null) {
+            return URI_UNKNOWN;
+        }
+        else if (matchingPattern.equals("/")) {
             return URI_ROOT;
         }
         return Tag.of("uri", matchingPattern);
@@ -105,10 +113,19 @@ public final class JerseyTags {
         return 300 <= status && status < 400;
     }
 
+    /**
+     * Gets the pattern for which the request was matched and normalizes it for tagging
+     * purposes.
+     * @param event request from which to extract the pattern
+     * @return normalized matched pattern or {@code null} if nothing matched
+     */
+    @Nullable
     static String getMatchingPattern(RequestEvent event) {
         ExtendedUriInfo uriInfo = event.getUriInfo();
         List<UriTemplate> templates = uriInfo.getMatchedTemplates();
-
+        if (templates.isEmpty()) {
+            return null;
+        }
         StringBuilder sb = new StringBuilder();
         sb.append(uriInfo.getBaseUri().getPath());
         for (int i = templates.size() - 1; i >= 0; i--) {

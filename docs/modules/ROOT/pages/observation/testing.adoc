@@ -1,15 +1,19 @@
-Micrometer Observation comes with `micrometer-observation-test` module that allows you to unit-test your Observations.
+[[micrometer-observation-testing]]
+= Testing
 
+Micrometer Observation comes with the `micrometer-observation-test` module, which lets you unit-test your Observations.
+
+[[micrometer-observation-installing]]
 == Installing
 
-The following example shows the required dependency in Gradle (assuming that Micrometer BOM has been added):
+The following example shows the required dependency in Gradle (assuming that the Micrometer BOM has been added):
 
 [source,groovy,subs=+attributes]
 -----
 testImplementation 'io.micrometer:micrometer-observation-test'
 -----
 
-The following example shows the required dependency in Maven (assuming that Micrometer BOM has been added):
+The following example shows the required dependency in Maven (assuming that the Micrometer BOM has been added):
 
 [source,xml,subs=+attributes]
 -----
@@ -20,16 +24,17 @@ The following example shows the required dependency in Maven (assuming that Micr
 </dependency>
 -----
 
+[[micrometer-observation-runnning]]
 == Running Observation Unit Tests
 
-Let's say that you have the following production code. It will create an observation with 2 tags (low and high cardinality) and then call `observe` that will start the observation, put it in scope, close the scope and stop the observation.
+Suppose you have the following production code. It will create an observation with two tags (low and high cardinality) and then call `observe` to start the observation, put it in scope, close the scope, and stop the observation:
 
 [source,java,subs=+attributes]
 -----
 include::{include-java}/observation/ObservationTestingTests.java[tags=example,indent=0]
 -----
 
-To unit-test this code you can use the `TestObservationRegistry` class.
+To unit-test this code, you can use the `TestObservationRegistry` class:
 
 [source,java,subs=+attributes]
 -----

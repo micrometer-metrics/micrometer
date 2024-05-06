@@ -15,9 +15,13 @@
  */
 package io.micrometer.benchmark.core;
 
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.config.MeterFilter;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.openjdk.jmh.annotations.*;
+import org.openjdk.jmh.profile.GCProfiler;
 import org.openjdk.jmh.runner.Runner;
 import org.openjdk.jmh.runner.RunnerException;
 import org.openjdk.jmh.runner.options.Options;
@@ -26,37 +30,60 @@ import org.openjdk.jmh.runner.options.OptionsBuilder;
 import java.util.concurrent.TimeUnit;
 
 @State(Scope.Benchmark)
+@Fork(1)
+@Warmup(iterations = 2)
+@Measurement(iterations = 5)
+@BenchmarkMode(Mode.AverageTime)
 @OutputTimeUnit(TimeUnit.MICROSECONDS)
+@Threads(2)
 public class MeterRegistrationBenchmark {
 
     public static void main(String[] args) throws RunnerException {
         Options opt = new OptionsBuilder().include(MeterRegistrationBenchmark.class.getSimpleName())
-            .warmupIterations(2)
-            .measurementIterations(5)
-            .mode(Mode.SampleTime)
-            .timeUnit(TimeUnit.SECONDS)
-            .forks(1)
+            .addProfiler(GCProfiler.class)
             .build();
 
         new Runner(opt).run();
     }
 
-    private int x = 923;
+    MeterRegistry registry = new SimpleMeterRegistry();
 
-    private int y = 123;
+    Meter.MeterProvider<Counter> counterMeterProvider = Counter.builder("jmh.existing").withRegistry(registry);
 
-    @Benchmark
-    public int insert10_000() {
-        MeterRegistry registry = new SimpleMeterRegistry();
-        for (int i = 0; i < 10_000; i++) {
-            registry.counter("my.counter", "k" + i, "v1");
-        }
-        return sum();
+    @Setup
+    public void setup() {
+        registry.config()
+            .commonTags("application", "abcservice", "az", "xyz", "environment", "production", "random-meta",
+                    "random-meta");
+        registry.counter("jmh.stale");
+        registry.config().meterFilter(MeterFilter.acceptNameStartsWith("jmh"));
+        registry.counter("jmh.existing", "k1", "v1");
     }
 
     @Benchmark
-    public int sum() {
-        return x + y;
+    @Warmup(iterations = 20)
+    @Measurement(iterations = 200)
+    @BenchmarkMode(Mode.SingleShotTime)
+    public Meter registerNew() {
+        return registry.counter("jmh.counter", "k1", "v1");
+    }
+
+    @Benchmark
+    @Warmup(iterations = 20)
+    @Measurement(iterations = 200)
+    @BenchmarkMode(Mode.SingleShotTime)
+    public Meter registerStale() {
+        return registry.counter("jmh.stale");
+    }
+
+    @Benchmark
+    public Meter registerExisting() {
+        return registry.counter("jmh.existing", "k1", "v1");
+    }
+
+    @Benchmark
+    public Meter registerExistingWithProvider() {
+        return counterMeterProvider.withTag("k1", "v1");
     }
 
 }

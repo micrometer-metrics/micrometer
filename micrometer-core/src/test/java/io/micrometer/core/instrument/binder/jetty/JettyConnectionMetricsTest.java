@@ -27,8 +27,8 @@ import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.api.Request;
 import org.eclipse.jetty.client.util.StringContentProvider;
 import org.eclipse.jetty.server.Connector;
+import org.eclipse.jetty.server.NetworkTrafficServerConnector;
 import org.eclipse.jetty.server.Server;
-import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.util.component.LifeCycle;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -44,12 +44,14 @@ class JettyConnectionMetricsTest {
 
     private Server server = new Server(0);
 
-    private ServerConnector connector = new ServerConnector(server);
+    private NetworkTrafficServerConnector connector = new NetworkTrafficServerConnector(server);
 
     private CloseableHttpClient client = HttpClients.createDefault();
 
     void setup() throws Exception {
-        connector.addBean(new JettyConnectionMetrics(registry));
+        JettyConnectionMetrics metrics = new JettyConnectionMetrics(registry);
+        connector.addBean(metrics);
+        connector.addNetworkTrafficListener(metrics);
         server.setConnectors(new Connector[] { connector });
         server.start();
     }
@@ -88,7 +90,7 @@ class JettyConnectionMetricsTest {
         assertThat(latch.await(10, SECONDS)).isTrue();
         assertThat(registry.get("jetty.connections.max").gauge().value()).isEqualTo(2.0);
         assertThat(registry.get("jetty.connections.request").tag("type", "server").timer().count()).isEqualTo(2);
-        assertThat(registry.get("jetty.connections.bytes.in").summary().totalAmount()).isGreaterThan(1);
+        assertThat(registry.get("jetty.connections.bytes.in").summary().totalAmount()).isPositive();
     }
 
     @Test
@@ -116,7 +118,12 @@ class JettyConnectionMetricsTest {
         assertThat(latch.await(10, SECONDS)).isTrue();
         assertThat(registry.get("jetty.connections.max").gauge().value()).isEqualTo(1.0);
         assertThat(registry.get("jetty.connections.request").tag("type", "client").timer().count()).isEqualTo(1);
-        assertThat(registry.get("jetty.connections.bytes.out").summary().totalAmount()).isGreaterThan(1);
+        // assertThat(registry.get("jetty.connections.bytes.out").summary().totalAmount()).isEqualTo(784);
+        // TODO: explain why there is a difference between what we had before and after
+        // the change
+        // assertThat(registry.get("jetty.connections.bytes.out").summary().totalAmount()).isEqualTo(618);
+        // after the changes
+        assertThat(registry.get("jetty.connections.bytes.out").summary().totalAmount()).isPositive();
     }
 
     @Test

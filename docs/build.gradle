@@ -1,13 +1,13 @@
 buildscript {
-	repositories {
-		mavenCentral()
-		gradlePluginPortal()
-	}
+    repositories {
+        mavenCentral()
+        gradlePluginPortal()
+    }
 
-	dependencies {
-		classpath 'io.spring.gradle.antora:spring-antora-plugin:0.0.1'
-		classpath 'org.antora:gradle-antora-plugin:1.0.0'
-	}
+    dependencies {
+        classpath 'io.spring.gradle.antora:spring-antora-plugin:0.0.1'
+        classpath 'org.antora:gradle-antora-plugin:1.0.0'
+    }
 }
 
 apply plugin: 'java'
@@ -17,7 +17,7 @@ apply plugin: 'org.antora'
 description = 'Micrometer Docs'
 
 repositories {
-   mavenCentral()
+    mavenCentral()
 }
 
 dependencies {
@@ -37,30 +37,35 @@ dependencies {
     testImplementation 'io.netty:netty-transport'
     testImplementation 'org.apache.httpcomponents.client5:httpclient5'
     testImplementation libs.javalin
+    // Kafka binder IT dependencies
+    testImplementation 'org.apache.kafka:kafka-clients'
+    testImplementation 'org.testcontainers:testcontainers'
+    testImplementation 'org.testcontainers:junit-jupiter'
+    testImplementation 'org.testcontainers:kafka'
 }
 
 antora {
-	version = '3.2.0-alpha.2'
-	playbook = 'antora-playbook.yml'
-	options = ['--clean', '--stacktrace']
-	environment = [
-			'ALGOLIA_API_KEY': 'da671ceec1f84f80f280884a6a91bde5',
-			'ALGOLIA_APP_ID': 'WB1FQYI187',
-			'ALGOLIA_INDEX_NAME': 'micrometer'
-	]
+    version = '3.2.0-alpha.2'
+    playbook = 'antora-playbook.yml'
+    options = ['--clean', '--stacktrace']
+    environment = [
+            'ALGOLIA_API_KEY'   : 'da671ceec1f84f80f280884a6a91bde5',
+            'ALGOLIA_APP_ID'    : 'WB1FQYI187',
+            'ALGOLIA_INDEX_NAME': 'micrometer'
+    ]
 
-	dependencies = [
-			'@antora/atlas-extension': '1.0.0-alpha.1',
-			'@antora/collector-extension': '1.0.0-alpha.3',
-			'@asciidoctor/tabs': '1.0.0-beta.3',
-			'@springio/antora-extensions': '1.4.2',
-			'@springio/asciidoctor-extensions': '1.0.0-alpha.8',
-	]
+    dependencies = [
+            '@antora/atlas-extension'         : '1.0.0-alpha.1',
+            '@antora/collector-extension'     : '1.0.0-alpha.3',
+            '@asciidoctor/tabs'               : '1.0.0-beta.3',
+            '@springio/antora-extensions'     : '1.4.2',
+            '@springio/asciidoctor-extensions': '1.0.0-alpha.8',
+    ]
 }
 
 tasks.named('generateAntoraYml') {
     asciidocAttributes = project.provider {
-        return  ['micrometer-version': project.version.toString()]
+        return ['micrometer-version': project.version.toString()]
     }
 }
 
@@ -81,13 +86,13 @@ javadoc {
 }
 
 tasks.withType(AbstractPublishToMaven).configureEach {
-	enabled = false
+    enabled = false
 }
 
 downloadBaseline {
-	enabled = false
+    enabled = false
 }
 
 japicmp {
-	enabled = false
+    enabled = false
 }

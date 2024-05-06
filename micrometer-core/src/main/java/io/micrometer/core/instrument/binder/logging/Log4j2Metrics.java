@@ -40,11 +40,11 @@ import static java.util.Collections.emptyList;
 /**
  * {@link MeterBinder} for Apache Log4j 2. Please use at least 2.21.0 since there was a
  * bug in earlier versions that prevented Micrometer to increment its counters correctly.
- * See:
- * <a href="https://github.com/apache/logging-log4j2/issues/1550">logging-log4j2#1550</a>
- * See: <a href=
- * "https://github.com/micrometer-metrics/micrometer/issues/2176">micrometer#2176</a>
  *
+ * @see <a href=
+ * "https://github.com/apache/logging-log4j2/issues/1550">logging-log4j2#1550</a>
+ * @see <a href=
+ * "https://github.com/micrometer-metrics/micrometer/issues/2176">micrometer#2176</a>
  * @author Steven Sheehy
  * @author Johnny Lim
  * @since 1.1.0
@@ -54,6 +54,8 @@ import static java.util.Collections.emptyList;
 public class Log4j2Metrics implements MeterBinder, AutoCloseable {
 
     private static final String METER_NAME = "log4j2.events";
+
+    private static final String METER_DESCRIPTION = "Number of log events";
 
     private final Iterable<Tag> tags;
 
@@ -76,7 +78,6 @@ public class Log4j2Metrics implements MeterBinder, AutoCloseable {
 
     @Override
     public void bindTo(MeterRegistry registry) {
-
         Configuration configuration = loggerContext.getConfiguration();
         LoggerConfig rootLoggerConfig = configuration.getRootLogger();
         rootLoggerConfig.addFilter(createMetricsFilterAndStart(registry));
@@ -92,9 +93,9 @@ public class Log4j2Metrics implements MeterBinder, AutoCloseable {
                 }
                 Filter logFilter = loggerConfig.getFilter();
 
-                if ((logFilter instanceof CompositeFilter
+                if (logFilter instanceof CompositeFilter
                         && Arrays.stream(((CompositeFilter) logFilter).getFiltersArray())
-                            .anyMatch(innerFilter -> innerFilter instanceof MetricsFilter))) {
+                            .anyMatch(innerFilter -> innerFilter instanceof MetricsFilter)) {
                     return;
                 }
 
@@ -157,42 +158,42 @@ public class Log4j2Metrics implements MeterBinder, AutoCloseable {
             fatalCounter = Counter.builder(METER_NAME)
                 .tags(tags)
                 .tags("level", "fatal")
-                .description("Number of fatal level log events")
+                .description(METER_DESCRIPTION)
                 .baseUnit(BaseUnits.EVENTS)
                 .register(registry);
 
             errorCounter = Counter.builder(METER_NAME)
                 .tags(tags)
                 .tags("level", "error")
-                .description("Number of error level log events")
+                .description(METER_DESCRIPTION)
                 .baseUnit(BaseUnits.EVENTS)
                 .register(registry);
 
             warnCounter = Counter.builder(METER_NAME)
                 .tags(tags)
                 .tags("level", "warn")
-                .description("Number of warn level log events")
+                .description(METER_DESCRIPTION)
                 .baseUnit(BaseUnits.EVENTS)
                 .register(registry);
 
             infoCounter = Counter.builder(METER_NAME)
                 .tags(tags)
                 .tags("level", "info")
-                .description("Number of info level log events")
+                .description(METER_DESCRIPTION)
                 .baseUnit(BaseUnits.EVENTS)
                 .register(registry);
 
             debugCounter = Counter.builder(METER_NAME)
                 .tags(tags)
                 .tags("level", "debug")
-                .description("Number of debug level log events")
+                .description(METER_DESCRIPTION)
                 .baseUnit(BaseUnits.EVENTS)
                 .register(registry);
 
             traceCounter = Counter.builder(METER_NAME)
                 .tags(tags)
                 .tags("level", "trace")
-                .description("Number of trace level log events")
+                .description(METER_DESCRIPTION)
                 .baseUnit(BaseUnits.EVENTS)
                 .register(registry);
         }
