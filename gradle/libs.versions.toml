@@ -1,6 +1,6 @@
 [versions]
 application-insights = "2.6.4"
-archunit = "1.1.0"
+archunit = "1.1.1"
 asmForPlugins = "7.3.1"
 aspectjweaver = "1.8.14"
 assertj = "3.24.2"
