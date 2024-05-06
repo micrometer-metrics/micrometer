@@ -1,24 +1,24 @@
 [versions]
 activemq-artemis = "2.33.0"
 application-insights = "2.6.4"
-archunit = "1.2.1"
+archunit = "1.3.0"
 asmForPlugins = "7.3.1"
 aspectjweaver = "1.9.22"
 assertj = "3.25.3"
 awaitility = "4.2.1"
 # legacy SDK
-aws-cloudwatch = "1.12.696"
+aws-cloudwatch = "1.12.713"
 caffeine = "2.9.3"
-cloudwatch2 = "2.25.26"
+cloudwatch2 = "2.25.43"
 colt = "1.2.0"
 dagger = "2.51.1"
 dropwizard-metrics = "4.2.25"
 dropwizard-metrics5 = "5.0.0"
-dynatrace-utils = "2.2.0"
+dynatrace-utils = "2.2.1"
 ehcache2 = "2.10.9.2"
 ehcache3 = "3.10.8"
 gmetric4j = "1.0.10"
-google-cloud-monitoring = "3.42.0"
+google-cloud-monitoring = "3.43.0"
 grpc = "1.58.0"
 grpcKotlin = "1.4.1"
 guava = "32.1.2-jre"
@@ -62,24 +62,24 @@ latency-utils = "2.0.3"
 logback12 = "1.2.13"
 logback-latest = "1.5.3"
 log4j = "2.23.1"
-maven-resolver = "1.9.18"
+maven-resolver = "1.9.20"
 mockito4 = "4.11.0"
 mockito5 = "5.11.0"
 mongo = "4.11.2"
-netty = "4.1.108.Final"
+netty = "4.1.109.Final"
 newrelic-api = "5.14.0"
 # Kotlin 1.7 sample will fail from OkHttp 4.12.0 due to okio dependency being a Kotlin 1.9 module
 okhttp = "4.11.0"
 postgre = "42.7.3"
 prometheus = "1.2.1"
 prometheusSimpleClient = "0.16.0"
-reactor = "2022.0.17"
+reactor = "2022.0.18"
 rest-assured = "5.4.0"
 resteasy-netty4 = "6.2.6.Final"
-signalfx = "1.0.40"
+signalfx = "1.0.41"
 slf4j = "1.7.36"
-spectator-atlas = "1.7.11"
-spring = "5.3.33"
+spectator-atlas = "1.7.12"
+spring = "5.3.34"
 spring-javaformat = "0.0.41"
 testcontainers = "1.19.7"
 tomcat = "8.5.100"
@@ -114,7 +114,7 @@ ehcache3 = { module = "org.ehcache:ehcache", version.ref = "ehcache3" }
 felixFramework = "org.apache.felix:org.apache.felix.framework:7.0.5"
 felixScr = "org.apache.felix:org.apache.felix.scr:2.2.10"
 gmetric4j = { module = "info.ganglia.gmetric4j:gmetric4j", version.ref = "gmetric4j" }
-googleCloudLibrariesBom = { module = "com.google.cloud:libraries-bom", version = "26.37.0" }
+googleCloudLibrariesBom = { module = "com.google.cloud:libraries-bom", version = "26.38.0" }
 googleCloudMonitoring = { module = "com.google.cloud:google-cloud-monitoring", version.ref = "google-cloud-monitoring" }
 googleOauth2Http = { module = "com.google.auth:google-auth-library-oauth2-http", version = "1.23.0"}
 grpcApi = { module = "io.grpc:grpc-api", version.ref = "grpc" }
@@ -190,7 +190,7 @@ nettyBom = { module = "io.netty:netty-bom", version.ref = "netty" }
 newrelicApi = { module = "com.newrelic.agent.java:newrelic-api", version.ref = "newrelic-api" }
 okhttp = { module = "com.squareup.okhttp3:okhttp", version.ref = "okhttp" }
 # some proto are marked alpha, hence the alpha version. metrics proto is what we use and it is marked stable
-openTelemetry-proto = { module = "io.opentelemetry.proto:opentelemetry-proto", version = "1.1.0-alpha" }
+openTelemetry-proto = { module = "io.opentelemetry.proto:opentelemetry-proto", version = "1.2.0-alpha" }
 osgiJunit5 = "org.osgi:org.osgi.test.junit5:1.3.0"
 postgre = { module = "org.postgresql:postgresql", version.ref = "postgre" }
 prometheusMetrics = { module = "io.prometheus:prometheus-metrics-core", version.ref = "prometheus" }
