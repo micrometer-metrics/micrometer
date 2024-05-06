@@ -78,7 +78,9 @@ class OtlpDeltaMeterRegistryTest extends OtlpMeterRegistryTest {
         Metric metric = writeToMetric(gauge);
         assertThat(metric.getGauge()).isNotNull();
         assertThat(metric.getGauge().getDataPoints(0).getAsDouble()).isEqualTo(5);
-        assertThat(metric.getGauge().getDataPoints(0).getTimeUnixNano()).isEqualTo(TimeUnit.MINUTES.toNanos(1));
+        assertThat(metric.getGauge().getDataPoints(0).getTimeUnixNano())
+            .describedAs("Gauges should have timestamp of the instant when data is sampled")
+            .isEqualTo(otlpConfig().step().plus(Duration.ofMillis(1)).toNanos());
     }
 
     @Test
@@ -88,7 +90,9 @@ class OtlpDeltaMeterRegistryTest extends OtlpMeterRegistryTest {
         Metric metric = writeToMetric(timeGauge);
         assertThat(metric.getGauge()).isNotNull();
         assertThat(metric.getGauge().getDataPoints(0).getAsDouble()).isEqualTo(0.024);
-        assertThat(metric.getGauge().getDataPoints(0).getTimeUnixNano()).isEqualTo(TimeUnit.MINUTES.toNanos(1));
+        assertThat(metric.getGauge().getDataPoints(0).getTimeUnixNano())
+            .describedAs("Gauges should have timestamp of the instant when data is sampled")
+            .isEqualTo(otlpConfig().step().plus(Duration.ofMillis(1)).toNanos());
     }
 
     @Test
