@@ -60,17 +60,17 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
 
     private static final Pattern IS_NULL_ERROR_RESPONSE = Pattern.compile("\"error\":\\s?null");
 
-    private static final WarnThenDebugLogger stackTraceWarnThenDebugLogger = new WarnThenDebugLogger(
-            DynatraceExporterV2.class);
-
-    private static final WarnThenDebugLogger nanGaugeWarnThenDebugLogger = new WarnThenDebugLogger(
-            DynatraceExporterV2.class);
-
     private static final Map<String, String> staticDimensions = Collections.singletonMap("dt.metrics.source",
             "micrometer");
 
-    // This should be non-static for MockLoggerFactory.injectLogger() in tests.
+    // Loggers must be non-static for MockLoggerFactory.injectLogger() in tests.
     private final InternalLogger logger = InternalLoggerFactory.getInstance(DynatraceExporterV2.class);
+
+    private final WarnThenDebugLogger stackTraceLogger = new WarnThenDebugLoggers.StackTraceLogger();
+
+    private final WarnThenDebugLogger nanGaugeLogger = new WarnThenDebugLoggers.NanGaugeLogger();
+
+    private final WarnThenDebugLogger metadataDiscrepancyLogger = new WarnThenDebugLoggers.MetadataDiscrepancyLogger();
 
     private MetricLinePreConfiguration preConfiguration;
 
@@ -219,7 +219,7 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
                 // NaN's are currently dropped on the Dynatrace side, so dropping them
                 // on the client side here will not change the metrics in Dynatrace.
 
-                nanGaugeWarnThenDebugLogger.log(() -> String.format(
+                nanGaugeLogger.log(() -> String.format(
                         "Meter '%s' returned a value of NaN, which will not be exported. This can be a deliberate value or because the weak reference to the backing object expired.",
                         meter.getId().getName()));
                 return null;
@@ -329,6 +329,18 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
     }
 
     Stream<String> toLongTaskTimerLine(LongTaskTimer meter, Map<String, String> seenMetadata) {
+        // use Dynatrace Snapshotting to ensure consistent data
+        if (meter instanceof DynatraceSummarySnapshotSupport) {
+            DynatraceSummarySnapshot snapshot = ((DynatraceSummarySnapshotSupport) meter)
+                .takeSummarySnapshot(getBaseTimeUnit());
+            if (snapshot.getCount() == 0) {
+                return Stream.empty();
+            }
+            return createSummaryLine(meter, seenMetadata, snapshot.getMin(), snapshot.getMax(), snapshot.getTotal(),
+                    snapshot.getCount());
+        }
+
+        // fall back to default implementation if the meter is not DynatraceLongTaskTimer
         HistogramSnapshot snapshot = meter.takeSnapshot();
 
         long count = snapshot.count();
@@ -418,9 +430,11 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
                         response.code(), getTruncatedBody(response)));
         }
         catch (Throwable throwable) {
-            logger.warn("Failed metric ingestion: " + throwable);
-            stackTraceWarnThenDebugLogger.log("Stack trace for previous 'Failed metric ingestion' warning log: ",
-                    throwable);
+            // the "general" logger logs the message, the WarnThenDebugLogger logs the
+            // stack trace.
+            logger.warn("Failed metric ingestion: {}", throwable.toString());
+            stackTraceLogger.log(String.format("Stack trace for previous 'Failed metric ingestion' warning log: %s",
+                    throwable.getMessage()), throwable);
         }
     }
 
@@ -501,10 +515,10 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
                 // set for this metric key.
                 if (!previousMetadataLine.equals(metadataLine)) {
                     seenMetadata.put(key, null);
-                    logger.warn(
-                            "Metadata discrepancy detected:\n" + "original metadata:\t{}\n" + "tried to set new:\t{}\n"
-                                    + "Metadata for metric key {} will not be sent.",
-                            previousMetadataLine, metadataLine, key);
+                    metadataDiscrepancyLogger.log(() -> String.format(
+                            "Metadata discrepancy detected:\n" + "original metadata:\t%s\n" + "tried to set new:\t%s\n"
+                                    + "Metadata for metric key %s will not be sent.",
+                            previousMetadataLine, metadataLine, key));
                 }
             }
             // else:

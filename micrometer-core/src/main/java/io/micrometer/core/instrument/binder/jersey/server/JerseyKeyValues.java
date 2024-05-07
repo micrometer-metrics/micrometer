@@ -38,6 +38,9 @@ class JerseyKeyValues {
     private static final KeyValue URI_ROOT = JerseyObservationDocumentation.JerseyLegacyLowCardinalityTags.URI
         .withValue("root");
 
+    private static final KeyValue URI_UNKNOWN = JerseyObservationDocumentation.JerseyLegacyLowCardinalityTags.URI
+        .withValue("UNKNOWN");
+
     private static final KeyValue EXCEPTION_NONE = JerseyObservationDocumentation.JerseyLegacyLowCardinalityTags.EXCEPTION
         .withValue("None");
 
@@ -93,6 +96,9 @@ class JerseyKeyValues {
             }
         }
         String matchingPattern = JerseyTags.getMatchingPattern(event);
+        if (matchingPattern == null) {
+            return URI_UNKNOWN;
+        }
         if (matchingPattern.equals("/")) {
             return URI_ROOT;
         }

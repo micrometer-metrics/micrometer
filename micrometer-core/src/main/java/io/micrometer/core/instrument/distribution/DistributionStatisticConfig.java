@@ -215,7 +215,8 @@ public class DistributionStatisticConfig implements Mergeable<DistributionStatis
      * greater weight to recent samples (exception: histogram counts are cumulative for
      * those systems that expect cumulative histogram buckets). Samples are accumulated to
      * such statistics in ring buffers which rotate after this expiry, with a buffer
-     * length of {@link #bufferLength}.
+     * length of {@link #bufferLength}, hence complete expiry happens after this expiry *
+     * buffer length.
      * @return The amount of time samples are accumulated to a histogram before it is
      * reset and rotated.
      */
@@ -427,7 +428,8 @@ public class DistributionStatisticConfig implements Mergeable<DistributionStatis
          * greater weight to recent samples (exception: histogram counts are cumulative
          * for those systems that expect cumulative histogram buckets). Samples are
          * accumulated to such statistics in ring buffers which rotate after this expiry,
-         * with a buffer length of {@link #bufferLength}.
+         * with a buffer length of {@link #bufferLength}, hence complete expiry happens
+         * after this expiry * buffer length.
          * @param expiry The amount of time samples are accumulated to decaying
          * distribution statistics before they are reset and rotated.
          * @return This builder.

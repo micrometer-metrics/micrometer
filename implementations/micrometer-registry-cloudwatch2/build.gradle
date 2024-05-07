@@ -1,3 +1,5 @@
+description = 'MeterRegistry implementation for publishing to CloudWatch using the AWS SDK v2.'
+
 dependencies {
     api project(':micrometer-core')
 

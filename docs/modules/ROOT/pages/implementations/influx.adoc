@@ -55,7 +55,7 @@ InfluxConfig config = new InfluxConfig() {
 MeterRegistry registry = new InfluxMeterRegistry(config, Clock.SYSTEM);
 ----
 
-To ship metrics to InfluxDB 2.x, make sure to configure the `org` and `bucket` to which to write the metrics, as well as the authentication `token`.
+To ship metrics to InfluxDB 2.x, make sure to configure the `org` and `bucket` to which to write the metrics, as well as the authentication `token`:
 
 .InfluxDB v2 configuration example
 [source, java]
@@ -132,7 +132,7 @@ The following listing adds the relevant library in Maven:
 </dependency>
 ----
 
-Metrics are shipped immediately over UDP to Telegraf by using Telegraf's flavor of the StatsD line protocol.
+Metrics are shipped immediately over UDP to Telegraf by using Telegraf's flavor of the StatsD line protocol:
 
 [source,java]
 ----

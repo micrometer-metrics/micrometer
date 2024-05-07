@@ -49,10 +49,12 @@ class FileDescriptorMetricsTest {
     void unixFileDescriptorMetrics() {
         assumeFalse(System.getProperty("os.name").toLowerCase().contains("win"));
 
+        // tag::example[]
         new FileDescriptorMetrics(Tags.of("some", "tag")).bindTo(registry);
 
         assertThat(registry.get("process.files.open").tags("some", "tag").gauge().value()).isGreaterThan(0);
         assertThat(registry.get("process.files.max").tags("some", "tag").gauge().value()).isGreaterThan(0);
+        // end::example[]
     }
 
     @Test

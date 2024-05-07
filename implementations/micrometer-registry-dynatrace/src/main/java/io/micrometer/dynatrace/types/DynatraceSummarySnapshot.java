@@ -26,6 +26,8 @@ import javax.annotation.concurrent.Immutable;
 @Immutable
 public final class DynatraceSummarySnapshot {
 
+    public static final DynatraceSummarySnapshot EMPTY = new DynatraceSummarySnapshot(0, 0, 0, 0);
+
     private final double min;
 
     private final double max;
@@ -55,6 +57,12 @@ public final class DynatraceSummarySnapshot {
 
     public long getCount() {
         return count;
+    }
+
+    @Override
+    public String toString() {
+        return "DynatraceSummarySnapshot{" + "min=" + min + ", max=" + max + ", total=" + total + ", count=" + count
+                + '}';
     }
 
 }

@@ -11,7 +11,7 @@ include::_install.adoc[]
 == Configuring
 
 Prometheus expects to scrape or poll individual application instances for metrics.
-In addition to creating a Prometheus registry, you also need to expose an HTTP endpoint to Prometheus' scraper.
+In addition to creating a Prometheus registry, you also need to expose an HTTP endpoint to Prometheus's scraper.
 In a Spring Boot application, a https://docs.spring.io/spring-boot/docs/current/actuator-api/htmlsingle/#prometheus[Prometheus actuator endpoint] is auto-configured in the presence of Spring Boot Actuator.
 Otherwise, you can use any JVM-based HTTP server implementation to expose scrape data to Prometheus.
 
@@ -38,7 +38,8 @@ try {
 ----
 <1> The `PrometheusMeterRegistry` has a `scrape()` function that knows how to supply the String data necessary for the scrape. All you have to do is wire it to an endpoint.
 
-You can alternatively use `io.prometheus.client.exporter.HTTPServer` that you can find in `io.prometheus:simpleclient_httpserver`:
+You can alternatively use `io.prometheus.client.exporter.HTTPServer`, which you can find in `io.prometheus:simpleclient_httpserver`:
+
 [source,java]
 ----
 PrometheusMeterRegistry prometheusRegistry = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT);
@@ -46,16 +47,17 @@ PrometheusMeterRegistry prometheusRegistry = new PrometheusMeterRegistry(Prometh
 new HTTPServer(new InetSocketAddress(8080), prometheusRegistry.getPrometheusRegistry(), true);
 ----
 
-Another alternative can be `io.prometheus.client.exporter.MetricsServlet` that you can find in `io.prometheus:simpleclient_servlet` in case your app is running in a servlet container (e.g.: Tomcat):
+Another alternative can be `io.prometheus.client.exporter.MetricsServlet`, which you can find in `io.prometheus:simpleclient_servlet` in case your app is running in a servlet container (such as Tomcat):
+
 [source,java]
 ----
 PrometheusMeterRegistry prometheusRegistry = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT);
 HttpServlet metricsServlet = new MetricsServlet(prometheusRegistry.getPrometheusRegistry());
 ----
 
-=== Scrape format
+=== Scrape Format
 
-By default, the https://prometheus.io/docs/instrumenting/exposition_formats/#text-based-format[Prometheus text format] is returned from the `PrometheusMeterRegistry` `scrape()` method.
+By default, the `PrometheusMeterRegistry` `scrape()` method returns the https://prometheus.io/docs/instrumenting/exposition_formats/#text-based-format[Prometheus text format].
 
 The https://github.com/OpenObservability/OpenMetrics/blob/main/specification/OpenMetrics.md[OpenMetrics] format can also be produced.
 To specify the format to be returned, you can pass a content type to the `scrape` method.
@@ -66,11 +68,11 @@ For example, to get the OpenMetrics 1.0.0 format scrape, you could use the Prome
 String openMetricsScrape = registry.scrape(TextFormat.CONTENT_TYPE_OPENMETRICS_100);
 ----
 
-In Spring Boot applications, the https://docs.spring.io/spring-boot/docs/current/actuator-api/htmlsingle/#prometheus[Prometheus Actuator endpoint] supports scraping in either format, defaulting to the Prometheus text format in absence of a specific `Accept` header.
+In Spring Boot applications, the https://docs.spring.io/spring-boot/docs/current/actuator-api/htmlsingle/#prometheus[Prometheus Actuator endpoint] supports scraping in either format, defaulting to the Prometheus text format in the absence of a specific `Accept` header.
 
 === The Prometheus Rename Filter
 
-In some cases, Micrometer provides instrumentation that overlaps with commonly used Prometheus simple client modules but has chosen a different naming scheme for consistency and portability.
+In some cases, Micrometer provides instrumentation that overlaps with the commonly used Prometheus simple client modules but has chosen a different naming scheme for consistency and portability.
 If you wish to use the Prometheus "standard" names, add the following filter:
 
 [source,java]
@@ -100,7 +102,7 @@ The dashboard features:
 * Direct/Mapped buffer sizes
 
 Instead of using the `job` tag to distinguish different applications, this dashboard makes use of a common tag called `application`, which is applied to every metric.
-You can apply the common tag as follows:
+You can apply the common tag, as follows:
 
 [source,java]
 ----
@@ -136,7 +138,7 @@ The Prometheus `Timer` produces two counter time series with different names:
 * `$\{name}_count`: Total number of all calls.
 * `$\{name}_sum`: Total time of all calls.
 
-Representing a counter without rate normalization over some time window is rarely useful, as the representation is a function of both the rapidity with which the counter is incremented and the longevity of the service.
+Again, representing a counter without rate normalization over some time window is rarely useful, as the representation is a function of both the rapidity with which the counter is incremented and the longevity of the service.
 
 Using the following Prometheus queries, we can graph the most commonly used statistics about timers:
 
@@ -148,7 +150,28 @@ image::implementations/prometheus-timer.png[Grafana-rendered Prometheus timer]
 
 === Long task timers
 
-The Prometheus query to plot the duration of a long task timer for a serial task is `long_task_timer_sum`. In Grafana, we can set an alert threshold at some fixed point.
+The following example shows a Prometheus query to plot the duration of a long task timer for a serial task is `long_task_timer_sum`. In Grafana, we can set an alert threshold at some fixed point.
 
 .Simulated back-to-back long tasks with a fixed alert threshold.
 image::implementations/prometheus-long-task-timer.png[Grafana-rendered Prometheus long task timer]
+
+== Limitation on same name with different set of tag keys
+
+The `PrometheusMeterRegistry` doesn't allow to create meters having the same name with a different set of tag keys, so you should guarantee that meters having the same name have the same set of tag keys.
+Otherwise, subsequent meters having the same name with a different set of tag keys will not be registered silently by default.
+You can change the default behavior by registering a meter registration failed listener.
+For example, you can register a meter registration failed listener that throws an exception as follows:
+
+[source,java]
+----
+registry.config().onMeterRegistrationFailed((id, reason) -> {
+    throw new IllegalArgumentException(reason);
+});
+----
+
+Actually, the `PrometheusMeterRegistry` has a shortcut for this, so you can do the following to achieve the same:
+
+[source,java]
+----
+registry.throwExceptionOnRegistrationFailure();
+----

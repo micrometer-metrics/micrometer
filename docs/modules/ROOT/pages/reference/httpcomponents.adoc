@@ -1,0 +1,30 @@
+[[overview]]
+= Apache HttpComponents Client Instrumentation
+
+IMPORTANT: This section requires usage of Apache HttpComponents Client at least in version 5.
+
+https://hc.apache.org/index.html/[Apache HttpComponents Client] is an HTTP/1.1 compliant HTTP agent implementation.
+
+Below you can find an example of how to instrument Apache HttpComponents Client xref:observation.adoc[Micrometer Observation]. That means that depending on your Observation Handler configuration you instrument once, and can have multiple benefits out of it (e.g. metrics, distributed tracing).
+
+Example of classic, blocking HTTP client.
+
+[source,java,subs=+attributes]
+-----
+// Setting up instrumentation (you need to create a client from the builder)
+include::{include-core-test-java}/io/micrometer/core/instrument/binder/httpcomponents/hc5/ObservationExecChainHandlerIntegrationTest.java[tags=setup_classic, indent=0]
+
+// Usage example
+include::{include-core-test-java}/io/micrometer/core/instrument/binder/httpcomponents/hc5/ObservationExecChainHandlerIntegrationTest.java[tags=example_classic, indent=0]
+-----
+
+Example of async HTTP client.
+
+[source,java,subs=+attributes]
+-----
+// Setting up instrumentation (you need to create a client from the builder)
+include::{include-core-test-java}/io/micrometer/core/instrument/binder/httpcomponents/hc5/ObservationExecChainHandlerIntegrationTest.java[tags=setup_async, indent=0]
+
+// Usage example
+include::{include-core-test-java}/io/micrometer/core/instrument/binder/httpcomponents/hc5/ObservationExecChainHandlerIntegrationTest.java[tags=example_async, indent=0]
+-----

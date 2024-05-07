@@ -39,22 +39,22 @@ class ObservationGrpcServerCallListener<RespT> extends SimpleForwardingServerCal
     @Override
     public void onMessage(RespT message) {
         this.observation.event(GrpcServerEvents.MESSAGE_RECEIVED);
-        try (Scope scope = observation.openScope()) {
-            super.onMessage(message);
-        }
+        this.observation.scoped(() -> super.onMessage(message));
     }
 
     @Override
     public void onHalfClose() {
-        try (Scope scope = observation.openScope()) {
-            super.onHalfClose();
-        }
+        this.observation.scoped(super::onHalfClose);
     }
 
     @Override
     public void onCancel() {
         try (Scope scope = this.observation.openScope()) {
             super.onCancel();
+        }
+        catch (Exception exception) {
+            this.observation.error(exception);
+            throw exception;
         }
         finally {
             this.observation.stop();
@@ -66,6 +66,10 @@ class ObservationGrpcServerCallListener<RespT> extends SimpleForwardingServerCal
         try (Scope scope = this.observation.openScope()) {
             super.onComplete();
         }
+        catch (Exception exception) {
+            this.observation.error(exception);
+            throw exception;
+        }
         finally {
             this.observation.stop();
         }
@@ -73,9 +77,7 @@ class ObservationGrpcServerCallListener<RespT> extends SimpleForwardingServerCal
 
     @Override
     public void onReady() {
-        try (Scope scope = this.observation.openScope()) {
-            super.onReady();
-        }
+        this.observation.scoped(super::onReady);
     }
 
 }

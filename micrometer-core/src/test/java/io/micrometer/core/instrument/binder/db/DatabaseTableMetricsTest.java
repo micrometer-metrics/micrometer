@@ -43,10 +43,12 @@ class DatabaseTableMetricsTest {
         ds = new JDBCDataSource();
         ds.setURL("jdbc:hsqldb:mem:test");
 
+        // tag::statement[]
         try (Connection conn = ds.getConnection()) {
             conn.prepareStatement("CREATE TABLE foo (id int)").execute();
             conn.prepareStatement("INSERT INTO foo VALUES (1)").executeUpdate();
         }
+        // end::statement[]
     }
 
     @AfterEach
@@ -58,8 +60,13 @@ class DatabaseTableMetricsTest {
 
     @Test
     void rowCountGauge() {
+        // tag::monitor[]
         DatabaseTableMetrics.monitor(registry, "foo", "mydb", ds);
+        // end::monitor[]
+
+        // tag::result[]
         assertThat(registry.get("db.table.size").tag("table", "foo").tag("db", "mydb").gauge().value()).isEqualTo(1.0);
+        // end::result[]
     }
 
     @Test

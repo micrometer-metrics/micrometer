@@ -17,13 +17,13 @@ package io.micrometer.observation;
 
 import io.micrometer.common.KeyValue;
 import io.micrometer.common.KeyValues;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.function.Supplier;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.*;
 
 /**
@@ -99,8 +99,7 @@ class ObservationContextTest {
     void getRequiredShouldFailIfThereIsNoValue() {
         context.put(String.class, "42");
         assertThat((String) context.getRequired(String.class)).isEqualTo("42");
-        Assertions.assertThatThrownBy(() -> context.getRequired(Integer.class))
-            .isInstanceOf(IllegalArgumentException.class)
+        assertThatThrownBy(() -> context.getRequired(Integer.class)).isInstanceOf(IllegalArgumentException.class)
             .hasMessage("Context does not have an entry for key [class java.lang.Integer]")
             .hasNoCause();
     }

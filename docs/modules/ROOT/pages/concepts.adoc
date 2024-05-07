@@ -6,17 +6,15 @@
 
 Micrometer is a metrics instrumentation library for JVM-based applications. It provides a simple facade over the instrumentation clients for the most popular monitoring systems, letting you instrument your JVM-based application code without vendor lock-in. It is designed to add little to no overhead to your metrics collection activity while maximizing the portability of your metrics effort.
 
-Micrometer is _not_ a distributed tracing system or an event logger. In Micrometer 1.10, we do however provide a plugin mechanism that allows you to add capabilities including the tracing features.
+Starting from Micrometer 1.10, Micrometer provides the xref:observation.adoc[Observation API] and a plugin mechanism that lets you add capabilities, including the tracing features. You can read more about tracing in the https://docs.micrometer.io/tracing/reference/[Micrometer Tracing documentation].
 
-// TODO: Link to tracing?
-
-For better understanding the differences among these different types of systems (Metrics, Distributed Tracing, and Logging) we recommend Adrian Cole's talk, titled https://www.dotconferences.com/2017/04/adrian-cole-observability-3-ways-logging-metrics-tracing[Observability 3 Ways].
+For better understanding of the differences among these different types of systems (Metrics, Distributed Tracing, and Logging) we recommend Adrian Cole's talk, titled https://www.youtube.com/watch?v=juP9VApKy_I[Observability 3 Ways]. To learn more about Micrometer Observation API, we recommend Tommy Ludwig's and Marcin Grzejszczak's talk, titled https://www.youtube.com/watch?v=fh3VbrPvAjg[Observability of Your Application].
 
 [[concepts-dependencies]]
 == Dependencies
 
-The `micrometer-core` module aims to have minimal dependencies. It does not require any third-party (non-Micrometer) dependencies on the classpath at compile time for applications using Micrometer.
+The `micrometer-core` module aims to have minimal dependencies. It does not require any third-party (non-Micrometer) dependencies on the classpath at compile time for applications that use Micrometer.
 
 Use of the xref:concepts/timers.adoc#pause-detection[pause detection] feature requires the https://github.com/LatencyUtils/LatencyUtils[LatencyUtils] dependency to be available on the classpath at runtime. If your application does not use the pause detection feature, you can exclude LatencyUtils from your runtime classpath.
 
-https://github.com/HdrHistogram/HdrHistogram[HdrHistogram] is needed on the classpath at runtime if you use xref:concepts/histogram-quantiles.adoc[client-side percentiles]. If you are not using client-side percentiles, you may exclude HdrHistogram from your application's runtime classpath.
+ If you use xref:concepts/histogram-quantiles.adoc[client-side percentiles], you need https://github.com/HdrHistogram/HdrHistogram[HdrHistogram] on the classpath at runtime. If you do not use client-side percentiles, you may exclude HdrHistogram from your application's runtime classpath.

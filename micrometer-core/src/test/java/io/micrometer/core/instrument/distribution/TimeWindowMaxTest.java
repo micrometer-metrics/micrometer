@@ -22,6 +22,7 @@ import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
  * Tests for {@link TimeWindowMax}
@@ -66,6 +67,12 @@ class TimeWindowMaxTest {
         clock.add(Duration.ofSeconds(62));
         timeWindowMax.record(100500);
         assertThat(timeWindowMax.poll()).isEqualTo(100500); // 666 | 500 | 100500
+    }
+
+    @Test
+    void throwsExceptionWhenRotateFrequency0() {
+        assertThatThrownBy(() -> new TimeWindowMax(clock, 0, 3)).isInstanceOf(IllegalArgumentException.class)
+            .withFailMessage("Rotate frequency must be a positive number");
     }
 
 }

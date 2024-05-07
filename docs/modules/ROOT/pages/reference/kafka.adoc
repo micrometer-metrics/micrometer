@@ -1,0 +1,31 @@
+[[overview]]
+= Apache Kafka Metrics
+
+https://kafka.apache.org/[Apache Kafka] is an open-source distributed event streaming platform used by thousands of companies for high-performance data pipelines, streaming analytics, data integration, and mission-critical applications.
+
+Below you can find an example of how to instrument Apache Kafka with Micrometer.
+
+Setting up instrumentation with Apache Kafka on the consumer side.
+
+[source,java,subs=+attributes]
+-----
+// Setting up and binding instrumentation
+include::{include-core-test-java}/io/micrometer/core/instrument/binder/kafka/KafkaClientMetricsIntegrationTest.java[tags=consumer_setup, indent=0]
+-----
+
+Setting up instrumentation with Apache Kafka on the producer side.
+
+[source,java,subs=+attributes]
+-----
+// Setting up and binding instrumentation
+include::{include-core-test-java}/io/micrometer/core/instrument/binder/kafka/KafkaClientMetricsIntegrationTest.java[tags=producer_setup, indent=0]
+-----
+
+Setting up instrumentation with Apache Kafka using Kafka Streams.
+
+[source,java,subs=+attributes]
+-----
+// Setting up, binding instrumentation and usage example
+include::{include-core-test-java}/io/micrometer/core/instrument/binder/kafka/KafkaStreamsMetricsTest.java[tags=example, indent=0]
+-----
+

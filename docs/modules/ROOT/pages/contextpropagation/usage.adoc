@@ -1,10 +1,10 @@
 [[context-propagation-usage-examples]]
-== Usage Examples
+= Usage Examples
 
 Below you will find a list of examples of using the Context Propagation library.
 
 [[context-propagation-usage-examples-thread-local]]
-=== `ThreadLocal` Population
+== `ThreadLocal` Population
 
 Below you can find a holder for `ThreadLocal` values.
 

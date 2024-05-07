@@ -107,14 +107,14 @@ class HttpJakartaServletRequestTagsTest {
 
     @Test
     void responseShouldContributeOutcomeTag() {
-        Tag unknownOutcome = Tag.of("outcome", "SUCCESS");
+        Tag successOutcome = Tag.of("outcome", "SUCCESS");
         HttpServletResponse jakartaResponse = mockJakartaResponse(200);
         Tag result = HttpJakartaServletRequestTags.outcome(jakartaResponse);
-        assertThat(result).isEqualTo(unknownOutcome);
+        assertThat(result).isEqualTo(successOutcome);
 
         javax.servlet.http.HttpServletResponse javaxResponse = mockJavaxResponse(200);
         result = HttpRequestTags.outcome(javaxResponse);
-        assertThat(result).isEqualTo(unknownOutcome);
+        assertThat(result).isEqualTo(successOutcome);
     }
 
     private HttpServletRequest mockJakartaRequest(String method) {

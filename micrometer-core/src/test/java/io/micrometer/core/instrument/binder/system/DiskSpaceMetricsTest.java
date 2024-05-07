@@ -37,10 +37,12 @@ class DiskSpaceMetricsTest {
 
     @Test
     void diskSpaceMetrics() {
+        // tag::example[]
         new DiskSpaceMetrics(new File(System.getProperty("user.dir"))).bindTo(registry);
 
         assertThat(registry.get("disk.free").gauge().value()).isNotNaN().isGreaterThan(0);
         assertThat(registry.get("disk.total").gauge().value()).isNotNaN().isGreaterThan(0);
+        // end::example[]
     }
 
     @Test

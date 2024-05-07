@@ -14,7 +14,7 @@ Contributions come in various forms and are not limited to code changes.
 The Micrometer community benefits from contributions in all forms.
 
 For example, those with Micrometer knowledge and experience can contribute by: 
-* [Contributing documentation](https://github.com/micrometer-metrics/micrometer-docs/)
+* [Contributing documentation](https://github.com/micrometer-metrics/micrometer/tree/main/docs/)
 * Answering [Stackoverflow questions](https://stackoverflow.com/tags/micrometer)
 * Answering questions on the [Micrometer slack](https://slack.micrometer.io)
 * Share Micrometer knowledge in other ways (e.g. presentations, blogs)

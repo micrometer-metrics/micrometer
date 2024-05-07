@@ -20,7 +20,11 @@ dependencies {
     optionalApi 'jakarta.jms:jakarta.jms-api'
 
     testImplementation 'org.junit.jupiter:junit-jupiter'
-    testImplementation 'com.tngtech.archunit:archunit-junit5'
+    testImplementation(libs.archunitJunit5) {
+        // avoid transitively pulling in slf4j 2
+        exclude group: "org.slf4j", module: "slf4j-api"
+    }
+    testImplementation libs.slf4jApi
     testImplementation 'org.mockito:mockito-core'
     testImplementation 'org.assertj:assertj-core'
 }

@@ -29,19 +29,24 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 class GuavaCacheMetricsTest extends AbstractCacheMetricsTest {
 
-    private LoadingCache<String, String> cache = CacheBuilder.newBuilder().build(new CacheLoader<String, String>() {
+    // tag::setup[]
+    LoadingCache<String, String> cache = CacheBuilder.newBuilder().build(new CacheLoader<String, String>() {
         public String load(String key) throws Exception {
             return "";
         }
     });
 
-    private GuavaCacheMetrics<String, String, Cache<String, String>> metrics = new GuavaCacheMetrics<>(cache,
-            "testCache", expectedTag);
+    GuavaCacheMetrics<String, String, Cache<String, String>> metrics = new GuavaCacheMetrics<>(cache, "testCache",
+            expectedTag);
+
+    // end::setup[]
 
     @Test
     void reportExpectedMetrics() {
+        // tag::register[]
         MeterRegistry registry = new SimpleMeterRegistry();
         metrics.bindTo(registry);
+        // end::register[]
 
         verifyCommonCacheMetrics(registry, metrics);
 
@@ -77,8 +82,10 @@ class GuavaCacheMetricsTest extends AbstractCacheMetricsTest {
 
     @Test
     void constructInstanceViaStaticMethodMonitor() {
+        // tag::monitor[]
         MeterRegistry meterRegistry = new SimpleMeterRegistry();
         GuavaCacheMetrics.monitor(meterRegistry, cache, "testCache", expectedTag);
+        // end::monitor[]
 
         meterRegistry.get("cache.load.duration").tags(expectedTag).timeGauge();
     }

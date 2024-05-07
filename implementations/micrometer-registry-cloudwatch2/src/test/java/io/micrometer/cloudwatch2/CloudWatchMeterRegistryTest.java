@@ -16,16 +16,19 @@
 package io.micrometer.cloudwatch2;
 
 import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.Statistic;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
-import software.amazon.awssdk.services.cloudwatch.model.Dimension;
-import software.amazon.awssdk.services.cloudwatch.model.MetricDatum;
-import software.amazon.awssdk.services.cloudwatch.model.StandardUnit;
+import software.amazon.awssdk.core.exception.AbortedException;
+import software.amazon.awssdk.services.cloudwatch.CloudWatchAsyncClient;
+import software.amazon.awssdk.services.cloudwatch.model.*;
 
+import java.net.SocketTimeoutException;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -56,6 +59,12 @@ class CloudWatchMeterRegistryTest {
         @Override
         public String namespace() {
             return "namespace";
+        }
+
+        @Override
+        @SuppressWarnings("deprecation")
+        public Duration readTimeout() {
+            return Duration.ofSeconds(1);
         }
     };
 
@@ -259,6 +268,66 @@ class CloudWatchMeterRegistryTest {
     @Test
     void batchToStandardUnitWhenUnitIsUnknownShouldReturnNone() {
         assertThat(this.registry.new Batch().toStandardUnit("unknownUnit")).isEqualTo(StandardUnit.NONE);
+    }
+
+    @Test
+    void putMetricDataShouldBeCalledOnPublish() {
+        CloudWatchAsyncClient client = mock(CloudWatchAsyncClient.class);
+        when(client.putMetricData(isA(PutMetricDataRequest.class)))
+            .thenReturn(CompletableFuture.completedFuture(PutMetricDataResponse.builder().build()));
+
+        CloudWatchMeterRegistry registry = new CloudWatchMeterRegistry(config, clock, client);
+        registry.counter("test").increment();
+        registry.publish();
+
+        verify(client).putMetricData(isA(PutMetricDataRequest.class));
+    }
+
+    @Test
+    void shouldHandleAbortedExceptionDuringPutMetricDataCallWithoutFailing() {
+        CloudWatchAsyncClient client = mock(CloudWatchAsyncClient.class);
+        CompletableFuture<PutMetricDataResponse> future = new CompletableFuture<>();
+        future.completeExceptionally(AbortedException.create("simulated"));
+        when(client.putMetricData(isA(PutMetricDataRequest.class))).thenReturn(future);
+
+        CloudWatchMeterRegistry registry = new CloudWatchMeterRegistry(config, clock, client);
+        registry.counter("test").increment();
+        registry.publish();
+
+        verify(client).putMetricData(isA(PutMetricDataRequest.class));
+    }
+
+    @Test
+    void shouldHandleExceptionsDuringPutMetricDataCallWithoutFailing() {
+        CloudWatchAsyncClient client = mock(CloudWatchAsyncClient.class);
+        CompletableFuture<PutMetricDataResponse> future = new CompletableFuture<>();
+        future.completeExceptionally(new SocketTimeoutException("simulated"));
+        when(client.putMetricData(isA(PutMetricDataRequest.class))).thenReturn(future);
+
+        CloudWatchMeterRegistry registry = new CloudWatchMeterRegistry(config, clock, client);
+        registry.counter("test").increment();
+        registry.publish();
+
+        verify(client).putMetricData(isA(PutMetricDataRequest.class));
+    }
+
+    @Test
+    void shouldHandleTimeoutsDuringPutMetricDataCallWithoutFailing() {
+        CloudWatchAsyncClient client = mock(CloudWatchAsyncClient.class);
+        Executor nonExecutingExecutor = new Executor() {
+            @Override
+            public void execute(Runnable command) {
+                // intentionally noop
+            }
+        };
+        when(client.putMetricData(isA(PutMetricDataRequest.class)))
+            .thenReturn(CompletableFuture.supplyAsync(() -> null, nonExecutingExecutor));
+
+        CloudWatchMeterRegistry registry = new CloudWatchMeterRegistry(config, clock, client);
+        registry.counter("test").increment();
+        registry.publish();
+
+        verify(client).putMetricData(isA(PutMetricDataRequest.class));
     }
 
     private Predicate<MetricDatum> hasAvgMetric(Id id) {
