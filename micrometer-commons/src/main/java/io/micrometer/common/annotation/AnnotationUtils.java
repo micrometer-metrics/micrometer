@@ -17,8 +17,12 @@ package io.micrometer.common.annotation;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
+import java.lang.reflect.Parameter;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 /**
  * Utility class that can verify whether the method is annotated with the Micrometer
@@ -36,18 +40,16 @@ final class AnnotationUtils {
 
     static List<AnnotatedParameter> findAnnotatedParameters(Class<? extends Annotation> annotationClazz, Method method,
             Object[] args) {
-        Annotation[][] parameters = method.getParameterAnnotations();
-        List<AnnotatedParameter> result = new ArrayList<>();
-        int i = 0;
-        for (Annotation[] parameter : parameters) {
-            for (Annotation parameter2 : parameter) {
-                if (annotationClazz.isAssignableFrom(parameter2.annotationType())) {
-                    result.add(new AnnotatedParameter(i, parameter2, args[i]));
-                }
+        Parameter[] parameters = method.getParameters();
+        return IntStream.range(0, parameters.length).boxed().flatMap(parameterIndex -> {
+            Parameter parameter = parameters[parameterIndex];
+            Annotation[] annotations = parameter.getAnnotationsByType(annotationClazz);
+            if (annotations.length == 0) {
+                return Stream.empty();
             }
-            i++;
-        }
-        return result;
+            return Arrays.stream(annotations)
+                .map(annotation -> new AnnotatedParameter(parameterIndex, annotation, args[parameterIndex]));
+        }).collect(Collectors.toList());
     }
 
 }
