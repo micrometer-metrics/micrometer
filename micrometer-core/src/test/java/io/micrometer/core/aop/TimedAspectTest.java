@@ -769,7 +769,7 @@ class TimedAspectTest {
 
     }
 
-    public final static class DataHolder {
+    public static final class DataHolder {
 
         private final String value1;
 
