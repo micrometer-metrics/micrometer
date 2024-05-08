@@ -75,7 +75,7 @@ java11Test {
         it.getFile().getAbsolutePath().contains("java11Test")
     }
 
-    retry {
+    develocity.testRetry {
         maxFailures = 5
         maxRetries = 3
     }
