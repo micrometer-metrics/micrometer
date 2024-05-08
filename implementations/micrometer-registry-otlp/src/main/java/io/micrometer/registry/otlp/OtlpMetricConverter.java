@@ -99,7 +99,7 @@ class OtlpMetricConverter {
             }
             metricBuilder.getGaugeBuilder()
                 .addDataPoints(NumberDataPoint.newBuilder()
-                    .setTimeUnixNano(getTimeUnixNano())
+                    .setTimeUnixNano(TimeUnit.MILLISECONDS.toNanos(clock.wallTime()))
                     .setAsDouble(gauge.value())
                     .addAllAttributes(getKeyValuesForId(gauge.getId()))
                     .build());
