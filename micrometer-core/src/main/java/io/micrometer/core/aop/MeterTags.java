@@ -25,7 +25,6 @@ import java.lang.annotation.Target;
 /**
  * Container annotation that aggregates several {@link MeterTag} annotations.
  *
- * <p>
  * Can be used natively, declaring several nested {@link MeterTag} annotations. Can also
  * be used in conjunction with Java 8's support for repeatable annotations, where
  * {@link MeterTag} can simply be declared several times on the same parameter, implicitly
@@ -33,7 +32,7 @@ import java.lang.annotation.Target;
  *
  * @author Maksym Symonov
  * @author Marcin Grzejszczak
- * @since 1.13.0
+ * @since 1.14.0
  * @see MeterTag
  */
 @Retention(RetentionPolicy.RUNTIME)

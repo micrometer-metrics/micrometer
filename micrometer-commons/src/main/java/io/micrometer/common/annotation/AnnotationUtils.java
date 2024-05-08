@@ -19,10 +19,8 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
-import java.util.stream.Stream;
 
 /**
  * Utility class that can verify whether the method is annotated with the Micrometer
@@ -41,15 +39,16 @@ final class AnnotationUtils {
     static List<AnnotatedParameter> findAnnotatedParameters(Class<? extends Annotation> annotationClazz, Method method,
             Object[] args) {
         Parameter[] parameters = method.getParameters();
-        return IntStream.range(0, parameters.length).boxed().flatMap(parameterIndex -> {
-            Parameter parameter = parameters[parameterIndex];
+        List<AnnotatedParameter> result = new LinkedList<>();
+        for (int i = 0; i < parameters.length; i++) {
+            Parameter parameter = parameters[i];
             Annotation[] annotations = parameter.getAnnotationsByType(annotationClazz);
-            if (annotations.length == 0) {
-                return Stream.empty();
-            }
-            return Arrays.stream(annotations)
-                .map(annotation -> new AnnotatedParameter(parameterIndex, annotation, args[parameterIndex]));
-        }).collect(Collectors.toList());
+            final int parameterIndex = i;
+            Arrays.stream(annotations)
+                .map(annotation -> new AnnotatedParameter(parameterIndex, annotation, args[parameterIndex]))
+                .forEach(result::add);
+        }
+        return result;
     }
 
 }
