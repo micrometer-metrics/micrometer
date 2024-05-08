@@ -55,11 +55,12 @@ public class DefaultMeterObservationHandler implements MeterObservationHandler<O
     }
 
     /**
-     * Creates the handler with the defined Meters to use when the handler processes the
-     * Observations.
+     * Creates the handler with the defined IgnoredMeters to use when the handler
+     * processes the Observations.
      * @param meterRegistry the MeterRegistry to use
      * @param metersToIgnore the Meters that should not be created when Observations are
      * handled
+     * @since 1.13.0
      */
     public DefaultMeterObservationHandler(MeterRegistry meterRegistry, IgnoredMeters... metersToIgnore) {
         this.meterRegistry = meterRegistry;
@@ -115,6 +116,11 @@ public class DefaultMeterObservationHandler implements MeterObservationHandler<O
         return tags;
     }
 
+    /**
+     * Meter types to ignore.
+     *
+     * @since 1.13.0
+     */
     public enum IgnoredMeters {
 
         LONG_TASK_TIMER
