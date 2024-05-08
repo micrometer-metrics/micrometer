@@ -309,7 +309,7 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
         return getMetricBuilder(gauge.getId())
             .setGauge(io.opentelemetry.proto.metrics.v1.Gauge.newBuilder()
                 .addDataPoints(NumberDataPoint.newBuilder()
-                    .setTimeUnixNano(getTimeUnixNano())
+                    .setTimeUnixNano(TimeUnit.MILLISECONDS.toNanos(clock.wallTime()))
                     .setAsDouble(gauge.value())
                     .addAllAttributes(getTagsForId(gauge.getId()))
                     .build()))
