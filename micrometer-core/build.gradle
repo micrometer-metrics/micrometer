@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.kotlin19)
     id 'me.champeau.mrjar' version "0.1.1"
+    id 'io.freefair.aspectj.post-compile-weaving' version '8.6'
 }
 
 description 'Core module of Micrometer containing instrumentation API and implementation'
@@ -81,6 +82,8 @@ dependencies {
     }
 
     // Aspects
+    implementation "org.aspectj:aspectjrt:${libs.versions.aspectjweaver.get()}"
+    java11Implementation "org.aspectj:aspectjrt:${libs.versions.aspectjweaver.get()}"
     optionalApi 'org.aspectj:aspectjweaver'
 
     // instrumentation options

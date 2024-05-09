@@ -1,3 +1,7 @@
+plugins {
+    id 'io.freefair.aspectj.post-compile-weaving' version '8.6'
+}
+
 description 'Module containing Observation related code'
 
 jar {
@@ -21,6 +25,7 @@ dependencies {
     optionalApi 'javax.servlet:javax.servlet-api'
 
     // Aspects
+    implementation "org.aspectj:aspectjrt:${libs.versions.aspectjweaver.get()}"
     optionalApi 'org.aspectj:aspectjweaver'
 
     // log monitoring
