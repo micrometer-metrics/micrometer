@@ -105,7 +105,7 @@ public class ObservedAspect {
         this.shouldSkip = shouldSkip;
     }
 
-    @Around("@within(io.micrometer.observation.annotation.Observed) and not @annotation(io.micrometer.observation.annotation.Observed)")
+    @Around("@within(io.micrometer.observation.annotation.Observed) && !@annotation(io.micrometer.observation.annotation.Observed) && execution(* *.*(..))")
     @Nullable
     public Object observeClass(ProceedingJoinPoint pjp) throws Throwable {
         if (shouldSkip.test(pjp)) {

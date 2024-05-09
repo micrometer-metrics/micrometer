@@ -1,0 +1,11 @@
+<!DOCTYPE aspectj PUBLIC "-//AspectJ//DTD//EN" "https://eclipse.dev/aspectj/dtd/aspectj.dtd">
+<aspectj>
+  <weaver options="-verbose -showWeaveInfo">
+    <include within="io.micrometer.core.aop.*"/>
+    <include within="io.micrometer.MeasuredClass"/>
+  </weaver>
+  <aspects>
+    <aspect name="io.micrometer.core.aop.CountedAspect"/>
+    <aspect name="io.micrometer.core.aop.TimedAspect"/>
+  </aspects>
+</aspectj>

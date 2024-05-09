@@ -1,0 +1,25 @@
+plugins {
+    id 'java'
+}
+
+group = 'io.micrometer'
+
+repositories {
+    mavenCentral()
+}
+
+configurations {
+    agents
+}
+
+dependencies {
+    agents libs.aspectjweaver
+    implementation project(':micrometer-core')
+    testImplementation libs.junitJupiter
+    testImplementation libs.assertj
+}
+
+test {
+    useJUnitPlatform()
+    jvmArgs '-javaagent:' + configurations.agents.files.find { it.name.startsWith('aspectjweaver') }
+}
