@@ -167,7 +167,7 @@ public class CountedAspect {
         this.shouldSkip = shouldSkip;
     }
 
-    @Around("@within(io.micrometer.core.annotation.Counted) and not @annotation(io.micrometer.core.annotation.Counted)")
+    @Around("@within(io.micrometer.core.annotation.Counted) && !@annotation(io.micrometer.core.annotation.Counted)")
     @Nullable
     public Object countedClass(ProceedingJoinPoint pjp) throws Throwable {
         if (shouldSkip.test(pjp)) {
