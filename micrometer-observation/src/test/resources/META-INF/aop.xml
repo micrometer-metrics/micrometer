@@ -1,0 +1,17 @@
+<!DOCTYPE aspectj PUBLIC "-//AspectJ//DTD//EN" "http://www.eclipse.org/aspectj/dtd/aspectj.dtd">
+<aspectj>
+  <weaver options="-verbose -showWeaveInfo">
+    <!-- We only want to weave classes that exist in our application-specific packages.
+
+         IMPORTANT: The packages defined here MUST include the package that the aspects are
+         defined in. The load-time aspect weaver must be able to weave-in additional methods each
+         Spring requires each aspect to have at run-time. If you exclude the aspects, you'll get
+         an error about aspectOf() not being defined.
+      -->
+    <include within="io.micrometer.observation..*"/>
+  </weaver>
+  <aspects>
+    <!-- These are the two aspects we want to switch on for now. -->
+    <aspect name="io.micrometer.observation.aop.ObservedAspect"/>
+  </aspects>
+</aspectj>

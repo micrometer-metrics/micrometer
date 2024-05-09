@@ -337,7 +337,7 @@ subprojects {
 
             check.dependsOn("testModules")
 
-            if (!(project.name in [])) { // add projects here that do not exist in the previous minor so should be excluded from japicmp
+            if (!(project.name in ['micrometer-test-ctw'])) { // add projects here that do not exist in the previous minor so should be excluded from japicmp
                 apply plugin: 'me.champeau.gradle.japicmp'
                 apply plugin: 'de.undercouch.download'
 

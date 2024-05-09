@@ -1,0 +1,19 @@
+plugins {
+    id 'java'
+    id 'io.freefair.aspectj.post-compile-weaving' version '8.6'
+}
+
+description 'AspectJ compile-time weaving test for Micrometer aspects'
+
+dependencies {
+    implementation project(':micrometer-core')
+    aspect project(':micrometer-core')
+    aspect project(':micrometer-observation')
+
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testImplementation 'org.assertj:assertj-core'
+}
+
+test {
+    useJUnitPlatform()
+}

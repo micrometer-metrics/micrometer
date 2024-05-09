@@ -19,6 +19,7 @@ import io.micrometer.common.lang.NonNullApi;
 import io.micrometer.common.lang.Nullable;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
+import io.micrometer.observation.Observations;
 import io.micrometer.observation.annotation.Observed;
 import io.micrometer.observation.ObservationConvention;
 import org.aspectj.lang.ProceedingJoinPoint;
@@ -83,6 +84,11 @@ public class ObservedAspect {
     private final ObservationConvention<ObservedAspectContext> observationConvention;
 
     private final Predicate<ProceedingJoinPoint> shouldSkip;
+
+    // For Compile Time Weaving
+    public ObservedAspect() {
+        this(Observations.getGlobalRegistry(), null, DONT_SKIP_ANYTHING);
+    }
 
     public ObservedAspect(ObservationRegistry registry) {
         this(registry, null, DONT_SKIP_ANYTHING);

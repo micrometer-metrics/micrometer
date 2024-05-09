@@ -31,7 +31,7 @@ include 'micrometer-commons', 'micrometer-core', 'micrometer-observation'
     project(":micrometer-samples-$sample").projectDir = new File(rootProject.projectDir, "samples/micrometer-samples-$sample")
 }
 
-include 'micrometer-test', 'micrometer-observation-test'
+include 'micrometer-test', 'micrometer-observation-test', 'micrometer-test-ctw'
 
 ['atlas', 'prometheus', 'prometheus-simpleclient', 'datadog', 'elastic', 'ganglia', 'graphite', 'health', 'jmx', 'influx', 'otlp', 'statsd', 'new-relic', 'cloudwatch2', 'signalfx', 'wavefront', 'dynatrace', 'azure-monitor', 'humio', 'appoptics', 'kairos', 'stackdriver', 'opentsdb'].each { sys ->
     include "micrometer-registry-$sys"
