@@ -167,7 +167,7 @@ public class CountedAspect {
         this.shouldSkip = shouldSkip;
     }
 
-    @Around("@within(io.micrometer.core.annotation.Counted) && !@annotation(io.micrometer.core.annotation.Counted)")
+    @Around("@within(io.micrometer.core.annotation.Counted) && !@annotation(io.micrometer.core.annotation.Counted) && execution(* *(..))")
     @Nullable
     public Object countedClass(ProceedingJoinPoint pjp) throws Throwable {
         if (shouldSkip.test(pjp)) {
@@ -198,15 +198,21 @@ public class CountedAspect {
      * {@link Counted#recordFailuresOnly()} is set to {@code false}, a success is
      * recorded.
      * @param pjp Encapsulates some information about the intercepted area.
-     * @param counted The annotation.
      * @return Whatever the intercepted method returns.
      * @throws Throwable When the intercepted method throws one.
      */
-    @Around(value = "@annotation(counted)", argNames = "pjp,counted")
+    @Around("execution (@io.micrometer.core.annotation.Counted * *.*(..))")
     @Nullable
-    public Object interceptAndRecord(ProceedingJoinPoint pjp, Counted counted) throws Throwable {
+    public Object interceptAndRecord(ProceedingJoinPoint pjp) throws Throwable {
         if (shouldSkip.test(pjp)) {
             return pjp.proceed();
+        }
+
+        Method method = ((MethodSignature) pjp.getSignature()).getMethod();
+        Counted counted = method.getAnnotation(Counted.class);
+        if (counted == null) {
+            method = pjp.getTarget().getClass().getMethod(method.getName(), method.getParameterTypes());
+            counted = method.getAnnotation(Counted.class);
         }
 
         return perform(pjp, counted);
