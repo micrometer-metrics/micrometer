@@ -35,6 +35,4 @@
     <logger name="/" level="warn"/>
     <logger name="WireMock" level="warn"/>
     <logger name="ru.lanwen.wiremock" level="warn"/>
-
-    <logger name="org.springframework" level="warn"/>
 </configuration>

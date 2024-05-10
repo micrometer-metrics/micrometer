@@ -87,14 +87,13 @@ class TimedHandlerTest {
                     barrier[1].await(5, TimeUnit.SECONDS);
                     response.write(true, BufferUtil.EMPTY_BUFFER, callback);
                 }
-                catch (Exception x) {
+                catch (Exception e) {
                     Thread.currentThread().interrupt();
-                    callback.failed(x);
+                    callback.failed(e);
                 }
                 return true;
             }
         });
-        // server.setDumpAfterStart(true);
         server.start();
 
         try (LocalConnector.LocalEndPoint endpoint1 = connector.connect();
@@ -114,10 +113,10 @@ class TimedHandlerTest {
             // Read the two responses to ensure that they are complete
             HttpTester.Response response1 = HttpTester.parseResponse(endpoint1.getResponse());
             assertThat(response1.getStatus()).isEqualTo(HttpStatus.OK_200);
-            assertThat(response1.getContent()).isEqualTo("");
+            assertThat(response1.getContent()).isEmpty();
             HttpTester.Response response2 = HttpTester.parseResponse(endpoint2.getResponse());
             assertThat(response2.getStatus()).isEqualTo(HttpStatus.OK_200);
-            assertThat(response2.getContent()).isEqualTo("");
+            assertThat(response2.getContent()).isEmpty();
 
             assertThat(registry.get("jetty.server.requests")
                 .tag("outcome", Outcome.SUCCESS.name())
@@ -179,7 +178,7 @@ class TimedHandlerTest {
             // Read response to ensure it is done
             HttpTester.Response response1 = HttpTester.parseResponse(endpoint.getResponse());
             assertThat(response1.getStatus()).isEqualTo(HttpStatus.OK_200);
-            assertThat(response1.getContent()).isEqualTo("");
+            assertThat(response1.getContent()).isEmpty();
 
             Thread.sleep(delay);
             shutdown.check();
