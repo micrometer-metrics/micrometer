@@ -19,6 +19,9 @@ import io.micrometer.core.annotation.Counted;
 import io.micrometer.core.annotation.Timed;
 import io.micrometer.observation.annotation.Observed;
 
+@Observed
+@Counted
+@Timed
 public class MeasuredClass {
 
     @Timed
@@ -31,6 +34,15 @@ public class MeasuredClass {
 
     @Observed
     public void observedMethod() {
+    }
+
+    public void classLevelTimedMethod() {
+    }
+
+    public void classLevelCountedMethod() {
+    }
+
+    public void classLevelObservedMethod() {
     }
 
 }

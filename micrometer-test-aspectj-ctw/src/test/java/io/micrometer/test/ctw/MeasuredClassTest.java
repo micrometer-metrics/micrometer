@@ -111,4 +111,60 @@ class MeasuredClassTest {
         then(timer.count()).isEqualTo(2);
     }
 
+    @Test
+    void shouldWrapMethodWithClassLevelTimedAspectThroughCTW() {
+        // when
+        measured.classLevelTimedMethod();
+        // then
+        Collection<Timer> timers = registry.find(TimedAspect.DEFAULT_METRIC_NAME)
+            .tag("class", MeasuredClass.class.getName())
+            .tag("method", "classLevelTimedMethod")
+            .timers();
+        then(timers).hasSize(1);
+        Timer timer = timers.iterator().next();
+        then(timer.count()).isEqualTo(1);
+
+        // when
+        measured.classLevelTimedMethod();
+        // then
+        then(timer.count()).isEqualTo(2);
+    }
+
+    @Test
+    void shouldWrapMethodWithClassLevelCountedAspectThroughCTW() {
+        // when
+        measured.classLevelCountedMethod();
+        // then
+        Collection<Counter> counters = registry.find("method.counted")
+            .tag("class", MeasuredClass.class.getName())
+            .tag("method", "classLevelCountedMethod")
+            .counters();
+        then(counters).hasSize(1);
+        Counter counter = counters.iterator().next();
+        then(counter.count()).isEqualTo(1);
+
+        // when
+        measured.classLevelCountedMethod();
+        // then
+        then(counter.count()).isEqualTo(2);
+    }
+
+    @Test
+    void shouldWrapMethodWithClassLevelObservedAspectThroughCTW() {
+        // when
+        measured.classLevelObservedMethod();
+        // then
+        Collection<Timer> timers = registry.find("method.observed")
+            .tag("class", MeasuredClass.class.getName())
+            .tag("method", "classLevelObservedMethod")
+            .timers();
+        then(timers).hasSize(1);
+        Timer timer = timers.iterator().next();
+        then(timer.count()).isEqualTo(1);
+
+        // when
+        measured.classLevelObservedMethod();
+        // then
+        then(timer.count()).isEqualTo(2);
+    }
 }
