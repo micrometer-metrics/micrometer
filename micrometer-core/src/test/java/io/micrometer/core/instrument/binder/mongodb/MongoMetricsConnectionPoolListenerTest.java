@@ -31,6 +31,7 @@ import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
 
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static java.util.Collections.singletonList;
@@ -117,6 +118,28 @@ class MongoMetricsConnectionPoolListenerTest extends AbstractMongoDbTest {
         assertThat(registry.find("mongodb.driver.pool.size").tags(tags).gauge())
             .describedAs("metrics should be removed when the connection pool is closed")
             .isNull();
+    }
+
+    @Test
+    void shouldIncrementCheckoutFailedCount() {
+        ServerId serverId = new ServerId(new ClusterId(), new ServerAddress(host, port));
+        MongoMetricsConnectionPoolListener listener = new MongoMetricsConnectionPoolListener(registry);
+        listener
+            .connectionPoolCreated(new ConnectionPoolCreatedEvent(serverId, ConnectionPoolSettings.builder().build()));
+
+        // start a connection checkout
+        listener.connectionCheckOutStarted(new ConnectionCheckOutStartedEvent(serverId, -1));
+        assertThat(registry.get("mongodb.driver.pool.waitqueuesize").gauge().value()).isEqualTo(1);
+        assertThat(registry.get("mongodb.driver.pool.checkoutfailed").counter().count()).isZero();
+
+        // let the connection checkout fail, simulating a timeout
+        ConnectionCheckOutFailedEvent.Reason reason = ConnectionCheckOutFailedEvent.Reason.TIMEOUT;
+        long elapsedTimeNanos = TimeUnit.SECONDS.toNanos(120);
+        ConnectionCheckOutFailedEvent checkOutFailedEvent = new ConnectionCheckOutFailedEvent(serverId, -1, reason,
+                elapsedTimeNanos);
+        listener.connectionCheckOutFailed(checkOutFailedEvent);
+        assertThat(registry.get("mongodb.driver.pool.waitqueuesize").gauge().value()).isZero();
+        assertThat(registry.get("mongodb.driver.pool.checkoutfailed").counter().count()).isEqualTo(1);
     }
 
     @Issue("#2384")
