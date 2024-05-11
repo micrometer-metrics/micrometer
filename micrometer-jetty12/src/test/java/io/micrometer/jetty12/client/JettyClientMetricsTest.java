@@ -57,7 +57,6 @@ class JettyClientMetricsTest {
         });
 
         httpClient.start();
-
     }
 
     protected void addInstrumentingListener() {
