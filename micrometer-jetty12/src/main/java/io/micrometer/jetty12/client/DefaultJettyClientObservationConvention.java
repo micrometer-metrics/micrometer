@@ -26,7 +26,7 @@ import org.eclipse.jetty.client.Result;
  */
 public class DefaultJettyClientObservationConvention implements JettyClientObservationConvention {
 
-    public static DefaultJettyClientObservationConvention INSTANCE = new DefaultJettyClientObservationConvention();
+    public static final DefaultJettyClientObservationConvention INSTANCE = new DefaultJettyClientObservationConvention();
 
     @Override
     public KeyValues getLowCardinalityKeyValues(JettyClientContext context) {
