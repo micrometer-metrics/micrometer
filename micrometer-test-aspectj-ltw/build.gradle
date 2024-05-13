@@ -1,0 +1,23 @@
+plugins {
+    id 'java'
+}
+
+description 'AspectJ load-time weaving test for Micrometer aspects'
+
+configurations {
+    agents
+}
+
+dependencies {
+    agents libs.aspectjweaver
+    implementation project(':micrometer-core')
+    implementation project(':micrometer-observation')
+
+    testImplementation libs.junitJupiter
+    testImplementation libs.assertj
+}
+
+test {
+    useJUnitPlatform()
+    jvmArgs '-javaagent:' + configurations.agents.files.find { it.name.startsWith('aspectjweaver') }
+}
