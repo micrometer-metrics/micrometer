@@ -26,8 +26,8 @@ updates:
     directory: "/"
     schedule:
       interval: monthly
-    target-branch: "1.11.x"
-    milestone: 206
+    target-branch: "1.12.x"
+    milestone: 211
     ignore:
       # metrics are better with https://github.com/Netflix/Hystrix/pull/1568 introduced
       # in hystrix 1.5.12, but Netflix re-released 1.5.11 as 1.5.18 late in 2018.
@@ -43,8 +43,8 @@ updates:
     directory: "/"
     schedule:
       interval: monthly
-    target-branch: "1.12.x"
-    milestone: 211
+    target-branch: "1.13.x"
+    milestone: 233
     ignore:
       # metrics are better with https://github.com/Netflix/Hystrix/pull/1568 introduced
       # in hystrix 1.5.12, but Netflix re-released 1.5.11 as 1.5.18 late in 2018.
