@@ -15,17 +15,23 @@
  */
 package io.micrometer.core.instrument.binder.jetty;
 
+import io.micrometer.common.lang.Nullable;
+import io.micrometer.common.util.internal.logging.InternalLogger;
+import io.micrometer.common.util.internal.logging.InternalLoggerFactory;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.TimeWindowMax;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.net.Socket;
 import java.nio.ByteBuffer;
 
 import org.eclipse.jetty.io.Connection;
 import org.eclipse.jetty.io.NetworkTrafficListener;
 import org.eclipse.jetty.server.Connector;
+import org.eclipse.jetty.server.NetworkTrafficServerConnector;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.util.component.AbstractLifeCycle;
 
@@ -46,13 +52,15 @@ import java.util.Map;
  * server.setConnectors(new Connector[] { connector });
  * }</pre>
  *
- * Alternatively, configure on all connectors with
+ * Alternatively, configure on all server connectors with
  * {@link JettyConnectionMetrics#addToAllConnectors(Server, MeterRegistry, Iterable)}.
  *
  * @author Jon Schneider
  * @since 1.4.0
  */
 public class JettyConnectionMetrics extends AbstractLifeCycle implements Connection.Listener, NetworkTrafficListener {
+
+    private static final InternalLogger logger = InternalLoggerFactory.getInstance(JettyConnectionMetrics.class);
 
     private final MeterRegistry registry;
 
@@ -193,16 +201,63 @@ public class JettyConnectionMetrics extends AbstractLifeCycle implements Connect
         bytesOut.record(bytes.limit());
     }
 
+    /**
+     * Configures metrics instrumentation on all the {@link Server}'s {@link Connector}.
+     * @param server apply to this server's connectors
+     * @param registry register metrics to this registry
+     * @param tags add these tags as additional tags on metrics registered via this
+     */
     public static void addToAllConnectors(Server server, MeterRegistry registry, Iterable<Tag> tags) {
         for (Connector connector : server.getConnectors()) {
             if (connector != null) {
-                connector.addBean(new JettyConnectionMetrics(registry, connector, tags));
+                JettyConnectionMetrics metrics = new JettyConnectionMetrics(registry, connector, tags);
+                connector.addBean(metrics);
+                if (connector instanceof NetworkTrafficServerConnector) {
+                    NetworkTrafficServerConnector networkTrafficServerConnector = (NetworkTrafficServerConnector) connector;
+                    Method setNetworkTrafficListenerMethod = getNetworkTrafficListenerMethod(
+                            networkTrafficServerConnector);
+                    if (setNetworkTrafficListenerMethod != null) {
+                        try {
+                            setNetworkTrafficListenerMethod.invoke(networkTrafficServerConnector, metrics);
+                        }
+                        catch (IllegalAccessException | InvocationTargetException e) {
+                            logger.debug("Unable to set network traffic listener on connector " + connector, e);
+                        }
+                    }
+                }
             }
         }
     }
 
+    /**
+     * Configures metrics instrumentation on all the {@link Server}'s {@link Connector}.
+     * @param server apply to this server's connectors
+     * @param registry register metrics to this registry
+     */
     public static void addToAllConnectors(Server server, MeterRegistry registry) {
         addToAllConnectors(server, registry, Tags.empty());
+    }
+
+    @Nullable
+    private static Method getNetworkTrafficListenerMethod(NetworkTrafficServerConnector networkTrafficServerConnector) {
+        Method method = null;
+        try {
+            // Jetty 9 method
+            method = networkTrafficServerConnector.getClass()
+                .getMethod("addNetworkTrafficListener", NetworkTrafficListener.class);
+        }
+        catch (NoSuchMethodException ignore) {
+        }
+        if (method != null)
+            return method;
+        try {
+            // Jetty 12 method
+            method = networkTrafficServerConnector.getClass()
+                .getMethod("setNetworkTrafficListener", NetworkTrafficListener.class);
+        }
+        catch (NoSuchMethodException ignore) {
+        }
+        return method;
     }
 
 }
