@@ -32,8 +32,8 @@ public final class Observations {
 
     private static final ObservationRegistry initialRegistry = ObservationRegistry.create();
 
-    private static final DelegatingObservationRegistry globalRegistry =
-        new DelegatingObservationRegistry(initialRegistry);
+    private static final DelegatingObservationRegistry globalRegistry = new DelegatingObservationRegistry(
+            initialRegistry);
 
     private Observations() {
         throw new UnsupportedOperationException("You can't instantiate a utility class");
@@ -41,7 +41,6 @@ public final class Observations {
 
     /**
      * Sets a registry as the global registry.
-     *
      * @param registry Registry to set.
      */
     public static void setRegistry(ObservationRegistry registry) {
@@ -57,7 +56,6 @@ public final class Observations {
 
     /**
      * Retrieves the current global instance.
-     *
      * @return Global registry.
      */
     public static ObservationRegistry getGlobalRegistry() {
@@ -65,6 +63,7 @@ public final class Observations {
     }
 
     private static final class DelegatingObservationRegistry implements ObservationRegistry {
+
         private final AtomicReference<ObservationRegistry> delegate = new AtomicReference<>(ObservationRegistry.NOOP);
 
         DelegatingObservationRegistry(ObservationRegistry delegate) {
@@ -101,5 +100,7 @@ public final class Observations {
         public boolean isNoop() {
             return delegate.get().isNoop();
         }
+
     }
+
 }

@@ -167,4 +167,5 @@ class MeasuredClassTest {
         // then
         then(timer.count()).isEqualTo(2);
     }
+
 }
