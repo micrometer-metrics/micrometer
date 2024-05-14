@@ -6,8 +6,6 @@ asmForPlugins = "7.3.1"
 aspectjweaver = "1.9.22.1"
 assertj = "3.25.3"
 awaitility = "4.2.1"
-# legacy SDK
-aws-cloudwatch = "1.12.720"
 caffeine = "2.9.3"
 cloudwatch2 = "2.25.50"
 colt = "1.2.0"
@@ -94,7 +92,6 @@ asmForPlugins = { module = "org.ow2.asm:asm", version.ref = "asmForPlugins" }
 aspectjweaver = { module = "org.aspectj:aspectjweaver", version.ref = "aspectjweaver" }
 assertj = { module = "org.assertj:assertj-core", version.ref = "assertj" }
 awaitility = { module = "org.awaitility:awaitility", version.ref = "awaitility" }
-aws-javaSdkCloudwatch = { module = "com.amazonaws:aws-java-sdk-cloudwatch", version.ref = "aws-cloudwatch" }
 caffeine = { module = "com.github.ben-manes.caffeine:caffeine", version.ref = "caffeine" }
 cloudwatch2 = { module = "software.amazon.awssdk:cloudwatch", version.ref = "cloudwatch2" }
 colt = { module = "colt:colt", version.ref = "colt" }
