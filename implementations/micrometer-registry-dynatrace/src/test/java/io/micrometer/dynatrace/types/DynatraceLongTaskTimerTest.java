@@ -19,7 +19,6 @@ import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
-import org.assertj.core.data.Offset;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
@@ -35,16 +34,12 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 class DynatraceLongTaskTimerTest {
 
-    private static final Offset<Double> OFFSET = Offset.offset(0.0001);
-
     private static final Meter.Id ID = new Meter.Id("test.id", Tags.empty(), "1", "desc",
             Meter.Type.DISTRIBUTION_SUMMARY);
 
     private static final DistributionStatisticConfig DISTRIBUTION_STATISTIC_CONFIG = DistributionStatisticConfig.NONE;
 
     private static final MockClock CLOCK = new MockClock();
-
-    private static final Offset<Double> TOLERANCE = Offset.offset(0.000001);
 
     @Test
     void singleTaskValuesAreRecorded() throws InterruptedException {
@@ -74,13 +69,11 @@ class DynatraceLongTaskTimerTest {
         // can release the background task
         stopLatch.countDown();
 
-        assertThat(snapshot.getMin()).isCloseTo(100, TOLERANCE);
-        assertThat(snapshot.getMax()).isCloseTo(100, TOLERANCE);
+        assertThat(snapshot.getMin()).isEqualTo(100);
+        assertThat(snapshot.getMax()).isEqualTo(100);
         assertThat(snapshot.getCount()).isEqualTo(1);
         // in the case of count == 1, the total has to be equal to min and max
-        assertThat(snapshot.getTotal()).isGreaterThan(0)
-            .isCloseTo(snapshot.getMin(), TOLERANCE)
-            .isCloseTo(snapshot.getMax(), TOLERANCE);
+        assertThat(snapshot.getTotal()).isEqualTo(snapshot.getMin()).isEqualTo(snapshot.getMax());
     }
 
     @Test
@@ -152,20 +145,19 @@ class DynatraceLongTaskTimerTest {
 
         // Task 1 has been "running" for 70ms at the time of recording and will
         // supply the max
-        assertThat(snapshot.getMax()).isCloseTo(70, OFFSET);
+        assertThat(snapshot.getMax()).isEqualTo(70);
         // Task 2 has been "running" for only 30ms at the time of recording and
         // will supply the min
-        assertThat(snapshot.getMin()).isCloseTo(30, OFFSET);
+        assertThat(snapshot.getMin()).isEqualTo(30);
         // Both tasks have been running in parallel.
         // After the second CLOCK.add(Duration) is called, the first task has been running
         // for 70ms, and the second task has been running for 30ms
         // together, they have been running for 100ms in total.
-        assertThat(snapshot.getTotal()).isCloseTo(100, OFFSET);
+        assertThat(snapshot.getTotal()).isEqualTo(100);
         // Two tasks were running in parallel.
         assertThat(snapshot.getCount()).isEqualTo(2);
         // On the clock, 70ms have passed. MockClock starts at 1, that's why the result
-        // here
-        // is 71 instead of 70.
+        // here is 71 instead of 70.
         assertThat(CLOCK.wallTime()).isEqualTo(71);
     }
 
