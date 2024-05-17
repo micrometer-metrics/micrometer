@@ -20,89 +20,107 @@ import io.grpc.Metadata;
 import io.grpc.MethodDescriptor.MethodType;
 import io.grpc.Status.Code;
 import io.micrometer.common.lang.Nullable;
-import io.micrometer.observation.Observation;
-import io.micrometer.observation.transport.Propagator.Setter;
-import io.micrometer.observation.transport.RequestReplySenderContext;
 
 /**
- * {@link Observation.Context} for gRPC client.
- *
- * @author Tadaya Tsuyukubo
- * @since 1.10.0
+ * Holds information relevant to gRPC client and server observation contexts.
  */
-public class GrpcClientObservationContext extends RequestReplySenderContext<Metadata, Object> {
+public class GrpcObservationContextInfo {
 
-    private GrpcObservationContextInfo grpcInfo;
+    private String serviceName;
 
-    public GrpcClientObservationContext(Setter<Metadata> setter) {
-        super(setter);
-        this.grpcInfo = new GrpcObservationContextInfo();
+    private String methodName;
+
+    private String fullMethodName;
+
+    private MethodType methodType;
+
+    private Code statusCode;
+
+    private String authority;
+
+    private Metadata headers;
+
+    private Metadata trailers;
+
+    public GrpcObservationContextInfo(String serviceName, String methodName, String fullMethodName,
+            MethodType methodType, Code statusCode, String authority, Metadata headers, Metadata trailers) {
+        this.serviceName = serviceName;
+        this.methodName = methodName;
+        this.fullMethodName = fullMethodName;
+        this.methodType = methodType;
+        this.statusCode = statusCode;
+        this.authority = authority;
+        this.headers = headers;
+        this.trailers = trailers;
     }
 
-    // Delegates to grpcInfo
+    public GrpcObservationContextInfo() {
+
+    }
+
     public String getServiceName() {
-        return grpcInfo.getServiceName();
+        return serviceName;
     }
 
     public String getMethodName() {
-        return grpcInfo.getMethodName();
+        return methodName;
     }
 
     public String getFullMethodName() {
-        return grpcInfo.getFullMethodName();
+        return fullMethodName;
     }
 
     public MethodType getMethodType() {
-        return grpcInfo.getMethodType();
+        return methodType;
     }
 
     @Nullable
     public Code getStatusCode() {
-        return grpcInfo.getStatusCode();
+        return statusCode;
     }
 
     public String getAuthority() {
-        return grpcInfo.getAuthority();
+        return authority;
     }
 
     public Metadata getHeaders() {
-        return grpcInfo.getHeaders();
+        return headers;
     }
 
     public Metadata getTrailers() {
-        return grpcInfo.getTrailers();
+        return trailers;
     }
 
     public void setTrailers(Metadata trailers) {
-        grpcInfo.setTrailers(trailers);
+        this.trailers = trailers;
     }
 
     public void setServiceName(String serviceName) {
-        this.grpcInfo.setServiceName(serviceName);
+        this.serviceName = serviceName;
     }
 
     public void setMethodName(String methodName) {
-        this.grpcInfo.setMethodName(methodName);
+        this.methodName = methodName;
     }
 
     public void setFullMethodName(String fullMethodName) {
-        this.grpcInfo.setFullMethodName(fullMethodName);
+        this.fullMethodName = fullMethodName;
     }
 
     public void setMethodType(MethodType methodType) {
-        this.grpcInfo.setMethodType(methodType);
+        this.methodType = methodType;
     }
 
     public void setStatusCode(Code statusCode) {
-        this.grpcInfo.setStatusCode(statusCode);
+        this.statusCode = statusCode;
     }
 
     public void setAuthority(String authority) {
-        this.grpcInfo.setAuthority(authority);
+        this.authority = authority;
     }
 
     public void setHeaders(Metadata headers) {
-        this.grpcInfo.setHeaders(headers);
+        this.headers = headers;
     }
 
 }

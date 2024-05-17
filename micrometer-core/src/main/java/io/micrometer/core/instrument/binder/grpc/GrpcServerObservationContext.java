@@ -32,112 +32,77 @@ import io.micrometer.observation.transport.RequestReplyReceiverContext;
  */
 public class GrpcServerObservationContext extends RequestReplyReceiverContext<Metadata, Object> {
 
-    private String serviceName;
-
-    private String methodName;
-
-    private String fullMethodName;
-
-    private MethodType methodType;
-
-    @Nullable
-    private Code statusCode;
-
-    @Nullable
-    private String authority;
-
-    private Metadata headers;
-
-    private Metadata trailers;
+    private GrpcObservationContextInfo grpcInfo;
 
     public GrpcServerObservationContext(Getter<Metadata> getter) {
         super(getter);
+        this.grpcInfo = new GrpcObservationContextInfo();
     }
 
+    // Delegates to grpcInfo
     public String getServiceName() {
-        return this.serviceName;
-    }
-
-    public void setServiceName(String serviceName) {
-        this.serviceName = serviceName;
+        return grpcInfo.getServiceName();
     }
 
     public String getMethodName() {
-        return this.methodName;
-    }
-
-    public void setMethodName(String methodName) {
-        this.methodName = methodName;
+        return grpcInfo.getMethodName();
     }
 
     public String getFullMethodName() {
-        return this.fullMethodName;
-    }
-
-    public void setFullMethodName(String fullMethodName) {
-        this.fullMethodName = fullMethodName;
+        return grpcInfo.getFullMethodName();
     }
 
     public MethodType getMethodType() {
-        return this.methodType;
-    }
-
-    public void setMethodType(MethodType methodType) {
-        this.methodType = methodType;
+        return grpcInfo.getMethodType();
     }
 
     @Nullable
     public Code getStatusCode() {
-        return this.statusCode;
+        return grpcInfo.getStatusCode();
+    }
+
+    public String getAuthority() {
+        return grpcInfo.getAuthority();
+    }
+
+    public Metadata getHeaders() {
+        return grpcInfo.getHeaders();
+    }
+
+    public Metadata getTrailers() {
+        return grpcInfo.getTrailers();
+    }
+
+    public void setTrailers(Metadata trailers) {
+        grpcInfo.setTrailers(trailers);
+    }
+
+    public void setServiceName(String serviceName) {
+        this.grpcInfo.setServiceName(serviceName);
+    }
+
+    public void setMethodName(String methodName) {
+        this.grpcInfo.setMethodName(methodName);
+    }
+
+    public void setFullMethodName(String fullMethodName) {
+        this.grpcInfo.setFullMethodName(fullMethodName);
+    }
+
+    public void setMethodType(MethodType methodType) {
+        this.grpcInfo.setMethodType(methodType);
     }
 
     public void setStatusCode(Code statusCode) {
-        this.statusCode = statusCode;
+        this.grpcInfo.setStatusCode(statusCode);
     }
 
-    @Nullable
-    public String getAuthority() {
-        return this.authority;
+    public void setAuthority(String authority) {
+        this.grpcInfo.setAuthority(authority);
     }
 
-    public void setAuthority(@Nullable String authority) {
-        this.authority = authority;
-    }
-
-    /**
-     * Response headers.
-     * @return response headers
-     * @since 1.13.0
-     */
-    public Metadata getHeaders() {
-        return this.headers;
-    }
-
-    /**
-     * Set response headers.
-     * @param headers response headers
-     * @since 1.13.0
-     */
     public void setHeaders(Metadata headers) {
-        this.headers = headers;
-    }
-
-    /**
-     * Trailers.
-     * @return trailers
-     * @since 1.13.0
-     */
-    public Metadata getTrailers() {
-        return this.trailers;
-    }
-
-    /**
-     * Set trailers.
-     * @param trailers
-     * @since 1.13.0
-     */
-    public void setTrailers(Metadata trailers) {
-        this.trailers = trailers;
+        this.grpcInfo.setHeaders(headers);
     }
 
 }
