@@ -50,6 +50,7 @@ public class DefaultGrpcServerObservationConvention implements GrpcServerObserva
         if (context.getStatusCode() != null) {
             keyValues.add(LowCardinalityKeyNames.STATUS_CODE.withValue(context.getStatusCode().name()));
         }
+        keyValues.add(LowCardinalityKeyNames.CANCELLED.withValue(Boolean.toString(context.isCancelled())));
         return KeyValues.of(keyValues);
     }
 
