@@ -1,5 +1,5 @@
 plugins {
-    id 'io.freefair.aspectj.post-compile-weaving' version '8.6'
+    alias(libs.plugins.aspectj)
 }
 
 description 'Module containing Observation related code'
