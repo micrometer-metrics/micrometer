@@ -25,7 +25,7 @@ dependencies {
     optionalApi 'javax.servlet:javax.servlet-api'
 
     // Aspects
-    implementation "org.aspectj:aspectjrt:${libs.versions.aspectjweaver.get()}"
+    implementation libs.aspectjrt   
     optionalApi 'org.aspectj:aspectjweaver'
 
     // log monitoring
