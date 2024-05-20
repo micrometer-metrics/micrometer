@@ -158,19 +158,19 @@ abstract class OtlpMeterRegistryTest {
         List<Metric> metrics = writeAllMeters();
         assertThat(metrics).hasSize(3);
 
-        assertThat(metrics).filteredOn(Metric::hasGauge).hasSize(1).first().satisfies(metric -> {
+        assertThat(metrics).filteredOn(Metric::hasGauge).singleElement().satisfies(metric -> {
             assertThat(metric.getDescription()).isEqualTo("description");
             assertThat(metric.getGauge().getDataPointsCount()).isEqualTo(2);
         });
 
-        assertThat(metrics).filteredOn(Metric::hasSum).hasSize(1).first().satisfies(metric -> {
+        assertThat(metrics).filteredOn(Metric::hasSum).singleElement().satisfies(metric -> {
             assertThat(metric.getDescription()).isEqualTo("description");
             assertThat(metric.getSum().getDataPointsCount()).isEqualTo(2);
             assertThat(metric.getSum().getAggregationTemporality())
                 .isEqualTo(AggregationTemporality.toOtlpAggregationTemporality(otlpConfig().aggregationTemporality()));
         });
 
-        assertThat(metrics).filteredOn(Metric::hasHistogram).hasSize(1).first().satisfies(metric -> {
+        assertThat(metrics).filteredOn(Metric::hasHistogram).singleElement().satisfies(metric -> {
             assertThat(metric.getDescription()).isEqualTo("description");
             assertThat(metric.getHistogram().getDataPointsCount()).isEqualTo(2);
             assertThat(metric.getHistogram().getAggregationTemporality())
@@ -183,8 +183,8 @@ abstract class OtlpMeterRegistryTest {
         Tags firstTag = Tags.of("key", "first");
         Tags secondTag = Tags.of("key", "second");
 
-        final String description1 = "description1";
-        final String description2 = "description2";
+        String description1 = "description1";
+        String description2 = "description2";
         Gauge.builder("test.gauge", () -> 1).description(description1).tags(firstTag).register(registry);
         Gauge.builder("test.gauge", () -> 1).description(description2).tags(secondTag).register(registry);
 
@@ -196,23 +196,20 @@ abstract class OtlpMeterRegistryTest {
 
         List<Metric> metrics = writeAllMeters();
         assertThat(metrics).hasSize(6);
-        assertThat(metrics).filteredOn(Metric::hasGauge).hasSize(2).satisfiesExactlyInAnyOrder(metric -> {
-            assertThat(metric.getDescription()).isEqualTo(description1);
-        }, metric -> {
-            assertThat(metric.getDescription()).isEqualTo(description2);
-        });
+        assertThat(metrics).filteredOn(Metric::hasGauge)
+            .hasSize(2)
+            .satisfiesExactlyInAnyOrder(metric -> assertThat(metric.getDescription()).isEqualTo(description1),
+                    metric -> assertThat(metric.getDescription()).isEqualTo(description2));
 
-        assertThat(metrics).filteredOn(Metric::hasSum).hasSize(2).satisfiesExactlyInAnyOrder(metric -> {
-            assertThat(metric.getUnit()).isEmpty();
-        }, metric -> {
-            assertThat(metric.getUnit()).isEqualTo("xyz");
-        });
+        assertThat(metrics).filteredOn(Metric::hasSum)
+            .hasSize(2)
+            .satisfiesExactlyInAnyOrder(metric -> assertThat(metric.getUnit()).isEmpty(),
+                    metric -> assertThat(metric.getUnit()).isEqualTo("xyz"));
 
-        assertThat(metrics).filteredOn(Metric::hasHistogram).hasSize(2).satisfiesExactlyInAnyOrder(metric -> {
-            assertThat(metric.getDescription()).isEqualTo(description1);
-        }, metric -> {
-            assertThat(metric.getDescription()).isEqualTo(description2);
-        });
+        assertThat(metrics).filteredOn(Metric::hasHistogram)
+            .hasSize(2)
+            .satisfiesExactlyInAnyOrder(metric -> assertThat(metric.getDescription()).isEqualTo(description1),
+                    metric -> assertThat(metric.getDescription()).isEqualTo(description2));
     }
 
     @Test
@@ -286,8 +283,8 @@ abstract class OtlpMeterRegistryTest {
                 registry.getBaseTimeUnit(), otlpConfig().aggregationTemporality(),
                 registry.config().namingConvention());
         otlpMetricConverter.addMeter(meter);
-        final List<Metric> metrics = otlpMetricConverter.getAllMetrics();
-        return metrics.isEmpty() ? Metric.getDefaultInstance() : metrics.get(0);
+        List<Metric> metrics = otlpMetricConverter.getAllMetrics();
+        return metrics.get(0);
     }
 
     protected List<Metric> writeAllMeters() {

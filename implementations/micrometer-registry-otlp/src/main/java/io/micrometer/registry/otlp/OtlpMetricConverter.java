@@ -93,35 +93,29 @@ class OtlpMetricConverter {
 
     private void writeGauge(Gauge gauge) {
         Metric.Builder metricBuilder = getOrCreateMetricBuilder(gauge.getId(), DataCase.GAUGE);
-        if (metricBuilder != null) {
-            if (!metricBuilder.hasGauge()) {
-                metricBuilder.setGauge(io.opentelemetry.proto.metrics.v1.Gauge.newBuilder());
-            }
-            metricBuilder.getGaugeBuilder()
-                .addDataPoints(NumberDataPoint.newBuilder()
-                    .setTimeUnixNano(TimeUnit.MILLISECONDS.toNanos(clock.wallTime()))
-                    .setAsDouble(gauge.value())
-                    .addAllAttributes(getKeyValuesForId(gauge.getId()))
-                    .build());
+        if (!metricBuilder.hasGauge()) {
+            metricBuilder.setGauge(io.opentelemetry.proto.metrics.v1.Gauge.newBuilder());
         }
+        metricBuilder.getGaugeBuilder()
+            .addDataPoints(NumberDataPoint.newBuilder()
+                .setTimeUnixNano(TimeUnit.MILLISECONDS.toNanos(clock.wallTime()))
+                .setAsDouble(gauge.value())
+                .addAllAttributes(getKeyValuesForId(gauge.getId()))
+                .build());
     }
 
     private void writeCounter(Counter counter) {
         Metric.Builder metricBuilder = getOrCreateMetricBuilder(counter.getId(), DataCase.SUM);
-        if (metricBuilder != null) {
-            setSumDataPoint(metricBuilder, counter, counter::count);
-        }
+        setSumDataPoint(metricBuilder, counter, counter::count);
     }
 
     private void writeFunctionCounter(FunctionCounter functionCounter) {
         Metric.Builder metricBuilder = getOrCreateMetricBuilder(functionCounter.getId(), DataCase.SUM);
-        if (metricBuilder != null) {
-            setSumDataPoint(metricBuilder, functionCounter, functionCounter::count);
-        }
+        setSumDataPoint(metricBuilder, functionCounter, functionCounter::count);
     }
 
     private void writeHistogramSupport(HistogramSupport histogramSupport) {
-        final Meter.Id id = histogramSupport.getId();
+        Meter.Id id = histogramSupport.getId();
         boolean isTimeBased = isTimeBasedMeter(id);
         HistogramSnapshot histogramSnapshot = histogramSupport.takeSnapshot();
 
@@ -142,80 +136,71 @@ class OtlpMetricConverter {
 
     private void writeFunctionTimer(FunctionTimer functionTimer) {
         Metric.Builder builder = getOrCreateMetricBuilder(functionTimer.getId(), DataCase.HISTOGRAM);
-        if (builder != null) {
-            HistogramDataPoint.Builder histogramDataPoint = HistogramDataPoint.newBuilder()
-                .addAllAttributes(getKeyValuesForId(functionTimer.getId()))
-                .setStartTimeUnixNano(getStartTimeNanos((functionTimer)))
-                .setTimeUnixNano(getTimeUnixNano())
-                .setSum(functionTimer.totalTime(baseTimeUnit))
-                .setCount((long) functionTimer.count());
+        HistogramDataPoint.Builder histogramDataPoint = HistogramDataPoint.newBuilder()
+            .addAllAttributes(getKeyValuesForId(functionTimer.getId()))
+            .setStartTimeUnixNano(getStartTimeNanos((functionTimer)))
+            .setTimeUnixNano(getTimeUnixNano())
+            .setSum(functionTimer.totalTime(baseTimeUnit))
+            .setCount((long) functionTimer.count());
 
-            setHistogramDataPoint(builder, histogramDataPoint.build());
-        }
+        setHistogramDataPoint(builder, histogramDataPoint.build());
     }
 
-    private boolean isTimeBasedMeter(final Meter.Id id) {
+    private boolean isTimeBasedMeter(Meter.Id id) {
         return id.getType() == Meter.Type.TIMER || id.getType() == Meter.Type.LONG_TASK_TIMER;
     }
 
-    private void buildHistogramDataPoint(final HistogramSupport histogramSupport, final Iterable<KeyValue> tags,
-            final long startTimeNanos, final double total, final long count, final boolean isTimeBased,
-            final HistogramSnapshot histogramSnapshot) {
+    private void buildHistogramDataPoint(HistogramSupport histogramSupport, Iterable<KeyValue> tags,
+            long startTimeNanos, double total, long count, boolean isTimeBased, HistogramSnapshot histogramSnapshot) {
         Metric.Builder metricBuilder = getOrCreateMetricBuilder(histogramSupport.getId(), DataCase.HISTOGRAM);
-        if (metricBuilder != null) {
-            HistogramDataPoint.Builder histogramDataPoint = HistogramDataPoint.newBuilder()
-                .addAllAttributes(tags)
-                .setStartTimeUnixNano(startTimeNanos)
-                .setTimeUnixNano(getTimeUnixNano())
-                .setSum(total)
-                .setCount(count);
+        HistogramDataPoint.Builder histogramDataPoint = HistogramDataPoint.newBuilder()
+            .addAllAttributes(tags)
+            .setStartTimeUnixNano(startTimeNanos)
+            .setTimeUnixNano(getTimeUnixNano())
+            .setSum(total)
+            .setCount(count);
 
-            if (isDelta()) {
-                histogramDataPoint.setMax(isTimeBased ? histogramSnapshot.max(baseTimeUnit) : histogramSnapshot.max());
-            }
-
-            // if histogram enabled, add histogram buckets
-            for (CountAtBucket countAtBucket : histogramSnapshot.histogramCounts()) {
-                if (countAtBucket.bucket() != Double.POSITIVE_INFINITY) {
-                    // OTLP expects explicit bounds to not contain POSITIVE_INFINITY but
-                    // there should be a
-                    // bucket count representing values between last bucket and
-                    // POSITIVE_INFINITY.
-                    histogramDataPoint
-                        .addExplicitBounds(isTimeBased ? countAtBucket.bucket(baseTimeUnit) : countAtBucket.bucket());
-                }
-                histogramDataPoint.addBucketCounts((long) countAtBucket.count());
-            }
-
-            setHistogramDataPoint(metricBuilder, histogramDataPoint.build());
+        if (isDelta()) {
+            histogramDataPoint.setMax(isTimeBased ? histogramSnapshot.max(baseTimeUnit) : histogramSnapshot.max());
         }
+
+        // if histogram enabled, add histogram buckets
+        for (CountAtBucket countAtBucket : histogramSnapshot.histogramCounts()) {
+            if (countAtBucket.bucket() != Double.POSITIVE_INFINITY) {
+                // OTLP expects explicit bounds to not contain POSITIVE_INFINITY but
+                // there should be a
+                // bucket count representing values between last bucket and
+                // POSITIVE_INFINITY.
+                histogramDataPoint
+                    .addExplicitBounds(isTimeBased ? countAtBucket.bucket(baseTimeUnit) : countAtBucket.bucket());
+            }
+            histogramDataPoint.addBucketCounts((long) countAtBucket.count());
+        }
+
+        setHistogramDataPoint(metricBuilder, histogramDataPoint.build());
     }
 
-    private void buildSummaryDataPoint(final HistogramSupport histogramSupport, final Iterable<KeyValue> tags,
-            final long startTimeNanos, final double total, final long count,
-            final HistogramSnapshot histogramSnapshot) {
+    private void buildSummaryDataPoint(HistogramSupport histogramSupport, Iterable<KeyValue> tags, long startTimeNanos,
+            double total, long count, HistogramSnapshot histogramSnapshot) {
         Metric.Builder metricBuilder = getOrCreateMetricBuilder(histogramSupport.getId(), DataCase.SUMMARY);
-        if (metricBuilder != null) {
-            SummaryDataPoint.Builder summaryDataPoint = SummaryDataPoint.newBuilder()
-                .addAllAttributes(tags)
-                .setStartTimeUnixNano(startTimeNanos)
-                .setTimeUnixNano(getTimeUnixNano())
-                .setSum(total)
-                .setCount(count);
-            for (ValueAtPercentile percentile : histogramSnapshot.percentileValues()) {
-                summaryDataPoint.addQuantileValues(SummaryDataPoint.ValueAtQuantile.newBuilder()
-                    .setQuantile(percentile.percentile())
-                    .setValue(TimeUtils.convert(percentile.value(), TimeUnit.NANOSECONDS, baseTimeUnit)));
-            }
-
-            setSummaryDataPoint(metricBuilder, summaryDataPoint);
+        SummaryDataPoint.Builder summaryDataPoint = SummaryDataPoint.newBuilder()
+            .addAllAttributes(tags)
+            .setStartTimeUnixNano(startTimeNanos)
+            .setTimeUnixNano(getTimeUnixNano())
+            .setSum(total)
+            .setCount(count);
+        for (ValueAtPercentile percentile : histogramSnapshot.percentileValues()) {
+            summaryDataPoint.addQuantileValues(SummaryDataPoint.ValueAtQuantile.newBuilder()
+                .setQuantile(percentile.percentile())
+                .setValue(TimeUtils.convert(percentile.value(), TimeUnit.NANOSECONDS, baseTimeUnit)));
         }
+
+        setSummaryDataPoint(metricBuilder, summaryDataPoint);
     }
 
-    private void setSumDataPoint(final Metric.Builder builder, Meter meter, DoubleSupplier count) {
+    private void setSumDataPoint(Metric.Builder builder, Meter meter, DoubleSupplier count) {
         if (!builder.hasSum()) {
-            builder
-                .setSum(Sum.newBuilder().setIsMonotonic(true).setAggregationTemporality(otlpAggregationTemporality()));
+            builder.setSum(Sum.newBuilder().setIsMonotonic(true).setAggregationTemporality(otlpAggregationTemporality));
         }
 
         builder.getSumBuilder()
@@ -227,19 +212,18 @@ class OtlpMetricConverter {
                 .build());
     }
 
-    private void setHistogramDataPoint(final Metric.Builder builder, HistogramDataPoint histogramDataPoint) {
+    private void setHistogramDataPoint(Metric.Builder builder, HistogramDataPoint histogramDataPoint) {
         if (!builder.hasHistogram()) {
-            builder.setHistogram(Histogram.newBuilder().setAggregationTemporality(otlpAggregationTemporality()));
+            builder.setHistogram(Histogram.newBuilder().setAggregationTemporality(otlpAggregationTemporality));
         }
         builder.getHistogramBuilder().addDataPoints(histogramDataPoint);
     }
 
-    private static void setSummaryDataPoint(final Metric.Builder metricBuilder,
-            final SummaryDataPoint.Builder summaryDataPoint) {
-        if (!metricBuilder.hasSummary()) {
-            metricBuilder.setSummary(Summary.newBuilder());
+    private void setSummaryDataPoint(Metric.Builder builder, SummaryDataPoint.Builder summaryDataPoint) {
+        if (!builder.hasSummary()) {
+            builder.setSummary(Summary.newBuilder());
         }
-        metricBuilder.getSummaryBuilder().addDataPoints(summaryDataPoint);
+        builder.getSummaryBuilder().addDataPoints(summaryDataPoint);
     }
 
     private long getStartTimeNanos(Meter meter) {
@@ -254,22 +238,17 @@ class OtlpMetricConverter {
         return this.aggregationTemporality == AggregationTemporality.DELTA;
     }
 
-    private io.opentelemetry.proto.metrics.v1.AggregationTemporality otlpAggregationTemporality() {
-        return otlpAggregationTemporality;
-    }
-
     // VisibleForTesting
-    @Nullable
-    Metric.Builder getOrCreateMetricBuilder(Meter.Id id, final DataCase dataCase) {
-        final String conventionName = id.getConventionName(namingConvention);
+    Metric.Builder getOrCreateMetricBuilder(Meter.Id id, DataCase dataCase) {
+        String conventionName = id.getConventionName(namingConvention);
 
         MetricMetaData metricMetaData = new MetricMetaData(dataCase, conventionName, id.getBaseUnit(),
                 id.getDescription());
-        final Metric.Builder builder = metricTypeBuilderMap.get(metricMetaData);
+        Metric.Builder builder = metricTypeBuilderMap.get(metricMetaData);
         return builder != null ? builder : createMetricBuilder(metricMetaData);
     }
 
-    private Metric.Builder createMetricBuilder(final MetricMetaData metricMetaData) {
+    private Metric.Builder createMetricBuilder(MetricMetaData metricMetaData) {
         Metric.Builder builder = Metric.newBuilder().setName(metricMetaData.getName());
         if (metricMetaData.getBaseUnit() != null) {
             builder.setUnit(metricMetaData.getBaseUnit());
@@ -332,13 +311,13 @@ class OtlpMetricConverter {
             if (o == null || getClass() != o.getClass())
                 return false;
             MetricMetaData that = (MetricMetaData) o;
-            return Objects.equals(name, that.name) && Objects.equals(baseUnit, that.baseUnit)
-                    && Objects.equals(description, that.description) && Objects.equals(dataCase, that.dataCase);
+            return Objects.equals(dataCase, that.dataCase) && Objects.equals(name, that.name)
+                    && Objects.equals(baseUnit, that.baseUnit) && Objects.equals(description, that.description);
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(name, baseUnit, description, dataCase);
+            return Objects.hash(dataCase, name, baseUnit, description);
         }
 
     }
