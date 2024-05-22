@@ -49,6 +49,7 @@ class ObservationGrpcServerCallListener<RespT> extends SimpleForwardingServerCal
 
     @Override
     public void onCancel() {
+        this.observation.event(GrpcServerEvents.CANCELLED);
         try (Scope scope = this.observation.openScope()) {
             super.onCancel();
         }

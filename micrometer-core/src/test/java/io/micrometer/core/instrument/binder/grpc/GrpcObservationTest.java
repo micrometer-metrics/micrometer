@@ -544,6 +544,55 @@ class GrpcObservationTest {
 
     }
 
+    @Nested
+    class ClientInterruption {
+
+        private ClientInterruptionAwareService service = new ClientInterruptionAwareService();
+
+        @BeforeEach
+        void setUpService() throws Exception {
+            server = InProcessServerBuilder.forName("sample").addService(service).intercept(serverInterceptor).build();
+            server.start();
+
+            channel = InProcessChannelBuilder.forName("sample").intercept(clientInterceptor).build();
+        }
+
+        @Test
+        void cancel() {
+            SimpleServiceFutureStub stub = SimpleServiceGrpc.newFutureStub(channel);
+            SimpleRequest request = SimpleRequest.newBuilder().setRequestMessage("Hello").build();
+            ListenableFuture<SimpleResponse> future = stub.unaryRpc(request);
+
+            await().untilTrue(this.service.requestReceived);
+            future.cancel(true);
+            this.service.requestInterrupted.set(true);
+            await().until(future::isDone);
+            assertThat(future.isCancelled()).isTrue();
+            TestObservationRegistryAssert.assertThat(observationRegistry)
+                .hasAnObservation(observationContextAssert -> observationContextAssert.hasNameEqualTo("grpc.client")
+                    .hasLowCardinalityKeyValue("grpc.status_code", "CANCELLED"));
+            assertThat(serverHandler.getEvents()).contains(GrpcServerEvents.CANCELLED);
+        }
+
+        @Test
+        void shutdown() {
+            SimpleServiceFutureStub stub = SimpleServiceGrpc.newFutureStub(channel);
+            SimpleRequest request = SimpleRequest.newBuilder().setRequestMessage("Hello").build();
+            ListenableFuture<SimpleResponse> future = stub.unaryRpc(request);
+
+            await().untilTrue(this.service.requestReceived);
+            channel.shutdownNow(); // shutdown client while server is processing
+            this.service.requestInterrupted.set(true);
+            await().until(channel::isTerminated);
+            await().until(future::isDone);
+            TestObservationRegistryAssert.assertThat(observationRegistry)
+                .hasAnObservation(observationContextAssert -> observationContextAssert.hasNameEqualTo("grpc.client")
+                    .hasLowCardinalityKeyValue("grpc.status_code", "UNAVAILABLE"));
+            assertThat(serverHandler.getEvents()).contains(GrpcServerEvents.CANCELLED);
+        }
+
+    }
+
     // perform server context verification on basic information
     void verifyServerContext(String serviceName, String methodName, String contextualName, MethodType methodType) {
         assertThat(serverHandler.getContext()).isNotNull().satisfies((serverContext) -> {
@@ -662,6 +711,25 @@ class GrpcObservationTest {
         @Override
         public StreamObserver<SimpleRequest> bidiStreamingRpc(StreamObserver<SimpleResponse> responseObserver) {
             throw new IllegalStateException("Boom!");
+        }
+
+    }
+
+    static class ClientInterruptionAwareService extends SimpleServiceImplBase {
+
+        AtomicBoolean requestReceived = new AtomicBoolean();
+
+        AtomicBoolean requestInterrupted = new AtomicBoolean();
+
+        @Override
+        public void unaryRpc(SimpleRequest request, StreamObserver<SimpleResponse> responseObserver) {
+            this.requestReceived.set(true);
+            SimpleResponse response = SimpleResponse.newBuilder()
+                .setResponseMessage(request.getRequestMessage())
+                .build();
+            await().untilTrue(this.requestInterrupted);
+            responseObserver.onNext(response);
+            responseObserver.onCompleted();
         }
 
     }
