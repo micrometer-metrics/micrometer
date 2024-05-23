@@ -23,7 +23,7 @@ import java.util.Arrays;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class StepHistogramTest {
+class StepBucketHistogramTest {
 
     MockClock clock = new MockClock();
 

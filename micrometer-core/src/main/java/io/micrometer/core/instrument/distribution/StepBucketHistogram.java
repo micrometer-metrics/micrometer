@@ -19,8 +19,6 @@ import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.config.InvalidConfigurationException;
 import io.micrometer.core.instrument.step.StepValue;
 
-import java.util.Arrays;
-import java.util.Iterator;
 import java.util.NavigableSet;
 import java.util.Objects;
 import java.util.function.Supplier;
@@ -36,16 +34,14 @@ public class StepBucketHistogram extends StepValue<CountAtBucket[]> implements H
 
     private final FixedBoundaryHistogram fixedBoundaryHistogram;
 
-    private final double[] buckets;
-
     public StepBucketHistogram(Clock clock, long stepMillis, DistributionStatisticConfig distributionStatisticConfig,
             boolean supportsAggregablePercentiles, boolean isCumulativeBucketCounts) {
         super(clock, stepMillis, getEmptyCounts(
                 getBucketsFromDistributionStatisticConfig(distributionStatisticConfig, supportsAggregablePercentiles)));
 
-        this.buckets = getBucketsFromDistributionStatisticConfig(distributionStatisticConfig,
-                supportsAggregablePercentiles);
-        this.fixedBoundaryHistogram = new FixedBoundaryHistogram(buckets, isCumulativeBucketCounts);
+        this.fixedBoundaryHistogram = new FixedBoundaryHistogram(
+                getBucketsFromDistributionStatisticConfig(distributionStatisticConfig, supportsAggregablePercentiles),
+                isCumulativeBucketCounts);
     }
 
     @Override
@@ -66,13 +62,9 @@ public class StepBucketHistogram extends StepValue<CountAtBucket[]> implements H
     @Override
     protected Supplier<CountAtBucket[]> valueSupplier() {
         return () -> {
-            CountAtBucket[] countAtBuckets = new CountAtBucket[buckets.length];
+            CountAtBucket[] countAtBuckets;
             synchronized (fixedBoundaryHistogram) {
-                final Iterator<CountAtBucket> iterator = fixedBoundaryHistogram
-                    .countsAtValues(Arrays.stream(buckets).iterator());
-                for (int i = 0; i < countAtBuckets.length; i++) {
-                    countAtBuckets[i] = iterator.next();
-                }
+                countAtBuckets = fixedBoundaryHistogram.getCountsAtBucket();
                 fixedBoundaryHistogram.reset();
             }
             return countAtBuckets;
@@ -81,7 +73,7 @@ public class StepBucketHistogram extends StepValue<CountAtBucket[]> implements H
 
     @Override
     protected CountAtBucket[] noValue() {
-        return getEmptyCounts(buckets);
+        return getEmptyCounts(this.fixedBoundaryHistogram.getBuckets());
     }
 
     private static CountAtBucket[] getEmptyCounts(double[] buckets) {

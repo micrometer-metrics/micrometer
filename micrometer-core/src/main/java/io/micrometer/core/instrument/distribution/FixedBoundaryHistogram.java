@@ -27,14 +27,32 @@ class FixedBoundaryHistogram {
 
     private final boolean isCumulativeBucketCounts;
 
+    /**
+     * Creates a FixedBoundaryHistogram which tracks the count of values for each bucket
+     * bound).
+     * @param buckets - sorted bucket boundaries
+     * @param isCumulativeBucketCounts - whether the count values should be cumulative
+     * count of lower buckets and current bucket.
+     */
     FixedBoundaryHistogram(double[] buckets, boolean isCumulativeBucketCounts) {
         this.buckets = buckets;
         this.values = new AtomicLongArray(buckets.length);
         this.isCumulativeBucketCounts = isCumulativeBucketCounts;
     }
 
-    long countAtValue(double value) {
-        int index = Arrays.binarySearch(buckets, value);
+    double[] getBuckets() {
+        return this.buckets;
+    }
+
+    /**
+     * Returns the number of values that was recorded between previous bucket and the
+     * queried bucket (upper bound inclusive)
+     * @param bucket - the bucket to find values for
+     * @return 0 if bucket is not a valid bucket otherwise number of values recorded
+     * between (index(bucket) - 1, bucket]
+     */
+    private long countAtBucket(double bucket) {
+        int index = Arrays.binarySearch(buckets, bucket);
         if (index < 0)
             return 0;
         return values.get(index);
@@ -53,18 +71,20 @@ class FixedBoundaryHistogram {
     }
 
     /**
-     * The least bucket that is less than or equal to a sample.
+     * The least bucket that is less than or equal to a valueToRecord. Returns -1, if the
+     * valueToRecord is greater than the highest bucket.
      */
-    int leastLessThanOrEqualTo(double key) {
+    // VisibleForTesting
+    int leastLessThanOrEqualTo(long valueToRecord) {
         int low = 0;
         int high = buckets.length - 1;
 
         while (low <= high) {
             int mid = (low + high) >>> 1;
-            double value = buckets[mid];
-            if (value < key)
+            double bucket = buckets[mid];
+            if (bucket < valueToRecord)
                 low = mid + 1;
-            else if (value > key)
+            else if (bucket > valueToRecord)
                 high = mid - 1;
             else
                 return mid; // exact match
@@ -73,28 +93,49 @@ class FixedBoundaryHistogram {
         return low < buckets.length ? low : -1;
     }
 
-    Iterator<CountAtBucket> countsAtValues(Iterator<Double> values) {
+    Iterator<CountAtBucket> countsAtValues(Iterator<Double> buckets) {
         return new Iterator<CountAtBucket>() {
             private double cumulativeCount = 0.0;
 
             @Override
             public boolean hasNext() {
-                return values.hasNext();
+                return buckets.hasNext();
             }
 
             @Override
             public CountAtBucket next() {
-                double value = values.next();
-                double count = countAtValue(value);
+                double bucket = buckets.next();
+                double count = countAtBucket(bucket);
                 if (isCumulativeBucketCounts) {
                     cumulativeCount += count;
-                    return new CountAtBucket(value, cumulativeCount);
+                    return new CountAtBucket(bucket, cumulativeCount);
                 }
                 else {
-                    return new CountAtBucket(value, count);
+                    return new CountAtBucket(bucket, count);
                 }
             }
         };
+    }
+
+    /**
+     * Returns the list of {@link CountAtBucket} for each of the buckets tracked by this
+     * histogram.
+     */
+    CountAtBucket[] getCountsAtBucket() {
+        CountAtBucket[] countAtBuckets = new CountAtBucket[this.buckets.length];
+        long cumulativeCount = 0;
+
+        for (int i = 0; i < this.buckets.length; i++) {
+            final long valueAtCurrentBucket = values.get(i);
+            if (isCumulativeBucketCounts) {
+                cumulativeCount += valueAtCurrentBucket;
+                countAtBuckets[i] = new CountAtBucket(buckets[i], cumulativeCount);
+            }
+            else {
+                countAtBuckets[i] = new CountAtBucket(buckets[i], valueAtCurrentBucket);
+            }
+        }
+        return countAtBuckets;
     }
 
 }
