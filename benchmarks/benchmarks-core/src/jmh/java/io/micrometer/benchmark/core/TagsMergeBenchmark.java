@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 VMware, Inc.
+ * Copyright 2024 VMware, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,14 +32,14 @@ import java.util.concurrent.TimeUnit;
 @State(Scope.Thread)
 public class TagsMergeBenchmark {
 
-    Tags left = Tags.of("key", "value", "key2", "value2", "key6", "value6", "key7", "value7", "key8", "value8", "keyA",
-            "valueA", "keyC", "valueC", "keyE", "valueE", "keyF", "valueF", "keyG", "valueG", "keyG", "valueG", "keyG",
-            "valueG", "keyH", "valueH");
+    static final Tags left = Tags.of("key", "value", "key2", "value2", "key6", "value6", "key7", "value7", "key8",
+            "value8", "keyA", "valueA", "keyC", "valueC", "keyE", "valueE", "keyF", "valueF", "keyG", "valueG", "keyG",
+            "valueG", "keyG", "valueG", "keyH", "valueH");
 
-    Tags right = Tags.of("key", "value", "key1", "value1", "key2", "value2", "key3", "value3", "key4", "value4", "key5",
-            "value5", "keyA", "valueA", "keyB", "valueB", "keyD", "valueD");
+    static final Tags right = Tags.of("key", "value", "key1", "value1", "key2", "value2", "key3", "value3", "key4",
+            "value4", "key5", "value5", "keyA", "valueA", "keyB", "valueB", "keyD", "valueD");
 
-    @Threads(16)
+    @Threads(1)
     @Benchmark
     public Tags mergeTags() {
         return left.and(right);

@@ -60,8 +60,11 @@ public final class Tags implements Iterable<Tag> {
     }
 
     private static Tags make(Tag[] tags) {
-        Arrays.sort(tags);
-        int len = dedup(tags);
+        int len = tags.length;
+        if (!isSortedSet(tags, len)) {
+            Arrays.sort(tags);
+            len = dedup(tags);
+        }
         return new Tags(tags, len);
     }
 
