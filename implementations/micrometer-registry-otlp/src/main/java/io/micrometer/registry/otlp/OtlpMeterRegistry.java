@@ -298,7 +298,7 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
     }
 
     private Iterable<? extends KeyValue> getTagsForId(Meter.Id id) {
-        return id.getTags()
+        return id.getConventionTags(config().namingConvention())
             .stream()
             .map(tag -> createKeyValue(tag.getKey(), tag.getValue()))
             .collect(Collectors.toList());

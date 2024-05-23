@@ -16,6 +16,8 @@
 package io.micrometer.registry.otlp;
 
 import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.config.NamingConvention;
+import io.opentelemetry.proto.metrics.v1.Metric;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -551,6 +553,23 @@ class OtlpMeterRegistryTest {
                         OtlpMeterRegistry.createKeyValue("b", "2"),
                         OtlpMeterRegistry.createKeyValue("service.name", "my-service"));
             });
+    }
+
+    @Test
+    void applyCustomNamingConvention() {
+        registry.config().namingConvention(NamingConvention.snakeCase);
+
+        Gauge gauge = Gauge.builder("test.meter", () -> 1)
+            .tags("test.tag", "1")
+            .description("description")
+            .register(registry);
+
+        Metric metric = registry.writeGauge(gauge);
+
+        assertThat(metric.getName()).isEqualTo("test_meter");
+        assertThat(metric.getGauge().getDataPointsList()).singleElement()
+            .satisfies(dataPoint -> assertThat(dataPoint.getAttributesList()).singleElement()
+                .satisfies(attribute -> assertThat(attribute.getKey()).isEqualTo("test_tag")));
     }
 
 }
