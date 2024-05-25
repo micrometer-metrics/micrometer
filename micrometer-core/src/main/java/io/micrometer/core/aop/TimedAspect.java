@@ -20,14 +20,18 @@ import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.annotation.Incubating;
 import io.micrometer.core.annotation.Timed;
 import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.util.TimeUtils;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.reflect.MethodSignature;
 
 import java.lang.reflect.Method;
+import java.time.Duration;
+import java.util.Arrays;
 import java.util.Optional;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
@@ -254,7 +258,10 @@ public class TimedAspect {
             .tags(EXCEPTION_TAG, exceptionClass)
             .tags(tagsBasedOnJoinPoint.apply(pjp))
             .publishPercentileHistogram(timed.histogram())
-            .publishPercentiles(timed.percentiles().length == 0 ? null : timed.percentiles());
+            .serviceLevelObjectives((Duration[]) Arrays.stream(timed.serviceLevelObjectives())
+                .mapToObj(s -> Duration.ofNanos((long) TimeUtils.secondsToUnit(s, TimeUnit.NANOSECONDS)))
+                .toArray());
+
         if (meterTagAnnotationHandler != null) {
             meterTagAnnotationHandler.addAnnotatedParameters(builder, pjp);
         }
