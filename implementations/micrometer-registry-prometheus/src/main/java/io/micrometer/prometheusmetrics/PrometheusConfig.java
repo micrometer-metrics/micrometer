@@ -31,6 +31,7 @@ import static io.micrometer.core.instrument.config.validate.PropertyValidator.*;
  *
  * @author Jon Schneider
  * @author Jonatan Ivanov
+ * @since 1.13.0
  */
 public interface PrometheusConfig extends MeterRegistryConfig {
 

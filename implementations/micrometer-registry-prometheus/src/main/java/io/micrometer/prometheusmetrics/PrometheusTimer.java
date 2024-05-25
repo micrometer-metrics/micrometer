@@ -33,6 +33,7 @@ import java.util.concurrent.atomic.LongAdder;
  *
  * @author Jon Schneider
  * @author Jonatan Ivanov
+ * @since 1.13.0
  */
 public class PrometheusTimer extends AbstractTimer {
 

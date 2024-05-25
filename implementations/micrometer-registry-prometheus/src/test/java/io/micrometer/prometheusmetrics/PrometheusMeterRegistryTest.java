@@ -36,7 +36,6 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.stream.Collectors;
 
 import static io.micrometer.core.instrument.MockClock.clock;
 import static java.util.Collections.emptyList;
@@ -161,12 +160,10 @@ class PrometheusMeterRegistryTest {
 
         MetricSnapshot snapshot = registry.getPrometheusRegistry().scrape().get(0);
         assertThat(snapshot).describedAs("custom counter with a type of COUNTER").isInstanceOf(CounterSnapshot.class);
-        assertThat(
-                snapshot.getDataPoints().get(0).getLabels().stream().map(Label::getName).collect(Collectors.toList()))
-            .containsExactly("statistic");
-        assertThat(
-                snapshot.getDataPoints().get(0).getLabels().stream().map(Label::getValue).collect(Collectors.toList()))
-            .containsExactly("COUNT");
+        assertThat(snapshot.getDataPoints().get(0).getLabels().stream().map(Label::getName)).singleElement()
+            .isEqualTo("statistic");
+        assertThat(snapshot.getDataPoints().get(0).getLabels().stream().map(Label::getValue)).singleElement()
+            .isEqualTo("COUNT");
     }
 
     @DisplayName("attempts to register different meter types with the same name fail somewhat gracefully")
@@ -379,7 +376,7 @@ class PrometheusMeterRegistryTest {
         assertThat(registry.scrape()).contains("api_requests_total 1.0");
     }
 
-    private Condition<? super Iterable<? extends MetricSnapshot>> withNameAndQuantile(String name) {
+    private Condition<Iterable<? extends MetricSnapshot>> withNameAndQuantile(String name) {
         return new Condition<>(
                 metricSnapshots -> ((MetricSnapshots) metricSnapshots).stream()
                     .filter(snapshot -> snapshot.getMetadata().getPrometheusName().equals(name))
@@ -511,8 +508,8 @@ class PrometheusMeterRegistryTest {
     }
 
     private void assertFilteredMetricSnapshots(String[] includedNames, String[] expectedNames) {
-        MetricSnapshots snapshots = registry.getPrometheusRegistry()
-            .scrape(name -> new HashSet<>(Arrays.asList(includedNames)).contains(name));
+        Set<String> includeNameSet = new HashSet<>(Arrays.asList(includedNames));
+        MetricSnapshots snapshots = registry.getPrometheusRegistry().scrape(name -> includeNameSet.contains(name));
         String[] names = snapshots.stream()
             .map(snapshot -> snapshot.getMetadata().getPrometheusName())
             .toArray(String[]::new);
@@ -542,7 +539,7 @@ class PrometheusMeterRegistryTest {
     @Test
     void filteredMetricFamilySamplesWithLongTaskTimer() {
         String[] includedNames = { "my_long_task_timer_seconds", "my_long_task_timer_seconds_max" };
-        String[] expectedNames = { "my_long_task_timer_seconds_max", "my_long_task_timer_seconds" };
+        String[] expectedNames = { "my_long_task_timer_seconds", "my_long_task_timer_seconds_max" };
 
         LongTaskTimer.builder("my.long.task.timer").register(registry);
         assertFilteredMetricSnapshots(includedNames, expectedNames);
@@ -585,7 +582,7 @@ class PrometheusMeterRegistryTest {
 
     @Test
     @Issue("#4988")
-    void longTaskTimerRecordingsSchouldBeCorrect() {
+    void longTaskTimerRecordingsShouldBeCorrect() {
         LongTaskTimer ltt = LongTaskTimer.builder("test.ltt").publishPercentileHistogram().register(registry);
 
         String result = registry.scrape();
@@ -870,11 +867,11 @@ class PrometheusMeterRegistryTest {
         timer.record(Duration.ofMillis(150));
 
         Timer timerWithHistogram = Timer.builder("timer.withHistogram").publishPercentileHistogram().register(registry);
-        timerWithHistogram.record(15, TimeUnit.MILLISECONDS);
+        timerWithHistogram.record(Duration.ofMillis(15));
         sleepToAvoidRateLimiting();
-        timerWithHistogram.record(150, TimeUnit.MILLISECONDS);
+        timerWithHistogram.record(Duration.ofMillis(150));
         sleepToAvoidRateLimiting();
-        timerWithHistogram.record(60, TimeUnit.SECONDS);
+        timerWithHistogram.record(Duration.ofSeconds(60));
 
         Timer timerWithSlos = Timer.builder("timer.withSlos")
             .serviceLevelObjectives(Duration.ofMillis(100), Duration.ofMillis(200), Duration.ofMillis(300))
@@ -899,14 +896,14 @@ class PrometheusMeterRegistryTest {
         sleepToAvoidRateLimiting();
         summaryWithHistogram.record(15);
 
-        DistributionSummary slos = DistributionSummary.builder("summary.withSlos")
+        DistributionSummary summaryWithSlos = DistributionSummary.builder("summary.withSlos")
             .serviceLevelObjectives(100, 200, 300)
             .register(registry);
-        slos.record(10);
+        summaryWithSlos.record(10);
         sleepToAvoidRateLimiting();
-        slos.record(1_000);
+        summaryWithSlos.record(1_000);
         sleepToAvoidRateLimiting();
-        slos.record(250);
+        summaryWithSlos.record(250);
 
         String scraped = registry.scrape("application/openmetrics-text");
         assertThat(scraped).contains("my_counter_total 1.0 # {span_id=\"1\",trace_id=\"2\"} 1.0 ");
@@ -1010,10 +1007,10 @@ class PrometheusMeterRegistryTest {
             }
         };
 
-        return new PrometheusMeterRegistry(prometheusConfig, prometheusRegistry, clock, new TestSpanContex());
+        return new PrometheusMeterRegistry(prometheusConfig, prometheusRegistry, clock, new TestSpanContext());
     }
 
-    static class TestSpanContex implements SpanContext {
+    static class TestSpanContext implements SpanContext {
 
         private final AtomicLong count = new AtomicLong();
 
