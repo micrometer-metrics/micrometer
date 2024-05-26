@@ -25,9 +25,7 @@ import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import io.micrometer.core.instrument.util.TimeUtils;
 
 import java.time.Duration;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.function.*;
