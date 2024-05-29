@@ -83,6 +83,12 @@ public enum GrpcObservationDocumentation implements ObservationDocumentation {
             public String asString() {
                 return "grpc.status_code";
             }
+        },
+        CANCELLED {
+            @Override
+            public String asString() {
+                return "grpc.cancelled";
+            }
         }
 
     }
