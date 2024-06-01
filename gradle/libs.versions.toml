@@ -24,7 +24,7 @@ guice = "5.1.0"
 h2 = "2.2.224"
 hazelcast = "5.3.2"
 hazelcast3 = "3.12.13"
-hdrhistogram = "2.2.1"
+hdrhistogram = "2.2.2"
 hibernate = "5.6.15.Final"
 # 2.6.0 requires JDK 11
 hsqldb = "2.7.2"
