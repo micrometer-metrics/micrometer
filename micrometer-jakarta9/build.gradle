@@ -18,6 +18,12 @@ dependencies {
     api project(":micrometer-observation")
 
     optionalApi 'jakarta.jms:jakarta.jms-api'
+    optionalApi libs.javax.rsapi // jax-rs
+
+    // jakarta servlet
+    optionalApi 'jakarta.servlet:jakarta.servlet-api'
+    optionalApi 'org.apache.tomcat.embed:tomcat-embed-core:10.1.+' // can't move to dependencies.gradle, we have 2 versions of this lib (check micrometer-core)
+    optionalApi 'org.glassfish.jersey.core:jersey-server:3.1.+' // can't move to dependencies.gradle, we have 2 versions of this lib (check micrometer-core)
 
     testImplementation 'org.junit.jupiter:junit-jupiter'
     testImplementation(libs.archunitJunit5) {
@@ -27,4 +33,9 @@ dependencies {
     testImplementation libs.slf4jApi
     testImplementation libs.mockitoCore5
     testImplementation 'org.assertj:assertj-core'
+    testImplementation 'ru.lanwen.wiremock:wiremock-junit5'
+    testImplementation 'com.github.tomakehurst:wiremock-jre8-standalone'
+    testImplementation libs.resteasy.netty4
+
+    testImplementation project(":micrometer-observation-test")
 }
