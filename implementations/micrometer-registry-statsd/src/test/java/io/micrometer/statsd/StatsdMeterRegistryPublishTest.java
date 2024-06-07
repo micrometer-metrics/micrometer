@@ -81,6 +81,25 @@ class StatsdMeterRegistryPublishTest {
 
     @ParameterizedTest
     @EnumSource(StatsdProtocol.class)
+    void receiveAllBufferedMetricsAfterCloseSuccessfully(StatsdProtocol protocol) throws InterruptedException {
+        skipUdsTestOnWindows(protocol);
+        serverLatch = new CountDownLatch(3);
+        server = startServer(protocol, 0);
+
+        final int port = getPort(protocol);
+        meterRegistry = new StatsdMeterRegistry(getBufferedConfig(protocol, port), Clock.SYSTEM);
+        startRegistryAndWaitForClient();
+        Thread.sleep(1000);
+        Counter counter = Counter.builder("my.counter").register(meterRegistry);
+        counter.increment();
+        counter.increment();
+        counter.increment();
+        meterRegistry.close();
+        assertThat(serverLatch.await(5, TimeUnit.SECONDS)).isTrue();
+    }
+
+    @ParameterizedTest
+    @EnumSource(StatsdProtocol.class)
     void receiveMetricsSuccessfully(StatsdProtocol protocol) throws InterruptedException {
         skipUdsTestOnWindows(protocol);
         serverLatch = new CountDownLatch(3);
@@ -336,11 +355,14 @@ class StatsdMeterRegistryPublishTest {
             return UdpServer.create()
                 .bindAddress(() -> protocol == StatsdProtocol.UDP
                         ? InetSocketAddress.createUnresolved("localhost", port) : newDomainSocketAddress())
-                .handle((in, out) -> in.receive().asString().flatMap(packet -> {
-                    serverLatch.countDown();
-                    serverMetricReadCount.getAndIncrement();
-                    return Flux.never();
-                }))
+                .handle((in, out) -> in.receive()
+                    .asString()
+                    .flatMap(packet -> Flux.just(packet.split("\n")))
+                    .flatMap(packetLine -> {
+                        serverLatch.countDown();
+                        serverMetricReadCount.getAndIncrement();
+                        return Flux.never();
+                    }))
                 .doOnBound((server) -> bound = true)
                 .doOnUnbound((server) -> bound = false)
                 .wiretap("udpserver", LogLevel.INFO)
@@ -351,14 +373,17 @@ class StatsdMeterRegistryPublishTest {
             return TcpServer.create()
                 .host("localhost")
                 .port(port)
-                .handle((in, out) -> in.receive().asString().flatMap(packet -> {
-                    IntStream.range(0, packet.split("my.counter").length - 1).forEach(i -> {
-                        serverLatch.countDown();
-                        serverMetricReadCount.getAndIncrement();
-                    });
-                    in.withConnection(channel::set);
-                    return Flux.never();
-                }))
+                .handle((in, out) -> in.receive()
+                    .asString()
+                    .flatMap(packet -> Flux.just(packet.split("\n")))
+                    .flatMap(packetLine -> {
+                        IntStream.range(0, packetLine.split("my.counter").length - 1).forEach(i -> {
+                            serverLatch.countDown();
+                            serverMetricReadCount.getAndIncrement();
+                        });
+                        in.withConnection(channel::set);
+                        return Flux.never();
+                    }))
                 .doOnBound((server) -> bound = true)
                 .doOnUnbound((server) -> {
                     bound = false;
@@ -388,6 +413,14 @@ class StatsdMeterRegistryPublishTest {
     }
 
     private StatsdConfig getUnbufferedConfig(StatsdProtocol protocol, int port) {
+        return getConfig(protocol, port, false);
+    }
+
+    private StatsdConfig getBufferedConfig(StatsdProtocol protocol, int port) {
+        return getConfig(protocol, port, true);
+    }
+
+    private StatsdConfig getConfig(StatsdProtocol protocol, int port, boolean buffered) {
         return new StatsdConfig() {
             @Override
             public String get(String key) {
@@ -411,7 +444,7 @@ class StatsdMeterRegistryPublishTest {
 
             @Override
             public boolean buffered() {
-                return false;
+                return buffered;
             }
         };
     }
