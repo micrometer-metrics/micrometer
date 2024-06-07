@@ -26,6 +26,7 @@ import io.micrometer.core.instrument.util.HierarchicalNameMapper;
 import io.micrometer.core.lang.Nullable;
 import io.micrometer.core.util.internal.logging.WarnThenDebugLogger;
 import io.micrometer.statsd.internal.*;
+import io.netty.channel.Channel;
 import io.netty.channel.unix.DomainSocketAddress;
 import io.netty.util.AttributeKey;
 import org.reactivestreams.Publisher;
@@ -92,7 +93,12 @@ public class StatsdMeterRegistry extends MeterRegistry {
 
     FluxSink<String> sink = new NoopFluxSink();
 
+    Flux<String> flux = Flux.empty();
+
     Disposable.Swap statsdConnection = Disposables.swap();
+
+    @Nullable
+    private Channel flushableChannel;
 
     private Disposable.Swap meterPoller = Disposables.swap();
 
@@ -219,6 +225,7 @@ public class StatsdMeterRegistry extends MeterRegistry {
             else {
                 final Publisher<String> publisher;
                 if (statsdConfig.buffered()) {
+                    flux = Flux.from(this.processor);
                     publisher = BufferingFlux
                         .create(Flux.from(this.processor), "\n", statsdConfig.maxPacketLength(),
                                 statsdConfig.pollingFrequency().toMillis())
@@ -295,6 +302,7 @@ public class StatsdMeterRegistry extends MeterRegistry {
     private void retryReplaceClient(Mono<? extends Connection> connectMono) {
         connectMono.retryWhen(Retry.backoff(Long.MAX_VALUE, Duration.ofSeconds(1)).maxBackoff(Duration.ofMinutes(1)))
             .subscribe(connection -> {
+                this.flushableChannel = connection.channel();
                 this.statsdConnection.replace(connection);
 
                 // now that we're connected, start polling gauges and other pollable
@@ -309,6 +317,9 @@ public class StatsdMeterRegistry extends MeterRegistry {
 
     public void stop() {
         if (started.compareAndSet(true, false)) {
+            if (this.flushableChannel != null) {
+                this.flushableChannel.flush();
+            }
             if (statsdConnection.get() != null) {
                 statsdConnection.get().dispose();
             }
@@ -321,6 +332,7 @@ public class StatsdMeterRegistry extends MeterRegistry {
     @Override
     public void close() {
         poll();
+        this.sink.complete();
         stop();
         super.close();
     }
