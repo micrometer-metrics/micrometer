@@ -7,10 +7,10 @@ aspectjweaver = "1.9.22.1"
 assertj = "3.26.0"
 awaitility = "4.2.1"
 caffeine = "2.9.3"
-cloudwatch2 = "2.25.64"
+cloudwatch2 = "2.25.69"
 colt = "1.2.0"
 dagger = "2.51.1"
-dropwizard-metrics = "4.2.25"
+dropwizard-metrics = "4.2.26"
 dropwizard-metrics5 = "5.0.0"
 dynatrace-utils = "2.2.1"
 ehcache2 = "2.10.9.2"
@@ -76,7 +76,7 @@ signalfx = "1.0.42"
 slf4j = "1.7.36"
 spectator-atlas = "1.7.13"
 spring = "5.3.36"
-spring-javaformat = "0.0.41"
+spring-javaformat = "0.0.42"
 testcontainers = "1.19.8"
 tomcat = "8.5.100"
 wavefront = "3.4.3"
@@ -107,7 +107,7 @@ dynatraceUtils = { module = "com.dynatrace.metric.util:dynatrace-metric-utils-ja
 ehcache2 = { module = "net.sf.ehcache:ehcache", version.ref = "ehcache2" }
 ehcache3 = { module = "org.ehcache:ehcache", version.ref = "ehcache3" }
 felixFramework = "org.apache.felix:org.apache.felix.framework:7.0.5"
-felixScr = "org.apache.felix:org.apache.felix.scr:2.2.10"
+felixScr = "org.apache.felix:org.apache.felix.scr:2.2.12"
 gmetric4j = { module = "info.ganglia.gmetric4j:gmetric4j", version.ref = "gmetric4j" }
 googleCloudLibrariesBom = { module = "com.google.cloud:libraries-bom", version = "26.40.0" }
 googleCloudMonitoring = { module = "com.google.cloud:google-cloud-monitoring", version.ref = "google-cloud-monitoring" }
@@ -223,7 +223,7 @@ plugin-nebulaInfo = { module = "com.netflix.nebula:gradle-info-plugin", version 
 plugin-noHttp = { module = "io.spring.nohttp:nohttp-gradle", version = "0.0.11" }
 plugin-nexusPublish = { module = "io.github.gradle-nexus:publish-plugin", version = "1.3.0" }
 plugin-javaformat = { module = "io.spring.javaformat:spring-javaformat-gradle-plugin", version.ref = "spring-javaformat" }
-plugin-japicmp = { module = "me.champeau.gradle:japicmp-gradle-plugin", version = "0.4.2" }
+plugin-japicmp = { module = "me.champeau.gradle:japicmp-gradle-plugin", version = "0.4.3" }
 plugin-downloadTask = { module = "de.undercouch:gradle-download-task", version = "5.6.0" }
 plugin-spotless = { module = "com.diffplug.spotless:spotless-plugin-gradle", version = "6.25.0" }
 plugin-bnd = "biz.aQute.bnd:biz.aQute.bnd.gradle:6.4.0"
