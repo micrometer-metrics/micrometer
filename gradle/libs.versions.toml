@@ -7,7 +7,7 @@ aspectjweaver = "1.9.22.1"
 assertj = "3.24.2"
 awaitility = "4.2.1"
 # legacy SDK
-aws-cloudwatch = "1.12.725"
+aws-cloudwatch = "1.12.734"
 caffeine = "2.9.3"
 cloudwatch2 = "2.21.46"
 colt = "1.2.0"
@@ -28,7 +28,7 @@ hazelcast3 = "3.12.13"
 hdrhistogram = "2.1.12"
 hibernate = "5.6.15.Final"
 # 2.6.0 requires JDK 11
-hsqldb = "2.7.2"
+hsqldb = "2.7.3"
 httpcomponents-async = "4.1.5"
 httpcomponents-client = "4.5.14"
 httpcomponents-client5 = "5.2.3"
@@ -60,16 +60,16 @@ maven-resolver = "1.9.20"
 mockito4 = "4.11.0"
 mockito5 = "5.7.0"
 mongo = "4.11.2"
-netty = "4.1.109.Final"
+netty = "4.1.110.Final"
 newrelic-api = "5.14.0"
 okhttp = "4.11.0"
 postgre = "42.6.2"
 prometheus = "0.16.0"
 reactor = "2022.0.19"
 rest-assured = "5.3.2"
-signalfx = "1.0.41"
+signalfx = "1.0.42"
 slf4j = "1.7.36"
-spectator-atlas = "1.7.12"
+spectator-atlas = "1.7.13"
 spring = "5.3.36"
 spring-javaformat = "0.0.41"
 testcontainers = "1.19.8"
@@ -169,7 +169,7 @@ logback14 = {module = "ch.qos.logback:logback-classic", version = "1.4.14" }
 log4j = { module = "org.apache.logging.log4j:log4j-core", version.ref = "log4j" }
 mavenResolverConnectorBasic = { module = "org.apache.maven.resolver:maven-resolver-connector-basic", version.ref = "maven-resolver" }
 mavenResolverTransportHttp = { module = "org.apache.maven.resolver:maven-resolver-transport-http", version.ref = "maven-resolver" }
-mavenResolverProvider = { module = "org.apache.maven:maven-resolver-provider", version = "3.9.6" }
+mavenResolverProvider = { module = "org.apache.maven:maven-resolver-provider", version = "3.9.7" }
 mockitoCore4 = { module = "org.mockito:mockito-core", version.ref = "mockito4" }
 mockitoCore5 = { module = "org.mockito:mockito-core", version.ref = "mockito5" }
 mongoSync = { module = "org.mongodb:mongodb-driver-sync", version.ref = "mongo" }
