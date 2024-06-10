@@ -107,7 +107,7 @@ dynatraceUtils = { module = "com.dynatrace.metric.util:dynatrace-metric-utils-ja
 ehcache2 = { module = "net.sf.ehcache:ehcache", version.ref = "ehcache2" }
 ehcache3 = { module = "org.ehcache:ehcache", version.ref = "ehcache3" }
 felixFramework = "org.apache.felix:org.apache.felix.framework:7.0.5"
-felixScr = "org.apache.felix:org.apache.felix.scr:2.2.10"
+felixScr = "org.apache.felix:org.apache.felix.scr:2.2.12"
 gmetric4j = { module = "info.ganglia.gmetric4j:gmetric4j", version.ref = "gmetric4j" }
 googleCloudLibrariesBom = { module = "com.google.cloud:libraries-bom", version = "26.38.0" }
 googleCloudMonitoring = { module = "com.google.cloud:google-cloud-monitoring", version.ref = "google-cloud-monitoring" }
