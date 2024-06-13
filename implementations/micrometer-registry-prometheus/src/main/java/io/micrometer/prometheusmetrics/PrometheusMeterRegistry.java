@@ -271,7 +271,8 @@ public class PrometheusMeterRegistry extends MeterRegistry {
                     if (Double.isFinite(histogramCounts[histogramCounts.length - 1].bucket())) {
                         // ClassicHistogramBuckets is not cumulative
                         buckets.add(Double.POSITIVE_INFINITY);
-                        counts.add(count - histogramCounts[histogramCounts.length - 1].count());
+                        double infCount = count - histogramCounts[histogramCounts.length - 1].count();
+                        counts.add(infCount >= 0 ? infCount : 0);
                     }
 
                     Exemplars exemplars = summary.exemplars();
@@ -494,7 +495,8 @@ public class PrometheusMeterRegistry extends MeterRegistry {
                 if (Double.isFinite(histogramCounts[histogramCounts.length - 1].bucket())) {
                     // ClassicHistogramBuckets is not cumulative
                     buckets.add(Double.POSITIVE_INFINITY);
-                    counts.add(count - histogramCounts[histogramCounts.length - 1].count());
+                    double infCount = count - histogramCounts[histogramCounts.length - 1].count();
+                    counts.add(infCount >= 0 ? infCount : 0);
                 }
 
                 Exemplars exemplars = createExemplarsWithScaledValues(exemplarsSupplier.get());
