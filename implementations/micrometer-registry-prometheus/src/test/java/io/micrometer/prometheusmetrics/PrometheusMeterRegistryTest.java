@@ -871,18 +871,18 @@ class PrometheusMeterRegistryTest {
 
         Timer timerWithHistogram = Timer.builder("timer.withHistogram").publishPercentileHistogram().register(registry);
         timerWithHistogram.record(15, TimeUnit.MILLISECONDS);
-        Thread.sleep(5); // sleeping 5ms since the sample interval limit is 1ms
+        sleepToAvoidRateLimiting();
         timerWithHistogram.record(150, TimeUnit.MILLISECONDS);
-        Thread.sleep(5); // sleeping 5ms since the sample interval limit is 1ms
+        sleepToAvoidRateLimiting();
         timerWithHistogram.record(60, TimeUnit.SECONDS);
 
         Timer timerWithSlos = Timer.builder("timer.withSlos")
             .serviceLevelObjectives(Duration.ofMillis(100), Duration.ofMillis(200), Duration.ofMillis(300))
             .register(registry);
         timerWithSlos.record(Duration.ofMillis(15));
-        Thread.sleep(5); // sleeping 5ms since the sample interval limit is 1ms
+        sleepToAvoidRateLimiting();
         timerWithSlos.record(Duration.ofMillis(1_500));
-        Thread.sleep(5); // sleeping 5ms since the sample interval limit is 1ms
+        sleepToAvoidRateLimiting();
         timerWithSlos.record(Duration.ofMillis(150));
 
         DistributionSummary summary = DistributionSummary.builder("summary.noHistogram").register(registry);
@@ -894,18 +894,18 @@ class PrometheusMeterRegistryTest {
             .publishPercentileHistogram()
             .register(registry);
         summaryWithHistogram.record(0.15);
-        Thread.sleep(5); // sleeping 5ms since the sample interval limit is 1ms
+        sleepToAvoidRateLimiting();
         summaryWithHistogram.record(5E18);
-        Thread.sleep(5); // sleeping 5ms since the sample interval limit is 1ms
+        sleepToAvoidRateLimiting();
         summaryWithHistogram.record(15);
 
         DistributionSummary slos = DistributionSummary.builder("summary.withSlos")
             .serviceLevelObjectives(100, 200, 300)
             .register(registry);
         slos.record(10);
-        Thread.sleep(5); // sleeping 5ms since the sample interval limit is 1ms
+        sleepToAvoidRateLimiting();
         slos.record(1_000);
-        Thread.sleep(5); // sleeping 5ms since the sample interval limit is 1ms
+        sleepToAvoidRateLimiting();
         slos.record(250);
 
         String scraped = registry.scrape("application/openmetrics-text");
@@ -942,6 +942,10 @@ class PrometheusMeterRegistryTest {
         assertThat(scraped).contains("summary_withSlos_count 3 # {span_id=\"29\",trace_id=\"30\"} 250.0 ");
 
         assertThat(scraped).endsWith("# EOF\n");
+    }
+
+    private static void sleepToAvoidRateLimiting() throws InterruptedException {
+        Thread.sleep(5); // sleeping 5ms since the sample interval limit is 1ms
     }
 
     @Test

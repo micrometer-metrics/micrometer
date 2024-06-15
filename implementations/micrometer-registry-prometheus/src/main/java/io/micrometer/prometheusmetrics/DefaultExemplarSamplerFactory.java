@@ -27,7 +27,6 @@ import java.util.concurrent.ConcurrentMap;
  * Default implementation of {@link ExemplarSamplerFactory}.
  *
  * @author Jonatan Ivanov
- * @since 1.13.0
  */
 class DefaultExemplarSamplerFactory implements ExemplarSamplerFactory {
 
@@ -39,7 +38,7 @@ class DefaultExemplarSamplerFactory implements ExemplarSamplerFactory {
 
     private final SpanContext spanContext;
 
-    public DefaultExemplarSamplerFactory(SpanContext spanContext, ExemplarsProperties exemplarsProperties) {
+    DefaultExemplarSamplerFactory(SpanContext spanContext, ExemplarsProperties exemplarsProperties) {
         this.spanContext = spanContext;
         this.exemplarsProperties = exemplarsProperties;
     }
@@ -52,10 +51,9 @@ class DefaultExemplarSamplerFactory implements ExemplarSamplerFactory {
     }
 
     @Override
-    public ExemplarSampler createExemplarSampler(double[] histogramClassicUpperBounds) {
+    public ExemplarSampler createExemplarSampler(double[] histogramUpperBounds) {
         ExemplarSamplerConfig config = exemplarSamplerConfigsByHistogramUpperBounds.computeIfAbsent(
-                histogramClassicUpperBounds,
-                key -> new ExemplarSamplerConfig(exemplarsProperties, histogramClassicUpperBounds));
+                histogramUpperBounds, key -> new ExemplarSamplerConfig(exemplarsProperties, histogramUpperBounds));
         return new ExemplarSampler(config, spanContext);
     }
 
