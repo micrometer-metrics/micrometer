@@ -64,6 +64,7 @@ import static java.util.stream.StreamSupport.stream;
  * @author Jon Schneider
  * @author Johnny Lim
  * @author Jonatan Ivanov
+ * @since 1.13.0
  */
 public class PrometheusMeterRegistry extends MeterRegistry {
 
@@ -128,7 +129,6 @@ public class PrometheusMeterRegistry extends MeterRegistry {
      * @param contentType the scrape Content-Type
      * @return the scrape body
      * @see ExpositionFormats
-     * @since 1.7.0
      */
     public String scrape(String contentType) {
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
@@ -175,7 +175,6 @@ public class PrometheusMeterRegistry extends MeterRegistry {
      * @return Content that should be included in the response body for an endpoint
      * designated for Prometheus to scrape from.
      * @see ExpositionFormats
-     * @since 1.7.0
      */
     public String scrape(String contentType, @Nullable Set<String> includedNames) {
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
@@ -197,7 +196,6 @@ public class PrometheusMeterRegistry extends MeterRegistry {
      * {@code null}.
      * @throws IOException if writing fails
      * @see ExpositionFormats
-     * @since 1.7.0
      */
     public void scrape(OutputStream outputStream, String contentType, @Nullable Set<String> includedNames)
             throws IOException {
@@ -258,7 +256,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
                     // TODO: remove this cumulative -> non cumulative conversion
                     // ClassicHistogramBuckets is not cumulative but the
                     // histograms we use are cumulative
-                    // so we converting it to non-cumulative just for the
+                    // so we convert it to non-cumulative just for the
                     // Prometheus client library
                     // can convert it back to cumulative.
                     buckets.add(histogramCounts[0].bucket());
@@ -287,7 +285,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
                     // a bunch of Collector.MetricFamilySamples.Sample
                     // that has an le label for Prometheus and a vmrange label for
                     // Victoria.
-                    // That control is gone now, we don’t have control over the
+                    // That control is gone now, so we don’t have control over the
                     // output and when HistogramDataPointSnapshot is written, the
                     // bucket name is hardcoded to le.
                 }
@@ -482,7 +480,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
                 // TODO: remove this cumulative -> non cumulative conversion
                 // ClassicHistogramBuckets is not cumulative but the histograms we
                 // use are cumulative
-                // so we converting it to non-cumulative just for the Prometheus
+                // so we convert it to non-cumulative just for the Prometheus
                 // client library
                 // can convert it back to cumulative.
                 buckets.add(histogramCounts[0].bucket(getBaseTimeUnit()));
@@ -511,7 +509,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
                 // a bunch of Collector.MetricFamilySamples.Sample
                 // that has an le label for Prometheus and a vmrange label for
                 // Victoria.
-                // That control is gone now, we don’t have control over the
+                // That control is gone now, so we don’t have control over the
                 // output and when HistogramDataPointSnapshot is written, the
                 // bucket name is hardcoded to le.
             }
@@ -604,7 +602,6 @@ public class PrometheusMeterRegistry extends MeterRegistry {
      * MeterRegistry.Config#onMeterRegistrationFailed(BiConsumer)} when you want meters
      * with the same name but different tags to cause an unchecked exception.
      * @return This registry
-     * @since 1.6.0
      */
     public PrometheusMeterRegistry throwExceptionOnRegistrationFailure() {
         config().onMeterRegistrationFailed((id, reason) -> {
@@ -616,9 +613,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
 
     private enum Format {
 
-        TEXT_004("text/plain; version=0.0.4; charset=utf-8"),
-        OPENMETRICS_100("application/openmetrics-text; version=1.0.0; charset=utf-8"),
-        PROTOBUF("application/vnd.google.protobuf; proto=io.prometheus.client.MetricFamily; encoding=delimited");
+        TEXT_004("text/plain; version=0.0.4; charset=utf-8");
 
         private final String contentType;
 
@@ -626,7 +621,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
             this.contentType = contentType;
         }
 
-        public String getContentType() {
+        String getContentType() {
             return contentType;
         }
 

@@ -15,6 +15,12 @@
  */
 package io.micrometer.prometheusmetrics;
 
+/**
+ * {@link PrometheusNamingConvention} with {@code _duration} suffix for timers.
+ *
+ * @author Clint Checketts
+ * @since 1.13.0
+ */
 public class PrometheusDurationNamingConvention extends PrometheusNamingConvention {
 
     public PrometheusDurationNamingConvention() {
