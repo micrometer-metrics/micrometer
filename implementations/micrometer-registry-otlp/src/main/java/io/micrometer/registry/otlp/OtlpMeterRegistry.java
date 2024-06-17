@@ -101,12 +101,23 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
     }
 
     public OtlpMeterRegistry(OtlpConfig config, Clock clock) {
-        this(config, clock, new HttpUrlConnectionSender());
+        this(config, clock, DEFAULT_THREAD_FACTORY);
+    }
+
+    /**
+     * Create an {@code OtlpMeterRegistry} instance.
+     * @param config config
+     * @param clock clock
+     * @param threadFactory thread factory
+     * @since 1.14.0
+     */
+    public OtlpMeterRegistry(OtlpConfig config, Clock clock, ThreadFactory threadFactory) {
+        this(config, clock, threadFactory, new HttpUrlConnectionSender());
     }
 
     // not public until we decide what we want to expose in public API
     // HttpSender may not be a good idea if we will support a non-HTTP transport
-    private OtlpMeterRegistry(OtlpConfig config, Clock clock, HttpSender httpSender) {
+    private OtlpMeterRegistry(OtlpConfig config, Clock clock, ThreadFactory threadFactory, HttpSender httpSender) {
         super(config, clock);
         this.config = config;
         this.baseTimeUnit = config.baseTimeUnit();
@@ -114,7 +125,7 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
         this.resource = Resource.newBuilder().addAllAttributes(getResourceAttributes()).build();
         this.aggregationTemporality = config.aggregationTemporality();
         config().namingConvention(NamingConvention.dot);
-        start(DEFAULT_THREAD_FACTORY);
+        start(threadFactory);
     }
 
     @Override
