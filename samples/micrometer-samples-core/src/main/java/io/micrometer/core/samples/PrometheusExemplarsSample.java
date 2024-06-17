@@ -40,26 +40,26 @@ public class PrometheusExemplarsSample {
 
         Timer timer = Timer.builder("test.timer").publishPercentileHistogram().register(registry);
         timer.record(Duration.ofNanos(1_000 * 100));
-        sleep(); // sleeping to avoid rate-limiting
+        sleepToAvoidRateLimiting();
         timer.record(Duration.ofMillis(2));
-        sleep(); // sleeping to avoid rate-limiting
+        sleepToAvoidRateLimiting();
         timer.record(Duration.ofMillis(100));
-        sleep(); // sleeping to avoid rate-limiting
+        sleepToAvoidRateLimiting();
         timer.record(Duration.ofSeconds(60));
 
         DistributionSummary distributionSummary = DistributionSummary.builder("test.distribution")
             .publishPercentileHistogram()
             .register(registry);
         distributionSummary.record(0.15);
-        sleep(); // sleeping to avoid rate-limiting
+        sleepToAvoidRateLimiting();
         distributionSummary.record(15);
-        sleep(); // sleeping to avoid rate-limiting
+        sleepToAvoidRateLimiting();
         distributionSummary.record(5E18);
 
         System.out.println(registry.scrape(CONTENT_TYPE_OPENMETRICS_100));
     }
 
-    static void sleep() {
+    static void sleepToAvoidRateLimiting() {
         try {
             // sleeping 100ms since the sample interval limit is 90ms
             Thread.sleep(100);
