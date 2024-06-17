@@ -123,6 +123,7 @@ public abstract class PushMeterRegistry extends MeterRegistry {
      * registry implementation that may be helpful in troubleshooting. By default, the
      * registry class name and step interval are included.
      * @return message to log on registry start
+     * @since 1.13.0
      */
     protected String startMessage() {
         return "publishing metrics for " + getClass().getSimpleName() + " every " + TimeUtils.format(config.step());
