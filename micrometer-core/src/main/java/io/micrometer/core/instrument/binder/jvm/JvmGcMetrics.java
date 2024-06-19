@@ -74,6 +74,8 @@ public class JvmGcMetrics implements MeterBinder, AutoCloseable {
 
     private final boolean managementExtensionsPresent = isManagementExtensionsPresent();
 
+    private final boolean garbageCollectorNotificationsAvailable = isGarbageCollectorNotificationsAvailable();
+
     // VisibleForTesting
     final boolean isGenerationalGc = isGenerationalGcConfigured();
 
@@ -119,7 +121,7 @@ public class JvmGcMetrics implements MeterBinder, AutoCloseable {
 
     @Override
     public void bindTo(MeterRegistry registry) {
-        if (!this.managementExtensionsPresent) {
+        if (!this.managementExtensionsPresent || !this.garbageCollectorNotificationsAvailable) {
             return;
         }
 
@@ -323,6 +325,27 @@ public class JvmGcMetrics implements MeterBinder, AutoCloseable {
                     + "com.sun.management.GarbageCollectionNotificationInfo is not present");
             return false;
         }
+    }
+
+    private static boolean isGarbageCollectorNotificationsAvailable() {
+        List<String> gcsWithoutNotification = new ArrayList<>();
+        for (GarbageCollectorMXBean gcBean : ManagementFactory.getGarbageCollectorMXBeans()) {
+            if (!(gcBean instanceof NotificationEmitter)) {
+                continue;
+            }
+            NotificationEmitter notificationEmitter = (NotificationEmitter) gcBean;
+            boolean notificationAvailable = Arrays.stream(notificationEmitter.getNotificationInfo())
+                .anyMatch(mBeanNotificationInfo -> Arrays.asList(mBeanNotificationInfo.getNotifTypes())
+                    .contains(GarbageCollectionNotificationInfo.GARBAGE_COLLECTION_NOTIFICATION));
+            if (notificationAvailable) {
+                return true;
+            }
+            gcsWithoutNotification.add(gcBean.getName());
+        }
+        log.warn("GC notifications will not be available because no GarbageCollectorMXBean of the JVM provides any."
+                + " GCs=" + gcsWithoutNotification);
+
+        return false;
     }
 
     @Override
