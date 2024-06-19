@@ -126,7 +126,7 @@ subprojects {
 
 
             javadoc {
-                if (project.name.contains('samples')) {
+                if (project.name.contains('samples') || project.name.contains("-test-aspectj")) {
                     enabled = false
                 } else {
                     configure(options) {
@@ -289,7 +289,7 @@ subprojects {
     }
 
     // Do not publish some modules
-    if (!['samples', 'benchmarks', 'micrometer-osgi-test', 'concurrency-tests'].find { project.name.contains(it) }) {
+    if (!['samples', 'benchmarks', 'micrometer-osgi-test', 'concurrency-tests', 'micrometer-test-aspectj-ctw', 'micrometer-test-aspectj-ltw'].find { project.name.contains(it) }) {
         apply plugin: 'com.netflix.nebula.maven-publish'
         apply plugin: 'com.netflix.nebula.maven-manifest'
         apply plugin: 'com.netflix.nebula.maven-developer'
@@ -337,7 +337,7 @@ subprojects {
 
             check.dependsOn("testModules")
 
-            if (!(project.name in [])) { // add projects here that do not exist in the previous minor so should be excluded from japicmp
+            if (!(project.name in ['micrometer-test-aspectj-ltw', 'micrometer-test-aspectj-ctw'])) { // add projects here that do not exist in the previous minor so should be excluded from japicmp
                 apply plugin: 'me.champeau.gradle.japicmp'
                 apply plugin: 'de.undercouch.download'
 

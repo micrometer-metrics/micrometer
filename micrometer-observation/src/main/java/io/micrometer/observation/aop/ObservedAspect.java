@@ -19,6 +19,7 @@ import io.micrometer.common.lang.NonNullApi;
 import io.micrometer.common.lang.Nullable;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
+import io.micrometer.observation.Observations;
 import io.micrometer.observation.annotation.Observed;
 import io.micrometer.observation.ObservationConvention;
 import org.aspectj.lang.ProceedingJoinPoint;
@@ -84,6 +85,11 @@ public class ObservedAspect {
 
     private final Predicate<ProceedingJoinPoint> shouldSkip;
 
+    // For Compile Time Weaving
+    public ObservedAspect() {
+        this(Observations.getGlobalRegistry(), null, DONT_SKIP_ANYTHING);
+    }
+
     public ObservedAspect(ObservationRegistry registry) {
         this(registry, null, DONT_SKIP_ANYTHING);
     }
@@ -105,7 +111,7 @@ public class ObservedAspect {
         this.shouldSkip = shouldSkip;
     }
 
-    @Around("@within(io.micrometer.observation.annotation.Observed) and not @annotation(io.micrometer.observation.annotation.Observed)")
+    @Around("@within(io.micrometer.observation.annotation.Observed) && !@annotation(io.micrometer.observation.annotation.Observed) && execution(* *.*(..))")
     @Nullable
     public Object observeClass(ProceedingJoinPoint pjp) throws Throwable {
         if (shouldSkip.test(pjp)) {

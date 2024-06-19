@@ -1,5 +1,6 @@
 plugins {
     alias(libs.plugins.kotlin19)
+    alias(libs.plugins.aspectj)
     id 'me.champeau.mrjar' version "0.1.1"
 }
 
@@ -81,7 +82,8 @@ dependencies {
     }
 
     // Aspects
-    optionalApi 'org.aspectj:aspectjweaver'
+    optionalApi libs.aspectjrt
+    java11RuntimeOnly libs.aspectjrt
 
     // instrumentation options
     optionalApi 'io.dropwizard.metrics:metrics-core' // TODO move dropwizard out of core module? DropwizardMeterRegistry for e.g. JMX registry
@@ -209,6 +211,8 @@ dependencies {
     testImplementation 'io.grpc:grpc-inprocess'
     testImplementation 'io.grpc:grpc-testing-proto'
     testImplementation 'com.squareup.retrofit2:retrofit'
+
+    testImplementation 'org.aspectj:aspectjweaver'
 }
 
 task shenandoahTest(type: Test) {
