@@ -15,20 +15,20 @@
  */
 package io.micrometer.registry.otlp;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
-import java.time.Duration;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
-
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.opentelemetry.proto.metrics.v1.Metric;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import java.time.Duration;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 class OtlpMetricConverterTest {
 
@@ -155,6 +155,25 @@ class OtlpMetricConverterTest {
                     assertThat(histogramDataPoint.getExplicitBoundsCount()).isEqualTo(1);
                     assertThat(histogramDataPoint.getBucketCountsCount()).isEqualTo(2);
                 }));
+    }
+
+    @Test
+    void applyCustomNamingConvention() {
+        Gauge gauge = Gauge.builder("test.meter", () -> 1)
+            .tags("test.tag", "1")
+            .description("description")
+            .register(otlpMeterRegistry);
+
+        OtlpMetricConverter otlpMetricConverter = new OtlpMetricConverter(mockClock, Duration.ofMillis(1),
+                TimeUnit.MILLISECONDS, AggregationTemporality.CUMULATIVE, NamingConvention.snakeCase);
+        otlpMetricConverter.addMeter(gauge);
+
+        assertThat(otlpMetricConverter.getAllMetrics()).singleElement().satisfies(metric -> {
+            assertThat(metric.getName()).isEqualTo("test_meter");
+            assertThat(metric.getGauge().getDataPointsList()).singleElement()
+                .satisfies(dataPoint -> assertThat(dataPoint.getAttributesList()).singleElement()
+                    .satisfies(attribute -> assertThat(attribute.getKey()).isEqualTo("test_tag")));
+        });
     }
 
 }
