@@ -282,7 +282,7 @@ class OtlpMetricConverter {
     }
 
     private Iterable<KeyValue> getKeyValuesForId(Meter.Id id) {
-        return id.getTags()
+        return id.getConventionTags(namingConvention)
             .stream()
             .map(tag -> createKeyValue(tag.getKey(), tag.getValue()))
             .collect(Collectors.toList());

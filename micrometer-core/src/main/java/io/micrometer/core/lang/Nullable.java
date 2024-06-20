@@ -39,7 +39,7 @@ import java.lang.annotation.*;
  * @see io.micrometer.common.lang.NonNullApi
  * @see io.micrometer.common.lang.NonNullFields
  * @see io.micrometer.common.lang.NonNull
- * @deprecated Please use {@link io.micrometer.common.lang.NonNullApi} instead.
+ * @deprecated Please use {@link io.micrometer.common.lang.Nullable} instead.
  */
 @Target({ ElementType.METHOD, ElementType.PARAMETER, ElementType.FIELD })
 @Retention(RetentionPolicy.RUNTIME)
