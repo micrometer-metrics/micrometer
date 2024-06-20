@@ -16,6 +16,7 @@
 package io.micrometer.registry.otlp;
 
 import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.opentelemetry.proto.metrics.v1.HistogramDataPoint;
 import io.opentelemetry.proto.metrics.v1.Metric;
@@ -240,6 +241,23 @@ abstract class OtlpMeterRegistryTest {
         assertThat(sumDataPoint.getAttributes(0).getValue().getStringValue()).isEqualTo(meterTag.getValue());
         assertThat(metric.getSum().getAggregationTemporality())
             .isEqualTo(AggregationTemporality.toOtlpAggregationTemporality(otlpConfig().aggregationTemporality()));
+    }
+
+    @Test
+    void applyCustomNamingConvention() {
+        registry.config().namingConvention(NamingConvention.snakeCase);
+
+        Gauge gauge = Gauge.builder("test.meter", () -> 1)
+            .tags("test.tag", "1")
+            .description("description")
+            .register(registry);
+
+        Metric metric = registry.writeGauge(gauge);
+
+        assertThat(metric.getName()).isEqualTo("test_meter");
+        assertThat(metric.getGauge().getDataPointsList()).singleElement()
+            .satisfies(dataPoint -> assertThat(dataPoint.getAttributesList()).singleElement()
+                .satisfies(attribute -> assertThat(attribute.getKey()).isEqualTo("test_tag")));
     }
 
 }
