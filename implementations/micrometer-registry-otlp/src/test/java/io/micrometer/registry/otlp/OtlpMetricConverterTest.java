@@ -15,10 +15,7 @@
  */
 package io.micrometer.registry.otlp;
 
-import io.micrometer.core.instrument.Gauge;
-import io.micrometer.core.instrument.MockClock;
-import io.micrometer.core.instrument.Tags;
-import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.opentelemetry.proto.metrics.v1.Metric;
 import org.junit.jupiter.api.BeforeEach;
@@ -31,6 +28,8 @@ import java.util.concurrent.TimeUnit;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class OtlpMetricConverterTest {
+
+    private static final Duration STEP = Duration.ofMillis(1);
 
     private static final Tags FIRST_TAG = Tags.of("key", "1");
 
@@ -45,7 +44,7 @@ class OtlpMetricConverterTest {
     @BeforeEach
     void setUp() {
         mockClock = new MockClock();
-        otlpMetricConverter = new OtlpMetricConverter(mockClock, Duration.ofMillis(1), TimeUnit.MILLISECONDS,
+        otlpMetricConverter = new OtlpMetricConverter(mockClock, STEP, TimeUnit.MILLISECONDS,
                 AggregationTemporality.CUMULATIVE, NamingConvention.dot);
         otlpMeterRegistry = new OtlpMeterRegistry(OtlpConfig.DEFAULT, mockClock);
     }
@@ -177,6 +176,22 @@ class OtlpMetricConverterTest {
                 .satisfies(dataPoint -> assertThat(dataPoint.getAttributesList()).singleElement()
                     .satisfies(attribute -> assertThat(attribute.getKey()).isEqualTo("test_tag")));
         });
+    }
+
+    @Test
+    void addMeterWithDistributionSummary() {
+        DistributionSummary summary = DistributionSummary.builder("test.summary")
+            .publishPercentiles(0.5)
+            .register(otlpMeterRegistry);
+
+        summary.record(5);
+        mockClock.add(STEP);
+
+        otlpMetricConverter.addMeter(summary);
+        assertThat(otlpMetricConverter.getAllMetrics()).singleElement()
+            .satisfies(metric -> assertThat(metric.getSummary().getDataPointsList()).singleElement()
+                .satisfies(dataPoint -> assertThat(dataPoint.getQuantileValuesList()).singleElement()
+                    .satisfies(valueAtQuantile -> assertThat(valueAtQuantile.getValue()).isEqualTo(5))));
     }
 
 }
