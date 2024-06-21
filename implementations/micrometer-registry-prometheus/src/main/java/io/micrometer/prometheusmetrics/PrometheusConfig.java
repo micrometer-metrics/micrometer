@@ -68,6 +68,7 @@ public interface PrometheusConfig extends MeterRegistryConfig {
      * {@code io.prometheus.exporter.exemplarsOnAllMetricTypes=true}.
      * @see <a href="https://prometheus.github.io/client_java/config/config/">Prometheus
      * docs</a>
+     * @since 1.13.0
      */
     @Nullable
     default Properties prometheusProperties() {
