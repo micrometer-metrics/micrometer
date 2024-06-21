@@ -386,9 +386,10 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
                 .setSum(total)
                 .setCount(count);
             for (ValueAtPercentile percentile : histogramSnapshot.percentileValues()) {
+                double value = percentile.value();
                 summaryData.addQuantileValues(SummaryDataPoint.ValueAtQuantile.newBuilder()
                     .setQuantile(percentile.percentile())
-                    .setValue(TimeUtils.convert(percentile.value(), TimeUnit.NANOSECONDS, getBaseTimeUnit())));
+                    .setValue(isTimeBased ? TimeUtils.convert(value, TimeUnit.NANOSECONDS, getBaseTimeUnit()) : value));
             }
             metricBuilder.setSummary(Summary.newBuilder().addDataPoints(summaryData));
             return metricBuilder.build();
