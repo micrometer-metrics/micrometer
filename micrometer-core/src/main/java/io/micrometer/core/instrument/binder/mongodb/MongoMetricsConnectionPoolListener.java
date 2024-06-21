@@ -21,6 +21,7 @@ import com.mongodb.event.*;
 import io.micrometer.common.lang.NonNullApi;
 import io.micrometer.common.lang.NonNullFields;
 import io.micrometer.core.annotation.Incubating;
+import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -50,6 +51,8 @@ public class MongoMetricsConnectionPoolListener implements ConnectionPoolListene
     private final Map<ServerId, AtomicInteger> poolSizes = new ConcurrentHashMap<>();
 
     private final Map<ServerId, AtomicInteger> checkedOutCounts = new ConcurrentHashMap<>();
+
+    private final Map<ServerId, Counter> checkOutFailedCounters = new ConcurrentHashMap<>();
 
     private final Map<ServerId, AtomicInteger> waitQueueSizes = new ConcurrentHashMap<>();
 
@@ -85,6 +88,8 @@ public class MongoMetricsConnectionPoolListener implements ConnectionPoolListene
                 "the current size of the connection pool, including idle and and in-use members", poolSizes));
         connectionMeters.add(registerGauge(event, METRIC_PREFIX + "checkedout",
                 "the count of connections that are currently in use", checkedOutCounts));
+        connectionMeters.add(registerCounter(event, METRIC_PREFIX + "checkoutfailed",
+                "the count of failed attempts to retrieve a connection", checkOutFailedCounters));
         connectionMeters.add(registerGauge(event, METRIC_PREFIX + "waitqueuesize",
                 "the current size of the wait queue for a connection from the pool", waitQueueSizes));
         meters.put(event.getServerId(), connectionMeters);
@@ -99,6 +104,7 @@ public class MongoMetricsConnectionPoolListener implements ConnectionPoolListene
         meters.remove(serverId);
         poolSizes.remove(serverId);
         checkedOutCounts.remove(serverId);
+        checkOutFailedCounters.remove(serverId);
         waitQueueSizes.remove(serverId);
     }
 
@@ -128,6 +134,11 @@ public class MongoMetricsConnectionPoolListener implements ConnectionPoolListene
         AtomicInteger waitQueueSize = waitQueueSizes.get(event.getServerId());
         if (waitQueueSize != null) {
             waitQueueSize.decrementAndGet();
+        }
+
+        Counter checkOutFailedCounter = checkOutFailedCounters.get(event.getServerId());
+        if (checkOutFailedCounter != null) {
+            checkOutFailedCounter.increment();
         }
     }
 
@@ -163,6 +174,16 @@ public class MongoMetricsConnectionPoolListener implements ConnectionPoolListene
             .description(description)
             .tags(tagsProvider.connectionPoolTags(event))
             .register(registry);
+    }
+
+    private Counter registerCounter(ConnectionPoolCreatedEvent event, String metricName, String description,
+            Map<ServerId, Counter> metrics) {
+        Counter counter = Counter.builder(metricName)
+            .description(description)
+            .tags(tagsProvider.connectionPoolTags(event))
+            .register(registry);
+        metrics.put(event.getServerId(), counter);
+        return counter;
     }
 
 }
