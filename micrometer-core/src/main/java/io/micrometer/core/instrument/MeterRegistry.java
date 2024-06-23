@@ -66,6 +66,8 @@ import static java.util.Objects.requireNonNull;
  */
 public abstract class MeterRegistry {
 
+    private static final InternalLogger log = InternalLoggerFactory.getInstance(MeterRegistry.class);
+
     // @formatter:off
     private static final EnumMap<TimeUnit, String> BASE_TIME_UNIT_STRING_CACHE = Arrays.stream(TimeUnit.values())
         .collect(
@@ -1182,6 +1184,17 @@ public abstract class MeterRegistry {
      * @since 1.6.0
      */
     protected void meterRegistrationFailed(Meter.Id id, @Nullable String reason) {
+        if (log.isWarnEnabled()) {
+            String message = format("The meter (%s) registration has failed", id);
+            if (reason != null) {
+                message += ": " + reason;
+            }
+            else {
+                message += ".";
+            }
+            log.warn(message);
+        }
+
         for (BiConsumer<Id, String> listener : meterRegistrationFailedListeners) {
             listener.accept(id, reason);
         }
