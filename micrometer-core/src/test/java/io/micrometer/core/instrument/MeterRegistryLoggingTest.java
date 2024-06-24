@@ -55,10 +55,11 @@ class MeterRegistryLoggingTest {
         try {
             registerMetricsAndConfigure();
 
-            assertThat(logEvents.withLevel(Level.WARN)).isEmpty();
+            assertThat(logEvents.withLevel(Level.WARN)).singleElement()
+                .extracting(ILoggingEvent::getFormattedMessage, as(InstanceOfAssertFactories.STRING))
+                .contains("A MeterFilter is being configured after a Meter has been registered to this registry.");
             assertThat(logEvents.withLevel(Level.DEBUG)).singleElement()
                 .extracting(ILoggingEvent::getFormattedMessage, as(InstanceOfAssertFactories.STRING))
-                .contains("A MeterFilter is being configured after a Meter has been registered to this registry.")
                 .containsPattern(
                         "io.micrometer.core.instrument.MeterRegistryLoggingTest.configureCommonTags\\(MeterRegistryLoggingTest.java:\\d+\\)\n"
                                 + "\tat io.micrometer.core.instrument.MeterRegistryLoggingTest.registerMetricsAndConfigure\\(MeterRegistryLoggingTest.java:\\d+\\)\n"
