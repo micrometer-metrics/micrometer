@@ -75,6 +75,15 @@ public @interface Timed {
     boolean histogram() default false;
 
     /**
+     * List of service level objectives to calculate client-side for the
+     * {@link io.micrometer.core.instrument.Timer} in seconds. For example, for a 100ms
+     * should be passed as {@code 0.1}.
+     * @return service level objectives to calculate
+     * @see io.micrometer.core.instrument.Timer.Builder#serviceLevelObjectives(java.time.Duration...)
+     */
+    double[] serviceLevelObjectives() default {};
+
+    /**
      * Description of the {@link io.micrometer.core.instrument.Timer}.
      * @return meter description
      * @see io.micrometer.core.instrument.Timer.Builder#description(String)
