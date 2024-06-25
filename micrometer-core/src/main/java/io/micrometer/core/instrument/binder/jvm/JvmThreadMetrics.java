@@ -88,6 +88,20 @@ public class JvmThreadMetrics implements MeterBinder {
                     .baseUnit(BaseUnits.THREADS)
                     .register(registry);
             }
+
+            Gauge.builder("jvm.threads.deadlocked", threadBean, JvmThreadMetrics::getDeadlockedThreadCount)
+                .tags(tags)
+                .description("The current number of threads that are deadlocked")
+                .baseUnit(BaseUnits.THREADS)
+                .register(registry);
+
+            Gauge
+                .builder("jvm.threads.deadlocked.monitor", threadBean,
+                        JvmThreadMetrics::getDeadlockedMonitorThreadCount)
+                .tags(tags)
+                .description("The current number of threads that are deadlocked on object monitors")
+                .baseUnit(BaseUnits.THREADS)
+                .register(registry);
         }
         catch (Error error) {
             // An error will be thrown for unsupported operations
@@ -100,6 +114,15 @@ public class JvmThreadMetrics implements MeterBinder {
         return Arrays.stream(threadBean.getThreadInfo(threadBean.getAllThreadIds()))
             .filter(threadInfo -> threadInfo != null && threadInfo.getThreadState() == state)
             .count();
+    }
+
+    static long getDeadlockedThreadCount(ThreadMXBean threadBean) {
+        return threadBean.findDeadlockedThreads() == null ? 0 : threadBean.findDeadlockedThreads().length;
+    }
+
+    static long getDeadlockedMonitorThreadCount(ThreadMXBean threadMXBean) {
+        return threadMXBean.findMonitorDeadlockedThreads() == null ? 0
+                : threadMXBean.findMonitorDeadlockedThreads().length;
     }
 
     private static String getStateTagValue(Thread.State state) {

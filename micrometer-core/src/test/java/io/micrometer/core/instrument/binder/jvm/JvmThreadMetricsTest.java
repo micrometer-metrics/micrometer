@@ -53,6 +53,12 @@ class JvmThreadMetricsTest {
         createTimedWaitingThread();
         assertThat(registry.get("jvm.threads.states").tag("state", "timed-waiting").gauge().value()).isPositive();
         assertThat(registry.get("jvm.threads.started").functionCounter().count()).isGreaterThan(initialThreadCount);
+
+        assertThat(registry.get("jvm.threads.deadlocked").gauge().value()).isEqualTo(0);
+        assertThat(registry.get("jvm.threads.deadlocked.monitor").gauge().value()).isEqualTo(0);
+        createTemporarilyDeadlockedThread();
+        assertThat(registry.get("jvm.threads.deadlocked").gauge().value()).isEqualTo(2);
+        assertThat(registry.get("jvm.threads.deadlocked.monitor").gauge().value()).isEqualTo(2);
     }
 
     @Test
@@ -64,6 +70,20 @@ class JvmThreadMetricsTest {
         when(threadInfo.getThreadState()).thenReturn(Thread.State.RUNNABLE);
         when(threadBean.getThreadInfo(threadIds)).thenReturn(new ThreadInfo[] { threadInfo, null });
         assertThat(JvmThreadMetrics.getThreadStateCount(threadBean, Thread.State.RUNNABLE)).isEqualTo(1);
+    }
+
+    @Test
+    void getDeadlockedThreadCountWhenFindDeadlockedThreadsIsNullShouldWork() {
+        ThreadMXBean threadBean = mock(ThreadMXBean.class);
+        when(threadBean.findDeadlockedThreads()).thenReturn(null);
+        assertThat(JvmThreadMetrics.getDeadlockedThreadCount(threadBean)).isEqualTo(0);
+    }
+
+    @Test
+    void getDeadlockedThreadCountWhenFindMonitorDeadlockedThreadsIsNullShouldWork() {
+        ThreadMXBean threadBean = mock(ThreadMXBean.class);
+        when(threadBean.findMonitorDeadlockedThreads()).thenReturn(null);
+        assertThat(JvmThreadMetrics.getDeadlockedMonitorThreadCount(threadBean)).isEqualTo(0);
     }
 
     private void createTimedWaitingThread() {
@@ -94,6 +114,33 @@ class JvmThreadMetricsTest {
             }
         }).start();
         sleep(1);
+    }
+
+    private void createTemporarilyDeadlockedThread() {
+        // create two threads that are deadlocked for about 5 seconds
+
+        Object lock1 = new Object();
+        Object lock2 = new Object();
+
+        int initialSleepSeconds = 1;
+        int deadlockedSleepSeconds = 5;
+        new Thread(() -> {
+            synchronized (lock1) {
+                sleep(initialSleepSeconds);
+                synchronized (lock2) {
+                    sleep(deadlockedSleepSeconds);
+                }
+            }
+        }).start();
+        new Thread(() -> {
+            synchronized (lock2) {
+                sleep(initialSleepSeconds);
+                synchronized (lock1) {
+                    sleep(deadlockedSleepSeconds);
+                }
+            }
+        }).start();
+        sleep(initialSleepSeconds + 2);
     }
 
 }
