@@ -50,8 +50,9 @@ class MeterRegistryLoggingTest {
 
     @Test
     void meterRegistrationBeforeMeterFilterConfigWithDebugLogging(LoggingEvents logEvents) {
-        Level priorLevel = ((Logger) LoggerFactory.getLogger(SimpleMeterRegistry.class)).getLevel();
-        ((Logger) LoggerFactory.getLogger(SimpleMeterRegistry.class)).setLevel(Level.DEBUG);
+        Logger logger = (Logger) LoggerFactory.getLogger(SimpleMeterRegistry.class);
+        Level priorLevel = logger.getLevel();
+        logger.setLevel(Level.DEBUG);
         try {
             registerMetricsAndConfigure();
 
@@ -65,7 +66,7 @@ class MeterRegistryLoggingTest {
                                 + "\tat io.micrometer.core.instrument.MeterRegistryLoggingTest.meterRegistrationBeforeMeterFilterConfigWithDebugLogging\\(MeterRegistryLoggingTest.java:\\d+\\)");
         }
         finally {
-            ((Logger) LoggerFactory.getLogger(SimpleMeterRegistry.class)).setLevel(priorLevel);
+            logger.setLevel(priorLevel);
         }
     }
 
