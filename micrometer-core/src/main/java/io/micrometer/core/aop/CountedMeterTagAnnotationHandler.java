@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 VMware, Inc.
+ * Copyright 2024 VMware, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,27 +19,29 @@ import io.micrometer.common.KeyValue;
 import io.micrometer.common.annotation.AnnotationHandler;
 import io.micrometer.common.annotation.ValueExpressionResolver;
 import io.micrometer.common.annotation.ValueResolver;
-import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.instrument.Counter;
 
 import java.util.function.Function;
 
 /**
  * Annotation handler for {@link MeterTag}. To add support for {@link MeterTag} on
- * {@link TimedAspect} check the
- * {@link TimedAspect#setMeterTagAnnotationHandler(MeterTagAnnotationHandler)} method.
+ * {@link CountedAspect} check the
+ * {@link CountedAspect#setMeterTagAnnotationHandler(CountedMeterTagAnnotationHandler)}
+ * method.
  *
- * @since 1.11.0
  * @author Marcin Grzejszczak
+ * @author Johnny Lim
  */
-public class MeterTagAnnotationHandler extends AnnotationHandler<Timer.Builder> {
+public class CountedMeterTagAnnotationHandler extends AnnotationHandler<Counter.Builder> {
 
     /**
-     * Creates a new instance of {@link MeterTagAnnotationHandler}.
+     * Creates a new instance of {@link CountedMeterTagAnnotationHandler}.
      * @param resolverProvider function to retrieve a {@link ValueResolver}
      * @param expressionResolverProvider function to retrieve a
      * {@link ValueExpressionResolver}
      */
-    public MeterTagAnnotationHandler(Function<Class<? extends ValueResolver>, ? extends ValueResolver> resolverProvider,
+    public CountedMeterTagAnnotationHandler(
+            Function<Class<? extends ValueResolver>, ? extends ValueResolver> resolverProvider,
             Function<Class<? extends ValueExpressionResolver>, ? extends ValueExpressionResolver> expressionResolverProvider) {
         super((keyValue, builder) -> builder.tag(keyValue.getKey(), keyValue.getValue()), resolverProvider,
                 expressionResolverProvider, MeterTag.class, (annotation, o) -> {

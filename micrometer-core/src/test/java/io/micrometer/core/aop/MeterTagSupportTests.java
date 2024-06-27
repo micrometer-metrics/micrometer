@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 VMware, Inc.
+ * Copyright 2024 VMware, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,13 @@ import java.lang.reflect.Method;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class MeterTagAnnotationHandlerTests {
+/**
+ * Tests for {@link MeterTagSupport}.
+ *
+ * @author Marcin Grzejszczak
+ * @author Johnny Lim
+ */
+class MeterTagSupportTests {
 
     ValueResolver valueResolver = parameter -> "Value from myCustomTagValueResolver";
 
@@ -36,8 +42,8 @@ class MeterTagAnnotationHandlerTests {
         Method method = AnnotationMockClass.class.getMethod("getAnnotationForTagValueResolver", String.class);
         Annotation annotation = method.getParameterAnnotations()[0][0];
         assertThat(annotation).isInstanceOf(MeterTag.class);
-        String resolvedValue = MeterTagAnnotationHandler.resolveTagValue((MeterTag) annotation, "test",
-                aClass -> valueResolver, aClass -> valueExpressionResolver);
+        String resolvedValue = MeterTagSupport.resolveTagValue((MeterTag) annotation, "test", aClass -> valueResolver,
+                aClass -> valueExpressionResolver);
         assertThat(resolvedValue).isEqualTo("Value from myCustomTagValueResolver");
     }
 
@@ -46,7 +52,7 @@ class MeterTagAnnotationHandlerTests {
         Method method = AnnotationMockClass.class.getMethod("getAnnotationForTagValueExpression", String.class);
         Annotation annotation = method.getParameterAnnotations()[0][0];
         assertThat(annotation).isInstanceOf(MeterTag.class);
-        String resolvedValue = MeterTagAnnotationHandler.resolveTagValue((MeterTag) annotation, "test value",
+        String resolvedValue = MeterTagSupport.resolveTagValue((MeterTag) annotation, "test value",
                 aClass -> valueResolver, aClass -> valueExpressionResolver);
         assertThat(resolvedValue).isEqualTo("hello test value characters");
     }
@@ -56,8 +62,8 @@ class MeterTagAnnotationHandlerTests {
         Method method = AnnotationMockClass.class.getMethod("getAnnotationForArgumentToString", Long.class);
         Annotation annotation = method.getParameterAnnotations()[0][0];
         assertThat(annotation).isInstanceOf(MeterTag.class);
-        String resolvedValue = MeterTagAnnotationHandler.resolveTagValue((MeterTag) annotation, 15,
-                aClass -> valueResolver, aClass -> valueExpressionResolver);
+        String resolvedValue = MeterTagSupport.resolveTagValue((MeterTag) annotation, 15, aClass -> valueResolver,
+                aClass -> valueExpressionResolver);
         assertThat(resolvedValue).isEqualTo("15");
     }
 

@@ -111,6 +111,8 @@ public class CountedAspect {
      */
     private final Predicate<ProceedingJoinPoint> shouldSkip;
 
+    private CountedMeterTagAnnotationHandler meterTagAnnotationHandler;
+
     /**
      * Creates a {@code CountedAspect} instance with {@link Metrics#globalRegistry}.
      *
@@ -267,7 +269,18 @@ public class CountedAspect {
         if (!description.isEmpty()) {
             builder.description(description);
         }
+        if (meterTagAnnotationHandler != null) {
+            meterTagAnnotationHandler.addAnnotatedParameters(builder, pjp);
+        }
         return builder;
+    }
+
+    /**
+     * Setting this enables support for {@link MeterTag}.
+     * @param meterTagAnnotationHandler meter tag annotation handler
+     */
+    public void setMeterTagAnnotationHandler(CountedMeterTagAnnotationHandler meterTagAnnotationHandler) {
+        this.meterTagAnnotationHandler = meterTagAnnotationHandler;
     }
 
 }
