@@ -402,6 +402,11 @@ public class ExecutorServiceMetrics implements MeterBinder {
             .description(
                     "An estimate of the number of worker threads that are not blocked waiting to join tasks or for other managed synchronization threads")
             .register(registry);
+
+        Gauge.builder(metricPrefix + "executor.parallelism", fj, ForkJoinPool::getParallelism)
+            .tags(tags)
+            .description("The targeted parallelism level of this pool")
+            .register(registry);
     }
 
     /**
