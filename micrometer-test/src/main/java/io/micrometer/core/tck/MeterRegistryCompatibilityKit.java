@@ -487,9 +487,8 @@ public abstract class MeterRegistryCompatibilityKit {
         @Test
         @DisplayName("supports sending the Nth percentile active task duration")
         void percentiles() {
-            LongTaskTimer t = LongTaskTimer.builder("my.timer")
-                .publishPercentiles(0.5, 0.7, 0.91, 0.999, 1)
-                .register(registry);
+            double[] rawPercentiles = new double[] { 0.5, 0.7, 0.91, 0.999, 1 };
+            LongTaskTimer t = LongTaskTimer.builder("my.timer").publishPercentiles(rawPercentiles).register(registry);
 
             // Using the example of percentile interpolation from
             // https://statisticsbyjim.com/basics/percentiles/
@@ -506,22 +505,35 @@ public abstract class MeterRegistryCompatibilityKit {
 
             ValueAtPercentile[] percentiles = t.takeSnapshot().percentileValues();
 
-            assertThat(percentiles[0].percentile()).isEqualTo(0.5);
-            assertThat(percentiles[0].value(TimeUnit.SECONDS)).isEqualTo(16);
+            int percentilesChecked = 0;
+            for (ValueAtPercentile percentile : percentiles) {
+                if (percentile.percentile() == 0.5) {
+                    assertThat(percentile.value(TimeUnit.SECONDS)).isEqualTo(16);
+                    percentilesChecked++;
+                }
+                else if (percentile.percentile() == 0.7) {
+                    assertThat(percentile.value(TimeUnit.SECONDS)).isEqualTo(37, within(0.001));
+                    percentilesChecked++;
+                }
+                else if (percentile.percentile() == 0.91) {
+                    // a value close-to the highest value that is available for
+                    // interpolation (11
+                    // / 12)
+                    assertThat(percentile.value(TimeUnit.SECONDS)).isEqualTo(47.5, within(0.1));
+                    percentilesChecked++;
+                }
+                else if (percentile.percentile() == 0.999) {
+                    assertThat(percentile.value(TimeUnit.SECONDS)).isEqualTo(48, within(0.1));
+                    percentilesChecked++;
+                }
+                else if (percentile.percentile() == 1) {
+                    assertThat(percentile.value(TimeUnit.SECONDS)).isEqualTo(48);
+                    percentilesChecked++;
+                }
+            }
 
-            assertThat(percentiles[1].percentile()).isEqualTo(0.7);
-            assertThat(percentiles[1].value(TimeUnit.SECONDS)).isEqualTo(37, within(0.001));
-
-            // a value close-to the highest value that is available for interpolation (11
-            // / 12)
-            assertThat(percentiles[2].percentile()).isEqualTo(0.91);
-            assertThat(percentiles[2].value(TimeUnit.SECONDS)).isEqualTo(47.5, within(0.1));
-
-            assertThat(percentiles[3].percentile()).isEqualTo(0.999);
-            assertThat(percentiles[3].value(TimeUnit.SECONDS)).isEqualTo(48, within(0.1));
-
-            assertThat(percentiles[4].percentile()).isEqualTo(1);
-            assertThat(percentiles[4].value(TimeUnit.SECONDS)).isEqualTo(48);
+            // ensure all percentiles specified have been checked.
+            assertThat(percentilesChecked).isEqualTo(rawPercentiles.length);
         }
 
         @Test
