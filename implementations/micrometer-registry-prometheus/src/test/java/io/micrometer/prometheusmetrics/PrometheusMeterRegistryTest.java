@@ -461,7 +461,7 @@ class PrometheusMeterRegistryTest {
         timer.record(5, TimeUnit.SECONDS);
         assertThat(timer.takeSnapshot().percentileValues()[0].value(TimeUnit.SECONDS)).isEqualTo(5.0, offset(0.1));
 
-        clock.addSeconds(60);
+        clock.add(Duration.ofMinutes(2));
 
         timer.record(2, TimeUnit.SECONDS);
 
@@ -482,7 +482,7 @@ class PrometheusMeterRegistryTest {
         timer.record(5);
         assertThat(timer.takeSnapshot().percentileValues()[0].value()).isEqualTo(5.0, offset(0.2));
 
-        clock.addSeconds(60);
+        clock.add(Duration.ofMinutes(2));
 
         timer.record(2);
 

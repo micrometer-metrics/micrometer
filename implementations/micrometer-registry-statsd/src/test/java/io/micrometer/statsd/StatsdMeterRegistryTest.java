@@ -311,7 +311,7 @@ class StatsdMeterRegistryTest {
         assertThat(timerHist1.value()).isEqualTo(1);
         assertThat(timerHist2.value()).isEqualTo(1);
 
-        clock.add(config.step());
+        clock.add(config.step().multipliedBy(3));
 
         assertThat(summaryHist1.value()).isEqualTo(0);
         assertThat(summaryHist2.value()).isEqualTo(0);

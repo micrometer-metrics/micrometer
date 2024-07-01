@@ -37,7 +37,7 @@ class DistributionSummaryTest {
 
         // Histogram bucket counts DO roll over at the step interval, so decay.
         assertThat(summary.takeSnapshot().histogramCounts()).containsExactly(new CountAtBucket(1.0, 1));
-        clock.add(SimpleConfig.DEFAULT.step());
+        clock.add(SimpleConfig.DEFAULT.step().multipliedBy(3));
         assertThat(summary.takeSnapshot().histogramCounts()).containsExactly(new CountAtBucket(1.0, 0));
     }
 
@@ -63,7 +63,7 @@ class DistributionSummaryTest {
         summary.record(1);
 
         assertThat(summary.takeSnapshot().histogramCounts()).containsExactly(new CountAtBucket(1.0, 1));
-        clock.add(SimpleConfig.DEFAULT.step());
+        clock.add(SimpleConfig.DEFAULT.step().multipliedBy(3));
         assertThat(summary.takeSnapshot().histogramCounts()).containsExactly(new CountAtBucket(1.0, 0));
     }
 
