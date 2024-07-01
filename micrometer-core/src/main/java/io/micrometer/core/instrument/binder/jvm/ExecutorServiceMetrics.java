@@ -407,6 +407,11 @@ public class ExecutorServiceMetrics implements MeterBinder {
             .tags(tags)
             .description("The targeted parallelism level of this pool")
             .register(registry);
+
+        Gauge.builder(metricPrefix + "executor.pool.size", fj, ForkJoinPool::getPoolSize)
+            .tags(tags)
+            .description("The number of worker threads that have started but not yet terminated")
+            .register(registry);
     }
 
     /**
