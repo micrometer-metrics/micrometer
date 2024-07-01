@@ -76,8 +76,8 @@ abstract class AbstractTimeWindowHistogram<T, U> implements Histogram {
 
         durationBetweenRotatesMillis = distributionStatisticConfig.getExpiry().toMillis();
         if (durationBetweenRotatesMillis <= 0) {
-            rejectHistogramConfig("expiry (" + distributionStatisticConfig.getExpiry().toMillis()
-                    + "ms) must be greater than 0.");
+            rejectHistogramConfig(
+                    "expiry (" + distributionStatisticConfig.getExpiry().toMillis() + "ms) must be greater than 0.");
         }
 
         currentBucket = 0;
