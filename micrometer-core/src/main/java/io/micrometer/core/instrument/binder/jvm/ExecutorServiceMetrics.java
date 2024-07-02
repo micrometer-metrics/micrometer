@@ -59,6 +59,8 @@ public class ExecutorServiceMetrics implements MeterBinder {
 
     private static final String DEFAULT_EXECUTOR_METRIC_PREFIX = "";
 
+    public static final String DESCRIPTION_POOL_SIZE = "The current number of threads in the pool";
+
     @Nullable
     private final ExecutorService executorService;
 
@@ -362,7 +364,7 @@ public class ExecutorServiceMetrics implements MeterBinder {
 
         Gauge.builder(metricPrefix + "executor.pool.size", tp, ThreadPoolExecutor::getPoolSize)
             .tags(tags)
-            .description("The current number of threads in the pool")
+            .description(DESCRIPTION_POOL_SIZE)
             .baseUnit(BaseUnits.THREADS)
             .register(registry);
 
@@ -385,32 +387,38 @@ public class ExecutorServiceMetrics implements MeterBinder {
             .description("Estimate of the total number of tasks stolen from "
                     + "one thread's work queue by another. The reported value "
                     + "underestimates the actual total number of steals when the pool " + "is not quiescent")
+            .baseUnit(BaseUnits.TASKS)
             .register(registry);
 
         Gauge.builder(metricPrefix + "executor.queued", fj, ForkJoinPool::getQueuedTaskCount)
             .tags(tags)
             .description("An estimate of the total number of tasks currently held in queues by worker threads")
+            .baseUnit(BaseUnits.TASKS)
             .register(registry);
 
         Gauge.builder(metricPrefix + "executor.active", fj, ForkJoinPool::getActiveThreadCount)
             .tags(tags)
             .description("An estimate of the number of threads that are currently stealing or executing tasks")
+            .baseUnit(BaseUnits.THREADS)
             .register(registry);
 
         Gauge.builder(metricPrefix + "executor.running", fj, ForkJoinPool::getRunningThreadCount)
             .tags(tags)
             .description(
                     "An estimate of the number of worker threads that are not blocked waiting to join tasks or for other managed synchronization threads")
+            .baseUnit(BaseUnits.THREADS)
             .register(registry);
 
         Gauge.builder(metricPrefix + "executor.parallelism", fj, ForkJoinPool::getParallelism)
             .tags(tags)
             .description("The targeted parallelism level of this pool")
+            .baseUnit(BaseUnits.THREADS)
             .register(registry);
 
         Gauge.builder(metricPrefix + "executor.pool.size", fj, ForkJoinPool::getPoolSize)
             .tags(tags)
-            .description("The number of worker threads that have started but not yet terminated")
+            .description(DESCRIPTION_POOL_SIZE)
+            .baseUnit(BaseUnits.THREADS)
             .register(registry);
     }
 
