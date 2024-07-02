@@ -161,6 +161,19 @@ class ExecutorServiceMetricsTest {
             .doesNotThrowAnyException();
     }
 
+    @DisplayName("ForkJoinPool is assigned with its own set of metrics")
+    @ParameterizedTest
+    @CsvSource({ "custom,custom.", "custom.,custom.", ",''", "' ',''" })
+    void forkJoinPool(String metricPrefix, String expectedMetricPrefix) {
+        var fjp = new ForkJoinPool(1);
+        monitorExecutorService("fjp", metricPrefix, fjp);
+        registry.get(expectedMetricPrefix + "executor.steals").tags(userTags).tag("name", "fjp").functionCounter();
+        registry.get(expectedMetricPrefix + "executor.queued").tags(userTags).tag("name", "fjp").gauge();
+        registry.get(expectedMetricPrefix + "executor.running").tags(userTags).tag("name", "fjp").gauge();
+        registry.get(expectedMetricPrefix + "executor.parallelism").tags(userTags).tag("name", "fjp").gauge();
+        registry.get(expectedMetricPrefix + "executor.pool.size").tags(userTags).tag("name", "fjp").gauge();
+    }
+
     @DisplayName("ScheduledExecutorService can be monitored with a default set of metrics")
     @ParameterizedTest
     @CsvSource({ "custom,custom.", "custom.,custom.", ",''", "' ',''" })

@@ -59,6 +59,8 @@ public class ExecutorServiceMetrics implements MeterBinder {
 
     private static final String DEFAULT_EXECUTOR_METRIC_PREFIX = "";
 
+    private static final String DESCRIPTION_POOL_SIZE = "The current number of threads in the pool";
+
     @Nullable
     private final ExecutorService executorService;
 
@@ -362,7 +364,7 @@ public class ExecutorServiceMetrics implements MeterBinder {
 
         Gauge.builder(metricPrefix + "executor.pool.size", tp, ThreadPoolExecutor::getPoolSize)
             .tags(tags)
-            .description("The current number of threads in the pool")
+            .description(DESCRIPTION_POOL_SIZE)
             .baseUnit(BaseUnits.THREADS)
             .register(registry);
 
@@ -401,6 +403,18 @@ public class ExecutorServiceMetrics implements MeterBinder {
             .tags(tags)
             .description(
                     "An estimate of the number of worker threads that are not blocked waiting to join tasks or for other managed synchronization threads")
+            .register(registry);
+
+        Gauge.builder(metricPrefix + "executor.parallelism", fj, ForkJoinPool::getParallelism)
+            .tags(tags)
+            .description("The targeted parallelism level of this pool")
+            .baseUnit(BaseUnits.THREADS)
+            .register(registry);
+
+        Gauge.builder(metricPrefix + "executor.pool.size", fj, ForkJoinPool::getPoolSize)
+            .tags(tags)
+            .description(DESCRIPTION_POOL_SIZE)
+            .baseUnit(BaseUnits.THREADS)
             .register(registry);
     }
 
