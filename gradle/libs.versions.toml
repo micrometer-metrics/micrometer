@@ -49,7 +49,7 @@ jmh = "1.37"
 # 3.14.x is the newest version of OSS jOOQ that supports Java 8
 jooqOld = "3.14.16"
 # latest version of jOOQ to run tests against
-jooqNew = "3.19.9"
+jooqNew = "3.19.10"
 jsr107 = "1.1.1"
 jsr305 = "3.0.2"
 junit = "5.10.3"
