@@ -55,8 +55,7 @@ class MeterRegistryLoggingTest {
         try {
             registerMetricsAndConfigure();
 
-            assertThat(logEvents.withLevel(Level.WARN)).isEmpty();
-            assertThat(logEvents.withLevel(Level.DEBUG)).singleElement()
+            assertThat(logEvents.withLevel(Level.WARN)).singleElement()
                 .extracting(ILoggingEvent::getFormattedMessage, as(InstanceOfAssertFactories.STRING))
                 .contains("A MeterFilter is being configured after a Meter has been registered to this registry.")
                 .containsPattern(

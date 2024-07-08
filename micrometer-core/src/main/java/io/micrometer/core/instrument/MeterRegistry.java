@@ -844,7 +844,7 @@ public abstract class MeterRegistry {
                 String stackTrace = Arrays.stream(Thread.currentThread().getStackTrace())
                     .map(StackTraceElement::toString)
                     .collect(Collectors.joining("\n\tat "));
-                logger.debug(baseMessage + "\n" + stackTrace);
+                logger.warn(baseMessage + "\n" + stackTrace);
             }
             else {
                 logger.warn(baseMessage
