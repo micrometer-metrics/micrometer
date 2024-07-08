@@ -23,6 +23,7 @@ import io.micrometer.core.instrument.LongTaskTimer;
 import io.micrometer.core.instrument.Meter.Id;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.instrument.distribution.CountAtBucket;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import io.micrometer.core.instrument.search.MeterNotFoundException;
@@ -34,6 +35,7 @@ import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.aop.aspectj.annotation.AspectJProxyFactory;
 
 import javax.annotation.Nonnull;
+import java.util.Arrays;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.function.Predicate;
@@ -93,6 +95,29 @@ class TimedAspectTest {
             .tag("extra", "tag")
             .longTaskTimers()
             .size()).isEqualTo(1);
+    }
+
+    @Test
+    void timeMethodWithSloTimer() {
+        MeterRegistry registry = new SimpleMeterRegistry();
+
+        AspectJProxyFactory pf = new AspectJProxyFactory(new TimedService());
+        pf.addAspect(new TimedAspect(registry));
+
+        TimedService service = pf.getProxy();
+
+        service.sloCall();
+
+        assertThat(Arrays
+            .stream(registry.get("sloCall")
+                .tag("class", getClass().getName() + "$TimedService")
+                .tag("method", "sloCall")
+                .tag("extra", "tag")
+                .timer()
+                .takeSnapshot()
+                .histogramCounts())
+            .mapToDouble(CountAtBucket::bucket)
+            .toArray()).isEqualTo(new double[] { Math.pow(10, 9) * 0.1, Math.pow(10, 9) * 0.5 });
     }
 
     @Test
@@ -619,6 +644,11 @@ class TimedAspectTest {
 
         @Timed(value = "longCall", extraTags = { "extra", "tag" }, longTask = true)
         void longCall() {
+        }
+
+        @Timed(value = "sloCall", extraTags = { "extra", "tag" }, histogram = true,
+                serviceLevelObjectives = { 0.1, 0.5 })
+        void sloCall() {
         }
 
     }
