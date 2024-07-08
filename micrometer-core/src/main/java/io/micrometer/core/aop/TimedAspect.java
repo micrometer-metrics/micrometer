@@ -258,12 +258,11 @@ public class TimedAspect {
             .tags(EXCEPTION_TAG, exceptionClass)
             .tags(tagsBasedOnJoinPoint.apply(pjp))
             .publishPercentileHistogram(timed.histogram())
-            .serviceLevelObjectives(timed.serviceLevelObjectives().length > 0 ?
-                (Duration[]) Arrays.stream(timed.serviceLevelObjectives())
-                    .mapToObj(s -> Duration.ofNanos((long) TimeUtils.secondsToUnit(s, TimeUnit.NANOSECONDS)))
-                    .toArray()
-                : null
-            );
+            .serviceLevelObjectives(timed.serviceLevelObjectives().length > 0
+                    ? (Duration[]) Arrays.stream(timed.serviceLevelObjectives())
+                        .mapToObj(s -> Duration.ofNanos((long) TimeUtils.secondsToUnit(s, TimeUnit.NANOSECONDS)))
+                        .toArray()
+                    : null);
 
         if (meterTagAnnotationHandler != null) {
             meterTagAnnotationHandler.addAnnotatedParameters(builder, pjp);
