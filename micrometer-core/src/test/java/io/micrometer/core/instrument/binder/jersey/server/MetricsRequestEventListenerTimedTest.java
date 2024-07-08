@@ -21,6 +21,7 @@ import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.binder.jersey.server.resources.TimedOnClassResource;
 import io.micrometer.core.instrument.binder.jersey.server.resources.TimedResource;
+import io.micrometer.core.instrument.distribution.CountAtBucket;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.test.JerseyTest;
@@ -91,6 +92,20 @@ class MetricsRequestEventListenerTimedTest extends JerseyTest {
         assertThat(registry.get("multi1").tags(tagsFrom("/multi-timed", 200)).timer().count()).isEqualTo(1);
 
         assertThat(registry.get("multi2").tags(tagsFrom("/multi-timed", 200)).timer().count()).isEqualTo(1);
+    }
+
+    @Test
+    void sloTaskTimerSupported() throws InterruptedException, ExecutionException, TimeoutException {
+        target("timed-slo").request().get();
+
+        CountAtBucket[] slos = registry.get("timedSlo")
+            .tags(tagsFrom("/timed-slo", 200))
+            .timer()
+            .takeSnapshot()
+            .histogramCounts();
+        assertThat(slos.length).isEqualTo(2);
+        assertThat(slos[0].bucket()).isEqualTo(Math.pow(10, 9) * 0.1);
+        assertThat(slos[1].bucket()).isEqualTo(Math.pow(10, 9) * 0.5);
     }
 
     @Test
