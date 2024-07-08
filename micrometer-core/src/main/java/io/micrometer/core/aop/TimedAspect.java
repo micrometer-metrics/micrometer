@@ -246,7 +246,7 @@ public class TimedAspect {
             sample.stop(recordBuilder(pjp, timed, metricName, exceptionClass).register(registry));
         }
         catch (Exception e) {
-            System.out.println(e);// ignoring on purpose
+            // ignoring on purpose
         }
     }
 
