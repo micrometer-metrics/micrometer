@@ -102,9 +102,12 @@ public interface Timer extends Meter, HistogramSupport {
             .description(timed.description().isEmpty() ? null : timed.description())
             .publishPercentileHistogram(timed.histogram())
             .publishPercentiles(timed.percentiles().length > 0 ? timed.percentiles() : null)
-            .serviceLevelObjectives((Duration[]) Arrays.stream(timed.serviceLevelObjectives())
-                .mapToObj(s -> Duration.ofNanos((long) TimeUtils.secondsToUnit(s, TimeUnit.NANOSECONDS)))
-                .toArray());
+            .serviceLevelObjectives(timed.serviceLevelObjectives().length > 0 ?
+                (Duration[]) Arrays.stream(timed.serviceLevelObjectives())
+                    .mapToObj(s -> Duration.ofNanos((long) TimeUtils.secondsToUnit(s, TimeUnit.NANOSECONDS)))
+                    .toArray()
+                : null
+            );
     }
 
     /**
