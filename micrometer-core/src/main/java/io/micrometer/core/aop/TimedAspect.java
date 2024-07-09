@@ -161,7 +161,7 @@ public class TimedAspect {
         this.shouldSkip = shouldSkip;
     }
 
-    @Around("@within(io.micrometer.core.annotation.Timed) && !@annotation(io.micrometer.core.annotation.Timed)")
+    @Around("@within(io.micrometer.core.annotation.Timed) and not @annotation(io.micrometer.core.annotation.Timed)")
     @Nullable
     public Object timedClass(ProceedingJoinPoint pjp) throws Throwable {
         if (shouldSkip.test(pjp)) {
