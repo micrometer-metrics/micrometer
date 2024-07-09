@@ -15,6 +15,7 @@
  */
 package io.micrometer.prometheusmetrics;
 
+import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.LongTaskTimer.Sample;
 import io.micrometer.core.instrument.Timer;
@@ -989,6 +990,50 @@ class PrometheusMeterRegistryTest {
             .contains("test_slos_bucket{le=\"+Inf\"} 3\n");
         assertThat(scraped).doesNotContain("span_id").doesNotContain("trace_id");
         assertThat(scraped).endsWith("# EOF\n");
+    }
+
+    @Test
+    @Issue("#5229")
+    void doesNotCallConventionOnScrape() {
+        CountingPrometheusNamingConvention convention = new CountingPrometheusNamingConvention();
+        registry.config().namingConvention(convention);
+
+        Timer.builder("timer").tag("k1", "v1").description("my timer").register(registry);
+        Counter.builder("counter").tag("k1", "v1").description("my counter").register(registry);
+        DistributionSummary.builder("summary").tag("k1", "v1").description("my summary").register(registry);
+        Gauge.builder("gauge", new AtomicInteger(), AtomicInteger::doubleValue)
+            .tag("k1", "v1")
+            .description("my gauge")
+            .register(registry);
+        LongTaskTimer.builder("long.task.timer").tag("k1", "v1").description("my long task timer").register(registry);
+
+        int expectedNameCount = convention.nameCount.get();
+        int expectedTagKeyCount = convention.tagKeyCount.get();
+
+        registry.scrape();
+
+        assertThat(convention.nameCount.get()).isEqualTo(expectedNameCount);
+        assertThat(convention.tagKeyCount.get()).isEqualTo(expectedTagKeyCount);
+    }
+
+    private static class CountingPrometheusNamingConvention extends PrometheusNamingConvention {
+
+        AtomicInteger nameCount = new AtomicInteger();
+
+        AtomicInteger tagKeyCount = new AtomicInteger();
+
+        @Override
+        public String name(String name, Meter.Type type, @Nullable String baseUnit) {
+            nameCount.incrementAndGet();
+            return super.name(name, type, baseUnit);
+        }
+
+        @Override
+        public String tagKey(String key) {
+            tagKeyCount.incrementAndGet();
+            return super.tagKey(key);
+        }
+
     }
 
     private PrometheusMeterRegistry createPrometheusMeterRegistryWithProperties(Properties properties) {
