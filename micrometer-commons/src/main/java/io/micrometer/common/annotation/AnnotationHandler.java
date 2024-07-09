@@ -120,8 +120,10 @@ public class AnnotationHandler<T> {
                 if (methodsAreTheSame(mostSpecificMethod, methodFromInterface)) {
                     List<AnnotatedParameter> annotatedParametersForActualMethod = AnnotationUtils
                         .findAnnotatedParameters(annotationClass, methodFromInterface, pjp.getArgs());
-                    // annotations for a single parameter can be `duplicated` by the ones from parent interface,
-                    // however later on during key-based deduplication the ones from specific method(target class)
+                    // annotations for a single parameter can be `duplicated` by the ones
+                    // from parent interface,
+                    // however later on during key-based deduplication the ones from
+                    // specific method(target class)
                     // will take precedence
                     annotatedParameters.addAll(annotatedParametersForActualMethod);
                 }

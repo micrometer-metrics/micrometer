@@ -27,7 +27,6 @@ import java.lang.annotation.Annotation;
  */
 class AnnotatedParameter {
 
-
     final Annotation annotation;
 
     final Object argument;
