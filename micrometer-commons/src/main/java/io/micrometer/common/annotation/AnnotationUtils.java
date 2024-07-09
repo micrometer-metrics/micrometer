@@ -45,7 +45,7 @@ final class AnnotationUtils {
             Annotation[] annotations = parameter.getAnnotationsByType(annotationClazz);
             final int parameterIndex = i;
             Arrays.stream(annotations)
-                .map(annotation -> new AnnotatedParameter(parameterIndex, annotation, args[parameterIndex]))
+                .map(annotation -> new AnnotatedParameter(annotation, args[parameterIndex]))
                 .forEach(result::add);
         }
         return result;

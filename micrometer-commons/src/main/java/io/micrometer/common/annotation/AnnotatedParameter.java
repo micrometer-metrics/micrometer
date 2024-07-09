@@ -27,14 +27,12 @@ import java.lang.annotation.Annotation;
  */
 class AnnotatedParameter {
 
-    final int parameterIndex;
 
     final Annotation annotation;
 
     final Object argument;
 
-    AnnotatedParameter(int parameterIndex, Annotation annotation, Object argument) {
-        this.parameterIndex = parameterIndex;
+    AnnotatedParameter(Annotation annotation, Object argument) {
         this.annotation = annotation;
         this.argument = argument;
     }

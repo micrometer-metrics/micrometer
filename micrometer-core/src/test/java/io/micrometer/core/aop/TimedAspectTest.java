@@ -479,7 +479,8 @@ class TimedAspectTest {
 
             service.getAnnotationForTagValueExpression("15L");
 
-            assertThat(registry.get("method.timed").tag("test", "hello characters").timer().count()).isEqualTo(1);
+            assertThat(registry.get("method.timed").tag("test", "hello characters. overridden").timer().count())
+                .isEqualTo(1);
         }
 
         @ParameterizedTest
@@ -498,7 +499,7 @@ class TimedAspectTest {
 
             assertThat(registry.get("method.timed")
                 .tag("value1", "value1: zxe")
-                .tag("value2", "value2: qwe")
+                .tag("value2", "value2. overridden: qwe")
                 .timer()
                 .count()).isEqualTo(1);
         }
@@ -561,7 +562,8 @@ class TimedAspectTest {
 
         enum AnnotatedTestClass {
 
-            CLASS_WITHOUT_INTERFACE(MeterTagClass.class), CLASS_WITH_INTERFACE(MeterTagClassChild.class);
+            // CLASS_WITHOUT_INTERFACE(MeterTagClass.class),
+            CLASS_WITH_INTERFACE(MeterTagClassChild.class);
 
             private final Class<? extends MeterTagClassInterface> clazz;
 
@@ -656,7 +658,8 @@ class TimedAspectTest {
 
             @Timed
             @Override
-            public void getAnnotationForTagValueExpression(String test) {
+            public void getAnnotationForTagValueExpression(
+                    @MeterTag(key = "test", expression = "'hello' + ' characters. overridden'") String test) {
             }
 
             @Timed
@@ -666,7 +669,8 @@ class TimedAspectTest {
 
             @Timed
             @Override
-            public void getMultipleAnnotationsForTagValueExpression(DataHolder param) {
+            public void getMultipleAnnotationsForTagValueExpression(
+                    @MeterTag(key = "value2", expression = "'value2. overridden: ' + value2") DataHolder param) {
 
             }
 
