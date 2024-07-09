@@ -22,6 +22,7 @@ import io.micrometer.core.instrument.distribution.CountAtBucket;
 import io.micrometer.core.instrument.distribution.HistogramSupport;
 import io.micrometer.core.instrument.distribution.ValueAtPercentile;
 import io.micrometer.core.instrument.distribution.pause.PauseDetector;
+import io.micrometer.core.instrument.util.TimeUtils;
 
 import java.time.Duration;
 import java.util.Arrays;
@@ -100,7 +101,11 @@ public interface Timer extends Meter, HistogramSupport {
         return new Builder(timed.value().isEmpty() ? defaultName : timed.value()).tags(timed.extraTags())
             .description(timed.description().isEmpty() ? null : timed.description())
             .publishPercentileHistogram(timed.histogram())
-            .publishPercentiles(timed.percentiles().length > 0 ? timed.percentiles() : null);
+            .publishPercentiles(timed.percentiles().length > 0 ? timed.percentiles() : null)
+            .serviceLevelObjectives(
+                    timed.serviceLevelObjectives().length > 0 ? Arrays.stream(timed.serviceLevelObjectives())
+                        .mapToObj(s -> Duration.ofNanos((long) TimeUtils.secondsToUnit(s, TimeUnit.NANOSECONDS)))
+                        .toArray(Duration[]::new) : null);
     }
 
     /**
