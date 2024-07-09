@@ -38,7 +38,6 @@ import java.lang.annotation.*;
 @Retention(RetentionPolicy.RUNTIME)
 @Inherited
 @Target(ElementType.PARAMETER)
-@Repeatable(MeterTags.class)
 public @interface MeterTag {
 
     /**
