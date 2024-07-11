@@ -58,7 +58,7 @@ import static java.util.Objects.requireNonNull;
  * @author Jon Schneider
  * @author Johnny Lim
  */
-public abstract class MeterRegistry implements AutoCloseable {
+public abstract class MeterRegistry {
 
     // @formatter:off
     private static final EnumMap<TimeUnit, String> BASE_TIME_UNIT_STRING_CACHE = Arrays.stream(TimeUnit.values())
@@ -1029,7 +1029,6 @@ public abstract class MeterRegistry implements AutoCloseable {
      * Closes this registry, releasing any resources in the process. Once closed, this
      * registry will no longer accept new meters and any publishing activity will cease.
      */
-    @Override
     public void close() {
         if (closed.compareAndSet(false, true)) {
             synchronized (meterMapLock) {
