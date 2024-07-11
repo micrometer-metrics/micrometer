@@ -93,8 +93,6 @@ public class StatsdMeterRegistry extends MeterRegistry {
 
     FluxSink<String> sink = new NoopFluxSink();
 
-    Flux<String> flux = Flux.empty();
-
     Disposable.Swap statsdConnection = Disposables.swap();
 
     @Nullable
@@ -225,7 +223,6 @@ public class StatsdMeterRegistry extends MeterRegistry {
             else {
                 final Publisher<String> publisher;
                 if (statsdConfig.buffered()) {
-                    flux = Flux.from(this.processor);
                     publisher = BufferingFlux
                         .create(Flux.from(this.processor), "\n", statsdConfig.maxPacketLength(),
                                 statsdConfig.pollingFrequency().toMillis())
