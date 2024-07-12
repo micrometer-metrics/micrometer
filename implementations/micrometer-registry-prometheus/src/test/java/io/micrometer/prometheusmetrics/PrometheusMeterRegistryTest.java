@@ -943,7 +943,7 @@ class PrometheusMeterRegistryTest {
     }
 
     private static void sleepToAvoidRateLimiting() throws InterruptedException {
-        Thread.sleep(5); // sleeping 5ms since the sample interval limit is 1ms
+        Thread.sleep(10); // sleeping since the sample interval limit is 1ms
     }
 
     @Test
