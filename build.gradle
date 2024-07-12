@@ -171,11 +171,6 @@ subprojects {
             useJUnitPlatform {
                 excludeTags 'docker'
             }
-
-            develocity.testRetry {
-                maxFailures = 5
-                maxRetries = 3
-            }
         }
 
         task dockerTest(type: Test) {
@@ -187,8 +182,12 @@ subprojects {
             }
         }
 
-        project.tasks.withType(Test) { Test testTask ->
-            testTask.testLogging.exceptionFormat = 'full'
+        tasks.withType(Test).configureEach {
+            testLogging.exceptionFormat = 'full'
+            develocity.testRetry {
+                maxFailures = 5
+                maxRetries = 3
+            }
         }
 
         license {
