@@ -15,15 +15,17 @@
  */
 package io.micrometer.dynatrace;
 
-import io.micrometer.core.instrument.Counter;
-import io.micrometer.core.instrument.MockClock;
-import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.instrument.*;
 import io.micrometer.core.ipc.http.HttpSender;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -152,6 +154,142 @@ class DynatraceMeterRegistryTest {
     }
 
     @Test
+    void shouldTrackPercentilesWhenDynatraceSummaryInstrumentsNotUsed() throws Throwable {
+        DynatraceConfig dynatraceConfig = getNonSummaryInstrumentsConfig();
+
+        DynatraceMeterRegistry registry = DynatraceMeterRegistry.builder(dynatraceConfig)
+            .httpClient(httpClient)
+            .clock(clock)
+            .build();
+
+        HttpSender.Request.Builder builder = HttpSender.Request.build(config.uri(), httpClient);
+        when(httpClient.post(config.uri())).thenReturn(builder);
+
+        double[] trackedPercentiles = new double[] { 0.5, 0.7, 0.99 };
+
+        Timer timer = Timer.builder("my.timer").publishPercentiles(trackedPercentiles).register(registry);
+        DistributionSummary distributionSummary = DistributionSummary.builder("my.ds")
+            .publishPercentiles(trackedPercentiles)
+            .register(registry);
+        CountDownLatch lttCountDownLatch = new CountDownLatch(1);
+        LongTaskTimer longTaskTimer = LongTaskTimer.builder("my.ltt")
+            .publishPercentiles(trackedPercentiles)
+            .register(registry);
+
+        timer.record(Duration.ofMillis(100));
+        distributionSummary.record(100);
+
+        ExecutorService executorService = Executors.newSingleThreadExecutor();
+        executorService.submit(() -> longTaskTimer.record(() -> {
+            clock.add(Duration.ofMillis(100));
+
+            try {
+                assertThat(lttCountDownLatch.await(300, MILLISECONDS)).isTrue();
+            }
+            catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        }));
+
+        clock.add(dynatraceConfig.step());
+
+        registry.publish();
+        // release long task timer
+        lttCountDownLatch.countDown();
+
+        verify(httpClient).send(
+                assertArg((request -> assertThat(request.getEntity()).asString()
+                    .hasLineCount(16)
+                    .contains(
+                            // Timer lines
+                            "my.timer,dt.metrics.source=micrometer gauge,min=100,max=100,sum=100,count=1 "
+                                    + clock.wallTime(),
+                            "#my.timer gauge dt.meta.unit=milliseconds",
+                            // Timer percentile lines. Percentiles are 0 because the step
+                            // rolled over.
+                            "my.timer.percentile,dt.metrics.source=micrometer,phi=0.5 gauge,0 " + clock.wallTime(),
+                            "my.timer.percentile,dt.metrics.source=micrometer,phi=0.7 gauge,0 " + clock.wallTime(),
+                            "my.timer.percentile,dt.metrics.source=micrometer,phi=0.99 gauge,0 " + clock.wallTime(),
+                            "#my.timer.percentile gauge dt.meta.unit=milliseconds",
+
+                            // DistributionSummary lines
+                            "my.ds,dt.metrics.source=micrometer gauge,min=100,max=100,sum=100,count=1 "
+                                    + clock.wallTime(),
+                            // DistributionSummary percentile lines. Percentiles are 0
+                            // because the step rolled over.
+                            "my.ds.percentile,dt.metrics.source=micrometer,phi=0.5 gauge,0 " + clock.wallTime(),
+                            "my.ds.percentile,dt.metrics.source=micrometer,phi=0.7 gauge,0 " + clock.wallTime(),
+                            "my.ds.percentile,dt.metrics.source=micrometer,phi=0.99 gauge,0 " + clock.wallTime(),
+
+                            // LongTaskTimer lines
+                            "my.ltt,dt.metrics.source=micrometer gauge,min=100,max=100,sum=100,count=1 "
+                                    + clock.wallTime(),
+                            "#my.ltt gauge dt.meta.unit=milliseconds",
+                            // LongTaskTimer percentile lines
+                            // 0th percentile is missing because it doesn't clear the
+                            // "interpolatable line" threshold defined in
+                            // DefaultLongTaskTimer#takeSnapshot().
+                            "my.ltt.percentile,dt.metrics.source=micrometer,phi=0.5 gauge,100 " + clock.wallTime(),
+                            "my.ltt.percentile,dt.metrics.source=micrometer,phi=0.7 gauge,100 " + clock.wallTime(),
+                            "my.ltt.percentile,dt.metrics.source=micrometer,phi=0.99 gauge,100 " + clock.wallTime(),
+                            "#my.ltt.percentile gauge dt.meta.unit=milliseconds"))));
+    }
+
+    @Test
+    void shouldTrackPercentilesWhenDynatraceSummaryInstrumentsNotUsed_shouldExport0PercentileWhenSpecified()
+            throws Throwable {
+        DynatraceConfig dynatraceConfig = getNonSummaryInstrumentsConfig();
+
+        DynatraceMeterRegistry registry = DynatraceMeterRegistry.builder(dynatraceConfig)
+            .httpClient(httpClient)
+            .clock(clock)
+            .build();
+
+        HttpSender.Request.Builder builder = HttpSender.Request.build(config.uri(), httpClient);
+        when(httpClient.post(config.uri())).thenReturn(builder);
+
+        // create instruments with an explicit 0 percentile. This should be exported.
+        Timer timer = Timer.builder("my.timer").publishPercentiles(0, 0.5, 0.99).register(registry);
+        DistributionSummary distributionSummary = DistributionSummary.builder("my.ds")
+            .publishPercentiles(0, 0.5, 0.99)
+            .register(registry);
+        // For LongTaskTimer, the 0 percentile is not tracked as it doesn't clear the
+        // "interpolatable line" threshold defined in DefaultLongTaskTimer#takeSnapshot().
+        // see shouldTrackPercentilesWhenDynatraceSummaryInstrumentsNotUsed for a test
+        // that exports LongTaskTimer percentiles
+
+        timer.record(Duration.ofMillis(100));
+        distributionSummary.record(100);
+
+        clock.add(dynatraceConfig.step());
+
+        registry.publish();
+
+        verify(httpClient)
+            .send(assertArg((request -> assertThat(request.getEntity()).asString()
+                .hasLineCount(10)
+                .contains(
+                        // Timer lines
+                        "my.timer,dt.metrics.source=micrometer gauge,min=100,max=100,sum=100,count=1 "
+                                + clock.wallTime(),
+                        "#my.timer gauge dt.meta.unit=milliseconds",
+                        // Timer percentile lines. Percentiles are 0 because the step
+                        // rolled over.
+                        "my.timer.percentile,dt.metrics.source=micrometer,phi=0 gauge,0 " + clock.wallTime(),
+                        "my.timer.percentile,dt.metrics.source=micrometer,phi=0.5 gauge,0 " + clock.wallTime(),
+                        "my.timer.percentile,dt.metrics.source=micrometer,phi=0.99 gauge,0 " + clock.wallTime(),
+                        "#my.timer.percentile gauge dt.meta.unit=milliseconds",
+
+                        // DistributionSummary lines
+                        "my.ds,dt.metrics.source=micrometer gauge,min=100,max=100,sum=100,count=1 " + clock.wallTime(),
+                        // DistributionSummary percentile lines. Percentiles are 0 because
+                        // the step rolled over.
+                        "my.ds.percentile,dt.metrics.source=micrometer,phi=0 gauge,0 " + clock.wallTime(),
+                        "my.ds.percentile,dt.metrics.source=micrometer,phi=0.5 gauge,0 " + clock.wallTime(),
+                        "my.ds.percentile,dt.metrics.source=micrometer,phi=0.99 gauge,0 " + clock.wallTime()))));
+    }
+
+    @Test
     void shouldNotExportLinesWithZeroCount() throws Throwable {
         HttpSender.Request.Builder builder = HttpSender.Request.build(config.uri(), httpClient);
         when(httpClient.post(config.uri())).thenReturn(builder);
@@ -213,6 +351,35 @@ class DynatraceMeterRegistryTest {
             @Override
             public DynatraceApiVersion apiVersion() {
                 return DynatraceApiVersion.V2;
+            }
+        };
+    }
+
+    private static DynatraceConfig getNonSummaryInstrumentsConfig() {
+        return new DynatraceConfig() {
+            @Override
+            public String get(String key) {
+                return null;
+            }
+
+            @Override
+            public String uri() {
+                return "http://localhost";
+            }
+
+            @Override
+            public String apiToken() {
+                return "apiToken";
+            }
+
+            @Override
+            public DynatraceApiVersion apiVersion() {
+                return DynatraceApiVersion.V2;
+            }
+
+            @Override
+            public boolean useDynatraceSummaryInstruments() {
+                return false;
             }
         };
     }
