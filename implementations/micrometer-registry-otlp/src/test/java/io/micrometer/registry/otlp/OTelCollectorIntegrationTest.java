@@ -42,9 +42,7 @@ import static uk.org.webcompere.systemstubs.SystemStubs.withEnvironmentVariables
 @Tag("docker")
 class OTelCollectorIntegrationTest {
 
-    // TODO: The OTel Prometheus exporter does not support openmetrics-text 1.0.0 yet
-    // see: https://github.com/open-telemetry/opentelemetry-collector-contrib/issues/18913
-    private static final String OPENMETRICS_001 = "application/openmetrics-text; version=0.0.1; charset=utf-8";
+    private static final String OPENMETRICS_TEXT = "application/openmetrics-text; version=1.0.0; charset=utf-8";
 
     private static final String CONFIG_FILE_NAME = "collector-config.yml";
 
@@ -55,8 +53,9 @@ class OTelCollectorIntegrationTest {
     private final GenericContainer<?> container = new GenericContainer(COLLECTOR_IMAGE)
         .withCommand("--config=/etc/" + CONFIG_FILE_NAME)
         .withClasspathResourceMapping(CONFIG_FILE_NAME, "/etc/" + CONFIG_FILE_NAME, READ_ONLY)
+        .withExposedPorts(4318, 9090) // HTTP receiver, Prometheus exporter
         .waitingFor(Wait.forLogMessage(".*Everything is ready.*", 1))
-        .withExposedPorts(4318, 9090); // HTTP receiver, Prometheus exporter
+        .waitingFor(Wait.forListeningPorts(4318));
 
     private static String getCollectorImageVersion() {
         String version = System.getProperty("otel-collector-image.version");
@@ -73,7 +72,7 @@ class OTelCollectorIntegrationTest {
         Counter.builder("test.counter").register(registry).increment(42);
         Gauge.builder("test.gauge", () -> 12).register(registry);
         Timer.builder("test.timer").register(registry).record(Duration.ofMillis(123));
-        DistributionSummary.builder("test.distributionsummary").register(registry).record(24);
+        DistributionSummary.builder("test.ds").register(registry).record(24);
 
         // @formatter:off
         await().atMost(Duration.ofSeconds(5))
@@ -81,7 +80,7 @@ class OTelCollectorIntegrationTest {
             .pollInterval(Duration.ofMillis(100))
             .untilAsserted(() -> whenPrometheusScraped().then()
                     .statusCode(200)
-                    .contentType(OPENMETRICS_001)
+                    .contentType(OPENMETRICS_TEXT)
                     .body(endsWith("# EOF\n"), not(startsWith("# EOF\n")))
             );
 
@@ -91,20 +90,29 @@ class OTelCollectorIntegrationTest {
         whenPrometheusScraped().then().body(
             containsString("{job=\"test\",service_name=\"test\",telemetry_sdk_language=\"java\",telemetry_sdk_name=\"io.micrometer\""),
 
+            containsString("# HELP test_counter \n"),
+            containsString("# TYPE test_counter counter\n"),
             matchesPattern("(?s)^.*test_counter_total\\{.+} 42\\.0\\n.*$"),
+
+            containsString("# HELP test_gauge \n"),
+            containsString("# TYPE test_gauge gauge\n"),
             matchesPattern("(?s)^.*test_gauge\\{.+} 12\\.0\\n.*$"),
 
+            containsString("# HELP test_timer_milliseconds \n"),
+            containsString("# TYPE test_timer_milliseconds histogram\n"),
             matchesPattern("(?s)^.*test_timer_milliseconds_count\\{.+} 1\\n.*$"),
-            // TODO: Earlier this was 123s (123), should have been 123ms (0.123)
+            // Earlier this was 123s (123), should have been 123ms (0.123)
             // see: https://github.com/open-telemetry/opentelemetry-collector-contrib/issues/18903
             // it seems units are still not converted but at least the unit is in the name now (breaking change)
             // see: https://github.com/open-telemetry/opentelemetry-collector-contrib/pull/20519
             matchesPattern("(?s)^.*test_timer_milliseconds_sum\\{.+} 123\\.0\\n.*$"),
             matchesPattern("(?s)^.*test_timer_milliseconds_bucket\\{.+,le=\"\\+Inf\"} 1\\n.*$"),
 
-            matchesPattern("(?s)^.*test_distributionsummary_count\\{.+} 1\\n.*$"),
-            matchesPattern("(?s)^.*test_distributionsummary_sum\\{.+} 24\\.0\\n.*$"),
-            matchesPattern("(?s)^.*test_distributionsummary_bucket\\{.+,le=\"\\+Inf\"} 1\\n.*$")
+            containsString("# HELP test_ds \n"),
+            containsString("# TYPE test_ds histogram\n"),
+            matchesPattern("(?s)^.*test_ds_count\\{.+} 1\\n.*$"),
+            matchesPattern("(?s)^.*test_ds_sum\\{.+} 24\\.0\\n.*$"),
+            matchesPattern("(?s)^.*test_ds_bucket\\{.+,le=\"\\+Inf\"} 1\\n.*$")
         );
         // @formatter:on
     }
@@ -137,7 +145,7 @@ class OTelCollectorIntegrationTest {
         // @formatter:off
         return given()
             .port(container.getMappedPort(9090))
-            .accept(OPENMETRICS_001)
+            .accept(OPENMETRICS_TEXT)
             .when()
             .get("/metrics");
         // @formatter:on
