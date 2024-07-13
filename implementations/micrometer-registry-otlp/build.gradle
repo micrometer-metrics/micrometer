@@ -14,7 +14,7 @@ dependencies {
 }
 
 dockerTest {
-    systemProperty 'otel-collector-image.version', '0.79.0'
+    systemProperty 'otel-collector-image.version', '0.104.0'
 }
 
 // new module in 1.9. This should be removed in later branches.
