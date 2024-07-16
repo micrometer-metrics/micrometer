@@ -21,7 +21,6 @@ import io.micrometer.common.lang.NonNull;
 import io.micrometer.common.util.StringUtils;
 import io.micrometer.common.util.internal.logging.InternalLogger;
 import io.micrometer.common.util.internal.logging.InternalLoggerFactory;
-import io.micrometer.common.util.internal.logging.WarnThenDebugLogger;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.distribution.HistogramSnapshot;
@@ -65,12 +64,6 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
 
     // Loggers must be non-static for MockLoggerFactory.injectLogger() in tests.
     private final InternalLogger logger = InternalLoggerFactory.getInstance(DynatraceExporterV2.class);
-
-    private final WarnThenDebugLogger stackTraceLogger = new WarnThenDebugLoggers.StackTraceLogger();
-
-    private final WarnThenDebugLogger nanGaugeLogger = new WarnThenDebugLoggers.NanGaugeLogger();
-
-    private final WarnThenDebugLogger metadataDiscrepancyLogger = new WarnThenDebugLoggers.MetadataDiscrepancyLogger();
 
     private MetricLinePreConfiguration preConfiguration;
 
@@ -223,10 +216,9 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
                 // collected, but the meter has not been removed from the registry.
                 // NaN's are currently dropped on the Dynatrace side, so dropping them
                 // on the client side here will not change the metrics in Dynatrace.
-
-                nanGaugeLogger.log(() -> String.format(
-                        "Meter '%s' returned a value of NaN, which will not be exported. This can be a deliberate value or because the weak reference to the backing object expired.",
-                        meter.getId().getName()));
+                logger.debug(
+                        "Meter '{}' returned a value of NaN, which will not be exported. This can be a deliberate value or because the weak reference to the backing object expired.",
+                        meter.getId().getName());
                 return null;
             }
             MetricLineBuilder.GaugeStep gaugeStep = createTypeStep(meter).gauge();
@@ -236,7 +228,8 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
             return gaugeStep.value(value).timestamp(Instant.ofEpochMilli(clock.wallTime())).build();
         }
         catch (MetricException e) {
-            logger.warn(METER_EXCEPTION_LOG_FORMAT, meter.getId(), e.getMessage());
+            // logging at info to not drown out warnings/errors from business code.
+            logger.info(METER_EXCEPTION_LOG_FORMAT, meter.getId(), e.getMessage());
         }
 
         return null;
@@ -255,7 +248,8 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
             return counterStep.delta(measurement.getValue()).timestamp(Instant.ofEpochMilli(clock.wallTime())).build();
         }
         catch (MetricException e) {
-            logger.warn(METER_EXCEPTION_LOG_FORMAT, meter.getId(), e.getMessage());
+            // logging at info to not drown out warnings/errors from business code.
+            logger.info(METER_EXCEPTION_LOG_FORMAT, meter.getId(), e.getMessage());
         }
 
         return null;
@@ -312,7 +306,8 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
                 .build());
         }
         catch (MetricException e) {
-            logger.warn(METER_EXCEPTION_LOG_FORMAT, meter.getId(), e.getMessage());
+            // logging at info to not drown out warnings/errors from business code.
+            logger.info(METER_EXCEPTION_LOG_FORMAT, meter.getId(), e.getMessage());
         }
 
         return Stream.empty();
@@ -431,15 +426,14 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
                 .withPlainText(body)
                 .send()
                 .onSuccess(response -> handleSuccess(lineCount, response))
-                .onError(response -> logger.error("Failed metric ingestion: Error Code={}, Response Body={}",
-                        response.code(), getTruncatedBody(response)));
+                .onError(response -> {
+                    logger.info("Failed metric ingestion: Error Code={}, Response Body={}", response.code(),
+                            getTruncatedBody(response));
+                });
         }
         catch (Throwable throwable) {
-            // the "general" logger logs the message, the WarnThenDebugLogger logs the
-            // stack trace.
-            logger.warn("Failed metric ingestion: {}", throwable.toString());
-            stackTraceLogger.log(String.format("Stack trace for previous 'Failed metric ingestion' warning log: %s",
-                    throwable.getMessage()), throwable);
+            // logging at info to not drown out warnings/errors from business code.
+            logger.info("Failed metric ingestion: {}", throwable.toString());
         }
     }
 
@@ -520,10 +514,10 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
                 // set for this metric key.
                 if (!previousMetadataLine.equals(metadataLine)) {
                     seenMetadata.put(key, null);
-                    metadataDiscrepancyLogger.log(() -> String.format(
-                            "Metadata discrepancy detected:\n" + "original metadata:\t%s\n" + "tried to set new:\t%s\n"
-                                    + "Metadata for metric key %s will not be sent.",
-                            previousMetadataLine, metadataLine, key));
+                    logger.info(
+                            "Metadata discrepancy detected:\n" + "original metadata:\t{}\n" + "tried to set new:\t{}\n"
+                                    + "Metadata for metric key {} will not be sent.",
+                            previousMetadataLine, metadataLine, key);
                 }
             }
             // else:
