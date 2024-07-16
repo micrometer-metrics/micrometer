@@ -514,7 +514,7 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
                 // set for this metric key.
                 if (!previousMetadataLine.equals(metadataLine)) {
                     seenMetadata.put(key, null);
-                    logger.info(
+                    logger.debug(
                             "Metadata discrepancy detected:\n" + "original metadata:\t{}\n" + "tried to set new:\t{}\n"
                                     + "Metadata for metric key {} will not be sent.",
                             previousMetadataLine, metadataLine, key);
