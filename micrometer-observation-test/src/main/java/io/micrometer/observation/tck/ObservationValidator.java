@@ -16,8 +16,6 @@
 package io.micrometer.observation.tck;
 
 import io.micrometer.common.lang.Nullable;
-import io.micrometer.common.util.internal.logging.InternalLogger;
-import io.micrometer.common.util.internal.logging.InternalLoggerFactory;
 import io.micrometer.observation.Observation.Context;
 import io.micrometer.observation.Observation.Event;
 import io.micrometer.observation.ObservationHandler;
@@ -35,14 +33,12 @@ import java.util.function.Predicate;
  */
 class ObservationValidator implements ObservationHandler<Context> {
 
-    private static final InternalLogger LOGGER = InternalLoggerFactory.getInstance(ObservationValidator.class);
-
     private final Consumer<ValidationResult> consumer;
 
     private final Predicate<Context> supportsContextPredicate;
 
     ObservationValidator() {
-        this(validationResult -> LOGGER.warn(validationResult.toString()));
+        this(ObservationValidator::throwInvalidObservationException);
     }
 
     ObservationValidator(Consumer<ValidationResult> consumer) {
@@ -114,6 +110,10 @@ class ObservationValidator implements ObservationHandler<Context> {
         }
 
         return status;
+    }
+
+    private static void throwInvalidObservationException(ValidationResult validationResult) {
+        throw new InvalidObservationException(validationResult.getMessage(), validationResult.getContext());
     }
 
     static class ValidationResult {
