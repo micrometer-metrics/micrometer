@@ -49,6 +49,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * Tests ported from
  * https://github.com/eclipse/jetty.project/blob/jetty-9.4.x/jetty-server/src/test/java/org/eclipse/jetty/server/handler/StatisticsHandlerTest.java
  */
+@SuppressWarnings("deprecation")
 class TimedHandlerTest {
 
     private SimpleMeterRegistry registry;

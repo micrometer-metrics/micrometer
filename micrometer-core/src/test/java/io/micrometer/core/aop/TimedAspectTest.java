@@ -374,6 +374,26 @@ class TimedAspectTest {
         });
     }
 
+    @Test
+    void ignoreClassLevelAnnotationIfMethodLevelPresent() {
+        MeterRegistry registry = new SimpleMeterRegistry();
+
+        AspectJProxyFactory pf = new AspectJProxyFactory(new TimedClass());
+        pf.addAspect(new TimedAspect(registry));
+
+        TimedClass service = pf.getProxy();
+
+        service.annotatedOnMethod();
+
+        assertThatExceptionOfType(MeterNotFoundException.class).isThrownBy(() -> registry.get("call").timer());
+        assertThat(registry.get("annotatedOnMethod")
+            .tag("class", "io.micrometer.core.aop.TimedAspectTest$TimedClass")
+            .tag("method", "annotatedOnMethod")
+            .tag("extra", "tag2")
+            .timer()
+            .count()).isEqualTo(1);
+    }
+
     static class MeterTagsTests {
 
         ValueResolver valueResolver = parameter -> "Value from myCustomTagValueResolver [" + parameter + "]";
@@ -454,6 +474,23 @@ class TimedAspectTest {
             assertThat(registry.get("method.timed").tag("foo", "bar").timer().count()).isEqualTo(1);
         }
 
+        @Test
+        void meterTagOnSuperClass() {
+            MeterRegistry registry = new SimpleMeterRegistry();
+            TimedAspect timedAspect = new TimedAspect(registry);
+            timedAspect.setMeterTagAnnotationHandler(meterTagAnnotationHandler);
+
+            AspectJProxyFactory pf = new AspectJProxyFactory(new MeterTagSub());
+            pf.setProxyTargetClass(true);
+            pf.addAspect(timedAspect);
+
+            MeterTagSub service = pf.getProxy();
+
+            service.superMethod("someValue");
+
+            assertThat(registry.get("method.timed").tag("superTag", "someValue").timer().count()).isEqualTo(1);
+        }
+
         enum AnnotatedTestClass {
 
             CLASS_WITHOUT_INTERFACE(MeterTagClass.class), CLASS_WITH_INTERFACE(MeterTagClassChild.class);
@@ -530,6 +567,22 @@ class TimedAspectTest {
             @Timed
             @Override
             public void getAnnotationForArgumentToString(Long param) {
+            }
+
+        }
+
+        static class MeterTagSuper {
+
+            @Timed
+            public void superMethod(@MeterTag("superTag") String foo) {
+            }
+
+        }
+
+        static class MeterTagSub extends MeterTagSuper {
+
+            @Timed
+            public void subMethod(@MeterTag("subTag") String foo) {
             }
 
         }
@@ -623,6 +676,10 @@ class TimedAspectTest {
     static class TimedClass {
 
         void call() {
+        }
+
+        @Timed(value = "annotatedOnMethod", extraTags = { "extra", "tag2" })
+        void annotatedOnMethod() {
         }
 
     }

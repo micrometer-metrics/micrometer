@@ -21,7 +21,6 @@ import io.micrometer.common.lang.NonNull;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
-import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.binder.MeterBinder;
 import io.micrometer.core.instrument.distribution.TimeWindowSum;
 
@@ -92,7 +91,6 @@ public class JvmHeapPressureMetrics implements MeterBinder, AutoCloseable {
                 .tag("area", "heap")
                 .tag("pool", "long-lived")
                 .description("The percentage of long-lived heap pool used after the last GC event, in the range [0..1]")
-                .baseUnit(BaseUnits.PERCENT)
                 .register(registry);
         }
 
@@ -103,7 +101,6 @@ public class JvmHeapPressureMetrics implements MeterBinder, AutoCloseable {
             .tags(tags)
             .description(
                     "An approximation of the percent of CPU time used by GC activities over the last lookback period or since monitoring began, whichever is shorter, in the range [0..1]")
-            .baseUnit(BaseUnits.PERCENT)
             .register(registry);
     }
 

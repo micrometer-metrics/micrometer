@@ -5,8 +5,8 @@ pluginManagement {
 }
 
 plugins {
-    id 'com.gradle.enterprise' version '3.17'
-    id 'io.spring.ge.conventions' version '0.0.16'
+    id 'com.gradle.develocity' version '3.17.4'
+    id 'io.spring.ge.conventions' version '0.0.17'
     id 'org.gradle.toolchains.foojay-resolver-convention' version '0.8.0'
 }
 
@@ -14,25 +14,26 @@ rootProject.name = 'micrometer'
 
 enableFeaturePreview("STABLE_CONFIGURATION_CACHE")
 
-buildCache {
-    remote(HttpBuildCache) {
-        url = 'https://ge.micrometer.io/cache/'
-    }
-}
-gradleEnterprise {
+develocity {
     server = 'https://ge.micrometer.io'
+}
+
+buildCache {
+    remote(develocity.buildCache) {
+        server = 'https://ge.micrometer.io'
+    }
 }
 
 include 'micrometer-commons', 'micrometer-core', 'micrometer-observation'
 
-['core', 'boot2', 'boot2-reactive', 'spring-integration', 'hazelcast', 'hazelcast3', 'javalin', 'jersey3', 'jetty12', 'kotlin'].each { sample ->
+['core', 'boot2', 'boot2-reactive', 'spring-integration', 'hazelcast', 'hazelcast3', 'javalin', 'jersey3', 'jetty12', 'jooq', 'kotlin'].each { sample ->
     include "micrometer-samples-$sample"
     project(":micrometer-samples-$sample").projectDir = new File(rootProject.projectDir, "samples/micrometer-samples-$sample")
 }
 
 include 'micrometer-test', 'micrometer-observation-test'
 
-['atlas', 'prometheus', 'datadog', 'elastic', 'ganglia', 'graphite', 'health', 'jmx', 'influx', 'otlp', 'statsd', 'new-relic', 'cloudwatch', 'cloudwatch2', 'signalfx', 'wavefront', 'dynatrace', 'azure-monitor', 'humio', 'appoptics', 'kairos', 'stackdriver', 'opentsdb'].each { sys ->
+['atlas', 'prometheus', 'prometheus-simpleclient', 'datadog', 'elastic', 'ganglia', 'graphite', 'health', 'jmx', 'influx', 'otlp', 'statsd', 'new-relic', 'cloudwatch2', 'signalfx', 'wavefront', 'dynatrace', 'azure-monitor', 'humio', 'appoptics', 'kairos', 'stackdriver', 'opentsdb'].each { sys ->
     include "micrometer-registry-$sys"
     project(":micrometer-registry-$sys").projectDir = new File(rootProject.projectDir, "implementations/micrometer-registry-$sys")
 }
@@ -42,8 +43,11 @@ include 'micrometer-test', 'micrometer-observation-test'
     project(":micrometer-benchmarks-$benchmark").projectDir = new File(rootProject.projectDir, "benchmarks/benchmarks-$benchmark")
 }
 
+include 'concurrency-tests'
 include 'micrometer-bom'
 include 'micrometer-jakarta9'
+include 'micrometer-java11'
 include 'micrometer-jetty11'
+include 'micrometer-jetty12'
 include 'micrometer-osgi-test'
 include 'docs'

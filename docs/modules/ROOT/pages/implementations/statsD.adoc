@@ -1,5 +1,4 @@
 = Micrometer StatsD
-:toc:
 :sectnums:
 :system: statsd
 

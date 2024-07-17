@@ -29,7 +29,9 @@ import static java.util.Objects.requireNonNull;
  *
  * @author Michael Weirauch
  * @since 1.8.0
+ * @deprecated since 1.13.0 use the jersey-micrometer module in the Jersey project instead
  */
+@Deprecated
 public class MetricsApplicationEventListener implements ApplicationEventListener {
 
     private final MeterRegistry meterRegistry;

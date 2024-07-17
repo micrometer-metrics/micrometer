@@ -1,17 +1,41 @@
 [[overview]]
 = Eclipse Jetty and Jersey Instrumentation
 
+== Jetty
+
 Micrometer supports binding metrics to Jetty through `Connection.Listener`.
 
-You can collect metrics from Jetty by adding `JettyConnectionMetrics`, as follows:
+You can collect metrics from a Jetty `Connector` by configuring it with `JettyConnectionMetrics`, as follows:
 
 [source,java]
 ----
  Server server = new Server(0);
- Connector connector = new ServerConnector(server);
- connector.addBean(new JettyConnectionMetrics(registry, connector, Tags.of("foo", "bar"));
+ NetworkTrafficServerConnector connector = new NetworkTrafficServerConnector(server);
+ JettyConnectionMetrics metrics = new JettyConnectionMetrics(registry, connector);
+ connector.addBean(metrics); //<1>
+ connector.setNetworkTrafficListener(metrics); //<2>
  server.setConnectors(new Connector[] { connector });
 ----
+<1> Register general connection metrics
+<2> Registers metrics for bytes in/out on this connector
+
+Alternatively, you can apply the metrics instrumentation to all connectors on a `Server` as follows:
+
+[source,java]
+----
+JettyConnectionMetrics.addToAllConnectors(server, registry);
+----
+
+Connection metrics can be configured on a client as well, but bytes in/out will not be available when instrumenting a client.
+
+.Configure instrumentation for a Jetty client
+[source,java]
+----
+HttpClient httpClient = new HttpClient();
+httpClient.addBean(new JettyConnectionMetrics(registry));
+----
+
+== Jersey
 
 Micrometer also supports binding metrics to Jersey through `ApplicationEventListener`.
 

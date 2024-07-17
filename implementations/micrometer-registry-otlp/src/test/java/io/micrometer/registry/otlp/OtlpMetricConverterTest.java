@@ -1,0 +1,163 @@
+/*
+ * Copyright 2024 VMware, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package io.micrometer.registry.otlp;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+import java.time.Duration;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import io.micrometer.core.instrument.Gauge;
+import io.micrometer.core.instrument.MockClock;
+import io.micrometer.core.instrument.Tags;
+import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.instrument.config.NamingConvention;
+import io.opentelemetry.proto.metrics.v1.Metric;
+
+class OtlpMetricConverterTest {
+
+    private static final Tags FIRST_TAG = Tags.of("key", "1");
+
+    private static final Tags SECOND_TAG = Tags.of("key", "2");
+
+    MockClock mockClock;
+
+    OtlpMetricConverter otlpMetricConverter;
+
+    OtlpMeterRegistry otlpMeterRegistry;
+
+    @BeforeEach
+    void setUp() {
+        mockClock = new MockClock();
+        otlpMetricConverter = new OtlpMetricConverter(mockClock, Duration.ofMillis(1), TimeUnit.MILLISECONDS,
+                AggregationTemporality.CUMULATIVE, NamingConvention.dot);
+        otlpMeterRegistry = new OtlpMeterRegistry(OtlpConfig.DEFAULT, mockClock);
+    }
+
+    @Test
+    void sameDescriptionShouldBeSingleMetric() {
+        Gauge.builder("test.meter", () -> 1).tags(FIRST_TAG).description("description").register(otlpMeterRegistry);
+        Gauge.builder("test.meter", () -> 1).tags(SECOND_TAG).description("description").register(otlpMeterRegistry);
+
+        otlpMetricConverter.addMeters(otlpMeterRegistry.getMeters());
+        final List<Metric> metrics = otlpMetricConverter.getAllMetrics();
+        assertThat(metrics).hasSize(1).satisfiesExactlyInAnyOrder(metric -> {
+            assertThat(metric.getDescription()).isEqualTo("description");
+            assertThat(metric.getGauge().getDataPointsCount()).isEqualTo(2);
+        });
+    }
+
+    @Test
+    void differentDescriptionShouldBeMultipleMetric() {
+        Gauge.builder("test.meter", () -> 1).tags(FIRST_TAG).description("description1").register(otlpMeterRegistry);
+        Gauge.builder("test.meter", () -> 1).tags(SECOND_TAG).description("description2").register(otlpMeterRegistry);
+
+        otlpMetricConverter.addMeters(otlpMeterRegistry.getMeters());
+        final List<Metric> metrics = otlpMetricConverter.getAllMetrics();
+
+        assertThat(metrics).hasSize(2).satisfiesExactlyInAnyOrder(metric -> {
+            assertThat(metric.getDescription()).isEqualTo("description1");
+            assertThat(metric.getGauge().getDataPointsCount()).isEqualTo(1);
+            assertThat(metric.getGauge().getDataPoints(0).getAttributesList()).hasSize(1);
+        }, metric -> {
+            assertThat(metric.getDescription()).isEqualTo("description2");
+            assertThat(metric.getGauge().getDataPointsCount()).isEqualTo(1);
+            assertThat(metric.getGauge().getDataPoints(0).getAttributesList()).hasSize(1);
+        });
+    }
+
+    @Test
+    void sameBaseUnitShouldBeSingleMetric() {
+        Gauge.builder("test.meter", () -> 1).tags(FIRST_TAG).baseUnit("xyz").register(otlpMeterRegistry);
+        Gauge.builder("test.meter", () -> 1).tags(SECOND_TAG).baseUnit("xyz").register(otlpMeterRegistry);
+
+        otlpMetricConverter.addMeters(otlpMeterRegistry.getMeters());
+        final List<Metric> metrics = otlpMetricConverter.getAllMetrics();
+        assertThat(metrics).hasSize(1).satisfiesExactlyInAnyOrder(metric -> {
+            assertThat(metric.getUnit()).isEqualTo("xyz");
+            assertThat(metric.getGauge().getDataPointsCount()).isEqualTo(2);
+        });
+    }
+
+    @Test
+    void differentBaseUnitShouldBeMultipleMetric() {
+        Gauge.builder("test.meter", () -> 1).tags(FIRST_TAG).baseUnit("xyz").register(otlpMeterRegistry);
+        Gauge.builder("test.meter", () -> 1).tags(SECOND_TAG).baseUnit("abc").register(otlpMeterRegistry);
+
+        otlpMetricConverter.addMeters(otlpMeterRegistry.getMeters());
+        final List<Metric> metrics = otlpMetricConverter.getAllMetrics();
+
+        assertThat(metrics).hasSize(2).satisfiesExactlyInAnyOrder(metric -> {
+            assertThat(metric.getUnit()).isEqualTo("xyz");
+            assertThat(metric.getGauge().getDataPointsCount()).isEqualTo(1);
+            assertThat(metric.getGauge().getDataPoints(0).getAttributesList()).hasSize(1);
+        }, metric -> {
+            assertThat(metric.getUnit()).isEqualTo("abc");
+            assertThat(metric.getGauge().getDataPointsCount()).isEqualTo(1);
+            assertThat(metric.getGauge().getDataPoints(0).getAttributesList()).hasSize(1);
+        });
+    }
+
+    @Test
+    void timerWithSummaryAndHistogramShouldBeMultipleMetrics() {
+        Timer timerWithSummary = Timer.builder("test.timer")
+            .description("description")
+            .tag("type", "summary")
+            .publishPercentiles(0.5)
+            .register(otlpMeterRegistry);
+        Timer timerWithHistogram = Timer.builder("test.timer")
+            .description("description")
+            .tag("type", "histogram")
+            .sla(Duration.ofMillis(10))
+            .register(otlpMeterRegistry);
+        Timer timer = Timer.builder("test.timer")
+            .description("description")
+            .tag("type", "vanilla")
+            .register(otlpMeterRegistry);
+
+        otlpMetricConverter.addMeters(otlpMeterRegistry.getMeters());
+        List<Metric> metrics = otlpMetricConverter.getAllMetrics();
+        assertThat(metrics).hasSize(2);
+
+        assertThat(metrics).filteredOn(Metric::hasSummary).hasSize(1).first().satisfies(metric -> {
+            assertThat(metric.getSummary().getDataPointsList()).hasSize(1)
+                .satisfiesExactlyInAnyOrder(summaryDataPoint -> {
+                    assertThat(summaryDataPoint.getAttributesCount()).isEqualTo(1);
+                    assertThat(summaryDataPoint.getAttributes(0).getValue().getStringValue()).isEqualTo("summary");
+                    assertThat(summaryDataPoint.getQuantileValuesCount()).isEqualTo(1);
+                    assertThat(summaryDataPoint.getQuantileValues(0).getQuantile()).isEqualTo(0.5);
+                });
+        });
+
+        assertThat(metrics).filteredOn(Metric::hasHistogram).hasSize(1).first().satisfies(metric -> {
+            assertThat(metric.getHistogram().getDataPointsList()).hasSize(2)
+                .satisfiesExactlyInAnyOrder(histogramDataPoint -> {
+                    assertThat(histogramDataPoint.getAttributesCount()).isEqualTo(1);
+                    assertThat(histogramDataPoint.getAttributes(0).getValue().getStringValue()).isEqualTo("vanilla");
+                    assertThat(histogramDataPoint.getBucketCountsCount()).isZero();
+                }, histogramDataPoint -> {
+                    assertThat(histogramDataPoint.getAttributesCount()).isEqualTo(1);
+                    assertThat(histogramDataPoint.getAttributes(0).getValue().getStringValue()).isEqualTo("histogram");
+                    assertThat(histogramDataPoint.getExplicitBoundsCount()).isEqualTo(1);
+                    assertThat(histogramDataPoint.getBucketCountsCount()).isEqualTo(2);
+                });
+        });
+    }
+
+}

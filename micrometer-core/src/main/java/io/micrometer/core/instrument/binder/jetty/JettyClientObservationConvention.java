@@ -22,7 +22,9 @@ import io.micrometer.observation.ObservationConvention;
  * Convention used with Jetty client instrumentation {@link JettyClientMetrics}.
  *
  * @since 1.11.0
+ * @deprecated since 1.13.0 in favor of the micrometer-jetty12 module
  */
+@Deprecated
 public interface JettyClientObservationConvention extends ObservationConvention<JettyClientContext> {
 
     @Override

@@ -37,15 +37,26 @@ class ObservationGrpcClientCallListener<RespT> extends SimpleForwardingClientCal
     }
 
     @Override
-    public void onClose(Status status, Metadata metadata) {
+    public void onHeaders(Metadata headers) {
+        super.onHeaders(headers);
+        // Per javadoc, headers are not thread-safe. Make a copy.
+        Metadata headersToKeep = new Metadata();
+        headersToKeep.merge(headers);
+        GrpcClientObservationContext context = (GrpcClientObservationContext) this.observation.getContext();
+        context.setHeaders(headersToKeep);
+    }
+
+    @Override
+    public void onClose(Status status, Metadata trailers) {
         GrpcClientObservationContext context = (GrpcClientObservationContext) this.observation.getContext();
         context.setStatusCode(status.getCode());
+        context.setTrailers(trailers);
         if (status.getCause() != null) {
             observation.error(status.getCause());
         }
         this.observation.stop();
         // We do not catch exception from the delegate. (following Brave design)
-        super.onClose(status, metadata);
+        super.onClose(status, trailers);
     }
 
     @Override

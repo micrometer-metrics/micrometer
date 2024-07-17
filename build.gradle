@@ -88,6 +88,8 @@ subprojects {
 
             toolchain {
                 languageVersion = javaLanguageVersion
+                sourceCompatibility = javaTargetVersion
+                targetCompatibility = javaTargetVersion
             }
         }
 
@@ -117,6 +119,9 @@ subprojects {
             compileTestJava {
                 options.encoding = 'UTF-8'
                 options.compilerArgs << '-Xlint:unchecked' << '-Xlint:deprecation'
+
+                sourceCompatibility = JavaVersion.VERSION_11
+                targetCompatibility = JavaVersion.VERSION_11
             }
 
 
@@ -172,7 +177,7 @@ subprojects {
                 excludeTags 'docker'
             }
 
-            retry {
+            develocity.testRetry {
                 maxFailures = 5
                 maxRetries = 3
             }
@@ -284,7 +289,7 @@ subprojects {
     }
 
     // Do not publish some modules
-    if (!['samples', 'benchmarks', 'micrometer-osgi-test'].find { project.name.contains(it) }) {
+    if (!['samples', 'benchmarks', 'micrometer-osgi-test', 'concurrency-tests'].find { project.name.contains(it) }) {
         apply plugin: 'com.netflix.nebula.maven-publish'
         apply plugin: 'com.netflix.nebula.maven-manifest'
         apply plugin: 'com.netflix.nebula.maven-developer'
@@ -332,7 +337,7 @@ subprojects {
 
             check.dependsOn("testModules")
 
-            if (!(project.name in ['micrometer-jakarta9'])) { // add projects here that do not exist in the previous minor so should be excluded from japicmp
+            if (!(project.name in ['micrometer-registry-prometheus', 'micrometer-registry-prometheus-simpleclient', 'micrometer-java11', 'micrometer-jetty12'])) { // add projects here that do not exist in the previous minor so should be excluded from japicmp
                 apply plugin: 'me.champeau.gradle.japicmp'
                 apply plugin: 'de.undercouch.download'
 
@@ -375,6 +380,8 @@ subprojects {
                     ignoreMissingClasses = true
                     includeSynthetic = true
 
+                    // TODO remove MetricsDSLContext from excludes in 1.14 when comparing against 1.13
+                    classExcludes = [ 'io.micrometer.core.instrument.binder.db.MetricsDSLContext' ]
                     compatibilityChangeExcludes = [ "METHOD_NEW_DEFAULT" ]
 
                     packageExcludes = ['io.micrometer.shaded.*', 'io.micrometer.statsd.internal']

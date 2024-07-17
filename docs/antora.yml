@@ -19,3 +19,4 @@ asciidoc:
     include-resources: 'example$docs-src/test/resources'
     include-core-test-java: 'example$core-test'
     include-micrometer-test-java: 'example$micrometer-test'
+    include-micrometer-java11-test: 'example$micrometer-java11-test'

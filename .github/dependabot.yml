@@ -12,25 +12,16 @@ updates:
     target-branch: "1.9.x"
     milestone: 136
     ignore:
+      # metrics are better with https://github.com/Netflix/Hystrix/pull/1568 introduced
+      # in hystrix 1.5.12, but Netflix re-released 1.5.11 as 1.5.18 late in 2018.
+      # <=1.5.11 or 1.5.18 doesn't break with Micrometer, but open metrics won't be correct necessarily.
+      - dependency-name: "com.netflix.hystrix:hystrix-core"
       # only upgrade patch versions
       - dependency-name: "*"
         update-types:
           - version-update:semver-major
           - version-update:semver-minor
-    open-pull-requests-limit: 10
-  - package-ecosystem: gradle
-    directory: "/"
-    schedule:
-      interval: monthly
-    target-branch: "1.10.x"
-    milestone: 159
-    ignore:
-      # only upgrade patch versions
-      - dependency-name: "*"
-        update-types:
-          - version-update:semver-major
-          - version-update:semver-minor
-    open-pull-requests-limit: 10
+    open-pull-requests-limit: 15
   - package-ecosystem: gradle
     directory: "/"
     schedule:
@@ -38,12 +29,33 @@ updates:
     target-branch: "1.11.x"
     milestone: 206
     ignore:
+      # metrics are better with https://github.com/Netflix/Hystrix/pull/1568 introduced
+      # in hystrix 1.5.12, but Netflix re-released 1.5.11 as 1.5.18 late in 2018.
+      # <=1.5.11 or 1.5.18 doesn't break with Micrometer, but open metrics won't be correct necessarily.
+      - dependency-name: "com.netflix.hystrix:hystrix-core"
       # only upgrade patch versions
       - dependency-name: "*"
         update-types:
           - version-update:semver-major
           - version-update:semver-minor
-    open-pull-requests-limit: 10
+    open-pull-requests-limit: 15
+  - package-ecosystem: gradle
+    directory: "/"
+    schedule:
+      interval: monthly
+    target-branch: "1.12.x"
+    milestone: 211
+    ignore:
+      # metrics are better with https://github.com/Netflix/Hystrix/pull/1568 introduced
+      # in hystrix 1.5.12, but Netflix re-released 1.5.11 as 1.5.18 late in 2018.
+      # <=1.5.11 or 1.5.18 doesn't break with Micrometer, but open metrics won't be correct necessarily.
+      - dependency-name: "com.netflix.hystrix:hystrix-core"
+      # only upgrade patch versions
+      - dependency-name: "*"
+        update-types:
+          - version-update:semver-major
+          - version-update:semver-minor
+    open-pull-requests-limit: 15
   - package-ecosystem: gradle
     directory: "/"
     schedule:
@@ -51,8 +63,12 @@ updates:
     target-branch: "main"
     milestone: 185
     ignore:
+      # metrics are better with https://github.com/Netflix/Hystrix/pull/1568 introduced
+      # in hystrix 1.5.12, but Netflix re-released 1.5.11 as 1.5.18 late in 2018.
+      # <=1.5.11 or 1.5.18 doesn't break with Micrometer, but open metrics won't be correct necessarily.
+      - dependency-name: "com.netflix.hystrix:hystrix-core"
       # upgrade minor and patch versions on main
       - dependency-name: "*"
         update-types:
           - version-update:semver-major
-    open-pull-requests-limit: 10
+    open-pull-requests-limit: 25

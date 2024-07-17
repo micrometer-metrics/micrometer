@@ -26,10 +26,13 @@ import io.micrometer.core.instrument.*;
 /**
  * Micrometer publisher for Hystrix thread pool metrics.
  *
+ * @deprecated since 1.13.0, Hystrix is no longer in active development, and is currently
+ * in maintenance mode.
  * @since 1.2.0
  */
 @NonNullApi
 @NonNullFields
+@Deprecated
 public class MicrometerMetricsPublisherThreadPool implements HystrixMetricsPublisherThreadPool {
 
     private static final String NAME_HYSTRIX_THREADPOOL = "hystrix.threadpool";

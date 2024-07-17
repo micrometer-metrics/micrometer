@@ -1,5 +1,4 @@
 = Micrometer Humio
-:toc:
 :sectnums:
 :system: humio
 

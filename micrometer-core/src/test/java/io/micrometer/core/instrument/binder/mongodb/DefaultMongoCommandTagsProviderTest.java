@@ -49,7 +49,8 @@ class DefaultMongoCommandTagsProviderTest {
     void defaultCommandTags() {
         CommandSucceededEvent event = commandSucceededEvent(5150);
         Iterable<Tag> tags = tagsProvider.commandTags(event);
-        assertThat(tags).containsExactlyInAnyOrder(Tag.of("command", "find"), Tag.of("collection", "unknown"),
+        assertThat(tags).containsExactlyInAnyOrder(Tag.of("command", "find"), Tag.of("database", "db1"),
+                Tag.of("collection", "unknown"),
                 Tag.of("cluster.id", connectionDesc.getConnectionId().getServerId().getClusterId().getValue()),
                 Tag.of("server.address", "localhost:5150"), Tag.of("status", "SUCCESS"));
     }
@@ -84,12 +85,12 @@ class DefaultMongoCommandTagsProviderTest {
     }
 
     private CommandStartedEvent commandStartedEvent(int requestId) {
-        return new CommandStartedEvent(requestId, connectionDesc, "db1", "find",
+        return new CommandStartedEvent(null, -1, requestId, connectionDesc, "db1", "find",
                 new BsonDocument("find", new BsonString("collection-" + requestId)));
     }
 
     private CommandSucceededEvent commandSucceededEvent(int requestId) {
-        return new CommandSucceededEvent(requestId, connectionDesc, "find", new BsonDocument(), 1200L);
+        return new CommandSucceededEvent(null, -1, requestId, connectionDesc, "db1", "find", new BsonDocument(), 1200L);
     }
 
     @Nested

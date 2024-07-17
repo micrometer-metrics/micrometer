@@ -39,6 +39,7 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 /**
  * @author Michael Weirauch
  */
+@SuppressWarnings("deprecation")
 class MetricsRequestEventListenerTimedTest extends JerseyTest {
 
     static {

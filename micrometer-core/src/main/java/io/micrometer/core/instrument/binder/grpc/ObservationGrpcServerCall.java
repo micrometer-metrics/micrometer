@@ -21,6 +21,7 @@ import io.grpc.ServerCall;
 import io.grpc.Status;
 import io.micrometer.core.instrument.binder.grpc.GrpcObservationDocumentation.GrpcServerEvents;
 import io.micrometer.observation.Observation;
+import io.micrometer.observation.Observation.Context;
 
 /**
  * A simple forwarding server call for {@link Observation}.
@@ -38,6 +39,18 @@ class ObservationGrpcServerCall<ReqT, RespT> extends SimpleForwardingServerCall<
     }
 
     @Override
+    public void sendHeaders(Metadata headers) {
+        super.sendHeaders(headers);
+        Context context = this.observation.getContext();
+        if (context instanceof GrpcServerObservationContext) {
+            // Per javadoc, headers are not thread-safe. Make a copy.
+            Metadata headersToKeep = new Metadata();
+            headersToKeep.merge(headers);
+            ((GrpcServerObservationContext) context).setHeaders(headersToKeep);
+        }
+    }
+
+    @Override
     public void sendMessage(RespT message) {
         this.observation.event(GrpcServerEvents.MESSAGE_SENT);
         super.sendMessage(message);
@@ -48,9 +61,12 @@ class ObservationGrpcServerCall<ReqT, RespT> extends SimpleForwardingServerCall<
         if (status.getCause() != null) {
             this.observation.error(status.getCause());
         }
-
+        // Per javadoc, trailers are not thread-safe. Make a copy.
+        Metadata trailersToKeep = new Metadata();
+        trailersToKeep.merge(trailers);
         GrpcServerObservationContext context = (GrpcServerObservationContext) this.observation.getContext();
         context.setStatusCode(status.getCode());
+        context.setTrailers(trailersToKeep);
         super.close(status, trailers);
     }
 

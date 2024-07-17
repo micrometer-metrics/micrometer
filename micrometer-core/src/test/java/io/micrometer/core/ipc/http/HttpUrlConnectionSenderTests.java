@@ -33,7 +33,7 @@ class HttpUrlConnectionSenderTests {
     @Test
     void customReadTimeoutHonored(WireMockRuntimeInfo wmInfo) {
         this.httpSender = new HttpUrlConnectionSender(Duration.ofSeconds(1), Duration.ofMillis(1));
-        stubFor(any(urlEqualTo("/metrics")).willReturn(ok().withFixedDelay(5)));
+        stubFor(any(urlEqualTo("/metrics")).willReturn(ok().withFixedDelay(15)));
 
         assertThatExceptionOfType(SocketTimeoutException.class)
             .isThrownBy(() -> httpSender.post(wmInfo.getHttpBaseUrl() + "/metrics").send());

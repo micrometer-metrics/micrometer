@@ -1,0 +1,19 @@
+description 'Micrometer core classes that require Java 11'
+
+dependencies {
+    api project(":micrometer-core")
+
+    testImplementation 'ru.lanwen.wiremock:wiremock-junit5'
+    testImplementation 'com.github.tomakehurst:wiremock-jre8-standalone'
+    testImplementation project(":micrometer-observation-test")
+}
+
+java {
+    targetCompatibility = 11
+}
+
+tasks.withType(JavaCompile).configureEach {
+    sourceCompatibility = JavaVersion.VERSION_11
+    targetCompatibility = JavaVersion.VERSION_11
+    options.release = 11
+}

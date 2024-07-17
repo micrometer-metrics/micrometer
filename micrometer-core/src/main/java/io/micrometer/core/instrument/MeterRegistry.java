@@ -16,6 +16,8 @@
 package io.micrometer.core.instrument;
 
 import io.micrometer.common.lang.Nullable;
+import io.micrometer.common.util.internal.logging.InternalLogger;
+import io.micrometer.common.util.internal.logging.InternalLoggerFactory;
 import io.micrometer.core.annotation.Incubating;
 import io.micrometer.core.instrument.Meter.Id;
 import io.micrometer.core.instrument.config.MeterFilter;
@@ -92,11 +94,22 @@ public abstract class MeterRegistry {
 
     private final More more = new More();
 
-    // Even though writes are guarded by meterMapLock, iterators across value space are
-    // supported
-    // Hence, we use CHM to support that iteration without ConcurrentModificationException
-    // risk
+    /**
+     * Even though writes are guarded by meterMapLock, iterators across value space are
+     * supported. Hence, we use CHM to support that iteration without
+     * ConcurrentModificationException risk.
+     */
     private final Map<Id, Meter> meterMap = new ConcurrentHashMap<>();
+
+    /**
+     * write/remove guarded by meterMapLock, read in
+     * {@link this#getOrCreateMeter(DistributionStatisticConfig, BiFunction, Id,
+     * Function)} is unguarded
+     */
+    private final Map<Id, Meter> preFilterIdToMeterMap = new HashMap<>();
+
+    // not thread safe; only needed when MeterFilter configured after Meters registered
+    private final Set<Id> stalePreFilterIds = new HashSet<>();
 
     /**
      * Map of meter id whose associated meter contains synthetic counterparts to those
@@ -586,8 +599,7 @@ public abstract class MeterRegistry {
     private <M extends Meter> M registerMeterIfNecessary(Class<M> meterClass, Meter.Id id,
             @Nullable DistributionStatisticConfig config, BiFunction<Meter.Id, DistributionStatisticConfig, M> builder,
             Function<Meter.Id, M> noopBuilder) {
-        Id mappedId = getMappedId(id);
-        Meter m = getOrCreateMeter(config, builder, id, mappedId, noopBuilder);
+        Meter m = getOrCreateMeter(config, builder, id, noopBuilder);
 
         if (!meterClass.isInstance(m)) {
             throw new IllegalArgumentException(
@@ -610,10 +622,24 @@ public abstract class MeterRegistry {
 
     private Meter getOrCreateMeter(@Nullable DistributionStatisticConfig config,
             BiFunction<Id, /* Nullable Generic */ DistributionStatisticConfig, ? extends Meter> builder, Id originalId,
-            Id mappedId, Function<Meter.Id, ? extends Meter> noopBuilder) {
-        Meter m = meterMap.get(mappedId);
+            Function<Meter.Id, ? extends Meter> noopBuilder) {
 
-        if (m == null) {
+        Meter m = preFilterIdToMeterMap.get(originalId);
+        if (m != null && !isStaleId(originalId)) {
+            return m;
+        }
+
+        Id mappedId = getMappedId(originalId);
+        m = meterMap.get(mappedId);
+
+        if (m != null) {
+            // If the mapping exists and the meter is marked stale, then this meter is no
+            // longer stale.
+            if (isStaleId(originalId)) {
+                unmarkStaleId(originalId);
+            }
+        }
+        else {
             if (isClosed()) {
                 return noopBuilder.apply(mappedId);
             }
@@ -647,11 +673,26 @@ public abstract class MeterRegistry {
                         onAdd.accept(m);
                     }
                     meterMap.put(mappedId, m);
+                    preFilterIdToMeterMap.put(originalId, m);
+                    unmarkStaleId(originalId);
                 }
             }
         }
 
         return m;
+    }
+
+    private boolean isStaleId(Id originalId) {
+        return !stalePreFilterIds.isEmpty() && stalePreFilterIds.contains(originalId);
+    }
+
+    /**
+     * Marks the ID as no longer stale if it is stale. Otherwise, does nothing.
+     * @param originalId id before any filter mapping has been applied
+     * @return {@code true} if the id is stale
+     */
+    private boolean unmarkStaleId(Id originalId) {
+        return !stalePreFilterIds.isEmpty() && stalePreFilterIds.remove(originalId);
     }
 
     private boolean accept(Meter.Id id) {
@@ -693,7 +734,10 @@ public abstract class MeterRegistry {
     @Incubating(since = "1.3.16")
     @Nullable
     public Meter removeByPreFilterId(Meter.Id preFilterId) {
-        return remove(getMappedId(preFilterId));
+        final Meter meterToRemove = preFilterIdToMeterMap.get(preFilterId);
+        if (meterToRemove == null)
+            return remove(getMappedId(preFilterId));
+        return remove(meterToRemove);
     }
 
     /**
@@ -708,12 +752,18 @@ public abstract class MeterRegistry {
     @Incubating(since = "1.1.0")
     @Nullable
     public Meter remove(Meter.Id mappedId) {
-        Meter m = meterMap.get(mappedId);
-
-        if (m != null) {
+        if (meterMap.containsKey(mappedId)) {
             synchronized (meterMapLock) {
-                m = meterMap.remove(mappedId);
-                if (m != null) {
+                final Meter removedMeter = meterMap.remove(mappedId);
+                Iterator<Map.Entry<Id, Meter>> iterator = preFilterIdToMeterMap.entrySet().iterator();
+                while (iterator.hasNext()) {
+                    Map.Entry<Id, Meter> nextEntry = iterator.next();
+                    if (nextEntry.getValue().equals(removedMeter)) {
+                        stalePreFilterIds.remove(nextEntry.getKey());
+                        iterator.remove();
+                    }
+                }
+                if (removedMeter != null) {
                     Set<Id> synthetics = syntheticAssociations.remove(mappedId);
                     if (synthetics != null) {
                         for (Id synthetic : synthetics) {
@@ -722,10 +772,10 @@ public abstract class MeterRegistry {
                     }
 
                     for (Consumer<Meter> onRemove : meterRemovedListeners) {
-                        onRemove.accept(m);
+                        onRemove.accept(removedMeter);
                     }
 
-                    return m;
+                    return removedMeter;
                 }
             }
         }
@@ -776,11 +826,30 @@ public abstract class MeterRegistry {
          * @return This configuration instance.
          */
         public synchronized Config meterFilter(MeterFilter filter) {
+            if (!meterMap.isEmpty()) {
+                logWarningAboutLateFilter();
+                stalePreFilterIds.addAll(preFilterIdToMeterMap.keySet());
+            }
             MeterFilter[] newFilters = new MeterFilter[filters.length + 1];
             System.arraycopy(filters, 0, newFilters, 0, filters.length);
             newFilters[filters.length] = filter;
             filters = newFilters;
             return this;
+        }
+
+        private void logWarningAboutLateFilter() {
+            InternalLogger logger = InternalLoggerFactory.getInstance(MeterRegistry.this.getClass());
+            String baseMessage = "A MeterFilter is being configured after a Meter has been registered to this registry. All MeterFilters should be configured before any Meters are registered. If that is not possible or you have a use case where it should be allowed, let the Micrometer maintainers know at https://github.com/micrometer-metrics/micrometer/issues/4920.";
+            if (logger.isDebugEnabled()) {
+                String stackTrace = Arrays.stream(Thread.currentThread().getStackTrace())
+                    .map(StackTraceElement::toString)
+                    .collect(Collectors.joining("\n\tat "));
+                logger.debug(baseMessage + "\n" + stackTrace);
+            }
+            else {
+                logger.warn(baseMessage
+                        + " Enable DEBUG level logging on this logger to see a stack trace of the call configuring this MeterFilter.");
+            }
         }
 
         /**
@@ -1116,6 +1185,16 @@ public abstract class MeterRegistry {
         for (BiConsumer<Id, String> listener : meterRegistrationFailedListeners) {
             listener.accept(id, reason);
         }
+    }
+
+    // VisibleForTesting
+    Map<Id, Meter> _getPreFilterIdToMeterMap() {
+        return Collections.unmodifiableMap(preFilterIdToMeterMap);
+    }
+
+    // VisibleForTesting
+    Set<Id> _getStalePreFilterIds() {
+        return Collections.unmodifiableSet(stalePreFilterIds);
     }
 
 }

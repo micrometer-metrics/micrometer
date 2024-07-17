@@ -23,11 +23,15 @@ import io.micrometer.context.ContextSnapshot;
 import io.micrometer.context.ContextSnapshotFactory;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationConvention;
+import io.micrometer.observation.ObservationRegistry;
 import io.micrometer.observation.ObservationTextPublisher;
 import io.micrometer.observation.annotation.Observed;
 import io.micrometer.observation.tck.TestObservationRegistry;
 import io.micrometer.observation.tck.TestObservationRegistryAssert;
+
 import org.aspectj.lang.ProceedingJoinPoint;
+import org.aspectj.lang.annotation.Around;
+import org.aspectj.lang.annotation.Aspect;
 import org.junit.jupiter.api.Test;
 import org.springframework.aop.aspectj.annotation.AspectJProxyFactory;
 
@@ -67,6 +71,27 @@ class ObservedAspectTests {
             .hasLowCardinalityKeyValue("test", "42")
             .hasLowCardinalityKeyValue("class", ObservedService.class.getName())
             .hasLowCardinalityKeyValue("method", "call")
+            .doesNotHaveError();
+    }
+
+    @Test
+    void annotatedCallOnAnInterfaceObserved() {
+        registry.observationConfig().observationHandler(new ObservationTextPublisher());
+
+        AspectJProxyFactory pf = new AspectJProxyFactory(new TestBean());
+        pf.addAspect(new ObservedAspect(registry));
+        pf.addAspect(new AspectWithParameterHandler());
+
+        TestBeanInterface service = pf.getProxy();
+        service.testMethod("bar");
+
+        TestObservationRegistryAssert.assertThat(registry)
+            .doesNotHaveAnyRemainingCurrentObservation()
+            .hasSingleObservationThat()
+            .hasBeenStopped()
+            .hasNameEqualTo("test.method")
+            .hasContextualNameEqualTo("foo")
+            .hasHighCardinalityKeyValue("foo", "bar")
             .doesNotHaveError();
     }
 
@@ -335,6 +360,23 @@ class ObservedAspectTests {
         TestObservationRegistryAssert.assertThat(registry).doesNotHaveAnyObservation();
     }
 
+    @Test
+    void ignoreClassLevelAnnotationIfMethodLevelPresent() {
+        registry.observationConfig().observationHandler(new ObservationTextPublisher());
+
+        AspectJProxyFactory pf = new AspectJProxyFactory(new ObservedClassLevelAnnotatedService());
+        pf.addAspect(new ObservedAspect(registry));
+
+        ObservedClassLevelAnnotatedService service = pf.getProxy();
+        service.annotatedOnMethod();
+        TestObservationRegistryAssert.assertThat(registry)
+            .doesNotHaveAnyRemainingCurrentObservation()
+            .hasSingleObservationThat()
+            .hasBeenStopped()
+            .hasNameEqualTo("test.class")
+            .hasContextualNameEqualTo("test.class#annotatedOnMethod");
+    }
+
     static class ObservedService {
 
         @Observed(name = "test.call", contextualName = "test#call",
@@ -363,6 +405,38 @@ class ObservedAspectTests {
 
     }
 
+    interface TestBeanInterface {
+
+        @Observed(name = "test.method", contextualName = "foo")
+        default void testMethod(@HighCardinality(key = "foo") String foo) {
+
+        }
+
+    }
+
+    // Example of an implementation class
+    static class TestBean implements TestBeanInterface {
+
+    }
+
+    @Aspect
+    static class AspectWithParameterHandler {
+
+        private final HighCardinalityAnnotationHandler handler = new HighCardinalityAnnotationHandler(
+                aClass -> parameter -> "", aClass -> (expression, parameter) -> "");
+
+        private final ObservationRegistry observationRegistry = ObservationRegistry.create();
+
+        @Around("execution (@io.micrometer.observation.annotation.Observed * *.*(..))")
+        @Nullable
+        public Object observeMethod(ProceedingJoinPoint pjp) throws Throwable {
+            Observation observation = observationRegistry.getCurrentObservation();
+            handler.addAnnotatedParameters(observation, pjp);
+            return pjp.proceed();
+        }
+
+    }
+
     @Observed(name = "test.class", contextualName = "test.class#call",
             lowCardinalityKeyValues = { "abc", "123", "test", "42" })
     static class ObservedClassLevelAnnotatedService {
@@ -385,6 +459,10 @@ class ObservedAspectTests {
                 .captureAll();
             return CompletableFuture.supplyAsync(fakeAsyncTask,
                     contextSnapshot.wrapExecutor(Executors.newSingleThreadExecutor()));
+        }
+
+        @Observed(name = "test.class", contextualName = "test.class#annotatedOnMethod")
+        void annotatedOnMethod() {
         }
 
     }

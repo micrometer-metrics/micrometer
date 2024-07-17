@@ -15,12 +15,32 @@
  */
 package io.micrometer.core.instrument.binder.grpc;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
+
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import io.grpc.CallOptions;
+import io.grpc.Channel;
+import io.grpc.ClientCall;
+import io.grpc.ClientInterceptor;
+import io.grpc.ForwardingClientCall.SimpleForwardingClientCall;
+import io.grpc.ForwardingServerCall.SimpleForwardingServerCall;
 import io.grpc.ManagedChannel;
+import io.grpc.Metadata;
+import io.grpc.MethodDescriptor;
 import io.grpc.MethodDescriptor.MethodType;
 import io.grpc.Server;
+import io.grpc.ServerCall;
+import io.grpc.ServerCall.Listener;
+import io.grpc.ServerCallHandler;
+import io.grpc.ServerInterceptor;
 import io.grpc.Status.Code;
 import io.grpc.StatusRuntimeException;
 import io.grpc.inprocess.InProcessChannelBuilder;
@@ -43,6 +63,7 @@ import io.micrometer.observation.Observation;
 import io.micrometer.observation.Observation.Context;
 import io.micrometer.observation.Observation.Event;
 import io.micrometer.observation.ObservationHandler;
+import io.micrometer.observation.ObservationRegistry;
 import io.micrometer.observation.ObservationTextPublisher;
 import io.micrometer.observation.tck.TestObservationRegistry;
 import io.micrometer.observation.tck.TestObservationRegistryAssert;
@@ -50,14 +71,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
@@ -92,8 +105,8 @@ class GrpcObservationTest {
     void setUp() {
         serverHandler = new ContextAndEventHoldingObservationHandler<>(GrpcServerObservationContext.class);
         clientHandler = new ContextAndEventHoldingObservationHandler<>(GrpcClientObservationContext.class);
-        MeterRegistry meterRegistry = new SimpleMeterRegistry();
 
+        MeterRegistry meterRegistry = new SimpleMeterRegistry();
         observationRegistry.observationConfig()
             .observationHandler(new ObservationTextPublisher())
             .observationHandler(new DefaultMeterObservationHandler(meterRegistry))
@@ -125,11 +138,14 @@ class GrpcObservationTest {
             EchoService echoService = new EchoService();
             server = InProcessServerBuilder.forName("sample")
                 .addService(echoService)
+                .intercept(new ServerHeaderInterceptor())
                 .intercept(serverInterceptor)
                 .build();
             server.start();
 
-            channel = InProcessChannelBuilder.forName("sample").intercept(clientInterceptor).build();
+            channel = InProcessChannelBuilder.forName("sample")
+                .intercept(new ClientHeaderInterceptor(), clientInterceptor)
+                .build();
             // end::example[]
         }
 
@@ -158,6 +174,7 @@ class GrpcObservationTest {
                 .hasAnObservation(observationContextAssert -> observationContextAssert.hasNameEqualTo("grpc.client"))
                 .hasAnObservation(observationContextAssert -> observationContextAssert.hasNameEqualTo("grpc.server"));
             // end::assertion[]
+            verifyHeaders();
         }
 
         @Test
@@ -191,6 +208,7 @@ class GrpcObservationTest {
             TestObservationRegistryAssert.assertThat(observationRegistry)
                 .hasAnObservation(observationContextAssert -> observationContextAssert.hasNameEqualTo("grpc.client"))
                 .hasAnObservation(observationContextAssert -> observationContextAssert.hasNameEqualTo("grpc.server"));
+            verifyHeaders();
         }
 
         @Test
@@ -233,6 +251,7 @@ class GrpcObservationTest {
             TestObservationRegistryAssert.assertThat(observationRegistry)
                 .hasAnObservation(observationContextAssert -> observationContextAssert.hasNameEqualTo("grpc.client"))
                 .hasAnObservation(observationContextAssert -> observationContextAssert.hasNameEqualTo("grpc.server"));
+            verifyHeaders();
         }
 
         @Test
@@ -267,6 +286,7 @@ class GrpcObservationTest {
             TestObservationRegistryAssert.assertThat(observationRegistry)
                 .hasAnObservation(observationContextAssert -> observationContextAssert.hasNameEqualTo("grpc.client"))
                 .hasAnObservation(observationContextAssert -> observationContextAssert.hasNameEqualTo("grpc.server"));
+            verifyHeaders();
         }
 
         @Test
@@ -319,6 +339,7 @@ class GrpcObservationTest {
             TestObservationRegistryAssert.assertThat(observationRegistry)
                 .hasAnObservation(observationContextAssert -> observationContextAssert.hasNameEqualTo("grpc.client"))
                 .hasAnObservation(observationContextAssert -> observationContextAssert.hasNameEqualTo("grpc.server"));
+            verifyHeaders();
         }
 
         private StreamObserver<SimpleResponse> createResponseObserver(List<String> messages, AtomicBoolean completed) {
@@ -341,6 +362,17 @@ class GrpcObservationTest {
             };
         }
 
+        private void verifyHeaders() {
+            assertThat(clientHandler.getContext().getCarrier().containsKey(ClientHeaderInterceptor.CLIENT_KEY))
+                .isTrue();
+            assertThat(clientHandler.getContext().getHeaders().containsKey(ServerHeaderInterceptor.SERVER_KEY))
+                .isTrue();
+            assertThat(serverHandler.getContext().getCarrier().containsKey(ClientHeaderInterceptor.CLIENT_KEY))
+                .isTrue();
+            assertThat(serverHandler.getContext().getHeaders().containsKey(ServerHeaderInterceptor.SERVER_KEY))
+                .isTrue();
+        }
+
     }
 
     @Nested
@@ -351,11 +383,14 @@ class GrpcObservationTest {
             ExceptionService exceptionService = new ExceptionService();
             server = InProcessServerBuilder.forName("exception")
                 .addService(exceptionService)
+                .intercept(new ServerHeaderInterceptor())
                 .intercept(serverInterceptor)
                 .build();
             server.start();
 
-            channel = InProcessChannelBuilder.forName("exception").intercept(clientInterceptor).build();
+            channel = InProcessChannelBuilder.forName("exception")
+                .intercept(new ClientHeaderInterceptor(), clientInterceptor)
+                .build();
         }
 
         @Test
@@ -470,6 +505,41 @@ class GrpcObservationTest {
                     throw new RuntimeException("Should not be successfully completed");
                 }
             };
+        }
+
+    }
+
+    @Nested
+    class WithObservationAwareInterceptor {
+
+        ObservationAwareServerInterceptor scopeAwareServerInterceptor;
+
+        @BeforeEach
+        void setCustomInterceptor() throws Exception {
+            scopeAwareServerInterceptor = new ObservationAwareServerInterceptor(observationRegistry);
+
+            EchoService echoService = new EchoService();
+            server = InProcessServerBuilder.forName("sample")
+                .addService(echoService)
+                .intercept(scopeAwareServerInterceptor)
+                .intercept(serverInterceptor)
+                .build();
+            server.start();
+
+            channel = InProcessChannelBuilder.forName("sample").intercept(clientInterceptor).build();
+        }
+
+        @Test
+        void observationShouldBeCapturedByInterceptor() {
+            SimpleServiceBlockingStub stub = SimpleServiceGrpc.newBlockingStub(channel);
+
+            SimpleRequest request = SimpleRequest.newBuilder().setRequestMessage("Hello").build();
+            stub.unaryRpc(request);
+
+            assertThat(scopeAwareServerInterceptor.lastObservation).isNotNull().satisfies((observation -> {
+                assertThat(observation.getContext().getContextualName())
+                    .isEqualTo("grpc.testing.SimpleService/UnaryRpc");
+            }));
         }
 
     }
@@ -631,6 +701,68 @@ class GrpcObservationTest {
 
         List<Event> getEvents() {
             return this.events;
+        }
+
+    }
+
+    static class ClientHeaderInterceptor implements ClientInterceptor {
+
+        private static final Metadata.Key<String> CLIENT_KEY = Metadata.Key.of("client",
+                Metadata.ASCII_STRING_MARSHALLER);
+
+        @Override
+        public <ReqT, RespT> ClientCall<ReqT, RespT> interceptCall(MethodDescriptor<ReqT, RespT> method,
+                CallOptions callOptions, Channel next) {
+            ClientCall<ReqT, RespT> call = next.newCall(method, callOptions);
+            return new SimpleForwardingClientCall<>(call) {
+                @Override
+                public void start(ClientCall.Listener<RespT> responseListener, Metadata headers) {
+                    headers.put(CLIENT_KEY, "client-request");
+                    super.start(responseListener, headers);
+                }
+
+            };
+        }
+
+    }
+
+    static class ServerHeaderInterceptor implements ServerInterceptor {
+
+        private static final Metadata.Key<String> SERVER_KEY = Metadata.Key.of("server",
+                Metadata.ASCII_STRING_MARSHALLER);
+
+        @Override
+        public <ReqT, RespT> Listener<ReqT> interceptCall(ServerCall<ReqT, RespT> call, Metadata headers,
+                ServerCallHandler<ReqT, RespT> next) {
+            SimpleForwardingServerCall<ReqT, RespT> serverCall = new SimpleForwardingServerCall<>(call) {
+                @Override
+                public void sendHeaders(Metadata headers) {
+                    headers.put(SERVER_KEY, "server-response");
+                    super.sendHeaders(headers);
+                }
+
+            };
+            return next.startCall(serverCall, headers);
+        }
+
+    }
+
+    // Hold reference to last intercepted Observation
+    static class ObservationAwareServerInterceptor implements ServerInterceptor {
+
+        Observation lastObservation;
+
+        private final ObservationRegistry observationRegistry;
+
+        private ObservationAwareServerInterceptor(ObservationRegistry observationRegistry) {
+            this.observationRegistry = observationRegistry;
+        }
+
+        @Override
+        public <ReqT, RespT> ServerCall.Listener<ReqT> interceptCall(ServerCall<ReqT, RespT> call, Metadata headers,
+                ServerCallHandler<ReqT, RespT> next) {
+            this.lastObservation = observationRegistry.getCurrentObservation();
+            return next.startCall(call, headers);
         }
 
     }
