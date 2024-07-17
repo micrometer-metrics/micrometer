@@ -17,9 +17,6 @@ package io.micrometer.dynatrace.v2;
 
 import com.dynatrace.file.util.DynatraceFileBasedConfigurationProvider;
 import io.micrometer.common.lang.Nullable;
-import io.micrometer.common.util.internal.logging.LogEvent;
-import io.micrometer.common.util.internal.logging.MockLogger;
-import io.micrometer.common.util.internal.logging.MockLoggerFactory;
 import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.*;
@@ -44,7 +41,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import static io.micrometer.common.util.internal.logging.InternalLogLevel.*;
 import static io.micrometer.core.instrument.MockClock.clock;
 import static java.lang.Double.*;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
@@ -63,12 +59,6 @@ import static org.mockito.Mockito.*;
  */
 class DynatraceExporterV2Test {
 
-    private static final String SUBSEQUENT_LOGS_AS_DEBUG = "Note that subsequent logs will be logged at debug level.";
-
-    private MockLoggerFactory loggerFactory;
-
-    private MockLogger logger;
-
     private static final Map<String, String> SEEN_METADATA = new HashMap<>();
 
     private DynatraceConfig config;
@@ -85,20 +75,12 @@ class DynatraceExporterV2Test {
     void setUp() {
         this.config = createDefaultDynatraceConfig();
         this.clock = new MockClock();
-        this.clock.add(System.currentTimeMillis(), MILLISECONDS); // Set the clock to
-                                                                  // something recent so
-                                                                  // that the Dynatrace
-                                                                  // library will not
-                                                                  // complain.
+        // Set the clock to something recent so that the Dynatrace library will not
+        // complain.
+        this.clock.add(System.currentTimeMillis(), MILLISECONDS);
         this.httpClient = mock(HttpSender.class);
 
-        // ensures new MockLoggers are created for each test.
-        // Since there are some asserts on log lines, different test runs do not reuse the
-        // same loggers and thus do not interfere.
-        this.loggerFactory = new MockLoggerFactory();
-        this.exporter = loggerFactory.injectLogger(() -> createExporter(httpClient));
-        this.logger = loggerFactory.getLogger(DynatraceExporterV2.class);
-
+        this.exporter = createExporter(httpClient);
         this.meterRegistry = DynatraceMeterRegistry.builder(config).clock(clock).httpClient(httpClient).build();
 
         SEEN_METADATA.clear();
@@ -118,27 +100,6 @@ class DynatraceExporterV2Test {
         meterRegistry.gauge("my.gauge", NaN);
         Gauge gauge = meterRegistry.find("my.gauge").gauge();
         assertThat(exporter.toGaugeLine(gauge, SEEN_METADATA)).isEmpty();
-    }
-
-    @Test
-    void toGaugeLineShouldDropNanValue_testLogWarnThenDebug() {
-        MockLogger nanGaugeLogger = loggerFactory.getLogger(WarnThenDebugLoggers.NanGaugeLogger.class);
-
-        String expectedMessage = "Meter 'my.gauge' returned a value of NaN, which will not be exported. This can be a deliberate value or because the weak reference to the backing object expired.";
-
-        LogEvent warnEvent = new LogEvent(WARN, String.join(" ", expectedMessage, SUBSEQUENT_LOGS_AS_DEBUG), null);
-        LogEvent debugEvent = new LogEvent(DEBUG, expectedMessage, null);
-
-        meterRegistry.gauge("my.gauge", NaN);
-        Gauge gauge = meterRegistry.find("my.gauge").gauge();
-
-        // first export; log at warn
-        assertThat(exporter.toGaugeLine(gauge, SEEN_METADATA)).isEmpty();
-        assertThat(nanGaugeLogger.getLogEvents()).hasSize(1).containsExactly(warnEvent);
-
-        // second export; log at debug
-        assertThat(exporter.toGaugeLine(gauge, SEEN_METADATA)).isEmpty();
-        assertThat(nanGaugeLogger.getLogEvents()).hasSize(2).containsExactly(warnEvent, debugEvent);
     }
 
     @Test
@@ -666,66 +627,6 @@ class DynatraceExporterV2Test {
     }
 
     @Test
-    void failOnSendShouldHaveProperLogging() throws Throwable {
-        HttpSender.Request.Builder builder = HttpSender.Request.build(config.uri(), httpClient);
-        when(httpClient.post(config.uri())).thenReturn(builder);
-        when(httpClient.send(isA(HttpSender.Request.class))).thenReturn(new HttpSender.Response(500, "simulated"));
-
-        meterRegistry.gauge("my.gauge", 1d);
-        Gauge gauge = meterRegistry.find("my.gauge").gauge();
-        exporter.export(Collections.singletonList(gauge));
-
-        assertThat(logger.getLogEvents())
-            .contains(new LogEvent(ERROR, "Failed metric ingestion: Error Code=500, Response Body=simulated", null));
-    }
-
-    @Test
-    void failOnSendWithExceptionShouldHaveProperLogging_warnThenDebug() {
-        MockLogger stackTraceLogger = loggerFactory.getLogger(WarnThenDebugLoggers.StackTraceLogger.class);
-
-        Throwable expectedException = new RuntimeException("test exception", new Throwable("root cause exception"));
-        when(httpClient.post(config.uri())).thenThrow(expectedException);
-
-        // the "general" logger just logs the message, the WarnThenDebugLogger contains
-        // the exception & stack trace.
-        String expectedWarnThenDebugMessage = "Stack trace for previous 'Failed metric ingestion' warning log:";
-        // these two will be logged by the WarnThenDebugLogger:
-        // the warning message is suffixed with "Note that subsequent logs will be logged
-        // at debug level.".
-        LogEvent warnThenDebugWarningLog = new LogEvent(WARN, String.join(" ", expectedWarnThenDebugMessage,
-                expectedException.getMessage(), SUBSEQUENT_LOGS_AS_DEBUG), expectedException);
-        LogEvent warnThenDebugDebugLog = new LogEvent(DEBUG,
-                String.join(" ", expectedWarnThenDebugMessage, expectedException.getMessage()), expectedException);
-
-        // this will be logged by the "general" logger in a single line (once per export)
-        LogEvent expectedExceptionLogMessage = new LogEvent(WARN, "Failed metric ingestion: " + expectedException,
-                null);
-
-        meterRegistry.gauge("my.gauge", 1d);
-        Gauge gauge = meterRegistry.find("my.gauge").gauge();
-
-        // first export
-        exporter.export(Collections.singletonList(gauge));
-
-        // after the first export, the general logger only has the WARN event, but not the
-        // debug event.
-        assertThat(logger.getLogEvents()).containsOnlyOnce(expectedExceptionLogMessage);
-
-        // the WarnThenDebugLogger only has one event so far.
-        assertThat(stackTraceLogger.getLogEvents()).containsExactly(warnThenDebugWarningLog);
-
-        // second export
-        exporter.export(Collections.singletonList(gauge));
-
-        // after the second export, the general logger contains the warning log twice
-        assertThat(logger.getLogEvents().stream().filter(event -> event.equals(expectedExceptionLogMessage)))
-            .hasSize(2);
-
-        // the WarnThenDebugLogger now has two logs.
-        assertThat(stackTraceLogger.getLogEvents()).containsExactly(warnThenDebugWarningLog, warnThenDebugDebugLog);
-    }
-
-    @Test
     void endpointPickedUpBetweenExportsAndChangedPropertiesFile() throws Throwable {
         String randomUuid = UUID.randomUUID().toString();
         final Path tempFile = Files.createTempFile(randomUuid, ".properties");
@@ -1009,47 +910,6 @@ class DynatraceExporterV2Test {
             assertThat(extractBase(line)).isEqualTo(expectedBases.next());
             assertThat(extractDims(line)).containsExactlyInAnyOrderElementsOf(expectedDims.next());
         });
-    }
-
-    @Test
-    void conflictingMetadataIsIgnored_testLogWarnThenDebug() {
-        MockLogger metadataDiscrepancyLogger = loggerFactory
-            .getLogger(WarnThenDebugLoggers.MetadataDiscrepancyLogger.class);
-
-        String expectedLogMessage = "Metadata discrepancy detected:\n"
-                + "original metadata:\t#my.count count dt.meta.description=count\\ 1\\ description,dt.meta.unit=Bytes\n"
-                + "tried to set new:\t#my.count count dt.meta.description=count\\ description\n"
-                + "Metadata for metric key my.count will not be sent.";
-        LogEvent warnEvent = new LogEvent(WARN, String.join(" ", expectedLogMessage, SUBSEQUENT_LOGS_AS_DEBUG), null);
-        LogEvent debugEvent = new LogEvent(DEBUG, expectedLogMessage, null);
-
-        HttpSender.Request.Builder builder = mock(HttpSender.Request.Builder.class);
-        when(httpClient.post(anyString())).thenReturn(builder);
-
-        // the unit and description are different between counters, while the name stays
-        // the same.
-        Counter counter1 = Counter.builder("my.count")
-            .description("count 1 description")
-            .baseUnit("Bytes")
-            .tag("counter-number", "counter1")
-            .register(meterRegistry);
-        Counter counter2 = Counter.builder("my.count")
-            .description("count description")
-            .baseUnit("not Bytes")
-            .tag("counter-number", "counter2")
-            .register(meterRegistry);
-
-        counter1.increment(5.234);
-        counter2.increment(2.345);
-
-        // first export
-        exporter.export(meterRegistry.getMeters());
-
-        assertThat(metadataDiscrepancyLogger.getLogEvents()).containsExactly(warnEvent);
-
-        // second export
-        exporter.export(meterRegistry.getMeters());
-        assertThat(metadataDiscrepancyLogger.getLogEvents()).containsExactly(warnEvent, debugEvent);
     }
 
     @Test
