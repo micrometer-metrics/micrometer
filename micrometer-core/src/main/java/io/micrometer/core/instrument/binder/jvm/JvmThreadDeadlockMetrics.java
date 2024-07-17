@@ -31,13 +31,12 @@ import java.lang.management.ThreadMXBean;
 import static java.util.Collections.emptyList;
 
 /**
- * {@link MeterBinder} for JVM deadlocked threads. These metrics are somewhat expensive to
- * collect, so they should not be enabled unless necessary. To enable these metrics, add
- * the following to your application's code ({@code registry} is the meter registry being
- * used by your application):
- * <pre>{@code new JvmDeadlockedThreadMetrics().bindTo(registry);}</pre>
+ * {@link MeterBinder} for JVM deadlocked threads. These metrics may be expensive to
+ * collect. Consider that when deciding whether to enable these metrics. To enable these
+ * metrics, bind an instance of this to a {@link MeterRegistry}.
  *
  * @author Ruth Kurniawati
+ * @since 1.14.0
  */
 @NonNullApi
 @NonNullFields
@@ -59,7 +58,7 @@ public class JvmThreadDeadlockMetrics implements MeterBinder {
     public void bindTo(MeterRegistry registry) {
         ThreadMXBean threadBean = ManagementFactory.getThreadMXBean();
 
-        if (threadBean.isObjectMonitorUsageSupported()) {
+        if (threadBean.isSynchronizerUsageSupported()) {
             Gauge.builder("jvm.threads.deadlocked", threadBean, JvmThreadDeadlockMetrics::getDeadlockedThreadCount)
                 .tags(tags)
                 .description("The current number of threads that are deadlocked")

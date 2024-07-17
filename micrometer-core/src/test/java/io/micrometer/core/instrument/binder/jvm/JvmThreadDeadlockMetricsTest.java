@@ -40,6 +40,58 @@ import static org.mockito.Mockito.when;
  */
 class JvmThreadDeadlockMetricsTest {
 
+    MeterRegistry registry = new SimpleMeterRegistry();
+
+    @Test
+    void deadlockedThreadMetrics() {
+        new JvmThreadDeadlockMetrics().bindTo(registry);
+        final CountDownLatch lock1IsLocked = new CountDownLatch(1);
+        final CountDownLatch lock2IsLocked = new CountDownLatch(1);
+        final Lock lock1 = new ReentrantLock();
+        final Lock lock2 = new ReentrantLock();
+
+        final DeadlockedThread deadlockedThread1 = new DeadlockedThread(lock1IsLocked, lock1, lock2IsLocked, lock2);
+        final DeadlockedThread deadlockedThread2 = new DeadlockedThread(lock2IsLocked, lock2, lock1IsLocked, lock1);
+        deadlockedThread1.start();
+        deadlockedThread2.start();
+
+        Awaitility.await().atMost(2, TimeUnit.SECONDS).untilAsserted(() -> {
+            assertThat(registry.get("jvm.threads.deadlocked").gauge().value()).isEqualTo(2);
+            assertThat(registry.get("jvm.threads.deadlocked.monitor").gauge().value()).isEqualTo(0);
+        });
+        deadlockedThread1.interrupt();
+        deadlockedThread2.interrupt();
+    }
+
+    @Test
+    void whenJvmDoesntSupportSynchronizerUsage_JvmThreadsDeadlockedMetricShouldNotBeRegistered() {
+        try (MockedStatic<ManagementFactory> mockedStatic = Mockito.mockStatic(ManagementFactory.class)) {
+            ThreadMXBean threadBean = mock(ThreadMXBean.class);
+            when(threadBean.isSynchronizerUsageSupported()).thenReturn(false);
+            mockedStatic.when(ManagementFactory::getThreadMXBean).thenReturn(threadBean);
+            new JvmThreadDeadlockMetrics().bindTo(registry);
+
+            // synchronizer usage is not monitored, so this should not be registered
+            assertThat(registry.find("jvm.threads.deadlocked").gauge()).isNull();
+            // but this one is still supported
+            assertThat(registry.find("jvm.threads.deadlocked.monitor").gauge()).isNotNull();
+        }
+    }
+
+    @Test
+    void getDeadlockedThreadCountWhenFindDeadlockedThreadsIsNullShouldWork() {
+        ThreadMXBean threadBean = mock(ThreadMXBean.class);
+        when(threadBean.findDeadlockedThreads()).thenReturn(null);
+        assertThat(JvmThreadDeadlockMetrics.getDeadlockedThreadCount(threadBean)).isEqualTo(0);
+    }
+
+    @Test
+    void getDeadlockedThreadCountWhenFindMonitorDeadlockedThreadsIsNullShouldWork() {
+        ThreadMXBean threadBean = mock(ThreadMXBean.class);
+        when(threadBean.findMonitorDeadlockedThreads()).thenReturn(null);
+        assertThat(JvmThreadDeadlockMetrics.getDeadlockedMonitorThreadCount(threadBean)).isEqualTo(0);
+    }
+
     private static class DeadlockedThread {
 
         private final Thread thread;
@@ -65,59 +117,6 @@ class JvmThreadDeadlockMetricsTest {
             thread.interrupt();
         }
 
-    }
-
-    @Test
-    void deadlockedThreadMetrics() {
-        MeterRegistry registry = new SimpleMeterRegistry();
-        new JvmThreadDeadlockMetrics().bindTo(registry);
-        final CountDownLatch lock1IsLocked = new CountDownLatch(1);
-        final CountDownLatch lock2IsLocked = new CountDownLatch(1);
-        final Lock lock1 = new ReentrantLock();
-        final Lock lock2 = new ReentrantLock();
-
-        final DeadlockedThread deadlockedThread1 = new DeadlockedThread(lock1IsLocked, lock1, lock2IsLocked, lock2);
-        final DeadlockedThread deadlockedThread2 = new DeadlockedThread(lock2IsLocked, lock2, lock1IsLocked, lock1);
-        deadlockedThread1.start();
-        deadlockedThread2.start();
-
-        Awaitility.await().atMost(2, TimeUnit.SECONDS).untilAsserted(() -> {
-            assertThat(registry.get("jvm.threads.deadlocked").gauge().value()).isEqualTo(2);
-            assertThat(registry.get("jvm.threads.deadlocked.monitor").gauge().value()).isEqualTo(0);
-        });
-        deadlockedThread1.interrupt();
-        deadlockedThread2.interrupt();
-    }
-
-    @Test
-    void whenJvmDoesntSupportObjectMonitorUsageJvmThreadsDeadlockedMetricShouldNotBeRegistered() {
-        MeterRegistry registry = new SimpleMeterRegistry();
-        try (MockedStatic<ManagementFactory> mockedStatic = Mockito.mockStatic(ManagementFactory.class)) {
-            ThreadMXBean threadBean = mock(ThreadMXBean.class);
-            when(threadBean.isObjectMonitorUsageSupported()).thenReturn(false);
-            mockedStatic.when(ManagementFactory::getThreadMXBean).thenReturn(threadBean);
-            new JvmThreadDeadlockMetrics().bindTo(registry);
-
-            // ObjectMonitorUsage is not supported, so this metric should not be
-            // registered
-            assertThat(registry.find("jvm.threads.deadlocked").gauge()).isNull();
-            // but this one is still supported
-            assertThat(registry.find("jvm.threads.deadlocked.monitor").gauge()).isNotNull();
-        }
-    }
-
-    @Test
-    void getDeadlockedThreadCountWhenFindDeadlockedThreadsIsNullShouldWork() {
-        ThreadMXBean threadBean = mock(ThreadMXBean.class);
-        when(threadBean.findDeadlockedThreads()).thenReturn(null);
-        assertThat(JvmThreadDeadlockMetrics.getDeadlockedThreadCount(threadBean)).isEqualTo(0);
-    }
-
-    @Test
-    void getDeadlockedThreadCountWhenFindMonitorDeadlockedThreadsIsNullShouldWork() {
-        ThreadMXBean threadBean = mock(ThreadMXBean.class);
-        when(threadBean.findMonitorDeadlockedThreads()).thenReturn(null);
-        assertThat(JvmThreadDeadlockMetrics.getDeadlockedMonitorThreadCount(threadBean)).isEqualTo(0);
     }
 
 }
