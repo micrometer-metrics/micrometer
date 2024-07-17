@@ -32,6 +32,7 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
  * @author Fábio C. Martins
  */
 class MemoryMetricsTest {
+
     MeterRegistry registry = new SimpleMeterRegistry();
 
     @BeforeEach
@@ -88,4 +89,5 @@ class MemoryMetricsTest {
             return false;
         }
     }
+
 }

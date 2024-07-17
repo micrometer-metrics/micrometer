@@ -44,8 +44,8 @@ public class MemoryMetrics implements MeterBinder {
      * List of public, exported interface class names from supported JVM implementations.
      */
     private static final List<String> OPERATING_SYSTEM_BEAN_CLASS_NAMES = Arrays.asList(
-        "com.ibm.lang.management.OperatingSystemMXBean", // J9
-        "com.sun.management.OperatingSystemMXBean" // HotSpot
+            "com.ibm.lang.management.OperatingSystemMXBean", // J9
+            "com.sun.management.OperatingSystemMXBean" // HotSpot
     );
 
     private final OperatingSystemMXBean operatingSystemBean;
@@ -57,12 +57,16 @@ public class MemoryMetrics implements MeterBinder {
 
     @Nullable
     private final Method committedVirtualMemorySize;
+
     @Nullable
     private final Method totalSwapSpaceSize;
+
     @Nullable
     private final Method freeSwapSpaceSize;
+
     @Nullable
     private final Method freePhysicalMemorySize;
+
     @Nullable
     private final Method totalPhysicalMemorySize;
 
@@ -88,7 +92,8 @@ public class MemoryMetrics implements MeterBinder {
             Gauge.builder("system.virtualmemory.commited", operatingSystemBean, x -> invoke(committedVirtualMemorySize))
                 .tags(tags)
                 .baseUnit(BaseUnits.BYTES)
-                .description("The amount of virtual memory in bytes that is commited for the Java virtual machine to use")
+                .description(
+                        "The amount of virtual memory in bytes that is commited for the Java virtual machine to use")
                 .register(registry);
         }
 
