@@ -130,7 +130,7 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
                         m -> writeMeter(m, metadataToSend), // visitCounter
                         timer -> writeTimer(timer, metadataToSend), // visitTimer
                         summary -> writeSummary(summary, metadataToSend), // visitSummary
-                        m -> writeMeter(m, metadataToSend), // visitLongTaskTimer
+                        longtimer -> writeLongTaskTimer(longtimer, metadataToSend), // visitLongTaskTimer
                         m -> writeMeter(m, metadataToSend), // visitTimeGauge
                         m -> writeMeter(m, metadataToSend), // visitFunctionCounter
                         timer -> writeTimer(timer, metadataToSend), // visitFunctionTimer
@@ -182,6 +182,24 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
 
         addToMetadataList(metadata, id, "sum", Statistic.TOTAL_TIME, null);
         addToMetadataList(metadata, id, "count", Statistic.COUNT, "occurrence");
+        addToMetadataList(metadata, id, "avg", Statistic.VALUE, null);
+        addToMetadataList(metadata, id, "max", Statistic.MAX, null);
+
+        return metrics.build();
+    }
+
+    private Stream<String> writeLongTaskTimer(LongTaskTimer timer, Map<String, DatadogMetricMetadata> metadata) {
+        final long wallTime = clock.wallTime();
+        final Stream.Builder<String> metrics = Stream.builder();
+
+        Meter.Id id = timer.getId();
+        metrics.add(writeMetric(id, "sum", wallTime, timer.duration(getBaseTimeUnit()), Statistic.DURATION, null));
+        metrics.add(writeMetric(id, "active", wallTime, timer.activeTasks(), Statistic.ACTIVE_TASKS, "occurrence"));
+        metrics.add(writeMetric(id, "avg", wallTime, timer.mean(getBaseTimeUnit()), Statistic.VALUE, null));
+        metrics.add(writeMetric(id, "max", wallTime, timer.max(getBaseTimeUnit()), Statistic.MAX, null));
+
+        addToMetadataList(metadata, id, "sum", Statistic.DURATION, null);
+        addToMetadataList(metadata, id, "active", Statistic.ACTIVE_TASKS, "occurrence");
         addToMetadataList(metadata, id, "avg", Statistic.VALUE, null);
         addToMetadataList(metadata, id, "max", Statistic.MAX, null);
 
