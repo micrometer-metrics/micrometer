@@ -19,13 +19,9 @@ import io.micrometer.observation.Observation;
 import io.micrometer.observation.Observation.Event;
 import io.micrometer.observation.Observation.Scope;
 import io.micrometer.observation.ObservationRegistry;
-import io.micrometer.observation.tck.ObservationValidator.ValidationResult;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.util.function.Consumer;
-
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
  * Tests for {@link ObservationValidator}.
@@ -34,109 +30,141 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 class ObservationValidatorTests {
 
-    private TestConsumer testConsumer;
-
-    private ObservationRegistry registry;
-
-    @BeforeEach
-    void setUp() {
-        testConsumer = new TestConsumer();
-        registry = ObservationRegistry.create();
-        registry.observationConfig().observationHandler(new ObservationValidator(testConsumer));
-    }
+    private final ObservationRegistry registry = TestObservationRegistry.create();
 
     @Test
     void doubleStartShouldBeInvalid() {
-        Observation.start("test", registry).start();
-        assertThat(testConsumer.toString()).isEqualTo("Invalid start: Observation has already been started");
+        assertThatThrownBy(() -> Observation.start("test", registry).start())
+            .isExactlyInstanceOf(InvalidObservationException.class)
+            .hasNoCause()
+            .hasMessage("Invalid start: Observation has already been started");
     }
 
     @Test
     void stopBeforeStartShouldBeInvalid() {
-        Observation.createNotStarted("test", registry).stop();
-        assertThat(testConsumer.toString()).isEqualTo("Invalid stop: Observation has not been started yet");
+        assertThatThrownBy(() -> Observation.createNotStarted("test", registry).stop())
+            .isExactlyInstanceOf(InvalidObservationException.class)
+            .hasNoCause()
+            .hasMessage("Invalid stop: Observation has not been started yet");
     }
 
     @Test
     void errorBeforeStartShouldBeInvalid() {
-        Observation.createNotStarted("test", registry).error(new RuntimeException());
-        assertThat(testConsumer.toString()).isEqualTo("Invalid error signal: Observation has not been started yet");
+        assertThatThrownBy(() -> Observation.createNotStarted("test", registry).error(new RuntimeException()))
+            .isExactlyInstanceOf(InvalidObservationException.class)
+            .hasNoCause()
+            .hasMessage("Invalid error signal: Observation has not been started yet");
     }
 
     @Test
     void eventBeforeStartShouldBeInvalid() {
-        Observation.createNotStarted("test", registry).event(Event.of("test"));
-        assertThat(testConsumer.toString()).isEqualTo("Invalid event signal: Observation has not been started yet");
+        assertThatThrownBy(() -> Observation.createNotStarted("test", registry).event(Event.of("test")))
+            .isExactlyInstanceOf(InvalidObservationException.class)
+            .hasNoCause()
+            .hasMessage("Invalid event signal: Observation has not been started yet");
     }
 
     @Test
+    @SuppressWarnings("resource")
     void scopeBeforeStartShouldBeInvalid() {
-        Scope scope = Observation.createNotStarted("test", registry).openScope();
-        scope.reset();
-        scope.close();
-        assertThat(testConsumer.toString()).isEqualTo("Invalid scope opening: Observation has not been started yet\n"
-                + "Invalid scope resetting: Observation has not been started yet\n"
-                + "Invalid scope closing: Observation has not been started yet");
+        // Since openScope throws an exception, reset and close can't happen
+        assertThatThrownBy(() -> Observation.createNotStarted("test", registry).openScope())
+            .isExactlyInstanceOf(InvalidObservationException.class)
+            .hasNoCause()
+            .hasMessage("Invalid scope opening: Observation has not been started yet");
     }
 
     @Test
     void observeAfterStartShouldBeInvalid() {
-        Observation.start("test", registry).observe(() -> "");
-        assertThat(testConsumer.toString()).isEqualTo("Invalid start: Observation has already been started");
+        assertThatThrownBy(() -> Observation.start("test", registry).observe(() -> ""))
+            .isExactlyInstanceOf(InvalidObservationException.class)
+            .hasNoCause()
+            .hasMessage("Invalid start: Observation has already been started");
     }
 
     @Test
     void doubleStopShouldBeInvalid() {
-        Observation observation = Observation.start("test", registry);
-        observation.stop();
-        observation.stop();
-        assertThat(testConsumer.toString()).isEqualTo("Invalid stop: Observation has already been stopped");
+        assertThatThrownBy(() -> {
+            Observation observation = Observation.start("test", registry);
+            observation.stop();
+            observation.stop();
+        }).isExactlyInstanceOf(InvalidObservationException.class)
+            .hasNoCause()
+            .hasMessage("Invalid stop: Observation has already been stopped");
     }
 
     @Test
     void errorAfterStopShouldBeInvalid() {
-        Observation observation = Observation.start("test", registry);
-        observation.stop();
-        observation.error(new RuntimeException());
-        assertThat(testConsumer.toString()).isEqualTo("Invalid error signal: Observation has already been stopped");
+        assertThatThrownBy(() -> {
+            Observation observation = Observation.start("test", registry);
+            observation.stop();
+            observation.error(new RuntimeException());
+        }).isExactlyInstanceOf(InvalidObservationException.class)
+            .hasNoCause()
+            .hasMessage("Invalid error signal: Observation has already been stopped");
     }
 
     @Test
     void eventAfterStopShouldBeInvalid() {
-        Observation observation = Observation.start("test", registry);
-        observation.stop();
-        observation.event(Event.of("test"));
-        assertThat(testConsumer.toString()).isEqualTo("Invalid event signal: Observation has already been stopped");
+        assertThatThrownBy(() -> {
+            Observation observation = Observation.start("test", registry);
+            observation.stop();
+            observation.event(Event.of("test"));
+        }).isExactlyInstanceOf(InvalidObservationException.class)
+            .hasNoCause()
+            .hasMessage("Invalid event signal: Observation has already been stopped");
     }
 
     @Test
-    void scopeAfterStopShouldBeInvalid() {
-        Observation observation = Observation.start("test", registry);
-        observation.stop();
-        Scope scope = observation.openScope();
-        scope.reset();
-        scope.close();
-        assertThat(testConsumer.toString()).isEqualTo("Invalid scope opening: Observation has already been stopped\n"
-                + "Invalid scope resetting: Observation has already been stopped\n"
-                + "Invalid scope closing: Observation has already been stopped");
+    @SuppressWarnings("resource")
+    void scopeOpenAfterStopShouldBeInvalid() {
+        assertThatThrownBy(() -> {
+            Observation observation = Observation.start("test", registry);
+            observation.stop();
+            observation.openScope();
+        }).isExactlyInstanceOf(InvalidObservationException.class)
+            .hasNoCause()
+            .hasMessage("Invalid scope opening: Observation has already been stopped");
+    }
+
+    @Test
+    @SuppressWarnings("resource")
+    void scopeResetAfterStopShouldBeInvalid() {
+        assertThatThrownBy(() -> {
+            Observation observation = Observation.start("test", registry);
+            Scope scope = observation.openScope();
+            observation.stop();
+            scope.reset();
+        }).isExactlyInstanceOf(InvalidObservationException.class)
+            .hasNoCause()
+            .hasMessage("Invalid scope resetting: Observation has already been stopped");
+    }
+
+    @Test
+    void scopeCloseAfterStopShouldBeInvalid() {
+        assertThatThrownBy(() -> {
+            Observation observation = Observation.start("test", registry);
+            Scope scope = observation.openScope();
+            observation.stop();
+            scope.close();
+        }).isExactlyInstanceOf(InvalidObservationException.class)
+            .hasNoCause()
+            .hasMessage("Invalid scope closing: Observation has already been stopped");
     }
 
     @Test
     void startEventStopShouldBeValid() {
         Observation.start("test", registry).event(Event.of("test")).stop();
-        assertThat(testConsumer.toString()).isEmpty();
     }
 
     @Test
     void startEventErrorStopShouldBeValid() {
         Observation.start("test", registry).event(Event.of("test")).error(new RuntimeException()).stop();
-        assertThat(testConsumer.toString()).isEmpty();
     }
 
     @Test
     void startErrorEventStopShouldBeValid() {
         Observation.start("test", registry).error(new RuntimeException()).event(Event.of("test")).stop();
-        assertThat(testConsumer.toString()).isEmpty();
     }
 
     @Test
@@ -145,7 +173,6 @@ class ObservationValidatorTests {
         observation.openScope().close();
         observation.event(Event.of("test"));
         observation.stop();
-        assertThat(testConsumer.toString()).isEmpty();
     }
 
     @Test
@@ -156,7 +183,6 @@ class ObservationValidatorTests {
         observation.error(new RuntimeException());
         scope.close();
         observation.stop();
-        assertThat(testConsumer.toString()).isEmpty();
     }
 
     @Test
@@ -167,23 +193,6 @@ class ObservationValidatorTests {
         observation.event(Event.of("test"));
         scope.close();
         observation.stop();
-        assertThat(testConsumer.toString()).isEmpty();
-    }
-
-    static class TestConsumer implements Consumer<ValidationResult> {
-
-        private final StringBuilder stringBuilder = new StringBuilder();
-
-        @Override
-        public void accept(ValidationResult validationResult) {
-            stringBuilder.append(validationResult.getMessage()).append("\n");
-        }
-
-        @Override
-        public String toString() {
-            return stringBuilder.toString().trim();
-        }
-
     }
 
 }
