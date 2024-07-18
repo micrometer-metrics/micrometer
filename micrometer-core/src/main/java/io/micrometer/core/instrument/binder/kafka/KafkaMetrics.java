@@ -71,6 +71,8 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
     static final String KAFKA_VERSION_TAG_NAME = "kafka.version";
     static final String DEFAULT_VALUE = "unknown";
 
+    private static final String DEFAULT_SCHEDULER_THREAD_NAME_PREFIX = "micrometer-kafka-metrics";
+
     private static final Set<Class<?>> counterMeasurableClasses = new HashSet<>();
 
     static {
@@ -96,8 +98,9 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
 
     private final Duration refreshInterval;
 
-    private final ScheduledExecutorService scheduler = Executors
-        .newSingleThreadScheduledExecutor(new NamedThreadFactory("micrometer-kafka-metrics"));
+    private final ScheduledExecutorService scheduler;
+
+    private final boolean schedulerExternallyManaged;
 
     @Nullable
     private Iterable<Tag> commonTags;
@@ -123,10 +126,22 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
     }
 
     KafkaMetrics(Supplier<Map<MetricName, ? extends Metric>> metricsSupplier, Iterable<Tag> extraTags,
+            ScheduledExecutorService scheduler) {
+        this(metricsSupplier, extraTags, DEFAULT_REFRESH_INTERVAL, scheduler, true);
+    }
+
+    KafkaMetrics(Supplier<Map<MetricName, ? extends Metric>> metricsSupplier, Iterable<Tag> extraTags,
             Duration refreshInterval) {
+        this(metricsSupplier, extraTags, refreshInterval, createDefaultScheduler(), false);
+    }
+
+    KafkaMetrics(Supplier<Map<MetricName, ? extends Metric>> metricsSupplier, Iterable<Tag> extraTags,
+            Duration refreshInterval, ScheduledExecutorService scheduler, boolean schedulerExternallyManaged) {
         this.metricsSupplier = metricsSupplier;
         this.extraTags = extraTags;
         this.refreshInterval = refreshInterval;
+        this.scheduler = scheduler;
+        this.schedulerExternallyManaged = schedulerExternallyManaged;
     }
 
     @Override
@@ -295,6 +310,10 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
         }
     }
 
+    private static ScheduledExecutorService createDefaultScheduler() {
+        return Executors.newSingleThreadScheduledExecutor(new NamedThreadFactory(DEFAULT_SCHEDULER_THREAD_NAME_PREFIX));
+    }
+
     private Gauge registerGauge(MeterRegistry registry, MetricName metricName, String meterName, Iterable<Tag> tags) {
         return Gauge.builder(meterName, this.metrics, toMetricValue(metricName))
             .tags(tags)
@@ -344,7 +363,9 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
 
     @Override
     public void close() {
-        this.scheduler.shutdownNow();
+        if (!schedulerExternallyManaged) {
+            this.scheduler.shutdownNow();
+        }
 
         for (Meter.Id id : registeredMeterIds) {
             registry.remove(id);
