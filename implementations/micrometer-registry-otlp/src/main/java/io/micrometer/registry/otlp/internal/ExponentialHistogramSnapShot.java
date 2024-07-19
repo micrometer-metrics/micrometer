@@ -15,8 +15,18 @@
  */
 package io.micrometer.registry.otlp.internal;
 
+import java.util.Collections;
 import java.util.List;
 
+/**
+ * <p>
+ * <strong> This is an internal class and might have breaking changes, external
+ * implementations SHOULD NOT rely on this implementation. </strong>
+ * </p>
+ *
+ * @author Lenin Jaganathan
+ * @since 1.14.0
+ */
 public interface ExponentialHistogramSnapShot {
 
     /**
@@ -31,14 +41,14 @@ public interface ExponentialHistogramSnapShot {
     long zeroCount();
 
     /**
-     * Returns the index of the first entry in the positive Bucket counts list.
+     * Returns the positive range of exponential bucket counts.
      */
-    int offset();
+    ExponentialBucket positive();
 
     /**
-     * Returns the count of positive range of exponential buckets.
+     * Returns the negative range of exponential bucket counts.
      */
-    List<Long> bucketsCount();
+    ExponentialBucket negative();
 
     /**
      * Returns the threshold below which (inclusive) the values are counted in
@@ -47,5 +57,38 @@ public interface ExponentialHistogramSnapShot {
     double zeroThreshold();
 
     boolean isEmpty();
+
+    final class ExponentialBucket {
+
+        public static final ExponentialBucket EMPTY_EXPONENTIAL_BUCKET = new ExponentialBucket(0,
+                Collections.emptyList());
+
+        private final int offset;
+
+        private final List<Long> bucketCounts;
+
+        ExponentialBucket(int offset, List<Long> bucketCounts) {
+            this.offset = offset;
+            this.bucketCounts = bucketCounts;
+        }
+
+        public int offset() {
+            return offset;
+        }
+
+        public List<Long> bucketCounts() {
+            return bucketCounts;
+        }
+
+        public boolean isEmpty() {
+            return bucketCounts.isEmpty();
+        }
+
+        @Override
+        public String toString() {
+            return "offset=" + offset() + ", " + "bucketCounts=" + bucketCounts();
+        }
+
+    }
 
 }

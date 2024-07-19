@@ -215,7 +215,7 @@ public interface OtlpConfig extends PushRegistryConfig {
      * </p>
      * @return - histogram flavour to be used
      *
-     * @since 1.12.0
+     * @since 1.14.0
      */
     default HistogramFlavour histogramFlavour() {
         String histogramPreference = System.getenv().get("OTEL_EXPORTER_OTLP_METRICS_DEFAULT_HISTOGRAM_AGGREGATION");
@@ -231,7 +231,7 @@ public interface OtlpConfig extends PushRegistryConfig {
      * {@link io.micrometer.registry.otlp.internal.Base2ExponentialHistogram}
      * @return maxScale
      *
-     * @since 1.12.0
+     * @since 1.14.0
      */
     default int maxScale() {
         return getInteger(this, "maxScale").orElse(20);
@@ -242,7 +242,7 @@ public interface OtlpConfig extends PushRegistryConfig {
      * {@link io.micrometer.registry.otlp.internal.Base2ExponentialHistogram}
      * @return - maxBuckets
      *
-     * @since 1.12.0
+     * @since 1.14.0
      */
     default int maxBucketCount() {
         return getInteger(this, "maxBucketCount").orElse(160);

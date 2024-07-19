@@ -21,10 +21,14 @@ import io.micrometer.common.lang.Nullable;
 
 /**
  * A {@link Base2ExponentialHistogram} that tracks values cumulatively from first recorded
- * value.
+ * value. *
+ * <p>
+ * * <strong> This is an internal class and might have breaking changes, external *
+ * implementations SHOULD NOT rely on this implementation. </strong> *
+ * </p>
  *
  * @author Lenin Jaganathan
- * @since 1.12.0
+ * @since 1.14.0
  */
 public class CumulativeBase2ExponentialHistogram extends Base2ExponentialHistogram {
 

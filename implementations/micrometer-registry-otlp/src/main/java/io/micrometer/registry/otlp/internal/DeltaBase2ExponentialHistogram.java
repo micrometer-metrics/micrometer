@@ -25,9 +25,13 @@ import io.micrometer.core.instrument.step.StepValue;
 /**
  * A {@link Base2ExponentialHistogram} where values are reset after every Step.
  * Internally, this uses {@link StepValue} to roll the HistogramSnapshot for every step.
+ * <p>
+ * <strong> This is an internal class and might have breaking changes, external
+ * implementations SHOULD NOT rely on this implementation. </strong>
+ * </p>
  *
  * @author Lenin Jaganathan
- * @since 1.12.0
+ * @since 1.14.0
  */
 public class DeltaBase2ExponentialHistogram extends Base2ExponentialHistogram {
 

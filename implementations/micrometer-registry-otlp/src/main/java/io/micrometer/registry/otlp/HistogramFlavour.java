@@ -22,7 +22,7 @@ package io.micrometer.registry.otlp;
  * "https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk_exporters/otlp.md#additional-configuration">OTLP
  * Configuration</a>
  * @author Lenin Jaganathan
- * @since 1.12.0
+ * @since 1.14.0
  */
 public enum HistogramFlavour {
 

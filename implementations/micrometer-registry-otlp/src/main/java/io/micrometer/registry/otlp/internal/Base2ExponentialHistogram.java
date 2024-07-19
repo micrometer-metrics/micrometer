@@ -15,6 +15,8 @@
  */
 package io.micrometer.registry.otlp.internal;
 
+import static io.micrometer.registry.otlp.internal.ExponentialHistogramSnapShot.ExponentialBucket.EMPTY_EXPONENTIAL_BUCKET;
+
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -26,6 +28,7 @@ import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.distribution.Histogram;
 import io.micrometer.core.instrument.distribution.HistogramSnapshot;
 import io.micrometer.core.instrument.util.TimeUtils;
+import io.micrometer.registry.otlp.internal.ExponentialHistogramSnapShot.ExponentialBucket;
 
 /**
  * A ExponentialHistogram implementation that compresses bucket boundaries using an
@@ -33,10 +36,16 @@ import io.micrometer.core.instrument.util.TimeUtils;
  * range data with small relative error. This is an implementation of the <a href=
  * "https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/data-model.md#exponentialhistogram">Exponential
  * Histogram</a> as per the OTLP specification. The internal implementations uses the
- * techniques outlined in the OTLP specification mentioned above.
+ * techniques outlined in the OTLP specification mentioned above. This implementation
+ * supports only recording positive values (enforced by
+ * {@link io.micrometer.core.instrument.AbstractTimer#record(long, TimeUnit)}).
+ * <p>
+ * <strong> This is an internal class and might have breaking changes, external
+ * implementations SHOULD NOT rely on this implementation. </strong>
+ * </p>
  *
  * @author Lenin Jaganathan
- * @since 1.12.0
+ * @since 1.14.0
  */
 public abstract class Base2ExponentialHistogram implements Histogram {
 
@@ -115,8 +124,8 @@ public abstract class Base2ExponentialHistogram implements Histogram {
     ExponentialHistogramSnapShot getCurrentValuesSnapshot() {
         return (circularCountHolder.isEmpty() && zeroCount.longValue() == 0)
                 ? DefaultExponentialHistogramSnapShot.getEmptySnapshotForScale(scale)
-                : new DefaultExponentialHistogramSnapShot(scale, getOffset(), zeroCount.longValue(), zeroThreshold,
-                        getBucketCounts());
+                : new DefaultExponentialHistogramSnapShot(scale, zeroCount.longValue(), zeroThreshold,
+                        new ExponentialBucket(getOffset(), getBucketCounts()), EMPTY_EXPONENTIAL_BUCKET);
     }
 
     /**

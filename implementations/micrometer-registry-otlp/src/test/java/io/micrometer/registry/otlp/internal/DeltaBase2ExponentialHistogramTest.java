@@ -62,21 +62,21 @@ class DeltaBase2ExponentialHistogramTest {
         exponentialHistogramSnapShot = deltaBase2ExponentialHistogram.getLatestExponentialHistogramSnapshot();
         assertThat(exponentialHistogramSnapShot.zeroCount()).isEqualTo(1);
         assertThat(exponentialHistogramSnapShot.scale()).isEqualTo(MAX_SCALE);
-        assertThat(exponentialHistogramSnapShot.offset()).isEqualTo(1023);
+        assertThat(exponentialHistogramSnapShot.positive().offset()).isEqualTo(1023);
         assertThat(Base2ExponentialHistogramTest.getAllBucketsCountSum(exponentialHistogramSnapShot)).isEqualTo(1);
 
         clock.add(step.dividedBy(2));
         exponentialHistogramSnapShot = deltaBase2ExponentialHistogram.getLatestExponentialHistogramSnapshot();
         assertThat(exponentialHistogramSnapShot.zeroCount()).isZero();
         assertThat(exponentialHistogramSnapShot.scale()).isZero();
-        assertThat(exponentialHistogramSnapShot.offset()).isEqualTo(1);
+        assertThat(exponentialHistogramSnapShot.positive().offset()).isEqualTo(1);
         assertThat(Base2ExponentialHistogramTest.getAllBucketsCountSum(exponentialHistogramSnapShot)).isEqualTo(2);
 
         clock.add(step);
         exponentialHistogramSnapShot = deltaBase2ExponentialHistogram.getLatestExponentialHistogramSnapshot();
         assertThat(exponentialHistogramSnapShot.zeroCount()).isZero();
         assertThat(exponentialHistogramSnapShot.scale()).isZero();
-        assertThat(exponentialHistogramSnapShot.offset()).isZero();
+        assertThat(exponentialHistogramSnapShot.positive().offset()).isZero();
         assertThat(Base2ExponentialHistogramTest.getAllBucketsCountSum(exponentialHistogramSnapShot)).isZero();
 
         // By this time, the histogram should be rescaled.

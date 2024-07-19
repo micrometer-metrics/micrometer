@@ -15,9 +15,9 @@
  */
 package io.micrometer.registry.otlp.internal;
 
-import java.util.Collections;
+import static io.micrometer.registry.otlp.internal.ExponentialHistogramSnapShot.ExponentialBucket.EMPTY_EXPONENTIAL_BUCKET;
+
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 
 class DefaultExponentialHistogramSnapShot implements ExponentialHistogramSnapShot {
@@ -33,21 +33,21 @@ class DefaultExponentialHistogramSnapShot implements ExponentialHistogramSnapSho
 
     private final int scale;
 
-    private final int offset;
-
     private final long zeroCount;
 
     private final double zeroThreshold;
 
-    private final List<Long> bucketsCount;
+    private final ExponentialBucket positive;
 
-    DefaultExponentialHistogramSnapShot(int scale, int offset, long zeroCount, double zeroThreshold,
-            List<Long> bucketsCount) {
+    private final ExponentialBucket negative;
+
+    DefaultExponentialHistogramSnapShot(int scale, long zeroCount, double zeroThreshold, ExponentialBucket positive,
+            ExponentialBucket negative) {
         this.scale = scale;
-        this.offset = offset;
         this.zeroCount = zeroCount;
         this.zeroThreshold = zeroThreshold;
-        this.bucketsCount = Collections.unmodifiableList(bucketsCount);
+        this.positive = positive;
+        this.negative = negative;
     }
 
     @Override
@@ -61,13 +61,13 @@ class DefaultExponentialHistogramSnapShot implements ExponentialHistogramSnapSho
     }
 
     @Override
-    public int offset() {
-        return offset;
+    public ExponentialBucket positive() {
+        return positive;
     }
 
     @Override
-    public List<Long> bucketsCount() {
-        return bucketsCount;
+    public ExponentialBucket negative() {
+        return negative;
     }
 
     @Override
@@ -77,19 +77,18 @@ class DefaultExponentialHistogramSnapShot implements ExponentialHistogramSnapSho
 
     @Override
     public boolean isEmpty() {
-        return bucketsCount.isEmpty() && zeroCount == 0;
+        return positive.isEmpty() && negative.isEmpty() && zeroCount == 0;
     }
 
     static ExponentialHistogramSnapShot getEmptySnapshotForScale(int scale) {
-        return emptySnapshotCache.computeIfAbsent(scale,
-                key -> new DefaultExponentialHistogramSnapShot(key, 0, 0, 0.0, Collections.emptyList()));
+        return emptySnapshotCache.computeIfAbsent(scale, key -> new DefaultExponentialHistogramSnapShot(key, 0, 0,
+                EMPTY_EXPONENTIAL_BUCKET, EMPTY_EXPONENTIAL_BUCKET));
     }
 
     @Override
     public String toString() {
-        return "DefaultExponentialHistogramSnapShot{" + "scale=" + scale() + ", zeroCount=" + zeroCount()
-                + ", zeroThreshold=" + zeroThreshold() + ", {bucketsCountLength=" + bucketsCount().size() + ", offset="
-                + offset() + ", " + "bucketsCount=" + bucketsCount() + '}';
+        return "DefaultExponentialHistogramSnapShot{" + "scale=" + scale() + ", zero_count=" + zeroCount()
+                + ", zero_threshold=" + zeroThreshold + ", positive={" + positive + "}, negative={" + negative + "}";
     }
 
 }

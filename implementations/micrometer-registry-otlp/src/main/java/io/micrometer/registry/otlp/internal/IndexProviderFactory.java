@@ -22,7 +22,7 @@ import java.util.Map;
  * A factory that provides the {@link IndexProvider} for a given scale.
  *
  * @author Lenin Jaganathan
- * @since 1.12.0
+ * @since 1.14.0
  * @see <a href=
  * "https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/data-model.md#exponential-buckets">Exponentioal
  * Buckets</a>

@@ -40,7 +40,6 @@ import io.micrometer.core.ipc.http.HttpSender;
 import io.micrometer.core.ipc.http.HttpUrlConnectionSender;
 import io.micrometer.registry.otlp.internal.CumulativeBase2ExponentialHistogram;
 import io.micrometer.registry.otlp.internal.DeltaBase2ExponentialHistogram;
-import io.micrometer.registry.otlp.internal.ExponentialHistogramSnapShot;
 import io.opentelemetry.proto.collector.metrics.v1.ExportMetricsServiceRequest;
 import io.opentelemetry.proto.common.v1.AnyValue;
 import io.opentelemetry.proto.common.v1.KeyValue;
@@ -68,11 +67,6 @@ import java.util.function.ToLongFunction;
 public class OtlpMeterRegistry extends PushMeterRegistry {
 
     private static final ThreadFactory DEFAULT_THREAD_FACTORY = new NamedThreadFactory("otlp-metrics-publisher");
-
-    private static final ExponentialHistogramDataPoint.Buckets EMPTY_EXPONETIAL_HISTOGRAM_BUCKETS = ExponentialHistogramDataPoint.Buckets
-        .newBuilder()
-        .addAllBucketCounts(Collections.emptyList())
-        .build();
 
     private static final double[] EMPTY_SLO_WITH_POSITIVE_INF = new double[] { Double.POSITIVE_INFINITY };
 
@@ -351,125 +345,6 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
         return stepMillis - (clock.wallTime() % stepMillis) + 1;
     }
 
-    // VisibleForTesting
-    Metric writeHistogramSupport(HistogramSupport histogramSupport) {
-        Metric.Builder metricBuilder = getMetricBuilder(histogramSupport.getId());
-        boolean isTimeBased = histogramSupport instanceof Timer || histogramSupport instanceof LongTaskTimer;
-        HistogramSnapshot histogramSnapshot = histogramSupport.takeSnapshot();
-
-        Iterable<? extends KeyValue> tags = getTagsForId(histogramSupport.getId());
-        long startTimeNanos = getStartTimeNanos(histogramSupport);
-        double total = isTimeBased ? histogramSnapshot.total(getBaseTimeUnit()) : histogramSnapshot.total();
-        long count = histogramSnapshot.count();
-
-        // if percentiles configured, use summary
-        if (histogramSnapshot.percentileValues().length != 0) {
-            SummaryDataPoint.Builder summaryData = SummaryDataPoint.newBuilder()
-                .addAllAttributes(tags)
-                .setStartTimeUnixNano(startTimeNanos)
-                .setTimeUnixNano(getTimeUnixNano())
-                .setSum(total)
-                .setCount(count);
-            for (ValueAtPercentile percentile : histogramSnapshot.percentileValues()) {
-                summaryData.addQuantileValues(SummaryDataPoint.ValueAtQuantile.newBuilder()
-                    .setQuantile(percentile.percentile())
-                    .setValue(TimeUtils.convert(percentile.value(), TimeUnit.NANOSECONDS, getBaseTimeUnit())));
-            }
-            metricBuilder.setSummary(Summary.newBuilder().addDataPoints(summaryData));
-            return metricBuilder.build();
-        }
-
-        ExponentialHistogramSnapShot exponentialHistogramSnapShot = getExponentialHistogramSnapShot(histogramSupport);
-        if (exponentialHistogramSnapShot != null) {
-            ExponentialHistogramDataPoint.Builder exponentialDataPoint = ExponentialHistogramDataPoint.newBuilder()
-                .addAllAttributes(tags)
-                .setStartTimeUnixNano(startTimeNanos)
-                .setTimeUnixNano(getTimeUnixNano())
-                .setCount(count)
-                .setSum(total)
-                .setScale(exponentialHistogramSnapShot.scale())
-                .setZeroCount(exponentialHistogramSnapShot.zeroCount())
-                .setZeroThreshold(exponentialHistogramSnapShot.zeroThreshold())
-                .setPositive(ExponentialHistogramDataPoint.Buckets.newBuilder()
-                    .addAllBucketCounts(exponentialHistogramSnapShot.bucketsCount())
-                    .setOffset(exponentialHistogramSnapShot.offset())
-                    .build())
-                // Micrometer doesn't support negative recordings.
-                .setNegative(EMPTY_EXPONETIAL_HISTOGRAM_BUCKETS);
-
-            if (isDelta()) {
-                exponentialDataPoint
-                    .setMax(isTimeBased ? histogramSnapshot.max(getBaseTimeUnit()) : histogramSnapshot.max());
-            }
-
-            return metricBuilder
-                .setExponentialHistogram(ExponentialHistogram.newBuilder()
-                    .setAggregationTemporality(otlpAggregationTemporality)
-                    .addDataPoints(exponentialDataPoint)
-                    .build())
-                .build();
-        }
-
-        HistogramDataPoint.Builder histogramDataPoint = HistogramDataPoint.newBuilder()
-            .addAllAttributes(tags)
-            .setStartTimeUnixNano(startTimeNanos)
-            .setTimeUnixNano(getTimeUnixNano())
-            .setSum(total)
-            .setCount(count);
-
-        if (isDelta()) {
-            histogramDataPoint.setMax(isTimeBased ? histogramSnapshot.max(getBaseTimeUnit()) : histogramSnapshot.max());
-        }
-        // if histogram enabled, add histogram buckets
-        if (histogramSnapshot.histogramCounts().length != 0) {
-            for (CountAtBucket countAtBucket : histogramSnapshot.histogramCounts()) {
-                if (countAtBucket.bucket() != Double.POSITIVE_INFINITY) {
-                    // OTLP expects explicit bounds to not contain POSITIVE_INFINITY but
-                    // there should be a
-                    // bucket count representing values between last bucket and
-                    // POSITIVE_INFINITY.
-                    histogramDataPoint.addExplicitBounds(
-                            isTimeBased ? countAtBucket.bucket(getBaseTimeUnit()) : countAtBucket.bucket());
-                }
-                histogramDataPoint.addBucketCounts((long) countAtBucket.count());
-            }
-            metricBuilder.setHistogram(io.opentelemetry.proto.metrics.v1.Histogram.newBuilder()
-                .setAggregationTemporality(otlpAggregationTemporality)
-                .addDataPoints(histogramDataPoint));
-            return metricBuilder.build();
-        }
-
-        return metricBuilder
-            .setHistogram(io.opentelemetry.proto.metrics.v1.Histogram.newBuilder()
-                .setAggregationTemporality(otlpAggregationTemporality)
-                .addDataPoints(histogramDataPoint))
-            .build();
-    }
-
-    @Nullable
-    private static ExponentialHistogramSnapShot getExponentialHistogramSnapShot(
-            final HistogramSupport histogramSupport) {
-        if (histogramSupport instanceof OtlpHistogramSupport) {
-            return ((OtlpHistogramSupport) histogramSupport).getExponentialHistogramSnapShot();
-        }
-
-        return null;
-    }
-
-    // VisibleForTesting
-    Metric writeFunctionTimer(FunctionTimer functionTimer) {
-        return getMetricBuilder(functionTimer.getId())
-            .setHistogram(io.opentelemetry.proto.metrics.v1.Histogram.newBuilder()
-                .addDataPoints(HistogramDataPoint.newBuilder()
-                    .addAllAttributes(getTagsForId(functionTimer.getId()))
-                    .setStartTimeUnixNano(getStartTimeNanos((functionTimer)))
-                    .setTimeUnixNano(getTimeUnixNano())
-                    .setSum(functionTimer.totalTime(getBaseTimeUnit()))
-                    .setCount((long) functionTimer.count()))
-                .setAggregationTemporality(otlpAggregationTemporality))
-            .build();
-    }
-
     private boolean isCumulative() {
         return this.aggregationTemporality == AggregationTemporality.CUMULATIVE;
     }
@@ -516,14 +391,15 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
 
     static Histogram getHistogram(final Clock clock, final DistributionStatisticConfig distributionStatisticConfig,
             final OtlpConfig otlpConfig, @Nullable final TimeUnit baseTimeUnit) {
-        // While publishing to OTLP, we export either Histogram datapoint (Explicit Bucket
+        // While publishing to OTLP, we export either Histogram datapoint (Explicit
+        // ExponentialBucket
         // or Exponential) / Summary
         // datapoint. So, we will make the histogram either of them and not both.
         // Though AbstractTimer/Distribution Summary prefers publishing percentiles,
         // exporting of histograms over percentiles is preferred in OTLP.
         if (distributionStatisticConfig.isPublishingHistogram()) {
-            if (histogramFlavour(otlpConfig.histogramFlavour(),
-                    distributionStatisticConfig) == HistogramFlavour.BASE2_EXPONENTIAL_BUCKET_HISTOGRAM) {
+            if (HistogramFlavour.BASE2_EXPONENTIAL_BUCKET_HISTOGRAM
+                .equals(histogramFlavour(otlpConfig.histogramFlavour(), distributionStatisticConfig))) {
                 Double minimumExpectedValue = distributionStatisticConfig.getMinimumExpectedValueAsDouble();
                 if (minimumExpectedValue == null) {
                     minimumExpectedValue = 0.0;
