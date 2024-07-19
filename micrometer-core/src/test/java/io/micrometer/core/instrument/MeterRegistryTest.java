@@ -75,6 +75,25 @@ class MeterRegistryTest {
     }
 
     @Test
+    void histogramTimerConstructor() {
+        MeterRegistry registry = new SimpleMeterRegistry() {
+            @Override
+            protected Timer newTimer(@Nonnull Meter.Id id, DistributionStatisticConfig histogramConfig,
+                    PauseDetector pauseDetector) {
+                if (id.getName().equals("timerWithHistogram")) {
+                    assertThat(histogramConfig.isPublishingHistogram()).isTrue();
+                }
+                else if (id.getName().equals("timerWithoutHistogram")) {
+                    assertThat(histogramConfig.isPublishingHistogram()).isFalse();
+                }
+                return super.newTimer(id, histogramConfig, pauseDetector);
+            }
+        };
+        registry.timer("timerWithHistogram", true);
+        registry.timer("timerWithoutHistogram", false);
+    }
+
+    @Test
     void histogramConfigTransformingMeterFilter() {
         MeterRegistry registry = new SimpleMeterRegistry() {
             @Override

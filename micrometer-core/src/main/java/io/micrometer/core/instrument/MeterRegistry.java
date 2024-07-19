@@ -483,6 +483,29 @@ public abstract class MeterRegistry {
     }
 
     /**
+     * Measures the time taken for short tasks and the count of these tasks.
+     * @param name The base metric name
+     * @param tags Sequence of dimensions for breaking down the name.
+     * @param publishPercentileHistogram If this timer publishes percentile histogram
+     * @return A new or existing timer.
+     */
+    public Timer timer(String name, boolean publishPercentileHistogram, Iterable<Tag> tags) {
+        return Timer.builder(name).tags(tags).publishPercentileHistogram(publishPercentileHistogram).register(this);
+    }
+
+    /**
+     * Measures the time taken for short tasks and the count of these tasks.
+     * @param name The base metric name
+     * @param tags MUST be an even number of arguments representing key/value pairs of
+     * tags.
+     * @param publishPercentileHistogram If this timer publishes percentile histogram
+     * @return A new or existing timer.
+     */
+    public Timer timer(String name, boolean publishPercentileHistogram, String... tags) {
+        return timer(name, publishPercentileHistogram, Tags.of(tags));
+    }
+
+    /**
      * Access to less frequently used meter types and patterns.
      * @return Access to additional meter types and patterns.
      */
