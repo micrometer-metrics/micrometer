@@ -89,7 +89,7 @@ public class MemoryMetrics implements MeterBinder {
     public void bindTo(MeterRegistry registry) {
         Runtime runtime = Runtime.getRuntime();
         if (committedVirtualMemorySize != null) {
-            Gauge.builder("system.virtualmemory.commited", operatingSystemBean, x -> invoke(committedVirtualMemorySize))
+            Gauge.builder("process.virtual_memory.commited", operatingSystemBean, x -> invoke(committedVirtualMemorySize))
                 .tags(tags)
                 .baseUnit(BaseUnits.BYTES)
                 .description(
