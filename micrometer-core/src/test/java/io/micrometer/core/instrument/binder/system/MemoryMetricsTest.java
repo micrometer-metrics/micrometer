@@ -42,7 +42,7 @@ class MemoryMetricsTest {
 
     @Test
     void memoryMetrics() {
-        Gauge virtualMemCommited = registry.get("system.virtualmemory.commited").gauge();
+        Gauge virtualMemCommited = registry.get("process.virtual_memory.commited").gauge();
         assertThat(virtualMemCommited.getId().getBaseUnit()).isEqualTo(BaseUnits.BYTES);
 
         Gauge swapTotal = registry.get("system.swap.total").gauge();
@@ -64,7 +64,7 @@ class MemoryMetricsTest {
     @Test
     void hotspotMetrics() {
         assumeFalse(isOpenJ9());
-        assertThat(registry.get("system.virtualmemory.commited").gauge().value()).isNotNegative();
+        assertThat(registry.get("process.virtual_memory.commited").gauge().value()).isNotNegative();
         assertThat(registry.get("system.memory.free").gauge().value()).isNotNegative();
     }
 
@@ -72,7 +72,7 @@ class MemoryMetricsTest {
     void j9Metrics() {
         assumeTrue(isOpenJ9());
 
-        assertThat(registry.get("system.virtualmemory.commited").gauge().value()).isGreaterThanOrEqualTo(-1);
+        assertThat(registry.get("process.virtual_memory.commited").gauge().value()).isGreaterThanOrEqualTo(-1);
         assertThat(registry.get("system.memory.free").gauge().value()).isGreaterThanOrEqualTo(-1);
     }
 
