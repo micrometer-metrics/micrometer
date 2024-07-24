@@ -34,24 +34,45 @@ import static java.util.stream.Collectors.joining;
  */
 public final class Tags implements Iterable<Tag> {
 
-    private static final Tags EMPTY = new Tags(new Tag[] {});
+    private static final Tags EMPTY = new Tags(new Tag[] {}, 0);
 
-    private final Tag[] tags;
+    private final Tag[] sortedSet;
 
-    private int last;
+    private final int length;
 
-    private Tags(Tag[] tags) {
-        this.tags = tags;
-        Arrays.sort(this.tags);
-        dedup();
+    private Tags(Tag[] sortedSet, int length) {
+        assert isSortedSet(sortedSet, length) : "bug on caller side: construction invariant violated";
+        this.sortedSet = sortedSet;
+        this.length = length;
     }
 
-    private void dedup() {
+    private static boolean isSortedSet(Tag[] sortedSet, int length) {
+        if (length > sortedSet.length) {
+            return false;
+        }
+        for (int i = 0; i < length - 1; i++) {
+            int cmp = sortedSet[i].compareTo(sortedSet[i + 1]);
+            if (cmp >= 0) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static Tags make(Tag[] tags) {
+        int len = tags.length;
+        if (!isSortedSet(tags, len)) {
+            Arrays.sort(tags);
+            len = dedup(tags);
+        }
+        return new Tags(tags, len);
+    }
+
+    private static int dedup(Tag[] tags) {
         int n = tags.length;
 
         if (n == 0 || n == 1) {
-            last = n;
-            return;
+            return n;
         }
 
         // index of next unique element
@@ -62,7 +83,47 @@ public final class Tags implements Iterable<Tag> {
                 tags[j++] = tags[i];
 
         tags[j++] = tags[n - 1];
-        last = j;
+        return j;
+    }
+
+    private Tags merged(Tags other) {
+        if (other.length == 0) {
+            return this;
+        }
+        if (Objects.equals(this, other)) {
+            return this;
+        }
+        Tag[] sortedSet = new Tag[this.length + other.length];
+        int sortedIdx = 0, thisIdx = 0, otherIdx = 0;
+        while (thisIdx < this.length && otherIdx < other.length) {
+            int cmp = this.sortedSet[thisIdx].compareTo(other.sortedSet[otherIdx]);
+            if (cmp > 0) {
+                sortedSet[sortedIdx] = other.sortedSet[otherIdx];
+                otherIdx++;
+            }
+            else if (cmp < 0) {
+                sortedSet[sortedIdx] = this.sortedSet[thisIdx];
+                thisIdx++;
+            }
+            else {
+                // In case of key conflict prefer tag from other set
+                sortedSet[sortedIdx] = other.sortedSet[otherIdx];
+                thisIdx++;
+                otherIdx++;
+            }
+            sortedIdx++;
+        }
+        int thisRemaining = this.length - thisIdx;
+        if (thisRemaining > 0) {
+            System.arraycopy(this.sortedSet, thisIdx, sortedSet, sortedIdx, thisRemaining);
+            sortedIdx += thisRemaining;
+        }
+        int otherRemaining = other.length - otherIdx;
+        if (otherIdx < other.sortedSet.length) {
+            System.arraycopy(other.sortedSet, otherIdx, sortedSet, sortedIdx, otherRemaining);
+            sortedIdx += otherRemaining;
+        }
+        return new Tags(sortedSet, sortedIdx);
     }
 
     /**
@@ -99,10 +160,7 @@ public final class Tags implements Iterable<Tag> {
         if (blankVarargs(tags)) {
             return this;
         }
-        Tag[] newTags = new Tag[last + tags.length];
-        System.arraycopy(this.tags, 0, newTags, 0, last);
-        System.arraycopy(tags, 0, newTags, last, tags.length);
-        return new Tags(newTags);
+        return and(make(tags));
     }
 
     /**
@@ -116,11 +174,10 @@ public final class Tags implements Iterable<Tag> {
             return this;
         }
 
-        if (this.tags.length == 0) {
+        if (this.length == 0) {
             return Tags.of(tags);
         }
-
-        return and(Tags.of(tags).tags);
+        return merged(Tags.of(tags));
     }
 
     @Override
@@ -134,12 +191,12 @@ public final class Tags implements Iterable<Tag> {
 
         @Override
         public boolean hasNext() {
-            return currentIndex < last;
+            return currentIndex < length;
         }
 
         @Override
         public Tag next() {
-            return tags[currentIndex++];
+            return sortedSet[currentIndex++];
         }
 
         @Override
@@ -151,7 +208,7 @@ public final class Tags implements Iterable<Tag> {
 
     @Override
     public Spliterator<Tag> spliterator() {
-        return Spliterators.spliterator(tags, 0, last, Spliterator.IMMUTABLE | Spliterator.ORDERED
+        return Spliterators.spliterator(sortedSet, 0, length, Spliterator.IMMUTABLE | Spliterator.ORDERED
                 | Spliterator.DISTINCT | Spliterator.NONNULL | Spliterator.SORTED);
     }
 
@@ -166,8 +223,8 @@ public final class Tags implements Iterable<Tag> {
     @Override
     public int hashCode() {
         int result = 1;
-        for (int i = 0; i < last; i++) {
-            result = 31 * result + tags[i].hashCode();
+        for (int i = 0; i < length; i++) {
+            result = 31 * result + sortedSet[i].hashCode();
         }
         return result;
     }
@@ -178,14 +235,14 @@ public final class Tags implements Iterable<Tag> {
     }
 
     private boolean tagsEqual(Tags obj) {
-        if (tags == obj.tags)
+        if (sortedSet == obj.sortedSet)
             return true;
 
-        if (last != obj.last)
+        if (length != obj.length)
             return false;
 
-        for (int i = 0; i < last; i++) {
-            if (!tags[i].equals(obj.tags[i]))
+        for (int i = 0; i < length; i++) {
+            if (!sortedSet[i].equals(obj.sortedSet[i]))
                 return false;
         }
 
@@ -229,10 +286,10 @@ public final class Tags implements Iterable<Tag> {
         }
         else if (tags instanceof Collection) {
             Collection<? extends Tag> tagsCollection = (Collection<? extends Tag>) tags;
-            return new Tags(tagsCollection.toArray(new Tag[0]));
+            return make(tagsCollection.toArray(new Tag[0]));
         }
         else {
-            return new Tags(StreamSupport.stream(tags.spliterator(), false).toArray(Tag[]::new));
+            return make(StreamSupport.stream(tags.spliterator(), false).toArray(Tag[]::new));
         }
     }
 
@@ -244,7 +301,7 @@ public final class Tags implements Iterable<Tag> {
      * @return a new {@code Tags} instance
      */
     public static Tags of(String key, String value) {
-        return new Tags(new Tag[] { Tag.of(key, value) });
+        return new Tags(new Tag[] { Tag.of(key, value) }, 1);
     }
 
     /**
@@ -264,7 +321,7 @@ public final class Tags implements Iterable<Tag> {
         for (int i = 0; i < keyValues.length; i += 2) {
             tags[i / 2] = Tag.of(keyValues[i], keyValues[i + 1]);
         }
-        return new Tags(tags);
+        return make(tags);
     }
 
     private static boolean blankVarargs(@Nullable Object[] args) {

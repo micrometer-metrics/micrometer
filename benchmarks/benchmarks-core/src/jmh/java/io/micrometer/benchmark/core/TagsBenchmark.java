@@ -15,6 +15,7 @@
  */
 package io.micrometer.benchmark.core;
 
+import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import org.openjdk.jmh.annotations.*;
 import org.openjdk.jmh.runner.Runner;
@@ -30,6 +31,60 @@ import java.util.concurrent.TimeUnit;
 @BenchmarkMode(Mode.AverageTime)
 @OutputTimeUnit(TimeUnit.NANOSECONDS)
 public class TagsBenchmark {
+
+    static final Tag[] orderedTagsSet10 = new Tag[] { Tag.of("key0", "value"), Tag.of("key1", "value"),
+            Tag.of("key2", "value"), Tag.of("key3", "value"), Tag.of("key4", "value"), Tag.of("key5", "value"),
+            Tag.of("key6", "value"), Tag.of("key7", "value"), Tag.of("key8", "value"), Tag.of("key9", "value") };
+
+    static final Tag[] orderedTagsSet4 = new Tag[] { Tag.of("key0", "value"), Tag.of("key1", "value"),
+            Tag.of("key2", "value"), Tag.of("key3", "value"), };
+
+    static final Tag[] orderedTagsSet2 = new Tag[] { Tag.of("key0", "value"), Tag.of("key1", "value"), };
+
+    static final Tag[] unorderedTagsSet10 = new Tag[] { Tag.of("key1", "value"), Tag.of("key2", "value"),
+            Tag.of("key3", "value"), Tag.of("key4", "value"), Tag.of("key5", "value"), Tag.of("key6", "value"),
+            Tag.of("key7", "value"), Tag.of("key8", "value"), Tag.of("key9", "value"), Tag.of("key0", "value") };
+
+    static final Tag[] unorderedTagsSet4 = new Tag[] { Tag.of("key1", "value"), Tag.of("key2", "value"),
+            Tag.of("key3", "value"), Tag.of("key0", "value"), };
+
+    static final Tag[] unorderedTagsSet2 = new Tag[] { Tag.of("key1", "value"), Tag.of("key0", "value") };
+
+    @Threads(1)
+    @Benchmark
+    public Tags tagsOfOrderedTagsSet10() {
+        return Tags.of(orderedTagsSet10);
+    }
+
+    @Threads(1)
+    @Benchmark
+    public Tags tagsOfOrderedTagsSet4() {
+        return Tags.of(orderedTagsSet4);
+    }
+
+    @Threads(1)
+    @Benchmark
+    public Tags tagsOfOrderedTagsSet2() {
+        return Tags.of(orderedTagsSet2);
+    }
+
+    @Threads(1)
+    @Benchmark
+    public Tags tagsOfUnorderedTagsSet10() {
+        return Tags.of(unorderedTagsSet10);
+    }
+
+    @Threads(1)
+    @Benchmark
+    public Tags tagsOfUnorderedTagsSet4() {
+        return Tags.of(unorderedTagsSet4);
+    }
+
+    @Threads(1)
+    @Benchmark
+    public Tags tagsOfUnorderedTagsSet2() {
+        return Tags.of(unorderedTagsSet2);
+    }
 
     @Threads(16)
     @Benchmark
