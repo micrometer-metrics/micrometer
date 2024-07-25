@@ -41,6 +41,7 @@ class JettyServerTimingInstrumentationVerificationTests extends HttpServerTiming
     @Override
     protected URI startInstrumentedWithMetricsServer() throws Exception {
         server = new Server(0);
+        @SuppressWarnings("deprecation")
         TimedHandler timedHandler = new TimedHandler(getRegistry(), Tags.empty());
         ServletContextHandler servletContextHandler = new ServletContextHandler();
         servletContextHandler.setContextPath("/");

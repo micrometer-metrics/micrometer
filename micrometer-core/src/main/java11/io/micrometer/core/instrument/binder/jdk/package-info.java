@@ -15,8 +15,10 @@
  */
 
 /**
- * Instrumentation of JDK classes.
+ * Instrumentation of JDK classes. Deprecated since 1.13.0 use the micrometer-java11
+ * module instead.
  */
+// Note we can't use the @deprecated JavaDoc tag due to compiler bug JDK-8160601
 @NonNullApi
 @NonNullFields
 package io.micrometer.core.instrument.binder.jdk;

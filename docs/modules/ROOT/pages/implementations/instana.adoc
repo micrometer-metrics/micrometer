@@ -1,6 +1,5 @@
 = Micrometer Instana
 Fabian Lange <fabian.lange@instana.com>
-:toc:
 :sectnums:
 :system: instana
 

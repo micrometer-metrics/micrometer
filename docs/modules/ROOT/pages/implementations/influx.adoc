@@ -1,5 +1,4 @@
 = Micrometer Influx
-:toc:
 :sectnums:
 :system: influx
 

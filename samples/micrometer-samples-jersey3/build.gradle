@@ -5,15 +5,15 @@ plugins {
 dependencies {
     implementation project(":micrometer-core")
 
-    // Test sample project with SLFJ4 2.x / Logback 1.4; see gh-3415
-    runtimeOnly(libs.logback14) {
+    // Test sample project with SLFJ4 2.x / Logback; see gh-3415
+    runtimeOnly(libs.logbackLatest) {
         version {
-            strictly libs.logback14.get().version
+            strictly libs.logbackLatest.get().version
         }
     }
-    testRuntimeOnly(libs.logback14) {
+    testRuntimeOnly(libs.logbackLatest) {
         version {
-            strictly libs.logback14.get().version
+            strictly libs.logbackLatest.get().version
         }
     }
 

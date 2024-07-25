@@ -27,7 +27,9 @@ import java.util.function.BiFunction;
  *
  * @since 1.11.0
  * @see JettyClientMetrics
+ * @deprecated since 1.13.0 in favor of the micrometer-jetty12 module
  */
+@Deprecated
 public class JettyClientContext extends RequestReplySenderContext<Request, Result> {
 
     private final BiFunction<Request, Result, String> uriPatternFunction;

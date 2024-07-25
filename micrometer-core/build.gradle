@@ -1,5 +1,5 @@
 plugins {
-    alias(libs.plugins.kotlin17)
+    alias(libs.plugins.kotlin19)
     id 'me.champeau.mrjar' version "0.1.1"
 }
 
@@ -12,12 +12,14 @@ multiRelease {
 tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).all {
     kotlinOptions {
         jvmTarget = javaTargetVersion
+        apiVersion = "1.7"
+        languageVersion = "1.7"
     }
 }
 
-tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinTest).all {
+compileTestKotlin {
     kotlinOptions {
-        jvmTarget = JavaVersion.toVersion(javaLanguageVersion)
+        jvmTarget = JavaVersion.VERSION_11
     }
 }
 
@@ -100,6 +102,7 @@ dependencies {
     optionalApi 'org.apache.tomcat.embed:tomcat-embed-core'
     optionalApi 'org.glassfish.jersey.core:jersey-server'
     optionalApi 'io.grpc:grpc-api'
+    optionalApi 'io.grpc:grpc-kotlin-stub'
     optionalApi 'io.netty:netty-transport'
 
     // apache httpcomponents monitoring
@@ -118,7 +121,7 @@ dependencies {
 
     optionalApi 'org.mongodb:mongodb-driver-sync'
 
-    optionalApi 'org.jooq:jooq'
+    optionalApi libs.jooq
 
     optionalApi 'org.apache.kafka:kafka-clients'
     optionalApi 'org.apache.kafka:kafka-streams'
@@ -153,8 +156,9 @@ dependencies {
     }
     // Needed for LogbackMetrics tests
     testImplementation libs.slf4jApi
+    testImplementation(libs.junitLoggingExtention)
 
-    testImplementation 'org.mockito:mockito-core'
+    testImplementation libs.mockitoCore5
 
     testImplementation 'org.hsqldb:hsqldb'
     testImplementation 'com.h2database:h2'
@@ -274,8 +278,13 @@ java11Test {
         it.getFile().getAbsolutePath().contains("java11Test")
     }
 
-    retry {
+    develocity.testRetry {
         maxFailures = 5
         maxRetries = 3
     }
+}
+
+compileJava11TestJava {
+    sourceCompatibility = JavaVersion.VERSION_11
+    targetCompatibility = JavaVersion.VERSION_11
 }

@@ -1,5 +1,4 @@
 = Micrometer Datadog
-:toc:
 :sectnums:
 :system: datadog
 
@@ -9,6 +8,8 @@ Datadog is a dimensional time-series SaaS with built-in dashboarding and alertin
 
 Micrometer supports shipping metrics to Datadog directly by using its HTTP API or by using DogStatsD through the xref:/implementations/statsD.adoc[StatsD registry].
 If you can choose between the two, the API approach is far more efficient.
+
+NOTE: If you encounter a rate limit problem with the Datadog API approach, try the DogStatsD approach or one of https://docs.datadoghq.com/metrics/guide/micrometer/[alternatives that are described in the Datadog documentation].
 
 === Direct to Datadog API Approach
 

@@ -27,8 +27,8 @@ import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.api.Request;
 import org.eclipse.jetty.client.util.StringContentProvider;
 import org.eclipse.jetty.server.Connector;
+import org.eclipse.jetty.server.NetworkTrafficServerConnector;
 import org.eclipse.jetty.server.Server;
-import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.util.component.LifeCycle;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -38,18 +38,25 @@ import java.util.concurrent.CountDownLatch;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
 
+/**
+ * Tests for {@link JettyConnectionMetrics} with Jetty 9.
+ */
 class JettyConnectionMetricsTest {
 
     private SimpleMeterRegistry registry = new SimpleMeterRegistry(SimpleConfig.DEFAULT, new MockClock());
 
     private Server server = new Server(0);
 
-    private ServerConnector connector = new ServerConnector(server);
+    private NetworkTrafficServerConnector connector = new NetworkTrafficServerConnector(server);
 
     private CloseableHttpClient client = HttpClients.createDefault();
 
-    void setup() throws Exception {
-        connector.addBean(new JettyConnectionMetrics(registry));
+    void setup(boolean instrumentServer) throws Exception {
+        if (instrumentServer) {
+            JettyConnectionMetrics metrics = new JettyConnectionMetrics(registry);
+            connector.addBean(metrics);
+            connector.addNetworkTrafficListener(metrics);
+        }
         server.setConnectors(new Connector[] { connector });
         server.start();
     }
@@ -62,8 +69,21 @@ class JettyConnectionMetricsTest {
     }
 
     @Test
+    void directServerConnectorInstrumentation() throws Exception {
+        setup(true);
+        contributesServerConnectorMetrics();
+    }
+
+    @Test
+    void addToAllConnectorsInstrumentation() throws Exception {
+        server.setConnectors(new Connector[] { connector });
+        JettyConnectionMetrics.addToAllConnectors(server, registry);
+        server.start();
+
+        contributesServerConnectorMetrics();
+    }
+
     void contributesServerConnectorMetrics() throws Exception {
-        setup();
         HttpPost post = new HttpPost("http://localhost:" + connector.getLocalPort());
         post.setEntity(new StringEntity("123456"));
 
@@ -93,7 +113,7 @@ class JettyConnectionMetricsTest {
 
     @Test
     void contributesClientConnectorMetrics() throws Exception {
-        setup();
+        setup(false);
         HttpClient httpClient = new HttpClient();
         httpClient.setFollowRedirects(false);
         httpClient.addBean(new JettyConnectionMetrics(registry));
@@ -116,7 +136,6 @@ class JettyConnectionMetricsTest {
         assertThat(latch.await(10, SECONDS)).isTrue();
         assertThat(registry.get("jetty.connections.max").gauge().value()).isEqualTo(1.0);
         assertThat(registry.get("jetty.connections.request").tag("type", "client").timer().count()).isEqualTo(1);
-        assertThat(registry.get("jetty.connections.bytes.out").summary().totalAmount()).isGreaterThan(1);
     }
 
     @Test

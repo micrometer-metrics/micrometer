@@ -20,6 +20,7 @@ import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationConvention;
 import io.micrometer.observation.docs.ObservationDocumentation;
 
+@SuppressWarnings("deprecation")
 enum HttpClientObservationDocumentation implements ObservationDocumentation {
 
     /**

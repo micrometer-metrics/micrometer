@@ -42,6 +42,7 @@
 ** xref:reference/db.adoc[Database]
 ** xref:reference/grpc.adoc[gRPC]
 ** xref:reference/httpcomponents.adoc[HttpComponents Client]
+** xref:reference/java-httpclient.adoc[Java HttpClient]
 ** xref:reference/jetty.adoc[Jetty and Jersey]
 ** xref:reference/jvm.adoc[JVM]
 ** xref:reference/kafka.adoc[Kafka]

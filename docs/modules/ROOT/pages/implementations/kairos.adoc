@@ -1,5 +1,4 @@
 = Micrometer KairosDB
-:toc:
 :sectnums:
 :system: kairos
 

@@ -108,8 +108,7 @@ public abstract class PushMeterRegistry extends MeterRegistry {
             stop();
 
         if (config.enabled()) {
-            logger.info("publishing metrics for " + getClass().getSimpleName() + " every "
-                    + TimeUtils.format(config.step()));
+            logger.info(startMessage());
 
             scheduledExecutorService = Executors.newSingleThreadScheduledExecutor(threadFactory);
             // if aligned, time publication to happen just after StepValue finishes the
@@ -122,6 +121,17 @@ public abstract class PushMeterRegistry extends MeterRegistry {
             scheduledExecutorService.scheduleAtFixedRate(this::publishSafelyOrSkipIfInProgress, initialDelayMillis,
                     stepMillis, TimeUnit.MILLISECONDS);
         }
+    }
+
+    /**
+     * Message that will be logged when the registry is {@link #start(ThreadFactory)
+     * started}. This can be overridden to customize the message with info specific to the
+     * registry implementation that may be helpful in troubleshooting. By default, the
+     * registry class name and step interval are included.
+     * @return message to log on registry start
+     */
+    protected String startMessage() {
+        return "publishing metrics for " + getClass().getSimpleName() + " every " + TimeUtils.format(config.step());
     }
 
     public void stop() {

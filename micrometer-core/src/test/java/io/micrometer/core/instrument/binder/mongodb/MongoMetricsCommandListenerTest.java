@@ -79,7 +79,7 @@ class MongoMetricsCommandListenerTest extends AbstractMongoDbTest {
         mongo.getDatabase("test").getCollection("testCol").insertOne(new Document("testDoc", new Date()));
 
         Tags tags = Tags.of("cluster.id", clusterId.get(), "server.address", String.format("%s:%s", host, port),
-                "command", "insert", "collection", "testCol", "status", "SUCCESS");
+                "command", "insert", "database", "test", "collection", "testCol", "status", "SUCCESS");
         assertThat(registry.get("mongodb.driver.commands").tags(tags).timer().count()).isEqualTo(1);
         // end::example[]
     }
@@ -89,7 +89,7 @@ class MongoMetricsCommandListenerTest extends AbstractMongoDbTest {
         mongo.getDatabase("test").getCollection("testCol").dropIndex("nonExistentIndex");
 
         Tags tags = Tags.of("cluster.id", clusterId.get(), "server.address", String.format("%s:%s", host, port),
-                "command", "dropIndexes", "collection", "testCol", "status", "FAILED");
+                "command", "dropIndexes", "database", "test", "collection", "testCol", "status", "FAILED");
         assertThat(registry.get("mongodb.driver.commands").tags(tags).timer().count()).isEqualTo(1);
     }
 
@@ -114,7 +114,8 @@ class MongoMetricsCommandListenerTest extends AbstractMongoDbTest {
         try (MongoClient mongo = MongoClients.create(settings)) {
             mongo.getDatabase("test").getCollection("testCol").insertOne(new Document("testDoc", new Date()));
             Tags tags = Tags.of("cluster.id", clusterId.get(), "server.address", String.format("%s:%s", host, port),
-                    "command", "insert", "collection", "testCol", "status", "SUCCESS", "mongoz", "5150");
+                    "command", "insert", "database", "test", "collection", "testCol", "status", "SUCCESS", "mongoz",
+                    "5150");
             assertThat(registry.get("mongodb.driver.commands").tags(tags).timer().count()).isEqualTo(1);
         }
     }
@@ -140,7 +141,8 @@ class MongoMetricsCommandListenerTest extends AbstractMongoDbTest {
         try (MongoClient mongo = MongoClients.create(settings)) {
             mongo.getDatabase("test").getCollection("testCol").dropIndex("nonExistentIndex");
             Tags tags = Tags.of("cluster.id", clusterId.get(), "server.address", String.format("%s:%s", host, port),
-                    "command", "dropIndexes", "collection", "testCol", "status", "FAILED", "mongoz", "5150");
+                    "command", "dropIndexes", "database", "test", "collection", "testCol", "status", "FAILED", "mongoz",
+                    "5150");
             assertThat(registry.get("mongodb.driver.commands").tags(tags).timer().count()).isEqualTo(1);
         }
     }

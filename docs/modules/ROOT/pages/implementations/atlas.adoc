@@ -1,5 +1,4 @@
 = Micrometer Atlas
-:toc:
 :sectnums:
 :system: atlas
 

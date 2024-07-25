@@ -32,6 +32,7 @@ import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@SuppressWarnings("deprecation")
 class Jersey3Test extends JerseyTest {
 
     static final String TIMER_METRIC_NAME = "http.server.requests";

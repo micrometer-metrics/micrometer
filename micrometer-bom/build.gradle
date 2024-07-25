@@ -17,6 +17,7 @@ dependencies {
                     name: it.name,
                     version: it.version.toString())
         }
+        api libs.contextPropagation
     }
 }
 

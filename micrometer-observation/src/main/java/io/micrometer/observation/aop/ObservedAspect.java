@@ -68,6 +68,7 @@ import java.util.function.Predicate;
  * </pre>
  *
  * @author Jonatan Ivanov
+ * @author Yanming Zhou
  * @since 1.10.0
  */
 @Aspect
@@ -104,7 +105,7 @@ public class ObservedAspect {
         this.shouldSkip = shouldSkip;
     }
 
-    @Around("@within(io.micrometer.observation.annotation.Observed)")
+    @Around("@within(io.micrometer.observation.annotation.Observed) and not @annotation(io.micrometer.observation.annotation.Observed)")
     @Nullable
     public Object observeClass(ProceedingJoinPoint pjp) throws Throwable {
         if (shouldSkip.test(pjp)) {

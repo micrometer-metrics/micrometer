@@ -30,6 +30,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.net.URI;
 
+@SuppressWarnings("deprecation")
 class JerseyServerTimingInstrumentationVerificationTests extends HttpServerTimingInstrumentationVerificationTests {
 
     JerseyTest jerseyTest;

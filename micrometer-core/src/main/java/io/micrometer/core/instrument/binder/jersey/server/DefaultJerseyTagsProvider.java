@@ -26,7 +26,9 @@ import org.glassfish.jersey.server.monitoring.RequestEvent;
  * @author Michael Weirauch
  * @author Johnny Lim
  * @since 1.8.0
+ * @deprecated since 1.13.0 use the jersey-micrometer module in the Jersey project instead
  */
+@Deprecated
 public final class DefaultJerseyTagsProvider implements JerseyTagsProvider {
 
     @Override

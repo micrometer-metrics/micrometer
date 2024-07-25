@@ -39,6 +39,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @author Michael Weirauch
  * @author Johnny Lim
  */
+@SuppressWarnings("deprecation")
 class MetricsRequestEventListenerTest extends JerseyTest {
 
     static {

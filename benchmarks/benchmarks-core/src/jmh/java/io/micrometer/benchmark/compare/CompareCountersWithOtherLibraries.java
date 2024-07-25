@@ -116,14 +116,14 @@ public class CompareCountersWithOtherLibraries {
     @State(Scope.Benchmark)
     public static class PrometheusState {
 
-        io.prometheus.client.Counter counter;
+        io.prometheus.metrics.core.metrics.Counter counter;
 
-        io.prometheus.client.Counter counterWithTags;
+        io.prometheus.metrics.core.metrics.Counter counterWithTags;
 
         @Setup(Level.Trial)
         public void setup() {
-            counter = io.prometheus.client.Counter.build().name("counter").help("A counter").create();
-            counterWithTags = io.prometheus.client.Counter.build()
+            counter = io.prometheus.metrics.core.metrics.Counter.builder().name("counter").help("A counter").register();
+            counterWithTags = io.prometheus.metrics.core.metrics.Counter.builder()
                 .name("counter")
                 .help("Counter with two tags declared")
                 .labelNames("key1", "key2")
@@ -172,7 +172,7 @@ public class CompareCountersWithOtherLibraries {
 
     @Benchmark
     public void prometheusCounterWithTags(PrometheusState state) {
-        state.counterWithTags.labels("value1", "value2").inc();
+        state.counterWithTags.labelValues("value1", "value2").inc();
     }
 
     public static void main(String[] args) throws RunnerException {

@@ -40,7 +40,9 @@ import java.util.function.BiFunction;
  *
  * @author Jon Schneider
  * @since 1.5.0
+ * @deprecated since 1.13.0 in favor of the micrometer-jetty12 module
  */
+@Deprecated
 @Incubating(since = "1.5.0")
 public class JettyClientMetrics implements Request.Listener {
 

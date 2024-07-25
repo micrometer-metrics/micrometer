@@ -46,6 +46,10 @@ public class GrpcServerObservationContext extends RequestReplyReceiverContext<Me
     @Nullable
     private String authority;
 
+    private Metadata headers;
+
+    private Metadata trailers;
+
     public GrpcServerObservationContext(Getter<Metadata> getter) {
         super(getter);
     }
@@ -98,6 +102,42 @@ public class GrpcServerObservationContext extends RequestReplyReceiverContext<Me
 
     public void setAuthority(@Nullable String authority) {
         this.authority = authority;
+    }
+
+    /**
+     * Response headers.
+     * @return response headers
+     * @since 1.13.0
+     */
+    public Metadata getHeaders() {
+        return this.headers;
+    }
+
+    /**
+     * Set response headers.
+     * @param headers response headers
+     * @since 1.13.0
+     */
+    public void setHeaders(Metadata headers) {
+        this.headers = headers;
+    }
+
+    /**
+     * Trailers.
+     * @return trailers
+     * @since 1.13.0
+     */
+    public Metadata getTrailers() {
+        return this.trailers;
+    }
+
+    /**
+     * Set trailers.
+     * @param trailers
+     * @since 1.13.0
+     */
+    public void setTrailers(Metadata trailers) {
+        this.trailers = trailers;
     }
 
 }

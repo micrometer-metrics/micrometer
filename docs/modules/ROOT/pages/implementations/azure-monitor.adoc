@@ -1,5 +1,4 @@
 = Micrometer Azure Monitor
-:toc:
 :sectnums:
 :system: azure-monitor
 

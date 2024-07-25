@@ -25,6 +25,7 @@ import org.eclipse.jetty.client.util.BytesContentProvider;
 
 import java.net.URI;
 
+@SuppressWarnings("deprecation")
 class JettyClientTimingInstrumentationVerificationTests
         extends HttpClientTimingInstrumentationVerificationTests<HttpClient> {
 

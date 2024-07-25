@@ -1,5 +1,4 @@
 = Micrometer Ganglia
-:toc:
 :sectnums:
 :system: ganglia
 

@@ -1,5 +1,4 @@
 = Micrometer JMX
-:toc:
 :sectnums:
 :system: jmx
 

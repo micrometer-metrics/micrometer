@@ -2,19 +2,29 @@ plugins {
     id "me.champeau.jmh" version "0.7.2"
 }
 
+// Uncomment as needed for benchmarking against released versions of Micrometer
+//repositories {
+//    mavenCentral()
+//    maven {
+//        url "https://repo.spring.io/milestone"
+//    }
+//}
+
 dependencies {
     jmh project(':micrometer-core')
+//    jmh 'io.micrometer:micrometer-core:1.13.0-M2'
     jmh project(':micrometer-registry-prometheus')
+//    jmh 'io.micrometer:micrometer-registry-prometheus:1.13.0-M2'
 
     jmh libs.dropwizardMetricsCore5
-    jmh libs.prometheusClient
+    jmh libs.prometheusMetrics
 
-    jmh 'io.dropwizard.metrics:metrics-core'
-    jmh 'com.google.guava:guava'
+    jmh libs.dropwizardMetricsCore
+    jmh libs.guava
 
     jmh libs.jmhCore
 
-    jmh 'ch.qos.logback:logback-classic'
+    jmh libs.logback12
 
     // Nebula doesn't like having jmhAnnotationProcessor without jmh so we just add it twice.
     jmh libs.jmhAnnotationProcessor

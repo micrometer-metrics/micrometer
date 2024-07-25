@@ -30,10 +30,13 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
+ * @deprecated since 1.13.0, Hystrix is no longer in active development, and is currently
+ * in maintenance mode.
  * @author Clint Checketts
  */
 @NonNullApi
 @NonNullFields
+@Deprecated
 public class MicrometerMetricsPublisherCommand implements HystrixMetricsPublisherCommand {
 
     private static final InternalLogger LOG = InternalLoggerFactory
