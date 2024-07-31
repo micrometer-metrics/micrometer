@@ -129,12 +129,16 @@ public class CommonsObjectPool2Metrics implements MeterBinder, AutoCloseable {
 
     private Iterable<Tag> nameTag(ObjectName name, String type)
             throws AttributeNotFoundException, MBeanException, ReflectionException, InstanceNotFoundException {
+
         Tags tags = Tags.of("name", name.getKeyProperty("name"), "type", type);
+        String factoryType = "none"; // Default value for factoryType if not available
+
         if (Objects.equals(type, "GenericObjectPool")) {
             // for GenericObjectPool, we want to include the name and factoryType as tags
-            String factoryType = mBeanServer.getAttribute(name, "FactoryType").toString();
-            tags = Tags.concat(tags, "factoryType", factoryType);
+            factoryType = mBeanServer.getAttribute(name, "FactoryType").toString();
         }
+
+        tags = Tags.concat(tags, "factoryType", factoryType);
         return tags;
     }
 
