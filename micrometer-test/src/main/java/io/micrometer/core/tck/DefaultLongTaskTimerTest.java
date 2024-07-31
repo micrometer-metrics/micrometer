@@ -24,8 +24,12 @@ import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.internal.DefaultLongTaskTimer;
 import io.micrometer.core.instrument.simple.SimpleConfig;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
+
+import java.io.ByteArrayOutputStream;
+
+import java.io.PrintStream;
+
+import org.junit.jupiter.api.*;
 
 import java.time.Duration;
 import java.util.Arrays;
@@ -33,9 +37,21 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static io.micrometer.core.instrument.MockClock.clock;
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.*;
 
 public class DefaultLongTaskTimerTest {
+
+    final ByteArrayOutputStream myErr = new ByteArrayOutputStream();
+
+    @BeforeEach
+    void setup() {
+        System.setErr(new PrintStream(myErr));
+    }
+
+    @AfterAll
+    static void cleanup() {
+        System.setErr(System.err);
+    }
 
     @Test
     @DisplayName("supports sending histograms of active task duration")
@@ -95,6 +111,26 @@ public class DefaultLongTaskTimerTest {
         while (index < countAtBuckets.length) {
             assertThat(countAtBuckets[index++].count()).isEqualTo(2);
         }
+    }
+
+    @Test
+    void histogramToStringNotThrowingException() throws InterruptedException {
+        SimpleMeterRegistry simpleMeterRegistry = new SimpleMeterRegistry();
+
+        LongTaskTimer timer = LongTaskTimer.builder("jobrunr.jobs")
+            .publishPercentiles(0.25, 0.5, 0.75, 0.8, 0.9, 0.95)
+            .publishPercentileHistogram()
+            .register(simpleMeterRegistry);
+        LongTaskTimer.Sample start = timer.start();
+        Thread.sleep(10);
+
+        assertThatNoException().isThrownBy(() -> {
+            simpleMeterRegistry.getMetersAsString();
+            start.stop();
+            simpleMeterRegistry.getMetersAsString();
+            String standardOutput = myErr.toString();
+            assertThat(standardOutput).doesNotContain("ArrayIndexOutOfBoundsException");
+        });
     }
 
 }
