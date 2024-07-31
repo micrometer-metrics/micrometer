@@ -129,17 +129,18 @@ public class CommonsObjectPool2Metrics implements MeterBinder, AutoCloseable {
 
     private Iterable<Tag> nameTag(ObjectName name, String type)
             throws AttributeNotFoundException, MBeanException, ReflectionException, InstanceNotFoundException {
+        return Tags.of("name", name.getKeyProperty("name"), "type", type, "factoryType", getFactoryType(name, type));
+    }
 
-        Tags tags = Tags.of("name", name.getKeyProperty("name"), "type", type);
-        String factoryType = "none"; // Default value for factoryType if not available
-
+    private String getFactoryType(ObjectName name, String type)
+            throws ReflectionException, AttributeNotFoundException, InstanceNotFoundException, MBeanException {
         if (Objects.equals(type, "GenericObjectPool")) {
             // for GenericObjectPool, we want to include the name and factoryType as tags
-            factoryType = mBeanServer.getAttribute(name, "FactoryType").toString();
+            return mBeanServer.getAttribute(name, "FactoryType").toString();
         }
-
-        tags = Tags.concat(tags, "factoryType", factoryType);
-        return tags;
+        else {
+            return "none";
+        }
     }
 
     private void registerMetricsEventually(String type, BiConsumer<ObjectName, Tags> perObject) {
@@ -174,36 +175,34 @@ public class CommonsObjectPool2Metrics implements MeterBinder, AutoCloseable {
                 // in notification listener, we cannot get attributes for the registered
                 // object,
                 // so we do it later time in a separate thread.
-                (notification, handback) -> {
-                    executor.execute(() -> {
-                        MBeanServerNotification mbs = (MBeanServerNotification) notification;
-                        ObjectName o = mbs.getMBeanName();
-                        Iterable<Tag> nameTags = emptyList();
-                        int maxTries = 3;
-                        for (int i = 0; i < maxTries; i++) {
-                            try {
-                                Thread.sleep(1000);
-                            }
-                            catch (InterruptedException e) {
-                                Thread.currentThread().interrupt();
-                                throw new RuntimeException(e);
-                            }
-                            try {
-                                nameTags = nameTag(o, type);
-                                break;
-                            }
-                            catch (AttributeNotFoundException | MBeanException | ReflectionException
-                                    | InstanceNotFoundException e) {
-                                if (i == maxTries - 1) {
-                                    log.error("can not set name tag", e);
-                                }
+                (notification, handback) -> executor.execute(() -> {
+                    MBeanServerNotification mbs = (MBeanServerNotification) notification;
+                    ObjectName o = mbs.getMBeanName();
+                    Iterable<Tag> nameTags = emptyList();
+                    int maxTries = 3;
+                    for (int i = 0; i < maxTries; i++) {
+                        try {
+                            Thread.sleep(1000);
+                        }
+                        catch (InterruptedException e) {
+                            Thread.currentThread().interrupt();
+                            throw new RuntimeException(e);
+                        }
+                        try {
+                            nameTags = nameTag(o, type);
+                            break;
+                        }
+                        catch (AttributeNotFoundException | MBeanException | ReflectionException
+                                | InstanceNotFoundException e) {
+                            if (i == maxTries - 1) {
+                                log.error("can not set name tag", e);
                             }
                         }
-                        perObject.accept(o, Tags.concat(tags, nameTags));
-                    });
-                };
+                    }
+                    perObject.accept(o, Tags.concat(tags, nameTags));
+                });
 
-        NotificationFilter filter = (NotificationFilter) notification -> {
+        NotificationFilter filter = notification -> {
             if (!MBeanServerNotification.REGISTRATION_NOTIFICATION.equals(notification.getType()))
                 return false;
             ObjectName obj = ((MBeanServerNotification) notification).getMBeanName();
