@@ -316,7 +316,7 @@ class OtlpDeltaMeterRegistryTest extends OtlpMeterRegistryTest {
         size.record(100);
         size.record(15);
         size.record(2233);
-        stepOverNStep(1);
+        stepOverNStep(3);
         size.record(204);
 
         Metric metric = writeToMetric(size);
