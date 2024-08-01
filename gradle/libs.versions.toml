@@ -56,7 +56,7 @@ maven-resolver = "1.8.2"
 # 5.x requires JDK 11.
 mockito = "4.11.0"
 mongo = "4.6.1"
-netty = "4.1.111.Final"
+netty = "4.1.112.Final"
 newrelic-api = "5.14.0"
 okhttp = "4.11.0"
 postgre = "42.3.10"
