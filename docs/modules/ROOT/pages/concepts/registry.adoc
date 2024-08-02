@@ -3,6 +3,8 @@
 
 A `Meter` is the interface for collecting a set of measurements (which we individually call metrics) about your application. Meters in Micrometer are created from and held in a `MeterRegistry`. Each supported monitoring system has an implementation of `MeterRegistry`. How a registry is created varies for each implementation.
 
+TIP: Recoding a measurement for a `Meter` is expected to be a simple math/tallying operation that will not consume any significant amount of computing time or throw exceptions. Transferring metrics to an external monitoring system is a scheduled operation on a separate thread and will not interfere with meter recordings.
+
 Micrometer includes a `SimpleMeterRegistry` that holds the latest value of each meter in memory and does not export the data anywhere. If you do not yet have a preferred monitoring system, you can get started playing with metrics by using the simple registry:
 
 ====
