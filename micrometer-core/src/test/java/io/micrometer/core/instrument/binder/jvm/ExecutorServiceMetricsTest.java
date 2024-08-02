@@ -156,11 +156,13 @@ class ExecutorServiceMetricsTest {
     @DisplayName("ExecutorService can be monitored with a default set of metrics")
     @ParameterizedTest
     @CsvSource({ "custom,custom.", "custom.,custom.", ",''", "' ',''" })
-    void monitorExecutorServiceAfterShutdown(String metricPrefix, String expectedMetricPrefix) throws InterruptedException {
+    void monitorExecutorServiceAfterShutdown(String metricPrefix, String expectedMetricPrefix)
+            throws InterruptedException {
         var exec = Executors.newFixedThreadPool(2);
         var monitorExecutorService = monitorExecutorService("exec", metricPrefix, exec);
         assertThreadPoolExecutorMetrics("exec", expectedMetricPrefix);
-        assertThat(registry.get(expectedMetricPrefix + "executor.pool.core").tags(userTags).gauge().value()).isEqualTo(2L);
+        assertThat(registry.get(expectedMetricPrefix + "executor.pool.core").tags(userTags).gauge().value())
+            .isEqualTo(2L);
 
         monitorExecutorService.shutdownNow();
         monitorExecutorService.awaitTermination(1, TimeUnit.SECONDS);
@@ -169,7 +171,8 @@ class ExecutorServiceMetricsTest {
         monitorExecutorService("exec", metricPrefix, exec);
         assertThreadPoolExecutorMetrics("exec", expectedMetricPrefix);
 
-        assertThat(registry.get(expectedMetricPrefix + "executor.pool.core").tags(userTags).gauge().value()).isEqualTo(3L);
+        assertThat(registry.get(expectedMetricPrefix + "executor.pool.core").tags(userTags).gauge().value())
+            .isEqualTo(3L);
     }
 
     @DisplayName("No exception thrown trying to monitor Executors private class")

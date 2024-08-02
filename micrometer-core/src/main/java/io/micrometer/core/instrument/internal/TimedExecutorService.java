@@ -37,6 +37,7 @@ public class TimedExecutorService implements ExecutorService {
     private final MeterRegistry registry;
 
     private final ExecutorService delegate;
+
     private final Set<Meter.Id> registeredMeterIds;
 
     private final Timer executionTimer;
@@ -54,7 +55,7 @@ public class TimedExecutorService implements ExecutorService {
     }
 
     public TimedExecutorService(MeterRegistry registry, ExecutorService delegate, String executorServiceName,
-                                String metricPrefix, Iterable<Tag> tags, Set<Meter.Id> registeredMeterIds) {
+            String metricPrefix, Iterable<Tag> tags, Set<Meter.Id> registeredMeterIds) {
         this.registry = registry;
         this.delegate = delegate;
         this.registeredMeterIds = registeredMeterIds;
