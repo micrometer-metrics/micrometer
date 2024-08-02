@@ -154,6 +154,8 @@ class ExecutorServiceMetricsTest {
     }
 
     @DisplayName("ExecutorService can be monitored with a default set of metrics")
+    @DisabledForJreRange(min = JRE.JAVA_16,
+            disabledReason = "See gh-2317 for why we can't run this full test on Java 16+")
     @ParameterizedTest
     @CsvSource({ "custom,custom.", "custom.,custom.", ",''", "' ',''" })
     void monitorExecutorServiceAfterShutdown(String metricPrefix, String expectedMetricPrefix)
