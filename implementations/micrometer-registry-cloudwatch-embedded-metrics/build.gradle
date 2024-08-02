@@ -1,0 +1,9 @@
+dependencies {
+    api project(':micrometer-core')
+
+    api 'software.amazon.cloudwatchlogs:aws-embedded-metrics:4.1.1'
+    implementation 'org.slf4j:slf4j-api'
+
+    testImplementation libs.mockitoCore5
+    testImplementation project(':micrometer-test')
+}
