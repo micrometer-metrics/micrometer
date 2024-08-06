@@ -103,8 +103,8 @@ public abstract class MeterRegistry {
 
     /**
      * write/remove guarded by meterMapLock, read in
-     * {@link this#getOrCreateMeter(DistributionStatisticConfig, BiFunction, Id,
-     * Function)} is unguarded
+     * {@link #getOrCreateMeter(DistributionStatisticConfig, BiFunction, Id, Function)} is
+     * unguarded
      */
     private final Map<Id, Meter> preFilterIdToMeterMap = new HashMap<>();
 
@@ -755,15 +755,16 @@ public abstract class MeterRegistry {
         if (meterMap.containsKey(mappedId)) {
             synchronized (meterMapLock) {
                 final Meter removedMeter = meterMap.remove(mappedId);
-                Iterator<Map.Entry<Id, Meter>> iterator = preFilterIdToMeterMap.entrySet().iterator();
-                while (iterator.hasNext()) {
-                    Map.Entry<Id, Meter> nextEntry = iterator.next();
-                    if (nextEntry.getValue().equals(removedMeter)) {
-                        stalePreFilterIds.remove(nextEntry.getKey());
-                        iterator.remove();
-                    }
-                }
                 if (removedMeter != null) {
+                    Iterator<Map.Entry<Id, Meter>> iterator = preFilterIdToMeterMap.entrySet().iterator();
+                    while (iterator.hasNext()) {
+                        Map.Entry<Id, Meter> nextEntry = iterator.next();
+                        if (nextEntry.getValue().equals(removedMeter)) {
+                            stalePreFilterIds.remove(nextEntry.getKey());
+                            iterator.remove();
+                        }
+                    }
+
                     Set<Id> synthetics = syntheticAssociations.remove(mappedId);
                     if (synthetics != null) {
                         for (Id synthetic : synthetics) {

@@ -272,7 +272,6 @@ class MeterRegistryTest {
 
         assertThat(c1).isSameAs(c2);
         assertThat(registry.remove(c1)).isSameAs(c2);
-        assertThat(registry.remove(c2)).isNull();
         assertThat(registry.getMeters()).isEmpty();
     }
 
@@ -314,6 +313,7 @@ class MeterRegistryTest {
         Counter c1 = registry.counter("counter");
         // make c1 marked as stale
         registry.config().commonTags("common", "tag");
+        assertThat(registry._getStalePreFilterIds()).hasSize(1);
 
         registry.remove(c1.getId());
         assertThat(registry.getMeters()).isEmpty();
@@ -338,6 +338,7 @@ class MeterRegistryTest {
         Counter c1 = registry.counter("counter");
         // make c1 stale
         registry.config().meterFilter(MeterFilter.ignoreTags("abc"));
+        assertThat(registry._getStalePreFilterIds()).hasSize(1);
         // this should cause c1 (== c2) to be unmarked as stale
         Counter c2 = registry.counter("counter");
 
@@ -347,7 +348,7 @@ class MeterRegistryTest {
         assertThat(registry._getPreFilterIdToMeterMap()).hasSize(1);
         assertThat(registry._getStalePreFilterIds())
             .describedAs("If the meter-filter doesn't alter the meter creation, meters are never unmarked "
-                    + "from staleness and we end-up paying the additional cost everytime")
+                    + "from staleness and we end up paying the additional cost every time")
             .isEmpty();
     }
 
