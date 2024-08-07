@@ -11,7 +11,7 @@ dependencies {
 }
 
 jcstress {
-    jcstressDependency 'org.openjdk.jcstress:jcstress-core:0.16'
+    libs.jcstressCore
 
     verbose = true
 }
