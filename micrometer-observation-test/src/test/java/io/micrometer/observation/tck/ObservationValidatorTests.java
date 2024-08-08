@@ -195,4 +195,9 @@ class ObservationValidatorTests {
         observation.stop();
     }
 
+    @Test
+    void startErrorErrorStopShouldBeValid() {
+        Observation.start("test", registry).error(new RuntimeException()).error(new RuntimeException()).stop();
+    }
+
 }
