@@ -80,15 +80,20 @@ public class InvalidObservationException extends RuntimeException {
         private int findFirstRelevantStackTraceElementIndex(StackTraceElement[] stackTrace) {
             int index = -1;
             for (int i = 0; i < stackTrace.length; i++) {
-                String className = stackTrace[i].getClassName();
-                if (className.equals(Observation.class.getName())
-                        || className.equals("io.micrometer.observation.SimpleObservation")) {
+                if (isObservationRelated(stackTrace[i])) {
                     // the first relevant StackTraceElement is after the last Observation
                     index = i + 1;
                 }
             }
 
             return (index >= stackTrace.length) ? -1 : index;
+        }
+
+        private boolean isObservationRelated(StackTraceElement stackTraceElement) {
+            String className = stackTraceElement.getClassName();
+            return className.equals(Observation.class.getName())
+                    || className.equals("io.micrometer.observation.SimpleObservation")
+                    || className.startsWith("io.micrometer.observation.SimpleObservation$");
         }
 
         public EventName getEventName() {
