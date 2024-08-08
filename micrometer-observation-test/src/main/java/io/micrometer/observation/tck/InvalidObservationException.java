@@ -18,6 +18,10 @@ package io.micrometer.observation.tck;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.Observation.Context;
 
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
+
 /**
  * A {@link RuntimeException} that can be thrown when an invalid {@link Observation}
  * detected.
@@ -29,13 +33,83 @@ public class InvalidObservationException extends RuntimeException {
 
     private final Context context;
 
-    InvalidObservationException(String message, Context context) {
+    private final List<HistoryElement> history;
+
+    InvalidObservationException(String message, Context context, List<HistoryElement> history) {
         super(message);
         this.context = context;
+        this.history = history;
     }
 
     public Context getContext() {
         return context;
+    }
+
+    public List<HistoryElement> getHistory() {
+        return history;
+    }
+
+    @Override
+    public String toString() {
+        return super.toString() + "\n"
+                + history.stream().map(HistoryElement::toString).collect(Collectors.joining("\n"));
+    }
+
+    public static class HistoryElement {
+
+        private final EventName eventName;
+
+        private final StackTraceElement[] stackTrace;
+
+        HistoryElement(EventName eventName) {
+            this.eventName = eventName;
+            StackTraceElement[] currentStackTrace = Thread.getAllStackTraces().get(Thread.currentThread());
+            this.stackTrace = findRelevantStackTraceElements(currentStackTrace);
+        }
+
+        private StackTraceElement[] findRelevantStackTraceElements(StackTraceElement[] stackTrace) {
+            int index = findFirstRelevantStackTraceElementIndex(stackTrace);
+            if (index == -1) {
+                return new StackTraceElement[0];
+            }
+            else {
+                return Arrays.copyOfRange(stackTrace, index, stackTrace.length);
+            }
+        }
+
+        private int findFirstRelevantStackTraceElementIndex(StackTraceElement[] stackTrace) {
+            int index = -1;
+            for (int i = 0; i < stackTrace.length; i++) {
+                String className = stackTrace[i].getClassName();
+                if (className.equals(Observation.class.getName())
+                        || className.equals("io.micrometer.observation.SimpleObservation")) {
+                    // the first relevant StackTraceElement is after the last Observation
+                    index = i + 1;
+                }
+            }
+
+            return (index >= stackTrace.length) ? -1 : index;
+        }
+
+        public EventName getEventName() {
+            return eventName;
+        }
+
+        public StackTraceElement[] getStackTrace() {
+            return stackTrace;
+        }
+
+        @Override
+        public String toString() {
+            return eventName + ": " + stackTrace[0];
+        }
+
+    }
+
+    public enum EventName {
+
+        START, STOP, ERROR, EVENT, SCOPE_OPEN, SCOPE_CLOSE, SCOPE_RESET
+
     }
 
 }
