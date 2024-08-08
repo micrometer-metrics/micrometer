@@ -346,6 +346,18 @@ public interface DistributionSummary extends Meter, HistogramSupport {
         }
 
         /**
+         * Restricts the number of buckets/bin ranges used in histogram.
+         * @param maxBucketCount maximum number of buckets
+         * @return This builder
+         */
+        public Builder maxBucketCount(@Nullable Integer maxBucketCount) {
+            if (maxBucketCount != null) {
+                this.distributionConfigBuilder.maxBucketCount(maxBucketCount);
+            }
+            return this;
+        }
+
+        /**
          * Statistics emanating from a distribution summary like max, percentiles, and
          * histogram counts decay over time to give greater weight to recent samples
          * (exception: histogram counts are cumulative for those systems that expect

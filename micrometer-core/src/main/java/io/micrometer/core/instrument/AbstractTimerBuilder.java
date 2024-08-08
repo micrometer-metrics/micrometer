@@ -195,6 +195,18 @@ public abstract class AbstractTimerBuilder<B extends AbstractTimerBuilder<B>> {
     }
 
     /**
+     * Restricts the number of buckets/bin ranges used in histogram.
+     * @param maxBucketCount maximum number of buckets
+     * @return This builder
+     */
+    public B maxBucketCount(@Nullable Integer maxBucketCount) {
+        if (maxBucketCount != null) {
+            this.distributionConfigBuilder.maxBucketCount(maxBucketCount);
+        }
+        return (B) this;
+    }
+
+    /**
      * Statistics emanating from a timer like max, percentiles, and histogram counts decay
      * over time to give greater weight to recent samples (exception: histogram counts are
      * cumulative for those systems that expect cumulative histogram buckets). Samples are

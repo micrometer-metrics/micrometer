@@ -372,6 +372,47 @@ abstract class OtlpMeterRegistryTest {
     }
 
     @Test
+    void histogramWithCustomMaxBuckets() {
+        Timer timeWithExplicitBucketHistogram = Timer.builder("test.timer")
+            .maxBucketCount(10)
+            .publishPercentileHistogram(true)
+            .register(registry);
+
+        Timer timerWithExponentialHistogram = Timer.builder("test.timer1")
+            .publishPercentileHistogram(true)
+            .register(registryWithExponentialHistogram);
+        timerWithExponentialHistogram.record(Duration.ofMillis(2));
+        timerWithExponentialHistogram.record(Duration.ofMillis(60000)); // ~120 buckets
+                                                                        // with scale 3
+
+        Timer timerWithExponentialHistogramWithMaxBuckets = Timer.builder("test.timer2")
+            .maxBucketCount(80)
+            .publishPercentileHistogram(true)
+            .register(registryWithExponentialHistogram);
+        timerWithExponentialHistogramWithMaxBuckets.record(Duration.ofMillis(2));
+        timerWithExponentialHistogramWithMaxBuckets.record(Duration.ofMillis(60000)); // ~60
+                                                                                      // buckets
+                                                                                      // with
+                                                                                      // scale
+                                                                                      // 2
+
+        clock.add(exponentialHistogramOtlpConfig().step());
+        Metric metric = writeToMetric(timeWithExplicitBucketHistogram);
+        HistogramDataPoint dataPoint = metric.getHistogram().getDataPoints(0);
+        assertThat(dataPoint.getExplicitBoundsCount()).isEqualTo(10);
+
+        metric = writeToMetric(timerWithExponentialHistogram);
+        ExponentialHistogramDataPoint exponentialHistogramDataPoint = metric.getExponentialHistogram().getDataPoints(0);
+        assertThat(exponentialHistogramDataPoint.getScale()).isEqualTo(3);
+        assertThat(exponentialHistogramDataPoint.getPositive().getBucketCountsCount()).isLessThanOrEqualTo(160);
+
+        metric = writeToMetric(timerWithExponentialHistogramWithMaxBuckets);
+        exponentialHistogramDataPoint = metric.getExponentialHistogram().getDataPoints(0);
+        assertThat(exponentialHistogramDataPoint.getScale()).isEqualTo(2);
+        assertThat(exponentialHistogramDataPoint.getPositive().getBucketCountsCount()).isLessThanOrEqualTo(80);
+    }
+
+    @Test
     abstract void testMetricsStartAndEndTime();
 
     protected Metric writeToMetric(Meter meter) {

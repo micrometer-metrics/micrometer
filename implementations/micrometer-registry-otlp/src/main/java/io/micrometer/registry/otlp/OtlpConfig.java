@@ -218,12 +218,14 @@ public interface OtlpConfig extends PushRegistryConfig {
      * @since 1.14.0
      */
     default HistogramFlavour histogramFlavour() {
-        String histogramPreference = System.getenv().get("OTEL_EXPORTER_OTLP_METRICS_DEFAULT_HISTOGRAM_AGGREGATION");
-        if (histogramPreference == null) {
-            return getEnum(this, HistogramFlavour.class, "histogramFlavour")
-                .orElse(HistogramFlavour.EXPLICIT_BUCKET_HISTOGRAM);
-        }
-        return HistogramFlavour.fromString(histogramPreference);
+        return getEnum(this, HistogramFlavour.class, "histogramFlavour").orElseGet(() -> {
+            String histogramPreference = System.getenv()
+                .get("OTEL_EXPORTER_OTLP_METRICS_DEFAULT_HISTOGRAM_AGGREGATION");
+            if (histogramPreference != null) {
+                return HistogramFlavour.fromString(histogramPreference);
+            }
+            return HistogramFlavour.EXPLICIT_BUCKET_HISTOGRAM;
+        });
     }
 
     /**

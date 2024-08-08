@@ -266,6 +266,7 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
     protected DistributionStatisticConfig defaultHistogramConfig() {
         return DistributionStatisticConfig.builder()
             .expiry(this.config.step())
+            .maxBucketCount(this.config.maxBucketCount())
             .build()
             .merge(DistributionStatisticConfig.DEFAULT);
     }
@@ -405,10 +406,12 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
                     minimumExpectedValue = 0.0;
                 }
 
+                final int maxBucketCount = distributionStatisticConfig.getMaxBucketCount() != null
+                        ? distributionStatisticConfig.getMaxBucketCount() : otlpConfig.maxBucketCount();
                 return otlpConfig.aggregationTemporality() == AggregationTemporality.DELTA
-                        ? new DeltaBase2ExponentialHistogram(otlpConfig.maxScale(), otlpConfig.maxBucketCount(),
+                        ? new DeltaBase2ExponentialHistogram(otlpConfig.maxScale(), maxBucketCount,
                                 minimumExpectedValue, baseTimeUnit, clock, otlpConfig.step().toMillis())
-                        : new CumulativeBase2ExponentialHistogram(otlpConfig.maxScale(), otlpConfig.maxBucketCount(),
+                        : new CumulativeBase2ExponentialHistogram(otlpConfig.maxScale(), maxBucketCount,
                                 minimumExpectedValue, baseTimeUnit);
             }
 

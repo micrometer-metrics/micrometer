@@ -240,6 +240,7 @@ class OtlpCumulativeMeterRegistryTest extends OtlpMeterRegistryTest {
     void distributionSummaryWithHistogram() {
         DistributionSummary size = DistributionSummary.builder("http.request.size")
             .baseUnit(BaseUnits.BYTES)
+            .maxBucketCount(1000)
             .publishPercentileHistogram()
             .register(registry);
         size.record(100);

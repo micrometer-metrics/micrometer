@@ -237,4 +237,43 @@ class OtlpConfigTest {
         assertThat(otlpConfig.validate().isValid()).isFalse();
     }
 
+    @Test
+    void maxScaleAndMaxBucketsDefault() {
+        Map<String, String> properties = new HashMap<>();
+        properties.put("otlp.maxScale", "8");
+        properties.put("otlp.maxBucketCount", "80");
+
+        OtlpConfig otlpConfig = properties::get;
+        assertThat(otlpConfig.validate().isValid()).isTrue();
+        assertThat(otlpConfig.maxScale()).isSameAs(8);
+        assertThat(otlpConfig.maxBucketCount()).isSameAs(80);
+    }
+
+    @Test
+    void histogramPreference() {
+        Map<String, String> properties = new HashMap<>();
+        properties.put("otlp.histogramFlavour", "base2_exponential_bucket_histogram");
+
+        OtlpConfig otlpConfig = properties::get;
+        assertThat(otlpConfig.validate().isValid()).isTrue();
+        assertThat(otlpConfig.histogramFlavour()).isEqualTo(HistogramFlavour.BASE2_EXPONENTIAL_BUCKET_HISTOGRAM);
+    }
+
+    @Test
+    void histogramPreferenceConfigTakesPrecedenceOverEnvVars() throws Exception {
+        OtlpConfig config = k -> "base2_exponential_bucket_histogram";
+        withEnvironmentVariable("OTEL_EXPORTER_OTLP_METRICS_DEFAULT_HISTOGRAM_AGGREGATION", "explicit_bucket_histogram")
+            .execute(() -> assertThat(config.histogramFlavour())
+                .isEqualTo(HistogramFlavour.BASE2_EXPONENTIAL_BUCKET_HISTOGRAM));
+    }
+
+    @Test
+    void histogramPreferenceUseEnvVarWhenConfigNotSet() throws Exception {
+        OtlpConfig config = k -> null;
+        withEnvironmentVariable("OTEL_EXPORTER_OTLP_METRICS_DEFAULT_HISTOGRAM_AGGREGATION",
+                "base2_exponential_bucket_histogram")
+            .execute(() -> assertThat(config.histogramFlavour())
+                .isEqualTo(HistogramFlavour.BASE2_EXPONENTIAL_BUCKET_HISTOGRAM));
+    }
+
 }

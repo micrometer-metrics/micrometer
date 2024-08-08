@@ -22,6 +22,7 @@ import io.micrometer.core.instrument.internal.Mergeable;
 import java.time.Duration;
 import java.util.NavigableSet;
 import java.util.TreeSet;
+import java.util.stream.Collectors;
 import java.util.stream.LongStream;
 
 /**
@@ -41,6 +42,7 @@ public class DistributionStatisticConfig implements Mergeable<DistributionStatis
         .percentilePrecision(1)
         .minimumExpectedValue(1.0)
         .maximumExpectedValue(Double.POSITIVE_INFINITY)
+        .maxBucketCount(Integer.MAX_VALUE)
         .expiry(Duration.ofMinutes(2))
         .bufferLength(3)
         .build();
@@ -71,6 +73,9 @@ public class DistributionStatisticConfig implements Mergeable<DistributionStatis
     @Nullable
     private Integer bufferLength;
 
+    @Nullable
+    private Integer maxBucketCount;
+
     public static Builder builder() {
         return new Builder();
     }
@@ -96,6 +101,7 @@ public class DistributionStatisticConfig implements Mergeable<DistributionStatis
                     this.minimumExpectedValue == null ? parent.minimumExpectedValue : this.minimumExpectedValue)
             .maximumExpectedValue(
                     this.maximumExpectedValue == null ? parent.maximumExpectedValue : this.maximumExpectedValue)
+            .maxBucketCount(this.maxBucketCount == null ? parent.maxBucketCount : this.maxBucketCount)
             .expiry(this.expiry == null ? parent.expiry : this.expiry)
             .bufferLength(this.bufferLength == null ? parent.bufferLength : this.bufferLength)
             .build();
@@ -119,6 +125,10 @@ public class DistributionStatisticConfig implements Mergeable<DistributionStatis
             for (double sloBoundary : serviceLevelObjectives) {
                 buckets.add(sloBoundary);
             }
+        }
+
+        if (maxBucketCount != null && buckets.size() > maxBucketCount) {
+            return buckets.stream().limit(maxBucketCount).collect(Collectors.toCollection(TreeSet::new));
         }
 
         return buckets;
@@ -208,6 +218,11 @@ public class DistributionStatisticConfig implements Mergeable<DistributionStatis
     @Nullable
     public Double getMaximumExpectedValueAsDouble() {
         return maximumExpectedValue;
+    }
+
+    @Nullable
+    public Integer getMaxBucketCount() {
+        return maxBucketCount;
     }
 
     /**
@@ -454,6 +469,16 @@ public class DistributionStatisticConfig implements Mergeable<DistributionStatis
         }
 
         /**
+         * Restricts the number of buckets/bin ranges used in histogram.
+         * @param maxBucketCount maximum number of buckets
+         * @return This builder
+         */
+        public Builder maxBucketCount(@Nullable Integer maxBucketCount) {
+            config.maxBucketCount = maxBucketCount;
+            return this;
+        }
+
+        /**
          * @return A new immutable distribution configuration.
          */
         public DistributionStatisticConfig build() {
@@ -487,6 +512,10 @@ public class DistributionStatisticConfig implements Mergeable<DistributionStatis
                 rejectConfig("maximumExpectedValue (" + config.maximumExpectedValue
                         + ") must be equal to or greater than minimumExpectedValue (" + config.minimumExpectedValue
                         + ").");
+            }
+
+            if (config.maxBucketCount != null && config.maxBucketCount <= 0) {
+                rejectConfig("maxBucketCount (" + config.maxBucketCount + ") must be greater than zero");
             }
 
             if (distributionStatisticConfig.getServiceLevelObjectiveBoundaries() != null) {

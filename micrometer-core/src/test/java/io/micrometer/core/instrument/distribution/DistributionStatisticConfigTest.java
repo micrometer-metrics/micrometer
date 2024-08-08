@@ -75,4 +75,32 @@ class DistributionStatisticConfigTest {
             .satisfies(cause -> assertThat(cause.getMessage()).startsWith("Invalid distribution configuration:"));
     }
 
+    @Test
+    void maxBucketCountValidation() {
+        assertThatThrownBy(() -> DistributionStatisticConfig.builder().maxBucketCount(0).build())
+            .satisfies(cause -> assertThat(cause.getMessage()).startsWith("Invalid distribution configuration:"));
+    }
+
+    @Test
+    void bucketsSubSetOnMaxBucketCount() {
+        assertThat(DistributionStatisticConfig.builder()
+            .percentilesHistogram(true)
+            .build()
+            .merge(DistributionStatisticConfig.DEFAULT)
+            .getHistogramBuckets(true)).hasSize(276);
+        assertThat(DistributionStatisticConfig.builder()
+            .percentilesHistogram(true)
+            .maxBucketCount(10)
+            .build()
+            .merge(DistributionStatisticConfig.DEFAULT)
+            .getHistogramBuckets(true)).hasSize(10).containsExactly(1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0);
+        assertThat(DistributionStatisticConfig.builder()
+            .percentilesHistogram(true)
+            .minimumExpectedValue(2.0)
+            .maxBucketCount(10)
+            .build()
+            .merge(DistributionStatisticConfig.DEFAULT)
+            .getHistogramBuckets(true)).hasSize(10).containsExactly(2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0);
+    }
+
 }
