@@ -19,7 +19,12 @@ import io.micrometer.common.lang.Nullable;
 import io.micrometer.observation.Observation.Context;
 import io.micrometer.observation.Observation.Event;
 import io.micrometer.observation.ObservationHandler;
+import io.micrometer.observation.tck.InvalidObservationException.EventName;
+import io.micrometer.observation.tck.InvalidObservationException.HistoryElement;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
@@ -52,6 +57,7 @@ class ObservationValidator implements ObservationHandler<Context> {
 
     @Override
     public void onStart(Context context) {
+        addHistoryElement(context, EventName.START);
         Status status = context.get(Status.class);
         if (status != null) {
             consumer.accept(new ValidationResult("Invalid start: Observation has already been started", context));
@@ -63,31 +69,37 @@ class ObservationValidator implements ObservationHandler<Context> {
 
     @Override
     public void onError(Context context) {
+        addHistoryElement(context, EventName.ERROR);
         checkIfObservationWasStartedButNotStopped("Invalid error signal", context);
     }
 
     @Override
     public void onEvent(Event event, Context context) {
+        addHistoryElement(context, EventName.EVENT);
         checkIfObservationWasStartedButNotStopped("Invalid event signal", context);
     }
 
     @Override
     public void onScopeOpened(Context context) {
+        addHistoryElement(context, EventName.SCOPE_OPEN);
         checkIfObservationWasStartedButNotStopped("Invalid scope opening", context);
     }
 
     @Override
     public void onScopeClosed(Context context) {
+        addHistoryElement(context, EventName.SCOPE_CLOSE);
         checkIfObservationWasStartedButNotStopped("Invalid scope closing", context);
     }
 
     @Override
     public void onScopeReset(Context context) {
+        addHistoryElement(context, EventName.SCOPE_RESET);
         checkIfObservationWasStartedButNotStopped("Invalid scope resetting", context);
     }
 
     @Override
     public void onStop(Context context) {
+        addHistoryElement(context, EventName.STOP);
         Status status = checkIfObservationWasStartedButNotStopped("Invalid stop", context);
         if (status != null) {
             status.markStopped();
@@ -97,6 +109,14 @@ class ObservationValidator implements ObservationHandler<Context> {
     @Override
     public boolean supportsContext(Context context) {
         return supportsContextPredicate.test(context);
+    }
+
+    private void addHistoryElement(Context context, EventName eventName) {
+        if (!context.containsKey(History.class)) {
+            context.put(History.class, new History());
+        }
+        History history = context.get(History.class);
+        history.addHistoryElement(eventName);
     }
 
     @Nullable
@@ -113,7 +133,9 @@ class ObservationValidator implements ObservationHandler<Context> {
     }
 
     private static void throwInvalidObservationException(ValidationResult validationResult) {
-        throw new InvalidObservationException(validationResult.getMessage(), validationResult.getContext());
+        History history = validationResult.getContext().getOrDefault(History.class, new History());
+        throw new InvalidObservationException(validationResult.getMessage(), validationResult.getContext(),
+                history.getHistoryElements());
     }
 
     static class ValidationResult {
@@ -152,6 +174,20 @@ class ObservationValidator implements ObservationHandler<Context> {
 
         void markStopped() {
             stopped = true;
+        }
+
+    }
+
+    static class History {
+
+        private final List<HistoryElement> historyElements = new ArrayList<>();
+
+        private void addHistoryElement(EventName eventName) {
+            historyElements.add(new HistoryElement(eventName));
+        }
+
+        List<HistoryElement> getHistoryElements() {
+            return Collections.unmodifiableList(historyElements);
         }
 
     }
