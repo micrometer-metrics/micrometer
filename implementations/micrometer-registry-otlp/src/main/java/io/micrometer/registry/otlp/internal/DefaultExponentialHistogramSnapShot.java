@@ -15,7 +15,7 @@
  */
 package io.micrometer.registry.otlp.internal;
 
-import static io.micrometer.registry.otlp.internal.ExponentialHistogramSnapShot.ExponentialBucket.EMPTY_EXPONENTIAL_BUCKET;
+import static io.micrometer.registry.otlp.internal.ExponentialHistogramSnapShot.ExponentialBuckets.EMPTY_EXPONENTIAL_BUCKET;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -37,12 +37,12 @@ class DefaultExponentialHistogramSnapShot implements ExponentialHistogramSnapSho
 
     private final double zeroThreshold;
 
-    private final ExponentialBucket positive;
+    private final ExponentialBuckets positive;
 
-    private final ExponentialBucket negative;
+    private final ExponentialBuckets negative;
 
-    DefaultExponentialHistogramSnapShot(int scale, long zeroCount, double zeroThreshold, ExponentialBucket positive,
-            ExponentialBucket negative) {
+    DefaultExponentialHistogramSnapShot(int scale, long zeroCount, double zeroThreshold, ExponentialBuckets positive,
+            ExponentialBuckets negative) {
         this.scale = scale;
         this.zeroCount = zeroCount;
         this.zeroThreshold = zeroThreshold;
@@ -61,12 +61,12 @@ class DefaultExponentialHistogramSnapShot implements ExponentialHistogramSnapSho
     }
 
     @Override
-    public ExponentialBucket positive() {
+    public ExponentialBuckets positive() {
         return positive;
     }
 
     @Override
-    public ExponentialBucket negative() {
+    public ExponentialBuckets negative() {
         return negative;
     }
 

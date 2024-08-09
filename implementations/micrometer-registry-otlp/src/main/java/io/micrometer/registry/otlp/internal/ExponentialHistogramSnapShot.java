@@ -43,12 +43,12 @@ public interface ExponentialHistogramSnapShot {
     /**
      * Returns the positive range of exponential bucket counts.
      */
-    ExponentialBucket positive();
+    ExponentialBuckets positive();
 
     /**
      * Returns the negative range of exponential bucket counts.
      */
-    ExponentialBucket negative();
+    ExponentialBuckets negative();
 
     /**
      * Returns the threshold below which (inclusive) the values are counted in
@@ -58,16 +58,19 @@ public interface ExponentialHistogramSnapShot {
 
     boolean isEmpty();
 
-    final class ExponentialBucket {
+    /**
+     * Represents a dense representation exponential bucket counts.
+     */
+    final class ExponentialBuckets {
 
-        public static final ExponentialBucket EMPTY_EXPONENTIAL_BUCKET = new ExponentialBucket(0,
+        public static final ExponentialBuckets EMPTY_EXPONENTIAL_BUCKET = new ExponentialBuckets(0,
                 Collections.emptyList());
 
         private final int offset;
 
         private final List<Long> bucketCounts;
 
-        ExponentialBucket(int offset, List<Long> bucketCounts) {
+        ExponentialBuckets(int offset, List<Long> bucketCounts) {
             this.offset = offset;
             this.bucketCounts = bucketCounts;
         }

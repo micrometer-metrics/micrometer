@@ -413,11 +413,6 @@ public interface Timer extends Meter, HistogramSupport {
         }
 
         @Override
-        public Builder maxBucketCount(Integer maxBucketCount) {
-            return super.maxBucketCount(maxBucketCount);
-        }
-
-        @Override
         public Builder distributionStatisticExpiry(Duration expiry) {
             return super.distributionStatisticExpiry(expiry);
         }

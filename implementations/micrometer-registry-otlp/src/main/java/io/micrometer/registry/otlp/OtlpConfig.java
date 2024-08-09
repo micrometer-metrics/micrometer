@@ -204,27 +204,27 @@ public interface OtlpConfig extends PushRegistryConfig {
 
     /**
      * Histogram type to be preferred when histogram publishing is enabled. By default
-     * {@link HistogramFlavour#EXPLICIT_BUCKET_HISTOGRAM} is used for the supported
-     * meters. When this is set to
-     * {@link HistogramFlavour#BASE2_EXPONENTIAL_BUCKET_HISTOGRAM} and publishPercentiles
-     * are enabled {@link io.micrometer.registry.otlp.internal.Base2ExponentialHistogram}
-     * is used for recording distributions.
+     * {@link HistogramFlavor#EXPLICIT_BUCKET_HISTOGRAM} is used for the supported meters.
+     * When this is set to {@link HistogramFlavor#BASE2_EXPONENTIAL_BUCKET_HISTOGRAM} and
+     * publishPercentiles are enabled
+     * {@link io.micrometer.registry.otlp.internal.Base2ExponentialHistogram} is used for
+     * recording distributions.
      * <p>
      * Note: If specific SLO's are added as part of meters, this property is not honored
-     * and {@link HistogramFlavour#EXPLICIT_BUCKET_HISTOGRAM} is used for those meters.
+     * and {@link HistogramFlavor#EXPLICIT_BUCKET_HISTOGRAM} is used for those meters.
      * </p>
-     * @return - histogram flavour to be used
+     * @return - histogram flavor to be used
      *
      * @since 1.14.0
      */
-    default HistogramFlavour histogramFlavour() {
-        return getEnum(this, HistogramFlavour.class, "histogramFlavour").orElseGet(() -> {
+    default HistogramFlavor histogramFlavor() {
+        return getEnum(this, HistogramFlavor.class, "histogramFlavor").orElseGet(() -> {
             String histogramPreference = System.getenv()
                 .get("OTEL_EXPORTER_OTLP_METRICS_DEFAULT_HISTOGRAM_AGGREGATION");
             if (histogramPreference != null) {
-                return HistogramFlavour.fromString(histogramPreference);
+                return HistogramFlavor.fromString(histogramPreference);
             }
-            return HistogramFlavour.EXPLICIT_BUCKET_HISTOGRAM;
+            return HistogramFlavor.EXPLICIT_BUCKET_HISTOGRAM;
         });
     }
 

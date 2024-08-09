@@ -16,7 +16,7 @@
 package io.micrometer.registry.otlp;
 
 /**
- * Histogram Flavour to be used while recording distributions,
+ * Histogram Flavor to be used while recording distributions,
  *
  * @see <a href=
  * "https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk_exporters/otlp.md#additional-configuration">OTLP
@@ -24,14 +24,14 @@ package io.micrometer.registry.otlp;
  * @author Lenin Jaganathan
  * @since 1.14.0
  */
-public enum HistogramFlavour {
+public enum HistogramFlavor {
 
     EXPLICIT_BUCKET_HISTOGRAM, BASE2_EXPONENTIAL_BUCKET_HISTOGRAM;
 
     /**
-     * Converts a string to {@link HistogramFlavour} by using a case-insensitive matching.
+     * Converts a string to {@link HistogramFlavor} by using a case-insensitive matching.
      */
-    public static HistogramFlavour fromString(final String histogramPreference) {
+    public static HistogramFlavor fromString(final String histogramPreference) {
         if (BASE2_EXPONENTIAL_BUCKET_HISTOGRAM.name().equalsIgnoreCase(histogramPreference)) {
             return BASE2_EXPONENTIAL_BUCKET_HISTOGRAM;
         }

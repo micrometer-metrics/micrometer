@@ -28,7 +28,7 @@ import java.util.concurrent.atomic.LongAdder;
 
 class OtlpStepTimer extends AbstractTimer implements OtlpHistogramSupport {
 
-    private final HistogramFlavour histogramFlavour;
+    private final HistogramFlavor histogramFlavor;
 
     private final LongAdder count = new LongAdder();
 
@@ -54,7 +54,7 @@ class OtlpStepTimer extends AbstractTimer implements OtlpHistogramSupport {
         countTotal = new OtlpStepTuple2<>(clock, otlpConfig.step().toMillis(), 0L, 0L, count::sumThenReset,
                 total::sumThenReset);
         max = new StepMax(clock, otlpConfig.step().toMillis());
-        this.histogramFlavour = OtlpMeterRegistry.histogramFlavour(otlpConfig.histogramFlavour(),
+        this.histogramFlavor = OtlpMeterRegistry.histogramFlavor(otlpConfig.histogramFlavor(),
                 distributionStatisticConfig);
     }
 
@@ -100,7 +100,7 @@ class OtlpStepTimer extends AbstractTimer implements OtlpHistogramSupport {
 
     @Override
     public ExponentialHistogramSnapShot getExponentialHistogramSnapShot() {
-        if (histogramFlavour == HistogramFlavour.BASE2_EXPONENTIAL_BUCKET_HISTOGRAM) {
+        if (histogramFlavor == HistogramFlavor.BASE2_EXPONENTIAL_BUCKET_HISTOGRAM) {
             return ((Base2ExponentialHistogram) histogram).getLatestExponentialHistogramSnapshot();
         }
         return null;

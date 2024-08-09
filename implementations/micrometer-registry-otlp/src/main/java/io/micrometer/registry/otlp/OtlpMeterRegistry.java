@@ -266,7 +266,6 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
     protected DistributionStatisticConfig defaultHistogramConfig() {
         return DistributionStatisticConfig.builder()
             .expiry(this.config.step())
-            .maxBucketCount(this.config.maxBucketCount())
             .build()
             .merge(DistributionStatisticConfig.DEFAULT);
     }
@@ -393,25 +392,23 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
     static Histogram getHistogram(final Clock clock, final DistributionStatisticConfig distributionStatisticConfig,
             final OtlpConfig otlpConfig, @Nullable final TimeUnit baseTimeUnit) {
         // While publishing to OTLP, we export either Histogram datapoint (Explicit
-        // ExponentialBucket
+        // ExponentialBuckets
         // or Exponential) / Summary
         // datapoint. So, we will make the histogram either of them and not both.
         // Though AbstractTimer/Distribution Summary prefers publishing percentiles,
         // exporting of histograms over percentiles is preferred in OTLP.
         if (distributionStatisticConfig.isPublishingHistogram()) {
-            if (HistogramFlavour.BASE2_EXPONENTIAL_BUCKET_HISTOGRAM
-                .equals(histogramFlavour(otlpConfig.histogramFlavour(), distributionStatisticConfig))) {
+            if (HistogramFlavor.BASE2_EXPONENTIAL_BUCKET_HISTOGRAM
+                .equals(histogramFlavor(otlpConfig.histogramFlavor(), distributionStatisticConfig))) {
                 Double minimumExpectedValue = distributionStatisticConfig.getMinimumExpectedValueAsDouble();
                 if (minimumExpectedValue == null) {
                     minimumExpectedValue = 0.0;
                 }
 
-                final int maxBucketCount = distributionStatisticConfig.getMaxBucketCount() != null
-                        ? distributionStatisticConfig.getMaxBucketCount() : otlpConfig.maxBucketCount();
                 return otlpConfig.aggregationTemporality() == AggregationTemporality.DELTA
-                        ? new DeltaBase2ExponentialHistogram(otlpConfig.maxScale(), maxBucketCount,
+                        ? new DeltaBase2ExponentialHistogram(otlpConfig.maxScale(), otlpConfig.maxBucketCount(),
                                 minimumExpectedValue, baseTimeUnit, clock, otlpConfig.step().toMillis())
-                        : new CumulativeBase2ExponentialHistogram(otlpConfig.maxScale(), maxBucketCount,
+                        : new CumulativeBase2ExponentialHistogram(otlpConfig.maxScale(), otlpConfig.maxBucketCount(),
                                 minimumExpectedValue, baseTimeUnit);
             }
 
@@ -428,17 +425,17 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
         return NoopHistogram.INSTANCE;
     }
 
-    static HistogramFlavour histogramFlavour(HistogramFlavour preferredHistogramFlavour,
+    static HistogramFlavor histogramFlavor(HistogramFlavor preferredHistogramFlavor,
             DistributionStatisticConfig distributionStatisticConfig) {
 
         final double[] serviceLevelObjectiveBoundaries = distributionStatisticConfig
             .getServiceLevelObjectiveBoundaries();
         if (distributionStatisticConfig.isPublishingHistogram()
-                && preferredHistogramFlavour == HistogramFlavour.BASE2_EXPONENTIAL_BUCKET_HISTOGRAM
+                && preferredHistogramFlavor == HistogramFlavor.BASE2_EXPONENTIAL_BUCKET_HISTOGRAM
                 && (serviceLevelObjectiveBoundaries == null || serviceLevelObjectiveBoundaries.length == 0)) {
-            return HistogramFlavour.BASE2_EXPONENTIAL_BUCKET_HISTOGRAM;
+            return HistogramFlavor.BASE2_EXPONENTIAL_BUCKET_HISTOGRAM;
         }
-        return HistogramFlavour.EXPLICIT_BUCKET_HISTOGRAM;
+        return HistogramFlavor.EXPLICIT_BUCKET_HISTOGRAM;
     }
 
     @Nullable

@@ -252,19 +252,19 @@ class OtlpConfigTest {
     @Test
     void histogramPreference() {
         Map<String, String> properties = new HashMap<>();
-        properties.put("otlp.histogramFlavour", "base2_exponential_bucket_histogram");
+        properties.put("otlp.histogramFlavor", "base2_exponential_bucket_histogram");
 
         OtlpConfig otlpConfig = properties::get;
         assertThat(otlpConfig.validate().isValid()).isTrue();
-        assertThat(otlpConfig.histogramFlavour()).isEqualTo(HistogramFlavour.BASE2_EXPONENTIAL_BUCKET_HISTOGRAM);
+        assertThat(otlpConfig.histogramFlavor()).isEqualTo(HistogramFlavor.BASE2_EXPONENTIAL_BUCKET_HISTOGRAM);
     }
 
     @Test
     void histogramPreferenceConfigTakesPrecedenceOverEnvVars() throws Exception {
         OtlpConfig config = k -> "base2_exponential_bucket_histogram";
         withEnvironmentVariable("OTEL_EXPORTER_OTLP_METRICS_DEFAULT_HISTOGRAM_AGGREGATION", "explicit_bucket_histogram")
-            .execute(() -> assertThat(config.histogramFlavour())
-                .isEqualTo(HistogramFlavour.BASE2_EXPONENTIAL_BUCKET_HISTOGRAM));
+            .execute(() -> assertThat(config.histogramFlavor())
+                .isEqualTo(HistogramFlavor.BASE2_EXPONENTIAL_BUCKET_HISTOGRAM));
     }
 
     @Test
@@ -272,8 +272,8 @@ class OtlpConfigTest {
         OtlpConfig config = k -> null;
         withEnvironmentVariable("OTEL_EXPORTER_OTLP_METRICS_DEFAULT_HISTOGRAM_AGGREGATION",
                 "base2_exponential_bucket_histogram")
-            .execute(() -> assertThat(config.histogramFlavour())
-                .isEqualTo(HistogramFlavour.BASE2_EXPONENTIAL_BUCKET_HISTOGRAM));
+            .execute(() -> assertThat(config.histogramFlavor())
+                .isEqualTo(HistogramFlavor.BASE2_EXPONENTIAL_BUCKET_HISTOGRAM));
     }
 
 }

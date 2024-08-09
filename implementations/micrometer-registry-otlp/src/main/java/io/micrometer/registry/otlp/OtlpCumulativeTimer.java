@@ -27,7 +27,7 @@ import java.util.concurrent.TimeUnit;
 
 class OtlpCumulativeTimer extends CumulativeTimer implements StartTimeAwareMeter, OtlpHistogramSupport {
 
-    private final HistogramFlavour histogramFlavour;
+    private final HistogramFlavor histogramFlavor;
 
     private final long startTimeNanos;
 
@@ -35,7 +35,7 @@ class OtlpCumulativeTimer extends CumulativeTimer implements StartTimeAwareMeter
             PauseDetector pauseDetector, TimeUnit baseTimeUnit, OtlpConfig otlpConfig) {
         super(id, clock, distributionStatisticConfig, pauseDetector, baseTimeUnit,
                 OtlpMeterRegistry.getHistogram(clock, distributionStatisticConfig, otlpConfig, baseTimeUnit));
-        this.histogramFlavour = OtlpMeterRegistry.histogramFlavour(otlpConfig.histogramFlavour(),
+        this.histogramFlavor = OtlpMeterRegistry.histogramFlavor(otlpConfig.histogramFlavor(),
                 distributionStatisticConfig);
         this.startTimeNanos = TimeUnit.MILLISECONDS.toNanos(clock.wallTime());
     }
@@ -48,7 +48,7 @@ class OtlpCumulativeTimer extends CumulativeTimer implements StartTimeAwareMeter
     @Override
     @Nullable
     public ExponentialHistogramSnapShot getExponentialHistogramSnapShot() {
-        if (histogramFlavour == HistogramFlavour.BASE2_EXPONENTIAL_BUCKET_HISTOGRAM) {
+        if (histogramFlavor == HistogramFlavor.BASE2_EXPONENTIAL_BUCKET_HISTOGRAM) {
             return ((Base2ExponentialHistogram) histogram).getLatestExponentialHistogramSnapshot();
         }
         return null;

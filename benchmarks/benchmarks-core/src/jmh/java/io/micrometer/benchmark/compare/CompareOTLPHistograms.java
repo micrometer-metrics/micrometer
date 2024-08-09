@@ -36,7 +36,7 @@ import io.micrometer.core.instrument.DistributionSummary;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.registry.otlp.AggregationTemporality;
-import io.micrometer.registry.otlp.HistogramFlavour;
+import io.micrometer.registry.otlp.HistogramFlavor;
 import io.micrometer.registry.otlp.OtlpConfig;
 import io.micrometer.registry.otlp.OtlpMeterRegistry;
 
@@ -198,8 +198,8 @@ public class CompareOTLPHistograms {
 
         OtlpConfig otlpConfig = new OtlpConfig() {
             @Override
-            public HistogramFlavour histogramFlavour() {
-                return HistogramFlavour.BASE2_EXPONENTIAL_BUCKET_HISTOGRAM;
+            public HistogramFlavor histogramFlavor() {
+                return HistogramFlavor.BASE2_EXPONENTIAL_BUCKET_HISTOGRAM;
             }
 
             @Nullable
@@ -240,8 +240,8 @@ public class CompareOTLPHistograms {
             }
 
             @Override
-            public HistogramFlavour histogramFlavour() {
-                return HistogramFlavour.BASE2_EXPONENTIAL_BUCKET_HISTOGRAM;
+            public HistogramFlavor histogramFlavor() {
+                return HistogramFlavor.BASE2_EXPONENTIAL_BUCKET_HISTOGRAM;
             }
 
             @Nullable

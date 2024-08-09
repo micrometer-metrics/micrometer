@@ -85,8 +85,8 @@ class OtlpDeltaMeterRegistryTest extends OtlpMeterRegistryTest {
             }
 
             @Override
-            public HistogramFlavour histogramFlavour() {
-                return HistogramFlavour.BASE2_EXPONENTIAL_BUCKET_HISTOGRAM;
+            public HistogramFlavor histogramFlavor() {
+                return HistogramFlavor.BASE2_EXPONENTIAL_BUCKET_HISTOGRAM;
             }
 
             @Override

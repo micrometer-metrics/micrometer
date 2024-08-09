@@ -15,7 +15,7 @@
  */
 package io.micrometer.registry.otlp.internal;
 
-import static io.micrometer.registry.otlp.internal.ExponentialHistogramSnapShot.ExponentialBucket.EMPTY_EXPONENTIAL_BUCKET;
+import static io.micrometer.registry.otlp.internal.ExponentialHistogramSnapShot.ExponentialBuckets.EMPTY_EXPONENTIAL_BUCKET;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -28,7 +28,7 @@ import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.distribution.Histogram;
 import io.micrometer.core.instrument.distribution.HistogramSnapshot;
 import io.micrometer.core.instrument.util.TimeUtils;
-import io.micrometer.registry.otlp.internal.ExponentialHistogramSnapShot.ExponentialBucket;
+import io.micrometer.registry.otlp.internal.ExponentialHistogramSnapShot.ExponentialBuckets;
 
 /**
  * A ExponentialHistogram implementation that compresses bucket boundaries using an
@@ -125,7 +125,7 @@ public abstract class Base2ExponentialHistogram implements Histogram {
         return (circularCountHolder.isEmpty() && zeroCount.longValue() == 0)
                 ? DefaultExponentialHistogramSnapShot.getEmptySnapshotForScale(scale)
                 : new DefaultExponentialHistogramSnapShot(scale, zeroCount.longValue(), zeroThreshold,
-                        new ExponentialBucket(getOffset(), getBucketCounts()), EMPTY_EXPONENTIAL_BUCKET);
+                        new ExponentialBuckets(getOffset(), getBucketCounts()), EMPTY_EXPONENTIAL_BUCKET);
     }
 
     /**

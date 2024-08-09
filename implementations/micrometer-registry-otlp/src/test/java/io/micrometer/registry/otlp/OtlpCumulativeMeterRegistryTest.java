@@ -43,8 +43,8 @@ class OtlpCumulativeMeterRegistryTest extends OtlpMeterRegistryTest {
         return new OtlpConfig() {
 
             @Override
-            public HistogramFlavour histogramFlavour() {
-                return HistogramFlavour.BASE2_EXPONENTIAL_BUCKET_HISTOGRAM;
+            public HistogramFlavor histogramFlavor() {
+                return HistogramFlavor.BASE2_EXPONENTIAL_BUCKET_HISTOGRAM;
             }
 
             @Override
@@ -240,7 +240,6 @@ class OtlpCumulativeMeterRegistryTest extends OtlpMeterRegistryTest {
     void distributionSummaryWithHistogram() {
         DistributionSummary size = DistributionSummary.builder("http.request.size")
             .baseUnit(BaseUnits.BYTES)
-            .maxBucketCount(1000)
             .publishPercentileHistogram()
             .register(registry);
         size.record(100);
