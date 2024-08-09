@@ -44,7 +44,7 @@ jetty9 = "9.4.55.v20240627"
 jetty11 = "11.0.16"
 jetty12 = "12.0.6"
 jersey2 = "2.43"
-jersey3 = "3.0.11"
+jersey3 = "3.0.12"
 jmh = "1.37"
 # 3.14.x is the newest version of OSS jOOQ that supports Java 8
 jooqOld = "3.14.16"
