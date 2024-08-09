@@ -15,13 +15,12 @@
  */
 package io.micrometer.core.instrument.internal;
 
-import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Tag;
-import io.micrometer.core.instrument.Tags;
-import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.instrument.*;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.*;
 
 import static java.util.stream.Collectors.toList;
@@ -39,6 +38,8 @@ public class TimedExecutorService implements ExecutorService {
 
     private final ExecutorService delegate;
 
+    private final Set<Meter.Id> registeredMeterIds;
+
     private final Timer executionTimer;
 
     private final Timer idleTimer;
@@ -50,15 +51,32 @@ public class TimedExecutorService implements ExecutorService {
         Tags finalTags = Tags.concat(tags, "name", executorServiceName);
         this.executionTimer = registry.timer(metricPrefix + "executor", finalTags);
         this.idleTimer = registry.timer(metricPrefix + "executor.idle", finalTags);
+        this.registeredMeterIds = Collections.emptySet();
+    }
+
+    public TimedExecutorService(MeterRegistry registry, ExecutorService delegate, String executorServiceName,
+            String metricPrefix, Iterable<Tag> tags, Set<Meter.Id> registeredMeterIds) {
+        this.registry = registry;
+        this.delegate = delegate;
+        this.registeredMeterIds = registeredMeterIds;
+        Tags finalTags = Tags.concat(tags, "name", executorServiceName);
+        this.executionTimer = registry.timer(metricPrefix + "executor", finalTags);
+        this.idleTimer = registry.timer(metricPrefix + "executor.idle", finalTags);
     }
 
     @Override
     public void shutdown() {
+        for (Meter.Id id : registeredMeterIds) {
+            registry.remove(id);
+        }
         delegate.shutdown();
     }
 
     @Override
     public List<Runnable> shutdownNow() {
+        for (Meter.Id id : registeredMeterIds) {
+            registry.remove(id);
+        }
         return delegate.shutdownNow();
     }
 

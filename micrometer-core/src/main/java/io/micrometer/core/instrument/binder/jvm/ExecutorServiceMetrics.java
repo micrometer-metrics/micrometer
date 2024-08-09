@@ -29,9 +29,12 @@ import io.micrometer.core.instrument.internal.TimedExecutorService;
 import io.micrometer.core.instrument.internal.TimedScheduledExecutorService;
 
 import java.lang.reflect.Field;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.*;
 
 import static java.util.Arrays.asList;
+import static java.util.stream.Collectors.toSet;
 
 /**
  * Monitors the status of executor service pools. Does not record timings on operations
@@ -60,6 +63,8 @@ public class ExecutorServiceMetrics implements MeterBinder {
     private static final String DEFAULT_EXECUTOR_METRIC_PREFIX = "";
 
     private static final String DESCRIPTION_POOL_SIZE = "The current number of threads in the pool";
+
+    private final Set<Meter.Id> registeredMeterIds = ConcurrentHashMap.newKeySet();
 
     @Nullable
     private final ExecutorService executorService;
@@ -177,8 +182,11 @@ public class ExecutorServiceMetrics implements MeterBinder {
         if (executor instanceof ScheduledExecutorService) {
             return monitor(registry, (ScheduledExecutorService) executor, executorServiceName, metricPrefix, tags);
         }
-        new ExecutorServiceMetrics(executor, executorServiceName, metricPrefix, tags).bindTo(registry);
-        return new TimedExecutorService(registry, executor, executorServiceName, sanitizePrefix(metricPrefix), tags);
+        ExecutorServiceMetrics executorServiceMetrics = new ExecutorServiceMetrics(executor, executorServiceName,
+                metricPrefix, tags);
+        executorServiceMetrics.bindTo(registry);
+        return new TimedExecutorService(registry, executor, executorServiceName, sanitizePrefix(metricPrefix), tags,
+                executorServiceMetrics.registeredMeterIds);
     }
 
     /**
@@ -337,85 +345,91 @@ public class ExecutorServiceMetrics implements MeterBinder {
         if (tp == null) {
             return;
         }
+        List<Meter> meters = asList(
+                FunctionCounter
+                    .builder(metricPrefix + "executor.completed", tp, ThreadPoolExecutor::getCompletedTaskCount)
+                    .tags(tags)
+                    .description("The approximate total number of tasks that have completed execution")
+                    .baseUnit(BaseUnits.TASKS)
+                    .register(registry),
+                Gauge.builder(metricPrefix + "executor.active", tp, ThreadPoolExecutor::getActiveCount)
+                    .tags(tags)
+                    .description("The approximate number of threads that are actively executing tasks")
+                    .baseUnit(BaseUnits.THREADS)
+                    .register(registry),
 
-        FunctionCounter.builder(metricPrefix + "executor.completed", tp, ThreadPoolExecutor::getCompletedTaskCount)
-            .tags(tags)
-            .description("The approximate total number of tasks that have completed execution")
-            .baseUnit(BaseUnits.TASKS)
-            .register(registry);
+                Gauge.builder(metricPrefix + "executor.queued", tp, tpRef -> tpRef.getQueue().size())
+                    .tags(tags)
+                    .description("The approximate number of tasks that are queued for execution")
+                    .baseUnit(BaseUnits.TASKS)
+                    .register(registry),
 
-        Gauge.builder(metricPrefix + "executor.active", tp, ThreadPoolExecutor::getActiveCount)
-            .tags(tags)
-            .description("The approximate number of threads that are actively executing tasks")
-            .baseUnit(BaseUnits.THREADS)
-            .register(registry);
+                Gauge
+                    .builder(metricPrefix + "executor.queue.remaining", tp,
+                            tpRef -> tpRef.getQueue().remainingCapacity())
+                    .tags(tags)
+                    .description(
+                            "The number of additional elements that this queue can ideally accept without blocking")
+                    .baseUnit(BaseUnits.TASKS)
+                    .register(registry),
 
-        Gauge.builder(metricPrefix + "executor.queued", tp, tpRef -> tpRef.getQueue().size())
-            .tags(tags)
-            .description("The approximate number of tasks that are queued for execution")
-            .baseUnit(BaseUnits.TASKS)
-            .register(registry);
+                Gauge.builder(metricPrefix + "executor.pool.size", tp, ThreadPoolExecutor::getPoolSize)
+                    .tags(tags)
+                    .description(DESCRIPTION_POOL_SIZE)
+                    .baseUnit(BaseUnits.THREADS)
+                    .register(registry),
 
-        Gauge.builder(metricPrefix + "executor.queue.remaining", tp, tpRef -> tpRef.getQueue().remainingCapacity())
-            .tags(tags)
-            .description("The number of additional elements that this queue can ideally accept without blocking")
-            .baseUnit(BaseUnits.TASKS)
-            .register(registry);
+                Gauge.builder(metricPrefix + "executor.pool.core", tp, ThreadPoolExecutor::getCorePoolSize)
+                    .tags(tags)
+                    .description("The core number of threads for the pool")
+                    .baseUnit(BaseUnits.THREADS)
+                    .register(registry),
 
-        Gauge.builder(metricPrefix + "executor.pool.size", tp, ThreadPoolExecutor::getPoolSize)
-            .tags(tags)
-            .description(DESCRIPTION_POOL_SIZE)
-            .baseUnit(BaseUnits.THREADS)
-            .register(registry);
-
-        Gauge.builder(metricPrefix + "executor.pool.core", tp, ThreadPoolExecutor::getCorePoolSize)
-            .tags(tags)
-            .description("The core number of threads for the pool")
-            .baseUnit(BaseUnits.THREADS)
-            .register(registry);
-
-        Gauge.builder(metricPrefix + "executor.pool.max", tp, ThreadPoolExecutor::getMaximumPoolSize)
-            .tags(tags)
-            .description("The maximum allowed number of threads in the pool")
-            .baseUnit(BaseUnits.THREADS)
-            .register(registry);
+                Gauge.builder(metricPrefix + "executor.pool.max", tp, ThreadPoolExecutor::getMaximumPoolSize)
+                    .tags(tags)
+                    .description("The maximum allowed number of threads in the pool")
+                    .baseUnit(BaseUnits.THREADS)
+                    .register(registry));
+        registeredMeterIds.addAll(meters.stream().map(Meter::getId).collect(toSet()));
     }
 
     private void monitor(MeterRegistry registry, ForkJoinPool fj) {
-        FunctionCounter.builder(metricPrefix + "executor.steals", fj, ForkJoinPool::getStealCount)
-            .tags(tags)
-            .description("Estimate of the total number of tasks stolen from "
-                    + "one thread's work queue by another. The reported value "
-                    + "underestimates the actual total number of steals when the pool " + "is not quiescent")
-            .register(registry);
+        List<Meter> meters = asList(
+                FunctionCounter.builder(metricPrefix + "executor.steals", fj, ForkJoinPool::getStealCount)
+                    .tags(tags)
+                    .description("Estimate of the total number of tasks stolen from "
+                            + "one thread's work queue by another. The reported value "
+                            + "underestimates the actual total number of steals when the pool " + "is not quiescent")
+                    .register(registry),
 
-        Gauge.builder(metricPrefix + "executor.queued", fj, ForkJoinPool::getQueuedTaskCount)
-            .tags(tags)
-            .description("An estimate of the total number of tasks currently held in queues by worker threads")
-            .register(registry);
+                Gauge.builder(metricPrefix + "executor.queued", fj, ForkJoinPool::getQueuedTaskCount)
+                    .tags(tags)
+                    .description("An estimate of the total number of tasks currently held in queues by worker threads")
+                    .register(registry),
 
-        Gauge.builder(metricPrefix + "executor.active", fj, ForkJoinPool::getActiveThreadCount)
-            .tags(tags)
-            .description("An estimate of the number of threads that are currently stealing or executing tasks")
-            .register(registry);
+                Gauge.builder(metricPrefix + "executor.active", fj, ForkJoinPool::getActiveThreadCount)
+                    .tags(tags)
+                    .description("An estimate of the number of threads that are currently stealing or executing tasks")
+                    .register(registry),
 
-        Gauge.builder(metricPrefix + "executor.running", fj, ForkJoinPool::getRunningThreadCount)
-            .tags(tags)
-            .description(
-                    "An estimate of the number of worker threads that are not blocked waiting to join tasks or for other managed synchronization threads")
-            .register(registry);
+                Gauge.builder(metricPrefix + "executor.running", fj, ForkJoinPool::getRunningThreadCount)
+                    .tags(tags)
+                    .description(
+                            "An estimate of the number of worker threads that are not blocked waiting to join tasks or for other managed synchronization threads")
+                    .register(registry),
 
-        Gauge.builder(metricPrefix + "executor.parallelism", fj, ForkJoinPool::getParallelism)
-            .tags(tags)
-            .description("The targeted parallelism level of this pool")
-            .baseUnit(BaseUnits.THREADS)
-            .register(registry);
+                Gauge.builder(metricPrefix + "executor.parallelism", fj, ForkJoinPool::getParallelism)
+                    .tags(tags)
+                    .description("The targeted parallelism level of this pool")
+                    .baseUnit(BaseUnits.THREADS)
+                    .register(registry),
 
-        Gauge.builder(metricPrefix + "executor.pool.size", fj, ForkJoinPool::getPoolSize)
-            .tags(tags)
-            .description(DESCRIPTION_POOL_SIZE)
-            .baseUnit(BaseUnits.THREADS)
-            .register(registry);
+                Gauge.builder(metricPrefix + "executor.pool.size", fj, ForkJoinPool::getPoolSize)
+                    .tags(tags)
+                    .description(DESCRIPTION_POOL_SIZE)
+                    .baseUnit(BaseUnits.THREADS)
+                    .register(registry));
+        registeredMeterIds.addAll(meters.stream().map(Meter::getId).collect(toSet()));
     }
 
     /**
