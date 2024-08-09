@@ -562,8 +562,7 @@ class TimedAspectTest {
 
         enum AnnotatedTestClass {
 
-            // CLASS_WITHOUT_INTERFACE(MeterTagClass.class),
-            CLASS_WITH_INTERFACE(MeterTagClassChild.class);
+            CLASS_WITHOUT_INTERFACE(MeterTagClass.class), CLASS_WITH_INTERFACE(MeterTagClassChild.class);
 
             private final Class<? extends MeterTagClassInterface> clazz;
 
@@ -619,7 +618,7 @@ class TimedAspectTest {
             @Timed
             @Override
             public void getAnnotationForTagValueExpression(
-                    @MeterTag(key = "test", expression = "'hello' + ' characters'") String test) {
+                    @MeterTag(key = "test", expression = "'hello' + ' characters. overridden'") String test) {
             }
 
             @Timed
@@ -635,7 +634,7 @@ class TimedAspectTest {
             @Override
             public void getMultipleAnnotationsForTagValueExpression(
                     @MeterTag(key = "value1", expression = "'value1: ' + value1") @MeterTag(key = "value2",
-                            expression = "'value2: ' + value2") DataHolder param) {
+                            expression = "'value2. overridden: ' + value2") DataHolder param) {
 
             }
 
