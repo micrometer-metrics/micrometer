@@ -24,6 +24,7 @@ import io.micrometer.core.instrument.distribution.HistogramSnapshot;
 import io.micrometer.core.instrument.distribution.HistogramSupport;
 import io.micrometer.core.instrument.distribution.ValueAtPercentile;
 import io.micrometer.core.instrument.util.TimeUtils;
+import io.micrometer.registry.otlp.internal.ExponentialHistogramSnapShot;
 import io.opentelemetry.proto.common.v1.AnyValue;
 import io.opentelemetry.proto.common.v1.KeyValue;
 import io.opentelemetry.proto.metrics.v1.*;
@@ -122,16 +123,35 @@ class OtlpMetricConverter {
         Iterable<KeyValue> tags = getKeyValuesForId(id);
         long startTimeNanos = getStartTimeNanos(histogramSupport);
         double total = isTimeBased ? histogramSnapshot.total(baseTimeUnit) : histogramSnapshot.total();
+        double max = isTimeBased ? histogramSnapshot.max(baseTimeUnit) : histogramSnapshot.max();
         long count = histogramSnapshot.count();
 
         // if percentiles configured, use summary
         if (histogramSnapshot.percentileValues().length != 0) {
             buildSummaryDataPoint(histogramSupport, tags, startTimeNanos, total, count, isTimeBased, histogramSnapshot);
+            return;
+        }
+
+        Optional<ExponentialHistogramSnapShot> exponentialHistogramSnapShot = getExponentialHistogramSnapShot(
+                histogramSupport);
+        if (exponentialHistogramSnapShot.isPresent()) {
+            buildExponentialHistogramDataPoint(histogramSupport, tags, startTimeNanos, total, max, count,
+                    exponentialHistogramSnapShot.get());
         }
         else {
-            buildHistogramDataPoint(histogramSupport, tags, startTimeNanos, total, count, isTimeBased,
+            buildHistogramDataPoint(histogramSupport, tags, startTimeNanos, total, max, count, isTimeBased,
                     histogramSnapshot);
         }
+
+    }
+
+    private static Optional<ExponentialHistogramSnapShot> getExponentialHistogramSnapShot(
+            final HistogramSupport histogramSupport) {
+        if (histogramSupport instanceof OtlpHistogramSupport) {
+            return Optional.ofNullable(((OtlpHistogramSupport) histogramSupport).getExponentialHistogramSnapShot());
+        }
+
+        return Optional.empty();
     }
 
     private void writeFunctionTimer(FunctionTimer functionTimer) {
@@ -151,7 +171,8 @@ class OtlpMetricConverter {
     }
 
     private void buildHistogramDataPoint(HistogramSupport histogramSupport, Iterable<KeyValue> tags,
-            long startTimeNanos, double total, long count, boolean isTimeBased, HistogramSnapshot histogramSnapshot) {
+            long startTimeNanos, double total, double max, long count, boolean isTimeBased,
+            HistogramSnapshot histogramSnapshot) {
         Metric.Builder metricBuilder = getOrCreateMetricBuilder(histogramSupport.getId(), DataCase.HISTOGRAM);
         HistogramDataPoint.Builder histogramDataPoint = HistogramDataPoint.newBuilder()
             .addAllAttributes(tags)
@@ -161,7 +182,7 @@ class OtlpMetricConverter {
             .setCount(count);
 
         if (isDelta()) {
-            histogramDataPoint.setMax(isTimeBased ? histogramSnapshot.max(baseTimeUnit) : histogramSnapshot.max());
+            histogramDataPoint.setMax(max);
         }
 
         // if histogram enabled, add histogram buckets
@@ -178,6 +199,37 @@ class OtlpMetricConverter {
         }
 
         setHistogramDataPoint(metricBuilder, histogramDataPoint.build());
+    }
+
+    private void buildExponentialHistogramDataPoint(HistogramSupport histogramSupport, Iterable<KeyValue> tags,
+            long startTimeNanos, double total, double max, long count,
+            ExponentialHistogramSnapShot exponentialHistogramSnapShot) {
+        Metric.Builder metricBuilder = getOrCreateMetricBuilder(histogramSupport.getId(),
+                DataCase.EXPONENTIAL_HISTOGRAM);
+        ExponentialHistogramDataPoint.Builder exponentialDataPoint = ExponentialHistogramDataPoint.newBuilder()
+            .addAllAttributes(tags)
+            .setStartTimeUnixNano(startTimeNanos)
+            .setTimeUnixNano(getTimeUnixNano())
+            .setCount(count)
+            .setSum(total)
+            .setScale(exponentialHistogramSnapShot.scale())
+            .setZeroCount(exponentialHistogramSnapShot.zeroCount())
+            .setZeroThreshold(exponentialHistogramSnapShot.zeroThreshold());
+
+        // Currently, micrometer doesn't support negative recordings hence we will only
+        // add positive buckets.
+        if (!exponentialHistogramSnapShot.positive().isEmpty()) {
+            exponentialDataPoint.setPositive(ExponentialHistogramDataPoint.Buckets.newBuilder()
+                .addAllBucketCounts(exponentialHistogramSnapShot.positive().bucketCounts())
+                .setOffset(exponentialHistogramSnapShot.positive().offset())
+                .build());
+        }
+
+        if (isDelta()) {
+            exponentialDataPoint.setMax(max);
+        }
+
+        setExponentialHistogramDataPoint(metricBuilder, exponentialDataPoint.build());
     }
 
     private void buildSummaryDataPoint(HistogramSupport histogramSupport, Iterable<KeyValue> tags, long startTimeNanos,
@@ -218,6 +270,15 @@ class OtlpMetricConverter {
             builder.setHistogram(Histogram.newBuilder().setAggregationTemporality(otlpAggregationTemporality));
         }
         builder.getHistogramBuilder().addDataPoints(histogramDataPoint);
+    }
+
+    private void setExponentialHistogramDataPoint(Metric.Builder builder,
+            ExponentialHistogramDataPoint exponentialHistogramDataPoint) {
+        if (!builder.hasExponentialHistogram()) {
+            builder.setExponentialHistogram(
+                    ExponentialHistogram.newBuilder().setAggregationTemporality(otlpAggregationTemporality));
+        }
+        builder.getExponentialHistogramBuilder().addDataPoints(exponentialHistogramDataPoint);
     }
 
     private void setSummaryDataPoint(Metric.Builder builder, SummaryDataPoint.Builder summaryDataPoint) {
