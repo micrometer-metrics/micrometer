@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 VMware, Inc.
+ * Copyright 2024 VMware, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,27 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.common.annotation;
+package io.micrometer.common.util;
 
-import java.lang.annotation.Annotation;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
+import java.util.function.Predicate;
 
-/**
- * A container class that holds information about the parameter of the annotated method
- * argument.
- *
- * Code ported from Spring Cloud Sleuth.
- *
- * @author Christian Schwerdtfeger
- */
-class AnnotatedParameter {
+public class StreamUtils {
 
-    final Annotation annotation;
+    public static <T> Predicate<T> distinctByKey(Function<? super T, ?> keyExtractor) {
 
-    final Object argument;
-
-    AnnotatedParameter(Annotation annotation, Object argument) {
-        this.annotation = annotation;
-        this.argument = argument;
+        Map<Object, Boolean> seen = new ConcurrentHashMap<>();
+        return item -> seen.putIfAbsent(keyExtractor.apply(item), Boolean.TRUE) == null;
     }
 
 }
