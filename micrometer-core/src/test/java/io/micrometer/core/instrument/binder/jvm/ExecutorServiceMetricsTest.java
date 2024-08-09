@@ -33,6 +33,7 @@ import org.junit.jupiter.params.provider.CsvSource;
 import java.util.concurrent.*;
 
 import static org.assertj.core.api.AssertionsForClassTypes.*;
+import static org.awaitility.Awaitility.await;
 
 /**
  * Tests for {@link ExecutorServiceMetrics}.
@@ -143,14 +144,16 @@ class ExecutorServiceMetricsTest {
             .value()).isEqualTo(1.0);
 
         taskComplete.countDown();
+        await().untilAsserted(() -> {
+            assertThat(registry.get(expectedMetricPrefix + "executor").tags(userTags).timer().count()).isEqualTo(2L);
+            assertThat(registry.get(expectedMetricPrefix + "executor.idle").tags(userTags).timer().count())
+                .isEqualTo(2L);
+            assertThat(registry.get(expectedMetricPrefix + "executor.queued").tags(userTags).gauge().value())
+                .isEqualTo(0.0);
+        });
 
         pool.shutdown();
         assertThat(pool.awaitTermination(1, TimeUnit.SECONDS)).isTrue();
-
-        assertThat(registry.get(expectedMetricPrefix + "executor").tags(userTags).timer().count()).isEqualTo(2L);
-        assertThat(registry.get(expectedMetricPrefix + "executor.idle").tags(userTags).timer().count()).isEqualTo(2L);
-        assertThat(registry.get(expectedMetricPrefix + "executor.queued").tags(userTags).gauge().value())
-            .isEqualTo(0.0);
     }
 
     @DisplayName("ExecutorService can be monitored with a default set of metrics after shutdown")
@@ -167,7 +170,7 @@ class ExecutorServiceMetricsTest {
             .isEqualTo(2L);
 
         monitorExecutorService.shutdownNow();
-        monitorExecutorService.awaitTermination(1, TimeUnit.SECONDS);
+        assertThat(monitorExecutorService.awaitTermination(1, TimeUnit.SECONDS)).isTrue();
 
         exec = Executors.newFixedThreadPool(3);
         monitorExecutorService("exec", metricPrefix, exec);
