@@ -153,7 +153,7 @@ class ExecutorServiceMetricsTest {
             .isEqualTo(0.0);
     }
 
-    @DisplayName("ExecutorService can be monitored with a default set of metrics")
+    @DisplayName("ExecutorService can be monitored with a default set of metrics after shutdown")
     @DisabledForJreRange(min = JRE.JAVA_16,
             disabledReason = "See gh-2317 for why we can't run this full test on Java 16+")
     @ParameterizedTest
