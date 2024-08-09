@@ -178,6 +178,9 @@ class ExecutorServiceMetricsTest {
 
         assertThat(registry.get(expectedMetricPrefix + "executor.pool.core").tags(userTags).gauge().value())
             .isEqualTo(3L);
+
+        exec.shutdown();
+        assertThat(exec.awaitTermination(1, TimeUnit.SECONDS)).isTrue();
     }
 
     @DisplayName("No exception thrown trying to monitor Executors private class")
