@@ -1,28 +1,28 @@
 [versions]
-activemq-artemis = "2.35.0"
+activemq-artemis = "2.36.0"
 application-insights = "2.6.4"
 archunit = "1.3.0"
 asmForPlugins = "7.3.1"
 # 1.9.20.1 is the last release that accepts jdk 11 for building
 aspectjweaver = "1.9.20.1"
-assertj = "3.26.0"
+assertj = "3.26.3"
 awaitility = "4.2.2"
 caffeine = "2.9.3"
-cloudwatch2 = "2.26.14"
+cloudwatch2 = "2.27.1"
 colt = "1.2.0"
-dagger = "2.51.1"
+dagger = "2.52"
 dropwizard-metrics = "4.2.26"
 dropwizard-metrics5 = "5.0.0"
 dynatrace-utils = "2.2.1"
 ehcache2 = "2.10.9.2"
 ehcache3 = "3.10.8"
 gmetric4j = "1.0.10"
-google-cloud-monitoring = "3.47.0"
+google-cloud-monitoring = "3.48.0"
 grpc = "1.58.0"
 grpcKotlin = "1.4.1"
 guava = "32.1.2-jre"
 guice = "5.1.0"
-h2 = "2.2.224"
+h2 = "2.3.230"
 hazelcast = "5.3.2"
 hazelcast3 = "3.12.13"
 hdrhistogram = "2.2.2"
@@ -36,14 +36,14 @@ httpcomponents-client5 = "5.3.1"
 # in hystrix 1.5.12, but Netflix re-released 1.5.11 as 1.5.18 late in 2018.
 # <=1.5.11 or 1.5.18 doesn't break with Micrometer, but open metrics won't be correct necessarily.
 hystrix = "1.5.12"
-jackson-databind = "2.17.1"
+jackson-databind = "2.17.2"
 javax-cache = "1.1.1"
 javax-inject = "1"
 jaxb = "2.3.1"
 jetty9 = "9.4.55.v20240627"
 jetty11 = "11.0.16"
 jetty12 = "12.0.6"
-jersey2 = "2.43"
+jersey2 = "2.44"
 jersey3 = "3.1.8"
 jmh = "1.37"
 # 3.14.x is the newest version of OSS jOOQ that supports Java 8
@@ -72,13 +72,13 @@ postgre = "42.7.3"
 prometheus = "1.3.1"
 prometheusSimpleClient = "0.16.0"
 reactor = "2022.0.21"
-rest-assured = "5.4.0"
+rest-assured = "5.5.0"
 signalfx = "1.0.44"
 slf4j = "1.7.36"
 spectator-atlas = "1.7.18"
 spring = "5.3.36"
 spring-javaformat = "0.0.42"
-testcontainers = "1.19.8"
+testcontainers = "1.20.1"
 tomcat = "8.5.100"
 wavefront = "3.4.3"
 wiremock = "2.35.2"
@@ -111,9 +111,9 @@ ehcache3 = { module = "org.ehcache:ehcache", version.ref = "ehcache3" }
 felixFramework = "org.apache.felix:org.apache.felix.framework:7.0.5"
 felixScr = "org.apache.felix:org.apache.felix.scr:2.2.12"
 gmetric4j = { module = "info.ganglia.gmetric4j:gmetric4j", version.ref = "gmetric4j" }
-googleCloudLibrariesBom = { module = "com.google.cloud:libraries-bom", version = "26.42.0" }
+googleCloudLibrariesBom = { module = "com.google.cloud:libraries-bom", version = "26.44.0" }
 googleCloudMonitoring = { module = "com.google.cloud:google-cloud-monitoring", version.ref = "google-cloud-monitoring" }
-googleOauth2Http = { module = "com.google.auth:google-auth-library-oauth2-http", version = "1.23.0"}
+googleOauth2Http = { module = "com.google.auth:google-auth-library-oauth2-http", version = "1.24.0"}
 grpcApi = { module = "io.grpc:grpc-api", version.ref = "grpc" }
 grpcCore = { module = "io.grpc:grpc-core", version.ref = "grpc" }
 grpcInprocess = { module = "io.grpc:grpc-inprocess", version.ref = "grpc" }
@@ -234,4 +234,4 @@ plugin-bnd = "biz.aQute.bnd:biz.aQute.bnd.gradle:6.4.0"
 kotlin19 = { id = "org.jetbrains.kotlin.jvm", version = "1.9.24" }
 kotlin17 = { id = "org.jetbrains.kotlin.jvm", version = "1.7.22" }
 jcstress = { id = "io.github.reyerizo.gradle.jcstress", version = "0.8.15" }
-aspectj = { id = 'io.freefair.aspectj.post-compile-weaving', version = '8.6' }
+aspectj = { id = 'io.freefair.aspectj.post-compile-weaving', version = '8.7.1' }
