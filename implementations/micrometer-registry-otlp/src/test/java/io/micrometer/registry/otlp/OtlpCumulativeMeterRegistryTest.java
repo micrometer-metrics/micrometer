@@ -564,7 +564,6 @@ class OtlpCumulativeMeterRegistryTest extends OtlpMeterRegistryTest {
             .tags(Tags.of(meterTag))
             .publishPercentileHistogram()
             .register(registryWithExponentialHistogram);
-        timer.record(Duration.ofMillis(1));
         timer.record(Duration.ofMillis(100));
         timer.record(Duration.ofMillis(1000));
 
@@ -572,7 +571,7 @@ class OtlpCumulativeMeterRegistryTest extends OtlpMeterRegistryTest {
         assertThat(metric.getExponentialHistogram().getDataPointsCount()).isPositive();
 
         ExponentialHistogramDataPoint exponentialHistogramDataPoint = metric.getExponentialHistogram().getDataPoints(0);
-        assertExponentialHistogram(metric, 3, 1101, 0.0, 1, 5);
+        assertExponentialHistogram(metric, 2, 1100, 0.0, 0, 5);
         ExponentialHistogramDataPoint.Buckets buckets = exponentialHistogramDataPoint.getPositive();
         assertThat(buckets.getOffset()).isEqualTo(212);
         assertThat(buckets.getBucketCountsCount()).isEqualTo(107);
@@ -590,7 +589,7 @@ class OtlpCumulativeMeterRegistryTest extends OtlpMeterRegistryTest {
         assertThat(exponentialHistogramDataPoint.getTimeUnixNano() - previousEndTime)
             .isEqualTo(otlpConfig().step().toNanos());
 
-        assertExponentialHistogram(metric, 4, 11101, 0.0, 1, 4);
+        assertExponentialHistogram(metric, 3, 11100, 0.0, 0, 4);
 
         buckets = exponentialHistogramDataPoint.getPositive();
         assertThat(buckets.getOffset()).isEqualTo(106);
@@ -608,7 +607,6 @@ class OtlpCumulativeMeterRegistryTest extends OtlpMeterRegistryTest {
             .tags(Tags.of(meterTag))
             .publishPercentileHistogram()
             .register(registryWithExponentialHistogram);
-        ds.record(1);
         ds.record(100);
         ds.record(1000);
 
@@ -616,7 +614,7 @@ class OtlpCumulativeMeterRegistryTest extends OtlpMeterRegistryTest {
         assertThat(metric.getExponentialHistogram().getDataPointsCount()).isPositive();
 
         ExponentialHistogramDataPoint exponentialHistogramDataPoint = metric.getExponentialHistogram().getDataPoints(0);
-        assertExponentialHistogram(metric, 3, 1101, 0.0, 1, 5);
+        assertExponentialHistogram(metric, 2, 1100, 0.0, 0, 5);
         ExponentialHistogramDataPoint.Buckets buckets = exponentialHistogramDataPoint.getPositive();
         assertThat(buckets.getOffset()).isEqualTo(212);
         assertThat(buckets.getBucketCountsCount()).isEqualTo(107);
@@ -634,7 +632,7 @@ class OtlpCumulativeMeterRegistryTest extends OtlpMeterRegistryTest {
         assertThat(exponentialHistogramDataPoint.getTimeUnixNano() - previousEndTime)
             .isEqualTo(otlpConfig().step().toNanos());
 
-        assertExponentialHistogram(metric, 4, 11101, 0.0, 1, 4);
+        assertExponentialHistogram(metric, 3, 11100, 0.0, 0, 4);
 
         buckets = exponentialHistogramDataPoint.getPositive();
         assertThat(buckets.getOffset()).isEqualTo(106);

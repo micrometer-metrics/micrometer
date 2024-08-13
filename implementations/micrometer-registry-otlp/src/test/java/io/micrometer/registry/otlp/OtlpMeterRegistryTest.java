@@ -308,15 +308,14 @@ abstract class OtlpMeterRegistryTest {
 
         ExponentialHistogramDataPoint dataPoint = writeToMetric(timerWithZero1ms).getExponentialHistogram()
             .getDataPoints(0);
-        assertThat(dataPoint.getZeroCount()).isEqualTo(2);
-        assertThat(dataPoint.getCount()).isEqualTo(2);
-        assertThat(dataPoint.getPositive().getBucketCountsCount()).isZero();
-
-        dataPoint = writeToMetric(timerWithZero1ns).getExponentialHistogram().getDataPoints(0);
         assertThat(dataPoint.getZeroCount()).isEqualTo(1);
         assertThat(dataPoint.getCount()).isEqualTo(2);
         assertThat(dataPoint.getPositive().getBucketCountsCount()).isEqualTo(1);
-        assertThat(dataPoint.getPositive().getBucketCountsList()).isEqualTo(List.of(1L));
+
+        dataPoint = writeToMetric(timerWithZero1ns).getExponentialHistogram().getDataPoints(0);
+        assertThat(dataPoint.getZeroCount()).isZero();
+        assertThat(dataPoint.getCount()).isEqualTo(2);
+        assertThat(dataPoint.getPositive().getBucketCountsCount()).isGreaterThan(1);
     }
 
     @Test
