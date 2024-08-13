@@ -22,6 +22,8 @@ import com.netflix.hystrix.strategy.metrics.HystrixMetricsPublisherCommand;
 import com.netflix.hystrix.strategy.metrics.HystrixMetricsPublisherThreadPool;
 import io.micrometer.common.lang.NonNullApi;
 import io.micrometer.common.lang.NonNullFields;
+import io.micrometer.common.util.internal.logging.InternalLogger;
+import io.micrometer.common.util.internal.logging.InternalLoggerFactory;
 import io.micrometer.core.instrument.MeterRegistry;
 
 /**
@@ -34,11 +36,14 @@ import io.micrometer.core.instrument.MeterRegistry;
 @Deprecated
 public class MicrometerMetricsPublisher extends HystrixMetricsPublisher {
 
+    private static final InternalLogger log = InternalLoggerFactory.getInstance(MicrometerMetricsPublisher.class);
+
     private final MeterRegistry registry;
 
     private HystrixMetricsPublisher metricsPublisher;
 
     public MicrometerMetricsPublisher(MeterRegistry registry, HystrixMetricsPublisher metricsPublisher) {
+        log.info("MicrometerMetricsPublisher has been deprecated due to Hystrix no longer being actively developed.");
         this.registry = registry;
         this.metricsPublisher = metricsPublisher;
     }
