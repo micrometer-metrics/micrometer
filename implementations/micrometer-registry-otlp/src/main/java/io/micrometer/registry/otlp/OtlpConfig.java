@@ -206,12 +206,12 @@ public interface OtlpConfig extends PushRegistryConfig {
      * Histogram type to be preferred when histogram publishing is enabled. By default
      * {@link HistogramFlavor#EXPLICIT_BUCKET_HISTOGRAM} is used for the supported meters.
      * When this is set to {@link HistogramFlavor#BASE2_EXPONENTIAL_BUCKET_HISTOGRAM} and
-     * publishPercentiles are enabled
+     * {@code publishPercentileHistogram} is enabled
      * {@link io.micrometer.registry.otlp.internal.Base2ExponentialHistogram} is used for
      * recording distributions.
      * <p>
-     * Note: If specific SLO's are added as part of meters, this property is not honored
-     * and {@link HistogramFlavor#EXPLICIT_BUCKET_HISTOGRAM} is used for those meters.
+     * Note: If specific SLO's are configured, this property is not honored and
+     * {@link HistogramFlavor#EXPLICIT_BUCKET_HISTOGRAM} is used for those meters.
      * </p>
      * @return - histogram flavor to be used
      *
@@ -229,9 +229,9 @@ public interface OtlpConfig extends PushRegistryConfig {
     }
 
     /**
-     * Max scale to use for
-     * {@link io.micrometer.registry.otlp.internal.Base2ExponentialHistogram}
+     * Max scale to use for exponential histograms, if configured.
      * @return maxScale
+     * @see #histogramFlavor()
      *
      * @since 1.14.0
      */
@@ -240,9 +240,10 @@ public interface OtlpConfig extends PushRegistryConfig {
     }
 
     /**
-     * Maximum number of buckets to be used for
-     * {@link io.micrometer.registry.otlp.internal.Base2ExponentialHistogram}
+     * Maximum number of buckets to be used for exponential histograms, if configured.
+     * This has no effect on explicit bucket histograms.
      * @return - maxBuckets
+     * @see #histogramFlavor()
      *
      * @since 1.14.0
      */

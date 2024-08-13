@@ -26,7 +26,16 @@ package io.micrometer.registry.otlp;
  */
 public enum HistogramFlavor {
 
-    EXPLICIT_BUCKET_HISTOGRAM, BASE2_EXPONENTIAL_BUCKET_HISTOGRAM;
+    /**
+     * Uses a pre-determined fixed bucketing strategy for histogram bucket boundaries.
+     */
+    EXPLICIT_BUCKET_HISTOGRAM,
+    /**
+     * Uses a base-2 exponential formula to determine bucket boundaries and an integer
+     * scale parameter to control resolution. Implementations adjust scale as necessary
+     * given the data.
+     */
+    BASE2_EXPONENTIAL_BUCKET_HISTOGRAM;
 
     /**
      * Converts a string to {@link HistogramFlavor} by using a case-insensitive matching.
