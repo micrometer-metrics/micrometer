@@ -15,6 +15,7 @@
  */
 package io.micrometer.observation.tck;
 
+import io.micrometer.observation.NullObservation;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.Observation.Event;
 import io.micrometer.observation.Observation.Scope;
@@ -251,6 +252,11 @@ class ObservationValidatorTests {
     @Test
     void startErrorErrorStopShouldBeValid() {
         Observation.start("test", registry).error(new RuntimeException()).error(new RuntimeException()).stop();
+    }
+
+    @Test
+    void nullObservationShouldBeIgnored() {
+        new NullObservation(registry).openScope();
     }
 
 }
