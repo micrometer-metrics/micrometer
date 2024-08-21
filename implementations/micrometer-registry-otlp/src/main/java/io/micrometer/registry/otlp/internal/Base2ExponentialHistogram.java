@@ -73,23 +73,35 @@ public abstract class Base2ExponentialHistogram implements Histogram {
      * maxBucketsCount.
      * @param maxBucketsCount - maximum number of buckets that can be used for
      * distribution.
-     * @param zeroThreshold - values less than or equal to this are considered in zero
-     * count and recorded in the histogram. If less than 0, this is rounded to zero. In
-     * case of recording time, this should be in nanoseconds.
+     * @param minimumExpectedValue - values less than this are considered in zero count
+     * and not recorded in the histogram. If less than 0, this is rounded to zero. In case
+     * of recording time, this should be in nanoseconds.
      * @param baseUnit - an Optional TimeUnit. If set to a non-null unit, the recorded
      * values are converted to this unit.
      */
-    Base2ExponentialHistogram(int maxScale, int maxBucketsCount, double zeroThreshold, @Nullable TimeUnit baseUnit) {
+    Base2ExponentialHistogram(int maxScale, int maxBucketsCount, double minimumExpectedValue,
+            @Nullable TimeUnit baseUnit) {
         this.maxScale = maxScale;
         this.scale = maxScale;
         this.maxBucketsCount = maxBucketsCount;
         this.baseUnit = baseUnit;
-        // Convert the zeroThreshold to baseUnit.
-        this.zeroThreshold = Math.max(baseUnit != null ? TimeUtils.nanosToUnit(zeroThreshold, baseUnit) : zeroThreshold,
-                0.0);
+        this.zeroThreshold = getZeroThreshHoldFromMinExpectedValue(minimumExpectedValue, baseUnit);
 
         this.circularCountHolder = new CircularCountHolder(maxBucketsCount);
         this.base2IndexProvider = IndexProviderFactory.getIndexProviderForScale(scale);
+    }
+
+    /**
+     * Convert the minimumExpectedValue to zeroThreshold. Micrometer's
+     * minimumExpectedValue should be included as part of distribution whereas Exponential
+     * Histogram will exclude the zeroThreshold from distribution. Hence, we find the next
+     * smallest value from minimumExpectedValue and use it as zeroThreshold.
+     */
+    private static double getZeroThreshHoldFromMinExpectedValue(final double minimumExpectedValue,
+            final @Nullable TimeUnit baseUnit) {
+        double minValueScaledToTime = baseUnit != null ? TimeUtils.nanosToUnit(minimumExpectedValue, baseUnit)
+                : minimumExpectedValue;
+        return Math.max(Math.nextDown(minValueScaledToTime), 0.0);
     }
 
     /**

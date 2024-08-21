@@ -42,7 +42,7 @@ class DeltaBase2ExponentialHistogramTest {
 
     @Test
     void snapshotShouldBeSameForOneStep() {
-        deltaBase2ExponentialHistogram.recordDouble(1.0);
+        deltaBase2ExponentialHistogram.recordDouble(0.5);
         deltaBase2ExponentialHistogram.recordDouble(2.0);
 
         ExponentialHistogramSnapShot exponentialHistogramSnapShot = deltaBase2ExponentialHistogram

@@ -513,7 +513,6 @@ class OtlpDeltaMeterRegistryTest extends OtlpMeterRegistryTest {
             .tags(Tags.of(meterTag))
             .publishPercentileHistogram()
             .register(registryWithExponentialHistogram);
-        timer.record(Duration.ofMillis(1));
         timer.record(Duration.ofMillis(100));
         timer.record(Duration.ofMillis(1000));
 
@@ -524,7 +523,7 @@ class OtlpDeltaMeterRegistryTest extends OtlpMeterRegistryTest {
         Metric metric = writeToMetric(timer);
         assertThat(metric.getExponentialHistogram().getDataPointsCount()).isPositive();
         ExponentialHistogramDataPoint exponentialHistogramDataPoint = metric.getExponentialHistogram().getDataPoints(0);
-        assertExponentialHistogram(metric, 3, 1101, 1000.0, 1, 5);
+        assertExponentialHistogram(metric, 2, 1100, 1000.0, 0, 5);
         ExponentialHistogramDataPoint.Buckets buckets = exponentialHistogramDataPoint.getPositive();
         assertThat(buckets.getOffset()).isEqualTo(212);
         assertThat(buckets.getBucketCountsCount()).isEqualTo(107);
@@ -567,7 +566,6 @@ class OtlpDeltaMeterRegistryTest extends OtlpMeterRegistryTest {
             .tags(Tags.of(meterTag))
             .publishPercentileHistogram()
             .register(registryWithExponentialHistogram);
-        ds.record(1);
         ds.record(100);
         ds.record(1000);
 
@@ -578,7 +576,7 @@ class OtlpDeltaMeterRegistryTest extends OtlpMeterRegistryTest {
         Metric metric = writeToMetric(ds);
         assertThat(metric.getExponentialHistogram().getDataPointsCount()).isPositive();
         ExponentialHistogramDataPoint exponentialHistogramDataPoint = metric.getExponentialHistogram().getDataPoints(0);
-        assertExponentialHistogram(metric, 3, 1101, 1000.0, 1, 5);
+        assertExponentialHistogram(metric, 2, 1100, 1000.0, 0, 5);
         ExponentialHistogramDataPoint.Buckets buckets = exponentialHistogramDataPoint.getPositive();
         assertThat(buckets.getOffset()).isEqualTo(212);
         assertThat(buckets.getBucketCountsCount()).isEqualTo(107);
