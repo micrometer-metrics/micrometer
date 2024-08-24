@@ -27,11 +27,15 @@ import io.micrometer.observation.Observations;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.DisabledForJreRange;
+import org.junit.jupiter.api.condition.JRE;
 
 import java.util.Collection;
 
 import static org.assertj.core.api.BDDAssertions.then;
 
+@DisabledForJreRange(min = JRE.JAVA_17,
+        disabledReason = "See https://github.com/micrometer-metrics/micrometer/pull/5401#issuecomment-2308440259")
 class MeasuredClassTest {
 
     MeterRegistry registry = new SimpleMeterRegistry();
