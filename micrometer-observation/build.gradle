@@ -46,5 +46,5 @@ dependencies {
 
     testImplementation 'org.assertj:assertj-core'
     testImplementation 'org.awaitility:awaitility'
-    testImplementation 'org.aspectj:aspectjweaver'
+    testImplementation libs.aspectjweaver
 }
