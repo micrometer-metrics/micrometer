@@ -36,7 +36,6 @@ public final class Observations {
             initialRegistry);
 
     private Observations() {
-        throw new UnsupportedOperationException("You can't instantiate a utility class");
     }
 
     /**

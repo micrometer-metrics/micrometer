@@ -212,7 +212,7 @@ dependencies {
     testImplementation 'io.grpc:grpc-testing-proto'
     testImplementation 'com.squareup.retrofit2:retrofit'
 
-    testImplementation 'org.aspectj:aspectjweaver'
+    testImplementation libs.aspectjweaver
 }
 
 task shenandoahTest(type: Test) {

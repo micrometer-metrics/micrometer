@@ -6,9 +6,9 @@ plugins {
 description 'AspectJ compile-time weaving test for Micrometer aspects'
 
 dependencies {
-    implementation project(':micrometer-core')
     aspect project(':micrometer-core')
     aspect project(':micrometer-observation')
+    implementation libs.aspectjrt
 
     testImplementation libs.junitJupiter
     testImplementation libs.assertj
