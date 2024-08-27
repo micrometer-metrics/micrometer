@@ -28,7 +28,7 @@ import io.micrometer.observation.contextpropagation.ObservationThreadLocalAccess
 public class NullObservation extends SimpleObservation {
 
     public NullObservation(ObservationRegistry registry) {
-        super("null", registry, new Context());
+        super("null", registry, new NullContext());
     }
 
     @Override
@@ -64,6 +64,18 @@ public class NullObservation extends SimpleObservation {
     @Override
     public Observation start() {
         return this;
+    }
+
+    /**
+     * A special {@link Observation.Context} that should be used only in
+     * {@link NullObservation} in special cases where clearing of scopes is important. Its
+     * only purpose is to make scenarios through {@link NullObservation} distinguishable
+     * from "normal" {@link Observation Observations}.
+     *
+     * @since 1.14.0
+     */
+    public static class NullContext extends Context {
+
     }
 
 }

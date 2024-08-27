@@ -85,7 +85,13 @@ public class ObservedAspect {
 
     private final Predicate<ProceedingJoinPoint> shouldSkip;
 
-    // For Compile Time Weaving
+    /**
+     * Create an {@code ObservedAspect} with {@link Observations#getGlobalRegistry()}.
+     *
+     * This is for compile-time weaving.
+     *
+     * @since 1.14.0
+     */
     public ObservedAspect() {
         this(Observations.getGlobalRegistry(), null, DONT_SKIP_ANYTHING);
     }
