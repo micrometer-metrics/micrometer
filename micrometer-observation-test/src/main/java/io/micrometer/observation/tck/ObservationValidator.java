@@ -16,6 +16,7 @@
 package io.micrometer.observation.tck;
 
 import io.micrometer.common.lang.Nullable;
+import io.micrometer.observation.NullObservation.NullContext;
 import io.micrometer.observation.Observation.Context;
 import io.micrometer.observation.Observation.Event;
 import io.micrometer.observation.ObservationHandler;
@@ -47,7 +48,7 @@ class ObservationValidator implements ObservationHandler<Context> {
     }
 
     ObservationValidator(Consumer<ValidationResult> consumer) {
-        this(consumer, context -> true);
+        this(consumer, context -> !(context instanceof NullContext));
     }
 
     ObservationValidator(Consumer<ValidationResult> consumer, Predicate<Context> supportsContextPredicate) {
