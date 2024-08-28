@@ -19,5 +19,7 @@ dependencies {
 
 test {
     useJUnitPlatform()
-    jvmArgs '-javaagent:' + configurations.agents.files.find { it.name.startsWith('aspectjweaver') }
+    jvmArgs '-javaagent:' + configurations.agents.files.find { it.name.startsWith('aspectjweaver') },
+            // needed for Java 16+, until upgrading to AspectJ 1.9.21.1, see https://github.com/eclipse-aspectj/aspectj/blob/master/docs/release/README-1.9.20.adoc#use-ltw-on-java-16
+            '--add-opens=java.base/java.lang=ALL-UNNAMED'
 }
