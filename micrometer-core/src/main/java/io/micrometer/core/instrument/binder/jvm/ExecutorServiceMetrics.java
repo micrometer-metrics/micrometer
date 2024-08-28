@@ -167,7 +167,11 @@ public class ExecutorServiceMetrics implements MeterBinder {
     }
 
     /**
-     * Record metrics on the use of an {@link ExecutorService}.
+     * Record metrics on the use of an {@link ExecutorService}. This will also time the
+     * execution of tasks submitted to the ExecutorService wrapped with
+     * {@link TimedExecutorService} returned by this method. Metrics registered for
+     * monitoring the {@link ExecutorService} will be removed when the wrapped
+     * {@link ExecutorService} is shutdown.
      * @param registry The registry to bind metrics to.
      * @param executor The executor to instrument.
      * @param executorServiceName Will be used to tag metrics with "name".
