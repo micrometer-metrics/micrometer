@@ -33,6 +33,7 @@ import org.junit.jupiter.params.provider.CsvSource;
 import java.util.concurrent.*;
 
 import static org.assertj.core.api.AssertionsForClassTypes.*;
+import static org.awaitility.Awaitility.await;
 
 /**
  * Tests for {@link ExecutorServiceMetrics}.
@@ -143,14 +144,43 @@ class ExecutorServiceMetricsTest {
             .value()).isEqualTo(1.0);
 
         taskComplete.countDown();
+        await().untilAsserted(() -> {
+            assertThat(registry.get(expectedMetricPrefix + "executor").tags(userTags).timer().count()).isEqualTo(2L);
+            assertThat(registry.get(expectedMetricPrefix + "executor.idle").tags(userTags).timer().count())
+                .isEqualTo(2L);
+            assertThat(registry.get(expectedMetricPrefix + "executor.queued").tags(userTags).gauge().value())
+                .isEqualTo(0.0);
+        });
 
         pool.shutdown();
         assertThat(pool.awaitTermination(1, TimeUnit.SECONDS)).isTrue();
+    }
 
-        assertThat(registry.get(expectedMetricPrefix + "executor").tags(userTags).timer().count()).isEqualTo(2L);
-        assertThat(registry.get(expectedMetricPrefix + "executor.idle").tags(userTags).timer().count()).isEqualTo(2L);
-        assertThat(registry.get(expectedMetricPrefix + "executor.queued").tags(userTags).gauge().value())
-            .isEqualTo(0.0);
+    @DisplayName("ExecutorService can be monitored with a default set of metrics after shutdown")
+    @DisabledForJreRange(min = JRE.JAVA_16,
+            disabledReason = "See gh-2317 for why we can't run this full test on Java 16+")
+    @ParameterizedTest
+    @CsvSource({ "custom,custom.", "custom.,custom.", ",''", "' ',''" })
+    void monitorExecutorServiceAfterShutdown(String metricPrefix, String expectedMetricPrefix)
+            throws InterruptedException {
+        var exec = Executors.newFixedThreadPool(2);
+        var monitorExecutorService = monitorExecutorService("exec", metricPrefix, exec);
+        assertThreadPoolExecutorMetrics("exec", expectedMetricPrefix);
+        assertThat(registry.get(expectedMetricPrefix + "executor.pool.core").tags(userTags).gauge().value())
+            .isEqualTo(2L);
+
+        monitorExecutorService.shutdownNow();
+        assertThat(monitorExecutorService.awaitTermination(1, TimeUnit.SECONDS)).isTrue();
+
+        exec = Executors.newFixedThreadPool(3);
+        monitorExecutorService("exec", metricPrefix, exec);
+        assertThreadPoolExecutorMetrics("exec", expectedMetricPrefix);
+
+        assertThat(registry.get(expectedMetricPrefix + "executor.pool.core").tags(userTags).gauge().value())
+            .isEqualTo(3L);
+
+        exec.shutdown();
+        assertThat(exec.awaitTermination(1, TimeUnit.SECONDS)).isTrue();
     }
 
     @DisplayName("No exception thrown trying to monitor Executors private class")
