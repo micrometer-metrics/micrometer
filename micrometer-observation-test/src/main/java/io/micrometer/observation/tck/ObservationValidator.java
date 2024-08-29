@@ -61,7 +61,8 @@ class ObservationValidator implements ObservationHandler<Context> {
         addHistoryElement(context, EventName.START);
         Status status = context.get(Status.class);
         if (status != null) {
-            consumer.accept(new ValidationResult("Invalid start: Observation has already been started", context));
+            consumer.accept(new ValidationResult(
+                    "Invalid start: Observation '" + context.getName() + "' has already been started", context));
         }
         else {
             context.put(Status.class, new Status());
@@ -124,10 +125,12 @@ class ObservationValidator implements ObservationHandler<Context> {
     private Status checkIfObservationWasStartedButNotStopped(String prefix, Context context) {
         Status status = context.get(Status.class);
         if (status == null) {
-            consumer.accept(new ValidationResult(prefix + ": Observation has not been started yet", context));
+            consumer.accept(new ValidationResult(
+                    prefix + ": Observation '" + context.getName() + "' has not been started yet", context));
         }
         else if (status.isStopped()) {
-            consumer.accept(new ValidationResult(prefix + ": Observation has already been stopped", context));
+            consumer.accept(new ValidationResult(
+                    prefix + ": Observation '" + context.getName() + "' has already been stopped", context));
         }
 
         return status;
