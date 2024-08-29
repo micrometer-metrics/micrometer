@@ -23,6 +23,8 @@ import com.github.benmanes.caffeine.cache.stats.CacheStats;
 import io.micrometer.common.lang.NonNullApi;
 import io.micrometer.common.lang.NonNullFields;
 import io.micrometer.common.lang.Nullable;
+import io.micrometer.common.util.internal.logging.InternalLogger;
+import io.micrometer.common.util.internal.logging.InternalLoggerFactory;
 import io.micrometer.core.instrument.*;
 
 import java.util.concurrent.TimeUnit;
@@ -48,6 +50,8 @@ public class CaffeineCacheMetrics<K, V, C extends Cache<K, V>> extends CacheMete
 
     private static final String DESCRIPTION_CACHE_LOAD = "The number of times cache lookup methods have successfully loaded a new value or failed to load a new value, either because no value was found or an exception was thrown while loading";
 
+    private static final InternalLogger log = InternalLoggerFactory.getInstance(CaffeineCacheMetrics.class);
+
     /**
      * Creates a new {@link CaffeineCacheMetrics} instance.
      * @param cache The cache to be instrumented. You must call
@@ -58,6 +62,12 @@ public class CaffeineCacheMetrics<K, V, C extends Cache<K, V>> extends CacheMete
      */
     public CaffeineCacheMetrics(C cache, String cacheName, Iterable<Tag> tags) {
         super(cache, cacheName, tags);
+
+        if (!cache.policy().isRecordingStats()) {
+            log.warn(
+                    "The cache '{}' is not recording statistics, so their values will be zero. Call 'Caffeine#recordStats()' prior to building the cache for metrics to be recorded.",
+                    cacheName);
+        }
     }
 
     /**
