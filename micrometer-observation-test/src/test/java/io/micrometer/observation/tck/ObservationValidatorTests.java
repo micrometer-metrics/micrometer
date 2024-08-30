@@ -39,9 +39,9 @@ class ObservationValidatorTests {
         assertThatThrownBy(() -> Observation.start("test", registry).start())
             .isExactlyInstanceOf(InvalidObservationException.class)
             .hasNoCause()
-            .hasMessage("Invalid start: Observation has already been started")
+            .hasMessage("Invalid start: Observation 'test' has already been started")
             .satisfies(exception -> assertThat(exception.toString()).matches(
-                    "(?s)^io\\.micrometer\\.observation\\.tck\\.InvalidObservationException: Invalid start: Observation has already been started\n"
+                    "(?s)^io\\.micrometer\\.observation\\.tck\\.InvalidObservationException: Invalid start: Observation 'test' has already been started\n"
                             + "START: app//io\\.micrometer\\.observation\\.tck\\.ObservationValidatorTests\\.lambda\\$doubleStartShouldBeInvalid\\$\\d+\\(ObservationValidatorTests\\.java:\\d+\\)\n"
                             + "START: app//io\\.micrometer\\.observation\\.tck\\.ObservationValidatorTests\\.lambda\\$doubleStartShouldBeInvalid\\$\\d+\\(ObservationValidatorTests.java:\\d+\\)$"));
     }
@@ -51,9 +51,9 @@ class ObservationValidatorTests {
         assertThatThrownBy(() -> Observation.createNotStarted("test", registry).stop())
             .isExactlyInstanceOf(InvalidObservationException.class)
             .hasNoCause()
-            .hasMessage("Invalid stop: Observation has not been started yet")
+            .hasMessage("Invalid stop: Observation 'test' has not been started yet")
             .satisfies(exception -> assertThat(exception.toString()).matches(
-                    "(?s)^io\\.micrometer\\.observation\\.tck\\.InvalidObservationException: Invalid stop: Observation has not been started yet\n"
+                    "(?s)^io\\.micrometer\\.observation\\.tck\\.InvalidObservationException: Invalid stop: Observation 'test' has not been started yet\n"
                             + "STOP: app//io\\.micrometer\\.observation\\.tck\\.ObservationValidatorTests\\.lambda\\$stopBeforeStartShouldBeInvalid\\$\\d+\\(ObservationValidatorTests.java:\\d+\\)$"));
     }
 
@@ -62,9 +62,9 @@ class ObservationValidatorTests {
         assertThatThrownBy(() -> Observation.createNotStarted("test", registry).error(new RuntimeException()))
             .isExactlyInstanceOf(InvalidObservationException.class)
             .hasNoCause()
-            .hasMessage("Invalid error signal: Observation has not been started yet")
+            .hasMessage("Invalid error signal: Observation 'test' has not been started yet")
             .satisfies(exception -> assertThat(exception.toString()).matches(
-                    "(?s)^io\\.micrometer\\.observation\\.tck\\.InvalidObservationException: Invalid error signal: Observation has not been started yet\n"
+                    "(?s)^io\\.micrometer\\.observation\\.tck\\.InvalidObservationException: Invalid error signal: Observation 'test' has not been started yet\n"
                             + "ERROR: app//io\\.micrometer\\.observation\\.tck\\.ObservationValidatorTests\\.lambda\\$errorBeforeStartShouldBeInvalid\\$\\d+\\(ObservationValidatorTests.java:\\d+\\)$"));
     }
 
@@ -73,9 +73,9 @@ class ObservationValidatorTests {
         assertThatThrownBy(() -> Observation.createNotStarted("test", registry).event(Event.of("test")))
             .isExactlyInstanceOf(InvalidObservationException.class)
             .hasNoCause()
-            .hasMessage("Invalid event signal: Observation has not been started yet")
+            .hasMessage("Invalid event signal: Observation 'test' has not been started yet")
             .satisfies(exception -> assertThat(exception.toString()).matches(
-                    "(?s)^io\\.micrometer\\.observation\\.tck\\.InvalidObservationException: Invalid event signal: Observation has not been started yet\n"
+                    "(?s)^io\\.micrometer\\.observation\\.tck\\.InvalidObservationException: Invalid event signal: Observation 'test' has not been started yet\n"
                             + "EVENT: app//io\\.micrometer\\.observation\\.tck\\.ObservationValidatorTests\\.lambda\\$eventBeforeStartShouldBeInvalid\\$\\d+\\(ObservationValidatorTests.java:\\d+\\)$"));
     }
 
@@ -86,9 +86,9 @@ class ObservationValidatorTests {
         assertThatThrownBy(() -> Observation.createNotStarted("test", registry).openScope())
             .isExactlyInstanceOf(InvalidObservationException.class)
             .hasNoCause()
-            .hasMessage("Invalid scope opening: Observation has not been started yet")
+            .hasMessage("Invalid scope opening: Observation 'test' has not been started yet")
             .satisfies(exception -> assertThat(exception.toString()).matches(
-                    "(?s)^io\\.micrometer\\.observation\\.tck\\.InvalidObservationException: Invalid scope opening: Observation has not been started yet\n"
+                    "(?s)^io\\.micrometer\\.observation\\.tck\\.InvalidObservationException: Invalid scope opening: Observation 'test' has not been started yet\n"
                             + "SCOPE_OPEN: app//io\\.micrometer\\.observation\\.tck\\.ObservationValidatorTests\\.lambda\\$scopeBeforeStartShouldBeInvalid\\$\\d+\\(ObservationValidatorTests.java:\\d+\\)$"));
     }
 
@@ -97,9 +97,9 @@ class ObservationValidatorTests {
         assertThatThrownBy(() -> Observation.start("test", registry).observe(() -> ""))
             .isExactlyInstanceOf(InvalidObservationException.class)
             .hasNoCause()
-            .hasMessage("Invalid start: Observation has already been started")
+            .hasMessage("Invalid start: Observation 'test' has already been started")
             .satisfies(exception -> assertThat(exception.toString()).matches(
-                    "(?s)^io\\.micrometer\\.observation\\.tck\\.InvalidObservationException: Invalid start: Observation has already been started\n"
+                    "(?s)^io\\.micrometer\\.observation\\.tck\\.InvalidObservationException: Invalid start: Observation 'test' has already been started\n"
                             + "START: app//io\\.micrometer\\.observation\\.tck\\.ObservationValidatorTests\\.lambda\\$observeAfterStartShouldBeInvalid\\$\\d+\\(ObservationValidatorTests\\.java:\\d+\\)\n"
                             + "START: app//io\\.micrometer\\.observation\\.tck\\.ObservationValidatorTests\\.lambda\\$observeAfterStartShouldBeInvalid\\$\\d+\\(ObservationValidatorTests.java:\\d+\\)$"));
     }
@@ -112,9 +112,9 @@ class ObservationValidatorTests {
             observation.stop();
         }).isExactlyInstanceOf(InvalidObservationException.class)
             .hasNoCause()
-            .hasMessage("Invalid stop: Observation has already been stopped")
+            .hasMessage("Invalid stop: Observation 'test' has already been stopped")
             .satisfies(exception -> assertThat(exception.toString()).matches(
-                    "(?s)^io\\.micrometer\\.observation\\.tck\\.InvalidObservationException: Invalid stop: Observation has already been stopped\n"
+                    "(?s)^io\\.micrometer\\.observation\\.tck\\.InvalidObservationException: Invalid stop: Observation 'test' has already been stopped\n"
                             + "START: app//io\\.micrometer\\.observation\\.tck\\.ObservationValidatorTests\\.lambda\\$doubleStopShouldBeInvalid\\$\\d+\\(ObservationValidatorTests\\.java:\\d+\\)\n"
                             + "STOP: app//io\\.micrometer\\.observation\\.tck\\.ObservationValidatorTests\\.lambda\\$doubleStopShouldBeInvalid\\$\\d+\\(ObservationValidatorTests\\.java:\\d+\\)\n"
                             + "STOP: app//io\\.micrometer\\.observation\\.tck\\.ObservationValidatorTests\\.lambda\\$doubleStopShouldBeInvalid\\$\\d+\\(ObservationValidatorTests.java:\\d+\\)$"));
@@ -128,9 +128,9 @@ class ObservationValidatorTests {
             observation.error(new RuntimeException());
         }).isExactlyInstanceOf(InvalidObservationException.class)
             .hasNoCause()
-            .hasMessage("Invalid error signal: Observation has already been stopped")
+            .hasMessage("Invalid error signal: Observation 'test' has already been stopped")
             .satisfies(exception -> assertThat(exception.toString()).matches(
-                    "(?s)^io\\.micrometer\\.observation\\.tck\\.InvalidObservationException: Invalid error signal: Observation has already been stopped\n"
+                    "(?s)^io\\.micrometer\\.observation\\.tck\\.InvalidObservationException: Invalid error signal: Observation 'test' has already been stopped\n"
                             + "START: app//io\\.micrometer\\.observation\\.tck\\.ObservationValidatorTests\\.lambda\\$errorAfterStopShouldBeInvalid\\$\\d+\\(ObservationValidatorTests\\.java:\\d+\\)\n"
                             + "STOP: app//io\\.micrometer\\.observation\\.tck\\.ObservationValidatorTests\\.lambda\\$errorAfterStopShouldBeInvalid\\$\\d+\\(ObservationValidatorTests\\.java:\\d+\\)\n"
                             + "ERROR: app//io\\.micrometer\\.observation\\.tck\\.ObservationValidatorTests\\.lambda\\$errorAfterStopShouldBeInvalid\\$\\d+\\(ObservationValidatorTests.java:\\d+\\)$"));
@@ -144,9 +144,9 @@ class ObservationValidatorTests {
             observation.event(Event.of("test"));
         }).isExactlyInstanceOf(InvalidObservationException.class)
             .hasNoCause()
-            .hasMessage("Invalid event signal: Observation has already been stopped")
+            .hasMessage("Invalid event signal: Observation 'test' has already been stopped")
             .satisfies(exception -> assertThat(exception.toString()).matches(
-                    "(?s)^io\\.micrometer\\.observation\\.tck\\.InvalidObservationException: Invalid event signal: Observation has already been stopped\n"
+                    "(?s)^io\\.micrometer\\.observation\\.tck\\.InvalidObservationException: Invalid event signal: Observation 'test' has already been stopped\n"
                             + "START: app//io\\.micrometer\\.observation\\.tck\\.ObservationValidatorTests\\.lambda\\$eventAfterStopShouldBeInvalid\\$\\d+\\(ObservationValidatorTests\\.java:\\d+\\)\n"
                             + "STOP: app//io\\.micrometer\\.observation\\.tck\\.ObservationValidatorTests\\.lambda\\$eventAfterStopShouldBeInvalid\\$\\d+\\(ObservationValidatorTests\\.java:\\d+\\)\n"
                             + "EVENT: app//io\\.micrometer\\.observation\\.tck\\.ObservationValidatorTests\\.lambda\\$eventAfterStopShouldBeInvalid\\$\\d+\\(ObservationValidatorTests.java:\\d+\\)$"));
@@ -161,9 +161,9 @@ class ObservationValidatorTests {
             observation.openScope();
         }).isExactlyInstanceOf(InvalidObservationException.class)
             .hasNoCause()
-            .hasMessage("Invalid scope opening: Observation has already been stopped")
+            .hasMessage("Invalid scope opening: Observation 'test' has already been stopped")
             .satisfies(exception -> assertThat(exception.toString()).matches(
-                    "(?s)^io\\.micrometer\\.observation\\.tck\\.InvalidObservationException: Invalid scope opening: Observation has already been stopped\n"
+                    "(?s)^io\\.micrometer\\.observation\\.tck\\.InvalidObservationException: Invalid scope opening: Observation 'test' has already been stopped\n"
                             + "START: app//io\\.micrometer\\.observation\\.tck\\.ObservationValidatorTests\\.lambda\\$scopeOpenAfterStopShouldBeInvalid\\$\\d+\\(ObservationValidatorTests\\.java:\\d+\\)\n"
                             + "STOP: app//io\\.micrometer\\.observation\\.tck\\.ObservationValidatorTests\\.lambda\\$scopeOpenAfterStopShouldBeInvalid\\$\\d+\\(ObservationValidatorTests\\.java:\\d+\\)\n"
                             + "SCOPE_OPEN: app//io\\.micrometer\\.observation\\.tck\\.ObservationValidatorTests\\.lambda\\$scopeOpenAfterStopShouldBeInvalid\\$\\d+\\(ObservationValidatorTests.java:\\d+\\)$"));
@@ -179,9 +179,9 @@ class ObservationValidatorTests {
             scope.reset();
         }).isExactlyInstanceOf(InvalidObservationException.class)
             .hasNoCause()
-            .hasMessage("Invalid scope resetting: Observation has already been stopped")
+            .hasMessage("Invalid scope resetting: Observation 'test' has already been stopped")
             .satisfies(exception -> assertThat(exception.toString()).matches(
-                    "(?s)^io\\.micrometer\\.observation\\.tck\\.InvalidObservationException: Invalid scope resetting: Observation has already been stopped\n"
+                    "(?s)^io\\.micrometer\\.observation\\.tck\\.InvalidObservationException: Invalid scope resetting: Observation 'test' has already been stopped\n"
                             + "START: app//io\\.micrometer\\.observation\\.tck\\.ObservationValidatorTests\\.lambda\\$scopeResetAfterStopShouldBeInvalid\\$\\d+\\(ObservationValidatorTests\\.java:\\d+\\)\n"
                             + "SCOPE_OPEN: app//io\\.micrometer\\.observation\\.tck\\.ObservationValidatorTests\\.lambda\\$scopeResetAfterStopShouldBeInvalid\\$\\d+\\(ObservationValidatorTests.java:\\d+\\)\n"
                             + "STOP: app//io\\.micrometer\\.observation\\.tck\\.ObservationValidatorTests\\.lambda\\$scopeResetAfterStopShouldBeInvalid\\$\\d+\\(ObservationValidatorTests\\.java:\\d+\\)\n"
@@ -197,9 +197,9 @@ class ObservationValidatorTests {
             scope.close();
         }).isExactlyInstanceOf(InvalidObservationException.class)
             .hasNoCause()
-            .hasMessage("Invalid scope closing: Observation has already been stopped")
+            .hasMessage("Invalid scope closing: Observation 'test' has already been stopped")
             .satisfies(exception -> assertThat(exception.toString()).matches(
-                    "(?s)^io\\.micrometer\\.observation\\.tck\\.InvalidObservationException: Invalid scope closing: Observation has already been stopped\n"
+                    "(?s)^io\\.micrometer\\.observation\\.tck\\.InvalidObservationException: Invalid scope closing: Observation 'test' has already been stopped\n"
                             + "START: app//io\\.micrometer\\.observation\\.tck\\.ObservationValidatorTests\\.lambda\\$scopeCloseAfterStopShouldBeInvalid\\$\\d+\\(ObservationValidatorTests\\.java:\\d+\\)\n"
                             + "SCOPE_OPEN: app//io\\.micrometer\\.observation\\.tck\\.ObservationValidatorTests\\.lambda\\$scopeCloseAfterStopShouldBeInvalid\\$\\d+\\(ObservationValidatorTests.java:\\d+\\)\n"
                             + "STOP: app//io\\.micrometer\\.observation\\.tck\\.ObservationValidatorTests\\.lambda\\$scopeCloseAfterStopShouldBeInvalid\\$\\d+\\(ObservationValidatorTests\\.java:\\d+\\)\n"
