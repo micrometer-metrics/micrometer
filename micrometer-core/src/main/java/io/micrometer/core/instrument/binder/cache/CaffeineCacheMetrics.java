@@ -65,7 +65,7 @@ public class CaffeineCacheMetrics<K, V, C extends Cache<K, V>> extends CacheMete
 
         if (!cache.policy().isRecordingStats()) {
             log.warn(
-                    "The cache '{}' is not recording statistics, so their values will be zero. Call 'Caffeine#recordStats()' prior to building the cache for metrics to be recorded.",
+                    "The cache '{}' is not recording statistics. No meters except 'cache.size' will be registered. Call 'Caffeine#recordStats()' prior to building the cache for metrics to be recorded.",
                     cacheName);
         }
     }
@@ -176,6 +176,10 @@ public class CaffeineCacheMetrics<K, V, C extends Cache<K, V>> extends CacheMete
     @Override
     protected void bindImplementationSpecificMetrics(MeterRegistry registry) {
         C cache = getCache();
+        if (cache == null || !cache.policy().isRecordingStats()) {
+            return;
+        }
+
         FunctionCounter.builder("cache.eviction.weight", cache, c -> c.stats().evictionWeight())
             .tags(getTagsWithCacheName())
             .description("The sum of weights of evicted entries. This total does not include manual invalidations.")
@@ -206,6 +210,10 @@ public class CaffeineCacheMetrics<K, V, C extends Cache<K, V>> extends CacheMete
     private Long getOrDefault(Function<C, Long> function, @Nullable Long defaultValue) {
         C cache = getCache();
         if (cache != null) {
+            if (!cache.policy().isRecordingStats()) {
+                return null;
+            }
+
             return function.apply(cache);
         }
 
@@ -215,6 +223,10 @@ public class CaffeineCacheMetrics<K, V, C extends Cache<K, V>> extends CacheMete
     private long getOrDefault(ToLongFunction<C> function, long defaultValue) {
         C cache = getCache();
         if (cache != null) {
+            if (!cache.policy().isRecordingStats()) {
+                return UNSUPPORTED;
+            }
+
             return function.applyAsLong(cache);
         }
 
