@@ -141,7 +141,7 @@ public class DefaultLongTaskTimer extends AbstractMeter implements LongTaskTimer
         CountAtBucket[] countAtBucketsArr = new CountAtBucket[0];
 
         List<Double> percentilesAboveInterpolatableLine = percentilesRequested.stream()
-            .filter(p -> p * (activeTasks.size() + 1) > activeTasks.size())
+            .filter(p -> p * (activeTasks.size() + 1) >= activeTasks.size())
             .collect(Collectors.toList());
 
         percentilesRequested.removeAll(percentilesAboveInterpolatableLine);
