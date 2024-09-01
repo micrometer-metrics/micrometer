@@ -47,9 +47,9 @@ jersey2 = "2.44"
 jersey3 = "3.0.12"
 jmh = "1.37"
 # 3.14.x is the newest version of OSS jOOQ that supports Java 8
-jooqOld = "3.14.16"
+jooqOld = "3.19.11"
 # latest version of jOOQ to run tests against
-jooqNew = "3.19.10"
+jooqNew = "3.19.11"
 jsr107 = "1.1.1"
 jsr305 = "3.0.2"
 junit = "5.10.3"
