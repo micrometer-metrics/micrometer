@@ -45,7 +45,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * Sources for netty/index.adoc
  */
-public class NettyMetricsTests {
+class NettyMetricsTests {
 
     private SimpleMeterRegistry registry = new SimpleMeterRegistry(SimpleConfig.DEFAULT, new MockClock());
 
