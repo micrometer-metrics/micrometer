@@ -35,7 +35,11 @@ import java.util.concurrent.TimeUnit;
 import static io.micrometer.core.instrument.MockClock.clock;
 import static org.assertj.core.api.Assertions.assertThat;
 
+// Test class is public and in main code... by mistake?
+//CHECKSTYLE:OFF
 public class DefaultLongTaskTimerTest {
+
+    // CHECKSTYLE:ON
 
     @Test
     @DisplayName("supports sending histograms of active task duration")
