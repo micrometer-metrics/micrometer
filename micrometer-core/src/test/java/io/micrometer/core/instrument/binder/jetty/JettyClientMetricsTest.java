@@ -38,7 +38,7 @@ import java.util.concurrent.CountDownLatch;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class JettyClientMetricsTest {
+class JettyClientMetricsTest {
 
     private SimpleMeterRegistry registry = new SimpleMeterRegistry(SimpleConfig.DEFAULT, new MockClock());
 
