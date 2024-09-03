@@ -22,9 +22,17 @@ import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.binder.MeterBinder;
 import jdk.jfr.consumer.RecordingStream;
 
+import java.io.Closeable;
+import java.io.IOException;
+import java.time.Duration;
+
 import static java.util.Collections.emptyList;
 
-public class JvmVirtualThreadEventMetrics implements MeterBinder, AutoCloseable {
+public class JvmVirtualThreadEventMetrics implements MeterBinder, Closeable {
+
+    private static final String PINNED_EVENT = "jdk.VirtualThreadPinned";
+
+    private static final String SUBMIT_FAILED_EVENT = "jdk.VirtualThreadSubmitFailed";
 
     private final Iterable<Tag> tags;
 
@@ -38,8 +46,10 @@ public class JvmVirtualThreadEventMetrics implements MeterBinder, AutoCloseable 
         this.tags = tags;
         this.recordingStream = new RecordingStream();
 
-        recordingStream.enable("jdk.VirtualThreadPinnedEvent");
-        recordingStream.enable("jdk.VirtualThreadSubmitFailedEvent");
+        recordingStream.enable(PINNED_EVENT);
+        recordingStream.enable(SUBMIT_FAILED_EVENT);
+        recordingStream.setMaxAge(Duration.ofSeconds(5));
+        recordingStream.startAsync();
     }
 
     @Override
@@ -56,15 +66,12 @@ public class JvmVirtualThreadEventMetrics implements MeterBinder, AutoCloseable 
                 .description("The number of virtual thread submissions that failed")
                 .register(registry);
 
-        recordingStream.onEvent("jdk.VirtualThreadPinnedEvent", event ->
-            pinnedTimer.record(event.getDuration()));
-
-        recordingStream.onEvent("jdk.VirtualThreadSubmitFailedEvent",
-            event -> submitFailedCounter.increment());
+        recordingStream.onEvent(PINNED_EVENT, event -> pinnedTimer.record(event.getDuration()));
+        recordingStream.onEvent(SUBMIT_FAILED_EVENT, event -> submitFailedCounter.increment());
     }
 
     @Override
-    public void close() throws Exception {
+    public void close() throws IOException {
         recordingStream.close();
     }
 }
