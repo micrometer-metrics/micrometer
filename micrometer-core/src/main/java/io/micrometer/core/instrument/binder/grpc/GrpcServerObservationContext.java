@@ -50,6 +50,8 @@ public class GrpcServerObservationContext extends RequestReplyReceiverContext<Me
 
     private Metadata trailers;
 
+    private boolean cancelled;
+
     public GrpcServerObservationContext(Getter<Metadata> getter) {
         super(getter);
     }
@@ -138,6 +140,23 @@ public class GrpcServerObservationContext extends RequestReplyReceiverContext<Me
      */
     public void setTrailers(Metadata trailers) {
         this.trailers = trailers;
+    }
+
+    /**
+     * Indicate whether the request is cancelled or not.
+     * @return {@code true} if the request is cancelled
+     * @since 1.14
+     */
+    public boolean isCancelled() {
+        return this.cancelled;
+    }
+
+    /**
+     * Set {@code true} when the request is cancelled.
+     * @since 1.14
+     */
+    public void setCancelled(boolean cancelled) {
+        this.cancelled = cancelled;
     }
 
 }

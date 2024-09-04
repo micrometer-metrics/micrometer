@@ -536,6 +536,10 @@ class GrpcObservationTest {
             SimpleRequest request = SimpleRequest.newBuilder().setRequestMessage("Hello").build();
             stub.unaryRpc(request);
 
+            // await until server side processing finishes, otherwise context name might
+            // not be populated.
+            await().until(serverHandler::isContextStopped);
+
             assertThat(scopeAwareServerInterceptor.lastObservation).isNotNull().satisfies((observation -> {
                 assertThat(observation.getContext().getContextualName())
                     .isEqualTo("grpc.testing.SimpleService/UnaryRpc");
@@ -570,7 +574,11 @@ class GrpcObservationTest {
             assertThat(future.isCancelled()).isTrue();
             TestObservationRegistryAssert.assertThat(observationRegistry)
                 .hasAnObservation(observationContextAssert -> observationContextAssert.hasNameEqualTo("grpc.client")
-                    .hasLowCardinalityKeyValue("grpc.status_code", "CANCELLED"));
+                    .hasLowCardinalityKeyValue("grpc.status_code", "CANCELLED"))
+                .hasAnObservation(observationContextAssert -> observationContextAssert.hasNameEqualTo("grpc.server")
+                    .satisfies(observation -> assertThat(observation).isInstanceOfSatisfying(
+                            GrpcServerObservationContext.class,
+                            context -> assertThat(context.isCancelled()).isTrue())));
             assertThat(serverHandler.getEvents()).contains(GrpcServerEvents.CANCELLED);
         }
 
@@ -744,6 +752,8 @@ class GrpcObservationTest {
 
         private final Class<T> contextClass;
 
+        private boolean contextStopped;
+
         ContextAndEventHoldingObservationHandler(Class<T> contextClass) {
             this.contextClass = contextClass;
         }
@@ -767,8 +777,19 @@ class GrpcObservationTest {
             return this.contextHolder.get();
         }
 
+        @Override
+        public void onStop(T context) {
+            if (context.equals(this.contextHolder.get())) {
+                this.contextStopped = true;
+            }
+        }
+
         List<Event> getEvents() {
             return this.events;
+        }
+
+        public boolean isContextStopped() {
+            return this.contextStopped;
         }
 
     }
