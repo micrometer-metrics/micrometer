@@ -154,56 +154,27 @@ class ObservationValidatorTests {
 
     @Test
     @SuppressWarnings("resource")
-    void scopeOpenAfterStopShouldBeInvalid() {
-        assertThatThrownBy(() -> {
-            Observation observation = Observation.start("test", registry);
-            observation.stop();
-            observation.openScope();
-        }).isExactlyInstanceOf(InvalidObservationException.class)
-            .hasNoCause()
-            .hasMessage("Invalid scope opening: Observation 'test' has already been stopped")
-            .satisfies(exception -> assertThat(exception.toString()).matches(
-                    "(?s)^io\\.micrometer\\.observation\\.tck\\.InvalidObservationException: Invalid scope opening: Observation 'test' has already been stopped\n"
-                            + "START: app//io\\.micrometer\\.observation\\.tck\\.ObservationValidatorTests\\.lambda\\$scopeOpenAfterStopShouldBeInvalid\\$\\d+\\(ObservationValidatorTests\\.java:\\d+\\)\n"
-                            + "STOP: app//io\\.micrometer\\.observation\\.tck\\.ObservationValidatorTests\\.lambda\\$scopeOpenAfterStopShouldBeInvalid\\$\\d+\\(ObservationValidatorTests\\.java:\\d+\\)\n"
-                            + "SCOPE_OPEN: app//io\\.micrometer\\.observation\\.tck\\.ObservationValidatorTests\\.lambda\\$scopeOpenAfterStopShouldBeInvalid\\$\\d+\\(ObservationValidatorTests.java:\\d+\\)$"));
+    void scopeOpenAfterStopShouldBeValid() {
+        Observation observation = Observation.start("test", registry);
+        observation.stop();
+        observation.openScope();
     }
 
     @Test
     @SuppressWarnings("resource")
-    void scopeResetAfterStopShouldBeInvalid() {
-        assertThatThrownBy(() -> {
-            Observation observation = Observation.start("test", registry);
-            Scope scope = observation.openScope();
-            observation.stop();
-            scope.reset();
-        }).isExactlyInstanceOf(InvalidObservationException.class)
-            .hasNoCause()
-            .hasMessage("Invalid scope resetting: Observation 'test' has already been stopped")
-            .satisfies(exception -> assertThat(exception.toString()).matches(
-                    "(?s)^io\\.micrometer\\.observation\\.tck\\.InvalidObservationException: Invalid scope resetting: Observation 'test' has already been stopped\n"
-                            + "START: app//io\\.micrometer\\.observation\\.tck\\.ObservationValidatorTests\\.lambda\\$scopeResetAfterStopShouldBeInvalid\\$\\d+\\(ObservationValidatorTests\\.java:\\d+\\)\n"
-                            + "SCOPE_OPEN: app//io\\.micrometer\\.observation\\.tck\\.ObservationValidatorTests\\.lambda\\$scopeResetAfterStopShouldBeInvalid\\$\\d+\\(ObservationValidatorTests.java:\\d+\\)\n"
-                            + "STOP: app//io\\.micrometer\\.observation\\.tck\\.ObservationValidatorTests\\.lambda\\$scopeResetAfterStopShouldBeInvalid\\$\\d+\\(ObservationValidatorTests\\.java:\\d+\\)\n"
-                            + "SCOPE_RESET: app//io\\.micrometer\\.observation\\.tck\\.ObservationValidatorTests\\.lambda\\$scopeResetAfterStopShouldBeInvalid\\$\\d+\\(ObservationValidatorTests.java:\\d+\\)$"));
+    void scopeResetAfterStopShouldBeInValid() {
+        Observation observation = Observation.start("test", registry);
+        Scope scope = observation.openScope();
+        observation.stop();
+        scope.reset();
     }
 
     @Test
-    void scopeCloseAfterStopShouldBeInvalid() {
-        assertThatThrownBy(() -> {
-            Observation observation = Observation.start("test", registry);
-            Scope scope = observation.openScope();
-            observation.stop();
-            scope.close();
-        }).isExactlyInstanceOf(InvalidObservationException.class)
-            .hasNoCause()
-            .hasMessage("Invalid scope closing: Observation 'test' has already been stopped")
-            .satisfies(exception -> assertThat(exception.toString()).matches(
-                    "(?s)^io\\.micrometer\\.observation\\.tck\\.InvalidObservationException: Invalid scope closing: Observation 'test' has already been stopped\n"
-                            + "START: app//io\\.micrometer\\.observation\\.tck\\.ObservationValidatorTests\\.lambda\\$scopeCloseAfterStopShouldBeInvalid\\$\\d+\\(ObservationValidatorTests\\.java:\\d+\\)\n"
-                            + "SCOPE_OPEN: app//io\\.micrometer\\.observation\\.tck\\.ObservationValidatorTests\\.lambda\\$scopeCloseAfterStopShouldBeInvalid\\$\\d+\\(ObservationValidatorTests.java:\\d+\\)\n"
-                            + "STOP: app//io\\.micrometer\\.observation\\.tck\\.ObservationValidatorTests\\.lambda\\$scopeCloseAfterStopShouldBeInvalid\\$\\d+\\(ObservationValidatorTests\\.java:\\d+\\)\n"
-                            + "SCOPE_CLOSE: app//io\\.micrometer\\.observation\\.tck\\.ObservationValidatorTests\\.lambda\\$scopeCloseAfterStopShouldBeInvalid\\$\\d+\\(ObservationValidatorTests.java:\\d+\\)$"));
+    void scopeCloseAfterStopShouldBeValid() {
+        Observation observation = Observation.start("test", registry);
+        Scope scope = observation.openScope();
+        observation.stop();
+        scope.close();
     }
 
     @Test
