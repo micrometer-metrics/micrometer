@@ -162,7 +162,7 @@ class ObservationValidatorTests {
 
     @Test
     @SuppressWarnings("resource")
-    void scopeResetAfterStopShouldBeInValid() {
+    void scopeResetAfterStopShouldBeValid() {
         Observation observation = Observation.start("test", registry);
         Scope scope = observation.openScope();
         observation.stop();
