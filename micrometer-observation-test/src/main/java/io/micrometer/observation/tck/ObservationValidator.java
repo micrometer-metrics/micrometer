@@ -84,19 +84,22 @@ class ObservationValidator implements ObservationHandler<Context> {
     @Override
     public void onScopeOpened(Context context) {
         addHistoryElement(context, EventName.SCOPE_OPEN);
-        checkIfObservationWasStartedButNotStopped("Invalid scope opening", context);
+        // In some cases (Reactor) scope open can happen after the observation is stopped
+        checkIfObservationWasStarted("Invalid scope opening", context);
     }
 
     @Override
     public void onScopeClosed(Context context) {
         addHistoryElement(context, EventName.SCOPE_CLOSE);
-        checkIfObservationWasStartedButNotStopped("Invalid scope closing", context);
+        // In some cases (Reactor) scope close can happen after the observation is stopped
+        checkIfObservationWasStarted("Invalid scope closing", context);
     }
 
     @Override
     public void onScopeReset(Context context) {
         addHistoryElement(context, EventName.SCOPE_RESET);
-        checkIfObservationWasStartedButNotStopped("Invalid scope resetting", context);
+        // In some cases (Reactor) scope reset can happen after the observation is stopped
+        checkIfObservationWasStarted("Invalid scope resetting", context);
     }
 
     @Override
@@ -122,13 +125,20 @@ class ObservationValidator implements ObservationHandler<Context> {
     }
 
     @Nullable
-    private Status checkIfObservationWasStartedButNotStopped(String prefix, Context context) {
+    private Status checkIfObservationWasStarted(String prefix, Context context) {
         Status status = context.get(Status.class);
         if (status == null) {
             consumer.accept(new ValidationResult(
                     prefix + ": Observation '" + context.getName() + "' has not been started yet", context));
         }
-        else if (status.isStopped()) {
+
+        return status;
+    }
+
+    @Nullable
+    private Status checkIfObservationWasStartedButNotStopped(String prefix, Context context) {
+        Status status = checkIfObservationWasStarted(prefix, context);
+        if (status != null && status.isStopped()) {
             consumer.accept(new ValidationResult(
                     prefix + ": Observation '" + context.getName() + "' has already been stopped", context));
         }
