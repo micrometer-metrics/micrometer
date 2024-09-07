@@ -5,8 +5,8 @@ pluginManagement {
 }
 
 plugins {
-    id 'com.gradle.develocity' version '3.17.2'
-    id 'io.spring.ge.conventions' version '0.0.17'
+    id 'com.gradle.develocity' version '3.18'
+    id 'io.spring.develocity.conventions' version '0.0.20'
     id 'org.gradle.toolchains.foojay-resolver-convention' version '0.8.0'
 }
 
@@ -31,7 +31,7 @@ include 'micrometer-commons', 'micrometer-core', 'micrometer-observation'
     project(":micrometer-samples-$sample").projectDir = new File(rootProject.projectDir, "samples/micrometer-samples-$sample")
 }
 
-include 'micrometer-test', 'micrometer-observation-test'
+include 'micrometer-test', 'micrometer-observation-test', 'micrometer-test-aspectj-ltw', 'micrometer-test-aspectj-ctw'
 
 ['atlas', 'prometheus', 'prometheus-simpleclient', 'datadog', 'elastic', 'ganglia', 'graphite', 'health', 'jmx', 'influx', 'otlp', 'statsd', 'new-relic', 'cloudwatch2', 'signalfx', 'wavefront', 'dynatrace', 'azure-monitor', 'humio', 'appoptics', 'kairos', 'stackdriver', 'opentsdb'].each { sys ->
     include "micrometer-registry-$sys"

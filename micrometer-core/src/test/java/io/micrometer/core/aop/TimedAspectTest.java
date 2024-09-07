@@ -23,6 +23,7 @@ import io.micrometer.core.instrument.LongTaskTimer;
 import io.micrometer.core.instrument.Meter.Id;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.instrument.distribution.CountAtBucket;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import io.micrometer.core.instrument.search.MeterNotFoundException;
@@ -34,6 +35,7 @@ import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.aop.aspectj.annotation.AspectJProxyFactory;
 
 import javax.annotation.Nonnull;
+import java.util.Arrays;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.function.Predicate;
@@ -93,6 +95,29 @@ class TimedAspectTest {
             .tag("extra", "tag")
             .longTaskTimers()
             .size()).isEqualTo(1);
+    }
+
+    @Test
+    void timeMethodWithSloTimer() {
+        MeterRegistry registry = new SimpleMeterRegistry();
+
+        AspectJProxyFactory pf = new AspectJProxyFactory(new TimedService());
+        pf.addAspect(new TimedAspect(registry));
+
+        TimedService service = pf.getProxy();
+
+        service.sloCall();
+
+        assertThat(Arrays
+            .stream(registry.get("sloCall")
+                .tag("class", getClass().getName() + "$TimedService")
+                .tag("method", "sloCall")
+                .tag("extra", "tag")
+                .timer()
+                .takeSnapshot()
+                .histogramCounts())
+            .mapToDouble(CountAtBucket::bucket)
+            .toArray()).isEqualTo(new double[] { Math.pow(10, 9) * 0.1, Math.pow(10, 9) * 0.5 });
     }
 
     @Test
@@ -454,7 +479,51 @@ class TimedAspectTest {
 
             service.getAnnotationForTagValueExpression("15L");
 
-            assertThat(registry.get("method.timed").tag("test", "hello characters").timer().count()).isEqualTo(1);
+            assertThat(registry.get("method.timed").tag("test", "hello characters. overridden").timer().count())
+                .isEqualTo(1);
+        }
+
+        @ParameterizedTest
+        @EnumSource(AnnotatedTestClass.class)
+        void multipleMeterTagsWithExpression(AnnotatedTestClass annotatedClass) {
+            MeterRegistry registry = new SimpleMeterRegistry();
+            TimedAspect timedAspect = new TimedAspect(registry);
+            timedAspect.setMeterTagAnnotationHandler(meterTagAnnotationHandler);
+
+            AspectJProxyFactory pf = new AspectJProxyFactory(annotatedClass.newInstance());
+            pf.addAspect(timedAspect);
+
+            MeterTagClassInterface service = pf.getProxy();
+
+            service.getMultipleAnnotationsForTagValueExpression(new DataHolder("zxe", "qwe"));
+
+            assertThat(registry.get("method.timed")
+                .tag("value1", "value1: zxe")
+                .tag("value2", "value2. overridden: qwe")
+                .timer()
+                .count()).isEqualTo(1);
+        }
+
+        @ParameterizedTest
+        @EnumSource(AnnotatedTestClass.class)
+        void multipleMeterTagsWithinContainerWithExpression(AnnotatedTestClass annotatedClass) {
+            MeterRegistry registry = new SimpleMeterRegistry();
+            TimedAspect timedAspect = new TimedAspect(registry);
+            timedAspect.setMeterTagAnnotationHandler(meterTagAnnotationHandler);
+
+            AspectJProxyFactory pf = new AspectJProxyFactory(annotatedClass.newInstance());
+            pf.addAspect(timedAspect);
+
+            MeterTagClassInterface service = pf.getProxy();
+
+            service.getMultipleAnnotationsWithContainerForTagValueExpression(new DataHolder("zxe", "qwe"));
+
+            assertThat(registry.get("method.timed")
+                .tag("value1", "value1: zxe")
+                .tag("value2", "value2: qwe")
+                .tag("value3", "value3: ZXEQWE")
+                .timer()
+                .count()).isEqualTo(1);
         }
 
         @Test
@@ -525,6 +594,17 @@ class TimedAspectTest {
             @Timed
             void getAnnotationForArgumentToString(@MeterTag("test") Long param);
 
+            @Timed
+            void getMultipleAnnotationsForTagValueExpression(
+                    @MeterTag(key = "value1", expression = "'value1: ' + value1") @MeterTag(key = "value2",
+                            expression = "'value2: ' + value2") DataHolder param);
+
+            @Timed
+            void getMultipleAnnotationsWithContainerForTagValueExpression(@MeterTags({
+                    @MeterTag(key = "value1", expression = "'value1: ' + value1"),
+                    @MeterTag(key = "value2", expression = "'value2: ' + value2"), @MeterTag(key = "value3",
+                            expression = "'value3: ' + value1.toUpperCase + value2.toUpperCase") }) DataHolder param);
+
         }
 
         static class MeterTagClass implements MeterTagClassInterface {
@@ -538,7 +618,7 @@ class TimedAspectTest {
             @Timed
             @Override
             public void getAnnotationForTagValueExpression(
-                    @MeterTag(key = "test", expression = "'hello' + ' characters'") String test) {
+                    @MeterTag(key = "test", expression = "'hello' + ' characters. overridden'") String test) {
             }
 
             @Timed
@@ -548,6 +628,22 @@ class TimedAspectTest {
 
             @Timed
             void getAnnotationForPackagePrivateMethod(@MeterTag("foo") String foo) {
+            }
+
+            @Timed
+            @Override
+            public void getMultipleAnnotationsForTagValueExpression(
+                    @MeterTag(key = "value1", expression = "'value1: ' + value1") @MeterTag(key = "value2",
+                            expression = "'value2. overridden: ' + value2") DataHolder param) {
+
+            }
+
+            @Timed
+            @Override
+            public void getMultipleAnnotationsWithContainerForTagValueExpression(@MeterTags({
+                    @MeterTag(key = "value1", expression = "'value1: ' + value1"),
+                    @MeterTag(key = "value2", expression = "'value2: ' + value2"), @MeterTag(key = "value3",
+                            expression = "'value3: ' + value1.toUpperCase + value2.toUpperCase") }) DataHolder param) {
             }
 
         }
@@ -561,12 +657,26 @@ class TimedAspectTest {
 
             @Timed
             @Override
-            public void getAnnotationForTagValueExpression(String test) {
+            public void getAnnotationForTagValueExpression(
+                    @MeterTag(key = "test", expression = "'hello' + ' characters. overridden'") String test) {
             }
 
             @Timed
             @Override
             public void getAnnotationForArgumentToString(Long param) {
+            }
+
+            @Timed
+            @Override
+            public void getMultipleAnnotationsForTagValueExpression(
+                    @MeterTag(key = "value2", expression = "'value2. overridden: ' + value2") DataHolder param) {
+
+            }
+
+            @Timed
+            @Override
+            public void getMultipleAnnotationsWithContainerForTagValueExpression(DataHolder param) {
+
             }
 
         }
@@ -619,6 +729,11 @@ class TimedAspectTest {
 
         @Timed(value = "longCall", extraTags = { "extra", "tag" }, longTask = true)
         void longCall() {
+        }
+
+        @Timed(value = "sloCall", extraTags = { "extra", "tag" }, histogram = true,
+                serviceLevelObjectives = { 0.1, 0.5 })
+        void sloCall() {
         }
 
     }
@@ -695,6 +810,27 @@ class TimedAspectTest {
 
         @Override
         public void call() {
+        }
+
+    }
+
+    public static final class DataHolder {
+
+        private final String value1;
+
+        private final String value2;
+
+        private DataHolder(String value1, String value2) {
+            this.value1 = value1;
+            this.value2 = value2;
+        }
+
+        public String getValue1() {
+            return value1;
+        }
+
+        public String getValue2() {
+            return value2;
         }
 
     }

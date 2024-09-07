@@ -38,7 +38,7 @@ public final class TestObservationRegistry implements ObservationRegistry {
     private final StoringObservationHandler handler = new StoringObservationHandler();
 
     private TestObservationRegistry() {
-        observationConfig().observationHandler(this.handler);
+        observationConfig().observationHandler(this.handler).observationHandler(new ObservationValidator());
     }
 
     /**

@@ -39,6 +39,9 @@ import java.util.concurrent.CountDownLatch;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
 
+/**
+ * Test {@link JettyConnectionMetrics} with Jetty 12.
+ */
 class JettyConnectionMetricsTest {
 
     private SimpleMeterRegistry registry = new SimpleMeterRegistry(SimpleConfig.DEFAULT, new MockClock());
@@ -49,10 +52,12 @@ class JettyConnectionMetricsTest {
 
     private CloseableHttpClient client = HttpClients.createDefault();
 
-    void setup() throws Exception {
-        JettyConnectionMetrics metrics = new JettyConnectionMetrics(registry);
-        connector.addBean(metrics);
-        connector.setNetworkTrafficListener(metrics);
+    void setup(boolean instrumentServer) throws Exception {
+        if (instrumentServer) {
+            JettyConnectionMetrics metrics = new JettyConnectionMetrics(registry, connector);
+            connector.addBean(metrics);
+            connector.setNetworkTrafficListener(metrics);
+        }
         server.setConnectors(new Connector[] { connector });
         server.start();
     }
@@ -65,8 +70,21 @@ class JettyConnectionMetricsTest {
     }
 
     @Test
+    void directServerConnectorInstrumentation() throws Exception {
+        setup(true);
+        contributesServerConnectorMetrics();
+    }
+
+    @Test
+    void addToAllConnectorsInstrumentation() throws Exception {
+        server.setConnectors(new Connector[] { connector });
+        JettyConnectionMetrics.addToAllConnectors(server, registry);
+        server.start();
+
+        contributesServerConnectorMetrics();
+    }
+
     void contributesServerConnectorMetrics() throws Exception {
-        setup();
         HttpPost post = new HttpPost("http://localhost:" + connector.getLocalPort());
         post.setEntity(new StringEntity("123456"));
 
@@ -96,7 +114,7 @@ class JettyConnectionMetricsTest {
 
     @Test
     void contributesClientConnectorMetrics() throws Exception {
-        setup();
+        setup(false);
         HttpClient httpClient = new HttpClient();
         httpClient.setFollowRedirects(false);
         httpClient.addBean(new JettyConnectionMetrics(registry));
@@ -119,7 +137,6 @@ class JettyConnectionMetricsTest {
         assertThat(latch.await(10, SECONDS)).isTrue();
         assertThat(registry.get("jetty.connections.max").gauge().value()).isEqualTo(1.0);
         assertThat(registry.get("jetty.connections.request").tag("type", "client").timer().count()).isEqualTo(1);
-        assertThat(registry.get("jetty.connections.bytes.out").summary().totalAmount()).isGreaterThan(1);
     }
 
     @Test

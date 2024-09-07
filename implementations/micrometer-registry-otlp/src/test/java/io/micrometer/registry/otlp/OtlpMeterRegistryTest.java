@@ -18,6 +18,8 @@ package io.micrometer.registry.otlp;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
+import io.micrometer.core.instrument.Timer;
+import io.opentelemetry.proto.metrics.v1.ExponentialHistogramDataPoint;
 import io.opentelemetry.proto.metrics.v1.HistogramDataPoint;
 import io.opentelemetry.proto.metrics.v1.Metric;
 import io.opentelemetry.proto.metrics.v1.NumberDataPoint;
@@ -47,9 +49,13 @@ abstract class OtlpMeterRegistryTest {
 
     protected MockClock clock = new MockClock();
 
-    protected OtlpMeterRegistry registry = new OtlpMeterRegistry(otlpConfig(), clock);
+    OtlpMeterRegistry registry = new OtlpMeterRegistry(otlpConfig(), clock);
+
+    OtlpMeterRegistry registryWithExponentialHistogram = new OtlpMeterRegistry(exponentialHistogramOtlpConfig(), clock);
 
     abstract OtlpConfig otlpConfig();
+
+    abstract OtlpConfig exponentialHistogramOtlpConfig();
 
     // If the service.name was not specified, SDKs MUST fallback to 'unknown_service'
     @Test
@@ -125,20 +131,46 @@ abstract class OtlpMeterRegistryTest {
 
     @Test
     void distributionWithPercentileShouldWriteSummary() {
-        Timer timer = Timer.builder("timer")
+        Timer.Builder timer = Timer.builder("timer")
             .description(METER_DESCRIPTION)
             .tags(Tags.of(meterTag))
-            .publishPercentiles(0.5, 0.9)
-            .register(registry);
+            .publishPercentiles(0.5, 0.9);
 
-        DistributionSummary ds = DistributionSummary.builder("ds")
+        DistributionSummary.Builder ds = DistributionSummary.builder("ds")
             .description(METER_DESCRIPTION)
             .tags(Tags.of(meterTag))
-            .publishPercentiles(0.5, 0.9)
-            .register(registry);
+            .publishPercentiles(0.5, 0.9);
 
-        assertThat(writeToMetric(timer).getDataCase().getNumber()).isEqualTo(Metric.DataCase.SUMMARY.getNumber());
-        assertThat(writeToMetric(ds).getDataCase().getNumber()).isEqualTo(Metric.DataCase.SUMMARY.getNumber());
+        assertThat(writeToMetric(timer.register(registry)).getDataCase().getNumber())
+            .isEqualTo(Metric.DataCase.SUMMARY.getNumber());
+        assertThat(writeToMetric(ds.register(registry)).getDataCase().getNumber())
+            .isEqualTo(Metric.DataCase.SUMMARY.getNumber());
+        assertThat(writeToMetric(timer.register(registryWithExponentialHistogram)).getDataCase().getNumber())
+            .isEqualTo(Metric.DataCase.SUMMARY.getNumber());
+        assertThat(writeToMetric(ds.register(registryWithExponentialHistogram)).getDataCase().getNumber())
+            .isEqualTo(Metric.DataCase.SUMMARY.getNumber());
+    }
+
+    @Test
+    void distributionWithPercentileHistogramShouldWriteHistogramOrExponentialHistogram() {
+        Timer.Builder timer = Timer.builder("timer")
+            .description(METER_DESCRIPTION)
+            .tags(Tags.of(meterTag))
+            .publishPercentileHistogram();
+
+        DistributionSummary.Builder ds = DistributionSummary.builder("ds")
+            .description(METER_DESCRIPTION)
+            .tags(Tags.of(meterTag))
+            .publishPercentileHistogram();
+
+        assertThat(writeToMetric(timer.register(registry)).getDataCase().getNumber())
+            .isEqualTo(Metric.DataCase.HISTOGRAM.getNumber());
+        assertThat(writeToMetric(ds.register(registry)).getDataCase().getNumber())
+            .isEqualTo(Metric.DataCase.HISTOGRAM.getNumber());
+        assertThat(writeToMetric(timer.register(registryWithExponentialHistogram)).getDataCase().getNumber())
+            .isEqualTo(Metric.DataCase.EXPONENTIAL_HISTOGRAM.getNumber());
+        assertThat(writeToMetric(ds.register(registryWithExponentialHistogram)).getDataCase().getNumber())
+            .isEqualTo(Metric.DataCase.EXPONENTIAL_HISTOGRAM.getNumber());
     }
 
     @Test
@@ -158,19 +190,19 @@ abstract class OtlpMeterRegistryTest {
         List<Metric> metrics = writeAllMeters();
         assertThat(metrics).hasSize(3);
 
-        assertThat(metrics).filteredOn(Metric::hasGauge).hasSize(1).first().satisfies(metric -> {
+        assertThat(metrics).filteredOn(Metric::hasGauge).singleElement().satisfies(metric -> {
             assertThat(metric.getDescription()).isEqualTo("description");
             assertThat(metric.getGauge().getDataPointsCount()).isEqualTo(2);
         });
 
-        assertThat(metrics).filteredOn(Metric::hasSum).hasSize(1).first().satisfies(metric -> {
+        assertThat(metrics).filteredOn(Metric::hasSum).singleElement().satisfies(metric -> {
             assertThat(metric.getDescription()).isEqualTo("description");
             assertThat(metric.getSum().getDataPointsCount()).isEqualTo(2);
             assertThat(metric.getSum().getAggregationTemporality())
                 .isEqualTo(AggregationTemporality.toOtlpAggregationTemporality(otlpConfig().aggregationTemporality()));
         });
 
-        assertThat(metrics).filteredOn(Metric::hasHistogram).hasSize(1).first().satisfies(metric -> {
+        assertThat(metrics).filteredOn(Metric::hasHistogram).singleElement().satisfies(metric -> {
             assertThat(metric.getDescription()).isEqualTo("description");
             assertThat(metric.getHistogram().getDataPointsCount()).isEqualTo(2);
             assertThat(metric.getHistogram().getAggregationTemporality())
@@ -183,8 +215,8 @@ abstract class OtlpMeterRegistryTest {
         Tags firstTag = Tags.of("key", "first");
         Tags secondTag = Tags.of("key", "second");
 
-        final String description1 = "description1";
-        final String description2 = "description2";
+        String description1 = "description1";
+        String description2 = "description2";
         Gauge.builder("test.gauge", () -> 1).description(description1).tags(firstTag).register(registry);
         Gauge.builder("test.gauge", () -> 1).description(description2).tags(secondTag).register(registry);
 
@@ -196,62 +228,122 @@ abstract class OtlpMeterRegistryTest {
 
         List<Metric> metrics = writeAllMeters();
         assertThat(metrics).hasSize(6);
-        assertThat(metrics).filteredOn(Metric::hasGauge).hasSize(2).satisfiesExactlyInAnyOrder(metric -> {
-            assertThat(metric.getDescription()).isEqualTo(description1);
-        }, metric -> {
-            assertThat(metric.getDescription()).isEqualTo(description2);
-        });
+        assertThat(metrics).filteredOn(Metric::hasGauge)
+            .hasSize(2)
+            .satisfiesExactlyInAnyOrder(metric -> assertThat(metric.getDescription()).isEqualTo(description1),
+                    metric -> assertThat(metric.getDescription()).isEqualTo(description2));
 
-        assertThat(metrics).filteredOn(Metric::hasSum).hasSize(2).satisfiesExactlyInAnyOrder(metric -> {
-            assertThat(metric.getUnit()).isEmpty();
-        }, metric -> {
-            assertThat(metric.getUnit()).isEqualTo("xyz");
-        });
+        assertThat(metrics).filteredOn(Metric::hasSum)
+            .hasSize(2)
+            .satisfiesExactlyInAnyOrder(metric -> assertThat(metric.getUnit()).isEmpty(),
+                    metric -> assertThat(metric.getUnit()).isEqualTo("xyz"));
 
-        assertThat(metrics).filteredOn(Metric::hasHistogram).hasSize(2).satisfiesExactlyInAnyOrder(metric -> {
-            assertThat(metric.getDescription()).isEqualTo(description1);
-        }, metric -> {
-            assertThat(metric.getDescription()).isEqualTo(description2);
-        });
+        assertThat(metrics).filteredOn(Metric::hasHistogram)
+            .hasSize(2)
+            .satisfiesExactlyInAnyOrder(metric -> assertThat(metric.getDescription()).isEqualTo(description1),
+                    metric -> assertThat(metric.getDescription()).isEqualTo(description2));
     }
 
     @Test
-    void distributionWithPercentileAndHistogramShouldWriteHistogramDataPoint() {
-        Timer timer = Timer.builder("timer")
+    void distributionWithPercentileAndHistogramShouldWriteHistogramOrExponentialHistogram() {
+        Timer.Builder timer = Timer.builder("timer")
             .description(METER_DESCRIPTION)
             .tags(Tags.of(meterTag))
             .publishPercentiles(0.5, 0.9)
-            .publishPercentileHistogram()
-            .serviceLevelObjectives(Duration.ofMillis(1))
-            .register(registry);
+            .publishPercentileHistogram();
 
-        DistributionSummary ds = DistributionSummary.builder("ds")
+        DistributionSummary.Builder ds = DistributionSummary.builder("ds")
             .description(METER_DESCRIPTION)
             .tags(Tags.of(meterTag))
             .publishPercentiles(0.5, 0.9)
-            .publishPercentileHistogram()
-            .serviceLevelObjectives(1.0)
-            .register(registry);
+            .publishPercentileHistogram();
 
-        assertThat(writeToMetric(timer).getDataCase().getNumber()).isEqualTo(Metric.DataCase.HISTOGRAM.getNumber());
-        assertThat(writeToMetric(ds).getDataCase().getNumber()).isEqualTo(Metric.DataCase.HISTOGRAM.getNumber());
+        assertThat(writeToMetric(timer.register(registry)).getDataCase().getNumber())
+            .isEqualTo(Metric.DataCase.HISTOGRAM.getNumber());
+        assertThat(writeToMetric(ds.register(registry)).getDataCase().getNumber())
+            .isEqualTo(Metric.DataCase.HISTOGRAM.getNumber());
+        assertThat(writeToMetric(timer.register(registryWithExponentialHistogram)).getDataCase().getNumber())
+            .isEqualTo(Metric.DataCase.EXPONENTIAL_HISTOGRAM.getNumber());
+        assertThat(writeToMetric(ds.register(registryWithExponentialHistogram)).getDataCase().getNumber())
+            .isEqualTo(Metric.DataCase.EXPONENTIAL_HISTOGRAM.getNumber());
     }
 
     @Test
-    void distributionWithHistogramShouldWriteHistogramDataPoint() {
-        Timer timer = Timer.builder("timer")
+    void distributionWithSLOShouldWriteHistogramDataPoint() {
+        Timer.Builder timer = Timer.builder("timer")
             .description(METER_DESCRIPTION)
             .tags(Tags.of(meterTag))
-            .serviceLevelObjectives(Duration.ofMillis(1))
-            .register(registry);
-        DistributionSummary ds = DistributionSummary.builder("ds")
+            .serviceLevelObjectives(Duration.ofMillis(1));
+        DistributionSummary.Builder ds = DistributionSummary.builder("ds")
             .description(METER_DESCRIPTION)
             .tags(Tags.of(meterTag))
-            .serviceLevelObjectives(1.0)
-            .register(registry);
+            .serviceLevelObjectives(1.0);
 
-        assertThat(writeToMetric(timer).getDataCase().getNumber()).isEqualTo(Metric.DataCase.HISTOGRAM.getNumber());
-        assertThat(writeToMetric(ds).getDataCase().getNumber()).isEqualTo(Metric.DataCase.HISTOGRAM.getNumber());
+        assertThat(writeToMetric(timer.register(registry)).getDataCase().getNumber())
+            .isEqualTo(Metric.DataCase.HISTOGRAM.getNumber());
+        assertThat(writeToMetric(ds.register(registry)).getDataCase().getNumber())
+            .isEqualTo(Metric.DataCase.HISTOGRAM.getNumber());
+        assertThat(writeToMetric(timer.register(registryWithExponentialHistogram)).getDataCase().getNumber())
+            .isEqualTo(Metric.DataCase.HISTOGRAM.getNumber());
+        assertThat(writeToMetric(ds.register(registryWithExponentialHistogram)).getDataCase().getNumber())
+            .isEqualTo(Metric.DataCase.HISTOGRAM.getNumber());
+    }
+
+    @Test
+    void testZeroCountForExponentialHistogram() {
+        Timer timerWithZero1ms = Timer.builder("zero_count_1ms")
+            .publishPercentileHistogram()
+            .register(registryWithExponentialHistogram);
+        Timer timerWithZero1ns = Timer.builder("zero_count_1ns")
+            .publishPercentileHistogram()
+            .minimumExpectedValue(Duration.ofNanos(1))
+            .register(registryWithExponentialHistogram);
+
+        timerWithZero1ms.record(Duration.ofNanos(1));
+        timerWithZero1ms.record(Duration.ofMillis(1));
+        timerWithZero1ns.record(Duration.ofNanos(1));
+        timerWithZero1ns.record(Duration.ofMillis(1));
+
+        clock.add(exponentialHistogramOtlpConfig().step());
+
+        ExponentialHistogramDataPoint dataPoint = writeToMetric(timerWithZero1ms).getExponentialHistogram()
+            .getDataPoints(0);
+        assertThat(dataPoint.getZeroCount()).isEqualTo(1);
+        assertThat(dataPoint.getCount()).isEqualTo(2);
+        assertThat(dataPoint.getPositive().getBucketCountsCount()).isEqualTo(1);
+
+        dataPoint = writeToMetric(timerWithZero1ns).getExponentialHistogram().getDataPoints(0);
+        assertThat(dataPoint.getZeroCount()).isZero();
+        assertThat(dataPoint.getCount()).isEqualTo(2);
+        assertThat(dataPoint.getPositive().getBucketCountsCount()).isGreaterThan(1);
+    }
+
+    @Test
+    void timerShouldRecordInBaseUnitForExponentialHistogram() {
+        Timer timer = Timer.builder("timer_with_different_units")
+            .minimumExpectedValue(Duration.ofNanos(1))
+            .publishPercentileHistogram()
+            .register(registryWithExponentialHistogram);
+
+        timer.record(Duration.ofNanos(1000)); // 0.001 Milliseconds
+        timer.record(Duration.ofMillis(1));
+        timer.record(Duration.ofSeconds(1)); // 1000 Milliseconds
+
+        clock.add(exponentialHistogramOtlpConfig().step());
+
+        Metric metric = writeToMetric(timer);
+        ExponentialHistogramDataPoint dataPoint = metric.getExponentialHistogram().getDataPoints(0);
+
+        assertThat(dataPoint.getCount()).isEqualTo(3);
+        assertThat(dataPoint.getSum()).isEqualTo(1001.001);
+
+        ExponentialHistogramDataPoint.Buckets buckets = dataPoint.getPositive();
+        assertThat(buckets.getOffset()).isEqualTo(-80);
+        assertThat(buckets.getBucketCountsCount()).isEqualTo(160);
+        assertThat(buckets.getBucketCountsList().get(0)).isEqualTo(1);
+        assertThat(buckets.getBucketCountsList().get(79)).isEqualTo(1);
+        assertThat(buckets.getBucketCountsList().get(159)).isEqualTo(1);
+        assertThat(buckets.getBucketCountsList()).filteredOn(v -> v == 0).hasSize(157);
     }
 
     @Test
@@ -286,8 +378,8 @@ abstract class OtlpMeterRegistryTest {
                 registry.getBaseTimeUnit(), otlpConfig().aggregationTemporality(),
                 registry.config().namingConvention());
         otlpMetricConverter.addMeter(meter);
-        final List<Metric> metrics = otlpMetricConverter.getAllMetrics();
-        return metrics.isEmpty() ? Metric.getDefaultInstance() : metrics.get(0);
+        List<Metric> metrics = otlpMetricConverter.getAllMetrics();
+        return metrics.get(0);
     }
 
     protected List<Metric> writeAllMeters() {
@@ -308,14 +400,11 @@ abstract class OtlpMeterRegistryTest {
             .isEqualTo(AggregationTemporality.toOtlpAggregationTemporality(otlpConfig().aggregationTemporality()));
 
         HistogramDataPoint histogram = metric.getHistogram().getDataPoints(0);
-        assertThat(metric.getName()).isEqualTo(METER_NAME);
-        assertThat(metric.getDescription()).isEqualTo(METER_DESCRIPTION);
-        assertThat(metric.getUnit()).isEqualTo(unit);
+        assertMetricMetadata(metric, Optional.of(unit));
         assertThat(histogram.getStartTimeUnixNano()).isEqualTo(startTime);
         assertThat(histogram.getTimeUnixNano()).isEqualTo(endTime);
         assertThat(histogram.getCount()).isEqualTo(count);
         assertThat(histogram.getSum()).isEqualTo(sum);
-
         assertThat(histogram.getAttributesCount()).isEqualTo(1);
         assertThat(histogram.getAttributes(0).getKey()).isEqualTo(meterTag.getKey());
         assertThat(histogram.getAttributes(0).getValue().getStringValue()).isEqualTo(meterTag.getValue());
@@ -332,8 +421,7 @@ abstract class OtlpMeterRegistryTest {
 
     protected void assertSum(Metric metric, long startTime, long endTime, double expectedValue) {
         NumberDataPoint sumDataPoint = metric.getSum().getDataPoints(0);
-        assertThat(metric.getName()).isEqualTo(METER_NAME);
-        assertThat(metric.getDescription()).isEqualTo(METER_DESCRIPTION);
+        assertMetricMetadata(metric, Optional.empty());
         assertThat(sumDataPoint.getStartTimeUnixNano()).isEqualTo(startTime);
         assertThat(sumDataPoint.getTimeUnixNano()).isEqualTo(endTime);
         assertThat(sumDataPoint.getAsDouble()).isEqualTo(expectedValue);
@@ -342,6 +430,25 @@ abstract class OtlpMeterRegistryTest {
         assertThat(sumDataPoint.getAttributes(0).getValue().getStringValue()).isEqualTo(meterTag.getValue());
         assertThat(metric.getSum().getAggregationTemporality())
             .isEqualTo(AggregationTemporality.toOtlpAggregationTemporality(otlpConfig().aggregationTemporality()));
+    }
+
+    protected void assertExponentialHistogram(Metric metric, long count, double sum, double max, long zeroCount,
+            long scale) {
+        assertThat(metric.getExponentialHistogram().getDataPointsCount()).isPositive();
+        ExponentialHistogramDataPoint exponentialHistogramDataPoint = metric.getExponentialHistogram().getDataPoints(0);
+        assertThat(exponentialHistogramDataPoint.getCount()).isEqualTo(count);
+        assertThat(exponentialHistogramDataPoint.getSum()).isEqualTo(sum);
+        assertThat(exponentialHistogramDataPoint.getMax()).isEqualTo(max);
+
+        assertThat(exponentialHistogramDataPoint.getScale()).isEqualTo(scale);
+        assertThat(exponentialHistogramDataPoint.getZeroCount()).isEqualTo(zeroCount);
+        assertThat(exponentialHistogramDataPoint.getNegative().getBucketCountsCount()).isZero();
+    }
+
+    private void assertMetricMetadata(final Metric metric, Optional<String> unitOptional) {
+        assertThat(metric.getName()).isEqualTo(METER_NAME);
+        assertThat(metric.getDescription()).isEqualTo(METER_DESCRIPTION);
+        unitOptional.ifPresent(unit -> assertThat(metric.getUnit()).isEqualTo(unit));
     }
 
 }

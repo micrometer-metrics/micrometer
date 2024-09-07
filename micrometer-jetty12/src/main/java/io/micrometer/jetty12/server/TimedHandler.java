@@ -20,14 +20,12 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Timer;
 import org.eclipse.jetty.http.HttpFields;
-import org.eclipse.jetty.io.Content;
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.Response;
 import org.eclipse.jetty.server.handler.EventsHandler;
 import org.eclipse.jetty.util.Callback;
 import org.eclipse.jetty.util.component.Graceful;
 
-import java.nio.ByteBuffer;
 import java.util.concurrent.CompletableFuture;
 
 /**
@@ -66,7 +64,7 @@ public class TimedHandler extends EventsHandler implements Graceful {
     private final LongTaskTimer timerRequest;
 
     /**
-     * How many Request are inside handle() calls.
+     * How many Requests are inside handle() calls.
      */
     private final LongTaskTimer timerHandle;
 
@@ -98,11 +96,6 @@ public class TimedHandler extends EventsHandler implements Graceful {
     }
 
     @Override
-    protected void onRequestRead(Request request, Content.Chunk chunk) {
-        super.onRequestRead(request, chunk);
-    }
-
-    @Override
     protected void onAfterHandling(Request request, boolean handled, Throwable failure) {
         stopHandlerTiming(request);
         super.onAfterHandling(request, handled, failure);
@@ -113,21 +106,6 @@ public class TimedHandler extends EventsHandler implements Graceful {
         // If we see a status of 0 here, that mean the Handler hasn't set a status code.
         request.setAttribute(RESPONSE_STATUS_ATTRIBUTE, status);
         super.onResponseBegin(request, status, headers);
-    }
-
-    @Override
-    protected void onResponseWrite(Request request, boolean last, ByteBuffer content) {
-        super.onResponseWrite(request, last, content);
-    }
-
-    @Override
-    protected void onResponseWriteComplete(Request request, Throwable failure) {
-        super.onResponseWriteComplete(request, failure);
-    }
-
-    @Override
-    protected void onResponseTrailersComplete(Request request, HttpFields trailers) {
-        super.onResponseTrailersComplete(request, trailers);
     }
 
     @Override

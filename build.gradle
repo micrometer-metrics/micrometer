@@ -126,7 +126,7 @@ subprojects {
 
 
             javadoc {
-                if (project.name.contains('samples')) {
+                if (project.name.contains('samples') || project.name.contains("-test-aspectj")) {
                     enabled = false
                 } else {
                     configure(options) {
@@ -176,11 +176,6 @@ subprojects {
             useJUnitPlatform {
                 excludeTags 'docker'
             }
-
-            develocity.testRetry {
-                maxFailures = 5
-                maxRetries = 3
-            }
         }
 
         task dockerTest(type: Test) {
@@ -192,8 +187,12 @@ subprojects {
             }
         }
 
-        project.tasks.withType(Test) { Test testTask ->
-            testTask.testLogging.exceptionFormat = 'full'
+        tasks.withType(Test).configureEach {
+            testLogging.exceptionFormat = 'full'
+            develocity.testRetry {
+                maxFailures = 5
+                maxRetries = 3
+            }
         }
 
         license {
@@ -281,6 +280,13 @@ subprojects {
         }
     }
 
+    plugins.withId('org.jetbrains.kotlin.jvm') {
+        // We disble the kotlinSourcesJar task since it conflicts with the sourcesJar task of the Java plugin
+        // See: https://github.com/micrometer-metrics/micrometer/issues/5151
+        // See: https://youtrack.jetbrains.com/issue/KT-54207/Kotlin-has-two-sources-tasks-kotlinSourcesJar-and-sourcesJar-that-archives-sources-to-the-same-artifact
+        kotlinSourcesJar.enabled = false
+    }
+
     tasks.register('downloadDependencies') {
         outputs.upToDateWhen { false }
         doLast {
@@ -289,7 +295,7 @@ subprojects {
     }
 
     // Do not publish some modules
-    if (!['samples', 'benchmarks', 'micrometer-osgi-test', 'concurrency-tests'].find { project.name.contains(it) }) {
+    if (!['samples', 'benchmarks', 'micrometer-osgi-test', 'concurrency-tests', 'micrometer-test-aspectj-ctw', 'micrometer-test-aspectj-ltw'].find { project.name.contains(it) }) {
         apply plugin: 'com.netflix.nebula.maven-publish'
         apply plugin: 'com.netflix.nebula.maven-manifest'
         apply plugin: 'com.netflix.nebula.maven-developer'
@@ -337,7 +343,7 @@ subprojects {
 
             check.dependsOn("testModules")
 
-            if (!(project.name in ['micrometer-registry-prometheus', 'micrometer-registry-prometheus-simpleclient', 'micrometer-jakarta9', 'micrometer-java11', 'micrometer-java21', 'micrometer-jetty12'])) { // add projects here that do not exist in the previous minor so should be excluded from japicmp
+            if (!(project.name in ['micrometer-test-aspectj-ltw', 'micrometer-test-aspectj-ctw', 'micrometer-java21'])) { // add projects here that do not exist in the previous minor so should be excluded from japicmp
                 apply plugin: 'me.champeau.gradle.japicmp'
                 apply plugin: 'de.undercouch.download'
 
@@ -427,7 +433,7 @@ nexusPublishing {
 }
 
 wrapper {
-    gradleVersion = '8.6'
+    gradleVersion = '8.10'
 }
 
 defaultTasks 'build'

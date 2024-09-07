@@ -38,6 +38,8 @@ import io.micrometer.core.instrument.util.NamedThreadFactory;
 import io.micrometer.core.instrument.util.TimeUtils;
 import io.micrometer.core.ipc.http.HttpSender;
 import io.micrometer.core.ipc.http.HttpUrlConnectionSender;
+import io.micrometer.registry.otlp.internal.CumulativeBase2ExponentialHistogram;
+import io.micrometer.registry.otlp.internal.DeltaBase2ExponentialHistogram;
 import io.opentelemetry.proto.collector.metrics.v1.ExportMetricsServiceRequest;
 import io.opentelemetry.proto.common.v1.AnyValue;
 import io.opentelemetry.proto.common.v1.KeyValue;
@@ -101,12 +103,23 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
     }
 
     public OtlpMeterRegistry(OtlpConfig config, Clock clock) {
-        this(config, clock, new HttpUrlConnectionSender());
+        this(config, clock, DEFAULT_THREAD_FACTORY);
+    }
+
+    /**
+     * Create an {@code OtlpMeterRegistry} instance.
+     * @param config config
+     * @param clock clock
+     * @param threadFactory thread factory
+     * @since 1.14.0
+     */
+    public OtlpMeterRegistry(OtlpConfig config, Clock clock, ThreadFactory threadFactory) {
+        this(config, clock, threadFactory, new HttpUrlConnectionSender());
     }
 
     // not public until we decide what we want to expose in public API
     // HttpSender may not be a good idea if we will support a non-HTTP transport
-    private OtlpMeterRegistry(OtlpConfig config, Clock clock, HttpSender httpSender) {
+    private OtlpMeterRegistry(OtlpConfig config, Clock clock, ThreadFactory threadFactory, HttpSender httpSender) {
         super(config, clock);
         this.config = config;
         this.baseTimeUnit = config.baseTimeUnit();
@@ -114,7 +127,7 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
         this.resource = Resource.newBuilder().addAllAttributes(getResourceAttributes()).build();
         this.aggregationTemporality = config.aggregationTemporality();
         config().namingConvention(NamingConvention.dot);
-        start(DEFAULT_THREAD_FACTORY);
+        start(threadFactory);
     }
 
     @Override
@@ -172,7 +185,8 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
                 }
             }
             catch (Throwable e) {
-                logger.warn("Failed to publish metrics to OTLP receiver (context: {})", getConfigurationContext(), e);
+                logger.warn(String.format("Failed to publish metrics to OTLP receiver (context: %s)",
+                        getConfigurationContext()), e);
             }
         }
     }
@@ -202,18 +216,17 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
     protected Timer newTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig,
             PauseDetector pauseDetector) {
         return isCumulative()
-                ? new OtlpCumulativeTimer(id, this.clock, distributionStatisticConfig, pauseDetector, getBaseTimeUnit())
-                : new OtlpStepTimer(id, clock, distributionStatisticConfig, pauseDetector, getBaseTimeUnit(),
-                        config.step().toMillis());
+                ? new OtlpCumulativeTimer(id, this.clock, distributionStatisticConfig, pauseDetector, getBaseTimeUnit(),
+                        config)
+                : new OtlpStepTimer(id, clock, distributionStatisticConfig, pauseDetector, getBaseTimeUnit(), config);
     }
 
     @Override
     protected DistributionSummary newDistributionSummary(Meter.Id id,
             DistributionStatisticConfig distributionStatisticConfig, double scale) {
         return isCumulative()
-                ? new OtlpCumulativeDistributionSummary(id, this.clock, distributionStatisticConfig, scale, true)
-                : new OtlpStepDistributionSummary(id, clock, distributionStatisticConfig, scale,
-                        config.step().toMillis());
+                ? new OtlpCumulativeDistributionSummary(id, this.clock, distributionStatisticConfig, scale, config)
+                : new OtlpStepDistributionSummary(id, clock, distributionStatisticConfig, scale, config);
     }
 
     @Override
@@ -372,35 +385,37 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
     }
 
     static Histogram getHistogram(Clock clock, DistributionStatisticConfig distributionStatisticConfig,
-            AggregationTemporality aggregationTemporality) {
-        return getHistogram(clock, distributionStatisticConfig, aggregationTemporality, 0);
+            OtlpConfig otlpConfig) {
+        return getHistogram(clock, distributionStatisticConfig, otlpConfig, null);
     }
 
-    static Histogram getHistogram(Clock clock, DistributionStatisticConfig distributionStatisticConfig,
-            AggregationTemporality aggregationTemporality, long stepMillis) {
-        // While publishing to OTLP, we export either Histogram datapoint / Summary
+    static Histogram getHistogram(final Clock clock, final DistributionStatisticConfig distributionStatisticConfig,
+            final OtlpConfig otlpConfig, @Nullable final TimeUnit baseTimeUnit) {
+        // While publishing to OTLP, we export either Histogram datapoint (Explicit
+        // ExponentialBuckets
+        // or Exponential) / Summary
         // datapoint. So, we will make the histogram either of them and not both.
         // Though AbstractTimer/Distribution Summary prefers publishing percentiles,
         // exporting of histograms over percentiles is preferred in OTLP.
         if (distributionStatisticConfig.isPublishingHistogram()) {
-            double[] sloWithPositiveInf = getSloWithPositiveInf(distributionStatisticConfig);
-            if (AggregationTemporality.isCumulative(aggregationTemporality)) {
-                return new TimeWindowFixedBoundaryHistogram(clock, DistributionStatisticConfig.builder()
-                    // effectively never roll over
-                    .expiry(Duration.ofDays(1825))
-                    .serviceLevelObjectives(sloWithPositiveInf)
-                    .percentiles()
-                    .bufferLength(1)
-                    .build()
-                    .merge(distributionStatisticConfig), true, false);
+            if (HistogramFlavor.BASE2_EXPONENTIAL_BUCKET_HISTOGRAM
+                .equals(histogramFlavor(otlpConfig.histogramFlavor(), distributionStatisticConfig))) {
+                Double minimumExpectedValue = distributionStatisticConfig.getMinimumExpectedValueAsDouble();
+                if (minimumExpectedValue == null) {
+                    minimumExpectedValue = 0.0;
+                }
+
+                return otlpConfig.aggregationTemporality() == AggregationTemporality.DELTA
+                        ? new DeltaBase2ExponentialHistogram(otlpConfig.maxScale(), otlpConfig.maxBucketCount(),
+                                minimumExpectedValue, baseTimeUnit, clock, otlpConfig.step().toMillis())
+                        : new CumulativeBase2ExponentialHistogram(otlpConfig.maxScale(), otlpConfig.maxBucketCount(),
+                                minimumExpectedValue, baseTimeUnit);
             }
-            if (AggregationTemporality.isDelta(aggregationTemporality) && stepMillis > 0) {
-                return new OtlpStepBucketHistogram(clock, stepMillis,
-                        DistributionStatisticConfig.builder()
-                            .serviceLevelObjectives(sloWithPositiveInf)
-                            .build()
-                            .merge(distributionStatisticConfig),
-                        true, false);
+
+            Histogram explicitBucketHistogram = getExplicitBucketHistogram(clock, distributionStatisticConfig,
+                    otlpConfig.aggregationTemporality(), otlpConfig.step().toMillis());
+            if (explicitBucketHistogram != null) {
+                return explicitBucketHistogram;
             }
         }
 
@@ -408,6 +423,47 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
             return new TimeWindowPercentileHistogram(clock, distributionStatisticConfig, false);
         }
         return NoopHistogram.INSTANCE;
+    }
+
+    static HistogramFlavor histogramFlavor(HistogramFlavor preferredHistogramFlavor,
+            DistributionStatisticConfig distributionStatisticConfig) {
+
+        final double[] serviceLevelObjectiveBoundaries = distributionStatisticConfig
+            .getServiceLevelObjectiveBoundaries();
+        if (distributionStatisticConfig.isPublishingHistogram()
+                && preferredHistogramFlavor == HistogramFlavor.BASE2_EXPONENTIAL_BUCKET_HISTOGRAM
+                && (serviceLevelObjectiveBoundaries == null || serviceLevelObjectiveBoundaries.length == 0)) {
+            return HistogramFlavor.BASE2_EXPONENTIAL_BUCKET_HISTOGRAM;
+        }
+        return HistogramFlavor.EXPLICIT_BUCKET_HISTOGRAM;
+    }
+
+    @Nullable
+    private static Histogram getExplicitBucketHistogram(final Clock clock,
+            final DistributionStatisticConfig distributionStatisticConfig,
+            final AggregationTemporality aggregationTemporality, final long stepMillis) {
+
+        double[] sloWithPositiveInf = getSloWithPositiveInf(distributionStatisticConfig);
+        if (AggregationTemporality.isCumulative(aggregationTemporality)) {
+            return new TimeWindowFixedBoundaryHistogram(clock, DistributionStatisticConfig.builder()
+                // effectively never roll over
+                .expiry(Duration.ofDays(1825))
+                .serviceLevelObjectives(sloWithPositiveInf)
+                .percentiles()
+                .bufferLength(1)
+                .build()
+                .merge(distributionStatisticConfig), true, false);
+        }
+        if (AggregationTemporality.isDelta(aggregationTemporality) && stepMillis > 0) {
+            return new OtlpStepBucketHistogram(clock, stepMillis,
+                    DistributionStatisticConfig.builder()
+                        .serviceLevelObjectives(sloWithPositiveInf)
+                        .build()
+                        .merge(distributionStatisticConfig),
+                    true, false);
+        }
+
+        return null;
     }
 
     // VisibleForTesting

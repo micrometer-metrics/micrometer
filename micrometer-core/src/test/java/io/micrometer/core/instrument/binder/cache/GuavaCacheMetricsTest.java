@@ -20,18 +20,22 @@ import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
 
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Tests for {@link GuavaCacheMetrics}.
  *
  * @author Oleksii Bondar
+ * @author Johnny Lim
  */
 class GuavaCacheMetricsTest extends AbstractCacheMetricsTest {
 
     // tag::setup[]
-    LoadingCache<String, String> cache = CacheBuilder.newBuilder().build(new CacheLoader<String, String>() {
-        public String load(String key) throws Exception {
+    LoadingCache<String, String> cache = CacheBuilder.newBuilder().recordStats().build(new CacheLoader<>() {
+        public String load(String key) {
             return "";
         }
     });
@@ -42,7 +46,12 @@ class GuavaCacheMetricsTest extends AbstractCacheMetricsTest {
     // end::setup[]
 
     @Test
-    void reportExpectedMetrics() {
+    void reportExpectedMetrics() throws ExecutionException {
+        cache.put("a", "1");
+        cache.get("a");
+        cache.get("a");
+        cache.get("b");
+
         // tag::register[]
         MeterRegistry registry = new SimpleMeterRegistry();
         metrics.bindTo(registry);
@@ -52,13 +61,13 @@ class GuavaCacheMetricsTest extends AbstractCacheMetricsTest {
 
         // common metrics
         Gauge cacheSize = fetch(registry, "cache.size").gauge();
-        assertThat(cacheSize.value()).isEqualTo(cache.size());
+        assertThat(cacheSize.value()).isEqualTo(cache.size()).isEqualTo(2);
 
         FunctionCounter hitCount = fetch(registry, "cache.gets", Tags.of("result", "hit")).functionCounter();
-        assertThat(hitCount.count()).isEqualTo(metrics.hitCount());
+        assertThat(hitCount.count()).isEqualTo(metrics.hitCount()).isEqualTo(2);
 
         FunctionCounter missCount = fetch(registry, "cache.gets", Tags.of("result", "miss")).functionCounter();
-        assertThat(missCount.count()).isEqualTo(metrics.missCount().doubleValue());
+        assertThat(missCount.count()).isEqualTo(metrics.missCount().doubleValue()).isEqualTo(1);
 
         FunctionCounter cachePuts = fetch(registry, "cache.puts").functionCounter();
         assertThat(cachePuts.count()).isEqualTo(metrics.putCount());
@@ -68,7 +77,7 @@ class GuavaCacheMetricsTest extends AbstractCacheMetricsTest {
 
         CacheStats stats = cache.stats();
         TimeGauge loadDuration = fetch(registry, "cache.load.duration").timeGauge();
-        assertThat(loadDuration.value()).isEqualTo(stats.totalLoadTime());
+        assertThat(loadDuration.value(TimeUnit.NANOSECONDS)).isEqualTo(stats.totalLoadTime());
 
         FunctionCounter successfulLoad = fetch(registry, "cache.load", Tags.of("result", "success")).functionCounter();
         assertThat(successfulLoad.count()).isEqualTo(stats.loadSuccessCount());
@@ -93,13 +102,44 @@ class GuavaCacheMetricsTest extends AbstractCacheMetricsTest {
     }
 
     @Test
-    void returnHitCount() {
-        assertThat(metrics.hitCount()).isEqualTo(cache.stats().hitCount());
+    void returnHitCount() throws ExecutionException {
+        MeterRegistry meterRegistry = new SimpleMeterRegistry();
+        metrics.bindTo(meterRegistry);
+
+        cache.put("a", "1");
+        cache.get("a");
+        cache.get("a");
+
+        assertThat(metrics.hitCount()).isEqualTo(cache.stats().hitCount()).isEqualTo(2);
+        assertThat(meterRegistry.get("cache.gets").tag("result", "hit").functionCounter().count()).isEqualTo(2);
     }
 
     @Test
-    void returnMissCount() {
-        assertThat(metrics.missCount()).isEqualTo(cache.stats().missCount());
+    void returnHitCountWithoutRecordStats() throws ExecutionException {
+        LoadingCache<String, String> cache = CacheBuilder.newBuilder().build(new CacheLoader<>() {
+            public String load(String key) {
+                return "";
+            }
+        });
+        GuavaCacheMetrics<String, String, Cache<String, String>> metrics = new GuavaCacheMetrics<>(cache, "testCache",
+                expectedTag);
+
+        MeterRegistry meterRegistry = new SimpleMeterRegistry();
+        metrics.bindTo(meterRegistry);
+
+        cache.put("a", "1");
+        cache.get("a");
+        cache.get("a");
+
+        assertThat(metrics.hitCount()).isEqualTo(cache.stats().hitCount()).isEqualTo(0);
+        assertThat(meterRegistry.get("cache.gets").tag("result", "hit").functionCounter().count()).isEqualTo(0);
+    }
+
+    @Test
+    void returnMissCount() throws ExecutionException {
+        cache.get("b");
+
+        assertThat(metrics.missCount()).isEqualTo(cache.stats().missCount()).isEqualTo(1);
     }
 
     @Test

@@ -1,3 +1,7 @@
+plugins {
+    alias(libs.plugins.aspectj)
+}
+
 description 'Module containing Observation related code'
 
 jar {
@@ -21,7 +25,7 @@ dependencies {
     optionalApi 'javax.servlet:javax.servlet-api'
 
     // Aspects
-    optionalApi 'org.aspectj:aspectjweaver'
+    optionalApi libs.aspectjrt
 
     // log monitoring
     testImplementation 'ch.qos.logback:logback-classic'
@@ -42,4 +46,5 @@ dependencies {
 
     testImplementation 'org.assertj:assertj-core'
     testImplementation 'org.awaitility:awaitility'
+    testImplementation libs.aspectjweaver
 }

@@ -50,13 +50,13 @@ class MeterRegistryLoggingTest {
 
     @Test
     void meterRegistrationBeforeMeterFilterConfigWithDebugLogging(LoggingEvents logEvents) {
-        Level priorLevel = ((Logger) LoggerFactory.getLogger(SimpleMeterRegistry.class)).getLevel();
-        ((Logger) LoggerFactory.getLogger(SimpleMeterRegistry.class)).setLevel(Level.DEBUG);
+        Logger logger = (Logger) LoggerFactory.getLogger(SimpleMeterRegistry.class);
+        Level priorLevel = logger.getLevel();
+        logger.setLevel(Level.DEBUG);
         try {
             registerMetricsAndConfigure();
 
-            assertThat(logEvents.withLevel(Level.WARN)).isEmpty();
-            assertThat(logEvents.withLevel(Level.DEBUG)).singleElement()
+            assertThat(logEvents.withLevel(Level.WARN)).singleElement()
                 .extracting(ILoggingEvent::getFormattedMessage, as(InstanceOfAssertFactories.STRING))
                 .contains("A MeterFilter is being configured after a Meter has been registered to this registry.")
                 .containsPattern(
@@ -65,7 +65,7 @@ class MeterRegistryLoggingTest {
                                 + "\tat io.micrometer.core.instrument.MeterRegistryLoggingTest.meterRegistrationBeforeMeterFilterConfigWithDebugLogging\\(MeterRegistryLoggingTest.java:\\d+\\)");
         }
         finally {
-            ((Logger) LoggerFactory.getLogger(SimpleMeterRegistry.class)).setLevel(priorLevel);
+            logger.setLevel(priorLevel);
         }
     }
 

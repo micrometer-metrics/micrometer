@@ -121,6 +121,12 @@ public enum GrpcObservationDocumentation implements ObservationDocumentation {
                 return "sent";
             }
 
+        },
+        CANCELLED {
+            @Override
+            public String getName() {
+                return "cancelled";
+            }
         }
 
     }

@@ -536,10 +536,67 @@ class GrpcObservationTest {
             SimpleRequest request = SimpleRequest.newBuilder().setRequestMessage("Hello").build();
             stub.unaryRpc(request);
 
+            // await until server side processing finishes, otherwise context name might
+            // not be populated.
+            await().until(serverHandler::isContextStopped);
+
             assertThat(scopeAwareServerInterceptor.lastObservation).isNotNull().satisfies((observation -> {
                 assertThat(observation.getContext().getContextualName())
                     .isEqualTo("grpc.testing.SimpleService/UnaryRpc");
             }));
+        }
+
+    }
+
+    @Nested
+    class ClientInterruption {
+
+        private ClientInterruptionAwareService service = new ClientInterruptionAwareService();
+
+        @BeforeEach
+        void setUpService() throws Exception {
+            server = InProcessServerBuilder.forName("sample").addService(service).intercept(serverInterceptor).build();
+            server.start();
+
+            channel = InProcessChannelBuilder.forName("sample").intercept(clientInterceptor).build();
+        }
+
+        @Test
+        void cancel() {
+            SimpleServiceFutureStub stub = SimpleServiceGrpc.newFutureStub(channel);
+            SimpleRequest request = SimpleRequest.newBuilder().setRequestMessage("Hello").build();
+            ListenableFuture<SimpleResponse> future = stub.unaryRpc(request);
+
+            await().untilTrue(this.service.requestReceived);
+            future.cancel(true);
+            this.service.requestInterrupted.set(true);
+            await().until(future::isDone);
+            assertThat(future.isCancelled()).isTrue();
+            TestObservationRegistryAssert.assertThat(observationRegistry)
+                .hasAnObservation(observationContextAssert -> observationContextAssert.hasNameEqualTo("grpc.client")
+                    .hasLowCardinalityKeyValue("grpc.status_code", "CANCELLED"))
+                .hasAnObservation(observationContextAssert -> observationContextAssert.hasNameEqualTo("grpc.server")
+                    .satisfies(observation -> assertThat(observation).isInstanceOfSatisfying(
+                            GrpcServerObservationContext.class,
+                            context -> assertThat(context.isCancelled()).isTrue())));
+            assertThat(serverHandler.getEvents()).contains(GrpcServerEvents.CANCELLED);
+        }
+
+        @Test
+        void shutdown() {
+            SimpleServiceFutureStub stub = SimpleServiceGrpc.newFutureStub(channel);
+            SimpleRequest request = SimpleRequest.newBuilder().setRequestMessage("Hello").build();
+            ListenableFuture<SimpleResponse> future = stub.unaryRpc(request);
+
+            await().untilTrue(this.service.requestReceived);
+            channel.shutdownNow(); // shutdown client while server is processing
+            this.service.requestInterrupted.set(true);
+            await().until(channel::isTerminated);
+            await().until(future::isDone);
+            TestObservationRegistryAssert.assertThat(observationRegistry)
+                .hasAnObservation(observationContextAssert -> observationContextAssert.hasNameEqualTo("grpc.client")
+                    .hasLowCardinalityKeyValue("grpc.status_code", "UNAVAILABLE"));
+            assertThat(serverHandler.getEvents()).contains(GrpcServerEvents.CANCELLED);
         }
 
     }
@@ -666,6 +723,25 @@ class GrpcObservationTest {
 
     }
 
+    static class ClientInterruptionAwareService extends SimpleServiceImplBase {
+
+        AtomicBoolean requestReceived = new AtomicBoolean();
+
+        AtomicBoolean requestInterrupted = new AtomicBoolean();
+
+        @Override
+        public void unaryRpc(SimpleRequest request, StreamObserver<SimpleResponse> responseObserver) {
+            this.requestReceived.set(true);
+            SimpleResponse response = SimpleResponse.newBuilder()
+                .setResponseMessage(request.getRequestMessage())
+                .build();
+            await().untilTrue(this.requestInterrupted);
+            responseObserver.onNext(response);
+            responseObserver.onCompleted();
+        }
+
+    }
+
     // Hold reference to the Context and Events happened in ObservationHandler
     static class ContextAndEventHoldingObservationHandler<T extends Observation.Context>
             implements ObservationHandler<T> {
@@ -675,6 +751,8 @@ class GrpcObservationTest {
         private final List<Event> events = new ArrayList<>();
 
         private final Class<T> contextClass;
+
+        private boolean contextStopped;
 
         ContextAndEventHoldingObservationHandler(Class<T> contextClass) {
             this.contextClass = contextClass;
@@ -699,8 +777,19 @@ class GrpcObservationTest {
             return this.contextHolder.get();
         }
 
+        @Override
+        public void onStop(T context) {
+            if (context.equals(this.contextHolder.get())) {
+                this.contextStopped = true;
+            }
+        }
+
         List<Event> getEvents() {
             return this.events;
+        }
+
+        public boolean isContextStopped() {
+            return this.contextStopped;
         }
 
     }

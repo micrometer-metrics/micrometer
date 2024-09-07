@@ -55,6 +55,13 @@ public class TimedResource {
     }
 
     @GET
+    @Path("timed-slo")
+    @Timed(value = "timedSlo", histogram = true, serviceLevelObjectives = { 0.1, 0.5 })
+    public String timedSlo() {
+        return "timed";
+    }
+
+    @GET
     @Path("multi-timed")
     @Timed("multi1")
     @Timed("multi2")

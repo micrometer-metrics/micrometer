@@ -15,6 +15,8 @@
  */
 package io.micrometer.core.aop;
 
+import io.micrometer.common.annotation.ValueExpressionResolver;
+import io.micrometer.common.annotation.ValueResolver;
 import io.micrometer.core.annotation.Counted;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -22,6 +24,8 @@ import io.micrometer.core.instrument.search.MeterNotFoundException;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.aop.aspectj.annotation.AspectJProxyFactory;
 
 import java.util.concurrent.CompletableFuture;
@@ -359,6 +363,168 @@ class CountedAspectTest {
         @Counted("method.counted")
         String greet() {
             return "hello";
+        }
+
+    }
+
+    static class MeterTagsTests {
+
+        ValueResolver valueResolver = parameter -> "Value from myCustomTagValueResolver [" + parameter + "]";
+
+        ValueExpressionResolver valueExpressionResolver = new SpelValueExpressionResolver();
+
+        CountedMeterTagAnnotationHandler meterTagAnnotationHandler = new CountedMeterTagAnnotationHandler(
+                aClass -> valueResolver, aClass -> valueExpressionResolver);
+
+        @ParameterizedTest
+        @EnumSource(AnnotatedTestClass.class)
+        void meterTagsWithText(AnnotatedTestClass annotatedClass) {
+            MeterRegistry registry = new SimpleMeterRegistry();
+            CountedAspect countedAspect = new CountedAspect(registry);
+            countedAspect.setMeterTagAnnotationHandler(meterTagAnnotationHandler);
+
+            AspectJProxyFactory pf = new AspectJProxyFactory(annotatedClass.newInstance());
+            pf.addAspect(countedAspect);
+
+            MeterTagClassInterface service = pf.getProxy();
+
+            service.getAnnotationForArgumentToString(15L);
+
+            assertThat(registry.get("method.counted").tag("test", "15").counter().count()).isEqualTo(1);
+        }
+
+        @ParameterizedTest
+        @EnumSource(AnnotatedTestClass.class)
+        void meterTagsWithResolver(AnnotatedTestClass annotatedClass) {
+            MeterRegistry registry = new SimpleMeterRegistry();
+            CountedAspect countedAspect = new CountedAspect(registry);
+            countedAspect.setMeterTagAnnotationHandler(meterTagAnnotationHandler);
+
+            AspectJProxyFactory pf = new AspectJProxyFactory(annotatedClass.newInstance());
+            pf.addAspect(countedAspect);
+
+            MeterTagClassInterface service = pf.getProxy();
+
+            service.getAnnotationForTagValueResolver("foo");
+
+            assertThat(registry.get("method.counted")
+                .tag("test", "Value from myCustomTagValueResolver [foo]")
+                .counter()
+                .count()).isEqualTo(1);
+        }
+
+        @ParameterizedTest
+        @EnumSource(AnnotatedTestClass.class)
+        void meterTagsWithExpression(AnnotatedTestClass annotatedClass) {
+            MeterRegistry registry = new SimpleMeterRegistry();
+            CountedAspect countedAspect = new CountedAspect(registry);
+            countedAspect.setMeterTagAnnotationHandler(meterTagAnnotationHandler);
+
+            AspectJProxyFactory pf = new AspectJProxyFactory(annotatedClass.newInstance());
+            pf.addAspect(countedAspect);
+
+            MeterTagClassInterface service = pf.getProxy();
+
+            service.getAnnotationForTagValueExpression("15L");
+
+            assertThat(registry.get("method.counted").tag("test", "hello characters").counter().count()).isEqualTo(1);
+        }
+
+        @Test
+        void meterTagOnPackagePrivateMethod() {
+            MeterRegistry registry = new SimpleMeterRegistry();
+            CountedAspect countedAspect = new CountedAspect(registry);
+            countedAspect.setMeterTagAnnotationHandler(meterTagAnnotationHandler);
+
+            AspectJProxyFactory pf = new AspectJProxyFactory(new MeterTagClass());
+            pf.setProxyTargetClass(true);
+            pf.addAspect(countedAspect);
+
+            MeterTagClass service = pf.getProxy();
+
+            service.getAnnotationForPackagePrivateMethod("bar");
+
+            assertThat(registry.get("method.counted").tag("foo", "bar").counter().count()).isEqualTo(1);
+        }
+
+        enum AnnotatedTestClass {
+
+            CLASS_WITHOUT_INTERFACE(MeterTagClass.class), CLASS_WITH_INTERFACE(MeterTagClassChild.class);
+
+            private final Class<? extends MeterTagClassInterface> clazz;
+
+            AnnotatedTestClass(Class<? extends MeterTagClassInterface> clazz) {
+                this.clazz = clazz;
+            }
+
+            @SuppressWarnings("unchecked")
+            <T extends MeterTagClassInterface> T newInstance() {
+                try {
+                    return (T) clazz.getDeclaredConstructor().newInstance();
+                }
+                catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+            }
+
+        }
+
+        interface MeterTagClassInterface {
+
+            @Counted
+            void getAnnotationForTagValueResolver(@MeterTag(key = "test", resolver = ValueResolver.class) String test);
+
+            @Counted
+            void getAnnotationForTagValueExpression(
+                    @MeterTag(key = "test", expression = "'hello' + ' characters'") String test);
+
+            @Counted
+            void getAnnotationForArgumentToString(@MeterTag("test") Long param);
+
+        }
+
+        static class MeterTagClass implements MeterTagClassInterface {
+
+            @Counted
+            @Override
+            public void getAnnotationForTagValueResolver(
+                    @MeterTag(key = "test", resolver = ValueResolver.class) String test) {
+            }
+
+            @Counted
+            @Override
+            public void getAnnotationForTagValueExpression(
+                    @MeterTag(key = "test", expression = "'hello' + ' characters'") String test) {
+            }
+
+            @Counted
+            @Override
+            public void getAnnotationForArgumentToString(@MeterTag("test") Long param) {
+            }
+
+            @Counted
+            void getAnnotationForPackagePrivateMethod(@MeterTag("foo") String foo) {
+            }
+
+        }
+
+        static class MeterTagClassChild implements MeterTagClassInterface {
+
+            @Counted
+            @Override
+            public void getAnnotationForTagValueResolver(String test) {
+            }
+
+            @Counted
+            @Override
+            public void getAnnotationForTagValueExpression(String test) {
+            }
+
+            @Counted
+            @Override
+            public void getAnnotationForArgumentToString(Long param) {
+            }
+
         }
 
     }

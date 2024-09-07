@@ -9,8 +9,10 @@ dependencies {
         rootProject.subprojects.findAll {
             !it.name.contains('sample') &&
                     !it.name.contains('benchmark') &&
+                    !it.name.contains('concurrency-tests') &&
                     !it.name.contains('micrometer-bom') &&
                     !it.name.contains('micrometer-osgi-test') &&
+                    !it.name.contains('-test-aspectj') &&
                     it.name != 'docs'
         }.each {
             api(group: it.group,

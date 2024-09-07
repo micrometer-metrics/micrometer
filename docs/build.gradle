@@ -28,7 +28,7 @@ dependencies {
 
     testImplementation project(':micrometer-test')
     testImplementation project(':micrometer-observation-test')
-    testImplementation 'org.aspectj:aspectjweaver'
+    testImplementation libs.aspectjweaver
     testImplementation 'org.junit.jupiter:junit-jupiter'
     testImplementation 'org.assertj:assertj-core'
     testImplementation 'org.springframework:spring-context'
@@ -49,9 +49,9 @@ antora {
     playbook = 'antora-playbook.yml'
     options = ['--clean', '--stacktrace']
     environment = [
-            'ALGOLIA_API_KEY'   : 'da671ceec1f84f80f280884a6a91bde5',
-            'ALGOLIA_APP_ID'    : 'WB1FQYI187',
-            'ALGOLIA_INDEX_NAME': 'micrometer'
+        'ALGOLIA_API_KEY': 'cbcaa86034c1961b2c0c73bd0c274862',
+        'ALGOLIA_APP_ID': 'R3TXPRVDPR',
+        'ALGOLIA_INDEX_NAME': 'micrometer'
     ]
 
     dependencies = [

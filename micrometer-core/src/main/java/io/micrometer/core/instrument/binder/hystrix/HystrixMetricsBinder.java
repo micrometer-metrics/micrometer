@@ -23,6 +23,8 @@ import com.netflix.hystrix.strategy.metrics.HystrixMetricsPublisher;
 import com.netflix.hystrix.strategy.properties.HystrixPropertiesStrategy;
 import io.micrometer.common.lang.NonNullApi;
 import io.micrometer.common.lang.NonNullFields;
+import io.micrometer.common.util.internal.logging.InternalLogger;
+import io.micrometer.common.util.internal.logging.InternalLoggerFactory;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.binder.MeterBinder;
 
@@ -35,8 +37,12 @@ import io.micrometer.core.instrument.binder.MeterBinder;
 @Deprecated
 public class HystrixMetricsBinder implements MeterBinder {
 
+    private static final InternalLogger log = InternalLoggerFactory.getInstance(HystrixMetricsBinder.class);
+
     @Override
     public void bindTo(MeterRegistry registry) {
+        log.info("HystrixMetricsBinder has been deprecated due to Hystrix no longer being actively developed.");
+
         // Keeps references of existing Hystrix plugins.
         HystrixEventNotifier eventNotifier = HystrixPlugins.getInstance().getEventNotifier();
         HystrixPropertiesStrategy propertiesStrategy = HystrixPlugins.getInstance().getPropertiesStrategy();

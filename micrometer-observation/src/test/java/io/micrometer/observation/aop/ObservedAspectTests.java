@@ -364,7 +364,8 @@ class ObservedAspectTests {
     void ignoreClassLevelAnnotationIfMethodLevelPresent() {
         registry.observationConfig().observationHandler(new ObservationTextPublisher());
 
-        AspectJProxyFactory pf = new AspectJProxyFactory(new ObservedClassLevelAnnotatedService());
+        ObservedClassLevelAnnotatedService annotatedService = new ObservedClassLevelAnnotatedService();
+        AspectJProxyFactory pf = new AspectJProxyFactory(annotatedService);
         pf.addAspect(new ObservedAspect(registry));
 
         ObservedClassLevelAnnotatedService service = pf.getProxy();

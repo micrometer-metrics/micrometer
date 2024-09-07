@@ -16,6 +16,7 @@
 package io.micrometer.prometheusmetrics;
 
 import io.micrometer.core.instrument.Meter;
+import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.config.MeterFilter;
 
 import java.util.HashMap;
@@ -26,6 +27,7 @@ import java.util.Map;
  * name.
  *
  * @author Tommy Ludwig
+ * @since 1.13.0
  */
 public class PrometheusRenameFilter implements MeterFilter {
 
@@ -38,6 +40,10 @@ public class PrometheusRenameFilter implements MeterFilter {
 
     @Override
     public Meter.Id map(Meter.Id id) {
+        if (id.getName().equals("process.start.time")) {
+            return new Meter.Id(id.getName(), Tags.of(id.getTagsAsIterable()), id.getBaseUnit(),
+                    "Start time of the process since unix epoch in seconds.", id.getType());
+        }
         String convertedName = MICROMETER_TO_PROMETHEUS_NAMES.get(id.getName());
         return convertedName == null ? id : id.withName(convertedName);
     }

@@ -54,18 +54,18 @@ public class MultiGauge {
         return new Builder(name);
     }
 
-    public void register(Iterable<Row<?>> rows) {
+    public void register(Iterable<? extends Row<?>> rows) {
         register(rows, false);
     }
 
     @SuppressWarnings("unchecked")
-    public void register(Iterable<Row<?>> rows, boolean overwrite) {
+    public void register(Iterable<? extends Row<?>> rows, boolean overwrite) {
         registeredRows.getAndUpdate(oldRows -> {
             // for some reason the compiler needs type assistance by creating this
             // intermediate variable.
             Stream<Meter.Id> idStream = StreamSupport.stream(rows.spliterator(), false).map(row -> {
                 Row r = row;
-                Meter.Id rowId = commonId.withTags(row.uniqueTags);
+                Meter.Id rowId = commonId.withTags(r.uniqueTags);
                 boolean previouslyDefined = oldRows.contains(rowId);
 
                 if (overwrite && previouslyDefined) {
@@ -73,7 +73,7 @@ public class MultiGauge {
                 }
 
                 if (overwrite || !previouslyDefined) {
-                    registry.gauge(rowId, row.obj, new StrongReferenceGaugeFunction<>(r.obj, r.valueFunction));
+                    registry.gauge(rowId, r.obj, new StrongReferenceGaugeFunction<>(r.obj, r.valueFunction));
                 }
 
                 return rowId;

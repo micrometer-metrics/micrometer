@@ -64,7 +64,7 @@ class TestObservationRegistryAssertTests {
 
     @Test
     void should_fail_when_observation_not_started() {
-        Observation.createNotStarted("foo", registry).stop();
+        Observation.createNotStarted("foo", registry);
 
         thenThrownBy(
                 () -> TestObservationRegistryAssert.assertThat(registry).hasSingleObservationThat().hasBeenStarted())

@@ -111,6 +111,8 @@ public class CountedAspect {
      */
     private final Predicate<ProceedingJoinPoint> shouldSkip;
 
+    private CountedMeterTagAnnotationHandler meterTagAnnotationHandler;
+
     /**
      * Creates a {@code CountedAspect} instance with {@link Metrics#globalRegistry}.
      *
@@ -167,7 +169,7 @@ public class CountedAspect {
         this.shouldSkip = shouldSkip;
     }
 
-    @Around("@within(io.micrometer.core.annotation.Counted) and not @annotation(io.micrometer.core.annotation.Counted)")
+    @Around("@within(io.micrometer.core.annotation.Counted) && !@annotation(io.micrometer.core.annotation.Counted) && execution(* *(..))")
     @Nullable
     public Object countedClass(ProceedingJoinPoint pjp) throws Throwable {
         if (shouldSkip.test(pjp)) {
@@ -202,7 +204,7 @@ public class CountedAspect {
      * @return Whatever the intercepted method returns.
      * @throws Throwable When the intercepted method throws one.
      */
-    @Around(value = "@annotation(counted)", argNames = "pjp,counted")
+    @Around(value = "@annotation(counted) && execution(* *(..))", argNames = "pjp,counted")
     @Nullable
     public Object interceptAndRecord(ProceedingJoinPoint pjp, Counted counted) throws Throwable {
         if (shouldSkip.test(pjp)) {
@@ -267,7 +269,18 @@ public class CountedAspect {
         if (!description.isEmpty()) {
             builder.description(description);
         }
+        if (meterTagAnnotationHandler != null) {
+            meterTagAnnotationHandler.addAnnotatedParameters(builder, pjp);
+        }
         return builder;
+    }
+
+    /**
+     * Setting this enables support for {@link MeterTag}.
+     * @param meterTagAnnotationHandler meter tag annotation handler
+     */
+    public void setMeterTagAnnotationHandler(CountedMeterTagAnnotationHandler meterTagAnnotationHandler) {
+        this.meterTagAnnotationHandler = meterTagAnnotationHandler;
     }
 
 }

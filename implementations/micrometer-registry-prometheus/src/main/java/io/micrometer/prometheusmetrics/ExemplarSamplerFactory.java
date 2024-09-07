@@ -21,7 +21,6 @@ import io.prometheus.metrics.core.exemplars.ExemplarSampler;
  * A factory that creates {@link ExemplarSampler} instances with the desired properties.
  *
  * @author Jonatan Ivanov
- * @since 1.13.0
  */
 interface ExemplarSamplerFactory {
 
@@ -34,7 +33,7 @@ interface ExemplarSamplerFactory {
 
     /**
      * Creates an {@link ExemplarSampler} that stores exemplars for the defined histogram
-     * buckets. This means as many exemplars as many buckets are defined.
+     * buckets. This means as many exemplars as buckets are defined.
      * @param histogramUpperBounds histogram buckets to store exemplars for.
      * @return a new {@link ExemplarSampler} instance.
      */

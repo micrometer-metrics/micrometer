@@ -23,20 +23,24 @@ import io.micrometer.core.instrument.FunctionCounter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.TimeGauge;
+import io.micrometer.core.instrument.search.MeterNotFoundException;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import java.util.concurrent.TimeUnit;
+
+import static org.assertj.core.api.Assertions.*;
 
 /**
  * Tests for {@link CaffeineCacheMetrics}.
  *
  * @author Oleksii Bondar
+ * @author Johnny Lim
  */
 class CaffeineCacheMetricsTest extends AbstractCacheMetricsTest {
 
     // tag::setup[]
-    LoadingCache<String, String> cache = Caffeine.newBuilder().build(key -> "");
+    LoadingCache<String, String> cache = Caffeine.newBuilder().recordStats().build(key -> "");
 
     CaffeineCacheMetrics<String, String, Cache<String, String>> metrics = new CaffeineCacheMetrics<>(cache, "testCache",
             expectedTag);
@@ -45,6 +49,11 @@ class CaffeineCacheMetricsTest extends AbstractCacheMetricsTest {
 
     @Test
     void reportExpectedGeneralMetrics() {
+        cache.put("a", "1");
+        cache.get("a");
+        cache.get("a");
+        cache.get("b");
+
         // tag::register[]
         MeterRegistry registry = new SimpleMeterRegistry();
         metrics.bindTo(registry);
@@ -58,7 +67,7 @@ class CaffeineCacheMetricsTest extends AbstractCacheMetricsTest {
 
         // specific to LoadingCache instance
         TimeGauge loadDuration = fetch(registry, "cache.load.duration").timeGauge();
-        assertThat(loadDuration.value()).isEqualTo(stats.totalLoadTime());
+        assertThat(loadDuration.value(TimeUnit.NANOSECONDS)).isEqualTo(stats.totalLoadTime());
 
         FunctionCounter successfulLoad = fetch(registry, "cache.load", Tags.of("result", "success")).functionCounter();
         assertThat(successfulLoad.count()).isEqualTo(stats.loadSuccessCount());
@@ -95,12 +104,41 @@ class CaffeineCacheMetricsTest extends AbstractCacheMetricsTest {
 
     @Test
     void returnHitCount() {
-        assertThat(metrics.hitCount()).isEqualTo(cache.stats().hitCount());
+        MeterRegistry meterRegistry = new SimpleMeterRegistry();
+        metrics.bindTo(meterRegistry);
+
+        cache.put("a", "1");
+        cache.get("a");
+        cache.get("a");
+
+        assertThat(metrics.hitCount()).isEqualTo(cache.stats().hitCount()).isEqualTo(2);
+        assertThat(meterRegistry.get("cache.gets").tag("result", "hit").functionCounter().count()).isEqualTo(2);
+    }
+
+    @Test
+    void returnHitCountWithoutRecordStats() {
+        LoadingCache<String, String> cache = Caffeine.newBuilder().build(key -> "");
+        CaffeineCacheMetrics<String, String, Cache<String, String>> metrics = new CaffeineCacheMetrics<>(cache,
+                "testCache", expectedTag);
+
+        MeterRegistry meterRegistry = new SimpleMeterRegistry();
+        metrics.bindTo(meterRegistry);
+
+        cache.put("a", "1");
+        cache.get("a");
+        cache.get("a");
+
+        assertThat(cache.stats().hitCount()).isEqualTo(0);
+        assertThat(metrics.hitCount()).isEqualTo(CaffeineCacheMetrics.UNSUPPORTED);
+        assertThatExceptionOfType(MeterNotFoundException.class)
+            .isThrownBy(() -> meterRegistry.get("cache.gets").tag("result", "hit").functionCounter());
     }
 
     @Test
     void returnMissCount() {
-        assertThat(metrics.missCount()).isEqualTo(cache.stats().missCount());
+        cache.get("b");
+
+        assertThat(metrics.missCount()).isEqualTo(cache.stats().missCount()).isEqualTo(1);
     }
 
     @Test
