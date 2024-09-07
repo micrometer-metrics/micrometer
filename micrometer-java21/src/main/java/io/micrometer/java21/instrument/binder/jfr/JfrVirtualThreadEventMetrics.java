@@ -84,7 +84,7 @@ public class JfrVirtualThreadEventMetrics implements MeterBinder, Closeable {
         recordingStream.enable(PINNED_EVENT).withThreshold(settings.pinnedThreshold);
         recordingStream.enable(SUBMIT_FAILED_EVENT);
         recordingStream.setMaxAge(settings.maxAge);
-        recordingStream.setMaxSize(settings.maxSize);
+        recordingStream.setMaxSize(settings.maxSizeBytes);
         recordingStream.startAsync();
         return recordingStream;
     }
@@ -96,10 +96,13 @@ public class JfrVirtualThreadEventMetrics implements MeterBinder, Closeable {
         }
     }
 
-    public record RecordingSettings(Duration maxAge, long maxSize, Duration pinnedThreshold) {
+    public record RecordingSettings(Duration maxAge, long maxSizeBytes, Duration pinnedThreshold) {
         public RecordingSettings {
             Objects.requireNonNull(maxAge, "maxAge parameter must not be null");
             Objects.requireNonNull(pinnedThreshold, "pinnedThreshold must not be null");
+            if (maxSizeBytes < 0) {
+                throw new IllegalArgumentException("maxSizeBytes must be positive");
+            }
         }
 
         public RecordingSettings() {
