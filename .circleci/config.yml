@@ -57,7 +57,7 @@ jobs:
   docker-tests:
     executor: machine-executor
     steps:
-      - run: apt install openjdk-21-jdk
+      - run: sudo apt -y update && sudo apt -y install openjdk-21-jdk
       - gradlew-build:
           command: dockerTest
 
