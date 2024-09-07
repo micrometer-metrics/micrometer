@@ -65,17 +65,15 @@ public class JfrVirtualThreadEventMetrics implements MeterBinder, Closeable {
         started = true;
         recordingStream = createRecordingStream(settings);
 
-        final Timer pinnedTimer =
-            Timer.builder("jvm.virtual.thread.pinned")
-                .tags(tags)
-                .description("The duration of virtual threads that were pinned to a physical thread")
-                .register(registry);
+        final Timer pinnedTimer = Timer.builder("jvm.virtual.thread.pinned")
+            .tags(tags)
+            .description("The duration of virtual threads that were pinned to a physical thread")
+            .register(registry);
 
-        final Counter submitFailedCounter =
-            Counter.builder("jvm.virtual.thread.submit.failed")
-                .tags(tags)
-                .description("The number of virtual thread submissions that failed")
-                .register(registry);
+        final Counter submitFailedCounter = Counter.builder("jvm.virtual.thread.submit.failed")
+            .tags(tags)
+            .description("The number of virtual thread submissions that failed")
+            .register(registry);
 
         recordingStream.onEvent(PINNED_EVENT, event -> pinnedTimer.record(event.getDuration()));
         recordingStream.onEvent(SUBMIT_FAILED_EVENT, event -> submitFailedCounter.increment());
@@ -103,8 +101,10 @@ public class JfrVirtualThreadEventMetrics implements MeterBinder, Closeable {
             Objects.requireNonNull(maxAge, "maxAge parameter must not be null");
             Objects.requireNonNull(pinnedThreshold, "pinnedThreshold must not be null");
         }
+
         public RecordingSettings() {
             this(Duration.ofSeconds(5), 10L * 1024 * 1024, Duration.ofMillis(1));
         }
     }
+
 }
