@@ -149,7 +149,7 @@ dependencies {
     // testAnnotationProcessor 'com.google.dagger:dagger-compiler'
 
     // JUnit 5
-    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testImplementation libs.junitJupiter
     testImplementation(libs.archunitJunit5) {
         // avoid transitively pulling in slf4j 2
         exclude group: "org.slf4j", module: "slf4j-api"
@@ -196,7 +196,7 @@ dependencies {
 
     // Dependencies for @ClassPathExclusions
     testImplementation("org.junit.platform:junit-platform-engine")
-    testImplementation("org.junit.platform:junit-platform-launcher")
+    testImplementation(libs.junitPlatformLauncher)
     testImplementation(libs.mavenResolverConnectorBasic)
     testImplementation(libs.mavenResolverProvider) {
         exclude(group: "javax.inject", module: "javax.inject")

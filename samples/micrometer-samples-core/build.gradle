@@ -15,7 +15,7 @@ dependencies {
         implementation project(":micrometer-registry-$sys")
     }
 
-    implementation 'io.prometheus:simpleclient_pushgateway'
+    implementation libs.prometheusSimpleClientPushgateway
     implementation 'io.projectreactor.netty:reactor-netty-http'
     implementation 'org.apache.kafka:kafka-clients'
     implementation 'com.github.charithe:kafka-junit'

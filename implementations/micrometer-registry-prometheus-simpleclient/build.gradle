@@ -3,7 +3,7 @@ description = 'MeterRegistry implementation for Prometheus using io.prometheus:s
 dependencies {
     api project(':micrometer-core')
 
-    api 'io.prometheus:simpleclient_common'
+    api libs.prometheusSimpleClient
 
     testImplementation project(':micrometer-test')
 }
