@@ -337,7 +337,7 @@ subprojects {
 
             check.dependsOn("testModules")
 
-            if (!(project.name in ['micrometer-registry-prometheus', 'micrometer-registry-prometheus-simpleclient', 'micrometer-jakarta9', 'micrometer-java11', 'micrometer-jetty12'])) { // add projects here that do not exist in the previous minor so should be excluded from japicmp
+            if (!(project.name in ['micrometer-registry-prometheus', 'micrometer-registry-prometheus-simpleclient', 'micrometer-jakarta9', 'micrometer-java11', 'micrometer-java21', 'micrometer-jetty12'])) { // add projects here that do not exist in the previous minor so should be excluded from japicmp
                 apply plugin: 'me.champeau.gradle.japicmp'
                 apply plugin: 'de.undercouch.download'
 

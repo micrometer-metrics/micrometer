@@ -1,0 +1,18 @@
+description 'Micrometer core classes that require Java 21'
+
+dependencies {
+    api project(":micrometer-core")
+
+    testImplementation 'org.awaitility:awaitility'
+    testImplementation project(":micrometer-observation-test")
+}
+
+java {
+    targetCompatibility = 21
+}
+
+tasks.withType(JavaCompile).configureEach {
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
+    options.release = 21
+}
