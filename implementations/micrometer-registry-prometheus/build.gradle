@@ -1,6 +1,8 @@
 description = 'MeterRegistry implementation for Prometheus using io.prometheus:prometheus-metrics-core. If you have compatibility issues with this module, you can go back to io.micrometer:micrometer-registry-prometheus-simpleclient that uses io.prometheus:simpleclient_common.'
 
 dependencies {
+    api(platform(libs.prometheusMetricsBom))
+
     api project(':micrometer-core')
 
     api(libs.prometheusMetrics) {

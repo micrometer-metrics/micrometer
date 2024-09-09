@@ -4,6 +4,7 @@ plugins {
 
 dependencies {
     implementation platform(libs.reactorBom)
+    implementation(platform(libs.prometheusSimpleClientBom))
 
     implementation project(':micrometer-core')
     implementation project(':micrometer-observation')

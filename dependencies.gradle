@@ -80,9 +80,7 @@ def VERSIONS = [
 def PLATFORM_BOMS = [
         libs.reactorBom,
         libs.nettyBom,
-        libs.junitBom,
-        libs.prometheusMetricsBom,
-        libs.prometheusSimpleClientBom
+        libs.junitBom
 ]
 
 subprojects {
