@@ -29,7 +29,7 @@ dependencies {
     testImplementation project(':micrometer-test')
     testImplementation project(':micrometer-observation-test')
     testImplementation libs.aspectjweaver
-    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testImplementation libs.junitJupiter
     testImplementation 'org.assertj:assertj-core'
     testImplementation 'org.springframework:spring-context'
     testImplementation 'io.projectreactor:reactor-core'

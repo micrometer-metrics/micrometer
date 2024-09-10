@@ -8,7 +8,7 @@ dependencies {
     optionalApi libs.aspectjrt
 
     // JUnit 5
-    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testImplementation libs.junitJupiter
     testImplementation 'org.assertj:assertj-core'
 }
 
