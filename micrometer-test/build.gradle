@@ -36,7 +36,7 @@ dependencies {
 
     api 'org.assertj:assertj-core'
 
-    api 'org.junit.jupiter:junit-jupiter'
+    api libs.junitJupiter
     api 'org.junit.jupiter:junit-jupiter-engine'
 
     api 'ru.lanwen.wiremock:wiremock-junit5'

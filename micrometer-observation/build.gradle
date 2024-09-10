@@ -32,7 +32,7 @@ dependencies {
     testImplementation 'org.springframework:spring-context'
 
     // JUnit 5
-    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testImplementation libs.junitJupiter
     testImplementation(libs.archunitJunit5) {
         // avoid transitively pulling in slf4j 2
         exclude group: "org.slf4j", module: "slf4j-api"

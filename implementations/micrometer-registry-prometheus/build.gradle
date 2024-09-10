@@ -1,18 +1,19 @@
 description = 'MeterRegistry implementation for Prometheus using io.prometheus:prometheus-metrics-core. If you have compatibility issues with this module, you can go back to io.micrometer:micrometer-registry-prometheus-simpleclient that uses io.prometheus:simpleclient_common.'
 
 dependencies {
+    api(platform(libs.prometheusMetricsBom))
+
     api project(':micrometer-core')
 
-    api('io.prometheus:prometheus-metrics-core') {
+    api(libs.prometheusMetrics) {
         // We only need SpanContext from prometheus-metrics-tracer-common, we don't need
         // prometheus-metrics-tracer-initializer nor the dependencies it pulls in
         exclude(group: 'io.prometheus', module: 'prometheus-metrics-tracer-initializer')
     }
-    api 'io.prometheus:prometheus-metrics-tracer-common'
-    implementation 'io.prometheus:prometheus-metrics-exposition-formats'
+    api libs.prometheusMetricsTracerCommon
+    implementation libs.prometheusMetricsExpositionFormats
 
     testImplementation project(':micrometer-test')
-    testImplementation 'io.prometheus:prometheus-metrics-tracer-common'
     testImplementation 'io.rest-assured:rest-assured'
     testImplementation 'org.testcontainers:junit-jupiter'
     testImplementation 'org.awaitility:awaitility'

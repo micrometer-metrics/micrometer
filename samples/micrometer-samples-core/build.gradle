@@ -4,6 +4,7 @@ plugins {
 
 dependencies {
     implementation platform(libs.reactorBom)
+    implementation(platform(libs.prometheusSimpleClientBom))
 
     implementation project(':micrometer-core')
     implementation project(':micrometer-observation')
@@ -15,7 +16,7 @@ dependencies {
         implementation project(":micrometer-registry-$sys")
     }
 
-    implementation 'io.prometheus:simpleclient_pushgateway'
+    implementation libs.prometheusSimpleClientPushgateway
     implementation 'io.projectreactor.netty:reactor-netty-http'
     implementation 'org.apache.kafka:kafka-clients'
     implementation 'com.github.charithe:kafka-junit'
