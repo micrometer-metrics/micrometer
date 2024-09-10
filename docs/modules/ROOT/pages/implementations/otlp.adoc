@@ -85,8 +85,11 @@ The following table maps OTLP data points and the Micrometer meters:
 |Gauge
 |Gauge, TimeGauge, MultiGauge
 
-|Histogram/Exponential Histogram^*^
+|Histogram
 |Timer, DistributionSummary, LongTaskTimer, FunctionTimer (only sum and count are set)
+
+|Exponential Histogram^*^
+|Timer, DistributionSummary
 
 |Summary
 |Timer, DistributionSummary, LongTaskTimer
@@ -111,10 +114,13 @@ Micrometer `Timer` and `DistributionSummary` support configuring xref:/concepts/
 | publishPercentileHistogram
 | Histogram/Exponential Histogram ^*^
 
+| publishPercentiles and publishPercentileHistogram
+| Histogram/Exponential Histogram ^*^
+
 | serviceLevelObjectives
 | Histogram
 
-| publishPercentiles and (publishPercentileHistogram/serviceLevelObjectives)
+| publishPercentiles and serviceLevelObjectives
 | Histogram
 |===
 __* The configuration `histogramFlavor` determines whether the OTLP DataPoint is a Histogram/Exponential Histogram.__
