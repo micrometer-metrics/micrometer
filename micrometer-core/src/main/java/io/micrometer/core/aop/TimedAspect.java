@@ -258,6 +258,7 @@ public class TimedAspect {
             .tags(EXCEPTION_TAG, exceptionClass)
             .tags(tagsBasedOnJoinPoint.apply(pjp))
             .publishPercentileHistogram(timed.histogram())
+            .publishPercentiles(timed.percentiles().length == 0 ? null : timed.percentiles())
             .serviceLevelObjectives(
                     timed.serviceLevelObjectives().length > 0 ? Arrays.stream(timed.serviceLevelObjectives())
                         .mapToObj(s -> Duration.ofNanos((long) TimeUtils.secondsToUnit(s, TimeUnit.NANOSECONDS)))
