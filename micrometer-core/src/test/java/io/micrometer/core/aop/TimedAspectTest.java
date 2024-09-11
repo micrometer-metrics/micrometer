@@ -25,6 +25,7 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.distribution.CountAtBucket;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
+import io.micrometer.core.instrument.distribution.ValueAtPercentile;
 import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import io.micrometer.core.instrument.search.MeterNotFoundException;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
@@ -118,6 +119,25 @@ class TimedAspectTest {
                 .histogramCounts())
             .mapToDouble(CountAtBucket::bucket)
             .toArray()).isEqualTo(new double[] { Math.pow(10, 9) * 0.1, Math.pow(10, 9) * 0.5 });
+    }
+
+    @Test
+    void timeMethodWithPercentilesTimer() {
+        MeterRegistry registry = new SimpleMeterRegistry();
+
+        AspectJProxyFactory pf = new AspectJProxyFactory(new TimedService());
+        pf.addAspect(new TimedAspect(registry));
+
+        TimedService service = pf.getProxy();
+
+        service.percentilesCall();
+
+        assertThat(registry.get("percentilesCall")
+            .tag("class", getClass().getName() + "$TimedService")
+            .tag("method", "percentilesCall")
+            .timer()
+            .takeSnapshot()
+            .percentileValues()).extracting(ValueAtPercentile::percentile).containsExactly(0.1, 0.5);
     }
 
     @Test
@@ -734,6 +754,10 @@ class TimedAspectTest {
         @Timed(value = "sloCall", extraTags = { "extra", "tag" }, histogram = true,
                 serviceLevelObjectives = { 0.1, 0.5 })
         void sloCall() {
+        }
+
+        @Timed(value = "percentilesCall", percentiles = { 0.1, 0.5 })
+        void percentilesCall() {
         }
 
     }
