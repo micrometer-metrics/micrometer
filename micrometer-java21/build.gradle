@@ -8,8 +8,8 @@ if (!javaLanguageVersion.canCompileOrRun(21)) {
 dependencies {
     api project(":micrometer-core")
 
+    testImplementation 'org.junit.jupiter:junit-jupiter'
     testImplementation 'org.awaitility:awaitility'
-    testImplementation project(":micrometer-observation-test")
 }
 
 java {

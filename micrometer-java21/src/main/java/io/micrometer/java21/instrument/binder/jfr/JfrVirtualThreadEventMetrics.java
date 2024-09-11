@@ -31,9 +31,9 @@ import static java.util.Collections.emptyList;
 
 public class JfrVirtualThreadEventMetrics implements MeterBinder, Closeable {
 
-    public static final String PINNED_EVENT = "jdk.VirtualThreadPinned";
+    private static final String PINNED_EVENT = "jdk.VirtualThreadPinned";
 
-    public static final String SUBMIT_FAILED_EVENT = "jdk.VirtualThreadSubmitFailed";
+    private static final String SUBMIT_FAILED_EVENT = "jdk.VirtualThreadSubmitFailed";
 
     private final RecordingSettings settings;
 
@@ -106,7 +106,7 @@ public class JfrVirtualThreadEventMetrics implements MeterBinder, Closeable {
         }
 
         public RecordingSettings() {
-            this(Duration.ofSeconds(5), 10L * 1024 * 1024, Duration.ofMillis(1));
+            this(Duration.ofSeconds(5), 10L * 1024 * 1024, Duration.ofMillis(20));
         }
     }
 
