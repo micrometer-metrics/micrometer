@@ -29,6 +29,7 @@ import io.micrometer.core.instrument.distribution.ValueAtPercentile;
 import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import io.micrometer.core.instrument.search.MeterNotFoundException;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import io.micrometer.core.instrument.util.TimeUtils;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -36,9 +37,9 @@ import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.aop.aspectj.annotation.AspectJProxyFactory;
 
 import javax.annotation.Nonnull;
-import java.util.Arrays;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 
 import static java.util.concurrent.CompletableFuture.supplyAsync;
@@ -109,16 +110,15 @@ class TimedAspectTest {
 
         service.sloCall();
 
-        assertThat(Arrays
-            .stream(registry.get("sloCall")
-                .tag("class", getClass().getName() + "$TimedService")
-                .tag("method", "sloCall")
-                .tag("extra", "tag")
-                .timer()
-                .takeSnapshot()
-                .histogramCounts())
-            .mapToDouble(CountAtBucket::bucket)
-            .toArray()).isEqualTo(new double[] { Math.pow(10, 9) * 0.1, Math.pow(10, 9) * 0.5 });
+        assertThat(registry.get("sloCall")
+            .tag("class", getClass().getName() + "$TimedService")
+            .tag("method", "sloCall")
+            .tag("extra", "tag")
+            .timer()
+            .takeSnapshot()
+            .histogramCounts()).extracting(CountAtBucket::bucket)
+            .containsExactly(TimeUtils.secondsToUnit(0.1, TimeUnit.NANOSECONDS),
+                    TimeUtils.secondsToUnit(0.5, TimeUnit.NANOSECONDS));
     }
 
     @Test

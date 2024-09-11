@@ -80,6 +80,7 @@ public @interface Timed {
      * should be passed as {@code 0.1}.
      * @return service level objectives to calculate
      * @see io.micrometer.core.instrument.Timer.Builder#serviceLevelObjectives(java.time.Duration...)
+     * @since 1.14.0
      */
     double[] serviceLevelObjectives() default {};
 
