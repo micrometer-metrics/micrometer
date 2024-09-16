@@ -15,56 +15,98 @@
  */
 package io.micrometer.java21.instrument.binder.jfr;
 
-import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tags;
+import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.io.IOException;
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.*;
 
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
+/**
+ * Tests for {@link JfrVirtualThreadEventMetrics}.
+ */
 class JfrVirtualThreadEventMetricsTests {
 
-    private static final Tags USER_TAGS = Tags.of("k", "v");
+    private static final Tags TAGS = Tags.of("k", "v");
 
-    private MeterRegistry registry;
+    private SimpleMeterRegistry registry;
 
     private JfrVirtualThreadEventMetrics jfrMetrics;
 
     @BeforeEach
-    void setup() {
+    void setUp() {
         registry = new SimpleMeterRegistry();
-        jfrMetrics = new JfrVirtualThreadEventMetrics(USER_TAGS);
+        jfrMetrics = new JfrVirtualThreadEventMetrics(TAGS);
         jfrMetrics.bindTo(registry);
     }
 
-    @Test
-    void registerPinnedEvent() throws Exception {
-        Thread.ofVirtual().name("vt-test").start(() -> {
-            synchronized (this) {
-                sleep(Duration.ofMillis(100));
-            }
-        }).join();
+    @AfterEach
+    void tearDown() {
+        jfrMetrics.close();
+    }
 
-        await().atMost(Duration.ofSeconds(2))
-            .until(() -> registry.get("jvm.virtual.thread.pinned").tags(USER_TAGS).timer().count() == 1);
+    @Test
+    void pinnedEventsShouldBeRecorded() {
+        try (ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor()) {
+            CountDownLatch latch = new CountDownLatch(1);
+            List<Future<?>> futures = new ArrayList<>();
+            for (int i = 0; i < 3; i++) {
+                futures.add(executor.submit(() -> pinCurrentThreadAndAwait(latch)));
+            }
+            sleep(Duration.ofMillis(50)); // the time the threads will be pinned for
+            latch.countDown();
+            for (Future<?> future : futures) {
+                waitFor(future);
+            }
+
+            Timer timer = registry.get("jvm.threads.virtual.pinned").tags(TAGS).timer();
+            await().atMost(Duration.ofSeconds(2)).until(() -> timer.count() == 3);
+            assertThat(timer.max(MILLISECONDS)).isBetween(45d, 55d); // ~50ms
+            assertThat(timer.totalTime(MILLISECONDS)).isBetween(145d, 155d); // ~150ms
+        }
+    }
+
+    private void pinCurrentThreadAndAwait(CountDownLatch latch) {
+        synchronized (new Object()) { // assumes that synchronized pins the thread
+            try {
+                if (!latch.await(2, TimeUnit.SECONDS)) {
+                    throw new IllegalStateException("Timed out waiting for latch");
+                }
+            }
+            catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        }
     }
 
     private void sleep(Duration duration) {
         try {
             Thread.sleep(duration);
         }
-        catch (InterruptedException ignored) {
+        catch (InterruptedException e) {
+            throw new RuntimeException(e);
         }
     }
 
-    @AfterEach
-    void cleanup() throws IOException {
-        jfrMetrics.close();
+    private void waitFor(Future<?> future) {
+        try {
+            future.get();
+        }
+        catch (ExecutionException | InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+        finally {
+            future.cancel(true);
+        }
     }
 
 }

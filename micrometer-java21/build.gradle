@@ -6,9 +6,10 @@ if (!javaLanguageVersion.canCompileOrRun(21)) {
 }
 
 dependencies {
-    api project(":micrometer-core")
+    api project(':micrometer-core')
 
     testImplementation 'org.junit.jupiter:junit-jupiter'
+    testImplementation 'org.assertj:assertj-core'
     testImplementation 'org.awaitility:awaitility'
 }
 

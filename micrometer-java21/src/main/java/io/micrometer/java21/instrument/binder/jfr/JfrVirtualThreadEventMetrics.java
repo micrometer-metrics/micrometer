@@ -23,90 +23,84 @@ import io.micrometer.core.instrument.binder.MeterBinder;
 import jdk.jfr.consumer.RecordingStream;
 
 import java.io.Closeable;
-import java.io.IOException;
 import java.time.Duration;
 import java.util.Objects;
 
 import static java.util.Collections.emptyList;
 
+/**
+ * Instrumentation support for Virtual Threads, see:
+ * https://openjdk.org/jeps/425#JDK-Flight-Recorder-JFR
+ *
+ * @author Artyom Gabeev
+ * @since 1.14.0
+ */
 public class JfrVirtualThreadEventMetrics implements MeterBinder, Closeable {
 
     private static final String PINNED_EVENT = "jdk.VirtualThreadPinned";
 
     private static final String SUBMIT_FAILED_EVENT = "jdk.VirtualThreadSubmitFailed";
 
-    private final RecordingSettings settings;
+    private final RecordingStream recordingStream;
 
     private final Iterable<Tag> tags;
 
-    private boolean started = false;
-
-    private RecordingStream recordingStream;
-
     public JfrVirtualThreadEventMetrics() {
-        this(new RecordingSettings(), emptyList());
+        this(new RecordingConfig(), emptyList());
     }
 
     public JfrVirtualThreadEventMetrics(Iterable<Tag> tags) {
-        this(new RecordingSettings(), tags);
+        this(new RecordingConfig(), tags);
     }
 
-    public JfrVirtualThreadEventMetrics(RecordingSettings settings, Iterable<Tag> tags) {
-        this.settings = settings;
+    private JfrVirtualThreadEventMetrics(RecordingConfig config, Iterable<Tag> tags) {
+        this.recordingStream = createRecordingStream(config);
         this.tags = tags;
     }
 
     @Override
     public void bindTo(MeterRegistry registry) {
-        if (started) {
-            return;
-        }
-
-        started = true;
-        recordingStream = createRecordingStream(settings);
-
-        final Timer pinnedTimer = Timer.builder("jvm.virtual.thread.pinned")
+        Timer pinnedTimer = Timer.builder("jvm.threads.virtual.pinned")
+            .description("The duration while the virtual thread was pinned without releasing its platform thread")
             .tags(tags)
-            .description("The duration of virtual threads that were pinned to a physical thread")
             .register(registry);
 
-        final Counter submitFailedCounter = Counter.builder("jvm.virtual.thread.submit.failed")
+        Counter submitFailedCounter = Counter.builder("jvm.threads.virtual.submit.failed")
+            .description("The number of events when starting or unparking a virtual thread failed")
             .tags(tags)
-            .description("The number of virtual thread submissions that failed")
             .register(registry);
 
         recordingStream.onEvent(PINNED_EVENT, event -> pinnedTimer.record(event.getDuration()));
         recordingStream.onEvent(SUBMIT_FAILED_EVENT, event -> submitFailedCounter.increment());
     }
 
-    protected RecordingStream createRecordingStream(RecordingSettings settings) {
-        final RecordingStream recordingStream = new RecordingStream();
-        recordingStream.enable(PINNED_EVENT).withThreshold(settings.pinnedThreshold);
+    private RecordingStream createRecordingStream(RecordingConfig config) {
+        RecordingStream recordingStream = new RecordingStream();
+        recordingStream.enable(PINNED_EVENT).withThreshold(config.pinnedThreshold);
         recordingStream.enable(SUBMIT_FAILED_EVENT);
-        recordingStream.setMaxAge(settings.maxAge);
-        recordingStream.setMaxSize(settings.maxSizeBytes);
+        recordingStream.setMaxAge(config.maxAge);
+        recordingStream.setMaxSize(config.maxSizeBytes);
         recordingStream.startAsync();
+
         return recordingStream;
     }
 
     @Override
-    public void close() throws IOException {
-        if (started) {
-            recordingStream.close();
-        }
+    public void close() {
+        recordingStream.close();
     }
 
-    public record RecordingSettings(Duration maxAge, long maxSizeBytes, Duration pinnedThreshold) {
-        public RecordingSettings {
+    private record RecordingConfig(Duration maxAge, long maxSizeBytes, Duration pinnedThreshold) {
+        private RecordingConfig() {
+            this(Duration.ofSeconds(5), 10L * 1024 * 1024, Duration.ofMillis(20));
+        }
+
+        private RecordingConfig {
             Objects.requireNonNull(maxAge, "maxAge parameter must not be null");
             Objects.requireNonNull(pinnedThreshold, "pinnedThreshold must not be null");
             if (maxSizeBytes < 0) {
                 throw new IllegalArgumentException("maxSizeBytes must be positive");
             }
-        }
-
-        public RecordingSettings() {
-            this(Duration.ofSeconds(5), 10L * 1024 * 1024, Duration.ofMillis(20));
         }
     }
 
