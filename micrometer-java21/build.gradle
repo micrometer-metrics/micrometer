@@ -22,3 +22,8 @@ tasks.withType(JavaCompile).configureEach {
     targetCompatibility = JavaVersion.VERSION_21
     options.release = 21
 }
+
+test {
+    // This hack is needed since JfrVirtualThreadEventMetricsTests utilizes reflection against java.lang, see its javadoc
+    jvmArgs += ['--add-opens', 'java.base/java.lang=ALL-UNNAMED']
+}
