@@ -243,6 +243,36 @@ class TimedAspectTest {
     }
 
     @Test
+    void timeMethodWhenCompletedErroneously() {
+        MeterRegistry registry = new SimpleMeterRegistry();
+
+        AspectJProxyFactory pf = new AspectJProxyFactory(new AsyncTimedService());
+        pf.addAspect(new TimedAspect(registry));
+
+        AsyncTimedService service = pf.getProxy();
+
+        assertThat(registry.find("callRaisingError")
+            .tag("class", getClass().getName() + "$AsyncTimedService")
+            .tag("method", "callRaisingError")
+            .tag("extra", "tag")
+            .tag("exception", "Error")
+            .timer()).isNull();
+
+        CompletableFuture<?> completableFuture = service.callRaisingError();
+
+        assertThatThrownBy(completableFuture::join).isInstanceOf(CompletionException.class) ;
+
+        assertThat(registry.get("callRaisingError")
+            .tag("class", getClass().getName() + "$AsyncTimedService")
+            .tag("method", "callRaisingError")
+            .tag("extra", "tag")
+            .tag("exception", "Error")
+            .timer()
+            .count()).isEqualTo(1);
+    }
+
+
+    @Test
     void timeMethodWithLongTaskTimerWhenCompleted() {
         MeterRegistry registry = new SimpleMeterRegistry();
 
@@ -772,6 +802,12 @@ class TimedAspectTest {
         @Timed(value = "longCall", extraTags = { "extra", "tag" }, longTask = true)
         CompletableFuture<?> longCall(GuardedResult guardedResult) {
             return supplyAsync(guardedResult::get);
+        }
+
+        @Timed(value = "callRaisingError", extraTags = { "extra", "tag" })
+        CompletableFuture<?> callRaisingError() {
+
+            return CompletableFuture.failedFuture(new Error());
         }
 
     }
