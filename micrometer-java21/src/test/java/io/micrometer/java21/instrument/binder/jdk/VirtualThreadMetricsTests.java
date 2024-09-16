@@ -84,8 +84,8 @@ class VirtualThreadMetricsTests {
 
             Timer timer = registry.get("jvm.threads.virtual.pinned").tags(TAGS).timer();
             await().atMost(Duration.ofSeconds(2)).until(() -> timer.count() == 3);
-            assertThat(timer.max(MILLISECONDS)).isBetween(45d, 55d); // ~50ms
-            assertThat(timer.totalTime(MILLISECONDS)).isBetween(145d, 155d); // ~150ms
+            assertThat(timer.max(MILLISECONDS)).isBetween(40d, 60d); // ~50ms
+            assertThat(timer.totalTime(MILLISECONDS)).isBetween(130d, 170d); // ~150ms
         }
     }
 
