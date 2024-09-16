@@ -260,7 +260,7 @@ class TimedAspectTest {
 
         CompletableFuture<?> completableFuture = service.callRaisingError();
 
-        assertThatThrownBy(completableFuture::join).isInstanceOf(CompletionException.class) ;
+        assertThatThrownBy(completableFuture::join).isInstanceOf(CompletionException.class);
 
         assertThat(registry.get("callRaisingError")
             .tag("class", getClass().getName() + "$AsyncTimedService")
@@ -270,7 +270,6 @@ class TimedAspectTest {
             .timer()
             .count()).isEqualTo(1);
     }
-
 
     @Test
     void timeMethodWithLongTaskTimerWhenCompleted() {
