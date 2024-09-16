@@ -19,7 +19,7 @@
  */
 @NonNullApi
 @NonNullFields
-package io.micrometer.java21.instrument.binder.jfr;
+package io.micrometer.java21.instrument.binder.jdk;
 
 import io.micrometer.common.lang.NonNullApi;
 import io.micrometer.common.lang.NonNullFields;

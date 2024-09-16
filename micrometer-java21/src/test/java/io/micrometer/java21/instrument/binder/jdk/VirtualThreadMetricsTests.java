@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.java21.instrument.binder.jfr;
+package io.micrometer.java21.instrument.binder.jdk;
 
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.Timer;
@@ -32,20 +32,20 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
 /**
- * Tests for {@link JfrVirtualThreadEventMetrics}.
+ * Tests for {@link VirtualThreadMetrics}.
  */
-class JfrVirtualThreadEventMetricsTests {
+class VirtualThreadMetricsTests {
 
     private static final Tags TAGS = Tags.of("k", "v");
 
     private SimpleMeterRegistry registry;
 
-    private JfrVirtualThreadEventMetrics jfrMetrics;
+    private VirtualThreadMetrics jfrMetrics;
 
     @BeforeEach
     void setUp() {
         registry = new SimpleMeterRegistry();
-        jfrMetrics = new JfrVirtualThreadEventMetrics(TAGS);
+        jfrMetrics = new VirtualThreadMetrics(TAGS);
         jfrMetrics.bindTo(registry);
     }
 

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.java21.instrument.binder.jfr;
+package io.micrometer.java21.instrument.binder.jdk;
 
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -35,7 +35,7 @@ import static java.util.Collections.emptyList;
  * @author Artyom Gabeev
  * @since 1.14.0
  */
-public class JfrVirtualThreadEventMetrics implements MeterBinder, Closeable {
+public class VirtualThreadMetrics implements MeterBinder, Closeable {
 
     private static final String PINNED_EVENT = "jdk.VirtualThreadPinned";
 
@@ -45,15 +45,15 @@ public class JfrVirtualThreadEventMetrics implements MeterBinder, Closeable {
 
     private final Iterable<Tag> tags;
 
-    public JfrVirtualThreadEventMetrics() {
+    public VirtualThreadMetrics() {
         this(new RecordingConfig(), emptyList());
     }
 
-    public JfrVirtualThreadEventMetrics(Iterable<Tag> tags) {
+    public VirtualThreadMetrics(Iterable<Tag> tags) {
         this(new RecordingConfig(), tags);
     }
 
-    private JfrVirtualThreadEventMetrics(RecordingConfig config, Iterable<Tag> tags) {
+    private VirtualThreadMetrics(RecordingConfig config, Iterable<Tag> tags) {
         this.recordingStream = createRecordingStream(config);
         this.tags = tags;
     }
