@@ -269,9 +269,9 @@ public class TimedAspect {
                 return ((CompletionStage<?>) pjp.proceed())
                     .whenComplete((result, throwable) -> sample.ifPresent(this::stopTimer));
             }
-            catch (Exception ex) {
+            catch (Throwable e) {
                 sample.ifPresent(this::stopTimer);
-                throw ex;
+                throw e;
             }
         }
 
