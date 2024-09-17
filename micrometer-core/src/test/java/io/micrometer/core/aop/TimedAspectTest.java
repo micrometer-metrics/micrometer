@@ -276,6 +276,33 @@ class TimedAspectTest {
     }
 
     @Test
+    void timeMethodWhenCompletedErroneously() {
+        MeterRegistry registry = new SimpleMeterRegistry();
+
+        AspectJProxyFactory pf = new AspectJProxyFactory(new TimedService());
+        pf.addAspect(new TimedAspect(registry));
+
+        TimedService service = pf.getProxy();
+
+        assertThat(registry.find("callRaisingError")
+            .tag("class", getClass().getName() + "$TimedService")
+            .tag("method", "callRaisingError")
+            .tag("extra", "tag")
+            .tag("exception", "Error")
+            .timer()).isNull();
+
+        assertThatThrownBy(service::callRaisingError).isInstanceOf(Error.class);
+
+        assertThat(registry.get("callRaisingError")
+            .tag("class", getClass().getName() + "$TimedService")
+            .tag("method", "callRaisingError")
+            .tag("extra", "tag")
+            .tag("exception", "Error")
+            .timer()
+            .count()).isEqualTo(1);
+    }
+
+    @Test
     void timeMethodFailureWithLongTaskTimerWhenCompleted() {
         MeterRegistry failingRegistry = new FailingMeterRegistry();
 
@@ -400,6 +427,11 @@ class TimedAspectTest {
 
         @Timed(value = "longCall", extraTags = { "extra", "tag" }, longTask = true)
         void longCall() {
+        }
+
+        @Timed(value = "callRaisingError", extraTags = { "extra", "tag" })
+        void callRaisingError() {
+            throw new Error();
         }
 
     }
