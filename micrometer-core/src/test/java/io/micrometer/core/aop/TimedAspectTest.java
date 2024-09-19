@@ -475,100 +475,100 @@ class TimedAspectTest {
             assertThat(registry.get("method.timed").tag("superTag", "someValue").timer().count()).isEqualTo(1);
         }
 
-        enum AnnotatedTestClass {
+    }
 
-            CLASS_WITHOUT_INTERFACE(MeterTagClass.class), CLASS_WITH_INTERFACE(MeterTagClassChild.class);
+    enum AnnotatedTestClass {
 
-            private final Class<? extends MeterTagClassInterface> clazz;
+        CLASS_WITHOUT_INTERFACE(MeterTagClass.class), CLASS_WITH_INTERFACE(MeterTagClassChild.class);
 
-            AnnotatedTestClass(Class<? extends MeterTagClassInterface> clazz) {
-                this.clazz = clazz;
-            }
+        private final Class<? extends MeterTagClassInterface> clazz;
 
-            @SuppressWarnings("unchecked")
-            <T extends MeterTagClassInterface> T newInstance() {
-                try {
-                    return (T) clazz.getDeclaredConstructor().newInstance();
-                }
-                catch (Exception e) {
-                    throw new RuntimeException(e);
-                }
-            }
-
+        AnnotatedTestClass(Class<? extends MeterTagClassInterface> clazz) {
+            this.clazz = clazz;
         }
 
-        interface MeterTagClassInterface {
-
-            @Timed
-            void getAnnotationForTagValueResolver(@MeterTag(key = "test", resolver = ValueResolver.class) String test);
-
-            @Timed
-            void getAnnotationForTagValueExpression(
-                    @MeterTag(key = "test", expression = "'hello' + ' characters'") String test);
-
-            @Timed
-            void getAnnotationForArgumentToString(@MeterTag("test") Long param);
-
+        @SuppressWarnings("unchecked")
+        <T extends MeterTagClassInterface> T newInstance() {
+            try {
+                return (T) clazz.getDeclaredConstructor().newInstance();
+            }
+            catch (Exception e) {
+                throw new RuntimeException(e);
+            }
         }
 
-        static class MeterTagClass implements MeterTagClassInterface {
+    }
 
-            @Timed
-            @Override
-            public void getAnnotationForTagValueResolver(
-                    @MeterTag(key = "test", resolver = ValueResolver.class) String test) {
-            }
+    interface MeterTagClassInterface {
 
-            @Timed
-            @Override
-            public void getAnnotationForTagValueExpression(
-                    @MeterTag(key = "test", expression = "'hello' + ' characters'") String test) {
-            }
+        @Timed
+        void getAnnotationForTagValueResolver(@MeterTag(key = "test", resolver = ValueResolver.class) String test);
 
-            @Timed
-            @Override
-            public void getAnnotationForArgumentToString(@MeterTag("test") Long param) {
-            }
+        @Timed
+        void getAnnotationForTagValueExpression(
+                @MeterTag(key = "test", expression = "'hello' + ' characters'") String test);
 
-            @Timed
-            void getAnnotationForPackagePrivateMethod(@MeterTag("foo") String foo) {
-            }
+        @Timed
+        void getAnnotationForArgumentToString(@MeterTag("test") Long param);
 
+    }
+
+    static class MeterTagClass implements MeterTagClassInterface {
+
+        @Timed
+        @Override
+        public void getAnnotationForTagValueResolver(
+                @MeterTag(key = "test", resolver = ValueResolver.class) String test) {
         }
 
-        static class MeterTagClassChild implements MeterTagClassInterface {
-
-            @Timed
-            @Override
-            public void getAnnotationForTagValueResolver(String test) {
-            }
-
-            @Timed
-            @Override
-            public void getAnnotationForTagValueExpression(String test) {
-            }
-
-            @Timed
-            @Override
-            public void getAnnotationForArgumentToString(Long param) {
-            }
-
+        @Timed
+        @Override
+        public void getAnnotationForTagValueExpression(
+                @MeterTag(key = "test", expression = "'hello' + ' characters'") String test) {
         }
 
-        static class MeterTagSuper {
-
-            @Timed
-            public void superMethod(@MeterTag("superTag") String foo) {
-            }
-
+        @Timed
+        @Override
+        public void getAnnotationForArgumentToString(@MeterTag("test") Long param) {
         }
 
-        static class MeterTagSub extends MeterTagSuper {
+        @Timed
+        void getAnnotationForPackagePrivateMethod(@MeterTag("foo") String foo) {
+        }
 
-            @Timed
-            public void subMethod(@MeterTag("subTag") String foo) {
-            }
+    }
 
+    static class MeterTagClassChild implements MeterTagClassInterface {
+
+        @Timed
+        @Override
+        public void getAnnotationForTagValueResolver(String test) {
+        }
+
+        @Timed
+        @Override
+        public void getAnnotationForTagValueExpression(String test) {
+        }
+
+        @Timed
+        @Override
+        public void getAnnotationForArgumentToString(Long param) {
+        }
+
+    }
+
+    static class MeterTagSuper {
+
+        @Timed
+        public void superMethod(@MeterTag("superTag") String foo) {
+        }
+
+    }
+
+    static class MeterTagSub extends MeterTagSuper {
+
+        @Timed
+        public void subMethod(@MeterTag("subTag") String foo) {
         }
 
     }
