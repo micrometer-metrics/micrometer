@@ -201,7 +201,7 @@ class TimedAspectTest {
         assertThat(registry.getMeters()).isEmpty();
 
         guardedResult.complete(new IllegalStateException("simulated"));
-        catchThrowableOfType(completableFuture::join, CompletionException.class);
+        assertThatThrownBy(completableFuture::join).isInstanceOf(CompletionException.class);
 
         assertThat(registry.get("call")
             .tag("class", getClass().getName() + "$AsyncTimedService")
@@ -261,8 +261,8 @@ class TimedAspectTest {
             .longTaskTimer()
             .activeTasks()).isEqualTo(1);
 
-        guardedResult.complete(new NullPointerException());
-        catchThrowableOfType(completableFuture::join, CompletionException.class);
+        guardedResult.complete(new IllegalStateException("simulated"));
+        assertThatThrownBy(completableFuture::join).isInstanceOf(CompletionException.class);
 
         assertThat(registry.get("longCall")
             .tag("class", getClass().getName() + "$AsyncTimedService")
@@ -336,7 +336,7 @@ class TimedAspectTest {
 
         service.call();
 
-        assertThat(registry.find("call").timer()).isNull();
+        assertThat(registry.getMeters()).isEmpty();
     }
 
     @Test
