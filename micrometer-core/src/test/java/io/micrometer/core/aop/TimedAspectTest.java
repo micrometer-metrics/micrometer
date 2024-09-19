@@ -25,7 +25,6 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.pause.PauseDetector;
-import io.micrometer.core.instrument.search.MeterNotFoundException;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.junit.jupiter.api.Nested;
@@ -40,7 +39,8 @@ import java.util.concurrent.CompletionException;
 import java.util.function.Predicate;
 
 import static java.util.concurrent.CompletableFuture.supplyAsync;
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class TimedAspectTest {
 
@@ -389,7 +389,7 @@ class TimedAspectTest {
 
         service.annotatedOnMethod();
 
-        assertThatExceptionOfType(MeterNotFoundException.class).isThrownBy(() -> registry.get("call").timer());
+        assertThat(registry.getMeters()).hasSize(1);
         assertThat(registry.get("annotatedOnMethod")
             .tag("class", "io.micrometer.core.aop.TimedAspectTest$TimedClass")
             .tag("method", "annotatedOnMethod")
