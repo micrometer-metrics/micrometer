@@ -27,7 +27,6 @@ import io.micrometer.core.instrument.distribution.CountAtBucket;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.ValueAtPercentile;
 import io.micrometer.core.instrument.distribution.pause.PauseDetector;
-import io.micrometer.core.instrument.search.MeterNotFoundException;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.micrometer.core.instrument.util.TimeUtils;
 import org.aspectj.lang.ProceedingJoinPoint;
@@ -44,7 +43,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 
 import static java.util.concurrent.CompletableFuture.supplyAsync;
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class TimedAspectTest {
 
@@ -252,7 +252,7 @@ class TimedAspectTest {
         assertThat(registry.getMeters()).isEmpty();
 
         guardedResult.complete(new IllegalStateException("simulated"));
-        catchThrowableOfType(completableFuture::join, CompletionException.class);
+        assertThatThrownBy(completableFuture::join).isInstanceOf(CompletionException.class);
 
         assertThat(registry.get("call")
             .tag("class", getClass().getName() + "$AsyncTimedService")
@@ -312,8 +312,8 @@ class TimedAspectTest {
             .longTaskTimer()
             .activeTasks()).isEqualTo(1);
 
-        guardedResult.complete(new NullPointerException());
-        catchThrowableOfType(completableFuture::join, CompletionException.class);
+        guardedResult.complete(new IllegalStateException("simulated"));
+        assertThatThrownBy(completableFuture::join).isInstanceOf(CompletionException.class);
 
         assertThat(registry.get("longCall")
             .tag("class", getClass().getName() + "$AsyncTimedService")
@@ -387,7 +387,7 @@ class TimedAspectTest {
 
         service.call();
 
-        assertThat(registry.find("call").timer()).isNull();
+        assertThat(registry.getMeters()).isEmpty();
     }
 
     @Test
@@ -434,7 +434,7 @@ class TimedAspectTest {
 
         service.annotatedOnMethod();
 
-        assertThatExceptionOfType(MeterNotFoundException.class).isThrownBy(() -> registry.get("call").timer());
+        assertThat(registry.getMeters()).hasSize(1);
         assertThat(registry.get("annotatedOnMethod")
             .tag("class", "io.micrometer.core.aop.TimedAspectTest$TimedClass")
             .tag("method", "annotatedOnMethod")
