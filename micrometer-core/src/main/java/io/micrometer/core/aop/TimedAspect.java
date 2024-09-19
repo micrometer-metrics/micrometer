@@ -210,9 +210,9 @@ public class TimedAspect {
                 return ((CompletionStage<?>) pjp.proceed()).whenComplete(
                         (result, throwable) -> record(pjp, timed, metricName, sample, getExceptionTag(throwable)));
             }
-            catch (Exception ex) {
-                record(pjp, timed, metricName, sample, ex.getClass().getSimpleName());
-                throw ex;
+            catch (Throwable e) {
+                record(pjp, timed, metricName, sample, e.getClass().getSimpleName());
+                throw e;
             }
         }
 
@@ -220,9 +220,9 @@ public class TimedAspect {
         try {
             return pjp.proceed();
         }
-        catch (Exception ex) {
-            exceptionClass = ex.getClass().getSimpleName();
-            throw ex;
+        catch (Throwable e) {
+            exceptionClass = e.getClass().getSimpleName();
+            throw e;
         }
         finally {
             record(pjp, timed, metricName, sample, exceptionClass);
@@ -269,9 +269,9 @@ public class TimedAspect {
                 return ((CompletionStage<?>) pjp.proceed())
                     .whenComplete((result, throwable) -> sample.ifPresent(this::stopTimer));
             }
-            catch (Exception ex) {
+            catch (Throwable e) {
                 sample.ifPresent(this::stopTimer);
-                throw ex;
+                throw e;
             }
         }
 
