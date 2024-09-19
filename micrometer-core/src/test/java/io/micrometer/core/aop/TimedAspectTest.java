@@ -28,6 +28,7 @@ import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import io.micrometer.core.instrument.search.MeterNotFoundException;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.aspectj.lang.ProceedingJoinPoint;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
@@ -73,7 +74,7 @@ class TimedAspectTest {
 
         service.call();
 
-        assertThat(registry.find("call").timer()).isNull();
+        assertThat(registry.getMeters()).isEmpty();
     }
 
     @Test
@@ -91,8 +92,7 @@ class TimedAspectTest {
             .tag("class", getClass().getName() + "$TimedService")
             .tag("method", "longCall")
             .tag("extra", "tag")
-            .longTaskTimers()
-            .size()).isEqualTo(1);
+            .longTaskTimers()).hasSize(1);
     }
 
     @Test
@@ -106,13 +106,7 @@ class TimedAspectTest {
 
         service.call();
 
-        assertThatExceptionOfType(MeterNotFoundException.class).isThrownBy(() -> {
-            failingRegistry.get("call")
-                .tag("class", getClass().getName() + "$TimedService")
-                .tag("method", "call")
-                .tag("extra", "tag")
-                .timer();
-        });
+        assertThat(failingRegistry.getMeters()).isEmpty();
     }
 
     @Test
@@ -126,13 +120,50 @@ class TimedAspectTest {
 
         service.longCall();
 
-        assertThatExceptionOfType(MeterNotFoundException.class).isThrownBy(() -> {
-            failingRegistry.get("longCall")
-                .tag("class", getClass().getName() + "$TimedService")
-                .tag("method", "longCall")
-                .tag("extra", "tag")
-                .longTaskTimer();
-        });
+        assertThat(failingRegistry.getMeters()).isEmpty();
+    }
+
+    @Test
+    void timeMethodWithError() {
+        MeterRegistry registry = new SimpleMeterRegistry();
+
+        AspectJProxyFactory pf = new AspectJProxyFactory(new TimedService());
+        pf.addAspect(new TimedAspect(registry));
+
+        TimedService service = pf.getProxy();
+
+        assertThat(registry.getMeters()).isEmpty();
+
+        assertThatThrownBy(service::callRaisingError).isInstanceOf(TestError.class);
+
+        assertThat(registry.get("callRaisingError")
+            .tag("class", getClass().getName() + "$TimedService")
+            .tag("method", "callRaisingError")
+            .tag("extra", "tag")
+            .tag("exception", "TestError")
+            .timer()
+            .count()).isEqualTo(1);
+    }
+
+    @Test
+    void timeMethodWithErrorAndLongTaskTimer() {
+        MeterRegistry registry = new SimpleMeterRegistry();
+
+        AspectJProxyFactory pf = new AspectJProxyFactory(new TimedService());
+        pf.addAspect(new TimedAspect(registry));
+
+        TimedService service = pf.getProxy();
+
+        assertThat(registry.getMeters()).isEmpty();
+
+        assertThatThrownBy(service::longCallRaisingError).isInstanceOf(TestError.class);
+
+        assertThat(registry.get("longCallRaisingError")
+            .tag("class", getClass().getName() + "$TimedService")
+            .tag("method", "longCallRaisingError")
+            .tag("extra", "tag")
+            .longTaskTimer()
+            .activeTasks()).isEqualTo(0);
     }
 
     @Test
@@ -147,12 +178,7 @@ class TimedAspectTest {
         GuardedResult guardedResult = new GuardedResult();
         CompletableFuture<?> completableFuture = service.call(guardedResult);
 
-        assertThat(registry.find("call")
-            .tag("class", getClass().getName() + "$AsyncTimedService")
-            .tag("method", "call")
-            .tag("extra", "tag")
-            .tag("exception", "none")
-            .timer()).isNull();
+        assertThat(registry.getMeters()).isEmpty();
 
         guardedResult.complete();
         completableFuture.join();
@@ -178,21 +204,16 @@ class TimedAspectTest {
         GuardedResult guardedResult = new GuardedResult();
         CompletableFuture<?> completableFuture = service.call(guardedResult);
 
-        assertThat(registry.find("call")
-            .tag("class", getClass().getName() + "$AsyncTimedService")
-            .tag("method", "call")
-            .tag("extra", "tag")
-            .tag("exception", "NullPointerException")
-            .timer()).isNull();
+        assertThat(registry.getMeters()).isEmpty();
 
-        guardedResult.complete(new NullPointerException());
+        guardedResult.complete(new IllegalStateException("simulated"));
         catchThrowableOfType(completableFuture::join, CompletionException.class);
 
         assertThat(registry.get("call")
             .tag("class", getClass().getName() + "$AsyncTimedService")
             .tag("method", "call")
             .tag("extra", "tag")
-            .tag("exception", "NullPointerException")
+            .tag("exception", "IllegalStateException")
             .timer()
             .count()).isEqualTo(1);
     }
@@ -271,12 +292,7 @@ class TimedAspectTest {
         guardedResult.complete();
         completableFuture.join();
 
-        assertThatExceptionOfType(MeterNotFoundException.class).isThrownBy(() -> failingRegistry.get("call")
-            .tag("class", getClass().getName() + "$AsyncTimedService")
-            .tag("method", "call")
-            .tag("extra", "tag")
-            .tag("exception", "none")
-            .timer());
+        assertThat(failingRegistry.getMeters()).isEmpty();
     }
 
     @Test
@@ -293,13 +309,7 @@ class TimedAspectTest {
         guardedResult.complete();
         completableFuture.join();
 
-        assertThatExceptionOfType(MeterNotFoundException.class).isThrownBy(() -> {
-            failingRegistry.get("longCall")
-                .tag("class", getClass().getName() + "$AsyncTimedService")
-                .tag("method", "longCall")
-                .tag("extra", "tag")
-                .longTaskTimer();
-        });
+        assertThat(failingRegistry.getMeters()).isEmpty();
     }
 
     @Test
@@ -365,13 +375,7 @@ class TimedAspectTest {
 
         service.call();
 
-        assertThatExceptionOfType(MeterNotFoundException.class).isThrownBy(() -> {
-            failingRegistry.get("call")
-                .tag("class", "io.micrometer.core.aop.TimedAspectTest$TimedClass")
-                .tag("method", "call")
-                .tag("extra", "tag")
-                .timer();
-        });
+        assertThat(failingRegistry.getMeters()).isEmpty();
     }
 
     @Test
@@ -394,7 +398,8 @@ class TimedAspectTest {
             .count()).isEqualTo(1);
     }
 
-    static class MeterTagsTests {
+    @Nested
+    class MeterTagsTests {
 
         ValueResolver valueResolver = parameter -> "Value from myCustomTagValueResolver [" + parameter + "]";
 
@@ -491,105 +496,105 @@ class TimedAspectTest {
             assertThat(registry.get("method.timed").tag("superTag", "someValue").timer().count()).isEqualTo(1);
         }
 
-        enum AnnotatedTestClass {
+    }
 
-            CLASS_WITHOUT_INTERFACE(MeterTagClass.class), CLASS_WITH_INTERFACE(MeterTagClassChild.class);
+    enum AnnotatedTestClass {
 
-            private final Class<? extends MeterTagClassInterface> clazz;
+        CLASS_WITHOUT_INTERFACE(MeterTagClass.class), CLASS_WITH_INTERFACE(MeterTagClassChild.class);
 
-            AnnotatedTestClass(Class<? extends MeterTagClassInterface> clazz) {
-                this.clazz = clazz;
-            }
+        private final Class<? extends MeterTagClassInterface> clazz;
 
-            @SuppressWarnings("unchecked")
-            <T extends MeterTagClassInterface> T newInstance() {
-                try {
-                    return (T) clazz.getDeclaredConstructor().newInstance();
-                }
-                catch (Exception e) {
-                    throw new RuntimeException(e);
-                }
-            }
-
+        AnnotatedTestClass(Class<? extends MeterTagClassInterface> clazz) {
+            this.clazz = clazz;
         }
 
-        interface MeterTagClassInterface {
-
-            @Timed
-            void getAnnotationForTagValueResolver(@MeterTag(key = "test", resolver = ValueResolver.class) String test);
-
-            @Timed
-            void getAnnotationForTagValueExpression(
-                    @MeterTag(key = "test", expression = "'hello' + ' characters'") String test);
-
-            @Timed
-            void getAnnotationForArgumentToString(@MeterTag("test") Long param);
-
-        }
-
-        static class MeterTagClass implements MeterTagClassInterface {
-
-            @Timed
-            @Override
-            public void getAnnotationForTagValueResolver(
-                    @MeterTag(key = "test", resolver = ValueResolver.class) String test) {
+        @SuppressWarnings("unchecked")
+        <T extends MeterTagClassInterface> T newInstance() {
+            try {
+                return (T) clazz.getDeclaredConstructor().newInstance();
             }
-
-            @Timed
-            @Override
-            public void getAnnotationForTagValueExpression(
-                    @MeterTag(key = "test", expression = "'hello' + ' characters'") String test) {
+            catch (Exception e) {
+                throw new RuntimeException(e);
             }
-
-            @Timed
-            @Override
-            public void getAnnotationForArgumentToString(@MeterTag("test") Long param) {
-            }
-
-            @Timed
-            void getAnnotationForPackagePrivateMethod(@MeterTag("foo") String foo) {
-            }
-
-        }
-
-        static class MeterTagClassChild implements MeterTagClassInterface {
-
-            @Timed
-            @Override
-            public void getAnnotationForTagValueResolver(String test) {
-            }
-
-            @Timed
-            @Override
-            public void getAnnotationForTagValueExpression(String test) {
-            }
-
-            @Timed
-            @Override
-            public void getAnnotationForArgumentToString(Long param) {
-            }
-
-        }
-
-        static class MeterTagSuper {
-
-            @Timed
-            public void superMethod(@MeterTag("superTag") String foo) {
-            }
-
-        }
-
-        static class MeterTagSub extends MeterTagSuper {
-
-            @Timed
-            public void subMethod(@MeterTag("subTag") String foo) {
-            }
-
         }
 
     }
 
-    private final class FailingMeterRegistry extends SimpleMeterRegistry {
+    interface MeterTagClassInterface {
+
+        @Timed
+        void getAnnotationForTagValueResolver(@MeterTag(key = "test", resolver = ValueResolver.class) String test);
+
+        @Timed
+        void getAnnotationForTagValueExpression(
+                @MeterTag(key = "test", expression = "'hello' + ' characters'") String test);
+
+        @Timed
+        void getAnnotationForArgumentToString(@MeterTag("test") Long param);
+
+    }
+
+    static class MeterTagClass implements MeterTagClassInterface {
+
+        @Timed
+        @Override
+        public void getAnnotationForTagValueResolver(
+                @MeterTag(key = "test", resolver = ValueResolver.class) String test) {
+        }
+
+        @Timed
+        @Override
+        public void getAnnotationForTagValueExpression(
+                @MeterTag(key = "test", expression = "'hello' + ' characters'") String test) {
+        }
+
+        @Timed
+        @Override
+        public void getAnnotationForArgumentToString(@MeterTag("test") Long param) {
+        }
+
+        @Timed
+        void getAnnotationForPackagePrivateMethod(@MeterTag("foo") String foo) {
+        }
+
+    }
+
+    static class MeterTagClassChild implements MeterTagClassInterface {
+
+        @Timed
+        @Override
+        public void getAnnotationForTagValueResolver(String test) {
+        }
+
+        @Timed
+        @Override
+        public void getAnnotationForTagValueExpression(String test) {
+        }
+
+        @Timed
+        @Override
+        public void getAnnotationForArgumentToString(Long param) {
+        }
+
+    }
+
+    static class MeterTagSuper {
+
+        @Timed
+        public void superMethod(@MeterTag("superTag") String foo) {
+        }
+
+    }
+
+    static class MeterTagSub extends MeterTagSuper {
+
+        @Timed
+        public void subMethod(@MeterTag("subTag") String foo) {
+        }
+
+    }
+
+    private static final class FailingMeterRegistry extends SimpleMeterRegistry {
 
         private FailingMeterRegistry() {
             super();
@@ -599,14 +604,14 @@ class TimedAspectTest {
         @Override
         protected Timer newTimer(@NonNull Id id, @NonNull DistributionStatisticConfig distributionStatisticConfig,
                 @NonNull PauseDetector pauseDetector) {
-            throw new RuntimeException();
+            throw new RuntimeException("FailingMeterRegistry");
         }
 
         @NonNull
         @Override
         protected LongTaskTimer newLongTaskTimer(@Nonnull Id id,
                 @Nonnull DistributionStatisticConfig distributionStatisticConfig) {
-            throw new RuntimeException();
+            throw new RuntimeException("FailingMeterRegistry");
         }
 
     }
@@ -619,6 +624,16 @@ class TimedAspectTest {
 
         @Timed(value = "longCall", extraTags = { "extra", "tag" }, longTask = true)
         void longCall() {
+        }
+
+        @Timed(value = "callRaisingError", extraTags = { "extra", "tag" })
+        void callRaisingError() {
+            throw new TestError();
+        }
+
+        @Timed(value = "longCallRaisingError", extraTags = { "extra", "tag" }, longTask = true)
+        void longCallRaisingError() {
+            throw new TestError();
         }
 
     }
@@ -696,6 +711,10 @@ class TimedAspectTest {
         @Override
         public void call() {
         }
+
+    }
+
+    static class TestError extends Error {
 
     }
 
