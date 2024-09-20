@@ -23,7 +23,18 @@ tasks.withType(JavaCompile).configureEach {
     options.release = 21
 }
 
-test {
-    // This hack is needed since VirtualThreadMetricsTests utilizes reflection against java.lang, see its javadoc
+task reflectiveTests(type: Test) {
+    useJUnitPlatform {
+        includeTags 'reflective'
+    }
+
+    // This hack is needed since VirtualThreadMetricsReflectiveTests utilizes reflection against java.lang, see its javadoc
     jvmArgs += ['--add-opens', 'java.base/java.lang=ALL-UNNAMED']
+}
+
+test {
+    dependsOn reflectiveTests
+    useJUnitPlatform {
+        excludeTags 'reflective'
+    }
 }
