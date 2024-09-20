@@ -179,7 +179,8 @@ public interface ElasticConfig extends StepRegistryConfig {
     }
 
     /**
-     * Enable {@literal _source} in the index template. Default is: {@code false}
+     * Enable {@literal _source} in the default index template optionally created if one
+     * does not exist by {@link #autoCreateIndex()}. Default is: {@code false}
      * @return whether {@literal _source} will be enabled in the index template used with
      * {@link #autoCreateIndex()}
      * @since 1.14.0
