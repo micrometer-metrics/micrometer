@@ -33,6 +33,7 @@ import io.opentelemetry.proto.metrics.v1.Metric.DataCase;
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BiConsumer;
 import java.util.function.DoubleSupplier;
 import java.util.stream.Collectors;
 
@@ -97,12 +98,16 @@ class OtlpMetricConverter {
         if (!metricBuilder.hasGauge()) {
             metricBuilder.setGauge(io.opentelemetry.proto.metrics.v1.Gauge.newBuilder());
         }
+        NumberDataPoint.Builder builder = NumberDataPoint.newBuilder()
+            .setTimeUnixNano(TimeUnit.MILLISECONDS.toNanos(clock.wallTime()))
+            .setAsDouble(gauge.value())
+            .addAllAttributes(getKeyValuesForId(gauge.getId()));
+
+        // Currently not needed because exemplars are not collected for gauges
+        addExemplars(builder, gauge, NumberDataPoint.Builder::addAllExemplars);
+
         metricBuilder.getGaugeBuilder()
-            .addDataPoints(NumberDataPoint.newBuilder()
-                .setTimeUnixNano(TimeUnit.MILLISECONDS.toNanos(clock.wallTime()))
-                .setAsDouble(gauge.value())
-                .addAllAttributes(getKeyValuesForId(gauge.getId()))
-                .build());
+            .addDataPoints(builder.build());
     }
 
     private void writeCounter(Counter counter) {
@@ -163,6 +168,9 @@ class OtlpMetricConverter {
             .setSum(functionTimer.totalTime(baseTimeUnit))
             .setCount((long) functionTimer.count());
 
+        // Currently not yet needed, because exemplars are not collected for FunctionTimers
+        addExemplars(histogramDataPoint, functionTimer, HistogramDataPoint.Builder::addAllExemplars);
+
         setHistogramDataPoint(builder, histogramDataPoint.build());
     }
 
@@ -180,6 +188,8 @@ class OtlpMetricConverter {
             .setTimeUnixNano(getTimeUnixNano())
             .setSum(total)
             .setCount(count);
+
+        addExemplars(histogramDataPoint, histogramSupport, HistogramDataPoint.Builder::addAllExemplars);
 
         if (isDelta()) {
             histogramDataPoint.setMax(max);
@@ -215,6 +225,9 @@ class OtlpMetricConverter {
             .setScale(exponentialHistogramSnapShot.scale())
             .setZeroCount(exponentialHistogramSnapShot.zeroCount())
             .setZeroThreshold(exponentialHistogramSnapShot.zeroThreshold());
+
+        // Currently not yet needed, because exemplars are not collected for exponential histograms
+        addExemplars(exponentialDataPoint, histogramSupport, ExponentialHistogramDataPoint.Builder::addAllExemplars);
 
         // Currently, micrometer doesn't support negative recordings hence we will only
         // add positive buckets.
@@ -256,13 +269,16 @@ class OtlpMetricConverter {
             builder.setSum(Sum.newBuilder().setIsMonotonic(true).setAggregationTemporality(otlpAggregationTemporality));
         }
 
+        NumberDataPoint.Builder numberDataPointBuilder = NumberDataPoint.newBuilder()
+            .setStartTimeUnixNano(getStartTimeNanos(meter))
+            .setTimeUnixNano(getTimeUnixNano())
+            .setAsDouble(count.getAsDouble())
+            .addAllAttributes(getKeyValuesForId(meter.getId()));
+
+        addExemplars(numberDataPointBuilder, meter, NumberDataPoint.Builder::addAllExemplars);
+
         builder.getSumBuilder()
-            .addDataPoints(NumberDataPoint.newBuilder()
-                .setStartTimeUnixNano(getStartTimeNanos(meter))
-                .setTimeUnixNano(getTimeUnixNano())
-                .setAsDouble(count.getAsDouble())
-                .addAllAttributes(getKeyValuesForId(meter.getId()))
-                .build());
+            .addDataPoints(numberDataPointBuilder.build());
     }
 
     private void setHistogramDataPoint(Metric.Builder builder, HistogramDataPoint histogramDataPoint) {
@@ -298,6 +314,12 @@ class OtlpMetricConverter {
 
     private boolean isDelta() {
         return this.aggregationTemporality == AggregationTemporality.DELTA;
+    }
+
+    private <T> void addExemplars(T builder, Meter meter, BiConsumer<T, List<Exemplar>> exemplarsConsumer) {
+        if (meter instanceof OtlpExemplarMeter) {
+            exemplarsConsumer.accept(builder, ((OtlpExemplarMeter) meter).exemplars());
+        }
     }
 
     // VisibleForTesting

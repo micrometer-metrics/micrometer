@@ -18,26 +18,44 @@ package io.micrometer.registry.otlp;
 import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.cumulative.CumulativeTimer;
-import io.micrometer.core.instrument.distribution.*;
+import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import io.micrometer.registry.otlp.internal.Base2ExponentialHistogram;
 import io.micrometer.registry.otlp.internal.ExponentialHistogramSnapShot;
+import io.opentelemetry.proto.metrics.v1.Exemplar;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-class OtlpCumulativeTimer extends CumulativeTimer implements StartTimeAwareMeter, OtlpHistogramSupport {
+class OtlpCumulativeTimer extends CumulativeTimer implements StartTimeAwareMeter, OtlpHistogramSupport, OtlpExemplarMeter {
 
     private final HistogramFlavor histogramFlavor;
 
     private final long startTimeNanos;
 
+    @Nullable
+    private final ExemplarCollector exemplarCollector;
+
     OtlpCumulativeTimer(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig,
-            PauseDetector pauseDetector, TimeUnit baseTimeUnit, OtlpConfig otlpConfig) {
+            PauseDetector pauseDetector, TimeUnit baseTimeUnit, OtlpConfig otlpConfig,
+                        @Nullable ExemplarCollectorFactory exemplarCollectorFactory) {
         super(id, clock, distributionStatisticConfig, pauseDetector, baseTimeUnit,
                 OtlpMeterRegistry.getHistogram(clock, distributionStatisticConfig, otlpConfig, baseTimeUnit));
         this.histogramFlavor = OtlpMeterRegistry.histogramFlavor(otlpConfig.histogramFlavor(),
                 distributionStatisticConfig);
         this.startTimeNanos = TimeUnit.MILLISECONDS.toNanos(clock.wallTime());
+        this.exemplarCollector = exemplarCollectorFactory == null
+            ? null
+            : exemplarCollectorFactory.forHistogram(distributionStatisticConfig, otlpConfig);
+    }
+
+    @Override
+    protected void recordNonNegative(long amount, TimeUnit unit) {
+        super.recordNonNegative(amount, unit);
+        if (exemplarCollector != null) {
+            exemplarCollector.offerDurationMeasurement(TimeUnit.NANOSECONDS.convert(amount, unit));
+        }
     }
 
     @Override
@@ -54,4 +72,8 @@ class OtlpCumulativeTimer extends CumulativeTimer implements StartTimeAwareMeter
         return null;
     }
 
+    @Override
+    public List<Exemplar> exemplars() {
+        return exemplarCollector == null ? Collections.emptyList() : exemplarCollector.collectDurationAndReset(baseTimeUnit());
+    }
 }

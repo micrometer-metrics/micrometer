@@ -18,12 +18,10 @@ package io.micrometer.registry.otlp;
 import io.micrometer.common.lang.Nullable;
 import io.micrometer.common.util.internal.logging.InternalLogger;
 import io.micrometer.common.util.internal.logging.InternalLoggerFactory;
-import io.micrometer.core.instrument.Gauge;
-import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.distribution.*;
-import io.micrometer.core.instrument.distribution.Histogram;
 import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import io.micrometer.core.instrument.internal.DefaultGauge;
 import io.micrometer.core.instrument.internal.DefaultLongTaskTimer;
@@ -43,7 +41,8 @@ import io.micrometer.registry.otlp.internal.DeltaBase2ExponentialHistogram;
 import io.opentelemetry.proto.collector.metrics.v1.ExportMetricsServiceRequest;
 import io.opentelemetry.proto.common.v1.AnyValue;
 import io.opentelemetry.proto.common.v1.KeyValue;
-import io.opentelemetry.proto.metrics.v1.*;
+import io.opentelemetry.proto.metrics.v1.ResourceMetrics;
+import io.opentelemetry.proto.metrics.v1.ScopeMetrics;
 import io.opentelemetry.proto.resource.v1.Resource;
 
 import java.time.Duration;
@@ -85,6 +84,9 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
 
     private final HttpSender httpSender;
 
+    @Nullable
+    private final ExemplarCollectorFactory exemplarCollectorFactory;
+
     private final Resource resource;
 
     private final AggregationTemporality aggregationTemporality;
@@ -106,6 +108,10 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
         this(config, clock, DEFAULT_THREAD_FACTORY);
     }
 
+    public OtlpMeterRegistry(OtlpConfig config, Clock clock, SpanContextProvider spanContextProvider) {
+        this(config, clock, DEFAULT_THREAD_FACTORY, spanContextProvider);
+    }
+
     /**
      * Create an {@code OtlpMeterRegistry} instance.
      * @param config config
@@ -114,16 +120,21 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
      * @since 1.14.0
      */
     public OtlpMeterRegistry(OtlpConfig config, Clock clock, ThreadFactory threadFactory) {
-        this(config, clock, threadFactory, new HttpUrlConnectionSender());
+        this(config, clock, threadFactory, new HttpUrlConnectionSender(), null);
+    }
+
+    public OtlpMeterRegistry(OtlpConfig config, Clock clock, ThreadFactory threadFactory, @Nullable SpanContextProvider spanContextProvider) {
+        this(config, clock, threadFactory, new HttpUrlConnectionSender(), spanContextProvider);
     }
 
     // not public until we decide what we want to expose in public API
     // HttpSender may not be a good idea if we will support a non-HTTP transport
-    private OtlpMeterRegistry(OtlpConfig config, Clock clock, ThreadFactory threadFactory, HttpSender httpSender) {
+    private OtlpMeterRegistry(OtlpConfig config, Clock clock, ThreadFactory threadFactory, HttpSender httpSender, @Nullable SpanContextProvider spanContextProvider) {
         super(config, clock);
         this.config = config;
         this.baseTimeUnit = config.baseTimeUnit();
         this.httpSender = httpSender;
+        this.exemplarCollectorFactory = spanContextProvider == null ? null : new ExemplarCollectorFactory(clock, spanContextProvider);
         this.resource = Resource.newBuilder().addAllAttributes(getResourceAttributes()).build();
         this.aggregationTemporality = config.aggregationTemporality();
         config().namingConvention(NamingConvention.dot);
@@ -208,8 +219,8 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
 
     @Override
     protected Counter newCounter(Meter.Id id) {
-        return isCumulative() ? new OtlpCumulativeCounter(id, this.clock)
-                : new StepCounter(id, this.clock, config.step().toMillis());
+        return isCumulative() ? new OtlpCumulativeCounter(id, this.clock, exemplarCollectorFactory)
+                : new OtlpStepCounter(id, this.clock, config.step().toMillis(), exemplarCollectorFactory);
     }
 
     @Override
@@ -217,16 +228,19 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
             PauseDetector pauseDetector) {
         return isCumulative()
                 ? new OtlpCumulativeTimer(id, this.clock, distributionStatisticConfig, pauseDetector, getBaseTimeUnit(),
-                        config)
-                : new OtlpStepTimer(id, clock, distributionStatisticConfig, pauseDetector, getBaseTimeUnit(), config);
+                        config, exemplarCollectorFactory)
+                : new OtlpStepTimer(id, clock, distributionStatisticConfig, pauseDetector, getBaseTimeUnit(), config,
+                        exemplarCollectorFactory);
     }
 
     @Override
     protected DistributionSummary newDistributionSummary(Meter.Id id,
             DistributionStatisticConfig distributionStatisticConfig, double scale) {
         return isCumulative()
-                ? new OtlpCumulativeDistributionSummary(id, this.clock, distributionStatisticConfig, scale, config)
-                : new OtlpStepDistributionSummary(id, clock, distributionStatisticConfig, scale, config);
+                ? new OtlpCumulativeDistributionSummary(id, this.clock, distributionStatisticConfig, scale, config,
+                        exemplarCollectorFactory)
+                : new OtlpStepDistributionSummary(id, clock, distributionStatisticConfig, scale, config,
+                        exemplarCollectorFactory);
     }
 
     @Override
