@@ -16,9 +16,8 @@
  */
 package io.micrometer.common.lang;
 
-import javax.annotation.Nonnull;
+import javax.annotation.CheckForNull;
 import javax.annotation.meta.TypeQualifierNickname;
-import javax.annotation.meta.When;
 import java.lang.annotation.*;
 
 /**
@@ -43,7 +42,7 @@ import java.lang.annotation.*;
 @Target({ ElementType.METHOD, ElementType.PARAMETER, ElementType.FIELD })
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
-@Nonnull(when = When.MAYBE)
+@CheckForNull
 @TypeQualifierNickname
 public @interface Nullable {
 
