@@ -546,7 +546,7 @@ class TimedAspectTest {
             assertThat(registry.get("method.timed")
                 .tag("value1", "value1: zxe")
                 .tag("value2", "value2: qwe")
-                .tag("value3", "value3: ZXEQWE")
+                .tag("value3", "value3. overridden: ZXEQWE")
                 .timer()
                 .count()).isEqualTo(1);
         }
@@ -670,7 +670,7 @@ class TimedAspectTest {
         public void getMultipleAnnotationsWithContainerForTagValueExpression(@MeterTags({
                 @MeterTag(key = "value1", expression = "'value1: ' + value1"),
                 @MeterTag(key = "value2", expression = "'value2: ' + value2"), @MeterTag(key = "value3",
-                        expression = "'value3: ' + value1.toUpperCase + value2.toUpperCase") }) DataHolder param) {
+                        expression = "'value3. overridden: ' + value1.toUpperCase + value2.toUpperCase") }) DataHolder param) {
         }
 
     }
@@ -697,13 +697,12 @@ class TimedAspectTest {
         @Override
         public void getMultipleAnnotationsForTagValueExpression(
                 @MeterTag(key = "value2", expression = "'value2. overridden: ' + value2") DataHolder param) {
-
         }
 
         @Timed
         @Override
-        public void getMultipleAnnotationsWithContainerForTagValueExpression(DataHolder param) {
-
+        public void getMultipleAnnotationsWithContainerForTagValueExpression(@MeterTag(key = "value3",
+                expression = "'value3. overridden: ' + value1.toUpperCase + value2.toUpperCase") DataHolder param) {
         }
 
     }
