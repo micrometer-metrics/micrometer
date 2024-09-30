@@ -15,11 +15,13 @@
  */
 package io.micrometer.concurrencytests;
 
+import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.openjdk.jcstress.annotations.*;
 import org.openjdk.jcstress.infra.results.LL_Result;
+import org.openjdk.jcstress.infra.results.L_Result;
 import org.openjdk.jcstress.infra.results.Z_Result;
 
 public class MeterRegistryConcurrencyTest {
@@ -141,6 +143,47 @@ public class MeterRegistryConcurrencyTest {
         public void arbiter(LL_Result r) {
             r.r1 = c1.getId().getTag("common");
             r.r2 = c2.getId().getTag("common");
+        }
+
+    }
+
+    /*
+     * Verify the fix for a ConcurrentModificationException that was being thrown in the
+     * tested scenario. The late registration of a MeterFilter causes iteration of the
+     * KeySet of the preFilterIdToMeterMap to add them to the stalePreFilterIds set. This
+     * iteration could happen at the same time a new meter is being registered, thus added
+     * to the preFilterIdToMeterMap, modifying it while iterating over its KeySet.
+     */
+    @Issue("gh-5489")
+    @JCStressTest
+    @Outcome(id = "OK", expect = Expect.ACCEPTABLE, desc = "No exception")
+    @Outcome(expect = Expect.FORBIDDEN, desc = "Exception thrown")
+    @State
+    public static class ConfigureLateMeterFilterWithNewMeterRegister {
+
+        MeterRegistry registry = new SimpleMeterRegistry();
+
+        public ConfigureLateMeterFilterWithNewMeterRegister() {
+            // registry not empty so the MeterFilter is treated as late configuration
+            registry.counter("c1");
+        }
+
+        @Actor
+        public void actor1() {
+            // adds a new meter to preMap, a concurrent modification if not guarded
+            registry.counter("c2");
+        }
+
+        @Actor
+        public void actor2(L_Result r) {
+            try {
+                // iterates over preMap keys to add all to the staleIds
+                registry.config().commonTags("common", "tag");
+                r.r1 = "OK";
+            }
+            catch (Throwable e) {
+                r.r1 = e.getClass().getSimpleName();
+            }
         }
 
     }
