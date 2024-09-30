@@ -15,14 +15,14 @@
  */
 package io.micrometer.concurrencytests;
 
+import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.openjdk.jcstress.annotations.*;
 import org.openjdk.jcstress.infra.results.LL_Result;
+import org.openjdk.jcstress.infra.results.L_Result;
 import org.openjdk.jcstress.infra.results.Z_Result;
-
-import java.util.ConcurrentModificationException;
 
 public class MeterRegistryConcurrencyTest {
 
@@ -147,34 +147,42 @@ public class MeterRegistryConcurrencyTest {
 
     }
 
+    /*
+     * Verify the fix for a ConcurrentModificationException that was being thrown in the
+     * tested scenario. The late registration of a MeterFilter causes iteration of the
+     * KeySet of the preFilterIdToMeterMap to add them to the stalePreFilterIds set. This
+     * iteration could happen at the same time a new meter is being registered, thus added
+     * to the preFilterIdToMeterMap, modifying it while iterating over its KeySet.
+     */
+    @Issue("gh-5489")
     @JCStressTest
-    @Outcome(id = "true", expect = Expect.ACCEPTABLE, desc = "No exception")
-    @Outcome(expect = Expect.FORBIDDEN, desc = "ConcurrentModificationException thrown")
+    @Outcome(id = "OK", expect = Expect.ACCEPTABLE, desc = "No exception")
+    @Outcome(expect = Expect.FORBIDDEN, desc = "Exception thrown")
     @State
     public static class ConfigureLateMeterFilterWithNewMeterRegister {
 
         MeterRegistry registry = new SimpleMeterRegistry();
 
         public ConfigureLateMeterFilterWithNewMeterRegister() {
-            // need the registry to not be empty
+            // registry not empty so the MeterFilter is treated as late configuration
             registry.counter("c1");
         }
 
         @Actor
         public void actor1() {
-            // creates new meter to add to preMap, updating the modCount
+            // adds a new meter to preMap, a concurrent modification if not guarded
             registry.counter("c2");
         }
 
         @Actor
-        public void actor2(Z_Result r) {
+        public void actor2(L_Result r) {
             try {
-                // adds all the preMap keys to the staleIds, iterating over preMap keys
-                registry.config().commonTags("common2", "tag2");
-                r.r1 = true;
+                // iterates over preMap keys to add all to the staleIds
+                registry.config().commonTags("common", "tag");
+                r.r1 = "OK";
             }
-            catch (ConcurrentModificationException e) {
-                r.r1 = false;
+            catch (Throwable e) {
+                r.r1 = e.getClass().getSimpleName();
             }
         }
 
