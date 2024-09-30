@@ -23,14 +23,10 @@ import org.aspectj.lang.reflect.MethodSignature;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Function;
-import java.util.function.Predicate;
 
 /**
  * This class is able to find all methods annotated with the Micrometer annotations. All
@@ -138,15 +134,13 @@ public class AnnotationHandler<T> {
     }
 
     private void addAnnotatedArguments(T objectToModify, List<AnnotatedParameter> toBeAdded) {
-        toBeAdded.stream()
-            .map(container -> toKeyValue.apply(container.annotation, container.argument))
-            .filter(distinctByKey(KeyValue::getKey))
-            .forEach(keyValue -> keyValueConsumer.accept(keyValue, objectToModify));
-    }
-
-    private static <T> Predicate<T> distinctByKey(Function<? super T, ?> keyExtractor) {
-        Map<Object, Boolean> seen = new ConcurrentHashMap<>();
-        return item -> seen.putIfAbsent(keyExtractor.apply(item), Boolean.TRUE) == null;
+        Set<String> seen = new HashSet<>();
+        for (AnnotatedParameter container : toBeAdded) {
+            KeyValue keyValue = toKeyValue.apply(container.annotation, container.argument);
+            if (seen.add(keyValue.getKey())) {
+                keyValueConsumer.accept(keyValue, objectToModify);
+            }
+        }
     }
 
     public Function<Class<? extends ValueResolver>, ? extends ValueResolver> getResolverProvider() {
