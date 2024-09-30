@@ -22,6 +22,8 @@ import org.openjdk.jcstress.annotations.*;
 import org.openjdk.jcstress.infra.results.LL_Result;
 import org.openjdk.jcstress.infra.results.Z_Result;
 
+import java.util.ConcurrentModificationException;
+
 public class MeterRegistryConcurrencyTest {
 
     /*
@@ -141,6 +143,39 @@ public class MeterRegistryConcurrencyTest {
         public void arbiter(LL_Result r) {
             r.r1 = c1.getId().getTag("common");
             r.r2 = c2.getId().getTag("common");
+        }
+
+    }
+
+    @JCStressTest
+    @Outcome(id = "true", expect = Expect.ACCEPTABLE, desc = "No exception")
+    @Outcome(expect = Expect.FORBIDDEN, desc = "ConcurrentModificationException thrown")
+    @State
+    public static class ConfigureLateMeterFilterWithNewMeterRegister {
+
+        MeterRegistry registry = new SimpleMeterRegistry();
+
+        public ConfigureLateMeterFilterWithNewMeterRegister() {
+            // need the registry to not be empty
+            registry.counter("c1");
+        }
+
+        @Actor
+        public void actor1() {
+            // creates new meter to add to preMap, updating the modCount
+            registry.counter("c2");
+        }
+
+        @Actor
+        public void actor2(Z_Result r) {
+            try {
+                // adds all the preMap keys to the staleIds, iterating over preMap keys
+                registry.config().commonTags("common2", "tag2");
+                r.r1 = true;
+            }
+            catch (ConcurrentModificationException e) {
+                r.r1 = false;
+            }
         }
 
     }
