@@ -108,7 +108,11 @@ public abstract class MeterRegistry {
      */
     private final Map<Id, Meter> preFilterIdToMeterMap = new HashMap<>();
 
-    // not thread safe; only needed when MeterFilter configured after Meters registered
+    /**
+     * Only needed when MeterFilter configured after Meters registered. Write/remove
+     * guarded by meterMapLock, remove in {@link #unmarkStaleId(Id)} and other operations
+     * unguarded
+     */
     private final Set<Id> stalePreFilterIds = new HashSet<>();
 
     /**
@@ -829,7 +833,9 @@ public abstract class MeterRegistry {
         public synchronized Config meterFilter(MeterFilter filter) {
             if (!meterMap.isEmpty()) {
                 logWarningAboutLateFilter();
-                stalePreFilterIds.addAll(preFilterIdToMeterMap.keySet());
+                synchronized (meterMapLock) {
+                    stalePreFilterIds.addAll(preFilterIdToMeterMap.keySet());
+                }
             }
             MeterFilter[] newFilters = new MeterFilter[filters.length + 1];
             System.arraycopy(filters, 0, newFilters, 0, filters.length);
