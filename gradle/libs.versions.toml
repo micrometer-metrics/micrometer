@@ -113,7 +113,7 @@ felixScr = "org.apache.felix:org.apache.felix.scr:2.2.12"
 gmetric4j = { module = "info.ganglia.gmetric4j:gmetric4j", version.ref = "gmetric4j" }
 googleCloudLibrariesBom = { module = "com.google.cloud:libraries-bom", version = "26.45.0" }
 googleCloudMonitoring = { module = "com.google.cloud:google-cloud-monitoring", version.ref = "google-cloud-monitoring" }
-googleOauth2Http = { module = "com.google.auth:google-auth-library-oauth2-http", version = "1.24.1"}
+googleOauth2Http = { module = "com.google.auth:google-auth-library-oauth2-http", version = "1.27.0"}
 grpcApi = { module = "io.grpc:grpc-api", version.ref = "grpc" }
 grpcCore = { module = "io.grpc:grpc-core", version.ref = "grpc" }
 grpcInprocess = { module = "io.grpc:grpc-inprocess", version.ref = "grpc" }
