@@ -46,10 +46,6 @@ public class TimerBenchmark {
 
     private Timer timer;
 
-    int x = 923;
-
-    int y = 123;
-
     @Setup
     public void setup() {
         registry = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT);
@@ -58,25 +54,23 @@ public class TimerBenchmark {
 
     @Benchmark
     public int sumTimedWithSupplier() {
-        return timer.record(this::sum);
+        return timer.record(this::doSomething);
     }
 
     @Benchmark
-    public int sumTimedWithSample() {
+    public long sumTimedWithSample() {
         Timer.Sample sample = Timer.start(registry);
-        int sum = sum();
-        sample.stop(timer);
-        return sum;
+        doSomething();
+        return sample.stop(timer);
     }
 
     @Benchmark
     public int sumTimedWithRegistryLookup() {
-        return registry.timer("timer").record(this::sum);
+        return registry.timer("timer").record(this::doSomething);
     }
 
-    @Benchmark
-    public int sum() {
-        return x + y;
+    int doSomething() {
+        return 923 + 123;
     }
 
 }
