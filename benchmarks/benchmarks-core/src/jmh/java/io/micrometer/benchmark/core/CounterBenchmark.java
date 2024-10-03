@@ -42,10 +42,6 @@ public class CounterBenchmark {
         new Runner(opt).run();
     }
 
-    private int x = 923;
-
-    private int y = 123;
-
     private MeterRegistry registry;
 
     private Counter counter;
@@ -57,20 +53,9 @@ public class CounterBenchmark {
     }
 
     @Benchmark
-    public int countSum() {
+    public double countSum() {
         counter.increment();
-        return sum();
-    }
-
-    @Benchmark
-    public int countSumWithRegistryLookup() {
-        registry.counter("counter").increment();
-        return sum();
-    }
-
-    @Benchmark
-    public int sum() {
-        return x + y;
+        return counter.count();
     }
 
 }
