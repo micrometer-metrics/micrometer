@@ -81,13 +81,13 @@ public class TagsBenchmark {
     }
 
     @Benchmark
-    public void of() {
-        Tags.of("key", "value", "key2", "value2", "key3", "value3", "key4", "value4", "key5", "value5");
+    public Tags of() {
+        return Tags.of("key", "value", "key2", "value2", "key3", "value3", "key4", "value4", "key5", "value5");
     }
 
     @Benchmark
-    public void dotAnd() {
-        Tags.of("key", "value").and("key2", "value2", "key3", "value3", "key4", "value4", "key5", "value5");
+    public Tags dotAnd() {
+        return Tags.of("key", "value").and("key2", "value2", "key3", "value3", "key4", "value4", "key5", "value5");
     }
 
     public static void main(String[] args) throws RunnerException {
