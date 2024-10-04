@@ -36,24 +36,77 @@ import static java.util.stream.Collectors.joining;
  */
 public final class KeyValues implements Iterable<KeyValue> {
 
-    private static final KeyValues EMPTY = new KeyValues(new KeyValue[] {});
+    private static final KeyValues EMPTY = new KeyValues(new KeyValue[] {}, 0);
 
-    private final KeyValue[] keyValues;
+    /**
+     * A private array of {@code KeyValue} objects containing the sorted and deduplicated
+     * tags.
+     */
+    private final KeyValue[] sortedSet;
 
-    private int last;
+    /**
+     * The number of valid tags present in the {@link #sortedSet} array.
+     */
+    private final int length;
 
-    private KeyValues(KeyValue[] keyValues) {
-        this.keyValues = keyValues;
-        Arrays.sort(this.keyValues);
-        dedup();
+    /**
+     * A private constructor that initializes a {@code KeyValues} object with a sorted set
+     * of keyvalues and its length.
+     * @param sortedSet an ordered set of unique keyvalues by key
+     * @param length the number of valid tags in the {@code sortedSet}
+     */
+    private KeyValues(KeyValue[] sortedSet, int length) {
+        this.sortedSet = sortedSet;
+        this.length = length;
     }
 
-    private void dedup() {
+    /**
+     * Checks if the first {@code length} elements of the {@code keyvalues} array form an
+     * ordered set of keyvalues.
+     * @param keyValues an array of keyvalues.
+     * @param length the number of items to check.
+     * @return {@code true} if the first {@code length} items of {@code keyvalues} form an
+     * ordered set; otherwise {@code false}.
+     */
+    private static boolean isSortedSet(KeyValue[] keyValues, int length) {
+        if (length > keyValues.length) {
+            return false;
+        }
+        for (int i = 0; i < length - 1; i++) {
+            int cmp = keyValues[i].compareTo(keyValues[i + 1]);
+            if (cmp >= 0) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Constructs a {@code Tags} collection from the provided array of tags.
+     * @param keyValues an array of {@code Tag} objects, possibly unordered and/or
+     * containing duplicates.
+     * @return a {@code Tags} instance with a deduplicated and ordered set of tags.
+     */
+    private static KeyValues make(KeyValue[] keyValues) {
+        int len = keyValues.length;
+        if (!isSortedSet(keyValues, len)) {
+            Arrays.sort(keyValues);
+            len = dedup(keyValues);
+        }
+        return new KeyValues(keyValues, len);
+    }
+
+    /**
+     * Removes duplicate tags from an ordered array of tags.
+     * @param keyValues an ordered array of {@code Tag} objects.
+     * @return the number of unique tags in the {@code tags} array after removing
+     * duplicates.
+     */
+    private static int dedup(KeyValue[] keyValues) {
         int n = keyValues.length;
 
         if (n == 0 || n == 1) {
-            last = n;
-            return;
+            return n;
         }
 
         // index of next unique element
@@ -64,7 +117,53 @@ public final class KeyValues implements Iterable<KeyValue> {
                 keyValues[j++] = keyValues[i];
 
         keyValues[j++] = keyValues[n - 1];
-        last = j;
+        return j;
+    }
+
+    /**
+     * Constructs a {@code Tags} instance by merging two sets of tags in time proportional
+     * to the sum of their sizes.
+     * @param other the set of tags to merge with this one.
+     * @return a {@code Tags} instance with the merged sets of tags.
+     */
+    private KeyValues merged(KeyValues other) {
+        if (other.length == 0) {
+            return this;
+        }
+        if (Objects.equals(this, other)) {
+            return this;
+        }
+        KeyValue[] sortedSet = new KeyValue[this.length + other.length];
+        int sortedIdx = 0, thisIdx = 0, otherIdx = 0;
+        while (thisIdx < this.length && otherIdx < other.length) {
+            int cmp = this.sortedSet[thisIdx].compareTo(other.sortedSet[otherIdx]);
+            if (cmp > 0) {
+                sortedSet[sortedIdx] = other.sortedSet[otherIdx];
+                otherIdx++;
+            }
+            else if (cmp < 0) {
+                sortedSet[sortedIdx] = this.sortedSet[thisIdx];
+                thisIdx++;
+            }
+            else {
+                // In case of key conflict prefer tag from other set
+                sortedSet[sortedIdx] = other.sortedSet[otherIdx];
+                thisIdx++;
+                otherIdx++;
+            }
+            sortedIdx++;
+        }
+        int thisRemaining = this.length - thisIdx;
+        if (thisRemaining > 0) {
+            System.arraycopy(this.sortedSet, thisIdx, sortedSet, sortedIdx, thisRemaining);
+            sortedIdx += thisRemaining;
+        }
+        int otherRemaining = other.length - otherIdx;
+        if (otherIdx < other.sortedSet.length) {
+            System.arraycopy(other.sortedSet, otherIdx, sortedSet, sortedIdx, otherRemaining);
+            sortedIdx += otherRemaining;
+        }
+        return new KeyValues(sortedSet, sortedIdx);
     }
 
     /**
@@ -101,10 +200,7 @@ public final class KeyValues implements Iterable<KeyValue> {
         if (blankVarargs(keyValues)) {
             return this;
         }
-        KeyValue[] newKeyValues = new KeyValue[last + keyValues.length];
-        System.arraycopy(this.keyValues, 0, newKeyValues, 0, last);
-        System.arraycopy(keyValues, 0, newKeyValues, last, keyValues.length);
-        return new KeyValues(newKeyValues);
+        return and(make(keyValues));
     }
 
     /**
@@ -137,11 +233,11 @@ public final class KeyValues implements Iterable<KeyValue> {
             return this;
         }
 
-        if (this.keyValues.length == 0) {
+        if (this.length == 0) {
             return KeyValues.of(keyValues);
         }
 
-        return and(KeyValues.of(keyValues).keyValues);
+        return merged(KeyValues.of(keyValues));
     }
 
     @Override
@@ -155,12 +251,12 @@ public final class KeyValues implements Iterable<KeyValue> {
 
         @Override
         public boolean hasNext() {
-            return currentIndex < last;
+            return currentIndex < length;
         }
 
         @Override
         public KeyValue next() {
-            return keyValues[currentIndex++];
+            return sortedSet[currentIndex++];
         }
 
         @Override
@@ -172,7 +268,7 @@ public final class KeyValues implements Iterable<KeyValue> {
 
     @Override
     public Spliterator<KeyValue> spliterator() {
-        return Spliterators.spliterator(keyValues, 0, last, Spliterator.IMMUTABLE | Spliterator.ORDERED
+        return Spliterators.spliterator(sortedSet, 0, length, Spliterator.IMMUTABLE | Spliterator.ORDERED
                 | Spliterator.DISTINCT | Spliterator.NONNULL | Spliterator.SORTED);
     }
 
@@ -187,8 +283,8 @@ public final class KeyValues implements Iterable<KeyValue> {
     @Override
     public int hashCode() {
         int result = 1;
-        for (int i = 0; i < last; i++) {
-            result = 31 * result + keyValues[i].hashCode();
+        for (int i = 0; i < length; i++) {
+            result = 31 * result + sortedSet[i].hashCode();
         }
         return result;
     }
@@ -199,14 +295,14 @@ public final class KeyValues implements Iterable<KeyValue> {
     }
 
     private boolean keyValuesEqual(KeyValues obj) {
-        if (keyValues == obj.keyValues)
+        if (sortedSet == obj.sortedSet)
             return true;
 
-        if (last != obj.last)
+        if (length != obj.length)
             return false;
 
-        for (int i = 0; i < last; i++) {
-            if (!keyValues[i].equals(obj.keyValues[i]))
+        for (int i = 0; i < length; i++) {
+            if (!sortedSet[i].equals(obj.sortedSet[i]))
                 return false;
         }
 
@@ -266,10 +362,10 @@ public final class KeyValues implements Iterable<KeyValue> {
         }
         else if (keyValues instanceof Collection) {
             Collection<? extends KeyValue> keyValuesCollection = (Collection<? extends KeyValue>) keyValues;
-            return new KeyValues(keyValuesCollection.toArray(new KeyValue[0]));
+            return make(keyValuesCollection.toArray(new KeyValue[0]));
         }
         else {
-            return new KeyValues(StreamSupport.stream(keyValues.spliterator(), false).toArray(KeyValue[]::new));
+            return make(StreamSupport.stream(keyValues.spliterator(), false).toArray(KeyValue[]::new));
         }
     }
 
@@ -281,7 +377,7 @@ public final class KeyValues implements Iterable<KeyValue> {
      * @return a new {@code KeyValues} instance
      */
     public static KeyValues of(String key, String value) {
-        return new KeyValues(new KeyValue[] { KeyValue.of(key, value) });
+        return new KeyValues(new KeyValue[] { KeyValue.of(key, value) }, 1);
     }
 
     /**
@@ -301,7 +397,7 @@ public final class KeyValues implements Iterable<KeyValue> {
         for (int i = 0; i < keyValues.length; i += 2) {
             keyValueArray[i / 2] = KeyValue.of(keyValues[i], keyValues[i + 1]);
         }
-        return new KeyValues(keyValueArray);
+        return make(keyValueArray);
     }
 
     private static boolean blankVarargs(@Nullable Object[] args) {
