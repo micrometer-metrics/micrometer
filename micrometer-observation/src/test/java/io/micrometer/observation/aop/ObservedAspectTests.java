@@ -27,7 +27,6 @@ import io.micrometer.observation.ObservationRegistry;
 import io.micrometer.observation.ObservationTextPublisher;
 import io.micrometer.observation.annotation.Observed;
 import io.micrometer.observation.tck.TestObservationRegistry;
-import io.micrometer.observation.tck.TestObservationRegistryAssert;
 
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
@@ -61,8 +60,7 @@ class ObservedAspectTests {
         ObservedService service = pf.getProxy();
         service.call();
 
-        TestObservationRegistryAssert.assertThat(registry)
-            .doesNotHaveAnyRemainingCurrentObservation()
+        assertThat(registry).doesNotHaveAnyRemainingCurrentObservation()
             .hasSingleObservationThat()
             .hasBeenStopped()
             .hasNameEqualTo("test.call")
@@ -85,8 +83,7 @@ class ObservedAspectTests {
         TestBeanInterface service = pf.getProxy();
         service.testMethod("bar");
 
-        TestObservationRegistryAssert.assertThat(registry)
-            .doesNotHaveAnyRemainingCurrentObservation()
+        assertThat(registry).doesNotHaveAnyRemainingCurrentObservation()
             .hasSingleObservationThat()
             .hasBeenStopped()
             .hasNameEqualTo("test.method")
@@ -105,8 +102,7 @@ class ObservedAspectTests {
         ObservedService service = pf.getProxy();
         assertThatThrownBy(service::error);
 
-        TestObservationRegistryAssert.assertThat(registry)
-            .doesNotHaveAnyRemainingCurrentObservation()
+        assertThat(registry).doesNotHaveAnyRemainingCurrentObservation()
             .hasSingleObservationThat()
             .hasBeenStopped()
             .hasNameEqualTo("test.error")
@@ -134,12 +130,9 @@ class ObservedAspectTests {
 
         assertThat(asyncResult.get()).isEqualTo("test-result");
         await().atMost(Duration.ofMillis(200))
-            .untilAsserted(() -> TestObservationRegistryAssert.assertThat(registry)
-                .hasSingleObservationThat()
-                .hasBeenStopped());
+            .untilAsserted(() -> assertThat(registry).hasSingleObservationThat().hasBeenStopped());
 
-        TestObservationRegistryAssert.assertThat(registry)
-            .doesNotHaveAnyRemainingCurrentObservation()
+        assertThat(registry).doesNotHaveAnyRemainingCurrentObservation()
             .hasSingleObservationThat()
             .hasNameEqualTo("test.async")
             .hasContextualNameEqualTo("ObservedService#async")
@@ -163,12 +156,9 @@ class ObservedAspectTests {
 
         assertThatThrownBy(fakeAsyncTask::get).isEqualTo(simulatedException);
         await().atMost(Duration.ofMillis(200))
-            .untilAsserted(() -> TestObservationRegistryAssert.assertThat(registry)
-                .hasSingleObservationThat()
-                .hasBeenStopped());
+            .untilAsserted(() -> assertThat(registry).hasSingleObservationThat().hasBeenStopped());
 
-        TestObservationRegistryAssert.assertThat(registry)
-            .doesNotHaveAnyRemainingCurrentObservation()
+        assertThat(registry).doesNotHaveAnyRemainingCurrentObservation()
             .hasSingleObservationThat()
             .hasNameEqualTo("test.async")
             .hasContextualNameEqualTo("ObservedService#async")
@@ -189,8 +179,7 @@ class ObservedAspectTests {
 
         ObservedService service = pf.getProxy();
         service.call();
-        TestObservationRegistryAssert.assertThat(registry)
-            .doesNotHaveAnyRemainingCurrentObservation()
+        assertThat(registry).doesNotHaveAnyRemainingCurrentObservation()
             .hasSingleObservationThat()
             .hasBeenStopped()
             .hasNameEqualTo("test.call")
@@ -210,7 +199,7 @@ class ObservedAspectTests {
 
         ObservedService service = pf.getProxy();
         service.call();
-        TestObservationRegistryAssert.assertThat(registry).doesNotHaveAnyObservation();
+        assertThat(registry).doesNotHaveAnyObservation();
     }
 
     @Test
@@ -223,8 +212,7 @@ class ObservedAspectTests {
         ObservedClassLevelAnnotatedService service = pf.getProxy();
         service.call();
 
-        TestObservationRegistryAssert.assertThat(registry)
-            .doesNotHaveAnyRemainingCurrentObservation()
+        assertThat(registry).doesNotHaveAnyRemainingCurrentObservation()
             .hasSingleObservationThat()
             .hasBeenStopped()
             .hasNameEqualTo("test.class")
@@ -246,8 +234,7 @@ class ObservedAspectTests {
         ObservedClassLevelAnnotatedService service = pf.getProxy();
         assertThatThrownBy(service::error);
 
-        TestObservationRegistryAssert.assertThat(registry)
-            .doesNotHaveAnyRemainingCurrentObservation()
+        assertThat(registry).doesNotHaveAnyRemainingCurrentObservation()
             .hasSingleObservationThat()
             .hasBeenStopped()
             .hasNameEqualTo("test.class")
@@ -277,12 +264,9 @@ class ObservedAspectTests {
 
         assertThat(asyncResult.get()).isEqualTo("test-result");
         await().atMost(Duration.ofMillis(200))
-            .untilAsserted(() -> TestObservationRegistryAssert.assertThat(registry)
-                .hasSingleObservationThat()
-                .hasBeenStopped());
+            .untilAsserted(() -> assertThat(registry).hasSingleObservationThat().hasBeenStopped());
 
-        TestObservationRegistryAssert.assertThat(registry)
-            .doesNotHaveAnyRemainingCurrentObservation()
+        assertThat(registry).doesNotHaveAnyRemainingCurrentObservation()
             .hasSingleObservationThat()
             .hasNameEqualTo("test.class")
             .hasContextualNameEqualTo("test.class#call")
@@ -308,12 +292,9 @@ class ObservedAspectTests {
 
         assertThatThrownBy(fakeAsyncTask::get).isEqualTo(simulatedException);
         await().atMost(Duration.ofMillis(200))
-            .untilAsserted(() -> TestObservationRegistryAssert.assertThat(registry)
-                .hasSingleObservationThat()
-                .hasBeenStopped());
+            .untilAsserted(() -> assertThat(registry).hasSingleObservationThat().hasBeenStopped());
 
-        TestObservationRegistryAssert.assertThat(registry)
-            .doesNotHaveAnyRemainingCurrentObservation()
+        assertThat(registry).doesNotHaveAnyRemainingCurrentObservation()
             .hasSingleObservationThat()
             .hasNameEqualTo("test.class")
             .hasContextualNameEqualTo("test.class#call")
@@ -336,8 +317,7 @@ class ObservedAspectTests {
 
         ObservedClassLevelAnnotatedService service = pf.getProxy();
         service.call();
-        TestObservationRegistryAssert.assertThat(registry)
-            .doesNotHaveAnyRemainingCurrentObservation()
+        assertThat(registry).doesNotHaveAnyRemainingCurrentObservation()
             .hasSingleObservationThat()
             .hasBeenStopped()
             .hasNameEqualTo("test.class")
@@ -357,7 +337,7 @@ class ObservedAspectTests {
 
         ObservedClassLevelAnnotatedService service = pf.getProxy();
         service.call();
-        TestObservationRegistryAssert.assertThat(registry).doesNotHaveAnyObservation();
+        assertThat(registry).doesNotHaveAnyObservation();
     }
 
     @Test
@@ -370,8 +350,7 @@ class ObservedAspectTests {
 
         ObservedClassLevelAnnotatedService service = pf.getProxy();
         service.annotatedOnMethod();
-        TestObservationRegistryAssert.assertThat(registry)
-            .doesNotHaveAnyRemainingCurrentObservation()
+        assertThat(registry).doesNotHaveAnyRemainingCurrentObservation()
             .hasSingleObservationThat()
             .hasBeenStopped()
             .hasNameEqualTo("test.class")

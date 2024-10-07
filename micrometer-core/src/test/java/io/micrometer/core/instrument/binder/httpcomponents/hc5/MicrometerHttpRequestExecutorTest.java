@@ -25,7 +25,6 @@ import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.micrometer.observation.GlobalObservationConvention;
 import io.micrometer.observation.ObservationRegistry;
 import io.micrometer.observation.tck.TestObservationRegistry;
-import io.micrometer.observation.tck.TestObservationRegistryAssert;
 import org.apache.hc.client5.http.ClientProtocolException;
 import org.apache.hc.client5.http.classic.methods.HttpGet;
 import org.apache.hc.client5.http.classic.methods.HttpPost;
@@ -318,8 +317,7 @@ class MicrometerHttpRequestExecutorTest {
                 execute(client, new HttpUriRequestBase(method, URI.create(server.baseUrl())));
                 break;
         }
-        TestObservationRegistryAssert.assertThat(observationRegistry)
-            .hasSingleObservationThat()
+        assertThat(observationRegistry).hasSingleObservationThat()
             .hasContextualNameEqualToIgnoringCase("http " + method);
     }
 

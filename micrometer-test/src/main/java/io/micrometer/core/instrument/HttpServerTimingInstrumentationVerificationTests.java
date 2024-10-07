@@ -36,7 +36,7 @@ import java.net.URI;
 import java.time.Duration;
 import java.util.function.Function;
 
-import static io.micrometer.observation.tck.TestObservationRegistryAssert.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 

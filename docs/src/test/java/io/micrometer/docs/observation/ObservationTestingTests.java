@@ -18,8 +18,9 @@ package io.micrometer.docs.observation;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
 import io.micrometer.observation.tck.TestObservationRegistry;
-import io.micrometer.observation.tck.TestObservationRegistryAssert;
 import org.junit.jupiter.api.Test;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Sources for observation-testing.adoc
@@ -37,7 +38,7 @@ class ObservationTestingTests {
         new Example(registry).run();
 
         // check your observation
-        TestObservationRegistryAssert.assertThat(registry)
+        assertThat(registry)
                 .doesNotHaveAnyRemainingCurrentObservation()
                 .hasObservationWithNameEqualTo("foo")
                 .that()
