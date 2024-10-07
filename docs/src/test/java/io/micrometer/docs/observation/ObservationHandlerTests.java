@@ -27,13 +27,13 @@ import io.micrometer.observation.annotation.Observed;
 import io.micrometer.observation.aop.ObservedAspect;
 import io.micrometer.observation.docs.ObservationDocumentation;
 import io.micrometer.observation.tck.TestObservationRegistry;
-import io.micrometer.observation.tck.TestObservationRegistryAssert;
 import org.junit.jupiter.api.Test;
 import org.springframework.aop.aspectj.annotation.AspectJProxyFactory;
 import org.springframework.lang.Nullable;
 
 import static io.micrometer.docs.observation.ObservationHandlerTests.TaxObservationDocumentation.TaxHighCardinalityKeyNames.USER_ID;
 import static io.micrometer.docs.observation.ObservationHandlerTests.TaxObservationDocumentation.TaxLowCardinalityKeyNames.TAX_TYPE;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Sources for observation-components.adoc
@@ -158,7 +158,7 @@ class ObservationHandlerTests {
         service.call();
 
         // assert that observation has been properly created
-        TestObservationRegistryAssert.assertThat(registry)
+        assertThat(registry)
                 .hasSingleObservationThat()
                 .hasBeenStopped()
                 .hasNameEqualTo("test.call")

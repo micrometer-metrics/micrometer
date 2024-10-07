@@ -20,7 +20,6 @@ import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationHandler;
 import io.micrometer.observation.ObservationRegistry;
 import io.micrometer.observation.tck.TestObservationRegistry;
-import io.micrometer.observation.tck.TestObservationRegistryAssert;
 import io.micrometer.observation.transport.ReceiverContext;
 import io.micrometer.observation.transport.SenderContext;
 import org.apache.kafka.clients.admin.AdminClient;
@@ -55,6 +54,8 @@ import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 @Testcontainers
 @Tag("docker")
@@ -134,15 +135,13 @@ class ObservationMessagingIntegrationTest {
         // end::consumer_side[]
 
         // tag::test_assertions[]
-        TestObservationRegistryAssert.assertThat(registry)
-            .hasObservationWithNameEqualTo("kafka.send")
+        assertThat(registry).hasObservationWithNameEqualTo("kafka.send")
             .that()
             .hasBeenStarted()
             .hasBeenStopped()
             .hasLowCardinalityKeyValue("sent", "true");
 
-        TestObservationRegistryAssert.assertThat(registry)
-            .hasObservationWithNameEqualTo("kafka.receive")
+        assertThat(registry).hasObservationWithNameEqualTo("kafka.receive")
             .that()
             .hasBeenStarted()
             .hasBeenStopped()
