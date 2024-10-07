@@ -21,10 +21,12 @@ import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.opentest4j.AssertionFailedError;
 
 import java.util.function.Supplier;
 
 import static io.micrometer.observation.tck.ObservationContextAssert.assertThat;
+import static org.assertj.core.api.BDDAssertions.then;
 import static org.assertj.core.api.BDDAssertions.thenNoException;
 import static org.assertj.core.api.BDDAssertions.thenThrownBy;
 import static org.mockito.Mockito.spy;
@@ -63,7 +65,11 @@ class ObservationContextAssertTests {
     void should_throw_exception_when_name_incorrect() {
         context.setName("foo");
 
-        thenThrownBy(() -> assertThat(context).hasNameEqualTo("bar")).isInstanceOf(AssertionError.class);
+        thenThrownBy(() -> assertThat(context).hasNameEqualTo("bar")).isInstanceOfSatisfying(AssertionFailedError.class,
+                error -> {
+                    then(error.getActual().getStringRepresentation()).isEqualTo("foo");
+                    then(error.getExpected().getStringRepresentation()).isEqualTo("bar");
+                });
     }
 
     @Test
@@ -91,7 +97,11 @@ class ObservationContextAssertTests {
     void should_throw_exception_when_contextual_name_incorrect() {
         context.setContextualName("foo");
 
-        thenThrownBy(() -> assertThat(context).hasContextualNameEqualTo("bar")).isInstanceOf(AssertionError.class);
+        thenThrownBy(() -> assertThat(context).hasContextualNameEqualTo("bar"))
+            .isInstanceOfSatisfying(AssertionFailedError.class, error -> {
+                then(error.getActual().getStringRepresentation()).isEqualTo("foo");
+                then(error.getExpected().getStringRepresentation()).isEqualTo("bar");
+            });
     }
 
     @Test
@@ -120,7 +130,11 @@ class ObservationContextAssertTests {
     void should_throw_exception_when_name_ignore_case_incorrect() {
         context.setName("foo");
 
-        thenThrownBy(() -> assertThat(context).hasNameEqualToIgnoringCase("bar")).isInstanceOf(AssertionError.class);
+        thenThrownBy(() -> assertThat(context).hasNameEqualToIgnoringCase("bar"))
+            .isInstanceOfSatisfying(AssertionFailedError.class, error -> {
+                then(error.getActual().getStringRepresentation()).isEqualTo("foo");
+                then(error.getExpected().getStringRepresentation()).isEqualTo("bar");
+            });
     }
 
     @Test
@@ -150,7 +164,10 @@ class ObservationContextAssertTests {
         context.setContextualName("foo");
 
         thenThrownBy(() -> assertThat(context).hasContextualNameEqualToIgnoringCase("bar"))
-            .isInstanceOf(AssertionError.class);
+            .isInstanceOfSatisfying(AssertionFailedError.class, error -> {
+                then(error.getActual().getStringRepresentation()).isEqualTo("foo");
+                then(error.getExpected().getStringRepresentation()).isEqualTo("bar");
+            });
     }
 
     @Test
@@ -248,7 +265,10 @@ class ObservationContextAssertTests {
         observation.lowCardinalityKeyValue("foo", "bar");
 
         thenThrownBy(() -> assertThat(context).hasLowCardinalityKeyValue("foo", "baz"))
-            .isInstanceOf(AssertionError.class);
+            .isInstanceOfSatisfying(AssertionFailedError.class, error -> {
+                then(error.getActual().getStringRepresentation()).isEqualTo("bar");
+                then(error.getExpected().getStringRepresentation()).isEqualTo("baz");
+            });
         thenThrownBy(() -> assertThat(context).hasLowCardinalityKeyValueWithKey("bar"))
             .isInstanceOf(AssertionError.class);
     }
@@ -284,7 +304,10 @@ class ObservationContextAssertTests {
         observation.highCardinalityKeyValue("foo", "bar");
 
         thenThrownBy(() -> assertThat(context).hasHighCardinalityKeyValue("foo", "baz"))
-            .isInstanceOf(AssertionError.class);
+            .isInstanceOfSatisfying(AssertionFailedError.class, error -> {
+                then(error.getActual().getStringRepresentation()).isEqualTo("bar");
+                then(error.getExpected().getStringRepresentation()).isEqualTo("baz");
+            });
         thenThrownBy(() -> assertThat(context).hasHighCardinalityKeyValueWithKey("bar"))
             .isInstanceOf(AssertionError.class);
     }
