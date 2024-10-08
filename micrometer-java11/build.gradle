@@ -3,6 +3,7 @@ description 'Micrometer core classes that require Java 11'
 dependencies {
     api project(":micrometer-core")
 
+    testImplementation project(":micrometer-test")
     testImplementation 'ru.lanwen.wiremock:wiremock-junit5'
     testImplementation 'com.github.tomakehurst:wiremock-jre8-standalone'
     testImplementation project(":micrometer-observation-test")
