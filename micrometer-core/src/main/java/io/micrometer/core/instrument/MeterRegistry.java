@@ -964,21 +964,19 @@ public abstract class MeterRegistry {
         }
 
         /**
-         * Creates and starts a new {@link HighCardinalityTagsDetector} for this registry.
-         * @param threshold The threshold to use to detect high cardinality tags (if the
-         * number of Meters with the same name is higher than this value, that's a high
-         * cardinality tag).
-         * @param delay The delay between the termination of one check and the
-         * commencement of the next.
-         * @param meterNameConsumer A consumer that will be called for each high
-         * cardinality tag detected.
+         * Uses the supplied {@code Function<MeterRegistry, HighCardinalityTagsDetector>}
+         * to create a new {@link HighCardinalityTagsDetector} for this registry. After
+         * the {@link HighCardinalityTagsDetector} is created, it also starts it. The
+         * implementation of the factory {@code Function} must pass the registry instance
+         * to one of the constructors of {@link HighCardinalityTagsDetector}.
+         * @param highCardinalityTagsDetectorFactory The {@code Function} that creates the
+         * {@link HighCardinalityTagsDetector} instance
          * @return This configuration instance.
-         * @since 1.12.0
+         * @since 1.14.0
          */
-        public Config withHighCardinalityTagsDetector(long threshold, Duration delay,
-                Consumer<String> meterNameConsumer) {
-            return withHighCardinalityTagsDetector(
-                    new HighCardinalityTagsDetector(MeterRegistry.this, threshold, delay, meterNameConsumer));
+        public Config withHighCardinalityTagsDetector(
+                Function<MeterRegistry, HighCardinalityTagsDetector> highCardinalityTagsDetectorFactory) {
+            return withHighCardinalityTagsDetector(highCardinalityTagsDetectorFactory.apply(MeterRegistry.this));
         }
 
         private Config withHighCardinalityTagsDetector(HighCardinalityTagsDetector newHighCardinalityTagsDetector) {
