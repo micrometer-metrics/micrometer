@@ -69,7 +69,8 @@ import static java.util.stream.StreamSupport.stream;
  */
 public class PrometheusMeterRegistry extends MeterRegistry {
 
-    private static final WarnThenDebugLogger log = new WarnThenDebugLogger(PrometheusMeterRegistry.class);
+    private static final WarnThenDebugLogger meterRegistrationFailureLogger = new WarnThenDebugLogger(
+            PrometheusMeterRegistry.class);
 
     private final PrometheusConfig prometheusConfig;
 
@@ -619,13 +620,13 @@ public class PrometheusMeterRegistry extends MeterRegistry {
     }
 
     @Override
-    protected void meterRegistrationFailed(Meter.Id id, String reason) {
-        super.meterRegistrationFailed(id, reason);
+    protected void meterRegistrationFailed(Meter.Id id, @Nullable String reason) {
+        meterRegistrationFailureLogger.log(() -> createMeterRegistrationFailureMessage(id, reason));
 
-        log.log(() -> createMeterRegistrationFailureMessage(id, reason));
+        super.meterRegistrationFailed(id, reason);
     }
 
-    private static String createMeterRegistrationFailureMessage(Meter.Id id, String reason) {
+    private static String createMeterRegistrationFailureMessage(Meter.Id id, @Nullable String reason) {
         String message = String.format("The meter (%s) registration has failed", id);
         if (reason != null) {
             message += ": " + reason;
