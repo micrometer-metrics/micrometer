@@ -8,16 +8,16 @@ aspectjweaver = "1.9.20.1"
 assertj = "3.26.3"
 awaitility = "4.2.2"
 caffeine = "2.9.3"
-cloudwatch2 = "2.27.17"
+cloudwatch2 = "2.28.18"
 colt = "1.2.0"
 dagger = "2.52"
-dropwizard-metrics = "4.2.27"
+dropwizard-metrics = "4.2.28"
 dropwizard-metrics5 = "5.0.0"
 dynatrace-utils = "2.2.1"
 ehcache2 = "2.10.9.2"
 ehcache3 = "3.10.8"
 gmetric4j = "1.0.10"
-google-cloud-monitoring = "3.49.0"
+google-cloud-monitoring = "3.52.0"
 grpc = "1.58.0"
 grpcKotlin = "1.4.1"
 guava = "32.1.2-jre"
@@ -36,7 +36,7 @@ httpcomponents-client5 = "5.3.1"
 # in hystrix 1.5.12, but Netflix re-released 1.5.11 as 1.5.18 late in 2018.
 # <=1.5.11 or 1.5.18 doesn't break with Micrometer, but open metrics won't be correct necessarily.
 hystrix = "1.5.12"
-jackson-databind = "2.17.2"
+jackson-databind = "2.18.0"
 javax-cache = "1.1.1"
 javax-inject = "1"
 jaxb = "2.3.1"
@@ -52,14 +52,13 @@ jooqOld = "3.14.16"
 jooqNew = "3.19.11"
 jsr107 = "1.1.1"
 jsr305 = "3.0.2"
-junit = "5.11.1"
-junit-platform = "1.11.0"
+junit = "5.11.2"
 kafka = "2.8.2"
 kafka-junit = "4.2.10"
 latency-utils = "2.0.3"
 logback12 = "1.2.13"
 logback-latest = "1.5.7"
-log4j = "2.23.1"
+log4j = "2.24.1"
 maven-resolver = "1.9.22"
 mockito4 = "4.11.0"
 mockito5 = "5.11.0"
@@ -111,9 +110,9 @@ ehcache3 = { module = "org.ehcache:ehcache", version.ref = "ehcache3" }
 felixFramework = "org.apache.felix:org.apache.felix.framework:7.0.5"
 felixScr = "org.apache.felix:org.apache.felix.scr:2.2.12"
 gmetric4j = { module = "info.ganglia.gmetric4j:gmetric4j", version.ref = "gmetric4j" }
-googleCloudLibrariesBom = { module = "com.google.cloud:libraries-bom", version = "26.45.0" }
+googleCloudLibrariesBom = { module = "com.google.cloud:libraries-bom", version = "26.48.0" }
 googleCloudMonitoring = { module = "com.google.cloud:google-cloud-monitoring", version.ref = "google-cloud-monitoring" }
-googleOauth2Http = { module = "com.google.auth:google-auth-library-oauth2-http", version = "1.24.1"}
+googleOauth2Http = { module = "com.google.auth:google-auth-library-oauth2-http", version = "1.28.0"}
 grpcApi = { module = "io.grpc:grpc-api", version.ref = "grpc" }
 grpcCore = { module = "io.grpc:grpc-core", version.ref = "grpc" }
 grpcInprocess = { module = "io.grpc:grpc-inprocess", version.ref = "grpc" }
@@ -227,7 +226,7 @@ plugin-nebulaInfo = { module = "com.netflix.nebula:gradle-info-plugin", version 
 plugin-noHttp = { module = "io.spring.nohttp:nohttp-gradle", version = "0.0.11" }
 plugin-nexusPublish = { module = "io.github.gradle-nexus:publish-plugin", version = "1.3.0" }
 plugin-javaformat = { module = "io.spring.javaformat:spring-javaformat-gradle-plugin", version.ref = "spring-javaformat" }
-plugin-japicmp = { module = "me.champeau.gradle:japicmp-gradle-plugin", version = "0.4.3" }
+plugin-japicmp = { module = "me.champeau.gradle:japicmp-gradle-plugin", version = "0.4.4" }
 plugin-downloadTask = { module = "de.undercouch:gradle-download-task", version = "5.6.0" }
 plugin-spotless = { module = "com.diffplug.spotless:spotless-plugin-gradle", version = "6.25.0" }
 plugin-bnd = "biz.aQute.bnd:biz.aQute.bnd.gradle:6.4.0"
@@ -236,4 +235,4 @@ plugin-bnd = "biz.aQute.bnd:biz.aQute.bnd.gradle:6.4.0"
 kotlin19 = { id = "org.jetbrains.kotlin.jvm", version = "1.9.25" }
 kotlin17 = { id = "org.jetbrains.kotlin.jvm", version = "1.7.22" }
 jcstress = { id = "io.github.reyerizo.gradle.jcstress", version = "0.8.15" }
-aspectj = { id = 'io.freefair.aspectj.post-compile-weaving', version = '8.10' }
+aspectj = { id = 'io.freefair.aspectj.post-compile-weaving', version = '8.10.2' }
