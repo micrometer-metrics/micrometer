@@ -963,6 +963,22 @@ public abstract class MeterRegistry {
                     new HighCardinalityTagsDetector(MeterRegistry.this, threshold, delay));
         }
 
+        /**
+         * Uses the supplied {@code Function<MeterRegistry, HighCardinalityTagsDetector>}
+         * to create a new {@link HighCardinalityTagsDetector} for this registry. After
+         * the {@link HighCardinalityTagsDetector} is created, it also starts it. The
+         * implementation of the factory {@code Function} must pass the registry instance
+         * to one of the constructors of {@link HighCardinalityTagsDetector}.
+         * @param highCardinalityTagsDetectorFactory The {@code Function} that creates the
+         * {@link HighCardinalityTagsDetector} instance
+         * @return This configuration instance.
+         * @since 1.14.0
+         */
+        public Config withHighCardinalityTagsDetector(
+                Function<MeterRegistry, HighCardinalityTagsDetector> highCardinalityTagsDetectorFactory) {
+            return withHighCardinalityTagsDetector(highCardinalityTagsDetectorFactory.apply(MeterRegistry.this));
+        }
+
         private Config withHighCardinalityTagsDetector(HighCardinalityTagsDetector newHighCardinalityTagsDetector) {
             if (highCardinalityTagsDetector != null) {
                 highCardinalityTagsDetector.close();
