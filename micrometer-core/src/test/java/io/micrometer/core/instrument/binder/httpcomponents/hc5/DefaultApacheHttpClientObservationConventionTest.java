@@ -159,8 +159,7 @@ class DefaultApacheHttpClientObservationConventionTest {
         SimpleHttpRequest request = SimpleRequestBuilder.get("https://example.org/resource").build();
         HttpClientContext clientContext = HttpClientContext.create();
         ApacheHttpClientContext context = new ApacheHttpClientContext(request, clientContext);
-        clientContext.setAttribute(HttpClientContext.HTTP_ROUTE,
-                new HttpRoute(HttpHost.create("https://example.org:80")));
+        clientContext.setRoute(new HttpRoute(HttpHost.create("https://example.org:80")));
         assertThat(observationConvention.getLowCardinalityKeyValues(context)).contains(
                 TARGET_HOST.withValue("example.org"), TARGET_PORT.withValue("80"), TARGET_SCHEME.withValue("https"));
     }

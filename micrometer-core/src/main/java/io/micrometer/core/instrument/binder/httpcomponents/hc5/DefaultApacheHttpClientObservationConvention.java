@@ -20,7 +20,6 @@ import io.micrometer.common.KeyValues;
 import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.binder.http.Outcome;
 import io.micrometer.core.instrument.binder.httpcomponents.hc5.ApacheHttpClientObservationDocumentation.ApacheHttpClientKeyNames;
-import org.apache.hc.client5.http.HttpRoute;
 import org.apache.hc.client5.http.RouteInfo;
 import org.apache.hc.client5.http.protocol.HttpClientContext;
 import org.apache.hc.core5.http.HttpException;
@@ -154,7 +153,7 @@ public class DefaultApacheHttpClientObservationConvention implements ApacheHttpC
      * @since 1.12.0
      */
     protected KeyValue targetHost(ApacheHttpClientContext context) {
-        RouteInfo httpRoute = context.getHttpClientContext().getHttpRoute();
+        RouteInfo httpRoute = getHttpRoute(context);
         if (httpRoute != null) {
             return ApacheHttpClientKeyNames.TARGET_HOST.withValue(httpRoute.getTargetHost().getHostName());
         }
@@ -168,9 +167,9 @@ public class DefaultApacheHttpClientObservationConvention implements ApacheHttpC
      * @since 1.12.0
      */
     protected KeyValue targetPort(ApacheHttpClientContext context) {
-        Object routeAttribute = context.getHttpClientContext().getAttribute("http.route");
-        if (routeAttribute instanceof HttpRoute) {
-            int port = ((HttpRoute) routeAttribute).getTargetHost().getPort();
+        RouteInfo httpRoute = getHttpRoute(context);
+        if (httpRoute != null) {
+            int port = httpRoute.getTargetHost().getPort();
             return ApacheHttpClientKeyNames.TARGET_PORT.withValue(String.valueOf(port));
         }
         return TARGET_PORT_UNKNOWN;
@@ -183,12 +182,16 @@ public class DefaultApacheHttpClientObservationConvention implements ApacheHttpC
      * @since 1.12.0
      */
     protected KeyValue targetScheme(ApacheHttpClientContext context) {
-        Object routeAttribute = context.getHttpClientContext().getAttribute("http.route");
-        if (routeAttribute instanceof HttpRoute) {
-            return ApacheHttpClientKeyNames.TARGET_SCHEME
-                .withValue(((HttpRoute) routeAttribute).getTargetHost().getSchemeName());
+        RouteInfo httpRoute = getHttpRoute(context);
+        if (httpRoute != null) {
+            return ApacheHttpClientKeyNames.TARGET_SCHEME.withValue(httpRoute.getTargetHost().getSchemeName());
         }
         return TARGET_SCHEME_UNKNOWN;
+    }
+
+    @Nullable
+    private static RouteInfo getHttpRoute(ApacheHttpClientContext context) {
+        return context.getHttpClientContext().getHttpRoute();
     }
 
     /**
