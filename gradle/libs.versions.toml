@@ -224,7 +224,7 @@ plugin-nebulaInfo = { module = "com.netflix.nebula:gradle-info-plugin", version 
 plugin-noHttp = { module = "io.spring.nohttp:nohttp-gradle", version = "0.0.11" }
 plugin-nexusPublish = { module = "io.github.gradle-nexus:publish-plugin", version = "1.3.0" }
 plugin-javaformat = { module = "io.spring.javaformat:spring-javaformat-gradle-plugin", version.ref = "spring-javaformat" }
-plugin-japicmp = { module = "me.champeau.gradle:japicmp-gradle-plugin", version = "0.4.3" }
+plugin-japicmp = { module = "me.champeau.gradle:japicmp-gradle-plugin", version = "0.4.4" }
 plugin-downloadTask = { module = "de.undercouch:gradle-download-task", version = "5.6.0" }
 plugin-spotless = { module = "com.diffplug.spotless:spotless-plugin-gradle", version = "6.25.0" }
 plugin-bnd = "biz.aQute.bnd:biz.aQute.bnd.gradle:6.4.0"
