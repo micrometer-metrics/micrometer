@@ -17,6 +17,7 @@ package io.micrometer.core.instrument.binder.httpcomponents.hc5;
 
 import io.micrometer.core.instrument.Tags;
 import org.apache.hc.client5.http.HttpRoute;
+import org.apache.hc.client5.http.protocol.HttpClientContext;
 import org.apache.hc.core5.http.HttpHost;
 import org.apache.hc.core5.http.protocol.HttpContext;
 
@@ -31,9 +32,15 @@ class HttpContextUtils {
         String targetScheme = "UNKNOWN";
         String targetHost = "UNKNOWN";
         String targetPort = "UNKNOWN";
-        Object routeAttribute = context.getAttribute("http.route");
-        if (routeAttribute instanceof HttpRoute) {
-            HttpHost host = ((HttpRoute) routeAttribute).getTargetHost();
+        Object route;
+        if (context instanceof HttpClientContext) {
+            route = ((HttpClientContext) context).getHttpRoute();
+        }
+        else {
+            route = context.getAttribute("http.route");
+        }
+        if (route instanceof HttpRoute) {
+            HttpHost host = ((HttpRoute) route).getTargetHost();
             targetScheme = host.getSchemeName();
             targetHost = host.getHostName();
             targetPort = String.valueOf(host.getPort());

@@ -28,6 +28,7 @@ import org.apache.hc.client5.http.protocol.HttpClientContext;
 import org.apache.hc.core5.http.*;
 import org.apache.hc.core5.http.impl.io.HttpRequestExecutor;
 import org.apache.hc.core5.http.io.HttpClientConnection;
+import org.apache.hc.core5.http.io.HttpResponseInformationCallback;
 import org.apache.hc.core5.http.protocol.HttpContext;
 import org.apache.hc.core5.util.Timeout;
 
@@ -102,17 +103,18 @@ public class MicrometerHttpRequestExecutor extends HttpRequestExecutor {
     }
 
     @Override
-    public ClassicHttpResponse execute(ClassicHttpRequest request, HttpClientConnection conn, HttpContext context)
+    public ClassicHttpResponse execute(ClassicHttpRequest request, HttpClientConnection conn,
+            @Nullable HttpResponseInformationCallback informationCallback, HttpContext localContext)
             throws IOException, HttpException {
         ObservationOrTimerCompatibleInstrumentation<ApacheHttpClientContext> sample = ObservationOrTimerCompatibleInstrumentation
             .start(registry, observationRegistry, () -> new ApacheHttpClientContext(request,
-                    HttpClientContext.adapt(context), uriMapper, exportTagsForRoute), convention,
+                    HttpClientContext.adapt(localContext), uriMapper, exportTagsForRoute), convention,
                     DefaultApacheHttpClientObservationConvention.INSTANCE);
         String statusCodeOrError = "UNKNOWN";
         Outcome statusOutcome = Outcome.UNKNOWN;
 
         try {
-            ClassicHttpResponse response = super.execute(request, conn, context);
+            ClassicHttpResponse response = super.execute(request, conn, informationCallback, localContext);
             sample.setResponse(response);
             statusCodeOrError = DefaultApacheHttpClientObservationConvention.INSTANCE.getStatusValue(response, null);
             statusOutcome = DefaultApacheHttpClientObservationConvention.INSTANCE.getStatusOutcome(response);
@@ -130,9 +132,15 @@ public class MicrometerHttpRequestExecutor extends HttpRequestExecutor {
                     () -> Tags
                         .of("method", DefaultApacheHttpClientObservationConvention.INSTANCE.getMethodString(request),
                                 "uri", uriMapper.apply(request), "status", status, "outcome", outcome)
-                        .and(exportTagsForRoute ? HttpContextUtils.generateTagsForRoute(context) : Tags.empty())
+                        .and(exportTagsForRoute ? HttpContextUtils.generateTagsForRoute(localContext) : Tags.empty())
                         .and(extraTags));
         }
+    }
+
+    @Override
+    public ClassicHttpResponse execute(ClassicHttpRequest request, HttpClientConnection conn, HttpContext context)
+            throws IOException, HttpException {
+        return execute(request, conn, null, context);
     }
 
     public static class Builder {
