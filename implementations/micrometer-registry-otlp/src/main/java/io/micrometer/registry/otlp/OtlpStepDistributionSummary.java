@@ -15,16 +15,20 @@
  */
 package io.micrometer.registry.otlp;
 
+import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.AbstractDistributionSummary;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.registry.otlp.internal.Base2ExponentialHistogram;
 import io.micrometer.registry.otlp.internal.ExponentialHistogramSnapShot;
+import io.opentelemetry.proto.metrics.v1.Exemplar;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.atomic.DoubleAdder;
 import java.util.concurrent.atomic.LongAdder;
 
-class OtlpStepDistributionSummary extends AbstractDistributionSummary implements OtlpHistogramSupport {
+class OtlpStepDistributionSummary extends AbstractDistributionSummary implements OtlpHistogramSupport, OtlpExemplarMeter {
 
     private final HistogramFlavor histogramFlavor;
 
@@ -36,6 +40,9 @@ class OtlpStepDistributionSummary extends AbstractDistributionSummary implements
 
     private final StepMax max;
 
+    @Nullable
+    private final ExemplarCollector exemplarCollector;
+
     /**
      * Create a new {@code OtlpStepDistributionSummary}.
      * @param id ID
@@ -45,13 +52,16 @@ class OtlpStepDistributionSummary extends AbstractDistributionSummary implements
      * @param otlpConfig config for registry
      */
     OtlpStepDistributionSummary(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig,
-            double scale, OtlpConfig otlpConfig) {
+                                double scale, OtlpConfig otlpConfig, @Nullable ExemplarCollectorFactory exemplarCollectorFactory) {
         super(id, scale, OtlpMeterRegistry.getHistogram(clock, distributionStatisticConfig, otlpConfig));
         this.countTotal = new OtlpStepTuple2<>(clock, otlpConfig.step().toMillis(), 0L, 0.0, count::sumThenReset,
                 total::sumThenReset);
         this.max = new StepMax(clock, otlpConfig.step().toMillis());
         this.histogramFlavor = OtlpMeterRegistry.histogramFlavor(otlpConfig.histogramFlavor(),
                 distributionStatisticConfig);
+        this.exemplarCollector = exemplarCollectorFactory == null
+            ? null
+            : exemplarCollectorFactory.forHistogram(distributionStatisticConfig, otlpConfig);
     }
 
     @Override
@@ -59,6 +69,9 @@ class OtlpStepDistributionSummary extends AbstractDistributionSummary implements
         count.add(1L);
         total.add(amount);
         max.record(amount);
+        if (exemplarCollector != null) {
+            exemplarCollector.offerMeasurement(amount);
+        }
     }
 
     @Override
@@ -82,6 +95,11 @@ class OtlpStepDistributionSummary extends AbstractDistributionSummary implements
             return ((Base2ExponentialHistogram) histogram).getLatestExponentialHistogramSnapshot();
         }
         return null;
+    }
+
+    @Override
+    public List<Exemplar> exemplars() {
+        return exemplarCollector == null ? Collections.emptyList() : exemplarCollector.collectAndReset();
     }
 
     /**
