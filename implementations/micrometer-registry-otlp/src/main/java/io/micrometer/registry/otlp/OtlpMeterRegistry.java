@@ -91,6 +91,8 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
 
     private final TimeUnit baseTimeUnit;
 
+    private final String userAgentHeader;
+
     // Time when the last scheduled rollOver has started. Applicable only for delta
     // flavour.
     private volatile long lastMeterRolloverStartTime = -1;
@@ -117,15 +119,17 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
         this(config, clock, threadFactory, new HttpUrlConnectionSender());
     }
 
+    // VisibleForTesting
     // not public until we decide what we want to expose in public API
     // HttpSender may not be a good idea if we will support a non-HTTP transport
-    private OtlpMeterRegistry(OtlpConfig config, Clock clock, ThreadFactory threadFactory, HttpSender httpSender) {
+    OtlpMeterRegistry(OtlpConfig config, Clock clock, ThreadFactory threadFactory, HttpSender httpSender) {
         super(config, clock);
         this.config = config;
         this.baseTimeUnit = config.baseTimeUnit();
         this.httpSender = httpSender;
         this.resource = Resource.newBuilder().addAllAttributes(getResourceAttributes()).build();
         this.aggregationTemporality = config.aggregationTemporality();
+        this.userAgentHeader = getUserAgentHeader();
         config().namingConvention(NamingConvention.dot);
         start(threadFactory);
     }
@@ -175,6 +179,7 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
                         .build())
                     .build();
                 HttpSender.Request.Builder httpRequest = this.httpSender.post(this.config.url())
+                    .withHeader("User-Agent", this.userAgentHeader)
                     .withContent("application/x-protobuf", request.toByteArray());
                 this.config.headers().forEach(httpRequest::withHeader);
                 HttpSender.Response response = httpRequest.send();
@@ -487,4 +492,10 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
         return sloWithPositiveInf;
     }
 
+    static String getUserAgentHeader() {
+        if (MeterRegistry.class.getPackage().getImplementationVersion() == null) {
+            return "Micrometer-OTLP-Exporter-Java/unknown";
+        }
+        return "Micrometer-OTLP-Exporter-Java/" + MeterRegistry.class.getPackage().getImplementationVersion();
+    }
 }
