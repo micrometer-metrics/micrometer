@@ -17,9 +17,7 @@ package io.micrometer.java11.instrument.binder.jdk;
 
 import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
-import io.micrometer.core.instrument.binder.http.Outcome;
 import io.micrometer.core.instrument.observation.ObservationOrTimerCompatibleInstrumentation;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
@@ -36,6 +34,7 @@ import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.Executor;
 import java.util.function.Function;
 
@@ -234,19 +233,13 @@ public class MicrometerHttpClient extends HttpClient {
             ObservationOrTimerCompatibleInstrumentation<HttpClientContext> instrumentation, HttpRequest request,
             @Nullable HttpResponse<T> res) {
         instrumentation.stop(DefaultHttpClientObservationConvention.INSTANCE.getName(), "Timer for JDK's HttpClient",
-                () -> {
-                    Tags tags = Tags.of(HttpClientObservationDocumentation.LowCardinalityKeys.METHOD.asString(),
-                            request.method(), HttpClientObservationDocumentation.LowCardinalityKeys.URI.asString(),
-                            DefaultHttpClientObservationConvention.INSTANCE.getUriTag(request, res, uriMapper));
-                    if (res != null) {
-                        tags = tags
-                            .and(Tag.of(HttpClientObservationDocumentation.LowCardinalityKeys.STATUS.asString(),
-                                    String.valueOf(res.statusCode())))
-                            .and(Tag.of(HttpClientObservationDocumentation.LowCardinalityKeys.OUTCOME.asString(),
-                                    Outcome.forStatus(res.statusCode()).name()));
-                    }
-                    return tags;
-                });
+                () -> Tags.of(HttpClientObservationDocumentation.LowCardinalityKeys.METHOD.asString(), request.method(),
+                        HttpClientObservationDocumentation.LowCardinalityKeys.URI.asString(),
+                        DefaultHttpClientObservationConvention.INSTANCE.getUriTag(request, res, uriMapper),
+                        HttpClientObservationDocumentation.LowCardinalityKeys.STATUS.asString(),
+                        DefaultHttpClientObservationConvention.INSTANCE.getStatus(res),
+                        HttpClientObservationDocumentation.LowCardinalityKeys.OUTCOME.asString(),
+                        DefaultHttpClientObservationConvention.INSTANCE.getOutcome(res)));
     }
 
     private ObservationOrTimerCompatibleInstrumentation<HttpClientContext> observationOrTimer(
@@ -277,6 +270,9 @@ public class MicrometerHttpClient extends HttpClient {
             }
             instrumentation.setResponse(response);
             stopObservationOrTimer(instrumentation, request, response);
+            if (throwable != null) {
+                throw new CompletionException(throwable);
+            }
             return response;
         });
     }
