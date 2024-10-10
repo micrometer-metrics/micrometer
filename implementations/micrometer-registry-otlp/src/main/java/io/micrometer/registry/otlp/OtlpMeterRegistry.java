@@ -498,4 +498,5 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
         }
         return "Micrometer-OTLP-Exporter-Java/" + MeterRegistry.class.getPackage().getImplementationVersion();
     }
+
 }

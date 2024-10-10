@@ -34,9 +34,7 @@ import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.assertArg;
-import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.Mockito.*;
-import static org.mockito.Mockito.when;
 import static uk.org.webcompere.systemstubs.SystemStubs.withEnvironmentVariables;
 
 /**
@@ -69,9 +67,8 @@ abstract class OtlpMeterRegistryTest {
     void setUp() {
         this.clock = new MockClock();
         this.mockHttpSender = mock(HttpSender.class);
-        this.registry = new OtlpMeterRegistry(otlpConfig(),
-            this.clock, new NamedThreadFactory("otlp-metrics-publisher"),
-            this.mockHttpSender);
+        this.registry = new OtlpMeterRegistry(otlpConfig(), this.clock,
+                new NamedThreadFactory("otlp-metrics-publisher"), this.mockHttpSender);
         this.registryWithExponentialHistogram = new OtlpMeterRegistry(exponentialHistogramOtlpConfig(), clock);
     }
 
