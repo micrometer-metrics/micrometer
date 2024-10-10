@@ -66,8 +66,6 @@ def VERSIONS = [
         libs.mongoSync,
         libs.postgre,
         libs.slf4jApi,
-        libs.spring.context,
-        libs.spring.core,
         libs.testcontainers.junitJupiter,
         libs.testcontainers.kafka,
         libs.testcontainers.postgresql,

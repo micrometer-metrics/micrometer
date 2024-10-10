@@ -13,17 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.core.instrument;
+package io.micrometer.samples.spring6.inject;
 
-import com.google.inject.AbstractModule;
-import com.google.inject.Guice;
-import com.google.inject.Injector;
 import io.micrometer.common.lang.Nullable;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Metrics;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import jakarta.annotation.PostConstruct;
+import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
-
-import javax.annotation.PostConstruct;
-import javax.inject.Inject;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 
 import static java.util.Objects.requireNonNull;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -36,25 +38,15 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  */
 class MeterRegistryInjectionTest {
 
-    // @Test
-    // void injectWithDagger() {
-    // DagConfiguration conf = DaggerDagConfiguration.create();
-    // MyComponent component = conf.component();
-    // component.after(); // @PostConstruct is not automatically called
-    // component.performanceCriticalFeature();
-    // assertThat(component.registry)
-    // .isInstanceOf(SimpleMeterRegistry.class)
-    // .matches(r -> r.find("feature.counter").counter().isPresent());
-    // }
-
     @Test
-    void injectWithGuice() {
-        Injector injector = Guice.createInjector(new GuiceConfiguration());
-        MyComponent component = injector.getInstance(MyComponent.class);
-        component.after(); // @PostConstruct is not automatically called
-        component.performanceCriticalFeature();
-        assertThat(component.registry).isInstanceOf(SimpleMeterRegistry.class);
-        component.registry.get("feature.counter").counter();
+    void injectWithSpring() {
+        try (AnnotationConfigApplicationContext ctx = new AnnotationConfigApplicationContext(
+                SpringConfiguration.class)) {
+            MyComponent component = ctx.getBean(MyComponent.class);
+            component.performanceCriticalFeature();
+            assertThat(component.registry).isInstanceOf(SimpleMeterRegistry.class);
+            component.registry.get("feature.counter").counter();
+        }
     }
 
     @Test
@@ -65,24 +57,17 @@ class MeterRegistryInjectionTest {
 
 }
 
-// @Component(modules = DagConfiguration.RegistryConf.class)
-// interface DagConfiguration {
-// MyComponent component();
-//
-// @Module
-// class RegistryConf {
-// @Provides
-// static MeterRegistry registry() {
-// return new SimpleMeterRegistry();
-// }
-// }
-// }
+@Configuration
+class SpringConfiguration {
 
-class GuiceConfiguration extends AbstractModule {
+    @Bean
+    SimpleMeterRegistry meterRegistry() {
+        return new SimpleMeterRegistry();
+    }
 
-    @Override
-    protected void configure() {
-        bind(MeterRegistry.class).to(SimpleMeterRegistry.class);
+    @Bean
+    MyComponent component() {
+        return new MyComponent();
     }
 
 }
