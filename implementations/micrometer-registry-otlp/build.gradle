@@ -10,6 +10,7 @@ dependencies {
     testImplementation 'io.rest-assured:rest-assured'
     testImplementation 'org.testcontainers:junit-jupiter'
     testImplementation 'org.awaitility:awaitility'
+	testImplementation libs.mockitoCore5
 }
 
 dockerTest {
