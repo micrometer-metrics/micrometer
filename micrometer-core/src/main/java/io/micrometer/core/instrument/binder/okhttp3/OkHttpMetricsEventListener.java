@@ -95,6 +95,8 @@ public class OkHttpMetricsEventListener extends EventListener {
 
     private final Function<Request, String> urlMapper;
 
+    private final Set<Integer> statusCodesMappedAsNotFound;
+
     private final Iterable<Tag> extraTags;
 
     private final Iterable<BiFunction<Request, Response, Tag>> contextSpecificTags;
@@ -107,17 +109,20 @@ public class OkHttpMetricsEventListener extends EventListener {
     final ConcurrentMap<Call, CallState> callState = new ConcurrentHashMap<>();
 
     protected OkHttpMetricsEventListener(MeterRegistry registry, String requestsMetricName,
-            Function<Request, String> urlMapper, Iterable<Tag> extraTags,
+            Function<Request, String> urlMapper, Set<Integer> statusCodesMappedAsNotFound, Iterable<Tag> extraTags,
             Iterable<BiFunction<Request, Response, Tag>> contextSpecificTags) {
-        this(registry, requestsMetricName, urlMapper, extraTags, contextSpecificTags, emptyList(), true);
+        this(registry, requestsMetricName, urlMapper, statusCodesMappedAsNotFound, extraTags, contextSpecificTags,
+                emptyList(), true);
     }
 
     OkHttpMetricsEventListener(MeterRegistry registry, String requestsMetricName, Function<Request, String> urlMapper,
-            Iterable<Tag> extraTags, Iterable<BiFunction<Request, Response, Tag>> contextSpecificTags,
-            Iterable<String> requestTagKeys, boolean includeHostTag) {
+            Set<Integer> statusCodesMappedAsNotFound, Iterable<Tag> extraTags,
+            Iterable<BiFunction<Request, Response, Tag>> contextSpecificTags, Iterable<String> requestTagKeys,
+            boolean includeHostTag) {
         this.registry = registry;
         this.requestsMetricName = requestsMetricName;
         this.urlMapper = urlMapper;
+        this.statusCodesMappedAsNotFound = statusCodesMappedAsNotFound;
         this.extraTags = extraTags;
         this.contextSpecificTags = contextSpecificTags;
         this.includeHostTag = includeHostTag;
@@ -200,7 +205,7 @@ public class OkHttpMetricsEventListener extends EventListener {
         if (request == null) {
             return TAG_VALUE_UNKNOWN;
         }
-        return state.response != null && (state.response.code() == 404 || state.response.code() == 301) ? "NOT_FOUND"
+        return state.response != null && statusCodesMappedAsNotFound.contains(state.response.code()) ? "NOT_FOUND"
                 : urlMapper.apply(request);
     }
 
@@ -271,6 +276,8 @@ public class OkHttpMetricsEventListener extends EventListener {
         private Function<Request, String> uriMapper = (request) -> Optional.ofNullable(request.header(URI_PATTERN))
             .orElse("none");
 
+        private Set<Integer> statusCodesMappedAsNotFound = new HashSet<>(Arrays.asList(301, 404));
+
         private Tags tags = Tags.empty();
 
         private Collection<BiFunction<Request, Response, Tag>> contextSpecificTags = new ArrayList<>();
@@ -313,6 +320,34 @@ public class OkHttpMetricsEventListener extends EventListener {
 
         public Builder uriMapper(Function<Request, String> uriMapper) {
             this.uriMapper = uriMapper;
+            return this;
+        }
+
+        /**
+         * Sets specific status codes to be mapped to a generic "NOT_FOUND" category for
+         * the 'uri' tag when recording metrics. This mapping helps in avoiding tag
+         * explosion and reducing metric dimensionality by treating these status codes
+         * identically.
+         * @param statusCodesMappedAsNotFound One or more status codes to be treated as
+         * "NOT_FOUND".
+         * @return this builder for chaining
+         */
+        public Builder statusCodesMappedAsNotFound(Integer... statusCodesMappedAsNotFound) {
+            return statusCodesMappedAsNotFound(Arrays.asList(statusCodesMappedAsNotFound));
+        }
+
+        /**
+         * Sets specific status codes to be mapped to a generic "NOT_FOUND" category for
+         * the 'uri' tag when recording metrics. This mapping helps in avoiding tag
+         * explosion and reducing metric dimensionality by treating these status codes
+         * identically.
+         * @param statusCodesMappedAsNotFound One or more status codes to be treated as
+         * "NOT_FOUND".
+         * @return this builder for chaining
+         */
+        public Builder statusCodesMappedAsNotFound(Iterable<Integer> statusCodesMappedAsNotFound) {
+            this.statusCodesMappedAsNotFound = new HashSet<>();
+            statusCodesMappedAsNotFound.forEach(this.statusCodesMappedAsNotFound::add);
             return this;
         }
 
@@ -361,8 +396,8 @@ public class OkHttpMetricsEventListener extends EventListener {
         }
 
         public OkHttpMetricsEventListener build() {
-            return new OkHttpMetricsEventListener(registry, name, uriMapper, tags, contextSpecificTags, requestTagKeys,
-                    includeHostTag);
+            return new OkHttpMetricsEventListener(registry, name, uriMapper, statusCodesMappedAsNotFound, tags,
+                    contextSpecificTags, requestTagKeys, includeHostTag);
         }
 
     }
