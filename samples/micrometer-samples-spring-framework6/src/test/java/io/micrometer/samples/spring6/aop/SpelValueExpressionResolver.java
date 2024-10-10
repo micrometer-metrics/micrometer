@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.core.aop;
+package io.micrometer.samples.spring6.aop;
 
 import io.micrometer.common.annotation.ValueExpressionResolver;
 import io.micrometer.common.util.internal.logging.InternalLogger;
@@ -23,7 +23,7 @@ import org.springframework.expression.ExpressionParser;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
 import org.springframework.expression.spel.support.SimpleEvaluationContext;
 
-class SpelValueExpressionResolver implements ValueExpressionResolver {
+public class SpelValueExpressionResolver implements ValueExpressionResolver {
 
     private static final InternalLogger log = InternalLoggerFactory.getInstance(SpelValueExpressionResolver.class);
 

@@ -143,12 +143,14 @@ dependencies {
 
     // dependency injection tests
     testImplementation 'javax.inject:javax.inject'
-    testImplementation 'org.springframework:spring-context'
     testImplementation 'com.google.inject:guice'
 
     // Uncomment these if you are interested in testing injection with dagger in MeterRegistryInjectionTest
     // testImplementation 'com.google.dagger:dagger'
     // testAnnotationProcessor 'com.google.dagger:dagger-compiler'
+
+    // Only needed for ModifiedClassPathClassLoader
+    testImplementation(libs.spring5.core)
 
     // JUnit 5
     testImplementation libs.junitJupiter
