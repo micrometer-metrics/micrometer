@@ -15,8 +15,11 @@
  */
 package io.micrometer.java11.instrument.binder.jdk;
 
+import com.github.tomakehurst.wiremock.client.ResponseDefinitionBuilder;
+import com.github.tomakehurst.wiremock.http.Fault;
 import com.github.tomakehurst.wiremock.junit5.WireMockRuntimeInfo;
 import com.github.tomakehurst.wiremock.junit5.WireMockTest;
+import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.observation.DefaultMeterObservationHandler;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
@@ -33,8 +36,11 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
+import java.util.concurrent.CompletionException;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
+import static org.assertj.core.api.Assertions.assertThatNoException;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.BDDAssertions.then;
 
 @WireMockTest
@@ -50,6 +56,8 @@ class MicrometerHttpClientTests {
     @BeforeEach
     void setup() {
         stubFor(any(urlEqualTo("/metrics")).willReturn(ok().withBody("body")));
+        stubFor(any(urlEqualTo("/test-fault"))
+            .willReturn(new ResponseDefinitionBuilder().withFault(Fault.CONNECTION_RESET_BY_PEER)));
     }
 
     @Test
@@ -89,6 +97,25 @@ class MicrometerHttpClientTests {
         observedClient.send(request, HttpResponse.BodyHandlers.ofString());
 
         thenMeterRegistryContainsHttpClientTags();
+    }
+
+    @Test
+    @Issue("#5136")
+    void shouldThrowErrorFromSendAsync(WireMockRuntimeInfo wmInfo) {
+        var client = MicrometerHttpClient.instrumentationBuilder(httpClient, meterRegistry).build();
+
+        var request = HttpRequest.newBuilder(URI.create(wmInfo.getHttpBaseUrl() + "/test-fault")).GET().build();
+
+        var response = client.sendAsync(request, HttpResponse.BodyHandlers.ofString());
+
+        assertThatThrownBy(response::join).isInstanceOf(CompletionException.class);
+        assertThatNoException().isThrownBy(() -> meterRegistry.get("http.client.requests")
+            .tag("method", "GET")
+            // TODO fix status/uri in exceptional cases where response may be null
+            .tag("uri", "UNKNOWN")
+            .tag("status", "UNKNOWN")
+            .tag("outcome", "UNKNOWN")
+            .timer());
     }
 
     private void thenMeterRegistryContainsHttpClientTags() {
