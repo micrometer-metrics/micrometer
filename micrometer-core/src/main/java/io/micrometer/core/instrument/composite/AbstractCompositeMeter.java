@@ -18,11 +18,11 @@ package io.micrometer.core.instrument.composite;
 import io.micrometer.core.instrument.AbstractMeter;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.noop.NoopMeter;
 import io.micrometer.core.lang.Nullable;
 
 import java.util.Collections;
 import java.util.IdentityHashMap;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -49,9 +49,11 @@ abstract class AbstractCompositeMeter<T extends Meter> extends AbstractMeter imp
     }
 
     T firstChild() {
-        final Iterator<T> i = children.values().iterator();
-        if (i.hasNext())
-            return i.next();
+        for (T next : children.values()) {
+            if (!(next instanceof NoopMeter)) {
+                return next;
+            }
+        }
 
         // There are no child meters. Return a lazily instantiated no-op meter.
         final T noopMeter = this.noopMeter;
