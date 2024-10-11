@@ -91,8 +91,8 @@ public class AnnotationHandler<T> {
         try {
             Method method = ((MethodSignature) pjp.getSignature()).getMethod();
             method = tryToTakeMethodFromTargetClass(pjp, method);
-            List<AnnotatedObject> annotatedParameters = AnnotationUtils.findAnnotatedParameters(annotationClass,
-                    method, pjp.getArgs());
+            List<AnnotatedObject> annotatedParameters = AnnotationUtils.findAnnotatedParameters(annotationClass, method,
+                    pjp.getArgs());
             getParametersAnnotationsFromInterfaces(pjp, method, annotatedParameters);
             addAnnotatedArguments(objectToModify, annotatedParameters);
         }
@@ -110,11 +110,9 @@ public class AnnotationHandler<T> {
             Arrays.stream(method.getAnnotationsByType(annotationClass))
                 .map(annotation -> new AnnotatedObject(annotation, result))
                 .forEach(annotatedResult::add);
-             getMethodAnnotationsFromInterfaces(pjp, method)
-                 .stream().map(annotation -> new AnnotatedObject(annotation, result))
-                 .forEach(annotatedResult::add);
-
-
+            getMethodAnnotationsFromInterfaces(pjp, method).stream()
+                .map(annotation -> new AnnotatedObject(annotation, result))
+                .forEach(annotatedResult::add);
 
             addAnnotatedArguments(objectToModify, annotatedResult);
         }
@@ -134,24 +132,21 @@ public class AnnotationHandler<T> {
     }
 
     private void getParametersAnnotationsFromInterfaces(ProceedingJoinPoint pjp, Method mostSpecificMethod,
-                                                        List<AnnotatedObject> annotatedParameters) {
-        traverseInterfacesHierarchy(
-            pjp, mostSpecificMethod,
-            method -> {
-                List<AnnotatedObject> annotatedParametersForActualMethod = AnnotationUtils
-                    .findAnnotatedParameters(annotationClass, method, pjp.getArgs());
-                // annotations for a single parameter can be `duplicated` by the ones
-                // from parent interface,
-                // however later on during key-based deduplication the ones from
-                // specific method(target class)
-                // will take precedence
-                annotatedParameters.addAll(annotatedParametersForActualMethod);
-            }
-        );
+            List<AnnotatedObject> annotatedParameters) {
+        traverseInterfacesHierarchy(pjp, mostSpecificMethod, method -> {
+            List<AnnotatedObject> annotatedParametersForActualMethod = AnnotationUtils
+                .findAnnotatedParameters(annotationClass, method, pjp.getArgs());
+            // annotations for a single parameter can be `duplicated` by the ones
+            // from parent interface,
+            // however later on during key-based deduplication the ones from
+            // specific method(target class)
+            // will take precedence
+            annotatedParameters.addAll(annotatedParametersForActualMethod);
+        });
     }
 
-    private void traverseInterfacesHierarchy(ProceedingJoinPoint pjp,
-                                                        Method mostSpecificMethod, Consumer<Method> consumer) {
+    private void traverseInterfacesHierarchy(ProceedingJoinPoint pjp, Method mostSpecificMethod,
+            Consumer<Method> consumer) {
         Class<?>[] implementedInterfaces = pjp.getThis().getClass().getInterfaces();
         for (Class<?> implementedInterface : implementedInterfaces) {
             for (Method methodFromInterface : implementedInterface.getMethods()) {
@@ -165,8 +160,7 @@ public class AnnotationHandler<T> {
     private List<Annotation> getMethodAnnotationsFromInterfaces(ProceedingJoinPoint pjp, Method mostSpecificMethod) {
         List<Annotation> allAnnotations = new ArrayList<>();
         traverseInterfacesHierarchy(pjp, mostSpecificMethod,
-            method -> allAnnotations.addAll(
-                Arrays.asList(method.getAnnotationsByType(annotationClass))));
+                method -> allAnnotations.addAll(Arrays.asList(method.getAnnotationsByType(annotationClass))));
         return allAnnotations;
     }
 
