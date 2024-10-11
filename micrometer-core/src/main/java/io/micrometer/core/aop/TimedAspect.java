@@ -17,6 +17,7 @@ package io.micrometer.core.aop;
 
 import io.micrometer.common.lang.NonNullApi;
 import io.micrometer.common.lang.Nullable;
+import io.micrometer.common.util.internal.logging.WarnThenDebugLogger;
 import io.micrometer.core.annotation.Incubating;
 import io.micrometer.core.annotation.Timed;
 import io.micrometer.core.instrument.*;
@@ -83,6 +84,8 @@ import java.util.function.Predicate;
 @NonNullApi
 @Incubating(since = "1.0.0")
 public class TimedAspect {
+
+    private static final WarnThenDebugLogger joinPointTagsFunctionLogger = new WarnThenDebugLogger(TimedAspect.class);
 
     private static final Predicate<ProceedingJoinPoint> DONT_SKIP_ANYTHING = pjp -> false;
 
@@ -157,8 +160,22 @@ public class TimedAspect {
     public TimedAspect(MeterRegistry registry, Function<ProceedingJoinPoint, Iterable<Tag>> tagsBasedOnJoinPoint,
             Predicate<ProceedingJoinPoint> shouldSkip) {
         this.registry = registry;
-        this.tagsBasedOnJoinPoint = tagsBasedOnJoinPoint;
+        this.tagsBasedOnJoinPoint = makeSafe(tagsBasedOnJoinPoint);
         this.shouldSkip = shouldSkip;
+    }
+
+    private Function<ProceedingJoinPoint, Iterable<Tag>> makeSafe(
+            Function<ProceedingJoinPoint, Iterable<Tag>> function) {
+        return pjp -> {
+            try {
+                return function.apply(pjp);
+            }
+            catch (Throwable t) {
+                joinPointTagsFunctionLogger
+                    .log("Exception thrown from the tagsBasedOnJoinPoint function configured on TimedAspect.", t);
+                return Tags.empty();
+            }
+        };
     }
 
     @Around("@within(io.micrometer.core.annotation.Timed) and not @annotation(io.micrometer.core.annotation.Timed)")

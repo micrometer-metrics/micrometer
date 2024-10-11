@@ -15,9 +15,11 @@
  */
 package io.micrometer.core.aop;
 
+import io.micrometer.core.Issue;
 import io.micrometer.core.annotation.Counted;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.search.MeterNotFoundException;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.aspectj.lang.ProceedingJoinPoint;
@@ -25,6 +27,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.aop.aspectj.annotation.AspectJProxyFactory;
 
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
 import java.util.function.Predicate;
 
 import static java.util.concurrent.CompletableFuture.supplyAsync;
@@ -193,6 +196,21 @@ class CountedAspectTest {
         assertThat(meterRegistry.get("method.counted").counters()).hasSize(2);
         assertThat(meterRegistry.get("method.counted").tag("result", "success").counter().count()).isOne();
         assertThat(meterRegistry.get("method.counted").tag("result", "failure").counter().count()).isOne();
+    }
+
+    @Test
+    @Issue("#5584")
+    void pjpFunctionThrows() {
+        CountedService countedService = getAdvisedService(new CountedService(),
+                new CountedAspect(meterRegistry, (Function<ProceedingJoinPoint, Iterable<Tag>>) jp -> {
+                    throw new RuntimeException("test");
+                }));
+        countedService.succeedWithMetrics();
+
+        Counter counter = meterRegistry.get("metric.success").tag("extra", "tag").tag("result", "success").counter();
+
+        assertThat(counter.count()).isOne();
+        assertThat(counter.getId().getDescription()).isNull();
     }
 
     static class CountedService {

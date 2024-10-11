@@ -18,11 +18,10 @@ package io.micrometer.core.aop;
 import io.micrometer.common.annotation.ValueExpressionResolver;
 import io.micrometer.common.annotation.ValueResolver;
 import io.micrometer.common.lang.NonNull;
+import io.micrometer.core.Issue;
 import io.micrometer.core.annotation.Timed;
-import io.micrometer.core.instrument.LongTaskTimer;
+import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.Meter.Id;
-import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
@@ -36,6 +35,7 @@ import org.springframework.aop.aspectj.annotation.AspectJProxyFactory;
 import javax.annotation.Nonnull;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
+import java.util.function.Function;
 import java.util.function.Predicate;
 
 import static java.util.concurrent.CompletableFuture.supplyAsync;
@@ -376,6 +376,22 @@ class TimedAspectTest {
         service.call();
 
         assertThat(failingRegistry.getMeters()).isEmpty();
+    }
+
+    @Issue("#5584")
+    void pjpFunctionThrows() {
+        MeterRegistry registry = new SimpleMeterRegistry();
+
+        AspectJProxyFactory pf = new AspectJProxyFactory(new TimedService());
+        pf.addAspect(new TimedAspect(registry, (Function<ProceedingJoinPoint, Iterable<Tag>>) jp -> {
+            throw new RuntimeException("test");
+        }));
+
+        TimedService service = pf.getProxy();
+
+        service.call();
+
+        assertThat(registry.get("call").tag("extra", "tag").timer().count()).isEqualTo(1);
     }
 
     @Test
