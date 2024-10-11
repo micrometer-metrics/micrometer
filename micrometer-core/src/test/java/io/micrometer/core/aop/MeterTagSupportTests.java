@@ -18,7 +18,7 @@ package io.micrometer.core.aop;
 /**
  * Tests for {@link MeterTagSupport} have been moved to the module
  * micrometer-samples-spring-framework6 to test with the current version of Spring that
- * requires JDK 17+..
+ * requires JDK 17+.
  *
  * @author Marcin Grzejszczak
  * @author Johnny Lim
