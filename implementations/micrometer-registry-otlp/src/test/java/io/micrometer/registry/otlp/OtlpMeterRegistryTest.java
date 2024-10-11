@@ -15,12 +15,15 @@
  */
 package io.micrometer.registry.otlp;
 
+import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
+import io.micrometer.core.ipc.http.HttpSender;
 import io.opentelemetry.proto.metrics.v1.HistogramDataPoint;
 import io.opentelemetry.proto.metrics.v1.Metric;
 import io.opentelemetry.proto.metrics.v1.NumberDataPoint;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -31,6 +34,8 @@ import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.assertArg;
+import static org.mockito.Mockito.*;
 import static uk.org.webcompere.systemstubs.SystemStubs.withEnvironmentVariables;
 
 /**
@@ -47,11 +52,20 @@ abstract class OtlpMeterRegistryTest {
 
     protected static final Tag meterTag = Tag.of("key", "value");
 
-    protected MockClock clock = new MockClock();
+    protected MockClock clock;
 
-    protected OtlpMeterRegistry registry = new OtlpMeterRegistry(otlpConfig(), clock);
+    protected OtlpMeterRegistry registry;
+
+    private HttpSender mockHttpSender;
 
     abstract OtlpConfig otlpConfig();
+
+    @BeforeEach
+    void setUp() {
+        this.clock = new MockClock();
+        this.mockHttpSender = mock(HttpSender.class);
+        this.registry = new OtlpMeterRegistry(otlpConfig(), this.clock, this.mockHttpSender);
+    }
 
     // If the service.name was not specified, SDKs MUST fallback to 'unknown_service'
     @Test
@@ -104,6 +118,23 @@ abstract class OtlpMeterRegistryTest {
         assertThat(writeToMetric(timeGauge).toString())
             .isEqualTo("name: \"gauge.time\"\n" + "unit: \"milliseconds\"\n" + "gauge {\n" + "  data_points {\n"
                     + "    time_unix_nano: 1000000\n" + "    as_double: 0.024\n" + "  }\n" + "}\n");
+    }
+
+    @Issue("#5577")
+    @Test
+    void httpHeaders() throws Throwable {
+        HttpSender.Request.Builder builder = HttpSender.Request.build(otlpConfig().url(), this.mockHttpSender);
+        when(mockHttpSender.post(otlpConfig().url())).thenReturn(builder);
+
+        when(mockHttpSender.send(isA(HttpSender.Request.class))).thenReturn(new HttpSender.Response(200, ""));
+
+        writeToMetric(TimeGauge.builder("gauge.time", this, TimeUnit.MICROSECONDS, o -> 24).register(registry));
+        registry.publish();
+
+        verify(this.mockHttpSender).send(assertArg(request -> {
+            assertThat(request.getRequestHeaders().get("User-Agent")).startsWith("Micrometer-OTLP-Exporter-Java");
+            assertThat(request.getRequestHeaders()).containsEntry("Content-Type", "application/x-protobuf");
+        }));
     }
 
     @Test
