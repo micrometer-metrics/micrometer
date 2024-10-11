@@ -851,7 +851,6 @@ class TimedAspectTest {
         void getAnnotationForPackagePrivateMethod(@MeterTag("foo") String foo) {
         }
 
-
         @Timed
         @MeterTag("foo")
         String getAnnotationForPackagePrivateMethod() {

@@ -473,6 +473,7 @@ class CountedAspectTest {
                 aClass -> valueResolver, aClass -> valueExpressionResolver);
 
         MeterRegistry registry;
+
         CountedAspect countedAspect;
 
         @BeforeEach
@@ -512,10 +513,7 @@ class CountedAspectTest {
 
             service.getAnnotationForTagValueExpression("15L");
 
-            assertThat(registry.get("method.counted")
-                .tag("test", "hello characters")
-                .counter().
-                count()).isEqualTo(1);
+            assertThat(registry.get("method.counted").tag("test", "hello characters").counter().count()).isEqualTo(1);
         }
 
         @ParameterizedTest
@@ -571,10 +569,7 @@ class CountedAspectTest {
 
             service.getAnnotationForPackagePrivateMethod("bar");
 
-            assertThat(registry.get("method.counted")
-                .tag("foo", "bar")
-                .counter()
-                .count()).isEqualTo(1);
+            assertThat(registry.get("method.counted").tag("foo", "bar").counter().count()).isEqualTo(1);
         }
 
         @ParameterizedTest
@@ -584,10 +579,7 @@ class CountedAspectTest {
 
             service.getAnnotationForArgumentToString();
 
-            assertThat(registry.get("method.counted")
-                .tag("test", "15")
-                .counter()
-                .count()).isEqualTo(1);
+            assertThat(registry.get("method.counted").tag("test", "15").counter().count()).isEqualTo(1);
         }
 
         @ParameterizedTest
@@ -610,10 +602,7 @@ class CountedAspectTest {
 
             service.getAnnotationForTagValueExpression();
 
-            assertThat(registry.get("method.counted")
-                .tag("test", "hello characters")
-                .counter().
-                count()).isEqualTo(1);
+            assertThat(registry.get("method.counted").tag("test", "hello characters").counter().count()).isEqualTo(1);
         }
 
         @Test
@@ -626,10 +615,7 @@ class CountedAspectTest {
 
             service.getAnnotationForPackagePrivateMethod();
 
-            assertThat(registry.get("method.counted")
-                .tag("foo", "bar")
-                .counter()
-                .count()).isEqualTo(1);
+            assertThat(registry.get("method.counted").tag("foo", "bar").counter().count()).isEqualTo(1);
         }
 
         private <T> T getProxyWithCountedAspect(T object) {
@@ -637,7 +623,6 @@ class CountedAspectTest {
             pf.addAspect(countedAspect);
             return pf.getProxy();
         }
-
 
         enum AnnotatedTestClass {
 
@@ -674,14 +659,12 @@ class CountedAspectTest {
             void getAnnotationForTagValueExpression(
                     @MeterTag(key = "test", expression = "'hello' + ' characters'") String test);
 
-
             @Counted
             @MeterTag(key = "test", expression = "'hello' + ' characters'")
             String getAnnotationForTagValueExpression();
 
             @Counted
             void getAnnotationForArgumentToString(@MeterTag("test") Long param);
-
 
             @Counted
             @MeterTag("test")
