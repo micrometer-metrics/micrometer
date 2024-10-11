@@ -15,18 +15,26 @@
  */
 package io.micrometer.registry.otlp;
 
+import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.cumulative.CumulativeCounter;
+import io.opentelemetry.proto.metrics.v1.Exemplar;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-class OtlpCumulativeCounter extends CumulativeCounter implements StartTimeAwareMeter {
+class OtlpCumulativeCounter extends CumulativeCounter implements StartTimeAwareMeter, OtlpExemplarMeter {
 
     private final long startTimeNanos;
 
-    OtlpCumulativeCounter(Id id, Clock clock) {
+    @Nullable
+    private final ExemplarCollector exemplarCollector;
+
+    OtlpCumulativeCounter(Id id, Clock clock, @Nullable ExemplarCollectorFactory exemplarCollectorFactory) {
         super(id);
         this.startTimeNanos = TimeUnit.MILLISECONDS.toNanos(clock.wallTime());
+        this.exemplarCollector = exemplarCollectorFactory == null ? null : exemplarCollectorFactory.fixedSize(1);
     }
 
     @Override
@@ -34,4 +42,16 @@ class OtlpCumulativeCounter extends CumulativeCounter implements StartTimeAwareM
         return this.startTimeNanos;
     }
 
+    @Override
+    public void increment(double amount) {
+        super.increment(amount);
+        if (exemplarCollector != null) {
+            exemplarCollector.offerMeasurement(amount);
+        }
+    }
+
+    @Override
+    public List<Exemplar> exemplars() {
+        return exemplarCollector == null ? Collections.emptyList() : exemplarCollector.collectAndReset();
+    }
 }
