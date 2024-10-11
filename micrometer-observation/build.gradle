@@ -33,8 +33,6 @@ dependencies {
 
     testImplementation project(':micrometer-observation-test')
 
-    testImplementation 'org.springframework:spring-context'
-
     // JUnit 5
     testImplementation libs.junitJupiter
     testImplementation(libs.archunitJunit5) {

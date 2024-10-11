@@ -75,7 +75,8 @@ rest-assured = "5.5.0"
 signalfx = "1.0.46"
 slf4j = "1.7.36"
 spectator-atlas = "1.7.21"
-spring = "5.3.36"
+spring5 = "5.3.39"
+spring6 = "6.1.13"
 spring-javaformat = "0.0.43"
 testcontainers = "1.20.2"
 tomcat = "8.5.100"
@@ -134,6 +135,8 @@ httpcomponents-client = { module = "org.apache.httpcomponents:httpclient", versi
 httpcomponents-client5 = { module = "org.apache.httpcomponents.client5:httpclient5", version.ref = "httpcomponents-client5" }
 hystrix = { module = "com.netflix.hystrix:hystrix-core", version.ref = "hystrix" }
 jacksonDatabind = { module = "com.fasterxml.jackson.core:jackson-databind", version.ref = "jackson-databind" }
+jakarta-annotationApi = { module = "jakarta.annotation:jakarta.annotation-api", version = "3.0.0" }
+jakarta-injectApi = { module = "jakarta.inject:jakarta.inject-api", version = "2.0.1" }
 jakarta-jmsApi = { module = "jakarta.jms:jakarta.jms-api", version = "3.0.0" }
 jakarta-servletApi = { module = "jakarta.servlet:jakarta.servlet-api", version = "5.0.0" }
 javalin = { module = "io.javalin:javalin", version = "5.6.5" }
@@ -202,10 +205,11 @@ signalfx = { module = "com.signalfx.public:signalfx-java", version.ref = "signal
 slf4jApi = { module = "org.slf4j:slf4j-api", version.ref = "slf4j" }
 slfj4Simple = { module = "org.slf4j:slf4j-simple", version.ref = "slf4j" }
 spectatorAtlas = { module = "com.netflix.spectator:spectator-reg-atlas", version.ref = "spectator-atlas" }
-spring-context = { module = "org.springframework:spring-context", version.ref = "spring" }
-spring-core = { module = "org.springframework:spring-core", version.ref = "spring" }
+spring5-core = { module = "org.springframework:spring-core", version.ref = "spring5" }
 spring-cloud = { module = "org.springframework.cloud:spring-cloud-dependencies", version = "2021.0.9" }
 spring-javaformatCheckstyle = { module = "io.spring.javaformat:spring-javaformat-checkstyle", version.ref = "spring-javaformat" }
+spring6-aop = { module = "org.springframework:spring-aop", version.ref = "spring6" }
+spring6-context = { module = "org.springframework:spring-context", version.ref = "spring6" }
 systemStubsJupiter = { module = "uk.org.webcompere:system-stubs-jupiter", version = "2.1.7" }
 testcontainers-junitJupiter = { module = "org.testcontainers:junit-jupiter", version.ref = "testcontainers" }
 testcontainers-kafka = { module = "org.testcontainers:kafka", version.ref = "testcontainers" }

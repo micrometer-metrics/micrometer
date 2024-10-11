@@ -16,8 +16,27 @@ apply plugin: 'org.antora'
 
 description = 'Micrometer Docs'
 
+// Spring 6 requires Java 17+
+// skip this module when building with jdk <17
+if (!javaLanguageVersion.canCompileOrRun(17)) {
+    project.tasks.configureEach { task -> task.enabled = false }
+}
+
 repositories {
     mavenCentral()
+}
+
+java {
+    toolchain {
+        languageVersion = javaLanguageVersion
+    }
+}
+
+compileTestJava {
+    // need to override the config applied in the root build.gradle to all subprojects
+    // TODO can we not do this with Gradle's toolchains instead?
+    sourceCompatibility = javaLanguageVersion
+    targetCompatibility = javaLanguageVersion
 }
 
 dependencies {
@@ -31,7 +50,7 @@ dependencies {
     testImplementation libs.aspectjweaver
     testImplementation libs.junitJupiter
     testImplementation 'org.assertj:assertj-core'
-    testImplementation 'org.springframework:spring-context'
+    testImplementation(libs.spring6.context)
     testImplementation 'io.projectreactor:reactor-core'
     testImplementation 'io.projectreactor:reactor-test'
     testImplementation 'io.netty:netty-transport'
