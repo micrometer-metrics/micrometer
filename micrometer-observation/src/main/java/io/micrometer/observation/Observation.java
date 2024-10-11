@@ -20,11 +20,14 @@ import io.micrometer.common.KeyValues;
 import io.micrometer.common.lang.NonNull;
 import io.micrometer.common.lang.Nullable;
 import io.micrometer.common.util.internal.logging.InternalLoggerFactory;
+import io.micrometer.context.ContextExecutorService;
+import io.micrometer.context.ContextSnapshotFactory;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -610,6 +613,11 @@ public interface Observation extends ObservationView {
 
     default <T, E extends Throwable> CheckedCallable<T, E> wrapChecked(CheckedCallable<T, E> checkedCallable) throws E {
         return () -> observeChecked(checkedCallable);
+    }
+
+    default ExecutorService wrap(ExecutorService executorService) {
+        return ContextExecutorService.wrap(executorService,
+                () -> ContextSnapshotFactory.builder().build().captureAll());
     }
 
     /**
