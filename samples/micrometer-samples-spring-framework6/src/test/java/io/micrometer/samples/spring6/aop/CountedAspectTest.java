@@ -244,6 +244,21 @@ class CountedAspectTest {
         assertThat(counter.getId().getDescription()).isNull();
     }
 
+    @Test
+    @Issue("#5584")
+    void pjpFunctionThrows() {
+        CountedService countedService = getAdvisedService(new CountedService(),
+                new CountedAspect(meterRegistry, (Function<ProceedingJoinPoint, Iterable<Tag>>) jp -> {
+                    throw new RuntimeException("test");
+                }));
+        countedService.succeedWithMetrics();
+
+        Counter counter = meterRegistry.get("metric.success").tag("extra", "tag").tag("result", "success").counter();
+
+        assertThat(counter.count()).isOne();
+        assertThat(counter.getId().getDescription()).isNull();
+    }
+
     static class CountedService {
 
         @Counted(value = "metric.none", recordFailuresOnly = true)

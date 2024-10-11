@@ -424,6 +424,22 @@ class TimedAspectTest {
         assertThat(failingRegistry.getMeters()).isEmpty();
     }
 
+    @Issue("#5584")
+    void pjpFunctionThrows() {
+        MeterRegistry registry = new SimpleMeterRegistry();
+
+        AspectJProxyFactory pf = new AspectJProxyFactory(new TimedService());
+        pf.addAspect(new TimedAspect(registry, (Function<ProceedingJoinPoint, Iterable<Tag>>) jp -> {
+            throw new RuntimeException("test");
+        }));
+
+        TimedService service = pf.getProxy();
+
+        service.call();
+
+        assertThat(registry.get("call").tag("extra", "tag").timer().count()).isEqualTo(1);
+    }
+
     @Test
     void ignoreClassLevelAnnotationIfMethodLevelPresent() {
         MeterRegistry registry = new SimpleMeterRegistry();
