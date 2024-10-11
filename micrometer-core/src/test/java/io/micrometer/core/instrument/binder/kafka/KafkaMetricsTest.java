@@ -98,7 +98,7 @@ class KafkaMetricsTest {
             KafkaMetric metric = new KafkaMetric(this, metricName, new Value(), new MetricConfig(), Time.SYSTEM);
             return Collections.singletonMap(metricName, metric);
         };
-        ScheduledExecutorService customScheduler = Executors.newScheduledThreadPool(2);
+        ScheduledExecutorService customScheduler = Executors.newScheduledThreadPool(1);
         kafkaMetrics = new KafkaMetrics(supplier, Collections.emptyList(), customScheduler);
         MeterRegistry registry = new SimpleMeterRegistry();
 

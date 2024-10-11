@@ -49,6 +49,16 @@ public class KafkaClientMetrics extends KafkaMetrics {
      * Kafka {@link Producer} metrics binder
      * @param kafkaProducer producer instance to be instrumented
      * @param tags additional tags
+     * @param scheduler scheduler to check and bind metrics``
+     */
+    public KafkaClientMetrics(Producer<?, ?> kafkaProducer, Iterable<Tag> tags, ScheduledExecutorService scheduler) {
+        super(kafkaProducer::metrics, tags, scheduler);
+    }
+
+    /**
+     * Kafka {@link Producer} metrics binder
+     * @param kafkaProducer producer instance to be instrumented
+     * @param tags additional tags
      */
     public KafkaClientMetrics(Producer<?, ?> kafkaProducer, Iterable<Tag> tags) {
         super(kafkaProducer::metrics, tags);
@@ -87,6 +97,16 @@ public class KafkaClientMetrics extends KafkaMetrics {
      */
     public KafkaClientMetrics(Consumer<?, ?> kafkaConsumer) {
         super(kafkaConsumer::metrics);
+    }
+
+    /**
+     * Kafka {@link AdminClient} metrics binder
+     * @param adminClient instance to be instrumented
+     * @param tags additional tags
+     * @param scheduler scheduler to check and bind metrics
+     */
+    public KafkaClientMetrics(AdminClient adminClient, Iterable<Tag> tags, ScheduledExecutorService scheduler) {
+        super(adminClient::metrics, tags, scheduler);
     }
 
     /**

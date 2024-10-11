@@ -76,7 +76,7 @@ class KafkaClientMetricsConsumerTest {
     @Test
     void shouldCreateMetersWithTagsAndCustomScheduler() {
         try (Consumer<String, String> consumer = createConsumer()) {
-            ScheduledExecutorService customScheduler = Executors.newScheduledThreadPool(2);
+            ScheduledExecutorService customScheduler = Executors.newScheduledThreadPool(1);
             metrics = new KafkaClientMetrics(consumer, tags, customScheduler);
             MeterRegistry registry = new SimpleMeterRegistry();
 
