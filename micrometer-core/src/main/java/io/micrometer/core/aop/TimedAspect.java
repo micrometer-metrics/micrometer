@@ -218,39 +218,41 @@ public class TimedAspect {
 
         if (stopWhenCompleted) {
             try {
-                return ((CompletionStage<?>) pjp.proceed()).whenComplete(
-                        (result, throwable) -> record(pjp, timed, metricName, sample, getExceptionTag(throwable)));
+                return ((CompletionStage<?>) pjp.proceed()).whenComplete((result, throwable) -> record(pjp, result,
+                        timed, metricName, sample, getExceptionTag(throwable)));
             }
             catch (Throwable e) {
-                record(pjp, timed, metricName, sample, e.getClass().getSimpleName());
+                record(pjp, null, timed, metricName, sample, e.getClass().getSimpleName());
                 throw e;
             }
         }
 
         String exceptionClass = DEFAULT_EXCEPTION_TAG_VALUE;
+        Object result = null;
         try {
-            return pjp.proceed();
+            result = pjp.proceed();
+            return result;
         }
         catch (Throwable e) {
             exceptionClass = e.getClass().getSimpleName();
             throw e;
         }
         finally {
-            record(pjp, timed, metricName, sample, exceptionClass);
+            record(pjp, result, timed, metricName, sample, exceptionClass);
         }
     }
 
-    private void record(ProceedingJoinPoint pjp, Timed timed, String metricName, Timer.Sample sample,
-            String exceptionClass) {
+    private void record(ProceedingJoinPoint pjp, Object methodResult, Timed timed, String metricName,
+            Timer.Sample sample, String exceptionClass) {
         try {
-            sample.stop(recordBuilder(pjp, timed, metricName, exceptionClass).register(registry));
+            sample.stop(recordBuilder(pjp, methodResult, timed, metricName, exceptionClass).register(registry));
         }
         catch (Exception e) {
             // ignoring on purpose
         }
     }
 
-    private Timer.Builder recordBuilder(ProceedingJoinPoint pjp, Timed timed, String metricName,
+    private Timer.Builder recordBuilder(ProceedingJoinPoint pjp, Object methodResult, Timed timed, String metricName,
             String exceptionClass) {
         Timer.Builder builder = Timer.builder(metricName)
             .description(timed.description().isEmpty() ? null : timed.description())
@@ -266,6 +268,7 @@ public class TimedAspect {
 
         if (meterTagAnnotationHandler != null) {
             meterTagAnnotationHandler.addAnnotatedParameters(builder, pjp);
+            meterTagAnnotationHandler.addAnnotatedMethodResult(builder, pjp, methodResult);
         }
         return builder;
     }

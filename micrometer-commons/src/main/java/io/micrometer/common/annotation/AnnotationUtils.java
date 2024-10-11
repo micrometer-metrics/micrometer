@@ -35,14 +35,14 @@ final class AnnotationUtils {
 
     }
 
-    static List<AnnotatedParameter> findAnnotatedParameters(Class<? extends Annotation> annotationClazz, Method method,
+    static List<AnnotatedObject> findAnnotatedParameters(Class<? extends Annotation> annotationClazz, Method method,
             Object[] args) {
         Parameter[] parameters = method.getParameters();
-        List<AnnotatedParameter> result = new ArrayList<>();
+        List<AnnotatedObject> result = new ArrayList<>();
         for (int i = 0; i < parameters.length; i++) {
             Parameter parameter = parameters[i];
             for (Annotation annotation : parameter.getAnnotationsByType(annotationClazz)) {
-                result.add(new AnnotatedParameter(annotation, args[i]));
+                result.add(new AnnotatedObject(annotation, args[i]));
             }
         }
         return result;
