@@ -456,6 +456,7 @@ class TimedAspectTest {
                 aClass -> valueExpressionResolver);
 
         MeterRegistry registry;
+
         TimedAspect timedAspect;
 
         @BeforeEach
@@ -472,10 +473,7 @@ class TimedAspectTest {
 
             service.getAnnotationForArgumentToString(15L);
 
-            assertThat(registry.get("method.timed")
-                .tag("test", "15")
-                .timer()
-                .count()).isEqualTo(1);
+            assertThat(registry.get("method.timed").tag("test", "15").timer().count()).isEqualTo(1);
         }
 
         @ParameterizedTest
@@ -498,10 +496,8 @@ class TimedAspectTest {
 
             service.getAnnotationForTagValueExpression("15L");
 
-            assertThat(registry.get("method.timed")
-                .tag("test", "hello characters. overridden")
-                .timer()
-                .count()).isEqualTo(1);
+            assertThat(registry.get("method.timed").tag("test", "hello characters. overridden").timer().count())
+                .isEqualTo(1);
         }
 
         @ParameterizedTest
@@ -543,10 +539,7 @@ class TimedAspectTest {
 
             service.getAnnotationForPackagePrivateMethod("bar");
 
-            assertThat(registry.get("method.timed")
-                .tag("foo", "bar")
-                .timer()
-                .count()).isEqualTo(1);
+            assertThat(registry.get("method.timed").tag("foo", "bar").timer().count()).isEqualTo(1);
         }
 
         @Test
@@ -555,10 +548,7 @@ class TimedAspectTest {
 
             service.superMethod("someValue");
 
-            assertThat(registry.get("method.timed")
-                .tag("superTag", "someValue")
-                .timer()
-                .count()).isEqualTo(1);
+            assertThat(registry.get("method.timed").tag("superTag", "someValue").timer().count()).isEqualTo(1);
         }
 
         @ParameterizedTest
@@ -568,10 +558,7 @@ class TimedAspectTest {
 
             service.getAnnotationForArgumentToString();
 
-            assertThat(registry.get("method.timed")
-                .tag("test", "15")
-                .timer()
-                .count()).isEqualTo(1);
+            assertThat(registry.get("method.timed").tag("test", "15").timer().count()).isEqualTo(1);
         }
 
         @ParameterizedTest
@@ -594,10 +581,8 @@ class TimedAspectTest {
 
             service.getAnnotationForTagValueExpression();
 
-            assertThat(registry.get("method.timed")
-                .tag("test", "hello characters. overridden")
-                .timer()
-                .count()).isEqualTo(1);
+            assertThat(registry.get("method.timed").tag("test", "hello characters. overridden").timer().count())
+                .isEqualTo(1);
         }
 
         @ParameterizedTest
@@ -639,10 +624,7 @@ class TimedAspectTest {
 
             service.getAnnotationForPackagePrivateMethod();
 
-            assertThat(registry.get("method.timed")
-                .tag("foo", "bar")
-                .timer()
-                .count()).isEqualTo(1);
+            assertThat(registry.get("method.timed").tag("foo", "bar").timer().count()).isEqualTo(1);
         }
 
         @Test
@@ -651,10 +633,7 @@ class TimedAspectTest {
 
             service.superMethod();
 
-            assertThat(registry.get("method.timed")
-                .tag("superTag", "someValue")
-                .timer()
-                .count()).isEqualTo(1);
+            assertThat(registry.get("method.timed").tag("superTag", "someValue").timer().count()).isEqualTo(1);
         }
 
         private <T> T getProxyWithTimedAspect(T object) {
@@ -728,10 +707,9 @@ class TimedAspectTest {
                         expression = "'value3: ' + value1.toUpperCase + value2.toUpperCase") }) DataHolder param);
 
         @Timed
-        @MeterTags({
-            @MeterTag(key = "value1", expression = "'value1: ' + value1"),
-            @MeterTag(key = "value2", expression = "'value2: ' + value2"), @MeterTag(key = "value3",
-            expression = "'value3: ' + value1.toUpperCase + value2.toUpperCase") })
+        @MeterTags({ @MeterTag(key = "value1", expression = "'value1: ' + value1"),
+                @MeterTag(key = "value2", expression = "'value2: ' + value2"),
+                @MeterTag(key = "value3", expression = "'value3: ' + value1.toUpperCase + value2.toUpperCase") })
         DataHolder getMultipleAnnotationsWithContainerForTagValueExpression();
 
     }
@@ -780,7 +758,6 @@ class TimedAspectTest {
         void getAnnotationForPackagePrivateMethod(@MeterTag("foo") String foo) {
         }
 
-
         @Timed
         @MeterTag("foo")
         String getAnnotationForPackagePrivateMethod() {
@@ -794,7 +771,6 @@ class TimedAspectTest {
                         expression = "'value2. overridden: ' + value2") DataHolder param) {
 
         }
-
 
         @Timed
         @MeterTag(key = "value1", expression = "'value1: ' + value1")
@@ -813,10 +789,10 @@ class TimedAspectTest {
         }
 
         @Timed
-        @MeterTags({
-            @MeterTag(key = "value1", expression = "'value1: ' + value1"),
-            @MeterTag(key = "value2", expression = "'value2: ' + value2"), @MeterTag(key = "value3",
-            expression = "'value3. overridden: ' + value1.toUpperCase + value2.toUpperCase") })
+        @MeterTags({ @MeterTag(key = "value1", expression = "'value1: ' + value1"),
+                @MeterTag(key = "value2", expression = "'value2: ' + value2"),
+                @MeterTag(key = "value3",
+                        expression = "'value3. overridden: ' + value1.toUpperCase + value2.toUpperCase") })
         @Override
         public DataHolder getMultipleAnnotationsWithContainerForTagValueExpression() {
             return new DataHolder("zxe", "qwe");
