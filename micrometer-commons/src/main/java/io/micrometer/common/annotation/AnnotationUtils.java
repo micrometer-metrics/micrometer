@@ -36,7 +36,7 @@ final class AnnotationUtils {
     }
 
     static List<AnnotatedObject> findAnnotatedParameters(Class<? extends Annotation> annotationClazz, Method method,
-                                                         Object[] args) {
+            Object[] args) {
         Parameter[] parameters = method.getParameters();
         List<AnnotatedObject> result = new ArrayList<>();
         for (int i = 0; i < parameters.length; i++) {
