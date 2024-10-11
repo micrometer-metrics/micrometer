@@ -241,17 +241,18 @@ public class CountedAspect {
                 Object result = pjp.proceed();
                 if (result == null) {
                     if (!counted.recordFailuresOnly()) {
-                        record(pjp, counted, DEFAULT_EXCEPTION_TAG_VALUE, RESULT_TAG_SUCCESS_VALUE);
+                        record(pjp, result, counted, DEFAULT_EXCEPTION_TAG_VALUE, RESULT_TAG_SUCCESS_VALUE);
                     }
                     return result;
                 }
                 else {
                     CompletionStage<?> stage = ((CompletionStage<?>) result);
-                    return stage.whenComplete((res, throwable) -> recordCompletionResult(pjp, counted, throwable));
+                    return stage
+                        .whenComplete((res, throwable) -> recordCompletionResult(pjp, result, counted, throwable));
                 }
             }
             catch (Throwable e) {
-                record(pjp, counted, e.getClass().getSimpleName(), RESULT_TAG_FAILURE_VALUE);
+                record(pjp, null, counted, e.getClass().getSimpleName(), RESULT_TAG_FAILURE_VALUE);
                 throw e;
             }
         }
@@ -259,30 +260,32 @@ public class CountedAspect {
         try {
             Object result = pjp.proceed();
             if (!counted.recordFailuresOnly()) {
-                record(pjp, counted, DEFAULT_EXCEPTION_TAG_VALUE, RESULT_TAG_SUCCESS_VALUE);
+                record(pjp, result, counted, DEFAULT_EXCEPTION_TAG_VALUE, RESULT_TAG_SUCCESS_VALUE);
             }
             return result;
         }
         catch (Throwable e) {
-            record(pjp, counted, e.getClass().getSimpleName(), RESULT_TAG_FAILURE_VALUE);
+            record(pjp, null, counted, e.getClass().getSimpleName(), RESULT_TAG_FAILURE_VALUE);
             throw e;
         }
     }
 
-    private void recordCompletionResult(ProceedingJoinPoint pjp, Counted counted, Throwable throwable) {
+    private void recordCompletionResult(ProceedingJoinPoint pjp, Object methodResult, Counted counted,
+            Throwable throwable) {
 
         if (throwable != null) {
             String exceptionTagValue = throwable.getCause() == null ? throwable.getClass().getSimpleName()
                     : throwable.getCause().getClass().getSimpleName();
-            record(pjp, counted, exceptionTagValue, RESULT_TAG_FAILURE_VALUE);
+            record(pjp, methodResult, counted, exceptionTagValue, RESULT_TAG_FAILURE_VALUE);
         }
         else if (!counted.recordFailuresOnly()) {
-            record(pjp, counted, DEFAULT_EXCEPTION_TAG_VALUE, RESULT_TAG_SUCCESS_VALUE);
+            record(pjp, methodResult, counted, DEFAULT_EXCEPTION_TAG_VALUE, RESULT_TAG_SUCCESS_VALUE);
         }
 
     }
 
-    private void record(ProceedingJoinPoint pjp, Counted counted, String exception, String result) {
+    private void record(ProceedingJoinPoint pjp, Object methodResult, Counted counted, String exception,
+            String result) {
         Counter.Builder builder = Counter.builder(counted.value())
             .description(counted.description().isEmpty() ? null : counted.description())
             .tags(counted.extraTags())
@@ -291,6 +294,7 @@ public class CountedAspect {
             .tags(tagsBasedOnJoinPoint.apply(pjp));
         if (meterTagAnnotationHandler != null) {
             meterTagAnnotationHandler.addAnnotatedParameters(builder, pjp);
+            meterTagAnnotationHandler.addAnnotatedMethodResult(builder, pjp, methodResult);
         }
         builder.register(registry).increment();
     }

@@ -26,7 +26,9 @@ import java.lang.reflect.Method;
 import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
+import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * This class is able to find all methods annotated with the Micrometer annotations. All
@@ -89,13 +91,35 @@ public class AnnotationHandler<T> {
         try {
             Method method = ((MethodSignature) pjp.getSignature()).getMethod();
             method = tryToTakeMethodFromTargetClass(pjp, method);
-            List<AnnotatedParameter> annotatedParameters = AnnotationUtils.findAnnotatedParameters(annotationClass,
+            List<AnnotatedObject> annotatedParameters = AnnotationUtils.findAnnotatedParameters(annotationClass,
                     method, pjp.getArgs());
-            getAnnotationsFromInterfaces(pjp, method, annotatedParameters);
+            getParametersAnnotationsFromInterfaces(pjp, method, annotatedParameters);
             addAnnotatedArguments(objectToModify, annotatedParameters);
         }
         catch (Exception ex) {
             log.error("Exception occurred while trying to add annotated parameters", ex);
+        }
+    }
+
+    public void addAnnotatedMethodResult(T objectToModify, ProceedingJoinPoint pjp, Object result) {
+        try {
+            Method method = ((MethodSignature) pjp.getSignature()).getMethod();
+            method = tryToTakeMethodFromTargetClass(pjp, method);
+
+            List<AnnotatedObject> annotatedResult = new ArrayList<>();
+            Arrays.stream(method.getAnnotationsByType(annotationClass))
+                .map(annotation -> new AnnotatedObject(annotation, result))
+                .forEach(annotatedResult::add);
+             getMethodAnnotationsFromInterfaces(pjp, method)
+                 .stream().map(annotation -> new AnnotatedObject(annotation, result))
+                 .forEach(annotatedResult::add);
+
+
+
+            addAnnotatedArguments(objectToModify, annotatedResult);
+        }
+        catch (Exception ex) {
+            log.error("Exception occurred while trying to add annotated method result", ex);
         }
     }
 
@@ -109,23 +133,41 @@ public class AnnotationHandler<T> {
         return method;
     }
 
-    private void getAnnotationsFromInterfaces(ProceedingJoinPoint pjp, Method mostSpecificMethod,
-            List<AnnotatedParameter> annotatedParameters) {
+    private void getParametersAnnotationsFromInterfaces(ProceedingJoinPoint pjp, Method mostSpecificMethod,
+                                                        List<AnnotatedObject> annotatedParameters) {
+        traverseInterfacesHierarchy(
+            pjp, mostSpecificMethod,
+            method -> {
+                List<AnnotatedObject> annotatedParametersForActualMethod = AnnotationUtils
+                    .findAnnotatedParameters(annotationClass, method, pjp.getArgs());
+                // annotations for a single parameter can be `duplicated` by the ones
+                // from parent interface,
+                // however later on during key-based deduplication the ones from
+                // specific method(target class)
+                // will take precedence
+                annotatedParameters.addAll(annotatedParametersForActualMethod);
+            }
+        );
+    }
+
+    private void traverseInterfacesHierarchy(ProceedingJoinPoint pjp,
+                                                        Method mostSpecificMethod, Consumer<Method> consumer) {
         Class<?>[] implementedInterfaces = pjp.getThis().getClass().getInterfaces();
         for (Class<?> implementedInterface : implementedInterfaces) {
             for (Method methodFromInterface : implementedInterface.getMethods()) {
                 if (methodsAreTheSame(mostSpecificMethod, methodFromInterface)) {
-                    List<AnnotatedParameter> annotatedParametersForActualMethod = AnnotationUtils
-                        .findAnnotatedParameters(annotationClass, methodFromInterface, pjp.getArgs());
-                    // annotations for a single parameter can be `duplicated` by the ones
-                    // from parent interface,
-                    // however later on during key-based deduplication the ones from
-                    // specific method(target class)
-                    // will take precedence
-                    annotatedParameters.addAll(annotatedParametersForActualMethod);
+                    consumer.accept(methodFromInterface);
                 }
             }
         }
+    }
+
+    private List<Annotation> getMethodAnnotationsFromInterfaces(ProceedingJoinPoint pjp, Method mostSpecificMethod) {
+        List<Annotation> allAnnotations = new ArrayList<>();
+        traverseInterfacesHierarchy(pjp, mostSpecificMethod,
+            method -> allAnnotations.addAll(
+                Arrays.asList(method.getAnnotationsByType(annotationClass))));
+        return allAnnotations;
     }
 
     private boolean methodsAreTheSame(Method mostSpecificMethod, Method method) {
@@ -133,10 +175,10 @@ public class AnnotationHandler<T> {
                 && Arrays.equals(method.getParameterTypes(), mostSpecificMethod.getParameterTypes());
     }
 
-    private void addAnnotatedArguments(T objectToModify, List<AnnotatedParameter> toBeAdded) {
+    private void addAnnotatedArguments(T objectToModify, List<AnnotatedObject> toBeAdded) {
         Set<String> seen = new HashSet<>();
-        for (AnnotatedParameter container : toBeAdded) {
-            KeyValue keyValue = toKeyValue.apply(container.annotation, container.argument);
+        for (AnnotatedObject container : toBeAdded) {
+            KeyValue keyValue = toKeyValue.apply(container.annotation, container.object);
             if (seen.add(keyValue.getKey())) {
                 keyValueConsumer.accept(keyValue, objectToModify);
             }
