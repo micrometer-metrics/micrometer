@@ -135,7 +135,7 @@ httpcomponents-client = { module = "org.apache.httpcomponents:httpclient", versi
 httpcomponents-client5 = { module = "org.apache.httpcomponents.client5:httpclient5", version.ref = "httpcomponents-client5" }
 hystrix = { module = "com.netflix.hystrix:hystrix-core", version.ref = "hystrix" }
 jacksonDatabind = { module = "com.fasterxml.jackson.core:jackson-databind", version.ref = "jackson-databind" }
-jakarta-annotationAPi = { module = "jakarta.annotation:jakarta.annotation-api", version = "3.0.0" }
+jakarta-annotationApi = { module = "jakarta.annotation:jakarta.annotation-api", version = "3.0.0" }
 jakarta-injectApi = { module = "jakarta.inject:jakarta.inject-api", version = "2.0.1" }
 jakarta-jmsApi = { module = "jakarta.jms:jakarta.jms-api", version = "3.0.0" }
 jakarta-servletApi = { module = "jakarta.servlet:jakarta.servlet-api", version = "5.0.0" }

@@ -16,7 +16,7 @@ dependencies {
     testImplementation(libs.aspectjweaver)
     testImplementation libs.awaitility
     testImplementation(libs.contextPropagation)
-    testImplementation(libs.jakarta.annotationAPi)
+    testImplementation(libs.jakarta.annotationApi)
     testImplementation(libs.jakarta.injectApi)
     testImplementation libs.spring6.aop
     testImplementation(libs.spring6.context)
