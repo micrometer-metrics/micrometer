@@ -15,8 +15,11 @@
  */
 package io.micrometer.dynatrace.v2;
 
-import com.dynatrace.metric.util.*;
+import com.dynatrace.metric.util.DynatraceMetricApiConstants;
+import com.dynatrace.metric.util.MetricException;
+import com.dynatrace.metric.util.MetricLineBuilder;
 import com.dynatrace.metric.util.MetricLineBuilder.MetadataStep;
+import com.dynatrace.metric.util.MetricLinePreConfiguration;
 import io.micrometer.common.lang.NonNull;
 import io.micrometer.common.util.StringUtils;
 import io.micrometer.common.util.internal.logging.InternalLogger;
@@ -60,8 +63,10 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
 
     private static final Pattern IS_NULL_ERROR_RESPONSE = Pattern.compile("\"error\":\\s?null");
 
-    private static final Map<String, String> staticDimensions = Collections.singletonMap("dt.metrics.source",
+    private static final Map<String, String> STATIC_DIMENSIONS = Collections.singletonMap("dt.metrics.source",
             "micrometer");
+
+    private static final Map<String, String> UCUM_TIME_UNIT_MAP = ucumTimeUnitMap();
 
     // Loggers must be non-static for MockLoggerFactory.injectLogger() in tests.
     private final InternalLogger logger = InternalLoggerFactory.getInstance(DynatraceExporterV2.class);
@@ -128,7 +133,7 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
 
     private Map<String, String> enrichWithMetricsSourceDimensions(Map<String, String> defaultDimensions) {
         LinkedHashMap<String, String> orderedDimensions = new LinkedHashMap<>(defaultDimensions);
-        orderedDimensions.putAll(staticDimensions);
+        orderedDimensions.putAll(STATIC_DIMENSIONS);
         return orderedDimensions;
     }
 
@@ -479,7 +484,8 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
     }
 
     private MetricLineBuilder.MetadataStep enrichMetadata(MetricLineBuilder.MetadataStep metadataStep, Meter meter) {
-        return metadataStep.description(meter.getId().getDescription()).unit(meter.getId().getBaseUnit());
+        return metadataStep.description(meter.getId().getDescription())
+            .unit(mapUnitIfNeeded(meter.getId().getBaseUnit()));
     }
 
     /**
@@ -545,6 +551,35 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
         }
 
         return metricKey.toString();
+    }
+
+    /**
+     * Maps a unit string to a UCUM-compliant string, if the mapping is known, see:
+     * {@link #ucumTimeUnitMap()}.
+     * @param unit the unit that might be mapped
+     * @return The UCUM-compliant string if known, otherwise returns the original unit
+     */
+    private static String mapUnitIfNeeded(String unit) {
+        return unit != null && UCUM_TIME_UNIT_MAP.containsKey(unit) ? UCUM_TIME_UNIT_MAP.get(unit) : unit;
+    }
+
+    /**
+     * Mapping from OpenJDK's {@link TimeUnit#toString()} and other common time unit
+     * formats to UCUM-compliant format, see: <a href="https://ucum.org/">ucum.org</a>.
+     * @return Time unit mapping to UCUM-compliant format
+     */
+    private static Map<String, String> ucumTimeUnitMap() {
+        Map<String, String> mapping = new HashMap<>();
+        mapping.put("nanoseconds", "ns");
+        mapping.put("nanosecond", "ns");
+        mapping.put("microseconds", "us");
+        mapping.put("microsecond", "us");
+        mapping.put("milliseconds", "ms");
+        mapping.put("millisecond", "ms");
+        mapping.put("seconds", "s");
+        mapping.put("second", "s");
+
+        return Collections.unmodifiableMap(mapping);
     }
 
 }
