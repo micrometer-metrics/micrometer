@@ -49,6 +49,7 @@ import static java.util.stream.Collectors.joining;
  *
  * @author Jon Schneider
  * @author Matthieu Borgraeve
+ * @author Francois Staudt
  * @since 1.1.0
  */
 @Incubating(since = "1.1.0")
@@ -114,6 +115,7 @@ public class LoggingMeterRegistry extends StepMeterRegistry {
     @Override
     protected void publish() {
         if (config.enabled()) {
+            loggingSink.accept("Step: " + config.step().getSeconds() + "s");
             getMeters().stream().sorted((m1, m2) -> {
                 int typeComp = m1.getId().getType().compareTo(m2.getId().getType());
                 if (typeComp == 0) {
@@ -126,22 +128,24 @@ public class LoggingMeterRegistry extends StepMeterRegistry {
                     double count = counter.count();
                     if (!config.logInactive() && count == 0)
                         return;
-                    loggingSink.accept(print.id() + " throughput=" + print.rate(count));
+                    loggingSink
+                        .accept(print.id() + " delta_count=" + ((int) count) + " throughput=" + print.rate(count));
                 }, timer -> {
                     HistogramSnapshot snapshot = timer.takeSnapshot();
                     long count = snapshot.count();
                     if (!config.logInactive() && count == 0)
                         return;
-                    loggingSink.accept(print.id() + " throughput=" + print.unitlessRate(count) + " mean="
-                            + print.time(snapshot.mean(getBaseTimeUnit())) + " max="
-                            + print.time(snapshot.max(getBaseTimeUnit())));
+                    loggingSink.accept(print.id() + " delta_count=" + ((int) count) + " throughput="
+                            + print.unitlessRate(count) + " mean=" + print.time(snapshot.mean(getBaseTimeUnit()))
+                            + " max=" + print.time(snapshot.max(getBaseTimeUnit())));
                 }, summary -> {
                     HistogramSnapshot snapshot = summary.takeSnapshot();
                     long count = snapshot.count();
                     if (!config.logInactive() && count == 0)
                         return;
-                    loggingSink.accept(print.id() + " throughput=" + print.unitlessRate(count) + " mean="
-                            + print.value(snapshot.mean()) + " max=" + print.value(snapshot.max()));
+                    loggingSink.accept(
+                            print.id() + " delta_count=" + ((int) count) + " throughput=" + print.unitlessRate(count)
+                                    + " mean=" + print.value(snapshot.mean()) + " max=" + print.value(snapshot.max()));
                 }, longTaskTimer -> {
                     int activeTasks = longTaskTimer.activeTasks();
                     if (!config.logInactive() && activeTasks == 0)
@@ -157,13 +161,14 @@ public class LoggingMeterRegistry extends StepMeterRegistry {
                     double count = counter.count();
                     if (!config.logInactive() && count == 0)
                         return;
-                    loggingSink.accept(print.id() + " throughput=" + print.rate(count));
+                    loggingSink
+                        .accept(print.id() + " delta_count=" + ((int) count) + " throughput=" + print.rate(count));
                 }, timer -> {
                     double count = timer.count();
                     if (!config.logInactive() && count == 0)
                         return;
-                    loggingSink.accept(print.id() + " throughput=" + print.rate(count) + " mean="
-                            + print.time(timer.mean(getBaseTimeUnit())));
+                    loggingSink.accept(print.id() + " delta_count=" + ((int) count) + " throughput="
+                            + print.unitlessRate(count) + " mean=" + print.time(timer.mean(getBaseTimeUnit())));
                 }, meter -> loggingSink.accept(writeMeter(meter, print)));
             });
         }
@@ -181,7 +186,8 @@ public class LoggingMeterRegistry extends StepMeterRegistry {
                 case DURATION:
                     return msLine + print.time(ms.getValue());
                 case COUNT:
-                    return "throughput=" + print.rate(ms.getValue());
+                    return "delta_count=" + print.humanReadableBaseUnit(ms.getValue()) + ", throughput="
+                            + print.rate(ms.getValue());
                 default:
                     return msLine + decimalOrNan(ms.getValue());
             }
