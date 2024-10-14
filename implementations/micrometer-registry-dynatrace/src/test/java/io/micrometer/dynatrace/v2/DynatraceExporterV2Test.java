@@ -18,6 +18,7 @@ package io.micrometer.dynatrace.v2;
 import com.dynatrace.file.util.DynatraceFileBasedConfigurationProvider;
 import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.Issue;
+import io.micrometer.core.instrument.LongTaskTimer.Sample;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.ipc.http.HttpSender;
@@ -622,7 +623,7 @@ class DynatraceExporterV2Test {
                 .containsSubsequence("my.counter,dt.metrics.source=micrometer count,delta=12 " + clock.wallTime(),
                         "my.gauge,dt.metrics.source=micrometer gauge,42 " + clock.wallTime(),
                         "my.timer,dt.metrics.source=micrometer gauge,min=22,max=22,sum=22,count=1 " + clock.wallTime(),
-                        "#my.timer gauge dt.meta.unit=milliseconds");
+                        "#my.timer gauge dt.meta.unit=ms");
         }));
     }
 
@@ -765,6 +766,40 @@ class DynatraceExporterV2Test {
                 "#gauge.u gauge dt.meta.unit=kelvin",
                 "gauge.du,dt.metrics.source=micrometer gauge,40 " + clock.wallTime(),
                 "#gauge.du gauge dt.meta.description=temperature,dt.meta.unit=kelvin")));
+    }
+
+    @Test
+    void shouldHaveUcumCompliantUnits() {
+        HttpSender.Request.Builder builder = spy(HttpSender.Request.build(config.uri(), httpClient));
+        when(httpClient.post(anyString())).thenReturn(builder);
+
+        meterRegistry.timer("test.timer").record(Duration.ofMillis(12));
+        meterRegistry.more().timeGauge("test.tg", Tags.empty(), this, TimeUnit.MICROSECONDS, x -> 1_000);
+        FunctionTimer.builder("test.ft", this, x -> 1, x -> 100, MILLISECONDS).register(meterRegistry);
+        Counter.builder("test.second").baseUnit("second").register(meterRegistry).increment(100);
+        Counter.builder("test.seconds").baseUnit("seconds").register(meterRegistry).increment(10);
+        FunctionCounter.builder("process.cpu.time", this, x -> 1_000_000).baseUnit("ns").register(meterRegistry);
+
+        Sample sample = meterRegistry.more().longTaskTimer("test.ltt").start();
+        clock.add(config.step().plus(Duration.ofSeconds(2)));
+
+        exporter.export(meterRegistry.getMeters());
+        sample.stop();
+
+        verify(builder).withPlainText(assertArg(body -> assertThat(body.split("\n")).containsExactlyInAnyOrder(
+                "test.timer,dt.metrics.source=micrometer gauge,min=12,max=12,sum=12,count=1 " + clock.wallTime(),
+                "#test.timer gauge dt.meta.unit=ms", "test.tg,dt.metrics.source=micrometer gauge,1 " + clock.wallTime(),
+                "#test.tg gauge dt.meta.unit=ms",
+                "test.ft,dt.metrics.source=micrometer gauge,min=100,max=100,sum=100,count=1 " + clock.wallTime(),
+                "#test.ft gauge dt.meta.unit=ms",
+                "test.second,dt.metrics.source=micrometer count,delta=100 " + clock.wallTime(),
+                "#test.second count dt.meta.unit=s",
+                "test.seconds,dt.metrics.source=micrometer count,delta=10 " + clock.wallTime(),
+                "#test.seconds count dt.meta.unit=s",
+                "process.cpu.time,dt.metrics.source=micrometer count,delta=1000000 " + clock.wallTime(),
+                "#process.cpu.time count dt.meta.unit=ns",
+                "test.ltt,dt.metrics.source=micrometer gauge,min=62000,max=62000,sum=62000,count=1 " + clock.wallTime(),
+                "#test.ltt gauge dt.meta.unit=ms")));
     }
 
     @Test

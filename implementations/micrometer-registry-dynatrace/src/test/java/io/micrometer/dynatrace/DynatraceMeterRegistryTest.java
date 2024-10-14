@@ -90,7 +90,7 @@ class DynatraceMeterRegistryTest {
                 .containsExactly("my.counter,dt.metrics.source=micrometer count,delta=12 " + clock.wallTime(),
                         "my.timer,dt.metrics.source=micrometer gauge,min=12,max=42,sum=108,count=4 " + clock.wallTime(),
                         "my.gauge,dt.metrics.source=micrometer gauge," + formatDouble(gauge) + " " + clock.wallTime(),
-                        "#my.timer gauge dt.meta.unit=milliseconds");
+                        "#my.timer gauge dt.meta.unit=ms");
         })));
     }
 
@@ -115,7 +115,7 @@ class DynatraceMeterRegistryTest {
         assertThat(request.getEntity()).asString()
             .hasLineCount(2)
             .contains("my.timer,dt.metrics.source=micrometer gauge,min=22,max=50,sum=72,count=2 " + clock.wallTime(),
-                    "#my.timer gauge dt.meta.unit=milliseconds");
+                    "#my.timer gauge dt.meta.unit=ms");
 
         // both are bigger than the previous min and smaller than the previous max. They
         // will only show up if the
@@ -133,7 +133,7 @@ class DynatraceMeterRegistryTest {
         assertThat(request2.getEntity()).asString()
             .hasLineCount(2)
             .contains("my.timer,dt.metrics.source=micrometer gauge,min=33,max=44,sum=77,count=2 " + clock.wallTime(),
-                    "#my.timer gauge dt.meta.unit=milliseconds");
+                    "#my.timer gauge dt.meta.unit=ms");
     }
 
     @Test
@@ -150,7 +150,7 @@ class DynatraceMeterRegistryTest {
         verify(httpClient).send(assertArg((request -> assertThat(request.getEntity()).asString()
             .hasLineCount(2)
             .contains("my.timer,dt.metrics.source=micrometer gauge,min=22,max=55,sum=77,count=2 " + clock.wallTime(),
-                    "#my.timer gauge dt.meta.unit=milliseconds"))));
+                    "#my.timer gauge dt.meta.unit=ms"))));
     }
 
     @Test
@@ -204,13 +204,13 @@ class DynatraceMeterRegistryTest {
                             // Timer lines
                             "my.timer,dt.metrics.source=micrometer gauge,min=100,max=100,sum=100,count=1 "
                                     + clock.wallTime(),
-                            "#my.timer gauge dt.meta.unit=milliseconds",
+                            "#my.timer gauge dt.meta.unit=ms",
                             // Timer percentile lines. Percentiles are 0 because the step
                             // rolled over.
                             "my.timer.percentile,dt.metrics.source=micrometer,phi=0.5 gauge,0 " + clock.wallTime(),
                             "my.timer.percentile,dt.metrics.source=micrometer,phi=0.7 gauge,0 " + clock.wallTime(),
                             "my.timer.percentile,dt.metrics.source=micrometer,phi=0.99 gauge,0 " + clock.wallTime(),
-                            "#my.timer.percentile gauge dt.meta.unit=milliseconds",
+                            "#my.timer.percentile gauge dt.meta.unit=ms",
 
                             // DistributionSummary lines
                             "my.ds,dt.metrics.source=micrometer gauge,min=100,max=100,sum=100,count=1 "
@@ -224,7 +224,7 @@ class DynatraceMeterRegistryTest {
                             // LongTaskTimer lines
                             "my.ltt,dt.metrics.source=micrometer gauge,min=100,max=100,sum=100,count=1 "
                                     + clock.wallTime(),
-                            "#my.ltt gauge dt.meta.unit=milliseconds",
+                            "#my.ltt gauge dt.meta.unit=ms",
                             // LongTaskTimer percentile lines
                             // 0th percentile is missing because it doesn't clear the
                             // "interpolatable line" threshold defined in
@@ -232,7 +232,7 @@ class DynatraceMeterRegistryTest {
                             "my.ltt.percentile,dt.metrics.source=micrometer,phi=0.5 gauge,100 " + clock.wallTime(),
                             "my.ltt.percentile,dt.metrics.source=micrometer,phi=0.7 gauge,100 " + clock.wallTime(),
                             "my.ltt.percentile,dt.metrics.source=micrometer,phi=0.99 gauge,100 " + clock.wallTime(),
-                            "#my.ltt.percentile gauge dt.meta.unit=milliseconds"))));
+                            "#my.ltt.percentile gauge dt.meta.unit=ms"))));
     }
 
     @Test
@@ -272,13 +272,13 @@ class DynatraceMeterRegistryTest {
                         // Timer lines
                         "my.timer,dt.metrics.source=micrometer gauge,min=100,max=100,sum=100,count=1 "
                                 + clock.wallTime(),
-                        "#my.timer gauge dt.meta.unit=milliseconds",
+                        "#my.timer gauge dt.meta.unit=ms",
                         // Timer percentile lines. Percentiles are 0 because the step
                         // rolled over.
                         "my.timer.percentile,dt.metrics.source=micrometer,phi=0 gauge,0 " + clock.wallTime(),
                         "my.timer.percentile,dt.metrics.source=micrometer,phi=0.5 gauge,0 " + clock.wallTime(),
                         "my.timer.percentile,dt.metrics.source=micrometer,phi=0.99 gauge,0 " + clock.wallTime(),
-                        "#my.timer.percentile gauge dt.meta.unit=milliseconds",
+                        "#my.timer.percentile gauge dt.meta.unit=ms",
 
                         // DistributionSummary lines
                         "my.ds,dt.metrics.source=micrometer gauge,min=100,max=100,sum=100,count=1 " + clock.wallTime(),
@@ -303,7 +303,7 @@ class DynatraceMeterRegistryTest {
         verify(httpClient).send(assertArg(request -> assertThat(request.getEntity()).asString()
             .hasLineCount(2)
             .contains("my.timer,dt.metrics.source=micrometer gauge,min=44,max=44,sum=44,count=1 " + clock.wallTime(),
-                    "#my.timer gauge dt.meta.unit=milliseconds")));
+                    "#my.timer gauge dt.meta.unit=ms")));
 
         // reset for next export interval
         reset(httpClient);
@@ -328,7 +328,7 @@ class DynatraceMeterRegistryTest {
         verify(httpClient).send(assertArg(request -> assertThat(request.getEntity()).asString()
             .hasLineCount(2)
             .contains("my.timer,dt.metrics.source=micrometer gauge,min=33,max=33,sum=33,count=1 " + clock.wallTime(),
-                    "#my.timer gauge dt.meta.unit=milliseconds")));
+                    "#my.timer gauge dt.meta.unit=ms")));
     }
 
     private DynatraceConfig createDefaultDynatraceConfig() {
