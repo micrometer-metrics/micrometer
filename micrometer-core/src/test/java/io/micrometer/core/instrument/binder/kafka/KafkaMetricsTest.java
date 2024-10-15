@@ -34,10 +34,13 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 
 class KafkaMetricsTest {
 
@@ -68,7 +71,7 @@ class KafkaMetricsTest {
     }
 
     @Test
-    void closeShouldRemoveAllMeters() {
+    void closeShouldRemoveAllMetersAndShutdownDefaultScheduler() {
         // Given
         Supplier<Map<MetricName, ? extends Metric>> supplier = () -> {
             MetricName metricName = new MetricName("a", "b", "c", new LinkedHashMap<>());
@@ -80,9 +83,35 @@ class KafkaMetricsTest {
 
         kafkaMetrics.bindTo(registry);
         assertThat(registry.getMeters()).hasSize(1);
+        assertThat(isDefaultMetricsSchedulerThreadAlive()).isTrue();
 
         kafkaMetrics.close();
         assertThat(registry.getMeters()).isEmpty();
+        await().until(() -> !isDefaultMetricsSchedulerThreadAlive());
+    }
+
+    @Test
+    void closeShouldRemoveAllMetersAndNotShutdownCustomScheduler() {
+        // Given
+        Supplier<Map<MetricName, ? extends Metric>> supplier = () -> {
+            MetricName metricName = new MetricName("a", "b", "c", new LinkedHashMap<>());
+            KafkaMetric metric = new KafkaMetric(this, metricName, new Value(), new MetricConfig(), Time.SYSTEM);
+            return Collections.singletonMap(metricName, metric);
+        };
+        ScheduledExecutorService customScheduler = Executors.newScheduledThreadPool(1);
+        kafkaMetrics = new KafkaMetrics(supplier, Collections.emptyList(), customScheduler);
+        MeterRegistry registry = new SimpleMeterRegistry();
+
+        kafkaMetrics.bindTo(registry);
+        assertThat(registry.getMeters()).hasSize(1);
+        await().until(() -> !isDefaultMetricsSchedulerThreadAlive());
+
+        kafkaMetrics.close();
+        assertThat(registry.getMeters()).isEmpty();
+        assertThat(customScheduler.isShutdown()).isFalse();
+
+        customScheduler.shutdownNow();
+        assertThat(customScheduler.isShutdown()).isTrue();
     }
 
     @Test
@@ -550,6 +579,15 @@ class KafkaMetricsTest {
 
     private KafkaMetric createKafkaMetric(MetricName metricName) {
         return new KafkaMetric(this, metricName, new Value(), new MetricConfig(), Time.SYSTEM);
+    }
+
+    private static boolean isDefaultMetricsSchedulerThreadAlive() {
+        return Thread.getAllStackTraces()
+            .keySet()
+            .stream()
+            .filter(Thread::isAlive)
+            .map(Thread::getName)
+            .anyMatch(name -> name.startsWith("micrometer-kafka-metrics"));
     }
 
 }
