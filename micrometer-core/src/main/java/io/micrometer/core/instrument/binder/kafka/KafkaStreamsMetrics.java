@@ -22,6 +22,8 @@ import io.micrometer.core.instrument.Tag;
 import org.apache.kafka.common.Metric;
 import org.apache.kafka.streams.KafkaStreams;
 
+import java.util.concurrent.ScheduledExecutorService;
+
 /**
  * Kafka Streams metrics binder. This should be closed on application shutdown to clean up
  * resources.
@@ -56,6 +58,19 @@ public class KafkaStreamsMetrics extends KafkaMetrics {
      */
     public KafkaStreamsMetrics(KafkaStreams kafkaStreams) {
         super(kafkaStreams::metrics);
+    }
+
+    /**
+     * {@link KafkaStreams} metrics binder that uses a custom scheduler that can be shared
+     * between Kafka clients to avoid using a thread per client for synchronizing metrics.
+     * @param kafkaStreams instance to be instrumented
+     * @param tags additional tags
+     * @param scheduler customer scheduler to run the task that syncs metrics between the
+     * Kafka client and Micrometer
+     * @since 1.14.0
+     */
+    public KafkaStreamsMetrics(KafkaStreams kafkaStreams, Iterable<Tag> tags, ScheduledExecutorService scheduler) {
+        super(kafkaStreams::metrics, tags, scheduler);
     }
 
 }

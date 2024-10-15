@@ -24,6 +24,8 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.Properties;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 
 import static io.micrometer.core.instrument.binder.kafka.KafkaStreamsMetrics.METRIC_NAME_PREFIX;
 import static org.apache.kafka.streams.StreamsConfig.APPLICATION_ID_CONFIG;
@@ -70,6 +72,27 @@ class KafkaStreamsMetricsTest {
             assertThat(registry.getMeters()).hasSizeGreaterThan(0)
                 .extracting(meter -> meter.getId().getTag("app"))
                 .allMatch(s -> s.equals("myapp"));
+        }
+    }
+
+    @Test
+    void shouldCreateMetersWithTagsAndCustomScheduler() {
+        try (KafkaStreams kafkaStreams = createStreams()) {
+            ScheduledExecutorService customScheduler = Executors.newScheduledThreadPool(1);
+            metrics = new KafkaStreamsMetrics(kafkaStreams, tags, customScheduler);
+            MeterRegistry registry = new SimpleMeterRegistry();
+
+            metrics.bindTo(registry);
+
+            assertThat(registry.getMeters()).hasSizeGreaterThan(0)
+                .extracting(meter -> meter.getId().getTag("app"))
+                .allMatch(s -> s.equals("myapp"));
+
+            metrics.close();
+            assertThat(customScheduler.isShutdown()).isFalse();
+
+            customScheduler.shutdownNow();
+            assertThat(customScheduler.isShutdown()).isTrue();
         }
     }
 
