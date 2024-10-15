@@ -42,6 +42,7 @@ import java.util.function.Function;
 import java.util.stream.StreamSupport;
 
 import static io.micrometer.core.instrument.util.DoubleFormat.decimalOrNan;
+import static io.micrometer.core.instrument.util.DoubleFormat.wholeOrDecimal;
 import static java.util.stream.Collectors.joining;
 
 /**
@@ -115,7 +116,6 @@ public class LoggingMeterRegistry extends StepMeterRegistry {
     @Override
     protected void publish() {
         if (config.enabled()) {
-            loggingSink.accept("Step: " + config.step().getSeconds() + "s");
             getMeters().stream().sorted((m1, m2) -> {
                 int typeComp = m1.getId().getType().compareTo(m2.getId().getType());
                 if (typeComp == 0) {
@@ -128,14 +128,14 @@ public class LoggingMeterRegistry extends StepMeterRegistry {
                     double count = counter.count();
                     if (!config.logInactive() && count == 0)
                         return;
-                    loggingSink
-                        .accept(print.id() + " delta_count=" + ((int) count) + " throughput=" + print.rate(count));
+                    loggingSink.accept(
+                            print.id() + " delta_count=" + wholeOrDecimal(count) + " throughput=" + print.rate(count));
                 }, timer -> {
                     HistogramSnapshot snapshot = timer.takeSnapshot();
                     long count = snapshot.count();
                     if (!config.logInactive() && count == 0)
                         return;
-                    loggingSink.accept(print.id() + " delta_count=" + ((int) count) + " throughput="
+                    loggingSink.accept(print.id() + " delta_count=" + wholeOrDecimal(count) + " throughput="
                             + print.unitlessRate(count) + " mean=" + print.time(snapshot.mean(getBaseTimeUnit()))
                             + " max=" + print.time(snapshot.max(getBaseTimeUnit())));
                 }, summary -> {
@@ -143,9 +143,9 @@ public class LoggingMeterRegistry extends StepMeterRegistry {
                     long count = snapshot.count();
                     if (!config.logInactive() && count == 0)
                         return;
-                    loggingSink.accept(
-                            print.id() + " delta_count=" + ((int) count) + " throughput=" + print.unitlessRate(count)
-                                    + " mean=" + print.value(snapshot.mean()) + " max=" + print.value(snapshot.max()));
+                    loggingSink.accept(print.id() + " delta_count=" + wholeOrDecimal(count) + " throughput="
+                            + print.unitlessRate(count) + " mean=" + print.value(snapshot.mean()) + " max="
+                            + print.value(snapshot.max()));
                 }, longTaskTimer -> {
                     int activeTasks = longTaskTimer.activeTasks();
                     if (!config.logInactive() && activeTasks == 0)
@@ -161,13 +161,13 @@ public class LoggingMeterRegistry extends StepMeterRegistry {
                     double count = counter.count();
                     if (!config.logInactive() && count == 0)
                         return;
-                    loggingSink
-                        .accept(print.id() + " delta_count=" + ((int) count) + " throughput=" + print.rate(count));
+                    loggingSink.accept(
+                            print.id() + " delta_count=" + wholeOrDecimal(count) + " throughput=" + print.rate(count));
                 }, timer -> {
                     double count = timer.count();
                     if (!config.logInactive() && count == 0)
                         return;
-                    loggingSink.accept(print.id() + " delta_count=" + ((int) count) + " throughput="
+                    loggingSink.accept(print.id() + " delta_count=" + wholeOrDecimal(count) + " throughput="
                             + print.unitlessRate(count) + " mean=" + print.time(timer.mean(getBaseTimeUnit())));
                 }, meter -> loggingSink.accept(writeMeter(meter, print)));
             });

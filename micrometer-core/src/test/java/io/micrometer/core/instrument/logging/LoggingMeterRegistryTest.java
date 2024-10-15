@@ -190,7 +190,16 @@ class LoggingMeterRegistryTest {
         counter.increment(30);
         clock.add(config.step());
         spyLogRegistry.publish();
-        assertThat(logs).containsExactly("Step: 60s", "my.counter{} delta_count=30 throughput=0.5/s");
+        assertThat(logs).containsExactly("my.counter{} delta_count=30 throughput=0.5/s");
+    }
+
+    @Test
+    void publish_ShouldPrintDeltaCountAsDecimal_WhenMeterIsCounterAndCountIsDecimal() {
+        var counter = spyLogRegistry.counter("my.counter");
+        counter.increment(0.5);
+        clock.add(config.step());
+        spyLogRegistry.publish();
+        assertThat(logs).containsExactly("my.counter{} delta_count=0.5 throughput=0.008333/s");
     }
 
     @Test
@@ -199,7 +208,7 @@ class LoggingMeterRegistryTest {
         IntStream.rangeClosed(1, 30).forEach(t -> timer.record(1, SECONDS));
         clock.add(config.step());
         spyLogRegistry.publish();
-        assertThat(logs).containsExactly("Step: 60s", "my.timer{} delta_count=30 throughput=0.5/s mean=1s max=1s");
+        assertThat(logs).containsExactly("my.timer{} delta_count=30 throughput=0.5/s mean=1s max=1s");
     }
 
     @Test
@@ -208,7 +217,7 @@ class LoggingMeterRegistryTest {
         IntStream.rangeClosed(1, 30).forEach(t -> summary.record(1));
         clock.add(config.step());
         spyLogRegistry.publish();
-        assertThat(logs).containsExactly("Step: 60s", "my.summary{} delta_count=30 throughput=0.5/s mean=1 max=1");
+        assertThat(logs).containsExactly("my.summary{} delta_count=30 throughput=0.5/s mean=1 max=1");
     }
 
     @Test
@@ -216,7 +225,15 @@ class LoggingMeterRegistryTest {
         spyLogRegistry.more().counter("my.function-counter", emptyList(), new AtomicDouble(), d -> 30);
         clock.add(config.step());
         spyLogRegistry.publish();
-        assertThat(logs).containsExactly("Step: 60s", "my.function-counter{} delta_count=30 throughput=0.5/s");
+        assertThat(logs).containsExactly("my.function-counter{} delta_count=30 throughput=0.5/s");
+    }
+
+    @Test
+    void publish_ShouldPrintDeltaCountAsDecimal_WhenMeterIsFunctionCounterAndCountIsDecimal() {
+        spyLogRegistry.more().counter("my.function-counter", emptyList(), new AtomicDouble(), d -> 0.5);
+        clock.add(config.step());
+        spyLogRegistry.publish();
+        assertThat(logs).containsExactly("my.function-counter{} delta_count=0.5 throughput=0.008333/s");
     }
 
     @Test
@@ -224,7 +241,7 @@ class LoggingMeterRegistryTest {
         spyLogRegistry.more().timer("my.function-timer", emptyList(), new AtomicDouble(), d -> 30, d -> 30, SECONDS);
         clock.add(config.step());
         spyLogRegistry.publish();
-        assertThat(logs).containsExactly("Step: 60s", "my.function-timer{} delta_count=30 throughput=0.5/s mean=1s");
+        assertThat(logs).containsExactly("my.function-timer{} delta_count=30 throughput=0.5/s mean=1s");
     }
 
     @Test
@@ -238,7 +255,7 @@ class LoggingMeterRegistryTest {
     }
 
     @Test
-    void publish_ShouldOnlyPrintStepDuration_WhenStepCountIsZeroAndLogsInactiveIsDisabled() {
+    void publish_ShouldNotPrintAnything_WhenStepCountIsZeroAndLogsInactiveIsDisabled() {
         spyLogRegistry.counter("my.counter");
         spyLogRegistry.timer("my.timer");
         spyLogRegistry.summary("my.summary");
@@ -247,7 +264,7 @@ class LoggingMeterRegistryTest {
         clock.add(config.step());
         spyLogRegistry.publish();
         assertThat(spyLogRegistry.getMeters()).hasSize(5);
-        assertThat(logs).containsExactly("Step: 60s");
+        assertThat(logs).isEmpty();
     }
 
     @Test
@@ -261,7 +278,7 @@ class LoggingMeterRegistryTest {
         clock.add(config.step());
         spyLogRegistry.publish();
         assertThat(spyLogRegistry.getMeters()).hasSize(5);
-        assertThat(logs).containsExactlyInAnyOrder("Step: 60s", "my.counter{} delta_count=0 throughput=0/s",
+        assertThat(logs).containsExactlyInAnyOrder("my.counter{} delta_count=0 throughput=0/s",
                 "my.timer{} delta_count=0 throughput=0/s mean= max=",
                 "my.summary{} delta_count=0 throughput=0/s mean=0 max=0",
                 "my.function-counter{} delta_count=0 throughput=0/s",
