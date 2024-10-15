@@ -61,12 +61,14 @@ public class KafkaStreamsMetrics extends KafkaMetrics {
     }
 
     /**
-     * {@link KafkaStreams} metrics binder that uses a custom scheduler that can be shared
-     * between Kafka clients to avoid using a thread per client for synchronizing metrics.
+     * {@link KafkaStreams} metrics binder. The lifecycle of the custom scheduler passed
+     * is the responsibility of the caller. It will not be shut down when this instance is
+     * {@link #close() closed}. A scheduler can be shared among multiple instances of
+     * {@link KafkaStreamsMetrics} to reduce resource usage by reducing the number of
+     * threads if there will be many instances.
      * @param kafkaStreams instance to be instrumented
      * @param tags additional tags
-     * @param scheduler customer scheduler to run the task that syncs metrics between the
-     * Kafka client and Micrometer
+     * @param scheduler customer scheduler to run the task that checks and binds metrics
      * @since 1.14.0
      */
     public KafkaStreamsMetrics(KafkaStreams kafkaStreams, Iterable<Tag> tags, ScheduledExecutorService scheduler) {
