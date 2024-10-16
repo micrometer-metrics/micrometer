@@ -25,6 +25,7 @@ import org.openjdk.jmh.runner.RunnerException;
 import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
 
+import java.util.Random;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.IntStream;
 
@@ -41,11 +42,13 @@ public class DefaultLongTaskTimerBenchmark {
 
     private static final int sampleCount = 10_000;
 
+    private static final Random random = new Random();
+
     private MockClock clock;
 
     private DefaultLongTaskTimer longTaskTimer;
 
-    private LongTaskTimer.Sample middleSample;
+    private LongTaskTimer.Sample randomSample;
 
     @Setup(Level.Invocation)
     public void setup() {
@@ -54,13 +57,15 @@ public class DefaultLongTaskTimerBenchmark {
                 new Meter.Id("ltt", Tags.empty(), TimeUnit.MILLISECONDS.toString().toLowerCase(), null,
                         Meter.Type.LONG_TASK_TIMER),
                 clock, TimeUnit.MILLISECONDS, DistributionStatisticConfig.DEFAULT, false);
+        int randomIndex = random.nextInt(sampleCount);
         // start some samples for benchmarking start/stop with active samples
         IntStream.range(0, sampleCount).forEach(offset -> {
             clock.add(offset, TimeUnit.MILLISECONDS);
             LongTaskTimer.Sample sample = longTaskTimer.start();
-            if (offset == sampleCount / 2)
-                middleSample = sample;
+            if (offset == randomIndex)
+                randomSample = sample;
         });
+        clock.add(1, TimeUnit.MILLISECONDS);
     }
 
     @TearDown(Level.Invocation)
@@ -80,8 +85,8 @@ public class DefaultLongTaskTimerBenchmark {
     @Warmup(iterations = 20)
     @Measurement(iterations = 200)
     @BenchmarkMode(Mode.SingleShotTime)
-    public long stop() {
-        return middleSample.stop();
+    public long stopRandom() {
+        return randomSample.stop();
     }
 
     @Benchmark
@@ -90,7 +95,7 @@ public class DefaultLongTaskTimerBenchmark {
     @BenchmarkMode(Mode.SingleShotTime)
     public long startAndStop() {
         start();
-        return stop();
+        return stopRandom();
     }
 
 }
