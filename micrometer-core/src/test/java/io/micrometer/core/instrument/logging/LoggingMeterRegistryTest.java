@@ -185,12 +185,12 @@ class LoggingMeterRegistryTest {
     }
 
     @Test
-    void publish_ShouldPrintDeltaCountAndThroughput_WhenMeterIsCounter() {
-        var counter = spyLogRegistry.counter("my.counter");
+    void publish_ShouldPrintDeltaCountAndThroughputWithBaseUnit_WhenMeterIsCounter() {
+        var counter = Counter.builder("my.counter").baseUnit("sheep").register(spyLogRegistry);
         counter.increment(30);
         clock.add(config.step());
         spyLogRegistry.publish();
-        assertThat(logs).containsExactly("my.counter{} delta_count=30 throughput=0.5/s");
+        assertThat(logs).containsExactly("my.counter{} delta_count=30 sheep throughput=0.5 sheep/s");
     }
 
     @Test
@@ -221,11 +221,13 @@ class LoggingMeterRegistryTest {
     }
 
     @Test
-    void publish_ShouldPrintDeltaCountAndThroughput_WhenMeterIsFunctionCounter() {
-        spyLogRegistry.more().counter("my.function-counter", emptyList(), new AtomicDouble(), d -> 30);
+    void publish_ShouldPrintDeltaCountAndThroughputWithBaseUnit_WhenMeterIsFunctionCounter() {
+        FunctionCounter.builder("my.function-counter", new AtomicDouble(), d -> 30)
+            .baseUnit("sheep")
+            .register(spyLogRegistry);
         clock.add(config.step());
         spyLogRegistry.publish();
-        assertThat(logs).containsExactly("my.function-counter{} delta_count=30 throughput=0.5/s");
+        assertThat(logs).containsExactly("my.function-counter{} delta_count=30 sheep throughput=0.5 sheep/s");
     }
 
     @Test

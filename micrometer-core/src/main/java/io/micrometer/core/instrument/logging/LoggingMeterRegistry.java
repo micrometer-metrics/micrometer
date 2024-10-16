@@ -128,8 +128,8 @@ public class LoggingMeterRegistry extends StepMeterRegistry {
                     double count = counter.count();
                     if (!config.logInactive() && count == 0)
                         return;
-                    loggingSink.accept(
-                            print.id() + " delta_count=" + wholeOrDecimal(count) + " throughput=" + print.rate(count));
+                    loggingSink.accept(print.id() + " delta_count=" + print.humanReadableBaseUnit(count)
+                            + " throughput=" + print.rate(count));
                 }, timer -> {
                     HistogramSnapshot snapshot = timer.takeSnapshot();
                     long count = snapshot.count();
@@ -161,8 +161,8 @@ public class LoggingMeterRegistry extends StepMeterRegistry {
                     double count = counter.count();
                     if (!config.logInactive() && count == 0)
                         return;
-                    loggingSink.accept(
-                            print.id() + " delta_count=" + wholeOrDecimal(count) + " throughput=" + print.rate(count));
+                    loggingSink.accept(print.id() + " delta_count=" + print.humanReadableBaseUnit(count)
+                            + " throughput=" + print.rate(count));
                 }, timer -> {
                     double count = timer.count();
                     if (!config.logInactive() && count == 0)
