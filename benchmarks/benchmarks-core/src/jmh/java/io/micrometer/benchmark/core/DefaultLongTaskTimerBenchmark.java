@@ -32,6 +32,9 @@ import java.util.stream.IntStream;
 @State(Scope.Benchmark)
 @OutputTimeUnit(TimeUnit.MICROSECONDS)
 @Fork(1)
+@BenchmarkMode(Mode.AverageTime)
+@Warmup(iterations = 3)
+@Measurement(iterations = 3)
 public class DefaultLongTaskTimerBenchmark {
 
     public static void main(String[] args) throws RunnerException {
@@ -40,9 +43,10 @@ public class DefaultLongTaskTimerBenchmark {
         new Runner(opt).run();
     }
 
-    private static final int sampleCount = 10_000;
-
     private static final Random random = new Random();
+
+    @Param({ "10000", "100000" })
+    int activeSampleCount;
 
     private MockClock clock;
 
@@ -57,9 +61,9 @@ public class DefaultLongTaskTimerBenchmark {
                 new Meter.Id("ltt", Tags.empty(), TimeUnit.MILLISECONDS.toString().toLowerCase(), null,
                         Meter.Type.LONG_TASK_TIMER),
                 clock, TimeUnit.MILLISECONDS, DistributionStatisticConfig.DEFAULT, false);
-        int randomIndex = random.nextInt(sampleCount);
+        int randomIndex = random.nextInt(activeSampleCount);
         // start some samples for benchmarking start/stop with active samples
-        IntStream.range(0, sampleCount).forEach(offset -> {
+        IntStream.range(0, activeSampleCount).forEach(offset -> {
             clock.add(offset, TimeUnit.MILLISECONDS);
             LongTaskTimer.Sample sample = longTaskTimer.start();
             if (offset == randomIndex)
@@ -68,34 +72,14 @@ public class DefaultLongTaskTimerBenchmark {
         clock.add(1, TimeUnit.MILLISECONDS);
     }
 
-    @TearDown(Level.Invocation)
-    public void tearDown() {
-        longTaskTimer = null;
-    }
-
     @Benchmark
-    @Warmup(iterations = 20)
-    @Measurement(iterations = 200)
-    @BenchmarkMode(Mode.SingleShotTime)
     public LongTaskTimer.Sample start() {
         return longTaskTimer.start();
     }
 
     @Benchmark
-    @Warmup(iterations = 20)
-    @Measurement(iterations = 200)
-    @BenchmarkMode(Mode.SingleShotTime)
     public long stopRandom() {
         return randomSample.stop();
-    }
-
-    @Benchmark
-    @Warmup(iterations = 20)
-    @Measurement(iterations = 200)
-    @BenchmarkMode(Mode.SingleShotTime)
-    public long startAndStop() {
-        start();
-        return stopRandom();
     }
 
 }
