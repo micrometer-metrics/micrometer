@@ -52,6 +52,12 @@ public class GrpcServerObservationContext extends RequestReplyReceiverContext<Me
 
     private boolean cancelled;
 
+    @Nullable
+    private String peerName;
+
+    @Nullable
+    private Integer peerPort;
+
     public GrpcServerObservationContext(Getter<Metadata> getter) {
         super(getter);
     }
@@ -157,6 +163,24 @@ public class GrpcServerObservationContext extends RequestReplyReceiverContext<Me
      */
     public void setCancelled(boolean cancelled) {
         this.cancelled = cancelled;
+    }
+
+    @Nullable
+    public String getPeerName() {
+        return this.peerName;
+    }
+
+    public void setPeerName(@Nullable String peerName) {
+        this.peerName = peerName;
+    }
+
+    @Nullable
+    public Integer getPeerPort() {
+        return this.peerPort;
+    }
+
+    public void setPeerPort(@Nullable Integer peerPort) {
+        this.peerPort = peerPort;
     }
 
 }

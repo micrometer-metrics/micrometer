@@ -24,6 +24,7 @@ import io.micrometer.common.lang.Nullable;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
 
+import java.net.URI;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
@@ -82,8 +83,17 @@ public class ObservationGrpcServerInterceptor implements ServerInterceptor {
             }
             context.setFullMethodName(fullMethodName);
             context.setMethodType(methodType);
-            context.setAuthority(call.getAuthority());
-
+            String authority = call.getAuthority();
+            if (authority != null) {
+                context.setAuthority(authority);
+                try {
+                    URI uri = new URI(null, authority, null, null, null);
+                    context.setPeerName(uri.getHost());
+                    context.setPeerPort(uri.getPort());
+                }
+                catch (Exception ex) {
+                }
+            }
             return context;
         };
 
