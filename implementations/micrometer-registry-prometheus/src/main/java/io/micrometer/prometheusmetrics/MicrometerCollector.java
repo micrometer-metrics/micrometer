@@ -116,10 +116,8 @@ class MicrometerCollector implements MultiCollector {
             return conventionName;
         }
 
-        Family<T> addSamples(Collection<DataPointSnapshot> dataPointSnapshots) {
-            for (DataPointSnapshot dataPointSnapshot : dataPointSnapshots) {
-                this.dataPointSnapshots.add((T) dataPointSnapshot);
-            }
+        Family<T> addSamples(Collection<T> dataPointSnapshots) {
+            this.dataPointSnapshots.addAll(dataPointSnapshots);
             return this;
         }
 

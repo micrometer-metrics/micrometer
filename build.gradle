@@ -176,11 +176,6 @@ subprojects {
             useJUnitPlatform {
                 excludeTags 'docker'
             }
-
-            develocity.testRetry {
-                maxFailures = 5
-                maxRetries = 3
-            }
         }
 
         task dockerTest(type: Test) {
@@ -192,8 +187,12 @@ subprojects {
             }
         }
 
-        project.tasks.withType(Test) { Test testTask ->
-            testTask.testLogging.exceptionFormat = 'full'
+        tasks.withType(Test).configureEach {
+            testLogging.exceptionFormat = 'full'
+            develocity.testRetry {
+                maxFailures = 5
+                maxRetries = 3
+            }
         }
 
         license {
@@ -279,6 +278,13 @@ subprojects {
         tasks.withType(GenerateModuleMetadata) {
             enabled = false
         }
+    }
+
+    plugins.withId('org.jetbrains.kotlin.jvm') {
+        // We disble the kotlinSourcesJar task since it conflicts with the sourcesJar task of the Java plugin
+        // See: https://github.com/micrometer-metrics/micrometer/issues/5151
+        // See: https://youtrack.jetbrains.com/issue/KT-54207/Kotlin-has-two-sources-tasks-kotlinSourcesJar-and-sourcesJar-that-archives-sources-to-the-same-artifact
+        kotlinSourcesJar.enabled = false
     }
 
     tasks.register('downloadDependencies') {
@@ -427,7 +433,7 @@ nexusPublishing {
 }
 
 wrapper {
-    gradleVersion = '8.6'
+    gradleVersion = '8.10'
 }
 
 defaultTasks 'build'

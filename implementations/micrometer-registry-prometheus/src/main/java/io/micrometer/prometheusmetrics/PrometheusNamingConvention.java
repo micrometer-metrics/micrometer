@@ -26,6 +26,7 @@ import io.prometheus.metrics.model.snapshots.PrometheusNaming;
  * docs</a> for a specification of the constraints on metric names and labels
  *
  * @author Jon Schneider
+ * @since 1.13.0
  */
 public class PrometheusNamingConvention implements NamingConvention {
 

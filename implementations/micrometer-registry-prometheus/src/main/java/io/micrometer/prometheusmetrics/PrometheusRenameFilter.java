@@ -26,6 +26,7 @@ import java.util.Map;
  * name.
  *
  * @author Tommy Ludwig
+ * @since 1.13.0
  */
 public class PrometheusRenameFilter implements MeterFilter {
 

@@ -26,6 +26,10 @@ import javax.annotation.concurrent.Immutable;
 @Immutable
 public final class DynatraceSummarySnapshot {
 
+    /**
+     * For empty value.
+     * @since 1.9.18
+     */
     public static final DynatraceSummarySnapshot EMPTY = new DynatraceSummarySnapshot(0, 0, 0, 0);
 
     private final double min;

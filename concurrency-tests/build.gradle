@@ -5,11 +5,13 @@ plugins {
 dependencies {
     implementation project(":micrometer-core")
 //    implementation("io.micrometer:micrometer-core:1.12.4")
+    implementation project(":micrometer-test")
+    implementation project(":micrometer-registry-prometheus")
     runtimeOnly(libs.logbackLatest)
 }
 
 jcstress {
-    jcstressDependency 'org.openjdk.jcstress:jcstress-core:0.16'
+    libs.jcstressCore
 
     verbose = true
 }
