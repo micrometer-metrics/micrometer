@@ -559,7 +559,7 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
      * @return The UCUM-compliant string if known, otherwise returns the original unit
      */
     private static String mapUnitIfNeeded(String unit) {
-        return unit != null && UCUM_TIME_UNIT_MAP.containsKey(unit) ? UCUM_TIME_UNIT_MAP.get(unit) : unit;
+        return unit != null ? UCUM_TIME_UNIT_MAP.getOrDefault(unit.toLowerCase(), unit) : null;
     }
 
     /**
@@ -569,14 +569,25 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
      */
     private static Map<String, String> ucumTimeUnitMap() {
         Map<String, String> mapping = new HashMap<>();
+        // There are redundant elements in case the toString method of TimeUnit changes
+        mapping.put(TimeUnit.NANOSECONDS.toString().toLowerCase(), "ns");
         mapping.put("nanoseconds", "ns");
         mapping.put("nanosecond", "ns");
+        mapping.put(TimeUnit.MICROSECONDS.toString().toLowerCase(), "us");
         mapping.put("microseconds", "us");
         mapping.put("microsecond", "us");
+        mapping.put(TimeUnit.MILLISECONDS.toString().toLowerCase(), "ms");
         mapping.put("milliseconds", "ms");
         mapping.put("millisecond", "ms");
+        mapping.put(TimeUnit.SECONDS.toString().toLowerCase(), "s");
         mapping.put("seconds", "s");
         mapping.put("second", "s");
+        mapping.put(TimeUnit.MINUTES.toString().toLowerCase(), "min");
+        mapping.put("minutes", "min");
+        mapping.put("minute", "min");
+        mapping.put(TimeUnit.HOURS.toString().toLowerCase(), "h");
+        mapping.put("hours", "h");
+        mapping.put("hour", "h");
 
         return Collections.unmodifiableMap(mapping);
     }

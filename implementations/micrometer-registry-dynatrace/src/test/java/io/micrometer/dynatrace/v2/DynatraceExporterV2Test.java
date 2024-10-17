@@ -44,8 +44,7 @@ import java.util.stream.Collectors;
 
 import static io.micrometer.core.instrument.MockClock.clock;
 import static java.lang.Double.*;
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static java.util.concurrent.TimeUnit.SECONDS;
+import static java.util.concurrent.TimeUnit.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.entry;
 import static org.awaitility.Awaitility.await;
@@ -76,8 +75,7 @@ class DynatraceExporterV2Test {
     void setUp() {
         this.config = createDefaultDynatraceConfig();
         this.clock = new MockClock();
-        // Set the clock to something recent so that the Dynatrace library will not
-        // complain.
+        // So that the Dynatrace library will not complain
         this.clock.add(System.currentTimeMillis(), MILLISECONDS);
         this.httpClient = mock(HttpSender.class);
 
@@ -769,16 +767,16 @@ class DynatraceExporterV2Test {
     }
 
     @Test
-    void shouldHaveUcumCompliantUnits() {
+    void metersShouldUseUcumCompliantUnits() {
         HttpSender.Request.Builder builder = spy(HttpSender.Request.build(config.uri(), httpClient));
         when(httpClient.post(anyString())).thenReturn(builder);
 
         meterRegistry.timer("test.timer").record(Duration.ofMillis(12));
-        meterRegistry.more().timeGauge("test.tg", Tags.empty(), this, TimeUnit.MICROSECONDS, x -> 1_000);
+        DistributionSummary.builder("test.summary").baseUnit("days").register(meterRegistry).record(42.0);
+        meterRegistry.more().timeGauge("test.timegauge", Tags.empty(), this, TimeUnit.MICROSECONDS, x -> 1_000);
         FunctionTimer.builder("test.ft", this, x -> 1, x -> 100, MILLISECONDS).register(meterRegistry);
-        Counter.builder("test.second").baseUnit("second").register(meterRegistry).increment(100);
         Counter.builder("test.seconds").baseUnit("seconds").register(meterRegistry).increment(10);
-        FunctionCounter.builder("process.cpu.time", this, x -> 1_000_000).baseUnit("ns").register(meterRegistry);
+        FunctionCounter.builder("test.fc", this, x -> 1_000_000).baseUnit("ns").register(meterRegistry);
 
         Sample sample = meterRegistry.more().longTaskTimer("test.ltt").start();
         clock.add(config.step().plus(Duration.ofSeconds(2)));
@@ -788,18 +786,95 @@ class DynatraceExporterV2Test {
 
         verify(builder).withPlainText(assertArg(body -> assertThat(body.split("\n")).containsExactlyInAnyOrder(
                 "test.timer,dt.metrics.source=micrometer gauge,min=12,max=12,sum=12,count=1 " + clock.wallTime(),
-                "#test.timer gauge dt.meta.unit=ms", "test.tg,dt.metrics.source=micrometer gauge,1 " + clock.wallTime(),
-                "#test.tg gauge dt.meta.unit=ms",
+                "#test.timer gauge dt.meta.unit=ms",
+                "test.summary,dt.metrics.source=micrometer gauge,min=42,max=42,sum=42,count=1 " + clock.wallTime(),
+                "#test.summary gauge dt.meta.unit=days",
+                "test.timegauge,dt.metrics.source=micrometer gauge,1 " + clock.wallTime(),
+                "#test.timegauge gauge dt.meta.unit=ms",
                 "test.ft,dt.metrics.source=micrometer gauge,min=100,max=100,sum=100,count=1 " + clock.wallTime(),
                 "#test.ft gauge dt.meta.unit=ms",
-                "test.second,dt.metrics.source=micrometer count,delta=100 " + clock.wallTime(),
-                "#test.second count dt.meta.unit=s",
                 "test.seconds,dt.metrics.source=micrometer count,delta=10 " + clock.wallTime(),
                 "#test.seconds count dt.meta.unit=s",
-                "process.cpu.time,dt.metrics.source=micrometer count,delta=1000000 " + clock.wallTime(),
-                "#process.cpu.time count dt.meta.unit=ns",
+                "test.fc,dt.metrics.source=micrometer count,delta=1000000 " + clock.wallTime(),
+                "#test.fc count dt.meta.unit=ns",
                 "test.ltt,dt.metrics.source=micrometer gauge,min=62000,max=62000,sum=62000,count=1 " + clock.wallTime(),
                 "#test.ltt gauge dt.meta.unit=ms")));
+    }
+
+    @Test
+    void userDefinedUnitsShouldBeFormattedToUcumCompliantUnits() {
+        HttpSender.Request.Builder builder = spy(HttpSender.Request.build(config.uri(), httpClient));
+        when(httpClient.post(anyString())).thenReturn(builder);
+
+        Counter.builder("test.tu.nanos").baseUnit(NANOSECONDS.toString()).register(meterRegistry).increment(1);
+        Counter.builder("test.nanoseconds").baseUnit("nanoseconds").register(meterRegistry).increment(2);
+        Counter.builder("test.nanosecond").baseUnit("nanosecond").register(meterRegistry).increment(3);
+
+        Counter.builder("test.tu.micros").baseUnit(MICROSECONDS.toString()).register(meterRegistry).increment(4);
+        Counter.builder("test.microseconds").baseUnit("microseconds").register(meterRegistry).increment(5);
+        Counter.builder("test.microsecond").baseUnit("microsecond").register(meterRegistry).increment(6);
+
+        Counter.builder("test.tu.millis").baseUnit(MILLISECONDS.toString()).register(meterRegistry).increment(7);
+        Counter.builder("test.milliseconds").baseUnit("milliseconds").register(meterRegistry).increment(8);
+        Counter.builder("test.millisecond").baseUnit("millisecond").register(meterRegistry).increment(9);
+
+        Counter.builder("test.tu.seconds").baseUnit(SECONDS.toString()).register(meterRegistry).increment(10);
+        Counter.builder("test.seconds").baseUnit("seconds").register(meterRegistry).increment(11);
+        Counter.builder("test.second").baseUnit("second").register(meterRegistry).increment(12);
+
+        Counter.builder("test.tu.minutes").baseUnit(MINUTES.toString()).register(meterRegistry).increment(13);
+        Counter.builder("test.minutes").baseUnit("minutes").register(meterRegistry).increment(14);
+        Counter.builder("test.minute").baseUnit("minute").register(meterRegistry).increment(15);
+
+        Counter.builder("test.tu.hours").baseUnit(HOURS.toString()).register(meterRegistry).increment(16);
+        Counter.builder("test.hours").baseUnit("hours").register(meterRegistry).increment(17);
+        Counter.builder("test.hour").baseUnit("hour").register(meterRegistry).increment(18);
+
+        clock.add(config.step().plus(Duration.ofSeconds(2)));
+        exporter.export(meterRegistry.getMeters());
+
+        verify(builder).withPlainText(assertArg(body -> assertThat(body.split("\n")).containsExactlyInAnyOrder(
+                "test.tu.nanos,dt.metrics.source=micrometer count,delta=1 " + clock.wallTime(),
+                "#test.tu.nanos count dt.meta.unit=ns",
+                "test.nanoseconds,dt.metrics.source=micrometer count,delta=2 " + clock.wallTime(),
+                "#test.nanoseconds count dt.meta.unit=ns",
+                "test.nanosecond,dt.metrics.source=micrometer count,delta=3 " + clock.wallTime(),
+                "#test.nanosecond count dt.meta.unit=ns",
+
+                "test.tu.micros,dt.metrics.source=micrometer count,delta=4 " + clock.wallTime(),
+                "#test.tu.micros count dt.meta.unit=us",
+                "test.microseconds,dt.metrics.source=micrometer count,delta=5 " + clock.wallTime(),
+                "#test.microseconds count dt.meta.unit=us",
+                "test.microsecond,dt.metrics.source=micrometer count,delta=6 " + clock.wallTime(),
+                "#test.microsecond count dt.meta.unit=us",
+
+                "test.tu.millis,dt.metrics.source=micrometer count,delta=7 " + clock.wallTime(),
+                "#test.tu.millis count dt.meta.unit=ms",
+                "test.milliseconds,dt.metrics.source=micrometer count,delta=8 " + clock.wallTime(),
+                "#test.milliseconds count dt.meta.unit=ms",
+                "test.millisecond,dt.metrics.source=micrometer count,delta=9 " + clock.wallTime(),
+                "#test.millisecond count dt.meta.unit=ms",
+
+                "test.tu.seconds,dt.metrics.source=micrometer count,delta=10 " + clock.wallTime(),
+                "#test.tu.seconds count dt.meta.unit=s",
+                "test.seconds,dt.metrics.source=micrometer count,delta=11 " + clock.wallTime(),
+                "#test.seconds count dt.meta.unit=s",
+                "test.second,dt.metrics.source=micrometer count,delta=12 " + clock.wallTime(),
+                "#test.second count dt.meta.unit=s",
+
+                "test.tu.minutes,dt.metrics.source=micrometer count,delta=13 " + clock.wallTime(),
+                "#test.tu.minutes count dt.meta.unit=min",
+                "test.minutes,dt.metrics.source=micrometer count,delta=14 " + clock.wallTime(),
+                "#test.minutes count dt.meta.unit=min",
+                "test.minute,dt.metrics.source=micrometer count,delta=15 " + clock.wallTime(),
+                "#test.minute count dt.meta.unit=min",
+
+                "test.tu.hours,dt.metrics.source=micrometer count,delta=16 " + clock.wallTime(),
+                "#test.tu.hours count dt.meta.unit=h",
+                "test.hours,dt.metrics.source=micrometer count,delta=17 " + clock.wallTime(),
+                "#test.hours count dt.meta.unit=h",
+                "test.hour,dt.metrics.source=micrometer count,delta=18 " + clock.wallTime(),
+                "#test.hour count dt.meta.unit=h")));
     }
 
     @Test
