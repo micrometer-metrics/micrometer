@@ -24,6 +24,8 @@ import io.micrometer.core.instrument.util.TimeUtils;
 import io.opentelemetry.proto.metrics.v1.HistogramDataPoint;
 import io.opentelemetry.proto.metrics.v1.Metric;
 import io.opentelemetry.proto.metrics.v1.NumberDataPoint;
+import io.opentelemetry.proto.metrics.v1.SummaryDataPoint;
+import io.opentelemetry.proto.metrics.v1.SummaryDataPoint.ValueAtQuantile;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.testcontainers.shaded.com.google.common.util.concurrent.AtomicDouble;
@@ -32,6 +34,7 @@ import java.time.Duration;
 import java.util.ArrayDeque;
 import java.util.Arrays;
 import java.util.Deque;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
@@ -255,9 +258,9 @@ class OtlpDeltaMeterRegistryTest extends OtlpMeterRegistryTest {
     @Test
     void distributionSummaryWithHistogram() {
         DistributionSummary ds = DistributionSummary.builder(METER_NAME)
+            .baseUnit(BaseUnits.BYTES)
             .description(METER_DESCRIPTION)
             .tags(Tags.of(meterTag))
-            .baseUnit(BaseUnits.BYTES)
             .serviceLevelObjectives(10, 50, 100, 500)
             .register(registry);
 
@@ -300,6 +303,36 @@ class OtlpDeltaMeterRegistryTest extends OtlpMeterRegistryTest {
         assertThat(histogramDataPoint.getBucketCounts(1)).isZero();
         assertThat(histogramDataPoint.getBucketCounts(2)).isZero();
         assertThat(histogramDataPoint.getBucketCounts(3)).isZero();
+    }
+
+    @Test
+    void distributionSummaryWithPercentiles() {
+        DistributionSummary size = DistributionSummary.builder(METER_NAME)
+            .baseUnit(BaseUnits.BYTES)
+            .description(METER_DESCRIPTION)
+            .tags(Tags.of(meterTag))
+            .publishPercentiles(0.5, 0.9, 0.99)
+            .register(registry);
+        size.record(100);
+        size.record(15);
+        size.record(2233);
+        stepOverNStep(1);
+        size.record(204);
+
+        Metric metric = writeToMetric(size);
+        assertThat(metric.getName()).isEqualTo(METER_NAME);
+        assertThat(metric.getDescription()).isEqualTo(METER_DESCRIPTION);
+        assertThat(metric.getUnit()).isEqualTo(BaseUnits.BYTES);
+        List<SummaryDataPoint> dataPoints = metric.getSummary().getDataPointsList();
+        assertThat(dataPoints).hasSize(1);
+        List<ValueAtQuantile> quantiles = dataPoints.get(0).getQuantileValuesList();
+        assertThat(quantiles).hasSize(3);
+        assertThat(quantiles.get(0)).satisfies(quantile -> assertThat(quantile.getQuantile()).isEqualTo(0.5))
+            .satisfies(quantile -> assertThat(quantile.getValue()).isEqualTo(200));
+        assertThat(quantiles.get(1)).satisfies(quantile -> assertThat(quantile.getQuantile()).isEqualTo(0.9))
+            .satisfies(quantile -> assertThat(quantile.getValue()).isEqualTo(200));
+        assertThat(quantiles.get(2)).satisfies(quantile -> assertThat(quantile.getQuantile()).isEqualTo(0.99))
+            .satisfies(quantile -> assertThat(quantile.getValue()).isEqualTo(200));
     }
 
     @Test

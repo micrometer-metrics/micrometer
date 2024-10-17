@@ -172,7 +172,8 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
                 }
             }
             catch (Throwable e) {
-                logger.warn("Failed to publish metrics to OTLP receiver (context: {})", getConfigurationContext(), e);
+                logger.warn(String.format("Failed to publish metrics to OTLP receiver (context: %s)",
+                        getConfigurationContext()), e);
             }
         }
     }

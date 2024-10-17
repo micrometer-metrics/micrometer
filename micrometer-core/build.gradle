@@ -156,7 +156,7 @@ dependencies {
     }
     // Needed for LogbackMetrics tests
     testImplementation libs.slf4jApi
-    testImplementation(libs.junitLoggingExtention)
+    testImplementation(libs.junitLoggingExtension)
 
     testImplementation libs.mockitoCore5
 

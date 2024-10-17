@@ -132,7 +132,7 @@ class OtlpMetricConverter {
 
         // if percentiles configured, use summary
         if (histogramSnapshot.percentileValues().length != 0) {
-            buildSummaryDataPoint(histogramSupport, tags, startTimeNanos, total, count, histogramSnapshot);
+            buildSummaryDataPoint(histogramSupport, tags, startTimeNanos, total, count, isTimeBased, histogramSnapshot);
         }
         else {
             buildHistogramDataPoint(histogramSupport, tags, startTimeNanos, total, count, isTimeBased,
@@ -192,7 +192,7 @@ class OtlpMetricConverter {
     }
 
     private void buildSummaryDataPoint(final HistogramSupport histogramSupport, final Iterable<KeyValue> tags,
-            final long startTimeNanos, final double total, final long count,
+            final long startTimeNanos, final double total, final long count, boolean isTimeBased,
             final HistogramSnapshot histogramSnapshot) {
         Metric.Builder metricBuilder = getOrCreateMetricBuilder(histogramSupport.getId(), DataCase.SUMMARY);
         if (metricBuilder != null) {
@@ -203,9 +203,10 @@ class OtlpMetricConverter {
                 .setSum(total)
                 .setCount(count);
             for (ValueAtPercentile percentile : histogramSnapshot.percentileValues()) {
+                double value = percentile.value();
                 summaryDataPoint.addQuantileValues(SummaryDataPoint.ValueAtQuantile.newBuilder()
                     .setQuantile(percentile.percentile())
-                    .setValue(TimeUtils.convert(percentile.value(), TimeUnit.NANOSECONDS, baseTimeUnit)));
+                    .setValue(isTimeBased ? TimeUtils.convert(value, TimeUnit.NANOSECONDS, baseTimeUnit) : value));
             }
 
             setSummaryDataPoint(metricBuilder, summaryDataPoint);
@@ -282,7 +283,7 @@ class OtlpMetricConverter {
     }
 
     private Iterable<KeyValue> getKeyValuesForId(Meter.Id id) {
-        return id.getTags()
+        return id.getConventionTags(namingConvention)
             .stream()
             .map(tag -> createKeyValue(tag.getKey(), tag.getValue()))
             .collect(Collectors.toList());

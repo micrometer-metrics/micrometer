@@ -59,7 +59,7 @@ public final class DynatraceLongTaskTimer extends DefaultLongTaskTimer implement
         // sample.duration(...) will return -1 if the task is already finished
         // (only currently active tasks are measured).
         // -1 will be ignored in recordNonNegative.
-        super.forEachActive(sample -> summary.recordNonNegative(sample.duration(unit)));
+        forEachActive(sample -> summary.recordNonNegative(sample.duration(unit)));
 
         return summary.takeSummarySnapshot();
     }

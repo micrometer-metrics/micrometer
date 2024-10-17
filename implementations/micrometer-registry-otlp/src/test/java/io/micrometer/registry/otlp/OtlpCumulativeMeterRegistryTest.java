@@ -218,7 +218,7 @@ class OtlpCumulativeMeterRegistryTest extends OtlpMeterRegistryTest {
     }
 
     @Test
-    void distributionSummaryWithHistogramBuckets() {
+    void distributionSummaryWithHistogram() {
         DistributionSummary size = DistributionSummary.builder("http.request.size")
             .baseUnit(BaseUnits.BYTES)
             .publishPercentileHistogram()
@@ -471,6 +471,27 @@ class OtlpCumulativeMeterRegistryTest extends OtlpMeterRegistryTest {
                 assertThat(actualLine).isEqualTo(expectedLine);
             }
         }
+    }
+
+    @Test
+    void distributionSummaryWithPercentiles() {
+        DistributionSummary size = DistributionSummary.builder("http.response.size")
+            .baseUnit(BaseUnits.BYTES)
+            .publishPercentiles(0.5, 0.9, 0.99)
+            .register(registry);
+        size.record(100);
+        size.record(15);
+        size.record(2233);
+        clock.add(otlpConfig().step());
+        size.record(204);
+
+        assertThat(writeToMetric(size).toString())
+            .isEqualTo("name: \"http.response.size\"\n" + "unit: \"bytes\"\n" + "summary {\n" + "  data_points {\n"
+                    + "    start_time_unix_nano: 1000000\n" + "    time_unix_nano: 60001000000\n" + "    count: 4\n"
+                    + "    sum: 2552.0\n" + "    quantile_values {\n" + "      quantile: 0.5\n" + "      value: 200.0\n"
+                    + "    }\n" + "    quantile_values {\n" + "      quantile: 0.9\n" + "      value: 200.0\n"
+                    + "    }\n" + "    quantile_values {\n" + "      quantile: 0.99\n" + "      value: 200.0\n"
+                    + "    }\n" + "  }\n" + "}\n");
     }
 
     private double extractValue(String line) {

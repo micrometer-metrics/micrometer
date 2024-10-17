@@ -31,6 +31,7 @@ import static io.micrometer.core.instrument.config.validate.PropertyValidator.*;
  *
  * @author Jon Schneider
  * @author Jonatan Ivanov
+ * @since 1.13.0
  */
 public interface PrometheusConfig extends MeterRegistryConfig {
 
@@ -67,6 +68,7 @@ public interface PrometheusConfig extends MeterRegistryConfig {
      * {@code io.prometheus.exporter.exemplarsOnAllMetricTypes=true}.
      * @see <a href="https://prometheus.github.io/client_java/config/config/">Prometheus
      * docs</a>
+     * @since 1.13.0
      */
     @Nullable
     default Properties prometheusProperties() {
