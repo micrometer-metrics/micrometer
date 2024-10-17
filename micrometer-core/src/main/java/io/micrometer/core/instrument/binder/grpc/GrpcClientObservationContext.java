@@ -49,6 +49,11 @@ public class GrpcClientObservationContext extends RequestReplySenderContext<Meta
 
     private Metadata trailers;
 
+    private String peerName;
+
+    @Nullable
+    private Integer peerPort;
+
     public GrpcClientObservationContext(Setter<Metadata> setter) {
         super(setter);
     }
@@ -136,6 +141,23 @@ public class GrpcClientObservationContext extends RequestReplySenderContext<Meta
      */
     public void setTrailers(Metadata trailers) {
         this.trailers = trailers;
+    }
+
+    public String getPeerName() {
+        return this.peerName;
+    }
+
+    public void setPeerName(String peerName) {
+        this.peerName = peerName;
+    }
+
+    @Nullable
+    public Integer getPeerPort() {
+        return this.peerPort;
+    }
+
+    public void setPeerPort(@Nullable Integer peerPort) {
+        this.peerPort = peerPort;
     }
 
 }
