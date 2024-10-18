@@ -93,6 +93,8 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
 
     private final TimeUnit baseTimeUnit;
 
+    private final @Nullable ExemplarContextProvider exemplarContextProvider;
+
     // Time when the last scheduled rollOver has started. Applicable only for delta
     // flavour.
     private volatile long lastMeterRolloverStartTime = -1;
@@ -115,11 +117,11 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
      * @since 1.14.0
      */
     public OtlpMeterRegistry(OtlpConfig config, Clock clock, ThreadFactory threadFactory) {
-        this(config, clock, threadFactory, new OtlpHttpMetricsSender(new HttpUrlConnectionSender()));
+        this(config, clock, threadFactory, new OtlpHttpMetricsSender(new HttpUrlConnectionSender()), null);
     }
 
     private OtlpMeterRegistry(OtlpConfig config, Clock clock, ThreadFactory threadFactory,
-            OtlpMetricsSender metricsSender) {
+            OtlpMetricsSender metricsSender, @Nullable ExemplarContextProvider exemplarContextProvider) {
         super(config, clock);
         this.config = config;
         this.baseTimeUnit = config.baseTimeUnit();
@@ -128,6 +130,7 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
         this.maxBucketsPerMeterLookup = MaxBucketsPerMeterLookup.DEFAULT;
         this.resource = Resource.newBuilder().addAllAttributes(getResourceAttributes()).build();
         this.aggregationTemporality = config.aggregationTemporality();
+        this.exemplarContextProvider = exemplarContextProvider;
         config().namingConvention(NamingConvention.dot);
         start(threadFactory);
     }
@@ -218,8 +221,8 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
 
     @Override
     protected Counter newCounter(Meter.Id id) {
-        return isCumulative() ? new OtlpCumulativeCounter(id, this.clock)
-                : new StepCounter(id, this.clock, config.step().toMillis());
+        return isCumulative() ? new OtlpCumulativeCounter(id, this.clock, newExemplarSampler())
+                : new OtlpStepCounter(id, this.clock, config.step().toMillis(), newExemplarSampler());
     }
 
     @Override
@@ -268,6 +271,11 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
         return isCumulative()
                 ? new OtlpCumulativeLongTaskTimer(id, this.clock, getBaseTimeUnit(), distributionStatisticConfig)
                 : new DefaultLongTaskTimer(id, clock, getBaseTimeUnit(), distributionStatisticConfig, false);
+    }
+
+    private @Nullable ExemplarSampler newExemplarSampler() {
+        return exemplarContextProvider != null
+                ? new OtlpExemplarSampler(exemplarContextProvider, clock, config.step().toMillis()) : null;
     }
 
     @Override
@@ -348,8 +356,14 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
     void pollMetersToRollover() {
         this.lastMeterRolloverStartTime = clock.wallTime();
         this.getMeters()
-            .forEach(m -> m.match(gauge -> null, Counter::count, Timer::takeSnapshot, DistributionSummary::takeSnapshot,
-                    meter -> null, meter -> null, FunctionCounter::count, FunctionTimer::count, meter -> null));
+            .forEach(m -> m.match(gauge -> null, counter -> pollOtlpCounter((OtlpCounter) counter), Timer::takeSnapshot,
+                    DistributionSummary::takeSnapshot, meter -> null, meter -> null, FunctionCounter::count,
+                    FunctionTimer::count, meter -> null));
+    }
+
+    private double pollOtlpCounter(OtlpCounter counter) {
+        counter.rollOver();
+        return 0.0;
     }
 
     private long getInitialDelay() {
@@ -602,6 +616,8 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
 
         private OtlpMetricsSender metricsSender;
 
+        private @Nullable ExemplarContextProvider exemplarContextProvider;
+
         private Builder(OtlpConfig otlpConfig) {
             this.otlpConfig = otlpConfig;
             this.metricsSender = new OtlpHttpMetricsSender(new HttpUrlConnectionSender());
@@ -630,8 +646,13 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
             return this;
         }
 
+        public Builder exemplarContextProvider(ExemplarContextProvider exemplarContextProvider) {
+            this.exemplarContextProvider = exemplarContextProvider;
+            return this;
+        }
+
         public OtlpMeterRegistry build() {
-            return new OtlpMeterRegistry(otlpConfig, clock, threadFactory, metricsSender);
+            return new OtlpMeterRegistry(otlpConfig, clock, threadFactory, metricsSender, exemplarContextProvider);
         }
 
     }

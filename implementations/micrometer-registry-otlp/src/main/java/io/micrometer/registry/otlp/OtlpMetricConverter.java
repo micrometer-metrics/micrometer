@@ -34,6 +34,7 @@ import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.function.DoubleSupplier;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 /**
@@ -111,12 +112,12 @@ class OtlpMetricConverter {
 
     private void writeCounter(Counter counter) {
         Metric.Builder metricBuilder = getOrCreateMetricBuilder(counter.getId(), DataCase.SUM);
-        setSumDataPoint(metricBuilder, counter, counter::count);
+        setSumDataPoint(metricBuilder, counter, counter::count, ((OtlpCounter) counter)::exemplars);
     }
 
     private void writeFunctionCounter(FunctionCounter functionCounter) {
         Metric.Builder metricBuilder = getOrCreateMetricBuilder(functionCounter.getId(), DataCase.SUM);
-        setSumDataPoint(metricBuilder, functionCounter, functionCounter::count);
+        setSumDataPoint(metricBuilder, functionCounter, functionCounter::count, Collections::emptyList);
     }
 
     private void writeHistogramSupport(HistogramSupport histogramSupport) {
@@ -274,7 +275,8 @@ class OtlpMetricConverter {
         setSummaryDataPoint(metricBuilder, summaryDataPoint);
     }
 
-    private void setSumDataPoint(Metric.Builder builder, Meter meter, DoubleSupplier count) {
+    private void setSumDataPoint(Metric.Builder builder, Meter meter, DoubleSupplier countSupplier,
+            Supplier<List<Exemplar>> exemplarsSupplier) {
         if (!builder.hasSum()) {
             builder.setSum(Sum.newBuilder().setIsMonotonic(true).setAggregationTemporality(otlpAggregationTemporality));
         }
@@ -283,8 +285,9 @@ class OtlpMetricConverter {
             .addDataPoints(NumberDataPoint.newBuilder()
                 .setStartTimeUnixNano(getStartTimeNanos(meter))
                 .setTimeUnixNano(getTimeUnixNano())
-                .setAsDouble(count.getAsDouble())
+                .setAsDouble(countSupplier.getAsDouble())
                 .addAllAttributes(getKeyValuesForId(meter.getId()))
+                .addAllExemplars(exemplarsSupplier.get())
                 .build());
     }
 
