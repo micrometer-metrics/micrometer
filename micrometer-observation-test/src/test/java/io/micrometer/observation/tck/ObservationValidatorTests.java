@@ -43,7 +43,7 @@ class ObservationValidatorTests {
             .satisfies(exception -> assertThat(exception.toString()).matches(
                     "(?s)^io\\.micrometer\\.observation\\.tck\\.InvalidObservationException: Invalid start: Observation 'test' has already been started\n"
                             + "START: app//io\\.micrometer\\.observation\\.tck\\.ObservationValidatorTests\\.lambda\\$doubleStartShouldBeInvalid\\$\\d+\\(ObservationValidatorTests\\.java:\\d+\\)\n"
-                            + "START: app//io\\.micrometer\\.observation\\.tck\\.ObservationValidatorTests\\.lambda\\$doubleStartShouldBeInvalid\\$\\d+\\(ObservationValidatorTests.java:\\d+\\)$"));
+                            + "START: app//io\\.micrometer\\.observation\\.tck\\.ObservationValidatorTests\\.lambda\\$doubleStartShouldBeInvalid\\$\\d+\\(ObservationValidatorTests\\.java:\\d+\\)$"));
     }
 
     @Test
@@ -54,7 +54,7 @@ class ObservationValidatorTests {
             .hasMessage("Invalid stop: Observation 'test' has not been started yet")
             .satisfies(exception -> assertThat(exception.toString()).matches(
                     "(?s)^io\\.micrometer\\.observation\\.tck\\.InvalidObservationException: Invalid stop: Observation 'test' has not been started yet\n"
-                            + "STOP: app//io\\.micrometer\\.observation\\.tck\\.ObservationValidatorTests\\.lambda\\$stopBeforeStartShouldBeInvalid\\$\\d+\\(ObservationValidatorTests.java:\\d+\\)$"));
+                            + "STOP: app//io\\.micrometer\\.observation\\.tck\\.ObservationValidatorTests\\.lambda\\$stopBeforeStartShouldBeInvalid\\$\\d+\\(ObservationValidatorTests\\.java:\\d+\\)$"));
     }
 
     @Test
@@ -65,7 +65,7 @@ class ObservationValidatorTests {
             .hasMessage("Invalid error signal: Observation 'test' has not been started yet")
             .satisfies(exception -> assertThat(exception.toString()).matches(
                     "(?s)^io\\.micrometer\\.observation\\.tck\\.InvalidObservationException: Invalid error signal: Observation 'test' has not been started yet\n"
-                            + "ERROR: app//io\\.micrometer\\.observation\\.tck\\.ObservationValidatorTests\\.lambda\\$errorBeforeStartShouldBeInvalid\\$\\d+\\(ObservationValidatorTests.java:\\d+\\)$"));
+                            + "ERROR: app//io\\.micrometer\\.observation\\.tck\\.ObservationValidatorTests\\.lambda\\$errorBeforeStartShouldBeInvalid\\$\\d+\\(ObservationValidatorTests\\.java:\\d+\\)$"));
     }
 
     @Test
@@ -76,7 +76,7 @@ class ObservationValidatorTests {
             .hasMessage("Invalid event signal: Observation 'test' has not been started yet")
             .satisfies(exception -> assertThat(exception.toString()).matches(
                     "(?s)^io\\.micrometer\\.observation\\.tck\\.InvalidObservationException: Invalid event signal: Observation 'test' has not been started yet\n"
-                            + "EVENT: app//io\\.micrometer\\.observation\\.tck\\.ObservationValidatorTests\\.lambda\\$eventBeforeStartShouldBeInvalid\\$\\d+\\(ObservationValidatorTests.java:\\d+\\)$"));
+                            + "EVENT: app//io\\.micrometer\\.observation\\.tck\\.ObservationValidatorTests\\.lambda\\$eventBeforeStartShouldBeInvalid\\$\\d+\\(ObservationValidatorTests\\.java:\\d+\\)$"));
     }
 
     @Test
@@ -89,7 +89,7 @@ class ObservationValidatorTests {
             .hasMessage("Invalid scope opening: Observation 'test' has not been started yet")
             .satisfies(exception -> assertThat(exception.toString()).matches(
                     "(?s)^io\\.micrometer\\.observation\\.tck\\.InvalidObservationException: Invalid scope opening: Observation 'test' has not been started yet\n"
-                            + "SCOPE_OPEN: app//io\\.micrometer\\.observation\\.tck\\.ObservationValidatorTests\\.lambda\\$scopeBeforeStartShouldBeInvalid\\$\\d+\\(ObservationValidatorTests.java:\\d+\\)$"));
+                            + "SCOPE_OPEN: app//io\\.micrometer\\.observation\\.tck\\.ObservationValidatorTests\\.lambda\\$scopeBeforeStartShouldBeInvalid\\$\\d+\\(ObservationValidatorTests\\.java:\\d+\\)$"));
     }
 
     @Test
@@ -101,7 +101,7 @@ class ObservationValidatorTests {
             .satisfies(exception -> assertThat(exception.toString()).matches(
                     "(?s)^io\\.micrometer\\.observation\\.tck\\.InvalidObservationException: Invalid start: Observation 'test' has already been started\n"
                             + "START: app//io\\.micrometer\\.observation\\.tck\\.ObservationValidatorTests\\.lambda\\$observeAfterStartShouldBeInvalid\\$\\d+\\(ObservationValidatorTests\\.java:\\d+\\)\n"
-                            + "START: app//io\\.micrometer\\.observation\\.tck\\.ObservationValidatorTests\\.lambda\\$observeAfterStartShouldBeInvalid\\$\\d+\\(ObservationValidatorTests.java:\\d+\\)$"));
+                            + "START: app//io\\.micrometer\\.observation\\.tck\\.ObservationValidatorTests\\.lambda\\$observeAfterStartShouldBeInvalid\\$\\d+\\(ObservationValidatorTests\\.java:\\d+\\)$"));
     }
 
     @Test
@@ -117,7 +117,7 @@ class ObservationValidatorTests {
                     "(?s)^io\\.micrometer\\.observation\\.tck\\.InvalidObservationException: Invalid stop: Observation 'test' has already been stopped\n"
                             + "START: app//io\\.micrometer\\.observation\\.tck\\.ObservationValidatorTests\\.lambda\\$doubleStopShouldBeInvalid\\$\\d+\\(ObservationValidatorTests\\.java:\\d+\\)\n"
                             + "STOP: app//io\\.micrometer\\.observation\\.tck\\.ObservationValidatorTests\\.lambda\\$doubleStopShouldBeInvalid\\$\\d+\\(ObservationValidatorTests\\.java:\\d+\\)\n"
-                            + "STOP: app//io\\.micrometer\\.observation\\.tck\\.ObservationValidatorTests\\.lambda\\$doubleStopShouldBeInvalid\\$\\d+\\(ObservationValidatorTests.java:\\d+\\)$"));
+                            + "STOP: app//io\\.micrometer\\.observation\\.tck\\.ObservationValidatorTests\\.lambda\\$doubleStopShouldBeInvalid\\$\\d+\\(ObservationValidatorTests\\.java:\\d+\\)$"));
     }
 
     @Test
@@ -133,7 +133,7 @@ class ObservationValidatorTests {
                     "(?s)^io\\.micrometer\\.observation\\.tck\\.InvalidObservationException: Invalid error signal: Observation 'test' has already been stopped\n"
                             + "START: app//io\\.micrometer\\.observation\\.tck\\.ObservationValidatorTests\\.lambda\\$errorAfterStopShouldBeInvalid\\$\\d+\\(ObservationValidatorTests\\.java:\\d+\\)\n"
                             + "STOP: app//io\\.micrometer\\.observation\\.tck\\.ObservationValidatorTests\\.lambda\\$errorAfterStopShouldBeInvalid\\$\\d+\\(ObservationValidatorTests\\.java:\\d+\\)\n"
-                            + "ERROR: app//io\\.micrometer\\.observation\\.tck\\.ObservationValidatorTests\\.lambda\\$errorAfterStopShouldBeInvalid\\$\\d+\\(ObservationValidatorTests.java:\\d+\\)$"));
+                            + "ERROR: app//io\\.micrometer\\.observation\\.tck\\.ObservationValidatorTests\\.lambda\\$errorAfterStopShouldBeInvalid\\$\\d+\\(ObservationValidatorTests\\.java:\\d+\\)$"));
     }
 
     @Test
@@ -149,7 +149,7 @@ class ObservationValidatorTests {
                     "(?s)^io\\.micrometer\\.observation\\.tck\\.InvalidObservationException: Invalid event signal: Observation 'test' has already been stopped\n"
                             + "START: app//io\\.micrometer\\.observation\\.tck\\.ObservationValidatorTests\\.lambda\\$eventAfterStopShouldBeInvalid\\$\\d+\\(ObservationValidatorTests\\.java:\\d+\\)\n"
                             + "STOP: app//io\\.micrometer\\.observation\\.tck\\.ObservationValidatorTests\\.lambda\\$eventAfterStopShouldBeInvalid\\$\\d+\\(ObservationValidatorTests\\.java:\\d+\\)\n"
-                            + "EVENT: app//io\\.micrometer\\.observation\\.tck\\.ObservationValidatorTests\\.lambda\\$eventAfterStopShouldBeInvalid\\$\\d+\\(ObservationValidatorTests.java:\\d+\\)$"));
+                            + "EVENT: app//io\\.micrometer\\.observation\\.tck\\.ObservationValidatorTests\\.lambda\\$eventAfterStopShouldBeInvalid\\$\\d+\\(ObservationValidatorTests\\.java:\\d+\\)$"));
     }
 
     @Test

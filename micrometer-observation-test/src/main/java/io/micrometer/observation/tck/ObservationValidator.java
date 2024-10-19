@@ -117,10 +117,7 @@ class ObservationValidator implements ObservationHandler<Context> {
     }
 
     private void addHistoryElement(Context context, EventName eventName) {
-        if (!context.containsKey(History.class)) {
-            context.put(History.class, new History());
-        }
-        History history = context.get(History.class);
+        History history = context.computeIfAbsent(History.class, clazz -> new History());
         history.addHistoryElement(eventName);
     }
 
@@ -147,7 +144,7 @@ class ObservationValidator implements ObservationHandler<Context> {
     }
 
     private static void throwInvalidObservationException(ValidationResult validationResult) {
-        History history = validationResult.getContext().getOrDefault(History.class, new History());
+        History history = validationResult.getContext().getOrDefault(History.class, () -> new History());
         throw new InvalidObservationException(validationResult.getMessage(), validationResult.getContext(),
                 history.getHistoryElements());
     }
