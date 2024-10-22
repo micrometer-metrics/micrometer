@@ -37,7 +37,7 @@ If you are not running Gradle with JDK 11 or later and Gradle cannot detect an e
 
 The Gradle wrapper is provided and should be used for building with a consistent version of Gradle.
 
-The wrapper can be used with a command, for example, `./gradlew check` to build the project and check conventions.
+The wrapper can be used with a command, for example, `./gradlew` to build the project and check conventions.
 
 ## Importing into an IDE
 
