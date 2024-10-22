@@ -53,7 +53,7 @@ public interface Gauge extends Meter {
      * @since 1.1.0
      */
     @Incubating(since = "1.1.0")
-    static Builder<Supplier<Number>> builder(String name, Supplier<Number> f) {
+    static <T extends Number> Builder<Supplier<T>> builder(String name, Supplier<T> f) {
         return new Builder<>(name, f, f2 -> {
             Number val = f2.get();
             return val == null ? Double.NaN : val.doubleValue();

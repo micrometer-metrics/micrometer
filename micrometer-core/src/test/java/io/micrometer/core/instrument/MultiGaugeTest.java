@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -89,6 +90,14 @@ class MultiGaugeTest {
         colorGauges.register(Collections.singletonList(Row.of(Tags.of("color", "red"), () -> 1)));
 
         System.gc();
+
+        assertThat(registry.get("colors").tag("color", "red").gauge().value()).isEqualTo(1);
+    }
+
+    @Test
+    void rowGaugesCanTakeSubClassOfNumberSuppliers() {
+        final Supplier<Long> supplier = () -> 1L;
+        colorGauges.register(Collections.singletonList(Row.of(Tags.of("color", "red"), supplier)));
 
         assertThat(registry.get("colors").tag("color", "red").gauge().value()).isEqualTo(1);
     }

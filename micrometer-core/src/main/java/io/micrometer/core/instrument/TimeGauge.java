@@ -46,7 +46,7 @@ public interface TimeGauge extends Gauge {
      * @since 1.7.0
      */
     @Incubating(since = "1.7.0")
-    static Builder<Supplier<Number>> builder(String name, Supplier<Number> f, TimeUnit fUnits) {
+    static <T extends Number> Builder<Supplier<T>> builder(String name, Supplier<T> f, TimeUnit fUnits) {
         return new Builder<>(name, f, fUnits, f2 -> {
             Number val = f2.get();
             return val == null ? Double.NaN : val.doubleValue();
