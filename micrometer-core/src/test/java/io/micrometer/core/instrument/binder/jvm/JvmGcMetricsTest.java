@@ -107,17 +107,17 @@ class JvmGcMetricsTest {
         // get initial GC timing metrics from JMX, if any
         // GC could have happened before this test due to testing infrastructure
         // If it did, it will not be captured in the metrics
-        long initialPausePhaseCount = 0;
+        long initialPauseCount = 0;
         long initialPauseTimeMs = 0;
-        long initialConcurrentPhaseCount = 0;
+        long initialConcurrentCount = 0;
         long initialConcurrentTimeMs = 0;
         for (GarbageCollectorMXBean mbean : ManagementFactory.getGarbageCollectorMXBeans()) {
             if (mbean.getName().contains("Pauses")) {
-                initialPausePhaseCount += mbean.getCollectionCount();
+                initialPauseCount += mbean.getCollectionCount();
                 initialPauseTimeMs += mbean.getCollectionTime();
             }
             else if (mbean.getName().contains("Cycles")) {
-                initialConcurrentPhaseCount += mbean.getCollectionCount();
+                initialConcurrentCount += mbean.getCollectionCount();
                 initialConcurrentTimeMs += mbean.getCollectionTime();
             }
         }
@@ -127,33 +127,11 @@ class JvmGcMetricsTest {
         // cause GC to record new metrics
         System.gc();
 
-        // get metrics from JMX again to obtain difference
-        long pausePhaseCount = 0;
-        long pauseTimeMs = 0;
-        long concurrentPhaseCount = 0;
-        long concurrentTimeMs = 0;
-        for (GarbageCollectorMXBean mbean : ManagementFactory.getGarbageCollectorMXBeans()) {
-            if (mbean.getName().contains("Pauses")) {
-                pausePhaseCount += mbean.getCollectionCount();
-                pauseTimeMs += mbean.getCollectionTime();
-            }
-            else if (mbean.getName().contains("Cycles")) {
-                concurrentPhaseCount += mbean.getCollectionCount();
-                concurrentTimeMs += mbean.getCollectionTime();
-            }
-        }
-
-        // subtract any difference
-        pausePhaseCount -= initialPausePhaseCount;
-        pauseTimeMs -= initialPauseTimeMs;
-        concurrentPhaseCount -= initialConcurrentPhaseCount;
-        concurrentTimeMs -= initialConcurrentTimeMs;
-
-        checkPhaseCount(pausePhaseCount, concurrentPhaseCount);
-        checkCollectionTime(pauseTimeMs, concurrentTimeMs);
+        checkPhaseCount(initialPauseCount, initialConcurrentCount);
+        checkCollectionTime(initialPauseTimeMs, initialConcurrentTimeMs);
     }
 
-    boolean isPauseCyclesGc() {
+    static boolean isPauseCyclesGc() {
         return ManagementFactory.getGarbageCollectorMXBeans()
             .stream()
             .map(MemoryManagerMXBean::getName)
@@ -225,8 +203,24 @@ class JvmGcMetricsTest {
 
     }
 
-    private void checkPhaseCount(long expectedPauseCount, long expectedConcurrentCount) {
+    private void checkPhaseCount(long initialPauseCount, long initialConcurrentCount) {
         await().atMost(200, TimeUnit.MILLISECONDS).untilAsserted(() -> {
+            long pauseCount = 0;
+            long concurrentCount = 0;
+
+            // get metrics from JMX again to obtain the difference
+            for (GarbageCollectorMXBean mbean : ManagementFactory.getGarbageCollectorMXBeans()) {
+                if (mbean.getName().contains("Pauses")) {
+                    pauseCount += mbean.getCollectionCount();
+                }
+                else if (mbean.getName().contains("Cycles")) {
+                    concurrentCount += mbean.getCollectionCount();
+                }
+            }
+
+            long expectedPauseCount = pauseCount - initialPauseCount;
+            long expectedConcurrentCount = concurrentCount - initialConcurrentCount;
+
             long observedPauseCount = registry.find("jvm.gc.pause").timers().stream().mapToLong(Timer::count).sum();
             long observedConcurrentCount = registry.find("jvm.gc.concurrent.phase.time")
                 .timers()
@@ -238,8 +232,24 @@ class JvmGcMetricsTest {
         });
     }
 
-    private void checkCollectionTime(long expectedPauseTimeMs, long expectedConcurrentTimeMs) {
+    private void checkCollectionTime(long initialPauseTimeMs, long initialConcurrentTimeMs) {
         await().atMost(200, TimeUnit.MILLISECONDS).untilAsserted(() -> {
+            long pauseTimeMs = 0;
+            long concurrentTimeMs = 0;
+
+            // get metrics from JMX again to obtain the difference
+            for (GarbageCollectorMXBean mbean : ManagementFactory.getGarbageCollectorMXBeans()) {
+                if (mbean.getName().contains("Pauses")) {
+                    pauseTimeMs += mbean.getCollectionTime();
+                }
+                else if (mbean.getName().contains("Cycles")) {
+                    concurrentTimeMs += mbean.getCollectionTime();
+                }
+            }
+
+            long expectedPauseTimeMs = pauseTimeMs - initialPauseTimeMs;
+            long expectedConcurrentTimeMs = concurrentTimeMs - initialConcurrentTimeMs;
+
             double observedPauseTimeMs = registry.find("jvm.gc.pause")
                 .timers()
                 .stream()
