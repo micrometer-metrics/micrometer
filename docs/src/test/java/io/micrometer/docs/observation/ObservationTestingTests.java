@@ -88,11 +88,13 @@ class ObservationTestingTests {
         }
 
         void run() {
-            Observation.createNotStarted("foo", registry)
+            final Observation observation = Observation.createNotStarted("foo", registry)
                     .lowCardinalityKeyValue("lowTag", "lowTagValue")
-                    .highCardinalityKeyValue("highTag", "highTagValue")
-                    .event(Observation.Event.of("event1"))
-                    .observe(() -> System.out.println("Hello"));
+                    .highCardinalityKeyValue("highTag", "highTagValue");
+            observation.observe(() -> {
+                observation.event(Observation.Event.of("event1"));
+                System.out.println("Hello");
+            });
         }
 
     }
