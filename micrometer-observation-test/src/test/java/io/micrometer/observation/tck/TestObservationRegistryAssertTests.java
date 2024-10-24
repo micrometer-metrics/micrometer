@@ -387,56 +387,58 @@ class TestObservationRegistryAssertTests {
     void should_not_fail_when_event_matched_on_name() {
         Observation.createNotStarted("FOO", registry).start().event(Observation.Event.of("event1")).stop();
 
-        thenNoException().isThrownBy(() -> assertThat(registry)
-            .hasObservationWithNameEqualTo("FOO").that().hasEvent("event1"));
+        thenNoException()
+            .isThrownBy(() -> assertThat(registry).hasObservationWithNameEqualTo("FOO").that().hasEvent("event1"));
     }
 
     @Test
     void should_not_fail_when_contextual_event_matched_on_name() {
         Observation.createNotStarted("FOO", registry).start().event(Observation.Event.of("event1", "ctx1")).stop();
 
-        thenNoException().isThrownBy(() -> assertThat(registry)
-            .hasObservationWithNameEqualTo("FOO").that().hasEvent("event1"));
+        thenNoException()
+            .isThrownBy(() -> assertThat(registry).hasObservationWithNameEqualTo("FOO").that().hasEvent("event1"));
     }
 
     @Test
     void should_not_fail_when_event_matched_on_name_and_contextual_name() {
         Observation.createNotStarted("FOO", registry).start().event(Observation.Event.of("event1", "ctx1")).stop();
 
-        thenNoException().isThrownBy(() -> assertThat(registry)
-            .hasObservationWithNameEqualTo("FOO").that().hasEvent("event1", "ctx1"));
+        thenNoException().isThrownBy(
+                () -> assertThat(registry).hasObservationWithNameEqualTo("FOO").that().hasEvent("event1", "ctx1"));
     }
 
     @Test
     void should_not_fail_when_event_not_matched_on_name() {
         Observation.createNotStarted("FOO", registry).start().event(Observation.Event.of("event1")).stop();
 
-        thenNoException().isThrownBy(() -> assertThat(registry)
-            .hasObservationWithNameEqualTo("FOO").that().doesNotHaveEvent("event2"));
+        thenNoException().isThrownBy(
+                () -> assertThat(registry).hasObservationWithNameEqualTo("FOO").that().doesNotHaveEvent("event2"));
     }
 
     @Test
     void should_not_fail_when_contextual_event_not_matched_on_name() {
         Observation.createNotStarted("FOO", registry).start().event(Observation.Event.of("event1", "ctx1")).stop();
 
-        thenNoException().isThrownBy(() -> assertThat(registry)
-            .hasObservationWithNameEqualTo("FOO").that().doesNotHaveEvent("event2"));
+        thenNoException().isThrownBy(
+                () -> assertThat(registry).hasObservationWithNameEqualTo("FOO").that().doesNotHaveEvent("event2"));
     }
 
     @Test
     void should_not_fail_when_event_not_matched_on_name_and_contextual_name() {
         Observation.createNotStarted("FOO", registry).start().event(Observation.Event.of("event1")).stop();
 
-        thenNoException().isThrownBy(() -> assertThat(registry)
-            .hasObservationWithNameEqualTo("FOO").that().doesNotHaveEvent("event2", "ctx1"));
+        thenNoException().isThrownBy(() -> assertThat(registry).hasObservationWithNameEqualTo("FOO")
+            .that()
+            .doesNotHaveEvent("event2", "ctx1"));
     }
 
     @Test
     void should_not_fail_when_contextual_event_not_matched_on_name_and_contextual_name() {
         Observation.createNotStarted("FOO", registry).start().event(Observation.Event.of("event1", "ctx1")).stop();
 
-        thenNoException().isThrownBy(() -> assertThat(registry)
-            .hasObservationWithNameEqualTo("FOO").that().doesNotHaveEvent("event2", "ctx1"));
+        thenNoException().isThrownBy(() -> assertThat(registry).hasObservationWithNameEqualTo("FOO")
+            .that()
+            .doesNotHaveEvent("event2", "ctx1"));
     }
 
     @Test
@@ -444,15 +446,18 @@ class TestObservationRegistryAssertTests {
         Observation.createNotStarted("FOO", registry).start().event(Observation.Event.of("event1")).stop();
 
         thenThrownBy(() -> assertThat(registry).hasObservationWithNameEqualTo("FOO").that().doesNotHaveEvent("event1"))
-            .isInstanceOf(AssertionError.class).hasMessage("Observation should not have an event with name <event1>");
+            .isInstanceOf(AssertionError.class)
+            .hasMessage("Observation should not have an event with name <event1>");
     }
 
     @Test
     void should_fail_when_event_matched_on_name_and_contextual_name() {
         Observation.createNotStarted("FOO", registry).start().event(Observation.Event.of("event1", "ctx1")).stop();
 
-        thenThrownBy(() -> assertThat(registry).hasObservationWithNameEqualTo("FOO").that().doesNotHaveEvent("event1", "ctx1"))
-            .isInstanceOf(AssertionError.class).hasMessage("Observation should not have an event with name <event1> and contextual name <ctx1>");
+        thenThrownBy(() -> assertThat(registry).hasObservationWithNameEqualTo("FOO")
+            .that()
+            .doesNotHaveEvent("event1", "ctx1")).isInstanceOf(AssertionError.class)
+            .hasMessage("Observation should not have an event with name <event1> and contextual name <ctx1>");
     }
 
     @Test
@@ -460,7 +465,8 @@ class TestObservationRegistryAssertTests {
         Observation.createNotStarted("FOO", registry).start().event(Observation.Event.of("event1")).stop();
 
         thenThrownBy(() -> assertThat(registry).hasObservationWithNameEqualTo("FOO").that().hasEvent("event2"))
-            .isInstanceOf(AssertionError.class).hasMessage("Observation should have an event with name <event2>");
+            .isInstanceOf(AssertionError.class)
+            .hasMessage("Observation should have an event with name <event2>");
     }
 
     @Test
@@ -468,7 +474,8 @@ class TestObservationRegistryAssertTests {
         Observation.createNotStarted("FOO", registry).start().event(Observation.Event.of("event1", "ctx1")).stop();
 
         thenThrownBy(() -> assertThat(registry).hasObservationWithNameEqualTo("FOO").that().hasEvent("event2"))
-            .isInstanceOf(AssertionError.class).hasMessage("Observation should have an event with name <event2>");
+            .isInstanceOf(AssertionError.class)
+            .hasMessage("Observation should have an event with name <event2>");
     }
 
     @Test
@@ -476,7 +483,8 @@ class TestObservationRegistryAssertTests {
         Observation.createNotStarted("FOO", registry).start().event(Observation.Event.of("event1", "ctx1")).stop();
 
         thenThrownBy(() -> assertThat(registry).hasObservationWithNameEqualTo("FOO").that().hasEvent("event2", "ctx2"))
-            .isInstanceOf(AssertionError.class).hasMessage("Observation should have an event with name <event2> and contextual name <ctx2>");
+            .isInstanceOf(AssertionError.class)
+            .hasMessage("Observation should have an event with name <event2> and contextual name <ctx2>");
     }
 
     static class Example {

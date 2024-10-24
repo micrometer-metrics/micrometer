@@ -577,7 +577,8 @@ public class TestObservationRegistryAssert
          * Verifies that the {@link Observation} has an event with the given name.
          * @param name event name
          * @return this
-         * @throws AssertionError if the {@link Observation} does not have an event with the given name
+         * @throws AssertionError if the {@link Observation} does not have an event with
+         * the given name
          */
         public TestObservationRegistryAssertReturningObservationContextAssert hasEvent(String name) {
             isNotNull();
@@ -588,25 +589,31 @@ public class TestObservationRegistryAssert
         }
 
         /**
-         * Verifies that the {@link Observation} has an event with the given name and contextual name.
+         * Verifies that the {@link Observation} has an event with the given name and
+         * contextual name.
          * @param name event name
          * @param contextualName contextual name
          * @return this
-         * @throws AssertionError if the {@link Observation} does not have an event with the given name and contextual name
+         * @throws AssertionError if the {@link Observation} does not have an event with
+         * the given name and contextual name
          */
-        public TestObservationRegistryAssertReturningObservationContextAssert hasEvent(String name, String contextualName) {
+        public TestObservationRegistryAssertReturningObservationContextAssert hasEvent(String name,
+                String contextualName) {
             isNotNull();
             if (!this.testContext.hasEvent(name, contextualName)) {
-                failWithMessage("Observation should have an event with name <%s> and contextual name <%s>", name, contextualName);
+                failWithMessage("Observation should have an event with name <%s> and contextual name <%s>", name,
+                        contextualName);
             }
             return this;
         }
 
         /**
-         * Verifies that the {@link Observation} does not have an event with the given name.
+         * Verifies that the {@link Observation} does not have an event with the given
+         * name.
          * @param name event name
          * @return this
-         * @throws AssertionError if the {@link Observation} has an event with the given name
+         * @throws AssertionError if the {@link Observation} has an event with the given
+         * name
          */
         public TestObservationRegistryAssertReturningObservationContextAssert doesNotHaveEvent(String name) {
             isNotNull();
@@ -617,16 +624,20 @@ public class TestObservationRegistryAssert
         }
 
         /**
-         * Verifies that the {@link Observation} does not have an event with the given name and contextual name.
+         * Verifies that the {@link Observation} does not have an event with the given
+         * name and contextual name.
          * @param name event name
          * @param contextualName contextual name@
          * @return this
-         * @throws AssertionError if the {@link Observation} has an event with the given name and contextual name
+         * @throws AssertionError if the {@link Observation} has an event with the given
+         * name and contextual name
          */
-        public TestObservationRegistryAssertReturningObservationContextAssert doesNotHaveEvent(String name, String contextualName) {
+        public TestObservationRegistryAssertReturningObservationContextAssert doesNotHaveEvent(String name,
+                String contextualName) {
             isNotNull();
             if (this.testContext.hasEvent(name, contextualName)) {
-                failWithMessage("Observation should not have an event with name <%s> and contextual name <%s>", name, contextualName);
+                failWithMessage("Observation should not have an event with name <%s> and contextual name <%s>", name,
+                        contextualName);
             }
             return this;
         }

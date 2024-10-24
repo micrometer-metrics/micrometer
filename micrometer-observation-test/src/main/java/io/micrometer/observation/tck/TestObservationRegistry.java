@@ -200,7 +200,8 @@ public final class TestObservationRegistry
         }
 
         /**
-         * Check if an {@link Observation.Event} with the given name was stored in this context.
+         * Check if an {@link Observation.Event} with the given name was stored in this
+         * context.
          * @param name name of the event to check
          * @return {@code true} if an event was stored under the given name
          */
@@ -209,14 +210,18 @@ public final class TestObservationRegistry
         }
 
         /**
-         * Check if an {@link Observation.Event} with the given name and contextual name was stored in this context.
+         * Check if an {@link Observation.Event} with the given name and contextual name
+         * was stored in this context.
          * @param name name of the event to check
          * @param contextualName contextual name of the event to check
-         * @return {@code true} if an event was stored under the given name and contextual name
+         * @return {@code true} if an event was stored under the given name and contextual
+         * name
          */
         public boolean hasEvent(String name, String contextualName) {
-            return this.contextEvents.stream().anyMatch(event -> event.getName().equals(name) && event.getContextualName().equals(contextualName));
+            return this.contextEvents.stream()
+                .anyMatch(event -> event.getName().equals(name) && event.getContextualName().equals(contextualName));
         }
+
     }
 
 }
