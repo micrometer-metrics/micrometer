@@ -44,6 +44,7 @@ class ObservationTestingTests {
                 .that()
                 .hasHighCardinalityKeyValue("highTag", "highTagValue")
                 .hasLowCardinalityKeyValue("lowTag", "lowTagValue")
+                .hasEvent("event1")
                 .hasBeenStarted()
                 .hasBeenStopped();
     }
@@ -90,6 +91,7 @@ class ObservationTestingTests {
             Observation.createNotStarted("foo", registry)
                     .lowCardinalityKeyValue("lowTag", "lowTagValue")
                     .highCardinalityKeyValue("highTag", "highTagValue")
+                    .event(Observation.Event.of("event1"))
                     .observe(() -> System.out.println("Hello"));
         }
 
