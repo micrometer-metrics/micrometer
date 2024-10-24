@@ -40,6 +40,7 @@ import java.net.URI;
 import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiFunction;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -161,6 +162,12 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
         int partitionSize = Math.min(config.batchSize(), DynatraceMetricApiConstants.getPayloadLinesLimit());
         List<String> batch = new ArrayList<>(partitionSize);
 
+        AtomicInteger cntLinesOk = new AtomicInteger(0);
+        AtomicInteger cntLinesFailed = new AtomicInteger(0);
+        AtomicInteger cntRequests = new AtomicInteger(0);
+        AtomicInteger cntMetricLines = new AtomicInteger(0);
+        AtomicInteger cntMetadataLines = new AtomicInteger(0);
+
         for (Meter meter : meters) {
             // Lines that are too long to be ingested into Dynatrace, as well as lines
             // that contain NaN or Inf values are not returned from "toMetricLines",
@@ -168,8 +175,10 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
             Stream<String> metricLines = toMetricLines(meter, seenMetadata);
 
             metricLines.forEach(line -> {
+                cntMetricLines.incrementAndGet();
+
                 batch.add(line);
-                sendBatchIfFull(batch, partitionSize);
+                sendBatchIfFull(batch, partitionSize, cntRequests, cntLinesOk, cntLinesFailed);
             });
         }
 
@@ -178,21 +187,33 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
         if (seenMetadata != null) {
             seenMetadata.values().forEach(line -> {
                 if (line != null) {
+                    cntMetadataLines.incrementAndGet();
+
                     batch.add(line);
-                    sendBatchIfFull(batch, partitionSize);
+                    sendBatchIfFull(batch, partitionSize, cntRequests, cntLinesOk, cntLinesFailed);
                 }
             });
         }
 
         // push remaining lines if any.
         if (!batch.isEmpty()) {
-            send(batch);
+            cntRequests.incrementAndGet();
+
+            send(batch, cntLinesOk, cntLinesFailed);
         }
+
+        logger.info(
+                "Export finished. Generated {} request(s) totaling {} metric lines and {} metadata lines. Of those, {} lines were successfully ingested, {} lines failed to ingest. Target URI: {}",
+                cntRequests.get(), cntMetricLines.get(), cntMetadataLines.get(), cntLinesOk.get(), cntLinesFailed.get(),
+                config.uri());
     }
 
-    private void sendBatchIfFull(List<String> batch, int partitionSize) {
+    private void sendBatchIfFull(List<String> batch, int partitionSize, AtomicInteger cntBatches,
+            AtomicInteger cntLinesOk, AtomicInteger cntLinesFailed) {
         if (batch.size() == partitionSize) {
-            send(batch);
+            cntBatches.incrementAndGet();
+
+            send(batch, cntLinesOk, cntLinesFailed);
             batch.clear();
         }
     }
@@ -409,7 +430,7 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
         return StreamSupport.stream(iterable.spliterator(), false);
     }
 
-    private void send(List<String> metricLines) {
+    private void send(List<String> metricLines, AtomicInteger cntLinesOk, AtomicInteger cntLinesFailed) {
         String endpoint = config.uri();
         if (!isValidEndpoint(endpoint)) {
             logger.warn("Invalid endpoint, skipping export... ({})", endpoint);
@@ -430,9 +451,12 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
             requestBuilder.withHeader("User-Agent", "micrometer")
                 .withPlainText(body)
                 .send()
-                .onSuccess(response -> handleSuccess(lineCount, response))
-                .onError(response -> logger.error("Failed metric ingestion: Error Code={}, Response Body={}",
-                        response.code(), getTruncatedBody(response)));
+                .onSuccess(response -> handleSuccess(lineCount, response, cntLinesOk, cntLinesFailed))
+                .onError(response -> {
+                    logger.info("Failed metric ingestion: Error Code={}, Response Body={}", response.code(),
+                            getTruncatedBody(response));
+                    cntLinesFailed.getAndAdd(lineCount);
+                });
         }
         catch (Throwable throwable) {
             // the "general" logger logs the message, the WarnThenDebugLogger logs the
@@ -447,7 +471,8 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
         return StringUtils.truncate(response.body(), 1_000, " (truncated)");
     }
 
-    private void handleSuccess(int totalSent, HttpSender.Response response) {
+    private void handleSuccess(int totalSent, HttpSender.Response response, AtomicInteger cntLinesOk,
+            AtomicInteger cntLinesFailed) {
         if (response.code() == 202) {
             if (IS_NULL_ERROR_RESPONSE.matcher(response.body()).find()) {
                 Matcher linesOkMatchResult = EXTRACT_LINES_OK.matcher(response.body());
@@ -455,6 +480,9 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
                 if (linesOkMatchResult.find() && linesInvalidMatchResult.find()) {
                     logger.debug("Sent {} metric lines, linesOk: {}, linesInvalid: {}.", totalSent,
                             linesOkMatchResult.group(1), linesInvalidMatchResult.group(1));
+
+                    cntLinesOk.getAndAdd(tryParseInt(linesOkMatchResult.group(1)));
+                    cntLinesFailed.getAndAdd(tryParseInt(linesInvalidMatchResult.group(1)));
                 }
                 else {
                     logger.warn("Unable to parse response: {}", getTruncatedBody(response));
@@ -591,6 +619,15 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
         mapping.put("hour", "h");
 
         return Collections.unmodifiableMap(mapping);
+    }
+
+    private static int tryParseInt(String s) {
+        try {
+            return Integer.parseInt(s);
+        }
+        catch (NumberFormatException ignored) {
+        }
+        return 0;
     }
 
 }
