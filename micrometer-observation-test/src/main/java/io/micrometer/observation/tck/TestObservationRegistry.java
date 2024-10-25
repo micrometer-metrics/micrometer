@@ -195,7 +195,7 @@ public final class TestObservationRegistry
          * Stores an {@link Observation.Event} in this context.
          * @param event the event to store
          */
-        public void addEvent(Observation.Event event) {
+        void addEvent(Observation.Event event) {
             this.contextEvents.add(event);
         }
 
@@ -205,7 +205,7 @@ public final class TestObservationRegistry
          * @param name name of the event to check
          * @return {@code true} if an event was stored under the given name
          */
-        public boolean hasEvent(String name) {
+        boolean hasEvent(String name) {
             return this.contextEvents.stream().anyMatch(event -> event.getName().equals(name));
         }
 
@@ -217,7 +217,7 @@ public final class TestObservationRegistry
          * @return {@code true} if an event was stored under the given name and contextual
          * name
          */
-        public boolean hasEvent(String name, String contextualName) {
+        boolean hasEvent(String name, String contextualName) {
             return this.contextEvents.stream()
                 .anyMatch(event -> event.getName().equals(name) && event.getContextualName().equals(contextualName));
         }
