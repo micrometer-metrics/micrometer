@@ -42,3 +42,14 @@ another. The reported value underestimates the actual total number of steals whe
 * `executor.running` (`Gauge`): An estimate of the number of worker threads that are not blocked but are waiting to join tasks or for other managed synchronization threads.
 * `executor.parallelism` (`Gauge`): The targeted parallelism level of this pool.
 * `executor.pool.size` (`Gauge`): The current number of threads in the pool.
+
+== Java 21 Metrics
+
+Micrometer provides support for https://openjdk.org/jeps/444[virtual threads] released in Java 21. In order to utilize it, you need to add the `io.micrometer:micrometer-java21` dependency to your classpath to use the binder:
+
+[source, java]
+----
+new VirtualThreadMetrics().bindTo(registry);
+----
+
+The binder measures the duration (and counts the number of events) of virtual threads being pinned; also counts the number of events when starting or unparking a virtual thread failed.
