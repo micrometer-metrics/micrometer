@@ -40,3 +40,5 @@ another. The reported value underestimates the actual total number of steals whe
 * `executor.queued` (`Gauge`): An estimate of the total number of tasks currently held in queues by worker threads.
 * `executor.active` (`Gauge`): An estimate of the number of threads that are currently stealing or running tasks.
 * `executor.running` (`Gauge`): An estimate of the number of worker threads that are not blocked but are waiting to join tasks or for other managed synchronization threads.
+* `executor.parallelism` (`Gauge`): The targeted parallelism level of this pool.
+* `executor.pool.size` (`Gauge`): The current number of threads in the pool.
