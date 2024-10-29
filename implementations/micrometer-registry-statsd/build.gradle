@@ -67,5 +67,3 @@ publishing {
         }
     }
 }
-
-tasks.japicmp.enabled = false
