@@ -45,6 +45,49 @@ Counter counter = Counter
     .register(registry);
 ----
 
+
+== The `@Counted` Annotation
+
+The `micrometer-core` module contains a `@Counted` annotation that frameworks can use to add timing support to either specific types of methods such as those serving web request endpoints or, more generally, to all methods.
+
+WARNING: Micrometer's Spring Boot configuration does _not_ recognize `@Counted` on arbitrary methods.
+
+Also, an incubating AspectJ aspect is included in `micrometer-core`. You can use it in your application either through compile/load time AspectJ weaving or through framework facilities that interpret AspectJ aspects and proxy targeted methods in some other way, such as Spring AOP. Here is a sample Spring AOP configuration:
+
+[source,java]
+----
+@Configuration
+public class CountedConfiguration {
+   @Bean
+   public CountedAspect countedAspect(MeterRegistry registry) {
+      return new CountedAspect(registry);
+   }
+}
+----
+
+Applying `CountedAspect` makes `@Counted` usable on any arbitrary method in an AspectJ proxied instance, as the following example shows:
+
+[source,java]
+----
+@Service
+public class ExampleService {
+
+  @Counted
+  public void sync() {
+    // @Counted will record the number of executions of this method
+    ...
+  }
+
+  @Async
+  @Counted
+  public CompletableFuture<?> async() {
+    // @Counted will record the number of executions of this method
+    return CompletableFuture.supplyAsync(...);
+  }
+
+}
+----
+
 == Function-tracking Counters
 
 Micrometer also provides a more infrequently used counter pattern that tracks a monotonically increasing function (a function that stays the same or increases over time but never decreases). Some monitoring systems, such as Prometheus, push cumulative values for counters to the backend, but others publish the rate at which a counter is incrementing over the push interval. By employing this pattern, you let the Micrometer implementation for your monitoring system choose whether to rate-normalize the counter, and your counter remains portable across different types of monitoring systems.
