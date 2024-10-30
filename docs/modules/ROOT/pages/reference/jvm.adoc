@@ -10,12 +10,14 @@ new JvmMemoryMetrics().bindTo(registry); <2>
 new JvmGcMetrics().bindTo(registry); <3>
 new ProcessorMetrics().bindTo(registry); <4>
 new JvmThreadMetrics().bindTo(registry); <5>
+new JvmThreadDeadlockMetrics().bindTo(registry); <6>
 ----
 <1> Gauges loaded and unloaded classes.
 <2> Gauges buffer and memory pool utilization.
 <3> Gauges max and live data size, promotion and allocation rates, and the number of times the GC pauses (or concurrent phase time in the case of CMS).
 <4> Gauges current CPU total and load average.
 <5> Gauges thread peak, the number of daemon threads, and live threads.
+<6> Gauges the number of threads that are deadlocked.
 
 Micrometer also provides a meter binder for `ExecutorService`. You can instrument your `ExecutorService`, as follows:
 
