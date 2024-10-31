@@ -48,7 +48,7 @@ Counter counter = Counter
 
 == The `@Counted` Annotation
 
-The `micrometer-core` module contains a `@Counted` annotation that frameworks can use to add timing support to either specific types of methods such as those serving web request endpoints or, more generally, to all methods.
+The `micrometer-core` module contains a `@Counted` annotation that frameworks can use to add counting support to either specific types of methods such as those serving web request endpoints or, more generally, to all methods.
 
 WARNING: Micrometer's Spring Boot configuration does _not_ recognize `@Counted` on arbitrary methods.
 
