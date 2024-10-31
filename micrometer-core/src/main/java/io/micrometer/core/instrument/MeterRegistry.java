@@ -16,6 +16,7 @@
 package io.micrometer.core.instrument;
 
 import io.micrometer.common.lang.Nullable;
+import io.micrometer.common.util.internal.logging.WarnThenDebugLogger;
 import io.micrometer.core.annotation.Incubating;
 import io.micrometer.core.instrument.Meter.Id;
 import io.micrometer.core.instrument.config.MeterFilter;
@@ -63,6 +64,9 @@ import static java.util.Objects.requireNonNull;
  * @author Marcin Grzejszczak
  */
 public abstract class MeterRegistry {
+
+    private static final WarnThenDebugLogger gaugeDoubleRegistrationLogger = new WarnThenDebugLogger(
+            MeterRegistry.class);
 
     // @formatter:off
     private static final EnumMap<TimeUnit, String> BASE_TIME_UNIT_STRING_CACHE = Arrays.stream(TimeUnit.values())
@@ -648,10 +652,24 @@ public abstract class MeterRegistry {
                     }
                     meterMap.put(mappedId, m);
                 }
+                else {
+                    checkAndWarnAboutGaugeDoubleRegistration(m);
+                }
             }
+        }
+        else {
+            checkAndWarnAboutGaugeDoubleRegistration(m);
         }
 
         return m;
+    }
+
+    private void checkAndWarnAboutGaugeDoubleRegistration(Meter meter) {
+        if (meter instanceof Gauge) {
+            gaugeDoubleRegistrationLogger.log(() -> String.format(
+                    "This Gauge has been already registered (%s), the Gauge registration will be ignored.",
+                    meter.getId()));
+        }
     }
 
     private boolean accept(Meter.Id id) {
