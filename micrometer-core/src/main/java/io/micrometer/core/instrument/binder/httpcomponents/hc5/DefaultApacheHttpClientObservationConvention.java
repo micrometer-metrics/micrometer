@@ -27,6 +27,8 @@ import org.apache.hc.core5.http.HttpRequest;
 import org.apache.hc.core5.http.HttpResponse;
 
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 
 /**
  * Default implementation of {@link ApacheHttpClientObservationConvention}.
@@ -157,7 +159,24 @@ public class DefaultApacheHttpClientObservationConvention implements ApacheHttpC
         if (httpRoute != null) {
             return ApacheHttpClientKeyNames.TARGET_HOST.withValue(httpRoute.getTargetHost().getHostName());
         }
+        URI uri = getUri(context);
+        if (uri != null && uri.getHost() != null) {
+            return ApacheHttpClientKeyNames.TARGET_HOST.withValue(uri.getHost());
+        }
         return TARGET_HOST_UNKNOWN;
+    }
+
+    @Nullable
+    private static URI getUri(ApacheHttpClientContext context) {
+        HttpRequest request = context.getCarrier();
+        if (request != null) {
+            try {
+                return request.getUri();
+            }
+            catch (URISyntaxException ignored) {
+            }
+        }
+        return null;
     }
 
     /**
@@ -172,6 +191,10 @@ public class DefaultApacheHttpClientObservationConvention implements ApacheHttpC
             int port = httpRoute.getTargetHost().getPort();
             return ApacheHttpClientKeyNames.TARGET_PORT.withValue(String.valueOf(port));
         }
+        URI uri = getUri(context);
+        if (uri != null && uri.getPort() != -1) {
+            return ApacheHttpClientKeyNames.TARGET_PORT.withValue(String.valueOf(uri.getPort()));
+        }
         return TARGET_PORT_UNKNOWN;
     }
 
@@ -185,6 +208,10 @@ public class DefaultApacheHttpClientObservationConvention implements ApacheHttpC
         RouteInfo httpRoute = getHttpRoute(context);
         if (httpRoute != null) {
             return ApacheHttpClientKeyNames.TARGET_SCHEME.withValue(httpRoute.getTargetHost().getSchemeName());
+        }
+        URI uri = getUri(context);
+        if (uri != null && uri.getScheme() != null) {
+            return ApacheHttpClientKeyNames.TARGET_SCHEME.withValue(String.valueOf(uri.getScheme()));
         }
         return TARGET_SCHEME_UNKNOWN;
     }
