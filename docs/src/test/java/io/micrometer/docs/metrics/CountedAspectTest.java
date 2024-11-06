@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 VMware, Inc.
+ * Copyright 2024 VMware, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,10 +17,10 @@ package io.micrometer.docs.metrics;
 
 import io.micrometer.common.annotation.ValueExpressionResolver;
 import io.micrometer.common.annotation.ValueResolver;
-import io.micrometer.core.annotation.Timed;
-import io.micrometer.core.aop.MeterTagAnnotationHandler;
+import io.micrometer.core.annotation.Counted;
+import io.micrometer.core.aop.CountedAspect;
+import io.micrometer.core.aop.CountedMeterTagAnnotationHandler;
 import io.micrometer.core.aop.MeterTag;
-import io.micrometer.core.aop.TimedAspect;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -29,7 +29,7 @@ import org.springframework.aop.aspectj.annotation.AspectJProxyFactory;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class TimedAspectTest {
+class CountedAspectTest {
 
     // tag::resolvers[]
     ValueResolver valueResolver = parameter -> "Value from myCustomTagValueResolver [" + parameter + "]";
@@ -43,22 +43,22 @@ class TimedAspectTest {
     @EnumSource(AnnotatedTestClass.class)
     void meterTagsWithText(AnnotatedTestClass annotatedClass) {
         MeterRegistry registry = new SimpleMeterRegistry();
-        TimedAspect timedAspect = new TimedAspect(registry);
+        CountedAspect countedAspect = new CountedAspect(registry);
         // tag::meter_tag_annotation_handler[]
         // Setting the handler on the aspect
-        timedAspect.setMeterTagAnnotationHandler(
-                new MeterTagAnnotationHandler(aClass -> valueResolver, aClass -> valueExpressionResolver));
+        countedAspect.setMeterTagAnnotationHandler(
+                new CountedMeterTagAnnotationHandler(aClass -> valueResolver, aClass -> valueExpressionResolver));
         // end::meter_tag_annotation_handler[]
 
         AspectJProxyFactory pf = new AspectJProxyFactory(annotatedClass.newInstance());
-        pf.addAspect(timedAspect);
+        pf.addAspect(countedAspect);
 
         MeterTagClassInterface service = pf.getProxy();
 
         // tag::example_value_to_string[]
         service.getAnnotationForArgumentToString(15L);
 
-        assertThat(registry.get("method.timed").tag("test", "15").timer().count()).isEqualTo(1);
+        assertThat(registry.get("method.counted").tag("test", "15").counter().count()).isEqualTo(1);
         // end::example_value_to_string[]
     }
 
@@ -66,12 +66,12 @@ class TimedAspectTest {
     @EnumSource(AnnotatedTestClass.class)
     void meterTagsWithResolver(AnnotatedTestClass annotatedClass) {
         MeterRegistry registry = new SimpleMeterRegistry();
-        TimedAspect timedAspect = new TimedAspect(registry);
-        timedAspect.setMeterTagAnnotationHandler(
-                new MeterTagAnnotationHandler(aClass -> valueResolver, aClass -> valueExpressionResolver));
+        CountedAspect countedAspect = new CountedAspect(registry);
+        countedAspect.setMeterTagAnnotationHandler(
+                new CountedMeterTagAnnotationHandler(aClass -> valueResolver, aClass -> valueExpressionResolver));
 
         AspectJProxyFactory pf = new AspectJProxyFactory(annotatedClass.newInstance());
-        pf.addAspect(timedAspect);
+        pf.addAspect(countedAspect);
 
         MeterTagClassInterface service = pf.getProxy();
 
@@ -79,9 +79,9 @@ class TimedAspectTest {
         // tag::example_value_resolver[]
         service.getAnnotationForTagValueResolver("foo");
 
-        assertThat(registry.get("method.timed")
+        assertThat(registry.get("method.counted")
             .tag("test", "Value from myCustomTagValueResolver [foo]")
-            .timer()
+            .counter()
             .count()).isEqualTo(1);
         // end::example_value_resolver[]
         // @formatter:on
@@ -91,19 +91,19 @@ class TimedAspectTest {
     @EnumSource(AnnotatedTestClass.class)
     void meterTagsWithExpression(AnnotatedTestClass annotatedClass) {
         MeterRegistry registry = new SimpleMeterRegistry();
-        TimedAspect timedAspect = new TimedAspect(registry);
-        timedAspect.setMeterTagAnnotationHandler(
-                new MeterTagAnnotationHandler(aClass -> valueResolver, aClass -> valueExpressionResolver));
+        CountedAspect countedAspect = new CountedAspect(registry);
+        countedAspect.setMeterTagAnnotationHandler(
+                new CountedMeterTagAnnotationHandler(aClass -> valueResolver, aClass -> valueExpressionResolver));
 
         AspectJProxyFactory pf = new AspectJProxyFactory(annotatedClass.newInstance());
-        pf.addAspect(timedAspect);
+        pf.addAspect(countedAspect);
 
         MeterTagClassInterface service = pf.getProxy();
 
         // tag::example_value_spel[]
         service.getAnnotationForTagValueExpression("15L");
 
-        assertThat(registry.get("method.timed").tag("test", "hello characters").timer().count()).isEqualTo(1);
+        assertThat(registry.get("method.counted").tag("test", "hello characters").counter().count()).isEqualTo(1);
         // end::example_value_spel[]
     }
 
@@ -132,14 +132,14 @@ class TimedAspectTest {
     // tag::interface[]
     interface MeterTagClassInterface {
 
-        @Timed
+        @Counted
         void getAnnotationForTagValueResolver(@MeterTag(key = "test", resolver = ValueResolver.class) String test);
 
-        @Timed
+        @Counted
         void getAnnotationForTagValueExpression(
                 @MeterTag(key = "test", expression = "'hello' + ' characters'") String test);
 
-        @Timed
+        @Counted
         void getAnnotationForArgumentToString(@MeterTag("test") Long param);
 
     }
@@ -147,19 +147,19 @@ class TimedAspectTest {
 
     static class MeterTagClass implements MeterTagClassInterface {
 
-        @Timed
+        @Counted
         @Override
         public void getAnnotationForTagValueResolver(
                 @MeterTag(key = "test", resolver = ValueResolver.class) String test) {
         }
 
-        @Timed
+        @Counted
         @Override
         public void getAnnotationForTagValueExpression(
                 @MeterTag(key = "test", expression = "'hello' + ' characters'") String test) {
         }
 
-        @Timed
+        @Counted
         @Override
         public void getAnnotationForArgumentToString(@MeterTag("test") Long param) {
         }
@@ -168,17 +168,17 @@ class TimedAspectTest {
 
     static class MeterTagClassChild implements MeterTagClassInterface {
 
-        @Timed
+        @Counted
         @Override
         public void getAnnotationForTagValueResolver(String test) {
         }
 
-        @Timed
+        @Counted
         @Override
         public void getAnnotationForTagValueExpression(String test) {
         }
 
-        @Timed
+        @Counted
         @Override
         public void getAnnotationForArgumentToString(Long param) {
         }

@@ -88,6 +88,38 @@ public class ExampleService {
 }
 ----
 
+=== @MeterTag on Method Parameters
+
+To support using the `@MeterTag` annotation on method parameters, you need to configure the `@CountedAspect` to add the `CountedMeterTagAnnotationHandler`.
+
+[source,java,subs=+attributes]
+-----
+include::{include-java}/metrics/CountedAspectTest.java[tags=resolvers,indent=0]
+
+include::{include-java}/metrics/CountedAspectTest.java[tags=meter_tag_annotation_handler,indent=0]
+-----
+
+Let's assume that we have the following interface.
+
+[source,java,subs=+attributes]
+-----
+include::{include-java}/metrics/CountedAspectTest.java[tags=interface,indent=0]
+-----
+
+When its implementations would be called with different arguments (remember that the implementation needs to be annotated with `@Counted` annotation too), the following counters would be created:
+
+[source,java,subs=+attributes]
+-----
+// Example for returning <toString()> on the parameter
+include::{include-java}/metrics/CountedAspectTest.java[tags=example_value_to_string,indent=0]
+
+// Example for calling the provided <ValueResolver> on the parameter
+include::{include-java}/metrics/CountedAspectTest.java[tags=example_value_resolver,indent=0]
+
+// Example for calling the provided <ValueExpressionResolver>
+include::{include-java}/metrics/CountedAspectTest.java[tags=example_value_spel,indent=0]
+-----
+
 == Function-tracking Counters
 
 Micrometer also provides a more infrequently used counter pattern that tracks a monotonically increasing function (a function that stays the same or increases over time but never decreases). Some monitoring systems, such as Prometheus, push cumulative values for counters to the backend, but others publish the rate at which a counter is incrementing over the push interval. By employing this pattern, you let the Micrometer implementation for your monitoring system choose whether to rate-normalize the counter, and your counter remains portable across different types of monitoring systems.

@@ -29,6 +29,7 @@ import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.search.MeterNotFoundException;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.aspectj.lang.ProceedingJoinPoint;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
@@ -431,7 +432,8 @@ class CountedAspectTest {
 
     }
 
-    static class MeterTagsTests {
+    @Nested
+    class MeterTagsTests {
 
         ValueResolver valueResolver = parameter -> "Value from myCustomTagValueResolver [" + parameter + "]";
 
