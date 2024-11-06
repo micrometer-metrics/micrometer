@@ -107,6 +107,30 @@ class CountedAspectTest {
         // end::example_value_spel[]
     }
 
+    @ParameterizedTest
+    @EnumSource(AnnotatedTestClass.class)
+    void multipleMeterTagsWithExpression(AnnotatedTestClass annotatedClass) {
+        MeterRegistry registry = new SimpleMeterRegistry();
+        CountedAspect countedAspect = new CountedAspect(registry);
+        countedAspect.setMeterTagAnnotationHandler(
+                new CountedMeterTagAnnotationHandler(aClass -> valueResolver, aClass -> valueExpressionResolver));
+
+        AspectJProxyFactory pf = new AspectJProxyFactory(annotatedClass.newInstance());
+        pf.addAspect(countedAspect);
+
+        MeterTagClassInterface service = pf.getProxy();
+
+        // tag::example_multi_annotations[]
+        service.getMultipleAnnotationsForTagValueExpression(new DataHolder("zxe", "qwe"));
+
+        assertThat(registry.get("method.counted")
+            .tag("value1", "value1: zxe")
+            .tag("value2", "value2: qwe")
+            .counter()
+            .count()).isEqualTo(1);
+        // end::example_multi_annotations[]
+    }
+
     enum AnnotatedTestClass {
 
         CLASS_WITHOUT_INTERFACE(MeterTagClass.class), CLASS_WITH_INTERFACE(MeterTagClassChild.class);
@@ -142,6 +166,11 @@ class CountedAspectTest {
         @Counted
         void getAnnotationForArgumentToString(@MeterTag("test") Long param);
 
+        @Counted
+        void getMultipleAnnotationsForTagValueExpression(
+                @MeterTag(key = "value1", expression = "'value1: ' + value1") @MeterTag(key = "value2",
+                        expression = "'value2: ' + value2") DataHolder param);
+
     }
     // end::interface[]
 
@@ -164,6 +193,13 @@ class CountedAspectTest {
         public void getAnnotationForArgumentToString(@MeterTag("test") Long param) {
         }
 
+        @Counted
+        @Override
+        public void getMultipleAnnotationsForTagValueExpression(
+                @MeterTag(key = "value1", expression = "'value1: ' + value1") @MeterTag(key = "value2",
+                        expression = "'value2: ' + value2") DataHolder param) {
+        }
+
     }
 
     static class MeterTagClassChild implements MeterTagClassInterface {
@@ -181,6 +217,33 @@ class CountedAspectTest {
         @Counted
         @Override
         public void getAnnotationForArgumentToString(Long param) {
+        }
+
+        @Counted
+        @Override
+        public void getMultipleAnnotationsForTagValueExpression(
+                @MeterTag(key = "value2", expression = "'value2: ' + value2") DataHolder param) {
+        }
+
+    }
+
+    static class DataHolder {
+
+        private final String value1;
+
+        private final String value2;
+
+        private DataHolder(String value1, String value2) {
+            this.value1 = value1;
+            this.value2 = value2;
+        }
+
+        public String getValue1() {
+            return value1;
+        }
+
+        public String getValue2() {
+            return value2;
         }
 
     }

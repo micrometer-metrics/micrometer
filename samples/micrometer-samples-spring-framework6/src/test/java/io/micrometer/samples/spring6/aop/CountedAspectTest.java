@@ -19,9 +19,7 @@ import io.micrometer.common.annotation.ValueExpressionResolver;
 import io.micrometer.common.annotation.ValueResolver;
 import io.micrometer.core.Issue;
 import io.micrometer.core.annotation.Counted;
-import io.micrometer.core.aop.CountedAspect;
-import io.micrometer.core.aop.CountedMeterTagAnnotationHandler;
-import io.micrometer.core.aop.MeterTag;
+import io.micrometer.core.aop.*;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
@@ -496,6 +494,49 @@ class CountedAspectTest {
             assertThat(registry.get("method.counted").tag("test", "hello characters").counter().count()).isEqualTo(1);
         }
 
+        @ParameterizedTest
+        @EnumSource(AnnotatedTestClass.class)
+        void multipleMeterTagsWithExpression(AnnotatedTestClass annotatedClass) {
+            MeterRegistry registry = new SimpleMeterRegistry();
+            CountedAspect countedAspect = new CountedAspect(registry);
+            countedAspect.setMeterTagAnnotationHandler(meterTagAnnotationHandler);
+
+            AspectJProxyFactory pf = new AspectJProxyFactory(annotatedClass.newInstance());
+            pf.addAspect(countedAspect);
+
+            MeterTagClassInterface service = pf.getProxy();
+
+            service.getMultipleAnnotationsForTagValueExpression(new DataHolder("zxe", "qwe"));
+
+            assertThat(registry.get("method.counted")
+                .tag("value1", "value1: zxe")
+                .tag("value2", "value2.overridden: qwe")
+                .counter()
+                .count()).isEqualTo(1);
+        }
+
+        @ParameterizedTest
+        @EnumSource(AnnotatedTestClass.class)
+        void multipleMeterTagsWithinContainerWithExpression(AnnotatedTestClass annotatedClass) {
+            MeterRegistry registry = new SimpleMeterRegistry();
+            CountedAspect countedAspect = new CountedAspect(registry);
+            countedAspect.setMeterTagAnnotationHandler(meterTagAnnotationHandler);
+
+            AspectJProxyFactory pf = new AspectJProxyFactory(annotatedClass.newInstance());
+            pf.addAspect(countedAspect);
+
+            MeterTagClassInterface service = pf.getProxy();
+
+            service.getMultipleAnnotationsWithContainerForTagValueExpression(new DataHolder("zxe", "qwe"));
+
+            assertThat(registry.get("method.counted")
+                .tag("value1", "value1: zxe")
+                .tag("value2", "value2: qwe")
+                .tag("value3", "value3.overridden: ZXEQWE")
+                .counter()
+                .count()).isEqualTo(1);
+        }
+
         @Test
         void meterTagOnPackagePrivateMethod() {
             MeterRegistry registry = new SimpleMeterRegistry();
@@ -547,6 +588,17 @@ class CountedAspectTest {
             @Counted
             void getAnnotationForArgumentToString(@MeterTag("test") Long param);
 
+            @Counted
+            void getMultipleAnnotationsForTagValueExpression(
+                    @MeterTag(key = "value1", expression = "'value1: ' + value1") @MeterTag(key = "value2",
+                            expression = "'value2: ' + value2") DataHolder param);
+
+            @Counted
+            void getMultipleAnnotationsWithContainerForTagValueExpression(@MeterTags({
+                    @MeterTag(key = "value1", expression = "'value1: ' + value1"),
+                    @MeterTag(key = "value2", expression = "'value2: ' + value2"), @MeterTag(key = "value3",
+                            expression = "'value3: ' + value1.toUpperCase + value2.toUpperCase") }) DataHolder param);
+
         }
 
         static class MeterTagClass implements MeterTagClassInterface {
@@ -572,6 +624,21 @@ class CountedAspectTest {
             void getAnnotationForPackagePrivateMethod(@MeterTag("foo") String foo) {
             }
 
+            @Counted
+            @Override
+            public void getMultipleAnnotationsForTagValueExpression(
+                    @MeterTag(key = "value1", expression = "'value1: ' + value1") @MeterTag(key = "value2",
+                            expression = "'value2.overridden: ' + value2") DataHolder param) {
+            }
+
+            @Counted
+            @Override
+            public void getMultipleAnnotationsWithContainerForTagValueExpression(@MeterTags({
+                    @MeterTag(key = "value1", expression = "'value1: ' + value1"),
+                    @MeterTag(key = "value2", expression = "'value2: ' + value2"), @MeterTag(key = "value3",
+                            expression = "'value3.overridden: ' + value1.toUpperCase + value2.toUpperCase") }) DataHolder param) {
+            }
+
         }
 
         static class MeterTagClassChild implements MeterTagClassInterface {
@@ -589,6 +656,39 @@ class CountedAspectTest {
             @Counted
             @Override
             public void getAnnotationForArgumentToString(Long param) {
+            }
+
+            @Counted
+            @Override
+            public void getMultipleAnnotationsForTagValueExpression(
+                    @MeterTag(key = "value2", expression = "'value2.overridden: ' + value2") DataHolder param) {
+            }
+
+            @Counted
+            @Override
+            public void getMultipleAnnotationsWithContainerForTagValueExpression(@MeterTag(key = "value3",
+                    expression = "'value3.overridden: ' + value1.toUpperCase + value2.toUpperCase") DataHolder param) {
+            }
+
+        }
+
+        static class DataHolder {
+
+            private final String value1;
+
+            private final String value2;
+
+            private DataHolder(String value1, String value2) {
+                this.value1 = value1;
+                this.value2 = value2;
+            }
+
+            public String getValue1() {
+                return value1;
+            }
+
+            public String getValue2() {
+                return value2;
             }
 
         }

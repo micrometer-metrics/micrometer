@@ -144,6 +144,10 @@ include::{include-java}/metrics/TimedAspectTest.java[tags=example_value_resolver
 
 // Example for calling the provided <ValueExpressionResolver>
 include::{include-java}/metrics/TimedAspectTest.java[tags=example_value_spel,indent=0]
+
+// Example for using multiple @MeterTag annotations on the same parameter
+// @MeterTags({ @MeterTag(...), @MeterTag(...) }) can be also used
+include::{include-java}/metrics/TimedAspectTest.java[tags=example_multi_annotations,indent=0]
 -----
 
 == Function-tracking Timers
