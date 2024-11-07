@@ -30,7 +30,7 @@ class PrometheusNamingConventionTest {
 
     @Test
     void formatName() {
-        assertThat(convention.name("123abc/{:id}水", Meter.Type.GAUGE)).startsWith("_23abc__:id__");
+        assertThat(convention.name("123abc/{:id}水", Meter.Type.GAUGE)).startsWith("_23abc___id__");
     }
 
     @Test
