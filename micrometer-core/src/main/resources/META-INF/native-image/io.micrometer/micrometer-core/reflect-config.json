@@ -27,5 +27,71 @@
   {
     "name":"org.HdrHistogram.Histogram",
     "methods":[{"name":"<init>","parameterTypes":["long","long","int"] }]
+  },
+  {
+    "name":"com.hazelcast.core.DistributedObject",
+    "methods":[{"name":"getName","parameterTypes":[] }]
+  },
+  {
+    "name":"com.hazelcast.map.IMap",
+    "methods":[{"name":"getLocalMapStats","parameterTypes":[] }]
+  },
+  {
+    "name":"com.hazelcast.core.IMap",
+    "methods":[{"name":"getLocalMapStats","parameterTypes":[] }]
+  },
+  {
+    "name":"com.hazelcast.map.LocalMapStats",
+    "methods":[
+      {"name":"getNearCacheStats","parameterTypes":[] },
+      {"name":"getOwnedEntryCount","parameterTypes":[] },
+      {"name":"getHits","parameterTypes":[] },
+      {"name":"getPutOperationCount","parameterTypes":[] },
+      {"name":"getSetOperationCount","parameterTypes":[] },
+      {"name":"getBackupEntryCount","parameterTypes":[] },
+      {"name":"getBackupEntryMemoryCost","parameterTypes":[] },
+      {"name":"getOwnedEntryMemoryCost","parameterTypes":[] },
+      {"name":"getGetOperationCount","parameterTypes":[] },
+      {"name":"getTotalGetLatency","parameterTypes":[] },
+      {"name":"getTotalPutLatency","parameterTypes":[] },
+      {"name":"getRemoveOperationCount","parameterTypes":[] },
+      {"name":"getTotalRemoveLatency","parameterTypes":[] }
+    ]
+  },
+  {
+    "name":"com.hazelcast.monitor.LocalMapStats",
+    "methods":[
+      {"name":"getNearCacheStats","parameterTypes":[] },
+      {"name":"getOwnedEntryCount","parameterTypes":[] },
+      {"name":"getHits","parameterTypes":[] },
+      {"name":"getPutOperationCount","parameterTypes":[] },
+      {"name":"getSetOperationCount","parameterTypes":[] },
+      {"name":"getBackupEntryCount","parameterTypes":[] },
+      {"name":"getBackupEntryMemoryCost","parameterTypes":[] },
+      {"name":"getOwnedEntryMemoryCost","parameterTypes":[] },
+      {"name":"getGetOperationCount","parameterTypes":[] },
+      {"name":"getTotalGetLatency","parameterTypes":[] },
+      {"name":"getTotalPutLatency","parameterTypes":[] },
+      {"name":"getRemoveOperationCount","parameterTypes":[] },
+      {"name":"getTotalRemoveLatency","parameterTypes":[] }
+    ]
+  },
+  {
+    "name":"com.hazelcast.nearcache.NearCacheStats",
+    "methods":[
+      {"name":"getHits","parameterTypes":[] },
+      {"name":"getMisses","parameterTypes":[] },
+      {"name":"getEvictions","parameterTypes":[] },
+      {"name":"getPersistenceCount","parameterTypes":[] }
+    ]
+  },
+  {
+    "name":"com.hazelcast.monitor.NearCacheStats",
+    "methods":[
+      {"name":"getHits","parameterTypes":[] },
+      {"name":"getMisses","parameterTypes":[] },
+      {"name":"getEvictions","parameterTypes":[] },
+      {"name":"getPersistenceCount","parameterTypes":[] }
+    ]
   }
 ]
