@@ -37,6 +37,8 @@ class HazelcastIMapAdapter {
 
     private static final InternalLogger log = InternalLoggerFactory.getInstance(HazelcastIMapAdapter.class);
 
+    private static final Class<?> CLASS_DISTRIBUTED_OBJECT = resolveClass("com.hazelcast.core.DistributedObject");
+
     private static final Class<?> CLASS_I_MAP = resolveOneOf("com.hazelcast.map.IMap", "com.hazelcast.core.IMap");
 
     private static final Class<?> CLASS_LOCAL_MAP = resolveOneOf("com.hazelcast.map.LocalMapStats",
@@ -50,8 +52,8 @@ class HazelcastIMapAdapter {
     private static final MethodHandle GET_LOCAL_MAP_STATS;
 
     static {
-        GET_NAME = resolveIMapMethod("getName", methodType(String.class));
-        GET_LOCAL_MAP_STATS = resolveIMapMethod("getLocalMapStats", methodType(CLASS_LOCAL_MAP));
+        GET_NAME = resolveMethod(CLASS_DISTRIBUTED_OBJECT, "getName", methodType(String.class));
+        GET_LOCAL_MAP_STATS = resolveMethod(CLASS_I_MAP, "getLocalMapStats", methodType(CLASS_LOCAL_MAP));
     }
 
     private final WeakReference<Object> cache;
@@ -252,9 +254,9 @@ class HazelcastIMapAdapter {
 
     }
 
-    private static MethodHandle resolveIMapMethod(String name, MethodType mt) {
+    private static MethodHandle resolveMethod(Class<?> clazz, String name, MethodType mt) {
         try {
-            return MethodHandles.publicLookup().findVirtual(CLASS_I_MAP, name, mt);
+            return MethodHandles.publicLookup().findVirtual(clazz, name, mt);
         }
         catch (NoSuchMethodException | IllegalAccessException e) {
             throw new IllegalStateException(e);
@@ -266,12 +268,16 @@ class HazelcastIMapAdapter {
             return Class.forName(class1);
         }
         catch (ClassNotFoundException e) {
-            try {
-                return Class.forName(class2);
-            }
-            catch (ClassNotFoundException ex) {
-                throw new IllegalStateException(ex);
-            }
+            return resolveClass(class2);
+        }
+    }
+
+    private static Class<?> resolveClass(String clazz) {
+        try {
+            return Class.forName(clazz);
+        }
+        catch (ClassNotFoundException e) {
+            throw new IllegalStateException(e);
         }
     }
 
