@@ -17,6 +17,7 @@ package io.micrometer.core.instrument.binder.httpcomponents.hc5;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
 import io.micrometer.observation.tck.TestObservationRegistry;
+import org.apache.hc.client5.http.HttpHostConnectException;
 import org.apache.hc.client5.http.async.methods.SimpleHttpRequest;
 import org.apache.hc.client5.http.async.methods.SimpleRequestBuilder;
 import org.apache.hc.client5.http.classic.methods.HttpGet;
@@ -55,8 +56,7 @@ import java.util.concurrent.TimeUnit;
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static com.github.tomakehurst.wiremock.stubbing.Scenario.STARTED;
 import static io.micrometer.core.instrument.binder.httpcomponents.hc5.ApacheHttpClientObservationDocumentation.ApacheHttpClientKeyNames.*;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.*;
 
 /**
  * Wiremock-based integration tests for {@link ObservationExecChainHandler}.
@@ -235,6 +235,18 @@ class ObservationExecChainHandlerIntegrationTest {
             }
             assertThat(observationRegistry).hasAnObservationWithAKeyValue(OUTCOME.withValue("SUCCESS"))
                 .doesNotHaveAnyRemainingCurrentObservation();
+        }
+
+        @Test
+        void targetHostPortAndSchemeShouldBeProvidedEvenWhenHttpHostConnectExceptionIsThrown() throws IOException {
+            try (CloseableHttpClient client = classicClient()) {
+                assertThatExceptionOfType(HttpHostConnectException.class)
+                    .isThrownBy(() -> executeClassic(client, new HttpGet("http://localhost:777/123")));
+            }
+            assertThat(observationRegistry).hasAnObservationWithAKeyValue(TARGET_HOST.withValue("localhost"))
+                .hasAnObservationWithAKeyValue(TARGET_PORT.withValue("777"))
+                .hasAnObservationWithAKeyValue(TARGET_SCHEME.withValue("http"))
+                .hasNumberOfObservationsWithNameEqualTo(DEFAULT_METER_NAME, 1);
         }
 
     }
