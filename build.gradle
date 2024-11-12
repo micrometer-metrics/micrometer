@@ -343,7 +343,7 @@ subprojects {
 
             check.dependsOn("testModules")
 
-            if (!(project.name in ['micrometer-test-aspectj-ltw', 'micrometer-test-aspectj-ctw', 'micrometer-java21'])) { // add projects here that do not exist in the previous minor so should be excluded from japicmp
+            if (!(project.name in [])) { // add projects here that do not exist in the previous minor so should be excluded from japicmp
                 apply plugin: 'me.champeau.gradle.japicmp'
                 apply plugin: 'de.undercouch.download'
 
@@ -386,13 +386,12 @@ subprojects {
                     ignoreMissingClasses = true
                     includeSynthetic = true
 
-                    // TODO remove MetricsDSLContext from excludes in 1.14 when comparing against 1.13
-                    classExcludes = [ 'io.micrometer.core.instrument.binder.db.MetricsDSLContext' ]
+                    classExcludes = []
                     compatibilityChangeExcludes = [ "METHOD_NEW_DEFAULT" ]
 
                     packageExcludes = ['io.micrometer.shaded.*', 'io.micrometer.statsd.internal']
 
-                    fieldExcludes = ['io.micrometer.core.instrument.binder.jdk.DefaultHttpClientObservationConvention#INSTANCE']
+                    fieldExcludes = []
 
                     onlyIf { compatibleVersion != 'SKIP' }
                 }
