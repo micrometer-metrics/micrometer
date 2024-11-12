@@ -1,6 +1,13 @@
 version: 2.1
 
 executors:
+  circle-jdk23-executor:
+    working_directory: ~/micrometer
+    environment:
+      GRADLE_OPTS: '-Dorg.gradle.jvmargs="-Xmx2048m -XX:+HeapDumpOnOutOfMemoryError"'
+    resource_class: medium+
+    docker:
+      - image: cimg/openjdk:23.0.1
   circle-jdk-executor:
     working_directory: ~/micrometer
     environment:
@@ -60,6 +67,11 @@ commands:
           path: ~/micrometer/test-results/
 
 jobs:
+  build-jdk23:
+    executor: circle-jdk23-executor
+    steps:
+      - gradlew-build
+
   build:
     executor: circle-jdk-executor
     steps:
@@ -107,6 +119,7 @@ workflows:
       - build
       - build-jdk11
       - build-jdk17
+      - build-jdk23
       - concurrency-tests
       - docker-tests
       - deploy:
@@ -114,6 +127,7 @@ workflows:
             - build
             - build-jdk11
             - build-jdk17
+            - build-jdk23
             - concurrency-tests
             - docker-tests
           filters:
@@ -141,6 +155,12 @@ workflows:
               ignore: /.*/
             tags:
               only: /^v\d+\.\d+\.\d+(-(RC|M)\d+)?$/
+      - build-jdk23:
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /^v\d+\.\d+\.\d+(-(RC|M)\d+)?$/
       - concurrency-tests:
           filters:
             branches:
@@ -158,6 +178,7 @@ workflows:
             - build
             - build-jdk11
             - build-jdk17
+            - build-jdk23
             - concurrency-tests
             - docker-tests
           filters:
