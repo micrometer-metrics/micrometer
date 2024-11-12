@@ -112,7 +112,7 @@ public class MultiGauge {
             return new Row<>(uniqueTags, number, Number::doubleValue);
         }
 
-        public static Row<Supplier<Number>> of(Tags uniqueTags, Supplier<Number> valueFunction) {
+        public static <T extends Number> Row<Supplier<T>> of(Tags uniqueTags, Supplier<T> valueFunction) {
             return new Row<>(uniqueTags, valueFunction, f -> {
                 Number value = valueFunction.get();
                 return value == null ? Double.NaN : value.doubleValue();
