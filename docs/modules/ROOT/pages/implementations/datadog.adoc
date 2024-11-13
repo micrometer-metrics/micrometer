@@ -13,9 +13,9 @@ If you can choose between the two, the API approach is far more efficient.
 
 ==== Gradle
 
-include::_gradle_bom.adoc[]
+include::../_gradle_bom.adoc[]
 
-Add the following implementation:
+Add the following dependency:
 
 [source,groovy]
 ----
@@ -24,7 +24,7 @@ implementation 'io.micrometer:micrometer-registry-datadog'
 
 ==== Maven
 
-include::_maven_bom.adoc[]
+include::../_maven_bom.adoc[]
 
 Add the following dependency:
 
@@ -83,9 +83,9 @@ For example, for the `US5` site, the correct API endpoint is `https://api.us5.da
 
 ==== Gradle
 
-include::_gradle_bom.adoc[]
+include::../_gradle_bom.adoc[]
 
-Add the following implementation:
+Add the following dependency:
 
 [source,groovy,subs=+attributes]
 ----
@@ -94,7 +94,7 @@ implementation 'io.micrometer:micrometer-registry-statsd'
 
 ==== Maven
 
-include::_maven_bom.adoc[]
+include::../_maven_bom.adoc[]
 
 Add the following dependency:
 

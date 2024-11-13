@@ -8,19 +8,26 @@ To use Micrometer, add the dependency for your monitoring system.
 
 The following example adds Prometheus in Gradle:
 
+include::_gradle_bom.adoc[]
+
+Add the following dependency:
+
 [source,groovy]
 ----
-implementation 'io.micrometer:micrometer-registry-prometheus:latest.release'
+implementation 'io.micrometer:micrometer-registry-prometheus'
 ----
 
 The following example adds Prometheus in Maven:
+
+include::_maven_bom.adoc[]
+
+Add the following dependency:
 
 [source,xml]
 ----
 <dependency>
   <groupId>io.micrometer</groupId>
   <artifactId>micrometer-registry-prometheus</artifactId>
-  <version>${micrometer.version}</version>
 </dependency>
 ----
 

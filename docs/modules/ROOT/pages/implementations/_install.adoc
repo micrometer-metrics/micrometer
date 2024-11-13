@@ -3,9 +3,9 @@
 
 === Gradle
 
-include::_gradle_bom.adoc[]
+include::../_gradle_bom.adoc[]
 
-Add the following implementation:
+Add the following dependency:
 
 [source,groovy,subs=+attributes]
 ----
@@ -14,7 +14,7 @@ implementation 'io.micrometer:micrometer-registry-{system}'
 
 === Maven
 
-include::_maven_bom.adoc[]
+include::../_maven_bom.adoc[]
 
 Add the following dependency:
 

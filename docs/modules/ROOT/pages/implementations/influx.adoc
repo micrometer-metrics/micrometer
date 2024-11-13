@@ -12,21 +12,28 @@ Micrometer supports shipping metrics to InfluxDB directly or through Telegraf th
 
 === Direct to InfluxDB
 
-The following example adds the required library in Gradle:
+The following example shows the Gradle configuration:
+
+include::../_gradle_bom.adoc[]
+
+Add the following dependency:
 
 [source,groovy]
 ----
-implementation 'io.micrometer:micrometer-registry-influx:latest.release'
+implementation 'io.micrometer:micrometer-registry-influx'
 ----
 
-The following example adds the required library in Maven:
+The following example shows the Maven configuration:
+
+include::../_maven_bom.adoc[]
+
+Add the following dependency:
 
 [source,xml]
 ----
 <dependency>
   <groupId>io.micrometer</groupId>
   <artifactId>micrometer-registry-influx</artifactId>
-  <version>${micrometer.version}</version>
 </dependency>
 ----
 
@@ -113,21 +120,28 @@ management.metrics.export.influx:
 
 Telegraf is a StatsD agent that expects a modified flavor of the StatsD line protocol.
 
-The following listing adds the relevant library in Gradle:
+The following example shows the Gradle configuration:
+
+include::../_gradle_bom.adoc[]
+
+Add the following dependency:
 
 [source,groovy]
 ----
-implementation 'io.micrometer:micrometer-registry-statsd:latest.release'
+implementation 'io.micrometer:micrometer-registry-statsd'
 ----
 
-The following listing adds the relevant library in Maven:
+The following example shows the Maven configuration:
+
+include::../_maven_bom.adoc[]
+
+Add the following dependency:
 
 [source,xml]
 ----
 <dependency>
   <groupId>io.micrometer</groupId>
   <artifactId>micrometer-registry-statsd</artifactId>
-  <version>${micrometer.version}</version>
 </dependency>
 ----
 

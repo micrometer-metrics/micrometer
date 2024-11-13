@@ -3,34 +3,27 @@
 
 Micrometer comes with a Bill of Materials (BOM), which is a project that manages all the project versions for consistency.
 
-The following example shows the required dependency for Micrometer Observation in Gradle:
+The following example shows the Gradle configuration:
+
+include::../_gradle_bom.adoc[]
+
+Add the following dependency:
 
 [source,groovy,subs=+attributes]
 ----
-implementation platform('io.micrometer:micrometer-bom:latest.release')
 implementation 'io.micrometer:micrometer-observation'
 ----
 
-The following example shows the required dependency in Maven:
+The following example shows the Maven configuration:
 
-[source,xml,subs=+attributes]
+include::../_maven_bom.adoc[]
+
+Add the following dependency:
+
+[source,xml]
 ----
-<dependencyManagement>
-    <dependencies>
-        <dependency>
-            <groupId>io.micrometer</groupId>
-            <artifactId>micrometer-bom</artifactId>
-            <version>${micrometer.version}</version>
-            <type>pom</type>
-            <scope>import</scope>
-        </dependency>
-    </dependencies>
-</dependencyManagement>
-
-<dependencies>
-    <dependency>
-      <groupId>io.micrometer</groupId>
-      <artifactId>micrometer-observation</artifactId>
-    </dependency>
-</dependencies>
+<dependency>
+  <groupId>io.micrometer</groupId>
+  <artifactId>micrometer-observation</artifactId>
+</dependency>
 ----

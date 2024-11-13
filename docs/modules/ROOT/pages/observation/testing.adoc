@@ -6,14 +6,22 @@ Micrometer Observation comes with the `micrometer-observation-test` module, whic
 [[micrometer-observation-installing]]
 == Installing
 
-The following example shows the required dependency in Gradle (assuming that the Micrometer BOM has been added):
+The following example shows the Gradle configuration:
+
+include::../_gradle_bom.adoc[]
+
+Add the following dependency:
 
 [source,groovy,subs=+attributes]
 -----
 testImplementation 'io.micrometer:micrometer-observation-test'
 -----
 
-The following example shows the required dependency in Maven (assuming that the Micrometer BOM has been added):
+The following example shows the Maven configuration:
+
+include::../_maven_bom.adoc[]
+
+Add the following dependency:
 
 [source,xml,subs=+attributes]
 -----

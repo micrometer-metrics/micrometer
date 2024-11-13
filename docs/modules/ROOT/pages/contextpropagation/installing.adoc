@@ -7,14 +7,22 @@ Milestone releases are published to https://repo.spring.io/milestone. Include th
 configuration to use milestone releases. Note that milestone releases are for testing purposes and are not intended for
 production use.
 
-The following example shows the required dependency in Gradle:
+The following example shows the Gradle configuration:
+
+include::../_gradle_bom.adoc[]
+
+Add the following dependency:
 
 [source,groovy,subs=+attributes]
 ----
-implementation 'io.micrometer:context-propagation:latest.integration'
+implementation 'io.micrometer:context-propagation'
 ----
 
-The following example shows the required dependency in Maven:
+The following example shows the Maven configuration:
+
+include::../_maven_bom.adoc[]
+
+Add the following dependency:
 
 [source,xml,subs=+attributes]
 ----
@@ -22,7 +30,6 @@ The following example shows the required dependency in Maven:
     <dependency>
         <groupId>io.micrometer</groupId>
         <artifactId>context-propagation</artifactId>
-        <version>${micrometer-context-propagation.version}</version>
     </dependency>
 </dependencies>
 ----
