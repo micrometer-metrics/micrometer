@@ -1,20 +1,27 @@
 [[implementations-installing]]
 == Installing
 
-For Gradle, add the following implementation:
+=== Gradle
+
+include::_gradle_bom.adoc[]
+
+Add the following implementation:
 
 [source,groovy,subs=+attributes]
 ----
-implementation 'io.micrometer:micrometer-registry-{system}:latest.release'
+implementation 'io.micrometer:micrometer-registry-{system}'
 ----
 
-For Maven, add the following dependency:
+=== Maven
+
+include::_maven_bom.adoc[]
+
+Add the following dependency:
 
 [source,xml,subs=+attributes]
 ----
 <dependency>
   <groupId>io.micrometer</groupId>
   <artifactId>micrometer-registry-{system}</artifactId>
-  <version>${micrometer.version}</version>
 </dependency>
 ----

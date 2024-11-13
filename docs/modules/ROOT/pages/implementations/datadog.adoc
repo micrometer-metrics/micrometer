@@ -11,21 +11,28 @@ If you can choose between the two, the API approach is far more efficient.
 
 === Direct to Datadog API Approach
 
-For Gradle, add the following implementation:
+==== Gradle
+
+include::_gradle_bom.adoc[]
+
+Add the following implementation:
 
 [source,groovy]
 ----
-implementation 'io.micrometer:micrometer-registry-datadog:latest.release'
+implementation 'io.micrometer:micrometer-registry-datadog'
 ----
 
-For Maven, add the following dependency:
+==== Maven
+
+include::_maven_bom.adoc[]
+
+Add the following dependency:
 
 [source,xml]
 ----
 <dependency>
   <groupId>io.micrometer</groupId>
   <artifactId>micrometer-registry-datadog</artifactId>
-  <version>${micrometer.version}</version>
 </dependency>
 ----
 
@@ -74,21 +81,28 @@ For example, for the `US5` site, the correct API endpoint is `https://api.us5.da
 
 === Through DogStatsD Approach
 
-For Gradle, add the following implementation:
+==== Gradle
+
+include::_gradle_bom.adoc[]
+
+Add the following implementation:
 
 [source,groovy,subs=+attributes]
 ----
-implementation 'io.micrometer:micrometer-registry-statsd:latest.release'
+implementation 'io.micrometer:micrometer-registry-statsd'
 ----
 
-For Maven, add the following dependency:
+==== Maven
+
+include::_maven_bom.adoc[]
+
+Add the following dependency:
 
 [source,xml,subs=+attributes]
 ----
 <dependency>
   <groupId>io.micrometer</groupId>
   <artifactId>micrometer-registry-statsd</artifactId>
-  <version>${micrometer.version}</version>
 </dependency>
 ----
 
