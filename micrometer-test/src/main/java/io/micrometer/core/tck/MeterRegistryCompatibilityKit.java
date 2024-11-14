@@ -19,6 +19,7 @@ import io.micrometer.core.Issue;
 import io.micrometer.core.annotation.Timed;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.config.MeterFilter;
 import io.micrometer.core.instrument.distribution.CountAtBucket;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.HistogramSnapshot;
@@ -442,6 +443,31 @@ public abstract class MeterRegistryCompatibilityKit {
 
             assertThat(registry.get("weak.ref").gauge().value()).isNaN();
             assertThat(registry.get("strong.ref").gauge().value()).isEqualTo(1.0);
+        }
+
+        @Test
+        @DisplayName("gauges cannot be registered twice")
+        void gaugesCannotBeRegisteredTwice() {
+            AtomicInteger n1 = registry.gauge("my.gauge", new AtomicInteger(1));
+            AtomicInteger n2 = registry.gauge("my.gauge", new AtomicInteger(2));
+
+            assertThat(registry.get("my.gauge").gauges()).hasSize(1);
+            assertThat(registry.get("my.gauge").gauge().value()).isEqualTo(1);
+            assertThat(n1).isNotNull().hasValue(1);
+            assertThat(n2).isNotNull().hasValue(2);
+        }
+
+        @Test
+        @DisplayName("gauges cannot be registered effectively twice")
+        void gaugesCannotBeRegisteredEffectivelyTwice() {
+            registry.config().meterFilter(MeterFilter.ignoreTags("ignored"));
+            AtomicInteger n1 = registry.gauge("my.gauge", Tags.of("ignored", "1"), new AtomicInteger(1));
+            AtomicInteger n2 = registry.gauge("my.gauge", Tags.of("ignored", "2"), new AtomicInteger(2));
+
+            assertThat(registry.get("my.gauge").gauges()).hasSize(1);
+            assertThat(registry.get("my.gauge").gauge().value()).isEqualTo(1);
+            assertThat(n1).isNotNull().hasValue(1);
+            assertThat(n2).isNotNull().hasValue(2);
         }
 
     }
