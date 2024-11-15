@@ -18,3 +18,7 @@ dependencies {
     testImplementation 'org.testcontainers:junit-jupiter'
     testImplementation 'org.awaitility:awaitility'
 }
+
+dockerTest {
+    systemProperty 'prometheus.version', 'v2.55.1'
+}

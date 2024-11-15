@@ -57,7 +57,8 @@ import static org.testcontainers.containers.BindMode.READ_ONLY;
 class PrometheusMeterRegistryIntegrationTest {
 
     @Container
-    static GenericContainer<?> prometheus = new GenericContainer<>(DockerImageName.parse("prom/prometheus:latest"))
+    static GenericContainer<?> prometheus = new GenericContainer<>(
+            DockerImageName.parse("prom/prometheus:" + getPrometheusImageVersion()))
         .withCommand("--config.file=/etc/prometheus/prometheus.yml")
         .withClasspathResourceMapping("prometheus.yml", "/etc/prometheus/prometheus.yml", READ_ONLY)
         .waitingFor(Wait.forLogMessage(".*Server is ready to receive web requests.*", 1))
@@ -71,6 +72,15 @@ class PrometheusMeterRegistryIntegrationTest {
 
     @Nullable
     private HttpServer prometheusTextServer;
+
+    private static String getPrometheusImageVersion() {
+        String version = System.getProperty("prometheus.version");
+        if (version == null) {
+            throw new IllegalStateException(
+                    "System property 'prometheus.version' is not set. This should be set in the build configuration for running from the command line. If you are running PrometheusMeterRegistryIntegrationTest from an IDE, set the system property to the desired prom/prometheus image version.");
+        }
+        return version;
+    }
 
     @BeforeEach
     void setUp() {
