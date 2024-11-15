@@ -18,12 +18,10 @@ package io.micrometer.registry.otlp;
 import io.micrometer.common.lang.Nullable;
 import io.micrometer.common.util.internal.logging.InternalLogger;
 import io.micrometer.common.util.internal.logging.InternalLoggerFactory;
-import io.micrometer.core.instrument.Gauge;
-import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.distribution.*;
-import io.micrometer.core.instrument.distribution.Histogram;
 import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import io.micrometer.core.instrument.internal.DefaultGauge;
 import io.micrometer.core.instrument.internal.DefaultLongTaskTimer;
@@ -36,14 +34,14 @@ import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.util.MeterPartition;
 import io.micrometer.core.instrument.util.NamedThreadFactory;
 import io.micrometer.core.instrument.util.TimeUtils;
-import io.micrometer.core.ipc.http.HttpSender;
 import io.micrometer.core.ipc.http.HttpUrlConnectionSender;
 import io.micrometer.registry.otlp.internal.CumulativeBase2ExponentialHistogram;
 import io.micrometer.registry.otlp.internal.DeltaBase2ExponentialHistogram;
 import io.opentelemetry.proto.collector.metrics.v1.ExportMetricsServiceRequest;
 import io.opentelemetry.proto.common.v1.AnyValue;
 import io.opentelemetry.proto.common.v1.KeyValue;
-import io.opentelemetry.proto.metrics.v1.*;
+import io.opentelemetry.proto.metrics.v1.ResourceMetrics;
+import io.opentelemetry.proto.metrics.v1.ScopeMetrics;
 import io.opentelemetry.proto.resource.v1.Resource;
 
 import java.time.Duration;
@@ -56,8 +54,7 @@ import java.util.function.ToDoubleFunction;
 import java.util.function.ToLongFunction;
 
 /**
- * Publishes meters in OTLP (OpenTelemetry Protocol) format. HTTP with Protobuf encoding
- * is the only option currently supported.
+ * Publishes meters in OTLP (OpenTelemetry Protocol) format.
  *
  * @author Tommy Ludwig
  * @author Lenin Jaganathan
@@ -83,15 +80,13 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
 
     private final OtlpConfig config;
 
-    private final HttpSender httpSender;
+    private final OltpMetricsSender metricsSender;
 
     private final Resource resource;
 
     private final AggregationTemporality aggregationTemporality;
 
     private final TimeUnit baseTimeUnit;
-
-    private final String userAgentHeader;
 
     // Time when the last scheduled rollOver has started. Applicable only for delta
     // flavour.
@@ -109,27 +104,32 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
     }
 
     /**
-     * Create an {@code OtlpMeterRegistry} instance.
+     * Create an {@code OtlpMeterRegistry} instance with an HTTP metrics sender.
      * @param config config
      * @param clock clock
      * @param threadFactory thread factory
      * @since 1.14.0
      */
     public OtlpMeterRegistry(OtlpConfig config, Clock clock, ThreadFactory threadFactory) {
-        this(config, clock, threadFactory, new HttpUrlConnectionSender());
+        this(config, clock, threadFactory, new OtlpHttpMetricsSender(new HttpUrlConnectionSender(), config));
     }
 
-    // VisibleForTesting
-    // not public until we decide what we want to expose in public API
-    // HttpSender may not be a good idea if we will support a non-HTTP transport
-    OtlpMeterRegistry(OtlpConfig config, Clock clock, ThreadFactory threadFactory, HttpSender httpSender) {
+    /**
+     * Create an {@code OtlpMeterRegistry} instance.
+     * @param config config
+     * @param clock clock
+     * @param threadFactory thread factory
+     * @param metricsSender metrics sender
+     * @since 1.14.0
+     */
+    public OtlpMeterRegistry(OtlpConfig config, Clock clock, ThreadFactory threadFactory,
+            OltpMetricsSender metricsSender) {
         super(config, clock);
         this.config = config;
         this.baseTimeUnit = config.baseTimeUnit();
-        this.httpSender = httpSender;
+        this.metricsSender = metricsSender;
         this.resource = Resource.newBuilder().addAllAttributes(getResourceAttributes()).build();
         this.aggregationTemporality = config.aggregationTemporality();
-        this.userAgentHeader = getUserAgentHeader();
         config().namingConvention(NamingConvention.dot);
         start(threadFactory);
     }
@@ -178,32 +178,13 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
                             .build())
                         .build())
                     .build();
-                HttpSender.Request.Builder httpRequest = this.httpSender.post(this.config.url())
-                    .withHeader("User-Agent", this.userAgentHeader)
-                    .withContent("application/x-protobuf", request.toByteArray());
-                this.config.headers().forEach(httpRequest::withHeader);
-                HttpSender.Response response = httpRequest.send();
-                if (!response.isSuccessful()) {
-                    logger.warn(
-                            "Failed to publish metrics (context: {}). Server responded with HTTP status code {} and body {}",
-                            getConfigurationContext(), response.code(), response.body());
-                }
+
+                metricsSender.send(request);
             }
             catch (Throwable e) {
-                logger.warn(String.format("Failed to publish metrics to OTLP receiver (context: %s)",
-                        getConfigurationContext()), e);
+                logger.warn("Failed to publish metrics to OTLP receiver", e);
             }
         }
-    }
-
-    /**
-     * Get the configuration context.
-     * @return A message containing enough information for the log reader to figure out
-     * what configuration details may have contributed to the failure.
-     */
-    private String getConfigurationContext() {
-        // While other values may contribute to failures, these two are most common
-        return "url=" + config.url() + ", resource-attributes=" + config.resourceAttributes();
     }
 
     @Override
@@ -390,12 +371,12 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
     }
 
     static Histogram getHistogram(Clock clock, DistributionStatisticConfig distributionStatisticConfig,
-            OtlpConfig otlpConfig) {
+                                  OtlpConfig otlpConfig) {
         return getHistogram(clock, distributionStatisticConfig, otlpConfig, null);
     }
 
     static Histogram getHistogram(final Clock clock, final DistributionStatisticConfig distributionStatisticConfig,
-            final OtlpConfig otlpConfig, @Nullable final TimeUnit baseTimeUnit) {
+                                  final OtlpConfig otlpConfig, @Nullable final TimeUnit baseTimeUnit) {
         // While publishing to OTLP, we export either Histogram datapoint (Explicit
         // ExponentialBuckets
         // or Exponential) / Summary
@@ -411,14 +392,14 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
                 }
 
                 return otlpConfig.aggregationTemporality() == AggregationTemporality.DELTA
-                        ? new DeltaBase2ExponentialHistogram(otlpConfig.maxScale(), otlpConfig.maxBucketCount(),
-                                minimumExpectedValue, baseTimeUnit, clock, otlpConfig.step().toMillis())
-                        : new CumulativeBase2ExponentialHistogram(otlpConfig.maxScale(), otlpConfig.maxBucketCount(),
-                                minimumExpectedValue, baseTimeUnit);
+                    ? new DeltaBase2ExponentialHistogram(otlpConfig.maxScale(), otlpConfig.maxBucketCount(),
+                    minimumExpectedValue, baseTimeUnit, clock, otlpConfig.step().toMillis())
+                    : new CumulativeBase2ExponentialHistogram(otlpConfig.maxScale(), otlpConfig.maxBucketCount(),
+                    minimumExpectedValue, baseTimeUnit);
             }
 
             Histogram explicitBucketHistogram = getExplicitBucketHistogram(clock, distributionStatisticConfig,
-                    otlpConfig.aggregationTemporality(), otlpConfig.step().toMillis());
+                otlpConfig.aggregationTemporality(), otlpConfig.step().toMillis());
             if (explicitBucketHistogram != null) {
                 return explicitBucketHistogram;
             }
@@ -431,13 +412,13 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
     }
 
     static HistogramFlavor histogramFlavor(HistogramFlavor preferredHistogramFlavor,
-            DistributionStatisticConfig distributionStatisticConfig) {
+                                           DistributionStatisticConfig distributionStatisticConfig) {
 
         final double[] serviceLevelObjectiveBoundaries = distributionStatisticConfig
             .getServiceLevelObjectiveBoundaries();
         if (distributionStatisticConfig.isPublishingHistogram()
-                && preferredHistogramFlavor == HistogramFlavor.BASE2_EXPONENTIAL_BUCKET_HISTOGRAM
-                && (serviceLevelObjectiveBoundaries == null || serviceLevelObjectiveBoundaries.length == 0)) {
+            && preferredHistogramFlavor == HistogramFlavor.BASE2_EXPONENTIAL_BUCKET_HISTOGRAM
+            && (serviceLevelObjectiveBoundaries == null || serviceLevelObjectiveBoundaries.length == 0)) {
             return HistogramFlavor.BASE2_EXPONENTIAL_BUCKET_HISTOGRAM;
         }
         return HistogramFlavor.EXPLICIT_BUCKET_HISTOGRAM;
@@ -445,8 +426,8 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
 
     @Nullable
     private static Histogram getExplicitBucketHistogram(final Clock clock,
-            final DistributionStatisticConfig distributionStatisticConfig,
-            final AggregationTemporality aggregationTemporality, final long stepMillis) {
+                                                        final DistributionStatisticConfig distributionStatisticConfig,
+                                                        final AggregationTemporality aggregationTemporality, final long stepMillis) {
 
         double[] sloWithPositiveInf = getSloWithPositiveInf(distributionStatisticConfig);
         if (AggregationTemporality.isCumulative(aggregationTemporality)) {
@@ -461,11 +442,11 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
         }
         if (AggregationTemporality.isDelta(aggregationTemporality) && stepMillis > 0) {
             return new OtlpStepBucketHistogram(clock, stepMillis,
-                    DistributionStatisticConfig.builder()
-                        .serviceLevelObjectives(sloWithPositiveInf)
-                        .build()
-                        .merge(distributionStatisticConfig),
-                    true, false);
+                DistributionStatisticConfig.builder()
+                    .serviceLevelObjectives(sloWithPositiveInf)
+                    .build()
+                    .merge(distributionStatisticConfig),
+                true, false);
         }
 
         return null;
@@ -490,15 +471,6 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
         double[] sloWithPositiveInf = Arrays.copyOf(sloBoundaries, sloBoundaries.length + 1);
         sloWithPositiveInf[sloWithPositiveInf.length - 1] = Double.POSITIVE_INFINITY;
         return sloWithPositiveInf;
-    }
-
-    private String getUserAgentHeader() {
-        String userAgent = "Micrometer-OTLP-Exporter-Java";
-        String version = getClass().getPackage().getImplementationVersion();
-        if (version != null) {
-            userAgent += "/" + version;
-        }
-        return userAgent;
     }
 
 }
