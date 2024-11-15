@@ -8,7 +8,7 @@ aspectjweaver = "1.9.20.1"
 assertj = "3.26.3"
 awaitility = "4.2.2"
 caffeine = "2.9.3"
-cloudwatch2 = "2.29.7"
+cloudwatch2 = "2.29.14"
 colt = "1.2.0"
 dagger = "2.52"
 dropwizard-metrics = "4.2.28"
@@ -62,7 +62,7 @@ log4j = "2.24.1"
 maven-resolver = "1.9.22"
 mockito4 = "4.11.0"
 mockito5 = "5.11.0"
-mongo = "4.11.4"
+mongo = "4.11.5"
 netty = "4.1.115.Final"
 newrelic-api = "5.14.0"
 # Kotlin 1.7 sample will fail from OkHttp 4.12.0 due to okio dependency being a Kotlin 1.9 module
@@ -74,7 +74,7 @@ reactor = "2022.0.22"
 rest-assured = "5.5.0"
 signalfx = "1.0.47"
 slf4j = "1.7.36"
-spectator-atlas = "1.8.1"
+spectator-atlas = "1.8.2"
 spring5 = "5.3.39"
 spring6 = "6.2.0"
 spring-javaformat = "0.0.43"
@@ -230,7 +230,7 @@ plugin-nebulaInfo = { module = "com.netflix.nebula:gradle-info-plugin", version 
 plugin-noHttp = { module = "io.spring.nohttp:nohttp-gradle", version = "0.0.11" }
 plugin-nexusPublish = { module = "io.github.gradle-nexus:publish-plugin", version = "1.3.0" }
 plugin-javaformat = { module = "io.spring.javaformat:spring-javaformat-gradle-plugin", version.ref = "spring-javaformat" }
-plugin-japicmp = { module = "me.champeau.gradle:japicmp-gradle-plugin", version = "0.4.4" }
+plugin-japicmp = { module = "me.champeau.gradle:japicmp-gradle-plugin", version = "0.4.5" }
 plugin-downloadTask = { module = "de.undercouch:gradle-download-task", version = "5.6.0" }
 plugin-spotless = { module = "com.diffplug.spotless:spotless-plugin-gradle", version = "6.25.0" }
 plugin-bnd = "biz.aQute.bnd:biz.aQute.bnd.gradle:6.4.0"
