@@ -258,7 +258,7 @@ public abstract class AbstractTimer extends AbstractMeter implements Timer {
     @Override
     public final void record(long amount, TimeUnit unit) {
         if (amount >= 0) {
-            histogram.recordLong(TimeUnit.NANOSECONDS.convert(amount, unit));
+            histogram.recordLong(baseTimeUnit().convert(amount, unit));
             recordNonNegative(amount, unit);
 
             if (intervalEstimator != null) {

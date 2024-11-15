@@ -43,9 +43,9 @@ public class StatsdTimer extends AbstractTimer {
 
     StatsdTimer(Id id, StatsdLineBuilder lineBuilder, FluxSink<String> sink, Clock clock,
             DistributionStatisticConfig distributionStatisticConfig, PauseDetector pauseDetector, TimeUnit baseTimeUnit,
-            long stepMillis) {
+            long stepBaseUnits) {
         super(id, clock, distributionStatisticConfig, pauseDetector, baseTimeUnit, false);
-        this.max = new StepDouble(clock, stepMillis);
+        this.max = new StepDouble(clock, stepBaseUnits);
         this.lineBuilder = lineBuilder;
         this.sink = sink;
     }
@@ -55,13 +55,13 @@ public class StatsdTimer extends AbstractTimer {
         if (!shutdown && amount >= 0) {
             count.increment();
 
-            double msAmount = TimeUtils.convert(amount, unit, TimeUnit.MILLISECONDS);
-            totalTime.add(msAmount);
+            double baseUnitAmount = TimeUtils.convert(amount, unit, baseTimeUnit());
+            totalTime.add(baseUnitAmount);
 
             // not necessary to ship max, as most StatsD agents calculate this themselves
-            max.getCurrent().add(Math.max(msAmount - max.getCurrent().doubleValue(), 0));
+            max.getCurrent().add(Math.max(baseUnitAmount - max.getCurrent().doubleValue(), 0));
 
-            sink.next(lineBuilder.timing(msAmount));
+            sink.next(lineBuilder.timing(baseUnitAmount));
         }
     }
 
@@ -72,7 +72,7 @@ public class StatsdTimer extends AbstractTimer {
 
     @Override
     public double totalTime(TimeUnit unit) {
-        return TimeUtils.convert(totalTime.doubleValue(), TimeUnit.MILLISECONDS, unit);
+        return TimeUtils.convert(totalTime.doubleValue(), baseTimeUnit(), unit);
     }
 
     /**
@@ -82,7 +82,7 @@ public class StatsdTimer extends AbstractTimer {
      */
     @Override
     public double max(TimeUnit unit) {
-        return TimeUtils.convert(max.poll(), TimeUnit.MILLISECONDS, unit);
+        return TimeUtils.convert(max.poll(), baseTimeUnit(), unit);
     }
 
     void shutdown() {
