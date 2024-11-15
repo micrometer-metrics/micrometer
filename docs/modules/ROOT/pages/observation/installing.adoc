@@ -1,24 +1,22 @@
 [[micrometer-observation-install]]
 = Installing
 
-Micrometer comes with a Bill of Materials (BOM), which is a project that manages all the project versions for consistency.
+It is recommended to use the BOM provided by Micrometer (or your framework if any), you can see how to configure it xref:../installing.adoc[here]. The examples below assume you are using a BOM.
 
-The following example shows the Gradle configuration:
+== Gradle
 
-include::../_gradle_bom.adoc[]
+After the BOM is xref:../installing.adoc[configured], add the following dependency:
 
-Add the following dependency:
-
-[source,groovy,subs=+attributes]
+[source,groovy]
 ----
 implementation 'io.micrometer:micrometer-observation'
 ----
 
-The following example shows the Maven configuration:
+NOTE: The version is not needed for this dependency since it is defined by the BOM.
 
-include::../_maven_bom.adoc[]
+== Maven
 
-Add the following dependency:
+After the BOM is xref:../installing.adoc[configured], add the following dependency:
 
 [source,xml]
 ----
@@ -27,3 +25,5 @@ Add the following dependency:
   <artifactId>micrometer-observation</artifactId>
 </dependency>
 ----
+
+NOTE: The version is not needed for this dependency since it is defined by the BOM.

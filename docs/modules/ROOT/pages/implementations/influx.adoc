@@ -6,28 +6,28 @@ The InfluxData suite of tools supports real-time stream processing and storage o
 
 The InfluxMeterRegistry supports the 1.x InfluxDB API as well as the v2 API.
 
-== Configuring
+== Installation and Configuration
 
 Micrometer supports shipping metrics to InfluxDB directly or through Telegraf through the StatsD registry.
 
+It is recommended to use the BOM provided by Micrometer (or your framework if any), you can see how to configure it xref:../installing.adoc[here]. The examples below assume you are using a BOM.
+
 === Direct to InfluxDB
 
-The following example shows the Gradle configuration:
+==== Gradle
 
-include::../_gradle_bom.adoc[]
-
-Add the following dependency:
+After the BOM is xref:../installing.adoc[configured], add the following dependency:
 
 [source,groovy]
 ----
 implementation 'io.micrometer:micrometer-registry-influx'
 ----
 
-The following example shows the Maven configuration:
+NOTE: The version is not needed for this dependency since it is defined by the BOM.
 
-include::../_maven_bom.adoc[]
+==== Maven
 
-Add the following dependency:
+After the BOM is xref:../installing.adoc[configured], add the following dependency:
 
 [source,xml]
 ----
@@ -36,6 +36,8 @@ Add the following dependency:
   <artifactId>micrometer-registry-influx</artifactId>
 </dependency>
 ----
+
+NOTE: The version is not needed for this dependency since it is defined by the BOM.
 
 Metrics are rate-aggregated and pushed to InfluxDB on a periodic interval. Rate aggregation performed by the registry yields datasets that are quite similar to those produced by Telegraf. The following example configures a meter registry for InfluxDB:
 
@@ -120,22 +122,18 @@ management.metrics.export.influx:
 
 Telegraf is a StatsD agent that expects a modified flavor of the StatsD line protocol.
 
-The following example shows the Gradle configuration:
+==== Gradle
 
-include::../_gradle_bom.adoc[]
-
-Add the following dependency:
+After the BOM is xref:../installing.adoc[configured], add the following dependency:
 
 [source,groovy]
 ----
 implementation 'io.micrometer:micrometer-registry-statsd'
 ----
 
-The following example shows the Maven configuration:
+==== Maven
 
-include::../_maven_bom.adoc[]
-
-Add the following dependency:
+After the BOM is xref:../installing.adoc[configured], add the following dependency:
 
 [source,xml]
 ----
@@ -144,6 +142,8 @@ Add the following dependency:
   <artifactId>micrometer-registry-statsd</artifactId>
 </dependency>
 ----
+
+NOTE: The version is not needed for this dependency since it is defined by the BOM.
 
 Metrics are shipped immediately over UDP to Telegraf by using Telegraf's flavor of the StatsD line protocol:
 

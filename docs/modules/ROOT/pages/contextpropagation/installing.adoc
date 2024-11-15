@@ -7,24 +7,24 @@ Milestone releases are published to https://repo.spring.io/milestone. Include th
 configuration to use milestone releases. Note that milestone releases are for testing purposes and are not intended for
 production use.
 
-The following example shows the Gradle configuration:
+It is recommended to use the BOM provided by Micrometer (or your framework if any), you can see how to configure it xref:../installing.adoc[here]. The examples below assume you are using a BOM.
 
-include::../_gradle_bom.adoc[]
+== Gradle
 
-Add the following dependency:
+After the BOM is xref:../installing.adoc[configured], the following example adds Context Propagation in Gradle:
 
-[source,groovy,subs=+attributes]
+[source,groovy]
 ----
 implementation 'io.micrometer:context-propagation'
 ----
 
-The following example shows the Maven configuration:
+NOTE: The version is not needed for this dependency since it is defined by the BOM.
 
-include::../_maven_bom.adoc[]
+== Maven
 
-Add the following dependency:
+After the BOM is xref:../installing.adoc[configured], the following example adds Context Propagation in Maven:
 
-[source,xml,subs=+attributes]
+[source,xml]
 ----
 <dependencies>
     <dependency>
@@ -33,3 +33,5 @@ Add the following dependency:
     </dependency>
 </dependencies>
 ----
+
+NOTE: The version is not needed for this dependency since it is defined by the BOM.

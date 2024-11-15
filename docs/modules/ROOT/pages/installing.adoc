@@ -4,24 +4,48 @@
 
 Micrometer contains a core library with the instrumentation SPI and an in-memory implementation that does not export data anywhere, a series of modules with implementations for various monitoring systems, and a test module.
 
-To use Micrometer, add the dependency for your monitoring system.
+To use Micrometer, add the dependency for your monitoring system. It is recommended to use the BOM provided by Micrometer, you can configure it as follows (you only need to declare it once in your project).
 
-The following example adds Prometheus in Gradle:
+NOTE: If you use a framework, it might already comes with a BOM that defines the Micrometer versions or imports the Micrometer BOM. If this is the case (for example if you use Spring Boot), you can skip configuring the Micrometer BOM.
 
-include::_gradle_bom.adoc[]
+== Gradle
 
-Add the following dependency:
+The following example configures the Micrometer BOM in Gradle:
+
+[source,groovy,subs=+attributes]
+----
+implementation platform('io.micrometer:micrometer-bom:{micrometer-version}')
+----
+
+After the BOM is configured, the following example adds Prometheus in Gradle:
 
 [source,groovy]
 ----
 implementation 'io.micrometer:micrometer-registry-prometheus'
 ----
 
-The following example adds Prometheus in Maven:
+NOTE: The version is not needed for this dependency since it is defined by the BOM.
 
-include::_maven_bom.adoc[]
+== Maven
 
-Add the following dependency:
+The following example configures the Micrometer BOM in Maven:
+
+[source,xml,subs=+attributes]
+----
+<dependencyManagement>
+    <dependencies>
+        <dependency>
+            <groupId>io.micrometer</groupId>
+            <artifactId>micrometer-bom</artifactId>
+            <version>{micrometer-version}</version>
+            <type>pom</type>
+            <scope>import</scope>
+        </dependency>
+    </dependencies>
+</dependencyManagement>
+----
+
+After the BOM is configured, the following example adds Prometheus in Maven:
 
 [source,xml]
 ----
@@ -30,6 +54,10 @@ Add the following dependency:
   <artifactId>micrometer-registry-prometheus</artifactId>
 </dependency>
 ----
+
+NOTE: The version is not needed for this dependency since it is defined by the BOM.
+
+== Multiple Monitoring Systems
 
 Through Micrometer's composite meter registry (described in greater detail in xref:/concepts/registry.adoc#_composite_registries["Concepts"]), you can configure more than one registry implementation if you intend to publish metrics to more than one monitoring system.
 

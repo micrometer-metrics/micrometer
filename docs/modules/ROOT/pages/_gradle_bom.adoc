@@ -1,6 +1,0 @@
-Micrometer provides BOM, and you can configure it as follows:
-
-[source,groovy,subs=+attributes]
-----
-implementation platform('io.micrometer:micrometer-bom:{micrometer-version}')
-----
