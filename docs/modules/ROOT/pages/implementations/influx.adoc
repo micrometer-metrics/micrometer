@@ -131,6 +131,8 @@ After the BOM is xref:../installing.adoc[configured], add the following dependen
 implementation 'io.micrometer:micrometer-registry-statsd'
 ----
 
+NOTE: The version is not needed for this dependency since it is defined by the BOM.
+
 ==== Maven
 
 After the BOM is xref:../installing.adoc[configured], add the following dependency:

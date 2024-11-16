@@ -6,7 +6,7 @@ Micrometer contains a core library with the instrumentation SPI and an in-memory
 
 To use Micrometer, add the dependency for your monitoring system. It is recommended to use the BOM provided by Micrometer, you can configure it as follows (you only need to declare it once in your project).
 
-NOTE: If you use a framework, it might already comes with a BOM that defines the Micrometer versions or imports the Micrometer BOM. If this is the case (for example if you use Spring Boot), you can skip configuring the Micrometer BOM.
+NOTE: If you use a framework, it might already come with a BOM that defines the Micrometer versions or imports the Micrometer BOM. If this is the case (for example if you use Spring Boot), you can skip configuring the Micrometer BOM.
 
 == Gradle
 
