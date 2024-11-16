@@ -29,6 +29,7 @@ import java.util.*;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
@@ -53,6 +54,8 @@ public class DefaultLongTaskTimer extends AbstractMeter implements LongTaskTimer
      * consider which bucket each active task belongs.
      */
     private final NavigableSet<SampleImpl> activeTasks = new ConcurrentSkipListSet<>();
+
+    private final AtomicInteger counter = new AtomicInteger();
 
     private final Clock clock;
 
@@ -95,9 +98,25 @@ public class DefaultLongTaskTimer extends AbstractMeter implements LongTaskTimer
 
     @Override
     public Sample start() {
-        SampleImpl sample = new SampleImpl();
-        activeTasks.add(sample);
+        final long startTime = clock.monotonicTime();
+        SampleImpl sample = new SampleImpl(startTime);
+        if (!activeTasks.add(sample)) {
+            sample = new SampleImplCounted(startTime, nextNonZeroCounter());
+            activeTasks.add(sample);
+        }
         return sample;
+    }
+
+    private int nextNonZeroCounter() {
+        int nextCount;
+        while ((nextCount = counter.incrementAndGet()) == 0) {
+        }
+        return nextCount;
+    }
+
+    // @VisibleForTesting
+    void setCounter(int newCounter) {
+        counter.set(newCounter);
     }
 
     @Override
@@ -230,8 +249,12 @@ public class DefaultLongTaskTimer extends AbstractMeter implements LongTaskTimer
 
         private volatile boolean stopped;
 
-        private SampleImpl() {
-            this.startTime = clock.monotonicTime();
+        private SampleImpl(long startTime) {
+            this.startTime = startTime;
+        }
+
+        int counter() {
+            return 0;
         }
 
         @Override
@@ -262,9 +285,25 @@ public class DefaultLongTaskTimer extends AbstractMeter implements LongTaskTimer
         public int compareTo(DefaultLongTaskTimer.SampleImpl o) {
             int startCompare = Long.compare(startTime, o.startTime);
             if (startCompare == 0) {
-                return Long.compare(hashCode(), o.hashCode());
+                return Integer.compare(counter(), o.counter());
             }
             return startCompare;
+        }
+
+    }
+
+    class SampleImplCounted extends SampleImpl {
+
+        private final int counter;
+
+        private SampleImplCounted(long startTime, int counter) {
+            super(startTime);
+            this.counter = counter;
+        }
+
+        @Override
+        int counter() {
+            return counter;
         }
 
     }
