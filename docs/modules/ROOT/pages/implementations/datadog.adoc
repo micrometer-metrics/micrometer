@@ -9,25 +9,34 @@ Datadog is a dimensional time-series SaaS with built-in dashboarding and alertin
 Micrometer supports shipping metrics to Datadog directly by using its HTTP API or by using DogStatsD through the xref:/implementations/statsD.adoc[StatsD registry].
 If you can choose between the two, the API approach is far more efficient.
 
+It is recommended to use the BOM provided by Micrometer (or your framework if any), you can see how to configure it xref:../installing.adoc[here]. The examples below assume you are using a BOM.
+
 === Direct to Datadog API Approach
 
-For Gradle, add the following implementation:
+==== Gradle
+
+After the BOM is xref:../installing.adoc[configured], add the following dependency:
 
 [source,groovy]
 ----
-implementation 'io.micrometer:micrometer-registry-datadog:latest.release'
+implementation 'io.micrometer:micrometer-registry-datadog'
 ----
 
-For Maven, add the following dependency:
+NOTE: The version is not needed for this dependency since it is defined by the BOM.
+
+==== Maven
+
+After the BOM is xref:../installing.adoc[configured], add the following dependency:
 
 [source,xml]
 ----
 <dependency>
   <groupId>io.micrometer</groupId>
   <artifactId>micrometer-registry-datadog</artifactId>
-  <version>${micrometer.version}</version>
 </dependency>
 ----
+
+NOTE: The version is not needed for this dependency since it is defined by the BOM.
 
 Metrics are rate-aggregated and pushed to `datadoghq` on a periodic interval. Rate aggregation performed by the registry yields datasets that are similar to those produced by `dogstatsd`.
 
@@ -74,23 +83,30 @@ For example, for the `US5` site, the correct API endpoint is `https://api.us5.da
 
 === Through DogStatsD Approach
 
-For Gradle, add the following implementation:
+==== Gradle
 
-[source,groovy,subs=+attributes]
+After the BOM is xref:../installing.adoc[configured], add the following dependency:
+
+[source,groovy]
 ----
-implementation 'io.micrometer:micrometer-registry-statsd:latest.release'
+implementation 'io.micrometer:micrometer-registry-statsd'
 ----
 
-For Maven, add the following dependency:
+NOTE: The version is not needed for this dependency since it is defined by the BOM.
 
-[source,xml,subs=+attributes]
+==== Maven
+
+After the BOM is xref:../installing.adoc[configured]d, add the following dependency:
+
+[source,xml]
 ----
 <dependency>
   <groupId>io.micrometer</groupId>
   <artifactId>micrometer-registry-statsd</artifactId>
-  <version>${micrometer.version}</version>
 </dependency>
 ----
+
+NOTE: The version is not needed for this dependency since it is defined by the BOM.
 
 Metrics are immediately shipped to DogStatsD using Datadog's flavor of the StatsD line protocol. `java-dogstatsd-client` is _not_ needed on the classpath for this to work, as Micrometer uses its own implementation.
 

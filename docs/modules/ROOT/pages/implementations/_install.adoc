@@ -1,20 +1,29 @@
 [[implementations-installing]]
 == Installing
 
-For Gradle, add the following implementation:
+It is recommended to use the BOM provided by Micrometer (or your framework if any), you can see how to configure it xref:../installing.adoc[here]. The examples below assume you are using a BOM.
+
+=== Gradle
+
+After the BOM is xref:../installing.adoc[configured], add the following dependency:
 
 [source,groovy,subs=+attributes]
 ----
-implementation 'io.micrometer:micrometer-registry-{system}:latest.release'
+implementation 'io.micrometer:micrometer-registry-{system}'
 ----
 
-For Maven, add the following dependency:
+NOTE: The version is not needed for this dependency since it is defined by the BOM.
+
+=== Maven
+
+After the BOM is xref:../installing.adoc[configured], add the following dependency:
 
 [source,xml,subs=+attributes]
 ----
 <dependency>
   <groupId>io.micrometer</groupId>
   <artifactId>micrometer-registry-{system}</artifactId>
-  <version>${micrometer.version}</version>
 </dependency>
 ----
+
+NOTE: The version is not needed for this dependency since it is defined by the BOM.
