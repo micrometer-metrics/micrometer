@@ -58,21 +58,25 @@ class FixedBoundaryHistogramTest {
         fixedBoundaryHistogram.record(1);
         fixedBoundaryHistogram.record(10);
         fixedBoundaryHistogram.record(100);
-        assertThat(fixedBoundaryHistogram.getCountsAtBucket()).allMatch(countAtBucket -> countAtBucket.count() == 1);
+        assertThat(fixedBoundaryHistogram.getCountAtBuckets()).isNotEmpty()
+            .allMatch(countAtBucket -> countAtBucket.count() == 1);
         fixedBoundaryHistogram.reset();
-        assertThat(fixedBoundaryHistogram.getCountsAtBucket()).allMatch(countAtBucket -> countAtBucket.count() == 0);
+        assertThat(fixedBoundaryHistogram.getCountAtBuckets()).isNotEmpty()
+            .allMatch(countAtBucket -> countAtBucket.count() == 0);
     }
 
     @Test
-    void testCountsAtBucket() {
+    void testCountAtBuckets() {
         fixedBoundaryHistogram.record(1);
         fixedBoundaryHistogram.record(10);
         fixedBoundaryHistogram.record(100);
-        assertThat(fixedBoundaryHistogram.getCountsAtBucket()).allMatch(countAtBucket -> countAtBucket.count() == 1);
+        assertThat(fixedBoundaryHistogram.getCountAtBuckets()).isNotEmpty()
+            .allMatch(countAtBucket -> countAtBucket.count() == 1);
         fixedBoundaryHistogram.reset();
-        assertThat(fixedBoundaryHistogram.getCountsAtBucket()).allMatch(countAtBucket -> countAtBucket.count() == 0);
+        assertThat(fixedBoundaryHistogram.getCountAtBuckets()).isNotEmpty()
+            .allMatch(countAtBucket -> countAtBucket.count() == 0);
         fixedBoundaryHistogram.record(0);
-        assertThat(fixedBoundaryHistogram.getCountsAtBucket()).containsExactly(new CountAtBucket(1.0, 1),
+        assertThat(fixedBoundaryHistogram.getCountAtBuckets()).containsExactly(new CountAtBucket(1.0, 1),
                 new CountAtBucket(10.0, 0), new CountAtBucket(100.0, 0));
     }
 
@@ -82,7 +86,7 @@ class FixedBoundaryHistogramTest {
         fixedBoundaryHistogram.record(1);
         fixedBoundaryHistogram.record(10);
         fixedBoundaryHistogram.record(100);
-        assertThat(fixedBoundaryHistogram.getCountsAtBucket()).containsExactly(new CountAtBucket(1.0, 1),
+        assertThat(fixedBoundaryHistogram.getCountAtBuckets()).containsExactly(new CountAtBucket(1.0, 1),
                 new CountAtBucket(10.0, 2), new CountAtBucket(100.0, 3));
     }
 
