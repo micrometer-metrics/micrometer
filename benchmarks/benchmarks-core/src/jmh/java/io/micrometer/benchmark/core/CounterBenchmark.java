@@ -26,6 +26,7 @@ import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
 
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @State(Scope.Benchmark)
 @OutputTimeUnit(TimeUnit.MICROSECONDS)
@@ -49,6 +50,16 @@ public class CounterBenchmark {
     @Setup
     public void setup() {
         registry = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT);
+        counter = registry.counter("counter");
+    }
+
+    @Benchmark
+    public void baseline() {
+        // this method was intentionally left blank.
+    }
+
+    @Benchmark
+    public void retrieve() {
         counter = registry.counter("counter");
     }
 
