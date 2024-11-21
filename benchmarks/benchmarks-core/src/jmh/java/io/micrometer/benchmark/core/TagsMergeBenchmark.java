@@ -33,8 +33,8 @@ import java.util.concurrent.TimeUnit;
 public class TagsMergeBenchmark {
 
     static final Tags left = Tags.of("key", "value", "key2", "value2", "key6", "value6", "key7", "value7", "key8",
-            "value8", "keyA", "valueA", "keyC", "valueC", "keyE", "valueE", "keyF", "valueF", "keyG", "valueG", "keyG",
-            "valueG", "keyG", "valueG", "keyH", "valueH");
+            "value8", "keyA", "valueA", "keyC", "valueC", "keyE", "valueE", "keyF", "valueF", "keyG", "valueG", "keyH",
+            "valueH");
 
     static final Tags right = Tags.of("key", "value", "key1", "value1", "key2", "value2", "key3", "value3", "key4",
             "value4", "key5", "value5", "keyA", "valueA", "keyB", "valueB", "keyD", "valueD");
