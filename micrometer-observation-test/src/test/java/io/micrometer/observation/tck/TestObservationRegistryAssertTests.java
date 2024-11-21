@@ -23,12 +23,13 @@ import org.assertj.core.api.Assertions;
 import org.assertj.core.api.BDDAssertions;
 import org.awaitility.Awaitility;
 import org.junit.jupiter.api.Test;
+import org.opentest4j.AssertionFailedError;
 
 import java.time.Duration;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.BDDAssertions.thenNoException;
-import static org.assertj.core.api.BDDAssertions.thenThrownBy;
+import static org.assertj.core.api.BDDAssertions.*;
+import static org.assertj.core.api.BDDAssertions.then;
 
 class TestObservationRegistryAssertTests {
 
@@ -228,7 +229,12 @@ class TestObservationRegistryAssertTests {
     void should_fail_when_number_of_observations_does_not_match() {
         Observation.createNotStarted("FOO", registry).start().stop();
 
-        thenThrownBy(() -> assertThat(registry).hasNumberOfObservationsEqualTo(0)).isInstanceOf(AssertionError.class);
+        thenThrownBy(() -> assertThat(registry).hasNumberOfObservationsEqualTo(0))
+            .isInstanceOfSatisfying(AssertionFailedError.class, error -> {
+                then(error.getActual().getStringRepresentation()).isEqualTo("1");
+                then(error.getExpected().getStringRepresentation()).isEqualTo("0");
+            });
+        ;
     }
 
     @Test
@@ -243,7 +249,10 @@ class TestObservationRegistryAssertTests {
         Observation.createNotStarted("foo", registry).start().stop();
 
         thenThrownBy(() -> assertThat(registry).hasNumberOfObservationsWithNameEqualTo("foo", 0))
-            .isInstanceOf(AssertionError.class);
+            .isInstanceOfSatisfying(AssertionFailedError.class, error -> {
+                then(error.getActual().getStringRepresentation()).isEqualTo("1");
+                then(error.getExpected().getStringRepresentation()).isEqualTo("0");
+            });
     }
 
     @Test
@@ -251,7 +260,10 @@ class TestObservationRegistryAssertTests {
         Observation.createNotStarted("foo", registry).start().stop();
 
         thenThrownBy(() -> assertThat(registry).hasNumberOfObservationsWithNameEqualTo("bar", 1))
-            .isInstanceOf(AssertionError.class);
+            .isInstanceOfSatisfying(AssertionFailedError.class, error -> {
+                then(error.getActual().getStringRepresentation()).isEqualTo("0");
+                then(error.getExpected().getStringRepresentation()).isEqualTo("1");
+            });
     }
 
     @Test
@@ -266,7 +278,10 @@ class TestObservationRegistryAssertTests {
         Observation.createNotStarted("FOO", registry).start().stop();
 
         thenThrownBy(() -> assertThat(registry).hasNumberOfObservationsWithNameEqualToIgnoreCase("foo", 0))
-            .isInstanceOf(AssertionError.class);
+            .isInstanceOfSatisfying(AssertionFailedError.class, error -> {
+                then(error.getActual().getStringRepresentation()).isEqualTo("1");
+                then(error.getExpected().getStringRepresentation()).isEqualTo("0");
+            });
     }
 
     @Test
@@ -274,7 +289,10 @@ class TestObservationRegistryAssertTests {
         Observation.createNotStarted("FOO", registry).start().stop();
 
         thenThrownBy(() -> assertThat(registry).hasNumberOfObservationsWithNameEqualToIgnoreCase("bar", 1))
-            .isInstanceOf(AssertionError.class);
+            .isInstanceOfSatisfying(AssertionFailedError.class, error -> {
+                then(error.getActual().getStringRepresentation()).isEqualTo("0");
+                then(error.getExpected().getStringRepresentation()).isEqualTo("1");
+            });
     }
 
     @Test
