@@ -48,13 +48,15 @@ public class GaugeBenchmark {
     }
 
     @Benchmark
-    public void baseline() {
+    public AtomicInteger baseline() {
         stateObject = new AtomicInteger();
+        return stateObject;
     }
 
     @Benchmark
-    public void gaugeReRegistrationWithoutBuilder() {
+    public AtomicInteger gaugeReRegistrationWithoutBuilder() {
         stateObject = registry.gauge("test.gauge", new AtomicInteger());
+        return stateObject;
     }
 
     @Benchmark

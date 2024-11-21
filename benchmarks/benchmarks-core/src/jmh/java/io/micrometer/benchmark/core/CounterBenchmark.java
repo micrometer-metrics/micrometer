@@ -59,8 +59,8 @@ public class CounterBenchmark {
     }
 
     @Benchmark
-    public void retrieve() {
-        counter = registry.counter("counter");
+    public Counter retrieve() {
+        return registry.counter("counter");
     }
 
     @Benchmark
