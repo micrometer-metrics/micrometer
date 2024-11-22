@@ -86,34 +86,10 @@ See the https://prometheus.io/docs/querying/basics[Prometheus docs] for a far mo
 
 === Grafana Dashboard
 
-A publicly available Grafana dashboard for Micrometer-sourced JVM and Tomcat metrics is available https://grafana.com/grafana/dashboards/4701-jvm-micrometer/[here].
+There are many third-party Grafana dashboards publicly available on https://grafana.com/grafana/dashboards/?search=micrometer[GrafanaHub].
+See an example https://grafana.com/grafana/dashboards/4701-jvm-micrometer/[here].
 
-image::implementations/prometheus-dashboard.png[Grafana dashboard for JVM and Tomcat binders]
-
-The dashboard features:
-
-* JVM memory
-* Process memory (provided by https://github.com/mweirauch/micrometer-jvm-extras[micrometer-jvm-extras])
-* CPU-Usage, Load, Threads, File Descriptors, and Log Events
-* JVM Memory Pools (Heap, Non-Heap)
-* Garbage Collection
-* Classloading
-* Direct/Mapped buffer sizes
-
-Instead of using the `job` tag to distinguish different applications, this dashboard makes use of a common tag called `application`, which is applied to every metric.
-You can apply the common tag, as follows:
-
-[source,java]
-----
-registry.config().commonTags("application", "MYAPPNAME");
-----
-
-In Spring Boot applications, you can use the https://docs.spring.io/spring-boot/docs/current/reference/html/actuator.html#actuator.metrics.customizing.common-tags[property support for common tags]:
-
-[source,properties]
-----
-management.metrics.tags.application=MYAPPNAME
-----
+NOTE: The dashboards are maintained by the community in their external GitHub repositories, so if you have an issue, it should be created in their respective GitHub repository.
 
 === Counters
 
