@@ -29,8 +29,8 @@ class FixedBoundaryHistogram {
 
     /**
      * Creates a FixedBoundaryHistogram which tracks the count of values for each bucket
-     * bound).
-     * @param buckets - sorted bucket boundaries
+     * bound.
+     * @param buckets sorted bucket boundaries
      * @param isCumulativeBucketCounts - whether the count values should be cumulative
      * count of lower buckets and current bucket.
      */
@@ -46,10 +46,10 @@ class FixedBoundaryHistogram {
 
     /**
      * Returns the number of values that was recorded between previous bucket and the
-     * queried bucket (upper bound inclusive)
+     * queried bucket (upper bound inclusive).
      * @param bucket - the bucket to find values for
      * @return 0 if bucket is not a valid bucket otherwise number of values recorded
-     * between (index(bucket) - 1, bucket]
+     * between (previous bucket, bucket]
      */
     private long countAtBucket(double bucket) {
         int index = Arrays.binarySearch(buckets, bucket);
@@ -75,7 +75,7 @@ class FixedBoundaryHistogram {
      * valueToRecord is greater than the highest bucket.
      */
     // VisibleForTesting
-    int leastLessThanOrEqualTo(long valueToRecord) {
+    int leastLessThanOrEqualTo(double valueToRecord) {
         int low = 0;
         int high = buckets.length - 1;
 
@@ -121,7 +121,7 @@ class FixedBoundaryHistogram {
      * Returns the list of {@link CountAtBucket} for each of the buckets tracked by this
      * histogram.
      */
-    CountAtBucket[] getCountsAtBucket() {
+    CountAtBucket[] getCountAtBuckets() {
         CountAtBucket[] countAtBuckets = new CountAtBucket[this.buckets.length];
         long cumulativeCount = 0;
 
