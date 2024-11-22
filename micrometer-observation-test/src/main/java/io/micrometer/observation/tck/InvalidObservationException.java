@@ -31,6 +31,8 @@ import java.util.stream.Collectors;
  */
 public class InvalidObservationException extends RuntimeException {
 
+    private static final StackTraceElement[] EMPTY_STACK_TRACE = new StackTraceElement[0];
+
     private final Context context;
 
     private final List<HistoryElement> history;
@@ -63,14 +65,14 @@ public class InvalidObservationException extends RuntimeException {
 
         HistoryElement(EventName eventName) {
             this.eventName = eventName;
-            StackTraceElement[] currentStackTrace = Thread.getAllStackTraces().get(Thread.currentThread());
+            StackTraceElement[] currentStackTrace = Thread.currentThread().getStackTrace();
             this.stackTrace = findRelevantStackTraceElements(currentStackTrace);
         }
 
         private StackTraceElement[] findRelevantStackTraceElements(StackTraceElement[] stackTrace) {
             int index = findFirstRelevantStackTraceElementIndex(stackTrace);
             if (index == -1) {
-                return new StackTraceElement[0];
+                return EMPTY_STACK_TRACE;
             }
             else {
                 return Arrays.copyOfRange(stackTrace, index, stackTrace.length);
