@@ -43,6 +43,19 @@ public interface ObservationRegistry {
     }
 
     /**
+     * Creates an instance of {@link ObservationRegistry}.
+     * @return {@link ObservationRegistry} instance
+     */
+    static void setGlobal(ObservationRegistry registry) {
+        ((DelegatingObservationRegistry) global).set(registry);
+    }
+
+    /**
+     * Global {@link ObservationRegistry}.
+     */
+    ObservationRegistry global = new DelegatingObservationRegistry();
+
+    /**
      * No-op implementation of {@link ObservationRegistry}.
      */
     ObservationRegistry NOOP = new NoopObservationRegistry();
