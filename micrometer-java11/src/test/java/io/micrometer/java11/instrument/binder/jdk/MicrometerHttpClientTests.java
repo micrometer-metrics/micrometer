@@ -104,15 +104,18 @@ class MicrometerHttpClientTests {
     void shouldThrowErrorFromSendAsync(WireMockRuntimeInfo wmInfo) {
         var client = MicrometerHttpClient.instrumentationBuilder(httpClient, meterRegistry).build();
 
-        var request = HttpRequest.newBuilder(URI.create(wmInfo.getHttpBaseUrl() + "/test-fault")).GET().build();
+        String uri = "/test-fault";
+        var request = HttpRequest.newBuilder(URI.create(wmInfo.getHttpBaseUrl() + uri))
+            .header(MicrometerHttpClient.URI_PATTERN_HEADER, uri)
+            .GET()
+            .build();
 
         var response = client.sendAsync(request, HttpResponse.BodyHandlers.ofString());
 
         assertThatThrownBy(response::join).isInstanceOf(CompletionException.class);
         assertThatNoException().isThrownBy(() -> meterRegistry.get("http.client.requests")
             .tag("method", "GET")
-            // TODO fix status/uri in exceptional cases where response may be null
-            .tag("uri", "UNKNOWN")
+            .tag("uri", uri)
             .tag("status", "UNKNOWN")
             .tag("outcome", "UNKNOWN")
             .timer());
