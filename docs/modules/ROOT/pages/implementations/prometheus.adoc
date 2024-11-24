@@ -85,14 +85,14 @@ By default, the `PrometheusMeterRegistry` `scrape()` method returns the https://
 
 The https://github.com/OpenObservability/OpenMetrics/blob/main/specification/OpenMetrics.md[OpenMetrics] format can also be produced.
 To specify the format to be returned, you can pass a content type to the `scrape` method.
-For example, to get the OpenMetrics 1.0.0 format scrape, you could use the Prometheus Java client constant for it, as follows in case of the "new" client (`micrometer-registry-prometheus`):
+For example, to get the OpenMetrics 1.0.0 format scrape, you could use the Content-Type for it, as follows in case of the "new" client (`micrometer-registry-prometheus`):
 
 [source,java]
 ----
 String openMetricsScrape = registry.scrape("application/openmetrics-text");
 ----
 
-if you use the "legacy" client (`micrometer-registry-prometheus-simpleclient`):
+If you use the "legacy" client (`micrometer-registry-prometheus-simpleclient`), you could use the Prometheus Java client constant for it:
 
 [source,java]
 ----
@@ -137,7 +137,7 @@ PrometheusMeterRegistry registry = new PrometheusMeterRegistry(config, new Prome
 <1> You can reuse the "default" properties defined in `PrometheusConfig`.
 <2> You can set any property from any property source.
 
-Micrometer passes these properties to the Exporters and the Examplar Sampler of the Prometheus client so you can use the https://prometheus.github.io/client_java/config/config/#exporter-properties[exporter]-, and the https://prometheus.github.io/client_java/config/config/#exemplar-properties[exemplar] properties of the Prometheus Client.
+Micrometer passes these properties to the Exporters and the Exemplar Sampler of the Prometheus client, so you can use the https://prometheus.github.io/client_java/config/config/#exporter-properties[exporter], and the https://prometheus.github.io/client_java/config/config/#exemplar-properties[exemplar] properties of the Prometheus Client.
 
 == Graphing
 
@@ -253,7 +253,7 @@ PrometheusMeterRegistry registry = new PrometheusMeterRegistry(
 registry.counter("test").increment();
 System.out.println(registry.scrape("application/openmetrics-text"));
 ----
-<1> You need to implement `MySpanContext` (`class MySpanContext implements SpanContext { ... }`) or use an implementation that already exists.
+<1> You need to implement `SpanContext` (`class MySpanContext implements SpanContext { ... }`) or use an implementation that already exists.
 
 But if you use the "legacy" client (`micrometer-registry-prometheus-simpleclient`):
 [source,java]
@@ -267,9 +267,9 @@ PrometheusMeterRegistry registry = new PrometheusMeterRegistry(
 registry.counter("test").increment();
 System.out.println(registry.scrape(TextFormat.CONTENT_TYPE_OPENMETRICS_100));
 ----
-<1> You need to implement `MySpanContextSupplier` (`class MySpanContextSupplier implements SpanContextSupplier { ... }`) or use an implementation that already exists.
+<1> You need to implement `SpanContextSupplier` (`class MySpanContextSupplier implements SpanContextSupplier { ... }`) or use an implementation that already exists.
 
-If your configuration is correct, you should get something like this, the `# {span_id="321",trace_id="123"} ...` section is the Exempar right after the value:
+If your configuration is correct, you should get something like this, the `# {span_id="321",trace_id="123"} ...` section is the Exemplar right after the value:
 [source]
 ----
 # TYPE test counter
