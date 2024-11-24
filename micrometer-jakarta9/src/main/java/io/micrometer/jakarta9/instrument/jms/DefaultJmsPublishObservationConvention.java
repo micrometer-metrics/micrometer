@@ -18,7 +18,6 @@ package io.micrometer.jakarta9.instrument.jms;
 
 import io.micrometer.common.KeyValue;
 import io.micrometer.common.KeyValues;
-import jakarta.jms.*;
 
 import io.micrometer.jakarta9.instrument.jms.JmsObservationDocumentation.*;
 
