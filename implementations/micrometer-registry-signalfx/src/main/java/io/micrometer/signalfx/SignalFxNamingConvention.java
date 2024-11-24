@@ -74,7 +74,7 @@ public class SignalFxNamingConvention implements NamingConvention {
         String conventionKey = delegate.tagKey(key);
         conventionKey = PATTERN_TAG_KEY_DENYLISTED_CHARS.matcher(conventionKey).replaceAll("_");
 
-        if (conventionKey.length() < 1) {
+        if (conventionKey.isEmpty()) {
             return conventionKey;
         }
 
@@ -93,7 +93,7 @@ public class SignalFxNamingConvention implements NamingConvention {
 
         if (i > 0) {
             conventionKey = conventionKey.substring(i);
-            if (conventionKey.length() < 1) {
+            if (conventionKey.isEmpty()) {
                 return conventionKey;
             }
         }
