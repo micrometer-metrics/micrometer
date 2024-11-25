@@ -116,8 +116,14 @@ public class ObservationRegistryAssert<SELF extends ObservationRegistryAssert<SE
     public SELF hasRemainingCurrentObservationSameAs(Observation observation) {
         isNotNull();
         Observation current = actual.getCurrentObservation();
+        if (current == null) {
+            failWithMessage(
+                    "Expected current observation in the registry to be same as <%s> but there was no current observation",
+                    observation);
+        }
         if (current != observation) {
-            failWithMessage("Expected current observation in the registry to be same as <%s> but was <%s>", observation,
+            failWithActualExpectedAndMessage(current, observation,
+                    "Expected current observation in the registry to be same as <%s> but was <%s>", observation,
                     current);
         }
         return (SELF) this;
@@ -183,16 +189,17 @@ public class ObservationRegistryAssert<SELF extends ObservationRegistryAssert<SE
     public SELF hasRemainingCurrentScopeSameAs(Observation.Scope scope) {
         isNotNull();
         Observation.Scope current = actual.getCurrentObservationScope();
+        String expectedContextName = scope.getCurrentObservation().getContext().getName();
         if (current == null) {
             failWithMessage(
                     "Expected current Scope in the registry to be same as a provided Scope tied to observation named <%s> but there was no current scope",
-                    scope.getCurrentObservation().getContext().getName());
+                    expectedContextName);
         }
         if (current != scope) {
-            failWithMessage(
+            String actualContextName = current.getCurrentObservation().getContext().getName();
+            failWithActualExpectedAndMessage(actualContextName, expectedContextName,
                     "Expected current Scope in the registry to be same as a provided Scope tied to observation named <%s> but was a different one (tied to observation named <%s>)",
-                    scope.getCurrentObservation().getContext().getName(),
-                    current.getCurrentObservation().getContext().getName());
+                    expectedContextName, actualContextName);
         }
         return (SELF) this;
     }

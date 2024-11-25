@@ -240,9 +240,11 @@ public class TestObservationRegistryAssert
      */
     public TestObservationRegistryAssert hasNumberOfObservationsEqualTo(int expectedNumberOfObservations) {
         isNotNull();
-        if (this.actual.getContexts().size() != expectedNumberOfObservations) {
-            failWithMessage("There should be <%s> Observations but there were <%s>. Found following Observations:\n%s",
-                    expectedNumberOfObservations, this.actual.getContexts().size(),
+        int actualNumberOfObservations = this.actual.getContexts().size();
+        if (actualNumberOfObservations != expectedNumberOfObservations) {
+            failWithActualExpectedAndMessage(actualNumberOfObservations, expectedNumberOfObservations,
+                    "There should be <%s> Observations but there were <%s>. Found following Observations:\n%s",
+                    expectedNumberOfObservations, actualNumberOfObservations,
                     observationNames(this.actual.getContexts()));
         }
         return this;
@@ -268,14 +270,14 @@ public class TestObservationRegistryAssert
     public TestObservationRegistryAssert hasNumberOfObservationsWithNameEqualTo(String observationName,
             int expectedNumberOfObservations) {
         isNotNull();
-        long observationsWithNameSize = this.actual.getContexts()
+        long actualNumberOfObservations = this.actual.getContexts()
             .stream()
             .filter(f -> observationName.equals(f.getContext().getName()))
             .count();
-        if (observationsWithNameSize != expectedNumberOfObservations) {
-            failWithMessage(
+        if (actualNumberOfObservations != expectedNumberOfObservations) {
+            failWithActualExpectedAndMessage(actualNumberOfObservations, expectedNumberOfObservations,
                     "There should be <%s> Observations with name <%s> but there were <%s>. Found following Observations:\n%s",
-                    expectedNumberOfObservations, observationName, observationsWithNameSize,
+                    expectedNumberOfObservations, observationName, actualNumberOfObservations,
                     observationNames(this.actual.getContexts()));
         }
         return this;
@@ -302,14 +304,14 @@ public class TestObservationRegistryAssert
     public TestObservationRegistryAssert hasNumberOfObservationsWithNameEqualToIgnoreCase(String observationName,
             int expectedNumberOfObservations) {
         isNotNull();
-        long observationsWithNameSize = this.actual.getContexts()
+        long actualNumberOfObservations = this.actual.getContexts()
             .stream()
             .filter(f -> observationName.equalsIgnoreCase(f.getContext().getName()))
             .count();
-        if (observationsWithNameSize != expectedNumberOfObservations) {
-            failWithMessage(
+        if (actualNumberOfObservations != expectedNumberOfObservations) {
+            failWithActualExpectedAndMessage(actualNumberOfObservations, expectedNumberOfObservations,
                     "There should be <%s> Observations with name (ignoring case) <%s> but there were <%s>. Found following Observations:\n%s",
-                    expectedNumberOfObservations, observationName, observationsWithNameSize,
+                    expectedNumberOfObservations, observationName, actualNumberOfObservations,
                     observationNames(this.actual.getContexts()));
         }
         return this;
