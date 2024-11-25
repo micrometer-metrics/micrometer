@@ -113,7 +113,7 @@ class OtlpConfigTest {
         OtlpConfig config = k -> null;
         withEnvironmentVariable("OTEL_EXPORTER_OTLP_HEADERS", "header2=%-1").execute(() -> {
             assertThatThrownBy(config::headers).isInstanceOf(InvalidConfigurationException.class)
-                .hasMessage("Cannot URL decode header value: header2=%-1,");
+                .hasMessage("Cannot URL decode headers value: header2=%-1,");
         });
     }
 

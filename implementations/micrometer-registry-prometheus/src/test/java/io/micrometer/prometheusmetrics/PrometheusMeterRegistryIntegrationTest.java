@@ -203,7 +203,7 @@ class PrometheusMeterRegistryIntegrationTest {
         .then()
             .statusCode(200)
             .header("Content-Type", "text/plain; version=0.0.4; charset=utf-8")
-            .body(not((contains("# EOF"))));
+            .body(not(contains("# EOF")));
         // @formatter:on
     }
 

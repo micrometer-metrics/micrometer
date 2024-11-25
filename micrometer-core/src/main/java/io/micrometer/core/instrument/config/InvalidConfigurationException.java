@@ -15,6 +15,8 @@
  */
 package io.micrometer.core.instrument.config;
 
+import io.micrometer.common.lang.Nullable;
+
 /**
  * Signals that a piece of provided configuration is not acceptable for some reason. For
  * example negative SLO boundaries.
@@ -31,12 +33,12 @@ public class InvalidConfigurationException extends IllegalStateException {
      * indicates that the cause is nonexistent or unknown.)
      * @since 1.11.9
      */
-    public InvalidConfigurationException(String message, Throwable cause) {
+    public InvalidConfigurationException(String message, @Nullable Throwable cause) {
         super(message, cause);
     }
 
-    public InvalidConfigurationException(String s) {
-        super(s);
+    public InvalidConfigurationException(String message) {
+        super(message);
     }
 
 }
