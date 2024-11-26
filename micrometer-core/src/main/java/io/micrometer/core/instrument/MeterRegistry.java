@@ -617,7 +617,10 @@ public abstract class MeterRegistry {
             Id mappedId, Function<Meter.Id, ? extends Meter> noopBuilder) {
         Meter m = meterMap.get(mappedId);
 
-        if (m == null) {
+        if (m != null) {
+            checkAndWarnAboutGaugeDoubleRegistration(m);
+        }
+        else {
             if (isClosed()) {
                 return noopBuilder.apply(mappedId);
             }
@@ -625,7 +628,10 @@ public abstract class MeterRegistry {
             synchronized (meterMapLock) {
                 m = meterMap.get(mappedId);
 
-                if (m == null) {
+                if (m != null) {
+                    checkAndWarnAboutGaugeDoubleRegistration(m);
+                }
+                else {
                     if (!accept(mappedId)) {
                         return noopBuilder.apply(mappedId);
                     }
@@ -652,13 +658,7 @@ public abstract class MeterRegistry {
                     }
                     meterMap.put(mappedId, m);
                 }
-                else {
-                    checkAndWarnAboutGaugeDoubleRegistration(m);
-                }
             }
-        }
-        else {
-            checkAndWarnAboutGaugeDoubleRegistration(m);
         }
 
         return m;
