@@ -37,7 +37,6 @@ import org.apache.hc.core5.http.impl.io.HttpRequestExecutor;
 import org.apache.hc.core5.http.io.HttpClientResponseHandler;
 import org.apache.hc.core5.http.io.entity.EntityUtils;
 import org.apache.hc.core5.util.Timeout;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -182,12 +181,12 @@ class MicrometerHttpRequestExecutorTest {
     }
 
     @Test
-    @Disabled("brittle test using reflection to check internals of third-party code")
     void waitForContinueGetsPassedToSuper() {
         MicrometerHttpRequestExecutor requestExecutor = MicrometerHttpRequestExecutor.builder(registry)
             .waitForContinue(Timeout.ofMilliseconds(1000))
             .build();
-        assertThat(requestExecutor).hasFieldOrPropertyWithValue("waitForContinue", Timeout.ofMilliseconds(1000));
+        assertThat(requestExecutor).extracting("http1Config.waitForContinueTimeout")
+            .isEqualTo(Timeout.ofMilliseconds(1000));
     }
 
     @ParameterizedTest
