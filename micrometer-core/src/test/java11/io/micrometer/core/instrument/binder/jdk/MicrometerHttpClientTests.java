@@ -38,8 +38,7 @@ import java.time.Duration;
 import java.util.concurrent.CompletionException;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
-import static org.assertj.core.api.Assertions.assertThatNoException;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.*;
 import static org.assertj.core.api.BDDAssertions.then;
 
 @WireMockTest
@@ -94,16 +93,38 @@ class MicrometerHttpClientTests {
     @Test
     void shouldThrowErrorFromSendAsync(WireMockRuntimeInfo wmInfo) {
         var client = MicrometerHttpClient.instrumentationBuilder(httpClient, meterRegistry).build();
-        var request = HttpRequest.newBuilder(URI.create(wmInfo.getHttpBaseUrl() + "/test-fault")).GET().build();
+
+        String uri = "/test-fault";
+        var request = HttpRequest.newBuilder(URI.create(wmInfo.getHttpBaseUrl() + uri))
+            .header(MicrometerHttpClient.URI_PATTERN_HEADER, uri)
+            .GET()
+            .build();
+
         var response = client.sendAsync(request, HttpResponse.BodyHandlers.ofString());
+
         assertThatThrownBy(response::join).isInstanceOf(CompletionException.class);
         assertThatNoException().isThrownBy(() -> meterRegistry.get("http.client.requests")
             .tag("method", "GET")
-            // TODO fix status/uri in exceptional cases where response may be null
-            .tag("uri", "UNKNOWN")
+            .tag("uri", uri)
             .tag("status", "UNKNOWN")
             .tag("outcome", "UNKNOWN")
             .timer());
+    }
+
+    @Test
+    void sendAsyncShouldSetErrorInContext(WireMockRuntimeInfo wmInfo) {
+        ObservationRegistry observationRegistry = TestObservationRegistry.create();
+        StoreContextObservationHandler storeContextObservationHandler = new StoreContextObservationHandler();
+        observationRegistry.observationConfig().observationHandler(storeContextObservationHandler);
+
+        var request = HttpRequest.newBuilder(URI.create(wmInfo.getHttpBaseUrl() + "/test-fault")).GET().build();
+
+        HttpClient observedClient = MicrometerHttpClient.instrumentationBuilder(httpClient, meterRegistry)
+            .observationRegistry(observationRegistry)
+            .build();
+        var response = observedClient.sendAsync(request, HttpResponse.BodyHandlers.ofString());
+        assertThatThrownBy(response::join).isInstanceOf(CompletionException.class);
+        assertThat(storeContextObservationHandler.context.getError()).isInstanceOf(CompletionException.class);
     }
 
     private void thenMeterRegistryContainsHttpClientTags() {
@@ -128,6 +149,22 @@ class MicrometerHttpClientTests {
                 context.getSetter().set(carrier, "foo", "bar");
             }
         };
+    }
+
+    static class StoreContextObservationHandler implements ObservationHandler<HttpClientContext> {
+
+        HttpClientContext context;
+
+        @Override
+        public boolean supportsContext(Observation.Context context) {
+            return context instanceof HttpClientContext;
+        }
+
+        @Override
+        public void onStart(HttpClientContext context) {
+            this.context = context;
+        }
+
     }
 
 }
