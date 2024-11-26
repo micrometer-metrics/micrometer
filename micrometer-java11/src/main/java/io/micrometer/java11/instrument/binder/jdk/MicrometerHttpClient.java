@@ -266,12 +266,15 @@ public class MicrometerHttpClient extends HttpClient {
         HttpRequest request = httpRequestBuilder.build();
         return client.sendAsync(request, bodyHandler, pushPromiseHandler).handle((response, throwable) -> {
             instrumentation.setResponse(response);
-            stopObservationOrTimer(instrumentation, request, response);
             if (throwable != null) {
                 instrumentation.setThrowable(throwable);
+                stopObservationOrTimer(instrumentation, request, response);
                 throw new CompletionException(throwable);
             }
-            return response;
+            else {
+                stopObservationOrTimer(instrumentation, request, response);
+                return response;
+            }
         });
     }
 

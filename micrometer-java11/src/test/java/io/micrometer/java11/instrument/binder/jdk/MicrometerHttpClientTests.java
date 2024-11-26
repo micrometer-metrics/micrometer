@@ -39,8 +39,7 @@ import java.time.Duration;
 import java.util.concurrent.CompletionException;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
-import static org.assertj.core.api.Assertions.assertThatNoException;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.*;
 import static org.assertj.core.api.BDDAssertions.then;
 
 @WireMockTest
@@ -121,6 +120,22 @@ class MicrometerHttpClientTests {
             .timer());
     }
 
+    @Test
+    void sendAsyncShouldSetErrorInContext(WireMockRuntimeInfo wmInfo) {
+        ObservationRegistry observationRegistry = TestObservationRegistry.create();
+        StoreContextObservationHandler storeContextObservationHandler = new StoreContextObservationHandler();
+        observationRegistry.observationConfig().observationHandler(storeContextObservationHandler);
+
+        var request = HttpRequest.newBuilder(URI.create(wmInfo.getHttpBaseUrl() + "/test-fault")).GET().build();
+
+        HttpClient observedClient = MicrometerHttpClient.instrumentationBuilder(httpClient, meterRegistry)
+            .observationRegistry(observationRegistry)
+            .build();
+        var response = observedClient.sendAsync(request, HttpResponse.BodyHandlers.ofString());
+        assertThatThrownBy(response::join).isInstanceOf(CompletionException.class);
+        assertThat(storeContextObservationHandler.context.getError()).isInstanceOf(CompletionException.class);
+    }
+
     private void thenMeterRegistryContainsHttpClientTags() {
         then(meterRegistry.find("http.client.requests")
             .tag("method", "GET")
@@ -143,6 +158,22 @@ class MicrometerHttpClientTests {
                 context.getSetter().set(carrier, "foo", "bar");
             }
         };
+    }
+
+    static class StoreContextObservationHandler implements ObservationHandler<HttpClientContext> {
+
+        HttpClientContext context;
+
+        @Override
+        public boolean supportsContext(Observation.Context context) {
+            return context instanceof HttpClientContext;
+        }
+
+        @Override
+        public void onStart(HttpClientContext context) {
+            this.context = context;
+        }
+
     }
 
 }
