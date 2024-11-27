@@ -46,6 +46,22 @@
             <property name="message" value="Please use AssertJ imports." />
             <property name="ignoreComments" value="true" />
         </module>
+        <module name="com.puppycrawl.tools.checkstyle.checks.regexp.RegexpSinglelineJavaCheck">
+            <property name="id" value="toLowerCaseWithoutLocale"/>
+            <property name="format" value="\.toLowerCase\(\)"/>
+            <property name="maximum" value="0"/>
+            <property name="message"
+                      value="String.toLowerCase(Locale.ROOT) should be String.toLowerCase(Locale.ROOT)"/>
+            <property name="ignoreComments" value="true"/>
+        </module>
+        <module name="com.puppycrawl.tools.checkstyle.checks.regexp.RegexpSinglelineJavaCheck">
+            <property name="id" value="toUpperCaseWithoutLocale"/>
+            <property name="format" value="\.toUpperCase\(\)"/>
+            <property name="maximum" value="0"/>
+            <property name="message"
+                      value="String.toUpperCase(Locale.ROOT) should be String.toUpperCase(Locale.ROOT)"/>
+            <property name="ignoreComments" value="true"/>
+        </module>
 
         <!-- Whitespace -->
         <module name="SingleSpaceSeparator" />

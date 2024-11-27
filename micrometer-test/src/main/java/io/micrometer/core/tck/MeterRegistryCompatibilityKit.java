@@ -159,7 +159,7 @@ public abstract class MeterRegistryCompatibilityKit {
         FunctionTimer ft = registry.get("function.timer").functionTimer();
         clock(registry).add(step());
         assertThat(ft.measure()).anySatisfy(ms -> {
-            TimeUnit baseUnit = TimeUnit.valueOf(requireNonNull(ft.getId().getBaseUnit()).toUpperCase());
+            TimeUnit baseUnit = TimeUnit.valueOf(requireNonNull(ft.getId().getBaseUnit()).toUpperCase(Locale.ROOT));
             assertThat(ms.getStatistic()).isEqualTo(Statistic.TOTAL_TIME);
             assertThat(TimeUtils.convert(ms.getValue(), baseUnit, TimeUnit.MILLISECONDS)).isEqualTo(1);
         });

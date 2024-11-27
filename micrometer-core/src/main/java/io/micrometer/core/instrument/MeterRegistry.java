@@ -71,7 +71,7 @@ public abstract class MeterRegistry {
         .collect(
             Collectors.toMap(
                 Function.identity(),
-                (timeUnit) -> timeUnit.toString().toLowerCase(),
+                (timeUnit) -> timeUnit.toString().toLowerCase(Locale.ROOT),
                 (k, v) -> { throw new IllegalStateException("Duplicate keys should not exist."); },
                 () -> new EnumMap<>(TimeUnit.class)
             )

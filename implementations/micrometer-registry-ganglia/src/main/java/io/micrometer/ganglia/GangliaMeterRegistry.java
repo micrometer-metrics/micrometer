@@ -32,6 +32,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.Locale;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
@@ -134,7 +135,7 @@ public class GangliaMeterRegistry extends StepMeterRegistry {
 
     private void announceMeter(Meter meter) {
         for (Measurement measurement : meter.measure()) {
-            announce(meter, measurement.getValue(), measurement.getStatistic().toString().toLowerCase());
+            announce(meter, measurement.getValue(), measurement.getStatistic().toString().toLowerCase(Locale.ROOT));
         }
     }
 

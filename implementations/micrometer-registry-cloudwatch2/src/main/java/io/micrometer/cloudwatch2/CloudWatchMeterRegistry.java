@@ -62,7 +62,7 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
         Map<String, StandardUnit> standardUnitByLowercaseValue = new HashMap<>();
         for (StandardUnit standardUnit : StandardUnit.values()) {
             if (standardUnit != StandardUnit.UNKNOWN_TO_SDK_VERSION) {
-                standardUnitByLowercaseValue.put(standardUnit.toString().toLowerCase(), standardUnit);
+                standardUnitByLowercaseValue.put(standardUnit.toString().toLowerCase(Locale.ROOT), standardUnit);
             }
         }
         STANDARD_UNIT_BY_LOWERCASE_VALUE = Collections.unmodifiableMap(standardUnitByLowercaseValue);
@@ -308,7 +308,7 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
             if (unit == null) {
                 return StandardUnit.NONE;
             }
-            StandardUnit standardUnit = STANDARD_UNIT_BY_LOWERCASE_VALUE.get(unit.toLowerCase());
+            StandardUnit standardUnit = STANDARD_UNIT_BY_LOWERCASE_VALUE.get(unit.toLowerCase(Locale.ROOT));
             return standardUnit != null ? standardUnit : StandardUnit.NONE;
         }
 
