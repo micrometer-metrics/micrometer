@@ -25,6 +25,7 @@ import org.openjdk.jmh.runner.RunnerException;
 import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
 
+import java.util.Locale;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.IntStream;
@@ -58,7 +59,7 @@ public class DefaultLongTaskTimerBenchmark {
     public void setup() {
         clock = new MockClock();
         longTaskTimer = new DefaultLongTaskTimer(
-                new Meter.Id("ltt", Tags.empty(), TimeUnit.MILLISECONDS.toString().toLowerCase(), null,
+                new Meter.Id("ltt", Tags.empty(), TimeUnit.MILLISECONDS.toString().toLowerCase(Locale.ROOT), null,
                         Meter.Type.LONG_TASK_TIMER),
                 clock, TimeUnit.MILLISECONDS, DistributionStatisticConfig.DEFAULT, false);
         int randomIndex = random.nextInt(activeSampleCount);

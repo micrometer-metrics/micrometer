@@ -28,6 +28,7 @@ import io.micrometer.core.instrument.util.NamedThreadFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Locale;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
@@ -114,7 +115,7 @@ public class AzureMonitorMeterRegistry extends StepMeterRegistry {
 
     private Stream<MetricTelemetry> trackMeter(Meter meter) {
         return stream(meter.measure().spliterator(), false).map(ms -> {
-            MetricTelemetry mt = createMetricTelemetry(meter, ms.getStatistic().toString().toLowerCase());
+            MetricTelemetry mt = createMetricTelemetry(meter, ms.getStatistic().toString().toLowerCase(Locale.ROOT));
             mt.setValue(ms.getValue());
             return mt;
         });

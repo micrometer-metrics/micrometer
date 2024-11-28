@@ -20,6 +20,7 @@ import io.micrometer.common.util.StringUtils;
 import io.micrometer.core.instrument.util.StringEscapeUtils;
 
 import java.util.Collections;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
@@ -109,7 +110,7 @@ class DynatraceMetricDefinition {
 
         private static Map<String, DynatraceUnit> UNITS_MAPPING = Collections
             .unmodifiableMap(Stream.of(DynatraceUnit.values())
-                .collect(Collectors.toMap(k -> k.toString().toLowerCase() + "s", Function.identity())));
+                .collect(Collectors.toMap(k -> k.toString().toLowerCase(Locale.ROOT) + "s", Function.identity())));
 
         @Nullable
         static DynatraceUnit fromPlural(@Nullable String plural) {

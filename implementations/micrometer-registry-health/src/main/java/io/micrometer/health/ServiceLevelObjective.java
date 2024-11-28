@@ -161,7 +161,7 @@ public abstract class ServiceLevelObjective {
         public String getValueAsString(MeterRegistry registry) {
             double value = getValue(registry);
             return Double.isNaN(value) ? "no value available"
-                    : getBaseUnit() != null && getBaseUnit().toLowerCase().contains("percent")
+                    : getBaseUnit() != null && getBaseUnit().toLowerCase(Locale.ROOT).contains("percent")
                             ? WHOLE_OR_SHORT_DECIMAL.get().format(value * 100) + "%"
                             : WHOLE_OR_SHORT_DECIMAL.get().format(value);
         }
@@ -366,7 +366,7 @@ public abstract class ServiceLevelObjective {
             abstract Double getValue(MeterRegistry registry);
 
             private String thresholdString(double threshold) {
-                return baseUnit != null && baseUnit.toLowerCase().contains("percent")
+                return baseUnit != null && baseUnit.toLowerCase(Locale.ROOT).contains("percent")
                         ? WHOLE_OR_SHORT_DECIMAL.get().format(threshold * 100) + "%"
                         : WHOLE_OR_SHORT_DECIMAL.get().format(threshold);
             }

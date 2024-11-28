@@ -26,6 +26,8 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.util.Locale;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 class MicrometerMetricsPublisherCommandTest {
@@ -86,7 +88,7 @@ class MicrometerMetricsPublisherCommandTest {
     }
 
     private void assertExecutionMetric(Iterable<Tag> tags, HystrixEventType eventType, double count) {
-        Iterable<Tag> myTags = Tags.concat(tags, "event", eventType.name().toLowerCase(), "terminal",
+        Iterable<Tag> myTags = Tags.concat(tags, "event", eventType.name().toLowerCase(Locale.ROOT), "terminal",
                 Boolean.toString(eventType.isTerminal()));
         assertThat(registry.get("hystrix.execution").tags(myTags).counter().count()).isEqualTo(count);
     }
