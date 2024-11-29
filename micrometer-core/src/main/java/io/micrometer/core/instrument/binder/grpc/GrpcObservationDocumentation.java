@@ -83,6 +83,19 @@ public enum GrpcObservationDocumentation implements ObservationDocumentation {
             public String asString() {
                 return "grpc.status_code";
             }
+        },
+        PEER_NAME {
+            @Override
+            public String asString() {
+                return "net.peer.name";
+            }
+        },
+        PEER_PORT {
+            @Override
+            public String asString() {
+                return "net.peer.port";
+            }
+
         }
 
     }
