@@ -33,7 +33,6 @@ import static io.micrometer.observation.aop.ObservedAspectObservationDocumentati
  * An {@link ObservationDocumentation} for {@link ObservedAspect}.
  *
  * @author Jonatan Ivanov
- * @since 1.10.0
  */
 enum ObservedAspectObservationDocumentation implements ObservationDocumentation {
 

@@ -493,10 +493,12 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
     }
 
     private String getUserAgentHeader() {
-        if (this.getClass().getPackage().getImplementationVersion() == null) {
-            return "Micrometer-OTLP-Exporter-Java";
+        String userAgent = "Micrometer-OTLP-Exporter-Java";
+        String version = getClass().getPackage().getImplementationVersion();
+        if (version != null) {
+            userAgent += "/" + version;
         }
-        return "Micrometer-OTLP-Exporter-Java/" + this.getClass().getPackage().getImplementationVersion();
+        return userAgent;
     }
 
 }

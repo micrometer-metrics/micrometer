@@ -67,11 +67,10 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
     static final String METRIC_GROUP_METRICS_COUNT = "kafka-metrics-count";
     static final String VERSION_METRIC_NAME = "version";
     static final String START_TIME_METRIC_NAME = "start-time-ms";
-    static final Duration DEFAULT_REFRESH_INTERVAL = Duration.ofSeconds(60);
     static final String KAFKA_VERSION_TAG_NAME = "kafka.version";
     static final String DEFAULT_VALUE = "unknown";
 
-    private static final String DEFAULT_SCHEDULER_THREAD_NAME_PREFIX = "micrometer-kafka-metrics";
+    private static final long REFRESH_INTERVAL_MILLIS = Duration.ofSeconds(60).toMillis();
 
     private static final Set<Class<?>> counterMeasurableClasses = new HashSet<>();
 
@@ -95,8 +94,6 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
     private final AtomicReference<Map<MetricName, ? extends Metric>> metrics = new AtomicReference<>();
 
     private final Iterable<Tag> extraTags;
-
-    private final Duration refreshInterval;
 
     private final ScheduledExecutorService scheduler;
 
@@ -122,24 +119,18 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
     }
 
     KafkaMetrics(Supplier<Map<MetricName, ? extends Metric>> metricsSupplier, Iterable<Tag> extraTags) {
-        this(metricsSupplier, extraTags, DEFAULT_REFRESH_INTERVAL);
+        this(metricsSupplier, extraTags, createDefaultScheduler(), false);
     }
 
     KafkaMetrics(Supplier<Map<MetricName, ? extends Metric>> metricsSupplier, Iterable<Tag> extraTags,
-            ScheduledExecutorService scheduler) {
-        this(metricsSupplier, extraTags, DEFAULT_REFRESH_INTERVAL, scheduler, true);
+                 ScheduledExecutorService scheduler) {
+        this(metricsSupplier, extraTags, scheduler, true);
     }
 
     KafkaMetrics(Supplier<Map<MetricName, ? extends Metric>> metricsSupplier, Iterable<Tag> extraTags,
-            Duration refreshInterval) {
-        this(metricsSupplier, extraTags, refreshInterval, createDefaultScheduler(), false);
-    }
-
-    KafkaMetrics(Supplier<Map<MetricName, ? extends Metric>> metricsSupplier, Iterable<Tag> extraTags,
-            Duration refreshInterval, ScheduledExecutorService scheduler, boolean schedulerExternallyManaged) {
+                 ScheduledExecutorService scheduler, boolean schedulerExternallyManaged) {
         this.metricsSupplier = metricsSupplier;
         this.extraTags = extraTags;
-        this.refreshInterval = refreshInterval;
         this.scheduler = scheduler;
         this.schedulerExternallyManaged = schedulerExternallyManaged;
     }
@@ -151,8 +142,8 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
         commonTags = getCommonTags(registry);
         prepareToBindMetrics(registry);
         checkAndBindMetrics(registry);
-        scheduler.scheduleAtFixedRate(() -> checkAndBindMetrics(registry), getRefreshIntervalInMillis(),
-                getRefreshIntervalInMillis(), TimeUnit.MILLISECONDS);
+        scheduler.scheduleAtFixedRate(() -> checkAndBindMetrics(registry), REFRESH_INTERVAL_MILLIS,
+                REFRESH_INTERVAL_MILLIS, TimeUnit.MILLISECONDS);
     }
 
     private Iterable<Tag> getCommonTags(MeterRegistry registry) {
@@ -186,10 +177,6 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
             MetricName startTimeMetricName = startTimeMetric.metricName();
             bindMeter(registry, startTimeMetric, meterName(startTimeMetricName), meterTags(startTimeMetricName));
         }
-    }
-
-    private long getRefreshIntervalInMillis() {
-        return refreshInterval.toMillis();
     }
 
     /**
@@ -311,7 +298,7 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
     }
 
     private static ScheduledExecutorService createDefaultScheduler() {
-        return Executors.newSingleThreadScheduledExecutor(new NamedThreadFactory(DEFAULT_SCHEDULER_THREAD_NAME_PREFIX));
+        return Executors.newSingleThreadScheduledExecutor(new NamedThreadFactory("micrometer-kafka-metrics"));
     }
 
     private Gauge registerGauge(MeterRegistry registry, MetricName metricName, String meterName, Iterable<Tag> tags) {

@@ -44,7 +44,6 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -563,7 +562,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
     }
 
     private MetricMetadata getMetadata(String name, @Nullable String description) {
-        String help = prometheusConfig.descriptions() ? Optional.ofNullable(description).orElse(" ") : " ";
+        String help = prometheusConfig.descriptions() && description != null ? description : " ";
         // Unit is intentionally not set, see:
         // https://github.com/OpenObservability/OpenMetrics/blob/1386544931307dff279688f332890c31b6c5de36/specification/OpenMetrics.md#unit
         return new MetricMetadata(name, help, null);

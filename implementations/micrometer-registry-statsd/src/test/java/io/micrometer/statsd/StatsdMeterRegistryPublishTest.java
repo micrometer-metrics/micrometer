@@ -89,7 +89,6 @@ class StatsdMeterRegistryPublishTest {
         final int port = getPort(protocol);
         meterRegistry = new StatsdMeterRegistry(getBufferedConfig(protocol, port), Clock.SYSTEM);
         startRegistryAndWaitForClient();
-        Thread.sleep(1000);
         Counter counter = Counter.builder("my.counter").register(meterRegistry);
         counter.increment();
         counter.increment();
