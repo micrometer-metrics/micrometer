@@ -455,14 +455,12 @@ class ObservationExecChainHandlerIntegrationTest {
             .setConnectTimeout(2000L, TimeUnit.MILLISECONDS)
             .build();
 
-        // tag::setup_classic_aggregate_retries[]
         HttpClientBuilder clientBuilder = HttpClients.custom()
             .setRetryStrategy(retryStrategy)
             .addExecInterceptorFirst("micrometer", new ObservationExecChainHandler(observationRegistry))
             .setConnectionManager(PoolingHttpClientConnectionManagerBuilder.create()
                 .setDefaultConnectionConfig(connectionConfig)
                 .build());
-        // end::setup_classic_aggregate_retries[]
 
         return clientBuilder.build();
     }

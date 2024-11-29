@@ -185,12 +185,12 @@ public interface OtlpConfig extends PushRegistryConfig {
             String metricsHeaders = env.getOrDefault("OTEL_EXPORTER_OTLP_METRICS_HEADERS", "").trim();
             headersString = Objects.equals(headersString, "") ? metricsHeaders : headersString + "," + metricsHeaders;
             try {
-                // headers are encoded as URL - see
+                // headers are URL-encoded - see
                 // https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/protocol/exporter.md#specifying-headers-via-environment-variables
                 headersString = URLDecoder.decode(headersString, "UTF-8");
             }
             catch (Exception e) {
-                throw new InvalidConfigurationException("Cannot URL decode header value: " + headersString, e);
+                throw new InvalidConfigurationException("Cannot URL decode headers value: " + headersString, e);
             }
         }
 

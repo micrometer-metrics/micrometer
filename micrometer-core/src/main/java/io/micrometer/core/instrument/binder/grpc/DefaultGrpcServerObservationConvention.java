@@ -42,12 +42,12 @@ public class DefaultGrpcServerObservationConvention implements GrpcServerObserva
         String statusCode = context.getStatusCode() != null ? context.getStatusCode().name() : UNKNOWN;
         String peerName = context.getPeerName() != null ? context.getPeerName() : UNKNOWN;
         String peerPort = context.getPeerPort() != null ? context.getPeerPort().toString() : UNKNOWN;
-        return KeyValues.of(LowCardinalityKeyNames.METHOD.withValue(context.getMethodName()),
-                LowCardinalityKeyNames.SERVICE.withValue(context.getServiceName()),
-                LowCardinalityKeyNames.METHOD_TYPE.withValue(context.getMethodType().name()),
-                LowCardinalityKeyNames.STATUS_CODE.withValue(statusCode),
+        return KeyValues.of(LowCardinalityKeyNames.STATUS_CODE.withValue(statusCode),
                 LowCardinalityKeyNames.PEER_NAME.withValue(peerName),
-                LowCardinalityKeyNames.PEER_PORT.withValue(peerPort));
+                LowCardinalityKeyNames.PEER_PORT.withValue(peerPort)
+                LowCardinalityKeyNames.METHOD.withValue(context.getMethodName()),
+                LowCardinalityKeyNames.SERVICE.withValue(context.getServiceName()),
+                LowCardinalityKeyNames.METHOD_TYPE.withValue(context.getMethodType().name()));
     }
 
 }

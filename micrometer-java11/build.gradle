@@ -10,7 +10,7 @@ dependencies {
 }
 
 java {
-    targetCompatibility = 11
+    targetCompatibility = JavaVersion.VERSION_11
 }
 
 tasks.withType(JavaCompile).configureEach {
