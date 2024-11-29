@@ -123,12 +123,12 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
     }
 
     KafkaMetrics(Supplier<Map<MetricName, ? extends Metric>> metricsSupplier, Iterable<Tag> extraTags,
-                 ScheduledExecutorService scheduler) {
+            ScheduledExecutorService scheduler) {
         this(metricsSupplier, extraTags, scheduler, true);
     }
 
     KafkaMetrics(Supplier<Map<MetricName, ? extends Metric>> metricsSupplier, Iterable<Tag> extraTags,
-                 ScheduledExecutorService scheduler, boolean schedulerExternallyManaged) {
+            ScheduledExecutorService scheduler, boolean schedulerExternallyManaged) {
         this.metricsSupplier = metricsSupplier;
         this.extraTags = extraTags;
         this.scheduler = scheduler;
