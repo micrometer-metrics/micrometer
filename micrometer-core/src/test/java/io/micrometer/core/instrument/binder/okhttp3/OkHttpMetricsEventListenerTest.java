@@ -163,6 +163,29 @@ class OkHttpMetricsEventListenerTest {
     }
 
     @Test
+    void timeWithStatusCodesMappedAsNotFound(@WiremockResolver.Wiremock WireMockServer server) throws IOException {
+        server.stubFor(any(anyUrl()).willReturn(aResponse().withStatus(404)));
+        Request request = new Request.Builder().url(server.baseUrl()).build();
+
+        OkHttpClient client = new OkHttpClient.Builder()
+            .eventListener(OkHttpMetricsEventListener.builder(registry, "okhttp.requests")
+                .statusCodesMappedAsNotFound(404) // Specifying that 404 should be treated
+                                                  // as 'NOT_FOUND'
+                .uriMapper(URI_MAPPER)
+                .tags(Tags.of("foo", "bar"))
+                .build())
+            .build();
+
+        client.newCall(request).execute().close();
+
+        assertThat(registry.get("okhttp.requests")
+            .tags("foo", "bar", "status", "404", "outcome", "CLIENT_ERROR", "uri", "NOT_FOUND", "target.host",
+                    "localhost", "target.port", String.valueOf(server.port()), "target.scheme", "http")
+            .timer()
+            .count()).isEqualTo(1L);
+    }
+
+    @Test
     void contextSpecificTags(@WiremockResolver.Wiremock WireMockServer server) throws IOException {
         server.stubFor(any(anyUrl()));
         OkHttpClient client = new OkHttpClient.Builder()
