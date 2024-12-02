@@ -616,22 +616,18 @@ public abstract class MeterRegistry {
             BiFunction<Id, /* Nullable Generic */ DistributionStatisticConfig, ? extends Meter> builder, Id originalId,
             Id mappedId, Function<Meter.Id, ? extends Meter> noopBuilder) {
         Meter m = meterMap.get(mappedId);
+        checkAndWarnAboutGaugeDoubleRegistration(m);
 
-        if (m != null) {
-            checkAndWarnAboutGaugeDoubleRegistration(m);
-        }
-        else {
+        if (m == null) {
             if (isClosed()) {
                 return noopBuilder.apply(mappedId);
             }
 
             synchronized (meterMapLock) {
                 m = meterMap.get(mappedId);
+                checkAndWarnAboutGaugeDoubleRegistration(m);
 
-                if (m != null) {
-                    checkAndWarnAboutGaugeDoubleRegistration(m);
-                }
-                else {
+                if (m == null) {
                     if (!accept(mappedId)) {
                         return noopBuilder.apply(mappedId);
                     }
