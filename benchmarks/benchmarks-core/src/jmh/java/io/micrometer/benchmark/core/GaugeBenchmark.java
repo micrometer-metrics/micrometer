@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 VMware, Inc.
+ * Copyright 2024 VMware, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,57 +15,58 @@
  */
 package io.micrometer.benchmark.core;
 
-import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.prometheusmetrics.PrometheusConfig;
 import io.micrometer.prometheusmetrics.PrometheusMeterRegistry;
 import org.openjdk.jmh.annotations.*;
 import org.openjdk.jmh.runner.Runner;
 import org.openjdk.jmh.runner.RunnerException;
-import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
 
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
+@Fork(1)
 @State(Scope.Benchmark)
+@BenchmarkMode(Mode.SampleTime)
 @OutputTimeUnit(TimeUnit.MICROSECONDS)
-public class CounterBenchmark {
-
-    public static void main(String[] args) throws RunnerException {
-        Options opt = new OptionsBuilder().include(CounterBenchmark.class.getSimpleName())
-            .warmupIterations(5)
-            .measurementIterations(10)
-            .mode(Mode.SampleTime)
-            .forks(1)
-            .build();
-
-        new Runner(opt).run();
-    }
+public class GaugeBenchmark {
 
     private MeterRegistry registry;
 
-    private Counter counter;
+    private AtomicInteger stateObject;
 
     @Setup
     public void setup() {
         registry = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT);
-        counter = registry.counter("counter");
+        stateObject = registry.gauge("test.gauge", new AtomicInteger());
+        // emits warn because of double registration
+        stateObject = registry.gauge("test.gauge", new AtomicInteger());
+        // emits debug because of double registration and keeps emitting debug from now on
+        stateObject = registry.gauge("test.gauge", new AtomicInteger());
     }
 
     @Benchmark
-    public void baseline() {
-        // this method was intentionally left blank.
+    public AtomicInteger baseline() {
+        stateObject = new AtomicInteger();
+        return stateObject;
     }
 
     @Benchmark
-    public Counter retrieve() {
-        return registry.counter("counter");
+    public AtomicInteger gaugeReRegistrationWithoutBuilder() {
+        stateObject = registry.gauge("test.gauge", new AtomicInteger());
+        return stateObject;
     }
 
     @Benchmark
-    public double countSum() {
-        counter.increment();
-        return counter.count();
+    public Gauge gaugeReRegistrationWithBuilder() {
+        stateObject = new AtomicInteger();
+        return Gauge.builder("test.gauge", stateObject, AtomicInteger::doubleValue).register(registry);
+    }
+
+    public static void main(String[] args) throws RunnerException {
+        new Runner(new OptionsBuilder().include(GaugeBenchmark.class.getSimpleName()).build()).run();
     }
 
 }
