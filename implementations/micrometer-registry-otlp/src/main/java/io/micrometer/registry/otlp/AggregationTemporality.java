@@ -36,6 +36,10 @@ public enum AggregationTemporality {
      */
     CUMULATIVE;
 
+    /**
+     * @deprecated This method was not intended to be public, users should not use it.
+     */
+    @Deprecated
     public static io.opentelemetry.proto.metrics.v1.AggregationTemporality toOtlpAggregationTemporality(
             AggregationTemporality aggregationTemporality) {
         switch (aggregationTemporality) {
