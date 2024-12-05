@@ -31,6 +31,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.assertj.core.api.AssertionsForClassTypes.*;
 
@@ -257,6 +258,32 @@ class ExecutorServiceMetricsTest {
 
         assertThat(registry.get(expectedMetricPrefix + "executor").tags(userTags).timer().count()).isEqualTo(6L);
         assertThat(registry.get(expectedMetricPrefix + "executor.idle").tags(userTags).timer().count()).isEqualTo(0L);
+    }
+
+    @Test
+    @Issue("#5650")
+    void queuedSubmissionsAreIncludedInExecutorQueuedMetric() {
+        ForkJoinPool pool = new ForkJoinPool(1, ForkJoinPool.defaultForkJoinWorkerThreadFactory, null, false, 1, 1, 1,
+                a -> true, 555, TimeUnit.MILLISECONDS);
+        ExecutorServiceMetrics.monitor(registry, pool, "myForkJoinPool");
+        AtomicBoolean busy = new AtomicBoolean(true);
+
+        // will be an active task
+        pool.execute(() -> {
+            while (busy.get()) {
+            }
+        });
+
+        // will be queued for submission
+        pool.execute(() -> {
+        });
+        pool.execute(() -> {
+        });
+
+        double queued = registry.get("executor.queued").tag("name", "myForkJoinPool").gauge().value();
+        busy.set(false);
+
+        assertThat(queued).isEqualTo(2.0);
     }
 
     @SuppressWarnings("unchecked")

@@ -387,9 +387,11 @@ public class ExecutorServiceMetrics implements MeterBinder {
                     + "underestimates the actual total number of steals when the pool " + "is not quiescent")
             .register(registry);
 
-        Gauge.builder(metricPrefix + "executor.queued", fj, ForkJoinPool::getQueuedTaskCount)
+        Gauge
+            .builder(metricPrefix + "executor.queued", fj,
+                    pool -> pool.getQueuedTaskCount() + pool.getQueuedSubmissionCount())
             .tags(tags)
-            .description("An estimate of the total number of tasks currently held in queues by worker threads")
+            .description("The approximate number of tasks that are queued for execution")
             .register(registry);
 
         Gauge.builder(metricPrefix + "executor.active", fj, ForkJoinPool::getActiveThreadCount)
