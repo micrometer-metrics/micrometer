@@ -85,6 +85,8 @@ jobs:
           command: dockerTest
 
   deploy:
+    context:
+      - deploy
     executor: circle-jdk-executor
     steps:
       - checkout
