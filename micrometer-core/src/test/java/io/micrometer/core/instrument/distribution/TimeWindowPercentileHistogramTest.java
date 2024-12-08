@@ -162,7 +162,7 @@ class TimeWindowPercentileHistogramTest {
     void timeBasedSlidingWindow() {
         final DistributionStatisticConfig config = DistributionStatisticConfig.builder()
             .percentiles(0.0, 0.5, 0.75, 0.9, 0.99, 0.999, 1.0)
-            .expiry(Duration.ofSeconds(4))
+            .expiry(Duration.ofSeconds(1))
             .bufferLength(4)
             .build()
             .merge(DistributionStatisticConfig.DEFAULT);
