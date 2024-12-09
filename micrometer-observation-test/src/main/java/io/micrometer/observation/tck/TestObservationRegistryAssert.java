@@ -581,6 +581,7 @@ public class TestObservationRegistryAssert
          * @return this
          * @throws AssertionError if the {@link Observation} does not have an event with
          * the given name
+         * @since 1.15.0
          */
         public TestObservationRegistryAssertReturningObservationContextAssert hasEvent(String name) {
             isNotNull();
@@ -598,6 +599,7 @@ public class TestObservationRegistryAssert
          * @return this
          * @throws AssertionError if the {@link Observation} does not have an event with
          * the given name and contextual name
+         * @since 1.15.0
          */
         public TestObservationRegistryAssertReturningObservationContextAssert hasEvent(String name,
                 String contextualName) {
@@ -616,6 +618,7 @@ public class TestObservationRegistryAssert
          * @return this
          * @throws AssertionError if the {@link Observation} has an event with the given
          * name
+         * @since 1.15.0
          */
         public TestObservationRegistryAssertReturningObservationContextAssert doesNotHaveEvent(String name) {
             isNotNull();
@@ -629,10 +632,11 @@ public class TestObservationRegistryAssert
          * Verifies that the {@link Observation} does not have an event with the given
          * name and contextual name.
          * @param name event name
-         * @param contextualName contextual name@
+         * @param contextualName contextual name
          * @return this
          * @throws AssertionError if the {@link Observation} has an event with the given
          * name and contextual name
+         * @since 1.15.0
          */
         public TestObservationRegistryAssertReturningObservationContextAssert doesNotHaveEvent(String name,
                 String contextualName) {

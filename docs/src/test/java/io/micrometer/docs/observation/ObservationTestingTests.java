@@ -88,7 +88,7 @@ class ObservationTestingTests {
         }
 
         void run() {
-            final Observation observation = Observation.createNotStarted("foo", registry)
+            Observation observation = Observation.createNotStarted("foo", registry)
                     .lowCardinalityKeyValue("lowTag", "lowTagValue")
                     .highCardinalityKeyValue("highTag", "highTagValue");
             observation.observe(() -> {

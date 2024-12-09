@@ -121,7 +121,7 @@ public final class TestObservationRegistry
         }
 
         @Override
-        public void onEvent(final Observation.Event event, final Observation.Context context) {
+        public void onEvent(Observation.Event event, Observation.Context context) {
             this.contexts.stream()
                 .filter(testContext -> testContext.getContext() == context)
                 .findFirst()
