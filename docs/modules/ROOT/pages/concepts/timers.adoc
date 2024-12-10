@@ -114,6 +114,8 @@ public class ExampleService {
 }
 ----
 
+NOTE: `TimedAspect` doesn't support meta-annotations with `@Timed`.
+
 === @MeterTag on Method Parameters
 
 To support using the `@MeterTag` annotation on method parameters, you need to configure the `@TimedAspect` to add the `MeterTagAnnotationHandler`.
