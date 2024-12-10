@@ -371,7 +371,12 @@ public final class KeyValues implements Iterable<KeyValue> {
         }
         else if (keyValues instanceof Collection) {
             Collection<? extends KeyValue> keyValuesCollection = (Collection<? extends KeyValue>) keyValues;
-            return toKeyValues(keyValuesCollection.toArray(EMPTY_KEY_VALUE_ARRAY));
+            try {
+                return toKeyValues(keyValuesCollection.toArray(EMPTY_KEY_VALUE_ARRAY));
+            }
+            catch (ArrayIndexOutOfBoundsException exception) {
+                return of(keyValues);
+            }
         }
         else {
             return toKeyValues(StreamSupport.stream(keyValues.spliterator(), false).toArray(KeyValue[]::new));
