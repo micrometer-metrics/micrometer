@@ -16,9 +16,9 @@
 
 package io.micrometer.benchmark.core;
 
-import io.micrometer.common.KeyValue;
 import io.micrometer.common.KeyValues;
 import io.micrometer.observation.Observation;
+import io.micrometer.observation.ObservationRegistry;
 import org.openjdk.jmh.annotations.*;
 import org.openjdk.jmh.runner.Runner;
 import org.openjdk.jmh.runner.RunnerException;
@@ -28,37 +28,57 @@ import org.openjdk.jmh.runner.options.OptionsBuilder;
 import java.util.concurrent.TimeUnit;
 
 @State(Scope.Benchmark)
-@OutputTimeUnit(TimeUnit.MICROSECONDS)
+@OutputTimeUnit(TimeUnit.NANOSECONDS)
+@Threads(4)
 public class ObservationKeyValuesBenchmark {
 
     private static final KeyValues KEY_VALUES = KeyValues.of("key1", "value1", "key2", "value2", "key3", "value3",
             "key4", "value4", "key5", "value5");
 
-    private static final KeyValue KEY_VALUE = KeyValue.of("testKey", "testValue");
+    private final ObservationRegistry registry = ObservationRegistry.create();
+
+    private final Observation.Context context = new TestContext();
+
+    private final Observation observation = Observation.createNotStarted("jmh", () -> context, registry);
 
     @Benchmark
-    public void noopBaseline() {
+    @Group("contended")
+    @GroupThreads(1)
+    public Observation contendedWrite() {
+        return write();
     }
 
     @Benchmark
-    public Observation.Context contextBaseline() {
-        return new TestContext().addLowCardinalityKeyValues(KEY_VALUES);
+    @Group("contended")
+    @GroupThreads(1)
+    public KeyValues contendedRead() {
+        return read();
     }
 
     @Benchmark
-    public Observation.Context putKeyValue() {
-        return new TestContext().addLowCardinalityKeyValues(KEY_VALUES).addLowCardinalityKeyValue(KEY_VALUE);
+    @Threads(1)
+    public Observation uncontendedWrite() {
+        return write();
     }
 
     @Benchmark
-    public KeyValues readKeyValues() {
-        return new TestContext().addLowCardinalityKeyValues(KEY_VALUES).getLowCardinalityKeyValues();
+    @Threads(1)
+    public KeyValues uncontendedRead() {
+        return read();
+    }
+
+    private Observation write() {
+        return observation.lowCardinalityKeyValues(KEY_VALUES);
+    }
+
+    private KeyValues read() {
+        return observation.getContext().getLowCardinalityKeyValues();
     }
 
     public static void main(String[] args) throws RunnerException {
         Options options = new OptionsBuilder().include(ObservationKeyValuesBenchmark.class.getSimpleName())
-            .warmupIterations(5)
-            .measurementIterations(10)
+            .warmupIterations(3)
+            .measurementIterations(5)
             .mode(Mode.SampleTime)
             .forks(1)
             .build();

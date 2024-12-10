@@ -22,7 +22,7 @@ import org.openjdk.jcstress.annotations.Actor;
 import org.openjdk.jcstress.annotations.JCStressTest;
 import org.openjdk.jcstress.annotations.Outcome;
 import org.openjdk.jcstress.annotations.State;
-import org.openjdk.jcstress.infra.results.Z_Result;
+import org.openjdk.jcstress.infra.results.LL_Result;
 
 import java.util.UUID;
 
@@ -33,32 +33,33 @@ public class ObservationContextConcurrencyTest {
 
     @JCStressTest
     @State
-    @Outcome(id = "true", expect = ACCEPTABLE)
+    @Outcome(id = "No exception, No exception", expect = ACCEPTABLE)
     @Outcome(expect = FORBIDDEN)
     public static class ConsistentKeyValues {
 
         private final Observation.Context context = new TestContext();
 
+        private final String uuid = UUID.randomUUID().toString();
+
         @Actor
-        public void read(Z_Result r) {
+        public void read(LL_Result r) {
             try {
                 context.getHighCardinalityKeyValues();
-                r.r1 = true;
+                r.r1 = "No exception";
             }
             catch (Exception e) {
-                r.r1 = false;
+                r.r1 = e.getClass();
             }
         }
 
         @Actor
-        public void write(Z_Result r) {
+        public void write(LL_Result r) {
             try {
-                String uuid = UUID.randomUUID().toString();
                 context.addHighCardinalityKeyValue(KeyValue.of(uuid, uuid));
-                r.r1 = true;
+                r.r2 = "No exception";
             }
             catch (Exception e) {
-                r.r1 = false;
+                r.r2 = e.getClass();
             }
         }
 
