@@ -88,6 +88,8 @@ public class ExampleService {
 }
 ----
 
+NOTE: `CountedAspect` doesn't support meta-annotations with `@Counted`.
+
 == Function-tracking Counters
 
 Micrometer also provides a more infrequently used counter pattern that tracks a monotonically increasing function (a function that stays the same or increases over time but never decreases). Some monitoring systems, such as Prometheus, push cumulative values for counters to the backend, but others publish the rate at which a counter is incrementing over the push interval. By employing this pattern, you let the Micrometer implementation for your monitoring system choose whether to rate-normalize the counter, and your counter remains portable across different types of monitoring systems.
