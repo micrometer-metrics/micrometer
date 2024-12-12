@@ -73,8 +73,6 @@ Note how we do not decide the timer to which to accumulate the sample until it i
 
 The `micrometer-core` module contains a `@Timed` annotation that frameworks can use to add timing support to either specific types of methods such as those serving web request endpoints or, more generally, to all methods.
 
-WARNING: Micrometer's Spring Boot configuration does _not_ recognize `@Timed` on arbitrary methods.
-
 Also, an incubating AspectJ aspect is included in `micrometer-core`. You can use it in your application either through compile/load time AspectJ weaving or through framework facilities that interpret AspectJ aspects and proxy targeted methods in some other way, such as Spring AOP. Here is a sample Spring AOP configuration:
 
 [source,java]
