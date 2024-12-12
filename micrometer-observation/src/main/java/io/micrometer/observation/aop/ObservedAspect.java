@@ -153,7 +153,8 @@ public class ObservedAspect {
                 if (result == null) {
                     stopObservation(observation, scope, null);
                     return result;
-                } else {
+                }
+                else {
                     CompletionStage<?> stage = (CompletionStage<?>) result;
                     return stage.whenComplete((res, error) -> stopObservation(observation, scope, error));
                 }

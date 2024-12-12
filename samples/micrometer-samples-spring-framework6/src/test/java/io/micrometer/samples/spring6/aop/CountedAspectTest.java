@@ -269,7 +269,8 @@ class CountedAspectTest {
             .tag("extra", "tag")
             .tag("exception", "none")
             .tag("result", "success")
-            .counter().count()).isOne();
+            .counter()
+            .count()).isOne();
     }
 
     @Test
@@ -354,7 +355,6 @@ class CountedAspectTest {
         CompletableFuture<?> successButNullWithoutMetrics() {
             return null;
         }
-
 
     }
 

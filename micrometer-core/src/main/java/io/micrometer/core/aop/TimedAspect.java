@@ -240,9 +240,11 @@ public class TimedAspect {
                 if (result == null) {
                     record(pjp, timed, metricName, sample, DEFAULT_EXCEPTION_TAG_VALUE);
                     return result;
-                } else {
+                }
+                else {
                     CompletionStage<?> stage = ((CompletionStage<?>) result);
-                    return stage.whenComplete((res, throwable) -> record(pjp, timed, metricName, sample, getExceptionTag(throwable)));
+                    return stage.whenComplete(
+                            (res, throwable) -> record(pjp, timed, metricName, sample, getExceptionTag(throwable)));
                 }
             }
             catch (Throwable e) {
@@ -318,7 +320,8 @@ public class TimedAspect {
                 if (result == null) {
                     sample.ifPresent(this::stopTimer);
                     return result;
-                } else {
+                }
+                else {
                     CompletionStage<?> stage = ((CompletionStage<?>) result);
                     return stage.whenComplete((res, throwable) -> sample.ifPresent(this::stopTimer));
                 }

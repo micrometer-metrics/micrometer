@@ -244,7 +244,8 @@ public class CountedAspect {
                         record(pjp, counted, DEFAULT_EXCEPTION_TAG_VALUE, RESULT_TAG_SUCCESS_VALUE);
                     }
                     return result;
-                } else {
+                }
+                else {
                     CompletionStage<?> stage = ((CompletionStage<?>) result);
                     return stage.whenComplete((res, throwable) -> recordCompletionResult(pjp, counted, throwable));
                 }

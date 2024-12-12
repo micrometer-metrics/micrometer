@@ -273,7 +273,6 @@ class TimedAspectTest {
 
         AsyncTimedService service = pf.getProxy();
 
-
         CompletableFuture<?> completableFuture = service.callNull();
         assertThat(completableFuture).isNull();
 
@@ -373,7 +372,6 @@ class TimedAspectTest {
             .longTaskTimer()
             .activeTasks()).isEqualTo(0);
     }
-
 
     @Test
     void timeMethodFailureWhenCompletedExceptionally() {
@@ -881,6 +879,7 @@ class TimedAspectTest {
         CompletableFuture<?> longCallNull() {
             return null;
         }
+
     }
 
     static class GuardedResult {
