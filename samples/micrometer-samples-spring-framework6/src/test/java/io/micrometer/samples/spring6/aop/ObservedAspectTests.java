@@ -358,7 +358,7 @@ class ObservedAspectTests {
     }
 
     @Test
-    void annotatedAsyncClassCallWithNullShouldBeObserved() throws ExecutionException, InterruptedException {
+    void annotatedAsyncClassCallWithNullShouldBeObserved() {
         registry.observationConfig().observationHandler(new ObservationTextPublisher());
 
         AspectJProxyFactory pf = new AspectJProxyFactory(new ObservedClassLevelAnnotatedService());
@@ -371,7 +371,7 @@ class ObservedAspectTests {
         assertThat(registry).doesNotHaveAnyRemainingCurrentObservation()
             .hasSingleObservationThat()
             .hasNameEqualTo("test.class")
-            .hasContextualNameEqualTo("test.class#asyncNull")
+            .hasContextualNameEqualTo("test.class#call")
             .hasLowCardinalityKeyValue("abc", "123")
             .hasLowCardinalityKeyValue("test", "42")
             .hasLowCardinalityKeyValue("class", ObservedClassLevelAnnotatedService.class.getName())
