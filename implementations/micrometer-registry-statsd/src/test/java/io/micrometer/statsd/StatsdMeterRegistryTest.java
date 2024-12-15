@@ -79,7 +79,7 @@ class StatsdMeterRegistryTest {
     }
 
     @ParameterizedTest
-    @EnumSource(StatsdFlavor.class)
+    @EnumSource
     void counterLineProtocol(StatsdFlavor flavor) {
         String line = null;
         switch (flavor) {
@@ -112,7 +112,7 @@ class StatsdMeterRegistryTest {
     }
 
     @ParameterizedTest
-    @EnumSource(StatsdFlavor.class)
+    @EnumSource
     void gaugeLineProtocol(StatsdFlavor flavor) {
         final AtomicInteger n = new AtomicInteger(2);
         final StatsdConfig config = configWithFlavor(flavor);
@@ -145,7 +145,7 @@ class StatsdMeterRegistryTest {
     }
 
     @ParameterizedTest
-    @EnumSource(StatsdFlavor.class)
+    @EnumSource
     void timerLineProtocol(StatsdFlavor flavor) {
         String line = null;
         switch (flavor) {
@@ -178,7 +178,7 @@ class StatsdMeterRegistryTest {
     }
 
     @ParameterizedTest
-    @EnumSource(StatsdFlavor.class)
+    @EnumSource
     void summaryLineProtocol(StatsdFlavor flavor) {
         String line = null;
         switch (flavor) {
@@ -211,7 +211,7 @@ class StatsdMeterRegistryTest {
     }
 
     @ParameterizedTest
-    @EnumSource(StatsdFlavor.class)
+    @EnumSource
     void longTaskTimerLineProtocol(StatsdFlavor flavor) {
         final StatsdConfig config = configWithFlavor(flavor);
         long stepMillis = config.step().toMillis();
@@ -286,7 +286,7 @@ class StatsdMeterRegistryTest {
     }
 
     @ParameterizedTest
-    @EnumSource(StatsdFlavor.class)
+    @EnumSource
     @Issue("#370")
     void serviceLevelObjectivesOnlyNoPercentileHistogram(StatsdFlavor flavor) {
         StatsdConfig config = configWithFlavor(flavor);
@@ -390,7 +390,7 @@ class StatsdMeterRegistryTest {
     }
 
     @ParameterizedTest
-    @EnumSource(StatsdFlavor.class)
+    @EnumSource
     @Issue("#600")
     void memoryPerformanceOfNamingConventionInHotLoops(StatsdFlavor flavor) {
         AtomicInteger namingConventionUses = new AtomicInteger();

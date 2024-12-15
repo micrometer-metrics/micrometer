@@ -80,7 +80,7 @@ class StatsdMeterRegistryPublishTest {
     }
 
     @ParameterizedTest
-    @EnumSource(StatsdProtocol.class)
+    @EnumSource
     void receiveAllBufferedMetricsAfterCloseSuccessfully(StatsdProtocol protocol) throws InterruptedException {
         skipUdsTestOnWindows(protocol);
         serverLatch = new CountDownLatch(3);
@@ -98,7 +98,7 @@ class StatsdMeterRegistryPublishTest {
     }
 
     @ParameterizedTest
-    @EnumSource(StatsdProtocol.class)
+    @EnumSource
     void receiveMetricsSuccessfully(StatsdProtocol protocol) throws InterruptedException {
         skipUdsTestOnWindows(protocol);
         serverLatch = new CountDownLatch(3);
@@ -116,7 +116,7 @@ class StatsdMeterRegistryPublishTest {
     }
 
     @ParameterizedTest
-    @EnumSource(StatsdProtocol.class)
+    @EnumSource
     void resumeSendingMetrics_whenServerIntermittentlyFails(StatsdProtocol protocol) throws InterruptedException {
         skipUdsTestOnWindows(protocol);
         serverLatch = new CountDownLatch(1);
@@ -163,7 +163,7 @@ class StatsdMeterRegistryPublishTest {
     }
 
     @ParameterizedTest
-    @EnumSource(StatsdProtocol.class)
+    @EnumSource
     @Issue("#1676")
     void stopAndStartMeterRegistrySendsMetrics(StatsdProtocol protocol) throws InterruptedException {
         skipUdsTestOnWindows(protocol);
@@ -206,7 +206,7 @@ class StatsdMeterRegistryPublishTest {
     }
 
     @ParameterizedTest
-    @EnumSource(StatsdProtocol.class)
+    @EnumSource
     void whenBackendInitiallyDown_metricsSentAfterBackendStarts(StatsdProtocol protocol) throws InterruptedException {
         skipUdsTestOnWindows(protocol);
         AtomicInteger writeCount = new AtomicInteger();
@@ -245,7 +245,7 @@ class StatsdMeterRegistryPublishTest {
     }
 
     @ParameterizedTest
-    @EnumSource(StatsdProtocol.class)
+    @EnumSource
     void whenRegistryStopped_doNotConnectToBackend(StatsdProtocol protocol) throws InterruptedException {
         skipUdsTestOnWindows(protocol);
         serverLatch = new CountDownLatch(3);
@@ -264,7 +264,7 @@ class StatsdMeterRegistryPublishTest {
     }
 
     @ParameterizedTest
-    @EnumSource(StatsdProtocol.class)
+    @EnumSource
     @Issue("#2177")
     void whenSendError_reconnectsAndWritesNewMetrics(StatsdProtocol protocol) throws InterruptedException {
         skipUdsTestOnWindows(protocol);
@@ -296,7 +296,7 @@ class StatsdMeterRegistryPublishTest {
 
     @Issue("#2880")
     @ParameterizedTest
-    @EnumSource(StatsdProtocol.class)
+    @EnumSource
     void receiveParallelMetricsSuccessfully(StatsdProtocol protocol) throws InterruptedException {
         final int n = 10;
 
