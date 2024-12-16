@@ -55,7 +55,7 @@ public class ClassLoaderMetrics implements MeterBinder {
 
         FunctionCounter.builder("jvm.classes.unloaded", classLoadingBean, ClassLoadingMXBean::getUnloadedClassCount)
             .tags(tags)
-            .description("The total number of classes unloaded since the Java virtual machine has started execution")
+            .description("The number of classes unloaded in the Java virtual machine")
             .baseUnit(BaseUnits.CLASSES)
             .register(registry);
     }
