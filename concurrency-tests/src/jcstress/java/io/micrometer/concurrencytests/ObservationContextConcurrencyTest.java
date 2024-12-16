@@ -35,31 +35,68 @@ public class ObservationContextConcurrencyTest {
     @State
     @Outcome(id = "No exception, No exception", expect = ACCEPTABLE)
     @Outcome(expect = FORBIDDEN)
-    public static class ConsistentKeyValues {
+    public static class ConsistentKeyValuesGetAdd {
 
         private final Observation.Context context = new TestContext();
 
         private final String uuid = UUID.randomUUID().toString();
 
         @Actor
-        public void read(LL_Result r) {
+        public void get(LL_Result r) {
             try {
                 context.getHighCardinalityKeyValues();
                 r.r1 = "No exception";
             }
             catch (Exception e) {
-                r.r1 = e.getClass();
+                r.r1 = e.getClass().getSimpleName();
             }
         }
 
         @Actor
-        public void write(LL_Result r) {
+        public void add(LL_Result r) {
             try {
-                context.addHighCardinalityKeyValue(KeyValue.of(uuid, uuid));
+                context.addHighCardinalityKeyValue(KeyValue.of("uuid", uuid));
                 r.r2 = "No exception";
             }
             catch (Exception e) {
-                r.r2 = e.getClass();
+                r.r2 = e.getClass().getSimpleName();
+            }
+        }
+
+    }
+
+    @JCStressTest
+    @State
+    @Outcome(id = "No exception, No exception", expect = ACCEPTABLE)
+    @Outcome(expect = FORBIDDEN)
+    public static class ConsistentKeyValuesGetRemove {
+
+        private final Observation.Context context = new TestContext();
+
+        public ConsistentKeyValuesGetRemove() {
+            context.addLowCardinalityKeyValue(KeyValue.of("keep", "donotremoveme"));
+            context.addLowCardinalityKeyValue(KeyValue.of("remove", "removeme"));
+        }
+
+        @Actor
+        public void get(LL_Result r) {
+            try {
+                context.getAllKeyValues();
+                r.r1 = "No exception";
+            }
+            catch (Exception e) {
+                r.r1 = e.getClass().getSimpleName();
+            }
+        }
+
+        @Actor
+        public void remove(LL_Result r) {
+            try {
+                context.removeLowCardinalityKeyValue("remove");
+                r.r2 = "No exception";
+            }
+            catch (Exception e) {
+                r.r2 = e.getClass().getSimpleName();
             }
         }
 

@@ -18,3 +18,8 @@ bin/
 .vscode
 .DS_Store
 .java-version
+
+# jcstress
+generated/
+results/
+jcstress-results-*.bin.gz

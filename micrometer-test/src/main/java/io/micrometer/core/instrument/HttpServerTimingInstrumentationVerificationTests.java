@@ -120,14 +120,14 @@ public abstract class HttpServerTimingInstrumentationVerificationTests extends I
     }
 
     @ParameterizedTest
-    @EnumSource(TestType.class)
+    @EnumSource
     void uriIsNotFound_whenRouteIsUnmapped(TestType testType) throws Throwable {
         sender.get(baseUri + "notFound").send();
         checkTimer(rs -> rs.tags("uri", "NOT_FOUND", "status", "404", "method", "GET").timer().count() == 1);
     }
 
     @ParameterizedTest
-    @EnumSource(TestType.class)
+    @EnumSource
     void uriTemplateIsTagged(TestType testType) throws Throwable {
         sender.get(baseUri + "hello/world").send();
         checkTimer(rs -> rs.tags("uri", InstrumentedRoutes.TEMPLATED_ROUTE, "status", "200", "method", "GET")
@@ -136,7 +136,7 @@ public abstract class HttpServerTimingInstrumentationVerificationTests extends I
     }
 
     @ParameterizedTest
-    @EnumSource(TestType.class)
+    @EnumSource
     void redirect(TestType testType) throws Throwable {
         sender.get(baseUri + "foundRedirect").send();
         checkTimer(rs -> rs.tags("uri", InstrumentedRoutes.REDIRECT, "status", "302", "method", "GET")
@@ -145,7 +145,7 @@ public abstract class HttpServerTimingInstrumentationVerificationTests extends I
     }
 
     @ParameterizedTest
-    @EnumSource(TestType.class)
+    @EnumSource
     void errorResponse(TestType testType) throws Throwable {
         sender.post(baseUri + "error").send();
         checkTimer(
@@ -153,7 +153,7 @@ public abstract class HttpServerTimingInstrumentationVerificationTests extends I
     }
 
     @ParameterizedTest
-    @EnumSource(TestType.class)
+    @EnumSource
     void canExtractContextFromHeaders(TestType testType) throws Throwable {
         sender.get(baseUri + "hello/micrometer").withHeader("Test-Propagation", "someValue").send();
 
