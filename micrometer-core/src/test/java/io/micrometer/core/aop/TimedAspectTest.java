@@ -425,7 +425,7 @@ class TimedAspectTest {
                 aClass -> valueExpressionResolver);
 
         @ParameterizedTest
-        @EnumSource(AnnotatedTestClass.class)
+        @EnumSource
         void meterTagsWithText(AnnotatedTestClass annotatedClass) {
             MeterRegistry registry = new SimpleMeterRegistry();
             TimedAspect timedAspect = new TimedAspect(registry);
@@ -442,7 +442,7 @@ class TimedAspectTest {
         }
 
         @ParameterizedTest
-        @EnumSource(AnnotatedTestClass.class)
+        @EnumSource
         void meterTagsWithResolver(AnnotatedTestClass annotatedClass) {
             MeterRegistry registry = new SimpleMeterRegistry();
             TimedAspect timedAspect = new TimedAspect(registry);
@@ -462,7 +462,7 @@ class TimedAspectTest {
         }
 
         @ParameterizedTest
-        @EnumSource(AnnotatedTestClass.class)
+        @EnumSource
         void meterTagsWithExpression(AnnotatedTestClass annotatedClass) {
             MeterRegistry registry = new SimpleMeterRegistry();
             TimedAspect timedAspect = new TimedAspect(registry);

@@ -144,7 +144,7 @@ public abstract class HttpClientTimingInstrumentationVerificationTests<CLIENT>
     }
 
     @ParameterizedTest
-    @EnumSource(TestType.class)
+    @EnumSource
     void getTemplatedPathForUri(TestType testType, WireMockRuntimeInfo wmRuntimeInfo) {
         checkAndSetupTestForTestType(testType);
 
@@ -162,7 +162,7 @@ public abstract class HttpClientTimingInstrumentationVerificationTests<CLIENT>
     }
 
     @ParameterizedTest
-    @EnumSource(TestType.class)
+    @EnumSource
     @Disabled("apache/jetty http client instrumentation currently fails this test")
     void timedWhenServerIsMissing(TestType testType) throws IOException {
         checkAndSetupTestForTestType(testType);
@@ -186,7 +186,7 @@ public abstract class HttpClientTimingInstrumentationVerificationTests<CLIENT>
     }
 
     @ParameterizedTest
-    @EnumSource(TestType.class)
+    @EnumSource
     void serverException(TestType testType, WireMockRuntimeInfo wmRuntimeInfo) {
         checkAndSetupTestForTestType(testType);
 
@@ -203,7 +203,7 @@ public abstract class HttpClientTimingInstrumentationVerificationTests<CLIENT>
     }
 
     @ParameterizedTest
-    @EnumSource(TestType.class)
+    @EnumSource
     void clientException(TestType testType, WireMockRuntimeInfo wmRuntimeInfo) {
         checkAndSetupTestForTestType(testType);
 
@@ -223,7 +223,7 @@ public abstract class HttpClientTimingInstrumentationVerificationTests<CLIENT>
     // TODO this test doesn't need to be parameterized but the custom resolver for
     // Before/After methods doesn't like when it isn't.
     @ParameterizedTest
-    @EnumSource(TestType.class)
+    @EnumSource
     void headerIsPropagatedFromContext(TestType testType, WireMockRuntimeInfo wmRuntimeInfo) {
         checkAndSetupTestForTestType(testType);
 

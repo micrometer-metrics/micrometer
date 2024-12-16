@@ -94,7 +94,7 @@ class CaffeineStatsCounterTest {
     }
 
     @ParameterizedTest
-    @EnumSource(RemovalCause.class)
+    @EnumSource
     void evictionWithCause(RemovalCause cause) {
         stats.recordEviction(3, cause);
         DistributionSummary summary = fetch("cache.evictions", "cause", cause.name()).summary();
