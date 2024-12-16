@@ -213,6 +213,29 @@ class CountedAspectTest {
         assertThat(counter.getId().getDescription()).isNull();
     }
 
+    @Test
+    void countedWithSuccessfulMetricsWhenReturnsCompletionStageNull() {
+        CompletableFuture<?> completableFuture = asyncCountedService.successButNull();
+        assertThat(completableFuture).isNull();
+
+        assertThat(meterRegistry.get("metric.success")
+            .tag("method", "successButNull")
+            .tag("class", getClass().getName() + "$AsyncCountedService")
+            .tag("extra", "tag")
+            .tag("exception", "none")
+            .tag("result", "success")
+            .counter()
+            .count()).isOne();
+    }
+
+    @Test
+    void countedWithoutSuccessfulMetricsWhenReturnsCompletionStageNull() {
+        CompletableFuture<?> completableFuture = asyncCountedService.successButNullWithoutMetrics();
+        assertThat(completableFuture).isNull();
+
+        assertThatThrownBy(() -> meterRegistry.get("metric.none").counter()).isInstanceOf(MeterNotFoundException.class);
+    }
+
     static class CountedService {
 
         @Counted(value = "metric.none", recordFailuresOnly = true)
@@ -272,6 +295,16 @@ class CountedAspectTest {
         @Counted
         CompletableFuture<?> emptyMetricName(GuardedResult guardedResult) {
             return supplyAsync(guardedResult::get);
+        }
+
+        @Counted(value = "metric.success", extraTags = { "extra", "tag" })
+        CompletableFuture<?> successButNull() {
+            return null;
+        }
+
+        @Counted(value = "metric.none", recordFailuresOnly = true)
+        CompletableFuture<?> successButNullWithoutMetrics() {
+            return null;
         }
 
     }

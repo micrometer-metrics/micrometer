@@ -69,6 +69,7 @@ import java.util.function.Predicate;
  *
  * @author Jonatan Ivanov
  * @author Yanming Zhou
+ * @author Jeonggi Kim
  * @since 1.10.0
  */
 @Aspect
@@ -136,8 +137,15 @@ public class ObservedAspect {
             observation.start();
             Observation.Scope scope = observation.openScope();
             try {
-                return ((CompletionStage<?>) pjp.proceed())
-                    .whenComplete((result, error) -> stopObservation(observation, scope, error));
+                Object result = pjp.proceed();
+                if (result == null) {
+                    stopObservation(observation, scope, null);
+                    return result;
+                }
+                else {
+                    CompletionStage<?> stage = (CompletionStage<?>) result;
+                    return stage.whenComplete((res, error) -> stopObservation(observation, scope, error));
+                }
             }
             catch (Throwable error) {
                 stopObservation(observation, scope, error);

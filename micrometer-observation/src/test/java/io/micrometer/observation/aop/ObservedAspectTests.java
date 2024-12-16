@@ -377,6 +377,29 @@ class ObservedAspectTests {
             .hasContextualNameEqualTo("test.class#annotatedOnMethod");
     }
 
+    @Test
+    void annotatedAsyncClassCallWithNullShouldBeObserved() {
+        registry.observationConfig().observationHandler(new ObservationTextPublisher());
+
+        AspectJProxyFactory pf = new AspectJProxyFactory(new ObservedClassLevelAnnotatedService());
+        pf.addAspect(new ObservedAspect(registry));
+
+        ObservedClassLevelAnnotatedService service = pf.getProxy();
+        CompletableFuture<String> asyncResult = service.asyncNull();
+        assertThat(asyncResult).isNull();
+
+        TestObservationRegistryAssert.assertThat(registry)
+            .doesNotHaveAnyRemainingCurrentObservation()
+            .hasSingleObservationThat()
+            .hasNameEqualTo("test.class")
+            .hasContextualNameEqualTo("test.class#call")
+            .hasLowCardinalityKeyValue("abc", "123")
+            .hasLowCardinalityKeyValue("test", "42")
+            .hasLowCardinalityKeyValue("class", ObservedClassLevelAnnotatedService.class.getName())
+            .hasLowCardinalityKeyValue("method", "asyncNull")
+            .doesNotHaveError();
+    }
+
     static class ObservedService {
 
         @Observed(name = "test.call", contextualName = "test#call",
@@ -463,6 +486,10 @@ class ObservedAspectTests {
 
         @Observed(name = "test.class", contextualName = "test.class#annotatedOnMethod")
         void annotatedOnMethod() {
+        }
+
+        CompletableFuture<String> asyncNull() {
+            return null;
         }
 
     }
