@@ -69,6 +69,7 @@ import java.util.function.Predicate;
  *
  * @author Ali Dehghani
  * @author Jonatan Ivanov
+ * @author Jeonggi Kim
  * @since 1.2.0
  * @see Counted
  */
@@ -212,8 +213,17 @@ public class CountedAspect {
 
         if (stopWhenCompleted) {
             try {
-                return ((CompletionStage<?>) pjp.proceed())
-                    .whenComplete((result, throwable) -> recordCompletionResult(pjp, counted, throwable));
+                Object result = pjp.proceed();
+                if (result == null) {
+                    if (!counted.recordFailuresOnly()) {
+                        record(pjp, counted, DEFAULT_EXCEPTION_TAG_VALUE, RESULT_TAG_SUCCESS_VALUE);
+                    }
+                    return result;
+                }
+                else {
+                    CompletionStage<?> stage = ((CompletionStage<?>) result);
+                    return stage.whenComplete((res, throwable) -> recordCompletionResult(pjp, counted, throwable));
+                }
             }
             catch (Throwable e) {
                 record(pjp, counted, e.getClass().getSimpleName(), RESULT_TAG_FAILURE_VALUE);

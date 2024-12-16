@@ -218,6 +218,29 @@ class TimedAspectTest {
     }
 
     @Test
+    void timeMethodWhenReturnCompletionStageNull() {
+        MeterRegistry registry = new SimpleMeterRegistry();
+
+        AspectJProxyFactory pf = new AspectJProxyFactory(new AsyncTimedService());
+        pf.addAspect(new TimedAspect(registry));
+
+        AsyncTimedService service = pf.getProxy();
+
+        CompletableFuture<?> completableFuture = service.callNull();
+        assertThat(completableFuture).isNull();
+
+        assertThat(registry.getMeters()).isNotEmpty();
+
+        assertThat(registry.get("callNull")
+            .tag("class", getClass().getName() + "$AsyncTimedService")
+            .tag("method", "callNull")
+            .tag("extra", "tag")
+            .tag("exception", "none")
+            .timer()
+            .count()).isEqualTo(1);
+    }
+
+    @Test
     void timeMethodWithLongTaskTimerWhenCompleted() {
         MeterRegistry registry = new SimpleMeterRegistry();
 
@@ -272,6 +295,32 @@ class TimedAspectTest {
         assertThat(registry.get("longCall")
             .tag("class", getClass().getName() + "$AsyncTimedService")
             .tag("method", "longCall")
+            .tag("extra", "tag")
+            .longTaskTimer()
+            .activeTasks()).isEqualTo(0);
+    }
+
+    @Test
+    void timeMethodWithLongTaskTimerWhenReturnCompletionStageNull() {
+        MeterRegistry registry = new SimpleMeterRegistry();
+
+        AspectJProxyFactory pf = new AspectJProxyFactory(new AsyncTimedService());
+        pf.addAspect(new TimedAspect(registry));
+
+        AsyncTimedService service = pf.getProxy();
+
+        CompletableFuture<?> completableFuture = service.longCallNull();
+        assertThat(completableFuture).isNull();
+
+        assertThat(registry.get("longCallNull")
+            .tag("class", getClass().getName() + "$AsyncTimedService")
+            .tag("method", "longCallNull")
+            .tag("extra", "tag")
+            .longTaskTimers()).hasSize(1);
+
+        assertThat(registry.find("longCallNull")
+            .tag("class", getClass().getName() + "$AsyncTimedService")
+            .tag("method", "longCallNull")
             .tag("extra", "tag")
             .longTaskTimer()
             .activeTasks()).isEqualTo(0);
@@ -641,9 +690,19 @@ class TimedAspectTest {
             return supplyAsync(guardedResult::get);
         }
 
+        @Timed(value = "callNull", extraTags = { "extra", "tag" })
+        CompletableFuture<?> callNull() {
+            return null;
+        }
+
         @Timed(value = "longCall", extraTags = { "extra", "tag" }, longTask = true)
         CompletableFuture<?> longCall(GuardedResult guardedResult) {
             return supplyAsync(guardedResult::get);
+        }
+
+        @Timed(value = "longCallNull", extraTags = { "extra", "tag" }, longTask = true)
+        CompletableFuture<?> longCallNull() {
+            return null;
         }
 
     }

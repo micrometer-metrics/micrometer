@@ -77,6 +77,7 @@ import java.util.function.Predicate;
  * @author Johnny Lim
  * @author Nejc Korasa
  * @author Jonatan Ivanov
+ * @author Jeonggi Kim
  * @since 1.0.0
  */
 @Aspect
@@ -230,8 +231,16 @@ public class TimedAspect {
 
         if (stopWhenCompleted) {
             try {
-                return ((CompletionStage<?>) pjp.proceed()).whenComplete(
-                        (result, throwable) -> record(pjp, timed, metricName, sample, getExceptionTag(throwable)));
+                Object result = pjp.proceed();
+                if (result == null) {
+                    record(pjp, timed, metricName, sample, DEFAULT_EXCEPTION_TAG_VALUE);
+                    return result;
+                }
+                else {
+                    CompletionStage<?> stage = ((CompletionStage<?>) result);
+                    return stage.whenComplete(
+                            (res, throwable) -> record(pjp, timed, metricName, sample, getExceptionTag(throwable)));
+                }
             }
             catch (Throwable e) {
                 record(pjp, timed, metricName, sample, e.getClass().getSimpleName());
@@ -297,8 +306,15 @@ public class TimedAspect {
 
         if (stopWhenCompleted) {
             try {
-                return ((CompletionStage<?>) pjp.proceed())
-                    .whenComplete((result, throwable) -> sample.ifPresent(this::stopTimer));
+                Object result = pjp.proceed();
+                if (result == null) {
+                    sample.ifPresent(this::stopTimer);
+                    return result;
+                }
+                else {
+                    CompletionStage<?> stage = ((CompletionStage<?>) result);
+                    return stage.whenComplete((res, throwable) -> sample.ifPresent(this::stopTimer));
+                }
             }
             catch (Throwable e) {
                 sample.ifPresent(this::stopTimer);
