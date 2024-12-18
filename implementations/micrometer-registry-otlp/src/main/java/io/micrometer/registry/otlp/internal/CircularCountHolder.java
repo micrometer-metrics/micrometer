@@ -81,8 +81,12 @@ class CircularCountHolder {
             startIndex = index;
         }
 
-        counts.addAndGet(getRelativeIndex(index), incrementBy);
-        return true;
+        final int relativeIndex = getRelativeIndex(index);
+        if (relativeIndex >= 0 && relativeIndex < length) {
+            counts.addAndGet(relativeIndex, incrementBy);
+            return true;
+        }
+        return false;
     }
 
     private int getRelativeIndex(int index) {
