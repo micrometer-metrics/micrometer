@@ -16,8 +16,8 @@
 
 package io.micrometer.jakarta9.instrument.jms;
 
+import io.micrometer.common.util.internal.logging.WarnThenDebugLogger;
 import io.micrometer.observation.transport.ReceiverContext;
-import jakarta.jms.JMSException;
 import jakarta.jms.Message;
 
 /**
@@ -33,12 +33,15 @@ import jakarta.jms.Message;
  */
 public class JmsProcessObservationContext extends ReceiverContext<Message> {
 
+    private static final WarnThenDebugLogger logger = new WarnThenDebugLogger(JmsProcessObservationContext.class);
+
     public JmsProcessObservationContext(Message receivedMessage) {
         super((message, key) -> {
             try {
                 return message.getStringProperty(key);
             }
-            catch (JMSException exc) {
+            catch (Exception exc) {
+                logger.log("Failed to get message property.", exc);
                 return null;
             }
         });
