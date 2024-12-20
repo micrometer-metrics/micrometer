@@ -15,6 +15,7 @@
  */
 package io.micrometer.core.instrument.binder.grpc;
 
+import io.micrometer.common.KeyValue;
 import io.micrometer.common.KeyValues;
 import io.micrometer.core.instrument.binder.grpc.GrpcObservationDocumentation.LowCardinalityKeyNames;
 
@@ -26,6 +27,8 @@ import io.micrometer.core.instrument.binder.grpc.GrpcObservationDocumentation.Lo
  * @since 1.10.0
  */
 public class DefaultGrpcClientObservationConvention implements GrpcClientObservationConvention {
+
+    private static final KeyValue STATUS_CODE_UNKNOWN = LowCardinalityKeyNames.STATUS_CODE.withValue(UNKNOWN);
 
     @Override
     public String getName() {
@@ -39,9 +42,9 @@ public class DefaultGrpcClientObservationConvention implements GrpcClientObserva
 
     @Override
     public KeyValues getLowCardinalityKeyValues(GrpcClientObservationContext context) {
-        String statusCode = context.getStatusCode() != null ? context.getStatusCode().name() : UNKNOWN;
-        return KeyValues.of(LowCardinalityKeyNames.STATUS_CODE.withValue(statusCode),
-                LowCardinalityKeyNames.METHOD.withValue(context.getMethodName()),
+        KeyValue statusCodeKeyValue = context.getStatusCode() != null
+                ? LowCardinalityKeyNames.STATUS_CODE.withValue(context.getStatusCode().name()) : STATUS_CODE_UNKNOWN;
+        return KeyValues.of(statusCodeKeyValue, LowCardinalityKeyNames.METHOD.withValue(context.getMethodName()),
                 LowCardinalityKeyNames.SERVICE.withValue(context.getServiceName()),
                 LowCardinalityKeyNames.METHOD_TYPE.withValue(context.getMethodType().name()));
     }
