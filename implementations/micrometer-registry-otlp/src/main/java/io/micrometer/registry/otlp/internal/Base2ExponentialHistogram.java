@@ -167,15 +167,16 @@ public abstract class Base2ExponentialHistogram implements Histogram {
             zeroCount.increment();
             return;
         }
+        recordToHistogram(value);
+    }
 
+    private synchronized void recordToHistogram(final double value) {
         int index = base2IndexProvider.getIndexForValue(value);
         if (!circularCountHolder.increment(index, 1)) {
-            synchronized (this) {
-                int downScaleFactor = getDownScaleFactor(index);
-                downScale(downScaleFactor);
-                index = base2IndexProvider.getIndexForValue(value);
-                circularCountHolder.increment(index, 1);
-            }
+            int downScaleFactor = getDownScaleFactor(index);
+            downScale(downScaleFactor);
+            index = base2IndexProvider.getIndexForValue(value);
+            circularCountHolder.increment(index, 1);
         }
     }
 

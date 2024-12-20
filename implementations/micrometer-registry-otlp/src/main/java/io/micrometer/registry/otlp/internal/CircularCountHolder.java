@@ -15,7 +15,7 @@
  */
 package io.micrometer.registry.otlp.internal;
 
-import java.util.concurrent.atomic.AtomicLongArray;
+import java.util.Arrays;
 
 /**
  * The CircularCountHolder is inspired from <a href=
@@ -25,7 +25,7 @@ import java.util.concurrent.atomic.AtomicLongArray;
  */
 class CircularCountHolder {
 
-    private final AtomicLongArray counts;
+    private final long[] counts;
 
     private final int length;
 
@@ -37,7 +37,7 @@ class CircularCountHolder {
 
     CircularCountHolder(int size) {
         this.length = size;
-        this.counts = new AtomicLongArray(size);
+        this.counts = new long[size];
         this.baseIndex = Integer.MIN_VALUE;
         this.startIndex = Integer.MIN_VALUE;
         this.endIndex = Integer.MIN_VALUE;
@@ -52,7 +52,7 @@ class CircularCountHolder {
     }
 
     long getValueAtIndex(int index) {
-        return counts.get(getRelativeIndex(index));
+        return counts[getRelativeIndex(index)];
     }
 
     boolean isEmpty() {
@@ -64,7 +64,7 @@ class CircularCountHolder {
             this.baseIndex = index;
             this.startIndex = index;
             this.endIndex = index;
-            this.counts.addAndGet(0, incrementBy);
+            this.counts[0] = this.counts[0] + incrementBy;
             return true;
         }
 
@@ -81,7 +81,8 @@ class CircularCountHolder {
             startIndex = index;
         }
 
-        counts.addAndGet(getRelativeIndex(index), incrementBy);
+        final int relativeIndex = getRelativeIndex(index);
+        counts[relativeIndex] = counts[relativeIndex] + incrementBy;
         return true;
     }
 
@@ -97,9 +98,7 @@ class CircularCountHolder {
     }
 
     void reset() {
-        for (int i = 0; i < counts.length(); i++) {
-            counts.set(i, 0);
-        }
+        Arrays.fill(counts, 0);
         this.baseIndex = Integer.MIN_VALUE;
         this.endIndex = Integer.MIN_VALUE;
         this.startIndex = Integer.MIN_VALUE;
