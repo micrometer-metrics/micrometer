@@ -54,6 +54,11 @@ public class MeterRemovalBenchmark {
         }
     }
 
+    /**
+     * Benchmark the time to remove one meter from a registry with many meters. This uses
+     * the single shot mode because otherwise it would measure the time to remove a meter
+     * not in the registry after the first call, and that is not what we want to measure.
+     */
     @Benchmark
     @Warmup(iterations = 100)
     @Measurement(iterations = 500)
