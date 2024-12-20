@@ -113,6 +113,12 @@ public abstract class MeterRegistry {
     private final Map<Id, Meter> preFilterIdToMeterMap = new HashMap<>();
 
     /**
+     * For reverse looking up pre-filter ID in {@link #preFilterIdToMeterMap} from the
+     * Meter being removed in {@link #remove(Id)}. Guarded by the {@link #meterMapLock}.
+     */
+    private final Map<Meter, Id> meterToPreFilterIdMap = new HashMap<>();
+
+    /**
      * Only needed when MeterFilter configured after Meters registered. Write/remove
      * guarded by meterMapLock, remove in {@link #unmarkStaleId(Id)} and other operations
      * unguarded
@@ -684,6 +690,7 @@ public abstract class MeterRegistry {
                     }
                     meterMap.put(mappedId, m);
                     preFilterIdToMeterMap.put(originalId, m);
+                    meterToPreFilterIdMap.put(m, originalId);
                     unmarkStaleId(originalId);
                 }
             }
@@ -774,14 +781,9 @@ public abstract class MeterRegistry {
             synchronized (meterMapLock) {
                 final Meter removedMeter = meterMap.remove(mappedId);
                 if (removedMeter != null) {
-                    Iterator<Map.Entry<Id, Meter>> iterator = preFilterIdToMeterMap.entrySet().iterator();
-                    while (iterator.hasNext()) {
-                        Map.Entry<Id, Meter> nextEntry = iterator.next();
-                        if (nextEntry.getValue().equals(removedMeter)) {
-                            stalePreFilterIds.remove(nextEntry.getKey());
-                            iterator.remove();
-                        }
-                    }
+                    Id preFilterIdToRemove = meterToPreFilterIdMap.remove(removedMeter);
+                    preFilterIdToMeterMap.remove(preFilterIdToRemove);
+                    stalePreFilterIds.remove(preFilterIdToRemove);
 
                     Set<Id> synthetics = syntheticAssociations.remove(mappedId);
                     if (synthetics != null) {
@@ -1227,6 +1229,11 @@ public abstract class MeterRegistry {
     // VisibleForTesting
     Map<Id, Meter> _getPreFilterIdToMeterMap() {
         return Collections.unmodifiableMap(preFilterIdToMeterMap);
+    }
+
+    // VisibleForTesting
+    Map<Meter, Id> _getMeterToPreFilterIdMap() {
+        return Collections.unmodifiableMap(meterToPreFilterIdMap);
     }
 
     // VisibleForTesting
