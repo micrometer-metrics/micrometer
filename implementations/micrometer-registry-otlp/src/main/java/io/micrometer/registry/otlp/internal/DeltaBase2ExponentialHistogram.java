@@ -66,7 +66,7 @@ public class DeltaBase2ExponentialHistogram extends Base2ExponentialHistogram {
     }
 
     @Override
-    void takeExponentialHistogramSnapShot() {
+    synchronized void takeExponentialHistogramSnapShot() {
         stepExponentialHistogramSnapShot.poll();
     }
 
@@ -82,8 +82,12 @@ public class DeltaBase2ExponentialHistogram extends Base2ExponentialHistogram {
         }
 
         @Override
-        protected Supplier<ExponentialHistogramSnapShot> valueSupplier() {
-            return () -> getCurrentValuesSnapshot(true);
+        protected synchronized Supplier<ExponentialHistogramSnapShot> valueSupplier() {
+            return () -> {
+                ExponentialHistogramSnapShot latestSnapShot = getCurrentValuesSnapshot();
+                reset();
+                return latestSnapShot;
+            };
         }
 
         @Override

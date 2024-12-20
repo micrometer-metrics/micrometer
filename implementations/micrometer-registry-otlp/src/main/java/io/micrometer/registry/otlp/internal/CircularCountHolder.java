@@ -81,18 +81,8 @@ class CircularCountHolder {
             startIndex = index;
         }
 
-        final int relativeIndex = getRelativeIndex(index);
-        if (relativeIndex >= 0 && relativeIndex < length) {
-            counts.addAndGet(relativeIndex, incrementBy);
-            return true;
-        }
-        /*
-         * This case is only possible (rarely) during initial writes on the histogram
-         * where there might be concurrent threads modifying the index and not fully
-         * synchronized externally. In this case, we would just notify the caller that
-         * write has failed and let the caller take a call on what to do.
-         */
-        return false;
+        counts.addAndGet(getRelativeIndex(index), incrementBy);
+        return true;
     }
 
     private int getRelativeIndex(int index) {

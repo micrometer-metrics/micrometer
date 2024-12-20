@@ -59,8 +59,8 @@ public class CumulativeBase2ExponentialHistogram extends Base2ExponentialHistogr
     }
 
     @Override
-    void takeExponentialHistogramSnapShot() {
-        this.exponentialHistogramSnapShot = getCurrentValuesSnapshot(false);
+    synchronized void takeExponentialHistogramSnapShot() {
+        this.exponentialHistogramSnapShot = getCurrentValuesSnapshot();
     }
 
 }
