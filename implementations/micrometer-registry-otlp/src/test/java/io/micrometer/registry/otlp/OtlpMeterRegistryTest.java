@@ -172,6 +172,7 @@ abstract class OtlpMeterRegistryTest {
         assertThat(writeToMetric(ds).getDataCase().getNumber()).isEqualTo(Metric.DataCase.SUMMARY.getNumber());
     }
 
+    @SuppressWarnings("deprecation")
     @Test
     void multipleMetricsWithSameMetaDataShouldBeSingleMetric() {
         Tags firstTag = Tags.of("key", "first");
@@ -333,6 +334,7 @@ abstract class OtlpMeterRegistryTest {
         clock.addSeconds(otlpConfig().step().getSeconds() * numStepsToSkip);
     }
 
+    @SuppressWarnings("deprecation")
     protected void assertHistogram(Metric metric, long startTime, long endTime, String unit, long count, double sum,
             double max) {
         assertThat(metric.getHistogram().getAggregationTemporality())
@@ -361,6 +363,7 @@ abstract class OtlpMeterRegistryTest {
         }
     }
 
+    @SuppressWarnings("deprecation")
     protected void assertSum(Metric metric, long startTime, long endTime, double expectedValue) {
         NumberDataPoint sumDataPoint = metric.getSum().getDataPoints(0);
         assertThat(metric.getName()).isEqualTo(METER_NAME);
