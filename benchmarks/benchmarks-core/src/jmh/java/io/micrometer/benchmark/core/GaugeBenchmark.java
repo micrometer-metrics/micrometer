@@ -35,34 +35,29 @@ public class GaugeBenchmark {
 
     private MeterRegistry registry;
 
-    private AtomicInteger stateObject;
-
     @Setup
     public void setup() {
         registry = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT);
-        stateObject = registry.gauge("test.gauge", new AtomicInteger());
+        registry.gauge("test.gauge", new AtomicInteger());
         // emits warn because of double registration
-        stateObject = registry.gauge("test.gauge", new AtomicInteger());
+        registry.gauge("test.gauge", new AtomicInteger());
         // emits debug because of double registration and keeps emitting debug from now on
-        stateObject = registry.gauge("test.gauge", new AtomicInteger());
+        registry.gauge("test.gauge", new AtomicInteger());
     }
 
     @Benchmark
     public AtomicInteger baseline() {
-        stateObject = new AtomicInteger();
-        return stateObject;
+        return new AtomicInteger();
     }
 
     @Benchmark
     public AtomicInteger gaugeReRegistrationWithoutBuilder() {
-        stateObject = registry.gauge("test.gauge", new AtomicInteger());
-        return stateObject;
+        return registry.gauge("test.gauge", new AtomicInteger());
     }
 
     @Benchmark
     public Gauge gaugeReRegistrationWithBuilder() {
-        stateObject = new AtomicInteger();
-        return Gauge.builder("test.gauge", stateObject, AtomicInteger::doubleValue).register(registry);
+        return Gauge.builder("test.gauge", new AtomicInteger(), AtomicInteger::doubleValue).register(registry);
     }
 
     public static void main(String[] args) throws RunnerException {
