@@ -56,6 +56,7 @@ class OtlpMetricConverter {
 
     private final long deltaTimeUnixNano;
 
+    @SuppressWarnings("deprecation")
     OtlpMetricConverter(Clock clock, Duration step, TimeUnit baseTimeUnit,
             AggregationTemporality aggregationTemporality, NamingConvention namingConvention) {
         this.clock = clock;
