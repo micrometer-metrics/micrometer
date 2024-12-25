@@ -8,8 +8,9 @@ dependencies {
     implementation project(":micrometer-core")
 //    implementation("io.micrometer:micrometer-core:1.14.1")
     implementation project(":micrometer-registry-prometheus")
-    implementation project(":micrometer-registry-otlp")
 //    implementation("io.micrometer:micrometer-registry-prometheus:1.14.1")
+    implementation project(":micrometer-registry-otlp")
+
     runtimeOnly(libs.logbackLatest)
 }
 
