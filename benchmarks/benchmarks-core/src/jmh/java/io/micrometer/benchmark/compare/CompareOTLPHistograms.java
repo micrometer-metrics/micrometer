@@ -45,11 +45,25 @@ import io.micrometer.registry.otlp.OtlpMeterRegistry;
  */
 @Fork(1)
 @Measurement(iterations = 2)
-@Warmup(iterations = 2)
-@BenchmarkMode(Mode.AverageTime)
+@Warmup(iterations = 3)
+@BenchmarkMode(Mode.SampleTime)
 @OutputTimeUnit(TimeUnit.NANOSECONDS)
-@Threads(16)
+@Threads(2)
 public class CompareOTLPHistograms {
+
+    // disable publishing since we are only benchmarking recording
+    static OtlpConfig disabledConfig = new OtlpConfig() {
+
+        @Override
+        public boolean enabled() {
+            return false;
+        }
+
+        @Override
+        public String get(String key) {
+            return "";
+        }
+    };
 
     @State(Scope.Thread)
     public static class Data {
@@ -82,7 +96,7 @@ public class CompareOTLPHistograms {
 
         @Setup(Level.Iteration)
         public void setup() {
-            registry = new OtlpMeterRegistry();
+            registry = new OtlpMeterRegistry(disabledConfig, Clock.SYSTEM);
             distributionSummary = DistributionSummary.builder("ds").register(registry);
             timer = Timer.builder("timer").register(registry);
         }
@@ -98,6 +112,11 @@ public class CompareOTLPHistograms {
     public static class DistributionsWithoutHistogramDelta {
 
         OtlpConfig otlpConfig = new OtlpConfig() {
+
+            @Override
+            public boolean enabled() {
+                return false;
+            }
 
             @Override
             public AggregationTemporality aggregationTemporality() {
@@ -142,7 +161,7 @@ public class CompareOTLPHistograms {
 
         @Setup(Level.Iteration)
         public void setup() {
-            registry = new OtlpMeterRegistry();
+            registry = new OtlpMeterRegistry(disabledConfig, Clock.SYSTEM);
             distributionSummary = DistributionSummary.builder("ds").publishPercentileHistogram().register(registry);
             timer = Timer.builder("timer").publishPercentileHistogram().register(registry);
         }
@@ -158,6 +177,11 @@ public class CompareOTLPHistograms {
     public static class ExplicitBucketHistogramDelta {
 
         OtlpConfig otlpConfig = new OtlpConfig() {
+
+            @Override
+            public boolean enabled() {
+                return false;
+            }
 
             @Override
             public AggregationTemporality aggregationTemporality() {
@@ -197,6 +221,12 @@ public class CompareOTLPHistograms {
         MeterRegistry registry;
 
         OtlpConfig otlpConfig = new OtlpConfig() {
+
+            @Override
+            public boolean enabled() {
+                return false;
+            }
+
             @Override
             public HistogramFlavor histogramFlavor() {
                 return HistogramFlavor.BASE2_EXPONENTIAL_BUCKET_HISTOGRAM;
@@ -233,6 +263,11 @@ public class CompareOTLPHistograms {
         MeterRegistry registry;
 
         OtlpConfig otlpConfig = new OtlpConfig() {
+
+            @Override
+            public boolean enabled() {
+                return false;
+            }
 
             @Override
             public AggregationTemporality aggregationTemporality() {
