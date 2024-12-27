@@ -60,7 +60,7 @@ class CountedAspectTest {
 
         Counter counter = meterRegistry.get("metric.success")
             .tag("method", "succeedWithMetrics")
-            .tag("class", getClass().getName() + "$CountedService")
+            .tag("class", CountedService.class.getName())
             .tag("extra", "tag")
             .tag("result", "success")
             .counter();
@@ -89,7 +89,7 @@ class CountedAspectTest {
 
         Counter counter = meterRegistry.get("metric.failing")
             .tag("method", "fail")
-            .tag("class", getClass().getName() + "$CountedService")
+            .tag("class", CountedService.class.getName())
             .tag("exception", "RuntimeException")
             .tag("result", "failure")
             .counter();
@@ -129,7 +129,7 @@ class CountedAspectTest {
 
         assertThat(meterRegistry.find("metric.success")
             .tag("method", "succeedWithMetrics")
-            .tag("class", getClass().getName() + "$AsyncCountedService")
+            .tag("class", AsyncCountedService.class.getName())
             .tag("extra", "tag")
             .tag("exception", "none")
             .tag("result", "success")
@@ -140,7 +140,7 @@ class CountedAspectTest {
 
         Counter counterAfterCompletion = meterRegistry.get("metric.success")
             .tag("method", "succeedWithMetrics")
-            .tag("class", getClass().getName() + "$AsyncCountedService")
+            .tag("class", AsyncCountedService.class.getName())
             .tag("extra", "tag")
             .tag("exception", "none")
             .tag("result", "success")
@@ -157,7 +157,7 @@ class CountedAspectTest {
 
         assertThat(meterRegistry.find("metric.failing")
             .tag("method", "fail")
-            .tag("class", getClass().getName() + "$AsyncCountedService")
+            .tag("class", AsyncCountedService.class.getName())
             .tag("exception", "RuntimeException")
             .tag("result", "failure")
             .counter()).isNull();
@@ -167,7 +167,7 @@ class CountedAspectTest {
 
         Counter counter = meterRegistry.get("metric.failing")
             .tag("method", "fail")
-            .tag("class", getClass().getName() + "$AsyncCountedService")
+            .tag("class", AsyncCountedService.class.getName())
             .tag("exception", "RuntimeException")
             .tag("result", "failure")
             .counter();
@@ -218,7 +218,7 @@ class CountedAspectTest {
 
         assertThat(meterRegistry.get("metric.success")
             .tag("method", "successButNull")
-            .tag("class", getClass().getName() + "$AsyncCountedService")
+            .tag("class", AsyncCountedService.class.getName())
             .tag("extra", "tag")
             .tag("exception", "none")
             .tag("result", "success")
