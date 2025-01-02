@@ -1016,6 +1016,12 @@ class PrometheusMeterRegistryTest {
         assertThat(convention.tagKeyCount.get()).isEqualTo(expectedTagKeyCount);
     }
 
+    @Test
+    void scrapeWhenMeterNameContainsSingleCharacter() {
+        registry.counter("c").increment();
+        assertThatNoException().isThrownBy(() -> registry.scrape());
+    }
+
     private static class CountingPrometheusNamingConvention extends PrometheusNamingConvention {
 
         AtomicInteger nameCount = new AtomicInteger();
