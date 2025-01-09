@@ -5,7 +5,7 @@ archunit = "1.3.0"
 asmForPlugins = "7.3.1"
 # 1.9.20.1 is the last release that accepts jdk 11 for building
 aspectjweaver = "1.9.20.1"
-assertj = "3.26.3"
+assertj = "3.27.2"
 awaitility = "4.2.2"
 caffeine = "2.9.3"
 cloudwatch2 = "2.29.46"
