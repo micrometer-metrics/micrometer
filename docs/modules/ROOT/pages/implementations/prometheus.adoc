@@ -193,7 +193,7 @@ image::implementations/prometheus-long-task-timer.png[Grafana-rendered Prometheu
 == Limitation on same name with different set of tag keys
 
 The `PrometheusMeterRegistry` doesn't allow to create meters having the same name with a different set of tag keys, so you should guarantee that meters having the same name have the same set of tag keys.
-Otherwise, subsequent meters having the same name with a different set of tag keys will not be registered silently by default.
+Otherwise, subsequent meters having the same name with a different set of tag keys will not be registered.
 This means that you should not do things like:
 
 [source,java]
@@ -203,17 +203,20 @@ registry.counter("test", "first", "1").increment();
 registry.counter("test", "second", "2").increment();
 ----
 
-Instead you can do something like this:
+This will result in the following warning and the second `Meter` will not be registered:
+[source]
+----
+WARNING: The meter (MeterId{name='test', tags=[tag(second=2)]}) registration has failed: Prometheus requires that all meters with the same name have the same set of tag keys. There is already an existing meter named 'test' containing tag keys [first]. The meter you are attempting to register has keys [second]. Note that subsequent logs will be logged at debug level.
+----
 
+Instead you can do something like this:
 [source,java]
 ----
 registry.counter("test", "first", "1", "second", "none").increment();
 registry.counter("test", "first", "none", "second", "2").increment();
 ----
 
-You can change the default behavior by registering a meter registration failed listener.
-For example, you can register a meter registration failed listener that throws an exception as follows:
-
+You can change the default warning behavior by registering a meter registration failed listener:
 [source,java]
 ----
 registry.config().onMeterRegistrationFailed((id, reason) -> {
