@@ -56,7 +56,7 @@ class TimedAspectTest {
         service.call();
 
         assertThat(registry.get("call")
-            .tag("class", getClass().getName() + "$TimedService")
+            .tag("class", TimedService.class.getName())
             .tag("method", "call")
             .tag("extra", "tag")
             .timer()
@@ -89,7 +89,7 @@ class TimedAspectTest {
         service.longCall();
 
         assertThat(registry.get("longCall")
-            .tag("class", getClass().getName() + "$TimedService")
+            .tag("class", TimedService.class.getName())
             .tag("method", "longCall")
             .tag("extra", "tag")
             .longTaskTimers()).hasSize(1);
@@ -137,7 +137,7 @@ class TimedAspectTest {
         assertThatThrownBy(service::callRaisingError).isInstanceOf(TestError.class);
 
         assertThat(registry.get("callRaisingError")
-            .tag("class", getClass().getName() + "$TimedService")
+            .tag("class", TimedService.class.getName())
             .tag("method", "callRaisingError")
             .tag("extra", "tag")
             .tag("exception", "TestError")
@@ -159,7 +159,7 @@ class TimedAspectTest {
         assertThatThrownBy(service::longCallRaisingError).isInstanceOf(TestError.class);
 
         assertThat(registry.get("longCallRaisingError")
-            .tag("class", getClass().getName() + "$TimedService")
+            .tag("class", TimedService.class.getName())
             .tag("method", "longCallRaisingError")
             .tag("extra", "tag")
             .longTaskTimer()
@@ -184,7 +184,7 @@ class TimedAspectTest {
         completableFuture.join();
 
         assertThat(registry.get("call")
-            .tag("class", getClass().getName() + "$AsyncTimedService")
+            .tag("class", AsyncTimedService.class.getName())
             .tag("method", "call")
             .tag("extra", "tag")
             .tag("exception", "none")
@@ -210,7 +210,7 @@ class TimedAspectTest {
         assertThatThrownBy(completableFuture::join).isInstanceOf(CompletionException.class);
 
         assertThat(registry.get("call")
-            .tag("class", getClass().getName() + "$AsyncTimedService")
+            .tag("class", AsyncTimedService.class.getName())
             .tag("method", "call")
             .tag("extra", "tag")
             .tag("exception", "IllegalStateException")
@@ -233,7 +233,7 @@ class TimedAspectTest {
         assertThat(registry.getMeters()).isNotEmpty();
 
         assertThat(registry.get("callNull")
-            .tag("class", getClass().getName() + "$AsyncTimedService")
+            .tag("class", AsyncTimedService.class.getName())
             .tag("method", "callNull")
             .tag("extra", "tag")
             .tag("exception", "none")
@@ -254,7 +254,7 @@ class TimedAspectTest {
         CompletableFuture<?> completableFuture = service.longCall(guardedResult);
 
         assertThat(registry.find("longCall")
-            .tag("class", getClass().getName() + "$AsyncTimedService")
+            .tag("class", AsyncTimedService.class.getName())
             .tag("method", "longCall")
             .tag("extra", "tag")
             .longTaskTimer()
@@ -264,7 +264,7 @@ class TimedAspectTest {
         completableFuture.join();
 
         assertThat(registry.get("longCall")
-            .tag("class", getClass().getName() + "$AsyncTimedService")
+            .tag("class", AsyncTimedService.class.getName())
             .tag("method", "longCall")
             .tag("extra", "tag")
             .longTaskTimer()
@@ -284,7 +284,7 @@ class TimedAspectTest {
         CompletableFuture<?> completableFuture = service.longCall(guardedResult);
 
         assertThat(registry.find("longCall")
-            .tag("class", getClass().getName() + "$AsyncTimedService")
+            .tag("class", AsyncTimedService.class.getName())
             .tag("method", "longCall")
             .tag("extra", "tag")
             .longTaskTimer()
@@ -294,7 +294,7 @@ class TimedAspectTest {
         assertThatThrownBy(completableFuture::join).isInstanceOf(CompletionException.class);
 
         assertThat(registry.get("longCall")
-            .tag("class", getClass().getName() + "$AsyncTimedService")
+            .tag("class", AsyncTimedService.class.getName())
             .tag("method", "longCall")
             .tag("extra", "tag")
             .longTaskTimer()
@@ -314,13 +314,13 @@ class TimedAspectTest {
         assertThat(completableFuture).isNull();
 
         assertThat(registry.get("longCallNull")
-            .tag("class", getClass().getName() + "$AsyncTimedService")
+            .tag("class", AsyncTimedService.class.getName())
             .tag("method", "longCallNull")
             .tag("extra", "tag")
             .longTaskTimers()).hasSize(1);
 
         assertThat(registry.find("longCallNull")
-            .tag("class", getClass().getName() + "$AsyncTimedService")
+            .tag("class", AsyncTimedService.class.getName())
             .tag("method", "longCallNull")
             .tag("extra", "tag")
             .longTaskTimer()
