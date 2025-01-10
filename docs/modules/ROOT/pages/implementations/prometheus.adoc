@@ -216,7 +216,7 @@ registry.counter("test", "first", "1", "second", "none").increment();
 registry.counter("test", "first", "none", "second", "2").increment();
 ----
 
-You can change the default warning behavior by registering a meter registration failed listener:
+In addition to the warning, you can register a meter registration failed listener to handle the failure:
 [source,java]
 ----
 registry.config().onMeterRegistrationFailed((id, reason) -> {
