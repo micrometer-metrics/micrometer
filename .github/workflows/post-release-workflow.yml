@@ -80,7 +80,7 @@ jobs:
           milestone_name=${GITHUB_REF_NAME#v}
           curl --location --request POST '${{ secrets.SPRING_RELEASE_GCHAT_WEBHOOK_URL }}' \
           --header 'Content-Type: application/json' \
-          --data-raw '{ text: "${{ github.event.repository.name }}-announcing ${milestone_name}"}'
+          --data-raw "{ text: \"${{ github.event.repository.name }}-announcing ${milestone_name}\"}"
 
       - name: Post on Bluesky
         env:
