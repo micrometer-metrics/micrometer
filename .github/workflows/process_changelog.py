@@ -42,7 +42,7 @@ def fetch_test_and_optional_dependencies():
 
             # Detect gradle plugin
             if "classpath" in line:
-                test_optional_dependencies = True
+                in_optional_section = True
                 continue
 
             # Detect test dependencies section
