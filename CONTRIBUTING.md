@@ -23,7 +23,7 @@ The remainder of this document will focus on guidance for contributing code chan
 
 ## Include a Signed Off By Trailer
 
-All commits must include a *Signed-off-by* trailer at the end of each commit message to indicate that the contributor agrees to the Developer Certificate of Origin.
+All commits must include a *Signed-off-by* trailer at the end of each commit message to indicate that the contributor agrees to the [Developer Certificate of Origin](https://developercertificate.org).
 For additional details, please refer to the blog post [Hello DCO, Goodbye CLA: Simplifying Contributions to Spring](https://spring.io/blog/2025/01/06/hello-dco-goodbye-cla-simplifying-contributions-to-spring).
 
 ## Getting the source
