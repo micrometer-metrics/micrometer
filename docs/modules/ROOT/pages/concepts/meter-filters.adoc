@@ -98,6 +98,17 @@ new MeterFilter() {
 
 This filter adds a name prefix and an additional tag conditionally to meters starting with a name of `test`.
 
+[IMPORTANT]
+.`MeterFilter` implementations of `map` should be "static"
+====
+The `id` parameter is the only dynamic input that changes over the lifecycle of the `MeterFilter` on which they should depend.
+Use cases where dynamic behavior is desired, such as defining tags based on the context of a request etc., should be implemented in the instrumentation itself rather than in a `MeterFilter`.
+For example, see `MongoMetricsCommandListener` and the `MongoCommandTagsProvider` it takes in a constructor argument as well as the default implementation `DefaultMongoCommandTagsProvider`.
+See also xref:../observation/components.adoc#micrometer-observation-predicates-filters[ObservationFilter] which allows dynamic implementations.
+====
+
+=== Convenience Methods
+
 `MeterFilter` provides convenience builders for many common transformation cases:
 
 * `commonTags(Iterable<Tag>)`: Adds a set of tags to all metrics. Adding common tags for application name, host, region, and others is a highly recommended practice.
