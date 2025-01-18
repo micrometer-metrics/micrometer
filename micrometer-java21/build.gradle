@@ -28,8 +28,13 @@ task reflectiveTests(type: Test) {
         includeTags 'reflective'
     }
 
-    // This hack is needed since VirtualThreadMetricsReflectiveTests utilizes reflection against java.lang, see its javadoc
-    jvmArgs += ['--add-opens', 'java.base/java.lang=ALL-UNNAMED']
+    // This hack is needed for the following tests:
+    // - VirtualThreadMetricsReflectiveTests utilizes reflection against java.lang.
+    // - ExecutorServiceMetricsReflectiveTests utilizes reflection against java.util.concurrent.
+    jvmArgs += [
+            '--add-opens', 'java.base/java.lang=ALL-UNNAMED',
+            '--add-opens', 'java.base/java.util.concurrent=ALL-UNNAMED'
+    ]
 }
 
 test {
