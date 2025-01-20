@@ -22,6 +22,7 @@ import io.micrometer.core.tck.MeterRegistryCompatibilityKit;
 
 import java.time.Duration;
 
+@SuppressWarnings("deprecation")
 class SignalFxMeterRegistryCompatibilityTest extends MeterRegistryCompatibilityKit {
 
     private final SignalFxConfig config = new SignalFxConfig() {

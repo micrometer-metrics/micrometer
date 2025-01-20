@@ -32,7 +32,7 @@
 ** xref:implementations/new-relic.adoc[New Relic]
 ** xref:implementations/otlp.adoc[OpenTelemetry Protocol (OTLP)]
 ** xref:implementations/prometheus.adoc[Prometheus]
-** xref:implementations/signalFx.adoc[SignalFx]
+** xref:implementations/signalFx.adoc[SignalFx] (deprecated)
 ** xref:implementations/stackdriver.adoc[Stackdriver]
 ** xref:implementations/statsD.adoc[statsD]
 ** xref:implementations/wavefront.adoc[Wavefront]
