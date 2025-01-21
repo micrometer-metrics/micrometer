@@ -167,8 +167,8 @@ public class OkHttpMetricsEventListener extends EventListener {
         boolean requestAvailable = request != null;
 
         Iterable<Tag> tags = Tags
-            .of("method", requestAvailable ? request.method() : TAG_VALUE_UNKNOWN, "uri", getUriTag(state, request),
-                    "status", getStatusMessage(state.response, state.exception))
+            .of("method", requestAvailable ? request.method() : TAG_VALUE_UNKNOWN, "uri", getUriTag(request), "status",
+                    getStatusMessage(state.response, state.exception))
             .and(getStatusOutcome(state.response).asTag())
             .and(extraTags)
             .and(stream(contextSpecificTags.spliterator(), false)
@@ -196,12 +196,11 @@ public class OkHttpMetricsEventListener extends EventListener {
                 TAG_TARGET_PORT, Integer.toString(request.url().port()));
     }
 
-    private String getUriTag(CallState state, @Nullable Request request) {
+    private String getUriTag(@Nullable Request request) {
         if (request == null) {
             return TAG_VALUE_UNKNOWN;
         }
-        return state.response != null && (state.response.code() == 404 || state.response.code() == 301) ? "NOT_FOUND"
-                : urlMapper.apply(request);
+        return urlMapper.apply(request);
     }
 
     private Iterable<Tag> getRequestTags(@Nullable Request request) {

@@ -88,7 +88,7 @@ public class DefaultOkHttpObservationConvention implements OkHttpObservationConv
         // TODO: Tags to key values and back - maybe we can improve this?
         KeyValues keyValues = KeyValues
             .of(METHOD.withValue(requestAvailable ? request.method() : TAG_VALUE_UNKNOWN),
-                    URI.withValue(getUriTag(urlMapper, state, request)),
+                    URI.withValue(getUriTag(urlMapper, request)),
                     STATUS.withValue(getStatusMessage(state.response, state.exception)),
                     OUTCOME.withValue(getStatusOutcome(state.response).name()))
             .and(extraTags)
@@ -105,13 +105,11 @@ public class DefaultOkHttpObservationConvention implements OkHttpObservationConv
         return keyValues;
     }
 
-    private String getUriTag(Function<Request, String> urlMapper, OkHttpObservationInterceptor.CallState state,
-            @Nullable Request request) {
+    private String getUriTag(Function<Request, String> urlMapper, @Nullable Request request) {
         if (request == null) {
             return TAG_VALUE_UNKNOWN;
         }
-        return state.response != null && (state.response.code() == 404 || state.response.code() == 301) ? "NOT_FOUND"
-                : urlMapper.apply(request);
+        return urlMapper.apply(request);
     }
 
     private Outcome getStatusOutcome(@Nullable Response response) {
