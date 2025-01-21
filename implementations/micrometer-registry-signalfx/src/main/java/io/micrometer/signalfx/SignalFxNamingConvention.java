@@ -32,7 +32,9 @@ import java.util.regex.Pattern;
  * conventions for metrics and dimensions</a>
  * @author Jon Schneider
  * @author Johnny Lim
+ * @deprecated this whole module is deprecated in favor of micrometer-registry-otlp
  */
+@Deprecated
 public class SignalFxNamingConvention implements NamingConvention {
 
     private static final WarnThenDebugLogger logger = new WarnThenDebugLogger(SignalFxNamingConvention.class);

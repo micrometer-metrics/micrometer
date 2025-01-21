@@ -52,6 +52,7 @@ import static org.assertj.core.api.Assertions.atIndex;
  *
  * @author Johnny Lim
  */
+@SuppressWarnings("deprecation")
 class SignalFxMeterRegistryTest {
 
     private final SignalFxConfig config = new SignalFxConfig() {
