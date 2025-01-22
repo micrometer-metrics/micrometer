@@ -26,8 +26,9 @@ dependencies {
 def testingBundle = tasks.register('testingBundle', Bundle) {
     archiveClassifier = 'tests'
     from sourceSets.test.output
-    sourceSet = sourceSets.test
-
+    if (javaLanguageVersion.asInt() < 17) {
+        sourceSet = sourceSets.test
+    }
     bundle {
         bnd """\
             Bundle-SymbolicName: \${task.archiveBaseName}-\${task.archiveClassifier}
