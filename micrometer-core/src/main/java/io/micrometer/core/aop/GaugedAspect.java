@@ -25,26 +25,25 @@ import io.micrometer.core.instrument.Tags;
 
 /**
  * <p>
- * AspectJ aspect for intercepting types or methods annotated with
- * {@link Gauged @Gauged}. This aspect supports programmatic customizations
- * through constructor-injectable custom logic.
+ * AspectJ aspect for intercepting types or methods annotated with {@link Gauged @Gauged}.
+ * This aspect supports programmatic customizations through constructor-injectable custom
+ * logic.
  * </p>
  * <p>
- * The aspect creates and manages gauges that track the number of concurrent
- * executions of annotated methods. Each gauge maintains a count of active
- * method invocations, including both synchronous and asynchronous executions.
+ * The aspect creates and manages gauges that track the number of concurrent executions of
+ * annotated methods. Each gauge maintains a count of active method invocations, including
+ * both synchronous and asynchronous executions.
  * </p>
  * <p>
- * You can add tags programmatically to the {@link Gauge} using the tags
- * provider function ({@code Function<ProceedingJoinPoint, Iterable<Tag>>}). It
- * receives a {@link ProceedingJoinPoint} and returns the {@link Tag}s that will
- * be attached to the {@link Gauge}.
+ * You can add tags programmatically to the {@link Gauge} using the tags provider function
+ * ({@code Function<ProceedingJoinPoint, Iterable<Tag>>}). It receives a
+ * {@link ProceedingJoinPoint} and returns the {@link Tag}s that will be attached to the
+ * {@link Gauge}.
  * </p>
  * <p>
- * You can also skip the {@link Gauge} creation programmatically using the skip
- * predicate ({@code Predicate<ProceedingJoinPoint>}). This is useful when
- * another component in your application already processes the
- * {@link Gauged @Gauged} annotation in some cases.
+ * You can also skip the {@link Gauge} creation programmatically using the skip predicate
+ * ({@code Predicate<ProceedingJoinPoint>}). This is useful when another component in your
+ * application already processes the {@link Gauged @Gauged} annotation in some cases.
  * </p>
  *
  * @author Sandeep Vishnu
@@ -76,13 +75,15 @@ public class GaugedAspect {
     public static final Predicate<ProceedingJoinPoint> DONT_SKIP_ANYTHING = pjp -> false;
 
     private final MeterRegistry registry;
+
     private final Function<ProceedingJoinPoint, Iterable<Tag>> tagsBasedOnJoinPoint;
+
     private final Predicate<ProceedingJoinPoint> shouldSkip;
+
     private final Map<String, AtomicInteger> gauges = new ConcurrentHashMap<>();
 
     /**
      * Creates a {@code GaugedAspect} instance with the given {@code registry}.
-     *
      * @param registry Where we're going to register metrics.
      */
     public GaugedAspect(MeterRegistry registry) {
@@ -90,34 +91,27 @@ public class GaugedAspect {
     }
 
     /**
-     * Creates a {@code GaugedAspect} instance with the given {@code registry} and
-     * skip predicate.
-     *
-     * @param registry   Where we're going to register metrics.
-     * @param shouldSkip A predicate to decide if creating the gauge should be
-     *                   skipped or not.
+     * Creates a {@code GaugedAspect} instance with the given {@code registry} and skip
+     * predicate.
+     * @param registry Where we're going to register metrics.
+     * @param shouldSkip A predicate to decide if creating the gauge should be skipped or
+     * not.
      */
     public GaugedAspect(MeterRegistry registry, Predicate<ProceedingJoinPoint> shouldSkip) {
-        this(registry,
-            pjp -> Tags.of("class",
-                pjp.getStaticPart().getSignature().getDeclaringTypeName(),
-                "method",
-                pjp.getStaticPart().getSignature().getName()),
-            shouldSkip);
+        this(registry, pjp -> Tags.of("class", pjp.getStaticPart().getSignature().getDeclaringTypeName(), "method",
+                pjp.getStaticPart().getSignature().getName()), shouldSkip);
     }
 
     /**
      * Creates a {@code GaugedAspect} instance with the given {@code registry}, tags
      * provider function and skip predicate.
-     *
-     * @param registry             Where we're going to register metrics.
+     * @param registry Where we're going to register metrics.
      * @param tagsBasedOnJoinPoint A function to generate tags given a join point.
-     * @param shouldSkip           A predicate to decide if creating the gauge
-     *                             should be skipped or not.
+     * @param shouldSkip A predicate to decide if creating the gauge should be skipped or
+     * not.
      */
-    public GaugedAspect(MeterRegistry registry,
-                        Function<ProceedingJoinPoint, Iterable<Tag>> tagsBasedOnJoinPoint,
-                        Predicate<ProceedingJoinPoint> shouldSkip) {
+    public GaugedAspect(MeterRegistry registry, Function<ProceedingJoinPoint, Iterable<Tag>> tagsBasedOnJoinPoint,
+            Predicate<ProceedingJoinPoint> shouldSkip) {
         this.registry = registry;
         this.tagsBasedOnJoinPoint = makeSafe(tagsBasedOnJoinPoint);
         this.shouldSkip = shouldSkip;
@@ -146,7 +140,6 @@ public class GaugedAspect {
 
     /**
      * Intercepts methods annotated with {@link Gauged @Gauged} annotation.
-     *
      * @param pjp Proceeding join point
      * @return The value from the method execution
      * @throws Throwable When the underlying method throws an exception
@@ -164,10 +157,9 @@ public class GaugedAspect {
     }
 
     /**
-     * Processes the method execution with gauge tracking. Increments the gauge
-     * before method execution and decrements it after completion.
-     *
-     * @param pjp    Proceeding join point
+     * Processes the method execution with gauge tracking. Increments the gauge before
+     * method execution and decrements it after completion.
+     * @param pjp Proceeding join point
      * @param gauged The {@link Gauged} annotation
      * @return The value from the method execution
      * @throws Throwable When the underlying method throws an exception
@@ -217,12 +209,10 @@ public class GaugedAspect {
 
     /**
      * Gets or creates a gauge for tracking concurrent method executions.
-     *
-     * @param pjp        Proceeding join point
-     * @param gauged     The {@link Gauged} annotation
+     * @param pjp Proceeding join point
+     * @param gauged The {@link Gauged} annotation
      * @param metricName Name of the metric
-     * @return An {@link AtomicInteger} that tracks the number of concurrent
-     *         executions
+     * @return An {@link AtomicInteger} that tracks the number of concurrent executions
      */
     private AtomicInteger getOrCreateGauge(ProceedingJoinPoint pjp, Gauged gauged, String metricName) {
         String gaugeKey = generateGaugeKey(metricName, pjp);
@@ -238,8 +228,8 @@ public class GaugedAspect {
                     .register(registry);
             }
             catch (Exception e) {
-                logger.log("Failed to register gauge '" + metricName + "' with tags " +
-                    Tags.concat(Tags.of(gauged.extraTags()), tagsBasedOnJoinPoint.apply(pjp)), e);
+                logger.log("Failed to register gauge '" + metricName + "' with tags "
+                        + Tags.concat(Tags.of(gauged.extraTags()), tagsBasedOnJoinPoint.apply(pjp)), e);
             }
 
             return value;
@@ -248,14 +238,13 @@ public class GaugedAspect {
 
     /**
      * Updates the gauge with exception information.
-     *
-     * @param pjp           Proceeding join point
-     * @param gauged        The {@link Gauged} annotation
-     * @param metricName    Name of the metric
+     * @param pjp Proceeding join point
+     * @param gauged The {@link Gauged} annotation
+     * @param metricName Name of the metric
      * @param exceptionClass Name of the exception class
      */
-    private void updateGaugeWithException(ProceedingJoinPoint pjp, Gauged gauged,
-                                          String metricName, String exceptionClass) {
+    private void updateGaugeWithException(ProceedingJoinPoint pjp, Gauged gauged, String metricName,
+            String exceptionClass) {
         try {
             String gaugeKey = generateGaugeKey(metricName, pjp) + "." + EXCEPTION_TAG;
             gauges.computeIfAbsent(gaugeKey, key -> {
@@ -273,27 +262,23 @@ public class GaugedAspect {
     }
 
     /**
-     * Generates a unique key for the gauge based on metric name and method
-     * signature.
-     *
+     * Generates a unique key for the gauge based on metric name and method signature.
      * @param metricName Name of the metric
-     * @param pjp        Proceeding join point
+     * @param pjp Proceeding join point
      * @return A unique string key for the gauge
      */
     private String generateGaugeKey(String metricName, ProceedingJoinPoint pjp) {
         return metricName + "_" + pjp.getStaticPart().getSignature().getDeclaringTypeName() + "_"
-            + pjp.getStaticPart().getSignature().getName();
+                + pjp.getStaticPart().getSignature().getName();
     }
 
     /**
-     * Creates a safe version of the tags provider function that won't throw
-     * exceptions.
-     *
+     * Creates a safe version of the tags provider function that won't throw exceptions.
      * @param function The original tags provider function
      * @return A safe version of the function that returns empty tags on error
      */
     private Function<ProceedingJoinPoint, Iterable<Tag>> makeSafe(
-        Function<ProceedingJoinPoint, Iterable<Tag>> function) {
+            Function<ProceedingJoinPoint, Iterable<Tag>> function) {
         return pjp -> {
             try {
                 return function.apply(pjp);
@@ -306,9 +291,8 @@ public class GaugedAspect {
     }
 
     /**
-     * Removes a gauge from tracking.
-     * This can be useful when you want to clean up gauges that are no longer needed.
-     *
+     * Removes a gauge from tracking. This can be useful when you want to clean up gauges
+     * that are no longer needed.
      * @param metricName Name of the metric
      * @param pjp Proceeding join point
      */
@@ -317,4 +301,5 @@ public class GaugedAspect {
         gauges.remove(gaugeKey);
         gauges.remove(gaugeKey + "." + EXCEPTION_TAG);
     }
+
 }
