@@ -284,19 +284,13 @@ class GaugedAspectTest {
         // Create actual instance of child service
         ChildService service = new ChildService();
 
-        // Get actual method from child class
         Method childMethod = ChildService.class.getDeclaredMethod("annotatedMethod");
 
-        // Setup mocks to simulate inheritance scenario
+        // Setup mocks with the real objects
         when(methodSignature.getMethod()).thenReturn(childMethod);
         when(pjp.getTarget()).thenReturn(service);
         when(pjp.getSignature()).thenReturn(methodSignature);
         when(pjp.proceed()).thenReturn("result");
-
-        // Mock the declaring class check to simulate parent class lookup
-        Method spyChildMethod = spy(childMethod);
-        doReturn(ParentService.class).when(spyChildMethod).getDeclaringClass();
-        when(methodSignature.getMethod()).thenReturn(spyChildMethod);
 
         aspect.gaugedClass(pjp);
 
