@@ -22,8 +22,9 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.*;
 
 /**
- * Unit test suite for {@link GaugedAspect} class, which provides comprehensive testing of the aspect-oriented
- * metrics gathering functionality using the {@link Gauged} annotation.
+ * Unit test suite for {@link GaugedAspect} class, which provides comprehensive testing of
+ * the aspect-oriented metrics gathering functionality using the {@link Gauged}
+ * annotation.
  *
  * @see GaugedAspect
  * @see Gauged
@@ -59,14 +60,15 @@ class GaugedAspectTest {
             registry = new SimpleMeterRegistry();
             aspect = new GaugedAspect(registry);
             setupMethodSignature();
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
 
     /**
-     * Configures the mock method signature with default test values.
-     * Sets up the necessary mock behaviors for method interception.
+     * Configures the mock method signature with default test values. Sets up the
+     * necessary mock behaviors for method interception.
      */
     private void setupMethodSignature() {
         try {
@@ -79,14 +81,15 @@ class GaugedAspectTest {
             when(pjp.getSignature()).thenReturn(methodSignature);
             when(pjp.getStaticPart()).thenReturn(staticPart);
             when(pjp.getTarget()).thenReturn(new TestService());
-        } catch (NoSuchMethodException e) {
+        }
+        catch (NoSuchMethodException e) {
             throw new RuntimeException(e);
         }
     }
 
     /**
-     * Tests that method-level @Gauged annotations are properly handled.
-     * Verifies gauge creation and value tracking for a simple method invocation.
+     * Tests that method-level @Gauged annotations are properly handled. Verifies gauge
+     * creation and value tracking for a simple method invocation.
      */
     @Test
     void shouldHandleMethodLevelGauge() throws Throwable {
@@ -100,8 +103,8 @@ class GaugedAspectTest {
     }
 
     /**
-     * Tests that class-level @Gauged annotations are properly handled.
-     * Verifies gauge creation and value tracking for methods in annotated classes.
+     * Tests that class-level @Gauged annotations are properly handled. Verifies gauge
+     * creation and value tracking for methods in annotated classes.
      */
     @Test
     void shouldHandleClassLevelGauge() throws Throwable {
@@ -123,9 +126,9 @@ class GaugedAspectTest {
     }
 
     /**
-     * Tests the aspect's behavior under concurrent access.
-     * Verifies thread safety and gauge value consistency when multiple threads
-     * access the gauged method simultaneously.
+     * Tests the aspect's behavior under concurrent access. Verifies thread safety and
+     * gauge value consistency when multiple threads access the gauged method
+     * simultaneously.
      */
     @Test
     void shouldHandleConcurrentRequests() throws Throwable {
@@ -143,7 +146,8 @@ class GaugedAspectTest {
                         startLatch.await();
                         aspect.gaugedMethod(pjp);
                         completionLatch.countDown();
-                    } catch (Throwable e) {
+                    }
+                    catch (Throwable e) {
                         throw new RuntimeException(e);
                     }
                 });
@@ -168,11 +172,9 @@ class GaugedAspectTest {
     }
 
     /**
-     * Tests that the gauge properly handles exceptions during method execution.
-     * Verifies that:
-     * 1. The original exception is propagated
-     * 2. The gauge value is properly decremented after exception
-     * 3. The gauge maintains consistent state
+     * Tests that the gauge properly handles exceptions during method execution. Verifies
+     * that: 1. The original exception is propagated 2. The gauge value is properly
+     * decremented after exception 3. The gauge maintains consistent state
      */
     @Test
     void shouldHandleExceptionAndDecrementGauge() throws Throwable {
@@ -181,8 +183,7 @@ class GaugedAspectTest {
         when(pjp.proceed()).thenThrow(expectedException);
 
         // Verify exception propagation
-        assertThatThrownBy(() -> aspect.gaugedMethod(pjp))
-            .isSameAs(expectedException);
+        assertThatThrownBy(() -> aspect.gaugedMethod(pjp)).isSameAs(expectedException);
 
         // Verify gauge was properly decremented
         Gauge gauge = registry.get("test.method.metric").gauge();
@@ -190,9 +191,9 @@ class GaugedAspectTest {
     }
 
     /**
-     * Tests the gauge creation skip predicate functionality.
-     * Verifies that when the skip predicate returns true, no gauge is created
-     * while still allowing the method to execute normally.
+     * Tests the gauge creation skip predicate functionality. Verifies that when the skip
+     * predicate returns true, no gauge is created while still allowing the method to
+     * execute normally.
      */
     @Test
     void shouldSkipGaugeCreationWhenPredicateMatches() throws Throwable {
@@ -208,8 +209,8 @@ class GaugedAspectTest {
     }
 
     /**
-     * Tests that methods annotated with @Gauged without a specified name
-     * use the default metric name properly.
+     * Tests that methods annotated with @Gauged without a specified name use the default
+     * metric name properly.
      */
     @Test
     void shouldUseDefaultMetricName() throws Throwable {
@@ -229,8 +230,8 @@ class GaugedAspectTest {
     }
 
     /**
-     * Tests that custom descriptions provided in @Gauged annotations
-     * are properly applied to the created gauge.
+     * Tests that custom descriptions provided in @Gauged annotations are properly applied
+     * to the created gauge.
      */
     @Test
     void shouldRespectCustomDescription() throws Throwable {
@@ -251,8 +252,8 @@ class GaugedAspectTest {
     }
 
     /**
-     * Tests that extra tags specified in @Gauged annotations are properly
-     * applied to the created gauge. Verifies both tag presence and values.
+     * Tests that extra tags specified in @Gauged annotations are properly applied to the
+     * created gauge. Verifies both tag presence and values.
      */
     @Test
     void shouldHandleExtraTags() throws Throwable {
@@ -270,14 +271,12 @@ class GaugedAspectTest {
         // Verify tags were properly applied
         Gauge gauge = registry.get("test.tags.metric").gauge();
         assertThat(gauge).isNotNull();
-        assertThat(gauge.getId().getTags())
-            .contains(Tag.of("region", "us-east-1"))
-            .contains(Tag.of("env", "prod"));
+        assertThat(gauge.getId().getTags()).contains(Tag.of("region", "us-east-1")).contains(Tag.of("env", "prod"));
     }
 
     /**
-     * Tests that @Gauged annotations are properly inherited from parent classes.
-     * Verifies that a child class inherits the gauge configuration from its parent.
+     * Tests that @Gauged annotations are properly inherited from parent classes. Verifies
+     * that a child class inherits the gauge configuration from its parent.
      */
     @Test
     void shouldHandleInheritedClassAnnotations() throws Throwable {
@@ -299,8 +298,8 @@ class GaugedAspectTest {
     }
 
     /**
-     * Tests that gauges properly handle null descriptions in annotations.
-     * Verifies that the gauge is created successfully with a null description.
+     * Tests that gauges properly handle null descriptions in annotations. Verifies that
+     * the gauge is created successfully with a null description.
      */
     @Test
     void shouldHandleNullDescription() throws Throwable {
@@ -346,46 +345,36 @@ class GaugedAspectTest {
         Gauge gauge2 = registry.get("test.method2.metric").gauge();
 
         // Verify gauges are independent
-        assertThat(gauge1)
-            .isNotNull()
-            .isNotSameAs(gauge2);
+        assertThat(gauge1).isNotNull().isNotSameAs(gauge2);
         assertThat(gauge2).isNotNull();
     }
 
     /**
-     * Tests that custom tag functions are properly applied to gauges.
-     * Verifies that programmatically added tags are present on the gauge.
+     * Tests that custom tag functions are properly applied to gauges. Verifies that
+     * programmatically added tags are present on the gauge.
      */
     @Test
     void shouldHandleCustomTagFunction() throws Throwable {
         // Create aspect with custom tag function
-        GaugedAspect customAspect = new GaugedAspect(
-            registry,
-            joinPoint -> Tags.of("custom", "tag"),
-            p -> false
-        );
+        GaugedAspect customAspect = new GaugedAspect(registry, joinPoint -> Tags.of("custom", "tag"), p -> false);
         when(pjp.proceed()).thenReturn("result");
 
         customAspect.gaugedMethod(pjp);
 
         // Verify custom tag was applied
-        assertThat(registry.get("test.method.metric")
-            .tag("custom", "tag")
-            .gauge()).isNotNull();
+        assertThat(registry.get("test.method.metric").tag("custom", "tag").gauge()).isNotNull();
     }
 
     /**
-     * Tests the aspect's resilience to errors in tag functions.
-     * Verifies that gauge creation proceeds even if tag function throws an exception.
+     * Tests the aspect's resilience to errors in tag functions. Verifies that gauge
+     * creation proceeds even if tag function throws an exception.
      */
     @Test
     void shouldHandleTagFunctionError() throws Throwable {
         // Create aspect with failing tag function
-        GaugedAspect customAspect = new GaugedAspect(
-            registry,
-            joinPoint -> { throw new RuntimeException("Tag function error"); },
-            p -> false
-        );
+        GaugedAspect customAspect = new GaugedAspect(registry, joinPoint -> {
+            throw new RuntimeException("Tag function error");
+        }, p -> false);
         when(pjp.proceed()).thenReturn("result");
 
         customAspect.gaugedMethod(pjp);
@@ -397,8 +386,8 @@ class GaugedAspectTest {
     }
 
     /**
-     * Tests that overridden methods properly maintain their gauge configuration.
-     * Verifies that method overriding doesn't affect gauge creation or tracking.
+     * Tests that overridden methods properly maintain their gauge configuration. Verifies
+     * that method overriding doesn't affect gauge creation or tracking.
      */
     @Test
     void shouldHandleOverriddenMethods() throws Throwable {
@@ -418,8 +407,8 @@ class GaugedAspectTest {
     }
 
     /**
-     * Tests that gauges properly handle long-running methods.
-     * Verifies gauge consistency for methods with extended execution times.
+     * Tests that gauges properly handle long-running methods. Verifies gauge consistency
+     * for methods with extended execution times.
      */
     @Test
     void shouldHandleLongRunningMethods() throws Throwable {
@@ -433,8 +422,8 @@ class GaugedAspectTest {
     }
 
     /**
-     * Tests that gauges properly handle recursive method calls.
-     * Verifies gauge consistency when methods call themselves recursively.
+     * Tests that gauges properly handle recursive method calls. Verifies gauge
+     * consistency when methods call themselves recursively.
      */
     @Test
     void shouldHandleRecursiveCalls() throws Throwable {
@@ -458,137 +447,146 @@ class GaugedAspectTest {
      */
     @Gauged("test.class.metric")
     static class GaugedService {
+
         public String someMethod() {
             return "result";
         }
+
     }
 
     /**
      * Service class demonstrating method-level @Gauged annotation usage
      */
     static class TestService {
+
         /**
-         * Method with @Gauged annotation.
-         * The gauge should use the specified metric name for this method.
-         *
+         * Method with @Gauged annotation. The gauge should use the specified metric name
+         * for this method.
          * @return A test result string
          */
         @Gauged("test.method.metric")
         public String annotatedMethod() {
             return "result";
         }
+
     }
 
     /**
      * Service class demonstrating @Gauged annotation with default naming
      */
     static class DefaultNameService {
+
         /**
-         * Method with @Gauged annotation but no explicit name.
-         * The gauge should use the default metric name for this method.
-         *
+         * Method with @Gauged annotation but no explicit name. The gauge should use the
+         * default metric name for this method.
          * @return A test result string
          */
         @Gauged
         public String methodWithDefaultName() {
             return "result";
         }
+
     }
 
     /**
-     * Test service demonstrating custom description support in @Gauged annotation.
-     * Used to verify that metric descriptions are properly captured and applied.
+     * Test service demonstrating custom description support in @Gauged annotation. Used
+     * to verify that metric descriptions are properly captured and applied.
      */
     static class DescriptionService {
+
         /**
-         * Method with a custom description in its gauge configuration.
-         * The gauge created for this method should include the specified description.
-         *
+         * Method with a custom description in its gauge configuration. The gauge created
+         * for this method should include the specified description.
          * @return A test result string
          */
         @Gauged(value = "test.description.metric", description = "Custom description for test")
         public String methodWithDescription() {
             return "result";
         }
+
     }
 
     /**
-     * Test service demonstrating @Gauged annotation without description.
-     * Used to verify proper handling of metrics without explicit descriptions.
+     * Test service demonstrating @Gauged annotation without description. Used to verify
+     * proper handling of metrics without explicit descriptions.
      */
     static class NoDescriptionService {
+
         /**
-         * Method without an explicit description in its gauge configuration.
-         * The gauge created for this method should handle null description gracefully.
-         *
+         * Method without an explicit description in its gauge configuration. The gauge
+         * created for this method should handle null description gracefully.
          * @return A test result string
          */
         @Gauged("test.no.description.metric")
         public String methodWithoutDescription() {
             return "result";
         }
+
     }
 
     /**
-     * Test service demonstrating extra tags support in @Gauged annotation.
-     * Used to verify that custom metric tags are properly applied.
+     * Test service demonstrating extra tags support in @Gauged annotation. Used to verify
+     * that custom metric tags are properly applied.
      */
     static class TaggedService {
+
         /**
-         * Method with extra tags in its gauge configuration.
-         * The gauge should include region and environment tags with specified values.
-         *
+         * Method with extra tags in its gauge configuration. The gauge should include
+         * region and environment tags with specified values.
          * @return A test result string
          */
-        @Gauged(value = "test.tags.metric", extraTags = {"region", "us-east-1", "env", "prod"})
+        @Gauged(value = "test.tags.metric", extraTags = { "region", "us-east-1", "env", "prod" })
         public String methodWithTags() {
             return "result";
         }
+
     }
 
     /**
-     * Parent service class demonstrating class-level @Gauged annotation inheritance.
-     * Used as the parent class in inheritance tests to verify annotation inheritance.
+     * Parent service class demonstrating class-level @Gauged annotation inheritance. Used
+     * as the parent class in inheritance tests to verify annotation inheritance.
      */
     @Gauged("test.inherited.metric")
     static class ParentService {
+
         /**
-         * Base implementation of annotated method.
-         * The gauge configuration from the class-level annotation should apply.
-         *
+         * Base implementation of annotated method. The gauge configuration from the
+         * class-level annotation should apply.
          * @return A parent-specific result string
          */
         public String annotatedMethod() {
             return "parent result";
         }
+
     }
 
     /**
-     * Child service class extending ParentService to test annotation inheritance.
-     * Used to verify that class-level @Gauged annotations are properly inherited.
+     * Child service class extending ParentService to test annotation inheritance. Used to
+     * verify that class-level @Gauged annotations are properly inherited.
      */
     static class ChildService extends ParentService {
+
         /**
-         * Overridden implementation of the parent's annotated method.
-         * Should inherit the gauge configuration from the parent class.
-         *
+         * Overridden implementation of the parent's annotated method. Should inherit the
+         * gauge configuration from the parent class.
          * @return A child-specific result string
          */
         @Override
         public String annotatedMethod() {
             return "child result";
         }
+
     }
 
     /**
-     * Test service demonstrating multiple @Gauged annotations within a single class.
-     * Used to verify that multiple gauges can operate independently within the same class.
+     * Test service demonstrating multiple @Gauged annotations within a single class. Used
+     * to verify that multiple gauges can operate independently within the same class.
      */
     static class MultiGaugeService {
+
         /**
-         * First gauged method with its own metric name.
-         * Should create and maintain an independent gauge.
-         *
+         * First gauged method with its own metric name. Should create and maintain an
+         * independent gauge.
          * @return A method-specific result string
          */
         @Gauged("test.method1.metric")
@@ -597,50 +595,54 @@ class GaugedAspectTest {
         }
 
         /**
-         * Second gauged method with a different metric name.
-         * Should create and maintain an independent gauge separate from method1.
-         *
+         * Second gauged method with a different metric name. Should create and maintain
+         * an independent gauge separate from method1.
          * @return A method-specific result string
          */
         @Gauged("test.method2.metric")
         public String method2() {
             return "result2";
         }
+
     }
 
     /**
-     * Test service demonstrating @Gauged annotation on an overridden method.
-     * Used to verify gauge behavior with method overriding.
+     * Test service demonstrating @Gauged annotation on an overridden method. Used to
+     * verify gauge behavior with method overriding.
      */
     static class OverrideService {
+
         /**
-         * Method with its own gauge configuration.
-         * Demonstrates gauge behavior in method override scenarios.
-         *
+         * Method with its own gauge configuration. Demonstrates gauge behavior in method
+         * override scenarios.
          * @return An override-specific result string
          */
         @Gauged("test.override.metric")
         public String annotatedMethod() {
             return "override result";
         }
+
     }
 
     /**
-     * Test service demonstrating @Gauged annotation with recursive method calls.
-     * Used to verify gauge behavior in recursive scenarios.
+     * Test service demonstrating @Gauged annotation with recursive method calls. Used to
+     * verify gauge behavior in recursive scenarios.
      */
     static class RecursiveService {
+
         /**
-         * Recursive method with gauge tracking.
-         * Tests gauge consistency during recursive method invocations.
-         *
+         * Recursive method with gauge tracking. Tests gauge consistency during recursive
+         * method invocations.
          * @param n The recursion depth parameter
          * @return The final result after recursion completes
          */
         @Gauged("test.recursive.metric")
         public int recursiveMethod(int n) {
-            if (n <= 0) return 0;
+            if (n <= 0)
+                return 0;
             return recursiveMethod(n - 1);
         }
+
     }
+
 }
