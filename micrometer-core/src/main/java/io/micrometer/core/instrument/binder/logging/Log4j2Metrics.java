@@ -31,9 +31,12 @@ import org.apache.logging.log4j.core.config.LoggerConfig;
 import org.apache.logging.log4j.core.filter.AbstractFilter;
 import org.apache.logging.log4j.core.filter.CompositeFilter;
 
-import java.util.*;
+import java.beans.PropertyChangeListener;
+import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import static java.util.Collections.emptyList;
 
@@ -63,6 +66,8 @@ public class Log4j2Metrics implements MeterBinder, AutoCloseable {
 
     private final ConcurrentMap<MeterRegistry, MetricsFilter> metricsFilters = new ConcurrentHashMap<>();
 
+    private final List<PropertyChangeListener> changeListeners = new CopyOnWriteArrayList<>();
+
     public Log4j2Metrics() {
         this(emptyList());
     }
@@ -79,12 +84,28 @@ public class Log4j2Metrics implements MeterBinder, AutoCloseable {
     @Override
     public void bindTo(MeterRegistry registry) {
         Configuration configuration = loggerContext.getConfiguration();
+        registerMetricsFilter(configuration, registry);
+        loggerContext.updateLoggers(configuration);
+
+        PropertyChangeListener changeListener = listener -> {
+            if (listener.getNewValue() instanceof Configuration && listener.getOldValue() != listener.getNewValue()) {
+                registerMetricsFilter((Configuration) listener.getNewValue(), registry);
+                if (listener.getOldValue() instanceof Configuration) {
+                    removeMetricsFilter((Configuration) listener.getOldValue());
+                }
+            }
+        };
+
+        changeListeners.add(changeListener);
+        loggerContext.addPropertyChangeListener(changeListener);
+    }
+
+    private void registerMetricsFilter(Configuration configuration, MeterRegistry registry) {
         LoggerConfig rootLoggerConfig = configuration.getRootLogger();
         MetricsFilter metricsFilter = getOrCreateMetricsFilterAndStart(registry);
         rootLoggerConfig.addFilter(metricsFilter);
 
-        loggerContext.getConfiguration()
-            .getLoggers()
+        configuration.getLoggers()
             .values()
             .stream()
             .filter(loggerConfig -> !loggerConfig.isAdditive())
@@ -105,8 +126,6 @@ public class Log4j2Metrics implements MeterBinder, AutoCloseable {
 
                 loggerConfig.addFilter(metricsFilter);
             });
-
-        loggerContext.updateLoggers(configuration);
     }
 
     private MetricsFilter getOrCreateMetricsFilterAndStart(MeterRegistry registry) {
@@ -119,26 +138,30 @@ public class Log4j2Metrics implements MeterBinder, AutoCloseable {
 
     @Override
     public void close() {
+        changeListeners.forEach(loggerContext::removePropertyChangeListener);
+
         if (!metricsFilters.isEmpty()) {
             Configuration configuration = loggerContext.getConfiguration();
-            LoggerConfig rootLoggerConfig = configuration.getRootLogger();
-            metricsFilters.values().forEach(rootLoggerConfig::removeFilter);
-
-            loggerContext.getConfiguration()
-                .getLoggers()
-                .values()
-                .stream()
-                .filter(loggerConfig -> !loggerConfig.isAdditive())
-                .forEach(loggerConfig -> {
-                    if (loggerConfig != rootLoggerConfig) {
-                        metricsFilters.values().forEach(loggerConfig::removeFilter);
-                    }
-                });
-
+            removeMetricsFilter(configuration);
             loggerContext.updateLoggers(configuration);
+
             metricsFilters.values().forEach(MetricsFilter::stop);
-            metricsFilters.clear();
         }
+    }
+
+    private void removeMetricsFilter(Configuration configuration) {
+        LoggerConfig rootLoggerConfig = configuration.getRootLogger();
+        metricsFilters.values().forEach(rootLoggerConfig::removeFilter);
+
+        configuration.getLoggers()
+            .values()
+            .stream()
+            .filter(loggerConfig -> !loggerConfig.isAdditive())
+            .forEach(loggerConfig -> {
+                if (loggerConfig != rootLoggerConfig) {
+                    metricsFilters.values().forEach(rootLoggerConfig::removeFilter);
+                }
+            });
     }
 
     @NonNullApi

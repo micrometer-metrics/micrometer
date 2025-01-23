@@ -288,4 +288,56 @@ class Log4j2MetricsTest {
         assertThat(registry2.get("log4j2.events").tags("level", "info").counter().count()).isEqualTo(2);
     }
 
+    @Issue("#5756")
+    @Test
+    void rebindsMetricsWhenConfigurationIsReloaded() {
+        LoggerContext context = new LoggerContext("test");
+        Logger logger = context.getLogger("com.test");
+        Configuration oldConfiguration = context.getConfiguration();
+
+        try (Log4j2Metrics metrics = new Log4j2Metrics(emptyList(), context)) {
+            metrics.bindTo(registry);
+
+            logger.error("first");
+            assertThat(registry.get("log4j2.events").tags("level", "error").counter().count()).isEqualTo(1);
+
+            // Should have added filter to configuration
+            Filter oldFilter = oldConfiguration.getRootLogger().getFilter();
+            assertThat(oldFilter).isInstanceOf(Log4j2Metrics.MetricsFilter.class);
+
+            // This will reload the configuration to default
+            context.reconfigure();
+
+            Configuration newConfiguration = context.getConfiguration();
+
+            // For this event to be counted, the metrics must be rebound
+            logger.error("second");
+            assertThat(registry.get("log4j2.events").tags("level", "error").counter().count()).isEqualTo(2);
+
+            // Should have removed filter from old configuration, adding it to the new
+            assertThat(oldConfiguration.getRootLogger().getFilter()).isNull();
+            Filter newFilter = newConfiguration.getRootLogger().getFilter();
+            assertThat(newFilter).isInstanceOf(Log4j2Metrics.MetricsFilter.class);
+        }
+    }
+
+    @Test
+    void shouldNotRebindMetricsIfBinderIsClosed() {
+        LoggerContext context = new LoggerContext("test");
+        Logger logger = context.getLogger("com.test");
+
+        try (Log4j2Metrics metrics = new Log4j2Metrics(emptyList(), context)) {
+            metrics.bindTo(registry);
+            logger.error("first");
+        }
+
+        // This will reload the configuration to default
+        context.reconfigure();
+
+        // This event should not be counted as the metrics binder is already closed
+        logger.error("second");
+
+        assertThat(registry.get("log4j2.events").tags("level", "error").counter().count()).isEqualTo(1);
+    }
+
 }
