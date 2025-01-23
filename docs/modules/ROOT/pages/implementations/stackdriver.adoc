@@ -127,7 +127,3 @@ You can also use https://docs.spring.io/spring-boot/docs/current/reference/html/
 spring.application.name=my-application
 management.metrics.tags.application=${spring.application.name}
 ----
-
-== GraalVM native image compilation
-
-To compile an application by using `micrometer-registry-stackdriver` to a https://www.graalvm.org/reference-manual/native-image/[native image using GraalVM], add the https://github.com/GoogleCloudPlatform/native-image-support-java[native-image-support-java] library as a dependency. Doing so ensures that the correct native image configuration is available and avoids errors like `Classes that should be initialized at run time got initialized during image building`.
