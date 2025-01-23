@@ -23,6 +23,7 @@ import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.core.Filter;
 import org.apache.logging.log4j.core.LoggerContext;
 import org.apache.logging.log4j.core.config.Configuration;
 import org.apache.logging.log4j.core.config.ConfigurationSource;
@@ -34,6 +35,7 @@ import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.time.Duration;
+import java.util.Iterator;
 
 import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -182,6 +184,49 @@ class Log4j2MetricsTest {
         logger.info("Hello, world!");
         await().atMost(Duration.ofSeconds(1))
             .until(() -> registry.get("log4j2.events").tags("level", "info").counter().count() == 3);
+    }
+
+    @Test
+    void metricsFilterIsReused() {
+        LoggerContext loggerContext = new LoggerContext("test");
+
+        LoggerConfig loggerConfig = new LoggerConfig("com.test", Level.INFO, false);
+        Configuration configuration = loggerContext.getConfiguration();
+        configuration.addLogger("com.test", loggerConfig);
+        loggerContext.setConfiguration(configuration);
+        loggerContext.updateLoggers();
+
+        Logger logger1 = loggerContext.getLogger("com.test.log1");
+        loggerContext.getLogger("com.test.log2");
+
+        new Log4j2Metrics(emptyList(), loggerContext).bindTo(registry);
+        Iterator<Filter> rootFilters = loggerContext.getRootLogger().getFilters();
+        Log4j2Metrics.MetricsFilter rootFilter = (Log4j2Metrics.MetricsFilter) rootFilters.next();
+        assertThat(rootFilters.hasNext()).isFalse();
+
+        Log4j2Metrics.MetricsFilter logger1Filter = (Log4j2Metrics.MetricsFilter) loggerContext.getConfiguration()
+            .getLoggerConfig(logger1.getName())
+            .getFilter();
+        assertThat(logger1Filter).isEqualTo(rootFilter);
+    }
+
+    @Test
+    void multipleRegistriesCanBeBound() {
+        MeterRegistry registry2 = new SimpleMeterRegistry();
+
+        Log4j2Metrics log4j2Metrics = new Log4j2Metrics(emptyList());
+        log4j2Metrics.bindTo(registry);
+
+        Logger logger = LogManager.getLogger(Log4j2MetricsTest.class);
+        Configurator.setLevel(logger, Level.INFO);
+        logger.info("Hello, world!");
+        assertThat(registry.get("log4j2.events").tags("level", "info").counter().count()).isEqualTo(1);
+
+        log4j2Metrics.bindTo(registry2);
+        logger.info("Hello, world!");
+        assertThat(registry.get("log4j2.events").tags("level", "info").counter().count()).isEqualTo(2);
+        assertThat(registry2.get("log4j2.events").tags("level", "info").counter().count()).isEqualTo(1);
+
     }
 
 }
