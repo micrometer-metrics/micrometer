@@ -31,9 +31,9 @@ import org.apache.logging.log4j.core.config.LoggerConfig;
 import org.apache.logging.log4j.core.filter.AbstractFilter;
 import org.apache.logging.log4j.core.filter.CompositeFilter;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 import static java.util.Collections.emptyList;
 
@@ -61,7 +61,7 @@ public class Log4j2Metrics implements MeterBinder, AutoCloseable {
 
     private final LoggerContext loggerContext;
 
-    private final List<MetricsFilter> metricsFilters = new ArrayList<>();
+    private final ConcurrentMap<MeterRegistry, MetricsFilter> metricsFilters = new ConcurrentHashMap<>();
 
     public Log4j2Metrics() {
         this(emptyList());
@@ -80,7 +80,7 @@ public class Log4j2Metrics implements MeterBinder, AutoCloseable {
     public void bindTo(MeterRegistry registry) {
         Configuration configuration = loggerContext.getConfiguration();
         LoggerConfig rootLoggerConfig = configuration.getRootLogger();
-        rootLoggerConfig.addFilter(createMetricsFilterAndStart(registry));
+        rootLoggerConfig.addFilter(getOrCreateMetricsFilterAndStart(registry));
 
         loggerContext.getConfiguration()
             .getLoggers()
@@ -102,17 +102,18 @@ public class Log4j2Metrics implements MeterBinder, AutoCloseable {
                 if (logFilter instanceof MetricsFilter) {
                     return;
                 }
-                loggerConfig.addFilter(createMetricsFilterAndStart(registry));
+                loggerConfig.addFilter(getOrCreateMetricsFilterAndStart(registry));
             });
 
         loggerContext.updateLoggers(configuration);
     }
 
-    private MetricsFilter createMetricsFilterAndStart(MeterRegistry registry) {
-        MetricsFilter metricsFilter = new MetricsFilter(registry, tags);
-        metricsFilter.start();
-        metricsFilters.add(metricsFilter);
-        return metricsFilter;
+    private MetricsFilter getOrCreateMetricsFilterAndStart(MeterRegistry registry) {
+        return metricsFilters.computeIfAbsent(registry, r -> {
+            MetricsFilter metricsFilter = new MetricsFilter(r, tags);
+            metricsFilter.start();
+            return metricsFilter;
+        });
     }
 
     @Override
@@ -120,7 +121,7 @@ public class Log4j2Metrics implements MeterBinder, AutoCloseable {
         if (!metricsFilters.isEmpty()) {
             Configuration configuration = loggerContext.getConfiguration();
             LoggerConfig rootLoggerConfig = configuration.getRootLogger();
-            metricsFilters.forEach(rootLoggerConfig::removeFilter);
+            metricsFilters.values().forEach(rootLoggerConfig::removeFilter);
 
             loggerContext.getConfiguration()
                 .getLoggers()
@@ -129,12 +130,13 @@ public class Log4j2Metrics implements MeterBinder, AutoCloseable {
                 .filter(loggerConfig -> !loggerConfig.isAdditive())
                 .forEach(loggerConfig -> {
                     if (loggerConfig != rootLoggerConfig) {
-                        metricsFilters.forEach(loggerConfig::removeFilter);
+                        metricsFilters.values().forEach(loggerConfig::removeFilter);
                     }
                 });
 
             loggerContext.updateLoggers(configuration);
-            metricsFilters.forEach(MetricsFilter::stop);
+            metricsFilters.values().forEach(MetricsFilter::stop);
+            metricsFilters.clear();
         }
     }
 
