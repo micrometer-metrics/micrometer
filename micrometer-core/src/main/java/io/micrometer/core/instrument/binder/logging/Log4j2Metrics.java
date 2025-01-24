@@ -89,7 +89,9 @@ public class Log4j2Metrics implements MeterBinder, AutoCloseable {
 
         PropertyChangeListener changeListener = listener -> {
             if (listener.getNewValue() instanceof Configuration && listener.getOldValue() != listener.getNewValue()) {
-                registerMetricsFilter((Configuration) listener.getNewValue(), registry);
+                Configuration newConfiguration = (Configuration) listener.getNewValue();
+                registerMetricsFilter(newConfiguration, registry);
+                loggerContext.updateLoggers(newConfiguration);
                 if (listener.getOldValue() instanceof Configuration) {
                     removeMetricsFilter((Configuration) listener.getOldValue());
                 }
@@ -139,6 +141,7 @@ public class Log4j2Metrics implements MeterBinder, AutoCloseable {
     @Override
     public void close() {
         changeListeners.forEach(loggerContext::removePropertyChangeListener);
+        changeListeners.clear();
 
         if (!metricsFilters.isEmpty()) {
             Configuration configuration = loggerContext.getConfiguration();
@@ -146,6 +149,7 @@ public class Log4j2Metrics implements MeterBinder, AutoCloseable {
             loggerContext.updateLoggers(configuration);
 
             metricsFilters.values().forEach(MetricsFilter::stop);
+            metricsFilters.clear();
         }
     }
 
