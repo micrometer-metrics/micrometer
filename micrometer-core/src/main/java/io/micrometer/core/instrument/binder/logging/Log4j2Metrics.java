@@ -163,7 +163,7 @@ public class Log4j2Metrics implements MeterBinder, AutoCloseable {
             .filter(loggerConfig -> !loggerConfig.isAdditive())
             .forEach(loggerConfig -> {
                 if (loggerConfig != rootLoggerConfig) {
-                    metricsFilters.values().forEach(rootLoggerConfig::removeFilter);
+                    metricsFilters.values().forEach(loggerConfig::removeFilter);
                 }
             });
     }
