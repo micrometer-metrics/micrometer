@@ -21,7 +21,6 @@ import io.micrometer.common.util.StringUtils;
 import io.micrometer.core.instrument.binder.http.Outcome;
 import org.eclipse.jetty.client.Request;
 import org.eclipse.jetty.client.Result;
-import org.eclipse.jetty.http.HttpStatus;
 
 import java.util.function.BiFunction;
 import java.util.regex.Pattern;
@@ -34,10 +33,6 @@ import java.util.regex.Pattern;
  * @since 1.13.0
  */
 public final class JettyClientKeyValues {
-
-    private static final KeyValue URI_NOT_FOUND = KeyValue.of("uri", "NOT_FOUND");
-
-    private static final KeyValue URI_REDIRECTION = KeyValue.of("uri", "REDIRECTION");
 
     private static final KeyValue URI_ROOT = KeyValue.of("uri", "root");
 
@@ -100,16 +95,6 @@ public final class JettyClientKeyValues {
      */
     public static KeyValue uri(Request request, @Nullable Result result,
             BiFunction<Request, Result, String> successfulUriPattern) {
-        if (result != null && result.getResponse() != null) {
-            int status = result.getResponse().getStatus();
-            if (HttpStatus.isRedirection(status)) {
-                return URI_REDIRECTION;
-            }
-            if (status == 404) {
-                return URI_NOT_FOUND;
-            }
-        }
-
         String matchingPattern = successfulUriPattern.apply(request, result);
         matchingPattern = MULTIPLE_SLASH_PATTERN.matcher(matchingPattern).replaceAll("/");
         if (matchingPattern.equals("/")) {
@@ -132,12 +117,6 @@ public final class JettyClientKeyValues {
         Throwable exception = result.getFailure();
         if (exception == null) {
             return EXCEPTION_NONE;
-        }
-        if (result.getResponse() != null) {
-            int status = result.getResponse().getStatus();
-            if (status == 404 || HttpStatus.isRedirection(status)) {
-                return EXCEPTION_NONE;
-            }
         }
         if (exception.getCause() != null) {
             exception = exception.getCause();
