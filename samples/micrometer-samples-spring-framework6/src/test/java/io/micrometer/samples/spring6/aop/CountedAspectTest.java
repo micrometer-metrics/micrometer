@@ -27,6 +27,7 @@ import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.search.MeterNotFoundException;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.aspectj.lang.ProceedingJoinPoint;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -492,17 +493,21 @@ class CountedAspectTest {
         CountedMeterTagAnnotationHandler meterTagAnnotationHandler = new CountedMeterTagAnnotationHandler(
                 aClass -> valueResolver, aClass -> valueExpressionResolver);
 
+        MeterRegistry registry;
+
+        CountedAspect countedAspect;
+
+        @BeforeEach
+        void setup() {
+            registry = new SimpleMeterRegistry();
+            countedAspect = new CountedAspect(registry);
+            countedAspect.setMeterTagAnnotationHandler(meterTagAnnotationHandler);
+        }
+
         @ParameterizedTest
         @EnumSource
         void meterTagsWithText(AnnotatedTestClass annotatedClass) {
-            MeterRegistry registry = new SimpleMeterRegistry();
-            CountedAspect countedAspect = new CountedAspect(registry);
-            countedAspect.setMeterTagAnnotationHandler(meterTagAnnotationHandler);
-
-            AspectJProxyFactory pf = new AspectJProxyFactory(annotatedClass.newInstance());
-            pf.addAspect(countedAspect);
-
-            MeterTagClassInterface service = pf.getProxy();
+            MeterTagClassInterface service = getProxyWithCountedAspect(annotatedClass.newInstance());
 
             service.getAnnotationForArgumentToString(15L);
 
@@ -512,14 +517,7 @@ class CountedAspectTest {
         @ParameterizedTest
         @EnumSource
         void meterTagsWithResolver(AnnotatedTestClass annotatedClass) {
-            MeterRegistry registry = new SimpleMeterRegistry();
-            CountedAspect countedAspect = new CountedAspect(registry);
-            countedAspect.setMeterTagAnnotationHandler(meterTagAnnotationHandler);
-
-            AspectJProxyFactory pf = new AspectJProxyFactory(annotatedClass.newInstance());
-            pf.addAspect(countedAspect);
-
-            MeterTagClassInterface service = pf.getProxy();
+            MeterTagClassInterface service = getProxyWithCountedAspect(annotatedClass.newInstance());
 
             service.getAnnotationForTagValueResolver("foo");
 
@@ -532,14 +530,7 @@ class CountedAspectTest {
         @ParameterizedTest
         @EnumSource
         void meterTagsWithExpression(AnnotatedTestClass annotatedClass) {
-            MeterRegistry registry = new SimpleMeterRegistry();
-            CountedAspect countedAspect = new CountedAspect(registry);
-            countedAspect.setMeterTagAnnotationHandler(meterTagAnnotationHandler);
-
-            AspectJProxyFactory pf = new AspectJProxyFactory(annotatedClass.newInstance());
-            pf.addAspect(countedAspect);
-
-            MeterTagClassInterface service = pf.getProxy();
+            MeterTagClassInterface service = getProxyWithCountedAspect(annotatedClass.newInstance());
 
             service.getAnnotationForTagValueExpression("15L");
 
@@ -591,10 +582,6 @@ class CountedAspectTest {
 
         @Test
         void meterTagOnPackagePrivateMethod() {
-            MeterRegistry registry = new SimpleMeterRegistry();
-            CountedAspect countedAspect = new CountedAspect(registry);
-            countedAspect.setMeterTagAnnotationHandler(meterTagAnnotationHandler);
-
             AspectJProxyFactory pf = new AspectJProxyFactory(new MeterTagClass());
             pf.setProxyTargetClass(true);
             pf.addAspect(countedAspect);
@@ -604,6 +591,58 @@ class CountedAspectTest {
             service.getAnnotationForPackagePrivateMethod("bar");
 
             assertThat(registry.get("method.counted").tag("foo", "bar").counter().count()).isEqualTo(1);
+        }
+
+        @ParameterizedTest
+        @EnumSource
+        void meterTagsOnReturnValueWithText(AnnotatedTestClass annotatedClass) {
+            MeterTagClassInterface service = getProxyWithCountedAspect(annotatedClass.newInstance());
+
+            service.getAnnotationForArgumentToString();
+
+            assertThat(registry.get("method.counted").tag("test", "15").counter().count()).isEqualTo(1);
+        }
+
+        @ParameterizedTest
+        @EnumSource
+        void meterTagsOnReturnValueWithResolver(AnnotatedTestClass annotatedClass) {
+            MeterTagClassInterface service = getProxyWithCountedAspect(annotatedClass.newInstance());
+
+            service.getAnnotationForTagValueResolver();
+
+            assertThat(registry.get("method.counted")
+                .tag("test", "Value from myCustomTagValueResolver [foo]")
+                .counter()
+                .count()).isEqualTo(1);
+        }
+
+        @ParameterizedTest
+        @EnumSource
+        void meterTagsOnReturnValueWithExpression(AnnotatedTestClass annotatedClass) {
+            MeterTagClassInterface service = getProxyWithCountedAspect(annotatedClass.newInstance());
+
+            service.getAnnotationForTagValueExpression();
+
+            assertThat(registry.get("method.counted").tag("test", "hello characters").counter().count()).isEqualTo(1);
+        }
+
+        @Test
+        void meterTagOnReturnValueOnPackagePrivateMethod() {
+            AspectJProxyFactory pf = new AspectJProxyFactory(new MeterTagClass());
+            pf.setProxyTargetClass(true);
+            pf.addAspect(countedAspect);
+
+            MeterTagClass service = pf.getProxy();
+
+            service.getAnnotationForPackagePrivateMethod();
+
+            assertThat(registry.get("method.counted").tag("foo", "bar").counter().count()).isEqualTo(1);
+        }
+
+        private <T> T getProxyWithCountedAspect(T object) {
+            AspectJProxyFactory pf = new AspectJProxyFactory(object);
+            pf.addAspect(countedAspect);
+            return pf.getProxy();
         }
 
         enum AnnotatedTestClass {
@@ -634,11 +673,23 @@ class CountedAspectTest {
             void getAnnotationForTagValueResolver(@MeterTag(key = "test", resolver = ValueResolver.class) String test);
 
             @Counted
+            @MeterTag(key = "test", resolver = ValueResolver.class)
+            String getAnnotationForTagValueResolver();
+
+            @Counted
             void getAnnotationForTagValueExpression(
                     @MeterTag(key = "test", expression = "'hello' + ' characters'") String test);
 
             @Counted
+            @MeterTag(key = "test", expression = "'hello' + ' characters'")
+            String getAnnotationForTagValueExpression();
+
+            @Counted
             void getAnnotationForArgumentToString(@MeterTag("test") Long param);
+
+            @Counted
+            @MeterTag("test")
+            Long getAnnotationForArgumentToString();
 
             @Counted
             void getMultipleAnnotationsForTagValueExpression(
@@ -662,9 +713,23 @@ class CountedAspectTest {
             }
 
             @Counted
+            @MeterTag(key = "test", resolver = ValueResolver.class)
+            @Override
+            public String getAnnotationForTagValueResolver() {
+                return "foo";
+            }
+
+            @Counted
             @Override
             public void getAnnotationForTagValueExpression(
                     @MeterTag(key = "test", expression = "'hello' + ' characters'") String test) {
+            }
+
+            @Counted
+            @MeterTag(key = "test", expression = "'hello' + ' characters'")
+            @Override
+            public String getAnnotationForTagValueExpression() {
+                return "15L";
             }
 
             @Counted
@@ -673,7 +738,20 @@ class CountedAspectTest {
             }
 
             @Counted
+            @MeterTag("test")
+            @Override
+            public Long getAnnotationForArgumentToString() {
+                return 15L;
+            }
+
+            @Counted
             void getAnnotationForPackagePrivateMethod(@MeterTag("foo") String foo) {
+            }
+
+            @MeterTag("foo")
+            @Counted
+            String getAnnotationForPackagePrivateMethod() {
+                return "bar";
             }
 
             @Counted
@@ -702,12 +780,30 @@ class CountedAspectTest {
 
             @Counted
             @Override
+            public String getAnnotationForTagValueResolver() {
+                return "foo";
+            }
+
+            @Counted
+            @Override
             public void getAnnotationForTagValueExpression(String test) {
             }
 
             @Counted
             @Override
+            public String getAnnotationForTagValueExpression() {
+                return "15L";
+            }
+
+            @Counted
+            @Override
             public void getAnnotationForArgumentToString(Long param) {
+            }
+
+            @Counted
+            @Override
+            public Long getAnnotationForArgumentToString() {
+                return 15L;
             }
 
             @Counted
