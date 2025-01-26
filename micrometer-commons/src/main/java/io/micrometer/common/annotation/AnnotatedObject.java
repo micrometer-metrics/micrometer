@@ -25,15 +25,15 @@ import java.lang.annotation.Annotation;
  *
  * @author Christian Schwerdtfeger
  */
-class AnnotatedParameter {
+class AnnotatedObject {
 
     final Annotation annotation;
 
-    final Object argument;
+    final Object object;
 
-    AnnotatedParameter(Annotation annotation, Object argument) {
+    AnnotatedObject(Annotation annotation, Object object) {
         this.annotation = annotation;
-        this.argument = argument;
+        this.object = object;
     }
 
 }

@@ -37,7 +37,7 @@ import java.lang.annotation.*;
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Inherited
-@Target(ElementType.PARAMETER)
+@Target({ ElementType.PARAMETER, ElementType.METHOD })
 @Repeatable(MeterTags.class)
 public @interface MeterTag {
 
