@@ -151,7 +151,7 @@ class JettyClientMetricsTest {
         assertThat(registry.get("jetty.client.requests")
             .tag("outcome", "CLIENT_ERROR")
             .tag("status", "404")
-            .tag("uri", "NOT_FOUND")
+            .tag("uri", "/doesNotExist")
             .tag("host", "localhost")
             .timer()
             .count()).isEqualTo(1);
