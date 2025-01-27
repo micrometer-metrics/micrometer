@@ -80,6 +80,7 @@ public class SignalFxMeterRegistry extends StepMeterRegistry {
 
     public SignalFxMeterRegistry(SignalFxConfig config, Clock clock, ThreadFactory threadFactory) {
         super(config, clock);
+        logger.warn("SignalFxMeterRegistry is deprecated in favor of micrometer-registry-otlp.");
         this.config = config;
 
         URI apiUri = URI.create(config.uri());
