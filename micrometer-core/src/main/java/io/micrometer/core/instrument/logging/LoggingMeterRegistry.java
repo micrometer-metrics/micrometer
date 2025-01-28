@@ -42,6 +42,7 @@ import java.util.function.Function;
 import java.util.stream.StreamSupport;
 
 import static io.micrometer.core.instrument.util.DoubleFormat.decimalOrNan;
+import static io.micrometer.core.instrument.util.DoubleFormat.wholeOrDecimal;
 import static java.util.stream.Collectors.joining;
 
 /**
@@ -146,7 +147,7 @@ public class LoggingMeterRegistry extends StepMeterRegistry {
                     int activeTasks = longTaskTimer.activeTasks();
                     if (!config.logInactive() && activeTasks == 0)
                         return;
-                    loggingSink.accept(print.id() + " active=" + print.value(activeTasks) + " duration="
+                    loggingSink.accept(print.id() + " active=" + wholeOrDecimal(activeTasks) + " duration="
                             + print.time(longTaskTimer.duration(getBaseTimeUnit())));
                 }, timeGauge -> {
                     double value = timeGauge.value(getBaseTimeUnit());
