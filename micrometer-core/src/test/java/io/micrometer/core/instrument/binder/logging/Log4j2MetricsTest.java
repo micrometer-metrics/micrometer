@@ -329,6 +329,7 @@ class Log4j2MetricsTest {
         try (Log4j2Metrics metrics = new Log4j2Metrics(emptyList(), context)) {
             metrics.bindTo(registry);
             logger.error("first");
+            assertThat(registry.get("log4j2.events").tags("level", "error").counter().count()).isEqualTo(1);
         }
 
         // This will reload the configuration to default
