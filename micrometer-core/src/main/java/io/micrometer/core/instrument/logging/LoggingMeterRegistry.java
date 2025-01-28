@@ -162,7 +162,7 @@ public class LoggingMeterRegistry extends StepMeterRegistry {
                     double count = timer.count();
                     if (!config.logInactive() && count == 0)
                         return;
-                    loggingSink.accept(print.id() + " throughput=" + print.rate(count) + " mean="
+                    loggingSink.accept(print.id() + " throughput=" + print.unitlessRate(count) + " mean="
                             + print.time(timer.mean(getBaseTimeUnit())));
                 }, meter -> loggingSink.accept(writeMeter(meter, print)));
             });

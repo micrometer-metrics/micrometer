@@ -271,8 +271,7 @@ class LoggingMeterRegistryTest {
         recordingRegistry.more().timer("my.function-timer", emptyList(), new AtomicDouble(), d -> 30, d -> 30, SECONDS);
         clock.add(config.step());
         recordingRegistry.publish();
-        assertThat(recordingRegistry.getLogs())
-            .containsExactly("my.function-timer{} throughput=0.5 milliseconds/s mean=1s");
+        assertThat(recordingRegistry.getLogs()).containsExactly("my.function-timer{} throughput=0.5/s mean=1s");
     }
 
     @Test
@@ -319,7 +318,7 @@ class LoggingMeterRegistryTest {
         assertThat(recordingRegistry.getMeters()).hasSize(5);
         assertThat(recordingRegistry.getLogs()).containsExactlyInAnyOrder("my.counter{} throughput=0/s",
                 "my.timer{} throughput=0/s mean= max=", "my.summary{} throughput=0/s mean=0 max=0",
-                "my.function-counter{} throughput=0/s", "my.function-timer{} throughput=0 milliseconds/s mean=");
+                "my.function-counter{} throughput=0/s", "my.function-timer{} throughput=0/s mean=");
     }
 
     private static class TestConfig implements LoggingRegistryConfig {
