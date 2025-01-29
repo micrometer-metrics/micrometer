@@ -101,7 +101,27 @@ class ObservationExecChainHandlerIntegrationTest {
                 .that()
                 .hasLowCardinalityKeyValue(OUTCOME.withValue("CLIENT_ERROR"))
                 .hasLowCardinalityKeyValue(STATUS.withValue("404"))
-                .hasLowCardinalityKeyValue(METHOD.withValue("GET"));
+                .hasLowCardinalityKeyValue(METHOD.withValue("GET"))
+                .hasLowCardinalityKeyValue(URI.withValue("UNKNOWN"));
+        }
+
+        @Test
+        void recordClientErrorExchangesWithUriPatternHeader(@WiremockResolver.Wiremock WireMockServer server)
+                throws Exception {
+            String uriPattern = "/resources/{id}";
+
+            server.stubFor(any(urlEqualTo("/resources/1")).willReturn(aResponse().withStatus(404)));
+            try (CloseableHttpClient client = classicClient()) {
+                HttpGet request = new HttpGet(server.baseUrl() + "/resources/1");
+                request.addHeader(DefaultUriMapper.URI_PATTERN_HEADER, uriPattern);
+                executeClassic(client, request);
+            }
+            assertThat(observationRegistry).hasObservationWithNameEqualTo(DEFAULT_METER_NAME)
+                .that()
+                .hasLowCardinalityKeyValue(OUTCOME.withValue("CLIENT_ERROR"))
+                .hasLowCardinalityKeyValue(STATUS.withValue("404"))
+                .hasLowCardinalityKeyValue(METHOD.withValue("GET"))
+                .hasLowCardinalityKeyValue(URI.withValue(uriPattern));
         }
 
         @Test
@@ -281,7 +301,27 @@ class ObservationExecChainHandlerIntegrationTest {
                 .that()
                 .hasLowCardinalityKeyValue(OUTCOME.withValue("CLIENT_ERROR"))
                 .hasLowCardinalityKeyValue(STATUS.withValue("404"))
-                .hasLowCardinalityKeyValue(METHOD.withValue("GET"));
+                .hasLowCardinalityKeyValue(METHOD.withValue("GET"))
+                .hasLowCardinalityKeyValue(URI.withValue("UNKNOWN"));
+        }
+
+        @Test
+        void recordClientErrorExchangesWithUriPatternHeader(@WiremockResolver.Wiremock WireMockServer server)
+                throws Exception {
+            String uriPattern = "/resources/{id}";
+
+            server.stubFor(any(urlEqualTo("/resources/1")).willReturn(aResponse().withStatus(404)));
+            try (CloseableHttpAsyncClient client = asyncClient()) {
+                SimpleHttpRequest request = SimpleRequestBuilder.get(server.baseUrl() + "/resources/1").build();
+                request.addHeader(DefaultUriMapper.URI_PATTERN_HEADER, uriPattern);
+                executeAsync(client, request);
+            }
+            assertThat(observationRegistry).hasObservationWithNameEqualTo(DEFAULT_METER_NAME)
+                .that()
+                .hasLowCardinalityKeyValue(OUTCOME.withValue("CLIENT_ERROR"))
+                .hasLowCardinalityKeyValue(STATUS.withValue("404"))
+                .hasLowCardinalityKeyValue(METHOD.withValue("GET"))
+                .hasLowCardinalityKeyValue(URI.withValue(uriPattern));
         }
 
         @Test
