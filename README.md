@@ -39,8 +39,7 @@ dependencies {
 
 ## Milestone releases
 
-Milestone releases are published to https://repo.spring.io/milestone.
-Include that as a maven repository in your build configuration to use milestone releases.
+Starting with the 1.15.0-M2 release, milestone releases and release candidates will be publish to Maven Central.
 Note that milestone releases are for testing purposes and are not intended for production use.
 
 ## Documentation
