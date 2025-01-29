@@ -32,9 +32,7 @@ import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.HistogramSnapshot;
 import io.micrometer.core.instrument.distribution.HistogramSupport;
 import io.micrometer.core.instrument.distribution.pause.PauseDetector;
-import io.micrometer.core.instrument.step.StepDistributionSummary;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
-import io.micrometer.core.instrument.step.StepTimer;
 import io.micrometer.core.instrument.util.DoubleFormat;
 import io.micrometer.core.instrument.util.NamedThreadFactory;
 import org.slf4j.Logger;
@@ -46,7 +44,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -289,15 +286,15 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
     @Override
     protected DistributionSummary newDistributionSummary(Meter.Id id,
             DistributionStatisticConfig distributionStatisticConfig, double scale) {
-        return new StepDistributionSummary(id, clock, distributionStatisticConfig, scale, config.step().toMillis(),
-                true);
+        return new StackdriverDistributionSummary(id, clock, distributionStatisticConfig, scale,
+                config.step().toMillis());
     }
 
     @Override
     protected Timer newTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig,
             PauseDetector pauseDetector) {
-        return new StepTimer(id, clock, distributionStatisticConfig, pauseDetector, getBaseTimeUnit(),
-                this.config.step().toMillis(), true);
+        return new StackdriverTimer(id, clock, distributionStatisticConfig, pauseDetector, getBaseTimeUnit(),
+                this.config.step().toMillis());
     }
 
     @Override
@@ -508,18 +505,17 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
         Distribution distribution(HistogramSnapshot snapshot, boolean timeDomain) {
             CountAtBucket[] histogram = snapshot.histogramCounts();
 
-            // selected finite buckets (represented as a normal histogram)
-            AtomicLong truncatedSum = new AtomicLong();
-            AtomicReference<Double> last = new AtomicReference<>(0.0);
-            List<Long> bucketCounts = Arrays.stream(histogram).map(countAtBucket -> {
-                double cumulativeCount = countAtBucket.count();
-                long bucketCount = (long) (cumulativeCount - last.getAndSet(cumulativeCount));
-                truncatedSum.addAndGet(bucketCount);
-                return bucketCount;
-            }).collect(toCollection(ArrayList::new));
+            List<Long> bucketCounts = Arrays.stream(histogram)
+                .map(CountAtBucket::count)
+                .map(Double::longValue)
+                .collect(toCollection(ArrayList::new));
+            long cumulativeCount = Arrays.stream(histogram).mapToLong(c -> (long) c.count()).sum();
 
-            if (!bucketCounts.isEmpty()) {
-                int endIndex = bucketCounts.size() - 1;
+            // no-op histogram will have no buckets; other histograms should have at least
+            // the +Inf bucket
+            if (!bucketCounts.isEmpty() && bucketCounts.size() > 1) {
+                // the rightmost bucket should be the infinity bucket; do not trim that
+                int endIndex = bucketCounts.size() - 2;
                 // trim zero-count buckets on the right side of the domain
                 if (bucketCounts.get(endIndex) == 0) {
                     int lastNonZeroIndex = 0;
@@ -529,30 +525,41 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
                             break;
                         }
                     }
+                    long infCount = bucketCounts.get(bucketCounts.size() - 1);
                     bucketCounts = bucketCounts.subList(0, lastNonZeroIndex + 1);
+                    // infinite bucket count of 0 can be omitted
+                    bucketCounts.add(infCount);
                 }
             }
 
-            // add the "+infinity" bucket, which does NOT have a corresponding bucket
-            // boundary
-            bucketCounts.add(Math.max(0, snapshot.count() - truncatedSum.get()));
+            // no-op histogram
+            if (bucketCounts.isEmpty()) {
+                bucketCounts.add(0L);
+            }
 
             List<Double> bucketBoundaries = Arrays.stream(histogram)
                 .map(countAtBucket -> timeDomain ? countAtBucket.bucket(getBaseTimeUnit()) : countAtBucket.bucket())
                 .collect(toCollection(ArrayList::new));
 
+            if (bucketBoundaries.size() == 1) {
+                bucketBoundaries.remove(Double.POSITIVE_INFINITY);
+            }
+
+            // trim bucket boundaries to match bucket count trimming
             if (bucketBoundaries.size() != bucketCounts.size() - 1) {
                 bucketBoundaries = bucketBoundaries.subList(0, bucketCounts.size() - 1);
             }
 
-            // stackdriver requires at least one finite bucket
+            // Stackdriver requires at least one explicit bucket bound
             if (bucketBoundaries.isEmpty()) {
                 bucketBoundaries.add(0.0);
             }
 
             return Distribution.newBuilder()
+                // is the mean optional? better to not send as it is for a different time
+                // window than the histogram
                 .setMean(timeDomain ? snapshot.mean(getBaseTimeUnit()) : snapshot.mean())
-                .setCount(snapshot.count())
+                .setCount(cumulativeCount)
                 .setBucketOptions(Distribution.BucketOptions.newBuilder()
                     .setExplicitBuckets(
                             Distribution.BucketOptions.Explicit.newBuilder().addAllBounds(bucketBoundaries).build())

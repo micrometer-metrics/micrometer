@@ -22,7 +22,6 @@ import io.micrometer.core.instrument.DistributionSummary;
 import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.distribution.HistogramSnapshot;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
@@ -87,7 +86,6 @@ class StackdriverMeterRegistryTest {
 
     // gh-4868 is an issue when the step count is less than the histogram count
     @Test
-    @Disabled("gh-4868")
     void distributionCountMustEqualBucketCountsSum() {
         DistributionSummary ds = DistributionSummary.builder("ds").serviceLevelObjectives(1, 2).register(meterRegistry);
         ds.record(1);
@@ -102,7 +100,6 @@ class StackdriverMeterRegistryTest {
     }
 
     @Test
-    @Disabled("gh-4868")
     void distributionWithTimerShouldHaveInfinityBucket() {
         StackdriverMeterRegistry.Batch batch = meterRegistry.new Batch();
         Timer timer = Timer.builder("timer")
@@ -140,16 +137,17 @@ class StackdriverMeterRegistryTest {
     }
 
     @Test
-    void distributionWithOnlyClientSidePercentilesIsEmpty() {
+    void distributionWithOnlyClientSidePercentilesHasSingleBound() {
         StackdriverMeterRegistry.Batch batch = meterRegistry.new Batch();
         DistributionSummary ds = DistributionSummary.builder("ds")
             .publishPercentiles(0.5, 0.99)
             .register(meterRegistry);
-        ds.record(1);
+        ds.record(5);
 
         Distribution distribution = batch.distribution(ds.takeSnapshot(), false);
         assertThat(distribution.getBucketOptions().getExplicitBuckets().getBoundsList()).containsExactly(0d);
-        assertThat(distribution.getBucketCountsList()).containsExactly(0L);
+        assertThat(distribution.getBucketCountsList()).containsExactly(1L);
+        assertThat(distribution.getCount()).isOne();
     }
 
     @Test
@@ -165,6 +163,18 @@ class StackdriverMeterRegistryTest {
         Distribution distribution = batch.distribution(ds.takeSnapshot(), false);
         assertThat(distribution.getBucketOptions().getExplicitBuckets().getBoundsList()).containsExactly(3d, 4d, 5d);
         assertThat(distribution.getBucketCountsList()).containsExactly(1L, 0L, 1L, 0L);
+    }
+
+    @Test
+    void distributionWithOneExplicitBucket() {
+        StackdriverMeterRegistry.Batch batch = meterRegistry.new Batch();
+        DistributionSummary ds = DistributionSummary.builder("ds").serviceLevelObjectives(3).register(meterRegistry);
+        ds.record(1);
+        ds.record(5);
+
+        Distribution distribution = batch.distribution(ds.takeSnapshot(), false);
+        assertThat(distribution.getBucketOptions().getExplicitBuckets().getBoundsList()).containsExactly(3d);
+        assertThat(distribution.getBucketCountsList()).containsExactly(1L, 1L);
     }
 
 }
