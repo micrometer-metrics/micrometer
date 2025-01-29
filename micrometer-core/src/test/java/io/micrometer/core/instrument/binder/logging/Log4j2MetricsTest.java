@@ -36,6 +36,7 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.Iterator;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -184,6 +185,27 @@ class Log4j2MetricsTest {
         logger.info("Hello, world!");
         await().atMost(Duration.ofSeconds(1))
             .until(() -> registry.get("log4j2.events").tags("level", "info").counter().count() == 3);
+    }
+
+    // see https://github.com/micrometer-metrics/micrometer/pull/872
+    @Test
+    void shouldTriggerLoggersUpdateOnOpenAndClose() {
+        LoggerContext context = new LoggerContext("test");
+
+        AtomicInteger reconfigureCount = new AtomicInteger();
+        context.addPropertyChangeListener(event -> {
+            if (event.getNewValue() instanceof Configuration) {
+                reconfigureCount.incrementAndGet();
+            }
+        });
+
+        Log4j2Metrics metrics = new Log4j2Metrics(emptyList(), context);
+
+        assertThat(reconfigureCount.get()).isEqualTo(0);
+        metrics.bindTo(registry);
+        assertThat(reconfigureCount.get()).isEqualTo(1);
+        metrics.close();
+        assertThat(reconfigureCount.get()).isEqualTo(2);
     }
 
     @Test

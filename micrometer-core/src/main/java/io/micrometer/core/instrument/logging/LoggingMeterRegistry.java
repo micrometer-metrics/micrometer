@@ -150,7 +150,7 @@ public class LoggingMeterRegistry extends StepMeterRegistry {
                     int activeTasks = longTaskTimer.activeTasks();
                     if (!config.logInactive() && activeTasks == 0)
                         return;
-                    loggingSink.accept(print.id() + " active=" + print.value(activeTasks) + " duration="
+                    loggingSink.accept(print.id() + " active=" + wholeOrDecimal(activeTasks) + " duration="
                             + print.time(longTaskTimer.duration(getBaseTimeUnit())));
                 }, timeGauge -> {
                     double value = timeGauge.value(getBaseTimeUnit());

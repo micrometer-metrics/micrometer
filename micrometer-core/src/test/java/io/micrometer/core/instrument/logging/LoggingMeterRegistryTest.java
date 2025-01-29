@@ -17,19 +17,18 @@ package io.micrometer.core.instrument.logging;
 
 import com.google.common.util.concurrent.AtomicDouble;
 import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.Meter.Type;
 import io.micrometer.core.instrument.binder.BaseUnits;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.IntStream;
 
 import static java.util.Collections.emptyList;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -40,36 +39,42 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @author Johnny Lim
  * @author Matthieu Borgraeve
  * @author Francois Staudt
+ * @author Jonatan Ivanov
  */
 class LoggingMeterRegistryTest {
 
-    private final LoggingMeterRegistry registry = new LoggingMeterRegistry();
-
-    private final ConfigurableLoggingRegistryConfig config = new ConfigurableLoggingRegistryConfig();
-
     private final MockClock clock = new MockClock();
 
-    private final List<String> logs = new ArrayList<>();
+    private TestConfig config;
 
-    private final LoggingMeterRegistry spyLogRegistry = new LoggingMeterRegistry(config, clock, logs::add);
+    private LoggingMeterRegistry registry;
+
+    private RecordingLoggingMeterRegistry recordingRegistry;
+
+    @BeforeEach
+    void setUp() {
+        config = new TestConfig();
+        registry = new LoggingMeterRegistry();
+        recordingRegistry = new RecordingLoggingMeterRegistry(config, clock);
+    }
 
     @Test
     void defaultMeterIdPrinter() {
         LoggingMeterRegistry registry = LoggingMeterRegistry.builder(LoggingRegistryConfig.DEFAULT).build();
-        Counter counter = registry.counter("my.gauage", "tag-1", "tag-2");
+        Counter counter = registry.counter("my.counter", "key1", "test");
         LoggingMeterRegistry.Printer printer = registry.new Printer(counter);
 
-        assertThat(printer.id()).isEqualTo("my.gauage{tag-1=tag-2}");
+        assertThat(printer.id()).isEqualTo("my.counter{key1=test}");
     }
 
     @Test
     void providedSinkFromConstructorShouldBeUsed() {
-        String expectedString = "my.gauage{tag-1=tag-2} value=1";
+        String expectedString = "my.gauge{key1=test} value=1";
         AtomicReference<String> actual = new AtomicReference<>();
         AtomicInteger gaugeValue = new AtomicInteger(1);
         LoggingMeterRegistry registry = new LoggingMeterRegistry(LoggingRegistryConfig.DEFAULT, Clock.SYSTEM,
                 actual::set);
-        registry.gauge("my.gauage", Tags.of("tag-1", "tag-2"), gaugeValue);
+        registry.gauge("my.gauge", Tags.of("key1", "test"), gaugeValue);
 
         registry.publish();
         assertThat(actual.get()).isEqualTo(expectedString);
@@ -77,11 +82,11 @@ class LoggingMeterRegistryTest {
 
     @Test
     void providedSinkFromConstructorShouldBeUsedWithDefaults() {
-        String expectedString = "my.gauage{tag-1=tag-2} value=1";
+        String expectedString = "my.gauge{key1=test} value=1";
         AtomicReference<String> actual = new AtomicReference<>();
         AtomicInteger gaugeValue = new AtomicInteger(1);
         LoggingMeterRegistry registry = new LoggingMeterRegistry(actual::set);
-        registry.gauge("my.gauage", Tags.of("tag-1", "tag-2"), gaugeValue);
+        registry.gauge("my.gauge", Tags.of("key1", "test"), gaugeValue);
 
         registry.publish();
         assertThat(actual.get()).isEqualTo(expectedString);
@@ -92,10 +97,10 @@ class LoggingMeterRegistryTest {
         LoggingMeterRegistry registry = LoggingMeterRegistry.builder(LoggingRegistryConfig.DEFAULT)
             .meterIdPrinter(meter -> meter.getId().getName())
             .build();
-        Counter counter = registry.counter("my.gauage", "tag-1", "tag-2");
+        Counter counter = registry.counter("my.counter", "key1", "value");
         LoggingMeterRegistry.Printer printer = registry.new Printer(counter);
 
-        assertThat(printer.id()).isEqualTo("my.gauage");
+        assertThat(printer.id()).isEqualTo("my.counter");
     }
 
     @Test
@@ -125,8 +130,8 @@ class LoggingMeterRegistryTest {
     }
 
     @Test
-    void writeMeterUnitlessValue() {
-        final String expectedResult = "meter.1{} value=0, delta_count=30, throughput=0.5/s";
+    void writeMeterUnitLessValue() {
+        String expectedResult = "meter.1{} value=0, delta_count=30, throughput=0.5/s";
 
         Measurement m1 = new Measurement(() -> 0d, Statistic.VALUE);
         Measurement m2 = new Measurement(() -> 30d, Statistic.COUNT);
@@ -137,7 +142,7 @@ class LoggingMeterRegistryTest {
 
     @Test
     void writeMeterMultipleValues() {
-        final String expectedResult = "sheepWatch{color=black} value=5 sheep, max=1023 sheep, total=1.1s, delta_count=30 sheep, throughput=0.5 sheep/s";
+        String expectedResult = "sheepWatch{color=black} value=5 sheep, max=1023 sheep, total=1.1s, delta_count=30 sheep, throughput=0.5 sheep/s";
 
         Measurement m1 = new Measurement(() -> 5d, Statistic.VALUE);
         Measurement m2 = new Measurement(() -> 1023d, Statistic.MAX);
@@ -154,7 +159,7 @@ class LoggingMeterRegistryTest {
 
     @Test
     void writeMeterByteValues() {
-        final String expectedResult = "bus-throughput{} delta_count=300 B, throughput=5 B/s, value=64 B, value=2.125 KiB, value=8 MiB, value=1 GiB";
+        String expectedResult = "bus-throughput{} delta_count=300 B, throughput=5 B/s, value=64 B, value=2.125 KiB, value=8 MiB, value=1 GiB";
 
         Measurement m1 = new Measurement(() -> 300d, Statistic.COUNT);
         Measurement m2 = new Measurement(() -> (double) (1 << 6), Statistic.VALUE);
@@ -172,6 +177,7 @@ class LoggingMeterRegistryTest {
     void printerValueWhenGaugeIsNaNShouldPrintNaN() {
         registry.gauge("my.gauge", Double.NaN);
         Gauge gauge = registry.find("my.gauge").gauge();
+        assertThat(gauge).isNotNull();
         LoggingMeterRegistry.Printer printer = registry.new Printer(gauge);
         assertThat(printer.value(Double.NaN)).isEqualTo("NaN");
     }
@@ -180,114 +186,151 @@ class LoggingMeterRegistryTest {
     void printerValueWhenGaugeIsInfinityShouldPrintInfinity() {
         registry.gauge("my.gauge", Double.POSITIVE_INFINITY);
         Gauge gauge = registry.find("my.gauge").gauge();
+        assertThat(gauge).isNotNull();
         LoggingMeterRegistry.Printer printer = registry.new Printer(gauge);
         assertThat(printer.value(Double.POSITIVE_INFINITY)).isEqualTo("∞");
     }
 
     @Test
-    void publish_ShouldPrintDeltaCountAndThroughputWithBaseUnit_WhenMeterIsCounter() {
-        var counter = Counter.builder("my.counter").baseUnit("sheep").register(spyLogRegistry);
-        counter.increment(30);
+    void publishShouldPrintDeltaCountAndThroughputWithBaseUnitWhenMeterIsCounter() {
+        Counter.builder("my.counter").baseUnit("sheep").register(recordingRegistry).increment(30);
         clock.add(config.step());
-        spyLogRegistry.publish();
-        assertThat(logs).containsExactly("my.counter{} delta_count=30 sheep throughput=0.5 sheep/s");
+        recordingRegistry.publish();
+        assertThat(recordingRegistry.getLogs())
+            .containsExactly("my.counter{} delta_count=30 sheep throughput=0.5 sheep/s");
     }
 
     @Test
-    void publish_ShouldPrintDeltaCountAsDecimal_WhenMeterIsCounterAndCountIsDecimal() {
-        var counter = spyLogRegistry.counter("my.counter");
-        counter.increment(0.5);
+    void publishShouldPrintDeltaCountAsDecimalWhenMeterIsCounterAndCountIsDecimal() {
+        recordingRegistry.counter("my.counter").increment(0.5);
         clock.add(config.step());
-        spyLogRegistry.publish();
-        assertThat(logs).containsExactly("my.counter{} delta_count=0.5 throughput=0.008333/s");
+        recordingRegistry.publish();
+        assertThat(recordingRegistry.getLogs()).containsExactly("my.counter{} delta_count=0.5 throughput=0.008333/s");
     }
 
     @Test
-    void publish_ShouldPrintDeltaCountAndThroughput_WhenMeterIsTimer() {
-        var timer = spyLogRegistry.timer("my.timer");
+    void publishShouldPrintValueWhenMeterIsGauge() {
+        Gauge.builder("my.gauge", () -> 100).baseUnit("C").register(recordingRegistry);
+        recordingRegistry.publish();
+        assertThat(recordingRegistry.getLogs()).containsExactly("my.gauge{} value=100 C");
+    }
+
+    @Test
+    void publishShouldPrintDeltaCountAndThroughputWhenMeterIsTimer() {
+        var timer = recordingRegistry.timer("my.timer");
         IntStream.rangeClosed(1, 30).forEach(t -> timer.record(1, SECONDS));
         clock.add(config.step());
-        spyLogRegistry.publish();
-        assertThat(logs).containsExactly("my.timer{} delta_count=30 throughput=0.5/s mean=1s max=1s");
+        recordingRegistry.publish();
+        assertThat(recordingRegistry.getLogs())
+            .containsExactly("my.timer{} delta_count=30 throughput=0.5/s mean=1s max=1s");
     }
 
     @Test
-    void publish_ShouldPrintDeltaCountAndThroughput_WhenMeterIsSummary() {
-        var summary = spyLogRegistry.summary("my.summary");
+    void publishShouldPrintActiveCountAndDurationWhenMeterIsLongTaskTimer() {
+        var timer = recordingRegistry.more().longTaskTimer("my.ltt");
+        IntStream.rangeClosed(1, 30).forEach(t -> timer.start());
+        clock.add(config.step());
+        recordingRegistry.publish();
+        assertThat(recordingRegistry.getLogs()).containsExactly("my.ltt{} active=30 duration=30m");
+    }
+
+    @Test
+    void publishShouldPrintValueWhenMeterIsTimeGauge() {
+        recordingRegistry.more().timeGauge("my.time-gauge", Tags.empty(), this, MILLISECONDS, x -> 100);
+        clock.add(config.step());
+        recordingRegistry.publish();
+        assertThat(recordingRegistry.getLogs()).containsExactly("my.time-gauge{} value=0.1s");
+    }
+
+    @Test
+    void publishShouldPrintDeltaCountAndThroughputWhenMeterIsSummary() {
+        var summary = recordingRegistry.summary("my.summary");
         IntStream.rangeClosed(1, 30).forEach(t -> summary.record(1));
         clock.add(config.step());
-        spyLogRegistry.publish();
-        assertThat(logs).containsExactly("my.summary{} delta_count=30 throughput=0.5/s mean=1 max=1");
+        recordingRegistry.publish();
+        assertThat(recordingRegistry.getLogs())
+            .containsExactly("my.summary{} delta_count=30 throughput=0.5/s mean=1 max=1");
     }
 
     @Test
-    void publish_ShouldPrintDeltaCountAndThroughputWithBaseUnit_WhenMeterIsFunctionCounter() {
+    void publishShouldPrintDeltaCountAndThroughputWithBaseUnitWhenMeterIsFunctionCounter() {
         FunctionCounter.builder("my.function-counter", new AtomicDouble(), d -> 30)
             .baseUnit("sheep")
-            .register(spyLogRegistry);
+            .register(recordingRegistry);
         clock.add(config.step());
-        spyLogRegistry.publish();
-        assertThat(logs).containsExactly("my.function-counter{} delta_count=30 sheep throughput=0.5 sheep/s");
+        recordingRegistry.publish();
+        assertThat(recordingRegistry.getLogs())
+            .containsExactly("my.function-counter{} delta_count=30 sheep throughput=0.5 sheep/s");
     }
 
     @Test
-    void publish_ShouldPrintDeltaCountAsDecimal_WhenMeterIsFunctionCounterAndCountIsDecimal() {
-        spyLogRegistry.more().counter("my.function-counter", emptyList(), new AtomicDouble(), d -> 0.5);
+    void publishShouldPrintDeltaCountAsDecimalWhenMeterIsFunctionCounterAndCountIsDecimal() {
+        recordingRegistry.more().counter("my.function-counter", emptyList(), new AtomicDouble(), d -> 0.5);
         clock.add(config.step());
-        spyLogRegistry.publish();
-        assertThat(logs).containsExactly("my.function-counter{} delta_count=0.5 throughput=0.008333/s");
+        recordingRegistry.publish();
+        assertThat(recordingRegistry.getLogs())
+            .containsExactly("my.function-counter{} delta_count=0.5 throughput=0.008333/s");
     }
 
     @Test
-    void publish_ShouldPrintDeltaCountAndThroughput_WhenMeterIsFunctionTimer() {
-        spyLogRegistry.more().timer("my.function-timer", emptyList(), new AtomicDouble(), d -> 30, d -> 30, SECONDS);
+    void publishShouldPrintDeltaCountAndThroughputWhenMeterIsFunctionTimer() {
+        recordingRegistry.more().timer("my.function-timer", emptyList(), new AtomicDouble(), d -> 30, d -> 30, SECONDS);
         clock.add(config.step());
-        spyLogRegistry.publish();
-        assertThat(logs).containsExactly("my.function-timer{} delta_count=30 throughput=0.5/s mean=1s");
+        recordingRegistry.publish();
+        assertThat(recordingRegistry.getLogs())
+            .containsExactly("my.function-timer{} delta_count=30 throughput=0.5/s mean=1s");
     }
 
     @Test
-    void publish_ShouldNotPrintAnything_WhenRegistryIsDisabled() {
+    void publishShouldPrintValueWhenMeterIsGeneric() {
+        Meter.builder("my.meter", Type.OTHER, List.of(new Measurement(() -> 42.0, Statistic.UNKNOWN)))
+            .register(recordingRegistry);
+        recordingRegistry.publish();
+        assertThat(recordingRegistry.getLogs()).containsExactly("my.meter{} unknown=42");
+    }
+
+    @Test
+    void publishShouldNotPrintAnythingWhenRegistryIsDisabled() {
         config.set("enabled", "false");
-        spyLogRegistry.counter("my.counter").increment();
+        recordingRegistry.counter("my.counter").increment();
         clock.add(config.step());
-        spyLogRegistry.publish();
-        assertThat(spyLogRegistry.getMeters()).hasSize(1);
-        assertThat(logs).isEmpty();
+        recordingRegistry.publish();
+        assertThat(recordingRegistry.getMeters()).hasSize(1);
+        assertThat(recordingRegistry.getLogs()).isEmpty();
     }
 
     @Test
-    void publish_ShouldNotPrintAnything_WhenStepCountIsZeroAndLogsInactiveIsDisabled() {
-        spyLogRegistry.counter("my.counter");
-        spyLogRegistry.timer("my.timer");
-        spyLogRegistry.summary("my.summary");
-        spyLogRegistry.more().counter("my.function-counter", emptyList(), new AtomicDouble(), d -> 0);
-        spyLogRegistry.more().timer("my.function-timer", emptyList(), new AtomicDouble(), d -> 0, d -> 0, SECONDS);
+    void publishShouldNotPrintAnythingWhenStepCountIsZeroAndLogsInactiveIsDisabled() {
+        recordingRegistry.counter("my.counter");
+        recordingRegistry.timer("my.timer");
+        recordingRegistry.summary("my.summary");
+        recordingRegistry.more().counter("my.function-counter", emptyList(), new AtomicDouble(), d -> 0);
+        recordingRegistry.more().timer("my.function-timer", emptyList(), new AtomicDouble(), d -> 0, d -> 0, SECONDS);
         clock.add(config.step());
-        spyLogRegistry.publish();
-        assertThat(spyLogRegistry.getMeters()).hasSize(5);
-        assertThat(logs).isEmpty();
+        recordingRegistry.publish();
+        assertThat(recordingRegistry.getMeters()).hasSize(5);
+        assertThat(recordingRegistry.getLogs()).isEmpty();
     }
 
     @Test
-    void publish_ShouldPrintMetersWithZeroStepCount_WhenLogsInactiveIsEnabled() {
+    void publishShouldPrintMetersWithZeroStepCountWhenLogsInactiveIsEnabled() {
         config.set("logInactive", "true");
-        spyLogRegistry.counter("my.counter");
-        spyLogRegistry.timer("my.timer");
-        spyLogRegistry.summary("my.summary");
-        spyLogRegistry.more().counter("my.function-counter", emptyList(), new AtomicDouble(), d -> 0);
-        spyLogRegistry.more().timer("my.function-timer", emptyList(), new AtomicDouble(), d -> 0, d -> 0, SECONDS);
+        recordingRegistry.counter("my.counter");
+        recordingRegistry.timer("my.timer");
+        recordingRegistry.summary("my.summary");
+        recordingRegistry.more().counter("my.function-counter", emptyList(), new AtomicDouble(), d -> 0);
+        recordingRegistry.more().timer("my.function-timer", emptyList(), new AtomicDouble(), d -> 0, d -> 0, SECONDS);
         clock.add(config.step());
-        spyLogRegistry.publish();
-        assertThat(spyLogRegistry.getMeters()).hasSize(5);
-        assertThat(logs).containsExactlyInAnyOrder("my.counter{} delta_count=0 throughput=0/s",
+        recordingRegistry.publish();
+        assertThat(recordingRegistry.getMeters()).hasSize(5);
+        assertThat(recordingRegistry.getLogs()).containsExactlyInAnyOrder("my.counter{} delta_count=0 throughput=0/s",
                 "my.timer{} delta_count=0 throughput=0/s mean= max=",
                 "my.summary{} delta_count=0 throughput=0/s mean=0 max=0",
                 "my.function-counter{} delta_count=0 throughput=0/s",
                 "my.function-timer{} delta_count=0 throughput=0/s mean=");
     }
 
-    private static class ConfigurableLoggingRegistryConfig implements LoggingRegistryConfig {
+    private static class TestConfig implements LoggingRegistryConfig {
 
         private final Map<String, String> keys = new HashMap<>();
 
@@ -298,6 +341,25 @@ class LoggingMeterRegistryTest {
 
         public void set(String key, String value) {
             keys.put(prefix() + "." + key, value);
+        }
+
+    }
+
+    private static class RecordingLoggingMeterRegistry extends LoggingMeterRegistry {
+
+        private final List<String> logs;
+
+        RecordingLoggingMeterRegistry(LoggingRegistryConfig config, Clock clock) {
+            this(config, clock, new ArrayList<>());
+        }
+
+        private RecordingLoggingMeterRegistry(LoggingRegistryConfig config, Clock clock, List<String> logs) {
+            super(config, clock, logs::add);
+            this.logs = logs;
+        }
+
+        List<String> getLogs() {
+            return logs;
         }
 
     }
