@@ -55,8 +55,7 @@ public class DefaultHttpClientObservationConvention implements HttpClientObserva
 
     String getUri(HttpRequest request, @Nullable HttpResponse<?> httpResponse,
             Function<HttpRequest, String> uriMapper) {
-        return httpResponse != null && (httpResponse.statusCode() == 404 || httpResponse.statusCode() == 301)
-                ? "NOT_FOUND" : uriMapper.apply(request);
+        return uriMapper.apply(request);
     }
 
     String getStatus(@Nullable HttpResponse<?> response) {

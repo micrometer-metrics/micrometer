@@ -57,6 +57,7 @@ class MicrometerHttpClientTests {
         stubFor(any(urlEqualTo("/metrics")).willReturn(ok().withBody("body")));
         stubFor(any(urlEqualTo("/test-fault"))
             .willReturn(new ResponseDefinitionBuilder().withFault(Fault.CONNECTION_RESET_BY_PEER)));
+        stubFor(any(urlEqualTo("/resources/1")).willReturn(notFound()));
     }
 
     @Test
@@ -96,6 +97,46 @@ class MicrometerHttpClientTests {
         observedClient.send(request, HttpResponse.BodyHandlers.ofString());
 
         thenMeterRegistryContainsHttpClientTags();
+    }
+
+    @Test
+    void shouldInstrumentHttpClientWhenNotFound(WireMockRuntimeInfo wmInfo) throws IOException, InterruptedException {
+        HttpRequest request = HttpRequest.newBuilder()
+            .GET()
+            .uri(URI.create(wmInfo.getHttpBaseUrl() + "/resources/1"))
+            .build();
+
+        HttpClient observedClient = MicrometerHttpClient.instrumentationBuilder(httpClient, meterRegistry).build();
+        observedClient.send(request, HttpResponse.BodyHandlers.ofString());
+
+        then(meterRegistry.get("http.client.requests")
+            .tag("method", "GET")
+            .tag("status", "404")
+            .tag("outcome", "CLIENT_ERROR")
+            .tag("uri", "UNKNOWN")
+            .timer()).isNotNull();
+    }
+
+    @Test
+    void shouldInstrumentHttpClientWithUriPatternHeaderWhenNotFound(WireMockRuntimeInfo wmInfo)
+            throws IOException, InterruptedException {
+        String uriPattern = "/resources/{id}";
+
+        HttpRequest request = HttpRequest.newBuilder()
+            .header(MicrometerHttpClient.URI_PATTERN_HEADER, uriPattern)
+            .GET()
+            .uri(URI.create(wmInfo.getHttpBaseUrl() + "/resources/1"))
+            .build();
+
+        HttpClient observedClient = MicrometerHttpClient.instrumentationBuilder(httpClient, meterRegistry).build();
+        observedClient.send(request, HttpResponse.BodyHandlers.ofString());
+
+        then(meterRegistry.get("http.client.requests")
+            .tag("method", "GET")
+            .tag("status", "404")
+            .tag("outcome", "CLIENT_ERROR")
+            .tag("uri", uriPattern)
+            .timer()).isNotNull();
     }
 
     @Test
