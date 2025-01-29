@@ -231,8 +231,7 @@ class LoggingMeterRegistryTest {
         IntStream.rangeClosed(1, 30).forEach(t -> timer.start());
         clock.add(config.step());
         recordingRegistry.publish();
-        assertThat(recordingRegistry.getLogs())
-            .containsExactly("my.ltt{} active=30 duration=30m throughput=0.5/s mean=1m max=1m");
+        assertThat(recordingRegistry.getLogs()).containsExactly("my.ltt{} active=30 duration=30m mean=1m max=1m");
     }
 
     @Test
