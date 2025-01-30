@@ -356,7 +356,7 @@ public interface Meter {
             if (o == null || getClass() != o.getClass())
                 return false;
             Meter.Id meterId = (Meter.Id) o;
-            return Objects.equals(name, meterId.name) && Objects.equals(tags, meterId.tags);
+            return name.equals(meterId.name) && tags.equals(meterId.tags);
         }
 
         @Override
