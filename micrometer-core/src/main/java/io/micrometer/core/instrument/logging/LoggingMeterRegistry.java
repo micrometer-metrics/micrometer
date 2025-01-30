@@ -150,8 +150,11 @@ public class LoggingMeterRegistry extends StepMeterRegistry {
                     int activeTasks = longTaskTimer.activeTasks();
                     if (!config.logInactive() && activeTasks == 0)
                         return;
+                    HistogramSnapshot snapshot = longTaskTimer.takeSnapshot();
                     loggingSink.accept(print.id() + " active=" + wholeOrDecimal(activeTasks) + " duration="
-                            + print.time(longTaskTimer.duration(getBaseTimeUnit())));
+                            + print.time(longTaskTimer.duration(getBaseTimeUnit())) + " mean="
+                            + print.time(snapshot.mean(getBaseTimeUnit())) + " max="
+                            + print.time(snapshot.max(getBaseTimeUnit())));
                 }, timeGauge -> {
                     double value = timeGauge.value(getBaseTimeUnit());
                     if (!config.logInactive() && value == 0)
