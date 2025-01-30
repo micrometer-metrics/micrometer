@@ -98,7 +98,7 @@ public class DefaultLongTaskTimer extends AbstractMeter implements LongTaskTimer
 
     @Override
     public Sample start() {
-        final long startTime = clock.monotonicTime();
+        long startTime = clock.monotonicTime();
         SampleImpl sample = new SampleImpl(startTime);
         if (!activeTasks.add(sample)) {
             sample = new SampleImplCounted(startTime, nextNonZeroCounter());
@@ -132,8 +132,7 @@ public class DefaultLongTaskTimer extends AbstractMeter implements LongTaskTimer
     @Override
     public double max(TimeUnit unit) {
         try {
-            Sample oldest = activeTasks.first();
-            return oldest.duration(unit);
+            return activeTasks.first().duration(unit);
         }
         catch (NoSuchElementException e) {
             return 0.0;
@@ -278,14 +277,17 @@ public class DefaultLongTaskTimer extends AbstractMeter implements LongTaskTimer
         public String toString() {
             double durationInNanoseconds = duration(TimeUnit.NANOSECONDS);
             return "SampleImpl{" + "duration(seconds)=" + TimeUtils.nanosToUnit(durationInNanoseconds, TimeUnit.SECONDS)
-                    + ", " + "duration(nanos)=" + durationInNanoseconds + ", " + "startTimeNanos=" + startTime + '}';
+                    + ", duration(nanos)=" + durationInNanoseconds + ", startTimeNanos=" + startTime + '}';
         }
 
         @Override
-        public int compareTo(DefaultLongTaskTimer.SampleImpl o) {
-            int startCompare = Long.compare(startTime, o.startTime);
+        public int compareTo(DefaultLongTaskTimer.SampleImpl that) {
+            if (this == that) {
+                return 0;
+            }
+            int startCompare = Long.compare(this.startTime, that.startTime);
             if (startCompare == 0) {
-                return Integer.compare(counter(), o.counter());
+                return Integer.compare(this.counter(), that.counter());
             }
             return startCompare;
         }
@@ -304,6 +306,14 @@ public class DefaultLongTaskTimer extends AbstractMeter implements LongTaskTimer
         @Override
         int counter() {
             return counter;
+        }
+
+        @Override
+        public String toString() {
+            double durationInNanoseconds = duration(TimeUnit.NANOSECONDS);
+            return "SampleImplCounted{" + "duration(seconds)="
+                    + TimeUtils.nanosToUnit(durationInNanoseconds, TimeUnit.SECONDS) + ", duration(nanos)="
+                    + durationInNanoseconds + ", startTimeNanos=" + super.startTime + ", counter=" + this.counter + '}';
         }
 
     }

@@ -22,9 +22,7 @@ import io.micrometer.core.instrument.internal.DefaultLongTaskTimer.SampleImpl;
 import io.micrometer.core.instrument.internal.DefaultLongTaskTimer.SampleImplCounted;
 import io.micrometer.core.instrument.simple.SimpleConfig;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-import org.assertj.core.api.AbstractComparableAssert;
-import org.assertj.core.api.Assertions;
-import org.assertj.core.api.InstanceOfAssertFactory;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.TimeUnit;
@@ -33,36 +31,38 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class DefaultLongTaskTimerTest {
 
-    private static final InstanceOfAssertFactory<SampleImpl, AbstractComparableAssert<?, SampleImpl>> SAMPLE_IMPL_ASSERT = new InstanceOfAssertFactory<>(
-            SampleImpl.class, Assertions::assertThat);
+    private MockClock clock;
+
+    private MeterRegistry registry;
+
+    @BeforeEach
+    void setUp() {
+        clock = new MockClock();
+        registry = new SimpleMeterRegistry(SimpleConfig.DEFAULT, clock);
+    }
 
     @Test
-    void sampleTimestampCollision() {
-        final MockClock clock = new MockClock();
-        MeterRegistry registry = new SimpleMeterRegistry(SimpleConfig.DEFAULT, clock);
-        LongTaskTimer t = LongTaskTimer.builder("my.timer").register(registry);
-
-        final LongTaskTimer.Sample sample1 = t.start();
-        final LongTaskTimer.Sample sample2 = t.start();
+    void timestampCollisionShouldBeOk() {
+        LongTaskTimer ltt = LongTaskTimer.builder("my.timer").register(registry);
+        LongTaskTimer.Sample sample1 = ltt.start();
+        LongTaskTimer.Sample sample2 = ltt.start();
         assertThat(sample1).isInstanceOf(SampleImpl.class).isNotInstanceOf(SampleImplCounted.class);
         assertThat(sample2).isInstanceOf(SampleImplCounted.class).isNotSameAs(sample1);
-        final SampleImpl sampleImpl1 = (SampleImpl) sample1;
-        final SampleImpl sampleImpl2 = (SampleImpl) sample2;
 
+        SampleImpl sampleImpl1 = (SampleImpl) sample1;
+        SampleImpl sampleImpl2 = (SampleImpl) sample2;
         clock.addSeconds(1);
-
         assertThat(sample1.duration(TimeUnit.SECONDS)).isEqualTo(1);
         assertThat(sample2.duration(TimeUnit.SECONDS)).isEqualTo(1);
 
-        final LongTaskTimer.Sample sample3 = t.start();
-        final LongTaskTimer.Sample sample4 = t.start();
+        LongTaskTimer.Sample sample3 = ltt.start();
+        LongTaskTimer.Sample sample4 = ltt.start();
         assertThat(sample3).isInstanceOf(SampleImpl.class).isNotInstanceOf(SampleImplCounted.class);
         assertThat(sample4).isInstanceOf(SampleImplCounted.class);
-        final SampleImpl sampleImpl3 = (SampleImpl) sample3;
-        final SampleImpl sampleImpl4 = (SampleImpl) sample4;
 
-        assertThat(t.activeTasks()).isEqualTo(4);
-
+        SampleImpl sampleImpl3 = (SampleImpl) sample3;
+        SampleImpl sampleImpl4 = (SampleImpl) sample4;
+        assertThat(ltt.activeTasks()).isEqualTo(4);
         assertThat(sampleImpl4).isEqualByComparingTo(sampleImpl4)
             .isGreaterThan(sampleImpl3)
             .isGreaterThan(sampleImpl2)
@@ -81,35 +81,47 @@ class DefaultLongTaskTimerTest {
             .isLessThan(sampleImpl2);
 
         assertThat(sample2.stop()).isEqualTo(TimeUnit.SECONDS.toNanos(1));
-        assertThat(t.activeTasks()).isEqualTo(3);
+        assertThat(ltt.activeTasks()).isEqualTo(3);
         assertThat(sample3.stop()).isEqualTo(TimeUnit.SECONDS.toNanos(0));
-        assertThat(t.activeTasks()).isEqualTo(2);
+        assertThat(ltt.activeTasks()).isEqualTo(2);
         assertThat(sample4.stop()).isEqualTo(TimeUnit.SECONDS.toNanos(0));
-        assertThat(t.activeTasks()).isEqualTo(1);
+        assertThat(ltt.activeTasks()).isEqualTo(1);
         assertThat(sample1.stop()).isEqualTo(TimeUnit.SECONDS.toNanos(1));
-        assertThat(t.activeTasks()).isEqualTo(0);
+        assertThat(ltt.activeTasks()).isEqualTo(0);
     }
 
     @Test
-    void counterJumpsZeroAndWraps() {
+    void counterShouldSurviveOverflow() {
+        LongTaskTimer ltt = LongTaskTimer.builder("my.timer").register(registry);
+        assertThat(ltt).isInstanceOf(DefaultLongTaskTimer.class);
+        assertInternalCounterIsZero(ltt.start());
 
-        MeterRegistry registry = new SimpleMeterRegistry(SimpleConfig.DEFAULT, new MockClock());
-        LongTaskTimer t = LongTaskTimer.builder("my.timer").register(registry);
-        assertThat(t).isInstanceOf(DefaultLongTaskTimer.class);
-        final DefaultLongTaskTimer dltt = (DefaultLongTaskTimer) t;
+        ((DefaultLongTaskTimer) ltt).setCounter(Integer.MAX_VALUE - 2);
+        assertInternalCounterValue(ltt.start(), Integer.MAX_VALUE - 1);
+        assertInternalCounterValue(ltt.start(), Integer.MAX_VALUE);
+        assertInternalCounterValue(ltt.start(), Integer.MIN_VALUE);
+        assertInternalCounterValue(ltt.start(), Integer.MIN_VALUE + 1);
+    }
 
-        dltt.setCounter(Integer.MAX_VALUE - 2);
+    @Test
+    void counterShouldJumpZero() {
+        LongTaskTimer ltt = LongTaskTimer.builder("my.timer").register(registry);
+        assertThat(ltt).isInstanceOf(DefaultLongTaskTimer.class);
+        assertInternalCounterIsZero(ltt.start());
 
-        assertThat(t.start()).asInstanceOf(SAMPLE_IMPL_ASSERT).returns(0, SampleImpl::counter);
-        assertThat(t.start()).asInstanceOf(SAMPLE_IMPL_ASSERT).returns(Integer.MAX_VALUE - 1, SampleImpl::counter);
-        assertThat(t.start()).asInstanceOf(SAMPLE_IMPL_ASSERT).returns(Integer.MAX_VALUE, SampleImpl::counter);
-        assertThat(t.start()).asInstanceOf(SAMPLE_IMPL_ASSERT).returns(Integer.MIN_VALUE, SampleImpl::counter);
-        assertThat(t.start()).asInstanceOf(SAMPLE_IMPL_ASSERT).returns(Integer.MIN_VALUE + 1, SampleImpl::counter);
+        ((DefaultLongTaskTimer) ltt).setCounter(-2);
+        assertInternalCounterValue(ltt.start(), -1);
+        assertInternalCounterValue(ltt.start(), 1);
+    }
 
-        dltt.setCounter(-2);
+    private void assertInternalCounterIsZero(LongTaskTimer.Sample sample) {
+        assertThat(sample).isNotInstanceOf(SampleImplCounted.class)
+            .isInstanceOfSatisfying(SampleImpl.class, si -> assertThat(si.counter()).isZero());
+    }
 
-        assertThat(t.start()).asInstanceOf(SAMPLE_IMPL_ASSERT).returns(-1, SampleImpl::counter);
-        assertThat(t.start()).asInstanceOf(SAMPLE_IMPL_ASSERT).returns(1, SampleImpl::counter);
+    private void assertInternalCounterValue(LongTaskTimer.Sample sample, int expected) {
+        assertThat(sample).isInstanceOfSatisfying(SampleImplCounted.class,
+                sic -> assertThat(sic.counter()).isEqualTo(expected));
     }
 
 }
