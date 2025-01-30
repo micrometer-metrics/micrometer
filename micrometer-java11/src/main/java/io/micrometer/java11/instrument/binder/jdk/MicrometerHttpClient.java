@@ -235,7 +235,7 @@ public class MicrometerHttpClient extends HttpClient {
         instrumentation.stop(DefaultHttpClientObservationConvention.INSTANCE.getName(), "Timer for JDK's HttpClient",
                 () -> Tags.of(HttpClientObservationDocumentation.LowCardinalityKeys.METHOD.asString(), request.method(),
                         HttpClientObservationDocumentation.LowCardinalityKeys.URI.asString(),
-                        DefaultHttpClientObservationConvention.INSTANCE.getUri(request, res, uriMapper),
+                        DefaultHttpClientObservationConvention.INSTANCE.getUri(request, uriMapper),
                         HttpClientObservationDocumentation.LowCardinalityKeys.STATUS.asString(),
                         DefaultHttpClientObservationConvention.INSTANCE.getStatus(res),
                         HttpClientObservationDocumentation.LowCardinalityKeys.OUTCOME.asString(),

@@ -46,15 +46,14 @@ public class DefaultHttpClientObservationConvention implements HttpClientObserva
         return KeyValues.of(
                 HttpClientObservationDocumentation.LowCardinalityKeys.METHOD.withValue(httpRequest.method()),
                 HttpClientObservationDocumentation.LowCardinalityKeys.URI
-                    .withValue(getUri(httpRequest, context.getResponse(), context.getUriMapper())),
+                    .withValue(getUri(httpRequest, context.getUriMapper())),
                 HttpClientObservationDocumentation.LowCardinalityKeys.STATUS
                     .withValue(getStatus(context.getResponse())),
                 HttpClientObservationDocumentation.LowCardinalityKeys.OUTCOME
                     .withValue(getOutcome(context.getResponse())));
     }
 
-    String getUri(HttpRequest request, @Nullable HttpResponse<?> httpResponse,
-            Function<HttpRequest, String> uriMapper) {
+    String getUri(HttpRequest request, Function<HttpRequest, String> uriMapper) {
         return uriMapper.apply(request);
     }
 
