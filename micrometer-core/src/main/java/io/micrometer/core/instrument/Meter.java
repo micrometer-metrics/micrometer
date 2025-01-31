@@ -23,7 +23,6 @@ import io.micrometer.core.instrument.distribution.HistogramGauges;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -356,7 +355,7 @@ public interface Meter {
             if (o == null || getClass() != o.getClass())
                 return false;
             Meter.Id meterId = (Meter.Id) o;
-            return Objects.equals(name, meterId.name) && Objects.equals(tags, meterId.tags);
+            return name.equals(meterId.name) && tags.equals(meterId.tags);
         }
 
         @Override
