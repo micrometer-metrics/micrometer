@@ -79,7 +79,7 @@ import java.util.function.Predicate;
 @NonNullApi
 public class CountedAspect {
 
-    private static final WarnThenDebugLogger joinPointTagsFunctionLogger = new WarnThenDebugLogger(CountedAspect.class);
+    private static final WarnThenDebugLogger WARN_THEN_DEBUG_LOGGER = new WarnThenDebugLogger(CountedAspect.class);
 
     private static final Predicate<ProceedingJoinPoint> DONT_SKIP_ANYTHING = pjp -> false;
 
@@ -180,7 +180,7 @@ public class CountedAspect {
                 return function.apply(pjp);
             }
             catch (Throwable t) {
-                joinPointTagsFunctionLogger
+                WARN_THEN_DEBUG_LOGGER
                     .log("Exception thrown from the tagsBasedOnJoinPoint function configured on CountedAspect.", t);
                 return Tags.empty();
             }
@@ -283,16 +283,21 @@ public class CountedAspect {
     }
 
     private void record(ProceedingJoinPoint pjp, Counted counted, String exception, String result) {
-        Counter.Builder builder = Counter.builder(counted.value())
-            .description(counted.description().isEmpty() ? null : counted.description())
-            .tags(counted.extraTags())
-            .tag(EXCEPTION_TAG, exception)
-            .tag(RESULT_TAG, result)
-            .tags(tagsBasedOnJoinPoint.apply(pjp));
-        if (meterTagAnnotationHandler != null) {
-            meterTagAnnotationHandler.addAnnotatedParameters(builder, pjp);
+        try {
+            Counter.Builder builder = Counter.builder(counted.value())
+                .description(counted.description().isEmpty() ? null : counted.description())
+                .tags(counted.extraTags())
+                .tag(EXCEPTION_TAG, exception)
+                .tag(RESULT_TAG, result)
+                .tags(tagsBasedOnJoinPoint.apply(pjp));
+            if (meterTagAnnotationHandler != null) {
+                meterTagAnnotationHandler.addAnnotatedParameters(builder, pjp);
+            }
+            builder.register(registry).increment();
         }
-        builder.register(registry).increment();
+        catch (Throwable ex) {
+            WARN_THEN_DEBUG_LOGGER.log("Failed to record.", ex);
+        }
     }
 
     /**
