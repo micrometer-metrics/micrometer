@@ -428,6 +428,7 @@ class TimedAspectTest {
     }
 
     @Issue("#5584")
+    @Test
     void pjpFunctionThrows() {
         MeterRegistry registry = new SimpleMeterRegistry();
 
