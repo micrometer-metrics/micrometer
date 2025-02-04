@@ -46,7 +46,6 @@ jetty12 = "12.0.6"
 jersey3 = "3.1.10"
 jmh = "1.37"
 # 3.14.x is the newest version of OSS jOOQ that supports Java 8
-jooqOld = "3.14.16"
 # latest version of jOOQ to run tests against
 jooqNew = "3.19.15"
 jsr107 = "1.1.1"
@@ -55,7 +54,6 @@ junit = "5.11.4"
 kafka = "2.8.2"
 kafka-junit = "4.2.10"
 latency-utils = "2.0.3"
-logback12 = "1.2.13"
 logback-latest = "1.5.12"
 log4j = "2.24.3"
 maven-resolver = "1.9.22"
@@ -159,7 +157,7 @@ jersey3Hk2 = { module = "org.glassfish.jersey.inject:jersey-hk2", version.ref = 
 jersey3TestFrameworkJdkHttp = { module = "org.glassfish.jersey.test-framework.providers:jersey-test-framework-provider-jdk-http", version.ref = "jersey3" }
 jmhCore = { module = "org.openjdk.jmh:jmh-core", version.ref = "jmh" }
 jmhAnnotationProcessor = { module = "org.openjdk.jmh:jmh-generator-annprocess", version.ref = "jmh" }
-jooq = { module = "org.jooq:jooq", version.ref = "jooqOld" }
+jooq = { module = "org.jooq:jooq", version = "3.14.16" }
 jooqLatest = { module = "org.jooq:jooq", version.ref = "jooqNew" }
 jsonPath = { module = "com.jayway.jsonpath:json-path", version = "2.9.0" }
 jsr107 = { module = "org.jsr107.ri:cache-ri-impl", version.ref = "jsr107" }
@@ -174,7 +172,7 @@ kafkaJunit = { module = "com.github.charithe:kafka-junit", version.ref = "kafka-
 kotlinxCoroutines = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version = "1.7.3" }
 latencyUtils = { module = "org.latencyutils:LatencyUtils", version.ref = "latency-utils" }
 lmaxDisruptor = "com.lmax:disruptor:3.4.4"
-logback12 = { module = "ch.qos.logback:logback-classic", version.ref = "logback12" }
+logback12 = { module = "ch.qos.logback:logback-classic", version = "1.2.13" }
 logbackLatest = {module = "ch.qos.logback:logback-classic", version.ref = "logback-latest" }
 log4j = { module = "org.apache.logging.log4j:log4j-core", version.ref = "log4j" }
 mavenResolverConnectorBasic = { module = "org.apache.maven.resolver:maven-resolver-connector-basic", version.ref = "maven-resolver" }
