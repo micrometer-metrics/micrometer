@@ -13,6 +13,7 @@ code/
 .project
 .settings/
 .sts4-cache/
+.kotlin/
 bin/
 .factorypath
 .vscode
