@@ -284,6 +284,8 @@ class ExecutorServiceMetricsTest {
         busy.set(false);
 
         assertThat(queued).isEqualTo(2.0);
+
+        pool.shutdown();
     }
 
     @SuppressWarnings("unchecked")
