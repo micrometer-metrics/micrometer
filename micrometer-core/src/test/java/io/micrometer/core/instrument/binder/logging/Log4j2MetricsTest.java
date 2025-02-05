@@ -251,4 +251,41 @@ class Log4j2MetricsTest {
 
     }
 
+    @Test
+    void multipleRegistriesCanBeBoundWithNonRootLoggerContext() {
+        LoggerContext loggerContext = new LoggerContext("test");
+
+        LoggerConfig loggerConfig = new LoggerConfig("com.test", Level.INFO, false);
+        Configuration configuration = loggerContext.getConfiguration();
+        configuration.getRootLogger().setLevel(Level.INFO);
+        configuration.addLogger("com.test", loggerConfig);
+        loggerContext.updateLoggers(configuration);
+
+        MeterRegistry registry2 = new SimpleMeterRegistry();
+
+        Log4j2Metrics log4j2Metrics = new Log4j2Metrics(emptyList(), loggerContext);
+        log4j2Metrics.bindTo(registry);
+
+        // verify root logger
+        Logger logger = loggerContext.getLogger(Log4j2MetricsTest.class);
+        logger.info("Hello, world!");
+        assertThat(registry.get("log4j2.events").tags("level", "info").counter().count()).isEqualTo(1);
+
+        // verify other logger
+        Logger logger2 = loggerContext.getLogger("com.test");
+        logger2.info("Using other logger than root logger");
+        assertThat(registry.get("log4j2.events").tags("level", "info").counter().count()).isEqualTo(2);
+
+        log4j2Metrics.bindTo(registry2);
+
+        logger.info("Hello, world!");
+        assertThat(registry.get("log4j2.events").tags("level", "info").counter().count()).isEqualTo(3);
+        assertThat(registry2.get("log4j2.events").tags("level", "info").counter().count()).isEqualTo(1);
+
+        logger2.info("Using other logger than root logger");
+        assertThat(registry.get("log4j2.events").tags("level", "info").counter().count()).isEqualTo(4);
+        // this final check does not pass as the log event is not properly counted
+        assertThat(registry2.get("log4j2.events").tags("level", "info").counter().count()).isEqualTo(2);
+    }
+
 }

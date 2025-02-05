@@ -80,7 +80,8 @@ public class Log4j2Metrics implements MeterBinder, AutoCloseable {
     public void bindTo(MeterRegistry registry) {
         Configuration configuration = loggerContext.getConfiguration();
         LoggerConfig rootLoggerConfig = configuration.getRootLogger();
-        rootLoggerConfig.addFilter(getOrCreateMetricsFilterAndStart(registry));
+        MetricsFilter metricsFilter = getOrCreateMetricsFilterAndStart(registry);
+        rootLoggerConfig.addFilter(metricsFilter);
 
         loggerContext.getConfiguration()
             .getLoggers()
@@ -93,16 +94,16 @@ public class Log4j2Metrics implements MeterBinder, AutoCloseable {
                 }
                 Filter logFilter = loggerConfig.getFilter();
 
-                if (logFilter instanceof CompositeFilter
-                        && Arrays.stream(((CompositeFilter) logFilter).getFiltersArray())
-                            .anyMatch(innerFilter -> innerFilter instanceof MetricsFilter)) {
+                if (metricsFilter.equals(logFilter)) {
                     return;
                 }
 
-                if (logFilter instanceof MetricsFilter) {
+                if (logFilter instanceof CompositeFilter
+                        && Arrays.asList(((CompositeFilter) logFilter).getFiltersArray()).contains(metricsFilter)) {
                     return;
                 }
-                loggerConfig.addFilter(getOrCreateMetricsFilterAndStart(registry));
+
+                loggerConfig.addFilter(metricsFilter);
             });
 
         loggerContext.updateLoggers(configuration);
