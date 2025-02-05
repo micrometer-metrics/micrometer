@@ -17,6 +17,8 @@ package io.micrometer.core.instrument.binder.logging;
 
 import io.micrometer.common.lang.NonNullApi;
 import io.micrometer.common.lang.NonNullFields;
+import io.micrometer.common.util.internal.logging.InternalLogger;
+import io.micrometer.common.util.internal.logging.InternalLoggerFactory;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
@@ -60,6 +62,8 @@ public class Log4j2Metrics implements MeterBinder, AutoCloseable {
 
     private static final String METER_DESCRIPTION = "Number of log events";
 
+    private static final InternalLogger logger = InternalLoggerFactory.getInstance(Log4j2Metrics.class);
+
     private final Iterable<Tag> tags;
 
     private final LoggerContext loggerContext;
@@ -83,6 +87,10 @@ public class Log4j2Metrics implements MeterBinder, AutoCloseable {
 
     @Override
     public void bindTo(MeterRegistry registry) {
+        if (metricsFilters.containsKey(registry)) {
+            logger.warn("This Log4j2Metrics instance has already been bound to the registry {}", registry);
+            return;
+        }
         Configuration configuration = loggerContext.getConfiguration();
         registerMetricsFilter(configuration, registry);
         loggerContext.updateLoggers(configuration);

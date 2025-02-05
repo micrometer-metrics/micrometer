@@ -341,4 +341,31 @@ class Log4j2MetricsTest {
         assertThat(registry.get("log4j2.events").tags("level", "error").counter().count()).isEqualTo(1);
     }
 
+    @Test
+    void bindingTwiceToSameRegistry_doesNotDoubleCount() {
+        LoggerContext context = new LoggerContext("test");
+        Logger logger = context.getLogger("com.test");
+
+        try (Log4j2Metrics metrics = new Log4j2Metrics(emptyList(), context)) {
+            // binding twice
+            metrics.bindTo(registry);
+            metrics.bindTo(registry);
+
+            logger.error("first");
+
+            assertThat(registry.get("log4j2.events").tags("level", "error").counter().count()).isEqualTo(1);
+
+            context.reconfigure();
+
+            logger.error("second");
+            assertThat(registry.get("log4j2.events").tags("level", "error").counter().count()).isEqualTo(2);
+        }
+
+        // no additional events should be counted now
+        context.reconfigure();
+
+        logger.error("third");
+        assertThat(registry.get("log4j2.events").tags("level", "error").counter().count()).isEqualTo(2);
+    }
+
 }
