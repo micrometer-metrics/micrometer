@@ -10,6 +10,8 @@ dependencies {
     api libs.googleOauth2Http
     implementation 'org.slf4j:slf4j-api'
     compileOnly 'ch.qos.logback:logback-classic'
+    // needed for extending TimeWindowPercentileHistogram in StackdriverHistogramUtil
+    compileOnly libs.hdrhistogram
 
     testImplementation project(':micrometer-test')
 }
