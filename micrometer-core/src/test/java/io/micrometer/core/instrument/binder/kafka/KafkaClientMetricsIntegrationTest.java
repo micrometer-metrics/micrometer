@@ -68,7 +68,7 @@ class KafkaClientMetricsIntegrationTest {
         // end::producer_setup[]
 
         int producerMetrics = registry.getMeters().size();
-        assertThat(registry.getMeters()).hasSizeGreaterThan(0);
+        assertThat(registry.getMeters()).isNotEmpty();
         assertThat(registry.getMeters()).extracting(m -> m.getId().getTag("kafka.version")).allMatch(v -> !v.isEmpty());
 
         // tag::consumer_setup[]

@@ -42,7 +42,6 @@ import java.util.function.Function;
 import java.util.stream.StreamSupport;
 
 import static io.micrometer.core.instrument.util.DoubleFormat.decimalOrNan;
-import static io.micrometer.core.instrument.util.DoubleFormat.wholeOrDecimal;
 import static java.util.stream.Collectors.joining;
 
 /**
@@ -147,24 +146,24 @@ public class LoggingMeterRegistry extends StepMeterRegistry {
                     int activeTasks = longTaskTimer.activeTasks();
                     if (!config.logInactive() && activeTasks == 0)
                         return;
-                    loggingSink.accept(print.id() + " active=" + wholeOrDecimal(activeTasks) + " duration="
+                    loggingSink.accept(print.id() + " active=" + activeTasks + " duration="
                             + print.time(longTaskTimer.duration(getBaseTimeUnit())));
                 }, timeGauge -> {
                     double value = timeGauge.value(getBaseTimeUnit());
                     if (!config.logInactive() && value == 0)
                         return;
                     loggingSink.accept(print.id() + " value=" + print.time(value));
-                }, counter -> {
-                    double count = counter.count();
+                }, functionCounter -> {
+                    double count = functionCounter.count();
                     if (!config.logInactive() && count == 0)
                         return;
                     loggingSink.accept(print.id() + " throughput=" + print.rate(count));
-                }, timer -> {
-                    double count = timer.count();
+                }, functionTimer -> {
+                    double count = functionTimer.count();
                     if (!config.logInactive() && count == 0)
                         return;
                     loggingSink.accept(print.id() + " throughput=" + print.unitlessRate(count) + " mean="
-                            + print.time(timer.mean(getBaseTimeUnit())));
+                            + print.time(functionTimer.mean(getBaseTimeUnit())));
                 }, meter -> loggingSink.accept(writeMeter(meter, print)));
             });
         }
