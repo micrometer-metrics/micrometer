@@ -39,7 +39,7 @@ dependencies {
 
 ## Milestone releases
 
-Starting with the 1.15.0-M2 release, milestone releases and release candidates will be publish to Maven Central.
+Starting with the 1.15.0-M2 release, milestone releases and release candidates will be published to Maven Central.
 Note that milestone releases are for testing purposes and are not intended for production use.
 
 ## Documentation
