@@ -44,7 +44,7 @@ class TimeWindowFixedBoundaryHistogramTest {
     }
 
     @Test
-    void histogramsAreCumulative() {
+    void histogramsAreCumulativeByDefault() {
         try (TimeWindowFixedBoundaryHistogram histogram = new TimeWindowFixedBoundaryHistogram(new MockClock(),
                 DistributionStatisticConfig.builder()
                     .serviceLevelObjectives(3.0, 6, 7)
@@ -67,6 +67,74 @@ class TimeWindowFixedBoundaryHistogramTest {
             // of the last snapshot
             assertThat(histogram.takeSnapshot(0, 0, 0).histogramCounts()).containsExactly(new CountAtBucket(3.0, 1),
                     new CountAtBucket(6.0, 2), new CountAtBucket(7.0, 3));
+        }
+    }
+
+    @Test
+    void nonCumulativeHistogram() {
+        try (TimeWindowFixedBoundaryHistogram histogram = new TimeWindowFixedBoundaryHistogram(new MockClock(),
+                DistributionStatisticConfig.builder()
+                    .serviceLevelObjectives(3.0, 6, 7)
+                    .bufferLength(1)
+                    .build()
+                    .merge(DistributionStatisticConfig.DEFAULT),
+                false, false)) {
+
+            histogram.recordDouble(3);
+
+            assertThat(histogram.takeSnapshot(0, 0, 0).histogramCounts()).containsExactly(new CountAtBucket(3.0, 1),
+                    new CountAtBucket(6.0, 0), new CountAtBucket(7.0, 0));
+
+            histogram.recordDouble(6);
+            histogram.recordDouble(7);
+
+            assertThat(histogram.takeSnapshot(0, 0, 0).histogramCounts()).containsExactly(new CountAtBucket(3.0, 1),
+                    new CountAtBucket(6.0, 1), new CountAtBucket(7.0, 1));
+        }
+    }
+
+    @Test
+    void infinityBucketAdded() {
+        try (TimeWindowFixedBoundaryHistogram histogram = new TimeWindowFixedBoundaryHistogram(new MockClock(),
+                DistributionStatisticConfig.builder()
+                    .serviceLevelObjectives(3.0, 6, 7)
+                    .bufferLength(1)
+                    .build()
+                    .merge(DistributionStatisticConfig.DEFAULT),
+                false, false, true)) {
+
+            histogram.recordDouble(3);
+
+            assertThat(histogram.takeSnapshot(0, 0, 0).histogramCounts()).containsExactly(new CountAtBucket(3.0, 1),
+                    new CountAtBucket(6.0, 0), new CountAtBucket(7.0, 0),
+                    new CountAtBucket(Double.POSITIVE_INFINITY, 0));
+
+            histogram.recordDouble(6);
+            histogram.recordDouble(7);
+            histogram.recordDouble(9);
+
+            assertThat(histogram.takeSnapshot(0, 0, 0).histogramCounts()).containsExactly(new CountAtBucket(3.0, 1),
+                    new CountAtBucket(6.0, 1), new CountAtBucket(7.0, 1),
+                    new CountAtBucket(Double.POSITIVE_INFINITY, 1));
+        }
+    }
+
+    @Test
+    void infinityBucketAddedWhenNoHistogramBucketsConfigured() {
+        try (TimeWindowFixedBoundaryHistogram histogram = new TimeWindowFixedBoundaryHistogram(new MockClock(),
+                DistributionStatisticConfig.DEFAULT, false, false, true)) {
+
+            histogram.recordDouble(3);
+
+            assertThat(histogram.takeSnapshot(0, 0, 0).histogramCounts())
+                .containsExactly(new CountAtBucket(Double.POSITIVE_INFINITY, 1));
+
+            histogram.recordDouble(6);
+            histogram.recordDouble(7);
+            histogram.recordDouble(9);
+
+            assertThat(histogram.takeSnapshot(0, 0, 0).histogramCounts())
+                .containsExactly(new CountAtBucket(Double.POSITIVE_INFINITY, 4));
         }
     }
 

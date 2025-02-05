@@ -16,7 +16,6 @@
 package io.micrometer.core.instrument.distribution;
 
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.concurrent.atomic.AtomicLongArray;
 
 class FixedBoundaryHistogram {
@@ -93,32 +92,8 @@ class FixedBoundaryHistogram {
         return low < buckets.length ? low : -1;
     }
 
-    Iterator<CountAtBucket> countsAtValues(Iterator<Double> buckets) {
-        return new Iterator<CountAtBucket>() {
-            private double cumulativeCount = 0.0;
-
-            @Override
-            public boolean hasNext() {
-                return buckets.hasNext();
-            }
-
-            @Override
-            public CountAtBucket next() {
-                double bucket = buckets.next();
-                double count = countAtBucket(bucket);
-                if (isCumulativeBucketCounts) {
-                    cumulativeCount += count;
-                    return new CountAtBucket(bucket, cumulativeCount);
-                }
-                else {
-                    return new CountAtBucket(bucket, count);
-                }
-            }
-        };
-    }
-
     /**
-     * Returns the list of {@link CountAtBucket} for each of the buckets tracked by this
+     * Returns the array of {@link CountAtBucket} for each of the buckets tracked by this
      * histogram.
      */
     CountAtBucket[] getCountAtBuckets() {

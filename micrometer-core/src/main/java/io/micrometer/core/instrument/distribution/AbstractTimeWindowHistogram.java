@@ -21,8 +21,6 @@ import io.micrometer.core.instrument.config.InvalidConfigurationException;
 
 import java.io.PrintStream;
 import java.lang.reflect.Array;
-import java.util.Iterator;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 
 /**
@@ -45,8 +43,6 @@ abstract class AbstractTimeWindowHistogram<T, U> implements Histogram {
 
     private final Clock clock;
 
-    private final boolean supportsAggregablePercentiles;
-
     private final T[] ringBuffer;
 
     private short currentBucket;
@@ -65,10 +61,9 @@ abstract class AbstractTimeWindowHistogram<T, U> implements Histogram {
 
     @SuppressWarnings("unchecked")
     AbstractTimeWindowHistogram(Clock clock, DistributionStatisticConfig distributionStatisticConfig,
-            Class<T> bucketType, boolean supportsAggregablePercentiles) {
+            Class<T> bucketType) {
         this.clock = clock;
         this.distributionStatisticConfig = validateDistributionConfig(distributionStatisticConfig);
-        this.supportsAggregablePercentiles = supportsAggregablePercentiles;
 
         final int ageBuckets = distributionStatisticConfig.getBufferLength();
 
@@ -125,7 +120,11 @@ abstract class AbstractTimeWindowHistogram<T, U> implements Histogram {
 
     abstract double valueAtPercentile(double percentile);
 
-    abstract Iterator<CountAtBucket> countsAtValues(Iterator<Double> values);
+    /**
+     * @return counts at the monitored histogram buckets for this histogram
+     */
+    @Nullable
+    abstract CountAtBucket[] countsAtBuckets();
 
     void outputSummary(PrintStream out, double bucketScaling) {
     }
@@ -139,7 +138,7 @@ abstract class AbstractTimeWindowHistogram<T, U> implements Histogram {
         synchronized (this) {
             accumulateIfStale();
             values = takeValueSnapshot();
-            counts = takeCountSnapshot();
+            counts = countsAtBuckets();
         }
 
         return new HistogramSnapshot(count, total, max, values, counts, this::outputSummary);
@@ -164,25 +163,6 @@ abstract class AbstractTimeWindowHistogram<T, U> implements Histogram {
             values[i] = new ValueAtPercentile(p, valueAtPercentile(p * 100));
         }
         return values;
-    }
-
-    private CountAtBucket[] takeCountSnapshot() {
-        if (!distributionStatisticConfig.isPublishingHistogram()) {
-            return null;
-        }
-
-        final Set<Double> monitoredValues = distributionStatisticConfig
-            .getHistogramBuckets(supportsAggregablePercentiles);
-        if (monitoredValues.isEmpty()) {
-            return null;
-        }
-
-        final CountAtBucket[] counts = new CountAtBucket[monitoredValues.size()];
-        final Iterator<CountAtBucket> iterator = countsAtValues(monitoredValues.iterator());
-        for (int i = 0; i < counts.length; i++) {
-            counts[i] = iterator.next();
-        }
-        return counts;
     }
 
     public void recordLong(long value) {
