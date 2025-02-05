@@ -151,7 +151,7 @@ public class LoggingMeterRegistry extends StepMeterRegistry {
                     if (!config.logInactive() && activeTasks == 0)
                         return;
                     HistogramSnapshot snapshot = longTaskTimer.takeSnapshot();
-                    loggingSink.accept(print.id() + " active=" + wholeOrDecimal(activeTasks) + " duration="
+                    loggingSink.accept(print.id() + " active=" + activeTasks + " duration="
                             + print.time(longTaskTimer.duration(getBaseTimeUnit())) + " mean="
                             + print.time(snapshot.mean(getBaseTimeUnit())) + " max="
                             + print.time(snapshot.max(getBaseTimeUnit())));
@@ -160,18 +160,18 @@ public class LoggingMeterRegistry extends StepMeterRegistry {
                     if (!config.logInactive() && value == 0)
                         return;
                     loggingSink.accept(print.id() + " value=" + print.time(value));
-                }, counter -> {
-                    double count = counter.count();
+                }, functionCounter -> {
+                    double count = functionCounter.count();
                     if (!config.logInactive() && count == 0)
                         return;
                     loggingSink.accept(print.id() + " delta_count=" + print.humanReadableBaseUnit(count)
                             + " throughput=" + print.rate(count));
-                }, timer -> {
-                    double count = timer.count();
+                }, functionTimer -> {
+                    double count = functionTimer.count();
                     if (!config.logInactive() && count == 0)
                         return;
                     loggingSink.accept(print.id() + " delta_count=" + wholeOrDecimal(count) + " throughput="
-                            + print.unitlessRate(count) + " mean=" + print.time(timer.mean(getBaseTimeUnit())));
+                            + print.unitlessRate(count) + " mean=" + print.time(functionTimer.mean(getBaseTimeUnit())));
                 }, meter -> loggingSink.accept(writeMeter(meter, print)));
             });
         }

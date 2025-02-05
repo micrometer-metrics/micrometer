@@ -130,7 +130,7 @@ class LoggingMeterRegistryTest {
     }
 
     @Test
-    void writeMeterUnitLessValue() {
+    void writeMeterUnitlessValue() {
         String expectedResult = "meter.1{} value=0, delta_count=30, throughput=0.5/s";
 
         Measurement m1 = new Measurement(() -> 0d, Statistic.VALUE);
@@ -192,20 +192,12 @@ class LoggingMeterRegistryTest {
     }
 
     @Test
-    void publishShouldPrintDeltaCountAndThroughputWithBaseUnitWhenMeterIsCounter() {
+    void publishShouldPrintThroughputWithBaseUnitWhenMeterIsCounter() {
         Counter.builder("my.counter").baseUnit("sheep").register(recordingRegistry).increment(30);
         clock.add(config.step());
         recordingRegistry.publish();
         assertThat(recordingRegistry.getLogs())
             .containsExactly("my.counter{} delta_count=30 sheep throughput=0.5 sheep/s");
-    }
-
-    @Test
-    void publishShouldPrintDeltaCountAsDecimalWhenMeterIsCounterAndCountIsDecimal() {
-        recordingRegistry.counter("my.counter").increment(0.5);
-        clock.add(config.step());
-        recordingRegistry.publish();
-        assertThat(recordingRegistry.getLogs()).containsExactly("my.counter{} delta_count=0.5 throughput=0.008333/s");
     }
 
     @Test
@@ -216,7 +208,7 @@ class LoggingMeterRegistryTest {
     }
 
     @Test
-    void publishShouldPrintDeltaCountAndThroughputWhenMeterIsTimer() {
+    void publishShouldPrintThroughputWhenMeterIsTimer() {
         var timer = recordingRegistry.timer("my.timer");
         IntStream.rangeClosed(1, 30).forEach(t -> timer.record(1, SECONDS));
         clock.add(config.step());
@@ -243,7 +235,7 @@ class LoggingMeterRegistryTest {
     }
 
     @Test
-    void publishShouldPrintDeltaCountAndThroughputWhenMeterIsSummary() {
+    void publishShouldPrintThroughputWhenMeterIsSummary() {
         var summary = recordingRegistry.summary("my.summary");
         IntStream.rangeClosed(1, 30).forEach(t -> summary.record(1));
         clock.add(config.step());
@@ -253,7 +245,7 @@ class LoggingMeterRegistryTest {
     }
 
     @Test
-    void publishShouldPrintDeltaCountAndThroughputWithBaseUnitWhenMeterIsFunctionCounter() {
+    void publishShouldPrintThroughputWithBaseUnitWhenMeterIsFunctionCounter() {
         FunctionCounter.builder("my.function-counter", new AtomicDouble(), d -> 30)
             .baseUnit("sheep")
             .register(recordingRegistry);
@@ -264,16 +256,7 @@ class LoggingMeterRegistryTest {
     }
 
     @Test
-    void publishShouldPrintDeltaCountAsDecimalWhenMeterIsFunctionCounterAndCountIsDecimal() {
-        recordingRegistry.more().counter("my.function-counter", emptyList(), new AtomicDouble(), d -> 0.5);
-        clock.add(config.step());
-        recordingRegistry.publish();
-        assertThat(recordingRegistry.getLogs())
-            .containsExactly("my.function-counter{} delta_count=0.5 throughput=0.008333/s");
-    }
-
-    @Test
-    void publishShouldPrintDeltaCountAndThroughputWhenMeterIsFunctionTimer() {
+    void publishShouldPrintThroughputWhenMeterIsFunctionTimer() {
         recordingRegistry.more().timer("my.function-timer", emptyList(), new AtomicDouble(), d -> 30, d -> 30, SECONDS);
         clock.add(config.step());
         recordingRegistry.publish();
@@ -300,7 +283,7 @@ class LoggingMeterRegistryTest {
     }
 
     @Test
-    void publishShouldNotPrintAnythingWhenStepCountIsZeroAndLogsInactiveIsDisabled() {
+    void publishShouldNotPrintAnythingWhenStepCountIsZeroAndLogInactiveIsDisabled() {
         recordingRegistry.counter("my.counter");
         recordingRegistry.timer("my.timer");
         recordingRegistry.summary("my.summary");
@@ -313,7 +296,7 @@ class LoggingMeterRegistryTest {
     }
 
     @Test
-    void publishShouldPrintMetersWithZeroStepCountWhenLogsInactiveIsEnabled() {
+    void publishShouldPrintMetersWithZeroStepCountWhenLogInactiveIsEnabled() {
         config.set("logInactive", "true");
         recordingRegistry.counter("my.counter");
         recordingRegistry.timer("my.timer");
