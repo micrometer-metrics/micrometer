@@ -16,8 +16,7 @@
 // tag::main[]
 repositories {
 	maven { url 'https://repo.spring.io/snapshot' } // for snapshots
-	maven { url 'https://repo.spring.io/milestone' } // for milestones
-	mavenCentral() // for GA
+	mavenCentral() // for GA and milestones
 }
 
 ext {

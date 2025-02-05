@@ -78,13 +78,5 @@
 				<enabled>false</enabled>
 			</releases>
 		</repository>
-		<repository>
-			<id>spring-milestones</id>
-			<name>Spring Milestones</name>
-			<url>https://repo.spring.io/milestone</url>  <!-- For Milestones -->
-			<snapshots>
-				<enabled>false</enabled>
-			</snapshots>
-		</repository>
 	</repositories>
 </project>

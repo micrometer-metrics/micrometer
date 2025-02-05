@@ -262,14 +262,6 @@ subprojects {
                         password findProperty('SNAPSHOT_REPO_PASSWORD')
                     }
                 }
-                maven {
-                    name = 'Milestone'
-                    url = 'https://repo.spring.io/milestone'
-                    credentials {
-                        username findProperty('MILESTONE_REPO_USER')
-                        password findProperty('MILESTONE_REPO_PASSWORD')
-                    }
-                }
             }
         }
 
