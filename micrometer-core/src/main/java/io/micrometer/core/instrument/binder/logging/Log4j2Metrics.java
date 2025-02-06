@@ -17,6 +17,8 @@ package io.micrometer.core.instrument.binder.logging;
 
 import io.micrometer.common.lang.NonNullApi;
 import io.micrometer.common.lang.NonNullFields;
+import io.micrometer.common.util.internal.logging.InternalLogger;
+import io.micrometer.common.util.internal.logging.InternalLoggerFactory;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
@@ -31,9 +33,12 @@ import org.apache.logging.log4j.core.config.LoggerConfig;
 import org.apache.logging.log4j.core.filter.AbstractFilter;
 import org.apache.logging.log4j.core.filter.CompositeFilter;
 
-import java.util.*;
+import java.beans.PropertyChangeListener;
+import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import static java.util.Collections.emptyList;
 
@@ -57,11 +62,15 @@ public class Log4j2Metrics implements MeterBinder, AutoCloseable {
 
     private static final String METER_DESCRIPTION = "Number of log events";
 
+    private static final InternalLogger logger = InternalLoggerFactory.getInstance(Log4j2Metrics.class);
+
     private final Iterable<Tag> tags;
 
     private final LoggerContext loggerContext;
 
     private final ConcurrentMap<MeterRegistry, MetricsFilter> metricsFilters = new ConcurrentHashMap<>();
+
+    private final List<PropertyChangeListener> changeListeners = new CopyOnWriteArrayList<>();
 
     public Log4j2Metrics() {
         this(emptyList());
@@ -78,13 +87,35 @@ public class Log4j2Metrics implements MeterBinder, AutoCloseable {
 
     @Override
     public void bindTo(MeterRegistry registry) {
+        if (metricsFilters.containsKey(registry)) {
+            logger.warn("This Log4j2Metrics instance has already been bound to the registry {}", registry);
+            return;
+        }
         Configuration configuration = loggerContext.getConfiguration();
+        registerMetricsFilter(configuration, registry);
+        loggerContext.updateLoggers(configuration);
+
+        PropertyChangeListener changeListener = listener -> {
+            if (listener.getNewValue() instanceof Configuration && listener.getOldValue() != listener.getNewValue()) {
+                Configuration newConfiguration = (Configuration) listener.getNewValue();
+                registerMetricsFilter(newConfiguration, registry);
+                loggerContext.updateLoggers(newConfiguration);
+                if (listener.getOldValue() instanceof Configuration) {
+                    removeMetricsFilter((Configuration) listener.getOldValue());
+                }
+            }
+        };
+
+        changeListeners.add(changeListener);
+        loggerContext.addPropertyChangeListener(changeListener);
+    }
+
+    private void registerMetricsFilter(Configuration configuration, MeterRegistry registry) {
         LoggerConfig rootLoggerConfig = configuration.getRootLogger();
         MetricsFilter metricsFilter = getOrCreateMetricsFilterAndStart(registry);
         rootLoggerConfig.addFilter(metricsFilter);
 
-        loggerContext.getConfiguration()
-            .getLoggers()
+        configuration.getLoggers()
             .values()
             .stream()
             .filter(loggerConfig -> !loggerConfig.isAdditive())
@@ -105,8 +136,6 @@ public class Log4j2Metrics implements MeterBinder, AutoCloseable {
 
                 loggerConfig.addFilter(metricsFilter);
             });
-
-        loggerContext.updateLoggers(configuration);
     }
 
     private MetricsFilter getOrCreateMetricsFilterAndStart(MeterRegistry registry) {
@@ -119,26 +148,32 @@ public class Log4j2Metrics implements MeterBinder, AutoCloseable {
 
     @Override
     public void close() {
+        changeListeners.forEach(loggerContext::removePropertyChangeListener);
+        changeListeners.clear();
+
         if (!metricsFilters.isEmpty()) {
             Configuration configuration = loggerContext.getConfiguration();
-            LoggerConfig rootLoggerConfig = configuration.getRootLogger();
-            metricsFilters.values().forEach(rootLoggerConfig::removeFilter);
-
-            loggerContext.getConfiguration()
-                .getLoggers()
-                .values()
-                .stream()
-                .filter(loggerConfig -> !loggerConfig.isAdditive())
-                .forEach(loggerConfig -> {
-                    if (loggerConfig != rootLoggerConfig) {
-                        metricsFilters.values().forEach(loggerConfig::removeFilter);
-                    }
-                });
-
+            removeMetricsFilter(configuration);
             loggerContext.updateLoggers(configuration);
+
             metricsFilters.values().forEach(MetricsFilter::stop);
             metricsFilters.clear();
         }
+    }
+
+    private void removeMetricsFilter(Configuration configuration) {
+        LoggerConfig rootLoggerConfig = configuration.getRootLogger();
+        metricsFilters.values().forEach(rootLoggerConfig::removeFilter);
+
+        configuration.getLoggers()
+            .values()
+            .stream()
+            .filter(loggerConfig -> !loggerConfig.isAdditive())
+            .forEach(loggerConfig -> {
+                if (loggerConfig != rootLoggerConfig) {
+                    metricsFilters.values().forEach(loggerConfig::removeFilter);
+                }
+            });
     }
 
     @NonNullApi
