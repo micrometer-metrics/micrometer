@@ -171,7 +171,6 @@ class DynatraceMeterRegistryTest {
         DistributionSummary distributionSummary = DistributionSummary.builder("my.ds")
             .publishPercentiles(trackedPercentiles)
             .register(registry);
-        CountDownLatch lttCountDownLatch = new CountDownLatch(1);
         LongTaskTimer longTaskTimer = LongTaskTimer.builder("my.ltt")
             .publishPercentiles(trackedPercentiles)
             .register(registry);
@@ -179,12 +178,16 @@ class DynatraceMeterRegistryTest {
         timer.record(Duration.ofMillis(100));
         distributionSummary.record(100);
 
+        CountDownLatch lttCountDownLatch1 = new CountDownLatch(1);
+        CountDownLatch lttCountDownLatch2 = new CountDownLatch(1);
+
         ExecutorService executorService = Executors.newSingleThreadExecutor();
         executorService.submit(() -> longTaskTimer.record(() -> {
             clock.add(Duration.ofMillis(100));
+            lttCountDownLatch1.countDown();
 
             try {
-                assertThat(lttCountDownLatch.await(300, MILLISECONDS)).isTrue();
+                assertThat(lttCountDownLatch2.await(300, MILLISECONDS)).isTrue();
             }
             catch (InterruptedException e) {
                 throw new RuntimeException(e);
@@ -193,9 +196,10 @@ class DynatraceMeterRegistryTest {
 
         clock.add(dynatraceConfig.step());
 
+        assertThat(lttCountDownLatch1.await(100, MILLISECONDS)).isTrue();
         registry.publish();
         // release long task timer
-        lttCountDownLatch.countDown();
+        lttCountDownLatch2.countDown();
 
         verify(httpClient).send(
                 assertArg((request -> assertThat(request.getEntity()).asString()
