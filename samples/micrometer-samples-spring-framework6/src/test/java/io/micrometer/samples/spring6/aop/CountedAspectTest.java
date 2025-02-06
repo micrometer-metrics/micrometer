@@ -279,6 +279,18 @@ class CountedAspectTest {
         assertThatThrownBy(() -> meterRegistry.get("metric.none").counter()).isInstanceOf(MeterNotFoundException.class);
     }
 
+    @Test
+    void brokenExtraTags() {
+        assertThatNoException().isThrownBy(() -> countedService.brokenExtraTags());
+        assertThat(meterRegistry.getMeters()).isEmpty();
+    }
+
+    @Test
+    void brokenExtraTagsWithCompletionStage() {
+        assertThatNoException().isThrownBy(() -> asyncCountedService.brokenExtraTags().get());
+        assertThat(meterRegistry.getMeters()).isEmpty();
+    }
+
     static class CountedService {
 
         @Counted(value = "metric.none", recordFailuresOnly = true)
@@ -304,6 +316,10 @@ class CountedAspectTest {
         @Counted
         void emptyMetricNameWithException() {
             throw new RuntimeException("This is it");
+        }
+
+        @Counted(value = "metric.broken", extraTags = { "key1" })
+        void brokenExtraTags() {
         }
 
     }
@@ -352,6 +368,11 @@ class CountedAspectTest {
         @Counted(value = "metric.none", recordFailuresOnly = true)
         CompletableFuture<?> successButNullWithoutMetrics() {
             return null;
+        }
+
+        @Counted(value = "metric.broken", extraTags = { "key1" })
+        CompletableFuture<String> brokenExtraTags() {
+            return CompletableFuture.completedFuture("test");
         }
 
     }

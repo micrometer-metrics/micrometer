@@ -90,7 +90,7 @@ import java.util.function.Predicate;
 @Incubating(since = "1.0.0")
 public class TimedAspect {
 
-    private static final WarnThenDebugLogger joinPointTagsFunctionLogger = new WarnThenDebugLogger(TimedAspect.class);
+    private static final WarnThenDebugLogger WARN_THEN_DEBUG_LOGGER = new WarnThenDebugLogger(TimedAspect.class);
 
     private static final Predicate<ProceedingJoinPoint> DONT_SKIP_ANYTHING = pjp -> false;
 
@@ -176,7 +176,7 @@ public class TimedAspect {
                 return function.apply(pjp);
             }
             catch (Throwable t) {
-                joinPointTagsFunctionLogger
+                WARN_THEN_DEBUG_LOGGER
                     .log("Exception thrown from the tagsBasedOnJoinPoint function configured on TimedAspect.", t);
                 return Tags.empty();
             }
@@ -272,7 +272,7 @@ public class TimedAspect {
             sample.stop(recordBuilder(pjp, timed, metricName, exceptionClass).register(registry));
         }
         catch (Exception e) {
-            // ignoring on purpose
+            WARN_THEN_DEBUG_LOGGER.log("Failed to record.", e);
         }
     }
 
