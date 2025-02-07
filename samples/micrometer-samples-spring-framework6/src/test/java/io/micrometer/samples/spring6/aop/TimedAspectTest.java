@@ -44,8 +44,8 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 
 import static java.util.concurrent.CompletableFuture.supplyAsync;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThatNoException;
 
 class TimedAspectTest {
 
@@ -515,6 +515,32 @@ class TimedAspectTest {
         assertThat(registry.get("call").tag("extra", "override").timer().count()).isEqualTo(1);
     }
 
+    @Test
+    void brokenExtraTags() {
+        MeterRegistry registry = new SimpleMeterRegistry();
+
+        AspectJProxyFactory pf = new AspectJProxyFactory(new TimedService());
+        pf.addAspect(new TimedAspect(registry));
+
+        TimedService service = pf.getProxy();
+
+        assertThatNoException().isThrownBy(() -> service.brokenExtraTags());
+        assertThat(registry.getMeters()).isEmpty();
+    }
+
+    @Test
+    void brokenExtraTagsWithCompletionStage() {
+        MeterRegistry registry = new SimpleMeterRegistry();
+
+        AspectJProxyFactory pf = new AspectJProxyFactory(new AsyncTimedService());
+        pf.addAspect(new TimedAspect(registry));
+
+        AsyncTimedService service = pf.getProxy();
+
+        assertThatNoException().isThrownBy(() -> service.brokenExtraTags().get());
+        assertThat(registry.getMeters()).isEmpty();
+    }
+
     @Nested
     class MeterTagsTests {
 
@@ -846,6 +872,10 @@ class TimedAspectTest {
             throw new TestError();
         }
 
+        @Timed(value = "broken", extraTags = { "key1" })
+        void brokenExtraTags() {
+        }
+
     }
 
     static class AsyncTimedService {
@@ -868,6 +898,11 @@ class TimedAspectTest {
         @Timed(value = "longCallNull", extraTags = { "extra", "tag" }, longTask = true)
         CompletableFuture<?> longCallNull() {
             return null;
+        }
+
+        @Timed(value = "broken", extraTags = { "key1" })
+        CompletableFuture<String> brokenExtraTags() {
+            return CompletableFuture.completedFuture("test");
         }
 
     }
