@@ -1,112 +1,28 @@
-name: Post Release Workflow
+name: Post Release Tasks
 
 on:
-  workflow_dispatch: # Enables manual trigger
+  workflow_dispatch:
+    inputs:
+      github_ref_name:
+        description: "Current release tag in this train (e.g., v1.15.3)"
+        required: true
+      previous_ref_name:
+        description: "Previous release tag in this train (e.g., v1.14.8)"
+        required: false
 
 jobs:
-  generate-release-notes:
-    name: Generate Release Notes
+  post_release:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Check out the repository
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
-      - name: Download Changelog Generator
-        run: |
-          curl -L -o github-changelog-generator.jar https://github.com/spring-io/github-changelog-generator/releases/download/v0.0.11/github-changelog-generator.jar
-
-      - name: Generate release notes
-        id: generate_notes
-        run: |
-          java -jar github-changelog-generator.jar \
-            ${GITHUB_REF_NAME#v} \
-            changelog.md \
-            --changelog.repository="${{ github.repository }}" \
-            --github.token="${{ secrets.GITHUB_TOKEN }}"
-
-      - name: Run script to process Markdown file
-        run: python .github/workflows/process_changelog.py
-
-      - name: Update release text
-        run: |
-          echo -e "::Info::Original changelog\n\n"
-          cat changelog.md
-          
-          echo -e "\n\n"
-          echo -e "::Info::Processed changelog\n\n"
-          cat changelog-output.md
-          gh release edit ${{ github.ref_name }} --notes-file changelog-output.md
-        env:
-          GH_TOKEN: ${{ secrets.GH_ACTIONS_REPO_TOKEN }}
-
-  close-milestone:
-    name: Close Milestone
-    runs-on: ubuntu-latest
-    needs: generate-release-notes
-    steps:
-      - name: Close milestone
-        run: |
-          # Extract version without 'v' prefix
-          milestone_name=${GITHUB_REF_NAME#v}
-          
-          echo "Closing milestone: $milestone_name"
-          
-          # List milestones and find the ID
-          milestone_id=$(gh api "/repos/${{ github.repository }}/milestones?state=open" \
-            --jq ".[] | select(.title == \"$milestone_name\").number")
-          
-          if [ -z "$milestone_id" ]; then
-            echo "::error::Milestone '$milestone_name' not found"
-            exit 1
-          fi
-          
-          # Close the milestone
-          gh api --method PATCH "/repos/${{ github.repository }}/milestones/$milestone_id" \
-            -f state=closed
-          
-          echo "Successfully closed milestone: $milestone_name"
-        env:
-          GH_TOKEN: ${{ secrets.GH_ACTIONS_REPO_TOKEN }}
-
-  notify:
-    name: Send Notifications
-    runs-on: ubuntu-latest
-    needs: close-milestone
-
-    steps:
-      - name: Announce Release on `Spring-Releases` space
-        run: |
-          milestone_name=${GITHUB_REF_NAME#v}
-          curl --location --request POST '${{ secrets.SPRING_RELEASE_GCHAT_WEBHOOK_URL }}' \
-          --header 'Content-Type: application/json' \
-          --data-raw '{ text: "${{ github.event.repository.name }}-announcing ${milestone_name}"}'
-
-      - name: Post on Bluesky
-        env:
-          BSKY_IDENTIFIER: ${{ secrets.BLUESKY_HANDLE }}
-          BSKY_PASSWORD: ${{ secrets.BLUESKY_PASSWORD }}
-        run: |
-          # First get the session token
-          SESSION_TOKEN=$(curl -s -X POST https://bsky.social/xrpc/com.atproto.server.createSession \
-            -H "Content-Type: application/json" \
-            -d "{\"identifier\":\"$BSKY_IDENTIFIER\",\"password\":\"$BSKY_PASSWORD\"}" | \
-            jq -r .accessJwt)
-
-          # Create post content
-          VERSION=${GITHUB_REF_NAME#v}
-          POST_TEXT="${{ github.event.repository.name }} ${VERSION} has been released!\n\nCheck out the changelog: https://github.com/${GITHUB_REPOSITORY}/releases/tag/${GITHUB_REF_NAME}"
-
-          # Create the post
-          curl -X POST https://bsky.social/xrpc/com.atproto.repo.createRecord \
-            -H "Content-Type: application/json" \
-            -H "Authorization: Bearer ${SESSION_TOKEN}" \
-            -d "{
-              \"repo\": \"$BSKY_IDENTIFIER\",
-              \"collection\": \"app.bsky.feed.post\",
-              \"record\": {
-                \"\$type\": \"app.bsky.feed.post\",
-                \"text\": \"$POST_TEXT\",
-                \"createdAt\": \"$(date -u +"%Y-%m-%dT%H:%M:%S.000Z")\"
-              }
-            }"
+      - name: Run Post Release Tasks
+        uses: marcingrzejszczak/micrometer-release@v0.0.1
+        with:
+          gh_token: ${{ secrets.GH_ACTIONS_REPO_TOKEN }}
+          github_ref_name: ${{ github.event.inputs.github_ref_name }}
+          previous_ref_name: ${{ github.event.inputs.previous_ref_name }}
+          spring_release_gchat_webhook_url: ${{ secrets.SPRING_RELEASE_GCHAT_WEBHOOK_URL }}
+          bluesky_handle: ${{ secrets.BLUESKY_HANDLE }}
+          bluesky_password: ${{ secrets.BLUESKY_PASSWORD }}
