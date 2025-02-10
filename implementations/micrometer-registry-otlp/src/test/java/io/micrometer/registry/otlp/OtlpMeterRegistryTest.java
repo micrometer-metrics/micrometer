@@ -19,7 +19,6 @@ import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
-import io.micrometer.core.instrument.util.NamedThreadFactory;
 import io.micrometer.core.ipc.http.HttpSender;
 import io.opentelemetry.proto.metrics.v1.ExponentialHistogramDataPoint;
 import io.opentelemetry.proto.metrics.v1.HistogramDataPoint;
@@ -67,9 +66,10 @@ abstract class OtlpMeterRegistryTest {
     @BeforeEach
     void setUp() {
         this.clock = new MockClock();
+        OtlpConfig config = otlpConfig();
         this.mockHttpSender = mock(HttpSender.class);
-        this.registry = new OtlpMeterRegistry(otlpConfig(), this.clock,
-                new NamedThreadFactory("otlp-metrics-publisher"), this.mockHttpSender);
+        OtlpMetricsSender metricsSender = new OtlpHttpMetricsSender(mockHttpSender, config);
+        this.registry = OtlpMeterRegistry.builder(config).clock(clock).metricsSender(metricsSender).build();
         this.registryWithExponentialHistogram = new OtlpMeterRegistry(exponentialHistogramOtlpConfig(), clock);
     }
 

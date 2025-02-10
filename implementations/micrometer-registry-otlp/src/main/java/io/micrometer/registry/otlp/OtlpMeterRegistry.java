@@ -18,12 +18,10 @@ package io.micrometer.registry.otlp;
 import io.micrometer.common.lang.Nullable;
 import io.micrometer.common.util.internal.logging.InternalLogger;
 import io.micrometer.common.util.internal.logging.InternalLoggerFactory;
-import io.micrometer.core.instrument.Gauge;
-import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.distribution.*;
-import io.micrometer.core.instrument.distribution.Histogram;
 import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import io.micrometer.core.instrument.internal.DefaultGauge;
 import io.micrometer.core.instrument.internal.DefaultLongTaskTimer;
@@ -36,14 +34,14 @@ import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.util.MeterPartition;
 import io.micrometer.core.instrument.util.NamedThreadFactory;
 import io.micrometer.core.instrument.util.TimeUtils;
-import io.micrometer.core.ipc.http.HttpSender;
 import io.micrometer.core.ipc.http.HttpUrlConnectionSender;
 import io.micrometer.registry.otlp.internal.CumulativeBase2ExponentialHistogram;
 import io.micrometer.registry.otlp.internal.DeltaBase2ExponentialHistogram;
 import io.opentelemetry.proto.collector.metrics.v1.ExportMetricsServiceRequest;
 import io.opentelemetry.proto.common.v1.AnyValue;
 import io.opentelemetry.proto.common.v1.KeyValue;
-import io.opentelemetry.proto.metrics.v1.*;
+import io.opentelemetry.proto.metrics.v1.ResourceMetrics;
+import io.opentelemetry.proto.metrics.v1.ScopeMetrics;
 import io.opentelemetry.proto.resource.v1.Resource;
 
 import java.time.Duration;
@@ -56,8 +54,7 @@ import java.util.function.ToDoubleFunction;
 import java.util.function.ToLongFunction;
 
 /**
- * Publishes meters in OTLP (OpenTelemetry Protocol) format. HTTP with Protobuf encoding
- * is the only option currently supported.
+ * Publishes meters in OTLP (OpenTelemetry Protocol) format.
  *
  * @author Tommy Ludwig
  * @author Lenin Jaganathan
@@ -83,15 +80,13 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
 
     private final OtlpConfig config;
 
-    private final HttpSender httpSender;
+    private final OtlpMetricsSender metricsSender;
 
     private final Resource resource;
 
     private final AggregationTemporality aggregationTemporality;
 
     private final TimeUnit baseTimeUnit;
-
-    private final String userAgentHeader;
 
     // Time when the last scheduled rollOver has started. Applicable only for delta
     // flavour.
@@ -109,29 +104,36 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
     }
 
     /**
-     * Create an {@code OtlpMeterRegistry} instance.
+     * Create an {@code OtlpMeterRegistry} instance with an HTTP metrics sender.
      * @param config config
      * @param clock clock
      * @param threadFactory thread factory
      * @since 1.14.0
      */
     public OtlpMeterRegistry(OtlpConfig config, Clock clock, ThreadFactory threadFactory) {
-        this(config, clock, threadFactory, new HttpUrlConnectionSender());
+        this(config, clock, threadFactory, new OtlpHttpMetricsSender(new HttpUrlConnectionSender(), config));
     }
 
-    // VisibleForTesting
-    // not public until we decide what we want to expose in public API
-    // HttpSender may not be a good idea if we will support a non-HTTP transport
-    OtlpMeterRegistry(OtlpConfig config, Clock clock, ThreadFactory threadFactory, HttpSender httpSender) {
+    private OtlpMeterRegistry(OtlpConfig config, Clock clock, ThreadFactory threadFactory,
+            OtlpMetricsSender metricsSender) {
         super(config, clock);
         this.config = config;
         this.baseTimeUnit = config.baseTimeUnit();
-        this.httpSender = httpSender;
+        this.metricsSender = metricsSender;
         this.resource = Resource.newBuilder().addAllAttributes(getResourceAttributes()).build();
         this.aggregationTemporality = config.aggregationTemporality();
-        this.userAgentHeader = getUserAgentHeader();
         config().namingConvention(NamingConvention.dot);
         start(threadFactory);
+    }
+
+    /**
+     * Construct an {@link OtlpMeterRegistry} using the Builder pattern.
+     * @param config config for the registry; see {@link OtlpConfig#DEFAULT}
+     * @return builder
+     * @since 1.15.0
+     */
+    public static Builder builder(OtlpConfig config) {
+        return new Builder(config);
     }
 
     @Override
@@ -178,32 +180,13 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
                             .build())
                         .build())
                     .build();
-                HttpSender.Request.Builder httpRequest = this.httpSender.post(this.config.url())
-                    .withHeader("User-Agent", this.userAgentHeader)
-                    .withContent("application/x-protobuf", request.toByteArray());
-                this.config.headers().forEach(httpRequest::withHeader);
-                HttpSender.Response response = httpRequest.send();
-                if (!response.isSuccessful()) {
-                    logger.warn(
-                            "Failed to publish metrics (context: {}). Server responded with HTTP status code {} and body {}",
-                            getConfigurationContext(), response.code(), response.body());
-                }
+
+                metricsSender.send(request.toByteArray(), this.config.headers());
             }
             catch (Throwable e) {
-                logger.warn(String.format("Failed to publish metrics to OTLP receiver (context: %s)",
-                        getConfigurationContext()), e);
+                logger.warn("Failed to publish metrics to OTLP receiver", e);
             }
         }
-    }
-
-    /**
-     * Get the configuration context.
-     * @return A message containing enough information for the log reader to figure out
-     * what configuration details may have contributed to the failure.
-     */
-    private String getConfigurationContext() {
-        // While other values may contribute to failures, these two are most common
-        return "url=" + config.url() + ", resource-attributes=" + config.resourceAttributes();
     }
 
     @Override
@@ -492,13 +475,48 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
         return sloWithPositiveInf;
     }
 
-    private String getUserAgentHeader() {
-        String userAgent = "Micrometer-OTLP-Exporter-Java";
-        String version = getClass().getPackage().getImplementationVersion();
-        if (version != null) {
-            userAgent += "/" + version;
+    public static class Builder {
+
+        private final OtlpConfig otlpConfig;
+
+        private Clock clock = Clock.SYSTEM;
+
+        private ThreadFactory threadFactory = DEFAULT_THREAD_FACTORY;
+
+        private OtlpMetricsSender metricsSender;
+
+        private Builder(OtlpConfig otlpConfig) {
+            this.otlpConfig = otlpConfig;
+            this.metricsSender = new OtlpHttpMetricsSender(new HttpUrlConnectionSender(), otlpConfig);
         }
-        return userAgent;
+
+        /** Override the default clock. */
+        public Builder clock(Clock clock) {
+            this.clock = clock;
+            return this;
+        }
+
+        /** Override the default {@link ThreadFactory}. */
+        public Builder threadFactory(ThreadFactory threadFactory) {
+            this.threadFactory = threadFactory;
+            return this;
+        }
+
+        /**
+         * Provide your own custom metrics sender. This can be used to send OTLP metrics
+         * from OtlpMeterRegistry using different transports or clients than the default
+         * (HTTP using the HttpUrlConnectionSender). Encoding is in OTLP protobuf format.
+         * @see OtlpHttpMetricsSender
+         */
+        public Builder metricsSender(OtlpMetricsSender metricsSender) {
+            this.metricsSender = metricsSender;
+            return this;
+        }
+
+        public OtlpMeterRegistry build() {
+            return new OtlpMeterRegistry(otlpConfig, clock, threadFactory, metricsSender);
+        }
+
     }
 
 }

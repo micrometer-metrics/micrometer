@@ -66,6 +66,27 @@ management:
 
 If this config is empty, resource attributes are loaded from the `OTEL_RESOURCE_ATTRIBUTES` environmental variable. You can override `service.name` by setting the `OTEL_SERVICE_NAME` environmental variable, and this takes precedence over other configs.
 
+== Customize metrics sender
+
+The `OtlpMeterRegistry` has an `OtlpMetricsSender` abstraction for sending batches of metrics in OTLP protobuf format.
+
+By default, metrics from the OTLP registry are sent via HTTP to the URL specified by `OtlpConfig#url` using an `HttpUrlConnectionSender`.
+You may use a different `HttpSender` implementation by creating and configuring an instance of `OtlpHttpMetricsSender` such as in the following example using the `OkHttpSender` instead of the default `HttpUrlConnectionSender`:
+
+[source,java,subs=+attributes]
+-----
+include::{include-java}/metrics/OtlpMeterRegistryCustomizationTest.java[tags=customizeHttpSender, indent=0]
+-----
+
+You can also provide a custom implementation of `OtlpMetricsSender` that does not use HTTP at all.
+For instance, if you made a gRPC implementation, you could configure it in the following way.
+Micrometer does not currently provide a gRPC implementation of `OtlpMetricsSender`.
+
+[source,java,subs=+attributes]
+-----
+include::{include-java}/metrics/OtlpMeterRegistryCustomizationTest.java[tags=customGrpcSender, indent=0]
+-----
+
 == Supported metrics
 https://opentelemetry.io/docs/specs/otel/metrics/data-model/#metric-points[Metric points, window=_blank] define the different data points that are supported in OTLP. Micrometer supports exporting the below data points in OTLP format,
 
