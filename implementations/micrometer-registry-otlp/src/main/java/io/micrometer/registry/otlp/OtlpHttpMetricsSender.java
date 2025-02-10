@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 VMware, Inc.
+ * Copyright 2025 VMware, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,9 +18,15 @@ package io.micrometer.registry.otlp;
 import io.micrometer.common.util.internal.logging.InternalLogger;
 import io.micrometer.common.util.internal.logging.InternalLoggerFactory;
 import io.micrometer.core.ipc.http.HttpSender;
-import io.opentelemetry.proto.collector.metrics.v1.ExportMetricsServiceRequest;
 
-public class OtlpHttpMetricsSender implements OltpMetricsSender {
+import java.util.Map;
+
+/**
+ * An implementation of {@link OtlpMetricsSender} that uses an {@link HttpSender}.
+ *
+ * @since 1.15.0
+ */
+public class OtlpHttpMetricsSender implements OtlpMetricsSender {
 
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(OtlpHttpMetricsSender.class);
 
@@ -38,11 +44,11 @@ public class OtlpHttpMetricsSender implements OltpMetricsSender {
     }
 
     @Override
-    public void send(ExportMetricsServiceRequest request) {
+    public void send(byte[] metricsData, Map<String, String> headers) {
         HttpSender.Request.Builder httpRequest = this.httpSender.post(config.url())
             .withHeader("User-Agent", userAgentHeader)
-            .withContent("application/x-protobuf", request.toByteArray());
-        config.headers().forEach(httpRequest::withHeader);
+            .withContent("application/x-protobuf", metricsData);
+        headers.forEach(httpRequest::withHeader);
         try {
             HttpSender.Response response = httpRequest.send();
             if (!response.isSuccessful()) {

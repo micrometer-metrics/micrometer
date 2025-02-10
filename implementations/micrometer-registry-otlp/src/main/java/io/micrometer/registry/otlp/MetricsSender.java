@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 VMware, Inc.
+ * Copyright 2025 VMware, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,18 @@
  */
 package io.micrometer.registry.otlp;
 
-import io.opentelemetry.proto.collector.metrics.v1.ExportMetricsServiceRequest;
+import java.util.Map;
 
-public interface OltpMetricsSender {
+// intentionally not public while we incubate this concept
+// if we want to use this in other registries, it should move to micrometer-core and become public API
+interface MetricsSender {
 
-    void send(ExportMetricsServiceRequest request);
+    /**
+     * Send encoded metrics data from a {@link io.micrometer.core.instrument.MeterRegistry
+     * MeterRegistry}.
+     * @param metricsData encoded batch of metrics
+     * @param headers metadata to send as headers with the metrics data
+     */
+    void send(byte[] metricsData, Map<String, String> headers);
 
 }

@@ -80,7 +80,7 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
 
     private final OtlpConfig config;
 
-    private final OltpMetricsSender metricsSender;
+    private final OtlpMetricsSender metricsSender;
 
     private final Resource resource;
 
@@ -114,16 +114,8 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
         this(config, clock, threadFactory, new OtlpHttpMetricsSender(new HttpUrlConnectionSender(), config));
     }
 
-    /**
-     * Create an {@code OtlpMeterRegistry} instance.
-     * @param config config
-     * @param clock clock
-     * @param threadFactory thread factory
-     * @param metricsSender metrics sender
-     * @since 1.14.0
-     */
-    public OtlpMeterRegistry(OtlpConfig config, Clock clock, ThreadFactory threadFactory,
-            OltpMetricsSender metricsSender) {
+    private OtlpMeterRegistry(OtlpConfig config, Clock clock, ThreadFactory threadFactory,
+            OtlpMetricsSender metricsSender) {
         super(config, clock);
         this.config = config;
         this.baseTimeUnit = config.baseTimeUnit();
@@ -132,6 +124,16 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
         this.aggregationTemporality = config.aggregationTemporality();
         config().namingConvention(NamingConvention.dot);
         start(threadFactory);
+    }
+
+    /**
+     * Construct an {@link OtlpMeterRegistry} using the Builder pattern.
+     * @param config config for the registry; see {@link OtlpConfig#DEFAULT}
+     * @return builder
+     * @since 1.15.0
+     */
+    public static Builder builder(OtlpConfig config) {
+        return new Builder(config);
     }
 
     @Override
@@ -179,7 +181,7 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
                         .build())
                     .build();
 
-                metricsSender.send(request);
+                metricsSender.send(request.toByteArray(), this.config.headers());
             }
             catch (Throwable e) {
                 logger.warn("Failed to publish metrics to OTLP receiver", e);
@@ -471,6 +473,50 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
         double[] sloWithPositiveInf = Arrays.copyOf(sloBoundaries, sloBoundaries.length + 1);
         sloWithPositiveInf[sloWithPositiveInf.length - 1] = Double.POSITIVE_INFINITY;
         return sloWithPositiveInf;
+    }
+
+    public static class Builder {
+
+        private final OtlpConfig otlpConfig;
+
+        private Clock clock = Clock.SYSTEM;
+
+        private ThreadFactory threadFactory = DEFAULT_THREAD_FACTORY;
+
+        private OtlpMetricsSender metricsSender;
+
+        private Builder(OtlpConfig otlpConfig) {
+            this.otlpConfig = otlpConfig;
+            this.metricsSender = new OtlpHttpMetricsSender(new HttpUrlConnectionSender(), otlpConfig);
+        }
+
+        /** Override the default clock. */
+        public Builder clock(Clock clock) {
+            this.clock = clock;
+            return this;
+        }
+
+        /** Override the default {@link ThreadFactory}. */
+        public Builder threadFactory(ThreadFactory threadFactory) {
+            this.threadFactory = threadFactory;
+            return this;
+        }
+
+        /**
+         * Provide your own custom metrics sender. This can be used to send OTLP metrics
+         * from OtlpMeterRegistry using different transports or clients than the default
+         * (HTTP using the HttpUrlConnectionSender). Encoding is in OTLP protobuf format.
+         * @see OtlpHttpMetricsSender
+         */
+        public Builder metricsSender(OtlpMetricsSender metricsSender) {
+            this.metricsSender = metricsSender;
+            return this;
+        }
+
+        public OtlpMeterRegistry build() {
+            return new OtlpMeterRegistry(otlpConfig, clock, threadFactory, metricsSender);
+        }
+
     }
 
 }
