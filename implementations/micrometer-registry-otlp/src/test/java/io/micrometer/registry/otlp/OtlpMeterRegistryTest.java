@@ -53,11 +53,11 @@ abstract class OtlpMeterRegistryTest {
 
     protected MockClock clock;
 
+    private HttpSender mockHttpSender;
+
     OtlpMeterRegistry registry;
 
     OtlpMeterRegistry registryWithExponentialHistogram;
-
-    private OtlpHttpMetricsSender metricsSender;
 
     abstract OtlpConfig otlpConfig();
 
@@ -67,7 +67,8 @@ abstract class OtlpMeterRegistryTest {
     void setUp() {
         this.clock = new MockClock();
         OtlpConfig config = otlpConfig();
-        this.metricsSender = new OtlpHttpMetricsSender(mock(HttpSender.class), config);
+        this.mockHttpSender = mock(HttpSender.class);
+        OtlpMetricsSender metricsSender = new OtlpHttpMetricsSender(mockHttpSender, config);
         this.registry = OtlpMeterRegistry.builder(config).clock(clock).metricsSender(metricsSender).build();
         this.registryWithExponentialHistogram = new OtlpMeterRegistry(exponentialHistogramOtlpConfig(), clock);
     }
@@ -147,16 +148,15 @@ abstract class OtlpMeterRegistryTest {
     @Issue("#5577")
     @Test
     void httpHeaders() throws Throwable {
-        HttpSender.Request.Builder builder = HttpSender.Request.build(otlpConfig().url(),
-                this.metricsSender.httpSender);
-        when(metricsSender.httpSender.post(otlpConfig().url())).thenReturn(builder);
+        HttpSender.Request.Builder builder = HttpSender.Request.build(otlpConfig().url(), this.mockHttpSender);
+        when(mockHttpSender.post(otlpConfig().url())).thenReturn(builder);
 
-        when(metricsSender.httpSender.send(isA(HttpSender.Request.class))).thenReturn(new HttpSender.Response(200, ""));
+        when(mockHttpSender.send(isA(HttpSender.Request.class))).thenReturn(new HttpSender.Response(200, ""));
 
         writeToMetric(TimeGauge.builder("gauge.time", this, TimeUnit.MICROSECONDS, o -> 24).register(registry));
         registry.publish();
 
-        verify(this.metricsSender.httpSender).send(assertArg(request -> {
+        verify(this.mockHttpSender).send(assertArg(request -> {
             assertThat(request.getRequestHeaders().get("User-Agent")).startsWith("Micrometer-OTLP-Exporter-Java");
             assertThat(request.getRequestHeaders()).containsEntry("Content-Type", "application/x-protobuf");
         }));

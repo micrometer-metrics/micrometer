@@ -30,8 +30,7 @@ public class OtlpHttpMetricsSender implements OtlpMetricsSender {
 
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(OtlpHttpMetricsSender.class);
 
-    // VisibleForTesting
-    final HttpSender httpSender;
+    private final HttpSender httpSender;
 
     private final OtlpConfig config;
 
