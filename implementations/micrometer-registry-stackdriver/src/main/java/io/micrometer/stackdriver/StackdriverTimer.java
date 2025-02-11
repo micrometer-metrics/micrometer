@@ -26,7 +26,7 @@ import static io.micrometer.stackdriver.StackdriverHistogramUtil.stackdriverHist
 
 class StackdriverTimer extends StepTimer {
 
-    public StackdriverTimer(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig,
+    StackdriverTimer(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig,
             PauseDetector pauseDetector, TimeUnit baseTimeUnit, long stepDurationMillis) {
         super(id, clock, distributionStatisticConfig, pauseDetector, baseTimeUnit, stepDurationMillis,
                 stackdriverHistogram(clock, distributionStatisticConfig));
