@@ -15,4 +15,5 @@ jobs:
     # Until v6 is released
     uses: spring-io/spring-github-workflows/.github/workflows/spring-merge-dependabot-pr.yml@b00736028017be7e964ed0a37c907ae1bf833f39
     with:
+      autoMerge: true
       mergeArguments: --auto --squash
