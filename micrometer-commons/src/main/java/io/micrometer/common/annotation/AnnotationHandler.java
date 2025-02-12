@@ -16,6 +16,7 @@
 package io.micrometer.common.annotation;
 
 import io.micrometer.common.KeyValue;
+import io.micrometer.common.lang.Nullable;
 import io.micrometer.common.util.internal.logging.InternalLogger;
 import io.micrometer.common.util.internal.logging.InternalLoggerFactory;
 import org.aspectj.lang.ProceedingJoinPoint;
@@ -90,7 +91,7 @@ public class AnnotationHandler<T> {
         try {
             Method method = ((MethodSignature) pjp.getSignature()).getMethod();
             method = tryToTakeMethodFromTargetClass(pjp, method);
-            List<AnnotatedObject> annotatedParameters = AnnotationUtils.findAnnotatedParameters(annotationClass, method,
+            List<AnnotatedObject> annotatedParameters = AnnotationUtils.findAnnotatedObjects(annotationClass, method,
                     pjp.getArgs());
             getParametersAnnotationsFromInterfaces(pjp, method, annotatedParameters);
             addAnnotatedArguments(objectToModify, annotatedParameters);
@@ -100,7 +101,14 @@ public class AnnotationHandler<T> {
         }
     }
 
-    public void addAnnotatedMethodResult(T objectToModify, ProceedingJoinPoint pjp, Object result) {
+    /**
+     * Modifies the object with {@link KeyValue} information based on the method result.
+     * @param objectToModify object to modify
+     * @param pjp proceeding join point
+     * @param result method return value
+     * @since 1.15.0
+     */
+    public void addAnnotatedMethodResult(T objectToModify, ProceedingJoinPoint pjp, @Nullable Object result) {
         try {
             Method method = ((MethodSignature) pjp.getSignature()).getMethod();
             method = tryToTakeMethodFromTargetClass(pjp, method);
@@ -134,7 +142,7 @@ public class AnnotationHandler<T> {
             List<AnnotatedObject> annotatedParameters) {
         traverseInterfacesHierarchy(pjp, mostSpecificMethod, method -> {
             List<AnnotatedObject> annotatedParametersForActualMethod = AnnotationUtils
-                .findAnnotatedParameters(annotationClass, method, pjp.getArgs());
+                .findAnnotatedObjects(annotationClass, method, pjp.getArgs());
             // annotations for a single parameter can be `duplicated` by the ones
             // from parent interface,
             // however later on during key-based deduplication the ones from

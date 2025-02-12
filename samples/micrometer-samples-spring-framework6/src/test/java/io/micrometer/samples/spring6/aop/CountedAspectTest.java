@@ -532,7 +532,7 @@ class CountedAspectTest {
         void meterTagsWithExpression(AnnotatedTestClass annotatedClass) {
             MeterTagClassInterface service = getProxyWithCountedAspect(annotatedClass.newInstance());
 
-            service.getAnnotationForTagValueExpression("15L");
+            service.getReturnValueAnnotationForTagValueExpression("15L");
 
             assertThat(registry.get("method.counted").tag("test", "hello characters").counter().count()).isEqualTo(1);
         }
@@ -598,9 +598,9 @@ class CountedAspectTest {
         void meterTagsOnReturnValueWithText(AnnotatedTestClass annotatedClass) {
             MeterTagClassInterface service = getProxyWithCountedAspect(annotatedClass.newInstance());
 
-            service.getAnnotationForArgumentToString();
+            Long value = service.getAnnotationForReturnValueToString();
 
-            assertThat(registry.get("method.counted").tag("test", "15").counter().count()).isEqualTo(1);
+            assertThat(registry.get("method.counted").tag("test", value.toString()).counter().count()).isEqualTo(1);
         }
 
         @ParameterizedTest
@@ -608,10 +608,10 @@ class CountedAspectTest {
         void meterTagsOnReturnValueWithResolver(AnnotatedTestClass annotatedClass) {
             MeterTagClassInterface service = getProxyWithCountedAspect(annotatedClass.newInstance());
 
-            service.getAnnotationForTagValueResolver();
+            String value = service.getReturnValueAnnotationForTagValueResolver();
 
             assertThat(registry.get("method.counted")
-                .tag("test", "Value from myCustomTagValueResolver [foo]")
+                .tag("test", String.format("Value from myCustomTagValueResolver [%s]", value))
                 .counter()
                 .count()).isEqualTo(1);
         }
@@ -621,7 +621,7 @@ class CountedAspectTest {
         void meterTagsOnReturnValueWithExpression(AnnotatedTestClass annotatedClass) {
             MeterTagClassInterface service = getProxyWithCountedAspect(annotatedClass.newInstance());
 
-            service.getAnnotationForTagValueExpression();
+            service.getReturnValueAnnotationForTagValueExpression();
 
             assertThat(registry.get("method.counted").tag("test", "hello characters").counter().count()).isEqualTo(1);
         }
@@ -634,9 +634,9 @@ class CountedAspectTest {
 
             MeterTagClass service = pf.getProxy();
 
-            service.getAnnotationForPackagePrivateMethod();
+            String value = service.getReturnValueAnnotationForPackagePrivateMethod();
 
-            assertThat(registry.get("method.counted").tag("foo", "bar").counter().count()).isEqualTo(1);
+            assertThat(registry.get("method.counted").tag("foo", value).counter().count()).isEqualTo(1);
         }
 
         private <T> T getProxyWithCountedAspect(T object) {
@@ -674,22 +674,22 @@ class CountedAspectTest {
 
             @Counted
             @MeterTag(key = "test", resolver = ValueResolver.class)
-            String getAnnotationForTagValueResolver();
+            String getReturnValueAnnotationForTagValueResolver();
 
             @Counted
-            void getAnnotationForTagValueExpression(
+            void getReturnValueAnnotationForTagValueExpression(
                     @MeterTag(key = "test", expression = "'hello' + ' characters'") String test);
 
             @Counted
             @MeterTag(key = "test", expression = "'hello' + ' characters'")
-            String getAnnotationForTagValueExpression();
+            String getReturnValueAnnotationForTagValueExpression();
 
             @Counted
             void getAnnotationForArgumentToString(@MeterTag("test") Long param);
 
             @Counted
             @MeterTag("test")
-            Long getAnnotationForArgumentToString();
+            Long getAnnotationForReturnValueToString();
 
             @Counted
             void getMultipleAnnotationsForTagValueExpression(
@@ -715,20 +715,20 @@ class CountedAspectTest {
             @Counted
             @MeterTag(key = "test", resolver = ValueResolver.class)
             @Override
-            public String getAnnotationForTagValueResolver() {
+            public String getReturnValueAnnotationForTagValueResolver() {
                 return "foo";
             }
 
             @Counted
             @Override
-            public void getAnnotationForTagValueExpression(
+            public void getReturnValueAnnotationForTagValueExpression(
                     @MeterTag(key = "test", expression = "'hello' + ' characters'") String test) {
             }
 
             @Counted
             @MeterTag(key = "test", expression = "'hello' + ' characters'")
             @Override
-            public String getAnnotationForTagValueExpression() {
+            public String getReturnValueAnnotationForTagValueExpression() {
                 return "15L";
             }
 
@@ -740,7 +740,7 @@ class CountedAspectTest {
             @Counted
             @MeterTag("test")
             @Override
-            public Long getAnnotationForArgumentToString() {
+            public Long getAnnotationForReturnValueToString() {
                 return 15L;
             }
 
@@ -750,7 +750,7 @@ class CountedAspectTest {
 
             @MeterTag("foo")
             @Counted
-            String getAnnotationForPackagePrivateMethod() {
+            String getReturnValueAnnotationForPackagePrivateMethod() {
                 return "bar";
             }
 
@@ -780,18 +780,18 @@ class CountedAspectTest {
 
             @Counted
             @Override
-            public String getAnnotationForTagValueResolver() {
+            public String getReturnValueAnnotationForTagValueResolver() {
                 return "foo";
             }
 
             @Counted
             @Override
-            public void getAnnotationForTagValueExpression(String test) {
+            public void getReturnValueAnnotationForTagValueExpression(String test) {
             }
 
             @Counted
             @Override
-            public String getAnnotationForTagValueExpression() {
+            public String getReturnValueAnnotationForTagValueExpression() {
                 return "15L";
             }
 
@@ -802,7 +802,7 @@ class CountedAspectTest {
 
             @Counted
             @Override
-            public Long getAnnotationForArgumentToString() {
+            public Long getAnnotationForReturnValueToString() {
                 return 15L;
             }
 

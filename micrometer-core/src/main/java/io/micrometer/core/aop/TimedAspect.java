@@ -217,6 +217,7 @@ public class TimedAspect {
         return perform(pjp, timed, method);
     }
 
+    @Nullable
     private Object perform(ProceedingJoinPoint pjp, Timed timed, Method method) throws Throwable {
         final String metricName = timed.value().isEmpty() ? DEFAULT_METRIC_NAME : timed.value();
         final boolean stopWhenCompleted = CompletionStage.class.isAssignableFrom(method.getReturnType());
@@ -229,6 +230,7 @@ public class TimedAspect {
         }
     }
 
+    @Nullable
     private Object processWithTimer(ProceedingJoinPoint pjp, Timed timed, String metricName, boolean stopWhenCompleted)
             throws Throwable {
 
@@ -268,7 +270,7 @@ public class TimedAspect {
         }
     }
 
-    private void record(ProceedingJoinPoint pjp, Object methodResult, Timed timed, String metricName,
+    private void record(ProceedingJoinPoint pjp, @Nullable Object methodResult, Timed timed, String metricName,
             Timer.Sample sample, String exceptionClass) {
         try {
             sample.stop(recordBuilder(pjp, methodResult, timed, metricName, exceptionClass).register(registry));
@@ -278,8 +280,8 @@ public class TimedAspect {
         }
     }
 
-    private Timer.Builder recordBuilder(ProceedingJoinPoint pjp, Object methodResult, Timed timed, String metricName,
-            String exceptionClass) {
+    private Timer.Builder recordBuilder(ProceedingJoinPoint pjp, @Nullable Object methodResult, Timed timed,
+            String metricName, String exceptionClass) {
         Timer.Builder builder = Timer.builder(metricName)
             .description(timed.description().isEmpty() ? null : timed.description())
             .tags(timed.extraTags())
@@ -312,6 +314,7 @@ public class TimedAspect {
         return throwable.getCause().getClass().getSimpleName();
     }
 
+    @Nullable
     private Object processWithLongTaskTimer(ProceedingJoinPoint pjp, Timed timed, String metricName,
             boolean stopWhenCompleted) throws Throwable {
 

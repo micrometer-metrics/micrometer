@@ -189,7 +189,6 @@ public class CountedAspect {
 
     @Around("@within(io.micrometer.core.annotation.Counted) && !@annotation(io.micrometer.core.annotation.Counted) && execution(* *(..))")
     @Nullable
-
     public Object countedClass(ProceedingJoinPoint pjp) throws Throwable {
         if (shouldSkip.test(pjp)) {
             return pjp.proceed();
@@ -233,6 +232,7 @@ public class CountedAspect {
         return perform(pjp, counted);
     }
 
+    @Nullable
     private Object perform(ProceedingJoinPoint pjp, Counted counted) throws Throwable {
         final Method method = ((MethodSignature) pjp.getSignature()).getMethod();
         final boolean stopWhenCompleted = CompletionStage.class.isAssignableFrom(method.getReturnType());
@@ -271,7 +271,7 @@ public class CountedAspect {
         }
     }
 
-    private void recordCompletionResult(ProceedingJoinPoint pjp, Object methodResult, Counted counted,
+    private void recordCompletionResult(ProceedingJoinPoint pjp, @Nullable Object methodResult, Counted counted,
             Throwable throwable) {
 
         if (throwable != null) {
@@ -285,7 +285,7 @@ public class CountedAspect {
 
     }
 
-    private void record(ProceedingJoinPoint pjp, Object methodResult, Counted counted, String exception,
+    private void record(ProceedingJoinPoint pjp, @Nullable Object methodResult, Counted counted, String exception,
             String result) {
         try {
             Counter.Builder builder = Counter.builder(counted.value())
