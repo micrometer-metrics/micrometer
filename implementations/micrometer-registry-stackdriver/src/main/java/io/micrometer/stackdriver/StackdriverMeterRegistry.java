@@ -505,15 +505,17 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
         Distribution distribution(HistogramSnapshot snapshot, boolean timeDomain) {
             CountAtBucket[] histogram = snapshot.histogramCounts();
 
-            List<Long> bucketCounts = Arrays.stream(histogram)
-                .map(CountAtBucket::count)
-                .map(Double::longValue)
-                .collect(toCollection(ArrayList::new));
-            long cumulativeCount = Arrays.stream(histogram).mapToLong(c -> (long) c.count()).sum();
+            List<Long> bucketCounts = new ArrayList<>();
+            long cumulativeCount = 0L;
+            for (CountAtBucket countAtBucket : histogram) {
+                long count = (long) countAtBucket.count();
+                bucketCounts.add(count);
+                cumulativeCount += count;
+            }
 
             // no-op histogram will have no buckets; other histograms should have at least
             // the +Inf bucket
-            if (!bucketCounts.isEmpty() && bucketCounts.size() > 1) {
+            if (bucketCounts.size() > 1) {
                 // the rightmost bucket should be the infinity bucket; do not trim that
                 int endIndex = bucketCounts.size() - 2;
                 // trim zero-count buckets on the right side of the domain
@@ -525,7 +527,7 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
                             break;
                         }
                     }
-                    long infCount = bucketCounts.get(bucketCounts.size() - 1);
+                    Long infCount = bucketCounts.get(bucketCounts.size() - 1);
                     bucketCounts = bucketCounts.subList(0, lastNonZeroIndex + 1);
                     // infinite bucket count of 0 can be omitted
                     bucketCounts.add(infCount);

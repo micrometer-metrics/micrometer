@@ -23,7 +23,7 @@ import static io.micrometer.stackdriver.StackdriverHistogramUtil.stackdriverHist
 
 class StackdriverDistributionSummary extends StepDistributionSummary {
 
-    public StackdriverDistributionSummary(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig,
+    StackdriverDistributionSummary(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig,
             double scale, long stepMillis) {
         super(id, clock, distributionStatisticConfig, scale, stepMillis,
                 stackdriverHistogram(clock, distributionStatisticConfig));
