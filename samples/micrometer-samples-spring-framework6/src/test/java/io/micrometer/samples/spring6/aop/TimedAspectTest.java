@@ -30,6 +30,7 @@ import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.micrometer.core.instrument.util.TimeUtils;
 import org.aspectj.lang.ProceedingJoinPoint;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -37,6 +38,7 @@ import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.aop.aspectj.annotation.AspectJProxyFactory;
 
 import javax.annotation.Nonnull;
+import java.util.Locale;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.TimeUnit;
@@ -551,17 +553,21 @@ class TimedAspectTest {
         MeterTagAnnotationHandler meterTagAnnotationHandler = new MeterTagAnnotationHandler(aClass -> valueResolver,
                 aClass -> valueExpressionResolver);
 
+        MeterRegistry registry;
+
+        TimedAspect timedAspect;
+
+        @BeforeEach
+        void setup() {
+            registry = new SimpleMeterRegistry();
+            timedAspect = new TimedAspect(registry);
+            timedAspect.setMeterTagAnnotationHandler(meterTagAnnotationHandler);
+        }
+
         @ParameterizedTest
         @EnumSource
         void meterTagsWithText(AnnotatedTestClass annotatedClass) {
-            MeterRegistry registry = new SimpleMeterRegistry();
-            TimedAspect timedAspect = new TimedAspect(registry);
-            timedAspect.setMeterTagAnnotationHandler(meterTagAnnotationHandler);
-
-            AspectJProxyFactory pf = new AspectJProxyFactory(annotatedClass.newInstance());
-            pf.addAspect(timedAspect);
-
-            MeterTagClassInterface service = pf.getProxy();
+            MeterTagClassInterface service = getProxyWithTimedAspect(annotatedClass.newInstance());
 
             service.getAnnotationForArgumentToString(15L);
 
@@ -571,14 +577,7 @@ class TimedAspectTest {
         @ParameterizedTest
         @EnumSource
         void meterTagsWithResolver(AnnotatedTestClass annotatedClass) {
-            MeterRegistry registry = new SimpleMeterRegistry();
-            TimedAspect timedAspect = new TimedAspect(registry);
-            timedAspect.setMeterTagAnnotationHandler(meterTagAnnotationHandler);
-
-            AspectJProxyFactory pf = new AspectJProxyFactory(annotatedClass.newInstance());
-            pf.addAspect(timedAspect);
-
-            MeterTagClassInterface service = pf.getProxy();
+            MeterTagClassInterface service = getProxyWithTimedAspect(annotatedClass.newInstance());
 
             service.getAnnotationForTagValueResolver("foo");
 
@@ -591,14 +590,7 @@ class TimedAspectTest {
         @ParameterizedTest
         @EnumSource
         void meterTagsWithExpression(AnnotatedTestClass annotatedClass) {
-            MeterRegistry registry = new SimpleMeterRegistry();
-            TimedAspect timedAspect = new TimedAspect(registry);
-            timedAspect.setMeterTagAnnotationHandler(meterTagAnnotationHandler);
-
-            AspectJProxyFactory pf = new AspectJProxyFactory(annotatedClass.newInstance());
-            pf.addAspect(timedAspect);
-
-            MeterTagClassInterface service = pf.getProxy();
+            MeterTagClassInterface service = getProxyWithTimedAspect(annotatedClass.newInstance());
 
             service.getAnnotationForTagValueExpression("15L");
 
@@ -609,14 +601,7 @@ class TimedAspectTest {
         @ParameterizedTest
         @EnumSource
         void multipleMeterTagsWithExpression(AnnotatedTestClass annotatedClass) {
-            MeterRegistry registry = new SimpleMeterRegistry();
-            TimedAspect timedAspect = new TimedAspect(registry);
-            timedAspect.setMeterTagAnnotationHandler(meterTagAnnotationHandler);
-
-            AspectJProxyFactory pf = new AspectJProxyFactory(annotatedClass.newInstance());
-            pf.addAspect(timedAspect);
-
-            MeterTagClassInterface service = pf.getProxy();
+            MeterTagClassInterface service = getProxyWithTimedAspect(annotatedClass.newInstance());
 
             service.getMultipleAnnotationsForTagValueExpression(new DataHolder("zxe", "qwe"));
 
@@ -630,14 +615,7 @@ class TimedAspectTest {
         @ParameterizedTest
         @EnumSource
         void multipleMeterTagsWithinContainerWithExpression(AnnotatedTestClass annotatedClass) {
-            MeterRegistry registry = new SimpleMeterRegistry();
-            TimedAspect timedAspect = new TimedAspect(registry);
-            timedAspect.setMeterTagAnnotationHandler(meterTagAnnotationHandler);
-
-            AspectJProxyFactory pf = new AspectJProxyFactory(annotatedClass.newInstance());
-            pf.addAspect(timedAspect);
-
-            MeterTagClassInterface service = pf.getProxy();
+            MeterTagClassInterface service = getProxyWithTimedAspect(annotatedClass.newInstance());
 
             service.getMultipleAnnotationsWithContainerForTagValueExpression(new DataHolder("zxe", "qwe"));
 
@@ -651,10 +629,6 @@ class TimedAspectTest {
 
         @Test
         void meterTagOnPackagePrivateMethod() {
-            MeterRegistry registry = new SimpleMeterRegistry();
-            TimedAspect timedAspect = new TimedAspect(registry);
-            timedAspect.setMeterTagAnnotationHandler(meterTagAnnotationHandler);
-
             AspectJProxyFactory pf = new AspectJProxyFactory(new MeterTagClass());
             pf.setProxyTargetClass(true);
             pf.addAspect(timedAspect);
@@ -668,19 +642,104 @@ class TimedAspectTest {
 
         @Test
         void meterTagOnSuperClass() {
-            MeterRegistry registry = new SimpleMeterRegistry();
-            TimedAspect timedAspect = new TimedAspect(registry);
-            timedAspect.setMeterTagAnnotationHandler(meterTagAnnotationHandler);
-
-            AspectJProxyFactory pf = new AspectJProxyFactory(new MeterTagSub());
-            pf.setProxyTargetClass(true);
-            pf.addAspect(timedAspect);
-
-            MeterTagSub service = pf.getProxy();
+            MeterTagSub service = getProxyWithTimedAspect(new MeterTagSub());
 
             service.superMethod("someValue");
 
             assertThat(registry.get("method.timed").tag("superTag", "someValue").timer().count()).isEqualTo(1);
+        }
+
+        @ParameterizedTest
+        @EnumSource(AnnotatedTestClass.class)
+        void meterTagsOnReturnValueWithText(AnnotatedTestClass annotatedClass) {
+            MeterTagClassInterface service = getProxyWithTimedAspect(annotatedClass.newInstance());
+
+            Long value = service.getAnnotationForReturnValueToString();
+
+            assertThat(registry.get("method.timed").tag("test", value.toString()).timer().count()).isEqualTo(1);
+        }
+
+        @ParameterizedTest
+        @EnumSource(AnnotatedTestClass.class)
+        void meterTagsOnReturnValueWithResolver(AnnotatedTestClass annotatedClass) {
+            MeterTagClassInterface service = getProxyWithTimedAspect(annotatedClass.newInstance());
+
+            String value = service.getReturnValueAnnotationForTagValueResolver();
+
+            assertThat(registry.get("method.timed")
+                .tag("test", String.format("Value from myCustomTagValueResolver [%s]", value))
+                .timer()
+                .count()).isEqualTo(1);
+        }
+
+        @ParameterizedTest
+        @EnumSource(AnnotatedTestClass.class)
+        void meterTagsOnReturnValueWithExpression(AnnotatedTestClass annotatedClass) {
+            MeterTagClassInterface service = getProxyWithTimedAspect(annotatedClass.newInstance());
+
+            service.getReturnValueAnnotationForTagValueExpression();
+
+            assertThat(registry.get("method.timed").tag("test", "hello characters. overridden").timer().count())
+                .isEqualTo(1);
+        }
+
+        @ParameterizedTest
+        @EnumSource(AnnotatedTestClass.class)
+        void multipleMeterTagsOnReturnValueWithExpression(AnnotatedTestClass annotatedClass) {
+            MeterTagClassInterface service = getProxyWithTimedAspect(annotatedClass.newInstance());
+
+            DataHolder value = service.getMultipleAnnotationsOnReturnValueForTagValueExpression();
+
+            assertThat(registry.get("method.timed")
+                .tag("value1", "value1: " + value.value1)
+                .tag("value2", "value2. overridden: " + value.value2)
+                .timer()
+                .count()).isEqualTo(1);
+        }
+
+        @ParameterizedTest
+        @EnumSource(AnnotatedTestClass.class)
+        void multipleMeterTagsOnReturnValueWithinContainerWithExpression(AnnotatedTestClass annotatedClass) {
+            MeterTagClassInterface service = getProxyWithTimedAspect(annotatedClass.newInstance());
+
+            DataHolder value = service.getMultipleAnnotationsOnReturnValueWithContainerForTagValueExpression();
+
+            assertThat(registry.get("method.timed")
+                .tag("value1", "value1: " + value.value1)
+                .tag("value2", "value2: " + value.value2)
+                .tag("value3",
+                        "value3. overridden: " + value.value1.toUpperCase(Locale.ROOT)
+                                + value.value2.toUpperCase(Locale.ROOT))
+                .timer()
+                .count()).isEqualTo(1);
+        }
+
+        @Test
+        void meterTagOnReturnValueOnPackagePrivateMethod() {
+            AspectJProxyFactory pf = new AspectJProxyFactory(new MeterTagClass());
+            pf.setProxyTargetClass(true);
+            pf.addAspect(timedAspect);
+
+            MeterTagClass service = pf.getProxy();
+
+            String value = service.getReturnValueAnnotationForPackagePrivateMethod();
+
+            assertThat(registry.get("method.timed").tag("foo", value).timer().count()).isEqualTo(1);
+        }
+
+        @Test
+        void meterTagOnReturnValueOnSuperClass() {
+            MeterTagSub service = getProxyWithTimedAspect(new MeterTagSub());
+
+            String value = service.superMethod();
+
+            assertThat(registry.get("method.timed").tag("superTag", value).timer().count()).isEqualTo(1);
+        }
+
+        private <T> T getProxyWithTimedAspect(T object) {
+            AspectJProxyFactory pf = new AspectJProxyFactory(object);
+            pf.addAspect(timedAspect);
+            return pf.getProxy();
         }
 
     }
@@ -713,11 +772,23 @@ class TimedAspectTest {
         void getAnnotationForTagValueResolver(@MeterTag(key = "test", resolver = ValueResolver.class) String test);
 
         @Timed
+        @MeterTag(key = "test", resolver = ValueResolver.class)
+        String getReturnValueAnnotationForTagValueResolver();
+
+        @Timed
         void getAnnotationForTagValueExpression(
                 @MeterTag(key = "test", expression = "'hello' + ' characters'") String test);
 
         @Timed
+        @MeterTag(key = "test", expression = "'hello' + ' characters'")
+        String getReturnValueAnnotationForTagValueExpression();
+
+        @Timed
         void getAnnotationForArgumentToString(@MeterTag("test") Long param);
+
+        @Timed
+        @MeterTag("test")
+        Long getAnnotationForReturnValueToString();
 
         @Timed
         void getMultipleAnnotationsForTagValueExpression(
@@ -725,10 +796,21 @@ class TimedAspectTest {
                         expression = "'value2: ' + value2") DataHolder param);
 
         @Timed
+        @MeterTag(key = "value1", expression = "'value1: ' + value1")
+        @MeterTag(key = "value2", expression = "'value2: ' + value2")
+        DataHolder getMultipleAnnotationsOnReturnValueForTagValueExpression();
+
+        @Timed
         void getMultipleAnnotationsWithContainerForTagValueExpression(@MeterTags({
                 @MeterTag(key = "value1", expression = "'value1: ' + value1"),
                 @MeterTag(key = "value2", expression = "'value2: ' + value2"), @MeterTag(key = "value3",
                         expression = "'value3: ' + value1.toUpperCase + value2.toUpperCase") }) DataHolder param);
+
+        @Timed
+        @MeterTags({ @MeterTag(key = "value1", expression = "'value1: ' + value1"),
+                @MeterTag(key = "value2", expression = "'value2: ' + value2"),
+                @MeterTag(key = "value3", expression = "'value3: ' + value1.toUpperCase + value2.toUpperCase") })
+        DataHolder getMultipleAnnotationsOnReturnValueWithContainerForTagValueExpression();
 
     }
 
@@ -741,9 +823,23 @@ class TimedAspectTest {
         }
 
         @Timed
+        @MeterTag(key = "test", resolver = ValueResolver.class)
+        @Override
+        public String getReturnValueAnnotationForTagValueResolver() {
+            return "foo";
+        }
+
+        @Timed
         @Override
         public void getAnnotationForTagValueExpression(
                 @MeterTag(key = "test", expression = "'hello' + ' characters.overridden'") String test) {
+        }
+
+        @Timed
+        @MeterTag(key = "test", expression = "'hello' + ' characters. overridden'")
+        @Override
+        public String getReturnValueAnnotationForTagValueExpression() {
+            return "foo";
         }
 
         @Timed
@@ -752,7 +848,20 @@ class TimedAspectTest {
         }
 
         @Timed
+        @MeterTag("test")
+        @Override
+        public Long getAnnotationForReturnValueToString() {
+            return 15L;
+        }
+
+        @Timed
         void getAnnotationForPackagePrivateMethod(@MeterTag("foo") String foo) {
+        }
+
+        @Timed
+        @MeterTag("foo")
+        String getReturnValueAnnotationForPackagePrivateMethod() {
+            return "bar";
         }
 
         @Timed
@@ -764,11 +873,29 @@ class TimedAspectTest {
         }
 
         @Timed
+        @MeterTag(key = "value1", expression = "'value1: ' + value1")
+        @MeterTag(key = "value2", expression = "'value2. overridden: ' + value2")
+        @Override
+        public DataHolder getMultipleAnnotationsOnReturnValueForTagValueExpression() {
+            return new DataHolder("zxe", "qwe");
+        }
+
+        @Timed
         @Override
         public void getMultipleAnnotationsWithContainerForTagValueExpression(@MeterTags({
                 @MeterTag(key = "value1", expression = "'value1: ' + value1"),
                 @MeterTag(key = "value2", expression = "'value2: ' + value2"), @MeterTag(key = "value3",
                         expression = "'value3.overridden: ' + value1.toUpperCase + value2.toUpperCase") }) DataHolder param) {
+        }
+
+        @Timed
+        @MeterTags({ @MeterTag(key = "value1", expression = "'value1: ' + value1"),
+                @MeterTag(key = "value2", expression = "'value2: ' + value2"),
+                @MeterTag(key = "value3",
+                        expression = "'value3. overridden: ' + value1.toUpperCase + value2.toUpperCase") })
+        @Override
+        public DataHolder getMultipleAnnotationsOnReturnValueWithContainerForTagValueExpression() {
+            return new DataHolder("zxe", "qwe");
         }
 
     }
@@ -782,13 +909,32 @@ class TimedAspectTest {
 
         @Timed
         @Override
+        public String getReturnValueAnnotationForTagValueResolver() {
+            return "foo";
+        }
+
+        @Timed
+        @Override
         public void getAnnotationForTagValueExpression(
                 @MeterTag(key = "test", expression = "'hello' + ' characters.overridden'") String test) {
         }
 
         @Timed
+        @MeterTag(key = "test", expression = "'hello' + ' characters. overridden'")
+        @Override
+        public String getReturnValueAnnotationForTagValueExpression() {
+            return "foo";
+        }
+
+        @Timed
         @Override
         public void getAnnotationForArgumentToString(Long param) {
+        }
+
+        @Timed
+        @Override
+        public Long getAnnotationForReturnValueToString() {
+            return 15L;
         }
 
         @Timed
@@ -799,8 +945,22 @@ class TimedAspectTest {
 
         @Timed
         @Override
+        @MeterTag(key = "value2", expression = "'value2. overridden: ' + value2")
+        public DataHolder getMultipleAnnotationsOnReturnValueForTagValueExpression() {
+            return new DataHolder("zxe", "qwe");
+        }
+
+        @Timed
+        @Override
         public void getMultipleAnnotationsWithContainerForTagValueExpression(@MeterTag(key = "value3",
                 expression = "'value3.overridden: ' + value1.toUpperCase + value2.toUpperCase") DataHolder param) {
+        }
+
+        @Timed
+        @MeterTag(key = "value3", expression = "'value3. overridden: ' + value1.toUpperCase + value2.toUpperCase")
+        @Override
+        public DataHolder getMultipleAnnotationsOnReturnValueWithContainerForTagValueExpression() {
+            return new DataHolder("zxe", "qwe");
         }
 
     }
@@ -811,12 +971,24 @@ class TimedAspectTest {
         public void superMethod(@MeterTag("superTag") String foo) {
         }
 
+        @Timed
+        @MeterTag("superTag")
+        public String superMethod() {
+            return "someValue";
+        }
+
     }
 
     static class MeterTagSub extends MeterTagSuper {
 
         @Timed
         public void subMethod(@MeterTag("subTag") String foo) {
+        }
+
+        @Timed
+        @MeterTag("subTag")
+        public String subMethod() {
+            return "someValue";
         }
 
     }

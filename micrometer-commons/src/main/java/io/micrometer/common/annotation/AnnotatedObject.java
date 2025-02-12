@@ -15,6 +15,8 @@
  */
 package io.micrometer.common.annotation;
 
+import io.micrometer.common.lang.Nullable;
+
 import java.lang.annotation.Annotation;
 
 /**
@@ -25,15 +27,16 @@ import java.lang.annotation.Annotation;
  *
  * @author Christian Schwerdtfeger
  */
-class AnnotatedParameter {
+class AnnotatedObject {
 
     final Annotation annotation;
 
-    final Object argument;
+    @Nullable
+    final Object object;
 
-    AnnotatedParameter(Annotation annotation, Object argument) {
+    AnnotatedObject(Annotation annotation, @Nullable Object object) {
         this.annotation = annotation;
-        this.argument = argument;
+        this.object = object;
     }
 
 }
