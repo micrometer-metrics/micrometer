@@ -368,4 +368,49 @@ class Log4j2MetricsTest {
         assertThat(registry.get("log4j2.events").tags("level", "error").counter().count()).isEqualTo(2);
     }
 
+    @Issue("#5901")
+    @Test
+    void programmaticallyAddedLoggerConfigShouldBeCounted() {
+        LoggerContext context = new LoggerContext("test");
+
+        AtomicInteger newLoggerUpdatedWithLoggerFilter = new AtomicInteger();
+
+        // checks that updateLoggers() is called after MetricsFilter is added to the
+        // programmatically added logger
+        context.addPropertyChangeListener(event -> {
+            if (event.getNewValue() instanceof Configuration) {
+                Configuration newConfiguration = (Configuration) event.getNewValue();
+                LoggerConfig loggerConfig = newConfiguration.getLoggerConfig("com.test");
+                if (!loggerConfig.isAdditive() && loggerConfig.getFilter() instanceof Log4j2Metrics.MetricsFilter) {
+                    newLoggerUpdatedWithLoggerFilter.incrementAndGet();
+                }
+            }
+        });
+
+        Log4j2Metrics metrics = new Log4j2Metrics(emptyList(), context);
+        metrics.bindTo(registry);
+
+        Configuration configuration = context.getConfiguration();
+
+        // here we add a logger programmatically, metrics for this will not be counted
+        // until updateLoggers is called
+        LoggerConfig addedLoggerConfig = new LoggerConfig("com.test", Level.DEBUG, false);
+        configuration.addLogger("com.test", addedLoggerConfig);
+        Logger logger = context.getLogger("com.test");
+
+        assertThat(addedLoggerConfig.getFilter()).isNull();
+
+        context.updateLoggers(configuration);
+
+        assertThat(addedLoggerConfig.getFilter()).isInstanceOf(Log4j2Metrics.MetricsFilter.class);
+        assertThat(newLoggerUpdatedWithLoggerFilter).hasValue(1);
+
+        logger.debug("test");
+        assertThat(registry.get("log4j2.events").tags("level", "debug").counter().count()).isEqualTo(1);
+
+        metrics.close();
+
+        assertThat(addedLoggerConfig.getFilter()).isNull();
+    }
+
 }
