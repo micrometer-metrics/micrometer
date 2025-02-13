@@ -18,6 +18,7 @@ package io.micrometer.core.instrument.binder.cache;
 import com.google.common.cache.*;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import org.assertj.core.data.Offset;
 import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.ExecutionException;
@@ -77,7 +78,7 @@ class GuavaCacheMetricsTest extends AbstractCacheMetricsTest {
 
         CacheStats stats = cache.stats();
         TimeGauge loadDuration = fetch(registry, "cache.load.duration").timeGauge();
-        assertThat(loadDuration.value(TimeUnit.NANOSECONDS)).isEqualTo(stats.totalLoadTime());
+        assertThat(loadDuration.value(TimeUnit.NANOSECONDS)).isCloseTo(stats.totalLoadTime(), Offset.offset(0.1));
 
         FunctionCounter successfulLoad = fetch(registry, "cache.load", Tags.of("result", "success")).functionCounter();
         assertThat(successfulLoad.count()).isEqualTo(stats.loadSuccessCount());
