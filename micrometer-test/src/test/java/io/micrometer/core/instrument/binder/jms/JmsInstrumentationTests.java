@@ -27,6 +27,8 @@ import org.apache.activemq.artemis.junit.EmbeddedActiveMQExtension;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.DisabledForJreRange;
+import org.junit.jupiter.api.condition.JRE;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -40,6 +42,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  *
  * @author Brian Clozel
  */
+@DisabledForJreRange(max = JRE.JAVA_16, disabledReason = "activemq-artemis requires Java 17 since 2.39.0")
 class JmsInstrumentationTests {
 
     @RegisterExtension
