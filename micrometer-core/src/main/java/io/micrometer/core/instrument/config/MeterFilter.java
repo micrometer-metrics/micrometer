@@ -423,8 +423,17 @@ public interface MeterFilter {
     }
 
     /**
+     * Transform the Meter {@link io.micrometer.core.instrument.Meter.Id Id} when
+     * registering a {@link Meter} with a {@link MeterRegistry} that has this
+     * {@link MeterFilter} configured. Note that implementations should only depend on the
+     * Id parameter and static (at runtime) values. That is, this should not be used to
+     * implement dynamic tagging, such as tagging based on a request object that will
+     * potentially be different each time metrics are to be recorded on a Meter. For such
+     * dynamic use cases, the dynamic tagging should be handled as part of the
+     * instrumentation, creating abstractions as necessary for end-users to customize the
+     * tagging behavior.
      * @param id Id to transform.
-     * @return Transformations to any part of the id.
+     * @return the transformed Id
      */
     default Meter.Id map(Meter.Id id) {
         return id;

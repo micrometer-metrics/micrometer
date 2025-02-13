@@ -101,7 +101,8 @@ This filter adds a name prefix and an additional tag conditionally to meters sta
 [IMPORTANT]
 .`MeterFilter` implementations of `map` should be "static"
 ====
-The `id` parameter is the only dynamic input that changes over the lifecycle of the `MeterFilter` on which they should depend.
+The `id` parameter is the only dynamic input that changes over the lifecycle of the `MeterFilter` on which `MeterFilter` implementations should depend.
+Depending on a value that will be fixed at runtime such as an instance ID or hostname is fine because it does not change after application start-up.
 Use cases where dynamic behavior is desired, such as defining tags based on the context of a request etc., should be implemented in the instrumentation itself rather than in a `MeterFilter`.
 For example, see `MongoMetricsCommandListener` and the `MongoCommandTagsProvider` it takes in a constructor argument as well as the default implementation `DefaultMongoCommandTagsProvider`.
 See also xref:../observation/components.adoc#micrometer-observation-predicates-filters[ObservationFilter] which allows dynamic implementations.
