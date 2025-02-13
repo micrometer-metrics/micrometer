@@ -220,6 +220,25 @@ public abstract class HttpClientTimingInstrumentationVerificationTests<CLIENT>
         assertThat(timer.totalTime(TimeUnit.NANOSECONDS)).isPositive();
     }
 
+    @ParameterizedTest
+    @EnumSource
+    void templatedPathWith404Response(TestType testType, WireMockRuntimeInfo wmRuntimeInfo) {
+        checkAndSetupTestForTestType(testType);
+
+        stubFor(post(anyUrl()).willReturn(notFound()));
+
+        // Some HTTP clients fail POST requests with a null body
+        String templatedPath = "/fxrates/{currencypair}";
+        sendHttpRequest(instrumentedClient(testType), HttpMethod.POST, new byte[0],
+                URI.create(wmRuntimeInfo.getHttpBaseUrl()), templatedPath, "NANA");
+
+        Timer timer = getRegistry().get(timerName())
+            .tags("method", "POST", "status", "404", "outcome", "CLIENT_ERROR", "uri", templatedPath)
+            .timer();
+        assertThat(timer.count()).isEqualTo(1);
+        assertThat(timer.totalTime(TimeUnit.NANOSECONDS)).isPositive();
+    }
+
     // TODO this test doesn't need to be parameterized but the custom resolver for
     // Before/After methods doesn't like when it isn't.
     @ParameterizedTest
