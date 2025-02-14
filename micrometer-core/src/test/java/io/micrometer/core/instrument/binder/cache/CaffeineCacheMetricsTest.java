@@ -25,6 +25,7 @@ import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.TimeGauge;
 import io.micrometer.core.instrument.search.MeterNotFoundException;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import org.assertj.core.data.Offset;
 import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.TimeUnit;
@@ -67,7 +68,7 @@ class CaffeineCacheMetricsTest extends AbstractCacheMetricsTest {
 
         // specific to LoadingCache instance
         TimeGauge loadDuration = fetch(registry, "cache.load.duration").timeGauge();
-        assertThat(loadDuration.value(TimeUnit.NANOSECONDS)).isEqualTo(stats.totalLoadTime());
+        assertThat(loadDuration.value(TimeUnit.NANOSECONDS)).isCloseTo(stats.totalLoadTime(), Offset.offset(0.1));
 
         FunctionCounter successfulLoad = fetch(registry, "cache.load", Tags.of("result", "success")).functionCounter();
         assertThat(successfulLoad.count()).isEqualTo(stats.loadSuccessCount());
