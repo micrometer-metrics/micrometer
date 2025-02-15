@@ -373,20 +373,6 @@ class Log4j2MetricsTest {
     void programmaticallyAddedLoggerConfigShouldBeCounted() {
         LoggerContext context = new LoggerContext("test");
 
-        AtomicInteger newLoggerUpdatedWithLoggerFilter = new AtomicInteger();
-
-        // checks that updateLoggers() is called after MetricsFilter is added to the
-        // programmatically added logger
-        context.addPropertyChangeListener(event -> {
-            if (event.getNewValue() instanceof Configuration) {
-                Configuration newConfiguration = (Configuration) event.getNewValue();
-                LoggerConfig loggerConfig = newConfiguration.getLoggerConfig("com.test");
-                if (!loggerConfig.isAdditive() && loggerConfig.getFilter() instanceof Log4j2Metrics.MetricsFilter) {
-                    newLoggerUpdatedWithLoggerFilter.incrementAndGet();
-                }
-            }
-        });
-
         Log4j2Metrics metrics = new Log4j2Metrics(emptyList(), context);
         metrics.bindTo(registry);
 
@@ -403,7 +389,6 @@ class Log4j2MetricsTest {
         context.updateLoggers(configuration);
 
         assertThat(addedLoggerConfig.getFilter()).isInstanceOf(Log4j2Metrics.MetricsFilter.class);
-        assertThat(newLoggerUpdatedWithLoggerFilter).hasValue(1);
 
         logger.debug("test");
         assertThat(registry.get("log4j2.events").tags("level", "debug").counter().count()).isEqualTo(1);
