@@ -34,7 +34,9 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 class StackdriverMeterRegistryTest {
 
-    StackdriverMeterRegistry meterRegistry = new StackdriverMeterRegistry(new StackdriverConfig() {
+    MockClock clock = new MockClock();
+
+    StackdriverConfig config = new StackdriverConfig() {
         @Override
         public boolean enabled() {
             return false;
@@ -50,7 +52,9 @@ class StackdriverMeterRegistryTest {
         public String get(String key) {
             return null;
         }
-    }, new MockClock());
+    };
+
+    StackdriverMeterRegistry meterRegistry = new StackdriverMeterRegistry(config, clock);
 
     @Test
     @Issue("#1325")
@@ -175,6 +179,22 @@ class StackdriverMeterRegistryTest {
         Distribution distribution = batch.distribution(ds.takeSnapshot(), false);
         assertThat(distribution.getBucketOptions().getExplicitBuckets().getBoundsList()).containsExactly(3d);
         assertThat(distribution.getBucketCountsList()).containsExactly(1L, 1L);
+    }
+
+    @Test
+    @Issue("#5927")
+    void meanIsZeroWhenCountIsZero() {
+        StackdriverMeterRegistry.Batch batch = meterRegistry.new Batch();
+        // halfway through first step
+        clock.add(config.step().dividedBy(2));
+        // histogram time window will start here
+        DistributionSummary ds = DistributionSummary.builder("ds").serviceLevelObjectives(2).register(meterRegistry);
+        ds.record(3);
+        // 3/4 through the second step; after histogram rollover
+        clock.add(config.step().dividedBy(4).multipliedBy(5));
+        Distribution distribution = batch.distribution(ds.takeSnapshot(), false);
+        assertThat(distribution.getCount()).isZero();
+        assertThat(distribution.getMean()).isZero();
     }
 
 }
