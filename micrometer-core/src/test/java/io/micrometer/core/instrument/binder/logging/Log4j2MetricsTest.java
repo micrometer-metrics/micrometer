@@ -368,4 +368,34 @@ class Log4j2MetricsTest {
         assertThat(registry.get("log4j2.events").tags("level", "error").counter().count()).isEqualTo(2);
     }
 
+    @Issue("#5901")
+    @Test
+    void programmaticallyAddedLoggerConfigShouldBeCounted() {
+        LoggerContext context = new LoggerContext("test");
+
+        Log4j2Metrics metrics = new Log4j2Metrics(emptyList(), context);
+        metrics.bindTo(registry);
+
+        Configuration configuration = context.getConfiguration();
+
+        // here we add a logger programmatically, metrics for this will not be counted
+        // until updateLoggers is called
+        LoggerConfig addedLoggerConfig = new LoggerConfig("com.test", Level.DEBUG, false);
+        configuration.addLogger("com.test", addedLoggerConfig);
+        Logger logger = context.getLogger("com.test");
+
+        assertThat(addedLoggerConfig.getFilter()).isNull();
+
+        context.updateLoggers(configuration);
+
+        assertThat(addedLoggerConfig.getFilter()).isInstanceOf(Log4j2Metrics.MetricsFilter.class);
+
+        logger.debug("test");
+        assertThat(registry.get("log4j2.events").tags("level", "debug").counter().count()).isEqualTo(1);
+
+        metrics.close();
+
+        assertThat(addedLoggerConfig.getFilter()).isNull();
+    }
+
 }
