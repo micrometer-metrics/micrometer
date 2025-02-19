@@ -557,10 +557,12 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
                 bucketBoundaries.add(0.0);
             }
 
+            double mean = cumulativeCount == 0 ? 0.0 : timeDomain ? snapshot.mean(getBaseTimeUnit()) : snapshot.mean();
+
             return Distribution.newBuilder()
                 // is the mean optional? better to not send as it is for a different time
                 // window than the histogram
-                .setMean(timeDomain ? snapshot.mean(getBaseTimeUnit()) : snapshot.mean())
+                .setMean(mean)
                 .setCount(cumulativeCount)
                 .setBucketOptions(Distribution.BucketOptions.newBuilder()
                     .setExplicitBuckets(
