@@ -475,6 +475,11 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
         return sloWithPositiveInf;
     }
 
+    /**
+     * Builder for {@link OtlpMeterRegistry}.
+     *
+     * @since 1.15.0
+     */
     public static class Builder {
 
         private final OtlpConfig otlpConfig;
