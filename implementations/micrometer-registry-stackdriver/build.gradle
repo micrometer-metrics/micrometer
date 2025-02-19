@@ -16,20 +16,3 @@ dependencies {
 
     testImplementation project(':micrometer-test')
 }
-
-test {
-    useJUnitPlatform {
-        excludeTags 'gcp-it'
-    }
-}
-
-task gcpTest(type: Test) {
-    doFirst {
-        if (System.getenv('GOOGLE_APPLICATION_CREDENTIALS') == null) {
-            throw new GradleException('Environment variable GOOGLE_APPLICATION_CREDENTIALS is required for task \'gcpTest\'')
-        }
-    }
-    useJUnitPlatform {
-        includeTags 'gcp-it'
-    }
-}
