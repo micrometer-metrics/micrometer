@@ -20,8 +20,8 @@ import io.micrometer.common.lang.Nullable;
 import java.lang.annotation.Annotation;
 
 /**
- * A container class that holds information about the parameter of the annotated method
- * argument.
+ * A container class that holds information about the parameter or return value of the
+ * annotated method.
  *
  * Code ported from Spring Cloud Sleuth.
  *

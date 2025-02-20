@@ -40,7 +40,7 @@ class CountedAspectTest {
     // end::resolvers[]
 
     @ParameterizedTest
-    @EnumSource(AnnotatedTestClass.class)
+    @EnumSource
     void meterTagsWithText(AnnotatedTestClass annotatedClass) {
         MeterRegistry registry = new SimpleMeterRegistry();
         CountedAspect countedAspect = new CountedAspect(registry);
@@ -63,7 +63,7 @@ class CountedAspectTest {
     }
 
     @ParameterizedTest
-    @EnumSource(AnnotatedTestClass.class)
+    @EnumSource
     void meterTagsWithResolver(AnnotatedTestClass annotatedClass) {
         MeterRegistry registry = new SimpleMeterRegistry();
         CountedAspect countedAspect = new CountedAspect(registry);
@@ -88,7 +88,7 @@ class CountedAspectTest {
     }
 
     @ParameterizedTest
-    @EnumSource(AnnotatedTestClass.class)
+    @EnumSource
     void meterTagsWithExpression(AnnotatedTestClass annotatedClass) {
         MeterRegistry registry = new SimpleMeterRegistry();
         CountedAspect countedAspect = new CountedAspect(registry);
@@ -108,7 +108,7 @@ class CountedAspectTest {
     }
 
     @ParameterizedTest
-    @EnumSource(AnnotatedTestClass.class)
+    @EnumSource
     void multipleMeterTagsWithExpression(AnnotatedTestClass annotatedClass) {
         MeterRegistry registry = new SimpleMeterRegistry();
         CountedAspect countedAspect = new CountedAspect(registry);

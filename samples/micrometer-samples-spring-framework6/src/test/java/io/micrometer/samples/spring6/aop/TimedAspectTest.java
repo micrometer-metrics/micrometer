@@ -650,7 +650,7 @@ class TimedAspectTest {
         }
 
         @ParameterizedTest
-        @EnumSource(AnnotatedTestClass.class)
+        @EnumSource
         void meterTagsOnReturnValueWithText(AnnotatedTestClass annotatedClass) {
             MeterTagClassInterface service = getProxyWithTimedAspect(annotatedClass.newInstance());
 
@@ -660,7 +660,7 @@ class TimedAspectTest {
         }
 
         @ParameterizedTest
-        @EnumSource(AnnotatedTestClass.class)
+        @EnumSource
         void meterTagsOnReturnValueWithResolver(AnnotatedTestClass annotatedClass) {
             MeterTagClassInterface service = getProxyWithTimedAspect(annotatedClass.newInstance());
 
@@ -673,7 +673,7 @@ class TimedAspectTest {
         }
 
         @ParameterizedTest
-        @EnumSource(AnnotatedTestClass.class)
+        @EnumSource
         void meterTagsOnReturnValueWithExpression(AnnotatedTestClass annotatedClass) {
             MeterTagClassInterface service = getProxyWithTimedAspect(annotatedClass.newInstance());
 
@@ -684,7 +684,7 @@ class TimedAspectTest {
         }
 
         @ParameterizedTest
-        @EnumSource(AnnotatedTestClass.class)
+        @EnumSource
         void multipleMeterTagsOnReturnValueWithExpression(AnnotatedTestClass annotatedClass) {
             MeterTagClassInterface service = getProxyWithTimedAspect(annotatedClass.newInstance());
 
@@ -698,7 +698,7 @@ class TimedAspectTest {
         }
 
         @ParameterizedTest
-        @EnumSource(AnnotatedTestClass.class)
+        @EnumSource
         void multipleMeterTagsOnReturnValueWithinContainerWithExpression(AnnotatedTestClass annotatedClass) {
             MeterTagClassInterface service = getProxyWithTimedAspect(annotatedClass.newInstance());
 
