@@ -108,7 +108,7 @@ class TimedAspectTest {
     }
 
     @ParameterizedTest
-    @EnumSource(AnnotatedTestClass.class)
+    @EnumSource
     void multipleMeterTagsWithExpression(AnnotatedTestClass annotatedClass) {
         MeterRegistry registry = new SimpleMeterRegistry();
         TimedAspect timedAspect = new TimedAspect(registry);

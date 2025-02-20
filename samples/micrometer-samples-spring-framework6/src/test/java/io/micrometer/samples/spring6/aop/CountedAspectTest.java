@@ -532,7 +532,7 @@ class CountedAspectTest {
         void meterTagsWithExpression(AnnotatedTestClass annotatedClass) {
             MeterTagClassInterface service = getProxyWithCountedAspect(annotatedClass.newInstance());
 
-            service.getReturnValueAnnotationForTagValueExpression("15L");
+            service.getAnnotationForTagValueExpression("15L");
 
             assertThat(registry.get("method.counted").tag("test", "hello characters").counter().count()).isEqualTo(1);
         }
@@ -677,7 +677,7 @@ class CountedAspectTest {
             String getReturnValueAnnotationForTagValueResolver();
 
             @Counted
-            void getReturnValueAnnotationForTagValueExpression(
+            void getAnnotationForTagValueExpression(
                     @MeterTag(key = "test", expression = "'hello' + ' characters'") String test);
 
             @Counted
@@ -721,7 +721,7 @@ class CountedAspectTest {
 
             @Counted
             @Override
-            public void getReturnValueAnnotationForTagValueExpression(
+            public void getAnnotationForTagValueExpression(
                     @MeterTag(key = "test", expression = "'hello' + ' characters'") String test) {
             }
 
@@ -786,7 +786,7 @@ class CountedAspectTest {
 
             @Counted
             @Override
-            public void getReturnValueAnnotationForTagValueExpression(String test) {
+            public void getAnnotationForTagValueExpression(String test) {
             }
 
             @Counted
