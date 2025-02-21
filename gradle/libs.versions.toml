@@ -6,7 +6,7 @@ asmForPlugins = "7.3.1"
 # 1.9.20.1 is the last release that accepts jdk 11 for building
 aspectjweaver = "1.9.20.1"
 assertj = "3.27.3"
-awaitility = "4.2.2"
+awaitility = "4.3.0"
 caffeine = "2.9.3"
 cloudwatch2 = "2.30.24"
 colt = "1.2.0"
