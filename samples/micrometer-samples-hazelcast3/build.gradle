@@ -12,5 +12,7 @@ dependencies {
     implementation 'ch.qos.logback:logback-classic'
 
     testImplementation project(':micrometer-test')
+    testImplementation libs.junitJupiter
+    testRuntimeOnly libs.junitPlatformLauncher
     testImplementation libs.mockitoCore5
 }

@@ -13,6 +13,7 @@ dependencies {
     implementation libs.jooqLatest
 
     testImplementation libs.junitJupiter
+    testRuntimeOnly libs.junitPlatformLauncher
     testImplementation libs.assertj
     testImplementation libs.mockitoCore5
 
