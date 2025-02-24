@@ -23,12 +23,13 @@ import io.micrometer.core.instrument.FunctionCounter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.TimeGauge;
+import io.micrometer.core.instrument.search.MeterNotFoundException;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.TimeUnit;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.*;
 
 /**
  * Tests for {@link CaffeineCacheMetrics}.
@@ -103,21 +104,34 @@ class CaffeineCacheMetricsTest extends AbstractCacheMetricsTest {
 
     @Test
     void returnHitCount() {
+        MeterRegistry meterRegistry = new SimpleMeterRegistry();
+        metrics.bindTo(meterRegistry);
+
         cache.put("a", "1");
         cache.get("a");
         cache.get("a");
 
         assertThat(metrics.hitCount()).isEqualTo(cache.stats().hitCount()).isEqualTo(2);
+        assertThat(meterRegistry.get("cache.gets").tag("result", "hit").functionCounter().count()).isEqualTo(2);
     }
 
     @Test
     void returnHitCountWithoutRecordStats() {
         LoadingCache<String, String> cache = Caffeine.newBuilder().build(key -> "");
+        CaffeineCacheMetrics<String, String, Cache<String, String>> metrics = new CaffeineCacheMetrics<>(cache,
+                "testCache", expectedTag);
+
+        MeterRegistry meterRegistry = new SimpleMeterRegistry();
+        metrics.bindTo(meterRegistry);
+
         cache.put("a", "1");
         cache.get("a");
         cache.get("a");
 
-        assertThat(metrics.hitCount()).isEqualTo(cache.stats().hitCount()).isEqualTo(0);
+        assertThat(cache.stats().hitCount()).isEqualTo(0);
+        assertThat(metrics.hitCount()).isEqualTo(CaffeineCacheMetrics.UNSUPPORTED);
+        assertThatExceptionOfType(MeterNotFoundException.class)
+            .isThrownBy(() -> meterRegistry.get("cache.gets").tag("result", "hit").functionCounter());
     }
 
     @Test

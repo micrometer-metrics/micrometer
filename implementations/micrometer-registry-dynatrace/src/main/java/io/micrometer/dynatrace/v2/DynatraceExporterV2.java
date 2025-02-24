@@ -15,13 +15,15 @@
  */
 package io.micrometer.dynatrace.v2;
 
-import com.dynatrace.metric.util.*;
+import com.dynatrace.metric.util.DynatraceMetricApiConstants;
+import com.dynatrace.metric.util.MetricException;
+import com.dynatrace.metric.util.MetricLineBuilder;
 import com.dynatrace.metric.util.MetricLineBuilder.MetadataStep;
+import com.dynatrace.metric.util.MetricLinePreConfiguration;
 import io.micrometer.common.lang.NonNull;
 import io.micrometer.common.util.StringUtils;
 import io.micrometer.common.util.internal.logging.InternalLogger;
 import io.micrometer.common.util.internal.logging.InternalLoggerFactory;
-import io.micrometer.common.util.internal.logging.WarnThenDebugLogger;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.distribution.HistogramSnapshot;
@@ -60,17 +62,13 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
 
     private static final Pattern IS_NULL_ERROR_RESPONSE = Pattern.compile("\"error\":\\s?null");
 
-    private static final Map<String, String> staticDimensions = Collections.singletonMap("dt.metrics.source",
+    private static final Map<String, String> STATIC_DIMENSIONS = Collections.singletonMap("dt.metrics.source",
             "micrometer");
+
+    private static final Map<String, String> UCUM_TIME_UNIT_MAP = ucumTimeUnitMap();
 
     // Loggers must be non-static for MockLoggerFactory.injectLogger() in tests.
     private final InternalLogger logger = InternalLoggerFactory.getInstance(DynatraceExporterV2.class);
-
-    private final WarnThenDebugLogger stackTraceLogger = new WarnThenDebugLoggers.StackTraceLogger();
-
-    private final WarnThenDebugLogger nanGaugeLogger = new WarnThenDebugLoggers.NanGaugeLogger();
-
-    private final WarnThenDebugLogger metadataDiscrepancyLogger = new WarnThenDebugLoggers.MetadataDiscrepancyLogger();
 
     private MetricLinePreConfiguration preConfiguration;
 
@@ -128,7 +126,7 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
 
     private Map<String, String> enrichWithMetricsSourceDimensions(Map<String, String> defaultDimensions) {
         LinkedHashMap<String, String> orderedDimensions = new LinkedHashMap<>(defaultDimensions);
-        orderedDimensions.putAll(staticDimensions);
+        orderedDimensions.putAll(STATIC_DIMENSIONS);
         return orderedDimensions;
     }
 
@@ -223,10 +221,9 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
                 // collected, but the meter has not been removed from the registry.
                 // NaN's are currently dropped on the Dynatrace side, so dropping them
                 // on the client side here will not change the metrics in Dynatrace.
-
-                nanGaugeLogger.log(() -> String.format(
-                        "Meter '%s' returned a value of NaN, which will not be exported. This can be a deliberate value or because the weak reference to the backing object expired.",
-                        meter.getId().getName()));
+                logger.debug(
+                        "Meter '{}' returned a value of NaN, which will not be exported. This can be a deliberate value or because the weak reference to the backing object expired.",
+                        meter.getId().getName());
                 return null;
             }
             MetricLineBuilder.GaugeStep gaugeStep = createTypeStep(meter).gauge();
@@ -236,7 +233,8 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
             return gaugeStep.value(value).timestamp(Instant.ofEpochMilli(clock.wallTime())).build();
         }
         catch (MetricException e) {
-            logger.warn(METER_EXCEPTION_LOG_FORMAT, meter.getId(), e.getMessage());
+            // logging at info to not drown out warnings/errors from business code.
+            logger.info(METER_EXCEPTION_LOG_FORMAT, meter.getId(), e.getMessage());
         }
 
         return null;
@@ -255,7 +253,8 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
             return counterStep.delta(measurement.getValue()).timestamp(Instant.ofEpochMilli(clock.wallTime())).build();
         }
         catch (MetricException e) {
-            logger.warn(METER_EXCEPTION_LOG_FORMAT, meter.getId(), e.getMessage());
+            // logging at info to not drown out warnings/errors from business code.
+            logger.info(METER_EXCEPTION_LOG_FORMAT, meter.getId(), e.getMessage());
         }
 
         return null;
@@ -312,7 +311,8 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
                 .build());
         }
         catch (MetricException e) {
-            logger.warn(METER_EXCEPTION_LOG_FORMAT, meter.getId(), e.getMessage());
+            // logging at info to not drown out warnings/errors from business code.
+            logger.info(METER_EXCEPTION_LOG_FORMAT, meter.getId(), e.getMessage());
         }
 
         return Stream.empty();
@@ -431,15 +431,14 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
                 .withPlainText(body)
                 .send()
                 .onSuccess(response -> handleSuccess(lineCount, response))
-                .onError(response -> logger.error("Failed metric ingestion: Error Code={}, Response Body={}",
-                        response.code(), getTruncatedBody(response)));
+                .onError(response -> {
+                    logger.info("Failed metric ingestion: Error Code={}, Response Body={}", response.code(),
+                            getTruncatedBody(response));
+                });
         }
         catch (Throwable throwable) {
-            // the "general" logger logs the message, the WarnThenDebugLogger logs the
-            // stack trace.
-            logger.warn("Failed metric ingestion: {}", throwable.toString());
-            stackTraceLogger.log(String.format("Stack trace for previous 'Failed metric ingestion' warning log: %s",
-                    throwable.getMessage()), throwable);
+            // logging at info to not drown out warnings/errors from business code.
+            logger.info("Failed metric ingestion: {}", throwable.toString());
         }
     }
 
@@ -484,7 +483,8 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
     }
 
     private MetricLineBuilder.MetadataStep enrichMetadata(MetricLineBuilder.MetadataStep metadataStep, Meter meter) {
-        return metadataStep.description(meter.getId().getDescription()).unit(meter.getId().getBaseUnit());
+        return metadataStep.description(meter.getId().getDescription())
+            .unit(mapUnitIfNeeded(meter.getId().getBaseUnit()));
     }
 
     /**
@@ -520,10 +520,10 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
                 // set for this metric key.
                 if (!previousMetadataLine.equals(metadataLine)) {
                     seenMetadata.put(key, null);
-                    metadataDiscrepancyLogger.log(() -> String.format(
-                            "Metadata discrepancy detected:\n" + "original metadata:\t%s\n" + "tried to set new:\t%s\n"
-                                    + "Metadata for metric key %s will not be sent.",
-                            previousMetadataLine, metadataLine, key));
+                    logger.debug(
+                            "Metadata discrepancy detected:\n" + "original metadata:\t{}\n" + "tried to set new:\t{}\n"
+                                    + "Metadata for metric key {} will not be sent.",
+                            previousMetadataLine, metadataLine, key);
                 }
             }
             // else:
@@ -550,6 +550,46 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
         }
 
         return metricKey.toString();
+    }
+
+    /**
+     * Maps a unit string to a UCUM-compliant string, if the mapping is known, see:
+     * {@link #ucumTimeUnitMap()}.
+     * @param unit the unit that might be mapped
+     * @return The UCUM-compliant string if known, otherwise returns the original unit
+     */
+    private static String mapUnitIfNeeded(String unit) {
+        return unit != null ? UCUM_TIME_UNIT_MAP.getOrDefault(unit.toLowerCase(), unit) : null;
+    }
+
+    /**
+     * Mapping from OpenJDK's {@link TimeUnit#toString()} and other common time unit
+     * formats to UCUM-compliant format, see: <a href="https://ucum.org/">ucum.org</a>.
+     * @return Time unit mapping to UCUM-compliant format
+     */
+    private static Map<String, String> ucumTimeUnitMap() {
+        Map<String, String> mapping = new HashMap<>();
+        // There are redundant elements in case the toString method of TimeUnit changes
+        mapping.put(TimeUnit.NANOSECONDS.toString().toLowerCase(), "ns");
+        mapping.put("nanoseconds", "ns");
+        mapping.put("nanosecond", "ns");
+        mapping.put(TimeUnit.MICROSECONDS.toString().toLowerCase(), "us");
+        mapping.put("microseconds", "us");
+        mapping.put("microsecond", "us");
+        mapping.put(TimeUnit.MILLISECONDS.toString().toLowerCase(), "ms");
+        mapping.put("milliseconds", "ms");
+        mapping.put("millisecond", "ms");
+        mapping.put(TimeUnit.SECONDS.toString().toLowerCase(), "s");
+        mapping.put("seconds", "s");
+        mapping.put("second", "s");
+        mapping.put(TimeUnit.MINUTES.toString().toLowerCase(), "min");
+        mapping.put("minutes", "min");
+        mapping.put("minute", "min");
+        mapping.put(TimeUnit.HOURS.toString().toLowerCase(), "h");
+        mapping.put("hours", "h");
+        mapping.put("hour", "h");
+
+        return Collections.unmodifiableMap(mapping);
     }
 
 }

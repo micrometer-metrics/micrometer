@@ -31,6 +31,7 @@ management:
       export:
         # Supported configs
         url: "https://otlp.example.com:4318/v1/metrics"
+        batchSize: 15000
         aggregationTemporality: "cumulative"
         headers:
           header1: value1
@@ -40,10 +41,11 @@ management:
 ----
 
 1. `url` - The URL to which data is reported. Environment variables `OTEL_EXPORTER_OTLP_METRICS_ENDPOINT` and `OTEL_EXPORTER_OTLP_ENDPOINT` are also supported in the default implementation. If a value is not provided, it defaults to `http://localhost:4318/v1/metrics`
-2. `aggregationTemporality` - https://opentelemetry.io/docs/specs/otel/metrics/data-model/#temporality[Aggregation temporality, window=_blank] determines how the additive quantities are expressed, in relation to time. The environment variable `OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE` is supported by the default implementation. The supported values are `cumulative` or `delta`. Defaults to `cumulative`.
-3. `headers` - Additional headers to send with exported metrics. This can be used for authorization headers. By default, headers are loaded from the config. If that is not set, they can be taken from the environment variables `OTEL_EXPORTER_OTLP_HEADERS` and `OTEL_EXPORTER_OTLP_METRICS_HEADERS`. If a header is set in both the environmental variables, the header in the latter overrides the former.
-4. `step` - the interval at which metrics will be published. The environment variable `OTEL_METRIC_EXPORT_INTERVAL` is supported by the default implementation. If a value is not provided, defaults to 1 minute.
-5. `resourceAttributes` - https://opentelemetry.io/docs/specs/otel/resource/semantic_conventions/#service[Resource attributes, window=_blank] are used for all metrics published. By default, Micrometer adds the following resource attributes:
+2. `batchSize` - number of `Meter` to include in a single payload sent to the backend. The default is 10,000.
+3. `aggregationTemporality` - https://opentelemetry.io/docs/specs/otel/metrics/data-model/#temporality[Aggregation temporality, window=_blank] determines how the additive quantities are expressed, in relation to time. The environment variable `OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE` is supported by the default implementation. The supported values are `cumulative` or `delta`. Defaults to `cumulative`.
+4. `headers` - Additional headers to send with exported metrics. This can be used for authorization headers. By default, headers are loaded from the config. If that is not set, they can be taken from the environment variables `OTEL_EXPORTER_OTLP_HEADERS` and `OTEL_EXPORTER_OTLP_METRICS_HEADERS`. If a header is set in both the environmental variables, the header in the latter overrides the former.
+5. `step` - the interval at which metrics will be published. The environment variable `OTEL_METRIC_EXPORT_INTERVAL` is supported by the default implementation. If a value is not provided, defaults to 1 minute.
+6. `resourceAttributes` - https://opentelemetry.io/docs/specs/otel/resource/semantic_conventions/#service[Resource attributes, window=_blank] are used for all metrics published. By default, Micrometer adds the following resource attributes:
 
 [%autowidth]
 |===
@@ -70,7 +72,8 @@ https://opentelemetry.io/docs/specs/otel/metrics/data-model/#metric-points[Metri
 1. https://opentelemetry.io/docs/specs/otel/metrics/data-model/#sums[Sums, window=_blank]
 2. https://opentelemetry.io/docs/specs/otel/metrics/data-model/#gauge[Gauge, window=_blank]
 3. https://opentelemetry.io/docs/specs/otel/metrics/data-model/#histogram[Histogram, window=_blank]
-4. https://opentelemetry.io/docs/specs/otel/metrics/data-model/#summary-legacy[Summary, window=_blank]
+4. https://opentelemetry.io/docs/specs/otel/metrics/data-model/#exponentialhistogram[Exponential Histogram, window=_blank]
+5. https://opentelemetry.io/docs/specs/otel/metrics/data-model/#summary-legacy[Summary, window=_blank]
 
 The following table maps OTLP data points and the Micrometer meters:
 
@@ -87,9 +90,13 @@ The following table maps OTLP data points and the Micrometer meters:
 |Histogram
 |Timer, DistributionSummary, LongTaskTimer, FunctionTimer (only sum and count are set)
 
+|Exponential Histogram^*^
+|Timer, DistributionSummary
+
 |Summary
 |Timer, DistributionSummary, LongTaskTimer
 |===
+__* - Histogram or Exponential Histogram is determined based on the configuration of the `OtlpMeterRegistry`. See below section for more info.__
 
 *Note*:
 
@@ -107,16 +114,28 @@ Micrometer `Timer` and `DistributionSummary` support configuring xref:/concepts/
 | Summary
 
 | publishPercentileHistogram
-| Histogram
+| Histogram/Exponential Histogram ^*^
+
+| publishPercentiles and publishPercentileHistogram
+| Histogram/Exponential Histogram ^*^
 
 | serviceLevelObjectives
 | Histogram
 
-| publishPercentiles and (publishPercentileHistogram/serviceLevelObjectives)
+| publishPercentiles and serviceLevelObjectives
 | Histogram
 |===
+__* The configuration `histogramFlavor` determines whether the OTLP DataPoint is a Histogram/Exponential Histogram.__
 
-Alternatively, if you use Spring Boot, you can use the https://docs.spring.io/spring-boot/docs/current/reference/htmlsingle/#actuator.metrics.customizing.per-meter-properties[per-meter properties, window=_blank] to configure this behavior.
+`OtlpMeterRegistry` supports 2 types of Histogram implementations (1.Explicit Bucket Histogram (or simply called Histogram), 2. Exponential Histogram) when `publishPercentileHistogram` is configured. The choice is chosen by setting `histogramFlavor` in `OtlpConfig` used by registry. When the implementation is exponential histogram, it also supports 2 additional properties
+
+1. maxScale used to cap the maximum https://opentelemetry.io/docs/specs/otel/metrics/data-model/#exponential-scale[scale, window=_blank] used by the Exponential Histogram (defaults to 20).
+2. maxBuckets determines the maximum number of https://opentelemetry.io/docs/specs/otel/metrics/data-model/#exponential-buckets[buckets, window=_blank] to be used for exponential histograms (defaults to 160).
+
+Since Exponential Histogram cannot have custom SLO's specified, explicit bucket histogram is used whenever `serviceLevelObjectives` are added.
+
+===  Configuration with Spring Boot
+If you use Spring Boot, you can use the https://docs.spring.io/spring-boot/docs/current/reference/htmlsingle/#actuator.metrics.customizing.per-meter-properties[per-meter properties, window=_blank] to configure this behavior.
 
 If you want to generate a Histogram data point for a Timer with name `test.timer` and default buckets generated by Micrometer, use:
 

@@ -21,6 +21,6 @@ dependencies {
     runtimeOnly libs.jersey3Hk2
 
     testImplementation libs.jersey3TestFrameworkJdkHttp
-    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testImplementation libs.junitJupiter
     testImplementation 'org.assertj:assertj-core'
 }

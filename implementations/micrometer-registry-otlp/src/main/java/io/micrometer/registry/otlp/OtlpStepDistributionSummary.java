@@ -18,11 +18,15 @@ package io.micrometer.registry.otlp;
 import io.micrometer.core.instrument.AbstractDistributionSummary;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
+import io.micrometer.registry.otlp.internal.Base2ExponentialHistogram;
+import io.micrometer.registry.otlp.internal.ExponentialHistogramSnapShot;
 
 import java.util.concurrent.atomic.DoubleAdder;
 import java.util.concurrent.atomic.LongAdder;
 
-class OtlpStepDistributionSummary extends AbstractDistributionSummary {
+class OtlpStepDistributionSummary extends AbstractDistributionSummary implements OtlpHistogramSupport {
+
+    private final HistogramFlavor histogramFlavor;
 
     private final LongAdder count = new LongAdder();
 
@@ -38,14 +42,16 @@ class OtlpStepDistributionSummary extends AbstractDistributionSummary {
      * @param clock clock
      * @param distributionStatisticConfig distribution statistic configuration
      * @param scale scale
-     * @param stepMillis step in milliseconds
+     * @param otlpConfig config for registry
      */
     OtlpStepDistributionSummary(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig,
-            double scale, long stepMillis) {
-        super(id, scale, OtlpMeterRegistry.getHistogram(clock, distributionStatisticConfig,
-                AggregationTemporality.DELTA, stepMillis));
-        this.countTotal = new OtlpStepTuple2<>(clock, stepMillis, 0L, 0.0, count::sumThenReset, total::sumThenReset);
-        this.max = new StepMax(clock, stepMillis);
+            double scale, OtlpConfig otlpConfig) {
+        super(id, scale, OtlpMeterRegistry.getHistogram(clock, distributionStatisticConfig, otlpConfig));
+        this.countTotal = new OtlpStepTuple2<>(clock, otlpConfig.step().toMillis(), 0L, 0.0, count::sumThenReset,
+                total::sumThenReset);
+        this.max = new StepMax(clock, otlpConfig.step().toMillis());
+        this.histogramFlavor = OtlpMeterRegistry.histogramFlavor(otlpConfig.histogramFlavor(),
+                distributionStatisticConfig);
     }
 
     @Override
@@ -70,6 +76,14 @@ class OtlpStepDistributionSummary extends AbstractDistributionSummary {
         return max.poll();
     }
 
+    @Override
+    public ExponentialHistogramSnapShot getExponentialHistogramSnapShot() {
+        if (histogramFlavor == HistogramFlavor.BASE2_EXPONENTIAL_BUCKET_HISTOGRAM) {
+            return ((Base2ExponentialHistogram) histogram).getLatestExponentialHistogramSnapshot();
+        }
+        return null;
+    }
+
     /**
      * This is an internal method not meant for general use.
      * <p>
@@ -81,6 +95,9 @@ class OtlpStepDistributionSummary extends AbstractDistributionSummary {
         max._closingRollover();
         if (histogram instanceof OtlpStepBucketHistogram) { // can be noop
             ((OtlpStepBucketHistogram) histogram)._closingRollover();
+        }
+        else if (histogram instanceof Base2ExponentialHistogram) {
+            histogram.close();
         }
     }
 

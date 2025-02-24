@@ -24,6 +24,8 @@ import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.common.Metric;
 
+import java.util.concurrent.ScheduledExecutorService;
+
 /**
  * Kafka Client metrics binder. This should be closed on application shutdown to clean up
  * resources.
@@ -44,6 +46,21 @@ import org.apache.kafka.common.Metric;
 public class KafkaClientMetrics extends KafkaMetrics {
 
     /**
+     * Kafka {@link Producer} metrics binder. The lifecycle of the custom scheduler passed
+     * is the responsibility of the caller. It will not be shut down when this instance is
+     * {@link #close() closed}. A scheduler can be shared among multiple instances of
+     * {@link KafkaClientMetrics} to reduce resource usage by reducing the number of
+     * threads if there will be many instances.
+     * @param kafkaProducer producer instance to be instrumented
+     * @param tags additional tags
+     * @param scheduler custom scheduler to check and bind metrics
+     * @since 1.14.0
+     */
+    public KafkaClientMetrics(Producer<?, ?> kafkaProducer, Iterable<Tag> tags, ScheduledExecutorService scheduler) {
+        super(kafkaProducer::metrics, tags, scheduler);
+    }
+
+    /**
      * Kafka {@link Producer} metrics binder
      * @param kafkaProducer producer instance to be instrumented
      * @param tags additional tags
@@ -61,6 +78,21 @@ public class KafkaClientMetrics extends KafkaMetrics {
     }
 
     /**
+     * Kafka {@link Consumer} metrics binder. The lifecycle of the custom scheduler passed
+     * is the responsibility of the caller. It will not be shut down when this instance is
+     * {@link #close() closed}. A scheduler can be shared among multiple instances of
+     * {@link KafkaClientMetrics} to reduce resource usage by reducing the number of
+     * threads if there will be many instances.
+     * @param kafkaConsumer consumer instance to be instrumented
+     * @param tags additional tags
+     * @param scheduler custom scheduler to check and bind metrics
+     * @since 1.14.0
+     */
+    public KafkaClientMetrics(Consumer<?, ?> kafkaConsumer, Iterable<Tag> tags, ScheduledExecutorService scheduler) {
+        super(kafkaConsumer::metrics, tags, scheduler);
+    }
+
+    /**
      * Kafka {@link Consumer} metrics binder
      * @param kafkaConsumer consumer instance to be instrumented
      * @param tags additional tags
@@ -75,6 +107,21 @@ public class KafkaClientMetrics extends KafkaMetrics {
      */
     public KafkaClientMetrics(Consumer<?, ?> kafkaConsumer) {
         super(kafkaConsumer::metrics);
+    }
+
+    /**
+     * Kafka {@link AdminClient} metrics binder. The lifecycle of the custom scheduler
+     * passed is the responsibility of the caller. It will not be shut down when this
+     * instance is {@link #close() closed}. A scheduler can be shared among multiple
+     * instances of {@link KafkaClientMetrics} to reduce resource usage by reducing the
+     * number of threads if there will be many instances.
+     * @param adminClient instance to be instrumented
+     * @param tags additional tags
+     * @param scheduler custom scheduler to check and bind metrics
+     * @since 1.14.0
+     */
+    public KafkaClientMetrics(AdminClient adminClient, Iterable<Tag> tags, ScheduledExecutorService scheduler) {
+        super(adminClient::metrics, tags, scheduler);
     }
 
     /**

@@ -67,6 +67,7 @@ class ObservationGrpcServerCall<ReqT, RespT> extends SimpleForwardingServerCall<
         GrpcServerObservationContext context = (GrpcServerObservationContext) this.observation.getContext();
         context.setStatusCode(status.getCode());
         context.setTrailers(trailersToKeep);
+        context.setCancelled(isCancelled());
         super.close(status, trailers);
     }
 

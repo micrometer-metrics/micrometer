@@ -23,6 +23,8 @@ import java.util.Objects;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
+import org.assertj.core.api.AssertProvider;
+
 /**
  * Implementation of {@link ObservationRegistry} used for testing.
  *
@@ -31,14 +33,15 @@ import java.util.concurrent.ConcurrentLinkedQueue;
  * @author Marcin Grzejszczak
  * @since 1.10.0
  */
-public final class TestObservationRegistry implements ObservationRegistry {
+public final class TestObservationRegistry
+        implements ObservationRegistry, AssertProvider<TestObservationRegistryAssert> {
 
     private final ObservationRegistry delegate = ObservationRegistry.create();
 
     private final StoringObservationHandler handler = new StoringObservationHandler();
 
     private TestObservationRegistry() {
-        observationConfig().observationHandler(this.handler);
+        observationConfig().observationHandler(this.handler).observationHandler(new ObservationValidator());
     }
 
     /**
@@ -79,6 +82,18 @@ public final class TestObservationRegistry implements ObservationRegistry {
      */
     public void clear() {
         getContexts().clear();
+    }
+
+    /**
+     * Return an assert for AspectJ.
+     * @return an AspectJ assert
+     * @deprecated to prevent accidental use. Prefer standard AssertJ
+     * {@code assertThat(observationRegistry)...} calls instead.
+     */
+    @Deprecated
+    @Override
+    public TestObservationRegistryAssert assertThat() {
+        return TestObservationRegistryAssert.assertThat(this);
     }
 
     private static class StoringObservationHandler implements ObservationHandler<Observation.Context> {

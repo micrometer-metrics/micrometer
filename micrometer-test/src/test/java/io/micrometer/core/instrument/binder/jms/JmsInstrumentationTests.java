@@ -21,7 +21,6 @@ import java.util.stream.Stream;
 
 import io.micrometer.jakarta9.instrument.jms.JmsInstrumentation;
 import io.micrometer.observation.tck.TestObservationRegistry;
-import io.micrometer.observation.tck.TestObservationRegistryAssert;
 import jakarta.jms.*;
 import org.apache.activemq.artemis.jms.client.ActiveMQConnectionFactory;
 import org.apache.activemq.artemis.junit.EmbeddedActiveMQExtension;
@@ -65,8 +64,7 @@ class JmsInstrumentationTests {
     void shouldInstrumentSendOperations(String methodName, SessionConsumer sessionConsumer) throws Exception {
         try (Session session = createInstrumentedSession()) {
             sessionConsumer.accept(session);
-            TestObservationRegistryAssert.assertThat(registry)
-                .hasObservationWithNameEqualTo("jms.message.publish")
+            assertThat(registry).hasObservationWithNameEqualTo("jms.message.publish")
                 .that()
                 .hasContextualNameEqualTo("test.send publish");
         }
@@ -116,8 +114,7 @@ class JmsInstrumentationTests {
             TextMessage message = session.createTextMessage("test content");
             jmsConnection.close();
             assertThatThrownBy(() -> producer.send(message)).isInstanceOf(jakarta.jms.IllegalStateException.class);
-            TestObservationRegistryAssert.assertThat(registry)
-                .hasObservationWithNameEqualTo("jms.message.publish")
+            assertThat(registry).hasObservationWithNameEqualTo("jms.message.publish")
                 .that()
                 .hasContextualNameEqualTo("test.send publish")
                 .hasLowCardinalityKeyValue("exception", "IllegalStateException");
@@ -134,8 +131,7 @@ class JmsInstrumentationTests {
             MessageProducer producer = session.createProducer(topic);
             producer.send(session.createTextMessage("test send"));
             assertThat(latch.await(2, TimeUnit.SECONDS)).isTrue();
-            TestObservationRegistryAssert.assertThat(registry)
-                .hasObservationWithNameEqualTo("jms.message.process")
+            assertThat(registry).hasObservationWithNameEqualTo("jms.message.process")
                 .that()
                 .hasContextualNameEqualTo("test.send process");
         }
@@ -154,8 +150,7 @@ class JmsInstrumentationTests {
             MessageProducer producer = session.createProducer(topic);
             producer.send(session.createTextMessage("test send"));
             assertThat(latch.await(2, TimeUnit.SECONDS)).isTrue();
-            TestObservationRegistryAssert.assertThat(registry)
-                .hasObservationWithNameEqualTo("jms.message.process")
+            assertThat(registry).hasObservationWithNameEqualTo("jms.message.process")
                 .that()
                 .hasLowCardinalityKeyValue("exception", "IllegalStateException");
         }

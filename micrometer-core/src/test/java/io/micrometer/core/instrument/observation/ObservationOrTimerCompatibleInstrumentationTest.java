@@ -26,7 +26,6 @@ import io.micrometer.observation.ObservationConvention;
 import io.micrometer.observation.tck.TestObservationRegistry;
 import org.junit.jupiter.api.Test;
 
-import static io.micrometer.observation.tck.TestObservationRegistryAssert.assertThat;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class ObservationOrTimerCompatibleInstrumentationTest {

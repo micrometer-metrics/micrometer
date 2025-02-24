@@ -106,11 +106,15 @@ class GuavaCacheMetricsTest extends AbstractCacheMetricsTest {
 
     @Test
     void returnHitCount() throws ExecutionException {
+        MeterRegistry meterRegistry = new SimpleMeterRegistry();
+        metrics.bindTo(meterRegistry);
+
         cache.put("a", "1");
         cache.get("a");
         cache.get("a");
 
         assertThat(metrics.hitCount()).isEqualTo(cache.stats().hitCount()).isEqualTo(2);
+        assertThat(meterRegistry.get("cache.gets").tag("result", "hit").functionCounter().count()).isEqualTo(2);
     }
 
     @Test
@@ -120,12 +124,18 @@ class GuavaCacheMetricsTest extends AbstractCacheMetricsTest {
                 return "";
             }
         });
+        GuavaCacheMetrics<String, String, Cache<String, String>> metrics = new GuavaCacheMetrics<>(cache, "testCache",
+                expectedTag);
+
+        MeterRegistry meterRegistry = new SimpleMeterRegistry();
+        metrics.bindTo(meterRegistry);
 
         cache.put("a", "1");
         cache.get("a");
         cache.get("a");
 
         assertThat(metrics.hitCount()).isEqualTo(cache.stats().hitCount()).isEqualTo(0);
+        assertThat(meterRegistry.get("cache.gets").tag("result", "hit").functionCounter().count()).isEqualTo(0);
     }
 
     @Test

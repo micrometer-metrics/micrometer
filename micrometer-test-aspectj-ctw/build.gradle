@@ -1,0 +1,19 @@
+plugins {
+    id 'java'
+    alias(libs.plugins.aspectj)
+}
+
+description 'AspectJ compile-time weaving test for Micrometer aspects'
+
+dependencies {
+    aspect project(':micrometer-core')
+    aspect project(':micrometer-observation')
+    implementation libs.aspectjrt
+
+    testImplementation libs.junitJupiter
+    testImplementation libs.assertj
+}
+
+test {
+    useJUnitPlatform()
+}

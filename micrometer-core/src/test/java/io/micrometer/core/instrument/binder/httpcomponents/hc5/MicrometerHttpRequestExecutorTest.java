@@ -25,7 +25,6 @@ import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.micrometer.observation.GlobalObservationConvention;
 import io.micrometer.observation.ObservationRegistry;
 import io.micrometer.observation.tck.TestObservationRegistry;
-import io.micrometer.observation.tck.TestObservationRegistryAssert;
 import org.apache.hc.client5.http.ClientProtocolException;
 import org.apache.hc.client5.http.classic.methods.HttpGet;
 import org.apache.hc.client5.http.classic.methods.HttpPost;
@@ -38,6 +37,7 @@ import org.apache.hc.core5.http.impl.io.HttpRequestExecutor;
 import org.apache.hc.core5.http.io.HttpClientResponseHandler;
 import org.apache.hc.core5.http.io.entity.EntityUtils;
 import org.apache.hc.core5.util.Timeout;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -182,6 +182,7 @@ class MicrometerHttpRequestExecutorTest {
     }
 
     @Test
+    @Disabled("brittle test using reflection to check internals of third-party code")
     void waitForContinueGetsPassedToSuper() {
         MicrometerHttpRequestExecutor requestExecutor = MicrometerHttpRequestExecutor.builder(registry)
             .waitForContinue(Timeout.ofMilliseconds(1000))
@@ -318,8 +319,7 @@ class MicrometerHttpRequestExecutorTest {
                 execute(client, new HttpUriRequestBase(method, URI.create(server.baseUrl())));
                 break;
         }
-        TestObservationRegistryAssert.assertThat(observationRegistry)
-            .hasSingleObservationThat()
+        assertThat(observationRegistry).hasSingleObservationThat()
             .hasContextualNameEqualToIgnoringCase("http " + method);
     }
 

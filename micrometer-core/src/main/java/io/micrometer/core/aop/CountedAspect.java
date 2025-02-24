@@ -17,6 +17,7 @@ package io.micrometer.core.aop;
 
 import io.micrometer.common.lang.NonNullApi;
 import io.micrometer.common.lang.Nullable;
+import io.micrometer.common.util.internal.logging.WarnThenDebugLogger;
 import io.micrometer.core.annotation.Counted;
 import io.micrometer.core.instrument.*;
 import org.aspectj.lang.ProceedingJoinPoint;
@@ -77,6 +78,8 @@ import java.util.function.Predicate;
 @NonNullApi
 public class CountedAspect {
 
+    private static final WarnThenDebugLogger joinPointTagsFunctionLogger = new WarnThenDebugLogger(CountedAspect.class);
+
     private static final Predicate<ProceedingJoinPoint> DONT_SKIP_ANYTHING = pjp -> false;
 
     public final String DEFAULT_EXCEPTION_TAG_VALUE = "none";
@@ -110,6 +113,8 @@ public class CountedAspect {
      * point.
      */
     private final Predicate<ProceedingJoinPoint> shouldSkip;
+
+    private CountedMeterTagAnnotationHandler meterTagAnnotationHandler;
 
     /**
      * Creates a {@code CountedAspect} instance with {@link Metrics#globalRegistry}.
@@ -163,11 +168,25 @@ public class CountedAspect {
     public CountedAspect(MeterRegistry registry, Function<ProceedingJoinPoint, Iterable<Tag>> tagsBasedOnJoinPoint,
             Predicate<ProceedingJoinPoint> shouldSkip) {
         this.registry = registry;
-        this.tagsBasedOnJoinPoint = tagsBasedOnJoinPoint;
+        this.tagsBasedOnJoinPoint = makeSafe(tagsBasedOnJoinPoint);
         this.shouldSkip = shouldSkip;
     }
 
-    @Around("@within(io.micrometer.core.annotation.Counted) and not @annotation(io.micrometer.core.annotation.Counted)")
+    private Function<ProceedingJoinPoint, Iterable<Tag>> makeSafe(
+            Function<ProceedingJoinPoint, Iterable<Tag>> function) {
+        return pjp -> {
+            try {
+                return function.apply(pjp);
+            }
+            catch (Throwable t) {
+                joinPointTagsFunctionLogger
+                    .log("Exception thrown from the tagsBasedOnJoinPoint function configured on CountedAspect.", t);
+                return Tags.empty();
+            }
+        };
+    }
+
+    @Around("@within(io.micrometer.core.annotation.Counted) && !@annotation(io.micrometer.core.annotation.Counted) && execution(* *(..))")
     @Nullable
     public Object countedClass(ProceedingJoinPoint pjp) throws Throwable {
         if (shouldSkip.test(pjp)) {
@@ -202,7 +221,7 @@ public class CountedAspect {
      * @return Whatever the intercepted method returns.
      * @throws Throwable When the intercepted method throws one.
      */
-    @Around(value = "@annotation(counted)", argNames = "pjp,counted")
+    @Around(value = "@annotation(counted) && execution(* *(..))", argNames = "pjp,counted")
     @Nullable
     public Object interceptAndRecord(ProceedingJoinPoint pjp, Counted counted) throws Throwable {
         if (shouldSkip.test(pjp)) {
@@ -254,20 +273,24 @@ public class CountedAspect {
     }
 
     private void record(ProceedingJoinPoint pjp, Counted counted, String exception, String result) {
-        counter(pjp, counted).tag(EXCEPTION_TAG, exception)
-            .tag(RESULT_TAG, result)
+        Counter.Builder builder = Counter.builder(counted.value())
+            .description(counted.description().isEmpty() ? null : counted.description())
             .tags(counted.extraTags())
-            .register(registry)
-            .increment();
+            .tag(EXCEPTION_TAG, exception)
+            .tag(RESULT_TAG, result)
+            .tags(tagsBasedOnJoinPoint.apply(pjp));
+        if (meterTagAnnotationHandler != null) {
+            meterTagAnnotationHandler.addAnnotatedParameters(builder, pjp);
+        }
+        builder.register(registry).increment();
     }
 
-    private Counter.Builder counter(ProceedingJoinPoint pjp, Counted counted) {
-        Counter.Builder builder = Counter.builder(counted.value()).tags(tagsBasedOnJoinPoint.apply(pjp));
-        String description = counted.description();
-        if (!description.isEmpty()) {
-            builder.description(description);
-        }
-        return builder;
+    /**
+     * Setting this enables support for {@link MeterTag}.
+     * @param meterTagAnnotationHandler meter tag annotation handler
+     */
+    public void setMeterTagAnnotationHandler(CountedMeterTagAnnotationHandler meterTagAnnotationHandler) {
+        this.meterTagAnnotationHandler = meterTagAnnotationHandler;
     }
 
 }

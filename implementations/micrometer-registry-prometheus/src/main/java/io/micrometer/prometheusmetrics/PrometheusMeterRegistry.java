@@ -16,6 +16,7 @@
 package io.micrometer.prometheusmetrics;
 
 import io.micrometer.common.lang.Nullable;
+import io.micrometer.common.util.internal.logging.WarnThenDebugLogger;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.cumulative.CumulativeFunctionCounter;
 import io.micrometer.core.instrument.cumulative.CumulativeFunctionTimer;
@@ -67,6 +68,9 @@ import static java.util.stream.StreamSupport.stream;
  * @since 1.13.0
  */
 public class PrometheusMeterRegistry extends MeterRegistry {
+
+    private static final WarnThenDebugLogger meterRegistrationFailureLogger = new WarnThenDebugLogger(
+            PrometheusMeterRegistry.class);
 
     private final PrometheusConfig prometheusConfig;
 
@@ -613,6 +617,24 @@ public class PrometheusMeterRegistry extends MeterRegistry {
         });
 
         return this;
+    }
+
+    @Override
+    protected void meterRegistrationFailed(Meter.Id id, @Nullable String reason) {
+        meterRegistrationFailureLogger.log(() -> createMeterRegistrationFailureMessage(id, reason));
+
+        super.meterRegistrationFailed(id, reason);
+    }
+
+    private static String createMeterRegistrationFailureMessage(Meter.Id id, @Nullable String reason) {
+        String message = String.format("The meter (%s) registration has failed", id);
+        if (reason != null) {
+            message += ": " + reason;
+        }
+        else {
+            message += ".";
+        }
+        return message;
     }
 
     private enum Format {

@@ -1,0 +1,45 @@
+plugins {
+    id 'java'
+}
+
+// Spring 6 requires Java 17+
+// skip this module when building with jdk <17
+if (!javaLanguageVersion.canCompileOrRun(17)) {
+    project.tasks.configureEach { task -> task.enabled = false }
+}
+
+dependencies {
+    implementation project(":micrometer-core")
+    implementation project(":micrometer-observation")
+
+    testImplementation project(":micrometer-observation-test")
+    testImplementation project(":micrometer-test")
+    testImplementation(libs.aspectjweaver)
+    testImplementation libs.awaitility
+    testImplementation(libs.contextPropagation)
+    testImplementation(libs.jakarta.annotationApi)
+    testImplementation(libs.jakarta.injectApi)
+    testImplementation libs.spring6.aop
+    testImplementation(libs.spring6.context)
+}
+
+java {
+    toolchain {
+        languageVersion = javaLanguageVersion
+    }
+}
+
+//compileTestJava {
+//    javaToolchains {
+//        launcherFor {
+//            languageVersion = javaLanguageVersion
+//        }
+//    }
+//}
+
+compileTestJava {
+    // need to override the config applied in the root build.gradle to all subprojects
+    // TODO can we not do this with Gradle's toolchains instead?
+    sourceCompatibility = javaLanguageVersion
+    targetCompatibility = javaLanguageVersion
+}

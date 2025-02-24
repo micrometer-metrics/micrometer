@@ -15,14 +15,14 @@
  */
 package io.micrometer.core.instrument;
 
-import java.time.Duration;
-import java.util.function.Consumer;
-
 import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
+import java.time.Duration;
+import java.util.function.Consumer;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
@@ -90,10 +90,23 @@ class HighCardinalityTagsDetectorTests {
         assertThat(highCardinalityTagsDetector.findFirst()).isEmpty();
     }
 
+    @Test
+    void shouldBeManagedThroughMeterRegistry() {
+        for (int i = 0; i < 4; i++) {
+            Counter.builder("test.counter").tag("index", String.valueOf(i)).register(registry).increment();
+        }
+
+        registry.config()
+            .withHighCardinalityTagsDetector(
+                    r -> new HighCardinalityTagsDetector(r, 3, Duration.ofMinutes(1), testMeterNameConsumer));
+
+        await().atMost(Duration.ofSeconds(1)).until(() -> "test.counter".equals(testMeterNameConsumer.getName()));
+    }
+
     private static class TestMeterNameConsumer implements Consumer<String> {
 
         @Nullable
-        private String name;
+        private volatile String name;
 
         @Override
         public void accept(String name) {
