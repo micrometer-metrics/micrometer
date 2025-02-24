@@ -153,11 +153,15 @@ class ObservationValidatorTests {
     }
 
     @Test
-    @SuppressWarnings("resource")
     void scopeOpenAfterStopShouldBeValid() {
         Observation observation = Observation.start("test", registry);
         observation.stop();
-        observation.openScope();
+        Scope scope = observation.openScope();
+
+        // The scope should be closed to clear its entry in the static
+        // localObservationScope in the SimpleObservationRegistry. Otherwise, it will
+        // pollute it and could affect other tests.
+        scope.close();
     }
 
     @Test
