@@ -19,6 +19,7 @@ import com.github.tomakehurst.wiremock.WireMockServer;
 import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.ipc.http.HttpSender;
+import java.time.Duration;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import ru.lanwen.wiremock.ext.WiremockResolver;
@@ -87,37 +88,7 @@ class DatadogMeterRegistryTest {
     @Test
     void testWithDescriptionEnabled(@WiremockResolver.Wiremock WireMockServer server) {
         Clock clock = new MockClock();
-        DatadogMeterRegistry registry = new DatadogMeterRegistry(new DatadogConfig() {
-            @Override
-            public String uri() {
-                return server.baseUrl();
-            }
-
-            @Override
-            public String get(String key) {
-                return null;
-            }
-
-            @Override
-            public String apiKey() {
-                return "fake";
-            }
-
-            @Override
-            public String applicationKey() {
-                return "fake";
-            }
-
-            @Override
-            public boolean descriptions() {
-                return true;
-            }
-
-            @Override
-            public boolean enabled() {
-                return false;
-            }
-        }, clock);
+        DatadogMeterRegistry registry = buildDatadogRegistry(server, clock, true);
 
         server.stubFor(any(anyUrl()));
 
@@ -158,6 +129,67 @@ class DatadogMeterRegistryTest {
         Meter.Id id = new Meter.Id("my.meter", Tags.empty(), null, null, Meter.Type.COUNTER);
         registry.postMetricMetadata("my.meter", new DatadogMetricMetadata(id, Statistic.COUNT, true, null));
         verifyNoInteractions(httpSender);
+    }
+
+    @Test
+    void testLongTaskTimer(@WiremockResolver.Wiremock WireMockServer server) {
+        MockClock clock = new MockClock();
+        DatadogMeterRegistry registry = buildDatadogRegistry(server, clock, false);
+
+        server.stubFor(any(anyUrl()));
+
+        LongTaskTimer handler = LongTaskTimer.builder("my.timer").description("my timer").register(registry);
+        handler.start();
+        clock.add(Duration.ofSeconds(3));
+
+        registry.publish();
+
+        // Excluding specific data points due to
+        // https://github.com/wiremock/wiremock/issues/1779
+        server.verify(postRequestedFor(urlEqualTo("/api/v1/series?api_key=fake")).withRequestBody(equalToJson(
+                "{\"series\":[" + "{\"metric\":\"my.timer.sum\",\"type\":\"gauge\"," + "\"unit\":\"millisecond\"},"
+                        + "{\"metric\":\"my.timer.active\",\"type\":\"gauge\"," + "\"unit\":\"occurrence\"},"
+                        + "{\"metric\":\"my.timer.avg\",\"type\":\"gauge\"," + "\"unit\":\"millisecond\"},"
+                        + "{\"metric\":\"my.timer.max\",\"type\":\"gauge\"," + "\"unit\":\"millisecond\"}" + "]}",
+                true, true)));
+
+        server.checkForUnmatchedRequests();
+
+        registry.close();
+    }
+
+    private static DatadogMeterRegistry buildDatadogRegistry(WireMockServer server, Clock clock, boolean descriptions) {
+        return new DatadogMeterRegistry(new DatadogConfig() {
+            @Override
+            public String uri() {
+                return server.baseUrl();
+            }
+
+            @Override
+            public String get(String key) {
+                return null;
+            }
+
+            @Override
+            public String apiKey() {
+                return "fake";
+            }
+
+            @Override
+            public String applicationKey() {
+                return "fake";
+            }
+
+            @Override
+            public boolean descriptions() {
+                return descriptions;
+            }
+
+            @Override
+            public boolean enabled() {
+                return false;
+            }
+        }, clock);
     }
 
 }
