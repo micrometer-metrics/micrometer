@@ -22,6 +22,7 @@ dependencies {
 
     testImplementation libs.jersey3TestFrameworkJdkHttp
     testImplementation libs.junitJupiter
+    testRuntimeOnly libs.junitPlatformLauncher
     testImplementation 'org.assertj:assertj-core'
     testImplementation libs.awaitility
 }

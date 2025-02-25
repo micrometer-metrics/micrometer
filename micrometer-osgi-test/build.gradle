@@ -4,7 +4,6 @@ import aQute.bnd.gradle.TestOSGi
 
 dependencies {
     testImplementation 'org.assertj:assertj-core'
-    testImplementation libs.junitJupiter
     testImplementation libs.osgiJunit5
     testImplementation 'org.slf4j:slf4j-api'
 
@@ -17,7 +16,6 @@ dependencies {
 
     testImplementation libs.felixFramework
 
-    testRuntimeOnly libs.junitPlatformLauncher
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
     testRuntimeOnly libs.felixScr
     testRuntimeOnly libs.slfj4Simple

@@ -75,6 +75,10 @@ subprojects {
             apply plugin: 'java'
         } else {
             apply plugin: 'java-library'
+            dependencies {
+                testImplementation libs.junitJupiter
+                testRuntimeOnly libs.junitPlatformLauncher
+            }
         }
         apply plugin: 'com.github.hierynomus.license'
         apply plugin: 'checkstyle'

@@ -49,7 +49,6 @@ dependencies {
     testImplementation project(':micrometer-observation-test')
     testImplementation project(':micrometer-registry-otlp')
     testImplementation libs.aspectjweaver
-    testImplementation libs.junitJupiter
     testImplementation 'org.assertj:assertj-core'
     // needed for OtlpMeterRegistryCustomizationTest
     testRuntimeOnly libs.okhttp

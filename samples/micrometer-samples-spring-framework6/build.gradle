@@ -21,6 +21,9 @@ dependencies {
     testImplementation(libs.jakarta.injectApi)
     testImplementation libs.spring6.aop
     testImplementation(libs.spring6.context)
+
+    testImplementation libs.junitJupiter
+    testRuntimeOnly libs.junitPlatformLauncher
 }
 
 java {

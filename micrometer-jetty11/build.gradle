@@ -4,7 +4,6 @@ dependencies {
     api project(":micrometer-core")
     api libs.jetty11Server
 
-    testImplementation libs.junitJupiter
     testImplementation 'org.assertj:assertj-core'
 }
 
