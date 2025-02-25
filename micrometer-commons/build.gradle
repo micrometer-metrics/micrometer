@@ -7,8 +7,6 @@ dependencies {
     // Aspects
     optionalApi 'org.aspectj:aspectjweaver'
 
-    // JUnit 5
-    testImplementation libs.junitJupiter
     testImplementation 'org.assertj:assertj-core'
 }
 
