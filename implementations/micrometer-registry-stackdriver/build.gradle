@@ -16,3 +16,15 @@ dependencies {
 
     testImplementation project(':micrometer-test')
 }
+
+test {
+    useJUnitPlatform {
+        excludeTags 'gcp-it'
+    }
+}
+
+task stackdriverTest(type: Test) {
+    useJUnitPlatform {
+        includeTags 'gcp-it'
+    }
+}
