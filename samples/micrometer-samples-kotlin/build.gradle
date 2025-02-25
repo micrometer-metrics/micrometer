@@ -22,4 +22,7 @@ dependencies {
     testRuntimeOnly libs.contextPropagation
 
     testImplementation project(":micrometer-test")
+
+    testImplementation libs.junitJupiter
+    testRuntimeOnly libs.junitPlatformLauncher
 }

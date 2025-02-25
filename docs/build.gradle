@@ -48,7 +48,6 @@ dependencies {
     testImplementation project(':micrometer-test')
     testImplementation project(':micrometer-observation-test')
     testImplementation libs.aspectjweaver
-    testImplementation libs.junitJupiter
     testImplementation 'org.assertj:assertj-core'
     testImplementation(libs.spring6.context)
     testImplementation 'io.projectreactor:reactor-core'

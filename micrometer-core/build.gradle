@@ -152,8 +152,6 @@ dependencies {
     // Only needed for ModifiedClassPathClassLoader
     testImplementation(libs.spring5.core)
 
-    // JUnit 5
-    testImplementation libs.junitJupiter
     testImplementation(libs.archunitJunit5) {
         // avoid transitively pulling in slf4j 2
         exclude group: "org.slf4j", module: "slf4j-api"
