@@ -25,6 +25,8 @@ import com.google.cloud.monitoring.v3.MetricServiceSettings;
 import com.google.monitoring.v3.*;
 import com.google.protobuf.Timestamp;
 import io.micrometer.common.lang.Nullable;
+import io.micrometer.common.util.internal.logging.InternalLogger;
+import io.micrometer.common.util.internal.logging.InternalLoggerFactory;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.distribution.CountAtBucket;
@@ -35,8 +37,6 @@ import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.util.DoubleFormat;
 import io.micrometer.core.instrument.util.NamedThreadFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.concurrent.Callable;
@@ -69,7 +69,7 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
      */
     private static final int TIMESERIES_PER_REQUEST_LIMIT = 200;
 
-    private final Logger logger = LoggerFactory.getLogger(StackdriverMeterRegistry.class);
+    private final InternalLogger logger = InternalLoggerFactory.getInstance(StackdriverMeterRegistry.class);
 
     private final StackdriverConfig config;
 
