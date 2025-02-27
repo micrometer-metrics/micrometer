@@ -38,6 +38,8 @@ shadowJar {
         include(dependency('io.projectreactor.netty:'))
         include(dependency('org.reactivestreams:reactive-streams'))
         include(dependency('io.netty:'))
+        // see gh-5953
+        exclude("META-INF/maven/**")
     }
     relocate 'reactor', 'io.micrometer.shaded.reactor'
     relocate 'org.reactivestreams', 'io.micrometer.shaded.org.reactorstreams'
