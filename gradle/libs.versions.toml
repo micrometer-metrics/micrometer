@@ -36,7 +36,7 @@ httpcomponents-client5 = "5.4.2"
 # in hystrix 1.5.12, but Netflix re-released 1.5.11 as 1.5.18 late in 2018.
 # <=1.5.11 or 1.5.18 doesn't break with Micrometer, but open metrics won't be correct necessarily.
 hystrix = "1.5.12"
-jackson-databind = "2.18.2"
+jackson-databind = "2.18.3"
 javax-cache = "1.1.1"
 javax-inject = "1"
 jaxb = "2.3.1"
