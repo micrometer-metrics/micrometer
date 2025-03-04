@@ -63,6 +63,7 @@ dependencies {
     testImplementation 'net.sf.ehcache:ehcache'
     testImplementation 'javax.cache:cache-api'
     testImplementation 'jakarta.jms:jakarta.jms-api'
+    testImplementation 'jakarta.mail:jakarta.mail-api'
     testImplementation 'com.hazelcast:hazelcast'
     testImplementation 'com.squareup.okhttp3:okhttp'
     testImplementation 'org.apache.httpcomponents:httpclient'
