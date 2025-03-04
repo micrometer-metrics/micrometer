@@ -133,6 +133,10 @@ public enum JmsObservationDocumentation implements ObservationDocumentation {
 
         /**
          * The name of destination the current message was sent to.
+         * <p>
+         * The rationale for classifying it as a high-cardinality key is that
+         * {@link jakarta.jms.TemporaryQueue} has a great number of possible values of
+         * names.
          */
         DESTINATION_NAME {
             @Override
