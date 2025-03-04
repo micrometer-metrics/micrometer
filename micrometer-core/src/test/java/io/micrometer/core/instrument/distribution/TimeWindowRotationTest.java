@@ -54,7 +54,7 @@ class TimeWindowRotationTest {
     @MethodSource("histogramTypes")
     void rotationIntervalValidation(Class<? extends AbstractTimeWindowHistogram<?, ?>> histogramType) {
         expectValidationFailure(histogramType,
-                DistributionStatisticConfig.builder().expiry(Duration.ofMillis(9)).bufferLength(10).build());
+                DistributionStatisticConfig.builder().expiry(Duration.ofMillis(-10)).build());
     }
 
 }
