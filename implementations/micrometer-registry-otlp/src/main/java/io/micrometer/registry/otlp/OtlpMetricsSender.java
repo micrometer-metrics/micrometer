@@ -26,11 +26,14 @@ import java.util.Map;
 public interface OtlpMetricsSender extends MetricsSender {
 
     /**
-     * Send a batch of OTLP Protobuf format metrics to a receiver.
+     * Send a batch of OTLP Protobuf format metrics to an OTLP receiver.
+     * @param address address of the OTLP receiver to which metrics will be sent
      * @param metricsData OTLP protobuf encoded batch of metrics
      * @param headers metadata to send as headers with the metrics data
+     * @throws Throwable when there is an exception in sending the metrics; the caller
+     * should handle this in some way such as logging the exception
      */
     @Override
-    void send(byte[] metricsData, Map<String, String> headers);
+    void send(String address, byte[] metricsData, Map<String, String> headers) throws Throwable;
 
 }
