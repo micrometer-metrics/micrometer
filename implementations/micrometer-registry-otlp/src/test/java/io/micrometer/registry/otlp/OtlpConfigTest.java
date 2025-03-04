@@ -25,6 +25,7 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
+import static java.util.Map.entry;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static uk.org.webcompere.systemstubs.SystemStubs.withEnvironmentVariable;
@@ -274,6 +275,27 @@ class OtlpConfigTest {
                 "base2_exponential_bucket_histogram")
             .execute(() -> assertThat(config.histogramFlavor())
                 .isEqualTo(HistogramFlavor.BASE2_EXPONENTIAL_BUCKET_HISTOGRAM));
+    }
+
+    @Test
+    void histogramFlavorPerMeter() {
+        Map<String, String> properties = new HashMap<>();
+        properties.put("otlp.histogramFlavorPerMeter",
+                "a.b.c=explicit_bucket_histogram ,expo =base2_exponential_bucket_histogram");
+        OtlpConfig otlpConfig = properties::get;
+        assertThat(otlpConfig.validate().isValid()).isTrue();
+        assertThat(otlpConfig.histogramFlavorPerMeter()).containsExactly(
+                entry("a.b.c", HistogramFlavor.EXPLICIT_BUCKET_HISTOGRAM),
+                entry("expo", HistogramFlavor.BASE2_EXPONENTIAL_BUCKET_HISTOGRAM));
+    }
+
+    @Test
+    void maxBucketsPerMeter() {
+        Map<String, String> properties = new HashMap<>();
+        properties.put("otlp.maxBucketsPerMeter", "a.b.c = 10");
+        OtlpConfig otlpConfig = properties::get;
+        assertThat(otlpConfig.validate().isValid()).isTrue();
+        assertThat(otlpConfig.maxBucketsPerMeter()).containsExactly(entry("a.b.c", 10));
     }
 
 }

@@ -31,6 +31,7 @@ import java.io.IOException;
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.assertArg;
@@ -406,6 +407,114 @@ abstract class OtlpMeterRegistryTest {
 
     @Test
     abstract void testMetricsStartAndEndTime();
+
+    @Test
+    void perMeterHistogramFlavorOverridesGeneralHistogramFlavor() {
+        OtlpConfig config = new OtlpConfig() {
+            @Override
+            public String get(String key) {
+                return null;
+            }
+
+            @Override
+            public AggregationTemporality aggregationTemporality() {
+                return otlpConfig().aggregationTemporality();
+            }
+
+            @Override
+            public HistogramFlavor histogramFlavor() {
+                return HistogramFlavor.EXPLICIT_BUCKET_HISTOGRAM;
+            }
+
+            @Override
+            public Map<String, HistogramFlavor> histogramFlavorPerMeter() {
+                return Collections.singletonMap("expo", HistogramFlavor.BASE2_EXPONENTIAL_BUCKET_HISTOGRAM);
+            }
+        };
+        OtlpMeterRegistry meterRegistry = new OtlpMeterRegistry(config, clock);
+        Timer expo = Timer.builder("expo").publishPercentileHistogram().register(meterRegistry);
+        Timer other = Timer.builder("other").publishPercentileHistogram().register(meterRegistry);
+
+        assertThat(writeToMetric(expo).getDataCase().getNumber())
+            .isEqualTo(Metric.DataCase.EXPONENTIAL_HISTOGRAM.getNumber());
+        assertThat(writeToMetric(other).getDataCase().getNumber()).isEqualTo(Metric.DataCase.HISTOGRAM.getNumber());
+
+        meterRegistry.clear();
+
+        DistributionSummary expo2 = DistributionSummary.builder("expo")
+            .publishPercentileHistogram()
+            .register(meterRegistry);
+        DistributionSummary other2 = DistributionSummary.builder("other")
+            .publishPercentileHistogram()
+            .register(meterRegistry);
+
+        assertThat(writeToMetric(expo2).getDataCase().getNumber())
+            .isEqualTo(Metric.DataCase.EXPONENTIAL_HISTOGRAM.getNumber());
+        assertThat(writeToMetric(other2).getDataCase().getNumber()).isEqualTo(Metric.DataCase.HISTOGRAM.getNumber());
+    }
+
+    @Test
+    void maxBucketsPerMeter() {
+        OtlpConfig config = new OtlpConfig() {
+            @Override
+            public String get(String key) {
+                return null;
+            }
+
+            @Override
+            public AggregationTemporality aggregationTemporality() {
+                return otlpConfig().aggregationTemporality();
+            }
+
+            @Override
+            public HistogramFlavor histogramFlavor() {
+                return HistogramFlavor.BASE2_EXPONENTIAL_BUCKET_HISTOGRAM;
+            }
+
+            @Override
+            public int maxBucketCount() {
+                return 56;
+            }
+
+            @Override
+            public Map<String, Integer> maxBucketsPerMeter() {
+                return Collections.singletonMap("low.variation", 15);
+            }
+        };
+        OtlpMeterRegistry meterRegistry = new OtlpMeterRegistry(config, clock);
+        Timer lowVariation = Timer.builder("low.variation").publishPercentileHistogram().register(meterRegistry);
+        Timer other = Timer.builder("other").publishPercentileHistogram().register(meterRegistry);
+
+        List.of(lowVariation, other)
+            .forEach(t -> IntStream.range(1, 111).forEach(i -> t.record(i, TimeUnit.MILLISECONDS)));
+        clock.add(config.step());
+
+        assertThat(writeToMetric(lowVariation).getExponentialHistogram()
+            .getDataPoints(0)
+            .getPositive()
+            .getBucketCountsList()).hasSize(15);
+        assertThat(writeToMetric(other).getExponentialHistogram().getDataPoints(0).getPositive().getBucketCountsList())
+            .hasSize(56);
+
+        meterRegistry.clear();
+
+        DistributionSummary lowVariation2 = DistributionSummary.builder("low.variation")
+            .publishPercentileHistogram()
+            .register(meterRegistry);
+        DistributionSummary other2 = DistributionSummary.builder("other")
+            .publishPercentileHistogram()
+            .register(meterRegistry);
+
+        List.of(lowVariation2, other2).forEach(t -> IntStream.range(1, 111).forEach(t::record));
+        clock.add(config.step());
+
+        assertThat(writeToMetric(lowVariation2).getExponentialHistogram()
+            .getDataPoints(0)
+            .getPositive()
+            .getBucketCountsList()).hasSize(15);
+        assertThat(writeToMetric(other2).getExponentialHistogram().getDataPoints(0).getPositive().getBucketCountsList())
+            .hasSize(56);
+    }
 
     protected Metric writeToMetric(Meter meter) {
         OtlpMetricConverter otlpMetricConverter = new OtlpMetricConverter(clock, otlpConfig().step(),

@@ -15,17 +15,16 @@
  */
 package io.micrometer.registry.otlp;
 
+import io.micrometer.common.util.StringUtils;
 import io.micrometer.core.instrument.config.InvalidConfigurationException;
 import io.micrometer.core.instrument.config.validate.Validated;
 import io.micrometer.core.instrument.push.PushRegistryConfig;
 
 import java.time.Duration;
 import java.net.URLDecoder;
-import java.util.Arrays;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.*;
@@ -215,6 +214,7 @@ public interface OtlpConfig extends PushRegistryConfig {
      * {@link HistogramFlavor#EXPLICIT_BUCKET_HISTOGRAM} is used for those meters.
      * </p>
      * @return - histogram flavor to be used
+     * @see #histogramFlavorPerMeter()
      *
      * @since 1.14.0
      */
@@ -230,6 +230,19 @@ public interface OtlpConfig extends PushRegistryConfig {
     }
 
     /**
+     * Configures the histogram flavor to use on a per-meter level. This will override the
+     * {@link #histogramFlavor()} configuration for matching Meters. The key is used to do
+     * an exact match on the Meter's name.
+     * @return mapping of meter name to histogram flavor
+     * @since 1.15.0
+     * @see #histogramFlavor()
+     */
+    default Map<String, HistogramFlavor> histogramFlavorPerMeter() {
+        String flavorPerMeterString = getString(this, "histogramFlavorPerMeter").orElse(null);
+        return propertiesStringToMap(flavorPerMeterString, HistogramFlavor::fromString);
+    }
+
+    /**
      * Max scale to use for exponential histograms, if configured.
      * @return maxScale
      * @see #histogramFlavor()
@@ -242,14 +255,29 @@ public interface OtlpConfig extends PushRegistryConfig {
 
     /**
      * Maximum number of buckets to be used for exponential histograms, if configured.
-     * This has no effect on explicit bucket histograms.
+     * This has no effect on explicit bucket histograms. This can be overridden per meter
+     * with {@link #maxBucketsPerMeter()}.
      * @return - maxBuckets
      * @see #histogramFlavor()
+     * @see #maxBucketsPerMeter()
      *
      * @since 1.14.0
      */
     default int maxBucketCount() {
         return getInteger(this, "maxBucketCount").orElse(160);
+    }
+
+    /**
+     * Configures the max bucket count to use on a per-meter level. This will override the
+     * {@link #maxBucketCount()} configuration for matching Meters. The key is used to do
+     * an exact match on the Meter's name. This has no effect on a meter if it does not
+     * have an exponential bucket histogram configured.
+     * @return mapping of meter name to max bucket count
+     * @since 1.15.0
+     * @see #maxBucketCount()
+     */
+    default Map<String, Integer> maxBucketsPerMeter() {
+        return propertiesStringToMap(getString(this, "maxBucketsPerMeter").orElse(null), Integer::parseInt);
     }
 
     @Override
@@ -262,6 +290,16 @@ public interface OtlpConfig extends PushRegistryConfig {
 
     default TimeUnit baseTimeUnit() {
         return getTimeUnit(this, "baseTimeUnit").orElse(TimeUnit.MILLISECONDS);
+    }
+
+    static <V> Map<String, V> propertiesStringToMap(String propertiesString,
+            Function<String, ? extends V> valueMapper) {
+        String[] keyvals = StringUtils.isBlank(propertiesString) ? new String[] {} : propertiesString.trim().split(",");
+        return Arrays.stream(keyvals)
+            .map(String::trim)
+            .filter(keyValue -> keyValue.length() > 2 && keyValue.indexOf('=') > 0)
+            .collect(Collectors.toMap(keyvalue -> keyvalue.substring(0, keyvalue.indexOf('=')).trim(),
+                    keyvalue -> valueMapper.apply(keyvalue.substring(keyvalue.indexOf('=') + 1).trim())));
     }
 
 }
