@@ -31,7 +31,7 @@ class OtlpMeterRegistryCustomizationTest {
     void customizeHttpSender() {
         // tag::customizeHttpSender[]
         OtlpConfig config = OtlpConfig.DEFAULT;
-        OtlpHttpMetricsSender httpMetricsSender = new OtlpHttpMetricsSender(new OkHttpSender(), config);
+        OtlpHttpMetricsSender httpMetricsSender = new OtlpHttpMetricsSender(new OkHttpSender());
         OtlpMeterRegistry meterRegistry = OtlpMeterRegistry.builder(config).metricsSender(httpMetricsSender).build();
         // end::customizeHttpSender[]
     }
@@ -49,7 +49,7 @@ class OtlpMeterRegistryCustomizationTest {
     private static class OtlpGrpcMetricsSender implements OtlpMetricsSender {
 
         @Override
-        public void send(byte[] metricsData, Map<String, String> headers) {
+        public void send(String address, byte[] metricsData, Map<String, String> headers) {
         }
 
     }
