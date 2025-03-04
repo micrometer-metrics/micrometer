@@ -104,6 +104,10 @@ class JvmGcMetricsTest {
     // in an LTS is 17
     @EnabledForJreRange(min = JRE.JAVA_17)
     void gcTimingIsCorrectForPauseCycleCollectors() {
+        // Try to reduce chances for GCs to happen between collecting initial values and
+        // binding metrics.
+        System.gc();
+
         // get initial GC timing metrics from JMX, if any
         // GC could have happened before this test due to testing infrastructure
         // If it did, it will not be captured in the metrics
