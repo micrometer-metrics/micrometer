@@ -18,7 +18,6 @@ package io.micrometer.core.instrument;
 import io.micrometer.common.docs.KeyName;
 import io.micrometer.common.lang.Nullable;
 import io.micrometer.observation.docs.ObservationDocumentation;
-import io.micrometer.observation.tck.TestObservationRegistryAssert;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.extension.ExtendWith;
 
@@ -78,13 +77,11 @@ abstract class InstrumentationTimingVerificationTests extends InstrumentationVer
 
         if (testType == TestType.METRICS_VIA_OBSERVATIONS_WITH_METRICS_HANDLER) {
             if (observationDocumentation.getDefaultConvention() == null) {
-                TestObservationRegistryAssert.assertThat(getObservationRegistry())
-                    .hasObservationWithNameEqualTo(observationDocumentation.getName())
+                assertThat(getObservationRegistry()).hasObservationWithNameEqualTo(observationDocumentation.getName())
                     .that()
                     .hasContextualNameEqualTo(observationDocumentation.getContextualName());
             }
-            TestObservationRegistryAssert.assertThat(getObservationRegistry())
-                .hasObservationWithNameEqualTo(timerName())
+            assertThat(getObservationRegistry()).hasObservationWithNameEqualTo(timerName())
                 .that()
                 .hasSubsetOfKeys(getAllKeyNames(observationDocumentation));
         }

@@ -23,6 +23,8 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.Properties;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 
 import static io.micrometer.core.instrument.binder.kafka.KafkaClientMetrics.METRIC_NAME_PREFIX;
 import static org.apache.kafka.clients.admin.AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG;
@@ -32,7 +34,7 @@ class KafkaClientMetricsAdminTest {
 
     private static final String BOOTSTRAP_SERVERS = "localhost:9092";
 
-    private Tags tags = Tags.of("app", "myapp", "version", "1");
+    private final Tags tags = Tags.of("app", "myapp", "version", "1");
 
     KafkaClientMetrics metrics;
 
@@ -66,6 +68,27 @@ class KafkaClientMetricsAdminTest {
             assertThat(registry.getMeters()).hasSizeGreaterThan(0)
                 .extracting(meter -> meter.getId().getTag("app"))
                 .allMatch(s -> s.equals("myapp"));
+        }
+    }
+
+    @Test
+    void shouldCreateMetersWithTagsAndCustomScheduler() {
+        try (AdminClient adminClient = createAdmin()) {
+            ScheduledExecutorService customScheduler = Executors.newScheduledThreadPool(1);
+            metrics = new KafkaClientMetrics(adminClient, tags, customScheduler);
+            MeterRegistry registry = new SimpleMeterRegistry();
+
+            metrics.bindTo(registry);
+
+            assertThat(registry.getMeters()).hasSizeGreaterThan(0)
+                .extracting(meter -> meter.getId().getTag("app"))
+                .allMatch(s -> s.equals("myapp"));
+
+            metrics.close();
+            assertThat(customScheduler.isShutdown()).isFalse();
+
+            customScheduler.shutdownNow();
+            assertThat(customScheduler.isShutdown()).isTrue();
         }
     }
 

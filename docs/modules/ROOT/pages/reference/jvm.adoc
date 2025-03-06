@@ -10,12 +10,14 @@ new JvmMemoryMetrics().bindTo(registry); <2>
 new JvmGcMetrics().bindTo(registry); <3>
 new ProcessorMetrics().bindTo(registry); <4>
 new JvmThreadMetrics().bindTo(registry); <5>
+new JvmThreadDeadlockMetrics().bindTo(registry); <6>
 ----
 <1> Gauges loaded and unloaded classes.
 <2> Gauges buffer and memory pool utilization.
 <3> Gauges max and live data size, promotion and allocation rates, and the number of times the GC pauses (or concurrent phase time in the case of CMS).
 <4> Gauges current CPU total and load average.
 <5> Gauges thread peak, the number of daemon threads, and live threads.
+<6> Gauges the number of threads that are deadlocked.
 
 Micrometer also provides a meter binder for `ExecutorService`. You can instrument your `ExecutorService`, as follows:
 
@@ -40,3 +42,16 @@ another. The reported value underestimates the actual total number of steals whe
 * `executor.queued` (`Gauge`): An estimate of the total number of tasks currently held in queues by worker threads.
 * `executor.active` (`Gauge`): An estimate of the number of threads that are currently stealing or running tasks.
 * `executor.running` (`Gauge`): An estimate of the number of worker threads that are not blocked but are waiting to join tasks or for other managed synchronization threads.
+* `executor.parallelism` (`Gauge`): The targeted parallelism level of this pool.
+* `executor.pool.size` (`Gauge`): The current number of threads in the pool.
+
+== Java 21 Metrics
+
+Micrometer provides support for https://openjdk.org/jeps/444[virtual threads] released in Java 21. In order to utilize it, you need to add the `io.micrometer:micrometer-java21` dependency to your classpath to use the binder:
+
+[source, java]
+----
+new VirtualThreadMetrics().bindTo(registry);
+----
+
+The binder measures the duration (and counts the number of events) of virtual threads being pinned; also counts the number of events when starting or unparking a virtual thread failed.

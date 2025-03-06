@@ -5,8 +5,8 @@ pluginManagement {
 }
 
 plugins {
-    id 'com.gradle.develocity' version '3.17.6'
-    id 'io.spring.develocity.conventions' version '0.0.20'
+    id 'com.gradle.develocity' version '3.18.1'
+    id 'io.spring.develocity.conventions' version '0.0.22'
     id 'org.gradle.toolchains.foojay-resolver-convention' version '0.8.0'
 }
 
@@ -26,12 +26,12 @@ buildCache {
 
 include 'micrometer-commons', 'micrometer-core', 'micrometer-observation'
 
-['core', 'boot2', 'boot2-reactive', 'spring-integration', 'hazelcast', 'hazelcast3', 'javalin', 'jersey3', 'jetty12', 'jooq', 'kotlin'].each { sample ->
+['core', 'boot2', 'boot2-reactive', 'spring-integration', 'hazelcast', 'hazelcast3', 'javalin', 'jersey3', 'jooq', 'kotlin', 'spring-framework6'].each { sample ->
     include "micrometer-samples-$sample"
     project(":micrometer-samples-$sample").projectDir = new File(rootProject.projectDir, "samples/micrometer-samples-$sample")
 }
 
-include 'micrometer-test', 'micrometer-observation-test'
+include 'micrometer-test', 'micrometer-observation-test', 'micrometer-test-aspectj-ltw', 'micrometer-test-aspectj-ctw'
 
 ['atlas', 'prometheus', 'prometheus-simpleclient', 'datadog', 'elastic', 'ganglia', 'graphite', 'health', 'jmx', 'influx', 'otlp', 'statsd', 'new-relic', 'cloudwatch2', 'signalfx', 'wavefront', 'dynatrace', 'azure-monitor', 'humio', 'appoptics', 'kairos', 'stackdriver', 'opentsdb'].each { sys ->
     include "micrometer-registry-$sys"
@@ -47,6 +47,7 @@ include 'concurrency-tests'
 include 'micrometer-bom'
 include 'micrometer-jakarta9'
 include 'micrometer-java11'
+include 'micrometer-java21'
 include 'micrometer-jetty11'
 include 'micrometer-jetty12'
 include 'micrometer-osgi-test'

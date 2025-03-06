@@ -21,9 +21,6 @@ import com.google.inject.Injector;
 import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
-import org.springframework.context.annotation.AnnotationConfigApplicationContext;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
 
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
@@ -38,17 +35,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  * @author Jon Schneider
  */
 class MeterRegistryInjectionTest {
-
-    @Test
-    void injectWithSpring() {
-        try (AnnotationConfigApplicationContext ctx = new AnnotationConfigApplicationContext(
-                SpringConfiguration.class)) {
-            MyComponent component = ctx.getBean(MyComponent.class);
-            component.performanceCriticalFeature();
-            assertThat(component.registry).isInstanceOf(SimpleMeterRegistry.class);
-            component.registry.get("feature.counter").counter();
-        }
-    }
 
     // @Test
     // void injectWithDagger() {
@@ -91,21 +77,6 @@ class MeterRegistryInjectionTest {
 // }
 // }
 // }
-
-@Configuration
-class SpringConfiguration {
-
-    @Bean
-    SimpleMeterRegistry meterRegistry() {
-        return new SimpleMeterRegistry();
-    }
-
-    @Bean
-    MyComponent component() {
-        return new MyComponent();
-    }
-
-}
 
 class GuiceConfiguration extends AbstractModule {
 

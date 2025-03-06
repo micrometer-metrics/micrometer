@@ -17,17 +17,22 @@ package io.micrometer.core.aop;
 
 import io.micrometer.common.lang.NonNullApi;
 import io.micrometer.common.lang.Nullable;
+import io.micrometer.common.util.internal.logging.WarnThenDebugLogger;
 import io.micrometer.core.annotation.Incubating;
 import io.micrometer.core.annotation.Timed;
 import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.util.TimeUtils;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.reflect.MethodSignature;
 
 import java.lang.reflect.Method;
+import java.time.Duration;
+import java.util.Arrays;
 import java.util.Optional;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
@@ -83,6 +88,8 @@ import java.util.function.Predicate;
 @NonNullApi
 @Incubating(since = "1.0.0")
 public class TimedAspect {
+
+    private static final WarnThenDebugLogger joinPointTagsFunctionLogger = new WarnThenDebugLogger(TimedAspect.class);
 
     private static final Predicate<ProceedingJoinPoint> DONT_SKIP_ANYTHING = pjp -> false;
 
@@ -157,11 +164,25 @@ public class TimedAspect {
     public TimedAspect(MeterRegistry registry, Function<ProceedingJoinPoint, Iterable<Tag>> tagsBasedOnJoinPoint,
             Predicate<ProceedingJoinPoint> shouldSkip) {
         this.registry = registry;
-        this.tagsBasedOnJoinPoint = tagsBasedOnJoinPoint;
+        this.tagsBasedOnJoinPoint = makeSafe(tagsBasedOnJoinPoint);
         this.shouldSkip = shouldSkip;
     }
 
-    @Around("@within(io.micrometer.core.annotation.Timed) and not @annotation(io.micrometer.core.annotation.Timed)")
+    private Function<ProceedingJoinPoint, Iterable<Tag>> makeSafe(
+            Function<ProceedingJoinPoint, Iterable<Tag>> function) {
+        return pjp -> {
+            try {
+                return function.apply(pjp);
+            }
+            catch (Throwable t) {
+                joinPointTagsFunctionLogger
+                    .log("Exception thrown from the tagsBasedOnJoinPoint function configured on TimedAspect.", t);
+                return Tags.empty();
+            }
+        };
+    }
+
+    @Around("@within(io.micrometer.core.annotation.Timed) && !@annotation(io.micrometer.core.annotation.Timed) && execution(* *(..))")
     @Nullable
     public Object timedClass(ProceedingJoinPoint pjp) throws Throwable {
         if (shouldSkip.test(pjp)) {
@@ -217,9 +238,9 @@ public class TimedAspect {
                 return ((CompletionStage<?>) pjp.proceed()).whenComplete(
                         (result, throwable) -> record(pjp, timed, metricName, sample, getExceptionTag(throwable)));
             }
-            catch (Exception ex) {
-                record(pjp, timed, metricName, sample, ex.getClass().getSimpleName());
-                throw ex;
+            catch (Throwable e) {
+                record(pjp, timed, metricName, sample, e.getClass().getSimpleName());
+                throw e;
             }
         }
 
@@ -227,9 +248,9 @@ public class TimedAspect {
         try {
             return pjp.proceed();
         }
-        catch (Exception ex) {
-            exceptionClass = ex.getClass().getSimpleName();
-            throw ex;
+        catch (Throwable e) {
+            exceptionClass = e.getClass().getSimpleName();
+            throw e;
         }
         finally {
             record(pjp, timed, metricName, sample, exceptionClass);
@@ -254,7 +275,12 @@ public class TimedAspect {
             .tags(EXCEPTION_TAG, exceptionClass)
             .tags(tagsBasedOnJoinPoint.apply(pjp))
             .publishPercentileHistogram(timed.histogram())
-            .publishPercentiles(timed.percentiles().length == 0 ? null : timed.percentiles());
+            .publishPercentiles(timed.percentiles().length == 0 ? null : timed.percentiles())
+            .serviceLevelObjectives(
+                    timed.serviceLevelObjectives().length > 0 ? Arrays.stream(timed.serviceLevelObjectives())
+                        .mapToObj(s -> Duration.ofNanos((long) TimeUtils.secondsToUnit(s, TimeUnit.NANOSECONDS)))
+                        .toArray(Duration[]::new) : null);
+
         if (meterTagAnnotationHandler != null) {
             meterTagAnnotationHandler.addAnnotatedParameters(builder, pjp);
         }
@@ -284,9 +310,9 @@ public class TimedAspect {
                 return ((CompletionStage<?>) pjp.proceed())
                     .whenComplete((result, throwable) -> sample.ifPresent(this::stopTimer));
             }
-            catch (Exception ex) {
+            catch (Throwable e) {
                 sample.ifPresent(this::stopTimer);
-                throw ex;
+                throw e;
             }
         }
 

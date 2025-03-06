@@ -40,6 +40,8 @@ public abstract class CacheMeterBinder<C> implements MeterBinder {
 
     private static final String DESCRIPTION_CACHE_GETS = "The number of times cache lookup methods have returned a cached (hit) or uncached (newly loaded or null) value (miss).";
 
+    static final long UNSUPPORTED = -1L;
+
     private final WeakReference<C> cacheRef;
 
     private final Iterable<Tag> tags;
@@ -75,16 +77,20 @@ public abstract class CacheMeterBinder<C> implements MeterBinder {
             }).tags(tags).tag("result", "miss").description(DESCRIPTION_CACHE_GETS).register(registry);
         }
 
-        FunctionCounter.builder("cache.gets", cache, c -> hitCount())
-            .tags(tags)
-            .tag("result", "hit")
-            .description(DESCRIPTION_CACHE_GETS)
-            .register(registry);
+        if (hitCount() != UNSUPPORTED) {
+            FunctionCounter.builder("cache.gets", cache, c -> hitCount())
+                .tags(tags)
+                .tag("result", "hit")
+                .description(DESCRIPTION_CACHE_GETS)
+                .register(registry);
+        }
 
-        FunctionCounter.builder("cache.puts", cache, c -> putCount())
-            .tags(tags)
-            .description("The number of entries added to the cache")
-            .register(registry);
+        if (putCount() != UNSUPPORTED) {
+            FunctionCounter.builder("cache.puts", cache, c -> putCount())
+                .tags(tags)
+                .description("The number of entries added to the cache")
+                .register(registry);
+        }
 
         if (evictionCount() != null) {
             FunctionCounter.builder("cache.evictions", cache, c -> {
@@ -108,7 +114,8 @@ public abstract class CacheMeterBinder<C> implements MeterBinder {
 
     /**
      * @return Get requests that resulted in a "hit" against an existing cache entry.
-     * Monotonically increasing hit count.
+     * Monotonically increasing hit count. Returns -1 if the cache implementation does not
+     * support this.
      */
     protected abstract long hitCount();
 
@@ -134,6 +141,7 @@ public abstract class CacheMeterBinder<C> implements MeterBinder {
      * The put mechanism is unimportant - this count applies to entries added to the cache
      * according to a pre-defined load function such as exists in Guava/Caffeine caches as
      * well as manual puts. Note that Guava/Caffeine caches don't count manual puts.
+     * Returns -1 if the cache implementation does not support this.
      * @return Total number of entries added to the cache. Monotonically increasing count.
      */
     protected abstract long putCount();

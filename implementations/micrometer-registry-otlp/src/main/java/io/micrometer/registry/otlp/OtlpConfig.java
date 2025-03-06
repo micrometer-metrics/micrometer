@@ -202,6 +202,55 @@ public interface OtlpConfig extends PushRegistryConfig {
                     keyValue -> keyValue.substring(keyValue.indexOf('=') + 1).trim(), (l, r) -> r));
     }
 
+    /**
+     * Histogram type to be preferred when histogram publishing is enabled. By default
+     * {@link HistogramFlavor#EXPLICIT_BUCKET_HISTOGRAM} is used for the supported meters.
+     * When this is set to {@link HistogramFlavor#BASE2_EXPONENTIAL_BUCKET_HISTOGRAM} and
+     * {@code publishPercentileHistogram} is enabled
+     * {@link io.micrometer.registry.otlp.internal.Base2ExponentialHistogram} is used for
+     * recording distributions.
+     * <p>
+     * Note: If specific SLO's are configured, this property is not honored and
+     * {@link HistogramFlavor#EXPLICIT_BUCKET_HISTOGRAM} is used for those meters.
+     * </p>
+     * @return - histogram flavor to be used
+     *
+     * @since 1.14.0
+     */
+    default HistogramFlavor histogramFlavor() {
+        return getEnum(this, HistogramFlavor.class, "histogramFlavor").orElseGet(() -> {
+            String histogramPreference = System.getenv()
+                .get("OTEL_EXPORTER_OTLP_METRICS_DEFAULT_HISTOGRAM_AGGREGATION");
+            if (histogramPreference != null) {
+                return HistogramFlavor.fromString(histogramPreference);
+            }
+            return HistogramFlavor.EXPLICIT_BUCKET_HISTOGRAM;
+        });
+    }
+
+    /**
+     * Max scale to use for exponential histograms, if configured.
+     * @return maxScale
+     * @see #histogramFlavor()
+     *
+     * @since 1.14.0
+     */
+    default int maxScale() {
+        return getInteger(this, "maxScale").orElse(20);
+    }
+
+    /**
+     * Maximum number of buckets to be used for exponential histograms, if configured.
+     * This has no effect on explicit bucket histograms.
+     * @return - maxBuckets
+     * @see #histogramFlavor()
+     *
+     * @since 1.14.0
+     */
+    default int maxBucketCount() {
+        return getInteger(this, "maxBucketCount").orElse(160);
+    }
+
     @Override
     default Validated<?> validate() {
         return checkAll(this, c -> PushRegistryConfig.validate(c), checkRequired("url", OtlpConfig::url),

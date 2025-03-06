@@ -43,27 +43,34 @@ public class DefaultHttpClientObservationConvention implements HttpClientObserva
             return KeyValues.empty();
         }
         HttpRequest httpRequest = context.getCarrier().build();
-        KeyValues keyValues = KeyValues.of(
+        return KeyValues.of(
                 HttpClientObservationDocumentation.LowCardinalityKeys.METHOD.withValue(httpRequest.method()),
                 HttpClientObservationDocumentation.LowCardinalityKeys.URI
-                    .withValue(getUriTag(httpRequest, context.getResponse(), context.getUriMapper())));
-        if (context.getResponse() != null) {
-            keyValues = keyValues
-                .and(HttpClientObservationDocumentation.LowCardinalityKeys.STATUS
-                    .withValue(String.valueOf(context.getResponse().statusCode())))
-                .and(HttpClientObservationDocumentation.LowCardinalityKeys.OUTCOME
-                    .withValue(Outcome.forStatus(context.getResponse().statusCode()).name()));
-        }
-        return keyValues;
+                    .withValue(getUriTag(httpRequest, context.getResponse(), context.getUriMapper())),
+                HttpClientObservationDocumentation.LowCardinalityKeys.STATUS
+                    .withValue(getStatus(context.getResponse())),
+                HttpClientObservationDocumentation.LowCardinalityKeys.OUTCOME
+                    .withValue(getOutcome(context.getResponse())));
     }
 
-    String getUriTag(@Nullable HttpRequest request, @Nullable HttpResponse<?> httpResponse,
+    String getUriTag(HttpRequest request, @Nullable HttpResponse<?> httpResponse,
             Function<HttpRequest, String> uriMapper) {
-        if (request == null) {
-            return null;
-        }
         return httpResponse != null && (httpResponse.statusCode() == 404 || httpResponse.statusCode() == 301)
                 ? "NOT_FOUND" : uriMapper.apply(request);
+    }
+
+    String getStatus(@Nullable HttpResponse<?> response) {
+        if (response == null) {
+            return "UNKNOWN";
+        }
+        return String.valueOf(response.statusCode());
+    }
+
+    String getOutcome(@Nullable HttpResponse<?> response) {
+        if (response == null) {
+            return Outcome.UNKNOWN.name();
+        }
+        return Outcome.forStatus(response.statusCode()).name();
     }
 
     @Override

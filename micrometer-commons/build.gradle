@@ -5,10 +5,10 @@ dependencies {
     optionalApi 'ch.qos.logback:logback-classic'
 
     // Aspects
-    optionalApi 'org.aspectj:aspectjweaver'
+    optionalApi libs.aspectjrt
 
     // JUnit 5
-    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testImplementation libs.junitJupiter
     testImplementation 'org.assertj:assertj-core'
 }
 

@@ -17,6 +17,7 @@ package io.micrometer.common.annotation;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
+import java.lang.reflect.Parameter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -36,16 +37,13 @@ final class AnnotationUtils {
 
     static List<AnnotatedParameter> findAnnotatedParameters(Class<? extends Annotation> annotationClazz, Method method,
             Object[] args) {
-        Annotation[][] parameters = method.getParameterAnnotations();
+        Parameter[] parameters = method.getParameters();
         List<AnnotatedParameter> result = new ArrayList<>();
-        int i = 0;
-        for (Annotation[] parameter : parameters) {
-            for (Annotation parameter2 : parameter) {
-                if (annotationClazz.isAssignableFrom(parameter2.annotationType())) {
-                    result.add(new AnnotatedParameter(i, parameter2, args[i]));
-                }
+        for (int i = 0; i < parameters.length; i++) {
+            Parameter parameter = parameters[i];
+            for (Annotation annotation : parameter.getAnnotationsByType(annotationClazz)) {
+                result.add(new AnnotatedParameter(annotation, args[i]));
             }
-            i++;
         }
         return result;
     }

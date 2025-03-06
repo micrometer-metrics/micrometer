@@ -71,7 +71,8 @@ public class ObservationContextAssert<SELF extends ObservationContextAssert<SELF
         isNotNull();
         String actualName = this.actual.getName();
         if (!Objects.equals(name, actualName)) {
-            failWithMessage("Observation should have name equal to <%s> but has <%s>", name, actualName);
+            failWithActualExpectedAndMessage(actualName, name,
+                    "Observation should have name equal to <%s> but has <%s>", name, actualName);
         }
         return (SELF) this;
     }
@@ -89,7 +90,8 @@ public class ObservationContextAssert<SELF extends ObservationContextAssert<SELF
         isNotNull();
         String actualName = this.actual.getName();
         if (!name.equalsIgnoreCase(actualName)) {
-            failWithMessage("Observation should have name equal to ignoring case <%s> but has <%s>", name, actualName);
+            failWithActualExpectedAndMessage(actualName, name,
+                    "Observation should have name equal to ignoring case <%s> but has <%s>", name, actualName);
         }
         return (SELF) this;
     }
@@ -107,7 +109,8 @@ public class ObservationContextAssert<SELF extends ObservationContextAssert<SELF
         isNotNull();
         String actualName = this.actual.getContextualName();
         if (!Objects.equals(name, actualName)) {
-            failWithMessage("Observation should have contextual name equal to <%s> but has <%s>", name, actualName);
+            failWithActualExpectedAndMessage(actualName, name,
+                    "Observation should have contextual name equal to <%s> but has <%s>", name, actualName);
         }
         return (SELF) this;
     }
@@ -125,7 +128,8 @@ public class ObservationContextAssert<SELF extends ObservationContextAssert<SELF
         isNotNull();
         String actualName = this.actual.getContextualName();
         if (!name.equalsIgnoreCase(actualName)) {
-            failWithMessage("Observation should have contextual name equal to ignoring case <%s> but has <%s>", name,
+            failWithActualExpectedAndMessage(actualName, name,
+                    "Observation should have contextual name equal to ignoring case <%s> but has <%s>", name,
                     actualName);
         }
         return (SELF) this;
@@ -251,7 +255,7 @@ public class ObservationContextAssert<SELF extends ObservationContextAssert<SELF
             .get()
             .getValue();
         if (!Objects.equals(tagValue, value)) {
-            failWithMessage(
+            failWithActualExpectedAndMessage(tagValue, value,
                     "Observation should have a low cardinality tag with key <%s> and value <%s>. The key is correct but the value is <%s>",
                     key, value, tagValue);
         }
@@ -328,7 +332,7 @@ public class ObservationContextAssert<SELF extends ObservationContextAssert<SELF
             .get()
             .getValue();
         if (!Objects.equals(tagValue, value)) {
-            failWithMessage(
+            failWithActualExpectedAndMessage(tagValue, value,
                     "Observation should have a high cardinality tag with key <%s> and value <%s>. The key is correct but the value is <%s>",
                     key, value, tagValue);
         }
@@ -462,7 +466,8 @@ public class ObservationContextAssert<SELF extends ObservationContextAssert<SELF
             failWithMessage("Observation should have parent <%s> but has none", expectedParent);
         }
         if (!realParent.equals(expectedParent)) {
-            failWithMessage("Observation should have parent <%s> but has <%s>", expectedParent, realParent);
+            failWithActualExpectedAndMessage(realParent, expectedParent,
+                    "Observation should have parent <%s> but has <%s>", expectedParent, realParent);
         }
         return (SELF) this;
     }

@@ -15,9 +15,11 @@
  */
 package io.micrometer.prometheusmetrics;
 
+import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.binder.system.UptimeMetrics;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
 
@@ -47,6 +49,15 @@ class PrometheusRenameFilterTest {
         Meter.Id actual = filter.map(original);
         assertThat(actual).isNotEqualTo(original);
         assertThat(actual.getName()).isEqualTo("process.open.fds");
+    }
+
+    @Test
+    @Issue("#5290")
+    void processStartTimeDescriptionMatchesPrometheusHelpString() {
+        registry.config().meterFilter(filter);
+        new UptimeMetrics().bindTo(registry);
+        assertThat(registry.get("process.start.time").meter().getId().getDescription())
+            .isEqualTo("Start time of the process since unix epoch in seconds.");
     }
 
 }

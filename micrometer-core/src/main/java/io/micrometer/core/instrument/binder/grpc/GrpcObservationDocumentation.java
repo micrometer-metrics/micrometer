@@ -121,6 +121,16 @@ public enum GrpcObservationDocumentation implements ObservationDocumentation {
                 return "sent";
             }
 
+        },
+        /**
+         * For a canceled event.
+         * @since 1.14.0
+         */
+        CANCELLED {
+            @Override
+            public String getName() {
+                return "cancelled";
+            }
         }
 
     }

@@ -34,7 +34,7 @@ class DefaultIndexTemplateCreator implements IndexTemplateCreator {
     private final Logger logger = LoggerFactory.getLogger(DefaultIndexTemplateCreator.class);
 
     private final String indexTemplateRequest = "{\n" + "  \"index_patterns\": [\"%s*\"],\n" + "  \"template\": {\n"
-            + "    \"mappings\": {\n" + "      \"_source\": {\n" + "        \"enabled\": false\n" + "      },\n"
+            + "    \"mappings\": {\n" + "      \"_source\": {\n" + "        \"enabled\": %b\n" + "      },\n"
             + "      \"properties\": {\n" + "        \"name\": { \"type\": \"keyword\" },\n"
             + "        \"count\": { \"type\": \"double\", \"index\": false },\n"
             + "        \"value\": { \"type\": \"double\", \"index\": false },\n"
@@ -81,9 +81,10 @@ class DefaultIndexTemplateCreator implements IndexTemplateCreator {
     @Override
     public void createIndexTemplate(ElasticConfig configuration) throws Throwable {
         String indexPattern = configuration.index() + configuration.indexDateSeparator();
+        boolean enableSource = configuration.enableSource();
         HttpSender.Request.Builder request = this.httpClient.put(configuration.host() + INDEX_TEMPLATE_PATH);
         configureAuthentication(configuration, request);
-        request.withJsonContent(String.format(indexTemplateRequest, indexPattern))
+        request.withJsonContent(String.format(indexTemplateRequest, indexPattern, enableSource))
             .send()
             .onError(response -> logger.error("Failed to create index template in Elastic: {}", response.body()));
     }

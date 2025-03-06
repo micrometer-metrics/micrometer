@@ -1,0 +1,40 @@
+description 'Micrometer core classes that require Java 21'
+
+// skip this module when building with jdk <21
+if (!javaLanguageVersion.canCompileOrRun(21)) {
+    project.tasks.configureEach { task -> task.enabled = false }
+}
+
+dependencies {
+    api project(':micrometer-core')
+
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testImplementation 'org.assertj:assertj-core'
+    testImplementation 'org.awaitility:awaitility'
+}
+
+java {
+    targetCompatibility = 21
+}
+
+tasks.withType(JavaCompile).configureEach {
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
+    options.release = 21
+}
+
+task reflectiveTests(type: Test) {
+    useJUnitPlatform {
+        includeTags 'reflective'
+    }
+
+    // This hack is needed since VirtualThreadMetricsReflectiveTests utilizes reflection against java.lang, see its javadoc
+    jvmArgs += ['--add-opens', 'java.base/java.lang=ALL-UNNAMED']
+}
+
+test {
+    dependsOn reflectiveTests
+    useJUnitPlatform {
+        excludeTags 'reflective'
+    }
+}
