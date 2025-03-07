@@ -27,17 +27,12 @@ import java.util.concurrent.TimeUnit;
 class OtlpCumulativeDistributionSummary extends CumulativeDistributionSummary
         implements StartTimeAwareMeter, OtlpHistogramSupport {
 
-    private final HistogramFlavor histogramFlavor;
-
     private final long startTimeNanos;
 
     OtlpCumulativeDistributionSummary(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig,
-            double scale, OtlpConfig otlpConfig) {
-        super(id, clock, distributionStatisticConfig, scale,
-                OtlpMeterRegistry.getHistogram(clock, distributionStatisticConfig, otlpConfig));
+            double scale, Histogram histogram) {
+        super(id, clock, distributionStatisticConfig, scale, histogram);
         this.startTimeNanos = TimeUnit.MILLISECONDS.toNanos(clock.wallTime());
-        this.histogramFlavor = OtlpMeterRegistry.histogramFlavor(otlpConfig.histogramFlavor(),
-                distributionStatisticConfig);
     }
 
     @Override
@@ -48,7 +43,7 @@ class OtlpCumulativeDistributionSummary extends CumulativeDistributionSummary
     @Override
     @Nullable
     public ExponentialHistogramSnapShot getExponentialHistogramSnapShot() {
-        if (histogramFlavor == HistogramFlavor.BASE2_EXPONENTIAL_BUCKET_HISTOGRAM) {
+        if (histogram instanceof Base2ExponentialHistogram) {
             return ((Base2ExponentialHistogram) histogram).getLatestExponentialHistogramSnapshot();
         }
         return null;
