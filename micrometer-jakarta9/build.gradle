@@ -6,6 +6,7 @@ jar {
         bnd '''\
         Import-Package: \
             jakarta.jms.*;resolution:=dynamic;version="${@}",\
+            jakarta.mail.*;resolution:=dynamic;version="${@}",\
             io.micrometer.observation.*;resolution:=dynamic;version="${@}",\
             *
         '''.stripIndent()
@@ -18,6 +19,7 @@ dependencies {
     api project(":micrometer-observation")
 
     optionalApi 'jakarta.jms:jakarta.jms-api'
+    optionalApi 'jakarta.mail:jakarta.mail-api'
 
     testImplementation(libs.archunitJunit5) {
         // avoid transitively pulling in slf4j 2
@@ -26,4 +28,6 @@ dependencies {
     testImplementation libs.slf4jApi
     testImplementation libs.mockitoCore5
     testImplementation 'org.assertj:assertj-core'
+    testImplementation 'org.assertj:assertj-core'
+    testImplementation 'org.eclipse.angus:jakarta.mail:2.0.3'
 }
