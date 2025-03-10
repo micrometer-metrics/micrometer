@@ -11,14 +11,6 @@ on:
         description: "[TRAIN] Comma separated list of micrometer versions (e.g. 1.13.2,1.14.8,1.15.9)"
         required: false
         default: ""
-      tracing_versions:
-        description: "[TRAIN] Comma separated list of micrometer tracing versions (e.g. 1.5.0,1.6.0,1.7.0)"
-        required: false
-        default: ""
-      docs_gen_versions:
-        description: "[TRAIN] Comma separated list of micrometer docs generator versions (e.g. 1.0.0,1.1.0,1.2.0)"
-        required: false
-        default: ""
 
 jobs:
   release:
