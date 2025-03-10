@@ -283,7 +283,9 @@ public interface OtlpConfig extends PushRegistryConfig {
         return checkAll(this, c -> PushRegistryConfig.validate(c), checkRequired("url", OtlpConfig::url),
                 check("resourceAttributes", OtlpConfig::resourceAttributes),
                 check("baseTimeUnit", OtlpConfig::baseTimeUnit),
-                check("aggregationTemporality", OtlpConfig::aggregationTemporality));
+                check("aggregationTemporality", OtlpConfig::aggregationTemporality),
+                check("histogramFlavorPerMeter", OtlpConfig::histogramFlavorPerMeter),
+                check("maxBucketsPerMeter", OtlpConfig::maxBucketsPerMeter));
     }
 
     default TimeUnit baseTimeUnit() {
