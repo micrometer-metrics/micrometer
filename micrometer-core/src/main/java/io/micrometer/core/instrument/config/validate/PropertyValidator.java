@@ -15,6 +15,7 @@
  */
 package io.micrometer.core.instrument.config.validate;
 
+import io.micrometer.common.util.StringUtils;
 import io.micrometer.core.annotation.Incubating;
 import io.micrometer.core.instrument.config.MeterRegistryConfig;
 
@@ -23,7 +24,9 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.time.Duration;
 import java.util.Arrays;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -139,6 +142,40 @@ public class PropertyValidator {
         catch (IllegalArgumentException ex) {
             return Validated.invalid(prefixedProperty, value, "must be a valid URI", InvalidReason.MALFORMED, ex);
         }
+    }
+
+    /**
+     * Populate a Map from the given property value in the format of
+     * key1=value1,key2=value2.
+     * @param config config
+     * @param property name of the property
+     * @param valueMapper function mapping the value of the key-value pairs contained in
+     * the property value to the value stored in the Map
+     * @return Map with key-values from the given property
+     * @param <V> type of the Map values
+     * @since 1.15.0
+     */
+    public static <V> Validated<Map<String, V>> getStringMap(MeterRegistryConfig config, String property,
+            Function<String, ? extends V> valueMapper) {
+        String prefixedProperty = prefixedProperty(config, property);
+        String propertyValue = config.get(prefixedProperty);
+        if (StringUtils.isBlank(propertyValue)) {
+            return Validated.valid(prefixedProperty, null);
+        }
+        String[] keyvals = propertyValue.trim().split(",");
+        Map<String, V> map = null;
+        try {
+            map = Arrays.stream(keyvals)
+                .map(String::trim)
+                .filter(keyValue -> keyValue.length() > 2 && keyValue.indexOf('=') > 0)
+                .collect(Collectors.toMap(keyvalue -> keyvalue.substring(0, keyvalue.indexOf('=')).trim(),
+                        keyvalue -> valueMapper.apply(keyvalue.substring(keyvalue.indexOf('=') + 1).trim())));
+        }
+        catch (Exception e) {
+            return Validated.invalid(prefixedProperty, map, "Exception mapping value using valueMapper",
+                    InvalidReason.MALFORMED, e);
+        }
+        return Validated.valid(prefixedProperty, map);
     }
 
     private static String prefixedProperty(MeterRegistryConfig config, String property) {

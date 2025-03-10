@@ -15,7 +15,6 @@
  */
 package io.micrometer.registry.otlp;
 
-import io.micrometer.common.util.StringUtils;
 import io.micrometer.core.instrument.config.InvalidConfigurationException;
 import io.micrometer.core.instrument.config.validate.Validated;
 import io.micrometer.core.instrument.push.PushRegistryConfig;
@@ -24,7 +23,6 @@ import java.time.Duration;
 import java.net.URLDecoder;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.*;
@@ -238,8 +236,8 @@ public interface OtlpConfig extends PushRegistryConfig {
      * @see #histogramFlavor()
      */
     default Map<String, HistogramFlavor> histogramFlavorPerMeter() {
-        String flavorPerMeterString = getString(this, "histogramFlavorPerMeter").orElse(null);
-        return propertiesStringToMap(flavorPerMeterString, HistogramFlavor::fromString);
+        return getStringMap(this, "histogramFlavorPerMeter", HistogramFlavor::fromString)
+            .orElse(Collections.emptyMap());
     }
 
     /**
@@ -277,7 +275,7 @@ public interface OtlpConfig extends PushRegistryConfig {
      * @see #maxBucketCount()
      */
     default Map<String, Integer> maxBucketsPerMeter() {
-        return propertiesStringToMap(getString(this, "maxBucketsPerMeter").orElse(null), Integer::parseInt);
+        return getStringMap(this, "maxBucketsPerMeter", Integer::parseInt).orElse(Collections.emptyMap());
     }
 
     @Override
@@ -290,16 +288,6 @@ public interface OtlpConfig extends PushRegistryConfig {
 
     default TimeUnit baseTimeUnit() {
         return getTimeUnit(this, "baseTimeUnit").orElse(TimeUnit.MILLISECONDS);
-    }
-
-    static <V> Map<String, V> propertiesStringToMap(String propertiesString,
-            Function<String, ? extends V> valueMapper) {
-        String[] keyvals = StringUtils.isBlank(propertiesString) ? new String[] {} : propertiesString.trim().split(",");
-        return Arrays.stream(keyvals)
-            .map(String::trim)
-            .filter(keyValue -> keyValue.length() > 2 && keyValue.indexOf('=') > 0)
-            .collect(Collectors.toMap(keyvalue -> keyvalue.substring(0, keyvalue.indexOf('=')).trim(),
-                    keyvalue -> valueMapper.apply(keyvalue.substring(keyvalue.indexOf('=') + 1).trim())));
     }
 
 }
