@@ -146,14 +146,17 @@ Micrometer `Timer` and `DistributionSummary` support configuring xref:/concepts/
 | publishPercentiles and serviceLevelObjectives
 | Histogram
 |===
-__* The configuration `histogramFlavor` determines whether the OTLP DataPoint is a Histogram/Exponential Histogram.__
+__* The configuration `histogramFlavorPerMeter` and `histogramFlavor` determine whether the OTLP DataPoint is a Histogram/Exponential Histogram.__
 
-`OtlpMeterRegistry` supports 2 types of Histogram implementations (1.Explicit Bucket Histogram (or simply called Histogram), 2. Exponential Histogram) when `publishPercentileHistogram` is configured. The choice is chosen by setting `histogramFlavor` in `OtlpConfig` used by registry. When the implementation is exponential histogram, it also supports 2 additional properties
+`OtlpMeterRegistry` supports 2 types of Histogram implementations (1.Explicit Bucket Histogram (or simply called Histogram), 2. Exponential Histogram) when `publishPercentileHistogram` is configured.
+The type is determined by `histogramFlavorPerMeter` and `histogramFlavor` in `OtlpConfig` used by the registry.
+When the implementation is the exponential histogram, additional configuration applies:
 
-1. maxScale used to cap the maximum https://opentelemetry.io/docs/specs/otel/metrics/data-model/#exponential-scale[scale, window=_blank] used by the Exponential Histogram (defaults to 20).
-2. maxBuckets determines the maximum number of https://opentelemetry.io/docs/specs/otel/metrics/data-model/#exponential-buckets[buckets, window=_blank] to be used for exponential histograms (defaults to 160).
+1. `maxScale` used to cap the maximum https://opentelemetry.io/docs/specs/otel/metrics/data-model/#exponential-scale[scale, window=_blank] used by the Exponential Histogram (defaults to 20).
+2. `maxBuckets` determines the maximum number of https://opentelemetry.io/docs/specs/otel/metrics/data-model/#exponential-buckets[buckets, window=_blank] to be used for exponential histograms (defaults to 160).
+3. `maxBucketsPerMeter` overrides `maxBuckets` for specific meter names, giving more fine-grained configurability.
 
-Since Exponential Histogram cannot have custom SLO's specified, explicit bucket histogram is used whenever `serviceLevelObjectives` are added.
+Since Exponential Histogram cannot have custom SLO's specified, an explicit bucket histogram is used whenever `serviceLevelObjectives` are configured.
 
 ===  Configuration with Spring Boot
 If you use Spring Boot, you can use the https://docs.spring.io/spring-boot/docs/current/reference/htmlsingle/#actuator.metrics.customizing.per-meter-properties[per-meter properties, window=_blank] to configure this behavior.
