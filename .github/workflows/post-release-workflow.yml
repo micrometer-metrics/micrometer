@@ -3,11 +3,8 @@ name: Post Release Tasks
 on:
   workflow_dispatch:
     inputs:
-      github_ref_name:
-        description: "Current release tag in this train (e.g., v1.15.3)"
-        required: true
       previous_ref_name:
-        description: "Previous release tag in this train (e.g., v1.14.8)"
+        description: "Previous release version (e.g., v1.14.8)"
         required: false
 
 jobs:
@@ -15,13 +12,13 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
       - name: Run Post Release Tasks
-        uses: marcingrzejszczak/micrometer-release@v0.0.1
+        uses: micrometer-metrics/micrometer-github-workflows@main
         with:
           gh_token: ${{ secrets.GH_ACTIONS_REPO_TOKEN }}
-          github_ref_name: ${{ github.event.inputs.github_ref_name }}
           previous_ref_name: ${{ github.event.inputs.previous_ref_name }}
           spring_release_gchat_webhook_url: ${{ secrets.SPRING_RELEASE_GCHAT_WEBHOOK_URL }}
           bluesky_handle: ${{ secrets.BLUESKY_HANDLE }}
