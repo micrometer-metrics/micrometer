@@ -15,16 +15,14 @@
  */
 package io.micrometer.java21.instrument.binder.jdk;
 
-import io.micrometer.core.instrument.Counter;
-import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Tag;
-import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.MeterBinder;
 import jdk.jfr.consumer.RecordingStream;
 
 import java.io.Closeable;
 import java.time.Duration;
 import java.util.Objects;
+import java.util.concurrent.atomic.LongAdder;
 
 import static java.util.Collections.emptyList;
 
@@ -41,37 +39,69 @@ public class VirtualThreadMetrics implements MeterBinder, Closeable {
 
     private static final String SUBMIT_FAILED_EVENT = "jdk.VirtualThreadSubmitFailed";
 
-    private final RecordingStream recordingStream;
+    private static final String START_EVENT = "jdk.VirtualThreadStart";
+
+    private static final String END_EVENT = "jdk.VirtualThreadEnd";
+
+    private static final String SUBMIT_FAILED_METRIC_NAME = "jvm.threads.virtual.submit.failed";
+
+    private static final String VT_PINNED_METRIC_NAME = "jvm.threads.virtual.pinned";
+
+    private static final String VT_ACTIVE_METRIC_NAME = "jvm.threads.virtual.active";
+
+    private final RecordingConfig recordingCfg;
+    
+    private RecordingStream recordingStream;
 
     private final Iterable<Tag> tags;
-
+    
+    private boolean activeMetricEnabled;
+    
     public VirtualThreadMetrics() {
         this(new RecordingConfig(), emptyList());
     }
 
+    public VirtualThreadMetrics(RecordingConfig config) {
+        this(config, emptyList());
+    }
+    
     public VirtualThreadMetrics(Iterable<Tag> tags) {
         this(new RecordingConfig(), tags);
     }
 
-    private VirtualThreadMetrics(RecordingConfig config, Iterable<Tag> tags) {
-        this.recordingStream = createRecordingStream(config);
+    public VirtualThreadMetrics(RecordingConfig config, Iterable<Tag> tags) {
+        this.recordingCfg = config;
         this.tags = tags;
     }
 
     @Override
     public void bindTo(MeterRegistry registry) {
-        Timer pinnedTimer = Timer.builder("jvm.threads.virtual.pinned")
+        if(this.recordingStream == null) {
+            this.recordingStream = createRecordingStream(this.recordingCfg);
+        }
+        Timer pinnedTimer = Timer.builder(VT_PINNED_METRIC_NAME)
             .description("The duration while the virtual thread was pinned without releasing its platform thread")
             .tags(tags)
             .register(registry);
 
-        Counter submitFailedCounter = Counter.builder("jvm.threads.virtual.submit.failed")
+        Counter submitFailedCounter = Counter.builder(SUBMIT_FAILED_METRIC_NAME)
             .description("The number of events when starting or unparking a virtual thread failed")
             .tags(tags)
             .register(registry);
 
         recordingStream.onEvent(PINNED_EVENT, event -> pinnedTimer.record(event.getDuration()));
         recordingStream.onEvent(SUBMIT_FAILED_EVENT, event -> submitFailedCounter.increment());
+        
+        if(activeMetricEnabled) {
+            final LongAdder activeCounter = new LongAdder();
+            this.recordingStream.onEvent(START_EVENT, event -> activeCounter.increment());
+            this.recordingStream.onEvent(END_EVENT, event -> activeCounter.decrement());
+
+            Gauge.builder(VT_ACTIVE_METRIC_NAME, activeCounter::doubleValue)
+                .description("The number of active virtual threads")
+                .tags(tags)
+                .register(registry);
+        }
     }
 
     private RecordingStream createRecordingStream(RecordingConfig config) {
@@ -80,6 +110,10 @@ public class VirtualThreadMetrics implements MeterBinder, Closeable {
         recordingStream.enable(SUBMIT_FAILED_EVENT);
         recordingStream.setMaxAge(config.maxAge);
         recordingStream.setMaxSize(config.maxSizeBytes);
+        if(activeMetricEnabled) {
+            recordingStream.enable(START_EVENT);
+            recordingStream.enable(END_EVENT);
+        }
         recordingStream.startAsync();
 
         return recordingStream;
@@ -90,12 +124,16 @@ public class VirtualThreadMetrics implements MeterBinder, Closeable {
         recordingStream.close();
     }
 
-    private record RecordingConfig(Duration maxAge, long maxSizeBytes, Duration pinnedThreshold) {
+    public void setActiveMetricEnabled(boolean activeMetricEnabled) {
+        this.activeMetricEnabled = activeMetricEnabled;
+    }
+
+    public record RecordingConfig(Duration maxAge, long maxSizeBytes, Duration pinnedThreshold) {
         private RecordingConfig() {
             this(Duration.ofSeconds(5), 10L * 1024 * 1024, Duration.ofMillis(20));
         }
 
-        private RecordingConfig {
+        public RecordingConfig {
             Objects.requireNonNull(maxAge, "maxAge parameter must not be null");
             Objects.requireNonNull(pinnedThreshold, "pinnedThreshold must not be null");
             if (maxSizeBytes < 0) {

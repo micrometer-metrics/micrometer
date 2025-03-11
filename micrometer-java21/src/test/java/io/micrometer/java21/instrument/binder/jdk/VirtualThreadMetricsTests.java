@@ -15,6 +15,7 @@
  */
 package io.micrometer.java21.instrument.binder.jdk;
 
+import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
@@ -49,6 +50,7 @@ class VirtualThreadMetricsTests {
     void setUp() {
         registry = new SimpleMeterRegistry();
         virtualThreadMetrics = new VirtualThreadMetrics(TAGS);
+        virtualThreadMetrics.setActiveMetricEnabled(true);
         virtualThreadMetrics.bindTo(registry);
     }
 
@@ -75,6 +77,17 @@ class VirtualThreadMetricsTests {
             await().atMost(Duration.ofSeconds(2)).until(() -> timer.count() == 3);
             assertThat(timer.max(MILLISECONDS)).isBetween(40d, 60d); // ~50ms
             assertThat(timer.totalTime(MILLISECONDS)).isBetween(130d, 170d); // ~150ms
+        }
+    }
+    
+    @Test
+    void startEndEventsShouldBeRecorded() {
+        try (ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor()) {
+            for (int i = 0; i < 3; i++) {
+                executor.submit(() -> sleep(Duration.ofSeconds(1)));
+            }
+            Gauge gauge = registry.get("jvm.threads.virtual.active").tags(TAGS).gauge();
+            await().atMost(Duration.ofSeconds(2)).until(() -> gauge.value() == 3);
         }
     }
 
