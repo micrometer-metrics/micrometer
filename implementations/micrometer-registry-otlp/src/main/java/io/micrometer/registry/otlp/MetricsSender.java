@@ -24,9 +24,12 @@ interface MetricsSender {
     /**
      * Send encoded metrics data from a {@link io.micrometer.core.instrument.MeterRegistry
      * MeterRegistry}.
+     * @param address where to send the metrics
      * @param metricsData encoded batch of metrics
      * @param headers metadata to send as headers with the metrics data
+     * @throws Throwable when there is an exception in sending the metrics; the caller
+     * should handle this in some way such as logging the exception
      */
-    void send(byte[] metricsData, Map<String, String> headers);
+    void send(String address, byte[] metricsData, Map<String, String> headers) throws Throwable;
 
 }

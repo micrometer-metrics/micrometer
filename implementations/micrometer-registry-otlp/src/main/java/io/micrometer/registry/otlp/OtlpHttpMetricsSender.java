@@ -32,32 +32,31 @@ public class OtlpHttpMetricsSender implements OtlpMetricsSender {
 
     private final HttpSender httpSender;
 
-    private final OtlpConfig config;
-
     private final String userAgentHeader;
 
-    public OtlpHttpMetricsSender(HttpSender httpSender, OtlpConfig config) {
+    public OtlpHttpMetricsSender(HttpSender httpSender) {
         this.httpSender = httpSender;
-        this.config = config;
         this.userAgentHeader = getUserAgentHeader();
     }
 
+    /**
+     * Send a batch of OTLP Protobuf format metrics to an OTLP HTTP receiver.
+     * @param address address of the OTLP HTTP receiver to which metrics will be sent
+     * @param metricsData OTLP protobuf encoded batch of metrics
+     * @param headers metadata to send as headers with the metrics data
+     * @throws Throwable when there is an exception in sending the metrics; the caller
+     * should handle this in some way such as logging the exception
+     */
     @Override
-    public void send(byte[] metricsData, Map<String, String> headers) {
-        HttpSender.Request.Builder httpRequest = this.httpSender.post(config.url())
+    public void send(String address, byte[] metricsData, Map<String, String> headers) throws Throwable {
+        HttpSender.Request.Builder httpRequest = this.httpSender.post(address)
             .withHeader("User-Agent", userAgentHeader)
             .withContent("application/x-protobuf", metricsData);
         headers.forEach(httpRequest::withHeader);
-        try {
-            HttpSender.Response response = httpRequest.send();
-            if (!response.isSuccessful()) {
-                logger.warn(
-                        "Failed to publish metrics (context: {}). Server responded with HTTP status code {} and body {}",
-                        getConfigurationContext(), response.code(), response.body());
-            }
-        }
-        catch (Throwable e) {
-            logger.warn("Failed to publish metrics (context: {}) ", getConfigurationContext(), e);
+        HttpSender.Response response = httpRequest.send();
+        if (!response.isSuccessful()) {
+            throw new OtlpHttpMetricsSendUnsuccessfulException(String
+                .format("Server responded with HTTP status code %d and body %s", response.code(), response.body()));
         }
     }
 
@@ -70,14 +69,12 @@ public class OtlpHttpMetricsSender implements OtlpMetricsSender {
         return userAgent;
     }
 
-    /**
-     * Get the configuration context.
-     * @return A message containing enough information for the log reader to figure out
-     * what configuration details may have contributed to the failure.
-     */
-    private String getConfigurationContext() {
-        // While other values may contribute to failures, these two are most common
-        return "url=" + config.url() + ", resource-attributes=" + config.resourceAttributes();
+    private static class OtlpHttpMetricsSendUnsuccessfulException extends RuntimeException {
+
+        public OtlpHttpMetricsSendUnsuccessfulException(String message) {
+            super(message);
+        }
+
     }
 
 }

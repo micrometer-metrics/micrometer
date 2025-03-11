@@ -69,7 +69,7 @@ abstract class OtlpMeterRegistryTest {
         this.clock = new MockClock();
         OtlpConfig config = otlpConfig();
         this.mockHttpSender = mock(HttpSender.class);
-        OtlpMetricsSender metricsSender = new OtlpHttpMetricsSender(mockHttpSender, config);
+        OtlpMetricsSender metricsSender = new OtlpHttpMetricsSender(mockHttpSender);
         this.registry = OtlpMeterRegistry.builder(config).clock(clock).metricsSender(metricsSender).build();
         this.registryWithExponentialHistogram = new OtlpMeterRegistry(exponentialHistogramOtlpConfig(), clock);
     }

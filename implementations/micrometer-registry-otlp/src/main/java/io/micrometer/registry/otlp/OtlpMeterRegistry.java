@@ -111,7 +111,7 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
      * @since 1.14.0
      */
     public OtlpMeterRegistry(OtlpConfig config, Clock clock, ThreadFactory threadFactory) {
-        this(config, clock, threadFactory, new OtlpHttpMetricsSender(new HttpUrlConnectionSender(), config));
+        this(config, clock, threadFactory, new OtlpHttpMetricsSender(new HttpUrlConnectionSender()));
     }
 
     private OtlpMeterRegistry(OtlpConfig config, Clock clock, ThreadFactory threadFactory,
@@ -181,12 +181,23 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
                         .build())
                     .build();
 
-                metricsSender.send(request.toByteArray(), this.config.headers());
+                metricsSender.send(config.url(), request.toByteArray(), config.headers());
             }
             catch (Throwable e) {
-                logger.warn("Failed to publish metrics to OTLP receiver", e);
+                logger.warn(String.format("Failed to publish metrics to OTLP receiver (context: %s)",
+                        getConfigurationContext()), e);
             }
         }
+    }
+
+    /**
+     * Get the configuration context.
+     * @return A message containing enough information for the log reader to figure out
+     * what configuration details may have contributed to the failure.
+     */
+    private String getConfigurationContext() {
+        // While other values may contribute to failures, these two are most common
+        return "url=" + config.url() + ", resource-attributes=" + config.resourceAttributes();
     }
 
     @Override
@@ -500,7 +511,7 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
 
         private Builder(OtlpConfig otlpConfig) {
             this.otlpConfig = otlpConfig;
-            this.metricsSender = new OtlpHttpMetricsSender(new HttpUrlConnectionSender(), otlpConfig);
+            this.metricsSender = new OtlpHttpMetricsSender(new HttpUrlConnectionSender());
         }
 
         /** Override the default clock. */
