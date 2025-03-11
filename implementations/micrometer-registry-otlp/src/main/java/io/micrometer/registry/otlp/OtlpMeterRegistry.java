@@ -205,16 +205,19 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
             PauseDetector pauseDetector) {
         return isCumulative()
                 ? new OtlpCumulativeTimer(id, this.clock, distributionStatisticConfig, pauseDetector, getBaseTimeUnit(),
-                        config)
-                : new OtlpStepTimer(id, clock, distributionStatisticConfig, pauseDetector, getBaseTimeUnit(), config);
+                        getHistogram(id, distributionStatisticConfig, getBaseTimeUnit()))
+                : new OtlpStepTimer(id, clock, pauseDetector,
+                        getHistogram(id, distributionStatisticConfig, getBaseTimeUnit()), config);
     }
 
     @Override
     protected DistributionSummary newDistributionSummary(Meter.Id id,
             DistributionStatisticConfig distributionStatisticConfig, double scale) {
         return isCumulative()
-                ? new OtlpCumulativeDistributionSummary(id, this.clock, distributionStatisticConfig, scale, config)
-                : new OtlpStepDistributionSummary(id, clock, distributionStatisticConfig, scale, config);
+                ? new OtlpCumulativeDistributionSummary(id, clock, distributionStatisticConfig, scale,
+                        getHistogram(id, distributionStatisticConfig))
+                : new OtlpStepDistributionSummary(id, clock, scale, getHistogram(id, distributionStatisticConfig),
+                        config);
     }
 
     @Override
@@ -372,13 +375,12 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
         return attributes;
     }
 
-    static Histogram getHistogram(Clock clock, DistributionStatisticConfig distributionStatisticConfig,
-            OtlpConfig otlpConfig) {
-        return getHistogram(clock, distributionStatisticConfig, otlpConfig, null);
+    private Histogram getHistogram(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig) {
+        return getHistogram(id, distributionStatisticConfig, null);
     }
 
-    static Histogram getHistogram(final Clock clock, final DistributionStatisticConfig distributionStatisticConfig,
-            final OtlpConfig otlpConfig, @Nullable final TimeUnit baseTimeUnit) {
+    private Histogram getHistogram(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig,
+            @Nullable TimeUnit baseTimeUnit) {
         // While publishing to OTLP, we export either Histogram datapoint (Explicit
         // ExponentialBuckets
         // or Exponential) / Summary
@@ -387,21 +389,21 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
         // exporting of histograms over percentiles is preferred in OTLP.
         if (distributionStatisticConfig.isPublishingHistogram()) {
             if (HistogramFlavor.BASE2_EXPONENTIAL_BUCKET_HISTOGRAM
-                .equals(histogramFlavor(otlpConfig.histogramFlavor(), distributionStatisticConfig))) {
+                .equals(histogramFlavor(id, config, distributionStatisticConfig))) {
                 Double minimumExpectedValue = distributionStatisticConfig.getMinimumExpectedValueAsDouble();
                 if (minimumExpectedValue == null) {
                     minimumExpectedValue = 0.0;
                 }
 
-                return otlpConfig.aggregationTemporality() == AggregationTemporality.DELTA
-                        ? new DeltaBase2ExponentialHistogram(otlpConfig.maxScale(), otlpConfig.maxBucketCount(),
-                                minimumExpectedValue, baseTimeUnit, clock, otlpConfig.step().toMillis())
-                        : new CumulativeBase2ExponentialHistogram(otlpConfig.maxScale(), otlpConfig.maxBucketCount(),
+                return config.aggregationTemporality() == AggregationTemporality.DELTA
+                        ? new DeltaBase2ExponentialHistogram(config.maxScale(), getMaxBuckets(id), minimumExpectedValue,
+                                baseTimeUnit, clock, config.step().toMillis())
+                        : new CumulativeBase2ExponentialHistogram(config.maxScale(), getMaxBuckets(id),
                                 minimumExpectedValue, baseTimeUnit);
             }
 
             Histogram explicitBucketHistogram = getExplicitBucketHistogram(clock, distributionStatisticConfig,
-                    otlpConfig.aggregationTemporality(), otlpConfig.step().toMillis());
+                    config.aggregationTemporality(), config.step().toMillis());
             if (explicitBucketHistogram != null) {
                 return explicitBucketHistogram;
             }
@@ -413,8 +415,14 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
         return NoopHistogram.INSTANCE;
     }
 
-    static HistogramFlavor histogramFlavor(HistogramFlavor preferredHistogramFlavor,
+    private int getMaxBuckets(Meter.Id id) {
+        return config.maxBucketsPerMeter().getOrDefault(id.getName(), config.maxBucketCount());
+    }
+
+    private HistogramFlavor histogramFlavor(Meter.Id id, OtlpConfig otlpConfig,
             DistributionStatisticConfig distributionStatisticConfig) {
+        HistogramFlavor preferredHistogramFlavor = otlpConfig.histogramFlavorPerMeter()
+            .getOrDefault(id.getName(), otlpConfig.histogramFlavor());
 
         final double[] serviceLevelObjectiveBoundaries = distributionStatisticConfig
             .getServiceLevelObjectiveBoundaries();
