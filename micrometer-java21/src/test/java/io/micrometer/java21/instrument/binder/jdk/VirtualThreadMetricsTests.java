@@ -79,7 +79,7 @@ class VirtualThreadMetricsTests {
             assertThat(timer.totalTime(MILLISECONDS)).isBetween(130d, 170d); // ~150ms
         }
     }
-    
+
     @Test
     void startEndEventsShouldBeRecorded() {
         try (ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor()) {

@@ -50,13 +50,13 @@ public class VirtualThreadMetrics implements MeterBinder, Closeable {
     private static final String VT_ACTIVE_METRIC_NAME = "jvm.threads.virtual.active";
 
     private final RecordingConfig recordingCfg;
-    
+
     private RecordingStream recordingStream;
 
     private final Iterable<Tag> tags;
-    
+
     private boolean activeMetricEnabled;
-    
+
     public VirtualThreadMetrics() {
         this(new RecordingConfig(), emptyList());
     }
@@ -64,7 +64,7 @@ public class VirtualThreadMetrics implements MeterBinder, Closeable {
     public VirtualThreadMetrics(RecordingConfig config) {
         this(config, emptyList());
     }
-    
+
     public VirtualThreadMetrics(Iterable<Tag> tags) {
         this(new RecordingConfig(), tags);
     }
@@ -76,7 +76,7 @@ public class VirtualThreadMetrics implements MeterBinder, Closeable {
 
     @Override
     public void bindTo(MeterRegistry registry) {
-        if(this.recordingStream == null) {
+        if (this.recordingStream == null) {
             this.recordingStream = createRecordingStream(this.recordingCfg);
         }
         Timer pinnedTimer = Timer.builder(VT_PINNED_METRIC_NAME)
@@ -91,8 +91,8 @@ public class VirtualThreadMetrics implements MeterBinder, Closeable {
 
         recordingStream.onEvent(PINNED_EVENT, event -> pinnedTimer.record(event.getDuration()));
         recordingStream.onEvent(SUBMIT_FAILED_EVENT, event -> submitFailedCounter.increment());
-        
-        if(activeMetricEnabled) {
+
+        if (activeMetricEnabled) {
             final LongAdder activeCounter = new LongAdder();
             this.recordingStream.onEvent(START_EVENT, event -> activeCounter.increment());
             this.recordingStream.onEvent(END_EVENT, event -> activeCounter.decrement());
@@ -110,7 +110,7 @@ public class VirtualThreadMetrics implements MeterBinder, Closeable {
         recordingStream.enable(SUBMIT_FAILED_EVENT);
         recordingStream.setMaxAge(config.maxAge);
         recordingStream.setMaxSize(config.maxSizeBytes);
-        if(activeMetricEnabled) {
+        if (activeMetricEnabled) {
             recordingStream.enable(START_EVENT);
             recordingStream.enable(END_EVENT);
         }
