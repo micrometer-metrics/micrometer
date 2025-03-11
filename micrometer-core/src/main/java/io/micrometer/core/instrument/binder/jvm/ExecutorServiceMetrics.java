@@ -29,6 +29,7 @@ import io.micrometer.core.instrument.internal.TimedExecutorService;
 import io.micrometer.core.instrument.internal.TimedScheduledExecutorService;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.*;
@@ -55,6 +56,11 @@ import static java.util.stream.Collectors.toSet;
 @NonNullApi
 @NonNullFields
 public class ExecutorServiceMetrics implements MeterBinder {
+
+    private static final String CLASS_NAME_THREAD_PER_TASK_EXECUTOR = "java.util.concurrent.ThreadPerTaskExecutor";
+
+    @Nullable
+    private static final Method METHOD_THREAD_COUNT_FROM_THREAD_PER_TASK_EXECUTOR = getMethodForThreadCountFromThreadPerTaskExecutor();
 
     private static boolean allowIllegalReflectiveAccess = true;
 
@@ -315,6 +321,9 @@ public class ExecutorServiceMetrics implements MeterBinder {
                 monitor(registry,
                         unwrapThreadPoolExecutor(executorService, executorService.getClass().getSuperclass()));
             }
+            else if (className.equals(CLASS_NAME_THREAD_PER_TASK_EXECUTOR)) {
+                monitorThreadPerTaskExecutor(registry, executorService);
+            }
             else {
                 log.warn("Failed to bind as {} is unsupported.", className);
             }
@@ -437,6 +446,39 @@ public class ExecutorServiceMetrics implements MeterBinder {
                     .baseUnit(BaseUnits.THREADS)
                     .register(registry));
         registeredMeterIds.addAll(meters.stream().map(Meter::getId).collect(toSet()));
+    }
+
+    private void monitorThreadPerTaskExecutor(MeterRegistry registry, ExecutorService executorService) {
+        List<Meter> meters = asList(Gauge
+            .builder(metricPrefix + "executor.active", executorService,
+                    ExecutorServiceMetrics::getThreadCountFromThreadPerTaskExecutor)
+            .tags(tags)
+            .description("The approximate number of threads that are actively executing tasks")
+            .baseUnit(BaseUnits.THREADS)
+            .register(registry));
+        registeredMeterIds.addAll(meters.stream().map(Meter::getId).collect(toSet()));
+    }
+
+    private static long getThreadCountFromThreadPerTaskExecutor(ExecutorService executorService) {
+        try {
+            return (long) METHOD_THREAD_COUNT_FROM_THREAD_PER_TASK_EXECUTOR.invoke(executorService);
+        }
+        catch (Throwable e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Nullable
+    private static Method getMethodForThreadCountFromThreadPerTaskExecutor() {
+        try {
+            Class<?> clazz = Class.forName(CLASS_NAME_THREAD_PER_TASK_EXECUTOR);
+            Method method = clazz.getMethod("threadCount");
+            method.setAccessible(true);
+            return method;
+        }
+        catch (Throwable e) {
+            return null;
+        }
     }
 
     /**
