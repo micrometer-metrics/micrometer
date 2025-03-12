@@ -64,7 +64,6 @@ public class VirtualThreadMetrics implements MeterBinder, Closeable {
 
     /**
      * Instantiates a new Virtual thread metrics.
-     *
      * @param config the config
      */
     public VirtualThreadMetrics(RecordingConfig config) {
@@ -73,7 +72,6 @@ public class VirtualThreadMetrics implements MeterBinder, Closeable {
 
     /**
      * Instantiates a new Virtual thread metrics.
-     *
      * @param tags the tags
      */
     public VirtualThreadMetrics(Iterable<Tag> tags) {
@@ -82,9 +80,8 @@ public class VirtualThreadMetrics implements MeterBinder, Closeable {
 
     /**
      * Instantiates a new Virtual thread metrics.
-     *
      * @param config the config
-     * @param tags   the tags
+     * @param tags the tags
      */
     public VirtualThreadMetrics(RecordingConfig config, Iterable<Tag> tags) {
         this.recordingCfg = config;
@@ -102,11 +99,11 @@ public class VirtualThreadMetrics implements MeterBinder, Closeable {
                 .description("The duration while the virtual thread was pinned without releasing its platform thread")
                 .tags(tags)
                 .register(registry);
-            
+
             recordingStream.onEvent(PINNED_EVENT, event -> pinnedTimer.record(event.getDuration()));
         }
 
-        if(recordingCfg.submitFailedMetricEnabled) {
+        if (recordingCfg.submitFailedMetricEnabled) {
             Counter submitFailedCounter = Counter.builder(SUBMIT_FAILED_METRIC_NAME)
                 .description("The number of events when starting or unparking a virtual thread failed")
                 .tags(tags)
@@ -129,10 +126,10 @@ public class VirtualThreadMetrics implements MeterBinder, Closeable {
 
     private RecordingStream createRecordingStream(RecordingConfig config) {
         RecordingStream recordingStream = new RecordingStream();
-        if(config.pinnedMetricEnabled) {
+        if (config.pinnedMetricEnabled) {
             recordingStream.enable(PINNED_EVENT).withThreshold(config.pinnedThreshold);
         }
-        if(config.submitFailedMetricEnabled) {
+        if (config.submitFailedMetricEnabled) {
             recordingStream.enable(SUBMIT_FAILED_EVENT);
         }
         if (config.activeMetricEnabled) {
@@ -152,27 +149,30 @@ public class VirtualThreadMetrics implements MeterBinder, Closeable {
     }
 
     /**
-     * The RecordingConfig type allows you to configure the recording features and the enabled events to listen to.
+     * The RecordingConfig type allows you to configure the recording features and the
+     * enabled events to listen to.
      */
-    public record RecordingConfig(Duration maxAge, long maxSizeBytes, Duration pinnedThreshold, boolean pinnedMetricEnabled, boolean submitFailedMetricEnabled, boolean activeMetricEnabled) {
-        
+    public record RecordingConfig(Duration maxAge, long maxSizeBytes, Duration pinnedThreshold,
+            boolean pinnedMetricEnabled, boolean submitFailedMetricEnabled, boolean activeMetricEnabled) {
+
         public RecordingConfig() {
             this(true, true, false);
         }
 
-        public RecordingConfig( boolean pinnedMetricEnabled, boolean submitFailedMetricEnabled, boolean activeMetricEnabled) {
-            this(Duration.ofSeconds(5), 10L * 1024 * 1024, Duration.ofMillis(20), pinnedMetricEnabled, submitFailedMetricEnabled, activeMetricEnabled);
+        public RecordingConfig(boolean pinnedMetricEnabled, boolean submitFailedMetricEnabled,
+                boolean activeMetricEnabled) {
+            this(Duration.ofSeconds(5), 10L * 1024 * 1024, Duration.ofMillis(20), pinnedMetricEnabled,
+                    submitFailedMetricEnabled, activeMetricEnabled);
         }
-        
+
         /**
          * Instantiates a new Recording config.
-         *
-         * @param maxAge                    the max age
-         * @param maxSizeBytes              the max size bytes
-         * @param pinnedThreshold           the pinned threshold
-         * @param pinnedMetricEnabled       the pinned metric enabled
+         * @param maxAge the max age
+         * @param maxSizeBytes the max size bytes
+         * @param pinnedThreshold the pinned threshold
+         * @param pinnedMetricEnabled the pinned metric enabled
          * @param submitFailedMetricEnabled the submit failed metric enabled
-         * @param activeMetricEnabled       the active metric enabled
+         * @param activeMetricEnabled the active metric enabled
          */
         public RecordingConfig {
             Objects.requireNonNull(maxAge, "maxAge parameter must not be null");

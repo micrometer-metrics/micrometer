@@ -71,10 +71,11 @@ class VirtualThreadMetricsReflectiveTests {
      */
     @Test
     void submitFailedEventsShouldBeRecorded() {
-        VirtualThreadMetrics.RecordingConfig recordingConfig = new VirtualThreadMetrics.RecordingConfig(false, true,false);
+        VirtualThreadMetrics.RecordingConfig recordingConfig = new VirtualThreadMetrics.RecordingConfig(false, true,
+                false);
         virtualThreadMetrics = new VirtualThreadMetrics(recordingConfig, TAGS);
         virtualThreadMetrics.bindTo(registry);
-        
+
         try (ExecutorService cachedPool = Executors.newCachedThreadPool()) {
             ThreadFactory factory = virtualThreadFactoryFor(cachedPool);
             Thread thread = factory.newThread(LockSupport::park);

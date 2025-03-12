@@ -58,10 +58,11 @@ class VirtualThreadMetricsTests {
 
     @Test
     void pinnedEventsShouldBeRecorded() {
-        VirtualThreadMetrics.RecordingConfig recordingConfig = new VirtualThreadMetrics.RecordingConfig(true, false,false);
+        VirtualThreadMetrics.RecordingConfig recordingConfig = new VirtualThreadMetrics.RecordingConfig(true, false,
+                false);
         virtualThreadMetrics = new VirtualThreadMetrics(recordingConfig, TAGS);
         virtualThreadMetrics.bindTo(registry);
-        
+
         try (ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor()) {
             CountDownLatch latch = new CountDownLatch(1);
             List<Future<?>> futures = new ArrayList<>();
@@ -84,10 +85,11 @@ class VirtualThreadMetricsTests {
 
     @Test
     void startEndEventsShouldBeRecorded() {
-        VirtualThreadMetrics.RecordingConfig recordingConfig = new VirtualThreadMetrics.RecordingConfig(false, false,true);
+        VirtualThreadMetrics.RecordingConfig recordingConfig = new VirtualThreadMetrics.RecordingConfig(false, false,
+                true);
         virtualThreadMetrics = new VirtualThreadMetrics(recordingConfig, TAGS);
         virtualThreadMetrics.bindTo(registry);
-        
+
         try (ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor()) {
             for (int i = 0; i < 3; i++) {
                 executor.submit(() -> sleep(Duration.ofSeconds(1)));
@@ -98,7 +100,6 @@ class VirtualThreadMetricsTests {
             assertThat(registry.getMeters()).containsExactly(gauge);
         }
     }
-    
 
     private void pinCurrentThreadAndAwait(CountDownLatch latch) {
         synchronized (new Object()) { // assumes that synchronized pins the thread
