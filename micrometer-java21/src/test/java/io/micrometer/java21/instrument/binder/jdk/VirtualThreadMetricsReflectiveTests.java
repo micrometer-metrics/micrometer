@@ -29,6 +29,7 @@ import java.util.concurrent.*;
 import java.util.concurrent.locks.LockSupport;
 
 import static java.lang.Thread.State.WAITING;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.awaitility.Awaitility.await;
 
@@ -56,8 +57,6 @@ class VirtualThreadMetricsReflectiveTests {
     @BeforeEach
     void setUp() {
         registry = new SimpleMeterRegistry();
-        virtualThreadMetrics = new VirtualThreadMetrics(TAGS);
-        virtualThreadMetrics.bindTo(registry);
     }
 
     @AfterEach
@@ -72,6 +71,10 @@ class VirtualThreadMetricsReflectiveTests {
      */
     @Test
     void submitFailedEventsShouldBeRecorded() {
+        VirtualThreadMetrics.RecordingConfig recordingConfig = new VirtualThreadMetrics.RecordingConfig(false, true,false);
+        virtualThreadMetrics = new VirtualThreadMetrics(recordingConfig, TAGS);
+        virtualThreadMetrics.bindTo(registry);
+        
         try (ExecutorService cachedPool = Executors.newCachedThreadPool()) {
             ThreadFactory factory = virtualThreadFactoryFor(cachedPool);
             Thread thread = factory.newThread(LockSupport::park);
@@ -90,6 +93,8 @@ class VirtualThreadMetricsReflectiveTests {
             assertThatThrownBy(() -> factory.newThread(LockSupport::park).start())
                 .isInstanceOf(RejectedExecutionException.class);
             await().atMost(Duration.ofSeconds(2)).until(() -> counter.count() == 2);
+
+            assertThat(registry.getMeters()).containsExactly(counter);
         }
     }
 
