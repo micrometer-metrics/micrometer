@@ -7,7 +7,6 @@ dependencies {
     testImplementation 'ru.lanwen.wiremock:wiremock-junit5'
     testImplementation 'com.github.tomakehurst:wiremock-jre8-standalone'
     testImplementation project(":micrometer-observation-test")
-    testImplementation libs.awaitility
 }
 
 java {
