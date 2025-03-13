@@ -53,11 +53,9 @@ class DynatraceMeterRegistryTest {
     void setUp() {
         this.config = createDefaultDynatraceConfig();
         this.clock = new MockClock();
-        this.clock.add(System.currentTimeMillis(), MILLISECONDS); // Set the clock to
-                                                                  // something recent so
-                                                                  // that the Dynatrace
-                                                                  // library will not
-                                                                  // complain.
+        // Set the clock to something recent so that the Dynatrace library will not
+        // complain.
+        this.clock.add(System.currentTimeMillis(), MILLISECONDS);
         this.httpClient = mock(HttpSender.class);
         this.meterRegistry = DynatraceMeterRegistry.builder(config).clock(clock).httpClient(httpClient).build();
     }
@@ -182,8 +180,9 @@ class DynatraceMeterRegistryTest {
         CountDownLatch lttCountDownLatch2 = new CountDownLatch(1);
 
         ExecutorService executorService = Executors.newSingleThreadExecutor();
+        Duration longTaskTimerDuration = Duration.ofMillis(100);
         executorService.submit(() -> longTaskTimer.record(() -> {
-            clock.add(Duration.ofMillis(100));
+            clock.add(longTaskTimerDuration);
             lttCountDownLatch1.countDown();
 
             try {
@@ -194,7 +193,10 @@ class DynatraceMeterRegistryTest {
             }
         }));
 
-        clock.add(dynatraceConfig.step());
+        // The 'longTaskTimerDuration' should be subtracted as depending on
+        // System.currentTimeMillis(), the 'longTaskTimerDuration' could start another
+        // step.
+        clock.add(dynatraceConfig.step().minus(longTaskTimerDuration));
 
         assertThat(lttCountDownLatch1.await(100, MILLISECONDS)).isTrue();
         registry.publish();
