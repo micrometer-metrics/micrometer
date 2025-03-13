@@ -4,7 +4,7 @@ dependencies {
     api project(':micrometer-observation')
 
     api 'org.assertj:assertj-core'
-    api libs.junitJupiter
+    implementation libs.junitJupiter
 
     implementation libs.mockitoCore4
 
