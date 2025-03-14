@@ -15,6 +15,10 @@
  */
 package io.micrometer.registry.otlp;
 
+import io.micrometer.common.lang.Nullable;
+
+import java.nio.charset.StandardCharsets;
+import java.util.Collections;
 import java.util.Map;
 
 /**
@@ -23,17 +27,125 @@ import java.util.Map;
  *
  * @since 1.15.0
  */
-public interface OtlpMetricsSender extends MetricsSender {
+public interface OtlpMetricsSender {
 
     /**
      * Send a batch of OTLP Protobuf format metrics to an OTLP receiver.
-     * @param address address of the OTLP receiver to which metrics will be sent
-     * @param metricsData OTLP protobuf encoded batch of metrics
-     * @param headers metadata to send as headers with the metrics data
-     * @throws Throwable when there is an exception in sending the metrics; the caller
+     * @param request metrics request to publish
+     * @throws Exception when there is an exception in sending the metrics; the caller
      * should handle this in some way such as logging the exception
      */
-    @Override
-    void send(String address, byte[] metricsData, Map<String, String> headers) throws Throwable;
+    void send(Request request) throws Exception;
+
+    /**
+     * Convenience method for building a request to use with this sender.
+     * @param metricsData metrics data that will be sent
+     * @return builder
+     * @see Request.Builder#send
+     */
+    default Request.Builder newRequest(byte[] metricsData) {
+        return new Request.Builder(metricsData, this);
+    }
+
+    /**
+     * Immutable representation of a payload of metrics to use with a
+     * {@link OtlpMetricsSender}.
+     *
+     * @since 1.15.0
+     */
+    class Request {
+
+        @Nullable
+        private final String address;
+
+        private final Map<String, String> headers;
+
+        private final byte[] metricsData;
+
+        /**
+         * Represents a payload of metrics to be sent.
+         * @param address where to send the metrics
+         * @param metricsData encoded batch of metrics
+         * @param headers metadata to send as headers with the metrics data
+         */
+        public Request(@Nullable String address, Map<String, String> headers, byte[] metricsData) {
+            this.address = address;
+            this.headers = headers;
+            this.metricsData = metricsData;
+        }
+
+        @Nullable
+        public String getAddress() {
+            return address;
+        }
+
+        public byte[] getMetricsData() {
+            return metricsData;
+        }
+
+        public Map<String, String> getHeaders() {
+            return headers;
+        }
+
+        public static Builder builder(byte[] metricsData) {
+            return new Builder(metricsData);
+        }
+
+        @Override
+        public String toString() {
+            return "OtlpMetricsSender.Request for address: " + address + ", headers: " + headers + ", metricsData: "
+                    + new String(metricsData, StandardCharsets.UTF_8);
+        }
+
+        public static class Builder {
+
+            private final byte[] metricsData;
+
+            @Nullable
+            private OtlpMetricsSender sender;
+
+            @Nullable
+            private String address;
+
+            private Map<String, String> headers = Collections.emptyMap();
+
+            private Builder(byte[] metricsData) {
+                this.metricsData = metricsData;
+            }
+
+            private Builder(byte[] metricsData, OtlpMetricsSender sender) {
+                this.metricsData = metricsData;
+                this.sender = sender;
+            }
+
+            public Builder address(String address) {
+                this.address = address;
+                return this;
+            }
+
+            public Builder headers(Map<String, String> headers) {
+                this.headers = headers;
+                return this;
+            }
+
+            public Request build() {
+                return new Request(address, headers, metricsData);
+            }
+
+            /**
+             * Build this request and send it to the associated sender. Throws an
+             * exception if there is no sender associated with this builder.
+             * @throws Exception when sending the request fails, an exception is thrown
+             */
+            public void send() throws Exception {
+                if (sender == null) {
+                    throw new IllegalStateException("A sender has not been set");
+                }
+                sender.send(build());
+            }
+
+        }
+
+    }
 
 }
