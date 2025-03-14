@@ -21,6 +21,7 @@ import org.junit.jupiter.api.Test;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Properties;
+import java.util.function.Function;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -45,6 +46,14 @@ class PropertyValidatorTest {
         props.put("test.map", "a=1,b=2");
         Validated<Map<String, Integer>> validated = PropertyValidator.getStringMap(config, "map", Integer::parseInt);
         assertThat(validated.isValid()).isTrue();
+    }
+
+    @Test
+    void stringMapIsValidButWeird() {
+        props.put("test.map", "a= b ,c =d, e = f");
+        Validated<Map<String, String>> validated = PropertyValidator.getStringMap(config, "map", Function.identity());
+        assertThat(validated.isValid()).isTrue();
+        assertThat(validated.get()).containsExactlyInAnyOrderEntriesOf(Map.of("a", "b", "c", "d", "e", "f"));
     }
 
     @Test
