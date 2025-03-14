@@ -23,8 +23,6 @@ import io.micrometer.registry.otlp.OtlpMeterRegistry;
 import io.micrometer.registry.otlp.OtlpMetricsSender;
 import org.junit.jupiter.api.Test;
 
-import java.util.Map;
-
 class OtlpMeterRegistryCustomizationTest {
 
     @Test
@@ -49,7 +47,7 @@ class OtlpMeterRegistryCustomizationTest {
     private static class OtlpGrpcMetricsSender implements OtlpMetricsSender {
 
         @Override
-        public void send(String address, byte[] metricsData, Map<String, String> headers) {
+        public void send(Request request) {
         }
 
     }
