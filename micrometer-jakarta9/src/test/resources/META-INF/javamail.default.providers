@@ -1,0 +1,2 @@
+protocol=micrometer:mocksmtp; type=transport; class=io.micrometer.jakarta9.instrument.mail.MicrometerSMTPTransport; vendor=Micrometer;
+protocol=mocksmtp; type=transport; class=io.micrometer.jakarta9.instrument.mail.MockSMTPTransport; vendor=Micrometer;

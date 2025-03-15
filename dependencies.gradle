@@ -34,6 +34,7 @@ def VERSIONS = [
         libs.restAssured,
         libs.retrofit2,
         libs.jakarta.jmsApi,
+        libs.jakarta.mailApi,
         libs.jakarta.servletApi,
         libs.javax.cacheApi,
         libs.javax.inject,
