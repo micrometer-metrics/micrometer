@@ -19,14 +19,17 @@ import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
+import java.time.Duration;
 import java.util.concurrent.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 
 /**
  * Tests for {@link ExecutorServiceMetrics} with reflection enabled.
  *
  * @author Tommy Ludwig
+ * @author Johnny Lim
  */
 @Tag("reflective")
 class ExecutorServiceMetricsReflectiveTests {
@@ -43,6 +46,27 @@ class ExecutorServiceMetricsReflectiveTests {
         monitored.execute(latch::countDown);
         assertThat(latch.await(100, TimeUnit.MILLISECONDS)).isTrue();
         assertThat(registry.get("executor.completed").tag("name", "test").functionCounter().count()).isEqualTo(1L);
+    }
+
+    @Test
+    void monitorWithExecutorsNewVirtualThreadPerTaskExecutor() {
+        CountDownLatch latch = new CountDownLatch(1);
+        ExecutorService unmonitored = Executors.newVirtualThreadPerTaskExecutor();
+        assertThat(unmonitored.getClass().getName()).isEqualTo("java.util.concurrent.ThreadPerTaskExecutor");
+        ExecutorService monitored = ExecutorServiceMetrics.monitor(registry, unmonitored, "test");
+        monitored.execute(() -> {
+            try {
+                latch.await(1, TimeUnit.SECONDS);
+            }
+            catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        });
+        await().atMost(Duration.ofSeconds(1))
+            .untilAsserted(() -> assertThat(registry.get("executor.active").gauge().value()).isEqualTo(1));
+        latch.countDown();
+        await().atMost(Duration.ofSeconds(1))
+            .untilAsserted(() -> assertThat(registry.get("executor.active").gauge().value()).isEqualTo(0));
     }
 
 }
