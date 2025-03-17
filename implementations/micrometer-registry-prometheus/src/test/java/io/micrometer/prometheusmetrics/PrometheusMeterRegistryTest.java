@@ -1064,6 +1064,27 @@ class PrometheusMeterRegistryTest {
                 .contains("custom_meter_created{statistic=\"COUNT\"} 5.001"));
     }
 
+    @Test
+    void createdTimestampDisabled() {
+        PrometheusConfig config = new PrometheusConfig() {
+            @Override
+            public String get(String key) {
+                return null;
+            }
+
+            @Override
+            public Properties prometheusProperties() {
+                Properties properties = new Properties();
+                properties.putAll(PrometheusConfig.super.prometheusProperties());
+                properties.setProperty("io.prometheus.exporter.includeCreatedTimestamps", "false");
+                return properties;
+            }
+        };
+        PrometheusMeterRegistry registry = new PrometheusMeterRegistry(config, prometheusRegistry, clock);
+        registry.counter("c").increment();
+        assertThat(registry.scrape()).doesNotContain("_created");
+    }
+
     private static class CountingPrometheusNamingConvention extends PrometheusNamingConvention {
 
         AtomicInteger nameCount = new AtomicInteger();
