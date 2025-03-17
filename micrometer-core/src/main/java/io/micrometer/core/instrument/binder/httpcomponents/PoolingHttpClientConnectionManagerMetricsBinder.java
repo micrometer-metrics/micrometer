@@ -101,7 +101,7 @@ public class PoolingHttpClientConnectionManagerMetricsBinder implements MeterBin
             .tag("state", "available")
             .register(registry);
         Gauge
-            .builder("httpcomponents.httpclient.pool.total.connections", connPoolControl,
+            .builder("httpcomponents.httpclient.pool.total.leased", connPoolControl,
                     (connPoolControl) -> connPoolControl.getTotalStats().getLeased())
             .description("The number of persistent and leased connections for all routes.")
             .tags(tags)
