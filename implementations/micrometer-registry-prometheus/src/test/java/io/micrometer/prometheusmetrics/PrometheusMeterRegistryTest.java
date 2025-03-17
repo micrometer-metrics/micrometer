@@ -25,6 +25,8 @@ import io.micrometer.core.instrument.binder.jvm.JvmInfoMetrics;
 import io.micrometer.core.instrument.composite.CompositeMeterRegistry;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.HistogramSnapshot;
+import io.prometheus.metrics.expositionformats.OpenMetricsTextFormatWriter;
+import io.prometheus.metrics.expositionformats.PrometheusTextFormatWriter;
 import io.prometheus.metrics.model.registry.PrometheusRegistry;
 import io.prometheus.metrics.model.snapshots.*;
 import io.prometheus.metrics.tracer.common.SpanContext;
@@ -37,6 +39,7 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.Stream;
 
 import static io.micrometer.core.instrument.MockClock.clock;
 import static java.util.Collections.emptyList;
@@ -1020,6 +1023,45 @@ class PrometheusMeterRegistryTest {
     void scrapeWhenMeterNameContainsSingleCharacter() {
         registry.counter("c").increment();
         assertThatNoException().isThrownBy(() -> registry.scrape());
+    }
+
+    @Test
+    void createdTimestampEnabled() {
+        PrometheusConfig config = new PrometheusConfig() {
+            @Override
+            public String get(String key) {
+                return null;
+            }
+
+            @Override
+            public Properties prometheusProperties() {
+                Properties properties = new Properties();
+                properties.putAll(PrometheusConfig.super.prometheusProperties());
+                properties.setProperty("io.prometheus.exporter.includeCreatedTimestamps", "true");
+                return properties;
+            }
+        };
+        PrometheusMeterRegistry registry = new PrometheusMeterRegistry(config, prometheusRegistry, clock);
+        clock.addSeconds(3);
+        registry.counter("c").increment();
+        registry.more().counter("fc", Tags.empty(), 3);
+        clock.addSeconds(1);
+        registry.timer("t").record(3, TimeUnit.MILLISECONDS);
+        registry.more().timer("ft", Tags.empty(), this, o -> 1, o -> 2, TimeUnit.MILLISECONDS);
+        clock.addSeconds(1);
+        registry.summary("s").record(4);
+        registry.newMeter(new Meter.Id("custom.meter", Tags.empty(), null, null, Meter.Type.OTHER), Meter.Type.OTHER,
+                List.of(new Measurement(() -> 11, Statistic.COUNT)));
+
+        String openMetricsScrape = registry.scrape(OpenMetricsTextFormatWriter.CONTENT_TYPE);
+        String prometheusTextScrape = registry.scrape(PrometheusTextFormatWriter.CONTENT_TYPE);
+        Stream.of(openMetricsScrape, prometheusTextScrape)
+            .forEach(scrape -> assertThat(scrape).contains("c_created 3.001")
+                .contains("fc_created 3.001")
+                .contains("t_seconds_created 4.001")
+                .contains("ft_seconds_created 4.001")
+                .contains("s_created 5.001")
+                .contains("custom_meter_created{statistic=\"COUNT\"} 5.001"));
     }
 
     private static class CountingPrometheusNamingConvention extends PrometheusNamingConvention {
