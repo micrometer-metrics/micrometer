@@ -50,6 +50,7 @@ To use the following `ExecutorService` instances, `--add-opens java.base/java.ut
 * `Executors.newSingleThreadScheduledExecutor()`
 * `Executors.newSingleThreadExecutor()`
 * `Executors.newThreadPerTaskExecutor()`
+* `Executors.newVirtualThreadPerTaskExecutor()`
 
 == Java 21 Metrics
 

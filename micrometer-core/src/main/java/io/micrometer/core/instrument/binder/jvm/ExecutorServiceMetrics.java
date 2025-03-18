@@ -57,6 +57,7 @@ import static java.util.stream.Collectors.toSet;
  * <li>Executors.newSingleThreadScheduledExecutor()</li>
  * <li>Executors.newSingleThreadExecutor()</li>
  * <li>Executors.newThreadPerTaskExecutor()</li>
+ * <li>Executors.newVirtualThreadPerTaskExecutor()</li>
  * </ul>
  *
  * @author Jon Schneider
@@ -333,7 +334,8 @@ public class ExecutorServiceMetrics implements MeterBinder {
                 monitor(registry,
                         unwrapThreadPoolExecutor(executorService, executorService.getClass().getSuperclass()));
             }
-            // For Executors.newThreadPerTaskExecutor()
+            // For Executors.newThreadPerTaskExecutor() and
+            // Executors.newVirtualThreadPerTaskExecutor()
             else if (className.equals(CLASS_NAME_THREAD_PER_TASK_EXECUTOR)) {
                 monitorThreadPerTaskExecutor(registry, executorService);
             }
