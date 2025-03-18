@@ -50,6 +50,15 @@ import static java.util.stream.Collectors.toSet;
  * {@link ExecutorService}, like {@link TimedExecutorService}. Make sure to pass the
  * underlying, unwrapped ExecutorService to this MeterBinder, if it is wrapped in another
  * type.
+ * <p>
+ * To use the following {@link ExecutorService} instances,
+ * {@literal --add-opens java.base/java.util.concurrent=ALL-UNNAMED} is required:
+ * <ul>
+ * <li>Executors.newSingleThreadScheduledExecutor()</li>
+ * <li>Executors.newSingleThreadExecutor()</li>
+ * <li>Executors.newThreadPerTaskExecutor()</li>
+ * <li>Executors.newVirtualThreadPerTaskExecutor()</li>
+ * </ul>
  *
  * @author Jon Schneider
  * @author Clint Checketts
@@ -315,14 +324,18 @@ public class ExecutorServiceMetrics implements MeterBinder {
             monitor(registry, (ForkJoinPool) executorService);
         }
         else if (allowIllegalReflectiveAccess) {
+            // For Executors.newSingleThreadScheduledExecutor()
             if (className.equals("java.util.concurrent.Executors$DelegatedScheduledExecutorService")) {
                 monitor(registry, unwrapThreadPoolExecutor(executorService, executorService.getClass()));
             }
+            // For Executors.newSingleThreadExecutor()
             else if (className.equals("java.util.concurrent.Executors$FinalizableDelegatedExecutorService")
                     || className.equals("java.util.concurrent.Executors$AutoShutdownDelegatedExecutorService")) {
                 monitor(registry,
                         unwrapThreadPoolExecutor(executorService, executorService.getClass().getSuperclass()));
             }
+            // For Executors.newThreadPerTaskExecutor() and
+            // Executors.newVirtualThreadPerTaskExecutor()
             else if (className.equals(CLASS_NAME_THREAD_PER_TASK_EXECUTOR)) {
                 monitorThreadPerTaskExecutor(registry, executorService);
             }

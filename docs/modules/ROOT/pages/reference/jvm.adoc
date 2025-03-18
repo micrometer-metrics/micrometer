@@ -45,6 +45,13 @@ another. The reported value underestimates the actual total number of steals whe
 * `executor.parallelism` (`Gauge`): The targeted parallelism level of this pool.
 * `executor.pool.size` (`Gauge`): The current number of threads in the pool.
 
+To use the following `ExecutorService` instances, `--add-opens java.base/java.util.concurrent=ALL-UNNAMED` is required:
+
+* `Executors.newSingleThreadScheduledExecutor()`
+* `Executors.newSingleThreadExecutor()`
+* `Executors.newThreadPerTaskExecutor()`
+* `Executors.newVirtualThreadPerTaskExecutor()`
+
 == Java 21 Metrics
 
 Micrometer provides support for https://openjdk.org/jeps/444[virtual threads] released in Java 21. In order to utilize it, you need to add the `io.micrometer:micrometer-java21` dependency to your classpath to use the binder:
