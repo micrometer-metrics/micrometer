@@ -21,12 +21,13 @@ import io.micrometer.observation.ObservationConvention;
 import io.micrometer.observation.docs.ObservationDocumentation;
 
 /**
- * OpenTelemetry {@link ObservationDocumentation} for Apache HTTP Client 5 instrumentation.
+ * OpenTelemetry {@link ObservationDocumentation} for Apache HTTP Client 5
+ * instrumentation.
  * <p>
  * Warning: Aligned with <b>STABLE</b> semantic conventions version 1.31.0
  *
- * @since 1.16.0
  * @see ObservationExecChainHandler
+ * @since 1.16.0
  */
 public enum OpenTelemetryApacheHttpClientObservationDocumentation implements ObservationDocumentation {
 
@@ -38,11 +39,16 @@ public enum OpenTelemetryApacheHttpClientObservationDocumentation implements Obs
 
         @Override
         public KeyName[] getLowCardinalityKeyNames() {
-            return ApacheHttpClientKeyNames.values();
+            return LowCardinalityKeys.values();
+        }
+
+        @Override
+        public KeyName[] getHighCardinalityKeyNames() {
+            return HighCardinalityKeys.values();
         }
     };
 
-    enum ApacheHttpClientKeyNames implements KeyName {
+    enum LowCardinalityKeys implements KeyName {
 
         /**
          * HTTP request method.
@@ -87,23 +93,10 @@ public enum OpenTelemetryApacheHttpClientObservationDocumentation implements Obs
         },
 
         /**
-         * Absolute URL describing a network resource according to RFC3986.
-         * <p>
-         * Examples: https://www.foo.bar/search?q=OpenTelemetry#SemConv; //localhost
-         * <p>
-         * Requirement level: Required
-         */
-        URL_FULL {
-            @Override
-            public String asString() {
-                return "url.full";
-            }
-        },
-
-        /**
          * Describes a class of error the operation ended with.
          * <p>
-         * Examples: timeout; java.net.UnknownHostException; server_certificate_invalid; 500
+         * Examples: timeout; java.net.UnknownHostException; server_certificate_invalid;
+         * 500
          * <p>
          * Requirement level: Conditionally Required If request has ended with an error.
          */
@@ -111,20 +104,6 @@ public enum OpenTelemetryApacheHttpClientObservationDocumentation implements Obs
             @Override
             public String asString() {
                 return "error.type";
-            }
-        },
-
-        /**
-         * Original HTTP method sent by the client in the request line.
-         * <p>
-         * Examples: GeT; ACL; foo
-         * <p>
-         * Requirement level: Conditionally Required
-         */
-        HTTP_REQUEST_METHOD_ORIGINAL {
-            @Override
-            public String asString() {
-                return "http.request.method_original";
             }
         },
 
@@ -157,34 +136,6 @@ public enum OpenTelemetryApacheHttpClientObservationDocumentation implements Obs
         },
 
         /**
-         * The ordinal number of request resending attempt (for any reason, including redirects).
-         * <p>
-         * Examples: 3
-         * <p>
-         * Requirement level: Recommended if and only if request was retried.
-         */
-        HTTP_REQUEST_RESEND_COUNT {
-            @Override
-            public String asString() {
-                return "http.request.resend_count";
-            }
-        },
-
-        /**
-         * Peer port number of the network connection.
-         * <p>
-         * Examples: 65123
-         * <p>
-         * Requirement level: Recommended If network.peer.address is set.
-         */
-        NETWORK_PEER_ADDRESS {
-            @Override
-            public String asString() {
-                return "network.peer.port";
-            }
-        },
-
-        /**
          * The actual version of the protocol used for network communication.
          * <p>
          * Examples: 1.0; 1.1; 2; 3
@@ -199,9 +150,86 @@ public enum OpenTelemetryApacheHttpClientObservationDocumentation implements Obs
         },
 
         /**
-         * HTTP request headers, {@code <key>} being the normalized HTTP Header name (lowercase), the value being the header values.
+         * The URI scheme component identifying the used protocol.
          * <p>
-         * Examples: http.request.header.content-type=["application/json"]; http.request.header.x-forwarded-for=["1.2.3.4", "1.2.3.5"]
+         * Examples: http; https
+         * <p>
+         * Requirement level: Opt-In.
+         */
+        URL_SCHEME {
+            @Override
+            public String asString() {
+                return "url.scheme";
+            }
+        }
+
+    }
+
+    enum HighCardinalityKeys implements KeyName {
+
+        /**
+         * Absolute URL describing a network resource according to RFC3986.
+         * <p>
+         * Examples: https://www.foo.bar/search?q=OpenTelemetry#SemConv; //localhost
+         * <p>
+         * Requirement level: Required
+         */
+        URL_FULL {
+            @Override
+            public String asString() {
+                return "url.full";
+            }
+        },
+
+        /**
+         * The ordinal number of request resending attempt (for any reason, including
+         * redirects).
+         * <p>
+         * Examples: 3
+         * <p>
+         * Requirement level: Recommended if and only if request was retried.
+         */
+        HTTP_REQUEST_RESEND_COUNT {
+            @Override
+            public String asString() {
+                return "http.request.resend_count";
+            }
+        },
+
+        /**
+         * Peer address of the network connection - IP address or Unix domain socket name.
+         * <p>
+         * Examples: 10.1.2.80; /tmp/my.sock
+         * <p>
+         * Requirement level: Recommended
+         */
+        NETWORK_PEER_ADDRESS {
+            @Override
+            public String asString() {
+                return "network.peer.address";
+            }
+        },
+
+        /**
+         * Peer port number of the network connection.
+         * <p>
+         * Examples: 65123
+         * <p>
+         * Requirement level: Recommended If network.peer.address is set.
+         */
+        NETWORK_PEER_PORT {
+            @Override
+            public String asString() {
+                return "network.peer.port";
+            }
+        },
+
+        /**
+         * HTTP request headers, {@code <key>} being the normalized HTTP Header name
+         * (lowercase), the value being the header values.
+         * <p>
+         * Examples: http.request.header.content-type=["application/json"];
+         * http.request.header.x-forwarded-for=["1.2.3.4", "1.2.3.5"]
          * <p>
          * Requirement level: Opt-In.
          */
@@ -213,9 +241,11 @@ public enum OpenTelemetryApacheHttpClientObservationDocumentation implements Obs
         },
 
         /**
-         * HTTP response headers, {@code <key>} being the normalized HTTP Header name (lowercase), the value being the header values.
+         * HTTP response headers, {@code <key>} being the normalized HTTP Header name
+         * (lowercase), the value being the header values.
          * <p>
-         * Examples: http.response.header.content-type=["application/json"]; http.response.header.my-custom-header=["abc", "def"]
+         * Examples: http.response.header.content-type=["application/json"];
+         * http.response.header.my-custom-header=["abc", "def"]
          * <p>
          * Requirement level: Opt-In.
          */
@@ -237,6 +267,22 @@ public enum OpenTelemetryApacheHttpClientObservationDocumentation implements Obs
             @Override
             public String asString() {
                 return "network.transport";
+            }
+        },
+
+        /**
+         * Value of the HTTP User-Agent header sent by the client.
+         * <p>
+         * Examples: CERN-LineMode/2.15 libwww/2.17b3; Mozilla/5.0 (iPhone; CPU iPhone OS
+         * 14_7_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.1.2
+         * Mobile/15E148 Safari/604.1; YourApp/1.0.0 grpc-java-okhttp/1.27.2
+         * <p>
+         * Requirement level: Opt-In.
+         */
+        USER_AGENT_ORIGINAL {
+            @Override
+            public String asString() {
+                return "user_agent.original";
             }
         },
 
