@@ -15,6 +15,7 @@
  */
 package io.micrometer.java21.instrument.binder.jdk;
 
+import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
@@ -48,8 +49,6 @@ class VirtualThreadMetricsTests {
     @BeforeEach
     void setUp() {
         registry = new SimpleMeterRegistry();
-        virtualThreadMetrics = new VirtualThreadMetrics(TAGS);
-        virtualThreadMetrics.bindTo(registry);
     }
 
     @AfterEach
@@ -59,6 +58,11 @@ class VirtualThreadMetricsTests {
 
     @Test
     void pinnedEventsShouldBeRecorded() {
+        VirtualThreadMetrics.RecordingConfig recordingConfig = new VirtualThreadMetrics.RecordingConfig(true, false,
+                false);
+        virtualThreadMetrics = new VirtualThreadMetrics(recordingConfig, TAGS);
+        virtualThreadMetrics.bindTo(registry);
+
         try (ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor()) {
             CountDownLatch latch = new CountDownLatch(1);
             List<Future<?>> futures = new ArrayList<>();
@@ -75,6 +79,25 @@ class VirtualThreadMetricsTests {
             await().atMost(Duration.ofSeconds(2)).until(() -> timer.count() == 3);
             assertThat(timer.max(MILLISECONDS)).isBetween(40d, 60d); // ~50ms
             assertThat(timer.totalTime(MILLISECONDS)).isBetween(130d, 170d); // ~150ms
+            assertThat(registry.getMeters()).containsExactly(timer);
+        }
+    }
+
+    @Test
+    void startEndEventsShouldBeRecorded() {
+        VirtualThreadMetrics.RecordingConfig recordingConfig = new VirtualThreadMetrics.RecordingConfig(false, false,
+                true);
+        virtualThreadMetrics = new VirtualThreadMetrics(recordingConfig, TAGS);
+        virtualThreadMetrics.bindTo(registry);
+
+        try (ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor()) {
+            for (int i = 0; i < 3; i++) {
+                executor.submit(() -> sleep(Duration.ofSeconds(1)));
+            }
+
+            Gauge gauge = registry.get("jvm.threads.virtual.active").tags(TAGS).gauge();
+            await().atMost(Duration.ofSeconds(2)).until(() -> gauge.value() == 3);
+            assertThat(registry.getMeters()).containsExactly(gauge);
         }
     }
 
