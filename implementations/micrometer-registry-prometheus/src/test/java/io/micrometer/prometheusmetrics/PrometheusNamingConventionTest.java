@@ -30,12 +30,12 @@ class PrometheusNamingConventionTest {
 
     @Test
     void formatName() {
-        assertThat(convention.name("123abc/{:id}水", Meter.Type.GAUGE)).startsWith("_23abc___id__");
+        assertThat(convention.name("123.abc/{:id}水", Meter.Type.GAUGE)).startsWith("_23_abc___id__");
     }
 
     @Test
     void formatTagKey() {
-        assertThat(convention.tagKey("123abc/{:id}水")).startsWith("_23abc___id__");
+        assertThat(convention.tagKey("123.abc/{:id}水")).startsWith("_23_abc___id__");
     }
 
     @Test

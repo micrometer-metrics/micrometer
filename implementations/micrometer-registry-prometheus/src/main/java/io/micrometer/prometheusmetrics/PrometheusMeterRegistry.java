@@ -20,8 +20,8 @@ import io.micrometer.common.util.internal.logging.WarnThenDebugLogger;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.cumulative.CumulativeFunctionCounter;
 import io.micrometer.core.instrument.cumulative.CumulativeFunctionTimer;
-import io.micrometer.core.instrument.distribution.HistogramSnapshot;
 import io.micrometer.core.instrument.distribution.*;
+import io.micrometer.core.instrument.distribution.HistogramSnapshot;
 import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import io.micrometer.core.instrument.internal.DefaultGauge;
 import io.micrometer.core.instrument.internal.DefaultLongTaskTimer;
@@ -54,7 +54,6 @@ import java.util.stream.StreamSupport;
 
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.StreamSupport.stream;
 
@@ -591,11 +590,11 @@ public class PrometheusMeterRegistry extends MeterRegistry {
 
             meterRegistrationFailed(id,
                     "Prometheus requires that all meters with the same name have the same"
-                            + " set of tag keys. There is already an existing meter named '" + id.getName()
+                            + " set of tag keys. There is already an existing meter named '" + getConventionName(id)
                             + "' containing tag keys ["
                             + String.join(", ", collectorMap.get(getConventionName(id)).getTagKeys())
-                            + "]. The meter you are attempting to register" + " has keys ["
-                            + getConventionTags(id).stream().map(Tag::getKey).collect(joining(", ")) + "].");
+                            + "]. The meter you are attempting to register" + " has keys [" + String.join(", ", tagKeys)
+                            + "].");
             return existingCollector;
         });
     }
