@@ -181,9 +181,12 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
                         .build())
                     .build();
 
-                metricsSender.send(config.url(), request.toByteArray(), config.headers());
+                metricsSender.send(OtlpMetricsSender.Request.builder(request.toByteArray())
+                    .address(config.url())
+                    .headers(config.headers())
+                    .build());
             }
-            catch (Throwable e) {
+            catch (Exception e) {
                 logger.warn(String.format("Failed to publish metrics to OTLP receiver (context: %s)",
                         getConfigurationContext()), e);
             }

@@ -15,11 +15,7 @@
  */
 package io.micrometer.registry.otlp;
 
-import io.micrometer.common.util.internal.logging.InternalLogger;
-import io.micrometer.common.util.internal.logging.InternalLoggerFactory;
 import io.micrometer.core.ipc.http.HttpSender;
-
-import java.util.Map;
 
 /**
  * An implementation of {@link OtlpMetricsSender} that uses an {@link HttpSender}.
@@ -28,12 +24,14 @@ import java.util.Map;
  */
 public class OtlpHttpMetricsSender implements OtlpMetricsSender {
 
-    private static final InternalLogger logger = InternalLoggerFactory.getInstance(OtlpHttpMetricsSender.class);
-
     private final HttpSender httpSender;
 
     private final String userAgentHeader;
 
+    /**
+     * Metrics sender using the given {@link HttpSender}.
+     * @param httpSender client to use to send metrics
+     */
     public OtlpHttpMetricsSender(HttpSender httpSender) {
         this.httpSender = httpSender;
         this.userAgentHeader = getUserAgentHeader();
@@ -41,19 +39,23 @@ public class OtlpHttpMetricsSender implements OtlpMetricsSender {
 
     /**
      * Send a batch of OTLP Protobuf format metrics to an OTLP HTTP receiver.
-     * @param address address of the OTLP HTTP receiver to which metrics will be sent
-     * @param metricsData OTLP protobuf encoded batch of metrics
-     * @param headers metadata to send as headers with the metrics data
-     * @throws Throwable when there is an exception in sending the metrics; the caller
+     * @param request metrics request to publish
+     * @throws Exception when there is an exception in sending the metrics; the caller
      * should handle this in some way such as logging the exception
      */
     @Override
-    public void send(String address, byte[] metricsData, Map<String, String> headers) throws Throwable {
-        HttpSender.Request.Builder httpRequest = this.httpSender.post(address)
+    public void send(Request request) throws Exception {
+        HttpSender.Request.Builder httpRequest = this.httpSender.post(request.getAddress())
             .withHeader("User-Agent", userAgentHeader)
-            .withContent("application/x-protobuf", metricsData);
-        headers.forEach(httpRequest::withHeader);
-        HttpSender.Response response = httpRequest.send();
+            .withContent("application/x-protobuf", request.getMetricsData());
+        request.getHeaders().forEach(httpRequest::withHeader);
+        HttpSender.Response response;
+        try {
+            response = httpRequest.send();
+        }
+        catch (Throwable e) {
+            throw new Exception(e);
+        }
         if (!response.isSuccessful()) {
             throw new OtlpHttpMetricsSendUnsuccessfulException(String
                 .format("Server responded with HTTP status code %d and body %s", response.code(), response.body()));
@@ -71,7 +73,7 @@ public class OtlpHttpMetricsSender implements OtlpMetricsSender {
 
     private static class OtlpHttpMetricsSendUnsuccessfulException extends RuntimeException {
 
-        public OtlpHttpMetricsSendUnsuccessfulException(String message) {
+        private OtlpHttpMetricsSendUnsuccessfulException(String message) {
             super(message);
         }
 
