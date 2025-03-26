@@ -19,7 +19,8 @@ dependencies {
     api project(":micrometer-observation")
 
     optionalApi libs.jakarta.jmsApi
-    optionalApi 'jakarta.mail:jakarta.mail-api:2.1.0'
+    // Jakarta 9 version of the Mail API
+    optionalApi 'jakarta.mail:jakarta.mail-api:2.0.1'
 
     testImplementation project(':micrometer-observation-test')
     testImplementation(libs.archunitJunit5) {
@@ -29,5 +30,5 @@ dependencies {
     testImplementation libs.slf4jApi
     testImplementation libs.mockitoCore5
     testImplementation libs.assertj
-    testImplementation 'org.eclipse.angus:jakarta.mail:2.0.3'
+    testRuntimeOnly('com.sun.mail:jakarta.mail:2.0.1')
 }

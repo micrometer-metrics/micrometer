@@ -13,34 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.jakarta9.instrument.mail;
+package io.micrometer.samples.jakarta10.mail;
 
+import io.micrometer.jakarta9.instrument.mail.InstrumentedTransport;
 import io.micrometer.observation.tck.TestObservationRegistry;
 import jakarta.mail.*;
-
 import jakarta.mail.Message.RecipientType;
 import jakarta.mail.internet.InternetAddress;
 import jakarta.mail.internet.MimeMessage;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.util.Properties;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
-
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 /**
- * Tests for {@link InstrumentedTransport}.
+ * Tests for {@link InstrumentedTransport} on Jakarta 10 Mail dependencies.
  */
-class InstrumentedTransportTest {
+class Jakarta10InstrumentedTransportTest {
 
     Session session;
-
-    MockSMTPTransportListener listener = Mockito.mock(MockSMTPTransportListener.class);
 
     TestObservationRegistry registry = TestObservationRegistry.create();
 
@@ -53,50 +46,14 @@ class InstrumentedTransportTest {
         // default use of mock to simplify test
         smtpProperties.put("mail.transport.protocol", "mocksmtp");
 
-        // avoid NPE
-        MockSMTPTransport.LISTENER = listener;
-
         // open a Session
         this.session = Session.getInstance(smtpProperties);
         transport = new InstrumentedTransport(session, this.session.getTransport("mocksmtp"), this.registry);
     }
 
     @Test
-    void shouldDelegateConnect() throws MessagingException {
-        transport.connect("host", 123, "user", "password");
-        verify(listener).onConnect("host", 123, "user", "password");
-    }
-
-    @Test
-    void shouldDelegateClose() throws MessagingException {
-        transport.close();
-        verify(listener).onClose();
-    }
-
-    @Test
-    void shouldDelegateSendMessageEvenIfObservationRegistryIsNotInstalled() throws MessagingException {
-        Message msg = new MimeMessage(this.session);
-        Address[] to = new Address[0];
-        transport.sendMessage(msg, to);
-        verify(listener).onSendMessage(msg, to);
-    }
-
-    @Test
-    void shouldDelegateSendMessageIfObservationRegistryIsInstalled() throws MessagingException {
-        Message msg = new MimeMessage(this.session);
-        Address[] to = new Address[0];
-        transport.sendMessage(msg, to);
-        verify(listener).onSendMessage(msg, to);
-    }
-
-    @Test
     void shouldCreateObservationWhenSendMessageIsCalled() throws MessagingException {
         // arrange
-        when(listener.onSendMessage(Mockito.any(), Mockito.any())).thenAnswer(invocation -> {
-            Message message = (Message) invocation.getArguments()[0];
-            message.setHeader("Message-Id", "message-id");
-            return true;
-        });
         Message msg = new MimeMessage(this.session);
         msg.setSubject("Hello world");
         Address[] to = new Address[0];
@@ -112,7 +69,6 @@ class InstrumentedTransportTest {
             .that()
             .hasBeenStarted()
             .hasBeenStopped()
-            .hasHighCardinalityKeyValue("smtp.message.id", "message-id")
             .hasHighCardinalityKeyValue("smtp.message.subject", "Hello world")
             .hasHighCardinalityKeyValue("smtp.message.to", "to@example.com")
             .hasHighCardinalityKeyValue("smtp.message.from", "from@example.com")

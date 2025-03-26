@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 VMware, Inc.
+ * Copyright 2025 VMware, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,13 +25,16 @@ import jakarta.mail.MessagingException;
  * Context that holds information for observation metadata collection during the
  * {@link MailObservationDocumentation#MAIL_SEND sending of mail messages}.
  * <p>
- * This propagates the tracing information with the message sent by
+ * This propagates metadata with the message sent by
  * {@link Message#setHeader(String, String) setting a message header}.
+ *
+ * @since 1.15.0
  */
 public class MailSendObservationContext extends SenderContext<Message> {
 
     private static final WarnThenDebugLogger logger = new WarnThenDebugLogger(MailSendObservationContext.class);
 
+    @Nullable
     private final String protocol;
 
     @Nullable
@@ -39,7 +42,7 @@ public class MailSendObservationContext extends SenderContext<Message> {
 
     private final int port;
 
-    public MailSendObservationContext(Message msg, String protocol, @Nullable String host, int port) {
+    public MailSendObservationContext(Message msg, @Nullable String protocol, @Nullable String host, int port) {
         super((message, key, value) -> {
             if (message != null) {
                 try {
@@ -56,6 +59,7 @@ public class MailSendObservationContext extends SenderContext<Message> {
         this.port = port;
     }
 
+    @Nullable
     public String getProtocol() {
         return protocol;
     }

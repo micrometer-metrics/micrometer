@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 VMware, Inc.
+ * Copyright 2025 VMware, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ import jakarta.mail.*;
 
 public class MockSMTPTransport extends Transport {
 
-    public static MockSMTPTransportListener LISTENER;
+    static MockSMTPTransportListener LISTENER;
 
     public MockSMTPTransport(Session session, URLName urlname) {
         super(session, urlname);
@@ -37,7 +37,7 @@ public class MockSMTPTransport extends Transport {
     }
 
     @Override
-    public synchronized void close() throws MessagingException {
+    public synchronized void close() {
         LISTENER.onClose();
     }
 
