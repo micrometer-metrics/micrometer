@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 VMware, Inc.
+ * Copyright 2025 VMware, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,8 @@ import io.micrometer.observation.ObservationConvention;
 /**
  * {@link ObservationConvention} interface for
  * {@link MailObservationDocumentation#MAIL_SEND mail send} operations.
+ *
+ * @since 1.15.0
  */
 public interface MailSendObservationConvention extends ObservationConvention<MailSendObservationContext> {
 

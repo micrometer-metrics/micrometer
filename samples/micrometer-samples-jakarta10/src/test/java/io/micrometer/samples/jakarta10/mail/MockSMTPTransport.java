@@ -13,15 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package io.micrometer.samples.jakarta10.mail;
 
-/**
- * Observation instrumentation for Jakarta Mail.
- *
- * @since 1.15.0
- */
-@NonNullFields
-@NonNullApi
-package io.micrometer.jakarta9.instrument.mail;
+import jakarta.mail.*;
 
-import io.micrometer.common.lang.NonNullApi;
-import io.micrometer.common.lang.NonNullFields;
+public class MockSMTPTransport extends Transport {
+
+    public MockSMTPTransport(Session session, URLName urlname) {
+        super(session, urlname);
+    }
+
+    @Override
+    public synchronized void connect(String host, int port, String user, String password) throws MessagingException {
+    }
+
+    @Override
+    public void sendMessage(Message msg, Address[] addresses) throws MessagingException {
+    }
+
+    @Override
+    public synchronized void close() {
+    }
+
+}

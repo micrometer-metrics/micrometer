@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 VMware, Inc.
+ * Copyright 2025 VMware, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ import jakarta.mail.Message;
 import jakarta.mail.MessagingException;
 import jakarta.mail.Message.RecipientType;
 
-public class MailKeyValues {
+class MailKeyValues {
 
     private static final KeyValue SMTP_MESSAGE_FROM_UNKNOWN = KeyValue
         .of(MailObservationDocumentation.HighCardinalityKeyNames.SMTP_MESSAGE_FROM, "unknown");
@@ -106,13 +106,17 @@ public class MailKeyValues {
     }
 
     static KeyValue serverAddress(MailSendObservationContext context) {
-        return KeyValue.of(LowCardinalityKeyNames.SERVER_ADDRESS,
-                context.getHost() == null ? "unknown" : context.getHost());
+        if (context.getHost() == null) {
+            return SERVER_ADDRESS_UNKNOWN;
+        }
+        return KeyValue.of(LowCardinalityKeyNames.SERVER_ADDRESS, context.getHost());
     }
 
     static KeyValue serverPort(MailSendObservationContext context) {
-        return KeyValue.of(LowCardinalityKeyNames.SERVER_PORT,
-                context.getPort() > 0 ? String.valueOf(context.getPort()) : "unknown");
+        if (context.getPort() <= 0) {
+            return SERVER_PORT_UNKNOWN;
+        }
+        return KeyValue.of(LowCardinalityKeyNames.SERVER_PORT, String.valueOf(context.getPort()));
     }
 
     static KeyValue networkProtocolName(MailSendObservationContext context) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 VMware, Inc.
+ * Copyright 2025 VMware, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,23 +16,26 @@
 package io.micrometer.jakarta9.instrument.mail;
 
 import io.micrometer.common.lang.Nullable;
-import io.micrometer.common.util.internal.logging.InternalLogger;
-import io.micrometer.common.util.internal.logging.InternalLoggerFactory;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationConvention;
 import io.micrometer.observation.ObservationRegistry;
 import jakarta.mail.*;
 
+/**
+ * Wraps a {@link Transport} so that it is instrumented with a Micrometer
+ * {@link Observation}.
+ *
+ * @since 1.15.0
+ */
 public class InstrumentedTransport extends Transport {
 
-    private static final InternalLogger LOGGER = InternalLoggerFactory.getInstance(InstrumentedTransport.class);
+    private static final DefaultMailSendObservationConvention DEFAULT_CONVENTION = new DefaultMailSendObservationConvention();
 
-    private static final ObservationConvention<MailSendObservationContext> DEFAULT_CONVENTION = new DefaultMailSendObservationConvention();
-
-    private ObservationRegistry observationRegistry;
+    private final ObservationRegistry observationRegistry;
 
     private final Transport delegate;
 
+    @Nullable
     private final String protocol;
 
     @Nullable
@@ -43,14 +46,27 @@ public class InstrumentedTransport extends Transport {
 
     private int port;
 
-    public InstrumentedTransport(Session session, Transport delegate, ObservationRegistry observationRegistry)
-            throws NoSuchProviderException {
+    /**
+     * Create an instrumented transport using the
+     * {@link DefaultMailSendObservationConvention default} {@link ObservationConvention}.
+     * @param session session for the delegate transport
+     * @param delegate transport to instrument
+     * @param observationRegistry registry for the observations
+     */
+    public InstrumentedTransport(Session session, Transport delegate, ObservationRegistry observationRegistry) {
         this(session, delegate, observationRegistry, null);
     }
 
+    /**
+     * Create an instrumented transport with a custom {@link MailSendObservationConvention
+     * convention}.
+     * @param session session for the delegate transport
+     * @param delegate transport to instrument
+     * @param observationRegistry registry for the observations
+     * @param customConvention override the convention to apply to the instrumentation
+     */
     public InstrumentedTransport(Session session, Transport delegate, ObservationRegistry observationRegistry,
-            @Nullable ObservationConvention<MailSendObservationContext> customConvention)
-            throws NoSuchProviderException {
+            @Nullable ObservationConvention<MailSendObservationContext> customConvention) {
         super(session, delegate.getURLName());
         this.protocol = this.url.getProtocol();
         this.delegate = delegate;
@@ -73,7 +89,7 @@ public class InstrumentedTransport extends Transport {
                 observationRegistry);
 
         observation.start();
-        try (Observation.Scope scope = observation.openScope()) {
+        try (Observation.Scope ignore = observation.openScope()) {
             // the Message-Id is set by the SMTP after sending the message
             this.delegate.sendMessage(msg, addresses);
             observation.highCardinalityKeyValue(MailKeyValues.smtpMessageId(msg));
