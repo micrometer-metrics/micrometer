@@ -1,7 +1,30 @@
 plugins {
     alias(libs.plugins.kotlin19)
-    alias(libs.plugins.aspectj)
+    alias(libs.plugins.aspectj) apply false
     id 'me.champeau.mrjar' version "0.1.1"
+}
+
+if (javaLanguageVersion.canCompileOrRun(17)) {
+    apply plugin: 'io.freefair.aspectj.post-compile-weaving'
+}
+else {
+    // ignore ajc generated code from japicmp comparison for < Java 17 builds
+    project.tasks.japicmp {
+        fieldExcludes.addAll([
+            'io.micrometer.core.aop.CountedAspect#ajc$perSingletonInstance',
+            'io.micrometer.core.aop.TimedAspect#ajc$perSingletonInstance'
+        ])
+        methodExcludes.addAll([
+            'io.micrometer.core.aop.CountedAspect#ajc$inlineAccessFieldGet$io_micrometer_core_aop_CountedAspect$io_micrometer_core_aop_CountedAspect$shouldSkip(io.micrometer.core.aop.CountedAspect)',
+            'io.micrometer.core.aop.CountedAspect#ajc$inlineAccessMethod$io_micrometer_core_aop_CountedAspect$io_micrometer_core_aop_CountedAspect$perform(io.micrometer.core.aop.CountedAspect, org.aspectj.lang.ProceedingJoinPoint, io.micrometer.core.annotation.Counted)',
+            'io.micrometer.core.aop.CountedAspect#aspectOf()',
+            'io.micrometer.core.aop.CountedAspect#hasAspect()',
+            'io.micrometer.core.aop.TimedAspect#ajc$inlineAccessFieldGet$io_micrometer_core_aop_TimedAspect$io_micrometer_core_aop_TimedAspect$shouldSkip(io.micrometer.core.aop.TimedAspect)',
+            'io.micrometer.core.aop.TimedAspect#ajc$inlineAccessMethod$io_micrometer_core_aop_TimedAspect$io_micrometer_core_aop_TimedAspect$perform(io.micrometer.core.aop.TimedAspect, org.aspectj.lang.ProceedingJoinPoint, io.micrometer.core.annotation.Timed, java.lang.reflect.Method)',
+            'io.micrometer.core.aop.TimedAspect#aspectOf()',
+            'io.micrometer.core.aop.TimedAspect#hasAspect()'
+        ])
+    }
 }
 
 description 'Core module of Micrometer containing instrumentation API and implementation'
