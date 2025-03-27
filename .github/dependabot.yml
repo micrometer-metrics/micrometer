@@ -33,6 +33,10 @@ updates:
       # in hystrix 1.5.12, but Netflix re-released 1.5.11 as 1.5.18 late in 2018.
       # <=1.5.11 or 1.5.18 doesn't break with Micrometer, but open metrics won't be correct necessarily.
       - dependency-name: "com.netflix.hystrix:hystrix-core"
+      # AspectJ does not use semantic versioning, the third number in the version is not the patch version
+      # but it indicates the latest Java version that is supported (the 4th number is the patch version).
+      - dependency-name: "org.aspectj:aspectjweaver"
+        versions: ["[1.9.23,)"]
       # only upgrade patch versions
       - dependency-name: "*"
         update-types:
@@ -50,6 +54,10 @@ updates:
       # in hystrix 1.5.12, but Netflix re-released 1.5.11 as 1.5.18 late in 2018.
       # <=1.5.11 or 1.5.18 doesn't break with Micrometer, but open metrics won't be correct necessarily.
       - dependency-name: "com.netflix.hystrix:hystrix-core"
+      # AspectJ does not use semantic versioning, the third number in the version is not the patch version
+      # but it indicates the latest Java version that is supported (the 4th number is the patch version).
+      - dependency-name: "org.aspectj:aspectjweaver"
+        versions: ["[1.9.21,)"]
       # only upgrade patch versions
       - dependency-name: "*"
         update-types:
