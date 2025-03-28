@@ -67,8 +67,7 @@ import static java.util.Objects.requireNonNull;
  */
 public abstract class MeterRegistry {
 
-    private static final WarnThenDebugLogger gaugeDoubleRegistrationLogger = new WarnThenDebugLogger(
-            MeterRegistry.class);
+    private static final WarnThenDebugLogger doubleRegistrationLogger = new WarnThenDebugLogger(MeterRegistry.class);
 
     // @formatter:off
     private static final EnumMap<TimeUnit, String> BASE_TIME_UNIT_STRING_CACHE = Arrays.stream(TimeUnit.values())
@@ -640,7 +639,7 @@ public abstract class MeterRegistry {
 
         Meter m = preFilterIdToMeterMap.get(originalId);
         if (m != null && !isStaleId(originalId)) {
-            checkAndWarnAboutGaugeDoubleRegistration(m);
+            checkAndWarnAboutDoubleRegistration(m);
             return m;
         }
 
@@ -653,7 +652,7 @@ public abstract class MeterRegistry {
             if (isStaleId(originalId)) {
                 unmarkStaleId(originalId);
             }
-            checkAndWarnAboutGaugeDoubleRegistration(m);
+            checkAndWarnAboutDoubleRegistration(m);
         }
         else {
             if (isClosed()) {
@@ -712,11 +711,10 @@ public abstract class MeterRegistry {
         return !stalePreFilterIds.isEmpty() && stalePreFilterIds.remove(originalId);
     }
 
-    private void checkAndWarnAboutGaugeDoubleRegistration(Meter meter) {
-        if (meter instanceof Gauge) {
-            gaugeDoubleRegistrationLogger.log(() -> String.format(
-                    "This Gauge has been already registered (%s), the Gauge registration will be ignored.",
-                    meter.getId()));
+    private void checkAndWarnAboutDoubleRegistration(Meter meter) {
+        if (meter instanceof Gauge || meter instanceof FunctionCounter || meter instanceof FunctionTimer) {
+            doubleRegistrationLogger.log(() -> String.format(
+                    "This Meter has been already registered (%s), the registration will be ignored.", meter.getId()));
         }
     }
 
