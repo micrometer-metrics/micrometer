@@ -231,11 +231,10 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
                             registeredMeterIds.remove(otherId);
                         }
                         // Check if already exists
-                        else if (tags.size() == meterTagsWithCommonTags.size())
+                        else if (tags.size() == meterTagsWithCommonTags.size()) {
                             if (tags.containsAll(meterTagsWithCommonTags))
                                 return;
-                            else
-                                break;
+                        }
                         else
                             hasLessTags = true;
                     }
