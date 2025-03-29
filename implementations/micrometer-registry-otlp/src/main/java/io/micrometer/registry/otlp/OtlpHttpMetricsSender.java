@@ -49,16 +49,15 @@ public class OtlpHttpMetricsSender implements OtlpMetricsSender {
             .withHeader("User-Agent", userAgentHeader)
             .withContent("application/x-protobuf", request.getMetricsData());
         request.getHeaders().forEach(httpRequest::withHeader);
-        HttpSender.Response response;
         try {
-            response = httpRequest.send();
+            HttpSender.Response response = httpRequest.send();
+            if (!response.isSuccessful()) {
+                throw new OtlpHttpMetricsSendUnsuccessfulException(String
+                    .format("Server responded with HTTP status code %d and body %s", response.code(), response.body()));
+            }
         }
         catch (Throwable e) {
             throw new Exception(e);
-        }
-        if (!response.isSuccessful()) {
-            throw new OtlpHttpMetricsSendUnsuccessfulException(String
-                .format("Server responded with HTTP status code %d and body %s", response.code(), response.body()));
         }
     }
 

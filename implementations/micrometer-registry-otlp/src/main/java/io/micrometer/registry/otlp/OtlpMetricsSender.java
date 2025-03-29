@@ -42,8 +42,6 @@ public interface OtlpMetricsSender {
     /**
      * Immutable representation of a payload of metrics to use with an
      * {@link OtlpMetricsSender}.
-     *
-     * @since 1.15.0
      */
     class Request {
 
