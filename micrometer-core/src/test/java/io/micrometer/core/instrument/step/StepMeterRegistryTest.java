@@ -657,7 +657,7 @@ class StepMeterRegistryTest {
                 prePublishAction.run();
             }
             publishCount.incrementAndGet();
-            getMeters().stream()
+            List<Meter> ignored = getMeters().stream()
                 .map(meter -> meter.match(g -> null, this::publishCounter, this::publishTimer, this::publishSummary,
                         null, tg -> null, this::publishFunctionCounter, this::publishFunctionTimer, m -> null))
                 .collect(Collectors.toList());
