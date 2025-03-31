@@ -76,6 +76,7 @@ public interface ElasticConfig extends StepRegistryConfig {
      * separated by the {@link #indexDateSeparator()}. Default is: "yyyy-MM"
      * @return date format for index
      */
+    @SuppressWarnings("ReturnValueIgnored")
     default String indexDateFormat() {
         return getString(this, "indexDateFormat").invalidateWhen(format -> {
             if (format == null) {
@@ -178,6 +179,7 @@ public interface ElasticConfig extends StepRegistryConfig {
         return getString(this, "documentType").orElse("doc");
     }
 
+    @SuppressWarnings("ReturnValueIgnored")
     @Override
     default Validated<?> validate() {
         return checkAll(this, c -> StepRegistryConfig.validate(c), checkRequired("host", ElasticConfig::host),
