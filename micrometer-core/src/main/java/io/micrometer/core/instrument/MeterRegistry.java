@@ -712,10 +712,20 @@ public abstract class MeterRegistry {
     }
 
     private void checkAndWarnAboutDoubleRegistration(Meter meter) {
-        if (meter instanceof Gauge || meter instanceof FunctionCounter || meter instanceof FunctionTimer) {
-            doubleRegistrationLogger.log(() -> String.format(
-                    "This Meter has been already registered (%s), the registration will be ignored.", meter.getId()));
+        if (meter instanceof Gauge) { // also TimeGauge
+            warnAboutDoubleRegistration("Gauge", meter.getId());
         }
+        else if (meter instanceof FunctionCounter) {
+            warnAboutDoubleRegistration("FunctionCounter", meter.getId());
+        }
+        else if (meter instanceof FunctionTimer) {
+            warnAboutDoubleRegistration("FunctionTimer", meter.getId());
+        }
+    }
+
+    private void warnAboutDoubleRegistration(String type, Meter.Id id) {
+        doubleRegistrationLogger.log(() -> String
+            .format("This %s has been already registered (%s), the registration will be ignored.", type, id));
     }
 
     private boolean accept(Meter.Id id) {
