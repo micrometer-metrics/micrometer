@@ -122,7 +122,7 @@ public class SampleRegistries {
                 os.close();
             });
 
-            new Thread(server::start).run();
+            new Thread(server::start).start();
         }
         catch (IOException e) {
             throw new RuntimeException(e);

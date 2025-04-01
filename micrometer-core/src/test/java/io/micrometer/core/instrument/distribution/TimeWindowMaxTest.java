@@ -71,8 +71,9 @@ class TimeWindowMaxTest {
 
     @Test
     void throwsExceptionWhenRotateFrequency0() {
-        assertThatThrownBy(() -> new TimeWindowMax(clock, 0, 3)).isInstanceOf(IllegalArgumentException.class)
-            .withFailMessage("Rotate frequency must be a positive number");
+        assertThatThrownBy(() -> new TimeWindowMax(clock, 0, 3))
+            .withFailMessage("Rotate frequency must be a positive number")
+            .isInstanceOf(IllegalArgumentException.class);
     }
 
 }

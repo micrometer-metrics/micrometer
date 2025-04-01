@@ -362,33 +362,33 @@ public class JvmGcMetrics implements MeterBinder, AutoCloseable {
 
         OLD, YOUNG, UNKNOWN;
 
-        private static final Map<String, GcGenerationAge> knownCollectors = new HashMap<String, GcGenerationAge>() {
-            {
-                put("ConcurrentMarkSweep", OLD);
-                put("Copy", YOUNG);
-                put("G1 Old Generation", OLD);
-                put("G1 Young Generation", YOUNG);
-                put("MarkSweepCompact", OLD);
-                put("PS MarkSweep", OLD);
-                put("PS Scavenge", YOUNG);
-                put("ParNew", YOUNG);
-                put("global", OLD);
-                put("scavenge", YOUNG);
-                put("partial gc", YOUNG);
-                put("global garbage collect", OLD);
-                put("Epsilon", OLD);
-                // GPGC (Azul's C4, see:
-                // https://docs.azul.com/prime/release-notes#prime_stream_22_12_0_0)
-                put("GPGC New", YOUNG); // old naming
-                put("GPGC Old", OLD); // old naming
-                put("GPGC New Cycles", YOUNG); // new naming
-                put("GPGC Old Cycles", OLD); // new naming
-                put("GPGC New Pauses", YOUNG); // new naming
-                put("GPGC Old Pauses", OLD); // new naming
-                put("ZGC Major Cycles", OLD); // do not include 'ZGC Major Pauses'; see
-                                              // gh-2872
-            }
-        };
+        private static final Map<String, GcGenerationAge> knownCollectors = new HashMap<>();
+
+        static {
+            knownCollectors.put("ConcurrentMarkSweep", OLD);
+            knownCollectors.put("Copy", YOUNG);
+            knownCollectors.put("G1 Old Generation", OLD);
+            knownCollectors.put("G1 Young Generation", YOUNG);
+            knownCollectors.put("MarkSweepCompact", OLD);
+            knownCollectors.put("PS MarkSweep", OLD);
+            knownCollectors.put("PS Scavenge", YOUNG);
+            knownCollectors.put("ParNew", YOUNG);
+            knownCollectors.put("global", OLD);
+            knownCollectors.put("scavenge", YOUNG);
+            knownCollectors.put("partial gc", YOUNG);
+            knownCollectors.put("global garbage collect", OLD);
+            knownCollectors.put("Epsilon", OLD);
+            // GPGC (Azul's C4, see:
+            // https://docs.azul.com/prime/release-notes#prime_stream_22_12_0_0)
+            knownCollectors.put("GPGC New", YOUNG); // old naming
+            knownCollectors.put("GPGC Old", OLD); // old naming
+            knownCollectors.put("GPGC New Cycles", YOUNG); // new naming
+            knownCollectors.put("GPGC Old Cycles", OLD); // new naming
+            knownCollectors.put("GPGC New Pauses", YOUNG); // new naming
+            knownCollectors.put("GPGC Old Pauses", OLD); // new naming
+            // do not include 'ZGC Major Pauses'; see gh-2872
+            knownCollectors.put("ZGC Major Cycles", OLD);
+        }
 
         static GcGenerationAge fromGcName(String gcName) {
             return knownCollectors.getOrDefault(gcName, UNKNOWN);

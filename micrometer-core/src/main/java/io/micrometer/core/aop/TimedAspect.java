@@ -278,6 +278,7 @@ public class TimedAspect {
 
     private Timer.Builder recordBuilder(ProceedingJoinPoint pjp, Timed timed, String metricName,
             String exceptionClass) {
+        @SuppressWarnings("NullTernary")
         Timer.Builder builder = Timer.builder(metricName)
             .description(timed.description().isEmpty() ? null : timed.description())
             .tags(timed.extraTags())

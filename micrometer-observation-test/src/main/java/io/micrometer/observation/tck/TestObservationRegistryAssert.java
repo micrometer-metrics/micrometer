@@ -332,7 +332,7 @@ public class TestObservationRegistryAssert
      */
     public TestObservationRegistryAssert hasAnObservationWithAKeyValue(String key, String value) {
         isNotNull();
-        this.actual.getContexts()
+        KeyValue ignored = this.actual.getContexts()
             .stream()
             .flatMap(f -> f.getContext().getAllKeyValues().stream())
             .filter(keyValue -> keyValue.getKey().equals(key) && keyValue.getValue().equals(value))
@@ -381,7 +381,7 @@ public class TestObservationRegistryAssert
      */
     public TestObservationRegistryAssert hasAnObservationWithAKeyName(String key) {
         isNotNull();
-        this.actual.getContexts()
+        KeyValue ignored = this.actual.getContexts()
             .stream()
             .flatMap(f -> f.getContext().getAllKeyValues().stream())
             .filter(keyValue -> keyValue.getKey().equals(key))

@@ -25,7 +25,7 @@ import org.eclipse.jetty.util.thread.QueuedThreadPool;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
-import java.util.function.BiFunction;
+import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -89,8 +89,8 @@ class InstrumentedQueuedThreadPoolTest {
     }
 
     private void assertThatMetrics(MeterRegistry meterRegistry,
-            BiFunction<Iterable<String>, ListAssert<String>, ListAssert<String>> assertFunction) {
-        assertFunction.apply(
+            BiConsumer<Iterable<String>, ListAssert<String>> assertConsumer) {
+        assertConsumer.accept(
                 Arrays.asList("jetty.threads.jobs", "jetty.threads.busy", "jetty.threads.idle",
                         "jetty.threads.config.max", "jetty.threads.config.min", "jetty.threads.current"),
                 assertThat(

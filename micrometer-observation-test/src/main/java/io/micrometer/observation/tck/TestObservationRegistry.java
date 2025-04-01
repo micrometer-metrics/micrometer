@@ -137,7 +137,7 @@ public final class TestObservationRegistry
             if (this == o) {
                 return true;
             }
-            if (o == null || getClass() != o.getClass()) {
+            if (!(o instanceof TestObservationContext)) {
                 return false;
             }
             TestObservationContext that = (TestObservationContext) o;

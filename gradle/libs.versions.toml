@@ -105,6 +105,7 @@ dropwizardMetricsCore5 = { module = "io.dropwizard.metrics5:metrics-core", versi
 dynatraceUtils = { module = "com.dynatrace.metric.util:dynatrace-metric-utils-java", version.ref = "dynatrace-utils" }
 ehcache2 = { module = "net.sf.ehcache:ehcache", version.ref = "ehcache2" }
 ehcache3 = { module = "org.ehcache:ehcache", version.ref = "ehcache3" }
+errorprone = { module = "com.google.errorprone:error_prone_core", version = "2.37.0" }
 felixFramework = "org.apache.felix:org.apache.felix.framework:7.0.5"
 felixScr = "org.apache.felix:org.apache.felix.scr:2.2.12"
 gmetric4j = { module = "info.ganglia.gmetric4j:gmetric4j", version.ref = "gmetric4j" }
@@ -219,6 +220,7 @@ wiremock = { module = "com.github.tomakehurst:wiremock-jre8-standalone", version
 wiremockJunit5 = { module = "ru.lanwen.wiremock:wiremock-junit5", version.ref = "wiremock-junit5" }
 
 # plugin dependencies
+plugin-errorprone = { module = "net.ltgt.errorprone:net.ltgt.errorprone.gradle.plugin", version = "4.1.0" }
 plugin-license = { module = "gradle.plugin.com.hierynomus.gradle.plugins:license-gradle-plugin", version = "0.16.1" }
 plugin-nebulaRelease = { module = "com.netflix.nebula:nebula-release-plugin", version = "18.0.8" }
 plugin-nebulaPublishing = { module = "com.netflix.nebula:nebula-publishing-plugin", version = "20.3.0" }
