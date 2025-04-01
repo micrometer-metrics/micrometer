@@ -68,6 +68,12 @@ subprojects {
     apply plugin: 'com.diffplug.spotless'
 
     if (project.name != 'micrometer-bom') {
+        if (!javaLanguageVersion.canCompileOrRun(17)) {
+            logger.info("Disabling Error Prone because the JDK version is less than 17")
+            tasks.withType(JavaCompile).configureEach {
+                options.errorprone.enabled = false
+            }
+        }
         if ((project.name.contains('samples') && !project.name.contains('kotlin')) || project.name.contains('benchmarks')) {
             apply plugin: 'java'
         } else {
