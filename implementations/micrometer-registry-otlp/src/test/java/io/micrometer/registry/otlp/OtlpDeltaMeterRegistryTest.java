@@ -100,7 +100,6 @@ class OtlpDeltaMeterRegistryTest extends OtlpMeterRegistryTest {
     void gauge() {
         Gauge gauge = Gauge.builder(METER_NAME, new AtomicInteger(5), AtomicInteger::doubleValue).register(registry);
         Metric metric = writeToMetric(gauge);
-        assertThat(metric.getGauge()).isNotNull();
         assertThat(metric.getGauge().getDataPoints(0).getAsDouble()).isEqualTo(5);
         assertThat(metric.getGauge().getDataPoints(0).getTimeUnixNano())
             .describedAs("Gauges should have timestamp of the instant when data is sampled")
@@ -112,7 +111,6 @@ class OtlpDeltaMeterRegistryTest extends OtlpMeterRegistryTest {
         TimeGauge timeGauge = TimeGauge.builder("gauge.time", this, TimeUnit.MICROSECONDS, o -> 24).register(registry);
 
         Metric metric = writeToMetric(timeGauge);
-        assertThat(metric.getGauge()).isNotNull();
         assertThat(metric.getGauge().getDataPoints(0).getAsDouble()).isEqualTo(0.024);
         assertThat(metric.getGauge().getDataPoints(0).getTimeUnixNano())
             .describedAs("Gauges should have timestamp of the instant when data is sampled")

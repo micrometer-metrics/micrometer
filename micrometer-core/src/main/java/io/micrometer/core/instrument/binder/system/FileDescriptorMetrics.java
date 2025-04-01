@@ -123,7 +123,7 @@ public class FileDescriptorMetrics implements MeterBinder {
         }
         try {
             // ensure the Bean we have is actually an instance of the interface
-            osBeanClass.cast(osBean);
+            Object ignored = osBeanClass.cast(osBean);
             return osBeanClass.getDeclaredMethod(name);
         }
         catch (ClassCastException | NoSuchMethodException | SecurityException e) {

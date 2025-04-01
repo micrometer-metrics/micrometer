@@ -41,6 +41,7 @@ class CaffeineCacheMetricsCompatibilityTest extends CacheMeterBinderCompatibilit
         return new CaffeineCacheMetrics<>(cache, "mycache", emptyList());
     }
 
+    @SuppressWarnings("CheckReturnValue")
     @Override
     public void put(String key, String value) {
         synchronized (this) {
