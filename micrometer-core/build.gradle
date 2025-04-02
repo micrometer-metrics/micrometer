@@ -1,7 +1,6 @@
 plugins {
     alias(libs.plugins.kotlin19)
     alias(libs.plugins.aspectj) apply false
-    id 'me.champeau.mrjar' version "0.1.1"
 }
 
 if (javaLanguageVersion.canCompileOrRun(17)) {
@@ -27,11 +26,15 @@ else {
     }
 }
 
-description 'Core module of Micrometer containing instrumentation API and implementation'
-
-multiRelease {
-    targetVersions 8, 11
+japicmp {
+    // TODO Remove once building 1.16
+    classExcludes.addAll('io.micrometer.core.instrument.binder.jdk.MicrometerHttpClient',
+            'io.micrometer.core.instrument.binder.jdk.DefaultHttpClientObservationConvention',
+            'io.micrometer.core.instrument.binder.jdk.HttpClientContext',
+            'io.micrometer.core.instrument.binder.jdk.HttpClientObservationConvention')
 }
+
+description 'Core module of Micrometer containing instrumentation API and implementation'
 
 tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).all {
     kotlinOptions {
@@ -94,9 +97,6 @@ dependencies {
     api project(":micrometer-commons")
     api project(":micrometer-observation")
 
-    java11Api project(":micrometer-commons")
-    java11Api project(":micrometer-observation")
-
     // HdrHistogram is needed at runtime when client-side percentiles are configured
     implementation 'org.hdrhistogram:HdrHistogram'
     // LatencyUtils is needed at runtime when pause detection is enabled
@@ -106,7 +106,6 @@ dependencies {
 
     // Aspects
     optionalApi libs.aspectjrt
-    java11RuntimeOnly libs.aspectjrt
 
     // instrumentation options
     optionalApi 'io.dropwizard.metrics:metrics-core' // TODO move dropwizard out of core module? DropwizardMeterRegistry for e.g. JMX registry
@@ -162,7 +161,6 @@ dependencies {
 
     testImplementation 'io.projectreactor:reactor-test'
     testImplementation project(":micrometer-observation-test")
-    java11TestImplementation project(":micrometer-observation-test")
 
     // dependency injection tests
     testImplementation 'javax.inject:javax.inject'
@@ -189,7 +187,6 @@ dependencies {
     testImplementation 'com.h2database:h2'
 
     testImplementation 'org.assertj:assertj-core'
-    java11TestImplementation 'org.assertj:assertj-core'
     testImplementation 'org.awaitility:awaitility'
 
     testImplementation 'org.ehcache:ehcache'
@@ -203,7 +200,6 @@ dependencies {
 
     testImplementation 'ru.lanwen.wiremock:wiremock-junit5'
     testImplementation 'com.github.tomakehurst:wiremock-jre8-standalone'
-    java11TestImplementation 'com.github.tomakehurst:wiremock-jre8-standalone'
 
     // Log4j2 Async dependency
     testImplementation libs.lmaxDisruptor
@@ -291,32 +287,4 @@ task openj9ConcurrentScavengeTest(type: Test) {
     }
 
     jvmArgs '-Xgc:concurrentScavenge'
-}
-
-java11Test {
-    // set heap size for the test JVM(s)
-    maxHeapSize = "1500m"
-
-    useJUnitPlatform {
-        excludeTags 'docker'
-    }
-
-    include {
-        it.getFile().getAbsolutePath().contains("java11Test")
-    }
-
-    develocity.testRetry {
-        maxFailures = 5
-        maxRetries = 3
-    }
-}
-
-compileJava11TestJava {
-    options.errorprone.enabled = false
-    sourceCompatibility = JavaVersion.VERSION_11
-    targetCompatibility = JavaVersion.VERSION_11
-}
-
-compileJava11Java {
-    options.errorprone.enabled = false
 }
