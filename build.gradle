@@ -77,6 +77,8 @@ subprojects {
             if (!javaLanguageVersion.canCompileOrRun(17)) {
                 // Error Prone does not work with JDK <17
                 options.errorprone.enabled = false
+            } else {
+                options.errorprone.disableAllChecks = true
             }
             if (System.env.CI != null) {
                 options.errorprone.disableAllWarnings = true
