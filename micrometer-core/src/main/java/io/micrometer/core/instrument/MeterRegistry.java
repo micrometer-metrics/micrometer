@@ -67,8 +67,7 @@ import static java.util.Objects.requireNonNull;
  */
 public abstract class MeterRegistry {
 
-    private static final WarnThenDebugLogger gaugeDoubleRegistrationLogger = new WarnThenDebugLogger(
-            MeterRegistry.class);
+    private static final WarnThenDebugLogger doubleRegistrationLogger = new WarnThenDebugLogger(MeterRegistry.class);
 
     // @formatter:off
     private static final EnumMap<TimeUnit, String> BASE_TIME_UNIT_STRING_CACHE = Arrays.stream(TimeUnit.values())
@@ -640,7 +639,7 @@ public abstract class MeterRegistry {
 
         Meter m = preFilterIdToMeterMap.get(originalId);
         if (m != null && !isStaleId(originalId)) {
-            checkAndWarnAboutGaugeDoubleRegistration(m);
+            checkAndWarnAboutDoubleRegistration(m);
             return m;
         }
 
@@ -653,7 +652,7 @@ public abstract class MeterRegistry {
             if (isStaleId(originalId)) {
                 unmarkStaleId(originalId);
             }
-            checkAndWarnAboutGaugeDoubleRegistration(m);
+            checkAndWarnAboutDoubleRegistration(m);
         }
         else {
             if (isClosed()) {
@@ -712,12 +711,21 @@ public abstract class MeterRegistry {
         return !stalePreFilterIds.isEmpty() && stalePreFilterIds.remove(originalId);
     }
 
-    private void checkAndWarnAboutGaugeDoubleRegistration(Meter meter) {
-        if (meter instanceof Gauge) {
-            gaugeDoubleRegistrationLogger.log(() -> String.format(
-                    "This Gauge has been already registered (%s), the Gauge registration will be ignored.",
-                    meter.getId()));
+    private void checkAndWarnAboutDoubleRegistration(Meter meter) {
+        if (meter instanceof Gauge) { // also TimeGauge
+            warnAboutDoubleRegistration("Gauge", meter.getId());
         }
+        else if (meter instanceof FunctionCounter) {
+            warnAboutDoubleRegistration("FunctionCounter", meter.getId());
+        }
+        else if (meter instanceof FunctionTimer) {
+            warnAboutDoubleRegistration("FunctionTimer", meter.getId());
+        }
+    }
+
+    private void warnAboutDoubleRegistration(String type, Meter.Id id) {
+        doubleRegistrationLogger.log(() -> String
+            .format("This %s has been already registered (%s), the registration will be ignored.", type, id));
     }
 
     private boolean accept(Meter.Id id) {

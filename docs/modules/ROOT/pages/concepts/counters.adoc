@@ -117,3 +117,11 @@ FunctionCounter counter = FunctionCounter
     .tags("region", "test") // optional
     .register(registry);
 ----
+
+WARNING: Attempting to construct a function-tracking counter with a primitive number or one of its `java.lang` object forms is always incorrect. These numbers are immutable. Thus, the function-tracking counter cannot ever be changed. Attempting to "re-register" the function-tracking counter with a different number does not work, as the registry maintains only one meter for each unique combination of name and tags. "Re-registering" a function-tracking counter can happen indirectly for example as the result of a `MeterFilter` modifying the name and/or the tags of two different function-tracking counter so that they will be the same after the filter is applied.
+
+Attempting to "re-register" a function-tracking counter will result in a warning like this:
+[source]
+----
+WARNING: This FunctionCounter has been already registered (MeterId{name='my.fc', tags=[]}), the registration will be ignored. Note that subsequent logs will be logged at debug level.
+----

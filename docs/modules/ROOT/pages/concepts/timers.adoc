@@ -182,6 +182,14 @@ FunctionTimer.builder("cache.gets.latency", cache,
     .register(registry);
 ----
 
+WARNING: Attempting to construct a function-tracking timer with a primitive number or one of its `java.lang` object forms is always incorrect. These numbers are immutable. Thus, the function-tracking timer cannot ever be changed. Attempting to "re-register" the function-tracking timer with a different number does not work, as the registry maintains only one meter for each unique combination of name and tags. "Re-registering" a function-tracking timer can happen indirectly for example as the result of a `MeterFilter` modifying the name and/or the tags of two different function-tracking timer so that they will be the same after the filter is applied.
+
+Attempting to "re-register" a function-tracking timer will result in a warning like this:
+[source]
+----
+WARNING: This FunctionTimer has been already registered (MeterId{name='my.ft', tags=[]}), the registration will be ignored. Note that subsequent logs will be logged at debug level.
+----
+
 == Pause Detection
 
 Micrometer uses the `LatencyUtils` package to compensate for https://highscalability.com/blog/2015/10/5/your-load-generator-is-probably-lying-to-you-take-the-red-pi.html[coordinated omission] -- extra latency arising from system and VM pauses that skew your latency statistics downward. Distribution statistics, such as percentiles and SLO counts, are influenced by a pause detector implementation that adds additional latency here and there to compensate for pauses.
