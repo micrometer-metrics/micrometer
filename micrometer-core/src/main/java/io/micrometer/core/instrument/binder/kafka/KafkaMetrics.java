@@ -150,7 +150,7 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
         // FIXME hack until we have proper API to retrieve common tags
         Meter.Id dummyId = Meter.builder("delete.this", OTHER, Collections.emptyList()).register(registry).getId();
         registry.remove(dummyId);
-        return dummyId.getTags();
+        return dummyId.getTagsAsIterable();
     }
 
     /**
@@ -191,74 +191,77 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
             Map<MetricName, ? extends Metric> currentMetrics = this.metricsSupplier.get();
             this.metrics.set(currentMetrics);
 
-            if (!currentMeters.equals(currentMetrics.keySet())) {
-                Set<MetricName> metricsToRemove = currentMeters.stream()
-                    .filter(metricName -> !currentMetrics.containsKey(metricName))
-                    .collect(Collectors.toSet());
+            if (currentMeters.equals(currentMetrics.keySet())) {
+                return;
+            }
 
-                for (MetricName metricName : metricsToRemove) {
-                    Meter.Id id = meterIdForComparison(metricName);
-                    registry.remove(id);
-                    registeredMeterIds.remove(id);
+            Set<MetricName> metricsToRemove = currentMeters.stream()
+                .filter(metricName -> !currentMetrics.containsKey(metricName))
+                .collect(Collectors.toSet());
+
+            for (MetricName metricName : metricsToRemove) {
+                Meter.Id id = meterIdForComparison(metricName);
+                registry.remove(id);
+                registeredMeterIds.remove(id);
+            }
+
+            currentMeters = new HashSet<>(currentMetrics.keySet());
+
+            Map<String, List<Meter>> registryMetersByNames = registry.getMeters()
+                .stream()
+                .collect(Collectors.groupingBy(meter -> meter.getId().getName()));
+
+            currentMetrics.forEach((name, metric) -> {
+                // Filter out non-numeric values
+                // Filter out metrics from groups that include metadata
+                if (!(metric.metricValue() instanceof Number) || METRIC_GROUP_APP_INFO.equals(name.group())
+                        || METRIC_GROUP_METRICS_COUNT.equals(name.group())) {
+                    return;
                 }
 
-                currentMeters = new HashSet<>(currentMetrics.keySet());
+                String meterName = meterName(name);
 
-                Map<String, List<Meter>> registryMetersByNames = registry.getMeters()
-                    .stream()
-                    .collect(Collectors.groupingBy(meter -> meter.getId().getName()));
-
-                currentMetrics.forEach((name, metric) -> {
-                    // Filter out non-numeric values
-                    // Filter out metrics from groups that include metadata
-                    if (!(metric.metricValue() instanceof Number) || METRIC_GROUP_APP_INFO.equals(name.group())
-                            || METRIC_GROUP_METRICS_COUNT.equals(name.group())) {
-                        return;
+                // Kafka has metrics with lower number of tags (e.g. with/without
+                // topic or partition tag)
+                // Remove meters with lower number of tags
+                boolean hasLessTags = false;
+                for (Meter other : registryMetersByNames.getOrDefault(meterName, emptyList())) {
+                    Meter.Id otherId = other.getId();
+                    List<Tag> otherTags = otherId.getTags();
+                    List<Tag> meterTagsWithCommonTags = meterTags(name, true);
+                    if (otherTags.size() < meterTagsWithCommonTags.size()) {
+                        registry.remove(otherId);
+                        registeredMeterIds.remove(otherId);
                     }
-
-                    String meterName = meterName(name);
-
-                    // Kafka has metrics with lower number of tags (e.g. with/without
-                    // topic or partition tag)
-                    // Remove meters with lower number of tags
-                    boolean hasLessTags = false;
-                    for (Meter other : registryMetersByNames.getOrDefault(meterName, emptyList())) {
-                        Meter.Id otherId = other.getId();
-                        List<Tag> tags = otherId.getTags();
-                        List<Tag> meterTagsWithCommonTags = meterTags(name, true);
-                        if (tags.size() < meterTagsWithCommonTags.size()) {
-                            registry.remove(otherId);
-                            registeredMeterIds.remove(otherId);
-                        }
-                        // Check if already exists
-                        else if (tags.size() == meterTagsWithCommonTags.size()) {
-                            if (tags.containsAll(meterTagsWithCommonTags))
-                                return;
-                        }
-                        else
-                            hasLessTags = true;
+                    // Check if already exists
+                    else if (otherTags.size() == meterTagsWithCommonTags.size()) {
+                        // https://www.jetbrains.com/help/inspectopedia/SlowListContainsAll.html
+                        if (new HashSet<>(otherTags).containsAll(meterTagsWithCommonTags))
+                            return;
                     }
-                    if (hasLessTags)
-                        return;
+                    else
+                        hasLessTags = true;
+                }
+                if (hasLessTags)
+                    return;
 
-                    List<Tag> tags = meterTags(name);
-                    try {
-                        Meter meter = bindMeter(registry, metric, meterName, tags);
-                        List<Meter> meters = registryMetersByNames.computeIfAbsent(meterName, k -> new ArrayList<>());
-                        meters.add(meter);
+                List<Tag> tags = meterTags(name);
+                try {
+                    Meter meter = bindMeter(registry, metric, meterName, tags);
+                    List<Meter> meters = registryMetersByNames.computeIfAbsent(meterName, k -> new ArrayList<>());
+                    meters.add(meter);
+                }
+                catch (Exception ex) {
+                    String message = ex.getMessage();
+                    if (message != null && message.contains("Prometheus requires")) {
+                        warnThenDebugLogger.log(() -> "Failed to bind meter: " + meterName + " " + tags
+                                + ". However, this could happen and might be restored in the next refresh.");
                     }
-                    catch (Exception ex) {
-                        String message = ex.getMessage();
-                        if (message != null && message.contains("Prometheus requires")) {
-                            warnThenDebugLogger.log(() -> "Failed to bind meter: " + meterName + " " + tags
-                                    + ". However, this could happen and might be restored in the next refresh.");
-                        }
-                        else {
-                            log.warn("Failed to bind meter: " + meterName + " " + tags + ".", ex);
-                        }
+                    else {
+                        log.warn("Failed to bind meter: " + meterName + " " + tags + ".", ex);
                     }
-                });
-            }
+                }
+            });
         }
         catch (Exception e) {
             log.warn("Failed to bind KafkaMetric", e);

@@ -44,6 +44,12 @@ This pattern should be less common than the `DoubleFunction` form. Remember that
 
 WARNING: Attempting to construct a gauge with a primitive number or one of its `java.lang` object forms is always incorrect. These numbers are immutable. Thus, the gauge cannot ever be changed. Attempting to "re-register" the gauge with a different number does not work, as the registry maintains only one meter for each unique combination of name and tags. "Re-registering" a gauge can happen indirectly for example as the result of a `MeterFilter` modifying the name and/or the tags of two different gauges so that they will be the same after the filter is applied.
 
+Attempting to "re-register" a gauge will result in a warning like this:
+[source]
+----
+WARNING: This Gauge has been already registered (MeterId{name='my.gauge', tags=[]}), the registration will be ignored. Note that subsequent logs will be logged at debug level.
+----
+
 == Gauge Fluent Builder
 
 The interface contains a fluent builder for gauges:
