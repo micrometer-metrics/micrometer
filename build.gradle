@@ -57,7 +57,6 @@ apply plugin: 'com.netflix.nebula.release'
 release.defaultVersionStrategy = nebula.plugin.release.git.opinion.Strategies.SNAPSHOT
 
 apply plugin: 'io.github.gradle-nexus.publish-plugin'
-apply from: 'dependencies.gradle'
 
 allprojects {
     group = 'io.micrometer'
@@ -87,6 +86,7 @@ subprojects {
         } else {
             apply plugin: 'java-library'
             dependencies {
+                testImplementation platform(libs.junitBom)
                 testImplementation libs.junitJupiter
                 testRuntimeOnly libs.junitPlatformLauncher
             }

@@ -8,9 +8,9 @@ dependencies {
 
     implementation project(':micrometer-core')
     implementation project(':micrometer-observation')
-    implementation 'colt:colt'
-    implementation('ch.qos.logback:logback-classic')
-    implementation('org.slf4j:slf4j-api')
+    implementation(libs.colt)
+    implementation(libs.logback12)
+    implementation(libs.slf4jApi)
 
     ['atlas', 'prometheus', 'datadog', 'ganglia', 'elastic', 'graphite', 'jmx', 'influx', 'statsd', 'new-relic', 'cloudwatch2', 'signalfx', 'wavefront', 'dynatrace', 'azure-monitor', 'humio', 'appoptics', 'kairos', 'stackdriver'].each { sys ->
         implementation project(":micrometer-registry-$sys")
@@ -18,10 +18,10 @@ dependencies {
 
     implementation libs.prometheusSimpleClientPushgateway
     implementation 'io.projectreactor.netty:reactor-netty-http'
-    implementation 'org.apache.kafka:kafka-clients'
-    implementation 'com.github.charithe:kafka-junit'
-    implementation 'io.grpc:grpc-services'
-    implementation 'io.grpc:grpc-inprocess'
+    implementation libs.kafkaClients
+    implementation(libs.kafkaJunit)
+    implementation libs.grpcServices
+    implementation libs.grpcInprocess
 
 }
 

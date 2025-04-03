@@ -3,8 +3,8 @@ description = 'MeterRegistry implementation for publishing to CloudWatch using t
 dependencies {
     api project(':micrometer-core')
 
-    api 'software.amazon.awssdk:cloudwatch'
-    implementation 'org.slf4j:slf4j-api'
+    api libs.cloudwatch2
+    implementation libs.slf4jApi
 
     testImplementation project(':micrometer-test')
     testImplementation libs.mockitoCore5

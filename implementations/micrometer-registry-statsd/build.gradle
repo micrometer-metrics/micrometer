@@ -5,6 +5,9 @@ plugins {
 dependencies {
     api project(':micrometer-core')
 
+    implementation platform(libs.reactorBom)
+    implementation platform(libs.nettyBom)
+
     implementation 'io.projectreactor:reactor-core'
     implementation('io.projectreactor.netty:reactor-netty-core') {
         // We do not use HTTP modules; exclude to avoid false positive CVE reports
@@ -18,8 +21,8 @@ dependencies {
 
     testImplementation project(':micrometer-test')
     testImplementation 'io.projectreactor:reactor-test'
-    testImplementation 'ch.qos.logback:logback-classic'
-    testImplementation 'org.awaitility:awaitility'
+    testImplementation libs.logback12
+    testImplementation libs.awaitility
     // for running tests with UDS on OSX
     testImplementation(group: 'io.netty', name: 'netty-transport-native-kqueue', classifier: 'osx-x86_64')
     testImplementation(group: 'io.netty', name: 'netty-transport-native-kqueue', classifier: 'osx-aarch_64')

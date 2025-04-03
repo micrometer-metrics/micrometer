@@ -23,6 +23,8 @@ dependencies {
 
     testImplementation project(":micrometer-test")
 
+    testImplementation platform(libs.junitBom)
+    testRuntimeOnly platform(libs.junitBom)
     testImplementation libs.junitJupiter
     testRuntimeOnly libs.junitPlatformLauncher
 }

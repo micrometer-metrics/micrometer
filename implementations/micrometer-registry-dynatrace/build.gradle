@@ -1,12 +1,12 @@
 dependencies {
     api project(':micrometer-core')
 
-    implementation 'org.slf4j:slf4j-api'
+    implementation libs.slf4jApi
     
-    implementation 'com.dynatrace.metric.util:dynatrace-metric-utils-java'
+    implementation(libs.dynatraceUtils)
 
     testImplementation project(':micrometer-test')
     testImplementation libs.mockitoCore5
-    testImplementation 'com.fasterxml.jackson.core:jackson-databind'
-    testImplementation 'org.awaitility:awaitility'
+    testImplementation libs.jacksonDatabind
+    testImplementation libs.awaitility
 }

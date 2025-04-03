@@ -12,6 +12,7 @@ dependencies {
     implementation project(":micrometer-core")
     implementation libs.jooqLatest
 
+    testImplementation platform(libs.junitBom)
     testImplementation libs.junitJupiter
     testRuntimeOnly libs.junitPlatformLauncher
     testImplementation libs.assertj
