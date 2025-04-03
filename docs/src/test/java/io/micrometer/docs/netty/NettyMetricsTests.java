@@ -28,9 +28,12 @@ import io.netty.buffer.ByteBufAllocator;
 import io.netty.buffer.ByteBufAllocatorMetricProvider;
 import io.netty.buffer.UnpooledByteBufAllocator;
 import io.netty.channel.ChannelInitializer;
-import io.netty.channel.DefaultEventLoopGroup;
 import io.netty.channel.EventLoop;
-import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.local.LocalIoHandler;
+import io.netty.channel.MultithreadEventLoopGroup;
+import io.netty.channel.MultiThreadIoEventLoopGroup;
+import io.netty.channel.nio.NioIoHandler;
+import io.netty.channel.SingleThreadIoEventLoop;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.util.concurrent.SingleThreadEventExecutor;
@@ -54,7 +57,7 @@ class NettyMetricsTests {
         Set<String> names = new LinkedHashSet<>();
         // tag::directInstrumentation[]
         // Create or get an existing resources
-        DefaultEventLoopGroup eventExecutors = new DefaultEventLoopGroup();
+        MultithreadEventLoopGroup eventExecutors = new MultiThreadIoEventLoopGroup(LocalIoHandler.newFactory());
         UnpooledByteBufAllocator unpooledByteBufAllocator = new UnpooledByteBufAllocator(false);
         // Use binders to instrument them
         new NettyEventExecutorMetrics(eventExecutors).bindTo(this.registry);
@@ -84,13 +87,14 @@ class NettyMetricsTests {
 
     @Test
     void shouldInstrumentEventLoopDuringChannelInit() throws Exception {
-        NioEventLoopGroup eventExecutors = new NioEventLoopGroup();
+        System.setProperty("io.netty.allocator.type", "pooled");
+        MultiThreadIoEventLoopGroup eventExecutors = new MultiThreadIoEventLoopGroup(NioIoHandler.newFactory());
         CustomChannelInitializer channelInitializer = new CustomChannelInitializer(this.registry);
         NioSocketChannel channel = new NioSocketChannel();
         eventExecutors.register(channel).await();
         channelInitializer.initChannel(channel);
         assertThat(this.registry.get(NettyMeters.EVENT_EXECUTOR_TASKS_PENDING.getName())
-            .tags(Tags.of("name", channel.eventLoop().threadProperties().name()))
+            .tags(Tags.of("name", ((SingleThreadIoEventLoop) channel.eventLoop()).threadProperties().name()))
             .gauge()
             .value()).isZero();
         ByteBuf buffer = channel.alloc().buffer();
