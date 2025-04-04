@@ -14,9 +14,9 @@ dependencies {
     implementation libs.prometheusMetricsExpositionFormats
 
     testImplementation project(':micrometer-test')
-    testImplementation 'io.rest-assured:rest-assured'
-    testImplementation 'org.testcontainers:junit-jupiter'
-    testImplementation 'org.awaitility:awaitility'
+    testImplementation libs.restAssured
+    testImplementation libs.testcontainers.junitJupiter
+    testImplementation libs.awaitility
 }
 
 dockerTest {

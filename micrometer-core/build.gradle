@@ -98,9 +98,9 @@ dependencies {
     api project(":micrometer-observation")
 
     // HdrHistogram is needed at runtime when client-side percentiles are configured
-    implementation 'org.hdrhistogram:HdrHistogram'
+    implementation libs.hdrhistogram
     // LatencyUtils is needed at runtime when pause detection is enabled
-    implementation('org.latencyutils:LatencyUtils') {
+    implementation(libs.latencyUtils) {
         exclude group: 'org.hdrhistogram', module: 'HdrHistogram'
     }
 
@@ -108,67 +108,69 @@ dependencies {
     optionalApi libs.aspectjrt
 
     // instrumentation options
-    optionalApi 'io.dropwizard.metrics:metrics-core' // TODO move dropwizard out of core module? DropwizardMeterRegistry for e.g. JMX registry
+    optionalApi libs.dropwizardMetricsCore // TODO move dropwizard out of core module? DropwizardMeterRegistry for e.g. JMX registry
 
     // cache monitoring
-    optionalApi 'com.google.guava:guava'
-    optionalApi 'com.github.ben-manes.caffeine:caffeine'
-    optionalApi 'net.sf.ehcache:ehcache'
-    optionalApi 'javax.cache:cache-api'
-    optionalApi 'com.hazelcast:hazelcast'
-    optionalApi 'org.hibernate:hibernate-entitymanager'
+    optionalApi libs.guava
+    optionalApi libs.caffeine
+    optionalApi libs.ehcache2
+    optionalApi libs.javax.cacheApi
+    optionalApi libs.hazelcast
+    optionalApi libs.hibernateEntitymanager
 
     // server runtime monitoring
     optionalApi libs.jetty9Server
     // jakarta servlet
-    optionalApi 'jakarta.servlet:jakarta.servlet-api'
+    optionalApi libs.jakarta.servletApi
     optionalApi libs.jetty9Client
-    optionalApi 'org.apache.tomcat.embed:tomcat-embed-core'
-    optionalApi 'org.glassfish.jersey.core:jersey-server'
-    optionalApi 'io.grpc:grpc-api'
-    optionalApi 'io.grpc:grpc-kotlin-stub'
+    optionalApi libs.tomcatEmbed
+    optionalApi libs.jersey2Server
+    optionalApi libs.grpcApi
+    optionalApi libs.grpcKotlinStub
+    optionalApi platform(libs.nettyBom)
     optionalApi 'io.netty:netty-transport'
 
     // apache httpcomponents monitoring
-    optionalApi 'org.apache.httpcomponents:httpclient'
-    optionalApi 'org.apache.httpcomponents:httpasyncclient'
-    optionalApi 'org.apache.httpcomponents.client5:httpclient5'
+    optionalApi libs.httpcomponents.client
+    optionalApi libs.httpcomponents.async
+    optionalApi libs.httpcomponents.client5
 
     // hystrix monitoring
-    optionalApi 'com.netflix.hystrix:hystrix-core'
+    optionalApi libs.hystrix
 
     // log monitoring
-    optionalApi 'ch.qos.logback:logback-classic'
-    optionalApi 'org.apache.logging.log4j:log4j-core'
+    optionalApi libs.logback12
+    optionalApi libs.log4j
 
-    optionalApi 'com.squareup.okhttp3:okhttp'
+    optionalApi libs.okhttp
 
-    optionalApi 'org.mongodb:mongodb-driver-sync'
+    optionalApi libs.mongoSync
 
     optionalApi libs.jooq
 
-    optionalApi 'org.apache.kafka:kafka-clients'
-    optionalApi 'org.apache.kafka:kafka-streams'
+    optionalApi libs.kafkaClients
+    optionalApi libs.kafkaStreams
 
     optionalApi project(':micrometer-observation')
-    optionalApi 'io.micrometer:context-propagation'
+    optionalApi libs.contextPropagation
 
     // kotlin
     optionalApi enforcedPlatform('org.jetbrains.kotlin:kotlin-bom')
     optionalApi 'org.jetbrains.kotlin:kotlin-reflect'
     optionalApi 'org.jetbrains.kotlin:kotlin-stdlib-jdk8'
-    optionalApi 'org.jetbrains.kotlinx:kotlinx-coroutines-core'
+    optionalApi libs.kotlinxCoroutines
 
+    testImplementation platform(libs.reactorBom)
     testImplementation 'io.projectreactor:reactor-test'
     testImplementation project(":micrometer-observation-test")
 
     // dependency injection tests
-    testImplementation 'javax.inject:javax.inject'
-    testImplementation 'com.google.inject:guice'
+    testImplementation libs.javax.inject
+    testImplementation libs.guice
 
     // Uncomment these if you are interested in testing injection with dagger in MeterRegistryInjectionTest
-    // testImplementation 'com.google.dagger:dagger'
-    // testAnnotationProcessor 'com.google.dagger:dagger-compiler'
+    // testImplementation libs.dagger
+    // testAnnotationProcessor libs.daggerCompiler
 
     // Only needed for ModifiedClassPathClassLoader
     testImplementation(libs.spring5.core)
@@ -183,37 +185,37 @@ dependencies {
 
     testImplementation libs.mockitoCore5
 
-    testImplementation 'org.hsqldb:hsqldb'
-    testImplementation 'com.h2database:h2'
+    testImplementation libs.hsqldb
+    testImplementation libs.h2
 
-    testImplementation 'org.assertj:assertj-core'
-    testImplementation 'org.awaitility:awaitility'
+    testImplementation libs.assertj
+    testImplementation libs.awaitility
 
-    testImplementation 'org.ehcache:ehcache'
+    testImplementation libs.ehcache3
 
-    testImplementation 'org.apache.kafka:kafka-clients'
+    testImplementation libs.kafkaClients
 
     testImplementation libs.commonsPool2
 
-    testImplementation 'org.glassfish.jersey.test-framework.providers:jersey-test-framework-provider-inmemory'
-    testRuntimeOnly 'org.glassfish.jersey.inject:jersey-hk2'
+    testImplementation libs.jersey2TestFrameworkInmemory
+    testRuntimeOnly libs.jersey2Hk2
 
-    testImplementation 'ru.lanwen.wiremock:wiremock-junit5'
-    testImplementation 'com.github.tomakehurst:wiremock-jre8-standalone'
+    testImplementation libs.wiremockJunit5
+    testImplementation libs.wiremock
 
     // Log4j2 Async dependency
     testImplementation libs.lmaxDisruptor
 
     // Kafka binder IT dependencies
-    testImplementation 'org.testcontainers:testcontainers'
-    testImplementation 'org.testcontainers:junit-jupiter'
-    testImplementation 'org.testcontainers:kafka'
+    testImplementation libs.testcontainers
+    testImplementation libs.testcontainers.junitJupiter
+    testImplementation libs.testcontainers.kafka
 
     // Postgres Binder IT dependencies
-    testImplementation 'org.testcontainers:postgresql'
-    testImplementation 'org.postgresql:postgresql'
+    testImplementation libs.testcontainers.postgresql
+    testImplementation libs.postgre
 
-    testImplementation 'org.testcontainers:mongodb'
+    testImplementation libs.testcontainers.mongodb
 
     // Dependencies for @ClassPathExclusions
     testImplementation("org.junit.platform:junit-platform-engine")
@@ -226,10 +228,10 @@ dependencies {
         exclude group: "org.slf4j", module: "jcl-over-slf4j"
     }
     // gRPC
-    testImplementation 'io.grpc:grpc-core'
-    testImplementation 'io.grpc:grpc-inprocess'
-    testImplementation 'io.grpc:grpc-testing-proto'
-    testImplementation 'com.squareup.retrofit2:retrofit'
+    testImplementation libs.grpcCore
+    testImplementation libs.grpcInprocess
+    testImplementation libs.grpcTestingProto
+    testImplementation libs.retrofit2
 
     testImplementation libs.aspectjweaver
 }

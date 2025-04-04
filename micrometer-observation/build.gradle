@@ -39,19 +39,15 @@ jar {
 dependencies {
     api project(":micrometer-commons")
 
-    optionalApi 'io.micrometer:context-propagation'
+    optionalApi libs.contextPropagation
 
     // HttpServlet KeyValueProvider
-    optionalApi 'javax.servlet:javax.servlet-api'
+    optionalApi libs.javax.servletApi
 
     // Aspects
     optionalApi libs.aspectjrt
 
-    // log monitoring
-    testImplementation 'ch.qos.logback:logback-classic'
-    testImplementation 'org.apache.logging.log4j:log4j-core'
-
-    testImplementation project(':micrometer-observation-test')
+    testRuntimeOnly libs.logback12
 
     testImplementation(libs.archunitJunit5) {
         // avoid transitively pulling in slf4j 2
@@ -60,7 +56,7 @@ dependencies {
 
     testImplementation libs.mockitoCore5
 
-    testImplementation 'org.assertj:assertj-core'
-    testImplementation 'org.awaitility:awaitility'
+    testImplementation libs.assertj
+    testImplementation libs.awaitility
     testImplementation libs.aspectjweaver
 }

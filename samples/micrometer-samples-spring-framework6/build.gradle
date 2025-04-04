@@ -22,6 +22,7 @@ dependencies {
     testImplementation libs.spring6.aop
     testImplementation(libs.spring6.context)
 
+    testImplementation platform(libs.junitBom)
     testImplementation libs.junitJupiter
     testRuntimeOnly libs.junitPlatformLauncher
 }

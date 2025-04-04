@@ -11,17 +11,13 @@ dependencies {
     optionalApi libs.jetty12Server
     optionalApi libs.jetty12Client
 
-    testRuntimeOnly(libs.logbackLatest) {
-        version {
-            strictly libs.logbackLatest.get().version
-        }
-    }
+    testRuntimeOnly(libs.logbackLatest)
 
     testImplementation project(":micrometer-observation-test")
     testImplementation project(":micrometer-test")
 
     testImplementation libs.httpcomponents.client
-    testImplementation 'org.awaitility:awaitility'
+    testImplementation libs.awaitility
 }
 
 java {

@@ -1,8 +1,8 @@
 dependencies {
     api project(':micrometer-core')
 
-    implementation 'org.slf4j:slf4j-api'
-    optionalApi 'com.newrelic.agent.java:newrelic-api'
+    implementation libs.slf4jApi
+    optionalApi libs.newrelicApi
 
     testImplementation project(':micrometer-test')
     testImplementation libs.mockitoCore5

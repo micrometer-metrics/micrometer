@@ -1,8 +1,9 @@
 dependencies {
     api project(':micrometer-core')
 
-    api 'io.dropwizard.metrics:metrics-graphite'
+    api libs.dropwizardMetricsGraphite
 
     testImplementation project(':micrometer-test')
+    testImplementation platform(libs.reactorBom)
     testImplementation 'io.projectreactor.netty:reactor-netty-core'
 }

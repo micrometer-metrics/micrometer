@@ -3,10 +3,11 @@ description 'Test compatibility kit for extensions of Micrometer Observation'
 dependencies {
     api project(':micrometer-observation')
 
-    api 'org.assertj:assertj-core'
+    api libs.assertj
+    implementation platform(libs.junitBom)
     implementation libs.junitJupiter
 
     implementation libs.mockitoCore4
 
-    testImplementation 'org.awaitility:awaitility'
+    testImplementation libs.awaitility
 }

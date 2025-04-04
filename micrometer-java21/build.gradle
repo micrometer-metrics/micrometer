@@ -8,8 +8,8 @@ if (!javaLanguageVersion.canCompileOrRun(21)) {
 dependencies {
     api project(':micrometer-core')
 
-    testImplementation 'org.assertj:assertj-core'
-    testImplementation 'org.awaitility:awaitility'
+    testImplementation libs.assertj
+    testImplementation libs.awaitility
 }
 
 java {

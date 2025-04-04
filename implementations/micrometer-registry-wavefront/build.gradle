@@ -1,8 +1,8 @@
 dependencies {
     api project(':micrometer-core')
 
-    api 'com.wavefront:wavefront-sdk-java'
-    implementation 'org.slf4j:slf4j-api'
+    api libs.wavefront
+    implementation libs.slf4jApi
 
     testImplementation project(':micrometer-test')
     testImplementation libs.mockitoCore5

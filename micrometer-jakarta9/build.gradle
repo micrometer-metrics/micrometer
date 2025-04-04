@@ -17,7 +17,7 @@ dependencies {
     api project(":micrometer-commons")
     api project(":micrometer-observation")
 
-    optionalApi 'jakarta.jms:jakarta.jms-api'
+    optionalApi libs.jakarta.jmsApi
 
     testImplementation(libs.archunitJunit5) {
         // avoid transitively pulling in slf4j 2
@@ -25,5 +25,5 @@ dependencies {
     }
     testImplementation libs.slf4jApi
     testImplementation libs.mockitoCore5
-    testImplementation 'org.assertj:assertj-core'
+    testImplementation libs.assertj
 }

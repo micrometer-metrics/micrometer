@@ -7,9 +7,9 @@ dependencies {
 
     testImplementation project(':micrometer-test')
     testImplementation libs.systemStubsJupiter
-    testImplementation 'io.rest-assured:rest-assured'
-    testImplementation 'org.testcontainers:junit-jupiter'
-    testImplementation 'org.awaitility:awaitility'
+    testImplementation libs.restAssured
+    testImplementation libs.testcontainers.junitJupiter
+    testImplementation libs.awaitility
     testImplementation libs.mockitoCore5
 }
 

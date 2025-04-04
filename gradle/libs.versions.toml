@@ -114,8 +114,6 @@ grpcApi = { module = "io.grpc:grpc-api", version.ref = "grpc" }
 grpcCore = { module = "io.grpc:grpc-core", version.ref = "grpc" }
 grpcInprocess = { module = "io.grpc:grpc-inprocess", version.ref = "grpc" }
 grpcServices = { module = "io.grpc:grpc-services", version.ref = "grpc" }
-grpcStubs = { module = "io.grpc:grpc-stubs", version.ref = "grpc" }
-grpcAlts = { module = "io.grpc:grpc-alts", version.ref = "grpc" }
 grpcTestingProto = { module = "io.grpc:grpc-testing-proto", version.ref = "grpc" }
 grpcKotlinStub = { module = "io.grpc:grpc-kotlin-stub", version.ref = "grpcKotlin" }
 guava = { module = "com.google.guava:guava", version.ref = "guava" }

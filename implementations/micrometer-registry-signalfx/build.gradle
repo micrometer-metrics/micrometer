@@ -3,8 +3,8 @@ description = 'MeterRegistry implementation for sending metrics to SignalFX. Thi
 dependencies {
     api project(':micrometer-core')
 
-    api 'com.signalfx.public:signalfx-java'
-    implementation 'org.slf4j:slf4j-api'
+    api libs.signalfx
+    implementation libs.slf4jApi
 
     testImplementation project(':micrometer-test')
 }
