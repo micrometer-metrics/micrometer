@@ -52,6 +52,11 @@ public final class KeyValues implements Iterable<KeyValue> {
     private final int length;
 
     /**
+     * Cache the hash code of the {@code KeyValues}, 0 value means hash was not computed.
+     */
+    private int hash;
+
+    /**
      * A constructor that initializes a {@code KeyValues} object with a sorted set of
      * key-values and its length.
      * @param sortedSet an ordered set of unique key-values by key
@@ -291,9 +296,16 @@ public final class KeyValues implements Iterable<KeyValue> {
 
     @Override
     public int hashCode() {
-        int result = 1;
-        for (int i = 0; i < length; i++) {
-            result = 31 * result + sortedSet[i].hashCode();
+        int result = hash;
+        if (result == 0) {
+            result = 1;
+            for (int i = 0; i < length; i++) {
+                result = 31 * result + sortedSet[i].hashCode();
+            }
+            if (result == 0) { // Re-map 0 hash code
+                result = 1;
+            }
+            hash = result;
         }
         return result;
     }
