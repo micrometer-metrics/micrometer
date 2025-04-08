@@ -21,6 +21,7 @@ import io.micrometer.jakarta9.instrument.mail.MailObservationDocumentation.LowCa
 
 import java.util.Arrays;
 import java.util.Locale;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import io.micrometer.common.KeyValue;
@@ -36,38 +37,33 @@ class MailKeyValues {
      */
     public static final String UNKNOWN = "unknown";
 
-    /**
-     * The value is when the value is not set or empty.
-     */
-    public static final String EMPTY = "";
-
     private MailKeyValues() {
     }
 
-    static KeyValue smtpMessageFrom(Message message) {
+    static Optional<KeyValue> smtpMessageFrom(Message message) {
         return safeExtractValue(MailObservationDocumentation.HighCardinalityKeyNames.SMTP_MESSAGE_FROM,
                 () -> addressesToValue(message.getFrom()));
     }
 
-    static KeyValue smtpMessageRecipients(Message message, RecipientType recipientType) {
+    static Optional<KeyValue> smtpMessageRecipients(Message message, RecipientType recipientType) {
         MailObservationDocumentation.HighCardinalityKeyNames key = MailObservationDocumentation.HighCardinalityKeyNames
             .valueOf("SMTP_MESSAGE_" + recipientType.toString().toUpperCase(Locale.ROOT));
         return safeExtractValue(key, () -> addressesToValue(message.getRecipients(recipientType)));
     }
 
-    static KeyValue smtpMessageSubject(Message message) {
+    static Optional<KeyValue> smtpMessageSubject(Message message) {
 
         return safeExtractValue(MailObservationDocumentation.HighCardinalityKeyNames.SMTP_MESSAGE_SUBJECT,
-                message::getSubject);
+                () -> Optional.ofNullable(message.getSubject()));
     }
 
-    static KeyValue smtpMessageId(Message message) {
+    static Optional<KeyValue> smtpMessageId(Message message) {
         return safeExtractValue(MailObservationDocumentation.HighCardinalityKeyNames.SMTP_MESSAGE_ID, () -> {
             String[] header = message.getHeader("Message-ID");
             if (header == null || header.length == 0) {
-                return EMPTY;
+                return Optional.empty();
             }
-            return String.join(", ", header);
+            return Optional.of(String.join(", ", header));
         });
     }
 
@@ -95,35 +91,32 @@ class MailKeyValues {
         return KeyValue.of(LowCardinalityKeyNames.NETWORK_PROTOCOL_NAME, protocol);
     }
 
-    private static KeyValue safeExtractValue(KeyName key, ValueExtractor extractor) {
+    private static Optional<KeyValue> safeExtractValue(KeyName key, ValueExtractor extractor) {
         String value;
         try {
-            value = extractor.extract();
-            if (value == null || value.isEmpty()) {
-                value = EMPTY;
+            Optional<String> extracted = extractor.extract();
+            if (!extracted.isPresent()) {
+                return Optional.empty();
             }
+            value = extracted.get();
         }
         catch (MessagingException exc) {
             value = UNKNOWN;
         }
-        return key.withValue(value);
+        return Optional.of(key.withValue(value));
     }
 
-    private static String addressesToValue(@Nullable Address[] addresses) {
-        String value;
+    private static Optional<String> addressesToValue(@Nullable Address[] addresses) {
         if (addresses == null || addresses.length == 0) {
-            value = EMPTY;
+            return Optional.empty();
         }
-        else {
-            value = Arrays.stream(addresses).map(Address::toString).collect(Collectors.joining(", "));
-        }
-        return value;
+        String value = Arrays.stream(addresses).map(Address::toString).collect(Collectors.joining(", "));
+        return Optional.of(value);
     }
 
     private interface ValueExtractor {
 
-        @Nullable
-        String extract() throws MessagingException;
+        Optional<String> extract() throws MessagingException;
 
     }
 

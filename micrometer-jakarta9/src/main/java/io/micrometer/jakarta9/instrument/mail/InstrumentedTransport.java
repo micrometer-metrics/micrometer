@@ -92,7 +92,7 @@ public class InstrumentedTransport extends Transport {
         try (Observation.Scope ignore = observation.openScope()) {
             // the Message-Id is set by the Transport (from the SMTP server) after sending
             this.delegate.sendMessage(msg, addresses);
-            observation.highCardinalityKeyValue(MailKeyValues.smtpMessageId(msg));
+            MailKeyValues.smtpMessageId(msg).ifPresent(observation::highCardinalityKeyValue);
         }
         catch (MessagingException error) {
             observation.error(error);
