@@ -56,7 +56,6 @@ class DefaultMailSendObservationConventionTests {
         MailSendObservationContext context = new MailSendObservationContext(message, "smtp", "localhost", 25);
         assertThat(convention.getHighCardinalityKeyValues(context)).contains(
                 KeyValue.of("smtp.message.from", "from@example.com"), KeyValue.of("smtp.message.to", "to@example.com"),
-                KeyValue.of("smtp.message.cc", ""), KeyValue.of("smtp.message.bcc", ""),
                 KeyValue.of("smtp.message.subject", "Test Subject"));
     }
 
@@ -83,9 +82,8 @@ class DefaultMailSendObservationConventionTests {
         };
 
         MailSendObservationContext context = new MailSendObservationContext(message, "smtp", "localhost", 25);
-        assertThat(convention.getHighCardinalityKeyValues(context)).contains(
-                KeyValue.of("smtp.message.from", "unknown"), KeyValue.of("smtp.message.to", ""),
-                KeyValue.of("smtp.message.subject", ""));
+        assertThat(convention.getHighCardinalityKeyValues(context))
+            .contains(KeyValue.of("smtp.message.from", "unknown"));
     }
 
     @Test

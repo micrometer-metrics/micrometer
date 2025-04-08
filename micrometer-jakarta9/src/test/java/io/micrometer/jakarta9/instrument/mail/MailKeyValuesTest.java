@@ -17,7 +17,9 @@
 package io.micrometer.jakarta9.instrument.mail;
 
 import static io.micrometer.jakarta9.instrument.mail.MailKeyValues.UNKNOWN;
-import static io.micrometer.jakarta9.instrument.mail.MailKeyValues.EMPTY;
+import static io.micrometer.jakarta9.instrument.mail.MailObservationDocumentation.HighCardinalityKeyNames.SMTP_MESSAGE_FROM;
+import static io.micrometer.jakarta9.instrument.mail.MailObservationDocumentation.HighCardinalityKeyNames.SMTP_MESSAGE_SUBJECT;
+import static io.micrometer.jakarta9.instrument.mail.MailObservationDocumentation.HighCardinalityKeyNames.SMTP_MESSAGE_ID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import jakarta.mail.Message;
@@ -45,7 +47,7 @@ class MailKeyValuesTest {
         var message = Mockito.mock(Message.class);
         Mockito.when(message.getFrom()).thenThrow(new MessagingException("test exception"));
         var result = MailKeyValues.smtpMessageFrom(message);
-        assertThat(result.getValue()).isEqualTo(UNKNOWN);
+        assertThat(result).isPresent().hasValue(SMTP_MESSAGE_FROM.withValue(UNKNOWN));
     }
 
     @Test
@@ -53,7 +55,7 @@ class MailKeyValuesTest {
     void smtpMessageFrom_WhenFromUnset_ReturnsNone() {
         var message = new MimeMessage((Session) null);
         var result = MailKeyValues.smtpMessageFrom(message);
-        assertThat(result.getValue()).isEqualTo(EMPTY);
+        assertThat(result).isEmpty();
     }
 
     @Test
@@ -62,7 +64,7 @@ class MailKeyValuesTest {
         var message = new MimeMessage((Session) null);
         message.addFrom(new InternetAddress[0]);
         var result = MailKeyValues.smtpMessageFrom(message);
-        assertThat(result.getValue()).isEqualTo(EMPTY);
+        assertThat(result).isEmpty();
     }
 
     @Test
@@ -71,7 +73,7 @@ class MailKeyValuesTest {
         var message = new MimeMessage((Session) null);
         message.addFrom(new InternetAddress[] { new InternetAddress("test@exemple.com") });
         var result = MailKeyValues.smtpMessageFrom(message);
-        assertThat(result.getValue()).isEqualTo("test@exemple.com");
+        assertThat(result).isPresent().hasValue(SMTP_MESSAGE_FROM.withValue("test@exemple.com"));
     }
 
     @Test
@@ -81,7 +83,7 @@ class MailKeyValuesTest {
         message.addFrom(new InternetAddress[] { new InternetAddress("test@exemple.com"),
                 new InternetAddress("other@example.com") });
         var result = MailKeyValues.smtpMessageFrom(message);
-        assertThat(result.getValue()).isEqualTo("test@exemple.com, other@example.com");
+        assertThat(result).isPresent().hasValue(SMTP_MESSAGE_FROM.withValue("test@exemple.com, other@example.com"));
     }
 
     @ParameterizedTest
@@ -90,16 +92,20 @@ class MailKeyValuesTest {
     void smtpMessageRecipients_WhenRecipientsUnset_ReturnsNone(RecipientType recipientType) {
         var message = new MimeMessage((Session) null);
         var result = MailKeyValues.smtpMessageRecipients(message, recipientType);
-        assertThat(result.getValue()).isEqualTo(EMPTY);
+        assertThat(result).isEmpty();
     }
 
-    @Test
+    @ParameterizedTest
+    @MethodSource("recipientTypes")
     @DisplayName("Should return UNKNOWN when recipient retrieval fails")
-    void smtpMessageRecipients_WhenRecipientsFail_ReturnsUnknown() throws MessagingException {
+    void smtpMessageRecipients_WhenRecipientsFail_ReturnsUnknown(RecipientType recipientType)
+            throws MessagingException {
+        MailObservationDocumentation.HighCardinalityKeyNames key = MailObservationDocumentation.HighCardinalityKeyNames
+            .valueOf("SMTP_MESSAGE_" + recipientType.toString().toUpperCase(Locale.ROOT));
         var message = Mockito.mock(Message.class);
         Mockito.when(message.getRecipients(ArgumentMatchers.any())).thenThrow(new MessagingException("test exception"));
-        var result = MailKeyValues.smtpMessageRecipients(message, RecipientType.TO);
-        assertThat(result.getValue()).isEqualTo(UNKNOWN);
+        var result = MailKeyValues.smtpMessageRecipients(message, recipientType);
+        assertThat(result).isPresent().hasValue(key.withValue(UNKNOWN));
     }
 
     @ParameterizedTest
@@ -109,7 +115,7 @@ class MailKeyValuesTest {
         var message = new MimeMessage((Session) null);
         message.addRecipients(recipientType, new InternetAddress[0]);
         var result = MailKeyValues.smtpMessageRecipients(message, recipientType);
-        assertThat(result.getValue()).isEqualTo(EMPTY);
+        assertThat(result).isEmpty();
     }
 
     @ParameterizedTest
@@ -117,10 +123,12 @@ class MailKeyValuesTest {
     @DisplayName("Should return single recipient when one is set")
     void smtpMessageRecipients_WhenOneRecipient_ReturnsRecipient(RecipientType recipientType)
             throws MessagingException {
+        MailObservationDocumentation.HighCardinalityKeyNames key = MailObservationDocumentation.HighCardinalityKeyNames
+            .valueOf("SMTP_MESSAGE_" + recipientType.toString().toUpperCase(Locale.ROOT));
         var message = new MimeMessage((Session) null);
         message.addRecipients(recipientType, new InternetAddress[] { new InternetAddress("test@exemple.com") });
         var result = MailKeyValues.smtpMessageRecipients(message, recipientType);
-        assertThat(result.getValue()).isEqualTo("test@exemple.com");
+        assertThat(result).isPresent().hasValue(key.withValue("test@exemple.com"));
     }
 
     @ParameterizedTest
@@ -128,14 +136,14 @@ class MailKeyValuesTest {
     @DisplayName("Should return multiple recipients when more than one is set")
     void smtpMessageRecipients_WhenMultipleRecipients_ReturnsRecipients(RecipientType recipientType)
             throws MessagingException {
+        MailObservationDocumentation.HighCardinalityKeyNames key = MailObservationDocumentation.HighCardinalityKeyNames
+            .valueOf("SMTP_MESSAGE_" + recipientType.toString().toUpperCase(Locale.ROOT));
         var message = new MimeMessage((Session) null);
         message.addRecipients(recipientType, new InternetAddress[] { new InternetAddress("test@exemple.com"),
                 new InternetAddress("other@example.com") });
         var result = MailKeyValues.smtpMessageRecipients(message, recipientType);
 
-        var expectedKeyName = "smtp.message." + recipientType.toString().toLowerCase(Locale.ROOT);
-        assertThat(result.getKey()).isEqualTo(expectedKeyName);
-        assertThat(result.getValue()).isEqualTo("test@exemple.com, other@example.com");
+        assertThat(result).isPresent().hasValue(key.withValue("test@exemple.com, other@example.com"));
     }
 
     public static Stream<Arguments> recipientTypes() {
@@ -149,7 +157,7 @@ class MailKeyValuesTest {
         var message = new MimeMessage((Session) null);
         message.setSubject("test subject");
         var result = MailKeyValues.smtpMessageSubject(message);
-        assertThat(result.getValue()).isEqualTo("test subject");
+        assertThat(result).isPresent().hasValue(SMTP_MESSAGE_SUBJECT.withValue("test subject"));
     }
 
     @Test
@@ -158,7 +166,7 @@ class MailKeyValuesTest {
         var message = Mockito.mock(Message.class);
         Mockito.when(message.getSubject()).thenThrow(new MessagingException("test exception"));
         var result = MailKeyValues.smtpMessageSubject(message);
-        assertThat(result.getValue()).isEqualTo(UNKNOWN);
+        assertThat(result).isPresent().hasValue(SMTP_MESSAGE_SUBJECT.withValue(UNKNOWN));
     }
 
     @Test
@@ -166,7 +174,8 @@ class MailKeyValuesTest {
     void smtpMessageSubject_WhenSubjectUnset_ReturnsNone() {
         var message = new MimeMessage((Session) null);
         var result = MailKeyValues.smtpMessageSubject(message);
-        assertThat(result.getValue()).isEqualTo(EMPTY);
+        assertThat(result).isEmpty();
+
     }
 
     @Test
@@ -215,7 +224,7 @@ class MailKeyValuesTest {
         var message = Mockito.mock(Message.class);
         Mockito.when(message.getHeader("Message-ID")).thenThrow(new MessagingException("test exception"));
         var result = MailKeyValues.smtpMessageId(message);
-        assertThat(result.getValue()).isEqualTo(UNKNOWN);
+        assertThat(result).isPresent().hasValue(SMTP_MESSAGE_ID.withValue(UNKNOWN));
     }
 
     @Test
@@ -223,7 +232,7 @@ class MailKeyValuesTest {
     void smtpMessageId_WhenHeaderMissing_ReturnsUnknown() {
         var message = new MimeMessage((Session) null);
         var result = MailKeyValues.smtpMessageId(message);
-        assertThat(result.getValue()).isEqualTo(EMPTY);
+        assertThat(result).isEmpty();
     }
 
     @Test
@@ -232,7 +241,7 @@ class MailKeyValuesTest {
         var message = new MimeMessage((Session) null);
         message.addHeader("Message-ID", "12345@example.com");
         var result = MailKeyValues.smtpMessageId(message);
-        assertThat(result.getValue()).isEqualTo("12345@example.com");
+        assertThat(result).isPresent().hasValue(SMTP_MESSAGE_ID.withValue("12345@example.com"));
     }
 
     @Test
