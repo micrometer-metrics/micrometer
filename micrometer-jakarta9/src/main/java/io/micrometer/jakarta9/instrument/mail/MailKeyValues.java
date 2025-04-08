@@ -15,9 +15,12 @@
  */
 package io.micrometer.jakarta9.instrument.mail;
 
+import io.micrometer.common.docs.KeyName;
+import io.micrometer.common.lang.Nullable;
 import io.micrometer.jakarta9.instrument.mail.MailObservationDocumentation.LowCardinalityKeyNames;
 
 import java.util.Arrays;
+import java.util.Locale;
 import java.util.stream.Collectors;
 
 import io.micrometer.common.KeyValue;
@@ -28,99 +31,100 @@ import jakarta.mail.Message.RecipientType;
 
 class MailKeyValues {
 
-    private static final KeyValue SMTP_MESSAGE_FROM_UNKNOWN = KeyValue
-        .of(MailObservationDocumentation.HighCardinalityKeyNames.SMTP_MESSAGE_FROM, "unknown");
+    /**
+     * The value is when value can't be determined.
+     */
+    public static final String UNKNOWN = "unknown";
 
-    private static final KeyValue SMTP_MESSAGE_TO_UNKNOWN = KeyValue
-        .of(MailObservationDocumentation.HighCardinalityKeyNames.SMTP_MESSAGE_TO, "unknown");
-
-    private static final KeyValue SMTP_MESSAGE_SUBJECT_UNKNOWN = KeyValue
-        .of(MailObservationDocumentation.HighCardinalityKeyNames.SMTP_MESSAGE_SUBJECT, "unknown");
-
-    private static final KeyValue SMTP_MESSAGE_ID_UNKNOWN = KeyValue
-        .of(MailObservationDocumentation.HighCardinalityKeyNames.SMTP_MESSAGE_ID, "unknown");
-
-    private static final KeyValue SERVER_ADDRESS_UNKNOWN = KeyValue.of(LowCardinalityKeyNames.SERVER_ADDRESS,
-            "unknown");
-
-    private static final KeyValue SERVER_PORT_UNKNOWN = KeyValue.of(LowCardinalityKeyNames.SERVER_PORT, "unknown");
+    /**
+     * The value is when the value is not set or empty.
+     */
+    public static final String EMPTY = "";
 
     private MailKeyValues() {
     }
 
     static KeyValue smtpMessageFrom(Message message) {
-        try {
-            if (message.getFrom() == null || message.getFrom().length == 0) {
-                return SMTP_MESSAGE_FROM_UNKNOWN;
-            }
-            String fromString = Arrays.stream(message.getFrom())
-                .map(Address::toString)
-                .collect(Collectors.joining(", "));
-            return KeyValue.of(MailObservationDocumentation.HighCardinalityKeyNames.SMTP_MESSAGE_FROM, fromString);
-        }
-        catch (MessagingException exc) {
-            return SMTP_MESSAGE_FROM_UNKNOWN;
-        }
+        return safeExtractValue(MailObservationDocumentation.HighCardinalityKeyNames.SMTP_MESSAGE_FROM,
+                () -> addressesToValue(message.getFrom()));
     }
 
-    static KeyValue smtpMessageTo(Message message) {
-        try {
-            Address[] recipients = message.getRecipients(RecipientType.TO);
-            if (recipients == null || recipients.length == 0) {
-                return SMTP_MESSAGE_TO_UNKNOWN;
-            }
-            String recipientsString = Arrays.stream(recipients)
-                .map(Address::toString)
-                .collect(Collectors.joining(", "));
-            return KeyValue.of(MailObservationDocumentation.HighCardinalityKeyNames.SMTP_MESSAGE_TO, recipientsString);
-        }
-        catch (MessagingException exc) {
-            return SMTP_MESSAGE_TO_UNKNOWN;
-        }
+    static KeyValue smtpMessageRecipients(Message message, RecipientType recipientType) {
+        MailObservationDocumentation.HighCardinalityKeyNames key = MailObservationDocumentation.HighCardinalityKeyNames
+            .valueOf("SMTP_MESSAGE_" + recipientType.toString().toUpperCase(Locale.ROOT));
+        return safeExtractValue(key, () -> addressesToValue(message.getRecipients(recipientType)));
     }
 
     static KeyValue smtpMessageSubject(Message message) {
-        try {
-            if (message.getSubject() == null) {
-                return SMTP_MESSAGE_SUBJECT_UNKNOWN;
-            }
-            return KeyValue.of(MailObservationDocumentation.HighCardinalityKeyNames.SMTP_MESSAGE_SUBJECT,
-                    message.getSubject());
-        }
-        catch (MessagingException exc) {
-            return SMTP_MESSAGE_SUBJECT_UNKNOWN;
-        }
+
+        return safeExtractValue(MailObservationDocumentation.HighCardinalityKeyNames.SMTP_MESSAGE_SUBJECT,
+                message::getSubject);
     }
 
     static KeyValue smtpMessageId(Message message) {
-        try {
-            if (message.getHeader("Message-ID") == null) {
-                return SMTP_MESSAGE_ID_UNKNOWN;
+        return safeExtractValue(MailObservationDocumentation.HighCardinalityKeyNames.SMTP_MESSAGE_ID, () -> {
+            String[] header = message.getHeader("Message-ID");
+            if (header == null || header.length == 0) {
+                return EMPTY;
             }
-            return KeyValue.of(MailObservationDocumentation.HighCardinalityKeyNames.SMTP_MESSAGE_ID,
-                    message.getHeader("Message-ID")[0]);
-        }
-        catch (MessagingException exc) {
-            return SMTP_MESSAGE_ID_UNKNOWN;
-        }
+            return String.join(", ", header);
+        });
     }
 
     static KeyValue serverAddress(MailSendObservationContext context) {
-        if (context.getHost() == null) {
-            return SERVER_ADDRESS_UNKNOWN;
+        String host = context.getHost();
+        if (host == null || host.isEmpty()) {
+            host = UNKNOWN;
         }
-        return KeyValue.of(LowCardinalityKeyNames.SERVER_ADDRESS, context.getHost());
+        return LowCardinalityKeyNames.SERVER_ADDRESS.withValue(host);
     }
 
     static KeyValue serverPort(MailSendObservationContext context) {
-        if (context.getPort() <= 0) {
-            return SERVER_PORT_UNKNOWN;
+        String port = UNKNOWN;
+        if (context.getPort() > 0) {
+            port = String.valueOf(context.getPort());
         }
-        return KeyValue.of(LowCardinalityKeyNames.SERVER_PORT, String.valueOf(context.getPort()));
+        return LowCardinalityKeyNames.SERVER_PORT.withValue(port);
     }
 
     static KeyValue networkProtocolName(MailSendObservationContext context) {
-        return KeyValue.of(LowCardinalityKeyNames.NETWORK_PROTOCOL_NAME, context.getProtocol());
+        String protocol = context.getProtocol();
+        if (protocol == null || protocol.isEmpty()) {
+            protocol = UNKNOWN;
+        }
+        return KeyValue.of(LowCardinalityKeyNames.NETWORK_PROTOCOL_NAME, protocol);
+    }
+
+    private static KeyValue safeExtractValue(KeyName key, ValueExtractor extractor) {
+        String value;
+        try {
+            value = extractor.extract();
+            if (value == null || value.isEmpty()) {
+                value = EMPTY;
+            }
+        }
+        catch (MessagingException exc) {
+            value = UNKNOWN;
+        }
+        return key.withValue(value);
+    }
+
+    private static String addressesToValue(@Nullable Address[] addresses) {
+        String value;
+        if (addresses == null || addresses.length == 0) {
+            value = EMPTY;
+        }
+        else {
+            value = Arrays.stream(addresses).map(Address::toString).collect(Collectors.joining(", "));
+        }
+        return value;
+    }
+
+    private interface ValueExtractor {
+
+        @Nullable
+        String extract() throws MessagingException;
+
     }
 
 }

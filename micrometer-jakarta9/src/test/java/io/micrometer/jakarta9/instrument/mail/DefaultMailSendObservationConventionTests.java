@@ -27,6 +27,9 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+/**
+ * Tests for {@link DefaultMailSendObservationConvention}.
+ */
 class DefaultMailSendObservationConventionTests {
 
     private final DefaultMailSendObservationConvention convention = new DefaultMailSendObservationConvention();
@@ -53,6 +56,7 @@ class DefaultMailSendObservationConventionTests {
         MailSendObservationContext context = new MailSendObservationContext(message, "smtp", "localhost", 25);
         assertThat(convention.getHighCardinalityKeyValues(context)).contains(
                 KeyValue.of("smtp.message.from", "from@example.com"), KeyValue.of("smtp.message.to", "to@example.com"),
+                KeyValue.of("smtp.message.cc", ""), KeyValue.of("smtp.message.bcc", ""),
                 KeyValue.of("smtp.message.subject", "Test Subject"));
     }
 
@@ -70,7 +74,7 @@ class DefaultMailSendObservationConventionTests {
     }
 
     @Test
-    void shouldHandleMessagingException() throws MessagingException {
+    void shouldHandleMessagingException() {
         MimeMessage message = new MimeMessage((Session) null) {
             @Override
             public Address[] getFrom() throws MessagingException {
@@ -80,8 +84,8 @@ class DefaultMailSendObservationConventionTests {
 
         MailSendObservationContext context = new MailSendObservationContext(message, "smtp", "localhost", 25);
         assertThat(convention.getHighCardinalityKeyValues(context)).contains(
-                KeyValue.of("smtp.message.from", "unknown"), KeyValue.of("smtp.message.to", "unknown"),
-                KeyValue.of("smtp.message.subject", "unknown"));
+                KeyValue.of("smtp.message.from", "unknown"), KeyValue.of("smtp.message.to", ""),
+                KeyValue.of("smtp.message.subject", ""));
     }
 
     @Test

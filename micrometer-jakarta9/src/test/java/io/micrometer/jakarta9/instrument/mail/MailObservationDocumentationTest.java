@@ -45,6 +45,8 @@ class MailObservationDocumentationTest {
         assertThat(highCardinalityKeyNames).containsExactly(
                 MailObservationDocumentation.HighCardinalityKeyNames.SMTP_MESSAGE_FROM,
                 MailObservationDocumentation.HighCardinalityKeyNames.SMTP_MESSAGE_TO,
+                MailObservationDocumentation.HighCardinalityKeyNames.SMTP_MESSAGE_CC,
+                MailObservationDocumentation.HighCardinalityKeyNames.SMTP_MESSAGE_BCC,
                 MailObservationDocumentation.HighCardinalityKeyNames.SMTP_MESSAGE_SUBJECT,
                 MailObservationDocumentation.HighCardinalityKeyNames.SMTP_MESSAGE_ID);
     }

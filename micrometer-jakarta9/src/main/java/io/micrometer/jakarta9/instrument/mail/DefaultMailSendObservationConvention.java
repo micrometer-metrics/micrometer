@@ -17,6 +17,7 @@ package io.micrometer.jakarta9.instrument.mail;
 
 import io.micrometer.common.KeyValues;
 import jakarta.mail.Message;
+import jakarta.mail.Message.RecipientType;
 
 /**
  * Default implementation for {@link MailSendObservationConvention}.
@@ -44,7 +45,10 @@ public class DefaultMailSendObservationConvention implements MailSendObservation
     @Override
     public KeyValues getHighCardinalityKeyValues(MailSendObservationContext context) {
         Message message = context.getCarrier();
-        return KeyValues.of(MailKeyValues.smtpMessageFrom(message), MailKeyValues.smtpMessageTo(message),
+        return KeyValues.of(MailKeyValues.smtpMessageFrom(message),
+                MailKeyValues.smtpMessageRecipients(message, RecipientType.TO),
+                MailKeyValues.smtpMessageRecipients(message, RecipientType.CC),
+                MailKeyValues.smtpMessageRecipients(message, RecipientType.BCC),
                 MailKeyValues.smtpMessageSubject(message));
     }
 
