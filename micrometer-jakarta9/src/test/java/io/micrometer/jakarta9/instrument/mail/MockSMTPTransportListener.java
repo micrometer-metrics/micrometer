@@ -17,6 +17,12 @@ package io.micrometer.jakarta9.instrument.mail;
 
 import jakarta.mail.*;
 
+/**
+ * Listener interface for the MockSMTPTransport class. This interface defines methods that
+ * will be called during the lifecycle of the MockSMTPTransport.
+ *
+ * @author famaridon
+ */
 interface MockSMTPTransportListener {
 
     void onConstructor(Session session, URLName urlname);

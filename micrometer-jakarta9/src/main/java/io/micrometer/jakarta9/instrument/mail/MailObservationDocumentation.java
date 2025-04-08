@@ -25,6 +25,7 @@ import io.micrometer.observation.docs.ObservationDocumentation;
  * {@link jakarta.mail.Transport send} of mail messages.
  *
  * @since 1.15.0
+ * @author famaridon
  */
 public enum MailObservationDocumentation implements ObservationDocumentation {
 

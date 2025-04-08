@@ -27,6 +27,7 @@ import java.util.List;
  * Default implementation for {@link MailSendObservationConvention}.
  *
  * @since 1.15.0
+ * @author famaridon
  */
 public class DefaultMailSendObservationConvention implements MailSendObservationConvention {
 

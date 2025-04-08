@@ -30,6 +30,13 @@ import jakarta.mail.Message;
 import jakarta.mail.MessagingException;
 import jakarta.mail.Message.RecipientType;
 
+/**
+ * Documented {@link io.micrometer.common.KeyValue KeyValues} for the observations on
+ * {@link jakarta.mail.Transport send} of mail messages.
+ *
+ * @since 1.15.0
+ * @author famaridon
+ */
 class MailKeyValues {
 
     /**
