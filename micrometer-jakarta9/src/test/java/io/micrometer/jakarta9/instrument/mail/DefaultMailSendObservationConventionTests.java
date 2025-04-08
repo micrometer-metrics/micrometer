@@ -29,6 +29,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Tests for {@link DefaultMailSendObservationConvention}.
+ *
+ * @author famaridon
  */
 class DefaultMailSendObservationConventionTests {
 

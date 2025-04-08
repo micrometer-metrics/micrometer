@@ -26,6 +26,7 @@ import jakarta.mail.*;
  * {@link Observation}.
  *
  * @since 1.15.0
+ * @author famaridon
  */
 public class InstrumentedTransport extends Transport {
 

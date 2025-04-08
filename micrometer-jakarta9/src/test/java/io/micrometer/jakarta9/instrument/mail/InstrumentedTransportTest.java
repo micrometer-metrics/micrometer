@@ -35,6 +35,8 @@ import static org.mockito.Mockito.when;
 
 /**
  * Tests for {@link InstrumentedTransport}.
+ *
+ * @author famaridon
  */
 class InstrumentedTransportTest {
 

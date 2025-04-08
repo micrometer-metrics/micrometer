@@ -29,6 +29,7 @@ import jakarta.mail.MessagingException;
  * {@link Message#setHeader(String, String) setting a message header}.
  *
  * @since 1.15.0
+ * @author famaridon
  */
 public class MailSendObservationContext extends SenderContext<Message> {
 

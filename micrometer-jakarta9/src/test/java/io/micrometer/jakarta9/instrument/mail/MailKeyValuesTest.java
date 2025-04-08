@@ -39,6 +39,11 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentMatchers;
 import org.mockito.Mockito;
 
+/**
+ * Tests for {@link MailKeyValues}.
+ *
+ * @author famaridon
+ */
 class MailKeyValuesTest {
 
     @Test

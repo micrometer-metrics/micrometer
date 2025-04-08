@@ -17,6 +17,12 @@ package io.micrometer.jakarta9.instrument.mail;
 
 import jakarta.mail.*;
 
+/**
+ * Mock implementation of the SMTP Transport class for testing purposes. This class allows
+ * us to simulate the behavior of an SMTP transport without actually sending emails.
+ *
+ * @author famaridon
+ */
 public class MockSMTPTransport extends Transport {
 
     static MockSMTPTransportListener LISTENER;
