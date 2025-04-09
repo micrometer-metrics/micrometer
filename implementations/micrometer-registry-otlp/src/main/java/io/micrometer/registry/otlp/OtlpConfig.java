@@ -15,6 +15,7 @@
  */
 package io.micrometer.registry.otlp;
 
+import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.config.InvalidConfigurationException;
 import io.micrometer.core.instrument.config.validate.Validated;
 import io.micrometer.core.instrument.push.PushRegistryConfig;
@@ -23,6 +24,7 @@ import java.time.Duration;
 import java.net.URLDecoder;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.*;
@@ -229,15 +231,16 @@ public interface OtlpConfig extends PushRegistryConfig {
 
     /**
      * Configures the histogram flavor to use on a per-meter level. This will override the
-     * {@link #histogramFlavor()} configuration for matching Meters. The key is used to do
-     * an exact match on the Meter's name.
-     * @return mapping of meter name to histogram flavor
+     * {@link #histogramFlavor()} configuration for matching Meters. By default, the key
+     * is used to do an exact match on the Meter's name.
+     * @return mapping of meter ID to histogram flavor
      * @since 1.15.0
      * @see #histogramFlavor()
      */
-    default Map<String, HistogramFlavor> histogramFlavorPerMeter() {
-        return getStringMap(this, "histogramFlavorPerMeter", HistogramFlavor::fromString)
-            .orElse(Collections.emptyMap());
+    default Function<Meter.Id, HistogramFlavor> histogramFlavorPerMeter() {
+        return id -> getStringMap(this, "histogramFlavorPerMeter", HistogramFlavor::fromString)
+            .orElse(Collections.emptyMap())
+            .getOrDefault(id.getName(), histogramFlavor());
     }
 
     /**
@@ -267,15 +270,16 @@ public interface OtlpConfig extends PushRegistryConfig {
 
     /**
      * Configures the max bucket count to use on a per-meter level. This will override the
-     * {@link #maxBucketCount()} configuration for matching Meters. The key is used to do
-     * an exact match on the Meter's name. This has no effect on a meter if it does not
-     * have an exponential bucket histogram configured.
-     * @return mapping of meter name to max bucket count
+     * {@link #maxBucketCount()} configuration for matching Meters. By default, the key is
+     * used to do an exact match on the Meter's name. This has no effect on a meter if it
+     * does not have an exponential bucket histogram configured.
+     * @return mapping of meter ID to max bucket count
      * @since 1.15.0
      * @see #maxBucketCount()
      */
-    default Map<String, Integer> maxBucketsPerMeter() {
-        return getStringMap(this, "maxBucketsPerMeter", Integer::parseInt).orElse(Collections.emptyMap());
+    default Function<Meter.Id, Integer> maxBucketsPerMeter() {
+        return id -> getStringMap(this, "maxBucketsPerMeter", Integer::parseInt).orElse(Collections.emptyMap())
+            .getOrDefault(id.getName(), maxBucketCount());
     }
 
     @Override

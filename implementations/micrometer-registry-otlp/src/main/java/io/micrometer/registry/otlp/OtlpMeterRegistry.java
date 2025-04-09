@@ -430,13 +430,15 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
     }
 
     private int getMaxBuckets(Meter.Id id) {
-        return config.maxBucketsPerMeter().getOrDefault(id.getName(), config.maxBucketCount());
+        Integer perMeterMaxBuckets = config.maxBucketsPerMeter().apply(id);
+        return perMeterMaxBuckets == null ? config.maxBucketCount() : perMeterMaxBuckets;
     }
 
     private HistogramFlavor histogramFlavor(Meter.Id id, OtlpConfig otlpConfig,
             DistributionStatisticConfig distributionStatisticConfig) {
-        HistogramFlavor preferredHistogramFlavor = otlpConfig.histogramFlavorPerMeter()
-            .getOrDefault(id.getName(), otlpConfig.histogramFlavor());
+        HistogramFlavor preferredHistogramFlavor = otlpConfig.histogramFlavorPerMeter().apply(id);
+        preferredHistogramFlavor = preferredHistogramFlavor == null ? otlpConfig.histogramFlavor()
+                : preferredHistogramFlavor;
 
         final double[] serviceLevelObjectiveBoundaries = distributionStatisticConfig
             .getServiceLevelObjectiveBoundaries();

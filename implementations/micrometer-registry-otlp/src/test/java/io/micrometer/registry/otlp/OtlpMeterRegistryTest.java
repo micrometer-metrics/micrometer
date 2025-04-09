@@ -31,6 +31,7 @@ import java.io.IOException;
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -427,8 +428,9 @@ abstract class OtlpMeterRegistryTest {
             }
 
             @Override
-            public Map<String, HistogramFlavor> histogramFlavorPerMeter() {
-                return Collections.singletonMap("expo", HistogramFlavor.BASE2_EXPONENTIAL_BUCKET_HISTOGRAM);
+            public Function<Meter.Id, HistogramFlavor> histogramFlavorPerMeter() {
+                return id -> id.getName().equals("expo") ? HistogramFlavor.BASE2_EXPONENTIAL_BUCKET_HISTOGRAM
+                        : histogramFlavor();
             }
         };
         OtlpMeterRegistry meterRegistry = new OtlpMeterRegistry(config, clock);
@@ -477,8 +479,8 @@ abstract class OtlpMeterRegistryTest {
             }
 
             @Override
-            public Map<String, Integer> maxBucketsPerMeter() {
-                return Collections.singletonMap("low.variation", 15);
+            public Function<Meter.Id, Integer> maxBucketsPerMeter() {
+                return id -> id.getName().equals("low.variation") ? 15 : maxBucketCount();
             }
         };
         OtlpMeterRegistry meterRegistry = new OtlpMeterRegistry(config, clock);

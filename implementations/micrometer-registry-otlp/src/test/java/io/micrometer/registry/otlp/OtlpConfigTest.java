@@ -15,6 +15,8 @@
  */
 package io.micrometer.registry.otlp;
 
+import io.micrometer.core.instrument.Meter;
+import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.config.InvalidConfigurationException;
 import org.junit.jupiter.api.Test;
 
@@ -23,9 +25,10 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 import java.util.stream.Stream;
 
-import static java.util.Map.entry;
+import static io.micrometer.core.instrument.config.validate.PropertyValidator.getStringMap;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static uk.org.webcompere.systemstubs.SystemStubs.withEnvironmentVariable;
@@ -284,9 +287,47 @@ class OtlpConfigTest {
                 "a.b.c=explicit_bucket_histogram ,expo =base2_exponential_bucket_histogram");
         OtlpConfig otlpConfig = properties::get;
         assertThat(otlpConfig.validate().isValid()).isTrue();
-        assertThat(otlpConfig.histogramFlavorPerMeter()).containsExactly(
-                entry("a.b.c", HistogramFlavor.EXPLICIT_BUCKET_HISTOGRAM),
-                entry("expo", HistogramFlavor.BASE2_EXPONENTIAL_BUCKET_HISTOGRAM));
+        assertThat(otlpConfig.histogramFlavorPerMeter().apply(idWithName("a.b.c")))
+            .isEqualTo(HistogramFlavor.EXPLICIT_BUCKET_HISTOGRAM);
+        assertThat(otlpConfig.histogramFlavorPerMeter().apply(idWithName("expo")))
+            .isEqualTo(HistogramFlavor.BASE2_EXPONENTIAL_BUCKET_HISTOGRAM);
+    }
+
+    @Test
+    void customHistogramFlavorPerMeterFunction() {
+        Map<String, String> properties = new HashMap<>();
+        properties.put("otlp.histogramFlavorPerMeter",
+                "a.b.c=explicit_bucket_histogram,expo=base2_exponential_bucket_histogram");
+        OtlpConfig otlpConfig = new OtlpConfig() {
+            @Override
+            public String get(String key) {
+                return properties.get(key);
+            }
+
+            @Override
+            public Function<Meter.Id, HistogramFlavor> histogramFlavorPerMeter() {
+                return id -> {
+                    Map<String, HistogramFlavor> histogramFlavorPerMeter = getStringMap(this, "histogramFlavorPerMeter",
+                            HistogramFlavor::fromString)
+                        .orElse(Collections.emptyMap());
+                    for (Map.Entry<String, HistogramFlavor> entry : histogramFlavorPerMeter.entrySet()) {
+                        if (id.getName().startsWith(entry.getKey())) {
+                            return entry.getValue();
+                        }
+                    }
+                    return histogramFlavor();
+                };
+            }
+        };
+        assertThat(otlpConfig.validate().isValid()).isTrue();
+        assertThat(otlpConfig.histogramFlavorPerMeter().apply(idWithName("something")))
+            .isEqualTo(otlpConfig.histogramFlavor());
+        assertThat(otlpConfig.histogramFlavorPerMeter().apply(idWithName("a.b.c")))
+            .isEqualTo(HistogramFlavor.EXPLICIT_BUCKET_HISTOGRAM);
+        assertThat(otlpConfig.histogramFlavorPerMeter().apply(idWithName("expo")))
+            .isEqualTo(HistogramFlavor.BASE2_EXPONENTIAL_BUCKET_HISTOGRAM);
+        assertThat(otlpConfig.histogramFlavorPerMeter().apply(idWithName("expo.other")))
+            .isEqualTo(HistogramFlavor.BASE2_EXPONENTIAL_BUCKET_HISTOGRAM);
     }
 
     @Test
@@ -295,7 +336,11 @@ class OtlpConfigTest {
         properties.put("otlp.maxBucketsPerMeter", "a.b.c = 10");
         OtlpConfig otlpConfig = properties::get;
         assertThat(otlpConfig.validate().isValid()).isTrue();
-        assertThat(otlpConfig.maxBucketsPerMeter()).containsExactly(entry("a.b.c", 10));
+        assertThat(otlpConfig.maxBucketsPerMeter().apply(idWithName("a.b.c"))).isEqualTo(10);
+    }
+
+    Meter.Id idWithName(String name) {
+        return new Meter.Id(name, Tags.empty(), null, null, Meter.Type.OTHER);
     }
 
 }
