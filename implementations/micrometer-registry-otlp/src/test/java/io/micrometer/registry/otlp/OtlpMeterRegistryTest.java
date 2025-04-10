@@ -16,8 +16,8 @@
 package io.micrometer.registry.otlp;
 
 import io.micrometer.core.Issue;
-import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.ipc.http.HttpSender;
 import io.opentelemetry.proto.metrics.v1.ExponentialHistogramDataPoint;
@@ -31,7 +31,6 @@ import java.io.IOException;
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
 import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -428,8 +427,8 @@ abstract class OtlpMeterRegistryTest {
             }
 
             @Override
-            public Function<Meter.Id, HistogramFlavor> histogramFlavorPerMeter() {
-                return id -> id.getName().equals("expo") ? HistogramFlavor.BASE2_EXPONENTIAL_BUCKET_HISTOGRAM
+            public HistogramFlavor histogramFlavorPerMeter(Meter.Id id) {
+                return id.getName().equals("expo") ? HistogramFlavor.BASE2_EXPONENTIAL_BUCKET_HISTOGRAM
                         : histogramFlavor();
             }
         };
@@ -479,8 +478,8 @@ abstract class OtlpMeterRegistryTest {
             }
 
             @Override
-            public Function<Meter.Id, Integer> maxBucketsPerMeter() {
-                return id -> id.getName().equals("low.variation") ? 15 : maxBucketCount();
+            public Integer maxBucketsPerMeter(Meter.Id id) {
+                return id.getName().equals("low.variation") ? 15 : maxBucketCount();
             }
         };
         OtlpMeterRegistry meterRegistry = new OtlpMeterRegistry(config, clock);
