@@ -215,7 +215,7 @@ dependencies {
     testImplementation libs.aspectjweaver
 }
 
-task shenandoahTest(type: Test) {
+tasks.register("shenandoahTest", Test) {
     // set heap size for the test JVM(s)
     maxHeapSize = "1500m"
 
@@ -226,7 +226,7 @@ task shenandoahTest(type: Test) {
     jvmArgs '-XX:+UseShenandoahGC'
 }
 
-task zgcTest(type: Test) {
+tasks.register("zgcTest", Test) {
     // set heap size for the test JVM(s)
     maxHeapSize = "1500m"
 
@@ -237,7 +237,7 @@ task zgcTest(type: Test) {
     jvmArgs '-XX:+UseZGC'
 }
 
-task zgcGenerationalTest(type: Test) {
+tasks.register("zgcGenerationalTest", Test) {
     // set heap size for the test JVM(s)
     maxHeapSize = "1500m"
 
@@ -248,7 +248,7 @@ task zgcGenerationalTest(type: Test) {
     jvmArgs '-XX:+UseZGC', '-XX:+ZGenerational'
 }
 
-task openj9BalancedTest(type: Test) {
+tasks.register("openj9BalancedTest", Test) {
     // set heap size for the test JVM(s)
     maxHeapSize = "1500m"
 
@@ -259,7 +259,7 @@ task openj9BalancedTest(type: Test) {
     jvmArgs '-Xgcpolicy:balanced'
 }
 
-task openj9ConcurrentScavengeTest(type: Test) {
+tasks.register("openj9ConcurrentScavengeTest", Test) {
     // set heap size for the test JVM(s)
     maxHeapSize = "1500m"
 

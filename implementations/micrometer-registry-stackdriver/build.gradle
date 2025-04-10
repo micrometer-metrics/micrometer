@@ -23,7 +23,7 @@ test {
     }
 }
 
-task stackdriverTest(type: Test) {
+tasks.register("stackdriverTest", Test) {
     useJUnitPlatform {
         includeTags 'gcp-it'
     }
