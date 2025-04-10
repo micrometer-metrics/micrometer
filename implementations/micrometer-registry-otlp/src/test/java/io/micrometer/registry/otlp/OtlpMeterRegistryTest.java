@@ -16,8 +16,8 @@
 package io.micrometer.registry.otlp;
 
 import io.micrometer.core.Issue;
-import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.ipc.http.HttpSender;
 import io.opentelemetry.proto.metrics.v1.ExponentialHistogramDataPoint;
@@ -427,8 +427,9 @@ abstract class OtlpMeterRegistryTest {
             }
 
             @Override
-            public Map<String, HistogramFlavor> histogramFlavorPerMeter() {
-                return Collections.singletonMap("expo", HistogramFlavor.BASE2_EXPONENTIAL_BUCKET_HISTOGRAM);
+            public HistogramFlavor histogramFlavorPerMeter(Meter.Id id) {
+                return id.getName().equals("expo") ? HistogramFlavor.BASE2_EXPONENTIAL_BUCKET_HISTOGRAM
+                        : histogramFlavor();
             }
         };
         OtlpMeterRegistry meterRegistry = new OtlpMeterRegistry(config, clock);
@@ -477,8 +478,8 @@ abstract class OtlpMeterRegistryTest {
             }
 
             @Override
-            public Map<String, Integer> maxBucketsPerMeter() {
-                return Collections.singletonMap("low.variation", 15);
+            public Integer maxBucketsPerMeter(Meter.Id id) {
+                return id.getName().equals("low.variation") ? 15 : maxBucketCount();
             }
         };
         OtlpMeterRegistry meterRegistry = new OtlpMeterRegistry(config, clock);

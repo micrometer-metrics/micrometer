@@ -18,8 +18,8 @@ package io.micrometer.registry.otlp;
 import io.micrometer.common.lang.Nullable;
 import io.micrometer.common.util.internal.logging.InternalLogger;
 import io.micrometer.common.util.internal.logging.InternalLoggerFactory;
-import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.distribution.*;
 import io.micrometer.core.instrument.distribution.pause.PauseDetector;
@@ -430,13 +430,15 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
     }
 
     private int getMaxBuckets(Meter.Id id) {
-        return config.maxBucketsPerMeter().getOrDefault(id.getName(), config.maxBucketCount());
+        Integer perMeterMaxBuckets = config.maxBucketsPerMeter(id);
+        return perMeterMaxBuckets == null ? config.maxBucketCount() : perMeterMaxBuckets;
     }
 
     private HistogramFlavor histogramFlavor(Meter.Id id, OtlpConfig otlpConfig,
             DistributionStatisticConfig distributionStatisticConfig) {
-        HistogramFlavor preferredHistogramFlavor = otlpConfig.histogramFlavorPerMeter()
-            .getOrDefault(id.getName(), otlpConfig.histogramFlavor());
+        HistogramFlavor preferredHistogramFlavor = otlpConfig.histogramFlavorPerMeter(id);
+        preferredHistogramFlavor = preferredHistogramFlavor == null ? otlpConfig.histogramFlavor()
+                : preferredHistogramFlavor;
 
         final double[] serviceLevelObjectiveBoundaries = distributionStatisticConfig
             .getServiceLevelObjectiveBoundaries();
