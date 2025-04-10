@@ -54,11 +54,42 @@ To use the following `ExecutorService` instances, `--add-opens java.base/java.ut
 
 == Java 21 Metrics
 
-Micrometer provides support for https://openjdk.org/jeps/444[virtual threads] released in Java 21. In order to utilize it, you need to add the `io.micrometer:micrometer-java21` dependency to your classpath to use the binder:
+=== Virtual Threads
+
+Micrometer provides metrics for https://openjdk.org/jeps/444[virtual threads] released in Java 21. In order to utilize it, you need to add the `io.micrometer:micrometer-java21` dependency to your classpath to use the binder:
 
 [source, java]
 ----
 new VirtualThreadMetrics().bindTo(registry);
 ----
 
-The binder measures the duration (and counts the number of events) of virtual threads being pinned; also counts the number of events when starting or unparking a virtual thread failed.
+The binder measures the duration (and counts the number of events) of virtual threads being pinned; it also counts the number of events when starting or unparking a virtual thread failed.
+
+If you are running your application with Java 24 or later on a JVM that has `jdk.management.VirtualThreadSchedulerMXBean` provided as a platform MXBean, the following additional virtual thread metrics will be provided.
+
+
+|===
+|Meter name | Type | Tag(s) | Description
+
+|`jvm.threads.virtual.parallelism`
+|Gauge
+|
+|Virtual thread scheduler's target parallelism
+
+|`jvm.threads.virtual.pool.size`
+|Gauge
+|
+|Current number of platform threads that the scheduler has started but have not terminated; -1 if not known.
+
+|`jvm.threads.virtual.live`
+|Gauge
+|`scheduling.status` = `mounted`
+|Approximate current number of virtual threads that are unfinished and mounted to a platform thread by the scheduler
+
+|`jvm.threads.virtual.live`
+|Gauge
+|`scheduling.status` = `queued`
+|Approximate current number of virtual threads that are unfinished and queued waiting to be scheduled
+|===
+
+Note that aggregating the values of `jvm.threads.virtual.live` across the different tags gives the total number of virtual threads started but not ended.

@@ -76,6 +76,7 @@ jobs:
     executor: circle-jdk-executor
     steps:
       - gradlew-build
+      - run: ./gradlew jdk24Test
       - run: ./gradlew shenandoahTest
       - run: ./gradlew zgcTest
       - run: ./gradlew zgcGenerationalTest
