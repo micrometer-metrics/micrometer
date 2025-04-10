@@ -31,7 +31,7 @@ dependencies {
 	adoc "io.micrometer:micrometer-docs-generator:$micrometerDocsVersion"
 }
 
-task generateObservabilityDocs(type: JavaExec) {
+tasks.register("generateObservabilityDocs", JavaExec) {
 	mainClass = "io.micrometer.docs.DocsGeneratorCommand"
 	classpath configurations.adoc
 	// input folder, inclusion pattern, output folder

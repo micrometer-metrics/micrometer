@@ -199,7 +199,7 @@ subprojects {
             }
         }
 
-        task dockerTest(type: Test) {
+        tasks.register("dockerTest", Test) {
             // set heap size for the test JVM(s)
             maxHeapSize = "1500m"
 
@@ -340,7 +340,7 @@ subprojects {
                 }
             }
 
-            task testModules(type: Exec) {
+            tasks.register("testModules", Exec) {
                 dependsOn jar
                 String executablePath = javaToolchains.launcherFor { languageVersion = javaLanguageVersion }.get().executablePath
                 commandLine "$executablePath", '-p', "$jar.archivePath", '--list-modules'
@@ -360,7 +360,7 @@ subprojects {
                 apply plugin: 'me.champeau.gradle.japicmp'
                 apply plugin: 'de.undercouch.download'
 
-                task downloadBaseline(type: Download) {
+                tasks.register("downloadBaseline", Download) {
                     onlyIf {
                         if (project.gradle.startParameter.isOffline()) {
                             println 'Offline: skipping downloading of baseline and JAPICMP'
@@ -389,7 +389,7 @@ subprojects {
                     dest layout.buildDirectory.file("baselineLibs/${project.name}-${compatibleVersion}.jar")
                 }
 
-                task japicmp(type: me.champeau.gradle.japicmp.JapicmpTask) {
+                tasks.register("japicmp", me.champeau.gradle.japicmp.JapicmpTask) {
                     oldClasspath.from(layout.buildDirectory.file("baselineLibs/${project.name}-${compatibleVersion}.jar"))
                     newClasspath.from(files(jar.archiveFile, project(":${project.name}").jar))
                     onlyBinaryIncompatibleModified = true
