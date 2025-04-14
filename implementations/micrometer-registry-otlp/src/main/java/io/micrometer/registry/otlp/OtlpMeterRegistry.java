@@ -51,7 +51,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Supplier;
 import java.util.function.ToDoubleFunction;
 import java.util.function.ToLongFunction;
 
@@ -118,7 +117,7 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
      */
     public OtlpMeterRegistry(OtlpConfig config, Clock clock, ThreadFactory threadFactory) {
         this(config, clock, threadFactory, new OtlpHttpMetricsSender(new HttpUrlConnectionSender()),
-                OtlpMeterRegistry::histogramFlavorPerMeter, OtlpMeterRegistry::maxBucketsPerMeter);
+                HistogramFlavorPerMeterLookup.DEFAULT, MaxBucketsPerMeterLookup.DEFAULT);
     }
 
     private OtlpMeterRegistry(OtlpConfig config, Clock clock, ThreadFactory threadFactory,
@@ -440,12 +439,16 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
     }
 
     private int getMaxBuckets(Meter.Id id) {
-        return maxBucketsPerMeterLookup.getMaxBuckets(config, id);
+        Integer maxBuckets = maxBucketsPerMeterLookup.getMaxBuckets(config.maxBucketsPerMeter(), id);
+        return (maxBuckets == null) ? config.maxBucketCount() : maxBuckets;
     }
 
     private HistogramFlavor histogramFlavor(Meter.Id id, OtlpConfig otlpConfig,
             DistributionStatisticConfig distributionStatisticConfig) {
-        HistogramFlavor preferredHistogramFlavor = histogramFlavorPerMeterLookup.getHistogramFlavor(otlpConfig, id);
+        HistogramFlavor preferredHistogramFlavor = histogramFlavorPerMeterLookup
+            .getHistogramFlavor(otlpConfig.histogramFlavorPerMeter(), id);
+        preferredHistogramFlavor = preferredHistogramFlavor == null ? otlpConfig.histogramFlavor()
+                : preferredHistogramFlavor;
         final double[] serviceLevelObjectiveBoundaries = distributionStatisticConfig
             .getServiceLevelObjectiveBoundaries();
         if (distributionStatisticConfig.isPublishingHistogram()
@@ -505,37 +508,6 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
         return sloWithPositiveInf;
     }
 
-    // VisibleForTesting
-    static HistogramFlavor histogramFlavorPerMeter(OtlpConfig config, Meter.Id id) {
-        return lookup(config.histogramFlavorPerMeter(), id, config.histogramFlavor());
-    }
-
-    // VisibleForTesting
-    static Integer maxBucketsPerMeter(OtlpConfig config, Meter.Id id) {
-        return lookup(config.maxBucketsPerMeter(), id, config.maxBucketCount());
-    }
-
-    private static <T> T lookup(Map<String, T> values, Meter.Id id, T defaultValue) {
-        if (values.isEmpty()) {
-            return defaultValue;
-        }
-        return doLookup(values, id, () -> defaultValue);
-    }
-
-    private static <T> T doLookup(Map<String, T> values, Meter.Id id, Supplier<T> defaultValue) {
-        String name = id.getName();
-        while (StringUtils.isNotEmpty(name)) {
-            T result = values.get(name);
-            if (result != null) {
-                return result;
-            }
-            int lastDot = name.lastIndexOf('.');
-            name = (lastDot != -1) ? name.substring(0, lastDot) : "";
-        }
-
-        return defaultValue.get();
-    }
-
     /**
      * Overridable lookup mechanism for {@link HistogramFlavor}.
      *
@@ -545,17 +517,25 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
     public interface HistogramFlavorPerMeterLookup {
 
         /**
+         * Default implementation.
+         */
+        HistogramFlavorPerMeterLookup DEFAULT = OtlpMeterRegistry::lookup;
+
+        /**
          * Looks up the histogram flavor to use on a per-meter level. This will override
-         * the {@link OtlpConfig#histogramFlavor()} for matching Meters.
+         * the default {@link OtlpConfig#histogramFlavor()} for matching Meters.
          * {@link OtlpConfig#histogramFlavorPerMeter()} provides the data while this
          * method provides the logic for the lookup, and you can override them
          * independently.
+         * @param perMeterMapping configured mapping data
          * @param id the {@link Meter.Id} the {@link HistogramFlavor} is configured for
-         * @return the histogram flavor mapped to the {@link Meter.Id}
+         * @return the histogram flavor mapped to the {@link Meter.Id} or {@code null} if
+         * mapping is undefined
          * @see OtlpConfig#histogramFlavorPerMeter()
          * @see OtlpConfig#histogramFlavor()
          */
-        HistogramFlavor getHistogramFlavor(OtlpConfig config, Meter.Id id);
+        @Nullable
+        HistogramFlavor getHistogramFlavor(Map<String, HistogramFlavor> perMeterMapping, Meter.Id id);
 
     }
 
@@ -569,19 +549,50 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
     public interface MaxBucketsPerMeterLookup {
 
         /**
+         * Default implementation.
+         */
+        MaxBucketsPerMeterLookup DEFAULT = OtlpMeterRegistry::lookup;
+
+        /**
          * Looks up the max bucket count to use on a per-meter level. This will override
-         * the {@link OtlpConfig#maxBucketCount()} for matching Meters.
+         * the default {@link OtlpConfig#maxBucketCount()} for matching Meters.
          * {@link OtlpConfig#maxBucketsPerMeter()} provides the data while this method
          * provides the logic for the lookup, and you can override them independently.
          * This has no effect on a meter if it does not have an exponential bucket
          * histogram configured.
+         * @param perMeterMapping configured mapping data
          * @param id the {@link Meter.Id} the max bucket count is configured for
-         * @return the max bucket count mapped to the {@link Meter.Id}
+         * @return the max bucket count mapped to the {@link Meter.Id} or {@code null} if
+         * the mapping is undefined
          * @see OtlpConfig#maxBucketsPerMeter()
          * @see OtlpConfig#maxBucketCount()
          */
-        Integer getMaxBuckets(OtlpConfig config, Meter.Id id);
+        @Nullable
+        Integer getMaxBuckets(Map<String, Integer> perMeterMapping, Meter.Id id);
 
+    }
+
+    @Nullable
+    private static <T> T lookup(Map<String, T> values, Meter.Id id) {
+        if (values.isEmpty()) {
+            return null;
+        }
+        return doLookup(values, id);
+    }
+
+    @Nullable
+    private static <T> T doLookup(Map<String, T> values, Meter.Id id) {
+        String name = id.getName();
+        while (StringUtils.isNotEmpty(name)) {
+            T result = values.get(name);
+            if (result != null) {
+                return result;
+            }
+            int lastDot = name.lastIndexOf('.');
+            name = (lastDot != -1) ? name.substring(0, lastDot) : "";
+        }
+
+        return null;
     }
 
     /**
@@ -606,8 +617,8 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
         private Builder(OtlpConfig otlpConfig) {
             this.otlpConfig = otlpConfig;
             this.metricsSender = new OtlpHttpMetricsSender(new HttpUrlConnectionSender());
-            this.histogramFlavorPerMeterLookup = OtlpMeterRegistry::histogramFlavorPerMeter;
-            this.maxBucketsPerMeterLookup = OtlpMeterRegistry::maxBucketsPerMeter;
+            this.histogramFlavorPerMeterLookup = HistogramFlavorPerMeterLookup.DEFAULT;
+            this.maxBucketsPerMeterLookup = MaxBucketsPerMeterLookup.DEFAULT;
         }
 
         /** Override the default clock. */

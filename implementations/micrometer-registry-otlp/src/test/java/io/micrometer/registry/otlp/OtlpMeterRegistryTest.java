@@ -542,8 +542,8 @@ abstract class OtlpMeterRegistryTest {
         };
         OtlpMeterRegistry meterRegistry = OtlpMeterRegistry.builder(config)
             .clock(clock)
-            .histogramFlavorPerMeterLookup((cfg, id) -> id.getName().startsWith("e")
-                    ? BASE2_EXPONENTIAL_BUCKET_HISTOGRAM : cfg.histogramFlavor())
+            .histogramFlavorPerMeterLookup((pmp, id) -> id.getName().startsWith("e")
+                    ? BASE2_EXPONENTIAL_BUCKET_HISTOGRAM : config.histogramFlavor())
             .build();
 
         Timer expo = Timer.builder("expo").publishPercentileHistogram().register(meterRegistry);
@@ -600,8 +600,8 @@ abstract class OtlpMeterRegistryTest {
         };
         OtlpMeterRegistry meterRegistry = OtlpMeterRegistry.builder(config)
             .clock(clock)
-            .histogramFlavorPerMeterLookup((cfg, id) -> id.getName().startsWith("e")
-                    ? BASE2_EXPONENTIAL_BUCKET_HISTOGRAM : cfg.histogramFlavor())
+            .histogramFlavorPerMeterLookup((pmp, id) -> id.getName().startsWith("e")
+                    ? BASE2_EXPONENTIAL_BUCKET_HISTOGRAM : config.histogramFlavor())
             .build();
 
         Timer expo = Timer.builder("expo").publishPercentileHistogram().register(meterRegistry);
@@ -781,7 +781,7 @@ abstract class OtlpMeterRegistryTest {
         };
         OtlpMeterRegistry meterRegistry = OtlpMeterRegistry.builder(config)
             .clock(clock)
-            .maxBucketsPerMeterLookup((cfg, id) -> id.getName().equals("low.variation") ? 15 : cfg.maxBucketCount())
+            .maxBucketsPerMeterLookup((pmp, id) -> id.getName().equals("low.variation") ? 15 : config.maxBucketCount())
             .build();
 
         Timer lowVariation = Timer.builder("low.variation").publishPercentileHistogram().register(meterRegistry);
@@ -864,7 +864,7 @@ abstract class OtlpMeterRegistryTest {
         };
         OtlpMeterRegistry meterRegistry = OtlpMeterRegistry.builder(config)
             .clock(clock)
-            .maxBucketsPerMeterLookup((cfg, id) -> id.getName().equals("low.variation") ? 15 : cfg.maxBucketCount())
+            .maxBucketsPerMeterLookup((pmp, id) -> id.getName().equals("low.variation") ? 15 : config.maxBucketCount())
             .build();
         Timer lowVariation = Timer.builder("low.variation").publishPercentileHistogram().register(meterRegistry);
         Timer lowVariationOther = Timer.builder("low.variation.other")
@@ -919,19 +919,9 @@ abstract class OtlpMeterRegistryTest {
         Map<String, HistogramFlavor> histogramFlavorPerMeter = new HashMap<>();
         histogramFlavorPerMeter.put("http", EXPLICIT_BUCKET_HISTOGRAM);
         histogramFlavorPerMeter.put("http.server", BASE2_EXPONENTIAL_BUCKET_HISTOGRAM);
-        OtlpConfig config = new OtlpConfig() {
-            @Override
-            public String get(String key) {
-                return null;
-            }
 
-            @Override
-            public Map<String, HistogramFlavor> histogramFlavorPerMeter() {
-                return histogramFlavorPerMeter;
-            }
-        };
-
-        assertThat(OtlpMeterRegistry.histogramFlavorPerMeter(config, createIdWithName("http.server.requests")))
+        assertThat(OtlpMeterRegistry.HistogramFlavorPerMeterLookup.DEFAULT.getHistogramFlavor(histogramFlavorPerMeter,
+                createIdWithName("http.server.requests")))
             .isEqualTo(BASE2_EXPONENTIAL_BUCKET_HISTOGRAM);
     }
 
@@ -940,19 +930,9 @@ abstract class OtlpMeterRegistryTest {
         Map<String, Integer> maxBucketsPerMeter = new HashMap<>();
         maxBucketsPerMeter.put("http", 10);
         maxBucketsPerMeter.put("http.server", 20);
-        OtlpConfig config = new OtlpConfig() {
-            @Override
-            public String get(String key) {
-                return null;
-            }
 
-            @Override
-            public Map<String, Integer> maxBucketsPerMeter() {
-                return maxBucketsPerMeter;
-            }
-        };
-
-        assertThat(OtlpMeterRegistry.maxBucketsPerMeter(config, createIdWithName("http.server.requests")))
+        assertThat(OtlpMeterRegistry.MaxBucketsPerMeterLookup.DEFAULT.getMaxBuckets(maxBucketsPerMeter,
+                createIdWithName("http.server.requests")))
             .isEqualTo(20);
     }
 
