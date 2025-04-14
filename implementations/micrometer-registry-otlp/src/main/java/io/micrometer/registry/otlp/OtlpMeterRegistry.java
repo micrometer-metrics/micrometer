@@ -637,11 +637,35 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
             return this;
         }
 
+        /**
+         * Override the default matching behavior to use with
+         * {@link OtlpConfig#histogramFlavorPerMeter()}. The default behavior is longest
+         * dot-separated match wins. For example, if
+         * {@link OtlpConfig#histogramFlavorPerMeter()} has keys {@literal http} and
+         * {@literal http.server}, an ID with a name {@literal http.server.requests} would
+         * match with the entry having key {@literal http.server}, whereas an ID with name
+         * {@literal http.client.requests} would match with the entry having the key
+         * {@literal http}.
+         *
+         * @see OtlpConfig#histogramFlavorPerMeter()
+         */
         public Builder histogramFlavorPerMeterLookup(HistogramFlavorPerMeterLookup histogramFlavorPerMeterLookup) {
             this.histogramFlavorPerMeterLookup = histogramFlavorPerMeterLookup;
             return this;
         }
 
+        /**
+         * Override the default matching behavior to use with
+         * {@link OtlpConfig#maxBucketsPerMeter()}. The default behavior is longest
+         * dot-separated match wins. For example, if
+         * {@link OtlpConfig#maxBucketsPerMeter()} has keys {@literal http} and
+         * {@literal http.server}, an ID with a name {@literal http.server.requests} would
+         * match with the entry having key {@literal http.server}, whereas an ID with name
+         * {@literal http.client.requests} would match with the entry having the key
+         * {@literal http}.
+         *
+         * @see OtlpConfig#maxBucketsPerMeter()
+         */
         public Builder maxBucketsPerMeterLookup(MaxBucketsPerMeterLookup maxBucketsPerMeterLookup) {
             this.maxBucketsPerMeterLookup = maxBucketsPerMeterLookup;
             return this;
