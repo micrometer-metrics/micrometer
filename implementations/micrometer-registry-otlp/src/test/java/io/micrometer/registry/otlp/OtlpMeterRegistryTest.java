@@ -914,6 +914,52 @@ abstract class OtlpMeterRegistryTest {
             .hasSize(56);
     }
 
+    @Test
+    void longestMatchWinsByDefaultHistogramFlavorPerMeter() {
+        Map<String, HistogramFlavor> histogramFlavorPerMeter = new HashMap<>();
+        histogramFlavorPerMeter.put("http", EXPLICIT_BUCKET_HISTOGRAM);
+        histogramFlavorPerMeter.put("http.server", BASE2_EXPONENTIAL_BUCKET_HISTOGRAM);
+        OtlpConfig config = new OtlpConfig() {
+            @Override
+            public String get(String key) {
+                return null;
+            }
+
+            @Override
+            public Map<String, HistogramFlavor> histogramFlavorPerMeter() {
+                return histogramFlavorPerMeter;
+            }
+        };
+
+        assertThat(OtlpMeterRegistry.histogramFlavorPerMeter(config, createIdWithName("http.server.requests")))
+            .isEqualTo(BASE2_EXPONENTIAL_BUCKET_HISTOGRAM);
+    }
+
+    @Test
+    void longestMatchWinsByDefaultMaxBucketsPerMeter() {
+        Map<String, Integer> maxBucketsPerMeter = new HashMap<>();
+        maxBucketsPerMeter.put("http", 10);
+        maxBucketsPerMeter.put("http.server", 20);
+        OtlpConfig config = new OtlpConfig() {
+            @Override
+            public String get(String key) {
+                return null;
+            }
+
+            @Override
+            public Map<String, Integer> maxBucketsPerMeter() {
+                return maxBucketsPerMeter;
+            }
+        };
+
+        assertThat(OtlpMeterRegistry.maxBucketsPerMeter(config, createIdWithName("http.server.requests")))
+            .isEqualTo(20);
+    }
+
+    private Meter.Id createIdWithName(String name) {
+        return new Meter.Id(name, Tags.empty(), null, null, Meter.Type.OTHER);
+    }
+
     protected Metric writeToMetric(Meter meter) {
         OtlpMetricConverter otlpMetricConverter = new OtlpMetricConverter(clock, otlpConfig().step(),
                 registry.getBaseTimeUnit(), otlpConfig().aggregationTemporality(),

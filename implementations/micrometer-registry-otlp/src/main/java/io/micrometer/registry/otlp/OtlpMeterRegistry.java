@@ -16,6 +16,7 @@
 package io.micrometer.registry.otlp;
 
 import io.micrometer.common.lang.Nullable;
+import io.micrometer.common.util.StringUtils;
 import io.micrometer.common.util.internal.logging.InternalLogger;
 import io.micrometer.common.util.internal.logging.InternalLoggerFactory;
 import io.micrometer.core.instrument.*;
@@ -50,6 +51,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 import java.util.function.ToDoubleFunction;
 import java.util.function.ToLongFunction;
 
@@ -503,22 +505,35 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
         return sloWithPositiveInf;
     }
 
-    private static HistogramFlavor histogramFlavorPerMeter(OtlpConfig config, Meter.Id id) {
-        for (Map.Entry<String, HistogramFlavor> entry : config.histogramFlavorPerMeter().entrySet()) {
-            if (id.getName().startsWith(entry.getKey())) {
-                return entry.getValue();
-            }
-        }
-        return config.histogramFlavor();
+    // VisibleForTesting
+    static HistogramFlavor histogramFlavorPerMeter(OtlpConfig config, Meter.Id id) {
+        return lookup(config.histogramFlavorPerMeter(), id, config.histogramFlavor());
     }
 
-    private static Integer maxBucketsPerMeter(OtlpConfig config, Meter.Id id) {
-        for (Map.Entry<String, Integer> entry : config.maxBucketsPerMeter().entrySet()) {
-            if (id.getName().startsWith(entry.getKey())) {
-                return entry.getValue();
-            }
+    // VisibleForTesting
+    static Integer maxBucketsPerMeter(OtlpConfig config, Meter.Id id) {
+        return lookup(config.maxBucketsPerMeter(), id, config.maxBucketCount());
+    }
+
+    private static <T> T lookup(Map<String, T> values, Meter.Id id, T defaultValue) {
+        if (values.isEmpty()) {
+            return defaultValue;
         }
-        return config.maxBucketCount();
+        return doLookup(values, id, () -> defaultValue);
+    }
+
+    private static <T> T doLookup(Map<String, T> values, Meter.Id id, Supplier<T> defaultValue) {
+        String name = id.getName();
+        while (StringUtils.isNotEmpty(name)) {
+            T result = values.get(name);
+            if (result != null) {
+                return result;
+            }
+            int lastDot = name.lastIndexOf('.');
+            name = (lastDot != -1) ? name.substring(0, lastDot) : "";
+        }
+
+        return defaultValue.get();
     }
 
     /**
