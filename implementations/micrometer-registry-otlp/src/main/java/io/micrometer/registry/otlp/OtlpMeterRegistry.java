@@ -546,11 +546,9 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
 
         /**
          * Looks up the histogram flavor to use on a per-meter level. This will override
-         * the {@link OtlpConfig#histogramFlavor()} for matching Meters. The default
-         * implementation in {@link OtlpMeterRegistry} does a prefix match on the Meter's
-         * name in the map that {@link OtlpConfig#histogramFlavorPerMeter()} returns. This
-         * means that {@link OtlpConfig#histogramFlavorPerMeter()} provides the data while
-         * this method provides the logic for the lookup, and you can override them
+         * the {@link OtlpConfig#histogramFlavor()} for matching Meters.
+         * {@link OtlpConfig#histogramFlavorPerMeter()} provides the data while this
+         * method provides the logic for the lookup, and you can override them
          * independently.
          * @param id the {@link Meter.Id} the {@link HistogramFlavor} is configured for
          * @return the histogram flavor mapped to the {@link Meter.Id}
@@ -572,13 +570,11 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
 
         /**
          * Looks up the max bucket count to use on a per-meter level. This will override
-         * the {@link OtlpConfig#maxBucketCount()} for matching Meters. The default
-         * implementation in {@link OtlpMeterRegistry} does a prefix match on the Meter's
-         * name in the map that {@link OtlpConfig#maxBucketsPerMeter()} returns. This
-         * means that {@link OtlpConfig#maxBucketsPerMeter()} provides the data while this
-         * method provides the logic for the lookup, and you can override them
-         * independently. This has no effect on a meter if it does not have an exponential
-         * bucket histogram configured.
+         * the {@link OtlpConfig#maxBucketCount()} for matching Meters.
+         * {@link OtlpConfig#maxBucketsPerMeter()} provides the data while this method
+         * provides the logic for the lookup, and you can override them independently.
+         * This has no effect on a meter if it does not have an exponential bucket
+         * histogram configured.
          * @param id the {@link Meter.Id} the max bucket count is configured for
          * @return the max bucket count mapped to the {@link Meter.Id}
          * @see OtlpConfig#maxBucketsPerMeter()
