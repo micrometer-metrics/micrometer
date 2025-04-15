@@ -25,6 +25,10 @@ package io.micrometer.core.testsupport.system;
  * assertThat(output.getErr()).contains("failed"); // Only checks System.err
  * assertThat(output.getOut()).contains("ok"); // Only checks System.out
  * </pre>
+ * <p>
+ * Copied from <a href=
+ * "https://github.com/spring-projects/spring-boot/blob/88c9ae97b5638491964537bb5b1f7dfbea1ae047/spring-boot-project/spring-boot-test/src/main/java/org/springframework/boot/test/system/CapturedOutput.java">org.springframework.boot.test.system.CapturedOutput</a>
+ * in Spring Boot.
  *
  * @author Madhura Bhave
  * @author Phillip Webb

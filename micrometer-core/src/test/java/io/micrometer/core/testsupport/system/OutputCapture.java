@@ -32,6 +32,10 @@ import java.util.function.Predicate;
 /**
  * Provides support for capturing {@link System#out System.out} and {@link System#err
  * System.err}.
+ * <p>
+ * Copied from <a href=
+ * "https://github.com/spring-projects/spring-boot/blob/88c9ae97b5638491964537bb5b1f7dfbea1ae047/spring-boot-project/spring-boot-test/src/main/java/org/springframework/boot/test/system/OutputCapture.java">org.springframework.boot.test.system.OutputCapture</a>
+ * in Spring Boot and dropped {@code AnsiOutput} support for simple use.
  *
  * @author Madhura Bhave
  * @author Phillip Webb

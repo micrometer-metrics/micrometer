@@ -73,6 +73,10 @@ import org.junit.jupiter.api.extension.ExtensionContext.Store;
  *     &lt;/Console&gt;
 *  &lt;/Appenders&gt;
  * </pre>
+ * <p>
+ * Copied from <a href=
+ * "https://github.com/spring-projects/spring-boot/blob/88c9ae97b5638491964537bb5b1f7dfbea1ae047/spring-boot-project/spring-boot-test/src/main/java/org/springframework/boot/test/system/OutputCaptureExtension.java">org.springframework.boot.test.system.OutputCaptureExtension</a>
+ * in Spring Boot.
  *
  * @author Madhura Bhave
  * @author Phillip Webb
