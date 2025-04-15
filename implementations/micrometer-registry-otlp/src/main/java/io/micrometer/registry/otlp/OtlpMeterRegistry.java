@@ -116,19 +116,17 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
      * @since 1.14.0
      */
     public OtlpMeterRegistry(OtlpConfig config, Clock clock, ThreadFactory threadFactory) {
-        this(config, clock, threadFactory, new OtlpHttpMetricsSender(new HttpUrlConnectionSender()),
-                HistogramFlavorPerMeterLookup.DEFAULT, MaxBucketsPerMeterLookup.DEFAULT);
+        this(config, clock, threadFactory, new OtlpHttpMetricsSender(new HttpUrlConnectionSender()));
     }
 
     private OtlpMeterRegistry(OtlpConfig config, Clock clock, ThreadFactory threadFactory,
-            OtlpMetricsSender metricsSender, HistogramFlavorPerMeterLookup histogramFlavorPerMeterLookup,
-            MaxBucketsPerMeterLookup maxBucketsPerMeterLookup) {
+            OtlpMetricsSender metricsSender) {
         super(config, clock);
         this.config = config;
         this.baseTimeUnit = config.baseTimeUnit();
         this.metricsSender = metricsSender;
-        this.histogramFlavorPerMeterLookup = histogramFlavorPerMeterLookup;
-        this.maxBucketsPerMeterLookup = maxBucketsPerMeterLookup;
+        this.histogramFlavorPerMeterLookup = HistogramFlavorPerMeterLookup.DEFAULT;
+        this.maxBucketsPerMeterLookup = MaxBucketsPerMeterLookup.DEFAULT;
         this.resource = Resource.newBuilder().addAllAttributes(getResourceAttributes()).build();
         this.aggregationTemporality = config.aggregationTemporality();
         config().namingConvention(NamingConvention.dot);
@@ -510,11 +508,10 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
 
     /**
      * Overridable lookup mechanism for {@link HistogramFlavor}.
-     *
-     * @since 1.15.0
      */
+    // VisibleForTesting
     @FunctionalInterface
-    public interface HistogramFlavorPerMeterLookup {
+    interface HistogramFlavorPerMeterLookup {
 
         /**
          * Default implementation.
@@ -542,11 +539,10 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
     /**
      * Overridable lookup mechanism for max bucket count. This has no effect on a meter if
      * it does not have an exponential bucket histogram configured.
-     *
-     * @since 1.15.0
      */
+    // VisibleForTesting
     @FunctionalInterface
-    public interface MaxBucketsPerMeterLookup {
+    interface MaxBucketsPerMeterLookup {
 
         /**
          * Default implementation.
@@ -610,15 +606,9 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
 
         private OtlpMetricsSender metricsSender;
 
-        private HistogramFlavorPerMeterLookup histogramFlavorPerMeterLookup;
-
-        private MaxBucketsPerMeterLookup maxBucketsPerMeterLookup;
-
         private Builder(OtlpConfig otlpConfig) {
             this.otlpConfig = otlpConfig;
             this.metricsSender = new OtlpHttpMetricsSender(new HttpUrlConnectionSender());
-            this.histogramFlavorPerMeterLookup = HistogramFlavorPerMeterLookup.DEFAULT;
-            this.maxBucketsPerMeterLookup = MaxBucketsPerMeterLookup.DEFAULT;
         }
 
         /** Override the default clock. */
@@ -644,43 +634,8 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
             return this;
         }
 
-        /**
-         * Override the default matching behavior to use with
-         * {@link OtlpConfig#histogramFlavorPerMeter()}. The default behavior is longest
-         * dot-separated match wins. For example, if
-         * {@link OtlpConfig#histogramFlavorPerMeter()} has keys {@literal http} and
-         * {@literal http.server}, an ID with a name {@literal http.server.requests} would
-         * match with the entry having key {@literal http.server}, whereas an ID with name
-         * {@literal http.client.requests} would match with the entry having the key
-         * {@literal http}.
-         *
-         * @see OtlpConfig#histogramFlavorPerMeter()
-         */
-        public Builder histogramFlavorPerMeterLookup(HistogramFlavorPerMeterLookup histogramFlavorPerMeterLookup) {
-            this.histogramFlavorPerMeterLookup = histogramFlavorPerMeterLookup;
-            return this;
-        }
-
-        /**
-         * Override the default matching behavior to use with
-         * {@link OtlpConfig#maxBucketsPerMeter()}. The default behavior is longest
-         * dot-separated match wins. For example, if
-         * {@link OtlpConfig#maxBucketsPerMeter()} has keys {@literal http} and
-         * {@literal http.server}, an ID with a name {@literal http.server.requests} would
-         * match with the entry having key {@literal http.server}, whereas an ID with name
-         * {@literal http.client.requests} would match with the entry having the key
-         * {@literal http}.
-         *
-         * @see OtlpConfig#maxBucketsPerMeter()
-         */
-        public Builder maxBucketsPerMeterLookup(MaxBucketsPerMeterLookup maxBucketsPerMeterLookup) {
-            this.maxBucketsPerMeterLookup = maxBucketsPerMeterLookup;
-            return this;
-        }
-
         public OtlpMeterRegistry build() {
-            return new OtlpMeterRegistry(otlpConfig, clock, threadFactory, metricsSender, histogramFlavorPerMeterLookup,
-                    maxBucketsPerMeterLookup);
+            return new OtlpMeterRegistry(otlpConfig, clock, threadFactory, metricsSender);
         }
 
     }

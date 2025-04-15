@@ -230,17 +230,16 @@ public interface OtlpConfig extends PushRegistryConfig {
 
     /**
      * Configures the histogram flavor mapping to use on a per-meter level. This can
-     * override the {@link #histogramFlavor()} configuration for matching Meters. By
-     * default, {@link OtlpMeterRegistry} (through
-     * {@link io.micrometer.registry.otlp.OtlpMeterRegistry.HistogramFlavorPerMeterLookup})
-     * uses the result of this method to look up the {@link HistogramFlavor} by
-     * {@link Meter.Id} (prefix match on the Meter's name by default). This means that
-     * this method provides the data while
-     * {@link io.micrometer.registry.otlp.OtlpMeterRegistry.HistogramFlavorPerMeterLookup}
-     * provides the logic for the lookup, and you can override them independently.
-     * @return mapping of meter name to histogram flavor
+     * override the {@link #histogramFlavor()} configuration for matching Meters.
+     * {@link OtlpMeterRegistry} uses the result of this method to look up the
+     * {@link HistogramFlavor} by {@link Meter.Id}. The longest dot-separated match wins.
+     * For example, if the returned Map has keys {@literal http} and
+     * {@literal http.server}, an ID with a name {@literal http.server.requests} would
+     * match with the entry having key {@literal http.server}, whereas an ID with name
+     * {@literal http.client.requests} would match with the entry having the key
+     * {@literal http}.
+     * @return mapping of meter name (or prefix) to histogram flavor
      * @since 1.15.0
-     * @see io.micrometer.registry.otlp.OtlpMeterRegistry.HistogramFlavorPerMeterLookup
      * @see #histogramFlavor()
      */
     default Map<String, HistogramFlavor> histogramFlavorPerMeter() {
@@ -275,19 +274,16 @@ public interface OtlpConfig extends PushRegistryConfig {
 
     /**
      * Configures the max bucket count mapping to use on a per-meter level. This can
-     * override the {@link #maxBucketCount()} configuration for matching Meters. By
-     * default, {@link OtlpMeterRegistry} (through
-     * {@link io.micrometer.registry.otlp.OtlpMeterRegistry.MaxBucketsPerMeterLookup})
-     * uses the result of this method to look up the max bucket count by {@link Meter.Id}
-     * (prefix match on the Meter's name by default). This means that this method provides
-     * the data while
-     * {@link io.micrometer.registry.otlp.OtlpMeterRegistry.MaxBucketsPerMeterLookup}
-     * provides the logic for the lookup, and you can override them independently. This
-     * has no effect on a meter if it does not have an exponential bucket histogram
-     * configured.
+     * override the {@link #maxBucketCount()} configuration for matching Meters.
+     * {@link OtlpMeterRegistry} uses the result of this method to look up the max bucket
+     * count by {@link Meter.Id}. The longest dot-separated match wins. For example, if
+     * the returned Map has keys {@literal http} and {@literal http.server}, an ID with a
+     * name {@literal http.server.requests} would match with the entry having key
+     * {@literal http.server}, whereas an ID with name {@literal http.client.requests}
+     * would match with the entry having the key {@literal http}. This has no effect on a
+     * meter if it does not have an exponential bucket histogram configured.
      * @return mapping of meter name to max bucket count
      * @since 1.15.0
-     * @see io.micrometer.registry.otlp.OtlpMeterRegistry.MaxBucketsPerMeterLookup
      * @see #maxBucketCount()
      */
     default Map<String, Integer> maxBucketsPerMeter() {
