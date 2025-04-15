@@ -25,9 +25,9 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
-import static java.util.Map.entry;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static io.micrometer.registry.otlp.HistogramFlavor.BASE2_EXPONENTIAL_BUCKET_HISTOGRAM;
+import static io.micrometer.registry.otlp.HistogramFlavor.EXPLICIT_BUCKET_HISTOGRAM;
+import static org.assertj.core.api.Assertions.*;
 import static uk.org.webcompere.systemstubs.SystemStubs.withEnvironmentVariable;
 import static uk.org.webcompere.systemstubs.SystemStubs.withEnvironmentVariables;
 
@@ -257,15 +257,14 @@ class OtlpConfigTest {
 
         OtlpConfig otlpConfig = properties::get;
         assertThat(otlpConfig.validate().isValid()).isTrue();
-        assertThat(otlpConfig.histogramFlavor()).isEqualTo(HistogramFlavor.BASE2_EXPONENTIAL_BUCKET_HISTOGRAM);
+        assertThat(otlpConfig.histogramFlavor()).isEqualTo(BASE2_EXPONENTIAL_BUCKET_HISTOGRAM);
     }
 
     @Test
     void histogramPreferenceConfigTakesPrecedenceOverEnvVars() throws Exception {
         OtlpConfig config = k -> "base2_exponential_bucket_histogram";
         withEnvironmentVariable("OTEL_EXPORTER_OTLP_METRICS_DEFAULT_HISTOGRAM_AGGREGATION", "explicit_bucket_histogram")
-            .execute(() -> assertThat(config.histogramFlavor())
-                .isEqualTo(HistogramFlavor.BASE2_EXPONENTIAL_BUCKET_HISTOGRAM));
+            .execute(() -> assertThat(config.histogramFlavor()).isEqualTo(BASE2_EXPONENTIAL_BUCKET_HISTOGRAM));
     }
 
     @Test
@@ -273,8 +272,7 @@ class OtlpConfigTest {
         OtlpConfig config = k -> null;
         withEnvironmentVariable("OTEL_EXPORTER_OTLP_METRICS_DEFAULT_HISTOGRAM_AGGREGATION",
                 "base2_exponential_bucket_histogram")
-            .execute(() -> assertThat(config.histogramFlavor())
-                .isEqualTo(HistogramFlavor.BASE2_EXPONENTIAL_BUCKET_HISTOGRAM));
+            .execute(() -> assertThat(config.histogramFlavor()).isEqualTo(BASE2_EXPONENTIAL_BUCKET_HISTOGRAM));
     }
 
     @Test
@@ -284,9 +282,8 @@ class OtlpConfigTest {
                 "a.b.c=explicit_bucket_histogram ,expo =base2_exponential_bucket_histogram");
         OtlpConfig otlpConfig = properties::get;
         assertThat(otlpConfig.validate().isValid()).isTrue();
-        assertThat(otlpConfig.histogramFlavorPerMeter()).containsExactly(
-                entry("a.b.c", HistogramFlavor.EXPLICIT_BUCKET_HISTOGRAM),
-                entry("expo", HistogramFlavor.BASE2_EXPONENTIAL_BUCKET_HISTOGRAM));
+        assertThat(otlpConfig.histogramFlavorPerMeter()).containsExactly(entry("a.b.c", EXPLICIT_BUCKET_HISTOGRAM),
+                entry("expo", BASE2_EXPONENTIAL_BUCKET_HISTOGRAM));
     }
 
     @Test

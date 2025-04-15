@@ -16,10 +16,11 @@
 package io.micrometer.registry.otlp;
 
 import io.micrometer.common.lang.Nullable;
+import io.micrometer.common.util.StringUtils;
 import io.micrometer.common.util.internal.logging.InternalLogger;
 import io.micrometer.common.util.internal.logging.InternalLoggerFactory;
-import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.distribution.*;
 import io.micrometer.core.instrument.distribution.pause.PauseDetector;
@@ -82,6 +83,10 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
 
     private final OtlpMetricsSender metricsSender;
 
+    private final HistogramFlavorPerMeterLookup histogramFlavorPerMeterLookup;
+
+    private final MaxBucketsPerMeterLookup maxBucketsPerMeterLookup;
+
     private final Resource resource;
 
     private final AggregationTemporality aggregationTemporality;
@@ -120,6 +125,8 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
         this.config = config;
         this.baseTimeUnit = config.baseTimeUnit();
         this.metricsSender = metricsSender;
+        this.histogramFlavorPerMeterLookup = HistogramFlavorPerMeterLookup.DEFAULT;
+        this.maxBucketsPerMeterLookup = MaxBucketsPerMeterLookup.DEFAULT;
         this.resource = Resource.newBuilder().addAllAttributes(getResourceAttributes()).build();
         this.aggregationTemporality = config.aggregationTemporality();
         config().namingConvention(NamingConvention.dot);
@@ -430,14 +437,16 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
     }
 
     private int getMaxBuckets(Meter.Id id) {
-        return config.maxBucketsPerMeter().getOrDefault(id.getName(), config.maxBucketCount());
+        Integer maxBuckets = maxBucketsPerMeterLookup.getMaxBuckets(config.maxBucketsPerMeter(), id);
+        return (maxBuckets == null) ? config.maxBucketCount() : maxBuckets;
     }
 
     private HistogramFlavor histogramFlavor(Meter.Id id, OtlpConfig otlpConfig,
             DistributionStatisticConfig distributionStatisticConfig) {
-        HistogramFlavor preferredHistogramFlavor = otlpConfig.histogramFlavorPerMeter()
-            .getOrDefault(id.getName(), otlpConfig.histogramFlavor());
-
+        HistogramFlavor preferredHistogramFlavor = histogramFlavorPerMeterLookup
+            .getHistogramFlavor(otlpConfig.histogramFlavorPerMeter(), id);
+        preferredHistogramFlavor = preferredHistogramFlavor == null ? otlpConfig.histogramFlavor()
+                : preferredHistogramFlavor;
         final double[] serviceLevelObjectiveBoundaries = distributionStatisticConfig
             .getServiceLevelObjectiveBoundaries();
         if (distributionStatisticConfig.isPublishingHistogram()
@@ -495,6 +504,91 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
         double[] sloWithPositiveInf = Arrays.copyOf(sloBoundaries, sloBoundaries.length + 1);
         sloWithPositiveInf[sloWithPositiveInf.length - 1] = Double.POSITIVE_INFINITY;
         return sloWithPositiveInf;
+    }
+
+    /**
+     * Overridable lookup mechanism for {@link HistogramFlavor}.
+     */
+    // VisibleForTesting
+    @FunctionalInterface
+    interface HistogramFlavorPerMeterLookup {
+
+        /**
+         * Default implementation.
+         */
+        HistogramFlavorPerMeterLookup DEFAULT = OtlpMeterRegistry::lookup;
+
+        /**
+         * Looks up the histogram flavor to use on a per-meter level. This will override
+         * the default {@link OtlpConfig#histogramFlavor()} for matching Meters.
+         * {@link OtlpConfig#histogramFlavorPerMeter()} provides the data while this
+         * method provides the logic for the lookup, and you can override them
+         * independently.
+         * @param perMeterMapping configured mapping data
+         * @param id the {@link Meter.Id} the {@link HistogramFlavor} is configured for
+         * @return the histogram flavor mapped to the {@link Meter.Id} or {@code null} if
+         * mapping is undefined
+         * @see OtlpConfig#histogramFlavorPerMeter()
+         * @see OtlpConfig#histogramFlavor()
+         */
+        @Nullable
+        HistogramFlavor getHistogramFlavor(Map<String, HistogramFlavor> perMeterMapping, Meter.Id id);
+
+    }
+
+    /**
+     * Overridable lookup mechanism for max bucket count. This has no effect on a meter if
+     * it does not have an exponential bucket histogram configured.
+     */
+    // VisibleForTesting
+    @FunctionalInterface
+    interface MaxBucketsPerMeterLookup {
+
+        /**
+         * Default implementation.
+         */
+        MaxBucketsPerMeterLookup DEFAULT = OtlpMeterRegistry::lookup;
+
+        /**
+         * Looks up the max bucket count to use on a per-meter level. This will override
+         * the default {@link OtlpConfig#maxBucketCount()} for matching Meters.
+         * {@link OtlpConfig#maxBucketsPerMeter()} provides the data while this method
+         * provides the logic for the lookup, and you can override them independently.
+         * This has no effect on a meter if it does not have an exponential bucket
+         * histogram configured.
+         * @param perMeterMapping configured mapping data
+         * @param id the {@link Meter.Id} the max bucket count is configured for
+         * @return the max bucket count mapped to the {@link Meter.Id} or {@code null} if
+         * the mapping is undefined
+         * @see OtlpConfig#maxBucketsPerMeter()
+         * @see OtlpConfig#maxBucketCount()
+         */
+        @Nullable
+        Integer getMaxBuckets(Map<String, Integer> perMeterMapping, Meter.Id id);
+
+    }
+
+    @Nullable
+    private static <T> T lookup(Map<String, T> values, Meter.Id id) {
+        if (values.isEmpty()) {
+            return null;
+        }
+        return doLookup(values, id);
+    }
+
+    @Nullable
+    private static <T> T doLookup(Map<String, T> values, Meter.Id id) {
+        String name = id.getName();
+        while (StringUtils.isNotEmpty(name)) {
+            T result = values.get(name);
+            if (result != null) {
+                return result;
+            }
+            int lastDot = name.lastIndexOf('.');
+            name = (lastDot != -1) ? name.substring(0, lastDot) : "";
+        }
+
+        return null;
     }
 
     /**

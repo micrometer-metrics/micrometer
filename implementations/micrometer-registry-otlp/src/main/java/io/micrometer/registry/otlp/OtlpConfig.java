@@ -15,12 +15,13 @@
  */
 package io.micrometer.registry.otlp;
 
+import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.config.InvalidConfigurationException;
 import io.micrometer.core.instrument.config.validate.Validated;
 import io.micrometer.core.instrument.push.PushRegistryConfig;
 
-import java.time.Duration;
 import java.net.URLDecoder;
+import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -228,10 +229,16 @@ public interface OtlpConfig extends PushRegistryConfig {
     }
 
     /**
-     * Configures the histogram flavor to use on a per-meter level. This will override the
-     * {@link #histogramFlavor()} configuration for matching Meters. The key is used to do
-     * an exact match on the Meter's name.
-     * @return mapping of meter name to histogram flavor
+     * Configures the histogram flavor mapping to use on a per-meter level. This can
+     * override the {@link #histogramFlavor()} configuration for matching Meters.
+     * {@link OtlpMeterRegistry} uses the result of this method to look up the
+     * {@link HistogramFlavor} by {@link Meter.Id}. The longest dot-separated match wins.
+     * For example, if the returned Map has keys {@literal http} and
+     * {@literal http.server}, an ID with a name {@literal http.server.requests} would
+     * match with the entry having key {@literal http.server}, whereas an ID with name
+     * {@literal http.client.requests} would match with the entry having the key
+     * {@literal http}.
+     * @return mapping of meter name (or prefix) to histogram flavor
      * @since 1.15.0
      * @see #histogramFlavor()
      */
@@ -266,10 +273,15 @@ public interface OtlpConfig extends PushRegistryConfig {
     }
 
     /**
-     * Configures the max bucket count to use on a per-meter level. This will override the
-     * {@link #maxBucketCount()} configuration for matching Meters. The key is used to do
-     * an exact match on the Meter's name. This has no effect on a meter if it does not
-     * have an exponential bucket histogram configured.
+     * Configures the max bucket count mapping to use on a per-meter level. This can
+     * override the {@link #maxBucketCount()} configuration for matching Meters.
+     * {@link OtlpMeterRegistry} uses the result of this method to look up the max bucket
+     * count by {@link Meter.Id}. The longest dot-separated match wins. For example, if
+     * the returned Map has keys {@literal http} and {@literal http.server}, an ID with a
+     * name {@literal http.server.requests} would match with the entry having key
+     * {@literal http.server}, whereas an ID with name {@literal http.client.requests}
+     * would match with the entry having the key {@literal http}. This has no effect on a
+     * meter if it does not have an exponential bucket histogram configured.
      * @return mapping of meter name to max bucket count
      * @since 1.15.0
      * @see #maxBucketCount()
