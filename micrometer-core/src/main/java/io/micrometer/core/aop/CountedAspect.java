@@ -15,6 +15,7 @@
  */
 package io.micrometer.core.aop;
 
+import io.micrometer.common.KeyValue;
 import io.micrometer.common.lang.NonNullApi;
 import io.micrometer.common.lang.Nullable;
 import io.micrometer.common.util.internal.logging.WarnThenDebugLogger;
@@ -83,7 +84,7 @@ public class CountedAspect {
 
     private static final Predicate<ProceedingJoinPoint> DONT_SKIP_ANYTHING = pjp -> false;
 
-    public final String DEFAULT_EXCEPTION_TAG_VALUE = "none";
+    public final String DEFAULT_EXCEPTION_TAG_VALUE = KeyValue.NONE_VALUE;
 
     public final String RESULT_TAG_FAILURE_VALUE = "failure";
 
