@@ -15,6 +15,7 @@
  */
 package io.micrometer.core.instrument.binder.okhttp3;
 
+import io.micrometer.common.KeyValue;
 import io.micrometer.common.lang.NonNullApi;
 import io.micrometer.common.lang.NonNullFields;
 import io.micrometer.common.lang.Nullable;
@@ -269,7 +270,7 @@ public class OkHttpMetricsEventListener extends EventListener {
         private final String name;
 
         private Function<Request, String> uriMapper = (request) -> Optional.ofNullable(request.header(URI_PATTERN))
-            .orElse("none");
+            .orElse(KeyValue.NONE_VALUE);
 
         private Tags tags = Tags.empty();
 

@@ -15,6 +15,7 @@
  */
 package io.micrometer.core.tck;
 
+import io.micrometer.common.KeyValue;
 import io.micrometer.core.Issue;
 import io.micrometer.core.annotation.Timed;
 import io.micrometer.core.instrument.Timer;
@@ -929,7 +930,8 @@ public abstract class MeterRegistryCompatibilityKit {
 
             assertThat(longTaskTimer.activeTasks()).isEqualTo(0);
 
-            Timer timer = registry.timer("myObservation", "error", "none", "staticTag", "42", "dynamicTag", "24");
+            Timer timer = registry.timer("myObservation", "error", KeyValue.NONE_VALUE, "staticTag", "42", "dynamicTag",
+                    "24");
             assertSoftly(softly -> {
                 softly.assertThat(timer.count()).isEqualTo(1L);
                 softly.assertThat(timer.totalTime(TimeUnit.SECONDS)).isCloseTo(1, offset(1.0e-12));
@@ -951,7 +953,7 @@ public abstract class MeterRegistryCompatibilityKit {
             observation.stop();
             clock(registry).add(step());
 
-            Timer timer = registry.timer("myObservation", "error", "none");
+            Timer timer = registry.timer("myObservation", "error", KeyValue.NONE_VALUE);
             assertSoftly(softly -> {
                 softly.assertThat(timer.count()).isEqualTo(1L);
                 softly.assertThat(timer.totalTime(TimeUnit.NANOSECONDS)).isCloseTo(10, offset(1.0e-12));
