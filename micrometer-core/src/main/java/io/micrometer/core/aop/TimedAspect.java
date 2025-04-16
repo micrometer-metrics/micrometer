@@ -15,6 +15,7 @@
  */
 package io.micrometer.core.aop;
 
+import io.micrometer.common.KeyValue;
 import io.micrometer.common.lang.NonNullApi;
 import io.micrometer.common.lang.Nullable;
 import io.micrometer.common.util.internal.logging.WarnThenDebugLogger;
@@ -96,7 +97,7 @@ public class TimedAspect {
 
     public static final String DEFAULT_METRIC_NAME = "method.timed";
 
-    public static final String DEFAULT_EXCEPTION_TAG_VALUE = "none";
+    public static final String DEFAULT_EXCEPTION_TAG_VALUE = KeyValue.NONE_VALUE;
 
     /**
      * Tag key for an exception.
