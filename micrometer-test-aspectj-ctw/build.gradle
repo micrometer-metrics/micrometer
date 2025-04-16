@@ -20,7 +20,7 @@ dependencies {
         // Use the latest Micrometer SNAPSHOT (built with Java 17+)
         // and the latest AspectJ that supports Java versions before 17
         aspect 'io.micrometer:micrometer-core:latest.integration'
-        implementation 'org.aspectj:aspectjrt:1.9.24'
+        implementation 'org.aspectj:aspectjrt:1.9.20.1'
     }
 
     testImplementation libs.assertj
