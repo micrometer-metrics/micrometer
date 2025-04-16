@@ -49,6 +49,7 @@ public interface KeyName {
     /**
      * Creates a key value for the given key name with {@value KeyValue#NONE_VALUE}.
      * @return key value
+     * @since 1.16.0
      */
     default KeyValue withoutValue() {
         return KeyValue.of(this, KeyValue.NONE_VALUE);
