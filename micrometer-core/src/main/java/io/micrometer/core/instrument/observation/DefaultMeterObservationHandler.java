@@ -105,7 +105,7 @@ public class DefaultMeterObservationHandler implements MeterObservationHandler<O
 
     private String getErrorValue(Observation.Context context) {
         Throwable error = context.getError();
-        return error != null ? error.getClass().getSimpleName() : "none";
+        return error != null ? error.getClass().getSimpleName() : KeyValue.NONE_VALUE;
     }
 
     private List<Tag> createTags(Observation.Context context) {

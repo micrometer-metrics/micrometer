@@ -15,6 +15,7 @@
  */
 package io.micrometer.core.instrument.binder.db;
 
+import io.micrometer.common.KeyValue;
 import io.micrometer.common.util.StringUtils;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
@@ -84,8 +85,8 @@ class JooqExecuteListener extends DefaultExecuteListener {
         if (sample == null)
             return;
 
-        String exceptionName = "none";
-        String exceptionSubclass = "none";
+        String exceptionName = KeyValue.NONE_VALUE;
+        String exceptionSubclass = KeyValue.NONE_VALUE;
 
         Exception exception = ctx.exception();
         if (exception != null) {
@@ -94,7 +95,7 @@ class JooqExecuteListener extends DefaultExecuteListener {
                 exceptionName = dae.sqlStateClass().name().toLowerCase().replace('_', ' ');
                 exceptionSubclass = dae.sqlStateSubclass().name().toLowerCase().replace('_', ' ');
                 if (exceptionSubclass.contains("no subclass")) {
-                    exceptionSubclass = "none";
+                    exceptionSubclass = KeyValue.NONE_VALUE;
                 }
             }
             else {
