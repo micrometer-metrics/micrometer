@@ -47,6 +47,14 @@ public interface KeyName {
     }
 
     /**
+     * Creates a key value for the given key name with {@value KeyValue#NONE_VALUE}.
+     * @return key value
+     */
+    default KeyValue withoutValue() {
+        return KeyValue.of(this, KeyValue.NONE_VALUE);
+    }
+
+    /**
      * Creates a key value for the given key name.
      * @param value value for key
      * @param validator value validator

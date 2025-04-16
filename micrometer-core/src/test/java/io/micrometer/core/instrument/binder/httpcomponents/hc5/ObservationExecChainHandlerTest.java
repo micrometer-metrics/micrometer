@@ -15,7 +15,6 @@
  */
 package io.micrometer.core.instrument.binder.httpcomponents.hc5;
 
-import io.micrometer.common.KeyValue;
 import io.micrometer.common.lang.Nullable;
 import io.micrometer.observation.tck.TestObservationRegistry;
 import org.apache.hc.client5.http.HttpRoute;
@@ -165,7 +164,7 @@ class ObservationExecChainHandlerTest {
             assertThat(observationRegistry).hasObservationWithNameEqualTo("httpcomponents.httpclient.request")
                 .that()
                 .hasLowCardinalityKeyValue(OUTCOME.withValue("UNKNOWN"))
-                .hasLowCardinalityKeyValue(EXCEPTION.withValue(KeyValue.NONE_VALUE));
+                .hasLowCardinalityKeyValue(EXCEPTION.withoutValue());
         }
 
     }
