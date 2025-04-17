@@ -51,7 +51,7 @@ public interface KeyName {
      * @return key value
      * @since 1.16.0
      */
-    default KeyValue withoutValue() {
+    default KeyValue withNoneValue() {
         return KeyValue.of(this, KeyValue.NONE_VALUE);
     }
 

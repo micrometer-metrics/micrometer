@@ -66,7 +66,7 @@ class DefaultApacheHttpClientObservationConventionTest {
     void shouldContributeExceptionNoneWhenSuccess() {
         HttpClientContext clientContext = HttpClientContext.create();
         ApacheHttpClientContext context = new ApacheHttpClientContext(null, clientContext);
-        assertThat(observationConvention.getLowCardinalityKeyValues(context)).contains(EXCEPTION.withoutValue());
+        assertThat(observationConvention.getLowCardinalityKeyValues(context)).contains(EXCEPTION.withNoneValue());
     }
 
     @Test

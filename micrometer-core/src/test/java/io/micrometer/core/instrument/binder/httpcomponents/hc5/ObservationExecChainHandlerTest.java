@@ -164,7 +164,7 @@ class ObservationExecChainHandlerTest {
             assertThat(observationRegistry).hasObservationWithNameEqualTo("httpcomponents.httpclient.request")
                 .that()
                 .hasLowCardinalityKeyValue(OUTCOME.withValue("UNKNOWN"))
-                .hasLowCardinalityKeyValue(EXCEPTION.withoutValue());
+                .hasLowCardinalityKeyValue(EXCEPTION.withNoneValue());
         }
 
     }
