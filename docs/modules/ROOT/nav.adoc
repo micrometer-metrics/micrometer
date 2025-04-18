@@ -44,6 +44,7 @@
 ** xref:reference/httpcomponents.adoc[HttpComponents Client]
 ** xref:reference/java-httpclient.adoc[Java HttpClient]
 ** xref:reference/jetty.adoc[Jetty and Jersey]
+** xref:reference/jms.adoc[JMS]
 ** xref:reference/jvm.adoc[JVM]
 ** xref:reference/kafka.adoc[Kafka]
 ** xref:reference/logging.adoc[Logging]
