@@ -25,8 +25,11 @@ import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.TimeGauge;
 import io.micrometer.core.instrument.search.MeterNotFoundException;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import io.micrometer.core.testsupport.system.CapturedOutput;
+import io.micrometer.core.testsupport.system.OutputCaptureExtension;
 import org.assertj.core.data.Offset;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 import java.util.concurrent.TimeUnit;
 
@@ -38,6 +41,7 @@ import static org.assertj.core.api.Assertions.*;
  * @author Oleksii Bondar
  * @author Johnny Lim
  */
+@ExtendWith(OutputCaptureExtension.class)
 class CaffeineCacheMetricsTest extends AbstractCacheMetricsTest {
 
     // tag::setup[]
@@ -88,19 +92,37 @@ class CaffeineCacheMetricsTest extends AbstractCacheMetricsTest {
     }
 
     @Test
-    void doNotReportMetricsForNonLoadingCache() {
+    void doNotReportMetricsForNonLoadingCache(CapturedOutput output) {
         MeterRegistry meterRegistry = new SimpleMeterRegistry();
-        Cache<Object, Object> cache = Caffeine.newBuilder().build();
+        Cache<Object, Object> cache = Caffeine.newBuilder().recordStats().build();
         CaffeineCacheMetrics<Object, Object, Cache<Object, Object>> metrics = new CaffeineCacheMetrics<>(cache,
                 "testCache", expectedTag);
         metrics.bindTo(meterRegistry);
 
         assertThat(meterRegistry.find("cache.load.duration").timeGauge()).isNull();
+        assertThat(output).doesNotContain(
+                "The cache 'testCache' is not recording statistics. No meters except 'cache.size' will be registered. Call 'Caffeine#recordStats()' prior to building the cache for metrics to be recorded.");
     }
 
     @Test
     void returnCacheSize() {
         assertThat(metrics.size()).isEqualTo(cache.estimatedSize());
+    }
+
+    @Test
+    void returnCacheSizeWithoutRecordStats(CapturedOutput output) {
+        LoadingCache<String, String> cache = Caffeine.newBuilder().build(key -> "");
+        CaffeineCacheMetrics<String, String, Cache<String, String>> metrics = new CaffeineCacheMetrics<>(cache,
+                "testCache", Tags.empty());
+
+        MeterRegistry meterRegistry = new SimpleMeterRegistry();
+        metrics.bindTo(meterRegistry);
+
+        cache.put("a", "1");
+        assertThat(metrics.size()).isOne();
+        assertThat(meterRegistry.get("cache.size").gauge().value()).isOne();
+        assertThat(output).contains(
+                "The cache 'testCache' is not recording statistics. No meters except 'cache.size' will be registered. Call 'Caffeine#recordStats()' prior to building the cache for metrics to be recorded.");
     }
 
     @Test
