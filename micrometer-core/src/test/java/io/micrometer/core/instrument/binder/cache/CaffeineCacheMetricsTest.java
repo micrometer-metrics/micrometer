@@ -92,14 +92,16 @@ class CaffeineCacheMetricsTest extends AbstractCacheMetricsTest {
     }
 
     @Test
-    void doNotReportMetricsForNonLoadingCache() {
+    void doNotReportMetricsForNonLoadingCache(CapturedOutput output) {
         MeterRegistry meterRegistry = new SimpleMeterRegistry();
-        Cache<Object, Object> cache = Caffeine.newBuilder().build();
+        Cache<Object, Object> cache = Caffeine.newBuilder().recordStats().build();
         CaffeineCacheMetrics<Object, Object, Cache<Object, Object>> metrics = new CaffeineCacheMetrics<>(cache,
                 "testCache", expectedTag);
         metrics.bindTo(meterRegistry);
 
         assertThat(meterRegistry.find("cache.load.duration").timeGauge()).isNull();
+        assertThat(output).doesNotContain(
+                "The cache 'testCache' is not recording statistics. No meters except 'cache.size' will be registered. Call 'Caffeine#recordStats()' prior to building the cache for metrics to be recorded.");
     }
 
     @Test
