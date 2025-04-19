@@ -399,7 +399,11 @@ subprojects {
                     ignoreMissingClasses = true
                     includeSynthetic = true
 
-                    classExcludes = []
+                    classExcludes = [
+                            'io.micrometer.elastic.ElasticConfig',
+                            'io.micrometer.ganglia.GangliaConfig',
+                            'io.micrometer.graphite.GraphiteConfig'
+                    ]
                     compatibilityChangeExcludes = [ "METHOD_NEW_DEFAULT" ]
 
                     packageExcludes = ['io.micrometer.shaded.*', 'io.micrometer.statsd.internal']
