@@ -283,11 +283,6 @@ java11Test {
 }
 
 compileJava11TestJava {
-    options.errorprone.enabled = false
     sourceCompatibility = JavaVersion.VERSION_11
     targetCompatibility = JavaVersion.VERSION_11
-}
-
-compileJava11Java {
-    options.errorprone.enabled = false
 }
