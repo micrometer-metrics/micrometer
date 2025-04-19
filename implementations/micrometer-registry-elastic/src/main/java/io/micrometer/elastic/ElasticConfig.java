@@ -44,6 +44,7 @@ public interface ElasticConfig extends StepRegistryConfig {
      * @param key Key to look up in the config.
      * @return Value for the key or null if no key is present.
      */
+    @Override
     @Nullable
     String get(String key);
 
@@ -51,6 +52,7 @@ public interface ElasticConfig extends StepRegistryConfig {
      * Property prefix to prepend to configuration names.
      * @return property prefix
      */
+    @Override
     default String prefix() {
         return "elastic";
     }
