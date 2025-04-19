@@ -968,6 +968,7 @@ public interface Observation extends ObservationView {
          * Returns the parent {@link ObservationView}.
          * @return parent observation or {@code null} if there was no parent
          */
+        @Override
         @Nullable
         public ObservationView getParentObservation() {
             return parentObservation;

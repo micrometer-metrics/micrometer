@@ -45,6 +45,7 @@ class OtlpCumulativeMeterRegistryTest extends OtlpMeterRegistryTest {
                 + "    time_unix_nano: 1000000\n" + "    as_double: \\d+\\.0\n" + "  }\n" + "}\n");
     }
 
+    @Override
     @Test
     void timeGauge() {
         TimeGauge timeGauge = TimeGauge.builder("gauge.time", this, TimeUnit.MICROSECONDS, o -> 24).register(registry);

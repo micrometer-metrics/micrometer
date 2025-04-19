@@ -165,6 +165,7 @@ abstract class AbstractTimeWindowHistogram<T, U> implements Histogram {
         return values;
     }
 
+    @Override
     public void recordLong(long value) {
         rotate();
         try {
@@ -181,6 +182,7 @@ abstract class AbstractTimeWindowHistogram<T, U> implements Histogram {
         }
     }
 
+    @Override
     public void recordDouble(double value) {
         rotate();
         try {

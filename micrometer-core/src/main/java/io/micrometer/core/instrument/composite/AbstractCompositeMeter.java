@@ -64,6 +64,7 @@ abstract class AbstractCompositeMeter<T extends Meter> extends AbstractMeter imp
         }
     }
 
+    @Override
     public final void add(MeterRegistry registry) {
         final T newMeter = registerNewMeter(registry);
         if (newMeter == null) {
@@ -90,6 +91,7 @@ abstract class AbstractCompositeMeter<T extends Meter> extends AbstractMeter imp
      * each meter belonging to the composite.
      * @param registry The registry to remove.
      */
+    @Override
     @Deprecated
     public final void remove(MeterRegistry registry) {
         for (;;) {

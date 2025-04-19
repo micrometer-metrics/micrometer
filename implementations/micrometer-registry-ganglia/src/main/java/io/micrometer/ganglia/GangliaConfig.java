@@ -42,12 +42,14 @@ public interface GangliaConfig extends StepRegistryConfig {
      * @param key Key to lookup in the config.
      * @return Value for the key or null if no key is present.
      */
+    @Override
     @Nullable
     String get(String key);
 
     /**
      * @return Property prefix to prepend to configuration names.
      */
+    @Override
     default String prefix() {
         return "ganglia";
     }
@@ -98,6 +100,7 @@ public interface GangliaConfig extends StepRegistryConfig {
     /**
      * @return {@code true} if publishing is enabled. Default is {@code true}.
      */
+    @Override
     default boolean enabled() {
         return getBoolean(this, "enabled").orElse(true);
     }
