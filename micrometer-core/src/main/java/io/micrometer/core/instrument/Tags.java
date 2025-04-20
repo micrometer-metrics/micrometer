@@ -221,11 +221,14 @@ public final class Tags implements Iterable<Tag> {
      * @return a new {@code Tags} instance
      */
     public static Tags of(@Nullable Iterable<? extends Tag> tags) {
-        if (tags == null || tags == EMPTY || !tags.iterator().hasNext()) {
+        if (tags == null || tags == EMPTY) {
             return Tags.empty();
         }
         else if (tags instanceof Tags) {
             return (Tags) tags;
+        }
+        else if (!tags.iterator().hasNext()) {
+            return Tags.empty();
         }
         else if (tags instanceof Collection) {
             Collection<? extends Tag> tagsCollection = (Collection<? extends Tag>) tags;
