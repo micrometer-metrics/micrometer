@@ -151,7 +151,7 @@ public class JvmGcMetrics implements MeterBinder, AutoCloseable {
                     "Incremented for an increase in the size of the (young) heap memory pool after one GC to before the next")
             .register(registry);
 
-        promotedBytes = (isGenerationalGc) ? Counter.builder("jvm.gc.memory.promoted")
+        promotedBytes = isGenerationalGc ? Counter.builder("jvm.gc.memory.promoted")
             .tags(tags)
             .baseUnit(BaseUnits.BYTES)
             .description(

@@ -146,7 +146,7 @@ class OtlpMetricConverter {
         if (builder != null) {
             HistogramDataPoint.Builder histogramDataPoint = HistogramDataPoint.newBuilder()
                 .addAllAttributes(getKeyValuesForId(functionTimer.getId()))
-                .setStartTimeUnixNano(getStartTimeNanos((functionTimer)))
+                .setStartTimeUnixNano(getStartTimeNanos(functionTimer))
                 .setTimeUnixNano(getTimeUnixNano())
                 .setSum(functionTimer.totalTime(baseTimeUnit))
                 .setCount((long) functionTimer.count());

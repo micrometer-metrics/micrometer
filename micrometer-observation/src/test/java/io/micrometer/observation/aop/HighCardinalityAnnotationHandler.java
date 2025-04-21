@@ -54,8 +54,8 @@ class HighCardinalityAnnotationHandler extends AnnotationHandler<Observation> {
             Function<Class<? extends ValueExpressionResolver>, ? extends ValueExpressionResolver> expressionResolverProvider) {
         String value = null;
         if (annotation.resolver() != NoOpValueResolver.class) {
-            ValueResolver ValueResolver = resolverProvider.apply(annotation.resolver());
-            value = ValueResolver.resolve(argument);
+            ValueResolver valueResolver = resolverProvider.apply(annotation.resolver());
+            value = valueResolver.resolve(argument);
         }
         else if (StringUtils.isNotBlank(annotation.expression())) {
             value = expressionResolverProvider.apply(ValueExpressionResolver.class)

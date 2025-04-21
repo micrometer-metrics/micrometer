@@ -245,8 +245,7 @@ public interface Meter {
         /**
          * Generate a new id replacing all tags with new ones.
          * @param tags The tags to add.
-         * @return A new id with the only the provided tags. The source id remains
-         * unchanged.
+         * @return A new id with the only provided tags. The source id remains unchanged.
          * @since 1.1.0
          */
         public Id replaceTags(Iterable<Tag> tags) {
