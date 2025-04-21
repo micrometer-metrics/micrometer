@@ -36,6 +36,7 @@ class GuavaCacheMetricsTest extends AbstractCacheMetricsTest {
 
     // tag::setup[]
     LoadingCache<String, String> cache = CacheBuilder.newBuilder().recordStats().build(new CacheLoader<>() {
+        @Override
         public String load(String key) {
             return "";
         }
@@ -114,6 +115,7 @@ class GuavaCacheMetricsTest extends AbstractCacheMetricsTest {
     @Test
     void returnHitCountWithoutRecordStats() throws ExecutionException {
         LoadingCache<String, String> cache = CacheBuilder.newBuilder().build(new CacheLoader<>() {
+            @Override
             public String load(String key) {
                 return "";
             }
