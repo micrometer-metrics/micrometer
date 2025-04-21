@@ -398,7 +398,7 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
     private MetricLineBuilder.TypeStep createTypeStep(Meter meter) throws MetricException {
         MetricLineBuilder.TypeStep typeStep = MetricLineBuilder.create(preConfiguration)
             .metricKey(meter.getId().getName());
-        for (Tag tag : meter.getId().getTags()) {
+        for (Tag tag : meter.getId().getTagsAsIterable()) {
             typeStep.dimension(tag.getKey(), tag.getValue());
         }
 

@@ -238,7 +238,7 @@ public interface Meter {
          * @since 1.1.0
          */
         public Id withTags(Iterable<Tag> tags) {
-            return new Id(name, Tags.concat(getTags(), tags), baseUnit, description, type);
+            return new Id(name, Tags.concat(this.tags, tags), baseUnit, description, type);
         }
 
         /**

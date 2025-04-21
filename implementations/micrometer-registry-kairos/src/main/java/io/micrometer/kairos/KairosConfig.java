@@ -41,6 +41,7 @@ public interface KairosConfig extends StepRegistryConfig {
      * Property prefix to prepend to configuration names.
      * @return property prefix
      */
+    @Override
     default String prefix() {
         return "kairos";
     }
