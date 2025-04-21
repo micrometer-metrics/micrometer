@@ -39,6 +39,7 @@ public interface OpenTSDBConfig extends PushRegistryConfig {
      * Property prefix to prepend to configuration names.
      * @return property prefix
      */
+    @Override
     default String prefix() {
         return "opentsdb";
     }

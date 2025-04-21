@@ -107,6 +107,7 @@ class OtlpDeltaMeterRegistryTest extends OtlpMeterRegistryTest {
             .isEqualTo(otlpConfig().step().plus(Duration.ofMillis(1)).toNanos());
     }
 
+    @Override
     @Test
     void timeGauge() {
         TimeGauge timeGauge = TimeGauge.builder("gauge.time", this, TimeUnit.MICROSECONDS, o -> 24).register(registry);
@@ -377,6 +378,7 @@ class OtlpDeltaMeterRegistryTest extends OtlpMeterRegistryTest {
                 UNIT_MILLISECONDS, 0, 0, 0);
     }
 
+    @Override
     @Test
     void testMetricsStartAndEndTime() {
         Counter counter = Counter.builder("test_publish_time").register(registry);

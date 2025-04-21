@@ -481,6 +481,7 @@ public abstract class ServiceLevelObjective {
                 this.toValue = toValue;
             }
 
+            @Override
             protected Double getValue(MeterRegistry registry) {
                 return toValue.apply(search.apply(Search.in(registry)));
             }
