@@ -201,7 +201,6 @@ slf4jApi = { module = "org.slf4j:slf4j-api", version.ref = "slf4j" }
 slfj4Simple = { module = "org.slf4j:slf4j-simple", version.ref = "slf4j" }
 spectatorAtlas = { module = "com.netflix.spectator:spectator-reg-atlas", version.ref = "spectator-atlas" }
 spring5-core = { module = "org.springframework:spring-core", version.ref = "spring5" }
-spring-cloud = { module = "org.springframework.cloud:spring-cloud-dependencies", version = "2021.0.9" }
 spring-javaformatCheckstyle = { module = "io.spring.javaformat:spring-javaformat-checkstyle", version.ref = "spring-javaformat" }
 spring6-aop = { module = "org.springframework:spring-aop", version.ref = "spring6" }
 spring6-context = { module = "org.springframework:spring-context", version.ref = "spring6" }
