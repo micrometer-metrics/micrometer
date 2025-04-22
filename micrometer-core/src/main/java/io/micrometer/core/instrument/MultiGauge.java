@@ -65,15 +65,16 @@ public class MultiGauge {
             // intermediate variable.
             Stream<Meter.Id> idStream = StreamSupport.stream(rows.spliterator(), false).map(row -> {
                 Row r = row;
-                Meter.Id rowId = commonId.withTags(row.uniqueTags);
+                Meter.Id prefilteredId = commonId.withTags(r.uniqueTags);
+                Meter.Id rowId = registry.getMappedId(prefilteredId);
                 boolean previouslyDefined = oldRows.contains(rowId);
 
                 if (overwrite && previouslyDefined) {
-                    registry.removeByPreFilterId(rowId);
+                    registry.removeByPreFilterId(prefilteredId);
                 }
 
                 if (overwrite || !previouslyDefined) {
-                    registry.gauge(rowId, row.obj, new StrongReferenceGaugeFunction<>(r.obj, r.valueFunction));
+                    registry.gauge(prefilteredId, r.obj, new StrongReferenceGaugeFunction<>(r.obj, r.valueFunction));
                 }
 
                 return rowId;
@@ -83,7 +84,7 @@ public class MultiGauge {
 
             for (Meter.Id oldRow : oldRows) {
                 if (!newRows.contains(oldRow))
-                    registry.removeByPreFilterId(oldRow);
+                    registry.remove(oldRow);
             }
 
             return newRows;
