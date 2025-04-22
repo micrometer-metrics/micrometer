@@ -15,7 +15,7 @@
  */
 package io.micrometer.newrelic;
 
-import io.micrometer.core.instrument.Meter.Type;
+import io.micrometer.core.instrument.Meter;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -35,13 +35,13 @@ class NewRelicNamingConventionTest {
 
     @Test
     void name() {
-        String validString = newRelicNamingConvention.name(VALID_NAME, Type.COUNTER);
+        String validString = newRelicNamingConvention.name(VALID_NAME, Meter.Type.COUNTER);
         assertThat(validString).isEqualTo(VALID_NAME);
     }
 
     @Test
     void nameShouldStripInvalidCharacters() {
-        String validString = newRelicNamingConvention.name(INVALID_NAME, Type.COUNTER);
+        String validString = newRelicNamingConvention.name(INVALID_NAME, Meter.Type.COUNTER);
         assertThat(validString).isEqualTo("invalid_name");
     }
 

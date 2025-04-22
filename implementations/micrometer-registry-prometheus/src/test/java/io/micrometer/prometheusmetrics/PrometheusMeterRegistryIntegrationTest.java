@@ -18,7 +18,6 @@ package io.micrometer.prometheusmetrics;
 import com.sun.net.httpserver.HttpServer;
 import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.*;
-import io.micrometer.core.instrument.Meter.Type;
 import io.micrometer.core.instrument.binder.jvm.JvmInfoMetrics;
 import io.prometheus.metrics.model.registry.PrometheusRegistry;
 import io.prometheus.metrics.tracer.common.SpanContext;
@@ -157,7 +156,7 @@ class PrometheusMeterRegistryIntegrationTest {
             final int value = i;
             measurements.add(new Measurement(() -> value + 10, Statistic.values()[i]));
         }
-        Meter.builder("test.custom", Type.OTHER, measurements).register(registry);
+        Meter.builder("test.custom", Meter.Type.OTHER, measurements).register(registry);
     }
 
     private void verifyBuildInfo() {

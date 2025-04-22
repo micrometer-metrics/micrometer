@@ -15,8 +15,7 @@
  */
 package io.micrometer.core.instrument.noop;
 
-import io.micrometer.core.instrument.Meter.Id;
-import io.micrometer.core.instrument.Meter.Type;
+import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.Tags;
 import org.junit.jupiter.api.Test;
 
@@ -29,7 +28,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 class NoopGaugeTest {
 
-    private Id id = new Id("test", Tags.of("name", "value"), "entries", "", Type.GAUGE);
+    private Meter.Id id = new Meter.Id("test", Tags.of("name", "value"), "entries", "", Meter.Type.GAUGE);
 
     private NoopGauge gauge = new NoopGauge(id);
 

@@ -20,7 +20,6 @@ import io.micrometer.common.util.internal.logging.InternalLogger;
 import io.micrometer.common.util.internal.logging.InternalLoggerFactory;
 import io.micrometer.common.util.internal.logging.WarnThenDebugLogger;
 import io.micrometer.core.annotation.Incubating;
-import io.micrometer.core.instrument.Meter.Id;
 import io.micrometer.core.instrument.config.MeterFilter;
 import io.micrometer.core.instrument.config.MeterFilterReply;
 import io.micrometer.core.instrument.config.NamingConvention;
@@ -102,27 +101,28 @@ public abstract class MeterRegistry {
      * supported. Hence, we use CHM to support that iteration without
      * ConcurrentModificationException risk.
      */
-    private final Map<Id, Meter> meterMap = new ConcurrentHashMap<>();
+    private final Map<Meter.Id, Meter> meterMap = new ConcurrentHashMap<>();
 
     /**
      * write/remove guarded by meterMapLock, read in
-     * {@link #getOrCreateMeter(DistributionStatisticConfig, BiFunction, Id, Function)} is
-     * unguarded
+     * {@link #getOrCreateMeter(DistributionStatisticConfig, BiFunction, Meter.Id, Function)}
+     * is unguarded
      */
-    private final Map<Id, Meter> preFilterIdToMeterMap = new HashMap<>();
+    private final Map<Meter.Id, Meter> preFilterIdToMeterMap = new HashMap<>();
 
     /**
      * For reverse looking up pre-filter ID in {@link #preFilterIdToMeterMap} from the
-     * Meter being removed in {@link #remove(Id)}. Guarded by the {@link #meterMapLock}.
+     * Meter being removed in {@link #remove(Meter.Id)}. Guarded by the
+     * {@link #meterMapLock}.
      */
-    private final Map<Meter, Id> meterToPreFilterIdMap = new HashMap<>();
+    private final Map<Meter, Meter.Id> meterToPreFilterIdMap = new HashMap<>();
 
     /**
      * Only needed when MeterFilter configured after Meters registered. Write/remove
-     * guarded by meterMapLock, remove in {@link #unmarkStaleId(Id)} and other operations
-     * unguarded
+     * guarded by meterMapLock, remove in {@link #unmarkStaleId(Meter.Id)} and other
+     * operations unguarded
      */
-    private final Set<Id> stalePreFilterIds = new HashSet<>();
+    private final Set<Meter.Id> stalePreFilterIds = new HashSet<>();
 
     /**
      * Map of meter id whose associated meter contains synthetic counterparts to those
@@ -130,7 +130,7 @@ public abstract class MeterRegistry {
      * synthetics, they can removed as well.
      */
     // Guarded by meterMapLock for both reads and writes
-    private final Map<Id, Set<Id>> syntheticAssociations = new HashMap<>();
+    private final Map<Meter.Id, Set<Meter.Id>> syntheticAssociations = new HashMap<>();
 
     private final AtomicBoolean closed = new AtomicBoolean();
 
@@ -255,7 +255,7 @@ public abstract class MeterRegistry {
 
         return new TimeGauge() {
             @Override
-            public Id getId() {
+            public Meter.Id getId() {
                 return withUnit;
             }
 
@@ -298,7 +298,7 @@ public abstract class MeterRegistry {
      * measurement.
      * @return A new function counter.
      */
-    protected abstract <T> FunctionCounter newFunctionCounter(Id id, T obj, ToDoubleFunction<T> countFunction);
+    protected abstract <T> FunctionCounter newFunctionCounter(Meter.Id id, T obj, ToDoubleFunction<T> countFunction);
 
     protected List<Tag> getConventionTags(Meter.Id id) {
         return id.getConventionTags(config().namingConvention());
@@ -622,11 +622,11 @@ public abstract class MeterRegistry {
         return meterClass.cast(m);
     }
 
-    private Id getMappedId(Id id) {
+    private Meter.Id getMappedId(Meter.Id id) {
         if (id.syntheticAssociation() != null) {
             return id;
         }
-        Id mappedId = id;
+        Meter.Id mappedId = id;
         for (MeterFilter filter : filters) {
             mappedId = filter.map(mappedId);
         }
@@ -634,8 +634,8 @@ public abstract class MeterRegistry {
     }
 
     private Meter getOrCreateMeter(@Nullable DistributionStatisticConfig config,
-            BiFunction<Id, /* Nullable Generic */ DistributionStatisticConfig, ? extends Meter> builder, Id originalId,
-            Function<Meter.Id, ? extends Meter> noopBuilder) {
+            BiFunction<Meter.Id, /* Nullable Generic */ DistributionStatisticConfig, ? extends Meter> builder,
+            Meter.Id originalId, Function<Meter.Id, ? extends Meter> noopBuilder) {
 
         Meter m = preFilterIdToMeterMap.get(originalId);
         if (m != null && !isStaleId(originalId)) {
@@ -643,7 +643,7 @@ public abstract class MeterRegistry {
             return m;
         }
 
-        Id mappedId = getMappedId(originalId);
+        Meter.Id mappedId = getMappedId(originalId);
         m = meterMap.get(mappedId);
 
         if (m != null) {
@@ -678,9 +678,10 @@ public abstract class MeterRegistry {
 
                     m = builder.apply(mappedId, config);
 
-                    Id synAssoc = mappedId.syntheticAssociation();
+                    Meter.Id synAssoc = mappedId.syntheticAssociation();
                     if (synAssoc != null) {
-                        Set<Id> associations = syntheticAssociations.computeIfAbsent(synAssoc, k -> new HashSet<>());
+                        Set<Meter.Id> associations = syntheticAssociations.computeIfAbsent(synAssoc,
+                                k -> new HashSet<>());
                         associations.add(mappedId);
                     }
 
@@ -698,7 +699,7 @@ public abstract class MeterRegistry {
         return m;
     }
 
-    private boolean isStaleId(Id originalId) {
+    private boolean isStaleId(Meter.Id originalId) {
         return !stalePreFilterIds.isEmpty() && stalePreFilterIds.contains(originalId);
     }
 
@@ -707,7 +708,7 @@ public abstract class MeterRegistry {
      * @param originalId id before any filter mapping has been applied
      * @return {@code true} if the id is stale
      */
-    private boolean unmarkStaleId(Id originalId) {
+    private boolean unmarkStaleId(Meter.Id originalId) {
         return !stalePreFilterIds.isEmpty() && stalePreFilterIds.remove(originalId);
     }
 
@@ -743,8 +744,8 @@ public abstract class MeterRegistry {
 
     /**
      * Remove a {@link Meter} from this {@link MeterRegistry registry}. This is expected
-     * to be a {@link Meter} with the same {@link Id} returned when registering a meter -
-     * which will have {@link MeterFilter}s applied to it.
+     * to be a {@link Meter} with the same {@link Meter.Id} returned when registering a
+     * meter - which will have {@link MeterFilter}s applied to it.
      * @param meter The meter to remove
      * @return The removed meter, or null if the provided meter is not currently
      * registered.
@@ -758,8 +759,8 @@ public abstract class MeterRegistry {
 
     /**
      * Remove a {@link Meter} from this {@link MeterRegistry registry} based on its
-     * {@link Id} before applying this registry's {@link MeterFilter}s to the given
-     * {@link Id}.
+     * {@link Meter.Id} before applying this registry's {@link MeterFilter}s to the given
+     * {@link Meter.Id}.
      * @param preFilterId the id of the meter to remove
      * @return The removed meter, or null if the meter is not found
      * @since 1.3.16
@@ -775,9 +776,9 @@ public abstract class MeterRegistry {
 
     /**
      * Remove a {@link Meter} from this {@link MeterRegistry registry} based the given
-     * {@link Id} as-is. The registry's {@link MeterFilter}s will not be applied to it.
-     * You can use the {@link Id} of the {@link Meter} returned when registering a meter,
-     * since that will have {@link MeterFilter}s already applied to it.
+     * {@link Meter.Id} as-is. The registry's {@link MeterFilter}s will not be applied to
+     * it. You can use the {@link Meter.Id} of the {@link Meter} returned when registering
+     * a meter, since that will have {@link MeterFilter}s already applied to it.
      * @param mappedId The id of the meter to remove
      * @return The removed meter, or null if no meter matched the provided id.
      * @since 1.1.0
@@ -789,13 +790,13 @@ public abstract class MeterRegistry {
             synchronized (meterMapLock) {
                 final Meter removedMeter = meterMap.remove(mappedId);
                 if (removedMeter != null) {
-                    Id preFilterIdToRemove = meterToPreFilterIdMap.remove(removedMeter);
+                    Meter.Id preFilterIdToRemove = meterToPreFilterIdMap.remove(removedMeter);
                     preFilterIdToMeterMap.remove(preFilterIdToRemove);
                     stalePreFilterIds.remove(preFilterIdToRemove);
 
-                    Set<Id> synthetics = syntheticAssociations.remove(mappedId);
+                    Set<Meter.Id> synthetics = syntheticAssociations.remove(mappedId);
                     if (synthetics != null) {
-                        for (Id synthetic : synthetics) {
+                        for (Meter.Id synthetic : synthetics) {
                             remove(synthetic);
                         }
                     }
@@ -913,7 +914,7 @@ public abstract class MeterRegistry {
          * @since 1.6.0
          */
         @Incubating(since = "1.6.0")
-        public Config onMeterRegistrationFailed(BiConsumer<Id, String> meterRegistrationFailedListener) {
+        public Config onMeterRegistrationFailed(BiConsumer<Meter.Id, String> meterRegistrationFailedListener) {
             meterRegistrationFailedListeners.add(meterRegistrationFailedListener);
             return this;
         }
@@ -1213,23 +1214,23 @@ public abstract class MeterRegistry {
      * @since 1.6.0
      */
     protected void meterRegistrationFailed(Meter.Id id, @Nullable String reason) {
-        for (BiConsumer<Id, String> listener : meterRegistrationFailedListeners) {
+        for (BiConsumer<Meter.Id, String> listener : meterRegistrationFailedListeners) {
             listener.accept(id, reason);
         }
     }
 
     // VisibleForTesting
-    Map<Id, Meter> _getPreFilterIdToMeterMap() {
+    Map<Meter.Id, Meter> _getPreFilterIdToMeterMap() {
         return Collections.unmodifiableMap(preFilterIdToMeterMap);
     }
 
     // VisibleForTesting
-    Map<Meter, Id> _getMeterToPreFilterIdMap() {
+    Map<Meter, Meter.Id> _getMeterToPreFilterIdMap() {
         return Collections.unmodifiableMap(meterToPreFilterIdMap);
     }
 
     // VisibleForTesting
-    Set<Id> _getStalePreFilterIds() {
+    Set<Meter.Id> _getStalePreFilterIds() {
         return Collections.unmodifiableSet(stalePreFilterIds);
     }
 

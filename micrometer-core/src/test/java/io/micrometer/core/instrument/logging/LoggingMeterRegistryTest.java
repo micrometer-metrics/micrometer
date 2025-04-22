@@ -17,7 +17,6 @@ package io.micrometer.core.instrument.logging;
 
 import com.google.common.util.concurrent.AtomicDouble;
 import io.micrometer.core.instrument.*;
-import io.micrometer.core.instrument.Meter.Type;
 import io.micrometer.core.instrument.binder.BaseUnits;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -260,7 +259,7 @@ class LoggingMeterRegistryTest {
 
     @Test
     void publishShouldPrintValueWhenMeterIsGeneric() {
-        Meter.builder("my.meter", Type.OTHER, List.of(new Measurement(() -> 42.0, Statistic.UNKNOWN)))
+        Meter.builder("my.meter", Meter.Type.OTHER, List.of(new Measurement(() -> 42.0, Statistic.UNKNOWN)))
             .register(recordingRegistry);
         recordingRegistry.publish();
         assertThat(recordingRegistry.getLogs()).containsExactly("my.meter{} unknown=42");

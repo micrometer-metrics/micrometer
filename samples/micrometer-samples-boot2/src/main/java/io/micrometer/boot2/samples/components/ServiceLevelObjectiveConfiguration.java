@@ -15,7 +15,7 @@
  */
 package io.micrometer.boot2.samples.components;
 
-import io.micrometer.core.instrument.Meter.Type;
+import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.config.NamingConvention;
@@ -65,7 +65,7 @@ public class ServiceLevelObjectiveConfiguration {
             .build();
 
         for (ServiceLevelObjective slo : registry.getServiceLevelObjectives()) {
-            applicationContext.registerBean(camelCasedHealthIndicatorNames.name(slo.getName(), Type.GAUGE),
+            applicationContext.registerBean(camelCasedHealthIndicatorNames.name(slo.getName(), Meter.Type.GAUGE),
                     HealthContributor.class, () -> toHealthContributor(registry, slo));
         }
 
@@ -96,7 +96,7 @@ public class ServiceLevelObjectiveConfiguration {
             ServiceLevelObjective.MultipleIndicator multipleIndicator = (ServiceLevelObjective.MultipleIndicator) slo;
             Map<String, HealthContributor> objectiveIndicators = Arrays.stream(multipleIndicator.getObjectives())
                 .collect(Collectors.toMap(
-                        indicator -> camelCasedHealthIndicatorNames.name(indicator.getName(), Type.GAUGE),
+                        indicator -> camelCasedHealthIndicatorNames.name(indicator.getName(), Meter.Type.GAUGE),
                         indicator -> toHealthContributor(registry, indicator)));
             return CompositeHealthContributor.fromMap(objectiveIndicators);
         }
