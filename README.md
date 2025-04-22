@@ -47,6 +47,10 @@ Note that milestone releases are for testing purposes and are not intended for p
 
 The reference documentation is managed in the [docs directory](/docs) and published to https://micrometer.io/.
 
+## Samples/Examples
+
+You can find sample/example apps in the [micrometer-samples](https://github.com/micrometer-metrics/micrometer-samples) repository.
+
 ## Contributing
 
 See our [Contributing Guide](CONTRIBUTING.md) for information about contributing to Micrometer.
