@@ -26,7 +26,7 @@ buildCache {
 
 include 'micrometer-commons', 'micrometer-core', 'micrometer-observation'
 
-['core', 'boot2', 'boot2-reactive', 'spring-integration', 'hazelcast', 'javalin', 'jersey3', 'jooq', 'kotlin', 'spring-framework6'].each { sample ->
+['core', 'hazelcast', 'javalin', 'jersey3', 'jooq', 'kotlin', 'spring-framework6'].each { sample ->
     include "micrometer-samples-$sample"
     project(":micrometer-samples-$sample").projectDir = new File(rootProject.projectDir, "samples/micrometer-samples-$sample")
 }
