@@ -159,7 +159,7 @@ class OtlpMetricConverter {
         Metric.Builder builder = getOrCreateMetricBuilder(functionTimer.getId(), DataCase.HISTOGRAM);
         HistogramDataPoint.Builder histogramDataPoint = HistogramDataPoint.newBuilder()
             .addAllAttributes(getKeyValuesForId(functionTimer.getId()))
-            .setStartTimeUnixNano(getStartTimeNanos((functionTimer)))
+            .setStartTimeUnixNano(getStartTimeNanos(functionTimer))
             .setTimeUnixNano(getTimeUnixNano())
             .setSum(functionTimer.totalTime(baseTimeUnit))
             .setCount((long) functionTimer.count());

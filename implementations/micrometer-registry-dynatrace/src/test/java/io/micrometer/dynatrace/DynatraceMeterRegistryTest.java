@@ -79,7 +79,7 @@ class DynatraceMeterRegistryTest {
 
         meterRegistry.publish();
 
-        verify(httpClient).send(assertArg((request -> {
+        verify(httpClient).send(assertArg(request -> {
             assertThat(request.getRequestHeaders()).containsOnly(entry("Content-Type", "text/plain"),
                     entry("User-Agent", "micrometer"), entry("Authorization", "Api-Token apiToken"));
 
@@ -89,7 +89,7 @@ class DynatraceMeterRegistryTest {
                         "my.timer,dt.metrics.source=micrometer gauge,min=12,max=42,sum=108,count=4 " + clock.wallTime(),
                         "my.gauge,dt.metrics.source=micrometer gauge," + formatDouble(gauge) + " " + clock.wallTime(),
                         "#my.timer gauge dt.meta.unit=ms");
-        })));
+        }));
     }
 
     @Test
@@ -144,11 +144,10 @@ class DynatraceMeterRegistryTest {
 
         clock.add(config.step());
         meterRegistry.publish();
-
-        verify(httpClient).send(assertArg((request -> assertThat(request.getEntity()).asString()
+        verify(httpClient).send(assertArg(request -> assertThat(request.getEntity()).asString()
             .hasLineCount(2)
             .contains("my.timer,dt.metrics.source=micrometer gauge,min=22,max=55,sum=77,count=2 " + clock.wallTime(),
-                    "#my.timer gauge dt.meta.unit=ms"))));
+                    "#my.timer gauge dt.meta.unit=ms")));
     }
 
     @Test
@@ -204,7 +203,7 @@ class DynatraceMeterRegistryTest {
         lttCountDownLatch2.countDown();
 
         verify(httpClient).send(
-                assertArg((request -> assertThat(request.getEntity()).asString()
+                assertArg(request -> assertThat(request.getEntity()).asString()
                     .hasLineCount(16)
                     .contains(
                             // Timer lines
@@ -238,7 +237,7 @@ class DynatraceMeterRegistryTest {
                             "my.ltt.percentile,dt.metrics.source=micrometer,phi=0.5 gauge,100 " + clock.wallTime(),
                             "my.ltt.percentile,dt.metrics.source=micrometer,phi=0.7 gauge,100 " + clock.wallTime(),
                             "my.ltt.percentile,dt.metrics.source=micrometer,phi=0.99 gauge,100 " + clock.wallTime(),
-                            "#my.ltt.percentile gauge dt.meta.unit=ms"))));
+                            "#my.ltt.percentile gauge dt.meta.unit=ms")));
     }
 
     @Test
@@ -272,7 +271,7 @@ class DynatraceMeterRegistryTest {
         registry.publish();
 
         verify(httpClient)
-            .send(assertArg((request -> assertThat(request.getEntity()).asString()
+            .send(assertArg(request -> assertThat(request.getEntity()).asString()
                 .hasLineCount(10)
                 .contains(
                         // Timer lines
@@ -292,7 +291,7 @@ class DynatraceMeterRegistryTest {
                         // the step rolled over.
                         "my.ds.percentile,dt.metrics.source=micrometer,phi=0 gauge,0 " + clock.wallTime(),
                         "my.ds.percentile,dt.metrics.source=micrometer,phi=0.5 gauge,0 " + clock.wallTime(),
-                        "my.ds.percentile,dt.metrics.source=micrometer,phi=0.99 gauge,0 " + clock.wallTime()))));
+                        "my.ds.percentile,dt.metrics.source=micrometer,phi=0.99 gauge,0 " + clock.wallTime())));
     }
 
     @Test

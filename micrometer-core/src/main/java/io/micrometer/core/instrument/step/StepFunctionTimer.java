@@ -48,7 +48,7 @@ public class StepFunctionTimer<T> implements FunctionTimer, StepMeter {
 
     private final Clock clock;
 
-    private volatile long lastUpdateTime = (long) (-2e6);
+    private volatile long lastUpdateTime = (long) -2e6;
 
     private volatile long lastCount;
 

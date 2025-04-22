@@ -186,7 +186,7 @@ FunctionTimer.builder("cache.gets.latency", cache,
     .register(registry);
 ----
 
-WARNING: Attempting to construct a function-tracking timer with a primitive number or one of its `java.lang` object forms is always incorrect. These numbers are immutable. Thus, the function-tracking timer cannot ever be changed. Attempting to "re-register" the function-tracking timer with a different number does not work, as the registry maintains only one meter for each unique combination of name and tags. "Re-registering" a function-tracking timer can happen indirectly for example as the result of a `MeterFilter` modifying the name and/or the tags of two different function-tracking timer so that they will be the same after the filter is applied.
+WARNING: Attempting to construct a function-tracking timer with a primitive number or one of its `java.lang` object forms is always incorrect. These numbers are immutable. Thus, the function-tracking timer cannot ever be changed. Attempting to "re-register" the function-tracking timer with a different number does not work, as the registry maintains only one meter for each unique combination of name and tags. "Re-registering" a function-tracking timer can happen indirectly for example as the result of a `MeterFilter` modifying the name and/or the tags of two different function-tracking timers so that they will be the same after the filter is applied.
 
 Attempting to "re-register" a function-tracking timer will result in a warning like this:
 [source]

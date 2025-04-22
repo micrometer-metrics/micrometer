@@ -52,8 +52,8 @@ public interface AzureMonitorConfig extends StepRegistryConfig {
     /**
      * Connection string to use when configuring sending metrics.
      * @return Connection String
-     * @see <a
-     * href=https://learn.microsoft.com/en-us/azure/azure-monitor/app/sdk-connection-string">Connection
+     * @see <a href=
+     * "https://learn.microsoft.com/en-us/azure/azure-monitor/app/sdk-connection-string">Connection
      * strings</a>
      * @since 1.11.0
      */
