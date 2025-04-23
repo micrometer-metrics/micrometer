@@ -19,7 +19,6 @@ import com.netflix.hystrix.*;
 import com.netflix.hystrix.strategy.HystrixPlugins;
 import com.netflix.hystrix.strategy.metrics.HystrixMetricsPublisher;
 import io.micrometer.core.instrument.Meter;
-import io.micrometer.core.instrument.Meter.Type;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
@@ -79,21 +78,23 @@ class MicrometerMetricsPublisherThreadPoolTest {
                     Tags.of(meter.getId().getTags())))
             .collect(Collectors.toSet());
 
-        final Set<MeterId> expectedMeterIds = new HashSet<>(Arrays.asList(
-                new MeterId(metricName("threads.active.current.count"), Type.GAUGE, tags),
-                new MeterId(metricName("threads.cumulative.count"), Type.COUNTER,
-                        tags.and(Tags.of("type", "executed"))),
-                new MeterId(metricName("threads.cumulative.count"), Type.COUNTER,
-                        tags.and(Tags.of("type", "rejected"))),
-                new MeterId(metricName("threads.pool.current.size"), Type.GAUGE, tags),
-                new MeterId(metricName("threads.largest.pool.current.size"), Type.GAUGE, tags),
-                new MeterId(metricName("threads.max.pool.current.size"), Type.GAUGE, tags),
-                new MeterId(metricName("threads.core.pool.current.size"), Type.GAUGE, tags),
-                new MeterId(metricName("tasks.cumulative.count"), Type.COUNTER, tags.and(Tags.of("type", "scheduled"))),
-                new MeterId(metricName("tasks.cumulative.count"), Type.COUNTER, tags.and(Tags.of("type", "completed"))),
-                new MeterId(metricName("queue.current.size"), Type.GAUGE, tags),
-                new MeterId(metricName("queue.max.size"), Type.GAUGE, tags),
-                new MeterId(metricName("queue.rejection.threshold.size"), Type.GAUGE, tags)));
+        final Set<MeterId> expectedMeterIds = new HashSet<>(
+                Arrays.asList(new MeterId(metricName("threads.active.current.count"), Meter.Type.GAUGE, tags),
+                        new MeterId(metricName("threads.cumulative.count"), Meter.Type.COUNTER,
+                                tags.and(Tags.of("type", "executed"))),
+                        new MeterId(metricName("threads.cumulative.count"), Meter.Type.COUNTER,
+                                tags.and(Tags.of("type", "rejected"))),
+                        new MeterId(metricName("threads.pool.current.size"), Meter.Type.GAUGE, tags),
+                        new MeterId(metricName("threads.largest.pool.current.size"), Meter.Type.GAUGE, tags),
+                        new MeterId(metricName("threads.max.pool.current.size"), Meter.Type.GAUGE, tags),
+                        new MeterId(metricName("threads.core.pool.current.size"), Meter.Type.GAUGE, tags),
+                        new MeterId(metricName("tasks.cumulative.count"), Meter.Type.COUNTER,
+                                tags.and(Tags.of("type", "scheduled"))),
+                        new MeterId(metricName("tasks.cumulative.count"), Meter.Type.COUNTER,
+                                tags.and(Tags.of("type", "completed"))),
+                        new MeterId(metricName("queue.current.size"), Meter.Type.GAUGE, tags),
+                        new MeterId(metricName("queue.max.size"), Meter.Type.GAUGE, tags),
+                        new MeterId(metricName("queue.rejection.threshold.size"), Meter.Type.GAUGE, tags)));
 
         assertThat(actualMeterIds).containsAll(expectedMeterIds);
     }
@@ -119,7 +120,7 @@ class MicrometerMetricsPublisherThreadPoolTest {
 
         private final Tags tags;
 
-        MeterId(final String name, final Type type, final Tags tags) {
+        MeterId(final String name, final Meter.Type type, final Tags tags) {
             this.name = name;
             this.type = type;
             this.tags = tags;

@@ -15,7 +15,7 @@
  */
 package io.micrometer.wavefront;
 
-import com.wavefront.sdk.common.clients.service.token.TokenService.Type;
+import com.wavefront.sdk.common.clients.service.token.TokenService;
 import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.config.validate.ValidationException;
 import org.junit.jupiter.api.Test;
@@ -52,7 +52,7 @@ class WavefrontConfigTest {
         Map<String, String> wavefrontProps = Map.of("wavefront.uri", "proxy://example.org:2878");
         WavefrontConfig config = wavefrontProps::get;
         assertThatCode(config::apiToken).doesNotThrowAnyException();
-        assertThat(config.apiTokenType()).isSameAs(Type.NO_TOKEN);
+        assertThat(config.apiTokenType()).isSameAs(TokenService.Type.NO_TOKEN);
     }
 
     @Test
@@ -61,7 +61,7 @@ class WavefrontConfigTest {
                 "s3cr3t");
         WavefrontConfig config = wavefrontProps::get;
         assertThatCode(config::apiToken).doesNotThrowAnyException();
-        assertThat(config.apiTokenType()).isSameAs(Type.WAVEFRONT_API_TOKEN);
+        assertThat(config.apiTokenType()).isSameAs(TokenService.Type.WAVEFRONT_API_TOKEN);
     }
 
     @Test
@@ -77,7 +77,7 @@ class WavefrontConfigTest {
     @Test
     void apiTokenTypeFailsIfNoTokenTypeAndDirectAccessUsed() {
         Map<String, String> wavefrontProps = Map.of("wavefront.uri", "https://example.org:2878",
-                "wavefront.apiTokenType", Type.NO_TOKEN.name());
+                "wavefront.apiTokenType", TokenService.Type.NO_TOKEN.name());
         WavefrontConfig config = wavefrontProps::get;
         assertThatCode(config::apiTokenType).isExactlyInstanceOf(ValidationException.class)
             .hasNoCause()
@@ -88,9 +88,9 @@ class WavefrontConfigTest {
     @Test
     void apiTokenTypeShouldBeUsedIfDirectAccessUsed() {
         Map<String, String> wavefrontProps = Map.of("wavefront.uri", "https://example.org:2878",
-                "wavefront.apiTokenType", Type.CSP_API_TOKEN.name());
+                "wavefront.apiTokenType", TokenService.Type.CSP_API_TOKEN.name());
         WavefrontConfig config = wavefrontProps::get;
-        assertThat(config.apiTokenType()).isSameAs(Type.CSP_API_TOKEN);
+        assertThat(config.apiTokenType()).isSameAs(TokenService.Type.CSP_API_TOKEN);
     }
 
 }

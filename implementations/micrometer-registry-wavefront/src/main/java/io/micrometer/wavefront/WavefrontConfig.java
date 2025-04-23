@@ -16,7 +16,6 @@
 package io.micrometer.wavefront;
 
 import com.wavefront.sdk.common.clients.service.token.TokenService;
-import com.wavefront.sdk.common.clients.service.token.TokenService.Type;
 import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.config.validate.InvalidReason;
 import io.micrometer.core.instrument.config.validate.Validated;
@@ -120,10 +119,12 @@ public interface WavefrontConfig extends PushRegistryConfig {
      */
     default TokenService.Type apiTokenType() {
         return getEnum(this, TokenService.Type.class, "apiTokenType")
-            .invalidateWhen(tokenType -> tokenType == Type.NO_TOKEN && WavefrontMeterRegistry.isDirectToApi(this),
+            .invalidateWhen(
+                    tokenType -> tokenType == TokenService.Type.NO_TOKEN && WavefrontMeterRegistry.isDirectToApi(this),
                     "must be set to something else whenever publishing directly to the Wavefront API",
                     InvalidReason.MISSING)
-            .orElse(WavefrontMeterRegistry.isDirectToApi(this) ? Type.WAVEFRONT_API_TOKEN : Type.NO_TOKEN);
+            .orElse(WavefrontMeterRegistry.isDirectToApi(this) ? TokenService.Type.WAVEFRONT_API_TOKEN
+                    : TokenService.Type.NO_TOKEN);
     }
 
     /**

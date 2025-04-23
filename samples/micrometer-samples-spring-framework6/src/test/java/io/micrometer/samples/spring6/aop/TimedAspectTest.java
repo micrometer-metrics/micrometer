@@ -20,9 +20,11 @@ import io.micrometer.common.annotation.ValueResolver;
 import io.micrometer.common.lang.NonNull;
 import io.micrometer.core.Issue;
 import io.micrometer.core.annotation.Timed;
-import io.micrometer.core.aop.*;
+import io.micrometer.core.aop.MeterTag;
+import io.micrometer.core.aop.MeterTagAnnotationHandler;
+import io.micrometer.core.aop.MeterTags;
+import io.micrometer.core.aop.TimedAspect;
 import io.micrometer.core.instrument.*;
-import io.micrometer.core.instrument.Meter.Id;
 import io.micrometer.core.instrument.distribution.CountAtBucket;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.ValueAtPercentile;
@@ -803,14 +805,14 @@ class TimedAspectTest {
 
         @NonNull
         @Override
-        protected Timer newTimer(@NonNull Id id, @NonNull DistributionStatisticConfig distributionStatisticConfig,
+        protected Timer newTimer(@NonNull Meter.Id id, @NonNull DistributionStatisticConfig distributionStatisticConfig,
                 @NonNull PauseDetector pauseDetector) {
             throw new RuntimeException("FailingMeterRegistry");
         }
 
         @NonNull
         @Override
-        protected LongTaskTimer newLongTaskTimer(@Nonnull Id id,
+        protected LongTaskTimer newLongTaskTimer(@Nonnull Meter.Id id,
                 @Nonnull DistributionStatisticConfig distributionStatisticConfig) {
             throw new RuntimeException("FailingMeterRegistry");
         }
