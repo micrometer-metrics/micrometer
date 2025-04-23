@@ -15,7 +15,7 @@
  */
 package io.micrometer.azuremonitor;
 
-import io.micrometer.core.instrument.Meter.Type;
+import io.micrometer.core.instrument.Meter;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -26,7 +26,7 @@ class AzureMonitorNamingConventionTest {
 
     @Test
     void testNameContainsDesiredCharacters() {
-        assertThat(namingConvention.name("{custom@Metric.1}", Type.GAUGE)).isEqualTo("_custom_Metric_1_");
+        assertThat(namingConvention.name("{custom@Metric.1}", Meter.Type.GAUGE)).isEqualTo("_custom_Metric_1_");
     }
 
     @Test

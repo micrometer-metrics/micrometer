@@ -17,7 +17,6 @@
 package io.micrometer.core.instrument.binder.grpc;
 
 import io.grpc.*;
-import io.grpc.Metadata.Key;
 import io.grpc.MethodDescriptor.MethodType;
 import io.micrometer.common.lang.Nullable;
 import io.micrometer.observation.Observation;
@@ -47,7 +46,7 @@ public class ObservationGrpcClientInterceptor implements ClientInterceptor {
 
     private static final GrpcClientObservationConvention DEFAULT_CONVENTION = new DefaultGrpcClientObservationConvention();
 
-    private static final Map<String, Key<String>> KEY_CACHE = new ConcurrentHashMap<>();
+    private static final Map<String, Metadata.Key<String>> KEY_CACHE = new ConcurrentHashMap<>();
 
     private final ObservationRegistry registry;
 
@@ -63,8 +62,8 @@ public class ObservationGrpcClientInterceptor implements ClientInterceptor {
             CallOptions callOptions, Channel next) {
         Supplier<GrpcClientObservationContext> contextSupplier = () -> {
             GrpcClientObservationContext context = new GrpcClientObservationContext((carrier, keyName, value) -> {
-                Key<String> key = KEY_CACHE.computeIfAbsent(keyName,
-                        (k) -> Key.of(keyName, Metadata.ASCII_STRING_MARSHALLER));
+                Metadata.Key<String> key = KEY_CACHE.computeIfAbsent(keyName,
+                        (k) -> Metadata.Key.of(keyName, Metadata.ASCII_STRING_MARSHALLER));
                 carrier.removeAll(key);
                 carrier.put(key, value);
             });
