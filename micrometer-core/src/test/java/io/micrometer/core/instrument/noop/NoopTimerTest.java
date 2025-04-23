@@ -15,8 +15,7 @@
  */
 package io.micrometer.core.instrument.noop;
 
-import io.micrometer.core.instrument.Meter.Id;
-import io.micrometer.core.instrument.Meter.Type;
+import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.distribution.HistogramSnapshot;
 import org.junit.jupiter.api.Test;
@@ -36,7 +35,7 @@ import static org.mockito.Mockito.verify;
  */
 class NoopTimerTest {
 
-    private Id id = new Id("test", Tags.of("name", "value"), "", "", Type.TIMER);
+    private Meter.Id id = new Meter.Id("test", Tags.of("name", "value"), "", "", Meter.Type.TIMER);
 
     private NoopTimer timer = new NoopTimer(id);
 

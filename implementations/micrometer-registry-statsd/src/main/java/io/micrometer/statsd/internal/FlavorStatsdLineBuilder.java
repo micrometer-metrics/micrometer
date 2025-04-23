@@ -24,8 +24,7 @@ import io.micrometer.statsd.StatsdLineBuilder;
 
 import java.util.Objects;
 import java.util.stream.Collectors;
-
-import static java.util.stream.Stream.of;
+import java.util.stream.Stream;
 
 public abstract class FlavorStatsdLineBuilder implements StatsdLineBuilder {
 
@@ -70,8 +69,8 @@ public abstract class FlavorStatsdLineBuilder implements StatsdLineBuilder {
 
     protected String tags(@Nullable Statistic stat, @Nullable String otherTags, String keyValueSeparator,
             String preamble) {
-        String tags = of(stat == null ? null : "statistic" + keyValueSeparator + stat.getTagValueRepresentation(),
-                otherTags)
+        String tags = Stream
+            .of(stat == null ? null : "statistic" + keyValueSeparator + stat.getTagValueRepresentation(), otherTags)
             .filter(Objects::nonNull)
             .collect(Collectors.joining(","));
 
