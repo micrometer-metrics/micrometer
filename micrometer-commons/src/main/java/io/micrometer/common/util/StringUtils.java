@@ -15,7 +15,7 @@
  */
 package io.micrometer.common.util;
 
-import io.micrometer.common.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Utilities for {@link String}.
