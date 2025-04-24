@@ -31,7 +31,7 @@ hibernate = "5.6.15.Final"
 hsqldb = "2.7.4"
 httpcomponents-async = "4.1.5"
 httpcomponents-client = "4.5.14"
-httpcomponents-client5 = "5.4.3"
+httpcomponents-client5 = "5.4.4"
 # metrics are better with https://github.com/Netflix/Hystrix/pull/1568 introduced
 # in hystrix 1.5.12, but Netflix re-released 1.5.11 as 1.5.18 late in 2018.
 # <=1.5.11 or 1.5.18 doesn't break with Micrometer, but open metrics won't be correct necessarily.
