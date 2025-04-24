@@ -20,6 +20,7 @@ import io.micrometer.core.ipc.http.HttpSender;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+import java.util.Locale;
 
 /**
  * Enum for the version of the InfluxDB API.
@@ -32,8 +33,8 @@ public enum InfluxApiVersion {
     V1 {
         @Override
         String writeEndpoint(final InfluxConfig config) {
-            String influxEndpoint = config.uri() + "/write?consistency=" + config.consistency().name().toLowerCase()
-                    + "&precision=ms&db=" + config.db();
+            String influxEndpoint = config.uri() + "/write?consistency="
+                    + config.consistency().name().toLowerCase(Locale.ROOT) + "&precision=ms&db=" + config.db();
             if (StringUtils.isNotBlank(config.retentionPolicy())) {
                 influxEndpoint += "&rp=" + config.retentionPolicy();
             }

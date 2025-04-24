@@ -34,6 +34,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
@@ -346,7 +347,7 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
         StringBuilder sb = new StringBuilder(actionLine);
         String timestamp = generateTimestamp();
         String name = getConventionName(meter.getId());
-        String type = meter.getId().getType().toString().toLowerCase();
+        String type = meter.getId().getType().toString().toLowerCase(Locale.ROOT);
         sb.append("{\"")
             .append(config.timestampFieldName())
             .append("\":\"")

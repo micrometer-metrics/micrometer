@@ -30,6 +30,7 @@ import java.net.MalformedURLException;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
@@ -175,14 +176,14 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
             String fieldKey = measurement.getStatistic()
                 .getTagValueRepresentation()
                 .replaceAll("(.)(\\p{Upper})", "$1_$2")
-                .toLowerCase();
+                .toLowerCase(Locale.ROOT);
             fields.add(new Field(fieldKey, value));
         }
         if (fields.isEmpty()) {
             return Stream.empty();
         }
         Meter.Id id = m.getId();
-        return Stream.of(influxLineProtocol(id, id.getType().name().toLowerCase(), fields.stream()));
+        return Stream.of(influxLineProtocol(id, id.getType().name().toLowerCase(Locale.ROOT), fields.stream()));
     }
 
     private Stream<String> writeLongTaskTimer(LongTaskTimer timer) {

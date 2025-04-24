@@ -25,6 +25,7 @@ import org.jooq.exception.DataAccessException;
 import org.jooq.impl.DefaultExecuteListener;
 
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.function.Supplier;
 
@@ -92,8 +93,8 @@ class JooqExecuteListener extends DefaultExecuteListener {
         if (exception != null) {
             if (exception instanceof DataAccessException) {
                 DataAccessException dae = (DataAccessException) exception;
-                exceptionName = dae.sqlStateClass().name().toLowerCase().replace('_', ' ');
-                exceptionSubclass = dae.sqlStateSubclass().name().toLowerCase().replace('_', ' ');
+                exceptionName = dae.sqlStateClass().name().toLowerCase(Locale.ROOT).replace('_', ' ');
+                exceptionSubclass = dae.sqlStateSubclass().name().toLowerCase(Locale.ROOT).replace('_', ' ');
                 if (exceptionSubclass.contains("no subclass")) {
                     exceptionSubclass = KeyValue.NONE_VALUE;
                 }
@@ -108,7 +109,7 @@ class JooqExecuteListener extends DefaultExecuteListener {
         sample.stop(Timer.builder("jooq.query")
             .description("Execution time of a SQL query performed with JOOQ")
             .tags(queryTags)
-            .tag("type", ctx.type().name().toLowerCase())
+            .tag("type", ctx.type().name().toLowerCase(Locale.ROOT))
             .tag("exception", exceptionName)
             .tag("exception.subclass", exceptionSubclass)
             .tags(tags)
