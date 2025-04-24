@@ -29,6 +29,7 @@ import java.net.Proxy;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -125,7 +126,7 @@ public class NewRelicInsightsApiClientProvider implements NewRelicClientProvider
         TimeUnit timeUnit = timer.baseTimeUnit();
         return Stream.of(event(timer.getId(), new Attribute(ACTIVE_TASKS, timer.activeTasks()),
                 new Attribute(DURATION, timer.duration(timeUnit)),
-                new Attribute(TIME_UNIT, timeUnit.name().toLowerCase())));
+                new Attribute(TIME_UNIT, timeUnit.name().toLowerCase(Locale.ROOT))));
     }
 
     @Override
@@ -156,7 +157,7 @@ public class NewRelicInsightsApiClientProvider implements NewRelicClientProvider
         double value = gauge.value();
         if (Double.isFinite(value)) {
             return Stream.of(event(gauge.getId(), new Attribute(VALUE, value),
-                    new Attribute(TIME_UNIT, gauge.baseTimeUnit().name().toLowerCase())));
+                    new Attribute(TIME_UNIT, gauge.baseTimeUnit().name().toLowerCase(Locale.ROOT))));
         }
         return Stream.empty();
     }
@@ -171,9 +172,10 @@ public class NewRelicInsightsApiClientProvider implements NewRelicClientProvider
     @Override
     public Stream<String> writeTimer(Timer timer) {
         TimeUnit timeUnit = timer.baseTimeUnit();
-        return Stream.of(event(timer.getId(), new Attribute(COUNT, timer.count()),
-                new Attribute(AVG, timer.mean(timeUnit)), new Attribute(TOTAL_TIME, timer.totalTime(timeUnit)),
-                new Attribute(MAX, timer.max(timeUnit)), new Attribute(TIME_UNIT, timeUnit.name().toLowerCase())));
+        return Stream
+            .of(event(timer.getId(), new Attribute(COUNT, timer.count()), new Attribute(AVG, timer.mean(timeUnit)),
+                    new Attribute(TOTAL_TIME, timer.totalTime(timeUnit)), new Attribute(MAX, timer.max(timeUnit)),
+                    new Attribute(TIME_UNIT, timeUnit.name().toLowerCase(Locale.ROOT))));
     }
 
     @Override
@@ -181,7 +183,7 @@ public class NewRelicInsightsApiClientProvider implements NewRelicClientProvider
         TimeUnit timeUnit = timer.baseTimeUnit();
         return Stream.of(event(timer.getId(), new Attribute(COUNT, timer.count()),
                 new Attribute(AVG, timer.mean(timeUnit)), new Attribute(TOTAL_TIME, timer.totalTime(timeUnit)),
-                new Attribute(TIME_UNIT, timeUnit.name().toLowerCase())));
+                new Attribute(TIME_UNIT, timeUnit.name().toLowerCase(Locale.ROOT))));
     }
 
     @Override

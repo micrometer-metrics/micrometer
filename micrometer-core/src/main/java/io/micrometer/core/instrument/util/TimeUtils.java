@@ -20,6 +20,7 @@ import io.micrometer.core.instrument.config.validate.DurationValidator;
 import java.time.Duration;
 import java.time.format.DateTimeParseException;
 import java.time.temporal.ChronoUnit;
+import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
@@ -218,7 +219,7 @@ public final class TimeUtils {
      */
     @Deprecated
     public static Duration simpleParse(String time) {
-        String timeLower = PARSE_PATTERN.matcher(time.toLowerCase()).replaceAll("");
+        String timeLower = PARSE_PATTERN.matcher(time.toLowerCase(Locale.ROOT)).replaceAll("");
         if (timeLower.endsWith("ns")) {
             return Duration.ofNanos(Long.parseLong(timeLower.substring(0, timeLower.length() - 2)));
         }

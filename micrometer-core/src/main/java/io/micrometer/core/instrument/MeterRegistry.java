@@ -34,6 +34,7 @@ import io.micrometer.core.instrument.util.TimeUtils;
 
 import java.time.Duration;
 import java.util.*;
+import java.util.Locale;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
@@ -73,7 +74,7 @@ public abstract class MeterRegistry {
         .collect(
             Collectors.toMap(
                 Function.identity(),
-                (timeUnit) -> timeUnit.toString().toLowerCase(),
+                (timeUnit) -> timeUnit.toString().toLowerCase(Locale.ROOT),
                 (k, v) -> { throw new IllegalStateException("Duplicate keys should not exist."); },
                 () -> new EnumMap<>(TimeUnit.class)
             )

@@ -39,6 +39,7 @@ import org.junit.jupiter.params.provider.CsvSource;
 
 import java.time.Duration;
 import java.util.*;
+import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -160,7 +161,7 @@ public abstract class MeterRegistryCompatibilityKit {
         FunctionTimer ft = registry.get("function.timer").functionTimer();
         clock(registry).add(step());
         assertThat(ft.measure()).anySatisfy(ms -> {
-            TimeUnit baseUnit = TimeUnit.valueOf(requireNonNull(ft.getId().getBaseUnit()).toUpperCase());
+            TimeUnit baseUnit = TimeUnit.valueOf(requireNonNull(ft.getId().getBaseUnit()).toUpperCase(Locale.ROOT));
             assertThat(ms.getStatistic()).isEqualTo(Statistic.TOTAL_TIME);
             assertThat(TimeUtils.convert(ms.getValue(), baseUnit, TimeUnit.MILLISECONDS)).isEqualTo(1);
         });

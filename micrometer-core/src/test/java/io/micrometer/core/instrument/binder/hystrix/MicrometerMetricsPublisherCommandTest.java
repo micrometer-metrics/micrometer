@@ -22,6 +22,7 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import java.util.Locale;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -86,7 +87,7 @@ class MicrometerMetricsPublisherCommandTest {
     }
 
     private void assertExecutionMetric(Iterable<Tag> tags, HystrixEventType eventType, double count) {
-        Iterable<Tag> myTags = Tags.concat(tags, "event", eventType.name().toLowerCase(), "terminal",
+        Iterable<Tag> myTags = Tags.concat(tags, "event", eventType.name().toLowerCase(Locale.ROOT), "terminal",
                 Boolean.toString(eventType.isTerminal()));
         assertThat(registry.get("hystrix.execution").tags(myTags).counter().count()).isEqualTo(count);
     }
