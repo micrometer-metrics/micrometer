@@ -15,8 +15,6 @@
  */
 package io.micrometer.observation.aop;
 
-import io.micrometer.common.lang.NonNullApi;
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
 import io.micrometer.observation.Observations;
@@ -26,6 +24,7 @@ import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.reflect.MethodSignature;
+import org.jspecify.annotations.Nullable;
 
 import java.lang.reflect.Method;
 import java.util.concurrent.CompletionStage;
@@ -74,7 +73,6 @@ import java.util.function.Predicate;
  * @since 1.10.0
  */
 @Aspect
-@NonNullApi
 public class ObservedAspect {
 
     private static final Predicate<ProceedingJoinPoint> DONT_SKIP_ANYTHING = pjp -> false;
@@ -142,7 +140,7 @@ public class ObservedAspect {
         return observe(pjp, method, observed);
     }
 
-    private Object observe(ProceedingJoinPoint pjp, Method method, Observed observed) throws Throwable {
+    private @Nullable Object observe(ProceedingJoinPoint pjp, Method method, Observed observed) throws Throwable {
         Observation observation = ObservedAspectObservationDocumentation.of(pjp, observed, this.registry,
                 this.observationConvention);
         if (CompletionStage.class.isAssignableFrom(method.getReturnType())) {

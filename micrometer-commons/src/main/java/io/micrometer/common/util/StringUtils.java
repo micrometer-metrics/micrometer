@@ -15,6 +15,7 @@
  */
 package io.micrometer.common.util;
 
+import io.micrometer.common.lang.internal.Contract;
 import org.jspecify.annotations.Nullable;
 
 /**
@@ -48,6 +49,7 @@ public final class StringUtils {
      * @param string String to check
      * @return {@code true} if the String has any non-whitespace character
      */
+    @Contract("null -> false")
     public static boolean isNotBlank(@Nullable String string) {
         return !isBlank(string);
     }

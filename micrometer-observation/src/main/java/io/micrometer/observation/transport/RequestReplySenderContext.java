@@ -15,8 +15,7 @@
  */
 package io.micrometer.observation.transport;
 
-import io.micrometer.common.lang.NonNull;
-import io.micrometer.common.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Context used when sending data over the wire with the idea that you'll wait for some
@@ -37,7 +36,7 @@ public class RequestReplySenderContext<C, RES> extends SenderContext<C> implemen
      * @param setter propagator setter
      * @param kind kind
      */
-    public RequestReplySenderContext(@NonNull Propagator.Setter<C> setter, @NonNull Kind kind) {
+    public RequestReplySenderContext(Propagator.Setter<C> setter, Kind kind) {
         super(setter, kind);
     }
 
@@ -45,7 +44,7 @@ public class RequestReplySenderContext<C, RES> extends SenderContext<C> implemen
      * Creates a new instance of a {@link Kind#CLIENT} {@link RequestReplySenderContext}.
      * @param setter propagator setter
      */
-    public RequestReplySenderContext(@NonNull Propagator.Setter<C> setter) {
+    public RequestReplySenderContext(Propagator.Setter<C> setter) {
         this(setter, Kind.CLIENT);
     }
 

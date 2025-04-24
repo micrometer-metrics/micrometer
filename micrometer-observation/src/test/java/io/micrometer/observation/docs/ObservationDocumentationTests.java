@@ -35,11 +35,13 @@ import static org.mockito.Mockito.verifyNoInteractions;
 
 class ObservationDocumentationTests {
 
+    ObservationConvention mockObservationConvention = mock(ObservationConvention.class);
+
     @Test
     void iseShouldBeThrownWhenDocumentedObservationHasNotOverriddenDefaultConvention() {
         ObservationRegistry registry = observationRegistry();
 
-        thenThrownBy(() -> TestConventionObservation.NOT_OVERRIDDEN_METHODS.observation(null, null,
+        thenThrownBy(() -> TestConventionObservation.NOT_OVERRIDDEN_METHODS.observation(null, mockObservationConvention,
                 Observation.Context::new, registry))
             .isInstanceOf(IllegalStateException.class)
             .hasMessageContaining("You've decided to use convention based naming yet this observation");
@@ -49,8 +51,8 @@ class ObservationDocumentationTests {
     void npeShouldBeThrownWhenDocumentedObservationHasOverriddenDefaultConventionButDefaultConventionWasNotPassedToTheFactoryMethod() {
         ObservationRegistry registry = observationRegistry();
 
-        thenThrownBy(
-                () -> TestConventionObservation.OVERRIDDEN.observation(null, null, Observation.Context::new, registry))
+        thenThrownBy(() -> TestConventionObservation.OVERRIDDEN.observation(null, mockObservationConvention,
+                Observation.Context::new, registry))
             .isInstanceOf(NullPointerException.class)
             .hasMessageContaining("You have not provided a default convention in the Observation factory method");
     }
@@ -63,6 +65,17 @@ class ObservationDocumentationTests {
                 Observation.Context::new, registry))
             .isInstanceOf(IllegalArgumentException.class)
             .hasMessageContaining("but you have provided an incompatible one of type");
+    }
+
+    @Test
+    void whenGetNameIsNotOverridden_thenNameShouldBeTakenFromDefaultConvention() {
+        ObservationRegistry registry = observationRegistry();
+        Observation.Context context = new Observation.Context();
+
+        TestConventionObservation.OVERRIDDEN.observation(registry, () -> context).start().stop();
+
+        then(context.getName()).isEqualTo("one");
+        then(context.getContextualName()).isEqualTo("contextual");
     }
 
     @Test

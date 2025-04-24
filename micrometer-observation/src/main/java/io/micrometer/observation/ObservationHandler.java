@@ -15,8 +15,8 @@
  */
 package io.micrometer.observation;
 
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.observation.Observation.Context;
+import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;

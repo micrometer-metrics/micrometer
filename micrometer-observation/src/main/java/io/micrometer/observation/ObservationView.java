@@ -15,8 +15,8 @@
  */
 package io.micrometer.observation;
 
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.observation.Observation.ContextView;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Read only view on the {@link Observation}.
@@ -45,8 +45,7 @@ public interface ObservationView {
      * @return scope for this {@link ObservationView}, {@code null} if there was no scope
      * @since 1.10.6
      */
-    @Nullable
-    default Observation.Scope getEnclosingScope() {
+    default Observation.@Nullable Scope getEnclosingScope() {
         return Observation.Scope.NOOP;
     }
 

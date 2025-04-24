@@ -15,7 +15,7 @@
  */
 package io.micrometer.observation;
 
-import io.micrometer.common.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
@@ -61,6 +61,8 @@ public final class Observations {
         return globalRegistry;
     }
 
+    // We know delegate.get() cannot be null but NullAway does not.
+    @SuppressWarnings("NullAway")
     private static final class DelegatingObservationRegistry implements ObservationRegistry {
 
         private final AtomicReference<ObservationRegistry> delegate = new AtomicReference<>(ObservationRegistry.NOOP);
@@ -73,20 +75,18 @@ public final class Observations {
             this.delegate.set(Objects.requireNonNull(delegate, "Delegate must not be null"));
         }
 
-        @Nullable
         @Override
-        public Observation getCurrentObservation() {
+        public @Nullable Observation getCurrentObservation() {
             return delegate.get().getCurrentObservation();
         }
 
-        @Nullable
         @Override
-        public Observation.Scope getCurrentObservationScope() {
+        public Observation.@Nullable Scope getCurrentObservationScope() {
             return delegate.get().getCurrentObservationScope();
         }
 
         @Override
-        public void setCurrentObservationScope(@Nullable Observation.Scope current) {
+        public void setCurrentObservationScope(Observation.@Nullable Scope current) {
             delegate.get().setCurrentObservationScope(current);
         }
 

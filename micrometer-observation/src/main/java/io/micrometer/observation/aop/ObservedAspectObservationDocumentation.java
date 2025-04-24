@@ -17,7 +17,7 @@ package io.micrometer.observation.aop;
 
 import io.micrometer.common.KeyValues;
 import io.micrometer.common.docs.KeyName;
-import io.micrometer.common.lang.Nullable;
+
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
 import io.micrometer.observation.annotation.Observed;
@@ -25,6 +25,7 @@ import io.micrometer.observation.ObservationConvention;
 import io.micrometer.observation.docs.ObservationDocumentation;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.Signature;
+import org.jspecify.annotations.Nullable;
 
 import static io.micrometer.observation.aop.ObservedAspectObservationDocumentation.ObservedAspectLowCardinalityKeyName.CLASS_NAME;
 import static io.micrometer.observation.aop.ObservedAspectObservationDocumentation.ObservedAspectLowCardinalityKeyName.METHOD_NAME;

@@ -18,8 +18,8 @@ package io.micrometer.observation;
 import io.micrometer.common.KeyValue;
 import io.micrometer.common.KeyValues;
 import io.micrometer.common.lang.NonNull;
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.common.util.internal.logging.InternalLoggerFactory;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -754,7 +754,7 @@ public interface Observation extends ObservationView {
      * @return the result from {@link CheckedCallable#call()}
      */
     @SuppressWarnings("unused")
-    default <T, E extends Throwable> T scopedChecked(CheckedCallable<T, E> checkedCallable) throws E {
+    default <T, E extends Throwable> @Nullable T scopedChecked(CheckedCallable<T, E> checkedCallable) throws E {
         try (Scope scope = openScope()) {
             return checkedCallable.call();
         }
@@ -819,7 +819,7 @@ public interface Observation extends ObservationView {
      * @param <E> type of exception checkedCallable throws
      * @return the result from {@link CheckedCallable#call()}
      */
-    static <T, E extends Throwable> T tryScopedChecked(@Nullable Observation parent,
+    static <T, E extends Throwable> @Nullable T tryScopedChecked(@Nullable Observation parent,
             CheckedCallable<T, E> checkedCallable) throws E {
         if (parent != null) {
             return parent.scopedChecked(checkedCallable);
@@ -852,8 +852,7 @@ public interface Observation extends ObservationView {
          * @return previously opened scope when this one was created
          * @since 1.10.8
          */
-        @Nullable
-        default Observation.Scope getPreviousObservationScope() {
+        default Observation.@Nullable Scope getPreviousObservationScope() {
             return null;
         }
 
@@ -913,6 +912,7 @@ public interface Observation extends ObservationView {
 
         private final Map<Object, Object> map = new ConcurrentHashMap<>();
 
+        @Nullable
         private String name;
 
         @Nullable
@@ -933,7 +933,7 @@ public interface Observation extends ObservationView {
          * @return name
          */
         @Override
-        public String getName() {
+        public @Nullable String getName() {
             return this.name;
         }
 
@@ -941,7 +941,7 @@ public interface Observation extends ObservationView {
          * Sets the observation name.
          * @param name observation name
          */
-        public void setName(String name) {
+        public void setName(@Nullable String name) {
             this.name = name;
         }
 
@@ -951,7 +951,7 @@ public interface Observation extends ObservationView {
          * @return contextual name
          */
         @Override
-        public String getContextualName() {
+        public @Nullable String getContextualName() {
             return this.contextualName;
         }
 
@@ -1217,12 +1217,12 @@ public interface Observation extends ObservationView {
         }
 
         @Override
-        public KeyValue getLowCardinalityKeyValue(String key) {
+        public @Nullable KeyValue getLowCardinalityKeyValue(String key) {
             return this.lowCardinalityKeyValues.get(key);
         }
 
         @Override
-        public KeyValue getHighCardinalityKeyValue(String key) {
+        public @Nullable KeyValue getHighCardinalityKeyValue(String key) {
             return this.highCardinalityKeyValues.get(key);
         }
 
@@ -1344,6 +1344,7 @@ public interface Observation extends ObservationView {
          * The observation name.
          * @return name
          */
+        @Nullable
         String getName();
 
         /**
@@ -1470,6 +1471,7 @@ public interface Observation extends ObservationView {
     @FunctionalInterface
     interface CheckedCallable<T, E extends Throwable> {
 
+        @Nullable
         T call() throws E;
 
     }

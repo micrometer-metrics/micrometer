@@ -97,6 +97,7 @@ subprojects {
                 option("NullAway:OnlyNullMarked", "true")
                 option("NullAway:CustomContractAnnotations", "io.micrometer.common.lang.internal.Contract")
                 option("NullAway:CheckContracts", "true")
+                option("NullAway:HandleTestAssertionLibraries", "true")
                 if (!javaLanguageVersion.canCompileOrRun(17)) {
                     // Error Prone does not work with JDK <17
                     enabled = false
