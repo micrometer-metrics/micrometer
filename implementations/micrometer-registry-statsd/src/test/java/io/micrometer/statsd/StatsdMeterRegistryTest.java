@@ -35,6 +35,7 @@ import reactor.util.concurrent.Queues;
 
 import java.time.Duration;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -260,7 +261,7 @@ class StatsdMeterRegistryTest {
     void customNamingConvention() {
         final Processor<String, String> lines = lineProcessor();
         registry = StatsdMeterRegistry.builder(configWithFlavor(StatsdFlavor.ETSY))
-            .nameMapper((id, convention) -> id.getName().toUpperCase())
+            .nameMapper((id, convention) -> id.getName().toUpperCase(Locale.ROOT))
             .clock(clock)
             .lineSink(toLineSink(lines))
             .build();

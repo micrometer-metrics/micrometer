@@ -22,6 +22,7 @@ import io.micrometer.core.instrument.push.PushRegistryConfig;
 import java.time.Duration;
 import java.net.URLDecoder;
 import java.util.Arrays;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
@@ -151,7 +152,7 @@ public interface OtlpConfig extends PushRegistryConfig {
         return getEnum(this, AggregationTemporality.class, "aggregationTemporality").orElseGet(() -> {
             String preference = System.getenv().get("OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE");
             if (preference != null) {
-                return AggregationTemporality.valueOf(preference.toUpperCase());
+                return AggregationTemporality.valueOf(preference.toUpperCase(Locale.ROOT));
             }
             return AggregationTemporality.CUMULATIVE;
         });

@@ -28,6 +28,7 @@ import io.micrometer.core.instrument.binder.MeterBinder;
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
 import java.util.Arrays;
+import java.util.Locale;
 
 import static java.util.Collections.emptyList;
 
@@ -103,7 +104,7 @@ public class JvmThreadMetrics implements MeterBinder {
     }
 
     private static String getStateTagValue(Thread.State state) {
-        return state.name().toLowerCase().replace("_", "-");
+        return state.name().toLowerCase(Locale.ROOT).replace("_", "-");
     }
 
 }

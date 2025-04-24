@@ -24,6 +24,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -93,7 +94,7 @@ public class NewRelicInsightsAgentClientProvider implements NewRelicClientProvid
         Map<String, Object> attributes = new HashMap<>();
         addAttribute(ACTIVE_TASKS, timer.activeTasks(), attributes);
         addAttribute(DURATION, timer.duration(timer.baseTimeUnit()), attributes);
-        addAttribute(TIME_UNIT, timer.baseTimeUnit().name().toLowerCase(), attributes);
+        addAttribute(TIME_UNIT, timer.baseTimeUnit().name().toLowerCase(Locale.ROOT), attributes);
         // process meter's name, type and tags
         addMeterAsAttributes(timer.getId(), attributes);
         return attributes;
@@ -141,7 +142,7 @@ public class NewRelicInsightsAgentClientProvider implements NewRelicClientProvid
         }
         Map<String, Object> attributes = new HashMap<>();
         addAttribute(VALUE, value, attributes);
-        addAttribute(TIME_UNIT, gauge.baseTimeUnit().name().toLowerCase(), attributes);
+        addAttribute(TIME_UNIT, gauge.baseTimeUnit().name().toLowerCase(Locale.ROOT), attributes);
         // process meter's name, type and tags
         addMeterAsAttributes(gauge.getId(), attributes);
         return attributes;
@@ -167,7 +168,7 @@ public class NewRelicInsightsAgentClientProvider implements NewRelicClientProvid
         addAttribute(AVG, timer.mean(timeUnit), attributes);
         addAttribute(TOTAL_TIME, timer.totalTime(timeUnit), attributes);
         addAttribute(MAX, timer.max(timeUnit), attributes);
-        addAttribute(TIME_UNIT, timeUnit.name().toLowerCase(), attributes);
+        addAttribute(TIME_UNIT, timeUnit.name().toLowerCase(Locale.ROOT), attributes);
         // process meter's name, type and tags
         addMeterAsAttributes(timer.getId(), attributes);
         return attributes;
@@ -180,7 +181,7 @@ public class NewRelicInsightsAgentClientProvider implements NewRelicClientProvid
         addAttribute(COUNT, timer.count(), attributes);
         addAttribute(AVG, timer.mean(timeUnit), attributes);
         addAttribute(TOTAL_TIME, timer.totalTime(timeUnit), attributes);
-        addAttribute(TIME_UNIT, timeUnit.name().toLowerCase(), attributes);
+        addAttribute(TIME_UNIT, timeUnit.name().toLowerCase(Locale.ROOT), attributes);
         // process meter's name, type and tags
         addMeterAsAttributes(timer.getId(), attributes);
         return attributes;
