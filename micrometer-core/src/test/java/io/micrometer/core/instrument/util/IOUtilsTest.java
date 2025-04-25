@@ -33,7 +33,7 @@ class IOUtilsTest {
     void testToString() {
         String expected = "This is a sample.";
 
-        ByteArrayInputStream inputStream = new ByteArrayInputStream(expected.getBytes());
+        ByteArrayInputStream inputStream = new ByteArrayInputStream(expected.getBytes(StandardCharsets.UTF_8));
 
         assertThat(IOUtils.toString(inputStream)).isEqualTo(expected);
     }

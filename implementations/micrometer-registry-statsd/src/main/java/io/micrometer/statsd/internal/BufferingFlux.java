@@ -18,6 +18,7 @@ package io.micrometer.statsd.internal;
 import reactor.core.publisher.DirectProcessor;
 import reactor.core.publisher.Flux;
 
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -45,7 +46,7 @@ public class BufferingFlux {
     public static Flux<String> create(final Flux<String> source, final String delimiter, final int maxByteArraySize,
             final long maxMillisecondsBetweenEmits) {
         return Flux.defer(() -> {
-            final int delimiterSize = delimiter.getBytes().length;
+            final int delimiterSize = delimiter.getBytes(StandardCharsets.UTF_8).length;
             final AtomicInteger byteSize = new AtomicInteger();
             final AtomicLong lastTime = new AtomicLong();
 
@@ -62,7 +63,7 @@ public class BufferingFlux {
                 .mergeWith(heartbeat);
 
             return sourceWithEmptyStringKeepAlive.bufferUntil(line -> {
-                final int bytesLength = line.getBytes().length;
+                final int bytesLength = line.getBytes(StandardCharsets.UTF_8).length;
                 final long now = System.currentTimeMillis();
                 // Update last time to now if this is the first time
                 lastTime.compareAndSet(0, now);

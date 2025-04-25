@@ -178,7 +178,7 @@ class ObservationMessagingIntegrationTest {
                 // This is a very naive approach that takes the first ConsumerRecord
                 Header header = carrier.iterator().next().headers().lastHeader(key);
                 if (header != null) {
-                    return new String(header.value());
+                    return new String(header.value(), StandardCharsets.UTF_8);
                 }
                 return null;
             });

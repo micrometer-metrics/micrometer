@@ -23,6 +23,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
@@ -311,7 +312,7 @@ class DynatraceConfigTest {
 
         Files.write(tempFile, ("DT_METRICS_INGEST_URL = https://your-dynatrace-ingest-url/api/v2/metrics/ingest\n"
                 + "DT_METRICS_INGEST_API_TOKEN = YOUR.DYNATRACE.TOKEN")
-            .getBytes());
+            .getBytes(StandardCharsets.UTF_8));
 
         DynatraceFileBasedConfigurationProvider.getInstance()
             .forceOverwriteConfig(tempFile.toString(), Duration.ofMillis(50));
@@ -333,7 +334,7 @@ class DynatraceConfigTest {
 
         Files.write(tempFile, ("DT_METRICS_INGEST_URL = https://a-different-url/api/v2/metrics/ingest\n"
                 + "DT_METRICS_INGEST_API_TOKEN = A.DIFFERENT.TOKEN")
-            .getBytes());
+            .getBytes(StandardCharsets.UTF_8));
 
         await().atMost(1_000, MILLISECONDS).until(() -> config.apiToken().equals("A.DIFFERENT.TOKEN"));
         assertThat(config.uri()).isEqualTo("https://a-different-url/api/v2/metrics/ingest");

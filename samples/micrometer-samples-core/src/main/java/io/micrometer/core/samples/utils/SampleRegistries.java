@@ -64,6 +64,7 @@ import io.micrometer.wavefront.WavefrontMeterRegistry;
 
 import java.io.*;
 import java.net.InetSocketAddress;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 
 public class SampleRegistries {
@@ -118,7 +119,7 @@ public class SampleRegistries {
                 String response = prometheusRegistry.scrape();
                 httpExchange.sendResponseHeaders(200, response.length());
                 OutputStream os = httpExchange.getResponseBody();
-                os.write(response.getBytes());
+                os.write(response.getBytes(StandardCharsets.UTF_8));
                 os.close();
             });
 
