@@ -23,7 +23,7 @@ import org.junit.jupiter.api.Test;
 import java.lang.management.OperatingSystemMXBean;
 import java.util.Locale;
 
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assumptions.assumeFalse;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 import static org.mockito.Mockito.mock;

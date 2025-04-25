@@ -23,7 +23,7 @@ import org.junit.jupiter.api.Test;
 import java.time.Duration;
 import java.util.Locale;
 
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
