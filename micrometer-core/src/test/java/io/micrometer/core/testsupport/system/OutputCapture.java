@@ -21,6 +21,7 @@ import org.springframework.util.Assert;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
@@ -260,7 +261,7 @@ class OutputCapture implements CapturedOutput {
 
         @Override
         public void write(byte[] b, int off, int len) throws IOException {
-            this.copy.accept(new String(b, off, len));
+            this.copy.accept(new String(b, off, len, StandardCharsets.UTF_8));
             this.systemStream.write(b, off, len);
         }
 

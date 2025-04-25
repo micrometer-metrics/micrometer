@@ -120,7 +120,7 @@ public interface HttpSender {
                 printed.append("<no request body>");
             }
             else {
-                printed.append(new String(entity));
+                printed.append(new String(entity, StandardCharsets.UTF_8));
             }
             return printed.toString();
         }
