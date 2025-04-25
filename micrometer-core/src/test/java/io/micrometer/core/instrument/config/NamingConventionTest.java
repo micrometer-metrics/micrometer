@@ -18,7 +18,7 @@ package io.micrometer.core.instrument.config;
 import io.micrometer.core.instrument.Meter;
 import org.junit.jupiter.api.Test;
 
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Tests for {@link NamingConvention}.
