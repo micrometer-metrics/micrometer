@@ -75,7 +75,12 @@ subprojects {
         tasks.withType(JavaCompile).configureEach {
             options.errorprone.disableWarningsInGeneratedCode = true
             options.errorprone.excludedPaths = ".*/build/generated/.*"
-            options.errorprone.error("StringCaseLocaleUsage")
+            options.errorprone.error(
+                    "BadImport",
+                    "DefaultCharset",
+                    "MissingOverride",
+                    "StringCaseLocaleUsage"
+            )
 
             if (!javaLanguageVersion.canCompileOrRun(17)) {
                 // Error Prone does not work with JDK <17
@@ -450,7 +455,7 @@ nexusPublishing {
 }
 
 wrapper {
-    gradleVersion = '8.13'
+    gradleVersion = '8.14'
 }
 
 defaultTasks 'build'

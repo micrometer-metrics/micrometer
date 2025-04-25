@@ -44,6 +44,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -150,7 +151,7 @@ class TomcatMetricsTest {
             protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
                 IOUtils.toString(req.getInputStream());
                 sleep();
-                resp.getOutputStream().write("yes".getBytes());
+                resp.getOutputStream().write("yes".getBytes(StandardCharsets.UTF_8));
             }
         };
 
@@ -183,7 +184,7 @@ class TomcatMetricsTest {
             protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
                 IOUtils.toString(req.getInputStream());
                 sleep();
-                resp.getOutputStream().write("yes".getBytes());
+                resp.getOutputStream().write("yes".getBytes(StandardCharsets.UTF_8));
             }
         };
 
@@ -217,7 +218,7 @@ class TomcatMetricsTest {
             protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
                 IOUtils.toString(req.getInputStream());
                 sleep();
-                resp.getOutputStream().write("yes".getBytes());
+                resp.getOutputStream().write("yes".getBytes(StandardCharsets.UTF_8));
             }
         }, new HttpServlet() {
             @Override
@@ -225,7 +226,7 @@ class TomcatMetricsTest {
                     throws ServletException, IOException {
                 IOUtils.toString(req.getInputStream());
                 sleep();
-                resp.getOutputStream().write("hi".getBytes());
+                resp.getOutputStream().write("hi".getBytes(StandardCharsets.UTF_8));
             }
         });
 
@@ -277,7 +278,7 @@ class TomcatMetricsTest {
             protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
                 IOUtils.toString(req.getInputStream());
                 sleep();
-                resp.getOutputStream().write("yes".getBytes());
+                resp.getOutputStream().write("yes".getBytes(StandardCharsets.UTF_8));
             }
         }, new HttpServlet() {
             @Override
@@ -285,7 +286,7 @@ class TomcatMetricsTest {
                     throws ServletException, IOException {
                 IOUtils.toString(req.getInputStream());
                 sleep();
-                resp.getOutputStream().write("hi".getBytes());
+                resp.getOutputStream().write("hi".getBytes(StandardCharsets.UTF_8));
             }
         });
 

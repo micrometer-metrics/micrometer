@@ -35,6 +35,7 @@ import org.testcontainers.utility.DockerImageName;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
@@ -277,9 +278,9 @@ class PrometheusMeterRegistryIntegrationTest {
             String response = registry.scrape(acceptHeader);
 
             httpExchange.getResponseHeaders().add("Content-Type", contentType);
-            httpExchange.sendResponseHeaders(200, response.getBytes().length);
+            httpExchange.sendResponseHeaders(200, response.getBytes(StandardCharsets.UTF_8).length);
             try (OutputStream outputStream = httpExchange.getResponseBody()) {
-                outputStream.write(response.getBytes());
+                outputStream.write(response.getBytes(StandardCharsets.UTF_8));
             }
         });
         new Thread(server::start).start();

@@ -42,6 +42,7 @@ import io.prometheus.metrics.tracer.common.SpanContext;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -136,7 +137,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         try {
             scrape(outputStream, contentType);
-            return outputStream.toString();
+            return outputStream.toString(StandardCharsets.UTF_8.name());
         }
         catch (IOException e) {
             // This should not happen during writing a ByteArrayOutputStream
@@ -182,7 +183,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         try {
             scrape(outputStream, contentType, includedNames);
-            return outputStream.toString();
+            return outputStream.toString(StandardCharsets.UTF_8.name());
         }
         catch (IOException e) {
             // This should not happen during writing a ByteArrayOutputStream
