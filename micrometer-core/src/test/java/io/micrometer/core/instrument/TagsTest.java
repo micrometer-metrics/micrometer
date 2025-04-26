@@ -18,7 +18,10 @@ package io.micrometer.core.instrument;
 import com.sun.management.ThreadMXBean;
 import io.micrometer.core.Issue;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.condition.*;
+import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import java.lang.management.ManagementFactory;
 import java.util.*;
@@ -137,6 +140,27 @@ class TagsTest {
     void concatOnTwoTagsWithSameKeyAreMergedIntoOneTag() {
         Iterable<Tag> tags = Tags.concat(Tags.of("k", "v1"), "k", "v2");
         assertThat(tags).containsExactly(Tag.of("k", "v2"));
+    }
+
+    static Stream<Arguments> concatenatedIterables() {
+        return Stream.of(Arguments.of(Tags.empty(), Tags.empty(), Tags.empty()),
+                Arguments.of(Tags.of("k1", "v1"), Tags.empty(), Tags.of("k1", "v1")),
+                Arguments.of(Tags.empty(), Tags.of("k1", "v1"), Tags.of("k1", "v1")),
+                Arguments.of(Tags.of("k1", "v1", "k2", "v2", "k4", "v4", "k3", "v3", "k5", "v5"),
+                        Tags.of("k0", "v0", "k2", "override", "k4", "override", "k6", "v6", "k7", "v7"),
+                        Tags.of("k0", "v0", "k1", "v1", "k2", "override", "k3", "v3", "k4", "override", "k5", "v5",
+                                "k6", "v6", "k7", "v7")));
+    }
+
+    @ParameterizedTest
+    @MethodSource("concatenatedIterables")
+    void concatOnTwoIterablesWithSameKeyAreMergedIntoOneTag(Tags left, Tags right, Tags expectation) {
+        // Converting to classes that are only iterables, not collections nor Tags
+        Iterable<Tag> first = left::iterator;
+        Iterable<Tag> second = right::iterator;
+
+        Iterable<Tag> tags = Tags.concat(first, second);
+        assertThat(tags).containsExactlyElementsOf(expectation);
     }
 
     @Issue("#3851")

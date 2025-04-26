@@ -71,11 +71,20 @@ public final class Tags implements Iterable<Tag> {
         if (length > tags.length) {
             return false;
         }
+
+        // This style is intentionally chosen to have only one array
+        // access per iteration (tags[i].compareTo(tags[i + 1]) would
+        // have two).
+        Tag current = tags[0];
+        Tag next;
+
         for (int i = 0; i < length - 1; i++) {
-            int cmp = tags[i].compareTo(tags[i + 1]);
+            next = tags[i + 1];
+            int cmp = current.compareTo(next);
             if (cmp >= 0) {
                 return false;
             }
+            current = next;
         }
         return true;
     }
@@ -96,7 +105,8 @@ public final class Tags implements Iterable<Tag> {
     }
 
     /**
-     * Removes duplicate tags from an ordered array of tags.
+     * Removes duplicate tags from an ordered array of tags. In the case of several
+     * consecutive tags with the same key, only the last one is preserved.
      * @param tags an ordered array of {@code Tag} objects.
      * @return the number of unique tags in the {@code tags} array after removing
      * duplicates.
@@ -111,9 +121,24 @@ public final class Tags implements Iterable<Tag> {
         // index of next unique element
         int j = 0;
 
-        for (int i = 0; i < n - 1; i++)
-            if (!tags[i].getKey().equals(tags[i + 1].getKey()))
+        // The following is intentionally written in this style to facilitate performance.
+        // Normally one would just do tags[i].getKey().equals(tags[i + 1].getKey()),
+        // but the tags[i + 1].getKey() value is exactly the same as tags[i].getKey()
+        // for the next iteration, thus caching it in a variable halves the number
+        // of lookups.
+        // The compiler is very unlikely to do this for us because of the absence of
+        // "this data is immutable" signs, even if MM doesn't enforce any HB
+        // relations with external modifications in this case. You can run the
+        // associated benchmarks to check the behavior for your specific JVM.
+        String current = tags[0].getKey();
+        String next;
+
+        for (int i = 0; i < n - 1; i++) {
+            next = tags[i + 1].getKey();
+            if (!current.equals(next))
                 tags[j++] = tags[i];
+            current = next;
+        }
 
         tags[j++] = tags[n - 1];
         return j;
@@ -126,12 +151,14 @@ public final class Tags implements Iterable<Tag> {
      * @return a {@code Tags} instance with the merged sets of tags.
      */
     private Tags merge(Tags other) {
-        if (other.length == 0) {
+        if (length == 0) {
+            return other;
+        }
+
+        if (other.length == 0 || tagsEqual(other)) {
             return this;
         }
-        if (Objects.equals(this, other)) {
-            return this;
-        }
+
         Tag[] sortedSet = new Tag[this.length + other.length];
         int sortedIndex = 0;
         int thisIndex = 0;
@@ -215,13 +242,12 @@ public final class Tags implements Iterable<Tag> {
      * @return a new {@code Tags} instance
      */
     public Tags and(@Nullable Iterable<? extends Tag> tags) {
-        if (tags == null || tags == EMPTY || !tags.iterator().hasNext()) {
-            return this;
-        }
-
         if (this.length == 0) {
             return Tags.of(tags);
         }
+
+        // Tags.of() will take care of nulls, empty iterables and so on
+        // merge() then will check if the argument is empty and reduce to no-op
         return merge(Tags.of(tags));
     }
 
@@ -276,7 +302,7 @@ public final class Tags implements Iterable<Tag> {
 
     @Override
     public boolean equals(@Nullable Object obj) {
-        return this == obj || obj != null && getClass() == obj.getClass() && tagsEqual((Tags) obj);
+        return this == obj || (obj != null && getClass() == obj.getClass() && tagsEqual((Tags) obj));
     }
 
     private boolean tagsEqual(Tags obj) {
@@ -323,15 +349,18 @@ public final class Tags implements Iterable<Tag> {
      * @return a new {@code Tags} instance
      */
     public static Tags of(@Nullable Iterable<? extends Tag> tags) {
-        if (tags == null || tags == EMPTY || !tags.iterator().hasNext()) {
-            return Tags.empty();
-        }
-        else if (tags instanceof Tags) {
+        if (tags instanceof Tags) {
             return (Tags) tags;
         }
         else if (tags instanceof Collection) {
             Collection<? extends Tag> tagsCollection = (Collection<? extends Tag>) tags;
+            if (tagsCollection.isEmpty()) {
+                return Tags.empty();
+            }
             return toTags(tagsCollection.toArray(EMPTY_TAG_ARRAY));
+        }
+        else if (emptyIterable(tags)) {
+            return Tags.empty();
         }
         else {
             return toTags(StreamSupport.stream(tags.spliterator(), false).toArray(Tag[]::new));
@@ -346,7 +375,7 @@ public final class Tags implements Iterable<Tag> {
      * @return a new {@code Tags} instance
      */
     public static Tags of(String key, String value) {
-        return new Tags(new Tag[] { Tag.of(key, value) }, 1);
+        return of(Tag.of(key, value));
     }
 
     /**
@@ -371,6 +400,26 @@ public final class Tags implements Iterable<Tag> {
 
     private static boolean blankVarargs(@Nullable Object[] args) {
         return args == null || args.length == 0 || (args.length == 1 && args[0] == null);
+    }
+
+    private static boolean emptyIterable(@Nullable Iterable<? extends Tag> iterable) {
+        // Doing the checks in the ascending cost order
+        if (iterable == null || iterable == EMPTY) {
+            return true;
+        }
+
+        if (iterable instanceof Tags) {
+            return ((Tags) iterable).length == 0;
+        }
+
+        if (iterable instanceof Collection) {
+            return ((Collection<?>) iterable).isEmpty();
+        }
+
+        // While the compiler can theoretically avoid Iterator allocation here
+        // (via scalarization), it is not guaranteed, thus leaving this check as the last
+        // one
+        return !iterable.iterator().hasNext();
     }
 
     /**
