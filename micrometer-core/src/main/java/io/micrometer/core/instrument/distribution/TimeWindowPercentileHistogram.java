@@ -86,7 +86,7 @@ public class TimeWindowPercentileHistogram extends AbstractTimeWindowHistogram<D
 
     @Override
     void recordLong(DoubleRecorder bucket, long value) {
-        bucket.recordValue(value);
+        bucket.recordValue((double) value);
     }
 
     @Override

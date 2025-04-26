@@ -64,7 +64,7 @@ class FixedBoundaryHistogram {
     }
 
     void record(long value) {
-        int index = leastLessThanOrEqualTo(value);
+        int index = leastLessThanOrEqualTo((double) value);
         if (index > -1)
             values.incrementAndGet(index);
     }

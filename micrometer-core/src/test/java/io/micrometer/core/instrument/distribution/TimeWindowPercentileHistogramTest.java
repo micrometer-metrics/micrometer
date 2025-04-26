@@ -98,7 +98,7 @@ class TimeWindowPercentileHistogramTest {
                 false)) {
 
             for (long i = 1; i <= 10; i++) {
-                histogram.recordLong((long) millisToUnit(i, TimeUnit.NANOSECONDS));
+                histogram.recordLong((long) millisToUnit((double) i, TimeUnit.NANOSECONDS));
             }
 
             assertThat(histogram.takeSnapshot(0, 0, 0).percentileValues())

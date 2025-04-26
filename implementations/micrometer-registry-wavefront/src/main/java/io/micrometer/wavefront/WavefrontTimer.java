@@ -48,7 +48,7 @@ class WavefrontTimer extends CumulativeTimer {
     protected void recordNonNegative(long amount, TimeUnit unit) {
         super.recordNonNegative(amount, unit);
         if (delegate != null) {
-            delegate.update(TimeUtils.convert(amount, unit, baseTimeUnit()));
+            delegate.update(TimeUtils.convert((double) amount, unit, baseTimeUnit()));
         }
     }
 

@@ -44,7 +44,7 @@ class FixedBoundaryHistogramTest {
     @ParameterizedTest
     @MethodSource("valuedIndexProvider")
     void testLeastLessThanOrEqualTo(long value, int expectedIndex) {
-        assertThat(fixedBoundaryHistogram.leastLessThanOrEqualTo(value)).isEqualTo(expectedIndex);
+        assertThat(fixedBoundaryHistogram.leastLessThanOrEqualTo((double) value)).isEqualTo(expectedIndex);
     }
 
     private static Stream<Arguments> valuedIndexProvider() {

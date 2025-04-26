@@ -36,7 +36,7 @@ class DropwizardCounterTest {
     @Test
     void increment() {
         long amount = 10;
-        counter.increment(amount);
+        counter.increment((double) amount);
 
         verify(meter).mark(amount);
     }
@@ -44,7 +44,7 @@ class DropwizardCounterTest {
     @Test
     void count() {
         when(meter.getCount()).thenReturn(20l);
-        assertThat(counter.count()).isEqualTo(meter.getCount());
+        assertThat(counter.count()).isEqualTo((double) meter.getCount());
     }
 
 }

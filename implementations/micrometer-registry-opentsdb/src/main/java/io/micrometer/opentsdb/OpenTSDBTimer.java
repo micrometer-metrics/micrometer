@@ -88,7 +88,7 @@ public class OpenTSDBTimer extends AbstractTimer {
         count.increment();
         long nanoAmount = TimeUnit.NANOSECONDS.convert(amount, unit);
         totalTime.add(nanoAmount);
-        max.record(nanoAmount, TimeUnit.NANOSECONDS);
+        max.record((double) nanoAmount, TimeUnit.NANOSECONDS);
 
         if (histogram != null) {
             histogram.recordLong(nanoAmount);

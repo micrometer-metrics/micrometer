@@ -187,8 +187,8 @@ public class JettyConnectionMetrics extends AbstractLifeCycle implements Connect
                 .tags(tags)
                 .register(registry));
         }
-        messagesIn.increment(connection.getMessagesIn());
-        messagesOut.increment(connection.getMessagesOut());
+        messagesIn.increment((double) connection.getMessagesIn());
+        messagesOut.increment((double) connection.getMessagesOut());
     }
 
     @Override

@@ -229,8 +229,8 @@ public class AppOpticsMeterRegistry extends StepMeterRegistry {
         HistogramSnapshot snapshot = timer.takeSnapshot();
         long count = snapshot.count();
         if (count > 0) {
-            return Optional.of(write(timer.getId(), "timer", Fields.Count.tag(), decimal(count), Fields.Sum.tag(),
-                    decimal(snapshot.total(getBaseTimeUnit())), Fields.Max.tag(),
+            return Optional.of(write(timer.getId(), "timer", Fields.Count.tag(), decimal((double) count),
+                    Fields.Sum.tag(), decimal(snapshot.total(getBaseTimeUnit())), Fields.Max.tag(),
                     decimal(snapshot.max(getBaseTimeUnit()))));
         }
         return Optional.empty();
@@ -240,8 +240,9 @@ public class AppOpticsMeterRegistry extends StepMeterRegistry {
         HistogramSnapshot snapshot = summary.takeSnapshot();
         long count = snapshot.count();
         if (count > 0) {
-            return Optional.of(write(summary.getId(), "distributionSummary", Fields.Count.tag(), decimal(count),
-                    Fields.Sum.tag(), decimal(snapshot.total()), Fields.Max.tag(), decimal(snapshot.max())));
+            return Optional
+                .of(write(summary.getId(), "distributionSummary", Fields.Count.tag(), decimal((double) count),
+                        Fields.Sum.tag(), decimal(snapshot.total()), Fields.Max.tag(), decimal(snapshot.max())));
         }
         return Optional.empty();
     }

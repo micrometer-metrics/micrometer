@@ -51,7 +51,7 @@ public class SpectatorTimer extends AbstractTimer {
     @Override
     public double totalTime(TimeUnit unit) {
         // the Spectator Timer contract insists that nanos be returned from totalTime()
-        return TimeUtils.nanosToUnit(timer.totalTime(), unit);
+        return TimeUtils.nanosToUnit((double) timer.totalTime(), unit);
     }
 
     @Override

@@ -252,8 +252,8 @@ class JvmGcMetricsTest {
                 .mapToDouble(timer -> timer.totalTime(TimeUnit.MILLISECONDS))
                 .sum();
             // small difference can happen when less than 1ms timing gets rounded
-            assertThat(observedPauseTimeMs).isCloseTo(expectedPauseTimeMs, within(1d));
-            assertThat(observedConcurrentTimeMs).isCloseTo(expectedConcurrentTimeMs, within(1d));
+            assertThat(observedPauseTimeMs).isCloseTo((double) expectedPauseTimeMs, within(1d));
+            assertThat(observedConcurrentTimeMs).isCloseTo((double) expectedConcurrentTimeMs, within(1d));
         });
     }
 

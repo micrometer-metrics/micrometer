@@ -103,7 +103,7 @@ public class DefaultLongTaskTimer extends AbstractMeter implements LongTaskTimer
         for (SampleImpl task : activeTasks) {
             sum += now - task.startTime();
         }
-        return TimeUtils.nanosToUnit(sum, unit);
+        return TimeUtils.nanosToUnit((double) sum, unit);
     }
 
     @Override
@@ -235,7 +235,7 @@ public class DefaultLongTaskTimer extends AbstractMeter implements LongTaskTimer
 
         @Override
         public double duration(TimeUnit unit) {
-            return stopped ? -1 : TimeUtils.nanosToUnit(clock.monotonicTime() - startTime, unit);
+            return stopped ? -1 : TimeUtils.nanosToUnit((double) (clock.monotonicTime() - startTime), unit);
         }
 
         private long startTime() {
