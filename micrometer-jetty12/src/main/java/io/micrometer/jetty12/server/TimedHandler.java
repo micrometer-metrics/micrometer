@@ -135,6 +135,8 @@ public class TimedHandler extends EventsHandler implements Graceful {
         request.removeAttribute(SAMPLE_REQUEST_LONG_TASK_TIMER_ATTRIBUTE);
 
         requestSample.stop();
+
+        shutdown.check();
     }
 
     private void beginHandlerTiming(Request request) {
