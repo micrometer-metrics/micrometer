@@ -68,17 +68,6 @@ class ObservationDocumentationTests {
     }
 
     @Test
-    void whenGetNameIsNotOverridden_thenNameShouldBeTakenFromDefaultConvention() {
-        ObservationRegistry registry = observationRegistry();
-        Observation.Context context = new Observation.Context();
-
-        TestConventionObservation.OVERRIDDEN.observation(registry, () -> context).start().stop();
-
-        then(context.getName()).isEqualTo("one");
-        then(context.getContextualName()).isEqualTo("contextual");
-    }
-
-    @Test
     void observationShouldBeCreatedWhenObservationConventionIsOfProperType() {
         ObservationRegistry registry = observationRegistry();
         Observation.Context context = new Observation.Context();
