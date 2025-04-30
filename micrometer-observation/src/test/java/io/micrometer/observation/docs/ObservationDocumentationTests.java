@@ -48,11 +48,12 @@ class ObservationDocumentationTests {
     }
 
     @Test
+    @SuppressWarnings("NullAway")
     void npeShouldBeThrownWhenDocumentedObservationHasOverriddenDefaultConventionButDefaultConventionWasNotPassedToTheFactoryMethod() {
         ObservationRegistry registry = observationRegistry();
 
-        thenThrownBy(() -> TestConventionObservation.OVERRIDDEN.observation(null, mockObservationConvention,
-                Observation.Context::new, registry))
+        thenThrownBy(
+                () -> TestConventionObservation.OVERRIDDEN.observation(null, null, Observation.Context::new, registry))
             .isInstanceOf(NullPointerException.class)
             .hasMessageContaining("You have not provided a default convention in the Observation factory method");
     }
