@@ -171,6 +171,25 @@ class MultiGaugeTest {
         testOverwrite("prefix.my.multi.gauge");
     }
 
+    @Test
+    void withMeterFilterIgnoreTags() {
+        registry.config().meterFilter(MeterFilter.ignoreTags("ignored"));
+
+        MultiGauge multiGauge = MultiGauge.builder("mg").register(registry);
+
+        multiGauge.register(List.of(Row.of(Tags.of("key", "1", "ignored", "1"), 1d)));
+        assertThat(registry.get("mg").tag("key", "1").gauges()).hasSize(1);
+        assertThat(registry.get("mg").tag("key", "1").gauge().value()).isEqualTo(1d);
+
+        multiGauge.register(List.of(Row.of(Tags.of("key", "1", "ignored", "2"), 2d)));
+        assertThat(registry.get("mg").tag("key", "1").gauges()).hasSize(1);
+        assertThat(registry.get("mg").tag("key", "1").gauge().value()).isEqualTo(1d);
+
+        multiGauge.register(List.of(Row.of(Tags.of("key", "1", "ignored", "3"), 3d)), true);
+        assertThat(registry.get("mg").tag("key", "1").gauges()).hasSize(1);
+        assertThat(registry.get("mg").tag("key", "1").gauge().value()).isEqualTo(3d);
+    }
+
     private static class Color {
 
         final String name;
