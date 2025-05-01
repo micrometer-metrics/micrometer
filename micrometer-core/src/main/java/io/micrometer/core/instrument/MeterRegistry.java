@@ -34,7 +34,6 @@ import io.micrometer.core.instrument.util.TimeUtils;
 
 import java.time.Duration;
 import java.util.*;
-import java.util.Locale;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
@@ -623,7 +622,15 @@ public abstract class MeterRegistry {
         return meterClass.cast(m);
     }
 
-    private Meter.Id getMappedId(Meter.Id id) {
+    Meter.Id getMappedId(Meter.Id id) {
+        Meter m = preFilterIdToMeterMap.get(id);
+        if (m != null && !isStaleId(id)) {
+            return m.getId();
+        }
+        return mapId(id);
+    }
+
+    private Meter.Id mapId(Meter.Id id) {
         if (id.syntheticAssociation() != null) {
             return id;
         }
@@ -644,7 +651,7 @@ public abstract class MeterRegistry {
             return m;
         }
 
-        Meter.Id mappedId = getMappedId(originalId);
+        Meter.Id mappedId = mapId(originalId);
         m = meterMap.get(mappedId);
 
         if (m != null) {
@@ -771,7 +778,7 @@ public abstract class MeterRegistry {
     public Meter removeByPreFilterId(Meter.Id preFilterId) {
         final Meter meterToRemove = preFilterIdToMeterMap.get(preFilterId);
         if (meterToRemove == null)
-            return remove(getMappedId(preFilterId));
+            return remove(mapId(preFilterId));
         return remove(meterToRemove);
     }
 
