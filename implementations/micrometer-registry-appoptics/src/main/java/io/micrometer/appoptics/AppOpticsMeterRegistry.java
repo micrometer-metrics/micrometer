@@ -238,10 +238,10 @@ public class AppOpticsMeterRegistry extends StepMeterRegistry {
 
     private Optional<String> writeSummary(DistributionSummary summary) {
         HistogramSnapshot snapshot = summary.takeSnapshot();
-        if (snapshot.count() > 0) {
-            return Optional
-                .of(write(summary.getId(), "distributionSummary", Fields.Count.tag(), decimal(summary.count()),
-                        Fields.Sum.tag(), decimal(summary.totalAmount()), Fields.Max.tag(), decimal(summary.max())));
+        long count = snapshot.count();
+        if (count > 0) {
+            return Optional.of(write(summary.getId(), "distributionSummary", Fields.Count.tag(), decimal(count),
+                    Fields.Sum.tag(), decimal(snapshot.total()), Fields.Max.tag(), decimal(snapshot.max())));
         }
         return Optional.empty();
     }
