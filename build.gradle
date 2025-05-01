@@ -78,6 +78,7 @@ subprojects {
             options.errorprone.error(
                     "BadImport",
                     "DefaultCharset",
+                    "LongDoubleConversion",
                     "MissingOverride",
                     "StringCaseLocaleUsage"
             )

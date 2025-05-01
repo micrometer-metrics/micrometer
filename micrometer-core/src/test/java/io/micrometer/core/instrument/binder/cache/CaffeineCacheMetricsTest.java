@@ -68,17 +68,18 @@ class CaffeineCacheMetricsTest extends AbstractCacheMetricsTest {
 
         FunctionCounter evictionWeight = fetch(registry, "cache.eviction.weight").functionCounter();
         CacheStats stats = cache.stats();
-        assertThat(evictionWeight.count()).isEqualTo(stats.evictionWeight());
+        assertThat(evictionWeight.count()).isEqualTo((double) stats.evictionWeight());
 
         // specific to LoadingCache instance
         TimeGauge loadDuration = fetch(registry, "cache.load.duration").timeGauge();
-        assertThat(loadDuration.value(TimeUnit.NANOSECONDS)).isCloseTo(stats.totalLoadTime(), Offset.offset(0.1));
+        assertThat(loadDuration.value(TimeUnit.NANOSECONDS)).isCloseTo((double) stats.totalLoadTime(),
+                Offset.offset(0.1));
 
         FunctionCounter successfulLoad = fetch(registry, "cache.load", Tags.of("result", "success")).functionCounter();
-        assertThat(successfulLoad.count()).isEqualTo(stats.loadSuccessCount());
+        assertThat(successfulLoad.count()).isEqualTo((double) stats.loadSuccessCount());
 
         FunctionCounter failedLoad = fetch(registry, "cache.load", Tags.of("result", "failure")).functionCounter();
-        assertThat(failedLoad.count()).isEqualTo(stats.loadFailureCount());
+        assertThat(failedLoad.count()).isEqualTo((double) stats.loadFailureCount());
     }
 
     @Test

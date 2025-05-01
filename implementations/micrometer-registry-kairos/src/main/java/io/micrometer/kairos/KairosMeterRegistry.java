@@ -106,7 +106,7 @@ public class KairosMeterRegistry extends StepMeterRegistry {
 
     Stream<String> writeSummary(DistributionSummary summary) {
         long wallTime = config().clock().wallTime();
-        return Stream.of(writeMetric(idWithSuffix(summary.getId(), "count"), wallTime, summary.count()),
+        return Stream.of(writeMetric(idWithSuffix(summary.getId(), "count"), wallTime, (double) summary.count()),
                 writeMetric(idWithSuffix(summary.getId(), "avg"), wallTime, summary.mean()),
                 writeMetric(idWithSuffix(summary.getId(), "sum"), wallTime, summary.totalAmount()),
                 writeMetric(idWithSuffix(summary.getId(), "max"), wallTime, summary.max()));
@@ -121,7 +121,7 @@ public class KairosMeterRegistry extends StepMeterRegistry {
 
     Stream<String> writeTimer(Timer timer) {
         long wallTime = config().clock().wallTime();
-        return Stream.of(writeMetric(idWithSuffix(timer.getId(), "count"), wallTime, timer.count()),
+        return Stream.of(writeMetric(idWithSuffix(timer.getId(), "count"), wallTime, (double) timer.count()),
                 writeMetric(idWithSuffix(timer.getId(), "max"), wallTime, timer.max(getBaseTimeUnit())),
                 writeMetric(idWithSuffix(timer.getId(), "avg"), wallTime, timer.mean(getBaseTimeUnit())),
                 writeMetric(idWithSuffix(timer.getId(), "sum"), wallTime, timer.totalTime(getBaseTimeUnit())));

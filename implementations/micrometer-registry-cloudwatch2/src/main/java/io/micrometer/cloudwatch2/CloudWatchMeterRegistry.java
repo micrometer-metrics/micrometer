@@ -192,7 +192,7 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
             metrics
                 .add(metricDatum(timer.getId(), "sum", getBaseTimeUnit().name(), timer.totalTime(getBaseTimeUnit())));
             long count = timer.count();
-            metrics.add(metricDatum(timer.getId(), "count", StandardUnit.COUNT, count));
+            metrics.add(metricDatum(timer.getId(), "count", StandardUnit.COUNT, (double) count));
             if (count > 0) {
                 metrics.add(metricDatum(timer.getId(), "avg", getBaseTimeUnit().name(), timer.mean(getBaseTimeUnit())));
                 metrics.add(metricDatum(timer.getId(), "max", getBaseTimeUnit().name(), timer.max(getBaseTimeUnit())));
@@ -205,7 +205,7 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
             Stream.Builder<MetricDatum> metrics = Stream.builder();
             metrics.add(metricDatum(summary.getId(), "sum", summary.totalAmount()));
             long count = summary.count();
-            metrics.add(metricDatum(summary.getId(), "count", StandardUnit.COUNT, count));
+            metrics.add(metricDatum(summary.getId(), "count", StandardUnit.COUNT, (double) count));
             if (count > 0) {
                 metrics.add(metricDatum(summary.getId(), "avg", summary.mean()));
                 metrics.add(metricDatum(summary.getId(), "max", summary.max()));

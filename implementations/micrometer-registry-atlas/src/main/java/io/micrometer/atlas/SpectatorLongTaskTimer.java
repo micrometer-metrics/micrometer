@@ -41,7 +41,7 @@ public class SpectatorLongTaskTimer extends DefaultLongTaskTimer implements Long
 
     @Override
     public double duration(TimeUnit unit) {
-        return TimeUtils.nanosToUnit(timer.duration(), unit);
+        return TimeUtils.nanosToUnit((double) timer.duration(), unit);
     }
 
     @Override
@@ -68,7 +68,7 @@ public class SpectatorLongTaskTimer extends DefaultLongTaskTimer implements Long
 
         @Override
         public double duration(TimeUnit unit) {
-            return TimeUtils.nanosToUnit(timer.duration(taskId), unit);
+            return TimeUtils.nanosToUnit((double) timer.duration(taskId), unit);
         }
 
     }
