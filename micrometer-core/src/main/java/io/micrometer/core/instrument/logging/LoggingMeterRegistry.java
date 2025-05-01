@@ -132,7 +132,7 @@ public class LoggingMeterRegistry extends StepMeterRegistry {
                     long count = snapshot.count();
                     if (!config.logInactive() && count == 0)
                         return;
-                    loggingSink.accept(print.id() + " throughput=" + print.unitlessRate(count) + " mean="
+                    loggingSink.accept(print.id() + " throughput=" + print.unitlessRate((double) count) + " mean="
                             + print.time(snapshot.mean(getBaseTimeUnit())) + " max="
                             + print.time(snapshot.max(getBaseTimeUnit())));
                 }, summary -> {
@@ -140,7 +140,7 @@ public class LoggingMeterRegistry extends StepMeterRegistry {
                     long count = snapshot.count();
                     if (!config.logInactive() && count == 0)
                         return;
-                    loggingSink.accept(print.id() + " throughput=" + print.unitlessRate(count) + " mean="
+                    loggingSink.accept(print.id() + " throughput=" + print.unitlessRate((double) count) + " mean="
                             + print.value(snapshot.mean()) + " max=" + print.value(snapshot.max()));
                 }, longTaskTimer -> {
                     int activeTasks = longTaskTimer.activeTasks();

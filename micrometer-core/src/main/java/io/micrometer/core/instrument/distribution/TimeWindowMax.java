@@ -92,7 +92,7 @@ public class TimeWindowMax {
      * @return A max scaled to the base unit of time. For use by timer implementations.
      */
     public double poll(TimeUnit timeUnit) {
-        return poll(() -> TimeUtils.nanosToUnit(ringBuffer[currentBucket].get(), timeUnit));
+        return poll(() -> TimeUtils.nanosToUnit((double) ringBuffer[currentBucket].get(), timeUnit));
     }
 
     private double poll(DoubleSupplier maxSupplier) {

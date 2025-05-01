@@ -101,7 +101,7 @@ public final class DynatraceTimer extends AbstractTimer implements DynatraceSumm
     protected void recordNonNegative(long amount, TimeUnit unit) {
         // store everything in baseTimeUnit
         long inBaseUnit = baseTimeUnit().convert(amount, unit);
-        summary.recordNonNegative(inBaseUnit);
+        summary.recordNonNegative((double) inBaseUnit);
     }
 
     /**

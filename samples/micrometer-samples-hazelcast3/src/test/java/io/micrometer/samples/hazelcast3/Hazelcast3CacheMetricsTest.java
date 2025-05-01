@@ -73,19 +73,19 @@ class Hazelcast3CacheMetricsTest {
     @Test
     void generalMetrics() {
         Gauge backupEntries = fetch(meterRegistry, "cache.entries", Tags.of("ownership", "backup")).gauge();
-        assertThat(backupEntries.value()).isEqualTo(localMapStats.getBackupEntryCount());
+        assertThat(backupEntries.value()).isEqualTo((double) localMapStats.getBackupEntryCount());
 
         Gauge ownedEntries = fetch(meterRegistry, "cache.entries", Tags.of("ownership", "owned")).gauge();
-        assertThat(ownedEntries.value()).isEqualTo(localMapStats.getOwnedEntryCount());
+        assertThat(ownedEntries.value()).isEqualTo((double) localMapStats.getOwnedEntryCount());
 
         Gauge backupEntryMemory = fetch(meterRegistry, "cache.entry.memory", Tags.of("ownership", "backup")).gauge();
-        assertThat(backupEntryMemory.value()).isEqualTo(localMapStats.getBackupEntryMemoryCost());
+        assertThat(backupEntryMemory.value()).isEqualTo((double) localMapStats.getBackupEntryMemoryCost());
 
         Gauge ownedEntryMemory = fetch(meterRegistry, "cache.entry.memory", Tags.of("ownership", "owned")).gauge();
-        assertThat(ownedEntryMemory.value()).isEqualTo(localMapStats.getOwnedEntryMemoryCost());
+        assertThat(ownedEntryMemory.value()).isEqualTo((double) localMapStats.getOwnedEntryMemoryCost());
 
         FunctionCounter partitionGets = fetch(meterRegistry, "cache.partition.gets").functionCounter();
-        assertThat(partitionGets.count()).isEqualTo(localMapStats.getGetOperationCount());
+        assertThat(partitionGets.count()).isEqualTo((double) localMapStats.getGetOperationCount());
     }
 
     @Test
@@ -96,32 +96,32 @@ class Hazelcast3CacheMetricsTest {
         when(nearCacheStats.getEvictions()).thenReturn(4L);
 
         Gauge hitCacheRequests = fetch(meterRegistry, "cache.near.requests", Tags.of("result", "hit")).gauge();
-        assertThat(hitCacheRequests.value()).isEqualTo(nearCacheStats.getHits());
+        assertThat(hitCacheRequests.value()).isEqualTo((double) nearCacheStats.getHits());
 
         Gauge missCacheRequests = fetch(meterRegistry, "cache.near.requests", Tags.of("result", "miss")).gauge();
-        assertThat(missCacheRequests.value()).isEqualTo(nearCacheStats.getMisses());
+        assertThat(missCacheRequests.value()).isEqualTo((double) nearCacheStats.getMisses());
 
         Gauge nearPersistences = fetch(meterRegistry, "cache.near.persistences").gauge();
-        assertThat(nearPersistences.value()).isEqualTo(nearCacheStats.getPersistenceCount());
+        assertThat(nearPersistences.value()).isEqualTo((double) nearCacheStats.getPersistenceCount());
 
         Gauge nearEvictions = fetch(meterRegistry, "cache.near.evictions").gauge();
-        assertThat(nearEvictions.value()).isEqualTo(nearCacheStats.getEvictions());
+        assertThat(nearEvictions.value()).isEqualTo((double) nearCacheStats.getEvictions());
     }
 
     @Test
     void timingsMetrics() {
         TimeUnit timeUnit = TimeUnit.MILLISECONDS;
         FunctionTimer getsLatency = fetch(meterRegistry, "cache.gets.latency").functionTimer();
-        assertThat(getsLatency.count()).isEqualTo(localMapStats.getGetOperationCount());
-        assertThat(getsLatency.totalTime(timeUnit)).isEqualTo(localMapStats.getTotalGetLatency());
+        assertThat(getsLatency.count()).isEqualTo((double) localMapStats.getGetOperationCount());
+        assertThat(getsLatency.totalTime(timeUnit)).isEqualTo((double) localMapStats.getTotalGetLatency());
 
         FunctionTimer putsLatency = fetch(meterRegistry, "cache.puts.latency").functionTimer();
-        assertThat(putsLatency.count()).isEqualTo(localMapStats.getPutOperationCount());
-        assertThat(putsLatency.totalTime(timeUnit)).isEqualTo(localMapStats.getTotalPutLatency());
+        assertThat(putsLatency.count()).isEqualTo((double) localMapStats.getPutOperationCount());
+        assertThat(putsLatency.totalTime(timeUnit)).isEqualTo((double) localMapStats.getTotalPutLatency());
 
         FunctionTimer removeLatency = fetch(meterRegistry, "cache.removals.latency").functionTimer();
-        assertThat(removeLatency.count()).isEqualTo(localMapStats.getRemoveOperationCount());
-        assertThat(removeLatency.totalTime(timeUnit)).isEqualTo(localMapStats.getTotalRemoveLatency());
+        assertThat(removeLatency.count()).isEqualTo((double) localMapStats.getRemoveOperationCount());
+        assertThat(removeLatency.totalTime(timeUnit)).isEqualTo((double) localMapStats.getTotalRemoveLatency());
     }
 
     private RequiredSearch fetch(MeterRegistry meterRegistry, String name) {

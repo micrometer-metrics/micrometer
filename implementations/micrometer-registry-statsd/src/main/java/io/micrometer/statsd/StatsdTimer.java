@@ -55,7 +55,7 @@ public class StatsdTimer extends AbstractTimer {
         if (!shutdown && amount >= 0) {
             count.increment();
 
-            double msAmount = TimeUtils.convert(amount, unit, TimeUnit.MILLISECONDS);
+            double msAmount = TimeUtils.convert((double) amount, unit, TimeUnit.MILLISECONDS);
             totalTime.add(msAmount);
 
             // not necessary to ship max, as most StatsD agents calculate this themselves
