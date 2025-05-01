@@ -224,7 +224,7 @@ public class JvmGcMetrics implements MeterBinder, AutoCloseable {
             if (isGenerationalGc) {
                 final long delta = longLivedAfter - longLivedBefore;
                 if (delta > 0L) {
-                    promotedBytes.increment(delta);
+                    promotedBytes.increment((double) delta);
                 }
             }
 
@@ -249,7 +249,7 @@ public class JvmGcMetrics implements MeterBinder, AutoCloseable {
             final long delta = beforeBytes - allocationPoolSizeAfter.get();
             allocationPoolSizeAfter.set(afterBytes);
             if (delta > 0L) {
-                allocatedBytes.increment(delta);
+                allocatedBytes.increment((double) delta);
             }
         }
 

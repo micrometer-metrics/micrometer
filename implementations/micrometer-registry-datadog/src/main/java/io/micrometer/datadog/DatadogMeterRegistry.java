@@ -176,7 +176,7 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
 
         Meter.Id id = timer.getId();
         metrics.add(writeMetric(id, "sum", wallTime, timer.totalTime(getBaseTimeUnit()), Statistic.TOTAL_TIME, null));
-        metrics.add(writeMetric(id, "count", wallTime, timer.count(), Statistic.COUNT, "occurrence"));
+        metrics.add(writeMetric(id, "count", wallTime, (double) timer.count(), Statistic.COUNT, "occurrence"));
         metrics.add(writeMetric(id, "avg", wallTime, timer.mean(getBaseTimeUnit()), Statistic.VALUE, null));
         metrics.add(writeMetric(id, "max", wallTime, timer.max(getBaseTimeUnit()), Statistic.MAX, null));
 
@@ -194,7 +194,7 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
 
         Meter.Id id = summary.getId();
         metrics.add(writeMetric(id, "sum", wallTime, summary.totalAmount(), Statistic.TOTAL, null));
-        metrics.add(writeMetric(id, "count", wallTime, summary.count(), Statistic.COUNT, "occurrence"));
+        metrics.add(writeMetric(id, "count", wallTime, (double) summary.count(), Statistic.COUNT, "occurrence"));
         metrics.add(writeMetric(id, "avg", wallTime, summary.mean(), Statistic.VALUE, null));
         metrics.add(writeMetric(id, "max", wallTime, summary.max(), Statistic.MAX, null));
 

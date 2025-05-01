@@ -209,7 +209,7 @@ public class WavefrontMeterRegistry extends PushMeterRegistry {
         }
         else {
             publishMetric(id, "sum", wallTime, timer.totalTime(getBaseTimeUnit()));
-            publishMetric(id, "count", wallTime, timer.count());
+            publishMetric(id, "count", wallTime, (double) timer.count());
             publishMetric(id, "avg", wallTime, timer.mean(getBaseTimeUnit()));
             publishMetric(id, "max", wallTime, timer.max(getBaseTimeUnit()));
         }
@@ -248,7 +248,7 @@ public class WavefrontMeterRegistry extends PushMeterRegistry {
         }
         else {
             publishMetric(id, "sum", wallTime, summary.totalAmount());
-            publishMetric(id, "count", wallTime, summary.count());
+            publishMetric(id, "count", wallTime, (double) summary.count());
             publishMetric(id, "avg", wallTime, summary.mean());
             publishMetric(id, "max", wallTime, summary.max());
         }
