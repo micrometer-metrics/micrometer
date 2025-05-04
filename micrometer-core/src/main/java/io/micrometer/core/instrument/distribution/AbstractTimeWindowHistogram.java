@@ -69,10 +69,10 @@ abstract class AbstractTimeWindowHistogram<T, U> implements Histogram {
 
         ringBuffer = (T[]) Array.newInstance(bucketType, ageBuckets);
 
-        durationBetweenRotatesMillis = distributionStatisticConfig.getExpiry().toMillis() / ageBuckets;
+        durationBetweenRotatesMillis = distributionStatisticConfig.getExpiry().toMillis();
         if (durationBetweenRotatesMillis <= 0) {
-            rejectHistogramConfig("expiry (" + distributionStatisticConfig.getExpiry().toMillis()
-                    + "ms) / bufferLength (" + ageBuckets + ") must be greater than 0.");
+            rejectHistogramConfig(
+                    "expiry (" + distributionStatisticConfig.getExpiry().toMillis() + "ms) must be greater than 0.");
         }
 
         currentBucket = 0;
