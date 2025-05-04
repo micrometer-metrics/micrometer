@@ -90,6 +90,60 @@ public interface Observation extends ObservationView {
     }
 
     /**
+     * Create and start an {@link Observation} with the given name. All Observations of
+     * the same type must share the same name.
+     * <p>
+     * When no registry is passed or the observation is
+     * {@link ObservationRegistry.ObservationConfig#observationPredicate(ObservationPredicate)
+     * not applicable}, a no-op observation will be returned.
+     * @param name name of the observation
+     * @param level observation level
+     * @param registry observation registry
+     * @return a started observation
+     * @since 1.13.0
+     */
+    static Observation start(String name, ObservationLevel level, @Nullable ObservationRegistry registry) {
+        return start(name, Context::new, level, registry);
+    }
+
+    /**
+     * Creates and starts an {@link Observation}. When the {@link ObservationRegistry} is
+     * null or the no-op registry, this fast returns a no-op {@link Observation} and skips
+     * the creation of the {@link Observation.Context}. This check avoids unnecessary
+     * {@link Observation.Context} creation, which is why it takes a {@link Supplier} for
+     * the context rather than the context directly. If the observation is not enabled
+     * (see
+     * {@link ObservationRegistry.ObservationConfig#observationPredicate(ObservationPredicate)
+     * ObservationConfig#observationPredicate}), a no-op observation will also be
+     * returned.
+     * @param name name of the observation
+     * @param contextSupplier mutable context supplier
+     * @param level observation level
+     * @param registry observation registry
+     * @return started observation
+     * @since 1.13.0
+     */
+    static <T extends Context> Observation start(String name, Supplier<T> contextSupplier, ObservationLevel level,
+            @Nullable ObservationRegistry registry) {
+        return createNotStarted(name, contextSupplier, level, registry).start();
+    }
+
+    /**
+     * Creates but <b>does not start</b> an {@link Observation}. Remember to call
+     * {@link Observation#start()} when you want the measurements to start. When no
+     * registry is passed or observation is not applicable will return a no-op
+     * observation.
+     * @param name name of the observation
+     * @param level observation level
+     * @param registry observation registry
+     * @return created but not started observation
+     * @since 1.13.0
+     */
+    static Observation createNotStarted(String name, ObservationLevel level, @Nullable ObservationRegistry registry) {
+        return createNotStarted(name, Context::new, level, registry);
+    }
+
+    /**
      * Creates but <b>does not start</b> an {@link Observation}. Remember to call
      * {@link Observation#start()} when you want the measurements to start. When no
      * registry is passed or observation is not applicable will return a no-op
@@ -121,13 +175,41 @@ public interface Observation extends ObservationView {
      */
     static <T extends Context> Observation createNotStarted(String name, Supplier<T> contextSupplier,
             @Nullable ObservationRegistry registry) {
+        return createNotStarted(name, contextSupplier, null, registry);
+    }
+
+    /**
+     * Creates but <b>does not start</b> an {@link Observation}. Remember to call
+     * {@link Observation#start()} when you want the measurements to start. When the
+     * {@link ObservationRegistry} is null or the no-op registry, this fast returns a
+     * no-op {@link Observation} and skips the creation of the
+     * {@link Observation.Context}. This check avoids unnecessary
+     * {@link Observation.Context} creation, which is why it takes a {@link Supplier} for
+     * the context rather than the context directly. If the observation is not enabled
+     * (see
+     * {@link ObservationRegistry.ObservationConfig#observationPredicate(ObservationPredicate)
+     * ObservationConfig#observationPredicate}), a no-op observation will also be
+     * returned.
+     * @param name name of the observation
+     * @param contextSupplier supplier for mutable context
+     * @param level observation level
+     * @param registry observation registry
+     * @return created but not started observation
+     * @since 1.13.0
+     */
+    static <T extends Context> Observation createNotStarted(String name, Supplier<T> contextSupplier,
+            @Nullable ObservationLevel level, @Nullable ObservationRegistry registry) {
         if (registry == null || registry.isNoop()) {
             return NOOP;
         }
         Context context = contextSupplier.get();
+        if (context.getName() == null) {
+            context.setName(name);
+        }
         context.setParentFromCurrentObservation(registry);
+        context.setLevel(level != null ? level : null);
         if (!registry.observationConfig().isObservationEnabled(name, context)) {
-            return NOOP;
+            return new PassthroughNoopObservation(context.getParentObservation());
         }
         return new SimpleObservation(name, registry, context);
     }
@@ -177,7 +259,7 @@ public interface Observation extends ObservationView {
             convention = registry.observationConfig().getObservationConvention(context, defaultConvention);
         }
         if (!registry.observationConfig().isObservationEnabled(convention.getName(), context)) {
-            return NOOP;
+            return new PassthroughNoopObservation(context.getParentObservation());
         }
         return new SimpleObservation(convention, registry, context);
     }
@@ -315,7 +397,7 @@ public interface Observation extends ObservationView {
         T context = contextSupplier.get();
         context.setParentFromCurrentObservation(registry);
         if (!registry.observationConfig().isObservationEnabled(observationConvention.getName(), context)) {
-            return NOOP;
+            return new PassthroughNoopObservation(context.getParentObservation());
         }
         return new SimpleObservation(observationConvention, registry, context);
     }
@@ -416,7 +498,7 @@ public interface Observation extends ObservationView {
      * @return {@code true} when this is a no-op observation
      */
     default boolean isNoop() {
-        return this == NOOP;
+        return this == NOOP || this instanceof NoopObservation;
     }
 
     /**
@@ -922,7 +1004,10 @@ public interface Observation extends ObservationView {
         private Throwable error;
 
         @Nullable
-        private ObservationView parentObservation;
+        private ObservationView parentObservationView;
+
+        @Nullable
+        private ObservationLevel level;
 
         private final Map<String, KeyValue> lowCardinalityKeyValues = new ConcurrentHashMap<>();
 
@@ -970,7 +1055,7 @@ public interface Observation extends ObservationView {
         @Override
         @Nullable
         public ObservationView getParentObservation() {
-            return parentObservation;
+            return parentObservationView;
         }
 
         /**
@@ -978,7 +1063,7 @@ public interface Observation extends ObservationView {
          * @param parentObservation parent observation to set
          */
         public void setParentObservation(@Nullable ObservationView parentObservation) {
-            this.parentObservation = parentObservation;
+            this.parentObservationView = parentObservation;
         }
 
         /**
@@ -987,7 +1072,7 @@ public interface Observation extends ObservationView {
          * @param registry the {@link ObservationRegistry} in using
          */
         void setParentFromCurrentObservation(ObservationRegistry registry) {
-            if (this.parentObservation == null) {
+            if (this.parentObservationView == null) {
                 Observation currentObservation = registry.getCurrentObservation();
                 if (currentObservation != null) {
                     setParentObservation(currentObservation);
@@ -1232,12 +1317,21 @@ public interface Observation extends ObservationView {
             return getLowCardinalityKeyValues().and(getHighCardinalityKeyValues());
         }
 
+        @Nullable
+        public ObservationLevel getLevel() {
+            return level;
+        }
+
+        void setLevel(ObservationLevel level) {
+            this.level = level;
+        }
+
         @Override
         public String toString() {
             return "name='" + name + '\'' + ", contextualName='" + contextualName + '\'' + ", error='" + error + '\''
                     + ", lowCardinalityKeyValues=" + toString(getLowCardinalityKeyValues())
                     + ", highCardinalityKeyValues=" + toString(getHighCardinalityKeyValues()) + ", map=" + toString(map)
-                    + ", parentObservation=" + parentObservation;
+                    + ", parentObservation=" + parentObservationView + ", observationLevel=" + level;
         }
 
         private String toString(KeyValues keyValues) {
@@ -1452,6 +1546,14 @@ public interface Observation extends ObservationView {
         @NonNull
         KeyValues getAllKeyValues();
 
+        /**
+         * Returns the observation level.
+         * @return observation level
+         */
+        default Level getObservationLevel() {
+            return Level.FULL;
+        }
+
     }
 
     /**
@@ -1484,6 +1586,58 @@ public interface Observation extends ObservationView {
 
         @Nullable
         R apply(T t) throws E;
+
+    }
+
+    /**
+     * Mapping of {@link Level} to {@link Class}.
+     *
+     * @author Marcin Grzejszczak
+     * @since 1.13.0
+     */
+    class ObservationLevel {
+
+        private final Level level;
+
+        public ObservationLevel(Level level) {
+            this.level = level;
+        }
+
+        public Level getLevel() {
+            return level;
+        }
+
+        /**
+         * Sets {@link Level#FULL} for observation of the given classs.
+         * @return observation level
+         */
+        public static ObservationLevel full() {
+            return new ObservationLevel(Level.FULL);
+        }
+
+        /**
+         * Sets {@link Level#BASIC} for observation of the given classs.
+         * @return observation level
+         */
+        public static ObservationLevel basic() {
+            return new ObservationLevel(Level.BASIC);
+        }
+
+        /**
+         * Sets {@link Level#DETAILED} for observation of the given classs.
+         * @return observation level
+         */
+        public static ObservationLevel detailed() {
+            return new ObservationLevel(Level.DETAILED);
+        }
+
+        /**
+         * Sets {@link Level#OFF} for observation of the given classs.
+         * @return observation level
+         */
+        public static ObservationLevel off() {
+            return new ObservationLevel(Level.OFF);
+        }
 
     }
 
