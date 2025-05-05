@@ -82,6 +82,9 @@ subprojects {
                     "MissingOverride",
                     "StringCaseLocaleUsage"
             )
+            options.errorprone.disable(
+                    "StringConcatToTextBlock"
+            )
 
             if (!javaLanguageVersion.canCompileOrRun(17)) {
                 // Error Prone does not work with JDK <17
