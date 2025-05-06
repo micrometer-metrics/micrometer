@@ -24,6 +24,7 @@ import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.common.Metric;
 
+import java.time.Duration;
 import java.util.concurrent.ScheduledExecutorService;
 
 /**
@@ -61,6 +62,23 @@ public class KafkaClientMetrics extends KafkaMetrics {
     }
 
     /**
+     * Kafka {@link Producer} metrics binder. The lifecycle of the custom scheduler passed
+     * is the responsibility of the caller. It will not be shut down when this instance is
+     * {@link #close() closed}. A scheduler can be shared among multiple instances of
+     * {@link KafkaClientMetrics} to reduce resource usage by reducing the number of
+     * threads if there will be many instances.
+     * @param kafkaProducer producer instance to be instrumented
+     * @param tags additional tags
+     * @param scheduler custom scheduler to check and bind metrics
+     * @param refreshInterval interval of refreshing
+     * @since 1.14.0
+     */
+    public KafkaClientMetrics(Producer<?, ?> kafkaProducer, Iterable<Tag> tags, ScheduledExecutorService scheduler,
+            Duration refreshInterval) {
+        super(kafkaProducer::metrics, tags, scheduler, refreshInterval);
+    }
+
+    /**
      * Kafka {@link Producer} metrics binder
      * @param kafkaProducer producer instance to be instrumented
      * @param tags additional tags
@@ -72,8 +90,27 @@ public class KafkaClientMetrics extends KafkaMetrics {
     /**
      * Kafka {@link Producer} metrics binder
      * @param kafkaProducer producer instance to be instrumented
+     * @param tags additional tags
+     * @param refreshInterval interval of refreshing
+     */
+    public KafkaClientMetrics(Producer<?, ?> kafkaProducer, Iterable<Tag> tags, Duration refreshInterval) {
+        super(kafkaProducer::metrics, tags, refreshInterval);
+    }
+
+    /**
+     * Kafka {@link Producer} metrics binder
+     * @param kafkaProducer producer instance to be instrumented
      */
     public KafkaClientMetrics(Producer<?, ?> kafkaProducer) {
+        super(kafkaProducer::metrics);
+    }
+
+    /**
+     * Kafka {@link Producer} metrics binder
+     * @param kafkaProducer producer instance to be instrumented
+     * @param refreshInterval interval of refreshing
+     */
+    public KafkaClientMetrics(Producer<?, ?> kafkaProducer, Duration refreshInterval) {
         super(kafkaProducer::metrics);
     }
 
@@ -93,6 +130,23 @@ public class KafkaClientMetrics extends KafkaMetrics {
     }
 
     /**
+     * Kafka {@link Consumer} metrics binder. The lifecycle of the custom scheduler passed
+     * is the responsibility of the caller. It will not be shut down when this instance is
+     * {@link #close() closed}. A scheduler can be shared among multiple instances of
+     * {@link KafkaClientMetrics} to reduce resource usage by reducing the number of
+     * threads if there will be many instances.
+     * @param kafkaConsumer consumer instance to be instrumented
+     * @param tags additional tags
+     * @param scheduler custom scheduler to check and bind metrics
+     * @param refreshInterval interval of refreshing
+     * @since 1.14.0
+     */
+    public KafkaClientMetrics(Consumer<?, ?> kafkaConsumer, Iterable<Tag> tags, ScheduledExecutorService scheduler,
+            Duration refreshInterval) {
+        super(kafkaConsumer::metrics, tags, scheduler, refreshInterval);
+    }
+
+    /**
      * Kafka {@link Consumer} metrics binder
      * @param kafkaConsumer consumer instance to be instrumented
      * @param tags additional tags
@@ -104,9 +158,28 @@ public class KafkaClientMetrics extends KafkaMetrics {
     /**
      * Kafka {@link Consumer} metrics binder
      * @param kafkaConsumer consumer instance to be instrumented
+     * @param refreshInterval interval of refreshing
+     * @param tags additional tags
+     */
+    public KafkaClientMetrics(Consumer<?, ?> kafkaConsumer, Iterable<Tag> tags, Duration refreshInterval) {
+        super(kafkaConsumer::metrics, tags, refreshInterval);
+    }
+
+    /**
+     * Kafka {@link Consumer} metrics binder
+     * @param kafkaConsumer consumer instance to be instrumented
      */
     public KafkaClientMetrics(Consumer<?, ?> kafkaConsumer) {
         super(kafkaConsumer::metrics);
+    }
+
+    /**
+     * Kafka {@link Consumer} metrics binder
+     * @param kafkaConsumer consumer instance to be instrumented
+     * @param refreshInterval interval of refreshing
+     */
+    public KafkaClientMetrics(Consumer<?, ?> kafkaConsumer, Duration refreshInterval) {
+        super(kafkaConsumer::metrics, refreshInterval);
     }
 
     /**
@@ -125,6 +198,23 @@ public class KafkaClientMetrics extends KafkaMetrics {
     }
 
     /**
+     * Kafka {@link AdminClient} metrics binder. The lifecycle of the custom scheduler
+     * passed is the responsibility of the caller. It will not be shut down when this
+     * instance is {@link #close() closed}. A scheduler can be shared among multiple
+     * instances of {@link KafkaClientMetrics} to reduce resource usage by reducing the
+     * number of threads if there will be many instances.
+     * @param adminClient instance to be instrumented
+     * @param tags additional tags
+     * @param scheduler custom scheduler to check and bind metrics
+     * @param refreshInterval interval of refreshing
+     * @since 1.14.0
+     */
+    public KafkaClientMetrics(AdminClient adminClient, Iterable<Tag> tags, ScheduledExecutorService scheduler,
+            Duration refreshInterval) {
+        super(adminClient::metrics, tags, scheduler, refreshInterval);
+    }
+
+    /**
      * Kafka {@link AdminClient} metrics binder
      * @param adminClient instance to be instrumented
      * @param tags additional tags
@@ -136,9 +226,28 @@ public class KafkaClientMetrics extends KafkaMetrics {
     /**
      * Kafka {@link AdminClient} metrics binder
      * @param adminClient instance to be instrumented
+     * @param tags additional tags
+     * @param refreshInterval interval of refreshing
+     */
+    public KafkaClientMetrics(AdminClient adminClient, Iterable<Tag> tags, Duration refreshInterval) {
+        super(adminClient::metrics, tags);
+    }
+
+    /**
+     * Kafka {@link AdminClient} metrics binder
+     * @param adminClient instance to be instrumented
      */
     public KafkaClientMetrics(AdminClient adminClient) {
         super(adminClient::metrics);
+    }
+
+    /**
+     * Kafka {@link AdminClient} metrics binder
+     * @param adminClient instance to be instrumented
+     * @param refreshInterval interval of refreshing
+     */
+    public KafkaClientMetrics(AdminClient adminClient, Duration refreshInterval) {
+        super(adminClient::metrics, refreshInterval);
     }
 
 }
