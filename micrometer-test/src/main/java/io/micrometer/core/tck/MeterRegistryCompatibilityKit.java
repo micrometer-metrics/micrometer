@@ -594,12 +594,12 @@ public abstract class MeterRegistryCompatibilityKit {
             gauges.register(Collections.singletonList(MultiGauge.Row.of(Tags.of("ignored", "true"), 4)));
 
             // no re-registration since overwrite is false by default
-            gauges.register(Collections.singletonList(MultiGauge.Row.of(Tags.of("ignored", "true"), 5)));
+            gauges.register(Collections.singletonList(MultiGauge.Row.of(Tags.of("ignored", "false"), 5)));
             assertThat(registry.get("my.gauge").gauges()).hasSize(1);
             assertThat(registry.get("my.gauge").gauge().value()).isEqualTo(4);
 
             // re-registration since overwrite is set to true
-            gauges.register(Collections.singletonList(MultiGauge.Row.of(Tags.of("ignored", "true"), 6)), true);
+            gauges.register(Collections.singletonList(MultiGauge.Row.of(Tags.of("ignored", "false"), 6)), true);
             assertThat(registry.get("my.gauge").gauges()).hasSize(1);
             assertThat(registry.get("my.gauge").gauge().value()).isEqualTo(6);
         }
