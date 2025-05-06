@@ -331,7 +331,7 @@ abstract class OtlpMeterRegistryTest {
     }
 
     protected void stepOverNStep(int numStepsToSkip) {
-        clock.addSeconds(otlpConfig().step().getSeconds() * numStepsToSkip);
+        clock.addSeconds(otlpConfig().step().toSeconds() * numStepsToSkip);
     }
 
     @SuppressWarnings("deprecation")

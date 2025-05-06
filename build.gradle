@@ -79,8 +79,14 @@ subprojects {
                     "StringCaseLocaleUsage"
             )
             options.errorprone.disable(
-                    "StringConcatToTextBlock"
+                    "StringConcatToTextBlock" // Requires JDK 15+
             )
+
+            if (it.name == "compileJava" && !(it.project.name in ["micrometer-java11"])) {
+                options.errorprone.disable(
+                        "JavaDurationGetSecondsToToSeconds" // Requires JDK 9+
+                )
+            }
 
             if (!javaLanguageVersion.canCompileOrRun(17)) {
                 // Error Prone does not work with JDK <17
