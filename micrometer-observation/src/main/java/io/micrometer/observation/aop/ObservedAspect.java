@@ -24,6 +24,7 @@ import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.reflect.MethodSignature;
+import org.jspecify.annotations.NullUnmarked;
 import org.jspecify.annotations.Nullable;
 
 import java.lang.reflect.Method;
@@ -117,8 +118,7 @@ public class ObservedAspect {
     }
 
     @Around("@within(io.micrometer.observation.annotation.Observed) && !@annotation(io.micrometer.observation.annotation.Observed) && execution(* *.*(..))")
-    @Nullable
-    public Object observeClass(ProceedingJoinPoint pjp) throws Throwable {
+    public @NullUnmarked Object observeClass(ProceedingJoinPoint pjp) throws Throwable {
         if (shouldSkip.test(pjp)) {
             return pjp.proceed();
         }
@@ -129,8 +129,7 @@ public class ObservedAspect {
     }
 
     @Around("execution (@io.micrometer.observation.annotation.Observed * *.*(..))")
-    @Nullable
-    public Object observeMethod(ProceedingJoinPoint pjp) throws Throwable {
+    public @NullUnmarked Object observeMethod(ProceedingJoinPoint pjp) throws Throwable {
         if (shouldSkip.test(pjp)) {
             return pjp.proceed();
         }
@@ -140,7 +139,7 @@ public class ObservedAspect {
         return observe(pjp, method, observed);
     }
 
-    private @Nullable Object observe(ProceedingJoinPoint pjp, Method method, Observed observed) throws Throwable {
+    private @NullUnmarked Object observe(ProceedingJoinPoint pjp, Method method, Observed observed) throws Throwable {
         Observation observation = ObservedAspectObservationDocumentation.of(pjp, observed, this.registry,
                 this.observationConvention);
         if (CompletionStage.class.isAssignableFrom(method.getReturnType())) {

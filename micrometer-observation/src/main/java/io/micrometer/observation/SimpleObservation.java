@@ -56,7 +56,7 @@ class SimpleObservation implements Observation {
 
     final Map<Thread, Scope> lastScope = new ConcurrentHashMap<>();
 
-    SimpleObservation(@Nullable String name, ObservationRegistry registry, Context context) {
+    SimpleObservation(String name, ObservationRegistry registry, Context context) {
         this.registry = registry;
         this.context = context;
         this.context.setName(name);
