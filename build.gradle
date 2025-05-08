@@ -73,6 +73,11 @@ subprojects {
 
     if (project.name != 'micrometer-bom') {
         tasks.withType(JavaCompile).configureEach {
+            if (it.name == "compileJava" && !(it.project.name in ["micrometer-java11"])) {
+                options.errorprone.disable(
+                        "JavaDurationGetSecondsToToSeconds" // Requires JDK 9+
+                )
+            }
             options.errorprone {
                 disableWarningsInGeneratedCode = true
                 excludedPaths = ".*/build/generated/.*"
@@ -80,11 +85,6 @@ subprojects {
                 disable(
                         "StringConcatToTextBlock" // Requires JDK 15+
                 )
-                if (it.name == "compileJava" && !(it.project.name in ["micrometer-java11"])) {
-                    disable(
-                            "JavaDurationGetSecondsToToSeconds" // Requires JDK 9+
-                    )
-                }
 
                 error("BadImport",
                         "DefaultCharset",
