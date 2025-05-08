@@ -31,7 +31,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * When running this integration test locally, authentication can be done by configuring
  * the env var GOOGLE_APPLICATION_CREDENTIALS with the location of the service key JSON
- * file.
+ * file. The project ID should be specified using the GOOGLE_CLOUD_PROJECT_ID env var.
  */
 @Tag("gcp-it")
 class StackdriverIntegrationTest {
@@ -43,7 +43,7 @@ class StackdriverIntegrationTest {
     static final StackdriverConfig CONFIG = new StackdriverConfig() {
         @Override
         public String projectId() {
-            return "micrometer-gcp";
+            return System.getenv("GOOGLE_CLOUD_PROJECT_ID");
         }
 
         @Override
