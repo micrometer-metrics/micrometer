@@ -17,6 +17,7 @@ package io.micrometer.core.instrument.config;
 
 import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.config.filter.TagReplacingFilter;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 
 import java.time.Duration;
@@ -120,22 +121,7 @@ public interface MeterFilter {
      * @return A filter that replaces tag values.
      */
     static MeterFilter replaceTagValues(String tagKey, Function<String, String> replacement, String... exceptions) {
-        return new MeterFilter() {
-            @Override
-            public Meter.Id map(Meter.Id id) {
-                List<Tag> tags = stream(id.getTagsAsIterable().spliterator(), false).map(t -> {
-                    if (!t.getKey().equals(tagKey))
-                        return t;
-                    for (String exception : exceptions) {
-                        if (t.getValue().equals(exception))
-                            return t;
-                    }
-                    return Tag.of(tagKey, replacement.apply(t.getValue()));
-                }).collect(toList());
-
-                return id.replaceTags(tags);
-            }
-        };
+        return TagReplacingFilter.classicValueReplacing(tagKey, replacement, exceptions);
     }
 
     /**
