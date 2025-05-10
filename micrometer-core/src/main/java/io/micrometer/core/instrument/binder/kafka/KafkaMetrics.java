@@ -70,7 +70,7 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
     static final String KAFKA_VERSION_TAG_NAME = "kafka.version";
     static final String DEFAULT_VALUE = "unknown";
 
-    private static final long REFRESH_INTERVAL_MILLIS = Duration.ofSeconds(60).toMillis();
+    private static final Duration DEFAULT_REFRESH_INTERVAL = Duration.ofSeconds(60);
 
     private static final Set<Class<?>> counterMeasurableClasses = new HashSet<>();
 
@@ -99,6 +99,8 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
 
     private final boolean schedulerExternallyManaged;
 
+    private final long refreshIntervalMillis;
+
     @Nullable
     private Iterable<Tag> commonTags;
 
@@ -118,21 +120,36 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
         this(metricsSupplier, emptyList());
     }
 
+    KafkaMetrics(Supplier<Map<MetricName, ? extends Metric>> metricsSupplier, Duration refreshInterval) {
+        this(metricsSupplier, emptyList(), refreshInterval);
+    }
+
     KafkaMetrics(Supplier<Map<MetricName, ? extends Metric>> metricsSupplier, Iterable<Tag> extraTags) {
-        this(metricsSupplier, extraTags, createDefaultScheduler(), false);
+        this(metricsSupplier, extraTags, createDefaultScheduler(), false, DEFAULT_REFRESH_INTERVAL);
+    }
+
+    KafkaMetrics(Supplier<Map<MetricName, ? extends Metric>> metricsSupplier, Iterable<Tag> extraTags,
+            Duration refreshInterval) {
+        this(metricsSupplier, extraTags, createDefaultScheduler(), false, refreshInterval);
     }
 
     KafkaMetrics(Supplier<Map<MetricName, ? extends Metric>> metricsSupplier, Iterable<Tag> extraTags,
             ScheduledExecutorService scheduler) {
-        this(metricsSupplier, extraTags, scheduler, true);
+        this(metricsSupplier, extraTags, scheduler, true, DEFAULT_REFRESH_INTERVAL);
     }
 
     KafkaMetrics(Supplier<Map<MetricName, ? extends Metric>> metricsSupplier, Iterable<Tag> extraTags,
-            ScheduledExecutorService scheduler, boolean schedulerExternallyManaged) {
+            ScheduledExecutorService scheduler, Duration refreshInterval) {
+        this(metricsSupplier, extraTags, scheduler, true, refreshInterval);
+    }
+
+    KafkaMetrics(Supplier<Map<MetricName, ? extends Metric>> metricsSupplier, Iterable<Tag> extraTags,
+            ScheduledExecutorService scheduler, boolean schedulerExternallyManaged, Duration refreshInterval) {
         this.metricsSupplier = metricsSupplier;
         this.extraTags = extraTags;
         this.scheduler = scheduler;
         this.schedulerExternallyManaged = schedulerExternallyManaged;
+        this.refreshIntervalMillis = refreshInterval.toMillis();
     }
 
     @Override
@@ -142,8 +159,8 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
         commonTags = getCommonTags(registry);
         prepareToBindMetrics(registry);
         checkAndBindMetrics(registry);
-        scheduler.scheduleAtFixedRate(() -> checkAndBindMetrics(registry), REFRESH_INTERVAL_MILLIS,
-                REFRESH_INTERVAL_MILLIS, TimeUnit.MILLISECONDS);
+        scheduler.scheduleAtFixedRate(() -> checkAndBindMetrics(registry), refreshIntervalMillis, refreshIntervalMillis,
+                TimeUnit.MILLISECONDS);
     }
 
     private Iterable<Tag> getCommonTags(MeterRegistry registry) {

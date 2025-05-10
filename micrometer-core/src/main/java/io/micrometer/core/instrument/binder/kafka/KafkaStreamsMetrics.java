@@ -22,6 +22,7 @@ import io.micrometer.core.instrument.Tag;
 import org.apache.kafka.common.Metric;
 import org.apache.kafka.streams.KafkaStreams;
 
+import java.time.Duration;
 import java.util.concurrent.ScheduledExecutorService;
 
 /**
@@ -55,9 +56,28 @@ public class KafkaStreamsMetrics extends KafkaMetrics {
     /**
      * {@link KafkaStreams} metrics binder
      * @param kafkaStreams instance to be instrumented
+     * @param tags additional tags
+     * @param refreshInterval interval of refreshing
+     */
+    public KafkaStreamsMetrics(KafkaStreams kafkaStreams, Iterable<Tag> tags, Duration refreshInterval) {
+        super(kafkaStreams::metrics, tags, refreshInterval);
+    }
+
+    /**
+     * {@link KafkaStreams} metrics binder
+     * @param kafkaStreams instance to be instrumented
      */
     public KafkaStreamsMetrics(KafkaStreams kafkaStreams) {
         super(kafkaStreams::metrics);
+    }
+
+    /**
+     * {@link KafkaStreams} metrics binder
+     * @param kafkaStreams instance to be instrumented
+     * @param refreshInterval interval of refreshing
+     */
+    public KafkaStreamsMetrics(KafkaStreams kafkaStreams, Duration refreshInterval) {
+        super(kafkaStreams::metrics, refreshInterval);
     }
 
     /**
@@ -73,6 +93,23 @@ public class KafkaStreamsMetrics extends KafkaMetrics {
      */
     public KafkaStreamsMetrics(KafkaStreams kafkaStreams, Iterable<Tag> tags, ScheduledExecutorService scheduler) {
         super(kafkaStreams::metrics, tags, scheduler);
+    }
+
+    /**
+     * {@link KafkaStreams} metrics binder. The lifecycle of the custom scheduler passed
+     * is the responsibility of the caller. It will not be shut down when this instance is
+     * {@link #close() closed}. A scheduler can be shared among multiple instances of
+     * {@link KafkaStreamsMetrics} to reduce resource usage by reducing the number of
+     * threads if there will be many instances.
+     * @param kafkaStreams instance to be instrumented
+     * @param tags additional tags
+     * @param scheduler customer scheduler to run the task that checks and binds metrics
+     * @param refreshInterval interval of refreshing
+     * @since 1.14.0
+     */
+    public KafkaStreamsMetrics(KafkaStreams kafkaStreams, Iterable<Tag> tags, ScheduledExecutorService scheduler,
+            Duration refreshInterval) {
+        super(kafkaStreams::metrics, tags, scheduler, refreshInterval);
     }
 
 }
