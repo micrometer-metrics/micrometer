@@ -23,6 +23,7 @@ import io.micrometer.observation.NullObservation;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.Observation.Scope;
 import io.micrometer.observation.ObservationRegistry;
+import org.jspecify.annotations.Nullable;
 
 /**
  * A {@link ThreadLocalAccessor} to put and restore current {@link Observation}.
@@ -49,6 +50,7 @@ public class ObservationThreadLocalAccessor implements ThreadLocalAccessor<Obser
      */
     private ObservationRegistry observationRegistry = ObservationRegistry.create();
 
+    @SuppressWarnings("NullAway.Init")
     private static ObservationThreadLocalAccessor instance;
 
     /**
@@ -106,7 +108,7 @@ public class ObservationThreadLocalAccessor implements ThreadLocalAccessor<Obser
     }
 
     @Override
-    public Observation getValue() {
+    public @Nullable Observation getValue() {
         return observationRegistry.getCurrentObservation();
     }
 

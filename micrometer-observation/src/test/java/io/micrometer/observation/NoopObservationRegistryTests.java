@@ -22,6 +22,7 @@ import static org.assertj.core.api.BDDAssertions.then;
 class NoopObservationRegistryTests {
 
     @Test
+    @SuppressWarnings("NullAway")
     void should_respect_scopes() {
         ObservationRegistry observationRegistry = ObservationRegistry.NOOP;
         then(observationRegistry.getCurrentObservation()).isNull();

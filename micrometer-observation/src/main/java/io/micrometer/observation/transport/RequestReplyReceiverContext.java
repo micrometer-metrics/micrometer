@@ -15,8 +15,7 @@
  */
 package io.micrometer.observation.transport;
 
-import io.micrometer.common.lang.NonNull;
-import io.micrometer.common.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Context used when receiving data over the wire with confirmation to be sent to sender
@@ -37,7 +36,7 @@ public class RequestReplyReceiverContext<C, RES> extends ReceiverContext<C> impl
      * @param getter propagator getter
      * @param kind kind
      */
-    public RequestReplyReceiverContext(@NonNull Propagator.Getter<C> getter, @NonNull Kind kind) {
+    public RequestReplyReceiverContext(Propagator.Getter<C> getter, Kind kind) {
         super(getter, kind);
     }
 
@@ -45,7 +44,7 @@ public class RequestReplyReceiverContext<C, RES> extends ReceiverContext<C> impl
      * Creates a new instance of {@link Kind#SERVER} {@link RequestReplyReceiverContext}.
      * @param getter propagator getter
      */
-    public RequestReplyReceiverContext(@NonNull Propagator.Getter<C> getter) {
+    public RequestReplyReceiverContext(Propagator.Getter<C> getter) {
         this(getter, Kind.SERVER);
     }
 

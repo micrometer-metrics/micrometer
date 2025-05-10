@@ -15,6 +15,8 @@
  */
 package io.micrometer.observation;
 
+import org.jspecify.annotations.Nullable;
+
 /**
  * No-op implementation of {@link ObservationRegistry} so that we can disable the
  * instrumentation logic.
@@ -34,17 +36,17 @@ final class NoopObservationRegistry implements ObservationRegistry {
     }
 
     @Override
-    public Observation getCurrentObservation() {
+    public @Nullable Observation getCurrentObservation() {
         return FOR_SCOPES.getCurrentObservation();
     }
 
     @Override
-    public Observation.Scope getCurrentObservationScope() {
+    public Observation.@Nullable Scope getCurrentObservationScope() {
         return FOR_SCOPES.getCurrentObservationScope();
     }
 
     @Override
-    public void setCurrentObservationScope(Observation.Scope current) {
+    public void setCurrentObservationScope(Observation.@Nullable Scope current) {
         FOR_SCOPES.setCurrentObservationScope(current);
     }
 

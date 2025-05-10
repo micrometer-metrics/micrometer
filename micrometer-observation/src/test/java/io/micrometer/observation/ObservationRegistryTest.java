@@ -17,6 +17,7 @@ package io.micrometer.observation;
 
 import io.micrometer.common.KeyValue;
 import io.micrometer.common.KeyValues;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 
 import static io.micrometer.observation.Observation.NOOP;
@@ -148,7 +149,7 @@ class ObservationRegistryTest {
 
     interface MessagingConvention extends KeyValuesConvention {
 
-        KeyValue queueName(String foo);
+        KeyValue queueName(@Nullable String foo);
 
     }
 
@@ -156,7 +157,7 @@ class ObservationRegistryTest {
 
         // In our standard the queue name should be registered under "baz" tag key
         @Override
-        public KeyValue queueName(String messagePayload) {
+        public KeyValue queueName(@Nullable String messagePayload) {
             return KeyValue.of("baz", messagePayload + " bar");
         }
 

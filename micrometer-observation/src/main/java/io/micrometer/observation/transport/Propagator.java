@@ -15,7 +15,7 @@
  */
 package io.micrometer.observation.transport;
 
-import io.micrometer.common.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Inspired by OpenZipkin Brave and OpenTelemetry. Most of the documentation is taken

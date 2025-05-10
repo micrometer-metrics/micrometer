@@ -106,6 +106,9 @@ class KeyValuesTest {
 
     // @Issue("#3851")
     @Test
+    // While we specify elements should not be null, a single null element is a common
+    // enough mistake that we handle and test for it
+    @SuppressWarnings("NullAway")
     void nullKeyValuesShouldProduceEmptyKeyValues() {
         assertThat(KeyValues.of((String) null)).isSameAs(KeyValues.empty());
     }
@@ -117,6 +120,9 @@ class KeyValuesTest {
 
     // @Issue("#3851")
     @Test
+    // While we specify elements should not be null, a single null element is a common
+    // enough mistake that we handle and test for it
+    @SuppressWarnings("NullAway")
     void nullKeyValueShouldProduceEmptyKeyValues() {
         assertThat(KeyValues.of((KeyValue) null)).isSameAs(KeyValues.empty());
     }
@@ -146,6 +152,9 @@ class KeyValuesTest {
 
     // @Issue("#3851")
     @Test
+    // While we specify elements should not be null, a single null element is a common
+    // enough mistake that we handle and test for it
+    @SuppressWarnings("NullAway")
     void concatWhenKeyValuesAreNullShouldReturnCurrentInstance() {
         KeyValues source = KeyValues.of("k", "v1");
         KeyValues concatenated = KeyValues.concat(source, (String) null);
@@ -197,6 +206,9 @@ class KeyValuesTest {
 
     // @Issue("#3851")
     @Test
+    // While we specify elements should not be null, a single null element is a common
+    // enough mistake that we handle and test for it
+    @SuppressWarnings("NullAway")
     void andKeyValuesStringArrayWhenKeyValuesAreNullShouldReturnCurrentInstance() {
         KeyValues source = KeyValues.of("t1", "v1");
         KeyValues merged = source.and((String) null);
@@ -228,6 +240,9 @@ class KeyValuesTest {
 
     // @Issue("#3851")
     @Test
+    // While we specify elements should not be null, a single null element is a common
+    // enough mistake that we handle and test for it
+    @SuppressWarnings("NullAway")
     void andKeyValuesWhenKeyValueIsNullShouldReturnCurrentInstance() {
         KeyValues source = KeyValues.of("t1", "v1");
         KeyValues merged = source.and((KeyValue) null);

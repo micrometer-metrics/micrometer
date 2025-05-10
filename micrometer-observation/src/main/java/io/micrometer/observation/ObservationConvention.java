@@ -16,7 +16,7 @@
 package io.micrometer.observation;
 
 import io.micrometer.common.KeyValues;
-import io.micrometer.common.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Contains conventions for naming and {@link KeyValues} providing.

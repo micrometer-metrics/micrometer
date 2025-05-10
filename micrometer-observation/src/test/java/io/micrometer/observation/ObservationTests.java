@@ -149,7 +149,9 @@ class ObservationTests {
         assertThat(child.getContextView()).isSameAs(childContext);
         assertThat(parent.getContextView()).isSameAs(parentContext);
 
-        assertThat(childContext.getParentObservation().getContextView()).isSameAs(parentContext);
+        ObservationView parentObservation = childContext.getParentObservation();
+        assertThat(parentObservation).isNotNull();
+        assertThat(parentObservation.getContextView()).isSameAs(parentContext);
     }
 
     @Test

@@ -15,9 +15,8 @@
  */
 package io.micrometer.observation.transport;
 
-import io.micrometer.common.lang.NonNull;
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.observation.Observation;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Objects;
 
@@ -48,7 +47,7 @@ public class SenderContext<C> extends Observation.Context {
      * @param setter propagator setter
      * @param kind kind
      */
-    public SenderContext(@NonNull Propagator.Setter<C> setter, @NonNull Kind kind) {
+    public SenderContext(Propagator.Setter<C> setter, Kind kind) {
         this.setter = Objects.requireNonNull(setter, "Setter must be set");
         this.kind = Objects.requireNonNull(kind, "Kind must be set");
     }
@@ -57,7 +56,7 @@ public class SenderContext<C> extends Observation.Context {
      * Creates a new instance of a {@link Kind#PRODUCER} {@link SenderContext}.
      * @param setter propagator setter
      */
-    public SenderContext(@NonNull Propagator.Setter<C> setter) {
+    public SenderContext(Propagator.Setter<C> setter) {
         this(setter, Kind.PRODUCER);
     }
 

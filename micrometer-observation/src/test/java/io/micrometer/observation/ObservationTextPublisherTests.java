@@ -67,6 +67,8 @@ class ObservationTextPublisherTests {
     }
 
     @Test
+    // null should not be passed, but we support it for now
+    @SuppressWarnings("NullAway")
     void shouldSupportAnyContextByDefault() {
         assertThat(publisher.supportsContext(null)).isTrue();
         assertThat(publisher.supportsContext(new Observation.Context())).isTrue();

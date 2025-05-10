@@ -16,11 +16,12 @@
 package io.micrometer.observation;
 
 import io.micrometer.common.KeyValue;
-import io.micrometer.common.lang.Nullable;
+
 import io.micrometer.common.util.StringUtils;
 import io.micrometer.common.util.internal.logging.InternalLogger;
 import io.micrometer.common.util.internal.logging.InternalLoggerFactory;
 import io.micrometer.observation.contextpropagation.ObservationThreadLocalAccessor;
+import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayDeque;
 import java.util.Collection;
@@ -55,7 +56,7 @@ class SimpleObservation implements Observation {
 
     final Map<Thread, Scope> lastScope = new ConcurrentHashMap<>();
 
-    SimpleObservation(@Nullable String name, ObservationRegistry registry, Context context) {
+    SimpleObservation(String name, ObservationRegistry registry, Context context) {
         this.registry = registry;
         this.context = context;
         this.context.setName(name);

@@ -16,7 +16,7 @@
 package io.micrometer.common.annotation;
 
 import io.micrometer.common.KeyValue;
-import io.micrometer.common.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Resolves the {@link KeyValue} value for the given parameter and the provided

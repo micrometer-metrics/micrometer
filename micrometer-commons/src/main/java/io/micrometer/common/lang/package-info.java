@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-@NonNullApi
-@NonNullFields
+@NullMarked
 package io.micrometer.common.lang;
+
+import org.jspecify.annotations.NullMarked;

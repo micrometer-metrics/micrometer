@@ -16,8 +16,8 @@
 package io.micrometer.observation.docs;
 
 import io.micrometer.common.docs.KeyName;
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.observation.*;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Objects;
 import java.util.function.Supplier;
@@ -145,6 +145,7 @@ public interface ObservationDocumentation {
      * @param contextSupplier observation context supplier
      * @return observation
      */
+    @SuppressWarnings("NullAway")
     default Observation observation(ObservationRegistry registry, Supplier<Observation.Context> contextSupplier) {
         Observation observation = Observation.createNotStarted(getName(), contextSupplier, registry);
         if (getContextualName() != null) {

@@ -15,7 +15,7 @@
  */
 package io.micrometer.observation;
 
-import io.micrometer.common.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Default implementation of {@link ObservationRegistry}.
@@ -31,9 +31,8 @@ class SimpleObservationRegistry implements ObservationRegistry {
 
     private final ObservationConfig observationConfig = new ObservationConfig();
 
-    @Nullable
     @Override
-    public Observation getCurrentObservation() {
+    public @Nullable Observation getCurrentObservation() {
         Observation.Scope scope = localObservationScope.get();
         if (scope != null) {
             return scope.getCurrentObservation();
@@ -47,7 +46,7 @@ class SimpleObservationRegistry implements ObservationRegistry {
     }
 
     @Override
-    public void setCurrentObservationScope(Observation.Scope current) {
+    public void setCurrentObservationScope(Observation.@Nullable Scope current) {
         localObservationScope.set(current);
     }
 

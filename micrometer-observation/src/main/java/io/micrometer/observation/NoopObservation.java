@@ -16,7 +16,7 @@
 package io.micrometer.observation;
 
 import io.micrometer.common.KeyValue;
-import io.micrometer.common.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 
 /**
  * No-op implementation of {@link Observation} so that we can disable the instrumentation

@@ -85,6 +85,7 @@ class CurrentObservationTest {
 
         executor2.submit(() -> {
             Observation myObservation = observationMap.get("myObservation");
+            assertThat(myObservation).isNotNull();
             try (Observation.Scope scope = myObservation.openScope()) {
                 assertThat(registry.getCurrentObservation()).isSameAs(myObservation);
             }
