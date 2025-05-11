@@ -68,7 +68,7 @@ public class CumulativeTimer extends AbstractTimer {
 
     @Override
     protected void recordNonNegative(long amount, TimeUnit unit) {
-        long nanoAmount = (long) TimeUtils.convert((double) amount, unit, TimeUnit.NANOSECONDS);
+        long nanoAmount = TimeUtils.convert(amount, unit, TimeUnit.NANOSECONDS);
         count.increment();
         total.add(nanoAmount);
         max.record((double) nanoAmount, TimeUnit.NANOSECONDS);

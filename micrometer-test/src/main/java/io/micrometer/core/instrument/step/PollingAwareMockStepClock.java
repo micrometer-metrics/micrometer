@@ -37,7 +37,7 @@ public class PollingAwareMockStepClock implements Clock {
 
     private final Duration step;
 
-    private long timeNanos = (long) TimeUtils.millisToUnit(1, TimeUnit.NANOSECONDS);
+    private long timeNanos = TimeUtils.millisToUnit(1, TimeUnit.NANOSECONDS);
 
     public PollingAwareMockStepClock(StepRegistryConfig stepRegistryConfig) {
         this.step = stepRegistryConfig.step();

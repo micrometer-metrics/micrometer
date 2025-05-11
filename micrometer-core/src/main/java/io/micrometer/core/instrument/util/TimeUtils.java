@@ -51,6 +51,14 @@ public final class TimeUtils {
     private TimeUtils() {
     }
 
+    public static long convert(long t, TimeUnit sourceUnit, TimeUnit destinationUnit) {
+        return destinationUnit.convert(t, sourceUnit);
+    }
+
+    public static long millisToUnit(long millis, TimeUnit destinationUnit) {
+        return destinationUnit.convert(millis, TimeUnit.MILLISECONDS);
+    }
+
     public static double convert(double t, TimeUnit sourceUnit, TimeUnit destinationUnit) {
         switch (sourceUnit) {
             case NANOSECONDS:

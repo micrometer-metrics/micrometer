@@ -630,7 +630,8 @@ public abstract class MeterRegistryCompatibilityKit {
                 assertThat(m.getValue()).isEqualTo(1.0);
                 assertThat(m.getStatistic()).isSameAs(ACTIVE_TASKS);
             }), measurement -> assertThat(measurement).satisfies(m -> {
-                assertThat(m.getValue()).isEqualTo(TimeUtils.convert(10, TimeUnit.NANOSECONDS, t.baseTimeUnit()));
+                assertThat(m.getValue())
+                    .isEqualTo(TimeUtils.convert((double) 10, TimeUnit.NANOSECONDS, t.baseTimeUnit()));
                 assertThat(m.getStatistic()).isSameAs(DURATION);
             }));
 
@@ -1022,7 +1023,7 @@ public abstract class MeterRegistryCompatibilityKit {
             t.record(1, TimeUnit.MILLISECONDS);
             // accommodate StepBucketHistogram
             clock(registry).add(halfStep);
-            assertThat(t.histogramCountAtValue((long) millisToUnit(1, TimeUnit.NANOSECONDS))).isEqualTo(1);
+            assertThat(t.histogramCountAtValue(millisToUnit(1, TimeUnit.NANOSECONDS))).isEqualTo(1);
             assertThat(t.histogramCountAtValue(1)).isNaN();
         }
 
