@@ -25,7 +25,6 @@ import org.eclipse.jetty.http.HttpTester;
 import org.eclipse.jetty.server.*;
 import org.eclipse.jetty.util.BufferUtil;
 import org.eclipse.jetty.util.Callback;
-import org.eclipse.jetty.util.component.Graceful;
 import org.eclipse.jetty.util.component.LifeCycle;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -166,13 +165,11 @@ class TimedHandlerTest {
 
             // initiate a shutdown
             Future<Void> shutdownFuture = timedHandler.shutdown();
-            Graceful.Shutdown shutdown = timedHandler.getShutdown();
             assertThat(shutdownFuture.isDone()).isFalse();
 
             // delay half what the handler is sleeping
             Thread.sleep(delay / 2);
             // response is still active, so don't shutdown.
-            shutdown.check();
             assertThat(shutdownFuture.isDone()).isFalse();
 
             // Read response to ensure it is done
@@ -181,7 +178,6 @@ class TimedHandlerTest {
             assertThat(response1.getContent()).isEmpty();
 
             Thread.sleep(delay);
-            shutdown.check();
             assertThat(shutdownFuture.isDone()).isTrue();
         }
     }
