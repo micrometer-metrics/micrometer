@@ -98,6 +98,11 @@ subprojects {
                 option("NullAway:CustomContractAnnotations", "io.micrometer.common.lang.internal.Contract")
                 option("NullAway:CheckContracts", "true")
                 option("NullAway:HandleTestAssertionLibraries", "true")
+                if (javaLanguageVersion.canCompileOrRun(22)) {
+                    // see https://bugs.openjdk.org/browse/JDK-8346471
+                    // see https://github.com/uber/NullAway/wiki/JSpecify-Support
+                    option("NullAway:JSpecifyMode", "true")
+                }
                 if (!javaLanguageVersion.canCompileOrRun(17)) {
                     // Error Prone does not work with JDK <17
                     enabled = false
