@@ -15,7 +15,7 @@
  */
 package io.micrometer.observation.transport;
 
-import io.micrometer.common.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Common interface for getting/setting the response object on

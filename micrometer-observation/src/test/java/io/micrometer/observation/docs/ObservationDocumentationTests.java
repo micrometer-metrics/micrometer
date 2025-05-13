@@ -35,17 +35,20 @@ import static org.mockito.Mockito.verifyNoInteractions;
 
 class ObservationDocumentationTests {
 
+    ObservationConvention mockObservationConvention = mock(ObservationConvention.class);
+
     @Test
     void iseShouldBeThrownWhenDocumentedObservationHasNotOverriddenDefaultConvention() {
         ObservationRegistry registry = observationRegistry();
 
-        thenThrownBy(() -> TestConventionObservation.NOT_OVERRIDDEN_METHODS.observation(null, null,
+        thenThrownBy(() -> TestConventionObservation.NOT_OVERRIDDEN_METHODS.observation(null, mockObservationConvention,
                 Observation.Context::new, registry))
             .isInstanceOf(IllegalStateException.class)
             .hasMessageContaining("You've decided to use convention based naming yet this observation");
     }
 
     @Test
+    @SuppressWarnings("NullAway")
     void npeShouldBeThrownWhenDocumentedObservationHasOverriddenDefaultConventionButDefaultConventionWasNotPassedToTheFactoryMethod() {
         ObservationRegistry registry = observationRegistry();
 

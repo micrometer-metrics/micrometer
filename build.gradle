@@ -73,31 +73,43 @@ subprojects {
 
     if (project.name != 'micrometer-bom') {
         tasks.withType(JavaCompile).configureEach {
-            options.errorprone.disableWarningsInGeneratedCode = true
-            options.errorprone.excludedPaths = ".*/build/generated/.*"
-            options.errorprone.error(
-                    "BadImport",
-                    "DefaultCharset",
-                    "LongDoubleConversion",
-                    "MissingOverride",
-                    "StringCaseLocaleUsage"
-            )
-            options.errorprone.disable(
-                    "StringConcatToTextBlock" // Requires JDK 15+
-            )
-
             if (it.name == "compileJava" && !(it.project.name in ["micrometer-java11"])) {
                 options.errorprone.disable(
                         "JavaDurationGetSecondsToToSeconds" // Requires JDK 9+
                 )
             }
+            options.errorprone {
+                disableWarningsInGeneratedCode = true
+                excludedPaths = ".*/build/generated/.*"
 
-            if (!javaLanguageVersion.canCompileOrRun(17)) {
-                // Error Prone does not work with JDK <17
-                options.errorprone.enabled = false
-            }
-            if (System.env.CI != null) {
-                options.errorprone.disableAllWarnings = true
+                disable(
+                        "StringConcatToTextBlock" // Requires JDK 15+
+                )
+
+                error("BadImport",
+                        "DefaultCharset",
+                        "LongDoubleConversion",
+                        "MissingOverride",
+                        "NullAway",
+                        "StringCaseLocaleUsage"
+                )
+
+                option("NullAway:OnlyNullMarked", "true")
+                option("NullAway:CustomContractAnnotations", "io.micrometer.common.lang.internal.Contract")
+                option("NullAway:CheckContracts", "true")
+                option("NullAway:HandleTestAssertionLibraries", "true")
+                if (javaLanguageVersion.canCompileOrRun(22)) {
+                    // see https://bugs.openjdk.org/browse/JDK-8346471
+                    // see https://github.com/uber/NullAway/wiki/JSpecify-Support
+                    option("NullAway:JSpecifyMode", "true")
+                }
+                if (!javaLanguageVersion.canCompileOrRun(17)) {
+                    // Error Prone does not work with JDK <17
+                    enabled = false
+                }
+                if (System.env.CI != null) {
+                    disableAllWarnings = true
+                }
             }
         }
         if ((project.name.contains('samples') && !project.name.contains('kotlin')) || project.name.contains('benchmarks')) {
@@ -105,6 +117,8 @@ subprojects {
         } else {
             apply plugin: 'java-library'
             dependencies {
+                api(libs.jspecify)
+
                 testImplementation platform(libs.junitBom)
                 testImplementation libs.junitJupiter
                 testRuntimeOnly libs.junitPlatformLauncher
@@ -139,6 +153,7 @@ subprojects {
             optionalApi libs.jsr305
             checkstyle libs.spring.javaformatCheckstyle
             errorprone(libs.errorprone)
+            errorprone(libs.nullAway)
         }
 
         tasks {

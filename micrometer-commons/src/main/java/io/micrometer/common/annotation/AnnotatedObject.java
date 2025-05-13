@@ -15,7 +15,7 @@
  */
 package io.micrometer.common.annotation;
 
-import io.micrometer.common.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.lang.annotation.Annotation;
 
@@ -31,8 +31,7 @@ class AnnotatedObject {
 
     final Annotation annotation;
 
-    @Nullable
-    final Object object;
+    final @Nullable Object object;
 
     AnnotatedObject(Annotation annotation, @Nullable Object object) {
         this.annotation = annotation;
