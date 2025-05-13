@@ -33,19 +33,6 @@ class LegacyIndexTemplateCreator implements IndexTemplateCreator {
 
     private final Logger logger = LoggerFactory.getLogger(LegacyIndexTemplateCreator.class);
 
-    private final String indexTemplateRequest = "{\n" + "  \"index_patterns\": [\"%s*\"],\n" + "  \"mappings\": {\n"
-            + "    \"_source\": {\n" + "      \"enabled\": false\n" + "    },\n" + "    \"properties\": {\n"
-            + "      \"name\": { \"type\": \"keyword\" },\n"
-            + "      \"count\": { \"type\": \"double\", \"index\": false },\n"
-            + "      \"value\": { \"type\": \"double\", \"index\": false },\n"
-            + "      \"sum\": { \"type\": \"double\", \"index\": false },\n"
-            + "      \"mean\": { \"type\": \"double\", \"index\": false },\n"
-            + "      \"duration\": { \"type\": \"double\", \"index\": false},\n"
-            + "      \"max\": { \"type\": \"double\", \"index\": false },\n"
-            + "      \"total\": { \"type\": \"double\", \"index\": false },\n"
-            + "      \"unknown\": { \"type\": \"double\", \"index\": false },\n"
-            + "      \"active\": { \"type\": \"double\", \"index\": false }\n" + "    }\n" + "  }\n" + "}";
-
     private final HttpSender httpClient;
 
     LegacyIndexTemplateCreator(HttpSender httpClient) {
@@ -82,7 +69,20 @@ class LegacyIndexTemplateCreator implements IndexTemplateCreator {
         String indexPattern = configuration.index() + configuration.indexDateSeparator();
         HttpSender.Request.Builder request = this.httpClient.put(configuration.host() + INDEX_TEMPLATE_PATH);
         configureAuthentication(configuration, request);
-        request.withJsonContent(String.format(indexTemplateRequest, indexPattern))
+        request
+            .withJsonContent(String.format("{\n" + "  \"index_patterns\": [\"%s*\"],\n" + "  \"mappings\": {\n"
+                    + "    \"_source\": {\n" + "      \"enabled\": false\n" + "    },\n" + "    \"properties\": {\n"
+                    + "      \"name\": { \"type\": \"keyword\" },\n"
+                    + "      \"count\": { \"type\": \"double\", \"index\": false },\n"
+                    + "      \"value\": { \"type\": \"double\", \"index\": false },\n"
+                    + "      \"sum\": { \"type\": \"double\", \"index\": false },\n"
+                    + "      \"mean\": { \"type\": \"double\", \"index\": false },\n"
+                    + "      \"duration\": { \"type\": \"double\", \"index\": false},\n"
+                    + "      \"max\": { \"type\": \"double\", \"index\": false },\n"
+                    + "      \"total\": { \"type\": \"double\", \"index\": false },\n"
+                    + "      \"unknown\": { \"type\": \"double\", \"index\": false },\n"
+                    + "      \"active\": { \"type\": \"double\", \"index\": false }\n" + "    }\n" + "  }\n" + "}",
+                    indexPattern))
             .send()
             .onError(response -> logger.error("Failed to create index template in Elastic: {}", response.body()));
     }
