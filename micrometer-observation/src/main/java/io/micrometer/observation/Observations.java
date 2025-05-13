@@ -62,6 +62,7 @@ public final class Observations {
     }
 
     // We know delegate.get() cannot be null but NullAway does not.
+    // see https://github.com/uber/NullAway/issues/681
     @SuppressWarnings("NullAway")
     private static final class DelegatingObservationRegistry implements ObservationRegistry {
 
