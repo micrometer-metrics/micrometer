@@ -31,17 +31,7 @@ import java.util.stream.Stream;
  */
 class CreateDatabaseQueryBuilder {
 
-    private static final String QUERY_MANDATORY_TEMPLATE = "CREATE DATABASE \"%s\"";
-
     private static final String RETENTION_POLICY_INTRODUCTION = " WITH";
-
-    private static final String DURATION_CLAUSE_TEMPLATE = " DURATION %s";
-
-    private static final String REPLICATION_FACTOR_CLAUSE_TEMPLATE = " REPLICATION %d";
-
-    private static final String SHARD_DURATION_CLAUSE_TEMPLATE = " SHARD DURATION %s";
-
-    private static final String NAME_CLAUSE_TEMPLATE = " NAME %s";
 
     private final String databaseName;
 
@@ -56,34 +46,34 @@ class CreateDatabaseQueryBuilder {
 
     CreateDatabaseQueryBuilder setRetentionDuration(@Nullable String retentionDuration) {
         if (!isEmpty(retentionDuration)) {
-            retentionPolicyClauses[0] = String.format(DURATION_CLAUSE_TEMPLATE, retentionDuration);
+            retentionPolicyClauses[0] = String.format(" DURATION %s", retentionDuration);
         }
         return this;
     }
 
     CreateDatabaseQueryBuilder setRetentionReplicationFactor(@Nullable Integer retentionReplicationFactor) {
         if (retentionReplicationFactor != null) {
-            retentionPolicyClauses[1] = String.format(REPLICATION_FACTOR_CLAUSE_TEMPLATE, retentionReplicationFactor);
+            retentionPolicyClauses[1] = String.format(" REPLICATION %d", retentionReplicationFactor);
         }
         return this;
     }
 
     CreateDatabaseQueryBuilder setRetentionShardDuration(@Nullable String retentionShardDuration) {
         if (!isEmpty(retentionShardDuration)) {
-            retentionPolicyClauses[2] = String.format(SHARD_DURATION_CLAUSE_TEMPLATE, retentionShardDuration);
+            retentionPolicyClauses[2] = String.format(" SHARD DURATION %s", retentionShardDuration);
         }
         return this;
     }
 
     CreateDatabaseQueryBuilder setRetentionPolicyName(@Nullable String retentionPolicyName) {
         if (!isEmpty(retentionPolicyName)) {
-            retentionPolicyClauses[3] = String.format(NAME_CLAUSE_TEMPLATE, retentionPolicyName);
+            retentionPolicyClauses[3] = String.format(" NAME %s", retentionPolicyName);
         }
         return this;
     }
 
     String build() {
-        StringBuilder queryStringBuilder = new StringBuilder(String.format(QUERY_MANDATORY_TEMPLATE, databaseName));
+        StringBuilder queryStringBuilder = new StringBuilder(String.format("CREATE DATABASE \"%s\"", databaseName));
         if (hasAnyRetentionPolicy()) {
             String retentionPolicyClause = Stream.of(retentionPolicyClauses)
                 .filter(Objects::nonNull)
