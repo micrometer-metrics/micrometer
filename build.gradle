@@ -440,7 +440,7 @@ subprojects {
                     packageExcludes = ['io.micrometer.shaded.*', 'io.micrometer.statsd.internal']
 
                     fieldExcludes = []
-                    methodExcludes = ['io.micrometer.registry.otlp.AggregationTemporality#toOtlpAggregationTemporality(io.micrometer.registry.otlp.AggregationTemporality)']
+                    methodExcludes = []
 
                     onlyIf { compatibleVersion != 'SKIP' }
                 }
