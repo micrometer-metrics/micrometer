@@ -26,14 +26,6 @@ else {
     }
 }
 
-japicmp {
-    // TODO Remove once building 1.16
-    classExcludes.addAll('io.micrometer.core.instrument.binder.jdk.MicrometerHttpClient',
-            'io.micrometer.core.instrument.binder.jdk.DefaultHttpClientObservationConvention',
-            'io.micrometer.core.instrument.binder.jdk.HttpClientContext',
-            'io.micrometer.core.instrument.binder.jdk.HttpClientObservationConvention')
-}
-
 description 'Core module of Micrometer containing instrumentation API and implementation'
 
 tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).all {
