@@ -73,6 +73,7 @@ subprojects {
             options.errorprone.excludedPaths = ".*/build/generated/.*"
             options.errorprone.error(
                     "BadImport",
+                    "ClassCanBeStatic",
                     "DefaultCharset",
                     "InlineFormatString",
                     "LongDoubleConversion",
