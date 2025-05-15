@@ -15,8 +15,6 @@
  */
 package io.micrometer.core.instrument;
 
-import io.micrometer.core.instrument.util.TimeUtils;
-
 import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 

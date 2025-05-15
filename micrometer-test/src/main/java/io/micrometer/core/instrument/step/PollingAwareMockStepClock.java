@@ -22,7 +22,6 @@ import java.util.concurrent.TimeUnit;
 
 import io.micrometer.core.annotation.Incubating;
 import io.micrometer.core.instrument.Clock;
-import io.micrometer.core.instrument.util.TimeUtils;
 
 /**
  * A clock meant to be used for testing {@link StepMeterRegistry}. This clock does the
