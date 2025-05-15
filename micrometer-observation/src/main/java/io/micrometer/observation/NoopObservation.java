@@ -27,7 +27,7 @@ import org.jspecify.annotations.Nullable;
  * @author Marcin Grzejszczak
  * @since 1.10.0
  */
-final class NoopObservation implements Observation {
+class NoopObservation implements Observation {
 
     private static final Context CONTEXT = new Context();
 

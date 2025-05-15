@@ -18,6 +18,7 @@ package io.micrometer.observation;
 import io.micrometer.common.KeyValue;
 import io.micrometer.common.KeyValues;
 import io.micrometer.observation.Observation.Context;
+import io.micrometer.observation.Observation.ObservationLevel;
 import org.awaitility.Awaitility;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -71,7 +72,18 @@ class ObservationTests {
 
         Observation observation = Observation.createNotStarted("foo", registry);
 
-        assertThat(observation).isSameAs(Observation.NOOP);
+        assertThat(observation).isInstanceOf(PassthroughNoopObservation.class);
+    }
+
+    @Test
+    void notMatchingObservationLevelShouldResultInPassthroughObservation() {
+        registry.observationConfig().observationHandler(context -> true);
+        registry.observationConfig().observationPredicate((s, context) -> true);
+        registry.observationConfig().observationLevel("foo", Level.BASIC);
+
+        Observation observation = Observation.createNotStarted("foo", ObservationLevel.detailed(), registry);
+
+        assertThat(observation).isInstanceOf(PassthroughNoopObservation.class);
     }
 
     @Test
@@ -81,7 +93,7 @@ class ObservationTests {
 
         Observation observation = Observation.createNotStarted("foo", registry);
 
-        assertThat(observation).isNotSameAs(Observation.NOOP);
+        assertThat(observation).isNotInstanceOf(NoopObservation.class);
     }
 
     @Test
@@ -91,11 +103,11 @@ class ObservationTests {
             .observationPredicate((s, context) -> !s.equals("child") || context.getParentObservation() != null);
 
         Observation childWithoutParent = Observation.createNotStarted("child", registry);
-        assertThat(childWithoutParent).isSameAs(Observation.NOOP);
+        assertThat(childWithoutParent).isInstanceOf(PassthroughNoopObservation.class);
 
         Observation childWithParent = Observation.createNotStarted("parent", registry)
             .observe(() -> Observation.createNotStarted("child", registry));
-        assertThat(childWithParent).isNotSameAs(Observation.NOOP);
+        assertThat(childWithParent).isNotInstanceOf(NoopObservation.class);
     }
 
     @Test

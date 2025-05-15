@@ -17,9 +17,11 @@ package io.micrometer.observation;
 
 import org.jspecify.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Objects;
+import io.micrometer.observation.Observation.ObservationLevel;
+
+import java.util.*;
+import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Supplier;
 
@@ -101,6 +103,8 @@ public interface ObservationRegistry {
 
         private final List<ObservationFilter> observationFilters = new CopyOnWriteArrayList<>();
 
+        private final Map<String, Level> observationLevels = new ConcurrentHashMap<>();
+
         /**
          * Register a handler for the {@link Observation observations}.
          * @param handler handler to add to the current configuration
@@ -149,6 +153,27 @@ public interface ObservationRegistry {
         }
 
         /**
+         * Sets an observation level for the given observation name.
+         * @param observationName observation name
+         * @param level observation level
+         * @return This configuration instance
+         */
+        public ObservationConfig observationLevel(String observationName, Level level) {
+            this.observationLevels.put(observationName, level);
+            return this;
+        }
+
+        /**
+         * Sets observation levels.
+         * @param levels observation levels (observation name to level mappings)
+         * @return This configuration instance
+         */
+        public ObservationConfig observationLevels(Map<String, Level> levels) {
+            this.observationLevels.putAll(levels);
+            return this;
+        }
+
+        /**
          * Finds an {@link ObservationConvention} for the given
          * {@link Observation.Context}.
          * @param context context
@@ -178,6 +203,20 @@ public interface ObservationRegistry {
             for (ObservationPredicate predicate : this.observationPredicates) {
                 if (!predicate.test(name, context)) {
                     return false;
+                }
+            }
+            if (context != null) {
+                ObservationLevel level = context.getLevel();
+                if (level == null) {
+                    return true;
+                }
+                String observationName = context.getName();
+                for (Entry<String, Level> levelEntry : this.observationLevels.entrySet()) {
+                    if (levelEntry.getKey().equalsIgnoreCase(observationName)) {
+                        // exact or partial match
+                        // e.g. ctx has INFO (3), configured is DEBUG (2)
+                        return level.getLevel().ordinal() >= levelEntry.getValue().ordinal();
+                    }
                 }
             }
             return true;

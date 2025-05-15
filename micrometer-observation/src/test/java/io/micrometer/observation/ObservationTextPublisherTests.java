@@ -30,7 +30,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 class ObservationTextPublisherTests {
 
-    private static final String CONTEXT_TOSTRING = "name='testName', contextualName='testContextualName', error='java.io.IOException: simulated', lowCardinalityKeyValues=[lcTag='foo'], highCardinalityKeyValues=[hcTag='bar'], map=[contextKey='contextValue'], parentObservation=null";
+    private static final String CONTEXT_TOSTRING = "name='testName', contextualName='testContextualName', error='java.io.IOException: simulated', lowCardinalityKeyValues=[lcTag='foo'], highCardinalityKeyValues=[hcTag='bar'], map=[contextKey='contextValue'], parentObservation=null, observationLevel=null";
 
     private final TestConsumer consumer = new TestConsumer();
 
