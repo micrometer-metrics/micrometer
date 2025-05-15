@@ -195,7 +195,7 @@ prometheusSimpleClient = { module = "io.prometheus:simpleclient_common" }
 prometheusSimpleClientPushgateway = { module = "io.prometheus:simpleclient_pushgateway" }
 reactorBom = { module = "io.projectreactor:reactor-bom", version.ref = "reactor" }
 restAssured = { module = "io.rest-assured:rest-assured", version.ref = "rest-assured" }
-retrofit2 = { module = "com.squareup.retrofit2:retrofit", version = "2.11.0" }
+retrofit2 = { module = "com.squareup.retrofit2:retrofit", version = "2.12.0" }
 signalfx = { module = "com.signalfx.public:signalfx-java", version.ref = "signalfx" }
 slf4jApi = { module = "org.slf4j:slf4j-api", version.ref = "slf4j" }
 slfj4Simple = { module = "org.slf4j:slf4j-simple", version.ref = "slf4j" }
