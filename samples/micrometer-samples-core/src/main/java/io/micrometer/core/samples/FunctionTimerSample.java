@@ -21,7 +21,6 @@ import cern.jet.random.engine.RandomEngine;
 import io.micrometer.core.instrument.FunctionTimer;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
-import io.micrometer.core.instrument.util.TimeUtils;
 import io.micrometer.core.samples.utils.SampleConfig;
 import reactor.core.publisher.Flux;
 
