@@ -91,14 +91,14 @@ class TimeWindowPercentileHistogramTest {
         try (TimeWindowPercentileHistogram histogram = new TimeWindowPercentileHistogram(clock,
                 DistributionStatisticConfig.builder()
                     .percentiles(0.5, 0.9, 0.95)
-                    .minimumExpectedValue(millisToUnit((double) 1, TimeUnit.NANOSECONDS))
+                    .minimumExpectedValue(millisToUnit(1, TimeUnit.NANOSECONDS))
                     .maximumExpectedValue(secondsToUnit(30, TimeUnit.NANOSECONDS))
                     .build()
                     .merge(DistributionStatisticConfig.DEFAULT),
                 false)) {
 
             for (long i = 1; i <= 10; i++) {
-                histogram.recordLong((long) millisToUnit((double) i, TimeUnit.NANOSECONDS));
+                histogram.recordLong(TimeUnit.MILLISECONDS.toNanos(i));
             }
 
             assertThat(histogram.takeSnapshot(0, 0, 0).percentileValues())
@@ -133,7 +133,7 @@ class TimeWindowPercentileHistogramTest {
         try (TimeWindowPercentileHistogram histogram = new TimeWindowPercentileHistogram(clock, config, false)) {
 
             for (int i = 1; i <= 10; i++) {
-                histogram.recordLong(millisToUnit(i, TimeUnit.NANOSECONDS));
+                histogram.recordLong(TimeUnit.MILLISECONDS.toNanos(i));
             }
 
             // baseline median
@@ -141,7 +141,7 @@ class TimeWindowPercentileHistogramTest {
                 .anyMatch(p -> percentileValueIsApproximately(p, 0.5, 5e6));
 
             for (int i = 11; i <= 20; i++) {
-                histogram.recordLong(millisToUnit(i, TimeUnit.NANOSECONDS));
+                histogram.recordLong(TimeUnit.MILLISECONDS.toNanos(i));
             }
 
             // median should have moved after seeing 10 more samples

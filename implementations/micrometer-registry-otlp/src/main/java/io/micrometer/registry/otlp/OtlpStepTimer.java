@@ -53,7 +53,7 @@ class OtlpStepTimer extends AbstractTimer {
 
     @Override
     protected void recordNonNegative(final long amount, final TimeUnit unit) {
-        final long nanoAmount = TimeUtils.convert(amount, unit, TimeUnit.NANOSECONDS);
+        final long nanoAmount = unit.toNanos(amount);
         count.add(1L);
         total.add(nanoAmount);
         max.record((double) nanoAmount);

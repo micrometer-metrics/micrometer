@@ -61,7 +61,7 @@ public class FunctionTimerSample {
                 // distributed normally with a mean of 250ms
                 timer.record(latencyForThisSecond.get(), TimeUnit.MILLISECONDS);
                 totalCount.incrementAndGet();
-                totalTimeNanos.addAndGet(TimeUtils.millisToUnit(latencyForThisSecond.get(), TimeUnit.NANOSECONDS));
+                totalTimeNanos.addAndGet(TimeUnit.MILLISECONDS.toNanos(latencyForThisSecond.get()));
             }
         }).blockLast();
     }

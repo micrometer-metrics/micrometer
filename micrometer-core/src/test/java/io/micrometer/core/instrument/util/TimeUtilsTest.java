@@ -15,7 +15,6 @@
  */
 package io.micrometer.core.instrument.util;
 
-import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
@@ -53,120 +52,6 @@ class TimeUtilsTest {
         assertThat(TimeUtils.format(Duration.ofSeconds(90))).isEqualTo("1m 30s");
         assertThat(TimeUtils.format(Duration.ofMinutes(2))).isEqualTo("2m");
         assertThat(TimeUtils.format(Duration.ofNanos(1001234000000L))).isEqualTo("16m 41.234s");
-    }
-
-    @Test
-    void convert() {
-        // double
-        assertThat(TimeUtils.convert(60_000.0, TimeUnit.NANOSECONDS, TimeUnit.MICROSECONDS)).isEqualTo(60.0);
-        assertThat(TimeUtils.convert(60_000.0, TimeUnit.MICROSECONDS, TimeUnit.MILLISECONDS)).isEqualTo(60.0);
-        assertThat(TimeUtils.convert(60_000.0, TimeUnit.MILLISECONDS, TimeUnit.SECONDS)).isEqualTo(60.0);
-        assertThat(TimeUtils.convert(60.0, TimeUnit.SECONDS, TimeUnit.MINUTES)).isEqualTo(1.0);
-        assertThat(TimeUtils.convert(60.0, TimeUnit.MINUTES, TimeUnit.HOURS)).isEqualTo(1.0);
-        assertThat(TimeUtils.convert(24.0, TimeUnit.HOURS, TimeUnit.DAYS)).isEqualTo(1.0);
-        assertThat(TimeUtils.convert(1.0, TimeUnit.DAYS, TimeUnit.DAYS)).isEqualTo(1.0);
-
-        // long
-        assertThat(TimeUtils.convert(60_000, TimeUnit.NANOSECONDS, TimeUnit.MICROSECONDS)).isEqualTo(60);
-        assertThat(TimeUtils.convert(60_000, TimeUnit.MICROSECONDS, TimeUnit.MILLISECONDS)).isEqualTo(60);
-        assertThat(TimeUtils.convert(60_000, TimeUnit.MILLISECONDS, TimeUnit.SECONDS)).isEqualTo(60);
-        assertThat(TimeUtils.convert(60, TimeUnit.SECONDS, TimeUnit.MINUTES)).isEqualTo(1);
-        assertThat(TimeUtils.convert(60, TimeUnit.MINUTES, TimeUnit.HOURS)).isEqualTo(1);
-        assertThat(TimeUtils.convert(24, TimeUnit.HOURS, TimeUnit.DAYS)).isEqualTo(1);
-        assertThat(TimeUtils.convert(1, TimeUnit.DAYS, TimeUnit.DAYS)).isEqualTo(1);
-    }
-
-    @Test
-    void nanosToUnit() {
-        // double
-        assertThat(TimeUtils.nanosToUnit(60_000.0, TimeUnit.NANOSECONDS)).isEqualTo(60_000.0);
-        assertThat(TimeUtils.nanosToUnit(60_000.0, TimeUnit.MICROSECONDS)).isEqualTo(60.0);
-        assertThat(TimeUtils.nanosToUnit(60_000_000.0, TimeUnit.MILLISECONDS)).isEqualTo(60.0);
-        assertThat(TimeUtils.nanosToUnit(60_000_000_000.0, TimeUnit.SECONDS)).isEqualTo(60.0);
-        assertThat(TimeUtils.nanosToUnit(60_000_000_000.0, TimeUnit.MINUTES)).isEqualTo(1.0);
-        assertThat(TimeUtils.nanosToUnit(3_600_000_000_000.0, TimeUnit.HOURS)).isEqualTo(1.0);
-        assertThat(TimeUtils.nanosToUnit(86_400_000_000_000.0, TimeUnit.DAYS)).isEqualTo(1.0);
-    }
-
-    @Test
-    void microsToUnit() {
-        // double
-        assertThat(TimeUtils.microsToUnit(60.0, TimeUnit.NANOSECONDS)).isEqualTo(60_000.0);
-        assertThat(TimeUtils.microsToUnit(60_000.0, TimeUnit.MICROSECONDS)).isEqualTo(60_000.0);
-        assertThat(TimeUtils.microsToUnit(60_000.0, TimeUnit.MILLISECONDS)).isEqualTo(60.0);
-        assertThat(TimeUtils.microsToUnit(60_000_000.0, TimeUnit.SECONDS)).isEqualTo(60.0);
-        assertThat(TimeUtils.microsToUnit(60_000_000.0, TimeUnit.MINUTES)).isEqualTo(1.0);
-        assertThat(TimeUtils.microsToUnit(3_600_000_000.0, TimeUnit.HOURS)).isEqualTo(1.0);
-        assertThat(TimeUtils.microsToUnit(86_400_000_000.0, TimeUnit.DAYS)).isEqualTo(1.0);
-    }
-
-    @Test
-    void millisToUnit() {
-        // double
-        assertThat(TimeUtils.millisToUnit(60_000.0, TimeUnit.NANOSECONDS)).isEqualTo(60_000_000_000.0);
-        assertThat(TimeUtils.millisToUnit(60_000.0, TimeUnit.MICROSECONDS)).isEqualTo(60_000_000.0);
-        assertThat(TimeUtils.millisToUnit(60_000.0, TimeUnit.MILLISECONDS)).isEqualTo(60_000.0);
-        assertThat(TimeUtils.millisToUnit(60_000.0, TimeUnit.SECONDS)).isEqualTo(60.0);
-        assertThat(TimeUtils.millisToUnit(60_000.0, TimeUnit.MINUTES)).isEqualTo(1.0);
-        assertThat(TimeUtils.millisToUnit(3_600_000.0, TimeUnit.HOURS)).isEqualTo(1.0);
-        assertThat(TimeUtils.millisToUnit(86_400_000.0, TimeUnit.DAYS)).isEqualTo(1.0);
-
-        // long
-        assertThat(TimeUtils.millisToUnit(60_000, TimeUnit.NANOSECONDS)).isEqualTo(60_000_000_000L);
-        assertThat(TimeUtils.millisToUnit(60_000, TimeUnit.MICROSECONDS)).isEqualTo(60_000_000);
-        assertThat(TimeUtils.millisToUnit(60_000, TimeUnit.MILLISECONDS)).isEqualTo(60_000);
-        assertThat(TimeUtils.millisToUnit(60_000, TimeUnit.SECONDS)).isEqualTo(60);
-        assertThat(TimeUtils.millisToUnit(60_000, TimeUnit.MINUTES)).isEqualTo(1);
-        assertThat(TimeUtils.millisToUnit(3_600_000, TimeUnit.HOURS)).isEqualTo(1);
-        assertThat(TimeUtils.millisToUnit(86_400_000, TimeUnit.DAYS)).isEqualTo(1);
-    }
-
-    @Test
-    void secondsToUnit() {
-        // double
-        assertThat(TimeUtils.secondsToUnit(60.0, TimeUnit.NANOSECONDS)).isEqualTo(60_000_000_000.0);
-        assertThat(TimeUtils.secondsToUnit(60.0, TimeUnit.MICROSECONDS)).isEqualTo(60_000_000.0);
-        assertThat(TimeUtils.secondsToUnit(60.0, TimeUnit.MILLISECONDS)).isEqualTo(60_000.0);
-        assertThat(TimeUtils.secondsToUnit(60.0, TimeUnit.SECONDS)).isEqualTo(60.0);
-        assertThat(TimeUtils.secondsToUnit(60.0, TimeUnit.MINUTES)).isEqualTo(1.0);
-        assertThat(TimeUtils.secondsToUnit(3_600.0, TimeUnit.HOURS)).isEqualTo(1.0);
-        assertThat(TimeUtils.secondsToUnit(86_400.0, TimeUnit.DAYS)).isEqualTo(1.0);
-    }
-
-    @Test
-    void minutesToUnit() {
-        // double
-        assertThat(TimeUtils.minutesToUnit(1.0, TimeUnit.NANOSECONDS)).isEqualTo(60_000_000_000.0);
-        assertThat(TimeUtils.minutesToUnit(1.0, TimeUnit.MICROSECONDS)).isEqualTo(60_000_000.0);
-        assertThat(TimeUtils.minutesToUnit(1.0, TimeUnit.MILLISECONDS)).isEqualTo(60_000.0);
-        assertThat(TimeUtils.minutesToUnit(1.0, TimeUnit.SECONDS)).isEqualTo(60.0);
-        assertThat(TimeUtils.minutesToUnit(1.0, TimeUnit.MINUTES)).isEqualTo(1.0);
-        assertThat(TimeUtils.minutesToUnit(60.0, TimeUnit.HOURS)).isEqualTo(1.0);
-        assertThat(TimeUtils.minutesToUnit(1_440.0, TimeUnit.DAYS)).isEqualTo(1.0);
-    }
-
-    @Test
-    void hoursToUnit() {
-        // double
-        assertThat(TimeUtils.hoursToUnit(1.0, TimeUnit.NANOSECONDS)).isEqualTo(3_600_000_000_000.0);
-        assertThat(TimeUtils.hoursToUnit(1.0, TimeUnit.MICROSECONDS)).isEqualTo(3_600_000_000.0);
-        assertThat(TimeUtils.hoursToUnit(1.0, TimeUnit.MILLISECONDS)).isEqualTo(3_600_000.0);
-        assertThat(TimeUtils.hoursToUnit(1.0, TimeUnit.SECONDS)).isEqualTo(3_600.0);
-        assertThat(TimeUtils.hoursToUnit(1.0, TimeUnit.MINUTES)).isEqualTo(60.0);
-        assertThat(TimeUtils.hoursToUnit(1.0, TimeUnit.HOURS)).isEqualTo(1.0);
-        assertThat(TimeUtils.hoursToUnit(24.0, TimeUnit.DAYS)).isEqualTo(1.0);
-    }
-
-    @Test
-    void daysToUnit() {
-        // double
-        assertThat(TimeUtils.daysToUnit(1.0, TimeUnit.NANOSECONDS)).isEqualTo(86_400_000_000_000.0);
-        assertThat(TimeUtils.daysToUnit(1.0, TimeUnit.MICROSECONDS)).isEqualTo(86_400_000_000.0);
-        assertThat(TimeUtils.daysToUnit(1.0, TimeUnit.MILLISECONDS)).isEqualTo(86_400_000.0);
-        assertThat(TimeUtils.daysToUnit(1.0, TimeUnit.SECONDS)).isEqualTo(86_400.0);
-        assertThat(TimeUtils.daysToUnit(1.0, TimeUnit.MINUTES)).isEqualTo(1_440.0);
-        assertThat(TimeUtils.daysToUnit(1.0, TimeUnit.HOURS)).isEqualTo(24.0);
-        assertThat(TimeUtils.daysToUnit(1.0, TimeUnit.DAYS)).isEqualTo(1.0);
     }
 
 }

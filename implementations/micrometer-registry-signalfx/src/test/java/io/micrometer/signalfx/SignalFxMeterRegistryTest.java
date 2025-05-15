@@ -144,10 +144,9 @@ class SignalFxMeterRegistryTest {
         assertThat(timer.max(TimeUnit.SECONDS)).isEqualTo(5);
         // histogram counts reflect everything that was observed
         assertThat(timer.takeSnapshot().histogramCounts()).containsExactly(
-                new CountAtBucket(millisToUnit((double) 10, TimeUnit.NANOSECONDS), 1),
-                new CountAtBucket(millisToUnit((double) 100, TimeUnit.NANOSECONDS), 2),
-                new CountAtBucket(millisToUnit((double) 1000, TimeUnit.NANOSECONDS), 3),
-                new CountAtBucket(Double.MAX_VALUE, 5));
+                new CountAtBucket(millisToUnit(10, TimeUnit.NANOSECONDS), 1),
+                new CountAtBucket(millisToUnit(100, TimeUnit.NANOSECONDS), 2),
+                new CountAtBucket(millisToUnit(1000, TimeUnit.NANOSECONDS), 3), new CountAtBucket(Double.MAX_VALUE, 5));
     }
 
     @Test
