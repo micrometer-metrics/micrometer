@@ -281,8 +281,14 @@ public interface Meter {
          * @return A set of dimensions that allows you to break down the name.
          */
         public List<Tag> getTags() {
-            List<Tag> tags = new ArrayList<>();
-            this.tags.forEach(tags::add);
+            if (this.tags == Tags.empty()) {
+                return Collections.emptyList();
+            }
+
+            List<Tag> tags = new ArrayList<>(32);
+            for (Tag tag : this.tags) {
+                tags.add(tag);
+            }
             return Collections.unmodifiableList(tags);
         }
 
