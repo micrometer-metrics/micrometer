@@ -26,6 +26,7 @@ import java.lang.management.CompilationMXBean;
 import java.lang.management.ManagementFactory;
 import java.lang.management.OperatingSystemMXBean;
 import java.time.Duration;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
@@ -111,7 +112,9 @@ class OtlpCumulativeMeterRegistryTest extends OtlpMeterRegistryTest {
         timer.record(111, TimeUnit.MILLISECONDS);
         clock.add(otlpConfig().step());
         timer.record(4, TimeUnit.MILLISECONDS);
-        assertThat(writeToMetric(timer).toString()).isEqualTo(
+        List<Metric> metrics = writeToMetrics(timer);
+        Metric metric = metrics.stream().filter(Metric::hasHistogram).findFirst().orElseThrow();
+        assertThat(metric.toString()).isEqualTo(
                 "name: \"web.requests\"\n" + "description: \"timing web requests\"\n" + "unit: \"milliseconds\"\n"
                         + "histogram {\n" + "  data_points {\n" + "    start_time_unix_nano: 1000000\n"
                         + "    time_unix_nano: 60001000000\n" + "    count: 4\n" + "    sum: 202.0\n" + "  }\n"
@@ -128,7 +131,9 @@ class OtlpCumulativeMeterRegistryTest extends OtlpMeterRegistryTest {
         clock.add(otlpConfig().step());
         timer.record(4, TimeUnit.MILLISECONDS);
 
-        assertThat(writeToMetric(timer).toString())
+        List<Metric> metrics = writeToMetrics(timer);
+        Metric metric = metrics.stream().filter(Metric::hasHistogram).findFirst().orElseThrow();
+        assertThat(metric.toString())
             .isEqualTo("name: \"http.client.requests\"\n" + "unit: \"milliseconds\"\n" + "histogram {\n"
                     + "  data_points {\n" + "    start_time_unix_nano: 1000000\n" + "    time_unix_nano: 60001000000\n"
                     + "    count: 5\n" + "    sum: 60202.0\n" + "    bucket_counts: 0\n" + "    bucket_counts: 0\n"
@@ -198,13 +203,14 @@ class OtlpCumulativeMeterRegistryTest extends OtlpMeterRegistryTest {
         timer.record(77, TimeUnit.MILLISECONDS);
         timer.record(111, TimeUnit.MILLISECONDS);
 
-        assertThat(writeToMetric(timer).toString())
-            .isEqualTo("name: \"service.requests\"\n" + "unit: \"milliseconds\"\n" + "summary {\n" + "  data_points {\n"
-                    + "    start_time_unix_nano: 1000000\n" + "    time_unix_nano: 1000000\n" + "    count: 3\n"
-                    + "    sum: 198.0\n" + "    quantile_values {\n" + "      quantile: 0.5\n"
-                    + "      value: 79.167488\n" + "    }\n" + "    quantile_values {\n" + "      quantile: 0.9\n"
-                    + "      value: 112.72192\n" + "    }\n" + "    quantile_values {\n" + "      quantile: 0.99\n"
-                    + "      value: 112.72192\n" + "    }\n" + "  }\n" + "}\n");
+        List<Metric> metrics = writeToMetrics(timer);
+        Metric metric = metrics.stream().filter(Metric::hasSummary).findFirst().orElseThrow();
+        assertThat(metric.toString()).isEqualTo("name: \"service.requests\"\n" + "unit: \"milliseconds\"\n"
+                + "summary {\n" + "  data_points {\n" + "    start_time_unix_nano: 1000000\n"
+                + "    time_unix_nano: 1000000\n" + "    count: 3\n" + "    sum: 198.0\n" + "    quantile_values {\n"
+                + "      quantile: 0.5\n" + "      value: 79.167488\n" + "    }\n" + "    quantile_values {\n"
+                + "      quantile: 0.9\n" + "      value: 112.72192\n" + "    }\n" + "    quantile_values {\n"
+                + "      quantile: 0.99\n" + "      value: 112.72192\n" + "    }\n" + "  }\n" + "}\n");
     }
 
     @Test
@@ -230,10 +236,11 @@ class OtlpCumulativeMeterRegistryTest extends OtlpMeterRegistryTest {
         size.record(2233);
         clock.add(otlpConfig().step());
         size.record(204);
-
-        assertThat(writeToMetric(size).toString()).isEqualTo("name: \"http.response.size\"\n" + "unit: \"bytes\"\n"
-                + "histogram {\n" + "  data_points {\n" + "    start_time_unix_nano: 1000000\n"
-                + "    time_unix_nano: 60001000000\n" + "    count: 4\n" + "    sum: 2552.0\n" + "  }\n"
+        List<Metric> metrics = writeToMetrics(size);
+        Metric metric = metrics.stream().filter(Metric::hasHistogram).findFirst().orElseThrow();
+        assertThat(metric.toString()).isEqualTo("name: \"http.response.size\"\n" + "unit: \"bytes\"\n" + "histogram {\n"
+                + "  data_points {\n" + "    start_time_unix_nano: 1000000\n" + "    time_unix_nano: 60001000000\n"
+                + "    count: 4\n" + "    sum: 2552.0\n" + "  }\n"
                 + "  aggregation_temporality: AGGREGATION_TEMPORALITY_CUMULATIVE\n" + "}\n");
     }
 
@@ -471,7 +478,7 @@ class OtlpCumulativeMeterRegistryTest extends OtlpMeterRegistryTest {
                 + "    explicit_bounds: 3.8430716820228234E18\n" + "    explicit_bounds: 4.2273788502251054E18\n"
                 + "  }\n" + "  aggregation_temporality: AGGREGATION_TEMPORALITY_CUMULATIVE\n" + "}\n";
         String[] expectedLines = expected.split("\n");
-        String actual = writeToMetric(size).toString();
+        String actual = writeToMetrics(size).stream().filter(Metric::hasHistogram).findFirst().orElseThrow().toString();
         String[] actualLines = actual.split("\n");
         assertThat(actualLines).hasSameSizeAs(expectedLines);
         for (int i = 0; i < actualLines.length; i++) {
@@ -505,13 +512,14 @@ class OtlpCumulativeMeterRegistryTest extends OtlpMeterRegistryTest {
         clock.add(otlpConfig().step());
         size.record(204);
 
-        assertThat(writeToMetric(size).toString())
-            .isEqualTo("name: \"http.response.size\"\n" + "unit: \"bytes\"\n" + "summary {\n" + "  data_points {\n"
-                    + "    start_time_unix_nano: 1000000\n" + "    time_unix_nano: 60001000000\n" + "    count: 4\n"
-                    + "    sum: 2552.0\n" + "    quantile_values {\n" + "      quantile: 0.5\n" + "      value: 200.0\n"
-                    + "    }\n" + "    quantile_values {\n" + "      quantile: 0.9\n" + "      value: 200.0\n"
-                    + "    }\n" + "    quantile_values {\n" + "      quantile: 0.99\n" + "      value: 200.0\n"
-                    + "    }\n" + "  }\n" + "}\n");
+        List<Metric> metrics = writeToMetrics(size);
+        Metric metric = metrics.stream().filter(Metric::hasSummary).findFirst().orElseThrow();
+        assertThat(metric.toString()).isEqualTo("name: \"http.response.size\"\n" + "unit: \"bytes\"\n" + "summary {\n"
+                + "  data_points {\n" + "    start_time_unix_nano: 1000000\n" + "    time_unix_nano: 60001000000\n"
+                + "    count: 4\n" + "    sum: 2552.0\n" + "    quantile_values {\n" + "      quantile: 0.5\n"
+                + "      value: 200.0\n" + "    }\n" + "    quantile_values {\n" + "      quantile: 0.9\n"
+                + "      value: 200.0\n" + "    }\n" + "    quantile_values {\n" + "      quantile: 0.99\n"
+                + "      value: 200.0\n" + "    }\n" + "  }\n" + "}\n");
     }
 
     private double extractValue(String line) {
@@ -525,11 +533,12 @@ class OtlpCumulativeMeterRegistryTest extends OtlpMeterRegistryTest {
         LongTaskTimer.Sample task2 = taskTimer.start();
         this.clock.add(otlpConfig().step().multipliedBy(3));
 
-        assertThat(writeToMetric(taskTimer).toString())
-            .isEqualTo("name: \"checkout.batch\"\n" + "unit: \"milliseconds\"\n" + "histogram {\n" + "  data_points {\n"
-                    + "    start_time_unix_nano: 1000000\n" + "    time_unix_nano: 180001000000\n" + "    count: 2\n"
-                    + "    sum: 360000.0\n" + "  }\n"
-                    + "  aggregation_temporality: AGGREGATION_TEMPORALITY_CUMULATIVE\n" + "}\n");
+        List<Metric> metrics = writeToMetrics(taskTimer);
+        Metric metric = metrics.stream().filter(Metric::hasHistogram).findFirst().orElseThrow();
+        assertThat(metric.toString()).isEqualTo("name: \"checkout.batch\"\n" + "unit: \"milliseconds\"\n"
+                + "histogram {\n" + "  data_points {\n" + "    start_time_unix_nano: 1000000\n"
+                + "    time_unix_nano: 180001000000\n" + "    count: 2\n" + "    sum: 360000.0\n" + "  }\n"
+                + "  aggregation_temporality: AGGREGATION_TEMPORALITY_CUMULATIVE\n" + "}\n");
 
         task1.stop();
         task2.stop();
@@ -537,7 +546,9 @@ class OtlpCumulativeMeterRegistryTest extends OtlpMeterRegistryTest {
 
         // this is not right that count/sum reset, but it's the same thing we do with
         // prometheus
-        assertThat(writeToMetric(taskTimer).toString())
+        metrics = writeToMetrics(taskTimer);
+        metric = metrics.stream().filter(Metric::hasHistogram).findFirst().orElseThrow();
+        assertThat(metric.toString())
             .isEqualTo("name: \"checkout.batch\"\n" + "unit: \"milliseconds\"\n" + "histogram {\n" + "  data_points {\n"
                     + "    start_time_unix_nano: 1000000\n" + "    time_unix_nano: 240001000000\n" + "    sum: 0.0\n"
                     + "  }\n" + "  aggregation_temporality: AGGREGATION_TEMPORALITY_CUMULATIVE\n" + "}\n");
@@ -568,7 +579,8 @@ class OtlpCumulativeMeterRegistryTest extends OtlpMeterRegistryTest {
         timer.record(Duration.ofMillis(100));
         timer.record(Duration.ofMillis(1000));
 
-        Metric metric = writeToMetric(timer);
+        List<Metric> metrics = writeToMetrics(timer);
+        Metric metric = metrics.stream().filter(Metric::hasExponentialHistogram).findFirst().orElseThrow();
         assertThat(metric.getExponentialHistogram().getDataPointsCount()).isPositive();
 
         ExponentialHistogramDataPoint exponentialHistogramDataPoint = metric.getExponentialHistogram().getDataPoints(0);
@@ -585,7 +597,8 @@ class OtlpCumulativeMeterRegistryTest extends OtlpMeterRegistryTest {
         clock.add(exponentialHistogramOtlpConfig().step());
         timer.record(Duration.ofMillis(10000));
 
-        metric = writeToMetric(timer);
+        metrics = writeToMetrics(timer);
+        metric = metrics.stream().filter(Metric::hasExponentialHistogram).findFirst().orElseThrow();
         exponentialHistogramDataPoint = metric.getExponentialHistogram().getDataPoints(0);
         assertThat(exponentialHistogramDataPoint.getTimeUnixNano() - previousEndTime)
             .isEqualTo(otlpConfig().step().toNanos());
@@ -611,7 +624,8 @@ class OtlpCumulativeMeterRegistryTest extends OtlpMeterRegistryTest {
         ds.record(100);
         ds.record(1000);
 
-        Metric metric = writeToMetric(ds);
+        List<Metric> metrics = writeToMetrics(ds);
+        Metric metric = metrics.stream().filter(Metric::hasExponentialHistogram).findFirst().orElseThrow();
         assertThat(metric.getExponentialHistogram().getDataPointsCount()).isPositive();
 
         ExponentialHistogramDataPoint exponentialHistogramDataPoint = metric.getExponentialHistogram().getDataPoints(0);
@@ -628,7 +642,8 @@ class OtlpCumulativeMeterRegistryTest extends OtlpMeterRegistryTest {
         clock.add(exponentialHistogramOtlpConfig().step());
         ds.record(10000);
 
-        metric = writeToMetric(ds);
+        metrics = writeToMetrics(ds);
+        metric = metrics.stream().filter(Metric::hasExponentialHistogram).findFirst().orElseThrow();
         exponentialHistogramDataPoint = metric.getExponentialHistogram().getDataPoints(0);
         assertThat(exponentialHistogramDataPoint.getTimeUnixNano() - previousEndTime)
             .isEqualTo(otlpConfig().step().toNanos());
