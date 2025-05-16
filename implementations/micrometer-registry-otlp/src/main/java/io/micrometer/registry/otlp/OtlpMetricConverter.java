@@ -370,7 +370,7 @@ class OtlpMetricConverter {
         public boolean equals(Object o) {
             if (this == o)
                 return true;
-            if (o == null || getClass() != o.getClass())
+            if (!(o instanceof MetricMetaData))
                 return false;
             MetricMetaData that = (MetricMetaData) o;
             return Objects.equals(dataCase, that.dataCase) && Objects.equals(name, that.name)
