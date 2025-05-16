@@ -61,7 +61,7 @@ public class LogEvent {
     public boolean equals(Object o) {
         if (this == o)
             return true;
-        if (o == null || getClass() != o.getClass())
+        if (!(o instanceof LogEvent))
             return false;
         LogEvent logEvent = (LogEvent) o;
         return level == logEvent.level && Objects.equals(message, logEvent.message)

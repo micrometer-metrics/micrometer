@@ -131,7 +131,7 @@ class MicrometerMetricsPublisherThreadPoolTest {
             if (this == o) {
                 return true;
             }
-            if (o == null || getClass() != o.getClass()) {
+            if (!(o instanceof MeterId)) {
                 return false;
             }
             final MeterId meterId = (MeterId) o;
