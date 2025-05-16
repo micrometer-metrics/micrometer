@@ -351,7 +351,7 @@ public interface Meter {
         public boolean equals(@Nullable Object o) {
             if (this == o)
                 return true;
-            if (o == null || getClass() != o.getClass())
+            if (!(o instanceof Id))
                 return false;
             Meter.Id meterId = (Meter.Id) o;
             return name.equals(meterId.name) && tags.equals(meterId.tags);
