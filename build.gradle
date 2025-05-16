@@ -75,6 +75,7 @@ subprojects {
                     "BadImport",
                     "ClassCanBeStatic",
                     "DefaultCharset",
+                    "EqualsGetClass",
                     "InlineFormatString",
                     "LongDoubleConversion",
                     "MissingOverride",
