@@ -53,7 +53,7 @@ public class ImmutableTag implements Tag {
     public boolean equals(@Nullable Object o) {
         if (this == o)
             return true;
-        if (o == null || getClass() != o.getClass())
+        if (!(o instanceof ImmutableTag))
             return false;
         Tag that = (Tag) o;
         return Objects.equals(key, that.getKey()) && Objects.equals(value, that.getValue());
