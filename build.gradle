@@ -75,7 +75,7 @@ subprojects {
         tasks.withType(JavaCompile).configureEach {
             if (it.name == "compileJava" && !(it.project.name in ["micrometer-java11"])) {
                 options.errorprone.disable(
-                        "JavaDurationGetSecondsToToSeconds" // Requires JDK 9+
+                    "JavaDurationGetSecondsToToSeconds" // Requires JDK 9+
                 )
             }
             options.errorprone {
@@ -83,16 +83,18 @@ subprojects {
                 excludedPaths = ".*/build/generated/.*"
 
                 disable(
-                        "StringConcatToTextBlock" // Requires JDK 15+
+                    "StringConcatToTextBlock" // Requires JDK 15+
                 )
 
-                error("BadImport",
-                        "DefaultCharset",
-                        "InlineFormatString",
-                        "LongDoubleConversion",
-                        "MissingOverride",
-                        "NullAway",
-                        "StringCaseLocaleUsage"
+                error(
+                    "BadImport",
+                    "ClassCanBeStatic",
+                    "DefaultCharset",
+                    "InlineFormatString",
+                    "LongDoubleConversion",
+                    "MissingOverride",
+                    "NullAway",
+                    "StringCaseLocaleUsage"
                 )
 
                 option("NullAway:OnlyNullMarked", "true")

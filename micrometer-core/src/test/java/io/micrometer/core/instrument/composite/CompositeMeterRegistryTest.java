@@ -327,7 +327,7 @@ class CompositeMeterRegistryTest {
         verify(registry2).close();
     }
 
-    private class CountingMeterRegistry extends StepMeterRegistry {
+    private static class CountingMeterRegistry extends StepMeterRegistry {
 
         Map<Meter.Id, Integer> publishCountById = new HashMap<>();
 

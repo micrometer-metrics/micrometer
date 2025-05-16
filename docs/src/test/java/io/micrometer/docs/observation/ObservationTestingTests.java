@@ -51,7 +51,7 @@ class ObservationTestingTests {
     // end::test[]
     // @formatter:on
 
-    class SomeComponent {
+    static class SomeComponent {
 
         private final ObservationRegistry registry;
 

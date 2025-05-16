@@ -266,7 +266,7 @@ public class NewRelicInsightsApiClientProvider implements NewRelicClientProvider
         }
     }
 
-    private class Attribute {
+    private static class Attribute {
 
         private final String name;
 
