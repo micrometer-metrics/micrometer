@@ -15,8 +15,6 @@
  */
 package io.micrometer.core.instrument;
 
-import io.micrometer.core.instrument.util.TimeUtils;
-
 import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 
@@ -24,7 +22,7 @@ public class MockClock implements Clock {
 
     // has to be non-zero to prevent divide-by-zeroes and other weird math results based
     // on the clock
-    private long timeNanos = (long) TimeUtils.millisToUnit(1, TimeUnit.NANOSECONDS);
+    private long timeNanos = TimeUnit.MILLISECONDS.toNanos(1);
 
     @Override
     public long monotonicTime() {
