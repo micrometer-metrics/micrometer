@@ -27,6 +27,7 @@ import io.opentelemetry.proto.metrics.v1.Metric;
 import io.opentelemetry.proto.metrics.v1.NumberDataPoint;
 import io.opentelemetry.proto.metrics.v1.SummaryDataPoint;
 import io.opentelemetry.proto.metrics.v1.SummaryDataPoint.ValueAtQuantile;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.testcontainers.shaded.com.google.common.util.concurrent.AtomicDouble;
@@ -70,7 +71,7 @@ class OtlpDeltaMeterRegistryTest extends OtlpMeterRegistryTest {
             }
 
             @Override
-            public String get(String key) {
+            public @Nullable String get(String key) {
                 return null;
             }
         };
@@ -90,7 +91,7 @@ class OtlpDeltaMeterRegistryTest extends OtlpMeterRegistryTest {
             }
 
             @Override
-            public String get(String key) {
+            public @Nullable String get(String key) {
                 return null;
             }
         };

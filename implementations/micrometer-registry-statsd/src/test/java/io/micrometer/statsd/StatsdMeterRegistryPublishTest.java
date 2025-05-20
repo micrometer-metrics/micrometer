@@ -24,6 +24,7 @@ import io.netty.channel.ChannelPromise;
 import io.netty.channel.unix.DomainSocketAddress;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.OS;
@@ -59,10 +60,13 @@ class StatsdMeterRegistryPublishTest {
 
     private static final String UDS_DATAGRAM_SOCKET_PATH = "/tmp/test-server.sock";
 
+    @SuppressWarnings("NullAway.Init")
     StatsdMeterRegistry meterRegistry;
 
+    @SuppressWarnings("NullAway.Init")
     DisposableChannel server;
 
+    @SuppressWarnings("NullAway.Init")
     volatile CountDownLatch serverLatch;
 
     AtomicInteger serverMetricReadCount = new AtomicInteger();
@@ -422,7 +426,7 @@ class StatsdMeterRegistryPublishTest {
     private StatsdConfig getConfig(StatsdProtocol protocol, int port, boolean buffered) {
         return new StatsdConfig() {
             @Override
-            public String get(String key) {
+            public @Nullable String get(String key) {
                 return null;
             }
 

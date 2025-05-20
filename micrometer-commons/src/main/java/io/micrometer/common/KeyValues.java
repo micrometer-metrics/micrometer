@@ -193,7 +193,7 @@ public final class KeyValues implements Iterable<KeyValue> {
      * @param keyValues the key/value pairs to add, elements mustn't be null
      * @return a new {@code KeyValues} instance
      */
-    public KeyValues and(String @Nullable... keyValues) {
+    public KeyValues and(String @Nullable ... keyValues) {
         if (isEmptyVarargs(keyValues)) {
             return this;
         }
@@ -206,7 +206,7 @@ public final class KeyValues implements Iterable<KeyValue> {
      * @param keyValues the key values to add, elements mustn't be null
      * @return a new {@code KeyValues} instance
      */
-    public KeyValues and(KeyValue @Nullable... keyValues) {
+    public KeyValues and(KeyValue @Nullable ... keyValues) {
         if (isEmptyVarargs(keyValues)) {
             return this;
         }
@@ -340,7 +340,7 @@ public final class KeyValues implements Iterable<KeyValue> {
      * @return the merged key values
      */
     public static KeyValues concat(@Nullable Iterable<? extends KeyValue> keyValues,
-            String @Nullable... otherKeyValues) {
+            String @Nullable ... otherKeyValues) {
         return KeyValues.of(keyValues).and(otherKeyValues);
     }
 
@@ -396,7 +396,7 @@ public final class KeyValues implements Iterable<KeyValue> {
      * @param keyValues the key/value pairs to add, elements mustn't be null
      * @return a new {@code KeyValues} instance
      */
-    public static KeyValues of(String @Nullable... keyValues) {
+    public static KeyValues of(String @Nullable ... keyValues) {
         if (isEmptyVarargs(keyValues)) {
             return empty();
         }
@@ -421,7 +421,7 @@ public final class KeyValues implements Iterable<KeyValue> {
      * @param keyValues the key values to add, elements mustn't be null
      * @return a new {@code KeyValues} instance
      */
-    public static KeyValues of(KeyValue @Nullable... keyValues) {
+    public static KeyValues of(KeyValue @Nullable ... keyValues) {
         return empty().and(keyValues);
     }
 

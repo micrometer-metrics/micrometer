@@ -25,7 +25,7 @@ public class NoOpValueResolver implements ValueResolver {
 
     @Override
     public String resolve(Object parameter) {
-        return null;
+        return "";
     }
 
 }

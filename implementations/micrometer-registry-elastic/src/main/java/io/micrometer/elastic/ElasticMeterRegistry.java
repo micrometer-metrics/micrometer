@@ -15,7 +15,6 @@
  */
 package io.micrometer.elastic;
 
-import io.micrometer.common.lang.NonNull;
 import io.micrometer.common.util.StringUtils;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.Timer;
@@ -25,6 +24,7 @@ import io.micrometer.core.instrument.util.MeterPartition;
 import io.micrometer.core.instrument.util.NamedThreadFactory;
 import io.micrometer.core.ipc.http.HttpSender;
 import io.micrometer.core.ipc.http.HttpUrlConnectionSender;
+import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -376,8 +376,7 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
     }
 
     @Override
-    @NonNull
-    protected TimeUnit getBaseTimeUnit() {
+    protected @NonNull TimeUnit getBaseTimeUnit() {
         return TimeUnit.MILLISECONDS;
     }
 

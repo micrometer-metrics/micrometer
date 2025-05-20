@@ -15,9 +15,9 @@
  */
 package io.micrometer.humio;
 
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.config.validate.Validated;
 import io.micrometer.core.instrument.step.StepRegistryConfig;
+import org.jspecify.annotations.Nullable;
 
 import java.time.Duration;
 import java.util.Map;
@@ -56,13 +56,11 @@ public interface HumioConfig extends StepRegistryConfig {
      * datasource defined by these tags.
      * @return Tags which uniquely determine the datasource to store metrics in.
      */
-    @Nullable
-    default Map<String, String> tags() {
+    @Nullable default Map<String, String> tags() {
         return null;
     }
 
-    @Nullable
-    default String apiToken() {
+    default @Nullable String apiToken() {
         return getSecret(this, "apiToken").orElse(null);
     }
 

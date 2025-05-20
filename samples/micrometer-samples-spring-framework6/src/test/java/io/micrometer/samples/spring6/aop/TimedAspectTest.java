@@ -17,7 +17,6 @@ package io.micrometer.samples.spring6.aop;
 
 import io.micrometer.common.annotation.ValueExpressionResolver;
 import io.micrometer.common.annotation.ValueResolver;
-import io.micrometer.common.lang.NonNull;
 import io.micrometer.core.Issue;
 import io.micrometer.core.annotation.Timed;
 import io.micrometer.core.aop.MeterTag;
@@ -32,6 +31,7 @@ import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.micrometer.core.instrument.util.TimeUtils;
 import org.aspectj.lang.ProceedingJoinPoint;
+import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -1001,16 +1001,15 @@ class TimedAspectTest {
             super();
         }
 
-        @NonNull
         @Override
-        protected Timer newTimer(@NonNull Meter.Id id, @NonNull DistributionStatisticConfig distributionStatisticConfig,
+        protected @NonNull Timer newTimer(Meter.@NonNull Id id,
+                @NonNull DistributionStatisticConfig distributionStatisticConfig,
                 @NonNull PauseDetector pauseDetector) {
             throw new RuntimeException("FailingMeterRegistry");
         }
 
-        @NonNull
         @Override
-        protected LongTaskTimer newLongTaskTimer(@Nonnull Meter.Id id,
+        protected @NonNull LongTaskTimer newLongTaskTimer(@Nonnull Meter.Id id,
                 @Nonnull DistributionStatisticConfig distributionStatisticConfig) {
             throw new RuntimeException("FailingMeterRegistry");
         }

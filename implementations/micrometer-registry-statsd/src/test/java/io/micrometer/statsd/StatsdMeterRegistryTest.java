@@ -17,11 +17,11 @@ package io.micrometer.statsd;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.logging.LogbackMetrics;
 import io.micrometer.core.instrument.config.NamingConvention;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -57,6 +57,7 @@ class StatsdMeterRegistryTest {
 
     private MockClock clock = new MockClock();
 
+    @SuppressWarnings("NullAway.Init")
     private StatsdMeterRegistry registry;
 
     @AfterEach
@@ -67,8 +68,7 @@ class StatsdMeterRegistryTest {
     private static StatsdConfig configWithFlavor(StatsdFlavor flavor) {
         return new StatsdConfig() {
             @Override
-            @Nullable
-            public String get(String key) {
+            public @Nullable String get(String key) {
                 return null;
             }
 
@@ -213,6 +213,7 @@ class StatsdMeterRegistryTest {
 
     @ParameterizedTest
     @EnumSource
+    @SuppressWarnings("NullAway")
     void longTaskTimerLineProtocol(StatsdFlavor flavor) {
         final StatsdConfig config = configWithFlavor(flavor);
         long stepMillis = config.step().toMillis();
@@ -464,7 +465,7 @@ class StatsdMeterRegistryTest {
         };
         registry = StatsdMeterRegistry.builder(new StatsdConfig() {
             @Override
-            public String get(String key) {
+            public @Nullable String get(String key) {
                 return null;
             }
 

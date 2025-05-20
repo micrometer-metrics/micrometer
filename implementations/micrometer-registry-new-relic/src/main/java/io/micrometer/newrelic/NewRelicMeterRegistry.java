@@ -15,12 +15,12 @@
  */
 package io.micrometer.newrelic;
 
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.util.NamedThreadFactory;
 import io.micrometer.core.ipc.http.HttpSender;
+import org.jspecify.annotations.Nullable;
 
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
@@ -112,8 +112,7 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
 
         private final NewRelicConfig config;
 
-        @Nullable
-        private NewRelicClientProvider clientProvider;
+        private @Nullable NewRelicClientProvider clientProvider;
 
         private NamingConvention convention = new NewRelicNamingConvention();
 
@@ -121,8 +120,7 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
 
         private ThreadFactory threadFactory = DEFAULT_THREAD_FACTORY;
 
-        @Nullable
-        private HttpSender httpClient;
+        private @Nullable HttpSender httpClient;
 
         Builder(NewRelicConfig config) {
             this.config = config;

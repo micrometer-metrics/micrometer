@@ -17,7 +17,4 @@
 /**
  * Instrumentation for Jetty 12 client.
  */
-@NonNullApi
 package io.micrometer.jetty12.client;
-
-import io.micrometer.common.lang.NonNullApi;

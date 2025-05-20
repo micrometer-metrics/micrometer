@@ -16,6 +16,8 @@
  */
 package io.micrometer.common.lang;
 
+import org.jspecify.annotations.NullMarked;
+
 import javax.annotation.CheckForNull;
 import javax.annotation.meta.TypeQualifierNickname;
 import java.lang.annotation.*;
@@ -35,9 +37,8 @@ import java.lang.annotation.*;
  *
  * @author Sebastien Deleuze
  * @author Juergen Hoeller
- * @see NonNullApi
- * @see NonNullFields
- * @see NonNull
+ * @see NullMarked
+ * @see org.jspecify.annotations.Nullable
  */
 @Target({ ElementType.METHOD, ElementType.PARAMETER, ElementType.FIELD })
 @Retention(RetentionPolicy.RUNTIME)

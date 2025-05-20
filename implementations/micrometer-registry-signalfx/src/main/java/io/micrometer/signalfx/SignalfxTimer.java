@@ -15,13 +15,13 @@
  */
 package io.micrometer.signalfx;
 
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.HistogramSnapshot;
 import io.micrometer.core.instrument.distribution.StepBucketHistogram;
 import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import io.micrometer.core.instrument.step.StepTimer;
+import org.jspecify.annotations.Nullable;
 
 import java.util.concurrent.TimeUnit;
 
@@ -36,8 +36,7 @@ import java.util.concurrent.TimeUnit;
  */
 final class SignalfxTimer extends StepTimer {
 
-    @Nullable
-    private final StepBucketHistogram stepBucketHistogram;
+    private final @Nullable StepBucketHistogram stepBucketHistogram;
 
     SignalfxTimer(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig,
             PauseDetector pauseDetector, TimeUnit baseTimeUnit, long stepMillis, boolean isDelta) {

@@ -25,7 +25,6 @@ import io.micrometer.appoptics.AppOpticsMeterRegistry;
 import io.micrometer.atlas.AtlasMeterRegistry;
 import io.micrometer.azuremonitor.AzureMonitorConfig;
 import io.micrometer.azuremonitor.AzureMonitorMeterRegistry;
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.logging.LoggingMeterRegistry;
@@ -59,6 +58,7 @@ import io.micrometer.statsd.StatsdFlavor;
 import io.micrometer.statsd.StatsdMeterRegistry;
 import io.micrometer.wavefront.WavefrontConfig;
 import io.micrometer.wavefront.WavefrontMeterRegistry;
+import org.jspecify.annotations.Nullable;
 
 import java.io.*;
 import java.net.InetSocketAddress;
@@ -85,8 +85,7 @@ public class SampleRegistries {
             }
 
             @Override
-            @Nullable
-            public String get(String k) {
+            public @Nullable String get(String k) {
                 return null;
             }
         }, Clock.SYSTEM);
@@ -105,8 +104,7 @@ public class SampleRegistries {
             }
 
             @Override
-            @Nullable
-            public String get(String k) {
+            public @Nullable String get(String k) {
                 return null;
             }
         });
@@ -139,8 +137,7 @@ public class SampleRegistries {
 
             @SuppressWarnings("ConstantConditions")
             @Override
-            @Nullable
-            public String get(String k) {
+            public @Nullable String get(String k) {
                 return null;
             }
         }, Clock.SYSTEM);
@@ -164,8 +161,7 @@ public class SampleRegistries {
             }
 
             @Override
-            @Nullable
-            public String get(String k) {
+            public @Nullable String get(String k) {
                 return null;
             }
         };
@@ -181,8 +177,7 @@ public class SampleRegistries {
             }
 
             @Override
-            @Nullable
-            public String get(String k) {
+            public @Nullable String get(String k) {
                 return null;
             }
         }, Clock.SYSTEM);
@@ -196,8 +191,7 @@ public class SampleRegistries {
             }
 
             @Override
-            @Nullable
-            public String get(String k) {
+            public @Nullable String get(String k) {
                 return null;
             }
 
@@ -216,8 +210,7 @@ public class SampleRegistries {
             }
 
             @Override
-            @Nullable
-            public String get(String k) {
+            public @Nullable String get(String k) {
                 return null;
             }
 
@@ -236,8 +229,7 @@ public class SampleRegistries {
             }
 
             @Override
-            @Nullable
-            public String get(String k) {
+            public @Nullable String get(String k) {
                 return null;
             }
 
@@ -256,8 +248,7 @@ public class SampleRegistries {
             }
 
             @Override
-            @Nullable
-            public String get(String k) {
+            public @Nullable String get(String k) {
                 return null;
             }
 
@@ -276,8 +267,7 @@ public class SampleRegistries {
             }
 
             @Override
-            @Nullable
-            public String get(String k) {
+            public @Nullable String get(String k) {
                 return null;
             }
         }, Clock.SYSTEM);
@@ -291,8 +281,7 @@ public class SampleRegistries {
             }
 
             @Override
-            @Nullable
-            public String get(String k) {
+            public @Nullable String get(String k) {
                 return null;
             }
         }, Clock.SYSTEM);
@@ -306,8 +295,7 @@ public class SampleRegistries {
             }
 
             @Override
-            @Nullable
-            public String get(String k) {
+            public @Nullable String get(String k) {
                 return null;
             }
         }, Clock.SYSTEM);
@@ -331,8 +319,7 @@ public class SampleRegistries {
             }
 
             @Override
-            @Nullable
-            public String get(String k) {
+            public @Nullable String get(String k) {
                 return null;
             }
         }, Clock.SYSTEM);
@@ -356,8 +343,7 @@ public class SampleRegistries {
             }
 
             @Override
-            @Nullable
-            public String get(String k) {
+            public @Nullable String get(String k) {
                 return null;
             }
         }, Clock.SYSTEM);
@@ -370,7 +356,7 @@ public class SampleRegistries {
     public static WavefrontMeterRegistry wavefrontDirect(String apiToken) {
         return new WavefrontMeterRegistry(new WavefrontConfig() {
             @Override
-            public String get(String key) {
+            public @Nullable String get(String key) {
                 return null;
             }
 
@@ -394,7 +380,7 @@ public class SampleRegistries {
             }
 
             @Override
-            public String get(String key) {
+            public @Nullable String get(String key) {
                 return null;
             }
 
@@ -413,7 +399,7 @@ public class SampleRegistries {
             }
 
             @Override
-            public String get(String key) {
+            public @Nullable String get(String key) {
                 return null;
             }
 
@@ -427,7 +413,7 @@ public class SampleRegistries {
     public static DynatraceMeterRegistry dynatrace(String apiToken, String uri) {
         return new DynatraceMeterRegistry(new DynatraceConfig() {
             @Override
-            public String get(String key) {
+            public @Nullable String get(String key) {
                 return null;
             }
 
@@ -456,7 +442,7 @@ public class SampleRegistries {
     public static HumioMeterRegistry humio(String apiToken) {
         return new HumioMeterRegistry(new HumioConfig() {
             @Override
-            public String get(String key) {
+            public @Nullable String get(String key) {
                 return null;
             }
 
@@ -475,7 +461,7 @@ public class SampleRegistries {
     public static KairosMeterRegistry kairos() {
         return new KairosMeterRegistry(new KairosConfig() {
             @Override
-            public String get(String key) {
+            public @Nullable String get(String key) {
                 return null;
             }
 
@@ -510,7 +496,7 @@ public class SampleRegistries {
                 }
 
                 @Override
-                public String get(String key) {
+                public @Nullable String get(String key) {
                     return null;
                 }
 
@@ -533,7 +519,7 @@ public class SampleRegistries {
     public static LoggingMeterRegistry logging() {
         return new LoggingMeterRegistry(new LoggingRegistryConfig() {
             @Override
-            public String get(String key) {
+            public @Nullable String get(String key) {
                 return null;
             }
 

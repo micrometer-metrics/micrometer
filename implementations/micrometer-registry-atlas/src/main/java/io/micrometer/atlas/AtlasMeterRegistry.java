@@ -23,7 +23,6 @@ import com.netflix.spectator.api.histogram.PercentileTimer;
 import com.netflix.spectator.api.patterns.PolledMeter;
 import com.netflix.spectator.atlas.AtlasConfig;
 import com.netflix.spectator.atlas.AtlasRegistry;
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.HistogramGauges;
@@ -34,6 +33,7 @@ import io.micrometer.core.instrument.internal.DefaultMeter;
 import io.micrometer.core.instrument.step.StepFunctionCounter;
 import io.micrometer.core.instrument.step.StepFunctionTimer;
 import io.micrometer.core.instrument.util.DoubleFormat;
+import org.jspecify.annotations.Nullable;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -106,7 +106,8 @@ public class AtlasMeterRegistry extends MeterRegistry {
             DistributionStatisticConfig distributionStatisticConfig, double scale) {
         com.netflix.spectator.api.DistributionSummary internalSummary;
 
-        if (distributionStatisticConfig.isPercentileHistogram()) {
+        if (distributionStatisticConfig.isPercentileHistogram() != null
+                && distributionStatisticConfig.isPercentileHistogram()) {
             long min = distributionStatisticConfig.getMinimumExpectedValueAsDouble() == null ? 0
                     : distributionStatisticConfig.getMinimumExpectedValueAsDouble().longValue();
             long max = distributionStatisticConfig.getMaximumExpectedValueAsDouble() == null ? Long.MAX_VALUE
@@ -140,7 +141,8 @@ public class AtlasMeterRegistry extends MeterRegistry {
             PauseDetector pauseDetector) {
         com.netflix.spectator.api.Timer internalTimer;
 
-        if (distributionStatisticConfig.isPercentileHistogram()) {
+        if (distributionStatisticConfig.isPercentileHistogram() != null
+                && distributionStatisticConfig.isPercentileHistogram()) {
             long minNanos = distributionStatisticConfig.getMinimumExpectedValueAsDouble() == null ? 0
                     : distributionStatisticConfig.getMinimumExpectedValueAsDouble().longValue();
             long maxNanos = distributionStatisticConfig.getMaximumExpectedValueAsDouble() == null ? Long.MAX_VALUE

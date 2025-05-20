@@ -15,7 +15,6 @@
  */
 package io.micrometer.registry.otlp;
 
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.config.NamingConvention;
@@ -29,6 +28,7 @@ import io.opentelemetry.proto.common.v1.AnyValue;
 import io.opentelemetry.proto.common.v1.KeyValue;
 import io.opentelemetry.proto.metrics.v1.*;
 import io.opentelemetry.proto.metrics.v1.Metric.DataCase;
+import org.jspecify.annotations.Nullable;
 
 import java.time.Duration;
 import java.util.*;
@@ -339,11 +339,9 @@ class OtlpMetricConverter {
 
         final String name;
 
-        @Nullable
-        final String baseUnit;
+        final @Nullable String baseUnit;
 
-        @Nullable
-        final String description;
+        final @Nullable String description;
 
         MetricMetaData(DataCase dataCase, String name, @Nullable String baseUnit, @Nullable String description) {
             this.dataCase = dataCase;
@@ -356,13 +354,11 @@ class OtlpMetricConverter {
             return name;
         }
 
-        @Nullable
-        private String getBaseUnit() {
+        private @Nullable String getBaseUnit() {
             return baseUnit;
         }
 
-        @Nullable
-        private String getDescription() {
+        private @Nullable String getDescription() {
             return description;
         }
 

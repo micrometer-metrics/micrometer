@@ -15,11 +15,11 @@
  */
 package io.micrometer.jakarta9.instrument.jms;
 
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
 import jakarta.jms.Message;
 import jakarta.jms.MessageProducer;
+import org.jspecify.annotations.Nullable;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
@@ -78,8 +78,7 @@ class MessageProducerInvocationHandler implements InvocationHandler {
         }
     }
 
-    @Nullable
-    private Message findMessageArgument(Object[] args) {
+    private @Nullable Message findMessageArgument(Object[] args) {
         for (Object arg : args) {
             if (arg instanceof Message) {
                 return (Message) arg;

@@ -20,7 +20,6 @@ import com.dynatrace.metric.util.MetricException;
 import com.dynatrace.metric.util.MetricLineBuilder;
 import com.dynatrace.metric.util.MetricLineBuilder.MetadataStep;
 import com.dynatrace.metric.util.MetricLinePreConfiguration;
-import io.micrometer.common.lang.NonNull;
 import io.micrometer.common.util.StringUtils;
 import io.micrometer.common.util.internal.logging.InternalLogger;
 import io.micrometer.common.util.internal.logging.InternalLoggerFactory;
@@ -33,6 +32,7 @@ import io.micrometer.dynatrace.AbstractDynatraceExporter;
 import io.micrometer.dynatrace.DynatraceConfig;
 import io.micrometer.dynatrace.types.DynatraceSummarySnapshot;
 import io.micrometer.dynatrace.types.DynatraceSummarySnapshotSupport;
+import org.jspecify.annotations.NonNull;
 
 import java.net.MalformedURLException;
 import java.net.URI;

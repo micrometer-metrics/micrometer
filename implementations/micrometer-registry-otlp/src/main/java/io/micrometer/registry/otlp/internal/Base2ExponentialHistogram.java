@@ -15,11 +15,11 @@
  */
 package io.micrometer.registry.otlp.internal;
 
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.distribution.Histogram;
 import io.micrometer.core.instrument.distribution.HistogramSnapshot;
 import io.micrometer.core.instrument.util.TimeUtils;
 import io.micrometer.registry.otlp.internal.ExponentialHistogramSnapShot.ExponentialBuckets;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -55,8 +55,7 @@ public abstract class Base2ExponentialHistogram implements Histogram {
 
     private final double zeroThreshold;
 
-    @Nullable
-    private final TimeUnit baseUnit;
+    private final @Nullable TimeUnit baseUnit;
 
     private final LongAdder zeroCount = new LongAdder();
 

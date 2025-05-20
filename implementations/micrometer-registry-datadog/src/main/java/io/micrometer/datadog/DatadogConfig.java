@@ -15,9 +15,9 @@
  */
 package io.micrometer.datadog;
 
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.config.validate.Validated;
 import io.micrometer.core.instrument.step.StepRegistryConfig;
+import org.jspecify.annotations.Nullable;
 
 import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.checkAll;
 import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.checkRequired;
@@ -43,16 +43,14 @@ public interface DatadogConfig extends StepRegistryConfig {
      * @return The Datadog application key. This is only required if you care for metadata
      * like base units, description, and meter type to be published to Datadog.
      */
-    @Nullable
-    default String applicationKey() {
+    default @Nullable String applicationKey() {
         return getString(this, "applicationKey").orElse(null);
     }
 
     /**
      * @return The tag that will be mapped to "host" when shipping metrics to datadog.
      */
-    @Nullable
-    default String hostTag() {
+    default @Nullable String hostTag() {
         return getString(this, "hostTag").orElse("instance");
     }
 

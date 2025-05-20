@@ -15,7 +15,6 @@
  */
 package io.micrometer.statsd.internal;
 
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Statistic;
@@ -23,6 +22,7 @@ import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.util.DoubleFormat;
+import org.jspecify.annotations.Nullable;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -38,16 +38,15 @@ public class DatadogStatsdLineBuilder extends FlavorStatsdLineBuilder {
 
     private final Object conventionTagsLock = new Object();
 
-    @SuppressWarnings({ "NullableProblems", "unused" })
+    @SuppressWarnings({ "NullAway.Init", "unused" })
     private volatile NamingConvention namingConvention;
 
-    @SuppressWarnings("NullableProblems")
+    @SuppressWarnings("NullAway.Init")
     private volatile String name;
 
-    @Nullable
-    private volatile String conventionTags;
+    private volatile @Nullable String conventionTags;
 
-    @SuppressWarnings("NullableProblems")
+    @SuppressWarnings("NullAway.Init")
     private volatile String tagsNoStat;
 
     private final ConcurrentMap<Statistic, String> tags = new ConcurrentHashMap<>();
@@ -127,8 +126,7 @@ public class DatadogStatsdLineBuilder extends FlavorStatsdLineBuilder {
         }
     }
 
-    @Nullable
-    private String appendEntityIdTag(@Nullable String tags) {
+    private @Nullable String appendEntityIdTag(@Nullable String tags) {
         if (ddEntityId != null && !ddEntityId.trim().isEmpty()) {
             String entityIdTag = formatTag(Tag.of(ENTITY_ID_TAG_NAME, ddEntityId));
             return tags == null ? entityIdTag : tags + "," + entityIdTag;
