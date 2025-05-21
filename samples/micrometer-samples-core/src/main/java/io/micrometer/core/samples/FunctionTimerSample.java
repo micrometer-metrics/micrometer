@@ -21,7 +21,6 @@ import cern.jet.random.engine.RandomEngine;
 import io.micrometer.core.instrument.FunctionTimer;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
-import io.micrometer.core.instrument.util.TimeUtils;
 import io.micrometer.core.samples.utils.SampleConfig;
 import reactor.core.publisher.Flux;
 
@@ -61,8 +60,7 @@ public class FunctionTimerSample {
                 // distributed normally with a mean of 250ms
                 timer.record(latencyForThisSecond.get(), TimeUnit.MILLISECONDS);
                 totalCount.incrementAndGet();
-                totalTimeNanos
-                    .addAndGet((long) TimeUtils.millisToUnit(latencyForThisSecond.get(), TimeUnit.NANOSECONDS));
+                totalTimeNanos.addAndGet(TimeUnit.MILLISECONDS.toNanos(latencyForThisSecond.get()));
             }
         }).blockLast();
     }
