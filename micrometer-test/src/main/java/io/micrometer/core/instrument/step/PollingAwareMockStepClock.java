@@ -22,7 +22,6 @@ import java.util.concurrent.TimeUnit;
 
 import io.micrometer.core.annotation.Incubating;
 import io.micrometer.core.instrument.Clock;
-import io.micrometer.core.instrument.util.TimeUtils;
 
 /**
  * A clock meant to be used for testing {@link StepMeterRegistry}. This clock does the
@@ -37,7 +36,7 @@ public class PollingAwareMockStepClock implements Clock {
 
     private final Duration step;
 
-    private long timeNanos = (long) TimeUtils.millisToUnit(1, TimeUnit.NANOSECONDS);
+    private long timeNanos = TimeUnit.MILLISECONDS.toNanos(1);
 
     public PollingAwareMockStepClock(StepRegistryConfig stepRegistryConfig) {
         this.step = stepRegistryConfig.step();
