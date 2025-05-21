@@ -16,8 +16,8 @@
 package io.micrometer.jakarta9.instrument.jms;
 
 import io.micrometer.common.KeyValue;
-import io.micrometer.common.lang.Nullable;
 import jakarta.jms.*;
+import org.jspecify.annotations.Nullable;
 
 class JmsKeyValues {
 

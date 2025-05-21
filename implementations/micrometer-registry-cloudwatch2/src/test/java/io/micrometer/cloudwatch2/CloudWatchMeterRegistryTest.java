@@ -17,6 +17,7 @@ package io.micrometer.cloudwatch2;
 
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.Statistic;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import software.amazon.awssdk.core.exception.AbortedException;
@@ -52,7 +53,7 @@ class CloudWatchMeterRegistryTest {
 
     private final CloudWatchConfig config = new CloudWatchConfig() {
         @Override
-        public String get(String key) {
+        public @Nullable String get(String key) {
             return null;
         }
 
@@ -70,7 +71,8 @@ class CloudWatchMeterRegistryTest {
 
     private final MockClock clock = new MockClock();
 
-    private final CloudWatchMeterRegistry registry = spy(new CloudWatchMeterRegistry(config, clock, null));
+    private final CloudWatchMeterRegistry registry = spy(
+            new CloudWatchMeterRegistry(config, clock, mock(CloudWatchAsyncClient.class)));
 
     private CloudWatchMeterRegistry.Batch registryBatch = registry.new Batch();
 

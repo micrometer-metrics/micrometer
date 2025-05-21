@@ -15,7 +15,6 @@
  */
 package io.micrometer.core.instrument;
 
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.binder.httpcomponents.DefaultUriMapper;
 import io.micrometer.core.instrument.binder.httpcomponents.MicrometerHttpClientInterceptor;
 import org.apache.http.HttpResponse;
@@ -24,6 +23,7 @@ import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.entity.BasicHttpEntity;
 import org.apache.http.impl.nio.client.CloseableHttpAsyncClient;
 import org.apache.http.impl.nio.client.HttpAsyncClients;
+import org.jspecify.annotations.Nullable;
 
 import java.io.ByteArrayInputStream;
 import java.net.URI;
@@ -46,9 +46,8 @@ class ApacheAsyncHttpClientTimingInstrumentationVerificationTests
         return client;
     }
 
-    @Nullable
     @Override
-    protected CloseableHttpAsyncClient clientInstrumentedWithObservations() {
+    protected @Nullable CloseableHttpAsyncClient clientInstrumentedWithObservations() {
         return null;
     }
 
@@ -59,7 +58,7 @@ class ApacheAsyncHttpClientTimingInstrumentationVerificationTests
 
     @Override
     protected void sendHttpRequest(CloseableHttpAsyncClient instrumentedClient, HttpMethod method,
-            @Nullable byte[] body, URI baseUri, String templatedPath, String... pathVariables) {
+            byte @Nullable [] body, URI baseUri, String templatedPath, String... pathVariables) {
         try {
             Future<HttpResponse> future = instrumentedClient
                 .execute(makeRequest(method, body, baseUri, templatedPath, pathVariables), null);
@@ -70,7 +69,7 @@ class ApacheAsyncHttpClientTimingInstrumentationVerificationTests
         }
     }
 
-    private HttpUriRequest makeRequest(HttpMethod method, @Nullable byte[] body, URI baseUri, String templatedPath,
+    private HttpUriRequest makeRequest(HttpMethod method, byte @Nullable [] body, URI baseUri, String templatedPath,
             String... pathVariables) {
         HttpEntityEnclosingRequestBase request = new HttpEntityEnclosingRequestBase() {
             @Override

@@ -203,6 +203,7 @@ class MicrometerHttpClientTests {
 
     static class StoreContextObservationHandler implements ObservationHandler<HttpClientContext> {
 
+        @SuppressWarnings("NullAway.Init")
         HttpClientContext context;
 
         @Override

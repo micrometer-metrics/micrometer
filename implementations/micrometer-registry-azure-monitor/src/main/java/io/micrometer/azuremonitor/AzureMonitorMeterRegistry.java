@@ -20,11 +20,11 @@ import com.microsoft.applicationinsights.TelemetryConfiguration;
 import com.microsoft.applicationinsights.telemetry.MetricTelemetry;
 import com.microsoft.applicationinsights.telemetry.SeverityLevel;
 import com.microsoft.applicationinsights.telemetry.TraceTelemetry;
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.common.util.StringUtils;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.util.NamedThreadFactory;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -236,8 +236,7 @@ public class AzureMonitorMeterRegistry extends StepMeterRegistry {
 
         private ThreadFactory threadFactory = DEFAULT_THREAD_FACTORY;
 
-        @Nullable
-        private TelemetryConfiguration telemetryConfiguration;
+        private @Nullable TelemetryConfiguration telemetryConfiguration;
 
         Builder(AzureMonitorConfig config) {
             this.config = config;

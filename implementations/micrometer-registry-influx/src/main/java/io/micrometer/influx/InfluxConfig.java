@@ -15,11 +15,11 @@
  */
 package io.micrometer.influx;
 
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.common.util.StringUtils;
 import io.micrometer.core.instrument.config.validate.InvalidReason;
 import io.micrometer.core.instrument.config.validate.Validated;
 import io.micrometer.core.instrument.step.StepRegistryConfig;
+import org.jspecify.annotations.Nullable;
 
 import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.checkAll;
 import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.checkRequired;
@@ -64,8 +64,7 @@ public interface InfluxConfig extends StepRegistryConfig {
      * @return Authenticate requests with this user. By default is {@code null}, and the
      * registry will not attempt to present credentials to Influx.
      */
-    @Nullable
-    default String userName() {
+    default @Nullable String userName() {
         return getSecret(this, "userName").orElse(null);
     }
 
@@ -74,8 +73,7 @@ public interface InfluxConfig extends StepRegistryConfig {
      * @return Authenticate requests with this password. By default is {@code null}, and
      * the registry will not attempt to present credentials to Influx.
      */
-    @Nullable
-    default String password() {
+    default @Nullable String password() {
         return getSecret(this, "password").orElse(null);
     }
 
@@ -83,8 +81,7 @@ public interface InfluxConfig extends StepRegistryConfig {
      * This retention configuration will only be used with InfluxDB v1.
      * @return Influx writes to the DEFAULT retention policy if one is not specified.
      */
-    @Nullable
-    default String retentionPolicy() {
+    default @Nullable String retentionPolicy() {
         return getString(this, "retentionPolicy").orElse(null);
     }
 
@@ -93,8 +90,7 @@ public interface InfluxConfig extends StepRegistryConfig {
      * @return Time period for which influx should retain data in the current database
      * (e.g. 2h, 52w).
      */
-    @Nullable
-    default String retentionDuration() {
+    default @Nullable String retentionDuration() {
         return getString(this, "retentionDuration").orElse(null);
     }
 
@@ -103,8 +99,7 @@ public interface InfluxConfig extends StepRegistryConfig {
      * @return How many copies of the data are stored in the cluster. Must be 1 for a
      * single node instance.
      */
-    @Nullable
-    default Integer retentionReplicationFactor() {
+    default @Nullable Integer retentionReplicationFactor() {
         return getInteger(this, "retentionReplicationFactor").orElse(null);
     }
 
@@ -112,8 +107,7 @@ public interface InfluxConfig extends StepRegistryConfig {
      * This retention configuration will only be used with InfluxDB v1.
      * @return The time range covered by a shard group (e.g. 2h, 52w).
      */
-    @Nullable
-    default String retentionShardDuration() {
+    default @Nullable String retentionShardDuration() {
         return getString(this, "retentionShardDuration").orElse(null);
     }
 
@@ -166,8 +160,7 @@ public interface InfluxConfig extends StepRegistryConfig {
      * @see <a href="https://v2.docs.influxdata.com/v2.0/organizations/view-orgs/">How to
      * retrieve the org parameter in the InfluxDB UI.</a>
      */
-    @Nullable
-    default String org() {
+    default @Nullable String org() {
         return getString(this, "org").orElse(null);
     }
 
@@ -208,8 +201,7 @@ public interface InfluxConfig extends StepRegistryConfig {
      * "https://v2.docs.influxdata.com/v2.0/reference/api/#authentication">InfluxDB v2:
      * Authentication API</a>
      */
-    @Nullable
-    default String token() {
+    default @Nullable String token() {
         return getString(this, "token").orElse(null);
     }
 

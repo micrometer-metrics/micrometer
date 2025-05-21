@@ -15,11 +15,11 @@
  */
 package io.micrometer.newrelic;
 
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.common.util.StringUtils;
 import io.micrometer.core.instrument.config.validate.InvalidReason;
 import io.micrometer.core.instrument.config.validate.Validated;
 import io.micrometer.core.instrument.step.StepRegistryConfig;
+import org.jspecify.annotations.Nullable;
 
 import static io.micrometer.common.util.StringUtils.isBlank;
 import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.*;
@@ -70,16 +70,14 @@ public interface NewRelicConfig extends StepRegistryConfig {
         return getEnum(this, ClientProviderType.class, "clientProviderType").orElse(ClientProviderType.INSIGHTS_API);
     }
 
-    @Nullable
-    default String apiKey() {
+    default @Nullable String apiKey() {
         return getSecret(this, "apiKey")
             .invalidateWhen(secret -> isBlank(secret) && ClientProviderType.INSIGHTS_API.equals(clientProviderType()),
                     "is required when publishing to Insights API", InvalidReason.MISSING)
             .orElse(null);
     }
 
-    @Nullable
-    default String accountId() {
+    default @Nullable String accountId() {
         return getSecret(this, "accountId")
             .invalidateWhen(secret -> isBlank(secret) && ClientProviderType.INSIGHTS_API.equals(clientProviderType()),
                     "is required when publishing to Insights API", InvalidReason.MISSING)

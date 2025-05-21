@@ -17,13 +17,13 @@ package io.micrometer.core.instrument;
 
 import com.github.tomakehurst.wiremock.junit5.WireMockRuntimeInfo;
 import com.github.tomakehurst.wiremock.junit5.WireMockTest;
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.annotation.Incubating;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationHandler;
 import io.micrometer.observation.ObservationRegistry;
 import io.micrometer.observation.tck.TestObservationRegistry;
 import io.micrometer.observation.transport.RequestReplySenderContext;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
@@ -52,8 +52,7 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
 public abstract class HttpClientTimingInstrumentationVerificationTests<CLIENT>
         extends InstrumentationTimingVerificationTests {
 
-    @Nullable
-    private CLIENT createdClient;
+    private @Nullable CLIENT createdClient;
 
     /**
      * HTTP Method to verify.
@@ -76,8 +75,7 @@ public abstract class HttpClientTimingInstrumentationVerificationTests<CLIENT>
      * @return instrumented client or {@code null} if instrumentation with
      * {@link Observation} is not supported
      */
-    @Nullable
-    protected abstract CLIENT clientInstrumentedWithObservations();
+    protected abstract @Nullable CLIENT clientInstrumentedWithObservations();
 
     /**
      * Returns the instrumented client depending on the {@link TestType}.
@@ -119,7 +117,7 @@ public abstract class HttpClientTimingInstrumentationVerificationTests<CLIENT>
      * forward slash, and optionally containing path variable placeholders
      * @param pathVariables optional variables to substitute into the templatedPath
      */
-    protected abstract void sendHttpRequest(CLIENT instrumentedClient, HttpMethod method, @Nullable byte[] body,
+    protected abstract void sendHttpRequest(CLIENT instrumentedClient, HttpMethod method, byte @Nullable [] body,
             URI baseUrl, String templatedPath, String... pathVariables);
 
     /**

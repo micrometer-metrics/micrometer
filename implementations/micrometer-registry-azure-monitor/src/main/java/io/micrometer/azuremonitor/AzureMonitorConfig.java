@@ -15,9 +15,9 @@
  */
 package io.micrometer.azuremonitor;
 
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.config.validate.Validated;
 import io.micrometer.core.instrument.step.StepRegistryConfig;
+import org.jspecify.annotations.Nullable;
 
 import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.check;
 import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.checkAll;
@@ -43,9 +43,8 @@ public interface AzureMonitorConfig extends StepRegistryConfig {
      * only called as a fallback in the default implementation if a connectionString is
      * not configured.
      */
-    @Nullable
     @Deprecated
-    default String instrumentationKey() {
+    default @Nullable String instrumentationKey() {
         return getSecret(this, "instrumentationKey").get();
     }
 
@@ -57,8 +56,7 @@ public interface AzureMonitorConfig extends StepRegistryConfig {
      * strings</a>
      * @since 1.11.0
      */
-    @Nullable
-    default String connectionString() {
+    default @Nullable String connectionString() {
         return getSecret(this, "connectionString").orElseGet(() -> {
             String instrumentationKey = instrumentationKey();
             if (instrumentationKey == null) {

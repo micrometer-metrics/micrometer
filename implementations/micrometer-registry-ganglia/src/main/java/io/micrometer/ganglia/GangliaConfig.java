@@ -16,9 +16,9 @@
 package io.micrometer.ganglia;
 
 import info.ganglia.gmetric4j.gmetric.GMetric;
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.config.validate.Validated;
 import io.micrometer.core.instrument.step.StepRegistryConfig;
+import org.jspecify.annotations.Nullable;
 
 import java.util.concurrent.TimeUnit;
 
@@ -43,8 +43,7 @@ public interface GangliaConfig extends StepRegistryConfig {
      * @return Value for the key or null if no key is present.
      */
     @Override
-    @Nullable
-    String get(String key);
+    @Nullable String get(String key);
 
     /**
      * @return Property prefix to prepend to configuration names.
@@ -60,8 +59,7 @@ public interface GangliaConfig extends StepRegistryConfig {
      * @deprecated since 1.5.0
      */
     @Deprecated
-    @Nullable
-    default TimeUnit rateUnits() {
+    default @Nullable TimeUnit rateUnits() {
         return null;
     }
 
@@ -75,8 +73,7 @@ public interface GangliaConfig extends StepRegistryConfig {
      * @deprecated since 1.5.0
      */
     @Deprecated
-    @Nullable
-    default String protocolVersion() {
+    default @Nullable String protocolVersion() {
         return null;
     }
 

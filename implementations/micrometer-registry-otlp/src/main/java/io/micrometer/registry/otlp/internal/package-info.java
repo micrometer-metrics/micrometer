@@ -14,9 +14,7 @@
  * limitations under the License.
  */
 
-@NonNullFields
-@NonNullApi
+@NullMarked
 package io.micrometer.registry.otlp.internal;
 
-import io.micrometer.common.lang.NonNullApi;
-import io.micrometer.common.lang.NonNullFields;
+import org.jspecify.annotations.NullMarked;

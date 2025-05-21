@@ -20,7 +20,6 @@ import io.javalin.http.ExceptionHandler;
 import io.javalin.http.HandlerType;
 import io.javalin.plugin.Plugin;
 import io.javalin.routing.HandlerEntry;
-import io.micrometer.common.lang.NonNull;
 import io.micrometer.common.util.StringUtils;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
@@ -39,6 +38,7 @@ import io.micrometer.prometheus.PrometheusMeterRegistry;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.eclipse.jetty.server.Server;
+import org.jspecify.annotations.NonNull;
 
 import static io.javalin.apibuilder.ApiBuilder.get;
 import static io.javalin.apibuilder.ApiBuilder.path;

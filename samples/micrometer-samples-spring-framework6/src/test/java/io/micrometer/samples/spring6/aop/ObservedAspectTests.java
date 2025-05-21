@@ -16,8 +16,6 @@
 package io.micrometer.samples.spring6.aop;
 
 import io.micrometer.common.KeyValues;
-import io.micrometer.common.lang.NonNull;
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.context.ContextRegistry;
 import io.micrometer.context.ContextSnapshot;
 import io.micrometer.context.ContextSnapshotFactory;
@@ -31,6 +29,8 @@ import io.micrometer.observation.tck.TestObservationRegistry;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 import org.springframework.aop.aspectj.annotation.AspectJProxyFactory;
 
@@ -427,8 +427,7 @@ class ObservedAspectTests {
         private final ObservationRegistry observationRegistry = ObservationRegistry.create();
 
         @Around("execution (@io.micrometer.observation.annotation.Observed * *.*(..))")
-        @Nullable
-        public Object observeMethod(ProceedingJoinPoint pjp) throws Throwable {
+        public @Nullable Object observeMethod(ProceedingJoinPoint pjp) throws Throwable {
             Observation observation = observationRegistry.getCurrentObservation();
             handler.addAnnotatedParameters(observation, pjp);
             return pjp.proceed();
@@ -472,11 +471,9 @@ class ObservedAspectTests {
 
     static class FakeAsyncTask implements Supplier<String> {
 
-        @Nullable
-        private final String result;
+        private final @Nullable String result;
 
-        @Nullable
-        private final RuntimeException exception;
+        private final @Nullable RuntimeException exception;
 
         private final CountDownLatch countDownLatch;
 
@@ -499,8 +496,7 @@ class ObservedAspectTests {
         }
 
         @Override
-        @Nullable
-        public String get() {
+        public @Nullable String get() {
             try {
                 countDownLatch.await();
             }
@@ -521,13 +517,12 @@ class ObservedAspectTests {
     static class CustomObservationConvention implements ObservationConvention<ObservedAspect.ObservedAspectContext> {
 
         @Override
-        @NonNull
-        public KeyValues getLowCardinalityKeyValues(@NonNull ObservedAspect.ObservedAspectContext context) {
+        public @NonNull KeyValues getLowCardinalityKeyValues(ObservedAspect.@NonNull ObservedAspectContext context) {
             return KeyValues.of("test", "24");
         }
 
         @Override
-        public boolean supportsContext(@NonNull Observation.Context context) {
+        public boolean supportsContext(Observation.@NonNull Context context) {
             return context instanceof ObservedAspect.ObservedAspectContext;
         }
 

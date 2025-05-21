@@ -15,11 +15,11 @@
  */
 package io.micrometer.statsd.internal;
 
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Statistic;
 import io.micrometer.core.instrument.config.NamingConvention;
+import org.jspecify.annotations.Nullable;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -29,16 +29,15 @@ public class TelegrafStatsdLineBuilder extends FlavorStatsdLineBuilder {
 
     private final Object conventionTagsLock = new Object();
 
-    @SuppressWarnings({ "NullableProblems", "unused" })
+    @SuppressWarnings({ "NullAway.Init", "unused" })
     private volatile NamingConvention namingConvention;
 
-    @SuppressWarnings("NullableProblems")
+    @SuppressWarnings("NullAway.Init")
     private volatile String name;
 
-    @Nullable
-    private volatile String conventionTags;
+    private volatile @Nullable String conventionTags;
 
-    @SuppressWarnings("NullableProblems")
+    @SuppressWarnings("NullAway.Init")
     private volatile String tagsNoStat;
 
     private final ConcurrentMap<Statistic, String> tags = new ConcurrentHashMap<>();

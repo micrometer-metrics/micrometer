@@ -15,12 +15,12 @@
  */
 package io.micrometer.java11.instrument.binder.jdk;
 
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.observation.ObservationOrTimerCompatibleInstrumentation;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
+import org.jspecify.annotations.Nullable;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLParameters;
@@ -61,11 +61,9 @@ public class MicrometerHttpClient extends HttpClient {
 
     private final HttpClient client;
 
-    @Nullable
-    private final ObservationRegistry observationRegistry;
+    private final @Nullable ObservationRegistry observationRegistry;
 
-    @Nullable
-    private final HttpClientObservationConvention customObservationConvention;
+    private final @Nullable HttpClientObservationConvention customObservationConvention;
 
     private final Function<HttpRequest, String> uriMapper;
 
@@ -99,11 +97,9 @@ public class MicrometerHttpClient extends HttpClient {
 
         private final MeterRegistry meterRegistry;
 
-        @Nullable
-        private ObservationRegistry observationRegistry;
+        private @Nullable ObservationRegistry observationRegistry;
 
-        @Nullable
-        private HttpClientObservationConvention customObservationConvention;
+        private @Nullable HttpClientObservationConvention customObservationConvention;
 
         private Function<HttpRequest, String> uriMapper = request -> request.headers()
             .firstValue(URI_PATTERN_HEADER)
@@ -259,7 +255,7 @@ public class MicrometerHttpClient extends HttpClient {
 
     @Override
     public <T> CompletableFuture<HttpResponse<T>> sendAsync(HttpRequest httpRequest,
-            HttpResponse.BodyHandler<T> bodyHandler, @Nullable HttpResponse.PushPromiseHandler<T> pushPromiseHandler) {
+            HttpResponse.BodyHandler<T> bodyHandler, HttpResponse.@Nullable PushPromiseHandler<T> pushPromiseHandler) {
         HttpRequest.Builder httpRequestBuilder = decorate(httpRequest);
         ObservationOrTimerCompatibleInstrumentation<HttpClientContext> instrumentation = observationOrTimer(
                 httpRequestBuilder);

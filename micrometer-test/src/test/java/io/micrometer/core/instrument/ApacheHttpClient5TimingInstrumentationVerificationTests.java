@@ -15,7 +15,6 @@
  */
 package io.micrometer.core.instrument;
 
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.binder.httpcomponents.hc5.*;
 import io.micrometer.observation.docs.ObservationDocumentation;
 import org.apache.hc.client5.http.classic.methods.HttpUriRequest;
@@ -27,6 +26,7 @@ import org.apache.hc.core5.http.ContentType;
 import org.apache.hc.core5.http.io.HttpClientResponseHandler;
 import org.apache.hc.core5.http.io.entity.BasicHttpEntity;
 import org.apache.hc.core5.http.io.entity.EntityUtils;
+import org.jspecify.annotations.Nullable;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -45,9 +45,8 @@ class ApacheHttpClient5TimingInstrumentationVerificationTests
             .build();
     }
 
-    @Nullable
     @Override
-    protected CloseableHttpClient clientInstrumentedWithObservations() {
+    protected @Nullable CloseableHttpClient clientInstrumentedWithObservations() {
         return HttpClientBuilder.create()
             .addExecInterceptorFirst("micrometer", new ObservationExecChainHandler(getObservationRegistry()))
             .build();
@@ -64,7 +63,7 @@ class ApacheHttpClient5TimingInstrumentationVerificationTests
     }
 
     @Override
-    protected void sendHttpRequest(CloseableHttpClient instrumentedClient, HttpMethod method, @Nullable byte[] body,
+    protected void sendHttpRequest(CloseableHttpClient instrumentedClient, HttpMethod method, byte @Nullable [] body,
             URI baseUri, String templatedPath, String... pathVariables) {
         try {
             EntityUtils.consume(instrumentedClient
@@ -77,7 +76,7 @@ class ApacheHttpClient5TimingInstrumentationVerificationTests
     }
 
     @SuppressWarnings("deprecation")
-    private HttpUriRequest makeRequest(HttpMethod method, @Nullable byte[] body, URI baseUri, String templatedPath,
+    private HttpUriRequest makeRequest(HttpMethod method, byte @Nullable [] body, URI baseUri, String templatedPath,
             String... pathVariables) {
         HttpUriRequestBase request = new HttpUriRequestBase(method.name(),
                 URI.create(baseUri + substitutePathVariables(templatedPath, pathVariables)));

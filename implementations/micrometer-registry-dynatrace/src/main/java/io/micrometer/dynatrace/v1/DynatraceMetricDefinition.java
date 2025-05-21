@@ -15,9 +15,9 @@
  */
 package io.micrometer.dynatrace.v1;
 
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.common.util.StringUtils;
 import io.micrometer.core.instrument.util.StringEscapeUtils;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.Locale;
@@ -40,11 +40,9 @@ class DynatraceMetricDefinition {
 
     private final String metricId;
 
-    @Nullable
-    private final String description;
+    private final @Nullable String description;
 
-    @Nullable
-    private final DynatraceUnit unit;
+    private final @Nullable DynatraceUnit unit;
 
     @Nullable
     private final Set<String> dimensions;
@@ -52,8 +50,7 @@ class DynatraceMetricDefinition {
     // Guaranteed to be non-empty
     private final String[] technologyTypes;
 
-    @Nullable
-    private final String group;
+    private final @Nullable String group;
 
     DynatraceMetricDefinition(String metricId, @Nullable String description, @Nullable DynatraceUnit unit,
             @Nullable Set<String> dimensions, String[] technologyTypes, String group) {
@@ -112,8 +109,7 @@ class DynatraceMetricDefinition {
             .unmodifiableMap(Stream.of(DynatraceUnit.values())
                 .collect(Collectors.toMap(k -> k.toString().toLowerCase(Locale.ROOT) + "s", Function.identity())));
 
-        @Nullable
-        static DynatraceUnit fromPlural(@Nullable String plural) {
+        static @Nullable DynatraceUnit fromPlural(@Nullable String plural) {
             return UNITS_MAPPING.getOrDefault(plural, null);
         }
 

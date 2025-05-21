@@ -15,10 +15,10 @@
  */
 package io.micrometer.datadog;
 
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.tck.MeterRegistryCompatibilityKit;
+import org.jspecify.annotations.Nullable;
 
 import java.time.Duration;
 
@@ -36,8 +36,7 @@ class DatadogMeterRegistryCompatibilityTest extends MeterRegistryCompatibilityKi
         }
 
         @Override
-        @Nullable
-        public String get(String key) {
+        public @Nullable String get(String key) {
             return null;
         }
     };

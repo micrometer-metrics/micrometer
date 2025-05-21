@@ -20,7 +20,7 @@ import java.util.Random;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
+import org.jspecify.annotations.Nullable;
 import org.openjdk.jmh.annotations.*;
 import org.openjdk.jmh.infra.Blackhole;
 import org.openjdk.jmh.runner.Runner;
@@ -29,8 +29,7 @@ import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
 //CHECKSTYLE:OFF
 import com.google.common.collect.Iterators;
-////CHECKSTYLE:ON
-import io.micrometer.common.lang.Nullable;
+//CHECKSTYLE:ON
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.DistributionSummary;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -123,9 +122,8 @@ public class CompareOTLPHistograms {
                 return AggregationTemporality.DELTA;
             }
 
-            @Nullable
             @Override
-            public String get(final String key) {
+            public @Nullable String get(final String key) {
                 return null;
             }
         };
@@ -188,9 +186,8 @@ public class CompareOTLPHistograms {
                 return AggregationTemporality.DELTA;
             }
 
-            @Nullable
             @Override
-            public String get(final String key) {
+            public @Nullable String get(final String key) {
                 return null;
             }
         };
@@ -232,9 +229,8 @@ public class CompareOTLPHistograms {
                 return HistogramFlavor.BASE2_EXPONENTIAL_BUCKET_HISTOGRAM;
             }
 
-            @Nullable
             @Override
-            public String get(final String key) {
+            public @Nullable String get(final String key) {
                 return null;
             }
         };
@@ -279,9 +275,8 @@ public class CompareOTLPHistograms {
                 return HistogramFlavor.BASE2_EXPONENTIAL_BUCKET_HISTOGRAM;
             }
 
-            @Nullable
             @Override
-            public String get(final String key) {
+            public @Nullable String get(final String key) {
                 return null;
             }
         };

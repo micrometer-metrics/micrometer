@@ -15,8 +15,6 @@
  */
 package io.micrometer.humio;
 
-import io.micrometer.common.lang.NonNull;
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.distribution.HistogramSnapshot;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
@@ -25,6 +23,7 @@ import io.micrometer.core.instrument.util.MeterPartition;
 import io.micrometer.core.instrument.util.NamedThreadFactory;
 import io.micrometer.core.ipc.http.HttpSender;
 import io.micrometer.core.ipc.http.HttpUrlConnectionSender;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -128,7 +127,6 @@ public class HumioMeterRegistry extends StepMeterRegistry {
     }
 
     @Override
-    @NonNull
     protected TimeUnit getBaseTimeUnit() {
         return TimeUnit.MILLISECONDS;
     }
@@ -199,8 +197,7 @@ public class HumioMeterRegistry extends StepMeterRegistry {
         }
 
         // VisibleForTesting
-        @Nullable
-        String writeFunctionCounter(FunctionCounter counter) {
+        @Nullable String writeFunctionCounter(FunctionCounter counter) {
             double count = counter.count();
             if (Double.isFinite(count)) {
                 return writeEvent(counter, event("count", count));
@@ -209,8 +206,7 @@ public class HumioMeterRegistry extends StepMeterRegistry {
         }
 
         // VisibleForTesting
-        @Nullable
-        String writeGauge(Gauge gauge) {
+        @Nullable String writeGauge(Gauge gauge) {
             double value = gauge.value();
             if (Double.isFinite(value)) {
                 return writeEvent(gauge, event("value", value));
@@ -219,8 +215,7 @@ public class HumioMeterRegistry extends StepMeterRegistry {
         }
 
         // VisibleForTesting
-        @Nullable
-        String writeTimeGauge(TimeGauge gauge) {
+        @Nullable String writeTimeGauge(TimeGauge gauge) {
             double value = gauge.value(getBaseTimeUnit());
             if (Double.isFinite(value)) {
                 return writeEvent(gauge, event("value", value));
@@ -255,7 +250,7 @@ public class HumioMeterRegistry extends StepMeterRegistry {
         }
 
         // VisibleForTesting
-        String writeMeter(Meter meter) {
+        @Nullable String writeMeter(Meter meter) {
             // Snapshot values should be used throughout this method as there are chances
             // for values to be changed in-between.
             List<Attribute> attributes = new ArrayList<>();

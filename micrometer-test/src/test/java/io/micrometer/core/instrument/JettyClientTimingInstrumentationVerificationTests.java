@@ -16,13 +16,13 @@
 package io.micrometer.core.instrument;
 
 import com.github.tomakehurst.wiremock.junit5.WireMockRuntimeInfo;
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.binder.jetty.JettyClientMetrics;
 import io.micrometer.core.instrument.binder.jetty.JettyClientObservationDocumentation;
 import io.micrometer.observation.docs.ObservationDocumentation;
 import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.api.Request;
 import org.eclipse.jetty.client.util.BytesContentProvider;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Disabled;
 
 import java.net.URI;
@@ -48,15 +48,14 @@ class JettyClientTimingInstrumentationVerificationTests
         return createHttpClient(false);
     }
 
-    @Nullable
     @Override
-    protected HttpClient clientInstrumentedWithObservations() {
+    protected @Nullable HttpClient clientInstrumentedWithObservations() {
         return createHttpClient(true);
     }
 
     @Override
-    protected void sendHttpRequest(HttpClient instrumentedClient, HttpMethod method, @Nullable byte[] body, URI baseUri,
-            String templatedPath, String... pathVariables) {
+    protected void sendHttpRequest(HttpClient instrumentedClient, HttpMethod method, byte @Nullable [] body,
+            URI baseUri, String templatedPath, String... pathVariables) {
         try {
             Request request = instrumentedClient
                 .newRequest(baseUri + substitutePathVariables(templatedPath, pathVariables))

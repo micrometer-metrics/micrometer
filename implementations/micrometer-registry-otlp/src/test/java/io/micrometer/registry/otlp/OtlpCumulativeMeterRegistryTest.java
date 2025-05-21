@@ -20,6 +20,7 @@ import io.micrometer.core.instrument.binder.BaseUnits;
 import io.opentelemetry.proto.metrics.v1.ExponentialHistogramDataPoint;
 import io.opentelemetry.proto.metrics.v1.Metric;
 import io.opentelemetry.proto.metrics.v1.NumberDataPoint;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 
 import java.lang.management.CompilationMXBean;
@@ -48,7 +49,7 @@ class OtlpCumulativeMeterRegistryTest extends OtlpMeterRegistryTest {
             }
 
             @Override
-            public String get(final String key) {
+            public @Nullable String get(final String key) {
                 return null;
             }
         };

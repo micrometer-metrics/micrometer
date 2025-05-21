@@ -15,15 +15,14 @@
  */
 package io.micrometer.atlas;
 
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.Statistic;
+import org.jspecify.annotations.Nullable;
 
 import static com.netflix.spectator.api.Statistic.*;
 
 public class AtlasUtils {
 
-    @Nullable
-    static com.netflix.spectator.api.Statistic toSpectatorStatistic(Statistic stat) {
+    static com.netflix.spectator.api.@Nullable Statistic toSpectatorStatistic(Statistic stat) {
         switch (stat) {
             case COUNT:
                 return count;

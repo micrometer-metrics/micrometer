@@ -15,7 +15,6 @@
  */
 package io.micrometer.docs.metrics;
 
-import io.micrometer.common.lang.NonNullApi;
 import io.micrometer.core.ipc.http.OkHttpSender;
 import io.micrometer.registry.otlp.OtlpConfig;
 import io.micrometer.registry.otlp.OtlpHttpMetricsSender;
@@ -43,7 +42,6 @@ class OtlpMeterRegistryCustomizationTest {
         // end::customGrpcSender[]
     }
 
-    @NonNullApi
     private static class OtlpGrpcMetricsSender implements OtlpMetricsSender {
 
         @Override

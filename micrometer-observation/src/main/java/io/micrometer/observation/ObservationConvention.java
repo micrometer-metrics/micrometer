@@ -60,8 +60,7 @@ public interface ObservationConvention<T extends Observation.Context> extends Ke
      * Allows to override the name for an observation.
      * @return the new name for the observation
      */
-    @Nullable
-    default String getName() {
+    @Nullable default String getName() {
         return null;
     }
 
@@ -72,8 +71,7 @@ public interface ObservationConvention<T extends Observation.Context> extends Ke
      * @param context context
      * @return the new, contextual name for the observation
      */
-    @Nullable
-    default String getContextualName(T context) {
+    @Nullable default String getContextualName(T context) {
         return null;
     }
 
