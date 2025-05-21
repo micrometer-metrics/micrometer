@@ -61,7 +61,7 @@ public final class JettyClientKeyValues {
      * @param request the request
      * @return the method KeyValue whose value is a capitalized method (e.g. GET).
      */
-    public static KeyValue method(Request request) {
+    public static KeyValue method(@Nullable Request request) {
         return (request != null) ? KeyValue.of("method", request.getMethod()) : METHOD_UNKNOWN;
     }
 
@@ -71,7 +71,7 @@ public final class JettyClientKeyValues {
      * @param request the request
      * @return the host KeyValue derived from request
      */
-    public static KeyValue host(Request request) {
+    public static KeyValue host(@Nullable Request request) {
         return (request != null) ? KeyValue.of("host", request.getHost()) : HOST_UNKNOWN;
     }
 
@@ -93,8 +93,8 @@ public final class JettyClientKeyValues {
      * @param successfulUriPattern successful URI pattern
      * @return the uri KeyValue derived from the request and its result
      */
-    public static KeyValue uri(Request request, @Nullable Result result,
-            BiFunction<Request, Result, String> successfulUriPattern) {
+    public static KeyValue uri(@Nullable Request request, @Nullable Result result,
+            BiFunction<@Nullable Request, @Nullable Result, String> successfulUriPattern) {
         String matchingPattern = successfulUriPattern.apply(request, result);
         matchingPattern = MULTIPLE_SLASH_PATTERN.matcher(matchingPattern).replaceAll("/");
         if (matchingPattern.equals("/")) {

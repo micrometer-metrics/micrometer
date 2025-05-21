@@ -17,4 +17,7 @@
 /**
  * Instrumentation for Jetty 12 client.
  */
+@NullMarked
 package io.micrometer.jetty12.client;
+
+import org.jspecify.annotations.NullMarked;

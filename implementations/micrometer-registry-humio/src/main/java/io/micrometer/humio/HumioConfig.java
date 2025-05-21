@@ -56,7 +56,7 @@ public interface HumioConfig extends StepRegistryConfig {
      * datasource defined by these tags.
      * @return Tags which uniquely determine the datasource to store metrics in.
      */
-    @Nullable default Map<String, String> tags() {
+    default @Nullable Map<String, String> tags() {
         return null;
     }
 
