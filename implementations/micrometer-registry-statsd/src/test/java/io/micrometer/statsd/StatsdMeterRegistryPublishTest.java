@@ -15,6 +15,7 @@
  */
 package io.micrometer.statsd;
 
+import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.Counter;
@@ -24,7 +25,6 @@ import io.netty.channel.ChannelPromise;
 import io.netty.channel.unix.DomainSocketAddress;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.OS;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -59,36 +59,20 @@ class StatsdMeterRegistryPublishTest {
 
     private static final String UDS_DATAGRAM_SOCKET_PATH = "/tmp/test-server.sock";
 
-    StatsdMeterRegistry meterRegistry;
+    private final AtomicInteger serverMetricReadCount = new AtomicInteger();
 
-    DisposableChannel server;
-
-    volatile CountDownLatch serverLatch;
-
-    AtomicInteger serverMetricReadCount = new AtomicInteger();
-
-    volatile boolean bound;
-
-    @AfterEach
-    void cleanUp() {
-        if (meterRegistry != null) {
-            meterRegistry.close();
-        }
-        if (server != null) {
-            server.disposeNow();
-        }
-    }
+    private volatile boolean bound = false;
 
     @ParameterizedTest
     @EnumSource
     void receiveAllBufferedMetricsAfterCloseSuccessfully(StatsdProtocol protocol) throws InterruptedException {
         skipUdsTestOnWindows(protocol);
-        serverLatch = new CountDownLatch(3);
-        server = startServer(protocol, 0);
+        CountDownLatch serverLatch = new CountDownLatch(3);
+        DisposableChannel server = startServer(protocol, 0, serverLatch);
 
-        final int port = getPort(protocol);
-        meterRegistry = new StatsdMeterRegistry(getBufferedConfig(protocol, port), Clock.SYSTEM);
-        startRegistryAndWaitForClient();
+        final int port = getPort(server, protocol);
+        StatsdMeterRegistry meterRegistry = new StatsdMeterRegistry(getBufferedConfig(protocol, port), Clock.SYSTEM);
+        startRegistryAndWaitForClient(meterRegistry);
         Counter counter = Counter.builder("my.counter").register(meterRegistry);
         counter.increment();
         counter.increment();
@@ -101,13 +85,13 @@ class StatsdMeterRegistryPublishTest {
     @EnumSource
     void receiveMetricsSuccessfully(StatsdProtocol protocol) throws InterruptedException {
         skipUdsTestOnWindows(protocol);
-        serverLatch = new CountDownLatch(3);
-        server = startServer(protocol, 0);
+        CountDownLatch serverLatch = new CountDownLatch(3);
+        DisposableChannel server = startServer(protocol, 0, serverLatch);
 
-        final int port = getPort(protocol);
+        final int port = getPort(server, protocol);
 
-        meterRegistry = new StatsdMeterRegistry(getUnbufferedConfig(protocol, port), Clock.SYSTEM);
-        startRegistryAndWaitForClient();
+        StatsdMeterRegistry meterRegistry = new StatsdMeterRegistry(getUnbufferedConfig(protocol, port), Clock.SYSTEM);
+        startRegistryAndWaitForClient(meterRegistry);
         Counter counter = Counter.builder("my.counter").register(meterRegistry);
         counter.increment();
         counter.increment();
@@ -119,15 +103,15 @@ class StatsdMeterRegistryPublishTest {
     @EnumSource
     void resumeSendingMetrics_whenServerIntermittentlyFails(StatsdProtocol protocol) throws InterruptedException {
         skipUdsTestOnWindows(protocol);
-        serverLatch = new CountDownLatch(1);
+        CountDownLatch serverLatch = new CountDownLatch(1);
         AtomicInteger writeCount = new AtomicInteger();
-        server = startServer(protocol, 0);
+        DisposableChannel server = startServer(protocol, 0, serverLatch);
 
-        final int port = getPort(protocol);
+        final int port = getPort(server, protocol);
 
-        meterRegistry = new StatsdMeterRegistry(getUnbufferedConfig(protocol, port), Clock.SYSTEM);
-        startRegistryAndWaitForClient();
-        trackWritesForUdpClient(protocol, writeCount);
+        StatsdMeterRegistry meterRegistry = new StatsdMeterRegistry(getUnbufferedConfig(protocol, port), Clock.SYSTEM);
+        startRegistryAndWaitForClient(meterRegistry);
+        trackWritesForUdpClient(meterRegistry, protocol, writeCount);
         Counter counter = Counter.builder("my.counter").register(meterRegistry);
         counter.increment(1);
         assertThat(serverLatch.await(5, TimeUnit.SECONDS)).isTrue();
@@ -135,14 +119,14 @@ class StatsdMeterRegistryPublishTest {
         Disposable firstClient = meterRegistry.statsdConnection.get();
 
         server.disposeNow();
-        serverLatch = new CountDownLatch(3);
+        CountDownLatch server2Latch = new CountDownLatch(3);
         // client will try to send but server is down
         IntStream.range(2, 5).forEach(counter::increment);
         if (protocol == StatsdProtocol.UDP) {
             await().until(() -> writeCount.get() == 4);
         }
-        server = startServer(protocol, port);
-        assertThat(serverLatch.getCount()).isEqualTo(3);
+        startServer(protocol, port, server2Latch);
+        assertThat(server2Latch.getCount()).isEqualTo(3);
 
         await().until(() -> bound);
 
@@ -159,7 +143,7 @@ class StatsdMeterRegistryPublishTest {
         counter.increment(5);
         counter.increment(6);
         counter.increment(7);
-        assertThat(serverLatch.await(3, TimeUnit.SECONDS)).isTrue();
+        assertThat(server2Latch.await(3, TimeUnit.SECONDS)).isTrue();
     }
 
     @ParameterizedTest
@@ -167,21 +151,20 @@ class StatsdMeterRegistryPublishTest {
     @Issue("#1676")
     void stopAndStartMeterRegistrySendsMetrics(StatsdProtocol protocol) throws InterruptedException {
         skipUdsTestOnWindows(protocol);
-        serverLatch = new CountDownLatch(3);
-        server = startServer(protocol, 0);
+        CountDownLatch serverLatch = new CountDownLatch(3);
+        DisposableChannel server = startServer(protocol, 0, serverLatch);
+        final int port = getPort(server, protocol);
 
-        final int port = getPort(protocol);
-
-        meterRegistry = new StatsdMeterRegistry(getUnbufferedConfig(protocol, port), Clock.SYSTEM);
-        startRegistryAndWaitForClient();
+        StatsdMeterRegistry meterRegistry = new StatsdMeterRegistry(getUnbufferedConfig(protocol, port), Clock.SYSTEM);
+        startRegistryAndWaitForClient(meterRegistry);
         Counter counter = Counter.builder("my.counter").register(meterRegistry);
         counter.increment();
         await().until(() -> serverLatch.getCount() == 2);
         meterRegistry.stop();
-        await().until(this::clientIsDisposed);
+        await().until(() -> clientIsDisposed(meterRegistry));
         // These increments shouldn't be sent
         IntStream.range(0, 3).forEach(i -> counter.increment());
-        startRegistryAndWaitForClient();
+        startRegistryAndWaitForClient(meterRegistry);
         assertThat(serverLatch.getCount()).isEqualTo(2);
         counter.increment();
         counter.increment();
@@ -192,7 +175,9 @@ class StatsdMeterRegistryPublishTest {
     @Issue("#1676")
     void stopAndStartMeterRegistryWithLineSink() throws InterruptedException {
         CountDownLatch latch = new CountDownLatch(3);
-        meterRegistry = StatsdMeterRegistry.builder(StatsdConfig.DEFAULT).lineSink(s -> latch.countDown()).build();
+        StatsdMeterRegistry meterRegistry = StatsdMeterRegistry.builder(StatsdConfig.DEFAULT)
+            .lineSink(s -> latch.countDown())
+            .build();
         Counter counter = Counter.builder("my.counter").register(meterRegistry);
         counter.increment();
         meterRegistry.stop();
@@ -210,27 +195,28 @@ class StatsdMeterRegistryPublishTest {
     void whenBackendInitiallyDown_metricsSentAfterBackendStarts(StatsdProtocol protocol) throws InterruptedException {
         skipUdsTestOnWindows(protocol);
         AtomicInteger writeCount = new AtomicInteger();
-        serverLatch = new CountDownLatch(3);
+        CountDownLatch serverLatch = new CountDownLatch(3);
         // start server to secure an open port
-        server = startServer(protocol, 0);
-        final int port = getPort(protocol);
+        DisposableChannel server = startServer(protocol, 0, serverLatch);
+        final int port = getPort(server, protocol);
         server.disposeNow();
-        meterRegistry = new StatsdMeterRegistry(getUnbufferedConfig(protocol, port), Clock.SYSTEM);
+        StatsdMeterRegistry meterRegistry = new StatsdMeterRegistry(getUnbufferedConfig(protocol, port), Clock.SYSTEM);
         meterRegistry.start();
-        trackWritesForUdpClient(protocol, writeCount);
+        trackWritesForUdpClient(meterRegistry, protocol, writeCount);
         Counter counter = Counter.builder("my.counter").register(meterRegistry);
         IntStream.range(1, 4).forEach(counter::increment);
         if (protocol == StatsdProtocol.UDP) {
             await().until(() -> writeCount.get() == 3);
         }
-        server = startServer(protocol, port);
+        CountDownLatch server2Latch = new CountDownLatch(3);
+        startServer(protocol, port, server2Latch);
         if (protocol == StatsdProtocol.TCP || protocol == StatsdProtocol.UDS_DATAGRAM) {
             // client is null until connection established
             await().until(() -> meterRegistry.statsdConnection.get() != null);
             // client may take some time to reconnect to the server
-            await().until(() -> !clientIsDisposed());
+            await().until(() -> !clientIsDisposed(meterRegistry));
         }
-        assertThat(serverLatch.getCount()).isEqualTo(3);
+        assertThat(server2Latch.getCount()).isEqualTo(3);
 
         if (protocol == StatsdProtocol.UDP) {
             // Note that this guarantees this test to be passed.
@@ -241,26 +227,27 @@ class StatsdMeterRegistryPublishTest {
         counter.increment();
         counter.increment();
         counter.increment();
-        assertThat(serverLatch.await(1, TimeUnit.SECONDS)).isTrue();
+        assertThat(server2Latch.await(1, TimeUnit.SECONDS)).isTrue();
     }
 
     @ParameterizedTest
     @EnumSource
     void whenRegistryStopped_doNotConnectToBackend(StatsdProtocol protocol) throws InterruptedException {
         skipUdsTestOnWindows(protocol);
-        serverLatch = new CountDownLatch(3);
+        CountDownLatch serverLatch = new CountDownLatch(3);
         // start server to secure an open port
-        server = startServer(protocol, 0);
-        final int port = getPort(protocol);
-        meterRegistry = new StatsdMeterRegistry(getUnbufferedConfig(protocol, port), Clock.SYSTEM);
-        startRegistryAndWaitForClient();
+        DisposableChannel server = startServer(protocol, 0, serverLatch);
+        final int port = getPort(server, protocol);
+        StatsdMeterRegistry meterRegistry = new StatsdMeterRegistry(getUnbufferedConfig(protocol, port), Clock.SYSTEM);
+        startRegistryAndWaitForClient(meterRegistry);
         server.disposeNow();
         meterRegistry.stop();
-        await().until(this::clientIsDisposed);
-        server = startServer(protocol, port);
+        await().until(() -> clientIsDisposed(meterRegistry));
+        CountDownLatch server2Latch = new CountDownLatch(3);
+        startServer(protocol, port, server2Latch);
         Counter counter = Counter.builder("my.counter").register(meterRegistry);
         IntStream.range(0, 100).forEach(counter::increment);
-        assertThat(serverLatch.await(1, TimeUnit.SECONDS)).isFalse();
+        assertThat(server2Latch.await(1, TimeUnit.SECONDS)).isFalse();
     }
 
     @ParameterizedTest
@@ -268,11 +255,11 @@ class StatsdMeterRegistryPublishTest {
     @Issue("#2177")
     void whenSendError_reconnectsAndWritesNewMetrics(StatsdProtocol protocol) throws InterruptedException {
         skipUdsTestOnWindows(protocol);
-        serverLatch = new CountDownLatch(3);
-        server = startServer(protocol, 0);
-        final int port = getPort(protocol);
-        meterRegistry = new StatsdMeterRegistry(getUnbufferedConfig(protocol, port), Clock.SYSTEM);
-        startRegistryAndWaitForClient();
+        CountDownLatch serverLatch = new CountDownLatch(3);
+        DisposableChannel server = startServer(protocol, 0, serverLatch);
+        final int port = getPort(server, protocol);
+        StatsdMeterRegistry meterRegistry = new StatsdMeterRegistry(getUnbufferedConfig(protocol, port), Clock.SYSTEM);
+        startRegistryAndWaitForClient(meterRegistry);
         ((Connection) meterRegistry.statsdConnection.get()).addHandlerFirst("writeFailure",
                 new ChannelOutboundHandlerAdapter() {
                     @Override
@@ -284,7 +271,7 @@ class StatsdMeterRegistryPublishTest {
         // write will cause error
         counter.increment();
         // wait for reconnect
-        await().until(() -> !clientIsDisposed());
+        await().until(() -> !clientIsDisposed(meterRegistry));
         // remove write exception handler
         ((Connection) meterRegistry.statsdConnection.get()).removeHandler("writeFailure");
         IntStream.range(1, 4).forEach(counter::increment);
@@ -301,12 +288,12 @@ class StatsdMeterRegistryPublishTest {
         final int n = 10;
 
         skipUdsTestOnWindows(protocol);
-        serverLatch = new CountDownLatch(n);
-        server = startServer(protocol, 0);
-        final int port = getPort(protocol);
+        CountDownLatch serverLatch = new CountDownLatch(n);
+        DisposableChannel server = startServer(protocol, 0, serverLatch);
+        final int port = getPort(server, protocol);
 
-        meterRegistry = new StatsdMeterRegistry(getUnbufferedConfig(protocol, port), Clock.SYSTEM);
-        startRegistryAndWaitForClient();
+        StatsdMeterRegistry meterRegistry = new StatsdMeterRegistry(getUnbufferedConfig(protocol, port), Clock.SYSTEM);
+        startRegistryAndWaitForClient(meterRegistry);
         Counter counter = Counter.builder("my.counter").register(meterRegistry);
 
         IntStream.range(0, n).parallel().forEach(ignored -> counter.increment());
@@ -319,14 +306,15 @@ class StatsdMeterRegistryPublishTest {
             assumeTrue(!OS.WINDOWS.isCurrentOs());
     }
 
-    private int getPort(StatsdProtocol protocol) {
+    private int getPort(DisposableChannel server, StatsdProtocol protocol) {
         if (protocol == StatsdProtocol.UDS_DATAGRAM)
             return 0;
         return ((InetSocketAddress) server.address()).getPort();
     }
 
-    private void trackWritesForUdpClient(StatsdProtocol protocol, AtomicInteger writeCount) {
-        if (protocol == StatsdProtocol.UDP) {
+    private void trackWritesForUdpClient(StatsdMeterRegistry meterRegistry, StatsdProtocol protocol,
+            AtomicInteger writeCount) {
+        if (protocol == io.micrometer.statsd.StatsdProtocol.UDP) {
             await().until(() -> meterRegistry.statsdConnection.get() != null);
             ((Connection) meterRegistry.statsdConnection.get())
                 .addHandlerFirst(new LoggingHandler("testudpclient", LogLevel.INFO))
@@ -340,16 +328,18 @@ class StatsdMeterRegistryPublishTest {
         }
     }
 
-    private void startRegistryAndWaitForClient() {
+    private void startRegistryAndWaitForClient(StatsdMeterRegistry meterRegistry) {
         meterRegistry.start();
-        await().until(() -> !clientIsDisposed());
+        await().until(() -> !clientIsDisposed(meterRegistry));
     }
 
-    private boolean clientIsDisposed() {
+    private boolean clientIsDisposed(StatsdMeterRegistry meterRegistry) {
         return meterRegistry.statsdConnection.get().isDisposed();
     }
 
-    private DisposableChannel startServer(StatsdProtocol protocol, int port) {
+    private DisposableChannel startServer(StatsdProtocol protocol, int port, CountDownLatch serverLatch) {
+        this.serverMetricReadCount.set(0);
+        this.bound = false;
         if (protocol == StatsdProtocol.UDP || protocol == StatsdProtocol.UDS_DATAGRAM) {
             return UdpServer.create()
                 .bindAddress(() -> protocol == StatsdProtocol.UDP
@@ -421,6 +411,7 @@ class StatsdMeterRegistryPublishTest {
 
     private StatsdConfig getConfig(StatsdProtocol protocol, int port, boolean buffered) {
         return new StatsdConfig() {
+            @Nullable
             @Override
             public String get(String key) {
                 return null;
