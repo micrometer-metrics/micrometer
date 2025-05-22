@@ -34,6 +34,6 @@ public interface ValueExpressionResolver {
      * @param parameter parameter annotated with a {@link KeyValue} related annotation
      * @return the value of the {@link KeyValue}
      */
-    @Nullable String resolve(String expression, @Nullable Object parameter);
+    String resolve(String expression, @Nullable Object parameter);
 
 }

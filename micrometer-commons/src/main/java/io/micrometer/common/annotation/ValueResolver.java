@@ -16,6 +16,7 @@
 package io.micrometer.common.annotation;
 
 import io.micrometer.common.KeyValue;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Resolves the {@link KeyValue} value for the given parameter.
@@ -31,6 +32,6 @@ public interface ValueResolver {
      * @param parameter annotated parameter
      * @return the value of the {@link KeyValue}
      */
-    String resolve(Object parameter);
+    String resolve(@Nullable Object parameter);
 
 }
