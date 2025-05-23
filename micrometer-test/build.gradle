@@ -1,34 +1,5 @@
 description 'Test compatibility kit for extensions of Micrometer'
 
-testing {
-    suites {
-        java11Test(JvmTestSuite) {
-            test {
-                useJUnitJupiter()
-            }
-            sources {
-                java {
-                    srcDirs = ['src/test/java11']
-                }
-            }
-            dependencies {
-                implementation project()
-                implementation project(':micrometer-java11')
-            }
-
-        }
-    }
-}
-
-compileJava11TestJava {
-    sourceCompatibility = JavaVersion.VERSION_11
-    targetCompatibility = JavaVersion.VERSION_11
-}
-
-check {
-    dependsOn(testing.suites.java11Test)
-}
-
 dependencies {
     api project(':micrometer-core')
     api project(':micrometer-observation')
@@ -46,6 +17,7 @@ dependencies {
 
     testImplementation project(':micrometer-observation-test')
     testImplementation project(':micrometer-jakarta9')
+    testImplementation project(':micrometer-java11')
 
     testImplementation 'org.jsr107.ri:cache-ri-impl'
 
