@@ -30,16 +30,13 @@ public class SysdigStatsdLineBuilder extends FlavorStatsdLineBuilder {
 
     private final Object conventionTagsLock = new Object();
 
-    @SuppressWarnings({ "NullableProblems", "unused" })
     private volatile NamingConvention namingConvention;
 
-    @SuppressWarnings("NullableProblems")
     private volatile String name;
 
     @Nullable
     private volatile String conventionTags;
 
-    @SuppressWarnings("NullableProblems")
     private volatile String tagsNoStat;
 
     private final ConcurrentMap<Statistic, String> tags = new ConcurrentHashMap<>();
@@ -48,6 +45,11 @@ public class SysdigStatsdLineBuilder extends FlavorStatsdLineBuilder {
 
     public SysdigStatsdLineBuilder(Meter.Id id, MeterRegistry.Config config) {
         super(id, config);
+
+        this.namingConvention = config.namingConvention();
+        this.name = createName(namingConvention);
+        this.conventionTags = createConventionTags(namingConvention);
+        this.tagsNoStat = createTagsNoStat(conventionTags);
     }
 
     @Override
@@ -59,17 +61,30 @@ public class SysdigStatsdLineBuilder extends FlavorStatsdLineBuilder {
     private void updateIfNamingConventionChanged() {
         NamingConvention next = config.namingConvention();
         if (this.namingConvention != next) {
-            this.name = sanitize(next.name(id.getName(), id.getType(), id.getBaseUnit()));
+            this.name = createName(next);
             synchronized (conventionTagsLock) {
                 this.tags.clear();
-                this.conventionTags = id.getTagsAsIterable().iterator().hasNext() ? id.getConventionTags(next)
-                    .stream()
-                    .map(t -> sanitize(t.getKey()) + "=" + sanitize(t.getValue()))
-                    .collect(Collectors.joining(",")) : null;
+                this.conventionTags = createConventionTags(next);
             }
-            this.tagsNoStat = tags(null, conventionTags, "=", "#");
+            this.tagsNoStat = createTagsNoStat(conventionTags);
             this.namingConvention = next;
         }
+    }
+
+    @Nullable
+    private String createConventionTags(NamingConvention namingConvention) {
+        return id.getTagsAsIterable().iterator().hasNext() ? id.getConventionTags(namingConvention)
+            .stream()
+            .map(t -> sanitize(t.getKey()) + "=" + sanitize(t.getValue()))
+            .collect(Collectors.joining(",")) : null;
+    }
+
+    private String createName(NamingConvention namingConvention) {
+        return sanitize(namingConvention.name(id.getName(), id.getType(), id.getBaseUnit()));
+    }
+
+    private String createTagsNoStat(@Nullable String conventionTags) {
+        return tags(null, conventionTags, "=", "#");
     }
 
     private static String sanitize(String name) {
