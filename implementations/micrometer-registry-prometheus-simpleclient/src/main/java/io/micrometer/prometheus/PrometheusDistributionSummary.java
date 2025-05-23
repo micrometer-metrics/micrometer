@@ -15,8 +15,6 @@
  */
 package io.micrometer.prometheus;
 
-import io.micrometer.common.lang.NonNull;
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.AbstractDistributionSummary;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.DistributionSummary;
@@ -24,6 +22,7 @@ import io.micrometer.core.instrument.distribution.*;
 import io.prometheus.client.exemplars.CounterExemplarSampler;
 import io.prometheus.client.exemplars.Exemplar;
 import io.prometheus.client.exemplars.ExemplarSampler;
+import org.jspecify.annotations.Nullable;
 
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.atomic.DoubleAdder;
@@ -51,14 +50,11 @@ public class PrometheusDistributionSummary extends AbstractDistributionSummary {
 
     private final HistogramFlavor histogramFlavor;
 
-    @Nullable
-    private final Histogram histogram;
+    private final @Nullable Histogram histogram;
 
-    @Nullable
-    private final ExemplarSampler exemplarSampler;
+    private final @Nullable ExemplarSampler exemplarSampler;
 
-    @Nullable
-    private final AtomicReference<Exemplar> lastExemplar;
+    private final @Nullable AtomicReference<Exemplar> lastExemplar;
 
     private boolean histogramExemplarsEnabled = false;
 
@@ -114,13 +110,14 @@ public class PrometheusDistributionSummary extends AbstractDistributionSummary {
         if (histogram != null) {
             histogram.recordDouble(amount);
         }
-        if (!histogramExemplarsEnabled && exemplarSampler != null) {
-            updateLastExemplar(amount, exemplarSampler);
+        if (!histogramExemplarsEnabled && lastExemplar != null && exemplarSampler != null) {
+            updateLastExemplar(lastExemplar, amount, exemplarSampler);
         }
     }
 
     // Similar to exemplar.updateAndGet(...) but it does nothing if the next value is null
-    private void updateLastExemplar(double amount, @NonNull CounterExemplarSampler exemplarSampler) {
+    private void updateLastExemplar(AtomicReference<Exemplar> lastExemplar, double amount,
+            CounterExemplarSampler exemplarSampler) {
         Exemplar prev;
         Exemplar next;
         do {
@@ -130,9 +127,8 @@ public class PrometheusDistributionSummary extends AbstractDistributionSummary {
         while (next != null && next != prev && !lastExemplar.compareAndSet(prev, next));
     }
 
-    @Nullable
-    Exemplar[] histogramExemplars() {
-        if (histogramExemplarsEnabled) {
+    Exemplar @Nullable [] histogramExemplars() {
+        if (histogramExemplarsEnabled && histogram != null) {
             return ((PrometheusHistogram) histogram).exemplars();
         }
         else {
@@ -140,9 +136,8 @@ public class PrometheusDistributionSummary extends AbstractDistributionSummary {
         }
     }
 
-    @Nullable
-    Exemplar lastExemplar() {
-        if (histogramExemplarsEnabled) {
+    @Nullable Exemplar lastExemplar() {
+        if (histogramExemplarsEnabled && histogram != null) {
             return ((PrometheusHistogram) histogram).lastExemplar();
         }
         else {

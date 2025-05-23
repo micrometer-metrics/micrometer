@@ -15,7 +15,6 @@
  */
 package io.micrometer.prometheus;
 
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.cumulative.CumulativeFunctionCounter;
 import io.micrometer.core.instrument.cumulative.CumulativeFunctionTimer;
@@ -29,6 +28,7 @@ import io.prometheus.client.CollectorRegistry;
 import io.prometheus.client.exemplars.Exemplar;
 import io.prometheus.client.exemplars.ExemplarSampler;
 import io.prometheus.client.exporter.common.TextFormat;
+import org.jspecify.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.StringWriter;
@@ -66,8 +66,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
 
     private final ConcurrentMap<String, MicrometerCollector> collectorMap = new ConcurrentHashMap<>();
 
-    @Nullable
-    private final ExemplarSampler exemplarSampler;
+    private final @Nullable ExemplarSampler exemplarSampler;
 
     public PrometheusMeterRegistry(PrometheusConfig config) {
         this(config, new CollectorRegistry(), Clock.SYSTEM);
@@ -591,13 +590,10 @@ public class PrometheusMeterRegistry extends MeterRegistry {
                 return existingCollector;
             }
 
-            meterRegistrationFailed(id,
-                    "Prometheus requires that all meters with the same name have the same"
-                            + " set of tag keys. There is already an existing meter named '" + id.getName()
-                            + "' containing tag keys ["
-                            + String.join(", ", collectorMap.get(getConventionName(id)).getTagKeys())
-                            + "]. The meter you are attempting to register" + " has keys ["
-                            + getConventionTags(id).stream().map(Tag::getKey).collect(joining(", ")) + "].");
+            meterRegistrationFailed(id, "Prometheus requires that all meters with the same name have the same"
+                    + " set of tag keys. There is already an existing meter named '" + name + "' containing tag keys ["
+                    + String.join(", ", existingCollector.getTagKeys()) + "]. The meter you are attempting to register"
+                    + " has keys [" + getConventionTags(id).stream().map(Tag::getKey).collect(joining(", ")) + "].");
             return existingCollector;
         });
     }

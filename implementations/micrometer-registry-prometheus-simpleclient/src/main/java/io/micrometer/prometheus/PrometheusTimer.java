@@ -15,8 +15,6 @@
  */
 package io.micrometer.prometheus;
 
-import io.micrometer.common.lang.NonNull;
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.AbstractTimer;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.Timer;
@@ -26,6 +24,7 @@ import io.micrometer.core.instrument.util.TimeUtils;
 import io.prometheus.client.exemplars.CounterExemplarSampler;
 import io.prometheus.client.exemplars.Exemplar;
 import io.prometheus.client.exemplars.ExemplarSampler;
+import org.jspecify.annotations.Nullable;
 
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
@@ -53,14 +52,11 @@ public class PrometheusTimer extends AbstractTimer {
 
     private final HistogramFlavor histogramFlavor;
 
-    @Nullable
-    private final Histogram histogram;
+    private final @Nullable Histogram histogram;
 
-    @Nullable
-    private final ExemplarSampler exemplarSampler;
+    private final @Nullable ExemplarSampler exemplarSampler;
 
-    @Nullable
-    private final AtomicReference<Exemplar> lastExemplar;
+    private final @Nullable AtomicReference<Exemplar> lastExemplar;
 
     private boolean histogramExemplarsEnabled = false;
 
@@ -118,13 +114,14 @@ public class PrometheusTimer extends AbstractTimer {
             histogram.recordLong(nanoAmount);
         }
 
-        if (!histogramExemplarsEnabled && exemplarSampler != null) {
-            updateLastExemplar(TimeUtils.nanosToUnit((double) amount, baseTimeUnit()), exemplarSampler);
+        if (!histogramExemplarsEnabled && lastExemplar != null && exemplarSampler != null) {
+            updateLastExemplar(lastExemplar, TimeUtils.nanosToUnit((double) amount, baseTimeUnit()), exemplarSampler);
         }
     }
 
     // Similar to exemplar.updateAndGet(...) but it does nothing if the next value is null
-    private void updateLastExemplar(double amount, @NonNull CounterExemplarSampler exemplarSampler) {
+    private void updateLastExemplar(AtomicReference<Exemplar> lastExemplar, double amount,
+            CounterExemplarSampler exemplarSampler) {
         Exemplar prev;
         Exemplar next;
         do {
@@ -134,9 +131,8 @@ public class PrometheusTimer extends AbstractTimer {
         while (next != null && next != prev && !lastExemplar.compareAndSet(prev, next));
     }
 
-    @Nullable
-    Exemplar[] histogramExemplars() {
-        if (histogramExemplarsEnabled) {
+    Exemplar @Nullable [] histogramExemplars() {
+        if (histogramExemplarsEnabled && histogram != null) {
             return ((PrometheusHistogram) histogram).exemplars();
         }
         else {
@@ -144,9 +140,8 @@ public class PrometheusTimer extends AbstractTimer {
         }
     }
 
-    @Nullable
-    Exemplar lastExemplar() {
-        if (histogramExemplarsEnabled) {
+    @Nullable Exemplar lastExemplar() {
+        if (histogramExemplarsEnabled && histogram != null) {
             return ((PrometheusHistogram) histogram).lastExemplar();
         }
         else {

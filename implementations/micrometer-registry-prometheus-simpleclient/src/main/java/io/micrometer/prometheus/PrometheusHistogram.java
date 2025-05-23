@@ -16,7 +16,6 @@
 
 package io.micrometer.prometheus;
 
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.Histogram;
@@ -24,6 +23,7 @@ import io.micrometer.core.instrument.distribution.TimeWindowFixedBoundaryHistogr
 import io.micrometer.core.instrument.util.TimeUtils;
 import io.prometheus.client.exemplars.Exemplar;
 import io.prometheus.client.exemplars.HistogramExemplarSampler;
+import org.jspecify.annotations.Nullable;
 
 import java.time.Duration;
 import java.util.Arrays;
@@ -42,17 +42,13 @@ import static java.util.concurrent.TimeUnit.SECONDS;
  */
 class PrometheusHistogram extends TimeWindowFixedBoundaryHistogram {
 
-    @Nullable
-    private final double[] buckets;
+    private final double @Nullable [] buckets;
 
-    @Nullable
-    private final AtomicReferenceArray<Exemplar> exemplars;
+    private final @Nullable AtomicReferenceArray<Exemplar> exemplars;
 
-    @Nullable
-    private final AtomicReference<Exemplar> lastExemplar;
+    private final @Nullable AtomicReference<Exemplar> lastExemplar;
 
-    @Nullable
-    private final HistogramExemplarSampler exemplarSampler;
+    private final @Nullable HistogramExemplarSampler exemplarSampler;
 
     PrometheusHistogram(Clock clock, DistributionStatisticConfig config,
             @Nullable HistogramExemplarSampler exemplarSampler) {
@@ -64,7 +60,7 @@ class PrometheusHistogram extends TimeWindowFixedBoundaryHistogram {
             .merge(config), true);
 
         this.exemplarSampler = exemplarSampler;
-        if (isExemplarsEnabled()) {
+        if (exemplarSampler != null) {
             double[] originalBuckets = getBuckets();
             if (originalBuckets[originalBuckets.length - 1] != Double.POSITIVE_INFINITY) {
                 this.buckets = Arrays.copyOf(originalBuckets, originalBuckets.length + 1);
@@ -90,27 +86,30 @@ class PrometheusHistogram extends TimeWindowFixedBoundaryHistogram {
     @Override
     public void recordDouble(double value) {
         super.recordDouble(value);
-        if (isExemplarsEnabled()) {
-            updateExemplar(value, null, null);
+        if (exemplarSampler != null && lastExemplar != null && exemplars != null && buckets != null) {
+            updateExemplar(exemplars, lastExemplar, value, null, null, buckets, exemplarSampler);
         }
     }
 
     @Override
     public void recordLong(long value) {
         super.recordLong(value);
-        if (isExemplarsEnabled()) {
-            updateExemplar((double) value, NANOSECONDS, SECONDS);
+        if (exemplarSampler != null && exemplars != null && lastExemplar != null && buckets != null) {
+            updateExemplar(exemplars, lastExemplar, (double) value, NANOSECONDS, SECONDS, buckets, exemplarSampler);
         }
     }
 
-    private void updateExemplar(double value, @Nullable TimeUnit sourceUnit, @Nullable TimeUnit destinationUnit) {
-        int index = leastLessThanOrEqualTo(value);
+    private void updateExemplar(AtomicReferenceArray<Exemplar> exemplars, AtomicReference<Exemplar> lastExemplar,
+            double value, @Nullable TimeUnit sourceUnit, @Nullable TimeUnit destinationUnit, double[] buckets,
+            HistogramExemplarSampler exemplarSampler) {
+        int index = leastLessThanOrEqualTo(value, buckets);
         index = (index == -1) ? exemplars.length() - 1 : index;
-        updateExemplar(value, sourceUnit, destinationUnit, index);
+        updateExemplar(exemplars, lastExemplar, value, sourceUnit, destinationUnit, buckets, index, exemplarSampler);
     }
 
-    private void updateExemplar(double value, @Nullable TimeUnit sourceUnit, @Nullable TimeUnit destinationUnit,
-            int index) {
+    private void updateExemplar(AtomicReferenceArray<Exemplar> exemplars, AtomicReference<Exemplar> lastExemplar,
+            double value, @Nullable TimeUnit sourceUnit, @Nullable TimeUnit destinationUnit, double[] buckets,
+            int index, HistogramExemplarSampler exemplarSampler) {
         double bucketFrom = (index == 0) ? Double.NEGATIVE_INFINITY : buckets[index - 1];
         double bucketTo = buckets[index];
         Exemplar previusBucketExemplar;
@@ -129,9 +128,8 @@ class PrometheusHistogram extends TimeWindowFixedBoundaryHistogram {
                         && lastExemplar.compareAndSet(previousLastExemplar, nextExemplar)));
     }
 
-    @Nullable
-    Exemplar[] exemplars() {
-        if (isExemplarsEnabled()) {
+    Exemplar @Nullable [] exemplars() {
+        if (isExemplarsEnabled() && exemplars != null) {
             Exemplar[] exemplarsArray = new Exemplar[this.exemplars.length()];
             for (int i = 0; i < this.exemplars.length(); i++) {
                 exemplarsArray[i] = this.exemplars.get(i);
@@ -144,15 +142,19 @@ class PrometheusHistogram extends TimeWindowFixedBoundaryHistogram {
         }
     }
 
-    @Nullable
-    Exemplar lastExemplar() {
-        return this.lastExemplar.get();
+    @Nullable Exemplar lastExemplar() {
+        if (isExemplarsEnabled() && lastExemplar != null) {
+            return this.lastExemplar.get();
+        }
+        else {
+            return null;
+        }
     }
 
     /**
      * The least bucket that is less than or equal to a sample.
      */
-    private int leastLessThanOrEqualTo(double key) {
+    private int leastLessThanOrEqualTo(double key, double[] buckets) {
         int low = 0;
         int high = buckets.length - 1;
 
