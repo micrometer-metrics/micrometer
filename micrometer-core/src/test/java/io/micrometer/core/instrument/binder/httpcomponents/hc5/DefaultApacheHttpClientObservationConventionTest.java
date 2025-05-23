@@ -15,7 +15,6 @@
  */
 package io.micrometer.core.instrument.binder.httpcomponents.hc5;
 
-import io.micrometer.common.KeyValue;
 import org.apache.hc.client5.http.HttpRoute;
 import org.apache.hc.client5.http.async.methods.SimpleHttpRequest;
 import org.apache.hc.client5.http.async.methods.SimpleHttpResponse;
@@ -67,8 +66,7 @@ class DefaultApacheHttpClientObservationConventionTest {
     void shouldContributeExceptionNoneWhenSuccess() {
         HttpClientContext clientContext = HttpClientContext.create();
         ApacheHttpClientContext context = new ApacheHttpClientContext(null, clientContext);
-        assertThat(observationConvention.getLowCardinalityKeyValues(context))
-            .contains(EXCEPTION.withValue(KeyValue.NONE_VALUE));
+        assertThat(observationConvention.getLowCardinalityKeyValues(context)).contains(EXCEPTION.withNoneValue());
     }
 
     @Test
