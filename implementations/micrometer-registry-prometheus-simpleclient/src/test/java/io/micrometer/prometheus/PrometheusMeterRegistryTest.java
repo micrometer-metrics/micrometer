@@ -15,10 +15,9 @@
  */
 package io.micrometer.prometheus;
 
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.Issue;
-import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.composite.CompositeMeterRegistry;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
@@ -29,6 +28,7 @@ import io.prometheus.client.exemplars.DefaultExemplarSampler;
 import io.prometheus.client.exemplars.tracer.common.SpanContextSupplier;
 import io.prometheus.client.exporter.common.TextFormat;
 import org.assertj.core.api.Condition;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -314,8 +314,8 @@ class PrometheusMeterRegistryTest {
     }
 
     private int bufferLength() {
-        // noinspection ConstantConditions
-        return DistributionStatisticConfig.DEFAULT.getBufferLength();
+        Integer bufferLength = DistributionStatisticConfig.DEFAULT.getBufferLength();
+        return bufferLength != null ? bufferLength : 0;
     }
 
     @Issue("#61")
