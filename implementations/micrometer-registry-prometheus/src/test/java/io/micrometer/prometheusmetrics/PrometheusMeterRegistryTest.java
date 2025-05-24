@@ -371,8 +371,8 @@ class PrometheusMeterRegistryTest {
     }
 
     private int bufferLength() {
-        // noinspection ConstantConditions
-        return DistributionStatisticConfig.DEFAULT.getBufferLength();
+        Integer bufferLength = DistributionStatisticConfig.DEFAULT.getBufferLength();
+        return bufferLength != null ? bufferLength : 0;
     }
 
     @Issue("#61")
