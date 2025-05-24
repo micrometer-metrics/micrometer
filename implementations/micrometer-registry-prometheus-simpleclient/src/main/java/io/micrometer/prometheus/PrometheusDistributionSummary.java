@@ -15,11 +15,12 @@
  */
 package io.micrometer.prometheus;
 
+import io.micrometer.common.lang.internal.EnsuresNonNullIf;
+import io.micrometer.common.lang.internal.RequiresNonNull;
 import io.micrometer.core.instrument.AbstractDistributionSummary;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.DistributionSummary;
 import io.micrometer.core.instrument.distribution.*;
-import io.prometheus.client.exemplars.CounterExemplarSampler;
 import io.prometheus.client.exemplars.Exemplar;
 import io.prometheus.client.exemplars.ExemplarSampler;
 import org.jspecify.annotations.Nullable;
@@ -110,14 +111,14 @@ public class PrometheusDistributionSummary extends AbstractDistributionSummary {
         if (histogram != null) {
             histogram.recordDouble(amount);
         }
-        if (!histogramExemplarsEnabled && lastExemplar != null && exemplarSampler != null) {
-            updateLastExemplar(lastExemplar, amount, exemplarSampler);
+        if (isLastExemplarEnabled()) {
+            updateLastExemplar(amount);
         }
     }
 
     // Similar to exemplar.updateAndGet(...) but it does nothing if the next value is null
-    private void updateLastExemplar(AtomicReference<Exemplar> lastExemplar, double amount,
-            CounterExemplarSampler exemplarSampler) {
+    @RequiresNonNull({ "exemplarSampler", "lastExemplar" })
+    private void updateLastExemplar(double amount) {
         Exemplar prev;
         Exemplar next;
         do {
@@ -128,7 +129,7 @@ public class PrometheusDistributionSummary extends AbstractDistributionSummary {
     }
 
     Exemplar @Nullable [] histogramExemplars() {
-        if (histogramExemplarsEnabled && histogram != null) {
+        if (isHistogramExemplarsEnabled()) {
             return ((PrometheusHistogram) histogram).exemplars();
         }
         else {
@@ -137,12 +138,22 @@ public class PrometheusDistributionSummary extends AbstractDistributionSummary {
     }
 
     @Nullable Exemplar lastExemplar() {
-        if (histogramExemplarsEnabled && histogram != null) {
+        if (isHistogramExemplarsEnabled()) {
             return ((PrometheusHistogram) histogram).lastExemplar();
         }
         else {
             return lastExemplar != null ? lastExemplar.get() : null;
         }
+    }
+
+    @EnsuresNonNullIf({ "exemplarSampler", "lastExemplar" })
+    private boolean isLastExemplarEnabled() {
+        return !histogramExemplarsEnabled && lastExemplar != null && exemplarSampler != null;
+    }
+
+    @EnsuresNonNullIf("histogram")
+    private boolean isHistogramExemplarsEnabled() {
+        return histogramExemplarsEnabled && histogram != null;
     }
 
     @Override

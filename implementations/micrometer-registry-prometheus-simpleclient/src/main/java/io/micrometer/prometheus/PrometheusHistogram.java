@@ -16,6 +16,8 @@
 
 package io.micrometer.prometheus;
 
+import io.micrometer.common.lang.internal.EnsuresNonNullIf;
+import io.micrometer.common.lang.internal.RequiresNonNull;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.Histogram;
@@ -79,37 +81,37 @@ class PrometheusHistogram extends TimeWindowFixedBoundaryHistogram {
         }
     }
 
+    @EnsuresNonNullIf({ "exemplarSampler", "buckets", "exemplars", "lastExemplar" })
     boolean isExemplarsEnabled() {
-        return exemplarSampler != null;
+        return exemplarSampler != null && buckets != null && exemplars != null && lastExemplar != null;
     }
 
     @Override
     public void recordDouble(double value) {
         super.recordDouble(value);
-        if (exemplarSampler != null && lastExemplar != null && exemplars != null && buckets != null) {
-            updateExemplar(exemplars, lastExemplar, value, null, null, buckets, exemplarSampler);
+        if (isExemplarsEnabled()) {
+            updateExemplar(value, null, null);
         }
     }
 
     @Override
     public void recordLong(long value) {
         super.recordLong(value);
-        if (exemplarSampler != null && exemplars != null && lastExemplar != null && buckets != null) {
-            updateExemplar(exemplars, lastExemplar, (double) value, NANOSECONDS, SECONDS, buckets, exemplarSampler);
+        if (isExemplarsEnabled()) {
+            updateExemplar((double) value, NANOSECONDS, SECONDS);
         }
     }
 
-    private void updateExemplar(AtomicReferenceArray<Exemplar> exemplars, AtomicReference<Exemplar> lastExemplar,
-            double value, @Nullable TimeUnit sourceUnit, @Nullable TimeUnit destinationUnit, double[] buckets,
-            HistogramExemplarSampler exemplarSampler) {
-        int index = leastLessThanOrEqualTo(value, buckets);
+    @RequiresNonNull({ "exemplarSampler", "buckets", "exemplars", "lastExemplar" })
+    private void updateExemplar(double value, @Nullable TimeUnit sourceUnit, @Nullable TimeUnit destinationUnit) {
+        int index = leastLessThanOrEqualTo(value);
         index = (index == -1) ? exemplars.length() - 1 : index;
-        updateExemplar(exemplars, lastExemplar, value, sourceUnit, destinationUnit, buckets, index, exemplarSampler);
+        updateExemplar(value, sourceUnit, destinationUnit, index);
     }
 
-    private void updateExemplar(AtomicReferenceArray<Exemplar> exemplars, AtomicReference<Exemplar> lastExemplar,
-            double value, @Nullable TimeUnit sourceUnit, @Nullable TimeUnit destinationUnit, double[] buckets,
-            int index, HistogramExemplarSampler exemplarSampler) {
+    @RequiresNonNull({ "exemplarSampler", "buckets", "exemplars", "lastExemplar" })
+    private void updateExemplar(double value, @Nullable TimeUnit sourceUnit, @Nullable TimeUnit destinationUnit,
+            int index) {
         double bucketFrom = (index == 0) ? Double.NEGATIVE_INFINITY : buckets[index - 1];
         double bucketTo = buckets[index];
         Exemplar previusBucketExemplar;
@@ -129,7 +131,7 @@ class PrometheusHistogram extends TimeWindowFixedBoundaryHistogram {
     }
 
     Exemplar @Nullable [] exemplars() {
-        if (isExemplarsEnabled() && exemplars != null) {
+        if (isExemplarsEnabled()) {
             Exemplar[] exemplarsArray = new Exemplar[this.exemplars.length()];
             for (int i = 0; i < this.exemplars.length(); i++) {
                 exemplarsArray[i] = this.exemplars.get(i);
@@ -143,7 +145,7 @@ class PrometheusHistogram extends TimeWindowFixedBoundaryHistogram {
     }
 
     @Nullable Exemplar lastExemplar() {
-        if (isExemplarsEnabled() && lastExemplar != null) {
+        if (isExemplarsEnabled()) {
             return this.lastExemplar.get();
         }
         else {
@@ -154,7 +156,8 @@ class PrometheusHistogram extends TimeWindowFixedBoundaryHistogram {
     /**
      * The least bucket that is less than or equal to a sample.
      */
-    private int leastLessThanOrEqualTo(double key, double[] buckets) {
+    @RequiresNonNull("buckets")
+    private int leastLessThanOrEqualTo(double key) {
         int low = 0;
         int high = buckets.length - 1;
 
