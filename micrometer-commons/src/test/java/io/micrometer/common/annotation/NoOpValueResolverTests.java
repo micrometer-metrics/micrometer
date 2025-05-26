@@ -25,7 +25,7 @@ import static org.assertj.core.api.BDDAssertions.then;
 class NoOpValueResolverTests {
 
     @Test
-    void should_return_null() {
+    void should_return_empty_string() {
         then(new NoOpValueResolver().resolve("")).isBlank();
     }
 
