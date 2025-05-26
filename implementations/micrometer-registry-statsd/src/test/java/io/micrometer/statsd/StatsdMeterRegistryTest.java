@@ -102,6 +102,8 @@ class StatsdMeterRegistryTest {
             .then(() -> registry.counter("my.counter", "my.tag", "val").increment(2.1))
             .expectNext(line)
             .verifyComplete();
+
+        registry.close();
     }
 
     @ParameterizedTest
@@ -128,16 +130,20 @@ class StatsdMeterRegistryTest {
                 fail("Unexpected flavor");
         }
 
+        AtomicReference<StatsdMeterRegistry> registryReference = new AtomicReference<>();
         StepVerifier.withVirtualTime(() -> {
             final Processor<String, String> lines = lineProcessor();
             StatsdMeterRegistry registry = StatsdMeterRegistry.builder(config)
                 .clock(clock)
                 .lineSink(toLineSink(lines))
                 .build();
+            registryReference.set(registry);
 
             registry.gauge("my.gauge", Tags.of("my.tag", "val"), n);
             return lines;
         }).then(() -> clock.add(config.step())).thenAwait(config.step()).expectNext(line).verifyComplete();
+
+        registryReference.get().close();
     }
 
     @ParameterizedTest
@@ -171,6 +177,8 @@ class StatsdMeterRegistryTest {
             .then(() -> registry.timer("my.timer", "my.tag", "val").record(1, TimeUnit.MILLISECONDS))
             .expectNext(line)
             .verifyComplete();
+
+        registry.close();
     }
 
     @ParameterizedTest
@@ -204,6 +212,8 @@ class StatsdMeterRegistryTest {
             .then(() -> registry.summary("my.summary", "my.tag", "val").record(1))
             .expectNext(line)
             .verifyComplete();
+
+        registry.close();
     }
 
     @ParameterizedTest
@@ -236,12 +246,14 @@ class StatsdMeterRegistryTest {
 
         AtomicReference<LongTaskTimer> ltt = new AtomicReference<>();
 
+        AtomicReference<StatsdMeterRegistry> registryReference = new AtomicReference<>();
         StepVerifier.withVirtualTime(() -> {
             final Processor<String, String> lines = lineProcessor();
             StatsdMeterRegistry registry = StatsdMeterRegistry.builder(config)
                 .clock(clock)
                 .lineSink(toLineSink(lines, 2))
                 .build();
+            registryReference.set(registry);
 
             ltt.set(registry.more().longTaskTimer("my.long.task", "my.tag", "val"));
             return lines;
@@ -252,6 +264,8 @@ class StatsdMeterRegistryTest {
             .expectNext(expectLines[0])
             .expectNext(expectLines[1])
             .verifyComplete();
+
+        registryReference.get().close();
     }
 
     @Test
@@ -267,6 +281,8 @@ class StatsdMeterRegistryTest {
             .then(() -> registry.counter("my.counter", "my.tag", "val").increment(2.1))
             .expectNext("MY.COUNTER:2|c")
             .verifyComplete();
+
+        registry.close();
     }
 
     @Issue("#411")
@@ -282,6 +298,8 @@ class StatsdMeterRegistryTest {
 
             registry.counter("my.counter").increment();
         }
+
+        registry.close();
     }
 
     @ParameterizedTest
@@ -317,6 +335,8 @@ class StatsdMeterRegistryTest {
         assertThat(summaryHist3.value()).isEqualTo(0);
         assertThat(timerHist1.value()).isEqualTo(0);
         assertThat(timerHist2.value()).isEqualTo(0);
+
+        registry.close();
     }
 
     @Test
@@ -327,6 +347,8 @@ class StatsdMeterRegistryTest {
         // A io.micrometer.core.instrument.search.MeterNotFoundException is thrown if the
         // gauge isn't present
         registry.get("my.timer.histogram").tag("le", "+Inf").gauge();
+
+        registry.close();
     }
 
     @Test
@@ -339,6 +361,8 @@ class StatsdMeterRegistryTest {
         // A io.micrometer.core.instrument.search.MeterNotFoundException is thrown if the
         // gauge isn't present
         registry.get("my.distribution.histogram").tag("le", "+Inf").gauge();
+
+        registry.close();
     }
 
     @Test
@@ -352,6 +376,8 @@ class StatsdMeterRegistryTest {
 
         assertThat(timerHist.value()).isEqualTo(1);
         assertThat(count).isEqualTo(1);
+
+        registry.close();
     }
 
     @Test
@@ -367,6 +393,8 @@ class StatsdMeterRegistryTest {
             DistributionSummary.builder("my.summary2").publishPercentileHistogram(false).register(registry).record(20);
             DistributionSummary.builder("my.summary").publishPercentileHistogram(true).register(registry).record(2);
         }).expectNext("my.summary2:20|h").expectNext("my.summary:2|d").verifyComplete();
+
+        registry.close();
     }
 
     @Test
@@ -385,6 +413,8 @@ class StatsdMeterRegistryTest {
                 .register(registry)
                 .record(20, TimeUnit.SECONDS);
         }).expectNext("my.timer:2000|d").expectNext("my.timer2:20000|ms").verifyComplete();
+
+        registry.close();
     }
 
     @Test
@@ -392,6 +422,8 @@ class StatsdMeterRegistryTest {
         StatsdMeterRegistry registry = new StatsdMeterRegistry(configWithFlavor(StatsdFlavor.ETSY), clock);
         registry.stop();
         registry.counter("my.counter").increment();
+
+        registry.close();
     }
 
     @ParameterizedTest
@@ -436,6 +468,8 @@ class StatsdMeterRegistryTest {
                 assertThat(namingConventionUses.intValue()).isEqualTo(5);
                 break;
         }
+
+        registry.close();
     }
 
     @Test
@@ -460,6 +494,8 @@ class StatsdMeterRegistryTest {
         value.set(Double.POSITIVE_INFINITY);
         gauge.poll();
         assertThat(lineCount.get()).isEqualTo(1);
+
+        registry.close();
     }
 
     @Test
@@ -483,6 +519,8 @@ class StatsdMeterRegistryTest {
 
         registry.counter("some.metric").increment();
         assertThat(registry.processor.inners().count()).as("processor has no subscribers registered").isZero();
+
+        registry.close();
     }
 
     @Test
@@ -564,6 +602,8 @@ class StatsdMeterRegistryTest {
         registry.remove(registry.get("functioncounter").functionCounter());
         registry.poll();
         assertThat(lines.get("functioncounter")).isEqualTo(1);
+
+        registry.close();
     }
 
     @Test
@@ -575,6 +615,8 @@ class StatsdMeterRegistryTest {
         Gauge.builder("works", () -> 42).register(registry);
 
         assertThatCode(registry::poll).doesNotThrowAnyException();
+
+        registry.close();
     }
 
     @Test
@@ -596,6 +638,8 @@ class StatsdMeterRegistryTest {
         registry.poll();
 
         assertThat(maxCount.await(10, TimeUnit.SECONDS)).isTrue();
+
+        registry.close();
     }
 
     private UnicastProcessor<String> lineProcessor() {
