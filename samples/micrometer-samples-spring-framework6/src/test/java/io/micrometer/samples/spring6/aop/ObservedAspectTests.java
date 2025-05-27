@@ -29,7 +29,6 @@ import io.micrometer.observation.tck.TestObservationRegistry;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
-import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 import org.springframework.aop.aspectj.annotation.AspectJProxyFactory;
@@ -517,12 +516,12 @@ class ObservedAspectTests {
     static class CustomObservationConvention implements ObservationConvention<ObservedAspect.ObservedAspectContext> {
 
         @Override
-        public @NonNull KeyValues getLowCardinalityKeyValues(ObservedAspect.@NonNull ObservedAspectContext context) {
+        public KeyValues getLowCardinalityKeyValues(ObservedAspect.ObservedAspectContext context) {
             return KeyValues.of("test", "24");
         }
 
         @Override
-        public boolean supportsContext(Observation.@NonNull Context context) {
+        public boolean supportsContext(Observation.Context context) {
             return context instanceof ObservedAspect.ObservedAspectContext;
         }
 

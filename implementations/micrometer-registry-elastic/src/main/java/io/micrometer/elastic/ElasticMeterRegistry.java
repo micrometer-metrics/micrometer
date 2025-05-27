@@ -24,7 +24,6 @@ import io.micrometer.core.instrument.util.MeterPartition;
 import io.micrometer.core.instrument.util.NamedThreadFactory;
 import io.micrometer.core.ipc.http.HttpSender;
 import io.micrometer.core.ipc.http.HttpUrlConnectionSender;
-import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -376,7 +375,7 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
     }
 
     @Override
-    protected @NonNull TimeUnit getBaseTimeUnit() {
+    protected TimeUnit getBaseTimeUnit() {
         return TimeUnit.MILLISECONDS;
     }
 

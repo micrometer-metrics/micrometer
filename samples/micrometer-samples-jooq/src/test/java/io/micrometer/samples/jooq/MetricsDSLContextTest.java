@@ -24,7 +24,6 @@ import org.jooq.Record;
 import org.jooq.exception.DataAccessException;
 import org.jooq.impl.DSL;
 import org.jooq.impl.DefaultConfiguration;
-import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.Test;
 
 import java.sql.Connection;
@@ -193,7 +192,7 @@ class MetricsDSLContextTest {
             .isEqualTo("io.micrometer.core.instrument.binder.db.JooqExecuteListener");
     }
 
-    private @NonNull MetricsDSLContext createDatabase(Connection conn) {
+    private MetricsDSLContext createDatabase(Connection conn) {
         Configuration configuration = new DefaultConfiguration().set(conn).set(SQLDialect.H2);
 
         MetricsDSLContext jooq = MetricsDSLContext.withMetrics(DSL.using(configuration), meterRegistry, Tags.empty());

@@ -64,7 +64,7 @@ public interface ObservationDocumentation {
      * method or {@link #getDefaultConvention()}. You can't use both.
      * @return name
      */
-    @Nullable default String getName() {
+    default @Nullable String getName() {
         return null;
     }
 
@@ -74,7 +74,7 @@ public interface ObservationDocumentation {
      * {@link #getContextualName()}.
      * @return default naming convention
      */
-    @Nullable default Class<? extends ObservationConvention<? extends Observation.Context>> getDefaultConvention() {
+    default @Nullable Class<? extends ObservationConvention<? extends Observation.Context>> getDefaultConvention() {
         return null;
     }
 
@@ -84,7 +84,7 @@ public interface ObservationDocumentation {
      * method will override what {@link #getDefaultConvention()} has set.
      * @return contextual name
      */
-    @Nullable default String getContextualName() {
+    default @Nullable String getContextualName() {
         return null;
     }
 
