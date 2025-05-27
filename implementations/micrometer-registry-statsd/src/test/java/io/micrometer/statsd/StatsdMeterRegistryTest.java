@@ -129,20 +129,17 @@ class StatsdMeterRegistryTest {
                 fail("Unexpected flavor");
         }
 
-        AtomicReference<StatsdMeterRegistry> registryReference = new AtomicReference<>();
+        final Processor<String, String> lines = lineProcessor();
+        StatsdMeterRegistry registry = StatsdMeterRegistry.builder(config)
+            .clock(clock)
+            .lineSink(toLineSink(lines))
+            .build();
         StepVerifier.withVirtualTime(() -> {
-            final Processor<String, String> lines = lineProcessor();
-            StatsdMeterRegistry registry = StatsdMeterRegistry.builder(config)
-                .clock(clock)
-                .lineSink(toLineSink(lines))
-                .build();
-            registryReference.set(registry);
-
             registry.gauge("my.gauge", Tags.of("my.tag", "val"), n);
             return lines;
         }).then(() -> clock.add(config.step())).thenAwait(config.step()).expectNext(line).verifyComplete();
 
-        registryReference.get().close();
+        registry.close();
     }
 
     @ParameterizedTest
@@ -245,16 +242,12 @@ class StatsdMeterRegistryTest {
         }
 
         AtomicReference<LongTaskTimer> ltt = new AtomicReference<>();
-
-        AtomicReference<StatsdMeterRegistry> registryReference = new AtomicReference<>();
+        final Processor<String, String> lines = lineProcessor();
+        StatsdMeterRegistry registry = StatsdMeterRegistry.builder(config)
+            .clock(clock)
+            .lineSink(toLineSink(lines, 2))
+            .build();
         StepVerifier.withVirtualTime(() -> {
-            final Processor<String, String> lines = lineProcessor();
-            StatsdMeterRegistry registry = StatsdMeterRegistry.builder(config)
-                .clock(clock)
-                .lineSink(toLineSink(lines, 2))
-                .build();
-            registryReference.set(registry);
-
             ltt.set(registry.more().longTaskTimer("my.long.task", "my.tag", "val"));
             return lines;
         })
@@ -265,7 +258,7 @@ class StatsdMeterRegistryTest {
             .expectNext(expectLines[1])
             .verifyComplete();
 
-        registryReference.get().close();
+        registry.close();
     }
 
     @Test
