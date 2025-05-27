@@ -79,6 +79,8 @@ class StatsdMeterRegistryPublishTest {
         counter.increment();
         meterRegistry.close();
         assertThat(serverLatch.await(5, TimeUnit.SECONDS)).isTrue();
+
+        server.disposeNow();
     }
 
     @ParameterizedTest
@@ -97,6 +99,9 @@ class StatsdMeterRegistryPublishTest {
         counter.increment();
         counter.increment();
         assertThat(serverLatch.await(3, TimeUnit.SECONDS)).isTrue();
+
+        meterRegistry.close();
+        server.disposeNow();
     }
 
     @ParameterizedTest
@@ -125,7 +130,7 @@ class StatsdMeterRegistryPublishTest {
         if (protocol == StatsdProtocol.UDP) {
             await().until(() -> writeCount.get() == 4);
         }
-        startServer(protocol, port, server2Latch);
+        server = startServer(protocol, port, server2Latch);
         assertThat(server2Latch.getCount()).isEqualTo(3);
 
         await().until(() -> bound);
@@ -144,6 +149,9 @@ class StatsdMeterRegistryPublishTest {
         counter.increment(6);
         counter.increment(7);
         assertThat(server2Latch.await(3, TimeUnit.SECONDS)).isTrue();
+
+        meterRegistry.close();
+        server.disposeNow();
     }
 
     @ParameterizedTest
@@ -169,6 +177,9 @@ class StatsdMeterRegistryPublishTest {
         counter.increment();
         counter.increment();
         assertThat(serverLatch.await(1, TimeUnit.SECONDS)).isTrue();
+
+        meterRegistry.close();
+        server.disposeNow();
     }
 
     @Test
@@ -188,6 +199,8 @@ class StatsdMeterRegistryPublishTest {
         counter.increment();
         counter.increment();
         assertThat(latch.await(1, TimeUnit.SECONDS)).isTrue();
+
+        meterRegistry.close();
     }
 
     @ParameterizedTest
@@ -208,8 +221,10 @@ class StatsdMeterRegistryPublishTest {
         if (protocol == StatsdProtocol.UDP) {
             await().until(() -> writeCount.get() == 3);
         }
+        assertThat(serverLatch.getCount()).isEqualTo(3);
+
         CountDownLatch server2Latch = new CountDownLatch(3);
-        startServer(protocol, port, server2Latch);
+        server = startServer(protocol, port, server2Latch);
         if (protocol == StatsdProtocol.TCP || protocol == StatsdProtocol.UDS_DATAGRAM) {
             // client is null until connection established
             await().until(() -> meterRegistry.statsdConnection.get() != null);
@@ -228,6 +243,9 @@ class StatsdMeterRegistryPublishTest {
         counter.increment();
         counter.increment();
         assertThat(server2Latch.await(1, TimeUnit.SECONDS)).isTrue();
+
+        meterRegistry.close();
+        server.disposeNow();
     }
 
     @ParameterizedTest
@@ -243,11 +261,15 @@ class StatsdMeterRegistryPublishTest {
         server.disposeNow();
         meterRegistry.stop();
         await().until(() -> clientIsDisposed(meterRegistry));
+        assertThat(serverLatch.getCount()).isEqualTo(3);
+
         CountDownLatch server2Latch = new CountDownLatch(3);
         startServer(protocol, port, server2Latch);
         Counter counter = Counter.builder("my.counter").register(meterRegistry);
         IntStream.range(0, 100).forEach(counter::increment);
         assertThat(server2Latch.await(1, TimeUnit.SECONDS)).isFalse();
+
+        meterRegistry.close();
     }
 
     @ParameterizedTest
@@ -279,6 +301,9 @@ class StatsdMeterRegistryPublishTest {
         await().pollDelay(Duration.ofSeconds(1))
             .atMost(Duration.ofSeconds(3))
             .until(() -> serverMetricReadCount.get() == 3);
+
+        meterRegistry.close();
+        server.disposeNow();
     }
 
     @Issue("#2880")
@@ -299,6 +324,9 @@ class StatsdMeterRegistryPublishTest {
         IntStream.range(0, n).parallel().forEach(ignored -> counter.increment());
 
         assertThat(serverLatch.await(3, TimeUnit.SECONDS)).isTrue();
+
+        meterRegistry.close();
+        server.disposeNow();
     }
 
     private void skipUdsTestOnWindows(StatsdProtocol protocol) {
