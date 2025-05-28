@@ -21,9 +21,11 @@ import io.grpc.MethodDescriptor.MethodType;
 import io.grpc.ServerCall.Listener;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
+import io.micrometer.observation.transport.Propagator;
 import org.jspecify.annotations.Nullable;
 
 import java.net.URI;
+import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
@@ -61,10 +63,21 @@ public class ObservationGrpcServerInterceptor implements ServerInterceptor {
     public <ReqT, RespT> Listener<ReqT> interceptCall(ServerCall<ReqT, RespT> call, Metadata headers,
             ServerCallHandler<ReqT, RespT> next) {
         Supplier<GrpcServerObservationContext> contextSupplier = () -> {
-            GrpcServerObservationContext context = new GrpcServerObservationContext((carrier, keyName) -> {
-                Metadata.Key<String> key = KEY_CACHE.computeIfAbsent(keyName,
-                        (k) -> Metadata.Key.of(keyName, Metadata.ASCII_STRING_MARSHALLER));
-                return carrier.get(key);
+            GrpcServerObservationContext context = new GrpcServerObservationContext(new Propagator.Getter<Metadata>() {
+                @Override
+                public @Nullable String get(Metadata carrier, String keyName) {
+                    Metadata.Key<String> key = KEY_CACHE.computeIfAbsent(keyName,
+                            (k) -> Metadata.Key.of(keyName, Metadata.ASCII_STRING_MARSHALLER));
+                    return carrier.get(key);
+                }
+
+                @Override
+                public Iterable<String> getAll(Metadata carrier, String keyName) {
+                    Metadata.Key<String> key = KEY_CACHE.computeIfAbsent(keyName,
+                            (k) -> Metadata.Key.of(keyName, Metadata.ASCII_STRING_MARSHALLER));
+                    Iterable<String> all = carrier.getAll(key);
+                    return all == null ? Collections.emptyList() : all;
+                }
             });
             context.setCarrier(headers);
 
