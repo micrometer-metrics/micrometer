@@ -16,10 +16,7 @@
 package io.micrometer.core.instrument.binder.kafka;
 
 import io.micrometer.core.Issue;
-import io.micrometer.core.instrument.Measurement;
-import io.micrometer.core.instrument.Meter;
-import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.micrometer.core.testsupport.system.CapturedOutput;
 import io.micrometer.core.testsupport.system.OutputCaptureExtension;
@@ -33,6 +30,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
+import java.time.Duration;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -561,6 +559,45 @@ class KafkaMetricsTest {
         kafkaMetrics.checkAndBindMetrics(registry);
     }
 
+    @Test
+    void shouldDetectChangesAutomatically() {
+        Map<MetricName, Metric> kafkaMetricMap = new HashMap<>();
+        Supplier<Map<MetricName, ? extends Metric>> supplier = () -> kafkaMetricMap;
+        ScheduledExecutorService customScheduler = Executors.newScheduledThreadPool(1);
+        kafkaMetrics = new KafkaMetrics(supplier, Tags.empty(), customScheduler, Duration.ofMillis(100));
+        MeterRegistry registry = new SimpleMeterRegistry();
+        kafkaMetrics.bindTo(registry);
+        assertThat(registry.getMeters()).isEmpty();
+
+        KafkaMetric aMetric = createKafkaMetric(createMetricName("a"), 1);
+        KafkaMetric bMetric = createKafkaMetric(createMetricName("b"), 2);
+        KafkaMetric cMetric = createKafkaMetric(createMetricName("c"), 3);
+
+        kafkaMetricMap.put(aMetric.metricName(), aMetric);
+        await().untilAsserted(() -> assertThat(registry.getMeters()).hasSize(1));
+        assertThat(registry.find("kafka.test.a").gauge().value()).isEqualTo(1.0);
+
+        kafkaMetricMap.clear();
+        await().untilAsserted(() -> assertThat(registry.getMeters()).isEmpty());
+
+        kafkaMetricMap.put(aMetric.metricName(), aMetric);
+        kafkaMetricMap.put(bMetric.metricName(), bMetric);
+        await().untilAsserted(() -> assertThat(registry.getMeters()).hasSize(2));
+        assertThat(registry.find("kafka.test.a").gauge().value()).isEqualTo(1.0);
+        assertThat(registry.find("kafka.test.b").gauge().value()).isEqualTo(2.0);
+
+        kafkaMetricMap.remove(aMetric.metricName());
+        await().untilAsserted(() -> assertThat(registry.getMeters()).hasSize(1));
+        assertThat(registry.find("kafka.test.b").gauge().value()).isEqualTo(2.0);
+
+        KafkaMetric bMetricModified = createKafkaMetric(createMetricName("b"), 42);
+        kafkaMetricMap.put(bMetricModified.metricName(), bMetricModified);
+        kafkaMetricMap.put(cMetric.metricName(), cMetric);
+        await().untilAsserted(() -> assertThat(registry.getMeters()).hasSize(2));
+        assertThat(registry.find("kafka.test.b").gauge().value()).isEqualTo(42.0);
+        assertThat(registry.find("kafka.test.c").gauge().value()).isEqualTo(3.0);
+    }
+
     private MetricName createMetricName(String name) {
         return createMetricName(name, Collections.emptyMap());
     }
@@ -587,6 +624,10 @@ class KafkaMetricsTest {
         return new KafkaMetric(this, metricName, new Value(), new MetricConfig(), Time.SYSTEM);
     }
 
+    private KafkaMetric createKafkaMetric(MetricName metricName, int value) {
+        return new KafkaMetric(this, metricName, new KafkaGauge(value), new MetricConfig(), Time.SYSTEM);
+    }
+
     private static boolean isDefaultMetricsSchedulerThreadAlive() {
         return Thread.getAllStackTraces()
             .keySet()
@@ -594,6 +635,21 @@ class KafkaMetricsTest {
             .filter(Thread::isAlive)
             .map(Thread::getName)
             .anyMatch(name -> name.startsWith("micrometer-kafka-metrics"));
+    }
+
+    private static class KafkaGauge implements org.apache.kafka.common.metrics.Gauge<Integer> {
+
+        private final int value;
+
+        private KafkaGauge(int value) {
+            this.value = value;
+        }
+
+        @Override
+        public Integer value(MetricConfig config, long now) {
+            return value;
+        }
+
     }
 
 }

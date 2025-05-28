@@ -99,7 +99,7 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
 
     private final boolean schedulerExternallyManaged;
 
-    private final long refreshIntervalMillis;
+    private final Duration refreshInterval;
 
     @Nullable
     private Iterable<Tag> commonTags;
@@ -120,17 +120,8 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
         this(metricsSupplier, emptyList());
     }
 
-    KafkaMetrics(Supplier<Map<MetricName, ? extends Metric>> metricsSupplier, Duration refreshInterval) {
-        this(metricsSupplier, emptyList(), refreshInterval);
-    }
-
     KafkaMetrics(Supplier<Map<MetricName, ? extends Metric>> metricsSupplier, Iterable<Tag> extraTags) {
         this(metricsSupplier, extraTags, createDefaultScheduler(), false, DEFAULT_REFRESH_INTERVAL);
-    }
-
-    KafkaMetrics(Supplier<Map<MetricName, ? extends Metric>> metricsSupplier, Iterable<Tag> extraTags,
-            Duration refreshInterval) {
-        this(metricsSupplier, extraTags, createDefaultScheduler(), false, refreshInterval);
     }
 
     KafkaMetrics(Supplier<Map<MetricName, ? extends Metric>> metricsSupplier, Iterable<Tag> extraTags,
@@ -149,7 +140,7 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
         this.extraTags = extraTags;
         this.scheduler = scheduler;
         this.schedulerExternallyManaged = schedulerExternallyManaged;
-        this.refreshIntervalMillis = refreshInterval.toMillis();
+        this.refreshInterval = refreshInterval;
     }
 
     @Override
@@ -159,8 +150,8 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
         commonTags = getCommonTags(registry);
         prepareToBindMetrics(registry);
         checkAndBindMetrics(registry);
-        scheduler.scheduleAtFixedRate(() -> checkAndBindMetrics(registry), refreshIntervalMillis, refreshIntervalMillis,
-                TimeUnit.MILLISECONDS);
+        scheduler.scheduleAtFixedRate(() -> checkAndBindMetrics(registry), refreshInterval.toMillis(),
+                refreshInterval.toMillis(), TimeUnit.MILLISECONDS);
     }
 
     private Iterable<Tag> getCommonTags(MeterRegistry registry) {

@@ -67,11 +67,21 @@ public class KafkaClientMetrics extends KafkaMetrics {
      * {@link #close() closed}. A scheduler can be shared among multiple instances of
      * {@link KafkaClientMetrics} to reduce resource usage by reducing the number of
      * threads if there will be many instances.
+     * <p>
+     * The refresh interval governs how frequently should Micrometer call the Kafka
+     * Client's Metrics API to discover new metrics to register and discard old ones since
+     * the Kafka Client can add/remove/recreate metrics on-the-fly. Please notice that
+     * this is not for fetching values for already registered metrics but to update the
+     * list of registered metrics when the Kafka Client adds/removes/recreates them. It is
+     * the responsibility of the caller to choose the right value since this process can
+     * be expensive and metrics can appear and disappear without being published if the
+     * interval is not chosen appropriately.
      * @param kafkaProducer producer instance to be instrumented
      * @param tags additional tags
      * @param scheduler custom scheduler to check and bind metrics
-     * @param refreshInterval interval of refreshing
-     * @since 1.14.0
+     * @param refreshInterval interval of discovering new/removed/recreated metrics by the
+     * Kafka Client
+     * @since 1.16.0
      */
     public KafkaClientMetrics(Producer<?, ?> kafkaProducer, Iterable<Tag> tags, ScheduledExecutorService scheduler,
             Duration refreshInterval) {
@@ -90,27 +100,8 @@ public class KafkaClientMetrics extends KafkaMetrics {
     /**
      * Kafka {@link Producer} metrics binder
      * @param kafkaProducer producer instance to be instrumented
-     * @param tags additional tags
-     * @param refreshInterval interval of refreshing
-     */
-    public KafkaClientMetrics(Producer<?, ?> kafkaProducer, Iterable<Tag> tags, Duration refreshInterval) {
-        super(kafkaProducer::metrics, tags, refreshInterval);
-    }
-
-    /**
-     * Kafka {@link Producer} metrics binder
-     * @param kafkaProducer producer instance to be instrumented
      */
     public KafkaClientMetrics(Producer<?, ?> kafkaProducer) {
-        super(kafkaProducer::metrics);
-    }
-
-    /**
-     * Kafka {@link Producer} metrics binder
-     * @param kafkaProducer producer instance to be instrumented
-     * @param refreshInterval interval of refreshing
-     */
-    public KafkaClientMetrics(Producer<?, ?> kafkaProducer, Duration refreshInterval) {
         super(kafkaProducer::metrics);
     }
 
@@ -135,11 +126,21 @@ public class KafkaClientMetrics extends KafkaMetrics {
      * {@link #close() closed}. A scheduler can be shared among multiple instances of
      * {@link KafkaClientMetrics} to reduce resource usage by reducing the number of
      * threads if there will be many instances.
+     * <p>
+     * The refresh interval governs how frequently should Micrometer call the Kafka
+     * Client's Metrics API to discover new metrics to register and discard old ones since
+     * the Kafka Client can add/remove/recreate metrics on-the-fly. Please notice that
+     * this is not for fetching values for already registered metrics but to update the
+     * list of registered metrics when the Kafka Client adds/removes/recreates them. It is
+     * the responsibility of the caller to choose the right value since this process can
+     * be expensive and metrics can appear and disappear without being published if the
+     * interval is not chosen appropriately.
      * @param kafkaConsumer consumer instance to be instrumented
      * @param tags additional tags
      * @param scheduler custom scheduler to check and bind metrics
-     * @param refreshInterval interval of refreshing
-     * @since 1.14.0
+     * @param refreshInterval interval of discovering new/removed/recreated metrics by the
+     * Kafka Client
+     * @since 1.16.0
      */
     public KafkaClientMetrics(Consumer<?, ?> kafkaConsumer, Iterable<Tag> tags, ScheduledExecutorService scheduler,
             Duration refreshInterval) {
@@ -158,28 +159,9 @@ public class KafkaClientMetrics extends KafkaMetrics {
     /**
      * Kafka {@link Consumer} metrics binder
      * @param kafkaConsumer consumer instance to be instrumented
-     * @param refreshInterval interval of refreshing
-     * @param tags additional tags
-     */
-    public KafkaClientMetrics(Consumer<?, ?> kafkaConsumer, Iterable<Tag> tags, Duration refreshInterval) {
-        super(kafkaConsumer::metrics, tags, refreshInterval);
-    }
-
-    /**
-     * Kafka {@link Consumer} metrics binder
-     * @param kafkaConsumer consumer instance to be instrumented
      */
     public KafkaClientMetrics(Consumer<?, ?> kafkaConsumer) {
         super(kafkaConsumer::metrics);
-    }
-
-    /**
-     * Kafka {@link Consumer} metrics binder
-     * @param kafkaConsumer consumer instance to be instrumented
-     * @param refreshInterval interval of refreshing
-     */
-    public KafkaClientMetrics(Consumer<?, ?> kafkaConsumer, Duration refreshInterval) {
-        super(kafkaConsumer::metrics, refreshInterval);
     }
 
     /**
@@ -203,11 +185,21 @@ public class KafkaClientMetrics extends KafkaMetrics {
      * instance is {@link #close() closed}. A scheduler can be shared among multiple
      * instances of {@link KafkaClientMetrics} to reduce resource usage by reducing the
      * number of threads if there will be many instances.
+     * <p>
+     * The refresh interval governs how frequently should Micrometer call the Kafka
+     * Client's Metrics API to discover new metrics to register and discard old ones since
+     * the Kafka Client can add/remove/recreate metrics on-the-fly. Please notice that
+     * this is not for fetching values for already registered metrics but to update the
+     * list of registered metrics when the Kafka Client adds/removes/recreates them. It is
+     * the responsibility of the caller to choose the right value since this process can
+     * be expensive and metrics can appear and disappear without being published if the
+     * interval is not chosen appropriately.
      * @param adminClient instance to be instrumented
      * @param tags additional tags
      * @param scheduler custom scheduler to check and bind metrics
-     * @param refreshInterval interval of refreshing
-     * @since 1.14.0
+     * @param refreshInterval interval of discovering new/removed/recreated metrics by the
+     * Kafka Client
+     * @since 1.16.0
      */
     public KafkaClientMetrics(AdminClient adminClient, Iterable<Tag> tags, ScheduledExecutorService scheduler,
             Duration refreshInterval) {
@@ -226,28 +218,9 @@ public class KafkaClientMetrics extends KafkaMetrics {
     /**
      * Kafka {@link AdminClient} metrics binder
      * @param adminClient instance to be instrumented
-     * @param tags additional tags
-     * @param refreshInterval interval of refreshing
-     */
-    public KafkaClientMetrics(AdminClient adminClient, Iterable<Tag> tags, Duration refreshInterval) {
-        super(adminClient::metrics, tags);
-    }
-
-    /**
-     * Kafka {@link AdminClient} metrics binder
-     * @param adminClient instance to be instrumented
      */
     public KafkaClientMetrics(AdminClient adminClient) {
         super(adminClient::metrics);
-    }
-
-    /**
-     * Kafka {@link AdminClient} metrics binder
-     * @param adminClient instance to be instrumented
-     * @param refreshInterval interval of refreshing
-     */
-    public KafkaClientMetrics(AdminClient adminClient, Duration refreshInterval) {
-        super(adminClient::metrics, refreshInterval);
     }
 
 }
