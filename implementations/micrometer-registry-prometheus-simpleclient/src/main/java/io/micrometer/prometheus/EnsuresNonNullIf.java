@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.common.lang.internal;
+package io.micrometer.prometheus;
 
 import java.lang.annotation.*;
 
@@ -23,7 +23,7 @@ import java.lang.annotation.*;
 @Documented
 @Retention(RetentionPolicy.CLASS)
 @Target(ElementType.METHOD)
-public @interface EnsuresNonNullIf {
+@interface EnsuresNonNullIf {
 
     /**
      * The list of fields that are non-null after the method returns the given result.

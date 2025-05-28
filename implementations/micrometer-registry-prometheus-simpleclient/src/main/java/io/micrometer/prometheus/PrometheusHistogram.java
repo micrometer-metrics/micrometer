@@ -16,8 +16,6 @@
 
 package io.micrometer.prometheus;
 
-import io.micrometer.common.lang.internal.EnsuresNonNullIf;
-import io.micrometer.common.lang.internal.RequiresNonNull;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.Histogram;
