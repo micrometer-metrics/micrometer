@@ -1258,14 +1258,14 @@ class DynatraceExporterV2Test {
     private String extractBase(String line) {
         if (line.startsWith("#"))
             return String.join(" ", Arrays.copyOfRange(line.split(" ", 3), 0, 2));
-        return line.split(",", 2)[0] + " " + line.split(" ")[1]
-                + (line.split(" ").length == 3 ? " " + line.split(" ")[2] : "");
+        String[] parts = line.split(" ", -1);
+        return line.split(",", 2)[0] + " " + parts[1] + (parts.length == 3 ? " " + parts[2] : "");
     }
 
     private List<String> extractDims(String line) {
         if (line.startsWith("#"))
             return Arrays.asList(line.split(" ", 3)[2].split(","));
-        return Arrays.asList(line.split(",", 2)[1].split(" ")[0].split(","));
+        return Arrays.asList(line.split(",", 2)[1].split(" ", -1)[0].split(",", -1));
     }
 
 }
