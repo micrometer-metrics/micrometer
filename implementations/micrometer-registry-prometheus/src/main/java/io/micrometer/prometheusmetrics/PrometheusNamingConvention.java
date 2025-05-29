@@ -15,10 +15,10 @@
  */
 package io.micrometer.prometheusmetrics;
 
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.prometheus.metrics.model.snapshots.PrometheusNaming;
+import org.jspecify.annotations.Nullable;
 
 /**
  * See <a href=

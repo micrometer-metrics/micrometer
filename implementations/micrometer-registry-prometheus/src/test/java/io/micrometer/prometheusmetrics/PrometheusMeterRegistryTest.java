@@ -15,11 +15,10 @@
  */
 package io.micrometer.prometheusmetrics;
 
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.Issue;
+import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.LongTaskTimer.Sample;
 import io.micrometer.core.instrument.Timer;
-import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.binder.jvm.JvmInfoMetrics;
 import io.micrometer.core.instrument.composite.CompositeMeterRegistry;
@@ -31,6 +30,7 @@ import io.prometheus.metrics.model.registry.PrometheusRegistry;
 import io.prometheus.metrics.model.snapshots.*;
 import io.prometheus.metrics.tracer.common.SpanContext;
 import org.assertj.core.api.Condition;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -371,8 +371,8 @@ class PrometheusMeterRegistryTest {
     }
 
     private int bufferLength() {
-        // noinspection ConstantConditions
-        return DistributionStatisticConfig.DEFAULT.getBufferLength();
+        Integer bufferLength = DistributionStatisticConfig.DEFAULT.getBufferLength();
+        return bufferLength != null ? bufferLength : 0;
     }
 
     @Issue("#61")
@@ -532,7 +532,7 @@ class PrometheusMeterRegistryTest {
 
     private void assertFilteredMetricSnapshots(String[] includedNames, String[] expectedNames) {
         Set<String> includeNameSet = new HashSet<>(Arrays.asList(includedNames));
-        MetricSnapshots snapshots = registry.getPrometheusRegistry().scrape(name -> includeNameSet.contains(name));
+        MetricSnapshots snapshots = registry.getPrometheusRegistry().scrape(includeNameSet::contains);
         String[] names = snapshots.stream()
             .map(snapshot -> snapshot.getMetadata().getPrometheusName())
             .toArray(String[]::new);
@@ -1041,14 +1041,14 @@ class PrometheusMeterRegistryTest {
     @Test
     void scrapeWhenMeterNameContainsSingleCharacter() {
         registry.counter("c").increment();
-        assertThatNoException().isThrownBy(() -> registry.scrape());
+        assertThatNoException().isThrownBy(registry::scrape);
     }
 
     @Test
     void createdTimestampEnabled() {
         PrometheusConfig config = new PrometheusConfig() {
             @Override
-            public String get(String key) {
+            public @Nullable String get(String key) {
                 return null;
             }
 
@@ -1087,7 +1087,7 @@ class PrometheusMeterRegistryTest {
     void createdTimestampDisabled() {
         PrometheusConfig config = new PrometheusConfig() {
             @Override
-            public String get(String key) {
+            public @Nullable String get(String key) {
                 return null;
             }
 
@@ -1127,7 +1127,7 @@ class PrometheusMeterRegistryTest {
     private PrometheusMeterRegistry createPrometheusMeterRegistryWithProperties(Properties properties) {
         PrometheusConfig prometheusConfig = new PrometheusConfig() {
             @Override
-            public String get(String key) {
+            public @Nullable String get(String key) {
                 return null;
             }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 VMware, Inc.
+ * Copyright 2025 VMware, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,13 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/**
- * Deprecated since 1.13.0, use io.micrometer:micrometer-registry-prometheus instead, the
- * new package name is {@code io.micrometer.prometheusmetrics}.
- */
-@NullMarked
-@Deprecated
 package io.micrometer.prometheus;
 
-import org.jspecify.annotations.NullMarked;
+import java.lang.annotation.*;
+
+/**
+ * This is for internal use only.
+ */
+@Documented
+@Retention(RetentionPolicy.CLASS)
+@Target(ElementType.METHOD)
+@interface RequiresNonNull {
+
+    /**
+     * The list of fields that are non-null.
+     */
+    String[] value();
+
+}
