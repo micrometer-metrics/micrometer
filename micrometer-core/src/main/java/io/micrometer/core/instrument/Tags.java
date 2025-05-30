@@ -112,12 +112,14 @@ public final class Tags implements Iterable<Tag> {
      * @return a new {@code Tags} instance
      */
     public Tags and(@Nullable Iterable<? extends Tag> tags) {
-        if (tags == null || tags == EMPTY || !tags.iterator().hasNext()) {
+        if (tags == null || tags == EMPTY) {
             return this;
         }
-
-        if (this.tags.length == 0) {
+        else if (this.tags.length == 0) {
             return Tags.of(tags);
+        }
+        else if (!tags.iterator().hasNext()) {
+            return this;
         }
 
         return and(Tags.of(tags).tags);

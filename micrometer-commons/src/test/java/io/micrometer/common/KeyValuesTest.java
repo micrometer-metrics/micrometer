@@ -18,9 +18,8 @@ package io.micrometer.common;
 
 import com.sun.management.ThreadMXBean;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.condition.DisabledForJreRange;
-import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
-import org.junit.jupiter.api.condition.JRE;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import java.lang.management.ManagementFactory;
 import java.util.*;
@@ -38,9 +37,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  * @author Johnny Lim
  */
 class KeyValuesTest {
-
-    // Should match "Eclipse OpenJ9 VM" and "IBM J9 VM"
-    private static final String JAVA_VM_NAME_J9_REGEX = ".*J9 VM$";
 
     @Test
     void dedup() {
@@ -340,42 +336,56 @@ class KeyValuesTest {
     }
 
     // gh-3313
-    @Test
-    @DisabledIfSystemProperty(named = "java.vm.name", matches = JAVA_VM_NAME_J9_REGEX,
-            disabledReason = "Sun ThreadMXBean with allocation counter not available")
-    @DisabledForJreRange(min = JRE.JAVA_19, max = JRE.JAVA_19,
-            disabledReason = "https://github.com/micrometer-metrics/micrometer/issues/3436")
-    void andEmptyDoesNotAllocate() {
-        ThreadMXBean threadMXBean = (ThreadMXBean) ManagementFactory.getThreadMXBean();
-        long currentThreadId = Thread.currentThread().getId();
+    @AllocationTest
+    @MethodSource("emptyNull_noAllocationArgs")
+    void anyKeyValuesAnd_noAllocation(Iterable<KeyValue> arg) {
         KeyValues keyValues = KeyValues.of("a", "b");
-        KeyValues extraKeyValues = KeyValues.empty();
 
-        long allocatedBytesBefore = threadMXBean.getThreadAllocatedBytes(currentThreadId);
-        KeyValues combined = keyValues.and(extraKeyValues);
-        long allocatedBytes = threadMXBean.getThreadAllocatedBytes(currentThreadId) - allocatedBytesBefore;
+        assertNoAllocations(() -> keyValues.and(arg));
+    }
 
-        assertThat(combined).isEqualTo(keyValues);
-        assertThat(allocatedBytes).isEqualTo(0);
+    @ParameterizedTest
+    @MethodSource("emptyNull_noAllocationArgs")
+    void anyKeyValuesAnd_sameAsThis(Iterable<KeyValue> arg) {
+        KeyValues tags = KeyValues.of("a", "b");
+        KeyValues combined = tags.and(arg);
+
+        assertThat(combined).isSameAs(tags);
+    }
+
+    static Stream<Iterable<KeyValue>> emptyNull_noAllocationArgs() {
+        // Note, new ArrayList<>() etc will allocate an iterator
+        return Stream.of(KeyValues.empty(), Collections.emptyList(), null);
+    }
+
+    @AllocationTest
+    @MethodSource("nonEmptyKeyValues_noAllocationArgs")
+    @MethodSource("emptyNull_noAllocationArgs")
+    void emptyAnd_noAllocation(Iterable<KeyValue> arg) {
+        assertNoAllocations(() -> KeyValues.empty().and(arg));
     }
 
     // gh-3313
-    @Test
-    @DisabledIfSystemProperty(named = "java.vm.name", matches = JAVA_VM_NAME_J9_REGEX,
-            disabledReason = "Sun ThreadMXBean with allocation counter not available")
-    @DisabledForJreRange(min = JRE.JAVA_19, max = JRE.JAVA_19,
-            disabledReason = "https://github.com/micrometer-metrics/micrometer/issues/3436")
-    void ofEmptyDoesNotAllocate() {
+    @AllocationTest
+    @MethodSource("nonEmptyKeyValues_noAllocationArgs")
+    @MethodSource("emptyNull_noAllocationArgs")
+    void of_noAllocation(Iterable<KeyValue> arg) {
+        assertNoAllocations(() -> KeyValues.of(arg));
+    }
+
+    static Stream<Iterable<KeyValue>> nonEmptyKeyValues_noAllocationArgs() {
+        return Stream.of(KeyValues.of("any", "thing"));
+    }
+
+    private void assertNoAllocations(Runnable runnable) {
         ThreadMXBean threadMXBean = (ThreadMXBean) ManagementFactory.getThreadMXBean();
         long currentThreadId = Thread.currentThread().getId();
-        KeyValues extraKeyValues = KeyValues.empty();
 
         long allocatedBytesBefore = threadMXBean.getThreadAllocatedBytes(currentThreadId);
-        KeyValues of = KeyValues.of(extraKeyValues);
+        runnable.run();
         long allocatedBytes = threadMXBean.getThreadAllocatedBytes(currentThreadId) - allocatedBytesBefore;
 
-        assertThat(of).isEqualTo(KeyValues.empty());
-        assertThat(allocatedBytes).isEqualTo(0);
+        assertThat(allocatedBytes).isZero();
     }
 
     private void assertKeyValues(KeyValues keyValues, String... expectedKeyValues) {
