@@ -17,10 +17,10 @@ package io.micrometer.core.instrument.config;
 
 import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.config.filter.TagRenamingFilter;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 
 import java.time.Duration;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -69,23 +69,7 @@ public interface MeterFilter {
      * @return A tag-renaming filter.
      */
     static MeterFilter renameTag(String meterNamePrefix, String fromTagKey, String toTagKey) {
-        return new MeterFilter() {
-            @Override
-            public Meter.Id map(Meter.Id id) {
-                if (!id.getName().startsWith(meterNamePrefix))
-                    return id;
-
-                List<Tag> tags = new ArrayList<>();
-                for (Tag tag : id.getTagsAsIterable()) {
-                    if (tag.getKey().equals(fromTagKey))
-                        tags.add(Tag.of(toTagKey, tag.getValue()));
-                    else
-                        tags.add(tag);
-                }
-
-                return id.replaceTags(tags);
-            }
-        };
+        return TagRenamingFilter.of(meterNamePrefix, fromTagKey, toTagKey);
     }
 
     /**
