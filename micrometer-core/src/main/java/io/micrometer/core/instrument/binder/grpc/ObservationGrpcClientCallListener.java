@@ -51,7 +51,8 @@ class ObservationGrpcClientCallListener<RespT> extends SimpleForwardingClientCal
         GrpcClientObservationContext context = (GrpcClientObservationContext) this.observation.getContext();
         context.setStatusCode(status.getCode());
         context.setTrailers(trailers);
-        if (status.getCause() != null) {
+        if (!Status.Code.OK.equals(status.getCode()) && !Status.Code.CANCELLED.equals(status.getCode())
+                && status.getCause() != null) {
             observation.error(status.getCause());
         }
         this.observation.stop();
