@@ -17,10 +17,13 @@ package io.micrometer.core.instrument.config;
 
 import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.config.filter.MultiTagInsertionFilter;
+import io.micrometer.core.instrument.config.filter.NoOpFilter;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -53,12 +56,34 @@ public interface MeterFilter {
      * @return A common tag filter.
      */
     static MeterFilter commonTags(Iterable<Tag> tags) {
-        return new MeterFilter() {
-            @Override
-            public Meter.Id map(Meter.Id id) {
-                return id.replaceTags(Tags.concat(tags, id.getTagsAsIterable()));
-            }
-        };
+        List<Tag> collected = stream(tags.spliterator(), false).collect(toList());
+
+        if (collected.isEmpty()) {
+            return NoOpFilter.create();
+        }
+
+        return MultiTagInsertionFilter.of(collected);
+    }
+
+    /**
+     * @see #commonTags(Iterable)
+     */
+    static MeterFilter commonTags(Tag... tags) {
+        return commonTags(Arrays.asList(tags));
+    }
+
+    /**
+     * @see #commonTags(Iterable)
+     */
+    static MeterFilter commonTags(String... tags) {
+        return commonTags(Tags.of(tags));
+    }
+
+    /**
+     * @see #commonTags(Iterable)
+     */
+    static MeterFilter commonTags(String key, String value) {
+        return commonTags(Tag.of(key, value));
     }
 
     /**
