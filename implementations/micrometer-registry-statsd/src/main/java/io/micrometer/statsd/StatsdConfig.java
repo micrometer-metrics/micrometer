@@ -146,6 +146,15 @@ public interface StatsdConfig extends MeterRegistryConfig {
         return getBoolean(this, "buffered").orElse(true);
     }
 
+    /**
+     * @return {@code true} if the subscriber should continue to retry on the same address
+     * when the server is not reachable. Default is {@code true}. Otherwise, there's no
+     * retry and the subscription resumes from the start
+     */
+    default boolean fastRetry() {
+        return getBoolean(this, "fastRetry").orElse(true);
+    }
+
     @Override
     default Validated<?> validate() {
         return checkAll(this, checkRequired("flavor", StatsdConfig::flavor), checkRequired("host", StatsdConfig::host),
