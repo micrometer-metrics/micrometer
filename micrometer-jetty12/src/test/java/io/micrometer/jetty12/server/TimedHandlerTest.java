@@ -237,6 +237,9 @@ class TimedHandlerTest {
             assertThat(shutdownFuture.isDone()).isFalse();
 
             requestBFinish.countDown();
+            HttpTester.Response responseB = HttpTester.parseResponse(endpoint2.getResponse());
+            assertThat(responseB.getStatus()).isEqualTo(200);
+
             assertThat(shutdownFuture.isDone()).isFalse();
 
             requestAFinish.countDown();
