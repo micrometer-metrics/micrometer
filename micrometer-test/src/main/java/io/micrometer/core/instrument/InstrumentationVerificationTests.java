@@ -84,6 +84,12 @@ abstract class InstrumentationVerificationTests {
     // https://code-case.hashnode.dev/how-to-pass-parameterized-test-parameters-to-beforeeachaftereach-method-in-junit5
     static class AfterBeforeParameterResolver implements BeforeEachMethodAdapter, ParameterResolver {
 
+        private static final Set<String> PARAMETER_RESOLVERS = new HashSet<>(Arrays.asList(
+                // JUnit 5.13 and after
+                "org.junit.jupiter.params.ParameterizedTestMethodParameterResolver",
+                // JUnit 5.12 and before
+                "org.junit.jupiter.params.ParameterizedTestParameterResolver"));
+
         private ParameterResolver parameterisedTestParameterResolver = null;
 
         @Override
@@ -93,7 +99,7 @@ abstract class InstrumentationVerificationTests {
                 .filter(this::isParameterizedTestMethodParameterResolver)
                 .findFirst()
                 .orElseThrow(() -> new IllegalStateException(
-                        "ParameterizedTestMethodParameterResolver missed in the registry. Probably it's not a Parameterized Test"));
+                        "Parameterized test resolver was not found in JUnit's ExtensionRegistry. Probably it's not a Parameterized Test."));
         }
 
         @Override
@@ -114,9 +120,7 @@ abstract class InstrumentationVerificationTests {
         }
 
         private boolean isParameterizedTestMethodParameterResolver(ParameterResolver parameterResolver) {
-            return parameterResolver.getClass()
-                .getName()
-                .equals("org.junit.jupiter.params.ParameterizedTestMethodParameterResolver");
+            return PARAMETER_RESOLVERS.contains(parameterResolver.getClass().getName());
         }
 
         private MappedParameterContext getMappedContext(ParameterContext parameterContext,
