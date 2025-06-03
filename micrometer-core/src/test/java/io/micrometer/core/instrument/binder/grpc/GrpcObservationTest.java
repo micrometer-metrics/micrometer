@@ -338,6 +338,28 @@ class GrpcObservationTest {
             verifyHeaders();
         }
 
+        @Test
+        void cancelledRpc() {
+            SimpleServiceBlockingStub stub = SimpleServiceGrpc.newBlockingStub(channel);
+
+            SimpleRequest request = SimpleRequest.newBuilder().setRequestMessage("Hello").build();
+            io.grpc.Context.CancellableContext context = io.grpc.Context.current().withCancellation();
+            context.cancel(new RuntimeException("Cancelled!"));
+            assertThatExceptionOfType(StatusRuntimeException.class)
+                .isThrownBy(() -> context.run(() -> stub.unaryRpc(request)));
+
+            verifyClientContext("grpc.testing.SimpleService", "UnaryRpc", "grpc.testing.SimpleService/UnaryRpc",
+                    MethodType.UNARY);
+            assertThat(clientHandler.getContext().getStatusCode()).isEqualTo(Code.CANCELLED);
+            assertThat(clientHandler.getEvents()).containsExactly(GrpcClientEvents.MESSAGE_SENT);
+
+            TestObservationRegistryAssert.assertThat(observationRegistry).hasAnObservation(observationContextAssert -> {
+                observationContextAssert.doesNotHaveError();
+                observationContextAssert.hasNameEqualTo("grpc.client");
+                assertCommonKeyValueNames(observationContextAssert);
+            });
+        }
+
         private StreamObserver<SimpleResponse> createResponseObserver(List<String> messages, AtomicBoolean completed) {
             return new StreamObserver<>() {
 
