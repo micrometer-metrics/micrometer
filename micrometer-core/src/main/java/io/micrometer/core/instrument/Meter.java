@@ -285,11 +285,11 @@ public interface Meter {
                 return Collections.emptyList();
             }
 
-            List<Tag> tags = new ArrayList<>(32);
+            List<Tag> list = new ArrayList<>(this.tags.size());
             for (Tag tag : this.tags) {
-                tags.add(tag);
+                list.add(tag);
             }
-            return Collections.unmodifiableList(tags);
+            return Collections.unmodifiableList(list);
         }
 
         public Iterable<Tag> getTagsAsIterable() {

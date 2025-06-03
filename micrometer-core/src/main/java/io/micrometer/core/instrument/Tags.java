@@ -225,6 +225,15 @@ public final class Tags implements Iterable<Tag> {
         return merge(Tags.of(tags));
     }
 
+    /**
+     * Non-public (for now) method to get the size of this, which can be useful in sizing
+     * a collection where these elements will be copied.
+     * @return number of unique {@link Tag} instances in this
+     */
+    int size() {
+        return length;
+    }
+
     @Override
     public Iterator<Tag> iterator() {
         return new ArrayIterator();
