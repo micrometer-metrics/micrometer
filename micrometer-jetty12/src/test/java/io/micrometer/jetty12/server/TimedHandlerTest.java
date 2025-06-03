@@ -182,6 +182,64 @@ class TimedHandlerTest {
         }
     }
 
+    @Test
+    void testShutdownCompletesOnlyAfterAllRequestsComplete() throws Exception {
+        CountDownLatch requestAStarted = new CountDownLatch(1);
+        CountDownLatch requestAFinishLatch = new CountDownLatch(1);
+
+        timedHandler.setHandler(new Handler.Abstract() {
+            @Override
+            public boolean handle(Request request, Response response, Callback callback) {
+                String path = request.getHttpURI().getPath();
+                if ("/slow".equals(path)) {
+                    new Thread(() -> {
+                        try {
+                            requestAStarted.countDown();
+                            requestAFinishLatch.await(5, TimeUnit.SECONDS);
+                            response.setStatus(200);
+                            response.write(true, BufferUtil.EMPTY_BUFFER, callback);
+                        }
+                        catch (Exception e) {
+                            callback.failed(e);
+                        }
+                    }).start();
+                    return true;
+                }
+                else {
+                    response.setStatus(200);
+                    response.write(true, BufferUtil.EMPTY_BUFFER, callback);
+                    return true;
+                }
+            }
+        });
+
+        server.start();
+
+        try (LocalConnector.LocalEndPoint endpointA = connector.connect();
+                LocalConnector.LocalEndPoint endpointB = connector.connect()) {
+            // Request A: delayed
+            endpointA.addInputAndExecute("GET /slow HTTP/1.1\r\nHost: localhost\r\n\r\n");
+
+            // Request B: quick response
+            endpointB.addInputAndExecute("GET /fast HTTP/1.1\r\nHost: localhost\r\n\r\n");
+            HttpTester.Response responseB = HttpTester.parseResponse(endpointB.getResponse());
+            assertThat(responseB.getStatus()).isEqualTo(HttpStatus.OK_200);
+
+            // Ensure request A has started
+            assertThat(requestAStarted.await(5, TimeUnit.SECONDS)).isTrue();
+
+            // Call shutdown while request A is still in progress
+            Future<Void> shutdownFuture = timedHandler.shutdown();
+            assertThat(shutdownFuture.isDone()).isFalse();
+
+            // Complete request A
+            requestAFinishLatch.countDown();
+
+            // Now shutdown should complete
+            assertThat(shutdownFuture.get(5, TimeUnit.SECONDS)).isNull();
+        }
+    }
+
     private static class LatchHandler extends Handler.Wrapper {
 
         private volatile CountDownLatch latch = new CountDownLatch(1);
