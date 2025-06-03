@@ -27,6 +27,7 @@ import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.Statistic;
 import io.micrometer.core.instrument.config.validate.ValidationException;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -50,7 +51,7 @@ class WavefrontMeterRegistryTest {
 
     private final WavefrontConfig config = new WavefrontConfig() {
         @Override
-        public String get(String key) {
+        public @Nullable String get(String key) {
             return null;
         }
 
@@ -150,7 +151,7 @@ class WavefrontMeterRegistryTest {
     void configureDefaultSenderWithCustomConfig() {
         WavefrontConfig customConfig = new WavefrontConfig() {
             @Override
-            public String get(String key) {
+            public @Nullable String get(String key) {
                 return null;
             }
 
@@ -190,7 +191,7 @@ class WavefrontMeterRegistryTest {
     void failsWithDefaultSenderWhenUriIsMissing() {
         WavefrontConfig missingUriConfig = new WavefrontConfig() {
             @Override
-            public String get(String key) {
+            public @Nullable String get(String key) {
                 return null;
             }
 
@@ -216,7 +217,7 @@ class WavefrontMeterRegistryTest {
     void customSenderDoesNotNeedUri() {
         WavefrontConfig missingUriConfig = new WavefrontConfig() {
             @Override
-            public String get(String key) {
+            public @Nullable String get(String key) {
                 return null;
             }
 

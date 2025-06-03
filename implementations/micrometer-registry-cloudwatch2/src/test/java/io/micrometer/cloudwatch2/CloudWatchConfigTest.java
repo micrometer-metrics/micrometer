@@ -17,6 +17,7 @@ package io.micrometer.cloudwatch2;
 
 import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.config.validate.Validated;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 
 import java.util.HashMap;
@@ -65,7 +66,7 @@ class CloudWatchConfigTest {
             }
 
             @Override
-            public String get(String key) {
+            public @Nullable String get(String key) {
                 return null;
             }
         }.validate();
@@ -78,12 +79,13 @@ class CloudWatchConfigTest {
     void invalidOverrideNamespace() {
         CloudWatchConfig config = new CloudWatchConfig() {
             @Override
+            @SuppressWarnings("NullAway")
             public String namespace() {
                 return null;
             }
 
             @Override
-            public String get(String key) {
+            public @Nullable String get(String key) {
                 return null;
             }
         };

@@ -15,10 +15,10 @@
  */
 package io.micrometer.datadog;
 
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.Statistic;
 import io.micrometer.core.instrument.util.StringEscapeUtils;
+import org.jspecify.annotations.Nullable;
 
 import java.util.*;
 
@@ -63,8 +63,7 @@ class DatadogMetricMetadata {
 
     private final boolean descriptionsEnabled;
 
-    @Nullable
-    private final String overrideBaseUnit;
+    private final @Nullable String overrideBaseUnit;
 
     DatadogMetricMetadata(Meter.Id id, Statistic statistic, boolean descriptionsEnabled,
             @Nullable String overrideBaseUnit) {
@@ -75,7 +74,7 @@ class DatadogMetricMetadata {
         this.type = sanitizeType(statistic);
     }
 
-    String editMetadataBody() {
+    @Nullable String editMetadataBody() {
         if (descriptionsEnabled && id.getDescription() != null) {
             String body = "{\"type\":\"" + type + "\"";
 
@@ -89,7 +88,7 @@ class DatadogMetricMetadata {
         return null;
     }
 
-    static String sanitizeBaseUnit(@Nullable String baseUnit, @Nullable String overrideBaseUnit) {
+    static @Nullable String sanitizeBaseUnit(@Nullable String baseUnit, @Nullable String overrideBaseUnit) {
         String sanitizeBaseUnit = overrideBaseUnit != null ? overrideBaseUnit : baseUnit;
         if (sanitizeBaseUnit != null) {
             return UNIT_WHITELIST.contains(sanitizeBaseUnit) ? sanitizeBaseUnit

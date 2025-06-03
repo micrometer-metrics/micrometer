@@ -15,9 +15,9 @@
  */
 package io.micrometer.opentsdb;
 
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.config.validate.Validated;
 import io.micrometer.core.instrument.push.PushRegistryConfig;
+import org.jspecify.annotations.Nullable;
 
 import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.*;
 import static io.micrometer.core.instrument.config.validate.PropertyValidator.*;
@@ -56,8 +56,7 @@ public interface OpenTSDBConfig extends PushRegistryConfig {
      * @return Authenticate requests with this user. By default is {@code null}, and the
      * registry will not attempt to present credentials to OpenTSDB.
      */
-    @Nullable
-    default String userName() {
+    default @Nullable String userName() {
         return getSecret(this, "userName").orElse(null);
     }
 
@@ -65,8 +64,7 @@ public interface OpenTSDBConfig extends PushRegistryConfig {
      * @return Authenticate requests with this password. By default is {@code null}, and
      * the registry will not attempt to present credentials to OpenTSDB.
      */
-    @Nullable
-    default String password() {
+    default @Nullable String password() {
         return getSecret(this, "password").orElse(null);
     }
 
@@ -76,8 +74,7 @@ public interface OpenTSDBConfig extends PushRegistryConfig {
      * fidelity at their ultimate destination.
      * @return A flavor that influences the style of metrics shipped to OpenTSDB.
      */
-    @Nullable
-    default OpenTSDBFlavor flavor() {
+    default @Nullable OpenTSDBFlavor flavor() {
         return getEnum(this, OpenTSDBFlavor.class, "flavor").orElse(null);
     }
 

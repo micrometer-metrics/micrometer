@@ -33,12 +33,13 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 class NullMeterTagSupportTests {
 
-    ValueResolver valueResolver = parameter -> null;
+    ValueResolver valueResolver = parameter -> "";
 
-    ValueExpressionResolver valueExpressionResolver = (expression, parameter) -> null;
+    ValueExpressionResolver valueExpressionResolver = (expression, parameter) -> "";
 
     @Test
-    void shouldUseEmptyStringWhenCustomTagValueResolverReturnsNull() throws NoSuchMethodException, SecurityException {
+    void shouldUseEmptyStringWhenCustomTagValueResolverReturnsEmptySting()
+            throws NoSuchMethodException, SecurityException {
         Method method = AnnotationMockClass.class.getMethod("getAnnotationForTagValueResolver", String.class);
         Annotation annotation = method.getParameterAnnotations()[0][0];
         assertThat(annotation).isInstanceOf(MeterTag.class);
@@ -48,7 +49,7 @@ class NullMeterTagSupportTests {
     }
 
     @Test
-    void shouldUseEmptyStringWhenTagValueExpressionReturnNull() throws NoSuchMethodException, SecurityException {
+    void shouldUseEmptyStringWhenTagValueExpressionReturnsEmptySting() throws NoSuchMethodException, SecurityException {
         Method method = AnnotationMockClass.class.getMethod("getAnnotationForTagValueExpression", String.class);
         Annotation annotation = method.getParameterAnnotations()[0][0];
         assertThat(annotation).isInstanceOf(MeterTag.class);

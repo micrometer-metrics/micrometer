@@ -15,11 +15,11 @@
  */
 package io.micrometer.statsd.internal;
 
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Statistic;
 import io.micrometer.core.instrument.config.NamingConvention;
+import org.jspecify.annotations.Nullable;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -29,22 +29,23 @@ public class TelegrafStatsdLineBuilder extends FlavorStatsdLineBuilder {
 
     private final Object conventionTagsLock = new Object();
 
-    @SuppressWarnings({ "NullableProblems", "unused" })
     private volatile NamingConvention namingConvention;
 
-    @SuppressWarnings("NullableProblems")
     private volatile String name;
 
-    @Nullable
-    private volatile String conventionTags;
+    private volatile @Nullable String conventionTags;
 
-    @SuppressWarnings("NullableProblems")
     private volatile String tagsNoStat;
 
     private final ConcurrentMap<Statistic, String> tags = new ConcurrentHashMap<>();
 
     public TelegrafStatsdLineBuilder(Meter.Id id, MeterRegistry.Config config) {
         super(id, config);
+
+        this.namingConvention = config.namingConvention();
+        this.conventionTags = createConventionTags(namingConvention);
+        this.name = createName(namingConvention);
+        this.tagsNoStat = createTagsNoStat(conventionTags);
     }
 
     @Override
@@ -61,15 +62,27 @@ public class TelegrafStatsdLineBuilder extends FlavorStatsdLineBuilder {
                     return;
                 }
                 this.tags.clear();
-                this.conventionTags = id.getTagsAsIterable().iterator().hasNext() ? id.getConventionTags(next)
-                    .stream()
-                    .map(t -> telegrafEscape(t.getKey()) + "=" + telegrafEscape(t.getValue()))
-                    .collect(Collectors.joining(",")) : null;
+                this.conventionTags = createConventionTags(next);
             }
-            this.name = telegrafEscape(next.name(id.getName(), id.getType(), id.getBaseUnit()));
-            this.tagsNoStat = tags(null, conventionTags, "=", ",");
+            this.name = createName(next);
+            this.tagsNoStat = createTagsNoStat(conventionTags);
             this.namingConvention = next;
         }
+    }
+
+    private @Nullable String createConventionTags(NamingConvention namingConvention) {
+        return id.getTagsAsIterable().iterator().hasNext() ? id.getConventionTags(namingConvention)
+            .stream()
+            .map(t -> telegrafEscape(t.getKey()) + "=" + telegrafEscape(t.getValue()))
+            .collect(Collectors.joining(",")) : null;
+    }
+
+    private String createName(NamingConvention namingConvention) {
+        return telegrafEscape(namingConvention.name(id.getName(), id.getType(), id.getBaseUnit()));
+    }
+
+    private String createTagsNoStat(@Nullable String conventionTags) {
+        return tags(null, conventionTags, "=", ",");
     }
 
     private String tagsByStatistic(@Nullable Statistic stat) {

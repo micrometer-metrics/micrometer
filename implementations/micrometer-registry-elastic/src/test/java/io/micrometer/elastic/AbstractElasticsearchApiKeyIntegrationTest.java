@@ -17,6 +17,7 @@ package io.micrometer.elastic;
 
 import com.jayway.jsonpath.JsonPath;
 import io.micrometer.core.ipc.http.HttpSender;
+import org.jspecify.annotations.Nullable;
 import org.testcontainers.elasticsearch.ElasticsearchContainer;
 
 import java.nio.charset.StandardCharsets;
@@ -51,7 +52,7 @@ abstract class AbstractElasticsearchApiKeyIntegrationTest extends AbstractElasti
         }
         return new ElasticConfig() {
             @Override
-            public String get(String key) {
+            public @Nullable String get(String key) {
                 return null;
             }
 

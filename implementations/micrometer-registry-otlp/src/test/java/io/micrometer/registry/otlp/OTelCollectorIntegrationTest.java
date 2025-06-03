@@ -17,6 +17,7 @@ package io.micrometer.registry.otlp;
 
 import io.micrometer.core.instrument.*;
 import io.restassured.response.Response;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.testcontainers.containers.GenericContainer;
@@ -135,7 +136,7 @@ class OTelCollectorIntegrationTest {
             }
 
             @Override
-            public String get(String key) {
+            public @Nullable String get(String key) {
                 return null;
             }
         };

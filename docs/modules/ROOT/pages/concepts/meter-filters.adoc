@@ -128,9 +128,9 @@ too high cardinality and starts stressing your monitoring system or costing too 
 new MeterFilter() {
     @Override
     public DistributionStatisticConfig configure(Meter.Id id, DistributionStatisticConfig config) {
-        if (id.getName().startsWith(prefix)) {
+        if (id.getName().startsWith("prefix")) {
             return DistributionStatisticConfig.builder()
-                    .publishPercentiles(0.9, 0.95)
+                    .percentiles(0.9, 0.95)
                     .build()
                     .merge(config);
         }

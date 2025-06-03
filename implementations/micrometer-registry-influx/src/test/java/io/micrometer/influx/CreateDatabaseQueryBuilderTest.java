@@ -36,7 +36,7 @@ class CreateDatabaseQueryBuilderTest {
 
     @Test
     void noEmptyDatabaseName() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new CreateDatabaseQueryBuilder(null));
+        assertThatIllegalArgumentException().isThrownBy(() -> new CreateDatabaseQueryBuilder(""));
     }
 
     @Test

@@ -17,11 +17,12 @@ package io.micrometer.influx;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.BasicCredentials;
-import io.micrometer.common.lang.NonNull;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.config.validate.Validated;
 import io.micrometer.core.instrument.config.validate.ValidationException;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import ru.lanwen.wiremock.ext.WiremockResolver;
@@ -141,7 +142,7 @@ class InfluxMeterRegistryVersionsTest {
             }
 
             @Override
-            public String get(String key) {
+            public @Nullable String get(String key) {
                 return null;
             }
 
@@ -174,7 +175,7 @@ class InfluxMeterRegistryVersionsTest {
             }
 
             @Override
-            public String get(String key) {
+            public @Nullable String get(String key) {
                 return null;
             }
 
@@ -212,7 +213,7 @@ class InfluxMeterRegistryVersionsTest {
             }
 
             @Override
-            public String get(String key) {
+            public @Nullable String get(String key) {
                 return null;
             }
 
@@ -245,7 +246,7 @@ class InfluxMeterRegistryVersionsTest {
             }
 
             @Override
-            public String get(String key) {
+            public @Nullable String get(String key) {
                 return null;
             }
 
@@ -350,7 +351,7 @@ class InfluxMeterRegistryVersionsTest {
             }
 
             @Override
-            public String get(String key) {
+            public @Nullable String get(String key) {
                 return null;
             }
 

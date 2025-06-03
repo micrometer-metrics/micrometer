@@ -18,6 +18,7 @@ package io.micrometer.registry.otlp;
 import com.github.tomakehurst.wiremock.junit5.WireMockRuntimeInfo;
 import com.github.tomakehurst.wiremock.junit5.WireMockTest;
 import io.micrometer.core.instrument.Clock;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 
 import java.util.Collections;
@@ -33,7 +34,7 @@ class OtlpMeterRegistryExportTest {
         stubFor(post("/v1/metrics").willReturn(ok()));
         OtlpMeterRegistry registry = new OtlpMeterRegistry(new OtlpConfig() {
             @Override
-            public String get(String key) {
+            public @Nullable String get(String key) {
                 return null;
             }
 

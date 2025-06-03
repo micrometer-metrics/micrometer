@@ -16,7 +16,6 @@
 
 package io.micrometer.prometheus;
 
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.Histogram;
@@ -24,6 +23,7 @@ import io.micrometer.core.instrument.distribution.TimeWindowFixedBoundaryHistogr
 import io.micrometer.core.instrument.util.TimeUtils;
 import io.prometheus.client.exemplars.Exemplar;
 import io.prometheus.client.exemplars.HistogramExemplarSampler;
+import org.jspecify.annotations.Nullable;
 
 import java.time.Duration;
 import java.util.Arrays;
@@ -42,17 +42,13 @@ import static java.util.concurrent.TimeUnit.SECONDS;
  */
 class PrometheusHistogram extends TimeWindowFixedBoundaryHistogram {
 
-    @Nullable
-    private final double[] buckets;
+    private final double @Nullable [] buckets;
 
-    @Nullable
-    private final AtomicReferenceArray<Exemplar> exemplars;
+    private final @Nullable AtomicReferenceArray<Exemplar> exemplars;
 
-    @Nullable
-    private final AtomicReference<Exemplar> lastExemplar;
+    private final @Nullable AtomicReference<Exemplar> lastExemplar;
 
-    @Nullable
-    private final HistogramExemplarSampler exemplarSampler;
+    private final @Nullable HistogramExemplarSampler exemplarSampler;
 
     PrometheusHistogram(Clock clock, DistributionStatisticConfig config,
             @Nullable HistogramExemplarSampler exemplarSampler) {
@@ -64,7 +60,7 @@ class PrometheusHistogram extends TimeWindowFixedBoundaryHistogram {
             .merge(config), true);
 
         this.exemplarSampler = exemplarSampler;
-        if (isExemplarsEnabled()) {
+        if (exemplarSampler != null) {
             double[] originalBuckets = getBuckets();
             if (originalBuckets[originalBuckets.length - 1] != Double.POSITIVE_INFINITY) {
                 this.buckets = Arrays.copyOf(originalBuckets, originalBuckets.length + 1);
@@ -83,8 +79,9 @@ class PrometheusHistogram extends TimeWindowFixedBoundaryHistogram {
         }
     }
 
+    @EnsuresNonNullIf({ "exemplarSampler", "buckets", "exemplars", "lastExemplar" })
     boolean isExemplarsEnabled() {
-        return exemplarSampler != null;
+        return exemplarSampler != null && buckets != null && exemplars != null && lastExemplar != null;
     }
 
     @Override
@@ -103,12 +100,14 @@ class PrometheusHistogram extends TimeWindowFixedBoundaryHistogram {
         }
     }
 
+    @RequiresNonNull({ "exemplarSampler", "buckets", "exemplars", "lastExemplar" })
     private void updateExemplar(double value, @Nullable TimeUnit sourceUnit, @Nullable TimeUnit destinationUnit) {
         int index = leastLessThanOrEqualTo(value);
         index = (index == -1) ? exemplars.length() - 1 : index;
         updateExemplar(value, sourceUnit, destinationUnit, index);
     }
 
+    @RequiresNonNull({ "exemplarSampler", "buckets", "exemplars", "lastExemplar" })
     private void updateExemplar(double value, @Nullable TimeUnit sourceUnit, @Nullable TimeUnit destinationUnit,
             int index) {
         double bucketFrom = (index == 0) ? Double.NEGATIVE_INFINITY : buckets[index - 1];
@@ -129,8 +128,7 @@ class PrometheusHistogram extends TimeWindowFixedBoundaryHistogram {
                         && lastExemplar.compareAndSet(previousLastExemplar, nextExemplar)));
     }
 
-    @Nullable
-    Exemplar[] exemplars() {
+    Exemplar @Nullable [] exemplars() {
         if (isExemplarsEnabled()) {
             Exemplar[] exemplarsArray = new Exemplar[this.exemplars.length()];
             for (int i = 0; i < this.exemplars.length(); i++) {
@@ -144,14 +142,19 @@ class PrometheusHistogram extends TimeWindowFixedBoundaryHistogram {
         }
     }
 
-    @Nullable
-    Exemplar lastExemplar() {
-        return this.lastExemplar.get();
+    @Nullable Exemplar lastExemplar() {
+        if (isExemplarsEnabled()) {
+            return this.lastExemplar.get();
+        }
+        else {
+            return null;
+        }
     }
 
     /**
      * The least bucket that is less than or equal to a sample.
      */
+    @RequiresNonNull("buckets")
     private int leastLessThanOrEqualTo(double key) {
         int low = 0;
         int high = buckets.length - 1;

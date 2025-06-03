@@ -21,6 +21,7 @@ import io.micrometer.common.util.internal.logging.MockLoggerFactory;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.DistributionSummary;
 import io.micrometer.core.instrument.Timer;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
@@ -47,7 +48,7 @@ class StackdriverIntegrationTest {
         }
 
         @Override
-        public String get(String key) {
+        public @Nullable String get(String key) {
             return null;
         }
     };

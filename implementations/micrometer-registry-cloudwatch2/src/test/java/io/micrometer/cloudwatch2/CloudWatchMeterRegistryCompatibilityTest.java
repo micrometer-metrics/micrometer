@@ -15,19 +15,21 @@
  */
 package io.micrometer.cloudwatch2;
 
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.tck.MeterRegistryCompatibilityKit;
+import org.jspecify.annotations.Nullable;
+import software.amazon.awssdk.services.cloudwatch.CloudWatchAsyncClient;
 
 import java.time.Duration;
+
+import static org.mockito.Mockito.mock;
 
 class CloudWatchMeterRegistryCompatibilityTest extends MeterRegistryCompatibilityKit {
 
     private final CloudWatchConfig config = new CloudWatchConfig() {
         @Override
-        @Nullable
-        public String get(String key) {
+        public @Nullable String get(String key) {
             return null;
         }
 
@@ -45,7 +47,7 @@ class CloudWatchMeterRegistryCompatibilityTest extends MeterRegistryCompatibilit
     @Override
     public MeterRegistry registry() {
         // noinspection ConstantConditions
-        return new CloudWatchMeterRegistry(config, new MockClock(), null);
+        return new CloudWatchMeterRegistry(config, new MockClock(), mock(CloudWatchAsyncClient.class));
     }
 
     @Override

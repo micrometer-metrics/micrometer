@@ -19,6 +19,7 @@ import com.github.tomakehurst.wiremock.WireMockServer;
 import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.ipc.http.HttpSender;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import ru.lanwen.wiremock.ext.WiremockResolver;
@@ -44,7 +45,7 @@ class DatadogMeterRegistryTest {
             }
 
             @Override
-            public String get(String key) {
+            public @Nullable String get(String key) {
                 return null;
             }
 
@@ -94,7 +95,7 @@ class DatadogMeterRegistryTest {
             }
 
             @Override
-            public String get(String key) {
+            public @Nullable String get(String key) {
                 return null;
             }
 
@@ -143,7 +144,7 @@ class DatadogMeterRegistryTest {
         DatadogConfig config = new DatadogConfig() {
 
             @Override
-            public String get(String key) {
+            public @Nullable String get(String key) {
                 return null;
             }
 

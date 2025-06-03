@@ -15,7 +15,6 @@
  */
 package io.micrometer.core.instrument;
 
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.binder.httpcomponents.DefaultUriMapper;
 import io.micrometer.core.instrument.binder.httpcomponents.hc5.ApacheHttpClientObservationConvention;
 import io.micrometer.core.instrument.binder.httpcomponents.hc5.MicrometerHttpClientInterceptor;
@@ -27,6 +26,7 @@ import org.apache.hc.client5.http.impl.async.CloseableHttpAsyncClient;
 import org.apache.hc.client5.http.impl.async.HttpAsyncClients;
 import org.apache.hc.client5.http.protocol.HttpClientContext;
 import org.apache.hc.core5.http.ContentType;
+import org.jspecify.annotations.Nullable;
 
 import java.net.URI;
 import java.util.concurrent.ExecutionException;
@@ -48,9 +48,8 @@ class ApacheAsyncHttpClient5TimingInstrumentationVerificationTests
         return client;
     }
 
-    @Nullable
     @Override
-    protected CloseableHttpAsyncClient clientInstrumentedWithObservations() {
+    protected @Nullable CloseableHttpAsyncClient clientInstrumentedWithObservations() {
         CloseableHttpAsyncClient client = HttpAsyncClients.custom()
             .addExecInterceptorFirst("micrometer", new ObservationExecChainHandler(getObservationRegistry()))
             .build();
@@ -65,7 +64,7 @@ class ApacheAsyncHttpClient5TimingInstrumentationVerificationTests
 
     @Override
     protected void sendHttpRequest(CloseableHttpAsyncClient instrumentedClient, HttpMethod method,
-            @Nullable byte[] body, URI baseUri, String templatedPath, String... pathVariables) {
+            byte @Nullable [] body, URI baseUri, String templatedPath, String... pathVariables) {
         try {
             HttpClientContext httpClientContext = HttpClientContext.create();
             httpClientContext.setAttribute(ApacheHttpClientObservationConvention.URI_TEMPLATE_ATTRIBUTE, templatedPath);
@@ -78,7 +77,7 @@ class ApacheAsyncHttpClient5TimingInstrumentationVerificationTests
         }
     }
 
-    private SimpleHttpRequest makeRequest(HttpMethod method, @Nullable byte[] body, URI baseUri, String templatedPath,
+    private SimpleHttpRequest makeRequest(HttpMethod method, byte @Nullable [] body, URI baseUri, String templatedPath,
             String... pathVariables) {
         SimpleRequestBuilder builder = SimpleRequestBuilder.create(method.name());
         if (body != null) {

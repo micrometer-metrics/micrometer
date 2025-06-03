@@ -16,6 +16,7 @@
 package io.micrometer.appoptics;
 
 import io.micrometer.core.instrument.config.validate.Validated;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 
 import java.util.HashMap;
@@ -59,7 +60,7 @@ class AppOpticsConfigTest {
             }
 
             @Override
-            public String get(String key) {
+            public @Nullable String get(String key) {
                 return null;
             }
         }.validate();

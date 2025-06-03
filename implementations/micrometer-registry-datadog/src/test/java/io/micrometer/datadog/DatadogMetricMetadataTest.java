@@ -20,6 +20,7 @@ import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Statistic;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -50,7 +51,7 @@ class DatadogMetricMetadataTest {
                 }
 
                 @Override
-                public String get(String key) {
+                public @Nullable String get(String key) {
                     return null;
                 }
             }, Clock.SYSTEM))

@@ -15,12 +15,12 @@
  */
 package io.micrometer.registry.otlp;
 
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.AbstractDistributionSummary;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.distribution.Histogram;
 import io.micrometer.registry.otlp.internal.Base2ExponentialHistogram;
 import io.micrometer.registry.otlp.internal.ExponentialHistogramSnapShot;
+import org.jspecify.annotations.Nullable;
 
 import java.util.concurrent.atomic.DoubleAdder;
 import java.util.concurrent.atomic.LongAdder;
@@ -72,8 +72,7 @@ class OtlpStepDistributionSummary extends AbstractDistributionSummary implements
     }
 
     @Override
-    @Nullable
-    public ExponentialHistogramSnapShot getExponentialHistogramSnapShot() {
+    public @Nullable ExponentialHistogramSnapShot getExponentialHistogramSnapShot() {
         if (histogram instanceof Base2ExponentialHistogram) {
             return ((Base2ExponentialHistogram) histogram).getLatestExponentialHistogramSnapshot();
         }

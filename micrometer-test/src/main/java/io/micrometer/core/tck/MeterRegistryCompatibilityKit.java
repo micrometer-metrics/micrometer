@@ -48,7 +48,6 @@ import java.util.function.Supplier;
 import static io.micrometer.core.instrument.MockClock.clock;
 import static io.micrometer.core.instrument.Statistic.ACTIVE_TASKS;
 import static io.micrometer.core.instrument.Statistic.DURATION;
-import static io.micrometer.core.instrument.util.TimeUtils.millisToUnit;
 import static java.util.Collections.emptyList;
 import static java.util.Objects.requireNonNull;
 import static org.assertj.core.api.Assertions.*;
@@ -1022,7 +1021,7 @@ public abstract class MeterRegistryCompatibilityKit {
             t.record(1, TimeUnit.MILLISECONDS);
             // accommodate StepBucketHistogram
             clock(registry).add(halfStep);
-            assertThat(t.histogramCountAtValue((long) millisToUnit(1, TimeUnit.NANOSECONDS))).isEqualTo(1);
+            assertThat(t.histogramCountAtValue(TimeUnit.MILLISECONDS.toNanos(1))).isEqualTo(1);
             assertThat(t.histogramCountAtValue(1)).isNaN();
         }
 

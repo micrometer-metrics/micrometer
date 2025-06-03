@@ -1,5 +1,5 @@
-/**
- * Copyright 2023 the original author or authors.
+/*
+ * Copyright 2025 VMware, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,25 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.common.annotation;
+package io.micrometer.prometheus;
 
-import io.micrometer.common.KeyValue;
-import org.jspecify.annotations.Nullable;
+import java.lang.annotation.*;
 
 /**
- * Resolves the {@link KeyValue} value for the given parameter.
- *
- * @author Christian Schwerdtfeger
- * @author Marcin Grzejszczak
- * @since 1.11.0
+ * This is for internal use only.
  */
-public interface ValueResolver {
+@Documented
+@Retention(RetentionPolicy.CLASS)
+@Target(ElementType.METHOD)
+@interface EnsuresNonNullIf {
 
     /**
-     * Returns the {@link KeyValue} value for the given parameter.
-     * @param parameter annotated parameter
-     * @return the value of the {@link KeyValue}
+     * The list of fields that are non-null after the method returns the given result.
      */
-    String resolve(@Nullable Object parameter);
+    String[] value();
+
+    /**
+     * The return value of the method under which the postcondition holds. The default is
+     * set to true, which means the method should return true in case fields are non-null.
+     */
+    boolean result() default true;
 
 }

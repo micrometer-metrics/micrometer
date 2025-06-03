@@ -49,8 +49,7 @@ public class RequestReplySenderContext<C, RES> extends SenderContext<C> implemen
     }
 
     @Override
-    @Nullable
-    public RES getResponse() {
+    @Nullable public RES getResponse() {
         return response;
     }
 

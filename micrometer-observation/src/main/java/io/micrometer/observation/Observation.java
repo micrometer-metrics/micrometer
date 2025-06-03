@@ -965,8 +965,7 @@ public interface Observation extends ObservationView {
          * @return parent observation or {@code null} if there was no parent
          */
         @Override
-        @Nullable
-        public ObservationView getParentObservation() {
+        @Nullable public ObservationView getParentObservation() {
             return parentObservation;
         }
 
@@ -1029,8 +1028,7 @@ public interface Observation extends ObservationView {
          * @return entry or {@code null} if not present
          */
         @Override
-        @Nullable
-        public <T> T get(Object key) {
+        @Nullable public <T> T get(Object key) {
             return (T) this.map.get(key);
         }
 
@@ -1341,30 +1339,26 @@ public interface Observation extends ObservationView {
          * The observation name.
          * @return name
          */
-        @Nullable
-        String getName();
+        @Nullable String getName();
 
         /**
          * Returns the contextual name. The name that makes sense within the current
          * context (e.g. name derived from HTTP request).
          * @return contextual name
          */
-        @Nullable
-        String getContextualName();
+        @Nullable String getContextualName();
 
         /**
          * Returns the parent {@link ObservationView}.
          * @return parent observation or {@code null} if there was no parent
          */
-        @Nullable
-        ObservationView getParentObservation();
+        @Nullable ObservationView getParentObservation();
 
         /**
          * Error that occurred while processing the {@link Observation}.
          * @return error (null if there wasn't any)
          */
-        @Nullable
-        Throwable getError();
+        @Nullable Throwable getError();
 
         /**
          * Gets an entry from the context. Returns {@code null} when entry is not present.
@@ -1372,8 +1366,7 @@ public interface Observation extends ObservationView {
          * @param <T> value type
          * @return entry or {@code null} if not present
          */
-        @Nullable
-        <T> T get(Object key);
+        @Nullable <T> T get(Object key);
 
         /**
          * Gets an entry from the context. Throws exception when entry is not present.
@@ -1432,16 +1425,14 @@ public interface Observation extends ObservationView {
          * @param key key
          * @return a low cardinality key value or {@code null}
          */
-        @Nullable
-        KeyValue getLowCardinalityKeyValue(String key);
+        @Nullable KeyValue getLowCardinalityKeyValue(String key);
 
         /**
          * Returns a high cardinality key value or {@code null} if not present.
          * @param key key
          * @return a high cardinality key value or {@code null}
          */
-        @Nullable
-        KeyValue getHighCardinalityKeyValue(String key);
+        @Nullable KeyValue getHighCardinalityKeyValue(String key);
 
         /**
          * Returns all key values.

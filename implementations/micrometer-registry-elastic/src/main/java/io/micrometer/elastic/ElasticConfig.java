@@ -15,10 +15,10 @@
  */
 package io.micrometer.elastic;
 
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.config.validate.InvalidReason;
 import io.micrometer.core.instrument.config.validate.Validated;
 import io.micrometer.core.instrument.step.StepRegistryConfig;
+import org.jspecify.annotations.Nullable;
 
 import java.time.format.DateTimeFormatter;
 
@@ -45,8 +45,7 @@ public interface ElasticConfig extends StepRegistryConfig {
      * @return Value for the key or null if no key is present.
      */
     @Override
-    @Nullable
-    String get(String key);
+    @Nullable String get(String key);
 
     /**
      * Property prefix to prepend to configuration names.
@@ -117,8 +116,7 @@ public interface ElasticConfig extends StepRegistryConfig {
      * it will be used for authentication instead of this.
      * @return username for Basic Authentication
      */
-    @Nullable
-    default String userName() {
+    default @Nullable String userName() {
         return getSecret(this, "userName").orElse(null);
     }
 
@@ -127,8 +125,7 @@ public interface ElasticConfig extends StepRegistryConfig {
      * it will be used for authentication instead of this.
      * @return password for Basic Authentication
      */
-    @Nullable
-    default String password() {
+    default @Nullable String password() {
         return getSecret(this, "password").orElse(null);
     }
 
@@ -137,8 +134,7 @@ public interface ElasticConfig extends StepRegistryConfig {
      * @return ingest pipeline name
      * @since 1.2.0
      */
-    @Nullable
-    default String pipeline() {
+    default @Nullable String pipeline() {
         return getString(this, "pipeline").orElse(null);
     }
 
@@ -164,8 +160,7 @@ public interface ElasticConfig extends StepRegistryConfig {
      * Guide - Create API key</a>
      * @since 1.8.0
      */
-    @Nullable
-    default String apiKeyCredentials() {
+    default @Nullable String apiKeyCredentials() {
         return getSecret(this, "apiKeyCredentials").orElse(null);
     }
 

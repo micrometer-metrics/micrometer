@@ -15,7 +15,7 @@
  */
 package io.micrometer.influx;
 
-import io.micrometer.common.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Objects;
 import java.util.stream.Stream;

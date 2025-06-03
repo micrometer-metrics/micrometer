@@ -18,6 +18,7 @@ package io.micrometer.registry.otlp;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.tck.MeterRegistryCompatibilityKit;
+import org.jspecify.annotations.Nullable;
 
 import java.time.Duration;
 
@@ -37,7 +38,7 @@ class OtlpDeltaMeterRegistryCompatibilityTest extends MeterRegistryCompatibility
             }
 
             @Override
-            public String get(String key) {
+            public @Nullable String get(String key) {
                 return null;
             }
         }, new MockClock());

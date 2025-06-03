@@ -18,10 +18,8 @@
  * Deprecated since 1.13.0, use io.micrometer:micrometer-registry-prometheus instead, the
  * new package name is {@code io.micrometer.prometheusmetrics}.
  */
-@NonNullApi
-@NonNullFields
+@NullMarked
 @Deprecated
 package io.micrometer.prometheus;
 
-import io.micrometer.common.lang.NonNullApi;
-import io.micrometer.common.lang.NonNullFields;
+import org.jspecify.annotations.NullMarked;

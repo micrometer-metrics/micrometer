@@ -15,10 +15,10 @@
  */
 package io.micrometer.appoptics;
 
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.config.validate.InvalidReason;
 import io.micrometer.core.instrument.config.validate.Validated;
 import io.micrometer.core.instrument.step.StepRegistryConfig;
+import org.jspecify.annotations.Nullable;
 
 import java.time.Duration;
 
@@ -54,8 +54,7 @@ public interface AppOpticsConfig extends StepRegistryConfig {
      * @return The tag that will be mapped to {@literal @host} when shipping metrics to
      * AppOptics.
      */
-    @Nullable
-    default String hostTag() {
+    default @Nullable String hostTag() {
         return getString(this, "hostTag").orElse("instance");
     }
 

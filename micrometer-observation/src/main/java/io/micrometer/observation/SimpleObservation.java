@@ -81,8 +81,7 @@ class SimpleObservation implements Observation {
         }
     }
 
-    @Nullable
-    private static ObservationConvention getConventionFromConfig(ObservationRegistry registry, Context context) {
+    @Nullable private static ObservationConvention getConventionFromConfig(ObservationRegistry registry, Context context) {
         for (ObservationConvention<?> convention : registry.observationConfig().getObservationConventions()) {
             if (convention.supportsContext(context)) {
                 return convention;
@@ -319,8 +318,7 @@ class SimpleObservation implements Observation {
             this.registry.setCurrentObservationScope(previousObservationScope);
         }
 
-        @Nullable
-        private SimpleScope getLastScope(SimpleScope simpleScope) {
+        @Nullable private SimpleScope getLastScope(SimpleScope simpleScope) {
             SimpleScope scope = simpleScope;
             do {
                 scope = (SimpleScope) scope.previousObservationScope;

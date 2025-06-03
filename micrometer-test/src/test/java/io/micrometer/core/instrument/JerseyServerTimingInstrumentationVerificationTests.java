@@ -15,7 +15,6 @@
  */
 package io.micrometer.core.instrument;
 
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.binder.jersey.server.DefaultJerseyTagsProvider;
 import io.micrometer.core.instrument.binder.jersey.server.JerseyObservationDocumentation;
 import io.micrometer.core.instrument.binder.jersey.server.MetricsApplicationEventListener;
@@ -23,6 +22,7 @@ import io.micrometer.core.instrument.binder.jersey.server.ObservationApplication
 import io.micrometer.observation.docs.ObservationDocumentation;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.test.JerseyTest;
+import org.jspecify.annotations.Nullable;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.Application;
@@ -42,9 +42,8 @@ class JerseyServerTimingInstrumentationVerificationTests extends HttpServerTimin
         return setupUri(jerseyTest);
     }
 
-    @Nullable
     @Override
-    protected URI startInstrumentedWithObservationsServer() throws Exception {
+    protected @Nullable URI startInstrumentedWithObservationsServer() throws Exception {
         jerseyTest = jerseyWithListener(
                 // tag::setup[]
                 new ObservationApplicationEventListener(getObservationRegistry(), timerName())

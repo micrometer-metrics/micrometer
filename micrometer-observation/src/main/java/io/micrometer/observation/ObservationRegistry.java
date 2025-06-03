@@ -55,8 +55,7 @@ public interface ObservationRegistry {
      * method will return the current present {@link Observation} within the scope.
      * @return current observation or {@code null} if it's not present
      */
-    @Nullable
-    Observation getCurrentObservation();
+    @Nullable Observation getCurrentObservation();
 
     /**
      * When previously set will allow to retrieve the {@link Observation.Scope} at any

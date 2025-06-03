@@ -16,12 +16,12 @@
 package io.micrometer.stackdriver;
 
 import com.google.api.Distribution;
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.DistributionSummary;
 import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.distribution.HistogramSnapshot;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
@@ -48,8 +48,7 @@ class StackdriverMeterRegistryTest {
         }
 
         @Override
-        @Nullable
-        public String get(String key) {
+        public @Nullable String get(String key) {
             return null;
         }
     };

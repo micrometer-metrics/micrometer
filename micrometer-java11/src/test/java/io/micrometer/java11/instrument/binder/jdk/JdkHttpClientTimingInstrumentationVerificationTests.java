@@ -15,9 +15,9 @@
  */
 package io.micrometer.java11.instrument.binder.jdk;
 
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.HttpClientTimingInstrumentationVerificationTests;
 import io.micrometer.observation.docs.ObservationDocumentation;
+import org.jspecify.annotations.Nullable;
 
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -33,9 +33,8 @@ class JdkHttpClientTimingInstrumentationVerificationTests
         return getInstrumentationBuilder().build();
     }
 
-    @Nullable
     @Override
-    protected HttpClient clientInstrumentedWithObservations() {
+    protected @Nullable HttpClient clientInstrumentedWithObservations() {
         return getInstrumentationBuilder().observationRegistry(getObservationRegistry()).build();
     }
 
@@ -45,8 +44,8 @@ class JdkHttpClientTimingInstrumentationVerificationTests
     }
 
     @Override
-    protected void sendHttpRequest(HttpClient instrumentedClient, HttpMethod method, @Nullable byte[] body, URI baseUri,
-            String templatedPath, String... pathVariables) {
+    protected void sendHttpRequest(HttpClient instrumentedClient, HttpMethod method, byte @Nullable [] body,
+            URI baseUri, String templatedPath, String... pathVariables) {
         try {
             instrumentedClient.send(makeRequest(method, body, baseUri, templatedPath, pathVariables),
                     HttpResponse.BodyHandlers.ofString());
@@ -61,7 +60,7 @@ class JdkHttpClientTimingInstrumentationVerificationTests
         return HttpClientObservationDocumentation.HTTP_CALL;
     }
 
-    private HttpRequest makeRequest(HttpMethod method, @Nullable byte[] body, URI baseUri, String templatedPath,
+    private HttpRequest makeRequest(HttpMethod method, byte @Nullable [] body, URI baseUri, String templatedPath,
             String... pathVariables) {
         return HttpRequest.newBuilder()
             .method(method.name(),

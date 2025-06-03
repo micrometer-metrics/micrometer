@@ -15,9 +15,9 @@
  */
 package io.micrometer.graphite;
 
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.MockClock;
 import io.netty.channel.ChannelOption;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Flux;
 import reactor.netty.Connection;
@@ -25,6 +25,7 @@ import reactor.netty.udp.UdpServer;
 
 import java.net.DatagramSocket;
 import java.time.Duration;
+import java.util.Objects;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -59,8 +60,7 @@ class GraphiteMeterRegistryTest {
 
         final GraphiteMeterRegistry registry = new GraphiteMeterRegistry(new GraphiteConfig() {
             @Override
-            @Nullable
-            public String get(String key) {
+            public @Nullable String get(String key) {
                 return null;
             }
 
@@ -109,7 +109,7 @@ class GraphiteMeterRegistryTest {
             .block(Duration.ofSeconds(10));
 
         assertThat(receiveLatch.await(10, TimeUnit.SECONDS)).as("line was received").isTrue();
-        server.dispose();
+        Objects.requireNonNull(server).dispose();
     }
 
     /**
@@ -126,8 +126,7 @@ class GraphiteMeterRegistryTest {
 
         final GraphiteMeterRegistry registry = new GraphiteMeterRegistry(new GraphiteConfig() {
             @Override
-            @Nullable
-            public String get(String key) {
+            public @Nullable String get(String key) {
                 return null;
             }
 
@@ -176,7 +175,7 @@ class GraphiteMeterRegistryTest {
             .block(Duration.ofSeconds(10));
 
         assertThat(receiveLatch.await(10, TimeUnit.SECONDS)).as("line was received").isTrue();
-        server.dispose();
+        Objects.requireNonNull(server).dispose();
     }
 
 }

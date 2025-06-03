@@ -15,7 +15,6 @@
  */
 package io.micrometer.registry.otlp;
 
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.common.util.StringUtils;
 import io.micrometer.common.util.internal.logging.InternalLogger;
 import io.micrometer.common.util.internal.logging.InternalLoggerFactory;
@@ -44,6 +43,7 @@ import io.opentelemetry.proto.common.v1.KeyValue;
 import io.opentelemetry.proto.metrics.v1.ResourceMetrics;
 import io.opentelemetry.proto.metrics.v1.ScopeMetrics;
 import io.opentelemetry.proto.resource.v1.Resource;
+import org.jspecify.annotations.Nullable;
 
 import java.time.Duration;
 import java.util.*;
@@ -97,8 +97,7 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
     // flavour.
     private volatile long lastMeterRolloverStartTime = -1;
 
-    @Nullable
-    private ScheduledExecutorService meterPollingService;
+    private @Nullable ScheduledExecutorService meterPollingService;
 
     public OtlpMeterRegistry() {
         this(OtlpConfig.DEFAULT, Clock.SYSTEM);
@@ -457,8 +456,7 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
         return HistogramFlavor.EXPLICIT_BUCKET_HISTOGRAM;
     }
 
-    @Nullable
-    private static Histogram getExplicitBucketHistogram(final Clock clock,
+    private static @Nullable Histogram getExplicitBucketHistogram(final Clock clock,
             final DistributionStatisticConfig distributionStatisticConfig,
             final AggregationTemporality aggregationTemporality, final long stepMillis) {
 
@@ -531,8 +529,7 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
          * @see OtlpConfig#histogramFlavorPerMeter()
          * @see OtlpConfig#histogramFlavor()
          */
-        @Nullable
-        HistogramFlavor getHistogramFlavor(Map<String, HistogramFlavor> perMeterMapping, Meter.Id id);
+        @Nullable HistogramFlavor getHistogramFlavor(Map<String, HistogramFlavor> perMeterMapping, Meter.Id id);
 
     }
 
@@ -563,21 +560,18 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
          * @see OtlpConfig#maxBucketsPerMeter()
          * @see OtlpConfig#maxBucketCount()
          */
-        @Nullable
-        Integer getMaxBuckets(Map<String, Integer> perMeterMapping, Meter.Id id);
+        @Nullable Integer getMaxBuckets(Map<String, Integer> perMeterMapping, Meter.Id id);
 
     }
 
-    @Nullable
-    private static <T> T lookup(Map<String, T> values, Meter.Id id) {
+    private static <T> @Nullable T lookup(Map<String, T> values, Meter.Id id) {
         if (values.isEmpty()) {
             return null;
         }
         return doLookup(values, id);
     }
 
-    @Nullable
-    private static <T> T doLookup(Map<String, T> values, Meter.Id id) {
+    private static <T> @Nullable T doLookup(Map<String, T> values, Meter.Id id) {
         String name = id.getName();
         while (StringUtils.isNotEmpty(name)) {
             T result = values.get(name);

@@ -81,8 +81,7 @@ public interface Propagator {
          * @return the first value of the given propagation {@code key} or returns
          * {@code null}.
          */
-        @Nullable
-        String get(C carrier, String key);
+        @Nullable String get(C carrier, String key);
 
     }
 

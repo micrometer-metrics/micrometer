@@ -17,11 +17,11 @@ package io.micrometer.graphite;
 
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.graphite.*;
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.dropwizard.DropwizardClock;
 import io.micrometer.core.instrument.dropwizard.DropwizardMeterRegistry;
 import io.micrometer.core.instrument.util.HierarchicalNameMapper;
+import org.jspecify.annotations.Nullable;
 
 import java.util.concurrent.TimeUnit;
 
@@ -100,8 +100,7 @@ public class GraphiteMeterRegistry extends DropwizardMeterRegistry {
     }
 
     @Override
-    @Nullable
-    protected Double nullGaugeValue() {
+    protected @Nullable Double nullGaugeValue() {
         return null;
     }
 

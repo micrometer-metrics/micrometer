@@ -17,9 +17,7 @@
 /**
  * Instrumentation for Jetty 12 server.
  */
-@NonNullApi
-@NonNullFields
+@NullMarked
 package io.micrometer.jetty12.server;
 
-import io.micrometer.common.lang.NonNullApi;
-import io.micrometer.common.lang.NonNullFields;
+import org.jspecify.annotations.NullMarked;

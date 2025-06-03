@@ -22,6 +22,7 @@ import io.micrometer.core.instrument.config.validate.ValidationException;
 import io.micrometer.core.instrument.util.NamedThreadFactory;
 import io.micrometer.core.ipc.http.HttpSender;
 import io.micrometer.newrelic.NewRelicMeterRegistryTest.MockNewRelicAgent.MockNewRelicInsights;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 
 import java.nio.charset.StandardCharsets;
@@ -45,7 +46,7 @@ class NewRelicMeterRegistryTest {
 
     private final NewRelicConfig insightsAgentConfig = new NewRelicConfig() {
         @Override
-        public String get(String key) {
+        public @Nullable String get(String key) {
             return null;
         }
 
@@ -58,7 +59,7 @@ class NewRelicMeterRegistryTest {
 
     private final NewRelicConfig insightsApiConfig = new NewRelicConfig() {
         @Override
-        public String get(String key) {
+        public @Nullable String get(String key) {
             return null;
         }
 
@@ -87,7 +88,7 @@ class NewRelicMeterRegistryTest {
         }
 
         @Override
-        public String get(String key) {
+        public @Nullable String get(String key) {
             return null;
         }
 
@@ -777,7 +778,7 @@ class NewRelicMeterRegistryTest {
             }
 
             @Override
-            public String get(String key) {
+            public @Nullable String get(String key) {
                 return null;
             }
         };
@@ -810,7 +811,7 @@ class NewRelicMeterRegistryTest {
             }
 
             @Override
-            public String get(String key) {
+            public @Nullable String get(String key) {
                 return null;
             }
         };
@@ -827,12 +828,13 @@ class NewRelicMeterRegistryTest {
             }
 
             @Override
+            @SuppressWarnings("NullAway")
             public String accountId() {
                 return null;
             }
 
             @Override
-            public String get(String key) {
+            public @Nullable String get(String key) {
                 return null;
             }
         };
@@ -860,7 +862,7 @@ class NewRelicMeterRegistryTest {
             }
 
             @Override
-            public String get(String key) {
+            public @Nullable String get(String key) {
                 return null;
             }
         };
@@ -893,7 +895,7 @@ class NewRelicMeterRegistryTest {
             }
 
             @Override
-            public String get(String key) {
+            public @Nullable String get(String key) {
                 return null;
             }
         };
@@ -911,7 +913,7 @@ class NewRelicMeterRegistryTest {
             }
 
             @Override
-            public String get(String key) {
+            public @Nullable String get(String key) {
                 return null;
             }
         };
@@ -928,14 +930,14 @@ class NewRelicMeterRegistryTest {
                 return true;
             }
 
-            @SuppressWarnings("ConstantConditions")
             @Override
+            @SuppressWarnings({ "ConstantConditions", "NullAway" })
             public String eventType() {
                 return null;
             }
 
             @Override
-            public String get(String key) {
+            public @Nullable String get(String key) {
                 return null;
             }
 
@@ -1001,6 +1003,7 @@ class NewRelicMeterRegistryTest {
 
     static class MockHttpSender implements HttpSender {
 
+        @SuppressWarnings("NullAway.Init")
         private Request request;
 
         @Override
@@ -1015,6 +1018,7 @@ class NewRelicMeterRegistryTest {
 
     }
 
+    @SuppressWarnings("NullAway")
     static class MockNewRelicAgent implements Agent {
 
         private final Insights insights;

@@ -18,6 +18,7 @@ package io.micrometer.appoptics;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.tck.MeterRegistryCompatibilityKit;
+import org.jspecify.annotations.Nullable;
 
 import java.time.Duration;
 
@@ -25,7 +26,7 @@ class AppOpticsMeterRegistryCompatibilityTest extends MeterRegistryCompatibility
 
     private final AppOpticsConfig config = new AppOpticsConfig() {
         @Override
-        public String get(String key) {
+        public @Nullable String get(String key) {
             return null;
         }
 

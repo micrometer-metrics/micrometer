@@ -15,9 +15,9 @@
  */
 package io.micrometer.graphite;
 
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.config.validate.Validated;
 import io.micrometer.core.instrument.dropwizard.DropwizardConfig;
+import org.jspecify.annotations.Nullable;
 
 import java.util.concurrent.TimeUnit;
 
@@ -42,8 +42,7 @@ public interface GraphiteConfig extends DropwizardConfig {
      * @return Value for the key or null if no key is present.
      */
     @Override
-    @Nullable
-    String get(String key);
+    @Nullable String get(String key);
 
     /**
      * @return Property prefix to prepend to configuration names.

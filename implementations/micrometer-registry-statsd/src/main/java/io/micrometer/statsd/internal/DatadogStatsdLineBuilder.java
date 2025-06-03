@@ -15,7 +15,6 @@
  */
 package io.micrometer.statsd.internal;
 
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Statistic;
@@ -23,6 +22,7 @@ import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.util.DoubleFormat;
+import org.jspecify.annotations.Nullable;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -38,16 +38,12 @@ public class DatadogStatsdLineBuilder extends FlavorStatsdLineBuilder {
 
     private final Object conventionTagsLock = new Object();
 
-    @SuppressWarnings({ "NullableProblems", "unused" })
     private volatile NamingConvention namingConvention;
 
-    @SuppressWarnings("NullableProblems")
     private volatile String name;
 
-    @Nullable
-    private volatile String conventionTags;
+    private volatile @Nullable String conventionTags;
 
-    @SuppressWarnings("NullableProblems")
     private volatile String tagsNoStat;
 
     private final ConcurrentMap<Statistic, String> tags = new ConcurrentHashMap<>();
@@ -73,9 +69,13 @@ public class DatadogStatsdLineBuilder extends FlavorStatsdLineBuilder {
             @Nullable DistributionStatisticConfig distributionStatisticConfig) {
         super(id, config);
 
-        percentileHistogram = distributionStatisticConfig != null
+        this.percentileHistogram = distributionStatisticConfig != null
                 && TRUE.equals(distributionStatisticConfig.isPercentileHistogram());
-        ddEntityId = System.getenv("DD_ENTITY_ID");
+        this.ddEntityId = System.getenv("DD_ENTITY_ID");
+        this.namingConvention = config.namingConvention();
+        this.conventionTags = createConventionTags(namingConvention);
+        this.name = createName(namingConvention);
+        this.tagsNoStat = createTagsNoStat(conventionTags);
     }
 
     @Override
@@ -116,19 +116,30 @@ public class DatadogStatsdLineBuilder extends FlavorStatsdLineBuilder {
                     return;
                 }
                 this.tags.clear();
-                String conventionTags = id.getTagsAsIterable().iterator().hasNext()
-                        ? id.getConventionTags(next).stream().map(this::formatTag).collect(Collectors.joining(","))
-                        : null;
-                this.conventionTags = appendEntityIdTag(conventionTags);
+                this.conventionTags = createConventionTags(next);
             }
-            this.name = next.name(sanitizeName(id.getName()), id.getType(), id.getBaseUnit()) + ":";
-            this.tagsNoStat = tags(null, conventionTags, ":", "|#");
+            this.name = createName(next);
+            this.tagsNoStat = createTagsNoStat(conventionTags);
             this.namingConvention = next;
         }
     }
 
-    @Nullable
-    private String appendEntityIdTag(@Nullable String tags) {
+    private @Nullable String createConventionTags(NamingConvention namingConvention) {
+        String conventionTags = id.getTagsAsIterable().iterator().hasNext()
+                ? id.getConventionTags(namingConvention).stream().map(this::formatTag).collect(Collectors.joining(","))
+                : null;
+        return appendEntityIdTag(conventionTags);
+    }
+
+    private String createName(NamingConvention namingConvention) {
+        return namingConvention.name(sanitizeName(id.getName()), id.getType(), id.getBaseUnit()) + ":";
+    }
+
+    private String createTagsNoStat(@Nullable String conventionTags) {
+        return tags(null, conventionTags, ":", "|#");
+    }
+
+    private @Nullable String appendEntityIdTag(@Nullable String tags) {
         if (ddEntityId != null && !ddEntityId.trim().isEmpty()) {
             String entityIdTag = formatTag(Tag.of(ENTITY_ID_TAG_NAME, ddEntityId));
             return tags == null ? entityIdTag : tags + "," + entityIdTag;

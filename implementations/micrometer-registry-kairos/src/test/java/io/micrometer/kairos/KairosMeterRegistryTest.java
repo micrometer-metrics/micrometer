@@ -41,25 +41,25 @@ class KairosMeterRegistryTest {
     @Test
     void writeGauge() {
         meterRegistry.gauge("my.gauge", 1d);
-        Gauge gauge = meterRegistry.find("my.gauge").gauge();
+        Gauge gauge = meterRegistry.get("my.gauge").gauge();
         assertThat(meterRegistry.writeGauge(gauge)).hasSize(1);
     }
 
     @Test
     void writeGaugeShouldDropNanValue() {
         meterRegistry.gauge("my.gauge", Double.NaN);
-        Gauge gauge = meterRegistry.find("my.gauge").gauge();
+        Gauge gauge = meterRegistry.get("my.gauge").gauge();
         assertThat(meterRegistry.writeGauge(gauge)).isEmpty();
     }
 
     @Test
     void writeGaugeShouldDropInfiniteValues() {
         meterRegistry.gauge("my.gauge", Double.POSITIVE_INFINITY);
-        Gauge gauge = meterRegistry.find("my.gauge").gauge();
+        Gauge gauge = meterRegistry.get("my.gauge").gauge();
         assertThat(meterRegistry.writeGauge(gauge)).isEmpty();
 
         meterRegistry.gauge("my.gauge", Double.NEGATIVE_INFINITY);
-        gauge = meterRegistry.find("my.gauge").gauge();
+        gauge = meterRegistry.get("my.gauge").gauge();
         assertThat(meterRegistry.writeGauge(gauge)).isEmpty();
     }
 
@@ -67,7 +67,7 @@ class KairosMeterRegistryTest {
     void writeTimeGauge() {
         AtomicReference<Double> obj = new AtomicReference<>(1d);
         meterRegistry.more().timeGauge("my.timeGauge", Tags.empty(), obj, TimeUnit.SECONDS, AtomicReference::get);
-        TimeGauge timeGauge = meterRegistry.find("my.timeGauge").timeGauge();
+        TimeGauge timeGauge = meterRegistry.get("my.timeGauge").timeGauge();
         assertThat(meterRegistry.writeTimeGauge(timeGauge)).hasSize(1);
     }
 
@@ -75,7 +75,7 @@ class KairosMeterRegistryTest {
     void writeTimeGaugeShouldDropNanValue() {
         AtomicReference<Double> obj = new AtomicReference<>(Double.NaN);
         meterRegistry.more().timeGauge("my.timeGauge", Tags.empty(), obj, TimeUnit.SECONDS, AtomicReference::get);
-        TimeGauge timeGauge = meterRegistry.find("my.timeGauge").timeGauge();
+        TimeGauge timeGauge = meterRegistry.get("my.timeGauge").timeGauge();
         assertThat(meterRegistry.writeTimeGauge(timeGauge)).isEmpty();
     }
 
@@ -83,12 +83,12 @@ class KairosMeterRegistryTest {
     void writeTimeGaugeShouldDropInfiniteValues() {
         AtomicReference<Double> obj = new AtomicReference<>(Double.POSITIVE_INFINITY);
         meterRegistry.more().timeGauge("my.timeGauge", Tags.empty(), obj, TimeUnit.SECONDS, AtomicReference::get);
-        TimeGauge timeGauge = meterRegistry.find("my.timeGauge").timeGauge();
+        TimeGauge timeGauge = meterRegistry.get("my.timeGauge").timeGauge();
         assertThat(meterRegistry.writeTimeGauge(timeGauge)).isEmpty();
 
         obj = new AtomicReference<>(Double.NEGATIVE_INFINITY);
         meterRegistry.more().timeGauge("my.timeGauge", Tags.empty(), obj, TimeUnit.SECONDS, AtomicReference::get);
-        timeGauge = meterRegistry.find("my.timeGauge").timeGauge();
+        timeGauge = meterRegistry.get("my.timeGauge").timeGauge();
         assertThat(meterRegistry.writeTimeGauge(timeGauge)).isEmpty();
     }
 

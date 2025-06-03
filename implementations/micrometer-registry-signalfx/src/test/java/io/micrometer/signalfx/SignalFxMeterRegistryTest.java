@@ -25,6 +25,7 @@ import io.micrometer.core.instrument.step.PollingAwareMockStepClock;
 import io.micrometer.core.instrument.util.DoubleFormat;
 import org.assertj.core.api.Condition;
 import org.assertj.core.util.Arrays;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -57,7 +58,7 @@ class SignalFxMeterRegistryTest {
 
     private final SignalFxConfig config = new SignalFxConfig() {
         @Override
-        public String get(String key) {
+        public @Nullable String get(String key) {
             return null;
         }
 
@@ -74,7 +75,7 @@ class SignalFxMeterRegistryTest {
 
     private final SignalFxConfig cumulativeHistogramConfig = new SignalFxConfig() {
         @Override
-        public String get(String key) {
+        public @Nullable String get(String key) {
             return null;
         }
 
@@ -96,7 +97,7 @@ class SignalFxMeterRegistryTest {
 
     private final SignalFxConfig cumulativeDeltaConfig = new SignalFxConfig() {
         @Override
-        public String get(String key) {
+        public @Nullable String get(String key) {
             return null;
         }
 

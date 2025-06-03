@@ -16,10 +16,10 @@
 package io.micrometer.wavefront;
 
 import com.wavefront.sdk.entities.histograms.WavefrontHistogramImpl;
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.cumulative.CumulativeDistributionSummary;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
@@ -32,8 +32,7 @@ import java.util.List;
  */
 class WavefrontDistributionSummary extends CumulativeDistributionSummary {
 
-    @Nullable
-    private final WavefrontHistogramImpl delegate;
+    private final @Nullable WavefrontHistogramImpl delegate;
 
     WavefrontDistributionSummary(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig,
             double scale) {

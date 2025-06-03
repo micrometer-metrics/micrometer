@@ -17,6 +17,7 @@ package io.micrometer.humio;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
 import io.micrometer.core.instrument.*;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import ru.lanwen.wiremock.ext.WiremockResolver;
@@ -72,7 +73,7 @@ class HumioMeterRegistryTest {
     @Test
     void writeGauge() {
         meterRegistry.gauge("my.gauge", 1d);
-        Gauge gauge = meterRegistry.find("my.gauge").gauge();
+        Gauge gauge = meterRegistry.get("my.gauge").gauge();
         assertThat(createBatch().writeGauge(gauge)).isNotNull();
     }
 
@@ -83,21 +84,21 @@ class HumioMeterRegistryTest {
     @Test
     void writeGaugeShouldDropNanValue() {
         meterRegistry.gauge("my.gauge", Double.NaN);
-        Gauge gauge = meterRegistry.find("my.gauge").gauge();
+        Gauge gauge = meterRegistry.get("my.gauge").gauge();
         assertThat(createBatch().writeGauge(gauge)).isNull();
     }
 
     @Test
     void writeGaugeShouldDropPositiveInfiniteValue() {
         meterRegistry.gauge("my.gauge", Double.POSITIVE_INFINITY);
-        Gauge gauge = meterRegistry.find("my.gauge").gauge();
+        Gauge gauge = meterRegistry.get("my.gauge").gauge();
         assertThat(createBatch().writeGauge(gauge)).isNull();
     }
 
     @Test
     void writeGaugeShouldDropNegativeInfiniteValue() {
         meterRegistry.gauge("my.gauge", Double.NEGATIVE_INFINITY);
-        Gauge gauge = meterRegistry.find("my.gauge").gauge();
+        Gauge gauge = meterRegistry.get("my.gauge").gauge();
         assertThat(createBatch().writeGauge(gauge)).isNull();
     }
 
@@ -105,7 +106,7 @@ class HumioMeterRegistryTest {
     void writeTimeGauge() {
         AtomicReference<Double> obj = new AtomicReference<>(1d);
         meterRegistry.more().timeGauge("my.timeGauge", Tags.empty(), obj, TimeUnit.SECONDS, AtomicReference::get);
-        TimeGauge timeGauge = meterRegistry.find("my.timeGauge").timeGauge();
+        TimeGauge timeGauge = meterRegistry.get("my.timeGauge").timeGauge();
         assertThat(createBatch().writeGauge(timeGauge)).isNotNull();
     }
 
@@ -113,7 +114,7 @@ class HumioMeterRegistryTest {
     void writeTimeGaugeShouldDropNanValue() {
         AtomicReference<Double> obj = new AtomicReference<>(Double.NaN);
         meterRegistry.more().timeGauge("my.timeGauge", Tags.empty(), obj, TimeUnit.SECONDS, AtomicReference::get);
-        TimeGauge timeGauge = meterRegistry.find("my.timeGauge").timeGauge();
+        TimeGauge timeGauge = meterRegistry.get("my.timeGauge").timeGauge();
         assertThat(createBatch().writeGauge(timeGauge)).isNull();
     }
 
@@ -121,7 +122,7 @@ class HumioMeterRegistryTest {
     void writeTimeGaugeShouldDropPositiveInfiniteValue() {
         AtomicReference<Double> obj = new AtomicReference<>(Double.POSITIVE_INFINITY);
         meterRegistry.more().timeGauge("my.timeGauge", Tags.empty(), obj, TimeUnit.SECONDS, AtomicReference::get);
-        TimeGauge timeGauge = meterRegistry.find("my.timeGauge").timeGauge();
+        TimeGauge timeGauge = meterRegistry.get("my.timeGauge").timeGauge();
         assertThat(createBatch().writeGauge(timeGauge)).isNull();
     }
 
@@ -129,7 +130,7 @@ class HumioMeterRegistryTest {
     void writeTimeGaugeShouldDropNegativeInfiniteValue() {
         AtomicReference<Double> obj = new AtomicReference<>(Double.NEGATIVE_INFINITY);
         meterRegistry.more().timeGauge("my.timeGauge", Tags.empty(), obj, TimeUnit.SECONDS, AtomicReference::get);
-        TimeGauge timeGauge = meterRegistry.find("my.timeGauge").timeGauge();
+        TimeGauge timeGauge = meterRegistry.get("my.timeGauge").timeGauge();
         assertThat(createBatch().writeGauge(timeGauge)).isNull();
     }
 
@@ -183,7 +184,7 @@ class HumioMeterRegistryTest {
     private HumioMeterRegistry humioMeterRegistry(WireMockServer server, String... tags) {
         return new HumioMeterRegistry(new HumioConfig() {
             @Override
-            public String get(String key) {
+            public @Nullable String get(String key) {
                 return null;
             }
 

@@ -15,12 +15,12 @@
  */
 package io.micrometer.signalfx;
 
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.common.util.StringUtils;
 import io.micrometer.common.util.internal.logging.WarnThenDebugLogger;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.util.StringEscapeUtils;
+import org.jspecify.annotations.Nullable;
 
 import java.util.regex.Pattern;
 

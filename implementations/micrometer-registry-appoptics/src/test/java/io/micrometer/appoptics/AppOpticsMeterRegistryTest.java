@@ -17,6 +17,7 @@ package io.micrometer.appoptics;
 
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.ipc.http.HttpSender;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
@@ -46,7 +47,7 @@ class AppOpticsMeterRegistryTest {
         }
 
         @Override
-        public String get(String key) {
+        public @Nullable String get(String key) {
             return null;
         }
     };
@@ -64,7 +65,7 @@ class AppOpticsMeterRegistryTest {
         }
 
         @Override
-        public String get(String key) {
+        public @Nullable String get(String key) {
             return null;
         }
     };
@@ -81,25 +82,25 @@ class AppOpticsMeterRegistryTest {
     @Test
     void writeGauge() {
         meterRegistry.gauge("my.gauge", 1d);
-        Gauge gauge = meterRegistry.find("my.gauge").gauge();
+        Gauge gauge = meterRegistry.get("my.gauge").gauge();
         assertThat(meterRegistry.writeGauge(gauge).isPresent()).isTrue();
     }
 
     @Test
     void writeGaugeShouldDropNanValue() {
         meterRegistry.gauge("my.gauge", Double.NaN);
-        Gauge gauge = meterRegistry.find("my.gauge").gauge();
+        Gauge gauge = meterRegistry.get("my.gauge").gauge();
         assertThat(meterRegistry.writeGauge(gauge).isPresent()).isFalse();
     }
 
     @Test
     void writeGaugeShouldDropInfiniteValues() {
         meterRegistry.gauge("my.gauge", Double.POSITIVE_INFINITY);
-        Gauge gauge = meterRegistry.find("my.gauge").gauge();
+        Gauge gauge = meterRegistry.get("my.gauge").gauge();
         assertThat(meterRegistry.writeGauge(gauge).isPresent()).isFalse();
 
         meterRegistry.gauge("my.gauge", Double.NEGATIVE_INFINITY);
-        gauge = meterRegistry.find("my.gauge").gauge();
+        gauge = meterRegistry.get("my.gauge").gauge();
         assertThat(meterRegistry.writeGauge(gauge).isPresent()).isFalse();
     }
 
@@ -107,7 +108,7 @@ class AppOpticsMeterRegistryTest {
     void writeTimeGauge() {
         AtomicReference<Double> obj = new AtomicReference<>(1d);
         meterRegistry.more().timeGauge("my.timeGauge", Tags.empty(), obj, TimeUnit.SECONDS, AtomicReference::get);
-        TimeGauge timeGauge = meterRegistry.find("my.timeGauge").timeGauge();
+        TimeGauge timeGauge = meterRegistry.get("my.timeGauge").timeGauge();
         assertThat(meterRegistry.writeTimeGauge(timeGauge).isPresent()).isTrue();
     }
 
@@ -115,7 +116,7 @@ class AppOpticsMeterRegistryTest {
     void writeTimeGaugeShouldDropNanValue() {
         AtomicReference<Double> obj = new AtomicReference<>(Double.NaN);
         meterRegistry.more().timeGauge("my.timeGauge", Tags.empty(), obj, TimeUnit.SECONDS, AtomicReference::get);
-        TimeGauge timeGauge = meterRegistry.find("my.timeGauge").timeGauge();
+        TimeGauge timeGauge = meterRegistry.get("my.timeGauge").timeGauge();
         assertThat(meterRegistry.writeTimeGauge(timeGauge).isPresent()).isFalse();
     }
 
@@ -123,12 +124,12 @@ class AppOpticsMeterRegistryTest {
     void writeTimeGaugeShouldDropInfiniteValues() {
         AtomicReference<Double> obj = new AtomicReference<>(Double.POSITIVE_INFINITY);
         meterRegistry.more().timeGauge("my.timeGauge", Tags.empty(), obj, TimeUnit.SECONDS, AtomicReference::get);
-        TimeGauge timeGauge = meterRegistry.find("my.timeGauge").timeGauge();
+        TimeGauge timeGauge = meterRegistry.get("my.timeGauge").timeGauge();
         assertThat(meterRegistry.writeTimeGauge(timeGauge).isPresent()).isFalse();
 
         obj = new AtomicReference<>(Double.NEGATIVE_INFINITY);
         meterRegistry.more().timeGauge("my.timeGauge", Tags.empty(), obj, TimeUnit.SECONDS, AtomicReference::get);
-        timeGauge = meterRegistry.find("my.timeGauge").timeGauge();
+        timeGauge = meterRegistry.get("my.timeGauge").timeGauge();
         assertThat(meterRegistry.writeTimeGauge(timeGauge).isPresent()).isFalse();
     }
 

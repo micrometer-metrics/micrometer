@@ -19,6 +19,7 @@ import com.dynatrace.file.util.DynatraceFileBasedConfigurationProvider;
 import com.dynatrace.metric.util.DynatraceMetricApiConstants;
 import io.micrometer.core.instrument.config.validate.InvalidReason;
 import io.micrometer.core.instrument.config.validate.Validated;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -52,7 +53,7 @@ class DynatraceConfigTest {
     void invalid() {
         DynatraceConfig config = new DynatraceConfig() {
             @Override
-            public String get(String key) {
+            public @Nullable String get(String key) {
                 return null;
             }
 
@@ -79,7 +80,7 @@ class DynatraceConfigTest {
             }
 
             @Override
-            public String get(String key) {
+            public @Nullable String get(String key) {
                 return null;
             }
 
@@ -101,7 +102,7 @@ class DynatraceConfigTest {
     void invalidMissingUriInV2() {
         Validated<?> validate = new DynatraceConfig() {
             @Override
-            public String get(String key) {
+            public @Nullable String get(String key) {
                 return null;
             }
 
@@ -111,6 +112,7 @@ class DynatraceConfigTest {
             }
 
             @Override
+            @SuppressWarnings("NullAway")
             public String uri() {
                 return null;
             }
@@ -239,7 +241,7 @@ class DynatraceConfigTest {
     void testDeviceIdNotSetFallsBackToV2() {
         DynatraceConfig config = new DynatraceConfig() {
             @Override
-            public String get(String key) {
+            public @Nullable String get(String key) {
                 return null;
             }
         };
@@ -251,7 +253,7 @@ class DynatraceConfigTest {
     void testDeviceIdSetFallsBackToV1() {
         DynatraceConfig config = new DynatraceConfig() {
             @Override
-            public String get(String key) {
+            public @Nullable String get(String key) {
                 return null;
             }
 
@@ -267,7 +269,7 @@ class DynatraceConfigTest {
     void testDeviceIdSetAndVersionOverwritten() {
         DynatraceConfig config = new DynatraceConfig() {
             @Override
-            public String get(String key) {
+            public @Nullable String get(String key) {
                 return null;
             }
 
@@ -292,7 +294,7 @@ class DynatraceConfigTest {
         // to overwrite the version.
         DynatraceConfig config = new DynatraceConfig() {
             @Override
-            public String get(String key) {
+            public @Nullable String get(String key) {
                 return null;
             }
 
@@ -319,7 +321,7 @@ class DynatraceConfigTest {
 
         DynatraceConfig config = new DynatraceConfig() {
             @Override
-            public String get(String key) {
+            public @Nullable String get(String key) {
                 return null;
             }
 

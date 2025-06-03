@@ -15,6 +15,8 @@
  */
 package io.micrometer.common.annotation;
 
+import org.jspecify.annotations.Nullable;
+
 /**
  * A no-op implementation of a {@link ValueResolver}.
  *
@@ -24,8 +26,8 @@ package io.micrometer.common.annotation;
 public class NoOpValueResolver implements ValueResolver {
 
     @Override
-    public String resolve(Object parameter) {
-        return null;
+    public String resolve(@Nullable Object parameter) {
+        return "";
     }
 
 }

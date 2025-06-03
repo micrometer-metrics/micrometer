@@ -49,8 +49,7 @@ public class RequestReplyReceiverContext<C, RES> extends ReceiverContext<C> impl
     }
 
     @Override
-    @Nullable
-    public RES getResponse() {
+    @Nullable public RES getResponse() {
         return response;
     }
 

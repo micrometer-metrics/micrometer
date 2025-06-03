@@ -15,11 +15,11 @@
  */
 package io.micrometer.core.instrument;
 
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.binder.jetty.TimedHandler;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHandler;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Disabled;
 
 import javax.servlet.http.HttpServlet;
@@ -53,9 +53,8 @@ class JettyServerTimingInstrumentationVerificationTests extends HttpServerTiming
         return server.getURI();
     }
 
-    @Nullable
     @Override
-    protected URI startInstrumentedWithObservationsServer() throws Exception {
+    protected @Nullable URI startInstrumentedWithObservationsServer() throws Exception {
         return null;
     }
 

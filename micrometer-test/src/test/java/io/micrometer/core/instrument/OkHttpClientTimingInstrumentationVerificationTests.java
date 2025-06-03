@@ -15,7 +15,6 @@
  */
 package io.micrometer.core.instrument;
 
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.binder.okhttp3.OkHttpMetricsEventListener;
 import io.micrometer.core.instrument.binder.okhttp3.OkHttpObservationDocumentation;
 import io.micrometer.core.instrument.binder.okhttp3.OkHttpObservationInterceptor;
@@ -24,6 +23,7 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
+import org.jspecify.annotations.Nullable;
 
 import java.io.IOException;
 import java.net.URI;
@@ -32,7 +32,7 @@ class OkHttpClientTimingInstrumentationVerificationTests
         extends HttpClientTimingInstrumentationVerificationTests<OkHttpClient> {
 
     @Override
-    protected void sendHttpRequest(OkHttpClient instrumentedClient, HttpMethod method, @Nullable byte[] body,
+    protected void sendHttpRequest(OkHttpClient instrumentedClient, HttpMethod method, byte @Nullable [] body,
             URI baseUri, String templatedPath, String... pathVariables) {
         Request request = new Request.Builder().method(method.name(), body == null ? null : RequestBody.create(body))
             .url(baseUri + substitutePathVariables(templatedPath, pathVariables))

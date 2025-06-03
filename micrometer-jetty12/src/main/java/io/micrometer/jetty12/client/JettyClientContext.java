@@ -18,6 +18,7 @@ package io.micrometer.jetty12.client;
 import io.micrometer.observation.transport.RequestReplySenderContext;
 import org.eclipse.jetty.client.Request;
 import org.eclipse.jetty.client.Result;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Objects;
 import java.util.function.BiFunction;
@@ -30,16 +31,17 @@ import java.util.function.BiFunction;
  */
 public class JettyClientContext extends RequestReplySenderContext<Request, Result> {
 
-    private final BiFunction<Request, Result, String> uriPatternFunction;
+    private final BiFunction<@Nullable Request, @Nullable Result, String> uriPatternFunction;
 
-    public JettyClientContext(Request request, BiFunction<Request, Result, String> uriPatternFunction) {
+    public JettyClientContext(Request request,
+            BiFunction<@Nullable Request, @Nullable Result, String> uriPatternFunction) {
         super((carrier, key, value) -> Objects.requireNonNull(carrier)
             .headers(httpFields -> httpFields.add(key, value)));
         this.uriPatternFunction = uriPatternFunction;
         setCarrier(request);
     }
 
-    public BiFunction<Request, Result, String> getUriPatternFunction() {
+    public BiFunction<@Nullable Request, @Nullable Result, String> getUriPatternFunction() {
         return uriPatternFunction;
     }
 

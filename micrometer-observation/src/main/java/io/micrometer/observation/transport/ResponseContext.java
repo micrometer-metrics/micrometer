@@ -31,8 +31,7 @@ public interface ResponseContext<RES> {
      * Getter for the response object.
      * @return the response
      */
-    @Nullable
-    RES getResponse();
+    @Nullable RES getResponse();
 
     /**
      * Setter for the response object.

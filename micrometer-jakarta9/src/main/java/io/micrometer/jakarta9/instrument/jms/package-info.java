@@ -17,9 +17,7 @@
 /**
  * Observation instrumentation for Jakarta JMS.
  */
-@NonNullFields
-@NonNullApi
+@NullMarked
 package io.micrometer.jakarta9.instrument.jms;
 
-import io.micrometer.common.lang.NonNullApi;
-import io.micrometer.common.lang.NonNullFields;
+import org.jspecify.annotations.NullMarked;

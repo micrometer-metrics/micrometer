@@ -15,7 +15,7 @@
  */
 package io.micrometer.registry.otlp;
 
-import io.micrometer.common.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
@@ -45,8 +45,7 @@ public interface OtlpMetricsSender {
      */
     class Request {
 
-        @Nullable
-        private final String address;
+        private final @Nullable String address;
 
         private final Map<String, String> headers;
 
@@ -64,8 +63,7 @@ public interface OtlpMetricsSender {
             this.metricsData = metricsData;
         }
 
-        @Nullable
-        public String getAddress() {
+        public @Nullable String getAddress() {
             return address;
         }
 
@@ -96,8 +94,7 @@ public interface OtlpMetricsSender {
 
             private final byte[] metricsData;
 
-            @Nullable
-            private String address;
+            private @Nullable String address;
 
             private Map<String, String> headers = Collections.emptyMap();
 

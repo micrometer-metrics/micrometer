@@ -15,10 +15,10 @@
  */
 package io.micrometer.ganglia;
 
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.tck.MeterRegistryCompatibilityKit;
+import org.jspecify.annotations.Nullable;
 
 import java.time.Duration;
 
@@ -33,8 +33,7 @@ class GangliaMeterRegistryCompatibilityTest extends MeterRegistryCompatibilityKi
             }
 
             @Override
-            @Nullable
-            public String get(String key) {
+            public @Nullable String get(String key) {
                 return null;
             }
         }).clock(new MockClock()).build();

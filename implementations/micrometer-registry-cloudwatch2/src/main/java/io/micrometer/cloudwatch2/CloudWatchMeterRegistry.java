@@ -15,13 +15,13 @@
  */
 package io.micrometer.cloudwatch2;
 
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.common.util.StringUtils;
 import io.micrometer.common.util.internal.logging.WarnThenDebugLogger;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.util.NamedThreadFactory;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.core.exception.AbortedException;
@@ -260,23 +260,21 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
                 .filter(Objects::nonNull);
         }
 
-        @Nullable
-        private MetricDatum metricDatum(Meter.Id id, double value) {
+        private @Nullable MetricDatum metricDatum(Meter.Id id, double value) {
             return metricDatum(id, null, id.getBaseUnit(), value);
         }
 
-        @Nullable
-        private MetricDatum metricDatum(Meter.Id id, @Nullable String suffix, double value) {
+        private @Nullable MetricDatum metricDatum(Meter.Id id, @Nullable String suffix, double value) {
             return metricDatum(id, suffix, id.getBaseUnit(), value);
         }
 
-        @Nullable
-        private MetricDatum metricDatum(Meter.Id id, @Nullable String suffix, @Nullable String unit, double value) {
+        private @Nullable MetricDatum metricDatum(Meter.Id id, @Nullable String suffix, @Nullable String unit,
+                double value) {
             return metricDatum(id, suffix, toStandardUnit(unit), value);
         }
 
-        @Nullable
-        private MetricDatum metricDatum(Meter.Id id, @Nullable String suffix, StandardUnit standardUnit, double value) {
+        private @Nullable MetricDatum metricDatum(Meter.Id id, @Nullable String suffix, StandardUnit standardUnit,
+                double value) {
             if (Double.isNaN(value)) {
                 return null;
             }

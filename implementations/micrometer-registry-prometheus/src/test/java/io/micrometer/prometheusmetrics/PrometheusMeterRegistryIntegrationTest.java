@@ -16,11 +16,11 @@
 package io.micrometer.prometheusmetrics;
 
 import com.sun.net.httpserver.HttpServer;
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.jvm.JvmInfoMetrics;
 import io.prometheus.metrics.model.registry.PrometheusRegistry;
 import io.prometheus.metrics.tracer.common.SpanContext;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
@@ -67,11 +67,9 @@ class PrometheusMeterRegistryIntegrationTest {
 
     private PrometheusMeterRegistry registry;
 
-    @Nullable
-    private HttpServer openMetricsServer;
+    private @Nullable HttpServer openMetricsServer;
 
-    @Nullable
-    private HttpServer prometheusTextServer;
+    private @Nullable HttpServer prometheusTextServer;
 
     private static String getPrometheusImageVersion() {
         String version = System.getProperty("prometheus.version");

@@ -15,9 +15,9 @@
  */
 package io.micrometer.registry.otlp.internal;
 
-import java.util.concurrent.TimeUnit;
+import org.jspecify.annotations.Nullable;
 
-import io.micrometer.common.lang.Nullable;
+import java.util.concurrent.TimeUnit;
 
 /**
  * A {@link Base2ExponentialHistogram} that tracks values cumulatively from first recorded

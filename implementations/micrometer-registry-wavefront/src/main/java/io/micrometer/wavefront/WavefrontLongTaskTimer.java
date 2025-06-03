@@ -16,10 +16,10 @@
 package io.micrometer.wavefront;
 
 import com.wavefront.sdk.entities.histograms.WavefrontHistogramImpl;
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.internal.DefaultLongTaskTimer;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
@@ -32,8 +32,7 @@ import java.util.concurrent.TimeUnit;
  */
 class WavefrontLongTaskTimer extends DefaultLongTaskTimer {
 
-    @Nullable
-    private final WavefrontHistogramImpl histogram;
+    private final @Nullable WavefrontHistogramImpl histogram;
 
     WavefrontLongTaskTimer(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig,
             TimeUnit baseTimeUnit) {

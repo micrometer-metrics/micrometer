@@ -15,12 +15,12 @@
  */
 package io.micrometer.signalfx;
 
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.HistogramSnapshot;
 import io.micrometer.core.instrument.distribution.StepBucketHistogram;
 import io.micrometer.core.instrument.step.StepDistributionSummary;
+import org.jspecify.annotations.Nullable;
 
 /**
  * A StepDistributionSummary which provides support for multiple flavours of Histograms to
@@ -33,8 +33,7 @@ import io.micrometer.core.instrument.step.StepDistributionSummary;
  */
 final class SignalfxDistributionSummary extends StepDistributionSummary {
 
-    @Nullable
-    private final StepBucketHistogram stepBucketHistogram;
+    private final @Nullable StepBucketHistogram stepBucketHistogram;
 
     SignalfxDistributionSummary(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig,
             double scale, long stepMillis, boolean isDelta) {

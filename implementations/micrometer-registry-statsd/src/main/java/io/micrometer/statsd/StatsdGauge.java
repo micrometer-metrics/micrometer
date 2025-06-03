@@ -15,9 +15,9 @@
  */
 package io.micrometer.statsd;
 
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.AbstractMeter;
 import io.micrometer.core.instrument.Gauge;
+import org.jspecify.annotations.Nullable;
 import reactor.core.publisher.FluxSink;
 
 import java.lang.ref.WeakReference;

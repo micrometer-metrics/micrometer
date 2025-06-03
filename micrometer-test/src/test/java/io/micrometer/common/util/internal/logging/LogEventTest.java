@@ -28,6 +28,7 @@ import static org.assertj.core.api.Assertions.*;
 class LogEventTest {
 
     @Test
+    @SuppressWarnings("NullAway")
     void logLevelShouldBeMandatory() {
         assertThatCode(() -> new LogEvent(INFO, null, null)).doesNotThrowAnyException();
         assertThatThrownBy(() -> new LogEvent(null, null, null)).isInstanceOf(NullPointerException.class)

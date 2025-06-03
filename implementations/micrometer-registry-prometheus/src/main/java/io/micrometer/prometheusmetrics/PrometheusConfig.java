@@ -15,16 +15,17 @@
  */
 package io.micrometer.prometheusmetrics;
 
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.config.MeterRegistryConfig;
 import io.micrometer.core.instrument.config.validate.Validated;
+import org.jspecify.annotations.Nullable;
 
 import java.time.Duration;
 import java.util.Properties;
 
 import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.checkAll;
 import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.checkRequired;
-import static io.micrometer.core.instrument.config.validate.PropertyValidator.*;
+import static io.micrometer.core.instrument.config.validate.PropertyValidator.getBoolean;
+import static io.micrometer.core.instrument.config.validate.PropertyValidator.getDuration;
 
 /**
  * Configuration for {@link PrometheusMeterRegistry}.
@@ -70,8 +71,7 @@ public interface PrometheusConfig extends MeterRegistryConfig {
      * docs</a>
      * @since 1.13.0
      */
-    @Nullable
-    default Properties prometheusProperties() {
+    default @Nullable Properties prometheusProperties() {
         Properties properties = new Properties();
         properties.setProperty("io.prometheus.exporter.exemplarsOnAllMetricTypes", "true");
         return properties;

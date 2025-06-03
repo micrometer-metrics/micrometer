@@ -88,19 +88,12 @@ abstract class InstrumentationVerificationTests {
 
         @Override
         public void invokeBeforeEachMethod(ExtensionContext context, ExtensionRegistry registry) {
-            Optional<ParameterResolver> resolverOptional = registry.getExtensions(ParameterResolver.class)
+            parameterisedTestParameterResolver = registry.getExtensions(ParameterResolver.class)
                 .stream()
-                .filter(parameterResolver -> parameterResolver.getClass()
-                    .getName()
-                    .contains("ParameterizedTestParameterResolver"))
-                .findFirst();
-            if (!resolverOptional.isPresent()) {
-                throw new IllegalStateException(
-                        "ParameterizedTestParameterResolver missed in the registry. Probably it's not a Parameterized Test");
-            }
-            else {
-                parameterisedTestParameterResolver = resolverOptional.get();
-            }
+                .filter(this::isParameterizedTestMethodParameterResolver)
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException(
+                        "ParameterizedTestMethodParameterResolver missed in the registry. Probably it's not a Parameterized Test"));
         }
 
         @Override
@@ -118,6 +111,12 @@ abstract class InstrumentationVerificationTests {
                 throws ParameterResolutionException {
             return parameterisedTestParameterResolver
                 .resolveParameter(getMappedContext(parameterContext, extensionContext), extensionContext);
+        }
+
+        private boolean isParameterizedTestMethodParameterResolver(ParameterResolver parameterResolver) {
+            return parameterResolver.getClass()
+                .getName()
+                .equals("org.junit.jupiter.params.ParameterizedTestMethodParameterResolver");
         }
 
         private MappedParameterContext getMappedContext(ParameterContext parameterContext,

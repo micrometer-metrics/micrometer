@@ -15,13 +15,13 @@
  */
 package io.micrometer.registry.otlp;
 
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.cumulative.CumulativeTimer;
 import io.micrometer.core.instrument.distribution.*;
 import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import io.micrometer.registry.otlp.internal.Base2ExponentialHistogram;
 import io.micrometer.registry.otlp.internal.ExponentialHistogramSnapShot;
+import org.jspecify.annotations.Nullable;
 
 import java.util.concurrent.TimeUnit;
 
@@ -41,8 +41,7 @@ class OtlpCumulativeTimer extends CumulativeTimer implements StartTimeAwareMeter
     }
 
     @Override
-    @Nullable
-    public ExponentialHistogramSnapShot getExponentialHistogramSnapShot() {
+    public @Nullable ExponentialHistogramSnapShot getExponentialHistogramSnapShot() {
         if (histogram instanceof Base2ExponentialHistogram) {
             return ((Base2ExponentialHistogram) histogram).getLatestExponentialHistogramSnapshot();
         }

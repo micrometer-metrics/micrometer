@@ -17,6 +17,7 @@ package io.micrometer.statsd;
 
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.atomic.AtomicInteger;
@@ -48,7 +49,7 @@ class StatsdGaugeTest {
         AtomicInteger lines = new AtomicInteger();
         MeterRegistry registry = StatsdMeterRegistry.builder(new StatsdConfig() {
             @Override
-            public String get(String key) {
+            public @Nullable String get(String key) {
                 return null;
             }
 

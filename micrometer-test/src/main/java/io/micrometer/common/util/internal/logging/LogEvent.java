@@ -15,6 +15,8 @@
  */
 package io.micrometer.common.util.internal.logging;
 
+import org.jspecify.annotations.Nullable;
+
 import java.util.Objects;
 
 /**
@@ -26,9 +28,9 @@ public class LogEvent {
 
     private final InternalLogLevel level;
 
-    private final String message;
+    private final @Nullable String message;
 
-    private final Throwable cause;
+    private final @Nullable Throwable cause;
 
     /**
      * @param level The level of the log event (INFO, WARN, ERROR, etc.) (mandatory).
@@ -36,7 +38,7 @@ public class LogEvent {
      * (optional).
      * @param cause The {@link Throwable} that triggered the log event (optional).
      */
-    public LogEvent(InternalLogLevel level, String message, Throwable cause) {
+    public LogEvent(InternalLogLevel level, @Nullable String message, @Nullable Throwable cause) {
         this.level = Objects.requireNonNull(level);
         this.message = message;
         this.cause = cause;
@@ -46,11 +48,11 @@ public class LogEvent {
         return level;
     }
 
-    public String getMessage() {
+    public @Nullable String getMessage() {
         return message;
     }
 
-    public Throwable getCause() {
+    public @Nullable Throwable getCause() {
         return cause;
     }
 

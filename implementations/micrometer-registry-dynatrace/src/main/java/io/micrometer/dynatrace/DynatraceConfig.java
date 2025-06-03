@@ -17,9 +17,9 @@ package io.micrometer.dynatrace;
 
 import com.dynatrace.file.util.DynatraceFileBasedConfigurationProvider;
 import com.dynatrace.metric.util.DynatraceMetricApiConstants;
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.config.validate.Validated;
 import io.micrometer.core.instrument.step.StepRegistryConfig;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.Map;
@@ -83,8 +83,7 @@ public interface DynatraceConfig extends StepRegistryConfig {
      * @return device group name
      * @since 1.2.0
      */
-    @Nullable
-    default String group() {
+    default @Nullable String group() {
         return get(prefix() + ".group");
     }
 

@@ -15,7 +15,6 @@
  */
 package io.micrometer.jetty12.client;
 
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.annotation.Incubating;
 import io.micrometer.core.instrument.DistributionSummary;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -29,6 +28,7 @@ import io.micrometer.observation.ObservationRegistry;
 import org.eclipse.jetty.client.Request;
 import org.eclipse.jetty.client.Result;
 import org.eclipse.jetty.io.Content;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Optional;
 import java.util.function.BiFunction;
@@ -56,15 +56,14 @@ public class JettyClientMetrics implements Request.Listener {
 
     private final ObservationRegistry observationRegistry;
 
-    @Nullable
-    private final JettyClientObservationConvention convention;
+    private final @Nullable JettyClientObservationConvention convention;
 
-    private final BiFunction<Request, Result, String> uriPatternFunction;
+    private final BiFunction<@Nullable Request, @Nullable Result, String> uriPatternFunction;
 
     private JettyClientMetrics(MeterRegistry registry, ObservationRegistry observationRegistry,
             @Nullable JettyClientObservationConvention convention, JettyClientTagsProvider tagsProvider,
             String timingMetricName, String contentSizeMetricName, int maxUriTags,
-            BiFunction<Request, Result, String> uriPatternFunction) {
+            BiFunction<@Nullable Request, @Nullable Result, String> uriPatternFunction) {
         this.registry = registry;
         this.tagsProvider = tagsProvider;
         this.timingMetricName = timingMetricName;
@@ -114,7 +113,8 @@ public class JettyClientMetrics implements Request.Listener {
      * @param uriPatternFunction how to extract the URI pattern for tagging
      * @return builder
      */
-    public static Builder builder(MeterRegistry registry, BiFunction<Request, Result, String> uriPatternFunction) {
+    public static Builder builder(MeterRegistry registry,
+            BiFunction<@Nullable Request, @Nullable Result, String> uriPatternFunction) {
         return new Builder(registry, uriPatternFunction);
     }
 
@@ -122,7 +122,7 @@ public class JettyClientMetrics implements Request.Listener {
 
         private final MeterRegistry meterRegistry;
 
-        private final BiFunction<Request, Result, String> uriPatternFunction;
+        private final BiFunction<@Nullable Request, @Nullable Result, String> uriPatternFunction;
 
         private ObservationRegistry observationRegistry = ObservationRegistry.NOOP;
 
@@ -134,10 +134,10 @@ public class JettyClientMetrics implements Request.Listener {
 
         private int maxUriTags = 1000;
 
-        @Nullable
-        private JettyClientObservationConvention observationConvention;
+        private @Nullable JettyClientObservationConvention observationConvention;
 
-        private Builder(MeterRegistry registry, BiFunction<Request, Result, String> uriPatternFunction) {
+        private Builder(MeterRegistry registry,
+                BiFunction<@Nullable Request, @Nullable Result, String> uriPatternFunction) {
             this.meterRegistry = registry;
             this.uriPatternFunction = uriPatternFunction;
             this.tagsProvider = result -> uriPatternFunction.apply(result.getRequest(), result);

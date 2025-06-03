@@ -15,7 +15,6 @@
  */
 package io.micrometer.core.instrument;
 
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.annotation.Incubating;
 import io.micrometer.core.instrument.search.RequiredSearch;
 import io.micrometer.core.ipc.http.HttpSender;
@@ -26,6 +25,7 @@ import io.micrometer.observation.ObservationRegistry;
 import io.micrometer.observation.tck.TestObservationRegistry;
 import io.micrometer.observation.transport.ReceiverContext;
 import org.assertj.core.api.Condition;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -90,8 +90,7 @@ public abstract class HttpServerTimingInstrumentationVerificationTests extends I
      * a slash (/) or {@code null} if you don't support observations
      * @see InstrumentedRoutes
      */
-    @Nullable
-    protected abstract URI startInstrumentedWithObservationsServer() throws Exception;
+    protected abstract @Nullable URI startInstrumentedWithObservationsServer() throws Exception;
 
     /**
      * Stop the instrumented server that was started with

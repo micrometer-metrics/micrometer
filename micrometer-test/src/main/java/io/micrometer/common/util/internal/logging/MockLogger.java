@@ -15,6 +15,8 @@
  */
 package io.micrometer.common.util.internal.logging;
 
+import org.jspecify.annotations.Nullable;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Queue;
@@ -267,7 +269,7 @@ public class MockLogger implements InternalLogger {
     }
 
     @Override
-    public void log(InternalLogLevel level, String msg, Throwable t) {
+    public void log(InternalLogLevel level, @Nullable String msg, @Nullable Throwable t) {
         logEvents.add(new LogEvent(level, msg, t));
     }
 

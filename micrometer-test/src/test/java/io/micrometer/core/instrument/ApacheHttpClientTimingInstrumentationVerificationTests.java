@@ -15,7 +15,6 @@
  */
 package io.micrometer.core.instrument;
 
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.binder.httpcomponents.ApacheHttpClientObservationDocumentation;
 import io.micrometer.core.instrument.binder.httpcomponents.DefaultUriMapper;
 import io.micrometer.core.instrument.binder.httpcomponents.MicrometerHttpRequestExecutor;
@@ -26,6 +25,7 @@ import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.entity.BasicHttpEntity;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.util.EntityUtils;
+import org.jspecify.annotations.Nullable;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -42,9 +42,8 @@ class ApacheHttpClientTimingInstrumentationVerificationTests
             .build();
     }
 
-    @Nullable
     @Override
-    protected HttpClient clientInstrumentedWithObservations() {
+    protected @Nullable HttpClient clientInstrumentedWithObservations() {
         return HttpClientBuilder.create()
             .setRequestExecutor(MicrometerHttpRequestExecutor.builder(getRegistry())
                 .observationRegistry(getObservationRegistry())
@@ -63,8 +62,8 @@ class ApacheHttpClientTimingInstrumentationVerificationTests
     }
 
     @Override
-    protected void sendHttpRequest(HttpClient instrumentedClient, HttpMethod method, @Nullable byte[] body, URI baseUri,
-            String templatedPath, String... pathVariables) {
+    protected void sendHttpRequest(HttpClient instrumentedClient, HttpMethod method, byte @Nullable [] body,
+            URI baseUri, String templatedPath, String... pathVariables) {
         try {
             EntityUtils
                 .consume(instrumentedClient.execute(makeRequest(method, body, baseUri, templatedPath, pathVariables))
@@ -75,7 +74,7 @@ class ApacheHttpClientTimingInstrumentationVerificationTests
         }
     }
 
-    private HttpUriRequest makeRequest(HttpMethod method, @Nullable byte[] body, URI baseUri, String templatedPath,
+    private HttpUriRequest makeRequest(HttpMethod method, byte @Nullable [] body, URI baseUri, String templatedPath,
             String... pathVariables) {
         HttpEntityEnclosingRequestBase request = new HttpEntityEnclosingRequestBase() {
             @Override

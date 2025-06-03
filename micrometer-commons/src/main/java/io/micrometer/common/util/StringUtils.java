@@ -59,6 +59,7 @@ public final class StringUtils {
      * @param string String to check
      * @return {@code true} if the String is null or empty
      */
+    @Contract("null -> true")
     public static boolean isEmpty(@Nullable String string) {
         return string == null || string.isEmpty();
     }

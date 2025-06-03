@@ -18,9 +18,9 @@ package io.micrometer.registry.otlp.internal;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.step.StepValue;
+import org.jspecify.annotations.Nullable;
 
 /**
  * A {@link Base2ExponentialHistogram} where values are reset after every Step.
