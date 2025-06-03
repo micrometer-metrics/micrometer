@@ -353,7 +353,7 @@ class GrpcObservationTest {
             assertThat(clientHandler.getContext().getStatusCode()).isEqualTo(Code.CANCELLED);
             assertThat(clientHandler.getEvents()).containsExactly(GrpcClientEvents.MESSAGE_SENT);
 
-            TestObservationRegistryAssert.assertThat(observationRegistry).hasAnObservation(observationContextAssert -> {
+            assertThat(observationRegistry).hasAnObservation(observationContextAssert -> {
                 observationContextAssert.doesNotHaveError();
                 observationContextAssert.hasNameEqualTo("grpc.client");
                 assertCommonKeyValueNames(observationContextAssert);
