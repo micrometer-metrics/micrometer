@@ -185,17 +185,19 @@ class TimedHandlerTest {
     @Test
     void testShutdownCompletesOnlyAfterAllRequestsComplete() throws Exception {
         CountDownLatch requestAStarted = new CountDownLatch(1);
-        CountDownLatch requestAFinishLatch = new CountDownLatch(1);
+        CountDownLatch requestBStarted = new CountDownLatch(1);
+        CountDownLatch requestAFinish = new CountDownLatch(1);
+        CountDownLatch requestBFinish = new CountDownLatch(1);
 
         timedHandler.setHandler(new Handler.Abstract() {
             @Override
             public boolean handle(Request request, Response response, Callback callback) {
                 String path = request.getHttpURI().getPath();
-                if ("/slow".equals(path)) {
+                if ("/a".equals(path)) {
                     new Thread(() -> {
                         try {
                             requestAStarted.countDown();
-                            requestAFinishLatch.await(5, TimeUnit.SECONDS);
+                            requestAFinish.await(5, TimeUnit.SECONDS);
                             response.setStatus(200);
                             response.write(true, BufferUtil.EMPTY_BUFFER, callback);
                         }
@@ -203,39 +205,41 @@ class TimedHandlerTest {
                             callback.failed(e);
                         }
                     }).start();
-                    return true;
                 }
-                else {
-                    response.setStatus(200);
-                    response.write(true, BufferUtil.EMPTY_BUFFER, callback);
-                    return true;
+                else if ("/b".equals(path)) {
+                    new Thread(() -> {
+                        try {
+                            requestBStarted.countDown();
+                            requestBFinish.await(5, TimeUnit.SECONDS);
+                            response.setStatus(200);
+                            response.write(true, BufferUtil.EMPTY_BUFFER, callback);
+                        }
+                        catch (Exception e) {
+                            callback.failed(e);
+                        }
+                    }).start();
                 }
+                return true;
             }
         });
 
         server.start();
 
-        try (LocalConnector.LocalEndPoint endpointA = connector.connect();
-                LocalConnector.LocalEndPoint endpointB = connector.connect()) {
-            // Request A: delayed
-            endpointA.addInputAndExecute("GET /slow HTTP/1.1\r\nHost: localhost\r\n\r\n");
+        try (LocalConnector.LocalEndPoint endpoint1 = connector.connect();
+                LocalConnector.LocalEndPoint endpoint2 = connector.connect()) {
+            endpoint1.addInputAndExecute("GET /a HTTP/1.1\r\nHost: localhost\r\n\r\n");
+            endpoint2.addInputAndExecute("GET /b HTTP/1.1\r\nHost: localhost\r\n\r\n");
 
-            // Request B: quick response
-            endpointB.addInputAndExecute("GET /fast HTTP/1.1\r\nHost: localhost\r\n\r\n");
-            HttpTester.Response responseB = HttpTester.parseResponse(endpointB.getResponse());
-            assertThat(responseB.getStatus()).isEqualTo(HttpStatus.OK_200);
-
-            // Ensure request A has started
             assertThat(requestAStarted.await(5, TimeUnit.SECONDS)).isTrue();
+            assertThat(requestBStarted.await(5, TimeUnit.SECONDS)).isTrue();
 
-            // Call shutdown while request A is still in progress
             Future<Void> shutdownFuture = timedHandler.shutdown();
             assertThat(shutdownFuture.isDone()).isFalse();
 
-            // Complete request A
-            requestAFinishLatch.countDown();
+            requestBFinish.countDown();
+            assertThat(shutdownFuture.isDone()).isFalse();
 
-            // Now shutdown should complete
+            requestAFinish.countDown();
             assertThat(shutdownFuture.get(5, TimeUnit.SECONDS)).isNull();
         }
     }
