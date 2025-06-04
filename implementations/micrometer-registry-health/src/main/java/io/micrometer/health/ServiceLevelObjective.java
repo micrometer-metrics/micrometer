@@ -700,7 +700,7 @@ public abstract class ServiceLevelObjective {
         private final ServiceLevelObjective delegate;
 
         FilteredServiceLevelObjective(Meter.Id id, ServiceLevelObjective delegate) {
-            super(id.getName(), Tags.of(id.getTags()), id.getBaseUnit(), id.getDescription());
+            super(id.getName(), Tags.of(id.getTagsAsIterable()), id.getBaseUnit(), id.getDescription());
             this.delegate = delegate;
         }
 
