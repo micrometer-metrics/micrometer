@@ -15,6 +15,7 @@
  */
 package io.micrometer.jetty12.server;
 
+import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.binder.http.Outcome;
@@ -44,7 +45,7 @@ class TimedHandlerTest {
 
     private SimpleMeterRegistry registry;
 
-    private TimedHandler timedHandler;
+    private TestableTimedHandler timedHandler;
 
     private Server server;
 
@@ -55,7 +56,7 @@ class TimedHandlerTest {
     @BeforeEach
     void setup() {
         this.registry = new SimpleMeterRegistry(SimpleConfig.DEFAULT, new MockClock());
-        this.timedHandler = new TimedHandler(registry, Tags.empty());
+        this.timedHandler = new TestableTimedHandler(registry, Tags.empty());
 
         this.server = new Server();
         this.connector = new LocalConnector(server);
@@ -240,6 +241,8 @@ class TimedHandlerTest {
             HttpTester.Response responseB = HttpTester.parseResponse(endpoint2.getResponse());
             assertThat(responseB.getStatus()).isEqualTo(200);
 
+            assertThat(timedHandler.awaitOnComplete(5, TimeUnit.SECONDS)).isTrue();
+
             assertThat(shutdownFuture.isDone()).isFalse();
 
             requestAFinish.countDown();
@@ -267,6 +270,30 @@ class TimedHandlerTest {
 
         private boolean await() throws InterruptedException {
             return latch.await(5, TimeUnit.SECONDS);
+        }
+
+    }
+
+    static class TestableTimedHandler extends TimedHandler {
+
+        private final CountDownLatch onCompleteLatch = new CountDownLatch(1);
+
+        TestableTimedHandler(MeterRegistry registry, Tags tags) {
+            super(registry, tags);
+        }
+
+        @Override
+        protected void onComplete(final Request request, final Throwable failure) {
+            try {
+                super.onComplete(request, failure);
+            }
+            finally {
+                onCompleteLatch.countDown();
+            }
+        }
+
+        public boolean awaitOnComplete(long timeout, TimeUnit unit) throws InterruptedException {
+            return onCompleteLatch.await(timeout, unit);
         }
 
     }
