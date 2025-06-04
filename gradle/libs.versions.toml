@@ -41,7 +41,7 @@ jaxb = "2.3.1"
 jetty9 = "9.4.57.v20241219"
 jetty11 = "11.0.16"
 jetty12 = "12.0.6"
-jersey3 = "3.1.10"
+jersey3 = "2.47"
 jmh = "1.37"
 # latest version of jOOQ to run tests against
 jooqNew = "3.20.4"
@@ -144,9 +144,9 @@ jetty11Server = { module = "org.eclipse.jetty:jetty-server", version.ref = "jett
 jetty12Server = { module = "org.eclipse.jetty:jetty-server", version.ref = "jetty12" }
 jetty12Client = { module = "org.eclipse.jetty:jetty-client", version.ref = "jetty12" }
 jersey2Server = { module = "org.glassfish.jersey.core:jersey-server", version = "2.47" }
-jersey2Hk2 = { module = "org.glassfish.jersey.inject:jersey-hk2", version = "2.45" }
+jersey2Hk2 = { module = "org.glassfish.jersey.inject:jersey-hk2", version = "2.47" }
 jersey2TestFrameworkInmemory = { module = "org.glassfish.jersey.test-framework.providers:jersey-test-framework-provider-inmemory", version = "2.47" }
-jersey2TestFrameworkJdkHttp = { module = "org.glassfish.jersey.test-framework.providers:jersey-test-framework-provider-jdk-http", version = "2.45" }
+jersey2TestFrameworkJdkHttp = { module = "org.glassfish.jersey.test-framework.providers:jersey-test-framework-provider-jdk-http", version = "2.47" }
 jersey3ContainerJdkHttp = { module = "org.glassfish.jersey.containers:jersey-container-jdk-http", version.ref = "jersey3" }
 jersey3Hk2 = { module = "org.glassfish.jersey.inject:jersey-hk2", version.ref = "jersey3" }
 jersey3TestFrameworkJdkHttp = { module = "org.glassfish.jersey.test-framework.providers:jersey-test-framework-provider-jdk-http", version.ref = "jersey3" }
