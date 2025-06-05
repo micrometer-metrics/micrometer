@@ -178,7 +178,7 @@ logbackLatest = {module = "ch.qos.logback:logback-classic", version.ref = "logba
 log4j = { module = "org.apache.logging.log4j:log4j-core", version.ref = "log4j" }
 mavenResolverConnectorBasic = { module = "org.apache.maven.resolver:maven-resolver-connector-basic", version.ref = "maven-resolver" }
 mavenResolverTransportHttp = { module = "org.apache.maven.resolver:maven-resolver-transport-http", version.ref = "maven-resolver" }
-mavenResolverProvider = { module = "org.apache.maven:maven-resolver-provider", version = "3.9.9" }
+mavenResolverProvider = { module = "org.apache.maven:maven-resolver-provider", version = "3.9.10" }
 mockitoCore4 = { module = "org.mockito:mockito-core", version.ref = "mockito4" }
 mockitoCore5 = { module = "org.mockito:mockito-core", version.ref = "mockito5" }
 mongoSync = { module = "org.mongodb:mongodb-driver-sync", version.ref = "mongo" }
