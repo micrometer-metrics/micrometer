@@ -44,8 +44,7 @@ import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 
 /**
  * Tests for {@link CompositeMeterRegistry}.
@@ -491,6 +490,26 @@ class CompositeMeterRegistryTest {
 
         assertThat(this.composite.getMeters()).isEmpty();
         assertThat(this.simple.getMeters()).isEmpty();
+    }
+
+    @Test
+    void filtersOnIntermediateCompositeMeterRegistryShouldWork() {
+        CompositeMeterRegistry parentMeterRegistry = new CompositeMeterRegistry();
+
+        CompositeMeterRegistry intermediateMeterRegistry = new CompositeMeterRegistry();
+        intermediateMeterRegistry.config().meterFilter(MeterFilter.denyNameStartsWith("deny"));
+        parentMeterRegistry.add(intermediateMeterRegistry);
+
+        SimpleMeterRegistry leafMeterRegistry = new SimpleMeterRegistry();
+        intermediateMeterRegistry.add(leafMeterRegistry);
+
+        parentMeterRegistry.counter("deny.item");
+
+        assertThat(parentMeterRegistry.getMeters()).hasSize(1);
+        // This seems to be empty with and without the filter.
+        assertThat(intermediateMeterRegistry.getMeters()).isEmpty();
+        // Filters on intermediate composite meter registries don't seem to work.
+        assertThat(leafMeterRegistry.getMeters()).isEmpty();
     }
 
 }
