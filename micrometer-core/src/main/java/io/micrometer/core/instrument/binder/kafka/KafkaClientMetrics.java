@@ -23,9 +23,12 @@ import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.common.Metric;
+import org.apache.kafka.common.MetricName;
 
 import java.time.Duration;
+import java.util.Map;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.function.Supplier;
 
 /**
  * Kafka Client metrics binder. This should be closed on application shutdown to clean up
@@ -221,6 +224,40 @@ public class KafkaClientMetrics extends KafkaMetrics {
      */
     public KafkaClientMetrics(AdminClient adminClient) {
         super(adminClient::metrics);
+    }
+
+    /**
+     * Kafka client metrics binder
+     * @param metricsSupplier supplier of metrics, make sure this comes from the Java
+     * Kafka Client because {@link KafkaClientMetrics} heavily depends on the behavior of
+     * the Java Kafka Client
+     */
+    public KafkaClientMetrics(Supplier<Map<MetricName, ? extends Metric>> metricsSupplier) {
+        super(metricsSupplier);
+    }
+
+    /**
+     * Kafka client metrics binder
+     * @param metricsSupplier supplier of metrics, make sure this comes from the Java
+     * Kafka Client because {@link KafkaClientMetrics} heavily depends on the behavior of
+     * the Java Kafka Client
+     * @param tags additional tags
+     */
+    public KafkaClientMetrics(Supplier<Map<MetricName, ? extends Metric>> metricsSupplier, Iterable<Tag> tags) {
+        super(metricsSupplier, tags);
+    }
+
+    /**
+     * Kafka client metrics binder
+     * @param metricsSupplier supplier of metrics, make sure this comes from the Java
+     * Kafka Client because {@link KafkaClientMetrics} heavily depends on the behavior of
+     * the Java Kafka Client
+     * @param tags additional tags
+     * @param scheduler custom scheduler to check and bind metrics
+     */
+    public KafkaClientMetrics(Supplier<Map<MetricName, ? extends Metric>> metricsSupplier, Iterable<Tag> tags,
+            ScheduledExecutorService scheduler) {
+        super(metricsSupplier, tags, scheduler);
     }
 
 }
