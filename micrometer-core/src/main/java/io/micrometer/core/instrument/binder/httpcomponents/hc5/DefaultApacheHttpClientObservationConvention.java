@@ -53,7 +53,7 @@ public class DefaultApacheHttpClientObservationConvention implements ApacheHttpC
 
     private static final KeyValue STATUS_CLIENT_ERROR = ApacheHttpClientKeyNames.STATUS.withValue("CLIENT_ERROR");
 
-    private static final KeyValue EXCEPTION_NONE = ApacheHttpClientKeyNames.EXCEPTION.withValue(KeyValue.NONE_VALUE);
+    private static final KeyValue EXCEPTION_NONE = ApacheHttpClientKeyNames.EXCEPTION.withNoneValue();
 
     private static final KeyValue OUTCOME_UNKNOWN = ApacheHttpClientKeyNames.OUTCOME.withValue(Outcome.UNKNOWN.name());
 
