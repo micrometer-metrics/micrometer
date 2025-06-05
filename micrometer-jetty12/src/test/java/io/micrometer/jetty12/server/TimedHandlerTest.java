@@ -15,6 +15,7 @@
  */
 package io.micrometer.jetty12.server;
 
+import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.binder.http.Outcome;
@@ -44,7 +45,7 @@ class TimedHandlerTest {
 
     private SimpleMeterRegistry registry;
 
-    private TimedHandler timedHandler;
+    private TestableTimedHandler timedHandler;
 
     private Server server;
 
@@ -55,7 +56,7 @@ class TimedHandlerTest {
     @BeforeEach
     void setup() {
         this.registry = new SimpleMeterRegistry(SimpleConfig.DEFAULT, new MockClock());
-        this.timedHandler = new TimedHandler(registry, Tags.empty());
+        this.timedHandler = new TestableTimedHandler(registry, Tags.empty());
 
         this.server = new Server();
         this.connector = new LocalConnector(server);
@@ -182,6 +183,73 @@ class TimedHandlerTest {
         }
     }
 
+    @Test
+    void testShutdownCompletesOnlyAfterAllRequestsComplete() throws Exception {
+        CountDownLatch requestAStarted = new CountDownLatch(1);
+        CountDownLatch requestBStarted = new CountDownLatch(1);
+        CountDownLatch requestAFinish = new CountDownLatch(1);
+        CountDownLatch requestBFinish = new CountDownLatch(1);
+
+        timedHandler.setHandler(new Handler.Abstract() {
+            @Override
+            public boolean handle(Request request, Response response, Callback callback) {
+                String path = request.getHttpURI().getPath();
+                if ("/a".equals(path)) {
+                    new Thread(() -> {
+                        try {
+                            requestAStarted.countDown();
+                            requestAFinish.await(5, TimeUnit.SECONDS);
+                            response.setStatus(200);
+                            response.write(true, BufferUtil.EMPTY_BUFFER, callback);
+                        }
+                        catch (Exception e) {
+                            callback.failed(e);
+                        }
+                    }).start();
+                }
+                else if ("/b".equals(path)) {
+                    new Thread(() -> {
+                        try {
+                            requestBStarted.countDown();
+                            requestBFinish.await(5, TimeUnit.SECONDS);
+                            response.setStatus(200);
+                            response.write(true, BufferUtil.EMPTY_BUFFER, callback);
+                        }
+                        catch (Exception e) {
+                            callback.failed(e);
+                        }
+                    }).start();
+                }
+                return true;
+            }
+        });
+
+        server.start();
+
+        try (LocalConnector.LocalEndPoint endpoint1 = connector.connect();
+                LocalConnector.LocalEndPoint endpoint2 = connector.connect()) {
+            endpoint1.addInputAndExecute("GET /a HTTP/1.1\r\nHost: localhost\r\n\r\n");
+            endpoint2.addInputAndExecute("GET /b HTTP/1.1\r\nHost: localhost\r\n\r\n");
+
+            assertThat(requestAStarted.await(5, TimeUnit.SECONDS)).isTrue();
+            assertThat(requestBStarted.await(5, TimeUnit.SECONDS)).isTrue();
+
+            Future<Void> shutdownFuture = timedHandler.shutdown();
+            assertThat(shutdownFuture.isDone()).isFalse();
+
+            requestBFinish.countDown();
+            HttpTester.Response responseB = HttpTester.parseResponse(endpoint2.getResponse());
+            assertThat(responseB.getStatus()).isEqualTo(200);
+
+            assertThat(timedHandler.awaitOnComplete(5, TimeUnit.SECONDS)).isTrue();
+
+            assertThat(shutdownFuture.isDone()).isFalse();
+
+            requestAFinish.countDown();
+            assertThat(shutdownFuture.get(5, TimeUnit.SECONDS)).isNull();
+        }
+    }
+
     private static class LatchHandler extends Handler.Wrapper {
 
         private volatile CountDownLatch latch = new CountDownLatch(1);
@@ -202,6 +270,30 @@ class TimedHandlerTest {
 
         private boolean await() throws InterruptedException {
             return latch.await(5, TimeUnit.SECONDS);
+        }
+
+    }
+
+    static class TestableTimedHandler extends TimedHandler {
+
+        private final CountDownLatch onCompleteLatch = new CountDownLatch(1);
+
+        TestableTimedHandler(MeterRegistry registry, Tags tags) {
+            super(registry, tags);
+        }
+
+        @Override
+        protected void onComplete(final Request request, final Throwable failure) {
+            try {
+                super.onComplete(request, failure);
+            }
+            finally {
+                onCompleteLatch.countDown();
+            }
+        }
+
+        public boolean awaitOnComplete(long timeout, TimeUnit unit) throws InterruptedException {
+            return onCompleteLatch.await(timeout, unit);
         }
 
     }
