@@ -15,8 +15,8 @@
  */
 package io.micrometer.registry.otlp.internal;
 
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * A factory that provides the {@link IndexProvider} for a given scale.
@@ -29,7 +29,7 @@ import java.util.Map;
  */
 class IndexProviderFactory {
 
-    private static final Map<Integer, IndexProvider> indexProviderCache = new HashMap<>();
+    private static final Map<Integer, IndexProvider> indexProviderCache = new ConcurrentHashMap<>();
 
     private static final IndexProvider ZERO_SCALE_INDEX_PROVIDER = new ZeroScaleIndexProvider();
 
