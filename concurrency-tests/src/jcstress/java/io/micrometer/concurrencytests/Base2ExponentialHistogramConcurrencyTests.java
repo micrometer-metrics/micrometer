@@ -84,4 +84,37 @@ public class Base2ExponentialHistogramConcurrencyTests {
 
     }
 
+    @JCStressTest
+    @Outcome(id = "OK", expect = Expect.ACCEPTABLE, desc = "No exception")
+    @Outcome(expect = Expect.FORBIDDEN, desc = "Exception thrown")
+    @State
+    public static class IndexProviderFactoryConcurrencyTest {
+
+        @Actor
+        public void actor1(L_Result result) {
+            try {
+                new CumulativeBase2ExponentialHistogram(20, 16, 1.0, null).close();
+                new CumulativeBase2ExponentialHistogram(19, 16, 1.0, null).close();
+                new CumulativeBase2ExponentialHistogram(18, 16, 1.0, null).close();
+                result.r1 = "OK";
+            }
+            catch (Exception e) {
+                result.r1 = e.getClass().getSimpleName();
+            }
+        }
+
+        @Actor
+        public void actor2(L_Result r) {
+            try {
+                new CumulativeBase2ExponentialHistogram(10, 16, 1.0, null).close();
+                new CumulativeBase2ExponentialHistogram(9, 16, 1.0, null).close();
+                new CumulativeBase2ExponentialHistogram(8, 16, 1.0, null).close();
+            }
+            catch (Exception e) {
+                r.r1 = e.getClass().getSimpleName();
+            }
+        }
+
+    }
+
 }
