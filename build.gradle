@@ -79,7 +79,8 @@ subprojects {
                     "InlineFormatString",
                     "LongDoubleConversion",
                     "MissingOverride",
-                    "StringCaseLocaleUsage"
+                    "StringCaseLocaleUsage",
+                    "StringSplitter"
             )
             options.errorprone.disable(
                     "StringConcatToTextBlock" // Requires JDK 15+
