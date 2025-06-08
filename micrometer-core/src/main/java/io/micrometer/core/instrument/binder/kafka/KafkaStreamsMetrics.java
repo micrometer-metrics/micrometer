@@ -83,10 +83,10 @@ public class KafkaStreamsMetrics extends KafkaMetrics {
      * {@link KafkaStreamsMetrics} to reduce resource usage by reducing the number of
      * threads if there will be many instances.
      * <p>
-     * The refresh interval governs how frequently should Micrometer call the Kafka
+     * The refresh interval governs how frequently Micrometer should call the Kafka
      * Client's Metrics API to discover new metrics to register and discard old ones since
      * the Kafka Client can add/remove/recreate metrics on-the-fly. Please notice that
-     * this is not for fetching values for already registered metrics but to update the
+     * this is not for fetching values for already registered metrics but for updating the
      * list of registered metrics when the Kafka Client adds/removes/recreates them. It is
      * the responsibility of the caller to choose the right value since this process can
      * be expensive and metrics can appear and disappear without being published if the
