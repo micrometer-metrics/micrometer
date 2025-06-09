@@ -95,7 +95,8 @@ subprojects {
                     "LongDoubleConversion",
                     "MissingOverride",
                     "NullAway",
-                    "StringCaseLocaleUsage"
+                    "StringCaseLocaleUsage",
+                    "StringSplitter"
                 )
 
                 option("NullAway:OnlyNullMarked", "true")
