@@ -17,12 +17,14 @@ package io.micrometer.core.instrument.config;
 
 import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.instrument.config.filter.NoOpFilter;
+import io.micrometer.core.instrument.config.filter.OneTwoTagsDroppingFilter;
+import io.micrometer.core.instrument.config.filter.SetBackedTagDroppingFilter;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -93,21 +95,25 @@ public interface MeterFilter {
      * @param tagKeys Keys of tags that should be suppressed.
      * @return A tag-suppressing filter.
      */
-    static MeterFilter ignoreTags(String... tagKeys) {
-        return new MeterFilter() {
-            @Override
-            public Meter.Id map(Meter.Id id) {
-                List<Tag> tags = stream(id.getTagsAsIterable().spliterator(), false).filter(t -> {
-                    for (String tagKey : tagKeys) {
-                        if (t.getKey().equals(tagKey))
-                            return false;
-                    }
-                    return true;
-                }).collect(toList());
+    static MeterFilter ignoreTags(Collection<String> tagKeys) {
+        switch (tagKeys.size()) {
+            case 0:
+                return NoOpFilter.create();
+            case 1:
+            case 2:
+                return OneTwoTagsDroppingFilter.of(tagKeys);
+            default:
+                return SetBackedTagDroppingFilter.of(tagKeys);
+        }
+    }
 
-                return id.replaceTags(tags);
-            }
-        };
+    /**
+     * Suppress tags with given tag keys.
+     * @param tagKeys Keys of tags that should be suppressed.
+     * @return A tag-suppressing filter.
+     */
+    static MeterFilter ignoreTags(String... tagKeys) {
+        return ignoreTags(Arrays.asList(tagKeys));
     }
 
     /**
