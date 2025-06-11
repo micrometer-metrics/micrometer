@@ -16,10 +16,10 @@
 package io.micrometer.core.instrument.binder.jersey.server;
 
 import io.micrometer.common.KeyValues;
-import io.micrometer.common.lang.Nullable;
 import org.glassfish.jersey.server.ContainerRequest;
 import org.glassfish.jersey.server.ContainerResponse;
 import org.glassfish.jersey.server.monitoring.RequestEvent;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Default implementation for {@link JerseyObservationConvention}.
@@ -51,9 +51,8 @@ public class DefaultJerseyObservationConvention implements JerseyObservationConv
         return this.metricsName;
     }
 
-    @Nullable
     @Override
-    public String getContextualName(JerseyContext context) {
+    public @Nullable String getContextualName(JerseyContext context) {
         if (context.getCarrier() == null) {
             return null;
         }

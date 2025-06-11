@@ -15,11 +15,11 @@
  */
 package io.micrometer.core.instrument.internal;
 
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.distribution.CountAtBucket;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.HistogramSnapshot;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
@@ -33,8 +33,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class CumulativeHistogramLongTaskTimer extends DefaultLongTaskTimer {
 
-    @Nullable
-    private CountAtBucket[] lastSnapshot;
+    private CountAtBucket @Nullable [] lastSnapshot;
 
     public CumulativeHistogramLongTaskTimer(Id id, Clock clock, TimeUnit baseTimeUnit,
             DistributionStatisticConfig distributionStatisticConfig) {

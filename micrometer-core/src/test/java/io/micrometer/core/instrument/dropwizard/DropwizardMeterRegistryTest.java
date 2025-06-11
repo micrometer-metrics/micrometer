@@ -16,10 +16,10 @@
 package io.micrometer.core.instrument.dropwizard;
 
 import com.codahale.metrics.MetricRegistry;
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.util.HierarchicalNameMapper;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
@@ -46,8 +46,7 @@ class DropwizardMeterRegistryTest {
         }
 
         @Override
-        @Nullable
-        public String get(String key) {
+        public @Nullable String get(String key) {
             return null;
         }
     };

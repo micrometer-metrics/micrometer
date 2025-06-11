@@ -15,8 +15,8 @@
  */
 package io.micrometer.core.instrument.distribution;
 
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.util.TimeUtils;
+import org.jspecify.annotations.Nullable;
 
 import java.io.PrintStream;
 import java.util.Arrays;
@@ -50,8 +50,8 @@ public final class HistogramSnapshot {
      * @param histogramCounts Bucket counts.
      * @param summaryOutput A function defining how to print the histogram.
      */
-    public HistogramSnapshot(long count, double total, double max, @Nullable ValueAtPercentile[] percentileValues,
-            @Nullable CountAtBucket[] histogramCounts, @Nullable BiConsumer<PrintStream, Double> summaryOutput) {
+    public HistogramSnapshot(long count, double total, double max, ValueAtPercentile @Nullable [] percentileValues,
+            CountAtBucket @Nullable [] histogramCounts, @Nullable BiConsumer<PrintStream, Double> summaryOutput) {
         this.count = count;
         this.total = total;
         this.max = max;

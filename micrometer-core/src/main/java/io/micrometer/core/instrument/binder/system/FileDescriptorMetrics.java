@@ -16,13 +16,13 @@
 package io.micrometer.core.instrument.binder.system;
 
 import io.micrometer.common.lang.NonNullApi;
-import io.micrometer.common.lang.NonNullFields;
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.binder.MeterBinder;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.OperatingSystemMXBean;
@@ -46,7 +46,7 @@ import static java.util.Collections.emptyList;
  * @author Tommy Ludwig
  */
 @NonNullApi
-@NonNullFields
+@NullMarked
 public class FileDescriptorMetrics implements MeterBinder {
 
     /**
@@ -64,11 +64,9 @@ public class FileDescriptorMetrics implements MeterBinder {
     @Nullable
     private final Class<?> osBeanClass;
 
-    @Nullable
-    private final Method openFilesMethod;
+    private final @Nullable Method openFilesMethod;
 
-    @Nullable
-    private final Method maxFilesMethod;
+    private final @Nullable Method maxFilesMethod;
 
     public FileDescriptorMetrics() {
         this(emptyList());
@@ -116,8 +114,7 @@ public class FileDescriptorMetrics implements MeterBinder {
         }
     }
 
-    @Nullable
-    private Method detectMethod(String name) {
+    private @Nullable Method detectMethod(String name) {
         if (osBeanClass == null) {
             return null;
         }
@@ -131,8 +128,7 @@ public class FileDescriptorMetrics implements MeterBinder {
         }
     }
 
-    @Nullable
-    private Class<?> getFirstClassFound(List<String> classNames) {
+    @Nullable private Class<?> getFirstClassFound(List<String> classNames) {
         for (String className : classNames) {
             try {
                 return Class.forName(className);

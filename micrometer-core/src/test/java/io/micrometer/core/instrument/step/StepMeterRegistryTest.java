@@ -15,10 +15,10 @@
  */
 package io.micrometer.core.instrument.step;
 
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.util.NamedThreadFactory;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 import org.testcontainers.shaded.com.google.common.util.concurrent.AtomicDouble;
 
@@ -437,9 +437,8 @@ class StepMeterRegistryTest {
                 return false;
             }
 
-            @Nullable
             @Override
-            public String get(String key) {
+            public @Nullable String get(String key) {
                 return null;
             }
         };

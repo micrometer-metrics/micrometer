@@ -101,6 +101,8 @@ class TagsTest {
 
     @Issue("#3851")
     @Test
+    // we test passing null even though we specify non-null
+    @SuppressWarnings("NullAway")
     void nullKeyValuesShouldProduceEmptyTags() {
         assertThat(Tags.of((String) null)).isSameAs(Tags.empty());
     }
@@ -112,6 +114,8 @@ class TagsTest {
 
     @Issue("#3851")
     @Test
+    // we test passing null even though we specify non-null
+    @SuppressWarnings("NullAway")
     void nullTagShouldProduceEmptyTags() {
         assertThat(Tags.of((Tag) null)).isSameAs(Tags.empty());
     }
@@ -192,6 +196,8 @@ class TagsTest {
 
     @Issue("#3851")
     @Test
+    // we test passing null even though we specify non-null
+    @SuppressWarnings("NullAway")
     void andKeyValuesWhenKeyValuesAreNullShouldReturnCurrentInstance() {
         Tags source = Tags.of("t1", "v1");
         Tags merged = source.and((String) null);
@@ -223,6 +229,8 @@ class TagsTest {
 
     @Issue("#3851")
     @Test
+    // we test passing null even though we specify non-null
+    @SuppressWarnings("NullAway")
     void andTagsWhenTagIsNullShouldReturnCurrentInstance() {
         Tags source = Tags.of("t1", "v1");
         Tags merged = source.and((Tag) null);

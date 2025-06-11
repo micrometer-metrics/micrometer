@@ -15,7 +15,7 @@
  */
 package io.micrometer.core.instrument.binder.jvm;
 
-import io.micrometer.common.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryPoolMXBean;
@@ -76,8 +76,7 @@ class JvmMemory {
         return getter.applyAsLong(usage);
     }
 
-    @Nullable
-    private static MemoryUsage getUsage(MemoryPoolMXBean memoryPoolMXBean) {
+    private static @Nullable MemoryUsage getUsage(MemoryPoolMXBean memoryPoolMXBean) {
         try {
             return memoryPoolMXBean.getUsage();
         }

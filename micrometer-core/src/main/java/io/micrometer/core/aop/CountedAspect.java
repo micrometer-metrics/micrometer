@@ -17,7 +17,6 @@ package io.micrometer.core.aop;
 
 import io.micrometer.common.KeyValue;
 import io.micrometer.common.lang.NonNullApi;
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.common.util.internal.logging.WarnThenDebugLogger;
 import io.micrometer.core.annotation.Counted;
 import io.micrometer.core.instrument.*;
@@ -25,6 +24,7 @@ import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.reflect.MethodSignature;
+import org.jspecify.annotations.Nullable;
 
 import java.lang.reflect.Method;
 import java.util.concurrent.CompletionStage;
@@ -189,8 +189,7 @@ public class CountedAspect {
     }
 
     @Around("@within(io.micrometer.core.annotation.Counted) && !@annotation(io.micrometer.core.annotation.Counted) && execution(* *(..))")
-    @Nullable
-    public Object countedClass(ProceedingJoinPoint pjp) throws Throwable {
+    public @Nullable Object countedClass(ProceedingJoinPoint pjp) throws Throwable {
         if (shouldSkip.test(pjp)) {
             return pjp.proceed();
         }
@@ -224,8 +223,7 @@ public class CountedAspect {
      * @throws Throwable When the intercepted method throws one.
      */
     @Around(value = "@annotation(counted) && execution(* *(..))", argNames = "pjp,counted")
-    @Nullable
-    public Object interceptAndRecord(ProceedingJoinPoint pjp, Counted counted) throws Throwable {
+    public @Nullable Object interceptAndRecord(ProceedingJoinPoint pjp, Counted counted) throws Throwable {
         if (shouldSkip.test(pjp)) {
             return pjp.proceed();
         }
@@ -233,8 +231,7 @@ public class CountedAspect {
         return perform(pjp, counted);
     }
 
-    @Nullable
-    private Object perform(ProceedingJoinPoint pjp, Counted counted) throws Throwable {
+    private @Nullable Object perform(ProceedingJoinPoint pjp, Counted counted) throws Throwable {
         final Method method = ((MethodSignature) pjp.getSignature()).getMethod();
         final boolean stopWhenCompleted = CompletionStage.class.isAssignableFrom(method.getReturnType());
 

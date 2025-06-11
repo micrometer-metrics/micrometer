@@ -18,8 +18,8 @@
  * Meter binders for Netty 4.x.
  */
 @NonNullApi
-@NonNullFields
+@NullMarked
 package io.micrometer.core.instrument.binder.netty4;
 
 import io.micrometer.common.lang.NonNullApi;
-import io.micrometer.common.lang.NonNullFields;
+import org.jspecify.annotations.NullMarked;

@@ -19,10 +19,10 @@ package io.micrometer.core.instrument.binder.grpc;
 import io.grpc.Metadata;
 import io.grpc.MethodDescriptor.MethodType;
 import io.grpc.Status.Code;
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.transport.Propagator.Setter;
 import io.micrometer.observation.transport.RequestReplySenderContext;
+import org.jspecify.annotations.Nullable;
 
 /**
  * {@link Observation.Context} for gRPC client.
@@ -40,8 +40,7 @@ public class GrpcClientObservationContext extends RequestReplySenderContext<Meta
 
     private MethodType methodType;
 
-    @Nullable
-    private Code statusCode;
+    private @Nullable Code statusCode;
 
     private String authority;
 
@@ -51,8 +50,7 @@ public class GrpcClientObservationContext extends RequestReplySenderContext<Meta
 
     private String peerName;
 
-    @Nullable
-    private Integer peerPort;
+    private @Nullable Integer peerPort;
 
     public GrpcClientObservationContext(Setter<Metadata> setter) {
         super(setter);
@@ -90,8 +88,7 @@ public class GrpcClientObservationContext extends RequestReplySenderContext<Meta
         this.methodType = methodType;
     }
 
-    @Nullable
-    public Code getStatusCode() {
+    public @Nullable Code getStatusCode() {
         return this.statusCode;
     }
 
@@ -151,8 +148,7 @@ public class GrpcClientObservationContext extends RequestReplySenderContext<Meta
         this.peerName = peerName;
     }
 
-    @Nullable
-    public Integer getPeerPort() {
+    public @Nullable Integer getPeerPort() {
         return this.peerPort;
     }
 

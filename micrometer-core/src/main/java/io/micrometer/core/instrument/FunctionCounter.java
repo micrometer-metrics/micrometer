@@ -15,7 +15,7 @@
  */
 package io.micrometer.core.instrument;
 
-import io.micrometer.common.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.function.ToDoubleFunction;
@@ -27,7 +27,7 @@ import java.util.function.ToDoubleFunction;
  */
 public interface FunctionCounter extends Meter {
 
-    static <T> Builder<T> builder(String name, @Nullable T obj, ToDoubleFunction<T> f) {
+    static <T> Builder<T> builder(String name, T obj, ToDoubleFunction<T> f) {
         return new Builder<>(name, obj, f);
     }
 
@@ -54,16 +54,13 @@ public interface FunctionCounter extends Meter {
 
         private Tags tags = Tags.empty();
 
-        @Nullable
         private final T obj;
 
-        @Nullable
-        private String description;
+        private @Nullable String description;
 
-        @Nullable
-        private String baseUnit;
+        private @Nullable String baseUnit;
 
-        private Builder(String name, @Nullable T obj, ToDoubleFunction<T> f) {
+        private Builder(String name, T obj, ToDoubleFunction<T> f) {
             this.name = name;
             this.obj = obj;
             this.f = f;

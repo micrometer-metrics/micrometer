@@ -18,9 +18,9 @@ package io.micrometer.core.instrument.binder.grpc;
 
 import io.grpc.*;
 import io.grpc.MethodDescriptor.MethodType;
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
+import org.jspecify.annotations.Nullable;
 
 import java.net.URI;
 import java.util.Map;
@@ -50,8 +50,7 @@ public class ObservationGrpcClientInterceptor implements ClientInterceptor {
 
     private final ObservationRegistry registry;
 
-    @Nullable
-    private GrpcClientObservationConvention customConvention;
+    private @Nullable GrpcClientObservationConvention customConvention;
 
     public ObservationGrpcClientInterceptor(ObservationRegistry registry) {
         this.registry = registry;

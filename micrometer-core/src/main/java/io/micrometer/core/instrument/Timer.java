@@ -15,7 +15,6 @@
  */
 package io.micrometer.core.instrument;
 
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.annotation.Incubating;
 import io.micrometer.core.annotation.Timed;
 import io.micrometer.core.instrument.distribution.CountAtBucket;
@@ -23,6 +22,8 @@ import io.micrometer.core.instrument.distribution.HistogramSupport;
 import io.micrometer.core.instrument.distribution.ValueAtPercentile;
 import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import io.micrometer.core.instrument.util.TimeUtils;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 import java.time.Duration;
 import java.util.Arrays;
@@ -131,8 +132,7 @@ public interface Timer extends Meter, HistogramSupport {
      * @param <T> The return type of the {@link Supplier}.
      * @return The return value of {@code f}.
      */
-    @Nullable
-    <T> T record(Supplier<T> f);
+    <T> @Nullable T record(Supplier<T> f);
 
     /**
      * Executes the Supplier {@code f} and records the time taken.
@@ -140,8 +140,10 @@ public interface Timer extends Meter, HistogramSupport {
      * @return The return value of {@code f}.
      * @since 1.10.0
      */
+    // boolean cast to Boolean cast back to boolean can't be null
+    @SuppressWarnings("NullAway")
     default boolean record(BooleanSupplier f) {
-        return record((Supplier<Boolean>) f::getAsBoolean);
+        return record((Supplier<@NonNull Boolean>) f::getAsBoolean);
     }
 
     /**
@@ -150,6 +152,8 @@ public interface Timer extends Meter, HistogramSupport {
      * @return The return value of {@code f}.
      * @since 1.10.0
      */
+    // int cast to Integer cast back to int can't be null
+    @SuppressWarnings("NullAway")
     default int record(IntSupplier f) {
         return record((Supplier<Integer>) f::getAsInt);
     }
@@ -160,6 +164,8 @@ public interface Timer extends Meter, HistogramSupport {
      * @return The return value of {@code f}.
      * @since 1.10.0
      */
+    // long cast to Long cast back to long can't be null
+    @SuppressWarnings("NullAway")
     default long record(LongSupplier f) {
         return record((Supplier<Long>) f::getAsLong);
     }
@@ -170,6 +176,8 @@ public interface Timer extends Meter, HistogramSupport {
      * @return The return value of {@code f}.
      * @since 1.10.0
      */
+    // double cast to Double cast back to double can't be null
+    @SuppressWarnings("NullAway")
     default double record(DoubleSupplier f) {
         return record((Supplier<Double>) f::getAsDouble);
     }
@@ -181,8 +189,7 @@ public interface Timer extends Meter, HistogramSupport {
      * @return The return value of {@code f}.
      * @throws Exception Any exception bubbling up from the callable.
      */
-    @Nullable
-    <T> T recordCallable(Callable<T> f) throws Exception;
+    @Nullable <T> T recordCallable(Callable<T> f) throws Exception;
 
     /**
      * Executes the runnable {@code f} and records the time taken.
@@ -373,12 +380,12 @@ public interface Timer extends Meter, HistogramSupport {
         }
 
         @Override
-        public Builder publishPercentiles(double... percentiles) {
+        public Builder publishPercentiles(double @Nullable ... percentiles) {
             return super.publishPercentiles(percentiles);
         }
 
         @Override
-        public Builder percentilePrecision(Integer digitsOfPrecision) {
+        public Builder percentilePrecision(@Nullable Integer digitsOfPrecision) {
             return super.percentilePrecision(digitsOfPrecision);
         }
 
@@ -388,48 +395,48 @@ public interface Timer extends Meter, HistogramSupport {
         }
 
         @Override
-        public Builder publishPercentileHistogram(Boolean enabled) {
+        public Builder publishPercentileHistogram(@Nullable Boolean enabled) {
             return super.publishPercentileHistogram(enabled);
         }
 
         @SuppressWarnings("deprecation")
         @Override
-        public Builder sla(Duration... sla) {
+        public Builder sla(Duration @Nullable ... sla) {
             return super.sla(sla);
         }
 
         @Override
-        public Builder serviceLevelObjectives(Duration... slos) {
+        public Builder serviceLevelObjectives(Duration @Nullable ... slos) {
             return super.serviceLevelObjectives(slos);
         }
 
         @Override
-        public Builder minimumExpectedValue(Duration min) {
+        public Builder minimumExpectedValue(@Nullable Duration min) {
             return super.minimumExpectedValue(min);
         }
 
         @Override
-        public Builder maximumExpectedValue(Duration max) {
+        public Builder maximumExpectedValue(@Nullable Duration max) {
             return super.maximumExpectedValue(max);
         }
 
         @Override
-        public Builder distributionStatisticExpiry(Duration expiry) {
+        public Builder distributionStatisticExpiry(@Nullable Duration expiry) {
             return super.distributionStatisticExpiry(expiry);
         }
 
         @Override
-        public Builder distributionStatisticBufferLength(Integer bufferLength) {
+        public Builder distributionStatisticBufferLength(@Nullable Integer bufferLength) {
             return super.distributionStatisticBufferLength(bufferLength);
         }
 
         @Override
-        public Builder pauseDetector(PauseDetector pauseDetector) {
+        public Builder pauseDetector(@Nullable PauseDetector pauseDetector) {
             return super.pauseDetector(pauseDetector);
         }
 
         @Override
-        public Builder description(String description) {
+        public Builder description(@Nullable String description) {
             return super.description(description);
         }
 

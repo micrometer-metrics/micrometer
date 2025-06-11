@@ -19,6 +19,7 @@ import io.micrometer.observation.transport.RequestReplySenderContext;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
 import org.apache.http.protocol.HttpContext;
+import org.jspecify.annotations.Nullable;
 
 import java.util.function.Function;
 
@@ -54,6 +55,13 @@ public class ApacheHttpClientContext extends RequestReplySenderContext<HttpReque
         this.exportTagsForRoute = exportTagsForRoute;
         setCarrier(request);
         this.apacheHttpContext = apacheHttpContext;
+    }
+
+    @Override
+    // Overridden to mark NonNull; setCarrier is called in constructor
+    @SuppressWarnings("NullAway")
+    public HttpRequest getCarrier() {
+        return super.getCarrier();
     }
 
     public HttpContext getApacheHttpContext() {

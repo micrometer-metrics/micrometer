@@ -15,9 +15,9 @@
  */
 package io.micrometer.core.instrument.binder.cache;
 
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.common.util.internal.logging.InternalLogger;
 import io.micrometer.common.util.internal.logging.InternalLoggerFactory;
+import org.jspecify.annotations.Nullable;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
@@ -71,8 +71,7 @@ class HazelcastIMapAdapter {
         }
     }
 
-    @Nullable
-    LocalMapStats getLocalMapStats() {
+    @Nullable LocalMapStats getLocalMapStats() {
         Object ref = cache.get();
         if (ref == null) {
             return null;
@@ -92,8 +91,7 @@ class HazelcastIMapAdapter {
 
         private static final MethodHandle GET_PUT_OPERATION_COUNT;
 
-        @Nullable
-        private static final MethodHandle GET_SET_OPERATION_COUNT;
+        private static final @Nullable MethodHandle GET_SET_OPERATION_COUNT;
 
         private static final MethodHandle GET_BACKUP_ENTRY_COUNT;
 
@@ -170,7 +168,7 @@ class HazelcastIMapAdapter {
             return (long) invoke(GET_GET_OPERATION_COUNT, localMapStats);
         }
 
-        NearCacheStats getNearCacheStats() {
+        @Nullable NearCacheStats getNearCacheStats() {
             Object result = invoke(GET_NEAR_CACHE_STATS, localMapStats);
             return result == null ? null : new NearCacheStats(result);
         }
@@ -191,8 +189,7 @@ class HazelcastIMapAdapter {
             return (long) invoke(GET_TOTAL_REMOVE_LATENCY, localMapStats);
         }
 
-        @Nullable
-        private static MethodHandle resolveMethod(String name, MethodType mt) {
+        private static @Nullable MethodHandle resolveMethod(String name, MethodType mt) {
             try {
                 return MethodHandles.publicLookup().findVirtual(CLASS_LOCAL_MAP, name, mt);
             }
@@ -281,7 +278,7 @@ class HazelcastIMapAdapter {
         }
     }
 
-    private static Object invoke(MethodHandle mh, Object object) {
+    private static @Nullable Object invoke(@Nullable MethodHandle mh, Object object) {
         try {
             return mh.invoke(object);
         }

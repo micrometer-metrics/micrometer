@@ -22,12 +22,12 @@ import ch.qos.logback.classic.spi.LoggerContextListener;
 import ch.qos.logback.classic.turbo.TurboFilter;
 import ch.qos.logback.core.spi.FilterReply;
 import io.micrometer.common.lang.NonNullApi;
-import io.micrometer.common.lang.NonNullFields;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.binder.MeterBinder;
+import org.jspecify.annotations.NullMarked;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Marker;
 
@@ -44,7 +44,7 @@ import static java.util.Collections.emptyList;
  * @author Jon Schneider
  */
 @NonNullApi
-@NonNullFields
+@NullMarked
 public class LogbackMetrics implements MeterBinder, AutoCloseable {
 
     static ThreadLocal<Boolean> ignoreMetrics = new ThreadLocal<>();
@@ -144,7 +144,7 @@ public class LogbackMetrics implements MeterBinder, AutoCloseable {
 }
 
 @NonNullApi
-@NonNullFields
+@NullMarked
 class MetricsTurboFilter extends TurboFilter {
 
     private static final String METER_NAME = "logback.events";

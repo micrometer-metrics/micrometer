@@ -19,6 +19,7 @@ import io.micrometer.core.instrument.FunctionTimer;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.noop.NoopFunctionTimer;
+import org.jspecify.annotations.Nullable;
 
 import java.lang.ref.WeakReference;
 import java.util.concurrent.TimeUnit;
@@ -65,7 +66,7 @@ class CompositeFunctionTimer<T> extends AbstractCompositeMeter<FunctionTimer> im
     }
 
     @Override
-    FunctionTimer registerNewMeter(MeterRegistry registry) {
+    @Nullable FunctionTimer registerNewMeter(MeterRegistry registry) {
         final T obj = ref.get();
         if (obj == null) {
             return null;

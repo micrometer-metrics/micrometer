@@ -19,15 +19,13 @@ import com.netflix.hystrix.*;
 import com.netflix.hystrix.metric.HystrixCommandCompletionStream;
 import com.netflix.hystrix.strategy.metrics.HystrixMetricsPublisherCommand;
 import io.micrometer.common.lang.NonNullApi;
-import io.micrometer.common.lang.NonNullFields;
 import io.micrometer.common.util.internal.logging.InternalLogger;
 import io.micrometer.common.util.internal.logging.InternalLoggerFactory;
 import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.Timer;
+import org.jspecify.annotations.NullMarked;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Locale;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -36,7 +34,7 @@ import java.util.concurrent.TimeUnit;
  * @author Clint Checketts
  */
 @NonNullApi
-@NonNullFields
+@NullMarked
 @Deprecated
 public class MicrometerMetricsPublisherCommand implements HystrixMetricsPublisherCommand {
 
@@ -139,7 +137,7 @@ public class MicrometerMetricsPublisherCommand implements HystrixMetricsPublishe
             for (HystrixEventType hystrixEventType : HystrixEventType.values()) {
                 int count = hystrixCommandCompletion.getEventCounts().getCount(hystrixEventType);
                 if (count > 0) {
-                    eventCounters.get(hystrixEventType).increment(count);
+                    Objects.requireNonNull(eventCounters.get(hystrixEventType)).increment(count);
                     if (hystrixEventType.isTerminal()) {
                         terminalEventCounterTotal.increment(count);
                     }

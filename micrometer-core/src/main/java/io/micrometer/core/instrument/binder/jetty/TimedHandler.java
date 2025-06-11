@@ -16,7 +16,6 @@
 package io.micrometer.core.instrument.binder.jetty;
 
 import io.micrometer.common.lang.NonNullApi;
-import io.micrometer.common.lang.NonNullFields;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.binder.http.DefaultHttpServletRequestTagsProvider;
@@ -29,6 +28,7 @@ import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.handler.HandlerWrapper;
 import org.eclipse.jetty.util.FutureCallback;
 import org.eclipse.jetty.util.component.Graceful;
+import org.jspecify.annotations.NullMarked;
 
 import javax.servlet.AsyncEvent;
 import javax.servlet.AsyncListener;
@@ -49,7 +49,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * module
  */
 @NonNullApi
-@NonNullFields
+@NullMarked
 @Deprecated
 public class TimedHandler extends HandlerWrapper implements Graceful {
 
