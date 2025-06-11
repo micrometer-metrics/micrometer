@@ -16,7 +16,10 @@
 package io.micrometer.core.instrument.binder.kafka;
 
 import io.micrometer.core.Issue;
-import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.Measurement;
+import io.micrometer.core.instrument.Meter;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.micrometer.core.testsupport.system.CapturedOutput;
 import io.micrometer.core.testsupport.system.OutputCaptureExtension;
@@ -30,13 +33,10 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
-import java.time.Duration;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
@@ -533,23 +533,22 @@ class KafkaMetricsTest {
     }
 
     @Test
-    void shouldReturnNaNForNullMetrics(CapturedOutput output) {
+    void shouldReturnNaNForNullMetricValue(CapturedOutput output) {
         Map<MetricName, Metric> kafkaMetricMap = new HashMap<>();
-        Supplier<Map<MetricName, ? extends Metric>> supplier = () -> kafkaMetricMap;
-        ScheduledExecutorService customScheduler = Executors.newScheduledThreadPool(1);
-        kafkaMetrics = new KafkaMetrics(supplier, Tags.empty(), customScheduler, Duration.ofMillis(100));
+        kafkaMetrics = new KafkaMetrics(() -> kafkaMetricMap);
         MeterRegistry registry = new SimpleMeterRegistry();
         kafkaMetrics.bindTo(registry);
         assertThat(registry.getMeters()).isEmpty();
 
-        KafkaMetric aMetric = createKafkaMetric(createMetricName("a"), 1);
-
+        KafkaMetric aMetric = createKafkaMetric(createMetricName("a"), (config, now) -> 1.0);
         kafkaMetricMap.put(aMetric.metricName(), aMetric);
-        await().untilAsserted(() -> assertThat(registry.getMeters()).hasSize(1));
+        kafkaMetrics.checkAndBindMetrics(registry);
+        assertThat(registry.getMeters()).hasSize(1);
         assertThat(registry.find("kafka.test.a").gauge().value()).isEqualTo(1.0);
 
-        KafkaMetric aMetricModified = createKafkaGaugeMetric(createMetricName("a"), (config, now) -> null);
+        KafkaMetric aMetricModified = createKafkaMetric(createMetricName("a"), (config, now) -> null);
         kafkaMetricMap.put(aMetricModified.metricName(), aMetricModified);
+        kafkaMetrics.checkAndBindMetrics(registry);
         assertThat(registry.find("kafka.test.a").gauge().value()).isNaN();
         assertThat(output).doesNotContain("Failed to apply the value function for the gauge").hasSize(0);
     }
@@ -580,7 +579,7 @@ class KafkaMetricsTest {
         return new KafkaMetric(this, metricName, new Value(), new MetricConfig(), Time.SYSTEM);
     }
 
-    private KafkaMetric createKafkaGaugeMetric(MetricName metricName, org.apache.kafka.common.metrics.Gauge<?> gauge) {
+    private KafkaMetric createKafkaMetric(MetricName metricName, org.apache.kafka.common.metrics.Gauge<?> gauge) {
         return new KafkaMetric(this, metricName, gauge, new MetricConfig(), Time.SYSTEM);
     }
 
