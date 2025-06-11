@@ -227,21 +227,56 @@ public class KafkaClientMetrics extends KafkaMetrics {
     }
 
     /**
-     * Kafka client metrics binder
-     * @param metricsSupplier supplier of metrics, make sure this comes from the Java
-     * Kafka Client because {@link KafkaClientMetrics} heavily depends on the behavior of
-     * the Java Kafka Client
+     * Kafka client metrics binder. The lifecycle of the custom scheduler passed is the
+     * responsibility of the caller. It will not be shut down when this instance is
+     * {@link #close() closed}. A scheduler can be shared among multiple instances of
+     * {@link KafkaClientMetrics} to reduce resource usage by reducing the number of
+     * threads if there will be many instances.
+     * @param metricsSupplier supplier of Kafka metrics, should come from the Java Kafka
+     * Client
+     * @param tags additional tags
+     * @param scheduler custom scheduler to check and bind metrics
+     * @since 1.16.0
      */
-    public KafkaClientMetrics(Supplier<Map<MetricName, ? extends Metric>> metricsSupplier) {
-        super(metricsSupplier);
+    public KafkaClientMetrics(Supplier<Map<MetricName, ? extends Metric>> metricsSupplier, Iterable<Tag> tags,
+            ScheduledExecutorService scheduler) {
+        super(metricsSupplier, tags, scheduler);
+    }
+
+    /**
+     * Kafka client metrics binder. The lifecycle of the custom scheduler passed is the
+     * responsibility of the caller. It will not be shut down when this instance is
+     * {@link #close() closed}. A scheduler can be shared among multiple instances of
+     * {@link KafkaClientMetrics} to reduce resource usage by reducing the number of
+     * threads if there will be many instances.
+     * <p>
+     * The refresh interval governs how frequently Micrometer should call the Kafka
+     * Client's Metrics API to discover new metrics to register and discard old ones since
+     * the Kafka Client can add/remove/recreate metrics on-the-fly. Please notice that
+     * this is not for fetching values for already registered metrics but for updating the
+     * list of registered metrics when the Kafka Client adds/removes/recreates them. It is
+     * the responsibility of the caller to choose the right value since this process can
+     * be expensive and metrics can appear and disappear without being published if the
+     * interval is not chosen appropriately.
+     * @param metricsSupplier supplier of Kafka metrics, should come from the Java Kafka
+     * Client
+     * @param tags additional tags
+     * @param scheduler custom scheduler to check and bind metrics
+     * @param refreshInterval interval of discovering new/removed/recreated metrics by the
+     * Kafka Client
+     * @since 1.16.0
+     */
+    public KafkaClientMetrics(Supplier<Map<MetricName, ? extends Metric>> metricsSupplier, Iterable<Tag> tags,
+            ScheduledExecutorService scheduler, Duration refreshInterval) {
+        super(metricsSupplier, tags, scheduler, refreshInterval);
     }
 
     /**
      * Kafka client metrics binder
-     * @param metricsSupplier supplier of metrics, make sure this comes from the Java
-     * Kafka Client because {@link KafkaClientMetrics} heavily depends on the behavior of
-     * the Java Kafka Client
+     * @param metricsSupplier supplier of Kafka metrics, should come from the Java Kafka
+     * Client
      * @param tags additional tags
+     * @since 1.16.0
      */
     public KafkaClientMetrics(Supplier<Map<MetricName, ? extends Metric>> metricsSupplier, Iterable<Tag> tags) {
         super(metricsSupplier, tags);
@@ -249,15 +284,12 @@ public class KafkaClientMetrics extends KafkaMetrics {
 
     /**
      * Kafka client metrics binder
-     * @param metricsSupplier supplier of metrics, make sure this comes from the Java
-     * Kafka Client because {@link KafkaClientMetrics} heavily depends on the behavior of
-     * the Java Kafka Client
-     * @param tags additional tags
-     * @param scheduler custom scheduler to check and bind metrics
+     * @param metricsSupplier supplier of Kafka metrics, should come from the Java Kafka
+     * Client
+     * @since 1.16.0
      */
-    public KafkaClientMetrics(Supplier<Map<MetricName, ? extends Metric>> metricsSupplier, Iterable<Tag> tags,
-            ScheduledExecutorService scheduler) {
-        super(metricsSupplier, tags, scheduler);
+    public KafkaClientMetrics(Supplier<Map<MetricName, ? extends Metric>> metricsSupplier) {
+        super(metricsSupplier);
     }
 
 }
