@@ -306,7 +306,14 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
     }
 
     private double toDouble(@Nullable Metric metric) {
-        return (metric != null) ? ((Number) metric.metricValue()).doubleValue() : Double.NaN;
+        if (metric == null) {
+            return Double.NaN;
+        }
+        Object metricValue = metric.metricValue();
+        if (metricValue == null) {
+            return Double.NaN;
+        }
+        return ((Number) metricValue).doubleValue();
     }
 
     private List<Tag> meterTags(MetricName metricName, boolean includeCommonTags) {
