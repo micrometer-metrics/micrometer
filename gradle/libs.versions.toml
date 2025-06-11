@@ -44,7 +44,7 @@ jetty12 = "12.0.6"
 jersey3 = "3.1.10"
 jmh = "1.37"
 # latest version of jOOQ to run tests against
-jooqNew = "3.20.4"
+jooqNew = "3.20.5"
 jsr107 = "1.1.1"
 jsr305 = "3.0.2"
 junit = "5.13.1"
