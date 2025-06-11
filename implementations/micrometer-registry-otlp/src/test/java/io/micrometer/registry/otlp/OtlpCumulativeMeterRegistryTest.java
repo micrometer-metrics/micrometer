@@ -503,12 +503,12 @@ class OtlpCumulativeMeterRegistryTest extends OtlpMeterRegistryTest {
         size.record(100);
         size.record(15);
         size.record(2233);
-        clock.add(otlpConfig().step());
+        clock.add(otlpConfig().step().multipliedBy(3));
         size.record(204);
 
         assertThat(writeToMetric(size).toString())
             .isEqualTo("name: \"http.response.size\"\n" + "unit: \"bytes\"\n" + "summary {\n" + "  data_points {\n"
-                    + "    start_time_unix_nano: 1000000\n" + "    time_unix_nano: 60001000000\n" + "    count: 4\n"
+                    + "    start_time_unix_nano: 1000000\n" + "    time_unix_nano: 180001000000\n" + "    count: 4\n"
                     + "    sum: 2552.0\n" + "    quantile_values {\n" + "      quantile: 0.5\n" + "      value: 200.0\n"
                     + "    }\n" + "    quantile_values {\n" + "      quantile: 0.9\n" + "      value: 200.0\n"
                     + "    }\n" + "    quantile_values {\n" + "      quantile: 0.99\n" + "      value: 200.0\n"

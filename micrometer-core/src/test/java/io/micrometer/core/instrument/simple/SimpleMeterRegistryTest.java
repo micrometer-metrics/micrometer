@@ -69,7 +69,7 @@ class SimpleMeterRegistryTest {
         assertThat(summaryHist2.value()).isEqualTo(1);
         assertThat(timerHist.value()).isEqualTo(1);
 
-        clock.add(SimpleConfig.DEFAULT.step());
+        clock.add(SimpleConfig.DEFAULT.step().multipliedBy(3));
 
         assertThat(summaryHist1.value()).isEqualTo(0);
         assertThat(summaryHist2.value()).isEqualTo(0);
