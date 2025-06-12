@@ -147,12 +147,13 @@ public interface StatsdConfig extends MeterRegistryConfig {
     }
 
     /**
-     * @return {@code true} if the subscriber should continue to retry on the same address
-     * when the server is not reachable. Default is {@code true}. Otherwise, there's no
-     * retry and the subscription resumes from the start
+     * @return Choose how to manage UDP server interruptions
      */
-    default boolean fastRetry() {
-        return getBoolean(this, "fastRetry").orElse(true);
+    default StatsdPortUnreachableMethod portUnreachableMethod() {
+        // Retry is the default because it's not expected that a server send ICMP
+        // port unreachable indefinitely
+        return getEnum(this, StatsdPortUnreachableMethod.class, "portUnreachableMethod")
+            .orElse(StatsdPortUnreachableMethod.RETRY);
     }
 
     @Override
