@@ -532,6 +532,27 @@ class KafkaMetricsTest {
         kafkaMetrics.checkAndBindMetrics(registry);
     }
 
+    @Test
+    void shouldReturnNaNForNullMetricValue(CapturedOutput output) {
+        Map<MetricName, Metric> kafkaMetricMap = new HashMap<>();
+        kafkaMetrics = new KafkaMetrics(() -> kafkaMetricMap);
+        MeterRegistry registry = new SimpleMeterRegistry();
+        kafkaMetrics.bindTo(registry);
+        assertThat(registry.getMeters()).isEmpty();
+
+        KafkaMetric aMetric = createKafkaMetric(createMetricName("a"), (config, now) -> 1.0);
+        kafkaMetricMap.put(aMetric.metricName(), aMetric);
+        kafkaMetrics.checkAndBindMetrics(registry);
+        assertThat(registry.getMeters()).hasSize(1);
+        assertThat(registry.find("kafka.test.a").gauge().value()).isEqualTo(1.0);
+
+        KafkaMetric aMetricModified = createKafkaMetric(createMetricName("a"), (config, now) -> null);
+        kafkaMetricMap.put(aMetricModified.metricName(), aMetricModified);
+        kafkaMetrics.checkAndBindMetrics(registry);
+        assertThat(registry.find("kafka.test.a").gauge().value()).isNaN();
+        assertThat(output).doesNotContain("Failed to apply the value function for the gauge").hasSize(0);
+    }
+
     private MetricName createMetricName(String name) {
         return createMetricName(name, Collections.emptyMap());
     }
@@ -556,6 +577,10 @@ class KafkaMetricsTest {
 
     private KafkaMetric createKafkaMetric(MetricName metricName) {
         return new KafkaMetric(this, metricName, new Value(), new MetricConfig(), Time.SYSTEM);
+    }
+
+    private KafkaMetric createKafkaMetric(MetricName metricName, org.apache.kafka.common.metrics.Gauge<?> gauge) {
+        return new KafkaMetric(this, metricName, gauge, new MetricConfig(), Time.SYSTEM);
     }
 
 }
