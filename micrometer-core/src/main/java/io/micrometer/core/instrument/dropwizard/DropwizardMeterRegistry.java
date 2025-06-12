@@ -182,6 +182,6 @@ public abstract class DropwizardMeterRegistry extends MeterRegistry {
      * @return Value to report when {@link io.micrometer.core.instrument.Gauge#value()}
      * returns {@code null}.
      */
-    protected abstract Double nullGaugeValue();
+    protected abstract @Nullable Double nullGaugeValue();
 
 }

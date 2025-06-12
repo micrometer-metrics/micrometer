@@ -33,7 +33,7 @@ import java.net.URI;
 @SuppressWarnings("deprecation")
 class JerseyServerTimingInstrumentationVerificationTests extends HttpServerTimingInstrumentationVerificationTests {
 
-    JerseyTest jerseyTest;
+    private @Nullable JerseyTest jerseyTest;
 
     @Override
     protected URI startInstrumentedWithMetricsServer() throws Exception {
@@ -78,7 +78,9 @@ class JerseyServerTimingInstrumentationVerificationTests extends HttpServerTimin
 
     @Override
     protected void stopInstrumentedServer() throws Exception {
-        jerseyTest.tearDown();
+        if (jerseyTest != null) {
+            jerseyTest.tearDown();
+        }
     }
 
     @Path("/")

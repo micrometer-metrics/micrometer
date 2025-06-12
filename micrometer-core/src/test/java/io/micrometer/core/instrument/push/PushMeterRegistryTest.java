@@ -23,6 +23,7 @@ import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.step.StepRegistryConfig;
 import io.micrometer.core.instrument.util.NamedThreadFactory;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
@@ -35,8 +36,10 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.LongStream;
 
-import static java.util.concurrent.TimeUnit.*;
-import static org.assertj.core.api.Assertions.*;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.Mockito.mock;
 
@@ -55,11 +58,11 @@ class PushMeterRegistryTest {
 
         @Override
         public String prefix() {
-            return null;
+            return "";
         }
 
         @Override
-        public String get(String key) {
+        public @Nullable String get(String key) {
             return null;
         }
     };
@@ -306,13 +309,13 @@ class PushMeterRegistryTest {
         }
 
         @Override
-        protected <T> Gauge newGauge(Meter.Id id, T obj, ToDoubleFunction<T> valueFunction) {
-            return null;
+        protected <T> Gauge newGauge(Meter.Id id, @Nullable T obj, ToDoubleFunction<T> valueFunction) {
+            return mock(Gauge.class);
         }
 
         @Override
         protected Counter newCounter(Meter.Id id) {
-            return null;
+            return mock(Counter.class);
         }
 
         @Override

@@ -60,7 +60,7 @@ class StepMeterRegistryTest {
         }
 
         @Override
-        public String get(String key) {
+        public @Nullable String get(String key) {
             return null;
         }
     };
@@ -588,11 +588,11 @@ class StepMeterRegistryTest {
             super(new StepRegistryConfig() {
                 @Override
                 public String prefix() {
-                    return null;
+                    return "";
                 }
 
                 @Override
-                public String get(String key) {
+                public @Nullable String get(String key) {
                     return null;
                 }
             }, new MockClock());

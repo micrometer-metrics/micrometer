@@ -26,7 +26,10 @@ import org.apache.hc.client5.http.classic.ExecRuntime;
 import org.apache.hc.client5.http.classic.methods.HttpGet;
 import org.apache.hc.client5.http.impl.classic.RequestFailedException;
 import org.apache.hc.client5.http.protocol.HttpClientContext;
-import org.apache.hc.core5.http.*;
+import org.apache.hc.core5.http.ClassicHttpRequest;
+import org.apache.hc.core5.http.HttpException;
+import org.apache.hc.core5.http.HttpHost;
+import org.apache.hc.core5.http.HttpRequest;
 import org.apache.hc.core5.http.message.BasicClassicHttpResponse;
 import org.apache.hc.core5.http.nio.AsyncEntityProducer;
 import org.jspecify.annotations.Nullable;
@@ -37,7 +40,8 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static io.micrometer.core.instrument.binder.httpcomponents.hc5.ApacheHttpClientObservationDocumentation.ApacheHttpClientKeyNames.*;
+import static io.micrometer.core.instrument.binder.httpcomponents.hc5.ApacheHttpClientObservationDocumentation.ApacheHttpClientKeyNames.EXCEPTION;
+import static io.micrometer.core.instrument.binder.httpcomponents.hc5.ApacheHttpClientObservationDocumentation.ApacheHttpClientKeyNames.OUTCOME;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
@@ -130,8 +134,9 @@ class ObservationExecChainHandlerTest {
         @Test
         void shouldInstrumentReceivedResponses() throws Exception {
             AsyncExecCallback clientCallback = mock(AsyncExecCallback.class);
-            handler.execute(request, null, this.scope, testAsyncExecChain, clientCallback);
+            handler.execute(request, mock(AsyncEntityProducer.class), this.scope, testAsyncExecChain, clientCallback);
 
+            assertThat(testAsyncExecChain.receivedCallback).isNotNull();
             testAsyncExecChain.receivedCallback.handleResponse(new BasicClassicHttpResponse(200), null);
             verify(clientCallback).handleResponse(any(), any());
 
@@ -143,8 +148,9 @@ class ObservationExecChainHandlerTest {
         @Test
         void shouldInstrumentExceptions() throws Exception {
             AsyncExecCallback clientCallback = mock(AsyncExecCallback.class);
-            handler.execute(request, null, this.scope, testAsyncExecChain, clientCallback);
+            handler.execute(request, mock(AsyncEntityProducer.class), this.scope, testAsyncExecChain, clientCallback);
 
+            assertThat(testAsyncExecChain.receivedCallback).isNotNull();
             testAsyncExecChain.receivedCallback.failed(new IllegalArgumentException());
             verify(clientCallback).failed(any());
 
@@ -157,7 +163,7 @@ class ObservationExecChainHandlerTest {
         @Test
         void shouldInstrumentCancelledRequests() throws Exception {
             AsyncExecCallback clientCallback = mock(AsyncExecCallback.class);
-            handler.execute(request, null, this.scope, testAsyncExecChain, clientCallback);
+            handler.execute(request, mock(AsyncEntityProducer.class), this.scope, testAsyncExecChain, clientCallback);
 
             cancellable.cancel();
 
