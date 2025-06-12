@@ -19,7 +19,6 @@ import io.micrometer.observation.transport.RequestReplySenderContext;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
 import org.apache.http.protocol.HttpContext;
-import org.jspecify.annotations.Nullable;
 
 import java.util.function.Function;
 
