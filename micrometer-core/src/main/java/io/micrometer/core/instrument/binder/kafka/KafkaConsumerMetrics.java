@@ -16,12 +16,12 @@
 package io.micrometer.core.instrument.binder.kafka;
 
 import io.micrometer.common.lang.NonNullApi;
-import io.micrometer.common.lang.NonNullFields;
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.annotation.Incubating;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.binder.MeterBinder;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 import javax.management.*;
 import java.lang.management.ManagementFactory;
@@ -54,7 +54,7 @@ import static java.util.Collections.emptyList;
  */
 @Incubating(since = "1.1.0")
 @NonNullApi
-@NonNullFields
+@NullMarked
 @Deprecated
 public class KafkaConsumerMetrics implements MeterBinder, AutoCloseable {
 
@@ -66,8 +66,7 @@ public class KafkaConsumerMetrics implements MeterBinder, AutoCloseable {
 
     private final Iterable<Tag> tags;
 
-    @Nullable
-    private Integer kafkaMajorVersion;
+    private @Nullable Integer kafkaMajorVersion;
 
     private final List<Runnable> notificationListenerCleanUpRunnables = new CopyOnWriteArrayList<>();
 
@@ -284,7 +283,10 @@ public class KafkaConsumerMetrics implements MeterBinder, AutoCloseable {
             AtomicReference<? extends Meter> meter, ObjectName o, String jmxMetricName) {
         return s -> safeDouble(() -> {
             if (!s.isRegistered(o)) {
-                registry.remove(meter.get());
+                Meter m = meter.get();
+                if (m != null) {
+                    registry.remove(m);
+                }
             }
             return s.getAttribute(o, jmxMetricName);
         });

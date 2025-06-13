@@ -17,6 +17,7 @@
 package io.micrometer.core.instrument.dropwizard;
 
 import com.codahale.metrics.Meter;
+import io.micrometer.core.instrument.Tags;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -31,7 +32,10 @@ class DropwizardCounterTest {
 
     private Meter meter = mock(Meter.class);
 
-    private DropwizardCounter counter = new DropwizardCounter(null, meter);
+    io.micrometer.core.instrument.Meter.Id id = new io.micrometer.core.instrument.Meter.Id("name", Tags.empty(), null,
+            null, io.micrometer.core.instrument.Meter.Type.COUNTER);
+
+    private DropwizardCounter counter = new DropwizardCounter(id, meter);
 
     @Test
     void increment() {

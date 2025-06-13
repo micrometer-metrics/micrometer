@@ -18,7 +18,6 @@ package io.micrometer.core.instrument.dropwizard;
 import com.codahale.metrics.ExponentiallyDecayingReservoir;
 import com.codahale.metrics.Gauge;
 import com.codahale.metrics.MetricRegistry;
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.common.util.internal.logging.WarnThenDebugLogger;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.config.NamingConvention;
@@ -28,6 +27,7 @@ import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import io.micrometer.core.instrument.internal.DefaultLongTaskTimer;
 import io.micrometer.core.instrument.internal.DefaultMeter;
 import io.micrometer.core.instrument.util.HierarchicalNameMapper;
+import org.jspecify.annotations.Nullable;
 
 import java.lang.ref.WeakReference;
 import java.util.concurrent.TimeUnit;
@@ -182,6 +182,6 @@ public abstract class DropwizardMeterRegistry extends MeterRegistry {
      * @return Value to report when {@link io.micrometer.core.instrument.Gauge#value()}
      * returns {@code null}.
      */
-    protected abstract Double nullGaugeValue();
+    protected abstract @Nullable Double nullGaugeValue();
 
 }

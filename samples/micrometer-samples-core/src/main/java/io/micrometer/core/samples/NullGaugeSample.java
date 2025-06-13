@@ -26,6 +26,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class NullGaugeSample {
 
+    @SuppressWarnings("NullAway")
     public static void main(String[] args) {
         MeterRegistry registry = SampleConfig.myMonitoringSystem();
         AtomicInteger n = new AtomicInteger(46875392);

@@ -15,11 +15,11 @@
  */
 package io.micrometer.core.instrument.search;
 
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.config.MeterFilter;
 import io.micrometer.core.instrument.config.MeterFilterReply;
+import org.jspecify.annotations.Nullable;
 
 import java.util.*;
 import java.util.function.Predicate;
@@ -136,48 +136,42 @@ public final class Search {
     /**
      * @return The first matching {@link Timer}, or {@code null} if none match.
      */
-    @Nullable
-    public Timer timer() {
+    public @Nullable Timer timer() {
         return findOne(Timer.class);
     }
 
     /**
      * @return The first matching {@link Counter}, or {@code null} if none match.
      */
-    @Nullable
-    public Counter counter() {
+    public @Nullable Counter counter() {
         return findOne(Counter.class);
     }
 
     /**
      * @return The first matching {@link Gauge}, or {@code null} if none match.
      */
-    @Nullable
-    public Gauge gauge() {
+    public @Nullable Gauge gauge() {
         return findOne(Gauge.class);
     }
 
     /**
      * @return The first matching {@link FunctionCounter}, or {@code null} if none match.
      */
-    @Nullable
-    public FunctionCounter functionCounter() {
+    public @Nullable FunctionCounter functionCounter() {
         return findOne(FunctionCounter.class);
     }
 
     /**
      * @return The first matching {@link TimeGauge}, or {@code null} if none match.
      */
-    @Nullable
-    public TimeGauge timeGauge() {
+    public @Nullable TimeGauge timeGauge() {
         return findOne(TimeGauge.class);
     }
 
     /**
      * @return The first matching {@link FunctionTimer}, or {@code null} if none match.
      */
-    @Nullable
-    public FunctionTimer functionTimer() {
+    public @Nullable FunctionTimer functionTimer() {
         return findOne(FunctionTimer.class);
     }
 
@@ -185,29 +179,25 @@ public final class Search {
      * @return The first matching {@link DistributionSummary}, or {@code null} if none
      * match.
      */
-    @Nullable
-    public DistributionSummary summary() {
+    public @Nullable DistributionSummary summary() {
         return findOne(DistributionSummary.class);
     }
 
     /**
      * @return The first matching {@link LongTaskTimer}, or {@code null} if none match.
      */
-    @Nullable
-    public LongTaskTimer longTaskTimer() {
+    public @Nullable LongTaskTimer longTaskTimer() {
         return findOne(LongTaskTimer.class);
     }
 
     /**
      * @return The first matching {@link Meter}, or {@code null} if none match.
      */
-    @Nullable
-    public Meter meter() {
+    public @Nullable Meter meter() {
         return findOne(Meter.class);
     }
 
-    @Nullable
-    private <M extends Meter> M findOne(Class<M> clazz) {
+    private <M extends Meter> @Nullable M findOne(Class<M> clazz) {
         return meterStream().filter(clazz::isInstance).findAny().map(clazz::cast).orElse(null);
     }
 

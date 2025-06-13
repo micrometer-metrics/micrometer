@@ -17,8 +17,7 @@ package io.micrometer.core.instrument.binder.http;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-
-import io.micrometer.common.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 import io.micrometer.common.util.StringUtils;
 import io.micrometer.core.annotation.Incubating;
 import io.micrometer.core.instrument.Tag;

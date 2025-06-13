@@ -31,13 +31,11 @@ class TimeWindowMaxTest {
 
     MockClock clock = new MockClock();
 
-    TimeWindowMax timeWindowMax;
-
     @Test
     void decaysToZero() {
         int bufferLength = 3;
         long rotateFrequencyMillis = Duration.ofMinutes(1).toMillis();
-        timeWindowMax = new TimeWindowMax(clock, rotateFrequencyMillis, bufferLength);
+        TimeWindowMax timeWindowMax = new TimeWindowMax(clock, rotateFrequencyMillis, bufferLength);
         timeWindowMax.record(100);
 
         for (int i = 0; i < bufferLength; i++) {
@@ -50,7 +48,7 @@ class TimeWindowMaxTest {
 
     @Test
     void testLongPeriodOfInactivity() {
-        timeWindowMax = new TimeWindowMax(clock, 60_000, 3);
+        TimeWindowMax timeWindowMax = new TimeWindowMax(clock, 60_000, 3);
         timeWindowMax.record(32);
         assertThat(timeWindowMax.poll()).isEqualTo(32); // 0 | 0 | 32
 

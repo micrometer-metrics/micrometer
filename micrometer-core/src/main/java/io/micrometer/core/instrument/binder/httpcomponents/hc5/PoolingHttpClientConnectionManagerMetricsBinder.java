@@ -15,7 +15,6 @@
  */
 package io.micrometer.core.instrument.binder.httpcomponents.hc5;
 
-import io.micrometer.common.lang.NonNull;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
@@ -25,6 +24,7 @@ import org.apache.hc.client5.http.HttpRoute;
 import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManager;
 import org.apache.hc.client5.http.impl.nio.PoolingAsyncClientConnectionManager;
 import org.apache.hc.core5.pool.ConnPoolControl;
+import org.jspecify.annotations.NonNull;
 
 /**
  * Collects metrics from a {@link ConnPoolControl}, for example

@@ -15,7 +15,7 @@
  */
 package io.micrometer.core.instrument;
 
-import io.micrometer.common.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Collections;
 
@@ -64,11 +64,9 @@ public interface Counter extends Meter {
 
         private Tags tags = Tags.empty();
 
-        @Nullable
-        private String description;
+        private @Nullable String description;
 
-        @Nullable
-        private String baseUnit;
+        private @Nullable String baseUnit;
 
         private Builder(String name) {
             this.name = name;

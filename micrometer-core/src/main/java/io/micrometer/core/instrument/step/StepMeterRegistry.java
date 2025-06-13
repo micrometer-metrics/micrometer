@@ -15,7 +15,6 @@
  */
 package io.micrometer.core.instrument.step;
 
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.common.util.internal.logging.InternalLogger;
 import io.micrometer.common.util.internal.logging.InternalLoggerFactory;
 import io.micrometer.core.instrument.*;
@@ -27,6 +26,7 @@ import io.micrometer.core.instrument.internal.DefaultLongTaskTimer;
 import io.micrometer.core.instrument.internal.DefaultMeter;
 import io.micrometer.core.instrument.push.PushMeterRegistry;
 import io.micrometer.core.instrument.util.NamedThreadFactory;
+import org.jspecify.annotations.Nullable;
 
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -47,8 +47,7 @@ public abstract class StepMeterRegistry extends PushMeterRegistry {
 
     private final StepRegistryConfig config;
 
-    @Nullable
-    private ScheduledExecutorService meterPollingService;
+    private @Nullable ScheduledExecutorService meterPollingService;
 
     // Time when the last scheduled rollOver has started.
     private volatile long lastMeterRolloverStartTime = -1;

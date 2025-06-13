@@ -51,7 +51,7 @@ public abstract class HttpServerTimingInstrumentationVerificationTests extends I
 
     private final HttpSender sender = new HttpUrlConnectionSender();
 
-    private URI baseUri;
+    private @Nullable URI baseUri;
 
     private boolean assumptionSucceeded = true;
 
@@ -180,7 +180,11 @@ public abstract class HttpServerTimingInstrumentationVerificationTests extends I
         @SuppressWarnings("unchecked")
         @Override
         public void onStart(T context) {
-            String testPropagation = context.getGetter().get(context.getCarrier(), "Test-Propagation");
+            Object carrier = context.getCarrier();
+            if (carrier == null) {
+                return;
+            }
+            String testPropagation = context.getGetter().get(carrier, "Test-Propagation");
             if (testPropagation != null) {
                 context.put("Test-Propagation", testPropagation);
             }

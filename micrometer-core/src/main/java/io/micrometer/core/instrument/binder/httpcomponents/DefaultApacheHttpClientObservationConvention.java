@@ -16,11 +16,11 @@
 package io.micrometer.core.instrument.binder.httpcomponents;
 
 import io.micrometer.common.KeyValues;
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.binder.http.Outcome;
 import org.apache.http.HttpException;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
+import org.jspecify.annotations.Nullable;
 
 import java.io.IOException;
 
@@ -80,7 +80,7 @@ public class DefaultApacheHttpClientObservationConvention implements ApacheHttpC
         return response != null ? Outcome.forStatus(response.getStatusLine().getStatusCode()) : Outcome.UNKNOWN;
     }
 
-    String getStatusValue(@Nullable HttpResponse response, Throwable error) {
+    String getStatusValue(@Nullable HttpResponse response, @Nullable Throwable error) {
         if (error instanceof IOException || error instanceof HttpException || error instanceof RuntimeException) {
             return "IO_ERROR";
         }

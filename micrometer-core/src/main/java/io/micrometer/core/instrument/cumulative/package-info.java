@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 @NonNullApi
-@NonNullFields
+@NullMarked
 package io.micrometer.core.instrument.cumulative;
 
 import io.micrometer.common.lang.NonNullApi;
-import io.micrometer.common.lang.NonNullFields;
+import org.jspecify.annotations.NullMarked;

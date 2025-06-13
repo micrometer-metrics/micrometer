@@ -15,8 +15,8 @@
  */
 package io.micrometer.core.instrument;
 
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -105,16 +105,14 @@ class HighCardinalityTagsDetectorTests {
 
     private static class TestMeterNameConsumer implements Consumer<String> {
 
-        @Nullable
-        private volatile String name;
+        private volatile @Nullable String name;
 
         @Override
         public void accept(String name) {
             this.name = name;
         }
 
-        @Nullable
-        public String getName() {
+        public @Nullable String getName() {
             return this.name;
         }
 

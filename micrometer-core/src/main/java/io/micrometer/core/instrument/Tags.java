@@ -15,7 +15,8 @@
  */
 package io.micrometer.core.instrument;
 
-import io.micrometer.common.lang.Nullable;
+import io.micrometer.common.lang.internal.Contract;
+import org.jspecify.annotations.Nullable;
 
 import java.util.*;
 import java.util.stream.Stream;
@@ -188,7 +189,7 @@ public final class Tags implements Iterable<Tag> {
      * @param keyValues the key/value pairs to add, elements mustn't be null
      * @return a new {@code Tags} instance
      */
-    public Tags and(@Nullable String... keyValues) {
+    public Tags and(String @Nullable ... keyValues) {
         if (blankVarargs(keyValues)) {
             return this;
         }
@@ -201,7 +202,7 @@ public final class Tags implements Iterable<Tag> {
      * @param tags the tags to add, elements mustn't be null
      * @return a new {@code Tags} instance
      */
-    public Tags and(@Nullable Tag... tags) {
+    public Tags and(Tag @Nullable ... tags) {
         if (blankVarargs(tags)) {
             return this;
         }
@@ -364,7 +365,7 @@ public final class Tags implements Iterable<Tag> {
      * @param keyValues the key/value pairs to add, elements mustn't be null
      * @return a new {@code Tags} instance
      */
-    public static Tags of(@Nullable String... keyValues) {
+    public static Tags of(String @Nullable ... keyValues) {
         if (blankVarargs(keyValues)) {
             return empty();
         }
@@ -378,7 +379,8 @@ public final class Tags implements Iterable<Tag> {
         return toTags(tags);
     }
 
-    private static boolean blankVarargs(@Nullable Object[] args) {
+    @Contract("null -> true")
+    private static boolean blankVarargs(Object @Nullable [] args) {
         return args == null || args.length == 0 || (args.length == 1 && args[0] == null);
     }
 
@@ -388,7 +390,7 @@ public final class Tags implements Iterable<Tag> {
      * @param tags the tags to add, elements mustn't be null
      * @return a new {@code Tags} instance
      */
-    public static Tags of(@Nullable Tag... tags) {
+    public static Tags of(Tag @Nullable ... tags) {
         return empty().and(tags);
     }
 

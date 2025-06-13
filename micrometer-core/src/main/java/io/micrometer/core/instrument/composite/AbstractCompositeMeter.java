@@ -15,10 +15,10 @@
  */
 package io.micrometer.core.instrument.composite;
 
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.AbstractMeter;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.IdentityHashMap;
@@ -32,8 +32,7 @@ abstract class AbstractCompositeMeter<T extends Meter> extends AbstractMeter imp
 
     private Map<MeterRegistry, T> children = Collections.emptyMap();
 
-    @Nullable
-    private volatile T noopMeter;
+    private volatile @Nullable T noopMeter;
 
     AbstractCompositeMeter(Id id) {
         super(id);
@@ -41,8 +40,7 @@ abstract class AbstractCompositeMeter<T extends Meter> extends AbstractMeter imp
 
     abstract T newNoopMeter();
 
-    @Nullable
-    abstract T registerNewMeter(MeterRegistry registry);
+    abstract @Nullable T registerNewMeter(MeterRegistry registry);
 
     final Iterable<T> getChildren() {
         return children.values();

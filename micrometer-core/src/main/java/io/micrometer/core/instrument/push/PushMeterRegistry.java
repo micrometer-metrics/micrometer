@@ -15,12 +15,12 @@
  */
 package io.micrometer.core.instrument.push;
 
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.common.util.internal.logging.InternalLogger;
 import io.micrometer.common.util.internal.logging.InternalLoggerFactory;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.util.TimeUtils;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Random;
 import java.util.concurrent.*;
@@ -39,8 +39,7 @@ public abstract class PushMeterRegistry extends MeterRegistry {
 
     private long lastScheduledPublishStartTime = 0L;
 
-    @Nullable
-    private ScheduledExecutorService scheduledExecutorService;
+    private @Nullable ScheduledExecutorService scheduledExecutorService;
 
     protected PushMeterRegistry(PushRegistryConfig config, Clock clock) {
         super(clock);

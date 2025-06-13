@@ -16,12 +16,13 @@
 package io.micrometer.core.instrument.binder.cache;
 
 import io.micrometer.common.lang.NonNullApi;
-import io.micrometer.common.lang.NonNullFields;
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.binder.cache.HazelcastIMapAdapter.LocalMapStats;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.function.ToDoubleFunction;
 import java.util.function.ToLongFunction;
@@ -33,7 +34,7 @@ import java.util.function.ToLongFunction;
  * @author Jon Schneider
  */
 @NonNullApi
-@NonNullFields
+@NullMarked
 public class HazelcastCacheMetrics extends CacheMeterBinder<Object> {
 
     private static final String DESCRIPTION_CACHE_ENTRIES = "The number of entries held by this member";
@@ -81,7 +82,7 @@ public class HazelcastCacheMetrics extends CacheMeterBinder<Object> {
     }
 
     @Override
-    protected Long size() {
+    protected @Nullable Long size() {
         LocalMapStats localMapStats = cache.getLocalMapStats();
         if (localMapStats != null) {
             return localMapStats.getOwnedEntryCount();
@@ -111,13 +112,12 @@ public class HazelcastCacheMetrics extends CacheMeterBinder<Object> {
      * @return There is no way to calculate miss count in Hazelcast. See issue #586.
      */
     @Override
-    protected Long missCount() {
+    protected @Nullable Long missCount() {
         return null;
     }
 
-    @Nullable
     @Override
-    protected Long evictionCount() {
+    protected @Nullable Long evictionCount() {
         return null;
     }
 
@@ -178,7 +178,7 @@ public class HazelcastCacheMetrics extends CacheMeterBinder<Object> {
         nearCacheMetrics(registry);
     }
 
-    private double getDouble(LocalMapStats localMapStats, ToDoubleFunction<LocalMapStats> function) {
+    private double getDouble(@Nullable LocalMapStats localMapStats, ToDoubleFunction<LocalMapStats> function) {
         return localMapStats != null ? function.applyAsDouble(localMapStats) : Double.NaN;
     }
 
@@ -187,7 +187,8 @@ public class HazelcastCacheMetrics extends CacheMeterBinder<Object> {
         if (localMapStats != null && localMapStats.getNearCacheStats() != null) {
             Gauge
                 .builder("cache.near.requests", cache,
-                        cache -> getDouble(cache.getLocalMapStats(), (stats) -> stats.getNearCacheStats().getHits()))
+                        cache -> getDouble(cache.getLocalMapStats(),
+                                (stats) -> Objects.requireNonNull(stats.getNearCacheStats()).getHits()))
                 .tags(getTagsWithCacheName())
                 .tag("result", "hit")
                 .description(DESCRIPTION_CACHE_NEAR_REQUESTS)
@@ -195,7 +196,8 @@ public class HazelcastCacheMetrics extends CacheMeterBinder<Object> {
 
             Gauge
                 .builder("cache.near.requests", cache,
-                        cache -> getDouble(cache.getLocalMapStats(), (stats) -> stats.getNearCacheStats().getMisses()))
+                        cache -> getDouble(cache.getLocalMapStats(),
+                                (stats) -> Objects.requireNonNull(stats.getNearCacheStats()).getMisses()))
                 .tags(getTagsWithCacheName())
                 .tag("result", "miss")
                 .description(DESCRIPTION_CACHE_NEAR_REQUESTS)
@@ -204,7 +206,7 @@ public class HazelcastCacheMetrics extends CacheMeterBinder<Object> {
             Gauge
                 .builder("cache.near.evictions", cache,
                         cache -> getDouble(cache.getLocalMapStats(),
-                                (stats) -> stats.getNearCacheStats().getEvictions()))
+                                (stats) -> Objects.requireNonNull(stats.getNearCacheStats()).getEvictions()))
                 .tags(getTagsWithCacheName())
                 .description("The number of evictions of near cache entries owned by this member")
                 .register(registry);
@@ -212,7 +214,7 @@ public class HazelcastCacheMetrics extends CacheMeterBinder<Object> {
             Gauge
                 .builder("cache.near.persistences", cache,
                         cache -> getDouble(cache.getLocalMapStats(),
-                                (stats) -> stats.getNearCacheStats().getPersistenceCount()))
+                                (stats) -> Objects.requireNonNull(stats.getNearCacheStats()).getPersistenceCount()))
                 .tags(getTagsWithCacheName())
                 .description("The number of near cache key persistences (when the pre-load feature is enabled)")
                 .register(registry);
@@ -244,7 +246,7 @@ public class HazelcastCacheMetrics extends CacheMeterBinder<Object> {
             .register(registry);
     }
 
-    private long getLong(LocalMapStats localMapStats, ToLongFunction<LocalMapStats> function) {
+    private long getLong(@Nullable LocalMapStats localMapStats, ToLongFunction<LocalMapStats> function) {
         return localMapStats != null ? function.applyAsLong(localMapStats) : 0L;
     }
 

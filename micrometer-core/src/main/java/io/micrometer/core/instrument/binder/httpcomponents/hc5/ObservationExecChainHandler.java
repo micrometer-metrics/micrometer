@@ -15,7 +15,6 @@
  */
 package io.micrometer.core.instrument.binder.httpcomponents.hc5;
 
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
 import org.apache.hc.client5.http.async.AsyncExecCallback;
@@ -29,6 +28,7 @@ import org.apache.hc.core5.concurrent.CancellableDependency;
 import org.apache.hc.core5.http.*;
 import org.apache.hc.core5.http.nio.AsyncDataConsumer;
 import org.apache.hc.core5.http.nio.AsyncEntityProducer;
+import org.jspecify.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.Objects;
@@ -63,8 +63,7 @@ public class ObservationExecChainHandler implements ExecChainHandler, AsyncExecC
 
     private final ObservationRegistry observationRegistry;
 
-    @Nullable
-    private final ApacheHttpClientObservationConvention observationConvention;
+    private final @Nullable ApacheHttpClientObservationConvention observationConvention;
 
     public ObservationExecChainHandler(ObservationRegistry observationRegistry,
             @Nullable ApacheHttpClientObservationConvention observationConvention) {

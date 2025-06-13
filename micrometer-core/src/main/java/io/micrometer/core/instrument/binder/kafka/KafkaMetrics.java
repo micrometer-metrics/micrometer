@@ -16,8 +16,6 @@
 package io.micrometer.core.instrument.binder.kafka;
 
 import io.micrometer.common.lang.NonNullApi;
-import io.micrometer.common.lang.NonNullFields;
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.common.util.internal.logging.InternalLogger;
 import io.micrometer.common.util.internal.logging.InternalLoggerFactory;
 import io.micrometer.common.util.internal.logging.WarnThenDebugLogger;
@@ -29,6 +27,8 @@ import org.apache.kafka.common.Metric;
 import org.apache.kafka.common.MetricName;
 import org.apache.kafka.common.metrics.KafkaMetric;
 import org.apache.kafka.common.metrics.Measurable;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 import java.time.Duration;
 import java.util.*;
@@ -55,7 +55,7 @@ import static java.util.Collections.emptyList;
  */
 @Incubating(since = "1.4.0")
 @NonNullApi
-@NonNullFields
+@NullMarked
 class KafkaMetrics implements MeterBinder, AutoCloseable {
 
     private static final InternalLogger log = InternalLoggerFactory.getInstance(KafkaMetrics.class);
@@ -111,8 +111,7 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
 
     private String kafkaVersion = DEFAULT_VALUE;
 
-    @Nullable
-    private volatile MeterRegistry registry;
+    private volatile @Nullable MeterRegistry registry;
 
     private final Set<Meter.Id> registeredMeterIds = ConcurrentHashMap.newKeySet();
 
@@ -170,7 +169,7 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
         // Collect static metrics and tags
         Metric startTimeMetric = null;
 
-        for (Map.Entry<MetricName, ? extends Metric> entry : metrics.entrySet()) {
+        for (Map.Entry<MetricName, ? extends Metric> entry : Objects.requireNonNull(metrics).entrySet()) {
             MetricName name = entry.getKey();
             if (METRIC_GROUP_APP_INFO.equals(name.group()))
                 if (VERSION_METRIC_NAME.equals(name.name())) {
@@ -293,8 +292,7 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
         return registerGauge(registry, metricName, meterName, tags);
     }
 
-    @Nullable
-    private static Class<? extends Measurable> getMeasurableClass(Metric metric) {
+    private static @Nullable Class<? extends Measurable> getMeasurableClass(Metric metric) {
         if (!(metric instanceof KafkaMetric)) {
             return null;
         }
@@ -327,7 +325,7 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
     }
 
     private ToDoubleFunction<AtomicReference<Map<MetricName, ? extends Metric>>> toMetricValue(MetricName metricName) {
-        return metricsReference -> toDouble(metricsReference.get().get(metricName));
+        return metricsReference -> toDouble(Objects.requireNonNull(metricsReference.get()).get(metricName));
     }
 
     private double toDouble(@Nullable Metric metric) {
@@ -346,7 +344,7 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
         metricName.tags().forEach((key, value) -> tags.add(Tag.of(key.replaceAll("-", "."), value)));
         tags.add(Tag.of(KAFKA_VERSION_TAG_NAME, kafkaVersion));
         extraTags.forEach(tags::add);
-        if (includeCommonTags) {
+        if (includeCommonTags && commonTags != null) {
             commonTags.forEach(tags::add);
         }
         return tags;
@@ -371,8 +369,10 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
             this.scheduler.shutdownNow();
         }
 
-        for (Meter.Id id : registeredMeterIds) {
-            registry.remove(id);
+        if (registry != null) {
+            for (Meter.Id id : registeredMeterIds) {
+                registry.remove(id);
+            }
         }
     }
 

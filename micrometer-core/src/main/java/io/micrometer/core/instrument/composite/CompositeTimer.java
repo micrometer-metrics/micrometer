@@ -182,10 +182,10 @@ class CompositeTimer extends AbstractCompositeMeter<Timer> implements Timer {
         Timer.Builder builder = Timer.builder(getId().getName())
             .tags(getId().getTagsAsIterable())
             .description(getId().getDescription())
-            .maximumExpectedValue(
-                    Duration.ofNanos(distributionStatisticConfig.getMaximumExpectedValueAsDouble().longValue()))
-            .minimumExpectedValue(
-                    Duration.ofNanos(distributionStatisticConfig.getMinimumExpectedValueAsDouble().longValue()))
+            .maximumExpectedValue(distributionStatisticConfig.getMaximumExpectedValueAsDouble() == null ? null
+                    : Duration.ofNanos(distributionStatisticConfig.getMaximumExpectedValueAsDouble().longValue()))
+            .minimumExpectedValue(distributionStatisticConfig.getMinimumExpectedValueAsDouble() == null ? null
+                    : Duration.ofNanos(distributionStatisticConfig.getMinimumExpectedValueAsDouble().longValue()))
             .publishPercentiles(distributionStatisticConfig.getPercentiles())
             .publishPercentileHistogram(distributionStatisticConfig.isPercentileHistogram())
             .distributionStatisticBufferLength(distributionStatisticConfig.getBufferLength())

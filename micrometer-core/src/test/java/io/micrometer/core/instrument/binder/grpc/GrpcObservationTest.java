@@ -53,7 +53,6 @@ import io.grpc.testing.protobuf.SimpleServiceGrpc.SimpleServiceBlockingStub;
 import io.grpc.testing.protobuf.SimpleServiceGrpc.SimpleServiceFutureStub;
 import io.grpc.testing.protobuf.SimpleServiceGrpc.SimpleServiceImplBase;
 import io.grpc.testing.protobuf.SimpleServiceGrpc.SimpleServiceStub;
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.binder.grpc.GrpcObservationDocumentation.GrpcClientEvents;
 import io.micrometer.core.instrument.binder.grpc.GrpcObservationDocumentation.GrpcServerEvents;
@@ -67,6 +66,7 @@ import io.micrometer.observation.ObservationRegistry;
 import io.micrometer.observation.ObservationTextPublisher;
 import io.micrometer.observation.tck.ObservationContextAssert;
 import io.micrometer.observation.tck.TestObservationRegistry;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -813,8 +813,7 @@ class GrpcObservationTest {
             this.events.add(event);
         }
 
-        @Nullable
-        T getContext() {
+        @Nullable T getContext() {
             return this.contextHolder.get();
         }
 

@@ -15,8 +15,8 @@
  */
 package io.micrometer.core.instrument.search;
 
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.*;
+import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -57,8 +57,7 @@ public class MeterNotFoundException extends RuntimeException {
             this.requiredMeterType = requiredMeterType;
         }
 
-        @Nullable
-        private String nameDetail() {
+        private @Nullable String nameDetail() {
             if (search.nameMatches == null)
                 return null;
 
@@ -88,8 +87,7 @@ public class MeterNotFoundException extends RuntimeException {
             return NOT_OK + " No meter that matches the name predicate was found.";
         }
 
-        @Nullable
-        private List<String> tagDetail() {
+        @Nullable private List<String> tagDetail() {
             if (search.requiredTagKeys.isEmpty() && search.requiredTags.isEmpty())
                 return null;
 
@@ -180,8 +178,7 @@ public class MeterNotFoundException extends RuntimeException {
          * search criteria.
          * @return Detail on why the type requirement was not met.
          */
-        @Nullable
-        private String typeDetail() {
+        private @Nullable String typeDetail() {
             if (requiredMeterType.equals(Meter.class))
                 return null;
 

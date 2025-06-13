@@ -16,7 +16,6 @@
 package io.micrometer.core.instrument.binder.jpa;
 
 import io.micrometer.common.lang.NonNullApi;
-import io.micrometer.common.lang.NonNullFields;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.MeterBinder;
 import org.hibernate.SessionFactory;
@@ -27,6 +26,7 @@ import org.hibernate.event.spi.PostLoadEvent;
 import org.hibernate.event.spi.PostLoadEventListener;
 import org.hibernate.stat.QueryStatistics;
 import org.hibernate.stat.Statistics;
+import org.jspecify.annotations.NullMarked;
 
 import java.util.concurrent.TimeUnit;
 
@@ -46,7 +46,7 @@ import java.util.concurrent.TimeUnit;
  * https://mvnrepository.com/artifact/org.hibernate/hibernate-micrometer/
  */
 @NonNullApi
-@NonNullFields
+@NullMarked
 @Deprecated
 public class HibernateQueryMetrics implements MeterBinder {
 

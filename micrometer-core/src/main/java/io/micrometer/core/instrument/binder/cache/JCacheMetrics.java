@@ -16,13 +16,13 @@
 package io.micrometer.core.instrument.binder.cache;
 
 import io.micrometer.common.lang.NonNullApi;
-import io.micrometer.common.lang.NonNullFields;
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.config.InvalidConfigurationException;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 import javax.cache.Cache;
 import javax.cache.CacheManager;
@@ -40,7 +40,7 @@ import java.util.List;
  * @author Jon Schneider
  */
 @NonNullApi
-@NonNullFields
+@NullMarked
 public class JCacheMetrics<K, V, C extends Cache<K, V>> extends CacheMeterBinder<C> {
 
     // VisibleForTesting
@@ -102,7 +102,7 @@ public class JCacheMetrics<K, V, C extends Cache<K, V>> extends CacheMeterBinder
     }
 
     @Override
-    protected Long size() {
+    protected @Nullable Long size() {
         // JCache statistics don't support size
         return null;
     }

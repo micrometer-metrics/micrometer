@@ -19,9 +19,9 @@ import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.LoadingCache;
 import io.micrometer.common.lang.NonNullApi;
-import io.micrometer.common.lang.NonNullFields;
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.*;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
@@ -31,7 +31,7 @@ import java.util.function.ToLongFunction;
  * @author Jon Schneider
  */
 @NonNullApi
-@NonNullFields
+@NullMarked
 public class GuavaCacheMetrics<K, V, C extends Cache<K, V>> extends CacheMeterBinder<C> {
 
     private static final String DESCRIPTION_CACHE_LOAD = "The number of times cache lookup methods have successfully loaded a new value or failed to load a new value because an exception was thrown while loading";
@@ -81,7 +81,7 @@ public class GuavaCacheMetrics<K, V, C extends Cache<K, V>> extends CacheMeterBi
     }
 
     @Override
-    protected Long size() {
+    protected @Nullable Long size() {
         return getOrDefault(Cache::size, null);
     }
 
@@ -91,12 +91,12 @@ public class GuavaCacheMetrics<K, V, C extends Cache<K, V>> extends CacheMeterBi
     }
 
     @Override
-    protected Long missCount() {
+    protected @Nullable Long missCount() {
         return getOrDefault(c -> c.stats().missCount(), null);
     }
 
     @Override
-    protected Long evictionCount() {
+    protected @Nullable Long evictionCount() {
         return getOrDefault(c -> c.stats().evictionCount(), null);
     }
 
@@ -129,8 +129,7 @@ public class GuavaCacheMetrics<K, V, C extends Cache<K, V>> extends CacheMeterBi
         }
     }
 
-    @Nullable
-    private Long getOrDefault(Function<Cache<?, ?>, Long> function, @Nullable Long defaultValue) {
+    private @Nullable Long getOrDefault(Function<Cache<?, ?>, Long> function, @Nullable Long defaultValue) {
         C ref = getCache();
         if (ref != null) {
             return function.apply(ref);

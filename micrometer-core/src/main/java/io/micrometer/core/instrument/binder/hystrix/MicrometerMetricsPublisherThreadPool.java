@@ -20,8 +20,8 @@ import com.netflix.hystrix.HystrixThreadPoolMetrics;
 import com.netflix.hystrix.HystrixThreadPoolProperties;
 import com.netflix.hystrix.strategy.metrics.HystrixMetricsPublisherThreadPool;
 import io.micrometer.common.lang.NonNullApi;
-import io.micrometer.common.lang.NonNullFields;
 import io.micrometer.core.instrument.*;
+import org.jspecify.annotations.NullMarked;
 
 /**
  * Micrometer publisher for Hystrix thread pool metrics.
@@ -31,7 +31,7 @@ import io.micrometer.core.instrument.*;
  * @since 1.2.0
  */
 @NonNullApi
-@NonNullFields
+@NullMarked
 @Deprecated
 public class MicrometerMetricsPublisherThreadPool implements HystrixMetricsPublisherThreadPool {
 

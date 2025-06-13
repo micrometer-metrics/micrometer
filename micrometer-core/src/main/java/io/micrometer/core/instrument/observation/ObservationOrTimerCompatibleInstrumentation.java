@@ -15,7 +15,6 @@
  */
 package io.micrometer.core.instrument.observation;
 
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Timer;
@@ -23,6 +22,7 @@ import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
 import io.micrometer.observation.ObservationConvention;
 import io.micrometer.observation.transport.ResponseContext;
+import org.jspecify.annotations.Nullable;
 
 import java.util.function.Supplier;
 
@@ -54,17 +54,13 @@ public class ObservationOrTimerCompatibleInstrumentation<T extends Observation.C
 
     private final ObservationConvention<T> defaultConvention;
 
-    @Nullable
-    private Timer.Sample timerSample;
+    private Timer.@Nullable Sample timerSample;
 
-    @Nullable
-    private Observation observation;
+    private @Nullable Observation observation;
 
-    @Nullable
-    private T context;
+    private @Nullable T context;
 
-    @Nullable
-    private Throwable throwable;
+    private @Nullable Throwable throwable;
 
     /**
      * Start timing based on Observation and the convention for it if

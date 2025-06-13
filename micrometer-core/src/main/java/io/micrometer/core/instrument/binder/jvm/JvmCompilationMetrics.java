@@ -16,13 +16,13 @@
 package io.micrometer.core.instrument.binder.jvm;
 
 import io.micrometer.common.lang.NonNullApi;
-import io.micrometer.common.lang.NonNullFields;
 import io.micrometer.core.instrument.FunctionCounter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.binder.MeterBinder;
+import org.jspecify.annotations.NullMarked;
 
 import java.lang.management.CompilationMXBean;
 import java.lang.management.ManagementFactory;
@@ -35,7 +35,7 @@ import static java.util.Collections.emptyList;
  * @since 1.4.0
  */
 @NonNullApi
-@NonNullFields
+@NullMarked
 public class JvmCompilationMetrics implements MeterBinder {
 
     private final Iterable<Tag> tags;

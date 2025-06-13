@@ -15,8 +15,8 @@
  */
 package io.micrometer.core.instrument;
 
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.annotation.Incubating;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
@@ -131,11 +131,9 @@ public class MultiGauge {
 
         private Tags tags = Tags.empty();
 
-        @Nullable
-        private String description;
+        private @Nullable String description;
 
-        @Nullable
-        private String baseUnit;
+        private @Nullable String baseUnit;
 
         private Builder(String name) {
             this.name = name;

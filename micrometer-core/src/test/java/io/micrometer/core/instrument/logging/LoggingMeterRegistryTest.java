@@ -18,6 +18,7 @@ package io.micrometer.core.instrument.logging;
 import com.google.common.util.concurrent.AtomicDouble;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.BaseUnits;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -317,7 +318,7 @@ class LoggingMeterRegistryTest {
         private final Map<String, String> keys = new HashMap<>();
 
         @Override
-        public String get(String key) {
+        public @Nullable String get(String key) {
             return keys.get(key);
         }
 

@@ -17,8 +17,8 @@
 package io.micrometer.core.instrument.docs;
 
 import io.micrometer.common.docs.KeyName;
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.Meter;
+import org.jspecify.annotations.Nullable;
 
 /**
  * In order to describe your metrics via e.g. enums instead of Strings you can use this
@@ -57,8 +57,7 @@ public interface MeterDocumentation {
      * Base unit.
      * @return base unit
      */
-    @Nullable
-    default String getBaseUnit() {
+    default @Nullable String getBaseUnit() {
         return null;
     }
 
@@ -105,7 +104,8 @@ public interface MeterDocumentation {
      * @return {@link MeterDocumentation} for which you don't want to create a default
      * metric documentation
      */
-    default Enum<?> overridesDefaultMetricFrom() {
+    // TODO should this be nullable?
+    default @Nullable Enum<?> overridesDefaultMetricFrom() {
         return null;
     }
 

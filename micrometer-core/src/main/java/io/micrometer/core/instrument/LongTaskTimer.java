@@ -15,10 +15,10 @@
  */
 package io.micrometer.core.instrument;
 
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.annotation.Timed;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.HistogramSupport;
+import org.jspecify.annotations.Nullable;
 
 import java.time.Duration;
 import java.util.Arrays;
@@ -67,8 +67,7 @@ public interface LongTaskTimer extends Meter, HistogramSupport {
      * @return The return value of {@code f}.
      * @throws Exception Any exception bubbling up from the callable.
      */
-    @Nullable
-    default <T> T recordCallable(Callable<T> f) throws Exception {
+    default <T> @Nullable T recordCallable(Callable<T> f) throws Exception {
         Sample sample = start();
         try {
             return f.call();
@@ -84,8 +83,7 @@ public interface LongTaskTimer extends Meter, HistogramSupport {
      * @param <T> The return type of the {@link Supplier}.
      * @return The return value of {@code f}.
      */
-    @Nullable
-    default <T> T record(Supplier<T> f) {
+    default <T> @Nullable T record(Supplier<T> f) {
         Sample sample = start();
         try {
             return f.get();
@@ -293,8 +291,7 @@ public interface LongTaskTimer extends Meter, HistogramSupport {
 
         private final DistributionStatisticConfig.Builder distributionConfigBuilder = new DistributionStatisticConfig.Builder();
 
-        @Nullable
-        private String description;
+        private @Nullable String description;
 
         private Builder(String name) {
             this.name = name;
@@ -430,7 +427,7 @@ public interface LongTaskTimer extends Meter, HistogramSupport {
          * @return This builder.
          * @since 1.5.0
          */
-        public Builder publishPercentiles(@Nullable double... percentiles) {
+        public Builder publishPercentiles(double @Nullable ... percentiles) {
             this.distributionConfigBuilder.percentiles(percentiles);
             return this;
         }

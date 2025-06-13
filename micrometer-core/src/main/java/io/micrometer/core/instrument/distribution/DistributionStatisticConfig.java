@@ -15,9 +15,9 @@
  */
 package io.micrometer.core.instrument.distribution;
 
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.config.InvalidConfigurationException;
 import io.micrometer.core.instrument.internal.Mergeable;
+import org.jspecify.annotations.Nullable;
 
 import java.time.Duration;
 import java.util.NavigableSet;
@@ -47,29 +47,21 @@ public class DistributionStatisticConfig implements Mergeable<DistributionStatis
 
     public static final DistributionStatisticConfig NONE = builder().build();
 
-    @Nullable
-    private Boolean percentileHistogram;
+    private @Nullable Boolean percentileHistogram;
 
-    @Nullable
-    private double[] percentiles;
+    private double @Nullable [] percentiles;
 
-    @Nullable
-    private Integer percentilePrecision;
+    private @Nullable Integer percentilePrecision;
 
-    @Nullable
-    private double[] serviceLevelObjectives;
+    private double @Nullable [] serviceLevelObjectives;
 
-    @Nullable
-    private Double minimumExpectedValue;
+    private @Nullable Double minimumExpectedValue;
 
-    @Nullable
-    private Double maximumExpectedValue;
+    private @Nullable Double maximumExpectedValue;
 
-    @Nullable
-    private Duration expiry;
+    private @Nullable Duration expiry;
 
-    @Nullable
-    private Integer bufferLength;
+    private @Nullable Integer bufferLength;
 
     public static Builder builder() {
         return new Builder();
@@ -130,8 +122,7 @@ public class DistributionStatisticConfig implements Mergeable<DistributionStatis
      * {@code histogram_quantile}, Atlas' {@code :percentiles}).
      * @return This builder.
      */
-    @Nullable
-    public Boolean isPercentileHistogram() {
+    public @Nullable Boolean isPercentileHistogram() {
         return percentileHistogram;
     }
 
@@ -144,8 +135,7 @@ public class DistributionStatisticConfig implements Mergeable<DistributionStatis
      * @return Percentiles to compute and publish. The 95th percentile should be expressed
      * as {@code 0.95}
      */
-    @Nullable
-    public double[] getPercentiles() {
+    public double @Nullable [] getPercentiles() {
         return percentiles;
     }
 
@@ -155,8 +145,7 @@ public class DistributionStatisticConfig implements Mergeable<DistributionStatis
      * precision, the more accurate the approximation is at the cost of more memory.
      * @return The digits of precision to maintain for percentile approximations.
      */
-    @Nullable
-    public Integer getPercentilePrecision() {
+    public @Nullable Integer getPercentilePrecision() {
         return percentilePrecision;
     }
 
@@ -169,8 +158,7 @@ public class DistributionStatisticConfig implements Mergeable<DistributionStatis
      * your code will not be compatible with code that uses Micrometer 1.3.x.
      */
     @Deprecated
-    @Nullable
-    public Double getMinimumExpectedValue() {
+    public @Nullable Double getMinimumExpectedValue() {
         return getMinimumExpectedValueAsDouble();
     }
 
@@ -180,8 +168,7 @@ public class DistributionStatisticConfig implements Mergeable<DistributionStatis
      * percentile approximations.
      * @return The minimum value that this distribution summary is expected to observe.
      */
-    @Nullable
-    public Double getMinimumExpectedValueAsDouble() {
+    public @Nullable Double getMinimumExpectedValueAsDouble() {
         return minimumExpectedValue;
     }
 
@@ -194,8 +181,7 @@ public class DistributionStatisticConfig implements Mergeable<DistributionStatis
      * your code will not be compatible with code that uses Micrometer 1.3.x.
      */
     @Deprecated
-    @Nullable
-    public Double getMaximumExpectedValue() {
+    public @Nullable Double getMaximumExpectedValue() {
         return getMaximumExpectedValueAsDouble();
     }
 
@@ -205,8 +191,7 @@ public class DistributionStatisticConfig implements Mergeable<DistributionStatis
      * percentile approximations.
      * @return The maximum value that the meter is expected to observe.
      */
-    @Nullable
-    public Double getMaximumExpectedValueAsDouble() {
+    public @Nullable Double getMaximumExpectedValueAsDouble() {
         return maximumExpectedValue;
     }
 
@@ -220,8 +205,7 @@ public class DistributionStatisticConfig implements Mergeable<DistributionStatis
      * @return The amount of time samples are accumulated to a histogram before it is
      * reset and rotated.
      */
-    @Nullable
-    public Duration getExpiry() {
+    public @Nullable Duration getExpiry() {
         return expiry;
     }
 
@@ -233,8 +217,7 @@ public class DistributionStatisticConfig implements Mergeable<DistributionStatis
      * buffer length.
      * @return The number of histograms to keep in the ring buffer.
      */
-    @Nullable
-    public Integer getBufferLength() {
+    public @Nullable Integer getBufferLength() {
         return bufferLength;
     }
 
@@ -250,9 +233,8 @@ public class DistributionStatisticConfig implements Mergeable<DistributionStatis
      * method, your code will not be compatible with code that uses Micrometer 1.4.x and
      * later.
      */
-    @Nullable
     @Deprecated
-    public double[] getSlaBoundaries() {
+    public double @Nullable [] getSlaBoundaries() {
         return getServiceLevelObjectiveBoundaries();
     }
 
@@ -265,8 +247,7 @@ public class DistributionStatisticConfig implements Mergeable<DistributionStatis
      * @return The SLO boundaries to include the set of histogram buckets shipped to the
      * monitoring system.
      */
-    @Nullable
-    public double[] getServiceLevelObjectiveBoundaries() {
+    public double @Nullable [] getServiceLevelObjectiveBoundaries() {
         return serviceLevelObjectives;
     }
 
@@ -289,7 +270,7 @@ public class DistributionStatisticConfig implements Mergeable<DistributionStatis
          * should be expressed as {@code 0.95}.
          * @return This builder.
          */
-        public Builder percentiles(@Nullable double... percentiles) {
+        public Builder percentiles(double @Nullable ... percentiles) {
             config.percentiles = percentiles;
             return this;
         }
@@ -319,7 +300,7 @@ public class DistributionStatisticConfig implements Mergeable<DistributionStatis
          * @return This builder.
          * @since 1.5.0
          */
-        public Builder serviceLevelObjectives(@Nullable double... slos) {
+        public Builder serviceLevelObjectives(double @Nullable ... slos) {
             config.serviceLevelObjectives = slos;
             return this;
         }
@@ -343,7 +324,7 @@ public class DistributionStatisticConfig implements Mergeable<DistributionStatis
          * then.
          */
         @Deprecated
-        public Builder sla(@Nullable double... sla) {
+        public Builder sla(double @Nullable ... sla) {
             return serviceLevelObjectives(sla);
         }
 
@@ -365,7 +346,7 @@ public class DistributionStatisticConfig implements Mergeable<DistributionStatis
          * then.
          */
         @Deprecated
-        public Builder sla(@Nullable long... sla) {
+        public Builder sla(long @Nullable ... sla) {
             return sla == null ? this : serviceLevelObjectives(LongStream.of(sla).asDoubleStream().toArray());
         }
 

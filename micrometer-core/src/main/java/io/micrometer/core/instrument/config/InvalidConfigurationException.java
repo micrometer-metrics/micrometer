@@ -15,7 +15,7 @@
  */
 package io.micrometer.core.instrument.config;
 
-import io.micrometer.common.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Signals that a piece of provided configuration is not acceptable for some reason. For

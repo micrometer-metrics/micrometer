@@ -18,6 +18,7 @@ package io.micrometer.core.instrument.binder.http;
 import io.micrometer.common.util.StringUtils;
 import io.micrometer.core.annotation.Incubating;
 import io.micrometer.core.instrument.Tag;
+import org.jspecify.annotations.Nullable;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -46,7 +47,7 @@ public class HttpRequestTags {
      * @param request the request
      * @return the method tag whose value is a capitalized method (e.g. GET).
      */
-    public static Tag method(HttpServletRequest request) {
+    public static Tag method(@Nullable HttpServletRequest request) {
         return (request != null) ? Tag.of("method", request.getMethod()) : METHOD_UNKNOWN;
     }
 
@@ -70,7 +71,7 @@ public class HttpRequestTags {
      * @param response the HTTP response
      * @return the status tag derived from the status of the response
      */
-    public static Tag status(HttpServletResponse response) {
+    public static Tag status(@Nullable HttpServletResponse response) {
         return (response != null) ? Tag.of("status", Integer.toString(response.getStatus())) : STATUS_UNKNOWN;
     }
 
@@ -93,7 +94,7 @@ public class HttpRequestTags {
      * @param exception the exception, may be {@code null}
      * @return the exception tag derived from the exception
      */
-    public static Tag exception(Throwable exception) {
+    public static Tag exception(@Nullable Throwable exception) {
         if (exception != null) {
             String simpleName = exception.getClass().getSimpleName();
             return Tag.of("exception",
@@ -107,7 +108,7 @@ public class HttpRequestTags {
      * @param response the HTTP response
      * @return the outcome tag derived from the status of the response
      */
-    public static Tag outcome(HttpServletResponse response) {
+    public static Tag outcome(@Nullable HttpServletResponse response) {
         Outcome outcome = (response != null) ? Outcome.forStatus(response.getStatus()) : Outcome.UNKNOWN;
         return outcome.asTag();
     }

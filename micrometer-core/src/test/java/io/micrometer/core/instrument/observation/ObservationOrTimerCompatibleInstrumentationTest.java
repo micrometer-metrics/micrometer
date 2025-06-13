@@ -36,7 +36,8 @@ class ObservationOrTimerCompatibleInstrumentationTest {
 
     @Test
     void noObservationRegistry() {
-        ObservationOrTimerCompatibleInstrumentation.start(meterRegistry, null, null, null, null)
+        ObservationOrTimerCompatibleInstrumentation
+            .start(meterRegistry, null, Observation.Context::new, null, TestDefaultConvention.INSTANCE)
             .stop("my.timer", "timer description", () -> Tags.of("a", "b"));
         assertThat(observationRegistry).doesNotHaveAnyObservation();
         Timer timer = meterRegistry.get("my.timer").timer();

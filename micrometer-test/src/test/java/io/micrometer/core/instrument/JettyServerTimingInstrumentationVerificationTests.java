@@ -31,7 +31,7 @@ import java.net.URI;
 @Disabled("URI is not tagged in generic Jetty servlet instrumentation")
 class JettyServerTimingInstrumentationVerificationTests extends HttpServerTimingInstrumentationVerificationTests {
 
-    private Server server;
+    private @Nullable Server server;
 
     @Override
     protected String timerName() {
@@ -60,7 +60,9 @@ class JettyServerTimingInstrumentationVerificationTests extends HttpServerTiming
 
     @Override
     protected void stopInstrumentedServer() throws Exception {
-        server.stop();
+        if (server != null) {
+            server.stop();
+        }
     }
 
     public static class MyWebServlet extends HttpServlet {

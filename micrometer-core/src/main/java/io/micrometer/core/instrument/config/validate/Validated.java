@@ -15,10 +15,10 @@
  */
 package io.micrometer.core.instrument.config.validate;
 
-import io.micrometer.common.lang.NonNull;
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.common.util.StringUtils;
 import io.micrometer.core.annotation.Incubating;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.Iterator;
@@ -256,15 +256,13 @@ public interface Validated<T> extends Iterable<Validated<T>> {
 
         private final String property;
 
-        @Nullable
-        private final Object value;
+        private final @Nullable Object value;
 
         private final String message;
 
         private final InvalidReason reason;
 
-        @Nullable
-        private final Throwable exception;
+        private final @Nullable Throwable exception;
 
         public Invalid(String property, @Nullable Object value, String message, InvalidReason reason,
                 @Nullable Throwable exception) {
@@ -294,8 +292,7 @@ public interface Validated<T> extends Iterable<Validated<T>> {
             return reason;
         }
 
-        @Nullable
-        public Throwable getException() {
+        public @Nullable Throwable getException() {
             return exception;
         }
 
@@ -330,8 +327,7 @@ public interface Validated<T> extends Iterable<Validated<T>> {
             return property;
         }
 
-        @Nullable
-        public Object getValue() {
+        public @Nullable Object getValue() {
             return value;
         }
 

@@ -15,8 +15,8 @@
  */
 package io.micrometer.core.instrument.util;
 
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.Meter;
+import org.jspecify.annotations.Nullable;
 
 /**
  * @author Jon Schneider
@@ -26,6 +26,8 @@ public final class MeterEquivalence {
     private MeterEquivalence() {
     }
 
+    // TODO fix somehow or report bug?
+    @SuppressWarnings("NullAway")
     public static boolean equals(@Nullable Meter m1, @Nullable Object o) {
         if (m1 == null && o != null)
             return false;
@@ -36,6 +38,7 @@ public final class MeterEquivalence {
         if (m1 == o)
             return true;
         Meter m2 = (Meter) o;
+        // NullAway isn't smart enough to know m1 (and m2) can't be null here
         return m1.getId().equals(m2.getId());
     }
 

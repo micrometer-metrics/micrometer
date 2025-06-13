@@ -15,6 +15,8 @@
  */
 package io.micrometer.core.instrument.cumulative;
 
+import io.micrometer.core.instrument.Meter;
+import io.micrometer.core.instrument.Tags;
 import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.TimeUnit;
@@ -30,7 +32,8 @@ class CumulativeFunctionTimerTest {
 
     @Test
     void totalTimeWhenStateObjectChangedToNullShouldWorkWithChangedTimeUnit() {
-        CumulativeFunctionTimer<Object> functionTimer = new CumulativeFunctionTimer<>(null, new Object(), (o) -> 1L,
+        Meter.Id id = new Meter.Id("name", Tags.empty(), null, null, Meter.Type.TIMER);
+        CumulativeFunctionTimer<Object> functionTimer = new CumulativeFunctionTimer<>(id, new Object(), (o) -> 1L,
                 (o) -> 1d, TimeUnit.SECONDS, TimeUnit.SECONDS);
         assertThat(functionTimer.totalTime(TimeUnit.SECONDS)).isEqualTo(1d);
         assertThat(functionTimer.totalTime(TimeUnit.MILLISECONDS)).isEqualTo(1000d);

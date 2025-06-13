@@ -21,10 +21,10 @@ import com.netflix.hystrix.strategy.metrics.HystrixMetricsPublisherCollapser;
 import com.netflix.hystrix.strategy.metrics.HystrixMetricsPublisherCommand;
 import com.netflix.hystrix.strategy.metrics.HystrixMetricsPublisherThreadPool;
 import io.micrometer.common.lang.NonNullApi;
-import io.micrometer.common.lang.NonNullFields;
 import io.micrometer.common.util.internal.logging.InternalLogger;
 import io.micrometer.common.util.internal.logging.InternalLoggerFactory;
 import io.micrometer.core.instrument.MeterRegistry;
+import org.jspecify.annotations.NullMarked;
 
 /**
  * @deprecated since 1.13.0, Hystrix is no longer in active development, and is currently
@@ -32,7 +32,7 @@ import io.micrometer.core.instrument.MeterRegistry;
  * @author Clint Checketts
  */
 @NonNullApi
-@NonNullFields
+@NullMarked
 @Deprecated
 public class MicrometerMetricsPublisher extends HystrixMetricsPublisher {
 

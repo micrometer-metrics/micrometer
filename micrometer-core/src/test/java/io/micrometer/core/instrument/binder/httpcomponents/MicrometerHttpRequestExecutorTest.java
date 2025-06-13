@@ -215,11 +215,13 @@ class MicrometerHttpRequestExecutorTest {
     }
 
     @Test
+    @SuppressWarnings("NullAway")
     void settingNullRegistryThrowsException() {
         assertThatIllegalArgumentException().isThrownBy(() -> MicrometerHttpRequestExecutor.builder(null).build());
     }
 
     @Test
+    @SuppressWarnings("NullAway")
     void overridingUriMapperWithNullThrowsException() {
         assertThatIllegalArgumentException()
             .isThrownBy(() -> MicrometerHttpRequestExecutor.builder(registry).uriMapper(null).build());
@@ -228,7 +230,9 @@ class MicrometerHttpRequestExecutorTest {
     @Test
     void overrideExtraTagsDoesNotThrowAnException(@WiremockResolver.Wiremock WireMockServer server) throws IOException {
         server.stubFor(any(anyUrl()));
-        MicrometerHttpRequestExecutor executor = MicrometerHttpRequestExecutor.builder(registry).tags(null).build();
+        MicrometerHttpRequestExecutor executor = MicrometerHttpRequestExecutor.builder(registry)
+            .tags(Tags.empty())
+            .build();
         HttpClient client = client(executor);
         EntityUtils.consume(client.execute(new HttpGet(server.baseUrl())).getEntity());
         assertThat(registry.get(EXPECTED_METER_NAME)).isNotNull();

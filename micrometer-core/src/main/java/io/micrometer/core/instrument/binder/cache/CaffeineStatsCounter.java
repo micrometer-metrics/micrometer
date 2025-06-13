@@ -20,11 +20,12 @@ import com.github.benmanes.caffeine.cache.RemovalCause;
 import com.github.benmanes.caffeine.cache.stats.CacheStats;
 import com.github.benmanes.caffeine.cache.stats.StatsCounter;
 import io.micrometer.common.lang.NonNullApi;
-import io.micrometer.common.lang.NonNullFields;
 import io.micrometer.core.instrument.*;
+import org.jspecify.annotations.NullMarked;
 
 import java.util.Arrays;
 import java.util.EnumMap;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 import static java.util.Objects.requireNonNull;
@@ -52,7 +53,7 @@ import static java.util.Objects.requireNonNull;
  * @since 1.7.0
  */
 @NonNullApi
-@NonNullFields
+@NullMarked
 public final class CaffeineStatsCounter implements StatsCounter {
 
     private static final String DESCRIPTION_CACHE_GETS = "The number of times cache lookup methods have returned a cached (hit) or uncached (newly loaded) value (miss).";
@@ -163,7 +164,7 @@ public final class CaffeineStatsCounter implements StatsCounter {
 
     @Override
     public void recordEviction(int weight, RemovalCause cause) {
-        evictionMetrics.get(cause).record(weight);
+        Objects.requireNonNull(evictionMetrics.get(cause)).record(weight);
     }
 
     @Override

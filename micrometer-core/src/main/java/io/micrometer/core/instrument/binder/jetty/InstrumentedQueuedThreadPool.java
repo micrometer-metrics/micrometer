@@ -15,10 +15,10 @@
  */
 package io.micrometer.core.instrument.binder.jetty;
 
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
+import org.jspecify.annotations.Nullable;
 
 import java.util.concurrent.BlockingQueue;
 
@@ -40,8 +40,7 @@ public class InstrumentedQueuedThreadPool extends QueuedThreadPool {
 
     private final Iterable<Tag> tags;
 
-    @Nullable
-    private JettyServerThreadPoolMetrics threadPoolMetrics;
+    private @Nullable JettyServerThreadPoolMetrics threadPoolMetrics;
 
     /**
      * Default values for the instrumented thread pool.

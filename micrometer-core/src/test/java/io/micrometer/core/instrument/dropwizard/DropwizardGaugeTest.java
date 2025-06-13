@@ -17,6 +17,9 @@
 package io.micrometer.core.instrument.dropwizard;
 
 import com.codahale.metrics.Gauge;
+import io.micrometer.core.instrument.Meter;
+import io.micrometer.core.instrument.Tags;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -28,10 +31,12 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 class DropwizardGaugeTest {
 
+    Meter.Id id = new Meter.Id("name", Tags.empty(), null, null, Meter.Type.GAUGE);
+
     @Test
     void returnNonNullValue() {
         double expectedValue = 10d;
-        DropwizardGauge gauge = new DropwizardGauge(null, new Gauge<Double>() {
+        DropwizardGauge gauge = new DropwizardGauge(id, new Gauge<Double>() {
 
             @Override
             public Double getValue() {
@@ -43,10 +48,10 @@ class DropwizardGaugeTest {
 
     @Test
     void returnNanForNullValue() {
-        DropwizardGauge gauge = new DropwizardGauge(null, new Gauge<Double>() {
+        DropwizardGauge gauge = new DropwizardGauge(id, new Gauge<Double>() {
 
             @Override
-            public Double getValue() {
+            public @Nullable Double getValue() {
                 return null;
             }
         });

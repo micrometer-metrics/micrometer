@@ -16,10 +16,10 @@
 package io.micrometer.core.instrument.binder.db;
 
 import io.micrometer.common.lang.NonNullApi;
-import io.micrometer.common.lang.NonNullFields;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.binder.MeterBinder;
+import org.jspecify.annotations.NullMarked;
 
 import javax.sql.DataSource;
 import java.sql.Connection;
@@ -40,7 +40,7 @@ import java.util.function.DoubleSupplier;
  * @since 1.1.0
  */
 @NonNullApi
-@NonNullFields
+@NullMarked
 public class PostgreSQLDatabaseMetrics implements MeterBinder {
 
     private static final String SELECT = "SELECT ";

@@ -28,6 +28,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class AbstractPartitionTest {
 
     @Test
+    @SuppressWarnings("NullAway")
     void nullNotAllowed() {
         assertThatThrownBy(() -> new TestPartition(null, 1)).hasMessage("delegate == null");
     }

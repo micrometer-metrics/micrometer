@@ -16,12 +16,12 @@
 package io.micrometer.core.instrument.binder.jetty;
 
 import io.micrometer.common.KeyValue;
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.common.util.StringUtils;
 import io.micrometer.core.instrument.binder.http.Outcome;
 import org.eclipse.jetty.client.api.Request;
 import org.eclipse.jetty.client.api.Result;
 import org.eclipse.jetty.http.HttpStatus;
+import org.jspecify.annotations.Nullable;
 
 import java.util.function.BiFunction;
 import java.util.regex.Pattern;

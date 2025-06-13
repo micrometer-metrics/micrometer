@@ -19,6 +19,7 @@ import io.micrometer.core.instrument.FunctionCounter;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.noop.NoopFunctionCounter;
+import org.jspecify.annotations.Nullable;
 
 import java.lang.ref.WeakReference;
 import java.util.function.ToDoubleFunction;
@@ -47,7 +48,7 @@ public class CompositeFunctionCounter<T> extends AbstractCompositeMeter<Function
     }
 
     @Override
-    FunctionCounter registerNewMeter(MeterRegistry registry) {
+    @Nullable FunctionCounter registerNewMeter(MeterRegistry registry) {
         final T obj = ref.get();
         if (obj == null) {
             return null;

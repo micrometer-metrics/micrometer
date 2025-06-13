@@ -17,13 +17,13 @@ package io.micrometer.core.instrument.binder.okhttp3;
 
 import io.micrometer.common.KeyValue;
 import io.micrometer.common.KeyValues;
-import io.micrometer.common.lang.NonNull;
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
 import okhttp3.Interceptor;
 import okhttp3.Request;
 import okhttp3.Response;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.*;
@@ -77,9 +77,8 @@ public class OkHttpObservationInterceptor implements Interceptor {
         return new OkHttpObservationInterceptor.Builder(registry, name);
     }
 
-    @NonNull
     @Override
-    public Response intercept(@NonNull Chain chain) throws IOException {
+    public @NonNull Response intercept(@NonNull Chain chain) throws IOException {
         Request request = chain.request();
         Request.Builder newRequestBuilder = request.newBuilder();
         OkHttpContext okHttpContext = new OkHttpContext(this.urlMapper, this.extraTags, this.contextSpecificTags,
@@ -117,8 +116,7 @@ public class OkHttpObservationInterceptor implements Interceptor {
     // VisibleForTesting
     static class CallState {
 
-        @Nullable
-        final Request request;
+        final @Nullable Request request;
 
         @Nullable
         Response response;

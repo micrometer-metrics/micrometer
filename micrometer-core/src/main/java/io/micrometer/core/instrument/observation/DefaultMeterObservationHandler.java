@@ -83,6 +83,8 @@ public class DefaultMeterObservationHandler implements MeterObservationHandler<O
     }
 
     @Override
+    // TODO decide what to do about context.getName being Nullable
+    @SuppressWarnings("NullAway")
     public void onStop(Observation.Context context) {
         List<Tag> tags = createTags(context);
         tags.add(Tag.of("error", getErrorValue(context)));

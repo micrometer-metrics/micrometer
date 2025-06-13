@@ -17,7 +17,6 @@ package io.micrometer.core.aop;
 
 import io.micrometer.common.KeyValue;
 import io.micrometer.common.lang.NonNullApi;
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.common.util.internal.logging.WarnThenDebugLogger;
 import io.micrometer.core.annotation.Incubating;
 import io.micrometer.core.annotation.Timed;
@@ -27,6 +26,7 @@ import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.reflect.MethodSignature;
+import org.jspecify.annotations.Nullable;
 
 import java.lang.reflect.Method;
 import java.time.Duration;
@@ -185,8 +185,7 @@ public class TimedAspect {
     }
 
     @Around("@within(io.micrometer.core.annotation.Timed) && !@annotation(io.micrometer.core.annotation.Timed) && execution(* *(..))")
-    @Nullable
-    public Object timedClass(ProceedingJoinPoint pjp) throws Throwable {
+    public @Nullable Object timedClass(ProceedingJoinPoint pjp) throws Throwable {
         if (shouldSkip.test(pjp)) {
             return pjp.proceed();
         }
@@ -202,8 +201,7 @@ public class TimedAspect {
     }
 
     @Around("execution (@io.micrometer.core.annotation.Timed * *.*(..))")
-    @Nullable
-    public Object timedMethod(ProceedingJoinPoint pjp) throws Throwable {
+    public @Nullable Object timedMethod(ProceedingJoinPoint pjp) throws Throwable {
         if (shouldSkip.test(pjp)) {
             return pjp.proceed();
         }
@@ -218,8 +216,7 @@ public class TimedAspect {
         return perform(pjp, timed, method);
     }
 
-    @Nullable
-    private Object perform(ProceedingJoinPoint pjp, Timed timed, Method method) throws Throwable {
+    private @Nullable Object perform(ProceedingJoinPoint pjp, Timed timed, Method method) throws Throwable {
         final String metricName = timed.value().isEmpty() ? DEFAULT_METRIC_NAME : timed.value();
         final boolean stopWhenCompleted = CompletionStage.class.isAssignableFrom(method.getReturnType());
 
@@ -231,9 +228,8 @@ public class TimedAspect {
         }
     }
 
-    @Nullable
-    private Object processWithTimer(ProceedingJoinPoint pjp, Timed timed, String metricName, boolean stopWhenCompleted)
-            throws Throwable {
+    private @Nullable Object processWithTimer(ProceedingJoinPoint pjp, Timed timed, String metricName,
+            boolean stopWhenCompleted) throws Throwable {
 
         Timer.Sample sample = Timer.start(registry);
 
@@ -316,8 +312,7 @@ public class TimedAspect {
         return throwable.getCause().getClass().getSimpleName();
     }
 
-    @Nullable
-    private Object processWithLongTaskTimer(ProceedingJoinPoint pjp, Timed timed, String metricName,
+    private @Nullable Object processWithLongTaskTimer(ProceedingJoinPoint pjp, Timed timed, String metricName,
             boolean stopWhenCompleted) throws Throwable {
 
         Optional<LongTaskTimer.Sample> sample = buildLongTaskTimer(pjp, timed, metricName).map(LongTaskTimer::start);

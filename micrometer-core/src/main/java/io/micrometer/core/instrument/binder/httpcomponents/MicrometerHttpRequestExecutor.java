@@ -15,7 +15,6 @@
  */
 package io.micrometer.core.instrument.binder.httpcomponents;
 
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.common.util.internal.logging.InternalLogger;
 import io.micrometer.common.util.internal.logging.InternalLoggerFactory;
 import io.micrometer.core.annotation.Incubating;
@@ -34,6 +33,7 @@ import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
 import org.apache.http.protocol.HttpContext;
 import org.apache.http.protocol.HttpRequestExecutor;
+import org.jspecify.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -80,8 +80,7 @@ public class MicrometerHttpRequestExecutor extends HttpRequestExecutor {
 
     private final ObservationRegistry observationRegistry;
 
-    @Nullable
-    private final ApacheHttpClientObservationConvention convention;
+    private final @Nullable ApacheHttpClientObservationConvention convention;
 
     private final Function<HttpRequest, String> uriMapper;
 
@@ -169,8 +168,7 @@ public class MicrometerHttpRequestExecutor extends HttpRequestExecutor {
 
         private boolean exportTagsForRoute = false;
 
-        @Nullable
-        private ApacheHttpClientObservationConvention observationConvention;
+        private @Nullable ApacheHttpClientObservationConvention observationConvention;
 
         Builder(MeterRegistry registry) {
             this.registry = registry;

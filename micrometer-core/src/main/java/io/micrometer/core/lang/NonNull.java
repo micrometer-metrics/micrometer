@@ -36,10 +36,8 @@ import java.lang.annotation.*;
  *
  * @author Sebastien Deleuze
  * @author Juergen Hoeller
- * @see io.micrometer.common.lang.NonNullApi
- * @see io.micrometer.common.lang.NonNullFields
- * @see io.micrometer.common.lang.Nullable
- * @deprecated Please use {@link io.micrometer.common.lang.NonNull} instead.
+ * @see org.jspecify.annotations.NullMarked
+ * @deprecated Please use {@link org.jspecify.annotations.NonNull} instead.
  */
 @Target({ ElementType.METHOD, ElementType.PARAMETER, ElementType.FIELD })
 @Retention(RetentionPolicy.RUNTIME)

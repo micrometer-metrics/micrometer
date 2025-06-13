@@ -15,7 +15,6 @@
  */
 package io.micrometer.core.instrument.binder.jetty;
 
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -24,6 +23,7 @@ import io.micrometer.core.instrument.binder.MeterBinder;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
 import org.eclipse.jetty.util.thread.ThreadPool;
 import org.eclipse.jetty.util.thread.ThreadPool.SizedThreadPool;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -66,8 +66,7 @@ public class JettyServerThreadPoolMetrics implements MeterBinder, AutoCloseable 
 
     private final Set<Meter.Id> registeredMeterIds = ConcurrentHashMap.newKeySet();
 
-    @Nullable
-    private MeterRegistry registry;
+    private @Nullable MeterRegistry registry;
 
     public JettyServerThreadPoolMetrics(ThreadPool threadPool, Iterable<Tag> tags) {
         this.threadPool = threadPool;
