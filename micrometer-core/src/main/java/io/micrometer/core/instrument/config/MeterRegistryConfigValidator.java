@@ -17,7 +17,8 @@ package io.micrometer.core.instrument.config;
 
 import io.micrometer.core.instrument.config.validate.Validated;
 import io.micrometer.core.instrument.config.validate.ValidationException;
-import org.jspecify.annotations.Nullable;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.NullUnmarked;
 
 import java.util.Arrays;
 import java.util.function.Function;
@@ -55,8 +56,8 @@ public class MeterRegistryConfigValidator {
      * @return A function which, given a configuration instance, validates the property.
      */
     @SuppressWarnings("unchecked")
-    public static <M extends MeterRegistryConfig, T extends @Nullable Object> Function<M, Validated<T>> check(
-            String property, Function<M, T> getter) {
+    @NullUnmarked public static <M extends @NonNull MeterRegistryConfig, T> Function<M, Validated<T>> check(@NonNull String property,
+            Function<M, T> getter) {
         return config -> {
             try {
                 return Validated.valid(config.prefix() + '.' + property, getter.apply(config));
@@ -68,8 +69,8 @@ public class MeterRegistryConfigValidator {
         };
     }
 
-    public static <M extends MeterRegistryConfig, T extends @Nullable Object> Function<M, Validated<T>> checkRequired(
-            String property, Function<M, T> getter) {
+    @NullUnmarked public static <M extends @NonNull MeterRegistryConfig, T> Function<M, Validated<T>> checkRequired(
+            @NonNull String property, Function<M, T> getter) {
         return check(property, getter).andThen(Validated::required);
     }
 
