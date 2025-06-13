@@ -7,7 +7,7 @@ executors:
       GRADLE_OPTS: '-Dorg.gradle.jvmargs="-Xmx2048m -XX:+HeapDumpOnOutOfMemoryError"'
     resource_class: medium+
     docker:
-      - image: bellsoft/liberica-openjdk-debian:24.0.1
+      - image: gradle:8-jdk24
   circle-jdk-executor:
     working_directory: ~/micrometer
     environment:
