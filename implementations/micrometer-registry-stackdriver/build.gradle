@@ -11,6 +11,7 @@ dependencies {
     implementation libs.slf4jApi
     compileOnly libs.logback12
     testRuntimeOnly libs.logback12
+    testImplementation libs.mockitoCore5
     // needed for extending TimeWindowPercentileHistogram in StackdriverHistogramUtil
     compileOnly libs.hdrhistogram
 
