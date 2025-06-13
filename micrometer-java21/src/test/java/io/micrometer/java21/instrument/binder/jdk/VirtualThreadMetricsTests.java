@@ -21,6 +21,8 @@ import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.DisabledForJreRange;
+import org.junit.jupiter.api.condition.JRE;
 
 import java.time.Duration;
 import java.util.ArrayList;
@@ -58,6 +60,8 @@ class VirtualThreadMetricsTests {
     }
 
     @Test
+    @DisabledForJreRange(min = JRE.JAVA_24,
+            disabledReason = "It's not easy to test pinning with synchronized block pinning fixed in 24.")
     void pinnedEventsShouldBeRecorded() {
         try (ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor()) {
             CountDownLatch latch = new CountDownLatch(1);
