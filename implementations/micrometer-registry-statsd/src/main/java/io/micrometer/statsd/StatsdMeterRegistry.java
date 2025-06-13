@@ -250,11 +250,13 @@ public class StatsdMeterRegistry extends MeterRegistry {
 
     private void prepareUdpClient(Publisher<String> publisher, Supplier<SocketAddress> remoteAddress) {
         AtomicReference<UdpClient> udpClientReference = new AtomicReference<>();
+        boolean shouldRetry = statsdConfig.portUnreachableMethod().equals(StatsdPortUnreachableMethod.RETRY);
         UdpClient udpClient = UdpClient.create()
             .remoteAddress(remoteAddress)
             .handle((in, out) -> out.sendString(publisher)
                 .neverComplete()
-                .retryWhen(Retry.indefinitely().filter(throwable -> throwable instanceof PortUnreachableException)))
+                .retryWhen(Retry.indefinitely()
+                    .filter(throwable -> shouldRetry && throwable instanceof PortUnreachableException)))
             .doOnDisconnected(connection -> {
                 Boolean connectionDisposed = connection.channel().attr(CONNECTION_DISPOSED).getAndSet(Boolean.TRUE);
                 if (connectionDisposed == null || !connectionDisposed) {
