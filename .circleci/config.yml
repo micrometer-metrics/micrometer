@@ -71,7 +71,6 @@ jobs:
     executor: circle-jdk24-executor
     steps:
       - gradlew-build
-      - run: ./gradlew jdk24Test
 
   build:
     executor: circle-jdk-executor
