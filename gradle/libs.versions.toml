@@ -218,7 +218,7 @@ wiremockJunit5 = { module = "ru.lanwen.wiremock:wiremock-junit5", version.ref = 
 # plugin dependencies
 plugin-errorprone = { module = "net.ltgt.errorprone:net.ltgt.errorprone.gradle.plugin", version = "4.2.0" }
 plugin-license = { module = "gradle.plugin.com.hierynomus.gradle.plugins:license-gradle-plugin", version = "0.16.1" }
-plugin-nebulaRelease = { module = "com.netflix.nebula:nebula-release-plugin", version = "20.2.0" }
+plugin-nebulaRelease = { module = "com.netflix.nebula:nebula-release-plugin", version = "18.0.8" }
 plugin-nebulaPublishing = { module = "com.netflix.nebula:nebula-publishing-plugin", version = "20.3.0" }
 plugin-nebulaProject = { module = "com.netflix.nebula:nebula-project-plugin", version = "10.1.5" }
 plugin-nebulaInfo = { module = "com.netflix.nebula:gradle-info-plugin", version = "12.1.6" }
