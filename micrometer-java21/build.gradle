@@ -22,16 +22,6 @@ tasks.withType(JavaCompile).configureEach {
     options.release = 21
 }
 
-tasks.register('jdk24Test', Test) {
-    useJUnitPlatform {
-        includeTags 'jdk24'
-    }
-
-    javaLauncher = javaToolchains.launcherFor {
-        languageVersion = JavaLanguageVersion.of(24)
-    }
-}
-
 tasks.register('reflectiveTests', Test) {
     useJUnitPlatform {
         includeTags 'reflective'
@@ -49,6 +39,6 @@ tasks.register('reflectiveTests', Test) {
 test {
     dependsOn reflectiveTests
     useJUnitPlatform {
-        excludeTags 'reflective', 'jdk24'
+        excludeTags 'reflective'
     }
 }
