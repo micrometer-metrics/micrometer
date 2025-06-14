@@ -46,7 +46,7 @@ class CloudWatchUtilsTest {
 
         assertThat(CloudWatchUtils.clampMetricValue(0)).as("Check 0").isEqualTo(0);
 
-        assertThat(CloudWatchUtils.clampMetricValue(-0)).as("Check -0").isEqualTo(0);
+        assertThat(CloudWatchUtils.clampMetricValue(-0.0)).as("Check -0").isEqualTo(0);
 
         assertThat(CloudWatchUtils.clampMetricValue(100.1)).as("Check positive value").isEqualTo(100.1);
 
