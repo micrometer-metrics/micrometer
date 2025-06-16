@@ -165,9 +165,8 @@ public interface Validated<T> extends Iterable<Validated<T>> {
         public void orThrow() {
         }
 
-        @NonNull
         @Override
-        public Iterator<Validated<T>> iterator() {
+        public @NonNull Iterator<Validated<T>> iterator() {
             return Collections.emptyIterator();
         }
 
@@ -211,9 +210,8 @@ public interface Validated<T> extends Iterable<Validated<T>> {
             return true;
         }
 
-        @NonNull
         @Override
-        public Iterator<Validated<T>> iterator() {
+        public @NonNull Iterator<Validated<T>> iterator() {
             return Stream.of((Validated<T>) this).iterator();
         }
 
@@ -278,9 +276,8 @@ public interface Validated<T> extends Iterable<Validated<T>> {
             return false;
         }
 
-        @NonNull
         @Override
-        public Iterator<Validated<T>> iterator() {
+        public @NonNull Iterator<Validated<T>> iterator() {
             return Stream.of((Validated<T>) this).iterator();
         }
 
@@ -383,9 +380,8 @@ public interface Validated<T> extends Iterable<Validated<T>> {
             throw new UnsupportedOperationException("cannot invoke flatMap on more than one Validated object");
         }
 
-        @NonNull
         @Override
-        public Iterator<Validated<Object>> iterator() {
+        public @NonNull Iterator<Validated<Object>> iterator() {
             return Stream
                 .concat(stream(left.spliterator(), false).map(v -> v.map(o -> (Object) o)),
                         stream(right.spliterator(), false).map(v -> v.map(o -> (Object) o)))

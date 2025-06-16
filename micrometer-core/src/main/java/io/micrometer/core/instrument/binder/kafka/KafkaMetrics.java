@@ -99,8 +99,7 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
 
     private final Duration refreshInterval;
 
-    @Nullable
-    private Iterable<Tag> commonTags;
+    private @Nullable Iterable<Tag> commonTags;
 
     /**
      * Keeps track of current set of metrics.

@@ -62,8 +62,7 @@ public class ProcessorMetrics implements MeterBinder {
 
     private final OperatingSystemMXBean operatingSystemBean;
 
-    @Nullable
-    private final Class<?> operatingSystemBeanClass;
+    private final @Nullable Class<?> operatingSystemBeanClass;
 
     private final @Nullable Method systemCpuUsage;
 
@@ -152,7 +151,7 @@ public class ProcessorMetrics implements MeterBinder {
         }
     }
 
-    @Nullable private Class<?> getFirstClassFound(List<String> classNames) {
+    private @Nullable Class<?> getFirstClassFound(List<String> classNames) {
         for (String className : classNames) {
             try {
                 return Class.forName(className);

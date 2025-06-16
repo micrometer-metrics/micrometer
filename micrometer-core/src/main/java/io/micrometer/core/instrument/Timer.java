@@ -189,7 +189,7 @@ public interface Timer extends Meter, HistogramSupport {
      * @return The return value of {@code f}.
      * @throws Exception Any exception bubbling up from the callable.
      */
-    @Nullable <T> T recordCallable(Callable<T> f) throws Exception;
+    <T> @Nullable T recordCallable(Callable<T> f) throws Exception;
 
     /**
      * Executes the runnable {@code f} and records the time taken.

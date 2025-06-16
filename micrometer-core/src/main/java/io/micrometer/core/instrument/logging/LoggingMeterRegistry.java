@@ -280,8 +280,7 @@ public class LoggingMeterRegistry extends StepMeterRegistry {
 
         private Consumer<String> loggingSink = log::info;
 
-        @Nullable
-        private Function<Meter, String> meterIdPrinter;
+        private @Nullable Function<Meter, String> meterIdPrinter;
 
         Builder(LoggingRegistryConfig config) {
             this.config = config;

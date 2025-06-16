@@ -39,8 +39,7 @@ public final class HistogramSnapshot {
 
     private final double max;
 
-    @Nullable
-    private final BiConsumer<PrintStream, Double> summaryOutput;
+    private final @Nullable BiConsumer<PrintStream, Double> summaryOutput;
 
     /**
      * @param count Total number of recordings

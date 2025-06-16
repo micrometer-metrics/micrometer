@@ -210,7 +210,7 @@ class SimpleMeterRegistryTest {
         return new SimpleMeterRegistry(new SimpleConfig() {
 
             @Override
-            @Nullable public String get(String key) {
+            public @Nullable String get(String key) {
                 return null;
             }
 

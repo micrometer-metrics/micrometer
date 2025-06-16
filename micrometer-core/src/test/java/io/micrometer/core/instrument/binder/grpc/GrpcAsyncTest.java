@@ -55,14 +55,14 @@ import static org.mockito.Mockito.mock;
  */
 class GrpcAsyncTest {
 
-    static final Metadata.Key<String> REQUEST_ID_KEY = Metadata.Key.of("request-id", Metadata.ASCII_STRING_MARSHALLER);
+    private static final Metadata.Key<String> REQUEST_ID_KEY = Metadata.Key.of("request-id",
+            Metadata.ASCII_STRING_MARSHALLER);
 
-    Server server;
+    private Server server;
 
-    @Nullable
-    ManagedChannel channel;
+    private @Nullable ManagedChannel channel;
 
-    ObservationRegistry observationRegistry;
+    private ObservationRegistry observationRegistry;
 
     @BeforeEach
     void setUp() throws Exception {

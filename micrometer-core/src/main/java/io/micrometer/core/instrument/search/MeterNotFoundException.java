@@ -87,7 +87,7 @@ public class MeterNotFoundException extends RuntimeException {
             return NOT_OK + " No meter that matches the name predicate was found.";
         }
 
-        @Nullable private List<String> tagDetail() {
+        private @Nullable List<String> tagDetail() {
             if (search.requiredTagKeys.isEmpty() && search.requiredTags.isEmpty())
                 return null;
 

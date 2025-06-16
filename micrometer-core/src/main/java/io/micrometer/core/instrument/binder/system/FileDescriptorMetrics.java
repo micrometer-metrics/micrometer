@@ -59,8 +59,7 @@ public class FileDescriptorMetrics implements MeterBinder {
 
     private final Iterable<Tag> tags;
 
-    @Nullable
-    private final Class<?> osBeanClass;
+    private final @Nullable Class<?> osBeanClass;
 
     private final @Nullable Method openFilesMethod;
 
@@ -126,7 +125,7 @@ public class FileDescriptorMetrics implements MeterBinder {
         }
     }
 
-    @Nullable private Class<?> getFirstClassFound(List<String> classNames) {
+    private @Nullable Class<?> getFirstClassFound(List<String> classNames) {
         for (String className : classNames) {
             try {
                 return Class.forName(className);

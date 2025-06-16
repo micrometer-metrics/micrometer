@@ -85,11 +85,9 @@ import static org.awaitility.Awaitility.await;
  */
 class GrpcObservationTest {
 
-    @Nullable
-    Server server;
+    private @Nullable Server server;
 
-    @Nullable
-    ManagedChannel channel;
+    private @Nullable ManagedChannel channel;
 
     ContextAndEventHoldingObservationHandler<GrpcServerObservationContext> serverHandler;
 
@@ -889,8 +887,7 @@ class GrpcObservationTest {
     // Hold reference to last intercepted Observation
     static class ObservationAwareServerInterceptor implements ServerInterceptor {
 
-        @Nullable
-        Observation lastObservation;
+        private @Nullable Observation lastObservation;
 
         private final ObservationRegistry observationRegistry;
 

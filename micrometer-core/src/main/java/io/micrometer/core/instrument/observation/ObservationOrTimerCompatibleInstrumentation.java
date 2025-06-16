@@ -49,8 +49,7 @@ public class ObservationOrTimerCompatibleInstrumentation<T extends Observation.C
 
     private final ObservationRegistry observationRegistry;
 
-    @Nullable
-    private final ObservationConvention<T> convention;
+    private final @Nullable ObservationConvention<T> convention;
 
     private final ObservationConvention<T> defaultConvention;
 
