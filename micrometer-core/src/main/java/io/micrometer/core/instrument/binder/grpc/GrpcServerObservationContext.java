@@ -32,21 +32,23 @@ import org.jspecify.annotations.Nullable;
  */
 public class GrpcServerObservationContext extends RequestReplyReceiverContext<Metadata, Object> {
 
-    private String serviceName;
+    private @Nullable String serviceName;
 
-    private String methodName;
+    private @Nullable String methodName;
 
+    @SuppressWarnings("NullAway.Init")
     private String fullMethodName;
 
+    @SuppressWarnings("NullAway.Init")
     private MethodType methodType;
 
     private @Nullable Code statusCode;
 
     private @Nullable String authority;
 
-    private Metadata headers;
+    private @Nullable Metadata headers;
 
-    private Metadata trailers;
+    private @Nullable Metadata trailers;
 
     private boolean cancelled;
 
@@ -58,7 +60,7 @@ public class GrpcServerObservationContext extends RequestReplyReceiverContext<Me
         super(getter);
     }
 
-    public String getServiceName() {
+    public @Nullable String getServiceName() {
         return this.serviceName;
     }
 
@@ -66,7 +68,7 @@ public class GrpcServerObservationContext extends RequestReplyReceiverContext<Me
         this.serviceName = serviceName;
     }
 
-    public String getMethodName() {
+    public @Nullable String getMethodName() {
         return this.methodName;
     }
 
@@ -111,7 +113,7 @@ public class GrpcServerObservationContext extends RequestReplyReceiverContext<Me
      * @return response headers
      * @since 1.13.0
      */
-    public Metadata getHeaders() {
+    public @Nullable Metadata getHeaders() {
         return this.headers;
     }
 
@@ -129,7 +131,7 @@ public class GrpcServerObservationContext extends RequestReplyReceiverContext<Me
      * @return trailers
      * @since 1.13.0
      */
-    public Metadata getTrailers() {
+    public @Nullable Metadata getTrailers() {
         return this.trailers;
     }
 

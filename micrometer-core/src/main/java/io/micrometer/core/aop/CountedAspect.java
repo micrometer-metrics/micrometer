@@ -116,7 +116,7 @@ public class CountedAspect {
      */
     private final Predicate<ProceedingJoinPoint> shouldSkip;
 
-    private CountedMeterTagAnnotationHandler meterTagAnnotationHandler;
+    private @Nullable CountedMeterTagAnnotationHandler meterTagAnnotationHandler;
 
     /**
      * Creates a {@code CountedAspect} instance with {@link Metrics#globalRegistry}.
@@ -270,7 +270,7 @@ public class CountedAspect {
     }
 
     private void recordCompletionResult(ProceedingJoinPoint pjp, @Nullable Object methodResult, Counted counted,
-            Throwable throwable) {
+            @Nullable Throwable throwable) {
 
         if (throwable != null) {
             String exceptionTagValue = throwable.getCause() == null ? throwable.getClass().getSimpleName()

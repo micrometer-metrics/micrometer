@@ -23,6 +23,7 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.ref.WeakReference;
+import java.util.Objects;
 
 import static java.lang.invoke.MethodType.methodType;
 
@@ -83,31 +84,31 @@ class HazelcastIMapAdapter {
 
     static class LocalMapStats {
 
-        private static final MethodHandle GET_NEAR_CACHE_STATS;
+        private static final @Nullable MethodHandle GET_NEAR_CACHE_STATS;
 
-        private static final MethodHandle GET_OWNED_ENTRY_COUNT;
+        private static final @Nullable MethodHandle GET_OWNED_ENTRY_COUNT;
 
-        private static final MethodHandle GET_HITS;
+        private static final @Nullable MethodHandle GET_HITS;
 
-        private static final MethodHandle GET_PUT_OPERATION_COUNT;
+        private static final @Nullable MethodHandle GET_PUT_OPERATION_COUNT;
 
         private static final @Nullable MethodHandle GET_SET_OPERATION_COUNT;
 
-        private static final MethodHandle GET_BACKUP_ENTRY_COUNT;
+        private static final @Nullable MethodHandle GET_BACKUP_ENTRY_COUNT;
 
-        private static final MethodHandle GET_BACKUP_ENTRY_MEMORY_COST;
+        private static final @Nullable MethodHandle GET_BACKUP_ENTRY_MEMORY_COST;
 
-        private static final MethodHandle GET_OWNED_ENTRY_MEMORY_COST;
+        private static final @Nullable MethodHandle GET_OWNED_ENTRY_MEMORY_COST;
 
-        private static final MethodHandle GET_GET_OPERATION_COUNT;
+        private static final @Nullable MethodHandle GET_GET_OPERATION_COUNT;
 
-        private static final MethodHandle GET_TOTAL_GET_LATENCY;
+        private static final @Nullable MethodHandle GET_TOTAL_GET_LATENCY;
 
-        private static final MethodHandle GET_TOTAL_PUT_LATENCY;
+        private static final @Nullable MethodHandle GET_TOTAL_PUT_LATENCY;
 
-        private static final MethodHandle GET_REMOVE_OPERATION_COUNT;
+        private static final @Nullable MethodHandle GET_REMOVE_OPERATION_COUNT;
 
-        private static final MethodHandle GET_TOTAL_REMOVE_LATENCY;
+        private static final @Nullable MethodHandle GET_TOTAL_REMOVE_LATENCY;
 
         static {
             GET_NEAR_CACHE_STATS = resolveMethod("getNearCacheStats", methodType(CLASS_NEAR_CACHE_STATS));
@@ -132,18 +133,26 @@ class HazelcastIMapAdapter {
             this.localMapStats = localMapStats;
         }
 
+        @SuppressWarnings("NullAway")
+        // return type of the MethodHandle is long
         long getOwnedEntryCount() {
             return (long) invoke(GET_OWNED_ENTRY_COUNT, localMapStats);
         }
 
+        @SuppressWarnings("NullAway")
+        // return type of the MethodHandle is long
         long getHits() {
             return (long) invoke(GET_HITS, localMapStats);
         }
 
+        @SuppressWarnings("NullAway")
+        // return type of the MethodHandle is long
         long getPutOperationCount() {
             return (long) invoke(GET_PUT_OPERATION_COUNT, localMapStats);
         }
 
+        @SuppressWarnings("NullAway")
+        // return type of the MethodHandle is long
         long getSetOperationCount() {
             if (GET_SET_OPERATION_COUNT == null) {
                 return 0L;
@@ -152,18 +161,26 @@ class HazelcastIMapAdapter {
             return (long) invoke(GET_SET_OPERATION_COUNT, localMapStats);
         }
 
+        @SuppressWarnings("NullAway")
+        // return type of the MethodHandle is long
         double getBackupEntryCount() {
             return (long) invoke(GET_BACKUP_ENTRY_COUNT, localMapStats);
         }
 
+        @SuppressWarnings("NullAway")
+        // return type of the MethodHandle is long
         long getBackupEntryMemoryCost() {
             return (long) invoke(GET_BACKUP_ENTRY_MEMORY_COST, localMapStats);
         }
 
+        @SuppressWarnings("NullAway")
+        // return type of the MethodHandle is long
         long getOwnedEntryMemoryCost() {
             return (long) invoke(GET_OWNED_ENTRY_MEMORY_COST, localMapStats);
         }
 
+        @SuppressWarnings("NullAway")
+        // return type of the MethodHandle is long
         long getGetOperationCount() {
             return (long) invoke(GET_GET_OPERATION_COUNT, localMapStats);
         }
@@ -173,18 +190,26 @@ class HazelcastIMapAdapter {
             return result == null ? null : new NearCacheStats(result);
         }
 
+        @SuppressWarnings("NullAway")
+        // return type of the MethodHandle is long
         long getTotalGetLatency() {
             return (long) invoke(GET_TOTAL_GET_LATENCY, localMapStats);
         }
 
+        @SuppressWarnings("NullAway")
+        // return type of the MethodHandle is long
         long getTotalPutLatency() {
             return (long) invoke(GET_TOTAL_PUT_LATENCY, localMapStats);
         }
 
+        @SuppressWarnings("NullAway")
+        // return type of the MethodHandle is long
         long getRemoveOperationCount() {
             return (long) invoke(GET_REMOVE_OPERATION_COUNT, localMapStats);
         }
 
+        @SuppressWarnings("NullAway")
+        // return type of the MethodHandle is long
         long getTotalRemoveLatency() {
             return (long) invoke(GET_TOTAL_REMOVE_LATENCY, localMapStats);
         }
@@ -224,18 +249,26 @@ class HazelcastIMapAdapter {
             this.nearCacheStats = nearCacheStats;
         }
 
+        @SuppressWarnings("NullAway")
+        // return type of the MethodHandle is long
         long getHits() {
             return (long) invoke(GET_HITS, nearCacheStats);
         }
 
+        @SuppressWarnings("NullAway")
+        // return type of the MethodHandle is long
         long getMisses() {
             return (long) invoke(GET_MISSES, nearCacheStats);
         }
 
+        @SuppressWarnings("NullAway")
+        // return type of the MethodHandle is long
         long getEvictions() {
             return (long) invoke(GET_EVICTIONS, nearCacheStats);
         }
 
+        @SuppressWarnings("NullAway")
+        // return type of the MethodHandle is long
         long getPersistenceCount() {
             return (long) invoke(GET_PERSISTENCE_COUNT, nearCacheStats);
         }
@@ -280,7 +313,7 @@ class HazelcastIMapAdapter {
 
     private static @Nullable Object invoke(@Nullable MethodHandle mh, Object object) {
         try {
-            return mh.invoke(object);
+            return Objects.requireNonNull(mh).invoke(object);
         }
         catch (Throwable t) {
             throw new RuntimeException(t);

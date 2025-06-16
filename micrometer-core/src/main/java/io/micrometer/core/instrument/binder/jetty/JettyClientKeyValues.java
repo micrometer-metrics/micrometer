@@ -101,7 +101,7 @@ public final class JettyClientKeyValues {
      * @return the uri KeyValue derived from the request and its result
      */
     public static KeyValue uri(Request request, @Nullable Result result,
-            BiFunction<Request, Result, String> successfulUriPattern) {
+            BiFunction<Request, @Nullable Result, String> successfulUriPattern) {
         if (result != null && result.getResponse() != null) {
             int status = result.getResponse().getStatus();
             if (HttpStatus.isRedirection(status)) {

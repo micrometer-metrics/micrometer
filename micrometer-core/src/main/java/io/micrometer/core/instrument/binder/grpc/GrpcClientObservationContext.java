@@ -32,22 +32,26 @@ import org.jspecify.annotations.Nullable;
  */
 public class GrpcClientObservationContext extends RequestReplySenderContext<Metadata, Object> {
 
-    private String serviceName;
+    private @Nullable String serviceName;
 
-    private String methodName;
+    private @Nullable String methodName;
 
+    @SuppressWarnings("NullAway.Init")
     private String fullMethodName;
 
+    @SuppressWarnings("NullAway.Init")
     private MethodType methodType;
 
     private @Nullable Code statusCode;
 
+    @SuppressWarnings("NullAway.Init")
     private String authority;
 
-    private Metadata headers;
+    private @Nullable Metadata headers;
 
-    private Metadata trailers;
+    private @Nullable Metadata trailers;
 
+    @SuppressWarnings("NullAway.Init")
     private String peerName;
 
     private @Nullable Integer peerPort;
@@ -56,7 +60,7 @@ public class GrpcClientObservationContext extends RequestReplySenderContext<Meta
         super(setter);
     }
 
-    public String getServiceName() {
+    public @Nullable String getServiceName() {
         return this.serviceName;
     }
 
@@ -64,7 +68,7 @@ public class GrpcClientObservationContext extends RequestReplySenderContext<Meta
         this.serviceName = serviceName;
     }
 
-    public String getMethodName() {
+    public @Nullable String getMethodName() {
         return this.methodName;
     }
 
@@ -109,7 +113,7 @@ public class GrpcClientObservationContext extends RequestReplySenderContext<Meta
      * @return response headers
      * @since 1.13.0
      */
-    public Metadata getHeaders() {
+    public @Nullable Metadata getHeaders() {
         return this.headers;
     }
 
@@ -127,7 +131,7 @@ public class GrpcClientObservationContext extends RequestReplySenderContext<Meta
      * @return trailers
      * @since 1.13.0
      */
-    public Metadata getTrailers() {
+    public @Nullable Metadata getTrailers() {
         return this.trailers;
     }
 

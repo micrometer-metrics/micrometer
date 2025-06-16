@@ -112,7 +112,7 @@ public class TimedAspect {
 
     private final Predicate<ProceedingJoinPoint> shouldSkip;
 
-    private MeterTagAnnotationHandler meterTagAnnotationHandler;
+    private @Nullable MeterTagAnnotationHandler meterTagAnnotationHandler;
 
     /**
      * Creates a {@code TimedAspect} instance with {@link Metrics#globalRegistry}.
@@ -299,7 +299,7 @@ public class TimedAspect {
         return builder;
     }
 
-    private String getExceptionTag(Throwable throwable) {
+    private String getExceptionTag(@Nullable Throwable throwable) {
 
         if (throwable == null) {
             return DEFAULT_EXCEPTION_TAG_VALUE;
