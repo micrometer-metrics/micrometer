@@ -21,7 +21,6 @@ import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.spi.LoggerContextListener;
 import ch.qos.logback.classic.turbo.TurboFilter;
 import ch.qos.logback.core.spi.FilterReply;
-import io.micrometer.common.lang.NonNullApi;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
@@ -43,7 +42,6 @@ import static java.util.Collections.emptyList;
  *
  * @author Jon Schneider
  */
-@NonNullApi
 @NullMarked
 public class LogbackMetrics implements MeterBinder, AutoCloseable {
 
@@ -143,7 +141,6 @@ public class LogbackMetrics implements MeterBinder, AutoCloseable {
 
 }
 
-@NonNullApi
 @NullMarked
 class MetricsTurboFilter extends TurboFilter {
 

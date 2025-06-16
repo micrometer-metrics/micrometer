@@ -17,9 +17,7 @@
 /**
  * Meter binders.
  */
-@NonNullApi
 @NullMarked
 package io.micrometer.core.instrument.binder;
 
-import io.micrometer.common.lang.NonNullApi;
 import org.jspecify.annotations.NullMarked;

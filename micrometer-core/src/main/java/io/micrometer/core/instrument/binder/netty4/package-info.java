@@ -17,9 +17,7 @@
 /**
  * Meter binders for Netty 4.x.
  */
-@NonNullApi
 @NullMarked
 package io.micrometer.core.instrument.binder.netty4;
 
-import io.micrometer.common.lang.NonNullApi;
 import org.jspecify.annotations.NullMarked;

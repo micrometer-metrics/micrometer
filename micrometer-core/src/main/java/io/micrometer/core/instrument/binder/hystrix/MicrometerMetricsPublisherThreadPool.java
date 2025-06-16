@@ -19,7 +19,6 @@ import com.netflix.hystrix.HystrixThreadPoolKey;
 import com.netflix.hystrix.HystrixThreadPoolMetrics;
 import com.netflix.hystrix.HystrixThreadPoolProperties;
 import com.netflix.hystrix.strategy.metrics.HystrixMetricsPublisherThreadPool;
-import io.micrometer.common.lang.NonNullApi;
 import io.micrometer.core.instrument.*;
 import org.jspecify.annotations.NullMarked;
 
@@ -30,7 +29,6 @@ import org.jspecify.annotations.NullMarked;
  * in maintenance mode.
  * @since 1.2.0
  */
-@NonNullApi
 @NullMarked
 @Deprecated
 public class MicrometerMetricsPublisherThreadPool implements HystrixMetricsPublisherThreadPool {

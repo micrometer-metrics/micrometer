@@ -15,7 +15,6 @@
  */
 package io.micrometer.core.instrument.binder.jvm;
 
-import io.micrometer.common.lang.NonNullApi;
 import io.micrometer.common.util.StringUtils;
 import io.micrometer.common.util.internal.logging.InternalLogger;
 import io.micrometer.common.util.internal.logging.InternalLoggerFactory;
@@ -65,7 +64,6 @@ import static java.util.stream.Collectors.toSet;
  * @author Clint Checketts
  * @author Johnny Lim
  */
-@NonNullApi
 @NullMarked
 public class ExecutorServiceMetrics implements MeterBinder {
 

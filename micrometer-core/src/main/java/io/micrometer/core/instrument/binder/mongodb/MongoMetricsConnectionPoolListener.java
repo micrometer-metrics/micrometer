@@ -18,7 +18,6 @@ package io.micrometer.core.instrument.binder.mongodb;
 import com.mongodb.client.MongoClient;
 import com.mongodb.connection.ServerId;
 import com.mongodb.event.*;
-import io.micrometer.common.lang.NonNullApi;
 import io.micrometer.core.annotation.Incubating;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Gauge;
@@ -42,7 +41,6 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @since 1.2.0
  * @implNote This implementation requires MongoDB Java driver 4 or later.
  */
-@NonNullApi
 @NullMarked
 @Incubating(since = "1.2.0")
 public class MongoMetricsConnectionPoolListener implements ConnectionPoolListener {

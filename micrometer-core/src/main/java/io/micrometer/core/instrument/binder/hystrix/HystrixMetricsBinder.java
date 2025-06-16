@@ -21,7 +21,6 @@ import com.netflix.hystrix.strategy.eventnotifier.HystrixEventNotifier;
 import com.netflix.hystrix.strategy.executionhook.HystrixCommandExecutionHook;
 import com.netflix.hystrix.strategy.metrics.HystrixMetricsPublisher;
 import com.netflix.hystrix.strategy.properties.HystrixPropertiesStrategy;
-import io.micrometer.common.lang.NonNullApi;
 import io.micrometer.common.util.internal.logging.InternalLogger;
 import io.micrometer.common.util.internal.logging.InternalLoggerFactory;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -32,7 +31,6 @@ import org.jspecify.annotations.NullMarked;
  * @deprecated since 1.13.0, Hystrix is no longer in active development, and is currently
  * in maintenance mode.
  */
-@NonNullApi
 @NullMarked
 @Deprecated
 public class HystrixMetricsBinder implements MeterBinder {

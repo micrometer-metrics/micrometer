@@ -17,7 +17,6 @@ package io.micrometer.core.instrument.binder.jvm;
 
 import com.sun.management.GarbageCollectionNotificationInfo;
 import com.sun.management.GcInfo;
-import io.micrometer.common.lang.NonNullApi;
 import io.micrometer.common.util.internal.logging.InternalLogger;
 import io.micrometer.common.util.internal.logging.InternalLoggerFactory;
 import io.micrometer.core.instrument.Timer;
@@ -66,7 +65,6 @@ import static java.util.Collections.emptyList;
  * @author Andrew Krasny
  * @see GarbageCollectorMXBean
  */
-@NonNullApi
 @NullMarked
 public class JvmGcMetrics implements MeterBinder, AutoCloseable {
 
@@ -363,7 +361,7 @@ public class JvmGcMetrics implements MeterBinder, AutoCloseable {
      * Generalization of which parts of the heap are considered "young" or "old" for
      * multiple GC implementations
      */
-    @NonNullApi
+    @NullMarked
     enum GcGenerationAge {
 
         OLD, YOUNG, UNKNOWN;

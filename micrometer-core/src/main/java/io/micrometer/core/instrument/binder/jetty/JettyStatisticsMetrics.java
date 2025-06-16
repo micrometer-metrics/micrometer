@@ -15,7 +15,6 @@
  */
 package io.micrometer.core.instrument.binder.jetty;
 
-import io.micrometer.common.lang.NonNullApi;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.binder.MeterBinder;
@@ -30,7 +29,6 @@ import java.util.function.ToLongFunction;
  * @deprecated Since 1.4.0. Use {@link TimedHandler} instead.
  */
 @Deprecated
-@NonNullApi
 @NullMarked
 public class JettyStatisticsMetrics implements MeterBinder {
 

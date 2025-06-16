@@ -16,7 +16,6 @@
 package io.micrometer.core.instrument.binder.okhttp3;
 
 import io.micrometer.common.KeyValue;
-import io.micrometer.common.lang.NonNullApi;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
@@ -54,7 +53,6 @@ import static java.util.stream.StreamSupport.stream;
  * @author Nurettin Yilmaz
  * @author Johnny Lim
  */
-@NonNullApi
 @NullMarked
 public class OkHttpMetricsEventListener extends EventListener {
 

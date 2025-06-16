@@ -15,7 +15,6 @@
  */
 package io.micrometer.core.instrument.binder.jvm;
 
-import io.micrometer.common.lang.NonNullApi;
 import io.micrometer.core.instrument.FunctionCounter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
@@ -34,7 +33,6 @@ import static java.util.Collections.emptyList;
  *
  * @since 1.4.0
  */
-@NonNullApi
 @NullMarked
 public class JvmCompilationMetrics implements MeterBinder {
 

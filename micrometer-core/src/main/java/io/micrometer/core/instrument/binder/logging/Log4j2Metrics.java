@@ -15,7 +15,6 @@
  */
 package io.micrometer.core.instrument.binder.logging;
 
-import io.micrometer.common.lang.NonNullApi;
 import io.micrometer.common.util.internal.logging.InternalLogger;
 import io.micrometer.common.util.internal.logging.InternalLoggerFactory;
 import io.micrometer.core.instrument.Counter;
@@ -54,7 +53,6 @@ import static java.util.Collections.emptyList;
  * @author Johnny Lim
  * @since 1.1.0
  */
-@NonNullApi
 @NullMarked
 public class Log4j2Metrics implements MeterBinder, AutoCloseable {
 
@@ -175,7 +173,6 @@ public class Log4j2Metrics implements MeterBinder, AutoCloseable {
             });
     }
 
-    @NonNullApi
     @NullMarked
     static class MetricsFilter extends AbstractFilter {
 

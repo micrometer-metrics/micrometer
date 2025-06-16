@@ -15,7 +15,6 @@
  */
 package io.micrometer.core.instrument.binder.jetty;
 
-import io.micrometer.common.lang.NonNullApi;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.binder.http.DefaultHttpServletRequestTagsProvider;
@@ -48,7 +47,6 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @deprecated since 1.13.0 in favor of {@code TimedHandler} in the micrometer-jetty12
  * module
  */
-@NonNullApi
 @NullMarked
 @Deprecated
 public class TimedHandler extends HandlerWrapper implements Graceful {

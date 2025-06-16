@@ -18,7 +18,6 @@ package io.micrometer.core.instrument.binder.hystrix;
 import com.netflix.hystrix.*;
 import com.netflix.hystrix.metric.HystrixCommandCompletionStream;
 import com.netflix.hystrix.strategy.metrics.HystrixMetricsPublisherCommand;
-import io.micrometer.common.lang.NonNullApi;
 import io.micrometer.common.util.internal.logging.InternalLogger;
 import io.micrometer.common.util.internal.logging.InternalLoggerFactory;
 import io.micrometer.core.instrument.*;
@@ -33,7 +32,6 @@ import java.util.concurrent.TimeUnit;
  * in maintenance mode.
  * @author Clint Checketts
  */
-@NonNullApi
 @NullMarked
 @Deprecated
 public class MicrometerMetricsPublisherCommand implements HystrixMetricsPublisherCommand {

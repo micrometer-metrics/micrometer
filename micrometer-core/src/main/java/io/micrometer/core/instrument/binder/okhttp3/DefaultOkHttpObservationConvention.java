@@ -17,7 +17,6 @@ package io.micrometer.core.instrument.binder.okhttp3;
 
 import io.micrometer.common.KeyValue;
 import io.micrometer.common.KeyValues;
-import io.micrometer.common.lang.NonNullApi;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.binder.http.Outcome;
@@ -38,7 +37,6 @@ import static io.micrometer.core.instrument.binder.okhttp3.OkHttpObservationDocu
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.StreamSupport.stream;
 
-@NonNullApi
 @NullMarked
 public class DefaultOkHttpObservationConvention implements OkHttpObservationConvention {
 

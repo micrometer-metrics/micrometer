@@ -18,7 +18,6 @@ package io.micrometer.core.instrument.binder.cache;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.LoadingCache;
-import io.micrometer.common.lang.NonNullApi;
 import io.micrometer.core.instrument.*;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
@@ -30,7 +29,6 @@ import java.util.function.ToLongFunction;
 /**
  * @author Jon Schneider
  */
-@NonNullApi
 @NullMarked
 public class GuavaCacheMetrics<K, V, C extends Cache<K, V>> extends CacheMeterBinder<C> {
 

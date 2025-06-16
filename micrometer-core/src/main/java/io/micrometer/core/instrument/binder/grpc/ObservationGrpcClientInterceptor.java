@@ -61,6 +61,9 @@ public class ObservationGrpcClientInterceptor implements ClientInterceptor {
             CallOptions callOptions, Channel next) {
         Supplier<GrpcClientObservationContext> contextSupplier = () -> {
             GrpcClientObservationContext context = new GrpcClientObservationContext((carrier, keyName, value) -> {
+                if (carrier == null) {
+                    return;
+                }
                 Metadata.Key<String> key = KEY_CACHE.computeIfAbsent(keyName,
                         (k) -> Metadata.Key.of(keyName, Metadata.ASCII_STRING_MARSHALLER));
                 carrier.removeAll(key);

@@ -15,7 +15,6 @@
  */
 package io.micrometer.core.instrument.binder.system;
 
-import io.micrometer.common.lang.NonNullApi;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.TimeGauge;
@@ -33,7 +32,6 @@ import static java.util.Collections.emptyList;
  *
  * @author Michael Weirauch
  */
-@NonNullApi
 @NullMarked
 public class UptimeMetrics implements MeterBinder {
 

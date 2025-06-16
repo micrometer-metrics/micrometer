@@ -15,7 +15,6 @@
  */
 package io.micrometer.core.instrument.binder.cache;
 
-import io.micrometer.common.lang.NonNullApi;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
@@ -39,7 +38,6 @@ import java.util.List;
  *
  * @author Jon Schneider
  */
-@NonNullApi
 @NullMarked
 public class JCacheMetrics<K, V, C extends Cache<K, V>> extends CacheMeterBinder<C> {
 

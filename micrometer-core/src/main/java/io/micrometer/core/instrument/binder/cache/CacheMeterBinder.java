@@ -15,7 +15,6 @@
  */
 package io.micrometer.core.instrument.binder.cache;
 
-import io.micrometer.common.lang.NonNullApi;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.MeterBinder;
 import org.jspecify.annotations.NullMarked;
@@ -34,7 +33,6 @@ import java.lang.ref.WeakReference;
  *
  * @author Jon Schneider
  */
-@NonNullApi
 @NullMarked
 public abstract class CacheMeterBinder<C> implements MeterBinder {
 

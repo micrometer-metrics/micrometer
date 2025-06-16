@@ -15,7 +15,6 @@
  */
 package io.micrometer.core.instrument.binder.tomcat;
 
-import io.micrometer.common.lang.NonNullApi;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.binder.MeterBinder;
@@ -43,7 +42,6 @@ import java.util.function.BiConsumer;
  * @author Jon Schneider
  * @author Johnny Lim
  */
-@NonNullApi
 @NullMarked
 public class TomcatMetrics implements MeterBinder, AutoCloseable {
 

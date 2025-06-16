@@ -15,7 +15,6 @@
  */
 package io.micrometer.core.instrument.binder.cache;
 
-import io.micrometer.common.lang.NonNullApi;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.binder.cache.HazelcastIMapAdapter.LocalMapStats;
@@ -33,7 +32,6 @@ import java.util.function.ToLongFunction;
  *
  * @author Jon Schneider
  */
-@NonNullApi
 @NullMarked
 public class HazelcastCacheMetrics extends CacheMeterBinder<Object> {
 

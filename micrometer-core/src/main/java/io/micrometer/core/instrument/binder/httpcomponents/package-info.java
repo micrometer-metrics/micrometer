@@ -18,8 +18,6 @@
  * Meter binders for Apache HttpComponents.
  */
 @NullMarked
-@NonNullApi
 package io.micrometer.core.instrument.binder.httpcomponents;
 
-import io.micrometer.common.lang.NonNullApi;
 import org.jspecify.annotations.NullMarked;

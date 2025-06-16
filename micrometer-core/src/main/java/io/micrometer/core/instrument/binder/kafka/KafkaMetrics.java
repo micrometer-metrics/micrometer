@@ -15,7 +15,6 @@
  */
 package io.micrometer.core.instrument.binder.kafka;
 
-import io.micrometer.common.lang.NonNullApi;
 import io.micrometer.common.util.internal.logging.InternalLogger;
 import io.micrometer.common.util.internal.logging.InternalLoggerFactory;
 import io.micrometer.common.util.internal.logging.WarnThenDebugLogger;
@@ -54,7 +53,6 @@ import static java.util.Collections.emptyList;
  * @since 1.4.0
  */
 @Incubating(since = "1.4.0")
-@NonNullApi
 @NullMarked
 class KafkaMetrics implements MeterBinder, AutoCloseable {
 

@@ -16,7 +16,6 @@
 package io.micrometer.core.aop;
 
 import io.micrometer.common.KeyValue;
-import io.micrometer.common.lang.NonNullApi;
 import io.micrometer.common.util.internal.logging.WarnThenDebugLogger;
 import io.micrometer.core.annotation.Counted;
 import io.micrometer.core.instrument.*;
@@ -24,6 +23,7 @@ import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.reflect.MethodSignature;
+import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
 import java.lang.reflect.Method;
@@ -77,7 +77,7 @@ import java.util.function.Predicate;
  * @see Counted
  */
 @Aspect
-@NonNullApi
+@NullMarked
 public class CountedAspect {
 
     private static final WarnThenDebugLogger WARN_THEN_DEBUG_LOGGER = new WarnThenDebugLogger(CountedAspect.class);

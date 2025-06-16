@@ -15,7 +15,6 @@
  */
 package io.micrometer.core.instrument.binder.cache;
 
-import io.micrometer.common.lang.NonNullApi;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.BaseUnits;
 import net.sf.ehcache.Ehcache;
@@ -32,7 +31,6 @@ import java.util.function.ToLongFunction;
  *
  * @author Jon Schneider
  */
-@NonNullApi
 @NullMarked
 public class EhCache2Metrics extends CacheMeterBinder<Ehcache> {
 

@@ -15,7 +15,6 @@
  */
 package io.micrometer.core.instrument.binder.db;
 
-import io.micrometer.common.lang.NonNullApi;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.binder.MeterBinder;
@@ -39,7 +38,6 @@ import java.util.function.DoubleSupplier;
  * @author Markus Dobel
  * @since 1.1.0
  */
-@NonNullApi
 @NullMarked
 public class PostgreSQLDatabaseMetrics implements MeterBinder {
 

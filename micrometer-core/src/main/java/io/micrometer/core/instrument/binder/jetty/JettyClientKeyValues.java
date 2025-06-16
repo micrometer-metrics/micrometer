@@ -68,7 +68,7 @@ public final class JettyClientKeyValues {
      * @param request the request
      * @return the method KeyValue whose value is a capitalized method (e.g. GET).
      */
-    public static KeyValue method(Request request) {
+    public static KeyValue method(@Nullable Request request) {
         return (request != null) ? KeyValue.of("method", request.getMethod()) : METHOD_UNKNOWN;
     }
 
@@ -78,7 +78,7 @@ public final class JettyClientKeyValues {
      * @param request the request
      * @return the host KeyValue derived from request
      */
-    public static KeyValue host(Request request) {
+    public static KeyValue host(@Nullable Request request) {
         return (request != null) ? KeyValue.of("host", request.getHost()) : HOST_UNKNOWN;
     }
 

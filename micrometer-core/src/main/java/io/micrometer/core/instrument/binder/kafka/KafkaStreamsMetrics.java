@@ -15,7 +15,6 @@
  */
 package io.micrometer.core.instrument.binder.kafka;
 
-import io.micrometer.common.lang.NonNullApi;
 import io.micrometer.core.annotation.Incubating;
 import io.micrometer.core.instrument.Tag;
 import org.apache.kafka.common.Metric;
@@ -40,7 +39,6 @@ import java.util.concurrent.ScheduledExecutorService;
  * @since 1.4.0
  */
 @Incubating(since = "1.4.0")
-@NonNullApi
 @NullMarked
 public class KafkaStreamsMetrics extends KafkaMetrics {
 

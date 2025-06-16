@@ -17,7 +17,7 @@
 /**
  * Meter binders for Jetty.
  */
-@NonNullApi
+@NullMarked
 package io.micrometer.core.instrument.binder.jetty;
 
-import io.micrometer.common.lang.NonNullApi;
+import org.jspecify.annotations.NullMarked;

@@ -15,7 +15,6 @@
  */
 package io.micrometer.core.instrument.binder.system;
 
-import io.micrometer.common.lang.NonNullApi;
 import io.micrometer.core.instrument.FunctionCounter;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -48,7 +47,6 @@ import static java.util.Objects.requireNonNull;
  * @author Clint Checketts
  * @author Tommy Ludwig
  */
-@NonNullApi
 @NullMarked
 public class ProcessorMetrics implements MeterBinder {
 

@@ -15,7 +15,6 @@
  */
 package io.micrometer.core.instrument.binder.jvm;
 
-import io.micrometer.common.lang.NonNullApi;
 import io.micrometer.core.annotation.Incubating;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -38,7 +37,6 @@ import static java.util.Collections.emptyList;
  * instead.
  */
 @Incubating(since = "1.1.0")
-@NonNullApi
 @NullMarked
 @Deprecated
 public class DiskSpaceMetrics implements MeterBinder {

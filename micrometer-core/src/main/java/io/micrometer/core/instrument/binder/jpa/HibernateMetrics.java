@@ -15,7 +15,6 @@
  */
 package io.micrometer.core.instrument.binder.jpa;
 
-import io.micrometer.common.lang.NonNullApi;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.MeterBinder;
 import org.hibernate.SessionFactory;
@@ -42,7 +41,6 @@ import java.util.function.ToDoubleFunction;
  * part of the Hibernate project as of version 5.4.26. See
  * https://mvnrepository.com/artifact/org.hibernate/hibernate-micrometer/
  */
-@NonNullApi
 @NullMarked
 @Deprecated
 public class HibernateMetrics implements MeterBinder {

@@ -36,7 +36,6 @@ import java.lang.annotation.*;
  *
  * @author Sebastien Deleuze
  * @author Juergen Hoeller
- * @see io.micrometer.common.lang.NonNullApi
  * @see org.jspecify.annotations.NullMarked
  * @deprecated Please use {@link org.jspecify.annotations.Nullable} instead.
  */

@@ -17,7 +17,6 @@ package io.micrometer.core.instrument.binder.mongodb;
 
 import com.mongodb.client.MongoClient;
 import com.mongodb.event.*;
-import io.micrometer.common.lang.NonNullApi;
 import io.micrometer.core.annotation.Incubating;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
@@ -32,7 +31,6 @@ import java.util.concurrent.TimeUnit;
  * @author Chris Bono
  * @since 1.2.0
  */
-@NonNullApi
 @NullMarked
 @Incubating(since = "1.2.0")
 public class MongoMetricsCommandListener implements CommandListener {

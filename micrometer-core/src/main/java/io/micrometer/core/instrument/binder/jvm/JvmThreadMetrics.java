@@ -15,7 +15,6 @@
  */
 package io.micrometer.core.instrument.binder.jvm;
 
-import io.micrometer.common.lang.NonNullApi;
 import io.micrometer.core.instrument.FunctionCounter;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -38,7 +37,6 @@ import static java.util.Collections.emptyList;
  * @author Jon Schneider
  * @author Johnny Lim
  */
-@NonNullApi
 @NullMarked
 public class JvmThreadMetrics implements MeterBinder {
 

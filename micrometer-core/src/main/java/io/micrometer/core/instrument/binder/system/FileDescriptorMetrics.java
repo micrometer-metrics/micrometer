@@ -15,7 +15,6 @@
  */
 package io.micrometer.core.instrument.binder.system;
 
-import io.micrometer.common.lang.NonNullApi;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
@@ -45,7 +44,6 @@ import static java.util.Collections.emptyList;
  * @author Michael Weirauch
  * @author Tommy Ludwig
  */
-@NonNullApi
 @NullMarked
 public class FileDescriptorMetrics implements MeterBinder {
 

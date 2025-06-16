@@ -19,7 +19,6 @@ import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.RemovalCause;
 import com.github.benmanes.caffeine.cache.stats.CacheStats;
 import com.github.benmanes.caffeine.cache.stats.StatsCounter;
-import io.micrometer.common.lang.NonNullApi;
 import io.micrometer.core.instrument.*;
 import org.jspecify.annotations.NullMarked;
 
@@ -52,7 +51,6 @@ import static java.util.Objects.requireNonNull;
  * @see CaffeineCacheMetrics
  * @since 1.7.0
  */
-@NonNullApi
 @NullMarked
 public final class CaffeineStatsCounter implements StatsCounter {
 

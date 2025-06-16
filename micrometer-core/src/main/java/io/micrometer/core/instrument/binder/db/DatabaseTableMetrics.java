@@ -15,7 +15,6 @@
  */
 package io.micrometer.core.instrument.binder.db;
 
-import io.micrometer.common.lang.NonNullApi;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
@@ -34,7 +33,6 @@ import java.util.function.ToDoubleFunction;
 /**
  * @author Jon Schneider
  */
-@NonNullApi
 @NullMarked
 public class DatabaseTableMetrics implements MeterBinder {
 
