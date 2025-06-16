@@ -55,9 +55,7 @@ abstract class AbstractTimeWindowHistogram<T, U> implements Histogram {
     private volatile long lastRotateTimestampMillis;
 
     @SuppressWarnings({ "unused", "FieldCanBeLocal" })
-    private volatile int rotating;
-
-    // 0 - not rotating, 1 - rotating
+    private volatile int rotating; // 0 - not rotating, 1 - rotating
 
     @SuppressWarnings("NullAway.Init")
     private U accumulatedHistogram;
