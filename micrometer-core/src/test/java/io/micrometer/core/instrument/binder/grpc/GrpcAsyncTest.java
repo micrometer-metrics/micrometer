@@ -33,6 +33,7 @@ import io.micrometer.observation.Observation;
 import io.micrometer.observation.Observation.Context;
 import io.micrometer.observation.ObservationHandler;
 import io.micrometer.observation.ObservationRegistry;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -58,6 +59,7 @@ class GrpcAsyncTest {
 
     Server server;
 
+    @Nullable
     ManagedChannel channel;
 
     ObservationRegistry observationRegistry;
@@ -202,7 +204,9 @@ class GrpcAsyncTest {
 
         @Override
         public void onScopeOpened(GrpcServerObservationContext context) {
-            String requestId = context.getCarrier().get(REQUEST_ID_KEY);
+            Metadata metadata = context.getCarrier();
+            assertThat(metadata).isNotNull();
+            String requestId = metadata.get(REQUEST_ID_KEY);
             assertThat(requestId).isNotNull();
             MyService.requestIdHolder.set(requestId);
         }

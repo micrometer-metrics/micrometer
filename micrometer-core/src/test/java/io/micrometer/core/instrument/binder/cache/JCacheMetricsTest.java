@@ -185,18 +185,18 @@ class JCacheMetricsTest extends AbstractCacheMetricsTest {
 
         @Override
         public AttributeList getAttributes(String[] attributes) {
-            return null;
+            return mock(AttributeList.class);
         }
 
         @Override
         public AttributeList setAttributes(AttributeList attributes) {
-            return null;
+            return attributes;
         }
 
         @Override
         public Object invoke(String actionName, Object[] params, String[] signature)
                 throws MBeanException, ReflectionException {
-            return null;
+            return new Object();
         }
 
         @Override

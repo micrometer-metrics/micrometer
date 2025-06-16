@@ -41,6 +41,7 @@ class EhCache2MetricsTest extends AbstractCacheMetricsTest {
 
     private static CacheManager cacheManager;
 
+    @SuppressWarnings("NullAway.Init")
     // tag::setup[]
     static Cache cache;
 

@@ -18,6 +18,7 @@ package io.micrometer.core.instrument.binder.cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import org.jspecify.annotations.Nullable;
 
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicReference;
@@ -59,7 +60,7 @@ class GuavaCacheMetricsCompatibilityKit extends CacheMeterBinderCompatibilityKit
     }
 
     @Override
-    public String get(String key) {
+    public @Nullable String get(String key) {
         try {
             return cache.get(key);
         }
