@@ -18,14 +18,14 @@ package io.micrometer.observation.tck;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationHandler;
 import io.micrometer.observation.ObservationRegistry;
+import org.assertj.core.api.AssertProvider;
+import org.jspecify.annotations.Nullable;
 
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
-
-import org.assertj.core.api.AssertProvider;
 
 /**
  * Implementation of {@link ObservationRegistry} used for testing.
@@ -55,17 +55,17 @@ public final class TestObservationRegistry
     }
 
     @Override
-    public Observation getCurrentObservation() {
+    public @Nullable Observation getCurrentObservation() {
         return this.delegate.getCurrentObservation();
     }
 
     @Override
-    public Observation.Scope getCurrentObservationScope() {
+    public Observation.@Nullable Scope getCurrentObservationScope() {
         return this.delegate.getCurrentObservationScope();
     }
 
     @Override
-    public void setCurrentObservationScope(Observation.Scope current) {
+    public void setCurrentObservationScope(Observation.@Nullable Scope current) {
         this.delegate.setCurrentObservationScope(current);
     }
 

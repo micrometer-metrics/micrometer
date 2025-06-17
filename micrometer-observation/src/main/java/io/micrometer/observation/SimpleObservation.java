@@ -45,9 +45,8 @@ class SimpleObservation implements Observation {
 
     private final Context context;
 
-    @Nullable
     @SuppressWarnings("rawtypes")
-    private ObservationConvention convention;
+    private @Nullable ObservationConvention convention;
 
     @SuppressWarnings("rawtypes")
     private final Deque<ObservationHandler> handlers;
@@ -81,7 +80,8 @@ class SimpleObservation implements Observation {
         }
     }
 
-    @Nullable private static ObservationConvention getConventionFromConfig(ObservationRegistry registry, Context context) {
+    private static @Nullable ObservationConvention getConventionFromConfig(ObservationRegistry registry,
+            Context context) {
         for (ObservationConvention<?> convention : registry.observationConfig().getObservationConventions()) {
             if (convention.supportsContext(context)) {
                 return convention;
@@ -196,9 +196,8 @@ class SimpleObservation implements Observation {
         return scope;
     }
 
-    @Nullable
     @Override
-    public Scope getEnclosingScope() {
+    public @Nullable Scope getEnclosingScope() {
         return lastScope.get(Thread.currentThread());
     }
 
@@ -281,8 +280,7 @@ class SimpleObservation implements Observation {
 
         private final Observation currentObservation;
 
-        @Nullable
-        final Scope previousObservationScope;
+        final @Nullable Scope previousObservationScope;
 
         SimpleScope(ObservationRegistry registry, Observation current) {
             this.registry = registry;
@@ -318,7 +316,7 @@ class SimpleObservation implements Observation {
             this.registry.setCurrentObservationScope(previousObservationScope);
         }
 
-        @Nullable private SimpleScope getLastScope(SimpleScope simpleScope) {
+        private @Nullable SimpleScope getLastScope(SimpleScope simpleScope) {
             SimpleScope scope = simpleScope;
             do {
                 scope = (SimpleScope) scope.previousObservationScope;
@@ -390,9 +388,8 @@ class SimpleObservation implements Observation {
             this.registry.setCurrentObservationScope(this);
         }
 
-        @Nullable
         @Override
-        public Scope getPreviousObservationScope() {
+        public @Nullable Scope getPreviousObservationScope() {
             return this.previousObservationScope;
         }
 

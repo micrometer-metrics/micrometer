@@ -15,13 +15,13 @@
  */
 package io.micrometer.observation.tck;
 
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.observation.NullObservation.NullContext;
 import io.micrometer.observation.Observation.Context;
 import io.micrometer.observation.Observation.Event;
 import io.micrometer.observation.ObservationHandler;
 import io.micrometer.observation.tck.InvalidObservationException.EventName;
 import io.micrometer.observation.tck.InvalidObservationException.HistoryElement;
+import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -121,8 +121,7 @@ class ObservationValidator implements ObservationHandler<Context> {
         history.addHistoryElement(eventName);
     }
 
-    @Nullable
-    private Status checkIfObservationWasStarted(String prefix, Context context) {
+    private @Nullable Status checkIfObservationWasStarted(String prefix, Context context) {
         Status status = context.get(Status.class);
         if (status == null) {
             consumer.accept(new ValidationResult(
@@ -132,8 +131,7 @@ class ObservationValidator implements ObservationHandler<Context> {
         return status;
     }
 
-    @Nullable
-    private Status checkIfObservationWasStartedButNotStopped(String prefix, Context context) {
+    private @Nullable Status checkIfObservationWasStartedButNotStopped(String prefix, Context context) {
         Status status = checkIfObservationWasStarted(prefix, context);
         if (status != null && status.isStopped()) {
             consumer.accept(new ValidationResult(

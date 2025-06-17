@@ -204,7 +204,8 @@ public interface ObservationHandler<T extends Observation.Context> {
             return handler != null;
         }
 
-        @Nullable private ObservationHandler<Observation.Context> getFirstApplicableHandler(Observation.Context context) {
+        private @Nullable ObservationHandler<Observation.Context> getFirstApplicableHandler(
+                Observation.Context context) {
             for (ObservationHandler<Context> handler : this.handlers) {
                 if (handler.supportsContext(context)) {
                     return handler;

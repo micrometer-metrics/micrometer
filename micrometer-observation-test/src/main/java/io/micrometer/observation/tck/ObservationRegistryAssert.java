@@ -196,7 +196,7 @@ public class ObservationRegistryAssert<SELF extends ObservationRegistryAssert<SE
                     expectedContextName);
         }
         if (current != scope) {
-            String actualContextName = current.getCurrentObservation().getContext().getName();
+            String actualContextName = current != null ? current.getCurrentObservation().getContext().getName() : null;
             failWithActualExpectedAndMessage(actualContextName, expectedContextName,
                     "Expected current Scope in the registry to be same as a provided Scope tied to observation named <%s> but was a different one (tied to observation named <%s>)",
                     expectedContextName, actualContextName);

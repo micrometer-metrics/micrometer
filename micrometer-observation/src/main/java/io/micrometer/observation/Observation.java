@@ -17,7 +17,6 @@ package io.micrometer.observation;
 
 import io.micrometer.common.KeyValue;
 import io.micrometer.common.KeyValues;
-import io.micrometer.common.lang.NonNull;
 import io.micrometer.common.util.internal.logging.InternalLoggerFactory;
 import org.jspecify.annotations.NullUnmarked;
 import org.jspecify.annotations.Nullable;
@@ -909,17 +908,13 @@ public interface Observation extends ObservationView {
 
         private final Map<Object, Object> map = new ConcurrentHashMap<>();
 
-        @Nullable
-        private String name;
+        private @Nullable String name;
 
-        @Nullable
-        private String contextualName;
+        private @Nullable String contextualName;
 
-        @Nullable
-        private Throwable error;
+        private @Nullable Throwable error;
 
-        @Nullable
-        private ObservationView parentObservation;
+        private @Nullable ObservationView parentObservation;
 
         private final Map<String, KeyValue> lowCardinalityKeyValues = new ConcurrentHashMap<>();
 
@@ -965,7 +960,7 @@ public interface Observation extends ObservationView {
          * @return parent observation or {@code null} if there was no parent
          */
         @Override
-        @Nullable public ObservationView getParentObservation() {
+        public @Nullable ObservationView getParentObservation() {
             return parentObservation;
         }
 
@@ -995,9 +990,8 @@ public interface Observation extends ObservationView {
          * Error that occurred while processing the {@link Observation}.
          * @return error (null if there wasn't any)
          */
-        @Nullable
         @Override
-        public Throwable getError() {
+        public @Nullable Throwable getError() {
             return this.error;
         }
 
@@ -1028,7 +1022,7 @@ public interface Observation extends ObservationView {
          * @return entry or {@code null} if not present
          */
         @Override
-        @Nullable public <T> T get(Object key) {
+        public <T> @Nullable T get(Object key) {
             return (T) this.map.get(key);
         }
 
@@ -1050,7 +1044,6 @@ public interface Observation extends ObservationView {
          * @return entry
          */
         @Override
-        @NonNull
         public <T> T getRequired(Object key) {
             T object = (T) this.map.get(key);
             if (object == null) {
@@ -1199,13 +1192,11 @@ public interface Observation extends ObservationView {
             return this;
         }
 
-        @NonNull
         @Override
         public KeyValues getLowCardinalityKeyValues() {
             return KeyValues.of(this.lowCardinalityKeyValues.values());
         }
 
-        @NonNull
         @Override
         public KeyValues getHighCardinalityKeyValues() {
             return KeyValues.of(this.highCardinalityKeyValues.values());
@@ -1221,7 +1212,6 @@ public interface Observation extends ObservationView {
             return this.highCardinalityKeyValues.get(key);
         }
 
-        @NonNull
         @Override
         public KeyValues getAllKeyValues() {
             return getLowCardinalityKeyValues().and(getHighCardinalityKeyValues());
@@ -1366,7 +1356,7 @@ public interface Observation extends ObservationView {
          * @param <T> value type
          * @return entry or {@code null} if not present
          */
-        @Nullable <T> T get(Object key);
+        <T> @Nullable T get(Object key);
 
         /**
          * Gets an entry from the context. Throws exception when entry is not present.
@@ -1375,7 +1365,6 @@ public interface Observation extends ObservationView {
          * @throws IllegalArgumentException if not present
          * @return entry
          */
-        @NonNull
         <T> T getRequired(Object key);
 
         /**
@@ -1417,7 +1406,6 @@ public interface Observation extends ObservationView {
          * Returns high cardinality key values.
          * @return high cardinality key values
          */
-        @NonNull
         KeyValues getHighCardinalityKeyValues();
 
         /**
@@ -1438,7 +1426,6 @@ public interface Observation extends ObservationView {
          * Returns all key values.
          * @return all key values
          */
-        @NonNull
         KeyValues getAllKeyValues();
 
     }
