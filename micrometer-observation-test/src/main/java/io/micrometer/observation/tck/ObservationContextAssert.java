@@ -447,14 +447,14 @@ public class ObservationContextAssert<SELF extends ObservationContextAssert<SELF
         return (SELF) this;
     }
 
-    @SuppressWarnings("NullAway") // see: https://github.com/uber/NullAway/issues/1222
     private ObservationView checkedParentObservation() {
         isNotNull();
         ObservationView p = this.actual.getParentObservation();
         if (p == null) {
             failWithMessage("Observation should have a parent");
         }
-        return p;
+        // see: https://github.com/uber/NullAway/issues/1222
+        return Objects.requireNonNull(p);
     }
 
     /**
