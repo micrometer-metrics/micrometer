@@ -87,6 +87,7 @@ subprojects {
                 )
 
                 error(
+                    "AttemptedNegativeZero",
                     "BadImport",
                     "ClassCanBeStatic",
                     "DefaultCharset",
