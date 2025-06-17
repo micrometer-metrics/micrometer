@@ -16,7 +16,6 @@
 
 package io.micrometer.core.instrument.kotlin;
 
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.context.ContextRegistry;
 import io.micrometer.context.ContextSnapshot;
 import io.micrometer.context.ContextSnapshotFactory;
@@ -26,6 +25,7 @@ import io.micrometer.observation.contextpropagation.ObservationThreadLocalAccess
 import kotlin.coroutines.CoroutineContext;
 import kotlin.jvm.functions.Function2;
 import kotlinx.coroutines.ThreadContextElement;
+import org.jspecify.annotations.Nullable;
 
 /**
  * {@link ThreadContextElement} for synchronizing a {@link ContextSnapshot.Scope} across
@@ -54,7 +54,7 @@ class KotlinObservationContextElement implements ThreadContextElement<ContextSna
         return KEY;
     }
 
-    Observation getCurrentObservation() {
+    @Nullable Observation getCurrentObservation() {
         return this.observationRegistry.getCurrentObservation();
     }
 
@@ -79,9 +79,8 @@ class KotlinObservationContextElement implements ThreadContextElement<ContextSna
         return Element.DefaultImpls.fold(this, initial, operation);
     }
 
-    @Nullable
     @Override
-    public <E extends Element> E get(Key<E> key) {
+    public <E extends Element> @Nullable E get(Key<E> key) {
         return Element.DefaultImpls.get(this, key);
     }
 

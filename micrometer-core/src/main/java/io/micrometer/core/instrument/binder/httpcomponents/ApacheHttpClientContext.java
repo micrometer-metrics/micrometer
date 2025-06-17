@@ -56,6 +56,13 @@ public class ApacheHttpClientContext extends RequestReplySenderContext<HttpReque
         this.apacheHttpContext = apacheHttpContext;
     }
 
+    @Override
+    // Overridden to mark NonNull; setCarrier is called in constructor
+    @SuppressWarnings("NullAway")
+    public HttpRequest getCarrier() {
+        return super.getCarrier();
+    }
+
     public HttpContext getApacheHttpContext() {
         return apacheHttpContext;
     }

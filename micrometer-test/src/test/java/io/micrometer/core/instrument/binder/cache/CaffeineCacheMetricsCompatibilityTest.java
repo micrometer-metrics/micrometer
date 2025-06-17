@@ -17,6 +17,7 @@ package io.micrometer.core.instrument.binder.cache;
 
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.LoadingCache;
+import org.jspecify.annotations.Nullable;
 
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -51,7 +52,7 @@ class CaffeineCacheMetricsCompatibilityTest extends CacheMeterBinderCompatibilit
     }
 
     @Override
-    public String get(String key) {
+    public @Nullable String get(String key) {
         try {
             return cache.get(key);
         }

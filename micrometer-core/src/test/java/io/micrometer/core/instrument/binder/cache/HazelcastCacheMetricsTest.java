@@ -43,6 +43,7 @@ import static org.mockito.Mockito.when;
  */
 class HazelcastCacheMetricsTest extends AbstractCacheMetricsTest {
 
+    @SuppressWarnings("NullAway.Init")
     // tag::setup[]
     static IMap<String, String> cache;
 

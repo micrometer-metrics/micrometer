@@ -22,6 +22,7 @@ import io.micrometer.core.instrument.simple.SimpleConfig;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.eclipse.jetty.io.ssl.SslHandshakeListener;
 import org.eclipse.jetty.server.Connector;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -43,7 +44,7 @@ class JettySslHandshakeMetricsTest {
 
     private SimpleMeterRegistry registry = new SimpleMeterRegistry(SimpleConfig.DEFAULT, new MockClock());
 
-    private JettySslHandshakeMetrics sslHandshakeMetrics;
+    private @Nullable JettySslHandshakeMetrics sslHandshakeMetrics;
 
     Iterable<Tag> tags = Tags.of("id", "0");
 

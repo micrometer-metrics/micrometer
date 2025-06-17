@@ -17,9 +17,7 @@
 /**
  * Meter binders for Apache HttpComponents 5.
  */
-@NonNullFields
-@NonNullApi
+@NullMarked
 package io.micrometer.core.instrument.binder.httpcomponents.hc5;
 
-import io.micrometer.common.lang.NonNullApi;
-import io.micrometer.common.lang.NonNullFields;
+import org.jspecify.annotations.NullMarked;

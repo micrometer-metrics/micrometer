@@ -41,7 +41,7 @@ class InstrumentedQueuedThreadPoolTest {
 
         assertThatMetricsExist(meterRegistry);
 
-        Gauge jobsGauge = meterRegistry.find("jetty.threads.jobs").gauge();
+        Gauge jobsGauge = meterRegistry.get("jetty.threads.jobs").gauge();
 
         assertThat(jobsGauge.getId().getTags()).as("ensure metrics have thread pool tag").contains(Tag.of("pool", "1"));
 
@@ -62,9 +62,9 @@ class InstrumentedQueuedThreadPoolTest {
 
         assertThatMetricsExist(meterRegistry);
 
-        assertThat(meterRegistry.find("jetty.threads.jobs").tag("pool", "1").gauge()).as("pool 1 gauge exists")
+        assertThat(meterRegistry.get("jetty.threads.jobs").tag("pool", "1").gauge()).as("pool 1 gauge exists")
             .isNotNull();
-        assertThat(meterRegistry.find("jetty.threads.jobs").tag("pool", "2").gauge()).as("pool 2 gauge exists")
+        assertThat(meterRegistry.get("jetty.threads.jobs").tag("pool", "2").gauge()).as("pool 2 gauge exists")
             .isNotNull();
 
         pool1.stop();

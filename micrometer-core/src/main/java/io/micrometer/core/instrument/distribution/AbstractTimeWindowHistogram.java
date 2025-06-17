@@ -15,12 +15,13 @@
  */
 package io.micrometer.core.instrument.distribution;
 
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.config.InvalidConfigurationException;
+import org.jspecify.annotations.Nullable;
 
 import java.io.PrintStream;
 import java.lang.reflect.Array;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 
 /**
@@ -56,7 +57,7 @@ abstract class AbstractTimeWindowHistogram<T, U> implements Histogram {
     @SuppressWarnings({ "unused", "FieldCanBeLocal" })
     private volatile int rotating; // 0 - not rotating, 1 - rotating
 
-    @Nullable
+    @SuppressWarnings("NullAway.Init")
     private U accumulatedHistogram;
 
     @SuppressWarnings("unchecked")
@@ -65,11 +66,12 @@ abstract class AbstractTimeWindowHistogram<T, U> implements Histogram {
         this.clock = clock;
         this.distributionStatisticConfig = validateDistributionConfig(distributionStatisticConfig);
 
-        final int ageBuckets = distributionStatisticConfig.getBufferLength();
+        final int ageBuckets = Objects.requireNonNull(distributionStatisticConfig.getBufferLength());
 
         ringBuffer = (T[]) Array.newInstance(bucketType, ageBuckets);
 
-        durationBetweenRotatesMillis = distributionStatisticConfig.getExpiry().toMillis() / ageBuckets;
+        durationBetweenRotatesMillis = Objects.requireNonNull(distributionStatisticConfig.getExpiry()).toMillis()
+                / ageBuckets;
         if (durationBetweenRotatesMillis <= 0) {
             rejectHistogramConfig("expiry (" + distributionStatisticConfig.getExpiry().toMillis()
                     + "ms) / bufferLength (" + ageBuckets + ") must be greater than 0.");
@@ -123,8 +125,7 @@ abstract class AbstractTimeWindowHistogram<T, U> implements Histogram {
     /**
      * @return counts at the monitored histogram buckets for this histogram
      */
-    @Nullable
-    abstract CountAtBucket[] countsAtBuckets();
+    abstract CountAtBucket @Nullable [] countsAtBuckets();
 
     void outputSummary(PrintStream out, double bucketScaling) {
     }
@@ -151,7 +152,7 @@ abstract class AbstractTimeWindowHistogram<T, U> implements Histogram {
         }
     }
 
-    private ValueAtPercentile[] takeValueSnapshot() {
+    private ValueAtPercentile @Nullable [] takeValueSnapshot() {
         double[] monitoredPercentiles = distributionStatisticConfig.getPercentiles();
         if (monitoredPercentiles == null || monitoredPercentiles.length == 0) {
             return null;

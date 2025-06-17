@@ -15,7 +15,6 @@
  */
 package io.micrometer.core.instrument.binder.okhttp3;
 
-import io.micrometer.common.lang.NonNull;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
@@ -23,6 +22,7 @@ import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.binder.MeterBinder;
 import okhttp3.ConnectionPool;
+import org.jspecify.annotations.NonNull;
 
 import java.util.Collections;
 import java.util.Optional;

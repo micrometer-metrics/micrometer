@@ -18,6 +18,7 @@ package io.micrometer.core.instrument.step;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.MockClock;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.TimeUnit;
@@ -35,7 +36,7 @@ class StepCounterTest {
         }
 
         @Override
-        public String get(String key) {
+        public @Nullable String get(String key) {
             return null;
         }
     };

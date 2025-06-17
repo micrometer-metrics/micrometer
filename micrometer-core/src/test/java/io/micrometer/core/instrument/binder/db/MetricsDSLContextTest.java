@@ -15,7 +15,6 @@
  */
 package io.micrometer.core.instrument.binder.db;
 
-import io.micrometer.common.lang.NonNull;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
@@ -24,6 +23,7 @@ import org.jooq.*;
 import org.jooq.exception.DataAccessException;
 import org.jooq.impl.DSL;
 import org.jooq.impl.DefaultConfiguration;
+import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.Test;
 
 import java.sql.Connection;
@@ -192,8 +192,7 @@ class MetricsDSLContextTest {
         assertThat(executeListenerProviders[1].provide()).isInstanceOf(JooqExecuteListener.class);
     }
 
-    @NonNull
-    private MetricsDSLContext createDatabase(Connection conn) {
+    private @NonNull MetricsDSLContext createDatabase(Connection conn) {
         // tag::setup[]
         Configuration configuration = new DefaultConfiguration().set(conn).set(SQLDialect.H2);
 

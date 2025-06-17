@@ -15,8 +15,8 @@
  */
 package io.micrometer.core.instrument.binder;
 
-import io.micrometer.common.lang.NonNull;
 import io.micrometer.core.instrument.MeterRegistry;
+import org.jspecify.annotations.NonNull;
 
 /**
  * Binders register one or more metrics to provide information about the state of some

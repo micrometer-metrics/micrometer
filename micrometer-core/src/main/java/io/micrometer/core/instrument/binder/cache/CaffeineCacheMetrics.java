@@ -20,12 +20,11 @@ import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.LoadingCache;
 import com.github.benmanes.caffeine.cache.stats.CacheStats;
-import io.micrometer.common.lang.NonNullApi;
-import io.micrometer.common.lang.NonNullFields;
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.common.util.internal.logging.InternalLogger;
 import io.micrometer.common.util.internal.logging.InternalLoggerFactory;
 import io.micrometer.core.instrument.*;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
@@ -44,8 +43,7 @@ import java.util.function.ToLongFunction;
  * @author Clint Checketts
  * @see CaffeineStatsCounter
  */
-@NonNullApi
-@NonNullFields
+@NullMarked
 public class CaffeineCacheMetrics<K, V, C extends Cache<K, V>> extends CacheMeterBinder<C> {
 
     private static final String DESCRIPTION_CACHE_LOAD = "The number of times cache lookup methods have successfully loaded a new value or failed to load a new value, either because no value was found or an exception was thrown while loading";
@@ -149,7 +147,7 @@ public class CaffeineCacheMetrics<K, V, C extends Cache<K, V>> extends CacheMete
     }
 
     @Override
-    protected Long size() {
+    protected @Nullable Long size() {
         return getOrDefault(Cache::estimatedSize, null, false);
     }
 
@@ -159,12 +157,12 @@ public class CaffeineCacheMetrics<K, V, C extends Cache<K, V>> extends CacheMete
     }
 
     @Override
-    protected Long missCount() {
+    protected @Nullable Long missCount() {
         return getOrDefault(c -> c.stats().missCount(), null);
     }
 
     @Override
-    protected Long evictionCount() {
+    protected @Nullable Long evictionCount() {
         return getOrDefault(c -> c.stats().evictionCount(), null);
     }
 
@@ -206,13 +204,12 @@ public class CaffeineCacheMetrics<K, V, C extends Cache<K, V>> extends CacheMete
         }
     }
 
-    @Nullable
-    private Long getOrDefault(Function<C, Long> function, @Nullable Long defaultValue) {
+    private @Nullable Long getOrDefault(Function<C, Long> function, @Nullable Long defaultValue) {
         return getOrDefault(function, defaultValue, true);
     }
 
-    @Nullable
-    private Long getOrDefault(Function<C, Long> function, @Nullable Long defaultValue, boolean recordingStatsRequired) {
+    private @Nullable Long getOrDefault(Function<C, Long> function, @Nullable Long defaultValue,
+            boolean recordingStatsRequired) {
         C cache = getCache();
         if (cache != null) {
             if (recordingStatsRequired && !cache.policy().isRecordingStats()) {

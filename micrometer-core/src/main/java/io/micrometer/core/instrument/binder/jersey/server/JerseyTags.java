@@ -15,7 +15,6 @@
  */
 package io.micrometer.core.instrument.binder.jersey.server;
 
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.common.util.StringUtils;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.binder.http.Outcome;
@@ -24,6 +23,7 @@ import org.glassfish.jersey.server.ContainerResponse;
 import org.glassfish.jersey.server.ExtendedUriInfo;
 import org.glassfish.jersey.server.monitoring.RequestEvent;
 import org.glassfish.jersey.uri.UriTemplate;
+import org.jspecify.annotations.Nullable;
 
 import java.util.List;
 import java.util.regex.Pattern;
@@ -119,8 +119,7 @@ public final class JerseyTags {
      * @param event request from which to extract the pattern
      * @return normalized matched pattern or {@code null} if nothing matched
      */
-    @Nullable
-    static String getMatchingPattern(RequestEvent event) {
+    static @Nullable String getMatchingPattern(RequestEvent event) {
         ExtendedUriInfo uriInfo = event.getUriInfo();
         List<UriTemplate> templates = uriInfo.getMatchedTemplates();
         if (templates.isEmpty()) {

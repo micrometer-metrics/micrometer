@@ -30,6 +30,7 @@ import static java.util.Collections.emptyList;
 
 class EhCache2MetricsCompatibilityTest extends CacheMeterBinderCompatibilityKit<Ehcache> {
 
+    @SuppressWarnings("NullAway.Init")
     private CacheManager cacheManager;
 
     @AfterEach

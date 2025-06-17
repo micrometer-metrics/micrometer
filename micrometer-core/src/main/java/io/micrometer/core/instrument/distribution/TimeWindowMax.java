@@ -18,6 +18,7 @@ package io.micrometer.core.instrument.distribution;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.util.TimeUtils;
 
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import java.util.concurrent.atomic.AtomicLong;
@@ -49,7 +50,8 @@ public class TimeWindowMax {
 
     @SuppressWarnings("ConstantConditions")
     public TimeWindowMax(Clock clock, DistributionStatisticConfig config) {
-        this(clock, config.getExpiry().toMillis(), config.getBufferLength());
+        this(clock, Objects.requireNonNull(config.getExpiry()).toMillis(),
+                Objects.requireNonNull(config.getBufferLength()));
     }
 
     public TimeWindowMax(Clock clock, long rotateFrequencyMillis, int bufferLength) {

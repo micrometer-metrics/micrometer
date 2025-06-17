@@ -19,10 +19,10 @@ package io.micrometer.core.instrument.binder.grpc;
 import io.grpc.Metadata;
 import io.grpc.MethodDescriptor.MethodType;
 import io.grpc.Status.Code;
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.transport.Propagator.Getter;
 import io.micrometer.observation.transport.RequestReplyReceiverContext;
+import org.jspecify.annotations.Nullable;
 
 /**
  * {@link Observation.Context} for gRPC server.
@@ -32,37 +32,35 @@ import io.micrometer.observation.transport.RequestReplyReceiverContext;
  */
 public class GrpcServerObservationContext extends RequestReplyReceiverContext<Metadata, Object> {
 
-    private String serviceName;
+    private @Nullable String serviceName;
 
-    private String methodName;
+    private @Nullable String methodName;
 
+    @SuppressWarnings("NullAway.Init")
     private String fullMethodName;
 
+    @SuppressWarnings("NullAway.Init")
     private MethodType methodType;
 
-    @Nullable
-    private Code statusCode;
+    private @Nullable Code statusCode;
 
-    @Nullable
-    private String authority;
+    private @Nullable String authority;
 
-    private Metadata headers;
+    private @Nullable Metadata headers;
 
-    private Metadata trailers;
+    private @Nullable Metadata trailers;
 
     private boolean cancelled;
 
-    @Nullable
-    private String peerName;
+    private @Nullable String peerName;
 
-    @Nullable
-    private Integer peerPort;
+    private @Nullable Integer peerPort;
 
     public GrpcServerObservationContext(Getter<Metadata> getter) {
         super(getter);
     }
 
-    public String getServiceName() {
+    public @Nullable String getServiceName() {
         return this.serviceName;
     }
 
@@ -70,7 +68,7 @@ public class GrpcServerObservationContext extends RequestReplyReceiverContext<Me
         this.serviceName = serviceName;
     }
 
-    public String getMethodName() {
+    public @Nullable String getMethodName() {
         return this.methodName;
     }
 
@@ -94,8 +92,7 @@ public class GrpcServerObservationContext extends RequestReplyReceiverContext<Me
         this.methodType = methodType;
     }
 
-    @Nullable
-    public Code getStatusCode() {
+    public @Nullable Code getStatusCode() {
         return this.statusCode;
     }
 
@@ -103,8 +100,7 @@ public class GrpcServerObservationContext extends RequestReplyReceiverContext<Me
         this.statusCode = statusCode;
     }
 
-    @Nullable
-    public String getAuthority() {
+    public @Nullable String getAuthority() {
         return this.authority;
     }
 
@@ -117,7 +113,7 @@ public class GrpcServerObservationContext extends RequestReplyReceiverContext<Me
      * @return response headers
      * @since 1.13.0
      */
-    public Metadata getHeaders() {
+    public @Nullable Metadata getHeaders() {
         return this.headers;
     }
 
@@ -135,7 +131,7 @@ public class GrpcServerObservationContext extends RequestReplyReceiverContext<Me
      * @return trailers
      * @since 1.13.0
      */
-    public Metadata getTrailers() {
+    public @Nullable Metadata getTrailers() {
         return this.trailers;
     }
 
@@ -165,8 +161,7 @@ public class GrpcServerObservationContext extends RequestReplyReceiverContext<Me
         this.cancelled = cancelled;
     }
 
-    @Nullable
-    public String getPeerName() {
+    public @Nullable String getPeerName() {
         return this.peerName;
     }
 
@@ -174,8 +169,7 @@ public class GrpcServerObservationContext extends RequestReplyReceiverContext<Me
         this.peerName = peerName;
     }
 
-    @Nullable
-    public Integer getPeerPort() {
+    public @Nullable Integer getPeerPort() {
         return this.peerPort;
     }
 
