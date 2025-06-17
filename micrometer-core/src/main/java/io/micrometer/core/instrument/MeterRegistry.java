@@ -70,7 +70,7 @@ public abstract class MeterRegistry {
     private static final WarnThenDebugLogger doubleRegistrationLogger = new WarnThenDebugLogger(MeterRegistry.class);
 
     // @formatter:off
-    private static final EnumMap<TimeUnit, @NonNull String> BASE_TIME_UNIT_STRING_CACHE = Arrays.stream(TimeUnit.values())
+    private static final EnumMap<TimeUnit, String> BASE_TIME_UNIT_STRING_CACHE = Arrays.stream(TimeUnit.values())
         .collect(
             Collectors.toMap(
                 Function.identity(),
@@ -325,7 +325,10 @@ public abstract class MeterRegistry {
      */
     protected abstract DistributionStatisticConfig defaultHistogramConfig();
 
-    // I don't know how to make NullAway understand the EnumMap can't return null
+    // We know the EnumMap doesn't return null because
+    // it contains all TimeUnit values and
+    // none map to null and
+    // getBaseTimeUnit does not return null.
     @SuppressWarnings("NullAway")
     private String getBaseTimeUnitStr() {
         return BASE_TIME_UNIT_STRING_CACHE.get(getBaseTimeUnit());

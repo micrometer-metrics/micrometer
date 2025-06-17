@@ -18,6 +18,7 @@ package io.micrometer.core.instrument;
 import io.micrometer.core.annotation.Timed;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.HistogramSupport;
+import org.jspecify.annotations.NullUnmarked;
 import org.jspecify.annotations.Nullable;
 
 import java.time.Duration;
@@ -67,7 +68,7 @@ public interface LongTaskTimer extends Meter, HistogramSupport {
      * @return The return value of {@code f}.
      * @throws Exception Any exception bubbling up from the callable.
      */
-    default <T> @Nullable T recordCallable(Callable<T> f) throws Exception {
+    default <T> @NullUnmarked T recordCallable(Callable<T> f) throws Exception {
         Sample sample = start();
         try {
             return f.call();
@@ -83,7 +84,7 @@ public interface LongTaskTimer extends Meter, HistogramSupport {
      * @param <T> The return type of the {@link Supplier}.
      * @return The return value of {@code f}.
      */
-    default <T> @Nullable T record(Supplier<T> f) {
+    default <T> @NullUnmarked T record(Supplier<T> f) {
         Sample sample = start();
         try {
             return f.get();
