@@ -73,6 +73,8 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
 
     private final StackdriverConfig config;
 
+    private final MetricServiceClientFactory clientFactory;
+
     private long previousBatchEndTime;
 
     /**
@@ -87,14 +89,16 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
     MetricServiceClient client;
 
     public StackdriverMeterRegistry(StackdriverConfig config, Clock clock) {
-        this(config, clock, DEFAULT_THREAD_FACTORY, () -> MetricServiceSettings.newBuilder().build());
+        this(config, clock, DEFAULT_THREAD_FACTORY, () -> MetricServiceSettings.newBuilder().build(),
+                new StackdriverMetricServiceClientFactory());
     }
 
     private StackdriverMeterRegistry(StackdriverConfig config, Clock clock, ThreadFactory threadFactory,
-            Callable<MetricServiceSettings> metricServiceSettings) {
+            Callable<MetricServiceSettings> metricServiceSettings, MetricServiceClientFactory clientFactory) {
         super(config, clock);
 
         this.config = config;
+        this.clientFactory = clientFactory;
 
         try {
             this.metricServiceSettings = metricServiceSettings.call();
@@ -123,7 +127,7 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
             else {
                 shutdownClientIfNecessary(true);
                 try {
-                    this.client = MetricServiceClient.create(metricServiceSettings);
+                    this.client = this.clientFactory.create(metricServiceSettings);
                     super.start(threadFactory);
                 }
                 catch (Exception e) {
@@ -311,6 +315,8 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
 
         private Callable<MetricServiceSettings> metricServiceSettings;
 
+        private MetricServiceClientFactory clientFactory = new StackdriverMetricServiceClientFactory();
+
         Builder(StackdriverConfig config) {
             this.config = config;
             this.metricServiceSettings = () -> {
@@ -338,8 +344,14 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
             return this;
         }
 
+        // VisibleForTesting
+        Builder clientFactory(MetricServiceClientFactory clientFactory) {
+            this.clientFactory = clientFactory;
+            return this;
+        }
+
         public StackdriverMeterRegistry build() {
-            return new StackdriverMeterRegistry(config, clock, threadFactory, metricServiceSettings);
+            return new StackdriverMeterRegistry(config, clock, threadFactory, metricServiceSettings, clientFactory);
         }
 
     }
@@ -421,6 +433,10 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
         private void createMetricDescriptorIfNecessary(MetricServiceClient client, Meter.Id id,
                 MetricDescriptor.ValueType valueType, @Nullable String statistic,
                 MetricDescriptor.MetricKind metricKind) {
+
+            if (!config.autoCreateMetricDescriptors()) {
+                return;
+            }
 
             if (verifiedDescriptors.isEmpty()) {
                 prePopulateVerifiedDescriptors();
