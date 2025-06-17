@@ -76,6 +76,7 @@ subprojects {
             options.errorprone.disableWarningsInGeneratedCode = true
             options.errorprone.excludedPaths = ".*/build/generated/.*"
             options.errorprone.error(
+                    "AttemptedNegativeZero",
                     "BadImport",
                     "ClassCanBeStatic",
                     "DefaultCharset",
