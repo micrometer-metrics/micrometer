@@ -18,17 +18,17 @@ package io.micrometer.core.instrument.binder.mongodb;
 import com.mongodb.client.MongoClient;
 import com.mongodb.connection.ServerId;
 import com.mongodb.event.*;
-import io.micrometer.common.lang.NonNullApi;
-import io.micrometer.common.lang.NonNullFields;
 import io.micrometer.core.annotation.Incubating;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
+import org.jspecify.annotations.NullMarked;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -41,8 +41,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @since 1.2.0
  * @implNote This implementation requires MongoDB Java driver 4 or later.
  */
-@NonNullApi
-@NonNullFields
+@NullMarked
 @Incubating(since = "1.2.0")
 public class MongoMetricsConnectionPoolListener implements ConnectionPoolListener {
 
@@ -98,7 +97,7 @@ public class MongoMetricsConnectionPoolListener implements ConnectionPoolListene
     @Override
     public void connectionPoolClosed(ConnectionPoolClosedEvent event) {
         ServerId serverId = event.getServerId();
-        for (Meter meter : meters.get(serverId)) {
+        for (Meter meter : Objects.requireNonNull(meters.get(serverId))) {
             registry.remove(meter);
         }
         meters.remove(serverId);

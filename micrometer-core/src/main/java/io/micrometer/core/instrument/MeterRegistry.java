@@ -15,7 +15,6 @@
  */
 package io.micrometer.core.instrument;
 
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.common.util.internal.logging.InternalLogger;
 import io.micrometer.common.util.internal.logging.InternalLoggerFactory;
 import io.micrometer.common.util.internal.logging.WarnThenDebugLogger;
@@ -31,6 +30,7 @@ import io.micrometer.core.instrument.search.MeterNotFoundException;
 import io.micrometer.core.instrument.search.RequiredSearch;
 import io.micrometer.core.instrument.search.Search;
 import io.micrometer.core.instrument.util.TimeUtils;
+import org.jspecify.annotations.Nullable;
 
 import java.time.Duration;
 import java.util.*;
@@ -136,8 +136,7 @@ public abstract class MeterRegistry {
 
     private PauseDetector pauseDetector = new NoPauseDetector();
 
-    @Nullable
-    private HighCardinalityTagsDetector highCardinalityTagsDetector;
+    private @Nullable HighCardinalityTagsDetector highCardinalityTagsDetector;
 
     /**
      * We'll use snake case as a general-purpose default for registries because it is the
@@ -325,6 +324,11 @@ public abstract class MeterRegistry {
      */
     protected abstract DistributionStatisticConfig defaultHistogramConfig();
 
+    // We know the EnumMap doesn't return null because
+    // it contains all TimeUnit values and
+    // none map to null and
+    // getBaseTimeUnit does not return null.
+    @SuppressWarnings("NullAway")
     private String getBaseTimeUnitStr() {
         return BASE_TIME_UNIT_STRING_CACHE.get(getBaseTimeUnit());
     }
@@ -517,8 +521,8 @@ public abstract class MeterRegistry {
      * @return The state object that was passed in so the registration can be done as part
      * of an assignment statement.
      */
-    @Nullable
-    public <T> T gauge(String name, Iterable<Tag> tags, @Nullable T stateObject, ToDoubleFunction<T> valueFunction) {
+    public <T> @Nullable T gauge(String name, Iterable<Tag> tags, @Nullable T stateObject,
+            ToDoubleFunction<T> valueFunction) {
         Gauge.builder(name, stateObject, valueFunction).tags(tags).register(this);
         return stateObject;
     }
@@ -533,8 +537,7 @@ public abstract class MeterRegistry {
      * @return The number that was passed in so the registration can be done as part of an
      * assignment statement.
      */
-    @Nullable
-    public <T extends Number> T gauge(String name, Iterable<Tag> tags, T number) {
+    public <T extends Number> @Nullable T gauge(String name, Iterable<Tag> tags, T number) {
         return gauge(name, tags, number, Number::doubleValue);
     }
 
@@ -547,8 +550,7 @@ public abstract class MeterRegistry {
      * @return The number that was passed in so the registration can be done as part of an
      * assignment statement.
      */
-    @Nullable
-    public <T extends Number> T gauge(String name, T number) {
+    public <T extends Number> @Nullable T gauge(String name, T number) {
         return gauge(name, emptyList(), number);
     }
 
@@ -562,8 +564,7 @@ public abstract class MeterRegistry {
      * @return The state object that was passed in so the registration can be done as part
      * of an assignment statement.
      */
-    @Nullable
-    public <T> T gauge(String name, T stateObject, ToDoubleFunction<T> valueFunction) {
+    public <T> @Nullable T gauge(String name, T stateObject, ToDoubleFunction<T> valueFunction) {
         return gauge(name, emptyList(), stateObject, valueFunction);
     }
 
@@ -581,8 +582,7 @@ public abstract class MeterRegistry {
      * @return The Collection that was passed in so the registration can be done as part
      * of an assignment statement.
      */
-    @Nullable
-    public <T extends Collection<?>> T gaugeCollectionSize(String name, Iterable<Tag> tags, T collection) {
+    public <T extends Collection<?>> @Nullable T gaugeCollectionSize(String name, Iterable<Tag> tags, T collection) {
         return gauge(name, tags, collection, Collection::size);
     }
 
@@ -599,8 +599,7 @@ public abstract class MeterRegistry {
      * @return The Map that was passed in so the registration can be done as part of an
      * assignment statement.
      */
-    @Nullable
-    public <T extends Map<?, ?>> T gaugeMapSize(String name, Iterable<Tag> tags, T map) {
+    public <T extends Map<?, ?>> @Nullable T gaugeMapSize(String name, Iterable<Tag> tags, T map) {
         return gauge(name, tags, map, Map::size);
     }
 
@@ -760,8 +759,7 @@ public abstract class MeterRegistry {
      * @since 1.1.0
      */
     @Incubating(since = "1.1.0")
-    @Nullable
-    public Meter remove(Meter meter) {
+    public @Nullable Meter remove(Meter meter) {
         return remove(meter.getId());
     }
 
@@ -774,8 +772,7 @@ public abstract class MeterRegistry {
      * @since 1.3.16
      */
     @Incubating(since = "1.3.16")
-    @Nullable
-    public Meter removeByPreFilterId(Meter.Id preFilterId) {
+    public @Nullable Meter removeByPreFilterId(Meter.Id preFilterId) {
         final Meter meterToRemove = preFilterIdToMeterMap.get(preFilterId);
         if (meterToRemove == null)
             return remove(mapId(preFilterId));
@@ -792,8 +789,7 @@ public abstract class MeterRegistry {
      * @since 1.1.0
      */
     @Incubating(since = "1.1.0")
-    @Nullable
-    public Meter remove(Meter.Id mappedId) {
+    public @Nullable Meter remove(Meter.Id mappedId) {
         if (meterMap.containsKey(mappedId)) {
             synchronized (meterMapLock) {
                 final Meter removedMeter = meterMap.remove(mappedId);
@@ -1030,8 +1026,7 @@ public abstract class MeterRegistry {
          * @return The {@link HighCardinalityTagsDetector} that is currently in effect.
          * @since 1.10.0
          */
-        @Nullable
-        public HighCardinalityTagsDetector highCardinalityTagsDetector() {
+        public @Nullable HighCardinalityTagsDetector highCardinalityTagsDetector() {
             return highCardinalityTagsDetector;
         }
 

@@ -44,6 +44,7 @@ public abstract class CacheMeterBinderCompatibilityKit<C> {
     /**
      * Performs any actions necessary to fully dereference the cache object.
      */
+    @SuppressWarnings("NullAway")
     public void dereferenceCache() {
         this.cache = null;
     }

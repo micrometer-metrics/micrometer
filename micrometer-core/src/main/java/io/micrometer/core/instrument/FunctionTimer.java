@@ -15,7 +15,7 @@
  */
 package io.micrometer.core.instrument;
 
-import io.micrometer.common.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
@@ -85,14 +85,12 @@ public interface FunctionTimer extends Meter {
 
         private Tags tags = Tags.empty();
 
-        @Nullable
         private final T obj;
 
-        @Nullable
-        private String description;
+        private @Nullable String description;
 
-        private Builder(String name, @Nullable T obj, ToLongFunction<T> countFunction,
-                ToDoubleFunction<T> totalTimeFunction, TimeUnit totalTimeFunctionUnit) {
+        private Builder(String name, T obj, ToLongFunction<T> countFunction, ToDoubleFunction<T> totalTimeFunction,
+                TimeUnit totalTimeFunctionUnit) {
             this.name = name;
             this.obj = obj;
             this.countFunction = countFunction;

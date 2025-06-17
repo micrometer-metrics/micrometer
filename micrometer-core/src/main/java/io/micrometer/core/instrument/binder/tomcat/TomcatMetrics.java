@@ -15,13 +15,12 @@
  */
 package io.micrometer.core.instrument.binder.tomcat;
 
-import io.micrometer.common.lang.NonNullApi;
-import io.micrometer.common.lang.NonNullFields;
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.binder.MeterBinder;
 import org.apache.catalina.Manager;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 import javax.management.*;
 import java.lang.management.ManagementFactory;
@@ -43,8 +42,7 @@ import java.util.function.BiConsumer;
  * @author Jon Schneider
  * @author Johnny Lim
  */
-@NonNullApi
-@NonNullFields
+@NullMarked
 public class TomcatMetrics implements MeterBinder, AutoCloseable {
 
     private static final String JMX_DOMAIN_EMBEDDED = "Tomcat";
@@ -57,8 +55,7 @@ public class TomcatMetrics implements MeterBinder, AutoCloseable {
 
     private static final String OBJECT_NAME_SERVER_STANDALONE = JMX_DOMAIN_STANDALONE + OBJECT_NAME_SERVER_SUFFIX;
 
-    @Nullable
-    private final Manager manager;
+    private final @Nullable Manager manager;
 
     private final MBeanServer mBeanServer;
 
@@ -66,7 +63,7 @@ public class TomcatMetrics implements MeterBinder, AutoCloseable {
 
     private final Set<NotificationListener> notificationListeners = ConcurrentHashMap.newKeySet();
 
-    private volatile String jmxDomain;
+    private volatile @Nullable String jmxDomain;
 
     public TomcatMetrics(@Nullable Manager manager, Iterable<Tag> tags) {
         this(manager, tags, getMBeanServer());
@@ -330,7 +327,7 @@ public class TomcatMetrics implements MeterBinder, AutoCloseable {
         }
     }
 
-    private String getJmxDomain() {
+    private @Nullable String getJmxDomain() {
         if (this.jmxDomain == null) {
             if (hasObjectName(OBJECT_NAME_SERVER_EMBEDDED)) {
                 this.jmxDomain = JMX_DOMAIN_EMBEDDED;

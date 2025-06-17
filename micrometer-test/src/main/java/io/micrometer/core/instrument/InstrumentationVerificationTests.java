@@ -90,7 +90,8 @@ abstract class InstrumentationVerificationTests {
                 // JUnit 5.12 and before
                 "org.junit.jupiter.params.ParameterizedTestParameterResolver"));
 
-        private ParameterResolver parameterisedTestParameterResolver = null;
+        @SuppressWarnings("NullAway.Init")
+        private ParameterResolver parameterisedTestParameterResolver;
 
         @Override
         public void invokeBeforeEachMethod(ExtensionContext context, ExtensionRegistry registry) {

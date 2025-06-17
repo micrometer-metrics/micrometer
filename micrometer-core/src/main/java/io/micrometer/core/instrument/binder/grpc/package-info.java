@@ -21,7 +21,7 @@
  * {@link io.micrometer.core.instrument.binder.grpc.MetricCollectingServerInterceptor} for
  * usage examples.
  */
-@NonNullApi
+@NullMarked
 package io.micrometer.core.instrument.binder.grpc;
 
-import io.micrometer.common.lang.NonNullApi;
+import org.jspecify.annotations.NullMarked;

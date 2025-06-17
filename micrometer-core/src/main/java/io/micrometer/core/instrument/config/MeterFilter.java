@@ -15,9 +15,9 @@
  */
 package io.micrometer.core.instrument.config;
 
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
+import org.jspecify.annotations.Nullable;
 
 import java.time.Duration;
 import java.util.ArrayList;
@@ -257,13 +257,12 @@ public interface MeterFilter {
                 return MeterFilterReply.NEUTRAL;
             }
 
-            @Nullable
-            private String matchNameAndGetTagValue(Meter.Id id) {
+            private @Nullable String matchNameAndGetTagValue(Meter.Id id) {
                 return id.getName().startsWith(meterNamePrefix) ? id.getTag(tagKey) : null;
             }
 
             @Override
-            public DistributionStatisticConfig configure(Meter.Id id, DistributionStatisticConfig config) {
+            public @Nullable DistributionStatisticConfig configure(Meter.Id id, DistributionStatisticConfig config) {
                 String value = matchNameAndGetTagValue(id);
                 if (value != null) {
                     if (!observedTagValues.contains(value)) {
@@ -446,8 +445,7 @@ public interface MeterFilter {
      * @param config A histogram configuration guaranteed to be non-null.
      * @return Overrides to any part of the histogram config, when applicable.
      */
-    @Nullable
-    default DistributionStatisticConfig configure(Meter.Id id, DistributionStatisticConfig config) {
+    default @Nullable DistributionStatisticConfig configure(Meter.Id id, DistributionStatisticConfig config) {
         return config;
     }
 

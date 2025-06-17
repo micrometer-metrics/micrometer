@@ -15,14 +15,13 @@
  */
 package io.micrometer.core.instrument.binder.system;
 
-import io.micrometer.common.lang.NonNullApi;
-import io.micrometer.common.lang.NonNullFields;
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.FunctionCounter;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.binder.MeterBinder;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.OperatingSystemMXBean;
@@ -48,8 +47,7 @@ import static java.util.Objects.requireNonNull;
  * @author Clint Checketts
  * @author Tommy Ludwig
  */
-@NonNullApi
-@NonNullFields
+@NullMarked
 public class ProcessorMetrics implements MeterBinder {
 
     /**
@@ -64,17 +62,13 @@ public class ProcessorMetrics implements MeterBinder {
 
     private final OperatingSystemMXBean operatingSystemBean;
 
-    @Nullable
-    private final Class<?> operatingSystemBeanClass;
+    private final @Nullable Class<?> operatingSystemBeanClass;
 
-    @Nullable
-    private final Method systemCpuUsage;
+    private final @Nullable Method systemCpuUsage;
 
-    @Nullable
-    private final Method processCpuUsage;
+    private final @Nullable Method processCpuUsage;
 
-    @Nullable
-    private final Method processCpuTime;
+    private final @Nullable Method processCpuTime;
 
     public ProcessorMetrics() {
         this(emptyList());
@@ -142,8 +136,7 @@ public class ProcessorMetrics implements MeterBinder {
         return number != null ? number.doubleValue() : Double.NaN;
     }
 
-    @Nullable
-    private Method detectMethod(String name) {
+    private @Nullable Method detectMethod(String name) {
         requireNonNull(name);
         if (operatingSystemBeanClass == null) {
             return null;
@@ -158,8 +151,7 @@ public class ProcessorMetrics implements MeterBinder {
         }
     }
 
-    @Nullable
-    private Class<?> getFirstClassFound(List<String> classNames) {
+    private @Nullable Class<?> getFirstClassFound(List<String> classNames) {
         for (String className : classNames) {
             try {
                 return Class.forName(className);

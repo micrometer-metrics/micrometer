@@ -16,10 +16,10 @@
 package io.micrometer.core.instrument.binder.jersey.server;
 
 import io.micrometer.common.docs.KeyName;
-import io.micrometer.common.lang.NonNullApi;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationConvention;
 import io.micrometer.observation.docs.ObservationDocumentation;
+import org.jspecify.annotations.NullMarked;
 
 /**
  * An {@link ObservationDocumentation} for Jersey.
@@ -29,7 +29,7 @@ import io.micrometer.observation.docs.ObservationDocumentation;
  * @deprecated since 1.13.0 use the jersey-micrometer module in the Jersey project instead
  */
 @Deprecated
-@NonNullApi
+@NullMarked
 public enum JerseyObservationDocumentation implements ObservationDocumentation {
 
     /**
@@ -47,7 +47,7 @@ public enum JerseyObservationDocumentation implements ObservationDocumentation {
         }
     };
 
-    @NonNullApi
+    @NullMarked
     enum JerseyLegacyLowCardinalityTags implements KeyName {
 
         OUTCOME {

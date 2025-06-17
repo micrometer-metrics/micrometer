@@ -15,10 +15,10 @@
  */
 package io.micrometer.core.instrument.config.validate;
 
-import io.micrometer.common.lang.NonNull;
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.common.util.StringUtils;
 import io.micrometer.core.annotation.Incubating;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.Iterator;
@@ -165,9 +165,8 @@ public interface Validated<T> extends Iterable<Validated<T>> {
         public void orThrow() {
         }
 
-        @NonNull
         @Override
-        public Iterator<Validated<T>> iterator() {
+        public @NonNull Iterator<Validated<T>> iterator() {
             return Collections.emptyIterator();
         }
 
@@ -211,9 +210,8 @@ public interface Validated<T> extends Iterable<Validated<T>> {
             return true;
         }
 
-        @NonNull
         @Override
-        public Iterator<Validated<T>> iterator() {
+        public @NonNull Iterator<Validated<T>> iterator() {
             return Stream.of((Validated<T>) this).iterator();
         }
 
@@ -256,15 +254,13 @@ public interface Validated<T> extends Iterable<Validated<T>> {
 
         private final String property;
 
-        @Nullable
-        private final Object value;
+        private final @Nullable Object value;
 
         private final String message;
 
         private final InvalidReason reason;
 
-        @Nullable
-        private final Throwable exception;
+        private final @Nullable Throwable exception;
 
         public Invalid(String property, @Nullable Object value, String message, InvalidReason reason,
                 @Nullable Throwable exception) {
@@ -280,9 +276,8 @@ public interface Validated<T> extends Iterable<Validated<T>> {
             return false;
         }
 
-        @NonNull
         @Override
-        public Iterator<Validated<T>> iterator() {
+        public @NonNull Iterator<Validated<T>> iterator() {
             return Stream.of((Validated<T>) this).iterator();
         }
 
@@ -294,8 +289,7 @@ public interface Validated<T> extends Iterable<Validated<T>> {
             return reason;
         }
 
-        @Nullable
-        public Throwable getException() {
+        public @Nullable Throwable getException() {
             return exception;
         }
 
@@ -330,8 +324,7 @@ public interface Validated<T> extends Iterable<Validated<T>> {
             return property;
         }
 
-        @Nullable
-        public Object getValue() {
+        public @Nullable Object getValue() {
             return value;
         }
 
@@ -387,9 +380,8 @@ public interface Validated<T> extends Iterable<Validated<T>> {
             throw new UnsupportedOperationException("cannot invoke flatMap on more than one Validated object");
         }
 
-        @NonNull
         @Override
-        public Iterator<Validated<Object>> iterator() {
+        public @NonNull Iterator<Validated<Object>> iterator() {
             return Stream
                 .concat(stream(left.spliterator(), false).map(v -> v.map(o -> (Object) o)),
                         stream(right.spliterator(), false).map(v -> v.map(o -> (Object) o)))

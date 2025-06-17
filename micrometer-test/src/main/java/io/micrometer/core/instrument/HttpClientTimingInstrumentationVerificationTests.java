@@ -31,6 +31,7 @@ import org.junit.jupiter.params.provider.EnumSource;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.URI;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
@@ -92,7 +93,7 @@ public abstract class HttpClientTimingInstrumentationVerificationTests<CLIENT>
         else {
             this.createdClient = clientInstrumentedWithObservations();
         }
-        return this.createdClient;
+        return Objects.requireNonNull(this.createdClient);
     }
 
     @Override

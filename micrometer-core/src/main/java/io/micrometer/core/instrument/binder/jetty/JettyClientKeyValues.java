@@ -16,12 +16,12 @@
 package io.micrometer.core.instrument.binder.jetty;
 
 import io.micrometer.common.KeyValue;
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.common.util.StringUtils;
 import io.micrometer.core.instrument.binder.http.Outcome;
 import org.eclipse.jetty.client.api.Request;
 import org.eclipse.jetty.client.api.Result;
 import org.eclipse.jetty.http.HttpStatus;
+import org.jspecify.annotations.Nullable;
 
 import java.util.function.BiFunction;
 import java.util.regex.Pattern;
@@ -68,7 +68,7 @@ public final class JettyClientKeyValues {
      * @param request the request
      * @return the method KeyValue whose value is a capitalized method (e.g. GET).
      */
-    public static KeyValue method(Request request) {
+    public static KeyValue method(@Nullable Request request) {
         return (request != null) ? KeyValue.of("method", request.getMethod()) : METHOD_UNKNOWN;
     }
 
@@ -78,7 +78,7 @@ public final class JettyClientKeyValues {
      * @param request the request
      * @return the host KeyValue derived from request
      */
-    public static KeyValue host(Request request) {
+    public static KeyValue host(@Nullable Request request) {
         return (request != null) ? KeyValue.of("host", request.getHost()) : HOST_UNKNOWN;
     }
 
@@ -101,7 +101,7 @@ public final class JettyClientKeyValues {
      * @return the uri KeyValue derived from the request and its result
      */
     public static KeyValue uri(Request request, @Nullable Result result,
-            BiFunction<Request, Result, String> successfulUriPattern) {
+            BiFunction<Request, @Nullable Result, String> successfulUriPattern) {
         if (result != null && result.getResponse() != null) {
             int status = result.getResponse().getStatus();
             if (HttpStatus.isRedirection(status)) {

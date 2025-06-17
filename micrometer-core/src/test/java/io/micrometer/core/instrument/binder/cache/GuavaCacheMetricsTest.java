@@ -69,12 +69,14 @@ class GuavaCacheMetricsTest extends AbstractCacheMetricsTest {
         assertThat(hitCount.count()).isEqualTo((double) metrics.hitCount()).isEqualTo(2);
 
         FunctionCounter missCount = fetch(registry, "cache.gets", Tags.of("result", "miss")).functionCounter();
+        assertThat(metrics.missCount()).isNotNull();
         assertThat(missCount.count()).isEqualTo(metrics.missCount().doubleValue()).isEqualTo(1);
 
         FunctionCounter cachePuts = fetch(registry, "cache.puts").functionCounter();
         assertThat(cachePuts.count()).isEqualTo((double) metrics.putCount());
 
         FunctionCounter cacheEviction = fetch(registry, "cache.evictions").functionCounter();
+        assertThat(metrics.evictionCount()).isNotNull();
         assertThat(cacheEviction.count()).isEqualTo(metrics.evictionCount().doubleValue());
 
         CacheStats stats = cache.stats();

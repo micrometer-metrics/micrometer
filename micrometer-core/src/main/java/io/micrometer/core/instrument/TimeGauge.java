@@ -15,9 +15,9 @@
  */
 package io.micrometer.core.instrument;
 
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.annotation.Incubating;
 import io.micrometer.core.instrument.util.TimeUtils;
+import org.jspecify.annotations.Nullable;
 
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
@@ -84,11 +84,9 @@ public interface TimeGauge extends Gauge {
 
         private boolean strongReference = false;
 
-        @Nullable
-        private final T obj;
+        private final @Nullable T obj;
 
-        @Nullable
-        private String description;
+        private @Nullable String description;
 
         private Builder(String name, @Nullable T obj, TimeUnit fUnits, ToDoubleFunction<T> f) {
             this.name = name;

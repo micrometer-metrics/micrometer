@@ -16,6 +16,8 @@
  */
 package io.micrometer.core.lang;
 
+import org.jspecify.annotations.Nullable;
+
 import javax.annotation.Nonnull;
 import javax.annotation.meta.TypeQualifierDefault;
 import java.lang.annotation.*;
@@ -33,10 +35,8 @@ import java.lang.annotation.*;
  * NOTE: This file has been copied from {@code org.springframework.lang}.
  *
  * @author Sebastien Deleuze
- * @see io.micrometer.common.lang.NonNullFields
- * @see io.micrometer.common.lang.Nullable
- * @see io.micrometer.common.lang.NonNull
- * @deprecated Please use {@link io.micrometer.common.lang.NonNullFields} instead.
+ * @see org.jspecify.annotations.NullMarked
+ * @deprecated Please use {@link org.jspecify.annotations.NullMarked} instead.
  */
 @Target({ ElementType.PACKAGE, ElementType.TYPE })
 @Retention(RetentionPolicy.RUNTIME)

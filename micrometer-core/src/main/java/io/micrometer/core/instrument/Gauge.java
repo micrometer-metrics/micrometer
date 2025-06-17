@@ -15,9 +15,9 @@
  */
 package io.micrometer.core.instrument;
 
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.annotation.Incubating;
 import io.micrometer.core.instrument.distribution.HistogramGauges;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.function.Supplier;
@@ -87,17 +87,13 @@ public interface Gauge extends Meter {
 
         private boolean strongReference = false;
 
-        @Nullable
-        private Meter.Id syntheticAssociation = null;
+        private Meter.@Nullable Id syntheticAssociation = null;
 
-        @Nullable
-        private final T obj;
+        private final @Nullable T obj;
 
-        @Nullable
-        private String description;
+        private @Nullable String description;
 
-        @Nullable
-        private String baseUnit;
+        private @Nullable String baseUnit;
 
         private Builder(String name, @Nullable T obj, ToDoubleFunction<T> f) {
             this.name = name;

@@ -15,7 +15,6 @@
  */
 package io.micrometer.core.instrument.binder.jetty;
 
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.common.util.internal.logging.InternalLogger;
 import io.micrometer.common.util.internal.logging.InternalLoggerFactory;
 import io.micrometer.core.instrument.*;
@@ -34,6 +33,7 @@ import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.NetworkTrafficServerConnector;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.util.component.AbstractLifeCycle;
+import org.jspecify.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -238,8 +238,8 @@ public class JettyConnectionMetrics extends AbstractLifeCycle implements Connect
         addToAllConnectors(server, registry, Tags.empty());
     }
 
-    @Nullable
-    private static Method getNetworkTrafficListenerMethod(NetworkTrafficServerConnector networkTrafficServerConnector) {
+    private static @Nullable Method getNetworkTrafficListenerMethod(
+            NetworkTrafficServerConnector networkTrafficServerConnector) {
         Method method = null;
         try {
             // Jetty 9 method

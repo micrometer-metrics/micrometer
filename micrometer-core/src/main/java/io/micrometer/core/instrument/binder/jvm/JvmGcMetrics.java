@@ -17,15 +17,14 @@ package io.micrometer.core.instrument.binder.jvm;
 
 import com.sun.management.GarbageCollectionNotificationInfo;
 import com.sun.management.GcInfo;
-import io.micrometer.common.lang.NonNullApi;
-import io.micrometer.common.lang.NonNullFields;
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.common.util.internal.logging.InternalLogger;
 import io.micrometer.common.util.internal.logging.InternalLoggerFactory;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.binder.MeterBinder;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 import javax.management.ListenerNotFoundException;
 import javax.management.Notification;
@@ -66,8 +65,7 @@ import static java.util.Collections.emptyList;
  * @author Andrew Krasny
  * @see GarbageCollectorMXBean
  */
-@NonNullApi
-@NonNullFields
+@NullMarked
 public class JvmGcMetrics implements MeterBinder, AutoCloseable {
 
     private static final InternalLogger log = InternalLoggerFactory.getInstance(JvmGcMetrics.class);
@@ -81,22 +79,24 @@ public class JvmGcMetrics implements MeterBinder, AutoCloseable {
 
     private final Iterable<Tag> tags;
 
-    @Nullable
-    private String allocationPoolName;
+    private @Nullable String allocationPoolName;
 
     private final Set<String> longLivedPoolNames = new HashSet<>();
 
     private final List<Runnable> notificationListenerCleanUpRunnables = new CopyOnWriteArrayList<>();
 
+    @SuppressWarnings("NullAway.Init")
     private Counter allocatedBytes;
 
-    @Nullable
-    private Counter promotedBytes;
+    private @Nullable Counter promotedBytes;
 
+    @SuppressWarnings("NullAway.Init")
     private AtomicLong allocationPoolSizeAfter;
 
+    @SuppressWarnings("NullAway.Init")
     private AtomicLong liveDataSize;
 
+    @SuppressWarnings("NullAway.Init")
     private AtomicLong maxDataSize;
 
     public JvmGcMetrics() {
@@ -116,6 +116,7 @@ public class JvmGcMetrics implements MeterBinder, AutoCloseable {
         this.tags = tags;
     }
 
+    @SuppressWarnings("NullAway.Init")
     // VisibleForTesting
     GcMetricsNotificationListener gcNotificationListener;
 
@@ -188,6 +189,9 @@ public class JvmGcMetrics implements MeterBinder, AutoCloseable {
         }
 
         @Override
+        // TODO decide whether it is worth it to add null checks where we generally know
+        // things should be non-null
+        @SuppressWarnings("NullAway")
         public void handleNotification(Notification notification, Object ref) {
             CompositeData cd = (CompositeData) notification.getUserData();
             GarbageCollectionNotificationInfo notificationInfo = GarbageCollectionNotificationInfo.from(cd);
@@ -223,7 +227,7 @@ public class JvmGcMetrics implements MeterBinder, AutoCloseable {
                 .mapToLong(pool -> before.get(pool).getUsed())
                 .sum();
             final long longLivedAfter = longLivedPoolNames.stream().mapToLong(pool -> after.get(pool).getUsed()).sum();
-            if (isGenerationalGc) {
+            if (isGenerationalGc && promotedBytes != null) {
                 final long delta = longLivedAfter - longLivedBefore;
                 if (delta > 0L) {
                     promotedBytes.increment((double) delta);
@@ -246,8 +250,8 @@ public class JvmGcMetrics implements MeterBinder, AutoCloseable {
             if (allocationPoolName == null) {
                 return;
             }
-            final long beforeBytes = before.get(allocationPoolName).getUsed();
-            final long afterBytes = after.get(allocationPoolName).getUsed();
+            final long beforeBytes = Objects.requireNonNull(before.get(allocationPoolName)).getUsed();
+            final long afterBytes = Objects.requireNonNull(after.get(allocationPoolName)).getUsed();
             final long delta = beforeBytes - allocationPoolSizeAfter.get();
             allocationPoolSizeAfter.set(afterBytes);
             if (delta > 0L) {
@@ -357,7 +361,7 @@ public class JvmGcMetrics implements MeterBinder, AutoCloseable {
      * Generalization of which parts of the heap are considered "young" or "old" for
      * multiple GC implementations
      */
-    @NonNullApi
+    @NullMarked
     enum GcGenerationAge {
 
         OLD, YOUNG, UNKNOWN;

@@ -15,11 +15,10 @@
  */
 package io.micrometer.core.instrument.binder.cache;
 
-import io.micrometer.common.lang.NonNullApi;
-import io.micrometer.common.lang.NonNullFields;
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.MeterBinder;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 import java.lang.ref.WeakReference;
 
@@ -34,8 +33,7 @@ import java.lang.ref.WeakReference;
  *
  * @author Jon Schneider
  */
-@NonNullApi
-@NonNullFields
+@NullMarked
 public abstract class CacheMeterBinder<C> implements MeterBinder {
 
     private static final String DESCRIPTION_CACHE_GETS = "The number of times cache lookup methods have returned a cached (hit) or uncached (newly loaded or null) value (miss).";
@@ -51,14 +49,16 @@ public abstract class CacheMeterBinder<C> implements MeterBinder {
         this.cacheRef = new WeakReference<>(cache);
     }
 
-    @Nullable
-    protected C getCache() {
+    protected @Nullable C getCache() {
         return cacheRef.get();
     }
 
     @Override
     public final void bindTo(MeterRegistry registry) {
         C cache = getCache();
+        if (cache == null) {
+            return;
+        }
         if (size() != null) {
             Gauge.builder("cache.size", cache, c -> {
                 Long size = size();
@@ -109,8 +109,7 @@ public abstract class CacheMeterBinder<C> implements MeterBinder {
      * removes, and evictions. Returns {@code null} if the cache implementation does not
      * provide a way to track cache size.
      */
-    @Nullable
-    protected abstract Long size();
+    protected abstract @Nullable Long size();
 
     /**
      * @return Get requests that resulted in a "hit" against an existing cache entry.
@@ -125,8 +124,7 @@ public abstract class CacheMeterBinder<C> implements MeterBinder {
      * implementation does not provide a way to track miss count, especially in
      * distributed caches.
      */
-    @Nullable
-    protected abstract Long missCount();
+    protected abstract @Nullable Long missCount();
 
     /**
      * @return Total number of entries that have been evicted from the cache.
@@ -134,8 +132,7 @@ public abstract class CacheMeterBinder<C> implements MeterBinder {
      * implementation does not support eviction, or does not provide a way to track the
      * eviction count.
      */
-    @Nullable
-    protected abstract Long evictionCount();
+    protected abstract @Nullable Long evictionCount();
 
     /**
      * The put mechanism is unimportant - this count applies to entries added to the cache

@@ -16,10 +16,10 @@
 package io.micrometer.samples.spring6.aop;
 
 import io.micrometer.common.annotation.ValueExpressionResolver;
-import io.micrometer.common.lang.NonNull;
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.common.util.internal.logging.InternalLogger;
 import io.micrometer.common.util.internal.logging.InternalLoggerFactory;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.springframework.expression.Expression;
 import org.springframework.expression.ExpressionParser;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
@@ -29,9 +29,8 @@ public class SpelValueExpressionResolver implements ValueExpressionResolver {
 
     private static final InternalLogger log = InternalLoggerFactory.getInstance(SpelValueExpressionResolver.class);
 
-    @NonNull
     @Override
-    public String resolve(@NonNull String expression, @Nullable Object parameter) {
+    public @NonNull String resolve(@NonNull String expression, @Nullable Object parameter) {
         try {
             SimpleEvaluationContext context = SimpleEvaluationContext.forReadOnlyDataBinding().build();
             ExpressionParser expressionParser = new SpelExpressionParser();
