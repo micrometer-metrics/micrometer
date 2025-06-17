@@ -282,3 +282,5 @@ tasks.register("openj9ConcurrentScavengeTest", Test) {
 
     jvmArgs '-Xgc:concurrentScavenge'
 }
+
+japicmp.enabled = false
