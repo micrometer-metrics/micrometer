@@ -14,8 +14,7 @@ The following example configures KairosDB:
 ----
 KairosConfig kairosConfig = new KairosConfig() {
     @Override
-    @Nullable
-    public String get(String k) {
+    public @Nullable String get(String k) {
         return null;
     }
 };

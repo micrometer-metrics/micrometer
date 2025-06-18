@@ -100,11 +100,9 @@ public class StatsdMeterRegistry extends MeterRegistry {
 
     private Disposable.Swap meterPoller = Disposables.swap();
 
-    @Nullable
-    private BiFunction<Meter.Id, DistributionStatisticConfig, StatsdLineBuilder> lineBuilderFunction;
+    private @Nullable BiFunction<Meter.Id, DistributionStatisticConfig, StatsdLineBuilder> lineBuilderFunction;
 
-    @Nullable
-    private Consumer<String> lineSink;
+    private @Nullable Consumer<String> lineSink;
 
     private static final AttributeKey<Boolean> CONNECTION_DISPOSED = AttributeKey.valueOf("doOnDisconnectCalled");
 
@@ -509,11 +507,9 @@ public class StatsdMeterRegistry extends MeterRegistry {
 
         private HierarchicalNameMapper nameMapper = HierarchicalNameMapper.DEFAULT;
 
-        @Nullable
-        private BiFunction<Meter.Id, DistributionStatisticConfig, StatsdLineBuilder> lineBuilderFunction = null;
+        private @Nullable BiFunction<Meter.Id, DistributionStatisticConfig, StatsdLineBuilder> lineBuilderFunction = null;
 
-        @Nullable
-        private Consumer<String> lineSink;
+        private @Nullable Consumer<String> lineSink;
 
         Builder(StatsdConfig config) {
             this.config = config;

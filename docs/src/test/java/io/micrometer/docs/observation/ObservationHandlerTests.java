@@ -27,9 +27,9 @@ import io.micrometer.observation.annotation.Observed;
 import io.micrometer.observation.aop.ObservedAspect;
 import io.micrometer.observation.docs.ObservationDocumentation;
 import io.micrometer.observation.tck.TestObservationRegistry;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 import org.springframework.aop.aspectj.annotation.AspectJProxyFactory;
-import org.springframework.lang.Nullable;
 
 import static io.micrometer.docs.observation.ObservationHandlerTests.TaxObservationDocumentation.TaxHighCardinalityKeyNames.USER_ID;
 import static io.micrometer.docs.observation.ObservationHandlerTests.TaxObservationDocumentation.TaxLowCardinalityKeyNames.TAX_TYPE;
@@ -383,8 +383,7 @@ class ObservationHandlerTests {
 
         // If the user wants to override the default they can override this. Otherwise,
         // it will be {@code null}.
-        @Nullable
-        private final TaxObservationConvention observationConvention;
+        private final @Nullable TaxObservationConvention observationConvention;
 
         TaxCalculator(ObservationRegistry observationRegistry,
                 @Nullable TaxObservationConvention observationConvention) {

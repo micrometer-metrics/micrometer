@@ -26,8 +26,7 @@ In this case, there is no need to configure anything, so you can use the followi
 ----
 DynatraceConfig dynatraceConfig = new DynatraceConfig() {
     @Override
-    @Nullable
-    public String get(String k) {
+    public @Nullable String get(String k) {
         // This method of the interface is used by the other configuration methods and needs to be
         // implemented here. Returning null accepts the defaults for the other configuration items.
         return null;
@@ -55,8 +54,7 @@ DynatraceConfig dynatraceConfig = new DynatraceConfig() {
     }
 
     @Override
-    @Nullable
-    public String get(String k) {
+    public @Nullable String get(String k) {
         return null; // accept the rest of the defaults
     }
 };
@@ -107,8 +105,7 @@ DynatraceConfig dynatraceConfig = new DynatraceConfig() {
     }
 
     @Override
-    @Nullable
-    public String get(String k) {
+    public @Nullable String get(String k) {
         return null; // accept the rest of the defaults
     }
 };
@@ -228,8 +225,7 @@ DynatraceConfig dynatraceConfig = new DynatraceConfig() {
     }
 
     @Override
-    @Nullable
-    public String get(String k) {
+    public @Nullable String get(String k) {
         return null; // accept the rest of the defaults
     }
 };
@@ -315,8 +311,7 @@ DynatraceConfig dynatraceConfig = new DynatraceConfig() {
     }
 
     @Override
-    @Nullable
-    public String get(String k) {
+    public @Nullable String get(String k) {
         return null; // accept the rest of the defaults
     }
 };
