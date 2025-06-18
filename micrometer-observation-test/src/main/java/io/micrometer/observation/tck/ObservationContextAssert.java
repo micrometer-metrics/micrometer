@@ -22,6 +22,7 @@ import io.micrometer.observation.ObservationView;
 import org.assertj.core.api.AbstractAssert;
 import org.assertj.core.api.AbstractThrowableAssert;
 import org.assertj.core.api.ThrowingConsumer;
+import org.jspecify.annotations.Nullable;
 
 import java.util.*;
 import java.util.function.Predicate;
@@ -105,7 +106,7 @@ public class ObservationContextAssert<SELF extends ObservationContextAssert<SELF
         return (SELF) this;
     }
 
-    public SELF hasContextualNameEqualTo(String name) {
+    public SELF hasContextualNameEqualTo(@Nullable String name) {
         isNotNull();
         String actualName = this.actual.getContextualName();
         if (!Objects.equals(name, actualName)) {
@@ -452,7 +453,8 @@ public class ObservationContextAssert<SELF extends ObservationContextAssert<SELF
         if (p == null) {
             failWithMessage("Observation should have a parent");
         }
-        return p;
+        // see: https://github.com/uber/NullAway/issues/1222
+        return Objects.requireNonNull(p);
     }
 
     /**
@@ -467,7 +469,7 @@ public class ObservationContextAssert<SELF extends ObservationContextAssert<SELF
         if (realParent == null) {
             failWithMessage("Observation should have parent <%s> but has none", expectedParent);
         }
-        if (!realParent.equals(expectedParent)) {
+        if (!Objects.equals(realParent, expectedParent)) {
             failWithActualExpectedAndMessage(realParent, expectedParent,
                     "Observation should have parent <%s> but has <%s>", expectedParent, realParent);
         }
@@ -544,7 +546,7 @@ public class ObservationContextAssert<SELF extends ObservationContextAssert<SELF
 
         private final ObservationContextAssert observationContextAssert;
 
-        public ObservationContextAssertReturningThrowableAssert(Throwable throwable,
+        public ObservationContextAssertReturningThrowableAssert(@Nullable Throwable throwable,
                 ObservationContextAssert observationContextAssert) {
             super(throwable, ObservationContextAssertReturningThrowableAssert.class);
             this.observationContextAssert = observationContextAssert;

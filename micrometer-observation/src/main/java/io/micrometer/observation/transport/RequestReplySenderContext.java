@@ -28,8 +28,7 @@ import org.jspecify.annotations.Nullable;
  */
 public class RequestReplySenderContext<C, RES> extends SenderContext<C> implements ResponseContext<RES> {
 
-    @Nullable
-    private RES response;
+    private @Nullable RES response;
 
     /**
      * Creates a new instance of {@link RequestReplySenderContext}.
@@ -49,7 +48,7 @@ public class RequestReplySenderContext<C, RES> extends SenderContext<C> implemen
     }
 
     @Override
-    @Nullable public RES getResponse() {
+    public @Nullable RES getResponse() {
         return response;
     }
 

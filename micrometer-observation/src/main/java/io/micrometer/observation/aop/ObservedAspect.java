@@ -80,8 +80,7 @@ public class ObservedAspect {
 
     private final ObservationRegistry registry;
 
-    @Nullable
-    private final ObservationConvention<ObservedAspectContext> observationConvention;
+    private final @Nullable ObservationConvention<ObservedAspectContext> observationConvention;
 
     private final Predicate<ProceedingJoinPoint> shouldSkip;
 

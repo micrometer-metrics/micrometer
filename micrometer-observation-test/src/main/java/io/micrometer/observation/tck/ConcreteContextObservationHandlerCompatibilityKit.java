@@ -65,6 +65,7 @@ public abstract class ConcreteContextObservationHandlerCompatibilityKit<T extend
     }
 
     @Test
+    @SuppressWarnings("NullAway")
     void handlerSupportsConcreteContextOnly() {
         assertThatCode(() -> handler.supportsContext(context())).doesNotThrowAnyException();
         assertThat(handler.supportsContext(context())).as("Handler supports only concrete context").isTrue();

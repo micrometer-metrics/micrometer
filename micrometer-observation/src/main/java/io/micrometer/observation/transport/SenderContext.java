@@ -33,14 +33,11 @@ public class SenderContext<C> extends Observation.Context {
 
     private final Kind kind;
 
-    @Nullable
-    private C carrier;
+    private @Nullable C carrier;
 
-    @Nullable
-    private String remoteServiceName;
+    private @Nullable String remoteServiceName;
 
-    @Nullable
-    private String remoteServiceAddress;
+    private @Nullable String remoteServiceAddress;
 
     /**
      * Creates a new instance of {@link SenderContext}.
@@ -60,7 +57,7 @@ public class SenderContext<C> extends Observation.Context {
         this(setter, Kind.PRODUCER);
     }
 
-    @Nullable public C getCarrier() {
+    public @Nullable C getCarrier() {
         return carrier;
     }
 
@@ -80,7 +77,7 @@ public class SenderContext<C> extends Observation.Context {
      * Return optional name for the service that will be called.
      * @return optional name for the service that will be called
      */
-    @Nullable public String getRemoteServiceName() {
+    public @Nullable String getRemoteServiceName() {
         return remoteServiceName;
     }
 
@@ -96,7 +93,7 @@ public class SenderContext<C> extends Observation.Context {
      * Return optional address for the service that will be called.
      * @return optional address for the service that will be called
      */
-    @Nullable public String getRemoteServiceAddress() {
+    public @Nullable String getRemoteServiceAddress() {
         return remoteServiceAddress;
     }
 

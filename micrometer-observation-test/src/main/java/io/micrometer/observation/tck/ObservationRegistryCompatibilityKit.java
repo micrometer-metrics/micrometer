@@ -17,11 +17,11 @@ package io.micrometer.observation.tck;
 
 import io.micrometer.common.KeyValue;
 import io.micrometer.common.KeyValues;
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.observation.GlobalObservationConvention;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationHandler;
 import io.micrometer.observation.ObservationRegistry;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -1004,15 +1004,13 @@ public abstract class ObservationRegistryCompatibilityKit {
 
     static class TestObservationConventionWithNameOverrides implements GlobalObservationConvention<TestContext> {
 
-        @Nullable
         @Override
-        public String getName() {
+        public @Nullable String getName() {
             return "conventionOverriddenName";
         }
 
-        @Nullable
         @Override
-        public String getContextualName(TestContext context) {
+        public @Nullable String getContextualName(TestContext context) {
             return "conventionOverriddenContextualName";
         }
 
@@ -1052,8 +1050,7 @@ public abstract class ObservationRegistryCompatibilityKit {
 
         private boolean stopped = false;
 
-        @Nullable
-        private Observation.Context context = null;
+        private Observation.@Nullable Context context = null;
 
         @Override
         public void onStop(Observation.Context context) {
