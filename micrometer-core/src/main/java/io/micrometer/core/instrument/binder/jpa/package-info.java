@@ -17,4 +17,7 @@
 /**
  * Meter binders for JPA.
  */
+@NullMarked
 package io.micrometer.core.instrument.binder.jpa;
+
+import org.jspecify.annotations.NullMarked;
