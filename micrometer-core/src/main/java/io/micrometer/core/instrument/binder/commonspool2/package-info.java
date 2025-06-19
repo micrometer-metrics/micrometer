@@ -17,4 +17,7 @@
 /**
  * Meter binders for Apache Commons Pool 2.x.
  */
+@NullMarked
 package io.micrometer.core.instrument.binder.commonspool2;
+
+import org.jspecify.annotations.NullMarked;
