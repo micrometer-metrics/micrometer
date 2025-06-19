@@ -54,6 +54,8 @@
  */
 package io.micrometer.common.util.internal.logging;
 
+import org.jspecify.annotations.Nullable;
+
 import java.text.MessageFormat;
 import java.util.HashSet;
 import java.util.Set;
@@ -142,7 +144,7 @@ final class MessageFormatter {
      * @param arg The argument to be substituted in place of the formatting anchor
      * @return The formatted message
      */
-    static FormattingTuple format(String messagePattern, Object arg) {
+    static FormattingTuple format(String messagePattern, @Nullable Object arg) {
         return arrayFormat(messagePattern, new Object[] { arg });
     }
 
@@ -161,7 +163,7 @@ final class MessageFormatter {
      * @param argB The argument to be substituted in place of the second formatting anchor
      * @return The formatted message
      */
-    static FormattingTuple format(final String messagePattern, Object argA, Object argB) {
+    static FormattingTuple format(final String messagePattern, @Nullable Object argA, @Nullable Object argB) {
         return arrayFormat(messagePattern, new Object[] { argA, argB });
     }
 
@@ -174,7 +176,7 @@ final class MessageFormatter {
      * anchors
      * @return The formatted message
      */
-    static FormattingTuple arrayFormat(final String messagePattern, final Object[] argArray) {
+    static FormattingTuple arrayFormat(final String messagePattern, final @Nullable Object[] argArray) {
         if (argArray == null || argArray.length == 0) {
             return new FormattingTuple(messagePattern, null);
         }
@@ -229,7 +231,7 @@ final class MessageFormatter {
     }
 
     // special treatment of array values was suggested by 'lizongbo'
-    private static void deeplyAppendParameter(StringBuilder sbuf, Object o, Set<Object[]> seenSet) {
+    private static void deeplyAppendParameter(StringBuilder sbuf, @Nullable Object o, @Nullable Set<Object[]> seenSet) {
         if (o == null) {
             sbuf.append("null");
             return;
@@ -306,7 +308,7 @@ final class MessageFormatter {
         }
     }
 
-    private static void objectArrayAppend(StringBuilder sbuf, Object[] a, Set<Object[]> seenSet) {
+    private static void objectArrayAppend(StringBuilder sbuf, Object[] a, @Nullable Set<Object[]> seenSet) {
         if (a.length == 0) {
             return;
         }
