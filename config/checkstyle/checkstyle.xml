@@ -16,13 +16,13 @@
         <!-- Imports -->
         <module name="IllegalImportCheck" >
             <property name="id" value="GeneralIllegalImportCheck"/>
-            <property name="illegalPkgs" value="com.google.common.(?!cache|util.concurrent).*,org.apache.commons.text.*,org.jetbrains.*,jdk.internal.jline.internal.*,reactor.util.annotation.*,org.checkerframework.checker.*,javax.ws.*"/>
-            <property name="illegalClasses" value="org\.assertj\.core\.api\.Java6Assertions\..*,javax.annotation.Nullable"/>
+            <property name="illegalPkgs" value="com\.google\.common\.(?!cache|util\.concurrent).*,org\.apache\.commons\.text.*,org\.jetbrains.*,jdk\.internal\.jline\.internal.*,reactor\.util\.annotation.*,org\.checkerframework\.checker.*,javax\.ws.*"/>
+            <property name="illegalClasses" value="org\.assertj\.core\.api\.Java6Assertions\..*,javax\.annotation\.Nullable"/>
             <property name="regexp" value="true"/>
         </module>
         <module name="IllegalImportCheck" >
             <property name="id" value="SLF4JIllegalImportCheck"/>
-            <property name="illegalPkgs" value="org.slf4j.*"/>
+            <property name="illegalPkgs" value="org\.slf4j.*"/>
             <property name="regexp" value="true"/>
         </module>
         <module name="UnusedImports" />
