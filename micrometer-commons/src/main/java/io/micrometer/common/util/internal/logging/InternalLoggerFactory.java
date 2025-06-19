@@ -31,6 +31,8 @@
 
 package io.micrometer.common.util.internal.logging;
 
+import org.jspecify.annotations.Nullable;
+
 import static java.util.Objects.requireNonNull;
 
 /**
@@ -49,7 +51,7 @@ import static java.util.Objects.requireNonNull;
  */
 public abstract class InternalLoggerFactory {
 
-    private static volatile InternalLoggerFactory defaultFactory;
+    private static volatile @Nullable InternalLoggerFactory defaultFactory;
 
     @SuppressWarnings("UnusedCatchParameter")
     private static InternalLoggerFactory newDefaultFactory(String name) {

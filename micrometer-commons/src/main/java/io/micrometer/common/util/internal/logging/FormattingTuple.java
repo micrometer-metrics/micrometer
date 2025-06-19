@@ -54,6 +54,8 @@
  */
 package io.micrometer.common.util.internal.logging;
 
+import org.jspecify.annotations.Nullable;
+
 /**
  * NOTE: This file has been copied from {io.netty.util.internal.logging}.
  *
@@ -61,20 +63,20 @@ package io.micrometer.common.util.internal.logging;
  */
 final class FormattingTuple {
 
-    private final String message;
+    private final @Nullable String message;
 
-    private final Throwable throwable;
+    private final @Nullable Throwable throwable;
 
-    FormattingTuple(String message, Throwable throwable) {
+    FormattingTuple(@Nullable String message, @Nullable Throwable throwable) {
         this.message = message;
         this.throwable = throwable;
     }
 
-    public String getMessage() {
+    public @Nullable String getMessage() {
         return message;
     }
 
-    public Throwable getThrowable() {
+    public @Nullable Throwable getThrowable() {
         return throwable;
     }
 

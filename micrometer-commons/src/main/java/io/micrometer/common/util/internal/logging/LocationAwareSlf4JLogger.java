@@ -30,6 +30,7 @@
  */
 package io.micrometer.common.util.internal.logging;
 
+import org.jspecify.annotations.Nullable;
 import org.slf4j.spi.LocationAwareLogger;
 
 import static org.slf4j.spi.LocationAwareLogger.*;
@@ -83,21 +84,21 @@ final class LocationAwareSlf4JLogger extends AbstractInternalLogger {
     }
 
     @Override
-    public void trace(String format, Object arg) {
+    public void trace(String format, @Nullable Object arg) {
         if (isTraceEnabled()) {
             log(TRACE_INT, org.slf4j.helpers.MessageFormatter.format(format, arg));
         }
     }
 
     @Override
-    public void trace(String format, Object argA, Object argB) {
+    public void trace(String format, @Nullable Object argA, @Nullable Object argB) {
         if (isTraceEnabled()) {
             log(TRACE_INT, org.slf4j.helpers.MessageFormatter.format(format, argA, argB));
         }
     }
 
     @Override
-    public void trace(String format, Object... argArray) {
+    public void trace(String format, @Nullable Object... argArray) {
         if (isTraceEnabled()) {
             log(TRACE_INT, org.slf4j.helpers.MessageFormatter.arrayFormat(format, argArray));
         }
@@ -123,21 +124,21 @@ final class LocationAwareSlf4JLogger extends AbstractInternalLogger {
     }
 
     @Override
-    public void debug(String format, Object arg) {
+    public void debug(String format, @Nullable Object arg) {
         if (isDebugEnabled()) {
             log(DEBUG_INT, org.slf4j.helpers.MessageFormatter.format(format, arg));
         }
     }
 
     @Override
-    public void debug(String format, Object argA, Object argB) {
+    public void debug(String format, @Nullable Object argA, @Nullable Object argB) {
         if (isDebugEnabled()) {
             log(DEBUG_INT, org.slf4j.helpers.MessageFormatter.format(format, argA, argB));
         }
     }
 
     @Override
-    public void debug(String format, Object... argArray) {
+    public void debug(String format, @Nullable Object... argArray) {
         if (isDebugEnabled()) {
             log(DEBUG_INT, org.slf4j.helpers.MessageFormatter.arrayFormat(format, argArray));
         }
@@ -163,21 +164,21 @@ final class LocationAwareSlf4JLogger extends AbstractInternalLogger {
     }
 
     @Override
-    public void info(String format, Object arg) {
+    public void info(String format, @Nullable Object arg) {
         if (isInfoEnabled()) {
             log(INFO_INT, org.slf4j.helpers.MessageFormatter.format(format, arg));
         }
     }
 
     @Override
-    public void info(String format, Object argA, Object argB) {
+    public void info(String format, @Nullable Object argA, @Nullable Object argB) {
         if (isInfoEnabled()) {
             log(INFO_INT, org.slf4j.helpers.MessageFormatter.format(format, argA, argB));
         }
     }
 
     @Override
-    public void info(String format, Object... argArray) {
+    public void info(String format, @Nullable Object... argArray) {
         if (isInfoEnabled()) {
             log(INFO_INT, org.slf4j.helpers.MessageFormatter.arrayFormat(format, argArray));
         }
@@ -203,21 +204,21 @@ final class LocationAwareSlf4JLogger extends AbstractInternalLogger {
     }
 
     @Override
-    public void warn(String format, Object arg) {
+    public void warn(String format, @Nullable Object arg) {
         if (isWarnEnabled()) {
             log(WARN_INT, org.slf4j.helpers.MessageFormatter.format(format, arg));
         }
     }
 
     @Override
-    public void warn(String format, Object... argArray) {
+    public void warn(String format, @Nullable Object... argArray) {
         if (isWarnEnabled()) {
             log(WARN_INT, org.slf4j.helpers.MessageFormatter.arrayFormat(format, argArray));
         }
     }
 
     @Override
-    public void warn(String format, Object argA, Object argB) {
+    public void warn(String format, @Nullable Object argA, @Nullable Object argB) {
         if (isWarnEnabled()) {
             log(WARN_INT, org.slf4j.helpers.MessageFormatter.format(format, argA, argB));
         }
@@ -243,21 +244,21 @@ final class LocationAwareSlf4JLogger extends AbstractInternalLogger {
     }
 
     @Override
-    public void error(String format, Object arg) {
+    public void error(String format, @Nullable Object arg) {
         if (isErrorEnabled()) {
             log(ERROR_INT, org.slf4j.helpers.MessageFormatter.format(format, arg));
         }
     }
 
     @Override
-    public void error(String format, Object argA, Object argB) {
+    public void error(String format, @Nullable Object argA, @Nullable Object argB) {
         if (isErrorEnabled()) {
             log(ERROR_INT, org.slf4j.helpers.MessageFormatter.format(format, argA, argB));
         }
     }
 
     @Override
-    public void error(String format, Object... argArray) {
+    public void error(String format, @Nullable Object... argArray) {
         if (isErrorEnabled()) {
             log(ERROR_INT, org.slf4j.helpers.MessageFormatter.arrayFormat(format, argArray));
         }
