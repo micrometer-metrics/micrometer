@@ -25,6 +25,7 @@ import io.micrometer.core.instrument.Tags;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
 import org.bson.BsonValue;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -117,7 +118,7 @@ public class DefaultMongoCommandTagsProvider implements MongoCommandTagsProvider
      * @return trimmed string from {@code bsonValue} in the Optional or empty Optional if
      * value was not a non-empty string
      */
-    private Optional<String> getNonEmptyBsonString(BsonValue bsonValue) {
+    private Optional<String> getNonEmptyBsonString(@Nullable BsonValue bsonValue) {
         return Optional.ofNullable(bsonValue)
             .filter(BsonValue::isString)
             .map(BsonValue::asString)

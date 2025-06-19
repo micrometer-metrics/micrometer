@@ -78,6 +78,7 @@ class MongoMetricsCommandListenerTest extends AbstractMongoDbTest {
         // tag::example[]
         mongo.getDatabase("test").getCollection("testCol").insertOne(new Document("testDoc", new Date()));
 
+        assertThat(clusterId.get()).isNotNull();
         Tags tags = Tags.of("cluster.id", clusterId.get(), "server.address", String.format("%s:%s", host, port),
                 "command", "insert", "database", "test", "collection", "testCol", "status", "SUCCESS");
         assertThat(registry.get("mongodb.driver.commands").tags(tags).timer().count()).isEqualTo(1);
@@ -88,6 +89,7 @@ class MongoMetricsCommandListenerTest extends AbstractMongoDbTest {
     void shouldCreateFailedCommandMetric() {
         mongo.getDatabase("test").getCollection("testCol").dropIndex("nonExistentIndex");
 
+        assertThat(clusterId.get()).isNotNull();
         Tags tags = Tags.of("cluster.id", clusterId.get(), "server.address", String.format("%s:%s", host, port),
                 "command", "dropIndexes", "database", "test", "collection", "testCol", "status", "FAILED");
         assertThat(registry.get("mongodb.driver.commands").tags(tags).timer().count()).isEqualTo(1);
@@ -113,6 +115,7 @@ class MongoMetricsCommandListenerTest extends AbstractMongoDbTest {
             .build();
         try (MongoClient mongo = MongoClients.create(settings)) {
             mongo.getDatabase("test").getCollection("testCol").insertOne(new Document("testDoc", new Date()));
+            assertThat(clusterId.get()).isNotNull();
             Tags tags = Tags.of("cluster.id", clusterId.get(), "server.address", String.format("%s:%s", host, port),
                     "command", "insert", "database", "test", "collection", "testCol", "status", "SUCCESS", "mongoz",
                     "5150");
@@ -140,6 +143,7 @@ class MongoMetricsCommandListenerTest extends AbstractMongoDbTest {
             .build();
         try (MongoClient mongo = MongoClients.create(settings)) {
             mongo.getDatabase("test").getCollection("testCol").dropIndex("nonExistentIndex");
+            assertThat(clusterId.get()).isNotNull();
             Tags tags = Tags.of("cluster.id", clusterId.get(), "server.address", String.format("%s:%s", host, port),
                     "command", "dropIndexes", "database", "test", "collection", "testCol", "status", "FAILED", "mongoz",
                     "5150");
@@ -202,9 +206,7 @@ class MongoMetricsCommandListenerTest extends AbstractMongoDbTest {
 
     @AfterEach
     void destroy() {
-        if (mongo != null) {
-            mongo.close();
-        }
+        mongo.close();
     }
 
 }
