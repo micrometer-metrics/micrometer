@@ -269,7 +269,7 @@ public class CommonsObjectPool2Metrics implements MeterBinder, AutoCloseable {
             AtomicReference<? extends Meter> meter, ObjectName o, String jmxMetricName) {
         return s -> safeDouble(() -> {
             if (!s.isRegistered(o)) {
-                registry.remove(meter.get());
+                registry.remove(Objects.requireNonNull(meter.get()));
             }
             return s.getAttribute(o, jmxMetricName);
         });
