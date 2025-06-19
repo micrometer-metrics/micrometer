@@ -17,4 +17,7 @@
 /**
  * Meter binders for Apache Tomcat.
  */
+@NullMarked
 package io.micrometer.core.instrument.binder.tomcat;
+
+import org.jspecify.annotations.NullMarked;
