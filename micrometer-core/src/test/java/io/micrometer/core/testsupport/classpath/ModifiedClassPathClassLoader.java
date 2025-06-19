@@ -51,7 +51,7 @@ import org.eclipse.aether.resolution.DependencyResult;
 import org.eclipse.aether.spi.connector.RepositoryConnectorFactory;
 import org.eclipse.aether.spi.connector.transport.TransporterFactory;
 import org.eclipse.aether.transport.http.HttpTransporterFactory;
-
+import org.jspecify.annotations.Nullable;
 import org.springframework.core.annotation.MergedAnnotation;
 import org.springframework.core.annotation.MergedAnnotations;
 import org.springframework.util.AntPathMatcher;
@@ -89,7 +89,7 @@ final class ModifiedClassPathClassLoader extends URLClassLoader {
         return super.loadClass(name);
     }
 
-    static ModifiedClassPathClassLoader get(Class<?> testClass, Method testMethod, List<Object> arguments) {
+    static @Nullable ModifiedClassPathClassLoader get(Class<?> testClass, Method testMethod, List<Object> arguments) {
         Set<AnnotatedElement> candidates = new LinkedHashSet<>();
         candidates.add(testClass);
         candidates.add(testMethod);
