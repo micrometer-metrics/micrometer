@@ -33,15 +33,16 @@ import java.lang.annotation.*;
  * NOTE: This file has been copied from {@code org.springframework.lang}.
  *
  * @author Sebastien Deleuze
- * @see NonNullFields
  * @see Nullable
  * @see NonNull
+ * @deprecated use {@link org.jspecify.annotations.NullMarked} instead
  */
 @Target({ ElementType.PACKAGE, ElementType.TYPE })
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
 @Nonnull
 @TypeQualifierDefault(ElementType.FIELD)
+@Deprecated
 public @interface NonNullFields {
 
 }

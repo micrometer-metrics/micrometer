@@ -18,6 +18,7 @@
             <property name="id" value="GeneralIllegalImportCheck"/>
             <property name="illegalPkgs" value="com.google.common.(?!cache|util.concurrent).*,org.apache.commons.text.*,org.jetbrains.*,jdk.internal.jline.internal.*,reactor.util.annotation.*,org.checkerframework.checker.*,javax.ws.*"/>
             <property name="illegalClasses" value="org\.assertj\.core\.api\.Java6Assertions\..*,javax.annotation.Nullable"/>
+            <property name="illegalClasses" value="io\.micrometer\.common\.lang\.N.*"/>
             <property name="regexp" value="true"/>
         </module>
         <module name="IllegalImportCheck" >
