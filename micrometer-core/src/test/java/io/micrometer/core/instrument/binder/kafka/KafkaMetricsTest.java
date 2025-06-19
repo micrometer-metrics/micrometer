@@ -31,10 +31,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
 import java.time.Duration;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicReference;
@@ -46,6 +43,7 @@ import static org.awaitility.Awaitility.await;
 @ExtendWith(OutputCaptureExtension.class)
 class KafkaMetricsTest {
 
+    @SuppressWarnings("NullAway.Init")
     private KafkaMetrics kafkaMetrics;
 
     @AfterEach
@@ -388,16 +386,16 @@ class KafkaMetricsTest {
     @Issue("#2801")
     @Test
     void shouldUseMetricFromSupplierIndirectly() {
-        AtomicReference<Map<MetricName, KafkaMetric>> metricsReference = new AtomicReference<>(new HashMap<>());
+        KafkaTestClient kafkaTestClient = new KafkaTestClient();
 
         MetricName oldMetricName = new MetricName("a0", "b0", "c0", new LinkedHashMap<>());
         Value oldValue = new Value();
         oldValue.record(new MetricConfig(), 1.0, System.currentTimeMillis());
         KafkaMetric oldMetricInstance = new KafkaMetric(this, oldMetricName, oldValue, new MetricConfig(), Time.SYSTEM);
 
-        metricsReference.get().put(oldMetricName, oldMetricInstance);
+        kafkaTestClient.getMetrics().put(oldMetricName, oldMetricInstance);
 
-        kafkaMetrics = new KafkaMetrics(metricsReference::get);
+        kafkaMetrics = new KafkaMetrics(kafkaTestClient::getMetrics);
         MeterRegistry registry = new SimpleMeterRegistry();
 
         kafkaMetrics.bindTo(registry);
@@ -409,12 +407,12 @@ class KafkaMetricsTest {
                 .extracting(Measurement::getValue)
                 .isEqualTo(1.0));
 
-        metricsReference.set(new HashMap<>());
+        kafkaTestClient.setMetrics(new HashMap<>());
         MetricName newMetricName = new MetricName("a0", "b0", "c0", new LinkedHashMap<>());
         Value newValue = new Value();
         newValue.record(new MetricConfig(), 2.0, System.currentTimeMillis());
         KafkaMetric newMetricInstance = new KafkaMetric(this, newMetricName, newValue, new MetricConfig(), Time.SYSTEM);
-        metricsReference.get().put(newMetricName, newMetricInstance);
+        kafkaTestClient.getMetrics().put(newMetricName, newMetricInstance);
 
         assertThat(registry.getMeters()).singleElement()
             .extracting(Meter::measure)
@@ -575,7 +573,7 @@ class KafkaMetricsTest {
 
         kafkaMetricMap.put(aMetric.metricName(), aMetric);
         await().untilAsserted(() -> assertThat(registry.getMeters()).hasSize(1));
-        assertThat(registry.find("kafka.test.a").gauge().value()).isEqualTo(1.0);
+        assertThat(registry.get("kafka.test.a").gauge().value()).isEqualTo(1.0);
 
         kafkaMetricMap.clear();
         await().untilAsserted(() -> assertThat(registry.getMeters()).isEmpty());
@@ -583,19 +581,19 @@ class KafkaMetricsTest {
         kafkaMetricMap.put(aMetric.metricName(), aMetric);
         kafkaMetricMap.put(bMetric.metricName(), bMetric);
         await().untilAsserted(() -> assertThat(registry.getMeters()).hasSize(2));
-        assertThat(registry.find("kafka.test.a").gauge().value()).isEqualTo(1.0);
-        assertThat(registry.find("kafka.test.b").gauge().value()).isEqualTo(2.0);
+        assertThat(registry.get("kafka.test.a").gauge().value()).isEqualTo(1.0);
+        assertThat(registry.get("kafka.test.b").gauge().value()).isEqualTo(2.0);
 
         kafkaMetricMap.remove(aMetric.metricName());
         await().untilAsserted(() -> assertThat(registry.getMeters()).hasSize(1));
-        assertThat(registry.find("kafka.test.b").gauge().value()).isEqualTo(2.0);
+        assertThat(registry.get("kafka.test.b").gauge().value()).isEqualTo(2.0);
 
         KafkaMetric bMetricModified = createKafkaMetric(createMetricName("b"), 42);
         kafkaMetricMap.put(bMetricModified.metricName(), bMetricModified);
         kafkaMetricMap.put(cMetric.metricName(), cMetric);
         await().untilAsserted(() -> assertThat(registry.getMeters()).hasSize(2));
-        assertThat(registry.find("kafka.test.b").gauge().value()).isEqualTo(42.0);
-        assertThat(registry.find("kafka.test.c").gauge().value()).isEqualTo(3.0);
+        assertThat(registry.get("kafka.test.b").gauge().value()).isEqualTo(42.0);
+        assertThat(registry.get("kafka.test.c").gauge().value()).isEqualTo(3.0);
     }
 
     @Test
@@ -610,12 +608,12 @@ class KafkaMetricsTest {
         kafkaMetricMap.put(aMetric.metricName(), aMetric);
         kafkaMetrics.checkAndBindMetrics(registry);
         assertThat(registry.getMeters()).hasSize(1);
-        assertThat(registry.find("kafka.test.a").gauge().value()).isEqualTo(1.0);
+        assertThat(registry.get("kafka.test.a").gauge().value()).isEqualTo(1.0);
 
         KafkaMetric aMetricModified = createKafkaMetric(createMetricName("a"), (config, now) -> null);
         kafkaMetricMap.put(aMetricModified.metricName(), aMetricModified);
         kafkaMetrics.checkAndBindMetrics(registry);
-        assertThat(registry.find("kafka.test.a").gauge().value()).isNaN();
+        assertThat(registry.get("kafka.test.a").gauge().value()).isNaN();
         assertThat(output).doesNotContain("Failed to apply the value function for the gauge").hasSize(0);
     }
 
@@ -673,6 +671,21 @@ class KafkaMetricsTest {
         @Override
         public Integer value(MetricConfig config, long now) {
             return value;
+        }
+
+    }
+
+    private static class KafkaTestClient {
+
+        private final AtomicReference<Map<MetricName, KafkaMetric>> metricsReference = new AtomicReference<>(
+                new HashMap<>());
+
+        Map<MetricName, KafkaMetric> getMetrics() {
+            return Objects.requireNonNull(metricsReference.get());
+        }
+
+        void setMetrics(Map<MetricName, KafkaMetric> metrics) {
+            metricsReference.set(metrics);
         }
 
     }

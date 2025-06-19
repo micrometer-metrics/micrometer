@@ -21,7 +21,6 @@ import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.common.serialization.StringSerializer;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.Properties;
@@ -38,18 +37,10 @@ class KafkaClientMetricsProducerTest {
 
     private final Tags tags = Tags.of("app", "myapp", "version", "1");
 
-    KafkaClientMetrics metrics;
-
-    @AfterEach
-    void afterEach() {
-        if (metrics != null)
-            metrics.close();
-    }
-
     @Test
     void shouldCreateMeters() {
-        try (Producer<String, String> producer = createProducer()) {
-            metrics = new KafkaClientMetrics(producer);
+        try (Producer<String, String> producer = createProducer();
+                KafkaMetrics metrics = new KafkaClientMetrics(producer)) {
             MeterRegistry registry = new SimpleMeterRegistry();
 
             metrics.bindTo(registry);
@@ -61,8 +52,8 @@ class KafkaClientMetricsProducerTest {
 
     @Test
     void shouldCreateMetersWithTags() {
-        try (Producer<String, String> producer = createProducer()) {
-            metrics = new KafkaClientMetrics(producer, tags);
+        try (Producer<String, String> producer = createProducer();
+                KafkaMetrics metrics = new KafkaClientMetrics(producer, tags)) {
             MeterRegistry registry = new SimpleMeterRegistry();
 
             metrics.bindTo(registry);
@@ -75,11 +66,10 @@ class KafkaClientMetricsProducerTest {
 
     @Test
     void shouldCreateMetersWithTagsAndCustomScheduler() {
-        try (Producer<String, String> producer = createProducer()) {
-            ScheduledExecutorService customScheduler = Executors.newScheduledThreadPool(1);
-            metrics = new KafkaClientMetrics(producer, tags, customScheduler);
+        ScheduledExecutorService customScheduler = Executors.newScheduledThreadPool(1);
+        try (Producer<String, String> producer = createProducer();
+                KafkaMetrics metrics = new KafkaClientMetrics(producer, tags, customScheduler)) {
             MeterRegistry registry = new SimpleMeterRegistry();
-
             metrics.bindTo(registry);
 
             assertThat(registry.getMeters()).hasSizeGreaterThan(0)
@@ -88,7 +78,8 @@ class KafkaClientMetricsProducerTest {
 
             metrics.close();
             assertThat(customScheduler.isShutdown()).isFalse();
-
+        }
+        finally {
             customScheduler.shutdownNow();
             assertThat(customScheduler.isShutdown()).isTrue();
         }
