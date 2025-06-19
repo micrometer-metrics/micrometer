@@ -44,8 +44,7 @@ class DynatraceMetricDefinition {
 
     private final @Nullable DynatraceUnit unit;
 
-    @Nullable
-    private final Set<String> dimensions;
+    private final @Nullable Set<String> dimensions;
 
     // Guaranteed to be non-empty
     private final String[] technologyTypes;

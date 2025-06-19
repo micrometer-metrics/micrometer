@@ -1005,12 +1005,12 @@ public abstract class ObservationRegistryCompatibilityKit {
     static class TestObservationConventionWithNameOverrides implements GlobalObservationConvention<TestContext> {
 
         @Override
-        public @Nullable String getName() {
+        public String getName() {
             return "conventionOverriddenName";
         }
 
         @Override
-        public @Nullable String getContextualName(TestContext context) {
+        public String getContextualName(TestContext context) {
             return "conventionOverriddenContextualName";
         }
 
