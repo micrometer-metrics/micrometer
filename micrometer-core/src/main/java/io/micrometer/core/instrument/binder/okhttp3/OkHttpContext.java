@@ -21,6 +21,7 @@ import io.micrometer.observation.transport.Kind;
 import io.micrometer.observation.transport.RequestReplySenderContext;
 import okhttp3.Request;
 import okhttp3.Response;
+import org.jspecify.annotations.Nullable;
 
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -48,7 +49,7 @@ public class OkHttpContext extends RequestReplySenderContext<Request.Builder, Re
 
     private final Request originalRequest;
 
-    private OkHttpObservationInterceptor.CallState state;
+    private OkHttpObservationInterceptor.@Nullable CallState state;
 
     public OkHttpContext(Function<Request, String> urlMapper, Iterable<KeyValue> extraTags,
             Iterable<BiFunction<Request, Response, KeyValue>> contextSpecificTags,
@@ -70,7 +71,7 @@ public class OkHttpContext extends RequestReplySenderContext<Request.Builder, Re
         this.state = state;
     }
 
-    public OkHttpObservationInterceptor.CallState getState() {
+    public OkHttpObservationInterceptor.@Nullable CallState getState() {
         return state;
     }
 
