@@ -19,7 +19,6 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.apache.kafka.clients.admin.AdminClient;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.Properties;
@@ -36,18 +35,9 @@ class KafkaClientMetricsAdminTest {
 
     private final Tags tags = Tags.of("app", "myapp", "version", "1");
 
-    KafkaClientMetrics metrics;
-
-    @AfterEach
-    void afterEach() {
-        if (metrics != null)
-            metrics.close();
-    }
-
     @Test
     void shouldCreateMeters() {
-        try (AdminClient adminClient = createAdmin()) {
-            metrics = new KafkaClientMetrics(adminClient);
+        try (AdminClient adminClient = createAdmin(); KafkaMetrics metrics = new KafkaClientMetrics(adminClient)) {
             MeterRegistry registry = new SimpleMeterRegistry();
 
             metrics.bindTo(registry);
@@ -59,8 +49,8 @@ class KafkaClientMetricsAdminTest {
 
     @Test
     void shouldCreateMetersWithTags() {
-        try (AdminClient adminClient = createAdmin()) {
-            metrics = new KafkaClientMetrics(adminClient, tags);
+        try (AdminClient adminClient = createAdmin();
+                KafkaMetrics metrics = new KafkaClientMetrics(adminClient, tags);) {
             MeterRegistry registry = new SimpleMeterRegistry();
 
             metrics.bindTo(registry);
@@ -73,9 +63,9 @@ class KafkaClientMetricsAdminTest {
 
     @Test
     void shouldCreateMetersWithTagsAndCustomScheduler() {
-        try (AdminClient adminClient = createAdmin()) {
-            ScheduledExecutorService customScheduler = Executors.newScheduledThreadPool(1);
-            metrics = new KafkaClientMetrics(adminClient, tags, customScheduler);
+        ScheduledExecutorService customScheduler = Executors.newScheduledThreadPool(1);
+        try (AdminClient adminClient = createAdmin();
+                KafkaMetrics metrics = new KafkaClientMetrics(adminClient, tags, customScheduler)) {
             MeterRegistry registry = new SimpleMeterRegistry();
 
             metrics.bindTo(registry);
@@ -86,7 +76,8 @@ class KafkaClientMetricsAdminTest {
 
             metrics.close();
             assertThat(customScheduler.isShutdown()).isFalse();
-
+        }
+        finally {
             customScheduler.shutdownNow();
             assertThat(customScheduler.isShutdown()).isTrue();
         }

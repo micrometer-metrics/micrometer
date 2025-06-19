@@ -17,4 +17,7 @@
 /**
  * Meter binders for Apache Kafka.
  */
+@NullMarked
 package io.micrometer.core.instrument.binder.kafka;
+
+import org.jspecify.annotations.NullMarked;
