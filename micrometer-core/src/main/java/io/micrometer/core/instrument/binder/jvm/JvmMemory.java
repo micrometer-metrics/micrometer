@@ -44,7 +44,7 @@ class JvmMemory {
         ;
     }
 
-    static boolean isAllocationPool(String name) {
+    static boolean isAllocationPool(@Nullable String name) {
         return name != null && (name.endsWith("Eden Space") || "Shenandoah".equals(name) //
                 || "ZHeap".equals(name) // ZGC non-generational
                 || "ZGC Young Generation".equals(name) // generational ZGC
@@ -54,7 +54,7 @@ class JvmMemory {
         );
     }
 
-    static boolean isLongLivedPool(String name) {
+    static boolean isLongLivedPool(@Nullable String name) {
         return name != null && (name.endsWith("Old Gen") || name.endsWith("Tenured Gen") || "Shenandoah".equals(name)
                 || "ZHeap".equals(name) // ZGC non-generational
                 || "ZGC Old Generation".equals(name) // generational ZGC
