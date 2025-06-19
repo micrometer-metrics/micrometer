@@ -17,4 +17,7 @@
 /**
  * Meter binders for MongoDB.
  */
+@NullMarked
 package io.micrometer.core.instrument.binder.mongodb;
+
+import org.jspecify.annotations.NullMarked;
