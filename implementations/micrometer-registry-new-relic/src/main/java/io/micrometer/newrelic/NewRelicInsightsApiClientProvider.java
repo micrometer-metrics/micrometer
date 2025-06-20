@@ -253,7 +253,7 @@ public class NewRelicInsightsApiClientProvider implements NewRelicClientProvider
             AtomicInteger totalEvents = new AtomicInteger();
 
             httpClient.post(insightsEndpoint)
-                .withHeader("X-Insert-Key", config.apiKey())
+                .withHeader("X-Insert-Key", Objects.requireNonNull(config.apiKey()))
                 .withJsonContent(
                         events.peek(ev -> totalEvents.incrementAndGet()).collect(Collectors.joining(",", "[", "]")))
                 .send()

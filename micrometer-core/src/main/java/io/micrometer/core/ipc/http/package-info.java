@@ -17,4 +17,7 @@
 /**
  * Support for HTTP communication.
  */
+@NullMarked
 package io.micrometer.core.ipc.http;
+
+import org.jspecify.annotations.NullMarked;

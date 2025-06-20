@@ -24,6 +24,8 @@ import io.micrometer.core.ipc.http.HttpSender;
  */
 public class OtlpHttpMetricsSender implements OtlpMetricsSender {
 
+    private final String DEFAULT_ADDRESS = "http://localhost";
+
     private final HttpSender httpSender;
 
     private final String userAgentHeader;
@@ -45,7 +47,8 @@ public class OtlpHttpMetricsSender implements OtlpMetricsSender {
      */
     @Override
     public void send(Request request) throws Exception {
-        HttpSender.Request.Builder httpRequest = this.httpSender.post(request.getAddress())
+        String address = request.getAddress() != null ? request.getAddress() : DEFAULT_ADDRESS;
+        HttpSender.Request.Builder httpRequest = this.httpSender.post(address)
             .withHeader("User-Agent", userAgentHeader)
             .withContent("application/x-protobuf", request.getMetricsData());
         request.getHeaders().forEach(httpRequest::withHeader);
