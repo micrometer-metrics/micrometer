@@ -17,4 +17,7 @@
 /**
  * Dynatrace-specific Meters to support Dynatrace v2 metrics API.
  */
+@NullMarked
 package io.micrometer.dynatrace.types;
+
+import org.jspecify.annotations.NullMarked;
