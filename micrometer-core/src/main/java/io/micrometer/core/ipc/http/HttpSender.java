@@ -137,7 +137,7 @@ public interface HttpSender {
 
             private byte[] entity = new byte[0];
 
-            private Method method;
+            private Method method = Method.GET;
 
             private Map<String, String> requestHeaders = new LinkedHashMap<>();
 
