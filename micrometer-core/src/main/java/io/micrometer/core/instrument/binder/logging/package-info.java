@@ -17,4 +17,7 @@
 /**
  * Meter binders for logging frameworks.
  */
+@NullMarked
 package io.micrometer.core.instrument.binder.logging;
+
+import org.jspecify.annotations.NullMarked;
