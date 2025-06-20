@@ -17,4 +17,7 @@
 /**
  * AOP-based metrics support.
  */
+@NullMarked
 package io.micrometer.core.aop;
+
+import org.jspecify.annotations.NullMarked;

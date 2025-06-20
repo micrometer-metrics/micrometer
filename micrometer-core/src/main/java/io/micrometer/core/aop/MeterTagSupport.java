@@ -19,6 +19,7 @@ import io.micrometer.common.annotation.NoOpValueResolver;
 import io.micrometer.common.annotation.ValueExpressionResolver;
 import io.micrometer.common.annotation.ValueResolver;
 import io.micrometer.common.util.StringUtils;
+import org.jspecify.annotations.Nullable;
 
 import java.util.function.Function;
 
@@ -34,7 +35,7 @@ final class MeterTagSupport {
         return StringUtils.isNotBlank(annotation.value()) ? annotation.value() : annotation.key();
     }
 
-    static String resolveTagValue(MeterTag annotation, Object argument,
+    static String resolveTagValue(MeterTag annotation, @Nullable Object argument,
             Function<Class<? extends ValueResolver>, ? extends ValueResolver> resolverProvider,
             Function<Class<? extends ValueExpressionResolver>, ? extends ValueExpressionResolver> expressionResolverProvider) {
         String value = null;
