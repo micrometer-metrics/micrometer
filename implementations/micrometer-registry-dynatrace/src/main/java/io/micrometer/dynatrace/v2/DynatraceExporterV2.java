@@ -33,6 +33,7 @@ import io.micrometer.dynatrace.DynatraceConfig;
 import io.micrometer.dynatrace.types.DynatraceSummarySnapshot;
 import io.micrometer.dynatrace.types.DynatraceSummarySnapshotSupport;
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 import java.net.MalformedURLException;
 import java.net.URI;
@@ -71,7 +72,7 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
     // Loggers must be non-static for MockLoggerFactory.injectLogger() in tests.
     private final InternalLogger logger = InternalLoggerFactory.getInstance(DynatraceExporterV2.class);
 
-    private MetricLinePreConfiguration preConfiguration;
+    private @Nullable MetricLinePreConfiguration preConfiguration;
 
     private boolean skipExport = false;
 
@@ -152,7 +153,7 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
             return;
         }
 
-        Map<String, String> seenMetadata = null;
+        Map<String, @Nullable String> seenMetadata = null;
         if (config.exportMeterMetadata()) {
             seenMetadata = new HashMap<>();
         }
@@ -196,7 +197,7 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
         }
     }
 
-    private Stream<String> toMetricLines(Meter meter, Map<String, String> seenMetadata) {
+    private Stream<String> toMetricLines(Meter meter, @Nullable Map<String, @Nullable String> seenMetadata) {
         return meter.match(m -> toGaugeLine(m, seenMetadata), m -> toCounterLine(m, seenMetadata),
                 m -> toTimerLine(m, seenMetadata), m -> toDistributionSummaryLine(m, seenMetadata),
                 m -> toLongTaskTimerLine(m, seenMetadata), m -> toGaugeLine(m, seenMetadata),
@@ -204,11 +205,12 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
                 m -> toGaugeLine(m, seenMetadata));
     }
 
-    Stream<String> toGaugeLine(Meter meter, Map<String, String> seenMetadata) {
+    Stream<String> toGaugeLine(Meter meter, @Nullable Map<String, @Nullable String> seenMetadata) {
         return toMeterLine(meter, (theMeter, measurement) -> createGaugeLine(theMeter, seenMetadata, measurement));
     }
 
-    private String createGaugeLine(Meter meter, Map<String, String> seenMetadata, Measurement measurement) {
+    private @Nullable String createGaugeLine(Meter meter, @Nullable Map<String, @Nullable String> seenMetadata,
+            Measurement measurement) {
         try {
             double value = measurement.getValue();
             if (Double.isNaN(value)) {
@@ -241,11 +243,12 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
         return null;
     }
 
-    Stream<String> toCounterLine(Meter counter, Map<String, String> seenMetadata) {
+    Stream<String> toCounterLine(Meter counter, @Nullable Map<String, @Nullable String> seenMetadata) {
         return toMeterLine(counter, (meter, measurement) -> createCounterLine(meter, seenMetadata, measurement));
     }
 
-    private String createCounterLine(Meter meter, Map<String, String> seenMetadata, Measurement measurement) {
+    private @Nullable String createCounterLine(Meter meter, @Nullable Map<String, @Nullable String> seenMetadata,
+            Measurement measurement) {
         try {
             MetricLineBuilder.CounterStep counterStep = createTypeStep(meter).count();
             if (shouldExportMetadata(meter.getId())) {
@@ -261,7 +264,7 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
         return null;
     }
 
-    Stream<String> toTimerLine(Timer meter, Map<String, String> seenMetadata) {
+    Stream<String> toTimerLine(Timer meter, @Nullable Map<String, @Nullable String> seenMetadata) {
         if (!(meter instanceof DynatraceSummarySnapshotSupport)) {
             return toSummaryLine(meter, seenMetadata, meter.takeSnapshot(), getBaseTimeUnit());
         }
@@ -277,8 +280,8 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
                 snapshot.getCount());
     }
 
-    private Stream<String> toSummaryLine(Meter meter, Map<String, String> seenMetadata,
-            HistogramSnapshot histogramSnapshot, TimeUnit timeUnit) {
+    private Stream<String> toSummaryLine(Meter meter, @Nullable Map<String, @Nullable String> seenMetadata,
+            HistogramSnapshot histogramSnapshot, @Nullable TimeUnit timeUnit) {
         long count = histogramSnapshot.count();
         if (count < 1) {
             logger.debug("Summary with 0 count dropped: {}", meter.getId().getName());
@@ -290,7 +293,7 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
         return createSummaryLine(meter, seenMetadata, min, max, total, count);
     }
 
-    private double minFromHistogramSnapshot(HistogramSnapshot histogramSnapshot, TimeUnit timeUnit) {
+    private double minFromHistogramSnapshot(HistogramSnapshot histogramSnapshot, @Nullable TimeUnit timeUnit) {
         ValueAtPercentile[] valuesAtPercentiles = histogramSnapshot.percentileValues();
         for (ValueAtPercentile valueAtPercentile : valuesAtPercentiles) {
             if (valueAtPercentile.percentile() == 0.0) {
@@ -300,8 +303,8 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
         return Double.NaN;
     }
 
-    private Stream<String> createSummaryLine(Meter meter, Map<String, String> seenMetadata, double min, double max,
-            double total, long count) {
+    private Stream<String> createSummaryLine(Meter meter, @Nullable Map<String, @Nullable String> seenMetadata,
+            double min, double max, double total, long count) {
         try {
             MetricLineBuilder.GaugeStep gaugeStep = createTypeStep(meter).gauge();
             if (shouldExportMetadata(meter.getId())) {
@@ -319,7 +322,8 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
         return Stream.empty();
     }
 
-    Stream<String> toDistributionSummaryLine(DistributionSummary meter, Map<String, String> seenMetadata) {
+    Stream<String> toDistributionSummaryLine(DistributionSummary meter,
+            @Nullable Map<String, @Nullable String> seenMetadata) {
         if (!(meter instanceof DynatraceSummarySnapshotSupport)) {
             return toSummaryLine(meter, seenMetadata, meter.takeSnapshot(), null);
         }
@@ -334,7 +338,7 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
                 snapshot.getCount());
     }
 
-    Stream<String> toLongTaskTimerLine(LongTaskTimer meter, Map<String, String> seenMetadata) {
+    Stream<String> toLongTaskTimerLine(LongTaskTimer meter, @Nullable Map<String, @Nullable String> seenMetadata) {
         // use Dynatrace Snapshotting to ensure consistent data
         if (meter instanceof DynatraceSummarySnapshotSupport) {
             DynatraceSummarySnapshot snapshot = ((DynatraceSummarySnapshotSupport) meter)
@@ -367,7 +371,7 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
         return toSummaryLine(meter, seenMetadata, snapshot, getBaseTimeUnit());
     }
 
-    Stream<String> toFunctionTimerLine(FunctionTimer meter, Map<String, String> seenMetadata) {
+    Stream<String> toFunctionTimerLine(FunctionTimer meter, @Nullable Map<String, @Nullable String> seenMetadata) {
         long count = (long) meter.count();
         if (count == 0) {
             logger.debug("Timer with 0 count dropped: {}", meter.getId().getName());
@@ -391,7 +395,8 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
         return createSummaryLine(meter, seenMetadata, average, average, total, count);
     }
 
-    private Stream<String> toMeterLine(Meter meter, BiFunction<Meter, Measurement, String> measurementConverter) {
+    private Stream<String> toMeterLine(Meter meter,
+            BiFunction<Meter, Measurement, @Nullable String> measurementConverter) {
         return streamOf(meter.measure()).map(measurement -> measurementConverter.apply(meter, measurement))
             .filter(Objects::nonNull);
     }
@@ -494,7 +499,8 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
      * {@code seenMetadata}
      * @param seenMetadata destination of the metadata
      */
-    private void storeMetadata(MetricLineBuilder.MetadataStep metadataStep, Map<String, String> seenMetadata) {
+    private void storeMetadata(MetricLineBuilder.@Nullable MetadataStep metadataStep,
+            @Nullable Map<String, @Nullable String> seenMetadata) {
         // if the config to export metadata is turned off, seenMetadata will be null
         if (seenMetadata == null || metadataStep == null) {
             return;
@@ -535,10 +541,6 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
     }
 
     private String extractMetricKey(String metadataLine) {
-        if (metadataLine == null) {
-            return null;
-        }
-
         StringBuilder metricKey = new StringBuilder(32);
         // Start at index 1 as index 0 will always be '#'
         for (int i = 1; i < metadataLine.length(); i++) {
@@ -559,7 +561,7 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
      * @param unit the unit that might be mapped
      * @return The UCUM-compliant string if known, otherwise returns the original unit
      */
-    private static String mapUnitIfNeeded(String unit) {
+    private static @Nullable String mapUnitIfNeeded(@Nullable String unit) {
         return unit != null ? UCUM_TIME_UNIT_MAP.getOrDefault(unit.toLowerCase(Locale.ROOT), unit) : null;
     }
 

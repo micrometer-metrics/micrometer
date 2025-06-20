@@ -223,7 +223,7 @@ public class DynatraceExporterV1 extends AbstractDynatraceExporter {
         }
     }
 
-    private void postCustomMetricValues(String type, String group, List<DynatraceTimeSeries> timeSeries,
+    private void postCustomMetricValues(String type, @Nullable String group, List<DynatraceTimeSeries> timeSeries,
             String customDeviceMetricEndpoint) {
         for (DynatraceBatchedPayload postMessage : createPostMessages(type, group, timeSeries)) {
             HttpSender.Request.Builder requestBuilder;
@@ -259,7 +259,7 @@ public class DynatraceExporterV1 extends AbstractDynatraceExporter {
     }
 
     // VisibleForTesting
-    HttpSender.Response trySendHttpRequest(HttpSender.Request.Builder requestBuilder) {
+    HttpSender.@Nullable Response trySendHttpRequest(HttpSender.Request.Builder requestBuilder) {
         try {
             return requestBuilder.send();
         }
@@ -272,7 +272,8 @@ public class DynatraceExporterV1 extends AbstractDynatraceExporter {
     }
 
     // VisibleForTesting
-    List<DynatraceBatchedPayload> createPostMessages(String type, String group, List<DynatraceTimeSeries> timeSeries) {
+    List<DynatraceBatchedPayload> createPostMessages(String type, @Nullable String group,
+            List<DynatraceTimeSeries> timeSeries) {
         final String header = "{\"type\":\"" + type + '\"'
                 + (StringUtils.isNotBlank(group) ? ",\"group\":\"" + group + '\"' : "") + ",\"series\":[";
         final String footer = "]}";
