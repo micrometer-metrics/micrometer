@@ -45,9 +45,7 @@ import reactor.util.context.Context;
 import reactor.util.context.ContextView;
 import reactor.util.retry.Retry;
 
-import java.net.InetSocketAddress;
-import java.net.PortUnreachableException;
-import java.net.SocketAddress;
+import java.net.*;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.Map;
@@ -232,8 +230,15 @@ public class StatsdMeterRegistry extends MeterRegistry {
                     publisher = this.processor;
                 }
                 if (statsdConfig.protocol() == StatsdProtocol.UDP) {
-                    prepareUdpClient(publisher,
-                            () -> InetSocketAddress.createUnresolved(statsdConfig.host(), statsdConfig.port()));
+                    prepareUdpClient(publisher, () -> {
+                        try {
+                            return new InetSocketAddress(InetAddress.getByName(statsdConfig.host()),
+                                    statsdConfig.port());
+                        }
+                        catch (UnknownHostException e) {
+                            return InetSocketAddress.createUnresolved(statsdConfig.host(), statsdConfig.port());
+                        }
+                    });
                 }
                 else if (statsdConfig.protocol() == StatsdProtocol.UDS_DATAGRAM) {
                     prepareUdpClient(publisher, () -> new DomainSocketAddress(statsdConfig.host()));
@@ -254,6 +259,9 @@ public class StatsdMeterRegistry extends MeterRegistry {
                 .neverComplete()
                 .retryWhen(Retry.indefinitely()
                     .filter(throwable -> shouldRetry && throwable instanceof PortUnreachableException)))
+            .doOnChannelInit((observer, channel, socketAddress) -> {
+                channel.bind(remoteAddress.get());
+            })
             .doOnDisconnected(connection -> {
                 Boolean connectionDisposed = connection.channel().attr(CONNECTION_DISPOSED).getAndSet(Boolean.TRUE);
                 if (connectionDisposed == null || !connectionDisposed) {
