@@ -17,4 +17,7 @@
 /**
  * Support for testing cache meter binders.
  */
+@NullMarked
 package io.micrometer.core.instrument.binder.cache;
+
+import org.jspecify.annotations.NullMarked;
