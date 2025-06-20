@@ -46,7 +46,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
 
 import static io.micrometer.core.instrument.MockClock.clock;
-import static io.micrometer.core.instrument.Statistic.ACTIVE_TASKS;
+import static io.micrometer.core.instrument.Statistic.*;
 import static io.micrometer.core.instrument.Statistic.DURATION;
 import static java.util.Collections.emptyList;
 import static java.util.Objects.requireNonNull;
@@ -631,6 +631,9 @@ public abstract class MeterRegistryCompatibilityKit {
             }), measurement -> assertThat(measurement).satisfies(m -> {
                 assertThat(m.getValue()).isEqualTo(TimeUtils.convert(10, TimeUnit.NANOSECONDS, t.baseTimeUnit()));
                 assertThat(m.getStatistic()).isSameAs(DURATION);
+            }), measurement -> assertThat(measurement).satisfies(m -> {
+                assertThat(m.getValue()).isEqualTo(TimeUtils.convert(10, TimeUnit.NANOSECONDS, t.baseTimeUnit()));
+                assertThat(m.getStatistic()).isSameAs(MAX);
             }));
 
             clock(registry).add(10, TimeUnit.NANOSECONDS);
