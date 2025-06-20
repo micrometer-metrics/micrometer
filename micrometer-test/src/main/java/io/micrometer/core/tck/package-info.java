@@ -17,4 +17,7 @@
 /**
  * TCK for {@link io.micrometer.core.instrument.MeterRegistry MeterRegistry classes}.
  */
+@NullMarked
 package io.micrometer.core.tck;
+
+import org.jspecify.annotations.NullMarked;

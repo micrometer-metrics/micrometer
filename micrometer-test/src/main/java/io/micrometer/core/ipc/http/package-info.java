@@ -17,4 +17,7 @@
 /**
  * Support for testing {@link io.micrometer.core.ipc.http.HttpSender HttpSender classes}.
  */
+@NullMarked
 package io.micrometer.core.ipc.http;
+
+import org.jspecify.annotations.NullMarked;
