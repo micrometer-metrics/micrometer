@@ -18,4 +18,7 @@
  * Predefined {@link io.micrometer.health.ServiceLevelObjective ServiceLevelObjective
  * classes}.
  */
+@NullMarked
 package io.micrometer.health.objectives;
+
+import org.jspecify.annotations.NullMarked;
