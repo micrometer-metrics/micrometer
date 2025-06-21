@@ -74,6 +74,7 @@ subprojects {
             options.errorprone.error(
                     "AttemptedNegativeZero",
                     "BadImport",
+                    "CatchAndPrintStackTrace",
                     "ClassCanBeStatic",
                     "DefaultCharset",
                     "EqualsGetClass",
