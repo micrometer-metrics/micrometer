@@ -17,4 +17,7 @@
 /**
  * Core annotations.
  */
+@NullMarked
 package io.micrometer.core.annotation;
+
+import org.jspecify.annotations.NullMarked;

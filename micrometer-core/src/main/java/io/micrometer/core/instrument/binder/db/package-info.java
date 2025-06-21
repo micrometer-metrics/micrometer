@@ -17,4 +17,7 @@
 /**
  * Meter binders for databases.
  */
+@NullMarked
 package io.micrometer.core.instrument.binder.db;
+
+import org.jspecify.annotations.NullMarked;

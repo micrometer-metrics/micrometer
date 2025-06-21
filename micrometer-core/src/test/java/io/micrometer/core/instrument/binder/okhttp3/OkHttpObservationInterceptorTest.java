@@ -32,12 +32,14 @@ import io.micrometer.observation.transport.RequestReplySenderContext;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import ru.lanwen.wiremock.ext.WiremockResolver;
 
 import java.io.IOException;
+import java.util.Objects;
 import java.util.function.Function;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.any;
@@ -129,7 +131,7 @@ class OkHttpObservationInterceptorTest {
 
     static class TestHandler implements ObservationHandler<Observation.Context> {
 
-        Observation.Context context;
+        Observation.@Nullable Context context;
 
         @Override
         public void onStart(Observation.Context context) {
@@ -169,7 +171,8 @@ class OkHttpObservationInterceptorTest {
 
         @Override
         public KeyValues getLowCardinalityKeyValues(OkHttpContext context) {
-            return KeyValues.of(convention.peerName(context.getState().request));
+            OkHttpObservationInterceptor.CallState state = Objects.requireNonNull(context.getState());
+            return KeyValues.of(convention.peerName(Objects.requireNonNull(state.request)));
         }
 
         @Override
@@ -188,62 +191,62 @@ class OkHttpObservationInterceptorTest {
 
         @Override
         public KeyValue method(Request request) {
-            return null;
+            throw new UnsupportedOperationException("Should not call this method!");
         }
 
         @Override
         public KeyValue url(Request request) {
-            return null;
+            throw new UnsupportedOperationException("Should not call this method!");
         }
 
         @Override
         public KeyValue target(Request request) {
-            return null;
+            throw new UnsupportedOperationException("Should not call this method!");
         }
 
         @Override
         public KeyValue host(Request request) {
-            return null;
+            throw new UnsupportedOperationException("Should not call this method!");
         }
 
         @Override
         public KeyValue scheme(Request request) {
-            return null;
+            throw new UnsupportedOperationException("Should not call this method!");
         }
 
         @Override
         public KeyValue statusCode(Response response) {
-            return null;
+            throw new UnsupportedOperationException("Should not call this method!");
         }
 
         @Override
         public KeyValue flavor(Request request) {
-            return null;
+            throw new UnsupportedOperationException("Should not call this method!");
         }
 
         @Override
         public KeyValue userAgent(Request request) {
-            return null;
+            throw new UnsupportedOperationException("Should not call this method!");
         }
 
         @Override
         public KeyValue requestContentLength(Request request) {
-            return null;
+            throw new UnsupportedOperationException("Should not call this method!");
         }
 
         @Override
         public KeyValue responseContentLength(Response response) {
-            return null;
+            throw new UnsupportedOperationException("Should not call this method!");
         }
 
         @Override
         public KeyValue ip(Request request) {
-            return null;
+            throw new UnsupportedOperationException("Should not call this method!");
         }
 
         @Override
         public KeyValue port(Request request) {
-            return null;
+            throw new UnsupportedOperationException("Should not call this method!");
         }
 
     }

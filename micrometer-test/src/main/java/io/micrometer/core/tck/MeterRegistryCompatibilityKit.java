@@ -30,6 +30,7 @@ import io.micrometer.core.instrument.observation.DefaultMeterObservationHandler;
 import io.micrometer.core.instrument.util.TimeUtils;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -344,7 +345,7 @@ public abstract class MeterRegistryCompatibilityKit {
         assertHistogramBuckets(countAtBuckets, null);
     }
 
-    private void assertHistogramBuckets(CountAtBucket[] countAtBuckets, TimeUnit timeUnit) {
+    private void assertHistogramBuckets(CountAtBucket[] countAtBuckets, @Nullable TimeUnit timeUnit) {
         // percentile histogram buckets may be there, assert SLO buckets are present
         assertThat(countAtBuckets).extracting(c -> getCount(c, timeUnit)).contains(5.0, 50.0, 95.0);
 
@@ -363,11 +364,11 @@ public abstract class MeterRegistryCompatibilityKit {
                 });
     }
 
-    private double getCount(CountAtBucket countAtBucket, TimeUnit timeUnit) {
+    private double getCount(CountAtBucket countAtBucket, @Nullable TimeUnit timeUnit) {
         return timeUnit != null ? countAtBucket.bucket(timeUnit) : countAtBucket.bucket();
     }
 
-    private double nonCumulativeBucketCountForRange(CountAtBucket[] countAtBuckets, TimeUnit timeUnit,
+    private double nonCumulativeBucketCountForRange(CountAtBucket[] countAtBuckets, @Nullable TimeUnit timeUnit,
             double exclusiveMinBucket, double inclusiveMaxBucket) {
         double count = 0;
         for (CountAtBucket countAtBucket : countAtBuckets) {
@@ -387,6 +388,7 @@ public abstract class MeterRegistryCompatibilityKit {
         @DisplayName("gauges attached to a number are updated when their values are observed")
         void numericGauge() {
             AtomicInteger n = registry.gauge("my.gauge", new AtomicInteger());
+            assertThat(n).isNotNull();
             n.set(1);
 
             Gauge g = registry.get("my.gauge").gauge();
@@ -399,7 +401,10 @@ public abstract class MeterRegistryCompatibilityKit {
         @Test
         @DisplayName("gauges attached to an object are updated when their values are observed")
         void objectGauge() {
-            List<String> list = registry.gauge("my.gauge", emptyList(), new ArrayList<>(), List::size);
+            // TODO: remove requireNonNull: https://github.com/uber/NullAway/issues/1219
+            List<String> list = Objects
+                .requireNonNull(registry.gauge("my.gauge", emptyList(), new ArrayList<>(), List::size));
+            assertThat(list).isNotNull();
             list.addAll(Arrays.asList("a", "b"));
 
             Gauge g = registry.get("my.gauge").gauge();
@@ -409,7 +414,10 @@ public abstract class MeterRegistryCompatibilityKit {
         @Test
         @DisplayName("gauges can be directly associated with collection size")
         void collectionSizeGauge() {
-            List<String> list = registry.gaugeCollectionSize("my.gauge", emptyList(), new ArrayList<>());
+            // TODO: remove requireNonNull: https://github.com/uber/NullAway/issues/1219
+            List<String> list = Objects
+                .requireNonNull(registry.gaugeCollectionSize("my.gauge", emptyList(), new ArrayList<>()));
+            assertThat(list).isNotNull();
             list.addAll(Arrays.asList("a", "b"));
 
             Gauge g = registry.get("my.gauge").gauge();
@@ -419,7 +427,9 @@ public abstract class MeterRegistryCompatibilityKit {
         @Test
         @DisplayName("gauges can be directly associated with map entry size")
         void mapSizeGauge() {
-            Map<String, Integer> map = registry.gaugeMapSize("my.gauge", emptyList(), new HashMap<>());
+            // TODO: remove requireNonNull: https://github.com/uber/NullAway/issues/1219
+            Map<String, Integer> map = requireNonNull(registry.gaugeMapSize("my.gauge", emptyList(), new HashMap<>()));
+            assertThat(map).isNotNull();
             map.put("a", 1);
 
             Gauge g = registry.get("my.gauge").gauge();
@@ -978,8 +988,8 @@ public abstract class MeterRegistryCompatibilityKit {
             assertThat(timer.max(TimeUnit.MILLISECONDS)).isEqualTo(1000);
 
             // noinspection ConstantConditions
-            clock(registry)
-                .add(Duration.ofMillis(step().toMillis() * DistributionStatisticConfig.DEFAULT.getBufferLength()));
+            Integer bufferLength = Objects.requireNonNull(DistributionStatisticConfig.DEFAULT.getBufferLength());
+            clock(registry).add(Duration.ofMillis(step().toMillis() * bufferLength));
             assertThat(timer.max(TimeUnit.SECONDS)).isEqualTo(0);
         }
 

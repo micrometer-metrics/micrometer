@@ -75,17 +75,17 @@ public class MockLogger implements InternalLogger {
     }
 
     @Override
-    public void trace(String format, Object arg) {
+    public void trace(String format, @Nullable Object arg) {
         log(TRACE, format, arg);
     }
 
     @Override
-    public void trace(String format, Object argA, Object argB) {
+    public void trace(String format, @Nullable Object argA, @Nullable Object argB) {
         log(TRACE, format, argA, argB);
     }
 
     @Override
-    public void trace(String format, Object... arguments) {
+    public void trace(String format, @Nullable Object... arguments) {
         log(TRACE, format, arguments);
     }
 
@@ -110,17 +110,17 @@ public class MockLogger implements InternalLogger {
     }
 
     @Override
-    public void debug(String format, Object arg) {
+    public void debug(String format, @Nullable Object arg) {
         log(DEBUG, format, arg);
     }
 
     @Override
-    public void debug(String format, Object argA, Object argB) {
+    public void debug(String format, @Nullable Object argA, @Nullable Object argB) {
         log(DEBUG, format, argA, argB);
     }
 
     @Override
-    public void debug(String format, Object... arguments) {
+    public void debug(String format, @Nullable Object... arguments) {
         log(DEBUG, format, arguments);
     }
 
@@ -145,17 +145,17 @@ public class MockLogger implements InternalLogger {
     }
 
     @Override
-    public void info(String format, Object arg) {
+    public void info(String format, @Nullable Object arg) {
         log(INFO, format, arg);
     }
 
     @Override
-    public void info(String format, Object argA, Object argB) {
+    public void info(String format, @Nullable Object argA, @Nullable Object argB) {
         log(INFO, format, argA, argB);
     }
 
     @Override
-    public void info(String format, Object... arguments) {
+    public void info(String format, @Nullable Object... arguments) {
         log(INFO, format, arguments);
     }
 
@@ -180,17 +180,17 @@ public class MockLogger implements InternalLogger {
     }
 
     @Override
-    public void warn(String format, Object arg) {
+    public void warn(String format, @Nullable Object arg) {
         log(WARN, format, arg);
     }
 
     @Override
-    public void warn(String format, Object... arguments) {
+    public void warn(String format, @Nullable Object... arguments) {
         log(WARN, format, arguments);
     }
 
     @Override
-    public void warn(String format, Object argA, Object argB) {
+    public void warn(String format, @Nullable Object argA, @Nullable Object argB) {
         log(WARN, format, argA, argB);
     }
 
@@ -215,17 +215,17 @@ public class MockLogger implements InternalLogger {
     }
 
     @Override
-    public void error(String format, Object arg) {
+    public void error(String format, @Nullable Object arg) {
         log(ERROR, format, arg);
     }
 
     @Override
-    public void error(String format, Object argA, Object argB) {
+    public void error(String format, @Nullable Object argA, @Nullable Object argB) {
         log(ERROR, format, argA, argB);
     }
 
     @Override
-    public void error(String format, Object... arguments) {
+    public void error(String format, @Nullable Object... arguments) {
         log(ERROR, format, arguments);
     }
 
@@ -250,17 +250,17 @@ public class MockLogger implements InternalLogger {
     }
 
     @Override
-    public void log(InternalLogLevel level, String format, Object arg) {
+    public void log(InternalLogLevel level, String format, @Nullable Object arg) {
         log(level, MessageFormatter.format(format, arg));
     }
 
     @Override
-    public void log(InternalLogLevel level, String format, Object argA, Object argB) {
+    public void log(InternalLogLevel level, String format, @Nullable Object argA, @Nullable Object argB) {
         log(level, MessageFormatter.format(format, argA, argB));
     }
 
     @Override
-    public void log(InternalLogLevel level, String format, Object... arguments) {
+    public void log(InternalLogLevel level, String format, @Nullable Object... arguments) {
         log(level, MessageFormatter.arrayFormat(format, arguments));
     }
 

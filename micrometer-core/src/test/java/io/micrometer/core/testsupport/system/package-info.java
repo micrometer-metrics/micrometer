@@ -17,4 +17,7 @@
 /**
  * Classes for {@link java.lang.System System}-related testing.
  */
+@NullMarked
 package io.micrometer.core.testsupport.system;
+
+import org.jspecify.annotations.NullMarked;

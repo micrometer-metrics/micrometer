@@ -26,7 +26,7 @@ class DynatraceTimeSeries {
 
     private final String metricId;
 
-    private final Map<String, String> dimensions;
+    private final @Nullable Map<String, String> dimensions;
 
     private final long time;
 

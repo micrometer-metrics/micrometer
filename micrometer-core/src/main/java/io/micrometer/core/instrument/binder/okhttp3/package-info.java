@@ -17,4 +17,7 @@
 /**
  * Meter binders for OkHttp 3.
  */
+@NullMarked
 package io.micrometer.core.instrument.binder.okhttp3;
+
+import org.jspecify.annotations.NullMarked;

@@ -52,7 +52,7 @@ class DynatraceMetricDefinition {
     private final @Nullable String group;
 
     DynatraceMetricDefinition(String metricId, @Nullable String description, @Nullable DynatraceUnit unit,
-            @Nullable Set<String> dimensions, String[] technologyTypes, String group) {
+            @Nullable Set<String> dimensions, String[] technologyTypes, @Nullable String group) {
         this.metricId = metricId;
         this.description = description;
         this.unit = unit;

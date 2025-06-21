@@ -21,7 +21,6 @@ import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.serialization.StringDeserializer;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.Properties;
@@ -38,18 +37,10 @@ class KafkaClientMetricsConsumerTest {
 
     private final Tags tags = Tags.of("app", "myapp", "version", "1");
 
-    KafkaClientMetrics metrics;
-
-    @AfterEach
-    void afterEach() {
-        if (metrics != null)
-            metrics.close();
-    }
-
     @Test
     void shouldCreateMeters() {
-        try (Consumer<String, String> consumer = createConsumer()) {
-            metrics = new KafkaClientMetrics(consumer);
+        try (Consumer<String, String> consumer = createConsumer();
+                KafkaMetrics metrics = new KafkaClientMetrics(consumer)) {
             MeterRegistry registry = new SimpleMeterRegistry();
 
             metrics.bindTo(registry);
@@ -61,8 +52,8 @@ class KafkaClientMetricsConsumerTest {
 
     @Test
     void shouldCreateMetersWithTags() {
-        try (Consumer<String, String> consumer = createConsumer()) {
-            metrics = new KafkaClientMetrics(consumer, tags);
+        try (Consumer<String, String> consumer = createConsumer();
+                KafkaMetrics metrics = new KafkaClientMetrics(consumer, tags)) {
             MeterRegistry registry = new SimpleMeterRegistry();
 
             metrics.bindTo(registry);
@@ -75,9 +66,9 @@ class KafkaClientMetricsConsumerTest {
 
     @Test
     void shouldCreateMetersWithTagsAndCustomScheduler() {
-        try (Consumer<String, String> consumer = createConsumer()) {
-            ScheduledExecutorService customScheduler = Executors.newScheduledThreadPool(1);
-            metrics = new KafkaClientMetrics(consumer, tags, customScheduler);
+        ScheduledExecutorService customScheduler = Executors.newScheduledThreadPool(1);
+        try (Consumer<String, String> consumer = createConsumer();
+                KafkaMetrics metrics = new KafkaClientMetrics(consumer, tags, customScheduler)) {
             MeterRegistry registry = new SimpleMeterRegistry();
 
             metrics.bindTo(registry);
@@ -88,7 +79,8 @@ class KafkaClientMetricsConsumerTest {
 
             metrics.close();
             assertThat(customScheduler.isShutdown()).isFalse();
-
+        }
+        finally {
             customScheduler.shutdownNow();
             assertThat(customScheduler.isShutdown()).isTrue();
         }

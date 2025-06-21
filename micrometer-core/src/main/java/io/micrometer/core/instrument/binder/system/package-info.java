@@ -17,4 +17,7 @@
 /**
  * Meter binders for an operating system.
  */
+@NullMarked
 package io.micrometer.core.instrument.binder.system;
+
+import org.jspecify.annotations.NullMarked;

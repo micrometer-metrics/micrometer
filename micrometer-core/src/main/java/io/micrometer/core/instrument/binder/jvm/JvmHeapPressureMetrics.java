@@ -23,6 +23,7 @@ import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.binder.MeterBinder;
 import io.micrometer.core.instrument.distribution.TimeWindowSum;
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 import javax.management.ListenerNotFoundException;
 import javax.management.NotificationEmitter;
@@ -125,10 +126,15 @@ public class JvmHeapPressureMetrics implements MeterBinder, AutoCloseable {
 
                 if (!longLivedPoolNames.isEmpty()) {
                     final long usedAfter = longLivedPoolNames.stream()
-                        .mapToLong(pool -> after.get(pool).getUsed())
+                        .mapToLong(pool -> getUsed(after.get(pool)))
                         .sum();
-                    double maxAfter = longLivedPoolNames.stream().mapToLong(pool -> after.get(pool).getMax()).sum();
-                    lastLongLivedPoolUsageAfterGc.set(usedAfter / maxAfter);
+                    double maxAfter = longLivedPoolNames.stream().mapToLong(pool -> getMax(after.get(pool))).sum();
+                    if (usedAfter > 0 && maxAfter > 0) {
+                        lastLongLivedPoolUsageAfterGc.set(usedAfter / maxAfter);
+                    }
+                    else {
+                        lastLongLivedPoolUsageAfterGc.set(0.0);
+                    }
                 }
             };
             NotificationEmitter notificationEmitter = (NotificationEmitter) mbean;
@@ -142,6 +148,14 @@ public class JvmHeapPressureMetrics implements MeterBinder, AutoCloseable {
                 }
             });
         }
+    }
+
+    private long getUsed(@Nullable MemoryUsage memoryUsage) {
+        return memoryUsage != null ? memoryUsage.getUsed() : 0;
+    }
+
+    private long getMax(@Nullable MemoryUsage memoryUsage) {
+        return memoryUsage != null ? memoryUsage.getMax() : 0;
     }
 
     @Override

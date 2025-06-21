@@ -54,6 +54,8 @@
  */
 package io.micrometer.common.util.internal.logging;
 
+import org.jspecify.annotations.Nullable;
+
 /**
  * NOTE: This file has been copied from {io.netty.util.internal.logging}.
  *
@@ -88,7 +90,7 @@ public interface InternalLogger {
      * @param format the format string
      * @param arg the argument
      */
-    void trace(String format, Object arg);
+    void trace(String format, @Nullable Object arg);
 
     /**
      * Log a message at the TRACE level according to the specified format and arguments.
@@ -99,7 +101,7 @@ public interface InternalLogger {
      * @param argA the first argument
      * @param argB the second argument
      */
-    void trace(String format, Object argA, Object argB);
+    void trace(String format, @Nullable Object argA, @Nullable Object argB);
 
     /**
      * Log a message at the TRACE level according to the specified format and arguments.
@@ -113,7 +115,7 @@ public interface InternalLogger {
      * @param format the format string
      * @param arguments a list of 3 or more arguments
      */
-    void trace(String format, Object... arguments);
+    void trace(String format, @Nullable Object... arguments);
 
     /**
      * Log an exception (throwable) at the TRACE level with an accompanying message.
@@ -148,7 +150,7 @@ public interface InternalLogger {
      * @param format the format string
      * @param arg the argument
      */
-    void debug(String format, Object arg);
+    void debug(String format, @Nullable Object arg);
 
     /**
      * Log a message at the DEBUG level according to the specified format and arguments.
@@ -159,7 +161,7 @@ public interface InternalLogger {
      * @param argA the first argument
      * @param argB the second argument
      */
-    void debug(String format, Object argA, Object argB);
+    void debug(String format, @Nullable Object argA, @Nullable Object argB);
 
     /**
      * Log a message at the DEBUG level according to the specified format and arguments.
@@ -173,7 +175,7 @@ public interface InternalLogger {
      * @param format the format string
      * @param arguments a list of 3 or more arguments
      */
-    void debug(String format, Object... arguments);
+    void debug(String format, @Nullable Object... arguments);
 
     /**
      * Log an exception (throwable) at the DEBUG level with an accompanying message.
@@ -208,7 +210,7 @@ public interface InternalLogger {
      * @param format the format string
      * @param arg the argument
      */
-    void info(String format, Object arg);
+    void info(String format, @Nullable Object arg);
 
     /**
      * Log a message at the INFO level according to the specified format and arguments.
@@ -219,7 +221,7 @@ public interface InternalLogger {
      * @param argA the first argument
      * @param argB the second argument
      */
-    void info(String format, Object argA, Object argB);
+    void info(String format, @Nullable Object argA, @Nullable Object argB);
 
     /**
      * Log a message at the INFO level according to the specified format and arguments.
@@ -233,7 +235,7 @@ public interface InternalLogger {
      * @param format the format string
      * @param arguments a list of 3 or more arguments
      */
-    void info(String format, Object... arguments);
+    void info(String format, @Nullable Object... arguments);
 
     /**
      * Log an exception (throwable) at the INFO level with an accompanying message.
@@ -268,7 +270,7 @@ public interface InternalLogger {
      * @param format the format string
      * @param arg the argument
      */
-    void warn(String format, Object arg);
+    void warn(String format, @Nullable Object arg);
 
     /**
      * Log a message at the WARN level according to the specified format and arguments.
@@ -282,7 +284,7 @@ public interface InternalLogger {
      * @param format the format string
      * @param arguments a list of 3 or more arguments
      */
-    void warn(String format, Object... arguments);
+    void warn(String format, @Nullable Object... arguments);
 
     /**
      * Log a message at the WARN level according to the specified format and arguments.
@@ -293,7 +295,7 @@ public interface InternalLogger {
      * @param argA the first argument
      * @param argB the second argument
      */
-    void warn(String format, Object argA, Object argB);
+    void warn(String format, @Nullable Object argA, @Nullable Object argB);
 
     /**
      * Log an exception (throwable) at the WARN level with an accompanying message.
@@ -328,7 +330,7 @@ public interface InternalLogger {
      * @param format the format string
      * @param arg the argument
      */
-    void error(String format, Object arg);
+    void error(String format, @Nullable Object arg);
 
     /**
      * Log a message at the ERROR level according to the specified format and arguments.
@@ -339,7 +341,7 @@ public interface InternalLogger {
      * @param argA the first argument
      * @param argB the second argument
      */
-    void error(String format, Object argA, Object argB);
+    void error(String format, @Nullable Object argA, @Nullable Object argB);
 
     /**
      * Log a message at the ERROR level according to the specified format and arguments.
@@ -353,7 +355,7 @@ public interface InternalLogger {
      * @param format the format string
      * @param arguments a list of 3 or more arguments
      */
-    void error(String format, Object... arguments);
+    void error(String format, @Nullable Object... arguments);
 
     /**
      * Log an exception (throwable) at the ERROR level with an accompanying message.
@@ -393,7 +395,7 @@ public interface InternalLogger {
      * @param format the format string
      * @param arg the argument
      */
-    void log(InternalLogLevel level, String format, Object arg);
+    void log(InternalLogLevel level, String format, @Nullable Object arg);
 
     /**
      * Log a message at the specified {@code level} according to the specified format and
@@ -406,7 +408,7 @@ public interface InternalLogger {
      * @param argA the first argument
      * @param argB the second argument
      */
-    void log(InternalLogLevel level, String format, Object argA, Object argB);
+    void log(InternalLogLevel level, String format, @Nullable Object argA, @Nullable Object argB);
 
     /**
      * Log a message at the specified {@code level} according to the specified format and
@@ -423,7 +425,7 @@ public interface InternalLogger {
      * @param format the format string
      * @param arguments a list of 3 or more arguments
      */
-    void log(InternalLogLevel level, String format, Object... arguments);
+    void log(InternalLogLevel level, String format, @Nullable Object... arguments);
 
     /**
      * Log an exception (throwable) at the specified {@code level} with an accompanying

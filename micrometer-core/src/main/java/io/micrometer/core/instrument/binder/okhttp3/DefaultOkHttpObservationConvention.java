@@ -75,21 +75,20 @@ public class DefaultOkHttpObservationConvention implements OkHttpObservationConv
     @Override
     public KeyValues getLowCardinalityKeyValues(OkHttpContext context) {
         OkHttpObservationInterceptor.CallState state = context.getState();
-        Request request = state.request;
+        Request request = state != null ? state.request : null;
+        Response response = state != null ? state.response : null;
+        IOException exception = state != null ? state.exception : null;
         Function<Request, String> urlMapper = context.getUrlMapper();
         Iterable<KeyValue> extraTags = context.getExtraTags();
         Iterable<BiFunction<Request, Response, KeyValue>> contextSpecificTags = context.getContextSpecificTags();
         Iterable<KeyValue> unknownRequestTags = context.getUnknownRequestTags();
         boolean includeHostTag = context.isIncludeHostTag();
         // TODO: Tags to key values and back - maybe we can improve this?
-        KeyValues keyValues = KeyValues
-            .of(METHOD.withValue(request != null ? request.method() : TAG_VALUE_UNKNOWN),
-                    URI.withValue(getUriTag(urlMapper, request)),
-                    STATUS.withValue(getStatusMessage(state.response, state.exception)),
-                    OUTCOME.withValue(getStatusOutcome(state.response).name()))
+        KeyValues keyValues = KeyValues.of(METHOD.withValue(request != null ? request.method() : TAG_VALUE_UNKNOWN),
+                URI.withValue(getUriTag(urlMapper, request)), STATUS.withValue(getStatusMessage(response, exception)),
+                OUTCOME.withValue(getStatusOutcome(response).name()))
             .and(extraTags)
-            .and(stream(contextSpecificTags.spliterator(), false)
-                .map(contextTag -> contextTag.apply(request, state.response))
+            .and(stream(contextSpecificTags.spliterator(), false).map(contextTag -> contextTag.apply(request, response))
                 .map(tag -> KeyValue.of(tag.getKey(), tag.getValue()))
                 .collect(toList()))
             .and(getRequestTags(request, unknownRequestTags))

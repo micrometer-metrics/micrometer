@@ -18,4 +18,7 @@
  * Custom JUnit extension to change the classpath. The code in this package was copied
  * from the Spring Boot project.
  */
+@NullMarked
 package io.micrometer.core.testsupport.classpath;
+
+import org.jspecify.annotations.NullMarked;

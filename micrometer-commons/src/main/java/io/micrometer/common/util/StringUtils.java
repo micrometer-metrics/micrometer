@@ -32,6 +32,7 @@ public final class StringUtils {
      * @param string String to check
      * @return {@code true} if the String is null or has only whitespaces
      */
+    @Contract("null -> true")
     public static boolean isBlank(@Nullable String string) {
         if (isEmpty(string)) {
             return true;
@@ -70,6 +71,7 @@ public final class StringUtils {
      * @return {@code true} if the String has any character
      * @since 1.1.0
      */
+    @Contract("null -> false")
     public static boolean isNotEmpty(@Nullable String string) {
         return !isEmpty(string);
     }
