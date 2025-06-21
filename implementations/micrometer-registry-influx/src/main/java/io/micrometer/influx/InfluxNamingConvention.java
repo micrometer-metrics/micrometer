@@ -48,7 +48,7 @@ public class InfluxNamingConvention implements NamingConvention {
 
     @Override
     public String name(String name, Meter.Type type, @Nullable String baseUnit) {
-        return escape(delegate.name(name, type, baseUnit).replace("=", "_"));
+        return escape(delegate.name(name, type, baseUnit).replace('=', '_'));
     }
 
     @Override
