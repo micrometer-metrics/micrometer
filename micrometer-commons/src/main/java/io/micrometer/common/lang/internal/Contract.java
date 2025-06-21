@@ -21,7 +21,6 @@ import java.lang.annotation.*;
  * This is for internal use only.
  */
 @Documented
-@Retention(RetentionPolicy.CLASS)
 @Target(ElementType.METHOD)
 public @interface Contract {
 
