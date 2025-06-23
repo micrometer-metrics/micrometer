@@ -21,6 +21,7 @@ import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.DistributionSummary;
 import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.instrument.distribution.CountAtBucket;
 import io.micrometer.core.instrument.distribution.HistogramSnapshot;
 import org.junit.jupiter.api.Test;
 
@@ -77,11 +78,12 @@ class StackdriverMeterRegistryTest {
     @Test
     @Issue("#2045")
     void batchDistributionWhenHistogramSnapshotIsEmpty() {
-        // no SLOs, percentiles, or percentile histogram configured => no-op histogram
+        // no SLOs, percentiles, or percentile histogram configured
+        // => only infinity bucket histogram
         DistributionSummary ds = DistributionSummary.builder("ds").register(meterRegistry);
         StackdriverMeterRegistry.Batch batch = meterRegistry.new Batch();
         HistogramSnapshot histogramSnapshot = ds.takeSnapshot();
-        assertThat(histogramSnapshot.histogramCounts()).isEmpty();
+        assertThat(histogramSnapshot.histogramCounts()).containsExactly(new CountAtBucket(Double.POSITIVE_INFINITY, 0));
         assertThat(histogramSnapshot.percentileValues()).isEmpty();
         Distribution distribution = batch.distribution(histogramSnapshot, false);
         assertThat(distribution.getBucketOptions().getExplicitBuckets().getBoundsList()).containsExactly(0d);
