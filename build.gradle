@@ -78,6 +78,7 @@ subprojects {
                     "ClassCanBeStatic",
                     "CollectionUndefinedEquality",
                     "DefaultCharset",
+                    "DoNotCallSuggester",
                     "EqualsGetClass",
                     "InlineFormatString",
                     "LongDoubleConversion",

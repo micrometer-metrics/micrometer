@@ -69,6 +69,7 @@ import java.time.Duration;
 
 public class SampleRegistries {
 
+    @SuppressWarnings("DoNotCallSuggester")
     public static MeterRegistry pickOne() {
         throw new RuntimeException(
                 "Pick some other method on SampleRegistries to ship sample metrics to the system of your choice");
