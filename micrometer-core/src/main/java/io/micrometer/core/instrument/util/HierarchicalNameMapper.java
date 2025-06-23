@@ -36,7 +36,7 @@ public interface HierarchicalNameMapper {
             convention) -> id.getConventionName(convention) + id.getConventionTags(convention)
                 .stream()
                 .map(t -> "." + t.getKey() + "." + t.getValue())
-                .map(nameSegment -> nameSegment.replace(" ", "_"))
+                .map(nameSegment -> nameSegment.replace(' ', '_'))
                 .collect(Collectors.joining(""));
 
     String toHierarchicalName(Meter.Id id, NamingConvention convention);
