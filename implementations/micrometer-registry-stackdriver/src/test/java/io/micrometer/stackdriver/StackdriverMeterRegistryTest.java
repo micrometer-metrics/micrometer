@@ -197,4 +197,18 @@ class StackdriverMeterRegistryTest {
         assertThat(distribution.getMean()).isZero();
     }
 
+    @Test
+    @Issue("#6401")
+    void distributionWithNoBucketsUsesStepCount() {
+        StackdriverMeterRegistry.Batch batch = meterRegistry.new Batch();
+        // halfway through first step
+        clock.add(config.step().dividedBy(2));
+        DistributionSummary ds = DistributionSummary.builder("ds").register(meterRegistry);
+        ds.record(3);
+        // 1/4 through the second step
+        clock.add(config.step().dividedBy(4).multipliedBy(3));
+        Distribution distribution = batch.distribution(ds.takeSnapshot(), false);
+        assertThat(distribution.getCount()).isEqualTo(1);
+    }
+
 }
