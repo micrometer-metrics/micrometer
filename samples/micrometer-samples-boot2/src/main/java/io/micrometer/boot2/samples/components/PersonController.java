@@ -45,7 +45,7 @@ public class PersonController {
             Thread.sleep(200);
         }
         catch (InterruptedException e) {
-            e.printStackTrace();
+            throw new RuntimeException(e);
         }
         return people;
     }
