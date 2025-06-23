@@ -76,6 +76,7 @@ subprojects {
                     "BadImport",
                     "CatchAndPrintStackTrace",
                     "ClassCanBeStatic",
+                    "CollectionUndefinedEquality",
                     "DefaultCharset",
                     "EqualsGetClass",
                     "InlineFormatString",
