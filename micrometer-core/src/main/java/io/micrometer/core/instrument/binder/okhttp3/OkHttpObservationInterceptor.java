@@ -118,11 +118,9 @@ public class OkHttpObservationInterceptor implements Interceptor {
 
         final @Nullable Request request;
 
-        @Nullable
-        Response response;
+        @Nullable Response response;
 
-        @Nullable
-        IOException exception;
+        @Nullable IOException exception;
 
         CallState(@Nullable Request request) {
             this.request = request;

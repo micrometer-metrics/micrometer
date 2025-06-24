@@ -40,11 +40,9 @@ public final class RequiredSearch {
 
     final Set<String> requiredTagKeys = new HashSet<>();
 
-    @Nullable
-    String exactNameMatch;
+    @Nullable String exactNameMatch;
 
-    @Nullable
-    Predicate<String> nameMatches;
+    @Nullable Predicate<String> nameMatches;
 
     private RequiredSearch(MeterRegistry registry) {
         this.registry = registry;

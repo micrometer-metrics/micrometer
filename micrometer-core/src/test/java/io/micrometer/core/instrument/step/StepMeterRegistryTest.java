@@ -631,8 +631,7 @@ class StepMeterRegistryTest {
 
         private long lastScheduledPublishStartTime;
 
-        @Nullable
-        Runnable prePublishAction;
+        @Nullable Runnable prePublishAction;
 
         AtomicBoolean isPublishing = new AtomicBoolean(false);
 

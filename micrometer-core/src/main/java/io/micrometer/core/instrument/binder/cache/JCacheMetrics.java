@@ -42,8 +42,7 @@ import java.util.List;
 public class JCacheMetrics<K, V, C extends Cache<K, V>> extends CacheMeterBinder<C> {
 
     // VisibleForTesting
-    @Nullable
-    ObjectName objectName;
+    @Nullable ObjectName objectName;
 
     /**
      * Record metrics on a JCache cache.
