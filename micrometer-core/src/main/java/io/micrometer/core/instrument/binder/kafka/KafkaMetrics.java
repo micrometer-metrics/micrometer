@@ -338,7 +338,7 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
 
     private List<Tag> meterTags(MetricName metricName, boolean includeCommonTags) {
         List<Tag> tags = new ArrayList<>();
-        metricName.tags().forEach((key, value) -> tags.add(Tag.of(key.replaceAll("-", "."), value)));
+        metricName.tags().forEach((key, value) -> tags.add(Tag.of(key.replace('-', '.'), value)));
         tags.add(Tag.of(KAFKA_VERSION_TAG_NAME, kafkaVersion));
         extraTags.forEach(tags::add);
         if (includeCommonTags && commonTags != null) {
@@ -353,7 +353,7 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
 
     private String meterName(MetricName metricName) {
         String name = METRIC_NAME_PREFIX + metricName.group() + "." + metricName.name();
-        return name.replaceAll("-metrics", "").replaceAll("-", ".");
+        return name.replaceAll("-metrics", "").replace('-', '.');
     }
 
     private Meter.Id meterIdForComparison(MetricName metricName) {

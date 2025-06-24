@@ -383,7 +383,7 @@ public class TomcatMetrics implements MeterBinder, AutoCloseable {
     private Iterable<Tag> nameTag(ObjectName name) {
         String nameTagValue = name.getKeyProperty("name");
         if (nameTagValue != null) {
-            return Tags.of("name", nameTagValue.replaceAll("\"", ""));
+            return Tags.of("name", nameTagValue.replace("\"", ""));
         }
         return Collections.emptyList();
     }

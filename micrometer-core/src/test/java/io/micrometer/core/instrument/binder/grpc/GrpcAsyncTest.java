@@ -119,6 +119,7 @@ class GrpcAsyncTest {
         assertThat(futures).allSatisfy((future) -> {
             // Make sure the request-id in the response message matches with the one sent
             // to server.
+            @SuppressWarnings("CollectionUndefinedEquality")
             String expectedRequestId = requestIds.get(future);
             assertThat(future.get().getResponseMessage()).contains("request-id=" + expectedRequestId);
         });

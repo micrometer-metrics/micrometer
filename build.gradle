@@ -89,8 +89,11 @@ subprojects {
                 error(
                     "AttemptedNegativeZero",
                     "BadImport",
+                    "CatchAndPrintStackTrace",
                     "ClassCanBeStatic",
+                    "CollectionUndefinedEquality",
                     "DefaultCharset",
+                    "DoNotCallSuggester",
                     "EqualsGetClass",
                     "InlineFormatString",
                     "LongDoubleConversion",
