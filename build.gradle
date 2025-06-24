@@ -81,6 +81,7 @@ subprojects {
                     "DoNotCallSuggester",
                     "EnumOrdinal",
                     "EqualsGetClass",
+                    "FallThrough",
                     "InlineFormatString",
                     "LongDoubleConversion",
                     "MissingOverride",
