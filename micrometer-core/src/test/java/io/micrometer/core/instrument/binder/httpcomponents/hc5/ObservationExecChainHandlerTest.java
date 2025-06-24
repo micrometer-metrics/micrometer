@@ -177,8 +177,7 @@ class ObservationExecChainHandlerTest {
 
     static class TestAsyncExecChain implements AsyncExecChain {
 
-        @Nullable
-        AsyncExecCallback receivedCallback;
+        @Nullable AsyncExecCallback receivedCallback;
 
         @Override
         public void proceed(HttpRequest request, AsyncEntityProducer entityProducer, Scope scope,

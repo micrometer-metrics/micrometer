@@ -56,7 +56,8 @@ public class MeterRegistryConfigValidator {
      * @return A function which, given a configuration instance, validates the property.
      */
     @SuppressWarnings("unchecked")
-    @NullUnmarked public static <M extends @NonNull MeterRegistryConfig, T> Function<M, Validated<T>> check(@NonNull String property,
+    @NullUnmarked
+    public static <M extends @NonNull MeterRegistryConfig, T> Function<M, Validated<T>> check(@NonNull String property,
             Function<M, T> getter) {
         return config -> {
             try {
@@ -69,7 +70,8 @@ public class MeterRegistryConfigValidator {
         };
     }
 
-    @NullUnmarked public static <M extends @NonNull MeterRegistryConfig, T> Function<M, Validated<T>> checkRequired(
+    @NullUnmarked
+    public static <M extends @NonNull MeterRegistryConfig, T> Function<M, Validated<T>> checkRequired(
             @NonNull String property, Function<M, T> getter) {
         return check(property, getter).andThen(Validated::required);
     }

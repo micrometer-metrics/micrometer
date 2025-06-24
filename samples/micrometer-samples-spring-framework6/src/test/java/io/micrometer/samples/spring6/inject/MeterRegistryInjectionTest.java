@@ -79,8 +79,7 @@ class MyComponent {
     MeterRegistry registry;
 
     // for performance-critical uses, it is best to store a meter in a field
-    @Nullable
-    Counter counter;
+    @Nullable Counter counter;
 
     @Inject
     MyComponent() {

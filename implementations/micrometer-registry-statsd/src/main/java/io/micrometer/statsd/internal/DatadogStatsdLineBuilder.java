@@ -51,8 +51,7 @@ public class DatadogStatsdLineBuilder extends FlavorStatsdLineBuilder {
     private final boolean percentileHistogram;
 
     // VisibleForTesting
-    @Nullable
-    String ddEntityId;
+    @Nullable String ddEntityId;
 
     public DatadogStatsdLineBuilder(Meter.Id id, MeterRegistry.Config config) {
         this(id, config, null);
