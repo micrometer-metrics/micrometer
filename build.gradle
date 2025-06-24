@@ -79,6 +79,7 @@ subprojects {
                     "CollectionUndefinedEquality",
                     "DefaultCharset",
                     "DoNotCallSuggester",
+                    "EnumOrdinal",
                     "EqualsGetClass",
                     "InlineFormatString",
                     "LongDoubleConversion",
