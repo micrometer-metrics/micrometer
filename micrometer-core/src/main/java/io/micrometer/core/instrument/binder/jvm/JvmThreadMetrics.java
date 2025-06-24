@@ -104,7 +104,7 @@ public class JvmThreadMetrics implements MeterBinder {
     }
 
     private static String getStateTagValue(Thread.State state) {
-        return state.name().toLowerCase(Locale.ROOT).replace("_", "-");
+        return state.name().toLowerCase(Locale.ROOT).replace('_', '-');
     }
 
 }

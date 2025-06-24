@@ -428,7 +428,7 @@ public class KafkaConsumerMetrics implements MeterBinder, AutoCloseable {
     }
 
     private static String sanitize(String value) {
-        return value.replaceAll("-", ".");
+        return value.replace('-', '.');
     }
 
     @Override
