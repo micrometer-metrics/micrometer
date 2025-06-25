@@ -61,6 +61,7 @@ class JettyClientMetricsTest {
                         throw new RuntimeException("big boom");
                     case "/error":
                         response.setStatus(500);
+                        // fall through
                     case "/ok":
                         baseRequest.setHandled(true);
                 }
