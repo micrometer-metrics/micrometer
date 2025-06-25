@@ -96,8 +96,8 @@ public class OkHttpConnectionPoolMetrics implements MeterBinder {
      * exposed by this instance. Therefore this binder allows to pass it, to be able to
      * monitor it.
      */
-    public OkHttpConnectionPoolMetrics(@Nullable ConnectionPool connectionPool, @Nullable String namePrefix,
-            @Nullable Iterable<Tag> tags, @Nullable Integer maxIdleConnections) {
+    public OkHttpConnectionPoolMetrics(ConnectionPool connectionPool, String namePrefix, Iterable<Tag> tags,
+            @Nullable Integer maxIdleConnections) {
         if (connectionPool == null) {
             throw new IllegalArgumentException("Given ConnectionPool must not be null.");
         }

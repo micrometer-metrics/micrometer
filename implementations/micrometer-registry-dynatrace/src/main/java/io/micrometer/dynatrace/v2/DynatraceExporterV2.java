@@ -23,8 +23,8 @@ import com.dynatrace.metric.util.MetricLinePreConfiguration;
 import io.micrometer.common.util.StringUtils;
 import io.micrometer.common.util.internal.logging.InternalLogger;
 import io.micrometer.common.util.internal.logging.InternalLoggerFactory;
-import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.distribution.HistogramSnapshot;
 import io.micrometer.core.instrument.distribution.ValueAtPercentile;
 import io.micrometer.core.ipc.http.HttpSender;
@@ -32,14 +32,12 @@ import io.micrometer.dynatrace.AbstractDynatraceExporter;
 import io.micrometer.dynatrace.DynatraceConfig;
 import io.micrometer.dynatrace.types.DynatraceSummarySnapshot;
 import io.micrometer.dynatrace.types.DynatraceSummarySnapshotSupport;
-import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.time.Instant;
 import java.util.*;
-import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
 import java.util.regex.Matcher;
@@ -142,7 +140,7 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
      * metric lines.
      */
     @Override
-    public void export(@NonNull List<Meter> meters) {
+    public void export(List<Meter> meters) {
         if (skipExport) {
             logger.warn("Dynatrace configuration is invalid, skipping export.");
             return;
