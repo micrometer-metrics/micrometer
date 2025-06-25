@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 VMware, Inc.
+ * Copyright 2023 VMware, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,22 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.core.instrument.binder;
-
-import io.micrometer.core.instrument.MeterRegistry;
-import org.jspecify.annotations.NonNull;
 
 /**
- * Binders register one or more metrics to provide information about the state of some
- * aspect of the application or its container.
- * <p>
- * Binders are enabled by default if they source data for an alert that is recommended for
- * a production ready app.
+ * Meter binders for git info.
  */
-public interface MeterBinder {
-
-    String DEFAULT_TAG_VALUE = "unknown";
-
-    void bindTo(@NonNull MeterRegistry registry);
-
-}
+package io.micrometer.core.instrument.binder.git;
