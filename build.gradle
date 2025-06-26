@@ -82,9 +82,11 @@ subprojects {
                     "EnumOrdinal",
                     "EqualsGetClass",
                     "FallThrough",
+                    "Finally",
                     "InlineFormatString",
                     "LongDoubleConversion",
                     "MissingOverride",
+                    "ModifyCollectionInEnhancedForLoop",
                     "StringCaseLocaleUsage",
                     "StringSplitter"
             )
