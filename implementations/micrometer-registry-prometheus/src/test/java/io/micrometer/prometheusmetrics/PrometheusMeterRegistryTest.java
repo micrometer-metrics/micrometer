@@ -109,6 +109,37 @@ class PrometheusMeterRegistryTest {
     }
 
     @Test
+    @Issue("#6434")
+    void registerAndScrapeGaugeAndCounterWithSameNameNoTags() {
+        registry.gauge("cache.removals", new AtomicInteger(19));
+        assertThatThrownBy(() -> registry.counter("cache.removals").increment())
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessage(
+                    "There is already a registered meter of a different type (DefaultGauge vs. Counter) with the same name: cache.removals");
+        assertThat(registry.scrape().lines()).hasSize(3).contains("# TYPE cache_removals gauge");
+    }
+
+    @Test
+    @Issue("#6434")
+    void registerAndScrapeGaugeAndCounterWithSameNameSameTagKeyDifferentTagValueNoException() {
+        registry.gauge("cache.removals", Tags.of("cache", "ehcache"), new AtomicInteger(19));
+        registry.counter("cache.removals", "cache", "redis").increment();
+        assertThat(registry.scrape().lines()).hasSize(3).contains("# TYPE cache_removals gauge");
+    }
+
+    @Test
+    @Issue("#6434")
+    void registerAndScrapeGaugeAndCounterWithSameNameSameTagKeyDifferentTagValueWithException() {
+        registry.throwExceptionOnRegistrationFailure();
+        registry.gauge("cache.removals", Tags.of("cache", "ehcache"), new AtomicInteger(19));
+        assertThatThrownBy(() -> registry.counter("cache.removals", "cache", "redis").increment())
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessage(
+                    "Prometheus requires that all meters with the same name have the same type. There is already an existing meter named 'cache_removals' that is a GAUGE. The meter you are attempting to register is a COUNTER.");
+        assertThat(registry.scrape().lines()).hasSize(3).contains("# TYPE cache_removals gauge");
+    }
+
+    @Test
     void baseUnitMakesItToScrape() {
         AtomicInteger n = new AtomicInteger();
         Gauge.builder("gauge", n, AtomicInteger::get).tags("a", "b").baseUnit(BaseUnits.BYTES).register(registry);
