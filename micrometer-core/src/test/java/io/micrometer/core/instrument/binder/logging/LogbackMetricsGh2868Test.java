@@ -49,7 +49,7 @@ class LogbackMetricsGh2868Test {
                         finishGate.await();
                     }
                     catch (InterruptedException | BrokenBarrierException e) {
-                        throw new RuntimeException(e);
+                        lastException.set(e);
                     }
                 }
             }).start();
