@@ -82,6 +82,7 @@ subprojects {
                     "EnumOrdinal",
                     "EqualsGetClass",
                     "FallThrough",
+                    "Finally",
                     "InlineFormatString",
                     "LongDoubleConversion",
                     "MissingOverride",
