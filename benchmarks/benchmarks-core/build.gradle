@@ -18,7 +18,6 @@ dependencies {
     jmh project(':micrometer-registry-otlp')
 //    jmh 'io.micrometer:micrometer-registry-otlp:1.13.0-M2'
 
-    jmh libs.dropwizardMetricsCore5
     jmh libs.prometheusMetrics
 
     jmh libs.dropwizardMetricsCore

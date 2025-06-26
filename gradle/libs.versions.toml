@@ -12,7 +12,6 @@ cloudwatch2 = "2.29.52"
 colt = "1.2.0"
 dagger = "2.52"
 dropwizard-metrics = "4.2.33"
-dropwizard-metrics5 = "5.0.0"
 dynatrace-utils = "2.2.1"
 ehcache2 = "2.10.9.2"
 ehcache3 = "3.10.8"
@@ -101,7 +100,6 @@ daggerCompiler = { module = "com.google.dagger:dagger-compiler", version.ref = "
 dropwizardMetricsCore = { module = "io.dropwizard.metrics:metrics-core", version.ref = "dropwizard-metrics" }
 dropwizardMetricsGraphite = { module = "io.dropwizard.metrics:metrics-graphite", version.ref = "dropwizard-metrics" }
 dropwizardMetricsJmx = { module = "io.dropwizard.metrics:metrics-jmx", version.ref = "dropwizard-metrics" }
-dropwizardMetricsCore5 = { module = "io.dropwizard.metrics5:metrics-core", version.ref = "dropwizard-metrics5" }
 dynatraceUtils = { module = "com.dynatrace.metric.util:dynatrace-metric-utils-java", version.ref = "dynatrace-utils" }
 ehcache2 = { module = "net.sf.ehcache:ehcache", version.ref = "ehcache2" }
 ehcache3 = { module = "org.ehcache:ehcache", version.ref = "ehcache3" }
