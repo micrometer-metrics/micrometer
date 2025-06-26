@@ -44,12 +44,15 @@ class MicrometerCollector implements MultiCollector {
 
     private final String conventionName;
 
+    private final Meter.Type meterType;
+
     private final List<String> tagKeys;
 
     // take name to avoid calling NamingConvention#name after the call-site has already
     // done it
     MicrometerCollector(String name, Meter.Id id, NamingConvention convention) {
         this.conventionName = name;
+        this.meterType = id.getType();
         this.tagKeys = id.getConventionTags(convention).stream().map(Tag::getKey).collect(toList());
     }
 
@@ -67,6 +70,10 @@ class MicrometerCollector implements MultiCollector {
 
     public List<String> getTagKeys() {
         return tagKeys;
+    }
+
+    Meter.Type getMeterType() {
+        return meterType;
     }
 
     @Override
