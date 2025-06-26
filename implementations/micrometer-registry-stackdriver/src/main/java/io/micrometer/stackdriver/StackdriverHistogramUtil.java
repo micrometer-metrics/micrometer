@@ -31,7 +31,7 @@ final class StackdriverHistogramUtil {
         if (distributionStatisticConfig.isPublishingHistogram()) {
             return new StackdriverFixedBoundaryHistogram(clock, distributionStatisticConfig);
         }
-        return NoopHistogram.INSTANCE;
+        return new StackdriverInfinityBucketHistogram(clock, distributionStatisticConfig);
     }
 
     static class StackdriverClientSidePercentilesHistogram extends TimeWindowPercentileHistogram {
@@ -47,6 +47,14 @@ final class StackdriverHistogramUtil {
 
         StackdriverFixedBoundaryHistogram(Clock clock, DistributionStatisticConfig config) {
             super(clock, config, true, false, true);
+        }
+
+    }
+
+    static class StackdriverInfinityBucketHistogram extends TimeWindowFixedBoundaryHistogram {
+
+        StackdriverInfinityBucketHistogram(Clock clock, DistributionStatisticConfig config) {
+            super(clock, config, false, false, true);
         }
 
     }

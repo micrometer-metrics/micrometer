@@ -78,6 +78,7 @@ public class MetricsRequestEventListener implements RequestEventListener {
                 if (!isClientError(event)) {
                     break;
                 }
+                // fall through
             case REQUEST_MATCHED:
                 timedAnnotations = annotations(event);
 
