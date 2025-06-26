@@ -86,6 +86,7 @@ subprojects {
                     "InlineFormatString",
                     "LongDoubleConversion",
                     "MissingOverride",
+                    "ModifyCollectionInEnhancedForLoop",
                     "StringCaseLocaleUsage",
                     "StringSplitter"
             )
