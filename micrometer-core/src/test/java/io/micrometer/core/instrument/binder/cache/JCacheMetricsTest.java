@@ -15,6 +15,7 @@
  */
 package io.micrometer.core.instrument.binder.cache;
 
+import io.micrometer.core.instrument.FunctionCounter;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tags;
@@ -161,7 +162,17 @@ class JCacheMetricsTest extends AbstractCacheMetricsTest {
         MeterRegistry registry = new SimpleMeterRegistry();
         metrics.bindImplementationSpecificMetrics(registry);
 
-        assertThat(registry.find("cache.removals").tags(expectedTag).functionCounter()).isNull();
+        assertThat(registry.find("cache.removals").tags(expectedTag).meter()).isNull();
+    }
+
+    @Test
+    void cacheRemovalsIsFunctionCounterWhenConfigured() {
+        MeterRegistry meterRegistry = new SimpleMeterRegistry();
+        metrics = new JCacheMetrics<>(cache, expectedTag, true);
+        metrics.bindTo(meterRegistry);
+
+        assertThat(meterRegistry.get("cache.removals").tags(expectedTag).meter()).isNotNull()
+            .isInstanceOf(FunctionCounter.class);
     }
 
     private static class CacheMBeanStub implements DynamicMBean {
