@@ -23,8 +23,6 @@ import org.openjdk.jmh.runner.RunnerException;
 import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -86,34 +84,6 @@ public class CompareCountersWithOtherLibraries {
     }
 
     @State(Scope.Benchmark)
-    public static class Dropwizard5State {
-
-        io.dropwizard.metrics5.MetricRegistry registry;
-
-        io.dropwizard.metrics5.Counter counter;
-
-        io.dropwizard.metrics5.Counter counterWithTags;
-
-        @Setup(Level.Trial)
-        public void setup() {
-            registry = new io.dropwizard.metrics5.MetricRegistry();
-            counter = registry.counter("untagged");
-            Map<String, String> tags = new HashMap<>();
-            tags.put("key1", "value1");
-            tags.put("key2", "value2");
-            counterWithTags = registry.counter(new io.dropwizard.metrics5.MetricName("tagged", tags));
-        }
-
-        @TearDown(Level.Trial)
-        public void tearDown(Blackhole hole) {
-            for (io.dropwizard.metrics5.Counter c : registry.getCounters().values()) {
-                hole.consume(c.getCount());
-            }
-        }
-
-    }
-
-    @State(Scope.Benchmark)
     public static class PrometheusState {
 
         io.prometheus.metrics.core.metrics.Counter counter;
@@ -130,24 +100,6 @@ public class CompareCountersWithOtherLibraries {
                 .register();
         }
 
-    }
-
-    // @Benchmark
-    public void dropwizard5Counter(Dropwizard5State state) {
-        state.counter.inc();
-    }
-
-    // @Benchmark
-    public void dropwizard5CounterFixedTags(Dropwizard5State state) {
-        state.counterWithTags.inc();
-    }
-
-    // @Benchmark
-    public void dropwizard5CounterTags(Dropwizard5State state) {
-        Map<String, String> tags = new HashMap<>();
-        tags.put("key1", "value1");
-        tags.put("key2", "value2");
-        state.registry.counter(new io.dropwizard.metrics5.MetricName("tagged", tags)).inc();
     }
 
     // @Benchmark
