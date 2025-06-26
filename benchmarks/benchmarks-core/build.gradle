@@ -2,6 +2,22 @@ plugins {
     id "me.champeau.jmh" version "0.7.2"
 }
 
+// skip this module when building with jdk <17
+// Dropwizard 5 has a Java 17 baseline
+if (!javaLanguageVersion.canCompileOrRun(17)) {
+    project.tasks.configureEach { task -> task.enabled = false }
+}
+
+java {
+    targetCompatibility = JavaVersion.VERSION_17
+}
+
+compileJava {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+    options.release = 17
+}
+
 // Uncomment as needed for benchmarking against released versions of Micrometer
 //repositories {
 //    mavenCentral()
