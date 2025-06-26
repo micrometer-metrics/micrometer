@@ -70,6 +70,7 @@ public class ObservationRequestEventListener implements RequestEventListener {
                 if (!isNotFoundException(event)) {
                     break;
                 }
+                // fall through
             case REQUEST_MATCHED:
                 JerseyContext jerseyContext = new JerseyContext(event);
                 Observation observation = JerseyObservationDocumentation.DEFAULT.start(this.customConvention,

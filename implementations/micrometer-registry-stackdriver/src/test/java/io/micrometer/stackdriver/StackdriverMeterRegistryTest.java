@@ -21,6 +21,7 @@ import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.DistributionSummary;
 import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.instrument.distribution.CountAtBucket;
 import io.micrometer.core.instrument.distribution.HistogramSnapshot;
 import org.junit.jupiter.api.Test;
 
@@ -77,11 +78,12 @@ class StackdriverMeterRegistryTest {
     @Test
     @Issue("#2045")
     void batchDistributionWhenHistogramSnapshotIsEmpty() {
-        // no SLOs, percentiles, or percentile histogram configured => no-op histogram
+        // no SLOs, percentiles, or percentile histogram configured
+        // => only infinity bucket histogram
         DistributionSummary ds = DistributionSummary.builder("ds").register(meterRegistry);
         StackdriverMeterRegistry.Batch batch = meterRegistry.new Batch();
         HistogramSnapshot histogramSnapshot = ds.takeSnapshot();
-        assertThat(histogramSnapshot.histogramCounts()).isEmpty();
+        assertThat(histogramSnapshot.histogramCounts()).containsExactly(new CountAtBucket(Double.POSITIVE_INFINITY, 0));
         assertThat(histogramSnapshot.percentileValues()).isEmpty();
         Distribution distribution = batch.distribution(histogramSnapshot, false);
         assertThat(distribution.getBucketOptions().getExplicitBuckets().getBoundsList()).containsExactly(0d);
@@ -195,6 +197,33 @@ class StackdriverMeterRegistryTest {
         Distribution distribution = batch.distribution(ds.takeSnapshot(), false);
         assertThat(distribution.getCount()).isZero();
         assertThat(distribution.getMean()).isZero();
+    }
+
+    @Test
+    @Issue("#6401")
+    void distributionWithNoBucketsHasCountInHistogramTimeWindow() {
+        StackdriverMeterRegistry.Batch batch = meterRegistry.new Batch();
+
+        // half-way through the first step, example: 30s
+        clock.add(config.step().dividedBy(2));
+        DistributionSummary ds = DistributionSummary.builder("ds").register(meterRegistry);
+        ds.record(3);
+
+        // 1/4 through the second step, example: 1m15s
+        clock.add(config.step().dividedBy(4).multipliedBy(3));
+        // assert and make count rollover as would happen via scheduled rollover
+        assertThat(ds.count()).isOne();
+        ds.record(5);
+
+        // 3/4 through the second step, example: 1m45s
+        clock.add(config.step().dividedBy(2));
+        assertThat(ds.count()).isOne();
+        ds.record(7);
+
+        Distribution distribution = batch.distribution(ds.takeSnapshot(), false);
+        // still returns count for the previous step
+        assertThat(ds.count()).isOne();
+        assertThat(distribution.getCount()).isEqualTo(2);
     }
 
 }
