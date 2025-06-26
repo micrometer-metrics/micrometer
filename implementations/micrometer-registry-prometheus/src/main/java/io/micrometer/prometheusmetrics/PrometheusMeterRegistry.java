@@ -575,6 +575,15 @@ public class PrometheusMeterRegistry extends MeterRegistry {
                 return micrometerCollector;
             }
 
+            Meter.Type type = existingCollector.getMeterType();
+            if (!type.equals(id.getType())) {
+                meterRegistrationFailed(id,
+                        "Prometheus requires that all meters with the same name have the same"
+                                + " type. There is already an existing meter named '" + name + "' that is a " + type
+                                + ". The meter you are attempting to register" + " is a " + id.getType() + ".");
+                return existingCollector;
+            }
+
             List<String> tagKeys = getConventionTags(id).stream().map(Tag::getKey).collect(toList());
             if (existingCollector.getTagKeys().equals(tagKeys)) {
                 consumer.accept(existingCollector);
