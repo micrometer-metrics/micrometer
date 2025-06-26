@@ -153,9 +153,10 @@ class PrometheusMeterRegistryIntegrationTest {
         TimeGauge.builder("test.tg", () -> 42, MILLISECONDS).register(registry);
 
         List<Measurement> measurements = new ArrayList<>();
-        for (int i = 0; i < Statistic.values().length; i++) {
-            final int value = i;
-            measurements.add(new Measurement(() -> value + 10, Statistic.values()[i]));
+        int i = 0;
+        for (Statistic statistic : Statistic.values()) {
+            int value = i++;
+            measurements.add(new Measurement(() -> value + 10, statistic));
         }
         Meter.builder("test.custom", Meter.Type.OTHER, measurements).register(registry);
     }
