@@ -15,15 +15,14 @@
  */
 package io.micrometer.core.annotation;
 
-import java.lang.annotation.Documented;
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Target;
+import java.lang.annotation.*;
 
 /**
  * This is a feature that is experimental and may yield a breaking change in a minor
  * release.
  */
 @Documented
+@Retention(RetentionPolicy.CLASS)
 @Target({ ElementType.METHOD, ElementType.TYPE, ElementType.CONSTRUCTOR })
 public @interface Incubating {
 
