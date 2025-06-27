@@ -24,7 +24,7 @@ import io.micrometer.observation.docs.ObservationDocumentation;
  * Documented {@link io.micrometer.common.KeyValue KeyValues} for the observations on
  * {@link jakarta.mail.Transport send} of mail messages.
  *
- * @since 1.15.0
+ * @since 1.16.0
  * @author famaridon
  */
 public enum MailObservationDocumentation implements ObservationDocumentation {

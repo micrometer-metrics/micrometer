@@ -15,11 +15,11 @@
  */
 package io.micrometer.jakarta9.instrument.mail;
 
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.common.util.internal.logging.WarnThenDebugLogger;
 import io.micrometer.observation.transport.SenderContext;
 import jakarta.mail.Message;
 import jakarta.mail.MessagingException;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Context that holds information for observation metadata collection during the
@@ -28,18 +28,16 @@ import jakarta.mail.MessagingException;
  * This propagates metadata with the message sent by
  * {@link Message#setHeader(String, String) setting a message header}.
  *
- * @since 1.15.0
+ * @since 1.16.0
  * @author famaridon
  */
 public class MailSendObservationContext extends SenderContext<Message> {
 
     private static final WarnThenDebugLogger logger = new WarnThenDebugLogger(MailSendObservationContext.class);
 
-    @Nullable
-    private final String protocol;
+    private final @Nullable String protocol;
 
-    @Nullable
-    private final String host;
+    private final @Nullable String host;
 
     private final int port;
 
@@ -60,13 +58,11 @@ public class MailSendObservationContext extends SenderContext<Message> {
         this.port = port;
     }
 
-    @Nullable
-    public String getProtocol() {
+    public @Nullable String getProtocol() {
         return protocol;
     }
 
-    @Nullable
-    public String getHost() {
+    public @Nullable String getHost() {
         return host;
     }
 

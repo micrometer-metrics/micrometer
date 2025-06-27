@@ -9,6 +9,7 @@ dependencies {
     testRuntimeOnly('org.eclipse.angus:jakarta.mail:2.0.3')
 
     testImplementation(project(":micrometer-observation-test"))
+    testImplementation platform(libs.junitBom)
     testImplementation(libs.junitJupiter)
     testRuntimeOnly(libs.junitPlatformLauncher)
 }

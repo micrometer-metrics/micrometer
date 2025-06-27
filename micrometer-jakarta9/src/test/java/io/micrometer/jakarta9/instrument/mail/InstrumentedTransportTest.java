@@ -17,19 +17,16 @@ package io.micrometer.jakarta9.instrument.mail;
 
 import io.micrometer.observation.tck.TestObservationRegistry;
 import jakarta.mail.*;
-
 import jakarta.mail.Message.RecipientType;
 import jakarta.mail.internet.InternetAddress;
 import jakarta.mail.internet.MimeMessage;
-
-import java.util.Properties;
-
-import static org.assertj.core.api.Assertions.assertThat;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
+import java.util.Properties;
+
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -40,27 +37,23 @@ import static org.mockito.Mockito.when;
  */
 class InstrumentedTransportTest {
 
-    Session session;
-
-    MockSMTPTransportListener listener = Mockito.mock(MockSMTPTransportListener.class);
-
     TestObservationRegistry registry = TestObservationRegistry.create();
+
+    MockSMTPTransport.Listener listener;
+
+    Session session;
 
     Transport transport;
 
     @BeforeEach
     void setUp() throws NoSuchProviderException {
-        // prepare properties for the session
         Properties smtpProperties = new Properties();
         // default use of mock to simplify test
         smtpProperties.put("mail.transport.protocol", "mocksmtp");
 
-        // avoid NPE
-        MockSMTPTransport.LISTENER = listener;
-
-        // open a Session
-        this.session = Session.getInstance(smtpProperties);
-        transport = new InstrumentedTransport(session, this.session.getTransport("mocksmtp"), this.registry);
+        listener = MockSMTPTransport.resetAndGetGlobalListener();
+        session = Session.getInstance(smtpProperties);
+        transport = new InstrumentedTransport(session, session.getTransport("mocksmtp"), registry);
     }
 
     @Test

@@ -16,6 +16,9 @@
 package io.micrometer.jakarta9.instrument.mail;
 
 import jakarta.mail.*;
+import org.mockito.Mockito;
+
+import static org.mockito.Mockito.mock;
 
 /**
  * Mock implementation of the SMTP Transport class for testing purposes. This class allows
@@ -25,11 +28,18 @@ import jakarta.mail.*;
  */
 public class MockSMTPTransport extends Transport {
 
-    static MockSMTPTransportListener LISTENER;
+    // Needs to be static since it is created by the Java Mail implementation,
+    // and we don't have access to the instance
+    private static final Listener LISTENER = mock(Listener.class);
 
     public MockSMTPTransport(Session session, URLName urlname) {
         super(session, urlname);
         LISTENER.onConstructor(session, urlname);
+    }
+
+    static Listener resetAndGetGlobalListener() {
+        Mockito.reset(LISTENER);
+        return LISTENER;
     }
 
     @Override
@@ -45,6 +55,18 @@ public class MockSMTPTransport extends Transport {
     @Override
     public synchronized void close() {
         LISTENER.onClose();
+    }
+
+    interface Listener {
+
+        void onConstructor(Session session, URLName urlname);
+
+        void onConnect(String host, int port, String user, String password) throws MessagingException;
+
+        boolean onSendMessage(Message msg, Address[] addresses) throws MessagingException;
+
+        void onClose();
+
     }
 
 }

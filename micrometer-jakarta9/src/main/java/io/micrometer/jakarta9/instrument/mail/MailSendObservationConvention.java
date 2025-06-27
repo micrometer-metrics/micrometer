@@ -22,7 +22,7 @@ import io.micrometer.observation.ObservationConvention;
  * {@link ObservationConvention} interface for
  * {@link MailObservationDocumentation#MAIL_SEND mail send} operations.
  *
- * @since 1.15.0
+ * @since 1.16.0
  * @author famaridon
  */
 public interface MailSendObservationConvention extends ObservationConvention<MailSendObservationContext> {

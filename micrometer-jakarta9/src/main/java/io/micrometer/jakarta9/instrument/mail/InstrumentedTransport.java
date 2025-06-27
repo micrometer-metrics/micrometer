@@ -15,17 +15,17 @@
  */
 package io.micrometer.jakarta9.instrument.mail;
 
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationConvention;
 import io.micrometer.observation.ObservationRegistry;
 import jakarta.mail.*;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Wraps a {@link Transport} so that it is instrumented with a Micrometer
  * {@link Observation}.
  *
- * @since 1.15.0
+ * @since 1.16.0
  * @author famaridon
  */
 public class InstrumentedTransport extends Transport {
@@ -36,16 +36,13 @@ public class InstrumentedTransport extends Transport {
 
     private final Transport delegate;
 
-    @Nullable
-    private final String protocol;
+    private final @Nullable String protocol;
 
-    @Nullable
-    private String host;
-
-    @Nullable
-    private final ObservationConvention<MailSendObservationContext> customConvention;
+    private @Nullable String host;
 
     private int port;
+
+    private final @Nullable ObservationConvention<MailSendObservationContext> customConvention;
 
     /**
      * Create an instrumented transport using the
@@ -84,16 +81,15 @@ public class InstrumentedTransport extends Transport {
 
     @Override
     public void sendMessage(Message msg, Address[] addresses) throws MessagingException {
-
         Observation observation = MailObservationDocumentation.MAIL_SEND.observation(this.customConvention,
                 DEFAULT_CONVENTION, () -> new MailSendObservationContext(msg, this.protocol, this.host, this.port),
                 observationRegistry);
 
         observation.start();
         try (Observation.Scope ignore = observation.openScope()) {
-            // the Message-Id is set by the Transport (from the SMTP server) after sending
             this.delegate.sendMessage(msg, addresses);
-            MailKeyValues.smtpMessageId(msg).ifPresent(observation::highCardinalityKeyValue);
+            // the Message-Id is set by the Transport (from the SMTP server) after sending
+            DEFAULT_CONVENTION.smtpMessageId(msg).ifPresent(observation::highCardinalityKeyValue);
         }
         catch (MessagingException error) {
             observation.error(error);

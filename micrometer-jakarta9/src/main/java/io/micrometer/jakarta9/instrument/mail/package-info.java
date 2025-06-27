@@ -17,11 +17,9 @@
 /**
  * Observation instrumentation for Jakarta Mail.
  *
- * @since 1.15.0
+ * @since 1.16.0
  */
-@NonNullFields
-@NonNullApi
+@NullMarked
 package io.micrometer.jakarta9.instrument.mail;
 
-import io.micrometer.common.lang.NonNullApi;
-import io.micrometer.common.lang.NonNullFields;
+import org.jspecify.annotations.NullMarked;
