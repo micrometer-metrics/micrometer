@@ -95,7 +95,7 @@ public class JCacheMetrics<K, V, C extends Cache<K, V>> extends CacheMeterBinder
     }
 
     public JCacheMetrics(C cache, Iterable<Tag> tags) {
-        this(cache, tags, false);
+        this(cache, tags, true);
     }
 
     /**
