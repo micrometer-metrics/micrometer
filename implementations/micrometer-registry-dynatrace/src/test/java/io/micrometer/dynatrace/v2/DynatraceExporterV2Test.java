@@ -60,7 +60,7 @@ import static org.mockito.Mockito.*;
  */
 class DynatraceExporterV2Test {
 
-    private static final Map<String, String> SEEN_METADATA = new HashMap<>();
+    private static final Map<String, @Nullable String> SEEN_METADATA = new HashMap<>();
 
     private DynatraceConfig config;
 
@@ -89,7 +89,7 @@ class DynatraceExporterV2Test {
     @Test
     void toGaugeLine() {
         meterRegistry.gauge("my.gauge", 1.23);
-        Gauge gauge = meterRegistry.find("my.gauge").gauge();
+        Gauge gauge = meterRegistry.get("my.gauge").gauge();
         List<String> lines = exporter.toGaugeLine(gauge, SEEN_METADATA).collect(Collectors.toList());
         assertThat(lines).hasSize(1);
         assertThat(lines.get(0)).isEqualTo("my.gauge,dt.metrics.source=micrometer gauge,1.23 " + clock.wallTime());
@@ -98,18 +98,18 @@ class DynatraceExporterV2Test {
     @Test
     void toGaugeLineShouldDropNanValue() {
         meterRegistry.gauge("my.gauge", NaN);
-        Gauge gauge = meterRegistry.find("my.gauge").gauge();
+        Gauge gauge = meterRegistry.get("my.gauge").gauge();
         assertThat(exporter.toGaugeLine(gauge, SEEN_METADATA)).isEmpty();
     }
 
     @Test
     void toGaugeLineShouldDropInfiniteValues() {
         meterRegistry.gauge("my.gauge", POSITIVE_INFINITY);
-        Gauge gauge = meterRegistry.find("my.gauge").gauge();
+        Gauge gauge = meterRegistry.get("my.gauge").gauge();
         assertThat(exporter.toGaugeLine(gauge, SEEN_METADATA)).isEmpty();
 
         meterRegistry.gauge("my.gauge", NEGATIVE_INFINITY);
-        gauge = meterRegistry.find("my.gauge").gauge();
+        gauge = meterRegistry.get("my.gauge").gauge();
         assertThat(exporter.toGaugeLine(gauge, SEEN_METADATA)).isEmpty();
     }
 
@@ -117,7 +117,7 @@ class DynatraceExporterV2Test {
     void toGaugeLineWithTimeGauge() {
         AtomicReference<Double> obj = new AtomicReference<>(2.3d);
         meterRegistry.more().timeGauge("my.timeGauge", Tags.empty(), obj, MILLISECONDS, AtomicReference::get);
-        TimeGauge timeGauge = meterRegistry.find("my.timeGauge").timeGauge();
+        TimeGauge timeGauge = meterRegistry.get("my.timeGauge").timeGauge();
         List<String> lines = exporter.toGaugeLine(timeGauge, SEEN_METADATA).collect(Collectors.toList());
         assertThat(lines).hasSize(1);
         assertThat(lines.get(0)).isEqualTo("my.timeGauge,dt.metrics.source=micrometer gauge,2.3 " + clock.wallTime());
@@ -127,7 +127,7 @@ class DynatraceExporterV2Test {
     void toGaugeLineWithTimeGaugeShouldDropNanValue() {
         AtomicReference<Double> obj = new AtomicReference<>(NaN);
         meterRegistry.more().timeGauge("my.timeGauge", Tags.empty(), obj, MILLISECONDS, AtomicReference::get);
-        TimeGauge timeGauge = meterRegistry.find("my.timeGauge").timeGauge();
+        TimeGauge timeGauge = meterRegistry.get("my.timeGauge").timeGauge();
 
         assertThat(exporter.toGaugeLine(timeGauge, SEEN_METADATA)).isEmpty();
     }
@@ -136,12 +136,12 @@ class DynatraceExporterV2Test {
     void toGaugeLineWithTimeGaugeShouldDropInfiniteValues() {
         AtomicReference<Double> obj = new AtomicReference<>(POSITIVE_INFINITY);
         meterRegistry.more().timeGauge("my.timeGauge", Tags.empty(), obj, MILLISECONDS, AtomicReference::get);
-        TimeGauge timeGauge = meterRegistry.find("my.timeGauge").timeGauge();
+        TimeGauge timeGauge = meterRegistry.get("my.timeGauge").timeGauge();
         assertThat(exporter.toGaugeLine(timeGauge, SEEN_METADATA)).isEmpty();
 
         obj = new AtomicReference<>(NEGATIVE_INFINITY);
         meterRegistry.more().timeGauge("my.timeGauge", Tags.empty(), obj, MILLISECONDS, AtomicReference::get);
-        timeGauge = meterRegistry.find("my.timeGauge").timeGauge();
+        timeGauge = meterRegistry.get("my.timeGauge").timeGauge();
         assertThat(exporter.toGaugeLine(timeGauge, SEEN_METADATA)).isEmpty();
     }
 
@@ -258,19 +258,16 @@ class DynatraceExporterV2Test {
             }
 
             @Override
-            @SuppressWarnings("NullableProblems")
             public double totalTime(TimeUnit unit) {
                 return NaN;
             }
 
             @Override
-            @SuppressWarnings("NullableProblems")
             public TimeUnit baseTimeUnit() {
                 return MILLISECONDS;
             }
 
             @Override
-            @SuppressWarnings("NullableProblems")
             public Id getId() {
                 return new Id("my.functionTimer", Tags.empty(), null, null, Type.TIMER);
             }
@@ -289,19 +286,16 @@ class DynatraceExporterV2Test {
             }
 
             @Override
-            @SuppressWarnings("NullableProblems")
             public double totalTime(TimeUnit unit) {
                 return 5000;
             }
 
             @Override
-            @SuppressWarnings("NullableProblems")
             public TimeUnit baseTimeUnit() {
                 return MILLISECONDS;
             }
 
             @Override
-            @SuppressWarnings("NullableProblems")
             public Id getId() {
                 return new Id("my.functionTimer", Tags.empty(), null, null, Type.TIMER);
             }
@@ -890,24 +884,21 @@ class DynatraceExporterV2Test {
         // createDefaultDynatraceConfig() but with a batch size of 3).
         DynatraceConfig config = new DynatraceConfig() {
             @Override
-            public String get(String key) {
+            public @Nullable String get(String key) {
                 return null;
             }
 
             @Override
-            @SuppressWarnings("NullableProblems")
             public String uri() {
                 return "http://localhost";
             }
 
             @Override
-            @SuppressWarnings("NullableProblems")
             public String apiToken() {
                 return "apiToken";
             }
 
             @Override
-            @SuppressWarnings("NullableProblems")
             public DynatraceApiVersion apiVersion() {
                 return DynatraceApiVersion.V2;
             }
@@ -1034,24 +1025,21 @@ class DynatraceExporterV2Test {
         // createDefaultDynatraceConfig() but with metadata turned off).
         DynatraceConfig config = new DynatraceConfig() {
             @Override
-            public String get(String key) {
+            public @Nullable String get(String key) {
                 return null;
             }
 
             @Override
-            @SuppressWarnings("NullableProblems")
             public String uri() {
                 return "http://localhost";
             }
 
             @Override
-            @SuppressWarnings("NullableProblems")
             public String apiToken() {
                 return "apiToken";
             }
 
             @Override
-            @SuppressWarnings("NullableProblems")
             public DynatraceApiVersion apiVersion() {
                 return DynatraceApiVersion.V2;
             }
@@ -1091,25 +1079,21 @@ class DynatraceExporterV2Test {
     private DynatraceConfig createDefaultDynatraceConfig() {
         return new DynatraceConfig() {
             @Override
-            @SuppressWarnings("NullableProblems")
-            public String get(String key) {
+            public @Nullable String get(String key) {
                 return null;
             }
 
             @Override
-            @SuppressWarnings("NullableProblems")
             public String uri() {
                 return "http://localhost";
             }
 
             @Override
-            @SuppressWarnings("NullableProblems")
             public String apiToken() {
                 return "apiToken";
             }
 
             @Override
-            @SuppressWarnings("NullableProblems")
             public DynatraceApiVersion apiVersion() {
                 return DynatraceApiVersion.V2;
             }

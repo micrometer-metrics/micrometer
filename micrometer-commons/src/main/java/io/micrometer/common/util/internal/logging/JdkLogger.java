@@ -54,6 +54,8 @@
  */
 package io.micrometer.common.util.internal.logging;
 
+import org.jspecify.annotations.Nullable;
+
 import java.util.logging.Level;
 import java.util.logging.LogRecord;
 import java.util.logging.Logger;
@@ -107,7 +109,7 @@ class JdkLogger extends AbstractInternalLogger {
      * @param arg the argument
      */
     @Override
-    public void trace(String format, Object arg) {
+    public void trace(String format, @Nullable Object arg) {
         if (logger.isLoggable(Level.FINEST)) {
             FormattingTuple ft = MessageFormatter.format(format, arg);
             log(SELF, Level.FINEST, ft.getMessage(), ft.getThrowable());
@@ -126,7 +128,7 @@ class JdkLogger extends AbstractInternalLogger {
      * @param argB the second argument
      */
     @Override
-    public void trace(String format, Object argA, Object argB) {
+    public void trace(String format, @Nullable Object argA, @Nullable Object argB) {
         if (logger.isLoggable(Level.FINEST)) {
             FormattingTuple ft = MessageFormatter.format(format, argA, argB);
             log(SELF, Level.FINEST, ft.getMessage(), ft.getThrowable());
@@ -144,7 +146,7 @@ class JdkLogger extends AbstractInternalLogger {
      * @param argArray an array of arguments
      */
     @Override
-    public void trace(String format, Object... argArray) {
+    public void trace(String format, @Nullable Object... argArray) {
         if (logger.isLoggable(Level.FINEST)) {
             FormattingTuple ft = MessageFormatter.arrayFormat(format, argArray);
             log(SELF, Level.FINEST, ft.getMessage(), ft.getThrowable());
@@ -194,7 +196,7 @@ class JdkLogger extends AbstractInternalLogger {
      * @param arg the argument
      */
     @Override
-    public void debug(String format, Object arg) {
+    public void debug(String format, @Nullable Object arg) {
         if (logger.isLoggable(Level.FINE)) {
             FormattingTuple ft = MessageFormatter.format(format, arg);
             log(SELF, Level.FINE, ft.getMessage(), ft.getThrowable());
@@ -213,7 +215,7 @@ class JdkLogger extends AbstractInternalLogger {
      * @param argB the second argument
      */
     @Override
-    public void debug(String format, Object argA, Object argB) {
+    public void debug(String format, @Nullable Object argA, @Nullable Object argB) {
         if (logger.isLoggable(Level.FINE)) {
             FormattingTuple ft = MessageFormatter.format(format, argA, argB);
             log(SELF, Level.FINE, ft.getMessage(), ft.getThrowable());
@@ -231,7 +233,7 @@ class JdkLogger extends AbstractInternalLogger {
      * @param argArray an array of arguments
      */
     @Override
-    public void debug(String format, Object... argArray) {
+    public void debug(String format, @Nullable Object... argArray) {
         if (logger.isLoggable(Level.FINE)) {
             FormattingTuple ft = MessageFormatter.arrayFormat(format, argArray);
             log(SELF, Level.FINE, ft.getMessage(), ft.getThrowable());
@@ -281,7 +283,7 @@ class JdkLogger extends AbstractInternalLogger {
      * @param arg the argument
      */
     @Override
-    public void info(String format, Object arg) {
+    public void info(String format, @Nullable Object arg) {
         if (logger.isLoggable(Level.INFO)) {
             FormattingTuple ft = MessageFormatter.format(format, arg);
             log(SELF, Level.INFO, ft.getMessage(), ft.getThrowable());
@@ -300,7 +302,7 @@ class JdkLogger extends AbstractInternalLogger {
      * @param argB the second argument
      */
     @Override
-    public void info(String format, Object argA, Object argB) {
+    public void info(String format, @Nullable Object argA, @Nullable Object argB) {
         if (logger.isLoggable(Level.INFO)) {
             FormattingTuple ft = MessageFormatter.format(format, argA, argB);
             log(SELF, Level.INFO, ft.getMessage(), ft.getThrowable());
@@ -318,7 +320,7 @@ class JdkLogger extends AbstractInternalLogger {
      * @param argArray an array of arguments
      */
     @Override
-    public void info(String format, Object... argArray) {
+    public void info(String format, @Nullable Object... argArray) {
         if (logger.isLoggable(Level.INFO)) {
             FormattingTuple ft = MessageFormatter.arrayFormat(format, argArray);
             log(SELF, Level.INFO, ft.getMessage(), ft.getThrowable());
@@ -368,7 +370,7 @@ class JdkLogger extends AbstractInternalLogger {
      * @param arg the argument
      */
     @Override
-    public void warn(String format, Object arg) {
+    public void warn(String format, @Nullable Object arg) {
         if (logger.isLoggable(Level.WARNING)) {
             FormattingTuple ft = MessageFormatter.format(format, arg);
             log(SELF, Level.WARNING, ft.getMessage(), ft.getThrowable());
@@ -387,7 +389,7 @@ class JdkLogger extends AbstractInternalLogger {
      * @param argB the second argument
      */
     @Override
-    public void warn(String format, Object argA, Object argB) {
+    public void warn(String format, @Nullable Object argA, @Nullable Object argB) {
         if (logger.isLoggable(Level.WARNING)) {
             FormattingTuple ft = MessageFormatter.format(format, argA, argB);
             log(SELF, Level.WARNING, ft.getMessage(), ft.getThrowable());
@@ -405,7 +407,7 @@ class JdkLogger extends AbstractInternalLogger {
      * @param argArray an array of arguments
      */
     @Override
-    public void warn(String format, Object... argArray) {
+    public void warn(String format, @Nullable Object... argArray) {
         if (logger.isLoggable(Level.WARNING)) {
             FormattingTuple ft = MessageFormatter.arrayFormat(format, argArray);
             log(SELF, Level.WARNING, ft.getMessage(), ft.getThrowable());
@@ -455,7 +457,7 @@ class JdkLogger extends AbstractInternalLogger {
      * @param arg the argument
      */
     @Override
-    public void error(String format, Object arg) {
+    public void error(String format, @Nullable Object arg) {
         if (logger.isLoggable(Level.SEVERE)) {
             FormattingTuple ft = MessageFormatter.format(format, arg);
             log(SELF, Level.SEVERE, ft.getMessage(), ft.getThrowable());
@@ -474,7 +476,7 @@ class JdkLogger extends AbstractInternalLogger {
      * @param argB the second argument
      */
     @Override
-    public void error(String format, Object argA, Object argB) {
+    public void error(String format, @Nullable Object argA, @Nullable Object argB) {
         if (logger.isLoggable(Level.SEVERE)) {
             FormattingTuple ft = MessageFormatter.format(format, argA, argB);
             log(SELF, Level.SEVERE, ft.getMessage(), ft.getThrowable());
@@ -492,7 +494,7 @@ class JdkLogger extends AbstractInternalLogger {
      * @param arguments an array of arguments
      */
     @Override
-    public void error(String format, Object... arguments) {
+    public void error(String format, @Nullable Object... arguments) {
         if (logger.isLoggable(Level.SEVERE)) {
             FormattingTuple ft = MessageFormatter.arrayFormat(format, arguments);
             log(SELF, Level.SEVERE, ft.getMessage(), ft.getThrowable());
@@ -518,7 +520,7 @@ class JdkLogger extends AbstractInternalLogger {
      *
      * See bug report #13 for more details.
      */
-    private void log(String callerFQCN, Level level, String msg, Throwable t) {
+    private void log(String callerFQCN, Level level, @Nullable String msg, @Nullable Throwable t) {
         // millis and thread are filled by the constructor
         LogRecord record = new LogRecord(level, msg);
         record.setLoggerName(name());

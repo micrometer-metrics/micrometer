@@ -38,6 +38,7 @@ class OkHttpConnectionPoolMetricsTest {
     private final ConnectionPool connectionPool = mock(ConnectionPool.class);
 
     @Test
+    @SuppressWarnings("NullAway")
     void creationWithNullConnectionPoolThrowsException() {
         assertThatIllegalArgumentException().isThrownBy(() -> new OkHttpConnectionPoolMetrics(null));
         assertThatIllegalArgumentException().isThrownBy(() -> new OkHttpConnectionPoolMetrics(null, Tags.empty()));
@@ -46,12 +47,14 @@ class OkHttpConnectionPoolMetricsTest {
     }
 
     @Test
+    @SuppressWarnings("NullAway")
     void creationWithNullNamePrefixThrowsException() {
         assertThatIllegalArgumentException()
             .isThrownBy(() -> new OkHttpConnectionPoolMetrics(connectionPool, null, Tags.empty()));
     }
 
     @Test
+    @SuppressWarnings("NullAway")
     void creationWithNullTagsThrowsException() {
         assertThatIllegalArgumentException().isThrownBy(() -> new OkHttpConnectionPoolMetrics(connectionPool, null));
         assertThatIllegalArgumentException()

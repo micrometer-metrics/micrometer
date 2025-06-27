@@ -17,4 +17,7 @@
 /**
  * Utilities for Stackdriver.
  */
+@NullMarked
 package io.micrometer.stackdriver.util;
+
+import org.jspecify.annotations.NullMarked;

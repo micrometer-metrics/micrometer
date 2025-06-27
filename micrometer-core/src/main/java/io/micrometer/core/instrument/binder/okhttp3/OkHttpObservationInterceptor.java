@@ -40,7 +40,7 @@ public class OkHttpObservationInterceptor implements Interceptor {
 
     private final ObservationRegistry registry;
 
-    private OkHttpObservationConvention observationConvention;
+    private @Nullable OkHttpObservationConvention observationConvention;
 
     private final String requestMetricName;
 
@@ -54,8 +54,9 @@ public class OkHttpObservationInterceptor implements Interceptor {
 
     private final boolean includeHostTag;
 
-    public OkHttpObservationInterceptor(ObservationRegistry registry, OkHttpObservationConvention observationConvention,
-            String requestsMetricName, Function<Request, String> urlMapper, Iterable<KeyValue> extraTags,
+    public OkHttpObservationInterceptor(ObservationRegistry registry,
+            @Nullable OkHttpObservationConvention observationConvention, String requestsMetricName,
+            Function<Request, String> urlMapper, Iterable<KeyValue> extraTags,
             Iterable<BiFunction<Request, Response, KeyValue>> contextSpecificTags, Iterable<String> requestTagKeys,
             boolean includeHostTag) {
         this.registry = registry;
@@ -150,7 +151,7 @@ public class OkHttpObservationInterceptor implements Interceptor {
 
         private Iterable<String> requestTagKeys = Collections.emptyList();
 
-        private OkHttpObservationConvention observationConvention;
+        private @Nullable OkHttpObservationConvention observationConvention;
 
         Builder(ObservationRegistry registry, String name) {
             this.registry = registry;

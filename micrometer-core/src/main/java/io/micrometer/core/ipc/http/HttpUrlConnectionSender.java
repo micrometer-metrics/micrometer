@@ -16,6 +16,7 @@
 package io.micrometer.core.ipc.http;
 
 import io.micrometer.core.instrument.util.IOUtils;
+import org.jspecify.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -41,7 +42,7 @@ public class HttpUrlConnectionSender implements HttpSender {
 
     private final int readTimeoutMs;
 
-    private final Proxy proxy;
+    private final @Nullable Proxy proxy;
 
     /**
      * Creates a sender with the specified timeouts but uses the default proxy settings.
@@ -59,7 +60,7 @@ public class HttpUrlConnectionSender implements HttpSender {
      * @param proxy proxy to use when establishing a connection
      * @since 1.2.0
      */
-    public HttpUrlConnectionSender(Duration connectTimeout, Duration readTimeout, Proxy proxy) {
+    public HttpUrlConnectionSender(Duration connectTimeout, Duration readTimeout, @Nullable Proxy proxy) {
         this.connectTimeoutMs = (int) connectTimeout.toMillis();
         this.readTimeoutMs = (int) readTimeout.toMillis();
         this.proxy = proxy;

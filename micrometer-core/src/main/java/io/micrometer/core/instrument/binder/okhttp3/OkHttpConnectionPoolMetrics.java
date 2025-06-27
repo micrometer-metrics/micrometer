@@ -23,9 +23,9 @@ import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.binder.MeterBinder;
 import okhttp3.ConnectionPool;
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Collections;
-import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 
 /**
@@ -51,7 +51,7 @@ public class OkHttpConnectionPoolMetrics implements MeterBinder {
 
     private final Iterable<Tag> tags;
 
-    private final Double maxIdleConnectionCount;
+    private final @Nullable Double maxIdleConnectionCount;
 
     private final ThreadLocal<ConnectionPoolConnectionStats> connectionStats = new ThreadLocal<>();
 
@@ -97,7 +97,7 @@ public class OkHttpConnectionPoolMetrics implements MeterBinder {
      * monitor it.
      */
     public OkHttpConnectionPoolMetrics(ConnectionPool connectionPool, String namePrefix, Iterable<Tag> tags,
-            Integer maxIdleConnections) {
+            @Nullable Integer maxIdleConnections) {
         if (connectionPool == null) {
             throw new IllegalArgumentException("Given ConnectionPool must not be null.");
         }
@@ -111,7 +111,7 @@ public class OkHttpConnectionPoolMetrics implements MeterBinder {
         this.connectionPool = connectionPool;
         this.namePrefix = namePrefix;
         this.tags = tags;
-        this.maxIdleConnectionCount = Optional.ofNullable(maxIdleConnections).map(Integer::doubleValue).orElse(null);
+        this.maxIdleConnectionCount = maxIdleConnections != null ? maxIdleConnections.doubleValue() : null;
     }
 
     @Override

@@ -17,4 +17,7 @@
 /**
  * Meter binders for JVM.
  */
+@NullMarked
 package io.micrometer.core.instrument.binder.jvm;
+
+import org.jspecify.annotations.NullMarked;

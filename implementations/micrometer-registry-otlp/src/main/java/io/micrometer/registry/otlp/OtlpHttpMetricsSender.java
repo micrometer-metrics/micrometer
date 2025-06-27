@@ -45,6 +45,10 @@ public class OtlpHttpMetricsSender implements OtlpMetricsSender {
      */
     @Override
     public void send(Request request) throws Exception {
+        if (request.getAddress() == null) {
+            throw new IllegalArgumentException("Address cannot be null");
+        }
+
         HttpSender.Request.Builder httpRequest = this.httpSender.post(request.getAddress())
             .withHeader("User-Agent", userAgentHeader)
             .withContent("application/x-protobuf", request.getMetricsData());

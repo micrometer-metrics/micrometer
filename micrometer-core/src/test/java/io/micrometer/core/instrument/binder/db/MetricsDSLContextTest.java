@@ -186,6 +186,7 @@ class MetricsDSLContextTest {
         assertThat(executeListenerProviders[1].provide()).isInstanceOf(JooqExecuteListener.class);
 
         SelectSelectStep<Record> select = jooq.tag("name", "selectAllAuthors").select(asterisk());
+        assertThat(select.configuration()).isNotNull();
         executeListenerProviders = select.configuration().executeListenerProviders();
         assertThat(executeListenerProviders).hasSize(2);
         assertThat(executeListenerProviders[0].provide()).isSameAs(userExecuteListener);

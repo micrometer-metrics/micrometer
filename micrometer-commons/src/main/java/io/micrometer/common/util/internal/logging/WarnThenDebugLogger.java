@@ -15,6 +15,8 @@
  */
 package io.micrometer.common.util.internal.logging;
 
+import org.jspecify.annotations.Nullable;
+
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 
@@ -44,7 +46,7 @@ public class WarnThenDebugLogger {
         this.logger = InternalLoggerFactory.getInstance(name);
     }
 
-    public void log(String message, Throwable ex) {
+    public void log(String message, @Nullable Throwable ex) {
         if (this.warnLogged.compareAndSet(false, true)) {
             log(InternalLogLevel.WARN, getWarnMessage(message), ex);
         }
@@ -57,7 +59,7 @@ public class WarnThenDebugLogger {
         return message + " Note that subsequent logs will be logged at debug level.";
     }
 
-    private void log(InternalLogLevel level, String finalMessage, Throwable ex) {
+    private void log(InternalLogLevel level, String finalMessage, @Nullable Throwable ex) {
         if (ex != null) {
             this.logger.log(level, finalMessage, ex);
         }
@@ -70,7 +72,7 @@ public class WarnThenDebugLogger {
         log(message, null);
     }
 
-    public void log(Supplier<String> messageSupplier, Throwable ex) {
+    public void log(Supplier<String> messageSupplier, @Nullable Throwable ex) {
         if (this.warnLogged.compareAndSet(false, true)) {
             log(InternalLogLevel.WARN, getWarnMessage(messageSupplier.get()), ex);
         }

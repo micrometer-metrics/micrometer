@@ -30,6 +30,8 @@
  */
 package io.micrometer.common.util.internal.logging;
 
+import org.jspecify.annotations.Nullable;
+
 import java.io.ObjectStreamException;
 import java.io.Serializable;
 
@@ -178,7 +180,7 @@ public abstract class AbstractInternalLogger implements InternalLogger, Serializ
     }
 
     @Override
-    public void log(InternalLogLevel level, String format, Object arg) {
+    public void log(InternalLogLevel level, String format, @Nullable Object arg) {
         switch (level) {
             case TRACE:
                 trace(format, arg);
@@ -201,7 +203,7 @@ public abstract class AbstractInternalLogger implements InternalLogger, Serializ
     }
 
     @Override
-    public void log(InternalLogLevel level, String format, Object argA, Object argB) {
+    public void log(InternalLogLevel level, String format, @Nullable Object argA, @Nullable Object argB) {
         switch (level) {
             case TRACE:
                 trace(format, argA, argB);
@@ -224,7 +226,7 @@ public abstract class AbstractInternalLogger implements InternalLogger, Serializ
     }
 
     @Override
-    public void log(InternalLogLevel level, String format, Object... arguments) {
+    public void log(InternalLogLevel level, String format, @Nullable Object... arguments) {
         switch (level) {
             case TRACE:
                 trace(format, arguments);

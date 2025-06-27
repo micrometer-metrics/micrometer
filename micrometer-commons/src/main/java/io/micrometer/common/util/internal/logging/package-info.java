@@ -36,4 +36,7 @@
  * <em>Internal-use-only</em> logging API which is not allowed to be used outside
  * Micrometer.
  */
+@NullMarked
 package io.micrometer.common.util.internal.logging;
+
+import org.jspecify.annotations.NullMarked;

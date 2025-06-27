@@ -35,6 +35,7 @@ import java.lang.management.MemoryUsage;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicReference;
@@ -125,9 +126,11 @@ public class JvmHeapPressureMetrics implements MeterBinder, AutoCloseable {
 
                 if (!longLivedPoolNames.isEmpty()) {
                     final long usedAfter = longLivedPoolNames.stream()
-                        .mapToLong(pool -> after.get(pool).getUsed())
+                        .mapToLong(pool -> Objects.requireNonNull(after.get(pool)).getUsed())
                         .sum();
-                    double maxAfter = longLivedPoolNames.stream().mapToLong(pool -> after.get(pool).getMax()).sum();
+                    double maxAfter = longLivedPoolNames.stream()
+                        .mapToLong(pool -> Objects.requireNonNull(after.get(pool)).getMax())
+                        .sum();
                     lastLongLivedPoolUsageAfterGc.set(usedAfter / maxAfter);
                 }
             };
