@@ -88,6 +88,7 @@ subprojects {
                     "MissingOverride",
                     "ModifyCollectionInEnhancedForLoop",
                     "NarrowCalculation",
+                    "OperatorPrecedence",
                     "StringCaseLocaleUsage",
                     "StringSplitter"
             )
