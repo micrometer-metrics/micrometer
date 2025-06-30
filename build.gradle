@@ -92,6 +92,7 @@ subprojects {
                     "StringCaseLocaleUsage",
                     "StringSplitter",
                     "UnnecessaryAsync",
+                    "UnnecessaryParentheses",
                     "URLEqualsHashCode"
             )
             options.errorprone.disable(

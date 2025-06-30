@@ -564,10 +564,9 @@ class GrpcObservationTest {
             SimpleRequest request = SimpleRequest.newBuilder().setRequestMessage("Hello").build();
             stub.unaryRpc(request);
 
-            assertThat(scopeAwareServerInterceptor.lastObservation).isNotNull().satisfies((observation -> {
-                assertThat(observation.getContext().getContextualName())
-                    .isEqualTo("grpc.testing.SimpleService/UnaryRpc");
-            }));
+            assertThat(scopeAwareServerInterceptor.lastObservation).isNotNull()
+                .satisfies(observation -> assertThat(observation.getContext().getContextualName())
+                    .isEqualTo("grpc.testing.SimpleService/UnaryRpc"));
         }
 
     }
