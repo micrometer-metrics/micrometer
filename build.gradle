@@ -102,7 +102,9 @@ subprojects {
                     "LongDoubleConversion",
                     "MissingOverride",
                     "ModifyCollectionInEnhancedForLoop",
+                    "NarrowCalculation",
                     "NullAway",
+                    "OperatorPrecedence",
                     "StringCaseLocaleUsage",
                     "StringSplitter"
                 )

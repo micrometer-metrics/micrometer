@@ -286,7 +286,7 @@ public final class Tags implements Iterable<Tag> {
 
     @Override
     public boolean equals(@Nullable Object obj) {
-        return this == obj || obj != null && getClass() == obj.getClass() && tagsEqual((Tags) obj);
+        return this == obj || (obj != null && getClass() == obj.getClass() && tagsEqual((Tags) obj));
     }
 
     private boolean tagsEqual(Tags obj) {
