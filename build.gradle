@@ -91,6 +91,7 @@ subprojects {
                     "OperatorPrecedence",
                     "StringCaseLocaleUsage",
                     "StringSplitter",
+                    "UnnecessaryAsync",
                     "URLEqualsHashCode"
             )
             options.errorprone.disable(
