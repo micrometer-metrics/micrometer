@@ -90,7 +90,8 @@ subprojects {
                     "NarrowCalculation",
                     "OperatorPrecedence",
                     "StringCaseLocaleUsage",
-                    "StringSplitter"
+                    "StringSplitter",
+                    "URLEqualsHashCode"
             )
             options.errorprone.disable(
                     "StringConcatToTextBlock" // Requires JDK 15+
