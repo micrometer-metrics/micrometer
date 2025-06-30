@@ -476,7 +476,7 @@ class CompositeMeterRegistryTest {
         assertThat(executor.awaitTermination(1L, TimeUnit.SECONDS)).isTrue();
         for (int i = 0; i < tagCount; i++) {
             assertThat(this.composite.find(meterName).tag(tagName, String.valueOf(i)).counter().count())
-                .isEqualTo(count / tagCount);
+                .isEqualTo((double) count / tagCount);
         }
     }
 
