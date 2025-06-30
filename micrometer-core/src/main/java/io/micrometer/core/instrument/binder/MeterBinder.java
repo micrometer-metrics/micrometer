@@ -16,7 +16,6 @@
 package io.micrometer.core.instrument.binder;
 
 import io.micrometer.core.instrument.MeterRegistry;
-import org.jspecify.annotations.NonNull;
 
 /**
  * Binders register one or more metrics to provide information about the state of some
@@ -27,6 +26,6 @@ import org.jspecify.annotations.NonNull;
  */
 public interface MeterBinder {
 
-    void bindTo(@NonNull MeterRegistry registry);
+    void bindTo(MeterRegistry registry);
 
 }

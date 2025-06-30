@@ -22,7 +22,6 @@ import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.binder.MeterBinder;
 import okhttp3.ConnectionPool;
-import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Collections;
@@ -115,7 +114,7 @@ public class OkHttpConnectionPoolMetrics implements MeterBinder {
     }
 
     @Override
-    public void bindTo(@NonNull MeterRegistry registry) {
+    public void bindTo(MeterRegistry registry) {
         String connectionCountName = namePrefix + ".connection.count";
         Gauge.builder(connectionCountName, connectionStats, cs -> {
             if (cs.get() == null) {

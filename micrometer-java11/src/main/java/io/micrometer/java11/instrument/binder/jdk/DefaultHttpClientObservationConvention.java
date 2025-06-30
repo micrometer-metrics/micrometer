@@ -17,7 +17,6 @@ package io.micrometer.java11.instrument.binder.jdk;
 
 import io.micrometer.common.KeyValues;
 import io.micrometer.core.instrument.binder.http.Outcome;
-import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 import java.net.http.HttpRequest;
@@ -72,7 +71,7 @@ public class DefaultHttpClientObservationConvention implements HttpClientObserva
     }
 
     @Override
-    public @NonNull String getName() {
+    public String getName() {
         return "http.client.requests";
     }
 

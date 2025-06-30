@@ -22,7 +22,6 @@ import io.micrometer.observation.ObservationRegistry;
 import okhttp3.Interceptor;
 import okhttp3.Request;
 import okhttp3.Response;
-import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 import java.io.IOException;
@@ -79,7 +78,7 @@ public class OkHttpObservationInterceptor implements Interceptor {
     }
 
     @Override
-    public @NonNull Response intercept(@NonNull Chain chain) throws IOException {
+    public Response intercept(Chain chain) throws IOException {
         Request request = chain.request();
         Request.Builder newRequestBuilder = request.newBuilder();
         OkHttpContext okHttpContext = new OkHttpContext(this.urlMapper, this.extraTags, this.contextSpecificTags,
