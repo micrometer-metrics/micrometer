@@ -91,6 +91,8 @@ subprojects {
                     "LongDoubleConversion",
                     "MissingOverride",
                     "ModifyCollectionInEnhancedForLoop",
+                    "NarrowCalculation",
+                    "OperatorPrecedence",
                     "StringCaseLocaleUsage",
                     "StringSplitter"
             )
