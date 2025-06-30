@@ -44,6 +44,8 @@ class StackdriverMeterRegistryDescriptorAutoCreationTest {
 
         verify(mockClient, never()).createMetricDescriptor(any());
         verify(mockClient, times(1)).createTimeSeries(any());
+
+        meterRegistry.close();
     }
 
     @Test
@@ -59,6 +61,8 @@ class StackdriverMeterRegistryDescriptorAutoCreationTest {
 
         verify(mockClient, times(1)).createMetricDescriptor(any());
         verify(mockClient, times(1)).createTimeSeries(any());
+
+        meterRegistry.close();
     }
 
     private StackdriverMeterRegistry mockMeterRegistry(MetricServiceClient mockClient,
