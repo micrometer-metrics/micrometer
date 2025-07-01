@@ -20,11 +20,7 @@ import io.micrometer.core.instrument.config.MeterFilter;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -108,7 +104,7 @@ class MultiGaugeTest {
         String testKey2 = "key2";
         AtomicInteger testValue2 = new AtomicInteger(2);
 
-        Map<String, AtomicInteger> map = new ConcurrentHashMap<>();
+        Map<String, AtomicInteger> map = new HashMap<>();
         map.put(testKey1, testValue1);
         map.put(testKey2, testValue2);
 
