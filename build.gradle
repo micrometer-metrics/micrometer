@@ -89,6 +89,7 @@ subprojects {
                     "MissingOverride",
                     "MixedMutabilityReturnType",
                     "ModifyCollectionInEnhancedForLoop",
+                    "MutablePublicArray",
                     "NarrowCalculation",
                     "OperatorPrecedence",
                     "StringCaseLocaleUsage",
