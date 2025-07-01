@@ -106,7 +106,10 @@ subprojects {
                     "NullAway",
                     "OperatorPrecedence",
                     "StringCaseLocaleUsage",
-                    "StringSplitter"
+                    "StringSplitter",
+                    "UnnecessaryAsync",
+                    "UnnecessaryParentheses",
+                    "URLEqualsHashCode"
                 )
 
                 option("NullAway:OnlyNullMarked", "true")

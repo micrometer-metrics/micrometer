@@ -219,6 +219,7 @@ final class ModifiedClassPathClassLoader extends URLClassLoader {
     }
 
     private static List<URL> getAdditionalUrls(List<MergedAnnotations> annotations) {
+        @SuppressWarnings("URLEqualsHashCode")
         Set<URL> urls = new LinkedHashSet<>();
         for (MergedAnnotations candidate : annotations) {
             MergedAnnotation<ClassPathOverrides> annotation = candidate.get(ClassPathOverrides.class);
