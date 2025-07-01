@@ -164,11 +164,8 @@ subprojects {
             }
         }
 
-        // All projects use optional annotations, but since we don't expose them downstream we would
-        // have to add the dependency in every project, which is tedious so just do it here.
+        // Dependencies for all projects that are not transitive to consumers of our modules
         dependencies {
-            // JSR-305 only used for non-required meta-annotations
-            optionalApi libs.jsr305
             checkstyle libs.spring.javaformatCheckstyle
             errorprone(libs.errorprone)
             errorprone(libs.nullAway)

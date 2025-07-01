@@ -1,6 +1,8 @@
 description 'Module containing common code'
 
 dependencies {
+    // remove when removing deprecated nullability annotations
+    optionalApi libs.jsr305
     // internal logger
     optionalApi libs.logback12
 
