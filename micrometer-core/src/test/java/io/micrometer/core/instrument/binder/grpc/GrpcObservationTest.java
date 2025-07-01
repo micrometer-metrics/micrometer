@@ -567,10 +567,9 @@ class GrpcObservationTest {
             // not be populated.
             await().until(serverHandler::isContextStopped);
 
-            assertThat(scopeAwareServerInterceptor.lastObservation).isNotNull().satisfies((observation -> {
-                assertThat(observation.getContext().getContextualName())
-                    .isEqualTo("grpc.testing.SimpleService/UnaryRpc");
-            }));
+            assertThat(scopeAwareServerInterceptor.lastObservation).isNotNull()
+                .satisfies(observation -> assertThat(observation.getContext().getContextualName())
+                    .isEqualTo("grpc.testing.SimpleService/UnaryRpc"));
         }
 
     }
