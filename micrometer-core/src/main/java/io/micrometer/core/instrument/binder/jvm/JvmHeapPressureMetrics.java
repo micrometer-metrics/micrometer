@@ -22,7 +22,6 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.binder.MeterBinder;
 import io.micrometer.core.instrument.distribution.TimeWindowSum;
-import org.jspecify.annotations.NonNull;
 
 import javax.management.ListenerNotFoundException;
 import javax.management.NotificationEmitter;
@@ -85,7 +84,7 @@ public class JvmHeapPressureMetrics implements MeterBinder, AutoCloseable {
     }
 
     @Override
-    public void bindTo(@NonNull MeterRegistry registry) {
+    public void bindTo(MeterRegistry registry) {
         if (!longLivedPoolNames.isEmpty()) {
             Gauge.builder("jvm.memory.usage.after.gc", lastLongLivedPoolUsageAfterGc, AtomicReference::get)
                 .tags(tags)

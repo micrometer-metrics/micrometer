@@ -22,7 +22,6 @@ import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.binder.MeterBinder;
 import org.apache.http.conn.routing.HttpRoute;
 import org.apache.http.pool.ConnPoolControl;
-import org.jspecify.annotations.NonNull;
 
 /**
  * Collects metrics from a {@link ConnPoolControl}, for example
@@ -82,7 +81,7 @@ public class PoolingHttpClientConnectionManagerMetricsBinder implements MeterBin
     }
 
     @Override
-    public void bindTo(@NonNull MeterRegistry registry) {
+    public void bindTo(MeterRegistry registry) {
         registerTotalMetrics(registry);
     }
 

@@ -24,7 +24,6 @@ import org.apache.hc.client5.http.HttpRoute;
 import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManager;
 import org.apache.hc.client5.http.impl.nio.PoolingAsyncClientConnectionManager;
 import org.apache.hc.core5.pool.ConnPoolControl;
-import org.jspecify.annotations.NonNull;
 
 /**
  * Collects metrics from a {@link ConnPoolControl}, for example
@@ -75,7 +74,7 @@ public class PoolingHttpClientConnectionManagerMetricsBinder implements MeterBin
     }
 
     @Override
-    public void bindTo(@NonNull MeterRegistry registry) {
+    public void bindTo(MeterRegistry registry) {
         registerTotalMetrics(registry);
     }
 

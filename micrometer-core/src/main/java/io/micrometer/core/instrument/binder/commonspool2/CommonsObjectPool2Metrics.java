@@ -22,7 +22,6 @@ import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.binder.MeterBinder;
 import io.micrometer.core.instrument.util.NamedThreadFactory;
-import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 import javax.management.*;
@@ -85,7 +84,7 @@ public class CommonsObjectPool2Metrics implements MeterBinder, AutoCloseable {
     }
 
     @Override
-    public void bindTo(@NonNull MeterRegistry registry) {
+    public void bindTo(MeterRegistry registry) {
         for (String type : TYPES) {
             registerMetricsEventually(type, (o, tags) -> {
                 registerGaugeForObject(registry, o, "NumIdle", "num.idle", tags,
