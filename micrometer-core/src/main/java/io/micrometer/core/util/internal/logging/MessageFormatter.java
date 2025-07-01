@@ -310,6 +310,7 @@ final class MessageFormatter {
         }
     }
 
+    @SuppressWarnings("ArrayAsKeyOfSetOrMap")
     private static void objectArrayAppend(StringBuilder sbuf, Object[] a, Set<Object[]> seenSet) {
         if (a.length == 0) {
             return;
