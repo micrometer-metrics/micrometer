@@ -87,6 +87,7 @@ subprojects {
                     "InlineFormatString",
                     "LongDoubleConversion",
                     "MissingOverride",
+                    "MixedMutabilityReturnType",
                     "ModifyCollectionInEnhancedForLoop",
                     "NarrowCalculation",
                     "OperatorPrecedence",
