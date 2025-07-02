@@ -72,6 +72,7 @@ subprojects {
             options.errorprone.disableWarningsInGeneratedCode = true
             options.errorprone.excludedPaths = ".*/build/generated/.*"
             options.errorprone.error(
+                    "ArrayAsKeyOfSetOrMap",
                     "AttemptedNegativeZero",
                     "BadImport",
                     "CatchAndPrintStackTrace",
@@ -86,7 +87,9 @@ subprojects {
                     "InlineFormatString",
                     "LongDoubleConversion",
                     "MissingOverride",
+                    "MixedMutabilityReturnType",
                     "ModifyCollectionInEnhancedForLoop",
+                    "MutablePublicArray",
                     "NarrowCalculation",
                     "OperatorPrecedence",
                     "StringCaseLocaleUsage",

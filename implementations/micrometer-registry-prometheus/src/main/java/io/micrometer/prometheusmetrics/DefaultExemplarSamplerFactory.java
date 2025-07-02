@@ -34,6 +34,7 @@ class DefaultExemplarSamplerFactory implements ExemplarSamplerFactory {
 
     private final ConcurrentMap<Integer, ExemplarSamplerConfig> exemplarSamplerConfigsByNumberOfExemplars = new ConcurrentHashMap<>();
 
+    @SuppressWarnings("ArrayAsKeyOfSetOrMap")
     private final ConcurrentMap<double[], ExemplarSamplerConfig> exemplarSamplerConfigsByHistogramUpperBounds = new ConcurrentHashMap<>();
 
     private final SpanContext spanContext;
