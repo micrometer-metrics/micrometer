@@ -69,6 +69,7 @@ reactor = "2022.0.22"
 rest-assured = "5.5.5"
 signalfx = "1.0.49"
 slf4j = "1.7.36"
+slf4j2 = "2.0.17"
 spectator-atlas = "1.8.16"
 spring5 = "5.3.39"
 spring6 = "6.1.21"
@@ -198,6 +199,8 @@ retrofit2 = { module = "com.squareup.retrofit2:retrofit", version = "2.11.0" }
 signalfx = { module = "com.signalfx.public:signalfx-java", version.ref = "signalfx" }
 slf4jApi = { module = "org.slf4j:slf4j-api", version.ref = "slf4j" }
 slfj4Simple = { module = "org.slf4j:slf4j-simple", version.ref = "slf4j" }
+slf4j2Api = { module = "org.slf4j:slf4j-api", version.ref = "slf4j2" }
+slfj42Simple = { module = "org.slf4j:slf4j-simple", version.ref = "slf4j2" }
 spectatorAtlas = { module = "com.netflix.spectator:spectator-reg-atlas", version.ref = "spectator-atlas" }
 spring5-core = { module = "org.springframework:spring-core", version.ref = "spring5" }
 spring-cloud = { module = "org.springframework.cloud:spring-cloud-dependencies", version = "2021.0.9" }
