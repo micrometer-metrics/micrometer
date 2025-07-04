@@ -85,7 +85,7 @@ public class AnnotationHandler<T> {
     /**
      * Modifies the object with {@link KeyValue} related information.
      * @param objectToModify object to modify
-     * @param jp proceeding join point
+     * @param jp join point
      */
     public void addAnnotatedParameters(T objectToModify, JoinPoint jp) {
         try {
@@ -104,7 +104,7 @@ public class AnnotationHandler<T> {
     /**
      * Modifies the object with {@link KeyValue} information based on the method result.
      * @param objectToModify object to modify
-     * @param jp proceeding join point
+     * @param jp join point
      * @param result method return value
      * @since 1.15.0
      */
