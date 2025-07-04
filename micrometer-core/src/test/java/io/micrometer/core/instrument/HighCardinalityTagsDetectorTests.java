@@ -15,6 +15,7 @@
  */
 package io.micrometer.core.instrument;
 
+import io.micrometer.core.instrument.HighCardinalityTagsDetector.HighCardinalityMeterInfo;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.AfterEach;
@@ -103,6 +104,28 @@ class HighCardinalityTagsDetectorTests {
         await().atMost(Duration.ofSeconds(1)).until(() -> "test.counter".equals(testMeterNameConsumer.getName()));
     }
 
+    @Test
+    void highCardinalityMeterInfoConsumer() {
+        String meterName = "test.counter";
+        int meterCount = 10;
+
+        for (int i = 0; i < meterCount; i++) {
+            Counter.builder(meterName).tag("index", String.valueOf(i)).register(registry).increment();
+        }
+
+        TestMeterInfoConsumer meterInfoConsumer = new TestMeterInfoConsumer();
+        registry.config()
+            .withHighCardinalityTagsDetector(registry -> new HighCardinalityTagsDetector.Builder(registry).threshold(3)
+                .highCardinalityMeterInfoConsumer(meterInfoConsumer)
+                .build());
+
+        await().atMost(Duration.ofSeconds(1))
+            .untilAsserted(() -> assertThat(meterInfoConsumer.meterInfo).isNotNull().satisfies((meterInfo) -> {
+                assertThat(meterInfo.getName()).isEqualTo(meterName);
+                assertThat(meterInfo.getCount()).isEqualTo(meterCount);
+            }));
+    }
+
     private static class TestMeterNameConsumer implements Consumer<String> {
 
         private volatile @Nullable String name;
@@ -114,6 +137,17 @@ class HighCardinalityTagsDetectorTests {
 
         public @Nullable String getName() {
             return this.name;
+        }
+
+    }
+
+    private static class TestMeterInfoConsumer implements Consumer<HighCardinalityMeterInfo> {
+
+        private volatile @Nullable HighCardinalityMeterInfo meterInfo;
+
+        @Override
+        public void accept(HighCardinalityMeterInfo meterInfo) {
+            this.meterInfo = meterInfo;
         }
 
     }

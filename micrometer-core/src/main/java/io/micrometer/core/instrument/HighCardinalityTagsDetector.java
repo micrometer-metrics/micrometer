@@ -16,7 +16,7 @@
 package io.micrometer.core.instrument;
 
 import java.time.Duration;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.Executors;
@@ -65,11 +65,13 @@ public class HighCardinalityTagsDetector implements AutoCloseable {
 
     private final long threshold;
 
-    private final Consumer<String> meterNameConsumer;
+    private final Duration delay;
+
+    @Nullable private final Consumer<String> meterNameConsumer;
+
+    @Nullable private Consumer<HighCardinalityMeterInfo> meterInfoConsumer;
 
     private final ScheduledExecutorService scheduledExecutorService;
-
-    private final Duration delay;
 
     /**
      * @param registry The registry to use to check the Meters in it
@@ -105,7 +107,7 @@ public class HighCardinalityTagsDetector implements AutoCloseable {
         this.registry = registry;
         this.threshold = threshold;
         this.delay = delay;
-        this.meterNameConsumer = meterNameConsumer != null ? meterNameConsumer : this::logWarning;
+        this.meterNameConsumer = meterNameConsumer;
         this.scheduledExecutorService = Executors
             .newSingleThreadScheduledExecutor(new NamedThreadFactory("high-cardinality-tags-detector"));
     }
@@ -135,7 +137,19 @@ public class HighCardinalityTagsDetector implements AutoCloseable {
 
     private void detectHighCardinalityTags() {
         try {
-            findFirst().ifPresent(this.meterNameConsumer);
+            findFirst().ifPresent((meterInfo) -> {
+                if (this.meterNameConsumer != null) {
+                    this.meterNameConsumer.accept(meterInfo.getName());
+                }
+                else {
+                    if (this.meterInfoConsumer != null) {
+                        this.meterInfoConsumer.accept(meterInfo);
+                    }
+                    else {
+                        logWarning(meterInfo);
+                    }
+                }
+            });
         }
         catch (Exception exception) {
             LOGGER.warn("Something went wrong during high cardinality tag detection", exception);
@@ -143,36 +157,31 @@ public class HighCardinalityTagsDetector implements AutoCloseable {
     }
 
     /**
-     * Finds the name of the first Meter that potentially has high cardinality tags.
-     * @return the name of the first Meter that potentially has high cardinality tags, an
-     * empty Optional if none found.
+     * Finds the {@code HighCardinalityMeterInfo} of the first Meter that potentially has
+     * high cardinality tags.
+     * @return the {@code HighCardinalityMeterInfo} of the first Meter that potentially
+     * has high cardinality tags, an empty Optional if none found.
      */
-    public Optional<String> findFirst() {
-        Map<String, Long> meterNameFrequencies = new HashMap<>();
+    public Optional<HighCardinalityMeterInfo> findFirst() {
+        Map<String, Long> meterNameFrequencies = new LinkedHashMap<>();
         for (Meter meter : this.registry.getMeters()) {
-            String name = meter.getId().getName();
-            if (!meterNameFrequencies.containsKey(name)) {
-                meterNameFrequencies.put(name, 1L);
-            }
-            else {
-                Long frequency = meterNameFrequencies.get(name);
-                if (frequency < this.threshold) {
-                    meterNameFrequencies.put(name, frequency + 1);
-                }
-                else {
-                    return Optional.of(name);
-                }
-            }
+            meterNameFrequencies.compute(meter.getId().getName(), (k, v) -> v == null ? 1 : v + 1);
         }
-
-        return Optional.empty();
+        return meterNameFrequencies.entrySet()
+            .stream()
+            .filter((entry) -> entry.getValue() > this.threshold)
+            .map((entry) -> new HighCardinalityMeterInfo(entry.getKey(), entry.getValue()))
+            .findFirst();
     }
 
-    private void logWarning(String name) {
-        WARN_THEN_DEBUG_LOGGER.log(() -> String.format("It seems %s has high cardinality tags (threshold: %d meters).\n"
-                + "Check your configuration for the instrumentation of %s to find and fix the cause of the high cardinality (see: https://docs.micrometer.io/micrometer/reference/concepts/naming.html#_tag_values).\n"
-                + "If the cardinality is expected and acceptable, raise the threshold for this %s.", name,
-                this.threshold, name, getClass().getSimpleName()));
+    private void logWarning(HighCardinalityMeterInfo meterInfo) {
+        WARN_THEN_DEBUG_LOGGER.log(() -> {
+            String name = meterInfo.getName();
+            return String.format("%s has %d meters, which seems to have high cardinality tags (threshold: %d meters).\n"
+                    + "Check your configuration for the instrumentation of %s to find and fix the cause of the high cardinality (see: https://docs.micrometer.io/micrometer/reference/concepts/naming.html#_tag_values).\n"
+                    + "If the cardinality is expected and acceptable, raise the threshold for this %s.", name,
+                    meterInfo.getCount(), this.threshold, name, getClass().getSimpleName());
+        });
     }
 
     private static long calculateThreshold() {
@@ -181,6 +190,122 @@ public class HighCardinalityTagsDetector implements AutoCloseable {
 
         // 2k Meters can take ~1MiB, 2M Meters can take ~1GiB
         return Math.max(1_000, Math.min(allowance * 2_000, 2_000_000));
+    }
+
+    /**
+     * Builder for {@code HighCardinalityTagsDetector}.
+     */
+    public static class Builder {
+
+        private final MeterRegistry registry;
+
+        private long threshold = calculateThreshold();
+
+        private Duration delay = DEFAULT_DELAY;
+
+        @Nullable private Consumer<String> highCardinalityMeterNameConsumer;
+
+        @Nullable private Consumer<HighCardinalityMeterInfo> highCardinalityMeterInfoConsumer;
+
+        /**
+         * Create a {@code Builder}.
+         * @param registry registry
+         */
+        public Builder(MeterRegistry registry) {
+            this.registry = registry;
+        }
+
+        /**
+         * Set threshold.
+         * @param threshold threshold
+         * @return this builder
+         */
+        public Builder threshold(long threshold) {
+            this.threshold = threshold;
+            return this;
+        }
+
+        /**
+         * Set delay.
+         * @param delay delay
+         * @return this builder
+         */
+        public Builder delay(Duration delay) {
+            this.delay = delay;
+            return this;
+        }
+
+        /**
+         * Set high cardinality meter name {@link Consumer}.
+         * @param highCardinalityMeterNameConsumer high cardinality meter name
+         * {@code Consumer}
+         * @return this builder
+         */
+        public Builder highCardinalityMeterNameConsumer(Consumer<String> highCardinalityMeterNameConsumer) {
+            this.highCardinalityMeterNameConsumer = highCardinalityMeterNameConsumer;
+            return this;
+        }
+
+        /**
+         * Set {@code HighCardinalityMeterInfo} {@link Consumer}.
+         * @param highCardinalityMeterInfoConsumer {@code HighCardinalityMeterInfo}
+         * {@code Consumer}
+         * @return this builder
+         */
+        public Builder highCardinalityMeterInfoConsumer(
+                Consumer<HighCardinalityMeterInfo> highCardinalityMeterInfoConsumer) {
+            this.highCardinalityMeterInfoConsumer = highCardinalityMeterInfoConsumer;
+            return this;
+        }
+
+        /**
+         * Build {@code HighCardinalityTagsDetector}.
+         * @return {@code HighCardinalityTagsDetector}
+         */
+        public HighCardinalityTagsDetector build() {
+            HighCardinalityTagsDetector highCardinalityTagsDetector = new HighCardinalityTagsDetector(this.registry,
+                    this.threshold, this.delay, this.highCardinalityMeterNameConsumer);
+            highCardinalityTagsDetector.meterInfoConsumer = this.highCardinalityMeterInfoConsumer;
+            return highCardinalityTagsDetector;
+        }
+
+    }
+
+    /**
+     * High cardinality meter information.
+     */
+    public static class HighCardinalityMeterInfo {
+
+        private final String name;
+
+        private final long count;
+
+        /**
+         * Create a {@code HighCardinalityMeterInfo} instance.
+         * @param name name
+         * @param count count
+         */
+        public HighCardinalityMeterInfo(String name, long count) {
+            this.name = name;
+            this.count = count;
+        }
+
+        /**
+         * Return the name.
+         * @return name
+         */
+        public String getName() {
+            return this.name;
+        }
+
+        /**
+         * Return the count.
+         * @return count
+         */
+        public long getCount() {
+            return this.count;
+        }
+
     }
 
 }
