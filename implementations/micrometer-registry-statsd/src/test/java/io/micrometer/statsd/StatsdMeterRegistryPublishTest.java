@@ -330,7 +330,7 @@ class StatsdMeterRegistryPublishTest {
     }
 
     @Test
-    void counterIncrementDoesNotWorkWithoutSleepAfterRegistryStart() throws InterruptedException {
+    void counterIncrementWorksWithSleepAfterRegistryStart() throws InterruptedException {
         StatsdConfig config = StatsdConfig.DEFAULT;
 
         CountDownLatch serverLatch = new CountDownLatch(1);
@@ -350,7 +350,7 @@ class StatsdMeterRegistryPublishTest {
     }
 
     @Test
-    void counterIncrementWorksWithSleepAfterRegistryStart() throws InterruptedException {
+    void counterIncrementDoesNotWorkWithoutSleepAfterRegistryStart() throws InterruptedException {
         StatsdConfig config = StatsdConfig.DEFAULT;
 
         CountDownLatch serverLatch = new CountDownLatch(1);
