@@ -105,3 +105,5 @@ MeterRegistry registry = StatsdMeterRegistry.builder(StatsdConfig.DEFAULT) <1>
     .build();
 ----
 <1> Because you have taken control of line building, the flavor is ignored.
+
+NOTE: `StatsdMeterRegistry` doesn't wait for a connection to the backend to be established, so metrics could be lost until the connection is ready.
