@@ -15,7 +15,6 @@
  */
 package io.micrometer.core.instrument.distribution;
 
-import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicLongArray;
 
 class FixedBoundaryHistogram {
@@ -41,20 +40,6 @@ class FixedBoundaryHistogram {
 
     double[] getBuckets() {
         return this.buckets;
-    }
-
-    /**
-     * Returns the number of values that was recorded between previous bucket and the
-     * queried bucket (upper bound inclusive).
-     * @param bucket - the bucket to find values for
-     * @return 0 if bucket is not a valid bucket otherwise number of values recorded
-     * between (previous bucket, bucket]
-     */
-    private long countAtBucket(double bucket) {
-        int index = Arrays.binarySearch(buckets, bucket);
-        if (index < 0)
-            return 0;
-        return values.get(index);
     }
 
     void reset() {

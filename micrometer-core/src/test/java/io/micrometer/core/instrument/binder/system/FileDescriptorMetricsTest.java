@@ -69,6 +69,7 @@ class FileDescriptorMetricsTest {
     }
 
     /** Represents a JVM implementation we do not currently support. */
+    @SuppressWarnings("unused")
     private interface UnsupportedOperatingSystemMXBean extends OperatingSystemMXBean {
 
         long getOpenFileDescriptorCount();

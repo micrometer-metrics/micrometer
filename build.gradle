@@ -96,6 +96,7 @@ subprojects {
                     "StringSplitter",
                     "UnnecessaryAsync",
                     "UnnecessaryParentheses",
+                    "UnusedMethod",
                     "URLEqualsHashCode"
             )
             options.errorprone.disable(
