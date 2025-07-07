@@ -5,7 +5,8 @@ import aQute.bnd.gradle.TestOSGi
 dependencies {
     testImplementation libs.assertj
     testImplementation libs.osgiJunit5
-    testImplementation libs.slf4j2Api
+    testImplementation 'org.slf4j:slf4j-api:2.0.17'
+    testImplementation 'org.slf4j:slf4j-simple:2.0.17'
 
     testImplementation project(':micrometer-core')
 
@@ -18,7 +19,7 @@ dependencies {
 
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
     testRuntimeOnly libs.felixScr
-    testRuntimeOnly libs.slfj42Simple
+    testRuntimeOnly 'org.slf4j:slf4j-simple:2.0.17'
     testRuntimeOnly 'org.apache.aries.spifly:org.apache.aries.spifly.dynamic.bundle:1.3.7'
 }
 
