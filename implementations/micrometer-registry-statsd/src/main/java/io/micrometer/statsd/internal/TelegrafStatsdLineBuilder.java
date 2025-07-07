@@ -109,7 +109,7 @@ public class TelegrafStatsdLineBuilder extends FlavorStatsdLineBuilder {
     // backslash escape =
     // trying to escape spaces and comma drops everything after that
     private String telegrafEscape(String value) {
-        return value.replaceAll("=", "\\=").replaceAll("[\\s,:]", "_");
+        return value.replaceAll("[\\s,:]", "_");
     }
 
 }
