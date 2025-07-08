@@ -76,6 +76,7 @@ jar {
             org.HdrHistogram.*;resolution:=dynamic;version="${@}",\
             org.apache.catalina.*;resolution:=dynamic,\
             org.bson.*;resolution:=dynamic;version="${@}",\
+            org.slf4j.*;resolution:=dynamic,\
             rx.*;resolution:=dynamic;version="${@}",\
             javax.persistence.*;resolution:=dynamic;version="${@}",\
             io.netty.*;resolution:=dynamic;version="${@}",\
