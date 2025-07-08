@@ -178,6 +178,7 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
                             .build())
                         .build())
                     .build();
+                logger.trace("Request: {}", request);
                 HttpSender.Request.Builder httpRequest = this.httpSender.post(this.config.url())
                     .withHeader("User-Agent", this.userAgentHeader)
                     .withContent("application/x-protobuf", request.toByteArray());

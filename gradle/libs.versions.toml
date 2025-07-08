@@ -56,8 +56,7 @@ latency-utils = "2.0.3"
 logback-latest = "1.5.12"
 log4j = "2.24.3"
 maven-resolver = "1.9.24"
-mockito4 = "4.11.0"
-mockito5 = "5.11.0"
+mockito5 = "5.18.0"
 mongo = "4.11.5"
 netty = "4.1.122.Final"
 newrelic-api = "5.14.0"
@@ -177,7 +176,6 @@ log4j = { module = "org.apache.logging.log4j:log4j-core", version.ref = "log4j" 
 mavenResolverConnectorBasic = { module = "org.apache.maven.resolver:maven-resolver-connector-basic", version.ref = "maven-resolver" }
 mavenResolverTransportHttp = { module = "org.apache.maven.resolver:maven-resolver-transport-http", version.ref = "maven-resolver" }
 mavenResolverProvider = { module = "org.apache.maven:maven-resolver-provider", version = "3.9.10" }
-mockitoCore4 = { module = "org.mockito:mockito-core", version.ref = "mockito4" }
 mockitoCore5 = { module = "org.mockito:mockito-core", version.ref = "mockito5" }
 mongoSync = { module = "org.mongodb:mongodb-driver-sync", version.ref = "mongo" }
 nettyBom = { module = "io.netty:netty-bom", version.ref = "netty" }
@@ -231,6 +229,7 @@ plugin-japicmp = { module = "me.champeau.gradle:japicmp-gradle-plugin", version 
 plugin-downloadTask = { module = "de.undercouch:gradle-download-task", version = "5.6.0" }
 plugin-spotless = { module = "com.diffplug.spotless:spotless-plugin-gradle", version = "6.25.0" }
 plugin-bnd = "biz.aQute.bnd:biz.aQute.bnd.gradle:6.4.0"
+plugin-bndForJava17 = "biz.aQute.bnd:biz.aQute.bnd.gradle:7.1.0"
 
 [plugins]
 kotlin19 = { id = "org.jetbrains.kotlin.jvm", version = "1.9.25" }

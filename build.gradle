@@ -20,7 +20,12 @@ buildscript {
         classpath libs.plugin.japicmp
         classpath libs.plugin.downloadTask
         classpath libs.plugin.spotless
-        classpath libs.plugin.bnd
+
+        if (javaLanguageVersion.asInt() < 17) {
+            classpath libs.plugin.bnd
+        } else {
+            classpath libs.plugin.bndForJava17
+        }
 
         constraints {
             classpath(libs.asmForPlugins) {
