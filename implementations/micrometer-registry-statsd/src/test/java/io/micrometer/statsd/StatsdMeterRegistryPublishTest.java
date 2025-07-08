@@ -329,6 +329,45 @@ class StatsdMeterRegistryPublishTest {
         server.disposeNow();
     }
 
+    @Test
+    void counterIncrementWorksWithSleepAfterRegistryStart() throws InterruptedException {
+        StatsdConfig config = StatsdConfig.DEFAULT;
+
+        CountDownLatch serverLatch = new CountDownLatch(1);
+        DisposableChannel server = startServer(StatsdProtocol.UDP, config.port(), serverLatch);
+
+        StatsdMeterRegistry registry = new StatsdMeterRegistry(config, Clock.SYSTEM);
+        Thread.sleep(1000);
+
+        Counter counter = Counter.builder("my.counter").register(registry);
+        counter.increment();
+
+        registry.close();
+
+        assertThat(serverLatch.await(1, TimeUnit.SECONDS)).isTrue();
+
+        server.disposeNow();
+    }
+
+    @Test
+    void counterIncrementDoesNotWorkWithoutSleepAfterRegistryStart() throws InterruptedException {
+        StatsdConfig config = StatsdConfig.DEFAULT;
+
+        CountDownLatch serverLatch = new CountDownLatch(1);
+        DisposableChannel server = startServer(StatsdProtocol.UDP, config.port(), serverLatch);
+
+        StatsdMeterRegistry registry = new StatsdMeterRegistry(config, Clock.SYSTEM);
+
+        Counter counter = Counter.builder("my.counter").register(registry);
+        counter.increment();
+
+        registry.close();
+
+        assertThat(serverLatch.await(1, TimeUnit.SECONDS)).isFalse();
+
+        server.disposeNow();
+    }
+
     private void skipUdsTestOnWindows(StatsdProtocol protocol) {
         if (protocol == StatsdProtocol.UDS_DATAGRAM)
             assumeTrue(!OS.WINDOWS.isCurrentOs());

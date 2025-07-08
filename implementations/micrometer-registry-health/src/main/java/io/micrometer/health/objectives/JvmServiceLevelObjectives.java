@@ -35,6 +35,7 @@ public class JvmServiceLevelObjectives {
      * <a href="https://www.jetbrains.com/help/teamcity/teamcity-memory-monitor.html">Team
      * City's memory monitor</a>.
      */
+    @SuppressWarnings("MutablePublicArray")
     public static final ServiceLevelObjective[] MEMORY = new ServiceLevelObjective[] {
             ServiceLevelObjective.build("jvm.pool.memory")
                 .failedMessage("Memory usage in a single memory pool exceeds 90% after garbage collection.")
@@ -72,6 +73,7 @@ public class JvmServiceLevelObjectives {
                                 + "Lasting memory lack may result in performance degradation and server instability.")
                 .and() };
 
+    @SuppressWarnings("MutablePublicArray")
     public static final ServiceLevelObjective[] ALLOCATIONS = new ServiceLevelObjective[] {
             ServiceLevelObjective.build("jvm.allocations.g1.humongous")
                 .failedMessage("A single object was allocated that exceeded 50% of the total size of the eden space.")
