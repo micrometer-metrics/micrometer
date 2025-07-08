@@ -2,6 +2,12 @@ import aQute.bnd.gradle.Bundle
 import aQute.bnd.gradle.Resolve
 import aQute.bnd.gradle.TestOSGi
 
+// skip this module when building with jdk >=24
+// waiting for a release with the fix https://github.com/bndtools/bnd/pull/6371
+if (javaLanguageVersion.canCompileOrRun(24)) {
+    project.tasks.configureEach { task -> task.enabled = false }
+}
+
 dependencies {
     testImplementation 'org.assertj:assertj-core'
     testImplementation libs.osgiJunit5
