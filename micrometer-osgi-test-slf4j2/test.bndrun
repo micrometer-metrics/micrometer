@@ -1,0 +1,20 @@
+-tester: biz.aQute.tester.junit-platform
+-runfw: org.apache.felix.framework;
+-runee: ${project.osgiRunee}
+-runtrace: false
+
+#uncomment to remote debug
+# -runjdb: 5005
+
+-runrequires: \
+    bnd.identity;id='org.apache.aries.spifly.dynamic.bundle',\
+    bnd.identity;id='micrometer-osgi-test-slf4j2-tests',\
+    bnd.identity;id='junit-jupiter-engine',\
+    bnd.identity;id='junit-platform-launcher'
+
+-runstartlevel: \
+    order=sortbynameversion,\
+    begin=-1
+
+-runproperties: \
+    org.osgi.framework.bsnversion=multiple
