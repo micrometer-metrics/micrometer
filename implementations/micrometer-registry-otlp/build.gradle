@@ -11,6 +11,7 @@ dependencies {
     testImplementation libs.testcontainers.junitJupiter
     testImplementation libs.awaitility
     testImplementation libs.mockitoCore5
+    testImplementation libs.logbackLatest
 }
 
 dockerTest {
