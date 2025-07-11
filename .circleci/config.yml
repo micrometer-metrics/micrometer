@@ -151,7 +151,6 @@ workflows:
             - build-jdk24
             - concurrency-tests
             - docker-tests
-            - stackdriver-it
           filters:
             branches:
               only:
