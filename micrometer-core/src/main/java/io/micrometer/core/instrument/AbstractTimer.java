@@ -264,7 +264,7 @@ public abstract class AbstractTimer extends AbstractMeter implements Timer {
             }
         }
         else {
-            log.log(() -> "'amount' should not be negative but was: " + amount);
+            log.log(() -> "'amount' should not be negative but was: " + amount, new IllegalArgumentException());
         }
     }
 
