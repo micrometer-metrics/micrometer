@@ -46,6 +46,15 @@ public class WarnThenDebugLogger {
         this.logger = InternalLoggerFactory.getInstance(name);
     }
 
+    /**
+     * This may be useful to have different behavior before/after logging once.
+     * @return whether the warn-level log has been made or not
+     * @since 1.16.0
+     */
+    public boolean isWarnLogged() {
+        return warnLogged.get();
+    }
+
     public void log(String message, @Nullable Throwable ex) {
         if (this.warnLogged.compareAndSet(false, true)) {
             log(InternalLogLevel.WARN, getWarnMessage(message), ex);
