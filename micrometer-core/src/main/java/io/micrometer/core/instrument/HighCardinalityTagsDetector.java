@@ -162,7 +162,8 @@ public class HighCardinalityTagsDetector implements AutoCloseable {
      * Finds the {@code HighCardinalityMeterInfo} of the first Meter that potentially has
      * high cardinality tags.
      * @return the {@code HighCardinalityMeterInfo} of the first Meter that potentially
-     * has high cardinality tags, an empty Optional if none found.
+     * has high cardinality tags, or an empty Optional if none found.
+     * @since 1.16.0
      */
     public Optional<HighCardinalityMeterInfo> findFirstHighCardinalityMeterInfo() {
         Map<String, Long> meterNameFrequencies = new LinkedHashMap<>();
