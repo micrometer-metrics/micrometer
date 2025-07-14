@@ -67,7 +67,7 @@ public class HighCardinalityTagsDetector implements AutoCloseable {
 
     private final Duration delay;
 
-    private @Nullable Consumer<HighCardinalityMeterInfo> meterInfoConsumer;
+    private Consumer<HighCardinalityMeterInfo> meterInfoConsumer;
 
     private final ScheduledExecutorService scheduledExecutorService;
 
@@ -110,6 +110,9 @@ public class HighCardinalityTagsDetector implements AutoCloseable {
         if (meterNameConsumer != null) {
             this.meterInfoConsumer = (meterInfo) -> meterNameConsumer.accept(meterInfo.getName());
         }
+        else {
+            this.meterInfoConsumer = this::logWarning;
+        }
         this.scheduledExecutorService = Executors
             .newSingleThreadScheduledExecutor(new NamedThreadFactory("high-cardinality-tags-detector"));
     }
@@ -139,14 +142,7 @@ public class HighCardinalityTagsDetector implements AutoCloseable {
 
     private void detectHighCardinalityTags() {
         try {
-            findFirstHighCardinalityMeterInfo().ifPresent((meterInfo) -> {
-                if (this.meterInfoConsumer != null) {
-                    this.meterInfoConsumer.accept(meterInfo);
-                }
-                else {
-                    logWarning(meterInfo);
-                }
-            });
+            findFirstHighCardinalityMeterInfo().ifPresent(this.meterInfoConsumer);
         }
         catch (Exception exception) {
             LOGGER.warn("Something went wrong during high cardinality tag detection", exception);
@@ -258,7 +254,9 @@ public class HighCardinalityTagsDetector implements AutoCloseable {
         public HighCardinalityTagsDetector build() {
             HighCardinalityTagsDetector highCardinalityTagsDetector = new HighCardinalityTagsDetector(this.registry,
                     this.threshold, this.delay);
-            highCardinalityTagsDetector.meterInfoConsumer = this.highCardinalityMeterInfoConsumer;
+            if (this.highCardinalityMeterInfoConsumer != null) {
+                highCardinalityTagsDetector.meterInfoConsumer = this.highCardinalityMeterInfoConsumer;
+            }
             return highCardinalityTagsDetector;
         }
 
