@@ -58,7 +58,7 @@ log4j = "2.24.3"
 maven-resolver = "1.9.24"
 mockito5 = "5.18.0"
 mongo = "4.11.5"
-netty = "4.1.122.Final"
+netty = "4.1.123.Final"
 newrelic-api = "5.14.0"
 # Kotlin 1.7 sample will fail from OkHttp 4.12.0 due to okio dependency being a Kotlin 1.9 module
 okhttp = "4.11.0"
