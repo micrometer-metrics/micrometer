@@ -15,6 +15,8 @@
  */
 package io.micrometer.observation.tck;
 
+import io.micrometer.common.KeyValue;
+import io.micrometer.common.KeyValues;
 import io.micrometer.observation.NullObservation.NullContext;
 import io.micrometer.observation.Observation.Context;
 import io.micrometer.observation.Observation.Event;
@@ -23,11 +25,10 @@ import io.micrometer.observation.tck.InvalidObservationException.EventName;
 import io.micrometer.observation.tck.InvalidObservationException.HistoryElement;
 import org.jspecify.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 /**
  * An {@link ObservationHandler} that validates the order of events of an Observation (for
@@ -43,6 +44,8 @@ class ObservationValidator implements ObservationHandler<Context> {
 
     private final Predicate<Context> supportsContextPredicate;
 
+    private final Map<String, Set<String>> lowCardinalityKeys;
+
     ObservationValidator() {
         this(ObservationValidator::throwInvalidObservationException);
     }
@@ -54,6 +57,7 @@ class ObservationValidator implements ObservationHandler<Context> {
     ObservationValidator(Consumer<ValidationResult> consumer, Predicate<Context> supportsContextPredicate) {
         this.consumer = consumer;
         this.supportsContextPredicate = supportsContextPredicate;
+        this.lowCardinalityKeys = new HashMap<>();
     }
 
     @Override
@@ -109,6 +113,7 @@ class ObservationValidator implements ObservationHandler<Context> {
         if (status != null) {
             status.markStopped();
         }
+        checkIfObservationsWithTheSameNameHaveTheSameSetOfLowCardinalityKeys(context);
     }
 
     @Override
@@ -141,8 +146,34 @@ class ObservationValidator implements ObservationHandler<Context> {
         return status;
     }
 
+    private void checkIfObservationsWithTheSameNameHaveTheSameSetOfLowCardinalityKeys(Context context) {
+        if (lowCardinalityKeys.containsKey(context.getName())) {
+            Set<String> existingKeys = lowCardinalityKeys.get(context.getName());
+            Set<String> currentKeys = getLowCardinalityKeys(context);
+            if (!existingKeys.equals(currentKeys)) {
+                String message = "Metrics backends may require that all observations with the same name have the same"
+                        + " set of low cardinality keys. There is already an existing observation named '"
+                        + context.getName() + "' containing keys [" + String.join(", ", existingKeys)
+                        + "]. The observation you are attempting to register" + " has keys ["
+                        + String.join(", ", currentKeys) + "].";
+                throw new InvalidObservationException(message, context);
+            }
+        }
+        else {
+            lowCardinalityKeys.put(Objects.requireNonNull(context.getName()), getLowCardinalityKeys(context));
+        }
+    }
+
+    private Set<String> getLowCardinalityKeys(Context context) {
+        return getKeys(context.getLowCardinalityKeyValues());
+    }
+
+    private Set<String> getKeys(KeyValues keyValues) {
+        return keyValues.stream().map(KeyValue::getKey).collect(Collectors.toSet());
+    }
+
     private static void throwInvalidObservationException(ValidationResult validationResult) {
-        History history = validationResult.getContext().getOrDefault(History.class, () -> new History());
+        History history = validationResult.getContext().getOrDefault(History.class, History::new);
         throw new InvalidObservationException(validationResult.getMessage(), validationResult.getContext(),
                 history.getHistoryElements());
     }
