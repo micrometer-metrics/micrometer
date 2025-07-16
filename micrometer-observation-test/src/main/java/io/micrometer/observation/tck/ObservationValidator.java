@@ -15,6 +15,8 @@
  */
 package io.micrometer.observation.tck;
 
+import io.micrometer.common.KeyValue;
+import io.micrometer.common.KeyValues;
 import io.micrometer.observation.NullObservation.NullContext;
 import io.micrometer.observation.Observation.Context;
 import io.micrometer.observation.Observation.Event;
@@ -23,11 +25,13 @@ import io.micrometer.observation.tck.InvalidObservationException.EventName;
 import io.micrometer.observation.tck.InvalidObservationException.HistoryElement;
 import org.jspecify.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
+
+import static io.micrometer.observation.tck.TestObservationRegistry.Capability;
+import static io.micrometer.observation.tck.TestObservationRegistry.Capability.OBSERVATIONS_WITH_THE_SAME_NAME_SHOULD_HAVE_THE_SAME_SET_OF_LOW_CARDINALITY_KEYS;
 
 /**
  * An {@link ObservationHandler} that validates the order of events of an Observation (for
@@ -43,17 +47,15 @@ class ObservationValidator implements ObservationHandler<Context> {
 
     private final Predicate<Context> supportsContextPredicate;
 
-    ObservationValidator() {
-        this(ObservationValidator::throwInvalidObservationException);
-    }
+    private final Map<String, Set<String>> lowCardinalityKeys;
 
-    ObservationValidator(Consumer<ValidationResult> consumer) {
-        this(consumer, context -> !(context instanceof NullContext));
-    }
+    private final Set<Capability> capabilities;
 
-    ObservationValidator(Consumer<ValidationResult> consumer, Predicate<Context> supportsContextPredicate) {
-        this.consumer = consumer;
-        this.supportsContextPredicate = supportsContextPredicate;
+    ObservationValidator(Set<Capability> capabilities) {
+        this.consumer = ObservationValidator::throwInvalidObservationException;
+        this.supportsContextPredicate = context -> !(context instanceof NullContext);
+        this.lowCardinalityKeys = new HashMap<>();
+        this.capabilities = capabilities;
     }
 
     @Override
@@ -109,6 +111,9 @@ class ObservationValidator implements ObservationHandler<Context> {
         if (status != null) {
             status.markStopped();
         }
+        if (capabilities.contains(OBSERVATIONS_WITH_THE_SAME_NAME_SHOULD_HAVE_THE_SAME_SET_OF_LOW_CARDINALITY_KEYS)) {
+            checkIfObservationsWithTheSameNameHaveTheSameSetOfLowCardinalityKeys(context);
+        }
     }
 
     @Override
@@ -141,8 +146,34 @@ class ObservationValidator implements ObservationHandler<Context> {
         return status;
     }
 
+    private void checkIfObservationsWithTheSameNameHaveTheSameSetOfLowCardinalityKeys(Context context) {
+        if (lowCardinalityKeys.containsKey(context.getName())) {
+            Set<String> existingKeys = lowCardinalityKeys.get(context.getName());
+            Set<String> currentKeys = getLowCardinalityKeys(context);
+            if (!existingKeys.equals(currentKeys)) {
+                String message = "Metrics backends may require that all observations with the same name have the same"
+                        + " set of low cardinality keys. There is already an existing observation named '"
+                        + context.getName() + "' containing keys [" + String.join(", ", existingKeys)
+                        + "]. The observation you are attempting to register" + " has keys ["
+                        + String.join(", ", currentKeys) + "].";
+                throw new InvalidObservationException(message, context);
+            }
+        }
+        else {
+            lowCardinalityKeys.put(Objects.requireNonNull(context.getName()), getLowCardinalityKeys(context));
+        }
+    }
+
+    private Set<String> getLowCardinalityKeys(Context context) {
+        return getKeys(context.getLowCardinalityKeyValues());
+    }
+
+    private Set<String> getKeys(KeyValues keyValues) {
+        return keyValues.stream().map(KeyValue::getKey).collect(Collectors.toSet());
+    }
+
     private static void throwInvalidObservationException(ValidationResult validationResult) {
-        History history = validationResult.getContext().getOrDefault(History.class, () -> new History());
+        History history = validationResult.getContext().getOrDefault(History.class, History::new);
         throw new InvalidObservationException(validationResult.getMessage(), validationResult.getContext(),
                 history.getHistoryElements());
     }
