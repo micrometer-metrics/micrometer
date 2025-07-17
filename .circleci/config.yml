@@ -71,6 +71,7 @@ jobs:
     executor: jdk24-executor
     steps:
       - gradlew-build
+      - run: ./gradlew generationalShenandoahTest
 
   build:
     executor: circle-jdk-executor
