@@ -45,7 +45,9 @@ class JvmMemory {
     }
 
     static boolean isAllocationPool(@Nullable String name) {
-        return name != null && (name.endsWith("Eden Space") || "Shenandoah".equals(name) //
+        return name != null && (name.endsWith("Eden Space") //
+                || "Shenandoah".equals(name) // non-generational ZGC
+                || "Shenandoah Young Gen".equals(name) // generational ZGC
                 || "ZHeap".equals(name) // ZGC non-generational
                 || "ZGC Young Generation".equals(name) // generational ZGC
                 || name.endsWith("New Gen") // Zing GPGC
@@ -55,7 +57,9 @@ class JvmMemory {
     }
 
     static boolean isLongLivedPool(@Nullable String name) {
-        return name != null && (name.endsWith("Old Gen") || name.endsWith("Tenured Gen") || "Shenandoah".equals(name)
+        return name != null && (name.endsWith("Old Gen") || name.endsWith("Tenured Gen") //
+                || "Shenandoah".equals(name) // non-generational Shenandoah
+                || "Shenandoah Old Generation".equals(name) // generational Shenandoah
                 || "ZHeap".equals(name) // ZGC non-generational
                 || "ZGC Old Generation".equals(name) // generational ZGC
                 || name.endsWith("balanced-old") //
