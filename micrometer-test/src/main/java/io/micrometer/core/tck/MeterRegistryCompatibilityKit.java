@@ -388,7 +388,6 @@ public abstract class MeterRegistryCompatibilityKit {
         @DisplayName("gauges attached to a number are updated when their values are observed")
         void numericGauge() {
             AtomicInteger n = registry.gauge("my.gauge", new AtomicInteger());
-            assertThat(n).isNotNull();
             n.set(1);
 
             Gauge g = registry.get("my.gauge").gauge();
@@ -401,10 +400,7 @@ public abstract class MeterRegistryCompatibilityKit {
         @Test
         @DisplayName("gauges attached to an object are updated when their values are observed")
         void objectGauge() {
-            // TODO: remove requireNonNull: https://github.com/uber/NullAway/issues/1219
-            List<String> list = Objects
-                .requireNonNull(registry.gauge("my.gauge", emptyList(), new ArrayList<>(), List::size));
-            assertThat(list).isNotNull();
+            List<String> list = registry.gauge("my.gauge", emptyList(), new ArrayList<>(), List::size);
             list.addAll(Arrays.asList("a", "b"));
 
             Gauge g = registry.get("my.gauge").gauge();
@@ -414,10 +410,7 @@ public abstract class MeterRegistryCompatibilityKit {
         @Test
         @DisplayName("gauges can be directly associated with collection size")
         void collectionSizeGauge() {
-            // TODO: remove requireNonNull: https://github.com/uber/NullAway/issues/1219
-            List<String> list = Objects
-                .requireNonNull(registry.gaugeCollectionSize("my.gauge", emptyList(), new ArrayList<>()));
-            assertThat(list).isNotNull();
+            List<String> list = registry.gaugeCollectionSize("my.gauge", emptyList(), new ArrayList<>());
             list.addAll(Arrays.asList("a", "b"));
 
             Gauge g = registry.get("my.gauge").gauge();
@@ -427,9 +420,7 @@ public abstract class MeterRegistryCompatibilityKit {
         @Test
         @DisplayName("gauges can be directly associated with map entry size")
         void mapSizeGauge() {
-            // TODO: remove requireNonNull: https://github.com/uber/NullAway/issues/1219
-            Map<String, Integer> map = requireNonNull(registry.gaugeMapSize("my.gauge", emptyList(), new HashMap<>()));
-            assertThat(map).isNotNull();
+            Map<String, Integer> map = registry.gaugeMapSize("my.gauge", emptyList(), new HashMap<>());
             map.put("a", 1);
 
             Gauge g = registry.get("my.gauge").gauge();
@@ -464,8 +455,8 @@ public abstract class MeterRegistryCompatibilityKit {
 
             assertThat(registry.get("my.gauge").gauges()).hasSize(1);
             assertThat(registry.get("my.gauge").gauge().value()).isEqualTo(1);
-            assertThat(n1).isNotNull().hasValue(1);
-            assertThat(n2).isNotNull().hasValue(2);
+            assertThat(n1).hasValue(1);
+            assertThat(n2).hasValue(2);
         }
 
         @Test
@@ -477,8 +468,8 @@ public abstract class MeterRegistryCompatibilityKit {
 
             assertThat(registry.get("my.gauge").gauges()).hasSize(1);
             assertThat(registry.get("my.gauge").gauge().value()).isEqualTo(1);
-            assertThat(n1).isNotNull().hasValue(1);
-            assertThat(n2).isNotNull().hasValue(2);
+            assertThat(n1).hasValue(1);
+            assertThat(n2).hasValue(2);
         }
 
     }

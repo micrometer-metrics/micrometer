@@ -24,7 +24,6 @@ import org.mockito.ArgumentCaptor;
 
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
-import java.util.Objects;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -69,7 +68,7 @@ class DynatraceMeterRegistryTest {
         when(httpClient.send(isA(HttpSender.Request.class)))
             .thenReturn(new HttpSender.Response(202, "{ \"linesOk\": 3, \"linesInvalid\": 0, \"error\": null }"));
 
-        Double gauge = Objects.requireNonNull(meterRegistry.gauge("my.gauge", 42d));
+        Double gauge = meterRegistry.gauge("my.gauge", 42d);
         Counter counter = meterRegistry.counter("my.counter");
         counter.increment(12d);
         Timer timer = meterRegistry.timer("my.timer");

@@ -15,6 +15,7 @@
  */
 package io.micrometer.core.instrument;
 
+import io.micrometer.common.lang.internal.Contract;
 import io.micrometer.common.util.internal.logging.InternalLogger;
 import io.micrometer.common.util.internal.logging.InternalLoggerFactory;
 import io.micrometer.common.util.internal.logging.WarnThenDebugLogger;
@@ -521,6 +522,7 @@ public abstract class MeterRegistry {
      * @return The state object that was passed in so the registration can be done as part
      * of an assignment statement.
      */
+    @Contract("_, _, null, _ -> null; _, _, !null, _ -> !null")
     public <T> @Nullable T gauge(String name, Iterable<Tag> tags, @Nullable T stateObject,
             ToDoubleFunction<T> valueFunction) {
         Gauge.builder(name, stateObject, valueFunction).tags(tags).register(this);
@@ -537,7 +539,7 @@ public abstract class MeterRegistry {
      * @return The number that was passed in so the registration can be done as part of an
      * assignment statement.
      */
-    public <T extends Number> @Nullable T gauge(String name, Iterable<Tag> tags, T number) {
+    public <T extends Number> T gauge(String name, Iterable<Tag> tags, T number) {
         return gauge(name, tags, number, Number::doubleValue);
     }
 
@@ -550,7 +552,7 @@ public abstract class MeterRegistry {
      * @return The number that was passed in so the registration can be done as part of an
      * assignment statement.
      */
-    public <T extends Number> @Nullable T gauge(String name, T number) {
+    public <T extends Number> T gauge(String name, T number) {
         return gauge(name, emptyList(), number);
     }
 
@@ -564,7 +566,7 @@ public abstract class MeterRegistry {
      * @return The state object that was passed in so the registration can be done as part
      * of an assignment statement.
      */
-    public <T> @Nullable T gauge(String name, T stateObject, ToDoubleFunction<T> valueFunction) {
+    public <T> T gauge(String name, T stateObject, ToDoubleFunction<T> valueFunction) {
         return gauge(name, emptyList(), stateObject, valueFunction);
     }
 
@@ -582,7 +584,7 @@ public abstract class MeterRegistry {
      * @return The Collection that was passed in so the registration can be done as part
      * of an assignment statement.
      */
-    public <T extends Collection<?>> @Nullable T gaugeCollectionSize(String name, Iterable<Tag> tags, T collection) {
+    public <T extends Collection<?>> T gaugeCollectionSize(String name, Iterable<Tag> tags, T collection) {
         return gauge(name, tags, collection, Collection::size);
     }
 
@@ -599,7 +601,7 @@ public abstract class MeterRegistry {
      * @return The Map that was passed in so the registration can be done as part of an
      * assignment statement.
      */
-    public <T extends Map<?, ?>> @Nullable T gaugeMapSize(String name, Iterable<Tag> tags, T map) {
+    public <T extends Map<?, ?>> T gaugeMapSize(String name, Iterable<Tag> tags, T map) {
         return gauge(name, tags, map, Map::size);
     }
 
