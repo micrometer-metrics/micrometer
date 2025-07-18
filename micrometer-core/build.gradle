@@ -239,6 +239,17 @@ tasks.register("shenandoahTest", Test) {
     jvmArgs '-XX:+UseShenandoahGC'
 }
 
+tasks.register("generationalShenandoahTest", Test) {
+    // set heap size for the test JVM(s)
+    maxHeapSize = "1500m"
+
+    useJUnitPlatform {
+        includeTags 'gc'
+    }
+
+    jvmArgs '-XX:+UseShenandoahGC', '-XX:+UnlockExperimentalVMOptions', '-XX:ShenandoahGCMode=generational'
+}
+
 tasks.register("zgcTest", Test) {
     // set heap size for the test JVM(s)
     maxHeapSize = "1500m"
