@@ -40,6 +40,36 @@ public class DefaultMailSendObservationConvention implements MailSendObservation
 
     private static final String UNKNOWN = "unknown";
 
+    private static final KeyValue NETWORK_PROTOCOL_NAME_UNKNOWN = NETWORK_PROTOCOL_NAME.withValue(UNKNOWN);
+
+    private static final KeyValue SERVER_PORT_UNKNOWN = SERVER_PORT.withValue(UNKNOWN);
+
+    private static final KeyValue SERVER_ADDRESS_UNKNOWN = SERVER_ADDRESS.withValue(UNKNOWN);
+
+    private static final KeyValue SMTP_MESSAGE_SUBJECT_UNKNOWN = SMTP_MESSAGE_SUBJECT.withValue(UNKNOWN);
+
+    private static final KeyValue SMTP_MESSAGE_FROM_UNKNOWN = SMTP_MESSAGE_FROM.withValue(UNKNOWN);
+
+    private static final KeyValue SMTP_MESSAGE_ID_UNKNOWN = SMTP_MESSAGE_ID.withValue(UNKNOWN);
+
+    private static final Map<RecipientType, KeyName> RECIPIENT_TYPE_KEY_NAME_MAP;
+    static {
+        Map<RecipientType, KeyName> map = new IdentityHashMap<>();
+        map.put(RecipientType.TO, SMTP_MESSAGE_TO);
+        map.put(RecipientType.CC, SMTP_MESSAGE_CC);
+        map.put(RecipientType.BCC, SMTP_MESSAGE_BCC);
+        RECIPIENT_TYPE_KEY_NAME_MAP = map;
+    }
+
+    private static final Map<RecipientType, KeyValue> RECIPIENT_TYPE_UNKNOWN_MAP;
+    static {
+        Map<RecipientType, KeyValue> map = new IdentityHashMap<>();
+        map.put(RecipientType.TO, SMTP_MESSAGE_TO.withValue(UNKNOWN));
+        map.put(RecipientType.CC, SMTP_MESSAGE_CC.withValue(UNKNOWN));
+        map.put(RecipientType.BCC, SMTP_MESSAGE_BCC.withValue(UNKNOWN));
+        RECIPIENT_TYPE_UNKNOWN_MAP = map;
+    }
+
     @Override
     public String getName() {
         return "mail.send";
@@ -58,20 +88,23 @@ public class DefaultMailSendObservationConvention implements MailSendObservation
     @Override
     public KeyValues getHighCardinalityKeyValues(MailSendObservationContext context) {
         Message message = context.getCarrier();
+        if (message == null) {
+            return KeyValues.empty();
+        }
+
         List<KeyValue> values = new ArrayList<>();
         smtpMessageSubject(message).ifPresent(values::add);
         smtpMessageFrom(message).ifPresent(values::add);
         smtpMessageRecipients(message, RecipientType.TO).ifPresent(values::add);
         smtpMessageRecipients(message, RecipientType.CC).ifPresent(values::add);
         smtpMessageRecipients(message, RecipientType.BCC).ifPresent(values::add);
-
         return KeyValues.of(values);
     }
 
     private KeyValue serverAddress(MailSendObservationContext context) {
         String host = context.getHost();
         if (host == null || host.isEmpty()) {
-            return SERVER_ADDRESS.withValue(UNKNOWN);
+            return SERVER_ADDRESS_UNKNOWN;
         }
         return SERVER_ADDRESS.withValue(host);
     }
@@ -79,7 +112,7 @@ public class DefaultMailSendObservationConvention implements MailSendObservation
     private KeyValue serverPort(MailSendObservationContext context) {
         int port = context.getPort();
         if (port <= 0) {
-            return SERVER_PORT.withValue(UNKNOWN);
+            return SERVER_PORT_UNKNOWN;
         }
         return SERVER_PORT.withValue(String.valueOf(port));
     }
@@ -87,39 +120,30 @@ public class DefaultMailSendObservationConvention implements MailSendObservation
     private KeyValue networkProtocolName(MailSendObservationContext context) {
         String protocol = context.getProtocol();
         if (protocol == null || protocol.isEmpty()) {
-            return NETWORK_PROTOCOL_NAME.withValue(UNKNOWN);
+            return NETWORK_PROTOCOL_NAME_UNKNOWN;
         }
         return NETWORK_PROTOCOL_NAME.withValue(protocol);
     }
 
-    private Optional<KeyValue> smtpMessageSubject(@Nullable Message message) {
-        if (message == null) {
-            return Optional.empty();
-        }
-        return safeExtractValue(SMTP_MESSAGE_SUBJECT, () -> Optional.ofNullable(message.getSubject()));
+    private Optional<KeyValue> smtpMessageSubject(Message message) {
+        return safeExtractValue(SMTP_MESSAGE_SUBJECT, () -> Optional.ofNullable(message.getSubject()),
+                SMTP_MESSAGE_SUBJECT_UNKNOWN);
     }
 
-    private Optional<KeyValue> smtpMessageFrom(@Nullable Message message) {
-        if (message == null) {
-            return Optional.empty();
-        }
-        return safeExtractValue(SMTP_MESSAGE_FROM, () -> addressesToValue(message.getFrom()));
+    private Optional<KeyValue> smtpMessageFrom(Message message) {
+        return safeExtractValue(SMTP_MESSAGE_FROM, () -> addressesToValue(message.getFrom()),
+                SMTP_MESSAGE_FROM_UNKNOWN);
     }
 
-    private Optional<KeyValue> smtpMessageRecipients(@Nullable Message message, RecipientType recipientType) {
-        if (message == null) {
-            return Optional.empty();
-        }
-        MailObservationDocumentation.HighCardinalityKeyNames key = MailObservationDocumentation.HighCardinalityKeyNames
-            .valueOf("SMTP_MESSAGE_" + recipientType.toString().toUpperCase(Locale.ROOT));
-        return safeExtractValue(key, () -> addressesToValue(message.getRecipients(recipientType)));
+    private Optional<KeyValue> smtpMessageRecipients(Message message, RecipientType recipientType) {
+        KeyName keyName = Objects.requireNonNull(RECIPIENT_TYPE_KEY_NAME_MAP.get(recipientType));
+        KeyValue unknownValue = Objects.requireNonNull(RECIPIENT_TYPE_UNKNOWN_MAP.get(recipientType));
+        return safeExtractValue(keyName, () -> addressesToValue(message.getRecipients(recipientType)), unknownValue);
     }
 
-    Optional<KeyValue> smtpMessageId(@Nullable Message message) {
-        if (message == null) {
-            return Optional.empty();
-        }
-        return safeExtractValue(SMTP_MESSAGE_ID, () -> extractHeaderValue(message, "Message-ID"));
+    Optional<KeyValue> smtpMessageId(Message message) {
+        return safeExtractValue(SMTP_MESSAGE_ID, () -> extractHeaderValue(message, "Message-ID"),
+                SMTP_MESSAGE_ID_UNKNOWN);
     }
 
     private Optional<String> extractHeaderValue(Message message, String headerName) throws MessagingException {
@@ -130,12 +154,12 @@ public class DefaultMailSendObservationConvention implements MailSendObservation
         return Optional.of(String.join(", ", header));
     }
 
-    private Optional<KeyValue> safeExtractValue(KeyName key, ValueExtractor extractor) {
+    private Optional<KeyValue> safeExtractValue(KeyName key, ValueExtractor extractor, KeyValue unknownValue) {
         try {
             return extractor.extract().map(key::withValue);
         }
         catch (MessagingException ex) {
-            return Optional.of(key.withValue(UNKNOWN));
+            return Optional.of(unknownValue);
         }
     }
 

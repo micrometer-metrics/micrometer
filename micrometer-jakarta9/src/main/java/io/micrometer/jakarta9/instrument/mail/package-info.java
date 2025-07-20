@@ -16,8 +16,6 @@
 
 /**
  * Observation instrumentation for Jakarta Mail.
- *
- * @since 1.16.0
  */
 @NullMarked
 package io.micrometer.jakarta9.instrument.mail;
