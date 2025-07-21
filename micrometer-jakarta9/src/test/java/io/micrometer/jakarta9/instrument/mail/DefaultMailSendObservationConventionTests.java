@@ -16,8 +16,6 @@
 package io.micrometer.jakarta9.instrument.mail;
 
 import io.micrometer.common.KeyValue;
-import io.micrometer.common.KeyValues;
-import jakarta.mail.Address;
 import jakarta.mail.Message;
 import jakarta.mail.MessagingException;
 import jakarta.mail.Session;
@@ -37,6 +35,8 @@ import java.util.stream.Stream;
 import static io.micrometer.jakarta9.instrument.mail.MailObservationDocumentation.HighCardinalityKeyNames.*;
 import static io.micrometer.jakarta9.instrument.mail.MailObservationDocumentation.LowCardinalityKeyNames.*;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 /**
  * Tests for {@link DefaultMailSendObservationConvention}.
@@ -67,9 +67,9 @@ class DefaultMailSendObservationConventionTests {
         message.setSubject("Test Subject");
 
         MailSendObservationContext context = new MailSendObservationContext(message, "smtp", "localhost", 25);
-        assertThat(convention.getHighCardinalityKeyValues(context)).contains(
-                KeyValue.of("smtp.message.from", "from@example.com"), KeyValue.of("smtp.message.to", "to@example.com"),
-                KeyValue.of("smtp.message.subject", "Test Subject"));
+        assertThat(convention.getHighCardinalityKeyValues(context)).containsExactlyInAnyOrder(
+                SMTP_MESSAGE_FROM.withValue("from@example.com"), SMTP_MESSAGE_TO.withValue("to@example.com"),
+                SMTP_MESSAGE_SUBJECT.withValue("Test Subject"));
     }
 
     @Test
@@ -80,34 +80,20 @@ class DefaultMailSendObservationConventionTests {
         message.setSubject("Test Subject");
 
         MailSendObservationContext context = new MailSendObservationContext(message, "smtp", "example.com", 587);
-        assertThat(convention.getLowCardinalityKeyValues(context)).contains(
-                KeyValue.of("server.address", "example.com"), KeyValue.of("server.port", "587"),
-                KeyValue.of("network.protocol.name", "smtp"));
-    }
-
-    @Test
-    void shouldHandleMessagingException() {
-        MimeMessage message = new MimeMessage((Session) null) {
-            @Override
-            public Address[] getFrom() throws MessagingException {
-                throw new MessagingException("test exception");
-            }
-        };
-
-        MailSendObservationContext context = new MailSendObservationContext(message, "smtp", "localhost", 25);
-        assertThat(convention.getHighCardinalityKeyValues(context))
-            .contains(KeyValue.of("smtp.message.from", "unknown"));
+        assertThat(convention.getLowCardinalityKeyValues(context)).containsExactlyInAnyOrder(
+                SERVER_ADDRESS.withValue("example.com"), SERVER_PORT.withValue("587"),
+                NETWORK_PROTOCOL_NAME.withValue("smtp"));
     }
 
     @Test
     void shouldHandleMultipleFromAddresses() throws MessagingException {
         MimeMessage message = new MimeMessage((Session) null);
-        message.setFrom(new InternetAddress("from1@example.com"));
-        message.addFrom(new InternetAddress[] { new InternetAddress("from2@example.com") });
+        message.addFrom(new InternetAddress[] { new InternetAddress("from1@example.com"),
+                new InternetAddress("from2@example.com") });
 
         MailSendObservationContext context = new MailSendObservationContext(message, "smtp", "localhost", 25);
         assertThat(convention.getHighCardinalityKeyValues(context))
-            .contains(KeyValue.of("smtp.message.from", "from1@example.com, from2@example.com"));
+            .containsExactly(SMTP_MESSAGE_FROM.withValue("from1@example.com, from2@example.com"));
     }
 
     @Test
@@ -118,13 +104,13 @@ class DefaultMailSendObservationConventionTests {
 
         MailSendObservationContext context = new MailSendObservationContext(message, "smtp", "localhost", 25);
         assertThat(convention.getHighCardinalityKeyValues(context))
-            .contains(KeyValue.of("smtp.message.to", "to1@example.com, to2@example.com"));
+            .containsExactly(SMTP_MESSAGE_TO.withValue("to1@example.com, to2@example.com"));
     }
 
     @Test
     void fromShouldBeUnknownWhenFetchingFails() throws MessagingException {
-        Message message = Mockito.mock(Message.class);
-        Mockito.when(message.getFrom()).thenThrow(new MessagingException("test exception"));
+        Message message = mock(Message.class);
+        when(message.getFrom()).thenThrow(new MessagingException("test exception"));
         assertThat(getHighCardinalityKeyValues(message)).containsExactly(SMTP_MESSAGE_FROM.withValue("unknown"));
     }
 
@@ -144,7 +130,7 @@ class DefaultMailSendObservationConventionTests {
     @Test
     void fromShouldBeThereWhenSet() throws MessagingException {
         Message message = new MimeMessage((Session) null);
-        message.addFrom(new InternetAddress[] { new InternetAddress("test@exemple.com") });
+        message.setFrom(new InternetAddress("test@exemple.com"));
         assertThat(getHighCardinalityKeyValues(message))
             .containsExactly(SMTP_MESSAGE_FROM.withValue("test@exemple.com"));
     }
@@ -161,17 +147,19 @@ class DefaultMailSendObservationConventionTests {
     @ParameterizedTest
     @MethodSource("recipientTypes")
     void recipientsShouldBeUnknownWhenFetchingFails(Message.RecipientType recipientType) throws MessagingException {
-        Message message = Mockito.mock(Message.class);
-        Mockito.when(message.getRecipients(recipientType)).thenThrow(new MessagingException("test exception"));
-        KeyValue keyValue = KeyValue.of("smtp.message." + String.valueOf(recipientType).toLowerCase(Locale.ROOT),
-                "unknown");
-        assertThat(getHighCardinalityKeyValues(message)).containsExactly(keyValue);
+        Message message = mock(Message.class);
+        when(message.getRecipients(recipientType)).thenThrow(new MessagingException("test exception"));
+        assertThat(getHighCardinalityKeyValues(message)).containsExactly(KeyValue.of(getKey(recipientType), "unknown"));
+    }
+
+    private String getKey(Message.RecipientType recipientType) {
+        return "smtp.message." + String.valueOf(recipientType).toLowerCase(Locale.ROOT);
     }
 
     @ParameterizedTest
     @MethodSource("recipientTypes")
     void recipientsShouldBeMissingWhenUnset(Message.RecipientType recipientType) throws MessagingException {
-        Message message = Mockito.mock(Message.class);
+        Message message = mock(Message.class);
         Mockito.when(message.getRecipients(recipientType)).thenReturn(null);
         assertThat(getHighCardinalityKeyValues(message)).isEmpty();
     }
@@ -188,10 +176,9 @@ class DefaultMailSendObservationConventionTests {
     @MethodSource("recipientTypes")
     void recipientsShouldBeThereWhenSet(Message.RecipientType recipientType) throws MessagingException {
         Message message = new MimeMessage((Session) null);
-        message.addRecipients(recipientType, new InternetAddress[] { new InternetAddress("test@exemple.com") });
-        KeyValue keyValue = KeyValue.of("smtp.message." + String.valueOf(recipientType).toLowerCase(Locale.ROOT),
-                "test@exemple.com");
-        assertThat(getHighCardinalityKeyValues(message)).containsExactly(keyValue);
+        message.addRecipient(recipientType, new InternetAddress("test@exemple.com"));
+        assertThat(getHighCardinalityKeyValues(message))
+            .containsExactly(KeyValue.of(getKey(recipientType), "test@exemple.com"));
     }
 
     @ParameterizedTest
@@ -200,15 +187,14 @@ class DefaultMailSendObservationConventionTests {
         Message message = new MimeMessage((Session) null);
         message.addRecipients(recipientType, new InternetAddress[] { new InternetAddress("test@exemple.com"),
                 new InternetAddress("other@example.com") });
-        KeyValue keyValue = KeyValue.of("smtp.message." + String.valueOf(recipientType).toLowerCase(Locale.ROOT),
-                "test@exemple.com, other@example.com");
-        assertThat(getHighCardinalityKeyValues(message)).containsExactly(keyValue);
+        assertThat(getHighCardinalityKeyValues(message))
+            .containsExactly(KeyValue.of(getKey(recipientType), "test@exemple.com, other@example.com"));
     }
 
     @Test
     void subjectShouldBeUnknownWhenFetchingFails() throws MessagingException {
-        var message = Mockito.mock(Message.class);
-        Mockito.when(message.getSubject()).thenThrow(new MessagingException("test exception"));
+        Message message = mock(Message.class);
+        when(message.getSubject()).thenThrow(new MessagingException("test exception"));
         assertThat(getHighCardinalityKeyValues(message)).containsExactly(SMTP_MESSAGE_SUBJECT.withValue("unknown"));
     }
 
@@ -221,26 +207,19 @@ class DefaultMailSendObservationConventionTests {
     }
 
     @Test
-    void protocolAddressAndPortShouldBeThereWhenSet() {
-        Message message = new MimeMessage((Session) null);
-        MailSendObservationContext context = new MailSendObservationContext(message, "smtp", "localhost", 25);
-        assertThat(getLowCardinalityKeyValues(context)).containsExactly(NETWORK_PROTOCOL_NAME.withValue("smtp"),
-                SERVER_ADDRESS.withValue("localhost"), SERVER_PORT.withValue("25"));
-    }
-
-    @Test
-    void protocolAndAddressShouldBeUnknownWhenUnsetOrInvalid() {
+    void protocolAddressAndPortShouldBeUnknownWhenUnsetOrInvalid() {
         Message message = new MimeMessage((Session) null);
         MailSendObservationContext context = new MailSendObservationContext(message, null, null, 0);
-        assertThat(getLowCardinalityKeyValues(context)).containsExactly(NETWORK_PROTOCOL_NAME.withValue("unknown"),
-                SERVER_ADDRESS.withValue("unknown"), SERVER_PORT.withValue("unknown"));
+        assertThat(getLowCardinalityKeyValues(context)).containsExactlyInAnyOrder(
+                NETWORK_PROTOCOL_NAME.withValue("unknown"), SERVER_ADDRESS.withValue("unknown"),
+                SERVER_PORT.withValue("unknown"));
     }
 
     @Test
     void messageIdShouldBeUnknownWhenFetchingFails() throws MessagingException {
-        Message message = Mockito.mock(Message.class);
-        Mockito.when(message.getHeader("Message-ID")).thenThrow(new MessagingException("test exception"));
-        assertThat(convention.smtpMessageId(message)).isPresent().hasValue(SMTP_MESSAGE_ID.withValue("unknown"));
+        Message message = mock(Message.class);
+        when(message.getHeader("Message-ID")).thenThrow(new MessagingException("test exception"));
+        assertThat(convention.smtpMessageId(message)).hasValue(SMTP_MESSAGE_ID.withValue("unknown"));
     }
 
     @Test
@@ -253,24 +232,21 @@ class DefaultMailSendObservationConventionTests {
     void messageIdShouldBeThereWhenSet() throws MessagingException {
         Message message = new MimeMessage((Session) null);
         message.addHeader("Message-ID", "12345@example.com");
-        assertThat(convention.smtpMessageId(message)).isPresent()
-            .hasValue(SMTP_MESSAGE_ID.withValue("12345@example.com"));
+        assertThat(convention.smtpMessageId(message)).hasValue(SMTP_MESSAGE_ID.withValue("12345@example.com"));
     }
 
     private List<KeyValue> getHighCardinalityKeyValues(Message message) {
         MailSendObservationContext context = new MailSendObservationContext(message, "smtp", "localhost", 25);
-        KeyValues highCardinalityKeyValues = convention.getHighCardinalityKeyValues(context);
-        return highCardinalityKeyValues.stream().collect(Collectors.toList());
+        return convention.getHighCardinalityKeyValues(context).stream().collect(Collectors.toList());
     }
 
     private List<KeyValue> getLowCardinalityKeyValues(MailSendObservationContext context) {
-        KeyValues lowCardinalityKeyValues = convention.getLowCardinalityKeyValues(context);
-        return lowCardinalityKeyValues.stream().collect(Collectors.toList());
+        return convention.getLowCardinalityKeyValues(context).stream().collect(Collectors.toList());
     }
 
     static Stream<Arguments> recipientTypes() {
-        return Stream.of(Arguments.of(Message.RecipientType.TO), Arguments.of(Message.RecipientType.CC),
-                Arguments.of(Message.RecipientType.BCC));
+        return Stream.of(Message.RecipientType.TO, Message.RecipientType.CC, Message.RecipientType.BCC)
+            .map(Arguments::of);
     }
 
 }

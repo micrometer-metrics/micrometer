@@ -16,10 +16,10 @@
 package io.micrometer.jakarta9.instrument.mail;
 
 import io.micrometer.common.docs.KeyName;
-import io.micrometer.observation.Observation;
-import io.micrometer.observation.ObservationConvention;
 import org.junit.jupiter.api.Test;
 
+import static io.micrometer.jakarta9.instrument.mail.MailObservationDocumentation.HighCardinalityKeyNames.*;
+import static io.micrometer.jakarta9.instrument.mail.MailObservationDocumentation.LowCardinalityKeyNames.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
@@ -34,26 +34,16 @@ class MailObservationDocumentationTest {
         MailObservationDocumentation mailSend = MailObservationDocumentation.MAIL_SEND;
 
         // Verify default convention
-        Class<? extends ObservationConvention<? extends Observation.Context>> defaultConvention = mailSend
-            .getDefaultConvention();
-        assertThat(defaultConvention).isEqualTo(DefaultMailSendObservationConvention.class);
+        assertThat(mailSend.getDefaultConvention()).isEqualTo(DefaultMailSendObservationConvention.class);
 
         // Verify low cardinality key names
         KeyName[] lowCardinalityKeyNames = mailSend.getLowCardinalityKeyNames();
-        assertThat(lowCardinalityKeyNames).containsExactly(
-                MailObservationDocumentation.LowCardinalityKeyNames.SERVER_ADDRESS,
-                MailObservationDocumentation.LowCardinalityKeyNames.SERVER_PORT,
-                MailObservationDocumentation.LowCardinalityKeyNames.NETWORK_PROTOCOL_NAME);
+        assertThat(lowCardinalityKeyNames).containsExactly(SERVER_ADDRESS, SERVER_PORT, NETWORK_PROTOCOL_NAME);
 
         // Verify high cardinality key names
         KeyName[] highCardinalityKeyNames = mailSend.getHighCardinalityKeyNames();
-        assertThat(highCardinalityKeyNames).containsExactly(
-                MailObservationDocumentation.HighCardinalityKeyNames.SMTP_MESSAGE_FROM,
-                MailObservationDocumentation.HighCardinalityKeyNames.SMTP_MESSAGE_TO,
-                MailObservationDocumentation.HighCardinalityKeyNames.SMTP_MESSAGE_CC,
-                MailObservationDocumentation.HighCardinalityKeyNames.SMTP_MESSAGE_BCC,
-                MailObservationDocumentation.HighCardinalityKeyNames.SMTP_MESSAGE_SUBJECT,
-                MailObservationDocumentation.HighCardinalityKeyNames.SMTP_MESSAGE_ID);
+        assertThat(highCardinalityKeyNames).containsExactly(SMTP_MESSAGE_FROM, SMTP_MESSAGE_TO, SMTP_MESSAGE_CC,
+                SMTP_MESSAGE_BCC, SMTP_MESSAGE_SUBJECT, SMTP_MESSAGE_ID);
     }
 
 }

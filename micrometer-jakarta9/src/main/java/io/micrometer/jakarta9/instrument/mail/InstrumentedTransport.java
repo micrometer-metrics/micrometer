@@ -22,8 +22,7 @@ import jakarta.mail.*;
 import org.jspecify.annotations.Nullable;
 
 /**
- * Wraps a {@link Transport} so that it is instrumented with a Micrometer
- * {@link Observation}.
+ * Wraps a {@link Transport} so that it is instrumented with an {@link Observation}.
  *
  * @since 1.16.0
  * @author famaridon
@@ -32,17 +31,17 @@ public class InstrumentedTransport extends Transport {
 
     private static final DefaultMailSendObservationConvention DEFAULT_CONVENTION = new DefaultMailSendObservationConvention();
 
+    private final Transport delegate;
+
     private final ObservationRegistry observationRegistry;
 
-    private final Transport delegate;
+    private final @Nullable ObservationConvention<MailSendObservationContext> customConvention;
 
     private final @Nullable String protocol;
 
     private @Nullable String host;
 
     private int port;
-
-    private final @Nullable ObservationConvention<MailSendObservationContext> customConvention;
 
     /**
      * Create an instrumented transport using the
@@ -66,10 +65,10 @@ public class InstrumentedTransport extends Transport {
     public InstrumentedTransport(Session session, Transport delegate, ObservationRegistry observationRegistry,
             @Nullable ObservationConvention<MailSendObservationContext> customConvention) {
         super(session, delegate.getURLName());
-        this.protocol = this.url.getProtocol();
         this.delegate = delegate;
         this.observationRegistry = observationRegistry;
         this.customConvention = customConvention;
+        this.protocol = this.url.getProtocol();
     }
 
     @Override
