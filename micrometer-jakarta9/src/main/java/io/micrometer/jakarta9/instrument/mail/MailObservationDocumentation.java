@@ -121,6 +121,15 @@ public enum MailObservationDocumentation implements ObservationDocumentation {
             }
         },
         /**
+         * Newsgroup (Usenet news) recipient(s) of the mail.
+         */
+        SMTP_MESSAGE_NEWSGROUPS {
+            @Override
+            public String asString() {
+                return "smtp.message.newsgroups";
+            }
+        },
+        /**
          * Subject line of the mail.
          */
         SMTP_MESSAGE_SUBJECT {
