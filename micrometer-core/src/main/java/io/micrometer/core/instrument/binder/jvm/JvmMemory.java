@@ -46,8 +46,8 @@ class JvmMemory {
 
     static boolean isAllocationPool(@Nullable String name) {
         return name != null && (name.endsWith("Eden Space") //
-                || "Shenandoah".equals(name) // non-generational ZGC
-                || "Shenandoah Young Gen".equals(name) // generational ZGC
+                || "Shenandoah".equals(name) // non-generational Shenandoah
+                || "Shenandoah Young Gen".equals(name) // generational Shenandoah
                 || "ZHeap".equals(name) // ZGC non-generational
                 || "ZGC Young Generation".equals(name) // generational ZGC
                 || name.endsWith("New Gen") // Zing GPGC
