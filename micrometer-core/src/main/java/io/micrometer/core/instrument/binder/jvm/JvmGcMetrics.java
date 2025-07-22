@@ -277,7 +277,7 @@ public class JvmGcMetrics implements MeterBinder, AutoCloseable {
         }
 
         private boolean isMajorGenerationalGc(String gcName) {
-            return GcGenerationAge.fromGcName(gcName) == GcGenerationAge.OLD;
+            return isGenerationalGc && GcGenerationAge.fromGcName(gcName) == GcGenerationAge.OLD;
         }
 
         private boolean nonGenerationalGcShouldUpdateDataSize(String gcName) {
@@ -392,6 +392,7 @@ public class JvmGcMetrics implements MeterBinder, AutoCloseable {
             knownCollectors.put("GPGC Old Pauses", OLD); // new naming
             // do not include 'ZGC Major Pauses'; see gh-2872
             knownCollectors.put("ZGC Major Cycles", OLD);
+            knownCollectors.put("Shenandoah Cycles", OLD);
         }
 
         static GcGenerationAge fromGcName(String gcName) {
