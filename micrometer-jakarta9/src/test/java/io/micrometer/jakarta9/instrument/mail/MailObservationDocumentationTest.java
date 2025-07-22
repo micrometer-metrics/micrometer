@@ -43,7 +43,7 @@ class MailObservationDocumentationTest {
         // Verify high cardinality key names
         KeyName[] highCardinalityKeyNames = mailSend.getHighCardinalityKeyNames();
         assertThat(highCardinalityKeyNames).containsExactly(SMTP_MESSAGE_FROM, SMTP_MESSAGE_TO, SMTP_MESSAGE_CC,
-                SMTP_MESSAGE_BCC, SMTP_MESSAGE_SUBJECT, SMTP_MESSAGE_ID);
+                SMTP_MESSAGE_BCC, SMTP_MESSAGE_NEWSGROUPS, SMTP_MESSAGE_SUBJECT, SMTP_MESSAGE_ID);
     }
 
 }

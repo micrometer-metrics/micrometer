@@ -16,11 +16,13 @@
 package io.micrometer.jakarta9.instrument.mail;
 
 import io.micrometer.common.KeyValue;
+import jakarta.mail.Address;
 import jakarta.mail.Message;
 import jakarta.mail.MessagingException;
 import jakarta.mail.Session;
 import jakarta.mail.internet.InternetAddress;
 import jakarta.mail.internet.MimeMessage;
+import jakarta.mail.internet.NewsAddress;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -176,19 +178,27 @@ class DefaultMailSendObservationConventionTests {
     @MethodSource("recipientTypes")
     void recipientsShouldBeThereWhenSet(Message.RecipientType recipientType) throws MessagingException {
         Message message = new MimeMessage((Session) null);
-        message.addRecipient(recipientType, new InternetAddress("test@exemple.com"));
-        assertThat(getHighCardinalityKeyValues(message))
-            .containsExactly(KeyValue.of(getKey(recipientType), "test@exemple.com"));
+        String newsgroup = "news.announce";
+        String mail = "test@exemple.com";
+        Address address = recipientType == MimeMessage.RecipientType.NEWSGROUPS ? new NewsAddress(newsgroup)
+                : new InternetAddress(mail);
+        message.addRecipient(recipientType, address);
+        assertThat(getHighCardinalityKeyValues(message)).containsExactly(KeyValue.of(getKey(recipientType),
+                recipientType == MimeMessage.RecipientType.NEWSGROUPS ? newsgroup : mail));
     }
 
     @ParameterizedTest
     @MethodSource("recipientTypes")
     void multipleRecipientsShouldBeThereWhenMultipleSet(Message.RecipientType recipientType) throws MessagingException {
         Message message = new MimeMessage((Session) null);
-        message.addRecipients(recipientType, new InternetAddress[] { new InternetAddress("test@exemple.com"),
-                new InternetAddress("other@example.com") });
+        NewsAddress[] newsAddresses = { new NewsAddress("news.announce"), new NewsAddress("news.misc") };
+        InternetAddress[] internetAddresses = { new InternetAddress("test@exemple.com"),
+                new InternetAddress("other@example.com") };
+        message.addRecipients(recipientType,
+                recipientType == MimeMessage.RecipientType.NEWSGROUPS ? newsAddresses : internetAddresses);
         assertThat(getHighCardinalityKeyValues(message))
-            .containsExactly(KeyValue.of(getKey(recipientType), "test@exemple.com, other@example.com"));
+            .containsExactly(KeyValue.of(getKey(recipientType), recipientType == MimeMessage.RecipientType.NEWSGROUPS
+                    ? "news.announce, news.misc" : "test@exemple.com, other@example.com"));
     }
 
     @Test
@@ -245,8 +255,7 @@ class DefaultMailSendObservationConventionTests {
     }
 
     static Stream<Arguments> recipientTypes() {
-        return Stream.of(Message.RecipientType.TO, Message.RecipientType.CC, Message.RecipientType.BCC)
-            .map(Arguments::of);
+        return DefaultMailSendObservationConvention.RECIPIENT_TYPES.stream().map(Arguments::of);
     }
 
 }

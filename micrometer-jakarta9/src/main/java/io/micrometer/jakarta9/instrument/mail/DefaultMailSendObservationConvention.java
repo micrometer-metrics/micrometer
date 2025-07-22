@@ -22,6 +22,7 @@ import jakarta.mail.Address;
 import jakarta.mail.Message;
 import jakarta.mail.Message.RecipientType;
 import jakarta.mail.MessagingException;
+import jakarta.mail.internet.MimeMessage;
 import org.jspecify.annotations.Nullable;
 
 import java.util.*;
@@ -58,15 +59,19 @@ public class DefaultMailSendObservationConvention implements MailSendObservation
         map.put(RecipientType.TO, SMTP_MESSAGE_TO);
         map.put(RecipientType.CC, SMTP_MESSAGE_CC);
         map.put(RecipientType.BCC, SMTP_MESSAGE_BCC);
+        map.put(MimeMessage.RecipientType.NEWSGROUPS, SMTP_MESSAGE_NEWSGROUPS);
         RECIPIENT_TYPE_KEY_NAME_MAP = map;
     }
+
+    // VisibleForTesting
+    static final Set<RecipientType> RECIPIENT_TYPES = RECIPIENT_TYPE_KEY_NAME_MAP.keySet();
 
     private static final Map<RecipientType, KeyValue> RECIPIENT_TYPE_UNKNOWN_MAP;
     static {
         Map<RecipientType, KeyValue> map = new IdentityHashMap<>();
-        map.put(RecipientType.TO, SMTP_MESSAGE_TO.withValue(UNKNOWN));
-        map.put(RecipientType.CC, SMTP_MESSAGE_CC.withValue(UNKNOWN));
-        map.put(RecipientType.BCC, SMTP_MESSAGE_BCC.withValue(UNKNOWN));
+        for (Map.Entry<RecipientType, KeyName> entry : RECIPIENT_TYPE_KEY_NAME_MAP.entrySet()) {
+            map.put(entry.getKey(), entry.getValue().withValue(UNKNOWN));
+        }
         RECIPIENT_TYPE_UNKNOWN_MAP = map;
     }
 
@@ -95,9 +100,9 @@ public class DefaultMailSendObservationConvention implements MailSendObservation
         List<KeyValue> values = new ArrayList<>();
         smtpMessageSubject(message).ifPresent(values::add);
         smtpMessageFrom(message).ifPresent(values::add);
-        smtpMessageRecipients(message, RecipientType.TO).ifPresent(values::add);
-        smtpMessageRecipients(message, RecipientType.CC).ifPresent(values::add);
-        smtpMessageRecipients(message, RecipientType.BCC).ifPresent(values::add);
+        for (RecipientType recipientType : RECIPIENT_TYPES) {
+            smtpMessageRecipients(message, recipientType).ifPresent(values::add);
+        }
         return KeyValues.of(values);
     }
 
