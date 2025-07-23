@@ -15,6 +15,7 @@
  */
 package io.micrometer.core.instrument.distribution;
 
+import io.micrometer.common.util.internal.logging.WarnThenDebugLogger;
 import io.micrometer.core.instrument.Clock;
 import org.HdrHistogram.DoubleHistogram;
 import org.HdrHistogram.DoubleRecorder;
@@ -35,6 +36,9 @@ import java.util.Set;
  * @author Trustin Heuiseung Lee
  */
 public class TimeWindowPercentileHistogram extends AbstractTimeWindowHistogram<DoubleRecorder, DoubleHistogram> {
+
+    private static final WarnThenDebugLogger WARN_THEN_DEBUG_LOGGER = new WarnThenDebugLogger(
+            TimeWindowPercentileHistogram.class);
 
     private final DoubleHistogram intervalHistogram;
 
@@ -102,7 +106,12 @@ public class TimeWindowPercentileHistogram extends AbstractTimeWindowHistogram<D
     @Override
     void accumulate() {
         currentHistogram().getIntervalHistogramInto(intervalHistogram);
-        accumulatedHistogram().add(intervalHistogram);
+        try {
+            accumulatedHistogram().add(intervalHistogram);
+        }
+        catch (ArrayIndexOutOfBoundsException ex) {
+            WARN_THEN_DEBUG_LOGGER.log("Failed to accumulate.", ex);
+        }
     }
 
     @Override
