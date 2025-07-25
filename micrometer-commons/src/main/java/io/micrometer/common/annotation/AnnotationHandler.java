@@ -19,6 +19,7 @@ import io.micrometer.common.KeyValue;
 import io.micrometer.common.util.internal.logging.InternalLogger;
 import io.micrometer.common.util.internal.logging.InternalLoggerFactory;
 import org.aspectj.lang.JoinPoint;
+import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.reflect.MethodSignature;
 import org.jspecify.annotations.Nullable;
 
@@ -102,6 +103,15 @@ public class AnnotationHandler<T> {
     }
 
     /**
+     * Modifies the object with {@link KeyValue} related information.
+     * @param objectToModify object to modify
+     * @param pjp proceeding join point
+     */
+    public void addAnnotatedParameters(T objectToModify, ProceedingJoinPoint pjp) {
+        addAnnotatedParameters(objectToModify, (JoinPoint) pjp);
+    }
+
+    /**
      * Modifies the object with {@link KeyValue} information based on the method result.
      * @param objectToModify object to modify
      * @param jp join point
@@ -126,6 +136,18 @@ public class AnnotationHandler<T> {
         catch (Exception ex) {
             log.error("Exception occurred while trying to add annotated method result", ex);
         }
+    }
+
+
+    /**
+     * Modifies the object with {@link KeyValue} information based on the method result.
+     * @param objectToModify object to modify
+     * @param pjp proceeding join point
+     * @param result method return value
+     * @since 1.15.0
+     */
+    public void addAnnotatedMethodResult(T objectToModify, ProceedingJoinPoint pjp, @Nullable Object result) {
+        addAnnotatedMethodResult(objectToModify, (JoinPoint) pjp, result);
     }
 
     private static Method tryToTakeMethodFromTargetClass(JoinPoint jp, Method method) {
