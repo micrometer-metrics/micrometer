@@ -25,6 +25,6 @@ import java.lang.annotation.*;
 @Target(ElementType.METHOD)
 public @interface Contract {
 
-    String value() default "";
+    String value();
 
 }
