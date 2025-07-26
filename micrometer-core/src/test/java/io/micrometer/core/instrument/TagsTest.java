@@ -16,16 +16,17 @@
 package io.micrometer.core.instrument;
 
 import com.sun.management.ThreadMXBean;
+import io.micrometer.core.AllocationTest;
 import io.micrometer.core.Issue;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.condition.*;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import java.lang.management.ManagementFactory;
 import java.util.*;
 import java.util.stream.Stream;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.*;
 
 /**
  * Tests for {@link Tags}.
@@ -36,9 +37,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  * @author Johnny Lim
  */
 class TagsTest {
-
-    // Should match "Eclipse OpenJ9 VM" and "IBM J9 VM"
-    private static final String JAVA_VM_NAME_J9_REGEX = ".*J9 VM$";
 
     @Test
     void dedup() {
@@ -334,39 +332,57 @@ class TagsTest {
         assertThat(Tags.empty().iterator()).isExhausted();
     }
 
-    @Test
     @Issue("#3313")
-    @DisabledIfSystemProperty(named = "java.vm.name", matches = JAVA_VM_NAME_J9_REGEX,
-            disabledReason = "Sun ThreadMXBean with allocation counter not available")
-    void andEmptyDoesNotAllocate() {
-        ThreadMXBean threadMXBean = (ThreadMXBean) ManagementFactory.getThreadMXBean();
-        long currentThreadId = Thread.currentThread().getId();
+    @AllocationTest
+    @MethodSource("emptyNull_noAllocationArgs")
+    void anyTagsAnd_noAllocation(Iterable<Tag> arg) {
         Tags tags = Tags.of("a", "b");
-        Tags extraTags = Tags.empty();
 
-        long allocatedBytesBefore = threadMXBean.getThreadAllocatedBytes(currentThreadId);
-        Tags combined = tags.and(extraTags);
-        long allocatedBytes = threadMXBean.getThreadAllocatedBytes(currentThreadId) - allocatedBytesBefore;
-
-        assertThat(combined).isEqualTo(tags);
-        assertThat(allocatedBytes).isEqualTo(0);
+        assertNoAllocations(() -> tags.and(arg));
     }
 
-    @Test
+    @ParameterizedTest
+    @MethodSource("emptyNull_noAllocationArgs")
+    void anyTagsAnd_sameAsThis(Iterable<Tag> arg) {
+        Tags tags = Tags.of("a", "b");
+        Tags combined = tags.and(arg);
+
+        assertThat(combined).isSameAs(tags);
+    }
+
+    static Stream<Iterable<Tag>> emptyNull_noAllocationArgs() {
+        // Note, new ArrayList<>() etc will allocate an iterator
+        return Stream.of(Tags.empty(), Collections.emptyList(), null);
+    }
+
+    @AllocationTest
+    @MethodSource("nonEmptyTags_noAllocationArgs")
+    @MethodSource("emptyNull_noAllocationArgs")
+    void emptyAnd_noAllocation(Iterable<Tag> arg) {
+        assertNoAllocations(() -> Tags.empty().and(arg));
+    }
+
     @Issue("#3313")
-    @DisabledIfSystemProperty(named = "java.vm.name", matches = JAVA_VM_NAME_J9_REGEX,
-            disabledReason = "Sun ThreadMXBean with allocation counter not available")
-    void ofEmptyDoesNotAllocate() {
+    @AllocationTest
+    @MethodSource("nonEmptyTags_noAllocationArgs")
+    @MethodSource("emptyNull_noAllocationArgs")
+    void of_noAllocation(Iterable<Tag> arg) {
+        assertNoAllocations(() -> Tags.of(arg));
+    }
+
+    static Stream<Iterable<Tag>> nonEmptyTags_noAllocationArgs() {
+        return Stream.of(Tags.of("any", "thing"));
+    }
+
+    private void assertNoAllocations(Runnable runnable) {
         ThreadMXBean threadMXBean = (ThreadMXBean) ManagementFactory.getThreadMXBean();
         long currentThreadId = Thread.currentThread().getId();
-        Tags extraTags = Tags.empty();
 
         long allocatedBytesBefore = threadMXBean.getThreadAllocatedBytes(currentThreadId);
-        Tags of = Tags.of(extraTags);
+        runnable.run();
         long allocatedBytes = threadMXBean.getThreadAllocatedBytes(currentThreadId) - allocatedBytesBefore;
 
-        assertThat(of).isEqualTo(Tags.empty());
-        assertThat(allocatedBytes).isEqualTo(0);
+        assertThat(allocatedBytes).isZero();
     }
 
     private void assertTags(Tags tags, String... keyValues) {
