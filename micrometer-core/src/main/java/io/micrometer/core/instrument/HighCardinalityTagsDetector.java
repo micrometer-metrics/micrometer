@@ -99,7 +99,8 @@ public class HighCardinalityTagsDetector implements AutoCloseable {
      * the next
      * @param meterNameConsumer The action to execute if the first high cardinality tag is
      * found
-     * @deprecated Use {@link Builder#highCardinalityMeterInfoConsumer(Consumer)} instead.
+     * @deprecated since 1.16.0, use
+     * {@link Builder#highCardinalityMeterInfoConsumer(Consumer)} instead.
      */
     @Deprecated
     public HighCardinalityTagsDetector(MeterRegistry registry, long threshold, Duration delay,
@@ -197,6 +198,8 @@ public class HighCardinalityTagsDetector implements AutoCloseable {
 
     /**
      * Builder for {@code HighCardinalityTagsDetector}.
+     *
+     * @since 1.16.0
      */
     public static class Builder {
 
@@ -265,6 +268,8 @@ public class HighCardinalityTagsDetector implements AutoCloseable {
 
     /**
      * High cardinality meter information.
+     *
+     * @since 1.16.0
      */
     public static class HighCardinalityMeterInfo {
 
