@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 VMware, Inc.
+ * Copyright 2025 VMware, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ import static java.util.stream.Collectors.joining;
  * @author Maciej Walkowiak
  * @author Phillip Webb
  * @author Johnny Lim
+ * @author Yoobin Yoon
  * @since 1.10.0
  */
 public final class KeyValues implements Iterable<KeyValue> {
@@ -250,6 +251,20 @@ public final class KeyValues implements Iterable<KeyValue> {
         return merge(KeyValues.of(keyValues));
     }
 
+    /**
+     * Return a new {@code KeyValues} instance by merging this collection and key values
+     * extracted using the specified {@link SmartKeyName}s and context.
+     * @param context the context to extract values from
+     * @param smartKeyName the first smart key name to use for extraction
+     * @param additionalSmartKeyNames additional smart key names to use for extraction
+     * @param <C> context type
+     * @return a new {@code KeyValues} instance
+     */
+    public <C> KeyValues and(@Nullable C context, SmartKeyName<C> smartKeyName,
+            SmartKeyName<C>... additionalSmartKeyNames) {
+        return and(KeyValues.of(context, smartKeyName, additionalSmartKeyNames));
+    }
+
     @Override
     public Iterator<KeyValue> iterator() {
         return new ArrayIterator();
@@ -431,6 +446,38 @@ public final class KeyValues implements Iterable<KeyValue> {
      */
     public static KeyValues empty() {
         return EMPTY;
+    }
+
+    /**
+     * Return a new {@code KeyValues} instance containing key values extracted using the
+     * specified {@link SmartKeyName}s and context.
+     * @param context the context to extract values from
+     * @param smartKeyName the first smart key name to use for extraction
+     * @param additionalSmartKeyNames additional smart key names to use for extraction
+     * @param <C> context type
+     * @return a new {@code KeyValues} instance
+     */
+    public static <C> KeyValues of(@Nullable C context, SmartKeyName<C> smartKeyName,
+            SmartKeyName<C>... additionalSmartKeyNames) {
+        SmartKeyName<C>[] allSmartKeyNames = new SmartKeyName[1 + additionalSmartKeyNames.length];
+        allSmartKeyNames[0] = smartKeyName;
+        System.arraycopy(additionalSmartKeyNames, 0, allSmartKeyNames, 1, additionalSmartKeyNames.length);
+
+        KeyValue[] keyValues = new KeyValue[allSmartKeyNames.length];
+        int count = 0;
+
+        for (SmartKeyName<C> smartKeyNameItem : allSmartKeyNames) {
+            KeyValue keyValue = smartKeyNameItem.valueOf(context);
+            if (keyValue != null) {
+                keyValues[count++] = keyValue;
+            }
+        }
+        if (count == 0) {
+            return empty();
+        }
+        KeyValue[] result = new KeyValue[count];
+        System.arraycopy(keyValues, 0, result, 0, count);
+        return toKeyValues(result);
     }
 
     @Override

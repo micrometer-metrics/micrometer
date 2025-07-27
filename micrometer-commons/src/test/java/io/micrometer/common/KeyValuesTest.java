@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 the original author or authors.
+ * Copyright 2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,6 +36,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  * @author Maciej Walkowiak
  * @author Jon Schneider
  * @author Johnny Lim
+ * @author Yoobin Yoon
  */
 class KeyValuesTest {
 
@@ -418,6 +419,187 @@ class KeyValuesTest {
         KeyValues keyValues = KeyValues.of("no", "way").and(map.entrySet(), Map.Entry::getKey, Map.Entry::getValue);
         assertThat(keyValues).containsExactlyInAnyOrder(KeyValue.of("no", "way"), KeyValue.of("micrometer", "tracing"),
                 KeyValue.of("can", "trace"));
+    }
+
+    // gh-6564
+    @Test
+    void ofSmartKeyNameSingleKey() {
+        SmartKeyName<Map<String, String>> colorKey = SmartKeyName.required("color", map -> map.get("color"));
+        Map<String, String> product = Map.of("color", "red", "category", "electronics");
+
+        KeyValues result = KeyValues.of(product, colorKey);
+
+        assertThat(result).hasSize(1);
+        assertThat(result).containsExactly(KeyValue.of("color", "red"));
+    }
+
+    @Test
+    void ofSmartKeyNameMultipleKeys() {
+        SmartKeyName<Map<String, String>> colorKey = SmartKeyName.required("color", map -> map.get("color"));
+        SmartKeyName<Map<String, String>> categoryKey = SmartKeyName.required("category", map -> map.get("category"));
+        Map<String, String> product = Map.of("color", "blue", "category", "fashion", "brand", "Nike");
+
+        KeyValues result = KeyValues.of(product, colorKey, categoryKey);
+
+        assertThat(result).hasSize(2);
+        assertThat(result).containsExactlyInAnyOrder(KeyValue.of("color", "blue"), KeyValue.of("category", "fashion"));
+    }
+
+    @Test
+    void ofSmartKeyNameWithNullValues() {
+        SmartKeyName<Map<String, String>> colorKey = SmartKeyName.withFallback("color", map -> map.get("color"),
+                "unknown");
+        SmartKeyName<Map<String, String>> categoryKey = SmartKeyName.required("category", map -> map.get("category"));
+        SmartKeyName<Map<String, String>> brandKey = SmartKeyName.optional("brand", map -> map.get("brand"));
+
+        Map<String, String> product = Map.of("category", "electronics");
+
+        KeyValues result = KeyValues.of(product, colorKey, categoryKey, brandKey);
+
+        assertThat(result).hasSize(2);
+        assertThat(result).containsExactlyInAnyOrder(KeyValue.of("color", "unknown"),
+                KeyValue.of("category", "electronics"));
+    }
+
+    @Test
+    void andSmartKeyName() {
+        SmartKeyName<Map<String, String>> colorKey = SmartKeyName.required("color", map -> map.get("color"));
+        KeyValues base = KeyValues.of("service", "shop");
+        Map<String, String> product = Map.of("color", "green");
+
+        KeyValues result = base.and(product, colorKey);
+
+        assertThat(result).hasSize(2);
+        assertThat(result).containsExactlyInAnyOrder(KeyValue.of("service", "shop"), KeyValue.of("color", "green"));
+    }
+
+    @Test
+    void smartKeyNameConsistentKeySetDemonstration() {
+        SmartKeyName<Map<String, String>> colorKey = SmartKeyName.withFallback("color", map -> map.get("color"),
+                "unknown");
+        SmartKeyName<Map<String, String>> categoryKey = SmartKeyName.withFallback("category",
+                map -> map.get("category"), "general");
+
+        Map<String, String> product1 = Map.of("color", "red", "category", "electronics");
+        Map<String, String> product2 = Map.of();
+
+        KeyValues result1 = KeyValues.of(product1, colorKey, categoryKey);
+        KeyValues result2 = KeyValues.of(product2, colorKey, categoryKey);
+
+        assertThat(result1.stream().map(KeyValue::getKey)).containsExactlyInAnyOrder("color", "category");
+        assertThat(result2.stream().map(KeyValue::getKey)).containsExactlyInAnyOrder("color", "category");
+
+        assertThat(result1).containsExactlyInAnyOrder(KeyValue.of("color", "red"),
+                KeyValue.of("category", "electronics"));
+        assertThat(result2).containsExactlyInAnyOrder(KeyValue.of("color", "unknown"),
+                KeyValue.of("category", "general"));
+    }
+
+    @Test
+    void smartKeyNameWithNullContextShouldUseFallbacks() {
+        SmartKeyName<Map<String, String>> colorKey = SmartKeyName.withFallback("color", map -> map.get("color"),
+                "unknown");
+        SmartKeyName<Map<String, String>> categoryKey = SmartKeyName.required("category", map -> map.get("category"));
+
+        KeyValues result = KeyValues.of(null, colorKey, categoryKey);
+
+        assertThat(result).hasSize(2);
+        assertThat(result).containsExactlyInAnyOrder(KeyValue.of("color", "unknown"), KeyValue.of("category", "none"));
+    }
+
+    @Test
+    void smartKeyNameChaining() {
+        SmartKeyName<String> lengthKey = SmartKeyName.required("length", str -> String.valueOf(str.length()));
+
+        KeyValues result = KeyValues.of("service", "api").and("hello", lengthKey).and("request_id", "123");
+
+        assertThat(result).hasSize(3);
+        assertThat(result).containsExactlyInAnyOrder(KeyValue.of("service", "api"), KeyValue.of("length", "5"),
+                KeyValue.of("request_id", "123"));
+    }
+
+    @Test
+    void smartKeyNameAsStringShouldReturnKeyName() {
+        SmartKeyName<String> key = SmartKeyName.required("test.key", String::toString);
+
+        assertThat(key.asString()).isEqualTo("test.key");
+    }
+
+    @Test
+    void smartKeyNameIsRequiredShouldReturnCorrectValue() {
+        SmartKeyName<String> requiredKey = SmartKeyName.required("key", String::toString);
+        SmartKeyName<String> optionalKey = SmartKeyName.optional("key", String::toString);
+        SmartKeyName<String> withFallbackKey = SmartKeyName.withFallback("key", String::toString, "default");
+
+        assertThat(requiredKey.isRequired()).isTrue();
+        assertThat(optionalKey.isRequired()).isFalse();
+        assertThat(withFallbackKey.isRequired()).isTrue();
+    }
+
+    @Test
+    void smartKeyNameGetFallbackValueShouldReturnCorrectValue() {
+        SmartKeyName<String> withFallback = SmartKeyName.withFallback("key", String::toString, "default");
+        SmartKeyName<String> withoutFallback = SmartKeyName.required("key", String::toString);
+        SmartKeyName<String> optionalKey = SmartKeyName.optional("key", String::toString);
+
+        assertThat(withFallback.getFallbackValue()).isEqualTo("default");
+        assertThat(withoutFallback.getFallbackValue()).isNull();
+        assertThat(optionalKey.getFallbackValue()).isNull();
+    }
+
+    @Test
+    void smartKeyNameRequiredWithNullValueShouldUseFallbackValue() {
+        SmartKeyName<Map<String, String>> colorKey = SmartKeyName.required("color", map -> map.get("color"));
+        Map<String, String> context = Map.of("region", "us-east");
+
+        KeyValue result = colorKey.valueOf(context);
+
+        assertThat(result).isNotNull();
+        assertThat(result.getKey()).isEqualTo("color");
+        assertThat(result.getValue()).isEqualTo(KeyValue.NONE_VALUE);
+    }
+
+    @Test
+    void smartKeyNameOptionalWithNullValueShouldReturnNull() {
+        SmartKeyName<Map<String, String>> colorKey = SmartKeyName.optional("color", map -> map.get("color"));
+        Map<String, String> context = Map.of("region", "us-west");
+
+        KeyValue result = colorKey.valueOf(context);
+
+        assertThat(result).isNull();
+    }
+
+    @Test
+    void smartKeyNameWithFallbackAndNullValueShouldUseCustomFallback() {
+        SmartKeyName<Map<String, String>> regionKey = SmartKeyName.withFallback("region", map -> map.get("region"),
+                "unknown");
+        Map<String, String> context = Map.of("color", "green");
+
+        KeyValue result = regionKey.valueOf(context);
+
+        assertThat(result).isNotNull();
+        assertThat(result.getKey()).isEqualTo("region");
+        assertThat(result.getValue()).isEqualTo("unknown");
+    }
+
+    @Test
+    void smartKeyNameWithNullContextShouldHandleGracefully() {
+        SmartKeyName<Map<String, String>> requiredKey = SmartKeyName.required("key", map -> map.get("key"));
+        SmartKeyName<Map<String, String>> optionalKey = SmartKeyName.optional("key", map -> map.get("key"));
+        SmartKeyName<Map<String, String>> fallbackKey = SmartKeyName.withFallback("key", map -> map.get("key"),
+                "default");
+
+        KeyValue requiredResult = requiredKey.valueOf(null);
+        KeyValue optionalResult = optionalKey.valueOf(null);
+        KeyValue fallbackResult = fallbackKey.valueOf(null);
+
+        assertThat(requiredResult).isNotNull();
+        assertThat(requiredResult.getValue()).isEqualTo(KeyValue.NONE_VALUE);
+
+        assertThat(optionalResult).isNull();
+
+        assertThat(fallbackResult).isNotNull();
+        assertThat(fallbackResult.getValue()).isEqualTo("default");
     }
 
 }
