@@ -48,11 +48,11 @@ public class WarnThenDebugLogger {
 
     /**
      * This may be useful to have different behavior before/after logging once.
-     * @return whether the warn-level log has been made or not
+     * @return whether this logger is enabled or not
      * @since 1.16.0
      */
-    public boolean isWarnLogged() {
-        return warnLogged.get();
+    public boolean isEnabled() {
+        return (this.logger.isWarnEnabled() && !this.warnLogged.get()) || this.logger.isDebugEnabled();
     }
 
     public void log(String message, @Nullable Throwable ex) {
