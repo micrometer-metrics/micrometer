@@ -50,7 +50,7 @@ class KafkaClientMetricsAdminTest {
     @Test
     void shouldCreateMetersWithTags() {
         try (AdminClient adminClient = createAdmin();
-                KafkaMetrics metrics = new KafkaClientMetrics(adminClient, tags);) {
+                KafkaMetrics metrics = new KafkaClientMetrics(adminClient, tags)) {
             MeterRegistry registry = new SimpleMeterRegistry();
 
             metrics.bindTo(registry);
