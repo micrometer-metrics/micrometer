@@ -78,7 +78,7 @@ public interface Propagator {
         /**
          * Returns the first value of the given propagation {@code key} or returns
          * {@code null}. This method should be preferred over
-         * {@link #getAll(Object, String)}} for better performance in cases where it is
+         * {@link #getAll(Object, String)} for better performance in cases where it is
          * expected that the key is not repeated.
          * @param carrier carrier of propagation fields, such as an http request.
          * @param key the key of the field.

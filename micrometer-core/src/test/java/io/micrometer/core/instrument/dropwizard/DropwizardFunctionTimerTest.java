@@ -46,7 +46,7 @@ class DropwizardFunctionTimerTest {
 
     @Test
     void getDropwizardMeterGetSnapshotGetMeanShouldReturnNanoseconds() {
-        Meter.Id id = new Meter.Id("name", Tags.empty(), null, null, Meter.Type.COUNTER);
+        Meter.Id id = new Meter.Id("name", Tags.empty(), null, null, Meter.Type.TIMER);
         DropwizardFunctionTimer<Object> functionTimer = new DropwizardFunctionTimer<>(id, new MockClock(), new Object(),
                 (o) -> 1L, (o) -> 1d, TimeUnit.SECONDS, TimeUnit.SECONDS);
         assertThat(functionTimer.getDropwizardMeter().getSnapshot().getMean()).isEqualTo(1000_000_000d);

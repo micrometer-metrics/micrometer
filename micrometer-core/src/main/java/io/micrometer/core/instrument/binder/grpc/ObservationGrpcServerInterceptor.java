@@ -66,16 +66,17 @@ public class ObservationGrpcServerInterceptor implements ServerInterceptor {
             GrpcServerObservationContext context = new GrpcServerObservationContext(new Propagator.Getter<Metadata>() {
                 @Override
                 public @Nullable String get(Metadata carrier, String keyName) {
-                    Metadata.Key<String> key = KEY_CACHE.computeIfAbsent(keyName,
+                    return carrier.get(getKey(keyName));
+                }
+
+                private Metadata.Key<String> getKey(String keyName) {
+                    return KEY_CACHE.computeIfAbsent(keyName,
                             (k) -> Metadata.Key.of(keyName, Metadata.ASCII_STRING_MARSHALLER));
-                    return carrier.get(key);
                 }
 
                 @Override
                 public Iterable<String> getAll(Metadata carrier, String keyName) {
-                    Metadata.Key<String> key = KEY_CACHE.computeIfAbsent(keyName,
-                            (k) -> Metadata.Key.of(keyName, Metadata.ASCII_STRING_MARSHALLER));
-                    Iterable<String> all = carrier.getAll(key);
+                    Iterable<String> all = carrier.getAll(getKey(keyName));
                     return all == null ? Collections.emptyList() : all;
                 }
             });

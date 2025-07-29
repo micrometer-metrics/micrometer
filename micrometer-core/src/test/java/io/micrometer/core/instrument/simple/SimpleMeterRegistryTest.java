@@ -92,7 +92,7 @@ class SimpleMeterRegistryTest {
         SimpleMeterRegistry registry = createRegistry(CountingMode.CUMULATIVE);
         Meter.Id id = new Meter.Id("some.timer", Tags.empty(), null, null, Meter.Type.COUNTER);
         AtomicInteger value = new AtomicInteger(0);
-        FunctionCounter functionCounter = registry.newFunctionCounter(id, value, Number::longValue);
+        FunctionCounter functionCounter = registry.newFunctionCounter(id, value, Number::doubleValue);
         assertThat(functionCounter).isInstanceOf(CumulativeFunctionCounter.class);
     }
 
@@ -111,7 +111,7 @@ class SimpleMeterRegistryTest {
         SimpleMeterRegistry registry = createRegistry(CountingMode.STEP);
         Meter.Id id = new Meter.Id("some.timer", Tags.empty(), null, null, Meter.Type.COUNTER);
         AtomicInteger value = new AtomicInteger(0);
-        FunctionCounter functionCounter = registry.newFunctionCounter(id, value, Number::longValue);
+        FunctionCounter functionCounter = registry.newFunctionCounter(id, value, Number::doubleValue);
         assertThat(functionCounter).isInstanceOf(StepFunctionCounter.class);
     }
 

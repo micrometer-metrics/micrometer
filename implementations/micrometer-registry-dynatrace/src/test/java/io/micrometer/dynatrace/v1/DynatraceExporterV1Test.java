@@ -198,7 +198,7 @@ class DynatraceExporterV1Test {
         DynatraceTimeSeries timeSeries = metric.getTimeSeries();
         try {
             Map<String, Object> map = mapper.readValue(timeSeries.asJson(), Map.class);
-            // TODO: remove requireNonNull: https://github.com/uber/NullAway/issues/1219
+            // TODO: remove requireNonNull: https://github.com/uber/NullAway/issues/1224
             List<List<Number>> dataPoints = Objects.requireNonNull((List<List<Number>>) map.get("dataPoints"));
             assertThat(dataPoints).hasSize(1);
             assertThat(dataPoints.get(0).get(1).doubleValue()).isEqualTo(GAUGE_VALUE);
