@@ -15,8 +15,6 @@
  */
 package io.micrometer.core.instrument;
 
-import io.micrometer.common.util.internal.logging.InternalLogger;
-import io.micrometer.common.util.internal.logging.InternalLoggerFactory;
 import io.micrometer.common.util.internal.logging.WarnThenDebugLogger;
 import io.micrometer.core.instrument.distribution.*;
 import io.micrometer.core.instrument.distribution.pause.ClockDriftPauseDetector;
@@ -40,8 +38,6 @@ import java.util.function.Supplier;
 public abstract class AbstractTimer extends AbstractMeter implements Timer {
 
     private static final WarnThenDebugLogger warnThenDebugLogger = new WarnThenDebugLogger(AbstractTimer.class);
-
-    private static final InternalLogger LOGGER = InternalLoggerFactory.getInstance(AbstractTimer.class);
 
     private static final Map<PauseDetector, Object> pauseDetectorCache = new ConcurrentHashMap<>();
 
@@ -268,7 +264,7 @@ public abstract class AbstractTimer extends AbstractMeter implements Timer {
             }
         }
         else {
-            if (!warnThenDebugLogger.isWarnLogged() || LOGGER.isDebugEnabled()) {
+            if (warnThenDebugLogger.isEnabled()) {
                 warnThenDebugLogger.log(() -> "'amount' should not be negative but was: " + amount,
                         new IllegalArgumentException("Timer measurements cannot be negative"));
             }
