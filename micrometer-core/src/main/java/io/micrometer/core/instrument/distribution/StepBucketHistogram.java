@@ -64,7 +64,7 @@ public class StepBucketHistogram extends StepValue<CountAtBucket[]> implements H
         return () -> {
             CountAtBucket[] countAtBuckets;
             synchronized (fixedBoundaryHistogram) {
-                countAtBuckets = fixedBoundaryHistogram.getCountsAtBucket();
+                countAtBuckets = fixedBoundaryHistogram.getCountAtBuckets();
                 fixedBoundaryHistogram.reset();
             }
             return countAtBuckets;

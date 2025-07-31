@@ -15,15 +15,14 @@
  */
 package io.micrometer.registry.otlp;
 
+import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.config.InvalidConfigurationException;
 import io.micrometer.core.instrument.config.validate.Validated;
 import io.micrometer.core.instrument.push.PushRegistryConfig;
 
-import java.time.Duration;
 import java.net.URLDecoder;
-import java.util.Arrays;
-import java.util.Map;
-import java.util.Objects;
+import java.time.Duration;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -151,7 +150,7 @@ public interface OtlpConfig extends PushRegistryConfig {
         return getEnum(this, AggregationTemporality.class, "aggregationTemporality").orElseGet(() -> {
             String preference = System.getenv().get("OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE");
             if (preference != null) {
-                return AggregationTemporality.valueOf(preference.toUpperCase());
+                return AggregationTemporality.valueOf(preference.toUpperCase(Locale.ROOT));
             }
             return AggregationTemporality.CUMULATIVE;
         });
@@ -184,12 +183,12 @@ public interface OtlpConfig extends PushRegistryConfig {
             String metricsHeaders = env.getOrDefault("OTEL_EXPORTER_OTLP_METRICS_HEADERS", "").trim();
             headersString = Objects.equals(headersString, "") ? metricsHeaders : headersString + "," + metricsHeaders;
             try {
-                // headers are encoded as URL - see
+                // headers are URL-encoded - see
                 // https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/protocol/exporter.md#specifying-headers-via-environment-variables
                 headersString = URLDecoder.decode(headersString, "UTF-8");
             }
             catch (Exception e) {
-                throw new InvalidConfigurationException("Cannot URL decode header value: " + headersString, e);
+                throw new InvalidConfigurationException("Cannot URL decode headers value: " + headersString, e);
             }
         }
 
@@ -214,6 +213,7 @@ public interface OtlpConfig extends PushRegistryConfig {
      * {@link HistogramFlavor#EXPLICIT_BUCKET_HISTOGRAM} is used for those meters.
      * </p>
      * @return - histogram flavor to be used
+     * @see #histogramFlavorPerMeter()
      *
      * @since 1.14.0
      */
@@ -229,6 +229,25 @@ public interface OtlpConfig extends PushRegistryConfig {
     }
 
     /**
+     * Configures the histogram flavor mapping to use on a per-meter level. This can
+     * override the {@link #histogramFlavor()} configuration for matching Meters.
+     * {@link OtlpMeterRegistry} uses the result of this method to look up the
+     * {@link HistogramFlavor} by {@link Meter.Id}. The longest dot-separated match wins.
+     * For example, if the returned Map has keys {@literal http} and
+     * {@literal http.server}, an ID with a name {@literal http.server.requests} would
+     * match with the entry having key {@literal http.server}, whereas an ID with name
+     * {@literal http.client.requests} would match with the entry having the key
+     * {@literal http}.
+     * @return mapping of meter name (or prefix) to histogram flavor
+     * @since 1.15.0
+     * @see #histogramFlavor()
+     */
+    default Map<String, HistogramFlavor> histogramFlavorPerMeter() {
+        return getStringMap(this, "histogramFlavorPerMeter", HistogramFlavor::fromString)
+            .orElse(Collections.emptyMap());
+    }
+
+    /**
      * Max scale to use for exponential histograms, if configured.
      * @return maxScale
      * @see #histogramFlavor()
@@ -241,9 +260,11 @@ public interface OtlpConfig extends PushRegistryConfig {
 
     /**
      * Maximum number of buckets to be used for exponential histograms, if configured.
-     * This has no effect on explicit bucket histograms.
+     * This has no effect on explicit bucket histograms. This can be overridden per meter
+     * with {@link #maxBucketsPerMeter()}.
      * @return - maxBuckets
      * @see #histogramFlavor()
+     * @see #maxBucketsPerMeter()
      *
      * @since 1.14.0
      */
@@ -251,12 +272,32 @@ public interface OtlpConfig extends PushRegistryConfig {
         return getInteger(this, "maxBucketCount").orElse(160);
     }
 
+    /**
+     * Configures the max bucket count mapping to use on a per-meter level. This can
+     * override the {@link #maxBucketCount()} configuration for matching Meters.
+     * {@link OtlpMeterRegistry} uses the result of this method to look up the max bucket
+     * count by {@link Meter.Id}. The longest dot-separated match wins. For example, if
+     * the returned Map has keys {@literal http} and {@literal http.server}, an ID with a
+     * name {@literal http.server.requests} would match with the entry having key
+     * {@literal http.server}, whereas an ID with name {@literal http.client.requests}
+     * would match with the entry having the key {@literal http}. This has no effect on a
+     * meter if it does not have an exponential bucket histogram configured.
+     * @return mapping of meter name to max bucket count
+     * @since 1.15.0
+     * @see #maxBucketCount()
+     */
+    default Map<String, Integer> maxBucketsPerMeter() {
+        return getStringMap(this, "maxBucketsPerMeter", Integer::parseInt).orElse(Collections.emptyMap());
+    }
+
     @Override
     default Validated<?> validate() {
         return checkAll(this, c -> PushRegistryConfig.validate(c), checkRequired("url", OtlpConfig::url),
                 check("resourceAttributes", OtlpConfig::resourceAttributes),
                 check("baseTimeUnit", OtlpConfig::baseTimeUnit),
-                check("aggregationTemporality", OtlpConfig::aggregationTemporality));
+                check("aggregationTemporality", OtlpConfig::aggregationTemporality),
+                check("histogramFlavorPerMeter", OtlpConfig::histogramFlavorPerMeter),
+                check("maxBucketsPerMeter", OtlpConfig::maxBucketsPerMeter));
     }
 
     default TimeUnit baseTimeUnit() {

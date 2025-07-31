@@ -56,7 +56,7 @@ public abstract class HttpSenderCompatibilityKit {
 
     @ParameterizedTest
     @DisplayName("successfully send a request with NO body and receive a response with NO body")
-    @EnumSource(HttpSender.Method.class)
+    @EnumSource
     void successfulRequestSentWithNoBody(HttpSender.Method method, @WiremockResolver.Wiremock WireMockServer server)
             throws Throwable {
         server.stubFor(any(urlEqualTo("/metrics")));
@@ -104,7 +104,7 @@ public abstract class HttpSenderCompatibilityKit {
 
     @ParameterizedTest
     @DisplayName("receive an error response")
-    @EnumSource(HttpSender.Method.class)
+    @EnumSource
     void errorResponseReceived(HttpSender.Method method, @WiremockResolver.Wiremock WireMockServer server)
             throws Throwable {
         server.stubFor(any(urlEqualTo("/metrics")).willReturn(badRequest().withBody("Error processing metrics")));
@@ -121,7 +121,7 @@ public abstract class HttpSenderCompatibilityKit {
     }
 
     @ParameterizedTest
-    @EnumSource(HttpSender.Method.class)
+    @EnumSource
     void basicAuth(HttpSender.Method method, @WiremockResolver.Wiremock WireMockServer server) throws Throwable {
         server.stubFor(any(urlEqualTo("/metrics")).willReturn(unauthorized()));
 
@@ -140,7 +140,7 @@ public abstract class HttpSenderCompatibilityKit {
     }
 
     @ParameterizedTest
-    @EnumSource(HttpSender.Method.class)
+    @EnumSource
     void customHeader(HttpSender.Method method, @WiremockResolver.Wiremock WireMockServer server) throws Throwable {
         server.stubFor(any(urlEqualTo("/metrics")).willReturn(unauthorized()));
 

@@ -52,7 +52,9 @@ import static java.util.stream.StreamSupport.stream;
  * @author Jon Schneider
  * @author Johnny Lim
  * @since 1.0.0
+ * @deprecated this whole module is deprecated in favor of micrometer-registry-otlp
  */
+@Deprecated
 public class SignalFxMeterRegistry extends StepMeterRegistry {
 
     private static final ThreadFactory DEFAULT_THREAD_FACTORY = new NamedThreadFactory("signalfx-metrics-publisher");
@@ -78,6 +80,7 @@ public class SignalFxMeterRegistry extends StepMeterRegistry {
 
     public SignalFxMeterRegistry(SignalFxConfig config, Clock clock, ThreadFactory threadFactory) {
         super(config, clock);
+        logger.warn("SignalFxMeterRegistry is deprecated in favor of micrometer-registry-otlp.");
         this.config = config;
 
         URI apiUri = URI.create(config.uri());

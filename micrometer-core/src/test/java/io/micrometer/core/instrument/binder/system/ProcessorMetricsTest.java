@@ -21,8 +21,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
+import java.util.Locale;
 
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
@@ -49,7 +50,7 @@ class ProcessorMetricsTest {
     @Test
     void cpuMetrics() {
         assertThat(registry.get("system.cpu.count").gauge().value()).isPositive();
-        if (System.getProperty("os.name").toLowerCase().contains("win")) {
+        if (System.getProperty("os.name").toLowerCase(Locale.ROOT).contains("win")) {
             assertThat(registry.find("system.load.average.1m").gauge()).describedAs("Not present on windows").isNull();
         }
         else {

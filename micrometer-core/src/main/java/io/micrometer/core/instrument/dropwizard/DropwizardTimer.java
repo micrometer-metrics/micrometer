@@ -47,7 +47,7 @@ public class DropwizardTimer extends AbstractTimer {
             impl.update(amount, unit);
 
             long nanoAmount = TimeUnit.NANOSECONDS.convert(amount, unit);
-            max.record(nanoAmount, TimeUnit.NANOSECONDS);
+            max.record((double) nanoAmount, TimeUnit.NANOSECONDS);
             totalTime.addAndGet(nanoAmount);
         }
     }
@@ -59,7 +59,7 @@ public class DropwizardTimer extends AbstractTimer {
 
     @Override
     public double totalTime(TimeUnit unit) {
-        return TimeUtils.nanosToUnit(totalTime.get(), unit);
+        return TimeUtils.nanosToUnit((double) totalTime.get(), unit);
     }
 
     @Override

@@ -19,9 +19,7 @@ import io.micrometer.common.util.StringUtils;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.binder.http.Outcome;
 import org.eclipse.jetty.client.Request;
-import org.eclipse.jetty.client.Response;
 import org.eclipse.jetty.client.Result;
-import org.eclipse.jetty.http.HttpStatus;
 
 import java.util.function.Function;
 import java.util.regex.Pattern;
@@ -34,10 +32,6 @@ import java.util.regex.Pattern;
  * @since 1.13.0
  */
 public final class JettyClientTags {
-
-    private static final Tag URI_NOT_FOUND = Tag.of("uri", "NOT_FOUND");
-
-    private static final Tag URI_REDIRECTION = Tag.of("uri", "REDIRECTION");
 
     private static final Tag URI_ROOT = Tag.of("uri", "root");
 
@@ -91,17 +85,6 @@ public final class JettyClientTags {
      * @return the uri tag derived from the request result
      */
     public static Tag uri(Result result, Function<Result, String> successfulUriPattern) {
-        Response response = result.getResponse();
-        if (response != null) {
-            int status = response.getStatus();
-            if (HttpStatus.isRedirection(status)) {
-                return URI_REDIRECTION;
-            }
-            if (status == 404) {
-                return URI_NOT_FOUND;
-            }
-        }
-
         String matchingPattern = successfulUriPattern.apply(result);
         matchingPattern = MULTIPLE_SLASH_PATTERN.matcher(matchingPattern).replaceAll("/");
         if (matchingPattern.equals("/")) {
@@ -121,12 +104,6 @@ public final class JettyClientTags {
         Throwable exception = result.getFailure();
         if (exception == null) {
             return EXCEPTION_NONE;
-        }
-        if (result.getResponse() != null) {
-            int status = result.getResponse().getStatus();
-            if (status == 404 || HttpStatus.isRedirection(status)) {
-                return EXCEPTION_NONE;
-            }
         }
         if (exception.getCause() != null) {
             exception = exception.getCause();

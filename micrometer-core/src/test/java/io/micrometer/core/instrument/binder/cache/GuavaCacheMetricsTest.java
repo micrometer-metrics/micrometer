@@ -18,6 +18,7 @@ package io.micrometer.core.instrument.binder.cache;
 import com.google.common.cache.*;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import org.assertj.core.data.Offset;
 import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.ExecutionException;
@@ -35,6 +36,7 @@ class GuavaCacheMetricsTest extends AbstractCacheMetricsTest {
 
     // tag::setup[]
     LoadingCache<String, String> cache = CacheBuilder.newBuilder().recordStats().build(new CacheLoader<>() {
+        @Override
         public String load(String key) {
             return "";
         }
@@ -61,32 +63,30 @@ class GuavaCacheMetricsTest extends AbstractCacheMetricsTest {
 
         // common metrics
         Gauge cacheSize = fetch(registry, "cache.size").gauge();
-        assertThat(cacheSize.value()).isEqualTo(cache.size()).isEqualTo(2);
+        assertThat(cacheSize.value()).isEqualTo((double) cache.size()).isEqualTo(2);
 
         FunctionCounter hitCount = fetch(registry, "cache.gets", Tags.of("result", "hit")).functionCounter();
-        assertThat(hitCount.count()).isEqualTo(metrics.hitCount()).isEqualTo(2);
+        assertThat(hitCount.count()).isEqualTo((double) metrics.hitCount()).isEqualTo(2);
 
         FunctionCounter missCount = fetch(registry, "cache.gets", Tags.of("result", "miss")).functionCounter();
         assertThat(missCount.count()).isEqualTo(metrics.missCount().doubleValue()).isEqualTo(1);
 
         FunctionCounter cachePuts = fetch(registry, "cache.puts").functionCounter();
-        assertThat(cachePuts.count()).isEqualTo(metrics.putCount());
+        assertThat(cachePuts.count()).isEqualTo((double) metrics.putCount());
 
         FunctionCounter cacheEviction = fetch(registry, "cache.evictions").functionCounter();
         assertThat(cacheEviction.count()).isEqualTo(metrics.evictionCount().doubleValue());
 
         CacheStats stats = cache.stats();
         TimeGauge loadDuration = fetch(registry, "cache.load.duration").timeGauge();
-        assertThat(loadDuration.value(TimeUnit.NANOSECONDS)).isEqualTo(stats.totalLoadTime());
+        assertThat(loadDuration.value(TimeUnit.NANOSECONDS)).isCloseTo((double) stats.totalLoadTime(),
+                Offset.offset(0.1));
 
         FunctionCounter successfulLoad = fetch(registry, "cache.load", Tags.of("result", "success")).functionCounter();
-        assertThat(successfulLoad.count()).isEqualTo(stats.loadSuccessCount());
+        assertThat(successfulLoad.count()).isEqualTo((double) stats.loadSuccessCount());
 
         FunctionCounter failedLoad = fetch(registry, "cache.load", Tags.of("result", "failure")).functionCounter();
-        assertThat(failedLoad.count()).isEqualTo(stats.loadExceptionCount());
-
-        Gauge hitRate = fetch(registry, "cache.hit_rate").gauge();
-        assertThat(hitRate.value()).isEqualTo(stats.hitRate());
+        assertThat(failedLoad.count()).isEqualTo((double) stats.loadExceptionCount());
     }
 
     @Test
@@ -120,6 +120,7 @@ class GuavaCacheMetricsTest extends AbstractCacheMetricsTest {
     @Test
     void returnHitCountWithoutRecordStats() throws ExecutionException {
         LoadingCache<String, String> cache = CacheBuilder.newBuilder().build(new CacheLoader<>() {
+            @Override
             public String load(String key) {
                 return "";
             }

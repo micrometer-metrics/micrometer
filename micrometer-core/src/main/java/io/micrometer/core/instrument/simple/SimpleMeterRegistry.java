@@ -28,6 +28,7 @@ import io.micrometer.core.instrument.internal.DefaultMeter;
 import io.micrometer.core.instrument.step.*;
 
 import java.util.Comparator;
+import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 import java.util.function.ToDoubleFunction;
 import java.util.function.ToLongFunction;
@@ -203,7 +204,7 @@ public class SimpleMeterRegistry extends MeterRegistry {
 
     private String toString(Measurement measurement, String meterUnitSuffix) {
         Statistic statistic = measurement.getStatistic();
-        return String.format("%s=%s%s", statistic.toString().toLowerCase(), measurement.getValue(),
+        return String.format("%s=%s%s", statistic.toString().toLowerCase(Locale.ROOT), measurement.getValue(),
                 getUnitSuffix(statistic, meterUnitSuffix));
     }
 

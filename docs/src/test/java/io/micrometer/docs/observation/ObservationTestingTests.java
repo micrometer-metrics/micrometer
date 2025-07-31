@@ -44,13 +44,14 @@ class ObservationTestingTests {
                 .that()
                 .hasHighCardinalityKeyValue("highTag", "highTagValue")
                 .hasLowCardinalityKeyValue("lowTag", "lowTagValue")
+                .hasEvent("event1")
                 .hasBeenStarted()
                 .hasBeenStopped();
     }
     // end::test[]
     // @formatter:on
 
-    class SomeComponent {
+    static class SomeComponent {
 
         private final ObservationRegistry registry;
 
@@ -87,10 +88,13 @@ class ObservationTestingTests {
         }
 
         void run() {
-            Observation.createNotStarted("foo", registry)
+            Observation observation = Observation.createNotStarted("foo", registry)
                     .lowCardinalityKeyValue("lowTag", "lowTagValue")
-                    .highCardinalityKeyValue("highTag", "highTagValue")
-                    .observe(() -> System.out.println("Hello"));
+                    .highCardinalityKeyValue("highTag", "highTagValue");
+            observation.observe(() -> {
+                observation.event(Observation.Event.of("event1"));
+                System.out.println("Hello");
+            });
         }
 
     }

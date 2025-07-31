@@ -44,6 +44,7 @@ public interface ElasticConfig extends StepRegistryConfig {
      * @param key Key to look up in the config.
      * @return Value for the key or null if no key is present.
      */
+    @Override
     @Nullable
     String get(String key);
 
@@ -51,6 +52,7 @@ public interface ElasticConfig extends StepRegistryConfig {
      * Property prefix to prepend to configuration names.
      * @return property prefix
      */
+    @Override
     default String prefix() {
         return "elastic";
     }
@@ -76,6 +78,7 @@ public interface ElasticConfig extends StepRegistryConfig {
      * separated by the {@link #indexDateSeparator()}. Default is: "yyyy-MM"
      * @return date format for index
      */
+    @SuppressWarnings("ReturnValueIgnored")
     default String indexDateFormat() {
         return getString(this, "indexDateFormat").invalidateWhen(format -> {
             if (format == null) {
@@ -189,6 +192,7 @@ public interface ElasticConfig extends StepRegistryConfig {
         return getBoolean(this, "enableSource").orElse(false);
     }
 
+    @SuppressWarnings("ReturnValueIgnored")
     @Override
     default Validated<?> validate() {
         return checkAll(this, c -> StepRegistryConfig.validate(c), checkRequired("host", ElasticConfig::host),

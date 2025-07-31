@@ -166,7 +166,8 @@ public class ObservationContextAssert<SELF extends ObservationContextAssert<SELF
         isNotNull();
         long actualSize = this.actual.getAllKeyValues().stream().count();
         if (actualSize != size) {
-            failWithMessage("Observation expected to have <%s> keys but has <%s>.", size, actualSize);
+            failWithActualExpectedAndMessage(actualSize, size, "Observation expected to have <%s> keys but has <%s>.",
+                    size, actualSize);
         }
         return (SELF) this;
     }
@@ -388,7 +389,8 @@ public class ObservationContextAssert<SELF extends ObservationContextAssert<SELF
         isNotNull();
         Object mapValue = this.actual.get(key);
         if (!Objects.equals(mapValue, value)) {
-            failWithMessage("Observation should have an entry for key <%s> with value <%s>. Value was <%s>", key, value,
+            failWithActualExpectedAndMessage(mapValue, value,
+                    "Observation should have an entry for key <%s> with value <%s>. Value was <%s>", key, value,
                     mapValue);
         }
         return (SELF) this;

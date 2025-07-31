@@ -15,6 +15,7 @@
  */
 package io.micrometer.core.instrument;
 
+import com.github.tomakehurst.wiremock.junit5.WireMockRuntimeInfo;
 import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.binder.jetty.JettyClientMetrics;
 import io.micrometer.core.instrument.binder.jetty.JettyClientObservationDocumentation;
@@ -22,6 +23,7 @@ import io.micrometer.observation.docs.ObservationDocumentation;
 import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.api.Request;
 import org.eclipse.jetty.client.util.BytesContentProvider;
+import org.junit.jupiter.api.Disabled;
 
 import java.net.URI;
 
@@ -69,6 +71,12 @@ class JettyClientTimingInstrumentationVerificationTests
         catch (Exception e) {
             throw new RuntimeException(e);
         }
+    }
+
+    @Override
+    @Disabled("this deprecated instrumentation will not be updated for this behavior")
+    void templatedPathWith404Response(TestType testType, WireMockRuntimeInfo wmRuntimeInfo) {
+        super.templatedPathWith404Response(testType, wmRuntimeInfo);
     }
 
     private HttpClient createHttpClient(boolean withObservationRegistry) {

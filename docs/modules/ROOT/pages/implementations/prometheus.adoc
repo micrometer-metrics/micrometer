@@ -85,14 +85,14 @@ By default, the `PrometheusMeterRegistry` `scrape()` method returns the https://
 
 The https://github.com/OpenObservability/OpenMetrics/blob/main/specification/OpenMetrics.md[OpenMetrics] format can also be produced.
 To specify the format to be returned, you can pass a content type to the `scrape` method.
-For example, to get the OpenMetrics 1.0.0 format scrape, you could use the Prometheus Java client constant for it, as follows in case of the "new" client (`micrometer-registry-prometheus`):
+For example, to get the OpenMetrics 1.0.0 format scrape, you could use the Content-Type for it, as follows in case of the "new" client (`micrometer-registry-prometheus`):
 
 [source,java]
 ----
 String openMetricsScrape = registry.scrape("application/openmetrics-text");
 ----
 
-if you use the "legacy" client (`micrometer-registry-prometheus-simpleclient`):
+If you use the "legacy" client (`micrometer-registry-prometheus-simpleclient`), you could use the Prometheus Java client constant for it:
 
 [source,java]
 ----
@@ -137,7 +137,7 @@ PrometheusMeterRegistry registry = new PrometheusMeterRegistry(config, new Prome
 <1> You can reuse the "default" properties defined in `PrometheusConfig`.
 <2> You can set any property from any property source.
 
-Micrometer passes these properties to the Exporters and the Examplar Sampler of the Prometheus client so you can use the https://prometheus.github.io/client_java/config/config/#exporter-properties[exporter]-, and the https://prometheus.github.io/client_java/config/config/#exemplar-properties[exemplar] properties of the Prometheus Client.
+Micrometer passes these properties to the Exporters and the Exemplar Sampler of the Prometheus client, so you can use the https://prometheus.github.io/client_java/config/config/#exporter-properties[exporter], and the https://prometheus.github.io/client_java/config/config/#exemplar-properties[exemplar] properties of the Prometheus Client.
 
 == Graphing
 
@@ -146,34 +146,10 @@ See the https://prometheus.io/docs/querying/basics[Prometheus docs] for a far mo
 
 === Grafana Dashboard
 
-A publicly available Grafana dashboard for Micrometer-sourced JVM and Tomcat metrics is available https://grafana.com/grafana/dashboards/4701-jvm-micrometer/[here].
+There are many third-party Grafana dashboards publicly available on https://grafana.com/grafana/dashboards/?search=micrometer[GrafanaHub].
+See an example https://grafana.com/grafana/dashboards/4701-jvm-micrometer/[here].
 
-image::implementations/prometheus-dashboard.png[Grafana dashboard for JVM and Tomcat binders]
-
-The dashboard features:
-
-* JVM memory
-* Process memory (provided by https://github.com/mweirauch/micrometer-jvm-extras[micrometer-jvm-extras])
-* CPU-Usage, Load, Threads, File Descriptors, and Log Events
-* JVM Memory Pools (Heap, Non-Heap)
-* Garbage Collection
-* Classloading
-* Direct/Mapped buffer sizes
-
-Instead of using the `job` tag to distinguish different applications, this dashboard makes use of a common tag called `application`, which is applied to every metric.
-You can apply the common tag, as follows:
-
-[source,java]
-----
-registry.config().commonTags("application", "MYAPPNAME");
-----
-
-In Spring Boot applications, you can use the https://docs.spring.io/spring-boot/docs/current/reference/html/actuator.html#actuator.metrics.customizing.common-tags[property support for common tags]:
-
-[source,properties]
-----
-management.metrics.tags.application=MYAPPNAME
-----
+NOTE: The dashboards are maintained by the community in their external GitHub repositories, so if you have an issue, it should be created in their respective GitHub repository.
 
 === Counters
 
@@ -217,10 +193,30 @@ image::implementations/prometheus-long-task-timer.png[Grafana-rendered Prometheu
 == Limitation on same name with different set of tag keys
 
 The `PrometheusMeterRegistry` doesn't allow to create meters having the same name with a different set of tag keys, so you should guarantee that meters having the same name have the same set of tag keys.
-Otherwise, subsequent meters having the same name with a different set of tag keys will not be registered silently by default.
-You can change the default behavior by registering a meter registration failed listener.
-For example, you can register a meter registration failed listener that throws an exception as follows:
+Otherwise, subsequent meters having the same name with a different set of tag keys will not be registered.
+This means that you should not do things like:
 
+[source,java]
+----
+// Please don't do this
+registry.counter("test", "first", "1").increment();
+registry.counter("test", "second", "2").increment();
+----
+
+This will result in the following warning and the second `Meter` will not be registered:
+[source]
+----
+WARNING: The meter (MeterId{name='test', tags=[tag(second=2)]}) registration has failed: Prometheus requires that all meters with the same name have the same set of tag keys. There is already an existing meter named 'test' containing tag keys [first]. The meter you are attempting to register has keys [second]. Note that subsequent logs will be logged at debug level.
+----
+
+Instead you can do something like this:
+[source,java]
+----
+registry.counter("test", "first", "1", "second", "none").increment();
+registry.counter("test", "first", "none", "second", "2").increment();
+----
+
+In addition to the warning, you can register a meter registration failed listener to handle the failure:
 [source,java]
 ----
 registry.config().onMeterRegistrationFailed((id, reason) -> {
@@ -253,7 +249,7 @@ PrometheusMeterRegistry registry = new PrometheusMeterRegistry(
 registry.counter("test").increment();
 System.out.println(registry.scrape("application/openmetrics-text"));
 ----
-<1> You need to implement `MySpanContext` (`class MySpanContext implements SpanContext { ... }`) or use an implementation that already exists.
+<1> You need to implement `SpanContext` (`class MySpanContext implements SpanContext { ... }`) or use an implementation that already exists.
 
 But if you use the "legacy" client (`micrometer-registry-prometheus-simpleclient`):
 [source,java]
@@ -267,9 +263,9 @@ PrometheusMeterRegistry registry = new PrometheusMeterRegistry(
 registry.counter("test").increment();
 System.out.println(registry.scrape(TextFormat.CONTENT_TYPE_OPENMETRICS_100));
 ----
-<1> You need to implement `MySpanContextSupplier` (`class MySpanContextSupplier implements SpanContextSupplier { ... }`) or use an implementation that already exists.
+<1> You need to implement `SpanContextSupplier` (`class MySpanContextSupplier implements SpanContextSupplier { ... }`) or use an implementation that already exists.
 
-If your configuration is correct, you should get something like this, the `# {span_id="321",trace_id="123"} ...` section is the Exempar right after the value:
+If your configuration is correct, you should get something like this, the `# {span_id="321",trace_id="123"} ...` section is the Exemplar right after the value:
 [source]
 ----
 # TYPE test counter

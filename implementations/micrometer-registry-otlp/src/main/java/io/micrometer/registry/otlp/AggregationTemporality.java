@@ -36,7 +36,7 @@ public enum AggregationTemporality {
      */
     CUMULATIVE;
 
-    public static io.opentelemetry.proto.metrics.v1.AggregationTemporality toOtlpAggregationTemporality(
+    static io.opentelemetry.proto.metrics.v1.AggregationTemporality toOtlpAggregationTemporality(
             AggregationTemporality aggregationTemporality) {
         switch (aggregationTemporality) {
             case DELTA:

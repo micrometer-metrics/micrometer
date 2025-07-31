@@ -103,7 +103,7 @@ public final class JerseyTags {
         if (matchingPattern == null) {
             return URI_UNKNOWN;
         }
-        else if (matchingPattern.equals("/")) {
+        if (matchingPattern.equals("/")) {
             return URI_ROOT;
         }
         return Tag.of("uri", matchingPattern);

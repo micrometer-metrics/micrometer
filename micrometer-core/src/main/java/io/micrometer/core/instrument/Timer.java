@@ -90,6 +90,7 @@ public interface Timer extends Meter, HistogramSupport {
      * empty.
      * @return This builder.
      */
+    @SuppressWarnings("NullTernary")
     static Builder builder(Timed timed, String defaultName) {
         if (timed.longTask() && timed.value().isEmpty()) {
             // the user MUST name long task timers, we don't lump them in with regular

@@ -144,7 +144,7 @@ public class OkHttpObservationInterceptor implements Interceptor {
         private final ObservationRegistry registry;
 
         private Function<Request, String> uriMapper = (request) -> Optional.ofNullable(request.header(URI_PATTERN))
-            .orElse("none");
+            .orElse(KeyValue.NONE_VALUE);
 
         private KeyValues tags = KeyValues.empty();
 

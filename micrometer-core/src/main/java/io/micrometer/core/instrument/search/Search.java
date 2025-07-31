@@ -241,7 +241,7 @@ public final class Search {
     private boolean isRequiredTagKeysPresent(Meter.Id id) {
         if (!requiredTagKeys.isEmpty()) {
             final Set<String> tagKeys = new HashSet<>();
-            id.getTags().forEach(t -> tagKeys.add(t.getKey()));
+            id.getTagsAsIterable().forEach(t -> tagKeys.add(t.getKey()));
             return tagKeys.containsAll(requiredTagKeys);
         }
         return true;
@@ -250,7 +250,7 @@ public final class Search {
     private boolean isTagPredicatesMatched(Meter.Id id) {
         if (!tagMatches.isEmpty()) {
             final Set<String> matchingTagKeys = new HashSet<>();
-            id.getTags().forEach(t -> {
+            id.getTagsAsIterable().forEach(t -> {
                 Collection<Predicate<String>> tagValueMatchers = tagMatches.get(t.getKey());
                 if (tagValueMatchers != null) {
                     if (tagValueMatchers.stream().allMatch(matcher -> matcher.test(t.getValue()))) {

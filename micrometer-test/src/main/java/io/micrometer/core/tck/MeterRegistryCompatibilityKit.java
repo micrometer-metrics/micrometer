@@ -15,10 +15,12 @@
  */
 package io.micrometer.core.tck;
 
+import io.micrometer.common.KeyValue;
 import io.micrometer.core.Issue;
 import io.micrometer.core.annotation.Timed;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.config.MeterFilter;
 import io.micrometer.core.instrument.distribution.CountAtBucket;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.HistogramSnapshot;
@@ -37,6 +39,7 @@ import org.junit.jupiter.params.provider.CsvSource;
 
 import java.time.Duration;
 import java.util.*;
+import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -45,7 +48,6 @@ import java.util.function.Supplier;
 import static io.micrometer.core.instrument.MockClock.clock;
 import static io.micrometer.core.instrument.Statistic.ACTIVE_TASKS;
 import static io.micrometer.core.instrument.Statistic.DURATION;
-import static io.micrometer.core.instrument.util.TimeUtils.millisToUnit;
 import static java.util.Collections.emptyList;
 import static java.util.Objects.requireNonNull;
 import static org.assertj.core.api.Assertions.*;
@@ -158,7 +160,7 @@ public abstract class MeterRegistryCompatibilityKit {
         FunctionTimer ft = registry.get("function.timer").functionTimer();
         clock(registry).add(step());
         assertThat(ft.measure()).anySatisfy(ms -> {
-            TimeUnit baseUnit = TimeUnit.valueOf(requireNonNull(ft.getId().getBaseUnit()).toUpperCase());
+            TimeUnit baseUnit = TimeUnit.valueOf(requireNonNull(ft.getId().getBaseUnit()).toUpperCase(Locale.ROOT));
             assertThat(ms.getStatistic()).isEqualTo(Statistic.TOTAL_TIME);
             assertThat(TimeUtils.convert(ms.getValue(), baseUnit, TimeUnit.MILLISECONDS)).isEqualTo(1);
         });
@@ -442,6 +444,163 @@ public abstract class MeterRegistryCompatibilityKit {
 
             assertThat(registry.get("weak.ref").gauge().value()).isNaN();
             assertThat(registry.get("strong.ref").gauge().value()).isEqualTo(1.0);
+        }
+
+        @Test
+        @DisplayName("gauges cannot be registered twice")
+        void gaugesCannotBeRegisteredTwice() {
+            AtomicInteger n1 = registry.gauge("my.gauge", new AtomicInteger(1));
+            AtomicInteger n2 = registry.gauge("my.gauge", new AtomicInteger(2));
+
+            assertThat(registry.get("my.gauge").gauges()).hasSize(1);
+            assertThat(registry.get("my.gauge").gauge().value()).isEqualTo(1);
+            assertThat(n1).isNotNull().hasValue(1);
+            assertThat(n2).isNotNull().hasValue(2);
+        }
+
+        @Test
+        @DisplayName("gauges cannot be registered effectively twice")
+        void gaugesCannotBeRegisteredEffectivelyTwice() {
+            registry.config().meterFilter(MeterFilter.ignoreTags("ignored"));
+            AtomicInteger n1 = registry.gauge("my.gauge", Tags.of("ignored", "1"), new AtomicInteger(1));
+            AtomicInteger n2 = registry.gauge("my.gauge", Tags.of("ignored", "2"), new AtomicInteger(2));
+
+            assertThat(registry.get("my.gauge").gauges()).hasSize(1);
+            assertThat(registry.get("my.gauge").gauge().value()).isEqualTo(1);
+            assertThat(n1).isNotNull().hasValue(1);
+            assertThat(n2).isNotNull().hasValue(2);
+        }
+
+    }
+
+    @DisplayName("functionCounters")
+    @Nested
+    class FunctionCounterTck {
+
+        @Test
+        @DisplayName("functionCounters cannot be registered twice")
+        void functionCountersCannotBeRegisteredTwice() {
+            FunctionCounter.builder("my.fc", this, x -> 1).register(registry);
+            FunctionCounter.builder("my.fc", this, x -> 2).register(registry);
+            clock(registry).add(step());
+
+            assertThat(registry.get("my.fc").functionCounters()).hasSize(1);
+            assertThat(registry.get("my.fc").functionCounter().count()).isEqualTo(1);
+        }
+
+        @Test
+        @DisplayName("functionCounters cannot be registered effectively twice")
+        void functionCountersCannotBeRegisteredEffectivelyTwice() {
+            registry.config().meterFilter(MeterFilter.ignoreTags("ignored"));
+            FunctionCounter.builder("my.fc", this, x -> 3).tags("ignored", "3").register(registry);
+            FunctionCounter.builder("my.fc", this, x -> 4).tags("ignored", "4").register(registry);
+            clock(registry).add(step());
+
+            assertThat(registry.get("my.fc").functionCounters()).hasSize(1);
+            assertThat(registry.get("my.fc").functionCounter().count()).isEqualTo(3);
+        }
+
+    }
+
+    @DisplayName("functionTimers")
+    @Nested
+    class FunctionTimerTck {
+
+        @Test
+        @DisplayName("functionTimers cannot be registered twice")
+        void functionTimersCannotBeRegisteredTwice() {
+            FunctionTimer.builder("my.ft", this, x -> 1, x -> 100, TimeUnit.MILLISECONDS).register(registry);
+            FunctionTimer.builder("my.ft", this, x -> 2, x -> 200, TimeUnit.MILLISECONDS).register(registry);
+            clock(registry).add(step());
+
+            assertThat(registry.get("my.ft").functionTimers()).hasSize(1);
+            assertThat(registry.get("my.ft").functionTimer().count()).isEqualTo(1);
+            assertThat(registry.get("my.ft").functionTimer().totalTime(TimeUnit.MILLISECONDS)).isEqualTo(100);
+        }
+
+        @Test
+        @DisplayName("functionTimers cannot be registered effectively twice")
+        void functionTimersCannotBeRegisteredEffectivelyTwice() {
+            registry.config().meterFilter(MeterFilter.ignoreTags("ignored"));
+            FunctionTimer.builder("my.ft", this, x -> 3, x -> 300, TimeUnit.MILLISECONDS)
+                .tags("ignored", "3")
+                .register(registry);
+            FunctionTimer.builder("my.ft", this, x -> 4, x -> 400, TimeUnit.MILLISECONDS)
+                .tags("ignored", "4")
+                .register(registry);
+            clock(registry).add(step());
+
+            assertThat(registry.get("my.ft").functionTimers()).hasSize(1);
+            assertThat(registry.get("my.ft").functionTimer().count()).isEqualTo(3);
+            assertThat(registry.get("my.ft").functionTimer().totalTime(TimeUnit.MILLISECONDS)).isEqualTo(300);
+        }
+
+    }
+
+    @DisplayName("timeGauges")
+    @Nested
+    class TimeGaugeTck {
+
+        @Test
+        @DisplayName("timeGauges cannot be registered twice")
+        void timeGaugesCannotBeRegisteredTwice() {
+            TimeGauge.builder("my.tg", () -> 100, TimeUnit.MILLISECONDS).register(registry);
+            TimeGauge.builder("my.tg", () -> 200, TimeUnit.MILLISECONDS).register(registry);
+
+            assertThat(registry.get("my.tg").timeGauges()).hasSize(1);
+            assertThat(registry.get("my.tg").timeGauge().value(TimeUnit.MILLISECONDS)).isEqualTo(100);
+        }
+
+        @Test
+        @DisplayName("timeGauges cannot be registered effectively twice")
+        void timeGaugesCannotBeRegisteredEffectivelyTwice() {
+            registry.config().meterFilter(MeterFilter.ignoreTags("ignored"));
+            TimeGauge.builder("my.tg", () -> 300, TimeUnit.MILLISECONDS).tags("ignored", "3").register(registry);
+            TimeGauge.builder("my.tg", () -> 400, TimeUnit.MILLISECONDS).tags("ignored", "4").register(registry);
+
+            assertThat(registry.get("my.tg").timeGauges()).hasSize(1);
+            assertThat(registry.get("my.tg").timeGauge().value(TimeUnit.MILLISECONDS)).isEqualTo(300);
+        }
+
+    }
+
+    @DisplayName("multiGauges")
+    @Nested
+    class MultiGaugeTck {
+
+        @Test
+        @DisplayName("multiGauges can be registered twice because they take care about de-registering the previous Gauge if overwrite=true")
+        void multiGaugesCanBeRegisteredTwice() {
+            MultiGauge gauges = MultiGauge.builder("my.gauge").register(registry);
+            gauges.register(Collections.singletonList(MultiGauge.Row.of(Tags.of("test", "true"), 1)));
+
+            // no re-registration since overwrite is false by default
+            gauges.register(Collections.singletonList(MultiGauge.Row.of(Tags.of("test", "true"), 2)));
+            assertThat(registry.get("my.gauge").tags("test", "true").gauges()).hasSize(1);
+            assertThat(registry.get("my.gauge").tags("test", "true").gauge().value()).isEqualTo(1);
+
+            // re-registration since overwrite is set to true
+            gauges.register(Collections.singletonList(MultiGauge.Row.of(Tags.of("test", "true"), 3)), true);
+            assertThat(registry.get("my.gauge").tags("test", "true").gauges()).hasSize(1);
+            assertThat(registry.get("my.gauge").tags("test", "true").gauge().value()).isEqualTo(3);
+        }
+
+        @Test
+        @DisplayName("multiGauges can be registered effectively twice because they take care about de-registering the previous Gauge if overwrite=true")
+        void multiGaugesCanBeRegisteredEffectivelyTwice() {
+            registry.config().meterFilter(MeterFilter.ignoreTags("ignored"));
+            MultiGauge gauges = MultiGauge.builder("my.gauge").register(registry);
+            gauges.register(Collections.singletonList(MultiGauge.Row.of(Tags.of("ignored", "true"), 4)));
+
+            // no re-registration since overwrite is false by default
+            gauges.register(Collections.singletonList(MultiGauge.Row.of(Tags.of("ignored", "false"), 5)));
+            assertThat(registry.get("my.gauge").gauges()).hasSize(1);
+            assertThat(registry.get("my.gauge").gauge().value()).isEqualTo(4);
+
+            // re-registration since overwrite is set to true
+            gauges.register(Collections.singletonList(MultiGauge.Row.of(Tags.of("ignored", "false"), 6)), true);
+            assertThat(registry.get("my.gauge").gauges()).hasSize(1);
+            assertThat(registry.get("my.gauge").gauge().value()).isEqualTo(6);
         }
 
     }
@@ -771,7 +930,8 @@ public abstract class MeterRegistryCompatibilityKit {
 
             assertThat(longTaskTimer.activeTasks()).isEqualTo(0);
 
-            Timer timer = registry.timer("myObservation", "error", "none", "staticTag", "42", "dynamicTag", "24");
+            Timer timer = registry.timer("myObservation", "error", KeyValue.NONE_VALUE, "staticTag", "42", "dynamicTag",
+                    "24");
             assertSoftly(softly -> {
                 softly.assertThat(timer.count()).isEqualTo(1L);
                 softly.assertThat(timer.totalTime(TimeUnit.SECONDS)).isCloseTo(1, offset(1.0e-12));
@@ -793,7 +953,7 @@ public abstract class MeterRegistryCompatibilityKit {
             observation.stop();
             clock(registry).add(step());
 
-            Timer timer = registry.timer("myObservation", "error", "none");
+            Timer timer = registry.timer("myObservation", "error", KeyValue.NONE_VALUE);
             assertSoftly(softly -> {
                 softly.assertThat(timer.count()).isEqualTo(1L);
                 softly.assertThat(timer.totalTime(TimeUnit.NANOSECONDS)).isCloseTo(10, offset(1.0e-12));
@@ -861,7 +1021,7 @@ public abstract class MeterRegistryCompatibilityKit {
             t.record(1, TimeUnit.MILLISECONDS);
             // accommodate StepBucketHistogram
             clock(registry).add(halfStep);
-            assertThat(t.histogramCountAtValue((long) millisToUnit(1, TimeUnit.NANOSECONDS))).isEqualTo(1);
+            assertThat(t.histogramCountAtValue(TimeUnit.MILLISECONDS.toNanos(1))).isEqualTo(1);
             assertThat(t.histogramCountAtValue(1)).isNaN();
         }
 

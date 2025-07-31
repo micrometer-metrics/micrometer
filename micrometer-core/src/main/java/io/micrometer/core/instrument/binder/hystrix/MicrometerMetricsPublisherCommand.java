@@ -26,6 +26,7 @@ import io.micrometer.core.instrument.*;
 
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -162,7 +163,7 @@ public class MicrometerMetricsPublisherCommand implements HystrixMetricsPublishe
     private Counter getCounter(HystrixEventType hystrixEventType) {
         return Counter.builder(NAME_HYSTRIX_EXECUTION)
             .description(DESCRIPTION_HYSTRIX_EXECUTION)
-            .tags(Tags.concat(tags, "event", hystrixEventType.name().toLowerCase(), "terminal",
+            .tags(Tags.concat(tags, "event", hystrixEventType.name().toLowerCase(Locale.ROOT), "terminal",
                     Boolean.toString(hystrixEventType.isTerminal())))
             .register(meterRegistry);
     }

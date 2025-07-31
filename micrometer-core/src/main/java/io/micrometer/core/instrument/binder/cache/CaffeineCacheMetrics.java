@@ -150,7 +150,7 @@ public class CaffeineCacheMetrics<K, V, C extends Cache<K, V>> extends CacheMete
 
     @Override
     protected Long size() {
-        return getOrDefault(Cache::estimatedSize, null);
+        return getOrDefault(Cache::estimatedSize, null, false);
     }
 
     @Override
@@ -208,9 +208,14 @@ public class CaffeineCacheMetrics<K, V, C extends Cache<K, V>> extends CacheMete
 
     @Nullable
     private Long getOrDefault(Function<C, Long> function, @Nullable Long defaultValue) {
+        return getOrDefault(function, defaultValue, true);
+    }
+
+    @Nullable
+    private Long getOrDefault(Function<C, Long> function, @Nullable Long defaultValue, boolean recordingStatsRequired) {
         C cache = getCache();
         if (cache != null) {
-            if (!cache.policy().isRecordingStats()) {
+            if (recordingStatsRequired && !cache.policy().isRecordingStats()) {
                 return null;
             }
 

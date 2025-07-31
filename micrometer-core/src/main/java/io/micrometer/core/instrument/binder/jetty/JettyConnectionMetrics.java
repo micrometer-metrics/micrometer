@@ -187,8 +187,8 @@ public class JettyConnectionMetrics extends AbstractLifeCycle implements Connect
                 .tags(tags)
                 .register(registry));
         }
-        messagesIn.increment(connection.getMessagesIn());
-        messagesOut.increment(connection.getMessagesOut());
+        messagesIn.increment((double) connection.getMessagesIn());
+        messagesOut.increment((double) connection.getMessagesOut());
     }
 
     @Override
@@ -202,7 +202,7 @@ public class JettyConnectionMetrics extends AbstractLifeCycle implements Connect
     }
 
     /**
-     * Configures metrics instrumentation on all the {@link Server}'s {@link Connector}.
+     * Configures metrics instrumentation on all the {@link Server}'s {@link Connector}s.
      * @param server apply to this server's connectors
      * @param registry register metrics to this registry
      * @param tags add these tags as additional tags on metrics registered via this
@@ -230,7 +230,7 @@ public class JettyConnectionMetrics extends AbstractLifeCycle implements Connect
     }
 
     /**
-     * Configures metrics instrumentation on all the {@link Server}'s {@link Connector}.
+     * Configures metrics instrumentation on all the {@link Server}'s {@link Connector}s.
      * @param server apply to this server's connectors
      * @param registry register metrics to this registry
      */

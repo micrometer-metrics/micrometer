@@ -40,8 +40,8 @@ management:
           key1: value1
 ----
 
-1. `url` - The URL to which data is reported. Environment variables `OTEL_EXPORTER_OTLP_METRICS_ENDPOINT` and `OTEL_EXPORTER_OTLP_ENDPOINT` are also supported in the default implementation. If a value is not provided, it defaults to `http://localhost:4318/v1/metrics`
-2. `batchSize` - number of `Meter` to include in a single payload sent to the backend. The default is 10,000.
+1. `url` - The address to which metrics are published. Environment variables `OTEL_EXPORTER_OTLP_METRICS_ENDPOINT` and `OTEL_EXPORTER_OTLP_ENDPOINT` are also supported in the default implementation. If a value is not provided, it defaults to `http://localhost:4318/v1/metrics`
+2. `batchSize` - number of ``Meter``s to include in a single payload sent to the backend. The default is 10,000.
 3. `aggregationTemporality` - https://opentelemetry.io/docs/specs/otel/metrics/data-model/#temporality[Aggregation temporality, window=_blank] determines how the additive quantities are expressed, in relation to time. The environment variable `OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE` is supported by the default implementation. The supported values are `cumulative` or `delta`. Defaults to `cumulative`.
 4. `headers` - Additional headers to send with exported metrics. This can be used for authorization headers. By default, headers are loaded from the config. If that is not set, they can be taken from the environment variables `OTEL_EXPORTER_OTLP_HEADERS` and `OTEL_EXPORTER_OTLP_METRICS_HEADERS`. If a header is set in both the environmental variables, the header in the latter overrides the former.
 5. `step` - the interval at which metrics will be published. The environment variable `OTEL_METRIC_EXPORT_INTERVAL` is supported by the default implementation. If a value is not provided, defaults to 1 minute.
@@ -65,6 +65,27 @@ management:
 |===
 
 If this config is empty, resource attributes are loaded from the `OTEL_RESOURCE_ATTRIBUTES` environmental variable. You can override `service.name` by setting the `OTEL_SERVICE_NAME` environmental variable, and this takes precedence over other configs.
+
+== Customize metrics sender
+
+The `OtlpMeterRegistry` has an `OtlpMetricsSender` abstraction for sending batches of metrics in OTLP protobuf format.
+
+By default, metrics from the OTLP registry are sent via HTTP to the URL specified by `OtlpConfig#url` using an `HttpUrlConnectionSender`.
+You may use a different `HttpSender` implementation by creating and configuring an instance of `OtlpHttpMetricsSender` such as in the following example using the `OkHttpSender` instead of the default `HttpUrlConnectionSender`:
+
+[source,java,subs=+attributes]
+-----
+include::{include-java}/metrics/OtlpMeterRegistryCustomizationTest.java[tags=customizeHttpSender, indent=0]
+-----
+
+You can also provide a custom implementation of `OtlpMetricsSender` that does not use `HttpSender` at all. `OtlpConfig#url` will be used as the address when the sender is called in the `OtlpMeterRegistry` `publish` method.
+For instance, if you made a gRPC implementation, you could configure it in the following way.
+Micrometer does not currently provide a gRPC implementation of `OtlpMetricsSender`.
+
+[source,java,subs=+attributes]
+-----
+include::{include-java}/metrics/OtlpMeterRegistryCustomizationTest.java[tags=customGrpcSender, indent=0]
+-----
 
 == Supported metrics
 https://opentelemetry.io/docs/specs/otel/metrics/data-model/#metric-points[Metric points, window=_blank] define the different data points that are supported in OTLP. Micrometer supports exporting the below data points in OTLP format,
@@ -125,14 +146,17 @@ Micrometer `Timer` and `DistributionSummary` support configuring xref:/concepts/
 | publishPercentiles and serviceLevelObjectives
 | Histogram
 |===
-__* The configuration `histogramFlavor` determines whether the OTLP DataPoint is a Histogram/Exponential Histogram.__
+__* The configuration `histogramFlavorPerMeter` and `histogramFlavor` determine whether the OTLP DataPoint is a Histogram/Exponential Histogram.__
 
-`OtlpMeterRegistry` supports 2 types of Histogram implementations (1.Explicit Bucket Histogram (or simply called Histogram), 2. Exponential Histogram) when `publishPercentileHistogram` is configured. The choice is chosen by setting `histogramFlavor` in `OtlpConfig` used by registry. When the implementation is exponential histogram, it also supports 2 additional properties
+`OtlpMeterRegistry` supports 2 types of Histogram implementations (1.Explicit Bucket Histogram (or simply called Histogram), 2. Exponential Histogram) when `publishPercentileHistogram` is configured.
+The type is determined by `histogramFlavorPerMeter` and `histogramFlavor` in `OtlpConfig` used by the registry.
+When the implementation is the exponential histogram, additional configuration applies:
 
-1. maxScale used to cap the maximum https://opentelemetry.io/docs/specs/otel/metrics/data-model/#exponential-scale[scale, window=_blank] used by the Exponential Histogram (defaults to 20).
-2. maxBuckets determines the maximum number of https://opentelemetry.io/docs/specs/otel/metrics/data-model/#exponential-buckets[buckets, window=_blank] to be used for exponential histograms (defaults to 160).
+1. `maxScale` used to cap the maximum https://opentelemetry.io/docs/specs/otel/metrics/data-model/#exponential-scale[scale, window=_blank] used by the Exponential Histogram (defaults to 20).
+2. `maxBuckets` determines the maximum number of https://opentelemetry.io/docs/specs/otel/metrics/data-model/#exponential-buckets[buckets, window=_blank] to be used for exponential histograms (defaults to 160).
+3. `maxBucketsPerMeter` overrides `maxBuckets` for specific meter names, giving more fine-grained configurability.
 
-Since Exponential Histogram cannot have custom SLO's specified, explicit bucket histogram is used whenever `serviceLevelObjectives` are added.
+Since Exponential Histogram cannot have custom SLO's specified, an explicit bucket histogram is used whenever `serviceLevelObjectives` are configured.
 
 ===  Configuration with Spring Boot
 If you use Spring Boot, you can use the https://docs.spring.io/spring-boot/docs/current/reference/htmlsingle/#actuator.metrics.customizing.per-meter-properties[per-meter properties, window=_blank] to configure this behavior.

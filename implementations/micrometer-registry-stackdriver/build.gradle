@@ -8,8 +8,23 @@ dependencies {
         exclude group: 'com.google.guava', module: 'listenablefuture'
     }
     api libs.googleOauth2Http
-    implementation 'org.slf4j:slf4j-api'
-    compileOnly 'ch.qos.logback:logback-classic'
+    implementation libs.slf4jApi
+    compileOnly libs.logback12
+    testRuntimeOnly libs.logback12
+    // needed for extending TimeWindowPercentileHistogram in StackdriverHistogramUtil
+    compileOnly libs.hdrhistogram
 
     testImplementation project(':micrometer-test')
+}
+
+test {
+    useJUnitPlatform {
+        excludeTags 'gcp-it'
+    }
+}
+
+tasks.register("stackdriverTest", Test) {
+    useJUnitPlatform {
+        includeTags 'gcp-it'
+    }
 }

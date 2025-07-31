@@ -49,7 +49,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class KafkaClientMetricsIntegrationTest {
 
     @Container
-    private KafkaContainer kafkaContainer = new KafkaContainer(DockerImageName.parse("confluentinc/cp-kafka:5.5.1"));
+    private KafkaContainer kafkaContainer = new KafkaContainer(DockerImageName.parse("confluentinc/cp-kafka:7.9.0"));
 
     @Test
     void shouldManageProducerAndConsumerMetrics() {
@@ -68,7 +68,7 @@ class KafkaClientMetricsIntegrationTest {
         // end::producer_setup[]
 
         int producerMetrics = registry.getMeters().size();
-        assertThat(registry.getMeters()).hasSizeGreaterThan(0);
+        assertThat(registry.getMeters()).isNotEmpty();
         assertThat(registry.getMeters()).extracting(m -> m.getId().getTag("kafka.version")).allMatch(v -> !v.isEmpty());
 
         // tag::consumer_setup[]

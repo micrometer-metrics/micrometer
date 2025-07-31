@@ -4,13 +4,13 @@ dependencies {
     api project(":micrometer-core")
 
     testImplementation project(":micrometer-test")
-    testImplementation 'ru.lanwen.wiremock:wiremock-junit5'
-    testImplementation 'com.github.tomakehurst:wiremock-jre8-standalone'
+    testImplementation libs.wiremockJunit5
+    testImplementation libs.wiremock
     testImplementation project(":micrometer-observation-test")
 }
 
 java {
-    targetCompatibility = 11
+    targetCompatibility = JavaVersion.VERSION_11
 }
 
 tasks.withType(JavaCompile).configureEach {

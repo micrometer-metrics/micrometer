@@ -24,6 +24,7 @@ import io.micrometer.core.ipc.http.HttpSender;
 import io.micrometer.newrelic.NewRelicMeterRegistryTest.MockNewRelicAgent.MockNewRelicInsights;
 import org.junit.jupiter.api.Test;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -612,7 +613,7 @@ class NewRelicMeterRegistryTest {
 
         apiProvider.sendEvents(apiProvider.writeGauge(gauge));
 
-        assertThat(new String(mockHttpClient.getRequest().getEntity())).contains(
+        assertThat(new String(mockHttpClient.getRequest().getEntity(), StandardCharsets.UTF_8)).contains(
                 "{\"eventType\":\"MicrometerSample\",\"value\":1,\"metricName\":\"myGauge\",\"metricType\":\"GAUGE\"}");
 
         // test meterNameEventTypeEnabledConfig = true
@@ -624,7 +625,7 @@ class NewRelicMeterRegistryTest {
 
         apiProvider.sendEvents(apiProvider.writeGauge(gauge));
 
-        assertThat(new String(mockHttpClient.getRequest().getEntity()))
+        assertThat(new String(mockHttpClient.getRequest().getEntity(), StandardCharsets.UTF_8))
             .contains("{\"eventType\":\"myGauge2\",\"value\":1}");
     }
 
@@ -679,7 +680,7 @@ class NewRelicMeterRegistryTest {
         registry.publish();
 
         // should send a batch of multiple in one json payload
-        assertThat(new String(mockHttpClient.getRequest().getEntity())).contains(
+        assertThat(new String(mockHttpClient.getRequest().getEntity(), StandardCharsets.UTF_8)).contains(
                 "[{\"eventType\":\"MicrometerSample\",\"value\":2,\"metricName\":\"otherGauge\",\"metricType\":\"GAUGE\"},"
                         + "{\"eventType\":\"MicrometerSample\",\"value\":1,\"metricName\":\"myGauge\",\"metricType\":\"GAUGE\",\"theTag\":\"theValue\"}]");
     }

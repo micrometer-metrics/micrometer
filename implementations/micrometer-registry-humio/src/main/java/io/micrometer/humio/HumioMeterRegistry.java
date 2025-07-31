@@ -243,14 +243,14 @@ public class HumioMeterRegistry extends StepMeterRegistry {
         // VisibleForTesting
         String writeTimer(Timer timer) {
             HistogramSnapshot snap = timer.takeSnapshot();
-            return writeEvent(timer, event("count", snap.count()), event("sum", snap.total(getBaseTimeUnit())),
+            return writeEvent(timer, event("count", (double) snap.count()), event("sum", snap.total(getBaseTimeUnit())),
                     event("avg", snap.mean(getBaseTimeUnit())), event("max", snap.max(getBaseTimeUnit())));
         }
 
         // VisibleForTesting
         String writeSummary(DistributionSummary summary) {
             HistogramSnapshot snap = summary.takeSnapshot();
-            return writeEvent(summary, event("count", snap.count()), event("sum", snap.total()),
+            return writeEvent(summary, event("count", (double) snap.count()), event("sum", snap.total()),
                     event("avg", snap.mean()), event("max", snap.max()));
         }
 

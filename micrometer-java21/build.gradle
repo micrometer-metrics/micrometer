@@ -8,9 +8,8 @@ if (!javaLanguageVersion.canCompileOrRun(21)) {
 dependencies {
     api project(':micrometer-core')
 
-    testImplementation 'org.junit.jupiter:junit-jupiter'
-    testImplementation 'org.assertj:assertj-core'
-    testImplementation 'org.awaitility:awaitility'
+    testImplementation libs.assertj
+    testImplementation libs.awaitility
 }
 
 java {
@@ -18,23 +17,38 @@ java {
 }
 
 tasks.withType(JavaCompile).configureEach {
-    sourceCompatibility = JavaVersion.VERSION_21
-    targetCompatibility = JavaVersion.VERSION_21
+    sourceCompatibility = 21
+    targetCompatibility = 21
     options.release = 21
 }
 
-task reflectiveTests(type: Test) {
+tasks.register('jdk24Test', Test) {
+    useJUnitPlatform {
+        includeTags 'jdk24'
+    }
+
+    javaLauncher = javaToolchains.launcherFor {
+        languageVersion = JavaLanguageVersion.of(24)
+    }
+}
+
+tasks.register('reflectiveTests', Test) {
     useJUnitPlatform {
         includeTags 'reflective'
     }
 
-    // This hack is needed since VirtualThreadMetricsReflectiveTests utilizes reflection against java.lang, see its javadoc
-    jvmArgs += ['--add-opens', 'java.base/java.lang=ALL-UNNAMED']
+    // This hack is needed for the following tests:
+    // - VirtualThreadMetricsReflectiveTests utilizes reflection against java.lang.
+    // - ExecutorServiceMetricsReflectiveTests utilizes reflection against java.util.concurrent.
+    jvmArgs += [
+            '--add-opens', 'java.base/java.lang=ALL-UNNAMED',
+            '--add-opens', 'java.base/java.util.concurrent=ALL-UNNAMED'
+    ]
 }
 
 test {
     dependsOn reflectiveTests
     useJUnitPlatform {
-        excludeTags 'reflective'
+        excludeTags 'reflective', 'jdk24'
     }
 }

@@ -27,9 +27,9 @@ import io.micrometer.core.instrument.util.TimeUtils;
 
 import java.util.*;
 import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.ConcurrentLinkedDeque;
-import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
@@ -37,18 +37,25 @@ import java.util.stream.StreamSupport;
 public class DefaultLongTaskTimer extends AbstractMeter implements LongTaskTimer {
 
     /**
-     * Preferring {@link ConcurrentLinkedDeque} over {@link CopyOnWriteArrayList} here
+     * Preferring {@link ConcurrentSkipListSet} over other concurrent collections
      * because...
      * <p>
      * Retrieval of percentile values will be O(N) but starting/stopping tasks will be
-     * O(1). Starting/stopping tasks happen in the same thread as the main application
-     * code, where publishing generally happens in a separate thread. Also, shipping
-     * client-side percentiles should be relatively uncommon.
+     * O(log(N)). Starting/stopping tasks happen in the same thread as the main
+     * application code, where publishing generally happens in a separate thread. Also,
+     * shipping client-side percentiles should be relatively uncommon.
+     * <p>
+     * Tasks are naturally ordered at time of insertion, but task completion/removal can
+     * happen out-of-order, that causes removal of tasks from the middle of the list. A
+     * queue would provide O(1) insertion, but O(N) removal in average. A skip-list
+     * provides O(log(N)) average across all tasks.
      * <p>
      * Histogram creation is O(N) for both the queue and list options, because we have to
      * consider which bucket each active task belongs.
      */
-    private final Deque<SampleImpl> activeTasks = new ConcurrentLinkedDeque<>();
+    private final NavigableSet<SampleImpl> activeTasks = new ConcurrentSkipListSet<>();
+
+    private final AtomicInteger counter = new AtomicInteger();
 
     private final Clock clock;
 
@@ -91,9 +98,25 @@ public class DefaultLongTaskTimer extends AbstractMeter implements LongTaskTimer
 
     @Override
     public Sample start() {
-        SampleImpl sample = new SampleImpl();
-        activeTasks.add(sample);
+        long startTime = clock.monotonicTime();
+        SampleImpl sample = new SampleImpl(startTime);
+        if (!activeTasks.add(sample)) {
+            sample = new SampleImplCounted(startTime, nextNonZeroCounter());
+            activeTasks.add(sample);
+        }
         return sample;
+    }
+
+    private int nextNonZeroCounter() {
+        int nextCount;
+        while ((nextCount = counter.incrementAndGet()) == 0) {
+        }
+        return nextCount;
+    }
+
+    // @VisibleForTesting
+    void setCounter(int newCounter) {
+        counter.set(newCounter);
     }
 
     @Override
@@ -103,13 +126,17 @@ public class DefaultLongTaskTimer extends AbstractMeter implements LongTaskTimer
         for (SampleImpl task : activeTasks) {
             sum += now - task.startTime();
         }
-        return TimeUtils.nanosToUnit(sum, unit);
+        return TimeUtils.nanosToUnit((double) sum, unit);
     }
 
     @Override
     public double max(TimeUnit unit) {
-        Sample oldest = activeTasks.peek();
-        return oldest == null ? 0.0 : oldest.duration(unit);
+        try {
+            return activeTasks.first().duration(unit);
+        }
+        catch (NoSuchElementException e) {
+            return 0.0;
+        }
     }
 
     @Override
@@ -215,14 +242,18 @@ public class DefaultLongTaskTimer extends AbstractMeter implements LongTaskTimer
                 (ps, scaling) -> ps.print("Summary output for LongTaskTimer histograms is not supported."));
     }
 
-    class SampleImpl extends Sample {
+    class SampleImpl extends Sample implements Comparable<SampleImpl> {
 
         private final long startTime;
 
         private volatile boolean stopped;
 
-        private SampleImpl() {
-            this.startTime = clock.monotonicTime();
+        private SampleImpl(long startTime) {
+            this.startTime = startTime;
+        }
+
+        int counter() {
+            return 0;
         }
 
         @Override
@@ -235,7 +266,7 @@ public class DefaultLongTaskTimer extends AbstractMeter implements LongTaskTimer
 
         @Override
         public double duration(TimeUnit unit) {
-            return stopped ? -1 : TimeUtils.nanosToUnit(clock.monotonicTime() - startTime, unit);
+            return stopped ? -1 : TimeUtils.nanosToUnit((double) (clock.monotonicTime() - startTime), unit);
         }
 
         private long startTime() {
@@ -246,7 +277,43 @@ public class DefaultLongTaskTimer extends AbstractMeter implements LongTaskTimer
         public String toString() {
             double durationInNanoseconds = duration(TimeUnit.NANOSECONDS);
             return "SampleImpl{" + "duration(seconds)=" + TimeUtils.nanosToUnit(durationInNanoseconds, TimeUnit.SECONDS)
-                    + ", " + "duration(nanos)=" + durationInNanoseconds + ", " + "startTimeNanos=" + startTime + '}';
+                    + ", duration(nanos)=" + durationInNanoseconds + ", startTimeNanos=" + startTime + '}';
+        }
+
+        @Override
+        public int compareTo(DefaultLongTaskTimer.SampleImpl that) {
+            if (this == that) {
+                return 0;
+            }
+            int startCompare = Long.compare(this.startTime, that.startTime);
+            if (startCompare == 0) {
+                return Integer.compare(this.counter(), that.counter());
+            }
+            return startCompare;
+        }
+
+    }
+
+    class SampleImplCounted extends SampleImpl {
+
+        private final int counter;
+
+        private SampleImplCounted(long startTime, int counter) {
+            super(startTime);
+            this.counter = counter;
+        }
+
+        @Override
+        int counter() {
+            return counter;
+        }
+
+        @Override
+        public String toString() {
+            double durationInNanoseconds = duration(TimeUnit.NANOSECONDS);
+            return "SampleImplCounted{" + "duration(seconds)="
+                    + TimeUtils.nanosToUnit(durationInNanoseconds, TimeUnit.SECONDS) + ", duration(nanos)="
+                    + durationInNanoseconds + ", startTimeNanos=" + super.startTime + ", counter=" + this.counter + '}';
         }
 
     }

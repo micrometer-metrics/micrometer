@@ -201,10 +201,18 @@ class ObservationContextAssertTests {
         observation.highCardinalityKeyValue("high", "bar");
 
         thenThrownBy(() -> assertThat(context).hasKeyValuesCount(1)).isInstanceOf(AssertionError.class)
-            .hasMessage("Observation expected to have <1> keys but has <2>.");
+            .hasMessage("Observation expected to have <1> keys but has <2>.")
+            .isInstanceOfSatisfying(AssertionFailedError.class, error -> {
+                then(error.getActual().getStringRepresentation()).isEqualTo("2");
+                then(error.getExpected().getStringRepresentation()).isEqualTo("1");
+            });
 
         thenThrownBy(() -> assertThat(context).hasKeyValuesCount(3)).isInstanceOf(AssertionError.class)
-            .hasMessage("Observation expected to have <3> keys but has <2>.");
+            .hasMessage("Observation expected to have <3> keys but has <2>.")
+            .isInstanceOfSatisfying(AssertionFailedError.class, error -> {
+                then(error.getActual().getStringRepresentation()).isEqualTo("2");
+                then(error.getExpected().getStringRepresentation()).isEqualTo("3");
+            });
     }
 
     @Test
@@ -414,7 +422,11 @@ class ObservationContextAssertTests {
     void should_throw_exception_when_map_entry_missing() {
         context.put("foo", "bar");
 
-        thenThrownBy(() -> assertThat(context).hasMapEntry("foo", "baz")).isInstanceOf(AssertionError.class);
+        thenThrownBy(() -> assertThat(context).hasMapEntry("foo", "baz"))
+            .isInstanceOfSatisfying(AssertionFailedError.class, error -> {
+                then(error.getActual().getStringRepresentation()).isEqualTo("bar");
+                then(error.getExpected().getStringRepresentation()).isEqualTo("baz");
+            });
     }
 
     @Test

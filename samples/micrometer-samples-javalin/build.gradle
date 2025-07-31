@@ -8,7 +8,7 @@ dependencies {
     implementation project(":micrometer-jetty11")
 
     implementation libs.javalin
-    implementation 'ch.qos.logback:logback-classic'
+    implementation libs.logback12
 }
 
 java {

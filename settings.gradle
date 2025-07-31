@@ -5,9 +5,9 @@ pluginManagement {
 }
 
 plugins {
-    id 'com.gradle.develocity' version '3.18.1'
-    id 'io.spring.develocity.conventions' version '0.0.22'
-    id 'org.gradle.toolchains.foojay-resolver-convention' version '0.8.0'
+    id 'com.gradle.develocity' version '3.19.2'
+    id 'io.spring.develocity.conventions' version '0.0.23'
+    id 'org.gradle.toolchains.foojay-resolver-convention' version '0.10.0'
 }
 
 rootProject.name = 'micrometer'
@@ -26,7 +26,7 @@ buildCache {
 
 include 'micrometer-commons', 'micrometer-core', 'micrometer-observation'
 
-['core', 'boot2', 'boot2-reactive', 'spring-integration', 'hazelcast', 'hazelcast3', 'javalin', 'jersey3', 'jooq', 'kotlin', 'spring-framework6'].each { sample ->
+['core', 'hazelcast', 'javalin', 'jersey3', 'jooq', 'kotlin', 'spring-framework6'].each { sample ->
     include "micrometer-samples-$sample"
     project(":micrometer-samples-$sample").projectDir = new File(rootProject.projectDir, "samples/micrometer-samples-$sample")
 }

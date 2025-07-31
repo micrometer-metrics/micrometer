@@ -81,8 +81,10 @@ class DefaultExponentialHistogramSnapShot implements ExponentialHistogramSnapSho
     }
 
     static ExponentialHistogramSnapShot getEmptySnapshotForScale(int scale) {
-        return emptySnapshotCache.computeIfAbsent(scale, key -> new DefaultExponentialHistogramSnapShot(key, 0, 0,
-                EMPTY_EXPONENTIAL_BUCKET, EMPTY_EXPONENTIAL_BUCKET));
+        synchronized (emptySnapshotCache) {
+            return emptySnapshotCache.computeIfAbsent(scale, key -> new DefaultExponentialHistogramSnapShot(key, 0, 0,
+                    EMPTY_EXPONENTIAL_BUCKET, EMPTY_EXPONENTIAL_BUCKET));
+        }
     }
 
     @Override

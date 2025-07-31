@@ -1,7 +1,7 @@
 dependencies {
     api project(':micrometer-core')
 
-    implementation 'org.slf4j:slf4j-api'
+    implementation libs.slf4jApi
 
     testImplementation project(':micrometer-test')
     testImplementation libs.mockitoCore5

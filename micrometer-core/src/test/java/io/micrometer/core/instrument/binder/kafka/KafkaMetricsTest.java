@@ -21,6 +21,8 @@ import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import io.micrometer.core.testsupport.system.CapturedOutput;
+import io.micrometer.core.testsupport.system.OutputCaptureExtension;
 import org.apache.kafka.common.Metric;
 import org.apache.kafka.common.MetricName;
 import org.apache.kafka.common.metrics.KafkaMetric;
@@ -29,6 +31,7 @@ import org.apache.kafka.common.metrics.stats.Value;
 import org.apache.kafka.common.utils.Time;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -42,6 +45,7 @@ import java.util.function.Supplier;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
+@ExtendWith(OutputCaptureExtension.class)
 class KafkaMetricsTest {
 
     private KafkaMetrics kafkaMetrics;
@@ -286,7 +290,7 @@ class KafkaMetricsTest {
 
     @Issue("#2212")
     @Test
-    void shouldRemoveMeterWithLessTagsWithMultipleClients() {
+    void shouldRemoveMeterWithLessTagsWithMultipleClients(CapturedOutput output) {
         // Given
         AtomicReference<Map<MetricName, KafkaMetric>> metrics = new AtomicReference<>(new LinkedHashMap<>());
         Supplier<Map<MetricName, ? extends Metric>> supplier = () -> metrics.updateAndGet(map -> {
@@ -349,6 +353,8 @@ class KafkaMetricsTest {
         registry.getMeters()
             .forEach(meter -> assertThat(meter.getId().getTags()).extracting(Tag::getKey)
                 .containsOnly("key0", "key1", "client.id", "kafka.version"));
+
+        assertThat(output).doesNotContain("This Gauge has been already registered");
     }
 
     @Issue("#2726")

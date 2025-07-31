@@ -13,7 +13,6 @@ dependencies {
     implementation project(':micrometer-core')
     implementation project(':micrometer-observation')
 
-    testImplementation libs.junitJupiter
     testImplementation libs.assertj
 }
 

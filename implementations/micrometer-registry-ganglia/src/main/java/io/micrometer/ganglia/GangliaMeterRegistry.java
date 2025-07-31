@@ -32,6 +32,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.Locale;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
@@ -134,7 +135,7 @@ public class GangliaMeterRegistry extends StepMeterRegistry {
 
     private void announceMeter(Meter meter) {
         for (Measurement measurement : meter.measure()) {
-            announce(meter, measurement.getValue(), measurement.getStatistic().toString().toLowerCase());
+            announce(meter, measurement.getValue(), measurement.getStatistic().toString().toLowerCase(Locale.ROOT));
         }
     }
 
@@ -159,7 +160,7 @@ public class GangliaMeterRegistry extends StepMeterRegistry {
 
     private void announceSummary(DistributionSummary summary) {
         HistogramSnapshot snapshot = summary.takeSnapshot();
-        announce(summary, snapshot.count(), "count");
+        announce(summary, (double) snapshot.count(), "count");
         announce(summary, snapshot.total(), "sum");
         announce(summary, snapshot.mean(), "avg");
         announce(summary, snapshot.max(), "max");
@@ -167,7 +168,7 @@ public class GangliaMeterRegistry extends StepMeterRegistry {
 
     private void announceTimer(Timer timer) {
         HistogramSnapshot snapshot = timer.takeSnapshot();
-        announce(timer, snapshot.count(), "count");
+        announce(timer, (double) snapshot.count(), "count");
         announce(timer, snapshot.total(getBaseTimeUnit()), "sum");
         announce(timer, snapshot.mean(getBaseTimeUnit()), "avg");
         announce(timer, snapshot.max(getBaseTimeUnit()), "max");

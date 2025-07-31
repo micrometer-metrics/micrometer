@@ -52,8 +52,6 @@ import io.micrometer.newrelic.NewRelicConfig;
 import io.micrometer.newrelic.NewRelicMeterRegistry;
 import io.micrometer.prometheusmetrics.PrometheusConfig;
 import io.micrometer.prometheusmetrics.PrometheusMeterRegistry;
-import io.micrometer.signalfx.SignalFxConfig;
-import io.micrometer.signalfx.SignalFxMeterRegistry;
 import io.micrometer.stackdriver.StackdriverConfig;
 import io.micrometer.stackdriver.StackdriverMeterRegistry;
 import io.micrometer.statsd.StatsdConfig;
@@ -64,6 +62,7 @@ import io.micrometer.wavefront.WavefrontMeterRegistry;
 
 import java.io.*;
 import java.net.InetSocketAddress;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 
 public class SampleRegistries {
@@ -118,11 +117,11 @@ public class SampleRegistries {
                 String response = prometheusRegistry.scrape();
                 httpExchange.sendResponseHeaders(200, response.length());
                 OutputStream os = httpExchange.getResponseBody();
-                os.write(response.getBytes());
+                os.write(response.getBytes(StandardCharsets.UTF_8));
                 os.close();
             });
 
-            new Thread(server::start).run();
+            new Thread(server::start).start();
         }
         catch (IOException e) {
             throw new RuntimeException(e);
@@ -349,26 +348,6 @@ public class SampleRegistries {
             @Override
             public String apiKey() {
                 return apiKey;
-            }
-
-            @Override
-            public Duration step() {
-                return Duration.ofSeconds(10);
-            }
-
-            @Override
-            @Nullable
-            public String get(String k) {
-                return null;
-            }
-        }, Clock.SYSTEM);
-    }
-
-    public static SignalFxMeterRegistry signalFx(String accessToken) {
-        return new SignalFxMeterRegistry(new SignalFxConfig() {
-            @Override
-            public String accessToken() {
-                return accessToken;
             }
 
             @Override

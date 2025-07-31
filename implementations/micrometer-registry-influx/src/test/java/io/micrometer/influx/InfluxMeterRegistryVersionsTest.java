@@ -29,12 +29,13 @@ import ru.lanwen.wiremock.ext.WiremockResolver.Wiremock;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
  * Unit tests to check compatibility of {@link InfluxMeterRegistry} with InfluxDB v1 and
@@ -386,7 +387,7 @@ class InfluxMeterRegistryVersionsTest {
         InfluxMeterRegistry registry = new InfluxMeterRegistry(config, new MockClock());
 
         Counter.builder("my.counter")
-            .baseUnit(TimeUnit.MICROSECONDS.name().toLowerCase())
+            .baseUnit(TimeUnit.MICROSECONDS.name().toLowerCase(Locale.ROOT))
             .description("metric description")
             .register(registry)
             .increment(Math.PI);

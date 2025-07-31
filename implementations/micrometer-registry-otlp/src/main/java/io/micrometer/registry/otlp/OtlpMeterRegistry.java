@@ -16,14 +16,13 @@
 package io.micrometer.registry.otlp;
 
 import io.micrometer.common.lang.Nullable;
+import io.micrometer.common.util.StringUtils;
 import io.micrometer.common.util.internal.logging.InternalLogger;
 import io.micrometer.common.util.internal.logging.InternalLoggerFactory;
-import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.distribution.*;
-import io.micrometer.core.instrument.distribution.Histogram;
 import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import io.micrometer.core.instrument.internal.DefaultGauge;
 import io.micrometer.core.instrument.internal.DefaultLongTaskTimer;
@@ -36,14 +35,14 @@ import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.util.MeterPartition;
 import io.micrometer.core.instrument.util.NamedThreadFactory;
 import io.micrometer.core.instrument.util.TimeUtils;
-import io.micrometer.core.ipc.http.HttpSender;
 import io.micrometer.core.ipc.http.HttpUrlConnectionSender;
 import io.micrometer.registry.otlp.internal.CumulativeBase2ExponentialHistogram;
 import io.micrometer.registry.otlp.internal.DeltaBase2ExponentialHistogram;
 import io.opentelemetry.proto.collector.metrics.v1.ExportMetricsServiceRequest;
 import io.opentelemetry.proto.common.v1.AnyValue;
 import io.opentelemetry.proto.common.v1.KeyValue;
-import io.opentelemetry.proto.metrics.v1.*;
+import io.opentelemetry.proto.metrics.v1.ResourceMetrics;
+import io.opentelemetry.proto.metrics.v1.ScopeMetrics;
 import io.opentelemetry.proto.resource.v1.Resource;
 
 import java.time.Duration;
@@ -56,8 +55,7 @@ import java.util.function.ToDoubleFunction;
 import java.util.function.ToLongFunction;
 
 /**
- * Publishes meters in OTLP (OpenTelemetry Protocol) format. HTTP with Protobuf encoding
- * is the only option currently supported.
+ * Publishes meters in OTLP (OpenTelemetry Protocol) format.
  *
  * @author Tommy Ludwig
  * @author Lenin Jaganathan
@@ -83,15 +81,17 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
 
     private final OtlpConfig config;
 
-    private final HttpSender httpSender;
+    private final OtlpMetricsSender metricsSender;
+
+    private final HistogramFlavorPerMeterLookup histogramFlavorPerMeterLookup;
+
+    private final MaxBucketsPerMeterLookup maxBucketsPerMeterLookup;
 
     private final Resource resource;
 
     private final AggregationTemporality aggregationTemporality;
 
     private final TimeUnit baseTimeUnit;
-
-    private final String userAgentHeader;
 
     // Time when the last scheduled rollOver has started. Applicable only for delta
     // flavour.
@@ -109,29 +109,38 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
     }
 
     /**
-     * Create an {@code OtlpMeterRegistry} instance.
+     * Create an {@code OtlpMeterRegistry} instance with an HTTP metrics sender.
      * @param config config
      * @param clock clock
      * @param threadFactory thread factory
      * @since 1.14.0
      */
     public OtlpMeterRegistry(OtlpConfig config, Clock clock, ThreadFactory threadFactory) {
-        this(config, clock, threadFactory, new HttpUrlConnectionSender());
+        this(config, clock, threadFactory, new OtlpHttpMetricsSender(new HttpUrlConnectionSender()));
     }
 
-    // VisibleForTesting
-    // not public until we decide what we want to expose in public API
-    // HttpSender may not be a good idea if we will support a non-HTTP transport
-    OtlpMeterRegistry(OtlpConfig config, Clock clock, ThreadFactory threadFactory, HttpSender httpSender) {
+    private OtlpMeterRegistry(OtlpConfig config, Clock clock, ThreadFactory threadFactory,
+            OtlpMetricsSender metricsSender) {
         super(config, clock);
         this.config = config;
         this.baseTimeUnit = config.baseTimeUnit();
-        this.httpSender = httpSender;
+        this.metricsSender = metricsSender;
+        this.histogramFlavorPerMeterLookup = HistogramFlavorPerMeterLookup.DEFAULT;
+        this.maxBucketsPerMeterLookup = MaxBucketsPerMeterLookup.DEFAULT;
         this.resource = Resource.newBuilder().addAllAttributes(getResourceAttributes()).build();
         this.aggregationTemporality = config.aggregationTemporality();
-        this.userAgentHeader = getUserAgentHeader();
         config().namingConvention(NamingConvention.dot);
         start(threadFactory);
+    }
+
+    /**
+     * Construct an {@link OtlpMeterRegistry} using the Builder pattern.
+     * @param config config for the registry; see {@link OtlpConfig#DEFAULT}
+     * @return builder
+     * @since 1.15.0
+     */
+    public static Builder builder(OtlpConfig config) {
+        return new Builder(config);
     }
 
     @Override
@@ -178,18 +187,13 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
                             .build())
                         .build())
                     .build();
-                HttpSender.Request.Builder httpRequest = this.httpSender.post(this.config.url())
-                    .withHeader("User-Agent", this.userAgentHeader)
-                    .withContent("application/x-protobuf", request.toByteArray());
-                this.config.headers().forEach(httpRequest::withHeader);
-                HttpSender.Response response = httpRequest.send();
-                if (!response.isSuccessful()) {
-                    logger.warn(
-                            "Failed to publish metrics (context: {}). Server responded with HTTP status code {} and body {}",
-                            getConfigurationContext(), response.code(), response.body());
-                }
+
+                metricsSender.send(OtlpMetricsSender.Request.builder(request.toByteArray())
+                    .address(config.url())
+                    .headers(config.headers())
+                    .build());
             }
-            catch (Throwable e) {
+            catch (Exception e) {
                 logger.warn(String.format("Failed to publish metrics to OTLP receiver (context: %s)",
                         getConfigurationContext()), e);
             }
@@ -222,16 +226,19 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
             PauseDetector pauseDetector) {
         return isCumulative()
                 ? new OtlpCumulativeTimer(id, this.clock, distributionStatisticConfig, pauseDetector, getBaseTimeUnit(),
-                        config)
-                : new OtlpStepTimer(id, clock, distributionStatisticConfig, pauseDetector, getBaseTimeUnit(), config);
+                        getHistogram(id, distributionStatisticConfig, getBaseTimeUnit()))
+                : new OtlpStepTimer(id, clock, pauseDetector,
+                        getHistogram(id, distributionStatisticConfig, getBaseTimeUnit()), config);
     }
 
     @Override
     protected DistributionSummary newDistributionSummary(Meter.Id id,
             DistributionStatisticConfig distributionStatisticConfig, double scale) {
         return isCumulative()
-                ? new OtlpCumulativeDistributionSummary(id, this.clock, distributionStatisticConfig, scale, config)
-                : new OtlpStepDistributionSummary(id, clock, distributionStatisticConfig, scale, config);
+                ? new OtlpCumulativeDistributionSummary(id, clock, distributionStatisticConfig, scale,
+                        getHistogram(id, distributionStatisticConfig))
+                : new OtlpStepDistributionSummary(id, clock, scale, getHistogram(id, distributionStatisticConfig),
+                        config);
     }
 
     @Override
@@ -389,13 +396,12 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
         return attributes;
     }
 
-    static Histogram getHistogram(Clock clock, DistributionStatisticConfig distributionStatisticConfig,
-            OtlpConfig otlpConfig) {
-        return getHistogram(clock, distributionStatisticConfig, otlpConfig, null);
+    private Histogram getHistogram(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig) {
+        return getHistogram(id, distributionStatisticConfig, null);
     }
 
-    static Histogram getHistogram(final Clock clock, final DistributionStatisticConfig distributionStatisticConfig,
-            final OtlpConfig otlpConfig, @Nullable final TimeUnit baseTimeUnit) {
+    private Histogram getHistogram(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig,
+            @Nullable TimeUnit baseTimeUnit) {
         // While publishing to OTLP, we export either Histogram datapoint (Explicit
         // ExponentialBuckets
         // or Exponential) / Summary
@@ -404,21 +410,21 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
         // exporting of histograms over percentiles is preferred in OTLP.
         if (distributionStatisticConfig.isPublishingHistogram()) {
             if (HistogramFlavor.BASE2_EXPONENTIAL_BUCKET_HISTOGRAM
-                .equals(histogramFlavor(otlpConfig.histogramFlavor(), distributionStatisticConfig))) {
+                .equals(histogramFlavor(id, config, distributionStatisticConfig))) {
                 Double minimumExpectedValue = distributionStatisticConfig.getMinimumExpectedValueAsDouble();
                 if (minimumExpectedValue == null) {
                     minimumExpectedValue = 0.0;
                 }
 
-                return otlpConfig.aggregationTemporality() == AggregationTemporality.DELTA
-                        ? new DeltaBase2ExponentialHistogram(otlpConfig.maxScale(), otlpConfig.maxBucketCount(),
-                                minimumExpectedValue, baseTimeUnit, clock, otlpConfig.step().toMillis())
-                        : new CumulativeBase2ExponentialHistogram(otlpConfig.maxScale(), otlpConfig.maxBucketCount(),
+                return config.aggregationTemporality() == AggregationTemporality.DELTA
+                        ? new DeltaBase2ExponentialHistogram(config.maxScale(), getMaxBuckets(id), minimumExpectedValue,
+                                baseTimeUnit, clock, config.step().toMillis())
+                        : new CumulativeBase2ExponentialHistogram(config.maxScale(), getMaxBuckets(id),
                                 minimumExpectedValue, baseTimeUnit);
             }
 
             Histogram explicitBucketHistogram = getExplicitBucketHistogram(clock, distributionStatisticConfig,
-                    otlpConfig.aggregationTemporality(), otlpConfig.step().toMillis());
+                    config.aggregationTemporality(), config.step().toMillis());
             if (explicitBucketHistogram != null) {
                 return explicitBucketHistogram;
             }
@@ -430,9 +436,17 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
         return NoopHistogram.INSTANCE;
     }
 
-    static HistogramFlavor histogramFlavor(HistogramFlavor preferredHistogramFlavor,
-            DistributionStatisticConfig distributionStatisticConfig) {
+    private int getMaxBuckets(Meter.Id id) {
+        Integer maxBuckets = maxBucketsPerMeterLookup.getMaxBuckets(config.maxBucketsPerMeter(), id);
+        return (maxBuckets == null) ? config.maxBucketCount() : maxBuckets;
+    }
 
+    private HistogramFlavor histogramFlavor(Meter.Id id, OtlpConfig otlpConfig,
+            DistributionStatisticConfig distributionStatisticConfig) {
+        HistogramFlavor preferredHistogramFlavor = histogramFlavorPerMeterLookup
+            .getHistogramFlavor(otlpConfig.histogramFlavorPerMeter(), id);
+        preferredHistogramFlavor = preferredHistogramFlavor == null ? otlpConfig.histogramFlavor()
+                : preferredHistogramFlavor;
         final double[] serviceLevelObjectiveBoundaries = distributionStatisticConfig
             .getServiceLevelObjectiveBoundaries();
         if (distributionStatisticConfig.isPublishingHistogram()
@@ -492,11 +506,138 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
         return sloWithPositiveInf;
     }
 
-    private String getUserAgentHeader() {
-        if (this.getClass().getPackage().getImplementationVersion() == null) {
-            return "Micrometer-OTLP-Exporter-Java";
+    /**
+     * Overridable lookup mechanism for {@link HistogramFlavor}.
+     */
+    // VisibleForTesting
+    @FunctionalInterface
+    interface HistogramFlavorPerMeterLookup {
+
+        /**
+         * Default implementation.
+         */
+        HistogramFlavorPerMeterLookup DEFAULT = OtlpMeterRegistry::lookup;
+
+        /**
+         * Looks up the histogram flavor to use on a per-meter level. This will override
+         * the default {@link OtlpConfig#histogramFlavor()} for matching Meters.
+         * {@link OtlpConfig#histogramFlavorPerMeter()} provides the data while this
+         * method provides the logic for the lookup, and you can override them
+         * independently.
+         * @param perMeterMapping configured mapping data
+         * @param id the {@link Meter.Id} the {@link HistogramFlavor} is configured for
+         * @return the histogram flavor mapped to the {@link Meter.Id} or {@code null} if
+         * mapping is undefined
+         * @see OtlpConfig#histogramFlavorPerMeter()
+         * @see OtlpConfig#histogramFlavor()
+         */
+        @Nullable
+        HistogramFlavor getHistogramFlavor(Map<String, HistogramFlavor> perMeterMapping, Meter.Id id);
+
+    }
+
+    /**
+     * Overridable lookup mechanism for max bucket count. This has no effect on a meter if
+     * it does not have an exponential bucket histogram configured.
+     */
+    // VisibleForTesting
+    @FunctionalInterface
+    interface MaxBucketsPerMeterLookup {
+
+        /**
+         * Default implementation.
+         */
+        MaxBucketsPerMeterLookup DEFAULT = OtlpMeterRegistry::lookup;
+
+        /**
+         * Looks up the max bucket count to use on a per-meter level. This will override
+         * the default {@link OtlpConfig#maxBucketCount()} for matching Meters.
+         * {@link OtlpConfig#maxBucketsPerMeter()} provides the data while this method
+         * provides the logic for the lookup, and you can override them independently.
+         * This has no effect on a meter if it does not have an exponential bucket
+         * histogram configured.
+         * @param perMeterMapping configured mapping data
+         * @param id the {@link Meter.Id} the max bucket count is configured for
+         * @return the max bucket count mapped to the {@link Meter.Id} or {@code null} if
+         * the mapping is undefined
+         * @see OtlpConfig#maxBucketsPerMeter()
+         * @see OtlpConfig#maxBucketCount()
+         */
+        @Nullable
+        Integer getMaxBuckets(Map<String, Integer> perMeterMapping, Meter.Id id);
+
+    }
+
+    @Nullable
+    private static <T> T lookup(Map<String, T> values, Meter.Id id) {
+        if (values.isEmpty()) {
+            return null;
         }
-        return "Micrometer-OTLP-Exporter-Java/" + this.getClass().getPackage().getImplementationVersion();
+        return doLookup(values, id);
+    }
+
+    @Nullable
+    private static <T> T doLookup(Map<String, T> values, Meter.Id id) {
+        String name = id.getName();
+        while (StringUtils.isNotEmpty(name)) {
+            T result = values.get(name);
+            if (result != null) {
+                return result;
+            }
+            int lastDot = name.lastIndexOf('.');
+            name = (lastDot != -1) ? name.substring(0, lastDot) : "";
+        }
+
+        return null;
+    }
+
+    /**
+     * Builder for {@link OtlpMeterRegistry}.
+     *
+     * @since 1.15.0
+     */
+    public static class Builder {
+
+        private final OtlpConfig otlpConfig;
+
+        private Clock clock = Clock.SYSTEM;
+
+        private ThreadFactory threadFactory = DEFAULT_THREAD_FACTORY;
+
+        private OtlpMetricsSender metricsSender;
+
+        private Builder(OtlpConfig otlpConfig) {
+            this.otlpConfig = otlpConfig;
+            this.metricsSender = new OtlpHttpMetricsSender(new HttpUrlConnectionSender());
+        }
+
+        /** Override the default clock. */
+        public Builder clock(Clock clock) {
+            this.clock = clock;
+            return this;
+        }
+
+        /** Override the default {@link ThreadFactory}. */
+        public Builder threadFactory(ThreadFactory threadFactory) {
+            this.threadFactory = threadFactory;
+            return this;
+        }
+
+        /**
+         * Provide your own custom metrics sender. This can be used to send OTLP metrics
+         * from OtlpMeterRegistry using different transports or clients than the default
+         * (HTTP using the HttpUrlConnectionSender). Encoding is in OTLP protobuf format.
+         * @see OtlpHttpMetricsSender
+         */
+        public Builder metricsSender(OtlpMetricsSender metricsSender) {
+            this.metricsSender = metricsSender;
+            return this;
+        }
+
+        public OtlpMeterRegistry build() {
+            return new OtlpMeterRegistry(otlpConfig, clock, threadFactory, metricsSender);
+        }
+
     }
 
 }

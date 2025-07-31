@@ -287,10 +287,12 @@ class MeterRegistryTest {
         // to the map because it would result in a memory leak with a high cardinality tag
         // that's otherwise limited in cardinality by a MeterFilter
         assertThat(registry._getPreFilterIdToMeterMap()).hasSize(1);
+        assertThat(registry._getMeterToPreFilterIdMap()).hasSize(1);
 
         assertThat(registry.remove(c1)).isSameAs(c2);
         assertThat(registry.getMeters()).isEmpty();
         assertThat(registry._getPreFilterIdToMeterMap()).isEmpty();
+        assertThat(registry._getMeterToPreFilterIdMap()).isEmpty();
     }
 
     @Test
@@ -318,6 +320,7 @@ class MeterRegistryTest {
         registry.remove(c1.getId());
         assertThat(registry.getMeters()).isEmpty();
         assertThat(registry._getPreFilterIdToMeterMap()).isEmpty();
+        assertThat(registry._getMeterToPreFilterIdMap()).isEmpty();
         assertThat(registry._getStalePreFilterIds()).isEmpty();
     }
 
@@ -331,6 +334,8 @@ class MeterRegistryTest {
         Meter.Id preFilterId = new Meter.Id("counter", Tags.of("secret", "value2"), null, null, Meter.Type.COUNTER);
         assertThat(registry.removeByPreFilterId(preFilterId)).isSameAs(c1).isSameAs(c2);
         assertThat(registry.getMeters()).isEmpty();
+        assertThat(registry._getPreFilterIdToMeterMap()).isEmpty();
+        assertThat(registry._getMeterToPreFilterIdMap()).isEmpty();
     }
 
     @Test

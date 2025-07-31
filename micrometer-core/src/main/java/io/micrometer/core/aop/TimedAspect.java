@@ -15,6 +15,7 @@
  */
 package io.micrometer.core.aop;
 
+import io.micrometer.common.KeyValue;
 import io.micrometer.common.lang.NonNullApi;
 import io.micrometer.common.lang.Nullable;
 import io.micrometer.common.util.internal.logging.WarnThenDebugLogger;
@@ -82,6 +83,7 @@ import java.util.function.Predicate;
  * @author Nejc Korasa
  * @author Jonatan Ivanov
  * @author Yanming Zhou
+ * @author Jeonggi Kim
  * @since 1.0.0
  */
 @Aspect
@@ -89,13 +91,13 @@ import java.util.function.Predicate;
 @Incubating(since = "1.0.0")
 public class TimedAspect {
 
-    private static final WarnThenDebugLogger joinPointTagsFunctionLogger = new WarnThenDebugLogger(TimedAspect.class);
+    private static final WarnThenDebugLogger WARN_THEN_DEBUG_LOGGER = new WarnThenDebugLogger(TimedAspect.class);
 
     private static final Predicate<ProceedingJoinPoint> DONT_SKIP_ANYTHING = pjp -> false;
 
     public static final String DEFAULT_METRIC_NAME = "method.timed";
 
-    public static final String DEFAULT_EXCEPTION_TAG_VALUE = "none";
+    public static final String DEFAULT_EXCEPTION_TAG_VALUE = KeyValue.NONE_VALUE;
 
     /**
      * Tag key for an exception.
@@ -175,7 +177,7 @@ public class TimedAspect {
                 return function.apply(pjp);
             }
             catch (Throwable t) {
-                joinPointTagsFunctionLogger
+                WARN_THEN_DEBUG_LOGGER
                     .log("Exception thrown from the tagsBasedOnJoinPoint function configured on TimedAspect.", t);
                 return Tags.empty();
             }
@@ -216,6 +218,7 @@ public class TimedAspect {
         return perform(pjp, timed, method);
     }
 
+    @Nullable
     private Object perform(ProceedingJoinPoint pjp, Timed timed, Method method) throws Throwable {
         final String metricName = timed.value().isEmpty() ? DEFAULT_METRIC_NAME : timed.value();
         final boolean stopWhenCompleted = CompletionStage.class.isAssignableFrom(method.getReturnType());
@@ -228,6 +231,7 @@ public class TimedAspect {
         }
     }
 
+    @Nullable
     private Object processWithTimer(ProceedingJoinPoint pjp, Timed timed, String metricName, boolean stopWhenCompleted)
             throws Throwable {
 
@@ -235,40 +239,51 @@ public class TimedAspect {
 
         if (stopWhenCompleted) {
             try {
-                return ((CompletionStage<?>) pjp.proceed()).whenComplete(
-                        (result, throwable) -> record(pjp, timed, metricName, sample, getExceptionTag(throwable)));
+                Object result = pjp.proceed();
+                if (result == null) {
+                    record(pjp, result, timed, metricName, sample, DEFAULT_EXCEPTION_TAG_VALUE);
+                    return result;
+                }
+                else {
+                    CompletionStage<?> stage = ((CompletionStage<?>) result);
+                    return stage.whenComplete((res, throwable) -> record(pjp, result, timed, metricName, sample,
+                            getExceptionTag(throwable)));
+                }
             }
             catch (Throwable e) {
-                record(pjp, timed, metricName, sample, e.getClass().getSimpleName());
+                record(pjp, null, timed, metricName, sample, e.getClass().getSimpleName());
                 throw e;
             }
         }
 
         String exceptionClass = DEFAULT_EXCEPTION_TAG_VALUE;
+        Object result = null;
         try {
-            return pjp.proceed();
+            result = pjp.proceed();
+            return result;
         }
         catch (Throwable e) {
             exceptionClass = e.getClass().getSimpleName();
             throw e;
         }
         finally {
-            record(pjp, timed, metricName, sample, exceptionClass);
+            record(pjp, result, timed, metricName, sample, exceptionClass);
         }
     }
 
-    private void record(ProceedingJoinPoint pjp, Timed timed, String metricName, Timer.Sample sample,
-            String exceptionClass) {
+    private void record(ProceedingJoinPoint pjp, @Nullable Object methodResult, Timed timed, String metricName,
+            Timer.Sample sample, String exceptionClass) {
         try {
-            sample.stop(recordBuilder(pjp, timed, metricName, exceptionClass).register(registry));
+            sample.stop(recordBuilder(pjp, methodResult, timed, metricName, exceptionClass).register(registry));
         }
         catch (Exception e) {
-            // ignoring on purpose
+            WARN_THEN_DEBUG_LOGGER.log("Failed to record.", e);
         }
     }
 
-    private Timer.Builder recordBuilder(ProceedingJoinPoint pjp, Timed timed, String metricName,
-            String exceptionClass) {
+    private Timer.Builder recordBuilder(ProceedingJoinPoint pjp, @Nullable Object methodResult, Timed timed,
+            String metricName, String exceptionClass) {
+        @SuppressWarnings("NullTernary")
         Timer.Builder builder = Timer.builder(metricName)
             .description(timed.description().isEmpty() ? null : timed.description())
             .tags(timed.extraTags())
@@ -283,6 +298,7 @@ public class TimedAspect {
 
         if (meterTagAnnotationHandler != null) {
             meterTagAnnotationHandler.addAnnotatedParameters(builder, pjp);
+            meterTagAnnotationHandler.addAnnotatedMethodResult(builder, pjp, methodResult);
         }
         return builder;
     }
@@ -300,6 +316,7 @@ public class TimedAspect {
         return throwable.getCause().getClass().getSimpleName();
     }
 
+    @Nullable
     private Object processWithLongTaskTimer(ProceedingJoinPoint pjp, Timed timed, String metricName,
             boolean stopWhenCompleted) throws Throwable {
 
@@ -307,8 +324,15 @@ public class TimedAspect {
 
         if (stopWhenCompleted) {
             try {
-                return ((CompletionStage<?>) pjp.proceed())
-                    .whenComplete((result, throwable) -> sample.ifPresent(this::stopTimer));
+                Object result = pjp.proceed();
+                if (result == null) {
+                    sample.ifPresent(this::stopTimer);
+                    return result;
+                }
+                else {
+                    CompletionStage<?> stage = ((CompletionStage<?>) result);
+                    return stage.whenComplete((res, throwable) -> sample.ifPresent(this::stopTimer));
+                }
             }
             catch (Throwable e) {
                 sample.ifPresent(this::stopTimer);

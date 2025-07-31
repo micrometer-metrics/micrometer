@@ -20,9 +20,8 @@ import io.micrometer.core.instrument.Tags;
 import org.glassfish.jersey.server.ContainerRequest;
 import org.glassfish.jersey.server.ContainerResponse;
 import org.glassfish.jersey.server.ExtendedUriInfo;
-import org.glassfish.jersey.server.internal.monitoring.RequestEventImpl.Builder;
+import org.glassfish.jersey.server.internal.monitoring.RequestEventImpl;
 import org.glassfish.jersey.server.monitoring.RequestEvent;
-import org.glassfish.jersey.server.monitoring.RequestEvent.Type;
 import org.glassfish.jersey.uri.UriTemplate;
 import org.junit.jupiter.api.Test;
 
@@ -106,7 +105,7 @@ class DefaultJerseyTagsProviderTest {
 
     private static RequestEvent event(Integer status, Exception exception, String baseUri,
             String... uriTemplateStrings) {
-        Builder builder = new Builder();
+        RequestEventImpl.Builder builder = new RequestEventImpl.Builder();
 
         ContainerRequest containerRequest = mock(ContainerRequest.class);
         when(containerRequest.getMethod()).thenReturn("GET");
@@ -128,7 +127,7 @@ class DefaultJerseyTagsProviderTest {
         when(extendedUriInfo.getMatchedTemplates()).thenReturn(uriTemplates);
         builder.setExtendedUriInfo(extendedUriInfo);
 
-        return builder.build(Type.FINISHED);
+        return builder.build(RequestEvent.Type.FINISHED);
     }
 
     private static Tag[] tagsFrom(String uri, int status, String exception, String outcome) {

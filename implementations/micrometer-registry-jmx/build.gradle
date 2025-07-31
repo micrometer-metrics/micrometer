@@ -1,8 +1,8 @@
 dependencies {
     api project(':micrometer-core')
 
-    api 'io.dropwizard.metrics:metrics-jmx'
+    api libs.dropwizardMetricsJmx
 
     testImplementation project(':micrometer-test')
-    testImplementation 'ch.qos.logback:logback-classic'
+    testImplementation libs.logback12
 }

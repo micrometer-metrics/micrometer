@@ -15,7 +15,11 @@
  */
 package io.micrometer.registry.otlp.internal;
 
-import static io.micrometer.registry.otlp.internal.ExponentialHistogramSnapShot.ExponentialBuckets.EMPTY_EXPONENTIAL_BUCKET;
+import io.micrometer.common.lang.Nullable;
+import io.micrometer.core.instrument.distribution.Histogram;
+import io.micrometer.core.instrument.distribution.HistogramSnapshot;
+import io.micrometer.core.instrument.util.TimeUtils;
+import io.micrometer.registry.otlp.internal.ExponentialHistogramSnapShot.ExponentialBuckets;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -24,11 +28,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.stream.Collectors;
 
-import io.micrometer.common.lang.Nullable;
-import io.micrometer.core.instrument.distribution.Histogram;
-import io.micrometer.core.instrument.distribution.HistogramSnapshot;
-import io.micrometer.core.instrument.util.TimeUtils;
-import io.micrometer.registry.otlp.internal.ExponentialHistogramSnapShot.ExponentialBuckets;
+import static io.micrometer.registry.otlp.internal.ExponentialHistogramSnapShot.ExponentialBuckets.EMPTY_EXPONENTIAL_BUCKET;
 
 /**
  * A ExponentialHistogram implementation that compresses bucket boundaries using an
@@ -148,7 +148,7 @@ public abstract class Base2ExponentialHistogram implements Histogram {
      */
     @Override
     public void recordLong(final long value) {
-        recordDouble(value);
+        recordDouble((double) value);
     }
 
     /**
@@ -167,15 +167,16 @@ public abstract class Base2ExponentialHistogram implements Histogram {
             zeroCount.increment();
             return;
         }
+        recordToHistogram(value);
+    }
 
+    private synchronized void recordToHistogram(final double value) {
         int index = base2IndexProvider.getIndexForValue(value);
         if (!circularCountHolder.increment(index, 1)) {
-            synchronized (this) {
-                int downScaleFactor = getDownScaleFactor(index);
-                downScale(downScaleFactor);
-                index = base2IndexProvider.getIndexForValue(value);
-                circularCountHolder.increment(index, 1);
-            }
+            int downScaleFactor = getDownScaleFactor(index);
+            downScale(downScaleFactor);
+            index = base2IndexProvider.getIndexForValue(value);
+            circularCountHolder.increment(index, 1);
         }
     }
 

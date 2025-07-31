@@ -1,0 +1,32 @@
+name: Release Train (for a single project)
+
+on:
+  workflow_dispatch:
+    inputs:
+      context_propagation_versions:
+        description: "[TRAIN] Comma separated list of context propagation versions (e.g. 1.0.0,1.1.0,1.1.0)"
+        required: false
+        default: ""
+      micrometer_versions:
+        description: "[TRAIN] Comma separated list of micrometer versions (e.g. 1.13.2,1.14.8,1.15.9)"
+        required: false
+        default: ""
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Single Project Release Train Tasks
+        uses: micrometer-metrics/micrometer-github-workflows@main
+        with:
+          gh_token: ${{ secrets.GH_ACTIONS_REPO_TOKEN }}
+          spring_release_gchat_webhook_url: ${{ secrets.SPRING_RELEASE_GCHAT_WEBHOOK_URL }}
+          bluesky_handle: ${{ secrets.BLUESKY_HANDLE }}
+          bluesky_password: ${{ secrets.BLUESKY_PASSWORD }}
+          circle_ci_token: ${{ secrets.CIRCLE_CI_TOKEN }}
+          context_propagation_versions: ${{ github.event.inputs.context_propagation_versions }}
+          micrometer_versions: ${{ github.event.inputs.micrometer_versions }}

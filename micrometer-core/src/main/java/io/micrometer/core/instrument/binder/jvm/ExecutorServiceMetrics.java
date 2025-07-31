@@ -28,7 +28,10 @@ import io.micrometer.core.instrument.internal.TimedExecutor;
 import io.micrometer.core.instrument.internal.TimedExecutorService;
 import io.micrometer.core.instrument.internal.TimedScheduledExecutorService;
 
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.*;
@@ -47,6 +50,15 @@ import static java.util.stream.Collectors.toSet;
  * {@link ExecutorService}, like {@link TimedExecutorService}. Make sure to pass the
  * underlying, unwrapped ExecutorService to this MeterBinder, if it is wrapped in another
  * type.
+ * <p>
+ * To use the following {@link ExecutorService} instances,
+ * {@literal --add-opens java.base/java.util.concurrent=ALL-UNNAMED} is required:
+ * <ul>
+ * <li>Executors.newSingleThreadScheduledExecutor()</li>
+ * <li>Executors.newSingleThreadExecutor()</li>
+ * <li>Executors.newThreadPerTaskExecutor()</li>
+ * <li>Executors.newVirtualThreadPerTaskExecutor()</li>
+ * </ul>
  *
  * @author Jon Schneider
  * @author Clint Checketts
@@ -55,6 +67,11 @@ import static java.util.stream.Collectors.toSet;
 @NonNullApi
 @NonNullFields
 public class ExecutorServiceMetrics implements MeterBinder {
+
+    private static final String CLASS_NAME_THREAD_PER_TASK_EXECUTOR = "java.util.concurrent.ThreadPerTaskExecutor";
+
+    @Nullable
+    private static final MethodHandle METHOD_HANDLE_THREAD_COUNT_FROM_THREAD_PER_TASK_EXECUTOR = getMethodHandleForThreadCountFromThreadPerTaskExecutor();
 
     private static boolean allowIllegalReflectiveAccess = true;
 
@@ -307,12 +324,20 @@ public class ExecutorServiceMetrics implements MeterBinder {
             monitor(registry, (ForkJoinPool) executorService);
         }
         else if (allowIllegalReflectiveAccess) {
+            // For Executors.newSingleThreadScheduledExecutor()
             if (className.equals("java.util.concurrent.Executors$DelegatedScheduledExecutorService")) {
                 monitor(registry, unwrapThreadPoolExecutor(executorService, executorService.getClass()));
             }
-            else if (className.equals("java.util.concurrent.Executors$FinalizableDelegatedExecutorService")) {
+            // For Executors.newSingleThreadExecutor()
+            else if (className.equals("java.util.concurrent.Executors$FinalizableDelegatedExecutorService")
+                    || className.equals("java.util.concurrent.Executors$AutoShutdownDelegatedExecutorService")) {
                 monitor(registry,
                         unwrapThreadPoolExecutor(executorService, executorService.getClass().getSuperclass()));
+            }
+            // For Executors.newThreadPerTaskExecutor() and
+            // Executors.newVirtualThreadPerTaskExecutor()
+            else if (className.equals(CLASS_NAME_THREAD_PER_TASK_EXECUTOR)) {
+                monitorThreadPerTaskExecutor(registry, executorService);
             }
             else {
                 log.warn("Failed to bind as {} is unsupported.", className);
@@ -406,9 +431,11 @@ public class ExecutorServiceMetrics implements MeterBinder {
                             + "underestimates the actual total number of steals when the pool " + "is not quiescent")
                     .register(registry),
 
-                Gauge.builder(metricPrefix + "executor.queued", fj, ForkJoinPool::getQueuedTaskCount)
+                Gauge
+                    .builder(metricPrefix + "executor.queued", fj,
+                            pool -> pool.getQueuedTaskCount() + pool.getQueuedSubmissionCount())
                     .tags(tags)
-                    .description("An estimate of the total number of tasks currently held in queues by worker threads")
+                    .description("The approximate number of tasks that are queued for execution")
                     .register(registry),
 
                 Gauge.builder(metricPrefix + "executor.active", fj, ForkJoinPool::getActiveThreadCount)
@@ -434,6 +461,39 @@ public class ExecutorServiceMetrics implements MeterBinder {
                     .baseUnit(BaseUnits.THREADS)
                     .register(registry));
         registeredMeterIds.addAll(meters.stream().map(Meter::getId).collect(toSet()));
+    }
+
+    private void monitorThreadPerTaskExecutor(MeterRegistry registry, ExecutorService executorService) {
+        List<Meter> meters = asList(Gauge
+            .builder(metricPrefix + "executor.active", executorService,
+                    ExecutorServiceMetrics::getThreadCountFromThreadPerTaskExecutor)
+            .tags(tags)
+            .description("The approximate number of threads that are actively executing tasks")
+            .baseUnit(BaseUnits.THREADS)
+            .register(registry));
+        registeredMeterIds.addAll(meters.stream().map(Meter::getId).collect(toSet()));
+    }
+
+    private static long getThreadCountFromThreadPerTaskExecutor(ExecutorService executorService) {
+        try {
+            return (long) METHOD_HANDLE_THREAD_COUNT_FROM_THREAD_PER_TASK_EXECUTOR.invoke(executorService);
+        }
+        catch (Throwable e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Nullable
+    private static MethodHandle getMethodHandleForThreadCountFromThreadPerTaskExecutor() {
+        try {
+            Class<?> clazz = Class.forName(CLASS_NAME_THREAD_PER_TASK_EXECUTOR);
+            Method method = clazz.getMethod("threadCount");
+            method.setAccessible(true);
+            return MethodHandles.lookup().unreflect(method);
+        }
+        catch (Throwable e) {
+            return null;
+        }
     }
 
     /**

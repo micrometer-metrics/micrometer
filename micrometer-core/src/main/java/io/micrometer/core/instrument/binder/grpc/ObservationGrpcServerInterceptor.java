@@ -17,13 +17,13 @@
 package io.micrometer.core.instrument.binder.grpc;
 
 import io.grpc.*;
-import io.grpc.Metadata.Key;
 import io.grpc.MethodDescriptor.MethodType;
 import io.grpc.ServerCall.Listener;
 import io.micrometer.common.lang.Nullable;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
 
+import java.net.URI;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
@@ -47,7 +47,7 @@ public class ObservationGrpcServerInterceptor implements ServerInterceptor {
 
     private static final GrpcServerObservationConvention DEFAULT_CONVENTION = new DefaultGrpcServerObservationConvention();
 
-    private static final Map<String, Key<String>> KEY_CACHE = new ConcurrentHashMap<>();
+    private static final Map<String, Metadata.Key<String>> KEY_CACHE = new ConcurrentHashMap<>();
 
     private final ObservationRegistry registry;
 
@@ -63,8 +63,8 @@ public class ObservationGrpcServerInterceptor implements ServerInterceptor {
             ServerCallHandler<ReqT, RespT> next) {
         Supplier<GrpcServerObservationContext> contextSupplier = () -> {
             GrpcServerObservationContext context = new GrpcServerObservationContext((carrier, keyName) -> {
-                Key<String> key = KEY_CACHE.computeIfAbsent(keyName,
-                        (k) -> Key.of(keyName, Metadata.ASCII_STRING_MARSHALLER));
+                Metadata.Key<String> key = KEY_CACHE.computeIfAbsent(keyName,
+                        (k) -> Metadata.Key.of(keyName, Metadata.ASCII_STRING_MARSHALLER));
                 return carrier.get(key);
             });
             context.setCarrier(headers);
@@ -82,8 +82,17 @@ public class ObservationGrpcServerInterceptor implements ServerInterceptor {
             }
             context.setFullMethodName(fullMethodName);
             context.setMethodType(methodType);
-            context.setAuthority(call.getAuthority());
-
+            String authority = call.getAuthority();
+            if (authority != null) {
+                context.setAuthority(authority);
+                try {
+                    URI uri = new URI(null, authority, null, null, null);
+                    context.setPeerName(uri.getHost());
+                    context.setPeerPort(uri.getPort());
+                }
+                catch (Exception ex) {
+                }
+            }
             return context;
         };
 

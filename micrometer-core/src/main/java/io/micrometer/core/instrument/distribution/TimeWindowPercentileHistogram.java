@@ -20,7 +20,8 @@ import org.HdrHistogram.DoubleHistogram;
 import org.HdrHistogram.DoubleRecorder;
 
 import java.io.PrintStream;
-import java.util.Iterator;
+import java.util.Objects;
+import java.util.Set;
 
 /**
  * <b>NOTE: This class is intended for internal use as an implementation detail. You
@@ -37,10 +38,39 @@ public class TimeWindowPercentileHistogram extends AbstractTimeWindowHistogram<D
 
     private final DoubleHistogram intervalHistogram;
 
+    private final double[] histogramBuckets;
+
+    private final boolean isCumulativeBucketCounts;
+
     public TimeWindowPercentileHistogram(Clock clock, DistributionStatisticConfig distributionStatisticConfig,
             boolean supportsAggregablePercentiles) {
-        super(clock, distributionStatisticConfig, DoubleRecorder.class, supportsAggregablePercentiles);
+        this(clock, distributionStatisticConfig, supportsAggregablePercentiles, true, false);
+    }
+
+    /**
+     * This constructor allows full customization of the histogram characteristics.
+     * @param clock clock used for time windowing
+     * @param distributionStatisticConfig distribution config to use with this histogram
+     * @param supportsAggregablePercentiles whether the backend receiving this histogram
+     * supports aggregating histograms to estimate percentiles
+     * @param isCumulativeBucketCounts whether histogram bucket counts are cumulative
+     * @param includeInfinityBucket whether to include the infinity histogram bucket
+     * @since 1.13.11
+     */
+    protected TimeWindowPercentileHistogram(Clock clock, DistributionStatisticConfig distributionStatisticConfig,
+            boolean supportsAggregablePercentiles, boolean isCumulativeBucketCounts, boolean includeInfinityBucket) {
+        super(clock, distributionStatisticConfig, DoubleRecorder.class);
         intervalHistogram = new DoubleHistogram(percentilePrecision(distributionStatisticConfig));
+        this.isCumulativeBucketCounts = isCumulativeBucketCounts;
+
+        Set<Double> monitoredBuckets = distributionStatisticConfig.getHistogramBuckets(supportsAggregablePercentiles);
+        if (includeInfinityBucket) {
+            monitoredBuckets.add(Double.POSITIVE_INFINITY);
+        }
+        histogramBuckets = monitoredBuckets.stream()
+            .filter(Objects::nonNull)
+            .mapToDouble(Double::doubleValue)
+            .toArray();
         initRingBuffer();
     }
 
@@ -56,7 +86,7 @@ public class TimeWindowPercentileHistogram extends AbstractTimeWindowHistogram<D
 
     @Override
     void recordLong(DoubleRecorder bucket, long value) {
-        bucket.recordValue(value);
+        bucket.recordValue((double) value);
     }
 
     @Override
@@ -86,26 +116,18 @@ public class TimeWindowPercentileHistogram extends AbstractTimeWindowHistogram<D
     }
 
     @Override
-    Iterator<CountAtBucket> countsAtValues(Iterator<Double> values) {
-        return new Iterator<CountAtBucket>() {
-            private double cumulativeCount = 0.0;
-
-            private double lowerBoundValue = 0.0;
-
-            @Override
-            public boolean hasNext() {
-                return values.hasNext();
-            }
-
-            @Override
-            public CountAtBucket next() {
-                double higherBoundValue = values.next();
-                double count = accumulatedHistogram().getCountBetweenValues(lowerBoundValue, higherBoundValue);
-                lowerBoundValue = accumulatedHistogram().nextNonEquivalentValue(higherBoundValue);
-                cumulativeCount += count;
-                return new CountAtBucket(higherBoundValue, cumulativeCount);
-            }
-        };
+    CountAtBucket[] countsAtBuckets() {
+        double cumulativeCount = 0.0;
+        double lowerBoundValue = 0.0;
+        CountAtBucket[] counts = new CountAtBucket[histogramBuckets.length];
+        for (int i = 0; i < counts.length; i++) {
+            double higherBoundValue = histogramBuckets[i];
+            double count = accumulatedHistogram().getCountBetweenValues(lowerBoundValue, higherBoundValue);
+            lowerBoundValue = accumulatedHistogram().nextNonEquivalentValue(higherBoundValue);
+            counts[i] = new CountAtBucket(higherBoundValue,
+                    isCumulativeBucketCounts ? cumulativeCount += count : count);
+        }
+        return counts;
     }
 
     private int percentilePrecision(DistributionStatisticConfig config) {

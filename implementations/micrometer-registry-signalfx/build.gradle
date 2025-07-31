@@ -1,8 +1,10 @@
+description = 'MeterRegistry implementation for sending metrics to SignalFX. This module is deprecated in favor of the micrometer-registry-otlp module.'
+
 dependencies {
     api project(':micrometer-core')
 
-    api 'com.signalfx.public:signalfx-java'
-    implementation 'org.slf4j:slf4j-api'
+    api libs.signalfx
+    implementation libs.slf4jApi
 
     testImplementation project(':micrometer-test')
 }

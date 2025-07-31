@@ -73,8 +73,6 @@ Note how we do not decide the timer to which to accumulate the sample until it i
 
 The `micrometer-core` module contains a `@Timed` annotation that frameworks can use to add timing support to either specific types of methods such as those serving web request endpoints or, more generally, to all methods.
 
-WARNING: Micrometer's Spring Boot configuration does _not_ recognize `@Timed` on arbitrary methods.
-
 Also, an incubating AspectJ aspect is included in `micrometer-core`. You can use it in your application either through compile/load time AspectJ weaving or through framework facilities that interpret AspectJ aspects and proxy targeted methods in some other way, such as Spring AOP. Here is a sample Spring AOP configuration:
 
 [source,java]
@@ -113,6 +111,8 @@ public class ExampleService {
 
 }
 ----
+
+NOTE: `TimedAspect` doesn't support meta-annotations with `@Timed`.
 
 === @MeterTag on Method Parameters
 
@@ -184,6 +184,14 @@ FunctionTimer.builder("cache.gets.latency", cache,
     .tags("name", cache.getName())
     .description("Cache gets")
     .register(registry);
+----
+
+WARNING: Attempting to construct a function-tracking timer with a primitive number or one of its `java.lang` object forms is always incorrect. These numbers are immutable. Thus, the function-tracking timer cannot ever be changed. Attempting to "re-register" the function-tracking timer with a different number does not work, as the registry maintains only one meter for each unique combination of name and tags. "Re-registering" a function-tracking timer can happen indirectly for example as the result of a `MeterFilter` modifying the name and/or the tags of two different function-tracking timers so that they will be the same after the filter is applied.
+
+Attempting to "re-register" a function-tracking timer will result in a warning like this:
+[source]
+----
+WARNING: This FunctionTimer has been already registered (MeterId{name='my.ft', tags=[]}), the registration will be ignored. Note that subsequent logs will be logged at debug level.
 ----
 
 == Pause Detection

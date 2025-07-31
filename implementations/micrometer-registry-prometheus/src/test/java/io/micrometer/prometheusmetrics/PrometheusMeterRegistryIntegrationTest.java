@@ -18,7 +18,6 @@ package io.micrometer.prometheusmetrics;
 import com.sun.net.httpserver.HttpServer;
 import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.*;
-import io.micrometer.core.instrument.Meter.Type;
 import io.micrometer.core.instrument.binder.jvm.JvmInfoMetrics;
 import io.prometheus.metrics.model.registry.PrometheusRegistry;
 import io.prometheus.metrics.tracer.common.SpanContext;
@@ -36,6 +35,7 @@ import org.testcontainers.utility.DockerImageName;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
@@ -57,7 +57,8 @@ import static org.testcontainers.containers.BindMode.READ_ONLY;
 class PrometheusMeterRegistryIntegrationTest {
 
     @Container
-    static GenericContainer<?> prometheus = new GenericContainer<>(DockerImageName.parse("prom/prometheus:latest"))
+    static GenericContainer<?> prometheus = new GenericContainer<>(
+            DockerImageName.parse("prom/prometheus:" + getPrometheusImageVersion()))
         .withCommand("--config.file=/etc/prometheus/prometheus.yml")
         .withClasspathResourceMapping("prometheus.yml", "/etc/prometheus/prometheus.yml", READ_ONLY)
         .waitingFor(Wait.forLogMessage(".*Server is ready to receive web requests.*", 1))
@@ -71,6 +72,15 @@ class PrometheusMeterRegistryIntegrationTest {
 
     @Nullable
     private HttpServer prometheusTextServer;
+
+    private static String getPrometheusImageVersion() {
+        String version = System.getProperty("prometheus.version");
+        if (version == null) {
+            throw new IllegalStateException(
+                    "System property 'prometheus.version' is not set. This should be set in the build configuration for running from the command line. If you are running PrometheusMeterRegistryIntegrationTest from an IDE, set the system property to the desired prom/prometheus image version.");
+        }
+        return version;
+    }
 
     @BeforeEach
     void setUp() {
@@ -147,7 +157,7 @@ class PrometheusMeterRegistryIntegrationTest {
             final int value = i;
             measurements.add(new Measurement(() -> value + 10, Statistic.values()[i]));
         }
-        Meter.builder("test.custom", Type.OTHER, measurements).register(registry);
+        Meter.builder("test.custom", Meter.Type.OTHER, measurements).register(registry);
     }
 
     private void verifyBuildInfo() {
@@ -193,7 +203,7 @@ class PrometheusMeterRegistryIntegrationTest {
         .then()
             .statusCode(200)
             .header("Content-Type", "text/plain; version=0.0.4; charset=utf-8")
-            .body(not((contains("# EOF"))));
+            .body(not(contains("# EOF")));
         // @formatter:on
     }
 
@@ -268,9 +278,9 @@ class PrometheusMeterRegistryIntegrationTest {
             String response = registry.scrape(acceptHeader);
 
             httpExchange.getResponseHeaders().add("Content-Type", contentType);
-            httpExchange.sendResponseHeaders(200, response.getBytes().length);
+            httpExchange.sendResponseHeaders(200, response.getBytes(StandardCharsets.UTF_8).length);
             try (OutputStream outputStream = httpExchange.getResponseBody()) {
-                outputStream.write(response.getBytes());
+                outputStream.write(response.getBytes(StandardCharsets.UTF_8));
             }
         });
         new Thread(server::start).start();

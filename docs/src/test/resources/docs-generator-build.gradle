@@ -16,8 +16,7 @@
 // tag::main[]
 repositories {
 	maven { url 'https://repo.spring.io/snapshot' } // for snapshots
-	maven { url 'https://repo.spring.io/milestone' } // for milestones
-	mavenCentral() // for GA
+	mavenCentral() // for GA and milestones
 }
 
 ext {
@@ -32,7 +31,7 @@ dependencies {
 	adoc "io.micrometer:micrometer-docs-generator:$micrometerDocsVersion"
 }
 
-task generateObservabilityDocs(type: JavaExec) {
+tasks.register("generateObservabilityDocs", JavaExec) {
 	mainClass = "io.micrometer.docs.DocsGeneratorCommand"
 	classpath configurations.adoc
 	// input folder, inclusion pattern, output folder

@@ -1,10 +1,10 @@
 dependencies {
     api project(':micrometer-core')
 
-    api 'com.microsoft.azure:applicationinsights-core'
-    implementation 'org.slf4j:slf4j-api'
+    api libs.applicationInsights
+    implementation libs.slf4jApi
 
     testImplementation project(':micrometer-test')
     // required by jdk 9+
-    testRuntimeOnly 'javax.xml.bind:jaxb-api'
+    testRuntimeOnly libs.jaxbApi
 }

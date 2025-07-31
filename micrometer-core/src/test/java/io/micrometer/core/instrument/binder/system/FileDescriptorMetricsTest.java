@@ -21,8 +21,9 @@ import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
 
 import java.lang.management.OperatingSystemMXBean;
+import java.util.Locale;
 
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assumptions.assumeFalse;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 import static org.mockito.Mockito.mock;
@@ -47,7 +48,7 @@ class FileDescriptorMetricsTest {
 
     @Test
     void unixFileDescriptorMetrics() {
-        assumeFalse(System.getProperty("os.name").toLowerCase().contains("win"));
+        assumeFalse(System.getProperty("os.name").toLowerCase(Locale.ROOT).contains("win"));
 
         // tag::example[]
         new FileDescriptorMetrics(Tags.of("some", "tag")).bindTo(registry);
@@ -59,7 +60,7 @@ class FileDescriptorMetricsTest {
 
     @Test
     void windowsFileDescriptorMetrics() {
-        assumeTrue(System.getProperty("os.name").toLowerCase().contains("win"));
+        assumeTrue(System.getProperty("os.name").toLowerCase(Locale.ROOT).contains("win"));
 
         new FileDescriptorMetrics(Tags.of("some", "tag")).bindTo(registry);
 

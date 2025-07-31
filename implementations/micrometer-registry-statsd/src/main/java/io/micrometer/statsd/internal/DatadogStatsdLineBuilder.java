@@ -38,16 +38,13 @@ public class DatadogStatsdLineBuilder extends FlavorStatsdLineBuilder {
 
     private final Object conventionTagsLock = new Object();
 
-    @SuppressWarnings({ "NullableProblems", "unused" })
     private volatile NamingConvention namingConvention;
 
-    @SuppressWarnings("NullableProblems")
     private volatile String name;
 
     @Nullable
     private volatile String conventionTags;
 
-    @SuppressWarnings("NullableProblems")
     private volatile String tagsNoStat;
 
     private final ConcurrentMap<Statistic, String> tags = new ConcurrentHashMap<>();
@@ -73,9 +70,13 @@ public class DatadogStatsdLineBuilder extends FlavorStatsdLineBuilder {
             @Nullable DistributionStatisticConfig distributionStatisticConfig) {
         super(id, config);
 
-        percentileHistogram = distributionStatisticConfig != null
+        this.percentileHistogram = distributionStatisticConfig != null
                 && TRUE.equals(distributionStatisticConfig.isPercentileHistogram());
-        ddEntityId = System.getenv("DD_ENTITY_ID");
+        this.ddEntityId = System.getenv("DD_ENTITY_ID");
+        this.namingConvention = config.namingConvention();
+        this.conventionTags = createConventionTags(namingConvention);
+        this.name = createName(namingConvention);
+        this.tagsNoStat = createTagsNoStat(conventionTags);
     }
 
     @Override
@@ -116,15 +117,28 @@ public class DatadogStatsdLineBuilder extends FlavorStatsdLineBuilder {
                     return;
                 }
                 this.tags.clear();
-                String conventionTags = id.getTagsAsIterable().iterator().hasNext()
-                        ? id.getConventionTags(next).stream().map(this::formatTag).collect(Collectors.joining(","))
-                        : null;
-                this.conventionTags = appendEntityIdTag(conventionTags);
+                this.conventionTags = createConventionTags(next);
             }
-            this.name = next.name(sanitizeName(id.getName()), id.getType(), id.getBaseUnit()) + ":";
-            this.tagsNoStat = tags(null, conventionTags, ":", "|#");
+            this.name = createName(next);
+            this.tagsNoStat = createTagsNoStat(conventionTags);
             this.namingConvention = next;
         }
+    }
+
+    @Nullable
+    private String createConventionTags(NamingConvention namingConvention) {
+        String conventionTags = id.getTagsAsIterable().iterator().hasNext()
+                ? id.getConventionTags(namingConvention).stream().map(this::formatTag).collect(Collectors.joining(","))
+                : null;
+        return appendEntityIdTag(conventionTags);
+    }
+
+    private String createName(NamingConvention namingConvention) {
+        return namingConvention.name(sanitizeName(id.getName()), id.getType(), id.getBaseUnit()) + ":";
+    }
+
+    private String createTagsNoStat(@Nullable String conventionTags) {
+        return tags(null, conventionTags, ":", "|#");
     }
 
     @Nullable

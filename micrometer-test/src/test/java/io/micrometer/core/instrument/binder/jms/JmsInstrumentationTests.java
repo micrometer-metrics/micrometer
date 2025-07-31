@@ -15,6 +15,7 @@
  */
 package io.micrometer.core.instrument.binder.jms;
 
+import java.time.Duration;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
@@ -27,6 +28,8 @@ import org.apache.activemq.artemis.junit.EmbeddedActiveMQExtension;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.DisabledForJreRange;
+import org.junit.jupiter.api.condition.JRE;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -34,12 +37,14 @@ import org.junit.jupiter.params.provider.MethodSource;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.awaitility.Awaitility.await;
 
 /**
  * Tests for {@link JmsInstrumentation}.
  *
  * @author Brian Clozel
  */
+@DisabledForJreRange(max = JRE.JAVA_16, disabledReason = "activemq-artemis requires Java 17 since 2.39.0")
 class JmsInstrumentationTests {
 
     @RegisterExtension
@@ -131,9 +136,10 @@ class JmsInstrumentationTests {
             MessageProducer producer = session.createProducer(topic);
             producer.send(session.createTextMessage("test send"));
             assertThat(latch.await(2, TimeUnit.SECONDS)).isTrue();
-            assertThat(registry).hasObservationWithNameEqualTo("jms.message.process")
-                .that()
-                .hasContextualNameEqualTo("test.send process");
+            await().atMost(Duration.ofSeconds(1))
+                .untilAsserted(() -> assertThat(registry).hasObservationWithNameEqualTo("jms.message.process")
+                    .that()
+                    .hasContextualNameEqualTo("test.send process"));
         }
     }
 

@@ -15,6 +15,7 @@
  */
 package io.micrometer.core.instrument.binder.commonspool2;
 
+import io.micrometer.common.KeyValue;
 import io.micrometer.common.lang.NonNull;
 import io.micrometer.common.lang.Nullable;
 import io.micrometer.common.util.internal.logging.InternalLogger;
@@ -129,17 +130,18 @@ public class CommonsObjectPool2Metrics implements MeterBinder, AutoCloseable {
 
     private Iterable<Tag> nameTag(ObjectName name, String type)
             throws AttributeNotFoundException, MBeanException, ReflectionException, InstanceNotFoundException {
-        return Tags.of("name", name.getKeyProperty("name"), "type", type, "factoryType", getFactoryType(name, type));
+        return Tags.of("name", name.getKeyProperty("name"), "type", type, "factoryType",
+                getFactoryTypeTagValue(name, type));
     }
 
-    private String getFactoryType(ObjectName name, String type)
+    private String getFactoryTypeTagValue(ObjectName name, String type)
             throws ReflectionException, AttributeNotFoundException, InstanceNotFoundException, MBeanException {
         if (Objects.equals(type, "GenericObjectPool")) {
             // for GenericObjectPool, we want to include the name and factoryType as tags
             return mBeanServer.getAttribute(name, "FactoryType").toString();
         }
         else {
-            return "none";
+            return KeyValue.NONE_VALUE;
         }
     }
 

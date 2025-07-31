@@ -205,7 +205,7 @@ public abstract class AbstractMetricCollectingInterceptor {
         final Function<Code, Timer> cacheResolver = code -> cache.computeIfAbsent(code, creator);
         // Eager initialize
         for (final Code code : this.eagerInitializedCodes) {
-            cacheResolver.apply(code);
+            Timer ignored = cacheResolver.apply(code);
         }
         return cacheResolver;
     }

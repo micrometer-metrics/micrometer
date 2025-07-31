@@ -34,7 +34,7 @@ public class KeyValuesMergeBenchmark {
 
     static final KeyValues left = KeyValues.of("key", "value", "key2", "value2", "key6", "value6", "key7", "value7",
             "key8", "value8", "keyA", "valueA", "keyC", "valueC", "keyE", "valueE", "keyF", "valueF", "keyG", "valueG",
-            "keyG", "valueG", "keyG", "valueG", "keyH", "valueH");
+            "keyH", "valueH");
 
     static final KeyValues right = KeyValues.of("key", "value", "key1", "value1", "key2", "value2", "key3", "value3",
             "key4", "value4", "key5", "value5", "keyA", "valueA", "keyB", "valueB", "keyD", "valueD");
