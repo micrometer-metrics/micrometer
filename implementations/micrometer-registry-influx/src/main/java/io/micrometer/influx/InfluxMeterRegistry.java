@@ -266,7 +266,8 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
         final Meter.Id id = meters.get(0).getId(); // get first from list, because all
         // have
         // the same tags
-        return Stream.of(influxLineProtocol(id, id.getType().name().toLowerCase(), fields.stream(), meterName));
+        return Stream
+            .of(influxLineProtocol(id, id.getType().name().toLowerCase(Locale.ROOT), fields.stream(), meterName));
     }
 
     // VisibleForTesting
@@ -285,14 +286,14 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
             String fieldKey = measurement.getStatistic()
                 .getTagValueRepresentation()
                 .replaceAll("(.)(\\p{Upper})", "$1_$2")
-                .toLowerCase();
+                .toLowerCase(Locale.ROOT);
             fields.add(new Field(fieldKey, value));
         }
         if (fields.isEmpty()) {
             return Stream.empty();
         }
         Meter.Id id = m.getId();
-        return Stream.of(influxLineProtocol(id, id.getType().name().toLowerCase(), fields.stream()));
+        return Stream.of(influxLineProtocol(id, id.getType().name().toLowerCase(Locale.ROOT), fields.stream()));
     }
 
     private Stream<String> writeLongTaskTimer(LongTaskTimer timer) {
