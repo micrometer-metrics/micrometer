@@ -15,7 +15,6 @@
  */
 package io.micrometer.concurrencytests;
 
-import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.DistributionSummary;
 import io.micrometer.core.instrument.LongTaskTimer;
 import io.micrometer.core.instrument.LongTaskTimer.Sample;
@@ -38,7 +37,7 @@ import static org.openjdk.jcstress.annotations.Expect.FORBIDDEN;
  */
 public class PrometheusMeterRegistryConcurrencyTest {
 
-    @Issue("#5193")
+    // @Issue("#5193")
     @JCStressTest
     @State
     @Outcome(id = "true", expect = ACCEPTABLE, desc = "Successful scrape")
@@ -67,7 +66,7 @@ public class PrometheusMeterRegistryConcurrencyTest {
 
     }
 
-    @Issue("#5193")
+    // @Issue("#5193")
     @JCStressTest
     @State
     @Outcome(id = "true", expect = ACCEPTABLE, desc = "Successful scrape")
@@ -96,7 +95,7 @@ public class PrometheusMeterRegistryConcurrencyTest {
 
     }
 
-    @Issue("#5193")
+    // @Issue("#5193")
     @JCStressTest
     @State
     @Outcome(id = "true", expect = ACCEPTABLE, desc = "Successful scrape")

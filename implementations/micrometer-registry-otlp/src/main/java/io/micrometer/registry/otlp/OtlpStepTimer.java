@@ -15,9 +15,10 @@
  */
 package io.micrometer.registry.otlp;
 
+import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.AbstractTimer;
 import io.micrometer.core.instrument.Clock;
-import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
+import io.micrometer.core.instrument.distribution.Histogram;
 import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import io.micrometer.core.instrument.util.TimeUtils;
 import io.micrometer.registry.otlp.internal.Base2ExponentialHistogram;
@@ -27,8 +28,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.LongAdder;
 
 class OtlpStepTimer extends AbstractTimer implements OtlpHistogramSupport {
-
-    private final HistogramFlavor histogramFlavor;
 
     private final LongAdder count = new LongAdder();
 
@@ -42,28 +41,22 @@ class OtlpStepTimer extends AbstractTimer implements OtlpHistogramSupport {
      * Create a new {@code OtlpStepTimer}.
      * @param id ID
      * @param clock clock
-     * @param distributionStatisticConfig distribution statistic configuration
      * @param pauseDetector pause detector
-     * @param baseTimeUnit base time unit
      * @param otlpConfig config of the registry
      */
-    OtlpStepTimer(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig,
-            PauseDetector pauseDetector, TimeUnit baseTimeUnit, OtlpConfig otlpConfig) {
-        super(id, clock, pauseDetector, otlpConfig.baseTimeUnit(),
-                OtlpMeterRegistry.getHistogram(clock, distributionStatisticConfig, otlpConfig, baseTimeUnit));
+    OtlpStepTimer(Id id, Clock clock, PauseDetector pauseDetector, Histogram histogram, OtlpConfig otlpConfig) {
+        super(id, clock, pauseDetector, otlpConfig.baseTimeUnit(), histogram);
         countTotal = new OtlpStepTuple2<>(clock, otlpConfig.step().toMillis(), 0L, 0L, count::sumThenReset,
                 total::sumThenReset);
         max = new StepMax(clock, otlpConfig.step().toMillis());
-        this.histogramFlavor = OtlpMeterRegistry.histogramFlavor(otlpConfig.histogramFlavor(),
-                distributionStatisticConfig);
     }
 
     @Override
     protected void recordNonNegative(final long amount, final TimeUnit unit) {
-        final long nanoAmount = (long) TimeUtils.convert(amount, unit, TimeUnit.NANOSECONDS);
+        final long nanoAmount = unit.toNanos(amount);
         count.add(1L);
         total.add(nanoAmount);
-        max.record(nanoAmount);
+        max.record((double) nanoAmount);
     }
 
     @Override
@@ -99,8 +92,9 @@ class OtlpStepTimer extends AbstractTimer implements OtlpHistogramSupport {
     }
 
     @Override
+    @Nullable
     public ExponentialHistogramSnapShot getExponentialHistogramSnapShot() {
-        if (histogramFlavor == HistogramFlavor.BASE2_EXPONENTIAL_BUCKET_HISTOGRAM) {
+        if (histogram instanceof Base2ExponentialHistogram) {
             return ((Base2ExponentialHistogram) histogram).getLatestExponentialHistogramSnapshot();
         }
         return null;

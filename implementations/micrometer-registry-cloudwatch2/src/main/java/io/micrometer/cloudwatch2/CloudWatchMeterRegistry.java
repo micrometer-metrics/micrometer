@@ -62,7 +62,7 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
         Map<String, StandardUnit> standardUnitByLowercaseValue = new HashMap<>();
         for (StandardUnit standardUnit : StandardUnit.values()) {
             if (standardUnit != StandardUnit.UNKNOWN_TO_SDK_VERSION) {
-                standardUnitByLowercaseValue.put(standardUnit.toString().toLowerCase(), standardUnit);
+                standardUnitByLowercaseValue.put(standardUnit.toString().toLowerCase(Locale.ROOT), standardUnit);
             }
         }
         STANDARD_UNIT_BY_LOWERCASE_VALUE = Collections.unmodifiableMap(standardUnitByLowercaseValue);
@@ -192,7 +192,7 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
             metrics
                 .add(metricDatum(timer.getId(), "sum", getBaseTimeUnit().name(), timer.totalTime(getBaseTimeUnit())));
             long count = timer.count();
-            metrics.add(metricDatum(timer.getId(), "count", StandardUnit.COUNT, count));
+            metrics.add(metricDatum(timer.getId(), "count", StandardUnit.COUNT, (double) count));
             if (count > 0) {
                 metrics.add(metricDatum(timer.getId(), "avg", getBaseTimeUnit().name(), timer.mean(getBaseTimeUnit())));
                 metrics.add(metricDatum(timer.getId(), "max", getBaseTimeUnit().name(), timer.max(getBaseTimeUnit())));
@@ -205,7 +205,7 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
             Stream.Builder<MetricDatum> metrics = Stream.builder();
             metrics.add(metricDatum(summary.getId(), "sum", summary.totalAmount()));
             long count = summary.count();
-            metrics.add(metricDatum(summary.getId(), "count", StandardUnit.COUNT, count));
+            metrics.add(metricDatum(summary.getId(), "count", StandardUnit.COUNT, (double) count));
             if (count > 0) {
                 metrics.add(metricDatum(summary.getId(), "avg", summary.mean()));
                 metrics.add(metricDatum(summary.getId(), "max", summary.max()));
@@ -308,7 +308,7 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
             if (unit == null) {
                 return StandardUnit.NONE;
             }
-            StandardUnit standardUnit = STANDARD_UNIT_BY_LOWERCASE_VALUE.get(unit.toLowerCase());
+            StandardUnit standardUnit = STANDARD_UNIT_BY_LOWERCASE_VALUE.get(unit.toLowerCase(Locale.ROOT));
             return standardUnit != null ? standardUnit : StandardUnit.NONE;
         }
 

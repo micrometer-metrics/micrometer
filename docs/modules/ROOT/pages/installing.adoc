@@ -4,25 +4,60 @@
 
 Micrometer contains a core library with the instrumentation SPI and an in-memory implementation that does not export data anywhere, a series of modules with implementations for various monitoring systems, and a test module.
 
-To use Micrometer, add the dependency for your monitoring system.
+To use Micrometer, add the dependency for your monitoring system. It is recommended to use the BOM provided by Micrometer, you can configure it as follows (you only need to declare it once in your project).
 
-The following example adds Prometheus in Gradle:
+NOTE: If you use a framework, it might have dependency management that defines Micrometer versions or imports the Micrometer BOM. You can defer to the framework's dependency management instead of declaring the Micrometer BOM directly in that case.
+
+== Gradle
+
+The following example configures the Micrometer BOM in Gradle:
+
+[source,groovy,subs=+attributes]
+----
+implementation platform('io.micrometer:micrometer-bom:{micrometer-version}')
+----
+
+After the BOM is configured, the following example adds Prometheus in Gradle:
 
 [source,groovy]
 ----
-implementation 'io.micrometer:micrometer-registry-prometheus:latest.release'
+implementation 'io.micrometer:micrometer-registry-prometheus'
 ----
 
-The following example adds Prometheus in Maven:
+NOTE: The version is not needed for this dependency since it is defined by the BOM.
+
+== Maven
+
+The following example configures the Micrometer BOM in Maven:
+
+[source,xml,subs=+attributes]
+----
+<dependencyManagement>
+    <dependencies>
+        <dependency>
+            <groupId>io.micrometer</groupId>
+            <artifactId>micrometer-bom</artifactId>
+            <version>{micrometer-version}</version>
+            <type>pom</type>
+            <scope>import</scope>
+        </dependency>
+    </dependencies>
+</dependencyManagement>
+----
+
+After the BOM is configured, the following example adds Prometheus in Maven:
 
 [source,xml]
 ----
 <dependency>
   <groupId>io.micrometer</groupId>
   <artifactId>micrometer-registry-prometheus</artifactId>
-  <version>${micrometer.version}</version>
 </dependency>
 ----
+
+NOTE: The version is not needed for this dependency since it is defined by the BOM.
+
+== Multiple Monitoring Systems
 
 Through Micrometer's composite meter registry (described in greater detail in xref:/concepts/registry.adoc#_composite_registries["Concepts"]), you can configure more than one registry implementation if you intend to publish metrics to more than one monitoring system.
 
@@ -35,6 +70,5 @@ Every successful https://app.circleci.com/pipelines/github/micrometer-metrics/mi
 == Milestones
 
 Milestone releases are made available for early testing purposes and are not intended for production use.
-Milestone releases are published to https://repo.spring.io/milestone.
-To use milestone releases, include that as a Maven repository in your build configuration.
+Milestone releases are published to Maven Central.
 Milestones are marked as "`pre-releases`" on GitHub, and the version has a suffix, such as `-M1` or `-RC1` (milestone 1 or release candidate 1, respectively).

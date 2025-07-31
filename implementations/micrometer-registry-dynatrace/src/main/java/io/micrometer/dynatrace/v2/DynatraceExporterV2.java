@@ -38,6 +38,7 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.time.Instant;
 import java.util.*;
+import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
 import java.util.regex.Matcher;
@@ -398,7 +399,7 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
     private MetricLineBuilder.TypeStep createTypeStep(Meter meter) throws MetricException {
         MetricLineBuilder.TypeStep typeStep = MetricLineBuilder.create(preConfiguration)
             .metricKey(meter.getId().getName());
-        for (Tag tag : meter.getId().getTags()) {
+        for (Tag tag : meter.getId().getTagsAsIterable()) {
             typeStep.dimension(tag.getKey(), tag.getValue());
         }
 
@@ -559,7 +560,7 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
      * @return The UCUM-compliant string if known, otherwise returns the original unit
      */
     private static String mapUnitIfNeeded(String unit) {
-        return unit != null ? UCUM_TIME_UNIT_MAP.getOrDefault(unit.toLowerCase(), unit) : null;
+        return unit != null ? UCUM_TIME_UNIT_MAP.getOrDefault(unit.toLowerCase(Locale.ROOT), unit) : null;
     }
 
     /**
@@ -570,22 +571,22 @@ public final class DynatraceExporterV2 extends AbstractDynatraceExporter {
     private static Map<String, String> ucumTimeUnitMap() {
         Map<String, String> mapping = new HashMap<>();
         // There are redundant elements in case the toString method of TimeUnit changes
-        mapping.put(TimeUnit.NANOSECONDS.toString().toLowerCase(), "ns");
+        mapping.put(TimeUnit.NANOSECONDS.toString().toLowerCase(Locale.ROOT), "ns");
         mapping.put("nanoseconds", "ns");
         mapping.put("nanosecond", "ns");
-        mapping.put(TimeUnit.MICROSECONDS.toString().toLowerCase(), "us");
+        mapping.put(TimeUnit.MICROSECONDS.toString().toLowerCase(Locale.ROOT), "us");
         mapping.put("microseconds", "us");
         mapping.put("microsecond", "us");
-        mapping.put(TimeUnit.MILLISECONDS.toString().toLowerCase(), "ms");
+        mapping.put(TimeUnit.MILLISECONDS.toString().toLowerCase(Locale.ROOT), "ms");
         mapping.put("milliseconds", "ms");
         mapping.put("millisecond", "ms");
-        mapping.put(TimeUnit.SECONDS.toString().toLowerCase(), "s");
+        mapping.put(TimeUnit.SECONDS.toString().toLowerCase(Locale.ROOT), "s");
         mapping.put("seconds", "s");
         mapping.put("second", "s");
-        mapping.put(TimeUnit.MINUTES.toString().toLowerCase(), "min");
+        mapping.put(TimeUnit.MINUTES.toString().toLowerCase(Locale.ROOT), "min");
         mapping.put("minutes", "min");
         mapping.put("minute", "min");
-        mapping.put(TimeUnit.HOURS.toString().toLowerCase(), "h");
+        mapping.put(TimeUnit.HOURS.toString().toLowerCase(Locale.ROOT), "h");
         mapping.put("hours", "h");
         mapping.put("hour", "h");
 

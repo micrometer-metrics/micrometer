@@ -18,9 +18,8 @@ package io.micrometer.common;
 
 import com.sun.management.ThreadMXBean;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.DisabledForJreRange;
 import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
-import org.junit.jupiter.api.condition.EnabledForJreRange;
-import org.junit.jupiter.api.condition.EnabledIf;
 import org.junit.jupiter.api.condition.JRE;
 
 import java.lang.management.ManagementFactory;
@@ -344,26 +343,9 @@ class KeyValuesTest {
     @Test
     @DisabledIfSystemProperty(named = "java.vm.name", matches = JAVA_VM_NAME_J9_REGEX,
             disabledReason = "Sun ThreadMXBean with allocation counter not available")
-    @EnabledForJreRange(max = JRE.JAVA_18)
+    @DisabledForJreRange(min = JRE.JAVA_19, max = JRE.JAVA_19,
+            disabledReason = "https://github.com/micrometer-metrics/micrometer/issues/3436")
     void andEmptyDoesNotAllocate() {
-        andEmptyDoesNotAllocate(0);
-    }
-
-    // gh-3313
-    // See https://github.com/micrometer-metrics/micrometer/issues/3436
-    @Test
-    @DisabledIfSystemProperty(named = "java.vm.name", matches = JAVA_VM_NAME_J9_REGEX,
-            disabledReason = "Sun ThreadMXBean with allocation counter not available")
-    @EnabledIf("java19")
-    void andEmptyDoesNotAllocateOnJava19() {
-        andEmptyDoesNotAllocate(16);
-    }
-
-    static boolean java19() {
-        return "19".equals(System.getProperty("java.version"));
-    }
-
-    private void andEmptyDoesNotAllocate(int expectedAllocatedBytes) {
         ThreadMXBean threadMXBean = (ThreadMXBean) ManagementFactory.getThreadMXBean();
         long currentThreadId = Thread.currentThread().getId();
         KeyValues keyValues = KeyValues.of("a", "b");
@@ -374,29 +356,16 @@ class KeyValuesTest {
         long allocatedBytes = threadMXBean.getThreadAllocatedBytes(currentThreadId) - allocatedBytesBefore;
 
         assertThat(combined).isEqualTo(keyValues);
-        assertThat(allocatedBytes).isEqualTo(expectedAllocatedBytes);
+        assertThat(allocatedBytes).isEqualTo(0);
     }
 
     // gh-3313
     @Test
     @DisabledIfSystemProperty(named = "java.vm.name", matches = JAVA_VM_NAME_J9_REGEX,
             disabledReason = "Sun ThreadMXBean with allocation counter not available")
-    @EnabledForJreRange(max = JRE.JAVA_18)
+    @DisabledForJreRange(min = JRE.JAVA_19, max = JRE.JAVA_19,
+            disabledReason = "https://github.com/micrometer-metrics/micrometer/issues/3436")
     void ofEmptyDoesNotAllocate() {
-        ofEmptyDoesNotAllocate(0);
-    }
-
-    // gh-3313
-    // See https://github.com/micrometer-metrics/micrometer/issues/3436
-    @Test
-    @DisabledIfSystemProperty(named = "java.vm.name", matches = JAVA_VM_NAME_J9_REGEX,
-            disabledReason = "Sun ThreadMXBean with allocation counter not available")
-    @EnabledIf("java19")
-    void ofEmptyDoesNotAllocateOnJava19() {
-        ofEmptyDoesNotAllocate(16);
-    }
-
-    private void ofEmptyDoesNotAllocate(int expectedAllocatedBytes) {
         ThreadMXBean threadMXBean = (ThreadMXBean) ManagementFactory.getThreadMXBean();
         long currentThreadId = Thread.currentThread().getId();
         KeyValues extraKeyValues = KeyValues.empty();
@@ -406,7 +375,7 @@ class KeyValuesTest {
         long allocatedBytes = threadMXBean.getThreadAllocatedBytes(currentThreadId) - allocatedBytesBefore;
 
         assertThat(of).isEqualTo(KeyValues.empty());
-        assertThat(allocatedBytes).isEqualTo(expectedAllocatedBytes);
+        assertThat(allocatedBytes).isEqualTo(0);
     }
 
     private void assertKeyValues(KeyValues keyValues, String... expectedKeyValues) {

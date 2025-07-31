@@ -23,6 +23,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import ru.lanwen.wiremock.ext.WiremockResolver;
 
+import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
@@ -71,7 +72,7 @@ class DatadogMeterRegistryTest {
         server.stubFor(any(anyUrl()));
 
         Counter.builder("my.counter#abc")
-            .baseUnit(TimeUnit.MICROSECONDS.toString().toLowerCase())
+            .baseUnit(TimeUnit.MICROSECONDS.toString().toLowerCase(Locale.ROOT))
             .description("metric description")
             .register(registry)
             .increment(Math.PI);
@@ -121,7 +122,7 @@ class DatadogMeterRegistryTest {
         server.stubFor(any(anyUrl()));
 
         Counter.builder("my.counter#abc")
-            .baseUnit(TimeUnit.MICROSECONDS.toString().toLowerCase())
+            .baseUnit(TimeUnit.MICROSECONDS.toString().toLowerCase(Locale.ROOT))
             .description("metric description")
             .register(registry)
             .increment(Math.PI);

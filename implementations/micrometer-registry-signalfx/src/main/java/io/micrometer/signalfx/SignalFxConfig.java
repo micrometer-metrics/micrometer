@@ -30,7 +30,9 @@ import static io.micrometer.core.instrument.config.validate.PropertyValidator.*;
  * Configuration for {@link SignalFxMeterRegistry}.
  *
  * @author Jon Schneider
+ * @deprecated this whole module is deprecated in favor of micrometer-registry-otlp
  */
+@Deprecated
 public interface SignalFxConfig extends StepRegistryConfig {
 
     @Override

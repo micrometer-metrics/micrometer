@@ -19,8 +19,10 @@ import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.opentest4j.AssertionFailedError;
 
 import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.BDDAssertions.then;
 
 @SuppressWarnings("rawtypes")
 class ObservationRegistryAssertTests {
@@ -76,7 +78,17 @@ class ObservationRegistryAssertTests {
 
         assertThatThrownBy(() -> this.registryAssert.hasRemainingCurrentObservationSameAs(observation))
             .isInstanceOf(AssertionError.class)
-            .hasMessageContaining("Expected current observation in the registry to be same as <{name=foo");
+            .hasMessageContaining("but there was no current observation");
+
+        Observation anotherObservation = Observation.start("bar", this.registry);
+        try (Observation.Scope scope = anotherObservation.openScope()) {
+            assertThatThrownBy(() -> this.registryAssert.hasRemainingCurrentObservationSameAs(observation))
+                .hasMessageContaining("Expected current observation in the registry to be same as <{name=foo")
+                .isInstanceOfSatisfying(AssertionFailedError.class, error -> {
+                    then(error.getActual().getStringRepresentation()).contains("bar");
+                    then(error.getExpected().getStringRepresentation()).contains("foo");
+                });
+        }
     }
 
     @Test
@@ -148,11 +160,16 @@ class ObservationRegistryAssertTests {
         Observation.Scope scope1 = o1.openScope();
         scope1.close();
         try (Observation.Scope scope2 = o2.openScope()) {
-            assertThatExceptionOfType(AssertionError.class)
+            assertThatExceptionOfType(AssertionFailedError.class)
                 .isThrownBy(() -> this.registryAssert.hasRemainingCurrentScopeSameAs(scope1))
                 .withMessage(
                         "Expected current Scope in the registry to be same as a provided Scope tied to observation named <old>"
-                                + " but was a different one (tied to observation named <new>)");
+                                + " but was a different one (tied to observation named <new>)")
+                .satisfies(error -> {
+                    then(error.getActual().getStringRepresentation()).isEqualTo("new");
+                    then(error.getExpected().getStringRepresentation()).isEqualTo("old");
+                });
+            ;
         }
     }
 

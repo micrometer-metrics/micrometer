@@ -19,9 +19,6 @@ import io.micrometer.common.KeyValue;
 import io.micrometer.common.KeyValues;
 import io.micrometer.core.instrument.binder.grpc.GrpcObservationDocumentation.LowCardinalityKeyNames;
 
-import java.util.ArrayList;
-import java.util.List;
-
 /**
  * Default convention for gRPC server. This class defines how to extract values from
  * {@link GrpcServerObservationContext}.
@@ -30,6 +27,12 @@ import java.util.List;
  * @since 1.10.0
  */
 public class DefaultGrpcServerObservationConvention implements GrpcServerObservationConvention {
+
+    private static final KeyValue STATUS_CODE_UNKNOWN = LowCardinalityKeyNames.STATUS_CODE.withValue(UNKNOWN);
+
+    private static final KeyValue PEER_NAME_UNKNOWN = LowCardinalityKeyNames.PEER_NAME.withValue(UNKNOWN);
+
+    private static final KeyValue PEER_PORT_UNKNOWN = LowCardinalityKeyNames.PEER_PORT.withValue(UNKNOWN);
 
     @Override
     public String getName() {
@@ -43,14 +46,16 @@ public class DefaultGrpcServerObservationConvention implements GrpcServerObserva
 
     @Override
     public KeyValues getLowCardinalityKeyValues(GrpcServerObservationContext context) {
-        List<KeyValue> keyValues = new ArrayList<>();
-        keyValues.add(LowCardinalityKeyNames.METHOD.withValue(context.getMethodName()));
-        keyValues.add(LowCardinalityKeyNames.SERVICE.withValue(context.getServiceName()));
-        keyValues.add(LowCardinalityKeyNames.METHOD_TYPE.withValue(context.getMethodType().name()));
-        if (context.getStatusCode() != null) {
-            keyValues.add(LowCardinalityKeyNames.STATUS_CODE.withValue(context.getStatusCode().name()));
-        }
-        return KeyValues.of(keyValues);
+        KeyValue statusCodeKeyValue = context.getStatusCode() != null
+                ? LowCardinalityKeyNames.STATUS_CODE.withValue(context.getStatusCode().name()) : STATUS_CODE_UNKNOWN;
+        KeyValue peerNameKeyValue = context.getPeerName() != null
+                ? LowCardinalityKeyNames.PEER_NAME.withValue(context.getPeerName()) : PEER_NAME_UNKNOWN;
+        KeyValue peerPortKeyValue = context.getPeerPort() != null
+                ? LowCardinalityKeyNames.PEER_PORT.withValue(context.getPeerPort().toString()) : PEER_PORT_UNKNOWN;
+        return KeyValues.of(statusCodeKeyValue, peerNameKeyValue, peerPortKeyValue,
+                LowCardinalityKeyNames.METHOD.withValue(context.getMethodName()),
+                LowCardinalityKeyNames.SERVICE.withValue(context.getServiceName()),
+                LowCardinalityKeyNames.METHOD_TYPE.withValue(context.getMethodType().name()));
     }
 
 }

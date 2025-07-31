@@ -29,7 +29,6 @@ public class EtsyStatsdLineBuilder extends FlavorStatsdLineBuilder {
 
     private final HierarchicalNameMapper nameMapper;
 
-    @SuppressWarnings({ "NullableProblems", "unused" })
     private volatile NamingConvention namingConvention;
 
     @Nullable
@@ -40,6 +39,8 @@ public class EtsyStatsdLineBuilder extends FlavorStatsdLineBuilder {
     public EtsyStatsdLineBuilder(Meter.Id id, MeterRegistry.Config config, HierarchicalNameMapper nameMapper) {
         super(id, config);
         this.nameMapper = nameMapper;
+        this.namingConvention = config.namingConvention();
+        this.nameNoStat = null;
     }
 
     @Override

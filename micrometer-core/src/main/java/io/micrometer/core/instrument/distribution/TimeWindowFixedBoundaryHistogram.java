@@ -18,7 +18,6 @@ package io.micrometer.core.instrument.distribution;
 import io.micrometer.core.instrument.Clock;
 
 import java.io.PrintStream;
-import java.util.Iterator;
 import java.util.Locale;
 import java.util.NavigableSet;
 import java.util.Objects;
@@ -38,27 +37,64 @@ public class TimeWindowFixedBoundaryHistogram extends AbstractTimeWindowHistogra
 
     private final boolean isCumulativeBucketCounts;
 
+    /**
+     * Create a {@code TimeWindowFixedBoundaryHistogram} instance with cumulative bucket
+     * counts and buckets based on the {@link DistributionStatisticConfig config} and
+     * {@code supportsAggregablePercentiles}.
+     * @param clock clock
+     * @param config distribution statistic configuration
+     * @param supportsAggregablePercentiles whether the backend supports aggregable
+     * percentiles
+     * @see PercentileHistogramBuckets
+     */
     public TimeWindowFixedBoundaryHistogram(Clock clock, DistributionStatisticConfig config,
             boolean supportsAggregablePercentiles) {
         this(clock, config, supportsAggregablePercentiles, true);
     }
 
     /**
-     * Create a {@code TimeWindowFixedBoundaryHistogram} instance.
+     * Create a {@code TimeWindowFixedBoundaryHistogram} instance with buckets based on
+     * the {@link DistributionStatisticConfig config} and
+     * {@code supportsAggregablePercentiles}.
      * @param clock clock
      * @param config distribution statistic configuration
-     * @param supportsAggregablePercentiles whether it supports aggregable percentiles
-     * @param isCumulativeBucketCounts whether it uses cumulative bucket counts
+     * @param supportsAggregablePercentiles whether the backend supports aggregable
+     * percentiles
+     * @param isCumulativeBucketCounts whether to use cumulative bucket counts
      * @since 1.9.0
+     * @see PercentileHistogramBuckets
      */
     public TimeWindowFixedBoundaryHistogram(Clock clock, DistributionStatisticConfig config,
             boolean supportsAggregablePercentiles, boolean isCumulativeBucketCounts) {
-        super(clock, config, FixedBoundaryHistogram.class, supportsAggregablePercentiles);
+        this(clock, config, supportsAggregablePercentiles, isCumulativeBucketCounts, false);
+    }
+
+    /**
+     * Create a {@code TimeWindowFixedBoundaryHistogram} instance with buckets based on
+     * the {@link DistributionStatisticConfig config} and
+     * {@code supportsAggregablePercentiles}. This constructor allows for use cases that
+     * always need an infinity bucket in the histogram.
+     * @param clock clock
+     * @param config distribution statistic configuration
+     * @param supportsAggregablePercentiles whether the backend supports aggregable
+     * percentiles
+     * @param isCumulativeBucketCounts whether to use cumulative bucket counts
+     * @param includeInfinityBucket whether to always include an infinity bucket
+     * @since 1.13.11
+     * @see PercentileHistogramBuckets
+     */
+    protected TimeWindowFixedBoundaryHistogram(Clock clock, DistributionStatisticConfig config,
+            boolean supportsAggregablePercentiles, boolean isCumulativeBucketCounts, boolean includeInfinityBucket) {
+        super(clock, config, FixedBoundaryHistogram.class);
 
         this.isCumulativeBucketCounts = isCumulativeBucketCounts;
 
         NavigableSet<Double> histogramBuckets = distributionStatisticConfig
             .getHistogramBuckets(supportsAggregablePercentiles);
+
+        if (includeInfinityBucket) {
+            histogramBuckets.add(Double.POSITIVE_INFINITY);
+        }
 
         this.buckets = histogramBuckets.stream().filter(Objects::nonNull).mapToDouble(Double::doubleValue).toArray();
         initRingBuffer();
@@ -103,13 +139,9 @@ public class TimeWindowFixedBoundaryHistogram extends AbstractTimeWindowHistogra
         return 0;
     }
 
-    /**
-     * For recording efficiency, we turn normal histogram into cumulative count histogram
-     * only on calls to {@link FixedBoundaryHistogram#countsAtValues(Iterator)}.
-     */
     @Override
-    Iterator<CountAtBucket> countsAtValues(Iterator<Double> values) {
-        return currentHistogram().countsAtValues(values);
+    CountAtBucket[] countsAtBuckets() {
+        return currentHistogram().getCountAtBuckets();
     }
 
     @Override

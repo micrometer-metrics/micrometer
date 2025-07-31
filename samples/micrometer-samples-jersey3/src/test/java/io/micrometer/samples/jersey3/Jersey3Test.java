@@ -28,9 +28,11 @@ import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.test.JerseyTest;
 import org.junit.jupiter.api.Test;
 
+import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 
 @SuppressWarnings("deprecation")
 class Jersey3Test extends JerseyTest {
@@ -48,16 +50,18 @@ class Jersey3Test extends JerseyTest {
     }
 
     @Test
-    void helloResourceIsTimed() throws InterruptedException {
+    void helloResourceIsTimed() {
         String response = target("hello/Jersey").request().get(String.class);
         assertThat(response).isEqualTo("Hello, Jersey");
         // Jersey metrics are recorded asynchronously to the request completing
-        Thread.sleep(10);
-        Timer timer = registry.get(TIMER_METRIC_NAME)
-            .tags("method", "GET", "uri", "/hello/{name}", "status", "200", "exception", "None", "outcome", "SUCCESS")
-            .timer();
-        assertThat(timer.count()).isEqualTo(1);
-        assertThat(timer.totalTime(TimeUnit.NANOSECONDS)).isPositive();
+        await().atMost(Duration.ofSeconds(1)).untilAsserted(() -> {
+            Timer timer = registry.get(TIMER_METRIC_NAME)
+                .tags("method", "GET", "uri", "/hello/{name}", "status", "200", "exception", "None", "outcome",
+                        "SUCCESS")
+                .timer();
+            assertThat(timer.count()).isEqualTo(1);
+            assertThat(timer.totalTime(TimeUnit.NANOSECONDS)).isPositive();
+        });
     }
 
     @Test

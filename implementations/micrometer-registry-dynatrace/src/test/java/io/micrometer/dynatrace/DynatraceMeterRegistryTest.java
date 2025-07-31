@@ -53,11 +53,9 @@ class DynatraceMeterRegistryTest {
     void setUp() {
         this.config = createDefaultDynatraceConfig();
         this.clock = new MockClock();
-        this.clock.add(System.currentTimeMillis(), MILLISECONDS); // Set the clock to
-                                                                  // something recent so
-                                                                  // that the Dynatrace
-                                                                  // library will not
-                                                                  // complain.
+        // Set the clock to something recent so that the Dynatrace library will not
+        // complain.
+        this.clock.add(System.currentTimeMillis(), MILLISECONDS);
         this.httpClient = mock(HttpSender.class);
         this.meterRegistry = DynatraceMeterRegistry.builder(config).clock(clock).httpClient(httpClient).build();
     }
@@ -81,7 +79,7 @@ class DynatraceMeterRegistryTest {
 
         meterRegistry.publish();
 
-        verify(httpClient).send(assertArg((request -> {
+        verify(httpClient).send(assertArg(request -> {
             assertThat(request.getRequestHeaders()).containsOnly(entry("Content-Type", "text/plain"),
                     entry("User-Agent", "micrometer"), entry("Authorization", "Api-Token apiToken"));
 
@@ -91,7 +89,7 @@ class DynatraceMeterRegistryTest {
                         "my.timer,dt.metrics.source=micrometer gauge,min=12,max=42,sum=108,count=4 " + clock.wallTime(),
                         "my.gauge,dt.metrics.source=micrometer gauge," + formatDouble(gauge) + " " + clock.wallTime(),
                         "#my.timer gauge dt.meta.unit=ms");
-        })));
+        }));
     }
 
     @Test
@@ -146,11 +144,10 @@ class DynatraceMeterRegistryTest {
 
         clock.add(config.step());
         meterRegistry.publish();
-
-        verify(httpClient).send(assertArg((request -> assertThat(request.getEntity()).asString()
+        verify(httpClient).send(assertArg(request -> assertThat(request.getEntity()).asString()
             .hasLineCount(2)
             .contains("my.timer,dt.metrics.source=micrometer gauge,min=22,max=55,sum=77,count=2 " + clock.wallTime(),
-                    "#my.timer gauge dt.meta.unit=ms"))));
+                    "#my.timer gauge dt.meta.unit=ms")));
     }
 
     @Test
@@ -171,7 +168,6 @@ class DynatraceMeterRegistryTest {
         DistributionSummary distributionSummary = DistributionSummary.builder("my.ds")
             .publishPercentiles(trackedPercentiles)
             .register(registry);
-        CountDownLatch lttCountDownLatch = new CountDownLatch(1);
         LongTaskTimer longTaskTimer = LongTaskTimer.builder("my.ltt")
             .publishPercentiles(trackedPercentiles)
             .register(registry);
@@ -179,26 +175,35 @@ class DynatraceMeterRegistryTest {
         timer.record(Duration.ofMillis(100));
         distributionSummary.record(100);
 
+        CountDownLatch lttCountDownLatch1 = new CountDownLatch(1);
+        CountDownLatch lttCountDownLatch2 = new CountDownLatch(1);
+
         ExecutorService executorService = Executors.newSingleThreadExecutor();
+        Duration longTaskTimerDuration = Duration.ofMillis(100);
         executorService.submit(() -> longTaskTimer.record(() -> {
-            clock.add(Duration.ofMillis(100));
+            clock.add(longTaskTimerDuration);
+            lttCountDownLatch1.countDown();
 
             try {
-                assertThat(lttCountDownLatch.await(300, MILLISECONDS)).isTrue();
+                assertThat(lttCountDownLatch2.await(300, MILLISECONDS)).isTrue();
             }
             catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }
         }));
 
-        clock.add(dynatraceConfig.step());
+        // The 'longTaskTimerDuration' should be subtracted as depending on
+        // System.currentTimeMillis(), the 'longTaskTimerDuration' could start another
+        // step.
+        clock.add(dynatraceConfig.step().minus(longTaskTimerDuration));
 
+        assertThat(lttCountDownLatch1.await(100, MILLISECONDS)).isTrue();
         registry.publish();
         // release long task timer
-        lttCountDownLatch.countDown();
+        lttCountDownLatch2.countDown();
 
         verify(httpClient).send(
-                assertArg((request -> assertThat(request.getEntity()).asString()
+                assertArg(request -> assertThat(request.getEntity()).asString()
                     .hasLineCount(16)
                     .contains(
                             // Timer lines
@@ -232,7 +237,7 @@ class DynatraceMeterRegistryTest {
                             "my.ltt.percentile,dt.metrics.source=micrometer,phi=0.5 gauge,100 " + clock.wallTime(),
                             "my.ltt.percentile,dt.metrics.source=micrometer,phi=0.7 gauge,100 " + clock.wallTime(),
                             "my.ltt.percentile,dt.metrics.source=micrometer,phi=0.99 gauge,100 " + clock.wallTime(),
-                            "#my.ltt.percentile gauge dt.meta.unit=ms"))));
+                            "#my.ltt.percentile gauge dt.meta.unit=ms")));
     }
 
     @Test
@@ -266,7 +271,7 @@ class DynatraceMeterRegistryTest {
         registry.publish();
 
         verify(httpClient)
-            .send(assertArg((request -> assertThat(request.getEntity()).asString()
+            .send(assertArg(request -> assertThat(request.getEntity()).asString()
                 .hasLineCount(10)
                 .contains(
                         // Timer lines
@@ -286,7 +291,7 @@ class DynatraceMeterRegistryTest {
                         // the step rolled over.
                         "my.ds.percentile,dt.metrics.source=micrometer,phi=0 gauge,0 " + clock.wallTime(),
                         "my.ds.percentile,dt.metrics.source=micrometer,phi=0.5 gauge,0 " + clock.wallTime(),
-                        "my.ds.percentile,dt.metrics.source=micrometer,phi=0.99 gauge,0 " + clock.wallTime()))));
+                        "my.ds.percentile,dt.metrics.source=micrometer,phi=0.99 gauge,0 " + clock.wallTime())));
     }
 
     @Test

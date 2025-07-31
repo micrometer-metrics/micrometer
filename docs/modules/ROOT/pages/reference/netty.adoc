@@ -12,7 +12,7 @@ include::{include-java}/netty/NettyMetricsTests.java[tags=directInstrumentation,
 -----
 
 Netty infrastructure can be configured in many ways, so you can also instrument lazily at runtime, as resources are used.
-The fllowing example shows how to lazily create instrumentation:
+The following example shows how to lazily create instrumentation:
 
 [source,java,subs=+attributes]
 -----

@@ -16,15 +16,19 @@
 package io.micrometer.jetty12.client;
 
 import com.github.tomakehurst.wiremock.junit5.WireMockRuntimeInfo;
+import io.micrometer.core.instrument.LongTaskTimer;
 import io.micrometer.core.instrument.observation.DefaultMeterObservationHandler;
 import io.micrometer.observation.ObservationRegistry;
 import io.micrometer.observation.tck.TestObservationRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.time.Duration;
+
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 
 class JettyClientMetricsWithObservationTest extends JettyClientMetricsTest {
 
@@ -47,13 +51,31 @@ class JettyClientMetricsWithObservationTest extends JettyClientMetricsTest {
 
     @Test
     void activeTimer(WireMockRuntimeInfo wmRuntimeInfo) throws Exception {
-        stubFor(get("/ok").willReturn(ok()));
+        stubFor(get("/ok").willReturn(ok().withFixedDelay(100)));
 
-        httpClient.GET("http://localhost:" + wmRuntimeInfo.getHttpPort() + "/ok");
-        assertThat(registry.get("jetty.client.requests.active")
-            .tags("uri", "/ok", "method", "GET")
-            .longTaskTimer()
-            .activeTasks()).isOne();
+        Thread thread = new Thread(() -> {
+            try {
+                httpClient.GET("http://localhost:" + wmRuntimeInfo.getHttpPort() + "/ok");
+            }
+            catch (Exception ex) {
+                throw new RuntimeException(ex);
+            }
+        });
+        thread.start();
+
+        await().atMost(Duration.ofMillis(100))
+            .pollDelay(Duration.ofMillis(10))
+            .pollInterval(Duration.ofMillis(10))
+            .untilAsserted(() -> {
+                LongTaskTimer longTaskTimer = registry.find("jetty.client.requests.active")
+                    .tags("uri", "/ok", "method", "GET")
+                    .longTaskTimer();
+                assertThat(longTaskTimer).isNotNull();
+                assertThat(longTaskTimer.activeTasks()).isOne();
+            });
+
+        thread.join();
+
         httpClient.stop();
 
         assertThat(singleRequestLatch.await(10, SECONDS)).isTrue();

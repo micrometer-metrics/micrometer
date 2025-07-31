@@ -19,8 +19,10 @@ import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationHandler;
 import io.micrometer.observation.ObservationRegistry;
 
+import java.util.HashSet;
 import java.util.Objects;
 import java.util.Queue;
+import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import org.assertj.core.api.AssertProvider;
@@ -118,6 +120,14 @@ public final class TestObservationRegistry
             return true;
         }
 
+        @Override
+        public void onEvent(Observation.Event event, Observation.Context context) {
+            this.contexts.stream()
+                .filter(testContext -> testContext.getContext() == context)
+                .findFirst()
+                .ifPresent(testContext -> testContext.addEvent(event));
+        }
+
     }
 
     static class TestObservationContext {
@@ -128,6 +138,8 @@ public final class TestObservationRegistry
 
         private boolean observationStopped;
 
+        private final Set<Observation.Event> contextEvents = new HashSet<>();
+
         TestObservationContext(Observation.Context context) {
             this.context = context;
         }
@@ -137,7 +149,7 @@ public final class TestObservationRegistry
             if (this == o) {
                 return true;
             }
-            if (o == null || getClass() != o.getClass()) {
+            if (!(o instanceof TestObservationContext)) {
                 return false;
             }
             TestObservationContext that = (TestObservationContext) o;
@@ -177,6 +189,37 @@ public final class TestObservationRegistry
 
         Observation.Context getContext() {
             return this.context;
+        }
+
+        /**
+         * Stores an {@link Observation.Event} in this context.
+         * @param event the event to store
+         */
+        void addEvent(Observation.Event event) {
+            this.contextEvents.add(event);
+        }
+
+        /**
+         * Check if an {@link Observation.Event} with the given name was stored in this
+         * context.
+         * @param name name of the event to check
+         * @return {@code true} if an event was stored under the given name
+         */
+        boolean hasEvent(String name) {
+            return this.contextEvents.stream().anyMatch(event -> event.getName().equals(name));
+        }
+
+        /**
+         * Check if an {@link Observation.Event} with the given name and contextual name
+         * was stored in this context.
+         * @param name name of the event to check
+         * @param contextualName contextual name of the event to check
+         * @return {@code true} if an event was stored under the given name and contextual
+         * name
+         */
+        boolean hasEvent(String name, String contextualName) {
+            return this.contextEvents.stream()
+                .anyMatch(event -> event.getName().equals(name) && event.getContextualName().equals(contextualName));
         }
 
     }

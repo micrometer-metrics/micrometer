@@ -21,7 +21,7 @@ import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
 
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Tests for {@code JvmMemoryMetrics}.
@@ -48,11 +48,11 @@ class JvmMemoryMetricsTest {
         assertThat(memUsed.getId().getBaseUnit()).isEqualTo(BaseUnits.BYTES);
 
         Gauge memCommitted = registry.get("jvm.memory.committed").tags("area", area).gauge();
-        assertThat(memCommitted.value()).isNotNull();
+        assertThat(memCommitted.value()).isNotNaN();
         assertThat(memCommitted.getId().getBaseUnit()).isEqualTo(BaseUnits.BYTES);
 
         Gauge memMax = registry.get("jvm.memory.max").tags("area", area).gauge();
-        assertThat(memMax.value()).isNotNull();
+        assertThat(memMax.value()).isNotNaN();
         assertThat(memMax.getId().getBaseUnit()).isEqualTo(BaseUnits.BYTES);
     }
 
@@ -60,7 +60,7 @@ class JvmMemoryMetricsTest {
         assertThat(registry.get("jvm.buffer.count").tags("id", bufferId).gauge().value()).isGreaterThanOrEqualTo(0);
 
         Gauge memoryUsedDirect = registry.get("jvm.buffer.memory.used").tags("id", bufferId).gauge();
-        assertThat(memoryUsedDirect.value()).isNotNull();
+        assertThat(memoryUsedDirect.value()).isNotNaN();
         assertThat(memoryUsedDirect.getId().getBaseUnit()).isEqualTo(BaseUnits.BYTES);
 
         Gauge bufferTotal = registry.get("jvm.buffer.total.capacity").tags("id", bufferId).gauge();

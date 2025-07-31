@@ -101,7 +101,7 @@ public class JettyClientMetrics implements Request.Listener {
                     .description("Content sizes for Jetty HTTP client requests")
                     .tags(httpRequestTags)
                     .register(registry)
-                    .record(requestLength);
+                    .record((double) requestLength);
             }
 
             sample.stop(timingMetricName, "Jetty HTTP client request timing", () -> httpRequestTags);

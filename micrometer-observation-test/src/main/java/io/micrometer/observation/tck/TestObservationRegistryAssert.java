@@ -240,9 +240,11 @@ public class TestObservationRegistryAssert
      */
     public TestObservationRegistryAssert hasNumberOfObservationsEqualTo(int expectedNumberOfObservations) {
         isNotNull();
-        if (this.actual.getContexts().size() != expectedNumberOfObservations) {
-            failWithMessage("There should be <%s> Observations but there were <%s>. Found following Observations:\n%s",
-                    expectedNumberOfObservations, this.actual.getContexts().size(),
+        int actualNumberOfObservations = this.actual.getContexts().size();
+        if (actualNumberOfObservations != expectedNumberOfObservations) {
+            failWithActualExpectedAndMessage(actualNumberOfObservations, expectedNumberOfObservations,
+                    "There should be <%s> Observations but there were <%s>. Found following Observations:\n%s",
+                    expectedNumberOfObservations, actualNumberOfObservations,
                     observationNames(this.actual.getContexts()));
         }
         return this;
@@ -268,14 +270,14 @@ public class TestObservationRegistryAssert
     public TestObservationRegistryAssert hasNumberOfObservationsWithNameEqualTo(String observationName,
             int expectedNumberOfObservations) {
         isNotNull();
-        long observationsWithNameSize = this.actual.getContexts()
+        long actualNumberOfObservations = this.actual.getContexts()
             .stream()
             .filter(f -> observationName.equals(f.getContext().getName()))
             .count();
-        if (observationsWithNameSize != expectedNumberOfObservations) {
-            failWithMessage(
+        if (actualNumberOfObservations != expectedNumberOfObservations) {
+            failWithActualExpectedAndMessage(actualNumberOfObservations, expectedNumberOfObservations,
                     "There should be <%s> Observations with name <%s> but there were <%s>. Found following Observations:\n%s",
-                    expectedNumberOfObservations, observationName, observationsWithNameSize,
+                    expectedNumberOfObservations, observationName, actualNumberOfObservations,
                     observationNames(this.actual.getContexts()));
         }
         return this;
@@ -302,14 +304,14 @@ public class TestObservationRegistryAssert
     public TestObservationRegistryAssert hasNumberOfObservationsWithNameEqualToIgnoreCase(String observationName,
             int expectedNumberOfObservations) {
         isNotNull();
-        long observationsWithNameSize = this.actual.getContexts()
+        long actualNumberOfObservations = this.actual.getContexts()
             .stream()
             .filter(f -> observationName.equalsIgnoreCase(f.getContext().getName()))
             .count();
-        if (observationsWithNameSize != expectedNumberOfObservations) {
-            failWithMessage(
+        if (actualNumberOfObservations != expectedNumberOfObservations) {
+            failWithActualExpectedAndMessage(actualNumberOfObservations, expectedNumberOfObservations,
                     "There should be <%s> Observations with name (ignoring case) <%s> but there were <%s>. Found following Observations:\n%s",
-                    expectedNumberOfObservations, observationName, observationsWithNameSize,
+                    expectedNumberOfObservations, observationName, actualNumberOfObservations,
                     observationNames(this.actual.getContexts()));
         }
         return this;
@@ -332,7 +334,7 @@ public class TestObservationRegistryAssert
      */
     public TestObservationRegistryAssert hasAnObservationWithAKeyValue(String key, String value) {
         isNotNull();
-        this.actual.getContexts()
+        KeyValue ignored = this.actual.getContexts()
             .stream()
             .flatMap(f -> f.getContext().getAllKeyValues().stream())
             .filter(keyValue -> keyValue.getKey().equals(key) && keyValue.getValue().equals(value))
@@ -381,7 +383,7 @@ public class TestObservationRegistryAssert
      */
     public TestObservationRegistryAssert hasAnObservationWithAKeyName(String key) {
         isNotNull();
-        this.actual.getContexts()
+        KeyValue ignored = this.actual.getContexts()
             .stream()
             .flatMap(f -> f.getContext().getAllKeyValues().stream())
             .filter(keyValue -> keyValue.getKey().equals(key))
@@ -571,6 +573,79 @@ public class TestObservationRegistryAssert
          */
         public TestObservationRegistryAssert backToTestObservationRegistry() {
             return this.originalAssert;
+        }
+
+        /**
+         * Verifies that the {@link Observation} has an event with the given name.
+         * @param name event name
+         * @return this
+         * @throws AssertionError if the {@link Observation} does not have an event with
+         * the given name
+         * @since 1.15.0
+         */
+        public TestObservationRegistryAssertReturningObservationContextAssert hasEvent(String name) {
+            isNotNull();
+            if (!this.testContext.hasEvent(name)) {
+                failWithMessage("Observation should have an event with name <%s>", name);
+            }
+            return this;
+        }
+
+        /**
+         * Verifies that the {@link Observation} has an event with the given name and
+         * contextual name.
+         * @param name event name
+         * @param contextualName contextual name
+         * @return this
+         * @throws AssertionError if the {@link Observation} does not have an event with
+         * the given name and contextual name
+         * @since 1.15.0
+         */
+        public TestObservationRegistryAssertReturningObservationContextAssert hasEvent(String name,
+                String contextualName) {
+            isNotNull();
+            if (!this.testContext.hasEvent(name, contextualName)) {
+                failWithMessage("Observation should have an event with name <%s> and contextual name <%s>", name,
+                        contextualName);
+            }
+            return this;
+        }
+
+        /**
+         * Verifies that the {@link Observation} does not have an event with the given
+         * name.
+         * @param name event name
+         * @return this
+         * @throws AssertionError if the {@link Observation} has an event with the given
+         * name
+         * @since 1.15.0
+         */
+        public TestObservationRegistryAssertReturningObservationContextAssert doesNotHaveEvent(String name) {
+            isNotNull();
+            if (this.testContext.hasEvent(name)) {
+                failWithMessage("Observation should not have an event with name <%s>", name);
+            }
+            return this;
+        }
+
+        /**
+         * Verifies that the {@link Observation} does not have an event with the given
+         * name and contextual name.
+         * @param name event name
+         * @param contextualName contextual name
+         * @return this
+         * @throws AssertionError if the {@link Observation} has an event with the given
+         * name and contextual name
+         * @since 1.15.0
+         */
+        public TestObservationRegistryAssertReturningObservationContextAssert doesNotHaveEvent(String name,
+                String contextualName) {
+            isNotNull();
+            if (this.testContext.hasEvent(name, contextualName)) {
+                failWithMessage("Observation should not have an event with name <%s> and contextual name <%s>", name,
+                        contextualName);
+            }
+            return this;
         }
 
     }

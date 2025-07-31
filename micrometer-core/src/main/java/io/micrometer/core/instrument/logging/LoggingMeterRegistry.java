@@ -42,6 +42,7 @@ import java.util.function.Function;
 import java.util.stream.StreamSupport;
 
 import static io.micrometer.core.instrument.util.DoubleFormat.decimalOrNan;
+import static io.micrometer.core.instrument.util.DoubleFormat.wholeOrDecimal;
 import static java.util.stream.Collectors.joining;
 
 /**
@@ -49,6 +50,7 @@ import static java.util.stream.Collectors.joining;
  *
  * @author Jon Schneider
  * @author Matthieu Borgraeve
+ * @author Francois Staudt
  * @since 1.1.0
  */
 @Incubating(since = "1.1.0")
@@ -126,13 +128,15 @@ public class LoggingMeterRegistry extends StepMeterRegistry {
                     double count = counter.count();
                     if (!config.logInactive() && count == 0)
                         return;
-                    loggingSink.accept(print.id() + " throughput=" + print.rate(count));
+                    loggingSink.accept(print.id() + " delta_count=" + print.humanReadableBaseUnit(count)
+                            + " throughput=" + print.rate(count));
                 }, timer -> {
                     HistogramSnapshot snapshot = timer.takeSnapshot();
                     long count = snapshot.count();
                     if (!config.logInactive() && count == 0)
                         return;
-                    loggingSink.accept(print.id() + " throughput=" + print.unitlessRate(count) + " mean="
+                    loggingSink.accept(print.id() + " delta_count=" + wholeOrDecimal((double) count) + " throughput="
+                            + print.unitlessRate((double) count) + " mean="
                             + print.time(snapshot.mean(getBaseTimeUnit())) + " max="
                             + print.time(snapshot.max(getBaseTimeUnit())));
                 }, summary -> {
@@ -140,30 +144,35 @@ public class LoggingMeterRegistry extends StepMeterRegistry {
                     long count = snapshot.count();
                     if (!config.logInactive() && count == 0)
                         return;
-                    loggingSink.accept(print.id() + " throughput=" + print.unitlessRate(count) + " mean="
-                            + print.value(snapshot.mean()) + " max=" + print.value(snapshot.max()));
+                    loggingSink.accept(print.id() + " delta_count=" + wholeOrDecimal((double) count) + " throughput="
+                            + print.unitlessRate((double) count) + " mean=" + print.value(snapshot.mean()) + " max="
+                            + print.value(snapshot.max()));
                 }, longTaskTimer -> {
                     int activeTasks = longTaskTimer.activeTasks();
                     if (!config.logInactive() && activeTasks == 0)
                         return;
-                    loggingSink.accept(print.id() + " active=" + print.value(activeTasks) + " duration="
-                            + print.time(longTaskTimer.duration(getBaseTimeUnit())));
+                    HistogramSnapshot snapshot = longTaskTimer.takeSnapshot();
+                    loggingSink.accept(print.id() + " active=" + activeTasks + " duration="
+                            + print.time(longTaskTimer.duration(getBaseTimeUnit())) + " mean="
+                            + print.time(snapshot.mean(getBaseTimeUnit())) + " max="
+                            + print.time(snapshot.max(getBaseTimeUnit())));
                 }, timeGauge -> {
                     double value = timeGauge.value(getBaseTimeUnit());
                     if (!config.logInactive() && value == 0)
                         return;
                     loggingSink.accept(print.id() + " value=" + print.time(value));
-                }, counter -> {
-                    double count = counter.count();
+                }, functionCounter -> {
+                    double count = functionCounter.count();
                     if (!config.logInactive() && count == 0)
                         return;
-                    loggingSink.accept(print.id() + " throughput=" + print.rate(count));
-                }, timer -> {
-                    double count = timer.count();
+                    loggingSink.accept(print.id() + " delta_count=" + print.humanReadableBaseUnit(count)
+                            + " throughput=" + print.rate(count));
+                }, functionTimer -> {
+                    double count = functionTimer.count();
                     if (!config.logInactive() && count == 0)
                         return;
-                    loggingSink.accept(print.id() + " throughput=" + print.rate(count) + " mean="
-                            + print.time(timer.mean(getBaseTimeUnit())));
+                    loggingSink.accept(print.id() + " delta_count=" + wholeOrDecimal(count) + " throughput="
+                            + print.unitlessRate(count) + " mean=" + print.time(functionTimer.mean(getBaseTimeUnit())));
                 }, meter -> loggingSink.accept(writeMeter(meter, print)));
             });
         }
@@ -181,7 +190,8 @@ public class LoggingMeterRegistry extends StepMeterRegistry {
                 case DURATION:
                     return msLine + print.time(ms.getValue());
                 case COUNT:
-                    return "throughput=" + print.rate(ms.getValue());
+                    return "delta_count=" + print.humanReadableBaseUnit(ms.getValue()) + ", throughput="
+                            + print.rate(ms.getValue());
                 default:
                     return msLine + decimalOrNan(ms.getValue());
             }

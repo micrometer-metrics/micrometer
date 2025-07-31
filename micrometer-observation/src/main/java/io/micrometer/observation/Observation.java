@@ -21,7 +21,6 @@ import io.micrometer.common.lang.NonNull;
 import io.micrometer.common.lang.Nullable;
 import io.micrometer.common.util.internal.logging.InternalLoggerFactory;
 
-import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
@@ -925,9 +924,9 @@ public interface Observation extends ObservationView {
         @Nullable
         private ObservationView parentObservation;
 
-        private final Map<String, KeyValue> lowCardinalityKeyValues = new LinkedHashMap<>();
+        private final Map<String, KeyValue> lowCardinalityKeyValues = new ConcurrentHashMap<>();
 
-        private final Map<String, KeyValue> highCardinalityKeyValues = new LinkedHashMap<>();
+        private final Map<String, KeyValue> highCardinalityKeyValues = new ConcurrentHashMap<>();
 
         /**
          * The observation name.
@@ -968,6 +967,7 @@ public interface Observation extends ObservationView {
          * Returns the parent {@link ObservationView}.
          * @return parent observation or {@code null} if there was no parent
          */
+        @Override
         @Nullable
         public ObservationView getParentObservation() {
             return parentObservation;

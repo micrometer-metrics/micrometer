@@ -25,6 +25,8 @@ import io.micrometer.core.instrument.binder.jvm.JvmInfoMetrics;
 import io.micrometer.core.instrument.composite.CompositeMeterRegistry;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.HistogramSnapshot;
+import io.prometheus.metrics.expositionformats.OpenMetricsTextFormatWriter;
+import io.prometheus.metrics.expositionformats.PrometheusTextFormatWriter;
 import io.prometheus.metrics.model.registry.PrometheusRegistry;
 import io.prometheus.metrics.model.snapshots.*;
 import io.prometheus.metrics.tracer.common.SpanContext;
@@ -37,6 +39,7 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.Stream;
 
 import static io.micrometer.core.instrument.MockClock.clock;
 import static java.util.Collections.emptyList;
@@ -67,23 +70,42 @@ class PrometheusMeterRegistryTest {
     }
 
     @Test
-    void meterRegistrationFailedListenerCalledOnSameNameDifferentTags() throws InterruptedException {
+    void meterRegistrationFailedListenerCalledOnSameNameDifferentTagsWithEmptyTags() throws InterruptedException {
         CountDownLatch failedLatch = new CountDownLatch(1);
         registry.config().onMeterRegistrationFailed((id, reason) -> failedLatch.countDown());
         registry.counter("my.counter");
+        registry.counter("my.counter", "test.k1", "v1").increment();
+
+        assertThat(failedLatch.await(1, TimeUnit.SECONDS)).isTrue();
+
+        assertThatThrownBy(() -> registry.throwExceptionOnRegistrationFailure().counter("my.counter", "test.k2", "v2"))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessage(
+                    "Prometheus requires that all meters with the same name have the same set of tag keys. There is already an existing meter named 'my_counter' containing tag keys []. The meter you are attempting to register has keys [test_k2].");
+
+        assertThatThrownBy(() -> registry.counter("my.counter", "test.k3", "v3"))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessage(
+                    "Prometheus requires that all meters with the same name have the same set of tag keys. There is already an existing meter named 'my_counter' containing tag keys []. The meter you are attempting to register has keys [test_k3].");
+    }
+
+    @Test
+    void meterRegistrationFailedListenerCalledOnSameNameDifferentTagsWithNonEmptyTags() throws InterruptedException {
+        CountDownLatch failedLatch = new CountDownLatch(1);
+        registry.config().onMeterRegistrationFailed((id, reason) -> failedLatch.countDown());
+        registry.counter("my.counter", "test.k1", "v1");
         registry.counter("my.counter", "k", "v").increment();
 
         assertThat(failedLatch.await(1, TimeUnit.SECONDS)).isTrue();
 
-        assertThatThrownBy(() -> registry.throwExceptionOnRegistrationFailure().counter("my.counter", "k1", "v1"))
+        assertThatThrownBy(() -> registry.throwExceptionOnRegistrationFailure().counter("my.counter", "test.k2", "v2"))
             .isInstanceOf(IllegalArgumentException.class)
-            .hasMessageStartingWith(
-                    "Prometheus requires that all meters with the same name have the same set of tag keys.");
+            .hasMessage(
+                    "Prometheus requires that all meters with the same name have the same set of tag keys. There is already an existing meter named 'my_counter' containing tag keys [test_k1]. The meter you are attempting to register has keys [test_k2].");
 
-        assertThatThrownBy(() -> registry.counter("my.counter", "k2", "v2"))
-            .isInstanceOf(IllegalArgumentException.class)
-            .hasMessageStartingWith(
-                    "Prometheus requires that all meters with the same name have the same set of tag keys.");
+        assertThatThrownBy(() -> registry.counter("my.counter")).isInstanceOf(IllegalArgumentException.class)
+            .hasMessage(
+                    "Prometheus requires that all meters with the same name have the same set of tag keys. There is already an existing meter named 'my_counter' containing tag keys [test_k1]. The meter you are attempting to register has keys [].");
     }
 
     @Test
@@ -943,7 +965,7 @@ class PrometheusMeterRegistryTest {
     }
 
     private static void sleepToAvoidRateLimiting() throws InterruptedException {
-        Thread.sleep(10); // sleeping since the sample interval limit is 1ms
+        Thread.sleep(100); // sleeping since the sample interval limit is 1ms
     }
 
     @Test
@@ -1014,6 +1036,72 @@ class PrometheusMeterRegistryTest {
 
         assertThat(convention.nameCount.get()).isEqualTo(expectedNameCount);
         assertThat(convention.tagKeyCount.get()).isEqualTo(expectedTagKeyCount);
+    }
+
+    @Test
+    void scrapeWhenMeterNameContainsSingleCharacter() {
+        registry.counter("c").increment();
+        assertThatNoException().isThrownBy(() -> registry.scrape());
+    }
+
+    @Test
+    void createdTimestampEnabled() {
+        PrometheusConfig config = new PrometheusConfig() {
+            @Override
+            public String get(String key) {
+                return null;
+            }
+
+            @Override
+            public Properties prometheusProperties() {
+                Properties properties = new Properties();
+                properties.putAll(PrometheusConfig.super.prometheusProperties());
+                properties.setProperty("io.prometheus.exporter.includeCreatedTimestamps", "true");
+                return properties;
+            }
+        };
+        PrometheusMeterRegistry registry = new PrometheusMeterRegistry(config, prometheusRegistry, clock);
+        clock.addSeconds(3);
+        registry.counter("c").increment();
+        registry.more().counter("fc", Tags.empty(), 3);
+        clock.addSeconds(1);
+        registry.timer("t").record(3, TimeUnit.MILLISECONDS);
+        registry.more().timer("ft", Tags.empty(), this, o -> 1, o -> 2, TimeUnit.MILLISECONDS);
+        clock.addSeconds(1);
+        registry.summary("s").record(4);
+        registry.newMeter(new Meter.Id("custom.meter", Tags.empty(), null, null, Meter.Type.OTHER), Meter.Type.OTHER,
+                List.of(new Measurement(() -> 11, Statistic.COUNT)));
+
+        String openMetricsScrape = registry.scrape(OpenMetricsTextFormatWriter.CONTENT_TYPE);
+        String prometheusTextScrape = registry.scrape(PrometheusTextFormatWriter.CONTENT_TYPE);
+        Stream.of(openMetricsScrape, prometheusTextScrape)
+            .forEach(scrape -> assertThat(scrape).contains("c_created 3.001")
+                .contains("fc_created 3.001")
+                .contains("t_seconds_created 4.001")
+                .contains("ft_seconds_created 4.001")
+                .contains("s_created 5.001")
+                .contains("custom_meter_created{statistic=\"COUNT\"} 5.001"));
+    }
+
+    @Test
+    void createdTimestampDisabled() {
+        PrometheusConfig config = new PrometheusConfig() {
+            @Override
+            public String get(String key) {
+                return null;
+            }
+
+            @Override
+            public Properties prometheusProperties() {
+                Properties properties = new Properties();
+                properties.putAll(PrometheusConfig.super.prometheusProperties());
+                properties.setProperty("io.prometheus.exporter.includeCreatedTimestamps", "false");
+                return properties;
+            }
+        };
+        PrometheusMeterRegistry registry = new PrometheusMeterRegistry(config, prometheusRegistry, clock);
+        registry.counter("c").increment();
+        assertThat(registry.scrape()).doesNotContain("_created");
     }
 
     private static class CountingPrometheusNamingConvention extends PrometheusNamingConvention {

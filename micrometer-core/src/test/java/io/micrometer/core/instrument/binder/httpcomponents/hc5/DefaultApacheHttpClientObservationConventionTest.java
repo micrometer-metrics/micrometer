@@ -150,8 +150,9 @@ class DefaultApacheHttpClientObservationConventionTest {
         SimpleHttpRequest request = SimpleRequestBuilder.get("https://example.org/resource").build();
         HttpClientContext clientContext = HttpClientContext.create();
         ApacheHttpClientContext context = new ApacheHttpClientContext(request, clientContext);
-        assertThat(observationConvention.getLowCardinalityKeyValues(context)).contains(TARGET_HOST.withValue("UNKNOWN"),
-                TARGET_PORT.withValue("UNKNOWN"), TARGET_SCHEME.withValue("UNKNOWN"));
+        assertThat(observationConvention.getLowCardinalityKeyValues(context)).contains(
+                TARGET_HOST.withValue("example.org"), TARGET_PORT.withValue("UNKNOWN"),
+                TARGET_SCHEME.withValue("https"));
     }
 
     @Test

@@ -23,6 +23,7 @@ import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -44,7 +45,7 @@ public enum DurationValidator {
             "^\\s*([\\+]?\\d{0,3}([_,]?\\d{3})*(\\.\\d*)?)\\s*([a-zA-Z]{0,2})\\s*") {
         @Override
         protected Validated<Duration> doParse(String property, String value) {
-            Matcher matcher = patterns.get(0).matcher(value.toLowerCase().replaceAll("[,_\\s]", ""));
+            Matcher matcher = patterns.get(0).matcher(value.toLowerCase(Locale.ROOT).replaceAll("[,_\\s]", ""));
             if (!matcher.matches()) {
                 return Validated.invalid(property, value, "must be a valid duration", InvalidReason.MALFORMED);
             }
@@ -143,7 +144,7 @@ public enum DurationValidator {
             return Validated.valid(property, null);
         }
 
-        switch (unit.toLowerCase()) {
+        switch (unit.toLowerCase(Locale.ROOT)) {
             case "ns":
             case "nanoseconds":
             case "nanosecond":

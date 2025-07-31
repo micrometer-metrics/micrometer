@@ -6,21 +6,14 @@ dependencies {
     implementation project(":micrometer-core")
 
     // Test sample project with SLFJ4 2.x / Logback; see gh-3415
-    runtimeOnly(libs.logbackLatest) {
-        version {
-            strictly libs.logbackLatest.get().version
-        }
-    }
-    testRuntimeOnly(libs.logbackLatest) {
-        version {
-            strictly libs.logbackLatest.get().version
-        }
-    }
+    runtimeOnly(libs.logbackLatest)
 
     implementation libs.jersey3ContainerJdkHttp
     runtimeOnly libs.jersey3Hk2
 
     testImplementation libs.jersey3TestFrameworkJdkHttp
     testImplementation libs.junitJupiter
-    testImplementation 'org.assertj:assertj-core'
+    testRuntimeOnly libs.junitPlatformLauncher
+    testImplementation libs.assertj
+    testImplementation libs.awaitility
 }

@@ -18,6 +18,7 @@ package io.micrometer.elastic;
 import io.micrometer.common.lang.NonNull;
 import io.micrometer.common.util.StringUtils;
 import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.distribution.HistogramSnapshot;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.util.MeterPartition;
@@ -31,10 +32,7 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
@@ -349,7 +347,7 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
         StringBuilder sb = new StringBuilder(actionLine);
         String timestamp = generateTimestamp();
         String name = getConventionName(meter.getId());
-        String type = meter.getId().getType().toString().toLowerCase();
+        String type = meter.getId().getType().toString().toLowerCase(Locale.ROOT);
         sb.append("{\"")
             .append(config.timestampFieldName())
             .append("\":\"")

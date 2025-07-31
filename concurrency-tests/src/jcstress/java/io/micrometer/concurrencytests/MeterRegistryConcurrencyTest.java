@@ -15,7 +15,6 @@
  */
 package io.micrometer.concurrencytests;
 
-import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
@@ -154,7 +153,7 @@ public class MeterRegistryConcurrencyTest {
      * iteration could happen at the same time a new meter is being registered, thus added
      * to the preFilterIdToMeterMap, modifying it while iterating over its KeySet.
      */
-    @Issue("gh-5489")
+    // @Issue("gh-5489")
     @JCStressTest
     @Outcome(id = "OK", expect = Expect.ACCEPTABLE, desc = "No exception")
     @Outcome(expect = Expect.FORBIDDEN, desc = "Exception thrown")

@@ -123,7 +123,7 @@ public class ObservationRequestEventListener implements RequestEventListener {
             if (this == o) {
                 return true;
             }
-            if (o == null || getClass() != o.getClass()) {
+            if (!(o instanceof ObservationScopeAndContext)) {
                 return false;
             }
             ObservationScopeAndContext that = (ObservationScopeAndContext) o;

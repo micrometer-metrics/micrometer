@@ -50,8 +50,6 @@ Counter counter = Counter
 
 The `micrometer-core` module contains a `@Counted` annotation that frameworks can use to add counting support to either specific types of methods such as those serving web request endpoints or, more generally, to all methods.
 
-WARNING: Micrometer's Spring Boot configuration does _not_ recognize `@Counted` on arbitrary methods.
-
 Also, an incubating AspectJ aspect is included in `micrometer-core`. You can use it in your application either through compile/load time AspectJ weaving or through framework facilities that interpret AspectJ aspects and proxy targeted methods in some other way, such as Spring AOP. Here is a sample Spring AOP configuration:
 
 [source,java]
@@ -124,6 +122,8 @@ include::{include-java}/metrics/CountedAspectTest.java[tags=example_value_spel,i
 include::{include-java}/metrics/CountedAspectTest.java[tags=example_multi_annotations,indent=0]
 -----
 
+NOTE: `CountedAspect` doesn't support meta-annotations with `@Counted`.
+
 == Function-tracking Counters
 
 Micrometer also provides a more infrequently used counter pattern that tracks a monotonically increasing function (a function that stays the same or increases over time but never decreases). Some monitoring systems, such as Prometheus, push cumulative values for counters to the backend, but others publish the rate at which a counter is incrementing over the push interval. By employing this pattern, you let the Micrometer implementation for your monitoring system choose whether to rate-normalize the counter, and your counter remains portable across different types of monitoring systems.
@@ -152,4 +152,12 @@ FunctionCounter counter = FunctionCounter
     .description("a description of what this counter does") // optional
     .tags("region", "test") // optional
     .register(registry);
+----
+
+WARNING: Attempting to construct a function-tracking counter with a primitive number or one of its `java.lang` object forms is always incorrect. These numbers are immutable. Thus, the function-tracking counter cannot ever be changed. Attempting to "re-register" the function-tracking counter with a different number does not work, as the registry maintains only one meter for each unique combination of name and tags. "Re-registering" a function-tracking counter can happen indirectly for example as the result of a `MeterFilter` modifying the name and/or the tags of two different function-tracking counters so that they will be the same after the filter is applied.
+
+Attempting to "re-register" a function-tracking counter will result in a warning like this:
+[source]
+----
+WARNING: This FunctionCounter has been already registered (MeterId{name='my.fc', tags=[]}), the registration will be ignored. Note that subsequent logs will be logged at debug level.
 ----

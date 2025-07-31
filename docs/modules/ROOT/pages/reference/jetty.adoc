@@ -17,7 +17,7 @@ You can collect metrics from a Jetty `Connector` by configuring it with `JettyCo
  server.setConnectors(new Connector[] { connector });
 ----
 <1> Register general connection metrics
-<2> Registers metrics for bytes in/out on this connector
+<2> Register metrics for bytes in/out on this connector
 
 Alternatively, you can apply the metrics instrumentation to all connectors on a `Server` as follows:
 

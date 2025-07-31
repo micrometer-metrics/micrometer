@@ -1,31 +1,38 @@
 version: 2.1
 
 executors:
+  circle-jdk23-executor:
+    working_directory: ~/micrometer
+    environment:
+      GRADLE_OPTS: '-Dorg.gradle.jvmargs="-Xmx2048m -XX:+HeapDumpOnOutOfMemoryError"'
+    resource_class: medium+
+    docker:
+      - image: cimg/openjdk:23.0.2
   circle-jdk-executor:
     working_directory: ~/micrometer
     environment:
-      GRADLE_OPTS: '-Dorg.gradle.jvmargs="-Xmx2048m -XX:+HeapDumpOnOutOfMemoryError"'
+      GRADLE_OPTS: '-Dorg.gradle.jvmargs="-Xmx1g -XX:+HeapDumpOnOutOfMemoryError"'
     resource_class: medium+
     docker:
-      - image: cimg/openjdk:21.0.2
+      - image: cimg/openjdk:21.0.6
   circle-jdk17-executor:
     working_directory: ~/micrometer
     environment:
-      GRADLE_OPTS: '-Dorg.gradle.jvmargs="-Xmx2048m -XX:+HeapDumpOnOutOfMemoryError"'
+      GRADLE_OPTS: '-Dorg.gradle.jvmargs="-Xmx1g -XX:+HeapDumpOnOutOfMemoryError"'
     resource_class: medium+
     docker:
-      - image: cimg/openjdk:17.0.11
+      - image: cimg/openjdk:17.0.14
   circle-jdk11-executor:
     working_directory: ~/micrometer
     environment:
-      GRADLE_OPTS: '-Dorg.gradle.jvmargs="-Xmx2048m -XX:+HeapDumpOnOutOfMemoryError"'
+      GRADLE_OPTS: '-Dorg.gradle.jvmargs="-Xmx1g -XX:+HeapDumpOnOutOfMemoryError"'
     resource_class: medium+
     docker:
-      - image: cimg/openjdk:11.0.22
+      - image: cimg/openjdk:11.0.26
   machine-executor:
     working_directory: ~/micrometer
     machine:
-      image: ubuntu-2204:2024.05.1
+      image: ubuntu-2404:2024.11.1
 
 commands:
   gradlew-build:
@@ -60,10 +67,16 @@ commands:
           path: ~/micrometer/test-results/
 
 jobs:
+  build-jdk23:
+    executor: circle-jdk23-executor
+    steps:
+      - gradlew-build
+
   build:
     executor: circle-jdk-executor
     steps:
       - gradlew-build
+      - run: ./gradlew jdk24Test
       - run: ./gradlew shenandoahTest
       - run: ./gradlew zgcTest
       - run: ./gradlew zgcGenerationalTest
@@ -100,6 +113,17 @@ jobs:
           name: Deployment
           command: sh ./gradle/deploy.sh
 
+  stackdriver-it:
+    executor: circle-jdk-executor
+    steps:
+      - run:
+          name: Setup Google Cloud auth
+          command: |
+            echo "$GCLOUD_SERVICE_KEY" >> "$HOME"/gcloud-service-key.json
+            echo 'export GOOGLE_APPLICATION_CREDENTIALS="$HOME"/gcloud-service-key.json' >> "$BASH_ENV"
+      - gradlew-build:
+          command: stackdriverTest
+
 workflows:
   version: 2
   build_prs_deploy_snapshots:
@@ -107,15 +131,28 @@ workflows:
       - build
       - build-jdk11
       - build-jdk17
+      - build-jdk23
       - concurrency-tests
       - docker-tests
+      - stackdriver-it:
+          context:
+            - gcp-metrics-writer
+          filters:
+            branches:
+              only:
+                - main
+                - /\d+\.\d+\.x/
       - deploy:
+          context:
+            - deploy
           requires:
             - build
             - build-jdk11
             - build-jdk17
+            - build-jdk23
             - concurrency-tests
             - docker-tests
+            - stackdriver-it
           filters:
             branches:
               only:
@@ -141,6 +178,12 @@ workflows:
               ignore: /.*/
             tags:
               only: /^v\d+\.\d+\.\d+(-(RC|M)\d+)?$/
+      - build-jdk23:
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /^v\d+\.\d+\.\d+(-(RC|M)\d+)?$/
       - concurrency-tests:
           filters:
             branches:
@@ -153,11 +196,22 @@ workflows:
               ignore: /.*/
             tags:
               only: /^v\d+\.\d+\.\d+(-(RC|M)\d+)?$/
+      - stackdriver-it:
+          context:
+            - gcp-metrics-writer
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /^v\d+\.\d+\.\d+(-(RC|M)\d+)?$/
       - deploy:
+          context:
+            - deploy
           requires:
             - build
             - build-jdk11
             - build-jdk17
+            - build-jdk23
             - concurrency-tests
             - docker-tests
           filters:

@@ -27,9 +27,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class TimeWindowPercentileHistogramTest {
 
+    MockClock clock = new MockClock();
+
     @Test
     void histogramsAreCumulative() {
-        try (TimeWindowPercentileHistogram histogram = new TimeWindowPercentileHistogram(new MockClock(),
+        try (TimeWindowPercentileHistogram histogram = new TimeWindowPercentileHistogram(clock,
                 DistributionStatisticConfig.builder()
                     .serviceLevelObjectives(3.0, 6, 7)
                     .build()
@@ -44,8 +46,7 @@ class TimeWindowPercentileHistogramTest {
             histogram.recordDouble(6);
 
             // Proves that the accumulated histogram is truly cumulative, and not just a
-            // representation
-            // of the last snapshot
+            // representation of the last snapshot
             assertThat(histogram.takeSnapshot(0, 0, 0).histogramCounts()).containsExactly(new CountAtBucket(3.0, 1),
                     new CountAtBucket(6.0, 2), new CountAtBucket(7.0, 2));
         }
@@ -53,7 +54,7 @@ class TimeWindowPercentileHistogramTest {
 
     @Test
     void sampleValueAboveMaximumExpectedValue() {
-        try (TimeWindowPercentileHistogram histogram = new TimeWindowPercentileHistogram(new MockClock(),
+        try (TimeWindowPercentileHistogram histogram = new TimeWindowPercentileHistogram(clock,
                 DistributionStatisticConfig.builder()
                     .serviceLevelObjectives(3.0)
                     .maximumExpectedValue(2.0)
@@ -68,7 +69,7 @@ class TimeWindowPercentileHistogramTest {
 
     @Test
     void recordValuesThatExceedTheDynamicRange() {
-        try (TimeWindowPercentileHistogram histogram = new TimeWindowPercentileHistogram(new MockClock(),
+        try (TimeWindowPercentileHistogram histogram = new TimeWindowPercentileHistogram(clock,
                 DistributionStatisticConfig.builder()
                     .serviceLevelObjectives(Double.POSITIVE_INFINITY)
                     .build()
@@ -87,7 +88,7 @@ class TimeWindowPercentileHistogramTest {
 
     @Test
     void percentiles() {
-        try (TimeWindowPercentileHistogram histogram = new TimeWindowPercentileHistogram(new MockClock(),
+        try (TimeWindowPercentileHistogram histogram = new TimeWindowPercentileHistogram(clock,
                 DistributionStatisticConfig.builder()
                     .percentiles(0.5, 0.9, 0.95)
                     .minimumExpectedValue(millisToUnit(1, TimeUnit.NANOSECONDS))
@@ -97,7 +98,7 @@ class TimeWindowPercentileHistogramTest {
                 false)) {
 
             for (long i = 1; i <= 10; i++) {
-                histogram.recordLong((long) millisToUnit(i, TimeUnit.NANOSECONDS));
+                histogram.recordLong(TimeUnit.MILLISECONDS.toNanos(i));
             }
 
             assertThat(histogram.takeSnapshot(0, 0, 0).percentileValues())
@@ -114,8 +115,7 @@ class TimeWindowPercentileHistogramTest {
             .build()
             .merge(DistributionStatisticConfig.DEFAULT);
 
-        try (TimeWindowPercentileHistogram histogram = new TimeWindowPercentileHistogram(new MockClock(), config,
-                false)) {
+        try (TimeWindowPercentileHistogram histogram = new TimeWindowPercentileHistogram(clock, config, false)) {
 
             ValueAtPercentile expectedPercentile = new ValueAtPercentile(0.5, 0);
             HistogramSnapshot snapshot = histogram.takeSnapshot(0, 0, 0);
@@ -130,11 +130,10 @@ class TimeWindowPercentileHistogramTest {
             .build()
             .merge(DistributionStatisticConfig.DEFAULT);
 
-        try (TimeWindowPercentileHistogram histogram = new TimeWindowPercentileHistogram(new MockClock(), config,
-                false)) {
+        try (TimeWindowPercentileHistogram histogram = new TimeWindowPercentileHistogram(clock, config, false)) {
 
             for (int i = 1; i <= 10; i++) {
-                histogram.recordLong((long) millisToUnit(i, TimeUnit.NANOSECONDS));
+                histogram.recordLong(TimeUnit.MILLISECONDS.toNanos(i));
             }
 
             // baseline median
@@ -142,7 +141,7 @@ class TimeWindowPercentileHistogramTest {
                 .anyMatch(p -> percentileValueIsApproximately(p, 0.5, 5e6));
 
             for (int i = 11; i <= 20; i++) {
-                histogram.recordLong((long) millisToUnit(i, TimeUnit.NANOSECONDS));
+                histogram.recordLong(TimeUnit.MILLISECONDS.toNanos(i));
             }
 
             // median should have moved after seeing 10 more samples
@@ -167,7 +166,6 @@ class TimeWindowPercentileHistogramTest {
             .build()
             .merge(DistributionStatisticConfig.DEFAULT);
 
-        MockClock clock = new MockClock();
         // Start from 0 for more comprehensive timing calculation.
         clock.add(-1, TimeUnit.NANOSECONDS);
         assertThat(clock.wallTime()).isZero();
@@ -235,6 +233,48 @@ class TimeWindowPercentileHistogramTest {
                 return valueAtPercentile.value();
         }
         return Double.NaN;
+    }
+
+    @Test
+    void nonCumulativeHistogram() {
+        DistributionStatisticConfig config = DistributionStatisticConfig.builder()
+            .serviceLevelObjectives(5, 10)
+            .build()
+            .merge(DistributionStatisticConfig.DEFAULT);
+        Histogram histogram = new TimeWindowPercentileHistogram(clock, config, false, false, false);
+        histogram.recordLong(3);
+        histogram.recordLong(4);
+        histogram.recordLong(10);
+
+        assertThat(histogram.takeSnapshot(0, 0, 0).histogramCounts()).containsExactly(new CountAtBucket(5d, 2),
+                new CountAtBucket(10d, 1));
+    }
+
+    @Test
+    void infinityBucketAddedWhenHistogramIsPresent() {
+        DistributionStatisticConfig config = DistributionStatisticConfig.builder()
+            .serviceLevelObjectives(5, 10)
+            .build()
+            .merge(DistributionStatisticConfig.DEFAULT);
+        Histogram histogram = new TimeWindowPercentileHistogram(clock, config, false, false, true);
+        histogram.recordLong(3);
+        histogram.recordLong(4);
+        histogram.recordLong(11);
+
+        assertThat(histogram.takeSnapshot(0, 0, 0).histogramCounts()).containsExactly(new CountAtBucket(5d, 2),
+                new CountAtBucket(10d, 0), new CountAtBucket(Double.POSITIVE_INFINITY, 1));
+    }
+
+    @Test
+    void infinityBucketAddedWhenNoHistogramBucketsAreConfigured() {
+        DistributionStatisticConfig config = DistributionStatisticConfig.DEFAULT;
+        Histogram histogram = new TimeWindowPercentileHistogram(clock, config, false, false, true);
+        histogram.recordLong(3);
+        histogram.recordLong(4);
+        histogram.recordLong(11);
+
+        assertThat(histogram.takeSnapshot(0, 0, 0).histogramCounts())
+            .containsExactly(new CountAtBucket(Double.POSITIVE_INFINITY, 3));
     }
 
 }

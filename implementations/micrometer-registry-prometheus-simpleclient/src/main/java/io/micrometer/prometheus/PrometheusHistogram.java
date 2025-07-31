@@ -99,7 +99,7 @@ class PrometheusHistogram extends TimeWindowFixedBoundaryHistogram {
     public void recordLong(long value) {
         super.recordLong(value);
         if (isExemplarsEnabled()) {
-            updateExemplar(value, NANOSECONDS, SECONDS);
+            updateExemplar((double) value, NANOSECONDS, SECONDS);
         }
     }
 

@@ -251,7 +251,7 @@ public class FixedBoundaryVictoriaMetricsHistogram implements Histogram {
         printStream.format("%14s %10s\n\n", "Bucket", "TotalCount");
 
         for (CountAtBucket bucket : nonZeroBuckets()) {
-            printStream.format(Locale.US, "%14.1f %10d\n", bucket.bucket() / bucketScaling, bucket.count());
+            printStream.format(Locale.US, "%14.1f %10f\n", bucket.bucket() / bucketScaling, bucket.count());
         }
 
         printStream.write('\n');

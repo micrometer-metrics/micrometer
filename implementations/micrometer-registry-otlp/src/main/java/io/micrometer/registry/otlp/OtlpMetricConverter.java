@@ -158,7 +158,7 @@ class OtlpMetricConverter {
         Metric.Builder builder = getOrCreateMetricBuilder(functionTimer.getId(), DataCase.HISTOGRAM);
         HistogramDataPoint.Builder histogramDataPoint = HistogramDataPoint.newBuilder()
             .addAllAttributes(getKeyValuesForId(functionTimer.getId()))
-            .setStartTimeUnixNano(getStartTimeNanos((functionTimer)))
+            .setStartTimeUnixNano(getStartTimeNanos(functionTimer))
             .setTimeUnixNano(getTimeUnixNano())
             .setSum(functionTimer.totalTime(baseTimeUnit))
             .setCount((long) functionTimer.count());
@@ -370,7 +370,7 @@ class OtlpMetricConverter {
         public boolean equals(Object o) {
             if (this == o)
                 return true;
-            if (o == null || getClass() != o.getClass())
+            if (!(o instanceof MetricMetaData))
                 return false;
             MetricMetaData that = (MetricMetaData) o;
             return Objects.equals(dataCase, that.dataCase) && Objects.equals(name, that.name)

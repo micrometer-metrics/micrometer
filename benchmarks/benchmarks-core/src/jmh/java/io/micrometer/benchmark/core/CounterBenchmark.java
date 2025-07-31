@@ -53,6 +53,16 @@ public class CounterBenchmark {
     }
 
     @Benchmark
+    public void baseline() {
+        // this method was intentionally left blank.
+    }
+
+    @Benchmark
+    public Counter retrieve() {
+        return registry.counter("counter");
+    }
+
+    @Benchmark
     public double countSum() {
         counter.increment();
         return counter.count();

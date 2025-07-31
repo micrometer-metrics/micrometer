@@ -48,7 +48,7 @@ public class StepFunctionTimer<T> implements FunctionTimer, StepMeter {
 
     private final Clock clock;
 
-    private volatile long lastUpdateTime = (long) (-2e6);
+    private volatile long lastUpdateTime = (long) -2e6;
 
     private volatile long lastCount;
 
@@ -75,6 +75,7 @@ public class StepFunctionTimer<T> implements FunctionTimer, StepMeter {
     /**
      * The total number of occurrences of the timed event.
      */
+    @Override
     public double count() {
         accumulateCountAndTotal();
         return countTotal.poll1();
@@ -83,6 +84,7 @@ public class StepFunctionTimer<T> implements FunctionTimer, StepMeter {
     /**
      * The total time of all occurrences of the timed event.
      */
+    @Override
     public double totalTime(TimeUnit unit) {
         accumulateCountAndTotal();
         return TimeUtils.convert(countTotal.poll2(), baseTimeUnit(), unit);

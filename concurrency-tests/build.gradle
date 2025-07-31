@@ -3,15 +3,19 @@ plugins {
 }
 
 dependencies {
+    // Comment out the local project references and reference an old version to compare jcstress results across versions
+    // Make sure to use a consistent version for all micrometer dependencies
     implementation project(":micrometer-core")
-//    implementation("io.micrometer:micrometer-core:1.12.4")
-    implementation project(":micrometer-test")
+//    implementation("io.micrometer:micrometer-core:1.14.1")
     implementation project(":micrometer-registry-prometheus")
+//    implementation("io.micrometer:micrometer-registry-prometheus:1.14.1")
+    implementation project(":micrometer-registry-otlp")
+
     runtimeOnly(libs.logbackLatest)
 }
 
 jcstress {
-    libs.jcstressCore
+    jcstressDependency libs.jcstressCore.get().toString()
 
     // This affects how long and thorough testing will be
     // In order of increasing stress: sanity, quick, default, tough, stress

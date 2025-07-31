@@ -39,13 +39,16 @@ dependencies {
 
 ## Milestone releases
 
-Milestone releases are published to https://repo.spring.io/milestone.
-Include that as a maven repository in your build configuration to use milestone releases.
+Starting with the 1.15.0-M2 release, milestone releases and release candidates will be published to Maven Central.
 Note that milestone releases are for testing purposes and are not intended for production use.
 
 ## Documentation
 
 The reference documentation is managed in the [docs directory](/docs) and published to https://micrometer.io/.
+
+## Samples/Examples
+
+You can find sample/example apps in the [micrometer-samples](https://github.com/micrometer-metrics/micrometer-samples) repository.
 
 ## Contributing
 

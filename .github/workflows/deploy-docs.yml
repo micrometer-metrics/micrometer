@@ -2,7 +2,10 @@ name: Deploy Docs
 on:
   push:
     branches: [ main, '[0-9]+.[0-9]+.x' ]
-    tags: 'v[0-9]+.[0-9]+.[0-9]+'
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'
+      - 'v[0-9]+.[0-9]+.0-M[0-9]'
+      - 'v[0-9]+.[0-9]+.0-RC[0-9]'
   repository_dispatch:
     types: request-build-reference # legacy
   #schedule:

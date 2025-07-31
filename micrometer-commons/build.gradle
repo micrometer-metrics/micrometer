@@ -1,15 +1,13 @@
 description 'Module containing common code'
 
 dependencies {
-    // log monitoring
-    optionalApi 'ch.qos.logback:logback-classic'
+    // internal logger
+    optionalApi libs.logback12
 
     // Aspects
     optionalApi libs.aspectjrt
 
-    // JUnit 5
-    testImplementation libs.junitJupiter
-    testImplementation 'org.assertj:assertj-core'
+    testImplementation libs.assertj
 }
 
 jar {

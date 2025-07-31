@@ -22,12 +22,17 @@ import io.micrometer.core.instrument.cumulative.CumulativeFunctionTimer;
 import io.micrometer.core.instrument.step.StepFunctionCounter;
 import io.micrometer.core.instrument.step.StepFunctionTimer;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
+import java.math.BigInteger;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Supplier;
+import java.util.stream.Stream;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -163,6 +168,35 @@ class SimpleMeterRegistryTest {
                 + "request.size(DISTRIBUTION_SUMMARY)[]; count=10.0, total=1450.0 bytes, max=190.0 bytes\n"
                 + "temperature(GAUGE)[]; value=24.0 celsius");
         sample.stop();
+    }
+
+    @ParameterizedTest
+    @MethodSource("getSuppliers")
+    void newGaugeWhenSupplierProvidesSubClassOfNumberShouldReportCorrectly(Supplier<? extends Number> supplier) {
+        Gauge.builder("temperature", supplier).register(registry);
+        assertThat(registry.getMeters()).singleElement().satisfies(meter -> {
+            assertThat(meter.getId().getName()).isEqualTo("temperature");
+            assertThat(meter.measure()).singleElement()
+                .satisfies(measurement -> assertThat(measurement.getValue()).isEqualTo(70));
+        });
+    }
+
+    @ParameterizedTest
+    @MethodSource("getSuppliers")
+    void newTimeGaugeWhenSupplierProvidesSubClassOfNumberShouldReportCorrectly(Supplier<? extends Number> supplier) {
+        TimeGauge.builder("processing.time", supplier, TimeUnit.SECONDS).register(registry);
+        assertThat(registry.getMeters()).singleElement().satisfies(meter -> {
+            assertThat(meter.getId().getName()).isEqualTo("processing.time");
+            assertThat(meter.getId().getBaseUnit()).isEqualTo("seconds");
+            assertThat(meter.measure()).singleElement()
+                .satisfies(measurement -> assertThat(measurement.getValue()).isEqualTo(70));
+        });
+    }
+
+    private static Stream<Supplier<? extends Number>> getSuppliers() {
+        return Stream.of((Supplier<Integer>) () -> 70, (Supplier<Double>) () -> 70.0, (Supplier<Long>) () -> 70L,
+                (Supplier<AtomicInteger>) () -> new AtomicInteger(70),
+                (Supplier<BigInteger>) () -> new BigInteger("70"));
     }
 
     private SimpleMeterRegistry createRegistry(CountingMode mode) {

@@ -17,8 +17,8 @@
 package io.micrometer.jakarta9.instrument.jms;
 
 import io.micrometer.common.lang.Nullable;
+import io.micrometer.common.util.internal.logging.WarnThenDebugLogger;
 import io.micrometer.observation.transport.SenderContext;
-import jakarta.jms.JMSException;
 import jakarta.jms.Message;
 
 /**
@@ -33,15 +33,18 @@ import jakarta.jms.Message;
  */
 public class JmsPublishObservationContext extends SenderContext<Message> {
 
+    private static final WarnThenDebugLogger logger = new WarnThenDebugLogger(JmsPublishObservationContext.class);
+
     public JmsPublishObservationContext(@Nullable Message sendMessage) {
         super((message, key, value) -> {
-            try {
-                if (message != null) {
+            if (message != null) {
+                try {
                     message.setStringProperty(key, value);
                 }
-            }
-            catch (JMSException exc) {
-                // ignore
+                // Some JMS providers throw exceptions other than JMSException
+                catch (Exception exc) {
+                    logger.log("Failed to set message property.", exc);
+                }
             }
         });
         setCarrier(sendMessage);

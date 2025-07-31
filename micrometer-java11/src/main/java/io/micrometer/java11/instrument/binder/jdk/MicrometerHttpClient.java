@@ -235,7 +235,7 @@ public class MicrometerHttpClient extends HttpClient {
         instrumentation.stop(DefaultHttpClientObservationConvention.INSTANCE.getName(), "Timer for JDK's HttpClient",
                 () -> Tags.of(HttpClientObservationDocumentation.LowCardinalityKeys.METHOD.asString(), request.method(),
                         HttpClientObservationDocumentation.LowCardinalityKeys.URI.asString(),
-                        DefaultHttpClientObservationConvention.INSTANCE.getUriTag(request, res, uriMapper),
+                        DefaultHttpClientObservationConvention.INSTANCE.getUri(request, uriMapper),
                         HttpClientObservationDocumentation.LowCardinalityKeys.STATUS.asString(),
                         DefaultHttpClientObservationConvention.INSTANCE.getStatus(res),
                         HttpClientObservationDocumentation.LowCardinalityKeys.OUTCOME.asString(),
@@ -265,15 +265,16 @@ public class MicrometerHttpClient extends HttpClient {
                 httpRequestBuilder);
         HttpRequest request = httpRequestBuilder.build();
         return client.sendAsync(request, bodyHandler, pushPromiseHandler).handle((response, throwable) -> {
+            instrumentation.setResponse(response);
             if (throwable != null) {
                 instrumentation.setThrowable(throwable);
-            }
-            instrumentation.setResponse(response);
-            stopObservationOrTimer(instrumentation, request, response);
-            if (throwable != null) {
+                stopObservationOrTimer(instrumentation, request, response);
                 throw new CompletionException(throwable);
             }
-            return response;
+            else {
+                stopObservationOrTimer(instrumentation, request, response);
+                return response;
+            }
         });
     }
 

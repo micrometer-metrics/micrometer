@@ -60,64 +60,64 @@ class EhCache2MetricsTest extends AbstractCacheMetricsTest {
         StatisticsGateway stats = cache.getStatistics();
 
         Gauge remoteSize = fetch(registry, "cache.remoteSize").gauge();
-        assertThat(remoteSize.value()).isEqualTo(stats.getRemoteSize());
+        assertThat(remoteSize.value()).isEqualTo((double) stats.getRemoteSize());
 
         FunctionCounter cacheRemovals = fetch(registry, "cache.removals").functionCounter();
-        assertThat(cacheRemovals.count()).isEqualTo(stats.cacheRemoveCount());
+        assertThat(cacheRemovals.count()).isEqualTo((double) stats.cacheRemoveCount());
 
         String cacheAdded = "cache.puts.added";
         FunctionCounter putsAdded = fetch(registry, cacheAdded, Tags.of("result", "added")).functionCounter();
-        assertThat(putsAdded.count()).isEqualTo(stats.cachePutAddedCount());
+        assertThat(putsAdded.count()).isEqualTo((double) stats.cachePutAddedCount());
 
         FunctionCounter putsUpdated = fetch(registry, cacheAdded, Tags.of("result", "updated")).functionCounter();
-        assertThat(putsUpdated.count()).isEqualTo(stats.cachePutUpdatedCount());
+        assertThat(putsUpdated.count()).isEqualTo((double) stats.cachePutUpdatedCount());
 
         Gauge offHeapSize = fetch(registry, "cache.local.offheap.size").gauge();
-        assertThat(offHeapSize.value()).isEqualTo(stats.getLocalOffHeapSizeInBytes());
+        assertThat(offHeapSize.value()).isEqualTo((double) stats.getLocalOffHeapSizeInBytes());
 
         Gauge heapSize = fetch(registry, "cache.local.heap.size").gauge();
-        assertThat(heapSize.value()).isEqualTo(stats.getLocalHeapSizeInBytes());
+        assertThat(heapSize.value()).isEqualTo((double) stats.getLocalHeapSizeInBytes());
 
         Gauge diskSize = fetch(registry, "cache.local.disk.size").gauge();
-        assertThat(diskSize.value()).isEqualTo(stats.getLocalDiskSizeInBytes());
+        assertThat(diskSize.value()).isEqualTo((double) stats.getLocalDiskSizeInBytes());
 
         // miss metrics
         String misses = "cache.misses";
         FunctionCounter expiredMisses = fetch(registry, misses, Tags.of("reason", "expired")).functionCounter();
-        assertThat(expiredMisses.count()).isEqualTo(stats.cacheMissExpiredCount());
+        assertThat(expiredMisses.count()).isEqualTo((double) stats.cacheMissExpiredCount());
 
         FunctionCounter notFoundMisses = fetch(registry, misses, Tags.of("reason", "notFound")).functionCounter();
-        assertThat(notFoundMisses.count()).isEqualTo(stats.cacheMissNotFoundCount());
+        assertThat(notFoundMisses.count()).isEqualTo((double) stats.cacheMissNotFoundCount());
 
         // commit transaction metrics
         String xaCommits = "cache.xa.commits";
         FunctionCounter readOnlyCommits = fetch(registry, xaCommits, Tags.of("result", "readOnly")).functionCounter();
-        assertThat(readOnlyCommits.count()).isEqualTo(stats.xaCommitReadOnlyCount());
+        assertThat(readOnlyCommits.count()).isEqualTo((double) stats.xaCommitReadOnlyCount());
 
         FunctionCounter exceptionCommits = fetch(registry, xaCommits, Tags.of("result", "exception")).functionCounter();
-        assertThat(exceptionCommits.count()).isEqualTo(stats.xaCommitExceptionCount());
+        assertThat(exceptionCommits.count()).isEqualTo((double) stats.xaCommitExceptionCount());
 
         FunctionCounter committedCommits = fetch(registry, xaCommits, Tags.of("result", "committed")).functionCounter();
-        assertThat(committedCommits.count()).isEqualTo(stats.xaCommitCommittedCount());
+        assertThat(committedCommits.count()).isEqualTo((double) stats.xaCommitCommittedCount());
 
         // rollback transaction metrics
         String xaRollbacks = "cache.xa.rollbacks";
         FunctionCounter exceptionRollback = fetch(registry, xaRollbacks, Tags.of("result", "exception"))
             .functionCounter();
-        assertThat(exceptionRollback.count()).isEqualTo(stats.xaRollbackExceptionCount());
+        assertThat(exceptionRollback.count()).isEqualTo((double) stats.xaRollbackExceptionCount());
 
         FunctionCounter successRollback = fetch(registry, xaRollbacks, Tags.of("result", "success")).functionCounter();
-        assertThat(successRollback.count()).isEqualTo(stats.xaRollbackSuccessCount());
+        assertThat(successRollback.count()).isEqualTo((double) stats.xaRollbackSuccessCount());
 
         // recovery transaction metrics
         String xaRecoveries = "cache.xa.recoveries";
         FunctionCounter nothingRecovered = fetch(registry, xaRecoveries, Tags.of("result", "nothing"))
             .functionCounter();
-        assertThat(nothingRecovered.count()).isEqualTo(stats.xaRecoveryNothingCount());
+        assertThat(nothingRecovered.count()).isEqualTo((double) stats.xaRecoveryNothingCount());
 
         FunctionCounter successRecoveries = fetch(registry, xaRecoveries, Tags.of("result", "success"))
             .functionCounter();
-        assertThat(successRecoveries.count()).isEqualTo(stats.xaRecoveryRecoveredCount());
+        assertThat(successRecoveries.count()).isEqualTo((double) stats.xaRecoveryRecoveredCount());
     }
 
     @Test

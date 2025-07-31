@@ -29,6 +29,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
@@ -663,9 +664,11 @@ class DynatraceExporterV2Test {
         final String firstUri = baseUri + "first";
         final String secondUri = baseUri + "second";
 
-        Files.write(tempFile, ("DT_METRICS_INGEST_URL = " + firstUri + "\n"
-                + "DT_METRICS_INGEST_API_TOKEN = YOUR.DYNATRACE.TOKEN.FIRST")
-            .getBytes());
+        Files
+            .write(tempFile,
+                    ("DT_METRICS_INGEST_URL = " + firstUri + "\n"
+                            + "DT_METRICS_INGEST_API_TOKEN = YOUR.DYNATRACE.TOKEN.FIRST")
+                        .getBytes(StandardCharsets.UTF_8));
 
         DynatraceFileBasedConfigurationProvider.getInstance()
             .forceOverwriteConfig(tempFile.toString(), Duration.ofMillis(50));
@@ -689,9 +692,10 @@ class DynatraceExporterV2Test {
         clock.add(config.step());
 
         // overwrite the file content to use the second uri
-        Files.write(tempFile, ("DT_METRICS_INGEST_URL = " + secondUri + "\n"
-                + "DT_METRICS_INGEST_API_TOKEN = YOUR.DYNATRACE.TOKEN.SECOND")
-            .getBytes());
+        Files.write(tempFile,
+                ("DT_METRICS_INGEST_URL = " + secondUri + "\n"
+                        + "DT_METRICS_INGEST_API_TOKEN = YOUR.DYNATRACE.TOKEN.SECOND")
+                    .getBytes(StandardCharsets.UTF_8));
 
         await().atMost(1_000, MILLISECONDS).until(() -> config.uri().equals(secondUri));
         exporter.export(Collections.singletonList(counter));
@@ -1116,14 +1120,14 @@ class DynatraceExporterV2Test {
     private String extractBase(String line) {
         if (line.startsWith("#"))
             return String.join(" ", Arrays.copyOfRange(line.split(" ", 3), 0, 2));
-        return line.split(",", 2)[0] + " " + line.split(" ")[1]
-                + (line.split(" ").length == 3 ? " " + line.split(" ")[2] : "");
+        String[] parts = line.split(" ", -1);
+        return line.split(",", 2)[0] + " " + parts[1] + (parts.length == 3 ? " " + parts[2] : "");
     }
 
     private List<String> extractDims(String line) {
         if (line.startsWith("#"))
             return Arrays.asList(line.split(" ", 3)[2].split(","));
-        return Arrays.asList(line.split(",", 2)[1].split(" ")[0].split(","));
+        return Arrays.asList(line.split(",", 2)[1].split(" ", -1)[0].split(",", -1));
     }
 
 }

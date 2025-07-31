@@ -45,7 +45,7 @@ public class PrometheusNamingConvention implements NamingConvention {
      */
     @Override
     public String name(String name, Meter.Type type, @Nullable String baseUnit) {
-        String conventionName = NamingConvention.snakeCase.name(name, type, baseUnit);
+        String conventionName = PrometheusNaming.prometheusName(name);
 
         switch (type) {
             case COUNTER:
@@ -85,7 +85,7 @@ public class PrometheusNamingConvention implements NamingConvention {
      */
     @Override
     public String tagKey(String key) {
-        return PrometheusNaming.sanitizeLabelName(key);
+        return PrometheusNaming.sanitizeLabelName(PrometheusNaming.prometheusName(key));
     }
 
 }

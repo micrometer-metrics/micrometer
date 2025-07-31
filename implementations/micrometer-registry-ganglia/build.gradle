@@ -1,11 +1,11 @@
 dependencies {
     api project(':micrometer-core')
 
-    api 'info.ganglia.gmetric4j:gmetric4j'
-    implementation 'org.slf4j:slf4j-api'
+    api libs.gmetric4j
+    implementation libs.slf4jApi
 
     // Deprecated constructor references this which is otherwise unused.
-    compileOnly 'io.dropwizard.metrics:metrics-core'
+    compileOnly libs.dropwizardMetricsCore
 
     testImplementation project(':micrometer-test')
 }

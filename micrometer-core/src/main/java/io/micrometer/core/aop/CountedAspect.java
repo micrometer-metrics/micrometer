@@ -15,6 +15,7 @@
  */
 package io.micrometer.core.aop;
 
+import io.micrometer.common.KeyValue;
 import io.micrometer.common.lang.NonNullApi;
 import io.micrometer.common.lang.Nullable;
 import io.micrometer.common.util.internal.logging.WarnThenDebugLogger;
@@ -71,6 +72,7 @@ import java.util.function.Predicate;
  * @author Jonatan Ivanov
  * @author Johnny Lim
  * @author Yanming Zhou
+ * @author Jeonggi Kim
  * @since 1.2.0
  * @see Counted
  */
@@ -78,11 +80,11 @@ import java.util.function.Predicate;
 @NonNullApi
 public class CountedAspect {
 
-    private static final WarnThenDebugLogger joinPointTagsFunctionLogger = new WarnThenDebugLogger(CountedAspect.class);
+    private static final WarnThenDebugLogger WARN_THEN_DEBUG_LOGGER = new WarnThenDebugLogger(CountedAspect.class);
 
     private static final Predicate<ProceedingJoinPoint> DONT_SKIP_ANYTHING = pjp -> false;
 
-    public final String DEFAULT_EXCEPTION_TAG_VALUE = "none";
+    public final String DEFAULT_EXCEPTION_TAG_VALUE = KeyValue.NONE_VALUE;
 
     public final String RESULT_TAG_FAILURE_VALUE = "failure";
 
@@ -179,7 +181,7 @@ public class CountedAspect {
                 return function.apply(pjp);
             }
             catch (Throwable t) {
-                joinPointTagsFunctionLogger
+                WARN_THEN_DEBUG_LOGGER
                     .log("Exception thrown from the tagsBasedOnJoinPoint function configured on CountedAspect.", t);
                 return Tags.empty();
             }
@@ -231,17 +233,28 @@ public class CountedAspect {
         return perform(pjp, counted);
     }
 
+    @Nullable
     private Object perform(ProceedingJoinPoint pjp, Counted counted) throws Throwable {
         final Method method = ((MethodSignature) pjp.getSignature()).getMethod();
         final boolean stopWhenCompleted = CompletionStage.class.isAssignableFrom(method.getReturnType());
 
         if (stopWhenCompleted) {
             try {
-                return ((CompletionStage<?>) pjp.proceed())
-                    .whenComplete((result, throwable) -> recordCompletionResult(pjp, counted, throwable));
+                Object result = pjp.proceed();
+                if (result == null) {
+                    if (!counted.recordFailuresOnly()) {
+                        record(pjp, result, counted, DEFAULT_EXCEPTION_TAG_VALUE, RESULT_TAG_SUCCESS_VALUE);
+                    }
+                    return result;
+                }
+                else {
+                    CompletionStage<?> stage = ((CompletionStage<?>) result);
+                    return stage
+                        .whenComplete((res, throwable) -> recordCompletionResult(pjp, result, counted, throwable));
+                }
             }
             catch (Throwable e) {
-                record(pjp, counted, e.getClass().getSimpleName(), RESULT_TAG_FAILURE_VALUE);
+                record(pjp, null, counted, e.getClass().getSimpleName(), RESULT_TAG_FAILURE_VALUE);
                 throw e;
             }
         }
@@ -249,40 +262,48 @@ public class CountedAspect {
         try {
             Object result = pjp.proceed();
             if (!counted.recordFailuresOnly()) {
-                record(pjp, counted, DEFAULT_EXCEPTION_TAG_VALUE, RESULT_TAG_SUCCESS_VALUE);
+                record(pjp, result, counted, DEFAULT_EXCEPTION_TAG_VALUE, RESULT_TAG_SUCCESS_VALUE);
             }
             return result;
         }
         catch (Throwable e) {
-            record(pjp, counted, e.getClass().getSimpleName(), RESULT_TAG_FAILURE_VALUE);
+            record(pjp, null, counted, e.getClass().getSimpleName(), RESULT_TAG_FAILURE_VALUE);
             throw e;
         }
     }
 
-    private void recordCompletionResult(ProceedingJoinPoint pjp, Counted counted, Throwable throwable) {
+    private void recordCompletionResult(ProceedingJoinPoint pjp, @Nullable Object methodResult, Counted counted,
+            Throwable throwable) {
 
         if (throwable != null) {
             String exceptionTagValue = throwable.getCause() == null ? throwable.getClass().getSimpleName()
                     : throwable.getCause().getClass().getSimpleName();
-            record(pjp, counted, exceptionTagValue, RESULT_TAG_FAILURE_VALUE);
+            record(pjp, methodResult, counted, exceptionTagValue, RESULT_TAG_FAILURE_VALUE);
         }
         else if (!counted.recordFailuresOnly()) {
-            record(pjp, counted, DEFAULT_EXCEPTION_TAG_VALUE, RESULT_TAG_SUCCESS_VALUE);
+            record(pjp, methodResult, counted, DEFAULT_EXCEPTION_TAG_VALUE, RESULT_TAG_SUCCESS_VALUE);
         }
 
     }
 
-    private void record(ProceedingJoinPoint pjp, Counted counted, String exception, String result) {
-        Counter.Builder builder = Counter.builder(counted.value())
-            .description(counted.description().isEmpty() ? null : counted.description())
-            .tags(counted.extraTags())
-            .tag(EXCEPTION_TAG, exception)
-            .tag(RESULT_TAG, result)
-            .tags(tagsBasedOnJoinPoint.apply(pjp));
-        if (meterTagAnnotationHandler != null) {
-            meterTagAnnotationHandler.addAnnotatedParameters(builder, pjp);
+    private void record(ProceedingJoinPoint pjp, @Nullable Object methodResult, Counted counted, String exception,
+            String result) {
+        try {
+            Counter.Builder builder = Counter.builder(counted.value())
+                .description(counted.description().isEmpty() ? null : counted.description())
+                .tags(counted.extraTags())
+                .tag(EXCEPTION_TAG, exception)
+                .tag(RESULT_TAG, result)
+                .tags(tagsBasedOnJoinPoint.apply(pjp));
+            if (meterTagAnnotationHandler != null) {
+                meterTagAnnotationHandler.addAnnotatedParameters(builder, pjp);
+                meterTagAnnotationHandler.addAnnotatedMethodResult(builder, pjp, methodResult);
+            }
+            builder.register(registry).increment();
         }
-        builder.register(registry).increment();
+        catch (Throwable ex) {
+            WARN_THEN_DEBUG_LOGGER.log("Failed to record.", ex);
+        }
     }
 
     /**

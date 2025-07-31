@@ -41,26 +41,30 @@ compileTestJava {
 
 dependencies {
     implementation project(':micrometer-core')
-    implementation 'io.micrometer:context-propagation'
-    implementation 'ch.qos.logback:logback-classic'
-    implementation 'org.slf4j:slf4j-api'
+    implementation libs.contextPropagation
+    implementation libs.logback12
+    implementation libs.slf4jApi
 
     testImplementation project(':micrometer-test')
     testImplementation project(':micrometer-observation-test')
+    testImplementation project(':micrometer-registry-otlp')
     testImplementation libs.aspectjweaver
-    testImplementation libs.junitJupiter
-    testImplementation 'org.assertj:assertj-core'
+    testImplementation libs.assertj
+    // needed for OtlpMeterRegistryCustomizationTest
+    testRuntimeOnly libs.okhttp
     testImplementation(libs.spring6.context)
+    testImplementation platform(libs.reactorBom)
     testImplementation 'io.projectreactor:reactor-core'
     testImplementation 'io.projectreactor:reactor-test'
+    testImplementation platform(libs.nettyBom)
     testImplementation 'io.netty:netty-transport'
-    testImplementation 'org.apache.httpcomponents.client5:httpclient5'
+    testImplementation libs.httpcomponents.client5
     testImplementation libs.javalin
     // Kafka binder IT dependencies
-    testImplementation 'org.apache.kafka:kafka-clients'
-    testImplementation 'org.testcontainers:testcontainers'
-    testImplementation 'org.testcontainers:junit-jupiter'
-    testImplementation 'org.testcontainers:kafka'
+    testImplementation libs.kafkaClients
+    testImplementation libs.testcontainers
+    testImplementation libs.testcontainers.junitJupiter
+    testImplementation libs.testcontainers.kafka
 }
 
 antora {

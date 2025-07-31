@@ -65,15 +65,16 @@ public class MultiGauge {
             // intermediate variable.
             Stream<Meter.Id> idStream = StreamSupport.stream(rows.spliterator(), false).map(row -> {
                 Row r = row;
-                Meter.Id rowId = commonId.withTags(r.uniqueTags);
+                Meter.Id prefilteredId = commonId.withTags(r.uniqueTags);
+                Meter.Id rowId = registry.getMappedId(prefilteredId);
                 boolean previouslyDefined = oldRows.contains(rowId);
 
                 if (overwrite && previouslyDefined) {
-                    registry.removeByPreFilterId(rowId);
+                    registry.removeByPreFilterId(prefilteredId);
                 }
 
                 if (overwrite || !previouslyDefined) {
-                    registry.gauge(rowId, r.obj, new StrongReferenceGaugeFunction<>(r.obj, r.valueFunction));
+                    registry.gauge(prefilteredId, r.obj, new StrongReferenceGaugeFunction<>(r.obj, r.valueFunction));
                 }
 
                 return rowId;
@@ -83,7 +84,7 @@ public class MultiGauge {
 
             for (Meter.Id oldRow : oldRows) {
                 if (!newRows.contains(oldRow))
-                    registry.removeByPreFilterId(oldRow);
+                    registry.remove(oldRow);
             }
 
             return newRows;
@@ -112,7 +113,7 @@ public class MultiGauge {
             return new Row<>(uniqueTags, number, Number::doubleValue);
         }
 
-        public static Row<Supplier<Number>> of(Tags uniqueTags, Supplier<Number> valueFunction) {
+        public static <T extends Number> Row<Supplier<T>> of(Tags uniqueTags, Supplier<T> valueFunction) {
             return new Row<>(uniqueTags, valueFunction, f -> {
                 Number value = valueFunction.get();
                 return value == null ? Double.NaN : value.doubleValue();

@@ -23,7 +23,6 @@ import io.micrometer.core.instrument.distribution.HistogramGauges;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -239,14 +238,13 @@ public interface Meter {
          * @since 1.1.0
          */
         public Id withTags(Iterable<Tag> tags) {
-            return new Id(name, Tags.concat(getTags(), tags), baseUnit, description, type);
+            return new Id(name, Tags.concat(this.tags, tags), baseUnit, description, type);
         }
 
         /**
          * Generate a new id replacing all tags with new ones.
          * @param tags The tags to add.
-         * @return A new id with the only the provided tags. The source id remains
-         * unchanged.
+         * @return A new id with only the provided tags. The source id remains unchanged.
          * @since 1.1.0
          */
         public Id replaceTags(Iterable<Tag> tags) {
@@ -353,10 +351,10 @@ public interface Meter {
         public boolean equals(@Nullable Object o) {
             if (this == o)
                 return true;
-            if (o == null || getClass() != o.getClass())
+            if (!(o instanceof Id))
                 return false;
             Meter.Id meterId = (Meter.Id) o;
-            return Objects.equals(name, meterId.name) && Objects.equals(tags, meterId.tags);
+            return name.equals(meterId.name) && tags.equals(meterId.tags);
         }
 
         @Override

@@ -48,7 +48,7 @@ public class StatsdLongTaskTimer extends DefaultLongTaskTimer implements StatsdP
     public void poll() {
         long active = activeTasks();
         if (alwaysPublish || lastActive.getAndSet(active) != active) {
-            sink.next(lineBuilder.gauge(active, Statistic.ACTIVE_TASKS));
+            sink.next(lineBuilder.gauge((double) active, Statistic.ACTIVE_TASKS));
         }
 
         double duration = duration(TimeUnit.MILLISECONDS);

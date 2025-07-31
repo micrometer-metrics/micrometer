@@ -25,6 +25,7 @@ import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.micrometer.observation.ObservationRegistry;
 import io.micrometer.observation.Observations;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -39,6 +40,11 @@ class MeasuredClassTest {
     ObservationRegistry observationRegistry = ObservationRegistry.create();
 
     MeasuredClass measured = new MeasuredClass();
+
+    @BeforeAll
+    static void setUpClass() {
+        System.out.println("java.version: " + System.getProperty("java.version"));
+    }
 
     @BeforeEach
     void setUp() {

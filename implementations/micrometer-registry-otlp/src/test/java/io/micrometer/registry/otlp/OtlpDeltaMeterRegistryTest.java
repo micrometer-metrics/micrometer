@@ -100,19 +100,18 @@ class OtlpDeltaMeterRegistryTest extends OtlpMeterRegistryTest {
     void gauge() {
         Gauge gauge = Gauge.builder(METER_NAME, new AtomicInteger(5), AtomicInteger::doubleValue).register(registry);
         Metric metric = writeToMetric(gauge);
-        assertThat(metric.getGauge()).isNotNull();
         assertThat(metric.getGauge().getDataPoints(0).getAsDouble()).isEqualTo(5);
         assertThat(metric.getGauge().getDataPoints(0).getTimeUnixNano())
             .describedAs("Gauges should have timestamp of the instant when data is sampled")
             .isEqualTo(otlpConfig().step().plus(Duration.ofMillis(1)).toNanos());
     }
 
+    @Override
     @Test
     void timeGauge() {
         TimeGauge timeGauge = TimeGauge.builder("gauge.time", this, TimeUnit.MICROSECONDS, o -> 24).register(registry);
 
         Metric metric = writeToMetric(timeGauge);
-        assertThat(metric.getGauge()).isNotNull();
         assertThat(metric.getGauge().getDataPoints(0).getAsDouble()).isEqualTo(0.024);
         assertThat(metric.getGauge().getDataPoints(0).getTimeUnixNano())
             .describedAs("Gauges should have timestamp of the instant when data is sampled")
@@ -312,7 +311,7 @@ class OtlpDeltaMeterRegistryTest extends OtlpMeterRegistryTest {
 
         stepOverNStep(1);
         ds.record(4);
-        clock.addSeconds(otlpConfig().step().getSeconds() - 5);
+        clock.addSeconds(otlpConfig().step().toSeconds() - 5);
 
         metric = writeToMetric(ds);
         assertHistogram(writeToMetric(ds), TimeUnit.MINUTES.toNanos(2), TimeUnit.MINUTES.toNanos(3), BaseUnits.BYTES, 1,
@@ -377,6 +376,7 @@ class OtlpDeltaMeterRegistryTest extends OtlpMeterRegistryTest {
                 UNIT_MILLISECONDS, 0, 0, 0);
     }
 
+    @Override
     @Test
     void testMetricsStartAndEndTime() {
         Counter counter = Counter.builder("test_publish_time").register(registry);
@@ -384,7 +384,7 @@ class OtlpDeltaMeterRegistryTest extends OtlpMeterRegistryTest {
         Function<Meter, NumberDataPoint> getDataPoint = (meter) -> writeToMetric(meter).getSum().getDataPoints(0);
         assertThat(getDataPoint.apply(counter).getStartTimeUnixNano()).isEqualTo(0);
         assertThat(getDataPoint.apply(counter).getTimeUnixNano()).isEqualTo(60000000000L);
-        clock.addSeconds(otlpConfig().step().getSeconds() - 1);
+        clock.addSeconds(otlpConfig().step().toSeconds() - 1);
         assertThat(getDataPoint.apply(counter).getStartTimeUnixNano()).isEqualTo(0);
         assertThat(getDataPoint.apply(counter).getTimeUnixNano()).isEqualTo(60000000000L);
         clock.addSeconds(1);
@@ -426,7 +426,7 @@ class OtlpDeltaMeterRegistryTest extends OtlpMeterRegistryTest {
         assertThat(writeToMetric(functionTimer).getHistogram().getDataPoints(0).getSum()).isEqualTo(16);
         assertThat(writeToMetric(functionTimer).getHistogram().getDataPoints(0).getCount()).isEqualTo(16);
 
-        clock.addSeconds(otlpConfig().step().getSeconds() / 2);
+        clock.addSeconds(otlpConfig().step().toSeconds() / 2);
         // pollMeters should be idempotent within a time window
         registry.pollMetersToRollover();
         assertSum(writeToMetric(counter), TimeUnit.MINUTES.toNanos(1), TimeUnit.MINUTES.toNanos(2), 1);
@@ -434,7 +434,7 @@ class OtlpDeltaMeterRegistryTest extends OtlpMeterRegistryTest {
         assertThat(writeToMetric(functionTimer).getHistogram().getDataPoints(0).getSum()).isEqualTo(16);
         assertThat(writeToMetric(functionTimer).getHistogram().getDataPoints(0).getCount()).isEqualTo(16);
 
-        clock.addSeconds(otlpConfig().step().getSeconds() / 2);
+        clock.addSeconds(otlpConfig().step().toSeconds() / 2);
         registry.pollMetersToRollover();
         assertSum(writeToMetric(counter), TimeUnit.MINUTES.toNanos(2), TimeUnit.MINUTES.toNanos(3), 10);
         assertThat(writeToMetric(functionCounter).getSum().getDataPoints(0).getAsDouble()).isEqualTo(10);

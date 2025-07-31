@@ -73,7 +73,7 @@ public interface NamingConvention {
         }
 
         private String toCamelCase(String value) {
-            String[] parts = value.split("\\.");
+            String[] parts = value.split("\\.", 0);
             StringBuilder conventionName = new StringBuilder(value.length());
             for (int i = 0; i < parts.length; i++) {
                 String str = parts[i];
@@ -109,7 +109,7 @@ public interface NamingConvention {
         }
 
         private String capitalize(String name) {
-            if (name.length() == 0 || Character.isUpperCase(name.charAt(0))) {
+            if (name.isEmpty() || Character.isUpperCase(name.charAt(0))) {
                 return name;
             }
 

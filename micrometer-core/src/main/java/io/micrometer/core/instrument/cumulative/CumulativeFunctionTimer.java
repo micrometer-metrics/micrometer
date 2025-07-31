@@ -59,6 +59,7 @@ public class CumulativeFunctionTimer<T> extends AbstractMeter implements Functio
     /**
      * The total number of occurrences of the timed event.
      */
+    @Override
     public double count() {
         T obj2 = ref.get();
         return obj2 != null ? (lastCount = Math.max(countFunction.applyAsLong(obj2), 0)) : lastCount;
@@ -67,6 +68,7 @@ public class CumulativeFunctionTimer<T> extends AbstractMeter implements Functio
     /**
      * The total time of all occurrences of the timed event.
      */
+    @Override
     public double totalTime(TimeUnit unit) {
         T obj2 = ref.get();
         if (obj2 != null) {
