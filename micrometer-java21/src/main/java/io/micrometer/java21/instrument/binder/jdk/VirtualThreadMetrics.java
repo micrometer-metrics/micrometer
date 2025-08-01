@@ -121,7 +121,8 @@ public class VirtualThreadMetrics implements MeterBinder, Closeable {
                 .description(LIVE_THREADS_DESCRIPTION)
                 .register(registry);
         }
-        catch (ClassNotFoundException | ClassCastException | NoSuchMethodException | IllegalAccessException ignored) {
+        catch (ClassNotFoundException | ClassCastException | NoSuchMethodException | IllegalAccessException
+                | IllegalArgumentException ignored) {
             // cannot instrument VirtualThreadSchedulerMXBean
         }
     }
