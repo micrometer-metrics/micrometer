@@ -121,7 +121,7 @@ public class JettyConnectionMetrics extends AbstractLifeCycle implements Connect
             .tags(tags)
             .register(registry);
 
-        Gauge.builder("jetty.connections.current", this, jcm -> jcm.connectionSamples.size())
+        Gauge.builder("jetty.connections.current", this, JettyConnectionMetrics::currentConnections)
             .strongReference(true)
             .baseUnit(BaseUnits.CONNECTIONS)
             .description("The current number of open Jetty connections")
@@ -258,6 +258,12 @@ public class JettyConnectionMetrics extends AbstractLifeCycle implements Connect
         catch (NoSuchMethodException ignore) {
         }
         return method;
+    }
+
+    private int currentConnections() {
+        synchronized (connectionSamplesLock) {
+            return connectionSamples.size();
+        }
     }
 
 }
