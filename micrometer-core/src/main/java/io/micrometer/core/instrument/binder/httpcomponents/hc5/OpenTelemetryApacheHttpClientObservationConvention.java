@@ -17,6 +17,7 @@ package io.micrometer.core.instrument.binder.httpcomponents.hc5;
 
 import io.micrometer.common.KeyValue;
 import io.micrometer.common.KeyValues;
+import io.micrometer.core.instrument.binder.http.HttpMethods;
 import io.micrometer.core.instrument.binder.http.Outcome;
 import io.micrometer.core.instrument.binder.httpcomponents.hc5.OpenTelemetryApacheHttpClientObservationDocumentation.HighCardinalityKeyNames;
 import io.micrometer.core.instrument.binder.httpcomponents.hc5.OpenTelemetryApacheHttpClientObservationDocumentation.LowCardinalityKeyNames;
@@ -29,8 +30,6 @@ import org.jspecify.annotations.Nullable;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.HashSet;
-import java.util.Set;
 
 /**
  * Implementation of {@link ApacheHttpClientObservationConvention} based on the
@@ -63,26 +62,6 @@ public class OpenTelemetryApacheHttpClientObservationConvention implements Apach
     private static final KeyValue SERVER_ADDRESS_UNKNOWN = LowCardinalityKeyNames.SERVER_ADDRESS.withValue("UNKNOWN");
 
     private static final KeyValue SERVER_PORT_UNKNOWN = LowCardinalityKeyNames.SERVER_PORT.withValue("UNKNOWN");
-
-    /**
-     * Known HTTP methods as defined in
-     * <a href="https://www.rfc-editor.org/rfc/rfc9110.html#name-methods">RFC 9110</a> and
-     * <a href="https://www.rfc-editor.org/rfc/rfc5789.html">RFC 5789</a>.
-     */
-    private static final Set<String> KNOWN_HTTP_METHODS = new HashSet<>();
-
-    static {
-        KNOWN_HTTP_METHODS.add("GET");
-        KNOWN_HTTP_METHODS.add("HEAD");
-        KNOWN_HTTP_METHODS.add("POST");
-        KNOWN_HTTP_METHODS.add("PUT");
-        KNOWN_HTTP_METHODS.add("DELETE");
-        KNOWN_HTTP_METHODS.add("CONNECT");
-        KNOWN_HTTP_METHODS.add("OPTIONS");
-        KNOWN_HTTP_METHODS.add("TRACE");
-        KNOWN_HTTP_METHODS.add("PATCH");
-
-    }
 
     // There is no need to instantiate this class multiple times, but it may be extended,
     // hence protected visibility.
@@ -133,7 +112,7 @@ public class OpenTelemetryApacheHttpClientObservationConvention implements Apach
 
     protected @Nullable String maybeGetKnownMethod(HttpRequest request) {
         String httpMethod = request.getMethod();
-        if (KNOWN_HTTP_METHODS.contains(httpMethod)) {
+        if (HttpMethods.isStandard(httpMethod)) {
             return httpMethod;
         }
         return null;
