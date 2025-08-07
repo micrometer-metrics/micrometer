@@ -117,6 +117,7 @@ See also xref:../observation/components.adoc#micrometer-observation-predicates-f
 too high cardinality and starts stressing your monitoring system or costing too much but you cannot change all the instrumentation points quickly.
 * `replaceTagValues(String tagKey, Function<String, String> replacement, String... exceptions)`: Replace tag values according to the provided mapping for all matching tag keys. You can use this to reduce the total cardinality of a tag by mapping some portion of tag values to something else.
 * `renameTag(String meterNamePrefix, String fromTagKey, String toTagKey)`: Rename a tag key for every metric that begins with a given prefix.
+* `forPrefix(String prefix, MeterFilter delegate)`: Adds another MeterFilter that is only evaluated if the meter name starts with a given prefix.
 
 == Configuring Distribution Statistics
 

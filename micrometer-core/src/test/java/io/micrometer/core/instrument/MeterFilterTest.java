@@ -266,4 +266,31 @@ class MeterFilterTest {
         assertThat(registry.getMeters()).isNotEmpty();
     }
 
+    @Test
+    void forPrefix() {
+        MeterFilter mapFilter = MeterFilter.forPrefix("my.prefix", MeterFilter.ignoreTags("ignored.tag"));
+        MeterFilter acceptFilter = MeterFilter.forPrefix("my.prefix",
+                MeterFilter.deny(id -> id.getType() == Meter.Type.GAUGE));
+        MeterFilter configureFilter = MeterFilter.forPrefix("my.prefix", new MeterFilter() {
+            @Override
+            public DistributionStatisticConfig configure(Meter.Id id, DistributionStatisticConfig config) {
+                return DistributionStatisticConfig.DEFAULT;
+            }
+        });
+        Meter.Id meterWithPrefix = new Meter.Id("my.prefix.suffix",
+                Tags.of("ignored.tag", "value1", "other.tag", "value2"), null, null, Meter.Type.GAUGE);
+        Meter.Id meterWithoutPrefix = new Meter.Id("other.prefix", Tags.of("ignored.tag", "value"), null, null,
+                Meter.Type.GAUGE);
+
+        assertThat(mapFilter.map(meterWithPrefix).getTags()).containsExactly(Tag.of("other.tag", "value2"));
+        assertThat(mapFilter.map(meterWithoutPrefix).getTags()).containsExactly(Tag.of("ignored.tag", "value"));
+
+        assertThat(acceptFilter.accept(meterWithPrefix)).isEqualTo(MeterFilterReply.DENY);
+        assertThat(acceptFilter.accept(meterWithoutPrefix)).isEqualTo(MeterFilterReply.NEUTRAL);
+
+        DistributionStatisticConfig config = new DistributionStatisticConfig();
+        assertThat(configureFilter.configure(meterWithPrefix, config)).isEqualTo(DistributionStatisticConfig.DEFAULT);
+        assertThat(configureFilter.configure(meterWithoutPrefix, config)).isEqualTo(config);
+    }
+
 }

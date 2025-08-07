@@ -413,6 +413,49 @@ public interface MeterFilter {
     }
 
     /**
+     * Enables another filter only for metric whose name begins with the given prefix.
+     * <p>
+     * This can be useful if you want to apply another filter only to a selected set of
+     * metrics, for example:
+     * <code>registry.config().meterFilter(MeterFilter.forPrefix("com.example", MeterFilter.ignoreTags("ignored")))</code>
+     * @param prefix Apply the filter only to metrics whose name begins with this prefix
+     * @param delegate A filter to apply to meters with the given prefix
+     * @return A filter that forwards actions to another filter if the prefix matches
+     * @since 1.16.0
+     */
+    static MeterFilter forPrefix(String prefix, MeterFilter delegate) {
+        return new MeterFilter() {
+            @Override
+            public MeterFilterReply accept(Meter.Id id) {
+                if (appliesToMetric(id)) {
+                    return delegate.accept(id);
+                }
+                return MeterFilterReply.NEUTRAL;
+            }
+
+            @Override
+            public Meter.Id map(Meter.Id id) {
+                if (appliesToMetric(id)) {
+                    return delegate.map(id);
+                }
+                return id;
+            }
+
+            @Override
+            public @Nullable DistributionStatisticConfig configure(Meter.Id id, DistributionStatisticConfig config) {
+                if (appliesToMetric(id)) {
+                    return delegate.configure(id, config);
+                }
+                return config;
+            }
+
+            private boolean appliesToMetric(Meter.Id id) {
+                return id.getName().startsWith(prefix);
+            }
+        };
+    }
+
+    /**
      * @param id Id with {@link MeterFilter#map} transformations applied.
      * @return After all transformations, should a real meter be registered for this id,
      * or should it be no-op'd.
