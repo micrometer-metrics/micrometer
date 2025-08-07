@@ -73,4 +73,13 @@ class NettyEventExecutorMetricsTests {
         eventExecutors.shutdownGracefully().get(5, TimeUnit.SECONDS);
     }
 
+    @Test
+    void shouldHaveCustomTags() throws Exception {
+        DefaultEventLoopGroup eventExecutors = new DefaultEventLoopGroup();
+        Tags tags = Tags.of("testKey", "testValue");
+        new NettyEventExecutorMetrics(eventExecutors.next(), tags).bindTo(this.registry);
+        this.registry.get(NettyMeters.EVENT_EXECUTOR_TASKS_PENDING.getName()).tags(tags).meter();
+        eventExecutors.shutdownGracefully().get(5, TimeUnit.SECONDS);
+    }
+
 }

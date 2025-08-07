@@ -17,10 +17,14 @@ package io.micrometer.core.instrument.binder.netty4;
 
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.binder.MeterBinder;
 import io.netty.channel.EventLoop;
 import io.netty.util.concurrent.EventExecutor;
 import io.netty.util.concurrent.SingleThreadEventExecutor;
+
+import static java.util.Collections.emptyList;
 
 /**
  * {@link MeterBinder} for Netty event executors.
@@ -30,6 +34,8 @@ import io.netty.util.concurrent.SingleThreadEventExecutor;
  * @see NettyMeters
  */
 public class NettyEventExecutorMetrics implements MeterBinder {
+
+    private final Iterable<Tag> tags;
 
     private final Iterable<EventExecutor> eventExecutors;
 
@@ -57,7 +63,19 @@ public class NettyEventExecutorMetrics implements MeterBinder {
      * @param eventExecutors the event executors to instrument
      */
     public NettyEventExecutorMetrics(Iterable<EventExecutor> eventExecutors) {
+        this(eventExecutors, emptyList());
+    }
+
+    /**
+     * Create a binder instance for the given event executors with common tags for all metrics.
+     *
+     * @param eventExecutors the event executors to instrument
+     * @param tags tags to apply to all recorded metrics
+     * @since 1.16.0
+     */
+    public NettyEventExecutorMetrics(Iterable<EventExecutor> eventExecutors, Iterable<Tag> tags) {
         this.eventExecutors = eventExecutors;
+        this.tags = tags;
     }
 
     @Override
@@ -68,8 +86,8 @@ public class NettyEventExecutorMetrics implements MeterBinder {
                 Gauge
                     .builder(NettyMeters.EVENT_EXECUTOR_TASKS_PENDING.getName(),
                             singleThreadEventExecutor::pendingTasks)
-                    .tag(NettyMeters.EventExecutorTasksPendingKeyNames.NAME.asString(),
-                            singleThreadEventExecutor.threadProperties().name())
+                    .tags(Tags.concat(tags, NettyMeters.EventExecutorTasksPendingKeyNames.NAME.asString(),
+                            singleThreadEventExecutor.threadProperties().name()))
                     .register(registry);
             }
         });
