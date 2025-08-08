@@ -24,10 +24,26 @@ import io.netty.channel.EventLoop;
 import io.netty.util.concurrent.EventExecutor;
 import io.netty.util.concurrent.SingleThreadEventExecutor;
 
-import static java.util.Collections.emptyList;
-
 /**
  * {@link MeterBinder} for Netty event executors.
+ * <p>
+ * An {@link io.netty.channel.EventLoopGroup} (all its executors) can be instrumented at
+ * startup like: <pre>
+ * MeterRegistry registry = //...
+ * EventLoopGroup group = //...
+ * new NettyEventExecutorMetrics(group).bindTo(registry);
+ * </pre> Alternatively, an {@link EventLoop} can be instrumented at runtime during
+ * channel initialization. In this case, developers should ensure that this instance has
+ * not been registered already as re-binding metrics at runtime is inefficient here. <pre>
+ * &#064;Override
+ * public void initChannel(SocketChannel channel) throws Exception {
+ *   // this concurrent check must be implemented by micrometer users
+ *   if (!isEventLoopInstrumented(channel.eventLoop())) {
+ *     new EventExecutorMetrics(channel.eventLoop()).bindTo(registry);
+ *   }
+ *   //...
+ * }
+ * </pre>
  *
  * @author Brian Clozel
  * @since 1.11.0
@@ -35,42 +51,23 @@ import static java.util.Collections.emptyList;
  */
 public class NettyEventExecutorMetrics implements MeterBinder {
 
-    private final Iterable<Tag> tags;
-
     private final Iterable<EventExecutor> eventExecutors;
+
+    private final Iterable<Tag> tags;
 
     /**
      * Create a binder instance for the given event executors.
-     * <p>
-     * An {@link io.netty.channel.EventLoopGroup} (all its executors) can be instrumented
-     * at startup like: <pre>
-     * MeterRegistry registry = //...
-     * EventLoopGroup group = //...
-     * new NettyEventExecutorMetrics(group).bindTo(registry);
-     * </pre> Alternatively, an {@link EventLoop} can be instrumented at runtime during
-     * channel initialization. In this case, developers should ensure that this instance
-     * has not been registered already as re-binding metrics at runtime is inefficient
-     * here. <pre>
-     * &#064;Override
-     * public void initChannel(SocketChannel channel) throws Exception {
-     *   // this concurrent check must be implemented by micrometer users
-     *   if (!isEventLoopInstrumented(channel.eventLoop())) {
-     *     new EventExecutorMetrics(channel.eventLoop()).bindTo(registry);
-     *   }
-     *   //...
-     * }
-     * </pre>
      * @param eventExecutors the event executors to instrument
      */
     public NettyEventExecutorMetrics(Iterable<EventExecutor> eventExecutors) {
-        this(eventExecutors, emptyList());
+        this(eventExecutors, Tags.empty());
     }
 
     /**
-     * Create a binder instance for the given event executors with common tags for all metrics.
-     *
+     * Create a binder instance for the given event executors with tags applied to all
+     * Meters created by this binder.
      * @param eventExecutors the event executors to instrument
-     * @param tags tags to apply to all recorded metrics
+     * @param tags tags to apply to all Meters
      * @since 1.16.0
      */
     public NettyEventExecutorMetrics(Iterable<EventExecutor> eventExecutors, Iterable<Tag> tags) {
@@ -86,8 +83,9 @@ public class NettyEventExecutorMetrics implements MeterBinder {
                 Gauge
                     .builder(NettyMeters.EVENT_EXECUTOR_TASKS_PENDING.getName(),
                             singleThreadEventExecutor::pendingTasks)
-                    .tags(Tags.concat(tags, NettyMeters.EventExecutorTasksPendingKeyNames.NAME.asString(),
-                            singleThreadEventExecutor.threadProperties().name()))
+                    .tag(NettyMeters.EventExecutorTasksPendingKeyNames.NAME.asString(),
+                            singleThreadEventExecutor.threadProperties().name())
+                    .tags(tags)
                     .register(registry);
             }
         });
