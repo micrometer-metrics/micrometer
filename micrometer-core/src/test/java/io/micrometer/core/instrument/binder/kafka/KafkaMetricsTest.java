@@ -579,7 +579,7 @@ class KafkaMetricsTest {
         kafkaMetricMap.put(aMetricModified.metricName(), aMetricModified);
         kafkaMetrics.checkAndBindMetrics(registry);
         assertThat(registry.find("kafka.test.a").gauge().value()).isNaN();
-        assertThat(output).doesNotContain("Failed to apply the value function for the gauge").hasSize(0);
+        assertThat(output).isEmpty();
     }
 
     private MetricName createMetricName(String name) {

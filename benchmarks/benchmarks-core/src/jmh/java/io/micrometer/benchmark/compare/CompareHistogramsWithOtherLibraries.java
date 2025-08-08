@@ -22,7 +22,7 @@ import com.codahale.metrics.UniformReservoir;
 //CHECKSTYLE:OFF
 import com.google.common.collect.Iterators;
 import com.google.common.primitives.Doubles;
-////CHECKSTYLE:ON
+//CHECKSTYLE:ON
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.DistributionSummary;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;

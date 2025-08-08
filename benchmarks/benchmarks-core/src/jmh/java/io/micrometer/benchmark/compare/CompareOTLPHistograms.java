@@ -29,7 +29,7 @@ import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
 //CHECKSTYLE:OFF
 import com.google.common.collect.Iterators;
-////CHECKSTYLE:ON
+//CHECKSTYLE:ON
 import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.DistributionSummary;

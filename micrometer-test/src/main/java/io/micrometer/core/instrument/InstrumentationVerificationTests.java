@@ -90,11 +90,11 @@ abstract class InstrumentationVerificationTests {
                 // JUnit 5.12 and before
                 "org.junit.jupiter.params.ParameterizedTestParameterResolver"));
 
-        private ParameterResolver parameterisedTestParameterResolver = null;
+        private ParameterResolver parameterizedTestParameterResolver = null;
 
         @Override
         public void invokeBeforeEachMethod(ExtensionContext context, ExtensionRegistry registry) {
-            parameterisedTestParameterResolver = registry.getExtensions(ParameterResolver.class)
+            parameterizedTestParameterResolver = registry.getExtensions(ParameterResolver.class)
                 .stream()
                 .filter(this::isParameterizedTestMethodParameterResolver)
                 .findFirst()
@@ -107,7 +107,7 @@ abstract class InstrumentationVerificationTests {
                 throws ParameterResolutionException {
             if (isExecutedOnAfterOrBeforeMethod(parameterContext)) {
                 ParameterContext pContext = getMappedContext(parameterContext, extensionContext);
-                return parameterisedTestParameterResolver.supportsParameter(pContext, extensionContext);
+                return parameterizedTestParameterResolver.supportsParameter(pContext, extensionContext);
             }
             return false;
         }
@@ -115,7 +115,7 @@ abstract class InstrumentationVerificationTests {
         @Override
         public Object resolveParameter(ParameterContext parameterContext, ExtensionContext extensionContext)
                 throws ParameterResolutionException {
-            return parameterisedTestParameterResolver
+            return parameterizedTestParameterResolver
                 .resolveParameter(getMappedContext(parameterContext, extensionContext), extensionContext);
         }
 
