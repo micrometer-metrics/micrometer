@@ -53,7 +53,7 @@ public class OpenTelemetryApacheHttpClientObservationConvention implements Apach
 
     private static final KeyValue STATUS_UNKNOWN = LowCardinalityKeyNames.STATUS.withValue("0");
 
-    private static final KeyValue EXCEPTION_NONE = LowCardinalityKeyNames.EXCEPTION.withNoneValue();
+    private static final KeyValue EXCEPTION_NONE = LowCardinalityKeyNames.ERROR_TYPE.withNoneValue();
 
     private static final KeyValue OUTCOME_UNKNOWN = LowCardinalityKeyNames.OUTCOME.withValue(Outcome.UNKNOWN.name());
 
@@ -173,7 +173,7 @@ public class OpenTelemetryApacheHttpClientObservationConvention implements Apach
     protected KeyValue exception(ApacheHttpClientContext context) {
         Throwable error = context.getError();
         if (error != null) {
-            return LowCardinalityKeyNames.EXCEPTION.withValue(error.getClass().getSimpleName());
+            return LowCardinalityKeyNames.ERROR_TYPE.withValue(error.getClass().getSimpleName());
         }
         return EXCEPTION_NONE;
     }

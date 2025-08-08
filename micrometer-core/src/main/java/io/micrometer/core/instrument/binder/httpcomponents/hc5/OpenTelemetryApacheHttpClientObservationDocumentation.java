@@ -66,7 +66,7 @@ public enum OpenTelemetryApacheHttpClientObservationDocumentation implements Obs
                 return "server.port";
             }
         },
-        EXCEPTION {
+        ERROR_TYPE {
             @Override
             public String asString() {
                 return "error.type";
