@@ -51,9 +51,7 @@ public class OpenTelemetryApacheHttpClientObservationConvention implements Apach
 
     private static final KeyValue URL_UNKNOWN = HighCardinalityKeyNames.URL.withValue("UNKNOWN");
 
-    private static final KeyValue STATUS_IO_ERROR = LowCardinalityKeyNames.STATUS.withValue("IO_ERROR");
-
-    private static final KeyValue STATUS_CLIENT_ERROR = LowCardinalityKeyNames.STATUS.withValue("CLIENT_ERROR");
+    private static final KeyValue STATUS_UNKNOWN = LowCardinalityKeyNames.STATUS.withValue("0");
 
     private static final KeyValue EXCEPTION_NONE = LowCardinalityKeyNames.EXCEPTION.withNoneValue();
 
@@ -61,7 +59,7 @@ public class OpenTelemetryApacheHttpClientObservationConvention implements Apach
 
     private static final KeyValue SERVER_ADDRESS_UNKNOWN = LowCardinalityKeyNames.SERVER_ADDRESS.withValue("UNKNOWN");
 
-    private static final KeyValue SERVER_PORT_UNKNOWN = LowCardinalityKeyNames.SERVER_PORT.withValue("UNKNOWN");
+    private static final KeyValue SERVER_PORT_UNKNOWN = LowCardinalityKeyNames.SERVER_PORT.withValue("-1");
 
     // There is no need to instantiate this class multiple times, but it may be extended,
     // hence protected visibility.
@@ -188,13 +186,11 @@ public class OpenTelemetryApacheHttpClientObservationConvention implements Apach
     protected KeyValue status(ApacheHttpClientContext context) {
         Throwable error = context.getError();
         if (error instanceof IOException || error instanceof HttpException || error instanceof RuntimeException) {
-            return STATUS_IO_ERROR;
+            return STATUS_UNKNOWN;
         }
         HttpResponse response = context.getResponse();
         if (response == null) {
-            // TODO should we return something like 0 or -1 to adhere to the definition of
-            // this as an int?
-            return STATUS_CLIENT_ERROR;
+            return STATUS_UNKNOWN;
         }
         return LowCardinalityKeyNames.STATUS.withValue(String.valueOf(response.getCode()));
     }
