@@ -89,13 +89,14 @@ class NettyMetricsTests {
         NioSocketChannel channel = new NioSocketChannel();
         eventExecutors.register(channel).await();
         channelInitializer.initChannel(channel);
+        assertThat(channel.eventLoop()).isInstanceOf(SingleThreadEventExecutor.class);
         assertThat(this.registry.get(NettyMeters.EVENT_EXECUTOR_TASKS_PENDING.getName())
-            .tags(Tags.of("name", channel.eventLoop().threadProperties().name()))
+            .tags(Tags.of("name", ((SingleThreadEventExecutor) channel.eventLoop()).threadProperties().name()))
             .gauge()
             .value()).isZero();
         ByteBuf buffer = channel.alloc().buffer();
         Tags tags = Tags.of("id", String.valueOf(channel.alloc().hashCode()), "allocator.type",
-                "PooledByteBufAllocator", "memory.type", "direct");
+                "AdaptiveByteBufAllocator", "memory.type", "direct");
         assertThat(this.registry.get(NettyMeters.ALLOCATOR_MEMORY_USED.getName()).tags(tags).gauge().value())
             .isPositive();
         buffer.release();
