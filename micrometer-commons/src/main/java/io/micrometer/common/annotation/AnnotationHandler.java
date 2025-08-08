@@ -18,6 +18,7 @@ package io.micrometer.common.annotation;
 import io.micrometer.common.KeyValue;
 import io.micrometer.common.util.internal.logging.InternalLogger;
 import io.micrometer.common.util.internal.logging.InternalLoggerFactory;
+import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.reflect.MethodSignature;
 import org.jspecify.annotations.Nullable;
@@ -85,15 +86,15 @@ public class AnnotationHandler<T> {
     /**
      * Modifies the object with {@link KeyValue} related information.
      * @param objectToModify object to modify
-     * @param pjp proceeding join point
+     * @param jp join point
      */
-    public void addAnnotatedParameters(T objectToModify, ProceedingJoinPoint pjp) {
+    public void addAnnotatedParameters(T objectToModify, JoinPoint jp) {
         try {
-            Method method = ((MethodSignature) pjp.getSignature()).getMethod();
-            method = tryToTakeMethodFromTargetClass(pjp, method);
+            Method method = ((MethodSignature) jp.getSignature()).getMethod();
+            method = tryToTakeMethodFromTargetClass(jp, method);
             List<AnnotatedObject> annotatedParameters = AnnotationUtils.findAnnotatedParameters(annotationClass, method,
-                    pjp.getArgs());
-            addAnnotatedParametersFromInterfaces(pjp, method, annotatedParameters);
+                    jp.getArgs());
+            addAnnotatedParametersFromInterfaces(jp, method, annotatedParameters);
             addAnnotatedObjects(objectToModify, annotatedParameters);
         }
         catch (Exception ex) {
@@ -102,22 +103,31 @@ public class AnnotationHandler<T> {
     }
 
     /**
-     * Modifies the object with {@link KeyValue} information based on the method result.
+     * Modifies the object with {@link KeyValue} related information.
      * @param objectToModify object to modify
      * @param pjp proceeding join point
+     */
+    public void addAnnotatedParameters(T objectToModify, ProceedingJoinPoint pjp) {
+        addAnnotatedParameters(objectToModify, (JoinPoint) pjp);
+    }
+
+    /**
+     * Modifies the object with {@link KeyValue} information based on the method result.
+     * @param objectToModify object to modify
+     * @param jp join point
      * @param result method return value
      * @since 1.15.0
      */
-    public void addAnnotatedMethodResult(T objectToModify, ProceedingJoinPoint pjp, @Nullable Object result) {
+    public void addAnnotatedMethodResult(T objectToModify, JoinPoint jp, @Nullable Object result) {
         try {
-            Method method = ((MethodSignature) pjp.getSignature()).getMethod();
-            method = tryToTakeMethodFromTargetClass(pjp, method);
+            Method method = ((MethodSignature) jp.getSignature()).getMethod();
+            method = tryToTakeMethodFromTargetClass(jp, method);
 
             List<AnnotatedObject> annotatedResult = new ArrayList<>();
             Arrays.stream(method.getAnnotationsByType(annotationClass))
                 .map(annotation -> new AnnotatedObject(annotation, result))
                 .forEach(annotatedResult::add);
-            getMethodAnnotationsFromInterfaces(pjp, method).stream()
+            getMethodAnnotationsFromInterfaces(jp, method).stream()
                 .map(annotation -> new AnnotatedObject(annotation, result))
                 .forEach(annotatedResult::add);
 
@@ -128,9 +138,21 @@ public class AnnotationHandler<T> {
         }
     }
 
-    private static Method tryToTakeMethodFromTargetClass(ProceedingJoinPoint pjp, Method method) {
+
+    /**
+     * Modifies the object with {@link KeyValue} information based on the method result.
+     * @param objectToModify object to modify
+     * @param pjp proceeding join point
+     * @param result method return value
+     * @since 1.15.0
+     */
+    public void addAnnotatedMethodResult(T objectToModify, ProceedingJoinPoint pjp, @Nullable Object result) {
+        addAnnotatedMethodResult(objectToModify, (JoinPoint) pjp, result);
+    }
+
+    private static Method tryToTakeMethodFromTargetClass(JoinPoint jp, Method method) {
         try {
-            return pjp.getTarget().getClass().getDeclaredMethod(method.getName(), method.getParameterTypes());
+            return jp.getTarget().getClass().getDeclaredMethod(method.getName(), method.getParameterTypes());
         }
         catch (NoSuchMethodException ex) {
             // matching method not found - will be taken from parent
@@ -138,11 +160,11 @@ public class AnnotationHandler<T> {
         return method;
     }
 
-    private void addAnnotatedParametersFromInterfaces(ProceedingJoinPoint pjp, Method mostSpecificMethod,
+    private void addAnnotatedParametersFromInterfaces(JoinPoint jp, Method mostSpecificMethod,
             List<AnnotatedObject> annotatedParameters) {
-        traverseInterfacesHierarchy(pjp, mostSpecificMethod, method -> {
+        traverseInterfacesHierarchy(jp, mostSpecificMethod, method -> {
             List<AnnotatedObject> annotatedParametersForActualMethod = AnnotationUtils
-                .findAnnotatedParameters(annotationClass, method, pjp.getArgs());
+                .findAnnotatedParameters(annotationClass, method, jp.getArgs());
             // annotations for a single parameter can be `duplicated` by the ones
             // from parent interface,
             // however later on during key-based deduplication the ones from
@@ -152,9 +174,8 @@ public class AnnotationHandler<T> {
         });
     }
 
-    private void traverseInterfacesHierarchy(ProceedingJoinPoint pjp, Method mostSpecificMethod,
-            Consumer<Method> consumer) {
-        Class<?>[] implementedInterfaces = pjp.getThis().getClass().getInterfaces();
+    private void traverseInterfacesHierarchy(JoinPoint jp, Method mostSpecificMethod, Consumer<Method> consumer) {
+        Class<?>[] implementedInterfaces = jp.getThis().getClass().getInterfaces();
         for (Class<?> implementedInterface : implementedInterfaces) {
             for (Method methodFromInterface : implementedInterface.getMethods()) {
                 if (methodsAreTheSame(mostSpecificMethod, methodFromInterface)) {
@@ -164,9 +185,9 @@ public class AnnotationHandler<T> {
         }
     }
 
-    private List<Annotation> getMethodAnnotationsFromInterfaces(ProceedingJoinPoint pjp, Method mostSpecificMethod) {
+    private List<Annotation> getMethodAnnotationsFromInterfaces(JoinPoint jp, Method mostSpecificMethod) {
         List<Annotation> allAnnotations = new ArrayList<>();
-        traverseInterfacesHierarchy(pjp, mostSpecificMethod,
+        traverseInterfacesHierarchy(jp, mostSpecificMethod,
                 method -> allAnnotations.addAll(Arrays.asList(method.getAnnotationsByType(annotationClass))));
         return allAnnotations;
     }
