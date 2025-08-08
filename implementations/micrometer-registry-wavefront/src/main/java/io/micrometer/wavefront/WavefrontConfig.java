@@ -30,10 +30,12 @@ import static io.micrometer.core.instrument.config.validate.PropertyValidator.*;
 /**
  * Configuration for {@link WavefrontMeterRegistry}.
  *
+ * @deprecated since 1.16.0 because Wavefront's End of Life Announcement
  * @author Howard Yoo
  * @author Jon Schneider
  * @since 1.0.0
  */
+@Deprecated
 public interface WavefrontConfig extends PushRegistryConfig {
 
     /**

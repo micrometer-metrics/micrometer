@@ -2,6 +2,8 @@
 :sectnums:
 :system: wavefront
 
+CAUTION: This module has been deprecated because https://support.broadcom.com/web/ecx/support-content-notification/-/external/content/release-announcements/0/25153[Wavefront's End of Life Announcement].
+
 Wavefront is a dimensional monitoring system offered as a SaaS with a full UI, custom query language, and advanced math operations. Wavefront operates on a push model. Metrics can be pushed either through a sidecar process running on the same host (called the Wavefront proxy) or directly to the Wavefront API.
 
 include::_install.adoc[]
