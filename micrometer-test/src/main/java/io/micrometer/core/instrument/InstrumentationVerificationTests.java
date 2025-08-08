@@ -91,11 +91,11 @@ abstract class InstrumentationVerificationTests {
                 "org.junit.jupiter.params.ParameterizedTestParameterResolver"));
 
         @SuppressWarnings("NullAway.Init")
-        private ParameterResolver parameterisedTestParameterResolver;
+        private ParameterResolver parameterizedTestParameterResolver;
 
         @Override
         public void invokeBeforeEachMethod(ExtensionContext context, ExtensionRegistry registry) {
-            parameterisedTestParameterResolver = registry.getExtensions(ParameterResolver.class)
+            parameterizedTestParameterResolver = registry.getExtensions(ParameterResolver.class)
                 .stream()
                 .filter(this::isParameterizedTestMethodParameterResolver)
                 .findFirst()
@@ -108,7 +108,7 @@ abstract class InstrumentationVerificationTests {
                 throws ParameterResolutionException {
             if (isExecutedOnAfterOrBeforeMethod(parameterContext)) {
                 ParameterContext pContext = getMappedContext(parameterContext, extensionContext);
-                return parameterisedTestParameterResolver.supportsParameter(pContext, extensionContext);
+                return parameterizedTestParameterResolver.supportsParameter(pContext, extensionContext);
             }
             return false;
         }
@@ -116,7 +116,7 @@ abstract class InstrumentationVerificationTests {
         @Override
         public Object resolveParameter(ParameterContext parameterContext, ExtensionContext extensionContext)
                 throws ParameterResolutionException {
-            return parameterisedTestParameterResolver
+            return parameterizedTestParameterResolver
                 .resolveParameter(getMappedContext(parameterContext, extensionContext), extensionContext);
         }
 

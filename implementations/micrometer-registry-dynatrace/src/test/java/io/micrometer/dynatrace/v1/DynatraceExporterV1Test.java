@@ -29,7 +29,6 @@ import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
-import java.io.IOException;
 import java.lang.reflect.Field;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -191,20 +190,12 @@ class DynatraceExporterV1Test {
         AtomicBoolean first = new AtomicBoolean(true);
         meterRegistry.gauge("my.gauge", first, (b) -> b.getAndSet(false) ? GAUGE_VALUE : Double.NaN);
         Gauge gauge = meterRegistry.get("my.gauge").gauge();
-        Stream<DynatraceCustomMetric> stream = exporter.writeMeter(gauge);
-        List<DynatraceCustomMetric> metrics = stream.collect(Collectors.toList());
-        assertThat(metrics).hasSize(1);
-        DynatraceCustomMetric metric = metrics.get(0);
-        DynatraceTimeSeries timeSeries = metric.getTimeSeries();
-        try {
+        assertThat(exporter.writeMeter(gauge)).singleElement().satisfies(metric -> {
+            DynatraceTimeSeries timeSeries = metric.getTimeSeries();
             Map<String, Object> map = mapper.readValue(timeSeries.asJson(), Map.class);
-            List<List<Number>> dataPoints = (List<List<Number>>) map.get("dataPoints");
-            assertThat(dataPoints).hasSize(1);
-            assertThat(dataPoints.get(0).get(1).doubleValue()).isEqualTo(GAUGE_VALUE);
-        }
-        catch (IOException ex) {
-            throw new RuntimeException(ex);
-        }
+            assertThat((List<List<Number>>) map.get("dataPoints")).singleElement()
+                .satisfies(dataPoint -> assertThat(dataPoint.get(1).doubleValue()).isEqualTo(GAUGE_VALUE));
+        });
     }
 
     @Test
