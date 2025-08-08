@@ -26,6 +26,7 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
+import static io.micrometer.core.instrument.binder.netty4.NettyMeters.EVENT_EXECUTOR_TASKS_PENDING;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
@@ -50,7 +51,7 @@ class NettyEventExecutorMetricsTests {
         });
         assertThat(names).isNotEmpty();
         names.forEach(name -> {
-            assertThat(this.registry.get(NettyMeters.EVENT_EXECUTOR_TASKS_PENDING.getName())
+            assertThat(this.registry.get(EVENT_EXECUTOR_TASKS_PENDING.getName())
                 .tags(Tags.of("name", name))
                 .gauge()
                 .value()).isZero();
@@ -66,8 +67,25 @@ class NettyEventExecutorMetricsTests {
         assertThat(eventLoop).isInstanceOf(SingleThreadEventExecutor.class);
         SingleThreadEventExecutor singleThreadEventExecutor = (SingleThreadEventExecutor) eventLoop;
         String eventLoopName = singleThreadEventExecutor.threadProperties().name();
-        assertThat(this.registry.get(NettyMeters.EVENT_EXECUTOR_TASKS_PENDING.getName())
+        assertThat(this.registry.get(EVENT_EXECUTOR_TASKS_PENDING.getName())
             .tags(Tags.of("name", eventLoopName))
+            .gauge()
+            .value()).isZero();
+        eventExecutors.shutdownGracefully().get(5, TimeUnit.SECONDS);
+    }
+
+    @Test
+    void shouldHaveCustomTags() throws Exception {
+        DefaultEventLoopGroup eventExecutors = new DefaultEventLoopGroup();
+        EventLoop eventLoop = eventExecutors.next();
+        Tags extraTags = Tags.of("testKey", "testValue");
+        new NettyEventExecutorMetrics(eventLoop, extraTags).bindTo(this.registry);
+        assertThat(eventLoop).isInstanceOf(SingleThreadEventExecutor.class);
+        SingleThreadEventExecutor singleThreadEventExecutor = (SingleThreadEventExecutor) eventLoop;
+        String eventLoopName = singleThreadEventExecutor.threadProperties().name();
+        assertThat(this.registry.get(EVENT_EXECUTOR_TASKS_PENDING.getName())
+            .tags(Tags.of("name", eventLoopName))
+            .tags(extraTags)
             .gauge()
             .value()).isZero();
         eventExecutors.shutdownGracefully().get(5, TimeUnit.SECONDS);
