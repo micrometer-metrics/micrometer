@@ -117,7 +117,7 @@ subprojects {
                 )
 
                 option("NullAway:OnlyNullMarked", "true")
-                option("NullAway:CustomContractAnnotations", "io.micrometer.common.lang.internal.Contract")
+                option("NullAway:CustomContractAnnotations", "io.micrometer.common.lang.internal.Contract,org.assertj.core.internal.annotation.Contract")
                 option("NullAway:CheckContracts", "true")
                 option("NullAway:HandleTestAssertionLibraries", "true")
                 if (javaLanguageVersion.canCompileOrRun(22)) {

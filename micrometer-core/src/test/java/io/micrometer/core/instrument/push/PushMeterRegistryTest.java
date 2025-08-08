@@ -127,8 +127,7 @@ class PushMeterRegistryTest {
         onClosePublishThread.join();
 
         assertThat(overlappingStepMeterRegistry.publishes).as("only one publish happened").hasSize(1);
-        // TODO: remove requireNonNull: https://github.com/uber/NullAway/issues/1219
-        Deque<Double> firstPublishValues = Objects.requireNonNull(overlappingStepMeterRegistry.publishes.get(0));
+        Deque<Double> firstPublishValues = overlappingStepMeterRegistry.publishes.get(0);
         assertThat(firstPublishValues).isNotNull();
         assertThat(firstPublishValues.pop()).isEqualTo(1);
         assertThat(firstPublishValues.pop()).isEqualTo(2.5);
@@ -191,8 +190,7 @@ class PushMeterRegistryTest {
         closeThread.join();
 
         assertThat(registry.publishes).as("only one publish happened").hasSize(1);
-        // TODO: remove requireNonNull: https://github.com/uber/NullAway/issues/1219
-        Deque<Double> firstPublishValues = Objects.requireNonNull(registry.publishes.get(0));
+        Deque<Double> firstPublishValues = registry.publishes.get(0);
         assertThat(firstPublishValues).isNotNull();
         assertThat(firstPublishValues.pop()).isEqualTo(1); // c1 counter count
         assertThat(firstPublishValues.pop()).isEqualTo(2.5); // c2 counter count

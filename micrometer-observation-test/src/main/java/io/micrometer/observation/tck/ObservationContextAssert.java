@@ -453,8 +453,7 @@ public class ObservationContextAssert<SELF extends ObservationContextAssert<SELF
         if (p == null) {
             failWithMessage("Observation should have a parent");
         }
-        // see: https://github.com/uber/NullAway/issues/1222
-        return Objects.requireNonNull(p);
+        return p;
     }
 
     /**
