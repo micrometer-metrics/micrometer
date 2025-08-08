@@ -16,6 +16,7 @@
 package io.micrometer.core.instrument.binder.httpcomponents.hc5;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
+import io.micrometer.common.KeyValue;
 import io.micrometer.observation.tck.TestObservationRegistry;
 import org.apache.hc.client5.http.HttpHostConnectException;
 import org.apache.hc.client5.http.async.methods.SimpleHttpRequest;
@@ -464,6 +465,42 @@ class ObservationExecChainHandlerIntegrationTest {
 
     }
 
+    @Nested
+    class OpenTelemetryConventionClassicClient {
+
+        @Test
+        void recordSuccessfulExchanges(@WiremockResolver.Wiremock WireMockServer server) throws Exception {
+            server.stubFor(any(anyUrl()));
+            try (CloseableHttpClient client = classicClientWithOtelConvention()) {
+                executeClassic(client, new HttpGet(server.baseUrl()));
+            }
+            assertThat(observationRegistry).hasObservationWithNameEqualTo("http.client.request.duration")
+                .that()
+                .hasLowCardinalityKeyValue(
+                        OpenTelemetryApacheHttpClientObservationDocumentation.LowCardinalityKeyNames.METHOD
+                            .withValue("GET"))
+                .hasLowCardinalityKeyValue(
+                        OpenTelemetryApacheHttpClientObservationDocumentation.LowCardinalityKeyNames.SERVER_ADDRESS
+                            .withValue(java.net.URI.create(server.baseUrl()).getHost()))
+                .hasLowCardinalityKeyValue(
+                        OpenTelemetryApacheHttpClientObservationDocumentation.LowCardinalityKeyNames.SERVER_PORT
+                            .withValue(String.valueOf(server.port())))
+                .hasLowCardinalityKeyValue(
+                        OpenTelemetryApacheHttpClientObservationDocumentation.LowCardinalityKeyNames.ERROR_TYPE
+                            .withValue(KeyValue.NONE_VALUE))
+                .hasLowCardinalityKeyValue(
+                        OpenTelemetryApacheHttpClientObservationDocumentation.LowCardinalityKeyNames.STATUS
+                            .withValue("200"))
+                .hasLowCardinalityKeyValue(
+                        OpenTelemetryApacheHttpClientObservationDocumentation.LowCardinalityKeyNames.OUTCOME
+                            .withValue("SUCCESS"))
+                .hasHighCardinalityKeyValue(
+                        OpenTelemetryApacheHttpClientObservationDocumentation.HighCardinalityKeyNames.URL
+                            .withValue(server.url("/")));
+        }
+
+    }
+
     private CloseableHttpClient classicClient() {
         DefaultHttpRequestRetryStrategy retryStrategy = new DefaultHttpRequestRetryStrategy(1,
                 TimeValue.ofMilliseconds(500L));
@@ -477,11 +514,34 @@ class ObservationExecChainHandlerIntegrationTest {
         HttpClientBuilder clientBuilder = HttpClients.custom()
             .setRetryStrategy(retryStrategy)
             .addExecInterceptorAfter(ChainElement.RETRY.name(), "micrometer",
-                    new ObservationExecChainHandler(observationRegistry))
+                    new ObservationExecChainHandler(observationRegistry)) // <1>
             .setConnectionManager(PoolingHttpClientConnectionManagerBuilder.create()
                 .setDefaultConnectionConfig(connectionConfig)
                 .build());
         // end::setup_classic[]
+
+        return clientBuilder.build();
+    }
+
+    private CloseableHttpClient classicClientWithOtelConvention() {
+        DefaultHttpRequestRetryStrategy retryStrategy = new DefaultHttpRequestRetryStrategy(1,
+                TimeValue.ofMilliseconds(500L));
+
+        ConnectionConfig connectionConfig = ConnectionConfig.custom()
+            .setSocketTimeout(500, TimeUnit.MILLISECONDS)
+            .setConnectTimeout(2000L, TimeUnit.MILLISECONDS)
+            .build();
+
+        // tag::setup_classic_otel[]
+        HttpClientBuilder clientBuilder = HttpClients.custom()
+            .setRetryStrategy(retryStrategy)
+            .addExecInterceptorAfter(ChainElement.RETRY.name(), "micrometer",
+                    new ObservationExecChainHandler(observationRegistry,
+                            OpenTelemetryApacheHttpClientObservationConvention.INSTANCE))
+            .setConnectionManager(PoolingHttpClientConnectionManagerBuilder.create()
+                .setDefaultConnectionConfig(connectionConfig)
+                .build());
+        // end::setup_classic_otel[]
 
         return clientBuilder.build();
     }
