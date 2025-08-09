@@ -1,4 +1,4 @@
-description = 'MeterRegistry implementation for Wavefront. This module is deprecated because Wavefront\'s End of Life Announcement.'
+description = 'MeterRegistry implementation for Wavefront. This module is deprecated due to Wavefront\'s End of Life Announcement.'
 
 dependencies {
     api project(':micrometer-core')
