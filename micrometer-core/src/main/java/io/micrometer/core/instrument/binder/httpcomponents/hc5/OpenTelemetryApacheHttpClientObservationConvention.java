@@ -61,8 +61,12 @@ public class OpenTelemetryApacheHttpClientObservationConvention implements Apach
 
     private static final KeyValue SERVER_PORT_UNKNOWN = LowCardinalityKeyNames.SERVER_PORT.withValue("-1");
 
-    // There is no need to instantiate this class multiple times, but it may be extended,
-    // hence protected visibility.
+    /**
+     * Create an {@link OpenTelemetryApacheHttpClientObservationConvention} instance.
+     * <p>
+     * There is no need to instantiate this class multiple times, but it may be extended,
+     * hence protected visibility.
+     */
     protected OpenTelemetryApacheHttpClientObservationConvention() {
     }
 
@@ -77,8 +81,9 @@ public class OpenTelemetryApacheHttpClientObservationConvention implements Apach
      * available, HTTP span names SHOULD be {@code {method}}.
      * <p>
      * The {@code {method}} MUST be {@code {http.request.method}} if the method represents
-     * the original method known to the instrumentation. In other cases (when Customize
-     * Toolbar… is set to {@code _OTHER}), {@code {method}} MUST be HTTP.
+     * the original method known to the instrumentation. In other cases (when
+     * {@code {http.request.method}} is set to {@code _OTHER}), {@code {method}} MUST be
+     * HTTP.
      * <p>
      * The {@code target} SHOULD be the {@code {url.template}} for HTTP Client spans if
      * enabled and available.
@@ -90,10 +95,11 @@ public class OpenTelemetryApacheHttpClientObservationConvention implements Apach
      */
     @Override
     public String getContextualName(ApacheHttpClientContext context) {
-        if (context.getCarrier() == null) {
+        HttpRequest carrier = context.getCarrier();
+        if (carrier == null) {
             return "HTTP";
         }
-        String maybeMethod = maybeGetKnownMethod(context.getCarrier());
+        String maybeMethod = maybeGetKnownMethod(carrier);
         return maybeMethod == null ? "HTTP" : maybeMethod;
     }
 
@@ -108,6 +114,11 @@ public class OpenTelemetryApacheHttpClientObservationConvention implements Apach
         return KeyValues.of(urlFull(context));
     }
 
+    /**
+     * Return known HTTP method name.
+     * @param request HTTP request
+     * @return known HTTP method name. {@code null} if unknown.
+     */
     protected @Nullable String maybeGetKnownMethod(HttpRequest request) {
         String httpMethod = request.getMethod();
         if (HttpMethods.isStandard(httpMethod)) {
@@ -123,9 +134,11 @@ public class OpenTelemetryApacheHttpClientObservationConvention implements Apach
      */
     protected KeyValue method(ApacheHttpClientContext context) {
         HttpRequest request = context.getCarrier();
-        String method;
-        if (request != null && (method = maybeGetKnownMethod(request)) != null) {
-            return LowCardinalityKeyNames.METHOD.withValue(method);
+        if (request != null) {
+            String method = maybeGetKnownMethod(request);
+            if (method != null) {
+                return LowCardinalityKeyNames.METHOD.withValue(method);
+            }
         }
         return METHOD_OTHER;
     }
@@ -136,15 +149,21 @@ public class OpenTelemetryApacheHttpClientObservationConvention implements Apach
      * @return extracted server address key value
      */
     protected KeyValue serverAddress(ApacheHttpClientContext context) {
+        String serverAddressValue = getServerAddressValue(context);
+        return serverAddressValue != null ? LowCardinalityKeyNames.SERVER_ADDRESS.withValue(serverAddressValue)
+                : SERVER_ADDRESS_UNKNOWN;
+    }
+
+    private @Nullable String getServerAddressValue(ApacheHttpClientContext context) {
         RouteInfo httpRoute = getHttpRoute(context);
         if (httpRoute != null) {
-            return LowCardinalityKeyNames.SERVER_ADDRESS.withValue(httpRoute.getTargetHost().getHostName());
+            return httpRoute.getTargetHost().getHostName();
         }
         URI uri = getUri(context);
         if (uri != null && uri.getHost() != null) {
-            return LowCardinalityKeyNames.SERVER_ADDRESS.withValue(uri.getHost());
+            return uri.getHost();
         }
-        return SERVER_ADDRESS_UNKNOWN;
+        return null;
     }
 
     /**
@@ -153,16 +172,21 @@ public class OpenTelemetryApacheHttpClientObservationConvention implements Apach
      * @return extracted server port key value
      */
     protected KeyValue serverPort(ApacheHttpClientContext context) {
+        Integer serverPortValue = getServerPortValue(context);
+        return serverPortValue != null ? LowCardinalityKeyNames.SERVER_PORT.withValue(String.valueOf(serverPortValue))
+                : SERVER_PORT_UNKNOWN;
+    }
+
+    private @Nullable Integer getServerPortValue(ApacheHttpClientContext context) {
         RouteInfo httpRoute = getHttpRoute(context);
         if (httpRoute != null) {
-            int port = httpRoute.getTargetHost().getPort();
-            return LowCardinalityKeyNames.SERVER_PORT.withValue(String.valueOf(port));
+            return httpRoute.getTargetHost().getPort();
         }
         URI uri = getUri(context);
         if (uri != null && uri.getPort() != -1) {
-            return LowCardinalityKeyNames.SERVER_PORT.withValue(String.valueOf(uri.getPort()));
+            return uri.getPort();
         }
-        return SERVER_PORT_UNKNOWN;
+        return null;
     }
 
     /**
@@ -181,7 +205,7 @@ public class OpenTelemetryApacheHttpClientObservationConvention implements Apach
     /**
      * Extract status key value from context.
      * @param context HTTP client context
-     * @return extracted Status key value
+     * @return extracted status key value
      */
     protected KeyValue status(ApacheHttpClientContext context) {
         Throwable error = context.getError();
@@ -208,11 +232,18 @@ public class OpenTelemetryApacheHttpClientObservationConvention implements Apach
         return LowCardinalityKeyNames.OUTCOME.withValue(Outcome.forStatus(response.getCode()).name());
     }
 
+    /**
+     * Extract {@code url.full} key value from context.
+     * @param context HTTP client context
+     * @return extracted {@code url.full} key value
+     */
     protected KeyValue urlFull(ApacheHttpClientContext context) {
         HttpRequest request = context.getCarrier();
-        URI uri;
-        if (request != null && (uri = getUri(context)) != null) {
-            return HighCardinalityKeyNames.URL.withValue(uri.toString());
+        if (request != null) {
+            URI uri = getUri(context);
+            if (uri != null) {
+                return HighCardinalityKeyNames.URL.withValue(uri.toString());
+            }
         }
         return URL_UNKNOWN;
     }
