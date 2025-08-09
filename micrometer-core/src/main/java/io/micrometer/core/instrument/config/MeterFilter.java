@@ -413,44 +413,30 @@ public interface MeterFilter {
     }
 
     /**
-     * Enables another filter only for metric whose name begins with the given prefix.
-     * <p>
-     * This can be useful if you want to apply another filter only to a selected set of
-     * metrics, for example:
-     * <code>registry.config().meterFilter(MeterFilter.forPrefix("com.example", MeterFilter.ignoreTags("ignored")))</code>
-     * @param prefix Apply the filter only to metrics whose name begins with this prefix
-     * @param delegate A filter to apply to meters with the given prefix
-     * @return A filter that forwards actions to another filter if the prefix matches
+     * Enables the provided filter for the Meters selected by the predicate.
+     * <code>registry.config().meterFilter(MeterFilter.forMeters(id -> id.getName().startsWith("test"), MeterFilter.ignoreTags("ignored")))</code>
+     * @param predicate Apply the provided filter only to Meters selected by this
+     * predicate
+     * @param delegate A filter to apply if the provided predicate returns true
+     * @return A filter that delegates calls to the delegate filter conditionally (based
+     * on the predicate)
      * @since 1.16.0
      */
-    static MeterFilter forPrefix(String prefix, MeterFilter delegate) {
+    static MeterFilter forMeters(Predicate<Meter.Id> predicate, MeterFilter delegate) {
         return new MeterFilter() {
             @Override
             public MeterFilterReply accept(Meter.Id id) {
-                if (appliesToMetric(id)) {
-                    return delegate.accept(id);
-                }
-                return MeterFilterReply.NEUTRAL;
+                return predicate.test(id) ? delegate.accept(id) : MeterFilter.super.accept(id);
             }
 
             @Override
             public Meter.Id map(Meter.Id id) {
-                if (appliesToMetric(id)) {
-                    return delegate.map(id);
-                }
-                return id;
+                return predicate.test(id) ? delegate.map(id) : MeterFilter.super.map(id);
             }
 
             @Override
             public @Nullable DistributionStatisticConfig configure(Meter.Id id, DistributionStatisticConfig config) {
-                if (appliesToMetric(id)) {
-                    return delegate.configure(id, config);
-                }
-                return config;
-            }
-
-            private boolean appliesToMetric(Meter.Id id) {
-                return id.getName().startsWith(prefix);
+                return predicate.test(id) ? delegate.configure(id, config) : MeterFilter.super.configure(id, config);
             }
         };
     }

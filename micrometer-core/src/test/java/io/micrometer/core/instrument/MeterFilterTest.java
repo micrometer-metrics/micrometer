@@ -26,6 +26,7 @@ import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Predicate;
 
 import static java.util.stream.StreamSupport.stream;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -268,29 +269,34 @@ class MeterFilterTest {
 
     @Test
     void forPrefix() {
-        MeterFilter mapFilter = MeterFilter.forPrefix("my.prefix", MeterFilter.ignoreTags("ignored.tag"));
-        MeterFilter acceptFilter = MeterFilter.forPrefix("my.prefix",
+        Meter.Id primary = new Meter.Id("primary.gauge", Tags.of("ignored", "true", "other", "value"), null, null,
+                Meter.Type.GAUGE);
+        Meter.Id secondary = new Meter.Id("secondary.gauge", Tags.of("ignored", "false"), null, null, Meter.Type.GAUGE);
+
+        MeterFilter denyPrimaryGauges = MeterFilter.forMeters(startsWith("primary."),
                 MeterFilter.deny(id -> id.getType() == Meter.Type.GAUGE));
-        MeterFilter configureFilter = MeterFilter.forPrefix("my.prefix", new MeterFilter() {
+        assertThat(denyPrimaryGauges.accept(primary)).isEqualTo(MeterFilterReply.DENY);
+        assertThat(denyPrimaryGauges.accept(secondary)).isEqualTo(MeterFilterReply.NEUTRAL);
+
+        MeterFilter ignoreTagsOnPrimaryMeters = MeterFilter.forMeters(startsWith("primary."),
+                MeterFilter.ignoreTags("ignored"));
+        assertThat(ignoreTagsOnPrimaryMeters.map(primary).getTags()).containsExactly(Tag.of("other", "value"));
+        assertThat(ignoreTagsOnPrimaryMeters.map(secondary).getTags()).containsExactly(Tag.of("ignored", "false"));
+
+        MeterFilter configurePrimaryMeters = MeterFilter.forMeters(startsWith("primary."), new MeterFilter() {
             @Override
             public DistributionStatisticConfig configure(Meter.Id id, DistributionStatisticConfig config) {
                 return DistributionStatisticConfig.DEFAULT;
             }
         });
-        Meter.Id meterWithPrefix = new Meter.Id("my.prefix.suffix",
-                Tags.of("ignored.tag", "value1", "other.tag", "value2"), null, null, Meter.Type.GAUGE);
-        Meter.Id meterWithoutPrefix = new Meter.Id("other.prefix", Tags.of("ignored.tag", "value"), null, null,
-                Meter.Type.GAUGE);
-
-        assertThat(mapFilter.map(meterWithPrefix).getTags()).containsExactly(Tag.of("other.tag", "value2"));
-        assertThat(mapFilter.map(meterWithoutPrefix).getTags()).containsExactly(Tag.of("ignored.tag", "value"));
-
-        assertThat(acceptFilter.accept(meterWithPrefix)).isEqualTo(MeterFilterReply.DENY);
-        assertThat(acceptFilter.accept(meterWithoutPrefix)).isEqualTo(MeterFilterReply.NEUTRAL);
 
         DistributionStatisticConfig config = new DistributionStatisticConfig();
-        assertThat(configureFilter.configure(meterWithPrefix, config)).isEqualTo(DistributionStatisticConfig.DEFAULT);
-        assertThat(configureFilter.configure(meterWithoutPrefix, config)).isEqualTo(config);
+        assertThat(configurePrimaryMeters.configure(primary, config)).isEqualTo(DistributionStatisticConfig.DEFAULT);
+        assertThat(configurePrimaryMeters.configure(secondary, config)).isEqualTo(config);
+    }
+
+    private Predicate<Meter.Id> startsWith(String prefix) {
+        return id -> id.getName().startsWith(prefix);
     }
 
 }
