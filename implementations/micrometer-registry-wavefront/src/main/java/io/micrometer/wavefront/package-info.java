@@ -15,7 +15,7 @@
  */
 
 /**
- * Deprecated since 1.16.0 because Wavefront's End of Life Announcement.
+ * Deprecated since 1.16.0 due to Wavefront's End of Life Announcement.
  */
 @NullMarked
 @Deprecated

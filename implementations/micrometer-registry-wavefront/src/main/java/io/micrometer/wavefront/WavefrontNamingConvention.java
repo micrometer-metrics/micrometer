@@ -25,7 +25,7 @@ import java.util.regex.Pattern;
 /**
  * Naming convention for Wavefront.
  *
- * @deprecated since 1.16.0 because Wavefront's End of Life Announcement
+ * @deprecated since 1.16.0 due to Wavefront's End of Life Announcement
  * @author Jon Schneider
  * @since 1.0.0
  */
