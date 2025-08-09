@@ -96,8 +96,8 @@ public class MeterRegistryConcurrencyTest {
     // @formatter:off
     /*
       When configuring a MeterFilter after a Meter has already been registered, existing meters will be marked stale.
-      Subsequent calls to {@code getOrCreateMeter} for those Meters create a new Meter with all MeterFilters applied.
-      If multiple concurrent calls to {@code getOrCreateMeter} interleave, it's possible not all see the new Meter.
+      Subsequent calls to getOrCreateMeter() for those Meters create a new Meter with all MeterFilters applied.
+      If multiple concurrent calls to getOrCreateMeter() interleave, it's possible not all see the new Meter.
       We ideally want both to get the new meter, but we don't want to pay the cost associated with that level of safety
       given the expected rarity of this situation happening, so we aim to get as close as possible for cheap.
 
