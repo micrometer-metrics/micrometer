@@ -20,6 +20,7 @@ import io.micrometer.core.instrument.search.MeterNotFoundException;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.netty.channel.DefaultEventLoopGroup;
 import io.netty.channel.EventLoop;
+import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.util.concurrent.SingleThreadEventExecutor;
 import org.junit.jupiter.api.Test;
 
@@ -97,7 +98,7 @@ class NettyEventExecutorMetricsTests {
 
     @Test
     void shouldHaveWorkersMetric() throws Exception {
-        DefaultEventLoopGroup eventExecutors = new DefaultEventLoopGroup(4);
+        NioEventLoopGroup eventExecutors = new NioEventLoopGroup(4);
         new NettyEventExecutorMetrics(eventExecutors).bindTo(this.registry);
 
         assertThat(this.registry.get(EVENT_EXECUTOR_WORKERS.getName())
@@ -109,7 +110,7 @@ class NettyEventExecutorMetricsTests {
 
     @Test
     void shouldHaveWorkersMetricWithCustomTags() throws Exception {
-        DefaultEventLoopGroup eventExecutors = new DefaultEventLoopGroup(2);
+        NioEventLoopGroup eventExecutors = new NioEventLoopGroup(2);
         Tags extraTags = Tags.of("testKey", "testValue");
         new NettyEventExecutorMetrics(eventExecutors, extraTags).bindTo(this.registry);
 
@@ -123,7 +124,7 @@ class NettyEventExecutorMetricsTests {
 
     @Test
     void shouldNotCreateWorkersMetricWhenNotAnEventLoopGroup() throws Exception {
-        DefaultEventLoopGroup group = new DefaultEventLoopGroup();
+        NioEventLoopGroup group = new NioEventLoopGroup();
         EventLoop singleLoop = group.next();
         new NettyEventExecutorMetrics(Collections.singletonList(singleLoop)).bindTo(this.registry);
 
