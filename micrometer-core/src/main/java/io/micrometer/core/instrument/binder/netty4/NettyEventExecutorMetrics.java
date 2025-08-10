@@ -15,9 +15,6 @@
  */
 package io.micrometer.core.instrument.binder.netty4;
 
-import java.util.Collection;
-import java.util.stream.StreamSupport;
-
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
@@ -87,12 +84,12 @@ public class NettyEventExecutorMetrics implements MeterBinder {
 
         this.eventExecutors.forEach(eventExecutor -> {
             if (eventExecutor instanceof SingleThreadEventExecutor) {
-                SingleThreadEventExecutor singleThreadEventExecutor = (SingleThreadEventExecutor) eventExecutor;
+                SingleThreadEventExecutor singleThreadEventExecutor = (SingleThreadEventExecutor)eventExecutor;
                 Gauge
                     .builder(NettyMeters.EVENT_EXECUTOR_TASKS_PENDING.getName(),
-                            singleThreadEventExecutor::pendingTasks)
+                        singleThreadEventExecutor::pendingTasks)
                     .tag(NettyMeters.EventExecutorTasksPendingKeyNames.NAME.asString(),
-                            singleThreadEventExecutor.threadProperties().name())
+                        singleThreadEventExecutor.threadProperties().name())
                     .tags(tags)
                     .register(registry);
             }
