@@ -20,3 +20,21 @@ include::{include-java}/netty/NettyMetricsTests.java[tags=channelInstrumentation
 -----
 
 CAUTION: If you use lazy instrumentation, you must ensure that you do not bind metrics for the same resource multiple times, as this can have runtime drawbacks.
+
+== EventExecutor Metrics
+
+The `NettyEventExecutorMetrics` binder collects metrics from Netty's `EventExecutor` instances:
+
+.EventExecutor metrics
+|===
+|Metric |Type |Description
+
+|`netty.eventexecutor.workers`
+|Gauge
+|The number of event executor workers
+
+|`netty.eventexecutor.tasks.pending`
+|Gauge
+|The number of pending tasks in individual event executors
+
+|===
