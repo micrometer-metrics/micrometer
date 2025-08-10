@@ -27,6 +27,7 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import static io.micrometer.core.instrument.binder.netty4.NettyMeters.EVENT_EXECUTOR_TASKS_PENDING;
+import static io.micrometer.core.instrument.binder.netty4.NettyMeters.EVENT_EXECUTOR_WORKERS;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
@@ -91,4 +92,42 @@ class NettyEventExecutorMetricsTests {
         eventExecutors.shutdownGracefully().get(5, TimeUnit.SECONDS);
     }
 
+    @Test
+    void shouldHaveWorkersMetric() throws Exception {
+        DefaultEventLoopGroup eventExecutors = new DefaultEventLoopGroup(4);
+        new NettyEventExecutorMetrics(eventExecutors).bindTo(this.registry);
+
+        assertThat(this.registry.get(EVENT_EXECUTOR_WORKERS.getName())
+            .gauge()
+            .value()).isEqualTo(4);
+
+        eventExecutors.shutdownGracefully().get(5, TimeUnit.SECONDS);
+    }
+
+    @Test
+    void shouldHaveWorkersMetricForSingleEventLoop() throws Exception {
+        DefaultEventLoopGroup eventExecutors = new DefaultEventLoopGroup();
+        EventLoop eventLoop = eventExecutors.next();
+        new NettyEventExecutorMetrics(eventLoop).bindTo(this.registry);
+
+        assertThat(this.registry.get(EVENT_EXECUTOR_WORKERS.getName())
+            .gauge()
+            .value()).isEqualTo(1);
+
+        eventExecutors.shutdownGracefully().get(5, TimeUnit.SECONDS);
+    }
+
+    @Test
+    void shouldHaveWorkersMetricWithCustomTags() throws Exception {
+        DefaultEventLoopGroup eventExecutors = new DefaultEventLoopGroup(2);
+        Tags extraTags = Tags.of("testKey", "testValue");
+        new NettyEventExecutorMetrics(eventExecutors, extraTags).bindTo(this.registry);
+
+        assertThat(this.registry.get(EVENT_EXECUTOR_WORKERS.getName())
+            .tags(extraTags)
+            .gauge()
+            .value()).isEqualTo(2);
+
+        eventExecutors.shutdownGracefully().get(5, TimeUnit.SECONDS);
+    }
 }
