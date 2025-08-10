@@ -20,7 +20,9 @@ import io.micrometer.core.instrument.search.MeterNotFoundException;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.netty.channel.DefaultEventLoopGroup;
 import io.netty.channel.EventLoop;
-import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.MultiThreadIoEventLoopGroup;
+import io.netty.channel.nio.NioIoHandler;
+import io.netty.util.concurrent.DefaultThreadFactory;
 import io.netty.util.concurrent.SingleThreadEventExecutor;
 import org.junit.jupiter.api.Test;
 
@@ -98,33 +100,36 @@ class NettyEventExecutorMetricsTests {
 
     @Test
     void shouldHaveWorkersMetric() throws Exception {
-        NioEventLoopGroup eventExecutors = new NioEventLoopGroup(4);
-        new NettyEventExecutorMetrics(eventExecutors).bindTo(this.registry);
+        MultiThreadIoEventLoopGroup group = new MultiThreadIoEventLoopGroup(4,
+            new DefaultThreadFactory("test-workers"), NioIoHandler.newFactory());
+        new NettyEventExecutorMetrics(group).bindTo(this.registry);
 
         assertThat(this.registry.get(EVENT_EXECUTOR_WORKERS.getName())
             .gauge()
             .value()).isEqualTo(4);
 
-        eventExecutors.shutdownGracefully().get(5, TimeUnit.SECONDS);
+        group.shutdownGracefully().get(5, TimeUnit.SECONDS);
     }
 
     @Test
     void shouldHaveWorkersMetricWithCustomTags() throws Exception {
-        NioEventLoopGroup eventExecutors = new NioEventLoopGroup(2);
+        MultiThreadIoEventLoopGroup group = new MultiThreadIoEventLoopGroup(2,
+            new DefaultThreadFactory("test-workers"), NioIoHandler.newFactory());
         Tags extraTags = Tags.of("testKey", "testValue");
-        new NettyEventExecutorMetrics(eventExecutors, extraTags).bindTo(this.registry);
+        new NettyEventExecutorMetrics(group, extraTags).bindTo(this.registry);
 
         assertThat(this.registry.get(EVENT_EXECUTOR_WORKERS.getName())
             .tags(extraTags)
             .gauge()
             .value()).isEqualTo(2);
 
-        eventExecutors.shutdownGracefully().get(5, TimeUnit.SECONDS);
+        group.shutdownGracefully().get(5, TimeUnit.SECONDS);
     }
 
     @Test
     void shouldNotCreateWorkersMetricWhenNotAnEventLoopGroup() throws Exception {
-        NioEventLoopGroup group = new NioEventLoopGroup();
+        MultiThreadIoEventLoopGroup group = new MultiThreadIoEventLoopGroup(4,
+            new DefaultThreadFactory("test-workers"), NioIoHandler.newFactory());
         EventLoop singleLoop = group.next();
         new NettyEventExecutorMetrics(Collections.singletonList(singleLoop)).bindTo(this.registry);
 
