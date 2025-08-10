@@ -16,20 +16,25 @@
 package io.micrometer.core.instrument.binder.netty4;
 
 import io.micrometer.core.instrument.Tags;
+import io.micrometer.core.instrument.search.MeterNotFoundException;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.netty.channel.EventLoop;
 import io.netty.channel.MultiThreadIoEventLoopGroup;
 import io.netty.channel.MultithreadEventLoopGroup;
 import io.netty.channel.local.LocalIoHandler;
+import io.netty.util.concurrent.DefaultThreadFactory;
 import io.netty.util.concurrent.SingleThreadEventExecutor;
 import org.junit.jupiter.api.Test;
 
+import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import static io.micrometer.core.instrument.binder.netty4.NettyMeters.EVENT_EXECUTOR_TASKS_PENDING;
+import static io.micrometer.core.instrument.binder.netty4.NettyMeters.EVENT_EXECUTOR_WORKERS;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
  * Tests for {@link NettyEventExecutorMetrics}.
@@ -91,6 +96,42 @@ class NettyEventExecutorMetricsTests {
             .gauge()
             .value()).isZero();
         eventExecutors.shutdownGracefully().get(5, TimeUnit.SECONDS);
+    }
+
+    @Test
+    void shouldHaveWorkersMetric() throws Exception {
+        MultiThreadIoEventLoopGroup group = new MultiThreadIoEventLoopGroup(4, new DefaultThreadFactory("test-workers"),
+                LocalIoHandler.newFactory());
+        new NettyEventExecutorMetrics(group).bindTo(this.registry);
+
+        assertThat(this.registry.get(EVENT_EXECUTOR_WORKERS.getName()).gauge().value()).isEqualTo(4);
+
+        group.shutdownGracefully().get(5, TimeUnit.SECONDS);
+    }
+
+    @Test
+    void shouldHaveWorkersMetricWithCustomTags() throws Exception {
+        MultiThreadIoEventLoopGroup group = new MultiThreadIoEventLoopGroup(2, new DefaultThreadFactory("test-workers"),
+                LocalIoHandler.newFactory());
+        Tags extraTags = Tags.of("testKey", "testValue");
+        new NettyEventExecutorMetrics(group, extraTags).bindTo(this.registry);
+
+        assertThat(this.registry.get(EVENT_EXECUTOR_WORKERS.getName()).tags(extraTags).gauge().value()).isEqualTo(2);
+
+        group.shutdownGracefully().get(5, TimeUnit.SECONDS);
+    }
+
+    @Test
+    void shouldNotCreateWorkersMetricWhenNotAnEventLoopGroup() throws Exception {
+        MultiThreadIoEventLoopGroup group = new MultiThreadIoEventLoopGroup(4, new DefaultThreadFactory("test-workers"),
+                LocalIoHandler.newFactory());
+        EventLoop singleLoop = group.next();
+        new NettyEventExecutorMetrics(Collections.singletonList(singleLoop)).bindTo(this.registry);
+
+        assertThatThrownBy(() -> this.registry.get(EVENT_EXECUTOR_WORKERS.getName()).gauge())
+            .isInstanceOf(MeterNotFoundException.class);
+
+        group.shutdownGracefully().get(5, TimeUnit.SECONDS);
     }
 
 }

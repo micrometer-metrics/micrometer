@@ -188,6 +188,26 @@ public enum NettyMeters implements MeterDocumentation {
         public KeyName[] getKeyNames() {
             return EventExecutorTasksPendingKeyNames.values();
         }
+    },
+
+    /**
+     * Number of event executor workers.
+     */
+    EVENT_EXECUTOR_WORKERS {
+        @Override
+        public String getName() {
+            return "netty.eventexecutor.workers";
+        }
+
+        @Override
+        public Meter.Type getType() {
+            return Meter.Type.GAUGE;
+        }
+
+        @Override
+        public KeyName[] getKeyNames() {
+            return new KeyName[0];
+        }
     };
 
     enum AllocatorKeyNames implements KeyName {
