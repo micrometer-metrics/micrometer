@@ -15,6 +15,9 @@
  */
 package io.micrometer.core.instrument.binder.netty4;
 
+import java.util.Collection;
+import java.util.stream.StreamSupport;
+
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
@@ -77,6 +80,11 @@ public class NettyEventExecutorMetrics implements MeterBinder {
 
     @Override
     public void bindTo(MeterRegistry registry) {
+        Gauge.builder(NettyMeters.EVENT_EXECUTOR_WORKERS.getName(), eventExecutors, this::getWorkerCount)
+            .description("The number of event executor workers")
+            .tags(tags)
+            .register(registry);
+
         this.eventExecutors.forEach(eventExecutor -> {
             if (eventExecutor instanceof SingleThreadEventExecutor) {
                 SingleThreadEventExecutor singleThreadEventExecutor = (SingleThreadEventExecutor) eventExecutor;
@@ -91,4 +99,18 @@ public class NettyEventExecutorMetrics implements MeterBinder {
         });
     }
 
+    /**
+     * Calculates the total number of workers in the event executors.
+     */
+    private double getWorkerCount(Iterable<EventExecutor> eventExecutors) {
+        if (eventExecutors == null) {
+            return 0;
+        }
+
+        int count = 0;
+        for (EventExecutor executor : eventExecutors) {
+            count++;
+        }
+        return count;
+    }
 }
