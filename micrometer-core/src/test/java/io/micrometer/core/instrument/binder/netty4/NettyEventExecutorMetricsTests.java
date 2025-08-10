@@ -16,12 +16,14 @@
 package io.micrometer.core.instrument.binder.netty4;
 
 import io.micrometer.core.instrument.Tags;
+import io.micrometer.core.instrument.search.MeterNotFoundException;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.netty.channel.DefaultEventLoopGroup;
 import io.netty.channel.EventLoop;
 import io.netty.util.concurrent.SingleThreadEventExecutor;
 import org.junit.jupiter.api.Test;
 
+import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -29,6 +31,7 @@ import java.util.concurrent.TimeUnit;
 import static io.micrometer.core.instrument.binder.netty4.NettyMeters.EVENT_EXECUTOR_TASKS_PENDING;
 import static io.micrometer.core.instrument.binder.netty4.NettyMeters.EVENT_EXECUTOR_WORKERS;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
  * Tests for {@link NettyEventExecutorMetrics}.
@@ -105,19 +108,6 @@ class NettyEventExecutorMetricsTests {
     }
 
     @Test
-    void shouldHaveWorkersMetricForSingleEventLoop() throws Exception {
-        DefaultEventLoopGroup eventExecutors = new DefaultEventLoopGroup();
-        EventLoop eventLoop = eventExecutors.next();
-        new NettyEventExecutorMetrics(eventLoop).bindTo(this.registry);
-
-        assertThat(this.registry.get(EVENT_EXECUTOR_WORKERS.getName())
-            .gauge()
-            .value()).isEqualTo(1);
-
-        eventExecutors.shutdownGracefully().get(5, TimeUnit.SECONDS);
-    }
-
-    @Test
     void shouldHaveWorkersMetricWithCustomTags() throws Exception {
         DefaultEventLoopGroup eventExecutors = new DefaultEventLoopGroup(2);
         Tags extraTags = Tags.of("testKey", "testValue");
@@ -129,5 +119,17 @@ class NettyEventExecutorMetricsTests {
             .value()).isEqualTo(2);
 
         eventExecutors.shutdownGracefully().get(5, TimeUnit.SECONDS);
+    }
+
+    @Test
+    void shouldNotCreateWorkersMetricWhenNotAnEventLoopGroup() throws Exception {
+        DefaultEventLoopGroup group = new DefaultEventLoopGroup();
+        EventLoop singleLoop = group.next();
+        new NettyEventExecutorMetrics(Collections.singletonList(singleLoop)).bindTo(this.registry);
+
+        assertThatThrownBy(() -> this.registry.get(EVENT_EXECUTOR_WORKERS.getName()).gauge())
+            .isInstanceOf(MeterNotFoundException.class);
+
+        group.shutdownGracefully().get(5, TimeUnit.SECONDS);
     }
 }
