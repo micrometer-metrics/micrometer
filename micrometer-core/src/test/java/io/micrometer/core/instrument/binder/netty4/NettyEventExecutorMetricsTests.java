@@ -100,36 +100,31 @@ class NettyEventExecutorMetricsTests {
 
     @Test
     void shouldHaveWorkersMetric() throws Exception {
-        MultiThreadIoEventLoopGroup group = new MultiThreadIoEventLoopGroup(4,
-            new DefaultThreadFactory("test-workers"), NioIoHandler.newFactory());
+        MultiThreadIoEventLoopGroup group = new MultiThreadIoEventLoopGroup(4, new DefaultThreadFactory("test-workers"),
+                NioIoHandler.newFactory());
         new NettyEventExecutorMetrics(group).bindTo(this.registry);
 
-        assertThat(this.registry.get(EVENT_EXECUTOR_WORKERS.getName())
-            .gauge()
-            .value()).isEqualTo(4);
+        assertThat(this.registry.get(EVENT_EXECUTOR_WORKERS.getName()).gauge().value()).isEqualTo(4);
 
         group.shutdownGracefully().get(5, TimeUnit.SECONDS);
     }
 
     @Test
     void shouldHaveWorkersMetricWithCustomTags() throws Exception {
-        MultiThreadIoEventLoopGroup group = new MultiThreadIoEventLoopGroup(2,
-            new DefaultThreadFactory("test-workers"), NioIoHandler.newFactory());
+        MultiThreadIoEventLoopGroup group = new MultiThreadIoEventLoopGroup(2, new DefaultThreadFactory("test-workers"),
+                NioIoHandler.newFactory());
         Tags extraTags = Tags.of("testKey", "testValue");
         new NettyEventExecutorMetrics(group, extraTags).bindTo(this.registry);
 
-        assertThat(this.registry.get(EVENT_EXECUTOR_WORKERS.getName())
-            .tags(extraTags)
-            .gauge()
-            .value()).isEqualTo(2);
+        assertThat(this.registry.get(EVENT_EXECUTOR_WORKERS.getName()).tags(extraTags).gauge().value()).isEqualTo(2);
 
         group.shutdownGracefully().get(5, TimeUnit.SECONDS);
     }
 
     @Test
     void shouldNotCreateWorkersMetricWhenNotAnEventLoopGroup() throws Exception {
-        MultiThreadIoEventLoopGroup group = new MultiThreadIoEventLoopGroup(4,
-            new DefaultThreadFactory("test-workers"), NioIoHandler.newFactory());
+        MultiThreadIoEventLoopGroup group = new MultiThreadIoEventLoopGroup(4, new DefaultThreadFactory("test-workers"),
+                NioIoHandler.newFactory());
         EventLoop singleLoop = group.next();
         new NettyEventExecutorMetrics(Collections.singletonList(singleLoop)).bindTo(this.registry);
 
@@ -138,4 +133,5 @@ class NettyEventExecutorMetricsTests {
 
         group.shutdownGracefully().get(5, TimeUnit.SECONDS);
     }
+
 }

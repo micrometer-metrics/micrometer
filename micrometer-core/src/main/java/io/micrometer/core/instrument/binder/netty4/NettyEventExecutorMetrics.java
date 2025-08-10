@@ -80,8 +80,9 @@ public class NettyEventExecutorMetrics implements MeterBinder {
     public void bindTo(MeterRegistry registry) {
         if (this.eventExecutors instanceof MultithreadEventLoopGroup) {
             MultithreadEventLoopGroup eventLoopGroup = (MultithreadEventLoopGroup) this.eventExecutors;
-            Gauge.builder(NettyMeters.EVENT_EXECUTOR_WORKERS.getName(), eventLoopGroup,
-                    MultithreadEventLoopGroup::executorCount)
+            Gauge
+                .builder(NettyMeters.EVENT_EXECUTOR_WORKERS.getName(), eventLoopGroup,
+                        MultithreadEventLoopGroup::executorCount)
                 .description("The total number of event loop workers.")
                 .tags(this.tags)
                 .register(registry);
@@ -100,4 +101,5 @@ public class NettyEventExecutorMetrics implements MeterBinder {
             }
         });
     }
+
 }
