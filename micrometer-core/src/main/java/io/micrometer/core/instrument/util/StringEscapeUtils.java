@@ -31,9 +31,8 @@ import io.micrometer.common.lang.Nullable;
  */
 public final class StringEscapeUtils {
 
-    /*
+    /**
      * @param v The string to escape.
-     *
      * @return An escaped JSON string.
      */
     public static String escapeJson(@Nullable String v) {
