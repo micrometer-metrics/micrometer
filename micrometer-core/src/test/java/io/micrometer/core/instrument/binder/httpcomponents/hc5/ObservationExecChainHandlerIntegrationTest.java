@@ -16,7 +16,6 @@
 package io.micrometer.core.instrument.binder.httpcomponents.hc5;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
-import io.micrometer.common.KeyValue;
 import io.micrometer.observation.tck.TestObservationRegistry;
 import org.apache.hc.client5.http.HttpHostConnectException;
 import org.apache.hc.client5.http.async.methods.SimpleHttpRequest;
@@ -487,7 +486,7 @@ class ObservationExecChainHandlerIntegrationTest {
                             .withValue(String.valueOf(server.port())))
                 .hasLowCardinalityKeyValue(
                         OpenTelemetryApacheHttpClientObservationDocumentation.LowCardinalityKeyNames.ERROR_TYPE
-                            .withValue(KeyValue.NONE_VALUE))
+                            .withNoneValue())
                 .hasLowCardinalityKeyValue(
                         OpenTelemetryApacheHttpClientObservationDocumentation.LowCardinalityKeyNames.STATUS
                             .withValue("200"))
@@ -514,7 +513,7 @@ class ObservationExecChainHandlerIntegrationTest {
         HttpClientBuilder clientBuilder = HttpClients.custom()
             .setRetryStrategy(retryStrategy)
             .addExecInterceptorAfter(ChainElement.RETRY.name(), "micrometer",
-                    new ObservationExecChainHandler(observationRegistry)) // <1>
+                    new ObservationExecChainHandler(observationRegistry))
             .setConnectionManager(PoolingHttpClientConnectionManagerBuilder.create()
                 .setDefaultConnectionConfig(connectionConfig)
                 .build());
@@ -537,7 +536,7 @@ class ObservationExecChainHandlerIntegrationTest {
             .setRetryStrategy(retryStrategy)
             .addExecInterceptorAfter(ChainElement.RETRY.name(), "micrometer",
                     new ObservationExecChainHandler(observationRegistry,
-                            OpenTelemetryApacheHttpClientObservationConvention.INSTANCE))
+                            OpenTelemetryApacheHttpClientObservationConvention.INSTANCE)) // <1>
             .setConnectionManager(PoolingHttpClientConnectionManagerBuilder.create()
                 .setDefaultConnectionConfig(connectionConfig)
                 .build());

@@ -29,6 +29,9 @@ import io.micrometer.observation.docs.ObservationDocumentation;
  */
 public enum OpenTelemetryApacheHttpClientObservationDocumentation implements ObservationDocumentation {
 
+    /**
+     * Default.
+     */
     DEFAULT {
         @Override
         public Class<? extends ObservationConvention<? extends Observation.Context>> getDefaultConvention() {
@@ -46,39 +49,56 @@ public enum OpenTelemetryApacheHttpClientObservationDocumentation implements Obs
         }
     };
 
-    enum LowCardinalityKeyNames implements KeyName {
+    /**
+     * Low cardinality key names.
+     */
+    public enum LowCardinalityKeyNames implements KeyName {
 
+        /**
+         * Key name for HTTP method.
+         */
         METHOD {
             @Override
             public String asString() {
                 return "http.request.method";
             }
         },
+        /**
+         * Key name for server address.
+         */
         SERVER_ADDRESS {
             @Override
             public String asString() {
                 return "server.address";
             }
         },
+        /**
+         * Key name for server port.
+         */
         SERVER_PORT {
             @Override
             public String asString() {
                 return "server.port";
             }
         },
+        /**
+         * Key name for error type.
+         */
         ERROR_TYPE {
             @Override
             public String asString() {
                 return "error.type";
             }
         },
+        /**
+         * Key name for HTTP status code.
+         */
         STATUS {
             @Override
             public String asString() {
                 return "http.response.status_code";
             }
         },
-
         /**
          * Key name for outcome.
          */
@@ -91,8 +111,14 @@ public enum OpenTelemetryApacheHttpClientObservationDocumentation implements Obs
 
     }
 
-    enum HighCardinalityKeyNames implements KeyName {
+    /**
+     * High cardinality key names.
+     */
+    public enum HighCardinalityKeyNames implements KeyName {
 
+        /**
+         * Key name for URL.
+         */
         URL {
             @Override
             public String asString() {
@@ -100,8 +126,8 @@ public enum OpenTelemetryApacheHttpClientObservationDocumentation implements Obs
             }
         },
         /**
-         * Original HTTP method sent by the client in the request line. This may differ
-         * from the {@code {http.request.method}} if an unknown method is used.
+         * Key name for original HTTP method sent by the client in the request line. This
+         * may differ from the {@code {http.request.method}} if an unknown method is used.
          */
         METHOD_ORIGINAL {
             @Override
