@@ -52,7 +52,7 @@ import java.util.stream.Collectors;
  * <p>
  * This requires Wavefront's Java SDK 2.2 or later.
  *
- * @deprecated since 1.16.0 because Wavefront's End of Life Announcement
+ * @deprecated since 1.16.0 due to Wavefront's End of Life Announcement
  * @author Jon Schneider
  * @author Howard Yoo
  * @since 1.0.0
