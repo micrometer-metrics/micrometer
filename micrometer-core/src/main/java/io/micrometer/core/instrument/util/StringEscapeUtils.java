@@ -31,9 +31,8 @@ import org.jspecify.annotations.Nullable;
  */
 public final class StringEscapeUtils {
 
-    /*
+    /**
      * @param v The string to escape.
-     *
      * @return An escaped JSON string.
      */
     public static String escapeJson(@Nullable String v) {
