@@ -13,7 +13,7 @@ jobs:
     permissions: write-all
 
     # Until v6 is released
-    uses: spring-io/spring-github-workflows/.github/workflows/spring-merge-dependabot-pr.yml@06179092b684ea95ce5f9e15dd313ed9534ccade
+    uses: spring-io/spring-github-workflows/.github/workflows/spring-merge-dependabot-pr.yml@440aa57b1a08021190ba1a6cc8d3d58f782dc5d3
     with:
       autoMerge: true
       mergeArguments: --auto --squash
