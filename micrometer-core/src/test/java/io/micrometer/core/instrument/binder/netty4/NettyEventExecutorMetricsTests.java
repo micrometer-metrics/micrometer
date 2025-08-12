@@ -17,8 +17,10 @@ package io.micrometer.core.instrument.binder.netty4;
 
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-import io.netty.channel.DefaultEventLoopGroup;
 import io.netty.channel.EventLoop;
+import io.netty.channel.MultiThreadIoEventLoopGroup;
+import io.netty.channel.MultithreadEventLoopGroup;
+import io.netty.channel.local.LocalIoHandler;
 import io.netty.util.concurrent.SingleThreadEventExecutor;
 import org.junit.jupiter.api.Test;
 
@@ -41,7 +43,7 @@ class NettyEventExecutorMetricsTests {
     @Test
     void shouldHaveTasksPendingMetricForEachEventLoop() throws Exception {
         Set<String> names = new LinkedHashSet<>();
-        DefaultEventLoopGroup eventExecutors = new DefaultEventLoopGroup();
+        MultithreadEventLoopGroup eventExecutors = new MultiThreadIoEventLoopGroup(LocalIoHandler.newFactory());
         new NettyEventExecutorMetrics(eventExecutors).bindTo(this.registry);
         eventExecutors.spliterator().forEachRemaining(eventExecutor -> {
             if (eventExecutor instanceof SingleThreadEventExecutor) {
@@ -61,7 +63,7 @@ class NettyEventExecutorMetricsTests {
 
     @Test
     void shouldHaveTasksPendingMetricForSingleEventLoop() throws Exception {
-        DefaultEventLoopGroup eventExecutors = new DefaultEventLoopGroup();
+        MultithreadEventLoopGroup eventExecutors = new MultiThreadIoEventLoopGroup(LocalIoHandler.newFactory());
         EventLoop eventLoop = eventExecutors.next();
         new NettyEventExecutorMetrics(eventLoop).bindTo(this.registry);
         assertThat(eventLoop).isInstanceOf(SingleThreadEventExecutor.class);
@@ -76,7 +78,7 @@ class NettyEventExecutorMetricsTests {
 
     @Test
     void shouldHaveCustomTags() throws Exception {
-        DefaultEventLoopGroup eventExecutors = new DefaultEventLoopGroup();
+        MultithreadEventLoopGroup eventExecutors = new MultiThreadIoEventLoopGroup(LocalIoHandler.newFactory());
         EventLoop eventLoop = eventExecutors.next();
         Tags extraTags = Tags.of("testKey", "testValue");
         new NettyEventExecutorMetrics(eventLoop, extraTags).bindTo(this.registry);

@@ -16,21 +16,21 @@
 package io.micrometer.docs.netty;
 
 import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.binder.netty4.NettyAllocatorMetrics;
 import io.micrometer.core.instrument.binder.netty4.NettyEventExecutorMetrics;
 import io.micrometer.core.instrument.binder.netty4.NettyMeters;
-import io.micrometer.core.instrument.simple.SimpleConfig;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 import io.netty.buffer.ByteBufAllocatorMetricProvider;
 import io.netty.buffer.UnpooledByteBufAllocator;
 import io.netty.channel.ChannelInitializer;
-import io.netty.channel.DefaultEventLoopGroup;
 import io.netty.channel.EventLoop;
-import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.MultiThreadIoEventLoopGroup;
+import io.netty.channel.MultithreadEventLoopGroup;
+import io.netty.channel.local.LocalIoHandler;
+import io.netty.channel.nio.NioIoHandler;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.util.concurrent.SingleThreadEventExecutor;
@@ -47,31 +47,28 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 class NettyMetricsTests {
 
-    private SimpleMeterRegistry registry = new SimpleMeterRegistry(SimpleConfig.DEFAULT, new MockClock());
+    private final SimpleMeterRegistry registry = new SimpleMeterRegistry();
 
     @Test
     void directInstrumentationExample() throws Exception {
         Set<String> names = new LinkedHashSet<>();
         // tag::directInstrumentation[]
         // Create or get an existing resources
-        DefaultEventLoopGroup eventExecutors = new DefaultEventLoopGroup();
+        MultithreadEventLoopGroup eventExecutors = new MultiThreadIoEventLoopGroup(LocalIoHandler.newFactory());
         UnpooledByteBufAllocator unpooledByteBufAllocator = new UnpooledByteBufAllocator(false);
         // Use binders to instrument them
         new NettyEventExecutorMetrics(eventExecutors).bindTo(this.registry);
         new NettyAllocatorMetrics(unpooledByteBufAllocator).bindTo(this.registry);
         // end::directInstrumentation[]
         eventExecutors.spliterator().forEachRemaining(eventExecutor -> {
-            if (eventExecutor instanceof SingleThreadEventExecutor) {
-                SingleThreadEventExecutor singleThreadEventExecutor = (SingleThreadEventExecutor) eventExecutor;
+            if (eventExecutor instanceof SingleThreadEventExecutor singleThreadEventExecutor) {
                 names.add(singleThreadEventExecutor.threadProperties().name());
             }
         });
-        names.forEach(name -> {
-            assertThat(this.registry.get(NettyMeters.EVENT_EXECUTOR_TASKS_PENDING.getName())
-                .tags(Tags.of("name", name))
-                .gauge()
-                .value()).isZero();
-        });
+        names.forEach(name -> assertThat(this.registry.get(NettyMeters.EVENT_EXECUTOR_TASKS_PENDING.getName())
+            .tags(Tags.of("name", name))
+            .gauge()
+            .value()).isZero());
         eventExecutors.shutdownGracefully().get(5, TimeUnit.SECONDS);
 
         ByteBuf buffer = unpooledByteBufAllocator.buffer();
@@ -84,7 +81,7 @@ class NettyMetricsTests {
 
     @Test
     void shouldInstrumentEventLoopDuringChannelInit() throws Exception {
-        NioEventLoopGroup eventExecutors = new NioEventLoopGroup();
+        MultiThreadIoEventLoopGroup eventExecutors = new MultiThreadIoEventLoopGroup(NioIoHandler.newFactory());
         CustomChannelInitializer channelInitializer = new CustomChannelInitializer(this.registry);
         NioSocketChannel channel = new NioSocketChannel();
         eventExecutors.register(channel).await();
@@ -113,14 +110,14 @@ class NettyMetricsTests {
 
         // tag::channelInstrumentation[]
         @Override
-        protected void initChannel(SocketChannel channel) throws Exception {
+        protected void initChannel(SocketChannel channel) {
             EventLoop eventLoop = channel.eventLoop();
             if (!isEventLoopInstrumented(eventLoop)) {
                 new NettyEventExecutorMetrics(eventLoop).bindTo(this.meterRegistry);
             }
             ByteBufAllocator allocator = channel.alloc();
-            if (!isAllocatorInstrumented(allocator) && allocator instanceof ByteBufAllocatorMetricProvider) {
-                ByteBufAllocatorMetricProvider allocatorMetric = (ByteBufAllocatorMetricProvider) allocator;
+            if (!isAllocatorInstrumented(allocator)
+                    && allocator instanceof ByteBufAllocatorMetricProvider allocatorMetric) {
                 new NettyAllocatorMetrics(allocatorMetric).bindTo(this.meterRegistry);
             }
         }
