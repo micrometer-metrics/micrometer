@@ -44,7 +44,7 @@ jetty12 = "12.0.6"
 jersey3 = "3.1.11"
 jmh = "1.37"
 # latest version of jOOQ to run tests against
-jooqNew = "3.20.5"
+jooqNew = "3.20.6"
 jsr107 = "1.1.1"
 jsr305 = "3.0.2"
 junit = "5.13.4"
@@ -152,7 +152,7 @@ jersey3TestFrameworkJdkHttp = { module = "org.glassfish.jersey.test-framework.pr
 jmhCore = { module = "org.openjdk.jmh:jmh-core", version.ref = "jmh" }
 jmhAnnotationProcessor = { module = "org.openjdk.jmh:jmh-generator-annprocess", version.ref = "jmh" }
 # 3.14.x is the newest version of OSS jOOQ that supports Java 8
-jooq = { module = "org.jooq:jooq", version = "3.14.16" }
+jooq = { module = "org.jooq:jooq", version = "3.20.6" }
 jooqLatest = { module = "org.jooq:jooq", version.ref = "jooqNew" }
 jsonPath = { module = "com.jayway.jsonpath:json-path", version = "2.9.0" }
 jspecify = { module = "org.jspecify:jspecify", version = "1.0.0" }
