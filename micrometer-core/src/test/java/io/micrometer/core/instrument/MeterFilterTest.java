@@ -26,6 +26,7 @@ import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Predicate;
 
 import static java.util.stream.StreamSupport.stream;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -264,6 +265,38 @@ class MeterFilterTest {
         registry.counter("my.counter").increment();
 
         assertThat(registry.getMeters()).isNotEmpty();
+    }
+
+    @Test
+    void forPrefix() {
+        Meter.Id primary = new Meter.Id("primary.gauge", Tags.of("ignored", "true", "other", "value"), null, null,
+                Meter.Type.GAUGE);
+        Meter.Id secondary = new Meter.Id("secondary.gauge", Tags.of("ignored", "false"), null, null, Meter.Type.GAUGE);
+
+        MeterFilter denyPrimaryGauges = MeterFilter.forMeters(startsWith("primary."),
+                MeterFilter.deny(id -> id.getType() == Meter.Type.GAUGE));
+        assertThat(denyPrimaryGauges.accept(primary)).isEqualTo(MeterFilterReply.DENY);
+        assertThat(denyPrimaryGauges.accept(secondary)).isEqualTo(MeterFilterReply.NEUTRAL);
+
+        MeterFilter ignoreTagsOnPrimaryMeters = MeterFilter.forMeters(startsWith("primary."),
+                MeterFilter.ignoreTags("ignored"));
+        assertThat(ignoreTagsOnPrimaryMeters.map(primary).getTags()).containsExactly(Tag.of("other", "value"));
+        assertThat(ignoreTagsOnPrimaryMeters.map(secondary).getTags()).containsExactly(Tag.of("ignored", "false"));
+
+        MeterFilter configurePrimaryMeters = MeterFilter.forMeters(startsWith("primary."), new MeterFilter() {
+            @Override
+            public DistributionStatisticConfig configure(Meter.Id id, DistributionStatisticConfig config) {
+                return DistributionStatisticConfig.DEFAULT;
+            }
+        });
+
+        DistributionStatisticConfig config = new DistributionStatisticConfig();
+        assertThat(configurePrimaryMeters.configure(primary, config)).isEqualTo(DistributionStatisticConfig.DEFAULT);
+        assertThat(configurePrimaryMeters.configure(secondary, config)).isEqualTo(config);
+    }
+
+    private Predicate<Meter.Id> startsWith(String prefix) {
+        return id -> id.getName().startsWith(prefix);
     }
 
 }

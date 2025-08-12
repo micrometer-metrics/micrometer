@@ -413,6 +413,35 @@ public interface MeterFilter {
     }
 
     /**
+     * Enables the provided filter for the Meters selected by the predicate.
+     * <code>registry.config().meterFilter(MeterFilter.forMeters(id -> id.getName().startsWith("test"), MeterFilter.ignoreTags("ignored")))</code>
+     * @param predicate Apply the provided filter only to Meters selected by this
+     * predicate
+     * @param delegate A filter to apply if the provided predicate returns true
+     * @return A filter that delegates calls to the delegate filter conditionally (based
+     * on the predicate)
+     * @since 1.16.0
+     */
+    static MeterFilter forMeters(Predicate<Meter.Id> predicate, MeterFilter delegate) {
+        return new MeterFilter() {
+            @Override
+            public MeterFilterReply accept(Meter.Id id) {
+                return predicate.test(id) ? delegate.accept(id) : MeterFilter.super.accept(id);
+            }
+
+            @Override
+            public Meter.Id map(Meter.Id id) {
+                return predicate.test(id) ? delegate.map(id) : MeterFilter.super.map(id);
+            }
+
+            @Override
+            public @Nullable DistributionStatisticConfig configure(Meter.Id id, DistributionStatisticConfig config) {
+                return predicate.test(id) ? delegate.configure(id, config) : MeterFilter.super.configure(id, config);
+            }
+        };
+    }
+
+    /**
      * @param id Id with {@link MeterFilter#map} transformations applied.
      * @return After all transformations, should a real meter be registered for this id,
      * or should it be no-op'd.
