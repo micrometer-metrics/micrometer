@@ -36,18 +36,20 @@ import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.util.concurrent.SingleThreadEventExecutor;
 import org.junit.jupiter.api.Test;
 
+import java.time.Duration;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 
 /**
  * Sources for netty/index.adoc
  */
 class NettyMetricsTests {
 
-    private SimpleMeterRegistry registry = new SimpleMeterRegistry(SimpleConfig.DEFAULT, new MockClock());
+    private final SimpleMeterRegistry registry = new SimpleMeterRegistry(SimpleConfig.DEFAULT, new MockClock());
 
     @Test
     void directInstrumentationExample() throws Exception {
@@ -61,17 +63,14 @@ class NettyMetricsTests {
         new NettyAllocatorMetrics(unpooledByteBufAllocator).bindTo(this.registry);
         // end::directInstrumentation[]
         eventExecutors.spliterator().forEachRemaining(eventExecutor -> {
-            if (eventExecutor instanceof SingleThreadEventExecutor) {
-                SingleThreadEventExecutor singleThreadEventExecutor = (SingleThreadEventExecutor) eventExecutor;
+            if (eventExecutor instanceof SingleThreadEventExecutor singleThreadEventExecutor) {
                 names.add(singleThreadEventExecutor.threadProperties().name());
             }
         });
-        names.forEach(name -> {
-            assertThat(this.registry.get(NettyMeters.EVENT_EXECUTOR_TASKS_PENDING.getName())
-                .tags(Tags.of("name", name))
-                .gauge()
-                .value()).isZero();
-        });
+        names.forEach(name -> assertThat(this.registry.get(NettyMeters.EVENT_EXECUTOR_TASKS_PENDING.getName())
+            .tags(Tags.of("name", name))
+            .gauge()
+            .value()).isZero());
         eventExecutors.shutdownGracefully().get(5, TimeUnit.SECONDS);
 
         ByteBuf buffer = unpooledByteBufAllocator.buffer();
@@ -102,6 +101,39 @@ class NettyMetricsTests {
         eventExecutors.shutdownGracefully().get(5, TimeUnit.SECONDS);
     }
 
+    @Test
+    void shouldNotPreventCollectingExecutors() throws Exception {
+        Set<String> names = new LinkedHashSet<>();
+        DefaultEventLoopGroup eventExecutors = new DefaultEventLoopGroup();
+        UnpooledByteBufAllocator unpooledByteBufAllocator = new UnpooledByteBufAllocator(false);
+        new NettyEventExecutorMetrics(eventExecutors).bindTo(this.registry);
+        new NettyAllocatorMetrics(unpooledByteBufAllocator).bindTo(this.registry);
+        eventExecutors.spliterator().forEachRemaining(eventExecutor -> {
+            if (eventExecutor instanceof SingleThreadEventExecutor singleThreadEventExecutor) {
+                names.add(singleThreadEventExecutor.threadProperties().name());
+            }
+        });
+        eventExecutors.shutdownGracefully().get(5, TimeUnit.SECONDS);
+        eventExecutors = null;
+        await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
+            System.gc();
+            names.forEach(name -> assertThat(this.registry.get(NettyMeters.EVENT_EXECUTOR_TASKS_PENDING.getName())
+                .tags(Tags.of("name", name))
+                .gauge()
+                .value()).isNaN());
+        });
+
+        Tags tags = Tags.of("id", String.valueOf(unpooledByteBufAllocator.hashCode()), "allocator.type",
+                "UnpooledByteBufAllocator", "memory.type", "heap");
+        unpooledByteBufAllocator.buffer().release();
+        unpooledByteBufAllocator = null;
+        await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
+            System.gc();
+            assertThat(this.registry.get(NettyMeters.ALLOCATOR_MEMORY_USED.getName()).tags(tags).gauge().value())
+                .isNaN();
+        });
+    }
+
     static class CustomChannelInitializer extends ChannelInitializer<SocketChannel> {
 
         private final MeterRegistry meterRegistry;
@@ -112,14 +144,14 @@ class NettyMetricsTests {
 
         // tag::channelInstrumentation[]
         @Override
-        protected void initChannel(SocketChannel channel) throws Exception {
+        protected void initChannel(SocketChannel channel) {
             EventLoop eventLoop = channel.eventLoop();
             if (!isEventLoopInstrumented(eventLoop)) {
                 new NettyEventExecutorMetrics(eventLoop).bindTo(this.meterRegistry);
             }
             ByteBufAllocator allocator = channel.alloc();
-            if (!isAllocatorInstrumented(allocator) && allocator instanceof ByteBufAllocatorMetricProvider) {
-                ByteBufAllocatorMetricProvider allocatorMetric = (ByteBufAllocatorMetricProvider) allocator;
+            if (!isAllocatorInstrumented(allocator)
+                    && allocator instanceof ByteBufAllocatorMetricProvider allocatorMetric) {
                 new NettyAllocatorMetrics(allocatorMetric).bindTo(this.meterRegistry);
             }
         }
