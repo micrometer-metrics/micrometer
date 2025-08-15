@@ -49,6 +49,7 @@ dependencies {
     testImplementation project(':micrometer-observation-test')
     testImplementation libs.aspectjweaver
     testImplementation 'org.assertj:assertj-core'
+    testImplementation 'org.awaitility:awaitility'
     testImplementation(libs.spring6.context)
     testImplementation 'io.projectreactor:reactor-core'
     testImplementation 'io.projectreactor:reactor-test'
