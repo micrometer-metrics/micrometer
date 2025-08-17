@@ -26,6 +26,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -183,6 +184,18 @@ public interface Meter {
      * A meter is uniquely identified by its combination of name and tags.
      */
     class Id {
+
+        static Predicate<Meter.Id> hasName(String expectedName) {
+            return id -> id.getName().equals(expectedName);
+        }
+
+        static Predicate<Meter.Id> nameStartsWith(String expectedPrefix) {
+            return id -> id.getName().startsWith(expectedPrefix);
+        }
+
+        static Predicate<Meter.Id> hasType(Meter.Type expectedType) {
+            return id -> id.getType() == expectedType;
+        }
 
         private final String name;
 
