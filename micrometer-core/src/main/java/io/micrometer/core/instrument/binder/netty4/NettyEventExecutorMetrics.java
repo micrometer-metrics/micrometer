@@ -66,8 +66,8 @@ public class NettyEventExecutorMetrics implements MeterBinder {
             if (eventExecutor instanceof SingleThreadEventExecutor) {
                 SingleThreadEventExecutor singleThreadEventExecutor = (SingleThreadEventExecutor) eventExecutor;
                 Gauge
-                    .builder(NettyMeters.EVENT_EXECUTOR_TASKS_PENDING.getName(),
-                            singleThreadEventExecutor::pendingTasks)
+                    .builder(NettyMeters.EVENT_EXECUTOR_TASKS_PENDING.getName(), singleThreadEventExecutor,
+                            SingleThreadEventExecutor::pendingTasks)
                     .tag(NettyMeters.EventExecutorTasksPendingKeyNames.NAME.asString(),
                             singleThreadEventExecutor.threadProperties().name())
                     .register(registry);
