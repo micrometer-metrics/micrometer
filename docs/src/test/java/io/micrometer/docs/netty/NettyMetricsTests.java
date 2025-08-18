@@ -36,11 +36,13 @@ import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.util.concurrent.SingleThreadEventExecutor;
 import org.junit.jupiter.api.Test;
 
+import java.time.Duration;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 
 /**
  * Sources for netty/index.adoc
@@ -98,6 +100,39 @@ class NettyMetricsTests {
             .isPositive();
         buffer.release();
         eventExecutors.shutdownGracefully().get(5, TimeUnit.SECONDS);
+    }
+
+    @Test
+    void shouldNotPreventCollectingExecutors() throws Exception {
+        Set<String> names = new LinkedHashSet<>();
+        DefaultEventLoopGroup eventExecutors = new DefaultEventLoopGroup();
+        UnpooledByteBufAllocator unpooledByteBufAllocator = new UnpooledByteBufAllocator(false);
+        new NettyEventExecutorMetrics(eventExecutors).bindTo(this.registry);
+        new NettyAllocatorMetrics(unpooledByteBufAllocator).bindTo(this.registry);
+        eventExecutors.spliterator().forEachRemaining(eventExecutor -> {
+            if (eventExecutor instanceof SingleThreadEventExecutor singleThreadEventExecutor) {
+                names.add(singleThreadEventExecutor.threadProperties().name());
+            }
+        });
+        eventExecutors.shutdownGracefully().get(5, TimeUnit.SECONDS);
+        eventExecutors = null;
+        await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
+            System.gc();
+            names.forEach(name -> assertThat(this.registry.get(NettyMeters.EVENT_EXECUTOR_TASKS_PENDING.getName())
+                .tags(Tags.of("name", name))
+                .gauge()
+                .value()).isNaN());
+        });
+
+        Tags tags = Tags.of("id", String.valueOf(unpooledByteBufAllocator.hashCode()), "allocator.type",
+                "UnpooledByteBufAllocator", "memory.type", "heap");
+        unpooledByteBufAllocator.buffer().release();
+        unpooledByteBufAllocator = null;
+        await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
+            System.gc();
+            assertThat(this.registry.get(NettyMeters.ALLOCATOR_MEMORY_USED.getName()).tags(tags).gauge().value())
+                .isNaN();
+        });
     }
 
     static class CustomChannelInitializer extends ChannelInitializer<SocketChannel> {

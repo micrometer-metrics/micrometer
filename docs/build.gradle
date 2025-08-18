@@ -50,6 +50,7 @@ dependencies {
     testImplementation project(':micrometer-registry-otlp')
     testImplementation libs.aspectjweaver
     testImplementation libs.assertj
+    testImplementation libs.awaitility
     // needed for OtlpMeterRegistryCustomizationTest
     testRuntimeOnly libs.okhttp
     testImplementation(libs.spring6.context)
