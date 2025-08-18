@@ -16,12 +16,17 @@
 package io.micrometer.core.instrument.observation;
 
 import io.micrometer.common.KeyValue;
+import io.micrometer.common.KeyValues;
 import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.Timer;
 import io.micrometer.observation.Observation;
 
+import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Handler for {@link Timer.Sample} and {@link Counter}.
@@ -44,6 +49,8 @@ public class DefaultMeterObservationHandler implements MeterObservationHandler<O
     private final MeterRegistry meterRegistry;
 
     private final boolean shouldCreateLongTaskTimer;
+
+    private final ConcurrentHashMap<Map.Entry<String, KeyValues>, Tags> tagCache = new ConcurrentHashMap<>();
 
     /**
      * Creates the handler with the default configuration.
@@ -71,8 +78,9 @@ public class DefaultMeterObservationHandler implements MeterObservationHandler<O
     @Override
     public void onStart(Observation.Context context) {
         if (shouldCreateLongTaskTimer) {
-            LongTaskTimer.Sample longTaskSample = LongTaskTimer.builder(context.getName() + ".active")
-                .tags(createTags(context))
+            String name = context.getName() + ".active";
+            LongTaskTimer.Sample longTaskSample = LongTaskTimer.builder(name)
+                .tags(getOrCreateTags(name, context.getLowCardinalityKeyValues()))
                 .register(meterRegistry)
                 .start();
             context.put(LongTaskTimer.Sample.class, longTaskSample);
@@ -86,10 +94,11 @@ public class DefaultMeterObservationHandler implements MeterObservationHandler<O
     // TODO decide what to do about context.getName being Nullable
     @SuppressWarnings("NullAway")
     public void onStop(Observation.Context context) {
-        List<Tag> tags = createTags(context);
-        tags.add(Tag.of("error", getErrorValue(context)));
         Timer.Sample sample = context.getRequired(Timer.Sample.class);
-        sample.stop(Timer.builder(context.getName()).tags(tags).register(this.meterRegistry));
+        String name = context.getName();
+        sample.stop(Timer.builder(name)
+            .tags(getOrCreateTags(name, context.getLowCardinalityKeyValues(), getErrorValue(context)))
+            .register(this.meterRegistry));
 
         if (shouldCreateLongTaskTimer) {
             LongTaskTimer.Sample longTaskSample = context.getRequired(LongTaskTimer.Sample.class);
@@ -99,8 +108,9 @@ public class DefaultMeterObservationHandler implements MeterObservationHandler<O
 
     @Override
     public void onEvent(Observation.Event event, Observation.Context context) {
-        Counter.builder(context.getName() + "." + event.getName())
-            .tags(createTags(context))
+        String name = context.getName() + "." + event.getName();
+        Counter.builder(name)
+            .tags(getOrCreateTags(name, context.getLowCardinalityKeyValues()))
             .register(meterRegistry)
             .increment();
     }
@@ -110,12 +120,25 @@ public class DefaultMeterObservationHandler implements MeterObservationHandler<O
         return error != null ? error.getClass().getSimpleName() : KeyValue.NONE_VALUE;
     }
 
-    private List<Tag> createTags(Observation.Context context) {
-        List<Tag> tags = new ArrayList<>();
-        for (KeyValue keyValue : context.getLowCardinalityKeyValues()) {
-            tags.add(Tag.of(keyValue.getKey(), keyValue.getValue()));
-        }
-        return tags;
+    private Tags getOrCreateTags(String name, KeyValues lowCardinalityKeyValues) {
+        return getOrCreateTags(name, lowCardinalityKeyValues, null);
+    }
+
+    private Tags getOrCreateTags(String name, KeyValues lowCardinalityKeyValues, String errorValue) {
+        Map.Entry<String, KeyValues> key = new AbstractMap.SimpleEntry<>(name, lowCardinalityKeyValues);
+
+        return tagCache.computeIfAbsent(key, k -> {
+            List<Tag> tagList = new ArrayList<>();
+            for (KeyValue keyValue : lowCardinalityKeyValues) {
+                tagList.add(Tag.of(keyValue.getKey(), keyValue.getValue()));
+            }
+
+            if (errorValue != null) {
+                tagList.add(Tag.of("error", errorValue));
+            }
+
+            return Tags.of(tagList);
+        });
     }
 
     /**
