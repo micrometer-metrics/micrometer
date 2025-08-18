@@ -105,7 +105,7 @@ class NettyMetricsTests {
     @Test
     void shouldNotPreventCollectingExecutors() throws Exception {
         Set<String> names = new LinkedHashSet<>();
-        DefaultEventLoopGroup eventExecutors = new DefaultEventLoopGroup();
+        MultithreadEventLoopGroup eventExecutors = new MultiThreadIoEventLoopGroup(LocalIoHandler.newFactory());
         UnpooledByteBufAllocator unpooledByteBufAllocator = new UnpooledByteBufAllocator(false);
         new NettyEventExecutorMetrics(eventExecutors).bindTo(this.registry);
         new NettyAllocatorMetrics(unpooledByteBufAllocator).bindTo(this.registry);
