@@ -174,6 +174,23 @@ class MetricsDSLContextTest {
     }
 
     @Test
+    // gh-6583
+    void fetchExistsIsTimedWithProvidedTags() throws SQLException {
+        try (Connection conn = DriverManager.getConnection("jdbc:h2:mem:fetchExists")) {
+            MetricsDSLContext jooq = createDatabase(conn);
+
+            boolean exists = jooq.tag("name", "checkAuthorExists").fetchExists(table("author"), field("id").eq(1));
+            assertThat(exists).isTrue();
+
+            assertThat(meterRegistry.get("jooq.query")
+                .tag("name", "checkAuthorExists")
+                .tag("type", "read")
+                .timer()
+                .count()).isEqualTo(1);
+        }
+    }
+
+    @Test
     void userExecuteListenerShouldBePreserved() {
         ExecuteListener userExecuteListener = mock(ExecuteListener.class);
         Configuration configuration = new DefaultConfiguration().set(() -> userExecuteListener);
