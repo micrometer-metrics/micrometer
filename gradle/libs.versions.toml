@@ -233,4 +233,4 @@ plugin-bndForJava17 = "biz.aQute.bnd:biz.aQute.bnd.gradle:7.1.0"
 kotlin19 = { id = "org.jetbrains.kotlin.jvm", version = "1.9.25" }
 kotlin17 = { id = "org.jetbrains.kotlin.jvm", version = "1.7.22" }
 jcstress = { id = "io.github.reyerizo.gradle.jcstress", version = "0.8.15" }
-aspectj = { id = 'io.freefair.aspectj.post-compile-weaving', version = '8.14' }
+aspectj = { id = 'io.freefair.aspectj.post-compile-weaving', version = '8.14.2' }
