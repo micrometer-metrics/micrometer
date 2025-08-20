@@ -790,4 +790,9 @@ public class MetricsDSLContext extends DefaultDSLContext {
         return timeCoercable(super.update(table));
     }
 
+    @Override
+    public boolean fetchExists(Table<?> table, Condition condition) {
+        return super.fetchExists(super.selectOne().from(table).where(condition));
+    }
+
 }
