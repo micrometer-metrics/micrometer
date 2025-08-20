@@ -51,7 +51,7 @@ public class MeterFilterCommonTagsBenchmark {
     public int supplied;
 
     @Param({ "0", "1", "2", "4", "8", "16", "32", "64" })
-    public int ignored;
+    public int commonTagCount;
 
     private Meter.Id[] samples;
 
@@ -65,7 +65,7 @@ public class MeterFilterCommonTagsBenchmark {
     public void setUp() {
         samples = FilterBenchmarkSupport.distributed(supplied).limit(COUNT).toArray(Meter.Id[]::new);
 
-        instances = TagsBenchmarkSupport.containers(ignored)
+        instances = TagsBenchmarkSupport.containers(commonTagCount)
             // Using List and not Tags to simulate the worst case
             // scenario. We're most interested in saving the performance
             // where it suffers most.

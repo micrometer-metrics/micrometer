@@ -15,7 +15,7 @@
  */
 package io.micrometer.benchmark;
 
-import io.micrometer.common.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 import org.openjdk.jmh.annotations.Mode;
 import org.openjdk.jmh.profile.GCProfiler;
 import org.openjdk.jmh.profile.LinuxPerfAsmProfiler;
@@ -204,7 +204,7 @@ public class BenchmarkSupport {
             .warmupTime(new TimeValue(5L, TimeUnit.SECONDS))
             // 9.5m benchmarks
             .measurementIterations(57)
-            .measurementTime(new TimeValue(5L, TimeUnit.SECONDS))
+            .measurementTime(new TimeValue(10L, TimeUnit.SECONDS))
             .mode(Mode.AverageTime)
             .timeUnit(TimeUnit.NANOSECONDS)
             .shouldDoGC(true)

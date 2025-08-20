@@ -26,9 +26,10 @@ import org.openjdk.jmh.runner.RunnerException;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Evaluates performance of {@link MeterFilter#commonTags(Iterable)}. To simulate at least
- * a somewhat realistic scenario and prevent false JIT assumptions, the input identifiers
- * have an arbitrary number of tags (0 to 64), having a prominent mode of [supplied].
+ * Evaluates performance of {@link MeterFilter#ignoreTags(String...)}. To simulate at
+ * least a somewhat realistic scenario and prevent false JIT assumptions, the input
+ * identifiers have an arbitrary number of tags (0 to 64), having a prominent mode of
+ * [supplied].
  */
 // Use jvmArgsAppend = "-XX:CompileCommand=dontinline,*.Tags.*" and
 // similar wildcards if you need to check clean assembly output
