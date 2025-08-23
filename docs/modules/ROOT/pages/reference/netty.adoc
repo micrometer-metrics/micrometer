@@ -29,11 +29,11 @@ The `NettyEventExecutorMetrics` binder collects metrics from Netty's `EventExecu
 |===
 |Metric |Type |Description
 
-|`netty.eventexecutor.workers`
+|`eventexecutor.workers`
 |Gauge
 |The number of event executor workers
 
-|`netty.eventexecutor.tasks.pending`
+|`eventexecutor.tasks.pending`
 |Gauge
 |The number of pending tasks in individual event executors
 

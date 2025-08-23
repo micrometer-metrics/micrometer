@@ -16,9 +16,9 @@
 package io.micrometer.core.instrument.binder.netty4;
 
 import io.micrometer.core.instrument.Tags;
-import io.micrometer.core.instrument.search.MeterNotFoundException;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.netty.channel.EventLoop;
+import io.netty.channel.EventLoopGroup;
 import io.netty.channel.MultiThreadIoEventLoopGroup;
 import io.netty.channel.MultithreadEventLoopGroup;
 import io.netty.channel.local.LocalIoHandler;
@@ -34,7 +34,6 @@ import java.util.concurrent.TimeUnit;
 import static io.micrometer.core.instrument.binder.netty4.NettyMeters.EVENT_EXECUTOR_TASKS_PENDING;
 import static io.micrometer.core.instrument.binder.netty4.NettyMeters.EVENT_EXECUTOR_WORKERS;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
  * Tests for {@link NettyEventExecutorMetrics}.
@@ -122,16 +121,33 @@ class NettyEventExecutorMetricsTests {
     }
 
     @Test
-    void shouldNotCreateWorkersMetricWhenNotAnEventLoopGroup() throws Exception {
+    void shouldHaveWorkersMetricForNonMultithreadEventLoopGroup() throws Exception {
         MultiThreadIoEventLoopGroup group = new MultiThreadIoEventLoopGroup(4, new DefaultThreadFactory("test-workers"),
                 LocalIoHandler.newFactory());
         EventLoop singleLoop = group.next();
         new NettyEventExecutorMetrics(Collections.singletonList(singleLoop)).bindTo(this.registry);
 
-        assertThatThrownBy(() -> this.registry.get(EVENT_EXECUTOR_WORKERS.getName()).gauge())
-            .isInstanceOf(MeterNotFoundException.class);
+        assertThat(this.registry.get(EVENT_EXECUTOR_WORKERS.getName()).gauge().value()).isEqualTo(1.0);
 
         group.shutdownGracefully().get(5, TimeUnit.SECONDS);
+    }
+
+    @Test
+    void shouldHaveWorkersMetricForSubclassOfMultiThreadEventLoopGroup() throws Exception {
+        EventLoopGroup group = new SubclassOfMultiThreadIoEventLoopGroup(3);
+        new NettyEventExecutorMetrics(group).bindTo(this.registry);
+
+        assertThat(this.registry.get(EVENT_EXECUTOR_WORKERS.getName()).gauge().value()).isEqualTo(3.0);
+
+        group.shutdownGracefully().get(5, TimeUnit.SECONDS);
+    }
+
+    private static class SubclassOfMultiThreadIoEventLoopGroup extends MultiThreadIoEventLoopGroup {
+
+        SubclassOfMultiThreadIoEventLoopGroup(int nThreads) {
+            super(nThreads, new DefaultThreadFactory("subclass-test-workers"), LocalIoHandler.newFactory());
+        }
+
     }
 
 }

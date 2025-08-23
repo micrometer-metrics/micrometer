@@ -121,7 +121,7 @@ class NettyMetricsTests {
             names.forEach(name -> assertThat(this.registry.get(NettyMeters.EVENT_EXECUTOR_TASKS_PENDING.getName())
                 .tags(Tags.of("name", name))
                 .gauge()
-                .value()).isNaN());
+                .value()).isEqualTo(0.0));
         });
 
         Tags tags = Tags.of("id", String.valueOf(unpooledByteBufAllocator.hashCode()), "allocator.type",
