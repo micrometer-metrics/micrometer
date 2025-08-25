@@ -287,6 +287,11 @@ public interface LongTaskTimer extends Meter, HistogramSupport {
      */
     class Builder {
 
+        static final DistributionStatisticConfig DEFAULT_DISTRIBUTION_CONFIG = DistributionStatisticConfig.builder()
+            .minimumExpectedValue((double) Duration.ofMinutes(2).toNanos())
+            .maximumExpectedValue((double) Duration.ofHours(2).toNanos())
+            .build();
+
         private final String name;
 
         private Tags tags = Tags.empty();
