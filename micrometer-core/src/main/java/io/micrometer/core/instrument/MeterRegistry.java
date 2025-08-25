@@ -486,7 +486,8 @@ public abstract class MeterRegistry {
      * @return A new or existing timer.
      */
     public Timer timer(String name, Iterable<Tag> tags) {
-        return Timer.builder(name).tags(tags).register(this);
+        return this.timer(new Meter.Id(name, Tags.of(tags), null, null, Meter.Type.TIMER),
+                AbstractTimerBuilder.DEFAULT_DISTRIBUTION_CONFIG, pauseDetector);
     }
 
     /**
@@ -1057,7 +1058,8 @@ public abstract class MeterRegistry {
          * @return A new or existing long task timer.
          */
         public LongTaskTimer longTaskTimer(String name, Iterable<Tag> tags) {
-            return LongTaskTimer.builder(name).tags(tags).register(MeterRegistry.this);
+            return longTaskTimer(new Meter.Id(name, Tags.of(tags), null, null, Meter.Type.LONG_TASK_TIMER),
+                    LongTaskTimer.Builder.DEFAULT_DISTRIBUTION_CONFIG);
         }
 
         /**

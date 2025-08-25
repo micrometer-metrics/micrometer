@@ -32,6 +32,15 @@ import java.util.Arrays;
 @SuppressWarnings("unchecked")
 public abstract class AbstractTimerBuilder<B extends AbstractTimerBuilder<B>> {
 
+    /**
+     * Default {@link DistributionStatisticConfig} used with {@link Timer} if not
+     * overridden.
+     */
+    static final DistributionStatisticConfig DEFAULT_DISTRIBUTION_CONFIG = DistributionStatisticConfig.builder()
+        .minimumExpectedValue((double) Duration.ofMillis(1).toNanos())
+        .maximumExpectedValue((double) Duration.ofSeconds(30).toNanos())
+        .build();
+
     protected final String name;
 
     protected Tags tags = Tags.empty();
