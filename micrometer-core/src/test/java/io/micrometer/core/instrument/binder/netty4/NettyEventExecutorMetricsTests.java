@@ -23,10 +23,11 @@ import io.netty.channel.MultiThreadIoEventLoopGroup;
 import io.netty.channel.MultithreadEventLoopGroup;
 import io.netty.channel.local.LocalIoHandler;
 import io.netty.util.concurrent.DefaultThreadFactory;
+import io.netty.util.concurrent.EventExecutor;
 import io.netty.util.concurrent.SingleThreadEventExecutor;
 import org.junit.jupiter.api.Test;
 
-import java.util.Collections;
+import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -34,6 +35,7 @@ import java.util.concurrent.TimeUnit;
 import static io.micrometer.core.instrument.binder.netty4.NettyMeters.EVENT_EXECUTOR_TASKS_PENDING;
 import static io.micrometer.core.instrument.binder.netty4.NettyMeters.EVENT_EXECUTOR_WORKERS;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
 
 /**
  * Tests for {@link NettyEventExecutorMetrics}.
@@ -121,15 +123,14 @@ class NettyEventExecutorMetricsTests {
     }
 
     @Test
-    void shouldHaveWorkersMetricForNonMultithreadEventLoopGroup() throws Exception {
-        MultiThreadIoEventLoopGroup group = new MultiThreadIoEventLoopGroup(4, new DefaultThreadFactory("test-workers"),
-                LocalIoHandler.newFactory());
-        EventLoop singleLoop = group.next();
-        new NettyEventExecutorMetrics(Collections.singletonList(singleLoop)).bindTo(this.registry);
+    void shouldCountWorkersForGenericIterableViaFallbackPath() {
+        EventExecutor mockExecutor1 = mock(EventExecutor.class);
+        EventExecutor mockExecutor2 = mock(EventExecutor.class);
+        Iterable<EventExecutor> genericIterable = Arrays.asList(mockExecutor1, mockExecutor2);
 
-        assertThat(this.registry.get(EVENT_EXECUTOR_WORKERS.getName()).gauge().value()).isEqualTo(1.0);
+        new NettyEventExecutorMetrics(genericIterable, Tags.empty()).bindTo(this.registry);
 
-        group.shutdownGracefully().get(5, TimeUnit.SECONDS);
+        assertThat(this.registry.get(EVENT_EXECUTOR_WORKERS.getName()).gauge().value()).isEqualTo(2.0);
     }
 
     @Test
