@@ -33,7 +33,7 @@ import java.util.concurrent.TimeUnit;
 @Warmup(iterations = 2)
 @Measurement(iterations = 5)
 @BenchmarkMode(Mode.AverageTime)
-@OutputTimeUnit(TimeUnit.MICROSECONDS)
+@OutputTimeUnit(TimeUnit.NANOSECONDS)
 @Threads(2)
 public class MeterRegistrationBenchmark {
 
@@ -49,7 +49,7 @@ public class MeterRegistrationBenchmark {
 
     Meter.MeterProvider<Counter> counterMeterProvider = Counter.builder("jmh.existing").withRegistry(registry);
 
-    Tags tags = Tags.of("key", "value");
+    Tags tags = Tags.of("k1", "v1");
 
     @Setup
     public void setup() {
@@ -89,8 +89,8 @@ public class MeterRegistrationBenchmark {
     }
 
     @Benchmark
-    public Meter registerExisting() {
-        return registry.counter("jmh.existing", "k1", "v1");
+    public Meter registerExistingCounter() {
+        return registry.counter("jmh.existing", tags);
     }
 
     @Benchmark

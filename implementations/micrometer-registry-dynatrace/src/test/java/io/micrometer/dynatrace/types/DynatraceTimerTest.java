@@ -47,7 +47,7 @@ class DynatraceTimerTest {
 
     private static final DistributionStatisticConfig DISTRIBUTION_STATISTIC_CONFIG = DistributionStatisticConfig.NONE;
 
-    private static final PauseDetector PAUSE_DETECTOR = new NoPauseDetector();
+    private static final PauseDetector PAUSE_DETECTOR = NoPauseDetector.INSTANCE;
 
     @Test
     void testTimerCount() {

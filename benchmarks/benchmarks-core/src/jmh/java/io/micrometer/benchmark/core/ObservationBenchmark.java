@@ -80,11 +80,11 @@ public class ObservationBenchmark {
         };
     }
 
-    @TearDown
-    public void tearDown() {
-        System.out.println("Meters:");
-        System.out.println(meterRegistry.getMetersAsString());
-    }
+    // @TearDown
+    // public void tearDown() {
+    // System.out.println("Meters:");
+    // System.out.println(meterRegistry.getMetersAsString());
+    // }
 
     @Benchmark
     public void baseline() {

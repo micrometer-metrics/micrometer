@@ -31,6 +31,8 @@ import io.micrometer.core.instrument.search.MeterNotFoundException;
 import io.micrometer.core.instrument.search.RequiredSearch;
 import io.micrometer.core.instrument.search.Search;
 import io.micrometer.core.instrument.util.TimeUtils;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.NullUnmarked;
 import org.jspecify.annotations.Nullable;
 
 import java.time.Duration;
@@ -106,7 +108,7 @@ public abstract class MeterRegistry {
 
     /**
      * write/remove guarded by meterMapLock, read in
-     * {@link #getOrCreateMeter(DistributionStatisticConfig, BiFunction, Meter.Id, Function)}
+     * {@link #getOrCreateMeter(DistributionStatisticConfig, PauseDetector, NewMeterSupplier, Meter.Id, Function)}
      * is unguarded
      */
     private final Map<Meter.Id, Meter> preFilterIdToMeterMap = new HashMap<>();
@@ -135,7 +137,7 @@ public abstract class MeterRegistry {
 
     private final AtomicBoolean closed = new AtomicBoolean();
 
-    private PauseDetector pauseDetector = new NoPauseDetector();
+    private PauseDetector pauseDetector = NoPauseDetector.INSTANCE;
 
     private @Nullable HighCardinalityTagsDetector highCardinalityTagsDetector;
 
@@ -338,9 +340,12 @@ public abstract class MeterRegistry {
      * Only used by {@link Counter#builder(String)}.
      * @param id The identifier for this counter.
      * @return A new or existing counter.
+     * @implNote Avoids allocation in the case the meter is already registered,
+     * particularly capturing lambdas.
      */
     Counter counter(Meter.Id id) {
-        return registerMeterIfNecessary(Counter.class, id, this::newCounter, NoopCounter::new);
+        return registerMeterIfNecessary(Counter.class, id, null, null,
+                (registry, mappedId, mappedConfig, pd) -> registry.newCounter(mappedId), NoopCounter::new);
     }
 
     /**
@@ -352,22 +357,27 @@ public abstract class MeterRegistry {
      * @return A new or existing gauge.
      */
     <T> Gauge gauge(Meter.Id id, @Nullable T obj, ToDoubleFunction<T> valueFunction) {
-        return registerMeterIfNecessary(Gauge.class, id, id2 -> newGauge(id2, obj, valueFunction), NoopGauge::new);
+        return registerMeterIfNecessary(Gauge.class, id,
+                (registry, mappedId) -> registry.newGauge(mappedId, obj, valueFunction), NoopGauge::new);
     }
 
     /**
-     * Only used by {@link Timer#builder(String)}.
+     * Only used internally.
      * @param id The identifier for this timer.
      * @param distributionStatisticConfig Configuration that governs how distribution
      * statistics are computed.
+     * @param specificPauseDetector explicit pause detector to use that may be different
+     * from the registry-configured one
      * @return A new or existing timer.
+     * @implNote Avoids allocation in the case the meter is already registered,
+     * particularly capturing lambdas.
      */
     Timer timer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig,
-            PauseDetector pauseDetectorOverride) {
-        return registerMeterIfNecessary(Timer.class, id, distributionStatisticConfig, (id2, filteredConfig) -> {
-            Meter.Id withUnit = id2.withBaseUnit(getBaseTimeUnitStr());
-            return newTimer(withUnit, filteredConfig.merge(defaultHistogramConfig()), pauseDetectorOverride);
-        }, NoopTimer::new);
+            PauseDetector specificPauseDetector) {
+        return registerMeterIfNecessary(Timer.class, id, distributionStatisticConfig, specificPauseDetector,
+                (registry, mappedId, mappedConfig, pd) -> registry
+                    .newTimer(mappedId.withBaseUnit(registry.getBaseTimeUnitStr()), mappedConfig, pd),
+                NoopTimer::new);
     }
 
     /**
@@ -378,8 +388,9 @@ public abstract class MeterRegistry {
      * @return A new or existing distribution summary.
      */
     DistributionSummary summary(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig, double scale) {
-        return registerMeterIfNecessary(DistributionSummary.class, id, distributionStatisticConfig, (id2,
-                filteredConfig) -> newDistributionSummary(id2, filteredConfig.merge(defaultHistogramConfig()), scale),
+        return registerMeterIfNecessary(
+                DistributionSummary.class, id, distributionStatisticConfig, null, (registry, mappedId, filteredConfig,
+                        pd) -> registry.newDistributionSummary(mappedId, filteredConfig, scale),
                 NoopDistributionSummary::new);
     }
 
@@ -392,7 +403,8 @@ public abstract class MeterRegistry {
      * @return The meter.
      */
     Meter register(Meter.Id id, Meter.Type type, Iterable<Measurement> measurements) {
-        return registerMeterIfNecessary(Meter.class, id, id2 -> newMeter(id2, type, measurements), NoopMeter::new);
+        return registerMeterIfNecessary(Meter.class, id,
+                (registry, mappedId) -> registry.newMeter(mappedId, type, measurements), NoopMeter::new);
     }
 
     /**
@@ -607,14 +619,15 @@ public abstract class MeterRegistry {
     }
 
     private <M extends Meter> M registerMeterIfNecessary(Class<M> meterClass, Meter.Id id,
-            Function<Meter.Id, M> builder, Function<Meter.Id, M> noopBuilder) {
-        return registerMeterIfNecessary(meterClass, id, null, (id2, conf) -> builder.apply(id2), noopBuilder);
+            BiFunction<MeterRegistry, Meter.Id, M> meterSupplier, Function<Meter.Id, M> noopBuilder) {
+        return registerMeterIfNecessary(meterClass, id, null, null,
+                (registry, mappedId, conf, pd) -> meterSupplier.apply(registry, mappedId), noopBuilder);
     }
 
     private <M extends Meter> M registerMeterIfNecessary(Class<M> meterClass, Meter.Id id,
-            @Nullable DistributionStatisticConfig config, BiFunction<Meter.Id, DistributionStatisticConfig, M> builder,
-            Function<Meter.Id, M> noopBuilder) {
-        Meter m = getOrCreateMeter(config, builder, id, noopBuilder);
+            @Nullable DistributionStatisticConfig config, @Nullable PauseDetector specificPauseDetector,
+            NewMeterSupplier<M> meterSupplier, Function<Meter.Id, M> noopBuilder) {
+        Meter m = getOrCreateMeter(config, specificPauseDetector, meterSupplier, id, noopBuilder);
 
         if (!meterClass.isInstance(m)) {
             throw new IllegalArgumentException(
@@ -643,8 +656,29 @@ public abstract class MeterRegistry {
         return mappedId;
     }
 
+    @FunctionalInterface
+    // Brittle, but this is internal. We pass nulls for some meter types as explained in
+    // JavaDoc.
+    @NullUnmarked
+    private interface NewMeterSupplier<M extends Meter> {
+
+        /**
+         * Create a new meter with the given parameters. The DistributionStatisticConfig
+         * and PauseDetector will be null for meter types that do not take them.
+         * @param registry the registry from which to make the new meter
+         * @param id the ID of the meter to create
+         * @param distributionStatisticConfig optional distribution config for types that
+         * take it
+         * @param pauseDetector optional pause detector for types that take it
+         * @return a new meter
+         */
+        @NonNull M create(MeterRegistry registry, Meter.Id id, DistributionStatisticConfig distributionStatisticConfig,
+                PauseDetector pauseDetector);
+
+    }
+
     private Meter getOrCreateMeter(@Nullable DistributionStatisticConfig config,
-            BiFunction<Meter.Id, /* Nullable Generic */ DistributionStatisticConfig, ? extends Meter> builder,
+            @Nullable PauseDetector specificPauseDetector, NewMeterSupplier<? extends Meter> meterSupplier,
             Meter.Id originalId, Function<Meter.Id, ? extends Meter> noopBuilder) {
 
         Meter m = preFilterIdToMeterMap.get(originalId);
@@ -684,9 +718,10 @@ public abstract class MeterRegistry {
                                 config = filteredConfig;
                             }
                         }
+                        config = config.merge(defaultHistogramConfig());
                     }
 
-                    m = builder.apply(mappedId, config);
+                    m = meterSupplier.create(this, mappedId, config, specificPauseDetector);
 
                     Meter.Id synAssoc = mappedId.syntheticAssociation();
                     if (synAssoc != null) {
@@ -1066,13 +1101,14 @@ public abstract class MeterRegistry {
          * Only used by {@link LongTaskTimer#builder(String)}.
          * @param id The identifier for this long task timer.
          * @return A new or existing long task timer.
+         * @implNote Avoids allocation in the case the meter is already registered,
+         * particularly capturing lambdas.
          */
         LongTaskTimer longTaskTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig) {
-            return registerMeterIfNecessary(LongTaskTimer.class, id, distributionStatisticConfig,
-                    (id2, filteredConfig) -> {
-                        Meter.Id withUnit = id2.withBaseUnit(getBaseTimeUnitStr());
-                        return newLongTaskTimer(withUnit, filteredConfig.merge(defaultHistogramConfig()));
-                    }, NoopLongTaskTimer::new);
+            return registerMeterIfNecessary(LongTaskTimer.class, id, distributionStatisticConfig, null,
+                    (registry, mappedId, mappedConfig, pd) -> registry
+                        .newLongTaskTimer(mappedId.withBaseUnit(registry.getBaseTimeUnitStr()), mappedConfig),
+                    NoopLongTaskTimer::new);
         }
 
         /**
@@ -1116,7 +1152,8 @@ public abstract class MeterRegistry {
          */
         <T> FunctionCounter counter(Meter.Id id, T obj, ToDoubleFunction<T> countFunction) {
             return registerMeterIfNecessary(FunctionCounter.class, id,
-                    id2 -> newFunctionCounter(id2, obj, countFunction), NoopFunctionCounter::new);
+                    (registry, mappedId) -> registry.newFunctionCounter(mappedId, obj, countFunction),
+                    NoopFunctionCounter::new);
         }
 
         /**
@@ -1157,10 +1194,10 @@ public abstract class MeterRegistry {
          */
         <T> FunctionTimer timer(Meter.Id id, T obj, ToLongFunction<T> countFunction,
                 ToDoubleFunction<T> totalTimeFunction, TimeUnit totalTimeFunctionUnit) {
-            return registerMeterIfNecessary(FunctionTimer.class, id, id2 -> {
-                Meter.Id withUnit = id2.withBaseUnit(getBaseTimeUnitStr());
-                return newFunctionTimer(withUnit, obj, countFunction, totalTimeFunction, totalTimeFunctionUnit);
-            }, NoopFunctionTimer::new);
+            return registerMeterIfNecessary(FunctionTimer.class, id,
+                    (registry, mappedId) -> registry.newFunctionTimer(mappedId.withBaseUnit(getBaseTimeUnitStr()), obj,
+                            countFunction, totalTimeFunction, totalTimeFunctionUnit),
+                    NoopFunctionTimer::new);
         }
 
         /**
@@ -1198,7 +1235,8 @@ public abstract class MeterRegistry {
         <T> TimeGauge timeGauge(Meter.Id id, @Nullable T obj, TimeUnit timeFunctionUnit,
                 ToDoubleFunction<T> timeFunction) {
             return registerMeterIfNecessary(TimeGauge.class, id,
-                    id2 -> newTimeGauge(id2, obj, timeFunctionUnit, timeFunction), NoopTimeGauge::new);
+                    (registry, mappedId) -> registry.newTimeGauge(mappedId, obj, timeFunctionUnit, timeFunction),
+                    NoopTimeGauge::new);
         }
 
     }

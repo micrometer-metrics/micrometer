@@ -75,7 +75,7 @@ class AbstractTimerTests {
 
         MyTimer() {
             super(new Meter.Id("name", Tags.empty(), null, null, Meter.Type.TIMER), Clock.SYSTEM,
-                    DistributionStatisticConfig.DEFAULT, new NoPauseDetector(), TimeUnit.SECONDS, false);
+                    DistributionStatisticConfig.DEFAULT, NoPauseDetector.INSTANCE, TimeUnit.SECONDS, false);
         }
 
         @Override
