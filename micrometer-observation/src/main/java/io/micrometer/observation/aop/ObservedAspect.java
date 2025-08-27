@@ -20,6 +20,7 @@ import io.micrometer.observation.ObservationRegistry;
 import io.micrometer.observation.Observations;
 import io.micrometer.observation.annotation.Observed;
 import io.micrometer.observation.ObservationConvention;
+import io.micrometer.observation.annotation.ObservedKeyValueTag;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
@@ -68,9 +69,14 @@ import java.util.function.Predicate;
  * }
  * </pre>
  *
+ * To add support for {@link ObservedKeyValueTag} annotations set the *
+ * {@link ObservedKeyValueTagAnnotationHandler} via *
+ * {@link ObservedAspect#setObservedKeyValueTagAnnotationHandler(ObservedKeyValueTagAnnotationHandler)}.
+ *
  * @author Jonatan Ivanov
  * @author Yanming Zhou
  * @author Jeonggi Kim
+ * @author Seungyong Hong
  * @since 1.10.0
  */
 @Aspect
@@ -83,6 +89,8 @@ public class ObservedAspect {
     private final @Nullable ObservationConvention<ObservedAspectContext> observationConvention;
 
     private final Predicate<ProceedingJoinPoint> shouldSkip;
+
+    private @Nullable ObservedKeyValueTagAnnotationHandler observedKeyValueTagAnnotationHandler;
 
     /**
      * Create an {@code ObservedAspect} with {@link Observations#getGlobalRegistry()}.
@@ -141,6 +149,11 @@ public class ObservedAspect {
     private @NullUnmarked Object observe(ProceedingJoinPoint pjp, Method method, Observed observed) throws Throwable {
         Observation observation = ObservedAspectObservationDocumentation.of(pjp, observed, this.registry,
                 this.observationConvention);
+
+        if (observedKeyValueTagAnnotationHandler != null) {
+            observedKeyValueTagAnnotationHandler.addAnnotatedParameters(observation.getContext(), pjp);
+        }
+
         if (CompletionStage.class.isAssignableFrom(method.getReturnType())) {
             observation.start();
             Observation.Scope scope = observation.openScope();
@@ -207,6 +220,15 @@ public class ObservedAspect {
             return this.proceedingJoinPoint;
         }
 
+    }
+
+    /**
+     * Setting this enables support for {@link ObservedKeyValueTag}.
+     * @param observedKeyValueTagAnnotationHandler annotation handler
+     */
+    public void setObservedKeyValueTagAnnotationHandler(
+            ObservedKeyValueTagAnnotationHandler observedKeyValueTagAnnotationHandler) {
+        this.observedKeyValueTagAnnotationHandler = observedKeyValueTagAnnotationHandler;
     }
 
 }
