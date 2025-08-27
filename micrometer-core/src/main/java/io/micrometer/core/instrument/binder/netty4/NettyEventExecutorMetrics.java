@@ -25,6 +25,8 @@ import io.netty.channel.MultithreadEventLoopGroup;
 import io.netty.util.concurrent.EventExecutor;
 import io.netty.util.concurrent.SingleThreadEventExecutor;
 
+import java.lang.ref.WeakReference;
+
 /**
  * {@link MeterBinder} for Netty event executors.
  * <p>
@@ -78,10 +80,24 @@ public class NettyEventExecutorMetrics implements MeterBinder {
 
     @Override
     public void bindTo(MeterRegistry registry) {
-        Gauge.builder(NettyMeters.EVENT_EXECUTOR_WORKERS.getName(), this::getWorkerCount)
-            .description("The total number of event loop workers.")
-            .tags(tags)
-            .register(registry);
+        WeakReference<Iterable<EventExecutor>> weakExecutors = new WeakReference<>(this.eventExecutors);
+        Gauge.builder(NettyMeters.EVENT_EXECUTOR_WORKERS.getName(), () -> {
+            Iterable<EventExecutor> executors = weakExecutors.get();
+
+            if (executors == null) {
+                return 0.0;
+            }
+
+            if (executors instanceof MultithreadEventLoopGroup) {
+                return (double) ((MultithreadEventLoopGroup) executors).executorCount();
+            }
+
+            int count = 0;
+            for (EventExecutor ignored : executors) {
+                count++;
+            }
+            return (double) count;
+        }).description("The total number of event loop workers.").tags(tags).register(registry);
 
         this.eventExecutors.forEach(eventExecutor -> {
             if (eventExecutor instanceof SingleThreadEventExecutor) {
@@ -95,18 +111,6 @@ public class NettyEventExecutorMetrics implements MeterBinder {
                     .register(registry);
             }
         });
-    }
-
-    private int getWorkerCount() {
-        if (this.eventExecutors instanceof MultithreadEventLoopGroup) {
-            return ((MultithreadEventLoopGroup) this.eventExecutors).executorCount();
-        }
-
-        int count = 0;
-        for (EventExecutor ignored : this.eventExecutors) {
-            count++;
-        }
-        return count;
     }
 
 }
