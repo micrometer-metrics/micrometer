@@ -81,7 +81,7 @@ public class NettyEventExecutorMetrics implements MeterBinder {
         Gauge
             .builder(NettyMeters.EVENT_EXECUTOR_WORKERS.getName(), this.eventExecutors,
                     NettyEventExecutorMetrics::getExecutorCount)
-            .description("The total number of event loop workers.")
+            .description("Number of event executor workers")
             .tags(tags)
             .register(registry);
 
