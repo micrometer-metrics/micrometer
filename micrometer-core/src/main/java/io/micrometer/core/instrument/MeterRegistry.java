@@ -456,7 +456,7 @@ public abstract class MeterRegistry {
      * @return A new or existing counter.
      */
     public Counter counter(String name, Iterable<Tag> tags) {
-        return Counter.builder(name).tags(tags).register(this);
+        return counter(name, Tags.of(tags));
     }
 
     /**
@@ -468,6 +468,17 @@ public abstract class MeterRegistry {
      */
     public Counter counter(String name, String... tags) {
         return counter(name, Tags.of(tags));
+    }
+
+    /**
+     * Tracks a monotonically increasing value.
+     * @param name The base metric name
+     * @param tags Sequence of dimensions for breaking down the name.
+     * @return A new or existing counter.
+     * @since 1.16.0
+     */
+    public Counter counter(String name, Tags tags) {
+        return counter(new Meter.Id(name, tags, null, null, Meter.Type.COUNTER));
     }
 
     /**
@@ -498,8 +509,7 @@ public abstract class MeterRegistry {
      * @return A new or existing timer.
      */
     public Timer timer(String name, Iterable<Tag> tags) {
-        return this.timer(new Meter.Id(name, Tags.of(tags), null, null, Meter.Type.TIMER),
-                AbstractTimerBuilder.DEFAULT_DISTRIBUTION_CONFIG, pauseDetector);
+        return this.timer(name, Tags.of(tags));
     }
 
     /**
@@ -511,6 +521,18 @@ public abstract class MeterRegistry {
      */
     public Timer timer(String name, String... tags) {
         return timer(name, Tags.of(tags));
+    }
+
+    /**
+     * Measures the time taken for short tasks and the count of these tasks.
+     * @param name The base metric name
+     * @param tags Sequence of dimensions for breaking down the name.
+     * @return A new or existing timer.
+     * @since 1.16.0
+     */
+    public Timer timer(String name, Tags tags) {
+        return this.timer(new Meter.Id(name, tags, null, null, Meter.Type.TIMER),
+                AbstractTimerBuilder.DEFAULT_DISTRIBUTION_CONFIG, pauseDetector);
     }
 
     /**
@@ -1093,7 +1115,18 @@ public abstract class MeterRegistry {
          * @return A new or existing long task timer.
          */
         public LongTaskTimer longTaskTimer(String name, Iterable<Tag> tags) {
-            return longTaskTimer(new Meter.Id(name, Tags.of(tags), null, null, Meter.Type.LONG_TASK_TIMER),
+            return longTaskTimer(name, Tags.of(tags));
+        }
+
+        /**
+         * Measures the time taken for long tasks.
+         * @param name Name of the long task timer being registered.
+         * @param tags Sequence of dimensions for breaking down the name.
+         * @return A new or existing long task timer.
+         * @since 1.16.0
+         */
+        public LongTaskTimer longTaskTimer(String name, Tags tags) {
+            return longTaskTimer(new Meter.Id(name, tags, null, null, Meter.Type.LONG_TASK_TIMER),
                     LongTaskTimer.Builder.DEFAULT_DISTRIBUTION_CONFIG);
         }
 
