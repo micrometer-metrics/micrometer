@@ -337,7 +337,7 @@ public abstract class MeterRegistry {
     }
 
     /**
-     * Only used by {@link Counter#builder(String)}.
+     * Only used internally.
      * @param id The identifier for this counter.
      * @return A new or existing counter.
      * @implNote Avoids allocation in the case the meter is already registered,
@@ -676,27 +676,6 @@ public abstract class MeterRegistry {
             mappedId = filter.map(mappedId);
         }
         return mappedId;
-    }
-
-    @FunctionalInterface
-    // Brittle, but this is internal. We pass nulls for some meter types as explained in
-    // JavaDoc.
-    @NullUnmarked
-    private interface NewMeterSupplier<M extends Meter> {
-
-        /**
-         * Create a new meter with the given parameters. The DistributionStatisticConfig
-         * and PauseDetector will be null for meter types that do not take them.
-         * @param registry the registry from which to make the new meter
-         * @param id the ID of the meter to create
-         * @param distributionStatisticConfig optional distribution config for types that
-         * take it
-         * @param pauseDetector optional pause detector for types that take it
-         * @return a new meter
-         */
-        @NonNull M create(MeterRegistry registry, Meter.Id id, DistributionStatisticConfig distributionStatisticConfig,
-                PauseDetector pauseDetector);
-
     }
 
     private Meter getOrCreateMeter(@Nullable DistributionStatisticConfig config,
@@ -1131,7 +1110,7 @@ public abstract class MeterRegistry {
         }
 
         /**
-         * Only used by {@link LongTaskTimer#builder(String)}.
+         * Only used internally.
          * @param id The identifier for this long task timer.
          * @return A new or existing long task timer.
          * @implNote Avoids allocation in the case the meter is already registered,
@@ -1311,6 +1290,27 @@ public abstract class MeterRegistry {
         for (BiConsumer<Meter.Id, String> listener : meterRegistrationFailedListeners) {
             listener.accept(id, reason);
         }
+    }
+
+    @FunctionalInterface
+    // Brittle, but this is internal. We pass nulls for some meter types as explained in
+    // JavaDoc.
+    @NullUnmarked
+    private interface NewMeterSupplier<M extends Meter> {
+
+        /**
+         * Create a new meter with the given parameters. The DistributionStatisticConfig
+         * and PauseDetector will be null for meter types that do not take them.
+         * @param registry the registry from which to make the new meter
+         * @param id the ID of the meter to create
+         * @param distributionStatisticConfig optional distribution config for types that
+         * take it
+         * @param pauseDetector optional pause detector for types that take it
+         * @return a new meter
+         */
+        @NonNull M create(MeterRegistry registry, Meter.Id id, DistributionStatisticConfig distributionStatisticConfig,
+                PauseDetector pauseDetector);
+
     }
 
     // VisibleForTesting
