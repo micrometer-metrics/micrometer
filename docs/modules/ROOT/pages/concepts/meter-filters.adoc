@@ -160,10 +160,12 @@ See the following example:
 [source, java]
 ----
 registry.config()
-    .meterFilter(MeterFilter.forMeters(startsWith("prefix"), MeterFilter.ignoreTags("extra")));
-
-Predicate<Meter.Id> startsWith(String prefix) {
-    return id -> id.getName().startsWith(prefix);
-}
+    .meterFilter(MeterFilter.forMeters(Meter.Id.nameStartsWith("prefix"), MeterFilter.ignoreTags("extra")));
 ----
 ====
+
+`Meter.Id` provides the following convenience methods to match meters:
+
+* `nameStartsWith(String)`: Matches meters with names starting with the given prefix.
+* `hasName(String)`: Matches meters with names that are equal to the given name.
+* `hasType(Meter.Type)`: Matches meters with the given type

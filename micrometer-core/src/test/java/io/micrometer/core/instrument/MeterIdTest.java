@@ -56,4 +56,28 @@ class MeterIdTest {
         assertThat(newId.getTags()).containsExactlyElementsOf(Tags.of("k1", "n1", "k", "n"));
     }
 
+    @Test
+    void hasName() {
+        Meter.Id id = new Meter.Id("my.id", Tags.empty(), null, null, Meter.Type.COUNTER);
+
+        assertThat(Meter.Id.hasName("my.id")).accepts(id);
+        assertThat(Meter.Id.hasName("other.id")).rejects(id);
+    }
+
+    @Test
+    void nameStartsWith() {
+        Meter.Id id = new Meter.Id("my.id", Tags.empty(), null, null, Meter.Type.COUNTER);
+
+        assertThat(Meter.Id.nameStartsWith("my")).accepts(id);
+        assertThat(Meter.Id.nameStartsWith("other")).rejects(id);
+    }
+
+    @Test
+    void hasType() {
+        Meter.Id id = new Meter.Id("my.id", Tags.empty(), null, null, Meter.Type.COUNTER);
+
+        assertThat(Meter.Id.hasType(Meter.Type.COUNTER)).accepts(id);
+        assertThat(Meter.Id.hasType(Meter.Type.TIMER)).rejects(id);
+    }
+
 }
