@@ -25,6 +25,7 @@ import io.micrometer.common.docs.KeyName;
  * measurements.
  *
  * @author Jon Schneider
+ * @author Seungyong Hong
  * @since 1.10.0
  */
 public interface KeyValue extends Comparable<KeyValue> {
@@ -92,6 +93,17 @@ public interface KeyValue extends Comparable<KeyValue> {
      */
     static <T> KeyValue of(KeyName keyName, T value, Predicate<? super T> validator) {
         return KeyValue.of(keyName.asString(), value, validator);
+    }
+
+    /**
+     * Creates a {@link KeyValue} for the given key, value and extended data.
+     * @param key key of the KeyValue
+     * @param value value for key
+     * @param data extended data
+     * @return KeyValue
+     */
+    static <T, D> KeyValue of(String key, T value, D data) {
+        return new ImmutableExtendedKeyValue<>(key, String.valueOf(value), data);
     }
 
     @Override
