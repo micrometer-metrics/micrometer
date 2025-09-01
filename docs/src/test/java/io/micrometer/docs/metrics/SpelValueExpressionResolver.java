@@ -25,7 +25,7 @@ import org.springframework.expression.ExpressionParser;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
 import org.springframework.expression.spel.support.SimpleEvaluationContext;
 
-class SpelValueExpressionResolver implements ValueExpressionResolver {
+public class SpelValueExpressionResolver implements ValueExpressionResolver {
 
     private static final InternalLogger log = InternalLoggerFactory.getInstance(SpelValueExpressionResolver.class);
 

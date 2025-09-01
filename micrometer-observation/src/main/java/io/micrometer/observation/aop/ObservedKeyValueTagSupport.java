@@ -18,13 +18,10 @@ package io.micrometer.observation.aop;
 import java.util.function.Function;
 
 import org.jspecify.annotations.Nullable;
-import io.micrometer.common.ImmutableExtendedKeyValue;
-import io.micrometer.common.KeyValue;
 import io.micrometer.common.annotation.NoOpValueResolver;
 import io.micrometer.common.annotation.ValueExpressionResolver;
 import io.micrometer.common.annotation.ValueResolver;
 import io.micrometer.common.util.StringUtils;
-import io.micrometer.observation.Observation;
 import io.micrometer.observation.annotation.ObservedKeyValueTag;
 
 /**
@@ -33,23 +30,6 @@ import io.micrometer.observation.annotation.ObservedKeyValueTag;
  * @author Seungyong Hong
  */
 public class ObservedKeyValueTagSupport {
-
-    public static void addTag(KeyValue keyValue, Observation.Context context) {
-        if (!(keyValue instanceof ImmutableExtendedKeyValue)) {
-            throw new IllegalStateException("keyValue must be an instance of AuunotationImmutableKeyValue");
-        }
-
-        ImmutableExtendedKeyValue<ObservedKeyValueTag> auunotationImmutableKeyValue = (ImmutableExtendedKeyValue<ObservedKeyValueTag>) keyValue;
-        ObservedKeyValueTag observedKeyValueTag = auunotationImmutableKeyValue.getData();
-        switch (observedKeyValueTag.cardinality()) {
-            case LOW:
-                context.addLowCardinalityKeyValue(keyValue);
-                break;
-            case HIGH:
-                context.addHighCardinalityKeyValue(keyValue);
-                break;
-        }
-    }
 
     public static String resolveTagKey(ObservedKeyValueTag observedKeyValueTag) {
         return StringUtils.isNotBlank(observedKeyValueTag.value()) ? observedKeyValueTag.value()
@@ -61,16 +41,13 @@ public class ObservedKeyValueTagSupport {
             Function<Class<? extends ValueExpressionResolver>, ? extends ValueExpressionResolver> expressionResolverProvider) {
         if (annotation.resolver() != NoOpValueResolver.class) {
             ValueResolver valueResolver = resolverProvider.apply(annotation.resolver());
-
             return valueResolver.resolve(argument);
         }
         else if (StringUtils.isNotBlank(annotation.expression())) {
-
             return expressionResolverProvider.apply(ValueExpressionResolver.class)
                 .resolve(annotation.expression(), argument);
         }
         else if (argument != null) {
-
             return argument.toString();
         }
 

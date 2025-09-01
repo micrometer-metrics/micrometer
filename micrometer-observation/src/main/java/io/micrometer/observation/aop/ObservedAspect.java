@@ -70,8 +70,8 @@ import java.util.function.Predicate;
  * </pre>
  *
  * To add support for {@link ObservedKeyValueTag} annotations set the *
- * {@link ObservedKeyValueTagAnnotationHandler} via *
- * {@link ObservedAspect#setObservedKeyValueTagAnnotationHandler(ObservedKeyValueTagAnnotationHandler)}.
+ * {@link ObservedKeyValueTagAnnotationHandler} via
+ * {@link ObservedAspect#setObservedKeyValueTagAnnotationHandler(ObservedKeyValueTagAnnotationHandler)}
  *
  * @author Jonatan Ivanov
  * @author Yanming Zhou

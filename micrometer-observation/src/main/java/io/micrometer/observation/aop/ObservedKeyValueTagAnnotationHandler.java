@@ -15,14 +15,15 @@
  */
 package io.micrometer.observation.aop;
 
+import java.util.function.Function;
+
+import org.aspectj.lang.ProceedingJoinPoint;
 import io.micrometer.common.KeyValue;
 import io.micrometer.common.annotation.AnnotationHandler;
 import io.micrometer.common.annotation.ValueExpressionResolver;
 import io.micrometer.common.annotation.ValueResolver;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.annotation.ObservedKeyValueTag;
-
-import java.util.function.Function;
 
 /**
  * Annotation handler for {@link ObservedKeyValueTag}. To add support for
@@ -32,7 +33,11 @@ import java.util.function.Function;
  *
  * @author Seungyong Hong
  */
-public class ObservedKeyValueTagAnnotationHandler extends AnnotationHandler<Observation.Context> {
+public class ObservedKeyValueTagAnnotationHandler {
+
+    private final AnnotationHandler<Observation.Context> highCardinalityAnnotationHandler;
+
+    private final AnnotationHandler<Observation.Context> lowCardinalityAnnotationHandler;
 
     /**
      * Creates a new instance of {@link ObservedKeyValueTagAnnotationHandler}.
@@ -43,18 +48,56 @@ public class ObservedKeyValueTagAnnotationHandler extends AnnotationHandler<Obse
     public ObservedKeyValueTagAnnotationHandler(
             Function<Class<? extends ValueResolver>, ? extends ValueResolver> resolverProvider,
             Function<Class<? extends ValueExpressionResolver>, ? extends ValueExpressionResolver> expressionResolverProvider) {
-        super(ObservedKeyValueTagSupport::addTag, resolverProvider, expressionResolverProvider,
-                ObservedKeyValueTag.class, (annotation, object) -> {
-                    if (!(annotation instanceof ObservedKeyValueTag)) {
-                        return null;
+        this.highCardinalityAnnotationHandler = new AnnotationHandler<>(
+                (keyValue, context) -> context.addHighCardinalityKeyValue(keyValue), resolverProvider,
+                expressionResolverProvider, ObservedKeyValueTag.class, (annotation, object) -> {
+                    ObservedKeyValueTag observedKeyValueTag = (ObservedKeyValueTag) annotation;
+
+                    return KeyValue.of(ObservedKeyValueTagSupport.resolveTagKey(observedKeyValueTag),
+                            ObservedKeyValueTagSupport.resolveTagValue(observedKeyValueTag, object, resolverProvider,
+                                    expressionResolverProvider));
+                }, (annotation, object) -> {
+                    if (annotation.annotationType() != ObservedKeyValueTag.class) {
+                        return false;
                     }
 
                     ObservedKeyValueTag observedKeyValueTag = (ObservedKeyValueTag) annotation;
+                    if (observedKeyValueTag.cardinality() != CardinalityType.HIGH) {
+                        return false;
+                    }
+
+                    return true;
+                });
+        this.lowCardinalityAnnotationHandler = new AnnotationHandler<>(
+                (keyValue, context) -> context.addLowCardinalityKeyValue(keyValue), resolverProvider,
+                expressionResolverProvider, ObservedKeyValueTag.class, (annotation, object) -> {
+                    ObservedKeyValueTag observedKeyValueTag = (ObservedKeyValueTag) annotation;
+
                     return KeyValue.of(ObservedKeyValueTagSupport.resolveTagKey(observedKeyValueTag),
                             ObservedKeyValueTagSupport.resolveTagValue(observedKeyValueTag, object, resolverProvider,
-                                    expressionResolverProvider),
-                            annotation);
+                                    expressionResolverProvider));
+                }, (annotation, object) -> {
+                    if (annotation.annotationType() != ObservedKeyValueTag.class) {
+                        return false;
+                    }
+
+                    ObservedKeyValueTag observedKeyValueTag = (ObservedKeyValueTag) annotation;
+                    if (observedKeyValueTag.cardinality() != CardinalityType.LOW) {
+                        return false;
+                    }
+
+                    return true;
                 });
+    }
+
+    /**
+     * Delegation method to
+     * {@link AnnotationHandler#addAnnotatedParameters(Object, ProceedingJoinPoint)} high
+     * and low annotation handlers.
+     */
+    public void addAnnotatedParameters(Observation.Context context, ProceedingJoinPoint pjp) {
+        highCardinalityAnnotationHandler.addAnnotatedParameters(context, pjp);
+        lowCardinalityAnnotationHandler.addAnnotatedParameters(context, pjp);
     }
 
 }

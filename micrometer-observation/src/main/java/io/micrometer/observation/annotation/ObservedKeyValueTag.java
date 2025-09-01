@@ -18,6 +18,7 @@ package io.micrometer.observation.annotation;
 import io.micrometer.common.annotation.NoOpValueResolver;
 import io.micrometer.common.annotation.ValueExpressionResolver;
 import io.micrometer.common.annotation.ValueResolver;
+import io.micrometer.observation.aop.CardinalityType;
 import io.micrometer.observation.aop.ObservedKeyValueTagAnnotationHandler;
 
 import java.lang.annotation.*;
@@ -72,15 +73,5 @@ public @interface ObservedKeyValueTag {
      * @return {@link CardinalityType} class
      */
     CardinalityType cardinality() default CardinalityType.LOW;
-
-    /**
-     * There are 2 types of cardinality in observation. And each type is treated
-     * differently.
-     */
-    enum CardinalityType {
-
-        LOW, HIGH
-
-    }
 
 }

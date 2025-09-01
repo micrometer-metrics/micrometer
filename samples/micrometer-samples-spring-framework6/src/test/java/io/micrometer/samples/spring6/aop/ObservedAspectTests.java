@@ -28,6 +28,7 @@ import io.micrometer.observation.ObservationTextPublisher;
 import io.micrometer.observation.annotation.Observed;
 import io.micrometer.observation.annotation.ObservedKeyValueTag;
 import io.micrometer.observation.annotation.ObservedKeyValueTags;
+import io.micrometer.observation.aop.CardinalityType;
 import io.micrometer.observation.aop.ObservedAspect;
 import io.micrometer.observation.aop.ObservedKeyValueTagAnnotationHandler;
 import io.micrometer.observation.tck.TestObservationRegistry;
@@ -579,13 +580,11 @@ class ObservedAspectTests {
     static class ObservedKeyValueTagCardinalityClass {
 
         @Observed
-        void lowCardinality(
-                @ObservedKeyValueTag(key = "test", cardinality = ObservedKeyValueTag.CardinalityType.LOW) String test) {
+        void lowCardinality(@ObservedKeyValueTag(key = "test", cardinality = CardinalityType.LOW) String test) {
         }
 
         @Observed
-        void highCardinlity(@ObservedKeyValueTag(key = "test",
-                cardinality = ObservedKeyValueTag.CardinalityType.HIGH) String test) {
+        void highCardinlity(@ObservedKeyValueTag(key = "test", cardinality = CardinalityType.HIGH) String test) {
         }
 
     }

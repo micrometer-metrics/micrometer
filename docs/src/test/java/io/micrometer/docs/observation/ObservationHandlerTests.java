@@ -17,14 +17,21 @@ package io.micrometer.docs.observation;
 
 import io.micrometer.common.KeyValue;
 import io.micrometer.common.KeyValues;
+import io.micrometer.common.annotation.ValueExpressionResolver;
+import io.micrometer.common.annotation.ValueResolver;
 import io.micrometer.common.docs.KeyName;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.observation.DefaultMeterObservationHandler;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import io.micrometer.docs.metrics.SpelValueExpressionResolver;
 import io.micrometer.observation.*;
 import io.micrometer.observation.annotation.Observed;
+import io.micrometer.observation.annotation.ObservedKeyValueTag;
+import io.micrometer.observation.annotation.ObservedKeyValueTags;
+import io.micrometer.observation.aop.CardinalityType;
 import io.micrometer.observation.aop.ObservedAspect;
+import io.micrometer.observation.aop.ObservedKeyValueTagAnnotationHandler;
 import io.micrometer.observation.docs.ObservationDocumentation;
 import io.micrometer.observation.tck.TestObservationRegistry;
 import org.jspecify.annotations.Nullable;
@@ -168,6 +175,45 @@ class ObservationHandlerTests {
                 .hasLowCardinalityKeyValue("class", ObservedService.class.getName())
                 .hasLowCardinalityKeyValue("method", "call").doesNotHaveError();
         // end::observed_aop[]
+        // @formatter:on
+    }
+
+    @Test
+    void annotatedCallShouldBeObservedWithParameter() {
+        // @formatter:off
+        // tag::observed_aop_with_parameter[]
+        // create a test registry
+        TestObservationRegistry registry = TestObservationRegistry.create();
+        // add a system out printing handler
+        registry.observationConfig().observationHandler(new ObservationTextPublisher());
+
+        // create a proxy around the observed service
+        AspectJProxyFactory pf = new AspectJProxyFactory(new ObservedServiceWithParameter());
+        ObservedAspect observedAspect = new ObservedAspect(registry);
+        ValueResolver valueResolver = parameter -> "Value from myCustomTagValueResolver [" + parameter + "]";
+        ValueExpressionResolver valueExpressionResolver = new SpelValueExpressionResolver();
+        observedAspect.setObservedKeyValueTagAnnotationHandler(
+            new ObservedKeyValueTagAnnotationHandler(
+                aClass -> valueResolver, aClass -> valueExpressionResolver)
+        );
+
+        pf.addAspect(observedAspect);
+
+        // make a call
+        ObservedServiceWithParameter service = pf.getProxy();
+        service.call("foo");
+
+        // assert that observation has been properly created
+        assertThat(registry)
+                .hasSingleObservationThat()
+                .hasBeenStopped()
+                .hasNameEqualTo("test.call")
+                .hasHighCardinalityKeyValue("key0", "foo")
+                .hasLowCardinalityKeyValue("key1", "foo")
+                .hasLowCardinalityKeyValue("key2", "key2: FOO")
+                .hasLowCardinalityKeyValue("key3", "Value from myCustomTagValueResolver [foo]")
+                .doesNotHaveError();
+        // end::observed_aop_with_parameter[]
         // @formatter:on
     }
 
@@ -458,5 +504,19 @@ class ObservationHandlerTests {
 
     }
     // end::observed_service[]
+
+    // tag::observed_service_with_parameter[]
+    static class ObservedServiceWithParameter {
+
+        @Observed(name = "test.call")
+        void call(@ObservedKeyValueTags({ @ObservedKeyValueTag(key = "key0", cardinality = CardinalityType.HIGH),
+                @ObservedKeyValueTag(key = "key1"),
+                @ObservedKeyValueTag(key = "key2", expression = "'key2: ' + toUpperCase"),
+                @ObservedKeyValueTag(key = "key3", resolver = ValueResolver.class) }) String param) {
+            System.out.println("call: param=" + param);
+        }
+
+    }
+    // end::observed_service_with_parameter[]
 
 }

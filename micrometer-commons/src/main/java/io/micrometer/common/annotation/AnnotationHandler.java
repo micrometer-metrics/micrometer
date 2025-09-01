@@ -25,10 +25,7 @@ import org.jspecify.annotations.Nullable;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.util.*;
-import java.util.function.BiConsumer;
-import java.util.function.BiFunction;
-import java.util.function.Consumer;
-import java.util.function.Function;
+import java.util.function.*;
 
 /**
  * This class is able to find all methods annotated with the Micrometer annotations. All
@@ -43,6 +40,7 @@ import java.util.function.Function;
  *
  * @param <T> type which should be enriched with {@link KeyValue} information
  * @author Christian Schwerdtfeger
+ * @author Seungyong Hong
  * @since 1.11.0
  */
 public class AnnotationHandler<T> {
@@ -58,6 +56,8 @@ public class AnnotationHandler<T> {
     private final Class<? extends Annotation> annotationClass;
 
     private final BiFunction<Annotation, Object, KeyValue> toKeyValue;
+
+    private final BiPredicate<Annotation, Object> validToAdd;
 
     /**
      * Creates a new instance of {@link AnnotationHandler}.
@@ -80,6 +80,33 @@ public class AnnotationHandler<T> {
         this.expressionResolverProvider = expressionResolverProvider;
         this.annotationClass = annotation;
         this.toKeyValue = toKeyValue;
+        this.validToAdd = (a, o) -> true;
+    }
+
+    /**
+     * Creates a new instance of {@link AnnotationHandler}.
+     * @param keyValueConsumer consumer that takes a {@link KeyValue} and mutates the
+     * {@code <T>} type
+     * @param resolverProvider function converting a class extending a
+     * {@link ValueResolver} to an instance of that class
+     * @param expressionResolverProvider function converting a class extending a
+     * {@link ValueExpressionResolver} to an instance of that class
+     * @param annotation annotation containing {@link KeyValue} related information
+     * @param toKeyValue function converting the annotation and the expression or
+     * @param validToAdd predicate that determines if the annotation and the annotation
+     * value to a {@link KeyValue}
+     */
+    public AnnotationHandler(BiConsumer<KeyValue, T> keyValueConsumer,
+            Function<Class<? extends ValueResolver>, ? extends ValueResolver> resolverProvider,
+            Function<Class<? extends ValueExpressionResolver>, ? extends ValueExpressionResolver> expressionResolverProvider,
+            Class<? extends Annotation> annotation, BiFunction<Annotation, Object, KeyValue> toKeyValue,
+            BiPredicate<Annotation, Object> validToAdd) {
+        this.keyValueConsumer = keyValueConsumer;
+        this.resolverProvider = resolverProvider;
+        this.expressionResolverProvider = expressionResolverProvider;
+        this.annotationClass = annotation;
+        this.toKeyValue = toKeyValue;
+        this.validToAdd = validToAdd;
     }
 
     /**
@@ -179,6 +206,10 @@ public class AnnotationHandler<T> {
     private void addAnnotatedObjects(T objectToModify, List<AnnotatedObject> toBeAdded) {
         Set<String> seen = new HashSet<>();
         for (AnnotatedObject container : toBeAdded) {
+            if (!validToAdd.test(container.annotation, container.object)) {
+                continue;
+            }
+
             KeyValue keyValue = toKeyValue.apply(container.annotation, container.object);
             if (seen.add(keyValue.getKey())) {
                 keyValueConsumer.accept(keyValue, objectToModify);

@@ -8,6 +8,7 @@ In this section we will describe main components related to Micrometer Observati
 * <<micrometer-observation-events, Signaling Errors and Arbitrary Events>>
 * <<micrometer-observation-convention-example, Observation Convention>>
 * <<micrometer-observation-predicates-filters, Observation Predicates and Filters>>
+* <<micrometer-observation-annotations, Using Annotations With @Observed and @ObservedKeyValueTag>>
 
 *Micrometer Observation basic flow*
 
@@ -164,7 +165,7 @@ include::{include-java}/observation/ObservationConfiguringTests.java[tags=predic
 -----
 
 [[micrometer-observation-annotations]]
-== Using Annotations With @Observed
+== Using Annotations With @Observed and @ObservedKeyValueTag
 
 If you have turned on Aspect Oriented Programming (for example, by using `org.aspectj:aspectjweaver`), you can use the `@Observed` annotation to create observations. You can put that annotation either on a method to observe it or on a class to observe all the methods in it.
 
@@ -180,4 +181,20 @@ The following test asserts whether the proper observation gets created when a pr
 [source,java,subs=+attributes]
 -----
 include::{include-java}/observation/ObservationHandlerTests.java[tags=observed_aop,indent=0]
+-----
+
+Also, you can use `@ObservedKeyValueTag` annotation to add tags via method parameters.
+
+The following example shows an `ObservedServiceWithParameter` that has an annotation on a method:
+
+[source,java,subs=+attributes]
+-----
+include::{include-java}/observation/ObservationHandlerTests.java[tags=observed_service_with_parameter,indent=0]
+-----
+
+The following test asserts whether the proper observation gets created when a proxied `ObservedServiceWithParameter` instance gets called:
+
+[source,java,subs=+attributes]
+-----
+include::{include-java}/observation/ObservationHandlerTests.java[tags=observed_aop_with_parameter,indent=0]
 -----
