@@ -5,8 +5,8 @@ plugins {
 dependencies {
     implementation project(":micrometer-jakarta9")
     // test micrometer-jakarta9 works with Jakarta 10 Mail dependencies
-    implementation('jakarta.mail:jakarta.mail-api:2.1.3')
-    testRuntimeOnly('org.eclipse.angus:jakarta.mail:2.0.3')
+    implementation('jakarta.mail:jakarta.mail-api:2.1.4')
+    testRuntimeOnly('org.eclipse.angus:jakarta.mail:2.0.4')
 
     testImplementation(project(":micrometer-observation-test"))
     testImplementation platform(libs.junitBom)
