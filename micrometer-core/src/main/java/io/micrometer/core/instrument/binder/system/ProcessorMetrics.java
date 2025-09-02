@@ -15,11 +15,9 @@
  */
 package io.micrometer.core.instrument.binder.system;
 
-import io.micrometer.core.instrument.FunctionCounter;
-import io.micrometer.core.instrument.Gauge;
-import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.MeterBinder;
+import io.micrometer.core.instrument.binder.jvm.convention.JvmMetersConventions;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
@@ -58,7 +56,9 @@ public class ProcessorMetrics implements MeterBinder {
             "com.sun.management.OperatingSystemMXBean" // HotSpot
     );
 
-    private final Iterable<Tag> tags;
+    private final Tags tags;
+
+    private final JvmMetersConventions.JvmCpuMeterConventionGroup convention;
 
     private final OperatingSystemMXBean operatingSystemBean;
 
@@ -75,7 +75,12 @@ public class ProcessorMetrics implements MeterBinder {
     }
 
     public ProcessorMetrics(Iterable<Tag> tags) {
-        this.tags = tags;
+        this(tags, JvmMetersConventions.DEFAULT);
+    }
+
+    public ProcessorMetrics(Iterable<? extends Tag> tags, JvmMetersConventions conventions) {
+        this.tags = Tags.of(tags);
+        this.convention = conventions.jvmCpuMeterConventions(this.tags);
         this.operatingSystemBean = ManagementFactory.getOperatingSystemMXBean();
         this.operatingSystemBeanClass = getFirstClassFound(OPERATING_SYSTEM_BEAN_CLASS_NAMES);
         Method getCpuLoad = detectMethod("getCpuLoad");
@@ -115,7 +120,9 @@ public class ProcessorMetrics implements MeterBinder {
         }
 
         if (processCpuTime != null) {
-            FunctionCounter.builder("process.cpu.time", operatingSystemBean, x -> invoke(processCpuTime))
+            FunctionCounter
+                .builder(this.convention.cpuTimeConvention().getName(), operatingSystemBean,
+                        x -> invoke(processCpuTime))
                 .tags(tags)
                 .description("The \"cpu time\" used by the Java Virtual Machine process")
                 .baseUnit("ns")

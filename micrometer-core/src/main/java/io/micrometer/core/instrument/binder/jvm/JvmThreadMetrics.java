@@ -22,12 +22,12 @@ import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.binder.MeterBinder;
+import io.micrometer.core.instrument.binder.jvm.convention.JvmMetersConventions;
 import org.jspecify.annotations.NullMarked;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
 import java.util.Arrays;
-import java.util.Locale;
 
 import static java.util.Collections.emptyList;
 
@@ -40,14 +40,21 @@ import static java.util.Collections.emptyList;
 @NullMarked
 public class JvmThreadMetrics implements MeterBinder {
 
-    private final Iterable<Tag> tags;
+    private final Tags tags;
+
+    private final JvmMetersConventions.JvmThreadMeterConventionGroup convention;
 
     public JvmThreadMetrics() {
         this(emptyList());
     }
 
     public JvmThreadMetrics(Iterable<Tag> tags) {
-        this.tags = tags;
+        this(tags, JvmMetersConventions.DEFAULT);
+    }
+
+    private JvmThreadMetrics(Iterable<? extends Tag> tags, JvmMetersConventions conventions) {
+        this.tags = Tags.of(tags);
+        this.convention = conventions.jvmThreadMeterConventions(this.tags);
     }
 
     @Override
@@ -81,8 +88,10 @@ public class JvmThreadMetrics implements MeterBinder {
         try {
             threadBean.getAllThreadIds();
             for (Thread.State state : Thread.State.values()) {
-                Gauge.builder("jvm.threads.states", threadBean, (bean) -> getThreadStateCount(bean, state))
-                    .tags(Tags.concat(tags, "state", getStateTagValue(state)))
+                Gauge
+                    .builder(convention.threadCountConvention().getName(), threadBean,
+                            (bean) -> getThreadStateCount(bean, state))
+                    .tags(convention.threadCountConvention().getTags(state))
                     .description("The current number of threads")
                     .baseUnit(BaseUnits.THREADS)
                     .register(registry);
@@ -99,10 +108,6 @@ public class JvmThreadMetrics implements MeterBinder {
         return Arrays.stream(threadBean.getThreadInfo(threadBean.getAllThreadIds()))
             .filter(threadInfo -> threadInfo != null && threadInfo.getThreadState() == state)
             .count();
-    }
-
-    private static String getStateTagValue(Thread.State state) {
-        return state.name().toLowerCase(Locale.ROOT).replace('_', '-');
     }
 
 }

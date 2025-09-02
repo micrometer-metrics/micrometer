@@ -15,45 +15,69 @@
  */
 package io.micrometer.core.instrument.binder.jvm;
 
-import io.micrometer.core.instrument.FunctionCounter;
-import io.micrometer.core.instrument.Gauge;
-import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.binder.MeterBinder;
-import org.jspecify.annotations.NullMarked;
+import io.micrometer.core.instrument.binder.jvm.convention.JvmMetersConventions;
 
 import java.lang.management.ClassLoadingMXBean;
 import java.lang.management.ManagementFactory;
 
-import static java.util.Collections.emptyList;
-
-@NullMarked
 public class ClassLoaderMetrics implements MeterBinder {
 
-    private final Iterable<Tag> tags;
+    private final JvmMetersConventions.JvmClassLoadingMeterConventionGroup conventions;
 
     public ClassLoaderMetrics() {
-        this(emptyList());
+        this(JvmMetersConventions.DEFAULT);
     }
 
     public ClassLoaderMetrics(Iterable<Tag> tags) {
-        this.tags = tags;
+        this(new JvmMetersConventions.JvmClassLoadingMeterConventionGroup() {
+            @Override
+            public Tags getCommonTags(Void context) {
+                return Tags.concat(
+                        JvmMetersConventions.JvmClassLoadingMeterConventionGroup.super.getCommonTags(context), tags);
+            }
+        });
+    }
+
+    /**
+     * @param conventions
+     * @since 1.16.0
+     */
+    public ClassLoaderMetrics(JvmMetersConventions conventions) {
+        this(conventions.jvmClassLoadingMeterConventions());
+    }
+
+    private ClassLoaderMetrics(JvmMetersConventions.JvmClassLoadingMeterConventionGroup conventions) {
+        this.conventions = conventions;
     }
 
     @Override
     public void bindTo(MeterRegistry registry) {
         ClassLoadingMXBean classLoadingBean = ManagementFactory.getClassLoadingMXBean();
 
-        Gauge.builder("jvm.classes.loaded", classLoadingBean, ClassLoadingMXBean::getLoadedClassCount)
-            .tags(tags)
+        Gauge
+            .builder(conventions.currentClassCountConvention().getName(), classLoadingBean,
+                    ClassLoadingMXBean::getLoadedClassCount)
+            .tags(conventions.currentClassCountConvention().getTags(null))
             .description("The number of classes that are currently loaded in the Java virtual machine")
             .baseUnit(BaseUnits.CLASSES)
             .register(registry);
 
-        FunctionCounter.builder("jvm.classes.unloaded", classLoadingBean, ClassLoadingMXBean::getUnloadedClassCount)
-            .tags(tags)
+        FunctionCounter
+            .builder(conventions.unloadedConvention().getName(), classLoadingBean,
+                    ClassLoadingMXBean::getUnloadedClassCount)
+            .tags(conventions.unloadedConvention().getTags(null))
             .description("The number of classes unloaded in the Java virtual machine")
+            .baseUnit(BaseUnits.CLASSES)
+            .register(registry);
+
+        FunctionCounter
+            .builder(conventions.loadedConvention().getName(), classLoadingBean,
+                    ClassLoadingMXBean::getTotalLoadedClassCount)
+            .tags(conventions.loadedConvention().getTags(null))
+            .description("The number of classes loaded in the Java virtual machine")
             .baseUnit(BaseUnits.CLASSES)
             .register(registry);
     }

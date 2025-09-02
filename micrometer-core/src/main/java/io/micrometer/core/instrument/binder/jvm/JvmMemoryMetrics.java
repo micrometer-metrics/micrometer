@@ -21,12 +21,11 @@ import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.binder.MeterBinder;
-import org.jspecify.annotations.NullMarked;
+import io.micrometer.core.instrument.binder.jvm.convention.JvmMetersConventions;
 
 import java.lang.management.*;
 
 import static io.micrometer.core.instrument.binder.jvm.JvmMemory.getUsageValue;
-import static java.util.Collections.emptyList;
 
 /**
  * Record metrics that report utilization of various memory and buffer pools.
@@ -36,17 +35,30 @@ import static java.util.Collections.emptyList;
  * @see MemoryPoolMXBean
  * @see BufferPoolMXBean
  */
-@NullMarked
 public class JvmMemoryMetrics implements MeterBinder {
 
-    private final Iterable<Tag> tags;
+    private final Tags tags;
+
+    private final JvmMetersConventions.JvmMemoryMeterConventionGroup convention;
 
     public JvmMemoryMetrics() {
-        this(emptyList());
+        this(Tags.empty(), JvmMetersConventions.DEFAULT);
     }
 
+    /**
+     * @param tags additional tags to add to each meter's tags produced by this binder
+     */
     public JvmMemoryMetrics(Iterable<Tag> tags) {
-        this.tags = tags;
+        this(tags, JvmMetersConventions.DEFAULT);
+    }
+
+    /**
+     * @param convention
+     * @since 1.16.0
+     */
+    public JvmMemoryMetrics(Iterable<? extends Tag> tags, JvmMetersConventions convention) {
+        this.tags = Tags.of(tags);
+        this.convention = convention.jvmMemoryMeterConventions(this.tags);
     }
 
     @Override
@@ -74,24 +86,26 @@ public class JvmMemoryMetrics implements MeterBinder {
         }
 
         for (MemoryPoolMXBean memoryPoolBean : ManagementFactory.getPlatformMXBeans(MemoryPoolMXBean.class)) {
-            String area = MemoryType.HEAP.equals(memoryPoolBean.getType()) ? "heap" : "nonheap";
-            Iterable<Tag> tagsWithId = Tags.concat(tags, "id", memoryPoolBean.getName(), "area", area);
-
-            Gauge.builder("jvm.memory.used", memoryPoolBean, (mem) -> getUsageValue(mem, MemoryUsage::getUsed))
-                .tags(tagsWithId)
+            Gauge
+                .builder(convention.getMemoryUsedConvention().getName(), memoryPoolBean,
+                        (mem) -> getUsageValue(mem, MemoryUsage::getUsed))
+                .tags(convention.getMemoryUsedConvention().getTags(memoryPoolBean))
                 .description("The amount of used memory")
                 .baseUnit(BaseUnits.BYTES)
                 .register(registry);
 
             Gauge
-                .builder("jvm.memory.committed", memoryPoolBean, (mem) -> getUsageValue(mem, MemoryUsage::getCommitted))
-                .tags(tagsWithId)
+                .builder(convention.getMemoryCommittedConvention().getName(), memoryPoolBean,
+                        (mem) -> getUsageValue(mem, MemoryUsage::getCommitted))
+                .tags(convention.getMemoryCommittedConvention().getTags(memoryPoolBean))
                 .description("The amount of memory in bytes that is committed for the Java virtual machine to use")
                 .baseUnit(BaseUnits.BYTES)
                 .register(registry);
 
-            Gauge.builder("jvm.memory.max", memoryPoolBean, (mem) -> getUsageValue(mem, MemoryUsage::getMax))
-                .tags(tagsWithId)
+            Gauge
+                .builder(convention.getMemoryMaxConvention().getName(), memoryPoolBean,
+                        (mem) -> getUsageValue(mem, MemoryUsage::getMax))
+                .tags(convention.getMemoryMaxConvention().getTags(memoryPoolBean))
                 .description("The maximum amount of memory in bytes that can be used for memory management")
                 .baseUnit(BaseUnits.BYTES)
                 .register(registry);
