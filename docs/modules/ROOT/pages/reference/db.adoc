@@ -40,6 +40,17 @@ include::{include-core-test-java}/io/micrometer/core/instrument/binder/db/Metric
 include::{include-core-test-java}/io/micrometer/core/instrument/binder/db/MetricsDSLContextTest.java[tags=result, indent=0]
 -----
 
+[IMPORTANT]
+====
+*Compatibility note for jOOQ versions.*
+
+Some newly added jOOQ overloads (for example, `DefaultDSLContext#fetchValue(SelectField)`) may internally delegate to `select(...)`. When using builder-level instrumentation with `MetricsDSLContext`, such delegation can lead to **double instrumentation** and **tag loss** on the `jooq.query` timer.
+
+**Recommendations**
+
+- Use only the APIs **overridden by `MetricsDSLContext`** for building/executing queries (i.e., prefer methods explicitly overridden by `MetricsDSLContext`) so each query is timed exactly once with consistent tags. And, avoid relying on newer jOOQ overloads that may delegate to `select(...)`.
+====
+
 [[db-postgres]]
 == PostgreSQL Instrumentation
 
