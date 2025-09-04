@@ -18,31 +18,41 @@ package io.micrometer.core.instrument.binder.jvm.convention;
 import com.sun.management.GarbageCollectionNotificationInfo;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.binder.MeterConvention;
-import io.micrometer.core.instrument.binder.MeterConventionGroup;
 
-import java.lang.management.*;
+import javax.management.Notification;
+import javax.management.openmbean.CompositeData;
 import java.util.Locale;
 
+/**
+ * Defines methods to get the various conventions related to JVM metrics.
+ *
+ * @since 1.16.0
+ * @see #DEFAULT the default implementation
+ */
 public interface JvmMetersConventions {
 
+    /**
+     * Implementation with the default conventions.
+     */
     JvmMetersConventions DEFAULT = new JvmMetersConventions() {
     };
 
-    default JvmMemoryMeterConventionGroup jvmMemoryMeterConventions(Tags extraTags) {
-        return new JvmMemoryMeterConventionGroup(extraTags) {
+    default JvmMemoryMeterConventions jvmMemoryMeterConventions(Tags extraTags) {
+        return new JvmMemoryMeterConventions(extraTags) {
         };
     }
 
-    default JvmClassLoadingMeterConventionGroup jvmClassLoadingMeterConventions() {
-        return JvmClassLoadingMeterConventionGroup.DEFAULT;
+    default JvmClassLoadingMeterConventions jvmClassLoadingMeterConventions() {
+        return JvmClassLoadingMeterConventions.DEFAULT;
     }
 
-    default JvmThreadMeterConventionGroup jvmThreadMeterConventions(Tags commonTags) {
-        return new DefaultJvmThreadMeterConventionGroup(commonTags);
+    default JvmThreadMeterConventionGroup jvmThreadMeterConventions(Tags extraTags) {
+        return new DefaultJvmThreadMeterConventionGroup(extraTags);
     }
 
-    default JvmCpuMeterConventionGroup jvmCpuMeterConventions(Tags commonTags) {
-        return new DefaultJvmCpuMeterConventionGroup(commonTags);
+    default JvmCpuMeterConventions jvmCpuMeterConventions(Tags extraTags) {
+        return new JvmCpuMeterConventions(extraTags) {
+        };
     }
 
     default JvmGcMeterConventionGroup jvmGcMeterConventions() {
@@ -50,156 +60,46 @@ public interface JvmMetersConventions {
         };
     }
 
-    abstract class JvmMemoryMeterConventionGroup implements MeterConventionGroup<MemoryPoolMXBean> {
-
-        protected final Tags extraTags;
-
-        public JvmMemoryMeterConventionGroup(Tags extraTags) {
-            this.extraTags = extraTags;
-        }
-
-        @Override
-        public Tags getCommonTags(MemoryPoolMXBean memoryPoolBean) {
-            return this.extraTags.and(Tags.of("id", memoryPoolBean.getName(), "area",
-                    MemoryType.HEAP.equals(memoryPoolBean.getType()) ? "heap" : "nonheap"));
-        }
-
-        public MeterConvention<MemoryPoolMXBean> getMemoryUsedConvention() {
-            return new MeterConvention<MemoryPoolMXBean>() {
-
-                @Override
-                public String getName() {
-                    return "jvm.memory.used";
-                }
-
-                @Override
-                public Tags getTags(MemoryPoolMXBean memoryPoolBean) {
-                    return getCommonTags(memoryPoolBean);
-                }
-            };
-        }
-
-        public MeterConvention<MemoryPoolMXBean> getMemoryCommittedConvention() {
-            return new MeterConvention<MemoryPoolMXBean>() {
-
-                @Override
-                public String getName() {
-                    return "jvm.memory.committed";
-                }
-
-                @Override
-                public Tags getTags(MemoryPoolMXBean memoryPoolBean) {
-                    return getCommonTags(memoryPoolBean);
-                }
-            };
-        }
-
-        public MeterConvention<MemoryPoolMXBean> getMemoryMaxConvention() {
-            return new MeterConvention<MemoryPoolMXBean>() {
-
-                @Override
-                public String getName() {
-                    return "jvm.memory.max";
-                }
-
-                @Override
-                public Tags getTags(MemoryPoolMXBean memoryPoolBean) {
-                    return getCommonTags(memoryPoolBean);
-                }
-            };
-        }
-
-    }
-
-    interface JvmClassLoadingMeterConventionGroup extends MeterConventionGroup<Void> {
-
-        JvmClassLoadingMeterConventionGroup DEFAULT = new JvmClassLoadingMeterConventionGroup() {
-        };
-
-        default MeterConvention<Void> loadedConvention() {
-            return () -> "jvm.classes.loaded.count";
-        }
-
-        default MeterConvention<Void> unloadedConvention() {
-            return () -> "jvm.classes.unloaded";
-        }
-
-        default MeterConvention<Void> currentClassCountConvention() {
-            return () -> "jvm.classes.loaded";
-        }
-
-    }
-
-    interface JvmThreadMeterConventionGroup extends MeterConventionGroup<ThreadMXBean> {
+    interface JvmThreadMeterConventionGroup {
 
         MeterConvention<Thread.State> threadCountConvention();
 
     }
 
-    interface JvmCpuMeterConventionGroup extends MeterConventionGroup<Void> {
+    interface JvmGcMeterConventionGroup {
 
-        default MeterConvention<Void> cpuTimeConvention() {
-            return () -> "process.cpu.time";
-        }
-
-        default MeterConvention<Void> cpuCountConvention() {
-            return () -> "system.cpu.count";
-        }
-
-        default MeterConvention<Void> cpuRecentUtilizationConvention() {
-            return () -> "process.cpu.usage";
-        }
-
-    }
-
-    interface JvmGcMeterConventionGroup extends MeterConventionGroup<GarbageCollectionNotificationInfo> {
-
-        default MeterConvention<GarbageCollectionNotificationInfo> gcTimeConvention() {
-            return new MeterConvention<GarbageCollectionNotificationInfo>() {
+        default MeterConvention<Notification> gcTimeConvention() {
+            return new MeterConvention<Notification>() {
                 @Override
                 public String getName() {
                     return "jvm.gc.duration";
                 }
 
                 @Override
-                public Tags getTags(GarbageCollectionNotificationInfo gcNotification) {
-                    return getCommonTags(gcNotification).and("jvm.gc.action", gcNotification.getGcAction(),
-                            "jvm.gc.name", gcNotification.getGcName(), "jvm.gc.cause", gcNotification.getGcCause());
+                public Tags getTags(Notification notification) {
+                    CompositeData cd = (CompositeData) notification.getUserData();
+                    GarbageCollectionNotificationInfo gcNotification = GarbageCollectionNotificationInfo.from(cd);
+                    return Tags.of("jvm.gc.action", gcNotification.getGcAction(), "jvm.gc.name",
+                            gcNotification.getGcName(), "jvm.gc.cause", gcNotification.getGcCause());
                 }
             };
         }
 
     }
 
-    class DefaultJvmCpuMeterConventionGroup implements JvmCpuMeterConventionGroup {
-
-        private final Tags commonTags;
-
-        public DefaultJvmCpuMeterConventionGroup(Tags commonTags) {
-            this.commonTags = commonTags;
-        }
-
-        @Override
-        public Tags getCommonTags(Void context) {
-            return this.commonTags;
-        }
-
-    }
-
     class DefaultJvmThreadMeterConventionGroup implements JvmThreadMeterConventionGroup {
 
-        final Tags commonTags;
+        final Tags extraTags;
 
         final MeterConvention<Thread.State> threadCountConvention;
 
-        public DefaultJvmThreadMeterConventionGroup(Tags commonTags) {
-            this.commonTags = commonTags;
-            this.threadCountConvention = new DefaultThreadCountMeterConvention(this.commonTags);
+        public DefaultJvmThreadMeterConventionGroup(Tags extraTags) {
+            this.extraTags = extraTags;
+            this.threadCountConvention = new DefaultThreadCountMeterConvention(this.getCommonTags());
         }
 
-        @Override
-        public Tags getCommonTags(ThreadMXBean context) {
-            return this.commonTags;
+        protected Tags getCommonTags() {
+            return this.extraTags;
         }
 
         @Override

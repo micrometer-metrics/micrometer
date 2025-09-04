@@ -17,80 +17,74 @@ package io.micrometer.core.instrument.binder.jvm.convention;
 
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.binder.MeterConvention;
+import io.micrometer.core.instrument.binder.SimpleMeterConvention;
 
 import java.lang.management.MemoryPoolMXBean;
 import java.lang.management.MemoryType;
-import java.lang.management.ThreadMXBean;
 import java.util.Locale;
 
-public class OtelJvmMetersConventions implements JvmMetersConventions {
+public class OtelJvmMetersConventions extends MicrometerJvmMetersConventions {
 
     @Override
-    public JvmMemoryMeterConventionGroup jvmMemoryMeterConventions(Tags extraTags) {
-        return new JvmMemoryMeterConventionGroup(extraTags) {
+    public JvmMemoryMeterConventions jvmMemoryMeterConventions(Tags extraTags) {
+        return new JvmMemoryMeterConventions(extraTags) {
             @Override
-            public Tags getCommonTags(MemoryPoolMXBean memoryPoolBean) {
+            protected Tags getCommonTags(MemoryPoolMXBean memoryPoolBean) {
                 return this.extraTags.and(Tags.of("jvm.memory.pool.name", memoryPoolBean.getName(), "jvm.memory.type",
                         MemoryType.HEAP.equals(memoryPoolBean.getType()) ? "heap" : "non_heap"));
             }
 
             @Override
             public MeterConvention<MemoryPoolMXBean> getMemoryMaxConvention() {
-                return new MeterConvention<MemoryPoolMXBean>() {
-                    @Override
-                    public String getName() {
-                        return "jvm.memory.limit";
-                    }
-
-                    @Override
-                    public Tags getTags(MemoryPoolMXBean context) {
-                        return getCommonTags(context);
-                    }
-                };
+                return new SimpleMeterConvention<>("jvm.memory.limit", this::getCommonTags);
             }
         };
     }
 
     @Override
-    public JvmClassLoadingMeterConventionGroup jvmClassLoadingMeterConventions() {
-        return new JvmClassLoadingMeterConventionGroup() {
-            @Override
-            public MeterConvention<Void> loadedConvention() {
-                return () -> "jvm.class.loaded";
-            }
+    public JvmClassLoadingMeterConventions jvmClassLoadingMeterConventions() {
+        return new OtelJvmClassLoadingMeterConventions();
+    }
 
-            @Override
-            public MeterConvention<Void> unloadedConvention() {
-                return () -> "jvm.class.unloaded";
-            }
+    public static class OtelJvmClassLoadingMeterConventions implements JvmClassLoadingMeterConventions {
 
-            @Override
-            public MeterConvention<Void> currentClassCountConvention() {
-                return () -> "jvm.class.count";
-            }
-        };
+        @Override
+        public MeterConvention<Object> loadedConvention() {
+            return new SimpleMeterConvention<>("jvm.class.loaded", getCommonTags());
+        }
+
+        @Override
+        public MeterConvention<Object> unloadedConvention() {
+            return new SimpleMeterConvention<>("jvm.class.unloaded", getCommonTags());
+        }
+
+        @Override
+        public MeterConvention<Object> currentClassCountConvention() {
+            return new SimpleMeterConvention<>("jvm.class.count", getCommonTags());
+        }
+
     }
 
     @Override
-    public JvmThreadMeterConventionGroup jvmThreadMeterConventions(Tags commonTags) {
-        return new OpenTelemetryJvmThreadMeterConventionGroup(commonTags);
+    public JvmThreadMeterConventionGroup jvmThreadMeterConventions(Tags extraTags) {
+        return new OpenTelemetryJvmThreadMeterConventionGroup(extraTags);
     }
 
     @Override
-    public JvmCpuMeterConventionGroup jvmCpuMeterConventions(Tags commonTags) {
-        return new JvmCpuMeterConventionGroup() {
+    public JvmCpuMeterConventions jvmCpuMeterConventions(Tags extraTags) {
+        return new JvmCpuMeterConventions(extraTags) {
             @Override
-            public MeterConvention<Void> cpuTimeConvention() {
+            public MeterConvention<Object> cpuTimeConvention() {
                 return () -> "jvm.cpu.time";
             }
 
             @Override
-            public MeterConvention<Void> cpuCountConvention() {
+            public MeterConvention<Object> cpuCountConvention() {
                 return () -> "jvm.cpu.count";
             }
 
             @Override
-            public MeterConvention<Void> cpuRecentUtilizationConvention() {
+            public MeterConvention<Object> processCpuLoadConvention() {
                 return () -> "jvm.cpu.recent_utilization";
             }
         };
@@ -107,8 +101,7 @@ public class OtelJvmMetersConventions implements JvmMetersConventions {
             threadCountConvention = new OtelJvmThreadCountConvention(this.commonTags);
         }
 
-        @Override
-        public Tags getCommonTags(ThreadMXBean context) {
+        public Tags getCommonTags() {
             return this.commonTags;
         }
 

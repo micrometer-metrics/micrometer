@@ -13,19 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.core.instrument.binder;
+package io.micrometer.core.instrument.binder.jvm.convention;
 
-import io.micrometer.core.instrument.Tags;
-
-/**
- * Provide common tags shared by a group of {@link MeterConvention}.
- *
- * @param <C> type of context used to derive common tags
- */
-public interface MeterConventionGroup<C> {
-
-    default Tags getCommonTags(C context) {
-        return Tags.empty();
-    }
+public class MicrometerJvmMetersConventions implements JvmMetersConventions {
 
 }

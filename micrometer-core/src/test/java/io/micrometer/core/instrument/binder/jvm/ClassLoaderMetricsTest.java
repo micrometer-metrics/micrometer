@@ -16,6 +16,11 @@
 package io.micrometer.core.instrument.binder.jvm;
 
 import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Tags;
+import io.micrometer.core.instrument.binder.MeterConvention;
+import io.micrometer.core.instrument.binder.SimpleMeterConvention;
+import io.micrometer.core.instrument.binder.jvm.convention.JvmClassLoadingMeterConventions;
+import io.micrometer.core.instrument.binder.jvm.convention.OtelJvmMetersConventions;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
 
@@ -23,12 +28,72 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class ClassLoaderMetricsTest {
 
+    private final MeterRegistry registry = new SimpleMeterRegistry();
+
     @Test
     void classLoadingMetrics() {
-        MeterRegistry registry = new SimpleMeterRegistry();
         new ClassLoaderMetrics().bindTo(registry);
 
         assertThat(registry.get("jvm.classes.loaded").gauge().value()).isGreaterThan(0);
+    }
+
+    @Test
+    void extraTagsAreApplied() {
+        new ClassLoaderMetrics(Tags.of("extra", "tags")).bindTo(registry);
+
+        assertThat(registry.get("jvm.classes.loaded").tag("extra", "tags").gauge().value()).isGreaterThan(0);
+    }
+
+    @Test
+    void otelConventions() {
+        new ClassLoaderMetrics(new OtelJvmMetersConventions.OtelJvmClassLoadingMeterConventions()).bindTo(registry);
+
+        assertThat(registry.get("jvm.class.loaded").functionCounter().count()).isGreaterThan(0);
+        assertThat(registry.get("jvm.class.unloaded").functionCounter().count()).isGreaterThanOrEqualTo(0);
+        assertThat(registry.get("jvm.class.count").gauge().value()).isGreaterThan(0);
+    }
+
+    @Test
+    void otelConventionsWithExtraTags() {
+        new ClassLoaderMetrics(new OtelJvmMetersConventions.OtelJvmClassLoadingMeterConventions() {
+            @Override
+            public Tags getCommonTags() {
+                return Tags.of("extra", "tag");
+            }
+        }).bindTo(registry);
+
+        assertThat(registry.get("jvm.class.loaded").tag("extra", "tag").functionCounter().count()).isGreaterThan(0);
+        assertThat(registry.get("jvm.class.unloaded").tag("extra", "tag").functionCounter().count())
+            .isGreaterThanOrEqualTo(0);
+        assertThat(registry.get("jvm.class.count").tag("extra", "tag").gauge().value()).isGreaterThan(0);
+    }
+
+    @Test
+    void customConventions() {
+        new ClassLoaderMetrics(new MyClassLoaderConventions()).bindTo(registry);
+
+        assertThat(registry.get("class.loaded")
+            .tag("common", "custom")
+            .tag("specific", "custom")
+            .functionCounter()
+            .count()).isPositive();
+        // overridden common tags applied to conventions not overridden
+        assertThat(registry.get("jvm.classes.unloaded").tag("common", "custom").functionCounter().count())
+            .isNotNegative();
+    }
+
+    static class MyClassLoaderConventions implements JvmClassLoadingMeterConventions {
+
+        @Override
+        public Tags getCommonTags() {
+            return Tags.of("common", "custom");
+        }
+
+        @Override
+        public MeterConvention<Object> loadedConvention() {
+            return new SimpleMeterConvention<>("class.loaded", getCommonTags().and(Tags.of("specific", "custom")));
+        }
+
     }
 
 }

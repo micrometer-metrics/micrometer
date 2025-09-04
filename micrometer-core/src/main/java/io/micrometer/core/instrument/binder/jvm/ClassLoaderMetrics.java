@@ -18,25 +18,24 @@ package io.micrometer.core.instrument.binder.jvm;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.binder.MeterBinder;
-import io.micrometer.core.instrument.binder.jvm.convention.JvmMetersConventions;
+import io.micrometer.core.instrument.binder.jvm.convention.JvmClassLoadingMeterConventions;
 
 import java.lang.management.ClassLoadingMXBean;
 import java.lang.management.ManagementFactory;
 
 public class ClassLoaderMetrics implements MeterBinder {
 
-    private final JvmMetersConventions.JvmClassLoadingMeterConventionGroup conventions;
+    private final JvmClassLoadingMeterConventions conventions;
 
     public ClassLoaderMetrics() {
-        this(JvmMetersConventions.DEFAULT);
+        this(JvmClassLoadingMeterConventions.DEFAULT);
     }
 
-    public ClassLoaderMetrics(Iterable<Tag> tags) {
-        this(new JvmMetersConventions.JvmClassLoadingMeterConventionGroup() {
+    public ClassLoaderMetrics(Iterable<Tag> extraTags) {
+        this(new JvmClassLoadingMeterConventions() {
             @Override
-            public Tags getCommonTags(Void context) {
-                return Tags.concat(
-                        JvmMetersConventions.JvmClassLoadingMeterConventionGroup.super.getCommonTags(context), tags);
+            public Tags getCommonTags() {
+                return Tags.of(extraTags);
             }
         });
     }
@@ -45,11 +44,7 @@ public class ClassLoaderMetrics implements MeterBinder {
      * @param conventions
      * @since 1.16.0
      */
-    public ClassLoaderMetrics(JvmMetersConventions conventions) {
-        this(conventions.jvmClassLoadingMeterConventions());
-    }
-
-    private ClassLoaderMetrics(JvmMetersConventions.JvmClassLoadingMeterConventionGroup conventions) {
+    public ClassLoaderMetrics(JvmClassLoadingMeterConventions conventions) {
         this.conventions = conventions;
     }
 

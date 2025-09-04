@@ -21,6 +21,7 @@ import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.binder.MeterBinder;
+import io.micrometer.core.instrument.binder.jvm.convention.JvmMemoryMeterConventions;
 import io.micrometer.core.instrument.binder.jvm.convention.JvmMetersConventions;
 
 import java.lang.management.*;
@@ -39,7 +40,7 @@ public class JvmMemoryMetrics implements MeterBinder {
 
     private final Tags tags;
 
-    private final JvmMetersConventions.JvmMemoryMeterConventionGroup convention;
+    private final JvmMemoryMeterConventions convention;
 
     public JvmMemoryMetrics() {
         this(Tags.empty(), JvmMetersConventions.DEFAULT);
