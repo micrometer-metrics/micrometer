@@ -76,10 +76,9 @@ class ObservationConfiguringTests {
             .observationHandler(new DefaultMeterObservationHandler(meterRegistry));
 
         // Observation will be ignored because of the name
-        then(Observation.start("to.ignore", () -> new MyContext("don't ignore"), registry)).isSameAs(Observation.NOOP);
+        then(Observation.start("to.ignore", () -> new MyContext("don't ignore"), registry).isNoop()).isTrue();
         // Observation will be ignored because of the entries in MyContext
-        then(Observation.start("not.to.ignore", () -> new MyContext("user to ignore"), registry))
-            .isSameAs(Observation.NOOP);
+        then(Observation.start("not.to.ignore", () -> new MyContext("user to ignore"), registry).isNoop()).isTrue();
 
         // Observation will not be ignored...
         MyContext myContext = new MyContext("user not to ignore");

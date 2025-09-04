@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 VMware, Inc.
+ * Copyright 2025 VMware, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,17 +15,21 @@
  */
 package io.micrometer.observation;
 
-import java.util.function.BiPredicate;
-
 /**
- * A predicate to define whether {@link Observation observation} should be created or a
- * no-op Observation instead.
+ * No-op implementation of {@link Observation} except scope opening so that we can disable
+ * the instrumentation for certain Observations but keep context-propagation working.
  *
  * @author Jonatan Ivanov
  * @author Tommy Ludwig
  * @author Marcin Grzejszczak
- * @since 1.10.0
  */
-public interface ObservationPredicate extends BiPredicate<String, Observation.Context> {
+final class NoopButScopeHandlingObservation extends NoopObservation {
+
+    static final Observation INSTANCE = new NoopButScopeHandlingObservation();
+
+    @Override
+    public Scope openScope() {
+        return new SimpleObservation.SimpleScope(NoopObservationRegistry.FOR_SCOPES, this);
+    }
 
 }
