@@ -21,28 +21,48 @@ import org.jspecify.annotations.Nullable;
 import java.util.Objects;
 import java.util.function.Function;
 
-public class SimpleMeterConvention<T extends @Nullable Object> implements MeterConvention<T> {
+/**
+ * Basic implementation of a {@link MeterConvention}.
+ *
+ * @param <C> context type from which tags can be derived
+ * @since 1.16.0
+ */
+public class SimpleMeterConvention<C extends @Nullable Object> implements MeterConvention<C> {
 
     private final String name;
 
     private final @Nullable Tags tags;
 
-    private final @Nullable Function<T, Tags> tagsFunction;
+    private final @Nullable Function<C, Tags> tagsFunction;
 
+    /**
+     * Create a convention with a name and no tags.
+     * @param name meter name
+     */
     public SimpleMeterConvention(String name) {
         this(name, Tags.empty());
     }
 
+    /**
+     * Create a convention with a name and fixed tags.
+     * @param name meter name
+     * @param tags tags associated with the meter
+     */
     public SimpleMeterConvention(String name, Tags tags) {
         this.name = name;
         this.tags = tags;
         this.tagsFunction = null;
     }
 
-    public SimpleMeterConvention(String name, Function<T, Tags> tagsFunction) {
+    /**
+     * Create a convention with a name and tags derived from a function.
+     * @param name meter name
+     * @param tagsFunction derive tags from the context with this function
+     */
+    public SimpleMeterConvention(String name, Function<C, Tags> tagsFunction) {
         this.name = name;
         this.tags = null;
-        this.tagsFunction = tagsFunction;
+        this.tagsFunction = Objects.requireNonNull(tagsFunction);
     }
 
     @Override
@@ -51,7 +71,7 @@ public class SimpleMeterConvention<T extends @Nullable Object> implements MeterC
     }
 
     @Override
-    public Tags getTags(T context) {
+    public Tags getTags(C context) {
         return tags == null ? Objects.requireNonNull(tagsFunction).apply(context) : tags;
     }
 
