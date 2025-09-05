@@ -15,8 +15,6 @@
  */
 package io.micrometer.benchmark.core;
 
-import java.util.concurrent.TimeUnit;
-
 import io.micrometer.common.KeyValue;
 import io.micrometer.common.KeyValues;
 import io.micrometer.core.instrument.LongTaskTimer;
@@ -34,12 +32,16 @@ import org.openjdk.jmh.runner.Runner;
 import org.openjdk.jmh.runner.RunnerException;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
 
+import java.util.concurrent.TimeUnit;
+
 @Fork(1)
 @Threads(4)
 @State(Scope.Benchmark)
 @BenchmarkMode(Mode.AverageTime)
 @OutputTimeUnit(TimeUnit.NANOSECONDS)
 public class ObservationBenchmark {
+
+    private static final Exception error = new IllegalStateException("error");
 
     SimpleMeterRegistry meterRegistry;
 
@@ -181,13 +183,15 @@ public class ObservationBenchmark {
         return instrumentation;
     }
 
+    // This should not measure anything, JIT should figure out that the registry is noop
     @Benchmark
     public Observation noopObservation() {
-        // This might not measure anything if JIT figures it out that the registry is
-        // always noop
         Observation observation = Observation.createNotStarted("test.obs", noopRegistry)
             .lowCardinalityKeyValue("abc", "123")
             .start();
+        try (Observation.Scope ignored = observation.openScope()) {
+            observation.error(error);
+        }
         observation.stop();
 
         return observation;

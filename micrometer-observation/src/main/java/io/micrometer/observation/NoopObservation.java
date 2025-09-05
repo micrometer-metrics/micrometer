@@ -20,14 +20,15 @@ import org.jspecify.annotations.Nullable;
 
 /**
  * No-op implementation of {@link Observation} so that we can disable the instrumentation
- * logic.
+ * logic entirely.
  *
  * @author Jonatan Ivanov
  * @author Tommy Ludwig
  * @author Marcin Grzejszczak
- * @since 1.10.0
  */
-final class NoopObservation implements Observation {
+class NoopObservation implements Observation {
+
+    static final Observation INSTANCE = new NoopObservation();
 
     private static final Context CONTEXT = new Context();
 
@@ -92,7 +93,7 @@ final class NoopObservation implements Observation {
 
     @Override
     public Scope openScope() {
-        return new SimpleObservation.SimpleScope(NoopObservationRegistry.FOR_SCOPES, this);
+        return NoopScope.INSTANCE;
     }
 
     /**
@@ -111,7 +112,7 @@ final class NoopObservation implements Observation {
 
         @Override
         public Observation getCurrentObservation() {
-            return Observation.NOOP;
+            return NoopObservation.INSTANCE;
         }
 
         @Override

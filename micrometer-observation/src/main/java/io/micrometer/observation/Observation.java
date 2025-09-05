@@ -50,9 +50,10 @@ import java.util.stream.Collectors;
 public interface Observation extends ObservationView {
 
     /**
-     * No-op observation.
+     * No-op observation. Do not use it to check if an Observation is no-op, use
+     * {@code observation.isNoop()} instead.
      */
-    Observation NOOP = new NoopObservation();
+    Observation NOOP = NoopObservation.INSTANCE;
 
     /**
      * Create and start an {@link Observation} with the given name. All Observations of
@@ -122,12 +123,12 @@ public interface Observation extends ObservationView {
     static <T extends Context> Observation createNotStarted(String name, Supplier<T> contextSupplier,
             @Nullable ObservationRegistry registry) {
         if (registry == null || registry.isNoop()) {
-            return NOOP;
+            return NoopObservation.INSTANCE;
         }
         Context context = contextSupplier.get();
         context.setParentFromCurrentObservation(registry);
         if (!registry.observationConfig().isObservationEnabled(name, context)) {
-            return NOOP;
+            return NoopButScopeHandlingObservation.INSTANCE;
         }
         return new SimpleObservation(name, registry, context);
     }
@@ -165,7 +166,7 @@ public interface Observation extends ObservationView {
             ObservationConvention<T> defaultConvention, Supplier<T> contextSupplier,
             @Nullable ObservationRegistry registry) {
         if (registry == null || registry.isNoop()) {
-            return Observation.NOOP;
+            return NoopObservation.INSTANCE;
         }
         ObservationConvention<T> convention;
         T context = contextSupplier.get();
@@ -177,7 +178,7 @@ public interface Observation extends ObservationView {
             convention = registry.observationConfig().getObservationConvention(context, defaultConvention);
         }
         if (!registry.observationConfig().isObservationEnabled(convention.getName(), context)) {
-            return NOOP;
+            return NoopButScopeHandlingObservation.INSTANCE;
         }
         return new SimpleObservation(convention, registry, context);
     }
@@ -309,13 +310,13 @@ public interface Observation extends ObservationView {
      */
     static <T extends Context> Observation createNotStarted(ObservationConvention<T> observationConvention,
             Supplier<T> contextSupplier, ObservationRegistry registry) {
-        if (registry == null || registry.isNoop() || observationConvention == NoopObservationConvention.INSTANCE) {
-            return NOOP;
+        if (registry == null || registry.isNoop()) {
+            return NoopObservation.INSTANCE;
         }
         T context = contextSupplier.get();
         context.setParentFromCurrentObservation(registry);
         if (!registry.observationConfig().isObservationEnabled(observationConvention.getName(), context)) {
-            return NOOP;
+            return NoopButScopeHandlingObservation.INSTANCE;
         }
         return new SimpleObservation(observationConvention, registry, context);
     }
@@ -416,7 +417,7 @@ public interface Observation extends ObservationView {
      * @return {@code true} when this is a no-op observation
      */
     default boolean isNoop() {
-        return this == NOOP;
+        return this == NoopObservation.INSTANCE || this == NoopButScopeHandlingObservation.INSTANCE;
     }
 
     /**
@@ -622,7 +623,7 @@ public interface Observation extends ObservationView {
      * <li>Stops the {@code Observation}</li>
      * </ul>
      *
-     * NOTE: When the {@link ObservationRegistry} is a noop, this function receives a
+     * NOTE: When the {@link ObservationRegistry} is a no-op, this function receives a
      * default {@link Context} instance which is not the one that has been passed at
      * {@link Observation} creation.
      * @param function the {@link Function} to call
@@ -663,7 +664,7 @@ public interface Observation extends ObservationView {
      * <li>Stops the {@code Observation}</li>
      * </ul>
      *
-     * NOTE: When the {@link ObservationRegistry} is a noop, this function receives a
+     * NOTE: When the {@link ObservationRegistry} is a no-op, this function receives a
      * default {@link Context} instance which is not the one that has been passed at
      * {@link Observation} creation.
      * @param function the {@link CheckedFunction} to call
