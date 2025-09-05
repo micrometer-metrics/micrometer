@@ -15,27 +15,10 @@
  */
 package io.micrometer.core.instrument.binder.jvm.convention;
 
-import io.micrometer.core.instrument.Tags;
+import io.micrometer.core.instrument.binder.MeterConvention;
 
-/**
- * Defines methods to get the various conventions related to JVM metrics.
- *
- * @since 1.16.0
- * @see #DEFAULT the default implementation
- */
-public interface JvmMetersConventions {
+public interface JvmThreadMeterConventions {
 
-    /**
-     * Implementation with the default conventions.
-     */
-    JvmMetersConventions DEFAULT = new MicrometerJvmMetersConventions();
-
-    JvmMemoryMeterConventions jvmMemoryMeterConventions(Tags extraTags);
-
-    JvmClassLoadingMeterConventions jvmClassLoadingMeterConventions();
-
-    JvmThreadMeterConventions jvmThreadMeterConventions(Tags extraTags);
-
-    JvmCpuMeterConventions jvmCpuMeterConventions(Tags extraTags);
+    MeterConvention<Thread.State> threadCountConvention();
 
 }

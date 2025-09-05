@@ -15,32 +15,14 @@
  */
 package io.micrometer.core.instrument.binder.jvm.convention;
 
-import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.binder.MeterConvention;
-import io.micrometer.core.instrument.binder.SimpleMeterConvention;
 
-public abstract class JvmCpuMeterConventions {
+public interface JvmCpuMeterConventions {
 
-    protected final Tags extraTags;
+    MeterConvention<Object> cpuTimeConvention();
 
-    public JvmCpuMeterConventions(Tags extraTags) {
-        this.extraTags = extraTags;
-    }
+    MeterConvention<Object> cpuCountConvention();
 
-    protected Tags getCommonTags() {
-        return extraTags;
-    }
-
-    public MeterConvention<Object> cpuTimeConvention() {
-        return new SimpleMeterConvention<>("process.cpu.time", getCommonTags());
-    }
-
-    public MeterConvention<Object> cpuCountConvention() {
-        return new SimpleMeterConvention<>("system.cpu.count", getCommonTags());
-    }
-
-    public MeterConvention<Object> processCpuLoadConvention() {
-        return new SimpleMeterConvention<>("process.cpu.usage", getCommonTags());
-    }
+    MeterConvention<Object> processCpuLoadConvention();
 
 }

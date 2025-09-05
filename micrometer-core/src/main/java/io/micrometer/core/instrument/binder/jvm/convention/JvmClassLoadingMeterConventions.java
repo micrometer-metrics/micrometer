@@ -15,35 +15,18 @@
  */
 package io.micrometer.core.instrument.binder.jvm.convention;
 
-import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.binder.MeterConvention;
-import io.micrometer.core.instrument.binder.SimpleMeterConvention;
 
 /**
- * Conventions for JVM class loading metrics.
- *
  * @since 1.16.0
  * @see io.micrometer.core.instrument.binder.jvm.ClassLoaderMetrics
  */
 public interface JvmClassLoadingMeterConventions {
 
-    JvmClassLoadingMeterConventions DEFAULT = new JvmClassLoadingMeterConventions() {
-    };
+    MeterConvention<Object> loadedConvention();
 
-    default Tags getCommonTags() {
-        return Tags.empty();
-    }
+    MeterConvention<Object> unloadedConvention();
 
-    default MeterConvention<Object> loadedConvention() {
-        return new SimpleMeterConvention<>("jvm.classes.loaded.count", getCommonTags());
-    }
-
-    default MeterConvention<Object> unloadedConvention() {
-        return new SimpleMeterConvention<>("jvm.classes.unloaded", getCommonTags());
-    }
-
-    default MeterConvention<Object> currentClassCountConvention() {
-        return new SimpleMeterConvention<>("jvm.classes.loaded", getCommonTags());
-    }
+    MeterConvention<Object> currentClassCountConvention();
 
 }

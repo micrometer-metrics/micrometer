@@ -15,36 +15,16 @@
  */
 package io.micrometer.core.instrument.binder.jvm.convention;
 
-import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.binder.MeterConvention;
-import io.micrometer.core.instrument.binder.SimpleMeterConvention;
 
 import java.lang.management.MemoryPoolMXBean;
-import java.lang.management.MemoryType;
 
-public abstract class JvmMemoryMeterConventions {
+public interface JvmMemoryMeterConventions {
 
-    protected final Tags extraTags;
+    MeterConvention<MemoryPoolMXBean> getMemoryUsedConvention();
 
-    public JvmMemoryMeterConventions(Tags extraTags) {
-        this.extraTags = extraTags;
-    }
+    MeterConvention<MemoryPoolMXBean> getMemoryCommittedConvention();
 
-    protected Tags getCommonTags(MemoryPoolMXBean memoryPoolBean) {
-        return this.extraTags.and(Tags.of("id", memoryPoolBean.getName(), "area",
-                MemoryType.HEAP.equals(memoryPoolBean.getType()) ? "heap" : "nonheap"));
-    }
-
-    public MeterConvention<MemoryPoolMXBean> getMemoryUsedConvention() {
-        return new SimpleMeterConvention<>("jvm.memory.used", this::getCommonTags);
-    }
-
-    public MeterConvention<MemoryPoolMXBean> getMemoryCommittedConvention() {
-        return new SimpleMeterConvention<>("jvm.memory.committed", this::getCommonTags);
-    }
-
-    public MeterConvention<MemoryPoolMXBean> getMemoryMaxConvention() {
-        return new SimpleMeterConvention<>("jvm.memory.max", this::getCommonTags);
-    }
+    MeterConvention<MemoryPoolMXBean> getMemoryMaxConvention();
 
 }

@@ -15,6 +15,28 @@
  */
 package io.micrometer.core.instrument.binder.jvm.convention;
 
+import io.micrometer.core.instrument.Tags;
+
 public class MicrometerJvmMetersConventions implements JvmMetersConventions {
+
+    @Override
+    public JvmMemoryMeterConventions jvmMemoryMeterConventions(Tags extraTags) {
+        return new MicrometerJvmMemoryMeterConventions(extraTags);
+    }
+
+    @Override
+    public JvmClassLoadingMeterConventions jvmClassLoadingMeterConventions() {
+        return new MicrometerJvmClassLoadingMeterConventions();
+    }
+
+    @Override
+    public JvmThreadMeterConventions jvmThreadMeterConventions(Tags extraTags) {
+        return new MicrometerJvmThreadMeterConventions(extraTags);
+    }
+
+    @Override
+    public JvmCpuMeterConventions jvmCpuMeterConventions(Tags extraTags) {
+        return new MicrometerJvmCpuMeterConventions(extraTags);
+    }
 
 }

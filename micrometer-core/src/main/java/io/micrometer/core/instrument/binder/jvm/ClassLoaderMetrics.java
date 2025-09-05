@@ -19,6 +19,7 @@ import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.binder.MeterBinder;
 import io.micrometer.core.instrument.binder.jvm.convention.JvmClassLoadingMeterConventions;
+import io.micrometer.core.instrument.binder.jvm.convention.MicrometerJvmClassLoadingMeterConventions;
 
 import java.lang.management.ClassLoadingMXBean;
 import java.lang.management.ManagementFactory;
@@ -28,16 +29,11 @@ public class ClassLoaderMetrics implements MeterBinder {
     private final JvmClassLoadingMeterConventions conventions;
 
     public ClassLoaderMetrics() {
-        this(JvmClassLoadingMeterConventions.DEFAULT);
+        this(new MicrometerJvmClassLoadingMeterConventions());
     }
 
     public ClassLoaderMetrics(Iterable<Tag> extraTags) {
-        this(new JvmClassLoadingMeterConventions() {
-            @Override
-            public Tags getCommonTags() {
-                return Tags.of(extraTags);
-            }
-        });
+        this(new MicrometerJvmClassLoadingMeterConventions(Tags.of(extraTags)));
     }
 
     /**

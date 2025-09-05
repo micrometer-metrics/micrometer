@@ -19,7 +19,7 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.binder.MeterConvention;
 import io.micrometer.core.instrument.binder.SimpleMeterConvention;
-import io.micrometer.core.instrument.binder.jvm.convention.JvmClassLoadingMeterConventions;
+import io.micrometer.core.instrument.binder.jvm.convention.MicrometerJvmClassLoadingMeterConventions;
 import io.micrometer.core.instrument.binder.jvm.convention.OtelJvmMetersConventions;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
@@ -55,12 +55,9 @@ class ClassLoaderMetricsTest {
 
     @Test
     void otelConventionsWithExtraTags() {
-        new ClassLoaderMetrics(new OtelJvmMetersConventions.OtelJvmClassLoadingMeterConventions() {
-            @Override
-            public Tags getCommonTags() {
-                return Tags.of("extra", "tag");
-            }
-        }).bindTo(registry);
+        new ClassLoaderMetrics(
+                new OtelJvmMetersConventions.OtelJvmClassLoadingMeterConventions(Tags.of("extra", "tag")))
+            .bindTo(registry);
 
         assertThat(registry.get("jvm.class.loaded").tag("extra", "tag").functionCounter().count()).isGreaterThan(0);
         assertThat(registry.get("jvm.class.unloaded").tag("extra", "tag").functionCounter().count())
@@ -82,11 +79,19 @@ class ClassLoaderMetricsTest {
             .isNotNegative();
     }
 
-    static class MyClassLoaderConventions implements JvmClassLoadingMeterConventions {
+    static class MyClassLoaderConventions extends MicrometerJvmClassLoadingMeterConventions {
+
+        public MyClassLoaderConventions() {
+            super();
+        }
+
+        public MyClassLoaderConventions(Tags extraTags) {
+            super(extraTags);
+        }
 
         @Override
-        public Tags getCommonTags() {
-            return Tags.of("common", "custom");
+        protected Tags getCommonTags() {
+            return super.getCommonTags().and(Tags.of("common", "custom"));
         }
 
         @Override

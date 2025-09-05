@@ -18,7 +18,7 @@ package io.micrometer.core.instrument.binder.system;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.MeterBinder;
 import io.micrometer.core.instrument.binder.jvm.convention.JvmCpuMeterConventions;
-import io.micrometer.core.instrument.binder.jvm.convention.JvmMetersConventions;
+import io.micrometer.core.instrument.binder.jvm.convention.MicrometerJvmCpuMeterConventions;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
@@ -76,12 +76,12 @@ public class ProcessorMetrics implements MeterBinder {
     }
 
     public ProcessorMetrics(Iterable<Tag> tags) {
-        this(tags, JvmMetersConventions.DEFAULT);
+        this(tags, new MicrometerJvmCpuMeterConventions(Tags.of(tags)));
     }
 
-    public ProcessorMetrics(Iterable<? extends Tag> tags, JvmMetersConventions conventions) {
+    public ProcessorMetrics(Iterable<? extends Tag> tags, JvmCpuMeterConventions conventions) {
         this.tags = Tags.of(tags);
-        this.convention = conventions.jvmCpuMeterConventions(this.tags);
+        this.convention = conventions;
         this.operatingSystemBean = ManagementFactory.getOperatingSystemMXBean();
         this.operatingSystemBeanClass = getFirstClassFound(OPERATING_SYSTEM_BEAN_CLASS_NAMES);
         Method getCpuLoad = detectMethod("getCpuLoad");

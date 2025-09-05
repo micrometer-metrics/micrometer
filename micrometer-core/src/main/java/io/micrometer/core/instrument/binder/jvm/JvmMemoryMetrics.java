@@ -22,7 +22,7 @@ import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.binder.MeterBinder;
 import io.micrometer.core.instrument.binder.jvm.convention.JvmMemoryMeterConventions;
-import io.micrometer.core.instrument.binder.jvm.convention.JvmMetersConventions;
+import io.micrometer.core.instrument.binder.jvm.convention.MicrometerJvmMemoryMeterConventions;
 
 import java.lang.management.*;
 
@@ -43,23 +43,23 @@ public class JvmMemoryMetrics implements MeterBinder {
     private final JvmMemoryMeterConventions convention;
 
     public JvmMemoryMetrics() {
-        this(Tags.empty(), JvmMetersConventions.DEFAULT);
+        this(Tags.empty(), new MicrometerJvmMemoryMeterConventions());
     }
 
     /**
      * @param tags additional tags to add to each meter's tags produced by this binder
      */
     public JvmMemoryMetrics(Iterable<Tag> tags) {
-        this(tags, JvmMetersConventions.DEFAULT);
+        this(tags, new MicrometerJvmMemoryMeterConventions(Tags.of(tags)));
     }
 
     /**
      * @param convention
      * @since 1.16.0
      */
-    public JvmMemoryMetrics(Iterable<? extends Tag> tags, JvmMetersConventions convention) {
+    public JvmMemoryMetrics(Iterable<? extends Tag> tags, JvmMemoryMeterConventions convention) {
         this.tags = Tags.of(tags);
-        this.convention = convention.jvmMemoryMeterConventions(this.tags);
+        this.convention = convention;
     }
 
     @Override
