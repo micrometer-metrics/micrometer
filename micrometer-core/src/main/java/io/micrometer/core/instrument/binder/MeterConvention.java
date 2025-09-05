@@ -17,6 +17,7 @@ package io.micrometer.core.instrument.binder;
 
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.Tags;
+import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationConvention;
 import org.jspecify.annotations.NonNull;
@@ -30,6 +31,10 @@ import org.jspecify.annotations.Nullable;
  * the {@link Observation} API and {@link ObservationConvention} instead.
  * {@link MeterConvention} is for instrumentation that is instrumented directly with the
  * metrics API.
+ * <p>
+ * This is a distinct concept from {@link NamingConvention}. The name provided by the
+ * {@link MeterConvention} is the canonical name, which will potentially be transformed by
+ * a {@link NamingConvention} for a specific metrics backend or format.
  *
  * @param <C> context type used to derive tags
  * @since 1.16.0
