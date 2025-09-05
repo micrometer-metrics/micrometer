@@ -21,6 +21,12 @@ import io.micrometer.core.instrument.binder.SimpleMeterConvention;
 
 import java.util.Locale;
 
+/**
+ * Implementation that provides the historical convention used in Micrometer-provided
+ * instrumentation.
+ *
+ * @since 1.16.0
+ */
 public class MicrometerJvmThreadMeterConventions implements JvmThreadMeterConventions {
 
     private final Tags extraTags;

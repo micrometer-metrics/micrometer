@@ -19,6 +19,12 @@ import io.micrometer.core.instrument.binder.MeterConvention;
 
 import java.lang.management.MemoryPoolMXBean;
 
+/**
+ * Get {@link MeterConvention} related to computer memory from the JVM metrics.
+ *
+ * @see io.micrometer.core.instrument.binder.jvm.JvmMemoryMetrics
+ * @since 1.16.0
+ */
 public interface JvmMemoryMeterConventions {
 
     MeterConvention<MemoryPoolMXBean> getMemoryUsedConvention();

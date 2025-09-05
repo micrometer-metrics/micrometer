@@ -17,6 +17,12 @@ package io.micrometer.core.instrument.binder.jvm.convention;
 
 import io.micrometer.core.instrument.binder.MeterConvention;
 
+/**
+ * Get {@link MeterConvention} for thread related metrics.
+ *
+ * @see io.micrometer.core.instrument.binder.jvm.JvmThreadMetrics
+ * @since 1.16.0
+ */
 public interface JvmThreadMeterConventions {
 
     MeterConvention<Thread.State> threadCountConvention();

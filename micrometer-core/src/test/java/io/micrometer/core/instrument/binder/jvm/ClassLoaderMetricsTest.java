@@ -20,7 +20,7 @@ import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.binder.MeterConvention;
 import io.micrometer.core.instrument.binder.SimpleMeterConvention;
 import io.micrometer.core.instrument.binder.jvm.convention.MicrometerJvmClassLoadingMeterConventions;
-import io.micrometer.core.instrument.binder.jvm.convention.OtelJvmMetersConventions;
+import io.micrometer.core.instrument.binder.jvm.convention.OpenTelemetryJvmMetersConventions;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
 
@@ -46,7 +46,8 @@ class ClassLoaderMetricsTest {
 
     @Test
     void otelConventions() {
-        new ClassLoaderMetrics(new OtelJvmMetersConventions.OtelJvmClassLoadingMeterConventions()).bindTo(registry);
+        new ClassLoaderMetrics(new OpenTelemetryJvmMetersConventions.OtelJvmClassLoadingMeterConventions())
+            .bindTo(registry);
 
         assertThat(registry.get("jvm.class.loaded").functionCounter().count()).isGreaterThan(0);
         assertThat(registry.get("jvm.class.unloaded").functionCounter().count()).isGreaterThanOrEqualTo(0);
@@ -56,7 +57,7 @@ class ClassLoaderMetricsTest {
     @Test
     void otelConventionsWithExtraTags() {
         new ClassLoaderMetrics(
-                new OtelJvmMetersConventions.OtelJvmClassLoadingMeterConventions(Tags.of("extra", "tag")))
+                new OpenTelemetryJvmMetersConventions.OtelJvmClassLoadingMeterConventions(Tags.of("extra", "tag")))
             .bindTo(registry);
 
         assertThat(registry.get("jvm.class.loaded").tag("extra", "tag").functionCounter().count()).isGreaterThan(0);

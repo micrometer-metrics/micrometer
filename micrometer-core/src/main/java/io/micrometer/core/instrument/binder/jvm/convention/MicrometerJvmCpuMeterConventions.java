@@ -19,6 +19,12 @@ import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.binder.MeterConvention;
 import io.micrometer.core.instrument.binder.SimpleMeterConvention;
 
+/**
+ * Implementation that provides the historical convention used in Micrometer-provided
+ * instrumentation.
+ *
+ * @since 1.16.0
+ */
 public class MicrometerJvmCpuMeterConventions implements JvmCpuMeterConventions {
 
     private final Tags extraTags;

@@ -17,6 +17,12 @@ package io.micrometer.core.instrument.binder.jvm.convention;
 
 import io.micrometer.core.instrument.binder.MeterConvention;
 
+/**
+ * Get {@link MeterConvention} for CPU-related metrics from the JVM.
+ *
+ * @see io.micrometer.core.instrument.binder.system.ProcessorMetrics
+ * @since 1.16.0
+ */
 public interface JvmCpuMeterConventions {
 
     MeterConvention<Object> cpuTimeConvention();

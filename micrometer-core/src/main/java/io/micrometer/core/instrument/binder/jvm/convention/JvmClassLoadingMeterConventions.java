@@ -18,8 +18,10 @@ package io.micrometer.core.instrument.binder.jvm.convention;
 import io.micrometer.core.instrument.binder.MeterConvention;
 
 /**
- * @since 1.16.0
+ * Get {@link MeterConvention} for metrics related to class loading.
+ *
  * @see io.micrometer.core.instrument.binder.jvm.ClassLoaderMetrics
+ * @since 1.16.0
  */
 public interface JvmClassLoadingMeterConventions {
 

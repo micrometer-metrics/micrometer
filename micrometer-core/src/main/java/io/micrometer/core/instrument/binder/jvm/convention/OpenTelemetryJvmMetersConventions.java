@@ -23,7 +23,13 @@ import java.lang.management.MemoryPoolMXBean;
 import java.lang.management.MemoryType;
 import java.util.Locale;
 
-public class OtelJvmMetersConventions extends MicrometerJvmMetersConventions {
+/**
+ * @see <a href=
+ * "https://github.com/open-telemetry/semantic-conventions/blob/v1.37.0/docs/runtime/jvm-metrics.md">OpenTelemtry
+ * Semantic conventions for JVM metrics v1.37.0</a>
+ * @since 1.16.0
+ */
+public class OpenTelemetryJvmMetersConventions extends MicrometerJvmMetersConventions {
 
     @Override
     public JvmMemoryMeterConventions jvmMemoryMeterConventions(Tags extraTags) {

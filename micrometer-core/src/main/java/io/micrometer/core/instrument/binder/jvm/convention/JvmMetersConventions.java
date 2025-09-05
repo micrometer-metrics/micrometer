@@ -20,8 +20,8 @@ import io.micrometer.core.instrument.Tags;
 /**
  * Defines methods to get the various conventions related to JVM metrics.
  *
- * @since 1.16.0
  * @see #DEFAULT the default implementation
+ * @since 1.16.0
  */
 public interface JvmMetersConventions {
 

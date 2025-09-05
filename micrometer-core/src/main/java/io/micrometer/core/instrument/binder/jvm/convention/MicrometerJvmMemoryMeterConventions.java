@@ -22,6 +22,12 @@ import io.micrometer.core.instrument.binder.SimpleMeterConvention;
 import java.lang.management.MemoryPoolMXBean;
 import java.lang.management.MemoryType;
 
+/**
+ * Implementation that provides the historical convention used in Micrometer-provided
+ * instrumentation.
+ *
+ * @since 1.16.0
+ */
 public class MicrometerJvmMemoryMeterConventions implements JvmMemoryMeterConventions {
 
     protected final Tags extraTags;
