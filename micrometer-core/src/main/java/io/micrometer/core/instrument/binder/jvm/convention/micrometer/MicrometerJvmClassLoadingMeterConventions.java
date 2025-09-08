@@ -13,17 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.core.instrument.binder.jvm.convention;
+package io.micrometer.core.instrument.binder.jvm.convention.micrometer;
 
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.binder.MeterConvention;
 import io.micrometer.core.instrument.binder.SimpleMeterConvention;
+import io.micrometer.core.instrument.binder.jvm.convention.JvmClassLoadingMeterConventions;
 
 /**
  * Micrometer's historical conventions for JVM class loading metrics.
  *
- * @since 1.16.0
  * @see io.micrometer.core.instrument.binder.jvm.ClassLoaderMetrics
+ * @since 1.16.0
  */
 public class MicrometerJvmClassLoadingMeterConventions implements JvmClassLoadingMeterConventions {
 

@@ -13,18 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.core.instrument.binder.jvm.convention;
+package io.micrometer.core.instrument.binder.jvm.convention.micrometer;
 
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.binder.MeterConvention;
 import io.micrometer.core.instrument.binder.SimpleMeterConvention;
+import io.micrometer.core.instrument.binder.jvm.convention.JvmThreadMeterConventions;
 
 import java.util.Locale;
 
 /**
- * Implementation that provides the historical convention used in Micrometer-provided
- * instrumentation.
+ * Historical convention used in Micrometer-provided JVM thread metrics.
  *
+ * @see io.micrometer.core.instrument.binder.jvm.JvmThreadMetrics
  * @since 1.16.0
  */
 public class MicrometerJvmThreadMeterConventions implements JvmThreadMeterConventions {

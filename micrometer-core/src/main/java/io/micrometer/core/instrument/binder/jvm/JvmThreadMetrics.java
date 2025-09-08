@@ -22,8 +22,9 @@ import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.binder.MeterBinder;
+import io.micrometer.core.instrument.binder.MeterConvention;
 import io.micrometer.core.instrument.binder.jvm.convention.JvmThreadMeterConventions;
-import io.micrometer.core.instrument.binder.jvm.convention.MicrometerJvmThreadMeterConventions;
+import io.micrometer.core.instrument.binder.jvm.convention.micrometer.MicrometerJvmThreadMeterConventions;
 import org.jspecify.annotations.NullMarked;
 
 import java.lang.management.ManagementFactory;
@@ -43,19 +44,31 @@ public class JvmThreadMetrics implements MeterBinder {
 
     private final Tags extraTags;
 
-    private final JvmThreadMeterConventions convention;
+    private final JvmThreadMeterConventions conventions;
 
     public JvmThreadMetrics() {
         this(emptyList());
     }
 
+    /**
+     * Uses the default convention with the provided extra tags.
+     * @param extraTags tags to add to each meter's tags produced by this binder
+     */
     public JvmThreadMetrics(Iterable<Tag> extraTags) {
         this(extraTags, new MicrometerJvmThreadMeterConventions(Tags.of(extraTags)));
     }
 
-    private JvmThreadMetrics(Iterable<? extends Tag> extraTags, JvmThreadMeterConventions conventions) {
+    /**
+     * The supplied extra tags are not combined with the convention. Provide a convention
+     * that applies the extra tags if that is the desired outcome. The convention only
+     * applies to some meters.
+     * @param extraTags extra tags to add to meters not covered by the conventions
+     * @param conventions custom conventions for applicable meters
+     * @since 1.16.0
+     */
+    public JvmThreadMetrics(Iterable<? extends Tag> extraTags, JvmThreadMeterConventions conventions) {
         this.extraTags = Tags.of(extraTags);
-        this.convention = conventions;
+        this.conventions = conventions;
     }
 
     @Override
@@ -88,11 +101,10 @@ public class JvmThreadMetrics implements MeterBinder {
 
         try {
             threadBean.getAllThreadIds();
+            MeterConvention<Thread.State> stateMeterConvention = conventions.threadCountConvention();
             for (Thread.State state : Thread.State.values()) {
-                Gauge
-                    .builder(convention.threadCountConvention().getName(), threadBean,
-                            (bean) -> getThreadStateCount(bean, state))
-                    .tags(convention.threadCountConvention().getTags(state))
+                Gauge.builder(stateMeterConvention.getName(), threadBean, (bean) -> getThreadStateCount(bean, state))
+                    .tags(stateMeterConvention.getTags(state))
                     .description("The current number of threads")
                     .baseUnit(BaseUnits.THREADS)
                     .register(registry);
