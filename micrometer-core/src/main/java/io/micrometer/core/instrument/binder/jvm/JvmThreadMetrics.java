@@ -22,12 +22,14 @@ import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.binder.MeterBinder;
+import io.micrometer.core.instrument.binder.MeterConvention;
+import io.micrometer.core.instrument.binder.jvm.convention.JvmThreadMeterConventions;
+import io.micrometer.core.instrument.binder.jvm.convention.micrometer.MicrometerJvmThreadMeterConventions;
 import org.jspecify.annotations.NullMarked;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
 import java.util.Arrays;
-import java.util.Locale;
 
 import static java.util.Collections.emptyList;
 
@@ -40,14 +42,33 @@ import static java.util.Collections.emptyList;
 @NullMarked
 public class JvmThreadMetrics implements MeterBinder {
 
-    private final Iterable<Tag> tags;
+    private final Tags extraTags;
+
+    private final JvmThreadMeterConventions conventions;
 
     public JvmThreadMetrics() {
         this(emptyList());
     }
 
-    public JvmThreadMetrics(Iterable<Tag> tags) {
-        this.tags = tags;
+    /**
+     * Uses the default convention with the provided extra tags.
+     * @param extraTags tags to add to each meter's tags produced by this binder
+     */
+    public JvmThreadMetrics(Iterable<Tag> extraTags) {
+        this(extraTags, new MicrometerJvmThreadMeterConventions(Tags.of(extraTags)));
+    }
+
+    /**
+     * The supplied extra tags are not combined with the convention. Provide a convention
+     * that applies the extra tags if that is the desired outcome. The convention only
+     * applies to some meters.
+     * @param extraTags extra tags to add to meters not covered by the conventions
+     * @param conventions custom conventions for applicable meters
+     * @since 1.16.0
+     */
+    public JvmThreadMetrics(Iterable<? extends Tag> extraTags, JvmThreadMeterConventions conventions) {
+        this.extraTags = Tags.of(extraTags);
+        this.conventions = conventions;
     }
 
     @Override
@@ -55,34 +76,35 @@ public class JvmThreadMetrics implements MeterBinder {
         ThreadMXBean threadBean = ManagementFactory.getThreadMXBean();
 
         Gauge.builder("jvm.threads.peak", threadBean, ThreadMXBean::getPeakThreadCount)
-            .tags(tags)
+            .tags(extraTags)
             .description("The peak live thread count since the Java virtual machine started or peak was reset")
             .baseUnit(BaseUnits.THREADS)
             .register(registry);
 
         Gauge.builder("jvm.threads.daemon", threadBean, ThreadMXBean::getDaemonThreadCount)
-            .tags(tags)
+            .tags(extraTags)
             .description("The current number of live daemon threads")
             .baseUnit(BaseUnits.THREADS)
             .register(registry);
 
         Gauge.builder("jvm.threads.live", threadBean, ThreadMXBean::getThreadCount)
-            .tags(tags)
+            .tags(extraTags)
             .description("The current number of live threads including both daemon and non-daemon threads")
             .baseUnit(BaseUnits.THREADS)
             .register(registry);
 
         FunctionCounter.builder("jvm.threads.started", threadBean, ThreadMXBean::getTotalStartedThreadCount)
-            .tags(tags)
+            .tags(extraTags)
             .description("The total number of application threads started in the JVM")
             .baseUnit(BaseUnits.THREADS)
             .register(registry);
 
         try {
             threadBean.getAllThreadIds();
+            MeterConvention<Thread.State> stateMeterConvention = conventions.threadCountConvention();
             for (Thread.State state : Thread.State.values()) {
-                Gauge.builder("jvm.threads.states", threadBean, (bean) -> getThreadStateCount(bean, state))
-                    .tags(Tags.concat(tags, "state", getStateTagValue(state)))
+                Gauge.builder(stateMeterConvention.getName(), threadBean, (bean) -> getThreadStateCount(bean, state))
+                    .tags(stateMeterConvention.getTags(state))
                     .description("The current number of threads")
                     .baseUnit(BaseUnits.THREADS)
                     .register(registry);
@@ -99,10 +121,6 @@ public class JvmThreadMetrics implements MeterBinder {
         return Arrays.stream(threadBean.getThreadInfo(threadBean.getAllThreadIds()))
             .filter(threadInfo -> threadInfo != null && threadInfo.getThreadState() == state)
             .count();
-    }
-
-    private static String getStateTagValue(Thread.State state) {
-        return state.name().toLowerCase(Locale.ROOT).replace('_', '-');
     }
 
 }

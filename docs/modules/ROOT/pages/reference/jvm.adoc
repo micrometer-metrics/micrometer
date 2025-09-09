@@ -52,6 +52,30 @@ To use the following `ExecutorService` instances, `--add-opens java.base/java.ut
 * `Executors.newThreadPerTaskExecutor()`
 * `Executors.newVirtualThreadPerTaskExecutor()`
 
+[[meter-conventions]]
+== Meter Conventions
+
+See also the general xref:../concepts/meter-convention.adoc[Meter Conventions] documentation.
+
+The following `MeterBinder` implementations have a constructor to customize the convention used for some or all of the meters they produce.
+This can be used as an alternative to customizing the Meter names and tags with a `MeterFilter`.
+
+* `ClassLoaderMetrics`
+* `JvmMemoryMetrics`
+* `JvmThreadMetrics`
+* `ProcessorMetrics`
+
+=== OpenTelemetry Semantic Conventions
+
+We provide `MeterConvention` implementations of the applicable https://opentelemetry.io/docs/specs/semconv/runtime/jvm-metrics/[OpenTelemetry semantic conventions for JVM metrics] that have been marked stable as of the version 1.37.0.
+These can be passed to the constructors of the above binders to change the convention from the default.
+Use the following classes:
+
+* `OpenTelemetryJvmClassLoadingMeterConventions`
+* `OpenTelemetryJvmMemoryMeterConventions`
+* `OpenTelemetryJvmThreadMeterConventions`
+* `OpenTelemetryJvmCpuMeterConventions`
+
 == Java 21 Metrics
 
 === Virtual Threads

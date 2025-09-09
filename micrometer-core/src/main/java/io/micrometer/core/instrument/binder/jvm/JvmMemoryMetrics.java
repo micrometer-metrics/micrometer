@@ -21,12 +21,13 @@ import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.binder.MeterBinder;
-import org.jspecify.annotations.NullMarked;
+import io.micrometer.core.instrument.binder.MeterConvention;
+import io.micrometer.core.instrument.binder.jvm.convention.JvmMemoryMeterConventions;
+import io.micrometer.core.instrument.binder.jvm.convention.micrometer.MicrometerJvmMemoryMeterConventions;
 
 import java.lang.management.*;
 
 import static io.micrometer.core.instrument.binder.jvm.JvmMemory.getUsageValue;
-import static java.util.Collections.emptyList;
 
 /**
  * Record metrics that report utilization of various memory and buffer pools.
@@ -36,17 +37,36 @@ import static java.util.Collections.emptyList;
  * @see MemoryPoolMXBean
  * @see BufferPoolMXBean
  */
-@NullMarked
 public class JvmMemoryMetrics implements MeterBinder {
 
-    private final Iterable<Tag> tags;
+    private final Tags tags;
+
+    private final JvmMemoryMeterConventions conventions;
 
     public JvmMemoryMetrics() {
-        this(emptyList());
+        this(Tags.empty(), new MicrometerJvmMemoryMeterConventions());
     }
 
-    public JvmMemoryMetrics(Iterable<Tag> tags) {
-        this.tags = tags;
+    /**
+     * Uses the default convention with the provided extra tags.
+     * @param extraTags tags to add to each meter's tags produced by this binder
+     */
+    public JvmMemoryMetrics(Iterable<Tag> extraTags) {
+        this(extraTags, new MicrometerJvmMemoryMeterConventions(Tags.of(extraTags)));
+    }
+
+    /**
+     * Memory metrics with extra tags and a specific convention applied to meters. The
+     * supplied extra tags are not combined with the convention. Provide a convention that
+     * applies the extra tags if that is the desired outcome. The convention only applies
+     * to some meters.
+     * @param extraTags these will be added to meters not covered by the convention
+     * @param conventions custom conventions for applicable metrics
+     * @since 1.16.0
+     */
+    public JvmMemoryMetrics(Iterable<? extends Tag> extraTags, JvmMemoryMeterConventions conventions) {
+        this.tags = Tags.of(extraTags);
+        this.conventions = conventions;
     }
 
     @Override
@@ -74,24 +94,29 @@ public class JvmMemoryMetrics implements MeterBinder {
         }
 
         for (MemoryPoolMXBean memoryPoolBean : ManagementFactory.getPlatformMXBeans(MemoryPoolMXBean.class)) {
-            String area = MemoryType.HEAP.equals(memoryPoolBean.getType()) ? "heap" : "nonheap";
-            Iterable<Tag> tagsWithId = Tags.concat(tags, "id", memoryPoolBean.getName(), "area", area);
-
-            Gauge.builder("jvm.memory.used", memoryPoolBean, (mem) -> getUsageValue(mem, MemoryUsage::getUsed))
-                .tags(tagsWithId)
+            MeterConvention<MemoryPoolMXBean> memoryUsedConvention = conventions.getMemoryUsedConvention();
+            Gauge
+                .builder(memoryUsedConvention.getName(), memoryPoolBean,
+                        (mem) -> getUsageValue(mem, MemoryUsage::getUsed))
+                .tags(memoryUsedConvention.getTags(memoryPoolBean))
                 .description("The amount of used memory")
                 .baseUnit(BaseUnits.BYTES)
                 .register(registry);
 
+            MeterConvention<MemoryPoolMXBean> memoryCommittedConvention = conventions.getMemoryCommittedConvention();
             Gauge
-                .builder("jvm.memory.committed", memoryPoolBean, (mem) -> getUsageValue(mem, MemoryUsage::getCommitted))
-                .tags(tagsWithId)
+                .builder(memoryCommittedConvention.getName(), memoryPoolBean,
+                        (mem) -> getUsageValue(mem, MemoryUsage::getCommitted))
+                .tags(memoryCommittedConvention.getTags(memoryPoolBean))
                 .description("The amount of memory in bytes that is committed for the Java virtual machine to use")
                 .baseUnit(BaseUnits.BYTES)
                 .register(registry);
 
-            Gauge.builder("jvm.memory.max", memoryPoolBean, (mem) -> getUsageValue(mem, MemoryUsage::getMax))
-                .tags(tagsWithId)
+            MeterConvention<MemoryPoolMXBean> memoryMaxConvention = conventions.getMemoryMaxConvention();
+            Gauge
+                .builder(memoryMaxConvention.getName(), memoryPoolBean,
+                        (mem) -> getUsageValue(mem, MemoryUsage::getMax))
+                .tags(memoryMaxConvention.getTags(memoryPoolBean))
                 .description("The maximum amount of memory in bytes that can be used for memory management")
                 .baseUnit(BaseUnits.BYTES)
                 .register(registry);
