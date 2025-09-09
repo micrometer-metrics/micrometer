@@ -17,6 +17,7 @@ package io.micrometer.core.instrument.binder.jvm.convention.otel;
 
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.binder.MeterConvention;
+import io.micrometer.core.instrument.binder.SimpleMeterConvention;
 import io.micrometer.core.instrument.binder.jvm.convention.micrometer.MicrometerJvmCpuMeterConventions;
 
 /**
@@ -36,17 +37,17 @@ public class OpenTelemetryJvmCpuMeterConventions extends MicrometerJvmCpuMeterCo
 
     @Override
     public MeterConvention<Object> cpuTimeConvention() {
-        return () -> "jvm.cpu.time";
+        return new SimpleMeterConvention<>("jvm.cpu.time", getCommonTags());
     }
 
     @Override
     public MeterConvention<Object> cpuCountConvention() {
-        return () -> "jvm.cpu.count";
+        return new SimpleMeterConvention<>("jvm.cpu.count", getCommonTags());
     }
 
     @Override
     public MeterConvention<Object> processCpuLoadConvention() {
-        return () -> "jvm.cpu.recent_utilization";
+        return new SimpleMeterConvention<>("jvm.cpu.recent_utilization", getCommonTags());
     }
 
 }

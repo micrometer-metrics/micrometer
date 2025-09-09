@@ -16,6 +16,8 @@
 package io.micrometer.core.instrument.binder.system;
 
 import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Tags;
+import io.micrometer.core.instrument.binder.jvm.convention.otel.OpenTelemetryJvmCpuMeterConventions;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -40,15 +42,11 @@ class ProcessorMetricsTest {
 
     MeterRegistry registry = new SimpleMeterRegistry();
 
-    @BeforeEach
-    void setup() {
+    @Test
+    void cpuMetrics() {
         // tag::setup[]
         new ProcessorMetrics().bindTo(registry);
         // end::setup[]
-    }
-
-    @Test
-    void cpuMetrics() {
         assertThat(registry.get("system.cpu.count").gauge().value()).isPositive();
         if (System.getProperty("os.name").toLowerCase(Locale.ROOT).contains("win")) {
             assertThat(registry.find("system.load.average.1m").gauge()).describedAs("Not present on windows").isNull();
@@ -62,6 +60,7 @@ class ProcessorMetricsTest {
     @Test
     void hotspotCpuMetrics() {
         assumeTrue(!isOpenJ9());
+        new ProcessorMetrics().bindTo(registry);
 
         // tag::example[]
         assertThat(registry.get("system.cpu.usage").gauge().value()).isNotNegative();
@@ -73,6 +72,7 @@ class ProcessorMetricsTest {
     @Test
     void openJ9CpuMetrics() {
         assumeTrue(isOpenJ9());
+        new ProcessorMetrics().bindTo(registry);
 
         /*
          * These methods are documented to return "-1" on the first call and a positive
@@ -87,6 +87,39 @@ class ProcessorMetricsTest {
         await().atMost(Duration.ofMillis(200))
             .untilAsserted(() -> assertThat(registry.get("process.cpu.usage").gauge().value()).isPositive());
         assertThat(registry.get("process.cpu.time").functionCounter().count()).isPositive();
+    }
+
+    @Test
+    void otelCpuMetrics() {
+        Tags extraTags = Tags.empty();
+        new ProcessorMetrics(extraTags, new OpenTelemetryJvmCpuMeterConventions(extraTags)).bindTo(registry);
+
+        assertThat(registry.get("jvm.cpu.count").gauge().value()).isPositive();
+        if (System.getProperty("os.name").toLowerCase(Locale.ROOT).contains("win")) {
+            assertThat(registry.find("jvm.cpu.recent_utilization").gauge()).describedAs("Not present on windows")
+                .isNull();
+        }
+        else {
+            assertThat(registry.get("jvm.cpu.recent_utilization").gauge().value()).isNotNegative();
+        }
+        assertThat(registry.get("jvm.cpu.time").functionCounter().count()).isPositive();
+    }
+
+    @Test
+    void otelCpuMetricsWithExtraTags() {
+        Tags extraTags = Tags.of("tag", "value");
+        new ProcessorMetrics(extraTags, new OpenTelemetryJvmCpuMeterConventions(extraTags)).bindTo(registry);
+
+        assertThat(registry.get("jvm.cpu.count").tags(extraTags).gauge().value()).isPositive();
+        if (System.getProperty("os.name").toLowerCase(Locale.ROOT).contains("win")) {
+            assertThat(registry.find("jvm.cpu.recent_utilization").tags(extraTags).gauge())
+                .describedAs("Not present on windows")
+                .isNull();
+        }
+        else {
+            assertThat(registry.get("jvm.cpu.recent_utilization").tags(extraTags).gauge().value()).isNotNegative();
+        }
+        assertThat(registry.get("jvm.cpu.time").tags(extraTags).functionCounter().count()).isPositive();
     }
 
     private boolean isOpenJ9() {
