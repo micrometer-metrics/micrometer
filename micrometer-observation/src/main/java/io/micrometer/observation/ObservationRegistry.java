@@ -112,7 +112,7 @@ public interface ObservationRegistry {
 
         /**
          * Register a predicate to define whether {@link Observation observation} should
-         * be created or a {@link NoopObservation} instead.
+         * be created or a no-op Observation instead.
          * @param predicate predicate
          * @return This configuration instance
          */
@@ -167,8 +167,8 @@ public interface ObservationRegistry {
         }
 
         /**
-         * Check to assert whether {@link Observation} should be created or
-         * {@link NoopObservation} instead.
+         * Check to assert whether {@link Observation} should be created or a no-op
+         * Observation instead.
          * @param name observation technical name
          * @param context context
          * @return {@code true} when observation is enabled
