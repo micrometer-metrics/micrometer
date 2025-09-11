@@ -509,7 +509,7 @@ public abstract class MeterRegistry {
      * @return A new or existing timer.
      */
     public Timer timer(String name, Iterable<Tag> tags) {
-        return this.timer(name, Tags.of(tags));
+        return timer(name, Tags.of(tags));
     }
 
     /**
@@ -531,7 +531,7 @@ public abstract class MeterRegistry {
      * @since 1.16.0
      */
     public Timer timer(String name, Tags tags) {
-        return this.timer(new Meter.Id(name, tags, null, null, Meter.Type.TIMER),
+        return timer(new Meter.Id(name, tags, null, null, Meter.Type.TIMER),
                 AbstractTimerBuilder.DEFAULT_DISTRIBUTION_CONFIG, pauseDetector);
     }
 

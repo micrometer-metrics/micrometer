@@ -32,13 +32,17 @@ import java.util.Arrays;
 @SuppressWarnings("unchecked")
 public abstract class AbstractTimerBuilder<B extends AbstractTimerBuilder<B>> {
 
+    private static final Duration DEFAULT_MINIMUM_EXPECTED_DURATION = Duration.ofMillis(1);
+
+    private static final Duration DEFAULT_MAXIMUM_EXPECTED_DURATION = Duration.ofSeconds(30);
+
     /**
      * Default {@link DistributionStatisticConfig} used with {@link Timer} if not
      * overridden.
      */
     static final DistributionStatisticConfig DEFAULT_DISTRIBUTION_CONFIG = DistributionStatisticConfig.builder()
-        .minimumExpectedValue((double) Duration.ofMillis(1).toNanos())
-        .maximumExpectedValue((double) Duration.ofSeconds(30).toNanos())
+        .minimumExpectedValue((double) DEFAULT_MINIMUM_EXPECTED_DURATION.toNanos())
+        .maximumExpectedValue((double) DEFAULT_MAXIMUM_EXPECTED_DURATION.toNanos())
         .build();
 
     protected final String name;
@@ -54,8 +58,8 @@ public abstract class AbstractTimerBuilder<B extends AbstractTimerBuilder<B>> {
     protected AbstractTimerBuilder(String name) {
         this.name = name;
         this.distributionConfigBuilder = new DistributionStatisticConfig.Builder();
-        minimumExpectedValue(Duration.ofMillis(1));
-        maximumExpectedValue(Duration.ofSeconds(30));
+        minimumExpectedValue(DEFAULT_MINIMUM_EXPECTED_DURATION);
+        maximumExpectedValue(DEFAULT_MAXIMUM_EXPECTED_DURATION);
     }
 
     /**

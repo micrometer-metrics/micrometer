@@ -287,9 +287,13 @@ public interface LongTaskTimer extends Meter, HistogramSupport {
      */
     class Builder {
 
+        private static final Duration DEFAULT_MINIMUM_EXPECTED_DURATION = Duration.ofMinutes(2);
+
+        private static final Duration DEFAULT_MAXIMUM_EXPECTED_DURATION = Duration.ofHours(2);
+
         static final DistributionStatisticConfig DEFAULT_DISTRIBUTION_CONFIG = DistributionStatisticConfig.builder()
-            .minimumExpectedValue((double) Duration.ofMinutes(2).toNanos())
-            .maximumExpectedValue((double) Duration.ofHours(2).toNanos())
+            .minimumExpectedValue((double) DEFAULT_MINIMUM_EXPECTED_DURATION.toNanos())
+            .maximumExpectedValue((double) DEFAULT_MAXIMUM_EXPECTED_DURATION.toNanos())
             .build();
 
         private final String name;
@@ -302,8 +306,8 @@ public interface LongTaskTimer extends Meter, HistogramSupport {
 
         private Builder(String name) {
             this.name = name;
-            minimumExpectedValue(Duration.ofMinutes(2));
-            maximumExpectedValue(Duration.ofHours(2));
+            minimumExpectedValue(DEFAULT_MINIMUM_EXPECTED_DURATION);
+            maximumExpectedValue(DEFAULT_MAXIMUM_EXPECTED_DURATION);
         }
 
         /**

@@ -109,7 +109,6 @@ public class MeterFilterRenameTagBenchmark {
         instanceMask = instances.length - 1;
     }
 
-    @SuppressWarnings("java:S1117")
     @Benchmark
     public Meter.Id baseline() {
         int index = sample += SAMPLE_STEP;
