@@ -151,7 +151,7 @@ Spring Boot offers property-based filters for configuring SLOs, percentiles, and
 
 == Apply MeterFilters conditionally
 
-It is a common use-case to apply MeterFilters only for a selection of Meters (for example for ones that has a certain name or starts with a given prefix).
+It is a common use-case to apply MeterFilters only for a selection of Meters (for example, for ones that have a certain name or start with a given prefix).
 In order to do this, Micrometer provides a convenience method `forMeters(Predicate<Meter.Id> predicate, MeterFilter delegate)` that enables the provided (delegate) filter for the Meters selected by the predicate.
 
 See the following example:

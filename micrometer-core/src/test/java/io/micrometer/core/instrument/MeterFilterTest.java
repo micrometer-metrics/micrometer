@@ -268,7 +268,7 @@ class MeterFilterTest {
     }
 
     @Test
-    void forPrefix() {
+    void forMeters() {
         Meter.Id primary = new Meter.Id("primary.gauge", Tags.of("ignored", "true", "other", "value"), null, null,
                 Meter.Type.GAUGE);
         Meter.Id secondary = new Meter.Id("secondary.gauge", Tags.of("ignored", "false"), null, null, Meter.Type.GAUGE);
