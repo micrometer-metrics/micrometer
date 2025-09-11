@@ -19,7 +19,7 @@ import io.micrometer.common.annotation.NoOpValueResolver;
 import io.micrometer.common.annotation.ValueExpressionResolver;
 import io.micrometer.common.annotation.ValueResolver;
 import io.micrometer.observation.aop.CardinalityType;
-import io.micrometer.observation.aop.ObservedKeyValueTagAnnotationHandler;
+import io.micrometer.observation.aop.ObservedKeyValueAnnotationHandler;
 
 import java.lang.annotation.*;
 
@@ -36,8 +36,8 @@ import java.lang.annotation.*;
 @Retention(RetentionPolicy.RUNTIME)
 @Inherited
 @Target({ ElementType.PARAMETER })
-@Repeatable(ObservedKeyValueTags.class)
-public @interface ObservedKeyValueTag {
+@Repeatable(ObservedKeyValues.class)
+public @interface ObservedKeyValue {
 
     /**
      * The name of the key of the tag which should be created. This is an alias for
@@ -56,7 +56,7 @@ public @interface ObservedKeyValueTag {
      * Execute this expression to calculate the tag value. Will be evaluated if no value
      * of the {@link #resolver()} was set. You need to have a
      * {@link ValueExpressionResolver} registered on the
-     * {@link ObservedKeyValueTagAnnotationHandler} to provide the expression resolution
+     * {@link ObservedKeyValueAnnotationHandler} to provide the expression resolution
      * engine.
      * @return an expression
      */

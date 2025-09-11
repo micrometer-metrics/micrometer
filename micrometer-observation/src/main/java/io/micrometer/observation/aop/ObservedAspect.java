@@ -20,7 +20,7 @@ import io.micrometer.observation.ObservationRegistry;
 import io.micrometer.observation.Observations;
 import io.micrometer.observation.annotation.Observed;
 import io.micrometer.observation.ObservationConvention;
-import io.micrometer.observation.annotation.ObservedKeyValueTag;
+import io.micrometer.observation.annotation.ObservedKeyValue;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
@@ -69,9 +69,9 @@ import java.util.function.Predicate;
  * }
  * </pre>
  *
- * To add support for {@link ObservedKeyValueTag} annotations set the *
- * {@link ObservedKeyValueTagAnnotationHandler} via
- * {@link ObservedAspect#setObservedKeyValueTagAnnotationHandler(ObservedKeyValueTagAnnotationHandler)}
+ * To add support for {@link ObservedKeyValue} annotations set the *
+ * {@link ObservedKeyValueAnnotationHandler} via
+ * {@link ObservedAspect#setObservedKeyValueAnnotationHandler(ObservedKeyValueAnnotationHandler)}
  *
  * @author Jonatan Ivanov
  * @author Yanming Zhou
@@ -90,7 +90,7 @@ public class ObservedAspect {
 
     private final Predicate<ProceedingJoinPoint> shouldSkip;
 
-    private @Nullable ObservedKeyValueTagAnnotationHandler observedKeyValueTagAnnotationHandler;
+    private @Nullable ObservedKeyValueAnnotationHandler observedKeyValueAnnotationHandler;
 
     /**
      * Create an {@code ObservedAspect} with {@link Observations#getGlobalRegistry()}.
@@ -150,8 +150,8 @@ public class ObservedAspect {
         Observation observation = ObservedAspectObservationDocumentation.of(pjp, observed, this.registry,
                 this.observationConvention);
 
-        if (observedKeyValueTagAnnotationHandler != null) {
-            observedKeyValueTagAnnotationHandler.addAnnotatedParameters(observation.getContext(), pjp);
+        if (observedKeyValueAnnotationHandler != null) {
+            observedKeyValueAnnotationHandler.addAnnotatedParameters(observation.getContext(), pjp);
         }
 
         if (CompletionStage.class.isAssignableFrom(method.getReturnType())) {
@@ -223,12 +223,12 @@ public class ObservedAspect {
     }
 
     /**
-     * Setting this enables support for {@link ObservedKeyValueTag}.
-     * @param observedKeyValueTagAnnotationHandler annotation handler
+     * Setting this enables support for {@link ObservedKeyValue}.
+     * @param observedKeyValueAnnotationHandler annotation handler
      */
-    public void setObservedKeyValueTagAnnotationHandler(
-            ObservedKeyValueTagAnnotationHandler observedKeyValueTagAnnotationHandler) {
-        this.observedKeyValueTagAnnotationHandler = observedKeyValueTagAnnotationHandler;
+    public void setObservedKeyValueAnnotationHandler(
+            ObservedKeyValueAnnotationHandler observedKeyValueAnnotationHandler) {
+        this.observedKeyValueAnnotationHandler = observedKeyValueAnnotationHandler;
     }
 
 }

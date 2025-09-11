@@ -27,11 +27,11 @@ import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.micrometer.docs.metrics.SpelValueExpressionResolver;
 import io.micrometer.observation.*;
 import io.micrometer.observation.annotation.Observed;
-import io.micrometer.observation.annotation.ObservedKeyValueTag;
-import io.micrometer.observation.annotation.ObservedKeyValueTags;
+import io.micrometer.observation.annotation.ObservedKeyValue;
+import io.micrometer.observation.annotation.ObservedKeyValues;
 import io.micrometer.observation.aop.CardinalityType;
 import io.micrometer.observation.aop.ObservedAspect;
-import io.micrometer.observation.aop.ObservedKeyValueTagAnnotationHandler;
+import io.micrometer.observation.aop.ObservedKeyValueAnnotationHandler;
 import io.micrometer.observation.docs.ObservationDocumentation;
 import io.micrometer.observation.tck.TestObservationRegistry;
 import org.jspecify.annotations.Nullable;
@@ -192,8 +192,8 @@ class ObservationHandlerTests {
         ObservedAspect observedAspect = new ObservedAspect(registry);
         ValueResolver valueResolver = parameter -> "Value from myCustomTagValueResolver [" + parameter + "]";
         ValueExpressionResolver valueExpressionResolver = new SpelValueExpressionResolver();
-        observedAspect.setObservedKeyValueTagAnnotationHandler(
-            new ObservedKeyValueTagAnnotationHandler(
+        observedAspect.setObservedKeyValueAnnotationHandler(
+            new ObservedKeyValueAnnotationHandler(
                 aClass -> valueResolver, aClass -> valueExpressionResolver)
         );
 
@@ -509,10 +509,9 @@ class ObservationHandlerTests {
     static class ObservedServiceWithParameter {
 
         @Observed(name = "test.call")
-        void call(@ObservedKeyValueTags({ @ObservedKeyValueTag(key = "key0", cardinality = CardinalityType.HIGH),
-                @ObservedKeyValueTag(key = "key1"),
-                @ObservedKeyValueTag(key = "key2", expression = "'key2: ' + toUpperCase"),
-                @ObservedKeyValueTag(key = "key3", resolver = ValueResolver.class) }) String param) {
+        void call(@ObservedKeyValues({ @ObservedKeyValue(key = "key0", cardinality = CardinalityType.HIGH),
+                @ObservedKeyValue(key = "key1"), @ObservedKeyValue(key = "key2", expression = "'key2: ' + toUpperCase"),
+                @ObservedKeyValue(key = "key3", resolver = ValueResolver.class) }) String param) {
             System.out.println("call: param=" + param);
         }
 

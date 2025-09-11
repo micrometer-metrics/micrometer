@@ -23,46 +23,45 @@ import io.micrometer.common.annotation.AnnotationHandler;
 import io.micrometer.common.annotation.ValueExpressionResolver;
 import io.micrometer.common.annotation.ValueResolver;
 import io.micrometer.observation.Observation;
-import io.micrometer.observation.annotation.ObservedKeyValueTag;
+import io.micrometer.observation.annotation.ObservedKeyValue;
 
 /**
- * Annotation handler for {@link ObservedKeyValueTag}. To add support for
- * {@link ObservedKeyValueTag} on {@link ObservedAspect} check the
- * {@link ObservedAspect#setObservedKeyValueTagAnnotationHandler(ObservedKeyValueTagAnnotationHandler)}
+ * Annotation handler for {@link ObservedKeyValue}. To add support for
+ * {@link ObservedKeyValue} on {@link ObservedAspect} check the
+ * {@link ObservedAspect#setObservedKeyValueAnnotationHandler(ObservedKeyValueAnnotationHandler)}
  * method.
  *
  * @author Seungyong Hong
  */
-public class ObservedKeyValueTagAnnotationHandler {
+public class ObservedKeyValueAnnotationHandler {
 
     private final AnnotationHandler<Observation.Context> highCardinalityAnnotationHandler;
 
     private final AnnotationHandler<Observation.Context> lowCardinalityAnnotationHandler;
 
     /**
-     * Creates a new instance of {@link ObservedKeyValueTagAnnotationHandler}.
+     * Creates a new instance of {@link ObservedKeyValueAnnotationHandler}.
      * @param resolverProvider function to retrieve a {@link ValueResolver}
      * @param expressionResolverProvider function to retrieve a
      * {@link ValueExpressionResolver}
      */
-    public ObservedKeyValueTagAnnotationHandler(
+    public ObservedKeyValueAnnotationHandler(
             Function<Class<? extends ValueResolver>, ? extends ValueResolver> resolverProvider,
             Function<Class<? extends ValueExpressionResolver>, ? extends ValueExpressionResolver> expressionResolverProvider) {
         this.highCardinalityAnnotationHandler = new AnnotationHandler<>(
                 (keyValue, context) -> context.addHighCardinalityKeyValue(keyValue), resolverProvider,
-                expressionResolverProvider, ObservedKeyValueTag.class, (annotation, object) -> {
-                    ObservedKeyValueTag observedKeyValueTag = (ObservedKeyValueTag) annotation;
+                expressionResolverProvider, ObservedKeyValue.class, (annotation, object) -> {
+                    ObservedKeyValue observedKeyValue = (ObservedKeyValue) annotation;
 
-                    return KeyValue.of(ObservedKeyValueTagSupport.resolveTagKey(observedKeyValueTag),
-                            ObservedKeyValueTagSupport.resolveTagValue(observedKeyValueTag, object, resolverProvider,
-                                    expressionResolverProvider));
+                    return KeyValue.of(ObservedKeyValueSupport.resolveTagKey(observedKeyValue), ObservedKeyValueSupport
+                        .resolveTagValue(observedKeyValue, object, resolverProvider, expressionResolverProvider));
                 }, (annotation, object) -> {
-                    if (annotation.annotationType() != ObservedKeyValueTag.class) {
+                    if (annotation.annotationType() != ObservedKeyValue.class) {
                         return false;
                     }
 
-                    ObservedKeyValueTag observedKeyValueTag = (ObservedKeyValueTag) annotation;
-                    if (observedKeyValueTag.cardinality() != CardinalityType.HIGH) {
+                    ObservedKeyValue observedKeyValue = (ObservedKeyValue) annotation;
+                    if (observedKeyValue.cardinality() != CardinalityType.HIGH) {
                         return false;
                     }
 
@@ -70,19 +69,18 @@ public class ObservedKeyValueTagAnnotationHandler {
                 });
         this.lowCardinalityAnnotationHandler = new AnnotationHandler<>(
                 (keyValue, context) -> context.addLowCardinalityKeyValue(keyValue), resolverProvider,
-                expressionResolverProvider, ObservedKeyValueTag.class, (annotation, object) -> {
-                    ObservedKeyValueTag observedKeyValueTag = (ObservedKeyValueTag) annotation;
+                expressionResolverProvider, ObservedKeyValue.class, (annotation, object) -> {
+                    ObservedKeyValue observedKeyValue = (ObservedKeyValue) annotation;
 
-                    return KeyValue.of(ObservedKeyValueTagSupport.resolveTagKey(observedKeyValueTag),
-                            ObservedKeyValueTagSupport.resolveTagValue(observedKeyValueTag, object, resolverProvider,
-                                    expressionResolverProvider));
+                    return KeyValue.of(ObservedKeyValueSupport.resolveTagKey(observedKeyValue), ObservedKeyValueSupport
+                        .resolveTagValue(observedKeyValue, object, resolverProvider, expressionResolverProvider));
                 }, (annotation, object) -> {
-                    if (annotation.annotationType() != ObservedKeyValueTag.class) {
+                    if (annotation.annotationType() != ObservedKeyValue.class) {
                         return false;
                     }
 
-                    ObservedKeyValueTag observedKeyValueTag = (ObservedKeyValueTag) annotation;
-                    if (observedKeyValueTag.cardinality() != CardinalityType.LOW) {
+                    ObservedKeyValue observedKeyValue = (ObservedKeyValue) annotation;
+                    if (observedKeyValue.cardinality() != CardinalityType.LOW) {
                         return false;
                     }
 

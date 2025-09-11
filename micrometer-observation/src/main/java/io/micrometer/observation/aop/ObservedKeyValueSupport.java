@@ -22,21 +22,20 @@ import io.micrometer.common.annotation.NoOpValueResolver;
 import io.micrometer.common.annotation.ValueExpressionResolver;
 import io.micrometer.common.annotation.ValueResolver;
 import io.micrometer.common.util.StringUtils;
-import io.micrometer.observation.annotation.ObservedKeyValueTag;
+import io.micrometer.observation.annotation.ObservedKeyValue;
 
 /**
- * Support for {@link ObservedKeyValueTag}.
+ * Support for {@link ObservedKeyValue}.
  *
  * @author Seungyong Hong
  */
-public class ObservedKeyValueTagSupport {
+class ObservedKeyValueSupport {
 
-    public static String resolveTagKey(ObservedKeyValueTag observedKeyValueTag) {
-        return StringUtils.isNotBlank(observedKeyValueTag.value()) ? observedKeyValueTag.value()
-                : observedKeyValueTag.key();
+    public static String resolveTagKey(ObservedKeyValue observedKeyValue) {
+        return StringUtils.isNotBlank(observedKeyValue.value()) ? observedKeyValue.value() : observedKeyValue.key();
     }
 
-    public static String resolveTagValue(ObservedKeyValueTag annotation, @Nullable Object argument,
+    public static String resolveTagValue(ObservedKeyValue annotation, @Nullable Object argument,
             Function<Class<? extends ValueResolver>, ? extends ValueResolver> resolverProvider,
             Function<Class<? extends ValueExpressionResolver>, ? extends ValueExpressionResolver> expressionResolverProvider) {
         if (annotation.resolver() != NoOpValueResolver.class) {
