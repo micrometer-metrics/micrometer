@@ -42,8 +42,8 @@ public final class TestObservationRegistry
 
     private final StoringObservationHandler handler = new StoringObservationHandler();
 
-    private TestObservationRegistry() {
-        observationConfig().observationHandler(this.handler).observationHandler(new ObservationValidator());
+    private TestObservationRegistry(Capability... capabilities) {
+        observationConfig().observationHandler(this.handler).observationHandler(new ObservationValidator(capabilities));
     }
 
     /**
@@ -52,6 +52,15 @@ public final class TestObservationRegistry
      */
     public static TestObservationRegistry create() {
         return new TestObservationRegistry();
+    }
+
+    /**
+     * Crates a new instance of mock observation registry.
+     * @param capabilities enables advanced functionalities
+     * @return mock instance of observation registry
+     */
+    public static TestObservationRegistry create(Capability... capabilities) {
+        return new TestObservationRegistry(capabilities);
     }
 
     @Override
@@ -221,6 +230,40 @@ public final class TestObservationRegistry
             return this.contextEvents.stream()
                 .anyMatch(event -> event.getName().equals(name) && event.getContextualName().equals(contextualName));
         }
+
+    }
+
+    public enum Capability {
+
+        /**
+         * Validates that Observations with the same name should have the same set of low
+         * cardinality keys.
+         * <p>
+         * Example 1:
+         * <p>
+         * <pre>
+         * observation{name=test, lowCardinalityKeyValues=[color=red]}
+         * observation{name=test, lowCardinalityKeyValues=[color=green]}
+         * observation{name=test, lowCardinalityKeyValues=[color=blue]}
+         * </pre>
+         * <p>
+         * Example 1 is valid since all the observations with the same name ("test") has
+         * the same set of low cardinality keys ("color").
+         * <p>
+         * Example 2:
+         * <p>
+         * <pre>
+         * observation{name=test, lowCardinalityKeyValues=[color=red]}
+         * observation{name=test, lowCardinalityKeyValues=[]}
+         * observation{name=test, lowCardinalityKeyValues=[status=ok]}
+         * </pre>
+         * <p>
+         * Example 2 is invalid since the second observation is missing a key the first
+         * one has ("color") and the third observation is not only missing a key the first
+         * one has ("color") but it also has an extra key the first one does not have
+         * ("status").
+         */
+        OBSERVATIONS_WITH_THE_SAME_NAME_SHOULD_HAVE_THE_SAME_SET_OF_LOW_CARDINALITY_KEYS
 
     }
 

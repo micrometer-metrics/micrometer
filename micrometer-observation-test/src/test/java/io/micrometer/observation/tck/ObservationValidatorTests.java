@@ -22,6 +22,7 @@ import io.micrometer.observation.Observation.Scope;
 import io.micrometer.observation.ObservationRegistry;
 import org.junit.jupiter.api.Test;
 
+import static io.micrometer.observation.tck.TestObservationRegistry.Capability.OBSERVATIONS_WITH_THE_SAME_NAME_SHOULD_HAVE_THE_SAME_SET_OF_LOW_CARDINALITY_KEYS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -235,22 +236,29 @@ class ObservationValidatorTests {
     }
 
     @Test
+    void observationsWithTheSameNameShouldHaveTheSameSetOfLowCardinalityKeysIsNotValidatedByDefault() {
+        Observation.createNotStarted("test", registry).lowCardinalityKeyValue("key1", "value1").start().stop();
+        Observation.createNotStarted("test", registry).start().stop();
+        Observation.createNotStarted("test", registry).lowCardinalityKeyValue("key2", "value2").start().stop();
+    }
+
+    @Test
     void observationsWithTheSameNameShouldHaveTheSameSetOfLowCardinalityKeys() {
+        TestObservationRegistry registry = TestObservationRegistry
+            .create(OBSERVATIONS_WITH_THE_SAME_NAME_SHOULD_HAVE_THE_SAME_SET_OF_LOW_CARDINALITY_KEYS);
+        Observation.createNotStarted("test", registry).lowCardinalityKeyValue("key1", "value1").start().stop();
         assertThatThrownBy(() -> {
-            Observation.createNotStarted("test", registry).lowCardinalityKeyValue("key1", "value1").start().stop();
             Observation.createNotStarted("test", registry).start().stop();
         }).isExactlyInstanceOf(InvalidObservationException.class)
             .hasMessageContaining(
                     "Metrics backends may require that all observations with the same name have the same set of low cardinality keys.");
 
         assertThatThrownBy(() -> {
-            Observation.createNotStarted("test", registry).lowCardinalityKeyValue("key1", "value1").start().stop();
             Observation.createNotStarted("test", registry).lowCardinalityKeyValue("key2", "value2").start().stop();
         }).isExactlyInstanceOf(InvalidObservationException.class)
             .hasMessageContaining(
                     "Metrics backends may require that all observations with the same name have the same set of low cardinality keys.");
 
-        Observation.createNotStarted("test", registry).lowCardinalityKeyValue("key1", "value1").start().stop();
         Observation.createNotStarted("test", registry).lowCardinalityKeyValue("key1", "value2").start().stop();
     }
 

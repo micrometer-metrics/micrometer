@@ -30,6 +30,9 @@ import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import static io.micrometer.observation.tck.TestObservationRegistry.Capability;
+import static io.micrometer.observation.tck.TestObservationRegistry.Capability.OBSERVATIONS_WITH_THE_SAME_NAME_SHOULD_HAVE_THE_SAME_SET_OF_LOW_CARDINALITY_KEYS;
+
 /**
  * An {@link ObservationHandler} that validates the order of events of an Observation (for
  * example stop should be called after start) and with a validation message and the
@@ -46,18 +49,13 @@ class ObservationValidator implements ObservationHandler<Context> {
 
     private final Map<String, Set<String>> lowCardinalityKeys;
 
-    ObservationValidator() {
-        this(ObservationValidator::throwInvalidObservationException);
-    }
+    private final Set<Capability> capabilities;
 
-    ObservationValidator(Consumer<ValidationResult> consumer) {
-        this(consumer, context -> !(context instanceof NullContext));
-    }
-
-    ObservationValidator(Consumer<ValidationResult> consumer, Predicate<Context> supportsContextPredicate) {
-        this.consumer = consumer;
-        this.supportsContextPredicate = supportsContextPredicate;
+    ObservationValidator(Capability... capabilities) {
+        this.consumer = ObservationValidator::throwInvalidObservationException;
+        this.supportsContextPredicate = context -> !(context instanceof NullContext);
         this.lowCardinalityKeys = new HashMap<>();
+        this.capabilities = new HashSet<>(Arrays.asList(capabilities));
     }
 
     @Override
@@ -113,7 +111,9 @@ class ObservationValidator implements ObservationHandler<Context> {
         if (status != null) {
             status.markStopped();
         }
-        checkIfObservationsWithTheSameNameHaveTheSameSetOfLowCardinalityKeys(context);
+        if (capabilities.contains(OBSERVATIONS_WITH_THE_SAME_NAME_SHOULD_HAVE_THE_SAME_SET_OF_LOW_CARDINALITY_KEYS)) {
+            checkIfObservationsWithTheSameNameHaveTheSameSetOfLowCardinalityKeys(context);
+        }
     }
 
     @Override
