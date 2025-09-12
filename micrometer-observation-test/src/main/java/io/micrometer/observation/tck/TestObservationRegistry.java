@@ -51,7 +51,7 @@ public final class TestObservationRegistry
      * @return mock instance of observation registry
      */
     public static TestObservationRegistry create() {
-        return new TestObservationRegistry();
+        return new TestObservationRegistry(Capability.values());
     }
 
     /**
@@ -263,7 +263,9 @@ public final class TestObservationRegistry
          * one has ("color") but it also has an extra key the first one does not have
          * ("status").
          */
-        OBSERVATIONS_WITH_THE_SAME_NAME_SHOULD_HAVE_THE_SAME_SET_OF_LOW_CARDINALITY_KEYS
+        OBSERVATIONS_WITH_THE_SAME_NAME_SHOULD_HAVE_THE_SAME_SET_OF_LOW_CARDINALITY_KEYS;
+
+        public static final Capability[] ALL_CAPABILITIES_DISABLED = new Capability[0];
 
     }
 
