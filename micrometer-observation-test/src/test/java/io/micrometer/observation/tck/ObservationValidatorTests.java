@@ -22,6 +22,7 @@ import io.micrometer.observation.Observation.Scope;
 import io.micrometer.observation.ObservationRegistry;
 import org.junit.jupiter.api.Test;
 
+import static io.micrometer.observation.tck.TestObservationRegistry.Capability.ALL_CAPABILITIES_DISABLED;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -232,6 +233,32 @@ class ObservationValidatorTests {
     @Test
     void nullObservationShouldBeIgnored() {
         new NullObservation(registry).openScope();
+    }
+
+    @Test
+    void capabilitiesCanBeDisabled() {
+        TestObservationRegistry registry = TestObservationRegistry.create(ALL_CAPABILITIES_DISABLED);
+        Observation.createNotStarted("test", registry).lowCardinalityKeyValue("key1", "value1").start().stop();
+        Observation.createNotStarted("test", registry).start().stop();
+        Observation.createNotStarted("test", registry).lowCardinalityKeyValue("key2", "value2").start().stop();
+    }
+
+    @Test
+    void observationsWithTheSameNameShouldHaveTheSameSetOfLowCardinalityKeys() {
+        Observation.createNotStarted("test", registry).lowCardinalityKeyValue("key1", "value1").start().stop();
+        assertThatThrownBy(() -> {
+            Observation.createNotStarted("test", registry).start().stop();
+        }).isExactlyInstanceOf(InvalidObservationException.class)
+            .hasMessageContaining(
+                    "Metrics backends may require that all observations with the same name have the same set of low cardinality keys.");
+
+        assertThatThrownBy(() -> {
+            Observation.createNotStarted("test", registry).lowCardinalityKeyValue("key2", "value2").start().stop();
+        }).isExactlyInstanceOf(InvalidObservationException.class)
+            .hasMessageContaining(
+                    "Metrics backends may require that all observations with the same name have the same set of low cardinality keys.");
+
+        Observation.createNotStarted("test", registry).lowCardinalityKeyValue("key1", "value2").start().stop();
     }
 
 }
