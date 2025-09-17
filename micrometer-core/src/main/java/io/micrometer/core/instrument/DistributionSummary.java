@@ -244,7 +244,7 @@ public interface DistributionSummary extends Meter, HistogramSupport {
          * then.
          */
         @Deprecated
-        public Builder sla(@Nullable long... sla) {
+        public Builder sla(long @Nullable ... sla) {
             return sla == null ? this : serviceLevelObjectives(Arrays.stream(sla).asDoubleStream().toArray());
         }
 
@@ -266,7 +266,7 @@ public interface DistributionSummary extends Meter, HistogramSupport {
          * then.
          */
         @Deprecated
-        public Builder sla(@Nullable double... sla) {
+        public Builder sla(double @Nullable ... sla) {
             this.distributionConfigBuilder.serviceLevelObjectives(sla);
             return this;
         }

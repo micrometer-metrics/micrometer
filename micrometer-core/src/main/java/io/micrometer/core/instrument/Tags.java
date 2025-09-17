@@ -322,7 +322,7 @@ public final class Tags implements Iterable<Tag> {
      * @param keyValues the additional key/value pairs to add, elements mustn't be null
      * @return the merged tags
      */
-    public static Tags concat(@Nullable Iterable<? extends Tag> tags, @Nullable String... keyValues) {
+    public static Tags concat(@Nullable Iterable<? extends Tag> tags, String @Nullable ... keyValues) {
         return Tags.of(tags).and(keyValues);
     }
 
