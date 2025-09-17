@@ -22,35 +22,44 @@ import io.micrometer.common.annotation.NoOpValueResolver;
 import io.micrometer.common.annotation.ValueExpressionResolver;
 import io.micrometer.common.annotation.ValueResolver;
 import io.micrometer.common.util.StringUtils;
-import io.micrometer.observation.annotation.ObservedKeyValue;
+import io.micrometer.observation.annotation.ObservationKeyValue;
 
 /**
- * Support for {@link ObservedKeyValue}.
+ * Support for {@link ObservationKeyValue}.
  *
  * @author Seungyong Hong
  */
-class ObservedKeyValueSupport {
+class ObservationKeyValueSupport {
 
-    public static String resolveTagKey(ObservedKeyValue observedKeyValue) {
-        return StringUtils.isNotBlank(observedKeyValue.value()) ? observedKeyValue.value() : observedKeyValue.key();
+    private ObservationKeyValueSupport() {
     }
 
-    public static String resolveTagValue(ObservedKeyValue annotation, @Nullable Object argument,
+    public static String resolveTagKey(ObservationKeyValue observationKeyValue) {
+        return StringUtils.isNotBlank(observationKeyValue.value()) ? observationKeyValue.value()
+                : observationKeyValue.key();
+    }
+
+    /**
+     * Similar to MeterTagSupport.resolveTagValue. The two logics are similar, so if one
+     * is modified, it looks good to be modified together.
+     */
+    public static String resolveTagValue(ObservationKeyValue annotation, @Nullable Object argument,
             Function<Class<? extends ValueResolver>, ? extends ValueResolver> resolverProvider,
             Function<Class<? extends ValueExpressionResolver>, ? extends ValueExpressionResolver> expressionResolverProvider) {
+        String value = null;
         if (annotation.resolver() != NoOpValueResolver.class) {
             ValueResolver valueResolver = resolverProvider.apply(annotation.resolver());
-            return valueResolver.resolve(argument);
+            value = valueResolver.resolve(argument);
         }
         else if (StringUtils.isNotBlank(annotation.expression())) {
-            return expressionResolverProvider.apply(ValueExpressionResolver.class)
+            value = expressionResolverProvider.apply(ValueExpressionResolver.class)
                 .resolve(annotation.expression(), argument);
         }
         else if (argument != null) {
-            return argument.toString();
+            value = argument.toString();
         }
 
-        return "";
+        return value == null ? "" : value;
     }
 
 }

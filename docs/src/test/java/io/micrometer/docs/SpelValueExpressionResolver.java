@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.docs.metrics;
+package io.micrometer.docs;
 
 import io.micrometer.common.annotation.ValueExpressionResolver;
 import io.micrometer.common.util.internal.logging.InternalLogger;

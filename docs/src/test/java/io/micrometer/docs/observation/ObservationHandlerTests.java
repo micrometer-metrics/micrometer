@@ -24,14 +24,14 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.observation.DefaultMeterObservationHandler;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-import io.micrometer.docs.metrics.SpelValueExpressionResolver;
+import io.micrometer.docs.SpelValueExpressionResolver;
 import io.micrometer.observation.*;
 import io.micrometer.observation.annotation.Observed;
-import io.micrometer.observation.annotation.ObservedKeyValue;
-import io.micrometer.observation.annotation.ObservedKeyValues;
+import io.micrometer.observation.annotation.ObservationKeyValue;
+import io.micrometer.observation.annotation.ObservationKeyValues;
 import io.micrometer.observation.aop.CardinalityType;
 import io.micrometer.observation.aop.ObservedAspect;
-import io.micrometer.observation.aop.ObservedKeyValueAnnotationHandler;
+import io.micrometer.observation.aop.ObservationKeyValueAnnotationHandler;
 import io.micrometer.observation.docs.ObservationDocumentation;
 import io.micrometer.observation.tck.TestObservationRegistry;
 import org.jspecify.annotations.Nullable;
@@ -192,8 +192,8 @@ class ObservationHandlerTests {
         ObservedAspect observedAspect = new ObservedAspect(registry);
         ValueResolver valueResolver = parameter -> "Value from myCustomTagValueResolver [" + parameter + "]";
         ValueExpressionResolver valueExpressionResolver = new SpelValueExpressionResolver();
-        observedAspect.setObservedKeyValueAnnotationHandler(
-            new ObservedKeyValueAnnotationHandler(
+        observedAspect.setObservationKeyValueAnnotationHandler(
+            new ObservationKeyValueAnnotationHandler(
                 aClass -> valueResolver, aClass -> valueExpressionResolver)
         );
 
@@ -209,9 +209,10 @@ class ObservationHandlerTests {
                 .hasBeenStopped()
                 .hasNameEqualTo("test.call")
                 .hasHighCardinalityKeyValue("key0", "foo")
-                .hasLowCardinalityKeyValue("key1", "foo")
-                .hasLowCardinalityKeyValue("key2", "key2: FOO")
-                .hasLowCardinalityKeyValue("key3", "Value from myCustomTagValueResolver [foo]")
+                .hasHighCardinalityKeyValue("key1", "foo")
+                .hasHighCardinalityKeyValue("key2", "key2: FOO")
+                .hasHighCardinalityKeyValue("key3", "Value from myCustomTagValueResolver [foo]")
+                .hasLowCardinalityKeyValue("key4", "foo")
                 .doesNotHaveError();
         // end::observed_aop_with_parameter[]
         // @formatter:on
@@ -509,10 +510,12 @@ class ObservationHandlerTests {
     static class ObservedServiceWithParameter {
 
         @Observed(name = "test.call")
-        void call(@ObservedKeyValues({ @ObservedKeyValue(key = "key0", cardinality = CardinalityType.HIGH),
-                @ObservedKeyValue(key = "key1"), @ObservedKeyValue(key = "key2", expression = "'key2: ' + toUpperCase"),
-                @ObservedKeyValue(key = "key3", resolver = ValueResolver.class) }) String param) {
-            System.out.println("call: param=" + param);
+        @ObservationKeyValue(key = "key4", cardinality = CardinalityType.LOW)
+        String call(@ObservationKeyValues({ @ObservationKeyValue(key = "key0", cardinality = CardinalityType.HIGH),
+                @ObservationKeyValue(key = "key1"),
+                @ObservationKeyValue(key = "key2", expression = "'key2: ' + toUpperCase"),
+                @ObservationKeyValue(key = "key3", resolver = ValueResolver.class) }) String param) {
+            return param;
         }
 
     }

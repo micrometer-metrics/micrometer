@@ -75,12 +75,7 @@ public class AnnotationHandler<T> {
             Function<Class<? extends ValueResolver>, ? extends ValueResolver> resolverProvider,
             Function<Class<? extends ValueExpressionResolver>, ? extends ValueExpressionResolver> expressionResolverProvider,
             Class<? extends Annotation> annotation, BiFunction<Annotation, Object, KeyValue> toKeyValue) {
-        this.keyValueConsumer = keyValueConsumer;
-        this.resolverProvider = resolverProvider;
-        this.expressionResolverProvider = expressionResolverProvider;
-        this.annotationClass = annotation;
-        this.toKeyValue = toKeyValue;
-        this.validToAdd = (a, o) -> true;
+        this(keyValueConsumer, resolverProvider, expressionResolverProvider, annotation, toKeyValue, (a, o) -> true);
     }
 
     /**
@@ -92,9 +87,9 @@ public class AnnotationHandler<T> {
      * @param expressionResolverProvider function converting a class extending a
      * {@link ValueExpressionResolver} to an instance of that class
      * @param annotation annotation containing {@link KeyValue} related information
-     * @param toKeyValue function converting the annotation and the expression or
+     * @param toKeyValue function converting the annotation and the expression or value to
+     * a {@link KeyValue}
      * @param validToAdd predicate that determines if the annotation and the annotation
-     * value to a {@link KeyValue}
      */
     public AnnotationHandler(BiConsumer<KeyValue, T> keyValueConsumer,
             Function<Class<? extends ValueResolver>, ? extends ValueResolver> resolverProvider,

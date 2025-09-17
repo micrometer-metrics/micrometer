@@ -2,12 +2,6 @@ buildscript {
     ext.javaLanguageVersion = JavaLanguageVersion.of(JavaVersion.current().isJava11Compatible() ? JavaVersion.current().getMajorVersion() : 17)
     ext.javaTargetVersion = JavaVersion.VERSION_1_8
 
-    allprojects {
-        configurations.configureEach {
-            resolutionStrategy.preferProjectModules()
-        }
-    }
-
     repositories {
         mavenCentral()
         gradlePluginPortal()
@@ -89,38 +83,38 @@ subprojects {
                 excludedPaths = ".*/build/generated/.*"
 
                 disable(
-                        "StringConcatToTextBlock" // Requires JDK 15+
+                    "StringConcatToTextBlock" // Requires JDK 15+
                 )
 
                 error(
-                        "AlmostJavadoc",
-                        "ArrayAsKeyOfSetOrMap",
-                        "AttemptedNegativeZero",
-                        "BadImport",
-                        "CatchAndPrintStackTrace",
-                        "ClassCanBeStatic",
-                        "CollectionUndefinedEquality",
-                        "DefaultCharset",
-                        "DoNotCallSuggester",
-                        "EnumOrdinal",
-                        "EqualsGetClass",
-                        "FallThrough",
-                        "Finally",
-                        "InlineFormatString",
-                        "LongDoubleConversion",
-                        "MissingOverride",
-                        "MixedMutabilityReturnType",
-                        "ModifyCollectionInEnhancedForLoop",
-                        "MutablePublicArray",
-                        "NarrowCalculation",
-                        "NullAway",
-                        "OperatorPrecedence",
-                        "StringCaseLocaleUsage",
-                        "StringSplitter",
-                        "UnnecessaryAsync",
-                        "UnnecessaryParentheses",
-                        "UnusedMethod",
-                        "URLEqualsHashCode"
+                    "AlmostJavadoc",
+                    "ArrayAsKeyOfSetOrMap",
+                    "AttemptedNegativeZero",
+                    "BadImport",
+                    "CatchAndPrintStackTrace",
+                    "ClassCanBeStatic",
+                    "CollectionUndefinedEquality",
+                    "DefaultCharset",
+                    "DoNotCallSuggester",
+                    "EnumOrdinal",
+                    "EqualsGetClass",
+                    "FallThrough",
+                    "Finally",
+                    "InlineFormatString",
+                    "LongDoubleConversion",
+                    "MissingOverride",
+                    "MixedMutabilityReturnType",
+                    "ModifyCollectionInEnhancedForLoop",
+                    "MutablePublicArray",
+                    "NarrowCalculation",
+                    "NullAway",
+                    "OperatorPrecedence",
+                    "StringCaseLocaleUsage",
+                    "StringSplitter",
+                    "UnnecessaryAsync",
+                    "UnnecessaryParentheses",
+                    "UnusedMethod",
+                    "URLEqualsHashCode"
                 )
 
                 option("NullAway:OnlyNullMarked", "true")

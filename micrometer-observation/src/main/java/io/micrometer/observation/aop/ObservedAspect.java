@@ -20,7 +20,7 @@ import io.micrometer.observation.ObservationRegistry;
 import io.micrometer.observation.Observations;
 import io.micrometer.observation.annotation.Observed;
 import io.micrometer.observation.ObservationConvention;
-import io.micrometer.observation.annotation.ObservedKeyValue;
+import io.micrometer.observation.annotation.ObservationKeyValue;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
@@ -69,9 +69,9 @@ import java.util.function.Predicate;
  * }
  * </pre>
  *
- * To add support for {@link ObservedKeyValue} annotations set the *
- * {@link ObservedKeyValueAnnotationHandler} via
- * {@link ObservedAspect#setObservedKeyValueAnnotationHandler(ObservedKeyValueAnnotationHandler)}
+ * To add support for {@link ObservationKeyValue} annotations set the
+ * {@link ObservationKeyValueAnnotationHandler} via
+ * {@link ObservedAspect#setObservationKeyValueAnnotationHandler(ObservationKeyValueAnnotationHandler)}
  *
  * @author Jonatan Ivanov
  * @author Yanming Zhou
@@ -90,7 +90,7 @@ public class ObservedAspect {
 
     private final Predicate<ProceedingJoinPoint> shouldSkip;
 
-    private @Nullable ObservedKeyValueAnnotationHandler observedKeyValueAnnotationHandler;
+    private @Nullable ObservationKeyValueAnnotationHandler observationKeyValueAnnotationHandler;
 
     /**
      * Create an {@code ObservedAspect} with {@link Observations#getGlobalRegistry()}.
@@ -150,8 +150,8 @@ public class ObservedAspect {
         Observation observation = ObservedAspectObservationDocumentation.of(pjp, observed, this.registry,
                 this.observationConvention);
 
-        if (observedKeyValueAnnotationHandler != null) {
-            observedKeyValueAnnotationHandler.addAnnotatedParameters(observation.getContext(), pjp);
+        if (observationKeyValueAnnotationHandler != null) {
+            observationKeyValueAnnotationHandler.addAnnotatedParameters(observation.getContext(), pjp);
         }
 
         if (CompletionStage.class.isAssignableFrom(method.getReturnType())) {
@@ -159,17 +159,18 @@ public class ObservedAspect {
             Observation.Scope scope = observation.openScope();
             try {
                 Object result = pjp.proceed();
+
                 if (result == null) {
-                    stopObservation(observation, scope, null);
+                    stopObservation(observation, scope, null, pjp, null);
                     return result;
                 }
                 else {
                     CompletionStage<?> stage = (CompletionStage<?>) result;
-                    return stage.whenComplete((res, error) -> stopObservation(observation, scope, error));
+                    return stage.whenComplete((res, error) -> stopObservation(observation, scope, error, pjp, res));
                 }
             }
             catch (Throwable error) {
-                stopObservation(observation, scope, error);
+                stopObservation(observation, scope, error, pjp, null);
                 throw error;
             }
             finally {
@@ -177,7 +178,16 @@ public class ObservedAspect {
             }
         }
         else {
-            return observation.observeChecked(() -> pjp.proceed());
+            return observation.observeChecked(() -> {
+                Object result = pjp.proceed();
+
+                if (observationKeyValueAnnotationHandler != null) {
+                    observationKeyValueAnnotationHandler.addAnnotatedMethodResult(observation.getContext(), pjp,
+                            result);
+                }
+
+                return result;
+            });
         }
     }
 
@@ -200,7 +210,12 @@ public class ObservedAspect {
         return method;
     }
 
-    private void stopObservation(Observation observation, Observation.Scope scope, @Nullable Throwable error) {
+    private void stopObservation(Observation observation, Observation.Scope scope, @Nullable Throwable error,
+            ProceedingJoinPoint pjp, @Nullable Object result) {
+        if (observationKeyValueAnnotationHandler != null) {
+            observationKeyValueAnnotationHandler.addAnnotatedMethodResult(observation.getContext(), pjp, result);
+        }
+
         if (error != null) {
             observation.error(error);
         }
@@ -223,12 +238,12 @@ public class ObservedAspect {
     }
 
     /**
-     * Setting this enables support for {@link ObservedKeyValue}.
-     * @param observedKeyValueAnnotationHandler annotation handler
+     * Setting this enables support for {@link ObservationKeyValue}.
+     * @param observationKeyValueAnnotationHandler annotation handler
      */
-    public void setObservedKeyValueAnnotationHandler(
-            ObservedKeyValueAnnotationHandler observedKeyValueAnnotationHandler) {
-        this.observedKeyValueAnnotationHandler = observedKeyValueAnnotationHandler;
+    public void setObservationKeyValueAnnotationHandler(
+            ObservationKeyValueAnnotationHandler observationKeyValueAnnotationHandler) {
+        this.observationKeyValueAnnotationHandler = observationKeyValueAnnotationHandler;
     }
 
 }

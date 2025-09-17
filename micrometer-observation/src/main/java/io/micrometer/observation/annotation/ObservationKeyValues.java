@@ -18,21 +18,21 @@ package io.micrometer.observation.annotation;
 import java.lang.annotation.*;
 
 /**
- * Container annotation that aggregates several {@link ObservedKeyValue} annotations.
+ * Container annotation that aggregates several {@link ObservationKeyValue} annotations.
  *
- * Can be used natively, declaring several nested {@link ObservedKeyValue} annotations.
+ * Can be used natively, declaring several nested {@link ObservationKeyValue} annotations.
  * Can also be used in conjunction with Java 8's support for repeatable annotations, where
- * {@link ObservedKeyValue} can simply be declared several times on the same parameter,
+ * {@link ObservationKeyValue} can simply be declared several times on the same parameter,
  * implicitly generating this container annotation.
  *
  * @author Seungyong Hong
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Inherited
-@Target({ ElementType.PARAMETER })
+@Target({ ElementType.PARAMETER, ElementType.METHOD })
 @Documented
-public @interface ObservedKeyValues {
+public @interface ObservationKeyValues {
 
-    ObservedKeyValue[] value();
+    ObservationKeyValue[] value();
 
 }

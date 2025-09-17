@@ -28,13 +28,21 @@ import java.util.function.Function;
  *
  * @author Marcin Grzejszczak
  * @author Johnny Lim
+ * @author Seungyong Hong
  */
 final class MeterTagSupport {
+
+    private MeterTagSupport() {
+    }
 
     static String resolveTagKey(MeterTag annotation) {
         return StringUtils.isNotBlank(annotation.value()) ? annotation.value() : annotation.key();
     }
 
+    /**
+     * Similar to ObservationKeyValueSupport.resolveTagValue. The two logics are similar,
+     * so if one is modified, it looks good to be modified together.
+     */
     static String resolveTagValue(MeterTag annotation, @Nullable Object argument,
             Function<Class<? extends ValueResolver>, ? extends ValueResolver> resolverProvider,
             Function<Class<? extends ValueExpressionResolver>, ? extends ValueExpressionResolver> expressionResolverProvider) {

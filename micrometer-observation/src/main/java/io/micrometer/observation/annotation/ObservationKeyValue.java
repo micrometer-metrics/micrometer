@@ -19,59 +19,59 @@ import io.micrometer.common.annotation.NoOpValueResolver;
 import io.micrometer.common.annotation.ValueExpressionResolver;
 import io.micrometer.common.annotation.ValueResolver;
 import io.micrometer.observation.aop.CardinalityType;
-import io.micrometer.observation.aop.ObservedKeyValueAnnotationHandler;
+import io.micrometer.observation.aop.ObservationKeyValueAnnotationHandler;
 
 import java.lang.annotation.*;
 
 /**
- * There are 3 different ways to add tags to an observation. All of them are controlled by
- * the annotation values. Precedence is to first try with the {@link ValueResolver}. If
- * the value of the resolver wasn't set, try to evaluate an expression. If there’s no
- * expression just return a {@code toString()} value of the parameter. Cardinality type
- * also can be set by {@link CardinalityType}. default value is
- * {@link CardinalityType#LOW}.
+ * There are 3 different ways to add key-values to an observation. All of them are
+ * controlled by the annotation values. Precedence is to first try with the
+ * {@link ValueResolver}. If the value of the resolver wasn't set, try to evaluate an
+ * expression. If there’s no expression just return a {@code toString()} value of the
+ * parameter. Cardinality type also can be set by {@link CardinalityType}. default value
+ * is {@link CardinalityType#HIGH}.
  *
  * @author Seungyong Hong
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Inherited
-@Target({ ElementType.PARAMETER })
-@Repeatable(ObservedKeyValues.class)
-public @interface ObservedKeyValue {
+@Target({ ElementType.PARAMETER, ElementType.METHOD })
+@Repeatable(ObservationKeyValues.class)
+public @interface ObservationKeyValue {
 
     /**
-     * The name of the key of the tag which should be created. This is an alias for
+     * The name of the key of the key-value which should be created. This is an alias for
      * {@link #key()}.
-     * @return the tag key name
+     * @return the key-value key name
      */
     String value() default "";
 
     /**
-     * The name of the key of the tag which should be created.
-     * @return the tag key name
+     * The name of the key of the key-value which should be created.
+     * @return the key-value key name
      */
     String key() default "";
 
     /**
-     * Execute this expression to calculate the tag value. Will be evaluated if no value
-     * of the {@link #resolver()} was set. You need to have a
+     * Execute this expression to calculate the key-value value. Will be evaluated if no
+     * value of the {@link #resolver()} was set. You need to have a
      * {@link ValueExpressionResolver} registered on the
-     * {@link ObservedKeyValueAnnotationHandler} to provide the expression resolution
+     * {@link ObservationKeyValueAnnotationHandler} to provide the expression resolution
      * engine.
      * @return an expression
      */
     String expression() default "";
 
     /**
-     * Use this object to resolve the tag value. Has the highest precedence.
+     * Use this object to resolve the key-value value. Has the highest precedence.
      * @return {@link ValueResolver} class
      */
     Class<? extends ValueResolver> resolver() default NoOpValueResolver.class;
 
     /**
-     * Cardinality type of the tag.
+     * Cardinality type of the key-value.
      * @return {@link CardinalityType} class
      */
-    CardinalityType cardinality() default CardinalityType.LOW;
+    CardinalityType cardinality() default CardinalityType.HIGH;
 
 }
