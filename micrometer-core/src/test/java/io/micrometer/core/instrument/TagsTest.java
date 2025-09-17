@@ -147,7 +147,7 @@ class TagsTest {
     @Test
     void concatWhenKeyValuesAreNullShouldReturnCurrentInstance() {
         Tags source = Tags.of("k", "v1");
-        Tags concatenated = Tags.concat(source, (String) null);
+        Tags concatenated = Tags.concat(source, (String[]) null);
         assertThat(source).isSameAs(concatenated);
     }
 
