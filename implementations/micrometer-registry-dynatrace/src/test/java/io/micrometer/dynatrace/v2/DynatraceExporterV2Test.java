@@ -737,7 +737,7 @@ class DynatraceExporterV2Test {
         verify(builder).withPlainText(assertArg(body -> {
             assertThat(body.split("\n")).containsExactly(
                     "my.count,dt.metrics.source=micrometer count,delta=5.234 " + clock.wallTime(),
-                    "#my.count count dt.meta.description=count\\ description,dt.meta.unit=Bytes");
+                    "#my.count count dt.meta.description=\"count description\",dt.meta.unit=Bytes");
         }));
     }
 
@@ -936,7 +936,7 @@ class DynatraceExporterV2Test {
         assertThat(firstReqLines).containsExactly(
                 "my.count,dt.metrics.source=micrometer count,delta=5.234 " + clock.wallTime(),
                 "my.gauge,dt.metrics.source=micrometer gauge,1.23 " + clock.wallTime(),
-                "#my.count count dt.meta.description=count\\ description,dt.meta.unit=Bytes");
+                "#my.count count dt.meta.description=\"count description\",dt.meta.unit=Bytes");
 
         // the second request will contain the leftover metadata line
         assertThat(secondReqLines)
@@ -971,7 +971,7 @@ class DynatraceExporterV2Test {
                             + clock.wallTime(),
                     "my.count,dt.metrics.source=micrometer,counter-number=counter2 count,delta=2.345 "
                             + clock.wallTime(),
-                    "#my.count count dt.meta.description=count\\ description,dt.meta.unit=Bytes");
+                    "#my.count count dt.meta.description=\"count description\",dt.meta.unit=Bytes");
         }));
     }
 
