@@ -170,6 +170,26 @@ class ObservedAspectTests {
     }
 
     @Test
+    void observationShouldNotLeakToFutureCompletionThread() {
+        registry.observationConfig().observationHandler(new ObservationTextPublisher());
+
+        AspectJProxyFactory pf = new AspectJProxyFactory(new ObservedService());
+        pf.addAspect(new ObservedAspect(registry));
+
+        ObservedService service = pf.getProxy();
+        FakeAsyncTask fakeAsyncTask = new FakeAsyncTask("test-result");
+        Executor sameThreadExecutor = new ThreadPoolExecutor(1, 1, 60, TimeUnit.SECONDS, new LinkedBlockingQueue<>());
+        CompletableFuture<String> asyncResult = service
+            .parent(() -> service.asyncChild(fakeAsyncTask, sameThreadExecutor));
+        CompletableFuture<Void> asyncAssertion = asyncResult
+            .thenRunAsync(() -> assertThat(registry).doesNotHaveAnyRemainingCurrentObservation(), sameThreadExecutor);
+        fakeAsyncTask.proceed();
+        fakeAsyncTask.get();
+
+        assertThat(asyncAssertion).succeedsWithin(Duration.ofMillis(200));
+    }
+
+    @Test
     void customObservationConventionShouldBeUsed() {
         registry.observationConfig().observationHandler(new ObservationTextPublisher());
 
@@ -399,6 +419,18 @@ class ObservedAspectTests {
                 .captureAll();
             return CompletableFuture.supplyAsync(fakeAsyncTask,
                     contextSnapshot.wrapExecutor(Executors.newSingleThreadExecutor()));
+        }
+
+        @Observed(name = "test.async-child")
+        CompletableFuture<String> asyncChild(FakeAsyncTask fakeAsyncTask, Executor singleThreadExecutor) {
+            System.out.println("async-child");
+            return CompletableFuture.supplyAsync(fakeAsyncTask, singleThreadExecutor);
+        }
+
+        @Observed(name = "test.parent")
+        <T> T parent(Supplier<T> supplier) {
+            System.out.println("parent");
+            return supplier.get();
         }
 
     }
