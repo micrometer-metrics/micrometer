@@ -19,6 +19,7 @@ import io.micrometer.observation.Observation;
 import io.micrometer.observation.Observation.Context;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -37,6 +38,10 @@ public class InvalidObservationException extends RuntimeException {
 
     private final List<HistoryElement> history;
 
+    InvalidObservationException(String message, Context context) {
+        this(message, context, Collections.emptyList());
+    }
+
     InvalidObservationException(String message, Context context, List<HistoryElement> history) {
         super(message);
         this.context = context;
@@ -53,8 +58,13 @@ public class InvalidObservationException extends RuntimeException {
 
     @Override
     public String toString() {
-        return super.toString() + "\n"
-                + history.stream().map(HistoryElement::toString).collect(Collectors.joining("\n"));
+        if (history.isEmpty()) {
+            return super.toString();
+        }
+        else {
+            return super.toString() + "\n"
+                    + history.stream().map(HistoryElement::toString).collect(Collectors.joining("\n"));
+        }
     }
 
     public static class HistoryElement {
