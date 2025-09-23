@@ -64,7 +64,10 @@ public class TimeWindowPercentileHistogram extends AbstractTimeWindowHistogram<D
     protected TimeWindowPercentileHistogram(Clock clock, DistributionStatisticConfig distributionStatisticConfig,
             boolean supportsAggregablePercentiles, boolean isCumulativeBucketCounts, boolean includeInfinityBucket) {
         super(clock, distributionStatisticConfig, DoubleRecorder.class);
-        intervalHistogram = new DoubleHistogram(percentilePrecision(distributionStatisticConfig));
+        intervalHistogram = new DoubleHistogram(computeHighestToLowestValueRatio(distributionStatisticConfig),
+            percentilePrecision(distributionStatisticConfig));
+        intervalHistogram.setAutoResize(true);
+
         this.isCumulativeBucketCounts = isCumulativeBucketCounts;
 
         Set<Double> monitoredBuckets = distributionStatisticConfig.getHistogramBuckets(supportsAggregablePercentiles);
@@ -80,7 +83,8 @@ public class TimeWindowPercentileHistogram extends AbstractTimeWindowHistogram<D
 
     @Override
     DoubleRecorder newBucket() {
-        return new DoubleRecorder(percentilePrecision(distributionStatisticConfig));
+        return new DoubleRecorder(computeHighestToLowestValueRatio(distributionStatisticConfig),
+            percentilePrecision(distributionStatisticConfig));
     }
 
     @Override
@@ -100,7 +104,8 @@ public class TimeWindowPercentileHistogram extends AbstractTimeWindowHistogram<D
 
     @Override
     DoubleHistogram newAccumulatedHistogram(DoubleRecorder[] ringBuffer) {
-        return new DoubleHistogram(percentilePrecision(distributionStatisticConfig));
+        return new DoubleHistogram(computeHighestToLowestValueRatio(distributionStatisticConfig),
+            percentilePrecision(distributionStatisticConfig));
     }
 
     @Override
@@ -141,6 +146,27 @@ public class TimeWindowPercentileHistogram extends AbstractTimeWindowHistogram<D
 
     private int percentilePrecision(DistributionStatisticConfig config) {
         return config.getPercentilePrecision() == null ? 1 : config.getPercentilePrecision();
+    }
+
+    /**
+     * Compute the highestToLowestValueRatio based on the configured min/max expected values.
+     * This allows HdrHistogram to cover the expected range without frequent resizing.
+     *
+     * @param config The distribution statistic configuration
+     * @return The computed ratio, or 2 if not enough information is available
+     */
+    private long computeHighestToLowestValueRatio(DistributionStatisticConfig config) {
+        Double min = config.getMinimumExpectedValueAsDouble();
+        Double max = config.getMaximumExpectedValueAsDouble();
+
+        // Only compute ratio if both min and max are explicitly set and finite
+        if (min != null && max != null && min > 0 && max > min && !Double.isInfinite(max)) {
+            // Compute the ratio, ensuring it's at least 2
+            long ratio = (long) Math.ceil(max / min);
+            return Math.max(ratio, 2L);
+        }
+
+        return 2L;
     }
 
     @Override
