@@ -138,7 +138,8 @@ dependencies {
 
     optionalApi libs.mongoSync
 
-    optionalApi libs.jooq
+    // 3.14.x is the newest version of OSS jOOQ that supports Java 8
+    optionalApi 'org.jooq:jooq:3.14.16'
 
     optionalApi libs.kafkaClients
     optionalApi libs.kafkaStreams
