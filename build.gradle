@@ -75,7 +75,7 @@ subprojects {
         tasks.withType(JavaCompile).configureEach {
             if (it.name == "compileJava" && !(it.project.name in ["micrometer-java11"])) {
                 options.errorprone.disable(
-                        "JavaDurationGetSecondsToToSeconds" // Requires JDK 9+
+                    "JavaDurationGetSecondsToToSeconds" // Requires JDK 9+
                 )
             }
             options.errorprone {
@@ -433,7 +433,7 @@ subprojects {
                     String rootUrl
                     if (compatibleVersion.contains('-M') || compatibleVersion.contains('-RC')) {
                         rootUrl = 'https://repo.spring.io/milestone/'
-                    } else if (compatibleVersion.contains('-SNAPSHOT')) {
+                    } else if (compatibleVersion.contains('-SNAPSHOT') ) {
                         rootUrl = 'https://repo.spring.io/snapshot/'
                     } else {
                         rootUrl = repositories.mavenCentral().url
@@ -454,7 +454,7 @@ subprojects {
                     includeSynthetic = true
 
                     classExcludes = []
-                    compatibilityChangeExcludes = ["METHOD_NEW_DEFAULT"]
+                    compatibilityChangeExcludes = [ "METHOD_NEW_DEFAULT" ]
 
                     packageExcludes = ['io.micrometer.shaded.*', 'io.micrometer.statsd.internal', 'io.micrometer.core.lang']
 
