@@ -65,7 +65,7 @@ public class TimeWindowPercentileHistogram extends AbstractTimeWindowHistogram<D
             boolean supportsAggregablePercentiles, boolean isCumulativeBucketCounts, boolean includeInfinityBucket) {
         super(clock, distributionStatisticConfig, DoubleRecorder.class);
         intervalHistogram = new DoubleHistogram(computeHighestToLowestValueRatio(distributionStatisticConfig),
-            percentilePrecision(distributionStatisticConfig));
+                percentilePrecision(distributionStatisticConfig));
         intervalHistogram.setAutoResize(true);
 
         this.isCumulativeBucketCounts = isCumulativeBucketCounts;
@@ -84,7 +84,7 @@ public class TimeWindowPercentileHistogram extends AbstractTimeWindowHistogram<D
     @Override
     DoubleRecorder newBucket() {
         return new DoubleRecorder(computeHighestToLowestValueRatio(distributionStatisticConfig),
-            percentilePrecision(distributionStatisticConfig));
+                percentilePrecision(distributionStatisticConfig));
     }
 
     @Override
@@ -105,7 +105,7 @@ public class TimeWindowPercentileHistogram extends AbstractTimeWindowHistogram<D
     @Override
     DoubleHistogram newAccumulatedHistogram(DoubleRecorder[] ringBuffer) {
         return new DoubleHistogram(computeHighestToLowestValueRatio(distributionStatisticConfig),
-            percentilePrecision(distributionStatisticConfig));
+                percentilePrecision(distributionStatisticConfig));
     }
 
     @Override
@@ -149,9 +149,9 @@ public class TimeWindowPercentileHistogram extends AbstractTimeWindowHistogram<D
     }
 
     /**
-     * Compute the highestToLowestValueRatio based on the configured min/max expected values.
-     * This allows HdrHistogram to cover the expected range without frequent resizing.
-     *
+     * Compute the highestToLowestValueRatio based on the configured min/max expected
+     * values. This allows HdrHistogram to cover the expected range without frequent
+     * resizing.
      * @param config The distribution statistic configuration
      * @return The computed ratio, or 2 if not enough information is available
      */
