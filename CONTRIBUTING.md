@@ -31,6 +31,8 @@ For additional details, please refer to the blog post [Hello DCO, Goodbye CLA: S
 The Micrometer source code is hosted on GitHub at https://github.com/micrometer-metrics/micrometer.
 You can use a Git client to clone the source code to your local machine.
 
+If you intend to build the source using the provided build configuration, make sure you fetch git tags information because this is used by some of our build plugins.
+
 ## Building
 
 Micrometer targets Java 8 but requires JDK 11 or later to build.
