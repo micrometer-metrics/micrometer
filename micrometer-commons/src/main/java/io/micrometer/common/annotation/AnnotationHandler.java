@@ -87,9 +87,10 @@ public class AnnotationHandler<T> {
      * @param expressionResolverProvider function converting a class extending a
      * {@link ValueExpressionResolver} to an instance of that class
      * @param annotation annotation containing {@link KeyValue} related information
-     * @param toKeyValue function converting the annotation and the expression or value to
-     * a {@link KeyValue}
-     * @param validToAdd predicate that determines if the annotation and the annotation
+     * @param toKeyValue function converting the annotation and the expression or
+     * annotation value to a {@link KeyValue}
+     * @param validToAdd predicate that determines if the value should be added to
+     * {@link T} with annotation.
      */
     public AnnotationHandler(BiConsumer<KeyValue, T> keyValueConsumer,
             Function<Class<? extends ValueResolver>, ? extends ValueResolver> resolverProvider,

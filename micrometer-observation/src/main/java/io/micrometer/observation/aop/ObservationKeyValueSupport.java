@@ -34,7 +34,7 @@ class ObservationKeyValueSupport {
     private ObservationKeyValueSupport() {
     }
 
-    public static String resolveTagKey(ObservationKeyValue observationKeyValue) {
+    static String resolveKey(ObservationKeyValue observationKeyValue) {
         return StringUtils.isNotBlank(observationKeyValue.value()) ? observationKeyValue.value()
                 : observationKeyValue.key();
     }
@@ -43,7 +43,7 @@ class ObservationKeyValueSupport {
      * Similar to MeterTagSupport.resolveTagValue. The two logics are similar, so if one
      * is modified, it looks good to be modified together.
      */
-    public static String resolveTagValue(ObservationKeyValue annotation, @Nullable Object argument,
+    static String resolveValue(ObservationKeyValue annotation, @Nullable Object argument,
             Function<Class<? extends ValueResolver>, ? extends ValueResolver> resolverProvider,
             Function<Class<? extends ValueExpressionResolver>, ? extends ValueExpressionResolver> expressionResolverProvider) {
         String value = null;

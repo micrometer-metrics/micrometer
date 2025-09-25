@@ -35,6 +35,7 @@ import io.micrometer.observation.tck.TestObservationRegistry;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
+import org.assertj.core.api.AbstractThrowableAssert;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -547,6 +548,42 @@ class ObservedAspectTests {
                 .doesNotHaveError();
         }
 
+        @Test
+        void observationKeyValueOnReturnValueWhenException() {
+            ObservationKeyValueExceptionClass service = getProxyWithObservedAspect(
+                    new ObservationKeyValueExceptionClass());
+
+            AbstractThrowableAssert<?, ? extends Throwable> abstractThrowableAssert = assertThatThrownBy(
+                    service::exceptionReturnValue);
+            abstractThrowableAssert.isInstanceOf(RuntimeException.class);
+            abstractThrowableAssert.hasMessage("exceptionReturnValue");
+
+            assertThat(registry).doesNotHaveAnyRemainingCurrentObservation()
+                .hasSingleObservationThat()
+                .hasBeenStopped()
+                .hasNameEqualTo("method.observed")
+                .hasHighCardinalityKeyValue("test", "")
+                .hasError();
+        }
+
+        @Test
+        void observationKeyValueOnParameterWhenException() {
+            ObservationKeyValueExceptionClass service = getProxyWithObservedAspect(
+                    new ObservationKeyValueExceptionClass());
+
+            AbstractThrowableAssert<?, ? extends Throwable> abstractThrowableAssert = assertThatThrownBy(
+                    () -> service.exceptionParameter("value"));
+            abstractThrowableAssert.isInstanceOf(RuntimeException.class);
+            abstractThrowableAssert.hasMessage("exceptionParameter");
+
+            assertThat(registry).doesNotHaveAnyRemainingCurrentObservation()
+                .hasSingleObservationThat()
+                .hasBeenStopped()
+                .hasNameEqualTo("method.observed")
+                .hasHighCardinalityKeyValue("test", "value")
+                .hasError();
+        }
+
         @ParameterizedTest
         @EnumSource
         void observationKeyValueOnReturnValueWithText(AnnotatedTestClass annotatedClass) {
@@ -947,6 +984,21 @@ class ObservedAspectTests {
                         expression = "'value3. overridden: ' + value1.toUpperCase + value2.toUpperCase") })
         public CompletableFuture<DataHolder> getMultipleAnnotationsOnReturnValueWithContainerForTagValueExpression() {
             return CompletableFuture.completedFuture(new DataHolder("zxe", "qwe"));
+        }
+
+    }
+
+    static class ObservationKeyValueExceptionClass {
+
+        @Observed
+        @ObservationKeyValue(key = "test")
+        public String exceptionReturnValue() {
+            throw new RuntimeException("exceptionReturnValue");
+        }
+
+        @Observed
+        public String exceptionParameter(@ObservationKeyValue(key = "test") String param) {
+            throw new RuntimeException("exceptionParameter");
         }
 
     }

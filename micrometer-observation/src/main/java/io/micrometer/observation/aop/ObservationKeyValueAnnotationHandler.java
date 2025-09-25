@@ -63,8 +63,8 @@ public class ObservationKeyValueAnnotationHandler {
                 resolverProvider, expressionResolverProvider, ObservationKeyValue.class, (annotation, object) -> {
                     ObservationKeyValue observationKeyValue = (ObservationKeyValue) annotation;
 
-                    return KeyValue.of(ObservationKeyValueSupport.resolveTagKey(observationKeyValue),
-                            ObservationKeyValueSupport.resolveTagValue(observationKeyValue, object, resolverProvider,
+                    return KeyValue.of(ObservationKeyValueSupport.resolveKey(observationKeyValue),
+                            ObservationKeyValueSupport.resolveValue(observationKeyValue, object, resolverProvider,
                                     expressionResolverProvider));
                 }, (annotation, object) -> {
                     if (annotation.annotationType() != ObservationKeyValue.class) {

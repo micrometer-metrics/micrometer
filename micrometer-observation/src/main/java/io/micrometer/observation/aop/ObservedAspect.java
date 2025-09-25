@@ -178,16 +178,19 @@ public class ObservedAspect {
             }
         }
         else {
-            return observation.observeChecked(() -> {
-                Object result = pjp.proceed();
+            observation.start();
+            Observation.Scope scope = observation.openScope();
 
-                if (observationKeyValueAnnotationHandler != null) {
-                    observationKeyValueAnnotationHandler.addAnnotatedMethodResult(observation.getContext(), pjp,
-                            result);
-                }
+            try {
+                Object result = pjp.proceed();
+                stopObservation(observation, scope, null, pjp, result);
 
                 return result;
-            });
+            }
+            catch (Throwable error) {
+                stopObservation(observation, scope, error, pjp, null);
+                throw error;
+            }
         }
     }
 
