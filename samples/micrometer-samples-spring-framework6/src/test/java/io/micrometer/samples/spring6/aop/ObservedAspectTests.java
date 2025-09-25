@@ -35,7 +35,6 @@ import io.micrometer.observation.tck.TestObservationRegistry;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
-import org.assertj.core.api.AbstractThrowableAssert;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -553,10 +552,8 @@ class ObservedAspectTests {
             ObservationKeyValueExceptionClass service = getProxyWithObservedAspect(
                     new ObservationKeyValueExceptionClass());
 
-            AbstractThrowableAssert<?, ? extends Throwable> abstractThrowableAssert = assertThatThrownBy(
-                    service::exceptionReturnValue);
-            abstractThrowableAssert.isInstanceOf(RuntimeException.class);
-            abstractThrowableAssert.hasMessage("exceptionReturnValue");
+            assertThatThrownBy(service::exceptionReturnValue).isInstanceOf(RuntimeException.class)
+                .hasMessage("exceptionReturnValue");
 
             assertThat(registry).doesNotHaveAnyRemainingCurrentObservation()
                 .hasSingleObservationThat()
@@ -571,10 +568,8 @@ class ObservedAspectTests {
             ObservationKeyValueExceptionClass service = getProxyWithObservedAspect(
                     new ObservationKeyValueExceptionClass());
 
-            AbstractThrowableAssert<?, ? extends Throwable> abstractThrowableAssert = assertThatThrownBy(
-                    () -> service.exceptionParameter("value"));
-            abstractThrowableAssert.isInstanceOf(RuntimeException.class);
-            abstractThrowableAssert.hasMessage("exceptionParameter");
+            assertThatThrownBy(() -> service.exceptionParameter("value")).isInstanceOf(RuntimeException.class)
+                .hasMessage("exceptionParameter");
 
             assertThat(registry).doesNotHaveAnyRemainingCurrentObservation()
                 .hasSingleObservationThat()
