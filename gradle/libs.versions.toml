@@ -51,7 +51,7 @@ junit = "5.13.4"
 kafka = "2.8.2"
 kafka-junit = "4.2.10"
 latency-utils = "2.0.3"
-logback-latest = "1.5.18"
+logback-latest = "1.5.19"
 log4j = "2.25.2"
 maven-resolver = "1.9.24"
 mockito5 = "5.18.0"
@@ -168,7 +168,7 @@ kafkaJunit = { module = "com.github.charithe:kafka-junit", version.ref = "kafka-
 kotlinxCoroutines = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version = "1.7.3" }
 latencyUtils = { module = "org.latencyutils:LatencyUtils", version.ref = "latency-utils" }
 lmaxDisruptor = "com.lmax:disruptor:3.4.4"
-logback12 = { module = "ch.qos.logback:logback-classic", version = "1.2.13" }
+logback12 = { module = "ch.qos.logback:logback-classic", version = "1.5.19" }
 logbackLatest = {module = "ch.qos.logback:logback-classic", version.ref = "logback-latest" }
 log4j = { module = "org.apache.logging.log4j:log4j-core", version.ref = "log4j" }
 mavenResolverConnectorBasic = { module = "org.apache.maven.resolver:maven-resolver-connector-basic", version.ref = "maven-resolver" }
