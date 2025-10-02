@@ -147,16 +147,16 @@ public class ObservedAspect {
             try {
                 Object result = pjp.proceed();
                 if (result == null) {
-                    stopObservation(observation, scope, null);
+                    stopObservation(observation, null);
                     return result;
                 }
                 else {
                     CompletionStage<?> stage = (CompletionStage<?>) result;
-                    return stage.whenComplete((res, error) -> stopObservation(observation, scope, error));
+                    return stage.whenComplete((res, error) -> stopObservation(observation, error));
                 }
             }
             catch (Throwable error) {
-                stopObservation(observation, scope, error);
+                stopObservation(observation, error);
                 throw error;
             }
             finally {
@@ -187,11 +187,10 @@ public class ObservedAspect {
         return method;
     }
 
-    private void stopObservation(Observation observation, Observation.Scope scope, @Nullable Throwable error) {
+    private void stopObservation(Observation observation, @Nullable Throwable error) {
         if (error != null) {
             observation.error(error);
         }
-        scope.close();
         observation.stop();
     }
 
