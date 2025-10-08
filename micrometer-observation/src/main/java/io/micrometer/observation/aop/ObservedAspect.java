@@ -149,7 +149,6 @@ public class ObservedAspect {
     private @NullUnmarked Object observe(ProceedingJoinPoint pjp, Method method, Observed observed) throws Throwable {
         Observation observation = ObservedAspectObservationDocumentation.of(pjp, observed, this.registry,
                 this.observationConvention);
-
         if (observationKeyValueAnnotationHandler != null) {
             observationKeyValueAnnotationHandler.addAnnotatedParameters(observation.getContext(), pjp);
         }
@@ -159,18 +158,17 @@ public class ObservedAspect {
             Observation.Scope scope = observation.openScope();
             try {
                 Object result = pjp.proceed();
-
                 if (result == null) {
-                    stopObservation(observation, scope, null, pjp, null);
-                    return result;
+                    stopObservation(observation, scope, pjp, null, null);
+                    return null;
                 }
                 else {
                     CompletionStage<?> stage = (CompletionStage<?>) result;
-                    return stage.whenComplete((res, error) -> stopObservation(observation, scope, error, pjp, res));
+                    return stage.whenComplete((res, error) -> stopObservation(observation, scope, pjp, res, error));
                 }
             }
             catch (Throwable error) {
-                stopObservation(observation, scope, error, pjp, null);
+                stopObservation(observation, scope, pjp, null, error);
                 throw error;
             }
             finally {
@@ -183,12 +181,11 @@ public class ObservedAspect {
 
             try {
                 Object result = pjp.proceed();
-                stopObservation(observation, scope, null, pjp, result);
-
+                stopObservation(observation, scope, pjp, result, null);
                 return result;
             }
             catch (Throwable error) {
-                stopObservation(observation, scope, error, pjp, null);
+                stopObservation(observation, scope, pjp, null, error);
                 throw error;
             }
         }
@@ -213,12 +210,11 @@ public class ObservedAspect {
         return method;
     }
 
-    private void stopObservation(Observation observation, Observation.Scope scope, @Nullable Throwable error,
-            ProceedingJoinPoint pjp, @Nullable Object result) {
+    private void stopObservation(Observation observation, Observation.Scope scope, ProceedingJoinPoint pjp,
+            @Nullable Object result, @Nullable Throwable error) {
         if (observationKeyValueAnnotationHandler != null) {
             observationKeyValueAnnotationHandler.addAnnotatedMethodResult(observation.getContext(), pjp, result);
         }
-
         if (error != null) {
             observation.error(error);
         }
