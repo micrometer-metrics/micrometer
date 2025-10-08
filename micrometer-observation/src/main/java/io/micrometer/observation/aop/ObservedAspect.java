@@ -69,7 +69,7 @@ import java.util.function.Predicate;
  * }
  * </pre>
  *
- * To add support for {@link ObservationKeyValue} annotations set the
+ * To add support for {@link ObservationKeyValue} annotations, set the
  * {@link ObservationKeyValueAnnotationHandler} via
  * {@link ObservedAspect#setObservationKeyValueAnnotationHandler(ObservationKeyValueAnnotationHandler)}
  *

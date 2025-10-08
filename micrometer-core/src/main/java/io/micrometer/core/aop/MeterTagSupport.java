@@ -40,8 +40,8 @@ final class MeterTagSupport {
     }
 
     /**
-     * Similar to ObservationKeyValueSupport.resolveTagValue. The two logics are similar,
-     * so if one is modified, it looks good to be modified together.
+     * Similar to {@code ObservationKeyValueSupport.resolveTagValue}. The two logics are
+     * similar, so if one is modified, probably the other one should be modified too.
      */
     static String resolveTagValue(MeterTag annotation, @Nullable Object argument,
             Function<Class<? extends ValueResolver>, ? extends ValueResolver> resolverProvider,

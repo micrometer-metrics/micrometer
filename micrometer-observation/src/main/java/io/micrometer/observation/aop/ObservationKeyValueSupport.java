@@ -1,12 +1,12 @@
-/**
- * Copyright 2025 the original author or authors.
- * <p>
+/*
+ * Copyright 2025 VMware, Inc.
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
+ *
  * https://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,14 +15,14 @@
  */
 package io.micrometer.observation.aop;
 
-import java.util.function.Function;
-
-import org.jspecify.annotations.Nullable;
 import io.micrometer.common.annotation.NoOpValueResolver;
 import io.micrometer.common.annotation.ValueExpressionResolver;
 import io.micrometer.common.annotation.ValueResolver;
 import io.micrometer.common.util.StringUtils;
 import io.micrometer.observation.annotation.ObservationKeyValue;
+import org.jspecify.annotations.Nullable;
+
+import java.util.function.Function;
 
 /**
  * Support for {@link ObservationKeyValue}.
@@ -40,8 +40,8 @@ class ObservationKeyValueSupport {
     }
 
     /**
-     * Similar to MeterTagSupport.resolveTagValue. The two logics are similar, so if one
-     * is modified, it looks good to be modified together.
+     * Similar to {@code MeterTagSupport.resolveTagValue}. The two logics are similar, so
+     * if one is modified, probably the other one should be modified too.
      */
     static String resolveValue(ObservationKeyValue annotation, @Nullable Object argument,
             Function<Class<? extends ValueResolver>, ? extends ValueResolver> resolverProvider,
@@ -58,7 +58,6 @@ class ObservationKeyValueSupport {
         else if (argument != null) {
             value = argument.toString();
         }
-
         return value == null ? "" : value;
     }
 
