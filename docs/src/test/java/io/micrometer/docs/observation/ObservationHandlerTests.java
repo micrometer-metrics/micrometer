@@ -29,7 +29,7 @@ import io.micrometer.observation.*;
 import io.micrometer.observation.annotation.Observed;
 import io.micrometer.observation.annotation.ObservationKeyValue;
 import io.micrometer.observation.annotation.ObservationKeyValues;
-import io.micrometer.observation.aop.CardinalityType;
+import io.micrometer.observation.aop.Cardinality;
 import io.micrometer.observation.aop.ObservedAspect;
 import io.micrometer.observation.aop.ObservationKeyValueAnnotationHandler;
 import io.micrometer.observation.docs.ObservationDocumentation;
@@ -510,8 +510,8 @@ class ObservationHandlerTests {
     static class ObservedServiceWithParameter {
 
         @Observed(name = "test.call")
-        @ObservationKeyValue(key = "key4", cardinality = CardinalityType.LOW)
-        String call(@ObservationKeyValues({ @ObservationKeyValue(key = "key0", cardinality = CardinalityType.HIGH),
+        @ObservationKeyValue(key = "key4", cardinality = Cardinality.LOW)
+        String call(@ObservationKeyValues({ @ObservationKeyValue(key = "key0", cardinality = Cardinality.HIGH),
                 @ObservationKeyValue(key = "key1"),
                 @ObservationKeyValue(key = "key2", expression = "'key2: ' + toUpperCase"),
                 @ObservationKeyValue(key = "key3", resolver = ValueResolver.class) }) String param) {

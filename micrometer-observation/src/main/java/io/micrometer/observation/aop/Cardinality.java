@@ -16,12 +16,13 @@
 package io.micrometer.observation.aop;
 
 /**
- * Cardinality type in micrometer-observation. There are two types of cardinality and
+ * Represents the cardinality of a key-value. There are two types of cardinality and
  * treated in different ways.
  *
  * @author Seungyong Hong
+ * @author Jonatan Ivanov
  */
-public enum CardinalityType {
+public enum Cardinality {
 
     HIGH, LOW
 

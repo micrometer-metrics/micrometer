@@ -49,7 +49,7 @@ public class ObservationKeyValueAnnotationHandler extends AnnotationHandler<Obse
 
     private static void addKeyValue(KeyValue keyValue, Observation.Context context) {
         if (keyValue instanceof KeyValueWithCardinality) {
-            if (((KeyValueWithCardinality) keyValue).cardinality == CardinalityType.LOW) {
+            if (((KeyValueWithCardinality) keyValue).cardinality == Cardinality.LOW) {
                 context.addLowCardinalityKeyValue(keyValue);
             }
             else {
@@ -71,9 +71,9 @@ public class ObservationKeyValueAnnotationHandler extends AnnotationHandler<Obse
 
         private final KeyValue keyValue;
 
-        private final CardinalityType cardinality;
+        private final Cardinality cardinality;
 
-        KeyValueWithCardinality(KeyValue keyValue, CardinalityType cardinality) {
+        KeyValueWithCardinality(KeyValue keyValue, Cardinality cardinality) {
             this.keyValue = keyValue;
             this.cardinality = cardinality;
         }

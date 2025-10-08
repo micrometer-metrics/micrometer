@@ -18,7 +18,7 @@ package io.micrometer.observation.annotation;
 import io.micrometer.common.annotation.NoOpValueResolver;
 import io.micrometer.common.annotation.ValueExpressionResolver;
 import io.micrometer.common.annotation.ValueResolver;
-import io.micrometer.observation.aop.CardinalityType;
+import io.micrometer.observation.aop.Cardinality;
 import io.micrometer.observation.aop.ObservationKeyValueAnnotationHandler;
 
 import java.lang.annotation.*;
@@ -28,8 +28,8 @@ import java.lang.annotation.*;
  * controlled by the annotation values. Precedence is to first try with the
  * {@link ValueResolver}. If the value of the resolver wasn't set, try to evaluate an
  * expression. If there's no expression just return a {@code toString()} value of the
- * parameter. {@link CardinalityType} also can be set by {@link #cardinality()}. default
- * value is {@link CardinalityType#HIGH}.
+ * parameter. {@link Cardinality} also can be set by {@link #cardinality()}. default value
+ * is {@link Cardinality#HIGH}.
  *
  * @author Seungyong Hong
  */
@@ -69,9 +69,9 @@ public @interface ObservationKeyValue {
     Class<? extends ValueResolver> resolver() default NoOpValueResolver.class;
 
     /**
-     * Cardinality type of the key-value.
-     * @return {@link CardinalityType} class
+     * Cardinality of the key-value.
+     * @return {@link Cardinality} class
      */
-    CardinalityType cardinality() default CardinalityType.HIGH;
+    Cardinality cardinality() default Cardinality.HIGH;
 
 }
