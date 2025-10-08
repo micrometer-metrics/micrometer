@@ -24,8 +24,14 @@ import io.micrometer.observation.annotation.ObservationKeyValue;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.jspecify.annotations.Nullable;
 
+import java.lang.annotation.Annotation;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
+
+import static io.micrometer.observation.aop.CardinalityType.HIGH;
+import static io.micrometer.observation.aop.CardinalityType.LOW;
+import static io.micrometer.observation.aop.ObservationKeyValueSupport.resolveKey;
+import static io.micrometer.observation.aop.ObservationKeyValueSupport.resolveValue;
 
 /**
  * Annotation handler for {@link ObservationKeyValue}. To add support for
@@ -50,37 +56,22 @@ public class ObservationKeyValueAnnotationHandler {
     public ObservationKeyValueAnnotationHandler(
             Function<Class<? extends ValueResolver>, ? extends ValueResolver> resolverProvider,
             Function<Class<? extends ValueExpressionResolver>, ? extends ValueExpressionResolver> expressionResolverProvider) {
-        this.highCardinalityAnnotationHandler = getAnnotationHandler(CardinalityType.HIGH, resolverProvider,
+        this.highCardinalityAnnotationHandler = createAnnotationHandler(HIGH, resolverProvider,
                 expressionResolverProvider);
-        this.lowCardinalityAnnotationHandler = getAnnotationHandler(CardinalityType.LOW, resolverProvider,
+        this.lowCardinalityAnnotationHandler = createAnnotationHandler(LOW, resolverProvider,
                 expressionResolverProvider);
     }
 
-    private AnnotationHandler<Observation.Context> getAnnotationHandler(CardinalityType cardinalityType,
+    private AnnotationHandler<Observation.Context> createAnnotationHandler(CardinalityType cardinalityType,
             Function<Class<? extends ValueResolver>, ? extends ValueResolver> resolverProvider,
             Function<Class<? extends ValueExpressionResolver>, ? extends ValueExpressionResolver> expressionResolverProvider) {
-        return new AnnotationHandler<>(ObservationKeyValueAnnotationHandler.getKeyValueConsumer(cardinalityType),
-                resolverProvider, expressionResolverProvider, ObservationKeyValue.class, (annotation, object) -> {
-                    ObservationKeyValue observationKeyValue = (ObservationKeyValue) annotation;
-
-                    return KeyValue.of(ObservationKeyValueSupport.resolveKey(observationKeyValue),
-                            ObservationKeyValueSupport.resolveValue(observationKeyValue, object, resolverProvider,
-                                    expressionResolverProvider));
-                }, (annotation, object) -> {
-                    if (annotation.annotationType() != ObservationKeyValue.class) {
-                        return false;
-                    }
-
-                    ObservationKeyValue observationKeyValue = (ObservationKeyValue) annotation;
-                    if (observationKeyValue.cardinality() != cardinalityType) {
-                        return false;
-                    }
-
-                    return true;
-                });
+        return new AnnotationHandler<>(keyValueConsumer(cardinalityType), resolverProvider, expressionResolverProvider,
+                ObservationKeyValue.class,
+                (annotation, object) -> toKeyValue(annotation, object, resolverProvider, expressionResolverProvider),
+                (annotation, object) -> validToAdd(annotation, cardinalityType));
     }
 
-    private static BiConsumer<KeyValue, Observation.Context> getKeyValueConsumer(CardinalityType cardinalityType) {
+    private BiConsumer<KeyValue, Observation.Context> keyValueConsumer(CardinalityType cardinalityType) {
         switch (cardinalityType) {
             case HIGH:
                 return (keyValue, context) -> context.addHighCardinalityKeyValue(keyValue);
@@ -91,12 +82,28 @@ public class ObservationKeyValueAnnotationHandler {
         }
     }
 
+    private KeyValue toKeyValue(Annotation annotation, Object object,
+            Function<Class<? extends ValueResolver>, ? extends ValueResolver> resolverProvider,
+            Function<Class<? extends ValueExpressionResolver>, ? extends ValueExpressionResolver> expressionResolverProvider) {
+        ObservationKeyValue observationKeyValue = (ObservationKeyValue) annotation;
+        return KeyValue.of(resolveKey(observationKeyValue),
+                resolveValue(observationKeyValue, object, resolverProvider, expressionResolverProvider));
+    }
+
+    private boolean validToAdd(Annotation annotation, CardinalityType cardinalityType) {
+        if (annotation.annotationType() != ObservationKeyValue.class) {
+            return false;
+        }
+
+        return ((ObservationKeyValue) annotation).cardinality() == cardinalityType;
+    }
+
     /**
      * Delegation method to
      * {@link AnnotationHandler#addAnnotatedParameters(Object, ProceedingJoinPoint)} high
      * and low annotation handlers.
      */
-    public void addAnnotatedParameters(Observation.Context context, ProceedingJoinPoint pjp) {
+    void addAnnotatedParameters(Observation.Context context, ProceedingJoinPoint pjp) {
         highCardinalityAnnotationHandler.addAnnotatedParameters(context, pjp);
         lowCardinalityAnnotationHandler.addAnnotatedParameters(context, pjp);
     }
@@ -106,8 +113,7 @@ public class ObservationKeyValueAnnotationHandler {
      * {@link AnnotationHandler#addAnnotatedMethodResult(Object, ProceedingJoinPoint, Object)}
      * high and low annotation handlers.
      */
-    public void addAnnotatedMethodResult(Observation.Context context, ProceedingJoinPoint pjp,
-            @Nullable Object result) {
+    void addAnnotatedMethodResult(Observation.Context context, ProceedingJoinPoint pjp, @Nullable Object result) {
         highCardinalityAnnotationHandler.addAnnotatedMethodResult(context, pjp, result);
         lowCardinalityAnnotationHandler.addAnnotatedMethodResult(context, pjp, result);
     }
