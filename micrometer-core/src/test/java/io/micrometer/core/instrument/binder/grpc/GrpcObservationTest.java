@@ -196,6 +196,8 @@ class GrpcObservationTest {
                 ListenableFuture<SimpleResponse> future = stub.unaryRpc(request);
                 Futures.addCallback(future, new FutureCallback<>() {
                     @Override
+                    // NullAway thinks the parent is nullable
+                    @SuppressWarnings("NullAway")
                     public void onSuccess(SimpleResponse result) {
                         responses.add(result.getResponseMessage());
                     }
