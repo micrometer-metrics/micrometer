@@ -443,9 +443,38 @@ subprojects {
                     dest layout.buildDirectory.file("baselineLibs/${project.name}-${compatibleVersion}.jar")
                 }
 
+                tasks.register("downloadCommons", Download) {
+                    onlyIf {
+                        if (project.gradle.startParameter.isOffline()) {
+                            println 'Offline: skipping downloading of baseline and JAPICMP'
+                            return false
+                        } else if (compatibleVersion == 'SKIP') {
+                            println 'SKIP: Instructed to skip the baseline comparison'
+                            return false
+                        } else {
+                            println "Will download and perform baseline comparison with ${compatibleVersion}"
+                            return true
+                        }
+                    }
+
+                    onlyIfNewer true
+                    compress true
+                    String rootUrl
+                    if (compatibleVersion.contains('-M') || compatibleVersion.contains('-RC')) {
+                        rootUrl = 'https://repo.spring.io/milestone/'
+                    } else if (compatibleVersion.contains('-SNAPSHOT') ) {
+                        rootUrl = 'https://repo.spring.io/snapshot/'
+                    } else {
+                        rootUrl = repositories.mavenCentral().url
+                    }
+
+                    src "${rootUrl}io/micrometer/micrometer-commons/${compatibleVersion}/micrometer-commons-${compatibleVersion}.jar"
+                    dest layout.buildDirectory.file("baselineLibs/micrometer-commons-${compatibleVersion}.jar")
+                }
+
                 tasks.register("japicmp", me.champeau.gradle.japicmp.JapicmpTask) {
-                    oldClasspath.from(layout.buildDirectory.file("baselineLibs/${project.name}-${compatibleVersion}.jar"))
-                    newClasspath.from(files(jar.archiveFile, project(":${project.name}").jar))
+                    oldClasspath.from(layout.buildDirectory.file("baselineLibs/${project.name}-${compatibleVersion}.jar"), layout.buildDirectory.file("baselineLibs/micrometer-commons-${compatibleVersion}.jar"))
+                    newClasspath.from(files(jar.archiveFile, project(":${project.name}").jar), files("$project.rootDir/micrometer-commons/build/libs/micrometer-commons-${version}.jar"))
                     onlyBinaryIncompatibleModified = true
                     failOnModification = true
                     failOnSourceIncompatibility = true
@@ -464,6 +493,7 @@ subprojects {
                     onlyIf { compatibleVersion != 'SKIP' }
                 }
 
+                tasks.japicmp.dependsOn(downloadCommons)
                 tasks.japicmp.dependsOn(downloadBaseline)
                 tasks.japicmp.dependsOn(jar)
                 tasks.check.dependsOn(japicmp)

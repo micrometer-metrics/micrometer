@@ -15,10 +15,10 @@
  */
 package io.micrometer.common;
 
+import io.micrometer.common.docs.KeyName;
+
 import java.util.function.Function;
 import java.util.function.Predicate;
-
-import io.micrometer.common.docs.KeyName;
 
 /**
  * Key/value pair representing a dimension of a meter used to classify and drill into
@@ -27,14 +27,12 @@ import io.micrometer.common.docs.KeyName;
  * @author Jon Schneider
  * @since 1.10.0
  */
-public interface KeyValue extends Comparable<KeyValue> {
+public interface KeyValue extends Comparable<KeyValue>, Keyed {
 
     /**
      * Use this if you want to indicate that the value is missing.
      */
     String NONE_VALUE = "none";
-
-    String getKey();
 
     String getValue();
 

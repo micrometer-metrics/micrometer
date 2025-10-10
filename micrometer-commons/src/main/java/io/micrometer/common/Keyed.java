@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 VMware, Inc.
+ * Copyright 2025 VMware, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,27 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.core.instrument;
+package io.micrometer.common;
 
-import io.micrometer.common.Keyed;
+public interface Keyed {
 
-/**
- * Key/value pair representing a dimension of a meter used to classify and drill into
- * measurements.
- *
- * @author Jon Schneider
- */
-public interface Tag extends Comparable<Tag>, Keyed {
-
-    String getValue();
-
-    static Tag of(String key, String value) {
-        return new ImmutableTag(key, value);
-    }
-
-    @Override
-    default int compareTo(Tag o) {
-        return getKey().compareTo(o.getKey());
-    }
+    String getKey();
 
 }

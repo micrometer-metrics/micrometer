@@ -16,7 +16,7 @@
 package io.micrometer.observation.aop;
 
 import io.micrometer.common.KeyValue;
-import io.micrometer.common.annotation.AnnotationHandler;
+import io.micrometer.common.annotation.GenericAnnotationHandler;
 import io.micrometer.common.annotation.ValueExpressionResolver;
 import io.micrometer.common.annotation.ValueResolver;
 import io.micrometer.observation.Observation;
@@ -37,7 +37,8 @@ import static io.micrometer.observation.aop.ObservationKeyValueSupport.resolveVa
  * @author Seungyong Hong
  * @author Jonatan Ivanov
  */
-public class ObservationKeyValueAnnotationHandler extends AnnotationHandler<Observation.Context> {
+public class ObservationKeyValueAnnotationHandler extends
+        GenericAnnotationHandler<ObservationKeyValueAnnotationHandler.KeyValueWithCardinality, Observation.Context> {
 
     public ObservationKeyValueAnnotationHandler(
             Function<Class<? extends ValueResolver>, ? extends ValueResolver> resolverProvider,
@@ -47,15 +48,12 @@ public class ObservationKeyValueAnnotationHandler extends AnnotationHandler<Obse
                 (annotation, object) -> toKeyValue(annotation, object, resolverProvider, expressionResolverProvider));
     }
 
-    private static void addKeyValue(KeyValue keyValue, Observation.Context context) {
-        if (keyValue instanceof KeyValueWithCardinality) {
-            KeyValueWithCardinality keyValueWithCardinality = (KeyValueWithCardinality) keyValue;
-            if (keyValueWithCardinality.cardinality == Cardinality.LOW) {
-                context.addLowCardinalityKeyValue(keyValueWithCardinality.getDelegate());
-            }
-            else {
-                context.addHighCardinalityKeyValue(keyValueWithCardinality.getDelegate());
-            }
+    private static void addKeyValue(KeyValueWithCardinality keyValueWithCardinality, Observation.Context context) {
+        if (keyValueWithCardinality.cardinality == Cardinality.LOW) {
+            context.addLowCardinalityKeyValue(keyValueWithCardinality.getDelegate());
+        }
+        else {
+            context.addHighCardinalityKeyValue(keyValueWithCardinality.getDelegate());
         }
     }
 
@@ -68,7 +66,7 @@ public class ObservationKeyValueAnnotationHandler extends AnnotationHandler<Obse
         return new KeyValueWithCardinality(keyValue, observationKeyValue.cardinality());
     }
 
-    private static class KeyValueWithCardinality implements KeyValue {
+    static class KeyValueWithCardinality implements KeyValue {
 
         private final KeyValue keyValue;
 
