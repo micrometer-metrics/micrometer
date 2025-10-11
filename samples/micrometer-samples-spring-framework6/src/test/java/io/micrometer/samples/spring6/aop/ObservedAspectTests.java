@@ -58,7 +58,7 @@ import static org.awaitility.Awaitility.await;
  */
 class ObservedAspectTests {
 
-    TestObservationRegistry registry = TestObservationRegistry.create();
+    private final TestObservationRegistry registry = TestObservationRegistry.create();
 
     @Test
     void annotatedCallShouldBeObserved() {
@@ -389,7 +389,7 @@ class ObservedAspectTests {
     @Nested
     class ObservationKeyValueTests {
 
-        ValueResolver valueResolver = parameter -> "Value from myCustomTagValueResolver [" + parameter + "]";
+        ValueResolver valueResolver = parameter -> "Value from myCustomValueResolver [" + parameter + "]";
 
         ValueExpressionResolver valueExpressionResolver = new SpelValueExpressionResolver();
 
@@ -457,13 +457,13 @@ class ObservedAspectTests {
         void observationKeyValuesWithResolver(AnnotatedTestClass annotatedClass) {
             ObservationKeyValueClassInterface service = getProxyWithObservedAspect(annotatedClass.newInstance());
 
-            service.getAnnotationForTagValueResolver("foo");
+            service.getAnnotationForValueResolver("foo");
 
             assertThat(registry).doesNotHaveAnyRemainingCurrentObservation()
                 .hasSingleObservationThat()
                 .hasBeenStopped()
                 .hasNameEqualTo("method.observed")
-                .hasHighCardinalityKeyValue("test", "Value from myCustomTagValueResolver [foo]")
+                .hasHighCardinalityKeyValue("test", "Value from myCustomValueResolver [foo]")
                 .doesNotHaveError();
         }
 
@@ -472,7 +472,7 @@ class ObservedAspectTests {
         void observationKeyValuesWithExpression(AnnotatedTestClass annotatedClass) {
             ObservationKeyValueClassInterface service = getProxyWithObservedAspect(annotatedClass.newInstance());
 
-            service.getAnnotationForTagValueExpression("15L");
+            service.getAnnotationForValueExpression("15L");
 
             assertThat(registry).doesNotHaveAnyRemainingCurrentObservation()
                 .hasSingleObservationThat()
@@ -484,10 +484,10 @@ class ObservedAspectTests {
 
         @ParameterizedTest
         @EnumSource
-        void multipleobservationKeyValuesWithExpression(AnnotatedTestClass annotatedClass) {
+        void multipleObservationKeyValuesWithExpression(AnnotatedTestClass annotatedClass) {
             ObservationKeyValueClassInterface service = getProxyWithObservedAspect(annotatedClass.newInstance());
 
-            service.getMultipleAnnotationsForTagValueExpression(new DataHolder("zxe", "qwe"));
+            service.getMultipleAnnotationsForValueExpression(new DataHolder("zxe", "qwe"));
 
             assertThat(registry).doesNotHaveAnyRemainingCurrentObservation()
                 .hasSingleObservationThat()
@@ -500,10 +500,10 @@ class ObservedAspectTests {
 
         @ParameterizedTest
         @EnumSource
-        void multipleobservationKeyValuesWithinContainerWithExpression(AnnotatedTestClass annotatedClass) {
+        void multipleObservationKeyValuesWithinContainerWithExpression(AnnotatedTestClass annotatedClass) {
             ObservationKeyValueClassInterface service = getProxyWithObservedAspect(annotatedClass.newInstance());
 
-            service.getMultipleAnnotationsWithContainerForTagValueExpression(new DataHolder("zxe", "qwe"));
+            service.getMultipleAnnotationsWithContainerForValueExpression(new DataHolder("zxe", "qwe"));
 
             assertThat(registry).doesNotHaveAnyRemainingCurrentObservation()
                 .hasSingleObservationThat()
@@ -543,7 +543,7 @@ class ObservedAspectTests {
                 .hasSingleObservationThat()
                 .hasBeenStopped()
                 .hasNameEqualTo("method.observed")
-                .hasHighCardinalityKeyValue("superTag", "someValue")
+                .hasHighCardinalityKeyValue("superKey", "someValue")
                 .doesNotHaveError();
         }
 
@@ -599,13 +599,13 @@ class ObservedAspectTests {
         void observationKeyValueOnReturnValueWithResolver(AnnotatedTestClass annotatedClass) {
             ObservationKeyValueClassInterface service = getProxyWithObservedAspect(annotatedClass.newInstance());
 
-            String value = service.getReturnValueAnnotationForTagValueResolver();
+            String value = service.getReturnValueAnnotationForValueResolver();
 
             assertThat(registry).doesNotHaveAnyRemainingCurrentObservation()
                 .hasSingleObservationThat()
                 .hasBeenStopped()
                 .hasNameEqualTo("method.observed")
-                .hasHighCardinalityKeyValue("test", String.format("Value from myCustomTagValueResolver [%s]", value))
+                .hasHighCardinalityKeyValue("test", String.format("Value from myCustomValueResolver [%s]", value))
                 .doesNotHaveError();
         }
 
@@ -614,7 +614,7 @@ class ObservedAspectTests {
         void observationKeyValueOnReturnValueWithExpression(AnnotatedTestClass annotatedClass) {
             ObservationKeyValueClassInterface service = getProxyWithObservedAspect(annotatedClass.newInstance());
 
-            service.getReturnValueAnnotationForTagValueExpression();
+            service.getReturnValueAnnotationForValueExpression();
 
             assertThat(registry).doesNotHaveAnyRemainingCurrentObservation()
                 .hasSingleObservationThat()
@@ -629,7 +629,7 @@ class ObservedAspectTests {
         void multipleobservationKeyValueOnReturnValueWithExpression(AnnotatedTestClass annotatedClass) {
             ObservationKeyValueClassInterface service = getProxyWithObservedAspect(annotatedClass.newInstance());
 
-            DataHolder value = service.getMultipleAnnotationsOnReturnValueForTagValueExpression();
+            DataHolder value = service.getMultipleAnnotationsOnReturnValueForValueExpression();
 
             assertThat(registry).doesNotHaveAnyRemainingCurrentObservation()
                 .hasSingleObservationThat()
@@ -645,7 +645,7 @@ class ObservedAspectTests {
         void multipleobservationKeyValueOnReturnValueWithinContainerWithExpression(AnnotatedTestClass annotatedClass) {
             ObservationKeyValueClassInterface service = getProxyWithObservedAspect(annotatedClass.newInstance());
 
-            DataHolder value = service.getMultipleAnnotationsOnReturnValueWithContainerForTagValueExpression();
+            DataHolder value = service.getMultipleAnnotationsOnReturnValueWithContainerForValueExpression();
 
             assertThat(registry).doesNotHaveAnyRemainingCurrentObservation()
                 .hasSingleObservationThat()
@@ -687,7 +687,7 @@ class ObservedAspectTests {
                 .hasSingleObservationThat()
                 .hasBeenStopped()
                 .hasNameEqualTo("method.observed")
-                .hasHighCardinalityKeyValue("superTag", value)
+                .hasHighCardinalityKeyValue("superKey", value)
                 .doesNotHaveError();
         }
 
@@ -709,13 +709,13 @@ class ObservedAspectTests {
         void observationKeyValuesWithResolverAsync() {
             ObservationKeyValueAsyncClass service = getProxyWithObservedAspect(new ObservationKeyValueAsyncClass());
 
-            service.getAnnotationForTagValueResolver("foo");
+            service.getAnnotationForValueResolver("foo");
 
             assertThat(registry).doesNotHaveAnyRemainingCurrentObservation()
                 .hasSingleObservationThat()
                 .hasBeenStopped()
                 .hasNameEqualTo("method.observed")
-                .hasHighCardinalityKeyValue("test", "Value from myCustomTagValueResolver [foo]")
+                .hasHighCardinalityKeyValue("test", "Value from myCustomValueResolver [foo]")
                 .doesNotHaveError();
         }
 
@@ -723,7 +723,7 @@ class ObservedAspectTests {
         void observationKeyValuesWithExpressionAsync() {
             ObservationKeyValueAsyncClass service = getProxyWithObservedAspect(new ObservationKeyValueAsyncClass());
 
-            service.getAnnotationForTagValueExpression("15L");
+            service.getAnnotationForValueExpression("15L");
 
             assertThat(registry).doesNotHaveAnyRemainingCurrentObservation()
                 .hasSingleObservationThat()
@@ -737,7 +737,7 @@ class ObservedAspectTests {
         void multipleobservationKeyValuesWithExpressionAsync() {
             ObservationKeyValueAsyncClass service = getProxyWithObservedAspect(new ObservationKeyValueAsyncClass());
 
-            service.getMultipleAnnotationsForTagValueExpression(new DataHolder("zxe", "qwe"));
+            service.getMultipleAnnotationsForValueExpression(new DataHolder("zxe", "qwe"));
 
             assertThat(registry).doesNotHaveAnyRemainingCurrentObservation()
                 .hasSingleObservationThat()
@@ -752,7 +752,7 @@ class ObservedAspectTests {
         void multipleobservationKeyValuesWithinContainerWithExpressionAsync() {
             ObservationKeyValueAsyncClass service = getProxyWithObservedAspect(new ObservationKeyValueAsyncClass());
 
-            service.getMultipleAnnotationsWithContainerForTagValueExpression(new DataHolder("zxe", "qwe"));
+            service.getMultipleAnnotationsWithContainerForValueExpression(new DataHolder("zxe", "qwe"));
 
             assertThat(registry).doesNotHaveAnyRemainingCurrentObservation()
                 .hasSingleObservationThat()
@@ -796,13 +796,13 @@ class ObservedAspectTests {
         void observationKeyValueOnReturnValueWithResolverAsync() throws ExecutionException, InterruptedException {
             ObservationKeyValueAsyncClass service = getProxyWithObservedAspect(new ObservationKeyValueAsyncClass());
 
-            String value = service.getReturnValueAnnotationForTagValueResolver().get();
+            String value = service.getReturnValueAnnotationForValueResolver().get();
 
             assertThat(registry).doesNotHaveAnyRemainingCurrentObservation()
                 .hasSingleObservationThat()
                 .hasBeenStopped()
                 .hasNameEqualTo("method.observed")
-                .hasHighCardinalityKeyValue("test", String.format("Value from myCustomTagValueResolver [%s]", value))
+                .hasHighCardinalityKeyValue("test", String.format("Value from myCustomValueResolver [%s]", value))
                 .doesNotHaveError();
         }
 
@@ -810,7 +810,7 @@ class ObservedAspectTests {
         void observationKeyValueOnReturnValueWithExpressionAsync() {
             ObservationKeyValueAsyncClass service = getProxyWithObservedAspect(new ObservationKeyValueAsyncClass());
 
-            service.getReturnValueAnnotationForTagValueExpression();
+            service.getReturnValueAnnotationForValueExpression();
 
             assertThat(registry).doesNotHaveAnyRemainingCurrentObservation()
                 .hasSingleObservationThat()
@@ -825,7 +825,7 @@ class ObservedAspectTests {
                 throws ExecutionException, InterruptedException {
             ObservationKeyValueAsyncClass service = getProxyWithObservedAspect(new ObservationKeyValueAsyncClass());
 
-            DataHolder value = service.getMultipleAnnotationsOnReturnValueForTagValueExpression().get();
+            DataHolder value = service.getMultipleAnnotationsOnReturnValueForValueExpression().get();
 
             assertThat(registry).doesNotHaveAnyRemainingCurrentObservation()
                 .hasSingleObservationThat()
@@ -841,7 +841,7 @@ class ObservedAspectTests {
                 throws ExecutionException, InterruptedException {
             ObservationKeyValueAsyncClass service = getProxyWithObservedAspect(new ObservationKeyValueAsyncClass());
 
-            DataHolder value = service.getMultipleAnnotationsOnReturnValueWithContainerForTagValueExpression().get();
+            DataHolder value = service.getMultipleAnnotationsOnReturnValueWithContainerForValueExpression().get();
 
             assertThat(registry).doesNotHaveAnyRemainingCurrentObservation()
                 .hasSingleObservationThat()
@@ -904,26 +904,26 @@ class ObservedAspectTests {
     static class ObservationKeyValueAsyncClass {
 
         @Observed
-        public CompletableFuture<Void> getAnnotationForTagValueResolver(
+        public CompletableFuture<Void> getAnnotationForValueResolver(
                 @ObservationKeyValue(key = "test", resolver = ValueResolver.class) String test) {
             return CompletableFuture.completedFuture(null);
         }
 
         @Observed
         @ObservationKeyValue(key = "test", resolver = ValueResolver.class)
-        public CompletableFuture<String> getReturnValueAnnotationForTagValueResolver() {
+        public CompletableFuture<String> getReturnValueAnnotationForValueResolver() {
             return CompletableFuture.completedFuture("foo");
         }
 
         @Observed
-        public CompletableFuture<Void> getAnnotationForTagValueExpression(
+        public CompletableFuture<Void> getAnnotationForValueExpression(
                 @ObservationKeyValue(key = "test", expression = "'hello' + ' characters.overridden'") String test) {
             return CompletableFuture.completedFuture(null);
         }
 
         @Observed
         @ObservationKeyValue(key = "test", expression = "'hello' + ' characters. overridden'")
-        public CompletableFuture<String> getReturnValueAnnotationForTagValueExpression() {
+        public CompletableFuture<String> getReturnValueAnnotationForValueExpression() {
             return CompletableFuture.completedFuture("foo");
         }
 
@@ -950,7 +950,7 @@ class ObservedAspectTests {
         }
 
         @Observed
-        public CompletableFuture<Void> getMultipleAnnotationsForTagValueExpression(
+        public CompletableFuture<Void> getMultipleAnnotationsForValueExpression(
                 @ObservationKeyValue(key = "value1", expression = "'value1: ' + value1") @ObservationKeyValue(
                         key = "value2", expression = "'value2.overridden: ' + value2") DataHolder param) {
             return CompletableFuture.completedFuture(null);
@@ -959,12 +959,12 @@ class ObservedAspectTests {
         @Observed
         @ObservationKeyValue(key = "value1", expression = "'value1: ' + value1")
         @ObservationKeyValue(key = "value2", expression = "'value2. overridden: ' + value2")
-        public CompletableFuture<DataHolder> getMultipleAnnotationsOnReturnValueForTagValueExpression() {
+        public CompletableFuture<DataHolder> getMultipleAnnotationsOnReturnValueForValueExpression() {
             return CompletableFuture.completedFuture(new DataHolder("zxe", "qwe"));
         }
 
         @Observed
-        public CompletableFuture<Void> getMultipleAnnotationsWithContainerForTagValueExpression(@ObservationKeyValues({
+        public CompletableFuture<Void> getMultipleAnnotationsWithContainerForValueExpression(@ObservationKeyValues({
                 @ObservationKeyValue(key = "value1", expression = "'value1: ' + value1"),
                 @ObservationKeyValue(key = "value2", expression = "'value2: ' + value2"),
                 @ObservationKeyValue(key = "value3",
@@ -977,7 +977,7 @@ class ObservedAspectTests {
                 @ObservationKeyValue(key = "value2", expression = "'value2: ' + value2"),
                 @ObservationKeyValue(key = "value3",
                         expression = "'value3. overridden: ' + value1.toUpperCase + value2.toUpperCase") })
-        public CompletableFuture<DataHolder> getMultipleAnnotationsOnReturnValueWithContainerForTagValueExpression() {
+        public CompletableFuture<DataHolder> getMultipleAnnotationsOnReturnValueWithContainerForValueExpression() {
             return CompletableFuture.completedFuture(new DataHolder("zxe", "qwe"));
         }
 
@@ -1013,20 +1013,20 @@ class ObservedAspectTests {
     interface ObservationKeyValueClassInterface {
 
         @Observed
-        void getAnnotationForTagValueResolver(
+        void getAnnotationForValueResolver(
                 @ObservationKeyValue(key = "test", resolver = ValueResolver.class) String test);
 
         @Observed
         @ObservationKeyValue(key = "test", resolver = ValueResolver.class)
-        String getReturnValueAnnotationForTagValueResolver();
+        String getReturnValueAnnotationForValueResolver();
 
         @Observed
-        void getAnnotationForTagValueExpression(
+        void getAnnotationForValueExpression(
                 @ObservationKeyValue(key = "test", expression = "'hello' + ' characters'") String test);
 
         @Observed
         @ObservationKeyValue(key = "test", expression = "'hello' + ' characters'")
-        String getReturnValueAnnotationForTagValueExpression();
+        String getReturnValueAnnotationForValueExpression();
 
         @Observed
         void getAnnotationForArgumentToString(@ObservationKeyValue("test") Long param);
@@ -1036,17 +1036,17 @@ class ObservedAspectTests {
         Long getAnnotationForReturnValueToString();
 
         @Observed
-        void getMultipleAnnotationsForTagValueExpression(
+        void getMultipleAnnotationsForValueExpression(
                 @ObservationKeyValue(key = "value1", expression = "'value1: ' + value1") @ObservationKeyValue(
                         key = "value2", expression = "'value2: ' + value2") DataHolder param);
 
         @Observed
         @ObservationKeyValue(key = "value1", expression = "'value1: ' + value1")
         @ObservationKeyValue(key = "value2", expression = "'value2: ' + value2")
-        DataHolder getMultipleAnnotationsOnReturnValueForTagValueExpression();
+        DataHolder getMultipleAnnotationsOnReturnValueForValueExpression();
 
         @Observed
-        void getMultipleAnnotationsWithContainerForTagValueExpression(@ObservationKeyValues({
+        void getMultipleAnnotationsWithContainerForValueExpression(@ObservationKeyValues({
                 @ObservationKeyValue(key = "value1", expression = "'value1: ' + value1"),
                 @ObservationKeyValue(key = "value2", expression = "'value2: ' + value2"),
                 @ObservationKeyValue(key = "value3",
@@ -1056,7 +1056,7 @@ class ObservedAspectTests {
         @ObservationKeyValues({ @ObservationKeyValue(key = "value1", expression = "'value1: ' + value1"),
                 @ObservationKeyValue(key = "value2", expression = "'value2: ' + value2"), @ObservationKeyValue(
                         key = "value3", expression = "'value3: ' + value1.toUpperCase + value2.toUpperCase") })
-        DataHolder getMultipleAnnotationsOnReturnValueWithContainerForTagValueExpression();
+        DataHolder getMultipleAnnotationsOnReturnValueWithContainerForValueExpression();
 
     }
 
@@ -1064,27 +1064,27 @@ class ObservedAspectTests {
 
         @Observed
         @Override
-        public void getAnnotationForTagValueResolver(
+        public void getAnnotationForValueResolver(
                 @ObservationKeyValue(key = "test", resolver = ValueResolver.class) String test) {
         }
 
         @Observed
         @ObservationKeyValue(key = "test", resolver = ValueResolver.class)
         @Override
-        public String getReturnValueAnnotationForTagValueResolver() {
+        public String getReturnValueAnnotationForValueResolver() {
             return "foo";
         }
 
         @Observed
         @Override
-        public void getAnnotationForTagValueExpression(
+        public void getAnnotationForValueExpression(
                 @ObservationKeyValue(key = "test", expression = "'hello' + ' characters.overridden'") String test) {
         }
 
         @Observed
         @ObservationKeyValue(key = "test", expression = "'hello' + ' characters. overridden'")
         @Override
-        public String getReturnValueAnnotationForTagValueExpression() {
+        public String getReturnValueAnnotationForValueExpression() {
             return "foo";
         }
 
@@ -1112,7 +1112,7 @@ class ObservedAspectTests {
 
         @Observed
         @Override
-        public void getMultipleAnnotationsForTagValueExpression(
+        public void getMultipleAnnotationsForValueExpression(
                 @ObservationKeyValue(key = "value1", expression = "'value1: ' + value1") @ObservationKeyValue(
                         key = "value2", expression = "'value2.overridden: ' + value2") DataHolder param) {
 
@@ -1122,13 +1122,13 @@ class ObservedAspectTests {
         @ObservationKeyValue(key = "value1", expression = "'value1: ' + value1")
         @ObservationKeyValue(key = "value2", expression = "'value2. overridden: ' + value2")
         @Override
-        public DataHolder getMultipleAnnotationsOnReturnValueForTagValueExpression() {
+        public DataHolder getMultipleAnnotationsOnReturnValueForValueExpression() {
             return new DataHolder("zxe", "qwe");
         }
 
         @Observed
         @Override
-        public void getMultipleAnnotationsWithContainerForTagValueExpression(@ObservationKeyValues({
+        public void getMultipleAnnotationsWithContainerForValueExpression(@ObservationKeyValues({
                 @ObservationKeyValue(key = "value1", expression = "'value1: ' + value1"),
                 @ObservationKeyValue(key = "value2", expression = "'value2: ' + value2"),
                 @ObservationKeyValue(key = "value3",
@@ -1141,7 +1141,7 @@ class ObservedAspectTests {
                 @ObservationKeyValue(key = "value3",
                         expression = "'value3. overridden: ' + value1.toUpperCase + value2.toUpperCase") })
         @Override
-        public DataHolder getMultipleAnnotationsOnReturnValueWithContainerForTagValueExpression() {
+        public DataHolder getMultipleAnnotationsOnReturnValueWithContainerForValueExpression() {
             return new DataHolder("zxe", "qwe");
         }
 
@@ -1151,25 +1151,25 @@ class ObservedAspectTests {
 
         @Observed
         @Override
-        public void getAnnotationForTagValueResolver(String test) {
+        public void getAnnotationForValueResolver(String test) {
         }
 
         @Observed
         @Override
-        public String getReturnValueAnnotationForTagValueResolver() {
+        public String getReturnValueAnnotationForValueResolver() {
             return "foo";
         }
 
         @Observed
         @Override
-        public void getAnnotationForTagValueExpression(
+        public void getAnnotationForValueExpression(
                 @ObservationKeyValue(key = "test", expression = "'hello' + ' characters.overridden'") String test) {
         }
 
         @Observed
         @ObservationKeyValue(key = "test", expression = "'hello' + ' characters. overridden'")
         @Override
-        public String getReturnValueAnnotationForTagValueExpression() {
+        public String getReturnValueAnnotationForValueExpression() {
             return "foo";
         }
 
@@ -1186,20 +1186,20 @@ class ObservedAspectTests {
 
         @Observed
         @Override
-        public void getMultipleAnnotationsForTagValueExpression(
+        public void getMultipleAnnotationsForValueExpression(
                 @ObservationKeyValue(key = "value2", expression = "'value2.overridden: ' + value2") DataHolder param) {
         }
 
         @Observed
         @ObservationKeyValue(key = "value2", expression = "'value2. overridden: ' + value2")
         @Override
-        public DataHolder getMultipleAnnotationsOnReturnValueForTagValueExpression() {
+        public DataHolder getMultipleAnnotationsOnReturnValueForValueExpression() {
             return new DataHolder("zxe", "qwe");
         }
 
         @Observed
         @Override
-        public void getMultipleAnnotationsWithContainerForTagValueExpression(@ObservationKeyValue(key = "value3",
+        public void getMultipleAnnotationsWithContainerForValueExpression(@ObservationKeyValue(key = "value3",
                 expression = "'value3.overridden: ' + value1.toUpperCase + value2.toUpperCase") DataHolder param) {
         }
 
@@ -1207,7 +1207,7 @@ class ObservedAspectTests {
         @ObservationKeyValue(key = "value3",
                 expression = "'value3. overridden: ' + value1.toUpperCase + value2.toUpperCase")
         @Override
-        public DataHolder getMultipleAnnotationsOnReturnValueWithContainerForTagValueExpression() {
+        public DataHolder getMultipleAnnotationsOnReturnValueWithContainerForValueExpression() {
             return new DataHolder("zxe", "qwe");
         }
 
@@ -1216,11 +1216,11 @@ class ObservedAspectTests {
     static class ObservationKeyValueSuper {
 
         @Observed
-        public void superMethod(@ObservationKeyValue("superTag") String foo) {
+        public void superMethod(@ObservationKeyValue("superKey") String foo) {
         }
 
         @Observed
-        @ObservationKeyValue("superTag")
+        @ObservationKeyValue("superKey")
         public String superMethod() {
             return "someValue";
         }
