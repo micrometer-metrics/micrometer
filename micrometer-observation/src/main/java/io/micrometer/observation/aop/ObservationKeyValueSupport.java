@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 VMware, Inc.
+ * Copyright 2025 VMware, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,37 +13,37 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.core.aop;
+package io.micrometer.observation.aop;
 
 import io.micrometer.common.annotation.NoOpValueResolver;
 import io.micrometer.common.annotation.ValueExpressionResolver;
 import io.micrometer.common.annotation.ValueResolver;
 import io.micrometer.common.util.StringUtils;
+import io.micrometer.observation.annotation.ObservationKeyValue;
 import org.jspecify.annotations.Nullable;
 
 import java.util.function.Function;
 
 /**
- * Support for {@link MeterTag}.
+ * Support for {@link ObservationKeyValue}.
  *
- * @author Marcin Grzejszczak
- * @author Johnny Lim
  * @author Seungyong Hong
  */
-final class MeterTagSupport {
+class ObservationKeyValueSupport {
 
-    private MeterTagSupport() {
+    private ObservationKeyValueSupport() {
     }
 
-    static String resolveTagKey(MeterTag annotation) {
-        return StringUtils.isNotBlank(annotation.value()) ? annotation.value() : annotation.key();
+    static String resolveKey(ObservationKeyValue observationKeyValue) {
+        return StringUtils.isNotBlank(observationKeyValue.value()) ? observationKeyValue.value()
+                : observationKeyValue.key();
     }
 
     /**
-     * Similar to {@code ObservationKeyValueSupport.resolveTagValue}. The two logics are
-     * similar, so if one is modified, probably the other one should be modified too.
+     * Similar to {@code MeterTagSupport.resolveTagValue}. The two logics are similar, so
+     * if one is modified, probably the other one should be modified too.
      */
-    static String resolveTagValue(MeterTag annotation, @Nullable Object argument,
+    static String resolveValue(ObservationKeyValue annotation, @Nullable Object argument,
             Function<Class<? extends ValueResolver>, ? extends ValueResolver> resolverProvider,
             Function<Class<? extends ValueExpressionResolver>, ? extends ValueExpressionResolver> expressionResolverProvider) {
         String value = null;

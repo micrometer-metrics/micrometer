@@ -24,7 +24,7 @@ import java.lang.annotation.*;
 /**
  * There are 3 different ways to add tags to a meter. All of them are controlled by the
  * annotation values. Precedence is to first try with the {@link ValueResolver}. If the
- * value of the resolver wasn't set, try to evaluate an expression. If there’s no
+ * value of the resolver wasn't set, try to evaluate an expression. If there's no
  * expression just return a {@code toString()} value of the parameter.
  *
  * IMPORTANT: Provided tag values MUST BE of LOW-CARDINALITY. If you fail to provide
