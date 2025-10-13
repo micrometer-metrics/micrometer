@@ -171,6 +171,26 @@ class ObservedAspectTests {
     }
 
     @Test
+    void observationShouldNotLeakToFutureCompletionThread() {
+        registry.observationConfig().observationHandler(new ObservationTextPublisher());
+
+        AspectJProxyFactory pf = new AspectJProxyFactory(new ObservedService());
+        pf.addAspect(new ObservedAspect(registry));
+
+        ObservedService service = pf.getProxy();
+        FakeAsyncTask fakeAsyncTask = new FakeAsyncTask("test-result");
+
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        CompletableFuture<String> asyncResult = service.supply(() -> service.async(fakeAsyncTask, executor));
+        // must run in the thread of the executor (async task)
+        CompletableFuture<Void> asyncAssertion = asyncResult
+            .thenRunAsync(() -> assertThat(registry).doesNotHaveAnyRemainingCurrentObservation(), executor);
+        fakeAsyncTask.proceed();
+
+        assertThat(asyncAssertion).succeedsWithin(Duration.ofMillis(200));
+    }
+
+    @Test
     void customObservationConventionShouldBeUsed() {
         registry.observationConfig().observationHandler(new ObservationTextPublisher());
 
@@ -392,14 +412,28 @@ class ObservedAspectTests {
 
         @Observed(name = "test.async")
         CompletableFuture<String> async(FakeAsyncTask fakeAsyncTask) {
-            System.out.println("async");
             ContextSnapshot contextSnapshot = ContextSnapshotFactory.builder()
                 .captureKeyPredicate(key -> true)
                 .contextRegistry(ContextRegistry.getInstance())
                 .build()
                 .captureAll();
-            return CompletableFuture.supplyAsync(fakeAsyncTask,
-                    contextSnapshot.wrapExecutor(Executors.newSingleThreadExecutor()));
+            return supplyAsync(fakeAsyncTask, contextSnapshot.wrapExecutor(Executors.newSingleThreadExecutor()));
+        }
+
+        @Observed(name = "test.async")
+        CompletableFuture<String> async(FakeAsyncTask fakeAsyncTask, Executor singleThreadExecutor) {
+            return supplyAsync(fakeAsyncTask, singleThreadExecutor);
+        }
+
+        @Observed(name = "test.supply")
+        <T> T supply(Supplier<T> supplier) {
+            System.out.println("supply");
+            return supplier.get();
+        }
+
+        private CompletableFuture<String> supplyAsync(FakeAsyncTask fakeAsyncTask, Executor executor) {
+            System.out.println("async");
+            return CompletableFuture.supplyAsync(fakeAsyncTask, executor);
         }
 
     }
