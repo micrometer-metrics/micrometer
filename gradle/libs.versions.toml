@@ -152,7 +152,7 @@ jersey3TestFrameworkJdkHttp = { module = "org.glassfish.jersey.test-framework.pr
 jmhCore = { module = "org.openjdk.jmh:jmh-core", version.ref = "jmh" }
 jmhAnnotationProcessor = { module = "org.openjdk.jmh:jmh-generator-annprocess", version.ref = "jmh" }
 # 3.14.x is the newest version of OSS jOOQ that supports Java 8
-jooq = { module = "org.jooq:jooq", version = "3.14.16" }
+jooq = { module = "org.jooq:jooq", version = "3.20.8" }
 jooqLatest = { module = "org.jooq:jooq", version.ref = "jooqNew" }
 jsonPath = { module = "com.jayway.jsonpath:json-path", version = "2.9.0" }
 jspecify = { module = "org.jspecify:jspecify", version = "1.0.0" }
