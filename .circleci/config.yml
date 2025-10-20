@@ -1,13 +1,13 @@
 version: 2.1
 
 executors:
-  circle-jdk24-executor:
+  jdk24-executor:
     working_directory: ~/micrometer
     environment:
       GRADLE_OPTS: '-Dorg.gradle.jvmargs="-Xmx2048m -XX:+HeapDumpOnOutOfMemoryError"'
     resource_class: medium+
     docker:
-      - image: cimg/openjdk:24.0.2
+      - image: gradle:8-jdk24
   circle-jdk-executor:
     working_directory: ~/micrometer
     environment:
@@ -68,7 +68,7 @@ commands:
 
 jobs:
   build-jdk24:
-    executor: circle-jdk24-executor
+    executor: jdk24-executor
     steps:
       - gradlew-build
 
