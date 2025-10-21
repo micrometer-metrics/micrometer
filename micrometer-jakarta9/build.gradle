@@ -2,9 +2,9 @@ description 'Module for Jakarta 9+ based instrumentations'
 
 jar {
     bundle {
-
         bnd '''\
         Import-Package: \
+            !java.*,\
             jakarta.jms.*;resolution:=dynamic;version="${@}",\
             jakarta.mail.*;resolution:=dynamic;version="${@}",\
             io.micrometer.observation.*;resolution:=dynamic;version="${@}",\

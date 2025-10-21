@@ -44,9 +44,9 @@ compileTestKotlin {
 
 jar {
     bundle {
-
         bnd '''\
         Import-Package: \
+            !java.*,\
             org.aspectj.*;resolution:=dynamic,\
             com.github.benmanes.caffeine.*;resolution:=dynamic;version="${@}",\
             net.sf.ehcache.*;resolution:=dynamic;version="${@}",\
