@@ -28,6 +28,7 @@ jar {
     bundle {
         bnd '''\
         Import-Package: \
+            !java.*,\
             javax.servlet.*;resolution:=optional,\
             io.micrometer.context.*;resolution:=optional,\
             org.aspectj.*;resolution:=optional,\
