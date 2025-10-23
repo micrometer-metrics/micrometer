@@ -13,8 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package io.micrometer.core.instrument.binder.db;
 
+import com.google.common.base.Splitter;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.binder.MeterBinder;
@@ -25,9 +27,13 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Iterator;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.DoubleSupplier;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * {@link MeterBinder} for a PostgreSQL database.
@@ -36,6 +42,7 @@ import java.util.function.DoubleSupplier;
  * @author Jon Schneider
  * @author Johnny Lim
  * @author Markus Dobel
+ * @apiNote Hari Mani
  * @since 1.1.0
  */
 @NullMarked
@@ -53,7 +60,15 @@ public class PostgreSQLDatabaseMetrics implements MeterBinder {
 
     private static final String QUERY_BUFFERS_BACKEND = getBgWriterQuery("buffers_backend");
 
+    private static final Stat BACKEND_BUFFER_WRITES = new Stat("pg_stat_io", "SUM(writes)");
+
     private static final String QUERY_BUFFERS_CHECKPOINT = getBgWriterQuery("buffers_checkpoint");
+
+    private static final Stat CHECKPOINTER_BUFFERS_WRITTEN = new Stat("pg_stat_checkpointer", "buffers_written");
+
+    private static final Stat TIMED_CHECKPOINTS_COUNT = new Stat("pg_stat_checkpointer", "num_timed");
+
+    private static final Stat REQUESTED_CHECKPOINTS_COUNT = new Stat("pg_stat_checkpointer", "num_requested");
 
     private final String database;
 
@@ -83,6 +98,8 @@ public class PostgreSQLDatabaseMetrics implements MeterBinder {
 
     private final String queryTransactionCount;
 
+    private final Version serverVersion;
+
     public PostgreSQLDatabaseMetrics(DataSource postgresDataSource, String database) {
         this(postgresDataSource, database, Tags.empty());
     }
@@ -103,6 +120,7 @@ public class PostgreSQLDatabaseMetrics implements MeterBinder {
         this.queryBlockHits = getDBStatQuery(database, "blks_hit");
         this.queryBlockReads = getDBStatQuery(database, "blks_read");
         this.queryTransactionCount = getDBStatQuery(database, "xact_commit + xact_rollback");
+        this.serverVersion = getServerVersion();
     }
 
     private static Tag createDbTag(String database) {
@@ -273,10 +291,16 @@ public class PostgreSQLDatabaseMetrics implements MeterBinder {
     }
 
     private Long getTimedCheckpointsCount() {
+        if (this.serverVersion.isAbove(Version.V17)) {
+            return runQuery(TIMED_CHECKPOINTS_COUNT.getQuery());
+        }
         return runQuery(QUERY_TIMED_CHECKPOINTS_COUNT);
     }
 
     private Long getRequestedCheckpointsCount() {
+        if (this.serverVersion.isAbove(Version.V17)) {
+            return runQuery(REQUESTED_CHECKPOINTS_COUNT.getQuery());
+        }
         return runQuery(QUERY_REQUESTED_CHECKPOINTS_COUNT);
     }
 
@@ -285,10 +309,16 @@ public class PostgreSQLDatabaseMetrics implements MeterBinder {
     }
 
     private Long getBuffersBackend() {
+        if (this.serverVersion.isAbove(Version.V17)) {
+            return runQuery(BACKEND_BUFFER_WRITES.getQuery());
+        }
         return runQuery(QUERY_BUFFERS_BACKEND);
     }
 
     private Long getBuffersCheckpoint() {
+        if (this.serverVersion.isAbove(Version.V17)) {
+            return runQuery(CHECKPOINTER_BUFFERS_WRITTEN.getQuery());
+        }
         return runQuery(QUERY_BUFFERS_CHECKPOINT);
     }
 
@@ -309,17 +339,26 @@ public class PostgreSQLDatabaseMetrics implements MeterBinder {
         return correctedValue;
     }
 
+    private Version getServerVersion() {
+        return runQuery("SHOW server_version", resultSet -> resultSet.getString(1)).map(Version::parse).orElse(Version.EMPTY);
+    }
+
     private Long runQuery(String query) {
+        return runQuery(query, resultSet -> resultSet.getLong(1)).orElse(0L);
+    }
+
+    private <T> Optional<T> runQuery(final String query, final ResultSetGetter<T> resultSetGetter) {
         try (Connection connection = postgresDataSource.getConnection();
                 Statement statement = connection.createStatement();
                 ResultSet resultSet = statement.executeQuery(query)) {
             if (resultSet.next()) {
-                return resultSet.getLong(1);
+                return Optional.of(resultSetGetter.get(resultSet));
             }
         }
-        catch (SQLException ignored) {
+        catch (SQLException err) {
+            System.err.println(err.getMessage());
         }
-        return 0L;
+        return Optional.empty();
     }
 
     private static String getDBStatQuery(String database, String statName) {
@@ -362,6 +401,78 @@ public class PostgreSQLDatabaseMetrics implements MeterBinder {
         }
 
         private Names() {
+        }
+
+    }
+
+    @FunctionalInterface
+    interface ResultSetGetter<T> {
+        T get(ResultSet resultSet) throws SQLException;
+    }
+
+    static class Stat {
+
+        private final String statView;
+
+        private final String statName;
+
+        public Stat(String statView, String statName) {
+            this.statView = statView;
+            this.statName = statName;
+        }
+
+        public String getQuery() {
+            return String.format("SELECT %s FROM %s;", this.statName, this.statView);
+        }
+
+    }
+
+    static final class Version {
+
+        private static final Pattern VERSION_PATTERN = Pattern.compile("^(\\d+\\.\\d+).*");
+
+        private static final Splitter SPLITTER = Splitter.on(".").trimResults().omitEmptyStrings();
+
+        static final Version EMPTY = new Version(0, 0);
+
+        static final Version V17 = new Version(17, 0);
+
+        final int majorVersion;
+
+        final int minorVersion;
+
+        static Version parse(String versionString) {
+            try {
+                final Matcher matcher = VERSION_PATTERN.matcher(versionString);
+                if (!matcher.matches()) {
+                    return EMPTY;
+                }
+                final Iterator<String> version = SPLITTER.split(matcher.group(1)).iterator();
+                return new Version(Integer.parseInt(version.next()), Integer.parseInt(version.next()));
+            }
+            catch (Exception exception) {
+                return EMPTY;
+            }
+        }
+
+        Version(int majorVersion, int minorVersion) {
+            this.majorVersion = majorVersion;
+            this.minorVersion = minorVersion;
+        }
+
+        public boolean isAbove(final Version other) {
+            if (this.majorVersion > other.majorVersion) {
+                return true;
+            }
+            if (this.majorVersion < other.majorVersion) {
+                return false;
+            }
+            return this.minorVersion >= other.minorVersion;
+        }
+
+        @Override
+        public String toString() {
+            return majorVersion + "." + minorVersion;
         }
 
     }
