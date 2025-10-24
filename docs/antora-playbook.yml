@@ -18,7 +18,6 @@ content:
     - url: ./..
       branches: HEAD
       start_path: docs
-      worktrees: true
 asciidoc:
   attributes:
     page-stackoverflow-url: https://stackoverflow.com/tags/micrometer
