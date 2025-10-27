@@ -126,8 +126,8 @@ subprojects {
                     // see https://github.com/uber/NullAway/wiki/JSpecify-Support
                     option("NullAway:JSpecifyMode", "true")
                 }
-                if (!javaLanguageVersion.canCompileOrRun(17)) {
-                    // Error Prone does not work with JDK <17
+                if (!javaLanguageVersion.canCompileOrRun(21)) {
+                    // Error Prone 2.43.0 requires JDK 21+
                     enabled = false
                 }
                 if (System.env.CI != null) {
