@@ -156,7 +156,7 @@ class PostgreSQL17DatabaseMetricsIntegrationTest {
     }
 
     private static DockerImageName getDockerImageName() {
-        return DockerImageName.parse("public.ecr.aws/docker/library/postgres:17.4").asCompatibleSubstituteFor("postgres");
+        return DockerImageName.parse("postgres:17");
     }
 
 }
