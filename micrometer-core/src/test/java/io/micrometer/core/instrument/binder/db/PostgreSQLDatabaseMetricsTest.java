@@ -20,16 +20,20 @@ import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.search.RequiredSearch;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
+import org.mockito.BDDMockito;
 
 import javax.sql.DataSource;
+import java.sql.SQLException;
 
 import static io.micrometer.core.instrument.binder.db.PostgreSQLDatabaseMetrics.Names.*;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
 
 /**
  * @author Kristof Depypere
  * @author Markus Dobel
+ * @author Hari Mani
  */
 class PostgreSQLDatabaseMetricsTest {
 
@@ -37,14 +41,17 @@ class PostgreSQLDatabaseMetricsTest {
 
     private static final String FUNCTIONAL_COUNTER_KEY = "key";
 
-    private final DataSource dataSource = mock(DataSource.class);
+    private final DataSource dataSource = mock(DataSource.class, BDDMockito.RETURNS_DEEP_STUBS);
 
     private final MeterRegistry registry = new SimpleMeterRegistry();
 
     private final Tags tags = Tags.of("database", DATABASE_NAME);
 
     @Test
-    void shouldRegisterPostgreSqlMetrics() {
+    void shouldRegisterPostgreSqlMetrics() throws SQLException {
+        // noinspection resource
+        given(dataSource.getConnection().createStatement().executeQuery("SHOW server_version").getString(1))
+            .willReturn("0.0.0");
         PostgreSQLDatabaseMetrics metrics = new PostgreSQLDatabaseMetrics(dataSource, DATABASE_NAME);
         metrics.bindTo(registry);
 
@@ -72,7 +79,10 @@ class PostgreSQLDatabaseMetricsTest {
     }
 
     @Test
-    void shouldBridgePgStatReset() {
+    void shouldBridgePgStatReset() throws SQLException {
+        // noinspection resource
+        given(dataSource.getConnection().createStatement().executeQuery("SHOW server_version").getString(1))
+            .willReturn("0.0.0");
         PostgreSQLDatabaseMetrics metrics = new PostgreSQLDatabaseMetrics(dataSource, DATABASE_NAME);
         metrics.bindTo(registry);
 
@@ -87,7 +97,10 @@ class PostgreSQLDatabaseMetricsTest {
     }
 
     @Test
-    void shouldBridgeDoublePgStatReset() {
+    void shouldBridgeDoublePgStatReset() throws SQLException {
+        // noinspection resource
+        given(dataSource.getConnection().createStatement().executeQuery("SHOW server_version").getString(1))
+            .willReturn("0.0.0");
         PostgreSQLDatabaseMetrics metrics = new PostgreSQLDatabaseMetrics(dataSource, DATABASE_NAME);
         metrics.bindTo(registry);
 
