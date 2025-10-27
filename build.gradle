@@ -172,8 +172,10 @@ subprojects {
         // Dependencies for all projects that are not transitive to consumers of our modules
         dependencies {
             checkstyle libs.spring.javaformatCheckstyle
-            errorprone(libs.errorprone)
-            errorprone(libs.nullAway)
+            if (javaLanguageVersion.canCompileOrRun(21)) {
+                errorprone(libs.errorprone)
+                errorprone(libs.nullAway)
+            }
         }
 
         tasks {
