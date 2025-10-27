@@ -16,7 +16,6 @@
 
 package io.micrometer.core.instrument.binder.db;
 
-import com.google.common.base.Splitter;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.binder.MeterBinder;
@@ -27,7 +26,6 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -340,7 +338,8 @@ public class PostgreSQLDatabaseMetrics implements MeterBinder {
     }
 
     private Version getServerVersion() {
-        return runQuery("SHOW server_version", resultSet -> resultSet.getString(1)).map(Version::parse).orElse(Version.EMPTY);
+        return runQuery("SHOW server_version", resultSet -> resultSet.getString(1)).map(Version::parse)
+            .orElse(Version.EMPTY);
     }
 
     private Long runQuery(String query) {
@@ -407,7 +406,9 @@ public class PostgreSQLDatabaseMetrics implements MeterBinder {
 
     @FunctionalInterface
     interface ResultSetGetter<T> {
+
         T get(ResultSet resultSet) throws SQLException;
+
     }
 
     static class Stat {
@@ -431,8 +432,6 @@ public class PostgreSQLDatabaseMetrics implements MeterBinder {
 
         private static final Pattern VERSION_PATTERN = Pattern.compile("^(\\d+\\.\\d+).*");
 
-        private static final Splitter SPLITTER = Splitter.on(".").trimResults().omitEmptyStrings();
-
         static final Version EMPTY = new Version(0, 0);
 
         static final Version V17 = new Version(17, 0);
@@ -447,8 +446,8 @@ public class PostgreSQLDatabaseMetrics implements MeterBinder {
                 if (!matcher.matches()) {
                     return EMPTY;
                 }
-                final Iterator<String> version = SPLITTER.split(matcher.group(1)).iterator();
-                return new Version(Integer.parseInt(version.next()), Integer.parseInt(version.next()));
+                final String[] versionArr = matcher.group(1).split("\\.", 2);
+                return new Version(Integer.parseInt(versionArr[0]), Integer.parseInt(versionArr[1]));
             }
             catch (Exception exception) {
                 return EMPTY;
