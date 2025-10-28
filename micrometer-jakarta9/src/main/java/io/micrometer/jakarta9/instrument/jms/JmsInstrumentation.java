@@ -49,7 +49,7 @@ import java.lang.reflect.Proxy;
  * MessageConsumer consumer = session.createConsumer(topic);
  * // when a message is processed by the listener,
  * // a "jms.message.process" observation is created
- * consumer.setMessageListener(message -> consumeMessage(message));
+ * consumer.setMessageListener(message -&gt; consumeMessage(message));
  * </pre>
  *
  * @author Brian Clozel

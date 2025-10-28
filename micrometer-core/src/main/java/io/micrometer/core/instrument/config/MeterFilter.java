@@ -414,7 +414,7 @@ public interface MeterFilter {
 
     /**
      * Enables the provided filter for the Meters selected by the predicate.
-     * <code>registry.config().meterFilter(MeterFilter.forMeters(id -> id.getName().startsWith("test"), MeterFilter.ignoreTags("ignored")))</code>
+     * <code>registry.config().meterFilter(MeterFilter.forMeters(id -&gt; id.getName().startsWith("test"), MeterFilter.ignoreTags("ignored")))</code>
      * @param predicate Apply the provided filter only to Meters selected by this
      * predicate
      * @param delegate A filter to apply if the provided predicate returns true

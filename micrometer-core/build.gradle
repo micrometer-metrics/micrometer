@@ -1,5 +1,8 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
+
 plugins {
-    alias(libs.plugins.kotlin19)
+    alias(libs.plugins.kotlin)
     alias(libs.plugins.aspectj) apply false
 }
 
@@ -28,61 +31,61 @@ else {
 
 description 'Core module of Micrometer containing instrumentation API and implementation'
 
-tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).all {
-    kotlinOptions {
-        jvmTarget = javaTargetVersion
-        apiVersion = "1.7"
-        languageVersion = "1.7"
+kotlin {
+    compilerOptions {
+        jvmTarget =  JvmTarget.JVM_1_8
+        apiVersion = KotlinVersion.KOTLIN_1_7
+        languageVersion = KotlinVersion.KOTLIN_1_7
     }
 }
 
 compileTestKotlin {
-    kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_11
+    compilerOptions {
+        jvmTarget = JvmTarget.JVM_11
     }
 }
 
 jar {
-    bundle {
-        bnd '''\
-        Import-Package: \
-            !java.*,\
-            org.aspectj.*;resolution:=dynamic,\
-            com.github.benmanes.caffeine.*;resolution:=dynamic;version="${@}",\
-            net.sf.ehcache.*;resolution:=dynamic;version="${@}",\
-            javax.cache.*;resolution:=dynamic;version="${@}",\
-            org.hibernate.*;resolution:=dynamic;version="${@}",\
-            org.eclipse.jetty.*;resolution:=dynamic;version="${@}",\
-            org.glassfish.jersey.*;resolution:=dynamic;version="${@}",\
-            io.grpc.*;resolution:=dynamic,\
-            org.apache.hc.*;resolution:=dynamic,\
-            org.apache.http.*;resolution:=dynamic,\
-            com.netflix.hystrix.*;resolution:=dynamic;version="${@}",\
-            ch.qos.logback.*;resolution:=dynamic;version="${@}",\
-            org.apache.logging.log4j.*;resolution:=dynamic;version="${@}",\
-            okhttp3.*;resolution:=dynamic,\
-            com.mongodb.*;resolution:=dynamic;version="${@}",\
-            org.jooq.*;resolution:=dynamic;version="${@}",\
-            org.apache.kafka.*;resolution:=dynamic,\
-            com.codahale.metrics.*;resolution:=dynamic;version="${@}",\
-            com.google.common.cache.*;resolution:=dynamic;version="${@}",\
-            jakarta.servlet.*;resolution:=dynamic;version="${@}",\
-            javax.servlet.*;resolution:=dynamic;version="${@}",\
-            io.micrometer.context.*;resolution:=dynamic,\
-            io.micrometer.observation.*;resolution:=dynamic;version="${@}",\
-            kotlin.*;resolution:=dynamic,\
-            kotlinx.coroutines.*;resolution:=dynamic,\
-            org.LatencyUtils.*;resolution:=dynamic,\
-            org.HdrHistogram.*;resolution:=dynamic;version="${@}",\
-            org.apache.catalina.*;resolution:=dynamic,\
-            org.bson.*;resolution:=dynamic;version="${@}",\
-            org.slf4j.*;resolution:=dynamic,\
-            rx.*;resolution:=dynamic;version="${@}",\
-            javax.persistence.*;resolution:=dynamic;version="${@}",\
-            io.netty.*;resolution:=dynamic;version="${@}",\
-            *
-        '''.stripIndent()
-    }
+//    bundle {
+//        bnd '''\
+//        Import-Package: \
+//            !java.*,\
+//            org.aspectj.*;resolution:=dynamic,\
+//            com.github.benmanes.caffeine.*;resolution:=dynamic;version="${@}",\
+//            net.sf.ehcache.*;resolution:=dynamic;version="${@}",\
+//            javax.cache.*;resolution:=dynamic;version="${@}",\
+//            org.hibernate.*;resolution:=dynamic;version="${@}",\
+//            org.eclipse.jetty.*;resolution:=dynamic;version="${@}",\
+//            org.glassfish.jersey.*;resolution:=dynamic;version="${@}",\
+//            io.grpc.*;resolution:=dynamic,\
+//            org.apache.hc.*;resolution:=dynamic,\
+//            org.apache.http.*;resolution:=dynamic,\
+//            com.netflix.hystrix.*;resolution:=dynamic;version="${@}",\
+//            ch.qos.logback.*;resolution:=dynamic;version="${@}",\
+//            org.apache.logging.log4j.*;resolution:=dynamic;version="${@}",\
+//            okhttp3.*;resolution:=dynamic,\
+//            com.mongodb.*;resolution:=dynamic;version="${@}",\
+//            org.jooq.*;resolution:=dynamic;version="${@}",\
+//            org.apache.kafka.*;resolution:=dynamic,\
+//            com.codahale.metrics.*;resolution:=dynamic;version="${@}",\
+//            com.google.common.cache.*;resolution:=dynamic;version="${@}",\
+//            jakarta.servlet.*;resolution:=dynamic;version="${@}",\
+//            javax.servlet.*;resolution:=dynamic;version="${@}",\
+//            io.micrometer.context.*;resolution:=dynamic,\
+//            io.micrometer.observation.*;resolution:=dynamic;version="${@}",\
+//            kotlin.*;resolution:=dynamic,\
+//            kotlinx.coroutines.*;resolution:=dynamic,\
+//            org.LatencyUtils.*;resolution:=dynamic,\
+//            org.HdrHistogram.*;resolution:=dynamic;version="${@}",\
+//            org.apache.catalina.*;resolution:=dynamic,\
+//            org.bson.*;resolution:=dynamic;version="${@}",\
+//            org.slf4j.*;resolution:=dynamic,\
+//            rx.*;resolution:=dynamic;version="${@}",\
+//            javax.persistence.*;resolution:=dynamic;version="${@}",\
+//            io.netty.*;resolution:=dynamic;version="${@}",\
+//            *
+//        '''.stripIndent()
+//    }
 }
 
 dependencies {
