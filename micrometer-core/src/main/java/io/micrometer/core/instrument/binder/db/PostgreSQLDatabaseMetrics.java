@@ -354,8 +354,7 @@ public class PostgreSQLDatabaseMetrics implements MeterBinder {
                 return Optional.of(resultSetGetter.get(resultSet));
             }
         }
-        catch (SQLException err) {
-            System.err.println(err.getMessage());
+        catch (SQLException ignored) {
         }
         return Optional.empty();
     }
