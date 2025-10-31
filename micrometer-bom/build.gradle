@@ -23,10 +23,10 @@ dependencies {
     }
 }
 
-publishing {
-    publications {
-        nebula(MavenPublication) {
-            from components.javaPlatform
-        }
-    }
-}
+//publishing {
+//    publications {
+//        nebula(MavenPublication) {
+//            from components.javaPlatform
+//        }
+//    }
+//}
