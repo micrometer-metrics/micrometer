@@ -154,7 +154,7 @@ jmhAnnotationProcessor = { module = "org.openjdk.jmh:jmh-generator-annprocess", 
 # 3.14.x is the newest version of OSS jOOQ that supports Java 8
 jooq = { module = "org.jooq:jooq", version = "3.14.16" }
 jooqLatest = { module = "org.jooq:jooq", version.ref = "jooqNew" }
-jsonPath = { module = "com.jayway.jsonpath:json-path", version = "2.9.0" }
+jsonPath = { module = "com.jayway.jsonpath:json-path", version = "2.10.0" }
 jspecify = { module = "org.jspecify:jspecify", version = "1.0.0" }
 jsr107 = { module = "org.jsr107.ri:cache-ri-impl", version.ref = "jsr107" }
 jsr305 = { module = "com.google.code.findbugs:jsr305", version.ref = "jsr305" }
