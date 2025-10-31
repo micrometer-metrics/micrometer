@@ -57,29 +57,34 @@ class HighCardinalityTagsDetectorTests {
         // end::registry_integration_factory[]
 
         // @formatter:off
-        // tag::registry_integration_full_config[]
+        // tag::registry_integration_builder[]
         registry.config().withHighCardinalityTagsDetector(r ->
-            new HighCardinalityTagsDetector(
-                r,
-                1000, // 1000 different meters with the same name
-                Duration.ofMinutes(5), // check ~every 5 minutes
-                name -> alert("High cardinality meter: " + name)
-            )
+            new HighCardinalityTagsDetector.Builder(r)
+                .threshold(1000) // 1000 different meters with the same name
+                .delay(Duration.ofMinutes(5)) // check ~every 5 minutes
+                .highCardinalityMeterInfoConsumer(info -> alert("Nooo!"))
+                .build()
         );
-        // end::registry_integration_full_config[]
+        // end::registry_integration_builder[]
         // @formatter:on
     }
 
     @Test
     void oneTimeCheck() {
         // tag::one_time_check[]
-        try (HighCardinalityTagsDetector detector = new HighCardinalityTagsDetector(registry, 10,
-                Duration.ofMinutes(1))) {
+        try (HighCardinalityTagsDetector detector = new HighCardinalityTagsDetector.Builder(registry).threshold(10)
+            .build()) {
             // Create meters with a high cardinality tag (uid)
             for (int i = 0; i < 15; i++) {
                 registry.counter("requests", "uid", String.valueOf(i)).increment();
             }
+
             assertThat(detector.findFirst()).isNotEmpty().get().isEqualTo("requests");
+            assertThat(detector.findFirstHighCardinalityMeterInfo()).isNotEmpty().get().satisfies(info -> {
+                assertThat(info.getName()).isEqualTo("requests");
+                assertThat(info.getCount()).isEqualTo(15);
+            });
+
         }
         // detector.close() is implicit here but don't forget to close it otherwise!
         // end::one_time_check[]
@@ -94,7 +99,9 @@ class HighCardinalityTagsDetectorTests {
         // @formatter:off
         // tag::custom_consumer_config[]
         registry.config().withHighCardinalityTagsDetector(r ->
-            new HighCardinalityTagsDetector(r, 10, Duration.ofMinutes(1), this::recordHighCardinalityEvent)
+            new HighCardinalityTagsDetector.Builder(r).threshold(10)
+                .highCardinalityMeterInfoConsumer(this::recordHighCardinalityEvent)
+                .build()
         );
         // end::custom_consumer_config[]
         // @formatter:on
@@ -104,9 +111,9 @@ class HighCardinalityTagsDetectorTests {
     }
 
     // tag::custom_consumer[]
-    void recordHighCardinalityEvent(String name) {
-        alert("High cardinality meter: " + name);
-        registry.counter("highCardinality.detections").increment();
+    void recordHighCardinalityEvent(HighCardinalityTagsDetector.HighCardinalityMeterInfo info) {
+        alert("High cardinality detected in " + info.getName() + " with " + info.getCount() + " meters!");
+        registry.counter("highCardinality.detections", "meter", info.getName()).increment();
     }
     // end::custom_consumer[]
 

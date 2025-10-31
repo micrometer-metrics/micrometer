@@ -54,13 +54,13 @@ You can provide your own `Function<MeterRegistry, HighCardinalityTagsDetector>` 
 include::{include-java}/metrics/HighCardinalityTagsDetectorTests.java[tags=registry_integration_factory,indent=0]
 ----
 
-=== Config params
+=== Configure with a Builder
 
-Constructors of `HighCardinalityTagsDetector` can be used to set parameters:
+`HighCardinalityTagsDetector.Builder` can be used to conveniently set parameters:
 
 [source,java,subs=+attributes]
 ----
-include::{include-java}/metrics/HighCardinalityTagsDetectorTests.java[tags=registry_integration_full_config,indent=0]
+include::{include-java}/metrics/HighCardinalityTagsDetectorTests.java[tags=registry_integration_builder,indent=0]
 ----
 
 === One-Time Check
@@ -83,7 +83,7 @@ For continuous monitoring in production, you don't need to create a scheduled jo
 
 === Custom Consumer
 
-Instead of the default logging behavior, you can provide a `Consumer<String>` to handle high cardinality notifications:
+Instead of the default logging behavior, you can provide a `Consumer<HighCardinalityMeterInfo>` to handle high cardinality notifications:
 
 [source,java,subs=+attributes]
 ----
