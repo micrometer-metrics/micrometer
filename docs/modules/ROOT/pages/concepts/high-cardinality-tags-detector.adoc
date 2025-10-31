@@ -1,0 +1,179 @@
+[[high-cardinality-tags-detector]]
+= High Cardinality Tags Detector
+
+High cardinality tags can cause memory and performance issues in your application and your metrics backend. When tag values are unbounded (for example userID, requestID, traceID), each unique combination creates a new Meter, potentially leading to millions of time series and excessive memory consumption.
+
+`HighCardinalityTagsDetector` helps you to identify Meters that may have high cardinality tags by monitoring the number of Meters that share the same name. When the count exceeds a configurable threshold, it indicates that the `Meter` likely has high cardinality tags.
+
+NOTE: `HighCardinalityTagsDetector` detects potential high cardinality tags by counting Meters with the same name. It does not detect other issues, such as appending random values to Meter names. Its sole purpose is detecting the potential presence of high cardinality tags.
+
+== Understand High Cardinality
+
+High cardinality occurs when a tag has an unbounded or large number of possible values that does not fit in memory. Common examples include:
+
+- UserID, Email, RequestID, SessionID, TraceID
+- Timestamps
+- Full URLs (`/users/123`)
+- Any user input that is not validated/normalized
+
+In contrast, low cardinality tags have a bounded, typically "small" set of values:
+
+- HTTP methods (`method=GET`)
+- HTTP status codes (`status=200`)
+- Application names (`application=payments-app`)
+- Environment names (`env=prod`)
+- Templated URLs (`/users/\{id}`)
+
+TIP: For more information on tag naming best practices, see xref:concepts/naming.adoc#_tag_naming[Tag Naming].
+
+== How It Works
+
+The detector works by:
+
+1. Counting how many meters exist with the same name in the registry
+2. Comparing this count against a threshold
+3. Notifying you (via logging or custom consumer) when the threshold is exceeded
+
+== Usage
+
+You can configure the detector through the `MeterRegistry`. In this case, the detector is automatically started and managed by the registry:
+
+=== Configure with the defaults
+
+[source,java,subs=+attributes]
+----
+include::{include-java}/metrics/HighCardinalityTagsDetectorTests.java[tags=registry_integration_default,indent=0]
+----
+
+=== Configure with a Factory
+
+You can provide your own `Function<MeterRegistry, HighCardinalityTagsDetector>` that receives a registry and returns a detector:
+
+[source,java,subs=+attributes]
+----
+include::{include-java}/metrics/HighCardinalityTagsDetectorTests.java[tags=registry_integration_factory,indent=0]
+----
+
+=== Config params
+
+Constructors of `HighCardinalityTagsDetector` can be used to set parameters:
+
+[source,java,subs=+attributes]
+----
+include::{include-java}/metrics/HighCardinalityTagsDetectorTests.java[tags=registry_integration_full_config,indent=0]
+----
+
+=== One-Time Check
+
+You can perform a one-time check to see if any meters exceed the threshold:
+
+[source,java,subs=+attributes]
+----
+include::{include-java}/metrics/HighCardinalityTagsDetectorTests.java[tags=one_time_check,indent=0]
+----
+
+This approach can be useful for:
+
+- Ad-hoc investigation of potential issues
+- Tests to verify your instrumentation
+
+=== Scheduled Monitoring
+
+For continuous monitoring in production, you don't need to create a scheduled job that periodically calls the detector. The detector has a built in scheduler, but you don't need to manage that one either (by calling `start()` and `close()`). Instead you can configure the detector through the `MeterRegistry` so that the detector is automatically started and managed by the registry for you. See the various configuration options with the registry above.
+
+=== Custom Consumer
+
+Instead of the default logging behavior, you can provide a `Consumer<String>` to handle high cardinality notifications:
+
+[source,java,subs=+attributes]
+----
+include::{include-java}/metrics/HighCardinalityTagsDetectorTests.java[tags=custom_consumer_config,indent=0]
+----
+And here's an example implementation:
+[source,java,subs=+attributes]
+----
+include::{include-java}/metrics/HighCardinalityTagsDetectorTests.java[tags=custom_consumer,indent=0]
+----
+
+This can be useful for:
+
+- Custom logging or reporting
+- Publishing alerts
+- Collecting metrics about high cardinality detections
+- Triggering any kind of custom actions
+
+== Preventing High Cardinality
+
+When the detector identifies high cardinality tags, consider the following possible solutions:
+
+=== Remove Problematic Tags
+
+If a tag provides little value but high cardinality, you should remove it. If you control the instrumentation, you should update it to not add the high cardinality tag. If you don't control the instrumentation, you can remove the tag using a `MeterFilter`:
+
+[source,java]
+----
+registry.config().meterFilter(MeterFilter.ignoreTags("userId"));
+----
+
+See xref:concepts/meter-filters.adoc[Meter Filters] for more information and configuration options.
+
+=== Normalize Tag Values
+
+Instead of using "raw" values, normalize them to reduce cardinality:
+
+- Use templated URLs instead of actual URLs: `/users/\{id}` instead of `/users/123`
+- Group values into ranges: `age.group=20-30` instead of `age=25`
+- Use categories: `outcome=CLIENT_ERROR` (or `status=4xx`) instead of `status=404`
+- Limit unknown/unexpected values to known values: `status=OTHER`
+
+NOTE: `age` and `status` are not necessarily high cardinality data since they are usually fall into a finite set of values (except if input is not validated and `age=12345` and `status=54321` are possible to send to the app). The normalization techniques to reduce cardinality are still valid though.
+
+=== Use High Cardinality data with the Observation API
+
+If you are using Micrometer's Observation API, you can mark certain metadata as high cardinality. These key-values should not be used for recording metrics. Typically they are only used in outputs that can handle high cardinality (for example: distributed tracing systems, logs):
+
+[source,java]
+----
+observation.highCardinalityKeyValue("userId", userId);
+----
+
+See xref:../observation/introduction.adoc[Observation API] for more information.
+
+=== Use MeterFilters to Set Bounds
+
+If none of the above works, you can use `maximumAllowableTags` and `maximumAllowableMetrics` as a last resort to protect your application and your monitoring system. They are for situations in which you cannot fix the cardinality problem, for example with an HTTP client instrumentation that does not offer a way to tag the URI with a template (low cardinality) instead of the expanded URI (high cardinality). You can use `MeterFilter` to prevent high cardinality before it becomes a problem:
+
+[source,java]
+----
+registry.config().meterFilter(MeterFilter.maximumAllowableTags("http.requests", "uri", 100, MeterFilter.deny()));
+----
+
+TIP: In the code above, instead of `MeterFilter.deny()`, you can implement your own logic that not only denies the registration of the `Meter` but also logs the event out. These logs can be overwhelming, it's a good idea to limit them.
+
+See xref:concepts/meter-filters.adoc[Meter Filters] for more information.
+
+== Best Practices
+
+1. **Enable in Production**: Run the detector in production to catch issues that may not appear in testing.
+
+2. **Monitor Regularly**: Use the scheduled monitoring mode rather than one-time checks.
+
+3. **Act on Warnings**: When high cardinality is detected, investigate and fix the root cause rather than just increasing the threshold.
+
+4. **Set Appropriate Thresholds**: The default threshold might work for most applications, but adjust it based on your monitoring system's capabilities and your application's scale as needed.
+
+5. **Test Your Instrumentation**: Use the detector in integration tests to verify that your custom instrumentation doesn't introduce high cardinality.
+
+== Limitations
+
+* The detector only identifies high cardinality by counting Meters with the same name. It cannot detect:
+  ** Random values appended to `Meter` names
+  ** Memory leaks from other sources
+  ** High cardinality that hasn't yet exceeded the threshold
+* The detector examines the first meter that exceeds the threshold. If multiple meters have high cardinality, you'll need to fix them iteratively.
+* The threshold is a heuristic based on memory and may need adjustment for your specific use case.
+
+== See Also
+
+- xref:concepts/meter-filters.adoc[Meter Filters]: Using filters to control meter registration and tag cardinality
+- xref:../observation/introduction.adoc[Observation API]: Using high- and low cardinality tags with Observations
