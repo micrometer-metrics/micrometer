@@ -23,6 +23,8 @@ Timer.builder("my.timer")
 <3> `serviceLevelObjectives`: Used to publish a cumulative histogram with buckets defined by your SLOs. When used in concert with `publishPercentileHistogram` on a monitoring system that supports aggregable percentiles, this setting adds additional buckets to the published histogram. When used on a system that does not support aggregable percentiles, this setting causes a histogram to be published with only these buckets.
 <4> `minimumExpectedValue`/`maximumExpectedValue`: Controls the number of buckets shipped by `publishPercentileHistogram` and controls the accuracy and memory footprint of the underlying HdrHistogram structure.
 
+NOTE: For those monitoring systems, where percentiles can be approximated using the histogram (see `publishPercentileHistogram` above), it is usually unnecessary to also publish client-side percentiles (`publishPercentiles`) since in those scenarios client-side percentiles are redundant and also non-aggregable across dimensions (unlike histograms). Prometheus Java Client (1.x) does not support having both under the same metric name.
+
 Since shipping percentiles to the monitoring system generates additional time series, it is generally preferable to *not* configure them in core libraries that are included as dependencies in applications. Instead, applications can turn on this behavior for some set of timers and distribution summaries by using a meter filter.
 
 For example, suppose we have a handful of timers in a common library. We have prefixed these timer names with `myservice`:
