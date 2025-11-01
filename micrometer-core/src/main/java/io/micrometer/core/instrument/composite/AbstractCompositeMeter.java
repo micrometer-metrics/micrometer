@@ -20,7 +20,6 @@ import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
 import org.jspecify.annotations.Nullable;
 
-import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -30,7 +29,9 @@ abstract class AbstractCompositeMeter<T extends Meter> extends AbstractMeter imp
 
     private final AtomicBoolean childrenGuard = new AtomicBoolean();
 
-    private Map<MeterRegistry, T> children = Collections.emptyMap();
+    // IdentityHashMap instead of Collections.emptyMap() keeps implementation type
+    // consistent, which may help JIT optimization.
+    private Map<MeterRegistry, T> children = new IdentityHashMap<>(0);
 
     private volatile @Nullable T noopMeter;
 
