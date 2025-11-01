@@ -20,17 +20,20 @@ import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
 import org.jspecify.annotations.Nullable;
 
-import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.Iterator;
-import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 abstract class AbstractCompositeMeter<T extends Meter> extends AbstractMeter implements CompositeMeter {
 
+    private static final IdentityHashMap<MeterRegistry, Meter> EMPTY_CHILDREN = new IdentityHashMap<>(0);
+
     private final AtomicBoolean childrenGuard = new AtomicBoolean();
 
-    private Map<MeterRegistry, T> children = Collections.emptyMap();
+    // Enforcing type of Map to explicitly be constrained to one type may help JIT
+    // optimizations.
+    @SuppressWarnings("unchecked")
+    private IdentityHashMap<MeterRegistry, T> children = (IdentityHashMap<MeterRegistry, T>) EMPTY_CHILDREN;
 
     private volatile @Nullable T noopMeter;
 
@@ -72,7 +75,7 @@ abstract class AbstractCompositeMeter<T extends Meter> extends AbstractMeter imp
         for (;;) {
             if (childrenGuard.compareAndSet(false, true)) {
                 try {
-                    Map<MeterRegistry, T> newChildren = new IdentityHashMap<>(children);
+                    IdentityHashMap<MeterRegistry, T> newChildren = new IdentityHashMap<>(children);
                     newChildren.put(registry, newMeter);
                     this.children = newChildren;
                     break;
@@ -95,7 +98,7 @@ abstract class AbstractCompositeMeter<T extends Meter> extends AbstractMeter imp
         for (;;) {
             if (childrenGuard.compareAndSet(false, true)) {
                 try {
-                    Map<MeterRegistry, T> newChildren = new IdentityHashMap<>(children);
+                    IdentityHashMap<MeterRegistry, T> newChildren = new IdentityHashMap<>(children);
                     newChildren.remove(registry);
                     this.children = newChildren;
                     break;
