@@ -45,7 +45,7 @@ import static java.util.Collections.emptyList;
 @NullMarked
 public class LogbackMetrics implements MeterBinder, AutoCloseable {
 
-    static ThreadLocal<Boolean> ignoreMetrics = new ThreadLocal<>();
+    static ThreadLocal<Boolean> ignoreMetrics = ThreadLocal.withInitial(() -> false);
 
     private final Iterable<Tag> tags;
 
@@ -126,7 +126,7 @@ public class LogbackMetrics implements MeterBinder, AutoCloseable {
             r.run();
         }
         finally {
-            ignoreMetrics.remove();
+            ignoreMetrics.set(false);
         }
     }
 
@@ -209,8 +209,7 @@ class MetricsTurboFilter extends TurboFilter {
             return FilterReply.NEUTRAL;
         }
 
-        Boolean ignored = LogbackMetrics.ignoreMetrics.get();
-        if (ignored != null && ignored) {
+        if (LogbackMetrics.ignoreMetrics.get()) {
             return FilterReply.NEUTRAL;
         }
 
