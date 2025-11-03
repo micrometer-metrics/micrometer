@@ -128,9 +128,9 @@ class GrpcAsyncTest {
     @Test
     @SuppressWarnings("unchecked")
     void multi_thread_client() throws Exception {
-        AtomicReference<Observation> onStart = new AtomicReference<>();
-        AtomicReference<Observation> onMessage = new AtomicReference<>();
-        AtomicReference<Observation> halfClose = new AtomicReference<>();
+        AtomicReference<@Nullable Observation> onStart = new AtomicReference<>();
+        AtomicReference<@Nullable Observation> onMessage = new AtomicReference<>();
+        AtomicReference<@Nullable Observation> halfClose = new AtomicReference<>();
         ClientInterceptor clientInterceptor = new ClientInterceptor() {
             @Override
             public <ReqT, RespT> ClientCall<ReqT, RespT> interceptCall(MethodDescriptor<ReqT, RespT> method,

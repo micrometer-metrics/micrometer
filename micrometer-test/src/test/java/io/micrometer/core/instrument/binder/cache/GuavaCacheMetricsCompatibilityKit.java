@@ -27,7 +27,7 @@ import static java.util.Collections.emptyList;
 
 class GuavaCacheMetricsCompatibilityKit extends CacheMeterBinderCompatibilityKit<LoadingCache<String, String>> {
 
-    private AtomicReference<String> loadValue = new AtomicReference<>();
+    private AtomicReference<@Nullable String> loadValue = new AtomicReference<>();
 
     @Override
     public LoadingCache<String, String> createCache() {
