@@ -40,7 +40,7 @@ import java.util.regex.Pattern;
  * @author Jon Schneider
  * @author Johnny Lim
  * @author Markus Dobel
- * @apiNote Hari Mani
+ * @author Hari Mani
  * @since 1.1.0
  */
 @NullMarked
@@ -207,7 +207,8 @@ public class PostgreSQLDatabaseMetrics implements MeterBinder {
     private void registerCheckpointMetrics(MeterRegistry registry) {
         FunctionCounter
             .builder(Names.CHECKPOINTS_TIMED, postgresDataSource,
-                    dataSource -> resettableFunctionalCounter(Names.CHECKPOINTS_TIMED, getTimedCheckpointsCountSupplier()))
+                    dataSource -> resettableFunctionalCounter(Names.CHECKPOINTS_TIMED,
+                            getTimedCheckpointsCountSupplier()))
             .tags(tags)
             .description("Number of checkpoints timed")
             .register(registry);
