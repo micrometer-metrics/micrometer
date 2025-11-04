@@ -58,15 +58,15 @@ public class PostgreSQLDatabaseMetrics implements MeterBinder {
 
     private static final String QUERY_BUFFERS_BACKEND = getBgWriterQuery("buffers_backend");
 
-    private static final Stat BACKEND_BUFFER_WRITES = new Stat("pg_stat_io", "SUM(writes)");
+    private static final String BACKEND_BUFFER_WRITES = SELECT + "SUM(writes) FROM pg_stat_io";
 
     private static final String QUERY_BUFFERS_CHECKPOINT = getBgWriterQuery("buffers_checkpoint");
 
-    private static final Stat CHECKPOINTER_BUFFERS_WRITTEN = new Stat("pg_stat_checkpointer", "buffers_written");
+    private static final String CHECKPOINTER_BUFFERS_WRITTEN = getStatCheckpointerQuery("buffers_written");
 
-    private static final Stat TIMED_CHECKPOINTS_COUNT = new Stat("pg_stat_checkpointer", "num_timed");
+    private static final String TIMED_CHECKPOINTS_COUNT = getStatCheckpointerQuery("num_timed");
 
-    private static final Stat REQUESTED_CHECKPOINTS_COUNT = new Stat("pg_stat_checkpointer", "num_requested");
+    private static final String REQUESTED_CHECKPOINTS_COUNT = getStatCheckpointerQuery("num_requested");
 
     private final String database;
 
@@ -290,14 +290,14 @@ public class PostgreSQLDatabaseMetrics implements MeterBinder {
 
     private DoubleSupplier getTimedCheckpointsCountSupplier() {
         if (this.serverVersion.isAbove(Version.V17)) {
-            return () -> runQuery(TIMED_CHECKPOINTS_COUNT.getQuery());
+            return () -> runQuery(TIMED_CHECKPOINTS_COUNT);
         }
         return () -> runQuery(QUERY_TIMED_CHECKPOINTS_COUNT);
     }
 
     private DoubleSupplier getRequestedCheckpointsCountSupplier() {
         if (this.serverVersion.isAbove(Version.V17)) {
-            return () -> runQuery(REQUESTED_CHECKPOINTS_COUNT.getQuery());
+            return () -> runQuery(REQUESTED_CHECKPOINTS_COUNT);
         }
         return () -> runQuery(QUERY_REQUESTED_CHECKPOINTS_COUNT);
     }
@@ -308,14 +308,14 @@ public class PostgreSQLDatabaseMetrics implements MeterBinder {
 
     private DoubleSupplier getBuffersBackendSupplier() {
         if (this.serverVersion.isAbove(Version.V17)) {
-            return () -> runQuery(BACKEND_BUFFER_WRITES.getQuery());
+            return () -> runQuery(BACKEND_BUFFER_WRITES);
         }
         return () -> runQuery(QUERY_BUFFERS_BACKEND);
     }
 
     private DoubleSupplier getBuffersCheckpointSupplier() {
         if (this.serverVersion.isAbove(Version.V17)) {
-            return () -> runQuery(CHECKPOINTER_BUFFERS_WRITTEN.getQuery());
+            return () -> runQuery(CHECKPOINTER_BUFFERS_WRITTEN);
         }
         return () -> runQuery(QUERY_BUFFERS_CHECKPOINT);
     }
@@ -371,6 +371,10 @@ public class PostgreSQLDatabaseMetrics implements MeterBinder {
         return SELECT + statName + " FROM pg_stat_bgwriter";
     }
 
+    private static String getStatCheckpointerQuery(String statName) {
+        return SELECT + statName + " FROM pg_stat_checkpointer";
+    }
+
     static final class Names {
 
         static final String SIZE = of("size");
@@ -407,23 +411,6 @@ public class PostgreSQLDatabaseMetrics implements MeterBinder {
     interface ResultSetGetter<T> {
 
         T get(ResultSet resultSet) throws SQLException;
-
-    }
-
-    static class Stat {
-
-        private final String statView;
-
-        private final String statName;
-
-        public Stat(String statView, String statName) {
-            this.statView = statView;
-            this.statName = statName;
-        }
-
-        public String getQuery() {
-            return String.format("SELECT %s FROM %s;", this.statName, this.statView);
-        }
 
     }
 
