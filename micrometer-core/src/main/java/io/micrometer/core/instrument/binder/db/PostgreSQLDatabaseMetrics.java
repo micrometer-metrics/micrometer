@@ -207,21 +207,21 @@ public class PostgreSQLDatabaseMetrics implements MeterBinder {
     private void registerCheckpointMetrics(MeterRegistry registry) {
         FunctionCounter
             .builder(Names.CHECKPOINTS_TIMED, postgresDataSource,
-                    dataSource -> resettableFunctionalCounter(Names.CHECKPOINTS_TIMED, this::getTimedCheckpointsCount))
+                    dataSource -> resettableFunctionalCounter(Names.CHECKPOINTS_TIMED, getTimedCheckpointsCountSupplier()))
             .tags(tags)
             .description("Number of checkpoints timed")
             .register(registry);
         FunctionCounter
             .builder(Names.CHECKPOINTS_REQUESTED, postgresDataSource,
                     dataSource -> resettableFunctionalCounter(Names.CHECKPOINTS_REQUESTED,
-                            this::getRequestedCheckpointsCount))
+                            getRequestedCheckpointsCountSupplier()))
             .tags(tags)
             .description("Number of checkpoints requested")
             .register(registry);
 
         FunctionCounter
             .builder(Names.BUFFERS_CHECKPOINT, postgresDataSource,
-                    dataSource -> resettableFunctionalCounter(Names.BUFFERS_CHECKPOINT, this::getBuffersCheckpoint))
+                    dataSource -> resettableFunctionalCounter(Names.BUFFERS_CHECKPOINT, getBuffersCheckpointSupplier()))
             .tags(tags)
             .description("Number of buffers written during checkpoints")
             .register(registry);
@@ -233,7 +233,7 @@ public class PostgreSQLDatabaseMetrics implements MeterBinder {
             .register(registry);
         FunctionCounter
             .builder(Names.BUFFERS_BACKEND, postgresDataSource,
-                    dataSource -> resettableFunctionalCounter(Names.BUFFERS_BACKEND, this::getBuffersBackend))
+                    dataSource -> resettableFunctionalCounter(Names.BUFFERS_BACKEND, getBuffersBackendSupplier()))
             .tags(tags)
             .description("Number of buffers written directly by a backend")
             .register(registry);
@@ -288,36 +288,36 @@ public class PostgreSQLDatabaseMetrics implements MeterBinder {
         return runQuery(QUERY_DEAD_TUPLE_COUNT);
     }
 
-    private Long getTimedCheckpointsCount() {
+    private DoubleSupplier getTimedCheckpointsCountSupplier() {
         if (this.serverVersion.isAbove(Version.V17)) {
-            return runQuery(TIMED_CHECKPOINTS_COUNT.getQuery());
+            return () -> runQuery(TIMED_CHECKPOINTS_COUNT.getQuery());
         }
-        return runQuery(QUERY_TIMED_CHECKPOINTS_COUNT);
+        return () -> runQuery(QUERY_TIMED_CHECKPOINTS_COUNT);
     }
 
-    private Long getRequestedCheckpointsCount() {
+    private DoubleSupplier getRequestedCheckpointsCountSupplier() {
         if (this.serverVersion.isAbove(Version.V17)) {
-            return runQuery(REQUESTED_CHECKPOINTS_COUNT.getQuery());
+            return () -> runQuery(REQUESTED_CHECKPOINTS_COUNT.getQuery());
         }
-        return runQuery(QUERY_REQUESTED_CHECKPOINTS_COUNT);
+        return () -> runQuery(QUERY_REQUESTED_CHECKPOINTS_COUNT);
     }
 
     private Long getBuffersClean() {
         return runQuery(QUERY_BUFFERS_CLEAN);
     }
 
-    private Long getBuffersBackend() {
+    private DoubleSupplier getBuffersBackendSupplier() {
         if (this.serverVersion.isAbove(Version.V17)) {
-            return runQuery(BACKEND_BUFFER_WRITES.getQuery());
+            return () -> runQuery(BACKEND_BUFFER_WRITES.getQuery());
         }
-        return runQuery(QUERY_BUFFERS_BACKEND);
+        return () -> runQuery(QUERY_BUFFERS_BACKEND);
     }
 
-    private Long getBuffersCheckpoint() {
+    private DoubleSupplier getBuffersCheckpointSupplier() {
         if (this.serverVersion.isAbove(Version.V17)) {
-            return runQuery(CHECKPOINTER_BUFFERS_WRITTEN.getQuery());
+            return () -> runQuery(CHECKPOINTER_BUFFERS_WRITTEN.getQuery());
         }
-        return runQuery(QUERY_BUFFERS_CHECKPOINT);
+        return () -> runQuery(QUERY_BUFFERS_CHECKPOINT);
     }
 
     /**
