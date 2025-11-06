@@ -90,7 +90,7 @@ updates:
     schedule:
       interval: daily
     target-branch: "main"
-    milestone: 296
+    milestone: 317
     ignore:
       # metrics are better with https://github.com/Netflix/Hystrix/pull/1568 introduced
       # in hystrix 1.5.12, but Netflix re-released 1.5.11 as 1.5.18 late in 2018.
