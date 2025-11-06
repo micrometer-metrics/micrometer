@@ -99,6 +99,7 @@ tasks.create('generateAntoraResources') {
 
 tasks.named('antora') {
     dependsOn 'generateAntoraResources', 'test'
+    inputs.files('modules')
 }
 
 jar {
