@@ -16,6 +16,8 @@
 
 package io.micrometer.core.instrument.binder.db;
 
+import io.micrometer.common.util.internal.logging.InternalLogger;
+import io.micrometer.common.util.internal.logging.InternalLoggerFactory;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.binder.MeterBinder;
@@ -27,6 +29,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.DoubleSupplier;
@@ -45,6 +48,8 @@ import java.util.regex.Pattern;
  */
 @NullMarked
 public class PostgreSQLDatabaseMetrics implements MeterBinder {
+
+    private static final InternalLogger log = InternalLoggerFactory.getInstance(PostgreSQLDatabaseMetrics.class);
 
     private static final String SELECT = "SELECT ";
 
@@ -290,14 +295,14 @@ public class PostgreSQLDatabaseMetrics implements MeterBinder {
     }
 
     private DoubleSupplier getTimedCheckpointsCountSupplier() {
-        if (this.serverVersion.isAbove(Version.V17)) {
+        if (this.serverVersion.isAtLeast(Version.V17)) {
             return () -> runQuery(TIMED_CHECKPOINTS_COUNT);
         }
         return () -> runQuery(QUERY_TIMED_CHECKPOINTS_COUNT);
     }
 
     private DoubleSupplier getRequestedCheckpointsCountSupplier() {
-        if (this.serverVersion.isAbove(Version.V17)) {
+        if (this.serverVersion.isAtLeast(Version.V17)) {
             return () -> runQuery(REQUESTED_CHECKPOINTS_COUNT);
         }
         return () -> runQuery(QUERY_REQUESTED_CHECKPOINTS_COUNT);
@@ -308,14 +313,14 @@ public class PostgreSQLDatabaseMetrics implements MeterBinder {
     }
 
     private DoubleSupplier getBuffersBackendSupplier() {
-        if (this.serverVersion.isAbove(Version.V17)) {
+        if (this.serverVersion.isAtLeast(Version.V17)) {
             return () -> runQuery(BACKEND_BUFFER_WRITES);
         }
         return () -> runQuery(QUERY_BUFFERS_BACKEND);
     }
 
     private DoubleSupplier getBuffersCheckpointSupplier() {
-        if (this.serverVersion.isAbove(Version.V17)) {
+        if (this.serverVersion.isAtLeast(Version.V17)) {
             return () -> runQuery(CHECKPOINTER_BUFFERS_WRITTEN);
         }
         return () -> runQuery(QUERY_BUFFERS_CHECKPOINT);
@@ -417,7 +422,7 @@ public class PostgreSQLDatabaseMetrics implements MeterBinder {
 
     static final class Version {
 
-        private static final Pattern VERSION_PATTERN = Pattern.compile("^(\\d+\\.\\d+).*");
+        private static final Pattern VERSION_PATTERN = Pattern.compile("^((?:\\d+\\.?)+).*");
 
         static final Version EMPTY = new Version(0, 0);
 
@@ -433,12 +438,20 @@ public class PostgreSQLDatabaseMetrics implements MeterBinder {
                 if (!matcher.matches()) {
                     return EMPTY;
                 }
-                final String[] versionArr = matcher.group(1).split("\\.", 2);
+                final String[] versionArr = matcher.group(1).split("\\.", 3);
+                if (versionArr.length == 1) {
+                    return new Version(Integer.parseInt(versionArr[0]));
+                }
                 return new Version(Integer.parseInt(versionArr[0]), Integer.parseInt(versionArr[1]));
             }
             catch (Exception exception) {
+                log.warn("Unable to parse Postgres version", exception);
                 return EMPTY;
             }
+        }
+
+        Version(int majorVersion) {
+            this(majorVersion, 0);
         }
 
         Version(int majorVersion, int minorVersion) {
@@ -446,7 +459,7 @@ public class PostgreSQLDatabaseMetrics implements MeterBinder {
             this.minorVersion = minorVersion;
         }
 
-        public boolean isAbove(final Version other) {
+        public boolean isAtLeast(final Version other) {
             if (this.majorVersion > other.majorVersion) {
                 return true;
             }
@@ -459,6 +472,19 @@ public class PostgreSQLDatabaseMetrics implements MeterBinder {
         @Override
         public String toString() {
             return majorVersion + "." + minorVersion;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (!(o instanceof Version))
+                return false;
+            Version version = (Version) o;
+            return majorVersion == version.majorVersion && minorVersion == version.minorVersion;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(majorVersion, minorVersion);
         }
 
     }
