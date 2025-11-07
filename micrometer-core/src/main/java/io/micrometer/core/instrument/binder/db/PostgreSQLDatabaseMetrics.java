@@ -13,8 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package io.micrometer.core.instrument.binder.db;
 
+import io.micrometer.common.util.internal.logging.InternalLogger;
+import io.micrometer.common.util.internal.logging.InternalLoggerFactory;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.binder.MeterBinder;
@@ -26,8 +29,12 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.DoubleSupplier;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * {@link MeterBinder} for a PostgreSQL database.
@@ -36,10 +43,13 @@ import java.util.function.DoubleSupplier;
  * @author Jon Schneider
  * @author Johnny Lim
  * @author Markus Dobel
+ * @author Hari Mani
  * @since 1.1.0
  */
 @NullMarked
 public class PostgreSQLDatabaseMetrics implements MeterBinder {
+
+    private static final InternalLogger log = InternalLoggerFactory.getInstance(PostgreSQLDatabaseMetrics.class);
 
     private static final String SELECT = "SELECT ";
 
@@ -53,7 +63,15 @@ public class PostgreSQLDatabaseMetrics implements MeterBinder {
 
     private static final String QUERY_BUFFERS_BACKEND = getBgWriterQuery("buffers_backend");
 
+    private static final String BACKEND_BUFFER_WRITES = SELECT + "SUM(writes) FROM pg_stat_io";
+
     private static final String QUERY_BUFFERS_CHECKPOINT = getBgWriterQuery("buffers_checkpoint");
+
+    private static final String CHECKPOINTER_BUFFERS_WRITTEN = getStatCheckpointerQuery("buffers_written");
+
+    private static final String TIMED_CHECKPOINTS_COUNT = getStatCheckpointerQuery("num_timed");
+
+    private static final String REQUESTED_CHECKPOINTS_COUNT = getStatCheckpointerQuery("num_requested");
 
     private final String database;
 
@@ -83,6 +101,8 @@ public class PostgreSQLDatabaseMetrics implements MeterBinder {
 
     private final String queryTransactionCount;
 
+    private final Version serverVersion;
+
     public PostgreSQLDatabaseMetrics(DataSource postgresDataSource, String database) {
         this(postgresDataSource, database, Tags.empty());
     }
@@ -103,6 +123,7 @@ public class PostgreSQLDatabaseMetrics implements MeterBinder {
         this.queryBlockHits = getDBStatQuery(database, "blks_hit");
         this.queryBlockReads = getDBStatQuery(database, "blks_read");
         this.queryTransactionCount = getDBStatQuery(database, "xact_commit + xact_rollback");
+        this.serverVersion = getServerVersion();
     }
 
     private static Tag createDbTag(String database) {
@@ -191,21 +212,22 @@ public class PostgreSQLDatabaseMetrics implements MeterBinder {
     private void registerCheckpointMetrics(MeterRegistry registry) {
         FunctionCounter
             .builder(Names.CHECKPOINTS_TIMED, postgresDataSource,
-                    dataSource -> resettableFunctionalCounter(Names.CHECKPOINTS_TIMED, this::getTimedCheckpointsCount))
+                    dataSource -> resettableFunctionalCounter(Names.CHECKPOINTS_TIMED,
+                            getTimedCheckpointsCountSupplier()))
             .tags(tags)
             .description("Number of checkpoints timed")
             .register(registry);
         FunctionCounter
             .builder(Names.CHECKPOINTS_REQUESTED, postgresDataSource,
                     dataSource -> resettableFunctionalCounter(Names.CHECKPOINTS_REQUESTED,
-                            this::getRequestedCheckpointsCount))
+                            getRequestedCheckpointsCountSupplier()))
             .tags(tags)
             .description("Number of checkpoints requested")
             .register(registry);
 
         FunctionCounter
             .builder(Names.BUFFERS_CHECKPOINT, postgresDataSource,
-                    dataSource -> resettableFunctionalCounter(Names.BUFFERS_CHECKPOINT, this::getBuffersCheckpoint))
+                    dataSource -> resettableFunctionalCounter(Names.BUFFERS_CHECKPOINT, getBuffersCheckpointSupplier()))
             .tags(tags)
             .description("Number of buffers written during checkpoints")
             .register(registry);
@@ -217,7 +239,7 @@ public class PostgreSQLDatabaseMetrics implements MeterBinder {
             .register(registry);
         FunctionCounter
             .builder(Names.BUFFERS_BACKEND, postgresDataSource,
-                    dataSource -> resettableFunctionalCounter(Names.BUFFERS_BACKEND, this::getBuffersBackend))
+                    dataSource -> resettableFunctionalCounter(Names.BUFFERS_BACKEND, getBuffersBackendSupplier()))
             .tags(tags)
             .description("Number of buffers written directly by a backend")
             .register(registry);
@@ -272,24 +294,36 @@ public class PostgreSQLDatabaseMetrics implements MeterBinder {
         return runQuery(QUERY_DEAD_TUPLE_COUNT);
     }
 
-    private Long getTimedCheckpointsCount() {
-        return runQuery(QUERY_TIMED_CHECKPOINTS_COUNT);
+    private DoubleSupplier getTimedCheckpointsCountSupplier() {
+        if (this.serverVersion.isAtLeast(Version.V17)) {
+            return () -> runQuery(TIMED_CHECKPOINTS_COUNT);
+        }
+        return () -> runQuery(QUERY_TIMED_CHECKPOINTS_COUNT);
     }
 
-    private Long getRequestedCheckpointsCount() {
-        return runQuery(QUERY_REQUESTED_CHECKPOINTS_COUNT);
+    private DoubleSupplier getRequestedCheckpointsCountSupplier() {
+        if (this.serverVersion.isAtLeast(Version.V17)) {
+            return () -> runQuery(REQUESTED_CHECKPOINTS_COUNT);
+        }
+        return () -> runQuery(QUERY_REQUESTED_CHECKPOINTS_COUNT);
     }
 
     private Long getBuffersClean() {
         return runQuery(QUERY_BUFFERS_CLEAN);
     }
 
-    private Long getBuffersBackend() {
-        return runQuery(QUERY_BUFFERS_BACKEND);
+    private DoubleSupplier getBuffersBackendSupplier() {
+        if (this.serverVersion.isAtLeast(Version.V17)) {
+            return () -> runQuery(BACKEND_BUFFER_WRITES);
+        }
+        return () -> runQuery(QUERY_BUFFERS_BACKEND);
     }
 
-    private Long getBuffersCheckpoint() {
-        return runQuery(QUERY_BUFFERS_CHECKPOINT);
+    private DoubleSupplier getBuffersCheckpointSupplier() {
+        if (this.serverVersion.isAtLeast(Version.V17)) {
+            return () -> runQuery(CHECKPOINTER_BUFFERS_WRITTEN);
+        }
+        return () -> runQuery(QUERY_BUFFERS_CHECKPOINT);
     }
 
     /**
@@ -309,17 +343,26 @@ public class PostgreSQLDatabaseMetrics implements MeterBinder {
         return correctedValue;
     }
 
+    private Version getServerVersion() {
+        return runQuery("SHOW server_version", resultSet -> resultSet.getString(1)).map(Version::parse)
+            .orElse(Version.EMPTY);
+    }
+
     private Long runQuery(String query) {
+        return runQuery(query, resultSet -> resultSet.getLong(1)).orElse(0L);
+    }
+
+    private <T> Optional<T> runQuery(final String query, final ResultSetGetter<T> resultSetGetter) {
         try (Connection connection = postgresDataSource.getConnection();
                 Statement statement = connection.createStatement();
                 ResultSet resultSet = statement.executeQuery(query)) {
             if (resultSet.next()) {
-                return resultSet.getLong(1);
+                return Optional.of(resultSetGetter.get(resultSet));
             }
         }
         catch (SQLException ignored) {
         }
-        return 0L;
+        return Optional.empty();
     }
 
     private static String getDBStatQuery(String database, String statName) {
@@ -332,6 +375,10 @@ public class PostgreSQLDatabaseMetrics implements MeterBinder {
 
     private static String getBgWriterQuery(String statName) {
         return SELECT + statName + " FROM pg_stat_bgwriter";
+    }
+
+    private static String getStatCheckpointerQuery(String statName) {
+        return SELECT + statName + " FROM pg_stat_checkpointer";
     }
 
     static final class Names {
@@ -362,6 +409,84 @@ public class PostgreSQLDatabaseMetrics implements MeterBinder {
         }
 
         private Names() {
+        }
+
+    }
+
+    @FunctionalInterface
+    interface ResultSetGetter<T> {
+
+        T get(ResultSet resultSet) throws SQLException;
+
+    }
+
+    static final class Version {
+
+        private static final Pattern VERSION_PATTERN = Pattern.compile("^((?:\\d+\\.?)+).*");
+
+        static final Version EMPTY = new Version(0, 0);
+
+        static final Version V17 = new Version(17, 0);
+
+        final int majorVersion;
+
+        final int minorVersion;
+
+        static Version parse(String versionString) {
+            try {
+                final Matcher matcher = VERSION_PATTERN.matcher(versionString);
+                if (!matcher.matches()) {
+                    log.warn("Received Postgres version {} does not match the expected pattern {}", versionString,
+                            VERSION_PATTERN.pattern());
+                    return EMPTY;
+                }
+                final String[] versionArr = matcher.group(1).split("\\.", 3);
+                if (versionArr.length == 1) {
+                    return new Version(Integer.parseInt(versionArr[0]));
+                }
+                return new Version(Integer.parseInt(versionArr[0]), Integer.parseInt(versionArr[1]));
+            }
+            catch (Exception exception) {
+                log.warn("Unable to parse Postgres version", exception);
+                return EMPTY;
+            }
+        }
+
+        Version(int majorVersion) {
+            this(majorVersion, 0);
+        }
+
+        Version(int majorVersion, int minorVersion) {
+            this.majorVersion = majorVersion;
+            this.minorVersion = minorVersion;
+        }
+
+        public boolean isAtLeast(final Version other) {
+            if (this.majorVersion > other.majorVersion) {
+                return true;
+            }
+            if (this.majorVersion < other.majorVersion) {
+                return false;
+            }
+            return this.minorVersion >= other.minorVersion;
+        }
+
+        @Override
+        public String toString() {
+            return majorVersion + "." + minorVersion;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (!(o instanceof Version))
+                return false;
+            Version version = (Version) o;
+            return majorVersion == version.majorVersion && minorVersion == version.minorVersion;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(majorVersion, minorVersion);
         }
 
     }
