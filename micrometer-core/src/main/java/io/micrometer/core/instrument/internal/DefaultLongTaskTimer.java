@@ -158,7 +158,7 @@ public class DefaultLongTaskTimer extends AbstractMeter implements LongTaskTimer
         double[] percentilesRequestedArr = distributionStatisticConfig.getPercentiles();
         Queue<Double> percentilesRequested = new ArrayBlockingQueue<>(
                 percentilesRequestedArr == null || percentilesRequestedArr.length == 0 ? 1
-                        : distributionStatisticConfig.getPercentiles().length);
+                        : percentilesRequestedArr.length);
         if (percentilesRequestedArr != null && percentilesRequestedArr.length > 0) {
             Arrays.stream(percentilesRequestedArr).sorted().boxed().forEach(percentilesRequested::add);
         }

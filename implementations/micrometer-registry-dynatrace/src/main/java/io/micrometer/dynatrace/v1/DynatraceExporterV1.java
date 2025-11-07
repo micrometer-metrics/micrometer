@@ -15,7 +15,6 @@
  */
 package io.micrometer.dynatrace.v1;
 
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.common.util.StringUtils;
 import io.micrometer.common.util.internal.logging.InternalLogger;
 import io.micrometer.common.util.internal.logging.InternalLoggerFactory;
@@ -28,6 +27,7 @@ import io.micrometer.dynatrace.AbstractDynatraceExporter;
 import io.micrometer.dynatrace.DynatraceApiVersion;
 import io.micrometer.dynatrace.DynatraceConfig;
 import io.micrometer.dynatrace.DynatraceNamingConvention;
+import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -223,7 +223,7 @@ public class DynatraceExporterV1 extends AbstractDynatraceExporter {
         }
     }
 
-    private void postCustomMetricValues(String type, String group, List<DynatraceTimeSeries> timeSeries,
+    private void postCustomMetricValues(String type, @Nullable String group, List<DynatraceTimeSeries> timeSeries,
             String customDeviceMetricEndpoint) {
         for (DynatraceBatchedPayload postMessage : createPostMessages(type, group, timeSeries)) {
             HttpSender.Request.Builder requestBuilder;
@@ -259,7 +259,7 @@ public class DynatraceExporterV1 extends AbstractDynatraceExporter {
     }
 
     // VisibleForTesting
-    HttpSender.Response trySendHttpRequest(HttpSender.Request.Builder requestBuilder) {
+    HttpSender.@Nullable Response trySendHttpRequest(HttpSender.Request.Builder requestBuilder) {
         try {
             return requestBuilder.send();
         }
@@ -272,7 +272,8 @@ public class DynatraceExporterV1 extends AbstractDynatraceExporter {
     }
 
     // VisibleForTesting
-    List<DynatraceBatchedPayload> createPostMessages(String type, String group, List<DynatraceTimeSeries> timeSeries) {
+    List<DynatraceBatchedPayload> createPostMessages(String type, @Nullable String group,
+            List<DynatraceTimeSeries> timeSeries) {
         final String header = "{\"type\":\"" + type + '\"'
                 + (StringUtils.isNotBlank(group) ? ",\"group\":\"" + group + '\"' : "") + ",\"series\":[";
         final String footer = "]}";

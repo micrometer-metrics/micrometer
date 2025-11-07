@@ -18,6 +18,7 @@ package io.micrometer.influx;
 import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.config.NamingConvention;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -86,7 +87,7 @@ class InfluxNamingConventionTest {
     private static class CustomNamingConvention implements NamingConvention {
 
         @Override
-        public String name(String name, Meter.Type type, String baseUnit) {
+        public String name(String name, Meter.Type type, @Nullable String baseUnit) {
             return "name:" + name;
         }
 

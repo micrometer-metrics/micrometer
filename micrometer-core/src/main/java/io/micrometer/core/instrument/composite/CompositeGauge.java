@@ -15,11 +15,11 @@
  */
 package io.micrometer.core.instrument.composite;
 
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.noop.NoopGauge;
+import org.jspecify.annotations.Nullable;
 
 import java.lang.ref.WeakReference;
 import java.util.function.ToDoubleFunction;
@@ -47,7 +47,7 @@ class CompositeGauge<T> extends AbstractCompositeMeter<Gauge> implements Gauge {
     }
 
     @Override
-    Gauge registerNewMeter(MeterRegistry registry) {
+    @Nullable Gauge registerNewMeter(MeterRegistry registry) {
         final T obj = ref.get();
         if (obj == null) {
             return null;

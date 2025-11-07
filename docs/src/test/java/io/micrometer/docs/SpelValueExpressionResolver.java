@@ -13,33 +13,34 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.docs.metrics;
+package io.micrometer.docs;
 
 import io.micrometer.common.annotation.ValueExpressionResolver;
 import io.micrometer.common.util.internal.logging.InternalLogger;
 import io.micrometer.common.util.internal.logging.InternalLoggerFactory;
-
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.springframework.expression.Expression;
 import org.springframework.expression.ExpressionParser;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
 import org.springframework.expression.spel.support.SimpleEvaluationContext;
 
-class SpelValueExpressionResolver implements ValueExpressionResolver {
+public class SpelValueExpressionResolver implements ValueExpressionResolver {
 
     private static final InternalLogger log = InternalLoggerFactory.getInstance(SpelValueExpressionResolver.class);
 
     @Override
-    public String resolve(String expression, Object parameter) {
+    public @NonNull String resolve(@NonNull String expression, @Nullable Object parameter) {
         try {
             SimpleEvaluationContext context = SimpleEvaluationContext.forReadOnlyDataBinding().build();
             ExpressionParser expressionParser = new SpelExpressionParser();
             Expression expressionToEvaluate = expressionParser.parseExpression(expression);
-            return expressionToEvaluate.getValue(context, parameter, String.class);
+            return String.valueOf(expressionToEvaluate.getValue(context, parameter, String.class));
         }
         catch (Exception ex) {
             log.error("Exception occurred while trying to evaluate the SpEL expression [" + expression + "]", ex);
         }
-        return parameter.toString();
+        return String.valueOf(parameter);
     }
 
 }

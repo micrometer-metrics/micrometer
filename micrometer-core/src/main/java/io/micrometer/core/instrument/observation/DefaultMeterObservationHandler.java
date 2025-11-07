@@ -71,9 +71,8 @@ public class DefaultMeterObservationHandler implements MeterObservationHandler<O
     @Override
     public void onStart(Observation.Context context) {
         if (shouldCreateLongTaskTimer) {
-            LongTaskTimer.Sample longTaskSample = LongTaskTimer.builder(context.getName() + ".active")
-                .tags(createTags(context))
-                .register(meterRegistry)
+            LongTaskTimer.Sample longTaskSample = meterRegistry.more()
+                .longTaskTimer(context.getName() + ".active", createTags(context))
                 .start();
             context.put(LongTaskTimer.Sample.class, longTaskSample);
         }
@@ -83,11 +82,13 @@ public class DefaultMeterObservationHandler implements MeterObservationHandler<O
     }
 
     @Override
+    // TODO decide what to do about context.getName being Nullable
+    @SuppressWarnings("NullAway")
     public void onStop(Observation.Context context) {
         List<Tag> tags = createTags(context);
         tags.add(Tag.of("error", getErrorValue(context)));
         Timer.Sample sample = context.getRequired(Timer.Sample.class);
-        sample.stop(Timer.builder(context.getName()).tags(tags).register(this.meterRegistry));
+        sample.stop(this.meterRegistry.timer(context.getName(), tags));
 
         if (shouldCreateLongTaskTimer) {
             LongTaskTimer.Sample longTaskSample = context.getRequired(LongTaskTimer.Sample.class);

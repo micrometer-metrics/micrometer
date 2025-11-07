@@ -15,9 +15,8 @@
  */
 package io.micrometer.observation.transport;
 
-import io.micrometer.common.lang.NonNull;
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.observation.Observation;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Objects;
 
@@ -34,21 +33,18 @@ public class SenderContext<C> extends Observation.Context {
 
     private final Kind kind;
 
-    @Nullable
-    private C carrier;
+    private @Nullable C carrier;
 
-    @Nullable
-    private String remoteServiceName;
+    private @Nullable String remoteServiceName;
 
-    @Nullable
-    private String remoteServiceAddress;
+    private @Nullable String remoteServiceAddress;
 
     /**
      * Creates a new instance of {@link SenderContext}.
      * @param setter propagator setter
      * @param kind kind
      */
-    public SenderContext(@NonNull Propagator.Setter<C> setter, @NonNull Kind kind) {
+    public SenderContext(Propagator.Setter<C> setter, Kind kind) {
         this.setter = Objects.requireNonNull(setter, "Setter must be set");
         this.kind = Objects.requireNonNull(kind, "Kind must be set");
     }
@@ -57,12 +53,11 @@ public class SenderContext<C> extends Observation.Context {
      * Creates a new instance of a {@link Kind#PRODUCER} {@link SenderContext}.
      * @param setter propagator setter
      */
-    public SenderContext(@NonNull Propagator.Setter<C> setter) {
+    public SenderContext(Propagator.Setter<C> setter) {
         this(setter, Kind.PRODUCER);
     }
 
-    @Nullable
-    public C getCarrier() {
+    public @Nullable C getCarrier() {
         return carrier;
     }
 
@@ -82,8 +77,7 @@ public class SenderContext<C> extends Observation.Context {
      * Return optional name for the service that will be called.
      * @return optional name for the service that will be called
      */
-    @Nullable
-    public String getRemoteServiceName() {
+    public @Nullable String getRemoteServiceName() {
         return remoteServiceName;
     }
 
@@ -99,8 +93,7 @@ public class SenderContext<C> extends Observation.Context {
      * Return optional address for the service that will be called.
      * @return optional address for the service that will be called
      */
-    @Nullable
-    public String getRemoteServiceAddress() {
+    public @Nullable String getRemoteServiceAddress() {
         return remoteServiceAddress;
     }
 

@@ -1,6 +1,9 @@
 dependencies {
     api project(':micrometer-core')
 
+    // @Immutable annotation is used and requires jsr305 as optional API
+    optionalApi(libs.jsr305)
+
     implementation libs.slf4jApi
     
     implementation(libs.dynatraceUtils)

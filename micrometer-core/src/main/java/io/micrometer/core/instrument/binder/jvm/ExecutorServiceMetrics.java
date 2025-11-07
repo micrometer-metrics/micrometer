@@ -15,9 +15,6 @@
  */
 package io.micrometer.core.instrument.binder.jvm;
 
-import io.micrometer.common.lang.NonNullApi;
-import io.micrometer.common.lang.NonNullFields;
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.common.util.StringUtils;
 import io.micrometer.common.util.internal.logging.InternalLogger;
 import io.micrometer.common.util.internal.logging.InternalLoggerFactory;
@@ -27,12 +24,15 @@ import io.micrometer.core.instrument.binder.MeterBinder;
 import io.micrometer.core.instrument.internal.TimedExecutor;
 import io.micrometer.core.instrument.internal.TimedExecutorService;
 import io.micrometer.core.instrument.internal.TimedScheduledExecutorService;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.*;
 
@@ -64,14 +64,12 @@ import static java.util.stream.Collectors.toSet;
  * @author Clint Checketts
  * @author Johnny Lim
  */
-@NonNullApi
-@NonNullFields
+@NullMarked
 public class ExecutorServiceMetrics implements MeterBinder {
 
     private static final String CLASS_NAME_THREAD_PER_TASK_EXECUTOR = "java.util.concurrent.ThreadPerTaskExecutor";
 
-    @Nullable
-    private static final MethodHandle METHOD_HANDLE_THREAD_COUNT_FROM_THREAD_PER_TASK_EXECUTOR = getMethodHandleForThreadCountFromThreadPerTaskExecutor();
+    private static final @Nullable MethodHandle METHOD_HANDLE_THREAD_COUNT_FROM_THREAD_PER_TASK_EXECUTOR = getMethodHandleForThreadCountFromThreadPerTaskExecutor();
 
     private static boolean allowIllegalReflectiveAccess = true;
 
@@ -83,8 +81,7 @@ public class ExecutorServiceMetrics implements MeterBinder {
 
     private final Set<Meter.Id> registeredMeterIds = ConcurrentHashMap.newKeySet();
 
-    @Nullable
-    private final ExecutorService executorService;
+    private final @Nullable ExecutorService executorService;
 
     private final Iterable<Tag> tags;
 
@@ -353,8 +350,7 @@ public class ExecutorServiceMetrics implements MeterBinder {
      * {@link Executors#newSingleThreadExecutor()} wrap a regular
      * {@link ThreadPoolExecutor}.
      */
-    @Nullable
-    private ThreadPoolExecutor unwrapThreadPoolExecutor(ExecutorService executor, Class<?> wrapper) {
+    private @Nullable ThreadPoolExecutor unwrapThreadPoolExecutor(ExecutorService executor, Class<?> wrapper) {
         try {
             Field e = wrapper.getDeclaredField("e");
             e.setAccessible(true);
@@ -476,15 +472,15 @@ public class ExecutorServiceMetrics implements MeterBinder {
 
     private static long getThreadCountFromThreadPerTaskExecutor(ExecutorService executorService) {
         try {
-            return (long) METHOD_HANDLE_THREAD_COUNT_FROM_THREAD_PER_TASK_EXECUTOR.invoke(executorService);
+            return (long) Objects.requireNonNull(METHOD_HANDLE_THREAD_COUNT_FROM_THREAD_PER_TASK_EXECUTOR)
+                .invoke(executorService);
         }
         catch (Throwable e) {
             throw new RuntimeException(e);
         }
     }
 
-    @Nullable
-    private static MethodHandle getMethodHandleForThreadCountFromThreadPerTaskExecutor() {
+    private static @Nullable MethodHandle getMethodHandleForThreadCountFromThreadPerTaskExecutor() {
         try {
             Class<?> clazz = Class.forName(CLASS_NAME_THREAD_PER_TASK_EXECUTOR);
             Method method = clazz.getMethod("threadCount");

@@ -19,6 +19,7 @@ import com.hazelcast.config.Config;
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.map.IMap;
 import io.micrometer.core.Issue;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
@@ -40,6 +41,7 @@ class HazelcastCacheMetricsCompatibilityTest extends CacheMeterBinderCompatibili
     }
 
     @Override
+    @SuppressWarnings("NullAway")
     public void dereferenceCache() {
         super.dereferenceCache();
         this.cache.destroy();
@@ -93,7 +95,7 @@ class HazelcastCacheMetricsCompatibilityTest extends CacheMeterBinderCompatibili
     }
 
     @Override
-    public String get(String key) {
+    public @Nullable String get(String key) {
         return this.cache.get(key);
     }
 

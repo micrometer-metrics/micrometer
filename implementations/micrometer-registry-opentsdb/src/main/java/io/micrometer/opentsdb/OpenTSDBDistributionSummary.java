@@ -15,10 +15,10 @@
  */
 package io.micrometer.opentsdb;
 
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.AbstractDistributionSummary;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.distribution.*;
+import org.jspecify.annotations.Nullable;
 
 import java.time.Duration;
 import java.util.concurrent.atomic.DoubleAdder;
@@ -41,8 +41,7 @@ public class OpenTSDBDistributionSummary extends AbstractDistributionSummary {
 
     private final TimeWindowMax max;
 
-    @Nullable
-    private final Histogram histogram;
+    private final @Nullable Histogram histogram;
 
     OpenTSDBDistributionSummary(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig,
             double scale, @Nullable OpenTSDBFlavor flavor) {

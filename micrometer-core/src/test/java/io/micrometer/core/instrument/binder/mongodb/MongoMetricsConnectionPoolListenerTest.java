@@ -24,11 +24,11 @@ import com.mongodb.connection.ConnectionId;
 import com.mongodb.connection.ConnectionPoolSettings;
 import com.mongodb.connection.ServerId;
 import com.mongodb.event.*;
-import io.micrometer.common.lang.NonNull;
 import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.TimeUnit;
@@ -66,6 +66,7 @@ class MongoMetricsConnectionPoolListenerTest extends AbstractMongoDbTest {
 
         mongo.getDatabase("test").createCollection("testCol");
 
+        assertThat(clusterId.get()).isNotNull();
         Tags tags = Tags.of("cluster.id", clusterId.get(), "server.address", String.format("%s:%s", host, port));
 
         assertThat(registry.get("mongodb.driver.pool.size").tags(tags).gauge().value()).isEqualTo(2);
@@ -104,6 +105,7 @@ class MongoMetricsConnectionPoolListenerTest extends AbstractMongoDbTest {
         // tag::example[]
         mongo.getDatabase("test").createCollection("testCol");
 
+        assertThat(clusterId.get()).isNotNull();
         Tags tags = Tags.of("cluster.id", clusterId.get(), "server.address", String.format("%s:%s", host, port),
                 "my.custom.connection.pool.identifier", "custom");
 

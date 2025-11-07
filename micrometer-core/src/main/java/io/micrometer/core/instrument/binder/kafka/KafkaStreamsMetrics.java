@@ -15,13 +15,13 @@
  */
 package io.micrometer.core.instrument.binder.kafka;
 
-import io.micrometer.common.lang.NonNullApi;
-import io.micrometer.common.lang.NonNullFields;
 import io.micrometer.core.annotation.Incubating;
 import io.micrometer.core.instrument.Tag;
 import org.apache.kafka.common.Metric;
 import org.apache.kafka.streams.KafkaStreams;
+import org.jspecify.annotations.NullMarked;
 
+import java.time.Duration;
 import java.util.concurrent.ScheduledExecutorService;
 
 /**
@@ -39,8 +39,7 @@ import java.util.concurrent.ScheduledExecutorService;
  * @since 1.4.0
  */
 @Incubating(since = "1.4.0")
-@NonNullApi
-@NonNullFields
+@NullMarked
 public class KafkaStreamsMetrics extends KafkaMetrics {
 
     /**
@@ -73,6 +72,33 @@ public class KafkaStreamsMetrics extends KafkaMetrics {
      */
     public KafkaStreamsMetrics(KafkaStreams kafkaStreams, Iterable<Tag> tags, ScheduledExecutorService scheduler) {
         super(kafkaStreams::metrics, tags, scheduler);
+    }
+
+    /**
+     * {@link KafkaStreams} metrics binder. The lifecycle of the custom scheduler passed
+     * is the responsibility of the caller. It will not be shut down when this instance is
+     * {@link #close() closed}. A scheduler can be shared among multiple instances of
+     * {@link KafkaStreamsMetrics} to reduce resource usage by reducing the number of
+     * threads if there will be many instances.
+     * <p>
+     * The refresh interval governs how frequently Micrometer should call the Kafka
+     * Client's Metrics API to discover new metrics to register and discard old ones since
+     * the Kafka Client can add/remove/recreate metrics on-the-fly. Please notice that
+     * this is not for fetching values for already registered metrics but for updating the
+     * list of registered metrics when the Kafka Client adds/removes/recreates them. It is
+     * the responsibility of the caller to choose the right value since this process can
+     * be expensive and metrics can appear and disappear without being published if the
+     * interval is not chosen appropriately.
+     * @param kafkaStreams instance to be instrumented
+     * @param tags additional tags
+     * @param scheduler customer scheduler to run the task that checks and binds metrics
+     * @param refreshInterval interval of discovering new/removed/recreated metrics by the
+     * Kafka Client
+     * @since 1.16.0
+     */
+    public KafkaStreamsMetrics(KafkaStreams kafkaStreams, Iterable<Tag> tags, ScheduledExecutorService scheduler,
+            Duration refreshInterval) {
+        super(kafkaStreams::metrics, tags, scheduler, refreshInterval);
     }
 
 }

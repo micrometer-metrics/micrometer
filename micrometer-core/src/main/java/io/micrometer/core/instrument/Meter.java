@@ -15,10 +15,11 @@
  */
 package io.micrometer.core.instrument;
 
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.annotation.Incubating;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.distribution.HistogramGauges;
+import org.jspecify.annotations.NullUnmarked;
+import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -89,6 +90,8 @@ public interface Meter {
      * @return return value from the applied function
      * @since 1.1.0
      */
+    @NullUnmarked // I can't figure out the magical combination that makes NullAway happy
+                  // here
     default <T> T match(Function<Gauge, T> visitGauge, Function<Counter, T> visitCounter, Function<Timer, T> visitTimer,
             Function<DistributionSummary, T> visitSummary, Function<LongTaskTimer, T> visitLongTaskTimer,
             Function<TimeGauge, T> visitTimeGauge, Function<FunctionCounter, T> visitFunctionCounter,
@@ -187,18 +190,15 @@ public interface Meter {
 
         private final Type type;
 
-        @Nullable
-        private final Meter.Id syntheticAssociation;
+        private final Meter.@Nullable Id syntheticAssociation;
 
-        @Nullable
-        private final String description;
+        private final @Nullable String description;
 
-        @Nullable
-        private final String baseUnit;
+        private final @Nullable String baseUnit;
 
         @Incubating(since = "1.1.0")
         Id(String name, Tags tags, @Nullable String baseUnit, @Nullable String description, Type type,
-                @Nullable Meter.Id syntheticAssociation) {
+                Meter.@Nullable Id syntheticAssociation) {
             this.name = name;
             this.tags = tags;
             this.baseUnit = baseUnit;
@@ -238,7 +238,7 @@ public interface Meter {
          * @since 1.1.0
          */
         public Id withTags(Iterable<Tag> tags) {
-            return new Id(name, Tags.concat(this.tags, tags), baseUnit, description, type);
+            return new Id(name, this.tags.and(tags), baseUnit, description, type);
         }
 
         /**
@@ -281,9 +281,15 @@ public interface Meter {
          * @return A set of dimensions that allows you to break down the name.
          */
         public List<Tag> getTags() {
-            List<Tag> tags = new ArrayList<>();
-            this.tags.forEach(tags::add);
-            return Collections.unmodifiableList(tags);
+            if (this.tags == Tags.empty()) {
+                return Collections.emptyList();
+            }
+
+            List<Tag> list = new ArrayList<>(this.tags.size());
+            for (Tag tag : this.tags) {
+                list.add(tag);
+            }
+            return Collections.unmodifiableList(list);
         }
 
         public Iterable<Tag> getTagsAsIterable() {
@@ -295,8 +301,7 @@ public interface Meter {
          * @return A matching tag value, or {@code null} if no tag with the provided key
          * exists on this id.
          */
-        @Nullable
-        public String getTag(String key) {
+        public @Nullable String getTag(String key) {
             for (Tag tag : tags) {
                 if (tag.getKey().equals(key))
                     return tag.getValue();
@@ -307,8 +312,7 @@ public interface Meter {
         /**
          * @return The base unit of measurement for this meter.
          */
-        @Nullable
-        public String getBaseUnit() {
+        public @Nullable String getBaseUnit() {
             return baseUnit;
         }
 
@@ -337,8 +341,7 @@ public interface Meter {
          * @return A description of the meter's purpose. This description text is
          * published to monitoring systems that support description text.
          */
-        @Nullable
-        public String getDescription() {
+        public @Nullable String getDescription() {
             return description;
         }
 
@@ -386,8 +389,7 @@ public interface Meter {
          * derivative.
          */
         @Incubating(since = "1.1.0")
-        @Nullable
-        public Meter.Id syntheticAssociation() {
+        public Meter.@Nullable Id syntheticAssociation() {
             return syntheticAssociation;
         }
 
@@ -406,11 +408,9 @@ public interface Meter {
 
         private Tags tags = Tags.empty();
 
-        @Nullable
-        private String description;
+        private @Nullable String description;
 
-        @Nullable
-        private String baseUnit;
+        private @Nullable String baseUnit;
 
         private Builder(String name, Type type, Iterable<Measurement> measurements) {
             this.name = name;

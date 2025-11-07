@@ -8,7 +8,7 @@ jobs:
   stale:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/stale@v9
+      - uses: actions/stale@v10
         with:
           stale-issue-message: 'If you would like us to look at this issue, please provide the requested information. If the information is not provided within the next 7 days this issue will be closed.'
           stale-pr-message: 'If you would like us to look at this PR, please provide the requested information. If the information is not provided within the next 7 days this PR will be closed.'

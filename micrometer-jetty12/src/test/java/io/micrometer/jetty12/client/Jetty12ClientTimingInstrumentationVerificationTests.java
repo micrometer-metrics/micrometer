@@ -15,12 +15,12 @@
  */
 package io.micrometer.jetty12.client;
 
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.HttpClientTimingInstrumentationVerificationTests;
 import io.micrometer.observation.docs.ObservationDocumentation;
 import org.eclipse.jetty.client.BytesRequestContent;
 import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.Request;
+import org.jspecify.annotations.Nullable;
 
 import java.net.URI;
 
@@ -44,15 +44,14 @@ class Jetty12ClientTimingInstrumentationVerificationTests
         return createHttpClient(false);
     }
 
-    @Nullable
     @Override
-    protected HttpClient clientInstrumentedWithObservations() {
+    protected @Nullable HttpClient clientInstrumentedWithObservations() {
         return createHttpClient(true);
     }
 
     @Override
-    protected void sendHttpRequest(HttpClient instrumentedClient, HttpMethod method, @Nullable byte[] body, URI baseUri,
-            String templatedPath, String... pathVariables) {
+    protected void sendHttpRequest(HttpClient instrumentedClient, HttpMethod method, byte @Nullable [] body,
+            URI baseUri, String templatedPath, String... pathVariables) {
         try {
             Request request = instrumentedClient
                 .newRequest(baseUri + substitutePathVariables(templatedPath, pathVariables))

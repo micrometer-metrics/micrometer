@@ -15,12 +15,12 @@
  */
 package io.micrometer.statsd.internal;
 
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Statistic;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.util.HierarchicalNameMapper;
+import org.jspecify.annotations.Nullable;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -31,8 +31,7 @@ public class EtsyStatsdLineBuilder extends FlavorStatsdLineBuilder {
 
     private volatile NamingConvention namingConvention;
 
-    @Nullable
-    private volatile String nameNoStat;
+    private volatile @Nullable String nameNoStat;
 
     private final ConcurrentMap<Statistic, String> names = new ConcurrentHashMap<>();
 

@@ -15,8 +15,6 @@
  */
 package io.micrometer.core.instrument.binder.jvm;
 
-import io.micrometer.common.lang.NonNullApi;
-import io.micrometer.common.lang.NonNullFields;
 import io.micrometer.common.util.internal.logging.InternalLogger;
 import io.micrometer.common.util.internal.logging.InternalLoggerFactory;
 import io.micrometer.core.instrument.Gauge;
@@ -24,6 +22,7 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.binder.MeterBinder;
+import org.jspecify.annotations.NullMarked;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
@@ -38,8 +37,7 @@ import static java.util.Collections.emptyList;
  * @author Ruth Kurniawati
  * @since 1.14.0
  */
-@NonNullApi
-@NonNullFields
+@NullMarked
 public class JvmThreadDeadlockMetrics implements MeterBinder {
 
     private static final InternalLogger log = InternalLoggerFactory.getInstance(JvmThreadDeadlockMetrics.class);

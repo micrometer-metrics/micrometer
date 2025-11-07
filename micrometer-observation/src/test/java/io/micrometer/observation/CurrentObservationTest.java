@@ -37,14 +37,14 @@ class CurrentObservationTest {
 
     @Test
     void nestedSamples_parentChildThreadsInstrumented() throws ExecutionException, InterruptedException {
-        ExecutorService taskRunner = Executors.newSingleThreadExecutor();
+        ExecutorService executor = Executors.newSingleThreadExecutor();
 
         Observation observation = Observation.createNotStarted("test.observation", registry);
         System.out.println("Outside task: " + observation);
         assertThat(registry.getCurrentObservation()).isNull();
         try (Observation.Scope scope = observation.openScope()) {
             assertThat(registry.getCurrentObservation()).isSameAs(observation);
-            taskRunner.submit(() -> {
+            executor.submit(() -> {
                 System.out.println("In task: " + registry.getCurrentObservation());
                 assertThat(registry.getCurrentObservation()).isNotEqualTo(observation);
             }).get();
@@ -85,6 +85,7 @@ class CurrentObservationTest {
 
         executor2.submit(() -> {
             Observation myObservation = observationMap.get("myObservation");
+            assertThat(myObservation).isNotNull();
             try (Observation.Scope scope = myObservation.openScope()) {
                 assertThat(registry.getCurrentObservation()).isSameAs(myObservation);
             }
@@ -128,6 +129,56 @@ class CurrentObservationTest {
             assertThat(registry.getCurrentObservationScope()).isSameAs(scopeA);
         }
         assertThat(registry.getCurrentObservationScope()).isNull();
+    }
+
+    @Test
+    void currentShouldBePropagatedAcrossThreads() throws Exception {
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        assertThat(registry.getCurrentObservation()).isNull();
+        Observation.createNotStarted("a", registry).observeChecked(() -> doA(executor, registry));
+        assertThat(registry.getCurrentObservation()).isNull();
+    }
+
+    @Test
+    void currentShouldBePropagatedAcrossThreadsEvenIfObservationIsDisabledByAnObservationPredicate() throws Exception {
+        ObservationRegistry registry = ObservationRegistry.create();
+        registry.observationConfig()
+            .observationHandler(context -> true)
+            // .observationHandler(new ObservationTextPublisher())
+            .observationPredicate((name, context) -> !name.equals("b"));
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        assertThat(registry.getCurrentObservation()).isNull();
+        Observation.createNotStarted("a", registry).observeChecked(() -> doA(executor, registry));
+        assertThat(registry.getCurrentObservation()).isNull();
+    }
+
+    private void doA(ExecutorService executor, ObservationRegistry registry) throws Exception {
+        // System.out.println("A...");
+        assertThat(registry.getCurrentObservation()).isNotNull();
+        assertThat(registry.getCurrentObservation().getContextView().getName()).isEqualTo("a");
+
+        Observation b = Observation.createNotStarted("b", registry).start();
+        executor.submit(() -> {
+            try (Observation.Scope ignored = b.openScope()) {
+                assertThat(registry.getCurrentObservation()).isSameAs(b);
+                doB(registry);
+                assertThat(registry.getCurrentObservation()).isSameAs(b);
+            }
+            assertThat(registry.getCurrentObservation()).isNull();
+        }).get();
+        assertThat(registry.getCurrentObservation()).isNotNull();
+        assertThat(registry.getCurrentObservation().getContextView().getName()).isEqualTo("a");
+    }
+
+    private void doB(ObservationRegistry registry) {
+        // System.out.println("B...");
+        Observation.createNotStarted("c", registry).observe(() -> doC(registry));
+    }
+
+    private void doC(ObservationRegistry registry) {
+        // System.out.println("C...");
+        assertThat(registry.getCurrentObservation()).isNotNull();
+        assertThat(registry.getCurrentObservation().getContextView().getName()).isEqualTo("c");
     }
 
 }

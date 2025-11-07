@@ -16,10 +16,10 @@
 package io.micrometer.core.instrument.binder.okhttp3;
 
 import io.micrometer.common.docs.KeyName;
-import io.micrometer.common.lang.NonNullApi;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationConvention;
 import io.micrometer.observation.docs.ObservationDocumentation;
+import org.jspecify.annotations.NullMarked;
 
 /**
  * An {@link ObservationDocumentation} for OkHttp3 metrics.
@@ -27,7 +27,7 @@ import io.micrometer.observation.docs.ObservationDocumentation;
  * @author Marcin Grzejszczak
  * @since 1.10.0
  */
-@NonNullApi
+@NullMarked
 public enum OkHttpObservationDocumentation implements ObservationDocumentation {
 
     /**
@@ -45,7 +45,7 @@ public enum OkHttpObservationDocumentation implements ObservationDocumentation {
         }
     };
 
-    @NonNullApi
+    @NullMarked
     enum OkHttpLegacyLowCardinalityTags implements KeyName {
 
         TARGET_SCHEME {

@@ -15,13 +15,13 @@
  */
 package io.micrometer.samples.spring6.inject;
 
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Metrics;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import jakarta.annotation.PostConstruct;
 import jakarta.inject.Inject;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.context.annotation.Bean;
@@ -79,8 +79,7 @@ class MyComponent {
     MeterRegistry registry;
 
     // for performance-critical uses, it is best to store a meter in a field
-    @Nullable
-    Counter counter;
+    @Nullable Counter counter;
 
     @Inject
     MyComponent() {

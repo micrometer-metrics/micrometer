@@ -16,8 +16,8 @@
 package io.micrometer.observation.docs;
 
 import io.micrometer.common.docs.KeyName;
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.observation.*;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Objects;
 import java.util.function.Supplier;
@@ -64,8 +64,7 @@ public interface ObservationDocumentation {
      * method or {@link #getDefaultConvention()}. You can't use both.
      * @return name
      */
-    @Nullable
-    default String getName() {
+    default @Nullable String getName() {
         return null;
     }
 
@@ -75,8 +74,7 @@ public interface ObservationDocumentation {
      * {@link #getContextualName()}.
      * @return default naming convention
      */
-    @Nullable
-    default Class<? extends ObservationConvention<? extends Observation.Context>> getDefaultConvention() {
+    default @Nullable Class<? extends ObservationConvention<? extends Observation.Context>> getDefaultConvention() {
         return null;
     }
 
@@ -86,8 +84,7 @@ public interface ObservationDocumentation {
      * method will override what {@link #getDefaultConvention()} has set.
      * @return contextual name
      */
-    @Nullable
-    default String getContextualName() {
+    default @Nullable String getContextualName() {
         return null;
     }
 
@@ -145,6 +142,7 @@ public interface ObservationDocumentation {
      * @param contextSupplier observation context supplier
      * @return observation
      */
+    @SuppressWarnings("NullAway")
     default Observation observation(ObservationRegistry registry, Supplier<Observation.Context> contextSupplier) {
         Observation observation = Observation.createNotStarted(getName(), contextSupplier, registry);
         if (getContextualName() != null) {

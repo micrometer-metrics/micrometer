@@ -16,8 +16,8 @@
 package io.micrometer.core.instrument;
 
 import io.micrometer.common.docs.KeyName;
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.observation.docs.ObservationDocumentation;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.extension.ExtendWith;
 
@@ -46,8 +46,7 @@ abstract class InstrumentationTimingVerificationTests extends InstrumentationVer
      * @return the observation documentation to compare results against, or null to do
      * nothing
      */
-    @Nullable
-    protected ObservationDocumentation observationDocumentation() {
+    protected @Nullable ObservationDocumentation observationDocumentation() {
         return null;
     }
 

@@ -15,7 +15,6 @@
  */
 package io.micrometer.statsd;
 
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.Counter;
@@ -25,6 +24,7 @@ import io.netty.channel.ChannelPromise;
 import io.netty.channel.unix.DomainSocketAddress;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.OS;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -329,6 +329,45 @@ class StatsdMeterRegistryPublishTest {
         server.disposeNow();
     }
 
+    @Test
+    void counterIncrementWorksWithSleepAfterRegistryStart() throws InterruptedException {
+        StatsdConfig config = StatsdConfig.DEFAULT;
+
+        CountDownLatch serverLatch = new CountDownLatch(1);
+        DisposableChannel server = startServer(StatsdProtocol.UDP, config.port(), serverLatch);
+
+        StatsdMeterRegistry registry = new StatsdMeterRegistry(config, Clock.SYSTEM);
+        Thread.sleep(1000);
+
+        Counter counter = Counter.builder("my.counter").register(registry);
+        counter.increment();
+
+        registry.close();
+
+        assertThat(serverLatch.await(1, TimeUnit.SECONDS)).isTrue();
+
+        server.disposeNow();
+    }
+
+    @Test
+    void counterIncrementDoesNotWorkWithoutSleepAfterRegistryStart() throws InterruptedException {
+        StatsdConfig config = StatsdConfig.DEFAULT;
+
+        CountDownLatch serverLatch = new CountDownLatch(1);
+        DisposableChannel server = startServer(StatsdProtocol.UDP, config.port(), serverLatch);
+
+        StatsdMeterRegistry registry = new StatsdMeterRegistry(config, Clock.SYSTEM);
+
+        Counter counter = Counter.builder("my.counter").register(registry);
+        counter.increment();
+
+        registry.close();
+
+        assertThat(serverLatch.await(1, TimeUnit.SECONDS)).isFalse();
+
+        server.disposeNow();
+    }
+
     private void skipUdsTestOnWindows(StatsdProtocol protocol) {
         if (protocol == StatsdProtocol.UDS_DATAGRAM)
             assumeTrue(!OS.WINDOWS.isCurrentOs());
@@ -439,9 +478,8 @@ class StatsdMeterRegistryPublishTest {
 
     private StatsdConfig getConfig(StatsdProtocol protocol, int port, boolean buffered) {
         return new StatsdConfig() {
-            @Nullable
             @Override
-            public String get(String key) {
+            public @Nullable String get(String key) {
                 return null;
             }
 

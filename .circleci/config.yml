@@ -1,38 +1,38 @@
 version: 2.1
 
 executors:
-  circle-jdk23-executor:
+  jdk24-executor:
     working_directory: ~/micrometer
     environment:
       GRADLE_OPTS: '-Dorg.gradle.jvmargs="-Xmx2048m -XX:+HeapDumpOnOutOfMemoryError"'
     resource_class: medium+
     docker:
-      - image: cimg/openjdk:23.0.2
+      - image: cimg/openjdk:24.0.2
   circle-jdk-executor:
     working_directory: ~/micrometer
     environment:
       GRADLE_OPTS: '-Dorg.gradle.jvmargs="-Xmx1g -XX:+HeapDumpOnOutOfMemoryError"'
     resource_class: medium+
     docker:
-      - image: cimg/openjdk:21.0.6
+      - image: cimg/openjdk:21.0.8
   circle-jdk17-executor:
     working_directory: ~/micrometer
     environment:
       GRADLE_OPTS: '-Dorg.gradle.jvmargs="-Xmx1g -XX:+HeapDumpOnOutOfMemoryError"'
     resource_class: medium+
     docker:
-      - image: cimg/openjdk:17.0.14
+      - image: cimg/openjdk:17.0.16
   circle-jdk11-executor:
     working_directory: ~/micrometer
     environment:
       GRADLE_OPTS: '-Dorg.gradle.jvmargs="-Xmx1g -XX:+HeapDumpOnOutOfMemoryError"'
     resource_class: medium+
     docker:
-      - image: cimg/openjdk:11.0.26
+      - image: cimg/openjdk:11.0.28
   machine-executor:
     working_directory: ~/micrometer
     machine:
-      image: ubuntu-2404:2024.11.1
+      image: ubuntu-2404:2025.09.1
 
 commands:
   gradlew-build:
@@ -67,16 +67,16 @@ commands:
           path: ~/micrometer/test-results/
 
 jobs:
-  build-jdk23:
-    executor: circle-jdk23-executor
+  build-jdk24:
+    executor: jdk24-executor
     steps:
       - gradlew-build
+      - run: ./gradlew generationalShenandoahTest
 
   build:
     executor: circle-jdk-executor
     steps:
       - gradlew-build
-      - run: ./gradlew jdk24Test
       - run: ./gradlew shenandoahTest
       - run: ./gradlew zgcTest
       - run: ./gradlew zgcGenerationalTest
@@ -131,7 +131,7 @@ workflows:
       - build
       - build-jdk11
       - build-jdk17
-      - build-jdk23
+      - build-jdk24
       - concurrency-tests
       - docker-tests
       - stackdriver-it:
@@ -149,10 +149,9 @@ workflows:
             - build
             - build-jdk11
             - build-jdk17
-            - build-jdk23
+            - build-jdk24
             - concurrency-tests
             - docker-tests
-            - stackdriver-it
           filters:
             branches:
               only:
@@ -178,7 +177,7 @@ workflows:
               ignore: /.*/
             tags:
               only: /^v\d+\.\d+\.\d+(-(RC|M)\d+)?$/
-      - build-jdk23:
+      - build-jdk24:
           filters:
             branches:
               ignore: /.*/
@@ -211,7 +210,7 @@ workflows:
             - build
             - build-jdk11
             - build-jdk17
-            - build-jdk23
+            - build-jdk24
             - concurrency-tests
             - docker-tests
           filters:

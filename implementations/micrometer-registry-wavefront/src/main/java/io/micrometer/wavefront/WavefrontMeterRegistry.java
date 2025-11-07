@@ -19,7 +19,6 @@ import com.wavefront.sdk.common.WavefrontSender;
 import com.wavefront.sdk.common.clients.WavefrontClient;
 import com.wavefront.sdk.entities.histograms.HistogramGranularity;
 import com.wavefront.sdk.entities.histograms.WavefrontHistogramImpl;
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.cumulative.CumulativeCounter;
 import io.micrometer.core.instrument.cumulative.CumulativeFunctionCounter;
@@ -32,6 +31,7 @@ import io.micrometer.core.instrument.internal.DefaultMeter;
 import io.micrometer.core.instrument.push.PushMeterRegistry;
 import io.micrometer.core.instrument.util.NamedThreadFactory;
 import io.micrometer.core.ipc.http.HttpSender;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,10 +52,12 @@ import java.util.stream.Collectors;
  * <p>
  * This requires Wavefront's Java SDK 2.2 or later.
  *
+ * @deprecated since 1.16.0 due to Wavefront's End of Life Announcement
  * @author Jon Schneider
  * @author Howard Yoo
  * @since 1.0.0
  */
+@Deprecated
 public class WavefrontMeterRegistry extends PushMeterRegistry {
 
     private static final ThreadFactory DEFAULT_THREAD_FACTORY = new NamedThreadFactory("waveferont-metrics-publisher");
@@ -370,8 +372,7 @@ public class WavefrontMeterRegistry extends PushMeterRegistry {
 
         private ThreadFactory threadFactory = DEFAULT_THREAD_FACTORY;
 
-        @Nullable
-        private WavefrontSender wavefrontSender;
+        private @Nullable WavefrontSender wavefrontSender;
 
         Builder(WavefrontConfig config) {
             this.config = config;

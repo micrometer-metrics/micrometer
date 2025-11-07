@@ -15,7 +15,6 @@
  */
 package io.micrometer.prometheusmetrics;
 
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.common.util.internal.logging.WarnThenDebugLogger;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.cumulative.CumulativeFunctionCounter;
@@ -38,6 +37,7 @@ import io.prometheus.metrics.model.snapshots.HistogramSnapshot.HistogramDataPoin
 import io.prometheus.metrics.model.snapshots.InfoSnapshot.InfoDataPointSnapshot;
 import io.prometheus.metrics.model.snapshots.SummarySnapshot.SummaryDataPointSnapshot;
 import io.prometheus.metrics.tracer.common.SpanContext;
+import org.jspecify.annotations.Nullable;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -79,8 +79,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
 
     private final ConcurrentMap<String, MicrometerCollector> collectorMap = new ConcurrentHashMap<>();
 
-    @Nullable
-    private final ExemplarSamplerFactory exemplarSamplerFactory;
+    private final @Nullable ExemplarSamplerFactory exemplarSamplerFactory;
 
     public PrometheusMeterRegistry(PrometheusConfig config) {
         this(config, new PrometheusRegistry(), Clock.SYSTEM);
@@ -583,19 +582,25 @@ public class PrometheusMeterRegistry extends MeterRegistry {
                 return micrometerCollector;
             }
 
+            Meter.Type type = existingCollector.getMeterType();
+            if (!type.equals(id.getType())) {
+                meterRegistrationFailed(id,
+                        "Prometheus requires that all meters with the same name have the same"
+                                + " type. There is already an existing meter named '" + name + "' that is a " + type
+                                + ". The meter you are attempting to register" + " is a " + id.getType() + ".");
+                return existingCollector;
+            }
+
             List<String> tagKeys = getConventionTags(id).stream().map(Tag::getKey).collect(toList());
             if (existingCollector.getTagKeys().equals(tagKeys)) {
                 consumer.accept(existingCollector);
                 return existingCollector;
             }
 
-            meterRegistrationFailed(id,
-                    "Prometheus requires that all meters with the same name have the same"
-                            + " set of tag keys. There is already an existing meter named '" + getConventionName(id)
-                            + "' containing tag keys ["
-                            + String.join(", ", collectorMap.get(getConventionName(id)).getTagKeys())
-                            + "]. The meter you are attempting to register" + " has keys [" + String.join(", ", tagKeys)
-                            + "].");
+            meterRegistrationFailed(id, "Prometheus requires that all meters with the same name have the same"
+                    + " set of tag keys. There is already an existing meter named '" + name + "' containing tag keys ["
+                    + String.join(", ", existingCollector.getTagKeys()) + "]. The meter you are attempting to register"
+                    + " has keys [" + String.join(", ", tagKeys) + "].");
             return existingCollector;
         });
     }

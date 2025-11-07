@@ -19,6 +19,8 @@ import io.micrometer.common.KeyValues;
 import org.eclipse.jetty.client.api.Request;
 import org.eclipse.jetty.client.api.Result;
 
+import java.util.Objects;
+
 /**
  * Default implementation of {@link JettyClientObservationConvention}.
  *
@@ -35,7 +37,7 @@ public class DefaultJettyClientObservationConvention implements JettyClientObser
         Request request = context.getCarrier();
         Result result = context.getResponse();
         return KeyValues.of(JettyClientKeyValues.method(request), JettyClientKeyValues.host(request),
-                JettyClientKeyValues.uri(request, result, context.getUriPatternFunction()),
+                JettyClientKeyValues.uri(Objects.requireNonNull(request), result, context.getUriPatternFunction()),
                 JettyClientKeyValues.exception(result), JettyClientKeyValues.status(result),
                 JettyClientKeyValues.outcome(result));
     }

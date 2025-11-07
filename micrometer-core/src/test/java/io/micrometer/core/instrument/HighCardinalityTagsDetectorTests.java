@@ -15,8 +15,9 @@
  */
 package io.micrometer.core.instrument;
 
-import io.micrometer.common.lang.Nullable;
+import io.micrometer.core.instrument.HighCardinalityTagsDetector.HighCardinalityMeterInfo;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -103,19 +104,50 @@ class HighCardinalityTagsDetectorTests {
         await().atMost(Duration.ofSeconds(1)).until(() -> "test.counter".equals(testMeterNameConsumer.getName()));
     }
 
+    @Test
+    void highCardinalityMeterInfoConsumer() {
+        String meterName = "test.counter";
+        int meterCount = 10;
+
+        for (int i = 0; i < meterCount; i++) {
+            Counter.builder(meterName).tag("index", String.valueOf(i)).register(registry).increment();
+        }
+
+        TestMeterInfoConsumer meterInfoConsumer = new TestMeterInfoConsumer();
+        registry.config()
+            .withHighCardinalityTagsDetector(registry -> new HighCardinalityTagsDetector.Builder(registry).threshold(3)
+                .highCardinalityMeterInfoConsumer(meterInfoConsumer)
+                .build());
+
+        await().atMost(Duration.ofSeconds(1))
+            .untilAsserted(() -> assertThat(meterInfoConsumer.meterInfo).isNotNull().satisfies((meterInfo) -> {
+                assertThat(meterInfo.getName()).isEqualTo(meterName);
+                assertThat(meterInfo.getCount()).isEqualTo(meterCount);
+            }));
+    }
+
     private static class TestMeterNameConsumer implements Consumer<String> {
 
-        @Nullable
-        private volatile String name;
+        private volatile @Nullable String name;
 
         @Override
         public void accept(String name) {
             this.name = name;
         }
 
-        @Nullable
-        public String getName() {
+        public @Nullable String getName() {
             return this.name;
+        }
+
+    }
+
+    private static class TestMeterInfoConsumer implements Consumer<HighCardinalityMeterInfo> {
+
+        private volatile @Nullable HighCardinalityMeterInfo meterInfo;
+
+        @Override
+        public void accept(HighCardinalityMeterInfo meterInfo) {
+            this.meterInfo = meterInfo;
         }
 
     }

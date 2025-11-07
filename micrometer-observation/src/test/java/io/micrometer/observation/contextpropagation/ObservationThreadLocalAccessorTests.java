@@ -25,6 +25,7 @@ import io.micrometer.observation.Observation;
 import io.micrometer.observation.Observation.Context;
 import io.micrometer.observation.ObservationHandler;
 import io.micrometer.observation.ObservationRegistry;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -216,6 +217,7 @@ class ObservationThreadLocalAccessorTests {
     }
 
     @Test
+    @SuppressWarnings("NullAway")
     void acceptsANullCurrentScopeOnRestore() {
         observationRegistry.observationConfig().observationHandler(new TracingHandler());
 
@@ -227,13 +229,14 @@ class ObservationThreadLocalAccessorTests {
         }.restore(null));
     }
 
+    @SuppressWarnings("NullAway")
     private void thenCurrentObservationHasParent(Observation parent, Observation observation) {
         then(globalObservationRegistry.getCurrentObservation()).isSameAs(observation);
         then(globalObservationRegistry.getCurrentObservation().getContextView().getParentObservation())
             .isSameAs(parent);
     }
 
-    private Scope thenCurrentScopeHasParent(Scope first) {
+    private Scope thenCurrentScopeHasParent(@Nullable Scope first) {
         Scope inScope = TracingHandler.value.get();
         then(scopeParent(inScope)).isSameAs(first);
         return inScope;
@@ -264,6 +267,7 @@ class ObservationThreadLocalAccessorTests {
         }
 
         @Override
+        @SuppressWarnings("NullAway")
         public void onScopeOpened(Observation.Context context) {
             Scope currentScope = value.get();
             Scope newScope = new Scope(currentScope, context.getName());
@@ -274,7 +278,8 @@ class ObservationThreadLocalAccessorTests {
         @Override
         public void onScopeClosed(Observation.Context context) {
             Scope scope = context.get(Scope.class);
-            scope.close();
+            if (scope != null)
+                scope.close();
             System.out.println("\ton scope close [" + context + "]. Hashcode [" + scope + "]");
         }
 
@@ -361,7 +366,7 @@ class ObservationThreadLocalAccessorTests {
         }
 
         @Override
-        public <T> T readValue(Map sourceContext, Object key) {
+        public <T> @Nullable T readValue(Map sourceContext, Object key) {
             return (T) sourceContext.get(key);
         }
 

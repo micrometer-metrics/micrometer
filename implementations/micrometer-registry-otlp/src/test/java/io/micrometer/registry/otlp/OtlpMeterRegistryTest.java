@@ -24,6 +24,7 @@ import io.opentelemetry.proto.metrics.v1.ExponentialHistogramDataPoint;
 import io.opentelemetry.proto.metrics.v1.HistogramDataPoint;
 import io.opentelemetry.proto.metrics.v1.Metric;
 import io.opentelemetry.proto.metrics.v1.NumberDataPoint;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -87,7 +88,7 @@ abstract class OtlpMeterRegistryTest {
     void setServiceNameOverrideMethod() {
         registry = new OtlpMeterRegistry(new OtlpConfig() {
             @Override
-            public String get(String key) {
+            public @Nullable String get(String key) {
                 return null;
             }
 
@@ -105,7 +106,7 @@ abstract class OtlpMeterRegistryTest {
     void reservedResourceAttributesAreKept() {
         registry = new OtlpMeterRegistry(new OtlpConfig() {
             @Override
-            public String get(String key) {
+            public @Nullable String get(String key) {
                 return null;
             }
 
@@ -413,7 +414,7 @@ abstract class OtlpMeterRegistryTest {
     void defaultHistogramFlavorShouldBeUsedIfNoOverrides() {
         OtlpConfig config = new OtlpConfig() {
             @Override
-            public String get(String key) {
+            public @Nullable String get(String key) {
                 return null;
             }
 
@@ -439,7 +440,7 @@ abstract class OtlpMeterRegistryTest {
     void globalHistogramFlavorShouldBeUsedIfNoPerMeterConfig() {
         OtlpConfig config = new OtlpConfig() {
             @Override
-            public String get(String key) {
+            public @Nullable String get(String key) {
                 return null;
             }
 
@@ -471,7 +472,7 @@ abstract class OtlpMeterRegistryTest {
     void perMeterHistogramFlavorShouldBeUsedFromConfigIfNoLookupOverrides() {
         OtlpConfig config = new OtlpConfig() {
             @Override
-            public String get(String key) {
+            public @Nullable String get(String key) {
                 return null;
             }
 
@@ -525,7 +526,7 @@ abstract class OtlpMeterRegistryTest {
     void globalMaxBucketsShouldBeUsedIfNoPerMeterConfig() {
         OtlpConfig config = new OtlpConfig() {
             @Override
-            public String get(String key) {
+            public @Nullable String get(String key) {
                 return null;
             }
 
@@ -570,7 +571,7 @@ abstract class OtlpMeterRegistryTest {
     void perMeterMaxBucketsShouldBeUsedFromConfigIfNoLookupOverrides() {
         OtlpConfig config = new OtlpConfig() {
             @Override
-            public String get(String key) {
+            public @Nullable String get(String key) {
                 return null;
             }
 

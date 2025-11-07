@@ -15,17 +15,18 @@
  */
 package io.micrometer.observation.aop;
 
-import io.micrometer.common.lang.NonNullApi;
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
 import io.micrometer.observation.Observations;
 import io.micrometer.observation.annotation.Observed;
 import io.micrometer.observation.ObservationConvention;
+import io.micrometer.observation.annotation.ObservationKeyValue;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.reflect.MethodSignature;
+import org.jspecify.annotations.NullUnmarked;
+import org.jspecify.annotations.Nullable;
 
 import java.lang.reflect.Method;
 import java.util.concurrent.CompletionStage;
@@ -68,23 +69,29 @@ import java.util.function.Predicate;
  * }
  * </pre>
  *
+ * To add support for {@link ObservationKeyValue} annotations, set the
+ * {@link ObservationKeyValueAnnotationHandler} via
+ * {@link ObservedAspect#setObservationKeyValueAnnotationHandler(ObservationKeyValueAnnotationHandler)}
+ *
  * @author Jonatan Ivanov
  * @author Yanming Zhou
  * @author Jeonggi Kim
+ * @author Maksim Petelin
+ * @author Seungyong Hong
  * @since 1.10.0
  */
 @Aspect
-@NonNullApi
 public class ObservedAspect {
 
     private static final Predicate<ProceedingJoinPoint> DONT_SKIP_ANYTHING = pjp -> false;
 
     private final ObservationRegistry registry;
 
-    @Nullable
-    private final ObservationConvention<ObservedAspectContext> observationConvention;
+    private final @Nullable ObservationConvention<ObservedAspectContext> observationConvention;
 
     private final Predicate<ProceedingJoinPoint> shouldSkip;
+
+    private @Nullable ObservationKeyValueAnnotationHandler observationKeyValueAnnotationHandler;
 
     /**
      * Create an {@code ObservedAspect} with {@link Observations#getGlobalRegistry()}.
@@ -119,8 +126,7 @@ public class ObservedAspect {
     }
 
     @Around("@within(io.micrometer.observation.annotation.Observed) && !@annotation(io.micrometer.observation.annotation.Observed) && execution(* *.*(..))")
-    @Nullable
-    public Object observeClass(ProceedingJoinPoint pjp) throws Throwable {
+    public @NullUnmarked Object observeClass(ProceedingJoinPoint pjp) throws Throwable {
         if (shouldSkip.test(pjp)) {
             return pjp.proceed();
         }
@@ -131,8 +137,7 @@ public class ObservedAspect {
     }
 
     @Around("execution (@io.micrometer.observation.annotation.Observed * *.*(..))")
-    @Nullable
-    public Object observeMethod(ProceedingJoinPoint pjp) throws Throwable {
+    public @NullUnmarked Object observeMethod(ProceedingJoinPoint pjp) throws Throwable {
         if (shouldSkip.test(pjp)) {
             return pjp.proceed();
         }
@@ -142,25 +147,29 @@ public class ObservedAspect {
         return observe(pjp, method, observed);
     }
 
-    private Object observe(ProceedingJoinPoint pjp, Method method, Observed observed) throws Throwable {
+    private @NullUnmarked Object observe(ProceedingJoinPoint pjp, Method method, Observed observed) throws Throwable {
         Observation observation = ObservedAspectObservationDocumentation.of(pjp, observed, this.registry,
                 this.observationConvention);
+        if (observationKeyValueAnnotationHandler != null) {
+            observationKeyValueAnnotationHandler.addAnnotatedParameters(observation.getContext(), pjp);
+        }
+
         if (CompletionStage.class.isAssignableFrom(method.getReturnType())) {
             observation.start();
             Observation.Scope scope = observation.openScope();
             try {
                 Object result = pjp.proceed();
                 if (result == null) {
-                    stopObservation(observation, scope, null);
-                    return result;
+                    stopObservation(observation, pjp, null, null);
+                    return null;
                 }
                 else {
                     CompletionStage<?> stage = (CompletionStage<?>) result;
-                    return stage.whenComplete((res, error) -> stopObservation(observation, scope, error));
+                    return stage.whenComplete((res, error) -> stopObservation(observation, pjp, res, error));
                 }
             }
             catch (Throwable error) {
-                stopObservation(observation, scope, error);
+                stopObservation(observation, pjp, null, error);
                 throw error;
             }
             finally {
@@ -168,7 +177,20 @@ public class ObservedAspect {
             }
         }
         else {
-            return observation.observeChecked(() -> pjp.proceed());
+            observation.start();
+            Observation.Scope scope = observation.openScope();
+            try {
+                Object result = pjp.proceed();
+                stopObservation(observation, pjp, result, null);
+                return result;
+            }
+            catch (Throwable error) {
+                stopObservation(observation, pjp, null, error);
+                throw error;
+            }
+            finally {
+                scope.close();
+            }
         }
     }
 
@@ -191,11 +213,14 @@ public class ObservedAspect {
         return method;
     }
 
-    private void stopObservation(Observation observation, Observation.Scope scope, @Nullable Throwable error) {
+    private void stopObservation(Observation observation, ProceedingJoinPoint pjp, @Nullable Object result,
+            @Nullable Throwable error) {
+        if (observationKeyValueAnnotationHandler != null) {
+            observationKeyValueAnnotationHandler.addAnnotatedMethodResult(observation.getContext(), pjp, result);
+        }
         if (error != null) {
             observation.error(error);
         }
-        scope.close();
         observation.stop();
     }
 
@@ -211,6 +236,15 @@ public class ObservedAspect {
             return this.proceedingJoinPoint;
         }
 
+    }
+
+    /**
+     * Setting this enables support for {@link ObservationKeyValue}.
+     * @param observationKeyValueAnnotationHandler annotation handler
+     */
+    public void setObservationKeyValueAnnotationHandler(
+            ObservationKeyValueAnnotationHandler observationKeyValueAnnotationHandler) {
+        this.observationKeyValueAnnotationHandler = observationKeyValueAnnotationHandler;
     }
 
 }

@@ -20,11 +20,11 @@ import com.netflix.spectator.api.Measurement;
 import com.netflix.spectator.api.patterns.PolledMeter;
 import com.netflix.spectator.atlas.AtlasConfig;
 import com.netflix.spectator.atlas.AtlasRegistry;
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.FunctionCounter;
 import io.micrometer.core.instrument.MockClock;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import ru.lanwen.wiremock.ext.WiremockResolver;
@@ -43,9 +43,9 @@ class AtlasMeterRegistryTest {
     @Test
     void publishOneLastTimeOnClose(@WiremockResolver.Wiremock WireMockServer server) {
         AtlasConfig config = new AtlasConfig() {
-            @Nullable
+
             @Override
-            public String get(String k) {
+            public @Nullable String get(String k) {
                 return null;
             }
 
@@ -67,9 +67,9 @@ class AtlasMeterRegistryTest {
 
         MockClock clock = new MockClock();
         AtlasMeterRegistry registry = new AtlasMeterRegistry(new AtlasConfig() {
-            @Nullable
+
             @Override
-            public String get(String k) {
+            public @Nullable String get(String k) {
                 return null;
             }
 

@@ -18,14 +18,13 @@ package io.micrometer.observation.tck;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationHandler;
 import io.micrometer.observation.ObservationRegistry;
+import org.assertj.core.api.AssertProvider;
+import org.jspecify.annotations.Nullable;
 
-import java.util.HashSet;
-import java.util.Objects;
-import java.util.Queue;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-import org.assertj.core.api.AssertProvider;
+import static io.micrometer.observation.tck.TestObservationRegistry.Capability.OBSERVATIONS_WITH_THE_SAME_NAME_SHOULD_HAVE_THE_SAME_SET_OF_LOW_CARDINALITY_KEYS;
 
 /**
  * Implementation of {@link ObservationRegistry} used for testing.
@@ -42,8 +41,8 @@ public final class TestObservationRegistry
 
     private final StoringObservationHandler handler = new StoringObservationHandler();
 
-    private TestObservationRegistry() {
-        observationConfig().observationHandler(this.handler).observationHandler(new ObservationValidator());
+    private TestObservationRegistry(Set<Capability> capabilities) {
+        observationConfig().observationHandler(this.handler).observationHandler(new ObservationValidator(capabilities));
     }
 
     /**
@@ -51,21 +50,29 @@ public final class TestObservationRegistry
      * @return mock instance of observation registry
      */
     public static TestObservationRegistry create() {
-        return new TestObservationRegistry();
+        return builder().build();
+    }
+
+    /**
+     * @return builder to create {@link TestObservationRegistry}.
+     * @since 1.16.0
+     */
+    public static TestObservationRegistryBuilder builder() {
+        return new TestObservationRegistryBuilder();
     }
 
     @Override
-    public Observation getCurrentObservation() {
+    public @Nullable Observation getCurrentObservation() {
         return this.delegate.getCurrentObservation();
     }
 
     @Override
-    public Observation.Scope getCurrentObservationScope() {
+    public Observation.@Nullable Scope getCurrentObservationScope() {
         return this.delegate.getCurrentObservationScope();
     }
 
     @Override
-    public void setCurrentObservationScope(Observation.Scope current) {
+    public void setCurrentObservationScope(Observation.@Nullable Scope current) {
         this.delegate.setCurrentObservationScope(current);
     }
 
@@ -127,6 +134,67 @@ public final class TestObservationRegistry
                 .findFirst()
                 .ifPresent(testContext -> testContext.addEvent(event));
         }
+
+    }
+
+    /**
+     * Builder to create {@link TestObservationRegistry}.
+     *
+     * @since 1.16.0
+     */
+    public static class TestObservationRegistryBuilder {
+
+        private final Set<Capability> capabilities = new HashSet<>(Arrays.asList(Capability.values()));
+
+        /**
+         * Enables/disables validating that Observations with the same name should have
+         * the same set of low cardinality keys.
+         * <p>
+         * Example 1:
+         * <p>
+         * <pre>
+         * observation{name=test, lowCardinalityKeyValues=[color=red]}
+         * observation{name=test, lowCardinalityKeyValues=[color=green]}
+         * observation{name=test, lowCardinalityKeyValues=[color=blue]}
+         * </pre>
+         * <p>
+         * Example 1 is valid since all the observations with the same name ("test") has
+         * the same set of low cardinality keys ("color").
+         * <p>
+         * Example 2:
+         * <p>
+         * <pre>
+         * observation{name=test, lowCardinalityKeyValues=[color=red]}
+         * observation{name=test, lowCardinalityKeyValues=[]}
+         * observation{name=test, lowCardinalityKeyValues=[status=ok]}
+         * </pre>
+         * <p>
+         * Example 2 is invalid since the second observation is missing a key the first
+         * one has ("color") and the third observation is not only missing a key the first
+         * one has ("color") but it also has an extra key the first one does not have
+         * ("status").
+         */
+        public TestObservationRegistryBuilder validateObservationsWithTheSameNameHavingTheSameSetOfLowCardinalityKeys(
+                boolean flag) {
+            if (flag) {
+                this.capabilities.add(OBSERVATIONS_WITH_THE_SAME_NAME_SHOULD_HAVE_THE_SAME_SET_OF_LOW_CARDINALITY_KEYS);
+            }
+            else {
+                this.capabilities
+                    .remove(OBSERVATIONS_WITH_THE_SAME_NAME_SHOULD_HAVE_THE_SAME_SET_OF_LOW_CARDINALITY_KEYS);
+            }
+            return this;
+        }
+
+        public TestObservationRegistry build() {
+            return new TestObservationRegistry(capabilities);
+        }
+
+    }
+
+    enum Capability {
+
+        OBSERVATIONS_WITH_THE_SAME_NAME_SHOULD_HAVE_THE_SAME_SET_OF_LOW_CARDINALITY_KEYS;
 
     }
 

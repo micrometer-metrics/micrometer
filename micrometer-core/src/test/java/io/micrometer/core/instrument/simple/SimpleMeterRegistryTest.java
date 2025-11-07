@@ -21,6 +21,7 @@ import io.micrometer.core.instrument.cumulative.CumulativeFunctionCounter;
 import io.micrometer.core.instrument.cumulative.CumulativeFunctionTimer;
 import io.micrometer.core.instrument.step.StepFunctionCounter;
 import io.micrometer.core.instrument.step.StepFunctionTimer;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -80,7 +81,9 @@ class SimpleMeterRegistryTest {
     void newFunctionTimerWhenCountingModeIsCumulativeShouldReturnCumulativeFunctionTimer() {
         SimpleMeterRegistry registry = createRegistry(CountingMode.CUMULATIVE);
         Meter.Id id = new Meter.Id("some.timer", Tags.empty(), null, null, Meter.Type.TIMER);
-        FunctionTimer functionTimer = registry.newFunctionTimer(id, null, (o) -> 0L, (o) -> 0d, TimeUnit.SECONDS);
+        AtomicInteger value = new AtomicInteger(0);
+        FunctionTimer functionTimer = registry.newFunctionTimer(id, value, Number::longValue, Number::doubleValue,
+                TimeUnit.SECONDS);
         assertThat(functionTimer).isInstanceOf(CumulativeFunctionTimer.class);
     }
 
@@ -88,7 +91,8 @@ class SimpleMeterRegistryTest {
     void newFunctionCounterWhenCountingModeIsCumulativeShouldReturnCumulativeFunctionCounter() {
         SimpleMeterRegistry registry = createRegistry(CountingMode.CUMULATIVE);
         Meter.Id id = new Meter.Id("some.timer", Tags.empty(), null, null, Meter.Type.COUNTER);
-        FunctionCounter functionCounter = registry.newFunctionCounter(id, null, (o) -> 0d);
+        AtomicInteger value = new AtomicInteger(0);
+        FunctionCounter functionCounter = registry.newFunctionCounter(id, value, Number::doubleValue);
         assertThat(functionCounter).isInstanceOf(CumulativeFunctionCounter.class);
     }
 
@@ -96,7 +100,9 @@ class SimpleMeterRegistryTest {
     void newFunctionTimerWhenCountingModeIsStepShouldReturnStepFunctionTimer() {
         SimpleMeterRegistry registry = createRegistry(CountingMode.STEP);
         Meter.Id id = new Meter.Id("some.timer", Tags.empty(), null, null, Meter.Type.TIMER);
-        FunctionTimer functionTimer = registry.newFunctionTimer(id, null, (o) -> 0L, (o) -> 0d, TimeUnit.SECONDS);
+        AtomicInteger value = new AtomicInteger(0);
+        FunctionTimer functionTimer = registry.newFunctionTimer(id, value, Number::longValue, Number::doubleValue,
+                TimeUnit.SECONDS);
         assertThat(functionTimer).isInstanceOf(StepFunctionTimer.class);
     }
 
@@ -104,7 +110,8 @@ class SimpleMeterRegistryTest {
     void newFunctionCounterWhenCountingModeIsStepShouldReturnStepFunctionCounter() {
         SimpleMeterRegistry registry = createRegistry(CountingMode.STEP);
         Meter.Id id = new Meter.Id("some.timer", Tags.empty(), null, null, Meter.Type.COUNTER);
-        FunctionCounter functionCounter = registry.newFunctionCounter(id, null, (o) -> 0d);
+        AtomicInteger value = new AtomicInteger(0);
+        FunctionCounter functionCounter = registry.newFunctionCounter(id, value, Number::doubleValue);
         assertThat(functionCounter).isInstanceOf(StepFunctionCounter.class);
     }
 
@@ -139,8 +146,10 @@ class SimpleMeterRegistryTest {
         }
 
         LongTaskTimer handler = LongTaskTimer.builder("handler").register(registry);
-        LongTaskTimer.Sample sample = handler.start();
-        clock.add(Duration.ofSeconds(3));
+        LongTaskTimer.Sample sample1 = handler.start();
+        clock.add(Duration.ofSeconds(2));
+        LongTaskTimer.Sample sample2 = handler.start();
+        clock.add(Duration.ofSeconds(1));
 
         AtomicLong processingTime = new AtomicLong(300);
         TimeGauge.builder("processing.time", () -> processingTime, MILLISECONDS).register(registry);
@@ -162,12 +171,13 @@ class SimpleMeterRegistryTest {
                 + "answers(COUNTER)[correct='false']; count=1.0\n"
                 + "cache.latency(TIMER)[]; count=5.0, total_time=0.1 seconds\n" + "cache.miss(COUNTER)[]; count=42.0\n"
                 + "custom.meter(OTHER)[]; value=42.0, unknown=21.0\n"
-                + "handler(LONG_TASK_TIMER)[]; active_tasks=1.0, duration=3.0 seconds\n"
+                + "handler(LONG_TASK_TIMER)[]; active_tasks=2.0, duration=4.0 seconds, max=3.0 seconds\n"
                 + "latency(TIMER)[method='GET', service='test', uri='/api/people']; count=10.0, total_time=0.29 seconds, max=0.038 seconds\n"
                 + "processing.time(GAUGE)[]; value=0.3 seconds\n"
                 + "request.size(DISTRIBUTION_SUMMARY)[]; count=10.0, total=1450.0 bytes, max=190.0 bytes\n"
                 + "temperature(GAUGE)[]; value=24.0 celsius");
-        sample.stop();
+        sample1.stop();
+        sample2.stop();
     }
 
     @ParameterizedTest
@@ -203,7 +213,7 @@ class SimpleMeterRegistryTest {
         return new SimpleMeterRegistry(new SimpleConfig() {
 
             @Override
-            public String get(String key) {
+            public @Nullable String get(String key) {
                 return null;
             }
 

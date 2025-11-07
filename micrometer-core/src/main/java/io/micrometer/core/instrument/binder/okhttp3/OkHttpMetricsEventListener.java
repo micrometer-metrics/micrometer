@@ -16,9 +16,6 @@
 package io.micrometer.core.instrument.binder.okhttp3;
 
 import io.micrometer.common.KeyValue;
-import io.micrometer.common.lang.NonNullApi;
-import io.micrometer.common.lang.NonNullFields;
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
@@ -26,6 +23,8 @@ import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.binder.http.Outcome;
 import okhttp3.EventListener;
 import okhttp3.*;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 import java.io.IOException;
 import java.lang.reflect.Method;
@@ -54,8 +53,7 @@ import static java.util.stream.StreamSupport.stream;
  * @author Nurettin Yilmaz
  * @author Johnny Lim
  */
-@NonNullApi
-@NonNullFields
+@NullMarked
 public class OkHttpMetricsEventListener extends EventListener {
 
     /**
@@ -80,8 +78,7 @@ public class OkHttpMetricsEventListener extends EventListener {
     private static final Tags TAGS_TARGET_UNKNOWN = Tags.of(TAG_TARGET_SCHEME, TAG_VALUE_UNKNOWN, TAG_TARGET_HOST,
             TAG_VALUE_UNKNOWN, TAG_TARGET_PORT, TAG_VALUE_UNKNOWN);
 
-    @Nullable
-    private static Method getMethod(Class<?>... parameterTypes) {
+    private static @Nullable Method getMethod(Class<?>... parameterTypes) {
         try {
             return Request.class.getMethod("tag", parameterTypes);
         }
@@ -165,10 +162,9 @@ public class OkHttpMetricsEventListener extends EventListener {
     // VisibleForTesting
     void time(CallState state) {
         Request request = state.request;
-        boolean requestAvailable = request != null;
 
         Iterable<Tag> tags = Tags
-            .of("method", requestAvailable ? request.method() : TAG_VALUE_UNKNOWN, "uri", getUriTag(request), "status",
+            .of("method", request != null ? request.method() : TAG_VALUE_UNKNOWN, "uri", getUriTag(request), "status",
                     getStatusMessage(state.response, state.exception))
             .and(getStatusOutcome(state.response).asTag())
             .and(extraTags)
@@ -179,7 +175,7 @@ public class OkHttpMetricsEventListener extends EventListener {
             .and(generateTagsForRoute(request));
 
         if (includeHostTag) {
-            tags = Tags.of(tags).and("host", requestAvailable ? request.url().host() : TAG_VALUE_UNKNOWN);
+            tags = Tags.of(tags).and("host", request != null ? request.url().host() : TAG_VALUE_UNKNOWN);
         }
 
         Timer.builder(this.requestsMetricName)
@@ -246,14 +242,11 @@ public class OkHttpMetricsEventListener extends EventListener {
 
         final long startTime;
 
-        @Nullable
-        final Request request;
+        final @Nullable Request request;
 
-        @Nullable
-        Response response;
+        @Nullable Response response;
 
-        @Nullable
-        IOException exception;
+        @Nullable IOException exception;
 
         CallState(long startTime, @Nullable Request request) {
             this.startTime = startTime;

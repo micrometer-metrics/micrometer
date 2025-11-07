@@ -17,7 +17,6 @@ package io.micrometer.samples.spring6.aop;
 
 import io.micrometer.common.annotation.ValueExpressionResolver;
 import io.micrometer.common.annotation.ValueResolver;
-import io.micrometer.common.lang.NonNull;
 import io.micrometer.core.Issue;
 import io.micrometer.core.annotation.Timed;
 import io.micrometer.core.aop.MeterTag;
@@ -39,7 +38,6 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.aop.aspectj.annotation.AspectJProxyFactory;
 
-import javax.annotation.Nonnull;
 import java.util.Locale;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
@@ -1001,17 +999,14 @@ class TimedAspectTest {
             super();
         }
 
-        @NonNull
         @Override
-        protected Timer newTimer(@NonNull Meter.Id id, @NonNull DistributionStatisticConfig distributionStatisticConfig,
-                @NonNull PauseDetector pauseDetector) {
+        protected Timer newTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig,
+                PauseDetector pauseDetector) {
             throw new RuntimeException("FailingMeterRegistry");
         }
 
-        @NonNull
         @Override
-        protected LongTaskTimer newLongTaskTimer(@Nonnull Meter.Id id,
-                @Nonnull DistributionStatisticConfig distributionStatisticConfig) {
+        protected LongTaskTimer newLongTaskTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig) {
             throw new RuntimeException("FailingMeterRegistry");
         }
 

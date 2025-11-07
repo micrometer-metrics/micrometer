@@ -17,7 +17,9 @@ package io.micrometer.core.instrument.binder.jvm;
 
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.binder.BaseUnits;
+import io.micrometer.core.instrument.binder.jvm.convention.otel.OpenTelemetryJvmMemoryMeterConventions;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
 
@@ -30,40 +32,92 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 class JvmMemoryMetricsTest {
 
+    MeterRegistry registry = new SimpleMeterRegistry();
+
     @Test
     void memoryMetrics() {
-        MeterRegistry registry = new SimpleMeterRegistry();
         new JvmMemoryMetrics().bindTo(registry);
 
-        assertJvmBufferMetrics(registry, "direct");
-        assertJvmBufferMetrics(registry, "mapped");
+        assertJvmBufferMetrics("direct");
+        assertJvmBufferMetrics("mapped");
 
-        assertJvmMemoryMetrics(registry, "heap");
-        assertJvmMemoryMetrics(registry, "nonheap");
+        assertJvmMemoryMetrics("heap");
+        assertJvmMemoryMetrics("nonheap");
     }
 
-    private void assertJvmMemoryMetrics(MeterRegistry registry, String area) {
-        Gauge memUsed = registry.get("jvm.memory.used").tags("area", area).gauge();
+    @Test
+    void memoryMetricsWithExtraTags() {
+        Tags extraTags = Tags.of("extra", "tag");
+        new JvmMemoryMetrics(extraTags).bindTo(registry);
+
+        assertJvmBufferMetrics("direct", extraTags);
+        assertJvmBufferMetrics("mapped", extraTags);
+
+        assertJvmMemoryMetrics("heap", extraTags);
+        assertJvmMemoryMetrics("nonheap", extraTags);
+    }
+
+    @Test
+    void otelMemoryMetrics() {
+        Tags extraTags = Tags.empty();
+        new JvmMemoryMetrics(extraTags, new OpenTelemetryJvmMemoryMeterConventions(extraTags)).bindTo(registry);
+
+        assertJvmBufferMetrics("direct");
+        assertJvmBufferMetrics("mapped");
+
+        assertJvmMemoryMetrics("heap", extraTags, true);
+        assertJvmMemoryMetrics("non_heap", extraTags, true);
+    }
+
+    @Test
+    void otelMemoryMetricsWithExtraTags() {
+        Tags extraTags = Tags.of("extra", "tag");
+        new JvmMemoryMetrics(extraTags, new OpenTelemetryJvmMemoryMeterConventions(extraTags)).bindTo(registry);
+
+        assertJvmBufferMetrics("direct");
+        assertJvmBufferMetrics("mapped");
+
+        assertJvmMemoryMetrics("heap", extraTags, true);
+        assertJvmMemoryMetrics("non_heap", extraTags, true);
+    }
+
+    private void assertJvmMemoryMetrics(String area) {
+        assertJvmMemoryMetrics(area, Tags.empty(), false);
+    }
+
+    private void assertJvmMemoryMetrics(String area, Tags extraTags) {
+        assertJvmMemoryMetrics(area, extraTags, false);
+    }
+
+    private void assertJvmMemoryMetrics(String area, Tags extraTags, boolean isOtel) {
+        String memoryAreaTagName = isOtel ? "jvm.memory.type" : "area";
+        String maxMemoryMeterName = isOtel ? "jvm.memory.limit" : "jvm.memory.max";
+
+        Gauge memUsed = registry.get("jvm.memory.used").tags(memoryAreaTagName, area).tags(extraTags).gauge();
         assertThat(memUsed.value()).isGreaterThanOrEqualTo(0);
         assertThat(memUsed.getId().getBaseUnit()).isEqualTo(BaseUnits.BYTES);
 
-        Gauge memCommitted = registry.get("jvm.memory.committed").tags("area", area).gauge();
+        Gauge memCommitted = registry.get("jvm.memory.committed").tags(memoryAreaTagName, area).tags(extraTags).gauge();
         assertThat(memCommitted.value()).isNotNaN();
         assertThat(memCommitted.getId().getBaseUnit()).isEqualTo(BaseUnits.BYTES);
 
-        Gauge memMax = registry.get("jvm.memory.max").tags("area", area).gauge();
+        Gauge memMax = registry.get(maxMemoryMeterName).tags(memoryAreaTagName, area).tags(extraTags).gauge();
         assertThat(memMax.value()).isNotNaN();
         assertThat(memMax.getId().getBaseUnit()).isEqualTo(BaseUnits.BYTES);
     }
 
-    private void assertJvmBufferMetrics(MeterRegistry registry, String bufferId) {
+    private void assertJvmBufferMetrics(String bufferId) {
+        assertJvmBufferMetrics(bufferId, Tags.empty());
+    }
+
+    private void assertJvmBufferMetrics(String bufferId, Tags extraTags) {
         assertThat(registry.get("jvm.buffer.count").tags("id", bufferId).gauge().value()).isGreaterThanOrEqualTo(0);
 
-        Gauge memoryUsedDirect = registry.get("jvm.buffer.memory.used").tags("id", bufferId).gauge();
+        Gauge memoryUsedDirect = registry.get("jvm.buffer.memory.used").tags("id", bufferId).tags(extraTags).gauge();
         assertThat(memoryUsedDirect.value()).isNotNaN();
         assertThat(memoryUsedDirect.getId().getBaseUnit()).isEqualTo(BaseUnits.BYTES);
 
-        Gauge bufferTotal = registry.get("jvm.buffer.total.capacity").tags("id", bufferId).gauge();
+        Gauge bufferTotal = registry.get("jvm.buffer.total.capacity").tags("id", bufferId).tags(extraTags).gauge();
         assertThat(bufferTotal.value()).isGreaterThanOrEqualTo(0);
         assertThat(bufferTotal.getId().getBaseUnit()).isEqualTo(BaseUnits.BYTES);
     }

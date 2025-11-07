@@ -15,7 +15,6 @@
  */
 package io.micrometer.core.instrument.binder;
 
-import io.micrometer.common.lang.NonNull;
 import io.micrometer.core.instrument.MeterRegistry;
 
 /**
@@ -27,6 +26,6 @@ import io.micrometer.core.instrument.MeterRegistry;
  */
 public interface MeterBinder {
 
-    void bindTo(@NonNull MeterRegistry registry);
+    void bindTo(MeterRegistry registry);
 
 }

@@ -18,6 +18,7 @@ package io.micrometer.atlas;
 import com.netflix.spectator.atlas.AtlasConfig;
 import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.Timer;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
@@ -32,7 +33,7 @@ class SpectatorTimerTest {
     void timerMax() {
         AtlasConfig atlasConfig = new AtlasConfig() {
             @Override
-            public String get(String k) {
+            public @Nullable String get(String k) {
                 return null;
             }
 

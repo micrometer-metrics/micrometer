@@ -15,7 +15,6 @@
  */
 package io.micrometer.core.instrument.binder.jetty;
 
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.common.util.internal.logging.InternalLogger;
 import io.micrometer.common.util.internal.logging.InternalLoggerFactory;
 import io.micrometer.core.instrument.*;
@@ -34,6 +33,7 @@ import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.NetworkTrafficServerConnector;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.util.component.AbstractLifeCycle;
+import org.jspecify.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -121,7 +121,7 @@ public class JettyConnectionMetrics extends AbstractLifeCycle implements Connect
             .tags(tags)
             .register(registry);
 
-        Gauge.builder("jetty.connections.current", this, jcm -> jcm.connectionSamples.size())
+        Gauge.builder("jetty.connections.current", this, JettyConnectionMetrics::currentConnections)
             .strongReference(true)
             .baseUnit(BaseUnits.CONNECTIONS)
             .description("The current number of open Jetty connections")
@@ -160,10 +160,12 @@ public class JettyConnectionMetrics extends AbstractLifeCycle implements Connect
     @Override
     public void onOpened(Connection connection) {
         Timer.Sample started = Timer.start(registry);
+        int connections;
         synchronized (connectionSamplesLock) {
             connectionSamples.put(connection, started);
-            maxConnections.record(connectionSamples.size());
+            connections = connectionSamples.size();
         }
+        maxConnections.record(connections);
     }
 
     @Override
@@ -238,8 +240,8 @@ public class JettyConnectionMetrics extends AbstractLifeCycle implements Connect
         addToAllConnectors(server, registry, Tags.empty());
     }
 
-    @Nullable
-    private static Method getNetworkTrafficListenerMethod(NetworkTrafficServerConnector networkTrafficServerConnector) {
+    private static @Nullable Method getNetworkTrafficListenerMethod(
+            NetworkTrafficServerConnector networkTrafficServerConnector) {
         Method method = null;
         try {
             // Jetty 9 method
@@ -258,6 +260,12 @@ public class JettyConnectionMetrics extends AbstractLifeCycle implements Connect
         catch (NoSuchMethodException ignore) {
         }
         return method;
+    }
+
+    private int currentConnections() {
+        synchronized (connectionSamplesLock) {
+            return connectionSamples.size();
+        }
     }
 
 }

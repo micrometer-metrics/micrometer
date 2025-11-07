@@ -15,9 +15,9 @@
  */
 package io.micrometer.core.instrument.config;
 
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
+import org.jspecify.annotations.Nullable;
 
 import java.time.Duration;
 import java.util.ArrayList;
@@ -257,13 +257,12 @@ public interface MeterFilter {
                 return MeterFilterReply.NEUTRAL;
             }
 
-            @Nullable
-            private String matchNameAndGetTagValue(Meter.Id id) {
+            private @Nullable String matchNameAndGetTagValue(Meter.Id id) {
                 return id.getName().startsWith(meterNamePrefix) ? id.getTag(tagKey) : null;
             }
 
             @Override
-            public DistributionStatisticConfig configure(Meter.Id id, DistributionStatisticConfig config) {
+            public @Nullable DistributionStatisticConfig configure(Meter.Id id, DistributionStatisticConfig config) {
                 String value = matchNameAndGetTagValue(id);
                 if (value != null) {
                     if (!observedTagValues.contains(value)) {
@@ -414,6 +413,35 @@ public interface MeterFilter {
     }
 
     /**
+     * Enables the provided filter for the Meters selected by the predicate.
+     * <code>registry.config().meterFilter(MeterFilter.forMeters(id -> id.getName().startsWith("test"), MeterFilter.ignoreTags("ignored")))</code>
+     * @param predicate Apply the provided filter only to Meters selected by this
+     * predicate
+     * @param delegate A filter to apply if the provided predicate returns true
+     * @return A filter that delegates calls to the delegate filter conditionally (based
+     * on the predicate)
+     * @since 1.16.0
+     */
+    static MeterFilter forMeters(Predicate<Meter.Id> predicate, MeterFilter delegate) {
+        return new MeterFilter() {
+            @Override
+            public MeterFilterReply accept(Meter.Id id) {
+                return predicate.test(id) ? delegate.accept(id) : MeterFilter.super.accept(id);
+            }
+
+            @Override
+            public Meter.Id map(Meter.Id id) {
+                return predicate.test(id) ? delegate.map(id) : MeterFilter.super.map(id);
+            }
+
+            @Override
+            public @Nullable DistributionStatisticConfig configure(Meter.Id id, DistributionStatisticConfig config) {
+                return predicate.test(id) ? delegate.configure(id, config) : MeterFilter.super.configure(id, config);
+            }
+        };
+    }
+
+    /**
      * @param id Id with {@link MeterFilter#map} transformations applied.
      * @return After all transformations, should a real meter be registered for this id,
      * or should it be no-op'd.
@@ -446,8 +474,7 @@ public interface MeterFilter {
      * @param config A histogram configuration guaranteed to be non-null.
      * @return Overrides to any part of the histogram config, when applicable.
      */
-    @Nullable
-    default DistributionStatisticConfig configure(Meter.Id id, DistributionStatisticConfig config) {
+    default @Nullable DistributionStatisticConfig configure(Meter.Id id, DistributionStatisticConfig config) {
         return config;
     }
 

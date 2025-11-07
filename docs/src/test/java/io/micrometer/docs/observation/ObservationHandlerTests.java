@@ -17,19 +17,26 @@ package io.micrometer.docs.observation;
 
 import io.micrometer.common.KeyValue;
 import io.micrometer.common.KeyValues;
+import io.micrometer.common.annotation.ValueExpressionResolver;
+import io.micrometer.common.annotation.ValueResolver;
 import io.micrometer.common.docs.KeyName;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.observation.DefaultMeterObservationHandler;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import io.micrometer.docs.SpelValueExpressionResolver;
 import io.micrometer.observation.*;
 import io.micrometer.observation.annotation.Observed;
+import io.micrometer.observation.annotation.ObservationKeyValue;
+import io.micrometer.observation.annotation.ObservationKeyValues;
+import io.micrometer.observation.aop.Cardinality;
 import io.micrometer.observation.aop.ObservedAspect;
+import io.micrometer.observation.aop.ObservationKeyValueAnnotationHandler;
 import io.micrometer.observation.docs.ObservationDocumentation;
 import io.micrometer.observation.tck.TestObservationRegistry;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 import org.springframework.aop.aspectj.annotation.AspectJProxyFactory;
-import org.springframework.lang.Nullable;
 
 import static io.micrometer.docs.observation.ObservationHandlerTests.TaxObservationDocumentation.TaxHighCardinalityKeyNames.USER_ID;
 import static io.micrometer.docs.observation.ObservationHandlerTests.TaxObservationDocumentation.TaxLowCardinalityKeyNames.TAX_TYPE;
@@ -168,6 +175,46 @@ class ObservationHandlerTests {
                 .hasLowCardinalityKeyValue("class", ObservedService.class.getName())
                 .hasLowCardinalityKeyValue("method", "call").doesNotHaveError();
         // end::observed_aop[]
+        // @formatter:on
+    }
+
+    @Test
+    void annotatedCallShouldBeObservedWithParameter() {
+        // @formatter:off
+        // tag::observed_aop_with_parameter[]
+        // create a test registry
+        TestObservationRegistry registry = TestObservationRegistry.create();
+        // add a system out printing handler
+        registry.observationConfig().observationHandler(new ObservationTextPublisher());
+
+        // create a proxy around the observed service
+        AspectJProxyFactory pf = new AspectJProxyFactory(new ObservedServiceWithParameter());
+        ObservedAspect observedAspect = new ObservedAspect(registry);
+        ValueResolver valueResolver = parameter -> "Value from myCustomTagValueResolver [" + parameter + "]";
+        ValueExpressionResolver valueExpressionResolver = new SpelValueExpressionResolver();
+        observedAspect.setObservationKeyValueAnnotationHandler(
+            new ObservationKeyValueAnnotationHandler(
+                aClass -> valueResolver, aClass -> valueExpressionResolver)
+        );
+
+        pf.addAspect(observedAspect);
+
+        // make a call
+        ObservedServiceWithParameter service = pf.getProxy();
+        service.call("foo");
+
+        // assert that observation has been properly created
+        assertThat(registry)
+                .hasSingleObservationThat()
+                .hasBeenStopped()
+                .hasNameEqualTo("test.call")
+                .hasHighCardinalityKeyValue("key0", "foo")
+                .hasHighCardinalityKeyValue("key1", "foo")
+                .hasHighCardinalityKeyValue("key2", "key2: FOO")
+                .hasHighCardinalityKeyValue("key3", "Value from myCustomTagValueResolver [foo]")
+                .hasLowCardinalityKeyValue("key4", "foo")
+                .doesNotHaveError();
+        // end::observed_aop_with_parameter[]
         // @formatter:on
     }
 
@@ -383,8 +430,7 @@ class ObservationHandlerTests {
 
         // If the user wants to override the default they can override this. Otherwise,
         // it will be {@code null}.
-        @Nullable
-        private final TaxObservationConvention observationConvention;
+        private final @Nullable TaxObservationConvention observationConvention;
 
         TaxCalculator(ObservationRegistry observationRegistry,
                 @Nullable TaxObservationConvention observationConvention) {
@@ -459,5 +505,20 @@ class ObservationHandlerTests {
 
     }
     // end::observed_service[]
+
+    // tag::observed_service_with_parameter[]
+    static class ObservedServiceWithParameter {
+
+        @Observed(name = "test.call")
+        @ObservationKeyValue(key = "key4", cardinality = Cardinality.LOW)
+        String call(@ObservationKeyValues({ @ObservationKeyValue(key = "key0", cardinality = Cardinality.HIGH),
+                @ObservationKeyValue(key = "key1"),
+                @ObservationKeyValue(key = "key2", expression = "'key2: ' + toUpperCase"),
+                @ObservationKeyValue(key = "key3", resolver = ValueResolver.class) }) String param) {
+            return param;
+        }
+
+    }
+    // end::observed_service_with_parameter[]
 
 }

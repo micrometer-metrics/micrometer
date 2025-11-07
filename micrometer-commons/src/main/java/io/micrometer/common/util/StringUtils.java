@@ -15,7 +15,8 @@
  */
 package io.micrometer.common.util;
 
-import io.micrometer.common.lang.Nullable;
+import io.micrometer.common.lang.internal.Contract;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Utilities for {@link String}.
@@ -31,6 +32,7 @@ public final class StringUtils {
      * @param string String to check
      * @return {@code true} if the String is null or has only whitespaces
      */
+    @Contract("null -> true")
     public static boolean isBlank(@Nullable String string) {
         if (isEmpty(string)) {
             return true;
@@ -48,6 +50,7 @@ public final class StringUtils {
      * @param string String to check
      * @return {@code true} if the String has any non-whitespace character
      */
+    @Contract("null -> false")
     public static boolean isNotBlank(@Nullable String string) {
         return !isBlank(string);
     }
@@ -57,6 +60,7 @@ public final class StringUtils {
      * @param string String to check
      * @return {@code true} if the String is null or empty
      */
+    @Contract("null -> true")
     public static boolean isEmpty(@Nullable String string) {
         return string == null || string.isEmpty();
     }
@@ -67,6 +71,7 @@ public final class StringUtils {
      * @return {@code true} if the String has any character
      * @since 1.1.0
      */
+    @Contract("null -> false")
     public static boolean isNotEmpty(@Nullable String string) {
         return !isEmpty(string);
     }

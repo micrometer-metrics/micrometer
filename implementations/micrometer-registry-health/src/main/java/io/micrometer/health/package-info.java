@@ -16,9 +16,7 @@
 /**
  * SLO-based health meter registry.
  */
-@NonNullApi
-@NonNullFields
+@NullMarked
 package io.micrometer.health;
 
-import io.micrometer.common.lang.NonNullApi;
-import io.micrometer.common.lang.NonNullFields;
+import org.jspecify.annotations.NullMarked;

@@ -15,19 +15,21 @@
  */
 package io.micrometer.wavefront;
 
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.util.StringEscapeUtils;
+import org.jspecify.annotations.Nullable;
 
 import java.util.regex.Pattern;
 
 /**
  * Naming convention for Wavefront.
  *
+ * @deprecated since 1.16.0 due to Wavefront's End of Life Announcement
  * @author Jon Schneider
  * @since 1.0.0
  */
+@Deprecated
 public class WavefrontNamingConvention implements NamingConvention {
 
     private static final Pattern NAME_CLEANUP_PATTERN = Pattern.compile("[^a-zA-Z0-9\\-_\\./,]");
@@ -36,8 +38,7 @@ public class WavefrontNamingConvention implements NamingConvention {
 
     private final NamingConvention delegate;
 
-    @Nullable
-    private String namePrefix;
+    private @Nullable String namePrefix;
 
     public WavefrontNamingConvention(@Nullable String namePrefix) {
         this(namePrefix, NamingConvention.dot);

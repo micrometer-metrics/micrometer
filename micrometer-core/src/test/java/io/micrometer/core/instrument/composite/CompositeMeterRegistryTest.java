@@ -25,6 +25,7 @@ import io.micrometer.core.instrument.simple.SimpleConfig;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.step.StepRegistryConfig;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
@@ -339,7 +340,7 @@ class CompositeMeterRegistryTest {
                 }
 
                 @Override
-                public String get(String key) {
+                public @Nullable String get(String key) {
                     return null;
                 }
 
@@ -475,8 +476,9 @@ class CompositeMeterRegistryTest {
         executor.shutdown();
         assertThat(executor.awaitTermination(1L, TimeUnit.SECONDS)).isTrue();
         for (int i = 0; i < tagCount; i++) {
-            assertThat(this.composite.find(meterName).tag(tagName, String.valueOf(i)).counter().count())
-                .isEqualTo(count / tagCount);
+            Counter counter = this.composite.find(meterName).tag(tagName, String.valueOf(i)).counter();
+            assertThat(counter).isNotNull();
+            assertThat(counter.count()).isEqualTo((double) count / tagCount);
         }
     }
 

@@ -16,10 +16,10 @@
 package io.micrometer.wavefront;
 
 import com.wavefront.sdk.common.clients.service.token.TokenService;
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.config.validate.InvalidReason;
 import io.micrometer.core.instrument.config.validate.Validated;
 import io.micrometer.core.instrument.push.PushRegistryConfig;
+import org.jspecify.annotations.Nullable;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -30,10 +30,12 @@ import static io.micrometer.core.instrument.config.validate.PropertyValidator.*;
 /**
  * Configuration for {@link WavefrontMeterRegistry}.
  *
+ * @deprecated since 1.16.0 due to Wavefront's End of Life Announcement
  * @author Howard Yoo
  * @author Jon Schneider
  * @since 1.0.0
  */
+@Deprecated
 public interface WavefrontConfig extends PushRegistryConfig {
 
     /**
@@ -41,7 +43,7 @@ public interface WavefrontConfig extends PushRegistryConfig {
      */
     WavefrontConfig DEFAULT_PROXY = new WavefrontConfig() {
         @Override
-        public String get(String key) {
+        public @Nullable String get(String key) {
             return null;
         }
 
@@ -57,7 +59,7 @@ public interface WavefrontConfig extends PushRegistryConfig {
      */
     WavefrontConfig DEFAULT_DIRECT = new WavefrontConfig() {
         @Override
-        public String get(String key) {
+        public @Nullable String get(String key) {
             return null;
         }
 
@@ -132,8 +134,7 @@ public interface WavefrontConfig extends PushRegistryConfig {
      * nothing.
      * @return The Wavefront API token.
      */
-    @Nullable
-    default String apiToken() {
+    default @Nullable String apiToken() {
         return getSecret(this, "apiToken")
             .invalidateWhen(token -> token == null && WavefrontMeterRegistry.isDirectToApi(this),
                     "must be set whenever publishing directly to the Wavefront API", InvalidReason.MISSING)
@@ -173,8 +174,7 @@ public interface WavefrontConfig extends PushRegistryConfig {
      * those originating from other Wavefront integrations.
      * @return A prefix to add to every metric.
      */
-    @Nullable
-    default String globalPrefix() {
+    default @Nullable String globalPrefix() {
         return getString(this, "globalPrefix").orElse(null);
     }
 

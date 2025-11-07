@@ -15,14 +15,13 @@
  */
 package io.micrometer.core.instrument.binder.system;
 
-import io.micrometer.common.lang.NonNullApi;
-import io.micrometer.common.lang.NonNullFields;
-import io.micrometer.common.lang.Nullable;
-import io.micrometer.core.instrument.FunctionCounter;
-import io.micrometer.core.instrument.Gauge;
-import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.MeterBinder;
+import io.micrometer.core.instrument.binder.MeterConvention;
+import io.micrometer.core.instrument.binder.jvm.convention.JvmCpuMeterConventions;
+import io.micrometer.core.instrument.binder.jvm.convention.micrometer.MicrometerJvmCpuMeterConventions;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.OperatingSystemMXBean;
@@ -48,8 +47,7 @@ import static java.util.Objects.requireNonNull;
  * @author Clint Checketts
  * @author Tommy Ludwig
  */
-@NonNullApi
-@NonNullFields
+@NullMarked
 public class ProcessorMetrics implements MeterBinder {
 
     /**
@@ -60,28 +58,43 @@ public class ProcessorMetrics implements MeterBinder {
             "com.sun.management.OperatingSystemMXBean" // HotSpot
     );
 
-    private final Iterable<Tag> tags;
+    private final Tags tags;
+
+    private final JvmCpuMeterConventions conventions;
 
     private final OperatingSystemMXBean operatingSystemBean;
 
-    @Nullable
-    private final Class<?> operatingSystemBeanClass;
+    private final @Nullable Class<?> operatingSystemBeanClass;
 
-    @Nullable
-    private final Method systemCpuUsage;
+    private final @Nullable Method systemCpuUsage;
 
-    @Nullable
-    private final Method processCpuUsage;
+    private final @Nullable Method processCpuUsage;
 
-    @Nullable
-    private final Method processCpuTime;
+    private final @Nullable Method processCpuTime;
 
     public ProcessorMetrics() {
         this(emptyList());
     }
 
-    public ProcessorMetrics(Iterable<Tag> tags) {
-        this.tags = tags;
+    /**
+     * Uses the default convention with the provided extra tags.
+     * @param extraTags tags to add to each meter's tags produced by this binder
+     */
+    public ProcessorMetrics(Iterable<Tag> extraTags) {
+        this(extraTags, new MicrometerJvmCpuMeterConventions(Tags.of(extraTags)));
+    }
+
+    /**
+     * The supplied extra tags are not combined with the convention. Provide a convention
+     * that applies the extra tags if that is the desired outcome. The convention only
+     * applies to some meters.
+     * @param extraTags extra tags to add to meters not covered by the conventions
+     * @param conventions custom conventions for applicable meters
+     * @since 1.16.0
+     */
+    public ProcessorMetrics(Iterable<? extends Tag> extraTags, JvmCpuMeterConventions conventions) {
+        this.tags = Tags.of(extraTags);
+        this.conventions = conventions;
         this.operatingSystemBean = ManagementFactory.getOperatingSystemMXBean();
         this.operatingSystemBeanClass = getFirstClassFound(OPERATING_SYSTEM_BEAN_CLASS_NAMES);
         Method getCpuLoad = detectMethod("getCpuLoad");
@@ -93,8 +106,9 @@ public class ProcessorMetrics implements MeterBinder {
     @Override
     public void bindTo(MeterRegistry registry) {
         Runtime runtime = Runtime.getRuntime();
-        Gauge.builder("system.cpu.count", runtime, Runtime::availableProcessors)
-            .tags(tags)
+        MeterConvention<Object> cpuCountConvention = conventions.cpuCountConvention();
+        Gauge.builder(cpuCountConvention.getName(), runtime, Runtime::availableProcessors)
+            .tags(cpuCountConvention.getTags(null))
             .description("The number of processors available to the Java virtual machine")
             .register(registry);
 
@@ -114,15 +128,17 @@ public class ProcessorMetrics implements MeterBinder {
         }
 
         if (processCpuUsage != null) {
-            Gauge.builder("process.cpu.usage", operatingSystemBean, x -> invoke(processCpuUsage))
-                .tags(tags)
+            MeterConvention<Object> processCpuLoadConvention = conventions.processCpuLoadConvention();
+            Gauge.builder(processCpuLoadConvention.getName(), operatingSystemBean, x -> invoke(processCpuUsage))
+                .tags(processCpuLoadConvention.getTags(null))
                 .description("The \"recent cpu usage\" for the Java Virtual Machine process")
                 .register(registry);
         }
 
         if (processCpuTime != null) {
-            FunctionCounter.builder("process.cpu.time", operatingSystemBean, x -> invoke(processCpuTime))
-                .tags(tags)
+            MeterConvention<Object> cpuTimeConvention = this.conventions.cpuTimeConvention();
+            FunctionCounter.builder(cpuTimeConvention.getName(), operatingSystemBean, x -> invoke(processCpuTime))
+                .tags(cpuTimeConvention.getTags(null))
                 .description("The \"cpu time\" used by the Java Virtual Machine process")
                 .baseUnit("ns")
                 .register(registry);
@@ -142,8 +158,7 @@ public class ProcessorMetrics implements MeterBinder {
         return number != null ? number.doubleValue() : Double.NaN;
     }
 
-    @Nullable
-    private Method detectMethod(String name) {
+    private @Nullable Method detectMethod(String name) {
         requireNonNull(name);
         if (operatingSystemBeanClass == null) {
             return null;
@@ -158,8 +173,7 @@ public class ProcessorMetrics implements MeterBinder {
         }
     }
 
-    @Nullable
-    private Class<?> getFirstClassFound(List<String> classNames) {
+    private @Nullable Class<?> getFirstClassFound(List<String> classNames) {
         for (String className : classNames) {
             try {
                 return Class.forName(className);

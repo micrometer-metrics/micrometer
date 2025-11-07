@@ -26,6 +26,7 @@ import io.micrometer.health.ServiceLevelObjective;
  */
 public class OperatingSystemServiceLevelObjectives {
 
+    @SuppressWarnings("MutablePublicArray")
     public static final ServiceLevelObjective[] DISK = new ServiceLevelObjective[] {
             ServiceLevelObjective.build("os.file.descriptors")
                 .failedMessage("Too many file descriptors are open. When the max is reached, "

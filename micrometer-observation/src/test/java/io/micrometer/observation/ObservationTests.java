@@ -54,14 +54,14 @@ class ObservationTests {
     void notHavingAnyHandlersShouldResultInNoopObservation() {
         Observation observation = Observation.createNotStarted("foo", registry);
 
-        assertThat(observation).isSameAs(Observation.NOOP);
+        assertThat(observation.isNoop()).isTrue();
     }
 
     @Test
     void notHavingARegistryShouldResultInNoopObservation() {
         Observation observation = Observation.createNotStarted("foo", null);
 
-        assertThat(observation).isSameAs(Observation.NOOP);
+        assertThat(observation.isNoop()).isTrue();
     }
 
     @Test
@@ -71,7 +71,7 @@ class ObservationTests {
 
         Observation observation = Observation.createNotStarted("foo", registry);
 
-        assertThat(observation).isSameAs(Observation.NOOP);
+        assertThat(observation.isNoop()).isTrue();
     }
 
     @Test
@@ -81,7 +81,7 @@ class ObservationTests {
 
         Observation observation = Observation.createNotStarted("foo", registry);
 
-        assertThat(observation).isNotSameAs(Observation.NOOP);
+        assertThat(observation.isNoop()).isFalse();
     }
 
     @Test
@@ -91,11 +91,11 @@ class ObservationTests {
             .observationPredicate((s, context) -> !s.equals("child") || context.getParentObservation() != null);
 
         Observation childWithoutParent = Observation.createNotStarted("child", registry);
-        assertThat(childWithoutParent).isSameAs(Observation.NOOP);
+        assertThat(childWithoutParent.isNoop()).isTrue();
 
         Observation childWithParent = Observation.createNotStarted("parent", registry)
             .observe(() -> Observation.createNotStarted("child", registry));
-        assertThat(childWithParent).isNotSameAs(Observation.NOOP);
+        assertThat(childWithParent.isNoop()).isFalse();
     }
 
     @Test
@@ -149,7 +149,9 @@ class ObservationTests {
         assertThat(child.getContextView()).isSameAs(childContext);
         assertThat(parent.getContextView()).isSameAs(parentContext);
 
-        assertThat(childContext.getParentObservation().getContextView()).isSameAs(parentContext);
+        ObservationView parentObservation = childContext.getParentObservation();
+        assertThat(parentObservation).isNotNull();
+        assertThat(parentObservation.getContextView()).isSameAs(parentContext);
     }
 
     @Test

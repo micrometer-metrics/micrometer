@@ -19,10 +19,15 @@ import io.micrometer.core.instrument.distribution.CountAtBucket;
 import io.micrometer.core.instrument.simple.CountingMode;
 import io.micrometer.core.instrument.simple.SimpleConfig;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import io.micrometer.core.testsupport.system.CapturedOutput;
+import io.micrometer.core.testsupport.system.OutputCaptureExtension;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@ExtendWith(OutputCaptureExtension.class)
 class DistributionSummaryTest {
 
     @Test
@@ -46,7 +51,7 @@ class DistributionSummaryTest {
         MockClock clock = new MockClock();
         MeterRegistry registry = new SimpleMeterRegistry(new SimpleConfig() {
             @Override
-            public String get(String key) {
+            public @Nullable String get(String key) {
                 return null;
             }
 
@@ -65,6 +70,20 @@ class DistributionSummaryTest {
         assertThat(summary.takeSnapshot().histogramCounts()).containsExactly(new CountAtBucket(1.0, 1));
         clock.add(SimpleConfig.DEFAULT.step());
         assertThat(summary.takeSnapshot().histogramCounts()).containsExactly(new CountAtBucket(1.0, 0));
+    }
+
+    @Test
+    void takeSnapshotShouldNotThrowExceptionEvenIfDoubleHistogramThrowsException(CapturedOutput output) {
+        SimpleMeterRegistry registry = new SimpleMeterRegistry();
+        DistributionSummary summary = DistributionSummary.builder("my.summary")
+            .publishPercentiles(0.1, 0.25, 0.5, 0.75, 0.9, 0.95, 0.99)
+            .register(registry);
+        summary.record(1);
+        summary.record(1E-10);
+        summary.takeSnapshot();
+        summary.record(1E-20);
+        summary.takeSnapshot();
+        assertThat(output).contains("Failed to accumulate.");
     }
 
 }

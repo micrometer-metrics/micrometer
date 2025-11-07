@@ -19,7 +19,7 @@ import java.util.function.BiPredicate;
 
 /**
  * A predicate to define whether {@link Observation observation} should be created or a
- * {@link NoopObservation} instead.
+ * no-op Observation instead.
  *
  * @author Jonatan Ivanov
  * @author Tommy Ludwig

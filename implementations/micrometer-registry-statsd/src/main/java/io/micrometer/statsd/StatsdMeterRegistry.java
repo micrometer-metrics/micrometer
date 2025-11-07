@@ -15,7 +15,6 @@
  */
 package io.micrometer.statsd;
 
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.common.util.internal.logging.WarnThenDebugLogger;
 import io.micrometer.core.annotation.Incubating;
 import io.micrometer.core.instrument.*;
@@ -29,6 +28,7 @@ import io.micrometer.statsd.internal.*;
 import io.netty.channel.Channel;
 import io.netty.channel.unix.DomainSocketAddress;
 import io.netty.util.AttributeKey;
+import org.jspecify.annotations.Nullable;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
@@ -51,6 +51,7 @@ import java.net.SocketAddress;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -95,16 +96,13 @@ public class StatsdMeterRegistry extends MeterRegistry {
 
     Disposable.Swap statsdConnection = Disposables.swap();
 
-    @Nullable
-    private Channel flushableChannel;
+    private @Nullable Channel flushableChannel;
 
     private Disposable.Swap meterPoller = Disposables.swap();
 
-    @Nullable
-    private BiFunction<Meter.Id, DistributionStatisticConfig, StatsdLineBuilder> lineBuilderFunction;
+    private @Nullable BiFunction<Meter.Id, DistributionStatisticConfig, StatsdLineBuilder> lineBuilderFunction;
 
-    @Nullable
-    private Consumer<String> lineSink;
+    private @Nullable Consumer<String> lineSink;
 
     private static final AttributeKey<Boolean> CONNECTION_DISPOSED = AttributeKey.valueOf("doOnDisconnectCalled");
 
@@ -202,6 +200,9 @@ public class StatsdMeterRegistry extends MeterRegistry {
                     }
 
                     @Override
+                    // for performance reasons we don't want to check when we know
+                    // lineSink isn't null
+                    @SuppressWarnings("NullAway")
                     public void onNext(String line) {
                         if (started.get()) {
                             lineSink.accept(line);
@@ -255,7 +256,7 @@ public class StatsdMeterRegistry extends MeterRegistry {
             .doOnDisconnected(connection -> {
                 Boolean connectionDisposed = connection.channel().attr(CONNECTION_DISPOSED).getAndSet(Boolean.TRUE);
                 if (connectionDisposed == null || !connectionDisposed) {
-                    connectAndSubscribe(udpClientReference.get());
+                    connectAndSubscribe(Objects.requireNonNull(udpClientReference.get()));
                 }
             });
         udpClientReference.set(udpClient);
@@ -271,7 +272,7 @@ public class StatsdMeterRegistry extends MeterRegistry {
             .doOnDisconnected(connection -> {
                 Boolean connectionDisposed = connection.channel().attr(CONNECTION_DISPOSED).getAndSet(Boolean.TRUE);
                 if (connectionDisposed == null || !connectionDisposed) {
-                    connectAndSubscribe(tcpClientReference.get());
+                    connectAndSubscribe(Objects.requireNonNull(tcpClientReference.get()));
                 }
             });
         tcpClientReference.set(tcpClient);
@@ -506,11 +507,9 @@ public class StatsdMeterRegistry extends MeterRegistry {
 
         private HierarchicalNameMapper nameMapper = HierarchicalNameMapper.DEFAULT;
 
-        @Nullable
-        private BiFunction<Meter.Id, DistributionStatisticConfig, StatsdLineBuilder> lineBuilderFunction = null;
+        private @Nullable BiFunction<Meter.Id, DistributionStatisticConfig, StatsdLineBuilder> lineBuilderFunction = null;
 
-        @Nullable
-        private Consumer<String> lineSink;
+        private @Nullable Consumer<String> lineSink;
 
         Builder(StatsdConfig config) {
             this.config = config;

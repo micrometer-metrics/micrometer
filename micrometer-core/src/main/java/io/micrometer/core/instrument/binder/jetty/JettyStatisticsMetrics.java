@@ -15,12 +15,11 @@
  */
 package io.micrometer.core.instrument.binder.jetty;
 
-import io.micrometer.common.lang.NonNullApi;
-import io.micrometer.common.lang.NonNullFields;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.binder.MeterBinder;
 import org.eclipse.jetty.server.handler.StatisticsHandler;
+import org.jspecify.annotations.NullMarked;
 
 import java.util.concurrent.TimeUnit;
 import java.util.function.ToDoubleFunction;
@@ -30,8 +29,7 @@ import java.util.function.ToLongFunction;
  * @deprecated Since 1.4.0. Use {@link TimedHandler} instead.
  */
 @Deprecated
-@NonNullApi
-@NonNullFields
+@NullMarked
 public class JettyStatisticsMetrics implements MeterBinder {
 
     private final StatisticsHandler statisticsHandler;

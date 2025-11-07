@@ -15,7 +15,8 @@
  */
 package io.micrometer.common;
 
-import io.micrometer.common.lang.Nullable;
+import io.micrometer.common.lang.internal.Contract;
+import org.jspecify.annotations.Nullable;
 
 import java.util.*;
 import java.util.function.Function;
@@ -192,8 +193,8 @@ public final class KeyValues implements Iterable<KeyValue> {
      * @param keyValues the key/value pairs to add, elements mustn't be null
      * @return a new {@code KeyValues} instance
      */
-    public KeyValues and(@Nullable String... keyValues) {
-        if (blankVarargs(keyValues)) {
+    public KeyValues and(String @Nullable ... keyValues) {
+        if (isEmptyVarargs(keyValues)) {
             return this;
         }
         return and(KeyValues.of(keyValues));
@@ -205,8 +206,8 @@ public final class KeyValues implements Iterable<KeyValue> {
      * @param keyValues the key values to add, elements mustn't be null
      * @return a new {@code KeyValues} instance
      */
-    public KeyValues and(@Nullable KeyValue... keyValues) {
-        if (blankVarargs(keyValues)) {
+    public KeyValues and(KeyValue @Nullable ... keyValues) {
+        if (isEmptyVarargs(keyValues)) {
             return this;
         }
         return and(toKeyValues(keyValues));
@@ -339,7 +340,7 @@ public final class KeyValues implements Iterable<KeyValue> {
      * @return the merged key values
      */
     public static KeyValues concat(@Nullable Iterable<? extends KeyValue> keyValues,
-            @Nullable String... otherKeyValues) {
+            String @Nullable ... otherKeyValues) {
         return KeyValues.of(keyValues).and(otherKeyValues);
     }
 
@@ -395,8 +396,8 @@ public final class KeyValues implements Iterable<KeyValue> {
      * @param keyValues the key/value pairs to add, elements mustn't be null
      * @return a new {@code KeyValues} instance
      */
-    public static KeyValues of(@Nullable String... keyValues) {
-        if (blankVarargs(keyValues)) {
+    public static KeyValues of(String @Nullable ... keyValues) {
+        if (isEmptyVarargs(keyValues)) {
             return empty();
         }
         if (keyValues.length % 2 == 1) {
@@ -409,7 +410,8 @@ public final class KeyValues implements Iterable<KeyValue> {
         return toKeyValues(keyValueArray);
     }
 
-    private static boolean blankVarargs(@Nullable Object[] args) {
+    @Contract("null -> true")
+    private static boolean isEmptyVarargs(@Nullable Object @Nullable [] args) {
         return args == null || args.length == 0 || (args.length == 1 && args[0] == null);
     }
 
@@ -419,7 +421,7 @@ public final class KeyValues implements Iterable<KeyValue> {
      * @param keyValues the key values to add, elements mustn't be null
      * @return a new {@code KeyValues} instance
      */
-    public static KeyValues of(@Nullable KeyValue... keyValues) {
+    public static KeyValues of(KeyValue @Nullable ... keyValues) {
         return empty().and(keyValues);
     }
 

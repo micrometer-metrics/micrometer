@@ -19,6 +19,7 @@ import io.micrometer.common.annotation.NoOpValueResolver;
 import io.micrometer.common.annotation.ValueExpressionResolver;
 import io.micrometer.common.annotation.ValueResolver;
 import io.micrometer.common.util.StringUtils;
+import org.jspecify.annotations.Nullable;
 
 import java.util.function.Function;
 
@@ -27,14 +28,22 @@ import java.util.function.Function;
  *
  * @author Marcin Grzejszczak
  * @author Johnny Lim
+ * @author Seungyong Hong
  */
 final class MeterTagSupport {
+
+    private MeterTagSupport() {
+    }
 
     static String resolveTagKey(MeterTag annotation) {
         return StringUtils.isNotBlank(annotation.value()) ? annotation.value() : annotation.key();
     }
 
-    static String resolveTagValue(MeterTag annotation, Object argument,
+    /**
+     * Similar to {@code ObservationKeyValueSupport.resolveTagValue}. The two logics are
+     * similar, so if one is modified, probably the other one should be modified too.
+     */
+    static String resolveTagValue(MeterTag annotation, @Nullable Object argument,
             Function<Class<? extends ValueResolver>, ? extends ValueResolver> resolverProvider,
             Function<Class<? extends ValueExpressionResolver>, ? extends ValueExpressionResolver> expressionResolverProvider) {
         String value = null;

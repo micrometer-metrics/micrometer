@@ -17,13 +17,12 @@ package io.micrometer.core.instrument.binder.okhttp3;
 
 import io.micrometer.common.KeyValue;
 import io.micrometer.common.KeyValues;
-import io.micrometer.common.lang.NonNull;
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
 import okhttp3.Interceptor;
 import okhttp3.Request;
 import okhttp3.Response;
+import org.jspecify.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.*;
@@ -40,7 +39,7 @@ public class OkHttpObservationInterceptor implements Interceptor {
 
     private final ObservationRegistry registry;
 
-    private OkHttpObservationConvention observationConvention;
+    private @Nullable OkHttpObservationConvention observationConvention;
 
     private final String requestMetricName;
 
@@ -54,8 +53,9 @@ public class OkHttpObservationInterceptor implements Interceptor {
 
     private final boolean includeHostTag;
 
-    public OkHttpObservationInterceptor(ObservationRegistry registry, OkHttpObservationConvention observationConvention,
-            String requestsMetricName, Function<Request, String> urlMapper, Iterable<KeyValue> extraTags,
+    public OkHttpObservationInterceptor(ObservationRegistry registry,
+            @Nullable OkHttpObservationConvention observationConvention, String requestsMetricName,
+            Function<Request, String> urlMapper, Iterable<KeyValue> extraTags,
             Iterable<BiFunction<Request, Response, KeyValue>> contextSpecificTags, Iterable<String> requestTagKeys,
             boolean includeHostTag) {
         this.registry = registry;
@@ -77,9 +77,8 @@ public class OkHttpObservationInterceptor implements Interceptor {
         return new OkHttpObservationInterceptor.Builder(registry, name);
     }
 
-    @NonNull
     @Override
-    public Response intercept(@NonNull Chain chain) throws IOException {
+    public Response intercept(Chain chain) throws IOException {
         Request request = chain.request();
         Request.Builder newRequestBuilder = request.newBuilder();
         OkHttpContext okHttpContext = new OkHttpContext(this.urlMapper, this.extraTags, this.contextSpecificTags,
@@ -117,14 +116,11 @@ public class OkHttpObservationInterceptor implements Interceptor {
     // VisibleForTesting
     static class CallState {
 
-        @Nullable
-        final Request request;
+        final @Nullable Request request;
 
-        @Nullable
-        Response response;
+        @Nullable Response response;
 
-        @Nullable
-        IOException exception;
+        @Nullable IOException exception;
 
         CallState(@Nullable Request request) {
             this.request = request;
@@ -154,7 +150,7 @@ public class OkHttpObservationInterceptor implements Interceptor {
 
         private Iterable<String> requestTagKeys = Collections.emptyList();
 
-        private OkHttpObservationConvention observationConvention;
+        private @Nullable OkHttpObservationConvention observationConvention;
 
         Builder(ObservationRegistry registry, String name) {
             this.registry = registry;

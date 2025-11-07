@@ -20,7 +20,6 @@ import info.ganglia.gmetric4j.gmetric.GMetric;
 import info.ganglia.gmetric4j.gmetric.GMetricSlope;
 import info.ganglia.gmetric4j.gmetric.GMetricType;
 import info.ganglia.gmetric4j.gmetric.GangliaException;
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.distribution.HistogramSnapshot;
@@ -28,6 +27,7 @@ import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.util.DoubleFormat;
 import io.micrometer.core.instrument.util.HierarchicalNameMapper;
 import io.micrometer.core.instrument.util.NamedThreadFactory;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

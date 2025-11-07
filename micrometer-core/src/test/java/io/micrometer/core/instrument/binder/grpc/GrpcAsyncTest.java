@@ -33,6 +33,7 @@ import io.micrometer.observation.Observation;
 import io.micrometer.observation.Observation.Context;
 import io.micrometer.observation.ObservationHandler;
 import io.micrometer.observation.ObservationRegistry;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -54,13 +55,14 @@ import static org.mockito.Mockito.mock;
  */
 class GrpcAsyncTest {
 
-    static final Metadata.Key<String> REQUEST_ID_KEY = Metadata.Key.of("request-id", Metadata.ASCII_STRING_MARSHALLER);
+    private static final Metadata.Key<String> REQUEST_ID_KEY = Metadata.Key.of("request-id",
+            Metadata.ASCII_STRING_MARSHALLER);
 
-    Server server;
+    private Server server;
 
-    ManagedChannel channel;
+    private @Nullable ManagedChannel channel;
 
-    ObservationRegistry observationRegistry;
+    private ObservationRegistry observationRegistry;
 
     @BeforeEach
     void setUp() throws Exception {
@@ -117,6 +119,7 @@ class GrpcAsyncTest {
         assertThat(futures).allSatisfy((future) -> {
             // Make sure the request-id in the response message matches with the one sent
             // to server.
+            @SuppressWarnings("CollectionUndefinedEquality")
             String expectedRequestId = requestIds.get(future);
             assertThat(future.get().getResponseMessage()).contains("request-id=" + expectedRequestId);
         });
@@ -125,9 +128,9 @@ class GrpcAsyncTest {
     @Test
     @SuppressWarnings("unchecked")
     void multi_thread_client() throws Exception {
-        AtomicReference<Observation> onStart = new AtomicReference<>();
-        AtomicReference<Observation> onMessage = new AtomicReference<>();
-        AtomicReference<Observation> halfClose = new AtomicReference<>();
+        AtomicReference<@Nullable Observation> onStart = new AtomicReference<>();
+        AtomicReference<@Nullable Observation> onMessage = new AtomicReference<>();
+        AtomicReference<@Nullable Observation> halfClose = new AtomicReference<>();
         ClientInterceptor clientInterceptor = new ClientInterceptor() {
             @Override
             public <ReqT, RespT> ClientCall<ReqT, RespT> interceptCall(MethodDescriptor<ReqT, RespT> method,
@@ -202,7 +205,9 @@ class GrpcAsyncTest {
 
         @Override
         public void onScopeOpened(GrpcServerObservationContext context) {
-            String requestId = context.getCarrier().get(REQUEST_ID_KEY);
+            Metadata metadata = context.getCarrier();
+            assertThat(metadata).isNotNull();
+            String requestId = metadata.get(REQUEST_ID_KEY);
             assertThat(requestId).isNotNull();
             MyService.requestIdHolder.set(requestId);
         }

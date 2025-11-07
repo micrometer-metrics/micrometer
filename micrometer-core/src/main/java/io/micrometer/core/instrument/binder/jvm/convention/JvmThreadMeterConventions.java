@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 VMware, Inc.
+ * Copyright 2025 VMware, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,8 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package io.micrometer.core.instrument.binder.jvm.convention;
+
+import io.micrometer.core.instrument.binder.MeterConvention;
 
 /**
- * Common annotations with language-level semantics.
+ * Get {@link MeterConvention} for thread related metrics.
+ *
+ * @see io.micrometer.core.instrument.binder.jvm.JvmThreadMetrics
+ * @since 1.16.0
  */
-package io.micrometer.core.lang;
+public interface JvmThreadMeterConventions {
+
+    MeterConvention<Thread.State> threadCountConvention();
+
+}

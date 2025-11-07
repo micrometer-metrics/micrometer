@@ -16,14 +16,13 @@
 package io.micrometer.core.instrument.binder.commonspool2;
 
 import io.micrometer.common.KeyValue;
-import io.micrometer.common.lang.NonNull;
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.common.util.internal.logging.InternalLogger;
 import io.micrometer.common.util.internal.logging.InternalLoggerFactory;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.binder.MeterBinder;
 import io.micrometer.core.instrument.util.NamedThreadFactory;
+import org.jspecify.annotations.Nullable;
 
 import javax.management.*;
 import java.lang.management.ManagementFactory;
@@ -85,7 +84,7 @@ public class CommonsObjectPool2Metrics implements MeterBinder, AutoCloseable {
     }
 
     @Override
-    public void bindTo(@NonNull MeterRegistry registry) {
+    public void bindTo(MeterRegistry registry) {
         for (String type : TYPES) {
             registerMetricsEventually(type, (o, tags) -> {
                 registerGaugeForObject(registry, o, "NumIdle", "num.idle", tags,
@@ -269,7 +268,7 @@ public class CommonsObjectPool2Metrics implements MeterBinder, AutoCloseable {
             AtomicReference<? extends Meter> meter, ObjectName o, String jmxMetricName) {
         return s -> safeDouble(() -> {
             if (!s.isRegistered(o)) {
-                registry.remove(meter.get());
+                registry.remove(Objects.requireNonNull(meter.get()));
             }
             return s.getAttribute(o, jmxMetricName);
         });

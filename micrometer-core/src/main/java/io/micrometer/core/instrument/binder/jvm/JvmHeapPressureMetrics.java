@@ -17,7 +17,6 @@ package io.micrometer.core.instrument.binder.jvm;
 
 import com.sun.management.GarbageCollectionNotificationInfo;
 import com.sun.management.GcInfo;
-import io.micrometer.common.lang.NonNull;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
@@ -35,6 +34,7 @@ import java.lang.management.MemoryUsage;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicReference;
@@ -84,7 +84,7 @@ public class JvmHeapPressureMetrics implements MeterBinder, AutoCloseable {
     }
 
     @Override
-    public void bindTo(@NonNull MeterRegistry registry) {
+    public void bindTo(MeterRegistry registry) {
         if (!longLivedPoolNames.isEmpty()) {
             Gauge.builder("jvm.memory.usage.after.gc", lastLongLivedPoolUsageAfterGc, AtomicReference::get)
                 .tags(tags)
@@ -125,9 +125,11 @@ public class JvmHeapPressureMetrics implements MeterBinder, AutoCloseable {
 
                 if (!longLivedPoolNames.isEmpty()) {
                     final long usedAfter = longLivedPoolNames.stream()
-                        .mapToLong(pool -> after.get(pool).getUsed())
+                        .mapToLong(pool -> Objects.requireNonNull(after.get(pool)).getUsed())
                         .sum();
-                    double maxAfter = longLivedPoolNames.stream().mapToLong(pool -> after.get(pool).getMax()).sum();
+                    double maxAfter = longLivedPoolNames.stream()
+                        .mapToLong(pool -> Objects.requireNonNull(after.get(pool)).getMax())
+                        .sum();
                     lastLongLivedPoolUsageAfterGc.set(usedAfter / maxAfter);
                 }
             };

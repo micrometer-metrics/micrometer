@@ -25,10 +25,10 @@ import io.micrometer.core.ipc.http.HttpSender;
 import io.micrometer.dynatrace.DynatraceApiVersion;
 import io.micrometer.dynatrace.DynatraceConfig;
 import io.micrometer.dynatrace.DynatraceMeterRegistry;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
-import java.io.IOException;
 import java.lang.reflect.Field;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -83,7 +83,7 @@ class DynatraceExporterV1Test {
     void constructorWhenUriIsMissingShouldThrowValidationException() {
         assertThatThrownBy(() -> new DynatraceMeterRegistry(new DynatraceConfig() {
             @Override
-            public String get(String key) {
+            public @Nullable String get(String key) {
                 return null;
             }
 
@@ -108,7 +108,7 @@ class DynatraceExporterV1Test {
     void constructorWhenDeviceIdIsMissingShouldThrowValidationException() {
         assertThatThrownBy(() -> new DynatraceMeterRegistry(new DynatraceConfig() {
             @Override
-            public String get(String key) {
+            public @Nullable String get(String key) {
                 return null;
             }
 
@@ -134,7 +134,7 @@ class DynatraceExporterV1Test {
     void constructorWhenApiTokenIsMissingShouldThrowValidationException() {
         assertThatThrownBy(() -> new DynatraceMeterRegistry(new DynatraceConfig() {
             @Override
-            public String get(String key) {
+            public @Nullable String get(String key) {
                 return null;
             }
 
@@ -173,14 +173,14 @@ class DynatraceExporterV1Test {
     @Test
     void writeMeterWithGauge() {
         meterRegistry.gauge("my.gauge", GAUGE_VALUE);
-        Gauge gauge = meterRegistry.find("my.gauge").gauge();
+        Gauge gauge = meterRegistry.get("my.gauge").gauge();
         assertThat(exporter.writeMeter(gauge)).hasSize(1);
     }
 
     @Test
     void writeMeterWithGaugeShouldDropNanValue() {
         meterRegistry.gauge("my.gauge", Double.NaN);
-        Gauge gauge = meterRegistry.find("my.gauge").gauge();
+        Gauge gauge = meterRegistry.get("my.gauge").gauge();
         assertThat(exporter.writeMeter(gauge)).isEmpty();
     }
 
@@ -189,30 +189,23 @@ class DynatraceExporterV1Test {
     void writeMeterWithGaugeWhenChangingFiniteToNaNShouldWork() {
         AtomicBoolean first = new AtomicBoolean(true);
         meterRegistry.gauge("my.gauge", first, (b) -> b.getAndSet(false) ? GAUGE_VALUE : Double.NaN);
-        Gauge gauge = meterRegistry.find("my.gauge").gauge();
-        Stream<DynatraceCustomMetric> stream = exporter.writeMeter(gauge);
-        List<DynatraceCustomMetric> metrics = stream.collect(Collectors.toList());
-        assertThat(metrics).hasSize(1);
-        DynatraceCustomMetric metric = metrics.get(0);
-        DynatraceTimeSeries timeSeries = metric.getTimeSeries();
-        try {
+        Gauge gauge = meterRegistry.get("my.gauge").gauge();
+        assertThat(exporter.writeMeter(gauge)).singleElement().satisfies(metric -> {
+            DynatraceTimeSeries timeSeries = metric.getTimeSeries();
             Map<String, Object> map = mapper.readValue(timeSeries.asJson(), Map.class);
-            List<List<Number>> dataPoints = (List<List<Number>>) map.get("dataPoints");
-            assertThat(dataPoints.get(0).get(1).doubleValue()).isEqualTo(GAUGE_VALUE);
-        }
-        catch (IOException ex) {
-            throw new RuntimeException(ex);
-        }
+            assertThat((List<List<Number>>) map.get("dataPoints")).singleElement()
+                .satisfies(dataPoint -> assertThat(dataPoint.get(1).doubleValue()).isEqualTo(GAUGE_VALUE));
+        });
     }
 
     @Test
     void writeMeterWithGaugeShouldDropInfiniteValues() {
         meterRegistry.gauge("my.gauge", Double.POSITIVE_INFINITY);
-        Gauge gauge = meterRegistry.find("my.gauge").gauge();
+        Gauge gauge = meterRegistry.get("my.gauge").gauge();
         assertThat(exporter.writeMeter(gauge)).isEmpty();
 
         meterRegistry.gauge("my.gauge", Double.NEGATIVE_INFINITY);
-        gauge = meterRegistry.find("my.gauge").gauge();
+        gauge = meterRegistry.get("my.gauge").gauge();
         assertThat(exporter.writeMeter(gauge)).isEmpty();
     }
 
@@ -220,7 +213,7 @@ class DynatraceExporterV1Test {
     void writeMeterWithTimeGauge() {
         AtomicReference<Double> obj = new AtomicReference<>(GAUGE_VALUE);
         meterRegistry.more().timeGauge("my.timeGauge", Tags.empty(), obj, TimeUnit.SECONDS, AtomicReference::get);
-        TimeGauge timeGauge = meterRegistry.find("my.timeGauge").timeGauge();
+        TimeGauge timeGauge = meterRegistry.get("my.timeGauge").timeGauge();
         assertThat(exporter.writeMeter(timeGauge)).hasSize(1);
     }
 
@@ -228,7 +221,7 @@ class DynatraceExporterV1Test {
     void writeMeterWithTimeGaugeShouldDropNanValue() {
         AtomicReference<Double> obj = new AtomicReference<>(Double.NaN);
         meterRegistry.more().timeGauge("my.timeGauge", Tags.empty(), obj, TimeUnit.SECONDS, AtomicReference::get);
-        TimeGauge timeGauge = meterRegistry.find("my.timeGauge").timeGauge();
+        TimeGauge timeGauge = meterRegistry.get("my.timeGauge").timeGauge();
         assertThat(exporter.writeMeter(timeGauge)).isEmpty();
     }
 
@@ -236,12 +229,12 @@ class DynatraceExporterV1Test {
     void writeMeterWithTimeGaugeShouldDropInfiniteValues() {
         AtomicReference<Double> obj = new AtomicReference<>(Double.POSITIVE_INFINITY);
         meterRegistry.more().timeGauge("my.timeGauge", Tags.empty(), obj, TimeUnit.SECONDS, AtomicReference::get);
-        TimeGauge timeGauge = meterRegistry.find("my.timeGauge").timeGauge();
+        TimeGauge timeGauge = meterRegistry.get("my.timeGauge").timeGauge();
         assertThat(exporter.writeMeter(timeGauge)).isEmpty();
 
         obj = new AtomicReference<>(Double.NEGATIVE_INFINITY);
         meterRegistry.more().timeGauge("my.timeGauge", Tags.empty(), obj, TimeUnit.SECONDS, AtomicReference::get);
-        timeGauge = meterRegistry.find("my.timeGauge").timeGauge();
+        timeGauge = meterRegistry.get("my.timeGauge").timeGauge();
         assertThat(exporter.writeMeter(timeGauge)).isEmpty();
     }
 
@@ -249,7 +242,7 @@ class DynatraceExporterV1Test {
     void writeCustomMetrics() {
         Double number = 1d;
         meterRegistry.gauge("my.gauge", number);
-        Gauge gauge = meterRegistry.find("my.gauge").gauge();
+        Gauge gauge = meterRegistry.get("my.gauge").gauge();
         Stream<DynatraceCustomMetric> series = exporter.writeMeter(gauge);
         List<DynatraceTimeSeries> timeSeries = series.map(DynatraceCustomMetric::getTimeSeries)
             .collect(Collectors.toList());
@@ -362,7 +355,7 @@ class DynatraceExporterV1Test {
         DynatraceExporterV1 exporter = FACTORY.injectLogger(() -> createExporter(httpClient));
 
         meterRegistry.gauge("my.gauge", GAUGE_VALUE);
-        Gauge gauge = meterRegistry.find("my.gauge").gauge();
+        Gauge gauge = meterRegistry.get("my.gauge").gauge();
         exporter.export(Collections.singletonList(gauge));
 
         assertThat(LOGGER.getLogEvents()).hasSize(1);
@@ -384,7 +377,7 @@ class DynatraceExporterV1Test {
         DynatraceExporterV1 exporter = FACTORY.injectLogger(() -> createExporter(httpClient));
 
         meterRegistry.gauge("my.gauge", GAUGE_VALUE);
-        Gauge gauge = meterRegistry.find("my.gauge").gauge();
+        Gauge gauge = meterRegistry.get("my.gauge").gauge();
         exporter.export(Collections.singletonList(gauge));
 
         assertThat(LOGGER.getLogEvents()).hasSize(3);
@@ -409,7 +402,7 @@ class DynatraceExporterV1Test {
         DynatraceExporterV1 exporter = getDynatraceExporterV1(httpClient, invalidUrl, apiToken);
 
         meterRegistry.gauge("my.gauge", GAUGE_VALUE);
-        Gauge gauge = meterRegistry.find("my.gauge").gauge();
+        Gauge gauge = meterRegistry.get("my.gauge").gauge();
 
         exporter.export(Collections.singletonList(gauge));
 
@@ -438,7 +431,7 @@ class DynatraceExporterV1Test {
         DynatraceExporterV1 exporter = getDynatraceExporterV1(httpClient, invalidUrl, apiToken);
 
         meterRegistry.gauge("my.gauge", GAUGE_VALUE);
-        Gauge gauge = meterRegistry.find("my.gauge").gauge();
+        Gauge gauge = meterRegistry.get("my.gauge").gauge();
 
         exporter.export(Collections.singletonList(gauge));
 
@@ -508,7 +501,7 @@ class DynatraceExporterV1Test {
     private DynatraceExporterV1 getDynatraceExporterV1(HttpSender httpClient, String url, String apiToken) {
         return FACTORY.injectLogger(() -> new DynatraceExporterV1(new DynatraceConfig() {
             @Override
-            public String get(String key) {
+            public @Nullable String get(String key) {
                 return null;
             }
 
@@ -546,7 +539,7 @@ class DynatraceExporterV1Test {
     private DynatraceConfig createDynatraceConfig() {
         return new DynatraceConfig() {
             @Override
-            public String get(String key) {
+            public @Nullable String get(String key) {
                 return null;
             }
 

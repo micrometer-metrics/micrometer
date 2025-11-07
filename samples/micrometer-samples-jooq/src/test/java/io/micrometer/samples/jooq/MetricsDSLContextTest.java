@@ -15,7 +15,6 @@
  */
 package io.micrometer.samples.jooq;
 
-import io.micrometer.common.lang.NonNull;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.binder.db.MetricsDSLContext;
@@ -193,7 +192,6 @@ class MetricsDSLContextTest {
             .isEqualTo("io.micrometer.core.instrument.binder.db.JooqExecuteListener");
     }
 
-    @NonNull
     private MetricsDSLContext createDatabase(Connection conn) {
         Configuration configuration = new DefaultConfiguration().set(conn).set(SQLDialect.H2);
 

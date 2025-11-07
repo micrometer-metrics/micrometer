@@ -15,12 +15,11 @@
  */
 package io.micrometer.benchmark.core;
 
-import io.micrometer.core.instrument.Counter;
-import io.micrometer.core.instrument.Meter;
-import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.config.MeterFilter;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.openjdk.jmh.annotations.*;
+import org.openjdk.jmh.annotations.Measurement;
 import org.openjdk.jmh.profile.GCProfiler;
 import org.openjdk.jmh.runner.Runner;
 import org.openjdk.jmh.runner.RunnerException;
@@ -34,7 +33,7 @@ import java.util.concurrent.TimeUnit;
 @Warmup(iterations = 2)
 @Measurement(iterations = 5)
 @BenchmarkMode(Mode.AverageTime)
-@OutputTimeUnit(TimeUnit.MICROSECONDS)
+@OutputTimeUnit(TimeUnit.NANOSECONDS)
 @Threads(2)
 public class MeterRegistrationBenchmark {
 
@@ -50,6 +49,8 @@ public class MeterRegistrationBenchmark {
 
     Meter.MeterProvider<Counter> counterMeterProvider = Counter.builder("jmh.existing").withRegistry(registry);
 
+    Tags tags = Tags.of("k1", "v1");
+
     @Setup
     public void setup() {
         registry.config()
@@ -58,6 +59,17 @@ public class MeterRegistrationBenchmark {
         registry.counter("jmh.stale");
         registry.config().meterFilter(MeterFilter.acceptNameStartsWith("jmh"));
         registry.counter("jmh.existing", "k1", "v1");
+        registry.timer("jmh.existing.timer", tags);
+    }
+
+    @Benchmark
+    public Timer registerExistingTimer() {
+        return registry.timer("jmh.existing.timer", tags);
+    }
+
+    @Benchmark
+    public Timer registerExistingTimerBuilder() {
+        return Timer.builder("jmh.existing.timer").tags(tags).register(registry);
     }
 
     @Benchmark
@@ -77,8 +89,8 @@ public class MeterRegistrationBenchmark {
     }
 
     @Benchmark
-    public Meter registerExisting() {
-        return registry.counter("jmh.existing", "k1", "v1");
+    public Meter registerExistingCounter() {
+        return registry.counter("jmh.existing", tags);
     }
 
     @Benchmark

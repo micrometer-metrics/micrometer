@@ -17,14 +17,13 @@ package io.micrometer.core.instrument.binder.okhttp3;
 
 import io.micrometer.common.KeyValue;
 import io.micrometer.common.KeyValues;
-import io.micrometer.common.lang.NonNullApi;
-import io.micrometer.common.lang.NonNullFields;
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.binder.http.Outcome;
 import okhttp3.Request;
 import okhttp3.Response;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 import java.io.IOException;
 import java.lang.reflect.Method;
@@ -38,8 +37,7 @@ import static io.micrometer.core.instrument.binder.okhttp3.OkHttpObservationDocu
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.StreamSupport.stream;
 
-@NonNullApi
-@NonNullFields
+@NullMarked
 public class DefaultOkHttpObservationConvention implements OkHttpObservationConvention {
 
     static final boolean REQUEST_TAG_CLASS_EXISTS;
@@ -48,8 +46,7 @@ public class DefaultOkHttpObservationConvention implements OkHttpObservationConv
         REQUEST_TAG_CLASS_EXISTS = getMethod(Class.class) != null;
     }
 
-    @Nullable
-    private static Method getMethod(Class<?>... parameterTypes) {
+    private static @Nullable Method getMethod(Class<?>... parameterTypes) {
         try {
             return Request.class.getMethod("tag", parameterTypes);
         }
@@ -78,29 +75,27 @@ public class DefaultOkHttpObservationConvention implements OkHttpObservationConv
     @Override
     public KeyValues getLowCardinalityKeyValues(OkHttpContext context) {
         OkHttpObservationInterceptor.CallState state = context.getState();
-        Request request = state.request;
-        boolean requestAvailable = request != null;
+        Request request = state != null ? state.request : null;
+        Response response = state != null ? state.response : null;
+        IOException exception = state != null ? state.exception : null;
         Function<Request, String> urlMapper = context.getUrlMapper();
         Iterable<KeyValue> extraTags = context.getExtraTags();
         Iterable<BiFunction<Request, Response, KeyValue>> contextSpecificTags = context.getContextSpecificTags();
         Iterable<KeyValue> unknownRequestTags = context.getUnknownRequestTags();
         boolean includeHostTag = context.isIncludeHostTag();
         // TODO: Tags to key values and back - maybe we can improve this?
-        KeyValues keyValues = KeyValues
-            .of(METHOD.withValue(requestAvailable ? request.method() : TAG_VALUE_UNKNOWN),
-                    URI.withValue(getUriTag(urlMapper, request)),
-                    STATUS.withValue(getStatusMessage(state.response, state.exception)),
-                    OUTCOME.withValue(getStatusOutcome(state.response).name()))
+        KeyValues keyValues = KeyValues.of(METHOD.withValue(request != null ? request.method() : TAG_VALUE_UNKNOWN),
+                URI.withValue(getUriTag(urlMapper, request)), STATUS.withValue(getStatusMessage(response, exception)),
+                OUTCOME.withValue(getStatusOutcome(response).name()))
             .and(extraTags)
-            .and(stream(contextSpecificTags.spliterator(), false)
-                .map(contextTag -> contextTag.apply(request, state.response))
+            .and(stream(contextSpecificTags.spliterator(), false).map(contextTag -> contextTag.apply(request, response))
                 .map(tag -> KeyValue.of(tag.getKey(), tag.getValue()))
                 .collect(toList()))
             .and(getRequestTags(request, unknownRequestTags))
             .and(generateTagsForRoute(request));
         if (includeHostTag) {
             keyValues = KeyValues.of(keyValues)
-                .and(HOST.withValue(requestAvailable ? request.url().host() : TAG_VALUE_UNKNOWN));
+                .and(HOST.withValue(request != null ? request.url().host() : TAG_VALUE_UNKNOWN));
         }
         return keyValues;
     }
@@ -173,9 +168,8 @@ public class DefaultOkHttpObservationConvention implements OkHttpObservationConv
         return this.metricName;
     }
 
-    @Nullable
     @Override
-    public String getContextualName(OkHttpContext context) {
+    public @Nullable String getContextualName(OkHttpContext context) {
         Request request = context.getOriginalRequest();
         if (request == null) {
             return null;

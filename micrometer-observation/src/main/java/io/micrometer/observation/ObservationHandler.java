@@ -15,8 +15,8 @@
  */
 package io.micrometer.observation;
 
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.observation.Observation.Context;
+import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -204,8 +204,8 @@ public interface ObservationHandler<T extends Observation.Context> {
             return handler != null;
         }
 
-        @Nullable
-        private ObservationHandler<Observation.Context> getFirstApplicableHandler(Observation.Context context) {
+        private @Nullable ObservationHandler<Observation.Context> getFirstApplicableHandler(
+                Observation.Context context) {
             for (ObservationHandler<Context> handler : this.handlers) {
                 if (handler.supportsContext(context)) {
                     return handler;

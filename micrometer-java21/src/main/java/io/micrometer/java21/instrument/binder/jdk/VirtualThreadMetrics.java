@@ -36,7 +36,7 @@ import static java.util.Collections.emptyList;
  *
  * @author Artyom Gabeev
  * @see <a href="https://openjdk.org/jeps/425#JDK-Flight-Recorder-JFR">JEP 425</a>
- * @see VirtualThreadSchedulerMXBean
+ * @see jdk.management.VirtualThreadSchedulerMXBean
  * @since 1.14.0
  */
 public class VirtualThreadMetrics implements MeterBinder, Closeable {
@@ -121,7 +121,8 @@ public class VirtualThreadMetrics implements MeterBinder, Closeable {
                 .description(LIVE_THREADS_DESCRIPTION)
                 .register(registry);
         }
-        catch (ClassNotFoundException | ClassCastException | NoSuchMethodException | IllegalAccessException ignored) {
+        catch (ClassNotFoundException | ClassCastException | NoSuchMethodException | IllegalAccessException
+                | IllegalArgumentException ignored) {
             // cannot instrument VirtualThreadSchedulerMXBean
         }
     }

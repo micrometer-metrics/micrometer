@@ -15,13 +15,13 @@
  */
 package io.micrometer.prometheusmetrics;
 
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.AbstractDistributionSummary;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.DistributionSummary;
 import io.micrometer.core.instrument.distribution.*;
 import io.prometheus.metrics.core.exemplars.ExemplarSampler;
 import io.prometheus.metrics.model.snapshots.Exemplars;
+import org.jspecify.annotations.Nullable;
 
 import java.util.concurrent.atomic.DoubleAdder;
 import java.util.concurrent.atomic.LongAdder;
@@ -43,11 +43,9 @@ public class PrometheusDistributionSummary extends AbstractDistributionSummary {
 
     private final TimeWindowMax max;
 
-    @Nullable
-    private final Histogram histogram;
+    private final @Nullable Histogram histogram;
 
-    @Nullable
-    private final ExemplarSampler exemplarSampler;
+    private final @Nullable ExemplarSampler exemplarSampler;
 
     PrometheusDistributionSummary(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig,
             double scale, @Nullable ExemplarSamplerFactory exemplarSamplerFactory) {

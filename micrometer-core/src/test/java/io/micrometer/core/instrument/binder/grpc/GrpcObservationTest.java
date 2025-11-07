@@ -18,6 +18,7 @@ package io.micrometer.core.instrument.binder.grpc;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -53,7 +54,6 @@ import io.grpc.testing.protobuf.SimpleServiceGrpc.SimpleServiceBlockingStub;
 import io.grpc.testing.protobuf.SimpleServiceGrpc.SimpleServiceFutureStub;
 import io.grpc.testing.protobuf.SimpleServiceGrpc.SimpleServiceImplBase;
 import io.grpc.testing.protobuf.SimpleServiceGrpc.SimpleServiceStub;
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.binder.grpc.GrpcObservationDocumentation.GrpcClientEvents;
 import io.micrometer.core.instrument.binder.grpc.GrpcObservationDocumentation.GrpcServerEvents;
@@ -67,6 +67,7 @@ import io.micrometer.observation.ObservationRegistry;
 import io.micrometer.observation.ObservationTextPublisher;
 import io.micrometer.observation.tck.ObservationContextAssert;
 import io.micrometer.observation.tck.TestObservationRegistry;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -84,9 +85,9 @@ import static org.awaitility.Awaitility.await;
  */
 class GrpcObservationTest {
 
-    Server server;
+    private @Nullable Server server;
 
-    ManagedChannel channel;
+    private @Nullable ManagedChannel channel;
 
     ContextAndEventHoldingObservationHandler<GrpcServerObservationContext> serverHandler;
 
@@ -195,6 +196,8 @@ class GrpcObservationTest {
                 ListenableFuture<SimpleResponse> future = stub.unaryRpc(request);
                 Futures.addCallback(future, new FutureCallback<>() {
                     @Override
+                    // NullAway thinks the parent is nullable
+                    @SuppressWarnings("NullAway")
                     public void onSuccess(SimpleResponse result) {
                         responses.add(result.getResponseMessage());
                     }
@@ -381,14 +384,20 @@ class GrpcObservationTest {
         }
 
         private void verifyHeaders() {
-            assertThat(clientHandler.getContext().getCarrier().containsKey(ClientHeaderInterceptor.CLIENT_KEY))
-                .isTrue();
-            assertThat(clientHandler.getContext().getHeaders().containsKey(ServerHeaderInterceptor.SERVER_KEY))
-                .isTrue();
-            assertThat(serverHandler.getContext().getCarrier().containsKey(ClientHeaderInterceptor.CLIENT_KEY))
-                .isTrue();
-            assertThat(serverHandler.getContext().getHeaders().containsKey(ServerHeaderInterceptor.SERVER_KEY))
-                .isTrue();
+            Metadata clientMetadata = clientHandler.getContext().getCarrier();
+            Metadata serverMetadata = serverHandler.getContext().getCarrier();
+            Metadata clientHeaders = clientHandler.getContext().getHeaders();
+            Metadata serverHeaders = serverHandler.getContext().getHeaders();
+
+            assertThat(clientMetadata).isNotNull();
+            assertThat(serverMetadata).isNotNull();
+            assertThat(clientHeaders).isNotNull();
+            assertThat(serverHeaders).isNotNull();
+
+            assertThat(clientMetadata.containsKey(ClientHeaderInterceptor.CLIENT_KEY)).isTrue();
+            assertThat(clientHeaders.containsKey(ServerHeaderInterceptor.SERVER_KEY)).isTrue();
+            assertThat(serverMetadata.containsKey(ClientHeaderInterceptor.CLIENT_KEY)).isTrue();
+            assertThat(serverHeaders.containsKey(ServerHeaderInterceptor.SERVER_KEY)).isTrue();
         }
 
     }
@@ -567,10 +576,9 @@ class GrpcObservationTest {
             // not be populated.
             await().until(serverHandler::isContextStopped);
 
-            assertThat(scopeAwareServerInterceptor.lastObservation).isNotNull().satisfies((observation -> {
-                assertThat(observation.getContext().getContextualName())
-                    .isEqualTo("grpc.testing.SimpleService/UnaryRpc");
-            }));
+            assertThat(scopeAwareServerInterceptor.lastObservation).isNotNull()
+                .satisfies(observation -> assertThat(observation.getContext().getContextualName())
+                    .isEqualTo("grpc.testing.SimpleService/UnaryRpc"));
         }
 
     }
@@ -616,6 +624,7 @@ class GrpcObservationTest {
             ListenableFuture<SimpleResponse> future = stub.unaryRpc(request);
 
             await().untilTrue(this.service.requestReceived);
+            assertThat(channel).isNotNull();
             channel.shutdownNow(); // shutdown client while server is processing
             this.service.requestInterrupted.set(true);
             await().until(channel::isTerminated);
@@ -813,9 +822,8 @@ class GrpcObservationTest {
             this.events.add(event);
         }
 
-        @Nullable
         T getContext() {
-            return this.contextHolder.get();
+            return Objects.requireNonNull(this.contextHolder.get());
         }
 
         @Override
@@ -880,7 +888,7 @@ class GrpcObservationTest {
     // Hold reference to last intercepted Observation
     static class ObservationAwareServerInterceptor implements ServerInterceptor {
 
-        Observation lastObservation;
+        private @Nullable Observation lastObservation;
 
         private final ObservationRegistry observationRegistry;
 

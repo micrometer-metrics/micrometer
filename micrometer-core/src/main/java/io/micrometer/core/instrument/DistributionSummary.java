@@ -15,11 +15,11 @@
  */
 package io.micrometer.core.instrument;
 
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.distribution.CountAtBucket;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.HistogramSupport;
 import io.micrometer.core.instrument.distribution.ValueAtPercentile;
+import org.jspecify.annotations.Nullable;
 
 import java.time.Duration;
 import java.util.Arrays;
@@ -121,11 +121,9 @@ public interface DistributionSummary extends Meter, HistogramSupport {
 
         private DistributionStatisticConfig.Builder distributionConfigBuilder = DistributionStatisticConfig.builder();
 
-        @Nullable
-        private String description;
+        private @Nullable String description;
 
-        @Nullable
-        private String baseUnit;
+        private @Nullable String baseUnit;
 
         private double scale = 1.0;
 
@@ -189,7 +187,7 @@ public interface DistributionSummary extends Meter, HistogramSupport {
          * should be expressed as {@code 0.95}.
          * @return This builder.
          */
-        public Builder publishPercentiles(@Nullable double... percentiles) {
+        public Builder publishPercentiles(double @Nullable ... percentiles) {
             this.distributionConfigBuilder.percentiles(percentiles);
             return this;
         }
@@ -246,7 +244,7 @@ public interface DistributionSummary extends Meter, HistogramSupport {
          * then.
          */
         @Deprecated
-        public Builder sla(@Nullable long... sla) {
+        public Builder sla(long @Nullable ... sla) {
             return sla == null ? this : serviceLevelObjectives(Arrays.stream(sla).asDoubleStream().toArray());
         }
 
@@ -268,7 +266,7 @@ public interface DistributionSummary extends Meter, HistogramSupport {
          * then.
          */
         @Deprecated
-        public Builder sla(@Nullable double... sla) {
+        public Builder sla(double @Nullable ... sla) {
             this.distributionConfigBuilder.serviceLevelObjectives(sla);
             return this;
         }
@@ -284,7 +282,7 @@ public interface DistributionSummary extends Meter, HistogramSupport {
          * @return This builder.
          * @since 1.5.0
          */
-        public Builder serviceLevelObjectives(@Nullable double... slos) {
+        public Builder serviceLevelObjectives(double @Nullable ... slos) {
             this.distributionConfigBuilder.serviceLevelObjectives(slos);
             return this;
         }

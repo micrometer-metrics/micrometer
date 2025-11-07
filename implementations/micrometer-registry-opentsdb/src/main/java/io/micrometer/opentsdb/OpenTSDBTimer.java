@@ -15,12 +15,12 @@
  */
 package io.micrometer.opentsdb;
 
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.AbstractTimer;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.distribution.*;
 import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import io.micrometer.core.instrument.util.TimeUtils;
+import org.jspecify.annotations.Nullable;
 
 import java.time.Duration;
 import java.util.concurrent.TimeUnit;
@@ -43,8 +43,7 @@ public class OpenTSDBTimer extends AbstractTimer {
 
     private final TimeWindowMax max;
 
-    @Nullable
-    private final Histogram histogram;
+    private final @Nullable Histogram histogram;
 
     OpenTSDBTimer(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig,
             PauseDetector pauseDetector, @Nullable OpenTSDBFlavor flavor) {

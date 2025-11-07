@@ -29,12 +29,14 @@ class AllMatchingCompositeObservationHandlerTests {
 
     MatchingHandler matchingHandler2 = new MatchingHandler();
 
+    Observation.Context context = new Observation.Context();
+
     @Test
     void should_run_on_start_for_all_matching_handlers() {
         AllMatchingCompositeObservationHandler allMatchingHandler = new AllMatchingCompositeObservationHandler(
                 new NotMatchingHandler(), this.matchingHandler, new NotMatchingHandler(), this.matchingHandler2);
 
-        allMatchingHandler.onStart(null);
+        allMatchingHandler.onStart(context);
 
         assertThat(this.matchingHandler.started).isTrue();
         assertThat(this.matchingHandler2.started).isTrue();
@@ -45,7 +47,7 @@ class AllMatchingCompositeObservationHandlerTests {
         AllMatchingCompositeObservationHandler allMatchingHandler = new AllMatchingCompositeObservationHandler(
                 new NotMatchingHandler(), this.matchingHandler, new NotMatchingHandler(), this.matchingHandler2);
 
-        allMatchingHandler.onStop(null);
+        allMatchingHandler.onStop(context);
 
         assertThat(this.matchingHandler.stopped).isTrue();
         assertThat(this.matchingHandler2.stopped).isTrue();
@@ -56,7 +58,7 @@ class AllMatchingCompositeObservationHandlerTests {
         AllMatchingCompositeObservationHandler allMatchingHandler = new AllMatchingCompositeObservationHandler(
                 new NotMatchingHandler(), this.matchingHandler, new NotMatchingHandler(), this.matchingHandler2);
 
-        allMatchingHandler.onError(null);
+        allMatchingHandler.onError(context);
 
         assertThat(this.matchingHandler.errored).isTrue();
         assertThat(this.matchingHandler2.errored).isTrue();
@@ -67,7 +69,7 @@ class AllMatchingCompositeObservationHandlerTests {
         AllMatchingCompositeObservationHandler allMatchingHandler = new AllMatchingCompositeObservationHandler(
                 new NotMatchingHandler(), this.matchingHandler, new NotMatchingHandler(), this.matchingHandler2);
 
-        allMatchingHandler.onEvent(Observation.Event.of("testEvent"), null);
+        allMatchingHandler.onEvent(Observation.Event.of("testEvent"), context);
 
         assertThat(this.matchingHandler.eventDetected).isTrue();
         assertThat(this.matchingHandler2.eventDetected).isTrue();
@@ -78,7 +80,7 @@ class AllMatchingCompositeObservationHandlerTests {
         AllMatchingCompositeObservationHandler allMatchingHandler = new AllMatchingCompositeObservationHandler(
                 new NotMatchingHandler(), this.matchingHandler, new NotMatchingHandler(), this.matchingHandler2);
 
-        allMatchingHandler.onScopeOpened(null);
+        allMatchingHandler.onScopeOpened(context);
 
         assertThat(this.matchingHandler.scopeOpened).isTrue();
         assertThat(this.matchingHandler2.scopeOpened).isTrue();
@@ -89,7 +91,7 @@ class AllMatchingCompositeObservationHandlerTests {
         AllMatchingCompositeObservationHandler allMatchingHandler = new AllMatchingCompositeObservationHandler(
                 new NotMatchingHandler(), this.matchingHandler, new NotMatchingHandler(), this.matchingHandler2);
 
-        allMatchingHandler.onScopeClosed(null);
+        allMatchingHandler.onScopeClosed(context);
 
         assertThat(this.matchingHandler.scopeClosed).isTrue();
         assertThat(this.matchingHandler2.scopeClosed).isTrue();
@@ -100,7 +102,7 @@ class AllMatchingCompositeObservationHandlerTests {
         AllMatchingCompositeObservationHandler allMatchingHandler = new AllMatchingCompositeObservationHandler(
                 this.matchingHandler, this.matchingHandler2);
 
-        allMatchingHandler.onScopeReset(null);
+        allMatchingHandler.onScopeReset(context);
 
         assertThat(this.matchingHandler.scopeReset).isTrue();
         assertThat(this.matchingHandler2.scopeReset).isTrue();

@@ -15,7 +15,7 @@
  */
 package io.micrometer.observation.transport;
 
-import io.micrometer.common.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Common interface for getting/setting the response object on
@@ -31,8 +31,7 @@ public interface ResponseContext<RES> {
      * Getter for the response object.
      * @return the response
      */
-    @Nullable
-    RES getResponse();
+    @Nullable RES getResponse();
 
     /**
      * Setter for the response object.

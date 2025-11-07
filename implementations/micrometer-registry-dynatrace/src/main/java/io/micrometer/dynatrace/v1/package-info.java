@@ -17,4 +17,7 @@
 /**
  * Support for Dynatrace v1 metrics API export.
  */
+@NullMarked
 package io.micrometer.dynatrace.v1;
+
+import org.jspecify.annotations.NullMarked;

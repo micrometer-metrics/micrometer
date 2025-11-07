@@ -15,7 +15,6 @@
  */
 package io.micrometer.core.instrument;
 
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.composite.CompositeMeterRegistry;
 
 import java.util.Collection;
@@ -145,7 +144,6 @@ public class Metrics {
      * @return The number that was passed in so the registration can be done as part of an
      * assignment statement.
      */
-    @Nullable
     public static <T> T gauge(String name, Iterable<Tag> tags, T obj, ToDoubleFunction<T> valueFunction) {
         return globalRegistry.gauge(name, tags, obj, valueFunction);
     }
@@ -160,7 +158,6 @@ public class Metrics {
      * @return The number that was passed in so the registration can be done as part of an
      * assignment statement.
      */
-    @Nullable
     public static <T extends Number> T gauge(String name, Iterable<Tag> tags, T number) {
         return globalRegistry.gauge(name, tags, number);
     }
@@ -174,7 +171,6 @@ public class Metrics {
      * @return The number that was passed in so the registration can be done as part of an
      * assignment statement.
      */
-    @Nullable
     public static <T extends Number> T gauge(String name, T number) {
         return globalRegistry.gauge(name, number);
     }
@@ -188,7 +184,6 @@ public class Metrics {
      * @return The number that was passed in so the registration can be done as part of an
      * assignment statement.
      */
-    @Nullable
     public static <T> T gauge(String name, T obj, ToDoubleFunction<T> valueFunction) {
         return globalRegistry.gauge(name, obj, valueFunction);
     }
@@ -207,7 +202,6 @@ public class Metrics {
      * @return The number that was passed in so the registration can be done as part of an
      * assignment statement.
      */
-    @Nullable
     public static <T extends Collection<?>> T gaugeCollectionSize(String name, Iterable<Tag> tags, T collection) {
         return globalRegistry.gaugeCollectionSize(name, tags, collection);
     }
@@ -225,7 +219,6 @@ public class Metrics {
      * @return The number that was passed in so the registration can be done as part of an
      * assignment statement.
      */
-    @Nullable
     public static <T extends Map<?, ?>> T gaugeMapSize(String name, Iterable<Tag> tags, T map) {
         return globalRegistry.gaugeMapSize(name, tags, map);
     }

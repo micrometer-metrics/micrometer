@@ -15,6 +15,22 @@
  */
 package io.micrometer.core.instrument.distribution.pause;
 
+/**
+ * No-op implementation of a {@link PauseDetector}.
+ */
 public class NoPauseDetector implements PauseDetector {
+
+    /**
+     * Singleton instance of {@link NoPauseDetector}.
+     * @since 1.16.0
+     */
+    public static final NoPauseDetector INSTANCE = new NoPauseDetector();
+
+    /**
+     * @deprecated use {@link #INSTANCE} instead.
+     */
+    @Deprecated
+    public NoPauseDetector() {
+    }
 
 }

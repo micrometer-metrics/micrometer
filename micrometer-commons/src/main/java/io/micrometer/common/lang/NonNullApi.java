@@ -37,12 +37,14 @@ import java.lang.annotation.*;
  * @see NonNullFields
  * @see Nullable
  * @see NonNull
+ * @deprecated use {@link org.jspecify.annotations.NullMarked} instead
  */
 @Target({ ElementType.PACKAGE, ElementType.TYPE })
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
 @Nonnull
 @TypeQualifierDefault({ ElementType.METHOD, ElementType.PARAMETER })
+@Deprecated
 public @interface NonNullApi {
 
 }

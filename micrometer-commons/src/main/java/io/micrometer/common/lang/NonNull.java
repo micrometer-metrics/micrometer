@@ -36,15 +36,14 @@ import java.lang.annotation.*;
  *
  * @author Sebastien Deleuze
  * @author Juergen Hoeller
- * @see NonNullApi
- * @see NonNullFields
- * @see Nullable
+ * @deprecated use {@link org.jspecify.annotations.NonNull} instead
  */
 @Target({ ElementType.METHOD, ElementType.PARAMETER, ElementType.FIELD })
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
 @Nonnull
 @TypeQualifierNickname
+@Deprecated
 public @interface NonNull {
 
 }

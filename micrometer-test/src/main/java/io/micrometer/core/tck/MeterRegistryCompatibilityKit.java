@@ -30,6 +30,7 @@ import io.micrometer.core.instrument.observation.DefaultMeterObservationHandler;
 import io.micrometer.core.instrument.util.TimeUtils;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -46,7 +47,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
 
 import static io.micrometer.core.instrument.MockClock.clock;
-import static io.micrometer.core.instrument.Statistic.ACTIVE_TASKS;
+import static io.micrometer.core.instrument.Statistic.*;
 import static io.micrometer.core.instrument.Statistic.DURATION;
 import static java.util.Collections.emptyList;
 import static java.util.Objects.requireNonNull;
@@ -344,7 +345,7 @@ public abstract class MeterRegistryCompatibilityKit {
         assertHistogramBuckets(countAtBuckets, null);
     }
 
-    private void assertHistogramBuckets(CountAtBucket[] countAtBuckets, TimeUnit timeUnit) {
+    private void assertHistogramBuckets(CountAtBucket[] countAtBuckets, @Nullable TimeUnit timeUnit) {
         // percentile histogram buckets may be there, assert SLO buckets are present
         assertThat(countAtBuckets).extracting(c -> getCount(c, timeUnit)).contains(5.0, 50.0, 95.0);
 
@@ -363,11 +364,11 @@ public abstract class MeterRegistryCompatibilityKit {
                 });
     }
 
-    private double getCount(CountAtBucket countAtBucket, TimeUnit timeUnit) {
+    private double getCount(CountAtBucket countAtBucket, @Nullable TimeUnit timeUnit) {
         return timeUnit != null ? countAtBucket.bucket(timeUnit) : countAtBucket.bucket();
     }
 
-    private double nonCumulativeBucketCountForRange(CountAtBucket[] countAtBuckets, TimeUnit timeUnit,
+    private double nonCumulativeBucketCountForRange(CountAtBucket[] countAtBuckets, @Nullable TimeUnit timeUnit,
             double exclusiveMinBucket, double inclusiveMaxBucket) {
         double count = 0;
         for (CountAtBucket countAtBucket : countAtBuckets) {
@@ -454,8 +455,8 @@ public abstract class MeterRegistryCompatibilityKit {
 
             assertThat(registry.get("my.gauge").gauges()).hasSize(1);
             assertThat(registry.get("my.gauge").gauge().value()).isEqualTo(1);
-            assertThat(n1).isNotNull().hasValue(1);
-            assertThat(n2).isNotNull().hasValue(2);
+            assertThat(n1).hasValue(1);
+            assertThat(n2).hasValue(2);
         }
 
         @Test
@@ -467,8 +468,8 @@ public abstract class MeterRegistryCompatibilityKit {
 
             assertThat(registry.get("my.gauge").gauges()).hasSize(1);
             assertThat(registry.get("my.gauge").gauge().value()).isEqualTo(1);
-            assertThat(n1).isNotNull().hasValue(1);
-            assertThat(n2).isNotNull().hasValue(2);
+            assertThat(n1).hasValue(1);
+            assertThat(n2).hasValue(2);
         }
 
     }
@@ -631,6 +632,9 @@ public abstract class MeterRegistryCompatibilityKit {
             }), measurement -> assertThat(measurement).satisfies(m -> {
                 assertThat(m.getValue()).isEqualTo(TimeUtils.convert(10, TimeUnit.NANOSECONDS, t.baseTimeUnit()));
                 assertThat(m.getStatistic()).isSameAs(DURATION);
+            }), measurement -> assertThat(measurement).satisfies(m -> {
+                assertThat(m.getValue()).isEqualTo(TimeUtils.convert(10, TimeUnit.NANOSECONDS, t.baseTimeUnit()));
+                assertThat(m.getStatistic()).isSameAs(MAX);
             }));
 
             clock(registry).add(10, TimeUnit.NANOSECONDS);
@@ -975,8 +979,8 @@ public abstract class MeterRegistryCompatibilityKit {
             assertThat(timer.max(TimeUnit.MILLISECONDS)).isEqualTo(1000);
 
             // noinspection ConstantConditions
-            clock(registry)
-                .add(Duration.ofMillis(step().toMillis() * DistributionStatisticConfig.DEFAULT.getBufferLength()));
+            Integer bufferLength = Objects.requireNonNull(DistributionStatisticConfig.DEFAULT.getBufferLength());
+            clock(registry).add(Duration.ofMillis(step().toMillis() * bufferLength));
             assertThat(timer.max(TimeUnit.SECONDS)).isEqualTo(0);
         }
 

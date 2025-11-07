@@ -15,6 +15,8 @@
  */
 package io.micrometer.core.instrument.binder.cache;
 
+import io.micrometer.core.Issue;
+import io.micrometer.core.instrument.FunctionCounter;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tags;
@@ -89,8 +91,8 @@ class JCacheMetricsTest extends AbstractCacheMetricsTest {
 
         verifyCommonCacheMetrics(meterRegistry, metrics);
 
-        Gauge cacheRemovals = fetch(meterRegistry, "cache.removals").gauge();
-        assertThat(cacheRemovals.value()).isEqualTo(expectedAttributeValue.doubleValue());
+        FunctionCounter cacheRemovals = fetch(meterRegistry, "cache.removals").functionCounter();
+        assertThat(cacheRemovals.count()).isEqualTo(expectedAttributeValue.doubleValue());
     }
 
     @Test
@@ -161,7 +163,17 @@ class JCacheMetricsTest extends AbstractCacheMetricsTest {
         MeterRegistry registry = new SimpleMeterRegistry();
         metrics.bindImplementationSpecificMetrics(registry);
 
-        assertThat(registry.find("cache.removals").tags(expectedTag).functionCounter()).isNull();
+        assertThat(registry.find("cache.removals").tags(expectedTag).meter()).isNull();
+    }
+
+    @Test
+    @Issue("#2754")
+    void cacheRemovalsIsGaugeWhenConfigured() {
+        MeterRegistry meterRegistry = new SimpleMeterRegistry();
+        metrics = new JCacheMetrics<>(cache, expectedTag, false);
+        metrics.bindTo(meterRegistry);
+
+        assertThat(meterRegistry.get("cache.removals").tags(expectedTag).meter()).isNotNull().isInstanceOf(Gauge.class);
     }
 
     private static class CacheMBeanStub implements DynamicMBean {
@@ -185,18 +197,18 @@ class JCacheMetricsTest extends AbstractCacheMetricsTest {
 
         @Override
         public AttributeList getAttributes(String[] attributes) {
-            return null;
+            return mock(AttributeList.class);
         }
 
         @Override
         public AttributeList setAttributes(AttributeList attributes) {
-            return null;
+            return attributes;
         }
 
         @Override
         public Object invoke(String actionName, Object[] params, String[] signature)
                 throws MBeanException, ReflectionException {
-            return null;
+            return new Object();
         }
 
         @Override

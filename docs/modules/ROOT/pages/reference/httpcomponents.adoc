@@ -31,6 +31,18 @@ include::{include-core-test-java}/io/micrometer/core/instrument/binder/httpcompo
 include::{include-core-test-java}/io/micrometer/core/instrument/binder/httpcomponents/hc5/ObservationExecChainHandlerIntegrationTest.java[tags=example_async, indent=0]
 -----
 
+=== Configure a custom convention
+
+You can pass an instance of `ApacheHttpClientObservationConvention` to customize the convention used by the instrumentation to something other than the default convention.
+
+For example, you can pass the instance of `OpenTelemetryApacheHttpClientObservationConvention` to use the https://github.com/open-telemetry/semantic-conventions/blob/v1.36.0/docs/http/http-metrics.md#http-client[OpenTelemetry Semantic Conventions for HTTP Clients based on version 1.36.0].
+
+[source,java,subs=+attributes]
+-----
+include::{include-core-test-java}/io/micrometer/core/instrument/binder/httpcomponents/hc5/ObservationExecChainHandlerIntegrationTest.java[tags=setup_classic_otel, indent=0]
+-----
+<1> Pass `OpenTelemetryApacheHttpClientObservationConvention.INSTANCE` to the `ObservationExecChainHandler` constructor
+
 == Retry Strategy Considerations
 
 HttpClient supports build-in request retry handling. Like micrometer observations, this functionality is implemented as an `ExecChainHandler` named `ChainElement.RETRY`. When instrumenting the client, you'll have to decide whether to observe individual retries or not. If the `ObservationExecChainHandler` is placed _before_ the retry handler, micrometer will see the initial request and the final outcome after the last retry. Elapsed time will account for any delays imposed by the retry handler. On the other hand, if micrometer is registered _after_ the retry handler, it will be invoked for each individual retry. Elapsed time will measure the individual http requests, but *_without_* the backoff delay imposed by the retry handler. The described behaviour and related configuration are the same for both the classic and the async client - with one exception described in the following note.

@@ -15,9 +15,9 @@
  */
 package io.micrometer.core.instrument.binder.cache;
 
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -44,6 +44,7 @@ public abstract class CacheMeterBinderCompatibilityKit<C> {
     /**
      * Performs any actions necessary to fully dereference the cache object.
      */
+    @SuppressWarnings("NullAway")
     public void dereferenceCache() {
         this.cache = null;
     }
@@ -55,8 +56,7 @@ public abstract class CacheMeterBinderCompatibilityKit<C> {
 
     public abstract void put(String key, String value);
 
-    @Nullable
-    public abstract String get(String key);
+    public abstract @Nullable String get(String key);
 
     @BeforeEach
     void bindToRegistry() {

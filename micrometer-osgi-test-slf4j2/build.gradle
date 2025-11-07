@@ -1,0 +1,70 @@
+import aQute.bnd.gradle.Bundle
+import aQute.bnd.gradle.Resolve
+import aQute.bnd.gradle.TestOSGi
+
+// skip this module when building with jdk >=24
+// waiting for a release with the fix https://github.com/bndtools/bnd/pull/6371
+if (javaLanguageVersion.canCompileOrRun(24)) {
+    project.tasks.configureEach { task -> task.enabled = false }
+}
+
+dependencies {
+    testImplementation libs.assertj
+    testImplementation libs.osgiJunit5
+    testImplementation 'org.slf4j:slf4j-api:2.0.17'
+    testImplementation 'org.slf4j:slf4j-simple:2.0.17'
+
+    testImplementation project(':micrometer-core')
+
+    testImplementation project(':micrometer-registry-jmx')
+    // osgi test fails when the new prometheus client is used
+    //testImplementation project(':micrometer-registry-prometheus')
+    testImplementation project(':micrometer-registry-prometheus-simpleclient')
+
+    testImplementation libs.felixFramework
+
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
+    testRuntimeOnly libs.felixScr
+    testRuntimeOnly 'org.slf4j:slf4j-simple:2.0.17'
+    testRuntimeOnly 'org.apache.aries.spifly:org.apache.aries.spifly.dynamic.bundle:1.3.7'
+}
+
+def testingBundle = tasks.register('testingBundle', Bundle) {
+    archiveClassifier = 'tests'
+    from sourceSets.test.output
+    if (javaLanguageVersion.asInt() < 17) {
+        sourceSet = sourceSets.test
+    }
+    bundle {
+        bnd """\
+            Bundle-SymbolicName: \${task.archiveBaseName}-\${task.archiveClassifier}
+            Test-Cases: \${classes;HIERARCHY_INDIRECTLY_ANNOTATED;org.junit.platform.commons.annotation.Testable;CONCRETE}
+            """.stripIndent()
+    }
+}
+
+def resolveTask = tasks.register("resolve", Resolve) {
+    dependsOn jar, testingBundle
+    project.ext.osgiRunee="JavaSE-${javaLanguageVersion.asInt()}"
+    bundles = files(sourceSets.test.runtimeClasspath, configurations.archives.artifacts.files)
+    bndrun = file("test.bndrun")
+    outputBndrun = layout.buildDirectory.file("resolved-test.bndrun")
+}
+
+
+
+tasks.register("testOSGi", TestOSGi) {
+    group = "verification"
+    description = "Run OSGi tests"
+    bundles = files(sourceSets.test.runtimeClasspath, configurations.archives.artifacts.files)
+    bndrun = resolveTask.flatMap { it.outputBndrun }
+}
+
+tasks.test.configure {
+    actions.clear()
+    dependsOn testOSGi
+}
+
+artifacts {
+    archives testingBundle
+}

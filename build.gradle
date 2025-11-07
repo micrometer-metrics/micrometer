@@ -73,35 +73,66 @@ subprojects {
 
     if (project.name != 'micrometer-bom') {
         tasks.withType(JavaCompile).configureEach {
-            options.errorprone.disableWarningsInGeneratedCode = true
-            options.errorprone.excludedPaths = ".*/build/generated/.*"
-            options.errorprone.error(
+            if (it.name == "compileJava" && !(it.project.name in ["micrometer-java11"])) {
+                options.errorprone.disable(
+                    "JavaDurationGetSecondsToToSeconds" // Requires JDK 9+
+                )
+            }
+            options.errorprone {
+                disableWarningsInGeneratedCode = true
+                excludedPaths = ".*/build/generated/.*"
+
+                disable(
+                    "StringConcatToTextBlock" // Requires JDK 15+
+                )
+
+                error(
+                    "AlmostJavadoc",
+                    "ArrayAsKeyOfSetOrMap",
+                    "AttemptedNegativeZero",
                     "BadImport",
+                    "CatchAndPrintStackTrace",
                     "ClassCanBeStatic",
+                    "CollectionUndefinedEquality",
                     "DefaultCharset",
+                    "DoNotCallSuggester",
+                    "EnumOrdinal",
                     "EqualsGetClass",
+                    "FallThrough",
+                    "Finally",
                     "InlineFormatString",
                     "LongDoubleConversion",
                     "MissingOverride",
+                    "MixedMutabilityReturnType",
+                    "ModifyCollectionInEnhancedForLoop",
+                    "MutablePublicArray",
+                    "NarrowCalculation",
+                    "NullAway",
+                    "OperatorPrecedence",
                     "StringCaseLocaleUsage",
-                    "StringSplitter"
-            )
-            options.errorprone.disable(
-                    "StringConcatToTextBlock" // Requires JDK 15+
-            )
-
-            if (it.name == "compileJava" && !(it.project.name in ["micrometer-java11"])) {
-                options.errorprone.disable(
-                        "JavaDurationGetSecondsToToSeconds" // Requires JDK 9+
+                    "StringSplitter",
+                    "UnnecessaryAsync",
+                    "UnnecessaryParentheses",
+                    "UnusedMethod",
+                    "URLEqualsHashCode"
                 )
-            }
 
-            if (!javaLanguageVersion.canCompileOrRun(17)) {
-                // Error Prone does not work with JDK <17
-                options.errorprone.enabled = false
-            }
-            if (System.env.CI != null) {
-                options.errorprone.disableAllWarnings = true
+                option("NullAway:OnlyNullMarked", "true")
+                option("NullAway:CustomContractAnnotations", "io.micrometer.common.lang.internal.Contract,org.assertj.core.internal.annotation.Contract")
+                option("NullAway:CheckContracts", "true")
+                option("NullAway:HandleTestAssertionLibraries", "true")
+                if (javaLanguageVersion.canCompileOrRun(22)) {
+                    // see https://bugs.openjdk.org/browse/JDK-8346471
+                    // see https://github.com/uber/NullAway/wiki/JSpecify-Support
+                    option("NullAway:JSpecifyMode", "true")
+                }
+                if (!javaLanguageVersion.canCompileOrRun(21)) {
+                    // Error Prone 2.43.0 requires JDK 21+
+                    enabled = false
+                }
+                if (System.env.CI != null) {
+                    disableAllWarnings = true
+                }
             }
         }
         if ((project.name.contains('samples') && !project.name.contains('kotlin')) || project.name.contains('benchmarks')) {
@@ -109,6 +140,8 @@ subprojects {
         } else {
             apply plugin: 'java-library'
             dependencies {
+                api(libs.jspecify)
+
                 testImplementation platform(libs.junitBom)
                 testImplementation libs.junitJupiter
                 testRuntimeOnly libs.junitPlatformLauncher
@@ -136,13 +169,13 @@ subprojects {
             }
         }
 
-        // All projects use optional annotations, but since we don't expose them downstream we would
-        // have to add the dependency in every project, which is tedious so just do it here.
+        // Dependencies for all projects that are not transitive to consumers of our modules
         dependencies {
-            // JSR-305 only used for non-required meta-annotations
-            optionalApi libs.jsr305
             checkstyle libs.spring.javaformatCheckstyle
-            errorprone(libs.errorprone)
+            if (javaLanguageVersion.canCompileOrRun(21)) {
+                errorprone(libs.errorprone)
+                errorprone(libs.nullAway)
+            }
         }
 
         tasks {
@@ -331,7 +364,7 @@ subprojects {
     }
 
     // Do not publish some modules
-    if (!['samples', 'benchmarks', 'micrometer-osgi-test', 'concurrency-tests', 'micrometer-test-aspectj-ctw', 'micrometer-test-aspectj-ltw'].find { project.name.contains(it) }) {
+    if (!['samples', 'benchmarks', 'micrometer-osgi-test', 'micrometer-osgi-test-slf4j2', 'concurrency-tests', 'micrometer-test-aspectj-ctw', 'micrometer-test-aspectj-ltw'].find { project.name.contains(it) }) {
         apply plugin: 'com.netflix.nebula.maven-publish'
         apply plugin: 'com.netflix.nebula.maven-manifest'
         apply plugin: 'com.netflix.nebula.maven-developer'
@@ -425,10 +458,10 @@ subprojects {
                     classExcludes = []
                     compatibilityChangeExcludes = [ "METHOD_NEW_DEFAULT" ]
 
-                    packageExcludes = ['io.micrometer.shaded.*', 'io.micrometer.statsd.internal']
+                    packageExcludes = ['io.micrometer.shaded.*', 'io.micrometer.statsd.internal', 'io.micrometer.core.lang']
 
                     fieldExcludes = []
-                    methodExcludes = ['io.micrometer.registry.otlp.AggregationTemporality#toOtlpAggregationTemporality(io.micrometer.registry.otlp.AggregationTemporality)']
+                    methodExcludes = []
 
                     onlyIf { compatibleVersion != 'SKIP' }
                 }
@@ -469,7 +502,7 @@ nexusPublishing {
 }
 
 wrapper {
-    gradleVersion = '8.14.2'
+    gradleVersion = '8.14.3'
 }
 
 defaultTasks 'build'

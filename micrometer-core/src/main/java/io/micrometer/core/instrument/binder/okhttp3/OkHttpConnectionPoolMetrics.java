@@ -15,7 +15,6 @@
  */
 package io.micrometer.core.instrument.binder.okhttp3;
 
-import io.micrometer.common.lang.NonNull;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
@@ -23,9 +22,9 @@ import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.binder.MeterBinder;
 import okhttp3.ConnectionPool;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Collections;
-import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 
 /**
@@ -51,7 +50,7 @@ public class OkHttpConnectionPoolMetrics implements MeterBinder {
 
     private final Iterable<Tag> tags;
 
-    private final Double maxIdleConnectionCount;
+    private final @Nullable Double maxIdleConnectionCount;
 
     private final ThreadLocal<ConnectionPoolConnectionStats> connectionStats = new ThreadLocal<>();
 
@@ -97,7 +96,7 @@ public class OkHttpConnectionPoolMetrics implements MeterBinder {
      * monitor it.
      */
     public OkHttpConnectionPoolMetrics(ConnectionPool connectionPool, String namePrefix, Iterable<Tag> tags,
-            Integer maxIdleConnections) {
+            @Nullable Integer maxIdleConnections) {
         if (connectionPool == null) {
             throw new IllegalArgumentException("Given ConnectionPool must not be null.");
         }
@@ -111,11 +110,11 @@ public class OkHttpConnectionPoolMetrics implements MeterBinder {
         this.connectionPool = connectionPool;
         this.namePrefix = namePrefix;
         this.tags = tags;
-        this.maxIdleConnectionCount = Optional.ofNullable(maxIdleConnections).map(Integer::doubleValue).orElse(null);
+        this.maxIdleConnectionCount = maxIdleConnections != null ? maxIdleConnections.doubleValue() : null;
     }
 
     @Override
-    public void bindTo(@NonNull MeterRegistry registry) {
+    public void bindTo(MeterRegistry registry) {
         String connectionCountName = namePrefix + ".connection.count";
         Gauge.builder(connectionCountName, connectionStats, cs -> {
             if (cs.get() == null) {

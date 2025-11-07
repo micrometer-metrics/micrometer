@@ -17,6 +17,7 @@ package io.micrometer.elastic;
 
 import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.*;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
@@ -245,7 +246,7 @@ class ElasticMeterRegistryTest {
     void indexNameSupportsIndexNameWithoutDateSuffix() {
         ElasticMeterRegistry registry = new ElasticMeterRegistry(new ElasticConfig() {
             @Override
-            public String get(String key) {
+            public @Nullable String get(String key) {
                 return null;
             }
 

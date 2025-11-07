@@ -19,6 +19,7 @@ import io.micrometer.common.KeyValue;
 import io.micrometer.common.docs.KeyName;
 import io.micrometer.observation.Observation;
 import org.assertj.core.api.ThrowingConsumer;
+import org.jspecify.annotations.Nullable;
 
 import java.util.List;
 import java.util.Objects;
@@ -90,7 +91,7 @@ public class TestObservationRegistryAssert
      * @return this
      * @throws AssertionError if there is no matching observation
      */
-    public That hasObservationWithNameEqualTo(String name) {
+    public That hasObservationWithNameEqualTo(@Nullable String name) {
         Queue<TestObservationRegistry.TestObservationContext> contexts = this.actual.getContexts();
         if (contexts.isEmpty()) {
             failForNoObservations();

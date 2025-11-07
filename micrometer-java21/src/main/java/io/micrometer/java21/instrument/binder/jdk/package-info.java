@@ -17,9 +17,7 @@
 /**
  * Instrumentation of JDK classes.
  */
-@NonNullApi
-@NonNullFields
+@NullMarked
 package io.micrometer.java21.instrument.binder.jdk;
 
-import io.micrometer.common.lang.NonNullApi;
-import io.micrometer.common.lang.NonNullFields;
+import org.jspecify.annotations.NullMarked;

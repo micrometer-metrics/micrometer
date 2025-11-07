@@ -148,12 +148,9 @@ public class TimeWindowFixedBoundaryHistogram extends AbstractTimeWindowHistogra
     void outputSummary(PrintStream printStream, double bucketScaling) {
         printStream.format("%14s %10s\n\n", "Bucket", "TotalCount");
 
-        String bucketFormatString = "%14.1f %10d\n";
-
         FixedBoundaryHistogram currentHistogram = currentHistogram();
         for (int i = 0; i < buckets.length; i++) {
-            printStream.format(Locale.US, bucketFormatString, buckets[i] / bucketScaling,
-                    currentHistogram.values.get(i));
+            printStream.format(Locale.US, "%14.1f %10d\n", buckets[i] / bucketScaling, currentHistogram.values.get(i));
         }
 
         printStream.write('\n');

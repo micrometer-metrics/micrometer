@@ -15,8 +15,8 @@
  */
 package io.micrometer.benchmark.core;
 
-import java.util.concurrent.TimeUnit;
-
+import io.micrometer.common.KeyValue;
+import io.micrometer.common.KeyValues;
 import io.micrometer.core.instrument.LongTaskTimer;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.Timer;
@@ -24,6 +24,7 @@ import io.micrometer.core.instrument.observation.DefaultMeterObservationHandler;
 import io.micrometer.core.instrument.observation.ObservationOrTimerCompatibleInstrumentation;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.micrometer.observation.Observation;
+import io.micrometer.observation.ObservationConvention;
 import io.micrometer.observation.ObservationRegistry;
 import org.openjdk.jmh.annotations.*;
 import org.openjdk.jmh.profile.GCProfiler;
@@ -31,12 +32,16 @@ import org.openjdk.jmh.runner.Runner;
 import org.openjdk.jmh.runner.RunnerException;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
 
+import java.util.concurrent.TimeUnit;
+
 @Fork(1)
 @Threads(4)
 @State(Scope.Benchmark)
-@BenchmarkMode(Mode.SampleTime)
-@OutputTimeUnit(TimeUnit.MICROSECONDS)
+@BenchmarkMode(Mode.AverageTime)
+@OutputTimeUnit(TimeUnit.NANOSECONDS)
 public class ObservationBenchmark {
+
+    private static final Exception error = new IllegalStateException("error");
 
     SimpleMeterRegistry meterRegistry;
 
@@ -46,6 +51,8 @@ public class ObservationBenchmark {
 
     Timer timer;
 
+    ObservationConvention<Observation.Context> convention;
+
     @Setup
     public void setup() {
         this.meterRegistry = new SimpleMeterRegistry();
@@ -54,6 +61,25 @@ public class ObservationBenchmark {
         this.observationRegistry.observationConfig()
             .observationHandler(new DefaultMeterObservationHandler(meterRegistry));
         this.noopRegistry = ObservationRegistry.create();
+        this.convention = new ObservationConvention<Observation.Context>() {
+
+            @Override
+            public String getName() {
+                return "http.server.requests";
+            }
+
+            @Override
+            public KeyValues getLowCardinalityKeyValues(Observation.Context context) {
+                return KeyValues.of(KeyValue.of("exception", "none"), KeyValue.of("method", "GET"),
+                        KeyValue.of("outcome", "SUCCESS"), KeyValue.of("status", "200"),
+                        KeyValue.of("url", "/books/{bookId}"));
+            }
+
+            @Override
+            public boolean supportsContext(Observation.Context context) {
+                return true;
+            }
+        };
     }
 
     @TearDown
@@ -106,7 +132,11 @@ public class ObservationBenchmark {
     @Benchmark
     public Observation observationWithoutThreadContention() {
         Observation observation = Observation.createNotStarted("test.obs", observationRegistry)
-            .lowCardinalityKeyValue("abc", "123")
+            .lowCardinalityKeyValue("exception", "none")
+            .lowCardinalityKeyValue("method", "GET")
+            .lowCardinalityKeyValue("outcome", "SUCCESS")
+            .lowCardinalityKeyValue("status", "200")
+            .lowCardinalityKeyValue("url", "/books/{bookId}")
             .start();
         observation.stop();
 
@@ -116,8 +146,29 @@ public class ObservationBenchmark {
     @Benchmark
     public Observation observation() {
         Observation observation = Observation.createNotStarted("test.obs", observationRegistry)
-            .lowCardinalityKeyValue("abc", "123")
+            .lowCardinalityKeyValue("exception", "none")
+            .lowCardinalityKeyValue("method", "GET")
+            .lowCardinalityKeyValue("outcome", "SUCCESS")
+            .lowCardinalityKeyValue("status", "200")
+            .lowCardinalityKeyValue("url", "/books/{bookId}")
             .start();
+        observation.stop();
+
+        return observation;
+    }
+
+    @Threads(1)
+    @Benchmark
+    public Observation observationConventionWithoutThreadContention() {
+        Observation observation = Observation.start(convention, observationRegistry);
+        observation.stop();
+
+        return observation;
+    }
+
+    @Benchmark
+    public Observation observationConvention() {
+        Observation observation = Observation.start(convention, observationRegistry);
         observation.stop();
 
         return observation;
@@ -132,13 +183,15 @@ public class ObservationBenchmark {
         return instrumentation;
     }
 
+    // This should not measure anything, JIT should figure out that the registry is noop
     @Benchmark
     public Observation noopObservation() {
-        // This might not measure anything if JIT figures it out that the registry is
-        // always noop
         Observation observation = Observation.createNotStarted("test.obs", noopRegistry)
             .lowCardinalityKeyValue("abc", "123")
             .start();
+        try (Observation.Scope ignored = observation.openScope()) {
+            observation.error(error);
+        }
         observation.stop();
 
         return observation;

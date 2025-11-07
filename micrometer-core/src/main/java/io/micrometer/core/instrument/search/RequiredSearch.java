@@ -15,9 +15,9 @@
  */
 package io.micrometer.core.instrument.search;
 
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.*;
+import org.jspecify.annotations.Nullable;
 
 import java.util.*;
 import java.util.function.Predicate;
@@ -40,11 +40,9 @@ public final class RequiredSearch {
 
     final Set<String> requiredTagKeys = new HashSet<>();
 
-    @Nullable
-    String exactNameMatch;
+    @Nullable String exactNameMatch;
 
-    @Nullable
-    Predicate<String> nameMatches;
+    @Nullable Predicate<String> nameMatches;
 
     private RequiredSearch(MeterRegistry registry) {
         this.registry = registry;

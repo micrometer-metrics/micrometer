@@ -15,14 +15,10 @@
  */
 package io.micrometer.core.instrument.binder.cache;
 
-import io.micrometer.common.lang.NonNullApi;
-import io.micrometer.common.lang.NonNullFields;
-import io.micrometer.common.lang.Nullable;
-import io.micrometer.core.instrument.Gauge;
-import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Tag;
-import io.micrometer.core.instrument.Tags;
+import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.config.InvalidConfigurationException;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 import javax.cache.Cache;
 import javax.cache.CacheManager;
@@ -39,13 +35,13 @@ import java.util.List;
  *
  * @author Jon Schneider
  */
-@NonNullApi
-@NonNullFields
+@NullMarked
 public class JCacheMetrics<K, V, C extends Cache<K, V>> extends CacheMeterBinder<C> {
 
     // VisibleForTesting
-    @Nullable
-    ObjectName objectName;
+    @Nullable ObjectName objectName;
+
+    private final boolean registerCacheRemovalsAsFunctionCounter;
 
     /**
      * Record metrics on a JCache cache.
@@ -75,21 +71,49 @@ public class JCacheMetrics<K, V, C extends Cache<K, V>> extends CacheMeterBinder
      * proxied in any way.
      */
     public static <K, V, C extends Cache<K, V>> C monitor(MeterRegistry registry, C cache, Iterable<Tag> tags) {
-        new JCacheMetrics<>(cache, tags).bindTo(registry);
+        return monitor(registry, cache, Tags.of(tags), false);
+    }
+
+    /**
+     * Record metrics on a JCache cache.
+     * @param registry The registry to bind metrics to.
+     * @param cache The cache to instrument.
+     * @param tags Tags to apply to all recorded metrics.
+     * @param registerCacheRemovalsAsFunctionCounter whether to register the
+     * {@code cache.removals} metric as a FunctionCounter
+     * @param <C> The cache type.
+     * @param <K> The cache key type.
+     * @param <V> The cache value type.
+     * @return The instrumented cache, unchanged. The original cache is not wrapped or
+     * proxied in any way.
+     * @since 1.14.9
+     */
+    public static <K, V, C extends Cache<K, V>> C monitor(MeterRegistry registry, C cache, Iterable<Tag> tags,
+            boolean registerCacheRemovalsAsFunctionCounter) {
+        new JCacheMetrics<>(cache, tags, registerCacheRemovalsAsFunctionCounter).bindTo(registry);
         return cache;
     }
 
     public JCacheMetrics(C cache, Iterable<Tag> tags) {
+        this(cache, tags, true);
+    }
+
+    /**
+     * Create a {@link CacheMeterBinder} for a JCache instance.
+     * @param cache the JCache instance to instrument
+     * @param tags additional tags to add to JCache meters
+     * @param registerCacheRemovalsAsFunctionCounter whether to register the
+     * {@code cache.removals} metric as a FunctionCounter
+     * @since 1.14.9
+     */
+    public JCacheMetrics(C cache, Iterable<Tag> tags, boolean registerCacheRemovalsAsFunctionCounter) {
         super(cache, cache.getName(), tags);
+        this.registerCacheRemovalsAsFunctionCounter = registerCacheRemovalsAsFunctionCounter;
         try {
             CacheManager cacheManager = cache.getCacheManager();
             if (cacheManager != null) {
-                String cacheManagerUri = cacheManager.getURI().toString().replace(':', '.'); // ehcache's
-                                                                                             // uri
-                                                                                             // is
-                                                                                             // prefixed
-                                                                                             // with
-                                                                                             // 'urn:'
+                // ehcache's uri is prefixed with 'urn:'
+                String cacheManagerUri = cacheManager.getURI().toString().replace(':', '.');
 
                 this.objectName = new ObjectName("javax.cache:type=CacheStatistics" + ",CacheManager=" + cacheManagerUri
                         + ",Cache=" + cache.getName());
@@ -102,7 +126,7 @@ public class JCacheMetrics<K, V, C extends Cache<K, V>> extends CacheMeterBinder
     }
 
     @Override
-    protected Long size() {
+    protected @Nullable Long size() {
         // JCache statistics don't support size
         return null;
     }
@@ -130,10 +154,18 @@ public class JCacheMetrics<K, V, C extends Cache<K, V>> extends CacheMeterBinder
     @Override
     protected void bindImplementationSpecificMetrics(MeterRegistry registry) {
         if (objectName != null) {
-            Gauge.builder("cache.removals", objectName, objectName -> lookupStatistic("CacheRemovals"))
-                .tags(getTagsWithCacheName())
-                .description("Cache removals")
-                .register(registry);
+            if (registerCacheRemovalsAsFunctionCounter) {
+                FunctionCounter.builder("cache.removals", objectName, objectName -> lookupStatistic("CacheRemovals"))
+                    .tags(getTagsWithCacheName())
+                    .description("Cache removals")
+                    .register(registry);
+            }
+            else {
+                Gauge.builder("cache.removals", objectName, objectName -> lookupStatistic("CacheRemovals"))
+                    .tags(getTagsWithCacheName())
+                    .description("Cache removals")
+                    .register(registry);
+            }
         }
     }
 

@@ -15,13 +15,12 @@
  */
 package io.micrometer.prometheus;
 
-import io.micrometer.common.lang.NonNull;
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.AbstractMeter;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Meter;
 import io.prometheus.client.exemplars.CounterExemplarSampler;
 import io.prometheus.client.exemplars.Exemplar;
+import org.jspecify.annotations.Nullable;
 
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.atomic.DoubleAdder;
@@ -42,8 +41,7 @@ public class PrometheusCounter extends AbstractMeter implements Counter {
 
     private final AtomicReference<Exemplar> exemplar = new AtomicReference<>();
 
-    @Nullable
-    private final CounterExemplarSampler exemplarSampler;
+    private final @Nullable CounterExemplarSampler exemplarSampler;
 
     PrometheusCounter(Meter.Id id) {
         this(id, null);
@@ -69,13 +67,12 @@ public class PrometheusCounter extends AbstractMeter implements Counter {
         return count.doubleValue();
     }
 
-    @Nullable
-    Exemplar exemplar() {
+    @Nullable Exemplar exemplar() {
         return exemplar.get();
     }
 
     // Similar to exemplar.updateAndGet(...) but it does nothing if the next value is null
-    private void updateExemplar(double amount, @NonNull CounterExemplarSampler exemplarSampler) {
+    private void updateExemplar(double amount, CounterExemplarSampler exemplarSampler) {
         Exemplar prev;
         Exemplar next;
         do {

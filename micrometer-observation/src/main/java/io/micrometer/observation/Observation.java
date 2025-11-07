@@ -17,9 +17,9 @@ package io.micrometer.observation;
 
 import io.micrometer.common.KeyValue;
 import io.micrometer.common.KeyValues;
-import io.micrometer.common.lang.NonNull;
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.common.util.internal.logging.InternalLoggerFactory;
+import org.jspecify.annotations.NullUnmarked;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -50,9 +50,10 @@ import java.util.stream.Collectors;
 public interface Observation extends ObservationView {
 
     /**
-     * No-op observation.
+     * No-op observation. Do not use it to check if an Observation is no-op, use
+     * {@code observation.isNoop()} instead.
      */
-    Observation NOOP = new NoopObservation();
+    Observation NOOP = NoopObservation.INSTANCE;
 
     /**
      * Create and start an {@link Observation} with the given name. All Observations of
@@ -122,12 +123,12 @@ public interface Observation extends ObservationView {
     static <T extends Context> Observation createNotStarted(String name, Supplier<T> contextSupplier,
             @Nullable ObservationRegistry registry) {
         if (registry == null || registry.isNoop()) {
-            return NOOP;
+            return NoopObservation.INSTANCE;
         }
         Context context = contextSupplier.get();
         context.setParentFromCurrentObservation(registry);
         if (!registry.observationConfig().isObservationEnabled(name, context)) {
-            return NOOP;
+            return NoopButScopeHandlingObservation.INSTANCE;
         }
         return new SimpleObservation(name, registry, context);
     }
@@ -165,7 +166,7 @@ public interface Observation extends ObservationView {
             ObservationConvention<T> defaultConvention, Supplier<T> contextSupplier,
             @Nullable ObservationRegistry registry) {
         if (registry == null || registry.isNoop()) {
-            return Observation.NOOP;
+            return NoopObservation.INSTANCE;
         }
         ObservationConvention<T> convention;
         T context = contextSupplier.get();
@@ -177,7 +178,7 @@ public interface Observation extends ObservationView {
             convention = registry.observationConfig().getObservationConvention(context, defaultConvention);
         }
         if (!registry.observationConfig().isObservationEnabled(convention.getName(), context)) {
-            return NOOP;
+            return NoopButScopeHandlingObservation.INSTANCE;
         }
         return new SimpleObservation(convention, registry, context);
     }
@@ -309,13 +310,13 @@ public interface Observation extends ObservationView {
      */
     static <T extends Context> Observation createNotStarted(ObservationConvention<T> observationConvention,
             Supplier<T> contextSupplier, ObservationRegistry registry) {
-        if (registry == null || registry.isNoop() || observationConvention == NoopObservationConvention.INSTANCE) {
-            return NOOP;
+        if (registry == null || registry.isNoop()) {
+            return NoopObservation.INSTANCE;
         }
         T context = contextSupplier.get();
         context.setParentFromCurrentObservation(registry);
         if (!registry.observationConfig().isObservationEnabled(observationConvention.getName(), context)) {
-            return NOOP;
+            return NoopButScopeHandlingObservation.INSTANCE;
         }
         return new SimpleObservation(observationConvention, registry, context);
     }
@@ -416,7 +417,7 @@ public interface Observation extends ObservationView {
      * @return {@code true} when this is a no-op observation
      */
     default boolean isNoop() {
-        return this == NOOP;
+        return this == NoopObservation.INSTANCE || this == NoopButScopeHandlingObservation.INSTANCE;
     }
 
     /**
@@ -557,8 +558,7 @@ public interface Observation extends ObservationView {
      * @param <T> the type parameter of the {@link Supplier}
      * @return the result from {@link Supplier#get()}
      */
-    @Nullable
-    default <T> T observe(Supplier<T> supplier) {
+    default <T> @NullUnmarked T observe(Supplier<T> supplier) {
         start();
         try (Scope scope = openScope()) {
             return supplier.get();
@@ -592,8 +592,7 @@ public interface Observation extends ObservationView {
      * @param <E> type of exception checkedCallable throws
      * @return the result from {@link CheckedCallable#call()}
      */
-    @Nullable
-    default <T, E extends Throwable> T observeChecked(CheckedCallable<T, E> checkedCallable) throws E {
+    default <T, E extends Throwable> @NullUnmarked T observeChecked(CheckedCallable<T, E> checkedCallable) throws E {
         start();
         try (Scope scope = openScope()) {
             return checkedCallable.call();
@@ -624,7 +623,7 @@ public interface Observation extends ObservationView {
      * <li>Stops the {@code Observation}</li>
      * </ul>
      *
-     * NOTE: When the {@link ObservationRegistry} is a noop, this function receives a
+     * NOTE: When the {@link ObservationRegistry} is a no-op, this function receives a
      * default {@link Context} instance which is not the one that has been passed at
      * {@link Observation} creation.
      * @param function the {@link Function} to call
@@ -635,9 +634,8 @@ public interface Observation extends ObservationView {
      * @deprecated scheduled for removal in 1.15.0, use {@code observe(...)} directly
      */
     @SuppressWarnings({ "unused", "unchecked" })
-    @Nullable
     @Deprecated
-    default <C extends Context, T> T observeWithContext(Function<C, T> function) {
+    default <C extends Context, T> @NullUnmarked T observeWithContext(Function<C, T> function) {
         InternalLoggerFactory.getInstance(Observation.class)
             .warn("This method is deprecated. Please migrate to observation.observe(...)");
         start();
@@ -666,7 +664,7 @@ public interface Observation extends ObservationView {
      * <li>Stops the {@code Observation}</li>
      * </ul>
      *
-     * NOTE: When the {@link ObservationRegistry} is a noop, this function receives a
+     * NOTE: When the {@link ObservationRegistry} is a no-op, this function receives a
      * default {@link Context} instance which is not the one that has been passed at
      * {@link Observation} creation.
      * @param function the {@link CheckedFunction} to call
@@ -679,10 +677,9 @@ public interface Observation extends ObservationView {
      * directly
      */
     @SuppressWarnings({ "unused", "unchecked" })
-    @Nullable
     @Deprecated
-    default <C extends Context, T, E extends Throwable> T observeCheckedWithContext(CheckedFunction<C, T, E> function)
-            throws E {
+    default <C extends Context, T, E extends Throwable> @NullUnmarked T observeCheckedWithContext(
+            CheckedFunction<C, T, E> function) throws E {
         InternalLoggerFactory.getInstance(Observation.class)
             .warn("This method is deprecated. Please migrate to observation.observeChecked(...)");
         start();
@@ -736,7 +733,7 @@ public interface Observation extends ObservationView {
      * @return the result from {@link Supplier#get()}
      */
     @SuppressWarnings("unused")
-    default <T> T scoped(Supplier<T> supplier) {
+    default <T> @NullUnmarked T scoped(Supplier<T> supplier) {
         try (Scope scope = openScope()) {
             return supplier.get();
         }
@@ -754,7 +751,7 @@ public interface Observation extends ObservationView {
      * @return the result from {@link CheckedCallable#call()}
      */
     @SuppressWarnings("unused")
-    default <T, E extends Throwable> T scopedChecked(CheckedCallable<T, E> checkedCallable) throws E {
+    default <T, E extends Throwable> @NullUnmarked T scopedChecked(CheckedCallable<T, E> checkedCallable) throws E {
         try (Scope scope = openScope()) {
             return checkedCallable.call();
         }
@@ -803,7 +800,7 @@ public interface Observation extends ObservationView {
      * @param action action to run
      * @return result of the action
      */
-    static <T> T tryScoped(@Nullable Observation parent, Supplier<T> action) {
+    static <T> @NullUnmarked T tryScoped(@Nullable Observation parent, Supplier<T> action) {
         if (parent != null) {
             return parent.scoped(action);
         }
@@ -819,7 +816,7 @@ public interface Observation extends ObservationView {
      * @param <E> type of exception checkedCallable throws
      * @return the result from {@link CheckedCallable#call()}
      */
-    static <T, E extends Throwable> T tryScopedChecked(@Nullable Observation parent,
+    static <T, E extends Throwable> @NullUnmarked T tryScopedChecked(@Nullable Observation parent,
             CheckedCallable<T, E> checkedCallable) throws E {
         if (parent != null) {
             return parent.scopedChecked(checkedCallable);
@@ -852,8 +849,7 @@ public interface Observation extends ObservationView {
          * @return previously opened scope when this one was created
          * @since 1.10.8
          */
-        @Nullable
-        default Observation.Scope getPreviousObservationScope() {
+        default Observation.@Nullable Scope getPreviousObservationScope() {
             return null;
         }
 
@@ -913,16 +909,13 @@ public interface Observation extends ObservationView {
 
         private final Map<Object, Object> map = new ConcurrentHashMap<>();
 
-        private String name;
+        private @Nullable String name;
 
-        @Nullable
-        private String contextualName;
+        private @Nullable String contextualName;
 
-        @Nullable
-        private Throwable error;
+        private @Nullable Throwable error;
 
-        @Nullable
-        private ObservationView parentObservation;
+        private @Nullable ObservationView parentObservation;
 
         private final Map<String, KeyValue> lowCardinalityKeyValues = new ConcurrentHashMap<>();
 
@@ -933,7 +926,7 @@ public interface Observation extends ObservationView {
          * @return name
          */
         @Override
-        public String getName() {
+        public @Nullable String getName() {
             return this.name;
         }
 
@@ -951,7 +944,7 @@ public interface Observation extends ObservationView {
          * @return contextual name
          */
         @Override
-        public String getContextualName() {
+        public @Nullable String getContextualName() {
             return this.contextualName;
         }
 
@@ -968,8 +961,7 @@ public interface Observation extends ObservationView {
          * @return parent observation or {@code null} if there was no parent
          */
         @Override
-        @Nullable
-        public ObservationView getParentObservation() {
+        public @Nullable ObservationView getParentObservation() {
             return parentObservation;
         }
 
@@ -999,9 +991,8 @@ public interface Observation extends ObservationView {
          * Error that occurred while processing the {@link Observation}.
          * @return error (null if there wasn't any)
          */
-        @Nullable
         @Override
-        public Throwable getError() {
+        public @Nullable Throwable getError() {
             return this.error;
         }
 
@@ -1032,8 +1023,7 @@ public interface Observation extends ObservationView {
          * @return entry or {@code null} if not present
          */
         @Override
-        @Nullable
-        public <T> T get(Object key) {
+        public <T> @Nullable T get(Object key) {
             return (T) this.map.get(key);
         }
 
@@ -1055,7 +1045,6 @@ public interface Observation extends ObservationView {
          * @return entry
          */
         @Override
-        @NonNull
         public <T> T getRequired(Object key) {
             T object = (T) this.map.get(key);
             if (object == null) {
@@ -1204,29 +1193,26 @@ public interface Observation extends ObservationView {
             return this;
         }
 
-        @NonNull
         @Override
         public KeyValues getLowCardinalityKeyValues() {
             return KeyValues.of(this.lowCardinalityKeyValues.values());
         }
 
-        @NonNull
         @Override
         public KeyValues getHighCardinalityKeyValues() {
             return KeyValues.of(this.highCardinalityKeyValues.values());
         }
 
         @Override
-        public KeyValue getLowCardinalityKeyValue(String key) {
+        public @Nullable KeyValue getLowCardinalityKeyValue(String key) {
             return this.lowCardinalityKeyValues.get(key);
         }
 
         @Override
-        public KeyValue getHighCardinalityKeyValue(String key) {
+        public @Nullable KeyValue getHighCardinalityKeyValue(String key) {
             return this.highCardinalityKeyValues.get(key);
         }
 
-        @NonNull
         @Override
         public KeyValues getAllKeyValues() {
             return getLowCardinalityKeyValues().and(getHighCardinalityKeyValues());
@@ -1344,29 +1330,26 @@ public interface Observation extends ObservationView {
          * The observation name.
          * @return name
          */
-        String getName();
+        @Nullable String getName();
 
         /**
          * Returns the contextual name. The name that makes sense within the current
          * context (e.g. name derived from HTTP request).
          * @return contextual name
          */
-        @Nullable
-        String getContextualName();
+        @Nullable String getContextualName();
 
         /**
          * Returns the parent {@link ObservationView}.
          * @return parent observation or {@code null} if there was no parent
          */
-        @Nullable
-        ObservationView getParentObservation();
+        @Nullable ObservationView getParentObservation();
 
         /**
          * Error that occurred while processing the {@link Observation}.
          * @return error (null if there wasn't any)
          */
-        @Nullable
-        Throwable getError();
+        @Nullable Throwable getError();
 
         /**
          * Gets an entry from the context. Returns {@code null} when entry is not present.
@@ -1374,8 +1357,7 @@ public interface Observation extends ObservationView {
          * @param <T> value type
          * @return entry or {@code null} if not present
          */
-        @Nullable
-        <T> T get(Object key);
+        <T> @Nullable T get(Object key);
 
         /**
          * Gets an entry from the context. Throws exception when entry is not present.
@@ -1384,7 +1366,6 @@ public interface Observation extends ObservationView {
          * @throws IllegalArgumentException if not present
          * @return entry
          */
-        @NonNull
         <T> T getRequired(Object key);
 
         /**
@@ -1426,7 +1407,6 @@ public interface Observation extends ObservationView {
          * Returns high cardinality key values.
          * @return high cardinality key values
          */
-        @NonNull
         KeyValues getHighCardinalityKeyValues();
 
         /**
@@ -1434,22 +1414,19 @@ public interface Observation extends ObservationView {
          * @param key key
          * @return a low cardinality key value or {@code null}
          */
-        @Nullable
-        KeyValue getLowCardinalityKeyValue(String key);
+        @Nullable KeyValue getLowCardinalityKeyValue(String key);
 
         /**
          * Returns a high cardinality key value or {@code null} if not present.
          * @param key key
          * @return a high cardinality key value or {@code null}
          */
-        @Nullable
-        KeyValue getHighCardinalityKeyValue(String key);
+        @Nullable KeyValue getHighCardinalityKeyValue(String key);
 
         /**
          * Returns all key values.
          * @return all key values
          */
-        @NonNull
         KeyValues getAllKeyValues();
 
     }
@@ -1468,6 +1445,7 @@ public interface Observation extends ObservationView {
      * A functional interface like {@link Callable} but it can throw a {@link Throwable}.
      */
     @FunctionalInterface
+    @NullUnmarked
     interface CheckedCallable<T, E extends Throwable> {
 
         T call() throws E;
@@ -1480,9 +1458,9 @@ public interface Observation extends ObservationView {
      * @since 1.11.0
      */
     @FunctionalInterface
+    @NullUnmarked
     interface CheckedFunction<T, R, E extends Throwable> {
 
-        @Nullable
         R apply(T t) throws E;
 
     }

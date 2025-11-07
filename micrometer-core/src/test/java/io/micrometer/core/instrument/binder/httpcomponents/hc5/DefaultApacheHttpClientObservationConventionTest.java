@@ -15,7 +15,6 @@
  */
 package io.micrometer.core.instrument.binder.httpcomponents.hc5;
 
-import io.micrometer.common.KeyValue;
 import org.apache.hc.client5.http.HttpRoute;
 import org.apache.hc.client5.http.async.methods.SimpleHttpRequest;
 import org.apache.hc.client5.http.async.methods.SimpleHttpResponse;
@@ -23,6 +22,7 @@ import org.apache.hc.client5.http.async.methods.SimpleRequestBuilder;
 import org.apache.hc.client5.http.protocol.HttpClientContext;
 import org.apache.hc.core5.http.HttpException;
 import org.apache.hc.core5.http.HttpHost;
+import org.apache.hc.core5.http.HttpRequest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -33,6 +33,7 @@ import java.util.stream.Stream;
 
 import static io.micrometer.core.instrument.binder.httpcomponents.hc5.ApacheHttpClientObservationDocumentation.ApacheHttpClientKeyNames.*;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
 
 /**
  * Tests for {@link DefaultApacheHttpClientObservationConvention}.
@@ -59,22 +60,21 @@ class DefaultApacheHttpClientObservationConventionTest {
     @Test
     void shouldHaveDefaultContextName() {
         HttpClientContext clientContext = HttpClientContext.create();
-        ApacheHttpClientContext context = new ApacheHttpClientContext(null, clientContext);
+        ApacheHttpClientContext context = new ApacheHttpClientContext(mock(HttpRequest.class), clientContext);
         assertThat(observationConvention.getContextualName(context)).isEqualTo("HTTP UNKNOWN");
     }
 
     @Test
     void shouldContributeExceptionNoneWhenSuccess() {
         HttpClientContext clientContext = HttpClientContext.create();
-        ApacheHttpClientContext context = new ApacheHttpClientContext(null, clientContext);
-        assertThat(observationConvention.getLowCardinalityKeyValues(context))
-            .contains(EXCEPTION.withValue(KeyValue.NONE_VALUE));
+        ApacheHttpClientContext context = new ApacheHttpClientContext(mock(HttpRequest.class), clientContext);
+        assertThat(observationConvention.getLowCardinalityKeyValues(context)).contains(EXCEPTION.withNoneValue());
     }
 
     @Test
     void shouldContributeExceptionWhenFailure() {
         HttpClientContext clientContext = HttpClientContext.create();
-        ApacheHttpClientContext context = new ApacheHttpClientContext(null, clientContext);
+        ApacheHttpClientContext context = new ApacheHttpClientContext(mock(HttpRequest.class), clientContext);
         context.setError(new IllegalStateException("error"));
         assertThat(observationConvention.getLowCardinalityKeyValues(context))
             .contains(EXCEPTION.withValue("IllegalStateException"));
@@ -91,7 +91,7 @@ class DefaultApacheHttpClientObservationConventionTest {
     @Test
     void shouldContributeDefaultHttpMethodName() {
         HttpClientContext clientContext = HttpClientContext.create();
-        ApacheHttpClientContext context = new ApacheHttpClientContext(null, clientContext);
+        ApacheHttpClientContext context = new ApacheHttpClientContext(mock(HttpRequest.class), clientContext);
         assertThat(observationConvention.getLowCardinalityKeyValues(context)).contains(METHOD.withValue("UNKNOWN"));
     }
 

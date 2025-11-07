@@ -15,7 +15,6 @@
  */
 package io.micrometer.health;
 
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.annotation.Incubating;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.Meter;
@@ -26,6 +25,7 @@ import io.micrometer.core.instrument.simple.CountingMode;
 import io.micrometer.core.instrument.simple.SimpleConfig;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.micrometer.core.instrument.util.NamedThreadFactory;
+import org.jspecify.annotations.Nullable;
 
 import java.time.Duration;
 import java.util.ArrayList;
@@ -62,14 +62,13 @@ public class HealthMeterRegistry extends SimpleMeterRegistry {
 
     private final Collection<MeterFilter> serviceLevelObjectiveFilters;
 
-    @Nullable
-    private ScheduledExecutorService scheduledExecutorService;
+    private @Nullable ScheduledExecutorService scheduledExecutorService;
 
     protected HealthMeterRegistry(HealthConfig config, Collection<ServiceLevelObjective> serviceLevelObjectives,
             Collection<MeterFilter> serviceLevelObjectiveFilters, Clock clock, ThreadFactory threadFactory) {
         super(new SimpleConfig() {
             @Override
-            public String get(String key) {
+            public @Nullable String get(String key) {
                 return null;
             }
 

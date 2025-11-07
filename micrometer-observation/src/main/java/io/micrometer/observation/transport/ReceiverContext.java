@@ -15,9 +15,8 @@
  */
 package io.micrometer.observation.transport;
 
-import io.micrometer.common.lang.NonNull;
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.observation.Observation;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Objects;
 
@@ -35,20 +34,18 @@ public class ReceiverContext<C> extends Observation.Context {
 
     private final Kind kind;
 
-    private C carrier;
+    private @Nullable C carrier;
 
-    @Nullable
-    private String remoteServiceName;
+    private @Nullable String remoteServiceName;
 
-    @Nullable
-    private String remoteServiceAddress;
+    private @Nullable String remoteServiceAddress;
 
     /**
      * Creates a new instance of {@link ReceiverContext}.
      * @param getter propagator getter
      * @param kind kind
      */
-    public ReceiverContext(@NonNull Propagator.Getter<C> getter, @NonNull Kind kind) {
+    public ReceiverContext(Propagator.Getter<C> getter, Kind kind) {
         this.getter = Objects.requireNonNull(getter, "Getter must be set");
         this.kind = Objects.requireNonNull(kind, "Kind must be set");
     }
@@ -57,11 +54,11 @@ public class ReceiverContext<C> extends Observation.Context {
      * Creates a new instance of a {@link Kind#CONSUMER} {@link ReceiverContext}.
      * @param getter propagator getter
      */
-    public ReceiverContext(@NonNull Propagator.Getter<C> getter) {
+    public ReceiverContext(Propagator.Getter<C> getter) {
         this(getter, Kind.CONSUMER);
     }
 
-    public C getCarrier() {
+    public @Nullable C getCarrier() {
         return carrier;
     }
 
@@ -81,8 +78,7 @@ public class ReceiverContext<C> extends Observation.Context {
      * Return optional name for the service from which the message is polled.
      * @return optional name for the service from which the message is polled
      */
-    @Nullable
-    public String getRemoteServiceName() {
+    public @Nullable String getRemoteServiceName() {
         return remoteServiceName;
     }
 
@@ -98,8 +94,7 @@ public class ReceiverContext<C> extends Observation.Context {
      * Return optional address for the service that will be called.
      * @return optional address for the service that will be called
      */
-    @Nullable
-    public String getRemoteServiceAddress() {
+    public @Nullable String getRemoteServiceAddress() {
         return remoteServiceAddress;
     }
 

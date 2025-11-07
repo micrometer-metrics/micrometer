@@ -252,6 +252,7 @@ class ObservationInstrumentingTests {
         mvc.stop();
     }
 
+    @SuppressWarnings("unused")
     private void enableContextPropagationForDocsSnippet() {
         // tag::reactor_hook[]
         Hooks.enableAutomaticContextPropagation();

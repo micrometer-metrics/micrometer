@@ -15,7 +15,6 @@
  */
 package io.micrometer.health;
 
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.MeterBinder;
@@ -24,6 +23,7 @@ import io.micrometer.core.instrument.config.MeterFilter;
 import io.micrometer.core.instrument.distribution.HistogramSupport;
 import io.micrometer.core.instrument.distribution.ValueAtPercentile;
 import io.micrometer.core.instrument.search.Search;
+import org.jspecify.annotations.Nullable;
 
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
@@ -59,14 +59,12 @@ public abstract class ServiceLevelObjective {
 
     private final Tags tags;
 
-    @Nullable
-    private final String baseUnit;
+    private final @Nullable String baseUnit;
 
     /**
      * Describes what it means for this service level objective to not be met.
      */
-    @Nullable
-    private final String failedMessage;
+    private final @Nullable String failedMessage;
 
     private final Meter.Id id;
 
@@ -86,8 +84,7 @@ public abstract class ServiceLevelObjective {
         return tags;
     }
 
-    @Nullable
-    public String getBaseUnit() {
+    public @Nullable String getBaseUnit() {
         return baseUnit;
     }
 
@@ -95,8 +92,7 @@ public abstract class ServiceLevelObjective {
         return id;
     }
 
-    @Nullable
-    public String getFailedMessage() {
+    public @Nullable String getFailedMessage() {
         return failedMessage;
     }
 
@@ -186,11 +182,9 @@ public abstract class ServiceLevelObjective {
 
             private Tags tags = Tags.empty();
 
-            @Nullable
-            private String baseUnit;
+            private @Nullable String baseUnit;
 
-            @Nullable
-            private String failedMessage;
+            private @Nullable String failedMessage;
 
             private final Collection<MeterBinder> requires;
 
@@ -347,11 +341,9 @@ public abstract class ServiceLevelObjective {
 
             private final Tags tags;
 
-            @Nullable
-            private final String baseUnit;
+            private final @Nullable String baseUnit;
 
-            @Nullable
-            private final String failedMessage;
+            private final @Nullable String failedMessage;
 
             private final Collection<MeterBinder> requires;
 
@@ -639,8 +631,7 @@ public abstract class ServiceLevelObjective {
 
             private final ServiceLevelObjective[] objectives;
 
-            @Nullable
-            private String failedMessage;
+            private @Nullable String failedMessage;
 
             Builder(String name, ServiceLevelObjective[] objectives) {
                 this.name = name;
@@ -709,7 +700,7 @@ public abstract class ServiceLevelObjective {
         private final ServiceLevelObjective delegate;
 
         FilteredServiceLevelObjective(Meter.Id id, ServiceLevelObjective delegate) {
-            super(id.getName(), Tags.of(id.getTags()), id.getBaseUnit(), id.getDescription());
+            super(id.getName(), Tags.of(id.getTagsAsIterable()), id.getBaseUnit(), id.getDescription());
             this.delegate = delegate;
         }
 

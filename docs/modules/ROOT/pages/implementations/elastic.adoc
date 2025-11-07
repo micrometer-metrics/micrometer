@@ -14,8 +14,7 @@ The following example configures an ElasticSearch instance:
 ----
 ElasticConfig elasticConfig = new ElasticConfig() {
     @Override
-    @Nullable
-    public String get(String k) {
+    public @Nullable String get(String k) {
         return null;
     }
 };

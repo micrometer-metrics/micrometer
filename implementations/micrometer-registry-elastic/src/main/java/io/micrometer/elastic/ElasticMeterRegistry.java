@@ -15,7 +15,6 @@
  */
 package io.micrometer.elastic;
 
-import io.micrometer.common.lang.NonNull;
 import io.micrometer.common.util.StringUtils;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.Timer;
@@ -376,7 +375,6 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
     }
 
     @Override
-    @NonNull
     protected TimeUnit getBaseTimeUnit() {
         return TimeUnit.MILLISECONDS;
     }

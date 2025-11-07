@@ -148,3 +148,22 @@ Generally, you should create a new `DistributionStatisticConfig` with only the p
 * `minExpected(Duration/long)`: Governs the lower bound of percentile histogram buckets shipped from a timer or summary.
 
 Spring Boot offers property-based filters for configuring SLOs, percentiles, and percentile histograms by name prefix.
+
+== Apply MeterFilters conditionally
+
+It is a common use-case to apply MeterFilters only for a selection of Meters (for example, for ones that have a certain name or start with a given prefix).
+In order to do this, Micrometer provides a convenience method `forMeters(Predicate<Meter.Id> predicate, MeterFilter delegate)` that enables the provided (delegate) filter for the Meters selected by the predicate.
+
+See the following example:
+
+====
+[source, java]
+----
+registry.config()
+    .meterFilter(MeterFilter.forMeters(startsWith("prefix"), MeterFilter.ignoreTags("extra")));
+
+Predicate<Meter.Id> startsWith(String prefix) {
+    return id -> id.getName().startsWith(prefix);
+}
+----
+====

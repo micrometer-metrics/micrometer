@@ -15,6 +15,8 @@
  */
 package io.micrometer.observation;
 
+import org.jspecify.annotations.Nullable;
+
 import java.util.Collection;
 import java.util.Collections;
 
@@ -48,7 +50,7 @@ final class NoopObservationConfig extends ObservationRegistry.ObservationConfig 
     }
 
     @Override
-    public boolean isObservationEnabled(String name, Observation.Context context) {
+    public boolean isObservationEnabled(@Nullable String name, Observation.@Nullable Context context) {
         return false;
     }
 

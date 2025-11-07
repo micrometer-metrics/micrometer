@@ -15,7 +15,7 @@
  */
 package io.micrometer.core.instrument.binder.jvm;
 
-import io.micrometer.common.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryPoolMXBean;
@@ -44,8 +44,10 @@ class JvmMemory {
         ;
     }
 
-    static boolean isAllocationPool(String name) {
-        return name != null && (name.endsWith("Eden Space") || "Shenandoah".equals(name) //
+    static boolean isAllocationPool(@Nullable String name) {
+        return name != null && (name.endsWith("Eden Space") //
+                || "Shenandoah".equals(name) // non-generational Shenandoah
+                || "Shenandoah Young Gen".equals(name) // generational Shenandoah
                 || "ZHeap".equals(name) // ZGC non-generational
                 || "ZGC Young Generation".equals(name) // generational ZGC
                 || name.endsWith("New Gen") // Zing GPGC
@@ -54,8 +56,10 @@ class JvmMemory {
         );
     }
 
-    static boolean isLongLivedPool(String name) {
-        return name != null && (name.endsWith("Old Gen") || name.endsWith("Tenured Gen") || "Shenandoah".equals(name)
+    static boolean isLongLivedPool(@Nullable String name) {
+        return name != null && (name.endsWith("Old Gen") || name.endsWith("Tenured Gen") //
+                || "Shenandoah".equals(name) // non-generational Shenandoah
+                || "Shenandoah Old Generation".equals(name) // generational Shenandoah
                 || "ZHeap".equals(name) // ZGC non-generational
                 || "ZGC Old Generation".equals(name) // generational ZGC
                 || name.endsWith("balanced-old") //
@@ -76,8 +80,7 @@ class JvmMemory {
         return getter.applyAsLong(usage);
     }
 
-    @Nullable
-    private static MemoryUsage getUsage(MemoryPoolMXBean memoryPoolMXBean) {
+    private static @Nullable MemoryUsage getUsage(MemoryPoolMXBean memoryPoolMXBean) {
         try {
             return memoryPoolMXBean.getUsage();
         }

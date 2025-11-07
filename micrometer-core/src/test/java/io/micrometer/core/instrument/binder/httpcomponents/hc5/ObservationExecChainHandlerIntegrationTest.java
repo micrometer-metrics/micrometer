@@ -464,6 +464,42 @@ class ObservationExecChainHandlerIntegrationTest {
 
     }
 
+    @Nested
+    class OpenTelemetryConventionClassicClient {
+
+        @Test
+        void recordSuccessfulExchanges(@WiremockResolver.Wiremock WireMockServer server) throws Exception {
+            server.stubFor(any(anyUrl()));
+            try (CloseableHttpClient client = classicClientWithOtelConvention()) {
+                executeClassic(client, new HttpGet(server.baseUrl()));
+            }
+            assertThat(observationRegistry).hasObservationWithNameEqualTo("http.client.request.duration")
+                .that()
+                .hasLowCardinalityKeyValue(
+                        OpenTelemetryApacheHttpClientObservationDocumentation.LowCardinalityKeyNames.METHOD
+                            .withValue("GET"))
+                .hasLowCardinalityKeyValue(
+                        OpenTelemetryApacheHttpClientObservationDocumentation.LowCardinalityKeyNames.SERVER_ADDRESS
+                            .withValue(java.net.URI.create(server.baseUrl()).getHost()))
+                .hasLowCardinalityKeyValue(
+                        OpenTelemetryApacheHttpClientObservationDocumentation.LowCardinalityKeyNames.SERVER_PORT
+                            .withValue(String.valueOf(server.port())))
+                .hasLowCardinalityKeyValue(
+                        OpenTelemetryApacheHttpClientObservationDocumentation.LowCardinalityKeyNames.ERROR_TYPE
+                            .withNoneValue())
+                .hasLowCardinalityKeyValue(
+                        OpenTelemetryApacheHttpClientObservationDocumentation.LowCardinalityKeyNames.STATUS
+                            .withValue("200"))
+                .hasLowCardinalityKeyValue(
+                        OpenTelemetryApacheHttpClientObservationDocumentation.LowCardinalityKeyNames.OUTCOME
+                            .withValue("SUCCESS"))
+                .hasHighCardinalityKeyValue(
+                        OpenTelemetryApacheHttpClientObservationDocumentation.HighCardinalityKeyNames.URL
+                            .withValue(server.url("/")));
+        }
+
+    }
+
     private CloseableHttpClient classicClient() {
         DefaultHttpRequestRetryStrategy retryStrategy = new DefaultHttpRequestRetryStrategy(1,
                 TimeValue.ofMilliseconds(500L));
@@ -482,6 +518,29 @@ class ObservationExecChainHandlerIntegrationTest {
                 .setDefaultConnectionConfig(connectionConfig)
                 .build());
         // end::setup_classic[]
+
+        return clientBuilder.build();
+    }
+
+    private CloseableHttpClient classicClientWithOtelConvention() {
+        DefaultHttpRequestRetryStrategy retryStrategy = new DefaultHttpRequestRetryStrategy(1,
+                TimeValue.ofMilliseconds(500L));
+
+        ConnectionConfig connectionConfig = ConnectionConfig.custom()
+            .setSocketTimeout(500, TimeUnit.MILLISECONDS)
+            .setConnectTimeout(2000L, TimeUnit.MILLISECONDS)
+            .build();
+
+        // tag::setup_classic_otel[]
+        HttpClientBuilder clientBuilder = HttpClients.custom()
+            .setRetryStrategy(retryStrategy)
+            .addExecInterceptorAfter(ChainElement.RETRY.name(), "micrometer",
+                    new ObservationExecChainHandler(observationRegistry,
+                            OpenTelemetryApacheHttpClientObservationConvention.INSTANCE)) // <1>
+            .setConnectionManager(PoolingHttpClientConnectionManagerBuilder.create()
+                .setDefaultConnectionConfig(connectionConfig)
+                .build());
+        // end::setup_classic_otel[]
 
         return clientBuilder.build();
     }

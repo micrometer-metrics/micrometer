@@ -20,7 +20,6 @@ import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.StreamsBuilder;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.Properties;
@@ -38,19 +37,11 @@ class KafkaStreamsMetricsTest {
 
     private Tags tags = Tags.of("app", "myapp", "version", "1");
 
-    KafkaStreamsMetrics metrics;
-
-    @AfterEach
-    void afterEach() {
-        if (metrics != null)
-            metrics.close();
-    }
-
     @Test
     void shouldCreateMeters() {
         // tag::example[]
-        try (KafkaStreams kafkaStreams = createStreams()) {
-            metrics = new KafkaStreamsMetrics(kafkaStreams);
+        try (KafkaStreams kafkaStreams = createStreams();
+                KafkaStreamsMetrics metrics = new KafkaStreamsMetrics(kafkaStreams)) {
             MeterRegistry registry = new SimpleMeterRegistry();
 
             metrics.bindTo(registry);
@@ -63,8 +54,8 @@ class KafkaStreamsMetricsTest {
 
     @Test
     void shouldCreateMetersWithTags() {
-        try (KafkaStreams kafkaStreams = createStreams()) {
-            metrics = new KafkaStreamsMetrics(kafkaStreams, tags);
+        try (KafkaStreams kafkaStreams = createStreams();
+                KafkaStreamsMetrics metrics = new KafkaStreamsMetrics(kafkaStreams, tags)) {
             MeterRegistry registry = new SimpleMeterRegistry();
 
             metrics.bindTo(registry);
@@ -77,9 +68,9 @@ class KafkaStreamsMetricsTest {
 
     @Test
     void shouldCreateMetersWithTagsAndCustomScheduler() {
-        try (KafkaStreams kafkaStreams = createStreams()) {
-            ScheduledExecutorService customScheduler = Executors.newScheduledThreadPool(1);
-            metrics = new KafkaStreamsMetrics(kafkaStreams, tags, customScheduler);
+        ScheduledExecutorService customScheduler = Executors.newScheduledThreadPool(1);
+        try (KafkaStreams kafkaStreams = createStreams();
+                KafkaStreamsMetrics metrics = new KafkaStreamsMetrics(kafkaStreams, tags, customScheduler)) {
             MeterRegistry registry = new SimpleMeterRegistry();
 
             metrics.bindTo(registry);
@@ -90,7 +81,8 @@ class KafkaStreamsMetricsTest {
 
             metrics.close();
             assertThat(customScheduler.isShutdown()).isFalse();
-
+        }
+        finally {
             customScheduler.shutdownNow();
             assertThat(customScheduler.isShutdown()).isTrue();
         }

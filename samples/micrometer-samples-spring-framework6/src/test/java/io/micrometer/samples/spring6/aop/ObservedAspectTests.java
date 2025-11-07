@@ -16,8 +16,8 @@
 package io.micrometer.samples.spring6.aop;
 
 import io.micrometer.common.KeyValues;
-import io.micrometer.common.lang.NonNull;
-import io.micrometer.common.lang.Nullable;
+import io.micrometer.common.annotation.ValueExpressionResolver;
+import io.micrometer.common.annotation.ValueResolver;
 import io.micrometer.context.ContextRegistry;
 import io.micrometer.context.ContextSnapshot;
 import io.micrometer.context.ContextSnapshotFactory;
@@ -26,15 +26,25 @@ import io.micrometer.observation.ObservationConvention;
 import io.micrometer.observation.ObservationRegistry;
 import io.micrometer.observation.ObservationTextPublisher;
 import io.micrometer.observation.annotation.Observed;
+import io.micrometer.observation.annotation.ObservationKeyValue;
+import io.micrometer.observation.annotation.ObservationKeyValues;
+import io.micrometer.observation.aop.Cardinality;
 import io.micrometer.observation.aop.ObservedAspect;
+import io.micrometer.observation.aop.ObservationKeyValueAnnotationHandler;
 import io.micrometer.observation.tck.TestObservationRegistry;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
+import org.jspecify.annotations.Nullable;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.aop.aspectj.annotation.AspectJProxyFactory;
 
 import java.time.Duration;
+import java.util.Locale;
 import java.util.concurrent.*;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -48,7 +58,7 @@ import static org.awaitility.Awaitility.await;
  */
 class ObservedAspectTests {
 
-    TestObservationRegistry registry = TestObservationRegistry.create();
+    private final TestObservationRegistry registry = TestObservationRegistry.create();
 
     @Test
     void annotatedCallShouldBeObserved() {
@@ -168,6 +178,26 @@ class ObservedAspectTests {
             .isInstanceOf(CompletionException.class)
             .rootCause()
             .isEqualTo(simulatedException);
+    }
+
+    @Test
+    void observationShouldNotLeakToFutureCompletionThread() {
+        registry.observationConfig().observationHandler(new ObservationTextPublisher());
+
+        AspectJProxyFactory pf = new AspectJProxyFactory(new ObservedService());
+        pf.addAspect(new ObservedAspect(registry));
+
+        ObservedService service = pf.getProxy();
+        FakeAsyncTask fakeAsyncTask = new FakeAsyncTask("test-result");
+
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        CompletableFuture<String> asyncResult = service.supply(() -> service.async(fakeAsyncTask, executor));
+        // must run in the thread of the executor (async task)
+        CompletableFuture<Void> asyncAssertion = asyncResult
+            .thenRunAsync(() -> assertThat(registry).doesNotHaveAnyRemainingCurrentObservation(), executor);
+        fakeAsyncTask.proceed();
+
+        assertThat(asyncAssertion).succeedsWithin(Duration.ofMillis(200));
     }
 
     @Test
@@ -376,6 +406,872 @@ class ObservedAspectTests {
             .doesNotHaveError();
     }
 
+    @Nested
+    class ObservationKeyValueTests {
+
+        ValueResolver valueResolver = parameter -> "Value from myCustomValueResolver [" + parameter + "]";
+
+        ValueExpressionResolver valueExpressionResolver = new SpelValueExpressionResolver();
+
+        ObservationKeyValueAnnotationHandler observationKeyValueAnnotationHandler = new ObservationKeyValueAnnotationHandler(
+                aClass -> valueResolver, aClass -> valueExpressionResolver);
+
+        TestObservationRegistry registry;
+
+        ObservedAspect observedAspect;
+
+        @BeforeEach
+        void setup() {
+            registry = TestObservationRegistry.create();
+            observedAspect = new ObservedAspect(registry);
+            observedAspect.setObservationKeyValueAnnotationHandler(observationKeyValueAnnotationHandler);
+        }
+
+        @Test
+        void observationKeyValuesWithTextLowCardinality() {
+            ObservationKeyValueCardinalityClass service = getProxyWithObservedAspect(
+                    new ObservationKeyValueCardinalityClass());
+
+            service.lowCardinality("value");
+
+            assertThat(registry).doesNotHaveAnyRemainingCurrentObservation()
+                .hasSingleObservationThat()
+                .hasBeenStopped()
+                .hasNameEqualTo("method.observed")
+                .hasLowCardinalityKeyValue("test", "value")
+                .doesNotHaveError();
+        }
+
+        @Test
+        void observationKeyValuesWithTextHighCardinality() {
+            ObservationKeyValueCardinalityClass service = getProxyWithObservedAspect(
+                    new ObservationKeyValueCardinalityClass());
+
+            service.highCardinlity("value");
+
+            assertThat(registry).doesNotHaveAnyRemainingCurrentObservation()
+                .hasSingleObservationThat()
+                .hasBeenStopped()
+                .hasNameEqualTo("method.observed")
+                .hasHighCardinalityKeyValue("test", "value")
+                .doesNotHaveError();
+        }
+
+        @ParameterizedTest
+        @EnumSource
+        void observationKeyValuesWithText(AnnotatedTestClass annotatedClass) {
+            ObservationKeyValueClassInterface service = getProxyWithObservedAspect(annotatedClass.newInstance());
+
+            service.getAnnotationForArgumentToString(15L);
+
+            assertThat(registry).doesNotHaveAnyRemainingCurrentObservation()
+                .hasSingleObservationThat()
+                .hasBeenStopped()
+                .hasNameEqualTo("method.observed")
+                .hasHighCardinalityKeyValue("test", "15")
+                .doesNotHaveError();
+        }
+
+        @ParameterizedTest
+        @EnumSource
+        void observationKeyValuesWithResolver(AnnotatedTestClass annotatedClass) {
+            ObservationKeyValueClassInterface service = getProxyWithObservedAspect(annotatedClass.newInstance());
+
+            service.getAnnotationForValueResolver("foo");
+
+            assertThat(registry).doesNotHaveAnyRemainingCurrentObservation()
+                .hasSingleObservationThat()
+                .hasBeenStopped()
+                .hasNameEqualTo("method.observed")
+                .hasHighCardinalityKeyValue("test", "Value from myCustomValueResolver [foo]")
+                .doesNotHaveError();
+        }
+
+        @ParameterizedTest
+        @EnumSource
+        void observationKeyValuesWithExpression(AnnotatedTestClass annotatedClass) {
+            ObservationKeyValueClassInterface service = getProxyWithObservedAspect(annotatedClass.newInstance());
+
+            service.getAnnotationForValueExpression("15L");
+
+            assertThat(registry).doesNotHaveAnyRemainingCurrentObservation()
+                .hasSingleObservationThat()
+                .hasBeenStopped()
+                .hasNameEqualTo("method.observed")
+                .hasHighCardinalityKeyValue("test", "hello characters.overridden")
+                .doesNotHaveError();
+        }
+
+        @ParameterizedTest
+        @EnumSource
+        void multipleObservationKeyValuesWithExpression(AnnotatedTestClass annotatedClass) {
+            ObservationKeyValueClassInterface service = getProxyWithObservedAspect(annotatedClass.newInstance());
+
+            service.getMultipleAnnotationsForValueExpression(new DataHolder("zxe", "qwe"));
+
+            assertThat(registry).doesNotHaveAnyRemainingCurrentObservation()
+                .hasSingleObservationThat()
+                .hasBeenStopped()
+                .hasNameEqualTo("method.observed")
+                .hasHighCardinalityKeyValue("value1", "value1: zxe")
+                .hasHighCardinalityKeyValue("value2", "value2.overridden: qwe")
+                .doesNotHaveError();
+        }
+
+        @ParameterizedTest
+        @EnumSource
+        void multipleObservationKeyValuesWithinContainerWithExpression(AnnotatedTestClass annotatedClass) {
+            ObservationKeyValueClassInterface service = getProxyWithObservedAspect(annotatedClass.newInstance());
+
+            service.getMultipleAnnotationsWithContainerForValueExpression(new DataHolder("zxe", "qwe"));
+
+            assertThat(registry).doesNotHaveAnyRemainingCurrentObservation()
+                .hasSingleObservationThat()
+                .hasBeenStopped()
+                .hasNameEqualTo("method.observed")
+                .hasHighCardinalityKeyValue("value1", "value1: zxe")
+                .hasHighCardinalityKeyValue("value2", "value2: qwe")
+                .hasHighCardinalityKeyValue("value3", "value3.overridden: ZXEQWE")
+                .doesNotHaveError();
+        }
+
+        @Test
+        void observationKeyValueOnPackagePrivateMethod() {
+            AspectJProxyFactory pf = new AspectJProxyFactory(new ObservationKeyValueClass());
+            pf.setProxyTargetClass(true);
+            pf.addAspect(observedAspect);
+
+            ObservationKeyValueClass service = pf.getProxy();
+
+            service.getAnnotationForPackagePrivateMethod("bar");
+
+            assertThat(registry).doesNotHaveAnyRemainingCurrentObservation()
+                .hasSingleObservationThat()
+                .hasBeenStopped()
+                .hasNameEqualTo("method.observed")
+                .hasHighCardinalityKeyValue("foo", "bar")
+                .doesNotHaveError();
+        }
+
+        @Test
+        void observationKeyValueOnSuperClass() {
+            ObservationKeyValueSub service = getProxyWithObservedAspect(new ObservationKeyValueSub());
+
+            service.superMethod("someValue");
+
+            assertThat(registry).doesNotHaveAnyRemainingCurrentObservation()
+                .hasSingleObservationThat()
+                .hasBeenStopped()
+                .hasNameEqualTo("method.observed")
+                .hasHighCardinalityKeyValue("superKey", "someValue")
+                .doesNotHaveError();
+        }
+
+        @Test
+        void observationKeyValueOnReturnValueWhenException() {
+            ObservationKeyValueExceptionClass service = getProxyWithObservedAspect(
+                    new ObservationKeyValueExceptionClass());
+
+            assertThatThrownBy(service::exceptionReturnValue).isInstanceOf(RuntimeException.class)
+                .hasMessage("exceptionReturnValue");
+
+            assertThat(registry).doesNotHaveAnyRemainingCurrentObservation()
+                .hasSingleObservationThat()
+                .hasBeenStopped()
+                .hasNameEqualTo("method.observed")
+                .hasHighCardinalityKeyValue("test", "")
+                .hasError();
+        }
+
+        @Test
+        void observationKeyValueOnParameterWhenException() {
+            ObservationKeyValueExceptionClass service = getProxyWithObservedAspect(
+                    new ObservationKeyValueExceptionClass());
+
+            assertThatThrownBy(() -> service.exceptionParameter("value")).isInstanceOf(RuntimeException.class)
+                .hasMessage("exceptionParameter");
+
+            assertThat(registry).doesNotHaveAnyRemainingCurrentObservation()
+                .hasSingleObservationThat()
+                .hasBeenStopped()
+                .hasNameEqualTo("method.observed")
+                .hasHighCardinalityKeyValue("test", "value")
+                .hasError();
+        }
+
+        @ParameterizedTest
+        @EnumSource
+        void observationKeyValueOnReturnValueWithText(AnnotatedTestClass annotatedClass) {
+            ObservationKeyValueClassInterface service = getProxyWithObservedAspect(annotatedClass.newInstance());
+
+            Long value = service.getAnnotationForReturnValueToString();
+
+            assertThat(registry).doesNotHaveAnyRemainingCurrentObservation()
+                .hasSingleObservationThat()
+                .hasBeenStopped()
+                .hasNameEqualTo("method.observed")
+                .hasHighCardinalityKeyValue("test", value.toString())
+                .doesNotHaveError();
+        }
+
+        @ParameterizedTest
+        @EnumSource
+        void observationKeyValueOnReturnValueWithResolver(AnnotatedTestClass annotatedClass) {
+            ObservationKeyValueClassInterface service = getProxyWithObservedAspect(annotatedClass.newInstance());
+
+            String value = service.getReturnValueAnnotationForValueResolver();
+
+            assertThat(registry).doesNotHaveAnyRemainingCurrentObservation()
+                .hasSingleObservationThat()
+                .hasBeenStopped()
+                .hasNameEqualTo("method.observed")
+                .hasHighCardinalityKeyValue("test", String.format("Value from myCustomValueResolver [%s]", value))
+                .doesNotHaveError();
+        }
+
+        @ParameterizedTest
+        @EnumSource
+        void observationKeyValueOnReturnValueWithExpression(AnnotatedTestClass annotatedClass) {
+            ObservationKeyValueClassInterface service = getProxyWithObservedAspect(annotatedClass.newInstance());
+
+            service.getReturnValueAnnotationForValueExpression();
+
+            assertThat(registry).doesNotHaveAnyRemainingCurrentObservation()
+                .hasSingleObservationThat()
+                .hasBeenStopped()
+                .hasNameEqualTo("method.observed")
+                .hasHighCardinalityKeyValue("test", "hello characters. overridden")
+                .doesNotHaveError();
+        }
+
+        @ParameterizedTest
+        @EnumSource
+        void multipleobservationKeyValueOnReturnValueWithExpression(AnnotatedTestClass annotatedClass) {
+            ObservationKeyValueClassInterface service = getProxyWithObservedAspect(annotatedClass.newInstance());
+
+            DataHolder value = service.getMultipleAnnotationsOnReturnValueForValueExpression();
+
+            assertThat(registry).doesNotHaveAnyRemainingCurrentObservation()
+                .hasSingleObservationThat()
+                .hasBeenStopped()
+                .hasNameEqualTo("method.observed")
+                .hasHighCardinalityKeyValue("value1", "value1: " + value.value1)
+                .hasHighCardinalityKeyValue("value2", "value2. overridden: " + value.value2)
+                .doesNotHaveError();
+        }
+
+        @ParameterizedTest
+        @EnumSource
+        void multipleobservationKeyValueOnReturnValueWithinContainerWithExpression(AnnotatedTestClass annotatedClass) {
+            ObservationKeyValueClassInterface service = getProxyWithObservedAspect(annotatedClass.newInstance());
+
+            DataHolder value = service.getMultipleAnnotationsOnReturnValueWithContainerForValueExpression();
+
+            assertThat(registry).doesNotHaveAnyRemainingCurrentObservation()
+                .hasSingleObservationThat()
+                .hasBeenStopped()
+                .hasNameEqualTo("method.observed")
+                .hasHighCardinalityKeyValue("value1", "value1: " + value.value1)
+                .hasHighCardinalityKeyValue("value2", "value2: " + value.value2)
+                .hasHighCardinalityKeyValue("value3",
+                        "value3. overridden: " + value.value1.toUpperCase(Locale.ROOT)
+                                + value.value2.toUpperCase(Locale.ROOT))
+                .doesNotHaveError();
+        }
+
+        @Test
+        void observationKeyValueOnReturnValueOnPackagePrivateMethod() {
+            AspectJProxyFactory pf = new AspectJProxyFactory(new ObservationKeyValueClass());
+            pf.setProxyTargetClass(true);
+            pf.addAspect(observedAspect);
+
+            ObservationKeyValueClass service = pf.getProxy();
+
+            String value = service.getReturnValueAnnotationForPackagePrivateMethod();
+
+            assertThat(registry).doesNotHaveAnyRemainingCurrentObservation()
+                .hasSingleObservationThat()
+                .hasBeenStopped()
+                .hasNameEqualTo("method.observed")
+                .hasHighCardinalityKeyValue("foo", value)
+                .doesNotHaveError();
+        }
+
+        @Test
+        void observationKeyValueOnReturnValueOnSuperClass() {
+            ObservationKeyValueSub service = getProxyWithObservedAspect(new ObservationKeyValueSub());
+
+            String value = service.superMethod();
+
+            assertThat(registry).doesNotHaveAnyRemainingCurrentObservation()
+                .hasSingleObservationThat()
+                .hasBeenStopped()
+                .hasNameEqualTo("method.observed")
+                .hasHighCardinalityKeyValue("superKey", value)
+                .doesNotHaveError();
+        }
+
+        @Test
+        void observationKeyValuesWithTextAsync() {
+            ObservationKeyValueAsyncClass service = getProxyWithObservedAspect(new ObservationKeyValueAsyncClass());
+
+            service.getAnnotationForArgumentToString(15L);
+
+            assertThat(registry).doesNotHaveAnyRemainingCurrentObservation()
+                .hasSingleObservationThat()
+                .hasBeenStopped()
+                .hasNameEqualTo("method.observed")
+                .hasHighCardinalityKeyValue("test", "15")
+                .doesNotHaveError();
+        }
+
+        @Test
+        void observationKeyValuesWithResolverAsync() {
+            ObservationKeyValueAsyncClass service = getProxyWithObservedAspect(new ObservationKeyValueAsyncClass());
+
+            service.getAnnotationForValueResolver("foo");
+
+            assertThat(registry).doesNotHaveAnyRemainingCurrentObservation()
+                .hasSingleObservationThat()
+                .hasBeenStopped()
+                .hasNameEqualTo("method.observed")
+                .hasHighCardinalityKeyValue("test", "Value from myCustomValueResolver [foo]")
+                .doesNotHaveError();
+        }
+
+        @Test
+        void observationKeyValuesWithExpressionAsync() {
+            ObservationKeyValueAsyncClass service = getProxyWithObservedAspect(new ObservationKeyValueAsyncClass());
+
+            service.getAnnotationForValueExpression("15L");
+
+            assertThat(registry).doesNotHaveAnyRemainingCurrentObservation()
+                .hasSingleObservationThat()
+                .hasBeenStopped()
+                .hasNameEqualTo("method.observed")
+                .hasHighCardinalityKeyValue("test", "hello characters.overridden")
+                .doesNotHaveError();
+        }
+
+        @Test
+        void multipleobservationKeyValuesWithExpressionAsync() {
+            ObservationKeyValueAsyncClass service = getProxyWithObservedAspect(new ObservationKeyValueAsyncClass());
+
+            service.getMultipleAnnotationsForValueExpression(new DataHolder("zxe", "qwe"));
+
+            assertThat(registry).doesNotHaveAnyRemainingCurrentObservation()
+                .hasSingleObservationThat()
+                .hasBeenStopped()
+                .hasNameEqualTo("method.observed")
+                .hasHighCardinalityKeyValue("value1", "value1: zxe")
+                .hasHighCardinalityKeyValue("value2", "value2.overridden: qwe")
+                .doesNotHaveError();
+        }
+
+        @Test
+        void multipleobservationKeyValuesWithinContainerWithExpressionAsync() {
+            ObservationKeyValueAsyncClass service = getProxyWithObservedAspect(new ObservationKeyValueAsyncClass());
+
+            service.getMultipleAnnotationsWithContainerForValueExpression(new DataHolder("zxe", "qwe"));
+
+            assertThat(registry).doesNotHaveAnyRemainingCurrentObservation()
+                .hasSingleObservationThat()
+                .hasBeenStopped()
+                .hasNameEqualTo("method.observed")
+                .hasHighCardinalityKeyValue("value1", "value1: zxe")
+                .hasHighCardinalityKeyValue("value2", "value2: qwe")
+                .hasHighCardinalityKeyValue("value3", "value3.overridden: ZXEQWE")
+                .doesNotHaveError();
+        }
+
+        @Test
+        void observationKeyValueOnPackagePrivateMethodAsync() {
+            ObservationKeyValueAsyncClass service = getProxyWithObservedAspect(new ObservationKeyValueAsyncClass());
+
+            service.getAnnotationForPackagePrivateMethod("bar");
+
+            assertThat(registry).doesNotHaveAnyRemainingCurrentObservation()
+                .hasSingleObservationThat()
+                .hasBeenStopped()
+                .hasNameEqualTo("method.observed")
+                .hasHighCardinalityKeyValue("foo", "bar")
+                .doesNotHaveError();
+        }
+
+        @Test
+        void observationKeyValueOnReturnValueWithTextAsync() throws ExecutionException, InterruptedException {
+            ObservationKeyValueAsyncClass service = getProxyWithObservedAspect(new ObservationKeyValueAsyncClass());
+
+            Long value = service.getAnnotationForReturnValueToString().get();
+
+            assertThat(registry).doesNotHaveAnyRemainingCurrentObservation()
+                .hasSingleObservationThat()
+                .hasBeenStopped()
+                .hasNameEqualTo("method.observed")
+                .hasHighCardinalityKeyValue("test", value.toString())
+                .doesNotHaveError();
+        }
+
+        @Test
+        void observationKeyValueOnReturnValueWithResolverAsync() throws ExecutionException, InterruptedException {
+            ObservationKeyValueAsyncClass service = getProxyWithObservedAspect(new ObservationKeyValueAsyncClass());
+
+            String value = service.getReturnValueAnnotationForValueResolver().get();
+
+            assertThat(registry).doesNotHaveAnyRemainingCurrentObservation()
+                .hasSingleObservationThat()
+                .hasBeenStopped()
+                .hasNameEqualTo("method.observed")
+                .hasHighCardinalityKeyValue("test", String.format("Value from myCustomValueResolver [%s]", value))
+                .doesNotHaveError();
+        }
+
+        @Test
+        void observationKeyValueOnReturnValueWithExpressionAsync() {
+            ObservationKeyValueAsyncClass service = getProxyWithObservedAspect(new ObservationKeyValueAsyncClass());
+
+            service.getReturnValueAnnotationForValueExpression();
+
+            assertThat(registry).doesNotHaveAnyRemainingCurrentObservation()
+                .hasSingleObservationThat()
+                .hasBeenStopped()
+                .hasNameEqualTo("method.observed")
+                .hasHighCardinalityKeyValue("test", "hello characters. overridden")
+                .doesNotHaveError();
+        }
+
+        @Test
+        void multipleobservationKeyValueOnReturnValueWithExpressionAsync()
+                throws ExecutionException, InterruptedException {
+            ObservationKeyValueAsyncClass service = getProxyWithObservedAspect(new ObservationKeyValueAsyncClass());
+
+            DataHolder value = service.getMultipleAnnotationsOnReturnValueForValueExpression().get();
+
+            assertThat(registry).doesNotHaveAnyRemainingCurrentObservation()
+                .hasSingleObservationThat()
+                .hasBeenStopped()
+                .hasNameEqualTo("method.observed")
+                .hasHighCardinalityKeyValue("value1", "value1: " + value.value1)
+                .hasHighCardinalityKeyValue("value2", "value2. overridden: " + value.value2)
+                .doesNotHaveError();
+        }
+
+        @Test
+        void multipleobservationKeyValueOnReturnValueWithinContainerWithExpressionAsync()
+                throws ExecutionException, InterruptedException {
+            ObservationKeyValueAsyncClass service = getProxyWithObservedAspect(new ObservationKeyValueAsyncClass());
+
+            DataHolder value = service.getMultipleAnnotationsOnReturnValueWithContainerForValueExpression().get();
+
+            assertThat(registry).doesNotHaveAnyRemainingCurrentObservation()
+                .hasSingleObservationThat()
+                .hasBeenStopped()
+                .hasNameEqualTo("method.observed")
+                .hasHighCardinalityKeyValue("value1", "value1: " + value.value1)
+                .hasHighCardinalityKeyValue("value2", "value2: " + value.value2)
+                .hasHighCardinalityKeyValue("value3",
+                        "value3. overridden: " + value.value1.toUpperCase(Locale.ROOT)
+                                + value.value2.toUpperCase(Locale.ROOT))
+                .doesNotHaveError();
+        }
+
+        @Test
+        void observationKeyValueOnReturnValueOnPackagePrivateMethodAsync()
+                throws ExecutionException, InterruptedException {
+            ObservationKeyValueAsyncClass service = getProxyWithObservedAspect(new ObservationKeyValueAsyncClass());
+
+            String value = service.getReturnValueAnnotationForPackagePrivateMethod().get();
+
+            assertThat(registry).doesNotHaveAnyRemainingCurrentObservation()
+                .hasSingleObservationThat()
+                .hasBeenStopped()
+                .hasNameEqualTo("method.observed")
+                .hasHighCardinalityKeyValue("foo", value)
+                .doesNotHaveError();
+        }
+
+        private <T> T getProxyWithObservedAspect(T object) {
+            AspectJProxyFactory pf = new AspectJProxyFactory(object);
+            pf.addAspect(observedAspect);
+            return pf.getProxy();
+        }
+
+    }
+
+    enum AnnotatedTestClass {
+
+        CLASS_WITHOUT_INTERFACE(ObservationKeyValueClass.class),
+        CLASS_WITH_INTERFACE(ObservationKeyValueClassChild.class);
+
+        private final Class<? extends ObservationKeyValueClassInterface> clazz;
+
+        AnnotatedTestClass(Class<? extends ObservationKeyValueClassInterface> clazz) {
+            this.clazz = clazz;
+        }
+
+        @SuppressWarnings("unchecked")
+        <T extends ObservationKeyValueClassInterface> T newInstance() {
+            try {
+                return (T) clazz.getDeclaredConstructor().newInstance();
+            }
+            catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+    }
+
+    static class ObservationKeyValueAsyncClass {
+
+        @Observed
+        public CompletableFuture<Void> getAnnotationForValueResolver(
+                @ObservationKeyValue(key = "test", resolver = ValueResolver.class) String test) {
+            return CompletableFuture.completedFuture(null);
+        }
+
+        @Observed
+        @ObservationKeyValue(key = "test", resolver = ValueResolver.class)
+        public CompletableFuture<String> getReturnValueAnnotationForValueResolver() {
+            return CompletableFuture.completedFuture("foo");
+        }
+
+        @Observed
+        public CompletableFuture<Void> getAnnotationForValueExpression(
+                @ObservationKeyValue(key = "test", expression = "'hello' + ' characters.overridden'") String test) {
+            return CompletableFuture.completedFuture(null);
+        }
+
+        @Observed
+        @ObservationKeyValue(key = "test", expression = "'hello' + ' characters. overridden'")
+        public CompletableFuture<String> getReturnValueAnnotationForValueExpression() {
+            return CompletableFuture.completedFuture("foo");
+        }
+
+        @Observed
+        public CompletableFuture<Void> getAnnotationForArgumentToString(@ObservationKeyValue("test") Long param) {
+            return CompletableFuture.completedFuture(null);
+        }
+
+        @Observed
+        @ObservationKeyValue("test")
+        public CompletableFuture<Long> getAnnotationForReturnValueToString() {
+            return CompletableFuture.completedFuture(15L);
+        }
+
+        @Observed
+        CompletableFuture<Void> getAnnotationForPackagePrivateMethod(@ObservationKeyValue("foo") String foo) {
+            return CompletableFuture.completedFuture(null);
+        }
+
+        @Observed
+        @ObservationKeyValue("foo")
+        CompletableFuture<String> getReturnValueAnnotationForPackagePrivateMethod() {
+            return CompletableFuture.completedFuture("bar");
+        }
+
+        @Observed
+        public CompletableFuture<Void> getMultipleAnnotationsForValueExpression(
+                @ObservationKeyValue(key = "value1", expression = "'value1: ' + value1") @ObservationKeyValue(
+                        key = "value2", expression = "'value2.overridden: ' + value2") DataHolder param) {
+            return CompletableFuture.completedFuture(null);
+        }
+
+        @Observed
+        @ObservationKeyValue(key = "value1", expression = "'value1: ' + value1")
+        @ObservationKeyValue(key = "value2", expression = "'value2. overridden: ' + value2")
+        public CompletableFuture<DataHolder> getMultipleAnnotationsOnReturnValueForValueExpression() {
+            return CompletableFuture.completedFuture(new DataHolder("zxe", "qwe"));
+        }
+
+        @Observed
+        public CompletableFuture<Void> getMultipleAnnotationsWithContainerForValueExpression(@ObservationKeyValues({
+                @ObservationKeyValue(key = "value1", expression = "'value1: ' + value1"),
+                @ObservationKeyValue(key = "value2", expression = "'value2: ' + value2"),
+                @ObservationKeyValue(key = "value3",
+                        expression = "'value3.overridden: ' + value1.toUpperCase + value2.toUpperCase") }) DataHolder param) {
+            return CompletableFuture.completedFuture(null);
+        }
+
+        @Observed
+        @ObservationKeyValues({ @ObservationKeyValue(key = "value1", expression = "'value1: ' + value1"),
+                @ObservationKeyValue(key = "value2", expression = "'value2: ' + value2"),
+                @ObservationKeyValue(key = "value3",
+                        expression = "'value3. overridden: ' + value1.toUpperCase + value2.toUpperCase") })
+        public CompletableFuture<DataHolder> getMultipleAnnotationsOnReturnValueWithContainerForValueExpression() {
+            return CompletableFuture.completedFuture(new DataHolder("zxe", "qwe"));
+        }
+
+    }
+
+    static class ObservationKeyValueExceptionClass {
+
+        @Observed
+        @ObservationKeyValue(key = "test")
+        public String exceptionReturnValue() {
+            throw new RuntimeException("exceptionReturnValue");
+        }
+
+        @Observed
+        public String exceptionParameter(@ObservationKeyValue(key = "test") String param) {
+            throw new RuntimeException("exceptionParameter");
+        }
+
+    }
+
+    static class ObservationKeyValueCardinalityClass {
+
+        @Observed
+        void lowCardinality(@ObservationKeyValue(key = "test", cardinality = Cardinality.LOW) String test) {
+        }
+
+        @Observed
+        void highCardinlity(@ObservationKeyValue(key = "test", cardinality = Cardinality.HIGH) String test) {
+        }
+
+    }
+
+    interface ObservationKeyValueClassInterface {
+
+        @Observed
+        void getAnnotationForValueResolver(
+                @ObservationKeyValue(key = "test", resolver = ValueResolver.class) String test);
+
+        @Observed
+        @ObservationKeyValue(key = "test", resolver = ValueResolver.class)
+        String getReturnValueAnnotationForValueResolver();
+
+        @Observed
+        void getAnnotationForValueExpression(
+                @ObservationKeyValue(key = "test", expression = "'hello' + ' characters'") String test);
+
+        @Observed
+        @ObservationKeyValue(key = "test", expression = "'hello' + ' characters'")
+        String getReturnValueAnnotationForValueExpression();
+
+        @Observed
+        void getAnnotationForArgumentToString(@ObservationKeyValue("test") Long param);
+
+        @Observed
+        @ObservationKeyValue("test")
+        Long getAnnotationForReturnValueToString();
+
+        @Observed
+        void getMultipleAnnotationsForValueExpression(
+                @ObservationKeyValue(key = "value1", expression = "'value1: ' + value1") @ObservationKeyValue(
+                        key = "value2", expression = "'value2: ' + value2") DataHolder param);
+
+        @Observed
+        @ObservationKeyValue(key = "value1", expression = "'value1: ' + value1")
+        @ObservationKeyValue(key = "value2", expression = "'value2: ' + value2")
+        DataHolder getMultipleAnnotationsOnReturnValueForValueExpression();
+
+        @Observed
+        void getMultipleAnnotationsWithContainerForValueExpression(@ObservationKeyValues({
+                @ObservationKeyValue(key = "value1", expression = "'value1: ' + value1"),
+                @ObservationKeyValue(key = "value2", expression = "'value2: ' + value2"),
+                @ObservationKeyValue(key = "value3",
+                        expression = "'value3: ' + value1.toUpperCase + value2.toUpperCase") }) DataHolder param);
+
+        @Observed
+        @ObservationKeyValues({ @ObservationKeyValue(key = "value1", expression = "'value1: ' + value1"),
+                @ObservationKeyValue(key = "value2", expression = "'value2: ' + value2"), @ObservationKeyValue(
+                        key = "value3", expression = "'value3: ' + value1.toUpperCase + value2.toUpperCase") })
+        DataHolder getMultipleAnnotationsOnReturnValueWithContainerForValueExpression();
+
+    }
+
+    static class ObservationKeyValueClass implements ObservationKeyValueClassInterface {
+
+        @Observed
+        @Override
+        public void getAnnotationForValueResolver(
+                @ObservationKeyValue(key = "test", resolver = ValueResolver.class) String test) {
+        }
+
+        @Observed
+        @ObservationKeyValue(key = "test", resolver = ValueResolver.class)
+        @Override
+        public String getReturnValueAnnotationForValueResolver() {
+            return "foo";
+        }
+
+        @Observed
+        @Override
+        public void getAnnotationForValueExpression(
+                @ObservationKeyValue(key = "test", expression = "'hello' + ' characters.overridden'") String test) {
+        }
+
+        @Observed
+        @ObservationKeyValue(key = "test", expression = "'hello' + ' characters. overridden'")
+        @Override
+        public String getReturnValueAnnotationForValueExpression() {
+            return "foo";
+        }
+
+        @Observed
+        @Override
+        public void getAnnotationForArgumentToString(@ObservationKeyValue("test") Long param) {
+        }
+
+        @Observed
+        @ObservationKeyValue("test")
+        @Override
+        public Long getAnnotationForReturnValueToString() {
+            return 15L;
+        }
+
+        @Observed
+        void getAnnotationForPackagePrivateMethod(@ObservationKeyValue("foo") String foo) {
+        }
+
+        @Observed
+        @ObservationKeyValue("foo")
+        String getReturnValueAnnotationForPackagePrivateMethod() {
+            return "bar";
+        }
+
+        @Observed
+        @Override
+        public void getMultipleAnnotationsForValueExpression(
+                @ObservationKeyValue(key = "value1", expression = "'value1: ' + value1") @ObservationKeyValue(
+                        key = "value2", expression = "'value2.overridden: ' + value2") DataHolder param) {
+
+        }
+
+        @Observed
+        @ObservationKeyValue(key = "value1", expression = "'value1: ' + value1")
+        @ObservationKeyValue(key = "value2", expression = "'value2. overridden: ' + value2")
+        @Override
+        public DataHolder getMultipleAnnotationsOnReturnValueForValueExpression() {
+            return new DataHolder("zxe", "qwe");
+        }
+
+        @Observed
+        @Override
+        public void getMultipleAnnotationsWithContainerForValueExpression(@ObservationKeyValues({
+                @ObservationKeyValue(key = "value1", expression = "'value1: ' + value1"),
+                @ObservationKeyValue(key = "value2", expression = "'value2: ' + value2"),
+                @ObservationKeyValue(key = "value3",
+                        expression = "'value3.overridden: ' + value1.toUpperCase + value2.toUpperCase") }) DataHolder param) {
+        }
+
+        @Observed
+        @ObservationKeyValues({ @ObservationKeyValue(key = "value1", expression = "'value1: ' + value1"),
+                @ObservationKeyValue(key = "value2", expression = "'value2: ' + value2"),
+                @ObservationKeyValue(key = "value3",
+                        expression = "'value3. overridden: ' + value1.toUpperCase + value2.toUpperCase") })
+        @Override
+        public DataHolder getMultipleAnnotationsOnReturnValueWithContainerForValueExpression() {
+            return new DataHolder("zxe", "qwe");
+        }
+
+    }
+
+    static class ObservationKeyValueClassChild implements ObservationKeyValueClassInterface {
+
+        @Observed
+        @Override
+        public void getAnnotationForValueResolver(String test) {
+        }
+
+        @Observed
+        @Override
+        public String getReturnValueAnnotationForValueResolver() {
+            return "foo";
+        }
+
+        @Observed
+        @Override
+        public void getAnnotationForValueExpression(
+                @ObservationKeyValue(key = "test", expression = "'hello' + ' characters.overridden'") String test) {
+        }
+
+        @Observed
+        @ObservationKeyValue(key = "test", expression = "'hello' + ' characters. overridden'")
+        @Override
+        public String getReturnValueAnnotationForValueExpression() {
+            return "foo";
+        }
+
+        @Observed
+        @Override
+        public void getAnnotationForArgumentToString(Long param) {
+        }
+
+        @Observed
+        @Override
+        public Long getAnnotationForReturnValueToString() {
+            return 15L;
+        }
+
+        @Observed
+        @Override
+        public void getMultipleAnnotationsForValueExpression(
+                @ObservationKeyValue(key = "value2", expression = "'value2.overridden: ' + value2") DataHolder param) {
+        }
+
+        @Observed
+        @ObservationKeyValue(key = "value2", expression = "'value2. overridden: ' + value2")
+        @Override
+        public DataHolder getMultipleAnnotationsOnReturnValueForValueExpression() {
+            return new DataHolder("zxe", "qwe");
+        }
+
+        @Observed
+        @Override
+        public void getMultipleAnnotationsWithContainerForValueExpression(@ObservationKeyValue(key = "value3",
+                expression = "'value3.overridden: ' + value1.toUpperCase + value2.toUpperCase") DataHolder param) {
+        }
+
+        @Observed
+        @ObservationKeyValue(key = "value3",
+                expression = "'value3. overridden: ' + value1.toUpperCase + value2.toUpperCase")
+        @Override
+        public DataHolder getMultipleAnnotationsOnReturnValueWithContainerForValueExpression() {
+            return new DataHolder("zxe", "qwe");
+        }
+
+    }
+
+    static class ObservationKeyValueSuper {
+
+        @Observed
+        public void superMethod(@ObservationKeyValue("superKey") String foo) {
+        }
+
+        @Observed
+        @ObservationKeyValue("superKey")
+        public String superMethod() {
+            return "someValue";
+        }
+
+    }
+
+    static class ObservationKeyValueSub extends ObservationKeyValueSuper {
+
+    }
+
+    static class DataHolder {
+
+        private final String value1;
+
+        private final String value2;
+
+        private DataHolder(String value1, String value2) {
+            this.value1 = value1;
+            this.value2 = value2;
+        }
+
+        public String getValue1() {
+            return value1;
+        }
+
+        public String getValue2() {
+            return value2;
+        }
+
+    }
+
     static class ObservedService {
 
         @Observed(name = "test.call", contextualName = "test#call",
@@ -392,14 +1288,28 @@ class ObservedAspectTests {
 
         @Observed(name = "test.async")
         CompletableFuture<String> async(FakeAsyncTask fakeAsyncTask) {
-            System.out.println("async");
             ContextSnapshot contextSnapshot = ContextSnapshotFactory.builder()
                 .captureKeyPredicate(key -> true)
                 .contextRegistry(ContextRegistry.getInstance())
                 .build()
                 .captureAll();
-            return CompletableFuture.supplyAsync(fakeAsyncTask,
-                    contextSnapshot.wrapExecutor(Executors.newSingleThreadExecutor()));
+            return supplyAsync(fakeAsyncTask, contextSnapshot.wrapExecutor(Executors.newSingleThreadExecutor()));
+        }
+
+        @Observed(name = "test.async")
+        CompletableFuture<String> async(FakeAsyncTask fakeAsyncTask, Executor singleThreadExecutor) {
+            return supplyAsync(fakeAsyncTask, singleThreadExecutor);
+        }
+
+        @Observed(name = "test.supply")
+        <T> T supply(Supplier<T> supplier) {
+            System.out.println("supply");
+            return supplier.get();
+        }
+
+        private CompletableFuture<String> supplyAsync(FakeAsyncTask fakeAsyncTask, Executor executor) {
+            System.out.println("async");
+            return CompletableFuture.supplyAsync(fakeAsyncTask, executor);
         }
 
     }
@@ -427,8 +1337,7 @@ class ObservedAspectTests {
         private final ObservationRegistry observationRegistry = ObservationRegistry.create();
 
         @Around("execution (@io.micrometer.observation.annotation.Observed * *.*(..))")
-        @Nullable
-        public Object observeMethod(ProceedingJoinPoint pjp) throws Throwable {
+        public @Nullable Object observeMethod(ProceedingJoinPoint pjp) throws Throwable {
             Observation observation = observationRegistry.getCurrentObservation();
             handler.addAnnotatedParameters(observation, pjp);
             return pjp.proceed();
@@ -472,11 +1381,9 @@ class ObservedAspectTests {
 
     static class FakeAsyncTask implements Supplier<String> {
 
-        @Nullable
-        private final String result;
+        private final @Nullable String result;
 
-        @Nullable
-        private final RuntimeException exception;
+        private final @Nullable RuntimeException exception;
 
         private final CountDownLatch countDownLatch;
 
@@ -499,8 +1406,7 @@ class ObservedAspectTests {
         }
 
         @Override
-        @Nullable
-        public String get() {
+        public @Nullable String get() {
             try {
                 countDownLatch.await();
             }
@@ -521,13 +1427,12 @@ class ObservedAspectTests {
     static class CustomObservationConvention implements ObservationConvention<ObservedAspect.ObservedAspectContext> {
 
         @Override
-        @NonNull
-        public KeyValues getLowCardinalityKeyValues(@NonNull ObservedAspect.ObservedAspectContext context) {
+        public KeyValues getLowCardinalityKeyValues(ObservedAspect.ObservedAspectContext context) {
             return KeyValues.of("test", "24");
         }
 
         @Override
-        public boolean supportsContext(@NonNull Observation.Context context) {
+        public boolean supportsContext(Observation.Context context) {
             return context instanceof ObservedAspect.ObservedAspectContext;
         }
 

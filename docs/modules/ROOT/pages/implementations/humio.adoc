@@ -19,8 +19,7 @@ HumioConfig humioConfig = new HumioConfig() {
     }
 
     @Override
-    @Nullable
-    public String get(String k) {
+    public @Nullable String get(String k) {
         return null;
     }
 };

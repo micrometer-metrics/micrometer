@@ -19,12 +19,13 @@ import io.micrometer.core.annotation.Incubating;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
-import org.jooq.Record;
 import org.jooq.*;
+import org.jooq.Record;
 import org.jooq.impl.DefaultDSLContext;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Objects;
 
 /**
  * Time SQL queries passing through jOOQ.
@@ -53,6 +54,7 @@ public class MetricsDSLContext extends DefaultDSLContext {
 
     private static final ThreadLocal<Iterable<Tag>> contextTags = new ThreadLocal<>();
 
+    @SuppressWarnings("NullAway.Init")
     private static ExecuteListenerProvider defaultExecuteListenerProvider;
 
     public static MetricsDSLContext withMetrics(DSLContext jooq, MeterRegistry registry, Iterable<Tag> tags) {
@@ -73,7 +75,7 @@ public class MetricsDSLContext extends DefaultDSLContext {
     }
 
     public <Q extends Query> Q time(Q q) {
-        q.attach(time(q.configuration()));
+        q.attach(time(Objects.requireNonNull(q.configuration())));
         return q;
     }
 
@@ -788,6 +790,11 @@ public class MetricsDSLContext extends DefaultDSLContext {
     @Override
     public <R extends Record> UpdateSetFirstStep<R> update(Table<R> table) {
         return timeCoercable(super.update(table));
+    }
+
+    @Override
+    public boolean fetchExists(Table<?> table, Condition condition) {
+        return super.fetchExists(super.selectOne().from(table).where(condition));
     }
 
 }

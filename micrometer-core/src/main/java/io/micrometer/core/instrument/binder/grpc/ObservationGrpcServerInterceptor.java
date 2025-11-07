@@ -19,11 +19,13 @@ package io.micrometer.core.instrument.binder.grpc;
 import io.grpc.*;
 import io.grpc.MethodDescriptor.MethodType;
 import io.grpc.ServerCall.Listener;
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
+import io.micrometer.observation.transport.Propagator;
+import org.jspecify.annotations.Nullable;
 
 import java.net.URI;
+import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
@@ -51,8 +53,7 @@ public class ObservationGrpcServerInterceptor implements ServerInterceptor {
 
     private final ObservationRegistry registry;
 
-    @Nullable
-    private GrpcServerObservationConvention customConvention;
+    private @Nullable GrpcServerObservationConvention customConvention;
 
     public ObservationGrpcServerInterceptor(ObservationRegistry registry) {
         this.registry = registry;
@@ -62,10 +63,22 @@ public class ObservationGrpcServerInterceptor implements ServerInterceptor {
     public <ReqT, RespT> Listener<ReqT> interceptCall(ServerCall<ReqT, RespT> call, Metadata headers,
             ServerCallHandler<ReqT, RespT> next) {
         Supplier<GrpcServerObservationContext> contextSupplier = () -> {
-            GrpcServerObservationContext context = new GrpcServerObservationContext((carrier, keyName) -> {
-                Metadata.Key<String> key = KEY_CACHE.computeIfAbsent(keyName,
-                        (k) -> Metadata.Key.of(keyName, Metadata.ASCII_STRING_MARSHALLER));
-                return carrier.get(key);
+            GrpcServerObservationContext context = new GrpcServerObservationContext(new Propagator.Getter<Metadata>() {
+                @Override
+                public @Nullable String get(Metadata carrier, String keyName) {
+                    return carrier.get(getKey(keyName));
+                }
+
+                private Metadata.Key<String> getKey(String keyName) {
+                    return KEY_CACHE.computeIfAbsent(keyName,
+                            (k) -> Metadata.Key.of(keyName, Metadata.ASCII_STRING_MARSHALLER));
+                }
+
+                @Override
+                public Iterable<String> getAll(Metadata carrier, String keyName) {
+                    Iterable<String> all = carrier.getAll(getKey(keyName));
+                    return all == null ? Collections.emptyList() : all;
+                }
             });
             context.setCarrier(headers);
 

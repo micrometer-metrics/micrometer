@@ -1,6 +1,8 @@
 description 'Module containing common code'
 
 dependencies {
+    // remove when removing deprecated nullability annotations
+    optionalApi libs.jsr305
     // internal logger
     optionalApi libs.logback12
 
@@ -12,10 +14,11 @@ dependencies {
 
 jar {
     bundle {
-
         bnd '''\
         Import-Package: \
+            !java.*,\
             org.aspectj.*;resolution:=dynamic,\
+            org.slf4j.*;resolution:=dynamic,\
             javax.annotation.*;resolution:=optional;version="${@}",\
             *
         '''.stripIndent()

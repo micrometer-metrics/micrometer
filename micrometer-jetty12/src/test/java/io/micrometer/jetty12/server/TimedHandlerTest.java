@@ -292,7 +292,7 @@ class TimedHandlerTest {
             }
         }
 
-        public boolean awaitOnComplete(long timeout, TimeUnit unit) throws InterruptedException {
+        boolean awaitOnComplete(long timeout, TimeUnit unit) throws InterruptedException {
             return onCompleteLatch.await(timeout, unit);
         }
 

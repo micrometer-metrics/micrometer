@@ -15,13 +15,13 @@
  */
 package io.micrometer.core.instrument.binder.cache;
 
-import io.micrometer.common.lang.Nullable;
 import net.sf.ehcache.Cache;
 import net.sf.ehcache.CacheManager;
 import net.sf.ehcache.Ehcache;
 import net.sf.ehcache.Element;
 import net.sf.ehcache.config.Configuration;
 import net.sf.ehcache.config.ConfigurationFactory;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.AfterEach;
 
 import java.util.UUID;
@@ -30,6 +30,7 @@ import static java.util.Collections.emptyList;
 
 class EhCache2MetricsCompatibilityTest extends CacheMeterBinderCompatibilityKit<Ehcache> {
 
+    @SuppressWarnings("NullAway.Init")
     private CacheManager cacheManager;
 
     @AfterEach
@@ -63,9 +64,8 @@ class EhCache2MetricsCompatibilityTest extends CacheMeterBinderCompatibilityKit<
         cache.put(new Element(key, value, 1));
     }
 
-    @Nullable
     @Override
-    public String get(String key) {
+    public @Nullable String get(String key) {
         Element element = cache.get(key);
         return element == null ? null : (String) element.getObjectValue();
     }

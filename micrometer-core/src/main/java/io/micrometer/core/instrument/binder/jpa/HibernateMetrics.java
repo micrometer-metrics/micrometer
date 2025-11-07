@@ -15,17 +15,17 @@
  */
 package io.micrometer.core.instrument.binder.jpa;
 
-import io.micrometer.common.lang.NonNullApi;
-import io.micrometer.common.lang.NonNullFields;
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.MeterBinder;
 import org.hibernate.SessionFactory;
 import org.hibernate.stat.Statistics;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.PersistenceException;
 import java.util.Arrays;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.function.ToDoubleFunction;
 
@@ -41,8 +41,7 @@ import java.util.function.ToDoubleFunction;
  * part of the Hibernate project as of version 5.4.26. See
  * https://mvnrepository.com/artifact/org.hibernate/hibernate-micrometer/
  */
-@NonNullApi
-@NonNullFields
+@NullMarked
 @Deprecated
 public class HibernateMetrics implements MeterBinder {
 
@@ -50,8 +49,7 @@ public class HibernateMetrics implements MeterBinder {
 
     private final Iterable<Tag> tags;
 
-    @Nullable
-    private final Statistics statistics;
+    private final @Nullable Statistics statistics;
 
     /**
      * Create {@code HibernateMetrics} and bind to the specified meter registry.
@@ -290,7 +288,7 @@ public class HibernateMetrics implements MeterBinder {
         // IllegalArgumentException
         // if the region can't be resolved.
         try {
-            return statistics.getDomainDataRegionStatistics(regionName) != null;
+            return Objects.requireNonNull(statistics).getDomainDataRegionStatistics(regionName) != null;
         }
         catch (IllegalArgumentException e) {
             return false;
@@ -302,8 +300,7 @@ public class HibernateMetrics implements MeterBinder {
      * @param entityManagerFactory {@link EntityManagerFactory} to unwrap
      * @return unwrapped {@link SessionFactory}
      */
-    @Nullable
-    private SessionFactory unwrap(EntityManagerFactory entityManagerFactory) {
+    private @Nullable SessionFactory unwrap(EntityManagerFactory entityManagerFactory) {
         try {
             return entityManagerFactory.unwrap(SessionFactory.class);
         }

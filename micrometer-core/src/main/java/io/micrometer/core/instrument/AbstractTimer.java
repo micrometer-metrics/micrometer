@@ -15,7 +15,6 @@
  */
 package io.micrometer.core.instrument;
 
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.common.util.internal.logging.WarnThenDebugLogger;
 import io.micrometer.core.instrument.distribution.*;
 import io.micrometer.core.instrument.distribution.pause.ClockDriftPauseDetector;
@@ -24,6 +23,7 @@ import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import org.LatencyUtils.IntervalEstimator;
 import org.LatencyUtils.SimplePauseDetector;
 import org.LatencyUtils.TimeCappedMovingAverageIntervalEstimator;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -37,7 +37,7 @@ import java.util.function.Supplier;
 
 public abstract class AbstractTimer extends AbstractMeter implements Timer {
 
-    private static final WarnThenDebugLogger log = new WarnThenDebugLogger(AbstractTimer.class);
+    private static final WarnThenDebugLogger warnThenDebugLogger = new WarnThenDebugLogger(AbstractTimer.class);
 
     private static final Map<PauseDetector, Object> pauseDetectorCache = new ConcurrentHashMap<>();
 
@@ -48,11 +48,9 @@ public abstract class AbstractTimer extends AbstractMeter implements Timer {
     private final TimeUnit baseTimeUnit;
 
     // Only used when pause detection is enabled
-    @Nullable
-    private Object intervalEstimator;
+    private @Nullable Object intervalEstimator;
 
-    @Nullable
-    private org.LatencyUtils.PauseDetector pauseDetector;
+    private org.LatencyUtils.@Nullable PauseDetector pauseDetector;
 
     /**
      * Creates a new timer.
@@ -266,7 +264,10 @@ public abstract class AbstractTimer extends AbstractMeter implements Timer {
             }
         }
         else {
-            log.log(() -> "'amount' should not be negative but was: " + amount);
+            if (warnThenDebugLogger.isEnabled()) {
+                warnThenDebugLogger.log(() -> "'amount' should not be negative but was: " + amount,
+                        new IllegalArgumentException("Timer measurements cannot be negative"));
+            }
         }
     }
 

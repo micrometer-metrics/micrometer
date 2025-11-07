@@ -23,6 +23,7 @@ import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.step.StepRegistryConfig;
 import io.micrometer.core.instrument.util.NamedThreadFactory;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
@@ -35,9 +36,12 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.LongStream;
 
-import static java.util.concurrent.TimeUnit.*;
-import static org.assertj.core.api.Assertions.*;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.awaitility.Awaitility.await;
+import static org.mockito.Mockito.mock;
 
 /**
  * Tests for {@link PushMeterRegistry}.
@@ -54,11 +58,11 @@ class PushMeterRegistryTest {
 
         @Override
         public String prefix() {
-            return null;
+            return "";
         }
 
         @Override
-        public String get(String key) {
+        public @Nullable String get(String key) {
             return null;
         }
     };
@@ -124,6 +128,7 @@ class PushMeterRegistryTest {
 
         assertThat(overlappingStepMeterRegistry.publishes).as("only one publish happened").hasSize(1);
         Deque<Double> firstPublishValues = overlappingStepMeterRegistry.publishes.get(0);
+        assertThat(firstPublishValues).isNotNull();
         assertThat(firstPublishValues.pop()).isEqualTo(1);
         assertThat(firstPublishValues.pop()).isEqualTo(2.5);
     }
@@ -186,6 +191,7 @@ class PushMeterRegistryTest {
 
         assertThat(registry.publishes).as("only one publish happened").hasSize(1);
         Deque<Double> firstPublishValues = registry.publishes.get(0);
+        assertThat(firstPublishValues).isNotNull();
         assertThat(firstPublishValues.pop()).isEqualTo(1); // c1 counter count
         assertThat(firstPublishValues.pop()).isEqualTo(2.5); // c2 counter count
     }
@@ -305,51 +311,51 @@ class PushMeterRegistryTest {
         }
 
         @Override
-        protected <T> Gauge newGauge(Meter.Id id, T obj, ToDoubleFunction<T> valueFunction) {
-            return null;
+        protected <T> Gauge newGauge(Meter.Id id, @Nullable T obj, ToDoubleFunction<T> valueFunction) {
+            return mock(Gauge.class);
         }
 
         @Override
         protected Counter newCounter(Meter.Id id) {
-            return null;
+            return mock(Counter.class);
         }
 
         @Override
         protected Timer newTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig,
                 PauseDetector pauseDetector) {
-            return null;
+            return mock(Timer.class);
         }
 
         @Override
         protected DistributionSummary newDistributionSummary(Meter.Id id,
                 DistributionStatisticConfig distributionStatisticConfig, double scale) {
-            return null;
+            return mock(DistributionSummary.class);
         }
 
         @Override
         protected Meter newMeter(Meter.Id id, Meter.Type type, Iterable<Measurement> measurements) {
-            return null;
+            return mock(Meter.class);
         }
 
         @Override
         protected <T> FunctionTimer newFunctionTimer(Meter.Id id, T obj, ToLongFunction<T> countFunction,
                 ToDoubleFunction<T> totalTimeFunction, TimeUnit totalTimeFunctionUnit) {
-            return null;
+            return mock(FunctionTimer.class);
         }
 
         @Override
         protected <T> FunctionCounter newFunctionCounter(Meter.Id id, T obj, ToDoubleFunction<T> countFunction) {
-            return null;
+            return mock(FunctionCounter.class);
         }
 
         @Override
         protected TimeUnit getBaseTimeUnit() {
-            return null;
+            return TimeUnit.MILLISECONDS;
         }
 
         @Override
         protected DistributionStatisticConfig defaultHistogramConfig() {
-            return null;
+            return DistributionStatisticConfig.DEFAULT;
         }
 
         @Override

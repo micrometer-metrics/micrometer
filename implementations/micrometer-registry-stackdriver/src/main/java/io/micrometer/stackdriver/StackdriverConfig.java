@@ -121,6 +121,17 @@ public interface StackdriverConfig extends StepRegistryConfig {
         }).get();
     }
 
+    /**
+     * Whether it should be attempted to create a metric descriptor before writing a time
+     * series. If you set up your metric descriptors using IaC tools like Terraform, you
+     * will likely want to disable this.
+     * @return true, if metric descriptors should be auto-created
+     * @since 1.16.0
+     */
+    default boolean autoCreateMetricDescriptors() {
+        return getBoolean(this, "autoCreateMetricDescriptors").orElse(true);
+    }
+
     @Override
     default Validated<?> validate() {
         return checkAll(this, c -> StepRegistryConfig.validate(c),

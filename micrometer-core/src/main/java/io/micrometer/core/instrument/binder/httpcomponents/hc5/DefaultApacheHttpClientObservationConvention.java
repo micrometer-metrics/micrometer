@@ -17,7 +17,6 @@ package io.micrometer.core.instrument.binder.httpcomponents.hc5;
 
 import io.micrometer.common.KeyValue;
 import io.micrometer.common.KeyValues;
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.binder.http.Outcome;
 import io.micrometer.core.instrument.binder.httpcomponents.hc5.ApacheHttpClientObservationDocumentation.ApacheHttpClientKeyNames;
 import org.apache.hc.client5.http.RouteInfo;
@@ -25,6 +24,7 @@ import org.apache.hc.client5.http.protocol.HttpClientContext;
 import org.apache.hc.core5.http.HttpException;
 import org.apache.hc.core5.http.HttpRequest;
 import org.apache.hc.core5.http.HttpResponse;
+import org.jspecify.annotations.Nullable;
 
 import java.io.IOException;
 import java.net.URI;
@@ -53,7 +53,7 @@ public class DefaultApacheHttpClientObservationConvention implements ApacheHttpC
 
     private static final KeyValue STATUS_CLIENT_ERROR = ApacheHttpClientKeyNames.STATUS.withValue("CLIENT_ERROR");
 
-    private static final KeyValue EXCEPTION_NONE = ApacheHttpClientKeyNames.EXCEPTION.withValue(KeyValue.NONE_VALUE);
+    private static final KeyValue EXCEPTION_NONE = ApacheHttpClientKeyNames.EXCEPTION.withNoneValue();
 
     private static final KeyValue OUTCOME_UNKNOWN = ApacheHttpClientKeyNames.OUTCOME.withValue(Outcome.UNKNOWN.name());
 
@@ -166,8 +166,7 @@ public class DefaultApacheHttpClientObservationConvention implements ApacheHttpC
         return TARGET_HOST_UNKNOWN;
     }
 
-    @Nullable
-    private static URI getUri(ApacheHttpClientContext context) {
+    private static @Nullable URI getUri(ApacheHttpClientContext context) {
         HttpRequest request = context.getCarrier();
         if (request != null) {
             try {
@@ -216,8 +215,7 @@ public class DefaultApacheHttpClientObservationConvention implements ApacheHttpC
         return TARGET_SCHEME_UNKNOWN;
     }
 
-    @Nullable
-    private static RouteInfo getHttpRoute(ApacheHttpClientContext context) {
+    private static @Nullable RouteInfo getHttpRoute(ApacheHttpClientContext context) {
         return context.getHttpClientContext().getHttpRoute();
     }
 
@@ -246,7 +244,7 @@ public class DefaultApacheHttpClientObservationConvention implements ApacheHttpC
     }
 
     @Deprecated
-    String getStatusValue(@Nullable HttpResponse response, Throwable error) {
+    String getStatusValue(@Nullable HttpResponse response, @Nullable Throwable error) {
         if (error instanceof IOException || error instanceof HttpException || error instanceof RuntimeException) {
             return "IO_ERROR";
         }

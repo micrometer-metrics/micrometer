@@ -15,12 +15,12 @@
  */
 package io.micrometer.prometheusmetrics;
 
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.AbstractMeter;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Meter;
 import io.prometheus.metrics.core.exemplars.ExemplarSampler;
 import io.prometheus.metrics.model.snapshots.Exemplar;
+import org.jspecify.annotations.Nullable;
 
 import java.util.concurrent.atomic.DoubleAdder;
 
@@ -35,8 +35,7 @@ public class PrometheusCounter extends AbstractMeter implements Counter {
 
     private final DoubleAdder count = new DoubleAdder();
 
-    @Nullable
-    private final ExemplarSampler exemplarSampler;
+    private final @Nullable ExemplarSampler exemplarSampler;
 
     PrometheusCounter(Meter.Id id) {
         this(id, null);
@@ -62,8 +61,7 @@ public class PrometheusCounter extends AbstractMeter implements Counter {
         return count.doubleValue();
     }
 
-    @Nullable
-    Exemplar exemplar() {
+    @Nullable Exemplar exemplar() {
         return exemplarSampler != null ? exemplarSampler.collect().getLatest() : null;
     }
 

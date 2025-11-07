@@ -26,14 +26,6 @@ else {
     }
 }
 
-japicmp {
-    // TODO Remove once building 1.16
-    classExcludes.addAll('io.micrometer.core.instrument.binder.jdk.MicrometerHttpClient',
-            'io.micrometer.core.instrument.binder.jdk.DefaultHttpClientObservationConvention',
-            'io.micrometer.core.instrument.binder.jdk.HttpClientContext',
-            'io.micrometer.core.instrument.binder.jdk.HttpClientObservationConvention')
-}
-
 description 'Core module of Micrometer containing instrumentation API and implementation'
 
 tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).all {
@@ -52,9 +44,9 @@ compileTestKotlin {
 
 jar {
     bundle {
-
         bnd '''\
         Import-Package: \
+            !java.*,\
             org.aspectj.*;resolution:=dynamic,\
             com.github.benmanes.caffeine.*;resolution:=dynamic;version="${@}",\
             net.sf.ehcache.*;resolution:=dynamic;version="${@}",\
@@ -84,10 +76,10 @@ jar {
             org.HdrHistogram.*;resolution:=dynamic;version="${@}",\
             org.apache.catalina.*;resolution:=dynamic,\
             org.bson.*;resolution:=dynamic;version="${@}",\
+            org.slf4j.*;resolution:=dynamic,\
             rx.*;resolution:=dynamic;version="${@}",\
             javax.persistence.*;resolution:=dynamic;version="${@}",\
             io.netty.*;resolution:=dynamic;version="${@}",\
-            javax.annotation.*;resolution:=optional;version="${@}",\
             *
         '''.stripIndent()
     }
@@ -245,6 +237,17 @@ tasks.register("shenandoahTest", Test) {
     }
 
     jvmArgs '-XX:+UseShenandoahGC'
+}
+
+tasks.register("generationalShenandoahTest", Test) {
+    // set heap size for the test JVM(s)
+    maxHeapSize = "1500m"
+
+    useJUnitPlatform {
+        includeTags 'gc'
+    }
+
+    jvmArgs '-XX:+UseShenandoahGC', '-XX:+UnlockExperimentalVMOptions', '-XX:ShenandoahGCMode=generational'
 }
 
 tasks.register("zgcTest", Test) {

@@ -15,11 +15,11 @@
  */
 package io.micrometer.statsd.internal;
 
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Statistic;
 import io.micrometer.core.instrument.config.NamingConvention;
+import org.jspecify.annotations.Nullable;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -34,8 +34,7 @@ public class SysdigStatsdLineBuilder extends FlavorStatsdLineBuilder {
 
     private volatile String name;
 
-    @Nullable
-    private volatile String conventionTags;
+    private volatile @Nullable String conventionTags;
 
     private volatile String tagsNoStat;
 
@@ -71,8 +70,7 @@ public class SysdigStatsdLineBuilder extends FlavorStatsdLineBuilder {
         }
     }
 
-    @Nullable
-    private String createConventionTags(NamingConvention namingConvention) {
+    private @Nullable String createConventionTags(NamingConvention namingConvention) {
         return id.getTagsAsIterable().iterator().hasNext() ? id.getConventionTags(namingConvention)
             .stream()
             .map(t -> sanitize(t.getKey()) + "=" + sanitize(t.getValue()))

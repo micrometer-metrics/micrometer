@@ -15,9 +15,9 @@
  */
 package io.micrometer.core.instrument;
 
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.pause.PauseDetector;
+import org.jspecify.annotations.Nullable;
 
 import java.time.Duration;
 import java.util.Arrays;
@@ -32,23 +32,34 @@ import java.util.Arrays;
 @SuppressWarnings("unchecked")
 public abstract class AbstractTimerBuilder<B extends AbstractTimerBuilder<B>> {
 
+    private static final Duration DEFAULT_MINIMUM_EXPECTED_DURATION = Duration.ofMillis(1);
+
+    private static final Duration DEFAULT_MAXIMUM_EXPECTED_DURATION = Duration.ofSeconds(30);
+
+    /**
+     * Default {@link DistributionStatisticConfig} used with {@link Timer} if not
+     * overridden.
+     */
+    static final DistributionStatisticConfig DEFAULT_DISTRIBUTION_CONFIG = DistributionStatisticConfig.builder()
+        .minimumExpectedValue((double) DEFAULT_MINIMUM_EXPECTED_DURATION.toNanos())
+        .maximumExpectedValue((double) DEFAULT_MAXIMUM_EXPECTED_DURATION.toNanos())
+        .build();
+
     protected final String name;
 
     protected Tags tags = Tags.empty();
 
     protected final DistributionStatisticConfig.Builder distributionConfigBuilder;
 
-    @Nullable
-    protected String description;
+    protected @Nullable String description;
 
-    @Nullable
-    protected PauseDetector pauseDetector;
+    protected @Nullable PauseDetector pauseDetector;
 
     protected AbstractTimerBuilder(String name) {
         this.name = name;
         this.distributionConfigBuilder = new DistributionStatisticConfig.Builder();
-        minimumExpectedValue(Duration.ofMillis(1));
-        maximumExpectedValue(Duration.ofSeconds(30));
+        minimumExpectedValue(DEFAULT_MINIMUM_EXPECTED_DURATION);
+        maximumExpectedValue(DEFAULT_MAXIMUM_EXPECTED_DURATION);
     }
 
     /**
@@ -89,7 +100,7 @@ public abstract class AbstractTimerBuilder<B extends AbstractTimerBuilder<B>> {
      * be expressed as {@code 0.95}.
      * @return This builder.
      */
-    public B publishPercentiles(@Nullable double... percentiles) {
+    public B publishPercentiles(double @Nullable ... percentiles) {
         this.distributionConfigBuilder.percentiles(percentiles);
         return (B) this;
     }
@@ -145,7 +156,7 @@ public abstract class AbstractTimerBuilder<B extends AbstractTimerBuilder<B>> {
      * are the threshold we intend to measure against, then.
      */
     @Deprecated
-    public B sla(@Nullable Duration... sla) {
+    public B sla(Duration @Nullable ... sla) {
         return serviceLevelObjectives(sla);
     }
 
@@ -160,7 +171,7 @@ public abstract class AbstractTimerBuilder<B extends AbstractTimerBuilder<B>> {
      * @return This builder.
      * @since 1.5.0
      */
-    public B serviceLevelObjectives(@Nullable Duration... slos) {
+    public B serviceLevelObjectives(Duration @Nullable ... slos) {
         if (slos != null) {
             this.distributionConfigBuilder
                 .serviceLevelObjectives(Arrays.stream(slos).mapToDouble(Duration::toNanos).toArray());

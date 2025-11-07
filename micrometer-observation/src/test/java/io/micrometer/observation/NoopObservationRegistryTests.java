@@ -22,12 +22,16 @@ import static org.assertj.core.api.BDDAssertions.then;
 class NoopObservationRegistryTests {
 
     @Test
-    void should_respect_scopes() {
-        ObservationRegistry observationRegistry = ObservationRegistry.NOOP;
+    @SuppressWarnings("NullAway")
+    void shouldRespectScopesIfDisabledByPredicate() {
+        ObservationRegistry observationRegistry = ObservationRegistry.create();
+        observationRegistry.observationConfig().getObservationHandlers().add(new ObservationTextPublisher());
+        observationRegistry.observationConfig().observationPredicate((name, context) -> false);
         then(observationRegistry.getCurrentObservation()).isNull();
 
         Observation observation = Observation.start("foo", observationRegistry);
         then(observation.isNoop()).isTrue();
+        then(observation).isSameAs(NoopButScopeHandlingObservation.INSTANCE);
         then(observationRegistry.getCurrentObservation()).isNull();
 
         try (Observation.Scope scope = observation.openScope()) {
@@ -39,6 +43,62 @@ class NoopObservationRegistryTests {
                 then(observationRegistry.getCurrentObservation()).isSameAs(observation);
             }
             then(observationRegistry.getCurrentObservation()).isSameAs(observation);
+        }
+
+        then(observationRegistry.getCurrentObservation()).isNull();
+    }
+
+    @Test
+    @SuppressWarnings("NullAway")
+    void shouldNotRespectScopesIfNullRegistryIsUsed() {
+        Observation observation = Observation.start("foo", null);
+        then(observation.isNoop()).isTrue();
+        then(observation).isSameAs(NoopObservation.INSTANCE);
+    }
+
+    @Test
+    @SuppressWarnings("NullAway")
+    void shouldNotRespectScopesIfNoopRegistryIsUsed() {
+        ObservationRegistry observationRegistry = ObservationRegistry.NOOP;
+        then(observationRegistry.getCurrentObservation()).isNull();
+
+        Observation observation = Observation.start("foo", observationRegistry);
+        then(observation.isNoop()).isTrue();
+        then(observation).isSameAs(NoopObservation.INSTANCE);
+        then(observationRegistry.getCurrentObservation()).isNull();
+
+        try (Observation.Scope ignored = observation.openScope()) {
+            then(observationRegistry.getCurrentObservationScope()).isSameAs(Observation.Scope.NOOP);
+            then(observationRegistry.getCurrentObservation()).isNull();
+            try (Observation.Scope ignored2 = observation.openScope()) {
+                then(observationRegistry.getCurrentObservationScope()).isSameAs(Observation.Scope.NOOP);
+                then(observationRegistry.getCurrentObservation()).isNull();
+            }
+            then(observationRegistry.getCurrentObservation()).isNull();
+        }
+
+        then(observationRegistry.getCurrentObservation()).isNull();
+    }
+
+    @Test
+    @SuppressWarnings("NullAway")
+    void shouldNotRespectScopesIfNoHandlersAreRegistered() {
+        ObservationRegistry observationRegistry = ObservationRegistry.create();
+        then(observationRegistry.getCurrentObservation()).isNull();
+
+        Observation observation = Observation.start("foo", observationRegistry);
+        then(observation.isNoop()).isTrue();
+        then(observation).isSameAs(NoopObservation.INSTANCE);
+        then(observationRegistry.getCurrentObservation()).isNull();
+
+        try (Observation.Scope ignored = observation.openScope()) {
+            then(observationRegistry.getCurrentObservationScope()).isSameAs(Observation.Scope.NOOP);
+            then(observationRegistry.getCurrentObservation()).isNull();
+            try (Observation.Scope ignored2 = observation.openScope()) {
+                then(observationRegistry.getCurrentObservationScope()).isSameAs(Observation.Scope.NOOP);
+                then(observationRegistry.getCurrentObservation()).isNull();
+            }
+            then(observationRegistry.getCurrentObservation()).isNull();
         }
 
         then(observationRegistry.getCurrentObservation()).isNull();

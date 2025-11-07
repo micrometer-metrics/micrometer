@@ -16,7 +16,6 @@
 
 package io.micrometer.prometheusmetrics;
 
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.Histogram;
@@ -24,6 +23,7 @@ import io.micrometer.core.instrument.distribution.TimeWindowFixedBoundaryHistogr
 import io.prometheus.metrics.core.exemplars.ExemplarSampler;
 import io.prometheus.metrics.model.snapshots.Exemplar;
 import io.prometheus.metrics.model.snapshots.Exemplars;
+import org.jspecify.annotations.Nullable;
 
 import java.time.Duration;
 import java.util.Arrays;
@@ -36,8 +36,7 @@ import java.util.Arrays;
  */
 class PrometheusHistogram extends TimeWindowFixedBoundaryHistogram {
 
-    @Nullable
-    private final ExemplarSampler exemplarSampler;
+    private final @Nullable ExemplarSampler exemplarSampler;
 
     PrometheusHistogram(Clock clock, DistributionStatisticConfig config,
             @Nullable ExemplarSamplerFactory exemplarSamplerFactory) {

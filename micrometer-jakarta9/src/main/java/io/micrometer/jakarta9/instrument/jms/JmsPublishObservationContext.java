@@ -16,10 +16,10 @@
 
 package io.micrometer.jakarta9.instrument.jms;
 
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.common.util.internal.logging.WarnThenDebugLogger;
 import io.micrometer.observation.transport.SenderContext;
 import jakarta.jms.Message;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Context that holds information for observation metadata collection during the
@@ -47,7 +47,9 @@ public class JmsPublishObservationContext extends SenderContext<Message> {
                 }
             }
         });
-        setCarrier(sendMessage);
+        if (sendMessage != null) {
+            setCarrier(sendMessage);
+        }
     }
 
 }

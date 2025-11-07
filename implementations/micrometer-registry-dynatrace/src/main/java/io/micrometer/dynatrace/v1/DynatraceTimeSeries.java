@@ -15,9 +15,9 @@
  */
 package io.micrometer.dynatrace.v1;
 
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.util.DoubleFormat;
 import io.micrometer.core.instrument.util.StringEscapeUtils;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -26,7 +26,7 @@ class DynatraceTimeSeries {
 
     private final String metricId;
 
-    private final Map<String, String> dimensions;
+    private final @Nullable Map<String, String> dimensions;
 
     private final long time;
 

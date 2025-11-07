@@ -15,8 +15,8 @@
  */
 package io.micrometer.core.instrument;
 
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.annotation.Incubating;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
@@ -65,16 +65,16 @@ public class MultiGauge {
             // intermediate variable.
             Stream<Meter.Id> idStream = StreamSupport.stream(rows.spliterator(), false).map(row -> {
                 Row r = row;
-                Meter.Id prefilteredId = commonId.withTags(r.uniqueTags);
-                Meter.Id rowId = registry.getMappedId(prefilteredId);
+                Meter.Id preFilteredId = commonId.withTags(r.uniqueTags);
+                Meter.Id rowId = registry.getMappedId(preFilteredId);
                 boolean previouslyDefined = oldRows.contains(rowId);
 
                 if (overwrite && previouslyDefined) {
-                    registry.removeByPreFilterId(prefilteredId);
+                    registry.removeByPreFilterId(preFilteredId);
                 }
 
                 if (overwrite || !previouslyDefined) {
-                    registry.gauge(prefilteredId, r.obj, new StrongReferenceGaugeFunction<>(r.obj, r.valueFunction));
+                    registry.gauge(preFilteredId, r.obj, new StrongReferenceGaugeFunction<>(r.obj, r.valueFunction));
                 }
 
                 return rowId;
@@ -131,11 +131,9 @@ public class MultiGauge {
 
         private Tags tags = Tags.empty();
 
-        @Nullable
-        private String description;
+        private @Nullable String description;
 
-        @Nullable
-        private String baseUnit;
+        private @Nullable String baseUnit;
 
         private Builder(String name) {
             this.name = name;

@@ -81,10 +81,10 @@ class JvmGcMetricsTest {
         System.gc();
         await().timeout(200, TimeUnit.MILLISECONDS)
             .alias("NotificationListener takes time after GC")
-            .untilAsserted(() -> assertThat(registry.find("jvm.gc.live.data.size").gauge().value()).isPositive());
-        assertThat(registry.find("jvm.gc.memory.allocated").counter().count()).isPositive();
-        assertThat(registry.find("jvm.gc.max.data.size").gauge().value()).isPositive();
-        Timer gcTimer = registry.find("jvm.gc.pause").tag("cause", "System.gc()").timer();
+            .untilAsserted(() -> assertThat(registry.get("jvm.gc.live.data.size").gauge().value()).isPositive());
+        assertThat(registry.get("jvm.gc.memory.allocated").counter().count()).isPositive();
+        assertThat(registry.get("jvm.gc.max.data.size").gauge().value()).isPositive();
+        Timer gcTimer = registry.get("jvm.gc.pause").tag("cause", "System.gc()").timer();
         assertThat(gcTimer).isNotNull();
         assertThat(gcTimer.count()).isPositive();
         assertThat(gcTimer.getId().getTag("gc")).isNotBlank();
@@ -182,7 +182,7 @@ class JvmGcMetricsTest {
             assertThat(notifications).isNotEmpty();
             // replay each notification and check size metrics not set to zero
             for (Notification notification : notifications) {
-                gcMetricsNotificationListener.handleNotification(notification, null);
+                gcMetricsNotificationListener.handleNotification(notification, new Object());
                 assertThat(registry.get("jvm.gc.live.data.size").gauge().value()).isPositive();
                 assertThat(registry.get("jvm.gc.max.data.size").gauge().value()).isPositive();
             }

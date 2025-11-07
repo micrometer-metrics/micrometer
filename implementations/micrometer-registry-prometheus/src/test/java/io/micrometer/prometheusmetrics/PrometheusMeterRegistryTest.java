@@ -15,11 +15,10 @@
  */
 package io.micrometer.prometheusmetrics;
 
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.Issue;
+import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.LongTaskTimer.Sample;
 import io.micrometer.core.instrument.Timer;
-import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.binder.jvm.JvmInfoMetrics;
 import io.micrometer.core.instrument.composite.CompositeMeterRegistry;
@@ -31,6 +30,7 @@ import io.prometheus.metrics.model.registry.PrometheusRegistry;
 import io.prometheus.metrics.model.snapshots.*;
 import io.prometheus.metrics.tracer.common.SpanContext;
 import org.assertj.core.api.Condition;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -106,6 +106,37 @@ class PrometheusMeterRegistryTest {
         assertThatThrownBy(() -> registry.counter("my.counter")).isInstanceOf(IllegalArgumentException.class)
             .hasMessage(
                     "Prometheus requires that all meters with the same name have the same set of tag keys. There is already an existing meter named 'my_counter' containing tag keys [test_k1]. The meter you are attempting to register has keys [].");
+    }
+
+    @Test
+    @Issue("#6434")
+    void registerAndScrapeGaugeAndCounterWithSameNameNoTags() {
+        registry.gauge("cache.removals", new AtomicInteger(19));
+        assertThatThrownBy(() -> registry.counter("cache.removals").increment())
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessage(
+                    "There is already a registered meter of a different type (DefaultGauge vs. Counter) with the same name: cache.removals");
+        assertThat(registry.scrape().lines()).hasSize(3).contains("# TYPE cache_removals gauge");
+    }
+
+    @Test
+    @Issue("#6434")
+    void registerAndScrapeGaugeAndCounterWithSameNameSameTagKeyDifferentTagValueNoException() {
+        registry.gauge("cache.removals", Tags.of("cache", "ehcache"), new AtomicInteger(19));
+        registry.counter("cache.removals", "cache", "redis").increment();
+        assertThat(registry.scrape().lines()).hasSize(3).contains("# TYPE cache_removals gauge");
+    }
+
+    @Test
+    @Issue("#6434")
+    void registerAndScrapeGaugeAndCounterWithSameNameSameTagKeyDifferentTagValueWithException() {
+        registry.throwExceptionOnRegistrationFailure();
+        registry.gauge("cache.removals", Tags.of("cache", "ehcache"), new AtomicInteger(19));
+        assertThatThrownBy(() -> registry.counter("cache.removals", "cache", "redis").increment())
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessage(
+                    "Prometheus requires that all meters with the same name have the same type. There is already an existing meter named 'cache_removals' that is a GAUGE. The meter you are attempting to register is a COUNTER.");
+        assertThat(registry.scrape().lines()).hasSize(3).contains("# TYPE cache_removals gauge");
     }
 
     @Test
@@ -371,8 +402,8 @@ class PrometheusMeterRegistryTest {
     }
 
     private int bufferLength() {
-        // noinspection ConstantConditions
-        return DistributionStatisticConfig.DEFAULT.getBufferLength();
+        Integer bufferLength = DistributionStatisticConfig.DEFAULT.getBufferLength();
+        return bufferLength != null ? bufferLength : 0;
     }
 
     @Issue("#61")
@@ -532,7 +563,7 @@ class PrometheusMeterRegistryTest {
 
     private void assertFilteredMetricSnapshots(String[] includedNames, String[] expectedNames) {
         Set<String> includeNameSet = new HashSet<>(Arrays.asList(includedNames));
-        MetricSnapshots snapshots = registry.getPrometheusRegistry().scrape(name -> includeNameSet.contains(name));
+        MetricSnapshots snapshots = registry.getPrometheusRegistry().scrape(includeNameSet::contains);
         String[] names = snapshots.stream()
             .map(snapshot -> snapshot.getMetadata().getPrometheusName())
             .toArray(String[]::new);
@@ -1041,14 +1072,14 @@ class PrometheusMeterRegistryTest {
     @Test
     void scrapeWhenMeterNameContainsSingleCharacter() {
         registry.counter("c").increment();
-        assertThatNoException().isThrownBy(() -> registry.scrape());
+        assertThatNoException().isThrownBy(registry::scrape);
     }
 
     @Test
     void createdTimestampEnabled() {
         PrometheusConfig config = new PrometheusConfig() {
             @Override
-            public String get(String key) {
+            public @Nullable String get(String key) {
                 return null;
             }
 
@@ -1087,7 +1118,7 @@ class PrometheusMeterRegistryTest {
     void createdTimestampDisabled() {
         PrometheusConfig config = new PrometheusConfig() {
             @Override
-            public String get(String key) {
+            public @Nullable String get(String key) {
                 return null;
             }
 
@@ -1127,7 +1158,7 @@ class PrometheusMeterRegistryTest {
     private PrometheusMeterRegistry createPrometheusMeterRegistryWithProperties(Properties properties) {
         PrometheusConfig prometheusConfig = new PrometheusConfig() {
             @Override
-            public String get(String key) {
+            public @Nullable String get(String key) {
                 return null;
             }
 

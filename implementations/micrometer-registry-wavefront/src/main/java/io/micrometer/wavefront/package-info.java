@@ -13,9 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-@NonNullApi
-@NonNullFields
+
+/**
+ * Deprecated since 1.16.0 due to Wavefront's End of Life Announcement.
+ */
+@NullMarked
+@Deprecated
 package io.micrometer.wavefront;
 
-import io.micrometer.common.lang.NonNullApi;
-import io.micrometer.common.lang.NonNullFields;
+import org.jspecify.annotations.NullMarked;

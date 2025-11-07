@@ -15,7 +15,7 @@
  */
 package io.micrometer.observation;
 
-import io.micrometer.common.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.List;
@@ -55,8 +55,7 @@ public interface ObservationRegistry {
      * method will return the current present {@link Observation} within the scope.
      * @return current observation or {@code null} if it's not present
      */
-    @Nullable
-    Observation getCurrentObservation();
+    @Nullable Observation getCurrentObservation();
 
     /**
      * When previously set will allow to retrieve the {@link Observation.Scope} at any
@@ -66,14 +65,13 @@ public interface ObservationRegistry {
      * method will return the current present {@link Observation.Scope}.
      * @return current observation scope or {@code null} if it's not present
      */
-    @Nullable
-    Observation.Scope getCurrentObservationScope();
+    Observation.@Nullable Scope getCurrentObservationScope();
 
     /**
      * Sets the observation scope as current.
      * @param current observation scope
      */
-    void setCurrentObservationScope(@Nullable Observation.Scope current);
+    void setCurrentObservationScope(Observation.@Nullable Scope current);
 
     /**
      * Configuration options for this registry.
@@ -114,7 +112,7 @@ public interface ObservationRegistry {
 
         /**
          * Register a predicate to define whether {@link Observation observation} should
-         * be created or a {@link NoopObservation} instead.
+         * be created or a no-op Observation instead.
          * @param predicate predicate
          * @return This configuration instance
          */
@@ -169,13 +167,13 @@ public interface ObservationRegistry {
         }
 
         /**
-         * Check to assert whether {@link Observation} should be created or
-         * {@link NoopObservation} instead.
+         * Check to assert whether {@link Observation} should be created or a no-op
+         * Observation instead.
          * @param name observation technical name
          * @param context context
          * @return {@code true} when observation is enabled
          */
-        boolean isObservationEnabled(String name, @Nullable Observation.Context context) {
+        boolean isObservationEnabled(@Nullable String name, Observation.@Nullable Context context) {
             for (ObservationPredicate predicate : this.observationPredicates) {
                 if (!predicate.test(name, context)) {
                     return false;

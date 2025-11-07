@@ -24,6 +24,7 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.Timer.Sample;
 import io.micrometer.core.instrument.binder.BaseUnits;
+import org.jspecify.annotations.Nullable;
 
 import java.util.EnumMap;
 import java.util.Map;
@@ -74,8 +75,8 @@ public abstract class AbstractMetricCollectingInterceptor {
         return Counter.builder(name)
             .description(description)
             .baseUnit(BaseUnits.MESSAGES)
-            .tag(TAG_SERVICE_NAME, method.getServiceName())
-            .tag(TAG_METHOD_NAME, method.getBareMethodName())
+            .tag(TAG_SERVICE_NAME, getTagValueOrUnknown(method::getServiceName))
+            .tag(TAG_METHOD_NAME, getTagValueOrUnknown(method::getBareMethodName))
             .tag(TAG_METHOD_TYPE, method.getType().name());
     }
 
@@ -90,9 +91,19 @@ public abstract class AbstractMetricCollectingInterceptor {
             final String description) {
         return Timer.builder(name)
             .description(description)
-            .tag(TAG_SERVICE_NAME, method.getServiceName())
-            .tag(TAG_METHOD_NAME, method.getBareMethodName())
+            .tag(TAG_SERVICE_NAME, getTagValueOrUnknown(method::getServiceName))
+            .tag(TAG_METHOD_NAME, getTagValueOrUnknown(method::getBareMethodName))
             .tag(TAG_METHOD_TYPE, method.getType().name());
+    }
+
+    private static String getTagValueOrUnknown(Supplier<@Nullable String> tagValueSupplier) {
+        String tagValue = tagValueSupplier.get();
+        if (tagValue == null) {
+            return "UNKNOWN";
+        }
+        else {
+            return tagValue;
+        }
     }
 
     private final Map<MethodDescriptor<?, ?>, MetricSet> metricsForMethods = new ConcurrentHashMap<>();

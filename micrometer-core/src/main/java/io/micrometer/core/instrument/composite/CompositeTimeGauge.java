@@ -15,10 +15,10 @@
  */
 package io.micrometer.core.instrument.composite;
 
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.TimeGauge;
 import io.micrometer.core.instrument.noop.NoopTimeGauge;
+import org.jspecify.annotations.Nullable;
 
 import java.lang.ref.WeakReference;
 import java.util.concurrent.TimeUnit;
@@ -55,7 +55,7 @@ class CompositeTimeGauge<T> extends AbstractCompositeMeter<TimeGauge> implements
     }
 
     @Override
-    TimeGauge registerNewMeter(MeterRegistry registry) {
+    @Nullable TimeGauge registerNewMeter(MeterRegistry registry) {
         final T obj = ref.get();
         if (obj == null) {
             return null;

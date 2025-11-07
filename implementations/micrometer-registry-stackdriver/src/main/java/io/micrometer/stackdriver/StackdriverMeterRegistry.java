@@ -24,7 +24,6 @@ import com.google.cloud.monitoring.v3.MetricServiceClient;
 import com.google.cloud.monitoring.v3.MetricServiceSettings;
 import com.google.monitoring.v3.*;
 import com.google.protobuf.Timestamp;
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.common.util.internal.logging.InternalLogger;
 import io.micrometer.common.util.internal.logging.InternalLoggerFactory;
 import io.micrometer.core.instrument.Timer;
@@ -37,6 +36,7 @@ import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.util.DoubleFormat;
 import io.micrometer.core.instrument.util.NamedThreadFactory;
+import org.jspecify.annotations.Nullable;
 
 import java.util.*;
 import java.util.concurrent.Callable;
@@ -73,6 +73,8 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
 
     private final StackdriverConfig config;
 
+    private final MetricServiceClientFactory clientFactory;
+
     private long previousBatchEndTime;
 
     /**
@@ -80,22 +82,22 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
      */
     private final Set<String> verifiedDescriptors = ConcurrentHashMap.newKeySet();
 
-    @Nullable
-    private MetricServiceSettings metricServiceSettings;
+    private @Nullable MetricServiceSettings metricServiceSettings;
 
     // VisibleForTesting
-    @Nullable
-    MetricServiceClient client;
+    @Nullable MetricServiceClient client;
 
     public StackdriverMeterRegistry(StackdriverConfig config, Clock clock) {
-        this(config, clock, DEFAULT_THREAD_FACTORY, () -> MetricServiceSettings.newBuilder().build());
+        this(config, clock, DEFAULT_THREAD_FACTORY, () -> MetricServiceSettings.newBuilder().build(),
+                new StackdriverMetricServiceClientFactory());
     }
 
     private StackdriverMeterRegistry(StackdriverConfig config, Clock clock, ThreadFactory threadFactory,
-            Callable<MetricServiceSettings> metricServiceSettings) {
+            Callable<MetricServiceSettings> metricServiceSettings, MetricServiceClientFactory clientFactory) {
         super(config, clock);
 
         this.config = config;
+        this.clientFactory = clientFactory;
 
         try {
             this.metricServiceSettings = metricServiceSettings.call();
@@ -124,7 +126,7 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
             else {
                 shutdownClientIfNecessary(true);
                 try {
-                    this.client = MetricServiceClient.create(metricServiceSettings);
+                    this.client = this.clientFactory.create(metricServiceSettings);
                     super.start(threadFactory);
                 }
                 catch (Exception e) {
@@ -312,6 +314,8 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
 
         private Callable<MetricServiceSettings> metricServiceSettings;
 
+        private MetricServiceClientFactory clientFactory = new StackdriverMetricServiceClientFactory();
+
         Builder(StackdriverConfig config) {
             this.config = config;
             this.metricServiceSettings = () -> {
@@ -339,8 +343,14 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
             return this;
         }
 
+        // VisibleForTesting
+        Builder clientFactory(MetricServiceClientFactory clientFactory) {
+            this.clientFactory = clientFactory;
+            return this;
+        }
+
         public StackdriverMeterRegistry build() {
-            return new StackdriverMeterRegistry(config, clock, threadFactory, metricServiceSettings);
+            return new StackdriverMeterRegistry(config, clock, threadFactory, metricServiceSettings, clientFactory);
         }
 
     }
@@ -422,6 +432,10 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
         private void createMetricDescriptorIfNecessary(MetricServiceClient client, Meter.Id id,
                 MetricDescriptor.ValueType valueType, @Nullable String statistic,
                 MetricDescriptor.MetricKind metricKind) {
+
+            if (!config.autoCreateMetricDescriptors()) {
+                return;
+            }
 
             if (verifiedDescriptors.isEmpty()) {
                 prePopulateVerifiedDescriptors();

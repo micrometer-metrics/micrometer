@@ -15,9 +15,6 @@
  */
 package io.micrometer.core.instrument.binder.kafka;
 
-import io.micrometer.common.lang.NonNullApi;
-import io.micrometer.common.lang.NonNullFields;
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.common.util.internal.logging.InternalLogger;
 import io.micrometer.common.util.internal.logging.InternalLoggerFactory;
 import io.micrometer.common.util.internal.logging.WarnThenDebugLogger;
@@ -29,6 +26,8 @@ import org.apache.kafka.common.Metric;
 import org.apache.kafka.common.MetricName;
 import org.apache.kafka.common.metrics.KafkaMetric;
 import org.apache.kafka.common.metrics.Measurable;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 import java.time.Duration;
 import java.util.*;
@@ -54,8 +53,7 @@ import static java.util.Collections.emptyList;
  * @since 1.4.0
  */
 @Incubating(since = "1.4.0")
-@NonNullApi
-@NonNullFields
+@NullMarked
 class KafkaMetrics implements MeterBinder, AutoCloseable {
 
     private static final InternalLogger log = InternalLoggerFactory.getInstance(KafkaMetrics.class);
@@ -70,7 +68,7 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
     static final String KAFKA_VERSION_TAG_NAME = "kafka.version";
     static final String DEFAULT_VALUE = "unknown";
 
-    private static final long REFRESH_INTERVAL_MILLIS = Duration.ofSeconds(60).toMillis();
+    private static final Duration DEFAULT_REFRESH_INTERVAL = Duration.ofSeconds(60);
 
     private static final Set<Class<?>> counterMeasurableClasses = new HashSet<>();
 
@@ -99,8 +97,9 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
 
     private final boolean schedulerExternallyManaged;
 
-    @Nullable
-    private Iterable<Tag> commonTags;
+    private final Duration refreshInterval;
+
+    private @Nullable Iterable<Tag> commonTags;
 
     /**
      * Keeps track of current set of metrics.
@@ -109,8 +108,7 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
 
     private String kafkaVersion = DEFAULT_VALUE;
 
-    @Nullable
-    private volatile MeterRegistry registry;
+    private volatile @Nullable MeterRegistry registry;
 
     private final Set<Meter.Id> registeredMeterIds = ConcurrentHashMap.newKeySet();
 
@@ -119,20 +117,26 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
     }
 
     KafkaMetrics(Supplier<Map<MetricName, ? extends Metric>> metricsSupplier, Iterable<Tag> extraTags) {
-        this(metricsSupplier, extraTags, createDefaultScheduler(), false);
+        this(metricsSupplier, extraTags, createDefaultScheduler(), false, DEFAULT_REFRESH_INTERVAL);
     }
 
     KafkaMetrics(Supplier<Map<MetricName, ? extends Metric>> metricsSupplier, Iterable<Tag> extraTags,
             ScheduledExecutorService scheduler) {
-        this(metricsSupplier, extraTags, scheduler, true);
+        this(metricsSupplier, extraTags, scheduler, true, DEFAULT_REFRESH_INTERVAL);
     }
 
     KafkaMetrics(Supplier<Map<MetricName, ? extends Metric>> metricsSupplier, Iterable<Tag> extraTags,
-            ScheduledExecutorService scheduler, boolean schedulerExternallyManaged) {
+            ScheduledExecutorService scheduler, Duration refreshInterval) {
+        this(metricsSupplier, extraTags, scheduler, true, refreshInterval);
+    }
+
+    KafkaMetrics(Supplier<Map<MetricName, ? extends Metric>> metricsSupplier, Iterable<Tag> extraTags,
+            ScheduledExecutorService scheduler, boolean schedulerExternallyManaged, Duration refreshInterval) {
         this.metricsSupplier = metricsSupplier;
         this.extraTags = extraTags;
         this.scheduler = scheduler;
         this.schedulerExternallyManaged = schedulerExternallyManaged;
+        this.refreshInterval = refreshInterval;
     }
 
     @Override
@@ -142,8 +146,8 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
         commonTags = getCommonTags(registry);
         prepareToBindMetrics(registry);
         checkAndBindMetrics(registry);
-        scheduler.scheduleAtFixedRate(() -> checkAndBindMetrics(registry), REFRESH_INTERVAL_MILLIS,
-                REFRESH_INTERVAL_MILLIS, TimeUnit.MILLISECONDS);
+        scheduler.scheduleAtFixedRate(() -> checkAndBindMetrics(registry), refreshInterval.toMillis(),
+                refreshInterval.toMillis(), TimeUnit.MILLISECONDS);
     }
 
     private Iterable<Tag> getCommonTags(MeterRegistry registry) {
@@ -162,7 +166,7 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
         // Collect static metrics and tags
         Metric startTimeMetric = null;
 
-        for (Map.Entry<MetricName, ? extends Metric> entry : metrics.entrySet()) {
+        for (Map.Entry<MetricName, ? extends Metric> entry : Objects.requireNonNull(metrics).entrySet()) {
             MetricName name = entry.getKey();
             if (METRIC_GROUP_APP_INFO.equals(name.group()))
                 if (VERSION_METRIC_NAME.equals(name.name())) {
@@ -285,8 +289,7 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
         return registerGauge(registry, metricName, meterName, tags);
     }
 
-    @Nullable
-    private static Class<? extends Measurable> getMeasurableClass(Metric metric) {
+    private static @Nullable Class<? extends Measurable> getMeasurableClass(Metric metric) {
         if (!(metric instanceof KafkaMetric)) {
             return null;
         }
@@ -319,19 +322,26 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
     }
 
     private ToDoubleFunction<AtomicReference<Map<MetricName, ? extends Metric>>> toMetricValue(MetricName metricName) {
-        return metricsReference -> toDouble(metricsReference.get().get(metricName));
+        return metricsReference -> toDouble(Objects.requireNonNull(metricsReference.get()).get(metricName));
     }
 
     private double toDouble(@Nullable Metric metric) {
-        return (metric != null) ? ((Number) metric.metricValue()).doubleValue() : Double.NaN;
+        if (metric == null) {
+            return Double.NaN;
+        }
+        Object metricValue = metric.metricValue();
+        if (metricValue == null) {
+            return Double.NaN;
+        }
+        return ((Number) metricValue).doubleValue();
     }
 
     private List<Tag> meterTags(MetricName metricName, boolean includeCommonTags) {
         List<Tag> tags = new ArrayList<>();
-        metricName.tags().forEach((key, value) -> tags.add(Tag.of(key.replaceAll("-", "."), value)));
+        metricName.tags().forEach((key, value) -> tags.add(Tag.of(key.replace('-', '.'), value)));
         tags.add(Tag.of(KAFKA_VERSION_TAG_NAME, kafkaVersion));
         extraTags.forEach(tags::add);
-        if (includeCommonTags) {
+        if (includeCommonTags && commonTags != null) {
             commonTags.forEach(tags::add);
         }
         return tags;
@@ -343,7 +353,7 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
 
     private String meterName(MetricName metricName) {
         String name = METRIC_NAME_PREFIX + metricName.group() + "." + metricName.name();
-        return name.replaceAll("-metrics", "").replaceAll("-", ".");
+        return name.replaceAll("-metrics", "").replace('-', '.');
     }
 
     private Meter.Id meterIdForComparison(MetricName metricName) {
@@ -356,8 +366,10 @@ class KafkaMetrics implements MeterBinder, AutoCloseable {
             this.scheduler.shutdownNow();
         }
 
-        for (Meter.Id id : registeredMeterIds) {
-            registry.remove(id);
+        if (registry != null) {
+            for (Meter.Id id : registeredMeterIds) {
+                registry.remove(id);
+            }
         }
     }
 

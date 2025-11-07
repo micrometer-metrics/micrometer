@@ -15,7 +15,6 @@
  */
 package io.micrometer.core.instrument.binder.db;
 
-import io.micrometer.common.lang.NonNull;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
@@ -24,6 +23,7 @@ import org.jooq.*;
 import org.jooq.exception.DataAccessException;
 import org.jooq.impl.DSL;
 import org.jooq.impl.DefaultConfiguration;
+import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.Test;
 
 import java.sql.Connection;
@@ -174,6 +174,23 @@ class MetricsDSLContextTest {
     }
 
     @Test
+    // gh-6583
+    void fetchExistsIsTimedWithProvidedTags() throws SQLException {
+        try (Connection conn = DriverManager.getConnection("jdbc:h2:mem:fetchExists")) {
+            MetricsDSLContext jooq = createDatabase(conn);
+
+            boolean exists = jooq.tag("name", "checkAuthorExists").fetchExists(table("author"), field("id").eq(1));
+            assertThat(exists).isTrue();
+
+            assertThat(meterRegistry.get("jooq.query")
+                .tag("name", "checkAuthorExists")
+                .tag("type", "read")
+                .timer()
+                .count()).isEqualTo(1);
+        }
+    }
+
+    @Test
     void userExecuteListenerShouldBePreserved() {
         ExecuteListener userExecuteListener = mock(ExecuteListener.class);
         Configuration configuration = new DefaultConfiguration().set(() -> userExecuteListener);
@@ -186,14 +203,14 @@ class MetricsDSLContextTest {
         assertThat(executeListenerProviders[1].provide()).isInstanceOf(JooqExecuteListener.class);
 
         SelectSelectStep<Record> select = jooq.tag("name", "selectAllAuthors").select(asterisk());
+        assertThat(select.configuration()).isNotNull();
         executeListenerProviders = select.configuration().executeListenerProviders();
         assertThat(executeListenerProviders).hasSize(2);
         assertThat(executeListenerProviders[0].provide()).isSameAs(userExecuteListener);
         assertThat(executeListenerProviders[1].provide()).isInstanceOf(JooqExecuteListener.class);
     }
 
-    @NonNull
-    private MetricsDSLContext createDatabase(Connection conn) {
+    private @NonNull MetricsDSLContext createDatabase(Connection conn) {
         // tag::setup[]
         Configuration configuration = new DefaultConfiguration().set(conn).set(SQLDialect.H2);
 

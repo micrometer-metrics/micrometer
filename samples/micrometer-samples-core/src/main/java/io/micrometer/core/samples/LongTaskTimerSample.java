@@ -31,6 +31,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class LongTaskTimerSample {
 
+    @SuppressWarnings("ModifyCollectionInEnhancedForLoop")
     public static void main(String[] args) {
         MeterRegistry registry = SampleConfig.myMonitoringSystem();
         LongTaskTimer timer = registry.more().longTaskTimer("longTaskTimer");

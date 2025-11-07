@@ -15,9 +15,9 @@
  */
 package io.micrometer.influx;
 
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.config.NamingConvention;
+import org.jspecify.annotations.Nullable;
 
 import java.util.regex.Pattern;
 
@@ -48,7 +48,7 @@ public class InfluxNamingConvention implements NamingConvention {
 
     @Override
     public String name(String name, Meter.Type type, @Nullable String baseUnit) {
-        return escape(delegate.name(name, type, baseUnit).replace("=", "_"));
+        return escape(delegate.name(name, type, baseUnit).replace('=', '_'));
     }
 
     @Override

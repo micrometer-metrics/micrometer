@@ -15,9 +15,9 @@
  */
 package io.micrometer.kairos;
 
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.config.validate.Validated;
 import io.micrometer.core.instrument.step.StepRegistryConfig;
+import org.jspecify.annotations.Nullable;
 
 import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.checkAll;
 import static io.micrometer.core.instrument.config.MeterRegistryConfigValidator.checkRequired;
@@ -58,8 +58,7 @@ public interface KairosConfig extends StepRegistryConfig {
      * @return Authenticate requests with this user. By default is {@code null}, and the
      * registry will not attempt to present credentials to KairosDB.
      */
-    @Nullable
-    default String userName() {
+    default @Nullable String userName() {
         return getSecret(this, "userName").orElse(null);
     }
 
@@ -67,8 +66,7 @@ public interface KairosConfig extends StepRegistryConfig {
      * @return Authenticate requests with this password. By default is {@code null}, and
      * the registry will not attempt to present credentials to KairosDB.
      */
-    @Nullable
-    default String password() {
+    default @Nullable String password() {
         return getSecret(this, "password").orElse(null);
     }
 

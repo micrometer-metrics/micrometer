@@ -17,6 +17,7 @@ package io.micrometer.dynatrace;
 
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.ipc.http.HttpSender;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -339,7 +340,7 @@ class DynatraceMeterRegistryTest {
     private DynatraceConfig createDefaultDynatraceConfig() {
         return new DynatraceConfig() {
             @Override
-            public String get(String key) {
+            public @Nullable String get(String key) {
                 return null;
             }
 
@@ -363,7 +364,7 @@ class DynatraceMeterRegistryTest {
     private static DynatraceConfig getNonSummaryInstrumentsConfig() {
         return new DynatraceConfig() {
             @Override
-            public String get(String key) {
+            public @Nullable String get(String key) {
                 return null;
             }
 

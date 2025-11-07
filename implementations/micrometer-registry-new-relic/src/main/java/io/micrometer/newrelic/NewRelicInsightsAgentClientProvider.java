@@ -110,6 +110,7 @@ public class NewRelicInsightsAgentClientProvider implements NewRelicClientProvid
         return writeCounterValues(counter.getId(), counter.count());
     }
 
+    @SuppressWarnings("MixedMutabilityReturnType")
     private Map<String, Object> writeCounterValues(Meter.Id id, double count) {
         if (!Double.isFinite(count)) {
             return Collections.emptyMap();
@@ -121,6 +122,7 @@ public class NewRelicInsightsAgentClientProvider implements NewRelicClientProvid
         return attributes;
     }
 
+    @SuppressWarnings("MixedMutabilityReturnType")
     @Override
     public Map<String, Object> writeGauge(Gauge gauge) {
         double value = gauge.value();
@@ -134,6 +136,7 @@ public class NewRelicInsightsAgentClientProvider implements NewRelicClientProvid
         return attributes;
     }
 
+    @SuppressWarnings("MixedMutabilityReturnType")
     @Override
     public Map<String, Object> writeTimeGauge(TimeGauge gauge) {
         double value = gauge.value();

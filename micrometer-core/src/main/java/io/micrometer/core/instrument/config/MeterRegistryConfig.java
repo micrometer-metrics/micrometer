@@ -15,9 +15,9 @@
  */
 package io.micrometer.core.instrument.config;
 
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.config.validate.Validated;
 import io.micrometer.core.instrument.config.validate.ValidationException;
+import org.jspecify.annotations.Nullable;
 
 public interface MeterRegistryConfig {
 
@@ -28,8 +28,7 @@ public interface MeterRegistryConfig {
      * @param key Key to lookup in the config.
      * @return Value for the key or null if no key is present.
      */
-    @Nullable
-    String get(String key);
+    @Nullable String get(String key);
 
     /**
      * Validate configuration.

@@ -10,7 +10,6 @@ if (!javaLanguageVersion.canCompileOrRun(17)) {
 
 dependencies {
     implementation project(":micrometer-core")
-    implementation project(":micrometer-observation")
 
     testImplementation project(":micrometer-observation-test")
     testImplementation project(":micrometer-test")

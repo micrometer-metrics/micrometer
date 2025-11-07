@@ -15,7 +15,6 @@
  */
 package io.micrometer.core.instrument.binder.httpcomponents;
 
-import io.micrometer.common.lang.NonNull;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
@@ -82,7 +81,7 @@ public class PoolingHttpClientConnectionManagerMetricsBinder implements MeterBin
     }
 
     @Override
-    public void bindTo(@NonNull MeterRegistry registry) {
+    public void bindTo(MeterRegistry registry) {
         registerTotalMetrics(registry);
     }
 

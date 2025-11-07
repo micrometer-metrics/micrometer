@@ -16,7 +16,7 @@
 package io.micrometer.observation;
 
 import io.micrometer.common.KeyValues;
-import io.micrometer.common.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Contains conventions for naming and {@link KeyValues} providing.
@@ -60,8 +60,7 @@ public interface ObservationConvention<T extends Observation.Context> extends Ke
      * Allows to override the name for an observation.
      * @return the new name for the observation
      */
-    @Nullable
-    default String getName() {
+    default @Nullable String getName() {
         return null;
     }
 
@@ -72,8 +71,7 @@ public interface ObservationConvention<T extends Observation.Context> extends Ke
      * @param context context
      * @return the new, contextual name for the observation
      */
-    @Nullable
-    default String getContextualName(T context) {
+    default @Nullable String getContextualName(T context) {
         return null;
     }
 

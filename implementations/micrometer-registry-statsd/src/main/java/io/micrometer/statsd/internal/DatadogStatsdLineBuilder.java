@@ -15,7 +15,6 @@
  */
 package io.micrometer.statsd.internal;
 
-import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Statistic;
@@ -23,6 +22,7 @@ import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.util.DoubleFormat;
+import org.jspecify.annotations.Nullable;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -42,8 +42,7 @@ public class DatadogStatsdLineBuilder extends FlavorStatsdLineBuilder {
 
     private volatile String name;
 
-    @Nullable
-    private volatile String conventionTags;
+    private volatile @Nullable String conventionTags;
 
     private volatile String tagsNoStat;
 
@@ -52,8 +51,7 @@ public class DatadogStatsdLineBuilder extends FlavorStatsdLineBuilder {
     private final boolean percentileHistogram;
 
     // VisibleForTesting
-    @Nullable
-    String ddEntityId;
+    @Nullable String ddEntityId;
 
     public DatadogStatsdLineBuilder(Meter.Id id, MeterRegistry.Config config) {
         this(id, config, null);
@@ -125,8 +123,7 @@ public class DatadogStatsdLineBuilder extends FlavorStatsdLineBuilder {
         }
     }
 
-    @Nullable
-    private String createConventionTags(NamingConvention namingConvention) {
+    private @Nullable String createConventionTags(NamingConvention namingConvention) {
         String conventionTags = id.getTagsAsIterable().iterator().hasNext()
                 ? id.getConventionTags(namingConvention).stream().map(this::formatTag).collect(Collectors.joining(","))
                 : null;
@@ -141,8 +138,7 @@ public class DatadogStatsdLineBuilder extends FlavorStatsdLineBuilder {
         return tags(null, conventionTags, ":", "|#");
     }
 
-    @Nullable
-    private String appendEntityIdTag(@Nullable String tags) {
+    private @Nullable String appendEntityIdTag(@Nullable String tags) {
         if (ddEntityId != null && !ddEntityId.trim().isEmpty()) {
             String entityIdTag = formatTag(Tag.of(ENTITY_ID_TAG_NAME, ddEntityId));
             return tags == null ? entityIdTag : tags + "," + entityIdTag;
