@@ -436,6 +436,8 @@ public class PostgreSQLDatabaseMetrics implements MeterBinder {
             try {
                 final Matcher matcher = VERSION_PATTERN.matcher(versionString);
                 if (!matcher.matches()) {
+                    log.warn("Received Postgres version {} does not match the expected pattern {}", versionString,
+                            VERSION_PATTERN.pattern());
                     return EMPTY;
                 }
                 final String[] versionArr = matcher.group(1).split("\\.", 3);
