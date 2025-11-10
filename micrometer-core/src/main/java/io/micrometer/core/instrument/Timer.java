@@ -22,7 +22,6 @@ import io.micrometer.core.instrument.distribution.HistogramSupport;
 import io.micrometer.core.instrument.distribution.ValueAtPercentile;
 import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import io.micrometer.core.instrument.util.TimeUtils;
-import org.jspecify.annotations.NullUnmarked;
 import org.jspecify.annotations.Nullable;
 
 import java.time.Duration;
@@ -132,7 +131,7 @@ public interface Timer extends Meter, HistogramSupport {
      * @param <T> The return type of the {@link Supplier}.
      * @return The return value of {@code f}.
      */
-    <T> @NullUnmarked T record(Supplier<T> f);
+    <T extends @Nullable Object> T record(Supplier<T> f);
 
     /**
      * Executes the Supplier {@code f} and records the time taken.
@@ -189,7 +188,7 @@ public interface Timer extends Meter, HistogramSupport {
      * @return The return value of {@code f}.
      * @throws Exception Any exception bubbling up from the callable.
      */
-    <T> @NullUnmarked T recordCallable(Callable<T> f) throws Exception;
+    <T extends @Nullable Object> T recordCallable(Callable<T> f) throws Exception;
 
     /**
      * Executes the runnable {@code f} and records the time taken.
