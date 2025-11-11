@@ -70,7 +70,7 @@ class Jersey3Test extends JerseyTest {
             logbackMetrics.bindTo(registry);
             InternalLogger logger = InternalLoggerFactory.getInstance(Jersey3Test.class);
             logger.info("test");
-            assertThat(registry.get("logback.events").tags("level", "info").counter().count()).isPositive();
+            assertThat(registry.get("logback.events").tags("level", "info").functionCounter().count()).isPositive();
         }
     }
 

@@ -19,10 +19,7 @@ import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.LoggerContext;
 import io.micrometer.core.Issue;
-import io.micrometer.core.instrument.Counter;
-import io.micrometer.core.instrument.Meter;
-import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.MockClock;
+import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.cumulative.CumulativeCounter;
 import io.micrometer.core.instrument.simple.SimpleConfig;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
@@ -31,8 +28,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.slf4j.LoggerFactory;
-
-import java.util.concurrent.atomic.AtomicInteger;
 
 import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -62,7 +57,7 @@ class LogbackMetricsTest {
 
     @Test
     void logbackLevelMetrics() {
-        assertThat(registry.get("logback.events").counter().count()).isEqualTo(0.0);
+        assertThat(registry.get("logback.events").functionCounter().count()).isEqualTo(0.0);
 
         // tag::example[]
         logger.setLevel(Level.INFO);
@@ -71,8 +66,8 @@ class LogbackMetricsTest {
         logger.error("error");
         logger.debug("debug"); // shouldn't record a metric
 
-        assertThat(registry.get("logback.events").tags("level", "warn").counter().count()).isEqualTo(1.0);
-        assertThat(registry.get("logback.events").tags("level", "debug").counter().count()).isEqualTo(0.0);
+        assertThat(registry.get("logback.events").tags("level", "warn").functionCounter().count()).isEqualTo(1.0);
+        assertThat(registry.get("logback.events").tags("level", "debug").functionCounter().count()).isEqualTo(0.0);
         // end::example[]
     }
 
@@ -81,7 +76,7 @@ class LogbackMetricsTest {
     void isLevelEnabledDoesntContributeToCounts() {
         logger.isErrorEnabled();
 
-        assertThat(registry.get("logback.events").tags("level", "error").counter().count()).isEqualTo(0.0);
+        assertThat(registry.get("logback.events").tags("level", "error").functionCounter().count()).isEqualTo(0.0);
     }
 
     @Issue("#411, #3623")
@@ -92,7 +87,7 @@ class LogbackMetricsTest {
             logbackMetrics.bindTo(registry);
             LoggerFactory.getLogger("test").info("This should be counted once");
         }
-        assertThat(registry.get("logback.events").tags("level", "info").counter().count()).isOne();
+        assertThat(registry.get("logback.events").tags("level", "info").functionCounter().count()).isOne();
     }
 
     @Issue("#421")
@@ -122,64 +117,13 @@ class LogbackMetricsTest {
         assertThat(loggerContext.getTurboFilterList()).hasSize(1);
     }
 
-    @Issue("#2270")
-    @Test
-    void resetIgnoreMetricsWhenRunnableThrows() {
-        Counter infoLogCounter = registry.get("logback.events").tag("level", "info").counter();
-        logger.info("hi");
-        assertThat(infoLogCounter.count()).isEqualTo(1);
-        try {
-            LogbackMetrics.ignoreMetrics(() -> {
-                throw new RuntimeException();
-            });
-        }
-        catch (RuntimeException ignore) {
-        }
-        logger.info("hi");
-        assertThat(infoLogCounter.count()).isEqualTo(2);
-    }
-
-    @Issue("#3891")
-    @Test
-    void threadLocalNotUsedWhenLogLevelNotEnabled() {
-        ThreadLocal<Boolean> priorThreadLocal = LogbackMetrics.ignoreMetrics;
-        AtomicInteger interactions = new AtomicInteger();
-        try {
-            LogbackMetrics.ignoreMetrics = new ThreadLocal<Boolean>() {
-                @Override
-                public Boolean get() {
-                    interactions.incrementAndGet();
-                    return super.get();
-                }
-
-                @Override
-                public void set(Boolean value) {
-                    interactions.incrementAndGet();
-                    super.set(value);
-                }
-
-                @Override
-                public void remove() {
-                    interactions.incrementAndGet();
-                    super.remove();
-                }
-            };
-            logger.trace("trace");
-            logger.isErrorEnabled();
-            assertThat(interactions.get()).isZero();
-        }
-        finally {
-            LogbackMetrics.ignoreMetrics = priorThreadLocal;
-        }
-    }
-
     @Test
     @Issue("#4404")
     void slf4j2FluentApiIncrementsCounter() {
         org.slf4j.Logger logger = LoggerFactory.getLogger("test");
         logger.atWarn().setMessage("test warn log with fluent builder").log();
 
-        assertThat(registry.get("logback.events").tags("level", "warn").counter().count()).isEqualTo(1.0);
+        assertThat(registry.get("logback.events").tags("level", "warn").functionCounter().count()).isEqualTo(1.0);
     }
 
     @NullMarked
