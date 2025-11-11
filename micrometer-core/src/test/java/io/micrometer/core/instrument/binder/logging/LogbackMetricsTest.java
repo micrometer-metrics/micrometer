@@ -173,6 +173,15 @@ class LogbackMetricsTest {
         }
     }
 
+    @Test
+    @Issue("#4404")
+    void slf4j2FluentApiIncrementsCounter() {
+        org.slf4j.Logger logger = LoggerFactory.getLogger("test");
+        logger.atWarn().setMessage("test warn log with fluent builder").log();
+
+        assertThat(registry.get("logback.events").tags("level", "warn").counter().count()).isEqualTo(1.0);
+    }
+
     @NullMarked
     private static class LoggingCounterMeterRegistry extends SimpleMeterRegistry {
 
