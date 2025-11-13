@@ -202,7 +202,7 @@ Micrometer supports two pause detector implementations: a clock-drift based dete
 
 The clock-drift based detector has a configurable sleep interval and pause threshold. CPU consumption is inversely proportional to `sleepInterval`, as is pause detection accuracy. 100ms for both values is a reasonable default to offer decent detection of long pause events while consuming a negligible amount of CPU time.
 
-NOTE: You need to add LatencyUtils to your runtime classpath to use the ClockDriftPauseDetector.
+NOTE: You need to add LatencyUtils(`org.latencyutils:LatencyUtils`) to your runtime classpath to use the `ClockDriftPauseDetector`.
 Without it on the runtime classpath, a warning will be logged and no pause detection will happen.
 
 You can customize the pause detector as follows:
