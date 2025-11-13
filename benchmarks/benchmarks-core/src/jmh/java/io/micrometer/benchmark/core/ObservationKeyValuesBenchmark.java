@@ -20,16 +20,20 @@ import io.micrometer.common.KeyValues;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
 import org.openjdk.jmh.annotations.*;
+import org.openjdk.jmh.profile.GCProfiler;
 import org.openjdk.jmh.runner.Runner;
 import org.openjdk.jmh.runner.RunnerException;
-import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
 
 import java.util.concurrent.TimeUnit;
 
-@State(Scope.Benchmark)
+@Fork(1)
+@Warmup(iterations = 3)
+@Measurement(iterations = 5)
+@BenchmarkMode(Mode.SampleTime)
 @OutputTimeUnit(TimeUnit.NANOSECONDS)
 @Threads(4)
+@State(Scope.Benchmark)
 public class ObservationKeyValuesBenchmark {
 
     private static final KeyValues KEY_VALUES = KeyValues.of("key1", "value1", "key2", "value2", "key3", "value3",
@@ -75,19 +79,14 @@ public class ObservationKeyValuesBenchmark {
         return observation.getContext().getLowCardinalityKeyValues();
     }
 
-    public static void main(String[] args) throws RunnerException {
-        Options options = new OptionsBuilder().include(ObservationKeyValuesBenchmark.class.getSimpleName())
-            .warmupIterations(3)
-            .measurementIterations(5)
-            .mode(Mode.SampleTime)
-            .forks(1)
-            .build();
-
-        new Runner(options).run();
-    }
-
     static class TestContext extends Observation.Context {
 
+    }
+
+    public static void main(String[] args) throws RunnerException {
+        new Runner(new OptionsBuilder().include(ObservationKeyValuesBenchmark.class.getSimpleName())
+            .addProfiler(GCProfiler.class)
+            .build()).run();
     }
 
 }

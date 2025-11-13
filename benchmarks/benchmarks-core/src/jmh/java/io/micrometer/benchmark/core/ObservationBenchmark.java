@@ -15,8 +15,6 @@
  */
 package io.micrometer.benchmark.core;
 
-import java.util.concurrent.TimeUnit;
-
 import io.micrometer.core.instrument.LongTaskTimer;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.Timer;
@@ -31,11 +29,15 @@ import org.openjdk.jmh.runner.Runner;
 import org.openjdk.jmh.runner.RunnerException;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
 
+import java.util.concurrent.TimeUnit;
+
 @Fork(1)
-@Threads(4)
-@State(Scope.Benchmark)
+@Warmup(iterations = 2)
+@Measurement(iterations = 2)
 @BenchmarkMode(Mode.SampleTime)
 @OutputTimeUnit(TimeUnit.MICROSECONDS)
+@Threads(4)
+@State(Scope.Benchmark)
 public class ObservationBenchmark {
 
     SimpleMeterRegistry meterRegistry;

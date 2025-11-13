@@ -22,25 +22,17 @@ import io.micrometer.prometheusmetrics.PrometheusMeterRegistry;
 import org.openjdk.jmh.annotations.*;
 import org.openjdk.jmh.runner.Runner;
 import org.openjdk.jmh.runner.RunnerException;
-import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
 
 import java.util.concurrent.TimeUnit;
 
+@Fork(1)
+@Warmup(iterations = 5)
+@Measurement(iterations = 10)
+@BenchmarkMode(Mode.SampleTime)
+@OutputTimeUnit(TimeUnit.NANOSECONDS)
 @State(Scope.Benchmark)
-@OutputTimeUnit(TimeUnit.MICROSECONDS)
 public class CounterBenchmark {
-
-    public static void main(String[] args) throws RunnerException {
-        Options opt = new OptionsBuilder().include(CounterBenchmark.class.getSimpleName())
-            .warmupIterations(5)
-            .measurementIterations(10)
-            .mode(Mode.SampleTime)
-            .forks(1)
-            .build();
-
-        new Runner(opt).run();
-    }
 
     private MeterRegistry registry;
 
@@ -66,6 +58,12 @@ public class CounterBenchmark {
     public double countSum() {
         counter.increment();
         return counter.count();
+    }
+
+    public static void main(String[] args) throws RunnerException {
+        new Runner(new OptionsBuilder().include(CounterBenchmark.class.getSimpleName())
+            // .addProfiler(GCProfiler.class)
+            .build()).run();
     }
 
 }

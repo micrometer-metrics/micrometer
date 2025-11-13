@@ -28,9 +28,11 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @Fork(1)
-@State(Scope.Benchmark)
+@Warmup(iterations = 2)
+@Measurement(iterations = 2)
 @BenchmarkMode(Mode.SampleTime)
-@OutputTimeUnit(TimeUnit.MICROSECONDS)
+@OutputTimeUnit(TimeUnit.NANOSECONDS)
+@State(Scope.Benchmark)
 public class GaugeBenchmark {
 
     private MeterRegistry registry;
@@ -61,7 +63,9 @@ public class GaugeBenchmark {
     }
 
     public static void main(String[] args) throws RunnerException {
-        new Runner(new OptionsBuilder().include(GaugeBenchmark.class.getSimpleName()).build()).run();
+        new Runner(new OptionsBuilder().include(GaugeBenchmark.class.getSimpleName())
+            // .addProfiler(GCProfiler.class)
+            .build()).run();
     }
 
 }
