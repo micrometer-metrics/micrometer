@@ -13,7 +13,8 @@ For better understanding of the differences among these different types of syste
 [[concepts-dependencies]]
 == Dependencies
 
-The `micrometer-core` module aims to have minimal dependencies. It does not require any third-party (non-Micrometer) dependencies on the classpath at compile time for applications that use Micrometer.
+The `micrometer-core` module aims to have minimal dependencies.
+It does not require any third-party (non-Micrometer) dependencies on the classpath at compile time for applications that use Micrometer, except for https://jspecify.dev/[JSpecify].
 
 Use of the xref:concepts/timers.adoc#pause-detection[pause detection] feature requires the https://github.com/LatencyUtils/LatencyUtils[LatencyUtils] dependency to be available on the classpath at runtime. If your application does not use the pause detection feature, you can exclude LatencyUtils from your runtime classpath.
 
