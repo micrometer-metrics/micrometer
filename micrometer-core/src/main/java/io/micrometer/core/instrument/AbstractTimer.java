@@ -37,7 +37,9 @@ import java.util.function.Supplier;
 
 public abstract class AbstractTimer extends AbstractMeter implements Timer {
 
-    private static final WarnThenDebugLogger warnThenDebugLogger = new WarnThenDebugLogger(AbstractTimer.class);
+    private static final WarnThenDebugLogger recordNegativeAmountLogger = new WarnThenDebugLogger(AbstractTimer.class);
+
+    private static final WarnThenDebugLogger pauseDetectorCNFELogger = new WarnThenDebugLogger(AbstractTimer.class);
 
     private static final Map<PauseDetector, Object> pauseDetectorCache = new ConcurrentHashMap<>();
 
@@ -133,6 +135,17 @@ public abstract class AbstractTimer extends AbstractMeter implements Timer {
     private void initPauseDetector(PauseDetector pauseDetectorType) {
         if (pauseDetectorType instanceof NoPauseDetector) {
             return;
+        }
+        if (pauseDetectorType instanceof ClockDriftPauseDetector) {
+            try {
+                Class.forName("org.LatencyUtils.SimplePauseDetector");
+            }
+            catch (ClassNotFoundException e) {
+                pauseDetectorCNFELogger.log(
+                        "ClockDriftPauseDetector which requires LatencyUtils is configured but LatencyUtils is not on the runtime classpath. Pause detection is disabled. To enable it, add LatencyUtils to the runtime classpath of your application.",
+                        e);
+                return;
+            }
         }
         pauseDetector = (org.LatencyUtils.PauseDetector) pauseDetectorCache.computeIfAbsent(pauseDetectorType,
                 detector -> {
@@ -264,8 +277,8 @@ public abstract class AbstractTimer extends AbstractMeter implements Timer {
             }
         }
         else {
-            if (warnThenDebugLogger.isEnabled()) {
-                warnThenDebugLogger.log(() -> "'amount' should not be negative but was: " + amount,
+            if (recordNegativeAmountLogger.isEnabled()) {
+                recordNegativeAmountLogger.log(() -> "'amount' should not be negative but was: " + amount,
                         new IllegalArgumentException("Timer measurements cannot be negative"));
             }
         }

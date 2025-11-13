@@ -198,9 +198,12 @@ WARNING: This FunctionTimer has been already registered (MeterId{name='my.ft', t
 
 Micrometer uses the `LatencyUtils` package to compensate for https://highscalability.com/blog/2015/10/5/your-load-generator-is-probably-lying-to-you-take-the-red-pi.html[coordinated omission] -- extra latency arising from system and VM pauses that skew your latency statistics downward. Distribution statistics, such as percentiles and SLO counts, are influenced by a pause detector implementation that adds additional latency here and there to compensate for pauses.
 
-Micrometer supports two pause detector implementations: a clock-drift based detector and a no-op detector. Before Micrometer 1.0.10/1.1.4/1.2.0, a clock-drift detector was configured by default to report as-accurate-as-possible metrics without further configuration. Since 1.0.10/1.1.4/1.2.0, the no-op detector is configured by default, but the clock-drift detector can be configured as shown in the next example.
+Micrometer supports two pause detector implementations: a clock-drift based detector and a no-op detector. The no-op detector is configured by default, but the clock-drift detector can be configured as shown in the next example.
 
 The clock-drift based detector has a configurable sleep interval and pause threshold. CPU consumption is inversely proportional to `sleepInterval`, as is pause detection accuracy. 100ms for both values is a reasonable default to offer decent detection of long pause events while consuming a negligible amount of CPU time.
+
+NOTE: You need to add LatencyUtils(`org.latencyutils:LatencyUtils`) to your runtime classpath to use the `ClockDriftPauseDetector`.
+Without it on the runtime classpath, a warning will be logged and no pause detection will happen.
 
 You can customize the pause detector as follows:
 

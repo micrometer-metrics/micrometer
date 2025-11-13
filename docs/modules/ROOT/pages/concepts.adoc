@@ -16,6 +16,7 @@ For better understanding of the differences among these different types of syste
 The `micrometer-core` module aims to have minimal dependencies.
 It does not require any third-party (non-Micrometer) dependencies on the classpath at compile time for applications that use Micrometer, except for https://jspecify.dev/[JSpecify].
 
-Use of the xref:concepts/timers.adoc#pause-detection[pause detection] feature requires the https://github.com/LatencyUtils/LatencyUtils[LatencyUtils] dependency to be available on the classpath at runtime. If your application does not use the pause detection feature, you can exclude LatencyUtils from your runtime classpath.
+Use of the xref:concepts/timers.adoc#pause-detection[pause detection] feature requires the https://github.com/LatencyUtils/LatencyUtils[LatencyUtils] dependency (`org.latencyutils:LatencyUtils`) to be available on the classpath at runtime.
+Micrometer does not include LatencyUtils on the runtime classpath by default because pause detection is turned off by default.
 
 If you use xref:concepts/histogram-quantiles.adoc[client-side percentiles], you need https://github.com/HdrHistogram/HdrHistogram[HdrHistogram] on the classpath at runtime. If you do not use client-side percentiles, you may exclude HdrHistogram from your application's runtime classpath.

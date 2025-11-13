@@ -16,12 +16,18 @@
 package io.micrometer.core.instrument;
 
 import io.micrometer.core.Issue;
+import io.micrometer.core.instrument.distribution.pause.ClockDriftPauseDetector;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.micrometer.core.testsupport.classpath.ClassPathExclusions;
+import io.micrometer.core.testsupport.system.CapturedOutput;
+import io.micrometer.core.testsupport.system.OutputCaptureExtension;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
+import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 
 /**
@@ -31,6 +37,7 @@ import static org.assertj.core.api.Assertions.assertThatCode;
  * @author Johnny Lim
  */
 @ClassPathExclusions("LatencyUtils-*.jar")
+@ExtendWith(OutputCaptureExtension.class)
 class MissingLatencyUtilsTest {
 
     private final SimpleMeterRegistry registry = new SimpleMeterRegistry();
@@ -43,6 +50,18 @@ class MissingLatencyUtilsTest {
             timer.record(1, TimeUnit.MILLISECONDS);
             timer.close();
         }).doesNotThrowAnyException();
+    }
+
+    @Test
+    @Issue("6863")
+    void timerWithPauseDetector_noExceptionThrown(CapturedOutput output) {
+        registry.config().pauseDetector(new ClockDriftPauseDetector(Duration.ofMillis(100), Duration.ofMillis(100)));
+        assertThatCode(() -> {
+            Timer timer = Timer.builder("my.timer").register(registry);
+            timer.record(1, TimeUnit.MILLISECONDS);
+            timer.close();
+        }).doesNotThrowAnyException();
+        assertThat(output).contains("LatencyUtils is not on the runtime classpath");
     }
 
 }
