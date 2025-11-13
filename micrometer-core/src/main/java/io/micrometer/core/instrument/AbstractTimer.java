@@ -142,7 +142,7 @@ public abstract class AbstractTimer extends AbstractMeter implements Timer {
             }
             catch (ClassNotFoundException e) {
                 pauseDetectorCNFELogger.log(
-                        "LatencyUtils is not on the runtime classpath but a ClockDriftPauseDetector which requires it is configured. Pause detection is disabled.",
+                        "ClockDriftPauseDetector which requires LatencyUtils is configured but LatencyUtils is not on the runtime classpath. Pause detection is disabled. To enable it, add LatencyUtils to the runtime classpath of your application.",
                         e);
                 return;
             }
