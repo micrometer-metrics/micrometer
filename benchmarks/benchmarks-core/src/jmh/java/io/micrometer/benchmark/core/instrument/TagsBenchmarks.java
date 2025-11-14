@@ -19,6 +19,8 @@ import io.micrometer.benchmark.BenchmarkSupport;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import org.openjdk.jmh.annotations.*;
+import org.openjdk.jmh.profile.GCProfiler;
+import org.openjdk.jmh.runner.Runner;
 import org.openjdk.jmh.runner.RunnerException;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
 
@@ -95,7 +97,7 @@ public class TagsBenchmarks {
      * of tags in [0..64] range. The [dominant] parameter defines the category that would
      * occupy 90% of the samples, other will be evenly distributed in the remaining 10%.
      */
-    @Fork(value = 1)
+    @Fork(1)
     @Warmup(iterations = 6, time = 10, timeUnit = TimeUnit.SECONDS)
     @Measurement(iterations = 54, time = 10, timeUnit = TimeUnit.SECONDS)
     @BenchmarkMode(Mode.AverageTime)
@@ -126,7 +128,8 @@ public class TagsBenchmarks {
         }
 
         public static void main(String[] args) throws RunnerException {
-            BenchmarkSupport.run(Of.class);
+            new Runner(new OptionsBuilder().include(Of.class.getSimpleName()).addProfiler(GCProfiler.class).build())
+                .run();
         }
 
     }
@@ -140,6 +143,7 @@ public class TagsBenchmarks {
      */
     @Fork(value = 1)
     @Warmup(iterations = 6, time = 10, timeUnit = TimeUnit.SECONDS)
+    // Not the coolest thing to do, but we're dealing with 6x6 matrix
     @Measurement(iterations = 12, time = 10, timeUnit = TimeUnit.SECONDS)
     @BenchmarkMode(Mode.AverageTime)
     @OutputTimeUnit(TimeUnit.NANOSECONDS)
@@ -184,9 +188,8 @@ public class TagsBenchmarks {
         }
 
         public static void main(String[] args) throws RunnerException {
-            BenchmarkSupport.run(Concat.class,
-                    // Not the coolest thing to do, but we're dealing with 6x6 matrix
-                    new OptionsBuilder().measurementIterations(12));
+            new Runner(new OptionsBuilder().include(Concat.class.getSimpleName()).addProfiler(GCProfiler.class).build())
+                .run();
         }
 
     }

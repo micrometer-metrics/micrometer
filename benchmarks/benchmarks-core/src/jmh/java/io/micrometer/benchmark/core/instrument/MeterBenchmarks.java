@@ -20,7 +20,10 @@ import io.micrometer.benchmark.core.instrument.config.filter.FilterBenchmarkSupp
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.Tag;
 import org.openjdk.jmh.annotations.*;
+import org.openjdk.jmh.profile.GCProfiler;
+import org.openjdk.jmh.runner.Runner;
 import org.openjdk.jmh.runner.RunnerException;
+import org.openjdk.jmh.runner.options.OptionsBuilder;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -30,7 +33,7 @@ public class MeterBenchmarks {
     private MeterBenchmarks() {
     }
 
-    @Fork(value = 1)
+    @Fork(1)
     @Warmup(iterations = 6, time = 10, timeUnit = TimeUnit.SECONDS)
     @Measurement(iterations = 54, time = 10, timeUnit = TimeUnit.SECONDS)
     @BenchmarkMode(Mode.AverageTime)
@@ -60,13 +63,17 @@ public class MeterBenchmarks {
         }
 
         public static void main(String[] args) throws RunnerException {
-            BenchmarkSupport.run(GetTags.class);
+            new Runner(
+                    new OptionsBuilder().include(GetTags.class.getSimpleName()).addProfiler(GCProfiler.class).build())
+                .run();
         }
 
     }
 
     public static void main(String[] args) throws RunnerException {
-        BenchmarkSupport.run(MeterBenchmarks.class);
+        new Runner(new OptionsBuilder().include(MeterBenchmarks.class.getSimpleName())
+            .addProfiler(GCProfiler.class)
+            .build()).run();
     }
 
 }
