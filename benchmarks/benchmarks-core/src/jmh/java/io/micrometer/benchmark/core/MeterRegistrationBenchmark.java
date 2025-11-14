@@ -24,27 +24,18 @@ import org.openjdk.jmh.annotations.*;
 import org.openjdk.jmh.profile.GCProfiler;
 import org.openjdk.jmh.runner.Runner;
 import org.openjdk.jmh.runner.RunnerException;
-import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
 
 import java.util.concurrent.TimeUnit;
 
-@State(Scope.Benchmark)
 @Fork(1)
 @Warmup(iterations = 2)
 @Measurement(iterations = 5)
 @BenchmarkMode(Mode.AverageTime)
-@OutputTimeUnit(TimeUnit.MICROSECONDS)
+@OutputTimeUnit(TimeUnit.NANOSECONDS)
 @Threads(2)
+@State(Scope.Benchmark)
 public class MeterRegistrationBenchmark {
-
-    public static void main(String[] args) throws RunnerException {
-        Options opt = new OptionsBuilder().include(MeterRegistrationBenchmark.class.getSimpleName())
-            .addProfiler(GCProfiler.class)
-            .build();
-
-        new Runner(opt).run();
-    }
 
     MeterRegistry registry = new SimpleMeterRegistry();
 
@@ -84,6 +75,12 @@ public class MeterRegistrationBenchmark {
     @Benchmark
     public Meter registerExistingWithProvider() {
         return counterMeterProvider.withTag("k1", "v1");
+    }
+
+    public static void main(String[] args) throws RunnerException {
+        new Runner(new OptionsBuilder().include(MeterRegistrationBenchmark.class.getSimpleName())
+            .addProfiler(GCProfiler.class)
+            .build()).run();
     }
 
 }
