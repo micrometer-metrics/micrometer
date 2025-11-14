@@ -15,31 +15,34 @@
  */
 package io.micrometer.benchmark.core;
 
-import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.binder.logging.LogbackMetrics;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.openjdk.jmh.annotations.*;
+import org.openjdk.jmh.profile.GCProfiler;
+import org.openjdk.jmh.runner.Runner;
+import org.openjdk.jmh.runner.RunnerException;
+import org.openjdk.jmh.runner.options.OptionsBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.TimeUnit;
 
 @Fork(1)
-@Measurement(iterations = 2)
 @Warmup(iterations = 2)
+@Measurement(iterations = 2)
 @BenchmarkMode(Mode.SampleTime)
 @OutputTimeUnit(TimeUnit.MICROSECONDS)
 @State(Scope.Benchmark)
 public class LogbackMetricsBenchmark {
 
-    Logger logger;
+    private SimpleMeterRegistry meterRegistry;
+
+    private LogbackMetrics logbackMetrics;
+
+    private Logger logger;
 
     @Param({ "false", "true" })
-    boolean registerLogbackMetrics;
-
-    MeterRegistry meterRegistry;
-
-    LogbackMetrics logbackMetrics;
+    private boolean registerLogbackMetrics;
 
     @Setup
     public void setup() {
@@ -50,18 +53,27 @@ public class LogbackMetricsBenchmark {
         }
 
         logger = LoggerFactory.getLogger(LogbackMetricsBenchmark.class);
+        logger.info("setup"); // initialize logback
+        System.out.println("\nMetrics at setup:\n" + meterRegistry.getMetersAsString());
     }
 
     @TearDown
-    public void teardown() throws Exception {
+    public void tearDown() {
         if (logbackMetrics != null) {
             logbackMetrics.close();
         }
+        System.out.println("\nMetrics at tearDown:\n" + meterRegistry.getMetersAsString());
     }
 
     @Benchmark
     public void logSomething() {
         logger.info("benchmark logging");
+    }
+
+    public static void main(String[] args) throws RunnerException {
+        new Runner(new OptionsBuilder().include(LogbackMetricsBenchmark.class.getSimpleName())
+            .addProfiler(GCProfiler.class)
+            .build()).run();
     }
 
 }
