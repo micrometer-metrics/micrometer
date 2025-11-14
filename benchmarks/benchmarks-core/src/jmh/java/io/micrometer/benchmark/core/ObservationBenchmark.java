@@ -35,10 +35,12 @@ import org.openjdk.jmh.runner.options.OptionsBuilder;
 import java.util.concurrent.TimeUnit;
 
 @Fork(1)
-@Threads(4)
-@State(Scope.Benchmark)
+@Warmup(iterations = 2)
+@Measurement(iterations = 2)
 @BenchmarkMode(Mode.AverageTime)
 @OutputTimeUnit(TimeUnit.NANOSECONDS)
+@Threads(4)
+@State(Scope.Benchmark)
 public class ObservationBenchmark {
 
     private static final Exception error = new IllegalStateException("error");
