@@ -35,7 +35,6 @@ import org.openjdk.jmh.annotations.*;
 import org.openjdk.jmh.infra.Blackhole;
 import org.openjdk.jmh.runner.Runner;
 import org.openjdk.jmh.runner.RunnerException;
-import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
 
 import java.util.Iterator;
@@ -48,8 +47,8 @@ import java.util.stream.Stream;
  * @author John Karp
  */
 @Fork(1)
-@Measurement(iterations = 2)
 @Warmup(iterations = 2)
+@Measurement(iterations = 2)
 @BenchmarkMode(Mode.AverageTime)
 @OutputTimeUnit(TimeUnit.NANOSECONDS)
 @Threads(16)
@@ -198,8 +197,9 @@ public class CompareHistogramsWithOtherLibraries {
     }
 
     public static void main(String[] args) throws RunnerException {
-        Options opt = new OptionsBuilder().include(CompareHistogramsWithOtherLibraries.class.getSimpleName()).build();
-        new Runner(opt).run();
+        new Runner(new OptionsBuilder().include(CompareHistogramsWithOtherLibraries.class.getSimpleName())
+            // .addProfiler(GCProfiler.class)
+            .build()).run();
     }
 
 }

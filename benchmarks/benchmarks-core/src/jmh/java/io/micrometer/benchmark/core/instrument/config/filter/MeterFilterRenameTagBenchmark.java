@@ -20,7 +20,10 @@ import io.micrometer.benchmark.core.instrument.TagsBenchmarkSupport;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.config.MeterFilter;
 import org.openjdk.jmh.annotations.*;
+import org.openjdk.jmh.profile.GCProfiler;
+import org.openjdk.jmh.runner.Runner;
 import org.openjdk.jmh.runner.RunnerException;
+import org.openjdk.jmh.runner.options.OptionsBuilder;
 
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
@@ -28,7 +31,7 @@ import java.util.stream.Stream;
 // Use jvmArgsAppend = "-XX:CompileCommand=dontinline,*.Tags.*" and
 // similar wildcards if you need to check clean assembly output
 // separately from other code.
-@Fork(value = 1)
+@Fork(1)
 @Warmup(iterations = 6, time = 10, timeUnit = TimeUnit.SECONDS)
 @Measurement(iterations = 54, time = 10, timeUnit = TimeUnit.SECONDS)
 @BenchmarkMode(Mode.AverageTime)
@@ -117,7 +120,9 @@ public class MeterFilterRenameTagBenchmark {
     }
 
     public static void main(String[] args) throws RunnerException {
-        BenchmarkSupport.run(MeterFilterRenameTagBenchmark.class);
+        new Runner(new OptionsBuilder().include(MeterFilterRenameTagBenchmark.class.getSimpleName())
+            .addProfiler(GCProfiler.class)
+            .build()).run();
     }
 
 }

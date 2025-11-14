@@ -1,5 +1,5 @@
 plugins {
-    id "me.champeau.jmh" version "0.7.2"
+    id "me.champeau.jmh" version "0.7.3"
 }
 
 // skip this module when building with jdk <17
@@ -50,9 +50,19 @@ dependencies {
 }
 
 jmh {
-    fork = 1
-    warmupIterations = 1
-    iterations = 1
     duplicateClassesStrategy = DuplicatesStrategy.EXCLUDE
     zip64 = true
+    // So we can do these:
+    // ./gradlew :micrometer-benchmarks-core:jmh -PjmhIncludes=io.micrometer.benchmark.core.CounterBenchmark
+    // ./gradlew :micrometer-benchmarks-core:jmh -PjmhIncludes=io.micrometer.benchmark.core.CounterBenchmark -PjmhProfilers=gc
+    if (project.hasProperty('jmhIncludes')) {
+        includes = [project.property('jmhIncludes')]
+    }
+    if (project.hasProperty('jmhProfilers')) {
+        profilers = [project.property('jmhProfilers')]
+    }
+}
+
+tasks.named('jmh') {
+    outputs.upToDateWhen { false }
 }

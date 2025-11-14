@@ -22,25 +22,16 @@ import org.openjdk.jmh.annotations.*;
 import org.openjdk.jmh.profile.GCProfiler;
 import org.openjdk.jmh.runner.Runner;
 import org.openjdk.jmh.runner.RunnerException;
-import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
 
 import java.util.concurrent.TimeUnit;
 
-@State(Scope.Benchmark)
 @Fork(1)
 @Warmup(iterations = 2)
 @Measurement(iterations = 5)
 @OutputTimeUnit(TimeUnit.MICROSECONDS)
+@State(Scope.Benchmark)
 public class MeterRemovalBenchmark {
-
-    public static void main(String[] args) throws RunnerException {
-        Options opt = new OptionsBuilder().include(MeterRemovalBenchmark.class.getSimpleName())
-            .addProfiler(GCProfiler.class)
-            .build();
-
-        new Runner(opt).run();
-    }
 
     @Param({ "10000", "100000" })
     int meterCount;
@@ -65,6 +56,12 @@ public class MeterRemovalBenchmark {
     @BenchmarkMode(Mode.SingleShotTime)
     public Meter remove() {
         return registry.remove(registry.counter("counter", "key", String.valueOf(meterCount / 2)));
+    }
+
+    public static void main(String[] args) throws RunnerException {
+        new Runner(new OptionsBuilder().include(MeterRemovalBenchmark.class.getSimpleName())
+            .addProfiler(GCProfiler.class)
+            .build()).run();
     }
 
 }

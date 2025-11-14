@@ -19,14 +19,13 @@ import io.micrometer.common.KeyValues;
 import org.openjdk.jmh.annotations.*;
 import org.openjdk.jmh.runner.Runner;
 import org.openjdk.jmh.runner.RunnerException;
-import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
 
 import java.util.concurrent.TimeUnit;
 
 @Fork(1)
-@Measurement(iterations = 2)
 @Warmup(iterations = 2)
+@Measurement(iterations = 2)
 @BenchmarkMode(Mode.AverageTime)
 @OutputTimeUnit(TimeUnit.NANOSECONDS)
 @State(Scope.Thread)
@@ -45,8 +44,9 @@ public class KeyValuesMergeBenchmark {
     }
 
     public static void main(String[] args) throws RunnerException {
-        Options opt = new OptionsBuilder().include(KeyValuesMergeBenchmark.class.getSimpleName()).build();
-        new Runner(opt).run();
+        new Runner(new OptionsBuilder().include(KeyValuesMergeBenchmark.class.getSimpleName())
+            // .addProfiler(GCProfiler.class)
+            .build()).run();
     }
 
 }
