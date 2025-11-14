@@ -22,6 +22,7 @@ import ch.qos.logback.classic.spi.LoggerContextListener;
 import ch.qos.logback.classic.turbo.TurboFilter;
 import ch.qos.logback.core.spi.FilterReply;
 import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.FunctionCounter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.binder.BaseUnits;
@@ -32,6 +33,7 @@ import org.slf4j.Marker;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.atomic.LongAdder;
 
 import static java.util.Collections.emptyList;
 
@@ -41,11 +43,10 @@ import static java.util.Collections.emptyList;
  * to an appender will not affect the metrics.
  *
  * @author Jon Schneider
+ * @author Jonatan Ivanov
  */
 @NullMarked
 public class LogbackMetrics implements MeterBinder, AutoCloseable {
-
-    static ThreadLocal<Boolean> ignoreMetrics = new ThreadLocal<>();
 
     private final Iterable<Tag> tags;
 
@@ -114,20 +115,18 @@ public class LogbackMetrics implements MeterBinder, AutoCloseable {
     }
 
     /**
-     * Used by {@link Counter#increment()} implementations that may cause a logback
-     * logging event to occur. Attempting to instrument that implementation would cause a
-     * {@link StackOverflowError}.
-     * @param r Don't record metrics on logging statements that occur inside of this
-     * runnable.
+     * This method was used by {@link Counter#increment()} implementations that may cause
+     * a logback logging event to occur. Attempting to instrument that implementation used
+     * to cause a {@link StackOverflowError}.
+     * @param r The runnable to execute, previously it also disabled recording metrics on
+     * logging statements that occur inside of this runnable but this is not needed
+     * anymore.
+     * @deprecated Should not be needed anymore since {@link LogbackMetrics} records
+     * logback events asynchronously and should not get into an infinite loop.
      */
+    @Deprecated
     public static void ignoreMetrics(Runnable r) {
-        ignoreMetrics.set(true);
-        try {
-            r.run();
-        }
-        finally {
-            ignoreMetrics.remove();
-        }
+        r.run();
     }
 
     @Override
@@ -148,46 +147,46 @@ class MetricsTurboFilter extends TurboFilter {
 
     private static final String METER_DESCRIPTION = "Number of log events that were enabled by the effective log level";
 
-    private final Counter errorCounter;
+    private final LongAdder errorCount = new LongAdder();
 
-    private final Counter warnCounter;
+    private final LongAdder warnCount = new LongAdder();
 
-    private final Counter infoCounter;
+    private final LongAdder infoCount = new LongAdder();
 
-    private final Counter debugCounter;
+    private final LongAdder debugCount = new LongAdder();
 
-    private final Counter traceCounter;
+    private final LongAdder traceCount = new LongAdder();
 
     MetricsTurboFilter(MeterRegistry registry, Iterable<Tag> tags) {
-        errorCounter = Counter.builder(METER_NAME)
+        FunctionCounter.builder(METER_NAME, errorCount, LongAdder::doubleValue)
             .tags(tags)
             .tags("level", "error")
             .description(METER_DESCRIPTION)
             .baseUnit(BaseUnits.EVENTS)
             .register(registry);
 
-        warnCounter = Counter.builder(METER_NAME)
+        FunctionCounter.builder(METER_NAME, warnCount, LongAdder::doubleValue)
             .tags(tags)
             .tags("level", "warn")
             .description(METER_DESCRIPTION)
             .baseUnit(BaseUnits.EVENTS)
             .register(registry);
 
-        infoCounter = Counter.builder(METER_NAME)
+        FunctionCounter.builder(METER_NAME, infoCount, LongAdder::doubleValue)
             .tags(tags)
             .tags("level", "info")
             .description(METER_DESCRIPTION)
             .baseUnit(BaseUnits.EVENTS)
             .register(registry);
 
-        debugCounter = Counter.builder(METER_NAME)
+        FunctionCounter.builder(METER_NAME, debugCount, LongAdder::doubleValue)
             .tags(tags)
             .tags("level", "debug")
             .description(METER_DESCRIPTION)
             .baseUnit(BaseUnits.EVENTS)
             .register(registry);
 
-        traceCounter = Counter.builder(METER_NAME)
+        FunctionCounter.builder(METER_NAME, traceCount, LongAdder::doubleValue)
             .tags(tags)
             .tags("level", "trace")
             .description(METER_DESCRIPTION)
@@ -209,12 +208,7 @@ class MetricsTurboFilter extends TurboFilter {
             return FilterReply.NEUTRAL;
         }
 
-        Boolean ignored = LogbackMetrics.ignoreMetrics.get();
-        if (ignored != null && ignored) {
-            return FilterReply.NEUTRAL;
-        }
-
-        LogbackMetrics.ignoreMetrics(() -> recordMetrics(level));
+        recordMetrics(level);
 
         return FilterReply.NEUTRAL;
     }
@@ -222,19 +216,19 @@ class MetricsTurboFilter extends TurboFilter {
     private void recordMetrics(Level level) {
         switch (level.toInt()) {
             case Level.ERROR_INT:
-                errorCounter.increment();
+                errorCount.increment();
                 break;
             case Level.WARN_INT:
-                warnCounter.increment();
+                warnCount.increment();
                 break;
             case Level.INFO_INT:
-                infoCounter.increment();
+                infoCount.increment();
                 break;
             case Level.DEBUG_INT:
-                debugCounter.increment();
+                debugCount.increment();
                 break;
             case Level.TRACE_INT:
-                traceCounter.increment();
+                traceCount.increment();
                 break;
         }
 

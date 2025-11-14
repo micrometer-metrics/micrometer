@@ -148,13 +148,6 @@ public class StatsdMeterRegistry extends MeterRegistry {
 
         if (config.enabled()) {
             this.sink = processor.sink();
-
-            try {
-                Class.forName("ch.qos.logback.classic.turbo.TurboFilter", false, getClass().getClassLoader());
-                this.sink = new LogbackMetricsSuppressingFluxSink(this.sink);
-            }
-            catch (ClassNotFoundException ignore) {
-            }
             start();
         }
     }

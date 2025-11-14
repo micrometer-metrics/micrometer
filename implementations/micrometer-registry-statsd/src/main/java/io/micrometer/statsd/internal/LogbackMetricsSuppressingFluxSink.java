@@ -26,7 +26,11 @@ import java.util.function.LongConsumer;
 /**
  * This is an internal class only for use within Micrometer. This suppresses logback event
  * metrics during Sink operations to avoid infinite loops.
+ *
+ * @deprecated Should not be needed anymore since {@link LogbackMetrics} records logback
+ * events asynchronously and should not get into an infinite loop.
  */
+@Deprecated
 public class LogbackMetricsSuppressingFluxSink implements FluxSink<String> {
 
     private final FluxSink<String> delegate;
