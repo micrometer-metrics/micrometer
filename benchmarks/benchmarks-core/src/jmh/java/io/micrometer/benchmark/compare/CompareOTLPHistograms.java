@@ -25,7 +25,6 @@ import org.openjdk.jmh.annotations.*;
 import org.openjdk.jmh.infra.Blackhole;
 import org.openjdk.jmh.runner.Runner;
 import org.openjdk.jmh.runner.RunnerException;
-import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
 //CHECKSTYLE:OFF
 import com.google.common.collect.Iterators;
@@ -44,8 +43,8 @@ import io.micrometer.registry.otlp.OtlpMeterRegistry;
  * @author Lenin Jaganathan
  */
 @Fork(1)
-@Measurement(iterations = 2)
 @Warmup(iterations = 3)
+@Measurement(iterations = 2)
 @BenchmarkMode(Mode.SampleTime)
 @OutputTimeUnit(TimeUnit.NANOSECONDS)
 @Threads(2)
@@ -365,8 +364,9 @@ public class CompareOTLPHistograms {
     }
 
     public static void main(String[] args) throws RunnerException {
-        Options opt = new OptionsBuilder().include(CompareOTLPHistograms.class.getSimpleName()).build();
-        new Runner(opt).run();
+        new Runner(new OptionsBuilder().include(CompareOTLPHistograms.class.getSimpleName())
+            // .addProfiler(GCProfiler.class)
+            .build()).run();
     }
 
 }
