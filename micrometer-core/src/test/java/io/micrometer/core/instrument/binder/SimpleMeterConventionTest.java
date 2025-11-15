@@ -20,8 +20,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.function.Function;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.*;
 
 class SimpleMeterConventionTest {
 
@@ -51,8 +50,8 @@ class SimpleMeterConventionTest {
     @Test
     @SuppressWarnings("NullAway")
     void nullTagsFunctionShouldThrowException() {
-        assertThatThrownBy(() -> new SimpleMeterConvention<>("my.meter", (Function<String, Tags>) null))
-            .isInstanceOf(NullPointerException.class);
+        assertThatNullPointerException()
+            .isThrownBy(() -> new SimpleMeterConvention<>("my.meter", (Function<String, Tags>) null));
     }
 
 }

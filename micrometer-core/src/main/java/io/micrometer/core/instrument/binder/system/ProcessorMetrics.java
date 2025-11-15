@@ -58,7 +58,7 @@ public class ProcessorMetrics implements MeterBinder {
             "com.sun.management.OperatingSystemMXBean" // HotSpot
     );
 
-    private final Tags tags;
+    private final Tags extraTags;
 
     private final JvmCpuMeterConventions conventions;
 
@@ -93,7 +93,7 @@ public class ProcessorMetrics implements MeterBinder {
      * @since 1.16.0
      */
     public ProcessorMetrics(Iterable<? extends Tag> extraTags, JvmCpuMeterConventions conventions) {
-        this.tags = Tags.of(extraTags);
+        this.extraTags = Tags.of(extraTags);
         this.conventions = conventions;
         this.operatingSystemBean = ManagementFactory.getOperatingSystemMXBean();
         this.operatingSystemBeanClass = getFirstClassFound(OPERATING_SYSTEM_BEAN_CLASS_NAMES);
@@ -114,7 +114,7 @@ public class ProcessorMetrics implements MeterBinder {
 
         if (operatingSystemBean.getSystemLoadAverage() >= 0) {
             Gauge.builder("system.load.average.1m", operatingSystemBean, OperatingSystemMXBean::getSystemLoadAverage)
-                .tags(tags)
+                .tags(extraTags)
                 .description("The sum of the number of runnable entities queued to available processors and the number "
                         + "of runnable entities running on the available processors averaged over a period of time")
                 .register(registry);
@@ -122,7 +122,7 @@ public class ProcessorMetrics implements MeterBinder {
 
         if (systemCpuUsage != null) {
             Gauge.builder("system.cpu.usage", operatingSystemBean, x -> invoke(systemCpuUsage))
-                .tags(tags)
+                .tags(extraTags)
                 .description("The \"recent cpu usage\" of the system the application is running in")
                 .register(registry);
         }

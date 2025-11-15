@@ -32,11 +32,8 @@ public class MicrometerJvmThreadMeterConventions implements JvmThreadMeterConven
 
     private final Tags extraTags;
 
-    private final MeterConvention<Thread.State> threadCountConvention;
-
     public MicrometerJvmThreadMeterConventions(Tags extraTags) {
         this.extraTags = extraTags;
-        this.threadCountConvention = new SimpleMeterConvention<>("jvm.threads.states", this::getStateTag);
     }
 
     private Tags getStateTag(Thread.State state) {
@@ -49,7 +46,7 @@ public class MicrometerJvmThreadMeterConventions implements JvmThreadMeterConven
 
     @Override
     public MeterConvention<Thread.State> threadCountConvention() {
-        return threadCountConvention;
+        return new SimpleMeterConvention<>("jvm.threads.states", this::getStateTag);
     }
 
 }

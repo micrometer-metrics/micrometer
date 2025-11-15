@@ -71,12 +71,13 @@ class JvmThreadMetricsTest {
 
     @Test
     void extraTagsAreApplied() {
-        new JvmThreadMetrics(Tags.of("extra", "tag")).bindTo(registry);
+        Tags extraTags = Tags.of("extra", "tag");
+        new JvmThreadMetrics(extraTags).bindTo(registry);
 
-        assertThat(registry.get("jvm.threads.live").tag("extra", "tag").gauge().value()).isPositive();
-        assertThat(registry.get("jvm.threads.daemon").tag("extra", "tag").gauge().value()).isPositive();
-        assertThat(registry.get("jvm.threads.peak").tag("extra", "tag").gauge().value()).isPositive();
-        assertThat(registry.get("jvm.threads.states").tag("extra", "tag").tag("state", "runnable").gauge().value())
+        assertThat(registry.get("jvm.threads.live").tags(extraTags).gauge().value()).isPositive();
+        assertThat(registry.get("jvm.threads.daemon").tags(extraTags).gauge().value()).isPositive();
+        assertThat(registry.get("jvm.threads.peak").tags(extraTags).gauge().value()).isPositive();
+        assertThat(registry.get("jvm.threads.states").tags(extraTags).tag("state", "runnable").gauge().value())
             .isPositive();
     }
 
@@ -104,32 +105,27 @@ class JvmThreadMetricsTest {
     void otelThreadStatesWithExtraTags() {
         Tags extraTags = Tags.of("extra", "tag");
         new JvmThreadMetrics(extraTags, new OpenTelemetryJvmThreadMeterConventions(extraTags)).bindTo(registry);
-        double initialThreadCount = registry.get("jvm.threads.started").tag("extra", "tag").functionCounter().count();
+        double initialThreadCount = registry.get("jvm.threads.started").tags(extraTags).functionCounter().count();
 
-        assertThat(registry.get("jvm.threads.live").tag("extra", "tag").gauge().value()).isPositive();
-        assertThat(registry.get("jvm.threads.daemon").tag("extra", "tag").gauge().value()).isPositive();
-        assertThat(registry.get("jvm.threads.peak").tag("extra", "tag").gauge().value()).isPositive();
-        assertThat(registry.get("jvm.thread.count")
-            .tag("extra", "tag")
-            .tag("jvm.thread.state", "runnable")
-            .gauge()
-            .value()).isPositive();
+        assertThat(registry.get("jvm.threads.live").tags(extraTags).gauge().value()).isPositive();
+        assertThat(registry.get("jvm.threads.daemon").tags(extraTags).gauge().value()).isPositive();
+        assertThat(registry.get("jvm.threads.peak").tags(extraTags).gauge().value()).isPositive();
+        assertThat(registry.get("jvm.thread.count").tags(extraTags).tag("jvm.thread.state", "runnable").gauge().value())
+            .isPositive();
 
         createBlockedThread();
-        assertThat(
-                registry.get("jvm.thread.count").tag("extra", "tag").tag("jvm.thread.state", "blocked").gauge().value())
+        assertThat(registry.get("jvm.thread.count").tags(extraTags).tag("jvm.thread.state", "blocked").gauge().value())
             .isPositive();
-        assertThat(
-                registry.get("jvm.thread.count").tag("extra", "tag").tag("jvm.thread.state", "waiting").gauge().value())
+        assertThat(registry.get("jvm.thread.count").tags(extraTags).tag("jvm.thread.state", "waiting").gauge().value())
             .isPositive();
 
         createTimedWaitingThread();
         assertThat(registry.get("jvm.thread.count")
-            .tag("extra", "tag")
+            .tags(extraTags)
             .tag("jvm.thread.state", "timed_waiting")
             .gauge()
             .value()).isPositive();
-        assertThat(registry.get("jvm.threads.started").tag("extra", "tag").functionCounter().count())
+        assertThat(registry.get("jvm.threads.started").tags(extraTags).functionCounter().count())
             .isGreaterThan(initialThreadCount);
     }
 
