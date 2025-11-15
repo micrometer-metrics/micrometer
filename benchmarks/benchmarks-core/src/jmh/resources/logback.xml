@@ -23,7 +23,11 @@
 	<appender name="NOP" class="ch.qos.logback.core.helpers.NOPAppender">
 	</appender>
 
-	<logger name="io.micrometer.benchmark.core.LogbackMetricsBenchmark" level="ALL" additivity="false">
+	<logger name="unfilteredLogger" level="ALL" additivity="false">
+		<appender-ref ref="NOP" />
+	</logger>
+
+	<logger name="filteredLogger" level="OFF" additivity="false">
 		<appender-ref ref="NOP" />
 	</logger>
 

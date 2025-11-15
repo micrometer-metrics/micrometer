@@ -27,6 +27,9 @@ import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.TimeUnit;
 
+/**
+ * Benchmarks for {@link LogbackMetrics}.
+ */
 @Fork(1)
 @Warmup(iterations = 2)
 @Measurement(iterations = 2)
@@ -39,7 +42,9 @@ public class LogbackMetricsBenchmark {
 
     private LogbackMetrics logbackMetrics;
 
-    private Logger logger;
+    private Logger unfilteredLogger;
+
+    private Logger filteredLogger;
 
     @Param({ "false", "true" })
     private boolean registerLogbackMetrics;
@@ -52,8 +57,11 @@ public class LogbackMetricsBenchmark {
             logbackMetrics.bindTo(meterRegistry);
         }
 
-        logger = LoggerFactory.getLogger(LogbackMetricsBenchmark.class);
-        logger.info("setup"); // initialize logback
+        unfilteredLogger = LoggerFactory.getLogger("unfilteredLogger");
+        filteredLogger = LoggerFactory.getLogger("filteredLogger");
+        // initialize logback
+        unfilteredLogger.info("setup");
+        filteredLogger.info("setup");
         System.out.println("\nMetrics at setup:\n" + meterRegistry.getMetersAsString());
     }
 
@@ -65,9 +73,20 @@ public class LogbackMetricsBenchmark {
         System.out.println("\nMetrics at tearDown:\n" + meterRegistry.getMetersAsString());
     }
 
+    /**
+     * Benchmark of unfiltered log events. These events are recorded as metrics.
+     */
     @Benchmark
-    public void logSomething() {
-        logger.info("benchmark logging");
+    public void unfiltered() {
+        unfilteredLogger.info("something");
+    }
+
+    /**
+     * Benchmark of filtered log events. These events are NOT recorded as metrics.
+     */
+    @Benchmark
+    public void filtered() {
+        filteredLogger.info("somethingFiltered");
     }
 
     public static void main(String[] args) throws RunnerException {
