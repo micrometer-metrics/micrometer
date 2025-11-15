@@ -33,11 +33,8 @@ import java.util.Locale;
  */
 public class OpenTelemetryJvmThreadMeterConventions extends MicrometerJvmThreadMeterConventions {
 
-    private final MeterConvention<Thread.State> threadCountConvention;
-
     public OpenTelemetryJvmThreadMeterConventions(Tags extraTags) {
         super(extraTags);
-        threadCountConvention = new SimpleMeterConvention<>("jvm.thread.count", this::getThreadStateTags);
     }
 
     private Tags getThreadStateTags(Thread.State state) {
@@ -46,7 +43,7 @@ public class OpenTelemetryJvmThreadMeterConventions extends MicrometerJvmThreadM
 
     @Override
     public MeterConvention<Thread.State> threadCountConvention() {
-        return this.threadCountConvention;
+        return new SimpleMeterConvention<>("jvm.thread.count", this::getThreadStateTags);
     }
 
 }
