@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.common.util.assertions;
+package io.micrometer.test.assertions;
 
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Tag;
@@ -28,6 +28,7 @@ import org.assertj.core.api.IntegerAssert;
  * {@link io.micrometer.core.tck.MeterRegistryAssert#counter(String, Tag...)}.
  *
  * @author Emanuel Trandafir
+ * @since 1.17.0
  */
 public class CounterAssert extends AbstractAssert<CounterAssert, Counter> {
 
@@ -40,11 +41,7 @@ public class CounterAssert extends AbstractAssert<CounterAssert, Counter> {
         return new CounterAssert(actual);
     }
 
-    /**
-     * Creates a new instance of {@link CounterAssert}.
-     * @param actual the counter to assert on
-     */
-    public CounterAssert(Counter actual) {
+    private CounterAssert(Counter actual) {
         super(actual, CounterAssert.class);
     }
 

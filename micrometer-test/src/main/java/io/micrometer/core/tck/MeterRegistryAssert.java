@@ -16,10 +16,10 @@
 package io.micrometer.core.tck;
 
 import io.micrometer.common.KeyValues;
-import io.micrometer.common.util.assertions.CounterAssert;
-import io.micrometer.common.util.assertions.GaugeAssert;
-import io.micrometer.common.util.assertions.MeterAssert;
-import io.micrometer.common.util.assertions.TimerAssert;
+import io.micrometer.test.assertions.CounterAssert;
+import io.micrometer.test.assertions.GaugeAssert;
+import io.micrometer.test.assertions.MeterAssert;
+import io.micrometer.test.assertions.TimerAssert;
 import io.micrometer.core.instrument.*;
 import org.assertj.core.api.AbstractAssert;
 import org.assertj.core.api.Assertions;
@@ -425,7 +425,7 @@ public class MeterRegistryAssert extends AbstractAssert<MeterRegistryAssert, Met
      * @see CounterAssert
      */
     public CounterAssert counter(String name, Tag... tags) {
-        MeterAssert<?> meter = meter(name, tags).hasType(Meter.Type.COUNTER);
+        MeterAssert<?> meter = meter(name, tags).hasType(Counter.class);
 
         return CounterAssert.assertThat((Counter) meter.actual())
             .as("Counter with name <%s> and tags <%s>", name, tags)
@@ -454,8 +454,7 @@ public class MeterRegistryAssert extends AbstractAssert<MeterRegistryAssert, Met
      * @see TimerAssert
      */
     public TimerAssert timer(String name, Tag... tags) {
-        MeterAssert<?> meter = meter(name, tags).hasType(Meter.Type.TIMER);
-
+        MeterAssert<?> meter = meter(name, tags).hasType(Timer.class);
         return TimerAssert.assertThat((Timer) meter.actual())
             .as("Timer with name <%s> and tags <%s>", name, tags)
             .isNotNull();
@@ -481,8 +480,7 @@ public class MeterRegistryAssert extends AbstractAssert<MeterRegistryAssert, Met
      * @see GaugeAssert
      */
     public GaugeAssert gauge(String name, Tag... tags) {
-        MeterAssert<?> meter = meter(name, tags).hasType(Meter.Type.GAUGE);
-
+        MeterAssert<?> meter = meter(name, tags).hasType(Gauge.class);
         return GaugeAssert.assertThat((Gauge) meter.actual())
             .as("Gauge with name <%s> and tags <%s>", name, tags)
             .isNotNull();

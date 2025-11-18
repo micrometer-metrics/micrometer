@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.common.util.assertions;
+package io.micrometer.test.assertions;
 
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.Tag;
@@ -27,6 +27,7 @@ import org.assertj.core.api.DoubleAssert;
  * use {@link io.micrometer.core.tck.MeterRegistryAssert#gauge(String, Tag...)}.
  *
  * @author Emanuel Trandafir
+ * @since 1.17.0
  */
 public class GaugeAssert extends AbstractAssert<GaugeAssert, Gauge> {
 
@@ -39,11 +40,7 @@ public class GaugeAssert extends AbstractAssert<GaugeAssert, Gauge> {
         return new GaugeAssert(actual);
     }
 
-    /**
-     * Creates a new instance of {@link GaugeAssert}.
-     * @param actual the gauge to assert on
-     */
-    public GaugeAssert(Gauge actual) {
+    private GaugeAssert(Gauge actual) {
         super(actual, GaugeAssert.class);
     }
 

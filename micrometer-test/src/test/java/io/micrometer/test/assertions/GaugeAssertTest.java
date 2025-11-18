@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.common.util.assertions;
+package io.micrometer.test.assertions;
 
-import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.micrometer.core.tck.MeterRegistryAssert;
@@ -23,44 +23,44 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-class CounterAssertTest {
+class GaugeAssertTest {
 
     SimpleMeterRegistry simpleMeterRegistry = new SimpleMeterRegistry();
 
     MeterRegistryAssert meterRegistryAssert = MeterRegistryAssert.assertThat(simpleMeterRegistry);
 
     @Test
-    void shouldFindCounterByName() {
-        Counter.builder("foo").register(simpleMeterRegistry).increment();
+    void shouldFindGaugeByName() {
+        Gauge.builder("foo", () -> 10.0).register(simpleMeterRegistry);
 
-        meterRegistryAssert.counter("foo").hasCount(1);
+        meterRegistryAssert.gauge("foo").hasValue(10.0);
     }
 
     @Test
-    void shouldThrowIfCounterNotFound() {
-        Counter.builder("foo").register(simpleMeterRegistry).increment();
+    void shouldThrowIfGaugeNotFound() {
+        Gauge.builder("foo", () -> 10.0).register(simpleMeterRegistry);
 
-        assertThatThrownBy(() -> meterRegistryAssert.counter("foo", Tag.of("other-tag", "xxx")))
+        assertThatThrownBy(() -> meterRegistryAssert.gauge("foo", Tag.of("other-tag", "xxx")))
             .isInstanceOf(AssertionError.class)
             .hasStackTraceContaining("Meter with name <foo> and tags <[tag(other-tag=xxx)]>")
             .hasMessageContaining("Expecting actual not to be null");
     }
 
     @Test
-    void shouldFindCounterByNameAndTags() {
-        Counter.builder("foo").tag("tag-1", "aa").register(simpleMeterRegistry).increment(1.0);
+    void shouldFindGaugeByNameAndTags() {
+        Gauge.builder("foo", 1.0, n -> n).tag("tag-1", "aa").register(simpleMeterRegistry);
 
-        Counter.builder("foo").tag("tag-1", "bb").tag("tag-2", "cc").register(simpleMeterRegistry).increment(99.0);
+        Gauge.builder("foo", 99.0, n -> n).tag("tag-1", "bb").tag("tag-2", "cc").register(simpleMeterRegistry);
 
-        meterRegistryAssert.counter("foo", Tag.of("tag-1", "aa")).hasCount(1);
-        meterRegistryAssert.counter("foo", Tag.of("tag-1", "bb"), Tag.of("tag-2", "cc")).hasCount(99);
+        meterRegistryAssert.gauge("foo", Tag.of("tag-1", "aa")).hasValue(1.0);
+        meterRegistryAssert.gauge("foo", Tag.of("tag-1", "bb"), Tag.of("tag-2", "cc")).hasValue(99.0);
     }
 
     @Test
-    void shouldLeverageIntegerAsserts() {
-        Counter.builder("foo").register(simpleMeterRegistry).increment(50.0);
+    void shouldLeverageDoubleAsserts() {
+        Gauge.builder("foo", () -> 50.0).register(simpleMeterRegistry);
 
-        meterRegistryAssert.counter("foo").count().isBetween(40, 60);
+        meterRegistryAssert.gauge("foo").value().isBetween(40.0, 60.0);
     }
 
 }

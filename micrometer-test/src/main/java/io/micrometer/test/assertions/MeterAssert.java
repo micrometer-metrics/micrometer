@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.common.util.assertions;
+package io.micrometer.test.assertions;
 
 import io.micrometer.core.instrument.Measurement;
 import io.micrometer.core.instrument.Meter;
@@ -36,21 +36,13 @@ import java.util.stream.StreamSupport;
  * To create a new instance of this class, invoke {@link MeterAssert#assertThat(Meter)} or
  * use {@link io.micrometer.core.tck.MeterRegistryAssert#meter(String, Tag...)}.
  *
- * @author Emanuel Trandafir
  * @see CounterAssert
  * @see TimerAssert
  * @see GaugeAssert
+ * @author Emanuel Trandafir
+ * @since 1.17.0
  */
 public class MeterAssert<METER extends Meter> extends AbstractAssert<MeterAssert<METER>, METER> {
-
-    /**
-     * Creates a new instance of {@link MeterAssert}.
-     * @param actual the meter to assert on
-     * @param type the class type for the assertion
-     */
-    protected MeterAssert(METER actual, Class<? extends MeterAssert> type) {
-        super(actual, type);
-    }
 
     /**
      * Creates a new instance of {@link MeterAssert}.
@@ -60,6 +52,10 @@ public class MeterAssert<METER extends Meter> extends AbstractAssert<MeterAssert
      */
     public static <M extends Meter> MeterAssert<M> assertThat(M actual) {
         return new MeterAssert<>(actual, MeterAssert.class);
+    }
+
+    private MeterAssert(METER actual, Class<? extends MeterAssert> type) {
+        super(actual, type);
     }
 
     /**
@@ -80,7 +76,6 @@ public class MeterAssert<METER extends Meter> extends AbstractAssert<MeterAssert
      * @param statistic the statistic type to check for
      * @param expectedValue the expected value for the statistic
      * @return this assertion object for chaining
-     * @see #hasType(Meter.Type)
      */
     public MeterAssert<METER> hasMeasurement(Statistic statistic, double expectedValue) {
         Optional<Double> measurement = StreamSupport.stream(actual.measure().spliterator(), false)
@@ -107,9 +102,8 @@ public class MeterAssert<METER extends Meter> extends AbstractAssert<MeterAssert
      * @param expectedType the expected meter type
      * @return this assertion object for chaining
      */
-    public MeterAssert<?> hasType(Meter.Type expectedType) {
-        Meter.Type actualType = actual().getId().getType();
-        Assertions.assertThat(actualType).isEqualTo(expectedType);
+    public <M extends Meter> MeterAssert<?> hasType(Class<M> expectedType) {
+        Assertions.assertThat(actual()).isInstanceOf(expectedType);
         return this;
     }
 

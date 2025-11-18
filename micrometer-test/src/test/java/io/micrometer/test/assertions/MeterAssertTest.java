@@ -13,10 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.common.util.assertions;
+package io.micrometer.test.assertions;
 
 import io.micrometer.core.instrument.DistributionSummary;
-import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.Statistic;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.micrometer.core.tck.MeterRegistryAssert;
@@ -45,7 +44,7 @@ class MeterAssertTest {
     void shouldAssertOnType() {
         DistributionSummary.builder("foo").register(simpleMeterRegistry).record(100.0);
 
-        meterRegistryAssert.meter("foo").hasType(Meter.Type.DISTRIBUTION_SUMMARY);
+        meterRegistryAssert.meter("foo").hasType(DistributionSummary.class);
     }
 
 }

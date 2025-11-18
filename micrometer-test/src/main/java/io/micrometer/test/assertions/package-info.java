@@ -16,9 +16,8 @@
 
 /**
  * AssertJ-style assertion classes for Micrometer
- * {@link io.micrometer.core.instrument.Meter}s.
  */
 @NullMarked
-package io.micrometer.common.util.assertions;
+package io.micrometer.test.assertions;
 
 import org.jspecify.annotations.NullMarked;
