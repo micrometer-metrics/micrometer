@@ -74,6 +74,15 @@ public interface ObservationRegistry {
     void setCurrentObservationScope(Observation.@Nullable Scope current);
 
     /**
+     * Sets the observation scope as current only if the candidate is present in the
+     * registry.
+     * @param candidate observation scope
+     */
+    default void setCurrentObservationScopeIfExists(Observation.@Nullable Scope candidate) {
+        setCurrentObservationScope(candidate);
+    }
+
+    /**
      * Configuration options for this registry.
      * @return observation configuration
      */
