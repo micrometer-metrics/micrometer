@@ -36,34 +36,34 @@ class ClassLoaderMetricsTest {
     void classLoadingMetrics() {
         new ClassLoaderMetrics().bindTo(registry);
 
-        assertThat(registry.get("jvm.classes.loaded").gauge().value()).isGreaterThan(0);
+        assertThat(registry.get("jvm.classes.loaded").gauge().value()).isPositive();
     }
 
     @Test
     void extraTagsAreApplied() {
-        new ClassLoaderMetrics(Tags.of("extra", "tags")).bindTo(registry);
+        Tags extraTags = Tags.of("extra", "tag");
+        new ClassLoaderMetrics(extraTags).bindTo(registry);
 
-        assertThat(registry.get("jvm.classes.loaded").tag("extra", "tags").gauge().value()).isGreaterThan(0);
+        assertThat(registry.get("jvm.classes.loaded").tags(extraTags).gauge().value()).isPositive();
     }
 
     @Test
     void otelConventions() {
         new ClassLoaderMetrics(new OpenTelemetryJvmClassLoadingMeterConventions()).bindTo(registry);
 
-        assertThat(registry.get("jvm.class.loaded").functionCounter().count()).isGreaterThan(0);
-        assertThat(registry.get("jvm.class.unloaded").functionCounter().count()).isGreaterThanOrEqualTo(0);
-        assertThat(registry.get("jvm.class.count").gauge().value()).isGreaterThan(0);
+        assertThat(registry.get("jvm.class.loaded").functionCounter().count()).isPositive();
+        assertThat(registry.get("jvm.class.unloaded").functionCounter().count()).isNotNegative();
+        assertThat(registry.get("jvm.class.count").gauge().value()).isPositive();
     }
 
     @Test
     void otelConventionsWithExtraTags() {
-        new ClassLoaderMetrics(new OpenTelemetryJvmClassLoadingMeterConventions(Tags.of("extra", "tag")))
-            .bindTo(registry);
+        Tags extraTags = Tags.of("extra", "tag");
+        new ClassLoaderMetrics(new OpenTelemetryJvmClassLoadingMeterConventions(extraTags)).bindTo(registry);
 
-        assertThat(registry.get("jvm.class.loaded").tag("extra", "tag").functionCounter().count()).isGreaterThan(0);
-        assertThat(registry.get("jvm.class.unloaded").tag("extra", "tag").functionCounter().count())
-            .isGreaterThanOrEqualTo(0);
-        assertThat(registry.get("jvm.class.count").tag("extra", "tag").gauge().value()).isGreaterThan(0);
+        assertThat(registry.get("jvm.class.loaded").tags(extraTags).functionCounter().count()).isPositive();
+        assertThat(registry.get("jvm.class.unloaded").tags(extraTags).functionCounter().count()).isNotNegative();
+        assertThat(registry.get("jvm.class.count").tags(extraTags).gauge().value()).isPositive();
     }
 
     @Test
@@ -81,14 +81,6 @@ class ClassLoaderMetricsTest {
     }
 
     static class MyClassLoaderConventions extends MicrometerJvmClassLoadingMeterConventions {
-
-        public MyClassLoaderConventions() {
-            super();
-        }
-
-        public MyClassLoaderConventions(Tags extraTags) {
-            super(extraTags);
-        }
 
         @Override
         protected Tags getCommonTags() {
