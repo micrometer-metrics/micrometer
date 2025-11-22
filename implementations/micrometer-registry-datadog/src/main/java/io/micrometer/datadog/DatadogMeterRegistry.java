@@ -34,6 +34,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
+import java.util.Objects;
 
 import static io.micrometer.core.instrument.util.StringEscapeUtils.escapeJson;
 import static java.util.stream.Collectors.joining;
@@ -160,14 +161,23 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
         Meter.Id id = timer.getId();
 
         addToMetadataList(metadata, id, "count", Statistic.COUNT, "occurrence");
-        addToMetadataList(metadata, id, "avg", Statistic.VALUE, null);
+
+        if (config.publishAverage()) {
+            addToMetadataList(metadata, id, "avg", Statistic.VALUE, null);
+        }
+
         addToMetadataList(metadata, id, "sum", Statistic.TOTAL_TIME, null);
 
         // we can't know anything about max and percentiles originating from a function
         // timer
         return Stream.of(writeMetric(id, "count", wallTime, timer.count(), Statistic.COUNT, "occurrence"),
-                writeMetric(id, "avg", wallTime, timer.mean(getBaseTimeUnit()), Statistic.VALUE, null),
-                writeMetric(id, "sum", wallTime, timer.totalTime(getBaseTimeUnit()), Statistic.TOTAL_TIME, null));
+
+                config.publishAverage()
+                        ? writeMetric(id, "avg", wallTime, timer.mean(getBaseTimeUnit()), Statistic.VALUE, null) : null,
+
+                writeMetric(id, "sum", wallTime, timer.totalTime(getBaseTimeUnit()), Statistic.TOTAL_TIME, null))
+            // filter out null avg when disabled
+            .filter(Objects::nonNull);
     }
 
     private Stream<String> writeTimer(Timer timer, Map<String, DatadogMetricMetadata> metadata) {
@@ -175,14 +185,20 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
         final Stream.Builder<String> metrics = Stream.builder();
 
         Meter.Id id = timer.getId();
-        metrics.add(writeMetric(id, "sum", wallTime, timer.totalTime(getBaseTimeUnit()), Statistic.TOTAL_TIME, null));
-        metrics.add(writeMetric(id, "count", wallTime, (double) timer.count(), Statistic.COUNT, "occurrence"));
-        metrics.add(writeMetric(id, "avg", wallTime, timer.mean(getBaseTimeUnit()), Statistic.VALUE, null));
-        metrics.add(writeMetric(id, "max", wallTime, timer.max(getBaseTimeUnit()), Statistic.MAX, null));
 
+        metrics.add(writeMetric(id, "sum", wallTime, timer.totalTime(getBaseTimeUnit()), Statistic.TOTAL_TIME, null));
         addToMetadataList(metadata, id, "sum", Statistic.TOTAL_TIME, null);
+
+        metrics.add(writeMetric(id, "count", wallTime, (double) timer.count(), Statistic.COUNT, "occurrence"));
         addToMetadataList(metadata, id, "count", Statistic.COUNT, "occurrence");
-        addToMetadataList(metadata, id, "avg", Statistic.VALUE, null);
+
+        // publish avg only when enabled
+        if (config.publishAverage()) {
+            metrics.add(writeMetric(id, "avg", wallTime, timer.mean(getBaseTimeUnit()), Statistic.VALUE, null));
+            addToMetadataList(metadata, id, "avg", Statistic.VALUE, null);
+        }
+
+        metrics.add(writeMetric(id, "max", wallTime, timer.max(getBaseTimeUnit()), Statistic.MAX, null));
         addToMetadataList(metadata, id, "max", Statistic.MAX, null);
 
         return metrics.build();
@@ -193,14 +209,20 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
         final Stream.Builder<String> metrics = Stream.builder();
 
         Meter.Id id = summary.getId();
-        metrics.add(writeMetric(id, "sum", wallTime, summary.totalAmount(), Statistic.TOTAL, null));
-        metrics.add(writeMetric(id, "count", wallTime, (double) summary.count(), Statistic.COUNT, "occurrence"));
-        metrics.add(writeMetric(id, "avg", wallTime, summary.mean(), Statistic.VALUE, null));
-        metrics.add(writeMetric(id, "max", wallTime, summary.max(), Statistic.MAX, null));
 
+        metrics.add(writeMetric(id, "sum", wallTime, summary.totalAmount(), Statistic.TOTAL, null));
         addToMetadataList(metadata, id, "sum", Statistic.TOTAL, null);
+
+        metrics.add(writeMetric(id, "count", wallTime, (double) summary.count(), Statistic.COUNT, "occurrence"));
         addToMetadataList(metadata, id, "count", Statistic.COUNT, "occurrence");
-        addToMetadataList(metadata, id, "avg", Statistic.VALUE, null);
+
+        // avg (only when enabled)
+        if (config.publishAverage()) {
+            metrics.add(writeMetric(id, "avg", wallTime, summary.mean(), Statistic.VALUE, null));
+            addToMetadataList(metadata, id, "avg", Statistic.VALUE, null);
+        }
+
+        metrics.add(writeMetric(id, "max", wallTime, summary.max(), Statistic.MAX, null));
         addToMetadataList(metadata, id, "max", Statistic.MAX, null);
 
         return metrics.build();
