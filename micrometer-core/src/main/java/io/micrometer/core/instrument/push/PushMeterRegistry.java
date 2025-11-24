@@ -125,7 +125,7 @@ public abstract class PushMeterRegistry extends MeterRegistry {
      * @since 1.13.0
      */
     protected String startMessage() {
-        return "publishing metrics for " + getClass().getSimpleName() + " every " + TimeUtils.format(config.step());
+        return "Publishing metrics for " + getClass().getSimpleName() + " every " + TimeUtils.format(config.step());
     }
 
     public void stop() {
