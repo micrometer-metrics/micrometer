@@ -26,6 +26,7 @@ registry.timer("http.server.requests");
 
 By adhering to Micrometer's lowercase dot notation convention, you guarantee the maximum degree of portability for your metric names across monitoring systems.
 
+[[tag-naming]]
 == Tag Naming
 
 TIP: We recommend that you follow the same lowercase dot notation described for meter names when naming tags. Using this consistent naming convention for tags allows for better translation into the respective monitoring system's idiomatic naming schemes.

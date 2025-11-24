@@ -24,7 +24,7 @@ In contrast, low cardinality tags have a bounded, typically "small" set of value
 - Environment names (`env=prod`)
 - Templated URLs (`/users/\{id}`)
 
-TIP: For more information on tag naming best practices, see xref:concepts/naming.adoc#_tag_naming[Tag Naming].
+TIP: For more information on tag naming best practices, see xref:concepts/naming.adoc#tag-naming[Tag Naming].
 
 == How It Works
 

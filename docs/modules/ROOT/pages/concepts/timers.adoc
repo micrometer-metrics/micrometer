@@ -194,6 +194,7 @@ Attempting to "re-register" a function-tracking timer will result in a warning l
 WARNING: This FunctionTimer has been already registered (MeterId{name='my.ft', tags=[]}), the registration will be ignored. Note that subsequent logs will be logged at debug level.
 ----
 
+[[pause-detection]]
 == Pause Detection
 
 Micrometer uses the `LatencyUtils` package to compensate for https://highscalability.com/blog/2015/10/5/your-load-generator-is-probably-lying-to-you-take-the-red-pi.html[coordinated omission] -- extra latency arising from system and VM pauses that skew your latency statistics downward. Distribution statistics, such as percentiles and SLO counts, are influenced by a pause detector implementation that adds additional latency here and there to compensate for pauses.
