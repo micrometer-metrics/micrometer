@@ -158,6 +158,7 @@ class ExecutorServiceMetricsTest {
     }
 
     @DisplayName("ExecutorService can be monitored with a default set of metrics after shutdown")
+    @Issue("#5366")
     @DisabledForJreRange(min = JRE.JAVA_16,
             disabledReason = "See gh-2317 for why we can't run this full test on Java 16+")
     @ParameterizedTest
@@ -182,6 +183,32 @@ class ExecutorServiceMetricsTest {
 
         exec.shutdown();
         assertThat(exec.awaitTermination(1, TimeUnit.SECONDS)).isTrue();
+    }
+
+    @DisplayName("ScheduledExecutorService can be monitored with a default set of metrics after shutdown")
+    @Issue("#5366")
+    @DisabledForJreRange(min = JRE.JAVA_16,
+            disabledReason = "See gh-2317 for why we can't run this full test on Java 16+")
+    @ParameterizedTest
+    @CsvSource({ "custom,custom.", "custom.,custom.", ",''", "' ',''" })
+    void monitorScheduledExecutorServiceAfterShutdown(String metricPrefix, String expectedMetricPrefix)
+            throws InterruptedException {
+        var monitorExecutorService = monitorExecutorService("exec", metricPrefix, Executors.newScheduledThreadPool(2));
+        assertThreadPoolExecutorMetrics("exec", expectedMetricPrefix);
+        assertThat(registry.get(expectedMetricPrefix + "executor.pool.core").tags(userTags).gauge().value())
+            .isEqualTo(2L);
+
+        monitorExecutorService.shutdownNow();
+        assertThat(monitorExecutorService.awaitTermination(1, TimeUnit.SECONDS)).isTrue();
+
+        monitorExecutorService = monitorExecutorService("exec", metricPrefix, Executors.newScheduledThreadPool(3));
+        assertThreadPoolExecutorMetrics("exec", expectedMetricPrefix);
+
+        assertThat(registry.get(expectedMetricPrefix + "executor.pool.core").tags(userTags).gauge().value())
+            .isEqualTo(3L);
+
+        monitorExecutorService.shutdown();
+        assertThat(monitorExecutorService.awaitTermination(1, TimeUnit.SECONDS)).isTrue();
     }
 
     @DisplayName("No exception thrown trying to monitor Executors private class")

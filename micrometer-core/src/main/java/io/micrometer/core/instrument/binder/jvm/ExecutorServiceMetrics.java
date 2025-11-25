@@ -263,9 +263,11 @@ public class ExecutorServiceMetrics implements MeterBinder {
      */
     public static ScheduledExecutorService monitor(MeterRegistry registry, ScheduledExecutorService executor,
             String executorServiceName, String metricPrefix, Iterable<Tag> tags) {
-        new ExecutorServiceMetrics(executor, executorServiceName, metricPrefix, tags).bindTo(registry);
+        ExecutorServiceMetrics executorServiceMetrics = new ExecutorServiceMetrics(executor, executorServiceName,
+                metricPrefix, tags);
+        executorServiceMetrics.bindTo(registry);
         return new TimedScheduledExecutorService(registry, executor, executorServiceName, sanitizePrefix(metricPrefix),
-                tags);
+                tags, executorServiceMetrics.registeredMeterIds);
     }
 
     /**

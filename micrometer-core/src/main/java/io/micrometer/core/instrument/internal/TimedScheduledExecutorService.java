@@ -18,7 +18,9 @@ package io.micrometer.core.instrument.internal;
 import io.micrometer.core.instrument.*;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.*;
 
 import static java.util.stream.Collectors.toList;
@@ -36,6 +38,8 @@ public class TimedScheduledExecutorService implements ScheduledExecutorService {
 
     private final ScheduledExecutorService delegate;
 
+    private final Set<Meter.Id> registeredMeterIds;
+
     private final Timer executionTimer;
 
     private final Timer idleTimer;
@@ -46,8 +50,14 @@ public class TimedScheduledExecutorService implements ScheduledExecutorService {
 
     public TimedScheduledExecutorService(MeterRegistry registry, ScheduledExecutorService delegate,
             String executorServiceName, String metricPrefix, Iterable<Tag> tags) {
+        this(registry, delegate, executorServiceName, metricPrefix, tags, Collections.emptySet());
+    }
+
+    public TimedScheduledExecutorService(MeterRegistry registry, ScheduledExecutorService delegate,
+            String executorServiceName, String metricPrefix, Iterable<Tag> tags, Set<Meter.Id> registeredMeterIds) {
         this.registry = registry;
         this.delegate = delegate;
+        this.registeredMeterIds = registeredMeterIds;
         Tags finalTags = Tags.concat(tags, "name", executorServiceName);
         this.executionTimer = registry.timer(metricPrefix + "executor", finalTags);
         this.idleTimer = registry.timer(metricPrefix + "executor.idle", finalTags);
@@ -57,11 +67,17 @@ public class TimedScheduledExecutorService implements ScheduledExecutorService {
 
     @Override
     public void shutdown() {
+        for (Meter.Id id : registeredMeterIds) {
+            registry.remove(id);
+        }
         delegate.shutdown();
     }
 
     @Override
     public List<Runnable> shutdownNow() {
+        for (Meter.Id id : registeredMeterIds) {
+            registry.remove(id);
+        }
         return delegate.shutdownNow();
     }
 
