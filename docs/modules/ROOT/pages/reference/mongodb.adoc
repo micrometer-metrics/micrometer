@@ -5,7 +5,7 @@ https://www.mongodb.com/[MongoDB] is a modern database that supports transaction
 
 Below you can find an example of how to instrument MongoDB with Micrometer.
 
-TIP: To add more capabilities such as distributed tracing, please consider using https://docs.spring.io/spring-data/mongodb/reference/observability/observability.html[Spring Data MongoDB] which uses xref:observation.adoc[Micrometer Observation] under the hood.
+TIP: To add more capabilities such as distributed tracing, please consider using https://docs.spring.io/spring-data/mongodb/reference/observability/observability.html[Spring Data MongoDB] which uses xref:../observation.adoc[Micrometer Observation] under the hood.
 
 Below you can find an example of metrics for command execution.
 
