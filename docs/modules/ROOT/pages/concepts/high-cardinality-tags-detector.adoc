@@ -24,7 +24,7 @@ In contrast, low cardinality tags have a bounded, typically "small" set of value
 - Environment names (`env=prod`)
 - Templated URLs (`/users/\{id}`)
 
-TIP: For more information on tag naming best practices, see xref:concepts/naming.adoc#tag-naming[Tag Naming].
+TIP: For more information on tag naming best practices, see xref:./naming.adoc#_tag_naming[Tag Naming].
 
 == How It Works
 
@@ -115,7 +115,7 @@ If a tag provides little value but high cardinality, you should remove it. If yo
 registry.config().meterFilter(MeterFilter.ignoreTags("userId"));
 ----
 
-See xref:concepts/meter-filters.adoc[Meter Filters] for more information and configuration options.
+See xref:./meter-filters.adoc[Meter Filters] for more information and configuration options.
 
 === Normalize Tag Values
 
@@ -150,7 +150,7 @@ registry.config().meterFilter(MeterFilter.maximumAllowableTags("http.requests", 
 
 TIP: In the code above, instead of `MeterFilter.deny()`, you can implement your own logic that not only denies the registration of the `Meter` but also logs the event out. These logs can be overwhelming, it's a good idea to limit them.
 
-See xref:concepts/meter-filters.adoc[Meter Filters] for more information.
+See xref:./meter-filters.adoc[Meter Filters] for more information.
 
 == Best Practices
 
@@ -175,5 +175,5 @@ See xref:concepts/meter-filters.adoc[Meter Filters] for more information.
 
 == See Also
 
-- xref:concepts/meter-filters.adoc[Meter Filters]: Using filters to control meter registration and tag cardinality
+- xref:./meter-filters.adoc[Meter Filters]: Using filters to control meter registration and tag cardinality
 - xref:../observation/introduction.adoc[Observation API]: Using high- and low cardinality tags with Observations
