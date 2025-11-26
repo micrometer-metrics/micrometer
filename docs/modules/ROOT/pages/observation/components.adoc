@@ -56,7 +56,7 @@ In this section we will describe main components related to Micrometer Observati
 └─────────────────┘
 -----
 
-`Observation` through `ObservationRegistry` gets created with a mutable `Observation.Context`. To allow name and key-value customization, an `ObservationConvention` can be used instead of direct name setting. List of `ObservationPredicate` is run to verify if an `Observation` should be created instead of a no-op version. On each xref:observation/introduction.adoc[Micrometer Observation lifecycle] action (e.g. `start()`) a corresponding `ObservationHandler` method is called (e.g. `onStart`) with the mutable `Observation.Context` as argument. On `Observation` stop, before calling the `ObservationHandler` `onStop` methods, list of `ObservationFilter` is called to optionally further modify the `Observation.Context`.
+`Observation` through `ObservationRegistry` gets created with a mutable `Observation.Context`. To allow name and key-value customization, an `ObservationConvention` can be used instead of direct name setting. List of `ObservationPredicate` is run to verify if an `Observation` should be created instead of a no-op version. On each xref:./introduction.adoc[Micrometer Observation lifecycle] action (e.g. `start()`) a corresponding `ObservationHandler` method is called (e.g. `onStart`) with the mutable `Observation.Context` as argument. On `Observation` stop, before calling the `ObservationHandler` `onStop` methods, list of `ObservationFilter` is called to optionally further modify the `Observation.Context`.
 
 [[micrometer-observation-context]]
 == Observation.Context
@@ -85,7 +85,7 @@ If you want to have more observation options (such as metrics and tracing -- alr
 include::{include-java}/observation/ObservationHandlerTests.java[tags=observation,indent=0]
 -----
 
-Starting with Micrometer 1.10, you can register "handlers" (`ObservationHandler` instances) that are notified about the xref:observation/introduction.adoc[lifecycle event] of an observation (for example, you can run custom code when an observation is started or stopped).
+Starting with Micrometer 1.10, you can register "handlers" (`ObservationHandler` instances) that are notified about the xref:./introduction.adoc[lifecycle event] of an observation (for example, you can run custom code when an observation is started or stopped).
 Using this feature lets you add tracing capabilities to your existing metrics instrumentation (see: `DefaultTracingObservationHandler`). The implementation of these handlers does not need to be tracing related. It is completely up to you how you are going to implement them (for example, you can add logging capabilities).
 
 [[micrometer-observation-handler-example]]

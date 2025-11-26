@@ -4,7 +4,7 @@
 
 StatsD is a UDP-based sidecar-driven metrics collection system. The maintainer of the original StatsD line protocol specification is Etsy. Datadog's DogStatsD and Influx's Telegraf each accept a modified version of the line protocol, having each enriched the original specification with dimensionality in different ways.
 
-If you intend to use the Datadog or Telegraf flavors, see the documentation for Micrometer's xref:/implementations/datadog.adoc[Datadog] or xref:/implementations/influx.adoc[Influx] support.
+If you intend to use the Datadog or Telegraf flavors, see the documentation for Micrometer's xref:./datadog.adoc[Datadog] or xref:./influx.adoc[Influx] support.
 
 NOTE: Starting a `StatsdMeterRegistry` doesn't block waiting for a connection to the backend to be established, so recorded measurements could be lost until the connection is established.
 

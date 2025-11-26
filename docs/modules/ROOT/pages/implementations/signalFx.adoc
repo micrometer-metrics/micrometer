@@ -2,7 +2,7 @@
 :sectnums:
 :system: signalfx
 
-CAUTION: This module has been deprecated in favor of the xref:implementations/otlp.adoc[OTLP Registry] because the https://github.com/signalfx/signalfx-java[SignalFX Java client library] that this module depends on has been deprecated.
+CAUTION: This module has been deprecated in favor of the xref:./otlp.adoc[OTLP Registry] because the https://github.com/signalfx/signalfx-java[SignalFX Java client library] that this module depends on has been deprecated.
 
 SignalFx is a dimensional monitoring system SaaS with a full UI that operates on a push model. It has a rich set of alert "`detectors`".
 
