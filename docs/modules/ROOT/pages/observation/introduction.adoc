@@ -48,7 +48,7 @@ TIP: Calling `observe(() -> ...)` leads to starting the Observation, putting it 
 [[micrometer-observation-building-blocks]]
 == Building Blocks
 
-In this section we will describe a high overview of Micrometer Observation components. You can read more about those in xref:observation/components.adoc[this part of the documentation].
+In this section we will describe a high overview of Micrometer Observation components. You can read more about those in xref:./components.adoc[this part of the documentation].
 
 [[micrometer-observation-glossary]]
 === Glossary

@@ -31,7 +31,7 @@ Micrometer Observation is used to instrument various projects. Below you can fin
 | R2DBC | https://github.com/r2dbc/r2dbc-proxy/issues/122[Issue]
 | RabbitMQ | https://github.com/rabbitmq/rabbitmq-java-client/issues/952[Issue]
 | RabbitMQ Stream | https://github.com/rabbitmq/rabbitmq-stream-java-client/pull/384[PR]
-| Reactor | xref:observation/instrumenting.adoc#instrumentation_of_reactive_libraries[Docs]
+| Reactor | xref:./instrumenting.adoc#instrumentation_of_reactive_libraries[Docs]
 | Reactor Netty | https://projectreactor.io/docs/netty/release/reference/index.html#_tracing_3[Docs]
 | Redisson | https://github.com/redisson/redisson/issues/4976[Issue], https://github.com/redisson/redisson/wiki/16.-Observability#162-tracing[Docs]
 | Resilience4j | https://github.com/resilience4j/resilience4j/pull/1698[PR]

@@ -15,7 +15,7 @@ Micrometer contains a core module with an instrumentation https://en.wikipedia.o
 |===
 
 
-* *xref:concepts/rate-aggregation.adoc[Rate Aggregation]*. In this context, we mean aggregation of a set of samples over a prescribed time interval. Some monitoring systems expect some types of discrete samples (such as counts) to be converted to a rate by the application prior to being published. Other systems expect cumulative values to always be sent. Still others have no opinion on it either way.
+* *xref:./rate-aggregation.adoc[Rate Aggregation]*. In this context, we mean aggregation of a set of samples over a prescribed time interval. Some monitoring systems expect some types of discrete samples (such as counts) to be converted to a rate by the application prior to being published. Other systems expect cumulative values to always be sent. Still others have no opinion on it either way.
 
 [cols=2*,options="header"]
 |===

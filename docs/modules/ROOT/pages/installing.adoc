@@ -59,7 +59,7 @@ NOTE: The version is not needed for this dependency since it is defined by the B
 
 == Multiple Monitoring Systems
 
-Through Micrometer's composite meter registry (described in greater detail in xref:/concepts/registry.adoc#_composite_registries["Concepts"]), you can configure more than one registry implementation if you intend to publish metrics to more than one monitoring system.
+Through Micrometer's composite meter registry (described in greater detail in xref:./concepts/registry.adoc#_composite_registries["Concepts"]), you can configure more than one registry implementation if you intend to publish metrics to more than one monitoring system.
 
 If you have not decided on a monitoring system yet and want only to try out the instrumentation SPI, you can add a dependency on `micrometer-core` instead and configure the `SimpleMeterRegistry`.
 
