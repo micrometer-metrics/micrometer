@@ -39,7 +39,7 @@ import static io.micrometer.core.instrument.binder.jvm.JvmMemory.getUsageValue;
  */
 public class JvmMemoryMetrics implements MeterBinder {
 
-    private final Tags tags;
+    private final Tags extraTags;
 
     private final JvmMemoryMeterConventions conventions;
 
@@ -65,14 +65,14 @@ public class JvmMemoryMetrics implements MeterBinder {
      * @since 1.16.0
      */
     public JvmMemoryMetrics(Iterable<? extends Tag> extraTags, JvmMemoryMeterConventions conventions) {
-        this.tags = Tags.of(extraTags);
+        this.extraTags = Tags.of(extraTags);
         this.conventions = conventions;
     }
 
     @Override
     public void bindTo(MeterRegistry registry) {
         for (BufferPoolMXBean bufferPoolBean : ManagementFactory.getPlatformMXBeans(BufferPoolMXBean.class)) {
-            Iterable<Tag> tagsWithId = Tags.concat(tags, "id", bufferPoolBean.getName());
+            Iterable<Tag> tagsWithId = Tags.concat(extraTags, "id", bufferPoolBean.getName());
 
             Gauge.builder("jvm.buffer.count", bufferPoolBean, BufferPoolMXBean::getCount)
                 .tags(tagsWithId)

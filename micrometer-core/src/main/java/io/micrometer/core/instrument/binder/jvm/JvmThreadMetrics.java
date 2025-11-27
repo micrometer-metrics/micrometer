@@ -101,10 +101,10 @@ public class JvmThreadMetrics implements MeterBinder {
 
         try {
             threadBean.getAllThreadIds();
-            MeterConvention<Thread.State> stateMeterConvention = conventions.threadCountConvention();
+            MeterConvention<Thread.State> threadCountConvention = conventions.threadCountConvention();
             for (Thread.State state : Thread.State.values()) {
-                Gauge.builder(stateMeterConvention.getName(), threadBean, (bean) -> getThreadStateCount(bean, state))
-                    .tags(stateMeterConvention.getTags(state))
+                Gauge.builder(threadCountConvention.getName(), threadBean, (bean) -> getThreadStateCount(bean, state))
+                    .tags(threadCountConvention.getTags(state))
                     .description("The current number of threads")
                     .baseUnit(BaseUnits.THREADS)
                     .register(registry);

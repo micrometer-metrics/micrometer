@@ -82,7 +82,7 @@ class JvmMemoryMetricsTest {
     }
 
     private void assertJvmMemoryMetrics(String area) {
-        assertJvmMemoryMetrics(area, Tags.empty(), false);
+        assertJvmMemoryMetrics(area, Tags.empty());
     }
 
     private void assertJvmMemoryMetrics(String area, Tags extraTags) {
@@ -90,18 +90,18 @@ class JvmMemoryMetricsTest {
     }
 
     private void assertJvmMemoryMetrics(String area, Tags extraTags, boolean isOtel) {
-        String memoryAreaTagName = isOtel ? "jvm.memory.type" : "area";
         String maxMemoryMeterName = isOtel ? "jvm.memory.limit" : "jvm.memory.max";
+        Tags tags = Tags.of(isOtel ? "jvm.memory.type" : "area", area).and(extraTags);
 
-        Gauge memUsed = registry.get("jvm.memory.used").tags(memoryAreaTagName, area).tags(extraTags).gauge();
+        Gauge memUsed = registry.get("jvm.memory.used").tags(tags).gauge();
         assertThat(memUsed.value()).isGreaterThanOrEqualTo(0);
         assertThat(memUsed.getId().getBaseUnit()).isEqualTo(BaseUnits.BYTES);
 
-        Gauge memCommitted = registry.get("jvm.memory.committed").tags(memoryAreaTagName, area).tags(extraTags).gauge();
+        Gauge memCommitted = registry.get("jvm.memory.committed").tags(tags).gauge();
         assertThat(memCommitted.value()).isNotNaN();
         assertThat(memCommitted.getId().getBaseUnit()).isEqualTo(BaseUnits.BYTES);
 
-        Gauge memMax = registry.get(maxMemoryMeterName).tags(memoryAreaTagName, area).tags(extraTags).gauge();
+        Gauge memMax = registry.get(maxMemoryMeterName).tags(tags).gauge();
         assertThat(memMax.value()).isNotNaN();
         assertThat(memMax.getId().getBaseUnit()).isEqualTo(BaseUnits.BYTES);
     }
