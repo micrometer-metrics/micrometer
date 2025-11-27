@@ -44,6 +44,6 @@ Result result = job.execute();
 sample.stop(timerProvider.withTags("status", result.status())); <2>
 ----
 <1> Definition of the `MeterProvider` for `Timer` with all the "static" fields necessary. Please note the `withRegistry` method call.
-<2> Definition of the dynamic tags. Note that only those tags are defined here that are dynamic and everying else is defined where the `MeterProvider` is created. The `withTags` method returns a `Timer` that is created using the tags defined in `withTags` plus everything else that is defined by the `MeterProvider`.
+<2> Definition of the dynamic tags. Note that only those tags are defined here that are dynamic and everything else is defined where the `MeterProvider` is created. The `withTags` method returns a `Timer` that is created using the tags defined in `withTags` plus everything else that is defined by the `MeterProvider`.
 
 This and the previous example produce the same output, the only difference is the amount of boilerplate in your code and the amount of builder objects created in the heap.
