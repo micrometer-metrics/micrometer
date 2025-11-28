@@ -1,10 +1,14 @@
 buildscript {
-    ext.javaLanguageVersion = JavaLanguageVersion.of(JavaVersion.current().isJava11Compatible() ? JavaVersion.current().getMajorVersion() : 17)
+    ext.gradleJvmVersion = JavaLanguageVersion.of(JavaVersion.current().getMajorVersion())
+    ext.javaLanguageVersion = project.hasProperty('toolchainVersion') && project.property('toolchainVersion') != '' ? JavaLanguageVersion.of(project.property('toolchainVersion') as int) : gradleJvmVersion
     ext.javaTargetVersion = JavaVersion.VERSION_1_8
 
     repositories {
         mavenCentral()
         gradlePluginPortal()
+        maven {
+            url = uri("https://bndtools.jfrog.io/bndtools/libs-release")
+        }
     }
 
     dependencies {
@@ -20,12 +24,7 @@ buildscript {
         classpath libs.plugin.japicmp
         classpath libs.plugin.downloadTask
         classpath libs.plugin.spotless
-
-        if (javaLanguageVersion.asInt() < 17) {
-            classpath libs.plugin.bnd
-        } else {
-            classpath libs.plugin.bndForJava17
-        }
+        classpath libs.plugin.bnd
 
         constraints {
             classpath(libs.asmForPlugins) {
@@ -164,9 +163,9 @@ subprojects {
 
             toolchain {
                 languageVersion = javaLanguageVersion
-                sourceCompatibility = javaTargetVersion
-                targetCompatibility = javaTargetVersion
             }
+            sourceCompatibility = javaTargetVersion
+            targetCompatibility = javaTargetVersion
         }
 
         // Dependencies for all projects that are not transitive to consumers of our modules
@@ -373,8 +372,6 @@ subprojects {
         apply plugin: 'com.netflix.nebula.maven-apache-license'
         apply plugin: 'com.netflix.nebula.publish-verification'
         apply plugin: 'com.netflix.nebula.contacts'
-        apply plugin: 'com.netflix.nebula.info'
-        apply plugin: 'com.netflix.nebula.project'
 
         if (project.name != 'micrometer-bom') {
             apply plugin: 'biz.aQute.bnd.builder'
@@ -399,7 +396,7 @@ subprojects {
             tasks.register("testModules", Exec) {
                 dependsOn jar
                 String executablePath = javaToolchains.launcherFor { languageVersion = javaLanguageVersion }.get().executablePath
-                commandLine "$executablePath", '-p', "$jar.archivePath", '--list-modules'
+                commandLine "$executablePath", '-p', "$jar.archiveFile", '--list-modules'
                 standardOutput = new ByteArrayOutputStream()
                 ignoreExitValue = true
 
@@ -502,7 +499,7 @@ nexusPublishing {
 }
 
 wrapper {
-    gradleVersion = '8.14.3'
+    gradleVersion = '9.2.1'
 }
 
 defaultTasks 'build'

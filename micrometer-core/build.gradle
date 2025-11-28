@@ -1,5 +1,8 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
+
 plugins {
-    alias(libs.plugins.kotlin19)
+    alias(libs.plugins.kotlin)
     alias(libs.plugins.aspectj) apply false
 }
 
@@ -28,17 +31,17 @@ else {
 
 description 'Core module of Micrometer containing instrumentation API and implementation'
 
-tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).all {
-    kotlinOptions {
-        jvmTarget = javaTargetVersion
-        apiVersion = "1.7"
-        languageVersion = "1.7"
+kotlin {
+    compilerOptions {
+        jvmTarget =  JvmTarget.JVM_1_8
+        apiVersion = KotlinVersion.KOTLIN_1_7
+        languageVersion = KotlinVersion.KOTLIN_1_7
     }
 }
 
 compileTestKotlin {
-    kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_11
+    compilerOptions {
+        jvmTarget = JvmTarget.JVM_11
     }
 }
 
