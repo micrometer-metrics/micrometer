@@ -6,6 +6,9 @@ buildscript {
     repositories {
         mavenCentral()
         gradlePluginPortal()
+        maven {
+            url = uri("https://bndtools.jfrog.io/bndtools/libs-release")
+        }
     }
 
     dependencies {
@@ -371,7 +374,7 @@ subprojects {
         apply plugin: 'com.netflix.nebula.contacts'
 
         if (project.name != 'micrometer-bom') {
-//            apply plugin: 'biz.aQute.bnd.builder'
+            apply plugin: 'biz.aQute.bnd.builder'
 
             jar {
                 manifest.attributes.put('Automatic-Module-Name', project.name.replace('-', '.'))
@@ -380,14 +383,14 @@ subprojects {
                     from "$rootDir/NOTICE"
                 }
 
-//                bundle {
-//                    // workaround for multi-version JARs
-//                    //  see https://github.com/bndtools/bnd/issues/2227
-//                    bnd '''\
-//                        -fixupmessages: '^Classes found in the wrong directory: .*'
-//                        -exportcontents: io.micrometer.*
-//                        '''.stripIndent()
-//                }
+                bundle {
+                    // workaround for multi-version JARs
+                    //  see https://github.com/bndtools/bnd/issues/2227
+                    bnd '''\
+                        -fixupmessages: '^Classes found in the wrong directory: .*'
+                        -exportcontents: io.micrometer.*
+                        '''.stripIndent()
+                }
             }
 
             tasks.register("testModules", Exec) {

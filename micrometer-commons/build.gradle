@@ -13,14 +13,14 @@ dependencies {
 }
 
 jar {
-//    bundle {
-//        bnd '''\
-//        Import-Package: \
-//            !java.*,\
-//            org.aspectj.*;resolution:=dynamic,\
-//            org.slf4j.*;resolution:=dynamic,\
-//            javax.annotation.*;resolution:=optional;version="${@}",\
-//            *
-//        '''.stripIndent()
-//    }
+    bundle {
+        bnd '''\
+        Import-Package: \
+            !java.*,\
+            org.aspectj.*;resolution:=dynamic,\
+            org.slf4j.*;resolution:=dynamic,\
+            javax.annotation.*;resolution:=optional;version="${@}",\
+            *
+        '''.stripIndent()
+    }
 }
