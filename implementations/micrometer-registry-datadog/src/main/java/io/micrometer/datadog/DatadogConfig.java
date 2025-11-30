@@ -76,8 +76,4 @@ public interface DatadogConfig extends StepRegistryConfig {
                 checkRequired("uri", DatadogConfig::uri));
     }
 
-    default boolean publishAverage() {
-        return getBoolean(this, "publishAverage").orElse(true);
-    }
-
 }
