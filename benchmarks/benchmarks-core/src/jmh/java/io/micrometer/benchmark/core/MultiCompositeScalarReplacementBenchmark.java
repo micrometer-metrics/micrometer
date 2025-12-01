@@ -41,21 +41,11 @@ import java.util.concurrent.TimeUnit;
  * user don't care about the global registry and don't add any {@link MeterRegistry} to
  * it.
  * <p>
- * Another similar scenario (that this benchmark does not simulate) is when the user uses
- * both a {@link CompositeMeterRegistry} (that is injected into the components of the
- * application) and the global registry in {@code Metrics} but meter registrations and
- * recordings happen in the app before any {@link MeterRegistry} would be added either to
- * the global or the composite registry. This is an "invalid" scenario, users should
- * configure registries properly before they would be used but this scenario causes the
- * same issue that the previous one does. This is possible even with one registry, if
- * "enough" recordings happen before any {@link MeterRegistry} would be added to the
- * composite/global.
- * <p>
  * The issue this benchmark reproduces is described in
  * <a href="https://github.com/micrometer-metrics/micrometer/issues/6811">#6811</a>:
  * {@code AbstractCompositeMeter} maintains a {@code Map} for its children. This map was
  * {@code Collections.emptyMap()} when an instance created and replaced to
- * {@code IdentityHashMap} as Meters were added. This means that in the scenarios above,
+ * {@code IdentityHashMap} as Meters were added. This means that in the scenario above,
  * the Meters of the non-empty {@link CompositeMeterRegistry} use {@code IdentityHashMap}
  * and Meters of the empty one use {@code Collections.emptyMap()}. This apparently breaks
  * "Scalar Replacement" (a JIT optimization that can eliminate allocations). Before the
@@ -66,6 +56,7 @@ import java.util.concurrent.TimeUnit;
  * were eliminated.
  *
  * @see "https://github.com/micrometer-metrics/micrometer/issues/6811"
+ * @see SingleCompositeScalarReplacementBenchmark
  */
 @Fork(1)
 @Warmup(iterations = 1)
@@ -73,7 +64,7 @@ import java.util.concurrent.TimeUnit;
 @BenchmarkMode(Mode.AverageTime)
 @OutputTimeUnit(TimeUnit.NANOSECONDS)
 @State(Scope.Benchmark)
-public class CompositeScalarReplacementBenchmark {
+public class MultiCompositeScalarReplacementBenchmark {
 
     private SimpleMeterRegistry simpleMeterRegistry;
 
@@ -116,7 +107,7 @@ public class CompositeScalarReplacementBenchmark {
     }
 
     public static void main(String[] args) throws RunnerException {
-        new Runner(new OptionsBuilder().include(CompositeScalarReplacementBenchmark.class.getSimpleName())
+        new Runner(new OptionsBuilder().include(MultiCompositeScalarReplacementBenchmark.class.getSimpleName())
             .addProfiler(GCProfiler.class)
             .build()).run();
     }
