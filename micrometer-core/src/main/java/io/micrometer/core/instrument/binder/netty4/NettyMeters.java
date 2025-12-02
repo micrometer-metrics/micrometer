@@ -192,6 +192,8 @@ public enum NettyMeters implements MeterDocumentation {
 
     /**
      * Number of event executor workers.
+     *
+     * @since 1.6.0
      */
     EVENT_EXECUTOR_WORKERS {
         @Override
@@ -202,11 +204,6 @@ public enum NettyMeters implements MeterDocumentation {
         @Override
         public Meter.Type getType() {
             return Meter.Type.GAUGE;
-        }
-
-        @Override
-        public KeyName[] getKeyNames() {
-            return new KeyName[0];
         }
     };
 
