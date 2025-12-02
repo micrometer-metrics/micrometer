@@ -1,27 +1,27 @@
 version: 2.1
 
 executors:
-  jdk25-executor:
-    working_directory: ~/micrometer
-    environment:
-      GRADLE_OPTS: '-Dorg.gradle.jvmargs="-Xmx2048m -XX:+HeapDumpOnOutOfMemoryError"'
-    resource_class: medium+
-    docker:
-      - image: cimg/openjdk:25.0
+#  jdk25-executor:
+#    working_directory: ~/micrometer
+#    environment:
+#      GRADLE_OPTS: '-Dorg.gradle.jvmargs="-Xmx2048m -XX:+HeapDumpOnOutOfMemoryError"'
+#    resource_class: medium+
+#    docker:
+#      - image: cimg/openjdk:25.0
   jdk21-executor:
     working_directory: ~/micrometer
     environment:
       GRADLE_OPTS: '-Dorg.gradle.jvmargs="-Xmx1g -XX:+HeapDumpOnOutOfMemoryError"'
     resource_class: medium+
     docker:
-      - image: cimg/openjdk:21.0.8
+      - image: cimg/openjdk:21.0.9
   jdk17-executor:
     working_directory: ~/micrometer
     environment:
       GRADLE_OPTS: '-Dorg.gradle.jvmargs="-Xmx1g -XX:+HeapDumpOnOutOfMemoryError"'
     resource_class: medium+
     docker:
-      - image: cimg/openjdk:17.0.16
+      - image: cimg/openjdk:17.0.17
   machine-executor:
     working_directory: ~/micrometer
     machine:
@@ -64,10 +64,11 @@ commands:
 
 jobs:
   build-jdk25:
-    executor: jdk25-executor
+    executor: jdk21-executor
     steps:
-      - gradlew-build
-      - run: ./gradlew generationalShenandoahTest
+      - gradlew-build:
+          toolchainVersion: '25'
+      - run: ./gradlew generationalShenandoahTest -PtoolchainVersion=25
 
   build-jdk21:
     executor: jdk21-executor
@@ -79,7 +80,7 @@ jobs:
       - run: ./gradlew zgcGenerationalTest -PtoolchainVersion=21
 
   build-jdk11:
-    executor: jdk25-executor
+    executor: jdk21-executor
     steps:
       - gradlew-build:
           toolchainVersion: '11'
@@ -91,7 +92,7 @@ jobs:
           toolchainVersion: '17'
 
   concurrency-tests:
-    executor: jdk25-executor
+    executor: jdk21-executor
     steps:
       - gradlew-build:
           command: jcstress
@@ -103,7 +104,7 @@ jobs:
           command: dockerTest
 
   deploy:
-    executor: jdk25-executor
+    executor: jdk21-executor
     steps:
       - checkout
       - restore_cache:
@@ -113,7 +114,7 @@ jobs:
           command: sh ./gradle/deploy.sh
 
   stackdriver-it:
-    executor: jdk25-executor
+    executor: jdk21-executor
     steps:
       - run:
           name: Setup Google Cloud auth
