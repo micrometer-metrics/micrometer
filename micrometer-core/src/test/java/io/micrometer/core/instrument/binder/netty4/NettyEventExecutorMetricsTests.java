@@ -128,7 +128,7 @@ class NettyEventExecutorMetricsTests {
         EventExecutor mockExecutor2 = mock(EventExecutor.class);
         Iterable<EventExecutor> genericIterable = Arrays.asList(mockExecutor1, mockExecutor2);
 
-        new NettyEventExecutorMetrics(genericIterable, Tags.empty()).bindTo(this.registry);
+        new NettyEventExecutorMetrics(genericIterable).bindTo(this.registry);
 
         assertThat(this.registry.get(EVENT_EXECUTOR_WORKERS.getName()).gauge().value()).isEqualTo(2.0);
     }
