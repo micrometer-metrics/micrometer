@@ -134,7 +134,7 @@ subprojects {
                 }
             }
         }
-        if ((project.name.contains('samples') && !project.name.contains('kotlin')) || project.name.contains('benchmarks')) {
+        if ((project.name.contains('samples') && !project.name.contains('kotlin')) || project.name.contains('benchmarks') || project.name.contains('osgi-test')) {
             apply plugin: 'java'
         } else {
             apply plugin: 'java-library'
