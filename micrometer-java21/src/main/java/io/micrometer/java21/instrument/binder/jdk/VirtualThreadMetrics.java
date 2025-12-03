@@ -36,7 +36,7 @@ import static java.util.Collections.emptyList;
  *
  * @author Artyom Gabeev
  * @see <a href="https://openjdk.org/jeps/425#JDK-Flight-Recorder-JFR">JEP 425</a>
- * @see jdk.management.VirtualThreadSchedulerMXBean
+ * @see <a href="https://www.oracle.com/java/technologies/javase/24-relnote-issues.html#JDK-8338890">jdk.management.VirtualThreadSchedulerMXBean</a>
  * @since 1.14.0
  */
 public class VirtualThreadMetrics implements MeterBinder, Closeable {
