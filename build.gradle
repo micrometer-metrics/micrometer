@@ -478,6 +478,10 @@ subprojects {
                 moniker 'Tommy Ludwig'
                 github 'shakuzen'
             }
+            'jivanov@vmware.com' {
+                moniker 'Jonatan Ivanov'
+                github 'jonatan-ivanov'
+            }
         }
     }
 
