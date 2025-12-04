@@ -229,6 +229,6 @@ plugin-spotless = { module = "com.diffplug.spotless:spotless-plugin-gradle", ver
 plugin-bnd = "biz.aQute.bnd:biz.aQute.bnd.gradle:7.2.0-RC3"
 
 [plugins]
-kotlin = { id = "org.jetbrains.kotlin.jvm", version = "1.9.25" }
+kotlin = { id = "org.jetbrains.kotlin.jvm", version = "2.2.21" }
 jcstress = { id = "io.github.reyerizo.gradle.jcstress", version = "0.9.0" }
 aspectj = { id = 'io.freefair.aspectj.post-compile-weaving', version = '8.14.3' }
