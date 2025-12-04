@@ -2,9 +2,10 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
 
 plugins {
-    alias(libs.plugins.kotlin)
     alias(libs.plugins.aspectj) apply false
 }
+
+apply plugin: libs.plugins.kotlin.get().pluginId
 
 if (javaLanguageVersion.canCompileOrRun(17)) {
     apply plugin: 'io.freefair.aspectj.post-compile-weaving'

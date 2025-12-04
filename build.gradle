@@ -36,6 +36,10 @@ buildscript {
     configurations.classpath.resolutionStrategy.cacheDynamicVersionsFor 0, 'minutes'
 }
 
+plugins {
+    alias(libs.plugins.kotlin) apply false
+}
+
 // Hacks because of Antora's clone/checkout/worktrees behavior
 // Antora uses shallow-clone and worktrees to check out branches/tags.
 if (project.hasProperty('antora')) {

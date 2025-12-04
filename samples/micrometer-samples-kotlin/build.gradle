@@ -1,16 +1,13 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
 
-plugins {
-    // test with the lowest version of Kotlin supported because we compile with highest version supported
-    alias(libs.plugins.kotlin)
-}
+apply plugin: libs.plugins.kotlin.get().pluginId
 
 kotlin {
     compilerOptions {
         jvmTarget =  JvmTarget.JVM_1_8
-        apiVersion = KotlinVersion.KOTLIN_1_7
-        languageVersion = KotlinVersion.KOTLIN_1_7
+        apiVersion = KotlinVersion.KOTLIN_1_8
+        languageVersion = KotlinVersion.KOTLIN_1_8
     }
 }
 
@@ -22,6 +19,7 @@ dependencies {
     // libraries that have Kotlin dependencies
     implementation project(":micrometer-core")
     implementation libs.kotlinxCoroutines
+    // test with the lowest version of Kotlin supported because we compile with highest version supported
     // force the stdlib version
     implementation enforcedPlatform('org.jetbrains.kotlin:kotlin-bom:1.7.22')
     implementation libs.okhttp
