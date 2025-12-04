@@ -65,6 +65,9 @@ allprojects {
     group = 'io.micrometer'
     ext.'release.stage' = releaseStage ?: 'SNAPSHOT'
 
+    apply plugin: 'com.netflix.nebula.info'
+    apply plugin: 'com.netflix.nebula.project'
+
     afterEvaluate { project -> println "I'm configuring $project.name with version $project.version" }
 }
 
