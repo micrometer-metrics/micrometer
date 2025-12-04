@@ -5,11 +5,13 @@ buildscript {
     }
 
     dependencies {
+        classpath 'io.spring.gradle.antora:spring-antora-plugin:0.0.1'
         classpath 'org.antora:gradle-antora-plugin:1.0.0'
     }
 }
 
 apply plugin: 'java'
+apply plugin: 'io.spring.antora.generate-antora-yml'
 apply plugin: 'org.antora'
 
 description = 'Micrometer Docs'
@@ -85,7 +87,13 @@ antora {
     ]
 }
 
-tasks.create('generateAntoraResources') {
+tasks.named('generateAntoraYml') {
+    asciidocAttributes = project.provider {
+        return ['micrometer-version': project.version.toString()]
+    }
+}
+
+tasks.register('generateAntoraResources') {
     dependsOn 'generateAntoraYml'
 }
 
