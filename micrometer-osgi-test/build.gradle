@@ -22,7 +22,7 @@ dependencies {
     testImplementation libs.felixFramework
 
     // BND not compatible with JUnit 5.13+; see https://github.com/bndtools/bnd/issues/6651
-    testImplementation platform('org.junit:junit-bom:5.12.2')
+    testImplementation platform('org.junit:junit-bom:5.14.1')
     testImplementation libs.junitJupiter
     testRuntimeOnly libs.junitPlatformLauncher
 
