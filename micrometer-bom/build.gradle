@@ -22,11 +22,3 @@ dependencies {
         api libs.contextPropagation
     }
 }
-
-//publishing {
-//    publications {
-//        nebula(MavenPublication) {
-//            from components.javaPlatform
-//        }
-//    }
-//}

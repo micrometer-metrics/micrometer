@@ -1,6 +1,7 @@
 version: 2.1
 
 executors:
+# TODO: add and use JDK 25 executor when upgrading to a version of the Kotlin plugin that's compatible
 #  jdk25-executor:
 #    working_directory: ~/micrometer
 #    environment:
