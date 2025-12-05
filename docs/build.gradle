@@ -93,7 +93,7 @@ tasks.named('generateAntoraYml') {
     }
 }
 
-tasks.create('generateAntoraResources') {
+tasks.register('generateAntoraResources') {
     dependsOn 'generateAntoraYml'
 }
 

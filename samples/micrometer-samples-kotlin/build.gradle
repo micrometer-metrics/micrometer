@@ -1,22 +1,27 @@
-plugins {
-    // test with the lowest version of Kotlin supported because we compile with highest version supported
-    alias(libs.plugins.kotlin17)
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
+
+apply plugin: libs.plugins.kotlin.get().pluginId
+
+kotlin {
+    compilerOptions {
+        jvmTarget =  JvmTarget.JVM_1_8
+        apiVersion = KotlinVersion.KOTLIN_1_8
+        languageVersion = KotlinVersion.KOTLIN_1_8
+    }
 }
 
-tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).all {
-    kotlinOptions {
-        jvmTarget = javaTargetVersion
-        apiVersion = "1.7"
-        languageVersion = "1.7"
-    }
+tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile.class).configureEach {
+    jvmTargetValidationMode = org.jetbrains.kotlin.gradle.dsl.jvm.JvmTargetValidationMode.WARNING
 }
 
 dependencies {
     // libraries that have Kotlin dependencies
     implementation project(":micrometer-core")
     implementation libs.kotlinxCoroutines
-    // force the stdlib versions to match the plugin version for this sample
-    implementation enforcedPlatform('org.jetbrains.kotlin:kotlin-bom')
+    // test with the lowest version of Kotlin supported because we compile with highest version supported
+    // force the stdlib version
+    implementation enforcedPlatform('org.jetbrains.kotlin:kotlin-bom:1.7.22')
     implementation libs.okhttp
 
     testRuntimeOnly libs.contextPropagation

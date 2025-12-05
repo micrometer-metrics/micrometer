@@ -48,7 +48,7 @@ public class GaugeAssert extends AbstractAssert<GaugeAssert, Gauge> {
      * Verifies that the gauge's value is equal to the expected value.
      * <p>
      * Example: <pre><code class='java'>
-     * Gauge gauge = Gauge.builder("my.gauge", () -> 42.0).register(registry);
+     * Gauge gauge = Gauge.builder("my.gauge", () -&gt; 42.0).register(registry);
      *
      * assertThat(gauge).hasValue(42.0);
      * </code></pre>
@@ -65,7 +65,7 @@ public class GaugeAssert extends AbstractAssert<GaugeAssert, Gauge> {
      * Returns AssertJ's {@link DoubleAssert} for the gauge's current value.
      * <p>
      * Example: <pre><code class='java'>
-     * Gauge gauge = Gauge.builder("my.gauge", () -> 42.5).register(registry);
+     * Gauge gauge = Gauge.builder("my.gauge", () -&gt; 42.5).register(registry);
      *
      * assertThat(gauge).value()
      *     .isBetween(40.0, 50.0)

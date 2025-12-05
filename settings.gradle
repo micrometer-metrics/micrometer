@@ -5,9 +5,9 @@ pluginManagement {
 }
 
 plugins {
-    id 'com.gradle.develocity' version '3.19.2'
+    id 'com.gradle.develocity' version '4.2.2'
     id 'io.spring.develocity.conventions' version '0.0.24'
-    id 'org.gradle.toolchains.foojay-resolver-convention' version '0.10.0'
+    id 'org.gradle.toolchains.foojay-resolver-convention' version '1.0.0'
 }
 
 rootProject.name = 'micrometer'

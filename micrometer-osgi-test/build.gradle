@@ -2,9 +2,8 @@ import aQute.bnd.gradle.Bundle
 import aQute.bnd.gradle.Resolve
 import aQute.bnd.gradle.TestOSGi
 
-// skip this module when building with jdk >=24
-// waiting for a release with the fix https://github.com/bndtools/bnd/pull/6371
-if (javaLanguageVersion.canCompileOrRun(24)) {
+// BND requires Java 17
+if (javaLanguageVersion.asInt() < 17) {
     project.tasks.configureEach { task -> task.enabled = false }
 }
 
@@ -22,7 +21,11 @@ dependencies {
 
     testImplementation libs.felixFramework
 
-    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
+    // BND not compatible with JUnit 5.13+; see https://github.com/bndtools/bnd/issues/6651
+    testImplementation platform('org.junit:junit-bom:5.12.2')
+    testImplementation libs.junitJupiter
+    testRuntimeOnly libs.junitPlatformLauncher
+
     testRuntimeOnly libs.felixScr
     testRuntimeOnly libs.slfj4Simple
 }
@@ -30,9 +33,6 @@ dependencies {
 def testingBundle = tasks.register('testingBundle', Bundle) {
     archiveClassifier = 'tests'
     from sourceSets.test.output
-    if (javaLanguageVersion.asInt() < 17) {
-        sourceSet = sourceSets.test
-    }
     bundle {
         bnd """\
             Bundle-SymbolicName: \${task.archiveBaseName}-\${task.archiveClassifier}

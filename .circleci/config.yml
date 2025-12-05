@@ -1,34 +1,28 @@
 version: 2.1
 
 executors:
-  jdk24-executor:
-    working_directory: ~/micrometer
-    environment:
-      GRADLE_OPTS: '-Dorg.gradle.jvmargs="-Xmx2048m -XX:+HeapDumpOnOutOfMemoryError"'
-    resource_class: medium+
-    docker:
-      - image: cimg/openjdk:24.0.2
-  circle-jdk-executor:
-    working_directory: ~/micrometer
-    environment:
-      GRADLE_OPTS: '-Dorg.gradle.jvmargs="-Xmx1g -XX:+HeapDumpOnOutOfMemoryError"'
-    resource_class: medium+
-    docker:
-      - image: cimg/openjdk:21.0.8
-  circle-jdk17-executor:
+# TODO: add and use JDK 25 executor when upgrading to a version of the Kotlin plugin that's compatible
+#  jdk25-executor:
+#    working_directory: ~/micrometer
+#    environment:
+#      GRADLE_OPTS: '-Dorg.gradle.jvmargs="-Xmx2048m -XX:+HeapDumpOnOutOfMemoryError"'
+#    resource_class: medium+
+#    docker:
+#      - image: cimg/openjdk:25.0
+  jdk21-executor:
     working_directory: ~/micrometer
     environment:
       GRADLE_OPTS: '-Dorg.gradle.jvmargs="-Xmx1g -XX:+HeapDumpOnOutOfMemoryError"'
     resource_class: medium+
     docker:
-      - image: cimg/openjdk:17.0.16
-  circle-jdk11-executor:
+      - image: cimg/openjdk:21.0.9
+  jdk17-executor:
     working_directory: ~/micrometer
     environment:
       GRADLE_OPTS: '-Dorg.gradle.jvmargs="-Xmx1g -XX:+HeapDumpOnOutOfMemoryError"'
     resource_class: medium+
     docker:
-      - image: cimg/openjdk:11.0.28
+      - image: cimg/openjdk:17.0.17
   machine-executor:
     working_directory: ~/micrometer
     machine:
@@ -41,6 +35,9 @@ commands:
       command:
         type: string
         default: 'build'
+      toolchainVersion:
+        type: string
+        default: ''
     steps:
       - checkout
       - restore_cache:
@@ -54,7 +51,7 @@ commands:
             - ~/.gradle
       - run:
           name: run gradle command
-          command: ./gradlew << parameters.command >>
+          command: ./gradlew << parameters.command >> -PtoolchainVersion=<< parameters.toolchainVersion >>
       - run:
           name: collect test reports
           when: always
@@ -67,32 +64,36 @@ commands:
           path: ~/micrometer/test-results/
 
 jobs:
-  build-jdk24:
-    executor: jdk24-executor
+  build-jdk25:
+    executor: jdk21-executor
     steps:
-      - gradlew-build
-      - run: ./gradlew generationalShenandoahTest
+      - gradlew-build:
+          toolchainVersion: '25'
+      - run: ./gradlew generationalShenandoahTest -PtoolchainVersion=25
 
-  build:
-    executor: circle-jdk-executor
+  build-jdk21:
+    executor: jdk21-executor
     steps:
-      - gradlew-build
-      - run: ./gradlew shenandoahTest
-      - run: ./gradlew zgcTest
-      - run: ./gradlew zgcGenerationalTest
+      - gradlew-build:
+          toolchainVersion: '21'
+      - run: ./gradlew shenandoahTest -PtoolchainVersion=21
+      - run: ./gradlew zgcTest -PtoolchainVersion=21
+      - run: ./gradlew zgcGenerationalTest -PtoolchainVersion=21
 
   build-jdk11:
-    executor: circle-jdk11-executor
+    executor: jdk21-executor
     steps:
-      - gradlew-build
+      - gradlew-build:
+          toolchainVersion: '11'
 
   build-jdk17:
-    executor: circle-jdk17-executor
+    executor: jdk17-executor
     steps:
-      - gradlew-build
+      - gradlew-build:
+          toolchainVersion: '17'
 
   concurrency-tests:
-    executor: circle-jdk-executor
+    executor: jdk21-executor
     steps:
       - gradlew-build:
           command: jcstress
@@ -104,7 +105,7 @@ jobs:
           command: dockerTest
 
   deploy:
-    executor: circle-jdk-executor
+    executor: jdk21-executor
     steps:
       - checkout
       - restore_cache:
@@ -114,7 +115,7 @@ jobs:
           command: sh ./gradle/deploy.sh
 
   stackdriver-it:
-    executor: circle-jdk-executor
+    executor: jdk21-executor
     steps:
       - run:
           name: Setup Google Cloud auth
@@ -128,10 +129,10 @@ workflows:
   version: 2
   build_prs_deploy_snapshots:
     jobs:
-      - build
       - build-jdk11
       - build-jdk17
-      - build-jdk24
+      - build-jdk21
+      - build-jdk25
       - concurrency-tests
       - docker-tests
       - stackdriver-it:
@@ -146,10 +147,10 @@ workflows:
           context:
             - deploy
           requires:
-            - build
             - build-jdk11
             - build-jdk17
-            - build-jdk24
+            - build-jdk21
+            - build-jdk25
             - concurrency-tests
             - docker-tests
           filters:
@@ -159,7 +160,7 @@ workflows:
                 - /\d+\.\d+\.x/
   build_deploy_releases:
     jobs:
-      - build:
+      - build-jdk21:
           filters:
             branches:
               ignore: /.*/
@@ -177,7 +178,7 @@ workflows:
               ignore: /.*/
             tags:
               only: /^v\d+\.\d+\.\d+(-(RC|M)\d+)?$/
-      - build-jdk24:
+      - build-jdk25:
           filters:
             branches:
               ignore: /.*/
@@ -207,10 +208,10 @@ workflows:
           context:
             - deploy
           requires:
-            - build
             - build-jdk11
             - build-jdk17
-            - build-jdk24
+            - build-jdk21
+            - build-jdk25
             - concurrency-tests
             - docker-tests
           filters:

@@ -1,10 +1,14 @@
 buildscript {
-    ext.javaLanguageVersion = JavaLanguageVersion.of(JavaVersion.current().isJava11Compatible() ? JavaVersion.current().getMajorVersion() : 17)
+    ext.gradleJvmVersion = JavaLanguageVersion.of(JavaVersion.current().getMajorVersion())
+    ext.javaLanguageVersion = project.hasProperty('toolchainVersion') && project.property('toolchainVersion') != '' ? JavaLanguageVersion.of(project.property('toolchainVersion') as int) : gradleJvmVersion
     ext.javaTargetVersion = JavaVersion.VERSION_1_8
 
     repositories {
         mavenCentral()
         gradlePluginPortal()
+        maven {
+            url = uri("https://bndtools.jfrog.io/bndtools/libs-release")
+        }
     }
 
     dependencies {
@@ -20,12 +24,7 @@ buildscript {
         classpath libs.plugin.japicmp
         classpath libs.plugin.downloadTask
         classpath libs.plugin.spotless
-
-        if (javaLanguageVersion.asInt() < 17) {
-            classpath libs.plugin.bnd
-        } else {
-            classpath libs.plugin.bndForJava17
-        }
+        classpath libs.plugin.bnd
 
         constraints {
             classpath(libs.asmForPlugins) {
@@ -35,6 +34,10 @@ buildscript {
     }
 
     configurations.classpath.resolutionStrategy.cacheDynamicVersionsFor 0, 'minutes'
+}
+
+plugins {
+    alias(libs.plugins.kotlin) apply false
 }
 
 // Hacks because of Antora's clone/checkout/worktrees behavior
@@ -57,6 +60,8 @@ apply plugin: 'com.netflix.nebula.release'
 release.defaultVersionStrategy = nebula.plugin.release.git.opinion.Strategies.SNAPSHOT
 
 apply plugin: 'io.github.gradle-nexus.publish-plugin'
+apply plugin: 'com.netflix.nebula.info'
+apply plugin: 'com.netflix.nebula.project'
 
 allprojects {
     group = 'io.micrometer'
@@ -135,7 +140,7 @@ subprojects {
                 }
             }
         }
-        if ((project.name.contains('samples') && !project.name.contains('kotlin')) || project.name.contains('benchmarks')) {
+        if ((project.name.contains('samples') && !project.name.contains('kotlin')) || project.name.contains('benchmarks') || project.name.contains('osgi-test')) {
             apply plugin: 'java'
         } else {
             apply plugin: 'java-library'
@@ -164,9 +169,9 @@ subprojects {
 
             toolchain {
                 languageVersion = javaLanguageVersion
-                sourceCompatibility = javaTargetVersion
-                targetCompatibility = javaTargetVersion
             }
+            sourceCompatibility = javaTargetVersion
+            targetCompatibility = javaTargetVersion
         }
 
         // Dependencies for all projects that are not transitive to consumers of our modules
@@ -399,7 +404,7 @@ subprojects {
             tasks.register("testModules", Exec) {
                 dependsOn jar
                 String executablePath = javaToolchains.launcherFor { languageVersion = javaLanguageVersion }.get().executablePath
-                commandLine "$executablePath", '-p', "$jar.archivePath", '--list-modules'
+                commandLine "$executablePath", '-p', "$jar.archiveFile", '--list-modules'
                 standardOutput = new ByteArrayOutputStream()
                 ignoreExitValue = true
 
@@ -477,6 +482,10 @@ subprojects {
                 moniker 'Tommy Ludwig'
                 github 'shakuzen'
             }
+            'jivanov@vmware.com' {
+                moniker 'Jonatan Ivanov'
+                github 'jonatan-ivanov'
+            }
         }
     }
 
@@ -502,7 +511,7 @@ nexusPublishing {
 }
 
 wrapper {
-    gradleVersion = '8.14.3'
+    gradleVersion = '9.2.1'
 }
 
 defaultTasks 'build'

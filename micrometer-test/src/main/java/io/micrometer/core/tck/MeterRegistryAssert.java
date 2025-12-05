@@ -465,7 +465,7 @@ public class MeterRegistryAssert extends AbstractAssert<MeterRegistryAssert, Met
      * assertions.
      * <p>
      * Example: <pre><code class='java'>
-     * Gauge.builder("my.gauge", () -> 42.0)
+     * Gauge.builder("my.gauge", () -&gt; 42.0)
      *     .tag("env", "prod")
      *     .register(registry);
      *
