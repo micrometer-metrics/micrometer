@@ -4,11 +4,11 @@ Since Java 11, an `HttpClient` is provided as part of the JDK. See https://openj
 
 == Installing
 
-It is recommended to use the BOM provided by Micrometer (or your framework if any), you can see how to configure it xref:../installing.adoc[here]. The examples below assume you are using a BOM.
+It is recommended to use the BOM provided by Micrometer (or your framework if any), you can see how to configure it xref:installing.adoc[here]. The examples below assume you are using a BOM.
 
 === Gradle
 
-After the BOM is xref:../installing.adoc[configured], add the following dependency:
+After the BOM is xref:installing.adoc[configured], add the following dependency:
 
 [source,groovy]
 ----
@@ -19,7 +19,7 @@ NOTE: The version is not needed for this dependency since it is defined by the B
 
 === Maven
 
-After the BOM is xref:../installing.adoc[configured], add the following dependency:
+After the BOM is xref:installing.adoc[configured], add the following dependency:
 
 [source,xml]
 ----

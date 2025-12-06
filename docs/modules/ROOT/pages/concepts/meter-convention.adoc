@@ -4,4 +4,4 @@
 While `MeterFilter` can be used to customize the name and tags (collectively, the convention) of Meters in any instrumentation, it can be more convenient and robust to customize the convention for a common instrumentation more directly.
 This is the purpose of the `MeterConvention`.
 
-For examples of its usage in instrumentation provided by Micrometer as well as examples of different implementations of a convention for an instrumentation, see the xref:../reference/jvm.adoc#meter-conventions[JVM metrics].
+For examples of its usage in instrumentation provided by Micrometer as well as examples of different implementations of a convention for an instrumentation, see the xref:reference/jvm.adoc#meter-conventions[JVM metrics].
