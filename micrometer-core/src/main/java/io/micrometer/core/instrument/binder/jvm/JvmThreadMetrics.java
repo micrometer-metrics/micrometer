@@ -103,7 +103,14 @@ public class JvmThreadMetrics implements MeterBinder {
             .register(registry);
 
         try {
-            Map<Thread.State, Long> stateCountMap = getThreadStateCountMap(threadBean);
+            long[] allThreadIds = threadBean.getAllThreadIds();
+            ThreadInfo[] threadInfos = threadBean.getThreadInfo(allThreadIds);
+            Map<Thread.State, Long> stateCountMap = new EnumMap<>(Thread.State.class);
+
+            for (ThreadInfo threadInfo : threadInfos) {
+                Thread.State state = threadInfo.getThreadState();
+                stateCountMap.merge(state, 1L, Long::sum);
+            }
 
             MeterConvention<Thread.State> threadCountConvention = conventions.threadCountConvention();
             for (Thread.State state : Thread.State.values()) {
@@ -118,20 +125,6 @@ public class JvmThreadMetrics implements MeterBinder {
             // An error will be thrown for unsupported operations
             // e.g. SubstrateVM does not support getAllThreadIds
         }
-    }
-
-    private Map<Thread.State, Long> getThreadStateCountMap(ThreadMXBean threadBean) {
-        ThreadInfo[] threadInfos = threadBean.getThreadInfo(threadBean.getAllThreadIds());
-
-        Map<Thread.State, Long> stateCountMap = new EnumMap<>(Thread.State.class);
-
-        for (ThreadInfo threadInfo : threadInfos) {
-            if (threadInfo != null) {
-                Thread.State state = threadInfo.getThreadState();
-                stateCountMap.merge(state, 1L , Long::sum);
-            }
-        }
-        return stateCountMap;
     }
 
     // VisibleForTesting
