@@ -103,7 +103,6 @@ public class JvmThreadMetrics implements MeterBinder {
             .register(registry);
 
         try {
-            threadBean.getAllThreadIds();
             Map<Thread.State, Long> stateCountMap = getThreadStateCountMap(threadBean);
 
             MeterConvention<Thread.State> threadCountConvention = conventions.threadCountConvention();
