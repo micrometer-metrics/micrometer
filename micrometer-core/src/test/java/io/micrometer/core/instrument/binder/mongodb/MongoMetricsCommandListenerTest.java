@@ -216,7 +216,7 @@ class MongoMetricsCommandListenerTest extends AbstractMongoDbTest {
         // tag::setup_1[]
         MongoClientSettings settings = MongoClientSettings.builder()
             .addCommandListener(new MongoMetricsCommandListener(registry))
-        // end::setup_1[]
+            // end::setup_1[]
             .applyToClusterSettings(builder -> builder.hosts(singletonList(new ServerAddress(host, port)))
                 .addClusterListener(new ClusterListener() {
                     @Override
@@ -224,7 +224,7 @@ class MongoMetricsCommandListenerTest extends AbstractMongoDbTest {
                         clusterId.set(event.getClusterId().getValue());
                     }
                 }))
-        // tag::setup_2[]
+            // tag::setup_2[]
             .build();
 
         MongoClient mongo = MongoClients.create(settings);
