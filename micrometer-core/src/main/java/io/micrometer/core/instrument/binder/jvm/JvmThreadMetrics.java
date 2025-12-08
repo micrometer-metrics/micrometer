@@ -28,8 +28,11 @@ import io.micrometer.core.instrument.binder.jvm.convention.micrometer.Micrometer
 import org.jspecify.annotations.NullMarked;
 
 import java.lang.management.ManagementFactory;
+import java.lang.management.ThreadInfo;
 import java.lang.management.ThreadMXBean;
 import java.util.Arrays;
+import java.util.EnumMap;
+import java.util.Map;
 
 import static java.util.Collections.emptyList;
 
@@ -101,9 +104,11 @@ public class JvmThreadMetrics implements MeterBinder {
 
         try {
             threadBean.getAllThreadIds();
+            Map<Thread.State, Long> stateCountMap = getThreadStateCountMap(threadBean);
+
             MeterConvention<Thread.State> threadCountConvention = conventions.threadCountConvention();
             for (Thread.State state : Thread.State.values()) {
-                Gauge.builder(threadCountConvention.getName(), threadBean, (bean) -> getThreadStateCount(bean, state))
+                Gauge.builder(threadCountConvention.getName(), threadBean, (bean) -> stateCountMap.get(state))
                     .tags(threadCountConvention.getTags(state))
                     .description("The current number of threads")
                     .baseUnit(BaseUnits.THREADS)
@@ -114,6 +119,20 @@ public class JvmThreadMetrics implements MeterBinder {
             // An error will be thrown for unsupported operations
             // e.g. SubstrateVM does not support getAllThreadIds
         }
+    }
+
+    private Map<Thread.State, Long> getThreadStateCountMap(ThreadMXBean threadBean) {
+        ThreadInfo[] threadInfos = threadBean.getThreadInfo(threadBean.getAllThreadIds());
+
+        Map<Thread.State, Long> stateCountMap = new EnumMap<>(Thread.State.class);
+
+        for (ThreadInfo threadInfo : threadInfos) {
+            if (threadInfo != null) {
+                Thread.State state = threadInfo.getThreadState();
+                stateCountMap.merge(state, 1L , Long::sum);
+            }
+        }
+        return stateCountMap;
     }
 
     // VisibleForTesting
