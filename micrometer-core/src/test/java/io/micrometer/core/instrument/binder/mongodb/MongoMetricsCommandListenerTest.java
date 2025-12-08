@@ -22,13 +22,13 @@ import com.mongodb.client.MongoClients;
 import com.mongodb.event.ClusterListener;
 import com.mongodb.event.ClusterOpeningEvent;
 import com.mongodb.event.CommandEvent;
+import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.search.MeterNotFoundException;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.bson.Document;
-import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
@@ -53,7 +53,8 @@ class MongoMetricsCommandListenerTest extends AbstractMongoDbTest {
 
     private MeterRegistry registry = new SimpleMeterRegistry();
 
-    @Nullable private MongoClient mongo;
+    @Nullable
+    private MongoClient mongo;
 
     @Test
     void shouldCreateSuccessCommandMetric() {
