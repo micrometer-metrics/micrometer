@@ -21,6 +21,11 @@ import static org.assertj.core.api.BDDAssertions.then;
 
 class NoopObservationRegistryTests {
 
+    {
+        System.out.println(Observation.Scope.NOOP);
+        System.out.println(NoopObservation.NoopScope.NOOP);
+    }
+
     @Test
     @SuppressWarnings("NullAway")
     void shouldRespectScopesIfDisabledByPredicate() {
