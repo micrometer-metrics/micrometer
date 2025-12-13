@@ -47,7 +47,7 @@ This section serves as a quick start to rendering useful representations in Atla
 
 Atlas serves up graphs in the form of PNG images (and other https://github.com/Netflix/atlas/wiki/Output-Formats[output formats] as well).
 
-We use the following query to visualize the counter from Atlas. Note that the value is rate-normalized over the step interval rather than monotonically increasing. Atlas always expects xref:../concepts/rate-aggregation.adoc#_client_side[rate-aggregated] data for counters from Micrometer.
+We use the following query to visualize the counter from Atlas. Note that the value is rate-normalized over the step interval rather than monotonically increasing. Atlas always expects xref:concepts/rate-aggregation.adoc#_client_side[rate-aggregated] data for counters from Micrometer.
 
 .Counter over a positive-biased random walk.
 image::implementations/atlas-counter.png[Atlas-rendered counter]
@@ -85,17 +85,19 @@ The Spectator Atlas `Timer` produces four time series, each with a different `st
 
 Therefore, you can achieve a throughput (requests/second) line with the following query:
 
-```http
+[source,http]
+----
 name,timer,:eq,statistic,count,:eq,:and
-```
+----
 
 Notice that `statistic` is just a dimension that can be drilled down and selected like any other.
 
 Furthermore, `totalTime/count` represents average latency and can be selected with a short-hand `:dist-avg` query, which selects the `totalTime` and `count` time series and performs the division for us:
 
-```http
+[source,http]
+----
 name,timer,:eq,:dist-avg
-```
+----
 
 In the preceding example, you can see these two lines plotted on a single dual-axis graph.
 

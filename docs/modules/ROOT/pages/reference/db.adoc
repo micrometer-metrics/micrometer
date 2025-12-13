@@ -11,7 +11,7 @@ Micrometer can instrument various libraries that interact with databases:
 [[db-datasource-observation]]
 == DataSource Observation Instrumentation
 
-Through the https://github.com/jdbc-observations/datasource-micrometer[Datasource Micrometer] project you can instrument your `DataSource` to start producing xref:../observation.adoc[Observations] while interacting with the database. That means that depending on your Observation Handler setup you can plug in producing of metrics or distributed tracing.
+Through the https://github.com/jdbc-observations/datasource-micrometer[Datasource Micrometer] project you can instrument your `DataSource` to start producing xref:observation.adoc[Observations] while interacting with the database. That means that depending on your Observation Handler setup you can plug in producing of metrics or distributed tracing.
 
 You can read more about Datasource Micrometer https://jdbc-observations.github.io/datasource-micrometer/docs/current/docs/html/[reference documentation] here.
 

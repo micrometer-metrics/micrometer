@@ -137,7 +137,7 @@ If you are using Micrometer's Observation API, you can mark certain metadata as 
 observation.highCardinalityKeyValue("userId", userId);
 ----
 
-See xref:../observation/introduction.adoc[Observation API] for more information.
+See xref:observation/introduction.adoc[Observation API] for more information.
 
 === Use MeterFilters to Set Bounds
 
@@ -176,4 +176,4 @@ See xref:./meter-filters.adoc[Meter Filters] for more information.
 == See Also
 
 - xref:./meter-filters.adoc[Meter Filters]: Using filters to control meter registration and tag cardinality
-- xref:../observation/introduction.adoc[Observation API]: Using high- and low cardinality tags with Observations
+- xref:observation/introduction.adoc[Observation API]: Using high- and low cardinality tags with Observations
