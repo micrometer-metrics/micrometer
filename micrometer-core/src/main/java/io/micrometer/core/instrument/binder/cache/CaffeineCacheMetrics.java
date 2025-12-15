@@ -44,7 +44,7 @@ import java.util.function.ToLongFunction;
  * @see CaffeineStatsCounter
  */
 @NullMarked
-public class CaffeineCacheMetrics<K, V, C extends Cache<K, V>> extends CacheMeterBinder<C> {
+public class CaffeineCacheMetrics<K, V extends @Nullable Object, C extends Cache<K, V>> extends CacheMeterBinder<C> {
 
     private static final String DESCRIPTION_CACHE_LOAD = "The number of times cache lookup methods have successfully loaded a new value or failed to load a new value, either because no value was found or an exception was thrown while loading";
 
