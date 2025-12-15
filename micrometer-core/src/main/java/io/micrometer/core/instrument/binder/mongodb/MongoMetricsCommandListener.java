@@ -20,7 +20,6 @@ import com.mongodb.event.*;
 import io.micrometer.core.annotation.Incubating;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
-import org.jspecify.annotations.NullMarked;
 
 import java.util.concurrent.TimeUnit;
 
@@ -31,7 +30,6 @@ import java.util.concurrent.TimeUnit;
  * @author Chris Bono
  * @since 1.2.0
  */
-@NullMarked
 @Incubating(since = "1.2.0")
 public class MongoMetricsCommandListener implements CommandListener {
 

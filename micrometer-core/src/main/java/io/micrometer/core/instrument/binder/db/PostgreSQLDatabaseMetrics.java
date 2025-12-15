@@ -21,7 +21,6 @@ import io.micrometer.common.util.internal.logging.InternalLoggerFactory;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.binder.MeterBinder;
-import org.jspecify.annotations.NullMarked;
 
 import javax.sql.DataSource;
 import java.sql.Connection;
@@ -46,7 +45,6 @@ import java.util.regex.Pattern;
  * @author Hari Mani
  * @since 1.1.0
  */
-@NullMarked
 public class PostgreSQLDatabaseMetrics implements MeterBinder {
 
     private static final InternalLogger log = InternalLoggerFactory.getInstance(PostgreSQLDatabaseMetrics.class);

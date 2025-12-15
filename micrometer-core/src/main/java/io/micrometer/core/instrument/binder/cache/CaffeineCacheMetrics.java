@@ -23,7 +23,6 @@ import com.github.benmanes.caffeine.cache.stats.CacheStats;
 import io.micrometer.common.util.internal.logging.InternalLogger;
 import io.micrometer.common.util.internal.logging.InternalLoggerFactory;
 import io.micrometer.core.instrument.*;
-import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
 import java.util.concurrent.TimeUnit;
@@ -43,8 +42,7 @@ import java.util.function.ToLongFunction;
  * @author Clint Checketts
  * @see CaffeineStatsCounter
  */
-@NullMarked
-public class CaffeineCacheMetrics<K, V, C extends Cache<K, V>> extends CacheMeterBinder<C> {
+public class CaffeineCacheMetrics<K, V extends @Nullable Object, C extends Cache<K, V>> extends CacheMeterBinder<C> {
 
     private static final String DESCRIPTION_CACHE_LOAD = "The number of times cache lookup methods have successfully loaded a new value or failed to load a new value, either because no value was found or an exception was thrown while loading";
 

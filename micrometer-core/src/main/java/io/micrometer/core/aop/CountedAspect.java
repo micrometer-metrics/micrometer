@@ -23,7 +23,6 @@ import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.reflect.MethodSignature;
-import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
 import java.lang.reflect.Method;
@@ -77,7 +76,6 @@ import java.util.function.Predicate;
  * @see Counted
  */
 @Aspect
-@NullMarked
 public class CountedAspect {
 
     private static final WarnThenDebugLogger WARN_THEN_DEBUG_LOGGER = new WarnThenDebugLogger(CountedAspect.class);

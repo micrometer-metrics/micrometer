@@ -22,7 +22,6 @@ import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.binder.MeterBinder;
-import org.jspecify.annotations.NullMarked;
 
 import java.io.File;
 
@@ -37,7 +36,6 @@ import static java.util.Collections.emptyList;
  * instead.
  */
 @Incubating(since = "1.1.0")
-@NullMarked
 @Deprecated
 public class DiskSpaceMetrics implements MeterBinder {
 

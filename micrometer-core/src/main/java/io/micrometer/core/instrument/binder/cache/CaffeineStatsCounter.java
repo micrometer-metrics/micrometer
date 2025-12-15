@@ -20,7 +20,6 @@ import com.github.benmanes.caffeine.cache.RemovalCause;
 import com.github.benmanes.caffeine.cache.stats.CacheStats;
 import com.github.benmanes.caffeine.cache.stats.StatsCounter;
 import io.micrometer.core.instrument.*;
-import org.jspecify.annotations.NullMarked;
 
 import java.util.Arrays;
 import java.util.EnumMap;
@@ -51,7 +50,6 @@ import static java.util.Objects.requireNonNull;
  * @see CaffeineCacheMetrics
  * @since 1.7.0
  */
-@NullMarked
 public final class CaffeineStatsCounter implements StatsCounter {
 
     private static final String DESCRIPTION_CACHE_GETS = "The number of times cache lookup methods have returned a cached (hit) or uncached (newly loaded) value (miss).";

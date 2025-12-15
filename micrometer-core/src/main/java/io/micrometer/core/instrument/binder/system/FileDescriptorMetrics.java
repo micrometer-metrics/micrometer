@@ -20,7 +20,6 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.binder.MeterBinder;
-import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
 import java.lang.management.ManagementFactory;
@@ -44,7 +43,6 @@ import static java.util.Collections.emptyList;
  * @author Michael Weirauch
  * @author Tommy Ludwig
  */
-@NullMarked
 public class FileDescriptorMetrics implements MeterBinder {
 
     /**

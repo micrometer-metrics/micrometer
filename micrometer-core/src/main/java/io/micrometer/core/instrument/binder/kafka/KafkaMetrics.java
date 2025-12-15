@@ -26,7 +26,6 @@ import org.apache.kafka.common.Metric;
 import org.apache.kafka.common.MetricName;
 import org.apache.kafka.common.metrics.KafkaMetric;
 import org.apache.kafka.common.metrics.Measurable;
-import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
 import java.time.Duration;
@@ -53,7 +52,6 @@ import static java.util.Collections.emptyList;
  * @since 1.4.0
  */
 @Incubating(since = "1.4.0")
-@NullMarked
 class KafkaMetrics implements MeterBinder, AutoCloseable {
 
     private static final InternalLogger log = InternalLoggerFactory.getInstance(KafkaMetrics.class);

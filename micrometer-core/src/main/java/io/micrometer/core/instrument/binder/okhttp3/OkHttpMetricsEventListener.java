@@ -23,7 +23,6 @@ import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.binder.http.Outcome;
 import okhttp3.EventListener;
 import okhttp3.*;
-import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
 import java.io.IOException;
@@ -53,7 +52,6 @@ import static java.util.stream.StreamSupport.stream;
  * @author Nurettin Yilmaz
  * @author Johnny Lim
  */
-@NullMarked
 public class OkHttpMetricsEventListener extends EventListener {
 
     /**

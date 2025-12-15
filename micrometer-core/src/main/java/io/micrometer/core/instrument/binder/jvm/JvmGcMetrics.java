@@ -23,7 +23,6 @@ import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.binder.MeterBinder;
-import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
 import javax.management.ListenerNotFoundException;
@@ -65,7 +64,6 @@ import static java.util.Collections.emptyList;
  * @author Andrew Krasny
  * @see GarbageCollectorMXBean
  */
-@NullMarked
 public class JvmGcMetrics implements MeterBinder, AutoCloseable {
 
     private static final InternalLogger log = InternalLoggerFactory.getInstance(JvmGcMetrics.class);
@@ -361,7 +359,6 @@ public class JvmGcMetrics implements MeterBinder, AutoCloseable {
      * Generalization of which parts of the heap are considered "young" or "old" for
      * multiple GC implementations
      */
-    @NullMarked
     enum GcGenerationAge {
 
         OLD, YOUNG, UNKNOWN;

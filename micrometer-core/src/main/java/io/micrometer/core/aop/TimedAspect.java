@@ -25,7 +25,6 @@ import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.reflect.MethodSignature;
-import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
 import java.lang.reflect.Method;
@@ -87,7 +86,6 @@ import java.util.function.Predicate;
  * @since 1.0.0
  */
 @Aspect
-@NullMarked
 @Incubating(since = "1.0.0")
 public class TimedAspect {
 

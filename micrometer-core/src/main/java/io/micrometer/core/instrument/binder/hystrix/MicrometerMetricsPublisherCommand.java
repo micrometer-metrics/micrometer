@@ -22,7 +22,6 @@ import io.micrometer.common.util.internal.logging.InternalLogger;
 import io.micrometer.common.util.internal.logging.InternalLoggerFactory;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.Timer;
-import org.jspecify.annotations.NullMarked;
 
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -32,7 +31,6 @@ import java.util.concurrent.TimeUnit;
  * in maintenance mode.
  * @author Clint Checketts
  */
-@NullMarked
 @Deprecated
 public class MicrometerMetricsPublisherCommand implements HystrixMetricsPublisherCommand {
 
