@@ -25,7 +25,6 @@ import org.hibernate.event.spi.PostLoadEvent;
 import org.hibernate.event.spi.PostLoadEventListener;
 import org.hibernate.stat.QueryStatistics;
 import org.hibernate.stat.Statistics;
-import org.jspecify.annotations.NullMarked;
 
 import java.util.concurrent.TimeUnit;
 
@@ -44,7 +43,6 @@ import java.util.concurrent.TimeUnit;
  * part of the Hibernate project as of version 5.4.26. See
  * https://mvnrepository.com/artifact/org.hibernate/hibernate-micrometer/
  */
-@NullMarked
 @Deprecated
 public class HibernateQueryMetrics implements MeterBinder {
 

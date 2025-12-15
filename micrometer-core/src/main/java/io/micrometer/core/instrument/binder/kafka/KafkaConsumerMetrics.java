@@ -19,7 +19,6 @@ import io.micrometer.core.annotation.Incubating;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.binder.MeterBinder;
-import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
 import javax.management.*;
@@ -52,7 +51,6 @@ import static java.util.Collections.emptyList;
  * @deprecated use {@link KafkaClientMetrics} instead since 1.4.0
  */
 @Incubating(since = "1.1.0")
-@NullMarked
 @Deprecated
 public class KafkaConsumerMetrics implements MeterBinder, AutoCloseable {
 

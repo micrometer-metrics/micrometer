@@ -23,7 +23,6 @@ import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
-import org.jspecify.annotations.NullMarked;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -41,7 +40,6 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @since 1.2.0
  * @implNote This implementation requires MongoDB Java driver 4 or later.
  */
-@NullMarked
 @Incubating(since = "1.2.0")
 public class MongoMetricsConnectionPoolListener implements ConnectionPoolListener {
 

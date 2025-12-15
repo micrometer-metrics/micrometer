@@ -22,7 +22,6 @@ import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.binder.http.Outcome;
 import okhttp3.Request;
 import okhttp3.Response;
-import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
 import java.io.IOException;
@@ -37,7 +36,6 @@ import static io.micrometer.core.instrument.binder.okhttp3.OkHttpObservationDocu
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.StreamSupport.stream;
 
-@NullMarked
 public class DefaultOkHttpObservationConvention implements OkHttpObservationConvention {
 
     static final boolean REQUEST_TAG_CLASS_EXISTS;

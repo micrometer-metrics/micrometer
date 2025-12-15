@@ -19,7 +19,6 @@ import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.BaseUnits;
 import net.sf.ehcache.Ehcache;
 import net.sf.ehcache.statistics.StatisticsGateway;
-import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
 import java.util.function.Function;
@@ -31,7 +30,6 @@ import java.util.function.ToLongFunction;
  *
  * @author Jon Schneider
  */
-@NullMarked
 public class EhCache2Metrics extends CacheMeterBinder<Ehcache> {
 
     private static final String DESCRIPTION_CACHE_PUTS_ADDED = "Cache puts (added or updated)";

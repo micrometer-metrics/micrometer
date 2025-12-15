@@ -19,7 +19,6 @@ import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.binder.MeterBinder;
 import org.apache.catalina.Manager;
-import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
 import javax.management.*;
@@ -42,7 +41,6 @@ import java.util.function.BiConsumer;
  * @author Jon Schneider
  * @author Johnny Lim
  */
-@NullMarked
 public class TomcatMetrics implements MeterBinder, AutoCloseable {
 
     private static final String JMX_DOMAIN_EMBEDDED = "Tomcat";

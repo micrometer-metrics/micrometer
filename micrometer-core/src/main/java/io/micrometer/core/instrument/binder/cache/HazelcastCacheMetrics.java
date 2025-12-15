@@ -18,7 +18,6 @@ package io.micrometer.core.instrument.binder.cache;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.binder.cache.HazelcastIMapAdapter.LocalMapStats;
-import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Objects;
@@ -32,7 +31,6 @@ import java.util.function.ToLongFunction;
  *
  * @author Jon Schneider
  */
-@NullMarked
 public class HazelcastCacheMetrics extends CacheMeterBinder<Object> {
 
     private static final String DESCRIPTION_CACHE_ENTRIES = "The number of entries held by this member";

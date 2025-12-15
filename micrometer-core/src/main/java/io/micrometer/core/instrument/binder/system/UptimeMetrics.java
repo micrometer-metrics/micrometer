@@ -19,7 +19,6 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.TimeGauge;
 import io.micrometer.core.instrument.binder.MeterBinder;
-import org.jspecify.annotations.NullMarked;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.RuntimeMXBean;
@@ -32,7 +31,6 @@ import static java.util.Collections.emptyList;
  *
  * @author Michael Weirauch
  */
-@NullMarked
 public class UptimeMetrics implements MeterBinder {
 
     private final RuntimeMXBean runtimeMXBean;

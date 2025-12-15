@@ -25,7 +25,6 @@ import io.micrometer.core.instrument.binder.MeterBinder;
 import io.micrometer.core.instrument.binder.MeterConvention;
 import io.micrometer.core.instrument.binder.jvm.convention.JvmThreadMeterConventions;
 import io.micrometer.core.instrument.binder.jvm.convention.micrometer.MicrometerJvmThreadMeterConventions;
-import org.jspecify.annotations.NullMarked;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
@@ -39,7 +38,6 @@ import static java.util.Collections.emptyList;
  * @author Jon Schneider
  * @author Johnny Lim
  */
-@NullMarked
 public class JvmThreadMetrics implements MeterBinder {
 
     private final Tags extraTags;

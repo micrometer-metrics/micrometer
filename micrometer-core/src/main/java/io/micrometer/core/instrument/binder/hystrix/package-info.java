@@ -18,5 +18,8 @@
  * Meter binders for Hystrix. Deprecated since 1.13.0, Hystrix is no longer in active
  * development, and is currently in maintenance mode.
  */
+@NullMarked
 @Deprecated
 package io.micrometer.core.instrument.binder.hystrix;
+
+import org.jspecify.annotations.NullMarked;

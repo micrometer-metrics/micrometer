@@ -21,7 +21,6 @@ import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.binder.MeterBinder;
-import org.jspecify.annotations.NullMarked;
 
 import javax.sql.DataSource;
 import java.sql.Connection;
@@ -33,7 +32,6 @@ import java.util.function.ToDoubleFunction;
 /**
  * @author Jon Schneider
  */
-@NullMarked
 public class DatabaseTableMetrics implements MeterBinder {
 
     private final DataSource dataSource;

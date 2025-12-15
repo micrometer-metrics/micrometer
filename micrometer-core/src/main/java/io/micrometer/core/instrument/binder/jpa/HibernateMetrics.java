@@ -19,7 +19,6 @@ import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.MeterBinder;
 import org.hibernate.SessionFactory;
 import org.hibernate.stat.Statistics;
-import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
 import javax.persistence.EntityManagerFactory;
@@ -41,7 +40,6 @@ import java.util.function.ToDoubleFunction;
  * part of the Hibernate project as of version 5.4.26. See
  * https://mvnrepository.com/artifact/org.hibernate/hibernate-micrometer/
  */
-@NullMarked
 @Deprecated
 public class HibernateMetrics implements MeterBinder {
 

@@ -20,7 +20,6 @@ import io.micrometer.core.instrument.binder.MeterBinder;
 import io.micrometer.core.instrument.binder.MeterConvention;
 import io.micrometer.core.instrument.binder.jvm.convention.JvmCpuMeterConventions;
 import io.micrometer.core.instrument.binder.jvm.convention.micrometer.MicrometerJvmCpuMeterConventions;
-import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
 import java.lang.management.ManagementFactory;
@@ -47,7 +46,6 @@ import static java.util.Objects.requireNonNull;
  * @author Clint Checketts
  * @author Tommy Ludwig
  */
-@NullMarked
 public class ProcessorMetrics implements MeterBinder {
 
     /**

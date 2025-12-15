@@ -24,7 +24,6 @@ import io.micrometer.core.instrument.binder.MeterBinder;
 import io.micrometer.core.instrument.internal.TimedExecutor;
 import io.micrometer.core.instrument.internal.TimedExecutorService;
 import io.micrometer.core.instrument.internal.TimedScheduledExecutorService;
-import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
 import java.lang.invoke.MethodHandle;
@@ -64,7 +63,6 @@ import static java.util.stream.Collectors.toSet;
  * @author Clint Checketts
  * @author Johnny Lim
  */
-@NullMarked
 public class ExecutorServiceMetrics implements MeterBinder {
 
     private static final String CLASS_NAME_THREAD_PER_TASK_EXECUTOR = "java.util.concurrent.ThreadPerTaskExecutor";

@@ -21,7 +21,6 @@ import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.common.Metric;
-import org.jspecify.annotations.NullMarked;
 
 import java.time.Duration;
 import java.util.concurrent.ScheduledExecutorService;
@@ -41,7 +40,6 @@ import java.util.concurrent.ScheduledExecutorService;
  * @since 1.4.0
  */
 @Incubating(since = "1.4.0")
-@NullMarked
 public class KafkaClientMetrics extends KafkaMetrics {
 
     /**

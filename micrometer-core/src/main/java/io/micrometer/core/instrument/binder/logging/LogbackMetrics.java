@@ -26,7 +26,6 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.binder.MeterBinder;
-import org.jspecify.annotations.NullMarked;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Marker;
 
@@ -42,7 +41,6 @@ import static java.util.Collections.emptyList;
  *
  * @author Jon Schneider
  */
-@NullMarked
 public class LogbackMetrics implements MeterBinder, AutoCloseable {
 
     static ThreadLocal<Boolean> ignoreMetrics = new ThreadLocal<>();
@@ -141,7 +139,6 @@ public class LogbackMetrics implements MeterBinder, AutoCloseable {
 
 }
 
-@NullMarked
 class MetricsTurboFilter extends TurboFilter {
 
     private static final String METER_NAME = "logback.events";

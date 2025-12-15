@@ -17,7 +17,6 @@ package io.micrometer.core.instrument.binder.cache;
 
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.MeterBinder;
-import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
 import java.lang.ref.WeakReference;
@@ -33,7 +32,6 @@ import java.lang.ref.WeakReference;
  *
  * @author Jon Schneider
  */
-@NullMarked
 public abstract class CacheMeterBinder<C> implements MeterBinder {
 
     private static final String DESCRIPTION_CACHE_GETS = "The number of times cache lookup methods have returned a cached (hit) or uncached (newly loaded or null) value (miss).";

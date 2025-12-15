@@ -17,7 +17,6 @@ package io.micrometer.core.instrument.binder.cache;
 
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.config.InvalidConfigurationException;
-import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
 import javax.cache.Cache;
@@ -35,7 +34,6 @@ import java.util.List;
  *
  * @author Jon Schneider
  */
-@NullMarked
 public class JCacheMetrics<K, V, C extends Cache<K, V>> extends CacheMeterBinder<C> {
 
     // VisibleForTesting
