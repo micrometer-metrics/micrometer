@@ -34,15 +34,9 @@ description 'Core module of Micrometer containing instrumentation API and implem
 
 kotlin {
     compilerOptions {
-        jvmTarget =  JvmTarget.JVM_1_8
-        apiVersion = KotlinVersion.KOTLIN_1_8
-        languageVersion = KotlinVersion.KOTLIN_1_8
-    }
-}
-
-compileTestKotlin {
-    compilerOptions {
-        jvmTarget = JvmTarget.JVM_11
+        jvmTarget =  JvmTarget.JVM_21
+        apiVersion = KotlinVersion.KOTLIN_2_2
+        languageVersion = KotlinVersion.KOTLIN_2_2
     }
 }
 

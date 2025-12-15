@@ -1,7 +1,7 @@
 buildscript {
     ext.gradleJvmVersion = JavaLanguageVersion.of(JavaVersion.current().getMajorVersion())
     ext.javaLanguageVersion = project.hasProperty('toolchainVersion') && project.property('toolchainVersion') != '' ? JavaLanguageVersion.of(project.property('toolchainVersion') as int) : gradleJvmVersion
-    ext.javaTargetVersion = JavaVersion.VERSION_1_8
+    ext.javaTargetVersion = JavaVersion.VERSION_21
 
     repositories {
         mavenCentral()
@@ -191,8 +191,8 @@ subprojects {
                 sourceCompatibility = javaTargetVersion
                 targetCompatibility = javaTargetVersion
 
-                // ensure Java 8 baseline is enforced for main source
-                options.release = 8
+                // ensure Java baseline is enforced for main source
+                options.release = Integer.valueOf(javaTargetVersion.getMajorVersion())
 
                 doLast {
                     task -> logger.info("Compiling with " + task.javaCompiler.get().executablePath)
@@ -201,9 +201,6 @@ subprojects {
             compileTestJava {
                 options.encoding = 'UTF-8'
                 options.compilerArgs << '-Xlint:unchecked' << '-Xlint:deprecation'
-
-                sourceCompatibility = JavaVersion.VERSION_11
-                targetCompatibility = JavaVersion.VERSION_11
             }
 
 
