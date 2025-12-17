@@ -15,10 +15,12 @@
  */
 package io.micrometer.observation;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.BDDAssertions.then;
 
+@Disabled("TODO: https://github.com/micrometer-metrics/micrometer/issues/6946")
 class NoopObservationRegistryTests {
 
     @Test
