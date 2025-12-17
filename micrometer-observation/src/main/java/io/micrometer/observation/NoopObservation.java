@@ -28,7 +28,7 @@ import org.jspecify.annotations.Nullable;
  */
 class NoopObservation implements Observation {
 
-    static final Observation INSTANCE = new NoopObservation();
+    static final Observation INSTANCE = Observation.NOOP;
 
     private static final Context CONTEXT = new Context();
 
@@ -104,9 +104,9 @@ class NoopObservation implements Observation {
         /**
          * Instance of {@link NoopScope}.
          */
-        static final Scope INSTANCE = new NoopScope();
+        static final Scope INSTANCE = Scope.NOOP;
 
-        private NoopScope() {
+        NoopScope() {
 
         }
 

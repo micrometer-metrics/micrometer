@@ -52,7 +52,7 @@ public interface Observation extends ObservationView {
      * No-op observation. Do not use it to check if an Observation is no-op, use
      * {@code observation.isNoop()} instead.
      */
-    Observation NOOP = NoopObservation.INSTANCE;
+    Observation NOOP = new NoopObservation();
 
     /**
      * Create and start an {@link Observation} with the given name. All Observations of
@@ -837,7 +837,7 @@ public interface Observation extends ObservationView {
         /**
          * No-op scope.
          */
-        Scope NOOP = NoopObservation.NoopScope.INSTANCE;
+        Scope NOOP = new NoopObservation.NoopScope();
 
         /**
          * Current observation available within this scope.
