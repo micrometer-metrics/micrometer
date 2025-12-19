@@ -296,6 +296,7 @@ public interface OtlpConfig extends PushRegistryConfig {
                 check("resourceAttributes", OtlpConfig::resourceAttributes),
                 check("baseTimeUnit", OtlpConfig::baseTimeUnit),
                 check("aggregationTemporality", OtlpConfig::aggregationTemporality),
+                check("compressionMode", OtlpConfig::compressionMode),
                 check("histogramFlavorPerMeter", OtlpConfig::histogramFlavorPerMeter),
                 check("maxBucketsPerMeter", OtlpConfig::maxBucketsPerMeter));
     }

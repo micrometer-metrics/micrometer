@@ -36,6 +36,7 @@ import static uk.org.webcompere.systemstubs.SystemStubs.withEnvironmentVariables
  *
  * @author Tommy Ludwig
  * @author Johnny Lim
+ * @author Tigran Kavanosyan
  */
 class OtlpConfigTest {
 
@@ -293,6 +294,51 @@ class OtlpConfigTest {
         OtlpConfig otlpConfig = properties::get;
         assertThat(otlpConfig.validate().isValid()).isTrue();
         assertThat(otlpConfig.maxBucketsPerMeter()).containsExactly(entry("a.b.c", 10));
+    }
+
+    @Test
+    void compressionModeDefault() {
+        Map<String, String> properties = new HashMap<>();
+
+        OtlpConfig otlpConfig = properties::get;
+        assertThat(otlpConfig.validate().isValid()).isTrue();
+        assertThat(otlpConfig.compressionMode()).isSameAs(CompressionMode.OFF);
+
+        properties.put("otlp.compressionMode", CompressionMode.OFF.name());
+        assertThat(otlpConfig.compressionMode()).isSameAs(CompressionMode.OFF);
+    }
+
+    @Test
+    void compressionModeOn() {
+        Map<String, String> properties = new HashMap<>();
+        properties.put("otlp.compressionMode", CompressionMode.ON.name());
+
+        OtlpConfig otlpConfig = properties::get;
+        assertThat(otlpConfig.validate().isValid()).isTrue();
+        assertThat(otlpConfig.compressionMode()).isSameAs(CompressionMode.ON);
+    }
+
+    @Test
+    void compressionModeConfigTakesPrecedenceOverEnvVars() throws Exception {
+        OtlpConfig config = k -> "ON";
+        withEnvironmentVariable("OTEL_EXPORTER_OTLP_METRICS_COMPRESSION", "OFF")
+            .execute(() -> assertThat(config.compressionMode()).isEqualTo(CompressionMode.ON));
+    }
+
+    @Test
+    void compressionModeUseEnvVarWhenConfigNotSet() throws Exception {
+        OtlpConfig config = k -> null;
+        withEnvironmentVariable("OTEL_EXPORTER_OTLP_METRICS_COMPRESSION", "ON")
+            .execute(() -> assertThat(config.compressionMode()).isEqualTo(CompressionMode.ON));
+    }
+
+    @Test
+    void invalidCompressionModeShouldBeCaptured() {
+        Map<String, String> properties = new HashMap<>();
+        properties.put("otlp.compressionMode", "some_random_thing");
+
+        OtlpConfig otlpConfig = properties::get;
+        assertThat(otlpConfig.validate().isValid()).isFalse();
     }
 
 }
