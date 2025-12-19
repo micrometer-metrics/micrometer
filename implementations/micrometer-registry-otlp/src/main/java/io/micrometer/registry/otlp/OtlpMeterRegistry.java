@@ -190,6 +190,7 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
                 metricsSender.send(OtlpMetricsSender.Request.builder(request.toByteArray())
                     .address(config.url())
                     .headers(config.headers())
+                    .compressionMode(config.compressionMode())
                     .build());
             }
             catch (Exception e) {
