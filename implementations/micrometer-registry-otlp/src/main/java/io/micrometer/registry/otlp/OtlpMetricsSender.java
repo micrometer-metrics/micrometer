@@ -60,7 +60,8 @@ public interface OtlpMetricsSender {
          * @param metricsData OTLP protobuf encoded batch of metrics
          * @param compressionMode compression mode for the metrics data
          */
-        private Request(@Nullable String address, Map<String, String> headers, byte[] metricsData, CompressionMode compressionMode) {
+        private Request(@Nullable String address, Map<String, String> headers, byte[] metricsData,
+                CompressionMode compressionMode) {
             this.address = address;
             this.headers = headers;
             this.metricsData = metricsData;
@@ -85,9 +86,8 @@ public interface OtlpMetricsSender {
 
         @Override
         public String toString() {
-            return "OtlpMetricsSender.Request for address: " + address + ", headers: " + headers
-                    + ", compressionMode: " + compressionMode + ", metricsData: "
-                    + new String(metricsData, StandardCharsets.UTF_8);
+            return "OtlpMetricsSender.Request for address: " + address + ", headers: " + headers + ", compressionMode: "
+                    + compressionMode + ", metricsData: " + new String(metricsData, StandardCharsets.UTF_8);
         }
 
         /**
