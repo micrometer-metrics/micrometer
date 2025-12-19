@@ -178,7 +178,7 @@ mockitoCore5 = { module = "org.mockito:mockito-core", version.ref = "mockito5" }
 mongoSync = { module = "org.mongodb:mongodb-driver-sync", version.ref = "mongo" }
 nettyBom = { module = "io.netty:netty-bom", version.ref = "netty" }
 newrelicApi = { module = "com.newrelic.agent.java:newrelic-api", version.ref = "newrelic-api" }
-nullAway = { module = "com.uber.nullaway:nullaway", version = "0.12.14" }
+nullAway = { module = "com.uber.nullaway:nullaway", version = "0.12.15" }
 okhttp = { module = "com.squareup.okhttp3:okhttp", version.ref = "okhttp" }
 # some proto are marked alpha, hence the alpha version. metrics proto is what we use and it is marked stable
 openTelemetry-proto = { module = "io.opentelemetry.proto:opentelemetry-proto", version = "1.8.0-alpha" }
