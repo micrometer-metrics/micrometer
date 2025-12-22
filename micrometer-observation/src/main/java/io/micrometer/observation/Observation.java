@@ -52,6 +52,7 @@ public interface Observation extends ObservationView {
      * No-op observation. Do not use it to check if an Observation is no-op, use
      * {@code observation.isNoop()} instead.
      */
+    @SuppressWarnings("ClassInitializationDeadlock")
     Observation NOOP = NoopObservation.INSTANCE;
 
     /**
@@ -837,6 +838,7 @@ public interface Observation extends ObservationView {
         /**
          * No-op scope.
          */
+        @SuppressWarnings("ClassInitializationDeadlock")
         Scope NOOP = NoopObservation.NoopScope.INSTANCE;
 
         /**
