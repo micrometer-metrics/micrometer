@@ -45,6 +45,7 @@ public interface ObservationRegistry {
     /**
      * No-op implementation of {@link ObservationRegistry}.
      */
+    @SuppressWarnings("ClassInitializationDeadlock")
     ObservationRegistry NOOP = new NoopObservationRegistry();
 
     /**
