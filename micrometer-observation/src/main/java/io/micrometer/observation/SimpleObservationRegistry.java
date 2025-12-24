@@ -51,6 +51,23 @@ class SimpleObservationRegistry implements ObservationRegistry {
     }
 
     @Override
+    public void setCurrentObservationScopeIfExists(Observation.@Nullable Scope candidate) {
+        if (candidate == null) {
+            setCurrentObservationScope(null);
+        }
+        else {
+            Observation.Scope scope = localObservationScope.get();
+            while (scope != null) {
+                if (scope.equals(candidate)) {
+                    setCurrentObservationScope(candidate);
+                    break;
+                }
+                scope = scope.getPreviousObservationScope();
+            }
+        }
+    }
+
+    @Override
     public ObservationConfig observationConfig() {
         return this.observationConfig;
     }
