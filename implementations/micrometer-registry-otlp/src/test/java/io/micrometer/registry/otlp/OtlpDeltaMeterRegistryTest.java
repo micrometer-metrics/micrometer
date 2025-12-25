@@ -163,23 +163,23 @@ class OtlpDeltaMeterRegistryTest extends OtlpMeterRegistryTest {
         timer.record(77, MILLISECONDS);
         timer.record(111, MILLISECONDS);
 
-        assertHistogram(writeToMetric(timer), 0, TimeUnit.MINUTES.toNanos(1), UNIT_MILLISECONDS, 0, 0, 0);
+        assertHistogram(writeToMetrics(timer), 0, TimeUnit.MINUTES.toNanos(1), UNIT_MILLISECONDS, 0, 0, 0);
         stepOverNStep(1);
-        assertHistogram(writeToMetric(timer), TimeUnit.MINUTES.toNanos(1), TimeUnit.MINUTES.toNanos(2),
+        assertHistogram(writeToMetrics(timer), TimeUnit.MINUTES.toNanos(1), TimeUnit.MINUTES.toNanos(2),
                 UNIT_MILLISECONDS, 3, 198, 111);
         timer.record(4, MILLISECONDS);
-        assertHistogram(writeToMetric(timer), TimeUnit.MINUTES.toNanos(1), TimeUnit.MINUTES.toNanos(2),
+        assertHistogram(writeToMetrics(timer), TimeUnit.MINUTES.toNanos(1), TimeUnit.MINUTES.toNanos(2),
                 UNIT_MILLISECONDS, 3, 198, 111);
         stepOverNStep(1);
-        assertHistogram(writeToMetric(timer), TimeUnit.MINUTES.toNanos(2), TimeUnit.MINUTES.toNanos(3),
+        assertHistogram(writeToMetrics(timer), TimeUnit.MINUTES.toNanos(2), TimeUnit.MINUTES.toNanos(3),
                 UNIT_MILLISECONDS, 1, 4, 4);
 
         stepOverNStep(2);
-        assertHistogram(writeToMetric(timer), TimeUnit.MINUTES.toNanos(4), TimeUnit.MINUTES.toNanos(5),
+        assertHistogram(writeToMetrics(timer), TimeUnit.MINUTES.toNanos(4), TimeUnit.MINUTES.toNanos(5),
                 UNIT_MILLISECONDS, 0, 0, 0);
         timer.record(1, MILLISECONDS);
         stepOverNStep(1);
-        assertHistogram(writeToMetric(timer), TimeUnit.MINUTES.toNanos(5), TimeUnit.MINUTES.toNanos(6),
+        assertHistogram(writeToMetrics(timer), TimeUnit.MINUTES.toNanos(5), TimeUnit.MINUTES.toNanos(6),
                 UNIT_MILLISECONDS, 1, 1, 1);
     }
 
@@ -196,46 +196,54 @@ class OtlpDeltaMeterRegistryTest extends OtlpMeterRegistryTest {
         timer.record(77, MILLISECONDS);
         timer.record(111, MILLISECONDS);
 
-        HistogramDataPoint histogramDataPoint = writeToMetric(timer).getHistogram().getDataPoints(0);
-        assertThat(histogramDataPoint.getExplicitBoundsCount()).isEqualTo(4);
+        assertThat(writeToMetrics(timer)).filteredOn(Metric::hasHistogram).singleElement().satisfies(metric -> {
+            HistogramDataPoint histogramDataPoint = metric.getHistogram().getDataPoints(0);
+            assertThat(histogramDataPoint.getExplicitBoundsCount()).isEqualTo(4);
+        });
         stepOverNStep(1);
 
-        Metric metric = writeToMetric(timer);
-        assertHistogram(metric, TimeUnit.MINUTES.toNanos(1), TimeUnit.MINUTES.toNanos(2), UNIT_MILLISECONDS, 3, 198,
+        List<Metric> metrics = writeToMetrics(timer);
+        assertHistogram(metrics, TimeUnit.MINUTES.toNanos(1), TimeUnit.MINUTES.toNanos(2), UNIT_MILLISECONDS, 3, 198,
                 111);
 
-        histogramDataPoint = metric.getHistogram().getDataPoints(0);
-        assertThat(histogramDataPoint.getExplicitBoundsCount()).isEqualTo(4);
+        assertThat(metrics).filteredOn(Metric::hasHistogram).singleElement().satisfies(metric -> {
+            HistogramDataPoint histogramDataPoint = metric.getHistogram().getDataPoints(0);
+            assertThat(histogramDataPoint.getExplicitBoundsCount()).isEqualTo(4);
 
-        assertThat(histogramDataPoint.getExplicitBounds(0)).isEqualTo(10.0);
-        assertThat(histogramDataPoint.getBucketCounts(0)).isEqualTo(1);
-        assertThat(histogramDataPoint.getExplicitBounds(1)).isEqualTo(50.0);
-        assertThat(histogramDataPoint.getBucketCounts(1)).isZero();
-        assertThat(histogramDataPoint.getExplicitBounds(2)).isEqualTo(100.0);
-        assertThat(histogramDataPoint.getBucketCounts(2)).isEqualTo(1);
-        assertThat(histogramDataPoint.getExplicitBounds(3)).isEqualTo(500.0);
-        assertThat(histogramDataPoint.getBucketCounts(3)).isEqualTo(1);
-
+            assertThat(histogramDataPoint.getExplicitBounds(0)).isEqualTo(10.0);
+            assertThat(histogramDataPoint.getBucketCounts(0)).isEqualTo(1);
+            assertThat(histogramDataPoint.getExplicitBounds(1)).isEqualTo(50.0);
+            assertThat(histogramDataPoint.getBucketCounts(1)).isZero();
+            assertThat(histogramDataPoint.getExplicitBounds(2)).isEqualTo(100.0);
+            assertThat(histogramDataPoint.getBucketCounts(2)).isEqualTo(1);
+            assertThat(histogramDataPoint.getExplicitBounds(3)).isEqualTo(500.0);
+            assertThat(histogramDataPoint.getBucketCounts(3)).isEqualTo(1);
+        });
         timer.record(4, MILLISECONDS);
         stepOverNStep(1);
 
-        metric = writeToMetric(timer);
-        assertHistogram(metric, TimeUnit.MINUTES.toNanos(2), TimeUnit.MINUTES.toNanos(3), UNIT_MILLISECONDS, 1, 4, 4);
+        metrics = writeToMetrics(timer);
+        assertHistogram(metrics, TimeUnit.MINUTES.toNanos(2), TimeUnit.MINUTES.toNanos(3), UNIT_MILLISECONDS, 1, 4, 4);
 
-        histogramDataPoint = metric.getHistogram().getDataPoints(0);
+        assertThat(metrics).filteredOn(Metric::hasHistogram).singleElement().satisfies(metric -> {
 
-        assertThat(histogramDataPoint.getBucketCounts(0)).isEqualTo(1);
-        assertThat(histogramDataPoint.getBucketCounts(1)).isZero();
-        assertThat(histogramDataPoint.getBucketCounts(2)).isZero();
-        assertThat(histogramDataPoint.getBucketCounts(3)).isZero();
+            HistogramDataPoint histogramDataPoint = metric.getHistogram().getDataPoints(0);
+            assertThat(histogramDataPoint.getBucketCounts(0)).isEqualTo(1);
+            assertThat(histogramDataPoint.getBucketCounts(1)).isZero();
+            assertThat(histogramDataPoint.getBucketCounts(2)).isZero();
+            assertThat(histogramDataPoint.getBucketCounts(3)).isZero();
+        });
 
         timer.record(4, MILLISECONDS);
         stepOverNStep(2);
-        histogramDataPoint = writeToMetric(timer).getHistogram().getDataPoints(0);
-        assertThat(histogramDataPoint.getBucketCounts(0)).isZero();
-        assertThat(histogramDataPoint.getBucketCounts(1)).isZero();
-        assertThat(histogramDataPoint.getBucketCounts(2)).isZero();
-        assertThat(histogramDataPoint.getBucketCounts(3)).isZero();
+
+        assertThat(writeToMetrics(timer)).filteredOn(Metric::hasHistogram).singleElement().satisfies(metric -> {
+            HistogramDataPoint histogramDataPoint = metric.getHistogram().getDataPoints(0);
+            assertThat(histogramDataPoint.getBucketCounts(0)).isZero();
+            assertThat(histogramDataPoint.getBucketCounts(1)).isZero();
+            assertThat(histogramDataPoint.getBucketCounts(2)).isZero();
+            assertThat(histogramDataPoint.getBucketCounts(3)).isZero();
+        });
     }
 
     @Test
@@ -244,12 +252,12 @@ class OtlpDeltaMeterRegistryTest extends OtlpMeterRegistryTest {
             .description(METER_DESCRIPTION)
             .tags(Tags.of(meterTag))
             .register(registry);
-        assertHistogram(writeToMetric(functionTimer), 0, TimeUnit.MINUTES.toNanos(1), UNIT_MILLISECONDS, 0, 0, 0);
+        assertHistogram(writeToMetrics(functionTimer), 0, TimeUnit.MINUTES.toNanos(1), UNIT_MILLISECONDS, 0, 0, 0);
         stepOverNStep(1);
-        assertHistogram(writeToMetric(functionTimer), TimeUnit.MINUTES.toNanos(1), TimeUnit.MINUTES.toNanos(2),
+        assertHistogram(writeToMetrics(functionTimer), TimeUnit.MINUTES.toNanos(1), TimeUnit.MINUTES.toNanos(2),
                 UNIT_MILLISECONDS, 5, 127, 0);
         stepOverNStep(1);
-        assertHistogram(writeToMetric(functionTimer), TimeUnit.MINUTES.toNanos(2), TimeUnit.MINUTES.toNanos(3),
+        assertHistogram(writeToMetrics(functionTimer), TimeUnit.MINUTES.toNanos(2), TimeUnit.MINUTES.toNanos(3),
                 UNIT_MILLISECONDS, 0, 0, 0);
     }
 
@@ -264,15 +272,15 @@ class OtlpDeltaMeterRegistryTest extends OtlpMeterRegistryTest {
         size.record(15);
         size.record(2233);
 
-        assertHistogram(writeToMetric(size), 0, TimeUnit.MINUTES.toNanos(1), BaseUnits.BYTES, 0, 0, 0);
+        assertHistogram(writeToMetrics(size), 0, TimeUnit.MINUTES.toNanos(1), BaseUnits.BYTES, 0, 0, 0);
         stepOverNStep(1);
-        assertHistogram(writeToMetric(size), TimeUnit.MINUTES.toNanos(1), TimeUnit.MINUTES.toNanos(2), BaseUnits.BYTES,
+        assertHistogram(writeToMetrics(size), TimeUnit.MINUTES.toNanos(1), TimeUnit.MINUTES.toNanos(2), BaseUnits.BYTES,
                 3, 2348, 2233);
         size.record(204);
-        assertHistogram(writeToMetric(size), TimeUnit.MINUTES.toNanos(1), TimeUnit.MINUTES.toNanos(2), BaseUnits.BYTES,
+        assertHistogram(writeToMetrics(size), TimeUnit.MINUTES.toNanos(1), TimeUnit.MINUTES.toNanos(2), BaseUnits.BYTES,
                 3, 2348, 2233);
         stepOverNStep(1);
-        assertHistogram(writeToMetric(size), TimeUnit.MINUTES.toNanos(2), TimeUnit.MINUTES.toNanos(3), BaseUnits.BYTES,
+        assertHistogram(writeToMetrics(size), TimeUnit.MINUTES.toNanos(2), TimeUnit.MINUTES.toNanos(3), BaseUnits.BYTES,
                 1, 204, 204);
     }
 
@@ -285,45 +293,40 @@ class OtlpDeltaMeterRegistryTest extends OtlpMeterRegistryTest {
             .serviceLevelObjectives(10, 50, 100, 500)
             .register(registry);
 
-        assertHistogram(writeToMetric(ds), 0, TimeUnit.MINUTES.toNanos(1), BaseUnits.BYTES, 0, 0, 0);
+        assertHistogram(writeToMetrics(ds), 0, TimeUnit.MINUTES.toNanos(1), BaseUnits.BYTES, 0, 0, 0);
         ds.record(10);
         ds.record(77);
         ds.record(111);
-        assertHistogram(writeToMetric(ds), 0, TimeUnit.MINUTES.toNanos(1), BaseUnits.BYTES, 0, 0, 0);
-
-        HistogramDataPoint histogramDataPoint = writeToMetric(ds).getHistogram().getDataPoints(0);
-        assertThat(histogramDataPoint.getExplicitBoundsCount()).isEqualTo(4);
+        assertHistogram(writeToMetrics(ds), 0, TimeUnit.MINUTES.toNanos(1), BaseUnits.BYTES, 0, 0, 0,
+                histogramDataPoint -> {
+                    assertThat(histogramDataPoint.getExplicitBoundsCount()).isEqualTo(4);
+                });
         stepOverNStep(1);
 
-        Metric metric = writeToMetric(ds);
-        assertHistogram(metric, TimeUnit.MINUTES.toNanos(1), TimeUnit.MINUTES.toNanos(2), BaseUnits.BYTES, 3, 198, 111);
+        assertHistogram(writeToMetrics(ds), TimeUnit.MINUTES.toNanos(1), TimeUnit.MINUTES.toNanos(2), BaseUnits.BYTES,
+                3, 198, 111, histogramDataPoint -> {
+                    assertThat(histogramDataPoint.getExplicitBoundsCount()).isEqualTo(4);
 
-        histogramDataPoint = metric.getHistogram().getDataPoints(0);
-        assertThat(histogramDataPoint.getExplicitBoundsCount()).isEqualTo(4);
-
-        assertThat(histogramDataPoint.getExplicitBounds(0)).isEqualTo(10);
-        assertThat(histogramDataPoint.getBucketCounts(0)).isEqualTo(1);
-        assertThat(histogramDataPoint.getExplicitBounds(1)).isEqualTo(50);
-        assertThat(histogramDataPoint.getBucketCounts(1)).isZero();
-        assertThat(histogramDataPoint.getExplicitBounds(2)).isEqualTo(100);
-        assertThat(histogramDataPoint.getBucketCounts(2)).isEqualTo(1);
-        assertThat(histogramDataPoint.getExplicitBounds(3)).isEqualTo(500);
-        assertThat(histogramDataPoint.getBucketCounts(3)).isEqualTo(1);
-
+                    assertThat(histogramDataPoint.getExplicitBounds(0)).isEqualTo(10);
+                    assertThat(histogramDataPoint.getBucketCounts(0)).isEqualTo(1);
+                    assertThat(histogramDataPoint.getExplicitBounds(1)).isEqualTo(50);
+                    assertThat(histogramDataPoint.getBucketCounts(1)).isZero();
+                    assertThat(histogramDataPoint.getExplicitBounds(2)).isEqualTo(100);
+                    assertThat(histogramDataPoint.getBucketCounts(2)).isEqualTo(1);
+                    assertThat(histogramDataPoint.getExplicitBounds(3)).isEqualTo(500);
+                    assertThat(histogramDataPoint.getBucketCounts(3)).isEqualTo(1);
+                });
         stepOverNStep(1);
         ds.record(4);
         clock.addSeconds(otlpConfig().step().toSeconds() - 5);
 
-        metric = writeToMetric(ds);
-        assertHistogram(writeToMetric(ds), TimeUnit.MINUTES.toNanos(2), TimeUnit.MINUTES.toNanos(3), BaseUnits.BYTES, 1,
-                4, 4);
-
-        histogramDataPoint = metric.getHistogram().getDataPoints(0);
-
-        assertThat(histogramDataPoint.getBucketCounts(0)).isEqualTo(1);
-        assertThat(histogramDataPoint.getBucketCounts(1)).isZero();
-        assertThat(histogramDataPoint.getBucketCounts(2)).isZero();
-        assertThat(histogramDataPoint.getBucketCounts(3)).isZero();
+        assertHistogram(writeToMetrics(ds), TimeUnit.MINUTES.toNanos(2), TimeUnit.MINUTES.toNanos(3), BaseUnits.BYTES,
+                1, 4, 4, histogramDataPoint -> {
+                    assertThat(histogramDataPoint.getBucketCounts(0)).isEqualTo(1);
+                    assertThat(histogramDataPoint.getBucketCounts(1)).isZero();
+                    assertThat(histogramDataPoint.getBucketCounts(2)).isZero();
+                    assertThat(histogramDataPoint.getBucketCounts(3)).isZero();
+                });
     }
 
     @Test
@@ -340,20 +343,26 @@ class OtlpDeltaMeterRegistryTest extends OtlpMeterRegistryTest {
         stepOverNStep(1);
         size.record(204);
 
-        Metric metric = writeToMetric(size);
-        assertThat(metric.getName()).isEqualTo(METER_NAME);
-        assertThat(metric.getDescription()).isEqualTo(METER_DESCRIPTION);
-        assertThat(metric.getUnit()).isEqualTo(BaseUnits.BYTES);
-        List<SummaryDataPoint> dataPoints = metric.getSummary().getDataPointsList();
-        assertThat(dataPoints).hasSize(1);
-        List<ValueAtQuantile> quantiles = dataPoints.get(0).getQuantileValuesList();
-        assertThat(quantiles).hasSize(3);
-        assertThat(quantiles.get(0)).satisfies(quantile -> assertThat(quantile.getQuantile()).isEqualTo(0.5))
-            .satisfies(quantile -> assertThat(quantile.getValue()).isEqualTo(200));
-        assertThat(quantiles.get(1)).satisfies(quantile -> assertThat(quantile.getQuantile()).isEqualTo(0.9))
-            .satisfies(quantile -> assertThat(quantile.getValue()).isEqualTo(200));
-        assertThat(quantiles.get(2)).satisfies(quantile -> assertThat(quantile.getQuantile()).isEqualTo(0.99))
-            .satisfies(quantile -> assertThat(quantile.getValue()).isEqualTo(200));
+        List<Metric> metrics = writeToMetrics(size);
+        assertThat(metrics).filteredOn(Metric::hasSummary).singleElement().satisfies(metric -> {
+            assertThat(metric.getName()).isEqualTo(METER_NAME);
+            assertThat(metric.getDescription()).isEqualTo(METER_DESCRIPTION);
+            assertThat(metric.getUnit()).isEqualTo(BaseUnits.BYTES);
+            List<SummaryDataPoint> dataPoints = metric.getSummary().getDataPointsList();
+            assertThat(dataPoints).hasSize(1);
+            List<ValueAtQuantile> quantiles = dataPoints.get(0).getQuantileValuesList();
+            assertThat(quantiles).hasSize(3);
+            assertThat(quantiles.get(0)).satisfies(quantile -> assertThat(quantile.getQuantile()).isEqualTo(0.5))
+                .satisfies(quantile -> assertThat(quantile.getValue()).isEqualTo(200));
+            assertThat(quantiles.get(1)).satisfies(quantile -> assertThat(quantile.getQuantile()).isEqualTo(0.9))
+                .satisfies(quantile -> assertThat(quantile.getValue()).isEqualTo(200));
+            assertThat(quantiles.get(2)).satisfies(quantile -> assertThat(quantile.getQuantile()).isEqualTo(0.99))
+                .satisfies(quantile -> assertThat(quantile.getValue()).isEqualTo(200));
+        });
+        assertThat(metrics).filteredOn(Metric::hasGauge).singleElement().satisfies(metric -> {
+            assertThat(metric.getName()).isEqualTo(METER_NAME + ".max");
+            assertThat(metric.getGauge().getDataPoints(0).getAsDouble()).isEqualTo(2233.0);
+        });
     }
 
     @Test
@@ -365,15 +374,15 @@ class OtlpDeltaMeterRegistryTest extends OtlpMeterRegistryTest {
         LongTaskTimer.Sample task1 = taskTimer.start();
         LongTaskTimer.Sample task2 = taskTimer.start();
         stepOverNStep(3);
-        assertHistogram(writeToMetric(taskTimer), TimeUnit.MINUTES.toNanos(3), TimeUnit.MINUTES.toNanos(4),
+        assertHistogram(writeToMetrics(taskTimer), TimeUnit.MINUTES.toNanos(3), TimeUnit.MINUTES.toNanos(4),
                 UNIT_MILLISECONDS, 2, 360000, 180000);
 
         task1.stop();
-        assertHistogram(writeToMetric(taskTimer), TimeUnit.MINUTES.toNanos(3), TimeUnit.MINUTES.toNanos(4),
+        assertHistogram(writeToMetrics(taskTimer), TimeUnit.MINUTES.toNanos(3), TimeUnit.MINUTES.toNanos(4),
                 UNIT_MILLISECONDS, 1, 180000, 180000);
         task2.stop();
         stepOverNStep(1);
-        assertHistogram(writeToMetric(taskTimer), TimeUnit.MINUTES.toNanos(4), TimeUnit.MINUTES.toNanos(5),
+        assertHistogram(writeToMetrics(taskTimer), TimeUnit.MINUTES.toNanos(4), TimeUnit.MINUTES.toNanos(5),
                 UNIT_MILLISECONDS, 0, 0, 0);
     }
 
@@ -452,26 +461,27 @@ class OtlpDeltaMeterRegistryTest extends OtlpMeterRegistryTest {
             .register(registry);
 
         registry.pollMetersToRollover();
-        assertHistogram(writeToMetric(timer), 0, TimeUnit.MINUTES.toNanos(1), UNIT_MILLISECONDS, 0, 0, 0);
+        assertHistogram(writeToMetrics(timer), 0, TimeUnit.MINUTES.toNanos(1), UNIT_MILLISECONDS, 0, 0, 0);
         timer.record(Duration.ofMillis(5));
         timer.record(Duration.ofMillis(15));
         timer.record(Duration.ofMillis(150));
 
-        assertHistogram(writeToMetric(timer), 0, TimeUnit.MINUTES.toNanos(1), UNIT_MILLISECONDS, 0, 0, 0);
-        assertThat(writeToMetric(timer).getHistogram().getDataPoints(0).getBucketCountsList()).allMatch(e -> e == 0);
+        assertHistogram(writeToMetrics(timer), 0, TimeUnit.MINUTES.toNanos(1), UNIT_MILLISECONDS, 0, 0, 0,
+                histogram -> assertThat(histogram.getBucketCountsList()).allMatch(e -> e == 0));
+
         stepOverNStep(1);
 
         // This should roll over the entire Meter to next step.
         registry.pollMetersToRollover();
-        assertHistogram(writeToMetric(timer), TimeUnit.MINUTES.toNanos(1), TimeUnit.MINUTES.toNanos(2),
-                UNIT_MILLISECONDS, 3, 170, 150);
-        assertThat(writeToMetric(timer).getHistogram().getDataPoints(0).getBucketCountsList()).allMatch(e -> e == 1);
+        assertHistogram(writeToMetrics(timer), TimeUnit.MINUTES.toNanos(1), TimeUnit.MINUTES.toNanos(2),
+                UNIT_MILLISECONDS, 3, 170, 150,
+                histogram -> assertThat(histogram.getBucketCountsList()).allMatch(e -> e == 1));
         clock.addSeconds(1);
 
         timer.record(Duration.ofMillis(160)); // This belongs to current step.
-        assertThat(writeToMetric(timer).getHistogram().getDataPoints(0).getBucketCountsList()).allMatch(e -> e == 1);
-        assertHistogram(writeToMetric(timer), TimeUnit.MINUTES.toNanos(1), TimeUnit.MINUTES.toNanos(2),
-                UNIT_MILLISECONDS, 3, 170, 150);
+        assertHistogram(writeToMetrics(timer), TimeUnit.MINUTES.toNanos(1), TimeUnit.MINUTES.toNanos(2),
+                UNIT_MILLISECONDS, 3, 170, 150,
+                histogram -> assertThat(histogram.getBucketCountsList()).allMatch(e -> e == 1));
 
     }
 
@@ -485,26 +495,26 @@ class OtlpDeltaMeterRegistryTest extends OtlpMeterRegistryTest {
             .register(registry);
 
         registry.pollMetersToRollover();
-        assertHistogram(writeToMetric(ds), 0, TimeUnit.MINUTES.toNanos(1), BaseUnits.BYTES, 0, 0, 0);
+        assertHistogram(writeToMetrics(ds), 0, TimeUnit.MINUTES.toNanos(1), BaseUnits.BYTES, 0, 0, 0);
         ds.record(5);
         ds.record(15);
         ds.record(150);
 
-        assertHistogram(writeToMetric(ds), 0, TimeUnit.MINUTES.toNanos(1), BaseUnits.BYTES, 0, 0, 0);
-        assertThat(writeToMetric(ds).getHistogram().getDataPoints(0).getBucketCountsList()).allMatch(e -> e == 0);
+        assertHistogram(writeToMetrics(ds), 0, TimeUnit.MINUTES.toNanos(1), BaseUnits.BYTES, 0, 0, 0,
+                histogram -> assertThat(histogram.getBucketCountsList()).allMatch(e -> e == 0));
         stepOverNStep(1);
 
         registry.pollMetersToRollover(); // This should roll over the entire Meter to next
         // step.
-        assertHistogram(writeToMetric(ds), TimeUnit.MINUTES.toNanos(1), TimeUnit.MINUTES.toNanos(2), BaseUnits.BYTES, 3,
-                170, 150);
+        assertHistogram(writeToMetrics(ds), TimeUnit.MINUTES.toNanos(1), TimeUnit.MINUTES.toNanos(2), BaseUnits.BYTES,
+                3, 170, 150);
         assertThat(writeToMetric(ds).getHistogram().getDataPoints(0).getBucketCountsList()).allMatch(e -> e == 1);
         clock.addSeconds(1);
 
         ds.record(160); // This belongs to current step.
         assertThat(writeToMetric(ds).getHistogram().getDataPoints(0).getBucketCountsList()).allMatch(e -> e == 1);
-        assertHistogram(writeToMetric(ds), TimeUnit.MINUTES.toNanos(1), TimeUnit.MINUTES.toNanos(2), BaseUnits.BYTES, 3,
-                170, 150);
+        assertHistogram(writeToMetrics(ds), TimeUnit.MINUTES.toNanos(1), TimeUnit.MINUTES.toNanos(2), BaseUnits.BYTES,
+                3, 170, 150);
     }
 
     @Test
@@ -521,43 +531,52 @@ class OtlpDeltaMeterRegistryTest extends OtlpMeterRegistryTest {
         registryWithExponentialHistogram.publish();
         timer.record(Duration.ofMillis(10000));
 
-        Metric metric = writeToMetric(timer);
-        assertThat(metric.getExponentialHistogram().getDataPointsCount()).isPositive();
-        ExponentialHistogramDataPoint exponentialHistogramDataPoint = metric.getExponentialHistogram().getDataPoints(0);
-        assertExponentialHistogram(metric, 2, 1100, 1000.0, 0, 5);
-        ExponentialHistogramDataPoint.Buckets buckets = exponentialHistogramDataPoint.getPositive();
-        assertThat(buckets.getOffset()).isEqualTo(212);
-        assertThat(buckets.getBucketCountsCount()).isEqualTo(107);
-        assertThat(buckets.getBucketCountsList().get(0)).isEqualTo(1);
-        assertThat(buckets.getBucketCountsList().get(106)).isEqualTo(1);
-        assertThat(buckets.getBucketCountsList()).filteredOn(v -> v == 0).hasSize(105);
+        List<Metric> metrics = writeToMetrics(timer);
+        assertThat(metrics).filteredOn(Metric::hasExponentialHistogram).singleElement().satisfies(metric -> {
+            assertThat(metric.getExponentialHistogram().getDataPointsCount()).isPositive();
+            ExponentialHistogramDataPoint exponentialHistogramDataPoint = metric.getExponentialHistogram()
+                .getDataPoints(0);
+            assertExponentialHistogram(metric, 2, 1100, 1000.0, 0, 5);
+            ExponentialHistogramDataPoint.Buckets buckets = exponentialHistogramDataPoint.getPositive();
+            assertThat(buckets.getOffset()).isEqualTo(212);
+            assertThat(buckets.getBucketCountsCount()).isEqualTo(107);
+            assertThat(buckets.getBucketCountsList().get(0)).isEqualTo(1);
+            assertThat(buckets.getBucketCountsList().get(106)).isEqualTo(1);
+            assertThat(buckets.getBucketCountsList()).filteredOn(v -> v == 0).hasSize(105);
+        });
 
         clock.add(exponentialHistogramOtlpConfig().step());
-        metric = writeToMetric(timer);
-        exponentialHistogramDataPoint = metric.getExponentialHistogram().getDataPoints(0);
-
-        // Note the difference here, if it cumulative we had gone to a lower scale to
-        // accommodate 1, 100, 1000,
-        // 10000 but since the first 3 values are reset after the step. We will still be
-        // able to record 10000 in the
-        // same scale.
-        assertExponentialHistogram(metric, 1, 10000, 10000.0, 0, 5);
-        buckets = exponentialHistogramDataPoint.getPositive();
-        assertThat(buckets.getOffset()).isEqualTo(425);
-        assertThat(buckets.getBucketCountsCount()).isEqualTo(1);
+        metrics = writeToMetrics(timer);
+        assertThat(metrics).filteredOn(Metric::hasExponentialHistogram).singleElement().satisfies(metric -> {
+            ExponentialHistogramDataPoint exponentialHistogramDataPoint = metric.getExponentialHistogram()
+                .getDataPoints(0);
+            // Note the difference here, if it cumulative we had gone to a lower scale to
+            // accommodate 1, 100, 1000,
+            // 10000 but since the first 3 values are reset after the step. We will still
+            // be
+            // able to record 10000 in the
+            // same scale.
+            assertExponentialHistogram(metric, 1, 10000, 10000.0, 0, 5);
+            ExponentialHistogramDataPoint.Buckets buckets = exponentialHistogramDataPoint.getPositive();
+            assertThat(buckets.getOffset()).isEqualTo(425);
+            assertThat(buckets.getBucketCountsCount()).isEqualTo(1);
+        });
 
         timer.record(Duration.ofMillis(10001));
         clock.add(exponentialHistogramOtlpConfig().step());
-        metric = writeToMetric(timer);
-        exponentialHistogramDataPoint = metric.getExponentialHistogram().getDataPoints(0);
+        metrics = writeToMetrics(timer);
+        assertThat(metrics).filteredOn(Metric::hasExponentialHistogram).singleElement().satisfies(metric -> {
+            ExponentialHistogramDataPoint exponentialHistogramDataPoint = metric.getExponentialHistogram()
+                .getDataPoints(0);
 
-        // Since, the range of recorded values in the last step is low, the histogram
-        // would have been rescaled to Max
-        // scale.
-        assertExponentialHistogram(metric, 1, 10001, 10001.0, 0, 20);
-        buckets = exponentialHistogramDataPoint.getPositive();
-        assertThat(buckets.getOffset()).isEqualTo(13933327);
-        assertThat(buckets.getBucketCountsCount()).isEqualTo(1);
+            // Since, the range of recorded values in the last step is low, the histogram
+            // would have been rescaled to Max
+            // scale.
+            assertExponentialHistogram(metric, 1, 10001, 10001.0, 0, 20);
+            ExponentialHistogramDataPoint.Buckets buckets = exponentialHistogramDataPoint.getPositive();
+            assertThat(buckets.getOffset()).isEqualTo(13933327);
+            assertThat(buckets.getBucketCountsCount()).isEqualTo(1);
+        });
     }
 
     @Test
@@ -574,43 +593,53 @@ class OtlpDeltaMeterRegistryTest extends OtlpMeterRegistryTest {
         registryWithExponentialHistogram.publish();
         ds.record(10000);
 
-        Metric metric = writeToMetric(ds);
-        assertThat(metric.getExponentialHistogram().getDataPointsCount()).isPositive();
-        ExponentialHistogramDataPoint exponentialHistogramDataPoint = metric.getExponentialHistogram().getDataPoints(0);
-        assertExponentialHistogram(metric, 2, 1100, 1000.0, 0, 5);
-        ExponentialHistogramDataPoint.Buckets buckets = exponentialHistogramDataPoint.getPositive();
-        assertThat(buckets.getOffset()).isEqualTo(212);
-        assertThat(buckets.getBucketCountsCount()).isEqualTo(107);
-        assertThat(buckets.getBucketCountsList().get(0)).isEqualTo(1);
-        assertThat(buckets.getBucketCountsList().get(106)).isEqualTo(1);
-        assertThat(buckets.getBucketCountsList()).filteredOn(v -> v == 0).hasSize(105);
+        List<Metric> metrics = writeToMetrics(ds);
+        assertThat(metrics).filteredOn(Metric::hasExponentialHistogram).singleElement().satisfies(metric -> {
+            assertThat(metric.getExponentialHistogram().getDataPointsCount()).isPositive();
+            ExponentialHistogramDataPoint exponentialHistogramDataPoint = metric.getExponentialHistogram()
+                .getDataPoints(0);
+            assertExponentialHistogram(metric, 2, 1100, 1000.0, 0, 5);
+            ExponentialHistogramDataPoint.Buckets buckets = exponentialHistogramDataPoint.getPositive();
+            assertThat(buckets.getOffset()).isEqualTo(212);
+            assertThat(buckets.getBucketCountsCount()).isEqualTo(107);
+            assertThat(buckets.getBucketCountsList().get(0)).isEqualTo(1);
+            assertThat(buckets.getBucketCountsList().get(106)).isEqualTo(1);
+            assertThat(buckets.getBucketCountsList()).filteredOn(v -> v == 0).hasSize(105);
+        });
 
         clock.add(exponentialHistogramOtlpConfig().step());
-        metric = writeToMetric(ds);
-        exponentialHistogramDataPoint = metric.getExponentialHistogram().getDataPoints(0);
+        metrics = writeToMetrics(ds);
+        assertThat(metrics).filteredOn(Metric::hasExponentialHistogram).singleElement().satisfies(metric -> {
+            ExponentialHistogramDataPoint exponentialHistogramDataPoint = metric.getExponentialHistogram()
+                .getDataPoints(0);
 
-        // Mote the difference here, if it cumulative we had gone to a lower scale to
-        // accommodate 1, 100, 1000,
-        // 10000 but since the first 3 values are reset after the step. We will still be
-        // able to record 10000 in the
-        // same scale.
-        assertExponentialHistogram(metric, 1, 10000, 10000.0, 0, 5);
-        buckets = exponentialHistogramDataPoint.getPositive();
-        assertThat(buckets.getOffset()).isEqualTo(425);
-        assertThat(buckets.getBucketCountsCount()).isEqualTo(1);
-
+            // Mote the difference here, if it cumulative we had gone to a lower scale to
+            // accommodate 1, 100, 1000,
+            // 10000 but since the first 3 values are reset after the step. We will still
+            // be
+            // able to record 10000 in the
+            // same scale.
+            assertExponentialHistogram(metric, 1, 10000, 10000.0, 0, 5);
+            ExponentialHistogramDataPoint.Buckets buckets = exponentialHistogramDataPoint.getPositive();
+            assertThat(buckets.getOffset()).isEqualTo(425);
+            assertThat(buckets.getBucketCountsCount()).isEqualTo(1);
+        });
         ds.record(10001);
         clock.add(exponentialHistogramOtlpConfig().step());
-        metric = writeToMetric(ds);
-        exponentialHistogramDataPoint = metric.getExponentialHistogram().getDataPoints(0);
+        metrics = writeToMetrics(ds);
+        assertThat(metrics).filteredOn(Metric::hasExponentialHistogram).singleElement().satisfies(metric -> {
+            ExponentialHistogramDataPoint exponentialHistogramDataPoint = metric.getExponentialHistogram()
+                .getDataPoints(0);
 
-        // Since, the range of recorded values in the last step is low, the histogram
-        // would have been rescaled to Max
-        // scale.
-        assertExponentialHistogram(metric, 1, 10001, 10001.0, 0, 20);
-        buckets = exponentialHistogramDataPoint.getPositive();
-        assertThat(buckets.getOffset()).isEqualTo(13933327);
-        assertThat(buckets.getBucketCountsCount()).isEqualTo(1);
+            // Since, the range of recorded values in the last step is low, the histogram
+            // would have been rescaled to Max
+            // scale.
+            assertExponentialHistogram(metric, 1, 10001, 10001.0, 0, 20);
+            ExponentialHistogramDataPoint.Buckets buckets = exponentialHistogramDataPoint.getPositive();
+            assertThat(buckets.getOffset()).isEqualTo(13933327);
+            assertThat(buckets.getBucketCountsCount()).isEqualTo(1);
+        });
+
     }
 
     @Issue("#3773")
