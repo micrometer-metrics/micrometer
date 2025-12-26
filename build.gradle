@@ -1,7 +1,7 @@
 buildscript {
     ext.gradleJvmVersion = JavaLanguageVersion.of(JavaVersion.current().getMajorVersion())
-    ext.javaLanguageVersion = project.hasProperty('toolchainVersion') && project.property('toolchainVersion') != '' ? JavaLanguageVersion.of(project.property('toolchainVersion') as int) : gradleJvmVersion
-    ext.javaTargetVersion = JavaVersion.VERSION_21
+    ext.javaLanguageVersion = project.hasProperty('toolchainVersion') && project.property('toolchainVersion') != '' ? JavaLanguageVersion.of(project.property('toolchainVersion') as int) : JavaLanguageVersion.of(26)
+    ext.javaTargetVersion = JavaVersion.VERSION_26
 
     repositories {
         mavenCentral()
@@ -77,6 +77,13 @@ subprojects {
     apply plugin: 'com.diffplug.spotless'
 
     if (project.name != 'micrometer-bom') {
+        tasks.withType(JavaCompile).configureEach {
+            options.compilerArgs.add('--enable-preview')
+        }
+
+        tasks.withType(Test).configureEach {
+            jvmArgs '--enable-preview'//, '-XX:+UnlockDiagnosticVMOptions', '-XX:+PrintInlineLayout', '-XX:+PrintFlatArrayLayout'
+        }
         tasks.withType(JavaCompile).configureEach {
             if (it.name == "compileJava" && !(it.project.name in ["micrometer-java11"])) {
                 options.errorprone.disable(

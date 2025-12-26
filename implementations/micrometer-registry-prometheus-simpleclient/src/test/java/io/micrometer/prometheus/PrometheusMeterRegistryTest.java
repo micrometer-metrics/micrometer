@@ -171,7 +171,7 @@ class PrometheusMeterRegistryTest {
         CompositeMeterRegistry composite = new CompositeMeterRegistry();
         composite.add(registry);
 
-        registry.more().counter("my.custom", emptyList(), 0);
+        registry.more().counter("my.custom", emptyList(), new AtomicInteger(0));
         assertThat(registry.scrape()).contains("my_custom");
     }
 
@@ -337,7 +337,7 @@ class PrometheusMeterRegistryTest {
     @Issue("#246")
     @Test
     void functionCounterNamingConvention() {
-        FunctionCounter.builder("api.requests", 1.0, n -> n).register(registry);
+        FunctionCounter.builder("api.requests", new AtomicInteger(1), AtomicInteger::get).register(registry);
 
         assertThat(registry.scrape()).contains("api_requests_total 1.0");
     }

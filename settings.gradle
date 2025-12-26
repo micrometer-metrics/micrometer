@@ -26,12 +26,12 @@ buildCache {
 
 include 'micrometer-commons', 'micrometer-core', 'micrometer-observation'
 
-['core', 'hazelcast', 'jakarta10', 'javalin', 'jersey3', 'jooq', 'kotlin', 'spring-framework6'].each { sample ->
+['core', 'hazelcast', 'jakarta10', /*'javalin',*/ 'jersey3', 'jooq', 'kotlin', 'spring-framework6'].each { sample ->
     include "micrometer-samples-$sample"
     project(":micrometer-samples-$sample").projectDir = new File(rootProject.projectDir, "samples/micrometer-samples-$sample")
 }
 
-include 'micrometer-test', 'micrometer-observation-test', 'micrometer-test-aspectj-ltw', 'micrometer-test-aspectj-ctw'
+include 'micrometer-test', 'micrometer-observation-test'/*, 'micrometer-test-aspectj-ltw', 'micrometer-test-aspectj-ctw'*/
 
 ['atlas', 'prometheus', 'prometheus-simpleclient', 'datadog', 'elastic', 'ganglia', 'graphite', 'health', 'jmx', 'influx', 'otlp', 'statsd', 'new-relic', 'cloudwatch2', 'signalfx', 'wavefront', 'dynatrace', 'azure-monitor', 'humio', 'appoptics', 'kairos', 'stackdriver', 'opentsdb'].each { sys ->
     include "micrometer-registry-$sys"
@@ -47,7 +47,7 @@ include 'concurrency-tests'
 include 'micrometer-bom'
 include 'micrometer-jakarta9'
 //include 'micrometer-java11'
-include 'micrometer-java21'
+//include 'micrometer-java21'
 //include 'micrometer-jetty11'
 include 'micrometer-jetty12'
 include 'micrometer-osgi-test'

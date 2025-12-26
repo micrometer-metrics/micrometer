@@ -7,7 +7,9 @@ plugins {
 
 apply plugin: libs.plugins.kotlin.get().pluginId
 
-if (javaLanguageVersion.canCompileOrRun(17)) {
+var skipAspectPlugin = true
+
+if (javaLanguageVersion.canCompileOrRun(17) && !skipAspectPlugin) {
     apply plugin: 'io.freefair.aspectj.post-compile-weaving'
 }
 else {
@@ -34,7 +36,7 @@ description 'Core module of Micrometer containing instrumentation API and implem
 
 kotlin {
     compilerOptions {
-        jvmTarget =  JvmTarget.JVM_21
+        jvmTarget =  JvmTarget.JVM_24
         apiVersion = KotlinVersion.KOTLIN_2_2
         languageVersion = KotlinVersion.KOTLIN_2_2
     }

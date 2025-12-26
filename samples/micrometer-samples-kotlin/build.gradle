@@ -5,9 +5,9 @@ apply plugin: libs.plugins.kotlin.get().pluginId
 
 kotlin {
     compilerOptions {
-        jvmTarget =  JvmTarget.JVM_21
-        apiVersion = KotlinVersion.KOTLIN_2_2
-        languageVersion = KotlinVersion.KOTLIN_2_2
+        jvmTarget =  JvmTarget.JVM_25
+        apiVersion = KotlinVersion.KOTLIN_2_0
+        languageVersion = KotlinVersion.KOTLIN_2_0
     }
 }
 
@@ -21,7 +21,7 @@ dependencies {
     implementation libs.kotlinxCoroutines
     // test with the lowest version of Kotlin supported because we compile with highest version supported
     // force the stdlib version
-    implementation enforcedPlatform('org.jetbrains.kotlin:kotlin-bom:1.7.22')
+    implementation enforcedPlatform('org.jetbrains.kotlin:kotlin-bom:2.0.21')
     implementation libs.okhttp
 
     testRuntimeOnly libs.contextPropagation

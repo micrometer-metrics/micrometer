@@ -48,9 +48,9 @@ class GaugeAssertTest {
 
     @Test
     void shouldFindGaugeByNameAndTags() {
-        Gauge.builder("foo", 1.0, n -> n).tag("tag-1", "aa").register(simpleMeterRegistry);
+        Gauge.builder("foo", () -> 1.0).tag("tag-1", "aa").register(simpleMeterRegistry);
 
-        Gauge.builder("foo", 99.0, n -> n).tag("tag-1", "bb").tag("tag-2", "cc").register(simpleMeterRegistry);
+        Gauge.builder("foo", () -> 99.0).tag("tag-1", "bb").tag("tag-2", "cc").register(simpleMeterRegistry);
 
         meterRegistryAssert.gauge("foo", Tag.of("tag-1", "aa")).hasValue(1.0);
         meterRegistryAssert.gauge("foo", Tag.of("tag-1", "bb"), Tag.of("tag-2", "cc")).hasValue(99.0);

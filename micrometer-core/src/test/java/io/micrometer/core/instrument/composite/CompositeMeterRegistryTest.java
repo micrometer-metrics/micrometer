@@ -181,7 +181,7 @@ class CompositeMeterRegistryTest {
         SimpleMeterRegistry registry = new SimpleMeterRegistry();
         CompositeMeterRegistry compositeMeterRegistry = new CompositeMeterRegistry();
 
-        FunctionCounter.builder("foo", 1L, x -> x).register(compositeMeterRegistry);
+        FunctionCounter.builder("foo", new AtomicInteger(1), AtomicInteger::get).register(compositeMeterRegistry);
 
         compositeMeterRegistry.add(registry);
     }

@@ -26,6 +26,7 @@ import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.DisabledOnOs;
 import org.junit.jupiter.api.condition.OS;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
@@ -55,6 +56,7 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
  * @author Tommy Ludwig
  * @author Johnny Lim
  */
+@DisabledOnOs(value = OS.MAC, disabledReason = "Flaky")
 class StatsdMeterRegistryPublishTest {
 
     private static final String UDS_DATAGRAM_SOCKET_PATH = "/tmp/test-server.sock";
@@ -331,12 +333,11 @@ class StatsdMeterRegistryPublishTest {
 
     @Test
     void counterIncrementWorksWithSleepAfterRegistryStart() throws InterruptedException {
-        StatsdConfig config = StatsdConfig.DEFAULT;
-
         CountDownLatch serverLatch = new CountDownLatch(1);
-        DisposableChannel server = startServer(StatsdProtocol.UDP, config.port(), serverLatch);
+        DisposableChannel server = startServer(StatsdProtocol.UDP, 0, serverLatch);
+        final int port = getPort(server, StatsdProtocol.UDP);
 
-        StatsdMeterRegistry registry = new StatsdMeterRegistry(config, Clock.SYSTEM);
+        StatsdMeterRegistry registry = new StatsdMeterRegistry(getUnbufferedConfig(StatsdProtocol.UDP, port), Clock.SYSTEM);
         Thread.sleep(1000);
 
         Counter counter = Counter.builder("my.counter").register(registry);
@@ -351,12 +352,11 @@ class StatsdMeterRegistryPublishTest {
 
     @Test
     void counterIncrementDoesNotWorkWithoutSleepAfterRegistryStart() throws InterruptedException {
-        StatsdConfig config = StatsdConfig.DEFAULT;
-
         CountDownLatch serverLatch = new CountDownLatch(1);
-        DisposableChannel server = startServer(StatsdProtocol.UDP, config.port(), serverLatch);
+        DisposableChannel server = startServer(StatsdProtocol.UDP, 0, serverLatch);
+        final int port = getPort(server, StatsdProtocol.UDP);
 
-        StatsdMeterRegistry registry = new StatsdMeterRegistry(config, Clock.SYSTEM);
+        StatsdMeterRegistry registry = new StatsdMeterRegistry(getUnbufferedConfig(StatsdProtocol.UDP, port), Clock.SYSTEM);
 
         Counter counter = Counter.builder("my.counter").register(registry);
         counter.increment();

@@ -438,8 +438,8 @@ public abstract class MeterRegistryCompatibilityKit {
         @Test
         @DisplayName("strong reference gauges")
         void strongReferenceGauges() {
-            Gauge.builder("weak.ref", 1.0, n -> n).register(registry);
-            Gauge.builder("strong.ref", 1.0, n -> n).strongReference(true).register(registry);
+            Gauge.builder("weak.ref", new AtomicInteger(1), AtomicInteger::get).register(registry);
+            Gauge.builder("strong.ref", new AtomicLong(1), AtomicLong::get).strongReference(true).register(registry);
 
             System.gc();
 
@@ -573,15 +573,15 @@ public abstract class MeterRegistryCompatibilityKit {
         @DisplayName("multiGauges can be registered twice because they take care about de-registering the previous Gauge if overwrite=true")
         void multiGaugesCanBeRegisteredTwice() {
             MultiGauge gauges = MultiGauge.builder("my.gauge").register(registry);
-            gauges.register(Collections.singletonList(MultiGauge.Row.of(Tags.of("test", "true"), 1)));
+            gauges.register(Collections.singletonList(MultiGauge.Row.of(Tags.of("test", "true"), new AtomicInteger(1))));
 
             // no re-registration since overwrite is false by default
-            gauges.register(Collections.singletonList(MultiGauge.Row.of(Tags.of("test", "true"), 2)));
+            gauges.register(Collections.singletonList(MultiGauge.Row.of(Tags.of("test", "true"), new AtomicInteger(2))));
             assertThat(registry.get("my.gauge").tags("test", "true").gauges()).hasSize(1);
             assertThat(registry.get("my.gauge").tags("test", "true").gauge().value()).isEqualTo(1);
 
             // re-registration since overwrite is set to true
-            gauges.register(Collections.singletonList(MultiGauge.Row.of(Tags.of("test", "true"), 3)), true);
+            gauges.register(Collections.singletonList(MultiGauge.Row.of(Tags.of("test", "true"), new AtomicInteger(3))), true);
             assertThat(registry.get("my.gauge").tags("test", "true").gauges()).hasSize(1);
             assertThat(registry.get("my.gauge").tags("test", "true").gauge().value()).isEqualTo(3);
         }
@@ -591,15 +591,15 @@ public abstract class MeterRegistryCompatibilityKit {
         void multiGaugesCanBeRegisteredEffectivelyTwice() {
             registry.config().meterFilter(MeterFilter.ignoreTags("ignored"));
             MultiGauge gauges = MultiGauge.builder("my.gauge").register(registry);
-            gauges.register(Collections.singletonList(MultiGauge.Row.of(Tags.of("ignored", "true"), 4)));
+            gauges.register(Collections.singletonList(MultiGauge.Row.of(Tags.of("ignored", "true"), new AtomicInteger(4))));
 
             // no re-registration since overwrite is false by default
-            gauges.register(Collections.singletonList(MultiGauge.Row.of(Tags.of("ignored", "false"), 5)));
+            gauges.register(Collections.singletonList(MultiGauge.Row.of(Tags.of("ignored", "false"), new AtomicInteger(5))));
             assertThat(registry.get("my.gauge").gauges()).hasSize(1);
             assertThat(registry.get("my.gauge").gauge().value()).isEqualTo(4);
 
             // re-registration since overwrite is set to true
-            gauges.register(Collections.singletonList(MultiGauge.Row.of(Tags.of("ignored", "false"), 6)), true);
+            gauges.register(Collections.singletonList(MultiGauge.Row.of(Tags.of("ignored", "false"), new AtomicInteger(6))), true);
             assertThat(registry.get("my.gauge").gauges()).hasSize(1);
             assertThat(registry.get("my.gauge").gauge().value()).isEqualTo(6);
         }

@@ -53,7 +53,7 @@ class QueryTest {
         t2.record(2, TimeUnit.SECONDS);
         t2.record(2, TimeUnit.SECONDS);
 
-        FunctionCounter.builder("my.function.counter", 1d, Number::doubleValue).register(registry);
+        FunctionCounter.builder("my.function.counter", this, _ -> 1).register(registry);
 
         clock(registry).addSeconds(10);
         registry.tick();

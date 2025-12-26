@@ -3,7 +3,7 @@ activemq-artemis = "2.44.0"
 application-insights = "2.6.4"
 archunit = "1.4.1"
 asmForPlugins = "7.3.1"
-aspectjweaver = "1.9.24"
+aspectjweaver = "1.9.25.1"
 assertj = "3.27.6"
 awaitility = "4.3.0"
 caffeine = "2.9.3"
@@ -87,6 +87,7 @@ aspectjrt = { module = "org.aspectj:aspectjrt", version.ref = "aspectjweaver" }
 aspectjweaver = { module = "org.aspectj:aspectjweaver", version.ref = "aspectjweaver" }
 assertj = { module = "org.assertj:assertj-core", version.ref = "assertj" }
 awaitility = { module = "org.awaitility:awaitility", version.ref = "awaitility" }
+byte-buddy = { module = "net.bytebuddy:byte-buddy", version = "1.18.3" }
 caffeine = { module = "com.github.ben-manes.caffeine:caffeine", version.ref = "caffeine" }
 cloudwatch2 = { module = "software.amazon.awssdk:cloudwatch", version.ref = "cloudwatch2" }
 colt = { module = "colt:colt", version.ref = "colt" }
@@ -165,7 +166,7 @@ junitPlatformLauncher = { module = "org.junit.platform:junit-platform-launcher" 
 kafkaClients = { module = "org.apache.kafka:kafka-clients", version.ref = "kafka" }
 kafkaStreams = { module = "org.apache.kafka:kafka-streams", version.ref = "kafka" }
 kafkaJunit = { module = "com.github.charithe:kafka-junit", version.ref = "kafka-junit" }
-kotlinxCoroutines = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version = "1.7.3" }
+kotlinxCoroutines = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version = "1.10.2" }
 latencyUtils = { module = "org.latencyutils:LatencyUtils", version.ref = "latency-utils" }
 lmaxDisruptor = "com.lmax:disruptor:3.4.4"
 logback12 = { module = "ch.qos.logback:logback-classic", version = "1.5.21" }
@@ -229,6 +230,6 @@ plugin-spotless = { module = "com.diffplug.spotless:spotless-plugin-gradle", ver
 plugin-bnd = "biz.aQute.bnd:biz.aQute.bnd.gradle:7.2.0-RC10"
 
 [plugins]
-kotlin = { id = "org.jetbrains.kotlin.jvm", version = "2.2.21" }
+kotlin = { id = "org.jetbrains.kotlin.jvm", version = "2.3.0" }
 jcstress = { id = "io.github.reyerizo.gradle.jcstress", version = "0.9.0" }
-aspectj = { id = 'io.freefair.aspectj.post-compile-weaving', version = '8.14.3' }
+aspectj = { id = 'io.freefair.aspectj.post-compile-weaving', version = '9.1.0' }
