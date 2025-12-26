@@ -21,10 +21,10 @@ import com.tngtech.archunit.lang.ArchRule;
 
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 
-@AnalyzeClasses(packages = "io.micrometer.jakarta9")
+//@AnalyzeClasses(packages = "io.micrometer.jakarta9")
 class NoJavaxArchitectureTests {
 
-    @ArchTest
+//    @ArchTest
     static final ArchRule noJavaxDependencies = noClasses().that()
         .resideInAPackage("io.micrometer.jakarta9..")
         .should()

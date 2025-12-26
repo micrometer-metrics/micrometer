@@ -25,7 +25,7 @@ dependencies {
 
     testImplementation project(':micrometer-observation-test')
     testImplementation project(':micrometer-jakarta9')
-    testImplementation project(':micrometer-java11')
+//    testImplementation project(':micrometer-java11')
 
     testImplementation libs.jsr107
 
