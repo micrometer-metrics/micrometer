@@ -21,6 +21,7 @@ import io.micrometer.test.assertions.GaugeAssert;
 import io.micrometer.test.assertions.MeterAssert;
 import io.micrometer.test.assertions.TimerAssert;
 import io.micrometer.core.instrument.*;
+import org.assertj.core.annotation.CheckReturnValue;
 import org.assertj.core.api.AbstractAssert;
 import org.assertj.core.api.Assertions;
 
@@ -49,6 +50,7 @@ public class MeterRegistryAssert extends AbstractAssert<MeterRegistryAssert, Met
      * @param actual meter registry to assert against
      * @return meter registry assertions
      */
+    @CheckReturnValue
     public static MeterRegistryAssert assertThat(MeterRegistry actual) {
         return new MeterRegistryAssert(actual);
     }
@@ -58,6 +60,7 @@ public class MeterRegistryAssert extends AbstractAssert<MeterRegistryAssert, Met
      * @param actual meter registry to assert against
      * @return meter registry assertions
      */
+    @CheckReturnValue
     public static MeterRegistryAssert then(MeterRegistry actual) {
         return new MeterRegistryAssert(actual);
     }

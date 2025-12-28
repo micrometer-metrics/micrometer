@@ -17,6 +17,7 @@ package io.micrometer.test.assertions;
 
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.Tag;
+import org.assertj.core.annotation.CheckReturnValue;
 import org.assertj.core.api.AbstractAssert;
 import org.assertj.core.api.DoubleAssert;
 
@@ -36,6 +37,7 @@ public class GaugeAssert extends AbstractAssert<GaugeAssert, Gauge> {
      * @param actual the gauge to assert on
      * @return the created assertion object
      */
+    @CheckReturnValue
     public static GaugeAssert assertThat(Gauge actual) {
         return new GaugeAssert(actual);
     }
@@ -74,6 +76,7 @@ public class GaugeAssert extends AbstractAssert<GaugeAssert, Gauge> {
      * @return a {@link DoubleAssert} for further assertions
      * @see #hasValue(double)
      */
+    @CheckReturnValue
     public DoubleAssert value() {
         return new DoubleAssert(actual.value());
     }
