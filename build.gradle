@@ -6,9 +6,6 @@ buildscript {
     repositories {
         mavenCentral()
         gradlePluginPortal()
-        maven {
-            url = uri("https://bndtools.jfrog.io/bndtools/libs-release")
-        }
     }
 
     dependencies {
