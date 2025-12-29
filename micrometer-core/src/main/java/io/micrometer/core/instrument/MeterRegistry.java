@@ -411,7 +411,7 @@ public abstract class MeterRegistry {
      * @return The set of registered meters.
      */
     public List<Meter> getMeters() {
-        return Collections.unmodifiableList(new ArrayList<>(meterMap.values()));
+        return Collections.unmodifiableList(Arrays.asList(meterMap.values().toArray(new Meter[0])));
     }
 
     /**
