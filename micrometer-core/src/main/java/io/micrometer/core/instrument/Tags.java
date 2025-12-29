@@ -50,6 +50,16 @@ public final class Tags implements Iterable<Tag> {
     private final int length;
 
     /**
+     * Cache of the hash code for this {@code Tags} instance.
+     */
+    private int hash;
+
+    /**
+     * Flag indicating whether the hash code has been computed and is zero.
+     */
+    private boolean hashIsZero;
+
+    /**
      * A constructor that initializes a {@code Tags} object with a sorted set of tags and
      * its length.
      * @param sortedSet an ordered set of unique tags by key
@@ -277,11 +287,20 @@ public final class Tags implements Iterable<Tag> {
 
     @Override
     public int hashCode() {
-        int result = 1;
-        for (int i = 0; i < length; i++) {
-            result = 31 * result + sortedSet[i].hashCode();
+        int h = hash;
+        if (h == 0 && !hashIsZero) {
+            h = 1;
+            for (int i = 0; i < length; i++) {
+                h = 31 * h + sortedSet[i].hashCode();
+            }
+            if (h == 0) {
+                hashIsZero = true;
+            }
+            else {
+                hash = h;
+            }
         }
-        return result;
+        return h;
     }
 
     @Override
