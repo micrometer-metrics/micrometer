@@ -82,7 +82,7 @@ subprojects {
             }
             options.errorprone {
                 disableWarningsInGeneratedCode = true
-                excludedPaths = ".*/build/generated/.*"
+                excludedPaths = ".*/generated/.*"
 
                 disable(
                     "StringConcatToTextBlock" // Requires JDK 15+
