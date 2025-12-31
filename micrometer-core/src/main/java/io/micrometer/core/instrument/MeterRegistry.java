@@ -410,8 +410,7 @@ public abstract class MeterRegistry {
     /**
      * Get currently registered meters.
      * @return An unmodifiable copy of registered meters.
-     * @implNote Avoids the ArrayList constructor because it copies the array
-     * twice.
+     * @implNote Avoids the ArrayList constructor because it copies the array twice.
      */
     @SuppressWarnings("unchecked")
     public List<Meter> getMeters() {
