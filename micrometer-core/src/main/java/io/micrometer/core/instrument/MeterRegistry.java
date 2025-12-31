@@ -408,10 +408,18 @@ public abstract class MeterRegistry {
     }
 
     /**
-     * @return The set of registered meters.
+     * Get currently registered meters.
+     * @return An unmodifiable copy of registered meters.
+     * @implNote Avoids the ArrayList constructor because it copies the array
+     * twice.
      */
+    @SuppressWarnings("unchecked")
     public List<Meter> getMeters() {
-        return Collections.unmodifiableList(new ArrayList<>(meterMap.values()));
+        return Collections.unmodifiableList(
+                // Arrays.asList wraps the array without copying it (unlike new ArrayList)
+                // The cast is safe because we know the map only contains Meters and the
+                // returned list is unmodifiable
+                (List<Meter>) (List<?>) Arrays.asList(meterMap.values().toArray()));
     }
 
     /**
