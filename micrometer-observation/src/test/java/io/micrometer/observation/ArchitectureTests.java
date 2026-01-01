@@ -18,13 +18,15 @@ package io.micrometer.observation;
 import com.tngtech.archunit.junit.AnalyzeClasses;
 import com.tngtech.archunit.junit.ArchTest;
 import com.tngtech.archunit.lang.ArchRule;
+import org.junit.jupiter.api.Disabled;
 
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 
-@AnalyzeClasses(packagesOf = ArchitectureTests.class)
+//@AnalyzeClasses(packagesOf = ArchitectureTests.class)
+@Disabled("ArchUnit doesn't support Java 26 class file versions")
 public class ArchitectureTests {
 
-    @ArchTest
+//    @ArchTest
     public static final ArchRule should_not_contain_any_micrometer_core_dependencies = noClasses().should()
         .dependOnClassesThat()
         .resideInAPackage("..io.micrometer.core..");
