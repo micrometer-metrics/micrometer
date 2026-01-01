@@ -77,7 +77,7 @@ library can automatically detect and use those credentials.
 == Stackdriver Labels
 
 Micrometer metrics tags are mapped to https://cloud.google.com/monitoring/api/v3/metrics-details#intro-time-series[Stackdriver metrics labels]. With tags and labels, you can further filter or group
-by the tag or label. See xref:../concepts/naming.adoc#_tag_naming[Micrometer Concepts] for more information on tags.
+by the tag or label. See xref:concepts/naming.adoc#_tag_naming[Micrometer Concepts] for more information on tags.
 The following example filters by tags:
 
 [source,java]
