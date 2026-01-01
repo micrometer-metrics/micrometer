@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 VMware, Inc.
+ * Copyright 2026 VMware, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.tngtech.archunit.junit.AnalyzeClasses;
 import com.tngtech.archunit.junit.ArchTest;
 import com.tngtech.archunit.lang.ArchRule;
 import com.tngtech.archunit.lang.syntax.ArchRuleDefinition;
+import org.assertj.core.annotation.CanIgnoreReturnValue;
 import org.assertj.core.annotation.CheckReturnValue;
 import org.assertj.core.api.Assert;
 
@@ -47,6 +48,8 @@ class AssertJArchitectureTests {
         .and()
         .doNotHaveModifier(JavaModifier.BRIDGE)
         .and(doNotReturnSelfType())
+        .and()
+        .areNotAnnotatedWith(CanIgnoreReturnValue.class)
         .should()
         .beAnnotatedWith(CheckReturnValue.class)
         .allowEmptyShould(true);
