@@ -556,6 +556,7 @@ public class ObservationContextAssert<SELF extends ObservationContextAssert<SELF
             this.observationContextAssert = observationContextAssert;
         }
 
+        @CheckReturnValue
         public ObservationContextAssert backToContext() {
             return this.observationContextAssert;
         }

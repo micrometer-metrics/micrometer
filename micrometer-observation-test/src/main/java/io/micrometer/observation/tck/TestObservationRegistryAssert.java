@@ -18,6 +18,7 @@ package io.micrometer.observation.tck;
 import io.micrometer.common.KeyValue;
 import io.micrometer.common.docs.KeyName;
 import io.micrometer.observation.Observation;
+import org.assertj.core.annotation.CheckReturnValue;
 import org.assertj.core.api.ThrowingConsumer;
 import org.jspecify.annotations.Nullable;
 
@@ -67,6 +68,7 @@ public class TestObservationRegistryAssert
      * @return this
      * @throws AssertionError if there is none or more than one observation
      */
+    @CheckReturnValue
     public TestObservationRegistryAssertReturningObservationContextAssert hasSingleObservationThat() {
         Queue<TestObservationRegistry.TestObservationContext> contexts = actual.getContexts();
         if (contexts.isEmpty()) {
@@ -91,6 +93,7 @@ public class TestObservationRegistryAssert
      * @return this
      * @throws AssertionError if there is no matching observation
      */
+    @CheckReturnValue
     public That hasObservationWithNameEqualTo(@Nullable String name) {
         Queue<TestObservationRegistry.TestObservationContext> contexts = this.actual.getContexts();
         if (contexts.isEmpty()) {
@@ -121,6 +124,7 @@ public class TestObservationRegistryAssert
      * @return this
      * @throws AssertionError if there is no matching observation
      */
+    @CheckReturnValue
     public That hasObservationWithNameEqualToIgnoringCase(String name) {
         Queue<TestObservationRegistry.TestObservationContext> contexts = this.actual.getContexts();
         if (contexts.isEmpty()) {
@@ -182,7 +186,7 @@ public class TestObservationRegistryAssert
      * @throws AssertionError if there is an Observation with the given name but the
      * additional assertion is not successful
      */
-    @SuppressWarnings("rawtypes")
+    @SuppressWarnings({ "rawtypes", "CheckReturnValue" })
     public TestObservationRegistryAssert forAllObservationsWithNameEqualTo(String name,
             Consumer<ObservationContextAssert> observationConsumer) {
         isNotNull();
@@ -212,7 +216,7 @@ public class TestObservationRegistryAssert
      * @throws AssertionError if there is an Observation with the given name (ignoring
      * case) but the additional assertion is not successful
      */
-    @SuppressWarnings("rawtypes")
+    @SuppressWarnings({ "rawtypes", "CheckReturnValue" })
     public TestObservationRegistryAssert forAllObservationsWithNameEqualToIgnoreCase(String name,
             Consumer<ObservationContextAssert> observationConsumer) {
         isNotNull();
@@ -572,6 +576,7 @@ public class TestObservationRegistryAssert
          * Returns the original {@link TestObservationRegistryAssert} for chaining.
          * @return the original assertion for chaining
          */
+        @CheckReturnValue
         public TestObservationRegistryAssert backToTestObservationRegistry() {
             return this.originalAssert;
         }
