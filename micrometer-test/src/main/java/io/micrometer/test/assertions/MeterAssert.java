@@ -19,6 +19,7 @@ import io.micrometer.core.instrument.Measurement;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.Statistic;
 import io.micrometer.core.instrument.Tag;
+import org.assertj.core.annotation.CheckReturnValue;
 import org.assertj.core.api.AbstractAssert;
 import org.assertj.core.api.Assertions;
 
@@ -50,6 +51,7 @@ public class MeterAssert<METER extends Meter> extends AbstractAssert<MeterAssert
      * @param <M> the meter type
      * @return the created assertion object
      */
+    @CheckReturnValue
     public static <M extends Meter> MeterAssert<M> assertThat(M actual) {
         return new MeterAssert<>(actual, MeterAssert.class);
     }

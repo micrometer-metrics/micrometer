@@ -19,6 +19,7 @@ import io.micrometer.common.KeyValue;
 import io.micrometer.common.KeyValues;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationView;
+import org.assertj.core.annotation.CheckReturnValue;
 import org.assertj.core.api.AbstractAssert;
 import org.assertj.core.api.AbstractThrowableAssert;
 import org.assertj.core.api.ThrowingConsumer;
@@ -55,6 +56,7 @@ public class ObservationContextAssert<SELF extends ObservationContextAssert<SELF
      * @param actual context to assert against
      * @return Observation assertions
      */
+    @CheckReturnValue
     public static ObservationContextAssert<?> assertThat(Observation.ContextView actual) {
         return new ObservationContextAssert<>(actual);
     }
@@ -64,6 +66,7 @@ public class ObservationContextAssert<SELF extends ObservationContextAssert<SELF
      * @param actual context to assert against
      * @return Observation assertions
      */
+    @CheckReturnValue
     public static ObservationContextAssert<?> then(Observation.ContextView actual) {
         return new ObservationContextAssert<>(actual);
     }
@@ -426,10 +429,12 @@ public class ObservationContextAssert<SELF extends ObservationContextAssert<SELF
         return (SELF) this;
     }
 
+    @CheckReturnValue
     public ObservationContextAssertReturningThrowableAssert assertThatError() {
         return new ObservationContextAssertReturningThrowableAssert(actual.getError(), this);
     }
 
+    @CheckReturnValue
     public ObservationContextAssertReturningThrowableAssert thenError() {
         return assertThatError();
     }
@@ -551,6 +556,7 @@ public class ObservationContextAssert<SELF extends ObservationContextAssert<SELF
             this.observationContextAssert = observationContextAssert;
         }
 
+        @CheckReturnValue
         public ObservationContextAssert backToContext() {
             return this.observationContextAssert;
         }

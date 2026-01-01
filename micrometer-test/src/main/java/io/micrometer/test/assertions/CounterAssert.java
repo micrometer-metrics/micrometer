@@ -17,6 +17,7 @@ package io.micrometer.test.assertions;
 
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Tag;
+import org.assertj.core.annotation.CheckReturnValue;
 import org.assertj.core.api.AbstractAssert;
 import org.assertj.core.api.IntegerAssert;
 
@@ -37,6 +38,7 @@ public class CounterAssert extends AbstractAssert<CounterAssert, Counter> {
      * @param actual the counter to assert on
      * @return the created assertion object
      */
+    @CheckReturnValue
     public static CounterAssert assertThat(Counter actual) {
         return new CounterAssert(actual);
     }
@@ -78,6 +80,7 @@ public class CounterAssert extends AbstractAssert<CounterAssert, Counter> {
      * @return an {@link IntegerAssert} for further assertions
      * @see #hasCount(int)
      */
+    @CheckReturnValue
     public IntegerAssert count() {
         return new IntegerAssert((int) actual.count());
     }

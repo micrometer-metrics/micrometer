@@ -18,6 +18,8 @@ package io.micrometer.observation.tck;
 import io.micrometer.common.KeyValue;
 import io.micrometer.common.docs.KeyName;
 import io.micrometer.observation.Observation;
+import org.assertj.core.annotation.CanIgnoreReturnValue;
+import org.assertj.core.annotation.CheckReturnValue;
 import org.assertj.core.api.ThrowingConsumer;
 import org.jspecify.annotations.Nullable;
 
@@ -67,6 +69,7 @@ public class TestObservationRegistryAssert
      * @return this
      * @throws AssertionError if there is none or more than one observation
      */
+    @CheckReturnValue
     public TestObservationRegistryAssertReturningObservationContextAssert hasSingleObservationThat() {
         Queue<TestObservationRegistry.TestObservationContext> contexts = actual.getContexts();
         if (contexts.isEmpty()) {
@@ -91,6 +94,7 @@ public class TestObservationRegistryAssert
      * @return this
      * @throws AssertionError if there is no matching observation
      */
+    @CanIgnoreReturnValue
     public That hasObservationWithNameEqualTo(@Nullable String name) {
         Queue<TestObservationRegistry.TestObservationContext> contexts = this.actual.getContexts();
         if (contexts.isEmpty()) {
@@ -121,6 +125,7 @@ public class TestObservationRegistryAssert
      * @return this
      * @throws AssertionError if there is no matching observation
      */
+    @CanIgnoreReturnValue
     public That hasObservationWithNameEqualToIgnoringCase(String name) {
         Queue<TestObservationRegistry.TestObservationContext> contexts = this.actual.getContexts();
         if (contexts.isEmpty()) {
@@ -572,6 +577,7 @@ public class TestObservationRegistryAssert
          * Returns the original {@link TestObservationRegistryAssert} for chaining.
          * @return the original assertion for chaining
          */
+        @CheckReturnValue
         public TestObservationRegistryAssert backToTestObservationRegistry() {
             return this.originalAssert;
         }

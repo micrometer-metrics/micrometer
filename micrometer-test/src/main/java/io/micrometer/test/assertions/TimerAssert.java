@@ -19,6 +19,7 @@ import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
+import org.assertj.core.annotation.CheckReturnValue;
 import org.assertj.core.api.AbstractAssert;
 import org.assertj.core.api.DurationAssert;
 import org.assertj.core.api.IntegerAssert;
@@ -42,6 +43,7 @@ public class TimerAssert extends AbstractAssert<TimerAssert, Timer> {
      * @param actual the timer to assert on
      * @return the created assertion object
      */
+    @CheckReturnValue
     public static TimerAssert assertThat(Timer actual) {
         return new TimerAssert(actual);
     }
@@ -68,6 +70,7 @@ public class TimerAssert extends AbstractAssert<TimerAssert, Timer> {
      * @see #max()
      * @see #mean()
      */
+    @CheckReturnValue
     public DurationAssert totalTime() {
         return toDurationAssert(actual::totalTime);
     }
@@ -89,6 +92,7 @@ public class TimerAssert extends AbstractAssert<TimerAssert, Timer> {
      * @see #totalTime()
      * @see #mean()
      */
+    @CheckReturnValue
     public DurationAssert max() {
         return toDurationAssert(actual::max);
     }
@@ -109,6 +113,7 @@ public class TimerAssert extends AbstractAssert<TimerAssert, Timer> {
      * @see #totalTime()
      * @see #max()
      */
+    @CheckReturnValue
     public DurationAssert mean() {
         return toDurationAssert(actual::mean);
     }
@@ -148,6 +153,7 @@ public class TimerAssert extends AbstractAssert<TimerAssert, Timer> {
      * @return an {@link IntegerAssert} for further assertions
      * @see #hasCount(int)
      */
+    @CheckReturnValue
     public IntegerAssert count() {
         return new IntegerAssert((int) actual.count());
     }

@@ -17,6 +17,7 @@ package io.micrometer.observation.tck;
 
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
+import org.assertj.core.annotation.CheckReturnValue;
 import org.assertj.core.api.AbstractAssert;
 
 /**
@@ -46,6 +47,7 @@ public class ObservationRegistryAssert<SELF extends ObservationRegistryAssert<SE
      * @param actual observation registry to assert against
      * @return meter registry assertions
      */
+    @CheckReturnValue
     public static ObservationRegistryAssert assertThat(ObservationRegistry actual) {
         return new ObservationRegistryAssert(actual);
     }
@@ -55,6 +57,7 @@ public class ObservationRegistryAssert<SELF extends ObservationRegistryAssert<SE
      * @param actual observation registry to assert against
      * @return meter registry assertions
      */
+    @CheckReturnValue
     public static ObservationRegistryAssert then(ObservationRegistry actual) {
         return new ObservationRegistryAssert(actual);
     }

@@ -21,6 +21,7 @@ import io.micrometer.test.assertions.GaugeAssert;
 import io.micrometer.test.assertions.MeterAssert;
 import io.micrometer.test.assertions.TimerAssert;
 import io.micrometer.core.instrument.*;
+import org.assertj.core.annotation.CheckReturnValue;
 import org.assertj.core.api.AbstractAssert;
 import org.assertj.core.api.Assertions;
 
@@ -49,6 +50,7 @@ public class MeterRegistryAssert extends AbstractAssert<MeterRegistryAssert, Met
      * @param actual meter registry to assert against
      * @return meter registry assertions
      */
+    @CheckReturnValue
     public static MeterRegistryAssert assertThat(MeterRegistry actual) {
         return new MeterRegistryAssert(actual);
     }
@@ -58,6 +60,7 @@ public class MeterRegistryAssert extends AbstractAssert<MeterRegistryAssert, Met
      * @param actual meter registry to assert against
      * @return meter registry assertions
      */
+    @CheckReturnValue
     public static MeterRegistryAssert then(MeterRegistry actual) {
         return new MeterRegistryAssert(actual);
     }
@@ -385,6 +388,7 @@ public class MeterRegistryAssert extends AbstractAssert<MeterRegistryAssert, Met
      * @return a {@link MeterAssert} for the found meter
      * @throws AssertionError if the meter is not found
      */
+    @CheckReturnValue
     public MeterAssert<?> meter(String meterName, Tag... tags) {
         return this.meter(meterName, Arrays.asList(tags));
     }
@@ -397,6 +401,7 @@ public class MeterRegistryAssert extends AbstractAssert<MeterRegistryAssert, Met
      * @return a {@link MeterAssert} for the found meter
      * @throws AssertionError if the meter is not found
      */
+    @CheckReturnValue
     public MeterAssert<?> meter(String meterName, Iterable<Tag> tags) {
         hasMeterWithName(meterName);
         Meter meter = actual.find(meterName).tags(tags).meter();
@@ -424,6 +429,7 @@ public class MeterRegistryAssert extends AbstractAssert<MeterRegistryAssert, Met
      * @throws AssertionError if the counter is not found
      * @see CounterAssert
      */
+    @CheckReturnValue
     public CounterAssert counter(String name, Tag... tags) {
         MeterAssert<?> meter = meter(name, tags).hasType(Counter.class);
 
@@ -453,6 +459,7 @@ public class MeterRegistryAssert extends AbstractAssert<MeterRegistryAssert, Met
      * @throws AssertionError if the timer is not found
      * @see TimerAssert
      */
+    @CheckReturnValue
     public TimerAssert timer(String name, Tag... tags) {
         MeterAssert<?> meter = meter(name, tags).hasType(Timer.class);
         return TimerAssert.assertThat((Timer) meter.actual())
@@ -479,6 +486,7 @@ public class MeterRegistryAssert extends AbstractAssert<MeterRegistryAssert, Met
      * @throws AssertionError if the gauge is not found
      * @see GaugeAssert
      */
+    @CheckReturnValue
     public GaugeAssert gauge(String name, Tag... tags) {
         MeterAssert<?> meter = meter(name, tags).hasType(Gauge.class);
         return GaugeAssert.assertThat((Gauge) meter.actual())
