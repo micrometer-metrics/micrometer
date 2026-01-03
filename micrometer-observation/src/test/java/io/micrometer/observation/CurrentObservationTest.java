@@ -37,62 +37,61 @@ class CurrentObservationTest {
 
     @Test
     void nestedSamples_parentChildThreadsInstrumented() throws ExecutionException, InterruptedException {
-        ExecutorService executor = Executors.newSingleThreadExecutor();
-
-        Observation observation = Observation.createNotStarted("test.observation", registry);
-        System.out.println("Outside task: " + observation);
-        assertThat(registry.getCurrentObservation()).isNull();
-        try (Observation.Scope scope = observation.openScope()) {
-            assertThat(registry.getCurrentObservation()).isSameAs(observation);
-            executor.submit(() -> {
-                System.out.println("In task: " + registry.getCurrentObservation());
-                assertThat(registry.getCurrentObservation()).isNotEqualTo(observation);
-            }).get();
+        try (ExecutorService executor = Executors.newSingleThreadExecutor()) {
+            Observation observation = Observation.createNotStarted("test.observation", registry);
+            assertThat(registry.getCurrentObservation()).isNull();
+            try (Observation.Scope scope = observation.openScope()) {
+                assertThat(registry.getCurrentObservation()).isSameAs(observation);
+                executor.submit(() -> {
+                    assertThat(registry.getCurrentObservation()).isNotEqualTo(observation);
+                }).get();
+            }
+            assertThat(registry.getCurrentObservation()).isNull();
+            observation.stop();
         }
-        assertThat(registry.getCurrentObservation()).isNull();
-        observation.stop();
     }
 
     @Test
     void start_thenStopOnChildThread() throws InterruptedException, ExecutionException {
-        ExecutorService executor = Executors.newSingleThreadExecutor();
+        try (ExecutorService executor = Executors.newSingleThreadExecutor()) {
+            Observation observation = Observation.createNotStarted("test.observation", registry);
+            assertThat(registry.getCurrentObservation()).isNull();
+            executor.submit(() -> {
+                try (Observation.Scope scope = observation.openScope()) {
+                    assertThat(registry.getCurrentObservation()).isSameAs(observation);
+                }
+                observation.stop();
+            }).get();
 
-        Observation observation = Observation.createNotStarted("test.observation", registry);
-        assertThat(registry.getCurrentObservation()).isNull();
-        executor.submit(() -> {
-            try (Observation.Scope scope = observation.openScope()) {
-                assertThat(registry.getCurrentObservation()).isSameAs(observation);
-            }
-            observation.stop();
-        }).get();
-
-        assertThat(registry.getCurrentObservation()).isNull();
+            assertThat(registry.getCurrentObservation()).isNull();
+        }
     }
 
     @Test
     void startOnChildThread_thenStopOnSiblingThread() throws InterruptedException, ExecutionException {
         // 2 thread pools with 1 thread each, so a different thread is used for the 2
         // tasks
-        ExecutorService executor = Executors.newSingleThreadExecutor();
-        ExecutorService executor2 = Executors.newSingleThreadExecutor();
-        Map<String, Observation> observationMap = new HashMap<>();
+        try (ExecutorService executor = Executors.newSingleThreadExecutor();
+                ExecutorService executor2 = Executors.newSingleThreadExecutor()) {
+            Map<String, Observation> observationMap = new HashMap<>();
 
-        executor.submit(() -> {
-            Observation observation = Observation.createNotStarted("test.observation", registry);
+            executor.submit(() -> {
+                Observation observation = Observation.createNotStarted("test.observation", registry);
+                assertThat(registry.getCurrentObservation()).isNull();
+                observationMap.put("myObservation", observation);
+            }).get();
+
+            executor2.submit(() -> {
+                Observation myObservation = observationMap.get("myObservation");
+                try (Observation.Scope scope = myObservation.openScope()) {
+                    assertThat(registry.getCurrentObservation()).isSameAs(myObservation);
+                }
+                myObservation.stop();
+                assertThat(registry.getCurrentObservation()).isNull();
+            }).get();
+
             assertThat(registry.getCurrentObservation()).isNull();
-            observationMap.put("myObservation", observation);
-        }).get();
-
-        executor2.submit(() -> {
-            Observation myObservation = observationMap.get("myObservation");
-            try (Observation.Scope scope = myObservation.openScope()) {
-                assertThat(registry.getCurrentObservation()).isSameAs(myObservation);
-            }
-            myObservation.stop();
-            assertThat(registry.getCurrentObservation()).isNull();
-        }).get();
-
-        assertThat(registry.getCurrentObservation()).isNull();
+        }
     }
 
     @Test
@@ -132,10 +131,11 @@ class CurrentObservationTest {
 
     @Test
     void currentShouldBePropagatedAcrossThreads() throws Exception {
-        ExecutorService executor = Executors.newSingleThreadExecutor();
-        assertThat(registry.getCurrentObservation()).isNull();
-        Observation.createNotStarted("a", registry).observeChecked(() -> doA(executor, registry));
-        assertThat(registry.getCurrentObservation()).isNull();
+        try (ExecutorService executor = Executors.newSingleThreadExecutor()) {
+            assertThat(registry.getCurrentObservation()).isNull();
+            Observation.createNotStarted("a", registry).observeChecked(() -> doA(executor, registry));
+            assertThat(registry.getCurrentObservation()).isNull();
+        }
     }
 
     @Test
@@ -143,16 +143,15 @@ class CurrentObservationTest {
         ObservationRegistry registry = ObservationRegistry.create();
         registry.observationConfig()
             .observationHandler(context -> true)
-            // .observationHandler(new ObservationTextPublisher())
             .observationPredicate((name, context) -> !name.equals("b"));
-        ExecutorService executor = Executors.newSingleThreadExecutor();
-        assertThat(registry.getCurrentObservation()).isNull();
-        Observation.createNotStarted("a", registry).observeChecked(() -> doA(executor, registry));
-        assertThat(registry.getCurrentObservation()).isNull();
+        try (ExecutorService executor = Executors.newSingleThreadExecutor()) {
+            assertThat(registry.getCurrentObservation()).isNull();
+            Observation.createNotStarted("a", registry).observeChecked(() -> doA(executor, registry));
+            assertThat(registry.getCurrentObservation()).isNull();
+        }
     }
 
     private void doA(ExecutorService executor, ObservationRegistry registry) throws Exception {
-        // System.out.println("A...");
         assertThat(registry.getCurrentObservation()).isNotNull();
         assertThat(registry.getCurrentObservation().getContextView().getName()).isEqualTo("a");
 
@@ -170,12 +169,10 @@ class CurrentObservationTest {
     }
 
     private void doB(ObservationRegistry registry) {
-        // System.out.println("B...");
         Observation.createNotStarted("c", registry).observe(() -> doC(registry));
     }
 
     private void doC(ObservationRegistry registry) {
-        // System.out.println("C...");
         assertThat(registry.getCurrentObservation()).isNotNull();
         assertThat(registry.getCurrentObservation().getContextView().getName()).isEqualTo("c");
     }
