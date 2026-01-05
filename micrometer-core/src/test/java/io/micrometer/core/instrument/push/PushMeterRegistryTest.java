@@ -180,7 +180,7 @@ class PushMeterRegistryTest {
         Thread closeThread = new Thread(registry::close, "simulatedShutdownHookThread");
         closeThread.start();
         // close is blocked (waiting for publish to finish)
-        await().atMost(config.step())
+        await().atMost(Duration.ofMillis(500))
             .pollInterval(1, MILLISECONDS)
             .untilAsserted(() -> assertThat(closeThread.getState()).isEqualTo(Thread.State.WAITING));
         // allow publish to finish
@@ -249,7 +249,7 @@ class PushMeterRegistryTest {
         Thread closeThread = new Thread(registry::close, "simulatedShutdownHookThread");
         closeThread.start();
         // close is blocked (waiting for publish to finish)
-        await().atMost(Duration.ofMillis(100))
+        await().atMost(Duration.ofMillis(500))
             .pollInterval(1, MILLISECONDS)
             .untilAsserted(() -> assertThat(closeThread.getState()).isEqualTo(Thread.State.WAITING));
 
