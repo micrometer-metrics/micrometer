@@ -70,6 +70,8 @@ public class ExecutorServiceMetrics implements MeterBinder {
 
     private static final String CLASS_NAME_THREAD_PER_TASK_EXECUTOR = "java.util.concurrent.ThreadPerTaskExecutor";
 
+    private static final String METHOD_NAME_THREAD_PER_TASK_EXECUTOR_THREAD_COUNT = "threadCount";
+
     @Nullable
     private static final MethodHandle METHOD_HANDLE_THREAD_COUNT_FROM_THREAD_PER_TASK_EXECUTOR = getMethodHandleForThreadCountFromThreadPerTaskExecutor();
 
@@ -464,6 +466,12 @@ public class ExecutorServiceMetrics implements MeterBinder {
     }
 
     private void monitorThreadPerTaskExecutor(MeterRegistry registry, ExecutorService executorService) {
+        if (METHOD_HANDLE_THREAD_COUNT_FROM_THREAD_PER_TASK_EXECUTOR == null) {
+            log.warn("{}.{}() is not available. Try '--add-opens java.base/java.util.concurrent=ALL-UNNAMED'.",
+                    CLASS_NAME_THREAD_PER_TASK_EXECUTOR, METHOD_NAME_THREAD_PER_TASK_EXECUTOR_THREAD_COUNT);
+            return;
+        }
+
         List<Meter> meters = asList(Gauge
             .builder(metricPrefix + "executor.active", executorService,
                     ExecutorServiceMetrics::getThreadCountFromThreadPerTaskExecutor)
@@ -487,7 +495,7 @@ public class ExecutorServiceMetrics implements MeterBinder {
     private static MethodHandle getMethodHandleForThreadCountFromThreadPerTaskExecutor() {
         try {
             Class<?> clazz = Class.forName(CLASS_NAME_THREAD_PER_TASK_EXECUTOR);
-            Method method = clazz.getMethod("threadCount");
+            Method method = clazz.getMethod(METHOD_NAME_THREAD_PER_TASK_EXECUTOR_THREAD_COUNT);
             method.setAccessible(true);
             return MethodHandles.lookup().unreflect(method);
         }
