@@ -2,29 +2,13 @@ plugins {
     id "me.champeau.jmh" version "0.7.3"
 }
 
-// skip this module when building with jdk <17
-// Dropwizard 5 has a Java 17 baseline
-if (!javaLanguageVersion.canCompileOrRun(17)) {
-    project.tasks.configureEach { task -> task.enabled = false }
-}
-
-java {
-    targetCompatibility = JavaVersion.VERSION_17
-}
-
-compileJava {
-    sourceCompatibility = JavaVersion.VERSION_17
-    targetCompatibility = JavaVersion.VERSION_17
-    options.release = 17
-}
-
 dependencies {
     jmh project(':micrometer-core')
-//    jmh 'io.micrometer:micrometer-core:1.16.0-M2'
+//    jmh 'io.micrometer:micrometer-core:1.16.1'
     jmh project(':micrometer-registry-prometheus')
-//    jmh 'io.micrometer:micrometer-registry-prometheus:1.16.0-M2'
+//    jmh 'io.micrometer:micrometer-registry-prometheus:1.16.1'
     jmh project(':micrometer-registry-otlp')
-//    jmh 'io.micrometer:micrometer-registry-otlp:1.16.0-M2'
+//    jmh 'io.micrometer:micrometer-registry-otlp:1.16.1'
 
     jmh libs.dropwizardMetricsCore5
     jmh libs.prometheusMetrics
@@ -53,6 +37,11 @@ jmh {
     if (project.hasProperty('jmhProfilers')) {
         profilers = [project.property('jmhProfilers')]
     }
+    jvmArgsPrepend = ['--enable-preview']
+}
+
+jmhRunBytecodeGenerator {
+    getJvmArgs().add("--enable-preview")
 }
 
 tasks.named('jmh') {

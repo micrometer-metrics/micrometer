@@ -72,7 +72,7 @@ class HumioMeterRegistryTest {
 
     @Test
     void writeGauge() {
-        meterRegistry.gauge("my.gauge", 1d);
+        meterRegistry.gauge("my.gauge", this, _ -> 1d);
         Gauge gauge = meterRegistry.get("my.gauge").gauge();
         assertThat(createBatch().writeGauge(gauge)).isNotNull();
     }
@@ -83,21 +83,21 @@ class HumioMeterRegistryTest {
 
     @Test
     void writeGaugeShouldDropNanValue() {
-        meterRegistry.gauge("my.gauge", Double.NaN);
+        meterRegistry.gauge("my.gauge", this, _ -> Double.NaN);
         Gauge gauge = meterRegistry.get("my.gauge").gauge();
         assertThat(createBatch().writeGauge(gauge)).isNull();
     }
 
     @Test
     void writeGaugeShouldDropPositiveInfiniteValue() {
-        meterRegistry.gauge("my.gauge", Double.POSITIVE_INFINITY);
+        meterRegistry.gauge("my.gauge", this, _ -> Double.POSITIVE_INFINITY);
         Gauge gauge = meterRegistry.get("my.gauge").gauge();
         assertThat(createBatch().writeGauge(gauge)).isNull();
     }
 
     @Test
     void writeGaugeShouldDropNegativeInfiniteValue() {
-        meterRegistry.gauge("my.gauge", Double.NEGATIVE_INFINITY);
+        meterRegistry.gauge("my.gauge", this, _ -> Double.NEGATIVE_INFINITY);
         Gauge gauge = meterRegistry.get("my.gauge").gauge();
         assertThat(createBatch().writeGauge(gauge)).isNull();
     }
@@ -136,14 +136,14 @@ class HumioMeterRegistryTest {
 
     @Test
     void writeFunctionCounter() {
-        FunctionCounter counter = FunctionCounter.builder("myCounter", 1d, Number::doubleValue).register(meterRegistry);
+        FunctionCounter counter = FunctionCounter.builder("myCounter", this, _ -> 1d).register(meterRegistry);
         clock.add(config.step());
         assertThat(createBatch().writeFunctionCounter(counter)).isNotNull();
     }
 
     @Test
     void writeFunctionCounterShouldDropPositiveInfiniteValue() {
-        FunctionCounter counter = FunctionCounter.builder("myCounter", Double.POSITIVE_INFINITY, Number::doubleValue)
+        FunctionCounter counter = FunctionCounter.builder("myCounter", this, _ -> Double.POSITIVE_INFINITY)
             .register(meterRegistry);
         clock.add(config.step());
         assertThat(createBatch().writeFunctionCounter(counter)).isNull();
@@ -151,7 +151,7 @@ class HumioMeterRegistryTest {
 
     @Test
     void writeFunctionCounterShouldDropNegativeInfiniteValue() {
-        FunctionCounter counter = FunctionCounter.builder("myCounter", Double.NEGATIVE_INFINITY, Number::doubleValue)
+        FunctionCounter counter = FunctionCounter.builder("myCounter", this, _ -> Double.NEGATIVE_INFINITY)
             .register(meterRegistry);
         clock.add(config.step());
         assertThat(createBatch().writeFunctionCounter(counter)).isNull();

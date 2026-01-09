@@ -7,6 +7,8 @@ dependencies {
 
     testImplementation project(':micrometer-test')
     testImplementation libs.systemStubsJupiter
+    // Use latest ByteBuddy for latest Java support
+    testRuntimeOnly(libs.byte.buddy)
     testImplementation libs.restAssured
     testImplementation libs.testcontainers.junitJupiter
     testImplementation libs.awaitility

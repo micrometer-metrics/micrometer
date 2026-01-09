@@ -193,8 +193,8 @@ class MeterRegistryTest {
 
     @Test
     void gaugeRegistersGaugeOnceAndSubsequentGaugeCallsWillNotRegister() {
-        registry.gauge("my.gauge", 1d);
-        registry.gauge("my.gauge", 2d);
+        registry.gauge("my.gauge", new AtomicInteger(1));
+        registry.gauge("my.gauge", new AtomicInteger(2));
 
         assertThat(registry.get("my.gauge").gauge().value()).isEqualTo(1d);
     }

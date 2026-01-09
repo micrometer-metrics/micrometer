@@ -25,6 +25,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -81,25 +82,25 @@ class AppOpticsMeterRegistryTest {
 
     @Test
     void writeGauge() {
-        meterRegistry.gauge("my.gauge", 1d);
+        meterRegistry.gauge("my.gauge", new AtomicInteger(1));
         Gauge gauge = meterRegistry.get("my.gauge").gauge();
         assertThat(meterRegistry.writeGauge(gauge).isPresent()).isTrue();
     }
 
     @Test
     void writeGaugeShouldDropNanValue() {
-        meterRegistry.gauge("my.gauge", Double.NaN);
+        meterRegistry.gauge("my.gauge", this, _ -> Double.NaN);
         Gauge gauge = meterRegistry.get("my.gauge").gauge();
         assertThat(meterRegistry.writeGauge(gauge).isPresent()).isFalse();
     }
 
     @Test
     void writeGaugeShouldDropInfiniteValues() {
-        meterRegistry.gauge("my.gauge", Double.POSITIVE_INFINITY);
+        meterRegistry.gauge("my.gauge", this, _ -> Double.POSITIVE_INFINITY);
         Gauge gauge = meterRegistry.get("my.gauge").gauge();
         assertThat(meterRegistry.writeGauge(gauge).isPresent()).isFalse();
 
-        meterRegistry.gauge("my.gauge", Double.NEGATIVE_INFINITY);
+        meterRegistry.gauge("my.gauge", this, _ -> Double.NEGATIVE_INFINITY);
         gauge = meterRegistry.get("my.gauge").gauge();
         assertThat(meterRegistry.writeGauge(gauge).isPresent()).isFalse();
     }
@@ -135,19 +136,19 @@ class AppOpticsMeterRegistryTest {
 
     @Test
     void writeFunctionCounter() {
-        FunctionCounter counter = FunctionCounter.builder("myCounter", 1d, Number::doubleValue).register(meterRegistry);
+        FunctionCounter counter = FunctionCounter.builder("myCounter", new AtomicInteger(1), AtomicInteger::doubleValue).register(meterRegistry);
         clock.add(config.step());
         assertThat(meterRegistry.writeFunctionCounter(counter).isPresent()).isTrue();
     }
 
     @Test
     void writeFunctionCounterShouldDropInfiniteValues() {
-        FunctionCounter counter = FunctionCounter.builder("myCounter", Double.POSITIVE_INFINITY, Number::doubleValue)
+        FunctionCounter counter = FunctionCounter.builder("myCounter", this, _ -> Double.POSITIVE_INFINITY)
             .register(meterRegistry);
         clock.add(config.step());
         assertThat(meterRegistry.writeFunctionCounter(counter).isPresent()).isFalse();
 
-        counter = FunctionCounter.builder("myCounter", Double.NEGATIVE_INFINITY, Number::doubleValue)
+        counter = FunctionCounter.builder("myCounter", this, _ -> Double.NEGATIVE_INFINITY)
             .register(meterRegistry);
         clock.add(config.step());
         assertThat(meterRegistry.writeFunctionCounter(counter).isPresent()).isFalse();
