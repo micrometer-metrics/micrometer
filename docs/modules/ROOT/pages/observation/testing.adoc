@@ -6,11 +6,11 @@ Micrometer Observation comes with the `micrometer-observation-test` module, whic
 [[micrometer-observation-installing]]
 == Installing
 
-It is recommended to use the BOM provided by Micrometer (or your framework if any), you can see how to configure it xref:../installing.adoc[here]. The examples below assume you are using a BOM.
+It is recommended to use the BOM provided by Micrometer (or your framework if any), you can see how to configure it xref:installing.adoc[here]. The examples below assume you are using a BOM.
 
 === Gradle
 
-After the BOM is xref:../installing.adoc[configured], add the following dependency:
+After the BOM is xref:installing.adoc[configured], add the following dependency:
 
 [source,groovy]
 -----
@@ -21,7 +21,7 @@ NOTE: The version is not needed for this dependency since it is defined by the B
 
 === Maven
 
-After the BOM is xref:../installing.adoc[configured], add the following dependency:
+After the BOM is xref:installing.adoc[configured], add the following dependency:
 
 [source,xml]
 -----
@@ -58,12 +58,13 @@ If you use `TestObservationRegistry`, an `ObservationHandler` called `Observatio
 
 If `ObservationValidator` detects such an issue, it will throw an `InvalidObservationException` which contains a validation message (explains why the `Observation` is invalid), the original `Observation.Context` and a history with the relevant stacktraces of the calls that were made on the `Observation`. These should help you to troubleshoot what went wrong with the instrumentation. The `toString()` method of the `InvalidObservationException` gives you the error message and a textual summary of the history, something like this:
 
-```
+[source]
+----
 io.micrometer.observation.tck.InvalidObservationException: Invalid error signal: Observation has already been stopped
 START: app//io.micrometer.observation.tck.ObservationValidatorTests.errorAfterStopShouldBeInvalid(ObservationValidatorTests.java:98)
 STOP: app//io.micrometer.observation.tck.ObservationValidatorTests.errorAfterStopShouldBeInvalid(ObservationValidatorTests.java:99)
 ERROR: app//io.micrometer.observation.tck.ObservationValidatorTests.errorAfterStopShouldBeInvalid(ObservationValidatorTests.java:100)
-```
+----
 
 Based on this, it seems that `error` (in `ObservationValidatorTests.java`, line `#100`) was called after `stop` (in `ObservationValidatorTests.java`, line `#99`) which is an invalid scenario. If you view the error in an IDE, the locations (i.e.: `ObservationValidatorTests.java:98`) should be "links" and clicking them should make the IDE jump to that line.
 

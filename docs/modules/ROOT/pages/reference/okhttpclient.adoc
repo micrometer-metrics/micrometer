@@ -6,7 +6,7 @@ Micrometer supports https://square.github.io/okhttp/[OkHttp Client] instrumentat
 [[okhttpclient-observation]]
 == OkHttpClient Observation
 
-Below you can find an example of how to instrument OkHttp Client with xref:../observation.adoc[Micrometer Observation]. That means that depending on your Observation Handler configuration you instrument once, and can have multiple benefits out of it (e.g. metrics, distributed tracing).
+Below you can find an example of how to instrument OkHttp Client with xref:observation.adoc[Micrometer Observation]. That means that depending on your Observation Handler configuration you instrument once, and can have multiple benefits out of it (e.g. metrics, distributed tracing).
 
 [source,java,subs=+attributes]
 -----
