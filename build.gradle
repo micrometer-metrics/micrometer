@@ -57,12 +57,13 @@ apply plugin: 'com.netflix.nebula.release'
 release.defaultVersionStrategy = nebula.plugin.release.git.opinion.Strategies.SNAPSHOT
 
 apply plugin: 'io.github.gradle-nexus.publish-plugin'
-apply plugin: 'com.netflix.nebula.info'
-apply plugin: 'com.netflix.nebula.project'
 
 allprojects {
     group = 'io.micrometer'
     ext.'release.stage' = releaseStage ?: 'SNAPSHOT'
+
+    apply plugin: 'com.netflix.nebula.info'
+    apply plugin: 'com.netflix.nebula.project'
 
     afterEvaluate { project -> println "I'm configuring $project.name with version $project.version" }
 }
@@ -376,8 +377,6 @@ subprojects {
         apply plugin: 'com.netflix.nebula.maven-apache-license'
         apply plugin: 'com.netflix.nebula.publish-verification'
         apply plugin: 'com.netflix.nebula.contacts'
-        apply plugin: 'com.netflix.nebula.info'
-        apply plugin: 'com.netflix.nebula.project'
 
         if (project.name != 'micrometer-bom') {
             apply plugin: 'biz.aQute.bnd.builder'
