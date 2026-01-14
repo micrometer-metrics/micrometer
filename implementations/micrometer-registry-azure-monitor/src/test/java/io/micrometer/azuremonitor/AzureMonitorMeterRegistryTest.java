@@ -113,7 +113,7 @@ class AzureMonitorMeterRegistryTest {
     @Test
     void trackFunctionTimer() {
         FunctionTimer functionTimer = FunctionTimer
-            .builder("my.function.timer", 1d, Number::longValue, Number::doubleValue, TimeUnit.MILLISECONDS)
+            .builder("my.function.timer", this, _ -> 1, _ -> 1d, TimeUnit.MILLISECONDS)
             .register(registry);
         clock.add(config.step());
         assertThat(registry.trackFunctionTimer(functionTimer)).hasSize(1);
@@ -122,7 +122,7 @@ class AzureMonitorMeterRegistryTest {
     @Test
     void trackFunctionTimerWhenCountIsZeroShouldReturnEmpty() {
         FunctionTimer functionTimer = FunctionTimer
-            .builder("my.function.timer", 0d, Number::longValue, Number::doubleValue, TimeUnit.MILLISECONDS)
+            .builder("my.function.timer", this, _ -> 0, _ -> 0, TimeUnit.MILLISECONDS)
             .register(registry);
         clock.add(config.step());
         assertThat(registry.trackFunctionTimer(functionTimer)).isEmpty();

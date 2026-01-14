@@ -43,25 +43,25 @@ class InfluxMeterRegistryTest {
 
     @Test
     void writeGauge() {
-        meterRegistry.gauge("my.gauge", 1d);
+        meterRegistry.gauge("my.gauge", this, _ -> 1d);
         Gauge gauge = meterRegistry.get("my.gauge").gauge();
         assertThat(meterRegistry.writeGauge(gauge.getId(), 1d)).hasSize(1);
     }
 
     @Test
     void writeGaugeShouldDropNanValue() {
-        meterRegistry.gauge("my.gauge", Double.NaN);
+        meterRegistry.gauge("my.gauge", this, _ -> Double.NaN);
         Gauge gauge = meterRegistry.get("my.gauge").gauge();
         assertThat(meterRegistry.writeGauge(gauge.getId(), Double.NaN)).isEmpty();
     }
 
     @Test
     void writeGaugeShouldDropInfiniteValues() {
-        meterRegistry.gauge("my.gauge", Double.POSITIVE_INFINITY);
+        meterRegistry.gauge("my.gauge", this, _ -> Double.POSITIVE_INFINITY);
         Gauge gauge = meterRegistry.get("my.gauge").gauge();
         assertThat(meterRegistry.writeGauge(gauge.getId(), Double.POSITIVE_INFINITY)).isEmpty();
 
-        meterRegistry.gauge("my.gauge", Double.NEGATIVE_INFINITY);
+        meterRegistry.gauge("my.gauge", this, _ -> Double.NEGATIVE_INFINITY);
         gauge = meterRegistry.get("my.gauge").gauge();
         assertThat(meterRegistry.writeGauge(gauge.getId(), Double.NEGATIVE_INFINITY)).isEmpty();
     }
@@ -97,19 +97,19 @@ class InfluxMeterRegistryTest {
 
     @Test
     void writeCounterWithFunction() {
-        FunctionCounter counter = FunctionCounter.builder("myCounter", 1d, Number::doubleValue).register(meterRegistry);
+        FunctionCounter counter = FunctionCounter.builder("myCounter", this, _ -> 1d).register(meterRegistry);
         clock.add(config.step());
         assertThat(meterRegistry.writeCounter(counter.getId(), 1d)).hasSize(1);
     }
 
     @Test
     void writeCounterWithFunctionCounterShouldDropInfiniteValues() {
-        FunctionCounter counter = FunctionCounter.builder("myCounter", Double.POSITIVE_INFINITY, Number::doubleValue)
+        FunctionCounter counter = FunctionCounter.builder("myCounter", this, _ -> Double.POSITIVE_INFINITY)
             .register(meterRegistry);
         clock.add(config.step());
         assertThat(meterRegistry.writeCounter(counter.getId(), Double.POSITIVE_INFINITY)).isEmpty();
 
-        counter = FunctionCounter.builder("myCounter", Double.NEGATIVE_INFINITY, Number::doubleValue)
+        counter = FunctionCounter.builder("myCounter", this, _ -> Double.NEGATIVE_INFINITY)
             .register(meterRegistry);
         clock.add(config.step());
         assertThat(meterRegistry.writeCounter(counter.getId(), Double.NEGATIVE_INFINITY)).isEmpty();
@@ -117,7 +117,7 @@ class InfluxMeterRegistryTest {
 
     @Test
     void writeShouldDropTagWithBlankValue() {
-        meterRegistry.gauge("my.gauge", Tags.of("foo", "bar").and("baz", ""), 1d);
+        meterRegistry.gauge("my.gauge", Tags.of("foo", "bar").and("baz", ""), this, _ -> 1d);
         final Gauge gauge = meterRegistry.get("my.gauge").gauge();
         assertThat(meterRegistry.writeGauge(gauge.getId(), 1d)).hasSize(1)
             .allSatisfy(s -> assertThat(s).contains("foo=bar").doesNotContain("baz"));
@@ -161,7 +161,7 @@ class InfluxMeterRegistryTest {
     @Test
     void nanFunctionTimerShouldNotBeWritten() {
         FunctionTimer timer = FunctionTimer
-            .builder("myFunctionTimer", Double.NaN, Number::longValue, Number::doubleValue, TimeUnit.MILLISECONDS)
+            .builder("myFunctionTimer", this, _ -> 1, _ -> Double.NaN, TimeUnit.MILLISECONDS)
             .register(meterRegistry);
         clock.add(config.step());
         assertThat(meterRegistry.writeFunctionTimer(timer)).isEmpty();

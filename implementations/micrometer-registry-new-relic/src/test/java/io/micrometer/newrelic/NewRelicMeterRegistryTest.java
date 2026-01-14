@@ -295,7 +295,7 @@ class NewRelicMeterRegistryTest {
 
     @Test
     void writeCounterWithFunctionCounter() {
-        FunctionCounter counter = FunctionCounter.builder("myCounter", 1d, Number::doubleValue).register(registry);
+        FunctionCounter counter = FunctionCounter.builder("myCounter", this, _ -> 1d).register(registry);
         clock.add(insightsApiConfig.step());
         // test API clientProvider
         writeCounterWithFunctionCounter(counter, getInsightsApiClientProvider(meterNameEventTypeEnabledConfig),
@@ -338,12 +338,12 @@ class NewRelicMeterRegistryTest {
 
     private void writeCounterWithFunctionCounterShouldDropInfiniteValues(
             NewRelicInsightsApiClientProvider clientProvider) {
-        FunctionCounter counter = FunctionCounter.builder("myCounter", Double.POSITIVE_INFINITY, Number::doubleValue)
+        FunctionCounter counter = FunctionCounter.builder("myCounter", this, _ -> Double.POSITIVE_INFINITY)
             .register(registry);
         clock.add(insightsApiConfig.step());
         assertThat(clientProvider.writeFunctionCounter(counter)).isEmpty();
 
-        counter = FunctionCounter.builder("myCounter", Double.NEGATIVE_INFINITY, Number::doubleValue)
+        counter = FunctionCounter.builder("myCounter", this, _ -> Double.NEGATIVE_INFINITY)
             .register(registry);
         clock.add(insightsApiConfig.step());
         assertThat(clientProvider.writeFunctionCounter(counter)).isEmpty();

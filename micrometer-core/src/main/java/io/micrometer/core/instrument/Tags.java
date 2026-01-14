@@ -33,7 +33,7 @@ import static java.util.stream.Collectors.joining;
  * @author Phillip Webb
  * @author Johnny Lim
  */
-public final class Tags implements Iterable<Tag> {
+public final value class Tags implements Iterable<Tag> {
 
     private static final Tag[] EMPTY_TAG_ARRAY = new Tag[0];
 
@@ -130,7 +130,7 @@ public final class Tags implements Iterable<Tag> {
         if (other.length == 0) {
             return this;
         }
-        if (Objects.equals(this, other)) {
+        if (this.equals(other)) {
             return this;
         }
         Tag[] sortedSet = new Tag[this.length + other.length];
@@ -158,6 +158,7 @@ public final class Tags implements Iterable<Tag> {
             sortedIndex++;
         }
         int thisRemaining = this.length - thisIndex;
+        // arraycopy may be slower: https://bugs.openjdk.org/browse/JDK-8251971
         if (thisRemaining > 0) {
             System.arraycopy(this.sortedSet, thisIndex, sortedSet, sortedIndex, thisRemaining);
             sortedIndex += thisRemaining;
@@ -180,7 +181,7 @@ public final class Tags implements Iterable<Tag> {
      * @return a new {@code Tags} instance
      */
     public Tags and(String key, String value) {
-        return and(Tag.of(key, value));
+        return and(Tags.of(key, value));
     }
 
     /**
@@ -216,12 +217,14 @@ public final class Tags implements Iterable<Tag> {
      * @return a new {@code Tags} instance
      */
     public Tags and(@Nullable Iterable<? extends Tag> tags) {
-        if (tags == null || tags == EMPTY || !tags.iterator().hasNext()) {
+        if (tags == null) {
             return this;
         }
-
-        if (this.length == 0) {
+        else if (this.length == 0) {
             return Tags.of(tags);
+        }
+        else if ((tags instanceof Tags otherTags && otherTags.length == 0) || !tags.iterator().hasNext()) {
+            return this;
         }
         return merge(Tags.of(tags));
     }
@@ -285,8 +288,8 @@ public final class Tags implements Iterable<Tag> {
     }
 
     @Override
-    public boolean equals(@Nullable Object obj) {
-        return this == obj || (obj != null && getClass() == obj.getClass() && tagsEqual((Tags) obj));
+    public boolean equals(@Nullable Object other) {
+        return other instanceof Tags otherTags && this.tagsEqual(otherTags);
     }
 
     private boolean tagsEqual(Tags obj) {
@@ -327,20 +330,22 @@ public final class Tags implements Iterable<Tag> {
     }
 
     /**
-     * Return a new {@code Tags} instance containing tags constructed from the specified
+     * Return a {@code Tags} instance containing tags constructed from the specified
      * source tags.
-     * @param tags the tags to add, elements mustn't be null
-     * @return a new {@code Tags} instance
+     * @param tags the tags, elements mustn't be null
+     * @return a {@code Tags} instance containing the given tags
      */
     public static Tags of(@Nullable Iterable<? extends Tag> tags) {
-        if (tags == null || tags == EMPTY || !tags.iterator().hasNext()) {
+        if (tags == null) {
             return Tags.empty();
         }
-        else if (tags instanceof Tags) {
-            return (Tags) tags;
+        else if (tags instanceof Tags tags1) {
+            return tags1;
         }
-        else if (tags instanceof Collection) {
-            Collection<? extends Tag> tagsCollection = (Collection<? extends Tag>) tags;
+        else if (!tags.iterator().hasNext()) {
+            return Tags.empty();
+        }
+        else if (tags instanceof Collection<? extends Tag> tagsCollection) {
             return toTags(tagsCollection.toArray(EMPTY_TAG_ARRAY));
         }
         else {
@@ -356,7 +361,7 @@ public final class Tags implements Iterable<Tag> {
      * @return a new {@code Tags} instance
      */
     public static Tags of(String key, String value) {
-        return new Tags(new Tag[] { Tag.of(key, value) }, 1);
+        return new Tags(new ImmutableTag[] {(ImmutableTag) Tag.of(key, value)}, 1);
     }
 
     /**
@@ -372,9 +377,9 @@ public final class Tags implements Iterable<Tag> {
         if (keyValues.length % 2 == 1) {
             throw new IllegalArgumentException("size must be even, it is a set of key=value pairs");
         }
-        Tag[] tags = new Tag[keyValues.length / 2];
+        ImmutableTag[] tags = new ImmutableTag[keyValues.length / 2];
         for (int i = 0; i < keyValues.length; i += 2) {
-            tags[i / 2] = Tag.of(keyValues[i], keyValues[i + 1]);
+            tags[i / 2] = (ImmutableTag) Tag.of(keyValues[i], keyValues[i + 1]);
         }
         return toTags(tags);
     }

@@ -182,7 +182,7 @@ public interface Meter {
     /**
      * A meter is uniquely identified by its combination of name and tags.
      */
-    class Id {
+    final value class Id {
 
         private final String name;
 
@@ -352,11 +352,8 @@ public interface Meter {
 
         @Override
         public boolean equals(@Nullable Object o) {
-            if (this == o)
-                return true;
-            if (!(o instanceof Id))
+            if (!(o instanceof Id meterId))
                 return false;
-            Meter.Id meterId = (Meter.Id) o;
             return name.equals(meterId.name) && tags.equals(meterId.tags);
         }
 

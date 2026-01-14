@@ -2,7 +2,9 @@ plugins {
     alias(libs.plugins.aspectj) apply false
 }
 
-if (javaLanguageVersion.canCompileOrRun(17)) {
+var skipAspectPlugin = true
+
+if (javaLanguageVersion.canCompileOrRun(17) && !skipAspectPlugin) {
     apply plugin: 'io.freefair.aspectj.post-compile-weaving'
 }
 else {

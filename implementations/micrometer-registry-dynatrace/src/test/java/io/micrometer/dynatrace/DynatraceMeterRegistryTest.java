@@ -68,7 +68,7 @@ class DynatraceMeterRegistryTest {
         when(httpClient.send(isA(HttpSender.Request.class)))
             .thenReturn(new HttpSender.Response(202, "{ \"linesOk\": 3, \"linesInvalid\": 0, \"error\": null }"));
 
-        Double gauge = meterRegistry.gauge("my.gauge", 42d);
+        meterRegistry.gauge("my.gauge", this, _ -> 42d);
         Counter counter = meterRegistry.counter("my.counter");
         counter.increment(12d);
         Timer timer = meterRegistry.timer("my.timer");
@@ -88,7 +88,7 @@ class DynatraceMeterRegistryTest {
             assertThat(lines).hasSize(4)
                 .containsExactly("my.counter,dt.metrics.source=micrometer count,delta=12 " + clock.wallTime(),
                         "my.timer,dt.metrics.source=micrometer gauge,min=12,max=42,sum=108,count=4 " + clock.wallTime(),
-                        "my.gauge,dt.metrics.source=micrometer gauge," + formatDouble(gauge) + " " + clock.wallTime(),
+                        "my.gauge,dt.metrics.source=micrometer gauge," + formatDouble(42d) + " " + clock.wallTime(),
                         "#my.timer gauge dt.meta.unit=ms");
         }));
     }

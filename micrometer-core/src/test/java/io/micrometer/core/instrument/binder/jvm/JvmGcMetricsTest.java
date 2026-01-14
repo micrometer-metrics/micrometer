@@ -25,6 +25,7 @@ import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.binder.jvm.JvmGcMetrics.GcMetricsNotificationListener;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledForJreRange;
 import org.junit.jupiter.api.condition.EnabledIf;
@@ -63,6 +64,7 @@ class JvmGcMetricsTest {
     JvmGcMetrics binder = new JvmGcMetrics(DEFAULT_TAGS);
 
     @Test
+    @Disabled("ArchUnit doesn't work with Java 26 yet")
     void noJvmImplementationSpecificApiSignatures() {
         JavaClasses importedClasses = new ClassFileImporter()
             .importPackages("io.micrometer.core.instrument.binder.jvm");

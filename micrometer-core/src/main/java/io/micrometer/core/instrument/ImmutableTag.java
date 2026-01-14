@@ -26,7 +26,7 @@ import static java.util.Objects.requireNonNull;
  *
  * @author Jon Schneider
  */
-public class ImmutableTag implements Tag {
+public final value class ImmutableTag implements Tag {
 
     private final String key;
 
@@ -51,12 +51,9 @@ public class ImmutableTag implements Tag {
 
     @Override
     public boolean equals(@Nullable Object o) {
-        if (this == o)
-            return true;
-        if (!(o instanceof ImmutableTag))
+        if (!(o instanceof ImmutableTag that))
             return false;
-        Tag that = (Tag) o;
-        return Objects.equals(key, that.getKey()) && Objects.equals(value, that.getValue());
+        return key.equals(that.getKey()) && value.equals(that.getValue());
     }
 
     @Override
