@@ -47,14 +47,14 @@ class ObservationValidator implements ObservationHandler<Context> {
 
     private final Predicate<Context> supportsContextPredicate;
 
-    private final Map<String, Set<String>> lowCardinalityKeys;
+    private final Map<String, Set<String>> lowCardinalityKeysByObservationName;
 
     private final Set<Capability> capabilities;
 
     ObservationValidator(Set<Capability> capabilities) {
         this.consumer = ObservationValidator::throwInvalidObservationException;
         this.supportsContextPredicate = context -> !(context instanceof NullContext);
-        this.lowCardinalityKeys = new HashMap<>();
+        this.lowCardinalityKeysByObservationName = new HashMap<>();
         this.capabilities = capabilities;
     }
 
@@ -147,9 +147,9 @@ class ObservationValidator implements ObservationHandler<Context> {
     }
 
     private void checkIfObservationsWithTheSameNameHaveTheSameSetOfLowCardinalityKeys(Context context) {
-        if (lowCardinalityKeys.containsKey(context.getName())) {
-            Set<String> existingKeys = lowCardinalityKeys.get(context.getName());
-            Set<String> currentKeys = getLowCardinalityKeys(context);
+        Set<String> existingKeys = lowCardinalityKeysByObservationName.get(context.getName());
+        Set<String> currentKeys = getLowCardinalityKeys(context);
+        if (existingKeys != null) {
             if (!existingKeys.equals(currentKeys)) {
                 String message = "Metrics backends may require that all observations with the same name have the same"
                         + " set of low cardinality keys. There is already an existing observation named '"
@@ -160,7 +160,7 @@ class ObservationValidator implements ObservationHandler<Context> {
             }
         }
         else {
-            lowCardinalityKeys.put(Objects.requireNonNull(context.getName()), getLowCardinalityKeys(context));
+            lowCardinalityKeysByObservationName.put(Objects.requireNonNull(context.getName()), currentKeys);
         }
     }
 
