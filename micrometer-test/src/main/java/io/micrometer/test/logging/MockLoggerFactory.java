@@ -13,7 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.common.util.internal.logging;
+package io.micrometer.test.logging;
+
+import io.micrometer.common.util.internal.logging.InternalLogger;
+import io.micrometer.common.util.internal.logging.InternalLoggerFactory;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -29,9 +32,7 @@ import java.util.function.Supplier;
  * previously.
  *
  * @author Jonatan Ivanov
- * @deprecated use {@link io.micrometer.test.logging.MockLoggerFactory} instead.
  */
-@Deprecated
 public class MockLoggerFactory extends InternalLoggerFactory {
 
     private final ConcurrentMap<String, MockLogger> loggers = new ConcurrentHashMap<>();

@@ -13,8 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.common.util.internal.logging;
+package io.micrometer.test.logging;
 
+import io.micrometer.common.util.internal.logging.InternalLogLevel;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Objects;
@@ -23,9 +24,7 @@ import java.util.Objects;
  * Simple POJO that represents a log event for test verification purposes.
  *
  * @author Jonatan Ivanov
- * @deprecated Use {@link io.micrometer.test.logging.LogEvent} instead.
  */
-@Deprecated
 public class LogEvent {
 
     private final InternalLogLevel level;

@@ -16,15 +16,15 @@
 package io.micrometer.dynatrace.v1;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.micrometer.common.util.internal.logging.LogEvent;
-import io.micrometer.common.util.internal.logging.MockLogger;
-import io.micrometer.common.util.internal.logging.MockLoggerFactory;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.config.validate.ValidationException;
 import io.micrometer.core.ipc.http.HttpSender;
 import io.micrometer.dynatrace.DynatraceApiVersion;
 import io.micrometer.dynatrace.DynatraceConfig;
 import io.micrometer.dynatrace.DynatraceMeterRegistry;
+import io.micrometer.test.logging.LogEvent;
+import io.micrometer.test.logging.MockLogger;
+import io.micrometer.test.logging.MockLoggerFactory;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;

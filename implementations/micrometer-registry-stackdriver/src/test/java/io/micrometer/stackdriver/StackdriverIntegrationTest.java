@@ -16,11 +16,11 @@
 package io.micrometer.stackdriver;
 
 import io.micrometer.common.util.internal.logging.InternalLogLevel;
-import io.micrometer.common.util.internal.logging.MockLogger;
-import io.micrometer.common.util.internal.logging.MockLoggerFactory;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.DistributionSummary;
 import io.micrometer.core.instrument.Timer;
+import io.micrometer.test.logging.MockLogger;
+import io.micrometer.test.logging.MockLoggerFactory;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;

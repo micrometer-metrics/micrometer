@@ -13,8 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.common.util.internal.logging;
+package io.micrometer.test.logging;
 
+import io.micrometer.common.util.internal.logging.*;
 import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -33,9 +34,7 @@ import static io.micrometer.common.util.internal.logging.InternalLogLevel.*;
  * {@link InternalLoggerFactory} to get one.
  *
  * @author Jonatan Ivanov
- * @deprecated use {@link io.micrometer.test.logging.MockLogger} instead.
  */
-@Deprecated
 public class MockLogger implements InternalLogger {
 
     private final String name;
