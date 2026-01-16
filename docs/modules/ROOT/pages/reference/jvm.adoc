@@ -23,12 +23,12 @@ Micrometer also provides a meter binder for `ExecutorService`. You can instrumen
 
 [source, java]
 ----
-new ExecutorServiceMetrics(executor, executorServiceName, tags).bindTo(registry); <1>
+ExecutorService monitoredExecutorService = ExecutorServiceMetrics.monitor(registry, executorService, executorServiceName, tags) <1>
 // or
-Executor monitoredExecutor = ExecutorServiceMetrics.monitor(registry, executor, executorServiceName, tags) <2>
+new ExecutorServiceMetrics(executor, executorServiceName, tags).bindTo(registry); <2>
 ----
-<1> Provides gauges for executor activity, including active threads, idle threads, and queued tasks.
-<2> Provides the same gauges and also records timers related to task execution.
+<1> Provides gauges for executor activity, timers for tasks are also included.
+<2> Provides gauges for executor activity.
 
 Metrics created from the binder vary based on the type of `ExecutorService`.
 
