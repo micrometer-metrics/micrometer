@@ -23,6 +23,7 @@ import org.jspecify.annotations.Nullable;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public class TelegrafStatsdLineBuilder extends FlavorStatsdLineBuilder {
@@ -38,6 +39,10 @@ public class TelegrafStatsdLineBuilder extends FlavorStatsdLineBuilder {
     private volatile String tagsNoStat;
 
     private final ConcurrentMap<Statistic, String> tags = new ConcurrentHashMap<>();
+
+    private static final Pattern SANITIZE_KEY_PATTERN = Pattern.compile("[\\s,:=]");
+
+    private static final Pattern SANITIZE_PATTERN = Pattern.compile("[\\s,:]");
 
     public TelegrafStatsdLineBuilder(Meter.Id id, MeterRegistry.Config config) {
         super(id, config);
@@ -73,7 +78,7 @@ public class TelegrafStatsdLineBuilder extends FlavorStatsdLineBuilder {
     private @Nullable String createConventionTags(NamingConvention namingConvention) {
         return id.getTagsAsIterable().iterator().hasNext() ? id.getConventionTags(namingConvention)
             .stream()
-            .map(t -> telegrafEscape(t.getKey()) + "=" + telegrafEscape(t.getValue()))
+            .map(t -> telegrafEscapeKey(t.getKey()) + "=" + telegrafEscape(t.getValue()))
             .collect(Collectors.joining(",")) : null;
     }
 
@@ -107,7 +112,13 @@ public class TelegrafStatsdLineBuilder extends FlavorStatsdLineBuilder {
     // backslash escape =
     // trying to escape spaces and comma drops everything after that
     private String telegrafEscape(String value) {
-        return value.replaceAll("[\\s,:]", "_");
+        return SANITIZE_PATTERN.matcher(value).replaceAll("_");
+    }
+
+    // Sanitize the equals sign (=) in tag keys to prevent Telegraf from misinterpreting
+    // it as the key-value separator.
+    private String telegrafEscapeKey(String key) {
+        return SANITIZE_KEY_PATTERN.matcher(key).replaceAll("_");
     }
 
 }
