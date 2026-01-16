@@ -16,6 +16,7 @@
 package io.micrometer.statsd.internal;
 
 import com.github.dockerjava.api.model.*;
+import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.statsd.StatsdConfig;
@@ -76,6 +77,7 @@ class TelegrafStatsdLineBuilderIntegrationTest {
         .dependsOn(influxDB)
         .waitingFor(Wait.forLogMessage(".*Loaded inputs: statsd.*", 1));
 
+    @Issue("#6513")
     @Test
     void shouldSanitizeEqualsSignInTagKeys() throws InterruptedException {
         StatsdMeterRegistry registry = getStatsdMeterRegistry(5000);
@@ -88,8 +90,8 @@ class TelegrafStatsdLineBuilderIntegrationTest {
                 String queryResult = queryInfluxDB("SELECT * FROM \"metric\"");
 
                 assertThat(queryResult).contains("\"name\":\"metric\"");
-                assertThat(queryResult).contains("\"this\"");
-                assertThat(queryResult).contains("\"is=the=tag=test\"");
+                assertThat(queryResult).contains("\"this_is_the\"");
+                assertThat(queryResult).contains("\"tag=test\"");
             });
         }
         finally {
