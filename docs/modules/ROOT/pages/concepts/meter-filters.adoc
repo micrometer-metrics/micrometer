@@ -105,7 +105,7 @@ The `id` parameter is the only dynamic input that changes over the lifecycle of 
 Depending on a value that will be fixed at runtime such as an instance ID or hostname is fine because it does not change after application start-up.
 Use cases where dynamic behavior is desired, such as defining tags based on the context of a request etc., should be implemented in the instrumentation itself rather than in a `MeterFilter`.
 For example, see `MongoMetricsCommandListener` and the `MongoCommandTagsProvider` it takes in a constructor argument as well as the default implementation `DefaultMongoCommandTagsProvider`.
-See also xref:../observation/components.adoc#micrometer-observation-predicates-filters[ObservationFilter] which allows dynamic implementations.
+See also xref:observation/components.adoc#micrometer-observation-predicates-filters[ObservationFilter] which allows dynamic implementations.
 ====
 
 === Convenience Methods

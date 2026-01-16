@@ -10,13 +10,13 @@ The InfluxMeterRegistry supports the 1.x InfluxDB API as well as the v2 API.
 
 Micrometer supports shipping metrics to InfluxDB directly or through Telegraf through the StatsD registry.
 
-It is recommended to use the BOM provided by Micrometer (or your framework if any), you can see how to configure it xref:../installing.adoc[here]. The examples below assume you are using a BOM.
+It is recommended to use the BOM provided by Micrometer (or your framework if any), you can see how to configure it xref:installing.adoc[here]. The examples below assume you are using a BOM.
 
 === Direct to InfluxDB
 
 ==== Gradle
 
-After the BOM is xref:../installing.adoc[configured], add the following dependency:
+After the BOM is xref:installing.adoc[configured], add the following dependency:
 
 [source,groovy]
 ----
@@ -27,7 +27,7 @@ NOTE: The version is not needed for this dependency since it is defined by the B
 
 ==== Maven
 
-After the BOM is xref:../installing.adoc[configured], add the following dependency:
+After the BOM is xref:installing.adoc[configured], add the following dependency:
 
 [source,xml]
 ----
@@ -124,7 +124,7 @@ Telegraf is a StatsD agent that expects a modified flavor of the StatsD line pro
 
 ==== Gradle
 
-After the BOM is xref:../installing.adoc[configured], add the following dependency:
+After the BOM is xref:installing.adoc[configured], add the following dependency:
 
 [source,groovy]
 ----
@@ -135,7 +135,7 @@ NOTE: The version is not needed for this dependency since it is defined by the B
 
 ==== Maven
 
-After the BOM is xref:../installing.adoc[configured], add the following dependency:
+After the BOM is xref:installing.adoc[configured], add the following dependency:
 
 [source,xml]
 ----

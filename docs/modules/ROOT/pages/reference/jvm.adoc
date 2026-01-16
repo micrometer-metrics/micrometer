@@ -55,7 +55,7 @@ To use the following `ExecutorService` instances, `--add-opens java.base/java.ut
 [[meter-conventions]]
 == Meter Conventions
 
-See also the general xref:../concepts/meter-convention.adoc[Meter Conventions] documentation.
+See also the general xref:concepts/meter-convention.adoc[Meter Conventions] documentation.
 
 The following `MeterBinder` implementations have a constructor to customize the convention used for some or all of the meters they produce.
 This can be used as an alternative to customizing the Meter names and tags with a `MeterFilter`.
