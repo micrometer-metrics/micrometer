@@ -63,7 +63,7 @@ class TelegrafStatsdLineBuilderIntegrationTest {
         .waitingFor(Wait.forHttp("/ping").forStatusCode(204));
 
     @Container
-    static GenericContainer<?> telegraf = new GenericContainer<>(DockerImageName.parse("telegraf:latest"))
+    static GenericContainer<?> telegraf = new GenericContainer<>(DockerImageName.parse("telegraf:1.30"))
         .withNetwork(network)
         .withCreateContainerCmdModifier(cmd -> {
             HostConfig hostConfig = cmd.getHostConfig() == null ? new HostConfig() : cmd.getHostConfig();
