@@ -22,7 +22,7 @@ import io.micrometer.core.instrument.Counter;
 import io.micrometer.statsd.StatsdConfig;
 import io.micrometer.statsd.StatsdFlavor;
 import io.micrometer.statsd.StatsdMeterRegistry;
-import org.jetbrains.annotations.NotNull;
+import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -50,32 +50,35 @@ import static org.awaitility.Awaitility.await;
 @Testcontainers
 class TelegrafStatsdLineBuilderIntegrationTest {
 
-    static private final Network network = Network.newNetwork();
-    static private final ExposedPort telegrafExposedPort = new ExposedPort(8125, InternetProtocol.UDP);
-    static private final String influxDbName = "metrics_db";
-    static private final Integer influxDbPort = 8086;
+    private static final Network network = Network.newNetwork();
+
+    private static final ExposedPort telegrafExposedPort = new ExposedPort(8125, InternetProtocol.UDP);
+
+    private static final String influxDbName = "metrics_db";
+
+    private static final Integer influxDbPort = 8086;
 
     @Container
     static GenericContainer<?> influxDB = new GenericContainer<>(DockerImageName.parse("influxdb:1.8"))
-        .withNetwork(network)
-        .withNetworkAliases("influxdb")
-        .withExposedPorts(influxDbPort)
-        .withEnv("INFLUXDB_DB", influxDbName)
-        .waitingFor(Wait.forHttp("/ping").forStatusCode(204));
+            .withNetwork(network)
+            .withNetworkAliases("influxdb")
+            .withExposedPorts(influxDbPort)
+            .withEnv("INFLUXDB_DB", influxDbName)
+            .waitingFor(Wait.forHttp("/ping").forStatusCode(204));
 
     @Container
     static GenericContainer<?> telegraf = new GenericContainer<>(DockerImageName.parse("telegraf:1.30"))
-        .withNetwork(network)
-        .withCreateContainerCmdModifier(cmd -> {
-            HostConfig hostConfig = cmd.getHostConfig() == null ? new HostConfig() : cmd.getHostConfig();
-            PortBinding portBinding = new PortBinding(Ports.Binding.bindPort(0), telegrafExposedPort);
-            cmd.withHostConfig(hostConfig.withPortBindings(portBinding));
-            cmd.withExposedPorts(telegrafExposedPort);
-        })
-        .withCopyFileToContainer(MountableFile.forClasspathResource("telegraf-test.conf"),
-                "/etc/telegraf/telegraf.conf")
-        .dependsOn(influxDB)
-        .waitingFor(Wait.forLogMessage(".*Loaded inputs: statsd.*", 1));
+            .withNetwork(network)
+            .withCreateContainerCmdModifier(cmd -> {
+                HostConfig hostConfig = cmd.getHostConfig() == null ? new HostConfig() : cmd.getHostConfig();
+                PortBinding portBinding = new PortBinding(Ports.Binding.bindPort(0), telegrafExposedPort);
+                cmd.withHostConfig(hostConfig.withPortBindings(portBinding));
+                cmd.withExposedPorts(telegrafExposedPort);
+            })
+            .withCopyFileToContainer(MountableFile.forClasspathResource("telegraf-test.conf"),
+                    "/etc/telegraf/telegraf.conf")
+            .dependsOn(influxDB)
+            .waitingFor(Wait.forLogMessage(".*Loaded inputs: statsd.*", 1));
 
     @Issue("#6513")
     @Test
@@ -93,8 +96,7 @@ class TelegrafStatsdLineBuilderIntegrationTest {
                 assertThat(queryResult).contains("\"this_is_the\"");
                 assertThat(queryResult).contains("\"tag=test\"");
             });
-        }
-        finally {
+        } finally {
             registry.close();
         }
     }
@@ -110,33 +112,34 @@ class TelegrafStatsdLineBuilderIntegrationTest {
     private StatsdConfig getStatsdConfig() {
         return new StatsdConfig() {
             @Override
-            @Nullable public String get(@NotNull String key) {
+            @Nullable
+            public String get(@NonNull String key) {
                 return null;
             }
 
             @Override
-            public @NotNull StatsdFlavor flavor() {
+            public @NonNull StatsdFlavor flavor() {
                 return StatsdFlavor.TELEGRAF;
             }
 
             @Override
-            public @NotNull String host() {
+            public @NonNull String host() {
                 return telegraf.getHost();
             }
 
             @Override
             public int port() {
                 Ports.Binding[] bindings = telegraf.getContainerInfo()
-                    .getNetworkSettings()
-                    .getPorts()
-                    .getBindings()
-                    .get(telegrafExposedPort);
+                        .getNetworkSettings()
+                        .getPorts()
+                        .getBindings()
+                        .get(telegrafExposedPort);
                 Ports.Binding binding = Objects.requireNonNull(bindings)[0];
                 return Integer.parseInt(binding.getHostPortSpec());
             }
 
             @Override
-            public @NotNull Duration step() {
+            public @NonNull Duration step() {
                 return Duration.ofSeconds(1);
             }
         };
@@ -156,8 +159,7 @@ class TelegrafStatsdLineBuilderIntegrationTest {
                     new InputStreamReader(con.getInputStream(), StandardCharsets.UTF_8))) {
                 return reader.lines().collect(java.util.stream.Collectors.joining());
             }
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             return "";
         }
     }
