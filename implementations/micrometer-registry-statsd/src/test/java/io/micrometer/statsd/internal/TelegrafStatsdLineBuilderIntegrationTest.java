@@ -60,25 +60,25 @@ class TelegrafStatsdLineBuilderIntegrationTest {
 
     @Container
     static GenericContainer<?> influxDB = new GenericContainer<>(DockerImageName.parse("influxdb:1.8"))
-            .withNetwork(network)
-            .withNetworkAliases("influxdb")
-            .withExposedPorts(influxDbPort)
-            .withEnv("INFLUXDB_DB", influxDbName)
-            .waitingFor(Wait.forHttp("/ping").forStatusCode(204));
+        .withNetwork(network)
+        .withNetworkAliases("influxdb")
+        .withExposedPorts(influxDbPort)
+        .withEnv("INFLUXDB_DB", influxDbName)
+        .waitingFor(Wait.forHttp("/ping").forStatusCode(204));
 
     @Container
     static GenericContainer<?> telegraf = new GenericContainer<>(DockerImageName.parse("telegraf:1.30"))
-            .withNetwork(network)
-            .withCreateContainerCmdModifier(cmd -> {
-                HostConfig hostConfig = cmd.getHostConfig() == null ? new HostConfig() : cmd.getHostConfig();
-                PortBinding portBinding = new PortBinding(Ports.Binding.bindPort(0), telegrafExposedPort);
-                cmd.withHostConfig(hostConfig.withPortBindings(portBinding));
-                cmd.withExposedPorts(telegrafExposedPort);
-            })
-            .withCopyFileToContainer(MountableFile.forClasspathResource("telegraf-test.conf"),
-                    "/etc/telegraf/telegraf.conf")
-            .dependsOn(influxDB)
-            .waitingFor(Wait.forLogMessage(".*Loaded inputs: statsd.*", 1));
+        .withNetwork(network)
+        .withCreateContainerCmdModifier(cmd -> {
+            HostConfig hostConfig = cmd.getHostConfig() == null ? new HostConfig() : cmd.getHostConfig();
+            PortBinding portBinding = new PortBinding(Ports.Binding.bindPort(0), telegrafExposedPort);
+            cmd.withHostConfig(hostConfig.withPortBindings(portBinding));
+            cmd.withExposedPorts(telegrafExposedPort);
+        })
+        .withCopyFileToContainer(MountableFile.forClasspathResource("telegraf-test.conf"),
+                "/etc/telegraf/telegraf.conf")
+        .dependsOn(influxDB)
+        .waitingFor(Wait.forLogMessage(".*Loaded inputs: statsd.*", 1));
 
     @Issue("#6513")
     @Test
@@ -96,7 +96,8 @@ class TelegrafStatsdLineBuilderIntegrationTest {
                 assertThat(queryResult).contains("\"this_is_the\"");
                 assertThat(queryResult).contains("\"tag=test\"");
             });
-        } finally {
+        }
+        finally {
             registry.close();
         }
     }
@@ -112,8 +113,7 @@ class TelegrafStatsdLineBuilderIntegrationTest {
     private StatsdConfig getStatsdConfig() {
         return new StatsdConfig() {
             @Override
-            @Nullable
-            public String get(@NonNull String key) {
+            @Nullable public String get(@NonNull String key) {
                 return null;
             }
 
@@ -130,10 +130,10 @@ class TelegrafStatsdLineBuilderIntegrationTest {
             @Override
             public int port() {
                 Ports.Binding[] bindings = telegraf.getContainerInfo()
-                        .getNetworkSettings()
-                        .getPorts()
-                        .getBindings()
-                        .get(telegrafExposedPort);
+                    .getNetworkSettings()
+                    .getPorts()
+                    .getBindings()
+                    .get(telegrafExposedPort);
                 Ports.Binding binding = Objects.requireNonNull(bindings)[0];
                 return Integer.parseInt(binding.getHostPortSpec());
             }
@@ -159,7 +159,8 @@ class TelegrafStatsdLineBuilderIntegrationTest {
                     new InputStreamReader(con.getInputStream(), StandardCharsets.UTF_8))) {
                 return reader.lines().collect(java.util.stream.Collectors.joining());
             }
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             return "";
         }
     }
