@@ -61,7 +61,7 @@ import org.jspecify.annotations.Nullable;
  *
  * Holds the results of formatting done by {@link MessageFormatter}.
  */
-final class FormattingTuple {
+public final class FormattingTuple {
 
     private final @Nullable String message;
 

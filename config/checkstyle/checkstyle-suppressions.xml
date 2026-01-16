@@ -16,6 +16,7 @@
 	<suppress checks="JavadocPackageCheck" files="concurrency-tests[\\/].+" />
 	<suppress checks="JavadocPackageCheck" files="samples[\\/].+" />
 	<suppress checks="JavadocPackageCheck" files="[\\/]src[\\/]test[\\/].*" />
+    <suppress checks="JavadocPackageCheck" files="micrometer-test[\\/]src[\\/]main[\\/]java[\\/]io[\\/]micrometer[\\/]common.*" />
 
 	<suppress id="SLF4JIllegalImportCheck" files="implementations[\\/].+" />
 	<suppress id="SLF4JIllegalImportCheck" files="benchmarks[\\/].+" />

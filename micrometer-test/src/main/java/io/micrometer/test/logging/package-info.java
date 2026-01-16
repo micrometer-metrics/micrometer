@@ -14,6 +14,6 @@
  * limitations under the License.
  */
 @NullMarked
-package io.micrometer.common.util.internal.logging;
+package io.micrometer.test.logging;
 
 import org.jspecify.annotations.NullMarked;

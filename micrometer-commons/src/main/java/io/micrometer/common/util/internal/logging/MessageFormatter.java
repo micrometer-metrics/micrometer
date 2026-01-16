@@ -123,7 +123,7 @@ import java.util.Set;
  * See also {@link #format(String, Object)}, {@link #format(String, Object, Object)} and
  * {@link #arrayFormat(String, Object[])} methods for more details.
  */
-final class MessageFormatter {
+public final class MessageFormatter {
 
     private static final String DELIM_STR = "{}";
 
@@ -144,7 +144,7 @@ final class MessageFormatter {
      * @param arg The argument to be substituted in place of the formatting anchor
      * @return The formatted message
      */
-    static FormattingTuple format(String messagePattern, @Nullable Object arg) {
+    public static FormattingTuple format(String messagePattern, @Nullable Object arg) {
         return arrayFormat(messagePattern, new Object[] { arg });
     }
 
@@ -163,7 +163,7 @@ final class MessageFormatter {
      * @param argB The argument to be substituted in place of the second formatting anchor
      * @return The formatted message
      */
-    static FormattingTuple format(final String messagePattern, @Nullable Object argA, @Nullable Object argB) {
+    public static FormattingTuple format(final String messagePattern, @Nullable Object argA, @Nullable Object argB) {
         return arrayFormat(messagePattern, new Object[] { argA, argB });
     }
 
@@ -176,7 +176,7 @@ final class MessageFormatter {
      * anchors
      * @return The formatted message
      */
-    static FormattingTuple arrayFormat(final String messagePattern, final @Nullable Object[] argArray) {
+    public static FormattingTuple arrayFormat(final String messagePattern, final @Nullable Object[] argArray) {
         if (argArray == null || argArray.length == 0) {
             return new FormattingTuple(messagePattern, null);
         }
