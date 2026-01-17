@@ -95,8 +95,7 @@ class TelegrafStatsdLineBuilderIntegrationTest {
         StatsdMeterRegistry registry = getStatsdMeterRegistry(5000);
 
         try {
-            Counter counter = Counter.builder("metric").tag("this=is=the", "tag=test").register(registry);
-            counter.increment();
+            Counter.builder("metric").tag("this=is=the", "tag=test").register(registry).increment();
 
             await().atMost(60, TimeUnit.SECONDS).pollInterval(Duration.ofSeconds(1)).untilAsserted(() -> {
                 String fluxQuery = String.format(
