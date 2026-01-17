@@ -54,31 +54,40 @@ class TelegrafStatsdLineBuilderIntegrationTest {
 
     private static final ExposedPort telegrafExposedPort = new ExposedPort(8125, InternetProtocol.UDP);
 
-    private static final String influxDbName = "metrics_db";
+    private static final String influxDbOrg = "my-org";
+
+    private static final String influxDbBucket = "metrics_db";
+
+    private static final String influxDbToken = "my-test-token";
 
     private static final Integer influxDbPort = 8086;
 
     @Container
-    static GenericContainer<?> influxDB = new GenericContainer<>(DockerImageName.parse("influxdb:1.8"))
-        .withNetwork(network)
-        .withNetworkAliases("influxdb")
-        .withExposedPorts(influxDbPort)
-        .withEnv("INFLUXDB_DB", influxDbName)
-        .waitingFor(Wait.forHttp("/ping").forStatusCode(204));
+    static GenericContainer<?> influxDB = new GenericContainer<>(DockerImageName.parse("influxdb:latest"))
+            .withNetwork(network)
+            .withNetworkAliases("influxdb")
+            .withExposedPorts(influxDbPort)
+            .withEnv("DOCKER_INFLUXDB_INIT_MODE", "setup")
+            .withEnv("DOCKER_INFLUXDB_INIT_USERNAME", "admin")
+            .withEnv("DOCKER_INFLUXDB_INIT_PASSWORD", "password")
+            .withEnv("DOCKER_INFLUXDB_INIT_ORG", influxDbOrg)
+            .withEnv("DOCKER_INFLUXDB_INIT_BUCKET", influxDbBucket)
+            .withEnv("DOCKER_INFLUXDB_INIT_ADMIN_TOKEN", influxDbToken)
+            .waitingFor(Wait.forHttp("/ping").forStatusCode(204));
 
     @Container
-    static GenericContainer<?> telegraf = new GenericContainer<>(DockerImageName.parse("telegraf:1.30"))
-        .withNetwork(network)
-        .withCreateContainerCmdModifier(cmd -> {
-            HostConfig hostConfig = cmd.getHostConfig() == null ? new HostConfig() : cmd.getHostConfig();
-            PortBinding portBinding = new PortBinding(Ports.Binding.bindPort(0), telegrafExposedPort);
-            cmd.withHostConfig(hostConfig.withPortBindings(portBinding));
-            cmd.withExposedPorts(telegrafExposedPort);
-        })
-        .withCopyFileToContainer(MountableFile.forClasspathResource("telegraf-test.conf"),
-                "/etc/telegraf/telegraf.conf")
-        .dependsOn(influxDB)
-        .waitingFor(Wait.forLogMessage(".*Loaded inputs: statsd.*", 1));
+    static GenericContainer<?> telegraf = new GenericContainer<>(DockerImageName.parse("telegraf:latest"))
+            .withNetwork(network)
+            .withCreateContainerCmdModifier(cmd -> {
+                HostConfig hostConfig = cmd.getHostConfig() == null ? new HostConfig() : cmd.getHostConfig();
+                PortBinding portBinding = new PortBinding(Ports.Binding.bindPort(0), telegrafExposedPort);
+                cmd.withHostConfig(hostConfig.withPortBindings(portBinding));
+                cmd.withExposedPorts(telegrafExposedPort);
+            })
+            .withCopyFileToContainer(MountableFile.forClasspathResource("telegraf-test.conf"),
+                    "/etc/telegraf/telegraf.conf")
+            .dependsOn(influxDB)
+            .waitingFor(Wait.forLogMessage(".*Loaded inputs: statsd.*", 1));
 
     @Issue("#6513")
     @Test
@@ -90,14 +99,16 @@ class TelegrafStatsdLineBuilderIntegrationTest {
             counter.increment();
 
             await().atMost(60, TimeUnit.SECONDS).pollInterval(Duration.ofSeconds(1)).untilAsserted(() -> {
-                String queryResult = queryInfluxDB("SELECT * FROM \"metric\"");
+                String fluxQuery = String.format(
+                        "from(bucket: \"%s\") |> range(start: -1h) |> filter(fn: (r) => r._measurement == \"metric\")",
+                        influxDbBucket);
+                String queryResult = queryInfluxDB(fluxQuery);
 
-                assertThat(queryResult).contains("\"name\":\"metric\"");
-                assertThat(queryResult).contains("\"this_is_the\"");
-                assertThat(queryResult).contains("\"tag=test\"");
+                assertThat(queryResult).contains("metric");
+                assertThat(queryResult).contains("this_is_the");
+                assertThat(queryResult).contains("tag=test");
             });
-        }
-        finally {
+        } finally {
             registry.close();
         }
     }
@@ -113,7 +124,8 @@ class TelegrafStatsdLineBuilderIntegrationTest {
     private StatsdConfig getStatsdConfig() {
         return new StatsdConfig() {
             @Override
-            @Nullable public String get(@NonNull String key) {
+            @Nullable
+            public String get(@NonNull String key) {
                 return null;
             }
 
@@ -130,10 +142,10 @@ class TelegrafStatsdLineBuilderIntegrationTest {
             @Override
             public int port() {
                 Ports.Binding[] bindings = telegraf.getContainerInfo()
-                    .getNetworkSettings()
-                    .getPorts()
-                    .getBindings()
-                    .get(telegrafExposedPort);
+                        .getNetworkSettings()
+                        .getPorts()
+                        .getBindings()
+                        .get(telegrafExposedPort);
                 Ports.Binding binding = Objects.requireNonNull(bindings)[0];
                 return Integer.parseInt(binding.getHostPortSpec());
             }
@@ -145,22 +157,29 @@ class TelegrafStatsdLineBuilderIntegrationTest {
         };
     }
 
-    private String queryInfluxDB(String query) {
+    private String queryInfluxDB(String fluxQuery) {
         try {
             String baseUrl = "http://" + influxDB.getHost() + ":" + influxDB.getMappedPort(influxDbPort);
 
-            String fullUrl = baseUrl + "/query?db=" + influxDbName + "&q="
-                    + java.net.URLEncoder.encode(query, StandardCharsets.UTF_8);
+            String fullUrl = baseUrl + "/api/v2/query?org=" + influxDbOrg;
 
             HttpURLConnection con = (HttpURLConnection) URI.create(fullUrl).toURL().openConnection();
-            con.setRequestMethod("GET");
+            con.setRequestMethod("POST");
+            con.setRequestProperty("Authorization", "Token " + influxDbToken);
+            con.setRequestProperty("Content-Type", "application/vnd.flux");
+            con.setRequestProperty("Accept", "application/csv");
+            con.setDoOutput(true);
+
+            try (java.io.OutputStream os = con.getOutputStream()) {
+                byte[] input = fluxQuery.getBytes(StandardCharsets.UTF_8);
+                os.write(input, 0, input.length);
+            }
 
             try (BufferedReader reader = new BufferedReader(
                     new InputStreamReader(con.getInputStream(), StandardCharsets.UTF_8))) {
-                return reader.lines().collect(java.util.stream.Collectors.joining());
+                return reader.lines().collect(java.util.stream.Collectors.joining("\n"));
             }
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             return "";
         }
     }
