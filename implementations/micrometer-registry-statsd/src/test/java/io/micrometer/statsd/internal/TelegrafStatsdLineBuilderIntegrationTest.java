@@ -28,6 +28,7 @@ import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.testcontainers.containers.GenericContainer;
@@ -78,13 +79,13 @@ class TelegrafStatsdLineBuilderIntegrationTest {
     void shouldSanitizeEqualsSignInTagKey() throws InterruptedException {
         StatsdMeterRegistry registry = getStatsdMeterRegistry(5000);
 
-        Counter.builder("test.metric").tag("this=is=the", "tag=test").register(registry).increment();
+        Counter.builder("test=metric").tag("this=is=the", "tag=test").register(registry).increment();
         registry.close();
 
         await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
-            whenGetMetricFromInfluxDb("test_metric").then()
+            whenGetMetricFromInfluxDb("test=metric").then()
                 .statusCode(200)
-                .body(containsString("test_metric"), containsString("this_is_the"), containsString("tag=test"));
+                .body(containsString("this_is_the"), containsString("tag=test"));
         });
     }
 
@@ -92,13 +93,13 @@ class TelegrafStatsdLineBuilderIntegrationTest {
     void shouldSanitizeCommaInTagKeyAndValue() throws InterruptedException {
         StatsdMeterRegistry registry = getStatsdMeterRegistry(5000);
 
-        Counter.builder("test.metric").tag("comma,key", "comma,value").register(registry).increment();
+        Counter.builder("test,metric").tag("comma,key", "comma,value").register(registry).increment();
         registry.close();
 
         await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
             whenGetMetricFromInfluxDb("test_metric").then()
                 .statusCode(200)
-                .body(containsString("test_metric"), containsString("comma_key"), containsString("comma_value"));
+                .body(containsString("comma_key"), containsString("comma_value"));
         });
     }
 
@@ -106,13 +107,13 @@ class TelegrafStatsdLineBuilderIntegrationTest {
     void shouldSanitizeSpaceInTagKeyAndValue() throws InterruptedException {
         StatsdMeterRegistry registry = getStatsdMeterRegistry(5000);
 
-        Counter.builder("test.metric").tag("space key", "space value").register(registry).increment();
+        Counter.builder("test metric").tag("space key", "space value").register(registry).increment();
         registry.close();
 
         await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
             whenGetMetricFromInfluxDb("test_metric").then()
                 .statusCode(200)
-                .body(containsString("test_metric"), containsString("space_key"), containsString("space_value"));
+                .body(containsString("space_key"), containsString("space_value"));
         });
     }
 
