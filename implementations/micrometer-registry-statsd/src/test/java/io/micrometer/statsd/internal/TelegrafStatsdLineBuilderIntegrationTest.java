@@ -118,14 +118,14 @@ class TelegrafStatsdLineBuilderIntegrationTest {
     }
 
     private void verifyCommaSignMetric() {
-        String fluxQuery = getFluxQuery("test,metric");
+        String fluxQuery = getFluxQuery("test_metric");
         whenGetMetricFromInfluxDb(fluxQuery).then()
             .statusCode(200)
             .body(containsString("comma_key"), containsString("comma_value"));
     }
 
     private void verifySpaceSignMetric() {
-        String fluxQuery = getFluxQuery("test metric");
+        String fluxQuery = getFluxQuery("test_metric");
         whenGetMetricFromInfluxDb(fluxQuery).then()
             .statusCode(200)
             .body(containsString("space_key"), containsString("space_value"));
