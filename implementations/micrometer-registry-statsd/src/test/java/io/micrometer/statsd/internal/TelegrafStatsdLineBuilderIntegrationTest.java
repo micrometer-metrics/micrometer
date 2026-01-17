@@ -15,7 +15,6 @@
  */
 package io.micrometer.statsd.internal;
 
-import com.github.dockerjava.api.model.*;
 import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.Counter;
@@ -83,13 +82,13 @@ class TelegrafStatsdLineBuilderIntegrationTest {
     @Test
     void shouldSanitizeCommaInTagKeyAndValue() throws InterruptedException {
         sendMetricWithComma();
-        await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> verifyCommaSignMetric());
+        await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> verifyCommaMetric());
     }
 
     @Test
     void shouldSanitizeSpaceInTagKeyAndValue() throws InterruptedException {
         sendMetricWithSpace();
-        await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> verifySpaceSignMetric());
+        await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> verifySpaceMetric());
     }
 
     private void sendMetricWithEqualSign() throws InterruptedException {
@@ -117,14 +116,14 @@ class TelegrafStatsdLineBuilderIntegrationTest {
             .body(containsString("this_is_the"), containsString("tag=test"));
     }
 
-    private void verifyCommaSignMetric() {
+    private void verifyCommaMetric() {
         String fluxQuery = getFluxQuery("test_metric");
         whenGetMetricFromInfluxDb(fluxQuery).then()
             .statusCode(200)
             .body(containsString("comma_key"), containsString("comma_value"));
     }
 
-    private void verifySpaceSignMetric() {
+    private void verifySpaceMetric() {
         String fluxQuery = getFluxQuery("test_metric");
         whenGetMetricFromInfluxDb(fluxQuery).then()
             .statusCode(200)
