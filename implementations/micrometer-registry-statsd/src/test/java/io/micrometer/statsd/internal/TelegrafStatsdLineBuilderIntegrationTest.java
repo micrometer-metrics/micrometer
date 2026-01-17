@@ -76,51 +76,68 @@ class TelegrafStatsdLineBuilderIntegrationTest {
     @Issue("#6513")
     @Test
     void shouldSanitizeEqualsSignInTagKey() throws InterruptedException {
-        StatsdMeterRegistry registry = getStatsdMeterRegistry(5000);
-
-        Counter.builder("test=metric").tag("this=is=the", "tag=test").register(registry).increment();
-        registry.close();
-
-        await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
-            whenGetMetricFromInfluxDb("test=metric").then()
-                .statusCode(200)
-                .body(containsString("this_is_the"), containsString("tag=test"));
-        });
+        sendMetricWithEqualSign();
+        await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> verifyEqualsSignMetric());
     }
 
     @Test
     void shouldSanitizeCommaInTagKeyAndValue() throws InterruptedException {
-        StatsdMeterRegistry registry = getStatsdMeterRegistry(5000);
-
-        Counter.builder("test,metric").tag("comma,key", "comma,value").register(registry).increment();
-        registry.close();
-
-        await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
-            whenGetMetricFromInfluxDb("test_metric").then()
-                .statusCode(200)
-                .body(containsString("comma_key"), containsString("comma_value"));
-        });
+        sendMetricWithComma();
+        await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> verifyCommaSignMetric());
     }
 
     @Test
     void shouldSanitizeSpaceInTagKeyAndValue() throws InterruptedException {
-        StatsdMeterRegistry registry = getStatsdMeterRegistry(5000);
-
-        Counter.builder("test metric").tag("space key", "space value").register(registry).increment();
-        registry.close();
-
-        await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
-            whenGetMetricFromInfluxDb("test_metric").then()
-                .statusCode(200)
-                .body(containsString("space_key"), containsString("space_value"));
-        });
+        sendMetricWithSpace();
+        await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> verifySpaceSignMetric());
     }
 
-    private Response whenGetMetricFromInfluxDb(String metricName) {
-        String fluxQuery = String.format(
+    private void sendMetricWithEqualSign() throws InterruptedException {
+        StatsdMeterRegistry registry = getStatsdMeterRegistry(5000);
+        Counter.builder("test=metric").tag("this=is=the", "tag=test").register(registry).increment();
+        registry.close();
+    }
+
+    private void sendMetricWithComma() throws InterruptedException {
+        StatsdMeterRegistry registry = getStatsdMeterRegistry(5000);
+        Counter.builder("test,metric").tag("comma,key", "comma,value").register(registry).increment();
+        registry.close();
+    }
+
+    private void sendMetricWithSpace() throws InterruptedException {
+        StatsdMeterRegistry registry = getStatsdMeterRegistry(5000);
+        Counter.builder("test metric").tag("space key", "space value").register(registry).increment();
+        registry.close();
+    }
+
+    private void verifyEqualsSignMetric() {
+        String fluxQuery = getFluxQuery("test=metric");
+        whenGetMetricFromInfluxDb(fluxQuery).then()
+            .statusCode(200)
+            .body(containsString("this_is_the"), containsString("tag=test"));
+    }
+
+    private void verifyCommaSignMetric() {
+        String fluxQuery = getFluxQuery("test,metric");
+        whenGetMetricFromInfluxDb(fluxQuery).then()
+            .statusCode(200)
+            .body(containsString("comma_key"), containsString("comma_value"));
+    }
+
+    private void verifySpaceSignMetric() {
+        String fluxQuery = getFluxQuery("test metric");
+        whenGetMetricFromInfluxDb(fluxQuery).then()
+            .statusCode(200)
+            .body(containsString("space_key"), containsString("space_value"));
+    }
+
+    private String getFluxQuery(String metricName) {
+        return String.format(
                 "from(bucket: \"metrics_db\") |> range(start: -1h) |> filter(fn: (r) => r._measurement == \"%s\")",
                 metricName);
+    }
 
+    private Response whenGetMetricFromInfluxDb(String fluxQuery) {
         return given()
             .config(config().encoderConfig(
                     EncoderConfig.encoderConfig().encodeContentTypeAs("application/vnd.flux", ContentType.TEXT)))
