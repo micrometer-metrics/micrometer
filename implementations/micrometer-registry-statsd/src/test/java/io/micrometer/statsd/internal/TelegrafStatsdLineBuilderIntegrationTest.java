@@ -148,11 +148,6 @@ class TelegrafStatsdLineBuilderIntegrationTest {
                 Ports.Binding binding = Objects.requireNonNull(bindings)[0];
                 return Integer.parseInt(binding.getHostPortSpec());
             }
-
-            @Override
-            public @NonNull Duration step() {
-                return Duration.ofSeconds(1);
-            }
         };
     }
 
