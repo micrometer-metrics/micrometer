@@ -22,6 +22,7 @@ dependencies {
     testImplementation project(':micrometer-test')
     testImplementation 'io.projectreactor:reactor-test'
     testImplementation libs.logback12
+    testImplementation libs.restAssured
     testImplementation libs.awaitility
     testImplementation libs.testcontainers.junitJupiter
     // for running tests with UDS on OSX
