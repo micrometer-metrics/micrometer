@@ -59,13 +59,11 @@ class TelegrafStatsdLineBuilderIntegrationTest {
 
     private static final String influxDbToken = "my-test-token";
 
-    private static final Integer influxDbPort = 8086;
-
     @Container
     static GenericContainer<?> influxDB = new GenericContainer<>(DockerImageName.parse("influxdb:latest"))
             .withNetwork(network)
             .withNetworkAliases("influxdb")
-            .withExposedPorts(influxDbPort)
+            .withExposedPorts(8086)
             .withEnv("DOCKER_INFLUXDB_INIT_MODE", "setup")
             .withEnv("DOCKER_INFLUXDB_INIT_USERNAME", "admin")
             .withEnv("DOCKER_INFLUXDB_INIT_PASSWORD", "password")
