@@ -22,6 +22,8 @@ import io.micrometer.core.instrument.Counter;
 import io.micrometer.statsd.StatsdConfig;
 import io.micrometer.statsd.StatsdFlavor;
 import io.micrometer.statsd.StatsdMeterRegistry;
+import io.restassured.config.EncoderConfig;
+import io.restassured.http.ContentType;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Tag;
@@ -34,15 +36,12 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
 import org.testcontainers.utility.MountableFile;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URI;
-import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
+import static io.restassured.RestAssured.config;
+import static io.restassured.RestAssured.given;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
@@ -99,13 +98,25 @@ class TelegrafStatsdLineBuilderIntegrationTest {
 
             await().atMost(60, TimeUnit.SECONDS).pollInterval(Duration.ofSeconds(1)).untilAsserted(() -> {
                 String fluxQuery = String.format(
-                        "from(bucket: \"%s\") |> range(start: -1h) |> filter(fn: (r) => r._measurement == \"metric\")",
-                        influxDbBucket);
-                String queryResult = queryInfluxDB(fluxQuery);
+                    "from(bucket: \"%s\") |> range(start: -1h) |> filter(fn: (r) => r._measurement == \"metric\")",
+                    influxDbBucket);
 
-                assertThat(queryResult).contains("metric");
-                assertThat(queryResult).contains("this_is_the");
-                assertThat(queryResult).contains("tag=test");
+                given()
+                    .config(config().encoderConfig(EncoderConfig.encoderConfig()
+                        .encodeContentTypeAs("application/vnd.flux", ContentType.TEXT)))
+                    .port(influxDB.getFirstMappedPort())
+                    .header("Authorization", "Token " + influxDbToken)
+                    .queryParam("org", influxDbOrg)
+                    .contentType("application/vnd.flux")
+                    .accept("application/csv")
+                    .body(fluxQuery)
+                .when()
+                    .post("/api/v2/query")
+                .then()
+                    .statusCode(200)
+                    .body(org.hamcrest.Matchers.containsString("metric"),
+                        org.hamcrest.Matchers.containsString("this_is_the"),
+                        org.hamcrest.Matchers.containsString("tag=test"));
             });
         } finally {
             registry.close();
@@ -149,33 +160,6 @@ class TelegrafStatsdLineBuilderIntegrationTest {
                 return Integer.parseInt(binding.getHostPortSpec());
             }
         };
-    }
-
-    private String queryInfluxDB(String fluxQuery) {
-        try {
-            String baseUrl = "http://" + influxDB.getHost() + ":" + influxDB.getMappedPort(influxDbPort);
-
-            String fullUrl = baseUrl + "/api/v2/query?org=" + influxDbOrg;
-
-            HttpURLConnection con = (HttpURLConnection) URI.create(fullUrl).toURL().openConnection();
-            con.setRequestMethod("POST");
-            con.setRequestProperty("Authorization", "Token " + influxDbToken);
-            con.setRequestProperty("Content-Type", "application/vnd.flux");
-            con.setRequestProperty("Accept", "application/csv");
-            con.setDoOutput(true);
-
-            try (java.io.OutputStream os = con.getOutputStream()) {
-                byte[] input = fluxQuery.getBytes(StandardCharsets.UTF_8);
-                os.write(input, 0, input.length);
-            }
-
-            try (BufferedReader reader = new BufferedReader(
-                    new InputStreamReader(con.getInputStream(), StandardCharsets.UTF_8))) {
-                return reader.lines().collect(java.util.stream.Collectors.joining("\n"));
-            }
-        } catch (Exception e) {
-            return "";
-        }
     }
 
 }
