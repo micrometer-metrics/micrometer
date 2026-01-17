@@ -25,6 +25,7 @@ import io.micrometer.statsd.StatsdMeterRegistry;
 import io.micrometer.statsd.StatsdProtocol;
 import io.restassured.config.EncoderConfig;
 import io.restassured.http.ContentType;
+import io.restassured.response.Response;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Tag;
@@ -50,12 +51,6 @@ class TelegrafStatsdLineBuilderIntegrationTest {
 
     private static final Network network = Network.newNetwork();
 
-    private static final String influxDbOrg = "my-org";
-
-    private static final String influxDbBucket = "metrics_db";
-
-    private static final String influxDbToken = "my-test-token";
-
     @Container
     static GenericContainer<?> influxDB = new GenericContainer<>(DockerImageName.parse("influxdb:latest"))
         .withNetwork(network)
@@ -64,9 +59,9 @@ class TelegrafStatsdLineBuilderIntegrationTest {
         .withEnv("DOCKER_INFLUXDB_INIT_MODE", "setup")
         .withEnv("DOCKER_INFLUXDB_INIT_USERNAME", "admin")
         .withEnv("DOCKER_INFLUXDB_INIT_PASSWORD", "password")
-        .withEnv("DOCKER_INFLUXDB_INIT_ORG", influxDbOrg)
-        .withEnv("DOCKER_INFLUXDB_INIT_BUCKET", influxDbBucket)
-        .withEnv("DOCKER_INFLUXDB_INIT_ADMIN_TOKEN", influxDbToken)
+        .withEnv("DOCKER_INFLUXDB_INIT_ORG", "my-org")
+        .withEnv("DOCKER_INFLUXDB_INIT_BUCKET", "metrics_db")
+        .withEnv("DOCKER_INFLUXDB_INIT_ADMIN_TOKEN", "my-test-token")
         .waitingFor(Wait.forHttp("/ping").forStatusCode(204));
 
     @Container
@@ -80,39 +75,63 @@ class TelegrafStatsdLineBuilderIntegrationTest {
 
     @Issue("#6513")
     @Test
-    void shouldSanitizeEqualsSignInTagKeys() throws InterruptedException {
+    void shouldSanitizeEqualsSignInTagKey() throws InterruptedException {
         StatsdMeterRegistry registry = getStatsdMeterRegistry(5000);
 
-        Counter.builder("test.metric")
-            .tag("this=is=the", "tag=test")
-            .tag("comma,key", "comma,value")
-            .tag("space key", "space value")
-            .register(registry)
-            .increment();
+        Counter.builder("test.metric").tag("this=is=the", "tag=test").register(registry).increment();
         registry.close();
 
-        await().atMost(10, TimeUnit.SECONDS).untilAsserted(() -> {
-            String fluxQuery = String.format(
-                    "from(bucket: \"%s\") |> range(start: -1h) |> filter(fn: (r) => r._measurement == \"test_metric\")",
-                    influxDbBucket);
-
-            given()
-                .config(config().encoderConfig(
-                        EncoderConfig.encoderConfig().encodeContentTypeAs("application/vnd.flux", ContentType.TEXT)))
-                .port(influxDB.getFirstMappedPort())
-                .header("Authorization", "Token " + influxDbToken)
-                .queryParam("org", influxDbOrg)
-                .contentType("application/vnd.flux")
-                .accept("application/csv")
-                .body(fluxQuery)
-                .when()
-                .post("/api/v2/query")
-                .then()
+        await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
+            whenGetMetricFromInfluxDb("test_metric").then()
                 .statusCode(200)
-                .body(containsString("test_metric"), containsString("this_is_the"), containsString("tag=test"),
-                        containsString("comma_key"), containsString("comma_value"), containsString("space_key"),
-                        containsString("space_value"));
+                .body(containsString("test_metric"), containsString("this_is_the"), containsString("tag=test"));
         });
+    }
+
+    @Test
+    void shouldSanitizeCommaInTagKeyAndValue() throws InterruptedException {
+        StatsdMeterRegistry registry = getStatsdMeterRegistry(5000);
+
+        Counter.builder("test.metric").tag("comma,key", "comma,value").register(registry).increment();
+        registry.close();
+
+        await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
+            whenGetMetricFromInfluxDb("test_metric").then()
+                .statusCode(200)
+                .body(containsString("test_metric"), containsString("comma_key"), containsString("comma_value"));
+        });
+    }
+
+    @Test
+    void shouldSanitizeSpaceInTagKeyAndValue() throws InterruptedException {
+        StatsdMeterRegistry registry = getStatsdMeterRegistry(5000);
+
+        Counter.builder("test.metric").tag("space key", "space value").register(registry).increment();
+        registry.close();
+
+        await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
+            whenGetMetricFromInfluxDb("test_metric").then()
+                .statusCode(200)
+                .body(containsString("test_metric"), containsString("space_key"), containsString("space_value"));
+        });
+    }
+
+    private Response whenGetMetricFromInfluxDb(String metricName) {
+        String fluxQuery = String.format(
+                "from(bucket: \"metrics_db\") |> range(start: -1h) |> filter(fn: (r) => r._measurement == \"%s\")",
+                metricName);
+
+        return given()
+            .config(config().encoderConfig(
+                    EncoderConfig.encoderConfig().encodeContentTypeAs("application/vnd.flux", ContentType.TEXT)))
+            .port(influxDB.getFirstMappedPort())
+            .header("Authorization", "Token my-test-token")
+            .queryParam("org", "my-org")
+            .contentType("application/vnd.flux")
+            .accept("application/csv")
+            .body(fluxQuery)
+            .when()
+            .post("/api/v2/query");
     }
 
     private StatsdMeterRegistry getStatsdMeterRegistry(long registryWarmUpMs) throws InterruptedException {
