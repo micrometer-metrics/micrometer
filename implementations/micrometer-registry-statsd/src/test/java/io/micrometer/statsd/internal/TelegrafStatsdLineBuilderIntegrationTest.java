@@ -25,7 +25,6 @@ import io.micrometer.statsd.StatsdMeterRegistry;
 import io.micrometer.statsd.StatsdProtocol;
 import io.restassured.config.EncoderConfig;
 import io.restassured.http.ContentType;
-import org.jetbrains.annotations.NotNull;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Tag;
@@ -147,7 +146,7 @@ class TelegrafStatsdLineBuilderIntegrationTest {
             }
 
             @Override
-            public @NotNull StatsdProtocol protocol() {
+            public @NonNull StatsdProtocol protocol() {
                 return StatsdProtocol.TCP;
             }
         };
