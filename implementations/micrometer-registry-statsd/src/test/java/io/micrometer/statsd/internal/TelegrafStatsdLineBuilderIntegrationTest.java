@@ -43,6 +43,7 @@ import java.util.concurrent.TimeUnit;
 import static io.restassured.RestAssured.config;
 import static io.restassured.RestAssured.given;
 import static org.awaitility.Awaitility.await;
+import static org.hamcrest.CoreMatchers.containsString;
 
 @Tag("docker")
 @Testcontainers
@@ -58,55 +59,60 @@ class TelegrafStatsdLineBuilderIntegrationTest {
 
     @Container
     static GenericContainer<?> influxDB = new GenericContainer<>(DockerImageName.parse("influxdb:latest"))
-            .withNetwork(network)
-            .withNetworkAliases("influxdb")
-            .withExposedPorts(8086)
-            .withEnv("DOCKER_INFLUXDB_INIT_MODE", "setup")
-            .withEnv("DOCKER_INFLUXDB_INIT_USERNAME", "admin")
-            .withEnv("DOCKER_INFLUXDB_INIT_PASSWORD", "password")
-            .withEnv("DOCKER_INFLUXDB_INIT_ORG", influxDbOrg)
-            .withEnv("DOCKER_INFLUXDB_INIT_BUCKET", influxDbBucket)
-            .withEnv("DOCKER_INFLUXDB_INIT_ADMIN_TOKEN", influxDbToken)
-            .waitingFor(Wait.forHttp("/ping").forStatusCode(204));
+        .withNetwork(network)
+        .withNetworkAliases("influxdb")
+        .withExposedPorts(8086)
+        .withEnv("DOCKER_INFLUXDB_INIT_MODE", "setup")
+        .withEnv("DOCKER_INFLUXDB_INIT_USERNAME", "admin")
+        .withEnv("DOCKER_INFLUXDB_INIT_PASSWORD", "password")
+        .withEnv("DOCKER_INFLUXDB_INIT_ORG", influxDbOrg)
+        .withEnv("DOCKER_INFLUXDB_INIT_BUCKET", influxDbBucket)
+        .withEnv("DOCKER_INFLUXDB_INIT_ADMIN_TOKEN", influxDbToken)
+        .waitingFor(Wait.forHttp("/ping").forStatusCode(204));
 
     @Container
     static GenericContainer<?> telegraf = new GenericContainer<>(DockerImageName.parse("telegraf:latest"))
-            .withNetwork(network)
-            .withExposedPorts(8125)
-            .withCopyFileToContainer(MountableFile.forClasspathResource("telegraf-test.conf"),
-                    "/etc/telegraf/telegraf.conf")
-            .dependsOn(influxDB)
-            .waitingFor(Wait.forLogMessage(".*Loaded inputs: statsd.*", 1));
+        .withNetwork(network)
+        .withExposedPorts(8125)
+        .withCopyFileToContainer(MountableFile.forClasspathResource("telegraf-test.conf"),
+                "/etc/telegraf/telegraf.conf")
+        .dependsOn(influxDB)
+        .waitingFor(Wait.forLogMessage(".*Loaded inputs: statsd.*", 1));
 
     @Issue("#6513")
     @Test
     void shouldSanitizeEqualsSignInTagKeys() throws InterruptedException {
         StatsdMeterRegistry registry = getStatsdMeterRegistry(5000);
 
-        Counter.builder("metric").tag("this=is=the", "tag=test").register(registry).increment();
+        Counter.builder("test.metric")
+            .tag("this=is=the", "tag=test")
+            .tag("comma,key", "comma,value")
+            .tag("space key", "space value")
+            .register(registry)
+            .increment();
         registry.close();
 
         await().atMost(10, TimeUnit.SECONDS).untilAsserted(() -> {
             String fluxQuery = String.format(
-                "from(bucket: \"%s\") |> range(start: -1h) |> filter(fn: (r) => r._measurement == \"metric\")",
-                influxDbBucket);
+                    "from(bucket: \"%s\") |> range(start: -1h) |> filter(fn: (r) => r._measurement == \"test_metric\")",
+                    influxDbBucket);
 
             given()
-                .config(config().encoderConfig(EncoderConfig.encoderConfig()
-                    .encodeContentTypeAs("application/vnd.flux", ContentType.TEXT)))
+                .config(config().encoderConfig(
+                        EncoderConfig.encoderConfig().encodeContentTypeAs("application/vnd.flux", ContentType.TEXT)))
                 .port(influxDB.getFirstMappedPort())
                 .header("Authorization", "Token " + influxDbToken)
                 .queryParam("org", influxDbOrg)
                 .contentType("application/vnd.flux")
                 .accept("application/csv")
                 .body(fluxQuery)
-            .when()
+                .when()
                 .post("/api/v2/query")
-            .then()
+                .then()
                 .statusCode(200)
-                .body(org.hamcrest.Matchers.containsString("metric"),
-                    org.hamcrest.Matchers.containsString("this_is_the"),
-                    org.hamcrest.Matchers.containsString("tag=test"));
+                .body(containsString("test_metric"), containsString("this_is_the"), containsString("tag=test"),
+                        containsString("comma_key"), containsString("comma_value"), containsString("space_key"),
+                        containsString("space_value"));
         });
     }
 
@@ -121,8 +127,7 @@ class TelegrafStatsdLineBuilderIntegrationTest {
     private StatsdConfig getStatsdConfig() {
         return new StatsdConfig() {
             @Override
-            @Nullable
-            public String get(@NonNull String key) {
+            @Nullable public String get(@NonNull String key) {
                 return null;
             }
 
