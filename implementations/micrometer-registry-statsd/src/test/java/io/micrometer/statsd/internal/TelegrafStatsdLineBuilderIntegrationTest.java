@@ -22,8 +22,10 @@ import io.micrometer.core.instrument.Counter;
 import io.micrometer.statsd.StatsdConfig;
 import io.micrometer.statsd.StatsdFlavor;
 import io.micrometer.statsd.StatsdMeterRegistry;
+import io.micrometer.statsd.StatsdProtocol;
 import io.restassured.config.EncoderConfig;
 import io.restassured.http.ContentType;
+import org.jetbrains.annotations.NotNull;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Tag;
@@ -36,13 +38,10 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
 import org.testcontainers.utility.MountableFile;
 
-import java.time.Duration;
-import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 import static io.restassured.RestAssured.config;
 import static io.restassured.RestAssured.given;
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
 @Tag("docker")
@@ -50,8 +49,6 @@ import static org.awaitility.Awaitility.await;
 class TelegrafStatsdLineBuilderIntegrationTest {
 
     private static final Network network = Network.newNetwork();
-
-    private static final ExposedPort telegrafExposedPort = new ExposedPort(8125, InternetProtocol.UDP);
 
     private static final String influxDbOrg = "my-org";
 
@@ -75,12 +72,7 @@ class TelegrafStatsdLineBuilderIntegrationTest {
     @Container
     static GenericContainer<?> telegraf = new GenericContainer<>(DockerImageName.parse("telegraf:latest"))
             .withNetwork(network)
-            .withCreateContainerCmdModifier(cmd -> {
-                HostConfig hostConfig = cmd.getHostConfig() == null ? new HostConfig() : cmd.getHostConfig();
-                PortBinding portBinding = new PortBinding(Ports.Binding.bindPort(0), telegrafExposedPort);
-                cmd.withHostConfig(hostConfig.withPortBindings(portBinding));
-                cmd.withExposedPorts(telegrafExposedPort);
-            })
+            .withExposedPorts(8125)
             .withCopyFileToContainer(MountableFile.forClasspathResource("telegraf-test.conf"),
                     "/etc/telegraf/telegraf.conf")
             .dependsOn(influxDB)
@@ -146,13 +138,12 @@ class TelegrafStatsdLineBuilderIntegrationTest {
 
             @Override
             public int port() {
-                Ports.Binding[] bindings = telegraf.getContainerInfo()
-                        .getNetworkSettings()
-                        .getPorts()
-                        .getBindings()
-                        .get(telegrafExposedPort);
-                Ports.Binding binding = Objects.requireNonNull(bindings)[0];
-                return Integer.parseInt(binding.getHostPortSpec());
+                return telegraf.getFirstMappedPort();
+            }
+
+            @Override
+            public @NotNull StatsdProtocol protocol() {
+                return StatsdProtocol.TCP;
             }
         };
     }
