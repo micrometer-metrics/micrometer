@@ -93,34 +93,31 @@ class TelegrafStatsdLineBuilderIntegrationTest {
     void shouldSanitizeEqualsSignInTagKeys() throws InterruptedException {
         StatsdMeterRegistry registry = getStatsdMeterRegistry(5000);
 
-        try {
-            Counter.builder("metric").tag("this=is=the", "tag=test").register(registry).increment();
+        Counter.builder("metric").tag("this=is=the", "tag=test").register(registry).increment();
+        registry.close();
 
-            await().atMost(60, TimeUnit.SECONDS).pollInterval(Duration.ofSeconds(1)).untilAsserted(() -> {
-                String fluxQuery = String.format(
-                    "from(bucket: \"%s\") |> range(start: -1h) |> filter(fn: (r) => r._measurement == \"metric\")",
-                    influxDbBucket);
+        await().atMost(10, TimeUnit.SECONDS).untilAsserted(() -> {
+            String fluxQuery = String.format(
+                "from(bucket: \"%s\") |> range(start: -1h) |> filter(fn: (r) => r._measurement == \"metric\")",
+                influxDbBucket);
 
-                given()
-                    .config(config().encoderConfig(EncoderConfig.encoderConfig()
-                        .encodeContentTypeAs("application/vnd.flux", ContentType.TEXT)))
-                    .port(influxDB.getFirstMappedPort())
-                    .header("Authorization", "Token " + influxDbToken)
-                    .queryParam("org", influxDbOrg)
-                    .contentType("application/vnd.flux")
-                    .accept("application/csv")
-                    .body(fluxQuery)
-                .when()
-                    .post("/api/v2/query")
-                .then()
-                    .statusCode(200)
-                    .body(org.hamcrest.Matchers.containsString("metric"),
-                        org.hamcrest.Matchers.containsString("this_is_the"),
-                        org.hamcrest.Matchers.containsString("tag=test"));
-            });
-        } finally {
-            registry.close();
-        }
+            given()
+                .config(config().encoderConfig(EncoderConfig.encoderConfig()
+                    .encodeContentTypeAs("application/vnd.flux", ContentType.TEXT)))
+                .port(influxDB.getFirstMappedPort())
+                .header("Authorization", "Token " + influxDbToken)
+                .queryParam("org", influxDbOrg)
+                .contentType("application/vnd.flux")
+                .accept("application/csv")
+                .body(fluxQuery)
+            .when()
+                .post("/api/v2/query")
+            .then()
+                .statusCode(200)
+                .body(org.hamcrest.Matchers.containsString("metric"),
+                    org.hamcrest.Matchers.containsString("this_is_the"),
+                    org.hamcrest.Matchers.containsString("tag=test"));
+        });
     }
 
     private StatsdMeterRegistry getStatsdMeterRegistry(long registryWarmUpMs) throws InterruptedException {
