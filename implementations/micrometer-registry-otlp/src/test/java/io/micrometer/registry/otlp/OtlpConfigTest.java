@@ -320,15 +320,30 @@ class OtlpConfigTest {
 
     @Test
     void compressionModeConfigTakesPrecedenceOverEnvVars() throws Exception {
-        OtlpConfig config = k -> "ON";
-        withEnvironmentVariable("OTEL_EXPORTER_OTLP_METRICS_COMPRESSION", "OFF")
+        OtlpConfig config = k -> "GZIP";
+        withEnvironmentVariable("OTEL_EXPORTER_OTLP_METRICS_COMPRESSION", "NONE")
             .execute(() -> assertThat(config.compressionMode()).isEqualTo(CompressionMode.GZIP));
     }
 
     @Test
     void compressionModeUseEnvVarWhenConfigNotSet() throws Exception {
         OtlpConfig config = k -> null;
-        withEnvironmentVariable("OTEL_EXPORTER_OTLP_METRICS_COMPRESSION", "ON")
+        withEnvironmentVariable("OTEL_EXPORTER_OTLP_METRICS_COMPRESSION", "GZIP")
+            .execute(() -> assertThat(config.compressionMode()).isEqualTo(CompressionMode.GZIP));
+    }
+
+    @Test
+    void compressionModeUseFallbackEnvVarWhenConfigNotSet() throws Exception {
+        OtlpConfig config = k -> null;
+        withEnvironmentVariable("OTEL_EXPORTER_OTLP_COMPRESSION", "GZIP")
+            .execute(() -> assertThat(config.compressionMode()).isEqualTo(CompressionMode.GZIP));
+    }
+
+    @Test
+    void compressionModeMetricsEnvVarTakesPrecedenceOverGenericEnvVar() throws Exception {
+        OtlpConfig config = k -> null;
+        withEnvironmentVariables().set("OTEL_EXPORTER_OTLP_COMPRESSION", "NONE")
+            .set("OTEL_EXPORTER_OTLP_METRICS_COMPRESSION", "GZIP")
             .execute(() -> assertThat(config.compressionMode()).isEqualTo(CompressionMode.GZIP));
     }
 
