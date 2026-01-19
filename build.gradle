@@ -75,6 +75,11 @@ subprojects {
 
     if (project.name != 'micrometer-bom') {
         tasks.withType(JavaCompile).configureEach {
+            if (javaLanguageVersion.asInt() == 21) {
+                // Helps NullAway with type annotations on JDK 21
+                // See https://github.com/uber/NullAway/wiki/JSpecify-Support#supported-jdk-versions
+                options.compilerArgs.add("-XDaddTypeAnnotationsToSymbol=true")
+            }
             if (it.name == "compileJava" && !(it.project.name in ["micrometer-java11"])) {
                 options.errorprone.disable(
                     "JavaDurationGetSecondsToToSeconds" // Requires JDK 9+
@@ -124,7 +129,7 @@ subprojects {
                 option("NullAway:CustomContractAnnotations", "io.micrometer.common.lang.internal.Contract,org.assertj.core.internal.annotation.Contract")
                 option("NullAway:CheckContracts", "true")
                 option("NullAway:HandleTestAssertionLibraries", "true")
-                if (javaLanguageVersion.canCompileOrRun(22)) {
+                if (javaLanguageVersion.canCompileOrRun(21)) {
                     // see https://bugs.openjdk.org/browse/JDK-8346471
                     // see https://github.com/uber/NullAway/wiki/JSpecify-Support
                     option("NullAway:JSpecifyMode", "true")
