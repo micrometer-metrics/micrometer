@@ -162,8 +162,8 @@ public interface OtlpConfig extends PushRegistryConfig {
      * implementation supports the environment variables
      * {@code OTEL_EXPORTER_OTLP_COMPRESSION} and
      * {@code OTEL_EXPORTER_OTLP_METRICS_COMPRESSION} when a value is not provided by
-     * {@link #get(String)}. If both are set, {@code OTEL_EXPORTER_OTLP_METRICS_COMPRESSION}
-     * takes precedence.
+     * {@link #get(String)}. If both are set,
+     * {@code OTEL_EXPORTER_OTLP_METRICS_COMPRESSION} takes precedence.
      * @return the compressionMode; default is OFF
      * @since 1.17.0
      */
