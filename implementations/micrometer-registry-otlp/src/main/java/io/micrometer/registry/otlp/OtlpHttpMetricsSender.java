@@ -53,7 +53,7 @@ public class OtlpHttpMetricsSender implements OtlpMetricsSender {
             .withHeader("User-Agent", userAgentHeader)
             .withContent("application/x-protobuf", request.getMetricsData());
         request.getHeaders().forEach(httpRequest::withHeader);
-        if (request.getCompressionMode() == CompressionMode.ON) {
+        if (request.getCompressionMode() == CompressionMode.GZIP) {
             httpRequest.compress();
         }
         HttpSender.Response response;

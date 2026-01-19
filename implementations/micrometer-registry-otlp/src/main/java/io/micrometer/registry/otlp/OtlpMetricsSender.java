@@ -107,7 +107,7 @@ public interface OtlpMetricsSender {
 
             private Map<String, String> headers = Collections.emptyMap();
 
-            private CompressionMode compressionMode = CompressionMode.OFF;
+            private CompressionMode compressionMode = CompressionMode.NONE;
 
             private Builder(byte[] metricsData) {
                 this.metricsData = Objects.requireNonNull(metricsData);

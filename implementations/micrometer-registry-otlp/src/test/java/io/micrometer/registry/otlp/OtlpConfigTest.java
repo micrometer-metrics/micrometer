@@ -302,34 +302,34 @@ class OtlpConfigTest {
 
         OtlpConfig otlpConfig = properties::get;
         assertThat(otlpConfig.validate().isValid()).isTrue();
-        assertThat(otlpConfig.compressionMode()).isSameAs(CompressionMode.OFF);
+        assertThat(otlpConfig.compressionMode()).isSameAs(CompressionMode.NONE);
 
-        properties.put("otlp.compressionMode", CompressionMode.OFF.name());
-        assertThat(otlpConfig.compressionMode()).isSameAs(CompressionMode.OFF);
+        properties.put("otlp.compressionMode", CompressionMode.NONE.name());
+        assertThat(otlpConfig.compressionMode()).isSameAs(CompressionMode.NONE);
     }
 
     @Test
     void compressionModeOn() {
         Map<String, String> properties = new HashMap<>();
-        properties.put("otlp.compressionMode", CompressionMode.ON.name());
+        properties.put("otlp.compressionMode", CompressionMode.GZIP.name());
 
         OtlpConfig otlpConfig = properties::get;
         assertThat(otlpConfig.validate().isValid()).isTrue();
-        assertThat(otlpConfig.compressionMode()).isSameAs(CompressionMode.ON);
+        assertThat(otlpConfig.compressionMode()).isSameAs(CompressionMode.GZIP);
     }
 
     @Test
     void compressionModeConfigTakesPrecedenceOverEnvVars() throws Exception {
         OtlpConfig config = k -> "ON";
         withEnvironmentVariable("OTEL_EXPORTER_OTLP_METRICS_COMPRESSION", "OFF")
-            .execute(() -> assertThat(config.compressionMode()).isEqualTo(CompressionMode.ON));
+            .execute(() -> assertThat(config.compressionMode()).isEqualTo(CompressionMode.GZIP));
     }
 
     @Test
     void compressionModeUseEnvVarWhenConfigNotSet() throws Exception {
         OtlpConfig config = k -> null;
         withEnvironmentVariable("OTEL_EXPORTER_OTLP_METRICS_COMPRESSION", "ON")
-            .execute(() -> assertThat(config.compressionMode()).isEqualTo(CompressionMode.ON));
+            .execute(() -> assertThat(config.compressionMode()).isEqualTo(CompressionMode.GZIP));
     }
 
     @Test

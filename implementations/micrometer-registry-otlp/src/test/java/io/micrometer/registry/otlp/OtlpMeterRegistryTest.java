@@ -176,7 +176,7 @@ abstract class OtlpMeterRegistryTest {
 
             @Override
             public CompressionMode compressionMode() {
-                return CompressionMode.ON;
+                return CompressionMode.GZIP;
             }
         };
 
@@ -190,7 +190,7 @@ abstract class OtlpMeterRegistryTest {
         registryWithCompression.publish();
 
         verify(mockMetricsSender).send(assertArg(request -> {
-            assertThat(request.getCompressionMode()).isEqualTo(CompressionMode.ON);
+            assertThat(request.getCompressionMode()).isEqualTo(CompressionMode.GZIP);
         }));
     }
 

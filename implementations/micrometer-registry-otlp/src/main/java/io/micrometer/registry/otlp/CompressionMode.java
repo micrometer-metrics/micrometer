@@ -23,6 +23,6 @@ package io.micrometer.registry.otlp;
  */
 public enum CompressionMode {
 
-    ON, OFF
+    GZIP, NONE
 
 }
