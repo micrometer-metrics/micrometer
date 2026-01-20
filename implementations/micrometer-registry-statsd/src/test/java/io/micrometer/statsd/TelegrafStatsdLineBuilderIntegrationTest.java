@@ -183,7 +183,7 @@ class TelegrafStatsdLineBuilderIntegrationTest {
 
             @Override
             public int port() {
-                return telegraf.getFirstMappedPort();
+                return telegraf.getMappedPort(8125);
             }
 
             @Override
