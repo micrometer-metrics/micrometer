@@ -72,19 +72,19 @@ class TelegrafStatsdLineBuilderIntegrationTest {
     @Test
     void shouldSanitizeEqualsSignInTagKey() {
         sendMetricWithEqualSign();
-        await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> verifyEqualsSignMetric());
+        verifyEqualsSignMetric();
     }
 
     @Test
     void shouldSanitizeCommaInTagKeyAndValue() {
         sendMetricWithComma();
-        await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> verifyCommaMetric());
+        verifyCommaMetric();
     }
 
     @Test
     void shouldSanitizeSpaceInTagKeyAndValue() {
         sendMetricWithSpace();
-        await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> verifySpaceMetric());
+        verifySpaceMetric();
     }
 
     private void sendMetricWithEqualSign() {
