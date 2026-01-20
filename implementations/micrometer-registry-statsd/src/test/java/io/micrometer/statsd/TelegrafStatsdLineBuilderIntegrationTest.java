@@ -33,8 +33,6 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
 import org.testcontainers.utility.MountableFile;
 
-import java.util.concurrent.TimeUnit;
-
 import static io.restassured.RestAssured.config;
 import static io.restassured.RestAssured.given;
 import static org.awaitility.Awaitility.await;
