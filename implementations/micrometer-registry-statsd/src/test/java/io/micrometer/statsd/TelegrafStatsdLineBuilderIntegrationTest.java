@@ -90,7 +90,7 @@ class TelegrafStatsdLineBuilderIntegrationTest {
         StatsdMeterRegistry registry = new StatsdMeterRegistry(statsdConfig, Clock.SYSTEM);
         startRegistryAndWaitForClient(registry);
 
-        Counter.builder("test=metric").tag("this=is=the", "tag=test").register(registry).increment();
+        Counter.builder("test=metric=equal").tag("this=is=the", "tag=test").register(registry).increment();
         registry.close();
     }
 
@@ -99,7 +99,7 @@ class TelegrafStatsdLineBuilderIntegrationTest {
         StatsdMeterRegistry registry = new StatsdMeterRegistry(statsdConfig, Clock.SYSTEM);
         startRegistryAndWaitForClient(registry);
 
-        Counter.builder("test,metric").tag("comma,key", "comma,value").register(registry).increment();
+        Counter.builder("test,metric,comma").tag("comma,key", "comma,value").register(registry).increment();
         registry.close();
     }
 
@@ -108,26 +108,26 @@ class TelegrafStatsdLineBuilderIntegrationTest {
         StatsdMeterRegistry registry = new StatsdMeterRegistry(statsdConfig, Clock.SYSTEM);
         startRegistryAndWaitForClient(registry);
 
-        Counter.builder("test metric").tag("space key", "space value").register(registry).increment();
+        Counter.builder("test metric space").tag("space key", "space value").register(registry).increment();
         registry.close();
     }
 
     private void verifyEqualsSignMetric() {
-        String fluxQuery = getFluxQuery("test=metric");
+        String fluxQuery = getFluxQuery("test=metric=equal");
         whenGetMetricFromInfluxDb(fluxQuery).then()
             .statusCode(200)
             .body(containsString("this_is_the"), containsString("tag=test"));
     }
 
     private void verifyCommaMetric() {
-        String fluxQuery = getFluxQuery("test_metric");
+        String fluxQuery = getFluxQuery("test_metric_comma");
         whenGetMetricFromInfluxDb(fluxQuery).then()
             .statusCode(200)
             .body(containsString("comma_key"), containsString("comma_value"));
     }
 
     private void verifySpaceMetric() {
-        String fluxQuery = getFluxQuery("test_metric");
+        String fluxQuery = getFluxQuery("test_metric_space");
         whenGetMetricFromInfluxDb(fluxQuery).then()
             .statusCode(200)
             .body(containsString("space_key"), containsString("space_value"));
