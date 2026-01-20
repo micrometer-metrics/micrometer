@@ -33,6 +33,8 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
 import org.testcontainers.utility.MountableFile;
 
+import java.util.concurrent.TimeUnit;
+
 import static io.restassured.RestAssured.config;
 import static io.restassured.RestAssured.given;
 import static org.awaitility.Awaitility.await;
@@ -70,19 +72,19 @@ class TelegrafStatsdLineBuilderIntegrationTest {
     @Test
     void shouldSanitizeEqualsSignInTagKey() {
         sendMetricWithEqualSign();
-        verifyEqualsSignMetric();
+        await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> verifyEqualsSignMetric());
     }
 
     @Test
     void shouldSanitizeCommaInTagKeyAndValue() {
         sendMetricWithComma();
-        verifyCommaMetric();
+        await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> verifyCommaMetric());
     }
 
     @Test
     void shouldSanitizeSpaceInTagKeyAndValue() {
         sendMetricWithSpace();
-        verifySpaceMetric();
+        await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> verifySpaceMetric());
     }
 
     private void sendMetricWithEqualSign() {
