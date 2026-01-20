@@ -13,15 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.statsd.internal;
+package io.micrometer.statsd;
 
 import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.Counter;
-import io.micrometer.statsd.StatsdConfig;
-import io.micrometer.statsd.StatsdFlavor;
-import io.micrometer.statsd.StatsdMeterRegistry;
-import io.micrometer.statsd.StatsdProtocol;
 import io.restassured.config.EncoderConfig;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
@@ -74,37 +70,46 @@ class TelegrafStatsdLineBuilderIntegrationTest {
 
     @Issue("#6513")
     @Test
-    void shouldSanitizeEqualsSignInTagKey() throws InterruptedException {
+    void shouldSanitizeEqualsSignInTagKey() {
         sendMetricWithEqualSign();
         await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> verifyEqualsSignMetric());
     }
 
     @Test
-    void shouldSanitizeCommaInTagKeyAndValue() throws InterruptedException {
+    void shouldSanitizeCommaInTagKeyAndValue() {
         sendMetricWithComma();
         await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> verifyCommaMetric());
     }
 
     @Test
-    void shouldSanitizeSpaceInTagKeyAndValue() throws InterruptedException {
+    void shouldSanitizeSpaceInTagKeyAndValue() {
         sendMetricWithSpace();
         await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> verifySpaceMetric());
     }
 
-    private void sendMetricWithEqualSign() throws InterruptedException {
-        StatsdMeterRegistry registry = getStatsdMeterRegistry(5000);
+    private void sendMetricWithEqualSign() {
+        StatsdConfig statsdConfig = getStatsdConfig();
+        StatsdMeterRegistry registry = new StatsdMeterRegistry(statsdConfig, Clock.SYSTEM);
+        startRegistryAndWaitForClient(registry);
+
         Counter.builder("test=metric").tag("this=is=the", "tag=test").register(registry).increment();
         registry.close();
     }
 
-    private void sendMetricWithComma() throws InterruptedException {
-        StatsdMeterRegistry registry = getStatsdMeterRegistry(5000);
+    private void sendMetricWithComma() {
+        StatsdConfig statsdConfig = getStatsdConfig();
+        StatsdMeterRegistry registry = new StatsdMeterRegistry(statsdConfig, Clock.SYSTEM);
+        startRegistryAndWaitForClient(registry);
+
         Counter.builder("test,metric").tag("comma,key", "comma,value").register(registry).increment();
         registry.close();
     }
 
-    private void sendMetricWithSpace() throws InterruptedException {
-        StatsdMeterRegistry registry = getStatsdMeterRegistry(5000);
+    private void sendMetricWithSpace() {
+        StatsdConfig statsdConfig = getStatsdConfig();
+        StatsdMeterRegistry registry = new StatsdMeterRegistry(statsdConfig, Clock.SYSTEM);
+        startRegistryAndWaitForClient(registry);
+
         Counter.builder("test metric").tag("space key", "space value").register(registry).increment();
         registry.close();
     }
@@ -150,12 +155,13 @@ class TelegrafStatsdLineBuilderIntegrationTest {
             .post("/api/v2/query");
     }
 
-    private StatsdMeterRegistry getStatsdMeterRegistry(long registryWarmUpMs) throws InterruptedException {
-        StatsdConfig statsdConfig = getStatsdConfig();
-        StatsdMeterRegistry registry = new StatsdMeterRegistry(statsdConfig, Clock.SYSTEM);
-        Thread.sleep(registryWarmUpMs);
+    private void startRegistryAndWaitForClient(StatsdMeterRegistry meterRegistry) {
+        meterRegistry.start();
+        await().until(() -> !clientIsDisposed(meterRegistry));
+    }
 
-        return registry;
+    private boolean clientIsDisposed(StatsdMeterRegistry meterRegistry) {
+        return meterRegistry.statsdConnection.get().isDisposed();
     }
 
     private StatsdConfig getStatsdConfig() {
