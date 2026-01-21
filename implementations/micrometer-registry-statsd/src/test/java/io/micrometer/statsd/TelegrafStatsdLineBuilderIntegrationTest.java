@@ -72,19 +72,25 @@ class TelegrafStatsdLineBuilderIntegrationTest {
     @Test
     void shouldSanitizeEqualsSignInTagKey() {
         sendMetricWithEqualSign();
-        await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> verifyEqualsSignMetric());
+        await().alias("Telegraf flushing and InfluxDB ingestion")
+            .atMost(5, TimeUnit.SECONDS)
+            .untilAsserted(() -> verifyEqualsSignMetric());
     }
 
     @Test
     void shouldSanitizeCommaInTagKeyAndValue() {
         sendMetricWithComma();
-        await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> verifyCommaMetric());
+        await().alias("Telegraf flushing and InfluxDB ingestion")
+            .atMost(5, TimeUnit.SECONDS)
+            .untilAsserted(() -> verifyCommaMetric());
     }
 
     @Test
     void shouldSanitizeSpaceInTagKeyAndValue() {
         sendMetricWithSpace();
-        await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> verifySpaceMetric());
+        await().alias("Telegraf flushing and InfluxDB ingestion")
+            .atMost(5, TimeUnit.SECONDS)
+            .untilAsserted(() -> verifySpaceMetric());
     }
 
     private void sendMetricWithEqualSign() {
