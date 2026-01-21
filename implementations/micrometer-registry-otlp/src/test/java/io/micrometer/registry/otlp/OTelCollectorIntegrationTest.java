@@ -28,6 +28,8 @@ import org.testcontainers.utility.DockerImageName;
 
 import java.time.Duration;
 
+import static io.micrometer.registry.otlp.CompressionMode.GZIP;
+import static io.micrometer.registry.otlp.CompressionMode.NONE;
 import static io.restassured.RestAssured.given;
 import static org.awaitility.Awaitility.await;
 import static org.hamcrest.Matchers.*;
@@ -172,30 +174,15 @@ class OTelCollectorIntegrationTest {
 
     private OtlpMeterRegistry createOtlpMeterRegistryForContainerWithGzipCompression(GenericContainer<?> container)
             throws Exception {
-        return withEnvironmentVariables("OTEL_SERVICE_NAME", "test").execute(
-                () -> new OtlpMeterRegistry(createOtlpConfigForContainerWithGzipCompression(container), Clock.SYSTEM));
+        return withEnvironmentVariables("OTEL_SERVICE_NAME", "test")
+            .execute(() -> new OtlpMeterRegistry(createOtlpConfigForContainer(container, GZIP), Clock.SYSTEM));
     }
 
     private OtlpConfig createOtlpConfigForContainer(GenericContainer<?> container) {
-        return new OtlpConfig() {
-            @Override
-            public String url() {
-                return String.format("http://%s:%d/v1/metrics", container.getHost(), container.getMappedPort(4318));
-            }
-
-            @Override
-            public Duration step() {
-                return Duration.ofSeconds(1);
-            }
-
-            @Override
-            public @Nullable String get(String key) {
-                return null;
-            }
-        };
+        return createOtlpConfigForContainer(container, NONE);
     }
 
-    private OtlpConfig createOtlpConfigForContainerWithGzipCompression(GenericContainer<?> container) {
+    private OtlpConfig createOtlpConfigForContainer(GenericContainer<?> container, CompressionMode compressionMode) {
         return new OtlpConfig() {
             @Override
             public String url() {
@@ -209,7 +196,7 @@ class OTelCollectorIntegrationTest {
 
             @Override
             public CompressionMode compressionMode() {
-                return CompressionMode.GZIP;
+                return compressionMode;
             }
 
             @Override

@@ -164,7 +164,7 @@ public interface OtlpConfig extends PushRegistryConfig {
      * {@code OTEL_EXPORTER_OTLP_METRICS_COMPRESSION} when a value is not provided by
      * {@link #get(String)}. If both are set,
      * {@code OTEL_EXPORTER_OTLP_METRICS_COMPRESSION} takes precedence.
-     * @return the compressionMode; default is OFF
+     * @return the compressionMode; default is {@link CompressionMode#NONE}
      * @since 1.17.0
      */
     default CompressionMode compressionMode() {
