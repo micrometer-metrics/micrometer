@@ -16,6 +16,8 @@ dependencies {
 
     testImplementation libs.felixFramework
 
+    // JUnit needs to be an 'implementation' dependency instead of 'testImplementation' otherwise
+    // tests are not dicovered and executed (so the tests never fail), see: https://github.com/micrometer-metrics/micrometer/issues/7060
     implementation platform(libs.junitBom)
     implementation libs.junitJupiter
     testRuntimeOnly libs.junitPlatformLauncher
