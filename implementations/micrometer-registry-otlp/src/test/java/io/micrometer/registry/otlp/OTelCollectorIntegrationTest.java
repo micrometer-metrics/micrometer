@@ -118,9 +118,62 @@ class OTelCollectorIntegrationTest {
         // @formatter:on
     }
 
+    @Test
+    void collectorShouldExportMetricsWithGzipCompression() throws Exception {
+        MeterRegistry registry = createOtlpMeterRegistryForContainerWithGzipCompression(container);
+        Counter.builder("test.counter.gzip").register(registry).increment(42);
+        Gauge.builder("test.gauge.gzip", () -> 12).register(registry);
+        Timer.builder("test.timer.gzip").register(registry).record(Duration.ofMillis(123));
+        DistributionSummary.builder("test.ds.gzip").register(registry).record(24);
+
+        // @formatter:off
+        await().atMost(Duration.ofSeconds(5))
+            .pollDelay(Duration.ofMillis(100))
+            .pollInterval(Duration.ofMillis(100))
+            .untilAsserted(() -> whenPrometheusScraped().then()
+                    .statusCode(200)
+                    .contentType(OPENMETRICS_TEXT)
+                    .body(endsWith("# EOF\n"), not(startsWith("# EOF\n")))
+            );
+
+        // tags can vary depending on where you run your tests:
+        //  - IDE: no telemetry_sdk_version tag
+        //  - Gradle: telemetry_sdk_version has the version number
+        whenPrometheusScraped().then().body(
+            containsString("{job=\"test\",service_name=\"test\",telemetry_sdk_language=\"java\",telemetry_sdk_name=\"io.micrometer\""),
+
+            containsString("# HELP test_counter_gzip \n"),
+            containsString("# TYPE test_counter_gzip counter\n"),
+            matchesPattern("(?s)^.*test_counter_gzip_total\\{.+} 42\\.0\\n.*$"),
+
+            containsString("# HELP test_gauge_gzip \n"),
+            containsString("# TYPE test_gauge_gzip gauge\n"),
+            matchesPattern("(?s)^.*test_gauge_gzip\\{.+} 12\\.0\\n.*$"),
+
+            containsString("# HELP test_timer_gzip_milliseconds \n"),
+            containsString("# TYPE test_timer_gzip_milliseconds histogram\n"),
+            matchesPattern("(?s)^.*test_timer_gzip_milliseconds_count\\{.+} 1\\n.*$"),
+            matchesPattern("(?s)^.*test_timer_gzip_milliseconds_sum\\{.+} 123\\.0\\n.*$"),
+            matchesPattern("(?s)^.*test_timer_gzip_milliseconds_bucket\\{.+,le=\"\\+Inf\"} 1\\n.*$"),
+
+            containsString("# HELP test_ds_gzip \n"),
+            containsString("# TYPE test_ds_gzip histogram\n"),
+            matchesPattern("(?s)^.*test_ds_gzip_count\\{.+} 1\\n.*$"),
+            matchesPattern("(?s)^.*test_ds_gzip_sum\\{.+} 24\\.0\\n.*$"),
+            matchesPattern("(?s)^.*test_ds_gzip_bucket\\{.+,le=\"\\+Inf\"} 1\\n.*$")
+        );
+        // @formatter:on
+    }
+
     private OtlpMeterRegistry createOtlpMeterRegistryForContainer(GenericContainer<?> container) throws Exception {
         return withEnvironmentVariables("OTEL_SERVICE_NAME", "test")
             .execute(() -> new OtlpMeterRegistry(createOtlpConfigForContainer(container), Clock.SYSTEM));
+    }
+
+    private OtlpMeterRegistry createOtlpMeterRegistryForContainerWithGzipCompression(GenericContainer<?> container)
+            throws Exception {
+        return withEnvironmentVariables("OTEL_SERVICE_NAME", "test").execute(
+                () -> new OtlpMeterRegistry(createOtlpConfigForContainerWithGzipCompression(container), Clock.SYSTEM));
     }
 
     private OtlpConfig createOtlpConfigForContainer(GenericContainer<?> container) {
@@ -133,6 +186,30 @@ class OTelCollectorIntegrationTest {
             @Override
             public Duration step() {
                 return Duration.ofSeconds(1);
+            }
+
+            @Override
+            public @Nullable String get(String key) {
+                return null;
+            }
+        };
+    }
+
+    private OtlpConfig createOtlpConfigForContainerWithGzipCompression(GenericContainer<?> container) {
+        return new OtlpConfig() {
+            @Override
+            public String url() {
+                return String.format("http://%s:%d/v1/metrics", container.getHost(), container.getMappedPort(4318));
+            }
+
+            @Override
+            public Duration step() {
+                return Duration.ofSeconds(1);
+            }
+
+            @Override
+            public CompressionMode compressionMode() {
+                return CompressionMode.GZIP;
             }
 
             @Override

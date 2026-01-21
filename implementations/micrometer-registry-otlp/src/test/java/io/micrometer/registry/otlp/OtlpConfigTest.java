@@ -36,6 +36,7 @@ import static uk.org.webcompere.systemstubs.SystemStubs.withEnvironmentVariables
  *
  * @author Tommy Ludwig
  * @author Johnny Lim
+ * @author Tigran Kavanosyan
  */
 class OtlpConfigTest {
 
@@ -293,6 +294,66 @@ class OtlpConfigTest {
         OtlpConfig otlpConfig = properties::get;
         assertThat(otlpConfig.validate().isValid()).isTrue();
         assertThat(otlpConfig.maxBucketsPerMeter()).containsExactly(entry("a.b.c", 10));
+    }
+
+    @Test
+    void compressionModeDefault() {
+        Map<String, String> properties = new HashMap<>();
+
+        OtlpConfig otlpConfig = properties::get;
+        assertThat(otlpConfig.validate().isValid()).isTrue();
+        assertThat(otlpConfig.compressionMode()).isSameAs(CompressionMode.NONE);
+
+        properties.put("otlp.compressionMode", CompressionMode.NONE.name());
+        assertThat(otlpConfig.compressionMode()).isSameAs(CompressionMode.NONE);
+    }
+
+    @Test
+    void compressionModeOn() {
+        Map<String, String> properties = new HashMap<>();
+        properties.put("otlp.compressionMode", CompressionMode.GZIP.name());
+
+        OtlpConfig otlpConfig = properties::get;
+        assertThat(otlpConfig.validate().isValid()).isTrue();
+        assertThat(otlpConfig.compressionMode()).isSameAs(CompressionMode.GZIP);
+    }
+
+    @Test
+    void compressionModeConfigTakesPrecedenceOverEnvVars() throws Exception {
+        OtlpConfig config = k -> "GZIP";
+        withEnvironmentVariable("OTEL_EXPORTER_OTLP_METRICS_COMPRESSION", "NONE")
+            .execute(() -> assertThat(config.compressionMode()).isEqualTo(CompressionMode.GZIP));
+    }
+
+    @Test
+    void compressionModeUseEnvVarWhenConfigNotSet() throws Exception {
+        OtlpConfig config = k -> null;
+        withEnvironmentVariable("OTEL_EXPORTER_OTLP_METRICS_COMPRESSION", "GZIP")
+            .execute(() -> assertThat(config.compressionMode()).isEqualTo(CompressionMode.GZIP));
+    }
+
+    @Test
+    void compressionModeUseFallbackEnvVarWhenConfigNotSet() throws Exception {
+        OtlpConfig config = k -> null;
+        withEnvironmentVariable("OTEL_EXPORTER_OTLP_COMPRESSION", "GZIP")
+            .execute(() -> assertThat(config.compressionMode()).isEqualTo(CompressionMode.GZIP));
+    }
+
+    @Test
+    void compressionModeMetricsEnvVarTakesPrecedenceOverGenericEnvVar() throws Exception {
+        OtlpConfig config = k -> null;
+        withEnvironmentVariables().set("OTEL_EXPORTER_OTLP_COMPRESSION", "NONE")
+            .set("OTEL_EXPORTER_OTLP_METRICS_COMPRESSION", "GZIP")
+            .execute(() -> assertThat(config.compressionMode()).isEqualTo(CompressionMode.GZIP));
+    }
+
+    @Test
+    void invalidCompressionModeShouldBeCaptured() {
+        Map<String, String> properties = new HashMap<>();
+        properties.put("otlp.compressionMode", "some_random_thing");
+
+        OtlpConfig otlpConfig = properties::get;
+        assertThat(otlpConfig.validate().isValid()).isFalse();
     }
 
 }

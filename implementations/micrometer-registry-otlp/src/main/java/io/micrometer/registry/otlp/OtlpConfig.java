@@ -157,6 +157,31 @@ public interface OtlpConfig extends PushRegistryConfig {
     }
 
     /**
+     * {@link CompressionMode} of the OtlpMeterRegistry. This determines whether the
+     * metrics data should be compressed before being sent to the OTLP endpoint. Default
+     * implementation supports the environment variables
+     * {@code OTEL_EXPORTER_OTLP_COMPRESSION} and
+     * {@code OTEL_EXPORTER_OTLP_METRICS_COMPRESSION} when a value is not provided by
+     * {@link #get(String)}. If both are set,
+     * {@code OTEL_EXPORTER_OTLP_METRICS_COMPRESSION} takes precedence.
+     * @return the compressionMode; default is OFF
+     * @since 1.17.0
+     */
+    default CompressionMode compressionMode() {
+        return getEnum(this, CompressionMode.class, "compressionMode").orElseGet(() -> {
+            Map<String, String> env = System.getenv();
+            String compression = env.get("OTEL_EXPORTER_OTLP_METRICS_COMPRESSION");
+            if (compression == null) {
+                compression = env.get("OTEL_EXPORTER_OTLP_COMPRESSION");
+            }
+            if (compression != null) {
+                return CompressionMode.valueOf(compression.toUpperCase(Locale.ROOT));
+            }
+            return CompressionMode.NONE;
+        });
+    }
+
+    /**
      * Additional headers to send with exported metrics. This may be needed for
      * authorization headers, for example.
      * <p>
@@ -296,6 +321,7 @@ public interface OtlpConfig extends PushRegistryConfig {
                 check("resourceAttributes", OtlpConfig::resourceAttributes),
                 check("baseTimeUnit", OtlpConfig::baseTimeUnit),
                 check("aggregationTemporality", OtlpConfig::aggregationTemporality),
+                check("compressionMode", OtlpConfig::compressionMode),
                 check("histogramFlavorPerMeter", OtlpConfig::histogramFlavorPerMeter),
                 check("maxBucketsPerMeter", OtlpConfig::maxBucketsPerMeter));
     }

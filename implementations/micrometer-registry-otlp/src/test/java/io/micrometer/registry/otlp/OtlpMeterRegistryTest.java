@@ -167,6 +167,34 @@ abstract class OtlpMeterRegistryTest {
     }
 
     @Test
+    void compressionModeFromConfig() throws Exception {
+        OtlpConfig configWithCompressionOn = new OtlpConfig() {
+            @Override
+            public @Nullable String get(String key) {
+                return null;
+            }
+
+            @Override
+            public CompressionMode compressionMode() {
+                return CompressionMode.GZIP;
+            }
+        };
+
+        OtlpMetricsSender mockMetricsSender = mock(OtlpMetricsSender.class);
+        OtlpMeterRegistry registryWithCompression = OtlpMeterRegistry.builder(configWithCompressionOn)
+            .clock(clock)
+            .metricsSender(mockMetricsSender)
+            .build();
+
+        Counter.builder("test.counter").register(registryWithCompression).increment();
+        registryWithCompression.publish();
+
+        verify(mockMetricsSender).send(assertArg(request -> {
+            assertThat(request.getCompressionMode()).isEqualTo(CompressionMode.GZIP);
+        }));
+    }
+
+    @Test
     void distributionWithPercentileShouldWriteSummary() {
         Timer.Builder timer = Timer.builder("timer")
             .description(METER_DESCRIPTION)

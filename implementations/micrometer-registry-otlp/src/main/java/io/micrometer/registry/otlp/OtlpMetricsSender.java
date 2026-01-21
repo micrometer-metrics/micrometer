@@ -51,16 +51,21 @@ public interface OtlpMetricsSender {
 
         private final byte[] metricsData;
 
+        private final CompressionMode compressionMode;
+
         /**
          * Represents a payload of metrics to be sent.
          * @param address where to send the metrics
          * @param headers metadata to send as headers with the metrics data
          * @param metricsData OTLP protobuf encoded batch of metrics
+         * @param compressionMode compression mode for the metrics data
          */
-        private Request(@Nullable String address, Map<String, String> headers, byte[] metricsData) {
+        private Request(@Nullable String address, Map<String, String> headers, byte[] metricsData,
+                CompressionMode compressionMode) {
             this.address = address;
             this.headers = headers;
             this.metricsData = metricsData;
+            this.compressionMode = compressionMode;
         }
 
         public @Nullable String getAddress() {
@@ -75,10 +80,14 @@ public interface OtlpMetricsSender {
             return headers;
         }
 
+        public CompressionMode getCompressionMode() {
+            return compressionMode;
+        }
+
         @Override
         public String toString() {
-            return "OtlpMetricsSender.Request for address: " + address + ", headers: " + headers + ", metricsData: "
-                    + new String(metricsData, StandardCharsets.UTF_8);
+            return "OtlpMetricsSender.Request for address: " + address + ", headers: " + headers + ", compressionMode: "
+                    + compressionMode + ", metricsData: " + new String(metricsData, StandardCharsets.UTF_8);
         }
 
         /**
@@ -98,6 +107,8 @@ public interface OtlpMetricsSender {
 
             private Map<String, String> headers = Collections.emptyMap();
 
+            private CompressionMode compressionMode = CompressionMode.NONE;
+
             private Builder(byte[] metricsData) {
                 this.metricsData = Objects.requireNonNull(metricsData);
             }
@@ -112,8 +123,13 @@ public interface OtlpMetricsSender {
                 return this;
             }
 
+            public Builder compressionMode(CompressionMode compressionMode) {
+                this.compressionMode = compressionMode;
+                return this;
+            }
+
             public Request build() {
-                return new Request(address, headers, metricsData);
+                return new Request(address, headers, metricsData, compressionMode);
             }
 
         }
