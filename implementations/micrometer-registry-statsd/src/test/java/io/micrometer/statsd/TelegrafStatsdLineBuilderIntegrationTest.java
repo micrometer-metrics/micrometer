@@ -96,7 +96,7 @@ class TelegrafStatsdLineBuilderIntegrationTest {
     private void sendMetricWithEqualSign() {
         StatsdConfig statsdConfig = getStatsdConfig();
         StatsdMeterRegistry registry = new StatsdMeterRegistry(statsdConfig, Clock.SYSTEM);
-        startRegistryAndWaitForClient(registry);
+        waitForClientReady(registry);
 
         Counter.builder("test=metric=equal").tag("this=is=the", "tag=test").register(registry).increment();
         registry.close();
@@ -105,7 +105,7 @@ class TelegrafStatsdLineBuilderIntegrationTest {
     private void sendMetricWithComma() {
         StatsdConfig statsdConfig = getStatsdConfig();
         StatsdMeterRegistry registry = new StatsdMeterRegistry(statsdConfig, Clock.SYSTEM);
-        startRegistryAndWaitForClient(registry);
+        waitForClientReady(registry);
 
         Counter.builder("test,metric,comma").tag("comma,key", "comma,value").register(registry).increment();
         registry.close();
@@ -114,7 +114,7 @@ class TelegrafStatsdLineBuilderIntegrationTest {
     private void sendMetricWithSpace() {
         StatsdConfig statsdConfig = getStatsdConfig();
         StatsdMeterRegistry registry = new StatsdMeterRegistry(statsdConfig, Clock.SYSTEM);
-        startRegistryAndWaitForClient(registry);
+        waitForClientReady(registry);
 
         Counter.builder("test metric space").tag("space key", "space value").register(registry).increment();
         registry.close();
@@ -161,8 +161,7 @@ class TelegrafStatsdLineBuilderIntegrationTest {
             .post("/api/v2/query");
     }
 
-    private void startRegistryAndWaitForClient(StatsdMeterRegistry meterRegistry) {
-        meterRegistry.start();
+    private void waitForClientReady(StatsdMeterRegistry meterRegistry) {
         await().until(() -> !clientIsDisposed(meterRegistry));
     }
 
