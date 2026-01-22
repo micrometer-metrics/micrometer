@@ -21,6 +21,8 @@ import io.micrometer.core.instrument.Counter;
 import io.restassured.config.EncoderConfig;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
+import io.restassured.response.ValidatableResponse;
+import org.hamcrest.Matcher;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Tag;
@@ -33,11 +35,15 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
 import org.testcontainers.utility.MountableFile;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
 import static io.restassured.RestAssured.config;
 import static io.restassured.RestAssured.given;
 import static org.awaitility.Awaitility.await;
+import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.containsString;
 
 @Tag("docker")
@@ -46,9 +52,9 @@ class TelegrafStatsdLineBuilderIntegrationTest {
 
     private static final Network network = Network.newNetwork();
 
-    private static final DockerImageName INFLUXDB_IMAGE = DockerImageName.parse("influxdb:" + getInfluxDbImageVersion());
+    private static final DockerImageName INFLUXDB_IMAGE = DockerImageName.parse("influxdb:" + getImageVersion("influxdb-image.version"));
 
-    private static final DockerImageName TELEGRAF_IMAGE = DockerImageName.parse("telegraf:" + getTelegrafImageVersion());
+    private static final DockerImageName TELEGRAF_IMAGE = DockerImageName.parse("telegraf:" + getImageVersion("telegraf-image.version"));
 
     @Container
     static GenericContainer<?> influxDB = new GenericContainer<>(INFLUXDB_IMAGE)
@@ -72,20 +78,11 @@ class TelegrafStatsdLineBuilderIntegrationTest {
         .dependsOn(influxDB)
         .waitingFor(Wait.forLogMessage(".*Loaded inputs: statsd.*", 1));
 
-    private static String getInfluxDbImageVersion() {
-        String version = System.getProperty("influxdb-image.version");
+    private static String getImageVersion(String systemProperty) {
+        String version = System.getProperty(systemProperty);
         if (version == null) {
             throw new IllegalStateException(
-                "System property 'influxdb-image.version' is not set. This should be set in the build configuration for running from the command line. If you are running TelegrafStatsdLineBuilderIntegrationTest from an IDE, set the system property to the desired collector image version.");
-        }
-        return version;
-    }
-
-    private static String getTelegrafImageVersion() {
-        String version = System.getProperty("telegraf-image.version");
-        if (version == null) {
-            throw new IllegalStateException(
-                "System property 'telegraf-image.version' is not set. This should be set in the build configuration for running from the command line. If you are running TelegrafStatsdLineBuilderIntegrationTest from an IDE, set the system property to the desired collector image version.");
+                "System property '" + systemProperty + "' is not set. This should be set in the build configuration for running from the command line. If you are running TelegrafStatsdLineBuilderIntegrationTest from an IDE, set the system property to the desired collector image version.");
         }
         return version;
     }
@@ -93,74 +90,57 @@ class TelegrafStatsdLineBuilderIntegrationTest {
     @Issue("#6513")
     @Test
     void shouldSanitizeEqualsSignInTagKey() {
-        sendMetricWithEqualSign();
+        registerMeter(registry ->
+            Counter.builder("test=metric=equal").tag("this=is=the", "tag=test").register(registry).increment());
+
         await().alias("Telegraf flushing and InfluxDB ingestion")
             .atMost(5, TimeUnit.SECONDS)
-            .untilAsserted(() -> verifyEqualsSignMetric());
+            .untilAsserted(() ->
+                verifyMetric("test=metric=equal",
+                    containsString("this_is_the"), containsString("tag=test"))
+            );
     }
 
     @Test
     void shouldSanitizeCommaInTagKeyAndValue() {
-        sendMetricWithComma();
+        registerMeter(registry ->
+            Counter.builder("test,metric,comma")
+                .tag("comma,key", "comma,value").register(registry).increment()
+        );
+
         await().alias("Telegraf flushing and InfluxDB ingestion")
             .atMost(5, TimeUnit.SECONDS)
-            .untilAsserted(() -> verifyCommaMetric());
+            .untilAsserted(() ->
+                verifyMetric("test_metric_comma",
+                    containsString("comma_key"), containsString("comma_value"))
+            );
     }
 
     @Test
     void shouldSanitizeSpaceInTagKeyAndValue() {
-        sendMetricWithSpace();
+        registerMeter(registry ->
+            Counter.builder("test metric space").tag("space key", "space value").register(registry).increment());
+
         await().alias("Telegraf flushing and InfluxDB ingestion")
             .atMost(5, TimeUnit.SECONDS)
-            .untilAsserted(() -> verifySpaceMetric());
+            .untilAsserted(() ->
+                verifyMetric("test_metric_space",
+                    containsString("space_key"), containsString("space_value"))
+            );
     }
 
-    private void sendMetricWithEqualSign() {
+    private void registerMeter(Consumer<StatsdMeterRegistry> metricAction) {
         StatsdConfig statsdConfig = getStatsdConfig();
         StatsdMeterRegistry registry = new StatsdMeterRegistry(statsdConfig, Clock.SYSTEM);
         waitForClientReady(registry);
-
-        Counter.builder("test=metric=equal").tag("this=is=the", "tag=test").register(registry).increment();
+        metricAction.accept(registry);
         registry.close();
     }
 
-    private void sendMetricWithComma() {
-        StatsdConfig statsdConfig = getStatsdConfig();
-        StatsdMeterRegistry registry = new StatsdMeterRegistry(statsdConfig, Clock.SYSTEM);
-        waitForClientReady(registry);
-
-        Counter.builder("test,metric,comma").tag("comma,key", "comma,value").register(registry).increment();
-        registry.close();
-    }
-
-    private void sendMetricWithSpace() {
-        StatsdConfig statsdConfig = getStatsdConfig();
-        StatsdMeterRegistry registry = new StatsdMeterRegistry(statsdConfig, Clock.SYSTEM);
-        waitForClientReady(registry);
-
-        Counter.builder("test metric space").tag("space key", "space value").register(registry).increment();
-        registry.close();
-    }
-
-    private void verifyEqualsSignMetric() {
-        String fluxQuery = getFluxQuery("test=metric=equal");
-        whenGetMetricFromInfluxDb(fluxQuery).then()
+    private void verifyMetric(String expectedMetricName, Matcher<? super String>... expectedTags) {
+        whenGetMetricFromInfluxDb(getFluxQuery(expectedMetricName)).then()
             .statusCode(200)
-            .body(containsString("this_is_the"), containsString("tag=test"));
-    }
-
-    private void verifyCommaMetric() {
-        String fluxQuery = getFluxQuery("test_metric_comma");
-        whenGetMetricFromInfluxDb(fluxQuery).then()
-            .statusCode(200)
-            .body(containsString("comma_key"), containsString("comma_value"));
-    }
-
-    private void verifySpaceMetric() {
-        String fluxQuery = getFluxQuery("test_metric_space");
-        whenGetMetricFromInfluxDb(fluxQuery).then()
-            .statusCode(200)
-            .body(containsString("space_key"), containsString("space_value"));
+            .body(allOf(expectedTags));
     }
 
     private String getFluxQuery(String metricName) {
