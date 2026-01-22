@@ -53,7 +53,7 @@ class NoopObservationRegistryTests {
     void shouldNotRespectScopesIfNullRegistryIsUsed() {
         Observation observation = Observation.start("foo", null);
         then(observation.isNoop()).isTrue();
-        then(observation).isSameAs(NoopObservation.INSTANCE);
+        then(observation).isSameAs(Observation.NOOP);
     }
 
     @Test
@@ -64,11 +64,11 @@ class NoopObservationRegistryTests {
 
         Observation observation = Observation.start("foo", observationRegistry);
         then(observation.isNoop()).isTrue();
-        then(observation).isSameAs(NoopObservation.INSTANCE);
+        then(observation).isSameAs(Observation.NOOP);
         then(observationRegistry.getCurrentObservation()).isNull();
 
         try (Observation.Scope ignored = observation.openScope()) {
-            then(observationRegistry.getCurrentObservationScope()).isSameAs(Observation.Scope.NOOP);
+            then(observationRegistry.getCurrentObservationScope()).isNotNull().isSameAs(Observation.Scope.NOOP);
             then(observationRegistry.getCurrentObservation()).isNull();
             try (Observation.Scope ignored2 = observation.openScope()) {
                 then(observationRegistry.getCurrentObservationScope()).isSameAs(Observation.Scope.NOOP);
@@ -88,11 +88,11 @@ class NoopObservationRegistryTests {
 
         Observation observation = Observation.start("foo", observationRegistry);
         then(observation.isNoop()).isTrue();
-        then(observation).isSameAs(NoopObservation.INSTANCE);
+        then(observation).isSameAs(Observation.NOOP);
         then(observationRegistry.getCurrentObservation()).isNull();
 
         try (Observation.Scope ignored = observation.openScope()) {
-            then(observationRegistry.getCurrentObservationScope()).isSameAs(Observation.Scope.NOOP);
+            then(observationRegistry.getCurrentObservationScope()).isNotNull().isSameAs(Observation.Scope.NOOP);
             then(observationRegistry.getCurrentObservation()).isNull();
             try (Observation.Scope ignored2 = observation.openScope()) {
                 then(observationRegistry.getCurrentObservationScope()).isSameAs(Observation.Scope.NOOP);

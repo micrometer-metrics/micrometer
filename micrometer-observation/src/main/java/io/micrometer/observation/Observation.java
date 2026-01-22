@@ -52,7 +52,72 @@ public interface Observation extends ObservationView {
      * No-op observation. Do not use it to check if an Observation is no-op, use
      * {@code observation.isNoop()} instead.
      */
-    Observation NOOP = NoopObservation.INSTANCE;
+    Observation NOOP = new Observation() {
+
+        @Override
+        public Observation contextualName(@Nullable String contextualName) {
+            return this;
+        }
+
+        @Override
+        public Observation parentObservation(@Nullable Observation parentObservation) {
+            return this;
+        }
+
+        @Override
+        public Observation lowCardinalityKeyValue(KeyValue keyValue) {
+            return this;
+        }
+
+        @Override
+        public Observation lowCardinalityKeyValue(String key, String value) {
+            return this;
+        }
+
+        @Override
+        public Observation highCardinalityKeyValue(KeyValue keyValue) {
+            return this;
+        }
+
+        @Override
+        public Observation highCardinalityKeyValue(String key, String value) {
+            return this;
+        }
+
+        @Override
+        public Observation observationConvention(ObservationConvention<?> observationConvention) {
+            return this;
+        }
+
+        @Override
+        public Observation error(Throwable error) {
+            return this;
+        }
+
+        @Override
+        public Observation event(Event event) {
+            return this;
+        }
+
+        @Override
+        public Observation start() {
+            return this;
+        }
+
+        @Override
+        public Context getContext() {
+            return Context.EMPTY;
+        }
+
+        @Override
+        public void stop() {
+        }
+
+        @Override
+        public Scope openScope() {
+            return Scope.NOOP;
+        }
+    };
 
     /**
      * Create and start an {@link Observation} with the given name. All Observations of
@@ -122,7 +187,7 @@ public interface Observation extends ObservationView {
     static <T extends Context> Observation createNotStarted(String name, Supplier<T> contextSupplier,
             @Nullable ObservationRegistry registry) {
         if (registry == null || registry.isNoop()) {
-            return NoopObservation.INSTANCE;
+            return Observation.NOOP;
         }
         Context context = contextSupplier.get();
         context.setParentFromCurrentObservation(registry);
@@ -165,7 +230,7 @@ public interface Observation extends ObservationView {
             ObservationConvention<T> defaultConvention, Supplier<T> contextSupplier,
             @Nullable ObservationRegistry registry) {
         if (registry == null || registry.isNoop()) {
-            return NoopObservation.INSTANCE;
+            return Observation.NOOP;
         }
         ObservationConvention<T> convention;
         T context = contextSupplier.get();
@@ -310,7 +375,7 @@ public interface Observation extends ObservationView {
     static <T extends Context> Observation createNotStarted(ObservationConvention<T> observationConvention,
             Supplier<T> contextSupplier, ObservationRegistry registry) {
         if (registry == null || registry.isNoop()) {
-            return NoopObservation.INSTANCE;
+            return Observation.NOOP;
         }
         T context = contextSupplier.get();
         context.setParentFromCurrentObservation(registry);
@@ -416,7 +481,7 @@ public interface Observation extends ObservationView {
      * @return {@code true} when this is a no-op observation
      */
     default boolean isNoop() {
-        return this == NoopObservation.INSTANCE || this == NoopButScopeHandlingObservation.INSTANCE;
+        return this == Observation.NOOP || this == NoopButScopeHandlingObservation.INSTANCE;
     }
 
     /**
@@ -837,7 +902,24 @@ public interface Observation extends ObservationView {
         /**
          * No-op scope.
          */
-        Scope NOOP = NoopObservation.NoopScope.INSTANCE;
+        Scope NOOP = new Scope() {
+            @Override
+            public Observation getCurrentObservation() {
+                return Observation.NOOP;
+            }
+
+            @Override
+            public void close() {
+            }
+
+            @Override
+            public void reset() {
+            }
+
+            @Override
+            public void makeCurrent() {
+            }
+        };
 
         /**
          * Current observation available within this scope.
@@ -907,6 +989,8 @@ public interface Observation extends ObservationView {
      */
     @SuppressWarnings("unchecked")
     class Context implements ContextView {
+
+        static final Context EMPTY = new Context();
 
         private final Map<Object, Object> map = new ConcurrentHashMap<>();
 

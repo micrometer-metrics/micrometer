@@ -15,6 +15,9 @@
  */
 package io.micrometer.observation;
 
+import io.micrometer.common.KeyValue;
+import org.jspecify.annotations.Nullable;
+
 /**
  * No-op implementation of {@link Observation} except scope opening so that we can disable
  * the instrumentation for certain Observations but keep context-propagation working.
@@ -23,13 +26,72 @@ package io.micrometer.observation;
  * @author Tommy Ludwig
  * @author Marcin Grzejszczak
  */
-final class NoopButScopeHandlingObservation extends NoopObservation {
+final class NoopButScopeHandlingObservation implements Observation {
 
-    static final Observation INSTANCE = new NoopButScopeHandlingObservation();
+    static final NoopButScopeHandlingObservation INSTANCE = new NoopButScopeHandlingObservation();
+
+    @Override
+    public Observation contextualName(@Nullable String contextualName) {
+        return this;
+    }
+
+    @Override
+    public Observation parentObservation(@Nullable Observation parentObservation) {
+        return this;
+    }
+
+    @Override
+    public Observation lowCardinalityKeyValue(KeyValue keyValue) {
+        return this;
+    }
+
+    @Override
+    public Observation lowCardinalityKeyValue(String key, String value) {
+        return this;
+    }
+
+    @Override
+    public Observation highCardinalityKeyValue(KeyValue keyValue) {
+        return this;
+    }
+
+    @Override
+    public Observation highCardinalityKeyValue(String key, String value) {
+        return this;
+    }
+
+    @Override
+    public Observation observationConvention(ObservationConvention<?> observationConvention) {
+        return this;
+    }
+
+    @Override
+    public Observation error(Throwable error) {
+        return this;
+    }
+
+    @Override
+    public Observation event(Event event) {
+        return this;
+    }
+
+    @Override
+    public Observation start() {
+        return this;
+    }
+
+    @Override
+    public Context getContext() {
+        return Context.EMPTY;
+    }
+
+    @Override
+    public void stop() {
+    }
 
     @Override
     public Scope openScope() {
-        return new SimpleObservation.SimpleScope(NoopObservationRegistry.FOR_SCOPES, this);
+        return new SimpleObservation.SimpleScope(ObservationRegistry.NOOP, this);
     }
 
 }

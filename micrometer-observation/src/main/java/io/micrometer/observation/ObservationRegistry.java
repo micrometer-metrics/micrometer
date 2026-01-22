@@ -45,7 +45,27 @@ public interface ObservationRegistry {
     /**
      * No-op implementation of {@link ObservationRegistry}.
      */
-    ObservationRegistry NOOP = new NoopObservationRegistry();
+    ObservationRegistry NOOP = new ObservationRegistry() {
+        @Override
+        public @Nullable Observation getCurrentObservation() {
+            return SimpleObservationRegistry._getCurrentObservation();
+        }
+
+        @Override
+        public Observation.@Nullable Scope getCurrentObservationScope() {
+            return SimpleObservationRegistry._getCurrentObservationScope();
+        }
+
+        @Override
+        public void setCurrentObservationScope(Observation.@Nullable Scope current) {
+            SimpleObservationRegistry._setCurrentObservationScope(current);
+        }
+
+        @Override
+        public ObservationConfig observationConfig() {
+            return NoopObservationConfig.INSTANCE;
+        }
+    };
 
     /**
      * When previously set will allow to retrieve the {@link Observation} at any point in
