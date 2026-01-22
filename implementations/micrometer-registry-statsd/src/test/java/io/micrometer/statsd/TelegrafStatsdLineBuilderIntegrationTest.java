@@ -46,8 +46,12 @@ class TelegrafStatsdLineBuilderIntegrationTest {
 
     private static final Network network = Network.newNetwork();
 
+    private static final DockerImageName INFLUXDB_IMAGE = DockerImageName.parse("influxdb:" + getInfluxDbImageVersion());
+
+    private static final DockerImageName TELEGRAF_IMAGE = DockerImageName.parse("telegraf:" + getTelegrafImageVersion());
+
     @Container
-    static GenericContainer<?> influxDB = new GenericContainer<>(DockerImageName.parse("influxdb:latest"))
+    static GenericContainer<?> influxDB = new GenericContainer<>(INFLUXDB_IMAGE)
         .withNetwork(network)
         .withNetworkAliases("influxdb")
         .withExposedPorts(8086)
@@ -60,13 +64,31 @@ class TelegrafStatsdLineBuilderIntegrationTest {
         .waitingFor(Wait.forHttp("/ping").forStatusCode(204));
 
     @Container
-    static GenericContainer<?> telegraf = new GenericContainer<>(DockerImageName.parse("telegraf:latest"))
+    static GenericContainer<?> telegraf = new GenericContainer<>(TELEGRAF_IMAGE)
         .withNetwork(network)
         .withExposedPorts(8125)
-        .withCopyFileToContainer(MountableFile.forClasspathResource("telegraf-test.conf"),
+        .withCopyFileToContainer(MountableFile.forClasspathResource("telegraf.conf"),
                 "/etc/telegraf/telegraf.conf")
         .dependsOn(influxDB)
         .waitingFor(Wait.forLogMessage(".*Loaded inputs: statsd.*", 1));
+
+    private static String getInfluxDbImageVersion() {
+        String version = System.getProperty("influxdb-image.version");
+        if (version == null) {
+            throw new IllegalStateException(
+                "System property 'influxdb-image.version' is not set. This should be set in the build configuration for running from the command line. If you are running TelegrafStatsdLineBuilderIntegrationTest from an IDE, set the system property to the desired collector image version.");
+        }
+        return version;
+    }
+
+    private static String getTelegrafImageVersion() {
+        String version = System.getProperty("telegraf-image.version");
+        if (version == null) {
+            throw new IllegalStateException(
+                "System property 'telegraf-image.version' is not set. This should be set in the build configuration for running from the command line. If you are running TelegrafStatsdLineBuilderIntegrationTest from an IDE, set the system property to the desired collector image version.");
+        }
+        return version;
+    }
 
     @Issue("#6513")
     @Test
