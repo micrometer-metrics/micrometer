@@ -34,12 +34,15 @@ class NoopObservationRegistryTests {
         then(observation).isSameAs(NoopButScopeHandlingObservation.INSTANCE);
         then(observationRegistry.getCurrentObservation()).isNull();
 
-        try (Observation.Scope scope = observation.openScope()) {
-            then(observationRegistry.getCurrentObservationScope()).isSameAs(scope);
+        try (Observation.Scope scope1 = observation.openScope()) {
+            then(scope1.isNoop()).isFalse();
+            then(observationRegistry.getCurrentObservationScope()).isSameAs(scope1);
+            then(observationRegistry.getCurrentObservationScope().getPreviousObservationScope()).isNull();
             then(observationRegistry.getCurrentObservation()).isSameAs(observation);
             try (Observation.Scope scope2 = observation.openScope()) {
+                then(scope2.isNoop()).isFalse();
                 then(observationRegistry.getCurrentObservationScope()).isSameAs(scope2);
-                then(observationRegistry.getCurrentObservationScope().getPreviousObservationScope()).isSameAs(scope);
+                then(observationRegistry.getCurrentObservationScope().getPreviousObservationScope()).isSameAs(scope1);
                 then(observationRegistry.getCurrentObservation()).isSameAs(observation);
             }
             then(observationRegistry.getCurrentObservation()).isSameAs(observation);
@@ -67,11 +70,15 @@ class NoopObservationRegistryTests {
         then(observation).isSameAs(Observation.NOOP);
         then(observationRegistry.getCurrentObservation()).isNull();
 
-        try (Observation.Scope ignored = observation.openScope()) {
-            then(observationRegistry.getCurrentObservationScope()).isNotNull().isSameAs(Observation.Scope.NOOP);
+        try (Observation.Scope scope1 = observation.openScope()) {
+            then(scope1.isNoop()).isTrue();
+            then(scope1).isSameAs(Observation.Scope.NOOP);
+            then(observationRegistry.getCurrentObservationScope()).isNull();
             then(observationRegistry.getCurrentObservation()).isNull();
-            try (Observation.Scope ignored2 = observation.openScope()) {
-                then(observationRegistry.getCurrentObservationScope()).isSameAs(Observation.Scope.NOOP);
+            try (Observation.Scope scope2 = observation.openScope()) {
+                then(scope2.isNoop()).isTrue();
+                then(scope2).isSameAs(Observation.Scope.NOOP);
+                then(observationRegistry.getCurrentObservationScope()).isNull();
                 then(observationRegistry.getCurrentObservation()).isNull();
             }
             then(observationRegistry.getCurrentObservation()).isNull();
@@ -91,11 +98,15 @@ class NoopObservationRegistryTests {
         then(observation).isSameAs(Observation.NOOP);
         then(observationRegistry.getCurrentObservation()).isNull();
 
-        try (Observation.Scope ignored = observation.openScope()) {
-            then(observationRegistry.getCurrentObservationScope()).isNotNull().isSameAs(Observation.Scope.NOOP);
+        try (Observation.Scope scope1 = observation.openScope()) {
+            then(scope1.isNoop()).isTrue();
+            then(scope1).isSameAs(Observation.Scope.NOOP);
+            then(observationRegistry.getCurrentObservationScope()).isNull();
             then(observationRegistry.getCurrentObservation()).isNull();
-            try (Observation.Scope ignored2 = observation.openScope()) {
-                then(observationRegistry.getCurrentObservationScope()).isSameAs(Observation.Scope.NOOP);
+            try (Observation.Scope scope2 = observation.openScope()) {
+                then(scope2.isNoop()).isTrue();
+                then(scope2).isSameAs(Observation.Scope.NOOP);
+                then(observationRegistry.getCurrentObservationScope()).isNull();
                 then(observationRegistry.getCurrentObservation()).isNull();
             }
             then(observationRegistry.getCurrentObservation()).isNull();
