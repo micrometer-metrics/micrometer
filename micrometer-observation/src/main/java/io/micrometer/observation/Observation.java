@@ -52,6 +52,7 @@ public interface Observation extends ObservationView {
      * No-op observation. Do not use it to check if an Observation is no-op, use
      * {@code observation.isNoop()} instead.
      */
+    // intentionally anonymous to avoid introducing circular initialization issues
     Observation NOOP = new Observation() {
 
         @Override
@@ -902,6 +903,7 @@ public interface Observation extends ObservationView {
         /**
          * No-op scope.
          */
+        // intentionally anonymous to avoid introducing circular initialization issues
         Scope NOOP = new Scope() {
             @Override
             public Observation getCurrentObservation() {
@@ -990,6 +992,7 @@ public interface Observation extends ObservationView {
     @SuppressWarnings("unchecked")
     class Context implements ContextView {
 
+        // TODO make an unmodifiable implementation
         static final Context EMPTY = new Context();
 
         private final Map<Object, Object> map = new ConcurrentHashMap<>();

@@ -45,6 +45,7 @@ public interface ObservationRegistry {
     /**
      * No-op implementation of {@link ObservationRegistry}.
      */
+    // intentionally anonymous to avoid introducing circular initialization issues
     ObservationRegistry NOOP = new ObservationRegistry() {
         @Override
         public @Nullable Observation getCurrentObservation() {
