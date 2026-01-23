@@ -157,13 +157,16 @@ public interface OtlpConfig extends PushRegistryConfig {
     }
 
     /**
-     * {@link CompressionMode} of the OtlpMeterRegistry. This determines whether the
-     * metrics data should be compressed before being sent to the OTLP endpoint. Default
-     * implementation supports the environment variables
+     * {@link CompressionMode} of the metrics payload. This determines whether the metrics
+     * data should be compressed before being sent to the configured OTLP endpoint.
+     * Default implementation supports the environment variables
      * {@code OTEL_EXPORTER_OTLP_COMPRESSION} and
      * {@code OTEL_EXPORTER_OTLP_METRICS_COMPRESSION} when a value is not provided by
      * {@link #get(String)}. If both are set,
-     * {@code OTEL_EXPORTER_OTLP_METRICS_COMPRESSION} takes precedence.
+     * {@code OTEL_EXPORTER_OTLP_METRICS_COMPRESSION} takes precedence. Note, it is up to
+     * the implementation of the {@link OtlpMetricsSender} to support compression. The
+     * default sender ({@link OtlpHttpMetricsSender}) supports compression. If the sender
+     * does not support using this configuration, it will be ignored.
      * @return the compressionMode; default is {@link CompressionMode#NONE}
      * @since 1.17.0
      */
