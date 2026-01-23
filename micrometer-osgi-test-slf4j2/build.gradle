@@ -22,8 +22,10 @@ dependencies {
 
     testImplementation libs.felixFramework
 
-    testImplementation platform(libs.junitBom)
-    testImplementation libs.junitJupiter
+    // JUnit needs to be an 'implementation' dependency instead of 'testImplementation' otherwise
+    // tests are not discovered and executed (so the tests never fail), see: https://github.com/micrometer-metrics/micrometer/issues/7060
+    implementation platform(libs.junitBom)
+    implementation libs.junitJupiter
     testRuntimeOnly libs.junitPlatformLauncher
 
     testRuntimeOnly libs.felixScr
@@ -49,8 +51,6 @@ def resolveTask = tasks.register("resolve", Resolve) {
     bndrun = file("test.bndrun")
     outputBndrun = layout.buildDirectory.file("resolved-test.bndrun")
 }
-
-
 
 tasks.register("testOSGi", TestOSGi) {
     group = "verification"
