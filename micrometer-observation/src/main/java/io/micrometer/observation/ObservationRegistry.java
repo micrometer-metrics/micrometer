@@ -45,8 +45,28 @@ public interface ObservationRegistry {
     /**
      * No-op implementation of {@link ObservationRegistry}.
      */
-    @SuppressWarnings("ClassInitializationDeadlock")
-    ObservationRegistry NOOP = new NoopObservationRegistry();
+    // intentionally anonymous to avoid introducing circular initialization issues
+    ObservationRegistry NOOP = new ObservationRegistry() {
+        @Override
+        public @Nullable Observation getCurrentObservation() {
+            return SimpleObservationRegistry._getCurrentObservation();
+        }
+
+        @Override
+        public Observation.@Nullable Scope getCurrentObservationScope() {
+            return SimpleObservationRegistry._getCurrentObservationScope();
+        }
+
+        @Override
+        public void setCurrentObservationScope(Observation.@Nullable Scope current) {
+            SimpleObservationRegistry._setCurrentObservationScope(current);
+        }
+
+        @Override
+        public ObservationConfig observationConfig() {
+            return NoopObservationConfig.INSTANCE;
+        }
+    };
 
     /**
      * When previously set will allow to retrieve the {@link Observation} at any point in

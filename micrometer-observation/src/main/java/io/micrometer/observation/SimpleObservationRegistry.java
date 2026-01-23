@@ -27,12 +27,16 @@ import org.jspecify.annotations.Nullable;
  */
 class SimpleObservationRegistry implements ObservationRegistry {
 
-    private static final ThreadLocal<Observation.Scope> localObservationScope = new ThreadLocal<>();
+    private static final ThreadLocal<Observation.@Nullable Scope> localObservationScope = new ThreadLocal<>();
 
     private final ObservationConfig observationConfig = new ObservationConfig();
 
     @Override
     public @Nullable Observation getCurrentObservation() {
+        return _getCurrentObservation();
+    }
+
+    static @Nullable Observation _getCurrentObservation() {
         Observation.Scope scope = localObservationScope.get();
         if (scope != null) {
             return scope.getCurrentObservation();
@@ -41,12 +45,20 @@ class SimpleObservationRegistry implements ObservationRegistry {
     }
 
     @Override
-    public Observation.Scope getCurrentObservationScope() {
+    public Observation.@Nullable Scope getCurrentObservationScope() {
+        return _getCurrentObservationScope();
+    }
+
+    static Observation.@Nullable Scope _getCurrentObservationScope() {
         return localObservationScope.get();
     }
 
     @Override
     public void setCurrentObservationScope(Observation.@Nullable Scope current) {
+        _setCurrentObservationScope(current);
+    }
+
+    static void _setCurrentObservationScope(Observation.@Nullable Scope current) {
         localObservationScope.set(current);
     }
 
