@@ -72,7 +72,7 @@ class TelegrafStatsdLineBuilderIntegrationTest {
         .withExposedPorts(8125)
         .withCopyFileToContainer(MountableFile.forClasspathResource("telegraf.conf"), "/etc/telegraf/telegraf.conf")
         .dependsOn(influxDB)
-        .waitingFor(Wait.forLogMessage(".*Loaded inputs: statsd.*", 1));
+        .waitingFor(Wait.forListeningPorts(8125));
 
     private static String getImageVersion(String systemProperty) {
         String version = System.getProperty(systemProperty);
