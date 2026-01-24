@@ -48,6 +48,8 @@ import static org.hamcrest.CoreMatchers.containsString;
 @Testcontainers
 class TelegrafStatsdLineBuilderIntegrationTest {
 
+    // Required to resolve the InfluxDB port,
+    // as the mapped port is unknown during static initialization.
     private static final Network network = Network.newNetwork();
 
     private static final DockerImageName INFLUXDB_IMAGE = DockerImageName
