@@ -24,6 +24,7 @@ import io.restassured.response.Response;
 import org.hamcrest.Matcher;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.testcontainers.containers.GenericContainer;
@@ -54,6 +55,11 @@ class TelegrafStatsdLineBuilderIntegrationTest {
 
     private static final DockerImageName TELEGRAF_IMAGE = DockerImageName
         .parse("telegraf:" + getImageVersion("telegraf-image.version"));
+
+    @AfterAll
+    static void tearDown() {
+        network.close();
+    }
 
     @Container
     static GenericContainer<?> influxDB = new GenericContainer<>(INFLUXDB_IMAGE).withNetwork(network)
