@@ -39,7 +39,7 @@ dependencies {
     testImplementation libs.javax.cacheApi
     testImplementation libs.jakarta.jmsApi
     // hard-coded to last hazelcast version to support Java 11
-    testImplementation("com.hazelcast:hazelcast:5.3.8")
+    testImplementation("com.hazelcast:hazelcast:5.6.0")
     testImplementation libs.okhttp
     testImplementation libs.httpcomponents.client
     testImplementation libs.httpcomponents.async
