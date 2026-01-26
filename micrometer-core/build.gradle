@@ -114,7 +114,8 @@ dependencies {
     optionalApi libs.caffeine
     optionalApi libs.ehcache2
     optionalApi libs.javax.cacheApi
-    optionalApi libs.hazelcast
+    // hard-coded to last hazelcast version to support Java 11
+    optionalApi("com.hazelcast:hazelcast:5.3.8")
     optionalApi libs.hibernateEntitymanager
 
     // server runtime monitoring

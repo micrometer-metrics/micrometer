@@ -2,8 +2,27 @@ plugins {
     id 'java'
 }
 
+// Latest version of Hazelcast requires Java 17
+if (!javaLanguageVersion.canCompileOrRun(17)) {
+    project.tasks.configureEach { task -> task.enabled = false }
+}
+
 dependencies {
     implementation project(':micrometer-core')
     implementation libs.hazelcast
     implementation libs.logback12
+
+    testImplementation(project(":micrometer-test"))
+    testImplementation(platform(libs.junitBom))
+    testImplementation(libs.junitJupiter)
+}
+
+java {
+    targetCompatibility = JavaVersion.VERSION_17
+}
+
+compileJava {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+    options.release = 17
 }
