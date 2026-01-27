@@ -33,7 +33,7 @@ import org.testcontainers.utility.DockerImageName;
 abstract class AbstractMongoDbTest {
 
     @Container
-    private final MongoDBContainer mongoDBContainer = new MongoDBContainer(DockerImageName.parse("mongo:4.0.10"));
+    private final MongoDBContainer mongoDBContainer = new MongoDBContainer(DockerImageName.parse("mongo:8.2.3"));
 
     String host;
 
