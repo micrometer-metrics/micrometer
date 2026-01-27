@@ -23,6 +23,7 @@ import org.jspecify.annotations.Nullable;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public class TelegrafStatsdLineBuilder extends FlavorStatsdLineBuilder {
@@ -38,6 +39,16 @@ public class TelegrafStatsdLineBuilder extends FlavorStatsdLineBuilder {
     private volatile String tagsNoStat;
 
     private final ConcurrentMap<Statistic, String> tags = new ConcurrentHashMap<>();
+
+    // Telegraf handles escaping for Line Protocol;
+    // sanitize only characters that break StatsD/Telegraf parsing.
+    // '=' is preserved in values to support use cases like query strings.
+    private static final Pattern SANITIZE_PATTERN = Pattern.compile("[\\s,:]");
+
+    // Telegraf identifies tags by the first '=',
+    // so sanitize '=' in keys to prevent parsing errors.
+    // See: https://github.com/micrometer-metrics/micrometer/issues/6513
+    private static final Pattern SANITIZE_KEY_PATTERN = Pattern.compile("[\\s,:=]");
 
     public TelegrafStatsdLineBuilder(Meter.Id id, MeterRegistry.Config config) {
         super(id, config);
@@ -73,12 +84,12 @@ public class TelegrafStatsdLineBuilder extends FlavorStatsdLineBuilder {
     private @Nullable String createConventionTags(NamingConvention namingConvention) {
         return id.getTagsAsIterable().iterator().hasNext() ? id.getConventionTags(namingConvention)
             .stream()
-            .map(t -> telegrafEscape(t.getKey()) + "=" + telegrafEscape(t.getValue()))
+            .map(t -> telegrafSanitizeKey(t.getKey()) + "=" + telegrafSanitize(t.getValue()))
             .collect(Collectors.joining(",")) : null;
     }
 
     private String createName(NamingConvention namingConvention) {
-        return telegrafEscape(namingConvention.name(id.getName(), id.getType(), id.getBaseUnit()));
+        return telegrafSanitize(namingConvention.name(id.getName(), id.getType(), id.getBaseUnit()));
     }
 
     private String createTagsNoStat(@Nullable String conventionTags) {
@@ -98,16 +109,12 @@ public class TelegrafStatsdLineBuilder extends FlavorStatsdLineBuilder {
         }
     }
 
-    /**
-     * Backslash escape '=' works fine.
-     * <p>
-     * Trying to escape spaces and commas causes the rest of the name to be dropped by
-     * telegraf. Trying to escape colons doesn't work. All of these must be replaced.
-     */
-    // backslash escape =
-    // trying to escape spaces and comma drops everything after that
-    private String telegrafEscape(String value) {
-        return value.replaceAll("[\\s,:]", "_");
+    private String telegrafSanitize(String value) {
+        return SANITIZE_PATTERN.matcher(value).replaceAll("_");
+    }
+
+    private String telegrafSanitizeKey(String key) {
+        return SANITIZE_KEY_PATTERN.matcher(key).replaceAll("_");
     }
 
 }
