@@ -167,7 +167,7 @@ class PrometheusMeterRegistryIntegrationTest {
             .get("/api/v1/status/buildinfo")
         .then()
             .body("status", equalTo("success"))
-            .body("data.version", startsWith("2."))
+            .body("data.version", startsWith("3."))
             .statusCode(200);
         // @formatter:on
     }

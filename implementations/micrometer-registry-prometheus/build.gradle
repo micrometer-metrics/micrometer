@@ -20,5 +20,5 @@ dependencies {
 }
 
 dockerTest {
-    systemProperty 'prometheus.version', 'v2.55.1'
+    systemProperty 'prometheus.version', 'v3.5.1'
 }
