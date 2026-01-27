@@ -47,7 +47,7 @@ abstract class AbstractElasticsearchMeterRegistryIntegrationTest {
     // https://www.elastic.co/guide/en/elasticsearch/reference/7.8/index-templates.html
     protected static final String VERSION_7 = "7.7.1";
 
-    protected static final String VERSION_8 = "8.6.2";
+    protected static final String VERSION_8 = "8.19.10";
 
     protected static final String USER = "elastic";
 
