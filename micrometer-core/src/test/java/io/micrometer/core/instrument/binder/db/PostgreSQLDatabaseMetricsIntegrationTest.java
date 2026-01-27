@@ -156,7 +156,7 @@ class PostgreSQLDatabaseMetricsIntegrationTest {
     }
 
     private static DockerImageName getDockerImageName() {
-        return DockerImageName.parse("postgres:9.6.24");
+        return DockerImageName.parse("postgres:18.1");
     }
 
 }
