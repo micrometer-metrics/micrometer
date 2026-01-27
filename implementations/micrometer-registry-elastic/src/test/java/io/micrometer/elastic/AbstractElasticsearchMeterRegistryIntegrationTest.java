@@ -49,6 +49,8 @@ abstract class AbstractElasticsearchMeterRegistryIntegrationTest {
 
     protected static final String VERSION_8 = "8.19.10";
 
+    protected static final String VERSION_9 = "9.2.4";
+
     protected static final String USER = "elastic";
 
     protected static final String PASSWORD = "changeme";
