@@ -273,6 +273,9 @@ subprojects {
         }
 
         tasks.withType(Test).configureEach {
+            // https://docs.gradle.org/current/userguide/upgrading_major_version_9.html#test_tasks_may_no_longer_execute_expected_tests
+            testClassesDirs = testing.suites.test.sources.output.classesDirs
+            classpath = testing.suites.test.sources.runtimeClasspath
             testLogging.exceptionFormat = 'full'
             develocity.testRetry {
                 maxFailures = 5
