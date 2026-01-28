@@ -26,12 +26,9 @@ import org.postgresql.ds.PGSimpleDataSource;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
-import org.testcontainers.utility.DockerImageName;
 
 import javax.sql.DataSource;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
+import java.sql.*;
 import java.util.Arrays;
 import java.util.List;
 
@@ -39,14 +36,25 @@ import static io.micrometer.core.instrument.binder.db.PostgreSQLDatabaseMetrics.
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
+ * Integration tests for {@link PostgreSQLDatabaseMetrics}.
+ *
  * @author Markus Dobel
+ * @author Jonatan Ivanov
  */
 @Testcontainers
 @Tag("docker")
-class PostgreSQLDatabaseMetricsIntegrationTest {
+abstract class AbstractPostgreSQLDatabaseMetricsIntegrationTest {
+
+    protected static final String VERSION_14 = "14.20";
+
+    protected static final String VERSION_18 = "18.1";
+
+    // statistics are updated only every PGSTAT_STAT_INTERVAL, which is 500ms.
+    // Add a bit for stable tests.
+    private static final long PGSTAT_STAT_INTERVAL = 500L + 50L;
 
     @Container
-    private final PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>(getDockerImageName());
+    private final PostgreSQLContainer<?> postgres = getContainer();
 
     private final MeterRegistry registry = new SimpleMeterRegistry();
 
@@ -54,9 +62,7 @@ class PostgreSQLDatabaseMetricsIntegrationTest {
 
     private Tags tags;
 
-    // statistics are updated only every PGSTAT_STAT_INTERVAL, which is 500ms. Add a bit
-    // for stable tests.
-    private static final long PGSTAT_STAT_INTERVAL = 500L + 50L;
+    protected abstract String getImageVersion();
 
     @BeforeEach
     void setup() {
@@ -128,6 +134,18 @@ class PostgreSQLDatabaseMetricsIntegrationTest {
         assertThat(get(ROWS_DEAD).gauge().value()).isGreaterThan(deadRowsBefore);
     }
 
+    @Test
+    void versionsShouldMatch() throws SQLException {
+        try (Connection connection = dataSource.getConnection()) {
+            try (PreparedStatement statement = connection.prepareStatement("SHOW server_version")) {
+                // auto-closed by the statement
+                ResultSet resultSet = statement.executeQuery();
+                assertThat(resultSet.next()).isTrue();
+                assertThat(resultSet.getString("server_version")).startsWith(getImageVersion());
+            }
+        }
+    }
+
     private DataSource createDataSource() {
         final PGSimpleDataSource dataSource = new PGSimpleDataSource();
         dataSource.setURL(postgres.getJdbcUrl());
@@ -155,8 +173,12 @@ class PostgreSQLDatabaseMetricsIntegrationTest {
         return registry.get(name).tags(tags);
     }
 
-    private static DockerImageName getDockerImageName() {
-        return DockerImageName.parse("postgres:18.1");
+    private PostgreSQLContainer<?> getContainer() {
+        return new PostgreSQLContainer<>(getDockerImageName(getImageVersion()));
+    }
+
+    private static String getDockerImageName(String version) {
+        return "postgres:" + version;
     }
 
 }
