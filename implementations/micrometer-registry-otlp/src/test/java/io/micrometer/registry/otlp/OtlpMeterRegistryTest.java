@@ -839,8 +839,8 @@ abstract class OtlpMeterRegistryTest {
 
     protected List<Metric> writeToMetrics(Meter meter) {
         OtlpMetricConverter otlpMetricConverter = new OtlpMetricConverter(clock, otlpConfig().step(),
-                registry.getBaseTimeUnit(), otlpConfig().aggregationTemporality(),
-                registry.config().namingConvention());
+                registry.getBaseTimeUnit(), otlpConfig().aggregationTemporality(), registry.config().namingConvention(),
+                otlpConfig().publishMaxGaugeForHistograms());
         otlpMetricConverter.addMeter(meter);
         return otlpMetricConverter.getAllMetrics();
 
@@ -848,8 +848,8 @@ abstract class OtlpMeterRegistryTest {
 
     protected List<Metric> writeAllMeters() {
         OtlpMetricConverter otlpMetricConverter = new OtlpMetricConverter(clock, otlpConfig().step(),
-                registry.getBaseTimeUnit(), otlpConfig().aggregationTemporality(),
-                registry.config().namingConvention());
+                registry.getBaseTimeUnit(), otlpConfig().aggregationTemporality(), registry.config().namingConvention(),
+                otlpConfig().publishMaxGaugeForHistograms());
         otlpMetricConverter.addMeters(registry.getMeters());
         return otlpMetricConverter.getAllMetrics();
     }
@@ -882,15 +882,14 @@ abstract class OtlpMeterRegistryTest {
                 assertThat(histogram.getMax()).isEqualTo(max);
             }
 
-            if (consumer != null) {
-                consumer.accept(histogram);
-            }
+            consumer.accept(histogram);
         });
     }
 
     protected void assertHistogram(List<Metric> metrics, long startTime, long endTime, String unit, long count,
             double sum, double max) {
-        assertHistogram(metrics, startTime, endTime, unit, count, sum, max, null);
+        assertHistogram(metrics, startTime, endTime, unit, count, sum, max, histogramDataPoint -> {
+        });
     }
 
     protected void assertSum(Metric metric, long startTime, long endTime, double expectedValue) {

@@ -276,6 +276,18 @@ public interface OtlpConfig extends PushRegistryConfig {
     }
 
     /**
+     * Whether to publish a separate gauge for the max value of histogram-based meters
+     * (Timer, DistributionSummary, LongTaskTimer). When enabled, a gauge with the suffix
+     * {@code .max} will be created for each histogram meter, reporting the maximum value
+     * from the histogram snapshot.
+     * @return true if max gauge should be published; default is true
+     * @since 1.16.3
+     */
+    default boolean publishMaxGaugeForHistograms() {
+        return getBoolean(this, "publishMaxGaugeForHistograms").orElse(true);
+    }
+
+    /**
      * Max scale to use for exponential histograms, if configured.
      * @return maxScale
      * @see #histogramFlavor()

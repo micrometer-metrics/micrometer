@@ -45,7 +45,7 @@ class OtlpMetricConverterTest {
     void setUp() {
         mockClock = new MockClock();
         otlpMetricConverter = new OtlpMetricConverter(mockClock, STEP, TimeUnit.MILLISECONDS,
-                AggregationTemporality.CUMULATIVE, NamingConvention.dot);
+                AggregationTemporality.CUMULATIVE, NamingConvention.dot, true);
         otlpMeterRegistry = new OtlpMeterRegistry(OtlpConfig.DEFAULT, mockClock);
     }
 
@@ -178,7 +178,7 @@ class OtlpMetricConverterTest {
             .register(otlpMeterRegistry);
 
         OtlpMetricConverter otlpMetricConverter = new OtlpMetricConverter(mockClock, Duration.ofMillis(1),
-                TimeUnit.MILLISECONDS, AggregationTemporality.CUMULATIVE, NamingConvention.snakeCase);
+                TimeUnit.MILLISECONDS, AggregationTemporality.CUMULATIVE, NamingConvention.snakeCase, true);
         otlpMetricConverter.addMeter(gauge);
 
         assertThat(otlpMetricConverter.getAllMetrics()).singleElement().satisfies(metric -> {
@@ -209,6 +209,46 @@ class OtlpMetricConverterTest {
         assertThat(metrics).filteredOn(Metric::hasGauge)
             .singleElement()
             .satisfies(metric -> assertThat(metric.getGauge().getDataPointsList()).hasSize(1));
+    }
+
+    @Test
+    void shouldNotPublishMaxGaugeWhenPublishHistogramMaxIsFalse() {
+        OtlpMetricConverter converterWithoutMax = new OtlpMetricConverter(mockClock, STEP, TimeUnit.MILLISECONDS,
+                AggregationTemporality.CUMULATIVE, NamingConvention.dot, false);
+
+        Timer timer = Timer.builder("test.timer").publishPercentileHistogram().register(otlpMeterRegistry);
+        timer.record(Duration.ofMillis(100));
+        mockClock.add(STEP);
+
+        converterWithoutMax.addMeter(timer);
+        List<Metric> metrics = converterWithoutMax.getAllMetrics();
+
+        assertThat(metrics).hasSize(1);
+        assertThat(metrics).filteredOn(Metric::hasHistogram)
+            .singleElement()
+            .satisfies(metric -> assertThat(metric.getName()).isEqualTo("test.timer"));
+        assertThat(metrics).filteredOn(Metric::hasGauge).isEmpty();
+    }
+
+    @Test
+    void shouldNotPublishMaxGaugeForDistributionSummaryWhenPublishHistogramMaxIsFalse() {
+        OtlpMetricConverter converterWithoutMax = new OtlpMetricConverter(mockClock, STEP, TimeUnit.MILLISECONDS,
+                AggregationTemporality.CUMULATIVE, NamingConvention.dot, false);
+
+        DistributionSummary summary = DistributionSummary.builder("test.summary")
+            .publishPercentileHistogram()
+            .register(otlpMeterRegistry);
+        summary.record(50);
+        mockClock.add(STEP);
+
+        converterWithoutMax.addMeter(summary);
+        List<Metric> metrics = converterWithoutMax.getAllMetrics();
+
+        assertThat(metrics).hasSize(1);
+        assertThat(metrics).filteredOn(Metric::hasHistogram)
+            .singleElement()
+            .satisfies(metric -> assertThat(metric.getName()).isEqualTo("test.summary"));
+        assertThat(metrics).filteredOn(Metric::hasGauge).isEmpty();
     }
 
 }

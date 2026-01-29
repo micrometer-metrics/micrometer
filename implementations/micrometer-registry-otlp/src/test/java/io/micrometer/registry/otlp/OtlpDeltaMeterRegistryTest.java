@@ -508,11 +508,13 @@ class OtlpDeltaMeterRegistryTest extends OtlpMeterRegistryTest {
         // step.
         assertHistogram(writeToMetrics(ds), TimeUnit.MINUTES.toNanos(1), TimeUnit.MINUTES.toNanos(2), BaseUnits.BYTES,
                 3, 170, 150);
-        assertThat(writeToMetric(ds).getHistogram().getDataPoints(0).getBucketCountsList()).allMatch(e -> e == 1);
+        assertHistogram(writeToMetrics(ds), TimeUnit.MINUTES.toNanos(1), TimeUnit.MINUTES.toNanos(2), BaseUnits.BYTES,
+                3, 170, 150, histogram -> assertThat(histogram.getBucketCountsList()).allMatch(e -> e == 1));
         clock.addSeconds(1);
 
         ds.record(160); // This belongs to current step.
-        assertThat(writeToMetric(ds).getHistogram().getDataPoints(0).getBucketCountsList()).allMatch(e -> e == 1);
+        assertHistogram(writeToMetrics(ds), TimeUnit.MINUTES.toNanos(1), TimeUnit.MINUTES.toNanos(2), BaseUnits.BYTES,
+                3, 170, 150, histogram -> assertThat(histogram.getBucketCountsList()).allMatch(e -> e == 1));
         assertHistogram(writeToMetrics(ds), TimeUnit.MINUTES.toNanos(1), TimeUnit.MINUTES.toNanos(2), BaseUnits.BYTES,
                 3, 170, 150);
     }

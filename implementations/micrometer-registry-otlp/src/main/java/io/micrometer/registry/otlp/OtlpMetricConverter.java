@@ -53,18 +53,22 @@ class OtlpMetricConverter {
 
     private final NamingConvention namingConvention;
 
+    private final boolean publishMaxGaugeForHistograms;
+
     private final Map<MetricMetaData, Metric.Builder> metricTypeBuilderMap = new HashMap<>();
 
     private final long deltaTimeUnixNano;
 
     OtlpMetricConverter(Clock clock, Duration step, TimeUnit baseTimeUnit,
-            AggregationTemporality aggregationTemporality, NamingConvention namingConvention) {
+            AggregationTemporality aggregationTemporality, NamingConvention namingConvention,
+            boolean publishMaxGaugeForHistograms) {
         this.clock = clock;
         this.step = step;
         this.aggregationTemporality = aggregationTemporality;
         this.otlpAggregationTemporality = AggregationTemporality.toOtlpAggregationTemporality(aggregationTemporality);
         this.baseTimeUnit = baseTimeUnit;
         this.namingConvention = namingConvention;
+        this.publishMaxGaugeForHistograms = publishMaxGaugeForHistograms;
         this.deltaTimeUnixNano = (clock.wallTime() / step.toMillis()) * step.toNanos();
     }
 
@@ -126,7 +130,9 @@ class OtlpMetricConverter {
         double max = isTimeBased ? histogramSnapshot.max(baseTimeUnit) : histogramSnapshot.max();
         long count = histogramSnapshot.count();
 
-        addMaxGaugeForTimer(id, tags, max);
+        if (publishMaxGaugeForHistograms) {
+            addMaxGaugeForHistogramSupport(id, tags, max);
+        }
 
         // if percentiles configured, use summary
         if (histogramSnapshot.percentileValues().length != 0) {
@@ -156,7 +162,7 @@ class OtlpMetricConverter {
         return Optional.empty();
     }
 
-    private void addMaxGaugeForTimer(Meter.Id id, Iterable<KeyValue> tags, double max) {
+    private void addMaxGaugeForHistogramSupport(Meter.Id id, Iterable<KeyValue> tags, double max) {
         String metricName = id.getName() + ".max";
         Metric.Builder metricBuilder = getOrCreateMetricBuilder(id.withName(metricName), DataCase.GAUGE);
         if (!metricBuilder.hasGauge()) {
@@ -167,7 +173,8 @@ class OtlpMetricConverter {
             .addDataPoints(NumberDataPoint.newBuilder()
                 .setTimeUnixNano(TimeUnit.MILLISECONDS.toNanos(clock.wallTime()))
                 .setAsDouble(max)
-                .addAllAttributes(tags));
+                .addAllAttributes(tags)
+                .build());
     }
 
     private void writeFunctionTimer(FunctionTimer functionTimer) {

@@ -356,4 +356,26 @@ class OtlpConfigTest {
         assertThat(otlpConfig.validate().isValid()).isFalse();
     }
 
+    @Test
+    void publishMaxGaugeForHistogramsDefault() {
+        Map<String, String> properties = new HashMap<>();
+
+        OtlpConfig otlpConfig = properties::get;
+        assertThat(otlpConfig.validate().isValid()).isTrue();
+        assertThat(otlpConfig.publishMaxGaugeForHistograms()).isTrue();
+
+        properties.put("otlp.publishMaxGaugeForHistograms", "true");
+        assertThat(otlpConfig.publishMaxGaugeForHistograms()).isTrue();
+    }
+
+    @Test
+    void publishMaxGaugeForHistogramsDisabled() {
+        Map<String, String> properties = new HashMap<>();
+        properties.put("otlp.publishMaxGaugeForHistograms", "false");
+
+        OtlpConfig otlpConfig = properties::get;
+        assertThat(otlpConfig.validate().isValid()).isTrue();
+        assertThat(otlpConfig.publishMaxGaugeForHistograms()).isFalse();
+    }
+
 }
