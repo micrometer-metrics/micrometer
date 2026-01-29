@@ -369,6 +369,16 @@ class OtlpConfigTest {
     }
 
     @Test
+    void publishMaxGaugeForHistogramsDefaultWithDeltaTemporality() {
+        Map<String, String> properties = new HashMap<>();
+        properties.put("otlp.aggregationTemporality", AggregationTemporality.DELTA.name());
+
+        OtlpConfig otlpConfig = properties::get;
+        assertThat(otlpConfig.validate().isValid()).isTrue();
+        assertThat(otlpConfig.publishMaxGaugeForHistograms()).isFalse();
+    }
+
+    @Test
     void publishMaxGaugeForHistogramsDisabled() {
         Map<String, String> properties = new HashMap<>();
         properties.put("otlp.publishMaxGaugeForHistograms", "false");

@@ -280,11 +280,14 @@ public interface OtlpConfig extends PushRegistryConfig {
      * (Timer, DistributionSummary, LongTaskTimer). When enabled, a gauge with the suffix
      * {@code .max} will be created for each histogram meter, reporting the maximum value
      * from the histogram snapshot.
-     * @return true if max gauge should be published; default is true
+     * @return true if max gauge should be published; default is true for
+     * {@link AggregationTemporality#CUMULATIVE} and false for
+     * {@link AggregationTemporality#DELTA}
      * @since 1.16.3
      */
     default boolean publishMaxGaugeForHistograms() {
-        return getBoolean(this, "publishMaxGaugeForHistograms").orElse(true);
+        return getBoolean(this, "publishMaxGaugeForHistograms")
+            .orElseGet(() -> aggregationTemporality() == AggregationTemporality.CUMULATIVE);
     }
 
     /**

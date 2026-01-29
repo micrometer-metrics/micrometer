@@ -15,8 +15,8 @@
  */
 package io.micrometer.registry.otlp;
 
-import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.distribution.CountAtBucket;
 import io.micrometer.core.instrument.distribution.HistogramSnapshot;
