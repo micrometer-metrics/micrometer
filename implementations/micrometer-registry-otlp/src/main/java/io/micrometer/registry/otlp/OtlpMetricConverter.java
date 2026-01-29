@@ -126,6 +126,8 @@ class OtlpMetricConverter {
         double max = isTimeBased ? histogramSnapshot.max(baseTimeUnit) : histogramSnapshot.max();
         long count = histogramSnapshot.count();
 
+        addMaxGaugeForTimer(id, tags, max);
+
         // if percentiles configured, use summary
         if (histogramSnapshot.percentileValues().length != 0) {
             buildSummaryDataPoint(histogramSupport, tags, startTimeNanos, total, count, isTimeBased, histogramSnapshot);
@@ -152,6 +154,20 @@ class OtlpMetricConverter {
         }
 
         return Optional.empty();
+    }
+
+    private void addMaxGaugeForTimer(Meter.Id id, Iterable<KeyValue> tags, double max) {
+        String maxMetricsName = id.getName() + "." + this.baseTimeUnit.toString().toLowerCase() + ".max";
+        Metric.Builder metricBuilder = getOrCreateMetricBuilder(id.withName(maxMetricsName), DataCase.GAUGE);
+        if (!metricBuilder.hasGauge()) {
+            metricBuilder.setGauge(io.opentelemetry.proto.metrics.v1.Gauge.newBuilder());
+        }
+
+        metricBuilder.getGaugeBuilder()
+            .addDataPoints(NumberDataPoint.newBuilder()
+                .setTimeUnixNano(TimeUnit.MILLISECONDS.toNanos(clock.wallTime()))
+                .setAsDouble(max)
+                .addAllAttributes(tags));
     }
 
     private void writeFunctionTimer(FunctionTimer functionTimer) {

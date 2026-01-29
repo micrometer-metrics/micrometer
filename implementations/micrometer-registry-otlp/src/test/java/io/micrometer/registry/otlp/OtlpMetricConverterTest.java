@@ -129,7 +129,7 @@ class OtlpMetricConverterTest {
 
         otlpMetricConverter.addMeters(otlpMeterRegistry.getMeters());
         List<Metric> metrics = otlpMetricConverter.getAllMetrics();
-        assertThat(metrics).hasSize(2);
+        assertThat(metrics).hasSize(3);
 
         assertThat(metrics).filteredOn(Metric::hasSummary)
             .singleElement()
@@ -153,6 +153,21 @@ class OtlpMetricConverterTest {
                     assertThat(histogramDataPoint.getAttributes(0).getValue().getStringValue()).isEqualTo("histogram");
                     assertThat(histogramDataPoint.getExplicitBoundsCount()).isEqualTo(1);
                     assertThat(histogramDataPoint.getBucketCountsCount()).isEqualTo(2);
+                }));
+
+        assertThat(metrics).filteredOn(Metric::hasGauge)
+            .singleElement()
+            .satisfies(metric -> assertThat(metric.getGauge().getDataPointsList()).hasSize(3)
+                .satisfiesExactlyInAnyOrder(gaugeDataPoint -> {
+                    assertThat(gaugeDataPoint.getAttributesCount()).isEqualTo(1);
+                    assertThat(gaugeDataPoint.getAttributes(0).getValue().getStringValue()).isEqualTo("vanilla");
+                }, gaugeDataPoint -> {
+                    assertThat(gaugeDataPoint.getAttributesCount()).isEqualTo(1);
+                    assertThat(gaugeDataPoint.getAttributes(0).getValue().getStringValue()).isEqualTo("histogram");
+                },
+                gaugeDataPoint -> {
+                    assertThat(gaugeDataPoint.getAttributesCount()).isEqualTo(1);
+                    assertThat(gaugeDataPoint.getAttributes(0).getValue().getStringValue()).isEqualTo("summary");
                 }));
     }
 
@@ -185,10 +200,16 @@ class OtlpMetricConverterTest {
         mockClock.add(STEP);
 
         otlpMetricConverter.addMeter(summary);
-        assertThat(otlpMetricConverter.getAllMetrics()).singleElement()
+        List<Metric> metrics = otlpMetricConverter.getAllMetrics();
+        assertThat(metrics).hasSize(2);
+        assertThat(metrics).filteredOn(Metric::hasSummary)
+            .singleElement()
             .satisfies(metric -> assertThat(metric.getSummary().getDataPointsList()).singleElement()
                 .satisfies(dataPoint -> assertThat(dataPoint.getQuantileValuesList()).singleElement()
                     .satisfies(valueAtQuantile -> assertThat(valueAtQuantile.getValue()).isEqualTo(5))));
+        assertThat(metrics).filteredOn(Metric::hasGauge)
+            .singleElement()
+            .satisfies(metric -> assertThat(metric.getGauge().getDataPointsList()).hasSize(1));
     }
 
 }
