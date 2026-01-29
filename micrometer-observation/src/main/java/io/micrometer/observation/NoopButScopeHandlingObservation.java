@@ -82,7 +82,7 @@ final class NoopButScopeHandlingObservation implements Observation {
 
     @Override
     public Context getContext() {
-        return Context.EMPTY;
+        return NoopContext.INSTANCE;
     }
 
     @Override
