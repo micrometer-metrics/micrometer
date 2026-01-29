@@ -107,7 +107,7 @@ public interface Observation extends ObservationView {
 
         @Override
         public Context getContext() {
-            return Context.EMPTY;
+            return NoopContext.INSTANCE;
         }
 
         @Override
@@ -992,9 +992,6 @@ public interface Observation extends ObservationView {
     @SuppressWarnings("unchecked")
     class Context implements ContextView {
 
-        // TODO make an unmodifiable implementation
-        static final Context EMPTY = new Context();
-
         private final Map<Object, Object> map = new ConcurrentHashMap<>();
 
         private @Nullable String name;
@@ -1121,7 +1118,7 @@ public interface Observation extends ObservationView {
          * @return the previous value associated with the key, or null if there was no
          * mapping for the key
          */
-        public Object remove(Object key) {
+        public @Nullable Object remove(Object key) {
             return this.map.remove(key);
         }
 
