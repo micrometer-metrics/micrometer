@@ -57,8 +57,8 @@ Some newly added jOOQ overloads (for example, `DefaultDSLContext#fetchValue(Sele
 [source,java,subs=+attributes]
 -----
 // Setting up instrumentation
-include::{include-core-test-java}/io/micrometer/core/instrument/binder/db/PostgreSQLDatabaseMetricsIntegrationTest.java[tags=setup, indent=0]
+include::{include-core-test-java}/io/micrometer/core/instrument/binder/db/AbstractPostgreSQLDatabaseMetricsIntegrationTest.java[tags=setup, indent=0]
 
 // Usage example
-include::{include-core-test-java}/io/micrometer/core/instrument/binder/db/PostgreSQLDatabaseMetricsIntegrationTest.java[tags=result, indent=0]
+include::{include-core-test-java}/io/micrometer/core/instrument/binder/db/AbstractPostgreSQLDatabaseMetricsIntegrationTest.java[tags=result, indent=0]
 -----

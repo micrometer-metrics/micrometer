@@ -91,7 +91,7 @@ class OTelCollectorIntegrationTest {
         //  - IDE: no telemetry_sdk_version tag
         //  - Gradle: telemetry_sdk_version has the version number
         whenPrometheusScraped().then().body(
-            containsString("{job=\"test\",service_name=\"test\",telemetry_sdk_language=\"java\",telemetry_sdk_name=\"io.micrometer\""),
+            containsString("{job=\"test\",otel_scope_name=\"\",otel_scope_schema_url=\"\",otel_scope_version=\"\",service_name=\"test\",telemetry_sdk_language=\"java\",telemetry_sdk_name=\"io.micrometer\""),
 
             containsString("# HELP test_counter \n"),
             containsString("# TYPE test_counter counter\n"),
@@ -142,7 +142,7 @@ class OTelCollectorIntegrationTest {
         //  - IDE: no telemetry_sdk_version tag
         //  - Gradle: telemetry_sdk_version has the version number
         whenPrometheusScraped().then().body(
-            containsString("{job=\"test\",service_name=\"test\",telemetry_sdk_language=\"java\",telemetry_sdk_name=\"io.micrometer\""),
+            containsString("{job=\"test\",otel_scope_name=\"\",otel_scope_schema_url=\"\",otel_scope_version=\"\",service_name=\"test\",telemetry_sdk_language=\"java\",telemetry_sdk_name=\"io.micrometer\""),
 
             containsString("# HELP test_counter_gzip \n"),
             containsString("# TYPE test_counter_gzip counter\n"),

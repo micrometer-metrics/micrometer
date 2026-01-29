@@ -15,5 +15,5 @@ dependencies {
 }
 
 dockerTest {
-    systemProperty 'otel-collector-image.version', '0.104.0'
+    systemProperty 'otel-collector-image.version', '0.144.0'
 }

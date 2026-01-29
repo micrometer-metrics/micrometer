@@ -39,9 +39,9 @@ import org.apache.kafka.common.serialization.StringSerializer;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
-import org.testcontainers.containers.KafkaContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
+import org.testcontainers.kafka.ConfluentKafkaContainer;
 import org.testcontainers.utility.DockerImageName;
 import wiremock.com.google.common.collect.ImmutableMap;
 
@@ -62,7 +62,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 class ObservationMessagingIntegrationTest {
 
     @Container
-    private KafkaContainer kafkaContainer = new KafkaContainer(DockerImageName.parse("confluentinc/cp-kafka:5.5.1"));
+    private ConfluentKafkaContainer kafkaContainer = new ConfluentKafkaContainer(
+            DockerImageName.parse("confluentinc/cp-kafka:8.0.3"));
 
     private AdminClient adminClient;
 

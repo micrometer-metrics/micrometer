@@ -30,9 +30,9 @@ import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
-import org.testcontainers.containers.KafkaContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
+import org.testcontainers.kafka.ConfluentKafkaContainer;
 import org.testcontainers.utility.DockerImageName;
 
 import java.time.Duration;
@@ -49,7 +49,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 class KafkaClientMetricsIntegrationTest {
 
     @Container
-    private KafkaContainer kafkaContainer = new KafkaContainer(DockerImageName.parse("confluentinc/cp-kafka:7.9.0"));
+    private final ConfluentKafkaContainer kafkaContainer = new ConfluentKafkaContainer(
+            DockerImageName.parse("confluentinc/cp-kafka:8.0.3"));
 
     @Test
     void shouldManageProducerAndConsumerMetrics() {
