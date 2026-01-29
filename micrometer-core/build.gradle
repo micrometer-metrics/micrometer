@@ -234,6 +234,8 @@ dependencies {
     testImplementation libs.retrofit2
 
     testImplementation libs.aspectjweaver
+
+    testImplementation libs.logbackLatest
 }
 
 tasks.register("shenandoahTest", Test) {
