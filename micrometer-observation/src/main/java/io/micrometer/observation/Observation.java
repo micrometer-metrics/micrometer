@@ -1043,6 +1043,7 @@ public interface Observation extends ObservationView {
          * @return the previous value associated with the key, or null if there was no
          * mapping for the key
          */
+        @Nullable
         public Object remove(Object key) {
             return this.map.remove(key);
         }

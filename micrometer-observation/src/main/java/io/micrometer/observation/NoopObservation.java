@@ -29,8 +29,6 @@ import io.micrometer.common.lang.Nullable;
  */
 final class NoopObservation implements Observation {
 
-    private static final Context CONTEXT = new Context();
-
     @Override
     public Observation contextualName(@Nullable String contextualName) {
         return this;
@@ -83,7 +81,7 @@ final class NoopObservation implements Observation {
 
     @Override
     public Context getContext() {
-        return CONTEXT;
+        return NoopContext.INSTANCE;
     }
 
     @Override
