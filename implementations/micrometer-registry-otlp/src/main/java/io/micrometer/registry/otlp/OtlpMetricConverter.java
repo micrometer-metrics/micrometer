@@ -157,8 +157,9 @@ class OtlpMetricConverter {
     }
 
     private void addMaxGaugeForTimer(Meter.Id id, Iterable<KeyValue> tags, double max) {
-        String maxMetricsName = id.getName() + "." + this.baseTimeUnit.toString().toLowerCase() + ".max";
-        Metric.Builder metricBuilder = getOrCreateMetricBuilder(id.withName(maxMetricsName), DataCase.GAUGE);
+        String metricName = id.getName()
+                + (isTimeBasedMeter(id) ? "." + this.baseTimeUnit.toString().toLowerCase() : "") + ".max";
+        Metric.Builder metricBuilder = getOrCreateMetricBuilder(id.withName(metricName), DataCase.GAUGE);
         if (!metricBuilder.hasGauge()) {
             metricBuilder.setGauge(io.opentelemetry.proto.metrics.v1.Gauge.newBuilder());
         }
