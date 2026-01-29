@@ -283,7 +283,7 @@ public interface OtlpConfig extends PushRegistryConfig {
      * @return true if max gauge should be published; default is true for
      * {@link AggregationTemporality#CUMULATIVE} and false for
      * {@link AggregationTemporality#DELTA}
-     * @since 1.16.3
+     * @since 1.17.0
      */
     default boolean publishMaxGaugeForHistograms() {
         return getBoolean(this, "publishMaxGaugeForHistograms")

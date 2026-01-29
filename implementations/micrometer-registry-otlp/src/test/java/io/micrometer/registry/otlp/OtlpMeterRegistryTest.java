@@ -210,20 +210,22 @@ abstract class OtlpMeterRegistryTest {
         assertThat(timerMetrics).filteredOn(Metric::hasSummary).singleElement().satisfies(summary -> {
             assertThat(summary.getDataCase().getNumber()).isEqualTo(Metric.DataCase.SUMMARY.getNumber());
         });
+        assertMaxGaugeMetrics(timerMetrics);
         List<Metric> dsMetrics = writeToMetrics(ds.register(registry));
         assertThat(dsMetrics).filteredOn(Metric::hasSummary).singleElement().satisfies(summary -> {
             assertThat(summary.getDataCase().getNumber()).isEqualTo(Metric.DataCase.SUMMARY.getNumber());
         });
+        assertMaxGaugeMetrics(dsMetrics);
         List<Metric> timerExpoMetrics = writeToMetrics(timer.register(registryWithExponentialHistogram));
         assertThat(timerExpoMetrics).filteredOn(Metric::hasSummary).singleElement().satisfies(summary -> {
             assertThat(summary.getDataCase().getNumber()).isEqualTo(Metric.DataCase.SUMMARY.getNumber());
         });
+        assertMaxGaugeMetrics(timerExpoMetrics);
         List<Metric> dsExpoMetrics = writeToMetrics(ds.register(registryWithExponentialHistogram));
         assertThat(dsExpoMetrics).filteredOn(Metric::hasSummary).singleElement().satisfies(summary -> {
             assertThat(summary.getDataCase().getNumber()).isEqualTo(Metric.DataCase.SUMMARY.getNumber());
         });
-        assertMaxGaugeMetrics(timerMetrics, dsMetrics, timerExpoMetrics, dsExpoMetrics);
-
+        assertMaxGaugeMetrics(dsExpoMetrics);
     }
 
     @Test
@@ -242,20 +244,22 @@ abstract class OtlpMeterRegistryTest {
         assertThat(timerMetrics).filteredOn(Metric::hasHistogram).singleElement().satisfies(metric -> {
             assertThat(metric.getDataCase().getNumber()).isEqualTo(Metric.DataCase.HISTOGRAM.getNumber());
         });
+        assertMaxGaugeMetrics(timerMetrics);
         List<Metric> dsMetrics = writeToMetrics(ds.register(registry));
         assertThat(dsMetrics).filteredOn(Metric::hasHistogram).singleElement().satisfies(metric -> {
             assertThat(metric.getDataCase().getNumber()).isEqualTo(Metric.DataCase.HISTOGRAM.getNumber());
         });
+        assertMaxGaugeMetrics(dsMetrics);
         List<Metric> timerExpoMetrics = writeToMetrics(timer.register(registryWithExponentialHistogram));
         assertThat(timerExpoMetrics).filteredOn(Metric::hasExponentialHistogram).singleElement().satisfies(metric -> {
             assertThat(metric.getDataCase().getNumber()).isEqualTo(Metric.DataCase.EXPONENTIAL_HISTOGRAM.getNumber());
         });
+        assertMaxGaugeMetrics(timerExpoMetrics);
         List<Metric> dsExpoMetrics = writeToMetrics(ds.register(registryWithExponentialHistogram));
         assertThat(dsExpoMetrics).filteredOn(Metric::hasExponentialHistogram).singleElement().satisfies(metric -> {
             assertThat(metric.getDataCase().getNumber()).isEqualTo(Metric.DataCase.EXPONENTIAL_HISTOGRAM.getNumber());
         });
-
-        assertMaxGaugeMetrics(timerMetrics, dsMetrics, timerExpoMetrics, dsExpoMetrics);
+        assertMaxGaugeMetrics(dsExpoMetrics);
     }
 
     @Test
@@ -372,23 +376,26 @@ abstract class OtlpMeterRegistryTest {
             .singleElement()
             .satisfies(metric -> assertThat(metric.getDataCase().getNumber())
                 .isEqualTo(Metric.DataCase.HISTOGRAM.getNumber()));
+        assertMaxGaugeMetrics(timerMetrics);
         List<Metric> dsMetrics = writeToMetrics(ds.register(registry));
         assertThat(dsMetrics).filteredOn(Metric::hasHistogram)
             .singleElement()
             .satisfies(metric -> assertThat(metric.getDataCase().getNumber())
                 .isEqualTo(Metric.DataCase.HISTOGRAM.getNumber()));
+        assertMaxGaugeMetrics(dsMetrics);
         List<Metric> timerExpoMetrics = writeToMetrics(timer.register(registryWithExponentialHistogram));
         assertThat(timerExpoMetrics).filteredOn(Metric::hasExponentialHistogram)
             .singleElement()
             .satisfies(metric -> assertThat(metric.getDataCase().getNumber())
                 .isEqualTo(Metric.DataCase.EXPONENTIAL_HISTOGRAM.getNumber()));
+        assertMaxGaugeMetrics(timerExpoMetrics);
         List<Metric> dsExpoMetrics = writeToMetrics(ds.register(registryWithExponentialHistogram));
         assertThat(dsExpoMetrics).filteredOn(Metric::hasExponentialHistogram)
             .singleElement()
             .satisfies(metric -> assertThat(metric.getDataCase().getNumber())
                 .isEqualTo(Metric.DataCase.EXPONENTIAL_HISTOGRAM.getNumber()));
+        assertMaxGaugeMetrics(dsExpoMetrics);
 
-        assertMaxGaugeMetrics(timerMetrics, dsMetrics, timerExpoMetrics, dsExpoMetrics);
     }
 
     @Test
@@ -407,21 +414,23 @@ abstract class OtlpMeterRegistryTest {
             .singleElement()
             .satisfies(metric -> assertThat(metric.getDataCase().getNumber())
                 .isEqualTo(Metric.DataCase.HISTOGRAM.getNumber()));
+        assertMaxGaugeMetrics(timerMetrics);
         List<Metric> dsMetrics = writeToMetrics(ds.register(registry));
         assertThat(dsMetrics).filteredOn(Metric::hasHistogram)
             .singleElement()
             .satisfies(metric -> assertThat(metric.getDataCase().getNumber())
                 .isEqualTo(Metric.DataCase.HISTOGRAM.getNumber()));
+        assertMaxGaugeMetrics(dsMetrics);
         List<Metric> timerExpoMetrics = writeToMetrics(timer.register(registryWithExponentialHistogram));
         assertThat(timerExpoMetrics).filteredOn(Metric::hasHistogram).singleElement().satisfies(metric -> {
             assertThat(metric.getDataCase().getNumber()).isEqualTo(Metric.DataCase.HISTOGRAM.getNumber());
         });
+        assertMaxGaugeMetrics(timerExpoMetrics);
         List<Metric> dsExpoMetrics = writeToMetrics(ds.register(registryWithExponentialHistogram));
         assertThat(dsExpoMetrics).filteredOn(Metric::hasHistogram).singleElement().satisfies(metric -> {
             assertThat(metric.getDataCase().getNumber()).isEqualTo(Metric.DataCase.HISTOGRAM.getNumber());
         });
-
-        assertMaxGaugeMetrics(timerMetrics, dsMetrics, timerExpoMetrics, dsExpoMetrics);
+        assertMaxGaugeMetrics(dsExpoMetrics);
     }
 
     @Test
@@ -940,19 +949,15 @@ abstract class OtlpMeterRegistryTest {
         unitOptional.ifPresent(unit -> assertThat(metric.getUnit()).isEqualTo(unit));
     }
 
-    @SafeVarargs
-    private void assertMaxGaugeMetrics(List<Metric>... metricLists) {
+    private void assertMaxGaugeMetrics(List<Metric> metrics) {
         if (otlpConfig().publishMaxGaugeForHistograms()) {
-            for (List<Metric> metrics : metricLists) {
-                assertThat(metrics).filteredOn(Metric::hasGauge).singleElement().satisfies(gauge -> {
-                    assertThat(gauge.getDataCase().getNumber()).isEqualTo(Metric.DataCase.GAUGE.getNumber());
-                });
-            }
+            assertThat(metrics).filteredOn(Metric::hasGauge)
+                .singleElement()
+                .satisfies(gauge -> assertThat(gauge.getDataCase().getNumber())
+                    .isEqualTo(Metric.DataCase.GAUGE.getNumber()));
         }
         else {
-            for (List<Metric> metrics : metricLists) {
-                assertThat(metrics).filteredOn(Metric::hasGauge).isEmpty();
-            }
+            assertThat(metrics).filteredOn(Metric::hasGauge).isEmpty();
         }
     }
 

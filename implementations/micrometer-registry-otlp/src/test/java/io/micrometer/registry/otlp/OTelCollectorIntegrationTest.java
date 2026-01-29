@@ -188,30 +188,24 @@ class OTelCollectorIntegrationTest {
                     .body(endsWith("# EOF\n"), not(startsWith("# EOF\n")))
             );
 
-        String body = whenPrometheusScraped().then().extract().body().asString();
-
-        // Verify timer histogram is exported
         whenPrometheusScraped().then().body(
+            // Verify timer histogram is exported
             containsString("# HELP test_timer_nomax_milliseconds \n"),
             containsString("# TYPE test_timer_nomax_milliseconds histogram\n"),
             matchesPattern("(?s)^.*test_timer_nomax_milliseconds_count\\{.+} 1\\n.*$"),
             matchesPattern("(?s)^.*test_timer_nomax_milliseconds_sum\\{.+} 123\\.0\\n.*$"),
-            matchesPattern("(?s)^.*test_timer_nomax_milliseconds_bucket\\{.+,le=\"\\+Inf\"} 1\\n.*$")
-        );
-
-        // Verify distribution summary histogram is exported
-        whenPrometheusScraped().then().body(
+            matchesPattern("(?s)^.*test_timer_nomax_milliseconds_bucket\\{.+,le=\"\\+Inf\"} 1\\n.*$"),
+            // Verify distribution summary histogram is exported
             containsString("# HELP test_ds_nomax \n"),
             containsString("# TYPE test_ds_nomax histogram\n"),
             matchesPattern("(?s)^.*test_ds_nomax_count\\{.+} 1\\n.*$"),
             matchesPattern("(?s)^.*test_ds_nomax_sum\\{.+} 24\\.0\\n.*$"),
-            matchesPattern("(?s)^.*test_ds_nomax_bucket\\{.+,le=\"\\+Inf\"} 1\\n.*$")
+            matchesPattern("(?s)^.*test_ds_nomax_bucket\\{.+,le=\"\\+Inf\"} 1\\n.*$"),
+            // Verify .max gauges are NOT exported
+            not(containsString("# HELP test_timer_nomax_max_milliseconds \n")),
+            not(containsString("# TYPE test_timer_nomax_max_milliseconds gauge\n")),
+            not(matchesPattern("(?s)^.*test_timer_nomax_max_milliseconds\\{.+} 123\\.0\n.*$"))
         );
-
-        // Verify .max gauges are NOT exported
-        org.assertj.core.api.Assertions.assertThat(body)
-            .doesNotContain("test_timer_nomax_max_milliseconds")
-            .doesNotContain("test_ds_nomax_max");
         // @formatter:on
     }
 
