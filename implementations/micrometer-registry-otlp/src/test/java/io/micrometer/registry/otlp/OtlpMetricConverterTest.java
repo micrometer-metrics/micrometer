@@ -164,8 +164,7 @@ class OtlpMetricConverterTest {
                 }, gaugeDataPoint -> {
                     assertThat(gaugeDataPoint.getAttributesCount()).isEqualTo(1);
                     assertThat(gaugeDataPoint.getAttributes(0).getValue().getStringValue()).isEqualTo("histogram");
-                },
-                gaugeDataPoint -> {
+                }, gaugeDataPoint -> {
                     assertThat(gaugeDataPoint.getAttributesCount()).isEqualTo(1);
                     assertThat(gaugeDataPoint.getAttributes(0).getValue().getStringValue()).isEqualTo("summary");
                 }));

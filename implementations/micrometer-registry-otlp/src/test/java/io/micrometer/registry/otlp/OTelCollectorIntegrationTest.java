@@ -110,7 +110,7 @@ class OTelCollectorIntegrationTest {
             // see: https://github.com/open-telemetry/opentelemetry-collector-contrib/pull/20519
             matchesPattern("(?s)^.*test_timer_milliseconds_sum\\{.+} 123\\.0\\n.*$"),
             matchesPattern("(?s)^.*test_timer_milliseconds_bucket\\{.+,le=\"\\+Inf\"} 1\\n.*$"),
-            matchesPattern("(?s)^.*test_timer_milliseconds_max\\{.+} 123\\.0\n.*$"),
+            matchesPattern("(?s)^.*test_timer_max_milliseconds\\{.+} 123\\.0\n.*$"),
 
             containsString("# HELP test_ds \n"),
             containsString("# TYPE test_ds histogram\n"),
