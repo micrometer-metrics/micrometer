@@ -1,0 +1,30 @@
+plugins {
+    id 'java'
+    id 'application'
+}
+
+application {
+    mainClass = 'io.micrometer.caffeine3.samples.Caffeine3CacheMetricsSample'
+}
+
+dependencies {
+    implementation project(":micrometer-core")
+
+    implementation libs.caffeine3
+
+    testImplementation project(":micrometer-test")
+    testImplementation platform(libs.junitBom)
+    testImplementation libs.junitJupiter
+    testRuntimeOnly libs.junitPlatformLauncher
+    testImplementation libs.assertj
+}
+
+java {
+    targetCompatibility = JavaVersion.VERSION_11
+}
+
+compileJava {
+    sourceCompatibility = JavaVersion.VERSION_11
+    targetCompatibility = JavaVersion.VERSION_11
+    options.release = 11
+}
