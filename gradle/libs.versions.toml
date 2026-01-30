@@ -7,6 +7,7 @@ aspectjweaver = "1.9.25.1"
 assertj = "3.27.7"
 awaitility = "4.3.0"
 caffeine = "2.9.3"
+caffeine3 = "3.2.3"
 cloudwatch2 = "2.41.31"
 colt = "1.2.0"
 dagger = "2.59.1"
@@ -87,6 +88,7 @@ aspectjweaver = { module = "org.aspectj:aspectjweaver", version.ref = "aspectjwe
 assertj = { module = "org.assertj:assertj-core", version.ref = "assertj" }
 awaitility = { module = "org.awaitility:awaitility", version.ref = "awaitility" }
 caffeine = { module = "com.github.ben-manes.caffeine:caffeine", version.ref = "caffeine" }
+caffeine3 = { module = "com.github.ben-manes.caffeine:caffeine", version.ref = "caffeine3" }
 cloudwatch2 = { module = "software.amazon.awssdk:cloudwatch", version.ref = "cloudwatch2" }
 colt = { module = "colt:colt", version.ref = "colt" }
 commonsPool2 = "org.apache.commons:commons-pool2:2.13.0"
