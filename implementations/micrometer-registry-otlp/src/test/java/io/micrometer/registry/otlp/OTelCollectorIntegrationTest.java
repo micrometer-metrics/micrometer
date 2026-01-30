@@ -111,10 +111,15 @@ class OTelCollectorIntegrationTest {
             matchesPattern("(?s)^.*test_timer_milliseconds_sum\\{.+} 123\\.0\\n.*$"),
             matchesPattern("(?s)^.*test_timer_milliseconds_bucket\\{.+,le=\"\\+Inf\"} 1\\n.*$"),
 
+            containsString("# HELP test_timer_max_milliseconds \n"),
+            containsString("# TYPE test_timer_max_milliseconds gauge\n"),
+            matchesPattern("(?s)^.*test_timer_max_milliseconds\\{.+} 123\\.0\n.*$"),
+
             containsString("# HELP test_ds \n"),
             containsString("# TYPE test_ds histogram\n"),
             matchesPattern("(?s)^.*test_ds_count\\{.+} 1\\n.*$"),
             matchesPattern("(?s)^.*test_ds_sum\\{.+} 24\\.0\\n.*$"),
+            matchesPattern("(?s)^.*test_ds_max\\{.+} 24\\.0\\n.*$"),
             matchesPattern("(?s)^.*test_ds_bucket\\{.+,le=\"\\+Inf\"} 1\\n.*$")
         );
         // @formatter:on
@@ -167,6 +172,43 @@ class OTelCollectorIntegrationTest {
         // @formatter:on
     }
 
+    @Test
+    void collectorShouldNotExportMaxMetricsWhenPublishHistogramMaxIsFalse() throws Exception {
+        MeterRegistry registry = createOtlpMeterRegistryForContainerWithoutMaxGauge(container);
+        Timer.builder("test.timer.nomax").register(registry).record(Duration.ofMillis(123));
+        DistributionSummary.builder("test.ds.nomax").register(registry).record(24);
+
+        // @formatter:off
+        await().atMost(Duration.ofSeconds(5))
+            .pollDelay(Duration.ofMillis(100))
+            .pollInterval(Duration.ofMillis(100))
+            .untilAsserted(() -> whenPrometheusScraped().then()
+                    .statusCode(200)
+                    .contentType(OPENMETRICS_TEXT)
+                    .body(endsWith("# EOF\n"), not(startsWith("# EOF\n")))
+            );
+
+        whenPrometheusScraped().then().body(
+            // Verify timer histogram is exported
+            containsString("# HELP test_timer_nomax_milliseconds \n"),
+            containsString("# TYPE test_timer_nomax_milliseconds histogram\n"),
+            matchesPattern("(?s)^.*test_timer_nomax_milliseconds_count\\{.+} 1\\n.*$"),
+            matchesPattern("(?s)^.*test_timer_nomax_milliseconds_sum\\{.+} 123\\.0\\n.*$"),
+            matchesPattern("(?s)^.*test_timer_nomax_milliseconds_bucket\\{.+,le=\"\\+Inf\"} 1\\n.*$"),
+            // Verify distribution summary histogram is exported
+            containsString("# HELP test_ds_nomax \n"),
+            containsString("# TYPE test_ds_nomax histogram\n"),
+            matchesPattern("(?s)^.*test_ds_nomax_count\\{.+} 1\\n.*$"),
+            matchesPattern("(?s)^.*test_ds_nomax_sum\\{.+} 24\\.0\\n.*$"),
+            matchesPattern("(?s)^.*test_ds_nomax_bucket\\{.+,le=\"\\+Inf\"} 1\\n.*$"),
+            // Verify .max gauges are NOT exported
+            not(containsString("# HELP test_timer_nomax_max_milliseconds \n")),
+            not(containsString("# TYPE test_timer_nomax_max_milliseconds gauge\n")),
+            not(matchesPattern("(?s)^.*test_timer_nomax_max_milliseconds\\{.+} 123\\.0\n.*$"))
+        );
+        // @formatter:on
+    }
+
     private OtlpMeterRegistry createOtlpMeterRegistryForContainer(GenericContainer<?> container) throws Exception {
         return withEnvironmentVariables("OTEL_SERVICE_NAME", "test")
             .execute(() -> new OtlpMeterRegistry(createOtlpConfigForContainer(container), Clock.SYSTEM));
@@ -178,11 +220,22 @@ class OTelCollectorIntegrationTest {
             .execute(() -> new OtlpMeterRegistry(createOtlpConfigForContainer(container, GZIP), Clock.SYSTEM));
     }
 
+    private OtlpMeterRegistry createOtlpMeterRegistryForContainerWithoutMaxGauge(GenericContainer<?> container)
+            throws Exception {
+        return withEnvironmentVariables("OTEL_SERVICE_NAME", "test")
+            .execute(() -> new OtlpMeterRegistry(createOtlpConfigForContainer(container, NONE, false), Clock.SYSTEM));
+    }
+
     private OtlpConfig createOtlpConfigForContainer(GenericContainer<?> container) {
         return createOtlpConfigForContainer(container, NONE);
     }
 
     private OtlpConfig createOtlpConfigForContainer(GenericContainer<?> container, CompressionMode compressionMode) {
+        return createOtlpConfigForContainer(container, compressionMode, true);
+    }
+
+    private OtlpConfig createOtlpConfigForContainer(GenericContainer<?> container, CompressionMode compressionMode,
+            boolean publishMaxGaugeForHistograms) {
         return new OtlpConfig() {
             @Override
             public String url() {
@@ -197,6 +250,11 @@ class OTelCollectorIntegrationTest {
             @Override
             public CompressionMode compressionMode() {
                 return compressionMode;
+            }
+
+            @Override
+            public boolean publishMaxGaugeForHistograms() {
+                return publishMaxGaugeForHistograms;
             }
 
             @Override

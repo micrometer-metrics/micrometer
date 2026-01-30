@@ -171,7 +171,8 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
     protected void publish() {
         for (List<Meter> batch : MeterPartition.partition(this, config.batchSize())) {
             OtlpMetricConverter otlpMetricConverter = new OtlpMetricConverter(clock, config.step(), getBaseTimeUnit(),
-                    config.aggregationTemporality(), config().namingConvention());
+                    config.aggregationTemporality(), config().namingConvention(),
+                    config.publishMaxGaugeForHistograms());
             otlpMetricConverter.addMeters(batch);
 
             try {
