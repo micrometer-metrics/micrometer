@@ -516,6 +516,26 @@ nexusPublishing {
     }
 }
 
+tasks.register('verifyDependencyVersions') {
+    doLast {
+        assertDependencyVersionPrefix(libs.jooq, '3.14.')
+        assertDependencyVersionPrefix(libs.logback12, '1.2.')
+    }
+}
+
+private static void assertDependencyVersionPrefix(def dependencySupplier, def expectedVersionPrefix) {
+    def dependency = dependencySupplier.get()
+    assert dependency.version.startsWith(expectedVersionPrefix)
+}
+
+tasks.register('check') {
+    dependsOn verifyDependencyVersions
+}
+
+tasks.register('build') {
+    dependsOn check
+}
+
 wrapper {
     gradleVersion = '9.3.1'
 }

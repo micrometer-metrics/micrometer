@@ -8,7 +8,7 @@ assertj = "3.27.7"
 awaitility = "4.3.0"
 caffeine = "2.9.3"
 caffeine3 = "3.2.3"
-cloudwatch2 = "2.41.17"
+cloudwatch2 = "2.41.18"
 colt = "1.2.0"
 dagger = "2.59"
 dropwizard-metrics = "4.2.38"
@@ -44,7 +44,7 @@ jetty12 = "12.0.6"
 jersey3 = "3.1.11"
 jmh = "1.37"
 # latest version of jOOQ to run tests against
-jooqNew = "3.20.10"
+jooqNew = "3.20.11"
 jsr107 = "1.1.1"
 jsr305 = "3.0.2"
 junit = "5.14.2"
@@ -170,7 +170,7 @@ kafkaJunit = { module = "com.github.charithe:kafka-junit", version.ref = "kafka-
 kotlinxCoroutines = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version = "1.7.3" }
 latencyUtils = { module = "org.latencyutils:LatencyUtils", version.ref = "latency-utils" }
 lmaxDisruptor = "com.lmax:disruptor:3.4.4"
-logback12 = { module = "ch.qos.logback:logback-classic", version = "1.5.26" }
+logback12 = { module = "ch.qos.logback:logback-classic", version = "1.2.13" }
 logbackLatest = {module = "ch.qos.logback:logback-classic", version.ref = "logback-latest" }
 log4j = { module = "org.apache.logging.log4j:log4j-core", version.ref = "log4j" }
 mavenResolverConnectorBasic = { module = "org.apache.maven.resolver:maven-resolver-connector-basic", version.ref = "maven-resolver" }
