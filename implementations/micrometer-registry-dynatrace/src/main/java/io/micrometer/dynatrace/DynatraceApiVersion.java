@@ -23,6 +23,12 @@ package io.micrometer.dynatrace;
  */
 public enum DynatraceApiVersion {
 
-    V1, V2
+    /**
+     * @deprecated The Dynatrace v1 API is deprecated. It will be removed in the future.
+     * Please use the v2 API instead.
+     */
+    V1,
+
+    V2
 
 }

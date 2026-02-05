@@ -281,6 +281,8 @@ No action is needed from users upgrading to 1.9.0. If there is a discrepancy in 
 
 === API v1 (Legacy) [[bookmark-apiv1]]
 
+CAUTION: The Dynatrace v1 API is deprecated. It will be removed in the future. Please use the v2 API instead. See https://docs.dynatrace.com/docs/discover-dynatrace/references/dynatrace-api/environment-api/metric-v1[Dynatrace API Docs].
+
 When the `apiVersion` is configured to be `v1`, the registry sends data by using the https://docs.dynatrace.com/docs/shortlink/api-custom-metrics[Dynatrace Timeseries API v1 for Custom Metrics].
 If a `deviceId` is specified, it defaults to `v1` for backwards compatibility with earlier setups.
 The `device-id` property is required for `v1` and not used in `v2`.
