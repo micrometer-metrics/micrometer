@@ -16,8 +16,6 @@
 package io.micrometer.prometheusmetrics;
 
 import io.micrometer.core.instrument.Meter;
-import io.micrometer.core.instrument.Tag;
-import io.micrometer.core.instrument.config.NamingConvention;
 import io.prometheus.metrics.model.registry.MultiCollector;
 import io.prometheus.metrics.model.snapshots.DataPointSnapshot;
 import io.prometheus.metrics.model.snapshots.MetricMetadata;
@@ -40,36 +38,29 @@ import static java.util.stream.Collectors.toList;
  */
 class MicrometerCollector implements MultiCollector {
 
-    private final Map<List<String>, Child> children = new ConcurrentHashMap<>();
+    private final Map<Meter.Id, Child> children = new ConcurrentHashMap<>();
 
     private final String conventionName;
 
     private final Meter.Type meterType;
 
-    private final List<String> tagKeys;
-
     // take name to avoid calling NamingConvention#name after the call-site has already
     // done it
-    MicrometerCollector(String name, Meter.Id id, NamingConvention convention) {
+    MicrometerCollector(String name, Meter.Id id) {
         this.conventionName = name;
         this.meterType = id.getType();
-        this.tagKeys = id.getConventionTags(convention).stream().map(Tag::getKey).collect(toList());
     }
 
-    public void add(List<String> tagValues, Child child) {
-        children.put(tagValues, child);
+    public void add(Meter.Id id, Child child) {
+        children.put(id, child);
     }
 
-    public void remove(List<String> tagValues) {
-        children.remove(tagValues);
+    public void remove(Meter.Id id) {
+        children.remove(id);
     }
 
     public boolean isEmpty() {
         return children.isEmpty();
-    }
-
-    public List<String> getTagKeys() {
-        return tagKeys;
     }
 
     Meter.Type getMeterType() {
@@ -81,7 +72,7 @@ class MicrometerCollector implements MultiCollector {
         Map<String, Family> families = new HashMap<>();
 
         for (Child child : children.values()) {
-            child.samples(conventionName, tagKeys)
+            child.samples(conventionName)
                 .forEach(family -> families.compute(family.getConventionName(),
                         (name, matchingFamily) -> matchingFamily != null
                                 ? matchingFamily.addSamples(family.dataPointSnapshots) : family));
@@ -97,7 +88,7 @@ class MicrometerCollector implements MultiCollector {
 
     interface Child {
 
-        Stream<Family<?>> samples(String conventionName, List<String> tagKeys);
+        Stream<Family<?>> samples(String conventionName);
 
     }
 

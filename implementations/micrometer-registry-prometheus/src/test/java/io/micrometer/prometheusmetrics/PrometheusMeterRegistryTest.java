@@ -37,6 +37,7 @@ import org.junit.jupiter.api.Test;
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Stream;
@@ -70,42 +71,45 @@ class PrometheusMeterRegistryTest {
     }
 
     @Test
-    void meterRegistrationFailedListenerCalledOnSameNameDifferentTagsWithEmptyTags() throws InterruptedException {
-        CountDownLatch failedLatch = new CountDownLatch(1);
-        registry.config().onMeterRegistrationFailed((id, reason) -> failedLatch.countDown());
-        registry.counter("my.counter");
-        registry.counter("my.counter", "test.k1", "v1").increment();
-
-        assertThat(failedLatch.await(1, TimeUnit.SECONDS)).isTrue();
-
-        assertThatThrownBy(() -> registry.throwExceptionOnRegistrationFailure().counter("my.counter", "test.k2", "v2"))
-            .isInstanceOf(IllegalArgumentException.class)
-            .hasMessage(
-                    "Prometheus requires that all meters with the same name have the same set of tag keys. There is already an existing meter named 'my_counter' containing tag keys []. The meter you are attempting to register has keys [test_k2].");
-
-        assertThatThrownBy(() -> registry.counter("my.counter", "test.k3", "v3"))
-            .isInstanceOf(IllegalArgumentException.class)
-            .hasMessage(
-                    "Prometheus requires that all meters with the same name have the same set of tag keys. There is already an existing meter named 'my_counter' containing tag keys []. The meter you are attempting to register has keys [test_k3].");
+    @Issue("gh-877")
+    void metersWithSameNameAndDifferentTagsCanScrape() {
+        String meterName = "my.counter";
+        registry.counter(meterName, "k1", "v1");
+        registry.counter(meterName, "k2", "v2");
+        registry.counter(meterName, "k3", "v3");
+        assertThat(registry.scrape()).isEqualTo("# HELP my_counter_total  \n" + "# TYPE my_counter_total counter\n"
+                + "my_counter_total{k1=\"v1\"} 0.0\n" + "my_counter_total{k2=\"v2\"} 0.0\n"
+                + "my_counter_total{k3=\"v3\"} 0.0\n");
     }
 
     @Test
-    void meterRegistrationFailedListenerCalledOnSameNameDifferentTagsWithNonEmptyTags() throws InterruptedException {
-        CountDownLatch failedLatch = new CountDownLatch(1);
-        registry.config().onMeterRegistrationFailed((id, reason) -> failedLatch.countDown());
+    void sameNameDifferentTagsWithEmptyTagsDoesNotFail() throws InterruptedException {
+        AtomicBoolean failed = new AtomicBoolean(false);
+        registry.config().onMeterRegistrationFailed((id, reason) -> failed.set(true));
+        registry.counter("my.counter");
+        registry.counter("my.counter", "test.k1", "v1").increment();
+
+        assertThat(failed).isFalse();
+
+        assertThatCode(() -> registry.throwExceptionOnRegistrationFailure().counter("my.counter", "test.k2", "v2"))
+            .doesNotThrowAnyException();
+
+        assertThatCode(() -> registry.counter("my.counter", "test.k3", "v3")).doesNotThrowAnyException();
+    }
+
+    @Test
+    void sameNameDifferentTagsWithNonEmptyTagsDoesNotFail() throws InterruptedException {
+        AtomicBoolean failed = new AtomicBoolean(false);
+        registry.config().onMeterRegistrationFailed((id, reason) -> failed.set(true));
         registry.counter("my.counter", "test.k1", "v1");
         registry.counter("my.counter", "k", "v").increment();
 
-        assertThat(failedLatch.await(1, TimeUnit.SECONDS)).isTrue();
+        assertThat(failed).isFalse();
 
-        assertThatThrownBy(() -> registry.throwExceptionOnRegistrationFailure().counter("my.counter", "test.k2", "v2"))
-            .isInstanceOf(IllegalArgumentException.class)
-            .hasMessage(
-                    "Prometheus requires that all meters with the same name have the same set of tag keys. There is already an existing meter named 'my_counter' containing tag keys [test_k1]. The meter you are attempting to register has keys [test_k2].");
+        assertThatCode(() -> registry.throwExceptionOnRegistrationFailure().counter("my.counter", "test.k2", "v2"))
+            .doesNotThrowAnyException();
 
-        assertThatThrownBy(() -> registry.counter("my.counter")).isInstanceOf(IllegalArgumentException.class)
-            .hasMessage(
-                    "Prometheus requires that all meters with the same name have the same set of tag keys. There is already an existing meter named 'my_counter' containing tag keys [test_k1]. The meter you are attempting to register has keys [].");
+        assertThatCode(() -> registry.counter("my.counter")).doesNotThrowAnyException();
     }
 
     @Test
