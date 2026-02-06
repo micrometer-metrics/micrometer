@@ -22,6 +22,11 @@ import org.jspecify.annotations.Nullable;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+/**
+ * @deprecated The Dynatrace v1 API is deprecated. It will be removed in the future.
+ * Please use the v2 API instead.
+ */
+@Deprecated
 class DynatraceTimeSeries {
 
     private final String metricId;

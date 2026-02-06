@@ -26,11 +26,14 @@ import java.util.regex.Pattern;
 /**
  * {@link NamingConvention} for Dynatrace API v1.
  *
+ * @deprecated The Dynatrace v1 API is deprecated. It will be removed in the future.
+ * Please use the v2 API instead.
  * @author Oriol Barcelona Palau
  * @author Jon Schneider
  * @author Johnny Lim
  * @since 1.8.0
  */
+@Deprecated
 public class DynatraceNamingConventionV1 implements NamingConvention {
 
     private static final WarnThenDebugLogger logger = new WarnThenDebugLogger(DynatraceNamingConventionV1.class);

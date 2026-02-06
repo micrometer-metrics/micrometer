@@ -30,8 +30,11 @@ import java.util.stream.Stream;
 import static java.util.Arrays.stream;
 
 /**
+ * @deprecated The Dynatrace v1 API is deprecated. It will be removed in the future.
+ * Please use the v2 API instead.
  * @author Oriol Barcelona
  */
+@Deprecated
 class DynatraceMetricDefinition {
 
     private static final int MAX_DISPLAY_NAME = 256;
