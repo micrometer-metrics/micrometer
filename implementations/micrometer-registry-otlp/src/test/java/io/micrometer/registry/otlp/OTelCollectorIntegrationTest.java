@@ -83,45 +83,44 @@ class OTelCollectorIntegrationTest {
             .untilAsserted(() -> whenPrometheusScraped().then()
                     .statusCode(200)
                     .contentType(OPENMETRICS_TEXT)
-                    .body(endsWith("# EOF\n"), not(startsWith("# EOF\n")))
-            );
+                    .body(
+                        endsWith("# EOF\n"),
+                        not(startsWith("# EOF\n")),
+                        // tags can vary depending on where you run your tests:
+                        //  - IDE: no telemetry_sdk_version tag
+                        //  - Gradle: telemetry_sdk_version has the version number
+                        containsString("{job=\"test\",otel_scope_name=\"\",otel_scope_schema_url=\"\",otel_scope_version=\"\",service_name=\"test\",telemetry_sdk_language=\"java\",telemetry_sdk_name=\"io.micrometer\""),
 
-        // tags can vary depending on where you run your tests:
-        //  - IDE: no telemetry_sdk_version tag
-        //  - Gradle: telemetry_sdk_version has the version number
-        whenPrometheusScraped().then().body(
-            containsString("{job=\"test\",otel_scope_name=\"\",otel_scope_schema_url=\"\",otel_scope_version=\"\",service_name=\"test\",telemetry_sdk_language=\"java\",telemetry_sdk_name=\"io.micrometer\""),
+                        containsString("# HELP test_counter \n"),
+                        containsString("# TYPE test_counter counter\n"),
+                        matchesPattern("(?s)^.*test_counter_total\\{.+} 42\\.0\\n.*$"),
 
-            containsString("# HELP test_counter \n"),
-            containsString("# TYPE test_counter counter\n"),
-            matchesPattern("(?s)^.*test_counter_total\\{.+} 42\\.0\\n.*$"),
+                        containsString("# HELP test_gauge \n"),
+                        containsString("# TYPE test_gauge gauge\n"),
+                        matchesPattern("(?s)^.*test_gauge\\{.+} 12\\.0\\n.*$"),
 
-            containsString("# HELP test_gauge \n"),
-            containsString("# TYPE test_gauge gauge\n"),
-            matchesPattern("(?s)^.*test_gauge\\{.+} 12\\.0\\n.*$"),
+                        containsString("# HELP test_timer_milliseconds \n"),
+                        containsString("# TYPE test_timer_milliseconds histogram\n"),
+                        matchesPattern("(?s)^.*test_timer_milliseconds_count\\{.+} 1\\n.*$"),
+                        // Earlier this was 123s (123), should have been 123ms (0.123)
+                        // see: https://github.com/open-telemetry/opentelemetry-collector-contrib/issues/18903
+                        // it seems units are still not converted but at least the unit is in the name now (breaking change)
+                        // see: https://github.com/open-telemetry/opentelemetry-collector-contrib/pull/20519
+                        matchesPattern("(?s)^.*test_timer_milliseconds_sum\\{.+} 123\\.0\\n.*$"),
+                        matchesPattern("(?s)^.*test_timer_milliseconds_bucket\\{.+,le=\"\\+Inf\"} 1\\n.*$"),
 
-            containsString("# HELP test_timer_milliseconds \n"),
-            containsString("# TYPE test_timer_milliseconds histogram\n"),
-            matchesPattern("(?s)^.*test_timer_milliseconds_count\\{.+} 1\\n.*$"),
-            // Earlier this was 123s (123), should have been 123ms (0.123)
-            // see: https://github.com/open-telemetry/opentelemetry-collector-contrib/issues/18903
-            // it seems units are still not converted but at least the unit is in the name now (breaking change)
-            // see: https://github.com/open-telemetry/opentelemetry-collector-contrib/pull/20519
-            matchesPattern("(?s)^.*test_timer_milliseconds_sum\\{.+} 123\\.0\\n.*$"),
-            matchesPattern("(?s)^.*test_timer_milliseconds_bucket\\{.+,le=\"\\+Inf\"} 1\\n.*$"),
+                        containsString("# HELP test_timer_max_milliseconds \n"),
+                        containsString("# TYPE test_timer_max_milliseconds gauge\n"),
+                        matchesPattern("(?s)^.*test_timer_max_milliseconds\\{.+} 123\\.0\n.*$"),
 
-            containsString("# HELP test_timer_max_milliseconds \n"),
-            containsString("# TYPE test_timer_max_milliseconds gauge\n"),
-            matchesPattern("(?s)^.*test_timer_max_milliseconds\\{.+} 123\\.0\n.*$"),
-
-            containsString("# HELP test_ds \n"),
-            containsString("# TYPE test_ds histogram\n"),
-            matchesPattern("(?s)^.*test_ds_count\\{.+} 1\\n.*$"),
-            matchesPattern("(?s)^.*test_ds_sum\\{.+} 24\\.0\\n.*$"),
-            matchesPattern("(?s)^.*test_ds_max\\{.+} 24\\.0\\n.*$"),
-            matchesPattern("(?s)^.*test_ds_bucket\\{.+,le=\"\\+Inf\"} 1\\n.*$")
-        );
-        // @formatter:on
+                        containsString("# HELP test_ds \n"),
+                        containsString("# TYPE test_ds histogram\n"),
+                        matchesPattern("(?s)^.*test_ds_count\\{.+} 1\\n.*$"),
+                        matchesPattern("(?s)^.*test_ds_sum\\{.+} 24\\.0\\n.*$"),
+                        matchesPattern("(?s)^.*test_ds_max\\{.+} 24\\.0\\n.*$"),
+                        matchesPattern("(?s)^.*test_ds_bucket\\{.+,le=\"\\+Inf\"} 1\\n.*$")
+                    ));
+                    // @formatter:on
     }
 
     @Test
@@ -139,36 +138,35 @@ class OTelCollectorIntegrationTest {
             .untilAsserted(() -> whenPrometheusScraped().then()
                     .statusCode(200)
                     .contentType(OPENMETRICS_TEXT)
-                    .body(endsWith("# EOF\n"), not(startsWith("# EOF\n")))
-            );
+                    .body(
+                        endsWith("# EOF\n"),
+                        not(startsWith("# EOF\n")),
+                        // tags can vary depending on where you run your tests:
+                        //  - IDE: no telemetry_sdk_version tag
+                        //  - Gradle: telemetry_sdk_version has the version number
+                        containsString("{job=\"test\",otel_scope_name=\"\",otel_scope_schema_url=\"\",otel_scope_version=\"\",service_name=\"test\",telemetry_sdk_language=\"java\",telemetry_sdk_name=\"io.micrometer\""),
 
-        // tags can vary depending on where you run your tests:
-        //  - IDE: no telemetry_sdk_version tag
-        //  - Gradle: telemetry_sdk_version has the version number
-        whenPrometheusScraped().then().body(
-            containsString("{job=\"test\",otel_scope_name=\"\",otel_scope_schema_url=\"\",otel_scope_version=\"\",service_name=\"test\",telemetry_sdk_language=\"java\",telemetry_sdk_name=\"io.micrometer\""),
+                        containsString("# HELP test_counter_gzip \n"),
+                        containsString("# TYPE test_counter_gzip counter\n"),
+                        matchesPattern("(?s)^.*test_counter_gzip_total\\{.+} 42\\.0\\n.*$"),
 
-            containsString("# HELP test_counter_gzip \n"),
-            containsString("# TYPE test_counter_gzip counter\n"),
-            matchesPattern("(?s)^.*test_counter_gzip_total\\{.+} 42\\.0\\n.*$"),
+                        containsString("# HELP test_gauge_gzip \n"),
+                        containsString("# TYPE test_gauge_gzip gauge\n"),
+                        matchesPattern("(?s)^.*test_gauge_gzip\\{.+} 12\\.0\\n.*$"),
 
-            containsString("# HELP test_gauge_gzip \n"),
-            containsString("# TYPE test_gauge_gzip gauge\n"),
-            matchesPattern("(?s)^.*test_gauge_gzip\\{.+} 12\\.0\\n.*$"),
+                        containsString("# HELP test_timer_gzip_milliseconds \n"),
+                        containsString("# TYPE test_timer_gzip_milliseconds histogram\n"),
+                        matchesPattern("(?s)^.*test_timer_gzip_milliseconds_count\\{.+} 1\\n.*$"),
+                        matchesPattern("(?s)^.*test_timer_gzip_milliseconds_sum\\{.+} 123\\.0\\n.*$"),
+                        matchesPattern("(?s)^.*test_timer_gzip_milliseconds_bucket\\{.+,le=\"\\+Inf\"} 1\\n.*$"),
 
-            containsString("# HELP test_timer_gzip_milliseconds \n"),
-            containsString("# TYPE test_timer_gzip_milliseconds histogram\n"),
-            matchesPattern("(?s)^.*test_timer_gzip_milliseconds_count\\{.+} 1\\n.*$"),
-            matchesPattern("(?s)^.*test_timer_gzip_milliseconds_sum\\{.+} 123\\.0\\n.*$"),
-            matchesPattern("(?s)^.*test_timer_gzip_milliseconds_bucket\\{.+,le=\"\\+Inf\"} 1\\n.*$"),
-
-            containsString("# HELP test_ds_gzip \n"),
-            containsString("# TYPE test_ds_gzip histogram\n"),
-            matchesPattern("(?s)^.*test_ds_gzip_count\\{.+} 1\\n.*$"),
-            matchesPattern("(?s)^.*test_ds_gzip_sum\\{.+} 24\\.0\\n.*$"),
-            matchesPattern("(?s)^.*test_ds_gzip_bucket\\{.+,le=\"\\+Inf\"} 1\\n.*$")
-        );
-        // @formatter:on
+                        containsString("# HELP test_ds_gzip \n"),
+                        containsString("# TYPE test_ds_gzip histogram\n"),
+                        matchesPattern("(?s)^.*test_ds_gzip_count\\{.+} 1\\n.*$"),
+                        matchesPattern("(?s)^.*test_ds_gzip_sum\\{.+} 24\\.0\\n.*$"),
+                        matchesPattern("(?s)^.*test_ds_gzip_bucket\\{.+,le=\"\\+Inf\"} 1\\n.*$")
+                    ));
+                    // @formatter:on
     }
 
     @Test
@@ -181,30 +179,30 @@ class OTelCollectorIntegrationTest {
         await().atMost(Duration.ofSeconds(5))
             .pollDelay(Duration.ofMillis(100))
             .pollInterval(Duration.ofMillis(100))
-            .untilAsserted(() -> whenPrometheusScraped().then()
+            .untilAsserted(() -> whenPrometheusScraped()
+                    .then()
                     .statusCode(200)
                     .contentType(OPENMETRICS_TEXT)
-                    .body(endsWith("# EOF\n"), not(startsWith("# EOF\n")))
-            );
-
-        whenPrometheusScraped().then().body(
-            // Verify timer histogram is exported
-            containsString("# HELP test_timer_nomax_milliseconds \n"),
-            containsString("# TYPE test_timer_nomax_milliseconds histogram\n"),
-            matchesPattern("(?s)^.*test_timer_nomax_milliseconds_count\\{.+} 1\\n.*$"),
-            matchesPattern("(?s)^.*test_timer_nomax_milliseconds_sum\\{.+} 123\\.0\\n.*$"),
-            matchesPattern("(?s)^.*test_timer_nomax_milliseconds_bucket\\{.+,le=\"\\+Inf\"} 1\\n.*$"),
-            // Verify distribution summary histogram is exported
-            containsString("# HELP test_ds_nomax \n"),
-            containsString("# TYPE test_ds_nomax histogram\n"),
-            matchesPattern("(?s)^.*test_ds_nomax_count\\{.+} 1\\n.*$"),
-            matchesPattern("(?s)^.*test_ds_nomax_sum\\{.+} 24\\.0\\n.*$"),
-            matchesPattern("(?s)^.*test_ds_nomax_bucket\\{.+,le=\"\\+Inf\"} 1\\n.*$"),
-            // Verify .max gauges are NOT exported
-            not(containsString("# HELP test_timer_nomax_max_milliseconds \n")),
-            not(containsString("# TYPE test_timer_nomax_max_milliseconds gauge\n")),
-            not(matchesPattern("(?s)^.*test_timer_nomax_max_milliseconds\\{.+} 123\\.0\n.*$"))
-        );
+                    .body(
+                        endsWith("# EOF\n"),
+                        not(startsWith("# EOF\n")),
+                        // Verify timer histogram is exported
+                        containsString("# HELP test_timer_nomax_milliseconds \n"),
+                        containsString("# TYPE test_timer_nomax_milliseconds histogram\n"),
+                        matchesPattern("(?s)^.*test_timer_nomax_milliseconds_count\\{.+} 1\\n.*$"),
+                        matchesPattern("(?s)^.*test_timer_nomax_milliseconds_sum\\{.+} 123\\.0\\n.*$"),
+                        matchesPattern("(?s)^.*test_timer_nomax_milliseconds_bucket\\{.+,le=\"\\+Inf\"} 1\\n.*$"),
+                        // Verify distribution summary histogram is exported
+                        containsString("# HELP test_ds_nomax \n"),
+                        containsString("# TYPE test_ds_nomax histogram\n"),
+                        matchesPattern("(?s)^.*test_ds_nomax_count\\{.+} 1\\n.*$"),
+                        matchesPattern("(?s)^.*test_ds_nomax_sum\\{.+} 24\\.0\\n.*$"),
+                        matchesPattern("(?s)^.*test_ds_nomax_bucket\\{.+,le=\"\\+Inf\"} 1\\n.*$"),
+                        // Verify .max gauges are NOT exported
+                        not(containsString("# HELP test_timer_nomax_max_milliseconds \n")),
+                        not(containsString("# TYPE test_timer_nomax_max_milliseconds gauge\n")),
+                        not(matchesPattern("(?s)^.*test_timer_nomax_max_milliseconds\\{.+} 123\\.0\n.*$"))
+                    ));
         // @formatter:on
     }
 
