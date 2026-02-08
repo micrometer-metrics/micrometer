@@ -49,8 +49,7 @@ class OTelCollectorIntegrationTest {
 
     private static final String CONFIG_FILE_NAME = "collector-config.yml";
 
-    private static final DockerImageName COLLECTOR_IMAGE = DockerImageName
-        .parse("otel/opentelemetry-collector-contrib:" + getCollectorImageVersion());
+    private static final DockerImageName COLLECTOR_IMAGE = getOtelCollectorImage();
 
     @Container
     private final GenericContainer<?> container = new GenericContainer(COLLECTOR_IMAGE)
@@ -60,13 +59,13 @@ class OTelCollectorIntegrationTest {
         .waitingFor(Wait.forLogMessage(".*Everything is ready.*", 1))
         .waitingFor(Wait.forListeningPorts(4318));
 
-    private static String getCollectorImageVersion() {
-        String version = System.getProperty("otel-collector-image.version");
-        if (version == null) {
+    private static DockerImageName getOtelCollectorImage() {
+        String imageName = System.getProperty("otel-collector-image.name");
+        if (imageName == null) {
             throw new IllegalStateException(
-                    "System property 'otel-collector-image.version' is not set. This should be set in the build configuration for running from the command line. If you are running OTelCollectorIntegrationTest from an IDE, set the system property to the desired collector image version.");
+                    "System property 'otel-collector-image.name' is not set. This should be set in the build configuration for running from the command line. If you are running OTelCollectorIntegrationTest from an IDE, set the system property to the desired collector image name.");
         }
-        return version;
+        return DockerImageName.parse(imageName);
     }
 
     @Test
