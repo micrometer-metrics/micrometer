@@ -15,5 +15,5 @@ dependencies {
 }
 
 dockerTest {
-    systemProperty 'otel-collector-image.version',  libs.versions.docker.otel.collector.get()
+    systemProperty 'otel-collector-image.name',  libs.versions.docker.otel.collector.get()
 }
