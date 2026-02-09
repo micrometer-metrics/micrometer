@@ -26,7 +26,10 @@ import org.junit.jupiter.api.Test;
 import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import static io.micrometer.core.instrument.binder.netty4.NettyMeters.EVENT_EXECUTOR_TASKS_PENDING;
 import static io.micrometer.core.instrument.binder.netty4.NettyMeters.EVENT_EXECUTOR_WORKERS;
@@ -43,9 +46,10 @@ class NettyEventExecutorMetricsTests {
     private final SimpleMeterRegistry registry = new SimpleMeterRegistry();
 
     @Test
-    void shouldHaveTasksPendingMetricForEachEventLoop() {
+    void shouldHaveTasksPendingMetricForEachEventLoop() throws Exception {
         Set<String> names = new LinkedHashSet<>();
-        try (DefaultEventLoopGroup eventExecutors = new DefaultEventLoopGroup()) {
+        DefaultEventLoopGroup eventExecutors = new DefaultEventLoopGroup();
+        try {
             new NettyEventExecutorMetrics(eventExecutors).bindTo(this.registry);
             eventExecutors.spliterator().forEachRemaining(eventExecutor -> {
                 if (eventExecutor instanceof SingleThreadEventExecutor) {
@@ -61,11 +65,15 @@ class NettyEventExecutorMetricsTests {
                     .value()).isZero();
             });
         }
+        finally {
+            eventExecutors.shutdownGracefully().get(5, TimeUnit.SECONDS);
+        }
     }
 
     @Test
-    void shouldHaveTasksPendingMetricForSingleEventLoop() {
-        try (DefaultEventLoopGroup eventExecutors = new DefaultEventLoopGroup()) {
+    void shouldHaveTasksPendingMetricForSingleEventLoop() throws Exception {
+        DefaultEventLoopGroup eventExecutors = new DefaultEventLoopGroup();
+        try {
             EventLoop eventLoop = eventExecutors.next();
             new NettyEventExecutorMetrics(eventLoop).bindTo(this.registry);
             assertThat(eventLoop).isInstanceOf(SingleThreadEventExecutor.class);
@@ -76,11 +84,15 @@ class NettyEventExecutorMetricsTests {
                 .gauge()
                 .value()).isZero();
         }
+        finally {
+            eventExecutors.shutdownGracefully().get(5, TimeUnit.SECONDS);
+        }
     }
 
     @Test
-    void shouldHaveCustomTags() {
-        try (DefaultEventLoopGroup eventExecutors = new DefaultEventLoopGroup()) {
+    void shouldHaveCustomTags() throws Exception {
+        DefaultEventLoopGroup eventExecutors = new DefaultEventLoopGroup();
+        try {
             EventLoop eventLoop = eventExecutors.next();
             Tags extraTags = Tags.of("testKey", "testValue");
             new NettyEventExecutorMetrics(eventLoop, extraTags).bindTo(this.registry);
@@ -93,25 +105,36 @@ class NettyEventExecutorMetricsTests {
                 .gauge()
                 .value()).isZero();
         }
-    }
-
-    @Test
-    void shouldHaveWorkersMetric() {
-        try (DefaultEventLoopGroup group = new DefaultEventLoopGroup(4, new DefaultThreadFactory("test-workers"))) {
-            new NettyEventExecutorMetrics(group).bindTo(this.registry);
-
-            assertThat(this.registry.get(EVENT_EXECUTOR_WORKERS.getName()).gauge().value()).isEqualTo(4);
+        finally {
+            eventExecutors.shutdownGracefully().get(5, TimeUnit.SECONDS);
         }
     }
 
     @Test
-    void shouldHaveWorkersMetricWithCustomTags() {
-        try (DefaultEventLoopGroup group = new DefaultEventLoopGroup(2, new DefaultThreadFactory("test-workers"))) {
+    void shouldHaveWorkersMetric() throws Exception {
+        DefaultEventLoopGroup group = new DefaultEventLoopGroup(4, new DefaultThreadFactory("test-workers"));
+        try {
+            new NettyEventExecutorMetrics(group).bindTo(this.registry);
+
+            assertThat(this.registry.get(EVENT_EXECUTOR_WORKERS.getName()).gauge().value()).isEqualTo(4);
+        }
+        finally {
+            group.shutdownGracefully().get(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    void shouldHaveWorkersMetricWithCustomTags() throws Exception {
+        DefaultEventLoopGroup group = new DefaultEventLoopGroup(2, new DefaultThreadFactory("test-workers"));
+        try {
             Tags extraTags = Tags.of("testKey", "testValue");
             new NettyEventExecutorMetrics(group, extraTags).bindTo(this.registry);
 
             assertThat(this.registry.get(EVENT_EXECUTOR_WORKERS.getName()).tags(extraTags).gauge().value())
                 .isEqualTo(2);
+        }
+        finally {
+            group.shutdownGracefully().get(5, TimeUnit.SECONDS);
         }
     }
 
@@ -127,11 +150,15 @@ class NettyEventExecutorMetricsTests {
     }
 
     @Test
-    void shouldHaveWorkersMetricForSubclassOfMultiThreadEventLoopGroup() {
-        try (EventLoopGroup group = new SubclassOfMultiThreadIoEventLoopGroup(3)) {
+    void shouldHaveWorkersMetricForSubclassOfMultiThreadEventLoopGroup() throws Exception {
+        EventLoopGroup group = new SubclassOfMultiThreadIoEventLoopGroup(3);
+        try {
             new NettyEventExecutorMetrics(group).bindTo(this.registry);
 
             assertThat(this.registry.get(EVENT_EXECUTOR_WORKERS.getName()).gauge().value()).isEqualTo(3.0);
+        }
+        finally {
+            group.shutdownGracefully().get(5, TimeUnit.SECONDS);
         }
     }
 
