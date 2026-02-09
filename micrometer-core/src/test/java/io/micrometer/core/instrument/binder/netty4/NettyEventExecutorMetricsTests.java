@@ -17,11 +17,7 @@ package io.micrometer.core.instrument.binder.netty4;
 
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-import io.netty.channel.EventLoop;
-import io.netty.channel.EventLoopGroup;
-import io.netty.channel.MultiThreadIoEventLoopGroup;
-import io.netty.channel.MultithreadEventLoopGroup;
-import io.netty.channel.local.LocalIoHandler;
+import io.netty.channel.*;
 import io.netty.util.concurrent.DefaultThreadFactory;
 import io.netty.util.concurrent.EventExecutor;
 import io.netty.util.concurrent.SingleThreadEventExecutor;
@@ -30,6 +26,7 @@ import org.junit.jupiter.api.Test;
 import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.Set;
+import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 
 import static io.micrometer.core.instrument.binder.netty4.NettyMeters.EVENT_EXECUTOR_TASKS_PENDING;
@@ -49,77 +46,94 @@ class NettyEventExecutorMetricsTests {
     @Test
     void shouldHaveTasksPendingMetricForEachEventLoop() throws Exception {
         Set<String> names = new LinkedHashSet<>();
-        MultithreadEventLoopGroup eventExecutors = new MultiThreadIoEventLoopGroup(LocalIoHandler.newFactory());
-        new NettyEventExecutorMetrics(eventExecutors).bindTo(this.registry);
-        eventExecutors.spliterator().forEachRemaining(eventExecutor -> {
-            if (eventExecutor instanceof SingleThreadEventExecutor) {
-                SingleThreadEventExecutor singleThreadEventExecutor = (SingleThreadEventExecutor) eventExecutor;
-                names.add(singleThreadEventExecutor.threadProperties().name());
-            }
-        });
-        assertThat(names).isNotEmpty();
-        names.forEach(name -> {
-            assertThat(this.registry.get(EVENT_EXECUTOR_TASKS_PENDING.getName())
-                .tags(Tags.of("name", name))
-                .gauge()
-                .value()).isZero();
-        });
-        eventExecutors.shutdownGracefully().get(5, TimeUnit.SECONDS);
+        DefaultEventLoopGroup eventExecutors = new DefaultEventLoopGroup();
+        try {
+            new NettyEventExecutorMetrics(eventExecutors).bindTo(this.registry);
+            eventExecutors.spliterator().forEachRemaining(eventExecutor -> {
+                if (eventExecutor instanceof SingleThreadEventExecutor) {
+                    SingleThreadEventExecutor singleThreadEventExecutor = (SingleThreadEventExecutor) eventExecutor;
+                    names.add(singleThreadEventExecutor.threadProperties().name());
+                }
+            });
+            assertThat(names).isNotEmpty();
+            names.forEach(name -> {
+                assertThat(this.registry.get(EVENT_EXECUTOR_TASKS_PENDING.getName())
+                    .tags(Tags.of("name", name))
+                    .gauge()
+                    .value()).isZero();
+            });
+        }
+        finally {
+            eventExecutors.shutdownGracefully().get(5, TimeUnit.SECONDS);
+        }
     }
 
     @Test
     void shouldHaveTasksPendingMetricForSingleEventLoop() throws Exception {
-        MultithreadEventLoopGroup eventExecutors = new MultiThreadIoEventLoopGroup(LocalIoHandler.newFactory());
-        EventLoop eventLoop = eventExecutors.next();
-        new NettyEventExecutorMetrics(eventLoop).bindTo(this.registry);
-        assertThat(eventLoop).isInstanceOf(SingleThreadEventExecutor.class);
-        SingleThreadEventExecutor singleThreadEventExecutor = (SingleThreadEventExecutor) eventLoop;
-        String eventLoopName = singleThreadEventExecutor.threadProperties().name();
-        assertThat(this.registry.get(EVENT_EXECUTOR_TASKS_PENDING.getName())
-            .tags(Tags.of("name", eventLoopName))
-            .gauge()
-            .value()).isZero();
-        eventExecutors.shutdownGracefully().get(5, TimeUnit.SECONDS);
+        DefaultEventLoopGroup eventExecutors = new DefaultEventLoopGroup();
+        try {
+            EventLoop eventLoop = eventExecutors.next();
+            new NettyEventExecutorMetrics(eventLoop).bindTo(this.registry);
+            assertThat(eventLoop).isInstanceOf(SingleThreadEventExecutor.class);
+            SingleThreadEventExecutor singleThreadEventExecutor = (SingleThreadEventExecutor) eventLoop;
+            String eventLoopName = singleThreadEventExecutor.threadProperties().name();
+            assertThat(this.registry.get(EVENT_EXECUTOR_TASKS_PENDING.getName())
+                .tags(Tags.of("name", eventLoopName))
+                .gauge()
+                .value()).isZero();
+        }
+        finally {
+            eventExecutors.shutdownGracefully().get(5, TimeUnit.SECONDS);
+        }
     }
 
     @Test
     void shouldHaveCustomTags() throws Exception {
-        MultithreadEventLoopGroup eventExecutors = new MultiThreadIoEventLoopGroup(LocalIoHandler.newFactory());
-        EventLoop eventLoop = eventExecutors.next();
-        Tags extraTags = Tags.of("testKey", "testValue");
-        new NettyEventExecutorMetrics(eventLoop, extraTags).bindTo(this.registry);
-        assertThat(eventLoop).isInstanceOf(SingleThreadEventExecutor.class);
-        SingleThreadEventExecutor singleThreadEventExecutor = (SingleThreadEventExecutor) eventLoop;
-        String eventLoopName = singleThreadEventExecutor.threadProperties().name();
-        assertThat(this.registry.get(EVENT_EXECUTOR_TASKS_PENDING.getName())
-            .tags(Tags.of("name", eventLoopName))
-            .tags(extraTags)
-            .gauge()
-            .value()).isZero();
-        eventExecutors.shutdownGracefully().get(5, TimeUnit.SECONDS);
+        DefaultEventLoopGroup eventExecutors = new DefaultEventLoopGroup();
+        try {
+            EventLoop eventLoop = eventExecutors.next();
+            Tags extraTags = Tags.of("testKey", "testValue");
+            new NettyEventExecutorMetrics(eventLoop, extraTags).bindTo(this.registry);
+            assertThat(eventLoop).isInstanceOf(SingleThreadEventExecutor.class);
+            SingleThreadEventExecutor singleThreadEventExecutor = (SingleThreadEventExecutor) eventLoop;
+            String eventLoopName = singleThreadEventExecutor.threadProperties().name();
+            assertThat(this.registry.get(EVENT_EXECUTOR_TASKS_PENDING.getName())
+                .tags(Tags.of("name", eventLoopName))
+                .tags(extraTags)
+                .gauge()
+                .value()).isZero();
+        }
+        finally {
+            eventExecutors.shutdownGracefully().get(5, TimeUnit.SECONDS);
+        }
     }
 
     @Test
     void shouldHaveWorkersMetric() throws Exception {
-        MultiThreadIoEventLoopGroup group = new MultiThreadIoEventLoopGroup(4, new DefaultThreadFactory("test-workers"),
-                LocalIoHandler.newFactory());
-        new NettyEventExecutorMetrics(group).bindTo(this.registry);
+        DefaultEventLoopGroup group = new DefaultEventLoopGroup(4, new DefaultThreadFactory("test-workers"));
+        try {
+            new NettyEventExecutorMetrics(group).bindTo(this.registry);
 
-        assertThat(this.registry.get(EVENT_EXECUTOR_WORKERS.getName()).gauge().value()).isEqualTo(4);
-
-        group.shutdownGracefully().get(5, TimeUnit.SECONDS);
+            assertThat(this.registry.get(EVENT_EXECUTOR_WORKERS.getName()).gauge().value()).isEqualTo(4);
+        }
+        finally {
+            group.shutdownGracefully().get(5, TimeUnit.SECONDS);
+        }
     }
 
     @Test
     void shouldHaveWorkersMetricWithCustomTags() throws Exception {
-        MultiThreadIoEventLoopGroup group = new MultiThreadIoEventLoopGroup(2, new DefaultThreadFactory("test-workers"),
-                LocalIoHandler.newFactory());
-        Tags extraTags = Tags.of("testKey", "testValue");
-        new NettyEventExecutorMetrics(group, extraTags).bindTo(this.registry);
+        DefaultEventLoopGroup group = new DefaultEventLoopGroup(2, new DefaultThreadFactory("test-workers"));
+        try {
+            Tags extraTags = Tags.of("testKey", "testValue");
+            new NettyEventExecutorMetrics(group, extraTags).bindTo(this.registry);
 
-        assertThat(this.registry.get(EVENT_EXECUTOR_WORKERS.getName()).tags(extraTags).gauge().value()).isEqualTo(2);
-
-        group.shutdownGracefully().get(5, TimeUnit.SECONDS);
+            assertThat(this.registry.get(EVENT_EXECUTOR_WORKERS.getName()).tags(extraTags).gauge().value())
+                .isEqualTo(2);
+        }
+        finally {
+            group.shutdownGracefully().get(5, TimeUnit.SECONDS);
+        }
     }
 
     @Test
@@ -136,17 +150,25 @@ class NettyEventExecutorMetricsTests {
     @Test
     void shouldHaveWorkersMetricForSubclassOfMultiThreadEventLoopGroup() throws Exception {
         EventLoopGroup group = new SubclassOfMultiThreadIoEventLoopGroup(3);
-        new NettyEventExecutorMetrics(group).bindTo(this.registry);
+        try {
+            new NettyEventExecutorMetrics(group).bindTo(this.registry);
 
-        assertThat(this.registry.get(EVENT_EXECUTOR_WORKERS.getName()).gauge().value()).isEqualTo(3.0);
-
-        group.shutdownGracefully().get(5, TimeUnit.SECONDS);
+            assertThat(this.registry.get(EVENT_EXECUTOR_WORKERS.getName()).gauge().value()).isEqualTo(3.0);
+        }
+        finally {
+            group.shutdownGracefully().get(5, TimeUnit.SECONDS);
+        }
     }
 
-    private static class SubclassOfMultiThreadIoEventLoopGroup extends MultiThreadIoEventLoopGroup {
+    private static class SubclassOfMultiThreadIoEventLoopGroup extends MultithreadEventLoopGroup {
 
         SubclassOfMultiThreadIoEventLoopGroup(int nThreads) {
-            super(nThreads, new DefaultThreadFactory("subclass-test-workers"), LocalIoHandler.newFactory());
+            super(nThreads, new DefaultThreadFactory("subclass-test-workers"));
+        }
+
+        @Override
+        protected EventLoop newChild(Executor executor, Object... objects) throws Exception {
+            return new DefaultEventLoop(executor);
         }
 
     }
