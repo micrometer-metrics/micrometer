@@ -141,7 +141,9 @@ class StatsdMeterRegistryPublishTest {
         // For UDP, the first change seems to be lost frequently somehow.
         Counter.builder("another.counter").register(meterRegistry).increment();
 
-        await().until(() -> meterRegistry.statsdConnection.get() != firstClient);
+        if (protocol == StatsdProtocol.UDS_DATAGRAM) {
+            await().until(() -> meterRegistry.statsdConnection.get() != firstClient);
+        }
 
         counter.increment(5);
         counter.increment(6);
@@ -329,12 +331,12 @@ class StatsdMeterRegistryPublishTest {
 
     @Test
     void counterIncrementWorksWithSleepAfterRegistryStart() throws InterruptedException {
-        StatsdConfig config = StatsdConfig.DEFAULT;
-
         CountDownLatch serverLatch = new CountDownLatch(1);
-        DisposableChannel server = startServer(StatsdProtocol.UDP, config.port(), serverLatch);
+        DisposableChannel server = startServer(StatsdProtocol.UDP, 0, serverLatch);
+        final int port = getPort(server, StatsdProtocol.UDP);
 
-        StatsdMeterRegistry registry = new StatsdMeterRegistry(config, Clock.SYSTEM);
+        StatsdMeterRegistry registry = new StatsdMeterRegistry(getBufferedConfig(StatsdProtocol.UDP, port),
+                Clock.SYSTEM);
         Thread.sleep(1000);
 
         Counter counter = Counter.builder("my.counter").register(registry);
@@ -349,12 +351,12 @@ class StatsdMeterRegistryPublishTest {
 
     @Test
     void counterIncrementDoesNotWorkWithoutSleepAfterRegistryStart() throws InterruptedException {
-        StatsdConfig config = StatsdConfig.DEFAULT;
-
         CountDownLatch serverLatch = new CountDownLatch(1);
-        DisposableChannel server = startServer(StatsdProtocol.UDP, config.port(), serverLatch);
+        DisposableChannel server = startServer(StatsdProtocol.UDP, 0, serverLatch);
+        final int port = getPort(server, StatsdProtocol.UDP);
 
-        StatsdMeterRegistry registry = new StatsdMeterRegistry(config, Clock.SYSTEM);
+        StatsdMeterRegistry registry = new StatsdMeterRegistry(getBufferedConfig(StatsdProtocol.UDP, port),
+                Clock.SYSTEM);
 
         Counter counter = Counter.builder("my.counter").register(registry);
         counter.increment();
