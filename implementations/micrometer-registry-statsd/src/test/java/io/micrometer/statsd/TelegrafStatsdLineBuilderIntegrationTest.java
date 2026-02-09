@@ -21,6 +21,7 @@ import io.micrometer.core.instrument.Counter;
 import io.restassured.config.EncoderConfig;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
+import reactor.core.Disposable;
 import org.hamcrest.Matcher;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
@@ -168,7 +169,8 @@ class TelegrafStatsdLineBuilderIntegrationTest {
     }
 
     private boolean clientIsDisposed(StatsdMeterRegistry meterRegistry) {
-        return meterRegistry.statsdConnection.get().isDisposed();
+        Disposable conn = meterRegistry.statsdConnection.get();
+        return conn != null && conn.isDisposed();
     }
 
     private StatsdConfig getStatsdConfig() {
