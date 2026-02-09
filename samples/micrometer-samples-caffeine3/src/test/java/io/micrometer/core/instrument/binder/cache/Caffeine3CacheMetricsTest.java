@@ -33,10 +33,8 @@ import java.util.concurrent.TimeUnit;
 import static org.assertj.core.api.Assertions.*;
 
 /**
- * Tests for {@link CaffeineCacheMetrics} with Caffeine 3.x.
- *
- * <p>
- * Copied from {@link CaffeineCacheMetricsTest}.
+ * Tests for {@link CaffeineCacheMetrics} with Caffeine 3.x. Copied from
+ * {@code micrometer-core/src/test/java/io/micrometer/core/instrument/binder/cache/CaffeineCacheMetricsTest.java}.
  *
  * @author Oleksii Bondar
  * @author Johnny Lim

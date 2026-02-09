@@ -34,10 +34,8 @@ import java.util.concurrent.TimeUnit;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Tests for {@link CaffeineStatsCounter} with Caffeine 3.x.
- *
- * <p>
- * Copied from {@link CaffeineStatsCounterTest}.
+ * Tests for {@link CaffeineStatsCounter} with Caffeine 3.x. Copied from
+ * {@code micrometer-core/src/test/java/io/micrometer/core/instrument/binder/cache/CaffeineStatsCounterTest.java}.
  *
  * @author John Karp
  */

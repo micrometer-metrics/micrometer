@@ -24,12 +24,8 @@ import java.util.concurrent.atomic.AtomicReference;
 import static java.util.Collections.emptyList;
 
 /**
- * Compatibility test for {@link CaffeineCacheMetrics} with Caffeine 3.x.
- *
- * <p>
- * Copied from {@link CaffeineCacheMetricsCompatibilityTest}.
- *
- * @author Oleksii Bondar
+ * Compatibility test for {@link CaffeineCacheMetrics} with Caffeine 3.x. Copied from
+ * {@code micrometer-test/src/test/java/io/micrometer/core/instrument/binder/cache/CaffeineCacheMetricsCompatibilityTest.java}.
  */
 class Caffeine3CacheMetricsCompatibilityTest extends CacheMeterBinderCompatibilityKit<LoadingCache<String, String>> {
 

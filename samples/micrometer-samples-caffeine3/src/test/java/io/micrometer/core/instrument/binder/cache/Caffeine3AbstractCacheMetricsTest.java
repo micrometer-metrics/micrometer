@@ -21,10 +21,8 @@ import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.search.RequiredSearch;
 
 /**
- * Base class for Caffeine 3.x cache metrics tests.
- *
- * <p>
- * Copied from {@link AbstractCacheMetricsTest}.
+ * Base class for Caffeine 3.x cache metrics tests. Copied from
+ * {@code micrometer-test/src/main/java/io/micrometer/core/instrument/binder/cache/AbstractCacheMetricsTest.java}.
  *
  * @author Oleksii Bondar
  */

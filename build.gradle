@@ -520,6 +520,7 @@ tasks.register('verifyDependencyVersions') {
     doLast {
         assertDependencyVersionPrefix(libs.jooq, '3.14.')
         assertDependencyVersionPrefix(libs.logback12, '1.2.')
+        assertDependencyVersionPrefix(libs.caffeine, '2.9.')
     }
 }
 
