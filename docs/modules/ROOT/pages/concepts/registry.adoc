@@ -32,9 +32,9 @@ composite.add(simple); <2>
 compositeCounter.increment(); <3>
 ----
 
-1. Increments are NOOP'd until there is a registry in the composite. The counter's count still yields 0 at this point.
-2. A counter named `counter` is registered to the simple registry.
-3. The simple registry counter is incremented, along with counters for any other registries in the composite.
+<1> Increments are NOOP'd until there is a registry in the composite. The counter's count still yields 0 at this point.
+<2> A counter named `counter` is registered to the simple registry.
+<3> The simple registry counter is incremented, along with counters for any other registries in the composite.
 ====
 
 == Global Registry
@@ -64,7 +64,7 @@ class MyApplication {
 }
 ----
 
-1. Wherever possible (and especially where instrumentation performance is critical), store `Meter` instances in fields to avoid a lookup on their name or tags on each use.
-2. When tags need to be determined from local context, you have no choice but to construct or lookup the Meter inside your method body. The lookup cost is just a single hash lookup, so it is acceptable for most use cases.
-3. It is OK to add registries _after_ meters have been created with code like `Metrics.counter(...)`. These meters are added to each registry, as it is bound to the global composite.
+<1> Wherever possible (and especially where instrumentation performance is critical), store `Meter` instances in fields to avoid a lookup on their name or tags on each use.
+<2> When tags need to be determined from local context, you have no choice but to construct or lookup the Meter inside your method body. The lookup cost is just a single hash lookup, so it is acceptable for most use cases.
+<3> It is OK to add registries _after_ meters have been created with code like `Metrics.counter(...)`. These meters are added to each registry, as it is bound to the global composite.
 ====

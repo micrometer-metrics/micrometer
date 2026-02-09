@@ -71,7 +71,7 @@ Meter filters are applied in the order in which they are configured on the regis
 ----
 registry.config()
     .meterFilter(MeterFilter.acceptNameStartsWith("http"))
-    .meterFilter(MeterFilter.deny()); <1>
+    .meterFilter(MeterFilter.deny());
 ----
 ====
 
