@@ -177,6 +177,7 @@ mavenResolverProvider = { module = "org.apache.maven:maven-resolver-provider", v
 mockitoCore5 = { module = "org.mockito:mockito-core", version.ref = "mockito5" }
 mongoSync = { module = "org.mongodb:mongodb-driver-sync", version.ref = "mongo" }
 nettyBom = { module = "io.netty:netty-bom", version.ref = "netty" }
+nettyBom42 = { module = "io.netty:netty-bom", version = "4.2.10.Final" }
 newrelicApi = { module = "com.newrelic.agent.java:newrelic-api", version.ref = "newrelic-api" }
 nullAway = { module = "com.uber.nullaway:nullaway", version = "0.12.15" }
 okhttp = { module = "com.squareup.okhttp3:okhttp", version.ref = "okhttp" }
