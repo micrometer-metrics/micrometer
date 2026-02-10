@@ -15,8 +15,10 @@
  */
 
 /**
- * Support for Dynatrace v1 metrics API export.
+ * Support for Dynatrace v1 metrics API export. The Dynatrace v1 API is deprecated. It
+ * will be removed in the future. Please use the v2 API instead.
  */
+@Deprecated
 @NullMarked
 package io.micrometer.dynatrace.v1;
 

@@ -24,12 +24,15 @@ import org.jspecify.annotations.Nullable;
  * {@link NamingConvention} for Dynatrace. Delegates to the API-specific naming
  * convention.
  *
+ * @deprecated The Dynatrace V1 API is deprecated. It will be removed in the future.
+ * Please use the V2 API instead.
  * @author Oriol Barcelona Palau
  * @author Jon Schneider
  * @author Johnny Lim
  * @author Georg Pirklbauer
  * @since 1.1.0
  */
+@Deprecated
 public class DynatraceNamingConvention implements NamingConvention {
 
     private final NamingConvention versionSpecificNamingConvention;

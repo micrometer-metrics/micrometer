@@ -44,6 +44,8 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 /**
  * Implementation for Dynatrace v1 metrics API export.
  *
+ * @deprecated The Dynatrace v1 API is deprecated. It will be removed in the future.
+ * Please use the v2 API instead.
  * @author Oriol Barcelona
  * @author Jon Schneider
  * @author Johnny Lim
@@ -51,6 +53,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
  * @author Georg Pirklbauer
  * @since 1.8.0
  */
+@Deprecated
 public class DynatraceExporterV1 extends AbstractDynatraceExporter {
 
     // max message size in bytes that Dynatrace will accept

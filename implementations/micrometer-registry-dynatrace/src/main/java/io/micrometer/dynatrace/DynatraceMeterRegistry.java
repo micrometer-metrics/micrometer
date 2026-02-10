@@ -87,6 +87,8 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
         }
         else {
             logger.info("Exporting to Dynatrace metrics API v1");
+            logger.warn(
+                    "Dynatrace v1 API is deprecated. It will be removed in the future. Please use the v2 API instead.");
             this.exporter = new DynatraceExporterV1(config, clock, httpClient);
         }
 

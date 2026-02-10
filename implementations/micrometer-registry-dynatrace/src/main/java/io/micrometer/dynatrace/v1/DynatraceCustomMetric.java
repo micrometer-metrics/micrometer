@@ -15,6 +15,11 @@
  */
 package io.micrometer.dynatrace.v1;
 
+/**
+ * @deprecated The Dynatrace v1 API is deprecated. It will be removed in the future.
+ * Please use the v2 API instead.
+ */
+@Deprecated
 class DynatraceCustomMetric {
 
     private final DynatraceMetricDefinition metricDefinition;
