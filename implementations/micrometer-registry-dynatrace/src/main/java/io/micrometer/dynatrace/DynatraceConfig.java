@@ -49,11 +49,6 @@ public interface DynatraceConfig extends StepRegistryConfig {
         return "dynatrace";
     }
 
-    /**
-     * @deprecated The Dynatrace v1 API is deprecated. It will be removed in the future.
-     * Please use the v2 API instead.
-     */
-    @Deprecated
     default String apiToken() {
         Validated<String> secret = getSecret(this, "apiToken");
         if (apiVersion() == V1) {
