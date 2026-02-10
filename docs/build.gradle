@@ -57,7 +57,7 @@ dependencies {
     testImplementation platform(libs.reactorBom)
     testImplementation 'io.projectreactor:reactor-core'
     testImplementation 'io.projectreactor:reactor-test'
-    testImplementation platform(libs.nettyBom)
+    testImplementation platform(libs.nettyBom42)
     testImplementation 'io.netty:netty-transport'
     testImplementation libs.httpcomponents.client5
     testImplementation libs.javalin
