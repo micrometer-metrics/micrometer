@@ -38,7 +38,9 @@ import org.apache.hc.core5.pool.ConnPoolControl;
  *
  * @author Benjamin Hubert (benjamin.hubert@willhaben.at)
  * @since 1.11.0
+ * @deprecated use the Apache httpclient5-observation artifact instead
  */
+@Deprecated
 public class PoolingHttpClientConnectionManagerMetricsBinder implements MeterBinder {
 
     private final ConnPoolControl<HttpRoute> connPoolControl;

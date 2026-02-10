@@ -39,7 +39,9 @@ import java.net.URISyntaxException;
  * @see <a href=
  * "https://github.com/open-telemetry/semantic-conventions/blob/v1.36.0/docs/http/README.md">OpenTelemetry
  * Semantic Conventions v1.36.0 for HTTP</a>
+ * @deprecated use the Apache httpclient5-observation artifact instead
  */
+@Deprecated
 public class OpenTelemetryApacheHttpClientObservationConvention implements ApacheHttpClientObservationConvention {
 
     /**

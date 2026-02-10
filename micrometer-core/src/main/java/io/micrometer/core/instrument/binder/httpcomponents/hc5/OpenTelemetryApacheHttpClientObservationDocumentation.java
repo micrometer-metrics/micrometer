@@ -26,7 +26,9 @@ import io.micrometer.observation.docs.ObservationDocumentation;
  *
  * @since 1.16.0
  * @see ObservationExecChainHandler
+ * @deprecated use the Apache httpclient5-observation artifact instead
  */
+@Deprecated
 public enum OpenTelemetryApacheHttpClientObservationDocumentation implements ObservationDocumentation {
 
     /**

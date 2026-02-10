@@ -58,7 +58,9 @@ import java.util.concurrent.atomic.AtomicMarkableReference;
  *
  * @author Brian Clozel
  * @since 1.12.0
+ * @deprecated use the Apache httpclient5-observation artifact instead
  */
+@Deprecated
 public class ObservationExecChainHandler implements ExecChainHandler, AsyncExecChainHandler {
 
     private final ObservationRegistry observationRegistry;

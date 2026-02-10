@@ -23,7 +23,9 @@ import io.micrometer.observation.ObservationConvention;
  *
  * @since 1.11.0
  * @see DefaultApacheHttpClientObservationConvention
+ * @deprecated use the Apache httpclient5-observation artifact instead
  */
+@Deprecated
 public interface ApacheHttpClientObservationConvention extends ObservationConvention<ApacheHttpClientContext> {
 
     /**

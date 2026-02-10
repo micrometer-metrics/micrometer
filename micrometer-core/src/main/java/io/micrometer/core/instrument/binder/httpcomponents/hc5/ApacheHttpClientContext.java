@@ -29,7 +29,9 @@ import java.util.function.Function;
  *
  * @author Brian Clozel
  * @since 1.11.0
+ * @deprecated use the Apache httpclient5-observation artifact instead
  */
+@Deprecated
 public class ApacheHttpClientContext extends RequestReplySenderContext<HttpRequest, HttpResponse> {
 
     @SuppressWarnings("deprecation")

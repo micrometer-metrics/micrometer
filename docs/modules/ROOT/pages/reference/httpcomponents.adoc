@@ -1,7 +1,9 @@
 [[overview]]
 = Apache HttpComponents Client Instrumentation
 
-IMPORTANT: This section requires usage of Apache HttpComponents Client at least in version 5.
+WARNING: This instrumentation is now deprecated in favor of the dedicated Apache module `httpclient5-observation`. See https://hc.apache.org/httpcomponents-client-5.6.x/observation.html[the documentation].
+
+IMPORTANT: This instrumentation requires usage of Apache HttpComponents Client at least in version 5.
 
 https://hc.apache.org/index.html[Apache HttpComponents Client] is an HTTP/1.1 compliant HTTP agent implementation.
 

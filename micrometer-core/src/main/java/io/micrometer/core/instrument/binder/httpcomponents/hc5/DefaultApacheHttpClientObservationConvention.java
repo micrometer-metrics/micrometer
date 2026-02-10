@@ -35,7 +35,9 @@ import java.net.URISyntaxException;
  *
  * @since 1.11.0
  * @see ApacheHttpClientObservationDocumentation
+ * @deprecated use the Apache httpclient5-observation artifact instead
  */
+@Deprecated
 public class DefaultApacheHttpClientObservationConvention implements ApacheHttpClientObservationConvention {
 
     /**
