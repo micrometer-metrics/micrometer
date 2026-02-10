@@ -90,9 +90,12 @@ public interface DynatraceConfig extends StepRegistryConfig {
 
     /**
      * Return device group name.
+     * @deprecated The Dynatrace v1 API is deprecated. It will be removed in the future.
+     * Please use the v2 API instead.
      * @return device group name
      * @since 1.2.0
      */
+    @Deprecated
     default @Nullable String group() {
         return get(prefix() + ".group");
     }
