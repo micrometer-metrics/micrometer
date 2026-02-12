@@ -43,7 +43,7 @@ The `count` statistic is meaningful by itself: It is a measure of _throughput_. 
 
 `totalTime / count` = 2 seconds / 20 requests = 0.1 seconds / request = 100 ms / request
 
-This is a useful measure of _average latency_. When the same idea is applied to the `totalAmount` and `count` emanating from distribution summaries, the measure is called a _distribution average_. Average latency is just the distribution average for a distribution summary measured in time (a timer). Some monitoring systems (such as Atlas) provide facilities for computing the distribution average from these statistics, and Micrometer includes `totalTime` and `count` as separate statistics. Others, (such as Datadog) do not have this kind of operation built-in, and Micrometer calculates the distribution average client-side and ships that.
+This is a useful measure of _average latency_. When the same idea is applied to the `totalTime` and `count` emanating from distribution summaries, the measure is called a _distribution average_. Average latency is just the distribution average for a distribution summary measured in time (a timer). Some monitoring systems (such as Atlas) provide facilities for computing the distribution average from these statistics, and Micrometer includes `totalTime` and `count` as separate statistics. Others, (such as Datadog) do not have this kind of operation built-in, and Micrometer calculates the distribution average client-side and ships that.
 
 Shipping the rate for the publishing interval is sufficient to reason about the rate over any time window greater than or equal to the publishing interval. In our example, if a service continues to receive 20 requests that each take 100ms for every 10 second interval in a given minute, we could say:
 
