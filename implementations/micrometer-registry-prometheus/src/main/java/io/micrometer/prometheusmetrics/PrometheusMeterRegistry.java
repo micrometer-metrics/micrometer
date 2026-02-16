@@ -588,6 +588,13 @@ public class PrometheusMeterRegistry extends MeterRegistry {
                 return micrometerCollector;
             }
 
+            if (!existingCollector.getOriginalId().getName().equals(id.getName())) {
+                meterRegistrationFailed(id, "A meter with the same Prometheus name (" + name + ") is already "
+                        + "registered. Registering this meter with a different Micrometer name that maps to the same Prometheus name "
+                        + "would fail with an exception on scrape.");
+                return existingCollector;
+            }
+
             Meter.Type type = existingCollector.getMeterType();
             if (!type.equals(id.getType())) {
                 meterRegistrationFailed(id,

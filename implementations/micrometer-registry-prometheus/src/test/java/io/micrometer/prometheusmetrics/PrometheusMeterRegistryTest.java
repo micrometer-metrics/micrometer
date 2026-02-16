@@ -63,53 +63,67 @@ class PrometheusMeterRegistryTest {
             prometheusRegistry, clock);
 
     @Test
-    void metersWithSameNameAndDifferentTagsContinueSilently() {
-        String meterName = "my.counter";
-        registry.counter(meterName, "k1", "v1");
-        registry.counter(meterName, "k2", "v2");
-        registry.counter(meterName, "k3", "v3");
-    }
-
-    @Test
     @Issue("gh-877")
     void metersWithSameNameAndDifferentTagsCanScrape() {
-        String meterName = "my.counter";
-        registry.counter(meterName, "k1", "v1");
-        registry.counter(meterName, "k2", "v2");
-        registry.counter(meterName, "k3", "v3");
-        assertThat(registry.scrape()).isEqualTo("# HELP my_counter_total  \n" + "# TYPE my_counter_total counter\n"
-                + "my_counter_total{k1=\"v1\"} 0.0\n" + "my_counter_total{k2=\"v2\"} 0.0\n"
-                + "my_counter_total{k3=\"v3\"} 0.0\n");
+        registry.counter("tasks.completed", "name", "task1").increment();
+        registry.counter("tasks.completed", "name", "task2").increment();
+        registry.counter("tasks.completed", "name", "task3", "error", "DatabaseException").increment();
+        assertThat(registry.scrape())
+        // @formatter:off
+            .isEqualTo("# HELP tasks_completed_total  \n" +
+                "# TYPE tasks_completed_total counter\n" +
+                "tasks_completed_total{error=\"DatabaseException\",name=\"task3\"} 1.0\n" +
+                "tasks_completed_total{name=\"task1\"} 1.0\n" +
+                "tasks_completed_total{name=\"task2\"} 1.0\n");
+        // @formatter:on
     }
 
     @Test
-    void sameNameDifferentTagsWithEmptyTagsDoesNotFail() throws InterruptedException {
+    void differentMicrometerNameSamePrometheusNameFailsToRegister() {
+        AtomicBoolean failed = new AtomicBoolean(false);
+        registry.config().onMeterRegistrationFailed((name, reason) -> failed.set(true));
+
+        registry.counter("test").increment();
+        assertThat(failed.get()).isFalse();
+        registry.counter("test.total").increment(42);
+        assertThat(failed.get()).isTrue();
+    }
+
+    @Test
+    void differentTypesThatProduceSamePrometheusMetricFamilyFailsToRegister() {
+        AtomicBoolean failed = new AtomicBoolean(false);
+        registry.config().onMeterRegistrationFailed((name, reason) -> failed.set(true));
+
+        Timer.builder("test").register(registry).record(Duration.ofMillis(10));
+        assertThat(failed.get()).isFalse();
+        Gauge.builder("test_seconds_max", new AtomicInteger(42), AtomicInteger::get).register(registry);
+        assertThat(failed.get()).isTrue(); // TODO this assertion fails
+    }
+
+    @Test
+    void sameNameDifferentTagsWithEmptyTagsDoesNotFail() {
         AtomicBoolean failed = new AtomicBoolean(false);
         registry.config().onMeterRegistrationFailed((id, reason) -> failed.set(true));
+
         registry.counter("my.counter");
         registry.counter("my.counter", "test.k1", "v1").increment();
+        registry.counter("my.counter", "test.k2", "v2");
+        registry.counter("my.counter", "test.k3", "v3");
 
         assertThat(failed).isFalse();
-
-        assertThatCode(() -> registry.throwExceptionOnRegistrationFailure().counter("my.counter", "test.k2", "v2"))
-            .doesNotThrowAnyException();
-
-        assertThatCode(() -> registry.counter("my.counter", "test.k3", "v3")).doesNotThrowAnyException();
     }
 
     @Test
     void sameNameDifferentTagsWithNonEmptyTagsDoesNotFail() throws InterruptedException {
         AtomicBoolean failed = new AtomicBoolean(false);
         registry.config().onMeterRegistrationFailed((id, reason) -> failed.set(true));
+
         registry.counter("my.counter", "test.k1", "v1");
         registry.counter("my.counter", "k", "v").increment();
+        registry.counter("my.counter", "test.k2", "v2");
+        registry.counter("my.counter");
 
         assertThat(failed).isFalse();
-
-        assertThatCode(() -> registry.throwExceptionOnRegistrationFailure().counter("my.counter", "test.k2", "v2"))
-            .doesNotThrowAnyException();
-
-        assertThatCode(() -> registry.counter("my.counter")).doesNotThrowAnyException();
     }
 
     @Test

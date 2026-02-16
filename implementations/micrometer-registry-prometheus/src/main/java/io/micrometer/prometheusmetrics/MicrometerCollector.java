@@ -42,13 +42,14 @@ class MicrometerCollector implements MultiCollector {
 
     private final String conventionName;
 
-    private final Meter.Type meterType;
+    // the id of the meter used to create this MicrometerCollector
+    private final Meter.Id originalMeterId;
 
     // take name to avoid calling NamingConvention#name after the call-site has already
     // done it
     MicrometerCollector(String name, Meter.Id id) {
         this.conventionName = name;
-        this.meterType = id.getType();
+        this.originalMeterId = id;
     }
 
     public void add(Meter.Id id, Child child) {
@@ -64,7 +65,11 @@ class MicrometerCollector implements MultiCollector {
     }
 
     Meter.Type getMeterType() {
-        return meterType;
+        return originalMeterId.getType();
+    }
+
+    Meter.Id getOriginalId() {
+        return originalMeterId;
     }
 
     @Override
