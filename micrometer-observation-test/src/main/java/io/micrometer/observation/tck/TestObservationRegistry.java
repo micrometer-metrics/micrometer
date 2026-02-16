@@ -144,7 +144,7 @@ public final class TestObservationRegistry
      */
     public static class TestObservationRegistryBuilder {
 
-        private final Set<Capability> capabilities = EnumSet.allOf(Capability.class);
+        private final Set<Capability> capabilities = EnumSet.noneOf(Capability.class);
 
         /**
          * Enables/disables validating that Observations with the same name should have
