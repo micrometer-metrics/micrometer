@@ -1,10 +1,5 @@
 description = 'MeterRegistry implementation for Prometheus using io.prometheus:prometheus-metrics-core. If you have compatibility issues with this module, you can go back to io.micrometer:micrometer-registry-prometheus-simpleclient that uses io.prometheus:simpleclient_common.'
 
-repositories {
-    // TODO remove when Prometheus Java client 1.5.0 is released
-    mavenLocal()
-}
-
 dependencies {
     api(platform(libs.prometheusMetricsBom))
 
