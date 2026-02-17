@@ -3,7 +3,7 @@ plugins {
     alias(libs.plugins.aspectj)
 }
 
-description 'AspectJ compile-time weaving test for Micrometer aspects'
+description = 'AspectJ compile-time weaving test for Micrometer aspects'
 
 if (!javaLanguageVersion.canCompileOrRun(17)) {
     repositories {

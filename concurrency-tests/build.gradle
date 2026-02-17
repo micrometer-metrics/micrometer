@@ -15,7 +15,7 @@ dependencies {
 }
 
 jcstress {
-    jcstressDependency libs.jcstressCore.get().toString()
+    jcstressDependency = libs.jcstressCore.get().toString()
 
     // This affects how long and thorough testing will be
     // In order of increasing stress: sanity, quick, default, tough, stress

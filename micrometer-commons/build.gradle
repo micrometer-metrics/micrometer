@@ -1,4 +1,4 @@
-description 'Module containing common code'
+description = 'Module containing common code'
 
 dependencies {
     // remove when removing deprecated nullability annotations

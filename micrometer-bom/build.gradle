@@ -2,7 +2,7 @@ plugins {
     id 'java-platform'
 }
 
-description 'Micrometer BOM (Bill of Materials) for managing Micrometer artifact versions'
+description = 'Micrometer BOM (Bill of Materials) for managing Micrometer artifact versions'
 
 dependencies {
     constraints {

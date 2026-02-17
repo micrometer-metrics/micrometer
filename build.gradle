@@ -284,8 +284,8 @@ subprojects {
         }
 
         license {
-            header rootProject.file('gradle/licenseHeader.txt')
-            strictCheck true
+            header = rootProject.file('gradle/licenseHeader.txt')
+            strictCheck = true
             mapping {
                 java = 'SLASHSTAR_STYLE'
             }
@@ -341,8 +341,8 @@ subprojects {
                     name = 'Snapshot'
                     url = 'https://repo.spring.io/snapshot'
                     credentials {
-                        username findProperty('SNAPSHOT_REPO_USER')
-                        password findProperty('SNAPSHOT_REPO_PASSWORD')
+                        username = findProperty('SNAPSHOT_REPO_USER')
+                        password = findProperty('SNAPSHOT_REPO_PASSWORD')
                     }
                 }
             }

@@ -30,7 +30,7 @@ else {
     }
 }
 
-description 'Core module of Micrometer containing instrumentation API and implementation'
+description = 'Core module of Micrometer containing instrumentation API and implementation'
 
 kotlin {
     compilerOptions {
