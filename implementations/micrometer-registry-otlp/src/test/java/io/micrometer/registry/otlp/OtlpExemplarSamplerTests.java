@@ -16,6 +16,7 @@
 package io.micrometer.registry.otlp;
 
 import com.google.protobuf.ByteString;
+import io.micrometer.common.KeyValues;
 import io.micrometer.core.instrument.MockClock;
 import io.opentelemetry.proto.common.v1.KeyValue;
 import io.opentelemetry.proto.metrics.v1.Exemplar;
@@ -58,13 +59,70 @@ class OtlpExemplarSamplerTests {
         assertThat(encodeHexString(exemplar.getSpanId())).isEqualTo("00f067aa0ba902b7");
         assertThat(exemplar.getAsDouble()).isEqualTo(42.0);
         assertThat(exemplar.getTimeUnixNano()).isEqualTo(TimeUnit.MILLISECONDS.toNanos(clock.wallTime()));
+        assertThat(exemplar.getFilteredAttributesList()).isEmpty();
+    }
 
+    @Test
+    void keyValuesShouldPresentIfSet() {
+        assertThat(sampler.collectExemplars()).isEmpty();
+        KeyValues keyValues = KeyValues.of("a", "b", "c", "d");
+        record("4bf92f3577b34da6a3ce929d0e0e4736", "00f067aa0ba902b7", keyValues, 42.0);
+        List<Exemplar> exemplars = sampler.collectExemplars();
+        assertThat(exemplars).hasSize(1);
+
+        Exemplar exemplar = exemplars.get(0);
+        assertThat(encodeHexString(exemplar.getTraceId())).isEqualTo("4bf92f3577b34da6a3ce929d0e0e4736");
+        assertThat(encodeHexString(exemplar.getSpanId())).isEqualTo("00f067aa0ba902b7");
+        assertThat(exemplar.getAsDouble()).isEqualTo(42.0);
+        assertThat(exemplar.getTimeUnixNano()).isEqualTo(TimeUnit.MILLISECONDS.toNanos(clock.wallTime()));
         List<KeyValue> filteredAttributes = exemplar.getFilteredAttributesList();
         assertThat(filteredAttributes).hasSize(2);
-        assertThat(filteredAttributes.get(0).getKey()).isEqualTo("originalTraceId");
-        assertThat(filteredAttributes.get(0).getValue().getStringValue()).isEqualTo("4bf92f3577b34da6a3ce929d0e0e4736");
-        assertThat(filteredAttributes.get(1).getKey()).isEqualTo("originalSpanId");
-        assertThat(filteredAttributes.get(1).getValue().getStringValue()).isEqualTo("00f067aa0ba902b7");
+        assertThat(filteredAttributes.get(0).getKey()).isEqualTo("a");
+        assertThat(filteredAttributes.get(0).getValue().getStringValue()).isEqualTo("b");
+        assertThat(filteredAttributes.get(1).getKey()).isEqualTo("c");
+        assertThat(filteredAttributes.get(1).getValue().getStringValue()).isEqualTo("d");
+    }
+
+    @Test
+    void traceIdAndSpanIdAreOptional() {
+        assertThat(sampler.collectExemplars()).isEmpty();
+        record(null, null, KeyValues.of("a", "b", "c", "d"), 42.0);
+        List<Exemplar> exemplars = sampler.collectExemplars();
+        assertThat(exemplars).hasSize(1);
+
+        Exemplar exemplar = exemplars.get(0);
+        assertThat(encodeHexString(exemplar.getTraceId())).isEmpty();
+        assertThat(encodeHexString(exemplar.getSpanId())).isEmpty();
+        assertThat(exemplar.getAsDouble()).isEqualTo(42.0);
+        assertThat(exemplar.getTimeUnixNano()).isEqualTo(TimeUnit.MILLISECONDS.toNanos(clock.wallTime()));
+        List<KeyValue> filteredAttributes = exemplar.getFilteredAttributesList();
+        assertThat(filteredAttributes).hasSize(2);
+        assertThat(filteredAttributes.get(0).getKey()).isEqualTo("a");
+        assertThat(filteredAttributes.get(0).getValue().getStringValue()).isEqualTo("b");
+        assertThat(filteredAttributes.get(1).getKey()).isEqualTo("c");
+        assertThat(filteredAttributes.get(1).getValue().getStringValue()).isEqualTo("d");
+    }
+
+    @Test
+    void emptyContextIsValid() {
+        assertThat(sampler.collectExemplars()).isEmpty();
+        record(null, null, null, 42.0);
+        List<Exemplar> exemplars = sampler.collectExemplars();
+        assertThat(exemplars).hasSize(1);
+
+        Exemplar exemplar = exemplars.get(0);
+        assertThat(encodeHexString(exemplar.getTraceId())).isEmpty();
+        assertThat(encodeHexString(exemplar.getSpanId())).isEmpty();
+        assertThat(exemplar.getAsDouble()).isEqualTo(42.0);
+        assertThat(exemplar.getTimeUnixNano()).isEqualTo(TimeUnit.MILLISECONDS.toNanos(clock.wallTime()));
+        assertThat(exemplar.getFilteredAttributesList()).isEmpty();
+    }
+
+    @Test
+    void nullContextShouldNotBeSampled() {
+        assertThat(sampler.collectExemplars()).isEmpty();
+        sampler.sampleMeasurement(42.0);
+        assertThat(sampler.collectExemplars()).isEmpty();
     }
 
     @RepeatedTest(10)
@@ -102,13 +160,6 @@ class OtlpExemplarSamplerTests {
         }
     }
 
-    @Test
-    void nullContextShouldNotBeSampled() {
-        assertThat(sampler.collectExemplars()).isEmpty();
-        sampler.sampleMeasurement(42.0);
-        assertThat(sampler.collectExemplars()).isEmpty();
-    }
-
     @RepeatedTest(10)
     void samplerCanBeFilled() {
         assertThat(sampler.collectExemplars()).isEmpty();
@@ -128,8 +179,13 @@ class OtlpExemplarSamplerTests {
         record(new Measurable(traceId, spanId, amount));
     }
 
+    private void record(@Nullable String traceId, @Nullable String spanId, @Nullable KeyValues keyValues,
+            double amount) {
+        record(new Measurable(traceId, spanId, keyValues, amount));
+    }
+
     private void record(Measurable measurable) {
-        exemplarContextProvider.setExemplar(measurable.traceId, measurable.spanId);
+        exemplarContextProvider.setExemplar(measurable.traceId, measurable.spanId, measurable.keyValues);
         sampler.sampleMeasurement(measurable.amount);
         exemplarContextProvider.reset();
     }
@@ -140,15 +196,22 @@ class OtlpExemplarSamplerTests {
 
     private static class Measurable {
 
-        private final String traceId;
+        private final @Nullable String traceId;
 
-        private final String spanId;
+        private final @Nullable String spanId;
+
+        private final @Nullable KeyValues keyValues;
 
         private final double amount;
 
         Measurable(String traceId, String spanId, double amount) {
+            this(traceId, spanId, null, amount);
+        }
+
+        Measurable(@Nullable String traceId, @Nullable String spanId, @Nullable KeyValues keyValues, double amount) {
             this.traceId = traceId;
             this.spanId = spanId;
+            this.keyValues = keyValues;
             this.amount = amount;
         }
 
@@ -163,8 +226,8 @@ class OtlpExemplarSamplerTests {
             return context;
         }
 
-        void setExemplar(String traceId, String spanId) {
-            context = new OtlpExemplarContext(traceId, spanId);
+        void setExemplar(@Nullable String traceId, @Nullable String spanId, @Nullable KeyValues keyValues) {
+            context = new OtlpExemplarContext(traceId, spanId, keyValues);
         }
 
         void reset() {

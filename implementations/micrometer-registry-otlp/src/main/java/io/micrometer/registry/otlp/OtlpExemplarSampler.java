@@ -112,19 +112,39 @@ class OtlpExemplarSampler implements ExemplarSampler {
         private static Exemplar createExemplar(double measurement, OtlpExemplarContext exemplarContext, Clock clock) {
             String traceId = exemplarContext.getTraceId();
             String spanId = exemplarContext.getSpanId();
-            return Exemplar.newBuilder()
+            Iterable<io.micrometer.common.KeyValue> keyValues = exemplarContext.getKeyValues();
+
+            Exemplar.Builder builder = Exemplar.newBuilder()
                 .setAsDouble(measurement)
-                .setTraceId(ByteString.fromHex(traceId))
-                .setSpanId(ByteString.fromHex(spanId))
-                .addFilteredAttributes(KeyValue.newBuilder()
-                    .setKey("originalTraceId")
-                    .setValue(AnyValue.newBuilder().setStringValue(traceId))
-                    .build())
-                .addFilteredAttributes(KeyValue.newBuilder()
-                    .setKey("originalSpanId")
-                    .setValue(AnyValue.newBuilder().setStringValue(spanId))
-                    .build())
-                .setTimeUnixNano(TimeUnit.MILLISECONDS.toNanos(clock.wallTime()))
+                // .addFilteredAttributes(KeyValue.newBuilder()
+                // .setKey("originalTraceId")
+                // .setValue(AnyValue.newBuilder().setStringValue(traceId))
+                // .build())
+                // .addFilteredAttributes(KeyValue.newBuilder()
+                // .setKey("originalSpanId")
+                // .setValue(AnyValue.newBuilder().setStringValue(spanId))
+                // .build())
+                .setTimeUnixNano(TimeUnit.MILLISECONDS.toNanos(clock.wallTime()));
+
+            if (traceId != null) {
+                builder.setTraceId(ByteString.fromHex(traceId));
+            }
+            if (spanId != null) {
+                builder.setSpanId(ByteString.fromHex(spanId));
+            }
+            if (keyValues != null) {
+                for (io.micrometer.common.KeyValue keyValue : keyValues) {
+                    builder.addFilteredAttributes(toOtelKeyValue(keyValue));
+                }
+            }
+
+            return builder.build();
+        }
+
+        private static KeyValue toOtelKeyValue(io.micrometer.common.KeyValue micrometerKeyValue) {
+            return KeyValue.newBuilder()
+                .setKey(micrometerKeyValue.getKey())
+                .setValue(AnyValue.newBuilder().setStringValue(micrometerKeyValue.getValue()).build())
                 .build();
         }
 
