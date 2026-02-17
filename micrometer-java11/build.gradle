@@ -1,4 +1,4 @@
-description 'Micrometer core classes that require Java 11'
+description = 'Micrometer core classes that require Java 11'
 
 dependencies {
     api project(":micrometer-core")

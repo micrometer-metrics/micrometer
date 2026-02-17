@@ -26,7 +26,7 @@ else {
     }
 }
 
-description 'Core module of Micrometer containing instrumentation API and implementation'
+description = 'Core module of Micrometer containing instrumentation API and implementation'
 
 tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).all {
     kotlinOptions {

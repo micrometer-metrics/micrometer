@@ -1,4 +1,4 @@
-description 'Micrometer instrumentation for Jetty 11'
+description = 'Micrometer instrumentation for Jetty 11'
 
 dependencies {
     api project(":micrometer-core")

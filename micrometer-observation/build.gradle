@@ -22,7 +22,7 @@ else {
     }
 }
 
-description 'Module containing Observation related code'
+description = 'Module containing Observation related code'
 
 jar {
     bundle {

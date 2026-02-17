@@ -1,4 +1,4 @@
-description 'Test compatibility kit for extensions of Micrometer'
+description = 'Test compatibility kit for extensions of Micrometer'
 
 // activemq-artemis requires Java 17 from 2.39.0
 compileTestJava {

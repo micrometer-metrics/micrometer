@@ -1,4 +1,4 @@
-description 'Test compatibility kit for extensions of Micrometer Observation'
+description = 'Test compatibility kit for extensions of Micrometer Observation'
 
 dependencies {
     api project(':micrometer-observation')

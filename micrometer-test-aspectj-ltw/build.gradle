@@ -2,7 +2,7 @@ plugins {
     id 'java'
 }
 
-description 'AspectJ load-time weaving test for Micrometer aspects'
+description = 'AspectJ load-time weaving test for Micrometer aspects'
 
 configurations {
     agents
