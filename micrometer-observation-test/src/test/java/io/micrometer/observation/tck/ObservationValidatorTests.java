@@ -245,9 +245,12 @@ class ObservationValidatorTests {
     }
 
     @Test
-    void observationsWithTheSameNameShouldHaveTheSameSetOfLowCardinalityKeysByDefaultUsingCreate() {
+    void observationsWithTheSameNameShouldHaveTheSameSetOfLowCardinalityKeysNotValidatedByDefaultUsingCreate() {
         TestObservationRegistry registry = TestObservationRegistry.create();
-        verifyThatValidateObservationsWithTheSameNameHavingTheSameSetOfLowCardinalityKeysWorks(registry);
+
+        Observation.createNotStarted("test", registry).lowCardinalityKeyValue("key1", "value1").start().stop();
+        Observation.createNotStarted("test", registry).start().stop();
+        Observation.createNotStarted("test", registry).lowCardinalityKeyValue("key2", "value2").start().stop();
     }
 
     private void verifyThatValidateObservationsWithTheSameNameHavingTheSameSetOfLowCardinalityKeysWorks(
@@ -257,20 +260,22 @@ class ObservationValidatorTests {
             Observation.createNotStarted("test", registry).start().stop();
         }).isExactlyInstanceOf(InvalidObservationException.class)
             .hasMessageContaining(
-                    "Metrics backends may require that all observations with the same name have the same set of low cardinality keys.");
+                    "Using a consistent set of low cardinality keys for Observations with the same name is recommended best practice if metrics will be produced from the Observations.");
 
         assertThatThrownBy(() -> {
             Observation.createNotStarted("test", registry).lowCardinalityKeyValue("key2", "value2").start().stop();
         }).isExactlyInstanceOf(InvalidObservationException.class)
             .hasMessageContaining(
-                    "Metrics backends may require that all observations with the same name have the same set of low cardinality keys.");
+                    "Using a consistent set of low cardinality keys for Observations with the same name is recommended best practice if metrics will be produced from the Observations.");
 
         Observation.createNotStarted("test", registry).lowCardinalityKeyValue("key1", "value2").start().stop();
     }
 
     @Test
-    void observationsWithTheSameNameShouldHaveTheSameSetOfLowCardinalityKeysByDefaultUsingTheBuilder() {
-        TestObservationRegistry registry = TestObservationRegistry.builder().build();
+    void observationsWithTheSameNameShouldHaveTheSameSetOfLowCardinalityKeysIfEnabledUsingTheBuilder() {
+        TestObservationRegistry registry = TestObservationRegistry.builder()
+            .validateObservationsWithTheSameNameHavingTheSameSetOfLowCardinalityKeys(true)
+            .build();
         verifyThatValidateObservationsWithTheSameNameHavingTheSameSetOfLowCardinalityKeysWorks(registry);
     }
 

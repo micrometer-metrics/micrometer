@@ -151,9 +151,10 @@ class ObservationValidator implements ObservationHandler<Context> {
         Set<String> currentKeys = getLowCardinalityKeys(context);
         if (existingKeys != null) {
             if (!existingKeys.equals(currentKeys)) {
-                String message = "Metrics backends may require that all observations with the same name have the same"
-                        + " set of low cardinality keys. There is already an existing observation named '"
-                        + context.getName() + "' containing keys [" + String.join(", ", existingKeys)
+                String message = "Using a consistent set of low cardinality keys for Observations with the same name is "
+                        + "recommended best practice if metrics will be produced from the Observations."
+                        + " There is already an existing observation named '" + context.getName()
+                        + "' containing keys [" + String.join(", ", existingKeys)
                         + "]. The observation you are attempting to register" + " has keys ["
                         + String.join(", ", currentKeys) + "].";
                 throw new InvalidObservationException(message, context);

@@ -31,12 +31,14 @@ import io.prometheus.metrics.model.snapshots.*;
 import io.prometheus.metrics.tracer.common.SpanContext;
 import org.assertj.core.api.Condition;
 import org.jspecify.annotations.Nullable;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Stream;
@@ -62,50 +64,68 @@ class PrometheusMeterRegistryTest {
             prometheusRegistry, clock);
 
     @Test
-    void metersWithSameNameAndDifferentTagsContinueSilently() {
-        String meterName = "my.counter";
-        registry.counter(meterName, "k1", "v1");
-        registry.counter(meterName, "k2", "v2");
-        registry.counter(meterName, "k3", "v3");
+    @Issue("gh-877")
+    void metersWithSameNameAndDifferentTagsCanScrape() {
+        registry.counter("tasks.completed", "name", "task1").increment();
+        registry.counter("tasks.completed", "name", "task2").increment();
+        registry.counter("tasks.completed", "name", "task3", "error", "DatabaseException").increment();
+        assertThat(registry.scrape())
+        // @formatter:off
+            .isEqualTo("# HELP tasks_completed_total  \n" +
+                "# TYPE tasks_completed_total counter\n" +
+                "tasks_completed_total{error=\"DatabaseException\",name=\"task3\"} 1.0\n" +
+                "tasks_completed_total{name=\"task1\"} 1.0\n" +
+                "tasks_completed_total{name=\"task2\"} 1.0\n");
+        // @formatter:on
     }
 
     @Test
-    void meterRegistrationFailedListenerCalledOnSameNameDifferentTagsWithEmptyTags() throws InterruptedException {
-        CountDownLatch failedLatch = new CountDownLatch(1);
-        registry.config().onMeterRegistrationFailed((id, reason) -> failedLatch.countDown());
+    void differentMicrometerNameSamePrometheusNameFailsToRegister() {
+        AtomicBoolean failed = new AtomicBoolean(false);
+        registry.config().onMeterRegistrationFailed((name, reason) -> failed.set(true));
+
+        registry.counter("test").increment();
+        assertThat(failed.get()).isFalse();
+        registry.counter("test.total").increment(42);
+        assertThat(failed.get()).isTrue();
+    }
+
+    @Test
+    @Disabled("We don't detect this situation yet; scrape will fail")
+    void differentTypesThatProduceSamePrometheusMetricFamilyFailsToRegister() {
+        AtomicBoolean failed = new AtomicBoolean(false);
+        registry.config().onMeterRegistrationFailed((name, reason) -> failed.set(true));
+
+        Timer.builder("test").register(registry).record(Duration.ofMillis(10));
+        assertThat(failed.get()).isFalse();
+        Gauge.builder("test_seconds_max", new AtomicInteger(42), AtomicInteger::get).register(registry);
+        assertThat(failed.get()).isTrue();
+    }
+
+    @Test
+    void sameNameDifferentTagsWithEmptyTagsDoesNotFail() {
+        AtomicBoolean failed = new AtomicBoolean(false);
+        registry.config().onMeterRegistrationFailed((id, reason) -> failed.set(true));
+
         registry.counter("my.counter");
         registry.counter("my.counter", "test.k1", "v1").increment();
+        registry.counter("my.counter", "test.k2", "v2");
+        registry.counter("my.counter", "test.k3", "v3");
 
-        assertThat(failedLatch.await(1, TimeUnit.SECONDS)).isTrue();
-
-        assertThatThrownBy(() -> registry.throwExceptionOnRegistrationFailure().counter("my.counter", "test.k2", "v2"))
-            .isInstanceOf(IllegalArgumentException.class)
-            .hasMessage(
-                    "Prometheus requires that all meters with the same name have the same set of tag keys. There is already an existing meter named 'my_counter' containing tag keys []. The meter you are attempting to register has keys [test_k2].");
-
-        assertThatThrownBy(() -> registry.counter("my.counter", "test.k3", "v3"))
-            .isInstanceOf(IllegalArgumentException.class)
-            .hasMessage(
-                    "Prometheus requires that all meters with the same name have the same set of tag keys. There is already an existing meter named 'my_counter' containing tag keys []. The meter you are attempting to register has keys [test_k3].");
+        assertThat(failed).isFalse();
     }
 
     @Test
-    void meterRegistrationFailedListenerCalledOnSameNameDifferentTagsWithNonEmptyTags() throws InterruptedException {
-        CountDownLatch failedLatch = new CountDownLatch(1);
-        registry.config().onMeterRegistrationFailed((id, reason) -> failedLatch.countDown());
+    void sameNameDifferentTagsWithNonEmptyTagsDoesNotFail() throws InterruptedException {
+        AtomicBoolean failed = new AtomicBoolean(false);
+        registry.config().onMeterRegistrationFailed((id, reason) -> failed.set(true));
+
         registry.counter("my.counter", "test.k1", "v1");
         registry.counter("my.counter", "k", "v").increment();
+        registry.counter("my.counter", "test.k2", "v2");
+        registry.counter("my.counter");
 
-        assertThat(failedLatch.await(1, TimeUnit.SECONDS)).isTrue();
-
-        assertThatThrownBy(() -> registry.throwExceptionOnRegistrationFailure().counter("my.counter", "test.k2", "v2"))
-            .isInstanceOf(IllegalArgumentException.class)
-            .hasMessage(
-                    "Prometheus requires that all meters with the same name have the same set of tag keys. There is already an existing meter named 'my_counter' containing tag keys [test_k1]. The meter you are attempting to register has keys [test_k2].");
-
-        assertThatThrownBy(() -> registry.counter("my.counter")).isInstanceOf(IllegalArgumentException.class)
-            .hasMessage(
-                    "Prometheus requires that all meters with the same name have the same set of tag keys. There is already an existing meter named 'my_counter' containing tag keys [test_k1]. The meter you are attempting to register has keys [].");
+        assertThat(failed).isFalse();
     }
 
     @Test
