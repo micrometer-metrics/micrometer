@@ -28,6 +28,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.stream.Stream;
 
+import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class MicrometerCollectorTest {
@@ -72,6 +73,78 @@ class MicrometerCollectorTest {
                         family -> new CounterSnapshot(family.metadata, family.dataPointSnapshots),
                         new MetricMetadata(conventionName), sample)));
         collector.add(sample2Id,
+                (conventionName) -> Stream.of(new MicrometerCollector.Family<>(conventionName,
+                        family -> new CounterSnapshot(family.metadata, family.dataPointSnapshots),
+                        new MetricMetadata(conventionName), sample2)));
+
+        assertThat(collector.collect().get(0).getDataPoints()).hasSize(2);
+    }
+
+    @Issue("#877")
+    @Test
+    void sameMetricDifferentTagKeysCounter() {
+        Meter.Id id = Metrics.counter("my.counter", "k1", "v1", "k2", "v2", "k3", "v3").getId();
+        MicrometerCollector collector = new MicrometerCollector(id.getConventionName(convention), id);
+
+        CounterSnapshot.CounterDataPointSnapshot sample = new CounterSnapshot.CounterDataPointSnapshot(1.0,
+                Labels.of(asList("k1", "k2", "k3"), asList("v1", "v2", "v3")), null, 0);
+        CounterSnapshot.CounterDataPointSnapshot sample2 = new CounterSnapshot.CounterDataPointSnapshot(1.0,
+                Labels.of(asList("k1", "k4"), asList("v1", "v4")), null, 0);
+        Meter.Id id2 = id.replaceTags(Tags.of("k1", "v1", "k4", "v4"));
+
+        collector.add(id,
+                (conventionName) -> Stream.of(new MicrometerCollector.Family<>(conventionName,
+                        family -> new CounterSnapshot(family.metadata, family.dataPointSnapshots),
+                        new MetricMetadata(conventionName), sample)));
+        collector.add(id2,
+                (conventionName) -> Stream.of(new MicrometerCollector.Family<>(conventionName,
+                        family -> new CounterSnapshot(family.metadata, family.dataPointSnapshots),
+                        new MetricMetadata(conventionName), sample2)));
+
+        assertThat(collector.collect().get(0).getDataPoints()).hasSize(2);
+    }
+
+    @Issue("#877")
+    @Test
+    void oneSampleHasSubsetOfTagKeysOfAnotherSample() {
+        Meter.Id id = Metrics.counter("my.counter", "k1", "v1", "k2", "v2", "k3", "v3").getId();
+        MicrometerCollector collector = new MicrometerCollector(id.getConventionName(convention), id);
+
+        CounterSnapshot.CounterDataPointSnapshot sample = new CounterSnapshot.CounterDataPointSnapshot(1.0,
+                Labels.of(asList("k1", "k2", "k3"), asList("v1", "v2", "v3")), null, 0);
+        CounterSnapshot.CounterDataPointSnapshot sample2 = new CounterSnapshot.CounterDataPointSnapshot(1.0,
+                Labels.of(asList("k1", "k2"), asList("v1", "v2")), null, 0);
+        Meter.Id id2 = id.replaceTags(Tags.of("k1", "v1", "k2", "v2"));
+
+        collector.add(id,
+                (conventionName) -> Stream.of(new MicrometerCollector.Family<>(conventionName,
+                        family -> new CounterSnapshot(family.metadata, family.dataPointSnapshots),
+                        new MetricMetadata(conventionName), sample)));
+        collector.add(id2,
+                (conventionName) -> Stream.of(new MicrometerCollector.Family<>(conventionName,
+                        family -> new CounterSnapshot(family.metadata, family.dataPointSnapshots),
+                        new MetricMetadata(conventionName), sample2)));
+
+        assertThat(collector.collect().get(0).getDataPoints()).hasSize(2);
+    }
+
+    @Issue("#877")
+    @Test
+    void sameMetricNameWithNoTagsAndAListOfTags() {
+        Meter.Id id = Metrics.counter("my.counter", "k1", "v1", "k2", "v2", "k3", "v3").getId();
+        MicrometerCollector collector = new MicrometerCollector(id.getConventionName(convention), id);
+
+        CounterSnapshot.CounterDataPointSnapshot sample = new CounterSnapshot.CounterDataPointSnapshot(1.0,
+                Labels.of(asList("k1", "k2", "k3"), asList("v1", "v2", "v3")), null, 0);
+        CounterSnapshot.CounterDataPointSnapshot sample2 = new CounterSnapshot.CounterDataPointSnapshot(1.0,
+                Labels.EMPTY, null, 0);
+        Meter.Id id2 = id.replaceTags(Tags.empty());
+
+        collector.add(id,
+                (conventionName) -> Stream.of(new MicrometerCollector.Family<>(conventionName,
+                        family -> new CounterSnapshot(family.metadata, family.dataPointSnapshots),
+                        new MetricMetadata(conventionName), sample)));
+        collector.add(id2,
                 (conventionName) -> Stream.of(new MicrometerCollector.Family<>(conventionName,
                         family -> new CounterSnapshot(family.metadata, family.dataPointSnapshots),
                         new MetricMetadata(conventionName), sample2)));
