@@ -194,10 +194,8 @@ class MetricsTurboFilter extends TurboFilter {
     @Override
     public FilterReply decide(Marker marker, Logger logger, Level level, String format, Object[] params, Throwable t) {
         // When filter is asked for decision for an isDebugEnabled call or similar test,
-        // there is no message (ie format)
-        // and no intention to log anything with this call. We will not increment counters
-        // and can return immediately and
-        // avoid the relatively expensive ThreadLocal access below. See also logbacks
+        // there is no message (i.e. format) and no intention to log anything.
+        // We will not increment counters and can return immediately. See also Logback's
         // Logger.callTurboFilters().
         // Calling logger.isEnabledFor(level) might be sub-optimal since it calls this
         // filter again. This behavior caused a StackOverflowError in the past.
