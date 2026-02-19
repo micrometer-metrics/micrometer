@@ -42,13 +42,10 @@ import static org.assertj.core.api.Assertions.*;
 @SuppressWarnings("CheckReturnValue")
 class Caffeine3CacheMetricsTest extends Caffeine3AbstractCacheMetricsTest {
 
-    // tag::setup[]
     LoadingCache<String, String> cache = Caffeine.newBuilder().recordStats().build(key -> "");
 
     CaffeineCacheMetrics<String, String, Cache<String, String>> metrics = new CaffeineCacheMetrics<>(cache, "testCache",
             expectedTag);
-
-    // end::setup[]
 
     @Test
     void reportExpectedGeneralMetrics() {
@@ -57,10 +54,8 @@ class Caffeine3CacheMetricsTest extends Caffeine3AbstractCacheMetricsTest {
         cache.get("a");
         cache.get("b");
 
-        // tag::register[]
         MeterRegistry registry = new SimpleMeterRegistry();
         metrics.bindTo(registry);
-        // end::register[]
 
         verifyCommonCacheMetrics(registry, metrics);
 
@@ -82,10 +77,8 @@ class Caffeine3CacheMetricsTest extends Caffeine3AbstractCacheMetricsTest {
 
     @Test
     void constructInstanceViaStaticMethodMonitor() {
-        // tag::monitor[]
         MeterRegistry meterRegistry = new SimpleMeterRegistry();
         CaffeineCacheMetrics.monitor(meterRegistry, cache, "testCache", expectedTag);
-        // end::monitor[]
 
         meterRegistry.get("cache.eviction.weight").tags(expectedTag).functionCounter();
     }
