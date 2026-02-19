@@ -1,0 +1,33 @@
+dependencies {
+    implementation project(':micrometer-core')
+    implementation libs.caffeine3
+
+    testImplementation project(':micrometer-test')
+    testImplementation platform(libs.junitBom)
+    testImplementation libs.junitJupiter
+    testRuntimeOnly libs.junitPlatformLauncher
+    testImplementation libs.assertj
+}
+
+java {
+    toolchain {
+        languageVersion = javaLanguageVersion
+    }
+    sourceCompatibility = javaTargetVersion
+    targetCompatibility = javaTargetVersion
+}
+tasks {
+    compileJava {
+        sourceCompatibility = javaTargetVersion
+        targetCompatibility = javaTargetVersion
+        options.release = 11
+
+        doLast {
+            task -> logger.info("Compiling with " + task.javaCompiler.get().executablePath)
+        }
+    }
+    compileTestJava {
+        sourceCompatibility = JavaVersion.VERSION_11
+        targetCompatibility = JavaVersion.VERSION_11
+    }
+}
