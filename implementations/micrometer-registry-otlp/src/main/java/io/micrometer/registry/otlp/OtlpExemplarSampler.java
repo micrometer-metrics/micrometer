@@ -32,18 +32,16 @@ import java.util.function.Supplier;
 
 class OtlpExemplarSampler implements ExemplarSampler {
 
-    private static final int DEFAULT_EXEMPLARS_SIZE = 16;
-
     private final ExemplarContextProvider exemplarContextProvider;
 
     private final Clock clock;
 
     private final Exemplars exemplars;
 
-    OtlpExemplarSampler(ExemplarContextProvider exemplarContextProvider, Clock clock, long stepMillis) {
+    OtlpExemplarSampler(ExemplarContextProvider exemplarContextProvider, Clock clock, long stepMillis, int size) {
         this.exemplarContextProvider = exemplarContextProvider;
         this.clock = clock;
-        this.exemplars = new Exemplars(clock, stepMillis, DEFAULT_EXEMPLARS_SIZE);
+        this.exemplars = new Exemplars(clock, stepMillis, size);
     }
 
     @Override

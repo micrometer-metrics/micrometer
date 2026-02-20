@@ -93,7 +93,7 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
 
     private final TimeUnit baseTimeUnit;
 
-    private final @Nullable ExemplarContextProvider exemplarContextProvider;
+    private final @Nullable OtlpExemplarSamplerFactory exemplarSamplerFactory;
 
     // Time when the last scheduled rollOver has started. Applicable only for delta
     // flavour.
@@ -130,7 +130,8 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
         this.maxBucketsPerMeterLookup = MaxBucketsPerMeterLookup.DEFAULT;
         this.resource = Resource.newBuilder().addAllAttributes(getResourceAttributes()).build();
         this.aggregationTemporality = config.aggregationTemporality();
-        this.exemplarContextProvider = exemplarContextProvider;
+        this.exemplarSamplerFactory = exemplarContextProvider != null
+                ? new OtlpExemplarSamplerFactory(exemplarContextProvider, clock, config.step().toMillis()) : null;
         config().namingConvention(NamingConvention.dot);
         start(threadFactory);
     }
@@ -221,8 +222,8 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
 
     @Override
     protected Counter newCounter(Meter.Id id) {
-        return isCumulative() ? new OtlpCumulativeCounter(id, this.clock, newExemplarSampler())
-                : new OtlpStepCounter(id, this.clock, config.step().toMillis(), newExemplarSampler());
+        return isCumulative() ? new OtlpCumulativeCounter(id, this.clock, exemplarSamplerFactory)
+                : new OtlpStepCounter(id, this.clock, config.step().toMillis(), exemplarSamplerFactory);
     }
 
     @Override
@@ -271,11 +272,6 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
         return isCumulative()
                 ? new OtlpCumulativeLongTaskTimer(id, this.clock, getBaseTimeUnit(), distributionStatisticConfig)
                 : new DefaultLongTaskTimer(id, clock, getBaseTimeUnit(), distributionStatisticConfig, false);
-    }
-
-    private @Nullable ExemplarSampler newExemplarSampler() {
-        return exemplarContextProvider != null
-                ? new OtlpExemplarSampler(exemplarContextProvider, clock, config.step().toMillis()) : null;
     }
 
     @Override

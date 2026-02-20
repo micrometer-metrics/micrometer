@@ -27,9 +27,9 @@ class OtlpStepCounter extends StepCounter implements OtlpExemplarsSupport {
 
     private final @Nullable ExemplarSampler exemplarSampler;
 
-    OtlpStepCounter(Id id, Clock clock, long stepMillis, @Nullable ExemplarSampler exemplarSampler) {
+    OtlpStepCounter(Id id, Clock clock, long stepMillis, @Nullable OtlpExemplarSamplerFactory exemplarSamplerFactory) {
         super(id, clock, stepMillis);
-        this.exemplarSampler = exemplarSampler;
+        this.exemplarSampler = exemplarSamplerFactory != null ? exemplarSamplerFactory.createExemplarSampler(16) : null;
     }
 
     @Override

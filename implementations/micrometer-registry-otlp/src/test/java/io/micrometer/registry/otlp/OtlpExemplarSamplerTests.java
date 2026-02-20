@@ -39,13 +39,15 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 class OtlpExemplarSamplerTests {
 
+    private static final int SIZE = 16;
+
     private static final Duration STEP = Duration.ofSeconds(1);
 
     private final MockClock clock = new MockClock();
 
-    private final TestsExemplarContextProvider exemplarContextProvider = new TestsExemplarContextProvider();
+    private final TestsExemplarContextProvider testContextProvider = new TestsExemplarContextProvider();
 
-    private final ExemplarSampler sampler = new OtlpExemplarSampler(exemplarContextProvider, clock, STEP.toMillis());
+    private final ExemplarSampler sampler = new OtlpExemplarSampler(testContextProvider, clock, STEP.toMillis(), SIZE);
 
     @Test
     void firstRecordingShouldBeAlwaysSampled() {
@@ -185,9 +187,9 @@ class OtlpExemplarSamplerTests {
     }
 
     private void record(Measurable measurable) {
-        exemplarContextProvider.setExemplar(measurable.traceId, measurable.spanId, measurable.keyValues);
+        testContextProvider.setExemplar(measurable.traceId, measurable.spanId, measurable.keyValues);
         sampler.sampleMeasurement(measurable.amount);
-        exemplarContextProvider.reset();
+        testContextProvider.reset();
     }
 
     private String encodeHexString(ByteString byteString) {
