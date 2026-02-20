@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 VMware, Inc.
+ * Copyright 2025 VMware, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,37 +16,39 @@
 package io.micrometer.registry.otlp;
 
 import io.micrometer.core.instrument.Clock;
-import io.micrometer.core.instrument.cumulative.CumulativeCounter;
+import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
+import io.micrometer.core.instrument.distribution.TimeWindowFixedBoundaryHistogram;
 import io.opentelemetry.proto.metrics.v1.Exemplar;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
-class OtlpCumulativeCounter extends CumulativeCounter implements StartTimeAwareMeter, OtlpExemplarsSupport {
-
-    private final long startTimeNanos;
+class OtlpCumulativeBucketHistogram extends TimeWindowFixedBoundaryHistogram implements OtlpExemplarsSupport {
 
     private final @Nullable ExemplarSampler exemplarSampler;
 
-    OtlpCumulativeCounter(Id id, Clock clock, @Nullable OtlpExemplarSamplerFactory exemplarSamplerFactory) {
-        super(id);
-        this.startTimeNanos = TimeUnit.MILLISECONDS.toNanos(clock.wallTime());
-        this.exemplarSampler = exemplarSamplerFactory != null ? exemplarSamplerFactory.create(16, false) : null;
+    protected OtlpCumulativeBucketHistogram(Clock clock, DistributionStatisticConfig config,
+            @Nullable OtlpExemplarSamplerFactory exemplarSamplerFactory, boolean timeBased) {
+        super(clock, config, true, false);
+        this.exemplarSampler = exemplarSamplerFactory != null ? exemplarSamplerFactory.create(getBuckets(), timeBased)
+                : null;
     }
 
     @Override
-    public void increment(double amount) {
-        super.increment(amount);
+    public void recordDouble(double value) {
+        super.recordDouble(value);
         if (exemplarSampler != null) {
-            exemplarSampler.sampleMeasurement(amount);
+            exemplarSampler.sampleMeasurement(value);
         }
     }
 
     @Override
-    public long getStartTimeNanos() {
-        return this.startTimeNanos;
+    public void recordLong(long value) {
+        super.recordLong(value);
+        if (exemplarSampler != null) {
+            exemplarSampler.sampleMeasurement((double) value);
+        }
     }
 
     @Override

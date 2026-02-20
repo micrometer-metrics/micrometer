@@ -18,7 +18,6 @@ package io.micrometer.registry.otlp;
 import com.google.protobuf.ByteString;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.step.StepValue;
-import io.micrometer.core.instrument.util.TimeUtils;
 import io.opentelemetry.proto.common.v1.AnyValue;
 import io.opentelemetry.proto.common.v1.KeyValue;
 import io.opentelemetry.proto.metrics.v1.Exemplar;
@@ -42,27 +41,14 @@ class OtlpExemplarSampler implements ExemplarSampler {
 
     private final DoubleUnaryOperator converter;
 
-    OtlpExemplarSampler(ExemplarContextProvider exemplarContextProvider, Clock clock, OtlpConfig config, int size) {
-        this(exemplarContextProvider, clock, new Exemplars(clock, config.step().toMillis(), size),
-                DoubleUnaryOperator.identity());
-    }
-
     OtlpExemplarSampler(ExemplarContextProvider exemplarContextProvider, Clock clock, OtlpConfig config, int size,
-            TimeUnit toUnit) {
-        this(exemplarContextProvider, clock, new Exemplars(clock, config.step().toMillis(), size),
-                value -> TimeUtils.nanosToUnit(value, toUnit));
+            DoubleUnaryOperator converter) {
+        this(exemplarContextProvider, clock, new Exemplars(clock, config.step().toMillis(), size), converter);
     }
 
     OtlpExemplarSampler(ExemplarContextProvider exemplarContextProvider, Clock clock, OtlpConfig config,
-            double[] buckets) {
-        this(exemplarContextProvider, clock, new Exemplars(clock, config.step().toMillis(), buckets),
-                DoubleUnaryOperator.identity());
-    }
-
-    OtlpExemplarSampler(ExemplarContextProvider exemplarContextProvider, Clock clock, OtlpConfig config,
-            double[] buckets, TimeUnit toUnit) {
-        this(exemplarContextProvider, clock, new Exemplars(clock, config.step().toMillis(), buckets),
-                value -> TimeUtils.nanosToUnit(value, toUnit));
+            double[] buckets, DoubleUnaryOperator converter) {
+        this(exemplarContextProvider, clock, new Exemplars(clock, config.step().toMillis(), buckets), converter);
     }
 
     private OtlpExemplarSampler(ExemplarContextProvider exemplarContextProvider, Clock clock, Exemplars exemplars,

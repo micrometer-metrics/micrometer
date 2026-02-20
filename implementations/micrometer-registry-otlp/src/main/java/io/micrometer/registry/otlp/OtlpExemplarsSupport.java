@@ -20,7 +20,9 @@ import io.opentelemetry.proto.metrics.v1.Exemplar;
 import java.util.Collections;
 import java.util.List;
 
-interface OtlpExemplarsSupport {
+// TODO: should not be public but Base2ExponentialHistogram is in another package (internal)
+//  It also leaks io.opentelemetry.proto.metrics.v1.Exemplar
+public interface OtlpExemplarsSupport {
 
     default List<Exemplar> exemplars() {
         return Collections.emptyList();

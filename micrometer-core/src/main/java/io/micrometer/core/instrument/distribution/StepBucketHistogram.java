@@ -99,4 +99,13 @@ public class StepBucketHistogram extends StepValue<CountAtBucket[]> implements H
         return histogramBuckets.stream().filter(Objects::nonNull).mapToDouble(Double::doubleValue).toArray();
     }
 
+    /**
+     * Return buckets.
+     * @return buckets
+     * @since 1.17.0
+     */
+    protected double[] getBuckets() {
+        return this.fixedBoundaryHistogram.getBuckets();
+    }
+
 }

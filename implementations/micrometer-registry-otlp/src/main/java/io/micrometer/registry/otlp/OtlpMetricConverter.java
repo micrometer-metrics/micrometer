@@ -124,6 +124,7 @@ class OtlpMetricConverter {
         Meter.Id id = histogramSupport.getId();
         boolean isTimeBased = isTimeBasedMeter(id);
         HistogramSnapshot histogramSnapshot = histogramSupport.takeSnapshot();
+        List<Exemplar> exemplars = getExemplars(histogramSupport);
 
         Iterable<KeyValue> tags = getKeyValuesForId(id);
         long startTimeNanos = getStartTimeNanos(histogramSupport);
@@ -149,9 +150,18 @@ class OtlpMetricConverter {
         }
         else {
             buildHistogramDataPoint(histogramSupport, tags, startTimeNanos, total, max, count, isTimeBased,
-                    histogramSnapshot);
+                    histogramSnapshot, exemplars);
         }
 
+    }
+
+    private static List<Exemplar> getExemplars(HistogramSupport histogramSupport) {
+        if (histogramSupport instanceof OtlpExemplarsSupport) {
+            return ((OtlpExemplarsSupport) histogramSupport).exemplars();
+        }
+        else {
+            return Collections.emptyList();
+        }
     }
 
     private static Optional<ExponentialHistogramSnapShot> getExponentialHistogramSnapShot(
@@ -196,14 +206,15 @@ class OtlpMetricConverter {
 
     private void buildHistogramDataPoint(HistogramSupport histogramSupport, Iterable<KeyValue> tags,
             long startTimeNanos, double total, double max, long count, boolean isTimeBased,
-            HistogramSnapshot histogramSnapshot) {
+            HistogramSnapshot histogramSnapshot, List<Exemplar> exemplars) {
         Metric.Builder metricBuilder = getOrCreateMetricBuilder(histogramSupport.getId(), DataCase.HISTOGRAM);
         HistogramDataPoint.Builder histogramDataPoint = HistogramDataPoint.newBuilder()
             .addAllAttributes(tags)
             .setStartTimeUnixNano(startTimeNanos)
             .setTimeUnixNano(getTimeUnixNano())
             .setSum(total)
-            .setCount(count);
+            .setCount(count)
+            .addAllExemplars(exemplars);
 
         if (isDelta()) {
             histogramDataPoint.setMax(max);

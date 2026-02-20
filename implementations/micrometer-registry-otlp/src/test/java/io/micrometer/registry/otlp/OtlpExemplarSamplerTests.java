@@ -51,16 +51,18 @@ class OtlpExemplarSamplerTests {
         }
 
         @Override
-        public @NonNull String get(@NonNull String key) {
-            return "";
+        public @Nullable String get(@NonNull String key) {
+            return null;
         }
     };
 
     private final MockClock clock = new MockClock();
 
-    private final TestsExemplarContextProvider testContextProvider = new TestsExemplarContextProvider();
+    private final TestsExemplarContextProvider contextProvider = new TestsExemplarContextProvider();
 
-    private final ExemplarSampler sampler = new OtlpExemplarSampler(testContextProvider, clock, config, SIZE);
+    private final OtlpExemplarSamplerFactory factory = new OtlpExemplarSamplerFactory(contextProvider, clock, config);
+
+    private final ExemplarSampler sampler = factory.create(SIZE, false);
 
     @Test
     void firstRecordingShouldBeAlwaysSampled() {
@@ -121,14 +123,14 @@ class OtlpExemplarSamplerTests {
     @Test
     void emptyContextIsValid() {
         assertThat(sampler.collectExemplars()).isEmpty();
-        record(null, null, null, 42.0);
+        record(null, null, null, 3.14);
         List<Exemplar> exemplars = sampler.collectExemplars();
         assertThat(exemplars).hasSize(1);
 
         Exemplar exemplar = exemplars.get(0);
         assertThat(encodeHexString(exemplar.getTraceId())).isEmpty();
         assertThat(encodeHexString(exemplar.getSpanId())).isEmpty();
-        assertThat(exemplar.getAsDouble()).isEqualTo(42.0);
+        assertThat(exemplar.getAsDouble()).isEqualTo(3.14);
         assertThat(exemplar.getTimeUnixNano()).isEqualTo(TimeUnit.MILLISECONDS.toNanos(clock.wallTime()));
         assertThat(exemplar.getFilteredAttributesList()).isEmpty();
     }
@@ -200,9 +202,9 @@ class OtlpExemplarSamplerTests {
     }
 
     private void record(Measurable measurable) {
-        testContextProvider.setExemplar(measurable.traceId, measurable.spanId, measurable.keyValues);
+        contextProvider.setExemplar(measurable.traceId, measurable.spanId, measurable.keyValues);
         sampler.sampleMeasurement(measurable.amount);
-        testContextProvider.reset();
+        contextProvider.reset();
     }
 
     private String encodeHexString(ByteString byteString) {

@@ -16,6 +16,10 @@
 package io.micrometer.registry.otlp;
 
 import io.micrometer.core.instrument.Clock;
+import io.micrometer.core.instrument.util.TimeUtils;
+
+import java.util.concurrent.TimeUnit;
+import java.util.function.DoubleUnaryOperator;
 
 // TODO: should not be public but OtlpCumulativeBucketHistogram is public with a protected ctor
 public class OtlpExemplarSamplerFactory {
@@ -26,27 +30,29 @@ public class OtlpExemplarSamplerFactory {
 
     private final OtlpConfig config;
 
+    private final TimeUnit baseTimeUnit;
+
     OtlpExemplarSamplerFactory(ExemplarContextProvider exemplarContextProvider, Clock clock, OtlpConfig config) {
         this.exemplarContextProvider = exemplarContextProvider;
         this.clock = clock;
         this.config = config;
+        this.baseTimeUnit = config.baseTimeUnit();
     }
 
-    ExemplarSampler createExemplarSampler(int numberOfExemplars) {
-        return new OtlpExemplarSampler(exemplarContextProvider, clock, config, numberOfExemplars);
+    ExemplarSampler create(int size, boolean timeBased) {
+        return new OtlpExemplarSampler(exemplarContextProvider, clock, config, size, converter(timeBased));
     }
 
-    ExemplarSampler createExemplarSampler(double[] buckets) {
-        return new OtlpExemplarSampler(exemplarContextProvider, clock, config, buckets);
+    ExemplarSampler create(double[] buckets, boolean timeBased) {
+        return new OtlpExemplarSampler(exemplarContextProvider, clock, config, buckets, converter(timeBased));
     }
 
-    ExemplarSampler createTimeBasedExemplarSampler(int numberOfExemplars) {
-        return new OtlpExemplarSampler(exemplarContextProvider, clock, config, numberOfExemplars,
-                config.baseTimeUnit());
+    private DoubleUnaryOperator converter(boolean timeBased) {
+        return timeBased ? this::nanosToBaseTimeUnit : DoubleUnaryOperator.identity();
     }
 
-    ExemplarSampler createTimeBasedExemplarSampler(double[] buckets) {
-        return new OtlpExemplarSampler(exemplarContextProvider, clock, config, buckets, config.baseTimeUnit());
+    private double nanosToBaseTimeUnit(double value) {
+        return TimeUtils.nanosToUnit(value, baseTimeUnit);
     }
 
 }

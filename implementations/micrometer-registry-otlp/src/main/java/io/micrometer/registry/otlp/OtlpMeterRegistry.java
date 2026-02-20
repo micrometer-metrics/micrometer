@@ -231,9 +231,10 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
             PauseDetector pauseDetector) {
         return isCumulative()
                 ? new OtlpCumulativeTimer(id, this.clock, distributionStatisticConfig, pauseDetector, getBaseTimeUnit(),
-                        getHistogram(id, distributionStatisticConfig, getBaseTimeUnit()))
+                        getHistogram(id, distributionStatisticConfig, getBaseTimeUnit()), exemplarSamplerFactory)
                 : new OtlpStepTimer(id, clock, pauseDetector,
-                        getHistogram(id, distributionStatisticConfig, getBaseTimeUnit()), config);
+                        getHistogram(id, distributionStatisticConfig, getBaseTimeUnit()), config,
+                        exemplarSamplerFactory);
     }
 
     @Override
@@ -241,9 +242,9 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
             DistributionStatisticConfig distributionStatisticConfig, double scale) {
         return isCumulative()
                 ? new OtlpCumulativeDistributionSummary(id, clock, distributionStatisticConfig, scale,
-                        getHistogram(id, distributionStatisticConfig))
+                        getHistogram(id, distributionStatisticConfig), exemplarSamplerFactory)
                 : new OtlpStepDistributionSummary(id, clock, scale, getHistogram(id, distributionStatisticConfig),
-                        config);
+                        config, exemplarSamplerFactory);
     }
 
     @Override
@@ -362,16 +363,22 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
     void pollMetersToRollover() {
         this.lastMeterRolloverStartTime = clock.wallTime();
         this.getMeters()
-            .forEach(m -> m.match(gauge -> null, this::pollCounter, Timer::takeSnapshot,
-                    DistributionSummary::takeSnapshot, meter -> null, meter -> null, FunctionCounter::count,
-                    FunctionTimer::count, meter -> null));
+            .forEach(m -> m.match(gauge -> null, this::poll, this::poll, this::poll, meter -> null, meter -> null,
+                    FunctionCounter::count, FunctionTimer::count, meter -> null));
     }
 
-    private double pollCounter(Counter counter) {
+    private double poll(Counter counter) {
         if (counter instanceof OtlpExemplarsSupport) {
             ((OtlpExemplarsSupport) counter).exemplars();
         }
         return counter.count();
+    }
+
+    private HistogramSnapshot poll(HistogramSupport histogramSupport) {
+        if (histogramSupport instanceof OtlpExemplarsSupport) {
+            ((OtlpExemplarsSupport) histogramSupport).exemplars();
+        }
+        return histogramSupport.takeSnapshot();
     }
 
     private long getInitialDelay() {
@@ -447,7 +454,7 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
             }
 
             Histogram explicitBucketHistogram = getExplicitBucketHistogram(clock, distributionStatisticConfig,
-                    config.aggregationTemporality(), config.step().toMillis());
+                    config.aggregationTemporality(), config.step().toMillis(), baseTimeUnit, exemplarSamplerFactory);
             if (explicitBucketHistogram != null) {
                 return explicitBucketHistogram;
             }
@@ -482,18 +489,19 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
 
     private static @Nullable Histogram getExplicitBucketHistogram(final Clock clock,
             final DistributionStatisticConfig distributionStatisticConfig,
-            final AggregationTemporality aggregationTemporality, final long stepMillis) {
+            final AggregationTemporality aggregationTemporality, final long stepMillis,
+            final @Nullable TimeUnit baseTimeUnit, final @Nullable OtlpExemplarSamplerFactory exemplarSamplerFactory) {
 
         double[] sloWithPositiveInf = getSloWithPositiveInf(distributionStatisticConfig);
         if (AggregationTemporality.isCumulative(aggregationTemporality)) {
-            return new TimeWindowFixedBoundaryHistogram(clock, DistributionStatisticConfig.builder()
+            return new OtlpCumulativeBucketHistogram(clock, DistributionStatisticConfig.builder()
                 // effectively never roll over
                 .expiry(Duration.ofDays(1825))
                 .serviceLevelObjectives(sloWithPositiveInf)
                 .percentiles()
                 .bufferLength(1)
                 .build()
-                .merge(distributionStatisticConfig), true, false);
+                .merge(distributionStatisticConfig), exemplarSamplerFactory, baseTimeUnit != null);
         }
         if (AggregationTemporality.isDelta(aggregationTemporality) && stepMillis > 0) {
             return new OtlpStepBucketHistogram(clock, stepMillis,
@@ -501,7 +509,7 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
                         .serviceLevelObjectives(sloWithPositiveInf)
                         .build()
                         .merge(distributionStatisticConfig),
-                    true, false);
+                    exemplarSamplerFactory, baseTimeUnit != null);
         }
 
         return null;

@@ -95,7 +95,8 @@ class OTelCollectorIntegrationTest {
 
             containsString("# HELP test_counter \n"),
             containsString("# TYPE test_counter counter\n"),
-            matchesPattern("(?s)^.*test_counter_total\\{.+} 42\\.0 # \\{trace_id=\"66fd7359621b3043e232148ef0c4c566\",span_id=\"e232148ef0c4c566\"} 42\\.0 1\\.\\d+e\\+09\\n.*$"),
+            matchesPattern("(?s)^.*test_counter_total\\{.+} 42\\.0 # \\{.*trace_id=\"66fd7359621b3043e232148ef0c4c566\".*} 42\\.0 1\\.\\d+e\\+09\\n.*$"),
+            matchesPattern("(?s)^.*test_counter_total\\{.+} 42\\.0 # \\{.*span_id=\"e232148ef0c4c566\".*} 42\\.0 1\\.\\d+e\\+09\\n.*$"),
 
             containsString("# HELP test_gauge \n"),
             containsString("# TYPE test_gauge gauge\n"),
@@ -109,7 +110,8 @@ class OTelCollectorIntegrationTest {
             // it seems units are still not converted but at least the unit is in the name now (breaking change)
             // see: https://github.com/open-telemetry/opentelemetry-collector-contrib/pull/20519
             matchesPattern("(?s)^.*test_timer_milliseconds_sum\\{.+} 123\\.0\\n.*$"),
-            matchesPattern("(?s)^.*test_timer_milliseconds_bucket\\{.+,le=\"\\+Inf\"} 1\\n.*$"),
+            matchesPattern("(?s)^.*test_timer_milliseconds_bucket\\{.+,le=\"\\+Inf\"} 1 # \\{.*trace_id=\"66fd7359621b3043e232148ef0c4c566\".*} 123\\.0 1\\.\\d+e\\+09\\n.*$"),
+            matchesPattern("(?s)^.*test_timer_milliseconds_bucket\\{.+,le=\"\\+Inf\"} 1 # \\{.*span_id=\"e232148ef0c4c566\".*} 123\\.0 1\\.\\d+e\\+09\\n.*$"),
 
             containsString("# HELP test_timer_max_milliseconds \n"),
             containsString("# TYPE test_timer_max_milliseconds gauge\n"),
@@ -120,7 +122,8 @@ class OTelCollectorIntegrationTest {
             matchesPattern("(?s)^.*test_ds_count\\{.+} 1\\n.*$"),
             matchesPattern("(?s)^.*test_ds_sum\\{.+} 24\\.0\\n.*$"),
             matchesPattern("(?s)^.*test_ds_max\\{.+} 24\\.0\\n.*$"),
-            matchesPattern("(?s)^.*test_ds_bucket\\{.+,le=\"\\+Inf\"} 1\\n.*$")
+            matchesPattern("(?s)^.*test_ds_bucket\\{.+,le=\"\\+Inf\"} 1 # \\{.*trace_id=\"66fd7359621b3043e232148ef0c4c566\".*} 24\\.0 1\\.\\d+e\\+09\\n.*$"),
+            matchesPattern("(?s)^.*test_ds_bucket\\{.+,le=\"\\+Inf\"} 1 # \\{.*span_id=\"e232148ef0c4c566\".*} 24\\.0 1\\.\\d+e\\+09\\n.*$")
         );
         // @formatter:on
     }
@@ -151,7 +154,8 @@ class OTelCollectorIntegrationTest {
 
             containsString("# HELP test_counter_gzip \n"),
             containsString("# TYPE test_counter_gzip counter\n"),
-            matchesPattern("(?s)^.*test_counter_gzip_total\\{.+} 42\\.0 # \\{trace_id=\"66fd7359621b3043e232148ef0c4c566\",span_id=\"e232148ef0c4c566\"} 42\\.0 1\\.\\d+e\\+09\\n.*$"),
+            matchesPattern("(?s)^.*test_counter_gzip_total\\{.+} 42\\.0 # \\{.*trace_id=\"66fd7359621b3043e232148ef0c4c566\".*} 42\\.0 1\\.\\d+e\\+09\\n.*$"),
+            matchesPattern("(?s)^.*test_counter_gzip_total\\{.+} 42\\.0 # \\{.*span_id=\"e232148ef0c4c566\".*} 42\\.0 1\\.\\d+e\\+09\\n.*$"),
 
             containsString("# HELP test_gauge_gzip \n"),
             containsString("# TYPE test_gauge_gzip gauge\n"),
@@ -161,13 +165,15 @@ class OTelCollectorIntegrationTest {
             containsString("# TYPE test_timer_gzip_milliseconds histogram\n"),
             matchesPattern("(?s)^.*test_timer_gzip_milliseconds_count\\{.+} 1\\n.*$"),
             matchesPattern("(?s)^.*test_timer_gzip_milliseconds_sum\\{.+} 123\\.0\\n.*$"),
-            matchesPattern("(?s)^.*test_timer_gzip_milliseconds_bucket\\{.+,le=\"\\+Inf\"} 1\\n.*$"),
+            matchesPattern("(?s)^.*test_timer_gzip_milliseconds_bucket\\{.+,le=\"\\+Inf\"} 1 # \\{.*trace_id=\"66fd7359621b3043e232148ef0c4c566\".*} 123\\.0 1\\.\\d+e\\+09\\n.*$"),
+            matchesPattern("(?s)^.*test_timer_gzip_milliseconds_bucket\\{.+,le=\"\\+Inf\"} 1 # \\{.*span_id=\"e232148ef0c4c566\".*} 123\\.0 1\\.\\d+e\\+09\\n.*$"),
 
             containsString("# HELP test_ds_gzip \n"),
             containsString("# TYPE test_ds_gzip histogram\n"),
             matchesPattern("(?s)^.*test_ds_gzip_count\\{.+} 1\\n.*$"),
             matchesPattern("(?s)^.*test_ds_gzip_sum\\{.+} 24\\.0\\n.*$"),
-            matchesPattern("(?s)^.*test_ds_gzip_bucket\\{.+,le=\"\\+Inf\"} 1\\n.*$")
+            matchesPattern("(?s)^.*test_ds_gzip_bucket\\{.+,le=\"\\+Inf\"} 1 # \\{.*trace_id=\"66fd7359621b3043e232148ef0c4c566\".*} 24\\.0 1\\.\\d+e\\+09\\n.*$"),
+            matchesPattern("(?s)^.*test_ds_gzip_bucket\\{.+,le=\"\\+Inf\"} 1 # \\{.*span_id=\"e232148ef0c4c566\".*} 24\\.0 1\\.\\d+e\\+09\\n.*$")
         );
         // @formatter:on
     }

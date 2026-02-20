@@ -20,12 +20,16 @@ import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.distribution.Histogram;
 import io.micrometer.registry.otlp.internal.Base2ExponentialHistogram;
 import io.micrometer.registry.otlp.internal.ExponentialHistogramSnapShot;
+import io.opentelemetry.proto.metrics.v1.Exemplar;
 import org.jspecify.annotations.Nullable;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.atomic.DoubleAdder;
 import java.util.concurrent.atomic.LongAdder;
 
-class OtlpStepDistributionSummary extends AbstractDistributionSummary implements OtlpHistogramSupport {
+class OtlpStepDistributionSummary extends AbstractDistributionSummary
+        implements OtlpHistogramSupport, OtlpExemplarsSupport {
 
     private final LongAdder count = new LongAdder();
 
@@ -35,6 +39,8 @@ class OtlpStepDistributionSummary extends AbstractDistributionSummary implements
 
     private final StepMax max;
 
+    private final @Nullable ExemplarSampler exemplarSampler;
+
     /**
      * Create a new {@code OtlpStepDistributionSummary}.
      * @param id ID
@@ -42,11 +48,18 @@ class OtlpStepDistributionSummary extends AbstractDistributionSummary implements
      * @param scale scale
      * @param otlpConfig config for registry
      */
-    OtlpStepDistributionSummary(Id id, Clock clock, double scale, Histogram histogram, OtlpConfig otlpConfig) {
+    OtlpStepDistributionSummary(Id id, Clock clock, double scale, Histogram histogram, OtlpConfig otlpConfig,
+            @Nullable OtlpExemplarSamplerFactory exemplarSamplerFactory) {
         super(id, scale, histogram);
         this.countTotal = new OtlpStepTuple2<>(clock, otlpConfig.step().toMillis(), 0L, 0.0, count::sumThenReset,
                 total::sumThenReset);
         this.max = new StepMax(clock, otlpConfig.step().toMillis());
+        if (histogram instanceof OtlpExemplarsSupport) {
+            this.exemplarSampler = null;
+        }
+        else {
+            this.exemplarSampler = exemplarSamplerFactory != null ? exemplarSamplerFactory.create(1, false) : null;
+        }
     }
 
     @Override
@@ -54,6 +67,22 @@ class OtlpStepDistributionSummary extends AbstractDistributionSummary implements
         count.add(1L);
         total.add(amount);
         max.record(amount);
+        if (exemplarSampler != null) {
+            exemplarSampler.sampleMeasurement(amount);
+        }
+    }
+
+    @Override
+    public List<Exemplar> exemplars() {
+        if (exemplarSampler != null) {
+            return exemplarSampler.collectExemplars();
+        }
+        else if (histogram instanceof OtlpExemplarsSupport) {
+            return ((OtlpExemplarsSupport) histogram).exemplars();
+        }
+        else {
+            return Collections.emptyList();
+        }
     }
 
     @Override
@@ -93,6 +122,9 @@ class OtlpStepDistributionSummary extends AbstractDistributionSummary implements
         }
         else if (histogram instanceof Base2ExponentialHistogram) {
             histogram.close();
+        }
+        if (exemplarSampler != null) {
+            exemplarSampler.close();
         }
     }
 
