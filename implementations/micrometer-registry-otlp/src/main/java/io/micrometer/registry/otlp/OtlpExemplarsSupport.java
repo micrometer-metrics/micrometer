@@ -26,4 +26,11 @@ interface OtlpExemplarsSupport {
         return Collections.emptyList();
     }
 
+    /**
+     * Rolls the values regardless of the clock or current time and ensures the value will
+     * never roll over again after.
+     */
+    default void closingExemplarsRollover() {
+    }
+
 }

@@ -86,6 +86,11 @@ class OtlpExemplarSampler implements ExemplarSampler {
         return exemplars.collect();
     }
 
+    @Override
+    public void close() {
+        exemplars.close();
+    }
+
     private static class Exemplars extends StepValue<Exemplar[]> {
 
         private static final Exemplar[] EMPTY = new Exemplar[0];
@@ -123,6 +128,14 @@ class OtlpExemplarSampler implements ExemplarSampler {
         @Override
         protected Exemplar[] noValue() {
             return EMPTY;
+        }
+
+        /**
+         * Rolls the values regardless of the clock or current time and ensures the value
+         * will never roll over again after.
+         */
+        void close() {
+            this._closingRollover();
         }
 
         private List<Exemplar> collect() {

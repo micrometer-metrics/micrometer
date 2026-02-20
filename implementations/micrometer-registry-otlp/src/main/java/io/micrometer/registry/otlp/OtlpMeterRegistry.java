@@ -308,6 +308,16 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
             }
             getMeters().forEach(this::closingRollover);
         }
+        else if (config.enabled() && isCumulative() && !isClosed()) {
+            if (isPublishing()) {
+                waitForInProgressScheduledPublish();
+            }
+            getMeters().stream()
+                .filter(meter -> meter instanceof OtlpExemplarsSupport)
+                .map(meter -> (OtlpExemplarsSupport) meter)
+                .forEach(OtlpExemplarsSupport::closingExemplarsRollover);
+        }
+
         super.close();
     }
 

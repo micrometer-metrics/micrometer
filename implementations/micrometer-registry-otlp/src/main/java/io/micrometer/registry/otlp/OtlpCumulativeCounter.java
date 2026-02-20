@@ -54,4 +54,11 @@ class OtlpCumulativeCounter extends CumulativeCounter implements StartTimeAwareM
         return exemplarSampler != null ? exemplarSampler.collectExemplars() : Collections.emptyList();
     }
 
+    @Override
+    public void closingExemplarsRollover() {
+        if (exemplarSampler != null) {
+            exemplarSampler.close();
+        }
+    }
+
 }

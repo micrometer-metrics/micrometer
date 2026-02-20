@@ -25,4 +25,10 @@ interface ExemplarSampler {
 
     List<Exemplar> collectExemplars();
 
+    /**
+     * Rolls the values regardless of the clock or current time and ensures the value will
+     * never roll over again after.
+     */
+    void close();
+
 }
