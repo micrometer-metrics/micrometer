@@ -131,7 +131,7 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
         this.resource = Resource.newBuilder().addAllAttributes(getResourceAttributes()).build();
         this.aggregationTemporality = config.aggregationTemporality();
         this.exemplarSamplerFactory = exemplarContextProvider != null
-                ? new OtlpExemplarSamplerFactory(exemplarContextProvider, clock, config.step().toMillis()) : null;
+                ? new OtlpExemplarSamplerFactory(exemplarContextProvider, clock, config) : null;
         config().namingConvention(NamingConvention.dot);
         start(threadFactory);
     }

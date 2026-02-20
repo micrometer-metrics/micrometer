@@ -21,6 +21,7 @@ import io.micrometer.core.instrument.MockClock;
 import io.opentelemetry.proto.common.v1.KeyValue;
 import io.opentelemetry.proto.metrics.v1.Exemplar;
 import org.apache.commons.codec.binary.Hex;
+import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
@@ -43,11 +44,23 @@ class OtlpExemplarSamplerTests {
 
     private static final Duration STEP = Duration.ofSeconds(1);
 
+    private final OtlpConfig config = new OtlpConfig() {
+        @Override
+        public @NonNull Duration step() {
+            return STEP;
+        }
+
+        @Override
+        public @NonNull String get(@NonNull String key) {
+            return "";
+        }
+    };
+
     private final MockClock clock = new MockClock();
 
     private final TestsExemplarContextProvider testContextProvider = new TestsExemplarContextProvider();
 
-    private final ExemplarSampler sampler = new OtlpExemplarSampler(testContextProvider, clock, STEP.toMillis(), SIZE);
+    private final ExemplarSampler sampler = new OtlpExemplarSampler(testContextProvider, clock, config, SIZE);
 
     @Test
     void firstRecordingShouldBeAlwaysSampled() {

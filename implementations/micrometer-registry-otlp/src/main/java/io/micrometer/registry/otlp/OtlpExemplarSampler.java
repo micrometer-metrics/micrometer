@@ -18,6 +18,7 @@ package io.micrometer.registry.otlp;
 import com.google.protobuf.ByteString;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.step.StepValue;
+import io.micrometer.core.instrument.util.TimeUtils;
 import io.opentelemetry.proto.common.v1.AnyValue;
 import io.opentelemetry.proto.common.v1.KeyValue;
 import io.opentelemetry.proto.metrics.v1.Exemplar;
@@ -28,6 +29,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.LongAdder;
+import java.util.function.DoubleUnaryOperator;
 import java.util.function.Supplier;
 
 class OtlpExemplarSampler implements ExemplarSampler {
@@ -38,17 +40,44 @@ class OtlpExemplarSampler implements ExemplarSampler {
 
     private final Exemplars exemplars;
 
-    OtlpExemplarSampler(ExemplarContextProvider exemplarContextProvider, Clock clock, long stepMillis, int size) {
+    private final DoubleUnaryOperator converter;
+
+    OtlpExemplarSampler(ExemplarContextProvider exemplarContextProvider, Clock clock, OtlpConfig config, int size) {
+        this(exemplarContextProvider, clock, new Exemplars(clock, config.step().toMillis(), size),
+                DoubleUnaryOperator.identity());
+    }
+
+    OtlpExemplarSampler(ExemplarContextProvider exemplarContextProvider, Clock clock, OtlpConfig config, int size,
+            TimeUnit toUnit) {
+        this(exemplarContextProvider, clock, new Exemplars(clock, config.step().toMillis(), size),
+                value -> TimeUtils.nanosToUnit(value, toUnit));
+    }
+
+    OtlpExemplarSampler(ExemplarContextProvider exemplarContextProvider, Clock clock, OtlpConfig config,
+            double[] buckets) {
+        this(exemplarContextProvider, clock, new Exemplars(clock, config.step().toMillis(), buckets),
+                DoubleUnaryOperator.identity());
+    }
+
+    OtlpExemplarSampler(ExemplarContextProvider exemplarContextProvider, Clock clock, OtlpConfig config,
+            double[] buckets, TimeUnit toUnit) {
+        this(exemplarContextProvider, clock, new Exemplars(clock, config.step().toMillis(), buckets),
+                value -> TimeUtils.nanosToUnit(value, toUnit));
+    }
+
+    private OtlpExemplarSampler(ExemplarContextProvider exemplarContextProvider, Clock clock, Exemplars exemplars,
+            DoubleUnaryOperator converter) {
         this.exemplarContextProvider = exemplarContextProvider;
         this.clock = clock;
-        this.exemplars = new Exemplars(clock, stepMillis, size);
+        this.exemplars = exemplars;
+        this.converter = converter;
     }
 
     @Override
     public void sampleMeasurement(double measurement) {
         OtlpExemplarContext exemplarContext = exemplarContextProvider.getExemplarContext();
         if (exemplarContext != null) {
-            exemplars.offer(measurement, exemplarContext, clock);
+            exemplars.offer(measurement, converter, exemplarContext, clock);
         }
     }
 
@@ -63,16 +92,20 @@ class OtlpExemplarSampler implements ExemplarSampler {
 
         private Exemplar[] exemplars;
 
-        private final LongAdder offeredExemplars;
+        private final CellSelector cellSelector;
 
         private Exemplars(Clock clock, long stepMillis, int size) {
-            this(clock, stepMillis, new Exemplar[size]);
+            this(clock, stepMillis, new Exemplar[size], new RandomDecayingProbabilityCellSelector());
         }
 
-        private Exemplars(Clock clock, long stepMillis, Exemplar[] initValue) {
+        private Exemplars(Clock clock, long stepMillis, double[] buckets) {
+            this(clock, stepMillis, new Exemplar[buckets.length], new HistogramCellSelector(buckets));
+        }
+
+        private Exemplars(Clock clock, long stepMillis, Exemplar[] initValue, CellSelector cellSelector) {
             super(clock, stepMillis, initValue);
             this.exemplars = initValue;
-            this.offeredExemplars = new LongAdder();
+            this.cellSelector = cellSelector;
         }
 
         @Override
@@ -83,7 +116,7 @@ class OtlpExemplarSampler implements ExemplarSampler {
         private Exemplar[] getExemplarsAndReset() {
             Exemplar[] result = exemplars;
             exemplars = new Exemplar[exemplars.length];
-            offeredExemplars.reset();
+            cellSelector.reset();
             return result;
         }
 
@@ -98,37 +131,37 @@ class OtlpExemplarSampler implements ExemplarSampler {
             return Collections.unmodifiableList(exemplars);
         }
 
-        private void offer(double measurement, OtlpExemplarContext exemplarContext, Clock clock) {
-            // OTel does something similar
-            offeredExemplars.increment();
-            int index = (int) (Math.random() * offeredExemplars.sum());
+        private void offer(double measurement, DoubleUnaryOperator converter, OtlpExemplarContext exemplarContext,
+                Clock clock) {
+            int index = cellSelector.getIndex(measurement);
             if (index < exemplars.length) {
-                exemplars[index] = createExemplar(measurement, exemplarContext, clock);
+                exemplars[index] = createExemplar(measurement, converter, exemplarContext, clock);
             }
         }
 
-        private static Exemplar createExemplar(double measurement, OtlpExemplarContext exemplarContext, Clock clock) {
+        private static Exemplar createExemplar(double measurement, DoubleUnaryOperator converter,
+                OtlpExemplarContext exemplarContext, Clock clock) {
             String traceId = exemplarContext.getTraceId();
             String spanId = exemplarContext.getSpanId();
             Iterable<io.micrometer.common.KeyValue> keyValues = exemplarContext.getKeyValues();
 
             Exemplar.Builder builder = Exemplar.newBuilder()
-                .setAsDouble(measurement)
-                // .addFilteredAttributes(KeyValue.newBuilder()
-                // .setKey("originalTraceId")
-                // .setValue(AnyValue.newBuilder().setStringValue(traceId))
-                // .build())
-                // .addFilteredAttributes(KeyValue.newBuilder()
-                // .setKey("originalSpanId")
-                // .setValue(AnyValue.newBuilder().setStringValue(spanId))
-                // .build())
+                .setAsDouble(converter.applyAsDouble(measurement))
                 .setTimeUnixNano(TimeUnit.MILLISECONDS.toNanos(clock.wallTime()));
 
             if (traceId != null) {
                 builder.setTraceId(ByteString.fromHex(traceId));
+                // .addFilteredAttributes(KeyValue.newBuilder()
+                // .setKey("originalTraceId")
+                // .setValue(AnyValue.newBuilder().setStringValue(traceId))
+                // .build());
             }
             if (spanId != null) {
                 builder.setSpanId(ByteString.fromHex(spanId));
+                // .addFilteredAttributes(KeyValue.newBuilder()
+                // .setKey("originalSpanId")
+                // .setValue(AnyValue.newBuilder().setStringValue(spanId))
+                // .build());
             }
             if (keyValues != null) {
                 for (io.micrometer.common.KeyValue keyValue : keyValues) {
@@ -145,6 +178,71 @@ class OtlpExemplarSampler implements ExemplarSampler {
                 .setValue(AnyValue.newBuilder().setStringValue(micrometerKeyValue.getValue()).build())
                 .build();
         }
+
+    }
+
+    private static class RandomDecayingProbabilityCellSelector implements CellSelector {
+
+        private final LongAdder count = new LongAdder();
+
+        @Override
+        public int getIndex(double ignored) {
+            count.increment();
+            return (int) (Math.random() * count.sum());
+        }
+
+        @Override
+        public void reset() {
+            count.reset();
+        }
+
+    }
+
+    private static class HistogramCellSelector implements CellSelector {
+
+        private final double[] buckets;
+
+        private HistogramCellSelector(double[] buckets) {
+            this.buckets = buckets;
+        }
+
+        @Override
+        public int getIndex(double measurement) {
+            return leastLessThanOrEqualTo(measurement);
+        }
+
+        @Override
+        public void reset() {
+            // no need, it's immutable
+        }
+
+        /**
+         * The least bucket that is less than or equal to a sample.
+         */
+        private int leastLessThanOrEqualTo(double key) {
+            int low = 0;
+            int high = buckets.length - 1;
+
+            while (low <= high) {
+                int mid = (low + high) >>> 1;
+                if (buckets[mid] < key)
+                    low = mid + 1;
+                else if (buckets[mid] > key)
+                    high = mid - 1;
+                else
+                    return mid; // exact match
+            }
+
+            return low < buckets.length ? low : -1;
+        }
+
+    }
+
+    private interface CellSelector {
+
+        int getIndex(double measurement);
+
+        void reset();
 
     }
 

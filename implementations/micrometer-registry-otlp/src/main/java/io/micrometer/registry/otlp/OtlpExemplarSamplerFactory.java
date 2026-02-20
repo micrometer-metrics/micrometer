@@ -24,20 +24,29 @@ public class OtlpExemplarSamplerFactory {
 
     private final Clock clock;
 
-    private final long stepMillis;
+    private final OtlpConfig config;
 
-    OtlpExemplarSamplerFactory(ExemplarContextProvider exemplarContextProvider, Clock clock, long stepMillis) {
+    OtlpExemplarSamplerFactory(ExemplarContextProvider exemplarContextProvider, Clock clock, OtlpConfig config) {
         this.exemplarContextProvider = exemplarContextProvider;
         this.clock = clock;
-        this.stepMillis = stepMillis;
+        this.config = config;
     }
 
     ExemplarSampler createExemplarSampler(int numberOfExemplars) {
-        return new OtlpExemplarSampler(exemplarContextProvider, clock, stepMillis, numberOfExemplars);
+        return new OtlpExemplarSampler(exemplarContextProvider, clock, config, numberOfExemplars);
     }
 
-    ExemplarSampler createExemplarSampler(double[] histogramUpperBounds) {
-        return new OtlpExemplarSampler(exemplarContextProvider, clock, stepMillis, histogramUpperBounds.length);
+    ExemplarSampler createExemplarSampler(double[] buckets) {
+        return new OtlpExemplarSampler(exemplarContextProvider, clock, config, buckets);
+    }
+
+    ExemplarSampler createTimeBasedExemplarSampler(int numberOfExemplars) {
+        return new OtlpExemplarSampler(exemplarContextProvider, clock, config, numberOfExemplars,
+                config.baseTimeUnit());
+    }
+
+    ExemplarSampler createTimeBasedExemplarSampler(double[] buckets) {
+        return new OtlpExemplarSampler(exemplarContextProvider, clock, config, buckets, config.baseTimeUnit());
     }
 
 }
