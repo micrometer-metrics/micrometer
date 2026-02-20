@@ -231,9 +231,10 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
             PauseDetector pauseDetector) {
         return isCumulative()
                 ? new OtlpCumulativeTimer(id, this.clock, distributionStatisticConfig, pauseDetector, getBaseTimeUnit(),
-                        getHistogram(id, distributionStatisticConfig, getBaseTimeUnit()))
+                        getHistogram(id, distributionStatisticConfig, getBaseTimeUnit()), exemplarSamplerFactory)
                 : new OtlpStepTimer(id, clock, pauseDetector,
-                        getHistogram(id, distributionStatisticConfig, getBaseTimeUnit()), config);
+                        getHistogram(id, distributionStatisticConfig, getBaseTimeUnit()), config,
+                        exemplarSamplerFactory);
     }
 
     @Override
@@ -362,9 +363,8 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
     void pollMetersToRollover() {
         this.lastMeterRolloverStartTime = clock.wallTime();
         this.getMeters()
-            .forEach(m -> m.match(gauge -> null, this::pollCounter, Timer::takeSnapshot,
-                    DistributionSummary::takeSnapshot, meter -> null, meter -> null, FunctionCounter::count,
-                    FunctionTimer::count, meter -> null));
+            .forEach(m -> m.match(gauge -> null, this::pollCounter, this::pollTimer, DistributionSummary::takeSnapshot,
+                    meter -> null, meter -> null, FunctionCounter::count, FunctionTimer::count, meter -> null));
     }
 
     private double pollCounter(Counter counter) {
@@ -372,6 +372,13 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
             ((OtlpExemplarsSupport) counter).exemplars();
         }
         return counter.count();
+    }
+
+    private HistogramSnapshot pollTimer(Timer timer) {
+        if (timer instanceof OtlpExemplarsSupport) {
+            ((OtlpExemplarsSupport) timer).exemplars();
+        }
+        return timer.takeSnapshot();
     }
 
     private long getInitialDelay() {
@@ -447,7 +454,7 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
             }
 
             Histogram explicitBucketHistogram = getExplicitBucketHistogram(clock, distributionStatisticConfig,
-                    config.aggregationTemporality(), config.step().toMillis());
+                    config.aggregationTemporality(), config.step().toMillis(), exemplarSamplerFactory);
             if (explicitBucketHistogram != null) {
                 return explicitBucketHistogram;
             }
@@ -482,18 +489,19 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
 
     private static @Nullable Histogram getExplicitBucketHistogram(final Clock clock,
             final DistributionStatisticConfig distributionStatisticConfig,
-            final AggregationTemporality aggregationTemporality, final long stepMillis) {
+            final AggregationTemporality aggregationTemporality, final long stepMillis,
+            final @Nullable OtlpExemplarSamplerFactory exemplarSamplerFactory) {
 
         double[] sloWithPositiveInf = getSloWithPositiveInf(distributionStatisticConfig);
         if (AggregationTemporality.isCumulative(aggregationTemporality)) {
-            return new TimeWindowFixedBoundaryHistogram(clock, DistributionStatisticConfig.builder()
+            return new OtlpCumulativeBucketHistogram(clock, DistributionStatisticConfig.builder()
                 // effectively never roll over
                 .expiry(Duration.ofDays(1825))
                 .serviceLevelObjectives(sloWithPositiveInf)
                 .percentiles()
                 .bufferLength(1)
                 .build()
-                .merge(distributionStatisticConfig), true, false);
+                .merge(distributionStatisticConfig), exemplarSamplerFactory);
         }
         if (AggregationTemporality.isDelta(aggregationTemporality) && stepMillis > 0) {
             return new OtlpStepBucketHistogram(clock, stepMillis,
@@ -501,7 +509,7 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
                         .serviceLevelObjectives(sloWithPositiveInf)
                         .build()
                         .merge(distributionStatisticConfig),
-                    true, false);
+                    exemplarSamplerFactory);
         }
 
         return null;
