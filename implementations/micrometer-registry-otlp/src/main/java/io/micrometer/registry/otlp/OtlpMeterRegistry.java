@@ -356,14 +356,16 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
     void pollMetersToRollover() {
         this.lastMeterRolloverStartTime = clock.wallTime();
         this.getMeters()
-            .forEach(m -> m.match(gauge -> null, counter -> pollOtlpCounter((OtlpCounter) counter), Timer::takeSnapshot,
+            .forEach(m -> m.match(gauge -> null, this::pollCounter, Timer::takeSnapshot,
                     DistributionSummary::takeSnapshot, meter -> null, meter -> null, FunctionCounter::count,
                     FunctionTimer::count, meter -> null));
     }
 
-    private double pollOtlpCounter(OtlpCounter counter) {
-        counter.rollOver();
-        return 0.0;
+    private double pollCounter(Counter counter) {
+        if (counter instanceof OtlpExemplarsSupport) {
+            ((OtlpExemplarsSupport) counter).exemplars();
+        }
+        return counter.count();
     }
 
     private long getInitialDelay() {

@@ -23,7 +23,7 @@ import org.jspecify.annotations.Nullable;
 import java.util.Collections;
 import java.util.List;
 
-class OtlpStepCounter extends StepCounter implements OtlpCounter {
+class OtlpStepCounter extends StepCounter implements OtlpExemplarsSupport {
 
     private final @Nullable ExemplarSampler exemplarSampler;
 

@@ -112,7 +112,7 @@ class OtlpMetricConverter {
 
     private void writeCounter(Counter counter) {
         Metric.Builder metricBuilder = getOrCreateMetricBuilder(counter.getId(), DataCase.SUM);
-        setSumDataPoint(metricBuilder, counter, counter::count, ((OtlpCounter) counter)::exemplars);
+        setSumDataPoint(metricBuilder, counter, counter::count, ((OtlpExemplarsSupport) counter)::exemplars);
     }
 
     private void writeFunctionCounter(FunctionCounter functionCounter) {

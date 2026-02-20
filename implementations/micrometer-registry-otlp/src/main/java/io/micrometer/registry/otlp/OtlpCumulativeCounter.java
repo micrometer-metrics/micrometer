@@ -24,7 +24,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-class OtlpCumulativeCounter extends CumulativeCounter implements StartTimeAwareMeter, OtlpCounter {
+class OtlpCumulativeCounter extends CumulativeCounter implements StartTimeAwareMeter, OtlpExemplarsSupport {
 
     private final long startTimeNanos;
 
