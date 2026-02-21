@@ -18,6 +18,7 @@ package io.micrometer.registry.otlp.internal;
 import io.micrometer.core.instrument.distribution.Histogram;
 import io.micrometer.core.instrument.distribution.HistogramSnapshot;
 import io.micrometer.core.instrument.util.TimeUtils;
+import io.micrometer.registry.otlp.OtlpExemplarsSupport;
 import io.micrometer.registry.otlp.internal.ExponentialHistogramSnapShot.ExponentialBuckets;
 import org.jspecify.annotations.Nullable;
 
@@ -47,7 +48,7 @@ import static io.micrometer.registry.otlp.internal.ExponentialHistogramSnapShot.
  * @author Lenin Jaganathan
  * @since 1.14.0
  */
-public abstract class Base2ExponentialHistogram implements Histogram {
+public abstract class Base2ExponentialHistogram implements Histogram, OtlpExemplarsSupport {
 
     private final int maxScale;
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 VMware, Inc.
+ * Copyright 2025 VMware, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,23 +16,19 @@
 package io.micrometer.registry.otlp;
 
 import io.micrometer.core.instrument.Clock;
-import io.micrometer.core.instrument.cumulative.CumulativeCounter;
+import io.micrometer.core.instrument.step.StepCounter;
 import io.opentelemetry.proto.metrics.v1.Exemplar;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
-class OtlpCumulativeCounter extends CumulativeCounter implements StartTimeAwareMeter, OtlpExemplarsSupport {
-
-    private final long startTimeNanos;
+class OtlpStepCounter extends StepCounter implements OtlpExemplarsSupport {
 
     private final @Nullable ExemplarSampler exemplarSampler;
 
-    OtlpCumulativeCounter(Id id, Clock clock, @Nullable OtlpExemplarSamplerFactory exemplarSamplerFactory) {
-        super(id);
-        this.startTimeNanos = TimeUnit.MILLISECONDS.toNanos(clock.wallTime());
+    OtlpStepCounter(Id id, Clock clock, long stepMillis, @Nullable OtlpExemplarSamplerFactory exemplarSamplerFactory) {
+        super(id, clock, stepMillis);
         this.exemplarSampler = exemplarSamplerFactory != null ? exemplarSamplerFactory.createExemplarSampler(16) : null;
     }
 
@@ -45,17 +41,13 @@ class OtlpCumulativeCounter extends CumulativeCounter implements StartTimeAwareM
     }
 
     @Override
-    public long getStartTimeNanos() {
-        return this.startTimeNanos;
-    }
-
-    @Override
     public List<Exemplar> exemplars() {
         return exemplarSampler != null ? exemplarSampler.collectExemplars() : Collections.emptyList();
     }
 
     @Override
-    public void closingExemplarsRollover() {
+    public void _closingRollover() {
+        super._closingRollover();
         if (exemplarSampler != null) {
             exemplarSampler.close();
         }
