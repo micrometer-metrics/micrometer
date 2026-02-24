@@ -313,7 +313,10 @@ class SimpleObservation implements Observation {
             else {
                 log.trace("NoOp observation used with SimpleScope");
             }
-            this.registry.setCurrentObservationScope(previousObservationScope);
+            // DB connections might be closed out of order, so only set the previous scope
+            // as current if it has not been already closed (by checking if it still
+            // exists in the registry).
+            this.registry.setCurrentObservationScopeIfExists(previousObservationScope);
         }
 
         private @Nullable SimpleScope getLastScope(SimpleScope simpleScope) {
