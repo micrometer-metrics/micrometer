@@ -88,9 +88,13 @@ public abstract class ObservationRegistryCompatibilityKit {
             Observation.Event event2 = Observation.Event.of("testEvent", "event for testing",
                     System.currentTimeMillis());
             observation.event(event2);
+            Observation.Event event3 = Observation.Event.of("retry", "retry", System.currentTimeMillis(),
+                    KeyValues.of("retryCount", "2"));
+            observation.event(event3);
 
             inOrder.verify(handler).onEvent(same(event), isA(Observation.Context.class));
             inOrder.verify(handler).onEvent(same(event2), isA(Observation.Context.class));
+            inOrder.verify(handler).onEvent(same(event3), isA(Observation.Context.class));
 
             Throwable exception = new IOException("simulated");
             observation.error(exception);
