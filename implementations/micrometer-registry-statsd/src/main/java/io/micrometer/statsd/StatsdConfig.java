@@ -146,6 +146,16 @@ public interface StatsdConfig extends MeterRegistryConfig {
         return getBoolean(this, "buffered").orElse(true);
     }
 
+    /**
+     * @return Choose how to manage UDP server interruptions
+     */
+    default StatsdPortUnreachableMethod portUnreachableMethod() {
+        // Retry is the default because it's not expected that a server send ICMP
+        // port unreachable indefinitely
+        return getEnum(this, StatsdPortUnreachableMethod.class, "portUnreachableMethod")
+            .orElse(StatsdPortUnreachableMethod.RETRY);
+    }
+
     @Override
     default Validated<?> validate() {
         return checkAll(this, checkRequired("flavor", StatsdConfig::flavor), checkRequired("host", StatsdConfig::host),
