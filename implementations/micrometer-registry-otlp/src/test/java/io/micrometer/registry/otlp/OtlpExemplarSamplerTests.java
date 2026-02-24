@@ -23,11 +23,11 @@ import io.opentelemetry.proto.metrics.v1.Exemplar;
 import org.apache.commons.codec.binary.Hex;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -39,8 +39,6 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @author Jonatan Ivanov
  */
 class OtlpExemplarSamplerTests {
-
-    private static final int SIZE = 16;
 
     private static final Duration STEP = Duration.ofSeconds(1);
 
@@ -62,174 +60,270 @@ class OtlpExemplarSamplerTests {
 
     private final OtlpExemplarSamplerFactory factory = new OtlpExemplarSamplerFactory(contextProvider, clock, config);
 
-    private final ExemplarSampler sampler = factory.create(SIZE, false);
+    @Nested
+    class FixedSizeSamplerTests {
 
-    @Test
-    void firstRecordingShouldBeAlwaysSampled() {
-        assertThat(sampler.collectExemplars()).isEmpty();
-        record("4bf92f3577b34da6a3ce929d0e0e4736", "00f067aa0ba902b7", 42.0);
-        List<Exemplar> exemplars = sampler.collectExemplars();
-        assertThat(exemplars).hasSize(1);
+        private static final int SIZE = 16;
 
-        Exemplar exemplar = exemplars.get(0);
-        assertThat(encodeHexString(exemplar.getTraceId())).isEqualTo("4bf92f3577b34da6a3ce929d0e0e4736");
-        assertThat(encodeHexString(exemplar.getSpanId())).isEqualTo("00f067aa0ba902b7");
-        assertThat(exemplar.getAsDouble()).isEqualTo(42.0);
-        assertThat(exemplar.getTimeUnixNano()).isEqualTo(TimeUnit.MILLISECONDS.toNanos(clock.wallTime()));
-        assertThat(exemplar.getFilteredAttributesList()).isEmpty();
-    }
+        private final ExemplarSampler sampler = factory.create(SIZE, false);
 
-    @Test
-    void keyValuesShouldPresentIfSet() {
-        assertThat(sampler.collectExemplars()).isEmpty();
-        KeyValues keyValues = KeyValues.of("a", "b", "c", "d");
-        record("4bf92f3577b34da6a3ce929d0e0e4736", "00f067aa0ba902b7", keyValues, 42.0);
-        List<Exemplar> exemplars = sampler.collectExemplars();
-        assertThat(exemplars).hasSize(1);
+        private final Recorder recorder = new Recorder(sampler, contextProvider);
 
-        Exemplar exemplar = exemplars.get(0);
-        assertThat(encodeHexString(exemplar.getTraceId())).isEqualTo("4bf92f3577b34da6a3ce929d0e0e4736");
-        assertThat(encodeHexString(exemplar.getSpanId())).isEqualTo("00f067aa0ba902b7");
-        assertThat(exemplar.getAsDouble()).isEqualTo(42.0);
-        assertThat(exemplar.getTimeUnixNano()).isEqualTo(TimeUnit.MILLISECONDS.toNanos(clock.wallTime()));
-        List<KeyValue> filteredAttributes = exemplar.getFilteredAttributesList();
-        assertThat(filteredAttributes).hasSize(2);
-        assertThat(filteredAttributes.get(0).getKey()).isEqualTo("a");
-        assertThat(filteredAttributes.get(0).getValue().getStringValue()).isEqualTo("b");
-        assertThat(filteredAttributes.get(1).getKey()).isEqualTo("c");
-        assertThat(filteredAttributes.get(1).getValue().getStringValue()).isEqualTo("d");
-    }
+        @Test
+        void firstRecordingShouldBeAlwaysSampled() {
+            assertThat(sampler.collectExemplars()).isEmpty();
+            recorder.record("4bf92f3577b34da6a3ce929d0e0e4736", "00f067aa0ba902b7", 42.0);
+            List<Exemplar> exemplars = sampler.collectExemplars();
+            assertThat(exemplars).hasSize(1);
 
-    @Test
-    void traceIdAndSpanIdAreOptional() {
-        assertThat(sampler.collectExemplars()).isEmpty();
-        record(null, null, KeyValues.of("a", "b", "c", "d"), 42.0);
-        List<Exemplar> exemplars = sampler.collectExemplars();
-        assertThat(exemplars).hasSize(1);
+            Exemplar exemplar = exemplars.get(0);
+            assertThat(encodeHexString(exemplar.getTraceId())).isEqualTo("4bf92f3577b34da6a3ce929d0e0e4736");
+            assertThat(encodeHexString(exemplar.getSpanId())).isEqualTo("00f067aa0ba902b7");
+            assertThat(exemplar.getAsDouble()).isEqualTo(42.0);
+            assertThat(exemplar.getTimeUnixNano()).isEqualTo(TimeUnit.MILLISECONDS.toNanos(clock.wallTime()));
+            assertThat(exemplar.getFilteredAttributesList()).isEmpty();
+        }
 
-        Exemplar exemplar = exemplars.get(0);
-        assertThat(encodeHexString(exemplar.getTraceId())).isEmpty();
-        assertThat(encodeHexString(exemplar.getSpanId())).isEmpty();
-        assertThat(exemplar.getAsDouble()).isEqualTo(42.0);
-        assertThat(exemplar.getTimeUnixNano()).isEqualTo(TimeUnit.MILLISECONDS.toNanos(clock.wallTime()));
-        List<KeyValue> filteredAttributes = exemplar.getFilteredAttributesList();
-        assertThat(filteredAttributes).hasSize(2);
-        assertThat(filteredAttributes.get(0).getKey()).isEqualTo("a");
-        assertThat(filteredAttributes.get(0).getValue().getStringValue()).isEqualTo("b");
-        assertThat(filteredAttributes.get(1).getKey()).isEqualTo("c");
-        assertThat(filteredAttributes.get(1).getValue().getStringValue()).isEqualTo("d");
-    }
+        @Test
+        void keyValuesShouldPresentIfSet() {
+            assertThat(sampler.collectExemplars()).isEmpty();
+            KeyValues keyValues = KeyValues.of("a", "b", "c", "d");
+            recorder.record("4bf92f3577b34da6a3ce929d0e0e4736", "00f067aa0ba902b7", keyValues, 42.0);
+            List<Exemplar> exemplars = sampler.collectExemplars();
+            assertThat(exemplars).hasSize(1);
 
-    @Test
-    void emptyContextIsValid() {
-        assertThat(sampler.collectExemplars()).isEmpty();
-        record(null, null, null, 3.14);
-        List<Exemplar> exemplars = sampler.collectExemplars();
-        assertThat(exemplars).hasSize(1);
+            Exemplar exemplar = exemplars.get(0);
+            assertThat(encodeHexString(exemplar.getTraceId())).isEqualTo("4bf92f3577b34da6a3ce929d0e0e4736");
+            assertThat(encodeHexString(exemplar.getSpanId())).isEqualTo("00f067aa0ba902b7");
+            assertThat(exemplar.getAsDouble()).isEqualTo(42.0);
+            assertThat(exemplar.getTimeUnixNano()).isEqualTo(TimeUnit.MILLISECONDS.toNanos(clock.wallTime()));
+            List<KeyValue> filteredAttributes = exemplar.getFilteredAttributesList();
+            assertThat(filteredAttributes).hasSize(2);
+            assertThat(filteredAttributes.get(0).getKey()).isEqualTo("a");
+            assertThat(filteredAttributes.get(0).getValue().getStringValue()).isEqualTo("b");
+            assertThat(filteredAttributes.get(1).getKey()).isEqualTo("c");
+            assertThat(filteredAttributes.get(1).getValue().getStringValue()).isEqualTo("d");
+        }
 
-        Exemplar exemplar = exemplars.get(0);
-        assertThat(encodeHexString(exemplar.getTraceId())).isEmpty();
-        assertThat(encodeHexString(exemplar.getSpanId())).isEmpty();
-        assertThat(exemplar.getAsDouble()).isEqualTo(3.14);
-        assertThat(exemplar.getTimeUnixNano()).isEqualTo(TimeUnit.MILLISECONDS.toNanos(clock.wallTime()));
-        assertThat(exemplar.getFilteredAttributesList()).isEmpty();
-    }
+        @Test
+        void traceIdAndSpanIdAreOptional() {
+            assertThat(sampler.collectExemplars()).isEmpty();
+            recorder.record(null, null, KeyValues.of("a", "b", "c", "d"), 42.0);
+            List<Exemplar> exemplars = sampler.collectExemplars();
+            assertThat(exemplars).hasSize(1);
 
-    @Test
-    void nullContextShouldNotBeSampled() {
-        assertThat(sampler.collectExemplars()).isEmpty();
-        sampler.sampleMeasurement(42.0);
-        assertThat(sampler.collectExemplars()).isEmpty();
-    }
+            Exemplar exemplar = exemplars.get(0);
+            assertThat(encodeHexString(exemplar.getTraceId())).isEmpty();
+            assertThat(encodeHexString(exemplar.getSpanId())).isEmpty();
+            assertThat(exemplar.getAsDouble()).isEqualTo(42.0);
+            assertThat(exemplar.getTimeUnixNano()).isEqualTo(TimeUnit.MILLISECONDS.toNanos(clock.wallTime()));
+            List<KeyValue> filteredAttributes = exemplar.getFilteredAttributesList();
+            assertThat(filteredAttributes).hasSize(2);
+            assertThat(filteredAttributes.get(0).getKey()).isEqualTo("a");
+            assertThat(filteredAttributes.get(0).getValue().getStringValue()).isEqualTo("b");
+            assertThat(filteredAttributes.get(1).getKey()).isEqualTo("c");
+            assertThat(filteredAttributes.get(1).getValue().getStringValue()).isEqualTo("d");
+        }
 
-    @RepeatedTest(10)
-    void multipleRecordingsShouldBeRandomlySampled() {
-        assertThat(sampler.collectExemplars()).isEmpty();
-        List<Measurable> measurable = Arrays.asList(
-                new Measurable("4bf92f3577b34da6a3ce929d0e0e0001", "00f067aa0ba90001", 41.0),
-                new Measurable("4bf92f3577b34da6a3ce929d0e0e0002", "00f067aa0ba90002", 42.0),
-                new Measurable("4bf92f3577b34da6a3ce929d0e0e0003", "00f067aa0ba90003", 43.0),
-                new Measurable("4bf92f3577b34da6a3ce929d0e0e0004", "00f067aa0ba90004", 44.0),
-                new Measurable("4bf92f3577b34da6a3ce929d0e0e0005", "00f067aa0ba90005", 45.0));
-        record(measurable);
-        assertThat(sampler.collectExemplars()).doesNotHaveDuplicates().hasSizeBetween(1, measurable.size());
-    }
+        @Test
+        void emptyContextIsValid() {
+            assertThat(sampler.collectExemplars()).isEmpty();
+            recorder.record(null, null, null, 3.14);
+            List<Exemplar> exemplars = sampler.collectExemplars();
+            assertThat(exemplars).hasSize(1);
 
-    @RepeatedTest(10)
-    void samplerResetsOverTime() {
-        List<Measurable> measurables = Arrays.asList(
-                new Measurable("4bf92f3577b34da6a3ce929d0e0e0001", "00f067aa0ba90001", 41.0),
-                new Measurable("4bf92f3577b34da6a3ce929d0e0e0002", "00f067aa0ba90002", 42.0),
-                new Measurable("4bf92f3577b34da6a3ce929d0e0e0003", "00f067aa0ba90003", 43.0),
-                new Measurable("4bf92f3577b34da6a3ce929d0e0e0004", "00f067aa0ba90004", 44.0),
-                new Measurable("4bf92f3577b34da6a3ce929d0e0e0005", "00f067aa0ba90005", 45.0));
+            Exemplar exemplar = exemplars.get(0);
+            assertThat(encodeHexString(exemplar.getTraceId())).isEmpty();
+            assertThat(encodeHexString(exemplar.getSpanId())).isEmpty();
+            assertThat(exemplar.getAsDouble()).isEqualTo(3.14);
+            assertThat(exemplar.getTimeUnixNano()).isEqualTo(TimeUnit.MILLISECONDS.toNanos(clock.wallTime()));
+            assertThat(exemplar.getFilteredAttributesList()).isEmpty();
+        }
 
-        for (int i = 0; i < 1_000; i++) {
+        @Test
+        void nullContextShouldNotBeSampled() {
+            assertThat(sampler.collectExemplars()).isEmpty();
+            contextProvider.reset();
+            sampler.sampleMeasurement(42.0);
+            assertThat(sampler.collectExemplars()).isEmpty();
+        }
+
+        @RepeatedTest(10)
+        void multipleRecordingsShouldBeRandomlySampled() {
+            assertThat(sampler.collectExemplars()).isEmpty();
+            recorder.recordRandomMeasurements(5);
+            assertThat(sampler.collectExemplars()).doesNotHaveDuplicates().hasSizeBetween(1, 5);
+        }
+
+        @Test
+        void samplerRespectsStepBoundaries() {
+            assertThat(sampler.collectExemplars()).isEmpty();
+            recorder.record("4bf92f3577b34da6a3ce929d0e0e4736", "00f067aa0ba902b7", 42.0);
+            assertThat(sampler.collectExemplars()).hasSize(1);
+            clock.add(STEP);
+            assertThat(sampler.collectExemplars()).hasSize(1);
+            clock.add(STEP);
+
+            for (int i = 0; i < 1_000; i++) {
+                assertThat(sampler.collectExemplars()).isEmpty();
+                recorder.record("4bf92f3577b34da6a3ce929d0e0e4736", "00f067aa0ba902b7", 42.0);
+                assertThat(sampler.collectExemplars()).isEmpty();
+                clock.add(STEP);
+                assertThat(sampler.collectExemplars()).hasSize(1);
+                clock.add(STEP);
+            }
+        }
+
+        @Test
+        void samplerRollsOverOnClose() {
             assertThat(sampler.collectExemplars()).isEmpty();
             clock.add(STEP);
             assertThat(sampler.collectExemplars()).isEmpty();
-            record(measurables);
+            recorder.record("4bf92f3577b34da6a3ce929d0e0e4736", "00f067aa0ba902b7", 42.0);
+            assertThat(sampler.collectExemplars()).isEmpty();
+            sampler.close();
+            assertThat(sampler.collectExemplars()).hasSize(1);
+        }
+
+        @RepeatedTest(10)
+        void samplerCanBeFilled() {
+            assertThat(sampler.collectExemplars()).isEmpty();
+            recorder.recordRandomMeasurements(1_000_000);
+            assertThat(sampler.collectExemplars()).hasSize(16);
+        }
+
+    }
+
+    @Nested
+    class ExplicitBucketSamplerTests {
+
+        private final double[] buckets = new double[] { 10.0, 20.0, Double.POSITIVE_INFINITY };
+
+        private final ExemplarSampler sampler = factory.create(buckets, false);
+
+        private final Recorder recorder = new Recorder(sampler, contextProvider);
+
+        @Test
+        void recordingsShouldGoToTheRightBucket() {
+            assertThat(sampler.collectExemplars()).isEmpty();
+            recorder.record("4bf92f3577b34da6a3ce929d0e000001", "00f067aa0b000001", 1.0);
+            recorder.record("4bf92f3577b34da6a3ce929d0e000002", "00f067aa0b000002", 11.0);
+            recorder.record("4bf92f3577b34da6a3ce929d0e000003", "00f067aa0b000003", 21.0);
+            List<Exemplar> exemplars = sampler.collectExemplars();
+            assertThat(exemplars).hasSize(3);
+
+            Exemplar exemplar1 = exemplars.get(0);
+            assertThat(encodeHexString(exemplar1.getTraceId())).isEqualTo("4bf92f3577b34da6a3ce929d0e000001");
+            assertThat(encodeHexString(exemplar1.getSpanId())).isEqualTo("00f067aa0b000001");
+            assertThat(exemplar1.getAsDouble()).isEqualTo(1.0);
+            assertThat(exemplar1.getTimeUnixNano()).isEqualTo(TimeUnit.MILLISECONDS.toNanos(clock.wallTime()));
+            assertThat(exemplar1.getFilteredAttributesList()).isEmpty();
+
+            Exemplar exemplar2 = exemplars.get(1);
+            assertThat(encodeHexString(exemplar2.getTraceId())).isEqualTo("4bf92f3577b34da6a3ce929d0e000002");
+            assertThat(encodeHexString(exemplar2.getSpanId())).isEqualTo("00f067aa0b000002");
+            assertThat(exemplar2.getAsDouble()).isEqualTo(11.0);
+            assertThat(exemplar2.getTimeUnixNano()).isEqualTo(TimeUnit.MILLISECONDS.toNanos(clock.wallTime()));
+            assertThat(exemplar2.getFilteredAttributesList()).isEmpty();
+
+            Exemplar exemplar3 = exemplars.get(2);
+            assertThat(encodeHexString(exemplar3.getTraceId())).isEqualTo("4bf92f3577b34da6a3ce929d0e000003");
+            assertThat(encodeHexString(exemplar3.getSpanId())).isEqualTo("00f067aa0b000003");
+            assertThat(exemplar3.getAsDouble()).isEqualTo(21.0);
+            assertThat(exemplar3.getTimeUnixNano()).isEqualTo(TimeUnit.MILLISECONDS.toNanos(clock.wallTime()));
+            assertThat(exemplar3.getFilteredAttributesList()).isEmpty();
+        }
+
+        @Test
+        void sameBucketCanBeOverwritten() {
+            assertThat(sampler.collectExemplars()).isEmpty();
+
+            recorder.record("4bf92f3577b34da6a3ce929d0e000001", "00f067aa0b000001", 1.0);
+
+            List<Exemplar> exemplars = sampler.collectExemplars();
+            assertThat(exemplars).hasSize(1);
+            Exemplar exemplar = exemplars.get(0);
+            assertThat(encodeHexString(exemplar.getSpanId())).isEqualTo("00f067aa0b000001");
+            assertThat(exemplar.getAsDouble()).isEqualTo(1.0);
+
+            recorder.record("4bf92f3577b34da6a3ce929d0e000002", "00f067aa0b000002", 10.0);
+
+            exemplars = sampler.collectExemplars();
+            assertThat(exemplars).hasSize(1);
+            Exemplar exemplar2 = exemplars.get(0);
+            assertThat(encodeHexString(exemplar2.getTraceId())).isEqualTo("4bf92f3577b34da6a3ce929d0e000002");
+            assertThat(encodeHexString(exemplar2.getSpanId())).isEqualTo("00f067aa0b000002");
+            assertThat(exemplar2.getAsDouble()).isEqualTo(10.0);
+            assertThat(exemplar2.getTimeUnixNano()).isEqualTo(TimeUnit.MILLISECONDS.toNanos(clock.wallTime()));
+            assertThat(exemplar2.getFilteredAttributesList()).isEmpty();
+        }
+
+        @Test
+        void sparseBucketsAreOk() {
             assertThat(sampler.collectExemplars()).isEmpty();
             clock.add(STEP);
-            assertThat(sampler.collectExemplars()).doesNotHaveDuplicates().hasSizeBetween(1, measurables.size());
-            clock.add(STEP);
             assertThat(sampler.collectExemplars()).isEmpty();
+
+            recorder.record("4bf92f3577b34da6a3ce929d0e000001", "00f067aa0b000001", 1.0);
+            clock.add(STEP);
+
+            List<Exemplar> exemplars = sampler.collectExemplars();
+            assertThat(exemplars).hasSize(1);
+            Exemplar exemplar = exemplars.get(0);
+            assertThat(encodeHexString(exemplar.getSpanId())).isEqualTo("00f067aa0b000001");
+            assertThat(exemplar.getAsDouble()).isEqualTo(1.0);
+
+            recorder.record("4bf92f3577b34da6a3ce929d0e000002", "00f067aa0b000002", 11.0);
+            clock.add(STEP);
+
+            exemplars = sampler.collectExemplars();
+            assertThat(exemplars).hasSize(1);
+            exemplar = exemplars.get(0);
+            assertThat(encodeHexString(exemplar.getSpanId())).isEqualTo("00f067aa0b000002");
+            assertThat(exemplar.getAsDouble()).isEqualTo(11.0);
+
+            recorder.record("4bf92f3577b34da6a3ce929d0e000003", "00f067aa0b000003", 21.0);
+            clock.add(STEP);
+
+            exemplars = sampler.collectExemplars();
+            assertThat(exemplars).hasSize(1);
+            exemplar = exemplars.get(0);
+            assertThat(encodeHexString(exemplar.getSpanId())).isEqualTo("00f067aa0b000003");
+            assertThat(exemplar.getAsDouble()).isEqualTo(21.0);
         }
-    }
 
-    @RepeatedTest(10)
-    void samplerCanBeFilled() {
-        assertThat(sampler.collectExemplars()).isEmpty();
-        for (int i = 0; i < 1_000_000; i++) {
-            record("4bf92f3577b34da6a3ce929d0e0e0000", "00f067aa0ba90000", i);
-        }
-        assertThat(sampler.collectExemplars()).hasSize(16);
-    }
-
-    private void record(List<Measurable> measurables) {
-        for (Measurable measurable : measurables) {
-            record(measurable);
-        }
-    }
-
-    private void record(String traceId, String spanId, double amount) {
-        record(new Measurable(traceId, spanId, amount));
-    }
-
-    private void record(@Nullable String traceId, @Nullable String spanId, @Nullable KeyValues keyValues,
-            double amount) {
-        record(new Measurable(traceId, spanId, keyValues, amount));
-    }
-
-    private void record(Measurable measurable) {
-        contextProvider.setExemplar(measurable.traceId, measurable.spanId, measurable.keyValues);
-        sampler.sampleMeasurement(measurable.amount);
-        contextProvider.reset();
     }
 
     private String encodeHexString(ByteString byteString) {
         return Hex.encodeHexString(byteString.toByteArray());
     }
 
-    private static class Measurable {
+    private static class Recorder {
 
-        private final @Nullable String traceId;
+        private final ExemplarSampler sampler;
 
-        private final @Nullable String spanId;
+        private final TestsExemplarContextProvider contextProvider;
 
-        private final @Nullable KeyValues keyValues;
-
-        private final double amount;
-
-        Measurable(String traceId, String spanId, double amount) {
-            this(traceId, spanId, null, amount);
+        private Recorder(ExemplarSampler sampler, TestsExemplarContextProvider contextProvider) {
+            this.sampler = sampler;
+            this.contextProvider = contextProvider;
         }
 
-        Measurable(@Nullable String traceId, @Nullable String spanId, @Nullable KeyValues keyValues, double amount) {
-            this.traceId = traceId;
-            this.spanId = spanId;
-            this.keyValues = keyValues;
-            this.amount = amount;
+        private void recordRandomMeasurements(int numberOfMeasurements) {
+            for (int i = 0; i < numberOfMeasurements; i++) {
+                record("4bf92f3577b34da6a3ce929d0e0e0000", "00f067aa0ba90000", i);
+            }
+        }
+
+        private void record(String traceId, String spanId, double amount) {
+            record(traceId, spanId, null, amount);
+        }
+
+        private void record(@Nullable String traceId, @Nullable String spanId, @Nullable KeyValues keyValues,
+                double amount) {
+            contextProvider.setExemplar(traceId, spanId, keyValues);
+            sampler.sampleMeasurement(amount);
+            contextProvider.reset();
         }
 
     }
