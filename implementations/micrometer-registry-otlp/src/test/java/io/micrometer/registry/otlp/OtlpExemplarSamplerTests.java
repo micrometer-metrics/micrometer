@@ -298,7 +298,7 @@ class OtlpExemplarSamplerTests {
         return Hex.encodeHexString(byteString.toByteArray());
     }
 
-    private static class Recorder {
+    static class Recorder {
 
         private final ExemplarSampler sampler;
 
@@ -328,7 +328,7 @@ class OtlpExemplarSamplerTests {
 
     }
 
-    private static class TestsExemplarContextProvider implements ExemplarContextProvider {
+    static class TestsExemplarContextProvider implements ExemplarContextProvider {
 
         private @Nullable OtlpExemplarContext context;
 
