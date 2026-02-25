@@ -17,6 +17,7 @@ package io.micrometer.registry.otlp;
 
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.BaseUnits;
+import io.opentelemetry.proto.metrics.v1.Exemplar;
 import io.opentelemetry.proto.metrics.v1.ExponentialHistogramDataPoint;
 import io.opentelemetry.proto.metrics.v1.Metric;
 import io.opentelemetry.proto.metrics.v1.NumberDataPoint;
@@ -88,6 +89,26 @@ class OtlpCumulativeMeterRegistryTest extends OtlpMeterRegistryTest {
                 + "    as_double: 3.0\n" + "    attributes {\n" + "      key: \"level\"\n" + "      value {\n"
                 + "        string_value: \"info\"\n" + "      }\n" + "    }\n" + "  }\n"
                 + "  aggregation_temporality: AGGREGATION_TEMPORALITY_CUMULATIVE\n" + "  is_monotonic: true\n" + "}\n");
+    }
+
+    @Test
+    void counterWithExemplars() {
+        Counter counter = registry.counter("log.event", "level", "info");
+        Exemplar e1 = recorder.record("4bf92f3577b34da6a3ce929d0e000001", "00f067aa0b000001", counter::increment, 1);
+        Exemplar e2 = recorder.record("4bf92f3577b34da6a3ce929d0e000002", "00f067aa0b000002", counter::increment, 1);
+        clock.add(otlpConfig().step());
+
+        assertThat(writeToMetric(counter).getSum().getDataPointsList()).singleElement().satisfies(numberDataPoint -> {
+            assertThat(numberDataPoint.getAsDouble()).isEqualTo(2.0);
+            assertThat(numberDataPoint.getExemplarsList()).hasSizeBetween(1, 2).containsAnyOf(e1, e2);
+        });
+
+        Exemplar e3 = recorder.record("4bf92f3577b34da6a3ce929d0e000003", "00f067aa0b000003", counter::increment, 1);
+        clock.add(otlpConfig().step());
+        assertThat(writeToMetric(counter).getSum().getDataPointsList()).singleElement().satisfies(numberDataPoint -> {
+            assertThat(numberDataPoint.getAsDouble()).isEqualTo(3.0);
+            assertThat(numberDataPoint.getExemplarsList()).singleElement().isEqualTo(e3);
+        });
     }
 
     @Test

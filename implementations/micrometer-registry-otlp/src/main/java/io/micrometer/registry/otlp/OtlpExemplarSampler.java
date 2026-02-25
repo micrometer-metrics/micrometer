@@ -81,7 +81,7 @@ class OtlpExemplarSampler implements ExemplarSampler {
 
         private static final Exemplar[] EMPTY = new Exemplar[0];
 
-        private Exemplar[] exemplars;
+        private Exemplar[] current;
 
         private final CellSelector cellSelector;
 
@@ -94,8 +94,8 @@ class OtlpExemplarSampler implements ExemplarSampler {
         }
 
         private Exemplars(Clock clock, long stepMillis, Exemplar[] initValue, CellSelector cellSelector) {
-            super(clock, stepMillis, initValue);
-            this.exemplars = initValue;
+            super(clock, stepMillis, EMPTY);
+            this.current = initValue;
             this.cellSelector = cellSelector;
         }
 
@@ -105,8 +105,8 @@ class OtlpExemplarSampler implements ExemplarSampler {
         }
 
         private Exemplar[] getExemplarsAndReset() {
-            Exemplar[] result = exemplars;
-            exemplars = new Exemplar[exemplars.length];
+            Exemplar[] result = current;
+            current = new Exemplar[current.length];
             cellSelector.reset();
             return result;
         }
@@ -133,8 +133,8 @@ class OtlpExemplarSampler implements ExemplarSampler {
         private void offer(double measurement, DoubleUnaryOperator converter, OtlpExemplarContext exemplarContext,
                 Clock clock) {
             int index = cellSelector.getIndex(measurement);
-            if (index < exemplars.length) {
-                exemplars[index] = createExemplar(measurement, converter, exemplarContext, clock);
+            if (index < current.length) {
+                current[index] = createExemplar(measurement, converter, exemplarContext, clock);
             }
         }
 

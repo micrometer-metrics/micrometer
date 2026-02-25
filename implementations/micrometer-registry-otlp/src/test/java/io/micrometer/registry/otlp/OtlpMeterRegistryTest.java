@@ -33,7 +33,6 @@ import java.io.IOException;
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
-import java.util.function.IntConsumer;
 import java.util.stream.IntStream;
 
 import static io.micrometer.registry.otlp.HistogramFlavor.BASE2_EXPONENTIAL_BUCKET_HISTOGRAM;
@@ -59,7 +58,9 @@ abstract class OtlpMeterRegistryTest {
 
     protected MockClock clock;
 
-    protected TestsExemplarContextProvider contextProvider;
+    protected ExemplarTestRecorder.TestsExemplarContextProvider contextProvider;
+
+    protected ExemplarTestRecorder recorder;
 
     private HttpSender mockHttpSender;
 
@@ -77,7 +78,8 @@ abstract class OtlpMeterRegistryTest {
         OtlpConfig config = otlpConfig();
         this.mockHttpSender = mock(HttpSender.class);
         OtlpMetricsSender metricsSender = new OtlpHttpMetricsSender(mockHttpSender);
-        this.contextProvider = new TestsExemplarContextProvider();
+        this.contextProvider = new ExemplarTestRecorder.TestsExemplarContextProvider();
+        this.recorder = new ExemplarTestRecorder(contextProvider, clock);
         this.registry = OtlpMeterRegistry.builder(config)
             .clock(clock)
             .metricsSender(metricsSender)
@@ -206,20 +208,20 @@ abstract class OtlpMeterRegistryTest {
     @Test
     void counterShouldWriteExemplars() {
         Counter counter = Counter.builder("test.counter").register(registry);
-        record("4bf92f3577b34da6a3ce929d0e000001", "00f067aa0b000001", () -> counter.increment(3));
+        Exemplar exemplar = recorder.record("4bf92f3577b34da6a3ce929d0e000001", "00f067aa0b000001",
+                () -> counter.increment(3), 3);
+        stepOverNStep(1);
 
         assertThat(writeToMetrics(counter)).singleElement().satisfies(metric -> {
-            assertThat(metric.getSum().getDataPointsList()).hasSize(1);
-            List<Exemplar> exemplars = metric.getSum().getDataPoints(0).getExemplarsList();
-            assertThat(exemplars).hasSize(1);
-            assertExemplar(exemplars.get(0), "4bf92f3577b34da6a3ce929d0e000001", "00f067aa0b000001", 3.0);
+            assertThat(metric.getSum().getDataPoints(0).getExemplarsList()).singleElement().isEqualTo(exemplar);
         });
     }
 
     @RepeatedTest(10)
     void multipleCounterRecordingsShouldBeRandomlySampled() {
         Counter counter = Counter.builder("test.counter").register(registry);
-        recordRandomMeasurements(5, counter::increment);
+        recorder.recordRandomMeasurements(5, counter::increment);
+        stepOverNStep(1);
 
         assertThat(writeToMetrics(counter)).singleElement().satisfies(metric -> {
             assertThat(metric.getSum().getDataPointsList()).hasSize(1);
@@ -231,52 +233,50 @@ abstract class OtlpMeterRegistryTest {
     @Test
     void distributionWithoutHistogramShouldWriteExemplars() {
         Timer timer = Timer.builder("timer").description(METER_DESCRIPTION).tags(Tags.of(meterTag)).register(registry);
-        record("4bf92f3577b34da6a3ce929d0e000001", "00f067aa0b000001", () -> timer.record(Duration.ofMillis(42)));
+        Exemplar exemplar1 = recorder.record("4bf92f3577b34da6a3ce929d0e000001", "00f067aa0b000001",
+                () -> timer.record(Duration.ofMillis(42)), 42);
 
         DistributionSummary ds = DistributionSummary.builder("ds")
             .description(METER_DESCRIPTION)
             .tags(Tags.of(meterTag))
             .register(registry);
-        record("4bf92f3577b34da6a3ce929d0e000003", "00f067aa0b000003", () -> ds.record(44));
+        Exemplar exemplar2 = recorder.record("4bf92f3577b34da6a3ce929d0e000003", "00f067aa0b000003",
+                () -> ds.record(44), 44);
+        stepOverNStep(1);
 
         assertThat(writeToMetrics(timer)).filteredOn(Metric::hasHistogram).singleElement().satisfies(metric -> {
             assertThat(metric.getHistogram().getDataPointsList()).hasSize(1);
-            List<Exemplar> exemplars = metric.getHistogram().getDataPoints(0).getExemplarsList();
-            assertThat(exemplars).hasSize(1);
-            assertExemplar(exemplars.get(0), "4bf92f3577b34da6a3ce929d0e000001", "00f067aa0b000001", 42.0);
+            assertThat(metric.getHistogram().getDataPoints(0).getExemplarsList()).singleElement().isEqualTo(exemplar1);
         });
 
         assertThat(writeToMetrics(ds)).filteredOn(Metric::hasHistogram).singleElement().satisfies(metric -> {
             assertThat(metric.getHistogram().getDataPointsList()).hasSize(1);
-            List<Exemplar> exemplars = metric.getHistogram().getDataPoints(0).getExemplarsList();
-            assertThat(exemplars).hasSize(1);
-            assertExemplar(exemplars.get(0), "4bf92f3577b34da6a3ce929d0e000003", "00f067aa0b000003", 44.0);
+            assertThat(metric.getHistogram().getDataPoints(0).getExemplarsList()).singleElement().isEqualTo(exemplar2);
         });
     }
 
     @RepeatedTest(10)
     void multipleDistributionsWithoutHistogramRecordingsShouldBeRandomlySampled() {
         Timer timer = Timer.builder("timer").description(METER_DESCRIPTION).tags(Tags.of(meterTag)).register(registry);
-        recordRandomMeasurements(5, index -> timer.record(Duration.ofMillis(index)));
+        recorder.recordRandomMeasurements(5, index -> timer.record(Duration.ofMillis(index)));
 
         DistributionSummary ds = DistributionSummary.builder("ds")
             .description(METER_DESCRIPTION)
             .tags(Tags.of(meterTag))
             .register(registry);
-        recordRandomMeasurements(5, ds::record);
+        recorder.recordRandomMeasurements(5, ds::record);
+        stepOverNStep(1);
 
         assertThat(writeToMetrics(timer)).filteredOn(Metric::hasHistogram).singleElement().satisfies(metric -> {
             assertThat(metric.getHistogram().getDataPointsList()).hasSize(1);
-            List<Exemplar> exemplars = metric.getHistogram().getDataPoints(0).getExemplarsList();
-            assertThat(exemplars).hasSize(1);
-            assertThat(exemplars.get(0).getAsDouble()).isBetween(1.0, 5.0);
+            assertThat(metric.getHistogram().getDataPoints(0).getExemplarsList()).singleElement()
+                .satisfies(exemplar -> assertThat(exemplar.getAsDouble()).isBetween(1.0, 5.0));
         });
 
         assertThat(writeToMetrics(ds)).filteredOn(Metric::hasHistogram).singleElement().satisfies(metric -> {
             assertThat(metric.getHistogram().getDataPointsList()).hasSize(1);
-            List<Exemplar> exemplars = metric.getHistogram().getDataPoints(0).getExemplarsList();
-            assertThat(exemplars).hasSize(1);
-            assertThat(exemplars.get(0).getAsDouble()).isBetween(1.0, 5.0);
+            assertThat(metric.getHistogram().getDataPoints(0).getExemplarsList()).singleElement()
+                .satisfies(exemplar -> assertThat(exemplar.getAsDouble()).isBetween(1.0, 5.0));
         });
     }
 
@@ -356,7 +356,8 @@ abstract class OtlpMeterRegistryTest {
             .publishPercentileHistogram();
 
         Timer timer = timerBuilder.register(registry);
-        record("4bf92f3577b34da6a3ce929d0e000001", "00f067aa0b000001", () -> timer.record(Duration.ofMillis(42)));
+        Exemplar exemplar1 = recorder.record("4bf92f3577b34da6a3ce929d0e000001", "00f067aa0b000001",
+                () -> timer.record(Duration.ofMillis(42)), 42);
 
         DistributionSummary.Builder dsBuilder = DistributionSummary.builder("ds")
             .description(METER_DESCRIPTION)
@@ -364,20 +365,18 @@ abstract class OtlpMeterRegistryTest {
             .publishPercentileHistogram();
 
         DistributionSummary ds = dsBuilder.register(registry);
-        record("4bf92f3577b34da6a3ce929d0e000003", "00f067aa0b000003", () -> ds.record(44));
+        Exemplar exemplar2 = recorder.record("4bf92f3577b34da6a3ce929d0e000003", "00f067aa0b000003",
+                () -> ds.record(44), 44);
+        stepOverNStep(1);
 
         assertThat(writeToMetrics(timer)).filteredOn(Metric::hasHistogram).singleElement().satisfies(metric -> {
             assertThat(metric.getHistogram().getDataPointsList()).hasSize(1);
-            List<Exemplar> exemplars = metric.getHistogram().getDataPoints(0).getExemplarsList();
-            assertThat(exemplars).hasSize(1);
-            assertExemplar(exemplars.get(0), "4bf92f3577b34da6a3ce929d0e000001", "00f067aa0b000001", 42.0);
+            assertThat(metric.getHistogram().getDataPoints(0).getExemplarsList()).singleElement().isEqualTo(exemplar1);
         });
 
         assertThat(writeToMetrics(ds)).filteredOn(Metric::hasHistogram).singleElement().satisfies(metric -> {
             assertThat(metric.getHistogram().getDataPointsList()).hasSize(1);
-            List<Exemplar> exemplars = metric.getHistogram().getDataPoints(0).getExemplarsList();
-            assertThat(exemplars).hasSize(1);
-            assertExemplar(exemplars.get(0), "4bf92f3577b34da6a3ce929d0e000003", "00f067aa0b000003", 44.0);
+            assertThat(metric.getHistogram().getDataPoints(0).getExemplarsList()).singleElement().isEqualTo(exemplar2);
         });
     }
 
@@ -390,14 +389,20 @@ abstract class OtlpMeterRegistryTest {
 
         Timer timer = timerBuilder.register(registry);
         // relevant buckets: 1.0, 89.478485, 111.848106, 30000.0, +Inf
-        record("4bf92f3577b34da6a3ce929d0e000001", "00f067aa0b000001", () -> timer.record(Duration.ofMillis(1)));
-        record("4bf92f3577b34da6a3ce929d0e000002", "00f067aa0b000002", () -> timer.record(Duration.ofMillis(100)));
+        Exemplar exemplar1 = recorder.record("4bf92f3577b34da6a3ce929d0e000001", "00f067aa0b000001",
+                () -> timer.record(Duration.ofMillis(1)), 1);
+        recorder.record("4bf92f3577b34da6a3ce929d0e000002", "00f067aa0b000002",
+                () -> timer.record(Duration.ofMillis(100)), 100);
         // falls into the same bucket as the previous and it overwrites it
-        record("4bf92f3577b34da6a3ce929d0e000003", "00f067aa0b000003", () -> timer.record(Duration.ofMillis(110)));
-        record("4bf92f3577b34da6a3ce929d0e000004", "00f067aa0b000004", () -> timer.record(Duration.ofSeconds(30)));
-        record("4bf92f3577b34da6a3ce929d0e000005", "00f067aa0b000005", () -> timer.record(Duration.ofSeconds(31)));
+        Exemplar exemplar2 = recorder.record("4bf92f3577b34da6a3ce929d0e000003", "00f067aa0b000003",
+                () -> timer.record(Duration.ofMillis(110)), 110);
+        Exemplar exemplar3 = recorder.record("4bf92f3577b34da6a3ce929d0e000004", "00f067aa0b000004",
+                () -> timer.record(Duration.ofSeconds(30)), 30_000);
+        recorder.record("4bf92f3577b34da6a3ce929d0e000005", "00f067aa0b000005",
+                () -> timer.record(Duration.ofSeconds(31)), 31_000);
         // falls into the same bucket as the previous and it overwrites it
-        record("4bf92f3577b34da6a3ce929d0e000006", "00f067aa0b000006", () -> timer.record(Duration.ofSeconds(42)));
+        Exemplar exemplar4 = recorder.record("4bf92f3577b34da6a3ce929d0e000006", "00f067aa0b000006",
+                () -> timer.record(Duration.ofSeconds(42)), 42_000);
 
         DistributionSummary.Builder dsBuilder = DistributionSummary.builder("ds")
             .description(METER_DESCRIPTION)
@@ -406,33 +411,31 @@ abstract class OtlpMeterRegistryTest {
 
         DistributionSummary ds = dsBuilder.register(registry);
         // relevant buckets: 1.0, 85.0, 106.0, 4.2273788502251054E18, +Inf
-        record("4bf92f3577b34da6a3ce929d0e000001", "00f067aa0b000001", () -> ds.record(1));
-        record("4bf92f3577b34da6a3ce929d0e000002", "00f067aa0b000002", () -> ds.record(90));
+        Exemplar exemplar5 = recorder.record("4bf92f3577b34da6a3ce929d0e000001", "00f067aa0b000001", () -> ds.record(1),
+                1);
+        recorder.record("4bf92f3577b34da6a3ce929d0e000002", "00f067aa0b000002", () -> ds.record(90), 90);
         // falls into the same bucket as the previous and it overwrites it
-        record("4bf92f3577b34da6a3ce929d0e000003", "00f067aa0b000003", () -> ds.record(100));
-        record("4bf92f3577b34da6a3ce929d0e000004", "00f067aa0b000004", () -> ds.record(4.2E18));
-        record("4bf92f3577b34da6a3ce929d0e000005", "00f067aa0b000005", () -> ds.record(4.3E18));
+        Exemplar exemplar6 = recorder.record("4bf92f3577b34da6a3ce929d0e000003", "00f067aa0b000003",
+                () -> ds.record(100), 100);
+        Exemplar exemplar7 = recorder.record("4bf92f3577b34da6a3ce929d0e000004", "00f067aa0b000004",
+                () -> ds.record(4.2E18), 4.2E18);
+        recorder.record("4bf92f3577b34da6a3ce929d0e000005", "00f067aa0b000005", () -> ds.record(4.3E18), 4.3E18);
         // falls into the same bucket as the previous and it overwrites it
-        record("4bf92f3577b34da6a3ce929d0e000006", "00f067aa0b000006", () -> ds.record(4.4E18));
+        Exemplar exemplar8 = recorder.record("4bf92f3577b34da6a3ce929d0e000006", "00f067aa0b000006",
+                () -> ds.record(4.4E18), 4.4E18);
+
+        stepOverNStep(1);
 
         assertThat(writeToMetrics(timer)).filteredOn(Metric::hasHistogram).singleElement().satisfies(metric -> {
             assertThat(metric.getHistogram().getDataPointsList()).hasSize(1);
-            List<Exemplar> exemplars = metric.getHistogram().getDataPoints(0).getExemplarsList();
-            assertThat(exemplars).hasSize(4);
-            assertExemplar(exemplars.get(0), "4bf92f3577b34da6a3ce929d0e000001", "00f067aa0b000001", 1.0);
-            assertExemplar(exemplars.get(1), "4bf92f3577b34da6a3ce929d0e000003", "00f067aa0b000003", 110.0);
-            assertExemplar(exemplars.get(2), "4bf92f3577b34da6a3ce929d0e000004", "00f067aa0b000004", 30_000.0);
-            assertExemplar(exemplars.get(3), "4bf92f3577b34da6a3ce929d0e000006", "00f067aa0b000006", 42_000.0);
+            assertThat(metric.getHistogram().getDataPoints(0).getExemplarsList()).hasSize(4)
+                .containsExactly(exemplar1, exemplar2, exemplar3, exemplar4);
         });
 
         assertThat(writeToMetrics(ds)).filteredOn(Metric::hasHistogram).singleElement().satisfies(metric -> {
             assertThat(metric.getHistogram().getDataPointsList()).hasSize(1);
-            List<Exemplar> exemplars = metric.getHistogram().getDataPoints(0).getExemplarsList();
-            assertThat(exemplars).hasSize(4);
-            assertExemplar(exemplars.get(0), "4bf92f3577b34da6a3ce929d0e000001", "00f067aa0b000001", 1.0);
-            assertExemplar(exemplars.get(1), "4bf92f3577b34da6a3ce929d0e000003", "00f067aa0b000003", 100.0);
-            assertExemplar(exemplars.get(2), "4bf92f3577b34da6a3ce929d0e000004", "00f067aa0b000004", 4.2E18);
-            assertExemplar(exemplars.get(3), "4bf92f3577b34da6a3ce929d0e000006", "00f067aa0b000006", 4.4E18);
+            assertThat(metric.getHistogram().getDataPoints(0).getExemplarsList()).hasSize(4)
+                .containsExactly(exemplar5, exemplar6, exemplar7, exemplar8);
         });
     }
 
@@ -581,7 +584,8 @@ abstract class OtlpMeterRegistryTest {
             .publishPercentileHistogram();
 
         Timer timer = timerBuilder.register(registry);
-        record("4bf92f3577b34da6a3ce929d0e000001", "00f067aa0b000001", () -> timer.record(Duration.ofMillis(42)));
+        Exemplar exemplar1 = recorder.record("4bf92f3577b34da6a3ce929d0e000001", "00f067aa0b000001",
+                () -> timer.record(Duration.ofMillis(42)), 42);
 
         DistributionSummary.Builder dsBuilder = DistributionSummary.builder("ds")
             .description(METER_DESCRIPTION)
@@ -590,20 +594,20 @@ abstract class OtlpMeterRegistryTest {
             .publishPercentileHistogram();
 
         DistributionSummary ds = dsBuilder.register(registry);
-        record("4bf92f3577b34da6a3ce929d0e000003", "00f067aa0b000003", () -> ds.record(44));
+        Exemplar exemplar2 = recorder.record("4bf92f3577b34da6a3ce929d0e000003", "00f067aa0b000003",
+                () -> ds.record(44), 44);
+
+        stepOverNStep(1);
 
         assertThat(writeToMetrics(timer)).filteredOn(Metric::hasHistogram).singleElement().satisfies(metric -> {
             assertThat(metric.getHistogram().getDataPointsList()).hasSize(1);
-            List<Exemplar> exemplars = metric.getHistogram().getDataPoints(0).getExemplarsList();
-            assertThat(exemplars).hasSize(1);
-            assertExemplar(exemplars.get(0), "4bf92f3577b34da6a3ce929d0e000001", "00f067aa0b000001", 42.0);
+            assertThat(metric.getHistogram().getDataPoints(0).getExemplarsList()).singleElement().isEqualTo(exemplar1);
         });
 
         assertThat(writeToMetrics(ds)).filteredOn(Metric::hasHistogram).singleElement().satisfies(metric -> {
             assertThat(metric.getHistogram().getDataPointsList()).hasSize(1);
-            List<Exemplar> exemplars = metric.getHistogram().getDataPoints(0).getExemplarsList();
-            assertThat(exemplars).hasSize(1);
-            assertExemplar(exemplars.get(0), "4bf92f3577b34da6a3ce929d0e000003", "00f067aa0b000003", 44.0);
+            assertThat(metric.getHistogram().getDataPointsList()).hasSize(1);
+            assertThat(metric.getHistogram().getDataPoints(0).getExemplarsList()).singleElement().isEqualTo(exemplar2);
         });
     }
 
@@ -650,7 +654,8 @@ abstract class OtlpMeterRegistryTest {
             .serviceLevelObjectives(Duration.ofMillis(1));
 
         Timer timer = timerBuilder.register(registry);
-        record("4bf92f3577b34da6a3ce929d0e000001", "00f067aa0b000001", () -> timer.record(Duration.ofMillis(42)));
+        Exemplar exemplar1 = recorder.record("4bf92f3577b34da6a3ce929d0e000001", "00f067aa0b000001",
+                () -> timer.record(Duration.ofMillis(42)), 42);
 
         DistributionSummary.Builder dsBuilder = DistributionSummary.builder("ds")
             .description(METER_DESCRIPTION)
@@ -658,20 +663,19 @@ abstract class OtlpMeterRegistryTest {
             .serviceLevelObjectives(1.0);
 
         DistributionSummary ds = dsBuilder.register(registry);
-        record("4bf92f3577b34da6a3ce929d0e000003", "00f067aa0b000003", () -> ds.record(44));
+        Exemplar exemplar2 = recorder.record("4bf92f3577b34da6a3ce929d0e000003", "00f067aa0b000003",
+                () -> ds.record(44), 44);
+
+        stepOverNStep(1);
 
         assertThat(writeToMetrics(timer)).filteredOn(Metric::hasHistogram).singleElement().satisfies(metric -> {
             assertThat(metric.getHistogram().getDataPointsList()).hasSize(1);
-            List<Exemplar> exemplars = metric.getHistogram().getDataPoints(0).getExemplarsList();
-            assertThat(exemplars).hasSize(1);
-            assertExemplar(exemplars.get(0), "4bf92f3577b34da6a3ce929d0e000001", "00f067aa0b000001", 42.0);
+            assertThat(metric.getHistogram().getDataPoints(0).getExemplarsList()).singleElement().isEqualTo(exemplar1);
         });
 
         assertThat(writeToMetrics(ds)).filteredOn(Metric::hasHistogram).singleElement().satisfies(metric -> {
             assertThat(metric.getHistogram().getDataPointsList()).hasSize(1);
-            List<Exemplar> exemplars = metric.getHistogram().getDataPoints(0).getExemplarsList();
-            assertThat(exemplars).hasSize(1);
-            assertExemplar(exemplars.get(0), "4bf92f3577b34da6a3ce929d0e000003", "00f067aa0b000003", 44.0);
+            assertThat(metric.getHistogram().getDataPoints(0).getExemplarsList()).singleElement().isEqualTo(exemplar2);
         });
     }
 
@@ -683,14 +687,20 @@ abstract class OtlpMeterRegistryTest {
             .serviceLevelObjectives(Duration.ofMillis(1), Duration.ofMillis(110), Duration.ofSeconds(1));
 
         Timer timer = timerBuilder.register(registry);
-        record("4bf92f3577b34da6a3ce929d0e000001", "00f067aa0b000001", () -> timer.record(Duration.ofMillis(1)));
-        record("4bf92f3577b34da6a3ce929d0e000002", "00f067aa0b000002", () -> timer.record(Duration.ofMillis(100)));
+        Exemplar exemplar1 = recorder.record("4bf92f3577b34da6a3ce929d0e000001", "00f067aa0b000001",
+                () -> timer.record(Duration.ofMillis(1)), 1);
+        recorder.record("4bf92f3577b34da6a3ce929d0e000002", "00f067aa0b000002",
+                () -> timer.record(Duration.ofMillis(100)), 100);
         // falls into the same bucket as the previous and it overwrites it
-        record("4bf92f3577b34da6a3ce929d0e000003", "00f067aa0b000003", () -> timer.record(Duration.ofMillis(110)));
-        record("4bf92f3577b34da6a3ce929d0e000004", "00f067aa0b000004", () -> timer.record(Duration.ofSeconds(1)));
-        record("4bf92f3577b34da6a3ce929d0e000005", "00f067aa0b000005", () -> timer.record(Duration.ofSeconds(2)));
+        Exemplar exemplar2 = recorder.record("4bf92f3577b34da6a3ce929d0e000003", "00f067aa0b000003",
+                () -> timer.record(Duration.ofMillis(110)), 110);
+        Exemplar exemplar3 = recorder.record("4bf92f3577b34da6a3ce929d0e000004", "00f067aa0b000004",
+                () -> timer.record(Duration.ofSeconds(1)), 1_000);
+        recorder.record("4bf92f3577b34da6a3ce929d0e000005", "00f067aa0b000005",
+                () -> timer.record(Duration.ofSeconds(2)), 2_000);
         // falls into the same bucket as the previous and it overwrites it
-        record("4bf92f3577b34da6a3ce929d0e000006", "00f067aa0b000006", () -> timer.record(Duration.ofSeconds(3)));
+        Exemplar exemplar4 = recorder.record("4bf92f3577b34da6a3ce929d0e000006", "00f067aa0b000006",
+                () -> timer.record(Duration.ofSeconds(3)), 3_000);
 
         DistributionSummary.Builder dsBuilder = DistributionSummary.builder("ds")
             .description(METER_DESCRIPTION)
@@ -699,33 +709,31 @@ abstract class OtlpMeterRegistryTest {
 
         DistributionSummary ds = dsBuilder.register(registry);
         // relevant buckets: 1.0, 85.0, 106.0, 4.2273788502251054E18, +Inf
-        record("4bf92f3577b34da6a3ce929d0e000001", "00f067aa0b000001", () -> ds.record(1));
-        record("4bf92f3577b34da6a3ce929d0e000002", "00f067aa0b000002", () -> ds.record(90));
+        Exemplar exemplar5 = recorder.record("4bf92f3577b34da6a3ce929d0e000001", "00f067aa0b000001", () -> ds.record(1),
+                1);
+        recorder.record("4bf92f3577b34da6a3ce929d0e000002", "00f067aa0b000002", () -> ds.record(90), 90);
         // falls into the same bucket as the previous and it overwrites it
-        record("4bf92f3577b34da6a3ce929d0e000003", "00f067aa0b000003", () -> ds.record(100));
-        record("4bf92f3577b34da6a3ce929d0e000004", "00f067aa0b000004", () -> ds.record(1_000));
-        record("4bf92f3577b34da6a3ce929d0e000005", "00f067aa0b000005", () -> ds.record(2_000));
+        Exemplar exemplar6 = recorder.record("4bf92f3577b34da6a3ce929d0e000003", "00f067aa0b000003",
+                () -> ds.record(100), 100);
+        Exemplar exemplar7 = recorder.record("4bf92f3577b34da6a3ce929d0e000004", "00f067aa0b000004",
+                () -> ds.record(1_000), 1_000);
+        recorder.record("4bf92f3577b34da6a3ce929d0e000005", "00f067aa0b000005", () -> ds.record(2_000), 2_000);
         // falls into the same bucket as the previous and it overwrites it
-        record("4bf92f3577b34da6a3ce929d0e000006", "00f067aa0b000006", () -> ds.record(3_000));
+        Exemplar exemplar8 = recorder.record("4bf92f3577b34da6a3ce929d0e000006", "00f067aa0b000006",
+                () -> ds.record(3_000), 3_000);
+
+        stepOverNStep(1);
 
         assertThat(writeToMetrics(timer)).filteredOn(Metric::hasHistogram).singleElement().satisfies(metric -> {
             assertThat(metric.getHistogram().getDataPointsList()).hasSize(1);
-            List<Exemplar> exemplars = metric.getHistogram().getDataPoints(0).getExemplarsList();
-            assertThat(exemplars).hasSize(4);
-            assertExemplar(exemplars.get(0), "4bf92f3577b34da6a3ce929d0e000001", "00f067aa0b000001", 1.0);
-            assertExemplar(exemplars.get(1), "4bf92f3577b34da6a3ce929d0e000003", "00f067aa0b000003", 110.0);
-            assertExemplar(exemplars.get(2), "4bf92f3577b34da6a3ce929d0e000004", "00f067aa0b000004", 1_000.0);
-            assertExemplar(exemplars.get(3), "4bf92f3577b34da6a3ce929d0e000006", "00f067aa0b000006", 3_000.0);
+            assertThat(metric.getHistogram().getDataPoints(0).getExemplarsList()).hasSize(4)
+                .containsExactly(exemplar1, exemplar2, exemplar3, exemplar4);
         });
 
         assertThat(writeToMetrics(ds)).filteredOn(Metric::hasHistogram).singleElement().satisfies(metric -> {
             assertThat(metric.getHistogram().getDataPointsList()).hasSize(1);
-            List<Exemplar> exemplars = metric.getHistogram().getDataPoints(0).getExemplarsList();
-            assertThat(exemplars).hasSize(4);
-            assertExemplar(exemplars.get(0), "4bf92f3577b34da6a3ce929d0e000001", "00f067aa0b000001", 1.0);
-            assertExemplar(exemplars.get(1), "4bf92f3577b34da6a3ce929d0e000003", "00f067aa0b000003", 100.0);
-            assertExemplar(exemplars.get(2), "4bf92f3577b34da6a3ce929d0e000004", "00f067aa0b000004", 1_000);
-            assertExemplar(exemplars.get(3), "4bf92f3577b34da6a3ce929d0e000006", "00f067aa0b000006", 3_000);
+            assertThat(metric.getHistogram().getDataPoints(0).getExemplarsList()).hasSize(4)
+                .containsExactly(exemplar5, exemplar6, exemplar7, exemplar8);
         });
     }
 
@@ -1257,48 +1265,8 @@ abstract class OtlpMeterRegistryTest {
         }
     }
 
-    protected void assertExemplar(Exemplar exemplar, String traceId, String spanId, double value) {
-        assertThat(encodeHexString(exemplar.getTraceId())).isEqualTo(traceId);
-        assertThat(encodeHexString(exemplar.getSpanId())).isEqualTo(spanId);
-        assertThat(exemplar.getAsDouble()).isEqualTo(value);
-        assertThat(exemplar.getTimeUnixNano()).isEqualTo(TimeUnit.MILLISECONDS.toNanos(clock.wallTime()));
-        assertThat(exemplar.getFilteredAttributesList()).isEmpty();
-    }
-
     String encodeHexString(ByteString byteString) {
         return Hex.encodeHexString(byteString.toByteArray());
-    }
-
-    private void recordRandomMeasurements(int numberOfMeasurements, IntConsumer consumer) {
-        for (int i = 1; i <= numberOfMeasurements; i++) {
-            int index = i;
-            record("4bf92f3577b34da6a3ce929d0e0e0000", "00f067aa0ba90000", () -> consumer.accept(index));
-        }
-    }
-
-    void record(String traceId, String spanId, Runnable runnable) {
-        contextProvider.setExemplar(traceId, spanId);
-        runnable.run();
-        contextProvider.reset();
-    }
-
-    static class TestsExemplarContextProvider implements ExemplarContextProvider {
-
-        private @Nullable OtlpExemplarContext context;
-
-        @Override
-        public @Nullable OtlpExemplarContext getExemplarContext() {
-            return context;
-        }
-
-        void setExemplar(String traceId, String spanId) {
-            context = new OtlpExemplarContext(traceId, spanId);
-        }
-
-        void reset() {
-            context = null;
-        }
-
     }
 
 }
