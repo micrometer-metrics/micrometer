@@ -15,12 +15,15 @@
  */
 package io.micrometer.registry.otlp.internal;
 
-import java.util.concurrent.TimeUnit;
-import java.util.function.Supplier;
-
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.step.StepValue;
+import io.opentelemetry.proto.metrics.v1.Exemplar;
 import org.jspecify.annotations.Nullable;
+
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 
 /**
  * A {@link Base2ExponentialHistogram} where values are reset after every Step.
@@ -73,6 +76,15 @@ public class DeltaBase2ExponentialHistogram extends Base2ExponentialHistogram {
     @Override
     public void close() {
         stepExponentialHistogramSnapShot._closingRollover();
+    }
+
+    @Override
+    public List<Exemplar> exemplars() {
+        return Collections.emptyList();
+    }
+
+    @Override
+    public void closingExemplarsRollover() {
     }
 
     private class StepExponentialHistogramSnapShot extends StepValue<ExponentialHistogramSnapShot> {

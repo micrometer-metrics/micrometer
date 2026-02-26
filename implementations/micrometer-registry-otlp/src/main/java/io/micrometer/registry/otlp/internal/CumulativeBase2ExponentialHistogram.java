@@ -15,8 +15,11 @@
  */
 package io.micrometer.registry.otlp.internal;
 
+import io.opentelemetry.proto.metrics.v1.Exemplar;
 import org.jspecify.annotations.Nullable;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -61,6 +64,15 @@ public class CumulativeBase2ExponentialHistogram extends Base2ExponentialHistogr
     @Override
     synchronized void takeExponentialHistogramSnapShot() {
         this.exponentialHistogramSnapShot = getCurrentValuesSnapshot();
+    }
+
+    @Override
+    public List<Exemplar> exemplars() {
+        return Collections.emptyList();
+    }
+
+    @Override
+    public void closingExemplarsRollover() {
     }
 
 }

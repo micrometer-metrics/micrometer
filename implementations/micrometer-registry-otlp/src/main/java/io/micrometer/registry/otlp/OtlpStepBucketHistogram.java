@@ -64,11 +64,16 @@ class OtlpStepBucketHistogram extends StepBucketHistogram implements OtlpExempla
     }
 
     @Override
-    protected void _closingRollover() {
-        super._closingRollover();
+    public void closingExemplarsRollover() {
         if (exemplarSampler != null) {
             exemplarSampler.close();
         }
+    }
+
+    @Override
+    protected void _closingRollover() {
+        super._closingRollover();
+        this.closingExemplarsRollover();
     }
 
 }

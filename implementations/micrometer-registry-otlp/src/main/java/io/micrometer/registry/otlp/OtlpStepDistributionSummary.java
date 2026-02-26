@@ -109,6 +109,13 @@ class OtlpStepDistributionSummary extends AbstractDistributionSummary
         return null;
     }
 
+    @Override
+    public void closingExemplarsRollover() {
+        if (exemplarSampler != null) {
+            exemplarSampler.close();
+        }
+    }
+
     /**
      * This is an internal method not meant for general use.
      * <p>
@@ -124,9 +131,7 @@ class OtlpStepDistributionSummary extends AbstractDistributionSummary
         else if (histogram instanceof Base2ExponentialHistogram) {
             histogram.close();
         }
-        if (exemplarSampler != null) {
-            exemplarSampler.close();
-        }
+        this.closingExemplarsRollover();
     }
 
 }

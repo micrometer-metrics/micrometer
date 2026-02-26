@@ -17,7 +17,6 @@ package io.micrometer.registry.otlp.internal;
 
 import io.opentelemetry.proto.metrics.v1.Exemplar;
 
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -29,15 +28,12 @@ public interface OtlpExemplarsSupport {
     /**
      * @return the sampled exemplars
      */
-    default List<Exemplar> exemplars() {
-        return Collections.emptyList();
-    }
+    List<Exemplar> exemplars();
 
     /**
      * Rolls the values regardless of the clock or current time and ensures the value will
      * never roll over again after.
      */
-    default void closingExemplarsRollover() {
-    }
+    void closingExemplarsRollover();
 
 }

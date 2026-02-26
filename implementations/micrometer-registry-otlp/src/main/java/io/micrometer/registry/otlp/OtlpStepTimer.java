@@ -103,6 +103,13 @@ class OtlpStepTimer extends AbstractTimer implements OtlpHistogramSupport, OtlpE
         return TimeUtils.nanosToUnit(max.poll(), unit);
     }
 
+    @Override
+    public void closingExemplarsRollover() {
+        if (exemplarSampler != null) {
+            exemplarSampler.close();
+        }
+    }
+
     /**
      * This is an internal method not meant for general use.
      * <p>
@@ -118,9 +125,7 @@ class OtlpStepTimer extends AbstractTimer implements OtlpHistogramSupport, OtlpE
         else if (histogram instanceof Base2ExponentialHistogram) {
             histogram.close();
         }
-        if (exemplarSampler != null) {
-            exemplarSampler.close();
-        }
+        this.closingExemplarsRollover();
     }
 
     @Override

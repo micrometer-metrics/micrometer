@@ -47,11 +47,16 @@ class OtlpStepCounter extends StepCounter implements OtlpExemplarsSupport {
     }
 
     @Override
-    public void _closingRollover() {
-        super._closingRollover();
+    public void closingExemplarsRollover() {
         if (exemplarSampler != null) {
             exemplarSampler.close();
         }
+    }
+
+    @Override
+    public void _closingRollover() {
+        super._closingRollover();
+        this.closingExemplarsRollover();
     }
 
 }
