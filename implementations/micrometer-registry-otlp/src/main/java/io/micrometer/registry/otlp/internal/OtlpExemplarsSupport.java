@@ -13,17 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.registry.otlp;
+package io.micrometer.registry.otlp.internal;
 
 import io.opentelemetry.proto.metrics.v1.Exemplar;
 
 import java.util.Collections;
 import java.util.List;
 
-// TODO: should not be public but Base2ExponentialHistogram is in another package (internal)
-//  It also leaks io.opentelemetry.proto.metrics.v1.Exemplar
+/**
+ * <strong> This is an internal component and might have breaking changes, external
+ * components SHOULD NOT rely on it.</strong>
+ */
 public interface OtlpExemplarsSupport {
 
+    /**
+     * @return the sampled exemplars
+     */
     default List<Exemplar> exemplars() {
         return Collections.emptyList();
     }

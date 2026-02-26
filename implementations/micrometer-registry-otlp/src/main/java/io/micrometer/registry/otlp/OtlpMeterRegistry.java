@@ -37,6 +37,7 @@ import io.micrometer.core.instrument.util.TimeUtils;
 import io.micrometer.core.ipc.http.HttpUrlConnectionSender;
 import io.micrometer.registry.otlp.internal.CumulativeBase2ExponentialHistogram;
 import io.micrometer.registry.otlp.internal.DeltaBase2ExponentialHistogram;
+import io.micrometer.registry.otlp.internal.OtlpExemplarsSupport;
 import io.opentelemetry.proto.collector.metrics.v1.ExportMetricsServiceRequest;
 import io.opentelemetry.proto.common.v1.AnyValue;
 import io.opentelemetry.proto.common.v1.KeyValue;

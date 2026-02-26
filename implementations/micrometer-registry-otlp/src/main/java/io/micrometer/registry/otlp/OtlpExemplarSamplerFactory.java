@@ -21,8 +21,7 @@ import io.micrometer.core.instrument.util.TimeUtils;
 import java.util.concurrent.TimeUnit;
 import java.util.function.DoubleUnaryOperator;
 
-// TODO: should not be public but OtlpCumulativeBucketHistogram is public with a protected ctor
-public class OtlpExemplarSamplerFactory {
+class OtlpExemplarSamplerFactory {
 
     private final ExemplarContextProvider exemplarContextProvider;
 

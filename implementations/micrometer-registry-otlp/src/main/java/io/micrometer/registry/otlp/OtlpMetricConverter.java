@@ -24,6 +24,7 @@ import io.micrometer.core.instrument.distribution.HistogramSupport;
 import io.micrometer.core.instrument.distribution.ValueAtPercentile;
 import io.micrometer.core.instrument.util.TimeUtils;
 import io.micrometer.registry.otlp.internal.ExponentialHistogramSnapShot;
+import io.micrometer.registry.otlp.internal.OtlpExemplarsSupport;
 import io.opentelemetry.proto.common.v1.AnyValue;
 import io.opentelemetry.proto.common.v1.KeyValue;
 import io.opentelemetry.proto.metrics.v1.*;

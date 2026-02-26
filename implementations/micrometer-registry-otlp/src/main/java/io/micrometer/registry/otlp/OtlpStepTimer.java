@@ -22,6 +22,7 @@ import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import io.micrometer.core.instrument.util.TimeUtils;
 import io.micrometer.registry.otlp.internal.Base2ExponentialHistogram;
 import io.micrometer.registry.otlp.internal.ExponentialHistogramSnapShot;
+import io.micrometer.registry.otlp.internal.OtlpExemplarsSupport;
 import io.opentelemetry.proto.metrics.v1.Exemplar;
 import org.jspecify.annotations.Nullable;
 
