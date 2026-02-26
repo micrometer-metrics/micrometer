@@ -15,7 +15,6 @@
  */
 package io.micrometer.registry.otlp;
 
-import io.micrometer.registry.otlp.internal.ExponentialHistogramSnapShot;
 import org.jspecify.annotations.Nullable;
 
 interface OtlpHistogramSupport {

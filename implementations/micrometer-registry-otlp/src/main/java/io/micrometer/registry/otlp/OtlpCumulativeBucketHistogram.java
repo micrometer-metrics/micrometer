@@ -18,7 +18,6 @@ package io.micrometer.registry.otlp;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.TimeWindowFixedBoundaryHistogram;
-import io.micrometer.registry.otlp.internal.OtlpExemplarsSupport;
 import io.opentelemetry.proto.metrics.v1.Exemplar;
 import org.jspecify.annotations.Nullable;
 

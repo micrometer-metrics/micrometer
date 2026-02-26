@@ -20,9 +20,6 @@ import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.distribution.Histogram;
 import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import io.micrometer.core.instrument.util.TimeUtils;
-import io.micrometer.registry.otlp.internal.Base2ExponentialHistogram;
-import io.micrometer.registry.otlp.internal.ExponentialHistogramSnapShot;
-import io.micrometer.registry.otlp.internal.OtlpExemplarsSupport;
 import io.opentelemetry.proto.metrics.v1.Exemplar;
 import org.jspecify.annotations.Nullable;
 
@@ -124,6 +121,7 @@ class OtlpStepTimer extends AbstractTimer implements OtlpHistogramSupport, OtlpE
         }
         else if (histogram instanceof Base2ExponentialHistogram) {
             histogram.close();
+            ((Base2ExponentialHistogram) histogram).closingExemplarsRollover();
         }
         this.closingExemplarsRollover();
     }

@@ -13,27 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.registry.otlp.internal;
+package io.micrometer.registry.otlp;
 
-import io.opentelemetry.proto.metrics.v1.Exemplar;
 import org.jspecify.annotations.Nullable;
 
-import java.util.Collections;
-import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
  * A {@link Base2ExponentialHistogram} that tracks values cumulatively from first recorded
- * value. *
- * <p>
- * * <strong> This is an internal class and might have breaking changes, external *
- * implementations SHOULD NOT rely on this implementation. </strong> *
- * </p>
+ * value.
  *
  * @author Lenin Jaganathan
  * @since 1.14.0
  */
-public class CumulativeBase2ExponentialHistogram extends Base2ExponentialHistogram {
+class CumulativeBase2ExponentialHistogram extends Base2ExponentialHistogram {
 
     private ExponentialHistogramSnapShot exponentialHistogramSnapShot;
 
@@ -50,9 +43,9 @@ public class CumulativeBase2ExponentialHistogram extends Base2ExponentialHistogr
      * @param baseUnit - an Optional TimeUnit. If set to a non-null unit, the recorded
      * values are converted to this unit.
      */
-    public CumulativeBase2ExponentialHistogram(final int maxScale, final int maxBucketsCount,
-            final double zeroThreshold, @Nullable final TimeUnit baseUnit) {
-        super(maxScale, maxBucketsCount, zeroThreshold, baseUnit);
+    CumulativeBase2ExponentialHistogram(final int maxScale, final int maxBucketsCount, final double zeroThreshold,
+            @Nullable final TimeUnit baseUnit, @Nullable OtlpExemplarSamplerFactory exemplarSamplerFactory) {
+        super(maxScale, maxBucketsCount, zeroThreshold, baseUnit, exemplarSamplerFactory);
         this.exponentialHistogramSnapShot = DefaultExponentialHistogramSnapShot.getEmptySnapshotForScale(maxScale);
     }
 
@@ -64,15 +57,6 @@ public class CumulativeBase2ExponentialHistogram extends Base2ExponentialHistogr
     @Override
     synchronized void takeExponentialHistogramSnapShot() {
         this.exponentialHistogramSnapShot = getCurrentValuesSnapshot();
-    }
-
-    @Override
-    public List<Exemplar> exemplars() {
-        return Collections.emptyList();
-    }
-
-    @Override
-    public void closingExemplarsRollover() {
     }
 
 }

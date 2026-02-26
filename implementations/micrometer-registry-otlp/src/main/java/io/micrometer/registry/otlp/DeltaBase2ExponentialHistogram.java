@@ -13,30 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.registry.otlp.internal;
+package io.micrometer.registry.otlp;
 
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.step.StepValue;
-import io.opentelemetry.proto.metrics.v1.Exemplar;
 import org.jspecify.annotations.Nullable;
 
-import java.util.Collections;
-import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
 /**
  * A {@link Base2ExponentialHistogram} where values are reset after every Step.
  * Internally, this uses {@link StepValue} to roll the HistogramSnapshot for every step.
- * <p>
- * <strong> This is an internal class and might have breaking changes, external
- * implementations SHOULD NOT rely on this implementation. </strong>
- * </p>
  *
  * @author Lenin Jaganathan
  * @since 1.14.0
  */
-public class DeltaBase2ExponentialHistogram extends Base2ExponentialHistogram {
+class DeltaBase2ExponentialHistogram extends Base2ExponentialHistogram {
 
     private final StepExponentialHistogramSnapShot stepExponentialHistogramSnapShot;
 
@@ -57,9 +50,10 @@ public class DeltaBase2ExponentialHistogram extends Base2ExponentialHistogram {
      * @param clock - clock to be used.
      * @param stepMillis - window for delta aggregation
      */
-    public DeltaBase2ExponentialHistogram(final int maxScale, final int maxBucketsCount, final double zeroThreshold,
-            @Nullable final TimeUnit baseUnit, final Clock clock, final long stepMillis) {
-        super(maxScale, maxBucketsCount, zeroThreshold, baseUnit);
+    DeltaBase2ExponentialHistogram(final int maxScale, final int maxBucketsCount, final double zeroThreshold,
+            @Nullable final TimeUnit baseUnit, final Clock clock, final long stepMillis,
+            @Nullable OtlpExemplarSamplerFactory exemplarSamplerFactory) {
+        super(maxScale, maxBucketsCount, zeroThreshold, baseUnit, exemplarSamplerFactory);
         this.stepExponentialHistogramSnapShot = new StepExponentialHistogramSnapShot(clock, stepMillis, maxScale);
     }
 
@@ -78,18 +72,9 @@ public class DeltaBase2ExponentialHistogram extends Base2ExponentialHistogram {
         stepExponentialHistogramSnapShot._closingRollover();
     }
 
-    @Override
-    public List<Exemplar> exemplars() {
-        return Collections.emptyList();
-    }
-
-    @Override
-    public void closingExemplarsRollover() {
-    }
-
     private class StepExponentialHistogramSnapShot extends StepValue<ExponentialHistogramSnapShot> {
 
-        public StepExponentialHistogramSnapShot(final Clock clock, final long stepMillis, final int maxScale) {
+        StepExponentialHistogramSnapShot(final Clock clock, final long stepMillis, final int maxScale) {
             super(clock, stepMillis, DefaultExponentialHistogramSnapShot.getEmptySnapshotForScale(maxScale));
         }
 

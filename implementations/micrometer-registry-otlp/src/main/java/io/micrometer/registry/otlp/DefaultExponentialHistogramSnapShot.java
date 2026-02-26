@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.registry.otlp.internal;
-
-import static io.micrometer.registry.otlp.internal.ExponentialHistogramSnapShot.ExponentialBuckets.EMPTY_EXPONENTIAL_BUCKET;
+package io.micrometer.registry.otlp;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+
+import static io.micrometer.registry.otlp.ExponentialHistogramSnapShot.ExponentialBuckets.EMPTY_EXPONENTIAL_BUCKET;
 
 class DefaultExponentialHistogramSnapShot implements ExponentialHistogramSnapShot {
 

@@ -18,9 +18,6 @@ package io.micrometer.registry.otlp;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.cumulative.CumulativeDistributionSummary;
 import io.micrometer.core.instrument.distribution.*;
-import io.micrometer.registry.otlp.internal.Base2ExponentialHistogram;
-import io.micrometer.registry.otlp.internal.ExponentialHistogramSnapShot;
-import io.micrometer.registry.otlp.internal.OtlpExemplarsSupport;
 import io.opentelemetry.proto.metrics.v1.Exemplar;
 import org.jspecify.annotations.Nullable;
 

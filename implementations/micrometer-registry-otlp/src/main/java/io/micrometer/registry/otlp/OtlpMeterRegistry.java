@@ -35,9 +35,6 @@ import io.micrometer.core.instrument.util.MeterPartition;
 import io.micrometer.core.instrument.util.NamedThreadFactory;
 import io.micrometer.core.instrument.util.TimeUtils;
 import io.micrometer.core.ipc.http.HttpUrlConnectionSender;
-import io.micrometer.registry.otlp.internal.CumulativeBase2ExponentialHistogram;
-import io.micrometer.registry.otlp.internal.DeltaBase2ExponentialHistogram;
-import io.micrometer.registry.otlp.internal.OtlpExemplarsSupport;
 import io.opentelemetry.proto.collector.metrics.v1.ExportMetricsServiceRequest;
 import io.opentelemetry.proto.common.v1.AnyValue;
 import io.opentelemetry.proto.common.v1.KeyValue;
@@ -449,9 +446,9 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
 
                 return config.aggregationTemporality() == AggregationTemporality.DELTA
                         ? new DeltaBase2ExponentialHistogram(config.maxScale(), getMaxBuckets(id), minimumExpectedValue,
-                                baseTimeUnit, clock, config.step().toMillis())
+                                baseTimeUnit, clock, config.step().toMillis(), exemplarSamplerFactory)
                         : new CumulativeBase2ExponentialHistogram(config.maxScale(), getMaxBuckets(id),
-                                minimumExpectedValue, baseTimeUnit);
+                                minimumExpectedValue, baseTimeUnit, exemplarSamplerFactory);
             }
 
             Histogram explicitBucketHistogram = getExplicitBucketHistogram(clock, distributionStatisticConfig,

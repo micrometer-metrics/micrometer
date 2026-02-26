@@ -23,8 +23,6 @@ import io.micrometer.core.instrument.distribution.HistogramSnapshot;
 import io.micrometer.core.instrument.distribution.HistogramSupport;
 import io.micrometer.core.instrument.distribution.ValueAtPercentile;
 import io.micrometer.core.instrument.util.TimeUtils;
-import io.micrometer.registry.otlp.internal.ExponentialHistogramSnapShot;
-import io.micrometer.registry.otlp.internal.OtlpExemplarsSupport;
 import io.opentelemetry.proto.common.v1.AnyValue;
 import io.opentelemetry.proto.common.v1.KeyValue;
 import io.opentelemetry.proto.metrics.v1.*;
@@ -147,7 +145,7 @@ class OtlpMetricConverter {
                 histogramSupport);
         if (exponentialHistogramSnapShot.isPresent()) {
             buildExponentialHistogramDataPoint(histogramSupport, tags, startTimeNanos, total, max, count,
-                    exponentialHistogramSnapShot.get());
+                    exponentialHistogramSnapShot.get(), exemplars);
         }
         else {
             buildHistogramDataPoint(histogramSupport, tags, startTimeNanos, total, max, count, isTimeBased,
@@ -239,7 +237,7 @@ class OtlpMetricConverter {
 
     private void buildExponentialHistogramDataPoint(HistogramSupport histogramSupport, Iterable<KeyValue> tags,
             long startTimeNanos, double total, double max, long count,
-            ExponentialHistogramSnapShot exponentialHistogramSnapShot) {
+            ExponentialHistogramSnapShot exponentialHistogramSnapShot, List<Exemplar> exemplars) {
         Metric.Builder metricBuilder = getOrCreateMetricBuilder(histogramSupport.getId(),
                 DataCase.EXPONENTIAL_HISTOGRAM);
         ExponentialHistogramDataPoint.Builder exponentialDataPoint = ExponentialHistogramDataPoint.newBuilder()
@@ -250,7 +248,8 @@ class OtlpMetricConverter {
             .setSum(total)
             .setScale(exponentialHistogramSnapShot.scale())
             .setZeroCount(exponentialHistogramSnapShot.zeroCount())
-            .setZeroThreshold(exponentialHistogramSnapShot.zeroThreshold());
+            .setZeroThreshold(exponentialHistogramSnapShot.zeroThreshold())
+            .addAllExemplars(exemplars);
 
         // Currently, micrometer doesn't support negative recordings hence we will only
         // add positive buckets.
