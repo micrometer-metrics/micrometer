@@ -17,7 +17,9 @@ package io.micrometer.registry.otlp;
 
 import io.micrometer.core.instrument.*;
 import io.restassured.response.Response;
+import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.testcontainers.containers.GenericContainer;
@@ -31,6 +33,7 @@ import java.time.Duration;
 import static io.micrometer.registry.otlp.CompressionMode.GZIP;
 import static io.micrometer.registry.otlp.CompressionMode.NONE;
 import static io.restassured.RestAssured.given;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.hamcrest.Matchers.*;
 import static org.testcontainers.containers.BindMode.READ_ONLY;
@@ -41,8 +44,8 @@ import static uk.org.webcompere.systemstubs.SystemStubs.withEnvironmentVariables
  *
  * @author Jonatan Ivanov
  */
-@Testcontainers
 @Tag("docker")
+@Testcontainers
 class OTelCollectorIntegrationTest {
 
     private static final String OPENMETRICS_TEXT = "application/openmetrics-text; version=1.0.0; charset=utf-8";
@@ -53,12 +56,16 @@ class OTelCollectorIntegrationTest {
         .parse("otel/opentelemetry-collector-contrib:" + getCollectorImageVersion());
 
     @Container
+    @SuppressWarnings("rawtypes")
     private final GenericContainer<?> container = new GenericContainer(COLLECTOR_IMAGE)
         .withCommand("--config=/etc/" + CONFIG_FILE_NAME)
         .withClasspathResourceMapping(CONFIG_FILE_NAME, "/etc/" + CONFIG_FILE_NAME, READ_ONLY)
         .withExposedPorts(4318, 9090) // HTTP receiver, Prometheus exporter
         .waitingFor(Wait.forLogMessage(".*Everything is ready.*", 1))
-        .waitingFor(Wait.forListeningPorts(4318));
+        .waitingFor(Wait.forHttp("/metrics").forPort(9090).forStatusCode(200));
+
+    // .waitingFor(Wait.forListeningPorts(4318)) does not work since Testcontainers wants
+    // to run "/bin/sh" which is not available in this image
 
     private static String getCollectorImageVersion() {
         String version = System.getProperty("otel-collector-image.version");
@@ -67,6 +74,18 @@ class OTelCollectorIntegrationTest {
                     "System property 'otel-collector-image.version' is not set. This should be set in the build configuration for running from the command line. If you are running OTelCollectorIntegrationTest from an IDE, set the system property to the desired collector image version.");
         }
         return version;
+    }
+
+    @BeforeEach
+    void preCheck() {
+        assertThat(container.isRunning()).isTrue();
+        // @formatter:off
+        await()
+            .atMost(Duration.ofSeconds(10))
+            .pollDelay(Duration.ofMillis(100))
+            .pollInterval(Duration.ofMillis(100))
+            .untilAsserted(() -> whenPrometheusScraped().then().statusCode(200));
+        // @formatter:on
     }
 
     @Test
@@ -78,19 +97,16 @@ class OTelCollectorIntegrationTest {
         DistributionSummary.builder("test.ds").register(registry).record(24);
 
         // @formatter:off
-        await().atMost(Duration.ofSeconds(5))
+        Response response = await()
+            .atMost(Duration.ofSeconds(10))
             .pollDelay(Duration.ofMillis(100))
             .pollInterval(Duration.ofMillis(100))
-            .untilAsserted(() -> whenPrometheusScraped().then()
-                    .statusCode(200)
-                    .contentType(OPENMETRICS_TEXT)
-                    .body(endsWith("# EOF\n"), not(startsWith("# EOF\n")))
-            );
+            .until(this::whenPrometheusScraped, this::doesPrometheusResponseContainValidData);
 
         // tags can vary depending on where you run your tests:
         //  - IDE: no telemetry_sdk_version tag
         //  - Gradle: telemetry_sdk_version has the version number
-        whenPrometheusScraped().then().body(
+        response.then().body(
             containsString("{job=\"test\",otel_scope_name=\"\",otel_scope_schema_url=\"\",otel_scope_version=\"\",service_name=\"test\",telemetry_sdk_language=\"java\",telemetry_sdk_name=\"io.micrometer\""),
 
             containsString("# HELP test_counter \n"),
@@ -137,19 +153,16 @@ class OTelCollectorIntegrationTest {
         DistributionSummary.builder("test.ds.gzip").register(registry).record(24);
 
         // @formatter:off
-        await().atMost(Duration.ofSeconds(5))
+        Response response = await()
+            .atMost(Duration.ofSeconds(10))
             .pollDelay(Duration.ofMillis(100))
             .pollInterval(Duration.ofMillis(100))
-            .untilAsserted(() -> whenPrometheusScraped().then()
-                    .statusCode(200)
-                    .contentType(OPENMETRICS_TEXT)
-                    .body(endsWith("# EOF\n"), not(startsWith("# EOF\n")))
-            );
+            .until(this::whenPrometheusScraped, this::doesPrometheusResponseContainValidData);
 
         // tags can vary depending on where you run your tests:
         //  - IDE: no telemetry_sdk_version tag
         //  - Gradle: telemetry_sdk_version has the version number
-        whenPrometheusScraped().then().body(
+        response.then().body(
             containsString("{job=\"test\",otel_scope_name=\"\",otel_scope_schema_url=\"\",otel_scope_version=\"\",service_name=\"test\",telemetry_sdk_language=\"java\",telemetry_sdk_name=\"io.micrometer\""),
 
             containsString("# HELP test_counter_gzip \n"),
@@ -185,16 +198,13 @@ class OTelCollectorIntegrationTest {
         DistributionSummary.builder("test.ds.nomax").register(registry).record(24);
 
         // @formatter:off
-        await().atMost(Duration.ofSeconds(5))
+        Response response = await()
+            .atMost(Duration.ofSeconds(10))
             .pollDelay(Duration.ofMillis(100))
             .pollInterval(Duration.ofMillis(100))
-            .untilAsserted(() -> whenPrometheusScraped().then()
-                    .statusCode(200)
-                    .contentType(OPENMETRICS_TEXT)
-                    .body(endsWith("# EOF\n"), not(startsWith("# EOF\n")))
-            );
+            .until(this::whenPrometheusScraped, this::doesPrometheusResponseContainValidData);
 
-        whenPrometheusScraped().then().body(
+        response.then().body(
             // Verify timer histogram is exported
             containsString("# HELP test_timer_nomax_milliseconds \n"),
             containsString("# TYPE test_timer_nomax_milliseconds histogram\n"),
@@ -248,17 +258,17 @@ class OTelCollectorIntegrationTest {
             boolean publishMaxGaugeForHistograms) {
         return new OtlpConfig() {
             @Override
-            public String url() {
+            public @NonNull String url() {
                 return String.format("http://%s:%d/v1/metrics", container.getHost(), container.getMappedPort(4318));
             }
 
             @Override
-            public Duration step() {
-                return Duration.ofSeconds(1);
+            public @NonNull Duration step() {
+                return Duration.ofSeconds(5);
             }
 
             @Override
-            public CompressionMode compressionMode() {
+            public @NonNull CompressionMode compressionMode() {
                 return compressionMode;
             }
 
@@ -268,7 +278,7 @@ class OTelCollectorIntegrationTest {
             }
 
             @Override
-            public @Nullable String get(String key) {
+            public @Nullable String get(@NonNull String key) {
                 return null;
             }
         };
@@ -282,6 +292,19 @@ class OTelCollectorIntegrationTest {
             .when()
             .get("/metrics");
         // @formatter:on
+    }
+
+    private boolean doesPrometheusResponseContainValidData(Response response) {
+        try {
+            response.then()
+                .statusCode(200)
+                .contentType(OPENMETRICS_TEXT)
+                .body(endsWith("# EOF\n"), not(startsWith("# EOF\n")));
+            return true;
+        }
+        catch (AssertionError ignored) {
+            return false;
+        }
     }
 
     static class TestExemplarContextProvider implements ExemplarContextProvider {
