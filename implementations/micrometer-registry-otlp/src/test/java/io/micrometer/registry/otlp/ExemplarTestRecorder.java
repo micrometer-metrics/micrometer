@@ -38,13 +38,13 @@ class ExemplarTestRecorder {
 
     private final Clock clock;
 
-    private final TestsExemplarContextProvider contextProvider;
+    private final TestExemplarContextProvider contextProvider;
 
-    ExemplarTestRecorder(TestsExemplarContextProvider contextProvider, Clock clock) {
+    ExemplarTestRecorder(TestExemplarContextProvider contextProvider, Clock clock) {
         this(contextProvider, clock, null);
     }
 
-    ExemplarTestRecorder(TestsExemplarContextProvider contextProvider, Clock clock, @Nullable ExemplarSampler sampler) {
+    ExemplarTestRecorder(TestExemplarContextProvider contextProvider, Clock clock, @Nullable ExemplarSampler sampler) {
         this.contextProvider = contextProvider;
         this.clock = clock;
         this.sampler = sampler;
@@ -131,7 +131,7 @@ class ExemplarTestRecorder {
         return builder.build();
     }
 
-    static class TestsExemplarContextProvider implements ExemplarContextProvider {
+    static class TestExemplarContextProvider implements ExemplarContextProvider {
 
         private @Nullable OtlpExemplarContext context;
 

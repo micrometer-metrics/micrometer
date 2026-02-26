@@ -58,7 +58,7 @@ abstract class OtlpMeterRegistryTest {
 
     protected MockClock clock;
 
-    protected ExemplarTestRecorder.TestsExemplarContextProvider contextProvider;
+    protected ExemplarTestRecorder.TestExemplarContextProvider contextProvider;
 
     protected ExemplarTestRecorder recorder;
 
@@ -78,7 +78,7 @@ abstract class OtlpMeterRegistryTest {
         OtlpConfig config = otlpConfig();
         this.mockHttpSender = mock(HttpSender.class);
         OtlpMetricsSender metricsSender = new OtlpHttpMetricsSender(mockHttpSender);
-        this.contextProvider = new ExemplarTestRecorder.TestsExemplarContextProvider();
+        this.contextProvider = new ExemplarTestRecorder.TestExemplarContextProvider();
         this.recorder = new ExemplarTestRecorder(contextProvider, clock);
         this.registry = OtlpMeterRegistry.builder(config)
             .clock(clock)

@@ -55,7 +55,7 @@ class OtlpExemplarSamplerTests {
 
     private final MockClock clock = new MockClock();
 
-    private final ExemplarTestRecorder.TestsExemplarContextProvider contextProvider = new ExemplarTestRecorder.TestsExemplarContextProvider();
+    private final ExemplarTestRecorder.TestExemplarContextProvider contextProvider = new ExemplarTestRecorder.TestExemplarContextProvider();
 
     private final OtlpExemplarSamplerFactory factory = new OtlpExemplarSamplerFactory(contextProvider, clock, config);
 
