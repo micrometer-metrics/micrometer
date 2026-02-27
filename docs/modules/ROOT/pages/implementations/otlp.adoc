@@ -183,3 +183,20 @@ Alternatively, if you want to generate Summary data point for a timer with name 
 ----
 management.metrics.distribution.percentiles.test.timer=0.9,0.99
 ----
+
+== Exemplars
+
+Exemplars are metadata that you can attach to the value of your time series. They can reference data outside of your metrics. A common use case is storing tracing information (`traceId`, `spanId`) but any arbitrary key-value pairs can be attached. Exemplars are not tags/dimensions (attributes in OTLP terminology); they will not increase cardinality since they belong to the values of the time series. Using them allows you to correlate metrics with traces/spans (or other concepts).
+
+Micrometer supports exemplars for `Counter`, `Timer`, and `DistributionSummary`.
+
+To enable exemplars, you need to provide an `ExemplarContextProvider` to the `OtlpMeterRegistry` using its builder:
+
+[source,java,subs=+attributes]
+-----
+include::{include-java}/metrics/OtlpMeterRegistryCustomizationTest.java[tags=customizeExemplarContextProvider, indent=0]
+-----
+
+The implementation of `ExemplarContextProvider` is responsible for providing an `OtlpExemplarContext` which contains the necessary information (traceId, spanId, and arbitrary key-value pairs) to be attached to the exemplar. If the exemplar information is not available (there is no current Span or the Span is not sampled) or the implementor does not want this particular Span to be used as an exemplar, the `ExemplarContextProvider` should return `null`.
+
+NOTE: The `traceId` and `spanId` passed to `OtlpExemplarContext` must be case-insensitive hex-encoded strings.
