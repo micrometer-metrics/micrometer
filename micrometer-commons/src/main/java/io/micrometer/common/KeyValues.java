@@ -64,18 +64,13 @@ public final class KeyValues implements Iterable<KeyValue> {
     }
 
     /**
-     * Checks if the first {@code length} elements of the {@code keyValues} array form an
-     * ordered set of key-values.
+     * Checks if the {@code keyValues} array forms an ordered set of key-values.
      * @param keyValues an array of key-values.
-     * @param length the number of elements to check.
-     * @return {@code true} if the first {@code length} elements of {@code keyValues} form
-     * an ordered set; otherwise {@code false}.
+     * @return {@code true} if {@code keyValues} forms an ordered set; otherwise
+     * {@code false}.
      */
-    private static boolean isSortedSet(KeyValue[] keyValues, int length) {
-        if (length > keyValues.length) {
-            return false;
-        }
-        for (int i = 0; i < length - 1; i++) {
+    private static boolean isSortedSet(KeyValue[] keyValues) {
+        for (int i = 0; i < keyValues.length - 1; i++) {
             int cmp = keyValues[i].compareTo(keyValues[i + 1]);
             if (cmp >= 0) {
                 return false;
@@ -92,12 +87,12 @@ public final class KeyValues implements Iterable<KeyValue> {
      * key-values.
      */
     private static KeyValues toKeyValues(KeyValue[] keyValues) {
-        int len = keyValues.length;
-        if (!isSortedSet(keyValues, len)) {
+        if (!isSortedSet(keyValues)) {
             Arrays.sort(keyValues);
-            len = dedup(keyValues);
+            int len = dedup(keyValues);
+            return new KeyValues(keyValues, len);
         }
-        return new KeyValues(keyValues, len);
+        return new KeyValues(keyValues, keyValues.length);
     }
 
     /**
