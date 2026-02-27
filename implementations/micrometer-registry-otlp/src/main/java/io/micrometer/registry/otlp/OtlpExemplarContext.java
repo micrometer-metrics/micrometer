@@ -33,17 +33,25 @@ public class OtlpExemplarContext {
     private final @Nullable Iterable<KeyValue> keyValues;
 
     /**
-     * @param traceId the TraceId of the Span
-     * @param spanId the SpanId of the Span
+     * @param traceId the TraceId of the Span, it must be represented as a
+     * case-insensitive hex-encoded string
+     * @param spanId the SpanId of the Span, it must be represented as a case-insensitive
+     * hex-encoded string
+     * @see <a href="https://datatracker.ietf.org/doc/html/rfc4648#section-8">Base 16
+     * Encoding</a> for traceId and spanId
      */
     public OtlpExemplarContext(String traceId, String spanId) {
         this(traceId, spanId, null);
     }
 
     /**
-     * @param traceId the TraceId of the Span
-     * @param spanId the SpanId of the Span
+     * @param traceId the TraceId of the Span, it must be represented as a
+     * case-insensitive hex-encoded string
+     * @param spanId the SpanId of the Span, it must be represented as a case-insensitive
+     * hex-encoded string
      * @param keyValues arbitrary key-value pairs to attach to the exemplar
+     * @see <a href="https://datatracker.ietf.org/doc/html/rfc4648#section-8">Base 16
+     * Encoding</a> for traceId and spanId
      */
     public OtlpExemplarContext(@Nullable String traceId, @Nullable String spanId,
             @Nullable Iterable<KeyValue> keyValues) {
@@ -52,10 +60,20 @@ public class OtlpExemplarContext {
         this.keyValues = keyValues;
     }
 
+    /**
+     * @return TraceId of the Span, represented by a case-insensitive hex-encoded string
+     * @see <a href="https://datatracker.ietf.org/doc/html/rfc4648#section-8">Base 16
+     * Encoding</a>
+     */
     public @Nullable String getTraceId() {
         return traceId;
     }
 
+    /**
+     * @return SpanId of the Span, represented by a case-insensitive hex-encoded string
+     * @see <a href="https://datatracker.ietf.org/doc/html/rfc4648#section-8">Base 16
+     * Encoding</a>
+     */
     public @Nullable String getSpanId() {
         return spanId;
     }
