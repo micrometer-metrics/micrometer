@@ -130,7 +130,7 @@ class OtlpExemplarSamplerTests {
         @Test
         void emptyContextIsValid() {
             assertThat(sampler.collectExemplars()).isEmpty();
-            Exemplar expected = recorder.record(null, null, (KeyValues) null, 3.14);
+            Exemplar expected = recorder.record(null, null, KeyValues.empty(), 3.14);
             assertThat(sampler.collectExemplars()).isEmpty();
             clock.add(STEP);
 

@@ -16,6 +16,7 @@
 package io.micrometer.registry.otlp;
 
 import io.micrometer.common.KeyValue;
+import io.micrometer.common.KeyValues;
 import org.jspecify.annotations.Nullable;
 
 /**
@@ -30,7 +31,7 @@ public class OtlpExemplarContext {
 
     private final @Nullable String spanId;
 
-    private final @Nullable Iterable<KeyValue> keyValues;
+    private final Iterable<KeyValue> keyValues;
 
     /**
      * @param traceId the TraceId of the Span, it must be represented as a
@@ -41,7 +42,7 @@ public class OtlpExemplarContext {
      * Encoding</a> for traceId and spanId
      */
     public OtlpExemplarContext(String traceId, String spanId) {
-        this(traceId, spanId, null);
+        this(traceId, spanId, KeyValues.empty());
     }
 
     /**
@@ -53,8 +54,7 @@ public class OtlpExemplarContext {
      * @see <a href="https://datatracker.ietf.org/doc/html/rfc4648#section-8">Base 16
      * Encoding</a> for traceId and spanId
      */
-    public OtlpExemplarContext(@Nullable String traceId, @Nullable String spanId,
-            @Nullable Iterable<KeyValue> keyValues) {
+    public OtlpExemplarContext(@Nullable String traceId, @Nullable String spanId, Iterable<KeyValue> keyValues) {
         this.traceId = traceId;
         this.spanId = spanId;
         this.keyValues = keyValues;
@@ -78,7 +78,11 @@ public class OtlpExemplarContext {
         return spanId;
     }
 
-    public @Nullable Iterable<KeyValue> getKeyValues() {
+    /**
+     * @return key-value pairs to be attached to the exemplar
+     * @see KeyValues
+     */
+    public Iterable<KeyValue> getKeyValues() {
         return keyValues;
     }
 

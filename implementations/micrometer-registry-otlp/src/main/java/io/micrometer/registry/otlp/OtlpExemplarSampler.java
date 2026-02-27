@@ -142,7 +142,6 @@ class OtlpExemplarSampler implements ExemplarSampler {
                 OtlpExemplarContext exemplarContext, Clock clock) {
             String traceId = exemplarContext.getTraceId();
             String spanId = exemplarContext.getSpanId();
-            Iterable<io.micrometer.common.KeyValue> keyValues = exemplarContext.getKeyValues();
 
             Exemplar.Builder builder = Exemplar.newBuilder()
                 .setAsDouble(converter.applyAsDouble(measurement))
@@ -162,10 +161,8 @@ class OtlpExemplarSampler implements ExemplarSampler {
                 // .setValue(AnyValue.newBuilder().setStringValue(spanId))
                 // .build());
             }
-            if (keyValues != null) {
-                for (io.micrometer.common.KeyValue keyValue : keyValues) {
-                    builder.addFilteredAttributes(toOtelKeyValue(keyValue));
-                }
+            for (io.micrometer.common.KeyValue keyValue : exemplarContext.getKeyValues()) {
+                builder.addFilteredAttributes(toOtelKeyValue(keyValue));
             }
 
             return builder.build();

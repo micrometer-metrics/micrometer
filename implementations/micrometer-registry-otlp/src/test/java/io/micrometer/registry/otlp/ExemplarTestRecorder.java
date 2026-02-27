@@ -59,7 +59,7 @@ class ExemplarTestRecorder {
     void recordRandomMeasurements(int numberOfMeasurements, IntConsumer consumer) {
         for (int i = 1; i <= numberOfMeasurements; i++) {
             int index = i;
-            record("4bf92f3577b34da6a3ce929d0e0e0000", "00f067aa0ba90000", null, () -> {
+            record("4bf92f3577b34da6a3ce929d0e0e0000", "00f067aa0ba90000", () -> {
                 consumer.accept(index);
                 return index;
             });
@@ -67,10 +67,10 @@ class ExemplarTestRecorder {
     }
 
     Exemplar record(String traceId, String spanId, double amount) {
-        return record(traceId, spanId, (KeyValues) null, amount);
+        return record(traceId, spanId, KeyValues.empty(), amount);
     }
 
-    Exemplar record(@Nullable String traceId, @Nullable String spanId, @Nullable KeyValues keyValues, double value) {
+    Exemplar record(@Nullable String traceId, @Nullable String spanId, KeyValues keyValues, double value) {
         return record(traceId, spanId, keyValues, () -> {
             if (sampler != null) {
                 sampler.sampleMeasurement(value);
@@ -80,17 +80,17 @@ class ExemplarTestRecorder {
     }
 
     Exemplar record(String traceId, String spanId, Runnable runnable, double value) {
-        return record(traceId, spanId, null, () -> {
+        return record(traceId, spanId, KeyValues.empty(), () -> {
             runnable.run();
             return value;
         });
     }
 
     Exemplar record(String traceId, String spanId, DoubleSupplier doubleSupplier) {
-        return record(traceId, spanId, null, doubleSupplier);
+        return record(traceId, spanId, KeyValues.empty(), doubleSupplier);
     }
 
-    private Exemplar record(@Nullable String traceId, @Nullable String spanId, @Nullable KeyValues keyValues,
+    private Exemplar record(@Nullable String traceId, @Nullable String spanId, KeyValues keyValues,
             DoubleSupplier doubleSupplier) {
         contextProvider.setExemplar(traceId, spanId, keyValues);
         double value = doubleSupplier.getAsDouble();
@@ -107,7 +107,6 @@ class ExemplarTestRecorder {
 
         String traceId = exemplarContext.getTraceId();
         String spanId = exemplarContext.getSpanId();
-        Iterable<io.micrometer.common.KeyValue> keyValues = exemplarContext.getKeyValues();
 
         Exemplar.Builder builder = Exemplar.newBuilder()
             .setAsDouble(value)
@@ -119,13 +118,11 @@ class ExemplarTestRecorder {
         if (spanId != null) {
             builder.setSpanId(ByteString.fromHex(spanId));
         }
-        if (keyValues != null) {
-            for (io.micrometer.common.KeyValue keyValue : keyValues) {
-                builder.addFilteredAttributes(KeyValue.newBuilder()
-                    .setKey(keyValue.getKey())
-                    .setValue(AnyValue.newBuilder().setStringValue(keyValue.getValue()).build())
-                    .build());
-            }
+        for (io.micrometer.common.KeyValue keyValue : exemplarContext.getKeyValues()) {
+            builder.addFilteredAttributes(KeyValue.newBuilder()
+                .setKey(keyValue.getKey())
+                .setValue(AnyValue.newBuilder().setStringValue(keyValue.getValue()).build())
+                .build());
         }
 
         return builder.build();
@@ -140,7 +137,7 @@ class ExemplarTestRecorder {
             return context;
         }
 
-        void setExemplar(@Nullable String traceId, @Nullable String spanId, @Nullable KeyValues keyValues) {
+        void setExemplar(@Nullable String traceId, @Nullable String spanId, KeyValues keyValues) {
             context = new OtlpExemplarContext(traceId, spanId, keyValues);
         }
 
