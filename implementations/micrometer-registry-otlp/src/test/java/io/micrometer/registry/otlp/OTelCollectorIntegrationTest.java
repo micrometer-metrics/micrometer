@@ -17,7 +17,9 @@ package io.micrometer.registry.otlp;
 
 import io.micrometer.core.instrument.*;
 import io.restassured.response.Response;
+import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.testcontainers.containers.GenericContainer;
@@ -31,6 +33,7 @@ import java.time.Duration;
 import static io.micrometer.registry.otlp.CompressionMode.GZIP;
 import static io.micrometer.registry.otlp.CompressionMode.NONE;
 import static io.restassured.RestAssured.given;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.hamcrest.Matchers.*;
 import static org.testcontainers.containers.BindMode.READ_ONLY;
@@ -41,8 +44,8 @@ import static uk.org.webcompere.systemstubs.SystemStubs.withEnvironmentVariables
  *
  * @author Jonatan Ivanov
  */
-@Testcontainers
 @Tag("docker")
+@Testcontainers
 class OTelCollectorIntegrationTest {
 
     private static final String OPENMETRICS_TEXT = "application/openmetrics-text; version=1.0.0; charset=utf-8";
@@ -53,12 +56,18 @@ class OTelCollectorIntegrationTest {
         .parse("otel/opentelemetry-collector-contrib:" + getCollectorImageVersion());
 
     @Container
+    @SuppressWarnings("rawtypes")
     private final GenericContainer<?> container = new GenericContainer(COLLECTOR_IMAGE)
         .withCommand("--config=/etc/" + CONFIG_FILE_NAME)
         .withClasspathResourceMapping(CONFIG_FILE_NAME, "/etc/" + CONFIG_FILE_NAME, READ_ONLY)
         .withExposedPorts(4318, 9090) // HTTP receiver, Prometheus exporter
         .waitingFor(Wait.forLogMessage(".*Everything is ready.*", 1))
-        .waitingFor(Wait.forListeningPorts(4318));
+        .waitingFor(Wait.forHttp("/metrics").forPort(9090).forStatusCode(200));
+
+    // .waitingFor(Wait.forListeningPorts(4318)) does not work since Testcontainers wants
+    // to run "/bin/sh" which is not available in this image
+
+    private final TestExemplarContextProvider contextProvider = new TestExemplarContextProvider();
 
     private static String getCollectorImageVersion() {
         String version = System.getProperty("otel-collector-image.version");
@@ -69,33 +78,45 @@ class OTelCollectorIntegrationTest {
         return version;
     }
 
+    @BeforeEach
+    void preCheck() {
+        assertThat(container.isRunning()).isTrue();
+        // @formatter:off
+        await()
+            .atMost(Duration.ofSeconds(10))
+            .pollDelay(Duration.ofMillis(100))
+            .pollInterval(Duration.ofMillis(100))
+            .untilAsserted(() -> whenPrometheusScraped().then().statusCode(200));
+        // @formatter:on
+    }
+
     @Test
     void collectorShouldExportMetrics() throws Exception {
         MeterRegistry registry = createOtlpMeterRegistryForContainer(container);
-        Counter.builder("test.counter").register(registry).increment(42);
-        Gauge.builder("test.gauge", () -> 12).register(registry);
-        Timer.builder("test.timer").register(registry).record(Duration.ofMillis(123));
-        DistributionSummary.builder("test.ds").register(registry).record(24);
+        record("66fd7359621b3043e232148ef0c4c566", "e232148ef0c4c566", () -> {
+            Counter.builder("test.counter").register(registry).increment(42);
+            Gauge.builder("test.gauge", () -> 12).register(registry);
+            Timer.builder("test.timer").register(registry).record(Duration.ofMillis(123));
+            DistributionSummary.builder("test.ds").register(registry).record(24);
+        });
 
         // @formatter:off
-        await().atMost(Duration.ofSeconds(5))
+        Response response = await()
+            .atMost(Duration.ofSeconds(10))
             .pollDelay(Duration.ofMillis(100))
             .pollInterval(Duration.ofMillis(100))
-            .untilAsserted(() -> whenPrometheusScraped().then()
-                    .statusCode(200)
-                    .contentType(OPENMETRICS_TEXT)
-                    .body(endsWith("# EOF\n"), not(startsWith("# EOF\n")))
-            );
+            .until(this::whenPrometheusScraped, this::doesPrometheusResponseContainValidData);
 
         // tags can vary depending on where you run your tests:
         //  - IDE: no telemetry_sdk_version tag
         //  - Gradle: telemetry_sdk_version has the version number
-        whenPrometheusScraped().then().body(
+        response.then().body(
             containsString("{job=\"test\",otel_scope_name=\"\",otel_scope_schema_url=\"\",otel_scope_version=\"\",service_name=\"test\",telemetry_sdk_language=\"java\",telemetry_sdk_name=\"io.micrometer\""),
 
             containsString("# HELP test_counter \n"),
             containsString("# TYPE test_counter counter\n"),
-            matchesPattern("(?s)^.*test_counter_total\\{.+} 42\\.0\\n.*$"),
+            matchesPattern("(?s)^.*test_counter_total\\{.+} 42\\.0 # \\{.*trace_id=\"66fd7359621b3043e232148ef0c4c566\".*} 42\\.0 1\\.\\d+e\\+09\\n.*$"),
+            matchesPattern("(?s)^.*test_counter_total\\{.+} 42\\.0 # \\{.*span_id=\"e232148ef0c4c566\".*} 42\\.0 1\\.\\d+e\\+09\\n.*$"),
 
             containsString("# HELP test_gauge \n"),
             containsString("# TYPE test_gauge gauge\n"),
@@ -109,7 +130,8 @@ class OTelCollectorIntegrationTest {
             // it seems units are still not converted but at least the unit is in the name now (breaking change)
             // see: https://github.com/open-telemetry/opentelemetry-collector-contrib/pull/20519
             matchesPattern("(?s)^.*test_timer_milliseconds_sum\\{.+} 123\\.0\\n.*$"),
-            matchesPattern("(?s)^.*test_timer_milliseconds_bucket\\{.+,le=\"\\+Inf\"} 1\\n.*$"),
+            matchesPattern("(?s)^.*test_timer_milliseconds_bucket\\{.+,le=\"\\+Inf\"} 1 # \\{.*trace_id=\"66fd7359621b3043e232148ef0c4c566\".*} 123\\.0 1\\.\\d+e\\+09\\n.*$"),
+            matchesPattern("(?s)^.*test_timer_milliseconds_bucket\\{.+,le=\"\\+Inf\"} 1 # \\{.*span_id=\"e232148ef0c4c566\".*} 123\\.0 1\\.\\d+e\\+09\\n.*$"),
 
             containsString("# HELP test_timer_max_milliseconds \n"),
             containsString("# TYPE test_timer_max_milliseconds gauge\n"),
@@ -120,7 +142,74 @@ class OTelCollectorIntegrationTest {
             matchesPattern("(?s)^.*test_ds_count\\{.+} 1\\n.*$"),
             matchesPattern("(?s)^.*test_ds_sum\\{.+} 24\\.0\\n.*$"),
             matchesPattern("(?s)^.*test_ds_max\\{.+} 24\\.0\\n.*$"),
-            matchesPattern("(?s)^.*test_ds_bucket\\{.+,le=\"\\+Inf\"} 1\\n.*$")
+            matchesPattern("(?s)^.*test_ds_bucket\\{.+,le=\"\\+Inf\"} 1 # \\{.*trace_id=\"66fd7359621b3043e232148ef0c4c566\".*} 24\\.0 1\\.\\d+e\\+09\\n.*$"),
+            matchesPattern("(?s)^.*test_ds_bucket\\{.+,le=\"\\+Inf\"} 1 # \\{.*span_id=\"e232148ef0c4c566\".*} 24\\.0 1\\.\\d+e\\+09\\n.*$")
+        );
+        // @formatter:on
+    }
+
+    @Test
+    void collectorShouldExportExemplarsOnHistograms() throws Exception {
+        MeterRegistry registry = createOtlpMeterRegistryForContainer(container);
+        Timer timer = Timer.builder("test.timer").publishPercentileHistogram().register(registry);
+        DistributionSummary ds = DistributionSummary.builder("test.ds").publishPercentileHistogram().register(registry);
+
+        record("66fd7359621b3043e232148ef0c40001", "e232148ef0c40001", () -> timer.record(Duration.ofMillis(1)));
+        record("66fd7359621b3043e232148ef0c40002", "e232148ef0c40002", () -> timer.record(Duration.ofMillis(123)));
+        record("66fd7359621b3043e232148ef0c40003", "e232148ef0c40003", () -> timer.record(Duration.ofSeconds(30)));
+        record("66fd7359621b3043e232148ef0c40004", "e232148ef0c40004", () -> timer.record(Duration.ofSeconds(42)));
+
+        record("66fd7359621b3043e232148ef0c40005", "e232148ef0c40005", () -> ds.record(1));
+        record("66fd7359621b3043e232148ef0c40006", "e232148ef0c40006", () -> ds.record(123));
+        record("66fd7359621b3043e232148ef0c40007", "e232148ef0c40007", () -> ds.record(4.2E18));
+        record("66fd7359621b3043e232148ef0c40008", "e232148ef0c40008", () -> ds.record(5.0E18));
+
+        // @formatter:off
+        Response response = await()
+            .atMost(Duration.ofSeconds(10))
+            .pollDelay(Duration.ofMillis(100))
+            .pollInterval(Duration.ofMillis(100))
+            .until(this::whenPrometheusScraped, this::doesPrometheusResponseContainValidData);
+
+        // tags can vary depending on where you run your tests:
+        //  - IDE: no telemetry_sdk_version tag
+        //  - Gradle: telemetry_sdk_version has the version number
+        response.then().body(
+            containsString("{job=\"test\",otel_scope_name=\"\",otel_scope_schema_url=\"\",otel_scope_version=\"\",service_name=\"test\",telemetry_sdk_language=\"java\",telemetry_sdk_name=\"io.micrometer\""),
+
+            containsString("# HELP test_timer_milliseconds \n"),
+            containsString("# TYPE test_timer_milliseconds histogram\n"),
+            matchesPattern("(?s)^.*test_timer_milliseconds_count\\{.+} 4\\n.*$"),
+            matchesPattern("(?s)^.*test_timer_milliseconds_sum\\{.+} 72124\\.0\\n.*$"),
+
+            matchesPattern("(?s)^.*test_timer_milliseconds_bucket\\{.+,le=\"1\\.0\"} 1 # \\{.*trace_id=\"66fd7359621b3043e232148ef0c40001\".*} 1\\.0 1\\.\\d+e\\+09\\n.*$"),
+            matchesPattern("(?s)^.*test_timer_milliseconds_bucket\\{.+,le=\"1\\.0\"} 1 # \\{.*span_id=\"e232148ef0c40001\".*} 1\\.0 1\\.\\d+e\\+09\\n.*$"),
+
+            matchesPattern("(?s)^.*test_timer_milliseconds_bucket\\{.+,le=\"134\\.217727\"} 2 # \\{.*trace_id=\"66fd7359621b3043e232148ef0c40002\".*} 123\\.0 1\\.\\d+e\\+09\\n.*$"),
+            matchesPattern("(?s)^.*test_timer_milliseconds_bucket\\{.+,le=\"134\\.217727\"} 2 # \\{.*span_id=\"e232148ef0c40002\".*} 123\\.0 1\\.\\d+e\\+09\\n.*$"),
+
+            matchesPattern("(?s)^.*test_timer_milliseconds_bucket\\{.+,le=\"30000\\.0\"} 3 # \\{.*trace_id=\"66fd7359621b3043e232148ef0c40003\".*} 30000\\.0 1\\.\\d+e\\+09\\n.*$"),
+            matchesPattern("(?s)^.*test_timer_milliseconds_bucket\\{.+,le=\"30000\\.0\"} 3 # \\{.*span_id=\"e232148ef0c40003\".*} 30000\\.0 1\\.\\d+e\\+09\\n.*$"),
+
+            matchesPattern("(?s)^.*test_timer_milliseconds_bucket\\{.+,le=\"\\+Inf\"} 4 # \\{.*trace_id=\"66fd7359621b3043e232148ef0c40004\".*} 42000\\.0 1\\.\\d+e\\+09\\n.*$"),
+            matchesPattern("(?s)^.*test_timer_milliseconds_bucket\\{.+,le=\"\\+Inf\"} 4 # \\{.*span_id=\"e232148ef0c40004\".*} 42000\\.0 1\\.\\d+e\\+09\\n.*$"),
+
+            containsString("# HELP test_ds \n"),
+            containsString("# TYPE test_ds histogram\n"),
+            matchesPattern("(?s)^.*test_ds_count\\{.+} 4\\n.*$"),
+            matchesPattern("(?s)^.*test_ds_sum\\{.+} 9\\.2e\\+18\\n.*$"),
+
+            matchesPattern("(?s)^.*test_ds_bucket\\{.+,le=\"1\\.0\"} 1 # \\{.*trace_id=\"66fd7359621b3043e232148ef0c40005\".*} 1\\.0 1\\.\\d+e\\+09\\n.*$"),
+            matchesPattern("(?s)^.*test_ds_bucket\\{.+,le=\"1\\.0\"} 1 # \\{.*span_id=\"e232148ef0c40005\".*} 1\\.0 1\\.\\d+e\\+09\\n.*$"),
+
+            matchesPattern("(?s)^.*test_ds_bucket\\{.+,le=\"127\\.0\"} 2 # \\{.*trace_id=\"66fd7359621b3043e232148ef0c40006\".*} 123\\.0 1\\.\\d+e\\+09\\n.*$"),
+            matchesPattern("(?s)^.*test_ds_bucket\\{.+,le=\"127\\.0\"} 2 # \\{.*span_id=\"e232148ef0c40006\".*} 123\\.0 1\\.\\d+e\\+09\\n.*$"),
+
+            matchesPattern("(?s)^.*test_ds_bucket\\{.+,le=\"4\\.2273788502251054e\\+18\"} 3 # \\{.*trace_id=\"66fd7359621b3043e232148ef0c40007\".*} 4\\.2e\\+18 1\\.\\d+e\\+09\\n.*$"),
+            matchesPattern("(?s)^.*test_ds_bucket\\{.+,le=\"4\\.2273788502251054e\\+18\"} 3 # \\{.*span_id=\"e232148ef0c40007\".*} 4\\.2e\\+18 1\\.\\d+e\\+09\\n.*$"),
+
+            matchesPattern("(?s)^.*test_ds_bucket\\{.+,le=\"\\+Inf\"} 4 # \\{.*trace_id=\"66fd7359621b3043e232148ef0c40008\".*} 5e\\+18 1\\.\\d+e\\+09\\n.*$"),
+            matchesPattern("(?s)^.*test_ds_bucket\\{.+,le=\"\\+Inf\"} 4 # \\{.*span_id=\"e232148ef0c40008\".*} 5e\\+18 1\\.\\d+e\\+09\\n.*$")
         );
         // @formatter:on
     }
@@ -128,30 +217,31 @@ class OTelCollectorIntegrationTest {
     @Test
     void collectorShouldExportMetricsWithGzipCompression() throws Exception {
         MeterRegistry registry = createOtlpMeterRegistryForContainerWithGzipCompression(container);
-        Counter.builder("test.counter.gzip").register(registry).increment(42);
-        Gauge.builder("test.gauge.gzip", () -> 12).register(registry);
-        Timer.builder("test.timer.gzip").register(registry).record(Duration.ofMillis(123));
-        DistributionSummary.builder("test.ds.gzip").register(registry).record(24);
+
+        record("66fd7359621b3043e232148ef0c4c566", "e232148ef0c4c566", () -> {
+            Counter.builder("test.counter.gzip").register(registry).increment(42);
+            Gauge.builder("test.gauge.gzip", () -> 12).register(registry);
+            Timer.builder("test.timer.gzip").register(registry).record(Duration.ofMillis(123));
+            DistributionSummary.builder("test.ds.gzip").register(registry).record(24);
+        });
 
         // @formatter:off
-        await().atMost(Duration.ofSeconds(5))
+        Response response = await()
+            .atMost(Duration.ofSeconds(10))
             .pollDelay(Duration.ofMillis(100))
             .pollInterval(Duration.ofMillis(100))
-            .untilAsserted(() -> whenPrometheusScraped().then()
-                    .statusCode(200)
-                    .contentType(OPENMETRICS_TEXT)
-                    .body(endsWith("# EOF\n"), not(startsWith("# EOF\n")))
-            );
+            .until(this::whenPrometheusScraped, this::doesPrometheusResponseContainValidData);
 
         // tags can vary depending on where you run your tests:
         //  - IDE: no telemetry_sdk_version tag
         //  - Gradle: telemetry_sdk_version has the version number
-        whenPrometheusScraped().then().body(
+        response.then().body(
             containsString("{job=\"test\",otel_scope_name=\"\",otel_scope_schema_url=\"\",otel_scope_version=\"\",service_name=\"test\",telemetry_sdk_language=\"java\",telemetry_sdk_name=\"io.micrometer\""),
 
             containsString("# HELP test_counter_gzip \n"),
             containsString("# TYPE test_counter_gzip counter\n"),
-            matchesPattern("(?s)^.*test_counter_gzip_total\\{.+} 42\\.0\\n.*$"),
+            matchesPattern("(?s)^.*test_counter_gzip_total\\{.+} 42\\.0 # \\{.*trace_id=\"66fd7359621b3043e232148ef0c4c566\".*} 42\\.0 1\\.\\d+e\\+09\\n.*$"),
+            matchesPattern("(?s)^.*test_counter_gzip_total\\{.+} 42\\.0 # \\{.*span_id=\"e232148ef0c4c566\".*} 42\\.0 1\\.\\d+e\\+09\\n.*$"),
 
             containsString("# HELP test_gauge_gzip \n"),
             containsString("# TYPE test_gauge_gzip gauge\n"),
@@ -161,13 +251,15 @@ class OTelCollectorIntegrationTest {
             containsString("# TYPE test_timer_gzip_milliseconds histogram\n"),
             matchesPattern("(?s)^.*test_timer_gzip_milliseconds_count\\{.+} 1\\n.*$"),
             matchesPattern("(?s)^.*test_timer_gzip_milliseconds_sum\\{.+} 123\\.0\\n.*$"),
-            matchesPattern("(?s)^.*test_timer_gzip_milliseconds_bucket\\{.+,le=\"\\+Inf\"} 1\\n.*$"),
+            matchesPattern("(?s)^.*test_timer_gzip_milliseconds_bucket\\{.+,le=\"\\+Inf\"} 1 # \\{.*trace_id=\"66fd7359621b3043e232148ef0c4c566\".*} 123\\.0 1\\.\\d+e\\+09\\n.*$"),
+            matchesPattern("(?s)^.*test_timer_gzip_milliseconds_bucket\\{.+,le=\"\\+Inf\"} 1 # \\{.*span_id=\"e232148ef0c4c566\".*} 123\\.0 1\\.\\d+e\\+09\\n.*$"),
 
             containsString("# HELP test_ds_gzip \n"),
             containsString("# TYPE test_ds_gzip histogram\n"),
             matchesPattern("(?s)^.*test_ds_gzip_count\\{.+} 1\\n.*$"),
             matchesPattern("(?s)^.*test_ds_gzip_sum\\{.+} 24\\.0\\n.*$"),
-            matchesPattern("(?s)^.*test_ds_gzip_bucket\\{.+,le=\"\\+Inf\"} 1\\n.*$")
+            matchesPattern("(?s)^.*test_ds_gzip_bucket\\{.+,le=\"\\+Inf\"} 1 # \\{.*trace_id=\"66fd7359621b3043e232148ef0c4c566\".*} 24\\.0 1\\.\\d+e\\+09\\n.*$"),
+            matchesPattern("(?s)^.*test_ds_gzip_bucket\\{.+,le=\"\\+Inf\"} 1 # \\{.*span_id=\"e232148ef0c4c566\".*} 24\\.0 1\\.\\d+e\\+09\\n.*$")
         );
         // @formatter:on
     }
@@ -179,16 +271,13 @@ class OTelCollectorIntegrationTest {
         DistributionSummary.builder("test.ds.nomax").register(registry).record(24);
 
         // @formatter:off
-        await().atMost(Duration.ofSeconds(5))
+        Response response = await()
+            .atMost(Duration.ofSeconds(10))
             .pollDelay(Duration.ofMillis(100))
             .pollInterval(Duration.ofMillis(100))
-            .untilAsserted(() -> whenPrometheusScraped().then()
-                    .statusCode(200)
-                    .contentType(OPENMETRICS_TEXT)
-                    .body(endsWith("# EOF\n"), not(startsWith("# EOF\n")))
-            );
+            .until(this::whenPrometheusScraped, this::doesPrometheusResponseContainValidData);
 
-        whenPrometheusScraped().then().body(
+        response.then().body(
             // Verify timer histogram is exported
             containsString("# HELP test_timer_nomax_milliseconds \n"),
             containsString("# TYPE test_timer_nomax_milliseconds histogram\n"),
@@ -211,13 +300,17 @@ class OTelCollectorIntegrationTest {
 
     private OtlpMeterRegistry createOtlpMeterRegistryForContainer(GenericContainer<?> container) throws Exception {
         return withEnvironmentVariables("OTEL_SERVICE_NAME", "test")
-            .execute(() -> new OtlpMeterRegistry(createOtlpConfigForContainer(container), Clock.SYSTEM));
+            .execute(() -> OtlpMeterRegistry.builder(createOtlpConfigForContainer(container))
+                .exemplarContextProvider(contextProvider)
+                .build());
     }
 
     private OtlpMeterRegistry createOtlpMeterRegistryForContainerWithGzipCompression(GenericContainer<?> container)
             throws Exception {
         return withEnvironmentVariables("OTEL_SERVICE_NAME", "test")
-            .execute(() -> new OtlpMeterRegistry(createOtlpConfigForContainer(container, GZIP), Clock.SYSTEM));
+            .execute(() -> OtlpMeterRegistry.builder(createOtlpConfigForContainer(container, GZIP))
+                .exemplarContextProvider(contextProvider)
+                .build());
     }
 
     private OtlpMeterRegistry createOtlpMeterRegistryForContainerWithoutMaxGauge(GenericContainer<?> container)
@@ -238,17 +331,17 @@ class OTelCollectorIntegrationTest {
             boolean publishMaxGaugeForHistograms) {
         return new OtlpConfig() {
             @Override
-            public String url() {
+            public @NonNull String url() {
                 return String.format("http://%s:%d/v1/metrics", container.getHost(), container.getMappedPort(4318));
             }
 
             @Override
-            public Duration step() {
-                return Duration.ofSeconds(1);
+            public @NonNull Duration step() {
+                return Duration.ofSeconds(5);
             }
 
             @Override
-            public CompressionMode compressionMode() {
+            public @NonNull CompressionMode compressionMode() {
                 return compressionMode;
             }
 
@@ -258,7 +351,7 @@ class OTelCollectorIntegrationTest {
             }
 
             @Override
-            public @Nullable String get(String key) {
+            public @Nullable String get(@NonNull String key) {
                 return null;
             }
         };
@@ -272,6 +365,44 @@ class OTelCollectorIntegrationTest {
             .when()
             .get("/metrics");
         // @formatter:on
+    }
+
+    private boolean doesPrometheusResponseContainValidData(Response response) {
+        try {
+            response.then()
+                .statusCode(200)
+                .contentType(OPENMETRICS_TEXT)
+                .body(endsWith("# EOF\n"), not(startsWith("# EOF\n")));
+            return true;
+        }
+        catch (AssertionError ignored) {
+            return false;
+        }
+    }
+
+    void record(String traceId, String spanId, Runnable runnable) {
+        contextProvider.setExemplar(traceId, spanId);
+        runnable.run();
+        contextProvider.reset();
+    }
+
+    static class TestExemplarContextProvider implements ExemplarContextProvider {
+
+        private @Nullable OtlpExemplarContext context;
+
+        @Override
+        public @Nullable OtlpExemplarContext getExemplarContext() {
+            return context;
+        }
+
+        void setExemplar(String traceId, String spanId) {
+            context = new OtlpExemplarContext(traceId, spanId);
+        }
+
+        void reset() {
+            context = null;
+        }
+
     }
 
 }

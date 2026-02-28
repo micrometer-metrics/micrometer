@@ -16,10 +16,9 @@
 package io.micrometer.docs.metrics;
 
 import io.micrometer.core.ipc.http.OkHttpSender;
-import io.micrometer.registry.otlp.OtlpConfig;
-import io.micrometer.registry.otlp.OtlpHttpMetricsSender;
-import io.micrometer.registry.otlp.OtlpMeterRegistry;
-import io.micrometer.registry.otlp.OtlpMetricsSender;
+import io.micrometer.registry.otlp.*;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 
 class OtlpMeterRegistryCustomizationTest {
@@ -42,10 +41,30 @@ class OtlpMeterRegistryCustomizationTest {
         // end::customGrpcSender[]
     }
 
+    @Test
+    void customizeExemplarContextProvider() {
+        // tag::customizeExemplarContextProvider[]
+        OtlpConfig config = OtlpConfig.DEFAULT;
+        ExemplarContextProvider contextProvider = new TracingExemplarContextProvider();
+        OtlpMeterRegistry meterRegistry = OtlpMeterRegistry.builder(config)
+            .exemplarContextProvider(contextProvider)
+            .build();
+        // end::customizeExemplarContextProvider[]
+    }
+
     private static class OtlpGrpcMetricsSender implements OtlpMetricsSender {
 
         @Override
-        public void send(Request request) {
+        public void send(@NonNull Request request) {
+        }
+
+    }
+
+    private static class TracingExemplarContextProvider implements ExemplarContextProvider {
+
+        @Override
+        public @Nullable OtlpExemplarContext getExemplarContext() {
+            return null;
         }
 
     }

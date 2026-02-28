@@ -13,15 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.registry.otlp.internal;
+package io.micrometer.registry.otlp;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import static org.assertj.core.api.Assertions.assertThat;
 
 class Base2ExponentialHistogramTest {
 
@@ -43,7 +43,8 @@ class Base2ExponentialHistogramTest {
          * values are more human-readable.
          */
 
-        base2ExponentialHistogram = new CumulativeBase2ExponentialHistogram(MAX_SCALE, MAX_BUCKETS_COUNT, 1.0, null);
+        base2ExponentialHistogram = new CumulativeBase2ExponentialHistogram(MAX_SCALE, MAX_BUCKETS_COUNT, 1.0, null,
+                null);
     }
 
     @Test
@@ -58,7 +59,7 @@ class Base2ExponentialHistogramTest {
     @Test
     void testRecordTimeBased() {
         base2ExponentialHistogram = new CumulativeBase2ExponentialHistogram(MAX_SCALE, MAX_BUCKETS_COUNT, MILLI_SCALE,
-                TimeUnit.MILLISECONDS);
+                TimeUnit.MILLISECONDS, null);
         base2ExponentialHistogram.recordLong(Duration.ofMillis(1).toNanos());
         base2ExponentialHistogram.recordLong(Duration.ofMillis(2).toNanos()); // This
                                                                               // should be
@@ -75,9 +76,9 @@ class Base2ExponentialHistogramTest {
     @Test
     void testRecordTimeBasedInSeconds() {
         base2ExponentialHistogram = new CumulativeBase2ExponentialHistogram(MAX_SCALE, MAX_BUCKETS_COUNT, MILLI_SCALE,
-                TimeUnit.MILLISECONDS);
+                TimeUnit.MILLISECONDS, null);
         base2ExponentialHistogram = new CumulativeBase2ExponentialHistogram(MAX_SCALE, MAX_BUCKETS_COUNT, MILLI_SCALE,
-                TimeUnit.SECONDS);
+                TimeUnit.SECONDS, null);
 
         base2ExponentialHistogram.recordLong(Duration.ofMillis(1).toNanos());
 
@@ -108,7 +109,7 @@ class Base2ExponentialHistogramTest {
         assertThat(getAllBucketsCountSum(currentSnapshot)).isEqualTo(1);
 
         Base2ExponentialHistogram base2ExponentialHistogramWithZeroAsMin = new CumulativeBase2ExponentialHistogram(
-                MAX_SCALE, MAX_BUCKETS_COUNT, 0.0, null);
+                MAX_SCALE, MAX_BUCKETS_COUNT, 0.0, null, null);
         base2ExponentialHistogramWithZeroAsMin.recordDouble(0.0);
         base2ExponentialHistogramWithZeroAsMin.recordDouble(Math.nextUp(0.0));
 

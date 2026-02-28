@@ -18,21 +18,30 @@ package io.micrometer.registry.otlp;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.cumulative.CumulativeDistributionSummary;
 import io.micrometer.core.instrument.distribution.*;
-import io.micrometer.registry.otlp.internal.Base2ExponentialHistogram;
-import io.micrometer.registry.otlp.internal.ExponentialHistogramSnapShot;
+import io.opentelemetry.proto.metrics.v1.Exemplar;
 import org.jspecify.annotations.Nullable;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 class OtlpCumulativeDistributionSummary extends CumulativeDistributionSummary
-        implements StartTimeAwareMeter, OtlpHistogramSupport {
+        implements StartTimeAwareMeter, OtlpHistogramSupport, OtlpExemplarsSupport {
 
     private final long startTimeNanos;
 
+    private final @Nullable ExemplarSampler exemplarSampler;
+
     OtlpCumulativeDistributionSummary(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig,
-            double scale, Histogram histogram) {
+            double scale, Histogram histogram, @Nullable OtlpExemplarSamplerFactory exemplarSamplerFactory) {
         super(id, clock, distributionStatisticConfig, scale, histogram);
         this.startTimeNanos = TimeUnit.MILLISECONDS.toNanos(clock.wallTime());
+        if (histogram instanceof OtlpExemplarsSupport) {
+            this.exemplarSampler = null;
+        }
+        else {
+            this.exemplarSampler = exemplarSamplerFactory != null ? exemplarSamplerFactory.create(1, false) : null;
+        }
     }
 
     @Override
@@ -46,6 +55,37 @@ class OtlpCumulativeDistributionSummary extends CumulativeDistributionSummary
             return ((Base2ExponentialHistogram) histogram).getLatestExponentialHistogramSnapshot();
         }
         return null;
+    }
+
+    @Override
+    protected void recordNonNegative(double amount) {
+        super.recordNonNegative(amount);
+        if (exemplarSampler != null) {
+            exemplarSampler.sampleMeasurement(amount);
+        }
+    }
+
+    @Override
+    public List<Exemplar> exemplars() {
+        if (exemplarSampler != null) {
+            return exemplarSampler.collectExemplars();
+        }
+        else if (histogram instanceof OtlpExemplarsSupport) {
+            return ((OtlpExemplarsSupport) histogram).exemplars();
+        }
+        else {
+            return Collections.emptyList();
+        }
+    }
+
+    @Override
+    public void closingExemplarsRollover() {
+        if (exemplarSampler != null) {
+            exemplarSampler.close();
+        }
+        else if (histogram instanceof OtlpExemplarsSupport) {
+            ((OtlpExemplarsSupport) histogram).closingExemplarsRollover();
+        }
     }
 
 }

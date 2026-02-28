@@ -13,21 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.registry.otlp.internal;
+package io.micrometer.registry.otlp;
 
 import java.util.Collections;
 import java.util.List;
 
 /**
- * <p>
- * <strong> This is an internal class and might have breaking changes, external
- * implementations SHOULD NOT rely on this implementation. </strong>
- * </p>
- *
  * @author Lenin Jaganathan
  * @since 1.14.0
  */
-public interface ExponentialHistogramSnapShot {
+interface ExponentialHistogramSnapShot {
 
     /**
      * Returns the scale of the ExponentialHistogram.
@@ -63,8 +58,7 @@ public interface ExponentialHistogramSnapShot {
      */
     final class ExponentialBuckets {
 
-        public static final ExponentialBuckets EMPTY_EXPONENTIAL_BUCKET = new ExponentialBuckets(0,
-                Collections.emptyList());
+        static final ExponentialBuckets EMPTY_EXPONENTIAL_BUCKET = new ExponentialBuckets(0, Collections.emptyList());
 
         private final int offset;
 
@@ -75,15 +69,15 @@ public interface ExponentialHistogramSnapShot {
             this.bucketCounts = bucketCounts;
         }
 
-        public int offset() {
+        int offset() {
             return offset;
         }
 
-        public List<Long> bucketCounts() {
+        List<Long> bucketCounts() {
             return bucketCounts;
         }
 
-        public boolean isEmpty() {
+        boolean isEmpty() {
             return bucketCounts.isEmpty();
         }
 

@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.registry.otlp.internal;
+package io.micrometer.registry.otlp;
 
 import io.micrometer.core.instrument.distribution.Histogram;
 import io.micrometer.core.instrument.distribution.HistogramSnapshot;
 import io.micrometer.core.instrument.util.TimeUtils;
-import io.micrometer.registry.otlp.internal.ExponentialHistogramSnapShot.ExponentialBuckets;
+import io.opentelemetry.proto.metrics.v1.Exemplar;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Arrays;
@@ -28,7 +28,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.stream.Collectors;
 
-import static io.micrometer.registry.otlp.internal.ExponentialHistogramSnapShot.ExponentialBuckets.EMPTY_EXPONENTIAL_BUCKET;
+import static io.micrometer.registry.otlp.ExponentialHistogramSnapShot.ExponentialBuckets.EMPTY_EXPONENTIAL_BUCKET;
 
 /**
  * A ExponentialHistogram implementation that compresses bucket boundaries using an
@@ -39,15 +39,11 @@ import static io.micrometer.registry.otlp.internal.ExponentialHistogramSnapShot.
  * techniques outlined in the OTLP specification mentioned above. This implementation
  * supports only recording positive values (enforced by
  * {@link io.micrometer.core.instrument.AbstractTimer#record(long, TimeUnit)}).
- * <p>
- * <strong> This is an internal class and might have breaking changes, external
- * implementations SHOULD NOT rely on this implementation. </strong>
- * </p>
  *
  * @author Lenin Jaganathan
  * @since 1.14.0
  */
-public abstract class Base2ExponentialHistogram implements Histogram {
+abstract class Base2ExponentialHistogram implements Histogram, OtlpExemplarsSupport {
 
     private final int maxScale;
 
@@ -65,6 +61,8 @@ public abstract class Base2ExponentialHistogram implements Histogram {
 
     private int scale;
 
+    private final @Nullable ExemplarSampler exemplarSampler;
+
     /**
      * Creates an Base2ExponentialHistogram that records positive values.
      * @param maxScale - maximum scale that can be used. The recordings start with this
@@ -79,11 +77,13 @@ public abstract class Base2ExponentialHistogram implements Histogram {
      * values are converted to this unit.
      */
     Base2ExponentialHistogram(int maxScale, int maxBucketsCount, double minimumExpectedValue,
-            @Nullable TimeUnit baseUnit) {
+            @Nullable TimeUnit baseUnit, @Nullable OtlpExemplarSamplerFactory exemplarSamplerFactory) {
         this.maxScale = maxScale;
         this.scale = maxScale;
         this.maxBucketsCount = maxBucketsCount;
         this.baseUnit = baseUnit;
+        this.exemplarSampler = exemplarSamplerFactory != null ? exemplarSamplerFactory.create(16, baseUnit != null)
+                : null;
         this.zeroThreshold = getZeroThreshHoldFromMinExpectedValue(minimumExpectedValue, baseUnit);
 
         this.circularCountHolder = new CircularCountHolder(maxBucketsCount);
@@ -109,7 +109,7 @@ public abstract class Base2ExponentialHistogram implements Histogram {
      * current set of values. It is recommended to use this method to consume values
      * recorded in this Histogram as this will provide consistency in recorded values.
      */
-    public abstract ExponentialHistogramSnapShot getLatestExponentialHistogramSnapshot();
+    abstract ExponentialHistogramSnapShot getLatestExponentialHistogramSnapshot();
 
     /**
      * Takes a snapshot of the values that are recorded.
@@ -136,7 +136,8 @@ public abstract class Base2ExponentialHistogram implements Histogram {
         return (circularCountHolder.isEmpty() && zeroCount.longValue() == 0)
                 ? DefaultExponentialHistogramSnapShot.getEmptySnapshotForScale(scale)
                 : new DefaultExponentialHistogramSnapShot(scale, zeroCount.longValue(), zeroThreshold,
-                        new ExponentialBuckets(getOffset(), getBucketCounts()), EMPTY_EXPONENTIAL_BUCKET);
+                        new ExponentialHistogramSnapShot.ExponentialBuckets(getOffset(), getBucketCounts()),
+                        EMPTY_EXPONENTIAL_BUCKET);
     }
 
     /**
@@ -158,15 +159,28 @@ public abstract class Base2ExponentialHistogram implements Histogram {
      */
     @Override
     public void recordDouble(double value) {
-        if (baseUnit != null) {
-            value = TimeUtils.nanosToUnit(value, baseUnit);
-        }
-
-        if (value <= zeroThreshold) {
+        double valueToRecord = baseUnit != null ? TimeUtils.nanosToUnit(value, baseUnit) : value;
+        if (valueToRecord <= zeroThreshold) {
             zeroCount.increment();
             return;
         }
-        recordToHistogram(value);
+        recordToHistogram(valueToRecord);
+        if (exemplarSampler != null) {
+            // record "raw" value (nanos in case of time-based histogram)
+            exemplarSampler.sampleMeasurement(value);
+        }
+    }
+
+    @Override
+    public List<Exemplar> exemplars() {
+        return exemplarSampler != null ? exemplarSampler.collectExemplars() : Collections.emptyList();
+    }
+
+    @Override
+    public void closingExemplarsRollover() {
+        if (exemplarSampler != null) {
+            exemplarSampler.close();
+        }
     }
 
     private synchronized void recordToHistogram(final double value) {
