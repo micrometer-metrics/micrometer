@@ -64,6 +64,53 @@ MeterRegistry registry = StatsdMeterRegistry.builder(StatsdConfig.DEFAULT) <2>
 <1> Define what to do with lines.
 <2> The flavor configuration option determines the structure of the line for the default line builder. It has no effect if you override the line builder with a customization.
 
+=== Unix Domain Socket (UDS) Support
+
+The StatsD registry supports sending metrics over Unix domain socket datagrams.
+
+To enable this transport, configure the `protocol` as `uds_datagram` and set the `host` to the absolute path of the socket file.
+
+[NOTE]
+====
+The `host` value must be the plain absolute path (for example, `/var/run/datadog/dsd.socket`). Do not prefix it with `unix://`.
+====
+
+*Java configuration example:*
+
+[source,java]
+----
+StatsdConfig config = new StatsdConfig() {
+    @Override
+    public String get(String k) {
+        return null; // accept defaults
+    }
+
+    @Override
+    public StatsdProtocol protocol() {
+        return StatsdProtocol.UDS_DATAGRAM;
+    }
+
+    @Override
+    public String host() {
+        return "/var/run/datadog/dsd.socket";
+    }
+};
+
+MeterRegistry registry = new StatsdMeterRegistry(config, Clock.SYSTEM);
+----
+
+*Spring Boot configuration example (`application.yml`):*
+
+[source,yaml]
+----
+management:
+  metrics:
+    export:
+      statsd:
+        protocol: uds_datagram
+        host: /var/run/datadog/dsd.socket
+----
+
 === Using Apache Kafka for Line Sink
 
 You can also use Apache Kafka for line sink, as follows:
