@@ -99,17 +99,7 @@ StatsdConfig config = new StatsdConfig() {
 MeterRegistry registry = new StatsdMeterRegistry(config, Clock.SYSTEM);
 ----
 
-*Spring Boot configuration example (`application.yml`):*
 
-[source,yaml]
-----
-management:
-  metrics:
-    export:
-      statsd:
-        protocol: uds_datagram
-        host: /var/run/datadog/dsd.socket
-----
 
 === Using Apache Kafka for Line Sink
 
