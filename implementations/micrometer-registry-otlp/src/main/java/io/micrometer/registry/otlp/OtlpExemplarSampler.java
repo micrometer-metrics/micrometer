@@ -16,11 +16,13 @@
 package io.micrometer.registry.otlp;
 
 import com.google.protobuf.ByteString;
+import io.micrometer.common.util.internal.logging.WarnThenDebugLogger;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.step.StepValue;
 import io.opentelemetry.proto.common.v1.AnyValue;
 import io.opentelemetry.proto.common.v1.KeyValue;
 import io.opentelemetry.proto.metrics.v1.Exemplar;
+import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -32,6 +34,8 @@ import java.util.function.DoubleUnaryOperator;
 import java.util.function.Supplier;
 
 class OtlpExemplarSampler implements ExemplarSampler {
+
+    private static final WarnThenDebugLogger LOGGER = new WarnThenDebugLogger(OtlpExemplarSampler.class);
 
     private final ExemplarContextProvider exemplarContextProvider;
 
@@ -140,32 +144,37 @@ class OtlpExemplarSampler implements ExemplarSampler {
 
         private static Exemplar createExemplar(double measurement, DoubleUnaryOperator converter,
                 OtlpExemplarContext exemplarContext, Clock clock) {
-            String traceId = exemplarContext.getTraceId();
-            String spanId = exemplarContext.getSpanId();
+            ByteString traceId = fromHex(exemplarContext.getTraceId());
+            ByteString spanId = fromHex(exemplarContext.getSpanId());
 
             Exemplar.Builder builder = Exemplar.newBuilder()
                 .setAsDouble(converter.applyAsDouble(measurement))
                 .setTimeUnixNano(TimeUnit.MILLISECONDS.toNanos(clock.wallTime()));
 
             if (traceId != null) {
-                builder.setTraceId(ByteString.fromHex(traceId));
-                // .addFilteredAttributes(KeyValue.newBuilder()
-                // .setKey("originalTraceId")
-                // .setValue(AnyValue.newBuilder().setStringValue(traceId))
-                // .build());
+                builder.setTraceId(traceId);
             }
             if (spanId != null) {
-                builder.setSpanId(ByteString.fromHex(spanId));
-                // .addFilteredAttributes(KeyValue.newBuilder()
-                // .setKey("originalSpanId")
-                // .setValue(AnyValue.newBuilder().setStringValue(spanId))
-                // .build());
+                builder.setSpanId(spanId);
             }
             for (io.micrometer.common.KeyValue keyValue : exemplarContext.getKeyValues()) {
                 builder.addFilteredAttributes(toOtelKeyValue(keyValue));
             }
 
             return builder.build();
+        }
+
+        private static @Nullable ByteString fromHex(@Nullable String value) {
+            if (value == null) {
+                return null;
+            }
+            try {
+                return ByteString.fromHex(value);
+            }
+            catch (Exception e) {
+                LOGGER.log("Unable to parse value!", e);
+                return null;
+            }
         }
 
         private static KeyValue toOtelKeyValue(io.micrometer.common.KeyValue micrometerKeyValue) {

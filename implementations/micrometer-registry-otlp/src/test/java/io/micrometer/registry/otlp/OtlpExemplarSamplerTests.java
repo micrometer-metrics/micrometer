@@ -153,6 +153,40 @@ class OtlpExemplarSamplerTests {
             assertThat(sampler.collectExemplars()).isEmpty();
         }
 
+        @Test
+        void nonHexEncodedTraceIdShouldNotThrowException() {
+            assertThat(sampler.collectExemplars()).isEmpty();
+            contextProvider.setExemplar("abcxyz", "00f067aa0ba902b7", KeyValues.empty());
+            sampler.sampleMeasurement(42.0);
+
+            assertThat(sampler.collectExemplars()).isEmpty();
+            clock.add(STEP);
+
+            assertThat(sampler.collectExemplars()).singleElement().satisfies(exemplar -> {
+                assertThat(encodeHexString(exemplar.getTraceId())).isEqualTo("");
+                assertThat(encodeHexString(exemplar.getSpanId())).isEqualTo("00f067aa0ba902b7");
+                assertThat(exemplar.getAsDouble()).isEqualTo(42.0);
+                assertThat(exemplar.getFilteredAttributesList()).isEmpty();
+            });
+        }
+
+        @Test
+        void nonHexEncodedSpanIdShouldNotThrowException() {
+            assertThat(sampler.collectExemplars()).isEmpty();
+            contextProvider.setExemplar("4bf92f3577b34da6a3ce929d0e0e4736", "abcxyz", KeyValues.empty());
+            sampler.sampleMeasurement(42.0);
+
+            assertThat(sampler.collectExemplars()).isEmpty();
+            clock.add(STEP);
+
+            assertThat(sampler.collectExemplars()).singleElement().satisfies(exemplar -> {
+                assertThat(encodeHexString(exemplar.getTraceId())).isEqualTo("4bf92f3577b34da6a3ce929d0e0e4736");
+                assertThat(encodeHexString(exemplar.getSpanId())).isEqualTo("");
+                assertThat(exemplar.getAsDouble()).isEqualTo(42.0);
+                assertThat(exemplar.getFilteredAttributesList()).isEmpty();
+            });
+        }
+
         @RepeatedTest(10)
         void multipleRecordingsShouldBeRandomlySampled() {
             assertThat(sampler.collectExemplars()).isEmpty();

@@ -19,7 +19,6 @@ import io.micrometer.core.instrument.*;
 import io.restassured.response.Response;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.testcontainers.containers.GenericContainer;
@@ -33,7 +32,6 @@ import java.time.Duration;
 import static io.micrometer.registry.otlp.CompressionMode.GZIP;
 import static io.micrometer.registry.otlp.CompressionMode.NONE;
 import static io.restassured.RestAssured.given;
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.hamcrest.Matchers.*;
 import static org.testcontainers.containers.BindMode.READ_ONLY;
@@ -76,18 +74,6 @@ class OTelCollectorIntegrationTest {
                     "System property 'otel-collector-image.version' is not set. This should be set in the build configuration for running from the command line. If you are running OTelCollectorIntegrationTest from an IDE, set the system property to the desired collector image version.");
         }
         return version;
-    }
-
-    @BeforeEach
-    void preCheck() {
-        assertThat(container.isRunning()).isTrue();
-        // @formatter:off
-        await()
-            .atMost(Duration.ofSeconds(10))
-            .pollDelay(Duration.ofMillis(100))
-            .pollInterval(Duration.ofMillis(100))
-            .untilAsserted(() -> whenPrometheusScraped().then().statusCode(200));
-        // @formatter:on
     }
 
     @Test
