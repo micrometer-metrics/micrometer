@@ -15,17 +15,18 @@
  */
 package io.micrometer.registry.otlp;
 
+import com.google.protobuf.ByteString;
 import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.ipc.http.HttpSender;
-import io.opentelemetry.proto.metrics.v1.ExponentialHistogramDataPoint;
-import io.opentelemetry.proto.metrics.v1.HistogramDataPoint;
-import io.opentelemetry.proto.metrics.v1.Metric;
-import io.opentelemetry.proto.metrics.v1.NumberDataPoint;
+import io.opentelemetry.proto.metrics.v1.*;
+import org.apache.commons.codec.binary.Hex;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -57,6 +58,10 @@ abstract class OtlpMeterRegistryTest {
 
     protected MockClock clock;
 
+    protected ExemplarTestRecorder.TestExemplarContextProvider contextProvider;
+
+    protected ExemplarTestRecorder recorder;
+
     private HttpSender mockHttpSender;
 
     OtlpMeterRegistry registry;
@@ -73,8 +78,18 @@ abstract class OtlpMeterRegistryTest {
         OtlpConfig config = otlpConfig();
         this.mockHttpSender = mock(HttpSender.class);
         OtlpMetricsSender metricsSender = new OtlpHttpMetricsSender(mockHttpSender);
-        this.registry = OtlpMeterRegistry.builder(config).clock(clock).metricsSender(metricsSender).build();
-        this.registryWithExponentialHistogram = new OtlpMeterRegistry(exponentialHistogramOtlpConfig(), clock);
+        this.contextProvider = new ExemplarTestRecorder.TestExemplarContextProvider();
+        this.recorder = new ExemplarTestRecorder(contextProvider, clock);
+        this.registry = OtlpMeterRegistry.builder(config)
+            .clock(clock)
+            .metricsSender(metricsSender)
+            .exemplarContextProvider(contextProvider)
+            .build();
+        this.registryWithExponentialHistogram = OtlpMeterRegistry.builder(exponentialHistogramOtlpConfig())
+            .clock(clock)
+            .metricsSender(metricsSender)
+            .exemplarContextProvider(contextProvider)
+            .build();
     }
 
     // If the service.name was not specified, SDKs MUST fallback to 'unknown_service'
@@ -195,6 +210,119 @@ abstract class OtlpMeterRegistryTest {
     }
 
     @Test
+    void counterShouldWriteExemplars() {
+        Counter counter = Counter.builder("test.counter").register(registry);
+        Exemplar exemplar = recorder.record("4bf92f3577b34da6a3ce929d0e000001", "00f067aa0b000001",
+                () -> counter.increment(3), 3);
+        stepOverNStep(1);
+
+        assertThat(writeToMetrics(counter)).singleElement().satisfies(metric -> {
+            assertThat(metric.getSum().getDataPoints(0).getExemplarsList()).singleElement().isEqualTo(exemplar);
+        });
+    }
+
+    @Test
+    void counterShouldRollOverExemplars() {
+        Counter counter = Counter.builder("test.counter").register(registry);
+        Exemplar exemplar = recorder.record("4bf92f3577b34da6a3ce929d0e000001", "00f067aa0b000001",
+                () -> counter.increment(3), 3);
+        registry.close();
+
+        assertThat(writeToMetrics(counter)).singleElement().satisfies(metric -> {
+            assertThat(metric.getSum().getDataPoints(0).getExemplarsList()).singleElement().isEqualTo(exemplar);
+        });
+    }
+
+    @RepeatedTest(10)
+    void multipleCounterRecordingsShouldBeRandomlySampled() {
+        Counter counter = Counter.builder("test.counter").register(registry);
+        recorder.recordRandomMeasurements(5, counter::increment);
+        stepOverNStep(1);
+
+        assertThat(writeToMetrics(counter)).singleElement().satisfies(metric -> {
+            assertThat(metric.getSum().getDataPointsList()).hasSize(1);
+            assertThat(metric.getSum().getDataPoints(0).getExemplarsList()).doesNotHaveDuplicates()
+                .hasSizeBetween(1, 5);
+        });
+    }
+
+    @Test
+    void distributionWithoutHistogramShouldWriteExemplars() {
+        Timer timer = Timer.builder("timer").description(METER_DESCRIPTION).tags(Tags.of(meterTag)).register(registry);
+        Exemplar exemplar1 = recorder.record("4bf92f3577b34da6a3ce929d0e000001", "00f067aa0b000001",
+                () -> timer.record(Duration.ofMillis(42)), 42);
+
+        DistributionSummary ds = DistributionSummary.builder("ds")
+            .description(METER_DESCRIPTION)
+            .tags(Tags.of(meterTag))
+            .register(registry);
+        Exemplar exemplar2 = recorder.record("4bf92f3577b34da6a3ce929d0e000003", "00f067aa0b000003",
+                () -> ds.record(44), 44);
+        stepOverNStep(1);
+
+        assertThat(writeToMetrics(timer)).filteredOn(Metric::hasHistogram).singleElement().satisfies(metric -> {
+            assertThat(metric.getHistogram().getDataPointsList()).hasSize(1);
+            assertThat(metric.getHistogram().getDataPoints(0).getExemplarsList()).singleElement().isEqualTo(exemplar1);
+        });
+
+        assertThat(writeToMetrics(ds)).filteredOn(Metric::hasHistogram).singleElement().satisfies(metric -> {
+            assertThat(metric.getHistogram().getDataPointsList()).hasSize(1);
+            assertThat(metric.getHistogram().getDataPoints(0).getExemplarsList()).singleElement().isEqualTo(exemplar2);
+        });
+    }
+
+    @Test
+    void distributionWithoutHistogramShouldRollOverExemplars() {
+        Timer timer = Timer.builder("timer").description(METER_DESCRIPTION).tags(Tags.of(meterTag)).register(registry);
+        Exemplar exemplar1 = recorder.record("4bf92f3577b34da6a3ce929d0e000001", "00f067aa0b000001",
+                () -> timer.record(Duration.ofMillis(42)), 42);
+
+        DistributionSummary ds = DistributionSummary.builder("ds")
+            .description(METER_DESCRIPTION)
+            .tags(Tags.of(meterTag))
+            .register(registry);
+        Exemplar exemplar2 = recorder.record("4bf92f3577b34da6a3ce929d0e000003", "00f067aa0b000003",
+                () -> ds.record(44), 44);
+
+        registry.close();
+
+        assertThat(writeToMetrics(timer)).filteredOn(Metric::hasHistogram).singleElement().satisfies(metric -> {
+            assertThat(metric.getHistogram().getDataPointsList()).hasSize(1);
+            assertThat(metric.getHistogram().getDataPoints(0).getExemplarsList()).singleElement().isEqualTo(exemplar1);
+        });
+
+        assertThat(writeToMetrics(ds)).filteredOn(Metric::hasHistogram).singleElement().satisfies(metric -> {
+            assertThat(metric.getHistogram().getDataPointsList()).hasSize(1);
+            assertThat(metric.getHistogram().getDataPoints(0).getExemplarsList()).singleElement().isEqualTo(exemplar2);
+        });
+    }
+
+    @RepeatedTest(10)
+    void multipleDistributionsWithoutHistogramRecordingsShouldBeRandomlySampled() {
+        Timer timer = Timer.builder("timer").description(METER_DESCRIPTION).tags(Tags.of(meterTag)).register(registry);
+        recorder.recordRandomMeasurements(5, index -> timer.record(Duration.ofMillis(index)));
+
+        DistributionSummary ds = DistributionSummary.builder("ds")
+            .description(METER_DESCRIPTION)
+            .tags(Tags.of(meterTag))
+            .register(registry);
+        recorder.recordRandomMeasurements(5, ds::record);
+        stepOverNStep(1);
+
+        assertThat(writeToMetrics(timer)).filteredOn(Metric::hasHistogram).singleElement().satisfies(metric -> {
+            assertThat(metric.getHistogram().getDataPointsList()).hasSize(1);
+            assertThat(metric.getHistogram().getDataPoints(0).getExemplarsList()).singleElement()
+                .satisfies(exemplar -> assertThat(exemplar.getAsDouble()).isBetween(1.0, 5.0));
+        });
+
+        assertThat(writeToMetrics(ds)).filteredOn(Metric::hasHistogram).singleElement().satisfies(metric -> {
+            assertThat(metric.getHistogram().getDataPointsList()).hasSize(1);
+            assertThat(metric.getHistogram().getDataPoints(0).getExemplarsList()).singleElement()
+                .satisfies(exemplar -> assertThat(exemplar.getAsDouble()).isBetween(1.0, 5.0));
+        });
+    }
+
+    @Test
     void distributionWithPercentileShouldWriteSummary() {
         Timer.Builder timer = Timer.builder("timer")
             .description(METER_DESCRIPTION)
@@ -260,6 +388,236 @@ abstract class OtlpMeterRegistryTest {
             assertThat(metric.getDataCase().getNumber()).isEqualTo(Metric.DataCase.EXPONENTIAL_HISTOGRAM.getNumber());
         });
         assertMaxGaugeMetrics(dsExpoMetrics);
+    }
+
+    @Test
+    void distributionWithPercentileHistogramShouldWriteExemplars() {
+        Timer timer = Timer.builder("timer")
+            .description(METER_DESCRIPTION)
+            .tags(Tags.of(meterTag))
+            .publishPercentileHistogram()
+            .register(registry);
+
+        Exemplar exemplar1 = recorder.record("4bf92f3577b34da6a3ce929d0e000001", "00f067aa0b000001",
+                () -> timer.record(Duration.ofMillis(42)), 42);
+
+        DistributionSummary ds = DistributionSummary.builder("ds")
+            .description(METER_DESCRIPTION)
+            .tags(Tags.of(meterTag))
+            .publishPercentileHistogram()
+            .register(registry);
+
+        Exemplar exemplar2 = recorder.record("4bf92f3577b34da6a3ce929d0e000003", "00f067aa0b000003",
+                () -> ds.record(44), 44);
+        stepOverNStep(1);
+
+        assertThat(writeToMetrics(timer)).filteredOn(Metric::hasHistogram).singleElement().satisfies(metric -> {
+            assertThat(metric.getHistogram().getDataPointsList()).hasSize(1);
+            assertThat(metric.getHistogram().getDataPoints(0).getExemplarsList()).singleElement().isEqualTo(exemplar1);
+        });
+
+        assertThat(writeToMetrics(ds)).filteredOn(Metric::hasHistogram).singleElement().satisfies(metric -> {
+            assertThat(metric.getHistogram().getDataPointsList()).hasSize(1);
+            assertThat(metric.getHistogram().getDataPoints(0).getExemplarsList()).singleElement().isEqualTo(exemplar2);
+        });
+    }
+
+    @Test
+    void distributionWithExponentialHistogramShouldWriteExemplars() {
+        Timer timer = Timer.builder("timer")
+            .description(METER_DESCRIPTION)
+            .tags(Tags.of(meterTag))
+            .publishPercentileHistogram()
+            .register(registryWithExponentialHistogram);
+
+        Exemplar exemplar1 = recorder.record("4bf92f3577b34da6a3ce929d0e000001", "00f067aa0b000001",
+                () -> timer.record(Duration.ofMillis(42)), 42);
+
+        DistributionSummary ds = DistributionSummary.builder("ds")
+            .description(METER_DESCRIPTION)
+            .tags(Tags.of(meterTag))
+            .publishPercentileHistogram()
+            .register(registryWithExponentialHistogram);
+
+        Exemplar exemplar2 = recorder.record("4bf92f3577b34da6a3ce929d0e000003", "00f067aa0b000003",
+                () -> ds.record(44), 44);
+        stepOverNStep(1);
+
+        assertThat(writeToMetrics(timer)).filteredOn(Metric::hasExponentialHistogram)
+            .singleElement()
+            .satisfies(metric -> {
+                assertThat(metric.getExponentialHistogram().getDataPointsList()).hasSize(1);
+                assertThat(metric.getExponentialHistogram().getDataPoints(0).getExemplarsList()).singleElement()
+                    .isEqualTo(exemplar1);
+            });
+
+        assertThat(writeToMetrics(ds)).filteredOn(Metric::hasExponentialHistogram).singleElement().satisfies(metric -> {
+            assertThat(metric.getExponentialHistogram().getDataPointsList()).hasSize(1);
+            assertThat(metric.getExponentialHistogram().getDataPoints(0).getExemplarsList()).singleElement()
+                .isEqualTo(exemplar2);
+        });
+    }
+
+    @Test
+    void distributionWithPercentileHistogramShouldRollOverExemplars() {
+        Timer timer = Timer.builder("timer")
+            .description(METER_DESCRIPTION)
+            .tags(Tags.of(meterTag))
+            .publishPercentileHistogram()
+            .register(registry);
+
+        Exemplar exemplar1 = recorder.record("4bf92f3577b34da6a3ce929d0e000001", "00f067aa0b000001",
+                () -> timer.record(Duration.ofMillis(42)), 42);
+
+        DistributionSummary ds = DistributionSummary.builder("ds")
+            .description(METER_DESCRIPTION)
+            .tags(Tags.of(meterTag))
+            .publishPercentileHistogram()
+            .register(registry);
+
+        Exemplar exemplar2 = recorder.record("4bf92f3577b34da6a3ce929d0e000003", "00f067aa0b000003",
+                () -> ds.record(44), 44);
+
+        registry.close();
+
+        assertThat(writeToMetrics(timer)).filteredOn(Metric::hasHistogram).singleElement().satisfies(metric -> {
+            assertThat(metric.getHistogram().getDataPointsList()).hasSize(1);
+            assertThat(metric.getHistogram().getDataPoints(0).getExemplarsList()).singleElement().isEqualTo(exemplar1);
+        });
+
+        assertThat(writeToMetrics(ds)).filteredOn(Metric::hasHistogram).singleElement().satisfies(metric -> {
+            assertThat(metric.getHistogram().getDataPointsList()).hasSize(1);
+            assertThat(metric.getHistogram().getDataPoints(0).getExemplarsList()).singleElement().isEqualTo(exemplar2);
+        });
+    }
+
+    @Test
+    void distributionWithExponentialHistogramShouldRollOverExemplars() {
+        Timer timer = Timer.builder("timer")
+            .description(METER_DESCRIPTION)
+            .tags(Tags.of(meterTag))
+            .publishPercentileHistogram()
+            .register(registryWithExponentialHistogram);
+
+        Exemplar exemplar1 = recorder.record("4bf92f3577b34da6a3ce929d0e000001", "00f067aa0b000001",
+                () -> timer.record(Duration.ofMillis(42)), 42);
+
+        DistributionSummary ds = DistributionSummary.builder("ds")
+            .description(METER_DESCRIPTION)
+            .tags(Tags.of(meterTag))
+            .publishPercentileHistogram()
+            .register(registryWithExponentialHistogram);
+
+        Exemplar exemplar2 = recorder.record("4bf92f3577b34da6a3ce929d0e000003", "00f067aa0b000003",
+                () -> ds.record(44), 44);
+
+        registryWithExponentialHistogram.close();
+
+        assertThat(writeToMetrics(timer)).filteredOn(Metric::hasExponentialHistogram)
+            .singleElement()
+            .satisfies(metric -> {
+                assertThat(metric.getExponentialHistogram().getDataPointsList()).hasSize(1);
+                assertThat(metric.getExponentialHistogram().getDataPoints(0).getExemplarsList()).singleElement()
+                    .isEqualTo(exemplar1);
+            });
+
+        assertThat(writeToMetrics(ds)).filteredOn(Metric::hasExponentialHistogram).singleElement().satisfies(metric -> {
+            assertThat(metric.getExponentialHistogram().getDataPointsList()).hasSize(1);
+            assertThat(metric.getExponentialHistogram().getDataPoints(0).getExemplarsList()).singleElement()
+                .isEqualTo(exemplar2);
+        });
+    }
+
+    @Test
+    void multipleDistributionsWithPercentileHistogramShouldWriteBucketedExemplars() {
+        Timer timer = Timer.builder("timer")
+            .description(METER_DESCRIPTION)
+            .tags(Tags.of(meterTag))
+            .publishPercentileHistogram()
+            .register(registry);
+
+        // relevant buckets: 1.0, 89.478485, 111.848106, 30000.0, +Inf
+        Exemplar exemplar1 = recorder.record("4bf92f3577b34da6a3ce929d0e000001", "00f067aa0b000001",
+                () -> timer.record(Duration.ofMillis(1)), 1);
+        recorder.record("4bf92f3577b34da6a3ce929d0e000002", "00f067aa0b000002",
+                () -> timer.record(Duration.ofMillis(100)), 100);
+        // falls into the same bucket as the previous and it overwrites it
+        Exemplar exemplar2 = recorder.record("4bf92f3577b34da6a3ce929d0e000003", "00f067aa0b000003",
+                () -> timer.record(Duration.ofMillis(110)), 110);
+        Exemplar exemplar3 = recorder.record("4bf92f3577b34da6a3ce929d0e000004", "00f067aa0b000004",
+                () -> timer.record(Duration.ofSeconds(30)), 30_000);
+        recorder.record("4bf92f3577b34da6a3ce929d0e000005", "00f067aa0b000005",
+                () -> timer.record(Duration.ofSeconds(31)), 31_000);
+        // falls into the same bucket as the previous and it overwrites it
+        Exemplar exemplar4 = recorder.record("4bf92f3577b34da6a3ce929d0e000006", "00f067aa0b000006",
+                () -> timer.record(Duration.ofSeconds(42)), 42_000);
+
+        DistributionSummary ds = DistributionSummary.builder("ds")
+            .description(METER_DESCRIPTION)
+            .tags(Tags.of(meterTag))
+            .publishPercentileHistogram()
+            .register(registry);
+
+        // relevant buckets: 1.0, 85.0, 106.0, 4.2273788502251054E18, +Inf
+        Exemplar exemplar5 = recorder.record("4bf92f3577b34da6a3ce929d0e000001", "00f067aa0b000001", () -> ds.record(1),
+                1);
+        recorder.record("4bf92f3577b34da6a3ce929d0e000002", "00f067aa0b000002", () -> ds.record(90), 90);
+        // falls into the same bucket as the previous and it overwrites it
+        Exemplar exemplar6 = recorder.record("4bf92f3577b34da6a3ce929d0e000003", "00f067aa0b000003",
+                () -> ds.record(100), 100);
+        Exemplar exemplar7 = recorder.record("4bf92f3577b34da6a3ce929d0e000004", "00f067aa0b000004",
+                () -> ds.record(4.2E18), 4.2E18);
+        recorder.record("4bf92f3577b34da6a3ce929d0e000005", "00f067aa0b000005", () -> ds.record(4.3E18), 4.3E18);
+        // falls into the same bucket as the previous and it overwrites it
+        Exemplar exemplar8 = recorder.record("4bf92f3577b34da6a3ce929d0e000006", "00f067aa0b000006",
+                () -> ds.record(4.4E18), 4.4E18);
+
+        stepOverNStep(1);
+
+        assertThat(writeToMetrics(timer)).filteredOn(Metric::hasHistogram).singleElement().satisfies(metric -> {
+            assertThat(metric.getHistogram().getDataPointsList()).hasSize(1);
+            assertThat(metric.getHistogram().getDataPoints(0).getExemplarsList()).hasSize(4)
+                .containsExactly(exemplar1, exemplar2, exemplar3, exemplar4);
+        });
+
+        assertThat(writeToMetrics(ds)).filteredOn(Metric::hasHistogram).singleElement().satisfies(metric -> {
+            assertThat(metric.getHistogram().getDataPointsList()).hasSize(1);
+            assertThat(metric.getHistogram().getDataPoints(0).getExemplarsList()).hasSize(4)
+                .containsExactly(exemplar5, exemplar6, exemplar7, exemplar8);
+        });
+    }
+
+    @RepeatedTest(10)
+    void multipleDistributionsWithExponentialHistogramShouldWriteRandomlySampledExemplars() {
+        Timer timer = Timer.builder("timer")
+            .description(METER_DESCRIPTION)
+            .tags(Tags.of(meterTag))
+            .publishPercentileHistogram()
+            .register(registryWithExponentialHistogram);
+        recorder.recordRandomMeasurements(5, index -> timer.record(Duration.ofMillis(index)));
+
+        DistributionSummary ds = DistributionSummary.builder("ds")
+            .description(METER_DESCRIPTION)
+            .tags(Tags.of(meterTag))
+            .publishPercentileHistogram()
+            .register(registryWithExponentialHistogram);
+        recorder.recordRandomMeasurements(5, ds::record);
+
+        stepOverNStep(1);
+
+        assertThat(writeToMetrics(timer)).filteredOn(Metric::hasExponentialHistogram)
+            .singleElement()
+            .satisfies(metric -> {
+                assertThat(metric.getExponentialHistogram().getDataPointsList()).hasSize(1);
+                assertThat(metric.getExponentialHistogram().getDataPoints(0).getExemplarsList()).doesNotHaveDuplicates()
+                    .hasSizeBetween(1, 5);
+            });
+
+        assertThat(writeToMetrics(ds)).filteredOn(Metric::hasExponentialHistogram).singleElement().satisfies(metric -> {
+            assertThat(metric.getExponentialHistogram().getDataPointsList()).hasSize(1);
+            assertThat(metric.getExponentialHistogram().getDataPoints(0).getExemplarsList()).doesNotHaveDuplicates()
+                .hasSizeBetween(1, 5);
+        });
     }
 
     @Test
@@ -399,6 +757,42 @@ abstract class OtlpMeterRegistryTest {
     }
 
     @Test
+    void distributionWithPercentileAndHistogramShouldWriteExemplars() {
+        Timer timer = Timer.builder("timer")
+            .description(METER_DESCRIPTION)
+            .tags(Tags.of(meterTag))
+            .publishPercentiles(0.5, 0.9)
+            .publishPercentileHistogram()
+            .register(registry);
+
+        Exemplar exemplar1 = recorder.record("4bf92f3577b34da6a3ce929d0e000001", "00f067aa0b000001",
+                () -> timer.record(Duration.ofMillis(42)), 42);
+
+        DistributionSummary ds = DistributionSummary.builder("ds")
+            .description(METER_DESCRIPTION)
+            .tags(Tags.of(meterTag))
+            .publishPercentiles(0.5, 0.9)
+            .publishPercentileHistogram()
+            .register(registry);
+
+        Exemplar exemplar2 = recorder.record("4bf92f3577b34da6a3ce929d0e000003", "00f067aa0b000003",
+                () -> ds.record(44), 44);
+
+        stepOverNStep(1);
+
+        assertThat(writeToMetrics(timer)).filteredOn(Metric::hasHistogram).singleElement().satisfies(metric -> {
+            assertThat(metric.getHistogram().getDataPointsList()).hasSize(1);
+            assertThat(metric.getHistogram().getDataPoints(0).getExemplarsList()).singleElement().isEqualTo(exemplar1);
+        });
+
+        assertThat(writeToMetrics(ds)).filteredOn(Metric::hasHistogram).singleElement().satisfies(metric -> {
+            assertThat(metric.getHistogram().getDataPointsList()).hasSize(1);
+            assertThat(metric.getHistogram().getDataPointsList()).hasSize(1);
+            assertThat(metric.getHistogram().getDataPoints(0).getExemplarsList()).singleElement().isEqualTo(exemplar2);
+        });
+    }
+
+    @Test
     void distributionWithSLOShouldWriteHistogramDataPoint() {
         Timer.Builder timer = Timer.builder("timer")
             .description(METER_DESCRIPTION)
@@ -431,6 +825,130 @@ abstract class OtlpMeterRegistryTest {
             assertThat(metric.getDataCase().getNumber()).isEqualTo(Metric.DataCase.HISTOGRAM.getNumber());
         });
         assertMaxGaugeMetrics(dsExpoMetrics);
+    }
+
+    @Test
+    void distributionWithSLOSShouldWriteExemplars() {
+        Timer timer = Timer.builder("timer")
+            .description(METER_DESCRIPTION)
+            .tags(Tags.of(meterTag))
+            .serviceLevelObjectives(Duration.ofMillis(1))
+            .register(registry);
+
+        Exemplar exemplar1 = recorder.record("4bf92f3577b34da6a3ce929d0e000001", "00f067aa0b000001",
+                () -> timer.record(Duration.ofMillis(42)), 42);
+
+        DistributionSummary ds = DistributionSummary.builder("ds")
+            .description(METER_DESCRIPTION)
+            .tags(Tags.of(meterTag))
+            .serviceLevelObjectives(1.0)
+            .register(registry);
+
+        Exemplar exemplar2 = recorder.record("4bf92f3577b34da6a3ce929d0e000003", "00f067aa0b000003",
+                () -> ds.record(44), 44);
+
+        stepOverNStep(1);
+
+        assertThat(writeToMetrics(timer)).filteredOn(Metric::hasHistogram).singleElement().satisfies(metric -> {
+            assertThat(metric.getHistogram().getDataPointsList()).hasSize(1);
+            assertThat(metric.getHistogram().getDataPoints(0).getExemplarsList()).singleElement().isEqualTo(exemplar1);
+        });
+
+        assertThat(writeToMetrics(ds)).filteredOn(Metric::hasHistogram).singleElement().satisfies(metric -> {
+            assertThat(metric.getHistogram().getDataPointsList()).hasSize(1);
+            assertThat(metric.getHistogram().getDataPoints(0).getExemplarsList()).singleElement().isEqualTo(exemplar2);
+        });
+    }
+
+    @Test
+    void distributionWithSLOSShouldRollOverExemplars() {
+        Timer timer = Timer.builder("timer")
+            .description(METER_DESCRIPTION)
+            .tags(Tags.of(meterTag))
+            .serviceLevelObjectives(Duration.ofMillis(1))
+            .register(registry);
+
+        Exemplar exemplar1 = recorder.record("4bf92f3577b34da6a3ce929d0e000001", "00f067aa0b000001",
+                () -> timer.record(Duration.ofMillis(42)), 42);
+
+        DistributionSummary ds = DistributionSummary.builder("ds")
+            .description(METER_DESCRIPTION)
+            .tags(Tags.of(meterTag))
+            .serviceLevelObjectives(1.0)
+            .register(registry);
+
+        Exemplar exemplar2 = recorder.record("4bf92f3577b34da6a3ce929d0e000003", "00f067aa0b000003",
+                () -> ds.record(44), 44);
+
+        registry.close();
+
+        assertThat(writeToMetrics(timer)).filteredOn(Metric::hasHistogram).singleElement().satisfies(metric -> {
+            assertThat(metric.getHistogram().getDataPointsList()).hasSize(1);
+            assertThat(metric.getHistogram().getDataPoints(0).getExemplarsList()).singleElement().isEqualTo(exemplar1);
+        });
+
+        assertThat(writeToMetrics(ds)).filteredOn(Metric::hasHistogram).singleElement().satisfies(metric -> {
+            assertThat(metric.getHistogram().getDataPointsList()).hasSize(1);
+            assertThat(metric.getHistogram().getDataPoints(0).getExemplarsList()).singleElement().isEqualTo(exemplar2);
+        });
+    }
+
+    @Test
+    void multipleDistributionsWithSLOSShouldWriteBucketedExemplars() {
+        Timer timer = Timer.builder("timer")
+            .description(METER_DESCRIPTION)
+            .tags(Tags.of(meterTag))
+            .serviceLevelObjectives(Duration.ofMillis(1), Duration.ofMillis(110), Duration.ofSeconds(1))
+            .register(registry);
+
+        Exemplar exemplar1 = recorder.record("4bf92f3577b34da6a3ce929d0e000001", "00f067aa0b000001",
+                () -> timer.record(Duration.ofMillis(1)), 1);
+        recorder.record("4bf92f3577b34da6a3ce929d0e000002", "00f067aa0b000002",
+                () -> timer.record(Duration.ofMillis(100)), 100);
+        // falls into the same bucket as the previous and it overwrites it
+        Exemplar exemplar2 = recorder.record("4bf92f3577b34da6a3ce929d0e000003", "00f067aa0b000003",
+                () -> timer.record(Duration.ofMillis(110)), 110);
+        Exemplar exemplar3 = recorder.record("4bf92f3577b34da6a3ce929d0e000004", "00f067aa0b000004",
+                () -> timer.record(Duration.ofSeconds(1)), 1_000);
+        recorder.record("4bf92f3577b34da6a3ce929d0e000005", "00f067aa0b000005",
+                () -> timer.record(Duration.ofSeconds(2)), 2_000);
+        // falls into the same bucket as the previous and it overwrites it
+        Exemplar exemplar4 = recorder.record("4bf92f3577b34da6a3ce929d0e000006", "00f067aa0b000006",
+                () -> timer.record(Duration.ofSeconds(3)), 3_000);
+
+        DistributionSummary ds = DistributionSummary.builder("ds")
+            .description(METER_DESCRIPTION)
+            .tags(Tags.of(meterTag))
+            .serviceLevelObjectives(1.0, 110, 1_000, 3_000)
+            .register(registry);
+
+        // relevant buckets: 1.0, 85.0, 106.0, 4.2273788502251054E18, +Inf
+        Exemplar exemplar5 = recorder.record("4bf92f3577b34da6a3ce929d0e000001", "00f067aa0b000001", () -> ds.record(1),
+                1);
+        recorder.record("4bf92f3577b34da6a3ce929d0e000002", "00f067aa0b000002", () -> ds.record(90), 90);
+        // falls into the same bucket as the previous and it overwrites it
+        Exemplar exemplar6 = recorder.record("4bf92f3577b34da6a3ce929d0e000003", "00f067aa0b000003",
+                () -> ds.record(100), 100);
+        Exemplar exemplar7 = recorder.record("4bf92f3577b34da6a3ce929d0e000004", "00f067aa0b000004",
+                () -> ds.record(1_000), 1_000);
+        recorder.record("4bf92f3577b34da6a3ce929d0e000005", "00f067aa0b000005", () -> ds.record(2_000), 2_000);
+        // falls into the same bucket as the previous and it overwrites it
+        Exemplar exemplar8 = recorder.record("4bf92f3577b34da6a3ce929d0e000006", "00f067aa0b000006",
+                () -> ds.record(3_000), 3_000);
+
+        stepOverNStep(1);
+
+        assertThat(writeToMetrics(timer)).filteredOn(Metric::hasHistogram).singleElement().satisfies(metric -> {
+            assertThat(metric.getHistogram().getDataPointsList()).hasSize(1);
+            assertThat(metric.getHistogram().getDataPoints(0).getExemplarsList()).hasSize(4)
+                .containsExactly(exemplar1, exemplar2, exemplar3, exemplar4);
+        });
+
+        assertThat(writeToMetrics(ds)).filteredOn(Metric::hasHistogram).singleElement().satisfies(metric -> {
+            assertThat(metric.getHistogram().getDataPointsList()).hasSize(1);
+            assertThat(metric.getHistogram().getDataPoints(0).getExemplarsList()).hasSize(4)
+                .containsExactly(exemplar5, exemplar6, exemplar7, exemplar8);
+        });
     }
 
     @Test
@@ -959,6 +1477,10 @@ abstract class OtlpMeterRegistryTest {
         else {
             assertThat(metrics).filteredOn(Metric::hasGauge).isEmpty();
         }
+    }
+
+    String encodeHexString(ByteString byteString) {
+        return Hex.encodeHexString(byteString.toByteArray());
     }
 
 }

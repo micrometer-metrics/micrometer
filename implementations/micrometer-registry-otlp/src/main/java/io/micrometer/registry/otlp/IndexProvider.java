@@ -13,8 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package io.micrometer.registry.otlp;
 
-@NullMarked
-package io.micrometer.registry.otlp.internal;
+interface IndexProvider {
 
-import org.jspecify.annotations.NullMarked;
+    int getIndexForValue(final double value);
+
+}

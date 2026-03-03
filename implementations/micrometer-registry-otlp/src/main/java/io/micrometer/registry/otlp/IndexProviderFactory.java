@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.registry.otlp.internal;
+package io.micrometer.registry.otlp;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;

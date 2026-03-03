@@ -469,7 +469,7 @@ subprojects {
                     classExcludes = []
                     compatibilityChangeExcludes = [ "METHOD_NEW_DEFAULT" ]
 
-                    packageExcludes = ['io.micrometer.shaded.*', 'io.micrometer.statsd.internal', 'io.micrometer.core.lang']
+                    packageExcludes = ['io.micrometer.shaded.*', 'io.micrometer.statsd.internal', 'io.micrometer.core.lang', 'io.micrometer.registry.otlp.internal']
 
                     fieldExcludes = []
                     methodExcludes = []

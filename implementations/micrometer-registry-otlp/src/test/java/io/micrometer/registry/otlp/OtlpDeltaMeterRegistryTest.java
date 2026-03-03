@@ -17,15 +17,12 @@ package io.micrometer.registry.otlp;
 
 import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.distribution.CountAtBucket;
 import io.micrometer.core.instrument.distribution.HistogramSnapshot;
 import io.micrometer.core.instrument.util.TimeUtils;
-import io.opentelemetry.proto.metrics.v1.ExponentialHistogramDataPoint;
-import io.opentelemetry.proto.metrics.v1.HistogramDataPoint;
-import io.opentelemetry.proto.metrics.v1.Metric;
-import io.opentelemetry.proto.metrics.v1.NumberDataPoint;
-import io.opentelemetry.proto.metrics.v1.SummaryDataPoint;
+import io.opentelemetry.proto.metrics.v1.*;
 import io.opentelemetry.proto.metrics.v1.SummaryDataPoint.ValueAtQuantile;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.BeforeEach;
@@ -125,15 +122,23 @@ class OtlpDeltaMeterRegistryTest extends OtlpMeterRegistryTest {
             .description(METER_DESCRIPTION)
             .tags(Tags.of(meterTag))
             .register(registry);
-        counter.increment();
-        counter.increment();
-        assertSum(writeToMetric(counter), 0, TimeUnit.MINUTES.toNanos(1), 0);
-        stepOverNStep(1);
-        assertSum(writeToMetric(counter), TimeUnit.MINUTES.toNanos(1), TimeUnit.MINUTES.toNanos(2), 2);
+
+        Exemplar e1 = recorder.record("4bf92f3577b34da6a3ce929d0e000001", "00f067aa0b000001", counter::increment, 1);
+        Exemplar e2 = recorder.record("4bf92f3577b34da6a3ce929d0e000002", "00f067aa0b000002", counter::increment, 1);
+        Metric metric = writeToMetric(counter);
+        assertSum(metric, 0, TimeUnit.MINUTES.toNanos(1), 0);
+        assertThat(metric.getSum().getDataPoints(0).getExemplarsList()).isEmpty();
 
         stepOverNStep(1);
-        counter.increment();
+        metric = writeToMetric(counter);
+        assertSum(metric, TimeUnit.MINUTES.toNanos(1), TimeUnit.MINUTES.toNanos(2), 2);
+        assertThat(metric.getSum().getDataPoints(0).getExemplarsList()).hasSizeBetween(1, 2).containsAnyOf(e1, e2);
+
+        stepOverNStep(1);
+        Exemplar e3 = recorder.record("4bf92f3577b34da6a3ce929d0e000003", "00f067aa0b000003", counter::increment, 1);
+        metric = writeToMetric(counter);
         assertSum(writeToMetric(counter), TimeUnit.MINUTES.toNanos(2), TimeUnit.MINUTES.toNanos(3), 1);
+        assertThat(metric.getSum().getDataPoints(0).getExemplarsList()).singleElement().isEqualTo(e3);
     }
 
     @Test

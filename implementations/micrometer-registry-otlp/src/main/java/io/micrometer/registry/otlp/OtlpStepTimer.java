@@ -20,14 +20,15 @@ import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.distribution.Histogram;
 import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import io.micrometer.core.instrument.util.TimeUtils;
-import io.micrometer.registry.otlp.internal.Base2ExponentialHistogram;
-import io.micrometer.registry.otlp.internal.ExponentialHistogramSnapShot;
+import io.opentelemetry.proto.metrics.v1.Exemplar;
 import org.jspecify.annotations.Nullable;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.LongAdder;
 
-class OtlpStepTimer extends AbstractTimer implements OtlpHistogramSupport {
+class OtlpStepTimer extends AbstractTimer implements OtlpHistogramSupport, OtlpExemplarsSupport {
 
     private final LongAdder count = new LongAdder();
 
@@ -37,6 +38,8 @@ class OtlpStepTimer extends AbstractTimer implements OtlpHistogramSupport {
 
     private final StepMax max;
 
+    private final @Nullable ExemplarSampler exemplarSampler;
+
     /**
      * Create a new {@code OtlpStepTimer}.
      * @param id ID
@@ -44,11 +47,18 @@ class OtlpStepTimer extends AbstractTimer implements OtlpHistogramSupport {
      * @param pauseDetector pause detector
      * @param otlpConfig config of the registry
      */
-    OtlpStepTimer(Id id, Clock clock, PauseDetector pauseDetector, Histogram histogram, OtlpConfig otlpConfig) {
+    OtlpStepTimer(Id id, Clock clock, PauseDetector pauseDetector, Histogram histogram, OtlpConfig otlpConfig,
+            @Nullable OtlpExemplarSamplerFactory exemplarSamplerFactory) {
         super(id, clock, pauseDetector, otlpConfig.baseTimeUnit(), histogram);
         countTotal = new OtlpStepTuple2<>(clock, otlpConfig.step().toMillis(), 0L, 0L, count::sumThenReset,
                 total::sumThenReset);
         max = new StepMax(clock, otlpConfig.step().toMillis());
+        if (histogram instanceof OtlpExemplarsSupport) {
+            this.exemplarSampler = null;
+        }
+        else {
+            this.exemplarSampler = exemplarSamplerFactory != null ? exemplarSamplerFactory.create(1, true) : null;
+        }
     }
 
     @Override
@@ -57,6 +67,22 @@ class OtlpStepTimer extends AbstractTimer implements OtlpHistogramSupport {
         count.add(1L);
         total.add(nanoAmount);
         max.record((double) nanoAmount);
+        if (exemplarSampler != null) {
+            exemplarSampler.sampleMeasurement((double) amount);
+        }
+    }
+
+    @Override
+    public List<Exemplar> exemplars() {
+        if (exemplarSampler != null) {
+            return exemplarSampler.collectExemplars();
+        }
+        else if (histogram instanceof OtlpExemplarsSupport) {
+            return ((OtlpExemplarsSupport) histogram).exemplars();
+        }
+        else {
+            return Collections.emptyList();
+        }
     }
 
     @Override
@@ -74,6 +100,13 @@ class OtlpStepTimer extends AbstractTimer implements OtlpHistogramSupport {
         return TimeUtils.nanosToUnit(max.poll(), unit);
     }
 
+    @Override
+    public void closingExemplarsRollover() {
+        if (exemplarSampler != null) {
+            exemplarSampler.close();
+        }
+    }
+
     /**
      * This is an internal method not meant for general use.
      * <p>
@@ -88,7 +121,9 @@ class OtlpStepTimer extends AbstractTimer implements OtlpHistogramSupport {
         }
         else if (histogram instanceof Base2ExponentialHistogram) {
             histogram.close();
+            ((Base2ExponentialHistogram) histogram).closingExemplarsRollover();
         }
+        this.closingExemplarsRollover();
     }
 
     @Override

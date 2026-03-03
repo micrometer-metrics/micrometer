@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.registry.otlp.internal;
-
-import static org.assertj.core.api.Assertions.assertThat;
+package io.micrometer.registry.otlp;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 class CumulativeBase2ExponentialHistogramTest {
 
@@ -28,7 +28,7 @@ class CumulativeBase2ExponentialHistogramTest {
 
     @BeforeEach
     void setUp() {
-        cumulativeBase2ExponentialHistogram = new CumulativeBase2ExponentialHistogram(MAX_SCALE, 16, 1.0, null);
+        cumulativeBase2ExponentialHistogram = new CumulativeBase2ExponentialHistogram(MAX_SCALE, 16, 1.0, null, null);
     }
 
     @Test

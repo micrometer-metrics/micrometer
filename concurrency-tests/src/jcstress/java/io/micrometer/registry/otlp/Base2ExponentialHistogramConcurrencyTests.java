@@ -13,16 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.concurrencytests;
-
-import static org.openjdk.jcstress.annotations.Expect.*;
-import static org.openjdk.jcstress.annotations.Expect.ACCEPTABLE;
-import static org.openjdk.jcstress.annotations.Expect.FORBIDDEN;
+package io.micrometer.registry.otlp;
 
 import org.openjdk.jcstress.annotations.*;
-import org.openjdk.jcstress.infra.results.*;
-import io.micrometer.registry.otlp.internal.Base2ExponentialHistogram;
-import io.micrometer.registry.otlp.internal.CumulativeBase2ExponentialHistogram;
+import org.openjdk.jcstress.infra.results.LLL_Result;
+import org.openjdk.jcstress.infra.results.L_Result;
+
+import static org.openjdk.jcstress.annotations.Expect.*;
 
 public class Base2ExponentialHistogramConcurrencyTests {
 
@@ -43,7 +40,7 @@ public class Base2ExponentialHistogramConcurrencyTests {
     @State
     public static class RescalingAndConcurrentReading {
 
-        Base2ExponentialHistogram exponentialHistogram = new CumulativeBase2ExponentialHistogram(20, 40, 0, null);
+        Base2ExponentialHistogram exponentialHistogram = new CumulativeBase2ExponentialHistogram(20, 40, 0, null, null);
 
         @Actor
         public void actor1(LLL_Result r) {
@@ -93,9 +90,9 @@ public class Base2ExponentialHistogramConcurrencyTests {
         @Actor
         public void actor1(L_Result result) {
             try {
-                new CumulativeBase2ExponentialHistogram(20, 16, 1.0, null).close();
-                new CumulativeBase2ExponentialHistogram(19, 16, 1.0, null).close();
-                new CumulativeBase2ExponentialHistogram(18, 16, 1.0, null).close();
+                new CumulativeBase2ExponentialHistogram(20, 16, 1.0, null, null).close();
+                new CumulativeBase2ExponentialHistogram(19, 16, 1.0, null, null).close();
+                new CumulativeBase2ExponentialHistogram(18, 16, 1.0, null, null).close();
                 result.r1 = "OK";
             }
             catch (Exception e) {
@@ -106,9 +103,9 @@ public class Base2ExponentialHistogramConcurrencyTests {
         @Actor
         public void actor2(L_Result r) {
             try {
-                new CumulativeBase2ExponentialHistogram(10, 16, 1.0, null).close();
-                new CumulativeBase2ExponentialHistogram(9, 16, 1.0, null).close();
-                new CumulativeBase2ExponentialHistogram(8, 16, 1.0, null).close();
+                new CumulativeBase2ExponentialHistogram(10, 16, 1.0, null, null).close();
+                new CumulativeBase2ExponentialHistogram(9, 16, 1.0, null, null).close();
+                new CumulativeBase2ExponentialHistogram(8, 16, 1.0, null, null).close();
             }
             catch (Exception e) {
                 r.r1 = e.getClass().getSimpleName();
