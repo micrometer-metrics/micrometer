@@ -101,7 +101,7 @@ class TelegrafStatsdLineBuilderIntegrationTest {
             .increment());
 
         await().alias("Telegraf flushing and InfluxDB ingestion")
-            .atMost(5, TimeUnit.SECONDS)
+            .atMost(10, TimeUnit.SECONDS)
             .untilAsserted(
                     () -> verifyMetric("test=metric=equal", containsString("this_is_the"), containsString("tag=test")));
     }
@@ -114,7 +114,7 @@ class TelegrafStatsdLineBuilderIntegrationTest {
             .increment());
 
         await().alias("Telegraf flushing and InfluxDB ingestion")
-            .atMost(5, TimeUnit.SECONDS)
+            .atMost(10, TimeUnit.SECONDS)
             .untilAsserted(() -> verifyMetric("test_metric_comma", containsString("comma_key"),
                     containsString("comma_value")));
     }
@@ -127,7 +127,7 @@ class TelegrafStatsdLineBuilderIntegrationTest {
             .increment());
 
         await().alias("Telegraf flushing and InfluxDB ingestion")
-            .atMost(5, TimeUnit.SECONDS)
+            .atMost(10, TimeUnit.SECONDS)
             .untilAsserted(() -> verifyMetric("test_metric_space", containsString("space_key"),
                     containsString("space_value")));
     }
