@@ -4,28 +4,28 @@ executors:
   jdk24-executor:
     working_directory: ~/micrometer
     environment:
-      GRADLE_OPTS: '-Dorg.gradle.jvmargs="-Xmx2048m -XX:+HeapDumpOnOutOfMemoryError" -Dscan.uploadInBackground=false'
+      GRADLE_OPTS: '-Dorg.gradle.jvmargs="-Xmx2048m -XX:+HeapDumpOnOutOfMemoryError" -Dscan.uploadInBackground=false -Dorg.gradle.workers.max=2'
     resource_class: medium+
     docker:
       - image: cimg/openjdk:24.0.2
   circle-jdk-executor:
     working_directory: ~/micrometer
     environment:
-      GRADLE_OPTS: '-Dorg.gradle.jvmargs="-Xmx2g -XX:+HeapDumpOnOutOfMemoryError" -Dscan.uploadInBackground=false'
+      GRADLE_OPTS: '-Dorg.gradle.jvmargs="-Xmx2g -XX:+HeapDumpOnOutOfMemoryError" -Dscan.uploadInBackground=false -Dorg.gradle.workers.max=2'
     resource_class: medium+
     docker:
       - image: cimg/openjdk:21.0.8
   circle-jdk17-executor:
     working_directory: ~/micrometer
     environment:
-      GRADLE_OPTS: '-Dorg.gradle.jvmargs="-Xmx2g -XX:+HeapDumpOnOutOfMemoryError" -Dscan.uploadInBackground=false'
+      GRADLE_OPTS: '-Dorg.gradle.jvmargs="-Xmx2g -XX:+HeapDumpOnOutOfMemoryError" -Dscan.uploadInBackground=false -Dorg.gradle.workers.max=2'
     resource_class: medium+
     docker:
       - image: cimg/openjdk:17.0.16
   circle-jdk11-executor:
     working_directory: ~/micrometer
     environment:
-      GRADLE_OPTS: '-Dorg.gradle.jvmargs="-Xmx2g -XX:+HeapDumpOnOutOfMemoryError" -Dscan.uploadInBackground=false'
+      GRADLE_OPTS: '-Dorg.gradle.jvmargs="-Xmx2g -XX:+HeapDumpOnOutOfMemoryError" -Dscan.uploadInBackground=false -Dorg.gradle.workers.max=2'
     resource_class: medium+
     docker:
       - image: cimg/openjdk:11.0.28
