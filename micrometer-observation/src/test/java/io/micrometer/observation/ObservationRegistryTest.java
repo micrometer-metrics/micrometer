@@ -20,7 +20,6 @@ import io.micrometer.common.KeyValues;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 
-import static io.micrometer.observation.Observation.NOOP;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.BDDAssertions.then;
 import static org.mockito.Mockito.mock;
@@ -68,15 +67,15 @@ class ObservationRegistryTest {
 
         Observation sample = Observation.start("test.timer", registry);
 
-        assertThat(sample).isSameAs(NOOP);
+        assertThat(sample.isNoop()).isTrue();
     }
 
     @Test
     void observationShouldBeNoopWhenNullRegistry() {
-        assertThat(Observation.start("test.timer", null)).isSameAs(NOOP);
-        assertThat(Observation.start("test.timer", Observation.Context::new, null)).isSameAs(NOOP);
-        assertThat(Observation.createNotStarted("test.timer", null)).isSameAs(NOOP);
-        assertThat(Observation.createNotStarted("test.timer", Observation.Context::new, null)).isSameAs(NOOP);
+        assertThat(Observation.start("test.timer", null).isNoop()).isTrue();
+        assertThat(Observation.start("test.timer", Observation.Context::new, null).isNoop()).isTrue();
+        assertThat(Observation.createNotStarted("test.timer", null).isNoop()).isTrue();
+        assertThat(Observation.createNotStarted("test.timer", Observation.Context::new, null).isNoop()).isTrue();
     }
 
     @Test

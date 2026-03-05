@@ -66,6 +66,11 @@ public interface ObservationRegistry {
         public ObservationConfig observationConfig() {
             return NoopObservationConfig.INSTANCE;
         }
+
+        @Override
+        public String toString() {
+            return "ObservationRegistry.NOOP";
+        }
     };
 
     /**

@@ -5,24 +5,32 @@ executors:
 #  jdk25-executor:
 #    working_directory: ~/micrometer
 #    environment:
-#      GRADLE_OPTS: '-Dorg.gradle.jvmargs="-Xmx2048m -XX:+HeapDumpOnOutOfMemoryError"'
+#      GRADLE_OPTS: '-Dorg.gradle.jvmargs="-Xmx2g -XX:+HeapDumpOnOutOfMemoryError" -Dorg.gradle.workers.max=2'
 #    resource_class: medium+
 #    docker:
-#      - image: cimg/openjdk:25.0
+#      - image: cimg/openjdk:25.0.1
   jdk21-executor:
     working_directory: ~/micrometer
     environment:
-      GRADLE_OPTS: '-Dorg.gradle.jvmargs="-Xmx1g -XX:+HeapDumpOnOutOfMemoryError"'
+      GRADLE_OPTS: '-Dorg.gradle.jvmargs="-Xmx2g -XX:+HeapDumpOnOutOfMemoryError" -Dorg.gradle.workers.max=2'
     resource_class: medium+
     docker:
       - image: cimg/openjdk:21.0.9
   jdk17-executor:
     working_directory: ~/micrometer
     environment:
-      GRADLE_OPTS: '-Dorg.gradle.jvmargs="-Xmx1g -XX:+HeapDumpOnOutOfMemoryError"'
+      GRADLE_OPTS: '-Dorg.gradle.jvmargs="-Xmx2g -XX:+HeapDumpOnOutOfMemoryError" -Dorg.gradle.workers.max=2'
     resource_class: medium+
     docker:
       - image: cimg/openjdk:17.0.17
+  # JCStress spawns multiple test JVMs; use larger instance to avoid daemon OOM
+  concurrency-tests-executor:
+    working_directory: ~/micrometer
+    environment:
+      GRADLE_OPTS: '-Dorg.gradle.jvmargs="-Xmx2g -XX:+HeapDumpOnOutOfMemoryError" -Dorg.gradle.workers.max=2'
+    resource_class: large
+    docker:
+      - image: cimg/openjdk:21.0.9
   machine-executor:
     working_directory: ~/micrometer
     machine:
@@ -41,7 +49,20 @@ commands:
     steps:
       - checkout
       - restore_cache:
-          key: gradle-dependencies-{{ .Branch }}-{{ checksum "build.gradle" }}-{{ checksum ".circleci/config.yml" }}
+          keys:
+            # Branch-specific cache (best match)
+            - gradle-dependencies-{{ .Branch }}-{{ checksum "build.gradle" }}-{{ checksum ".circleci/config.yml" }}
+            # Fallback: same build config, any branch (e.g. main cache for PRs)
+            - gradle-dependencies-{{ checksum "build.gradle" }}-{{ checksum ".circleci/config.yml" }}
+            # Last resort: any gradle-dependencies cache
+            - gradle-dependencies-
+      - run:
+          name: diagnostic (memory and cache size)
+          command: |
+            echo "=== Memory ==="
+            free -m || true
+            echo "=== Gradle cache size (after restore) ==="
+            du -sh ~/.gradle 2>/dev/null || echo "N/A"
       - run:
           name: downloadDependencies
           command: ./gradlew downloadDependencies --console=plain
@@ -93,7 +114,7 @@ jobs:
           toolchainVersion: '17'
 
   concurrency-tests:
-    executor: jdk21-executor
+    executor: concurrency-tests-executor
     steps:
       - gradlew-build:
           command: jcstress
@@ -109,7 +130,10 @@ jobs:
     steps:
       - checkout
       - restore_cache:
-          key: gradle-dependencies-{{ .Branch }}-{{ checksum "build.gradle" }}-{{ checksum ".circleci/config.yml" }}
+          keys:
+            - gradle-dependencies-{{ .Branch }}-{{ checksum "build.gradle" }}-{{ checksum ".circleci/config.yml" }}
+            - gradle-dependencies-{{ checksum "build.gradle" }}-{{ checksum ".circleci/config.yml" }}
+            - gradle-dependencies-
       - run:
           name: Deployment
           command: sh ./gradle/deploy.sh
