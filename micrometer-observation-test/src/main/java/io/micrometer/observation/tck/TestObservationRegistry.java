@@ -186,6 +186,42 @@ public final class TestObservationRegistry
             return this;
         }
 
+        /**
+         * Enables/disables validating that scopes are closed in the reverse order of
+         * opening (LIFO). For example, if scope A is opened and then scope B is opened,
+         * scope B must be closed before scope A.
+         * @param flag whether to enable this validation
+         * @return this builder
+         * @since 1.16.0
+         */
+        public TestObservationRegistryBuilder validateScopesClosedInReverseOrderOfOpening(boolean flag) {
+            if (flag) {
+                this.capabilities.add(Capability.SCOPES_SHOULD_BE_CLOSED_IN_REVERSE_ORDER_OF_OPENING);
+            }
+            else {
+                this.capabilities.remove(Capability.SCOPES_SHOULD_BE_CLOSED_IN_REVERSE_ORDER_OF_OPENING);
+            }
+            return this;
+        }
+
+        /**
+         * Enables/disables validating that scopes are opened and closed on the same
+         * thread. This can catch situations where a scope is opened on one thread but
+         * closed on another, which is typically a programming error.
+         * @param flag whether to enable this validation
+         * @return this builder
+         * @since 1.16.0
+         */
+        public TestObservationRegistryBuilder validateScopesOpenedAndClosedOnTheSameThread(boolean flag) {
+            if (flag) {
+                this.capabilities.add(Capability.SCOPES_SHOULD_BE_OPENED_AND_CLOSED_ON_THE_SAME_THREAD);
+            }
+            else {
+                this.capabilities.remove(Capability.SCOPES_SHOULD_BE_OPENED_AND_CLOSED_ON_THE_SAME_THREAD);
+            }
+            return this;
+        }
+
         public TestObservationRegistry build() {
             return new TestObservationRegistry(capabilities);
         }
@@ -194,7 +230,11 @@ public final class TestObservationRegistry
 
     enum Capability {
 
-        OBSERVATIONS_WITH_THE_SAME_NAME_SHOULD_HAVE_THE_SAME_SET_OF_LOW_CARDINALITY_KEYS;
+        OBSERVATIONS_WITH_THE_SAME_NAME_SHOULD_HAVE_THE_SAME_SET_OF_LOW_CARDINALITY_KEYS,
+
+        SCOPES_SHOULD_BE_CLOSED_IN_REVERSE_ORDER_OF_OPENING,
+
+        SCOPES_SHOULD_BE_OPENED_AND_CLOSED_ON_THE_SAME_THREAD;
 
     }
 
