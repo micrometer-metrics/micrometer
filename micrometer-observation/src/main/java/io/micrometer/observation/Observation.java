@@ -118,6 +118,11 @@ public interface Observation extends ObservationView {
         public Scope openScope() {
             return Scope.NOOP;
         }
+
+        @Override
+        public String toString() {
+            return "Observation.NOOP";
+        }
     };
 
     /**
@@ -188,7 +193,7 @@ public interface Observation extends ObservationView {
     static <T extends Context> Observation createNotStarted(String name, Supplier<T> contextSupplier,
             @Nullable ObservationRegistry registry) {
         if (registry == null || registry.isNoop()) {
-            return Observation.NOOP;
+            return NoopButScopeHandlingObservation.INSTANCE;
         }
         Context context = contextSupplier.get();
         context.setParentFromCurrentObservation(registry);
@@ -231,7 +236,7 @@ public interface Observation extends ObservationView {
             ObservationConvention<T> defaultConvention, Supplier<T> contextSupplier,
             @Nullable ObservationRegistry registry) {
         if (registry == null || registry.isNoop()) {
-            return Observation.NOOP;
+            return NoopButScopeHandlingObservation.INSTANCE;
         }
         ObservationConvention<T> convention;
         T context = contextSupplier.get();
@@ -376,7 +381,7 @@ public interface Observation extends ObservationView {
     static <T extends Context> Observation createNotStarted(ObservationConvention<T> observationConvention,
             Supplier<T> contextSupplier, ObservationRegistry registry) {
         if (registry == null || registry.isNoop()) {
-            return Observation.NOOP;
+            return NoopButScopeHandlingObservation.INSTANCE;
         }
         T context = contextSupplier.get();
         context.setParentFromCurrentObservation(registry);
@@ -920,6 +925,11 @@ public interface Observation extends ObservationView {
 
             @Override
             public void makeCurrent() {
+            }
+
+            @Override
+            public String toString() {
+                return "Scope.NOOP";
             }
         };
 
