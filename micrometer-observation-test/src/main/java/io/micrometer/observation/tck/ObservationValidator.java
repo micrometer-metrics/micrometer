@@ -32,6 +32,8 @@ import java.util.stream.Collectors;
 
 import static io.micrometer.observation.tck.TestObservationRegistry.Capability;
 import static io.micrometer.observation.tck.TestObservationRegistry.Capability.OBSERVATIONS_WITH_THE_SAME_NAME_SHOULD_HAVE_THE_SAME_SET_OF_LOW_CARDINALITY_KEYS;
+import static io.micrometer.observation.tck.TestObservationRegistry.Capability.SCOPES_SHOULD_BE_CLOSED_IN_REVERSE_ORDER_OF_OPENING;
+import static io.micrometer.observation.tck.TestObservationRegistry.Capability.SCOPES_SHOULD_BE_OPENED_AND_CLOSED_ON_THE_SAME_THREAD;
 
 /**
  * An {@link ObservationHandler} that validates the order of events of an Observation (for
@@ -49,12 +51,15 @@ class ObservationValidator implements ObservationHandler<Context> {
 
     private final Map<String, Set<String>> lowCardinalityKeysByObservationName;
 
+    private final Deque<Context> globalScopeStack;
+
     private final Set<Capability> capabilities;
 
     ObservationValidator(Set<Capability> capabilities) {
         this.consumer = ObservationValidator::throwInvalidObservationException;
         this.supportsContextPredicate = context -> !(context instanceof NullContext);
         this.lowCardinalityKeysByObservationName = new HashMap<>();
+        this.globalScopeStack = new ArrayDeque<>();
         this.capabilities = capabilities;
     }
 
@@ -88,6 +93,14 @@ class ObservationValidator implements ObservationHandler<Context> {
         addHistoryElement(context, EventName.SCOPE_OPEN);
         // In some cases (Reactor) scope open can happen after the observation is stopped
         checkIfObservationWasStarted("Invalid scope opening", context);
+        if (capabilities.contains(SCOPES_SHOULD_BE_OPENED_AND_CLOSED_ON_THE_SAME_THREAD)
+                || capabilities.contains(SCOPES_SHOULD_BE_CLOSED_IN_REVERSE_ORDER_OF_OPENING)) {
+            ScopeState scopeState = context.computeIfAbsent(ScopeState.class, clazz -> new ScopeState());
+            scopeState.openingThreadIds.push(Thread.currentThread().getId());
+        }
+        if (capabilities.contains(SCOPES_SHOULD_BE_CLOSED_IN_REVERSE_ORDER_OF_OPENING)) {
+            globalScopeStack.push(context);
+        }
     }
 
     @Override
@@ -95,6 +108,27 @@ class ObservationValidator implements ObservationHandler<Context> {
         addHistoryElement(context, EventName.SCOPE_CLOSE);
         // In some cases (Reactor) scope close can happen after the observation is stopped
         checkIfObservationWasStarted("Invalid scope closing", context);
+        if (capabilities.contains(SCOPES_SHOULD_BE_CLOSED_IN_REVERSE_ORDER_OF_OPENING) && !globalScopeStack.isEmpty()) {
+            Context top = globalScopeStack.peek();
+            if (top != context) {
+                consumer.accept(new ValidationResult("Invalid scope closing order: Observation '" + context.getName()
+                        + "' had its scope closed before the most recently opened scope" + " for Observation '"
+                        + top.getName() + "' was closed", context));
+            }
+            globalScopeStack.pop();
+        }
+        if (capabilities.contains(SCOPES_SHOULD_BE_OPENED_AND_CLOSED_ON_THE_SAME_THREAD)) {
+            ScopeState scopeState = context.get(ScopeState.class);
+            if (scopeState != null && !scopeState.openingThreadIds.isEmpty()) {
+                long openThreadId = scopeState.openingThreadIds.pop();
+                long closeThreadId = Thread.currentThread().getId();
+                if (openThreadId != closeThreadId) {
+                    consumer.accept(new ValidationResult("Invalid scope closing thread: Observation '"
+                            + context.getName() + "' had a scope opened on thread '" + openThreadId
+                            + "' but closed on thread '" + closeThreadId + "'", context));
+                }
+            }
+        }
     }
 
     @Override
@@ -102,6 +136,16 @@ class ObservationValidator implements ObservationHandler<Context> {
         addHistoryElement(context, EventName.SCOPE_RESET);
         // In some cases (Reactor) scope reset can happen after the observation is stopped
         checkIfObservationWasStarted("Invalid scope resetting", context);
+        if (capabilities.contains(SCOPES_SHOULD_BE_CLOSED_IN_REVERSE_ORDER_OF_OPENING)) {
+            globalScopeStack.removeIf(ctx -> ctx == context);
+        }
+        if (capabilities.contains(SCOPES_SHOULD_BE_OPENED_AND_CLOSED_ON_THE_SAME_THREAD)
+                || capabilities.contains(SCOPES_SHOULD_BE_CLOSED_IN_REVERSE_ORDER_OF_OPENING)) {
+            ScopeState scopeState = context.get(ScopeState.class);
+            if (scopeState != null) {
+                scopeState.openingThreadIds.clear();
+            }
+        }
     }
 
     @Override
@@ -216,6 +260,12 @@ class ObservationValidator implements ObservationHandler<Context> {
         void markStopped() {
             stopped = true;
         }
+
+    }
+
+    static class ScopeState {
+
+        final Deque<Long> openingThreadIds = new ArrayDeque<>();
 
     }
 
