@@ -118,6 +118,11 @@ public interface Observation extends ObservationView {
         public Scope openScope() {
             return Scope.NOOP;
         }
+
+        @Override
+        public String toString() {
+            return "Observation.NOOP";
+        }
     };
 
     /**
@@ -920,6 +925,11 @@ public interface Observation extends ObservationView {
 
             @Override
             public void makeCurrent() {
+            }
+
+            @Override
+            public String toString() {
+                return "Scope.NOOP";
             }
         };
 
