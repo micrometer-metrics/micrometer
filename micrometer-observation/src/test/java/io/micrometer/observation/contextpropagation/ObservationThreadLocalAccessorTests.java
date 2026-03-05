@@ -20,11 +20,8 @@ import io.micrometer.context.ContextExecutorService;
 import io.micrometer.context.ContextRegistry;
 import io.micrometer.context.ContextSnapshot;
 import io.micrometer.context.ContextSnapshotFactory;
-import io.micrometer.observation.NullObservation;
-import io.micrometer.observation.Observation;
+import io.micrometer.observation.*;
 import io.micrometer.observation.Observation.Context;
-import io.micrometer.observation.ObservationHandler;
-import io.micrometer.observation.ObservationRegistry;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
@@ -38,6 +35,7 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.BDDAssertions.then;
 import static org.assertj.core.api.BDDAssertions.thenNoException;
 
@@ -229,6 +227,27 @@ class ObservationThreadLocalAccessorTests {
         }.restore(null));
     }
 
+    @Test
+    void contextPropagationWithNoOpObservationRegistryInsideRealObservationScope() {
+        ContextSnapshotFactory contextSnapshotFactory = ContextSnapshotFactory.builder().build();
+        // register a handler so observations are not no-op
+        observationRegistry.observationConfig().observationHandler(ignored -> false);
+
+        Observation outer = Observation.createNotStarted("outer", observationRegistry);
+        outer.observe(() -> {
+            assertThat(observationRegistry.getCurrentObservation()).isSameAs(outer);
+
+            Observation inner = Observation.createNotStarted("inner", ObservationRegistry.NOOP);
+            Map<String, Object> context = Map.of(ObservationThreadLocalAccessor.KEY, inner);
+
+            try (var scope = contextSnapshotFactory.captureFrom(context).setThreadLocals()) {
+                assertThat(observationRegistry.getCurrentObservation()).isSameAs(inner);
+            }
+
+            assertThat(observationRegistry.getCurrentObservation()).isSameAs(outer);
+        });
+    }
+
     @SuppressWarnings("NullAway")
     private void thenCurrentObservationHasParent(Observation parent, Observation observation) {
         then(globalObservationRegistry.getCurrentObservation()).isSameAs(observation);
@@ -362,7 +381,7 @@ class ObservationThreadLocalAccessorTests {
 
         @Override
         public void readValues(Map sourceContext, Predicate<Object> keyPredicate, Map<Object, Object> readValues) {
-
+            readValues.putAll(sourceContext);
         }
 
         @Override
