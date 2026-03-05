@@ -395,8 +395,10 @@ class SimpleObservation implements Observation {
 
         @Override
         public String toString() {
-            return "SimpleScope(currentObservation=" + this.currentObservation + ", previousObservationScope=" + this.previousObservationScope + ")";
+            return "SimpleScope(currentObservation=" + this.currentObservation + ", previousObservationScope="
+                    + this.previousObservationScope + ")";
         }
+
     }
 
 }
