@@ -30,12 +30,13 @@ import static io.micrometer.observation.aop.ObservationKeyValueSupport.resolveVa
 
 /**
  * Annotation handler for {@link ObservationKeyValue}. To add support for
- * {@link ObservationKeyValue} on {@link ObservedAspect} check the
+ * {@link ObservationKeyValue} on {@link ObservedAspect}, check the
  * {@link ObservedAspect#setObservationKeyValueAnnotationHandler(ObservationKeyValueAnnotationHandler)}
  * method.
  *
  * @author Seungyong Hong
  * @author Jonatan Ivanov
+ * @since 1.16.0
  */
 public class ObservationKeyValueAnnotationHandler extends AnnotationHandler<Observation.Context> {
 

@@ -183,7 +183,7 @@ The following test asserts whether the proper observation gets created when a pr
 include::{include-java}/observation/ObservationHandlerTests.java[tags=observed_aop,indent=0]
 -----
 
-Also, you can use `@ObservationKeyValue` annotation to add tags via method parameters.
+Also, you can use `@ObservationKeyValue` annotation to add key-values via method parameters.
 
 The following example shows an `ObservedServiceWithParameter` that has an annotation on a method:
 
