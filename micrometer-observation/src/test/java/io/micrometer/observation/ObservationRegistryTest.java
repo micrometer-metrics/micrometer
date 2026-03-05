@@ -68,15 +68,15 @@ class ObservationRegistryTest {
 
         Observation sample = Observation.start("test.timer", registry);
 
-        assertThat(sample).isSameAs(NOOP);
+        assertThat(sample.isNoop()).isTrue();
     }
 
     @Test
     void observationShouldBeNoopWhenNullRegistry() {
-        assertThat(Observation.start("test.timer", null)).isSameAs(NOOP);
-        assertThat(Observation.start("test.timer", Observation.Context::new, null)).isSameAs(NOOP);
-        assertThat(Observation.createNotStarted("test.timer", null)).isSameAs(NOOP);
-        assertThat(Observation.createNotStarted("test.timer", Observation.Context::new, null)).isSameAs(NOOP);
+        assertThat(Observation.start("test.timer", null).isNoop()).isTrue();
+        assertThat(Observation.start("test.timer", Observation.Context::new, null).isNoop()).isTrue();
+        assertThat(Observation.createNotStarted("test.timer", null).isNoop()).isTrue();
+        assertThat(Observation.createNotStarted("test.timer", Observation.Context::new, null).isNoop()).isTrue();
     }
 
     @Test
