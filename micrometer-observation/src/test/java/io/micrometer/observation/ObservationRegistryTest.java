@@ -20,7 +20,6 @@ import io.micrometer.common.KeyValues;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 
-import static io.micrometer.observation.Observation.NOOP;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.BDDAssertions.then;
 import static org.mockito.Mockito.mock;
