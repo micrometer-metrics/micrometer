@@ -197,6 +197,7 @@ class SimpleObservation implements Observation {
     }
 
     @Override
+    @Deprecated
     public @Nullable Scope getEnclosingScope() {
         return lastScope.get(Thread.currentThread());
     }
