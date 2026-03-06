@@ -361,6 +361,7 @@ class SimpleObservation implements Observation {
          * {@link ObservationHandler#onScopeReset(Context)}.
          */
         @Override
+        @Deprecated
         public void makeCurrent() {
             SimpleScope scope = this;
             do {
