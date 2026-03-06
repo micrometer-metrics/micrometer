@@ -75,7 +75,12 @@ public interface ObservationHandler<T extends Observation.Context> {
      * this method should clear that {@link ThreadLocal} or any other scoped variable.
      * @param context an {@link Observation.Context}
      * @since 1.10.4
+     * @deprecated Only invoked when {@link Observation.Scope#reset()} or
+     * {@link Observation.Scope#makeCurrent()} is used; both are deprecated and no longer
+     * used by Micrometer code. Prefer {@link #onScopeClosed} for cleanup when a scope is
+     * closed. This method will be removed in a future release.
      */
+    @Deprecated
     default void onScopeReset(T context) {
     }
 
@@ -183,6 +188,7 @@ public interface ObservationHandler<T extends Observation.Context> {
         }
 
         @Override
+        @Deprecated
         public void onScopeReset(Observation.Context context) {
             ObservationHandler<Observation.Context> handler = getFirstApplicableHandler(context);
             if (handler != null) {
@@ -297,6 +303,7 @@ public interface ObservationHandler<T extends Observation.Context> {
         }
 
         @Override
+        @Deprecated
         public void onScopeReset(Observation.Context context) {
             for (ObservationHandler<Context> handler : this.handlers) {
                 if (handler.supportsContext(context)) {

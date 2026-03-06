@@ -327,6 +327,7 @@ class SimpleObservation implements Observation {
         }
 
         @Override
+        @Deprecated
         public void reset() {
             SimpleScope scope = this;
             if (scope.currentObservation instanceof SimpleObservation) {
