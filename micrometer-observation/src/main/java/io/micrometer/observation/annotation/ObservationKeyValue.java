@@ -28,10 +28,11 @@ import java.lang.annotation.*;
  * controlled by the annotation values. Precedence is to first try with the
  * {@link ValueResolver}. If the value of the resolver wasn't set, try to evaluate an
  * expression. If there's no expression just return a {@code toString()} value of the
- * parameter. {@link Cardinality} also can be set by {@link #cardinality()}. default value
- * is {@link Cardinality#HIGH}.
+ * parameter. {@link Cardinality} also can be set by {@link #cardinality()}, and its
+ * default value is {@link Cardinality#HIGH}.
  *
  * @author Seungyong Hong
+ * @since 1.16.0
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Inherited

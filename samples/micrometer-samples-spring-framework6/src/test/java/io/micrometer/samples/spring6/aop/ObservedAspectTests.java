@@ -646,7 +646,7 @@ class ObservedAspectTests {
 
         @ParameterizedTest
         @EnumSource
-        void multipleobservationKeyValueOnReturnValueWithExpression(AnnotatedTestClass annotatedClass) {
+        void multipleObservationKeyValueOnReturnValueWithExpression(AnnotatedTestClass annotatedClass) {
             ObservationKeyValueClassInterface service = getProxyWithObservedAspect(annotatedClass.newInstance());
 
             DataHolder value = service.getMultipleAnnotationsOnReturnValueForValueExpression();
@@ -662,7 +662,7 @@ class ObservedAspectTests {
 
         @ParameterizedTest
         @EnumSource
-        void multipleobservationKeyValueOnReturnValueWithinContainerWithExpression(AnnotatedTestClass annotatedClass) {
+        void multipleObservationKeyValueOnReturnValueWithinContainerWithExpression(AnnotatedTestClass annotatedClass) {
             ObservationKeyValueClassInterface service = getProxyWithObservedAspect(annotatedClass.newInstance());
 
             DataHolder value = service.getMultipleAnnotationsOnReturnValueWithContainerForValueExpression();
@@ -754,7 +754,7 @@ class ObservedAspectTests {
         }
 
         @Test
-        void multipleobservationKeyValuesWithExpressionAsync() {
+        void multipleObservationKeyValuesWithExpressionAsync() {
             ObservationKeyValueAsyncClass service = getProxyWithObservedAspect(new ObservationKeyValueAsyncClass());
 
             service.getMultipleAnnotationsForValueExpression(new DataHolder("zxe", "qwe"));
@@ -769,7 +769,7 @@ class ObservedAspectTests {
         }
 
         @Test
-        void multipleobservationKeyValuesWithinContainerWithExpressionAsync() {
+        void multipleObservationKeyValuesWithinContainerWithExpressionAsync() {
             ObservationKeyValueAsyncClass service = getProxyWithObservedAspect(new ObservationKeyValueAsyncClass());
 
             service.getMultipleAnnotationsWithContainerForValueExpression(new DataHolder("zxe", "qwe"));
@@ -841,7 +841,7 @@ class ObservedAspectTests {
         }
 
         @Test
-        void multipleobservationKeyValueOnReturnValueWithExpressionAsync()
+        void multipleObservationKeyValueOnReturnValueWithExpressionAsync()
                 throws ExecutionException, InterruptedException {
             ObservationKeyValueAsyncClass service = getProxyWithObservedAspect(new ObservationKeyValueAsyncClass());
 
@@ -857,7 +857,7 @@ class ObservedAspectTests {
         }
 
         @Test
-        void multipleobservationKeyValueOnReturnValueWithinContainerWithExpressionAsync()
+        void multipleObservationKeyValueOnReturnValueWithinContainerWithExpressionAsync()
                 throws ExecutionException, InterruptedException {
             ObservationKeyValueAsyncClass service = getProxyWithObservedAspect(new ObservationKeyValueAsyncClass());
 

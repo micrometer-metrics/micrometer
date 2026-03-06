@@ -190,7 +190,7 @@ class ObservationHandlerTests {
         // create a proxy around the observed service
         AspectJProxyFactory pf = new AspectJProxyFactory(new ObservedServiceWithParameter());
         ObservedAspect observedAspect = new ObservedAspect(registry);
-        ValueResolver valueResolver = parameter -> "Value from myCustomTagValueResolver [" + parameter + "]";
+        ValueResolver valueResolver = parameter -> "Value from myCustomValueResolver [" + parameter + "]";
         ValueExpressionResolver valueExpressionResolver = new SpelValueExpressionResolver();
         observedAspect.setObservationKeyValueAnnotationHandler(
             new ObservationKeyValueAnnotationHandler(
@@ -211,7 +211,7 @@ class ObservationHandlerTests {
                 .hasHighCardinalityKeyValue("key0", "foo")
                 .hasHighCardinalityKeyValue("key1", "foo")
                 .hasHighCardinalityKeyValue("key2", "key2: FOO")
-                .hasHighCardinalityKeyValue("key3", "Value from myCustomTagValueResolver [foo]")
+                .hasHighCardinalityKeyValue("key3", "Value from myCustomValueResolver [foo]")
                 .hasLowCardinalityKeyValue("key4", "foo")
                 .doesNotHaveError();
         // end::observed_aop_with_parameter[]

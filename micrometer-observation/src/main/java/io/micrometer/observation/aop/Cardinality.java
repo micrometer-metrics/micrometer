@@ -16,11 +16,12 @@
 package io.micrometer.observation.aop;
 
 /**
- * Represents the cardinality of a key-value. There are two types of cardinality and
- * treated in different ways.
+ * Represents the cardinality of a key-value for
+ * {@link io.micrometer.observation.annotation.ObservationKeyValue}.
  *
  * @author Seungyong Hong
  * @author Jonatan Ivanov
+ * @since 1.16.0
  */
 public enum Cardinality {
 
