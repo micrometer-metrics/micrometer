@@ -103,6 +103,52 @@ class ObservationHandlerTests {
     }
 
     @Test
+    void default_meter_observation_handler() {
+        // tag::default_meter_handler[]
+        MeterRegistry meterRegistry = new SimpleMeterRegistry();
+        ObservationRegistry registry = ObservationRegistry.create();
+        // Register DefaultMeterObservationHandler to create metrics from observations
+        registry.observationConfig().observationHandler(new DefaultMeterObservationHandler(meterRegistry));
+
+        // Perform an observation
+        Observation observation = Observation.createNotStarted("my.operation", registry)
+            .lowCardinalityKeyValue("region", "us-east-1");
+        observation.start(); // LongTaskTimer "my.operation.active" starts here
+        observation.event(Observation.Event.of("my.event")); // Counter
+                                                             // "my.operation.my.event"
+                                                             // incremented
+        observation.stop(); // Timer "my.operation" and LongTaskTimer stop
+
+        // Verify metrics were created:
+        // Timer: my.operation (with tags: region=us-east-1, error=none)
+        assertThat(meterRegistry.get("my.operation").timer().count()).isEqualTo(1);
+        // Counter: my.operation.my.event (with tags: region=us-east-1)
+        assertThat(meterRegistry.get("my.operation.my.event").counter().count()).isEqualTo(1);
+        // end::default_meter_handler[]
+    }
+
+    @Test
+    void default_meter_observation_handler_ignore_long_task_timer() {
+        // tag::default_meter_handler_ignore_ltt[]
+        MeterRegistry meterRegistry = new SimpleMeterRegistry();
+        ObservationRegistry registry = ObservationRegistry.create();
+        // You can disable the LongTaskTimer if you don't need it
+        registry.observationConfig()
+            .observationHandler(new DefaultMeterObservationHandler(meterRegistry,
+                    DefaultMeterObservationHandler.IgnoredMeters.LONG_TASK_TIMER));
+
+        Observation.createNotStarted("my.operation", registry)
+            .lowCardinalityKeyValue("region", "us-east-1")
+            .start()
+            .stop();
+
+        // Timer is created, but no LongTaskTimer
+        assertThat(meterRegistry.get("my.operation").timer().count()).isEqualTo(1);
+        assertThat(meterRegistry.find("my.operation.active").longTaskTimer()).isNull();
+        // end::default_meter_handler_ignore_ltt[]
+    }
+
+    @Test
     void error_and_event() {
         // tag::error_and_event[]
         ObservationRegistry registry = ObservationRegistry.create();
