@@ -1,0 +1,86 @@
+[[overview]]
+= Jakarta Mail Instrumentation
+
+Micrometer provides Jakarta Mail instrumentation.
+
+== Installing
+
+It is recommended to use the BOM provided by Micrometer (or your framework if any), you can see how to configure it xref:../installing.adoc[here]. The examples below assume you are using a BOM.
+
+=== Gradle
+
+After the BOM is xref:../installing.adoc[configured], add the following dependency:
+
+[source,groovy]
+----
+implementation 'io.micrometer:micrometer-jakarta9'
+----
+
+NOTE: The version is not needed for this dependency since it is defined by the BOM.
+
+=== Maven
+
+After the BOM is xref:../installing.adoc[configured], add the following dependency:
+
+[source,xml]
+----
+<dependency>
+  <groupId>io.micrometer</groupId>
+  <artifactId>micrometer-jakarta9</artifactId>
+</dependency>
+----
+
+NOTE: The version is not needed for this dependency since it is defined by the BOM.
+
+== Usage
+
+Here is how a Jakarta Mail `Transport` can be instrumented for observability:
+
+[source,java]
+----
+import io.micrometer.jakarta9.instrument.mail.InstrumentedTransport;
+
+Session session = Session.getInstance(new Properties());
+ObservationRegistry registry = ...
+
+Transport original = session.getTransport("smtp");
+Transport transport = new InstrumentedTransport(session, original, registry);
+
+transport.connect("smtp.example.com", 587, "username", "password");
+
+MimeMessage message = new MimeMessage(session);
+message.setFrom("from@example.com");
+message.setRecipients(Message.RecipientType.TO, "to@example.com");
+message.setSubject("Hello");
+message.setText("Mail from Micrometer instrumentation");
+
+// this operation will create a "mail.send" observation
+transport.sendMessage(message, message.getAllRecipients());
+----
+
+== Observations
+
+This instrumentation creates the `"mail.send"` observation when
+`jakarta.mail.Transport.sendMessage` is called.
+
+.Low cardinality keys
+[cols="a,a"]
+|===
+|Name | Description
+|`server.address` |(SMTP) server address used for sending mails.
+|`server.port` |(SMTP) server port used for sending mails.
+|`network.protocol.name` |Network protocol used for sending mails.
+|===
+
+.High cardinality keys
+[cols="a,a"]
+|===
+|Name | Description
+|`smtp.message.from` |Sender of the mail.
+|`smtp.message.to` |Primary (TO) recipient(s) of the mail.
+|`smtp.message.cc` |Carbon copy (CC) recipient(s) of the mail.
+|`smtp.message.bcc` |Blind carbon copy (BCC) recipient(s) of the mail.
+|`smtp.message.newsgroups` |Newsgroup (Usenet news) recipient(s) of the mail.
+|`smtp.message.subject` |Subject line of the mail.
+|`smtp.message.id` |Message ID received from the SMTP server.
+|===
