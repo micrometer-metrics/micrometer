@@ -40,7 +40,7 @@ executors:
   machine-executor:
     working_directory: ~/micrometer
     machine:
-      image: ubuntu-2404:2025.09.1
+      image: ubuntu-2404:2026.02.2
 
 commands:
   gradlew-build:
