@@ -41,6 +41,7 @@ executors:
     working_directory: ~/micrometer
     machine:
       image: ubuntu-2404:2026.02.2
+    resource_class: large
 
 commands:
   gradlew-build:
