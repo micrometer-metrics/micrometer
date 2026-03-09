@@ -15,7 +15,6 @@
  */
 package io.micrometer.registry.otlp;
 
-import com.google.protobuf.ByteString;
 import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.Gauge;
@@ -23,7 +22,6 @@ import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.ipc.http.HttpSender;
 import io.opentelemetry.proto.metrics.v1.*;
-import org.apache.commons.codec.binary.Hex;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.RepeatedTest;
@@ -1477,10 +1475,6 @@ abstract class OtlpMeterRegistryTest {
         else {
             assertThat(metrics).filteredOn(Metric::hasGauge).isEmpty();
         }
-    }
-
-    String encodeHexString(ByteString byteString) {
-        return Hex.encodeHexString(byteString.toByteArray());
     }
 
 }

@@ -22,7 +22,6 @@ dependencies {
     implementation(libs.kafkaJunit)
     implementation libs.grpcServices
     implementation libs.grpcInprocess
-    implementation libs.openTelemetry.proto
 
 }
 

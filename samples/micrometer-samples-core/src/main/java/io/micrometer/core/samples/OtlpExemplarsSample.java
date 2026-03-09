@@ -17,7 +17,6 @@ package io.micrometer.core.samples;
 
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.registry.otlp.*;
-import io.opentelemetry.proto.collector.metrics.v1.ExportMetricsServiceRequest;
 import org.jspecify.annotations.Nullable;
 
 import java.time.Duration;
@@ -90,7 +89,7 @@ public class OtlpExemplarsSample {
         @Override
         public void send(Request request) throws Exception {
             System.out.println("Publishing...");
-            System.out.println(ExportMetricsServiceRequest.parseFrom(request.getMetricsData()));
+            System.out.println(request);
         }
 
     }
