@@ -18,6 +18,7 @@ Micrometer Observation is used to instrument various projects. Below you can fin
 | Couchbase | https://issues.couchbase.com/browse/JCBC-2046[Issue]
 | gRPC | https://github.com/micrometer-metrics/micrometer/pull/3427[PR]
 | Halo | https://github.com/halo-dev/halo/commit/d192b8c956887e4701b94e3ed302fb88e4771583[Commit]
+| Jakarta Mail | https://github.com/micrometer-metrics/micrometer/tree/main/micrometer-jakarta9/src/main/java/io/micrometer/jakarta9/instrument/mail[Repo]
 | JDBC | https://github.com/jdbc-observations/datasource-micrometer[Repo]
 | JDK Http Client | https://github.com/micrometer-metrics/micrometer/blob/main/micrometer-core/src/main/java11/io/micrometer/core/instrument/binder/jdk/MicrometerHttpClient.java[Repo]
 | Jersey | https://github.com/eclipse-ee4j/jersey/pull/5391[PR]

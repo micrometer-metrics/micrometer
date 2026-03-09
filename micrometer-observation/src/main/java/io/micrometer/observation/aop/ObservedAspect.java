@@ -154,43 +154,19 @@ public class ObservedAspect {
             observationKeyValueAnnotationHandler.addAnnotatedParameters(observation.getContext(), pjp);
         }
 
-        if (CompletionStage.class.isAssignableFrom(method.getReturnType())) {
-            observation.start();
-            Observation.Scope scope = observation.openScope();
-            try {
-                Object result = pjp.proceed();
-                if (result == null) {
-                    stopObservation(observation, pjp, null, null);
-                    return null;
-                }
-                else {
-                    CompletionStage<?> stage = (CompletionStage<?>) result;
-                    return stage.whenComplete((res, error) -> stopObservation(observation, pjp, res, error));
-                }
+        observation.start();
+        try (Observation.Scope scope = observation.openScope()) {
+            Object result = pjp.proceed();
+            if (result != null && CompletionStage.class.isAssignableFrom(method.getReturnType())) {
+                CompletionStage<?> stage = (CompletionStage<?>) result;
+                return stage.whenComplete((res, error) -> stopObservation(observation, pjp, res, error));
             }
-            catch (Throwable error) {
-                stopObservation(observation, pjp, null, error);
-                throw error;
-            }
-            finally {
-                scope.close();
-            }
+            stopObservation(observation, pjp, result, null);
+            return result;
         }
-        else {
-            observation.start();
-            Observation.Scope scope = observation.openScope();
-            try {
-                Object result = pjp.proceed();
-                stopObservation(observation, pjp, result, null);
-                return result;
-            }
-            catch (Throwable error) {
-                stopObservation(observation, pjp, null, error);
-                throw error;
-            }
-            finally {
-                scope.close();
-            }
+        catch (Throwable error) {
+            stopObservation(observation, pjp, null, error);
+            throw error;
         }
     }
 
@@ -241,6 +217,7 @@ public class ObservedAspect {
     /**
      * Setting this enables support for {@link ObservationKeyValue}.
      * @param observationKeyValueAnnotationHandler annotation handler
+     * @since 1.16.0
      */
     public void setObservationKeyValueAnnotationHandler(
             ObservationKeyValueAnnotationHandler observationKeyValueAnnotationHandler) {
