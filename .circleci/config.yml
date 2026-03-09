@@ -14,21 +14,21 @@ executors:
       GRADLE_OPTS: '-Dorg.gradle.jvmargs="-Xmx2g -XX:+HeapDumpOnOutOfMemoryError" -Dorg.gradle.workers.max=2'
     resource_class: medium+
     docker:
-      - image: cimg/openjdk:21.0.8
+      - image: cimg/openjdk:21.0.9
   circle-jdk17-executor:
     working_directory: ~/micrometer
     environment:
       GRADLE_OPTS: '-Dorg.gradle.jvmargs="-Xmx2g -XX:+HeapDumpOnOutOfMemoryError" -Dorg.gradle.workers.max=2'
     resource_class: medium+
     docker:
-      - image: cimg/openjdk:17.0.16
+      - image: cimg/openjdk:17.0.17
   circle-jdk11-executor:
     working_directory: ~/micrometer
     environment:
       GRADLE_OPTS: '-Dorg.gradle.jvmargs="-Xmx2g -XX:+HeapDumpOnOutOfMemoryError" -Dorg.gradle.workers.max=2'
     resource_class: medium+
     docker:
-      - image: cimg/openjdk:11.0.28
+      - image: cimg/openjdk:11.0.29
   # JCStress spawns multiple test JVMs; use larger instance to avoid daemon OOM
   concurrency-tests-executor:
     working_directory: ~/micrometer
@@ -36,7 +36,7 @@ executors:
       GRADLE_OPTS: '-Dorg.gradle.jvmargs="-Xmx2g -XX:+HeapDumpOnOutOfMemoryError" -Dorg.gradle.workers.max=2'
     resource_class: large
     docker:
-      - image: cimg/openjdk:21.0.8
+      - image: cimg/openjdk:21.0.9
   machine-executor:
     working_directory: ~/micrometer
     machine:

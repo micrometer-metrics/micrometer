@@ -5,6 +5,7 @@ In this section we will describe main components related to Micrometer Observati
 
 * <<micrometer-observation-context, Observation Context>>
 * <<micrometer-observation-handler, Observation Handler>>
+* <<micrometer-observation-default-meter-handler, DefaultMeterObservationHandler>>
 * <<micrometer-observation-events, Signaling Errors and Arbitrary Events>>
 * <<micrometer-observation-convention-example, Observation Convention>>
 * <<micrometer-observation-predicates-filters, Observation Predicates and Filters>>
@@ -117,6 +118,34 @@ You can also take full control of the scoping mechanism:
 [source,java,subs=+attributes]
 -----
 include::{include-java}/observation/ObservationHandlerTests.java[tags=manual_scoping,indent=0]
+-----
+
+[[micrometer-observation-default-meter-handler]]
+=== DefaultMeterObservationHandler
+
+Micrometer provides `DefaultMeterObservationHandler`, an `ObservationHandler` implementation that automatically creates metrics from Observations.
+When registered on an `ObservationRegistry`, it translates Observation lifecycle events into the following meter types:
+
+* **Timer** (`<observation-name>`) -- Created on `stop`. Records the duration between `start` and `stop`. Tagged with all low cardinality key values and an `error` tag (set to the exception class name if an error was recorded, or `none` otherwise).
+* **LongTaskTimer** (`<observation-name>.active`) -- Created on `start`. Tracks the duration of in-progress observations. Stopped when the observation is stopped. Only tagged with low cardinality key values that are available at the time of `start`.
+* **Counter** (`<observation-name>.<event-name>`) -- Incremented when an event is signaled via `Observation.event(Event)`. Tagged with all low cardinality key values available at the time of the event.
+
+NOTE: Only low cardinality key values are used as meter tags. High cardinality key values are not included in meters because they can cause a cardinality explosion in the metrics backend.
+
+WARNING: Since the `LongTaskTimer` is created in the `onStart` method, it can only contain tags that are available by that time. Any low cardinality key values added after calling `start` on the `Observation` will not be included as tags on the `LongTaskTimer`.
+
+The following example shows how to register `DefaultMeterObservationHandler` and the metrics it creates:
+
+[source,java,subs=+attributes]
+-----
+include::{include-java}/observation/ObservationHandlerTests.java[tags=default_meter_handler,indent=0]
+-----
+
+If you do not need the `LongTaskTimer` (for example, to reduce the number of created meters), you can disable it using `IgnoredMeters`:
+
+[source,java,subs=+attributes]
+-----
+include::{include-java}/observation/ObservationHandlerTests.java[tags=default_meter_handler_ignore_ltt,indent=0]
 -----
 
 [[micrometer-observation-events]]
