@@ -197,6 +197,7 @@ class SimpleObservation implements Observation {
     }
 
     @Override
+    @Deprecated
     public @Nullable Scope getEnclosingScope() {
         return lastScope.get(Thread.currentThread());
     }
@@ -326,6 +327,7 @@ class SimpleObservation implements Observation {
         }
 
         @Override
+        @Deprecated
         public void reset() {
             SimpleScope scope = this;
             if (scope.currentObservation instanceof SimpleObservation) {
@@ -360,6 +362,7 @@ class SimpleObservation implements Observation {
          * {@link ObservationHandler#onScopeReset(Context)}.
          */
         @Override
+        @Deprecated
         public void makeCurrent() {
             SimpleScope scope = this;
             do {

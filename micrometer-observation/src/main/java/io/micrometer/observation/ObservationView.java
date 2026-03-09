@@ -44,7 +44,9 @@ public interface ObservationView {
      * Pops the last scope attached to this {@link ObservationView} in this thread.
      * @return scope for this {@link ObservationView}, {@code null} if there was no scope
      * @since 1.10.6
+     * @deprecated This method will be removed in a future release.
      */
+    @Deprecated
     default Observation.@Nullable Scope getEnclosingScope() {
         return Observation.Scope.NOOP;
     }

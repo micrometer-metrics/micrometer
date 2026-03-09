@@ -920,10 +920,12 @@ public interface Observation extends ObservationView {
             }
 
             @Override
+            @Deprecated
             public void reset() {
             }
 
             @Override
+            @Deprecated
             public void makeCurrent() {
             }
 
@@ -965,7 +967,10 @@ public interface Observation extends ObservationView {
          * method if you know what you are doing and your use-case demands the usage of
          * it.
          * @since 1.10.4
+         * @deprecated No longer used by Micrometer code. Use {@link #close()} instead.
+         * This method will be removed in a future release.
          */
+        @Deprecated
         void reset();
 
         /**
@@ -980,7 +985,10 @@ public interface Observation extends ObservationView {
          * method if you know what you are doing and your use-case demands the usage of
          * it.
          * @since 1.10.6
+         * @deprecated This method will be removed in a future release. It is no longer
+         * called by Micrometer code.
          */
+        @Deprecated
         void makeCurrent();
 
         /**
