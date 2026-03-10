@@ -1,14 +1,13 @@
 version: 2.1
 
 executors:
-# TODO: add and use JDK 25 executor when upgrading to a version of the Kotlin plugin that's compatible
-#  jdk25-executor:
-#    working_directory: ~/micrometer
-#    environment:
-#      GRADLE_OPTS: '-Dorg.gradle.jvmargs="-Xmx2g -XX:+HeapDumpOnOutOfMemoryError" -Dorg.gradle.workers.max=2'
-#    resource_class: medium+
-#    docker:
-#      - image: cimg/openjdk:25.0.1
+  jdk25-executor:
+    working_directory: ~/micrometer
+    environment:
+      GRADLE_OPTS: '-Dorg.gradle.jvmargs="-Xmx2g -XX:+HeapDumpOnOutOfMemoryError" -Dorg.gradle.workers.max=2'
+    resource_class: medium+
+    docker:
+      - image: cimg/openjdk:25.0.1
   jdk21-executor:
     working_directory: ~/micrometer
     environment:
@@ -30,7 +29,7 @@ executors:
       GRADLE_OPTS: '-Dorg.gradle.jvmargs="-Xmx2g -XX:+HeapDumpOnOutOfMemoryError" -Dorg.gradle.workers.max=2'
     resource_class: large
     docker:
-      - image: cimg/openjdk:21.0.9
+      - image: cimg/openjdk:25.0.1
   machine-executor:
     working_directory: ~/micrometer
     machine:
@@ -86,7 +85,7 @@ commands:
 
 jobs:
   build-jdk25:
-    executor: jdk21-executor
+    executor: jdk25-executor
     steps:
       - gradlew-build:
           toolchainVersion: '25'
@@ -102,7 +101,7 @@ jobs:
       - run: ./gradlew zgcGenerationalTest -PtoolchainVersion=21
 
   build-jdk11:
-    executor: jdk21-executor
+    executor: jdk25-executor
     steps:
       - gradlew-build:
           toolchainVersion: '11'
@@ -126,7 +125,7 @@ jobs:
           command: dockerTest
 
   deploy:
-    executor: jdk21-executor
+    executor: jdk25-executor
     steps:
       - checkout
       - restore_cache:
@@ -139,7 +138,7 @@ jobs:
           command: sh ./gradle/deploy.sh
 
   stackdriver-it:
-    executor: jdk21-executor
+    executor: jdk25-executor
     steps:
       - run:
           name: Setup Google Cloud auth
