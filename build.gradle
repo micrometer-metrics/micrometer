@@ -516,17 +516,17 @@ nexusPublishing {
     }
 }
 
+ext.assertDependencyVersionPrefix = { def dependencySupplier, def expectedVersionPrefix ->
+    def dependency = dependencySupplier.get()
+    assert dependency.version.startsWith(expectedVersionPrefix)
+}
+
 tasks.register('verifyDependencyVersions') {
     doLast {
         assertDependencyVersionPrefix(libs.jooq, '3.14.')
         assertDependencyVersionPrefix(libs.logback12, '1.2.')
         assertDependencyVersionPrefix(libs.caffeine, '2.9.')
     }
-}
-
-private static void assertDependencyVersionPrefix(def dependencySupplier, def expectedVersionPrefix) {
-    def dependency = dependencySupplier.get()
-    assert dependency.version.startsWith(expectedVersionPrefix)
 }
 
 tasks.register('check') {
