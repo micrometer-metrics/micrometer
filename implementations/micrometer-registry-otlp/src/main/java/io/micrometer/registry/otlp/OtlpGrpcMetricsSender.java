@@ -37,6 +37,9 @@ import java.util.Locale;
  */
 public class OtlpGrpcMetricsSender implements OtlpMetricsSender {
 
+    private static final Metadata.Key<String> USER_AGENT_KEY = Metadata.Key.of("user-agent",
+            Metadata.ASCII_STRING_MARSHALLER);
+
     private final MetricsServiceGrpc.MetricsServiceBlockingStub baseStub;
 
     /**
@@ -56,6 +59,7 @@ public class OtlpGrpcMetricsSender implements OtlpMetricsSender {
     @Override
     public void send(Request request) throws Exception {
         Metadata headers = new Metadata();
+        headers.put(USER_AGENT_KEY, OtlpMetricsSender.getUserAgentHeader());
         request.getHeaders().forEach((key, value) -> {
             String normalizedKey = key.toLowerCase(Locale.ROOT);
             if (normalizedKey.endsWith("-bin")) {

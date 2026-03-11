@@ -57,6 +57,9 @@ class OtlpGrpcMetricsSenderTests {
     private static final Metadata.Key<String> GRPC_ENCODING_KEY = Metadata.Key.of("grpc-encoding",
             Metadata.ASCII_STRING_MARSHALLER);
 
+    private static final Metadata.Key<String> USER_AGENT_KEY = Metadata.Key.of("user-agent",
+            Metadata.ASCII_STRING_MARSHALLER);
+
     private String serverName;
 
     private Server server;
@@ -109,6 +112,18 @@ class OtlpGrpcMetricsSenderTests {
 
         assertThat(this.testService.capturedHeaders.get()).isNotNull();
         assertThat(this.testService.capturedHeaders.get().get(TEST_HEADER_KEY)).isEqualTo("test-value");
+    }
+
+    @Test
+    void shouldSendUserAgentHeader() throws Exception {
+        OtlpGrpcMetricsSender sender = new OtlpGrpcMetricsSender(this.channel);
+        OtlpMetricsSender.Request request = OtlpMetricsSender.Request.builder(EMPTY_REQUEST_BYTES).build();
+
+        sender.send(request);
+
+        assertThat(this.testService.capturedHeaders.get()).isNotNull();
+        assertThat(this.testService.capturedHeaders.get().getAll(USER_AGENT_KEY))
+            .anyMatch(v -> v.contains("Micrometer-OTLP-Exporter-Java"));
     }
 
     @Test
