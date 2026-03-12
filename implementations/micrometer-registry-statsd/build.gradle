@@ -37,6 +37,7 @@ nebulaPublishVerification {
 
 shadowJar {
     duplicatesStrategy = DuplicatesStrategy.INCLUDE
+    failOnDuplicateEntries = true
     configurations.set([project.configurations.compileClasspath])
     archiveClassifier.set('')
     dependencies {
