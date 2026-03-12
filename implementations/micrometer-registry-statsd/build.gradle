@@ -1,5 +1,5 @@
 plugins {
-    id 'com.gradleup.shadow' version '8.3.9'
+    id 'com.gradleup.shadow' version '9.3.2'
 }
 
 dependencies {
@@ -36,13 +36,14 @@ nebulaPublishVerification {
 }
 
 shadowJar {
-    configurations = [project.configurations.compileClasspath]
+    duplicatesStrategy = DuplicatesStrategy.INCLUDE
+    configurations.set([project.configurations.compileClasspath])
     archiveClassifier.set('')
     dependencies {
-        include(dependency('io.projectreactor:'))
-        include(dependency('io.projectreactor.netty:'))
-        include(dependency('org.reactivestreams:reactive-streams'))
-        include(dependency('io.netty:'))
+        include(dependency('io.projectreactor:.*'))
+        include(dependency('io.projectreactor.netty:.*'))
+        include(dependency('org.reactivestreams:reactive-streams:.*'))
+        include(dependency('io.netty:.*'))
         // see gh-5953
         exclude("META-INF/maven/**")
         exclude("META-INF/io.netty.versions.properties")
