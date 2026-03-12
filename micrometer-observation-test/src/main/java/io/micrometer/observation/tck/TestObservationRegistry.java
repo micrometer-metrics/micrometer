@@ -192,7 +192,7 @@ public final class TestObservationRegistry
          * scope B must be closed before scope A.
          * @param flag whether to enable this validation
          * @return this builder
-         * @since 1.16.0
+         * @since 1.17.0
          */
         public TestObservationRegistryBuilder validateScopesClosedInReverseOrderOfOpening(boolean flag) {
             if (flag) {
@@ -210,7 +210,7 @@ public final class TestObservationRegistry
          * closed on another, which is typically a programming error.
          * @param flag whether to enable this validation
          * @return this builder
-         * @since 1.16.0
+         * @since 1.17.0
          */
         public TestObservationRegistryBuilder validateScopesOpenedAndClosedOnTheSameThread(boolean flag) {
             if (flag) {

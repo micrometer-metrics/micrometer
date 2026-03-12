@@ -42,6 +42,7 @@ import static io.micrometer.observation.tck.TestObservationRegistry.Capability.S
  * {@link Consumer} of your choice.
  *
  * @author Jonatan Ivanov
+ * @author Seonghyeok Lee
  */
 class ObservationValidator implements ObservationHandler<Context> {
 
@@ -51,7 +52,7 @@ class ObservationValidator implements ObservationHandler<Context> {
 
     private final Map<String, Set<String>> lowCardinalityKeysByObservationName;
 
-    private final Deque<Context> globalScopeStack;
+    private final Deque<Context> scopedContexts;
 
     private final Set<Capability> capabilities;
 
@@ -59,7 +60,7 @@ class ObservationValidator implements ObservationHandler<Context> {
         this.consumer = ObservationValidator::throwInvalidObservationException;
         this.supportsContextPredicate = context -> !(context instanceof NullContext);
         this.lowCardinalityKeysByObservationName = new HashMap<>();
-        this.globalScopeStack = new ArrayDeque<>();
+        this.scopedContexts = new ArrayDeque<>();
         this.capabilities = capabilities;
     }
 
@@ -93,13 +94,12 @@ class ObservationValidator implements ObservationHandler<Context> {
         addHistoryElement(context, EventName.SCOPE_OPEN);
         // In some cases (Reactor) scope open can happen after the observation is stopped
         checkIfObservationWasStarted("Invalid scope opening", context);
-        if (capabilities.contains(SCOPES_SHOULD_BE_OPENED_AND_CLOSED_ON_THE_SAME_THREAD)
-                || capabilities.contains(SCOPES_SHOULD_BE_CLOSED_IN_REVERSE_ORDER_OF_OPENING)) {
+        if (capabilities.contains(SCOPES_SHOULD_BE_OPENED_AND_CLOSED_ON_THE_SAME_THREAD)) {
             ScopeState scopeState = context.computeIfAbsent(ScopeState.class, clazz -> new ScopeState());
             scopeState.openingThreadIds.push(Thread.currentThread().getId());
         }
         if (capabilities.contains(SCOPES_SHOULD_BE_CLOSED_IN_REVERSE_ORDER_OF_OPENING)) {
-            globalScopeStack.push(context);
+            scopedContexts.push(context);
         }
     }
 
@@ -108,14 +108,14 @@ class ObservationValidator implements ObservationHandler<Context> {
         addHistoryElement(context, EventName.SCOPE_CLOSE);
         // In some cases (Reactor) scope close can happen after the observation is stopped
         checkIfObservationWasStarted("Invalid scope closing", context);
-        if (capabilities.contains(SCOPES_SHOULD_BE_CLOSED_IN_REVERSE_ORDER_OF_OPENING) && !globalScopeStack.isEmpty()) {
-            Context top = globalScopeStack.peek();
+        if (capabilities.contains(SCOPES_SHOULD_BE_CLOSED_IN_REVERSE_ORDER_OF_OPENING) && !scopedContexts.isEmpty()) {
+            Context top = scopedContexts.peek();
             if (top != context) {
                 consumer.accept(new ValidationResult("Invalid scope closing order: Observation '" + context.getName()
-                        + "' had its scope closed before the most recently opened scope" + " for Observation '"
+                        + "' had its scope closed before the most recently opened scope for Observation '"
                         + top.getName() + "' was closed", context));
             }
-            globalScopeStack.pop();
+            scopedContexts.pop();
         }
         if (capabilities.contains(SCOPES_SHOULD_BE_OPENED_AND_CLOSED_ON_THE_SAME_THREAD)) {
             ScopeState scopeState = context.get(ScopeState.class);
@@ -137,10 +137,9 @@ class ObservationValidator implements ObservationHandler<Context> {
         // In some cases (Reactor) scope reset can happen after the observation is stopped
         checkIfObservationWasStarted("Invalid scope resetting", context);
         if (capabilities.contains(SCOPES_SHOULD_BE_CLOSED_IN_REVERSE_ORDER_OF_OPENING)) {
-            globalScopeStack.removeIf(ctx -> ctx == context);
+            scopedContexts.removeIf(ctx -> ctx == context);
         }
-        if (capabilities.contains(SCOPES_SHOULD_BE_OPENED_AND_CLOSED_ON_THE_SAME_THREAD)
-                || capabilities.contains(SCOPES_SHOULD_BE_CLOSED_IN_REVERSE_ORDER_OF_OPENING)) {
+        if (capabilities.contains(SCOPES_SHOULD_BE_OPENED_AND_CLOSED_ON_THE_SAME_THREAD)) {
             ScopeState scopeState = context.get(ScopeState.class);
             if (scopeState != null) {
                 scopeState.openingThreadIds.clear();

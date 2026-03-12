@@ -330,6 +330,55 @@ class ObservationValidatorTests {
     }
 
     @Test
+    void multipleScopesOpenedAndClosedOnSameThreadShouldBeValid() {
+        TestObservationRegistry registry = TestObservationRegistry.builder()
+            .validateScopesOpenedAndClosedOnTheSameThread(true)
+            .build();
+        Observation observation = Observation.start("test", registry);
+        Scope scope1 = observation.openScope();
+        Scope scope2 = observation.openScope();
+        Scope scope3 = observation.openScope();
+        scope3.close();
+        scope2.close();
+        scope1.close();
+        observation.stop();
+    }
+
+    @Test
+    void multipleScopesWithOneClosedOnDifferentThreadShouldBeInvalid() throws Exception {
+        TestObservationRegistry registry = TestObservationRegistry.builder()
+            .validateScopesOpenedAndClosedOnTheSameThread(true)
+            .build();
+        Observation observation = Observation.start("test", registry);
+        Scope scope1 = observation.openScope();
+        Scope scope2 = observation.openScope();
+
+        CountDownLatch latch = new CountDownLatch(1);
+        AtomicReference<Throwable> error = new AtomicReference<>();
+        Thread thread = new Thread(() -> {
+            try {
+                scope2.close();
+            }
+            catch (Throwable t) {
+                error.set(t);
+            }
+            finally {
+                latch.countDown();
+            }
+        });
+        thread.start();
+        latch.await();
+
+        assertThat(error.get()).isExactlyInstanceOf(InvalidObservationException.class)
+            .hasMessageContaining("Invalid scope closing thread")
+            .hasMessageContaining("test");
+
+        // scope1 should still close fine on the original thread
+        scope1.close();
+        observation.stop();
+    }
+
+    @Test
     void scopeClosedOnDifferentThreadShouldBeInvalid() throws Exception {
         TestObservationRegistry registry = TestObservationRegistry.builder()
             .validateScopesOpenedAndClosedOnTheSameThread(true)
