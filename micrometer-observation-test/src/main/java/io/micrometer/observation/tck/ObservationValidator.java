@@ -31,7 +31,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import static io.micrometer.observation.tck.TestObservationRegistry.Capability;
-import static io.micrometer.observation.tck.TestObservationRegistry.Capability.OBSERVATIONS_WITH_THE_SAME_NAME_SHOULD_HAVE_THE_SAME_SET_OF_LOW_CARDINALITY_KEYS;
+import static io.micrometer.observation.tck.TestObservationRegistry.Capability.*;
 
 /**
  * An {@link ObservationHandler} that validates the order of events of an Observation (for
@@ -40,6 +40,7 @@ import static io.micrometer.observation.tck.TestObservationRegistry.Capability.O
  * {@link Consumer} of your choice.
  *
  * @author Jonatan Ivanov
+ * @author Seonghyeok Lee
  */
 class ObservationValidator implements ObservationHandler<Context> {
 
@@ -49,12 +50,15 @@ class ObservationValidator implements ObservationHandler<Context> {
 
     private final Map<String, Set<String>> lowCardinalityKeysByObservationName;
 
+    private final Deque<Context> scopedContexts;
+
     private final Set<Capability> capabilities;
 
     ObservationValidator(Set<Capability> capabilities) {
         this.consumer = ObservationValidator::throwInvalidObservationException;
         this.supportsContextPredicate = context -> !(context instanceof NullContext);
         this.lowCardinalityKeysByObservationName = new HashMap<>();
+        this.scopedContexts = new ArrayDeque<>();
         this.capabilities = capabilities;
     }
 
@@ -85,23 +89,54 @@ class ObservationValidator implements ObservationHandler<Context> {
 
     @Override
     public void onScopeOpened(Context context) {
-        addHistoryElement(context, EventName.SCOPE_OPEN);
+        History history = addHistoryElement(context, EventName.SCOPE_OPEN);
         // In some cases (Reactor) scope open can happen after the observation is stopped
         checkIfObservationWasStarted("Invalid scope opening", context);
+        if (capabilities.contains(SCOPES_SHOULD_BE_CLOSED_IN_REVERSE_ORDER_OF_OPENING)) {
+            scopedContexts.push(context);
+        }
+        if (capabilities.contains(SCOPES_SHOULD_BE_OPENED_AND_CLOSED_ON_THE_SAME_THREAD)) {
+            history.addCurrentThreadToScopeOpeningThreadIds();
+        }
     }
 
     @Override
     public void onScopeClosed(Context context) {
-        addHistoryElement(context, EventName.SCOPE_CLOSE);
+        History history = addHistoryElement(context, EventName.SCOPE_CLOSE);
         // In some cases (Reactor) scope close can happen after the observation is stopped
         checkIfObservationWasStarted("Invalid scope closing", context);
+        if (capabilities.contains(SCOPES_SHOULD_BE_CLOSED_IN_REVERSE_ORDER_OF_OPENING)) {
+            Context currentContext = scopedContexts.pollFirst();
+            if (currentContext != null && currentContext != context) {
+                consumer.accept(new ValidationResult("Invalid scope closing order: Observation '" + context.getName()
+                        + "' had its scope closed before the most recently opened scope for Observation '"
+                        + currentContext.getName() + "' was closed", context));
+            }
+        }
+        if (capabilities.contains(SCOPES_SHOULD_BE_OPENED_AND_CLOSED_ON_THE_SAME_THREAD)) {
+            Long openingThreadId = history.pollFirstScopeOpeningThreadId();
+            if (openingThreadId != null) {
+                long closingThreadId = Thread.currentThread().getId();
+                if (!openingThreadId.equals(closingThreadId)) {
+                    consumer.accept(new ValidationResult("Invalid scope closing thread: Observation '"
+                            + context.getName() + "' had a scope opened on thread '" + openingThreadId
+                            + "' but closed on thread '" + closingThreadId + "'", context));
+                }
+            }
+        }
     }
 
     @Override
     public void onScopeReset(Context context) {
-        addHistoryElement(context, EventName.SCOPE_RESET);
+        History history = addHistoryElement(context, EventName.SCOPE_RESET);
         // In some cases (Reactor) scope reset can happen after the observation is stopped
         checkIfObservationWasStarted("Invalid scope resetting", context);
+        if (capabilities.contains(SCOPES_SHOULD_BE_CLOSED_IN_REVERSE_ORDER_OF_OPENING)) {
+            scopedContexts.removeIf(ctx -> ctx == context);
+        }
+        if (capabilities.contains(SCOPES_SHOULD_BE_OPENED_AND_CLOSED_ON_THE_SAME_THREAD)) {
+            history.clearScopeOpeningThreadIds();
+        }
     }
 
     @Override
@@ -121,9 +156,10 @@ class ObservationValidator implements ObservationHandler<Context> {
         return supportsContextPredicate.test(context);
     }
 
-    private void addHistoryElement(Context context, EventName eventName) {
+    private History addHistoryElement(Context context, EventName eventName) {
         History history = context.computeIfAbsent(History.class, clazz -> new History());
         history.addHistoryElement(eventName);
+        return history;
     }
 
     private @Nullable Status checkIfObservationWasStarted(String prefix, Context context) {
@@ -223,12 +259,26 @@ class ObservationValidator implements ObservationHandler<Context> {
 
         private final List<HistoryElement> historyElements = new ArrayList<>();
 
+        private final Deque<Long> scopeOpeningThreadIds = new ArrayDeque<>();
+
         private void addHistoryElement(EventName eventName) {
             historyElements.add(new HistoryElement(eventName));
         }
 
-        List<HistoryElement> getHistoryElements() {
+        private List<HistoryElement> getHistoryElements() {
             return Collections.unmodifiableList(historyElements);
+        }
+
+        private void addCurrentThreadToScopeOpeningThreadIds() {
+            scopeOpeningThreadIds.push(Thread.currentThread().getId());
+        }
+
+        private @Nullable Long pollFirstScopeOpeningThreadId() {
+            return scopeOpeningThreadIds.pollFirst();
+        }
+
+        private void clearScopeOpeningThreadIds() {
+            scopeOpeningThreadIds.clear();
         }
 
     }

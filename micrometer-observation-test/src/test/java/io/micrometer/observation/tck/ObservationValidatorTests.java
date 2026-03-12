@@ -22,6 +22,8 @@ import io.micrometer.observation.Observation.Scope;
 import io.micrometer.observation.ObservationRegistry;
 import org.junit.jupiter.api.Test;
 
+import java.util.concurrent.atomic.AtomicReference;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -29,6 +31,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  * Tests for {@link ObservationValidator}.
  *
  * @author Jonatan Ivanov
+ * @author Seonghyeok Lee
  */
 class ObservationValidatorTests {
 
@@ -230,6 +233,7 @@ class ObservationValidatorTests {
     }
 
     @Test
+    @SuppressWarnings("resource")
     void nullObservationShouldBeIgnored() {
         new NullObservation(registry).openScope();
     }
@@ -256,15 +260,15 @@ class ObservationValidatorTests {
     private void verifyThatValidateObservationsWithTheSameNameHavingTheSameSetOfLowCardinalityKeysWorks(
             TestObservationRegistry registry) {
         Observation.createNotStarted("test", registry).lowCardinalityKeyValue("key1", "value1").start().stop();
-        assertThatThrownBy(() -> {
-            Observation.createNotStarted("test", registry).start().stop();
-        }).isExactlyInstanceOf(InvalidObservationException.class)
+        assertThatThrownBy(() -> Observation.createNotStarted("test", registry).start().stop())
+            .isExactlyInstanceOf(InvalidObservationException.class)
             .hasMessageContaining(
                     "Using a consistent set of low cardinality keys for Observations with the same name is recommended best practice if metrics will be produced from the Observations.");
 
-        assertThatThrownBy(() -> {
-            Observation.createNotStarted("test", registry).lowCardinalityKeyValue("key2", "value2").start().stop();
-        }).isExactlyInstanceOf(InvalidObservationException.class)
+        assertThatThrownBy(() -> Observation.createNotStarted("test", registry)
+            .lowCardinalityKeyValue("key2", "value2")
+            .start()
+            .stop()).isExactlyInstanceOf(InvalidObservationException.class)
             .hasMessageContaining(
                     "Using a consistent set of low cardinality keys for Observations with the same name is recommended best practice if metrics will be produced from the Observations.");
 
@@ -285,6 +289,141 @@ class ObservationValidatorTests {
             .validateObservationsWithTheSameNameHavingTheSameSetOfLowCardinalityKeys(true)
             .build();
         verifyThatValidateObservationsWithTheSameNameHavingTheSameSetOfLowCardinalityKeysWorks(registry);
+    }
+
+    @Test
+    void scopeClosedInCorrectOrderShouldBeValid() {
+        TestObservationRegistry registry = TestObservationRegistry.builder()
+            .validateScopesClosedInReverseOrderOfOpening(true)
+            .build();
+        Observation observation = Observation.start("test", registry);
+        Scope outerScope = observation.openScope();
+        observation.openScope().close();
+        outerScope.close();
+        observation.stop();
+    }
+
+    @Test
+    @SuppressWarnings("resource")
+    void scopeClosedInWrongOrderShouldBeInvalid() {
+        TestObservationRegistry registry = TestObservationRegistry.builder()
+            .validateScopesClosedInReverseOrderOfOpening(true)
+            .build();
+        Observation outerObservation = Observation.start("outerObservation", registry);
+        Scope outerScope = outerObservation.openScope();
+        Observation innerObservation = Observation.start("innerObservation", registry);
+        innerObservation.openScope();
+        assertThatThrownBy(outerScope::close).isExactlyInstanceOf(InvalidObservationException.class)
+            .hasMessageContaining(
+                    "Invalid scope closing order: Observation 'outerObservation' had its scope closed before the most recently opened scope for Observation 'innerObservation' was closed");
+    }
+
+    @Test
+    void scopeClosedOnSameThreadShouldBeValid() {
+        TestObservationRegistry registry = TestObservationRegistry.builder()
+            .validateScopesOpenedAndClosedOnTheSameThread(true)
+            .build();
+        Observation observation = Observation.start("test", registry);
+        observation.openScope().close();
+        observation.stop();
+    }
+
+    @Test
+    void multipleScopesOpenedAndClosedOnSameThreadShouldBeValid() {
+        TestObservationRegistry registry = TestObservationRegistry.builder()
+            .validateScopesOpenedAndClosedOnTheSameThread(true)
+            .build();
+        Observation observation = Observation.start("test", registry);
+        Scope scope1 = observation.openScope();
+        Scope scope2 = observation.openScope();
+        observation.openScope().close();
+        scope2.close();
+        scope1.close();
+        observation.stop();
+    }
+
+    @Test
+    void multipleScopesWithOneClosedOnDifferentThreadShouldBeInvalid() throws Exception {
+        TestObservationRegistry registry = TestObservationRegistry.builder()
+            .validateScopesOpenedAndClosedOnTheSameThread(true)
+            .build();
+        Observation observation = Observation.start("test", registry);
+        Scope outerScope = observation.openScope();
+        Scope innerScope = observation.openScope();
+
+        AtomicReference<Throwable> error = new AtomicReference<>();
+        Thread thread = new Thread(() -> {
+            try {
+                innerScope.close();
+            }
+            catch (Throwable t) {
+                error.set(t);
+            }
+        });
+        thread.start();
+        thread.join();
+
+        assertThat(error.get()).isExactlyInstanceOf(InvalidObservationException.class)
+            .hasMessageMatching(
+                    "Invalid scope closing thread: Observation 'test' had a scope opened on thread '.+' but closed on thread '.+'");
+
+        // outer scope should still close fine on the original thread
+        outerScope.close();
+        observation.stop();
+    }
+
+    @Test
+    void scopeClosedOnDifferentThreadShouldBeInvalid() throws Exception {
+        TestObservationRegistry registry = TestObservationRegistry.builder()
+            .validateScopesOpenedAndClosedOnTheSameThread(true)
+            .build();
+        Observation observation = Observation.start("test", registry);
+        Scope scope = observation.openScope();
+
+        AtomicReference<Throwable> error = new AtomicReference<>();
+        Thread thread = new Thread(() -> {
+            try {
+                scope.close();
+            }
+            catch (Throwable t) {
+                error.set(t);
+            }
+        });
+        thread.start();
+        thread.join();
+
+        assertThat(error.get()).isExactlyInstanceOf(InvalidObservationException.class)
+            .hasMessageMatching(
+                    "Invalid scope closing thread: Observation 'test' had a scope opened on thread '.+' but closed on thread '.+'");
+    }
+
+    @Test
+    void scopeValidationNotEnabledByDefault() {
+        TestObservationRegistry registry = TestObservationRegistry.create();
+        Observation outerObservation = Observation.start("outerObservation", registry);
+        Scope outerScope = outerObservation.openScope();
+        Observation innerObservation = Observation.start("obs2", registry);
+        Scope innerScope = innerObservation.openScope();
+        // Closing in wrong order should not throw when validation is not enabled
+        outerScope.close();
+        innerScope.close();
+        innerObservation.stop();
+        outerObservation.stop();
+    }
+
+    @Test
+    void nestedScopesOnSameObservationClosedInCorrectOrderShouldBeValid() {
+        TestObservationRegistry registry = TestObservationRegistry.builder()
+            .validateScopesClosedInReverseOrderOfOpening(true)
+            .validateScopesOpenedAndClosedOnTheSameThread(true)
+            .build();
+        Observation observation = Observation.start("test", registry);
+        Scope scope1 = observation.openScope();
+        Scope scope2 = observation.openScope();
+        observation.openScope().close();
+        scope2.close();
+        scope1.close();
+        observation.stop();
     }
 
 }
