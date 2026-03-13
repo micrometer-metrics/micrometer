@@ -53,4 +53,36 @@ class DurationValidatorTest {
             .isEqualByComparingTo(Duration.ofDays(2).plus(Duration.ofHours(3)).plus(Duration.ofMinutes(4)));
     }
 
+    @Test
+    void blankValueIsInvalid() {
+        assertThat(validate("dur", " ").isInvalid()).isTrue();
+        assertThat(validate("dur", "").isInvalid()).isTrue();
+    }
+
+    @Test
+    void malformedDurationIsInvalid() {
+        assertThat(validate("dur", "not-a-duration").isInvalid()).isTrue();
+    }
+
+    @Test
+    void missingUnitIsInvalid() {
+        assertThat(validate("dur", "42").isInvalid()).isTrue();
+    }
+
+    @Test
+    void invalidUnitIsInvalid() {
+        assertThat(validate("dur", "10xy").isInvalid()).isTrue();
+    }
+
+    @Test
+    void invalidIsoDurationIsInvalid() {
+        assertThat(validate("dur", "PT10X").isInvalid()).isTrue();
+    }
+
+    @Test
+    void nullValueIsValid() {
+        assertThat(validate("dur", null).isValid()).isTrue();
+        assertThat(validate("dur", null).get()).isNull();
+    }
+
 }
