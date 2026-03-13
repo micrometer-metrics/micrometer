@@ -61,18 +61,12 @@ public final class Tags implements Iterable<Tag> {
     }
 
     /**
-     * Checks if the first {@code length} elements of the {@code tags} array form an
-     * ordered set of tags.
+     * Checks if the {@code tags} array forms an ordered set of tags.
      * @param tags an array of tags.
-     * @param length the number of elements to check.
-     * @return {@code true} if the first {@code length} elements of {@code tags} form an
-     * ordered set; otherwise {@code false}.
+     * @return {@code true} if {@code tags} forms an ordered set; otherwise {@code false}.
      */
-    private static boolean isSortedSet(Tag[] tags, int length) {
-        if (length > tags.length) {
-            return false;
-        }
-        for (int i = 0; i < length - 1; i++) {
+    private static boolean isSortedSet(Tag[] tags) {
+        for (int i = 0; i < tags.length - 1; i++) {
             int cmp = tags[i].compareTo(tags[i + 1]);
             if (cmp >= 0) {
                 return false;
@@ -88,12 +82,12 @@ public final class Tags implements Iterable<Tag> {
      * @return a {@code Tags} instance with a deduplicated and ordered set of tags.
      */
     private static Tags toTags(Tag[] tags) {
-        int len = tags.length;
-        if (!isSortedSet(tags, len)) {
+        if (!isSortedSet(tags)) {
             Arrays.sort(tags);
-            len = dedup(tags);
+            int len = dedup(tags);
+            return new Tags(tags, len);
         }
-        return new Tags(tags, len);
+        return new Tags(tags, tags.length);
     }
 
     /**
