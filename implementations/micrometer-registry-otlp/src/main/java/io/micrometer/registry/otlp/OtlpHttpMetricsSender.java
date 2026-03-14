@@ -34,7 +34,7 @@ public class OtlpHttpMetricsSender implements OtlpMetricsSender {
      */
     public OtlpHttpMetricsSender(HttpSender httpSender) {
         this.httpSender = httpSender;
-        this.userAgentHeader = getUserAgentHeader();
+        this.userAgentHeader = OtlpMetricsSender.getUserAgentHeader();
     }
 
     /**
@@ -67,15 +67,6 @@ public class OtlpHttpMetricsSender implements OtlpMetricsSender {
             throw new OtlpHttpMetricsSendUnsuccessfulException(String
                 .format("Server responded with HTTP status code %d and body %s", response.code(), response.body()));
         }
-    }
-
-    private String getUserAgentHeader() {
-        String userAgent = "Micrometer-OTLP-Exporter-Java";
-        String version = getClass().getPackage().getImplementationVersion();
-        if (version != null) {
-            userAgent += "/" + version;
-        }
-        return userAgent;
     }
 
     private static class OtlpHttpMetricsSendUnsuccessfulException extends RuntimeException {

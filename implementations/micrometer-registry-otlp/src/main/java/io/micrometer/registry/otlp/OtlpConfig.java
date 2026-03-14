@@ -17,7 +17,9 @@ package io.micrometer.registry.otlp;
 
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.config.InvalidConfigurationException;
+import io.micrometer.core.instrument.config.validate.InvalidReason;
 import io.micrometer.core.instrument.config.validate.Validated;
+import io.micrometer.core.instrument.config.validate.ValidationException;
 import io.micrometer.core.instrument.push.PushRegistryConfig;
 
 import java.net.URLDecoder;
@@ -74,6 +76,48 @@ public interface OtlpConfig extends PushRegistryConfig {
             }
             return endpoint;
         });
+    }
+
+    /**
+     * The transport protocol to use for OTLP export. Reads
+     * {@code OTEL_EXPORTER_OTLP_METRICS_PROTOCOL} first (signal-specific), then
+     * {@code OTEL_EXPORTER_OTLP_PROTOCOL} (global fallback), defaulting to
+     * {@link OtlpTransportProtocol#HTTP_PROTOBUF}.
+     * <p>
+     * Accepted values per the OpenTelemetry specification: {@code grpc} or
+     * {@code http/protobuf} (case-insensitive). The same values are accepted when
+     * configured via {@link #get(String)} (e.g., {@code otlp.protocol}); the underscore
+     * form {@code http_protobuf} is also accepted as a property value.
+     * <p>
+     * Note: this method only influences the default URL returned by {@link #url()} for
+     * the gRPC transport. It does not automatically switch the sender implementation. To
+     * use OTLP/gRPC, configure {@code OtlpGrpcMetricsSender} explicitly on the registry
+     * builder.
+     * @return the transport protocol; default is
+     * {@link OtlpTransportProtocol#HTTP_PROTOBUF}
+     * @see <a href= "https://opentelemetry.io/docs/specs/otel/protocol/exporter/">OTLP
+     * Exporter Configuration</a>
+     */
+    default OtlpTransportProtocol protocol() {
+        String propertyValue = getString(this, "protocol").orElse(null);
+        if (propertyValue != null) {
+            try {
+                return OtlpTransportProtocol.fromString(propertyValue);
+            }
+            catch (IllegalArgumentException e) {
+                throw new ValidationException(Validated.invalid(prefix() + ".protocol", propertyValue, e.getMessage(),
+                        InvalidReason.MALFORMED, e));
+            }
+        }
+        Map<String, String> env = System.getenv();
+        String protocol = env.get("OTEL_EXPORTER_OTLP_METRICS_PROTOCOL");
+        if (protocol == null) {
+            protocol = env.get("OTEL_EXPORTER_OTLP_PROTOCOL");
+        }
+        if (protocol != null) {
+            return OtlpTransportProtocol.fromString(protocol);
+        }
+        return OtlpTransportProtocol.HTTP_PROTOBUF;
     }
 
     /**
@@ -339,7 +383,7 @@ public interface OtlpConfig extends PushRegistryConfig {
                 check("resourceAttributes", OtlpConfig::resourceAttributes),
                 check("baseTimeUnit", OtlpConfig::baseTimeUnit),
                 check("aggregationTemporality", OtlpConfig::aggregationTemporality),
-                check("compressionMode", OtlpConfig::compressionMode),
+                check("compressionMode", OtlpConfig::compressionMode), check("protocol", OtlpConfig::protocol),
                 check("histogramFlavorPerMeter", OtlpConfig::histogramFlavorPerMeter),
                 check("maxBucketsPerMeter", OtlpConfig::maxBucketsPerMeter));
     }
