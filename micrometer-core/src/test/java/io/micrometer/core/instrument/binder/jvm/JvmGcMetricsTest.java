@@ -99,6 +99,26 @@ class JvmGcMetricsTest {
     }
 
     @Test
+    @EnabledForJreRange(min = JRE.JAVA_26)
+    void gcCpuTimeAvailable() {
+        binder.bindTo(registry);
+        // ensure some GC time has been spent
+        System.gc();
+
+        assertThat(registry.get("jvm.gc.cpu.time").functionCounter().count()).isPositive();
+    }
+
+    @Test
+    @EnabledForJreRange(max = JRE.JAVA_25)
+    void gcCpuTimeNotAvailable() {
+        binder.bindTo(registry);
+        // ensure some GC time has been spent
+        System.gc();
+
+        assertThat(registry.find("jvm.gc.cpu.time").functionCounter()).isNull();
+    }
+
+    @Test
     @EnabledIf(value = "isPauseCyclesGc", disabledReason = "test only works with certain collectors")
     // available for some platforms and distributions earlier, but broadest availability
     // in an LTS is 17

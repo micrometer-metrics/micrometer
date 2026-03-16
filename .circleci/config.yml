@@ -84,6 +84,12 @@ commands:
           path: ~/micrometer/test-results/
 
 jobs:
+  build-jdk26:
+    executor: jdk25-executor
+    steps:
+      - gradlew-build:
+          toolchainVersion: '26'
+
   build-jdk25:
     executor: jdk25-executor
     steps:
@@ -156,6 +162,7 @@ workflows:
       - build-jdk17
       - build-jdk21
       - build-jdk25
+      - build-jdk26
       - concurrency-tests
       - docker-tests
       - stackdriver-it:
@@ -174,6 +181,7 @@ workflows:
             - build-jdk17
             - build-jdk21
             - build-jdk25
+            - build-jdk26
             - concurrency-tests
             - docker-tests
           filters:
@@ -207,6 +215,12 @@ workflows:
               ignore: /.*/
             tags:
               only: /^v\d+\.\d+\.\d+(-(RC|M)\d+)?$/
+      - build-jdk26:
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /^v\d+\.\d+\.\d+(-(RC|M)\d+)?$/
       - concurrency-tests:
           filters:
             branches:
@@ -235,6 +249,7 @@ workflows:
             - build-jdk17
             - build-jdk21
             - build-jdk25
+            - build-jdk26
             - concurrency-tests
             - docker-tests
           filters:
