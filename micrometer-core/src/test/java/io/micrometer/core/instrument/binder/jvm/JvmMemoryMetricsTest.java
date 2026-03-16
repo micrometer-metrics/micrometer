@@ -21,6 +21,7 @@ import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.binder.jvm.convention.otel.OpenTelemetryJvmMemoryMeterConventions;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -30,6 +31,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  *
  * @author Michael Weirauch
  */
+@Tag("gc")
 class JvmMemoryMetricsTest {
 
     MeterRegistry registry = new SimpleMeterRegistry();
@@ -79,6 +81,23 @@ class JvmMemoryMetricsTest {
 
         assertJvmMemoryMetrics("heap", extraTags, true);
         assertJvmMemoryMetrics("non_heap", extraTags, true);
+    }
+
+    @Test
+    void memoryUsedAfterLastGc() {
+        new JvmMemoryMetrics().bindTo(registry);
+
+        assertThat(registry.get("jvm.memory.used_after_last_gc").gauges()).isNotEmpty()
+            .allSatisfy(gauge -> assertThat(gauge.value()).isGreaterThanOrEqualTo(0));
+
+        System.gc();
+
+        assertThat(registry.get("jvm.memory.used_after_last_gc").gauges()).isNotEmpty()
+            .allSatisfy(gauge -> assertThat(gauge.value()).isGreaterThanOrEqualTo(0));
+
+        registry.get("jvm.memory.used_after_last_gc").gauges().forEach(gauge -> {
+            assertThat(gauge.getId().getBaseUnit()).isEqualTo(BaseUnits.BYTES);
+        });
     }
 
     private void assertJvmMemoryMetrics(String area) {
