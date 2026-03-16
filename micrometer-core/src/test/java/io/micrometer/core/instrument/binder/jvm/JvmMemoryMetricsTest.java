@@ -21,7 +21,6 @@ import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.binder.jvm.convention.otel.OpenTelemetryJvmMemoryMeterConventions;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -31,7 +30,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  *
  * @author Michael Weirauch
  */
-@Tag("gc")
+@GcTest
 class JvmMemoryMetricsTest {
 
     MeterRegistry registry = new SimpleMeterRegistry();
