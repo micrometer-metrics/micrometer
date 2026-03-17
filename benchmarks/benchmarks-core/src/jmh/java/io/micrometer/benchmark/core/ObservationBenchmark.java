@@ -15,12 +15,6 @@
  */
 package io.micrometer.benchmark.core;
 
-import io.micrometer.core.instrument.LongTaskTimer;
-import io.micrometer.core.instrument.Tags;
-import io.micrometer.core.instrument.Timer;
-import io.micrometer.core.instrument.observation.DefaultMeterObservationHandler;
-import io.micrometer.core.instrument.observation.ObservationOrTimerCompatibleInstrumentation;
-import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
 import org.openjdk.jmh.annotations.*;
@@ -34,74 +28,24 @@ import java.util.concurrent.TimeUnit;
 @Fork(1)
 @Warmup(iterations = 2)
 @Measurement(iterations = 2)
-@BenchmarkMode(Mode.SampleTime)
-@OutputTimeUnit(TimeUnit.MICROSECONDS)
+@BenchmarkMode(Mode.AverageTime)
+@OutputTimeUnit(TimeUnit.NANOSECONDS)
 @Threads(4)
 @State(Scope.Benchmark)
 public class ObservationBenchmark {
 
-    SimpleMeterRegistry meterRegistry;
+    ObservationRegistry observationRegistry = ObservationRegistry.create();
 
-    ObservationRegistry observationRegistry;
-
-    ObservationRegistry noopRegistry;
-
-    Timer timer;
+    ObservationRegistry noopRegistry = ObservationRegistry.NOOP;
 
     @Setup
     public void setup() {
-        this.meterRegistry = new SimpleMeterRegistry();
-        this.timer = Timer.builder("cached.timer").tag("abc", "123").register(meterRegistry);
-        this.observationRegistry = ObservationRegistry.create();
-        this.observationRegistry.observationConfig()
-            .observationHandler(new DefaultMeterObservationHandler(meterRegistry));
-        this.noopRegistry = ObservationRegistry.create();
-    }
-
-    @TearDown
-    public void tearDown() {
-        System.out.println("Meters:");
-        System.out.println(meterRegistry.getMetersAsString());
+        this.observationRegistry.observationConfig().observationHandler(c -> false);
     }
 
     @Benchmark
     public void baseline() {
         // this method was intentionally left blank.
-    }
-
-    @Benchmark
-    public long cachedTimerWithLong() { // Dynamic tags don't work
-        long start = System.nanoTime();
-        long duration = System.nanoTime() - start;
-        timer.record(duration, TimeUnit.NANOSECONDS);
-
-        return duration;
-    }
-
-    @Benchmark
-    public long cachedTimerWithSample() { // Dynamic tags don't work
-        Timer.Sample sample = Timer.start(meterRegistry);
-        return sample.stop(timer);
-    }
-
-    @Benchmark
-    public long builtTimerWithSample() {
-        Timer.Sample sample = Timer.start(meterRegistry);
-        return sample.stop(Timer.builder("built.timer").tag("abc", "123").register(meterRegistry));
-    }
-
-    @Benchmark
-    public long builtTimerAndLongTaskTimer() {
-        LongTaskTimer.Sample longTaskSample = LongTaskTimer.builder("built.timer.active")
-            .tag("abc", "123")
-            .register(meterRegistry)
-            .start();
-        Timer.Sample sample = Timer.start(meterRegistry);
-
-        long latencyWithTimer = sample.stop(Timer.builder("built.timer").tag("abc", "123").register(meterRegistry));
-        long latencyWithLongTaskTimer = longTaskSample.stop();
-
-        return latencyWithTimer + latencyWithLongTaskTimer;
     }
 
     @Threads(1)
@@ -123,15 +67,6 @@ public class ObservationBenchmark {
         observation.stop();
 
         return observation;
-    }
-
-    @Benchmark
-    public ObservationOrTimerCompatibleInstrumentation<Observation.Context> observationOrTimer() {
-        ObservationOrTimerCompatibleInstrumentation<Observation.Context> instrumentation = ObservationOrTimerCompatibleInstrumentation
-            .start(meterRegistry, noopRegistry, null, null, null);
-        instrumentation.stop("test.obs-or-timer", null, () -> Tags.of("abc", "123"));
-
-        return instrumentation;
     }
 
     @Benchmark
