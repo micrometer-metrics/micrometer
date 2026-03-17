@@ -24,8 +24,7 @@ import io.opentelemetry.proto.collector.metrics.v1.MetricsServiceGrpc;
 import java.util.Locale;
 
 /**
- * An implementation of {@link OtlpMetricsSender} that uses gRPC (OTLP/gRPC). Preferred
- * over HTTP for in-cluster communication (lower overhead, HTTP/2 multiplexing).
+ * An implementation of {@link OtlpMetricsSender} that uses gRPC (OTLP/gRPC).
  *
  * <p>
  * The {@link ManagedChannel} is provided by the caller, allowing full control over TLS,
