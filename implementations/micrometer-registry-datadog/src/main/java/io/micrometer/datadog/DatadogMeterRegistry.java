@@ -16,6 +16,8 @@
 package io.micrometer.datadog;
 
 import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
+import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.util.MeterPartition;
 import io.micrometer.core.instrument.util.NamedThreadFactory;
@@ -33,7 +35,10 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
+import java.util.function.ToDoubleFunction;
+import java.util.function.ToLongFunction;
 import java.util.stream.Stream;
+import java.util.Objects;
 
 import static io.micrometer.core.instrument.util.StringEscapeUtils.escapeJson;
 import static java.util.stream.Collectors.joining;
@@ -52,6 +57,11 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
     private final DatadogConfig config;
 
     private final HttpSender httpClient;
+
+    /**
+     * Cache of per-meter `publishAverage` settings captured at meter creation time.
+     */
+    private final Map<Meter.Id, Boolean> publishAvgFlags = new ConcurrentHashMap<>();
 
     /**
      * Metric names for which we have posted metadata concerning type and base unit
@@ -102,6 +112,29 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
             }
         }
         super.start(threadFactory);
+    }
+
+    @Override
+    protected Timer newTimer(Meter.Id id, DistributionStatisticConfig config, PauseDetector pauseDetector) {
+        publishAvgFlags.put(id, config.isPublishingAverage());
+        return super.newTimer(id, config, pauseDetector);
+    }
+
+    @Override
+    protected DistributionSummary newDistributionSummary(Meter.Id id, DistributionStatisticConfig config,
+            double scale) {
+        publishAvgFlags.put(id, config.isPublishingAverage());
+        return super.newDistributionSummary(id, config, scale);
+    }
+
+    @Override
+    protected <T> FunctionTimer newFunctionTimer(Meter.Id id, T obj, ToLongFunction<T> countFunction,
+            ToDoubleFunction<T> totalTimeFunction, TimeUnit totalTimeFunctionUnit) {
+        // FunctionTimer never receives a DistributionStatisticConfig.
+        // So we fall back to DEFAULT.isPublishingAverage().
+
+        publishAvgFlags.put(id, DistributionStatisticConfig.DEFAULT.isPublishingAverage());
+        return super.newFunctionTimer(id, obj, countFunction, totalTimeFunction, totalTimeFunctionUnit);
     }
 
     @Override
@@ -160,14 +193,23 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
         Meter.Id id = timer.getId();
 
         addToMetadataList(metadata, id, "count", Statistic.COUNT, "occurrence");
-        addToMetadataList(metadata, id, "avg", Statistic.VALUE, null);
+
+        if (publishAvgFlags.getOrDefault(id, DistributionStatisticConfig.DEFAULT.isPublishingAverage())) {
+            addToMetadataList(metadata, id, "avg", Statistic.VALUE, null);
+        }
+
         addToMetadataList(metadata, id, "sum", Statistic.TOTAL_TIME, null);
 
         // we can't know anything about max and percentiles originating from a function
         // timer
         return Stream.of(writeMetric(id, "count", wallTime, timer.count(), Statistic.COUNT, "occurrence"),
-                writeMetric(id, "avg", wallTime, timer.mean(getBaseTimeUnit()), Statistic.VALUE, null),
-                writeMetric(id, "sum", wallTime, timer.totalTime(getBaseTimeUnit()), Statistic.TOTAL_TIME, null));
+
+                publishAvgFlags.getOrDefault(id, DistributionStatisticConfig.DEFAULT.isPublishingAverage())
+                        ? writeMetric(id, "avg", wallTime, timer.mean(getBaseTimeUnit()), Statistic.VALUE, null) : null,
+
+                writeMetric(id, "sum", wallTime, timer.totalTime(getBaseTimeUnit()), Statistic.TOTAL_TIME, null))
+            // filter out null avg when disabled
+            .filter(Objects::nonNull);
     }
 
     private Stream<String> writeTimer(Timer timer, Map<String, DatadogMetricMetadata> metadata) {
@@ -175,14 +217,20 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
         final Stream.Builder<String> metrics = Stream.builder();
 
         Meter.Id id = timer.getId();
-        metrics.add(writeMetric(id, "sum", wallTime, timer.totalTime(getBaseTimeUnit()), Statistic.TOTAL_TIME, null));
-        metrics.add(writeMetric(id, "count", wallTime, (double) timer.count(), Statistic.COUNT, "occurrence"));
-        metrics.add(writeMetric(id, "avg", wallTime, timer.mean(getBaseTimeUnit()), Statistic.VALUE, null));
-        metrics.add(writeMetric(id, "max", wallTime, timer.max(getBaseTimeUnit()), Statistic.MAX, null));
 
+        metrics.add(writeMetric(id, "sum", wallTime, timer.totalTime(getBaseTimeUnit()), Statistic.TOTAL_TIME, null));
         addToMetadataList(metadata, id, "sum", Statistic.TOTAL_TIME, null);
+
+        metrics.add(writeMetric(id, "count", wallTime, (double) timer.count(), Statistic.COUNT, "occurrence"));
         addToMetadataList(metadata, id, "count", Statistic.COUNT, "occurrence");
-        addToMetadataList(metadata, id, "avg", Statistic.VALUE, null);
+
+        // publish avg only when enabled
+        if (publishAvgFlags.getOrDefault(id, DistributionStatisticConfig.DEFAULT.isPublishingAverage())) {
+            metrics.add(writeMetric(id, "avg", wallTime, timer.mean(getBaseTimeUnit()), Statistic.VALUE, null));
+            addToMetadataList(metadata, id, "avg", Statistic.VALUE, null);
+        }
+
+        metrics.add(writeMetric(id, "max", wallTime, timer.max(getBaseTimeUnit()), Statistic.MAX, null));
         addToMetadataList(metadata, id, "max", Statistic.MAX, null);
 
         return metrics.build();
@@ -193,14 +241,20 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
         final Stream.Builder<String> metrics = Stream.builder();
 
         Meter.Id id = summary.getId();
-        metrics.add(writeMetric(id, "sum", wallTime, summary.totalAmount(), Statistic.TOTAL, null));
-        metrics.add(writeMetric(id, "count", wallTime, (double) summary.count(), Statistic.COUNT, "occurrence"));
-        metrics.add(writeMetric(id, "avg", wallTime, summary.mean(), Statistic.VALUE, null));
-        metrics.add(writeMetric(id, "max", wallTime, summary.max(), Statistic.MAX, null));
 
+        metrics.add(writeMetric(id, "sum", wallTime, summary.totalAmount(), Statistic.TOTAL, null));
         addToMetadataList(metadata, id, "sum", Statistic.TOTAL, null);
+
+        metrics.add(writeMetric(id, "count", wallTime, (double) summary.count(), Statistic.COUNT, "occurrence"));
         addToMetadataList(metadata, id, "count", Statistic.COUNT, "occurrence");
-        addToMetadataList(metadata, id, "avg", Statistic.VALUE, null);
+
+        // avg (only when enabled)
+        if (publishAvgFlags.getOrDefault(id, DistributionStatisticConfig.DEFAULT.isPublishingAverage())) {
+            metrics.add(writeMetric(id, "avg", wallTime, summary.mean(), Statistic.VALUE, null));
+            addToMetadataList(metadata, id, "avg", Statistic.VALUE, null);
+        }
+
+        metrics.add(writeMetric(id, "max", wallTime, summary.max(), Statistic.MAX, null));
         addToMetadataList(metadata, id, "max", Statistic.MAX, null);
 
         return metrics.build();
