@@ -47,6 +47,7 @@ import static org.awaitility.Awaitility.await;
  *
  * @author Steven Sheehy
  * @author Johnny Lim
+ * @author Harsh Verma
  */
 class Log4j2MetricsTest {
 
@@ -223,10 +224,10 @@ class Log4j2MetricsTest {
 
         new Log4j2Metrics(emptyList(), loggerContext).bindTo(registry);
         Iterator<Filter> rootFilters = loggerContext.getRootLogger().getFilters();
-        Log4j2Metrics.MetricsFilter rootFilter = (Log4j2Metrics.MetricsFilter) rootFilters.next();
+        MetricsFilter rootFilter = (MetricsFilter) rootFilters.next();
         assertThat(rootFilters.hasNext()).isFalse();
 
-        Log4j2Metrics.MetricsFilter logger1Filter = (Log4j2Metrics.MetricsFilter) loggerContext.getConfiguration()
+        MetricsFilter logger1Filter = (MetricsFilter) loggerContext.getConfiguration()
             .getLoggerConfig(logger1.getName())
             .getFilter();
         assertThat(logger1Filter).isEqualTo(rootFilter);
@@ -303,7 +304,7 @@ class Log4j2MetricsTest {
 
             // Should have added filter to configuration
             Filter oldFilter = oldConfiguration.getRootLogger().getFilter();
-            assertThat(oldFilter).isInstanceOf(Log4j2Metrics.MetricsFilter.class);
+            assertThat(oldFilter).isInstanceOf(MetricsFilter.class);
 
             // This will reload the configuration to default
             context.reconfigure();
@@ -317,7 +318,7 @@ class Log4j2MetricsTest {
             // Should have removed filter from old configuration, adding it to the new
             assertThat(oldConfiguration.getRootLogger().getFilter()).isNull();
             Filter newFilter = newConfiguration.getRootLogger().getFilter();
-            assertThat(newFilter).isInstanceOf(Log4j2Metrics.MetricsFilter.class);
+            assertThat(newFilter).isInstanceOf(MetricsFilter.class);
         }
     }
 
@@ -388,7 +389,7 @@ class Log4j2MetricsTest {
 
         context.updateLoggers(configuration);
 
-        assertThat(addedLoggerConfig.getFilter()).isInstanceOf(Log4j2Metrics.MetricsFilter.class);
+        assertThat(addedLoggerConfig.getFilter()).isInstanceOf(MetricsFilter.class);
 
         logger.debug("test");
         assertThat(registry.get("log4j2.events").tags("level", "debug").counter().count()).isEqualTo(1);

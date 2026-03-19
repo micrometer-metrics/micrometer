@@ -17,18 +17,14 @@ package io.micrometer.core.instrument.binder.logging;
 
 import io.micrometer.common.util.internal.logging.InternalLogger;
 import io.micrometer.common.util.internal.logging.InternalLoggerFactory;
-import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
-import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.binder.MeterBinder;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.Filter;
-import org.apache.logging.log4j.core.LogEvent;
 import org.apache.logging.log4j.core.LoggerContext;
 import org.apache.logging.log4j.core.config.Configuration;
 import org.apache.logging.log4j.core.config.LoggerConfig;
-import org.apache.logging.log4j.core.filter.AbstractFilter;
 import org.apache.logging.log4j.core.filter.CompositeFilter;
 
 import java.beans.PropertyChangeListener;
@@ -50,19 +46,18 @@ import static java.util.Collections.emptyList;
  * "https://github.com/micrometer-metrics/micrometer/issues/2176">micrometer#2176</a>
  * @author Steven Sheehy
  * @author Johnny Lim
+ * @author Harsh Verma
  * @since 1.1.0
  */
 public class Log4j2Metrics implements MeterBinder, AutoCloseable {
-
-    private static final String METER_NAME = "log4j2.events";
-
-    private static final String METER_DESCRIPTION = "Number of log events";
 
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(Log4j2Metrics.class);
 
     private final Iterable<Tag> tags;
 
     private final LoggerContext loggerContext;
+
+    private final List<LogEventInterceptor> logEventInterceptors;
 
     private final ConcurrentMap<MeterRegistry, MetricsFilter> metricsFilters = new ConcurrentHashMap<>();
 
@@ -77,8 +72,14 @@ public class Log4j2Metrics implements MeterBinder, AutoCloseable {
     }
 
     public Log4j2Metrics(Iterable<Tag> tags, LoggerContext loggerContext) {
+        this(tags, loggerContext, emptyList());
+    }
+
+    public Log4j2Metrics(Iterable<Tag> tags, LoggerContext loggerContext,
+            List<LogEventInterceptor> logEventInterceptors) {
         this.tags = tags;
         this.loggerContext = loggerContext;
+        this.logEventInterceptors = logEventInterceptors;
     }
 
     @Override
@@ -135,7 +136,8 @@ public class Log4j2Metrics implements MeterBinder, AutoCloseable {
 
     private MetricsFilter getOrCreateMetricsFilterAndStart(MeterRegistry registry) {
         return metricsFilters.computeIfAbsent(registry, r -> {
-            MetricsFilter metricsFilter = new MetricsFilter(r, tags);
+            MetricsFilter metricsFilter = logEventInterceptors.isEmpty() ? new StaticTagMetricsFilter(r, tags)
+                    : new RunTimeTagMetricsFilter(r, tags, logEventInterceptors);
             metricsFilter.start();
             return metricsFilter;
         });
@@ -169,97 +171,6 @@ public class Log4j2Metrics implements MeterBinder, AutoCloseable {
                     metricsFilters.values().forEach(loggerConfig::removeFilter);
                 }
             });
-    }
-
-    static class MetricsFilter extends AbstractFilter {
-
-        private final Counter fatalCounter;
-
-        private final Counter errorCounter;
-
-        private final Counter warnCounter;
-
-        private final Counter infoCounter;
-
-        private final Counter debugCounter;
-
-        private final Counter traceCounter;
-
-        MetricsFilter(MeterRegistry registry, Iterable<Tag> tags) {
-            fatalCounter = Counter.builder(METER_NAME)
-                .tags(tags)
-                .tags("level", "fatal")
-                .description(METER_DESCRIPTION)
-                .baseUnit(BaseUnits.EVENTS)
-                .register(registry);
-
-            errorCounter = Counter.builder(METER_NAME)
-                .tags(tags)
-                .tags("level", "error")
-                .description(METER_DESCRIPTION)
-                .baseUnit(BaseUnits.EVENTS)
-                .register(registry);
-
-            warnCounter = Counter.builder(METER_NAME)
-                .tags(tags)
-                .tags("level", "warn")
-                .description(METER_DESCRIPTION)
-                .baseUnit(BaseUnits.EVENTS)
-                .register(registry);
-
-            infoCounter = Counter.builder(METER_NAME)
-                .tags(tags)
-                .tags("level", "info")
-                .description(METER_DESCRIPTION)
-                .baseUnit(BaseUnits.EVENTS)
-                .register(registry);
-
-            debugCounter = Counter.builder(METER_NAME)
-                .tags(tags)
-                .tags("level", "debug")
-                .description(METER_DESCRIPTION)
-                .baseUnit(BaseUnits.EVENTS)
-                .register(registry);
-
-            traceCounter = Counter.builder(METER_NAME)
-                .tags(tags)
-                .tags("level", "trace")
-                .description(METER_DESCRIPTION)
-                .baseUnit(BaseUnits.EVENTS)
-                .register(registry);
-        }
-
-        @Override
-        public Result filter(LogEvent event) {
-            incrementCounter(event);
-            return Result.NEUTRAL;
-        }
-
-        private void incrementCounter(LogEvent event) {
-            switch (event.getLevel().getStandardLevel()) {
-                case FATAL:
-                    fatalCounter.increment();
-                    break;
-                case ERROR:
-                    errorCounter.increment();
-                    break;
-                case WARN:
-                    warnCounter.increment();
-                    break;
-                case INFO:
-                    infoCounter.increment();
-                    break;
-                case DEBUG:
-                    debugCounter.increment();
-                    break;
-                case TRACE:
-                    traceCounter.increment();
-                    break;
-                default:
-                    break;
-            }
-        }
-
     }
 
 }
