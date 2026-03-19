@@ -15,6 +15,7 @@
  */
 package io.micrometer.core.instrument.binder.jvm.convention;
 
+import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.binder.MeterConvention;
 
 import java.lang.management.MemoryPoolMXBean;
@@ -32,5 +33,34 @@ public interface JvmMemoryMeterConventions {
     MeterConvention<MemoryPoolMXBean> getMemoryCommittedConvention();
 
     MeterConvention<MemoryPoolMXBean> getMemoryMaxConvention();
+
+    /**
+     * Convention for JVM memory used after last GC.
+     * @return convention for JVM memory used after last GC
+     * @since 1.17.0
+     */
+    default JvmMemoryUsedAfterLastGcConvention getMemoryUsedAfterLastGcConvention() {
+        return new JvmMemoryUsedAfterLastGcConvention() {
+        };
+    }
+
+    /**
+     * {@link MeterConvention} for JVM memory used after last GC.
+     *
+     * @since 1.17.0
+     */
+    interface JvmMemoryUsedAfterLastGcConvention extends MeterConvention<MemoryPoolMXBean> {
+
+        @Override
+        default String getName() {
+            return "jvm.memory.used_after_last_gc";
+        }
+
+        @Override
+        default Tags getTags(MemoryPoolMXBean memoryPoolBean) {
+            return Tags.empty();
+        }
+
+    }
 
 }

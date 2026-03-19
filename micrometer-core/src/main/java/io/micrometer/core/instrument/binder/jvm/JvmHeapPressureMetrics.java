@@ -90,7 +90,8 @@ public class JvmHeapPressureMetrics implements MeterBinder, AutoCloseable {
                 .tags(tags)
                 .tag("area", "heap")
                 .tag("pool", "long-lived")
-                .description("The percentage of long-lived heap pool used after the last GC event, in the range [0..1]")
+                .description(
+                        "[DEPRECATED: see jvm.memory.used_after_last_gc] The percentage of long-lived heap pool used after the last GC event, in the range [0..1]")
                 .register(registry);
         }
 

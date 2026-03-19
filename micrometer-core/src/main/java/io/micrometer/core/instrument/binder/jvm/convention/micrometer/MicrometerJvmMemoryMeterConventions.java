@@ -61,4 +61,15 @@ public class MicrometerJvmMemoryMeterConventions implements JvmMemoryMeterConven
         return new SimpleMeterConvention<>("jvm.memory.max", this::getCommonTags);
     }
 
+    @Override
+    public JvmMemoryUsedAfterLastGcConvention getMemoryUsedAfterLastGcConvention() {
+        return new JvmMemoryUsedAfterLastGcConvention() {
+
+            @Override
+            public Tags getTags(MemoryPoolMXBean memoryPoolBean) {
+                return getCommonTags(memoryPoolBean);
+            }
+        };
+    }
+
 }
