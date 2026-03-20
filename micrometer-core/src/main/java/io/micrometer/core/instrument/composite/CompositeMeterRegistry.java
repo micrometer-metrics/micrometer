@@ -20,6 +20,8 @@ import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import org.jspecify.annotations.Nullable;
+import io.micrometer.common.util.internal.logging.InternalLogger;
+import io.micrometer.common.util.internal.logging.InternalLoggerFactory;
 
 import java.util.Collections;
 import java.util.IdentityHashMap;
@@ -38,6 +40,8 @@ import java.util.function.ToLongFunction;
  * @author Johnny Lim
  */
 public class CompositeMeterRegistry extends MeterRegistry {
+
+    private static final InternalLogger logger = InternalLoggerFactory.getInstance(CompositeMeterRegistry.class);
 
     private final AtomicBoolean registriesLock = new AtomicBoolean();
 
@@ -135,6 +139,12 @@ public class CompositeMeterRegistry extends MeterRegistry {
     }
 
     public CompositeMeterRegistry add(MeterRegistry registry) {
+
+        if (!this.getMeters().isEmpty()) {
+            logger.warn(
+                    "Adding a MeterRegistry after meters are already registered may cause missing metrics in the new registry.");
+        }
+
         lock(registriesLock, () -> {
             forbidSelfContainingComposite(registry);
 
