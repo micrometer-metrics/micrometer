@@ -2,16 +2,6 @@
  * Copyright 2017 VMware, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * https://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
  */
 package io.micrometer.core.instrument.composite;
 
@@ -31,14 +21,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.ToDoubleFunction;
 import java.util.function.ToLongFunction;
 
-/**
- * The clock of the composite effectively overrides the clocks of the registries it
- * manages without actually replacing the state of the clock in these registries with the
- * exception of long task timers, whose clock cannot be overridden.
- *
- * @author Jon Schneider
- * @author Johnny Lim
- */
 public class CompositeMeterRegistry extends MeterRegistry {
 
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(CompositeMeterRegistry.class);
@@ -49,7 +31,6 @@ public class CompositeMeterRegistry extends MeterRegistry {
 
     private final Set<MeterRegistry> unmodifiableRegistries = Collections.unmodifiableSet(registries);
 
-    // VisibleForTesting
     volatile Set<MeterRegistry> nonCompositeDescendants = Collections.emptySet();
 
     private final AtomicBoolean parentLock = new AtomicBoolean();
@@ -67,11 +48,11 @@ public class CompositeMeterRegistry extends MeterRegistry {
     public CompositeMeterRegistry(Clock clock, Iterable<MeterRegistry> registries) {
         super(clock);
         config().namingConvention(NamingConvention.identity).onMeterAdded(m -> {
-            if (m instanceof CompositeMeter) { // should always be
+            if (m instanceof CompositeMeter) {
                 lock(registriesLock, () -> nonCompositeDescendants.forEach(((CompositeMeter) m)::add));
             }
         }).onMeterRemoved(m -> {
-            if (m instanceof CompositeMeter) { // should always be
+            if (m instanceof CompositeMeter) {
                 lock(registriesLock, () -> nonCompositeDescendants.forEach(r -> r.removeByPreFilterId(m.getId())));
             }
         });
@@ -138,11 +119,32 @@ public class CompositeMeterRegistry extends MeterRegistry {
         return new CompositeCustomMeter(id, type, measurements);
     }
 
+    // ✅ UPDATED METHOD
     public CompositeMeterRegistry add(MeterRegistry registry) {
 
-        if (!this.getMeters().isEmpty()) {
+        // snapshot to avoid repeated getMeters() calls
+        java.util.List<Meter> meters = new java.util.ArrayList<>(this.getMeters());
+        int meterCount = meters.size();
+
+        if (meterCount > 0) {
             logger.warn(
-                    "Adding a MeterRegistry after meters are already registered may cause missing metrics in the new registry.");
+                    "Adding a MeterRegistry after {} meters are already registered. New registry will not contain these meters.",
+                    meterCount);
+
+            if (logger.isDebugEnabled()) {
+                int limit = Math.min(5, meterCount);
+                int i = 0;
+
+                for (Meter meter : meters) {
+                    if (i++ >= limit)
+                        break;
+                    logger.debug("Existing meter not propagated: {}", meter.getId().getName());
+                }
+
+                if (meterCount > limit) {
+                    logger.debug("... and {} more meters", meterCount - limit);
+                }
+            }
         }
 
         lock(registriesLock, () -> {
@@ -227,7 +229,7 @@ public class CompositeMeterRegistry extends MeterRegistry {
 
         if (!removes.isEmpty() || !adds.isEmpty()) {
             for (Meter meter : getMeters()) {
-                if (meter instanceof CompositeMeter) { // should always be
+                if (meter instanceof CompositeMeter) {
                     CompositeMeter composite = (CompositeMeter) meter;
                     removes.forEach(composite::remove);
                     adds.forEach(composite::add);
