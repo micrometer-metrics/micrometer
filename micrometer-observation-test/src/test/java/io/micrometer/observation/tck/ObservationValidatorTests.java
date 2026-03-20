@@ -22,6 +22,7 @@ import io.micrometer.observation.Observation.Scope;
 import io.micrometer.observation.ObservationRegistry;
 import org.junit.jupiter.api.Test;
 
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -409,6 +410,55 @@ class ObservationValidatorTests {
         innerScope.close();
         innerObservation.stop();
         outerObservation.stop();
+    }
+
+    @Test
+    void siblingScopesOnDifferentThreadsShouldBeValid() throws InterruptedException {
+        TestObservationRegistry registry = TestObservationRegistry.builder()
+            .validateScopesClosedInReverseOrderOfOpening(true)
+            .build();
+
+        CountDownLatch scopeOneOpenLatch = new CountDownLatch(1);
+        CountDownLatch scopeTwoOpenLatch = new CountDownLatch(1);
+        CountDownLatch scopeOneCloseLatch = new CountDownLatch(1);
+
+        AtomicReference<Throwable> error = new AtomicReference<>();
+        Thread thread1 = new Thread(() -> {
+            Observation observation1 = Observation.start("one", registry);
+            try {
+                Scope scope1 = observation1.openScope();
+                scopeOneOpenLatch.countDown();
+                scopeTwoOpenLatch.await();
+                scope1.close();
+                scopeOneCloseLatch.countDown();
+                observation1.stop();
+            }
+            catch (Throwable t) {
+                error.set(t);
+                scopeOneCloseLatch.countDown();
+            }
+        });
+        Thread thread2 = new Thread(() -> {
+            try {
+                scopeOneOpenLatch.await();
+                Observation observation2 = Observation.start("two", registry);
+                Scope scope2 = observation2.openScope();
+                scopeTwoOpenLatch.countDown();
+                scopeOneCloseLatch.await();
+                scope2.close();
+                observation2.stop();
+            }
+            catch (Throwable t) {
+                // noop
+            }
+        });
+
+        thread1.start();
+        thread2.start();
+        thread1.join();
+        thread2.join();
+
+        assertThat(error.get()).isNull();
     }
 
     @Test

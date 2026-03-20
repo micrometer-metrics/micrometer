@@ -50,7 +50,7 @@ class ObservationValidator implements ObservationHandler<Context> {
 
     private final Map<String, Set<String>> lowCardinalityKeysByObservationName;
 
-    private final Deque<Context> scopedContexts;
+    private final ThreadLocal<Deque<Context>> scopedContexts;
 
     private final Set<Capability> capabilities;
 
@@ -58,7 +58,7 @@ class ObservationValidator implements ObservationHandler<Context> {
         this.consumer = ObservationValidator::throwInvalidObservationException;
         this.supportsContextPredicate = context -> !(context instanceof NullContext);
         this.lowCardinalityKeysByObservationName = new HashMap<>();
-        this.scopedContexts = new ArrayDeque<>();
+        this.scopedContexts = ThreadLocal.withInitial(ArrayDeque::new);
         this.capabilities = capabilities;
     }
 
@@ -93,7 +93,7 @@ class ObservationValidator implements ObservationHandler<Context> {
         // In some cases (Reactor) scope open can happen after the observation is stopped
         checkIfObservationWasStarted("Invalid scope opening", context);
         if (capabilities.contains(SCOPES_SHOULD_BE_CLOSED_IN_REVERSE_ORDER_OF_OPENING)) {
-            scopedContexts.push(context);
+            scopedContexts.get().push(context);
         }
         if (capabilities.contains(SCOPES_SHOULD_BE_OPENED_AND_CLOSED_ON_THE_SAME_THREAD)) {
             history.addCurrentThreadToScopeOpeningThreadIds();
@@ -106,7 +106,7 @@ class ObservationValidator implements ObservationHandler<Context> {
         // In some cases (Reactor) scope close can happen after the observation is stopped
         checkIfObservationWasStarted("Invalid scope closing", context);
         if (capabilities.contains(SCOPES_SHOULD_BE_CLOSED_IN_REVERSE_ORDER_OF_OPENING)) {
-            Context currentContext = scopedContexts.pollFirst();
+            Context currentContext = scopedContexts.get().pollFirst();
             if (currentContext != null && currentContext != context) {
                 consumer.accept(new ValidationResult("Invalid scope closing order: Observation '" + context.getName()
                         + "' had its scope closed before the most recently opened scope for Observation '"
@@ -132,7 +132,7 @@ class ObservationValidator implements ObservationHandler<Context> {
         // In some cases (Reactor) scope reset can happen after the observation is stopped
         checkIfObservationWasStarted("Invalid scope resetting", context);
         if (capabilities.contains(SCOPES_SHOULD_BE_CLOSED_IN_REVERSE_ORDER_OF_OPENING)) {
-            scopedContexts.removeIf(ctx -> ctx == context);
+            scopedContexts.get().removeIf(ctx -> ctx == context);
         }
         if (capabilities.contains(SCOPES_SHOULD_BE_OPENED_AND_CLOSED_ON_THE_SAME_THREAD)) {
             history.clearScopeOpeningThreadIds();
