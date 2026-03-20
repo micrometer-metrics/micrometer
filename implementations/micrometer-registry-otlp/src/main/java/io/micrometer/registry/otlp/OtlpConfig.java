@@ -17,6 +17,7 @@ package io.micrometer.registry.otlp;
 
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.config.InvalidConfigurationException;
+import io.micrometer.core.instrument.config.validate.InvalidReason;
 import io.micrometer.core.instrument.config.validate.Validated;
 import io.micrometer.core.instrument.push.PushRegistryConfig;
 
@@ -34,6 +35,7 @@ import static io.micrometer.core.instrument.config.validate.PropertyValidator.*;
  *
  * @author Tommy Ludwig
  * @author Lenin Jaganathan
+ * @author Jonatan Ivanov
  * @since 1.9.0
  */
 public interface OtlpConfig extends PushRegistryConfig {
@@ -234,8 +236,8 @@ public interface OtlpConfig extends PushRegistryConfig {
      * {@link HistogramFlavor#EXPLICIT_BUCKET_HISTOGRAM} is used for the supported meters.
      * When this is set to {@link HistogramFlavor#BASE2_EXPONENTIAL_BUCKET_HISTOGRAM} and
      * {@code publishPercentileHistogram} is enabled
-     * {@link io.micrometer.registry.otlp.internal.Base2ExponentialHistogram} is used for
-     * recording distributions.
+     * {@link io.micrometer.registry.otlp.Base2ExponentialHistogram} is used for recording
+     * distributions.
      * <p>
      * Note: If specific SLO's are configured, this property is not honored and
      * {@link HistogramFlavor#EXPLICIT_BUCKET_HISTOGRAM} is used for those meters.
@@ -291,6 +293,17 @@ public interface OtlpConfig extends PushRegistryConfig {
     }
 
     /**
+     * Max number of exemplars per time series. Histograms use their own strategy for the
+     * number of exemplars and may ignore this value.
+     * @return exemplarsSize
+     *
+     * @since 1.17.0
+     */
+    default int exemplarsSize() {
+        return getInteger(this, "exemplarsSize").orElse(1);
+    }
+
+    /**
      * Max scale to use for exponential histograms, if configured.
      * @return maxScale
      * @see #histogramFlavor()
@@ -341,7 +354,9 @@ public interface OtlpConfig extends PushRegistryConfig {
                 check("aggregationTemporality", OtlpConfig::aggregationTemporality),
                 check("compressionMode", OtlpConfig::compressionMode),
                 check("histogramFlavorPerMeter", OtlpConfig::histogramFlavorPerMeter),
-                check("maxBucketsPerMeter", OtlpConfig::maxBucketsPerMeter));
+                check("maxBucketsPerMeter", OtlpConfig::maxBucketsPerMeter),
+                check("exemplarsSize", OtlpConfig::exemplarsSize).andThen(validated -> validated
+                    .invalidateWhen(value -> value <= 0, "exemplarsSize must be positive!", InvalidReason.MALFORMED)));
     }
 
     default TimeUnit baseTimeUnit() {

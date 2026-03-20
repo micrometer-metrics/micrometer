@@ -38,7 +38,18 @@ class OtlpCumulativeMeterRegistryTest extends OtlpMeterRegistryTest {
 
     @Override
     protected OtlpConfig otlpConfig() {
-        return OtlpConfig.DEFAULT;
+        return new OtlpConfig() {
+
+            @Override
+            public int exemplarsSize() {
+                return 4;
+            }
+
+            @Override
+            public @Nullable String get(String key) {
+                return null;
+            }
+        };
     }
 
     @Override
@@ -51,7 +62,7 @@ class OtlpCumulativeMeterRegistryTest extends OtlpMeterRegistryTest {
             }
 
             @Override
-            public @Nullable String get(final String key) {
+            public @Nullable String get(String key) {
                 return null;
             }
         };

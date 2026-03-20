@@ -62,6 +62,12 @@ class OtlpDeltaMeterRegistryTest extends OtlpMeterRegistryTest {
     @Override
     protected OtlpConfig otlpConfig() {
         return new OtlpConfig() {
+
+            @Override
+            public int exemplarsSize() {
+                return 4;
+            }
+
             @Override
             public AggregationTemporality aggregationTemporality() {
                 return DELTA;
