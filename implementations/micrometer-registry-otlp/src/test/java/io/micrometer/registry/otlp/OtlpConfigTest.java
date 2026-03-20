@@ -240,6 +240,22 @@ class OtlpConfigTest {
     }
 
     @Test
+    void exemplarsSizeShouldHaveDefault() {
+        OtlpConfig otlpConfig = k -> null;
+        assertThat(otlpConfig.validate().isValid()).isTrue();
+        assertThat(otlpConfig.exemplarsSize()).isEqualTo(4);
+    }
+
+    @Test
+    void exemplarsSizeShouldBeOverridden() {
+        Map<String, String> properties = new HashMap<>();
+        properties.put("otlp.exemplarsSize", "3");
+        OtlpConfig otlpConfig = properties::get;
+        assertThat(otlpConfig.validate().isValid()).isTrue();
+        assertThat(otlpConfig.exemplarsSize()).isEqualTo(3);
+    }
+
+    @Test
     void maxScaleAndMaxBucketsDefault() {
         Map<String, String> properties = new HashMap<>();
         properties.put("otlp.maxScale", "8");
