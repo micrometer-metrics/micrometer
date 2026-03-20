@@ -20,6 +20,8 @@ import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import org.jspecify.annotations.Nullable;
+import io.micrometer.common.util.internal.logging.InternalLogger;
+import io.micrometer.common.util.internal.logging.InternalLoggerFactory;
 
 import java.util.Collections;
 import java.util.IdentityHashMap;
@@ -37,7 +39,10 @@ import java.util.function.ToLongFunction;
  * @author Jon Schneider
  * @author Johnny Lim
  */
+
 public class CompositeMeterRegistry extends MeterRegistry {
+
+    private static final InternalLogger logger = InternalLoggerFactory.getInstance(CompositeMeterRegistry.class);
 
     private final AtomicBoolean registriesLock = new AtomicBoolean();
 
@@ -45,7 +50,6 @@ public class CompositeMeterRegistry extends MeterRegistry {
 
     private final Set<MeterRegistry> unmodifiableRegistries = Collections.unmodifiableSet(registries);
 
-    // VisibleForTesting
     volatile Set<MeterRegistry> nonCompositeDescendants = Collections.emptySet();
 
     private final AtomicBoolean parentLock = new AtomicBoolean();
@@ -63,11 +67,11 @@ public class CompositeMeterRegistry extends MeterRegistry {
     public CompositeMeterRegistry(Clock clock, Iterable<MeterRegistry> registries) {
         super(clock);
         config().namingConvention(NamingConvention.identity).onMeterAdded(m -> {
-            if (m instanceof CompositeMeter) { // should always be
+            if (m instanceof CompositeMeter) {
                 lock(registriesLock, () -> nonCompositeDescendants.forEach(((CompositeMeter) m)::add));
             }
         }).onMeterRemoved(m -> {
-            if (m instanceof CompositeMeter) { // should always be
+            if (m instanceof CompositeMeter) {
                 lock(registriesLock, () -> nonCompositeDescendants.forEach(r -> r.removeByPreFilterId(m.getId())));
             }
         });
@@ -134,7 +138,34 @@ public class CompositeMeterRegistry extends MeterRegistry {
         return new CompositeCustomMeter(id, type, measurements);
     }
 
+    // ✅ UPDATED METHOD
     public CompositeMeterRegistry add(MeterRegistry registry) {
+
+        // snapshot to avoid repeated getMeters() calls
+        java.util.List<Meter> meters = new java.util.ArrayList<>(this.getMeters());
+        int meterCount = meters.size();
+
+        if (meterCount > 0) {
+            logger.warn(
+                    "Adding a MeterRegistry after {} meters are already registered. New registry will not contain these meters.",
+                    meterCount);
+
+            if (logger.isDebugEnabled()) {
+                int limit = Math.min(5, meterCount);
+                int i = 0;
+
+                for (Meter meter : meters) {
+                    if (i++ >= limit)
+                        break;
+                    logger.debug("Existing meter not propagated: {}", meter.getId().getName());
+                }
+
+                if (meterCount > limit) {
+                    logger.debug("... and {} more meters", meterCount - limit);
+                }
+            }
+        }
+
         lock(registriesLock, () -> {
             forbidSelfContainingComposite(registry);
 
@@ -217,7 +248,7 @@ public class CompositeMeterRegistry extends MeterRegistry {
 
         if (!removes.isEmpty() || !adds.isEmpty()) {
             for (Meter meter : getMeters()) {
-                if (meter instanceof CompositeMeter) { // should always be
+                if (meter instanceof CompositeMeter) {
                     CompositeMeter composite = (CompositeMeter) meter;
                     removes.forEach(composite::remove);
                     adds.forEach(composite::add);
