@@ -25,8 +25,8 @@ package io.micrometer.core.instrument.binder.db;
 class LatestPostgreSQLDatabaseMetricsIntegrationTest extends AbstractPostgreSQLDatabaseMetricsIntegrationTest {
 
     @Override
-    protected String getImageVersion() {
-        return VERSION_18;
+    protected PostgresVersion getPostgresVersion() {
+        return PostgresVersion.VERSION_18;
     }
 
 }

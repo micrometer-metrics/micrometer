@@ -307,4 +307,6 @@ tasks.register("openj9ConcurrentScavengeTest", Test) {
 dockerTest {
     systemProperty 'mongodb-image.name', libs.versions.docker.mongodb.get()
     systemProperty 'kafka-image.name', libs.versions.docker.kafka.get()
+    systemProperty 'postgres-v14-image.name', libs.versions.docker.postgres.v14.get()
+    systemProperty 'postgres-v18-image.name', libs.versions.docker.postgres.v18.get()
 }
