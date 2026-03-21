@@ -303,3 +303,7 @@ tasks.register("openj9ConcurrentScavengeTest", Test) {
 
     jvmArgs '-Xgc:concurrentScavenge'
 }
+
+dockerTest {
+    systemProperty 'mongodb-image.name', libs.versions.docker.mongodb.get()
+}
