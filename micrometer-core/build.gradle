@@ -306,4 +306,5 @@ tasks.register("openj9ConcurrentScavengeTest", Test) {
 
 dockerTest {
     systemProperty 'mongodb-image.name', libs.versions.docker.mongodb.get()
+    systemProperty 'kafka-image.name', libs.versions.docker.kafka.get()
 }
