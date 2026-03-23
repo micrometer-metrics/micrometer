@@ -395,8 +395,8 @@ public class PrometheusMeterRegistry extends MeterRegistry {
         }
         catch (IllegalArgumentException ex) {
             if (value < 0.0) {
-                throw new IllegalArgumentException("Failed to create Prometheus function counter snapshot for meter '"
-                        + id.getName() + "': " + ex.getMessage(), ex);
+                throw new IllegalArgumentException(
+                        "Failed to create Prometheus function counter snapshot for meter '" + id.getName() + "'", ex);
             }
             throw ex;
         }

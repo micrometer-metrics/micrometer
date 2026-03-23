@@ -459,9 +459,10 @@ class PrometheusMeterRegistryTest {
 
         value.set(-2);
 
-        assertThatThrownBy(registry::scrape).isInstanceOf(IllegalArgumentException.class)
-            .hasMessageContaining("api.requests")
-            .hasMessageContaining("-2.0: counters cannot have a negative value");
+        Throwable thrown = catchThrowable(registry::scrape);
+
+        assertThat(thrown).isInstanceOf(IllegalArgumentException.class).hasMessageContaining("api.requests");
+        assertThat(thrown).hasCauseInstanceOf(IllegalArgumentException.class);
     }
 
     private Condition<Iterable<? extends MetricSnapshot>> withNameAndQuantile(String name) {
