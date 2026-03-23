@@ -380,13 +380,26 @@ public class PrometheusMeterRegistry extends MeterRegistry {
         applyToCollector(id, (collector) -> {
             List<String> tagValues = tagValues(id);
             List<String> tagKeys = tagKeys(id);
-            collector.add(id,
-                    (conventionName) -> Stream.of(new MicrometerCollector.Family<>(conventionName,
-                            family -> new CounterSnapshot(family.metadata, family.dataPointSnapshots),
-                            getMetadata(conventionName, id.getDescription()), new CounterDataPointSnapshot(fc.count(),
-                                    Labels.of(tagKeys, tagValues), null, createdTimestampMillis))));
+            collector.add(id, (conventionName) -> Stream.of(new MicrometerCollector.Family<>(conventionName,
+                    family -> new CounterSnapshot(family.metadata, family.dataPointSnapshots),
+                    getMetadata(conventionName, id.getDescription()),
+                    newFunctionCounterDataPointSnapshot(id, fc.count(), tagKeys, tagValues, createdTimestampMillis))));
         });
         return fc;
+    }
+
+    private CounterDataPointSnapshot newFunctionCounterDataPointSnapshot(Meter.Id id, double value,
+            List<String> tagKeys, List<String> tagValues, long createdTimestampMillis) {
+        try {
+            return new CounterDataPointSnapshot(value, Labels.of(tagKeys, tagValues), null, createdTimestampMillis);
+        }
+        catch (IllegalArgumentException ex) {
+            if (value < 0.0) {
+                throw new IllegalArgumentException("Failed to create Prometheus function counter snapshot for meter '"
+                        + id.getName() + "': " + ex.getMessage(), ex);
+            }
+            throw ex;
+        }
     }
 
     @Override
