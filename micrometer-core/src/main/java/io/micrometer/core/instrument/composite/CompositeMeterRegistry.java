@@ -141,20 +141,18 @@ public class CompositeMeterRegistry extends MeterRegistry {
     // ✅ UPDATED METHOD
     public CompositeMeterRegistry add(MeterRegistry registry) {
 
-        // snapshot to avoid repeated getMeters() calls
-        java.util.List<Meter> meters = new java.util.ArrayList<>(this.getMeters());
-        int meterCount = meters.size();
+        int meterCount = this.getMeters().size();
 
-        if (meterCount > 0) {
+         if (meterCount > 0) {
             logger.warn(
                     "Adding a MeterRegistry after {} meters are already registered. New registry will not contain these meters.",
                     meterCount);
 
             if (logger.isDebugEnabled()) {
-                int limit = Math.min(5, meterCount);
+                int limit = 5;
                 int i = 0;
 
-                for (Meter meter : meters) {
+                for (Meter meter : this.getMeters()) {
                     if (i++ >= limit)
                         break;
                     logger.debug("Existing meter not propagated: {}", meter.getId().getName());
