@@ -258,8 +258,12 @@ class ObservationValidatorTests {
         Observation.createNotStarted("test", registry).lowCardinalityKeyValue("key2", "value2").start().stop();
     }
 
-    private void verifyThatValidateObservationsWithTheSameNameHavingTheSameSetOfLowCardinalityKeysWorks(
-            TestObservationRegistry registry) {
+    @Test
+    void observationsWithTheSameNameShouldHaveTheSameSetOfLowCardinalityKeysWhenEnabledUsingTheBuilder() {
+        TestObservationRegistry registry = TestObservationRegistry.builder()
+            .validateObservationsWithTheSameNameHavingTheSameSetOfLowCardinalityKeys(true)
+            .build();
+
         Observation.createNotStarted("test", registry).lowCardinalityKeyValue("key1", "value1").start().stop();
         assertThatThrownBy(() -> Observation.createNotStarted("test", registry).start().stop())
             .isExactlyInstanceOf(InvalidObservationException.class)
@@ -274,22 +278,6 @@ class ObservationValidatorTests {
                     "Using a consistent set of low cardinality keys for Observations with the same name is recommended best practice if metrics will be produced from the Observations.");
 
         Observation.createNotStarted("test", registry).lowCardinalityKeyValue("key1", "value2").start().stop();
-    }
-
-    @Test
-    void observationsWithTheSameNameShouldHaveTheSameSetOfLowCardinalityKeysIfEnabledUsingTheBuilder() {
-        TestObservationRegistry registry = TestObservationRegistry.builder()
-            .validateObservationsWithTheSameNameHavingTheSameSetOfLowCardinalityKeys(true)
-            .build();
-        verifyThatValidateObservationsWithTheSameNameHavingTheSameSetOfLowCardinalityKeysWorks(registry);
-    }
-
-    @Test
-    void observationsWithTheSameNameShouldHaveTheSameSetOfLowCardinalityKeysWhenEnabledUsingTheBuilder() {
-        TestObservationRegistry registry = TestObservationRegistry.builder()
-            .validateObservationsWithTheSameNameHavingTheSameSetOfLowCardinalityKeys(true)
-            .build();
-        verifyThatValidateObservationsWithTheSameNameHavingTheSameSetOfLowCardinalityKeysWorks(registry);
     }
 
     @Test
@@ -474,6 +462,27 @@ class ObservationValidatorTests {
         scope2.close();
         scope1.close();
         observation.stop();
+    }
+
+    @Test
+    void validatorShouldLoseStateWhenCleared() {
+        TestObservationRegistry registry = TestObservationRegistry.builder()
+            .validateObservationsWithTheSameNameHavingTheSameSetOfLowCardinalityKeys(true)
+            .validateScopesClosedInReverseOrderOfOpening(true)
+            .build();
+
+        // verify if the validator forgets low cardinality key-values
+        Observation.createNotStarted("test", registry).lowCardinalityKeyValue("key1", "value1").start().stop();
+        registry.clear();
+        Observation.createNotStarted("test", registry).lowCardinalityKeyValue("key2", "value2").start().stop();
+
+        // verify if the validator forgets the opened scopes
+        Observation outerObservation = Observation.start("outerObservation", registry);
+        Scope outerScope = outerObservation.openScope();
+        Scope innerScope = Observation.start("innerObservation", registry).openScope();
+        registry.clear();
+        outerScope.close();
+        innerScope.close();
     }
 
 }

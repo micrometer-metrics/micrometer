@@ -37,12 +37,17 @@ import static io.micrometer.observation.tck.TestObservationRegistry.Capability.O
 public final class TestObservationRegistry
         implements ObservationRegistry, AssertProvider<TestObservationRegistryAssert> {
 
-    private final ObservationRegistry delegate = ObservationRegistry.create();
+    private final ObservationRegistry delegate;
 
-    private final StoringObservationHandler handler = new StoringObservationHandler();
+    private final StoringObservationHandler handler;
+
+    private final ObservationValidator validator;
 
     private TestObservationRegistry(Set<Capability> capabilities) {
-        observationConfig().observationHandler(this.handler).observationHandler(new ObservationValidator(capabilities));
+        this.delegate = ObservationRegistry.create();
+        this.handler = new StoringObservationHandler();
+        this.validator = new ObservationValidator(capabilities);
+        observationConfig().observationHandler(this.handler).observationHandler(this.validator);
     }
 
     /**
@@ -86,11 +91,12 @@ public final class TestObservationRegistry
     }
 
     /**
-     * Clears the stored {@link Observation.Context}.
+     * Clears the stored {@link Observation.Context} and the state of the validator.
      * @since 1.11.0
      */
     public void clear() {
-        getContexts().clear();
+        this.handler.clear();
+        this.validator.clear();
     }
 
     /**
@@ -107,7 +113,7 @@ public final class TestObservationRegistry
 
     private static class StoringObservationHandler implements ObservationHandler<Observation.Context> {
 
-        final Queue<TestObservationContext> contexts = new ConcurrentLinkedQueue<>();
+        private final Queue<TestObservationContext> contexts = new ConcurrentLinkedQueue<>();
 
         @Override
         public void onStart(Observation.Context context) {
@@ -133,6 +139,10 @@ public final class TestObservationRegistry
                 .filter(testContext -> testContext.getContext() == context)
                 .findFirst()
                 .ifPresent(testContext -> testContext.addEvent(event));
+        }
+
+        private void clear() {
+            this.contexts.clear();
         }
 
     }

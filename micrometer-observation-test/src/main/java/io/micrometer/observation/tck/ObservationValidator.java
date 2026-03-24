@@ -44,22 +44,22 @@ import static io.micrometer.observation.tck.TestObservationRegistry.Capability.*
  */
 class ObservationValidator implements ObservationHandler<Context> {
 
+    private final Set<Capability> capabilities;
+
     private final Consumer<ValidationResult> consumer;
 
     private final Predicate<Context> supportsContextPredicate;
 
     private final Map<String, Set<String>> lowCardinalityKeysByObservationName;
 
-    private final ThreadLocal<Deque<Context>> scopedContexts;
-
-    private final Set<Capability> capabilities;
+    private ThreadLocal<Deque<Context>> scopedContexts;
 
     ObservationValidator(Set<Capability> capabilities) {
+        this.capabilities = capabilities;
         this.consumer = ObservationValidator::throwInvalidObservationException;
         this.supportsContextPredicate = context -> !(context instanceof NullContext);
         this.lowCardinalityKeysByObservationName = new HashMap<>();
         this.scopedContexts = ThreadLocal.withInitial(ArrayDeque::new);
-        this.capabilities = capabilities;
     }
 
     @Override
@@ -154,6 +154,11 @@ class ObservationValidator implements ObservationHandler<Context> {
     @Override
     public boolean supportsContext(Context context) {
         return supportsContextPredicate.test(context);
+    }
+
+    void clear() {
+        this.lowCardinalityKeysByObservationName.clear();
+        this.scopedContexts = ThreadLocal.withInitial(ArrayDeque::new);
     }
 
     private History addHistoryElement(Context context, EventName eventName) {
