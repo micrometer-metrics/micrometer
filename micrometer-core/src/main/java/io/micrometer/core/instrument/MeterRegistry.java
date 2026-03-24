@@ -1176,26 +1176,24 @@ public abstract class MeterRegistry {
         }
 
         /**
-         * A counter that tracks a time value, to be scaled to the {@link MeterRegistry}'s base
-         * time unit.
+         * A counter that tracks a time value, to be scaled to the {@link MeterRegistry}'s
+         * base time unit.
          * @param id The identifier for this function counter.
          * @param obj State object used to compute a value.
          * @param functionTimeUnit The unit of time produced by the count function.
          * @param countFunction Function that produces a monotonically increasing counter
          * value from the state object.
-         * @param <T> The type of the state object from which the counter value is extracted.
+         * @param <T> The type of the state object from which the counter value is
+         * extracted.
          * @return A new or existing function counter.
          */
         <T> FunctionCounter functionTimeCounter(Meter.Id id, T obj, TimeUnit functionTimeUnit,
-                                                ToDoubleFunction<T> countFunction) {
-            return registerMeterIfNecessary(FunctionCounter.class, id,
-                    (registry, mappedId) -> {
-                        Meter.Id withUnit = mappedId.withBaseUnit(registry.getBaseTimeUnitStr());
-                        return registry.newFunctionCounter(withUnit, obj,
-                                obj2 -> TimeUtils.convert(countFunction.applyAsDouble(obj2), functionTimeUnit,
-                                        registry.getBaseTimeUnit()));
-                    },
-                    NoopFunctionCounter::new);
+                ToDoubleFunction<T> countFunction) {
+            return registerMeterIfNecessary(FunctionCounter.class, id, (registry, mappedId) -> {
+                Meter.Id withUnit = mappedId.withBaseUnit(registry.getBaseTimeUnitStr());
+                return registry.newFunctionCounter(withUnit, obj, obj2 -> TimeUtils
+                    .convert(countFunction.applyAsDouble(obj2), functionTimeUnit, registry.getBaseTimeUnit()));
+            }, NoopFunctionCounter::new);
         }
 
         /**

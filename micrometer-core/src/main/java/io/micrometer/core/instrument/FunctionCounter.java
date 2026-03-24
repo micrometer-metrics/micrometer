@@ -116,7 +116,9 @@ public interface FunctionCounter extends Meter {
         }
 
         /**
-         * Only set this if this function counter is time-based. This will be used to convert from the time unit provided by the function to the base time unit for the {@link MeterRegistry}.
+         * Only set this if this function counter is time-based. This will be used to
+         * convert from the time unit provided by the function to the base time unit for
+         * the {@link MeterRegistry}.
          * @param timeUnit time unit of the provided function return value.
          * @return The counter builder with added time unit.
          */
@@ -137,7 +139,8 @@ public interface FunctionCounter extends Meter {
         public FunctionCounter register(MeterRegistry registry) {
             if (functionTimeUnit != null) {
                 return registry.more()
-                    .functionTimeCounter(new Meter.Id(name, tags, null, description, Type.COUNTER), obj, functionTimeUnit, f);
+                    .functionTimeCounter(new Meter.Id(name, tags, null, description, Type.COUNTER), obj,
+                            functionTimeUnit, f);
             }
             return registry.more().counter(new Meter.Id(name, tags, baseUnit, description, Type.COUNTER), obj, f);
         }
