@@ -18,6 +18,7 @@ package io.micrometer.core.instrument;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Collections;
+import java.util.concurrent.TimeUnit;
 import java.util.function.ToDoubleFunction;
 
 /**
@@ -59,6 +60,8 @@ public interface FunctionCounter extends Meter {
         private @Nullable String description;
 
         private @Nullable String baseUnit;
+
+        private @Nullable TimeUnit baseTimeUnit;
 
         private Builder(String name, T obj, ToDoubleFunction<T> f) {
             this.name = name;
@@ -113,6 +116,15 @@ public interface FunctionCounter extends Meter {
         }
 
         /**
+         * @param timeUnit Base time unit of the eventual counter.
+         * @return The counter builder with added base time unit.
+         */
+        public Builder<T> baseTimeUnit(@Nullable TimeUnit timeUnit) {
+            this.baseTimeUnit = timeUnit;
+            return this;
+        }
+
+        /**
          * Add the function counter to a single registry, or return an existing function
          * counter in that registry. The returned function counter will be unique for each
          * registry, but each registry is guaranteed to only create one function counter
@@ -122,6 +134,11 @@ public interface FunctionCounter extends Meter {
          * @return A new or existing function counter.
          */
         public FunctionCounter register(MeterRegistry registry) {
+            if (baseTimeUnit != null) {
+                return registry.more()
+                    .timeFunctionCounter(new Meter.Id(name, tags, null, description, Type.COUNTER), obj, baseTimeUnit,
+                            f);
+            }
             return registry.more().counter(new Meter.Id(name, tags, baseUnit, description, Type.COUNTER), obj, f);
         }
 
