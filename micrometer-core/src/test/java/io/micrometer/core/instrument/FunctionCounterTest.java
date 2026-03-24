@@ -31,7 +31,7 @@ class FunctionCounterTest {
 
         AtomicLong n = new AtomicLong(1000);
         FunctionCounter c = FunctionCounter.builder("my.time.counter", n, AtomicLong::doubleValue)
-            .baseTimeUnit(TimeUnit.MILLISECONDS)
+            .timeUnit(TimeUnit.MILLISECONDS)
             .register(registry);
 
         assertThat(c.getId().getBaseUnit()).isEqualTo("seconds");
