@@ -1176,8 +1176,8 @@ public abstract class MeterRegistry {
         }
 
         /**
-         * A counter that tracks a time value, to be scaled to the {@link MeterRegistry}'s
-         * base time unit.
+         * A function-based counter that tracks a time value, to be scaled to the
+         * {@link MeterRegistry}'s base time unit.
          * @param id The identifier for this function counter.
          * @param obj State object used to compute a value.
          * @param functionTimeUnit The unit of time produced by the count function.
