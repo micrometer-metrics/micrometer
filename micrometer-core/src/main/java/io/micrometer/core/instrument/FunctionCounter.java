@@ -121,6 +121,7 @@ public interface FunctionCounter extends Meter {
          * the {@link MeterRegistry}.
          * @param timeUnit time unit of the provided function return value.
          * @return The counter builder with added time unit.
+         * @since 1.17.0
          */
         public Builder<T> timeUnit(@Nullable TimeUnit timeUnit) {
             this.functionTimeUnit = timeUnit;
