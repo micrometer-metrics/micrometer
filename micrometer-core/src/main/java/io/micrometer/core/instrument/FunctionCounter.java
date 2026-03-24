@@ -61,7 +61,7 @@ public interface FunctionCounter extends Meter {
 
         private @Nullable String baseUnit;
 
-        private @Nullable TimeUnit baseTimeUnit;
+        private @Nullable TimeUnit functionTimeUnit;
 
         private Builder(String name, T obj, ToDoubleFunction<T> f) {
             this.name = name;
@@ -116,11 +116,12 @@ public interface FunctionCounter extends Meter {
         }
 
         /**
-         * @param timeUnit Base time unit of the eventual counter.
-         * @return The counter builder with added base time unit.
+         * Only set this if this function counter is time-based. This will be used to convert from the time unit provided by the function to the base time unit for the {@link MeterRegistry}.
+         * @param timeUnit time unit of the provided function return value.
+         * @return The counter builder with added time unit.
          */
-        public Builder<T> baseTimeUnit(@Nullable TimeUnit timeUnit) {
-            this.baseTimeUnit = timeUnit;
+        public Builder<T> timeUnit(@Nullable TimeUnit timeUnit) {
+            this.functionTimeUnit = timeUnit;
             return this;
         }
 
@@ -134,10 +135,9 @@ public interface FunctionCounter extends Meter {
          * @return A new or existing function counter.
          */
         public FunctionCounter register(MeterRegistry registry) {
-            if (baseTimeUnit != null) {
+            if (functionTimeUnit != null) {
                 return registry.more()
-                    .timeFunctionCounter(new Meter.Id(name, tags, null, description, Type.COUNTER), obj, baseTimeUnit,
-                            f);
+                    .functionTimeCounter(new Meter.Id(name, tags, null, description, Type.COUNTER), obj, functionTimeUnit, f);
             }
             return registry.more().counter(new Meter.Id(name, tags, baseUnit, description, Type.COUNTER), obj, f);
         }
