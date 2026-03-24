@@ -19,6 +19,7 @@ import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
+import io.micrometer.core.instrument.util.TimeUtils;
 import io.micrometer.core.ipc.http.HttpSender;
 import io.opentelemetry.proto.metrics.v1.ExponentialHistogramDataPoint;
 import io.opentelemetry.proto.metrics.v1.HistogramDataPoint;
@@ -352,6 +353,65 @@ abstract class OtlpMeterRegistryTest {
         assertThat(dataPoint.getZeroCount()).isZero();
         assertThat(dataPoint.getCount()).isEqualTo(2);
         assertThat(dataPoint.getPositive().getBucketCountsCount()).isGreaterThan(1);
+    }
+
+    @Test
+    void testZeroThresholdForExponentialHistogram() {
+        Timer timerWithDefaultZeroThreshold = Timer.builder("zero_threshold_default")
+            .publishPercentileHistogram()
+            .register(registryWithExponentialHistogram);
+        Timer timerWith1nsZeroThreshold = Timer.builder("zero_threshold_1ns")
+            .publishPercentileHistogram()
+            .minimumExpectedValue(Duration.ofNanos(1))
+            .register(registryWithExponentialHistogram);
+
+        timerWithDefaultZeroThreshold.record(Duration.ofMillis(1));
+        timerWith1nsZeroThreshold.record(Duration.ofMillis(1));
+
+        DistributionSummary dsDefault = DistributionSummary.builder("zero_threshold_ds_default")
+            .publishPercentileHistogram()
+            .register(registryWithExponentialHistogram);
+        DistributionSummary dsCustom = DistributionSummary.builder("zero_threshold_ds_custom")
+            .publishPercentileHistogram()
+            .minimumExpectedValue(10.0)
+            .register(registryWithExponentialHistogram);
+
+        dsDefault.record(1.0);
+        dsCustom.record(1.0);
+
+        clock.add(exponentialHistogramOtlpConfig().step());
+
+        assertThat(writeToMetric(timerWithDefaultZeroThreshold)).matches(Metric::hasExponentialHistogram)
+            .satisfies(exponentialHistogram -> {
+                ExponentialHistogramDataPoint dataPoint = exponentialHistogram.getExponentialHistogram()
+                    .getDataPoints(0);
+                // Default minimum expected value for Timer is 1ms. Base unit is
+                // milliseconds.
+                assertThat(dataPoint.getZeroThreshold()).isEqualTo(Math.nextDown(1.0));
+            });
+
+        assertThat(writeToMetric(timerWith1nsZeroThreshold)).matches(Metric::hasExponentialHistogram)
+            .satisfies(exponentialHistogram -> {
+                ExponentialHistogramDataPoint dataPoint = exponentialHistogram.getExponentialHistogram()
+                    .getDataPoints(0);
+                // 1ns in milliseconds is 0.000001
+                assertThat(dataPoint.getZeroThreshold())
+                    .isEqualTo(Math.nextDown(TimeUtils.nanosToUnit(1, TimeUnit.MILLISECONDS)));
+            });
+
+        assertThat(writeToMetric(dsDefault)).matches(Metric::hasExponentialHistogram)
+            .satisfies(exponentialHistogram -> {
+                ExponentialHistogramDataPoint dataPoint = exponentialHistogram.getExponentialHistogram()
+                    .getDataPoints(0);
+                // Default minimum expected value for DistributionSummary is 1.0 (no base
+                // unit conversion)
+                assertThat(dataPoint.getZeroThreshold()).isEqualTo(Math.nextDown(1.0));
+            });
+
+        assertThat(writeToMetric(dsCustom)).matches(Metric::hasExponentialHistogram).satisfies(exponentialHistogram -> {
+            ExponentialHistogramDataPoint dataPoint = exponentialHistogram.getExponentialHistogram().getDataPoints(0);
+            assertThat(dataPoint.getZeroThreshold()).isEqualTo(Math.nextDown(10.0));
+        });
     }
 
     @Test
