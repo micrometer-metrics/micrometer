@@ -1016,7 +1016,8 @@ abstract class OtlpMeterRegistryTest {
 
         clock.add(exponentialHistogramOtlpConfig().step());
 
-        assertThat(writeToMetric(timerWithDefaultZeroThreshold)).matches(Metric::hasExponentialHistogram)
+        assertThat(writeToMetrics(timerWithDefaultZeroThreshold)).filteredOn(Metric::hasExponentialHistogram)
+            .singleElement()
             .satisfies(exponentialHistogram -> {
                 ExponentialHistogramDataPoint dataPoint = exponentialHistogram.getExponentialHistogram()
                     .getDataPoints(0);
@@ -1025,7 +1026,8 @@ abstract class OtlpMeterRegistryTest {
                 assertThat(dataPoint.getZeroThreshold()).isEqualTo(Math.nextDown(1.0));
             });
 
-        assertThat(writeToMetric(timerWith1nsZeroThreshold)).matches(Metric::hasExponentialHistogram)
+        assertThat(writeToMetrics(timerWith1nsZeroThreshold)).filteredOn(Metric::hasExponentialHistogram)
+            .singleElement()
             .satisfies(exponentialHistogram -> {
                 ExponentialHistogramDataPoint dataPoint = exponentialHistogram.getExponentialHistogram()
                     .getDataPoints(0);
@@ -1034,7 +1036,8 @@ abstract class OtlpMeterRegistryTest {
                     .isEqualTo(Math.nextDown(TimeUtils.nanosToUnit(1, TimeUnit.MILLISECONDS)));
             });
 
-        assertThat(writeToMetric(dsDefault)).matches(Metric::hasExponentialHistogram)
+        assertThat(writeToMetrics(dsDefault)).filteredOn(Metric::hasExponentialHistogram)
+            .singleElement()
             .satisfies(exponentialHistogram -> {
                 ExponentialHistogramDataPoint dataPoint = exponentialHistogram.getExponentialHistogram()
                     .getDataPoints(0);
@@ -1043,10 +1046,13 @@ abstract class OtlpMeterRegistryTest {
                 assertThat(dataPoint.getZeroThreshold()).isEqualTo(Math.nextDown(1.0));
             });
 
-        assertThat(writeToMetric(dsCustom)).matches(Metric::hasExponentialHistogram).satisfies(exponentialHistogram -> {
-            ExponentialHistogramDataPoint dataPoint = exponentialHistogram.getExponentialHistogram().getDataPoints(0);
-            assertThat(dataPoint.getZeroThreshold()).isEqualTo(Math.nextDown(10.0));
-        });
+        assertThat(writeToMetrics(dsCustom)).filteredOn(Metric::hasExponentialHistogram)
+            .singleElement()
+            .satisfies(exponentialHistogram -> {
+                ExponentialHistogramDataPoint dataPoint = exponentialHistogram.getExponentialHistogram()
+                    .getDataPoints(0);
+                assertThat(dataPoint.getZeroThreshold()).isEqualTo(Math.nextDown(10.0));
+            });
     }
 
     @Test
