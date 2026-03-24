@@ -19,16 +19,17 @@ import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class FunctionCounterTest {
 
-    @Test
-    void hasBaseTimeUnit() {
-        MeterRegistry registry = new SimpleMeterRegistry();
+    MeterRegistry registry = new SimpleMeterRegistry();
 
+    @Test
+    void convertsCountUsingTimeUnit() {
         AtomicLong n = new AtomicLong(1000);
         FunctionCounter c = FunctionCounter.builder("my.time.counter", n, AtomicLong::doubleValue)
             .timeUnit(TimeUnit.MILLISECONDS)
@@ -36,6 +37,28 @@ class FunctionCounterTest {
 
         assertThat(c.getId().getBaseUnit()).isEqualTo("seconds");
         assertThat(c.count()).isEqualTo(1.0);
+    }
+
+    @Test
+    void timeUnitTakesPrecedenceOverBaseUnit() {
+        FunctionCounter functionCounter = FunctionCounter
+            .builder("my.time.counter", new AtomicInteger(), AtomicInteger::doubleValue)
+            .timeUnit(TimeUnit.MILLISECONDS)
+            .baseUnit("milliseconds")
+            .register(registry);
+
+        // SimpleMeterRegistry has baseTimeUnit of seconds
+        assertThat(functionCounter.getId().getBaseUnit()).isEqualTo("seconds");
+    }
+
+    @Test
+    void baseUnitNotIgnoredWhenTimeUnitIsNull() {
+        FunctionCounter functionCounter = FunctionCounter
+            .builder("jdbc.connections.created", new AtomicInteger(), AtomicInteger::doubleValue)
+            .baseUnit("connections")
+            .register(registry);
+
+        assertThat(functionCounter.getId().getBaseUnit()).isEqualTo("connections");
     }
 
 }

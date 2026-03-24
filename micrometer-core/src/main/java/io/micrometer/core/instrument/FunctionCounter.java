@@ -107,6 +107,7 @@ public interface FunctionCounter extends Meter {
         }
 
         /**
+         * Use this if the unit is not time. Otherwise, use {@link #timeUnit(TimeUnit)}.
          * @param unit Base unit of the eventual counter.
          * @return The counter builder with added base unit.
          */
@@ -118,7 +119,8 @@ public interface FunctionCounter extends Meter {
         /**
          * Only set this if this function counter is time-based. This will be used to
          * convert from the time unit provided by the function to the base time unit for
-         * the {@link MeterRegistry}.
+         * the {@link MeterRegistry}. If this is set, any {@link #baseUnit(String)} will
+         * be ignored and the registry's base time unit will be used instead.
          * @param timeUnit time unit of the provided function return value.
          * @return The counter builder with added time unit.
          * @since 1.17.0
