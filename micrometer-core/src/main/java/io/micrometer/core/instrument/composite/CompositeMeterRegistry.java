@@ -50,6 +50,8 @@ public class CompositeMeterRegistry extends MeterRegistry {
 
     private final Set<MeterRegistry> unmodifiableRegistries = Collections.unmodifiableSet(registries);
 
+    // VisibleForTesting
+    
     volatile Set<MeterRegistry> nonCompositeDescendants = Collections.emptySet();
 
     private final AtomicBoolean parentLock = new AtomicBoolean();
