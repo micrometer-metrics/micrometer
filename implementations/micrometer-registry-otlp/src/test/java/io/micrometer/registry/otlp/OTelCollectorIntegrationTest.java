@@ -16,7 +16,9 @@
 package io.micrometer.registry.otlp;
 
 import io.micrometer.core.instrument.*;
+import io.prometheus.metrics.expositionformats.generated.Metrics;
 import io.restassured.response.Response;
+import org.hamcrest.Matcher;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Tag;
@@ -27,11 +29,17 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import static io.micrometer.registry.otlp.CompressionMode.GZIP;
 import static io.micrometer.registry.otlp.CompressionMode.NONE;
 import static io.restassured.RestAssured.given;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.hamcrest.Matchers.*;
 import static org.testcontainers.containers.BindMode.READ_ONLY;
@@ -47,6 +55,8 @@ import static uk.org.webcompere.systemstubs.SystemStubs.withEnvironmentVariables
 class OTelCollectorIntegrationTest {
 
     private static final String OPENMETRICS_TEXT = "application/openmetrics-text; version=1.0.0; charset=utf-8";
+
+    private static final String PROMETHEUS_PROTOBUF = "application/vnd.google.protobuf; proto=io.prometheus.client.MetricFamily; encoding=delimited; escaping=underscores";
 
     private static final String CONFIG_FILE_NAME = "collector-config.yml";
 
@@ -91,7 +101,7 @@ class OTelCollectorIntegrationTest {
             .atMost(Duration.ofSeconds(10))
             .pollDelay(Duration.ofMillis(100))
             .pollInterval(Duration.ofMillis(100))
-            .until(this::whenPrometheusScraped, this::doesPrometheusResponseContainValidData);
+            .until(this::whenPrometheusScrapedWithOpenMetrics, this::doesPrometheusResponseContainValidOpenMetricsData);
 
         // tags can vary depending on where you run your tests:
         //  - IDE: no telemetry_sdk_version tag
@@ -155,7 +165,7 @@ class OTelCollectorIntegrationTest {
             .atMost(Duration.ofSeconds(10))
             .pollDelay(Duration.ofMillis(100))
             .pollInterval(Duration.ofMillis(100))
-            .until(this::whenPrometheusScraped, this::doesPrometheusResponseContainValidData);
+            .until(this::whenPrometheusScrapedWithOpenMetrics, this::doesPrometheusResponseContainValidOpenMetricsData);
 
         // tags can vary depending on where you run your tests:
         //  - IDE: no telemetry_sdk_version tag
@@ -201,6 +211,52 @@ class OTelCollectorIntegrationTest {
     }
 
     @Test
+    void collectorShouldExportExponentialHistograms() throws Exception {
+        // Shows that the collector received the exemplars:
+        // container.followOutput(frame -> System.out.println(frame.getUtf8String()));
+        MeterRegistry registry = createOtlpMeterRegistryForContainerWithExponentialHistogram(container);
+        Timer timer = Timer.builder("test.timer").publishPercentileHistogram().register(registry);
+        DistributionSummary ds = DistributionSummary.builder("test.ds").publishPercentileHistogram().register(registry);
+
+        record("66fd7359621b3043e232148ef0c40001", "e232148ef0c40001", () -> timer.record(Duration.ofMillis(1)));
+        record("66fd7359621b3043e232148ef0c40002", "e232148ef0c40002", () -> timer.record(Duration.ofMillis(123)));
+
+        record("66fd7359621b3043e232148ef0c40005", "e232148ef0c40005", () -> ds.record(1));
+        record("66fd7359621b3043e232148ef0c40006", "e232148ef0c40006", () -> ds.record(123));
+
+        // @formatter:off
+        Response response = await()
+            .atMost(Duration.ofSeconds(10))
+            .pollDelay(Duration.ofMillis(100))
+            .pollInterval(Duration.ofMillis(100))
+            .until(this::whenPrometheusScrapedWithProtobuf, this::doesPrometheusResponseContainValidProtobufData);
+
+        List<Metrics.MetricFamily> families = parse(response);
+        assertThat(families.size()).isEqualTo(2);
+        assertThat(families).allSatisfy(family -> {
+            assertThat(family.getMetricCount()).isEqualTo(1);
+            assertThat(family.getMetric(0).getHistogram().getPositiveDeltaCount()).isPositive();
+            // TODO: Check Exemplars after support is added to the collector,
+            //  see: https://github.com/open-telemetry/opentelemetry-collector-contrib/issues/47159
+            //  assertThat(family.getMetric(0).getHistogram().getExemplarsCount()).isPositive();
+        });
+        // @formatter:on
+    }
+
+    private List<io.prometheus.metrics.expositionformats.generated.Metrics.MetricFamily> parse(Response response)
+            throws IOException {
+        List<Metrics.MetricFamily> families = new ArrayList<>();
+        try (InputStream is = response.body().asInputStream()) {
+            Metrics.MetricFamily family;
+            while ((family = Metrics.MetricFamily.parseDelimitedFrom(is)) != null) {
+                families.add(family);
+            }
+        }
+
+        return families;
+    }
+
+    @Test
     void collectorShouldExportMetricsWithGzipCompression() throws Exception {
         MeterRegistry registry = createOtlpMeterRegistryForContainerWithGzipCompression(container);
 
@@ -216,7 +272,7 @@ class OTelCollectorIntegrationTest {
             .atMost(Duration.ofSeconds(10))
             .pollDelay(Duration.ofMillis(100))
             .pollInterval(Duration.ofMillis(100))
-            .until(this::whenPrometheusScraped, this::doesPrometheusResponseContainValidData);
+            .until(this::whenPrometheusScrapedWithOpenMetrics, this::doesPrometheusResponseContainValidOpenMetricsData);
 
         // tags can vary depending on where you run your tests:
         //  - IDE: no telemetry_sdk_version tag
@@ -261,7 +317,7 @@ class OTelCollectorIntegrationTest {
             .atMost(Duration.ofSeconds(10))
             .pollDelay(Duration.ofMillis(100))
             .pollInterval(Duration.ofMillis(100))
-            .until(this::whenPrometheusScraped, this::doesPrometheusResponseContainValidData);
+            .until(this::whenPrometheusScrapedWithOpenMetrics, this::doesPrometheusResponseContainValidOpenMetricsData);
 
         response.then().body(
             // Verify timer histogram is exported
@@ -301,8 +357,18 @@ class OTelCollectorIntegrationTest {
 
     private OtlpMeterRegistry createOtlpMeterRegistryForContainerWithoutMaxGauge(GenericContainer<?> container)
             throws Exception {
-        return withEnvironmentVariables("OTEL_SERVICE_NAME", "test")
-            .execute(() -> new OtlpMeterRegistry(createOtlpConfigForContainer(container, NONE, false), Clock.SYSTEM));
+        return withEnvironmentVariables("OTEL_SERVICE_NAME", "test").execute(() -> new OtlpMeterRegistry(
+                createOtlpConfigForContainer(container, NONE, false, HistogramFlavor.EXPLICIT_BUCKET_HISTOGRAM),
+                Clock.SYSTEM));
+    }
+
+    private OtlpMeterRegistry createOtlpMeterRegistryForContainerWithExponentialHistogram(GenericContainer<?> container)
+            throws Exception {
+        return withEnvironmentVariables("OTEL_SERVICE_NAME", "test").execute(() -> OtlpMeterRegistry
+            .builder(createOtlpConfigForContainer(container, NONE, false,
+                    HistogramFlavor.BASE2_EXPONENTIAL_BUCKET_HISTOGRAM))
+            .exemplarContextProvider(contextProvider)
+            .build());
     }
 
     private OtlpConfig createOtlpConfigForContainer(GenericContainer<?> container) {
@@ -310,11 +376,12 @@ class OTelCollectorIntegrationTest {
     }
 
     private OtlpConfig createOtlpConfigForContainer(GenericContainer<?> container, CompressionMode compressionMode) {
-        return createOtlpConfigForContainer(container, compressionMode, true);
+        return createOtlpConfigForContainer(container, compressionMode, true,
+                HistogramFlavor.EXPLICIT_BUCKET_HISTOGRAM);
     }
 
     private OtlpConfig createOtlpConfigForContainer(GenericContainer<?> container, CompressionMode compressionMode,
-            boolean publishMaxGaugeForHistograms) {
+            boolean publishMaxGaugeForHistograms, HistogramFlavor histogramFlavor) {
         return new OtlpConfig() {
             @Override
             public @NonNull String url() {
@@ -337,28 +404,54 @@ class OTelCollectorIntegrationTest {
             }
 
             @Override
+            public @NonNull HistogramFlavor histogramFlavor() {
+                return histogramFlavor;
+            }
+
+            @Override
+            public @NonNull TimeUnit baseTimeUnit() {
+                return histogramFlavor == HistogramFlavor.BASE2_EXPONENTIAL_BUCKET_HISTOGRAM ? TimeUnit.SECONDS
+                        : TimeUnit.MILLISECONDS;
+            }
+
+            @Override
             public @Nullable String get(@NonNull String key) {
                 return null;
             }
         };
     }
 
-    private Response whenPrometheusScraped() {
+    private Response whenPrometheusScrapedWithOpenMetrics() {
+        return whenPrometheusScrapedWith(OPENMETRICS_TEXT);
+    }
+
+    private Response whenPrometheusScrapedWithProtobuf() {
+        return whenPrometheusScrapedWith(PROMETHEUS_PROTOBUF);
+    }
+
+    private Response whenPrometheusScrapedWith(String contentType) {
         // @formatter:off
         return given()
             .port(container.getMappedPort(9090))
-            .accept(OPENMETRICS_TEXT)
+            .accept(contentType)
             .when()
             .get("/metrics");
         // @formatter:on
     }
 
-    private boolean doesPrometheusResponseContainValidData(Response response) {
+    private boolean doesPrometheusResponseContainValidOpenMetricsData(Response response) {
+        return doesPrometheusResponseContainValidData(response, OPENMETRICS_TEXT,
+                allOf(endsWith("# EOF\n"), not(startsWith("# EOF\n"))));
+    }
+
+    private boolean doesPrometheusResponseContainValidProtobufData(Response response) {
+        return doesPrometheusResponseContainValidData(response, PROMETHEUS_PROTOBUF, containsString("io.micrometer"));
+    }
+
+    private boolean doesPrometheusResponseContainValidData(Response response, String contentType,
+            Matcher<String> bodyMatcher) {
         try {
-            response.then()
-                .statusCode(200)
-                .contentType(OPENMETRICS_TEXT)
-                .body(endsWith("# EOF\n"), not(startsWith("# EOF\n")));
+            response.then().statusCode(200).contentType(contentType).body(bodyMatcher);
             return true;
         }
         catch (AssertionError ignored) {

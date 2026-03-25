@@ -12,6 +12,8 @@ dependencies {
     testImplementation libs.awaitility
     testImplementation libs.mockitoCore5
     testImplementation libs.logbackLatest
+    testImplementation(platform(libs.prometheusMetricsBom))
+    testImplementation libs.prometheusMetricsExpositionFormats
 }
 
 dockerTest {

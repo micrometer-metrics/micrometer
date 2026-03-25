@@ -29,9 +29,11 @@ exporters:
     enable_open_metrics: true
     resource_to_telemetry_conversion:
       enabled: true
+  debug:
+    verbosity: detailed
 
 service:
   pipelines:
     metrics:
       receivers: [otlp]
-      exporters: [prometheus]
+      exporters: [prometheus, debug]
