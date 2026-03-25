@@ -160,8 +160,7 @@ If the function tracks a time value, you can use `timeUnit` on the builder to cr
 ----
 MyCounterState state = ...;
 
-FunctionCounter counter = FunctionCounter
-    .builder("counter.time", state, state -> state.totalTime())
+FunctionCounter.builder("counter.time", state, state -> state.totalTime())
     .timeUnit(TimeUnit.NANOSECONDS) // optional, scales the value to the registry's base time unit
     .description("a description of what this counter does") // optional
     .tags("region", "test") // optional
