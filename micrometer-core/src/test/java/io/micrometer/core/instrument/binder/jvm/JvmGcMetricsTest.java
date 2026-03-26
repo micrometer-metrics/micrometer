@@ -25,6 +25,7 @@ import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.binder.jvm.JvmGcMetrics.GcMetricsNotificationListener;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledForJreRange;
 import org.junit.jupiter.api.condition.EnabledIf;
@@ -61,6 +62,11 @@ class JvmGcMetricsTest {
     SimpleMeterRegistry registry = new SimpleMeterRegistry();
 
     JvmGcMetrics binder = new JvmGcMetrics(DEFAULT_TAGS);
+
+    @AfterEach
+    void cleanUp() {
+        binder.close();
+    }
 
     @Test
     void noJvmImplementationSpecificApiSignatures() {
