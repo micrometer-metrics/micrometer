@@ -37,6 +37,10 @@ nebulaPublishVerification {
     ignore('io.netty:netty-transport-native-kqueue')
 }
 
+tasks.named('jar') {
+    enabled = false
+}
+
 def shadowJar = tasks.named('shadowJar', ShadowJar) {
     duplicatesStrategy = DuplicatesStrategy.INCLUDE
     failOnDuplicateEntries = true
