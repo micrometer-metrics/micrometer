@@ -32,8 +32,10 @@ import javax.management.NotificationListener;
 import javax.management.openmbean.CompositeData;
 import java.lang.management.GarbageCollectorMXBean;
 import java.lang.management.ManagementFactory;
+import java.lang.management.MemoryMXBean;
 import java.lang.management.MemoryPoolMXBean;
 import java.lang.management.MemoryUsage;
+import java.lang.reflect.Method;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
@@ -160,6 +162,28 @@ public class JvmGcMetrics implements MeterBinder, AutoCloseable {
             .register(registry) : null;
 
         allocationPoolSizeAfter = new AtomicLong(0L);
+
+        MemoryMXBean memoryMXBean = ManagementFactory.getMemoryMXBean();
+        try {
+            Method m = MemoryMXBean.class.getMethod("getTotalGcCpuTime");
+            if ((Long) m.invoke(memoryMXBean) >= 0) {
+                FunctionCounter.builder("jvm.gc.cpu.time", memoryMXBean, bean -> {
+                    try {
+                        long nanos = (Long) m.invoke(bean);
+                        return nanos >= 0 ? (double) nanos : 0;
+                    }
+                    catch (Exception e) {
+                        return 0;
+                    }
+                })
+                    .tags(tags)
+                    .description("Approximate accumulated time spent in garbage collection")
+                    .baseUnit("ns")
+                    .register(registry);
+            }
+        }
+        catch (Exception ignore) {
+        }
 
         for (GarbageCollectorMXBean gcBean : ManagementFactory.getGarbageCollectorMXBeans()) {
             if (!(gcBean instanceof NotificationEmitter)) {

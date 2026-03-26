@@ -14,7 +14,7 @@ new JvmThreadDeadlockMetrics().bindTo(registry); <6>
 ----
 <1> Gauges loaded and unloaded classes.
 <2> Gauges buffer and memory pool utilization.
-<3> Gauges max and live data size, promotion and allocation rates, and the number of times the GC pauses (or concurrent phase time in the case of CMS).
+<3> Gauges max and live data size, promotion and allocation rates, and the number of times the GC pauses (or concurrent phase time in the case of CMS). If you are running Java 26 or later, it also tracks the accumulated CPU time for GC related activity.
 <4> Gauges current CPU total and load average.
 <5> Gauges thread peak, the number of daemon threads, and live threads.
 <6> Gauges the number of threads that are deadlocked.

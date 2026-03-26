@@ -25,6 +25,7 @@ import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.binder.jvm.JvmGcMetrics.GcMetricsNotificationListener;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledForJreRange;
 import org.junit.jupiter.api.condition.EnabledIf;
@@ -62,6 +63,11 @@ class JvmGcMetricsTest {
 
     JvmGcMetrics binder = new JvmGcMetrics(DEFAULT_TAGS);
 
+    @AfterEach
+    void cleanUp() {
+        binder.close();
+    }
+
     @Test
     void noJvmImplementationSpecificApiSignatures() {
         JavaClasses importedClasses = new ClassFileImporter()
@@ -96,6 +102,26 @@ class JvmGcMetricsTest {
         }
         // cannot guarantee an object was promoted, so cannot check for positive count
         assertThat(registry.find("jvm.gc.memory.promoted").counter()).isNotNull();
+    }
+
+    @Test
+    @EnabledForJreRange(min = JRE.JAVA_26)
+    void gcCpuTimeAvailable() {
+        binder.bindTo(registry);
+        // ensure some GC time has been spent
+        System.gc();
+
+        assertThat(registry.get("jvm.gc.cpu.time").functionCounter().count()).isPositive();
+    }
+
+    @Test
+    @EnabledForJreRange(max = JRE.JAVA_25)
+    void gcCpuTimeNotAvailable() {
+        binder.bindTo(registry);
+        // ensure some GC time has been spent
+        System.gc();
+
+        assertThat(registry.find("jvm.gc.cpu.time").functionCounter()).isNull();
     }
 
     @Test
