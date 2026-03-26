@@ -235,3 +235,4 @@ plugin-bnd = "biz.aQute.bnd:biz.aQute.bnd.gradle:7.2.3"
 kotlin = { id = "org.jetbrains.kotlin.jvm", version = "2.2.21" }
 jcstress = { id = "io.github.reyerizo.gradle.jcstress", version = "0.9.0" }
 aspectj = { id = 'io.freefair.aspectj.post-compile-weaving', version = '8.14.4' }
+shadow = { id = "com.gradleup.shadow", version = "9.3.2" }

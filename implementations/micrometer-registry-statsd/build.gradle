@@ -1,5 +1,7 @@
+import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
+
 plugins {
-    id 'com.gradleup.shadow' version '9.3.2'
+    alias(libs.plugins.shadow)
 }
 
 dependencies {
@@ -35,7 +37,7 @@ nebulaPublishVerification {
     ignore('io.netty:netty-transport-native-kqueue')
 }
 
-shadowJar {
+def shadowJar = tasks.named('shadowJar', ShadowJar) {
     duplicatesStrategy = DuplicatesStrategy.INCLUDE
     failOnDuplicateEntries = true
     configurations.set([project.configurations.compileClasspath])
@@ -45,10 +47,10 @@ shadowJar {
         include(dependency('io.projectreactor.netty:.*'))
         include(dependency('org.reactivestreams:reactive-streams:.*'))
         include(dependency('io.netty:.*'))
-        // see gh-5953
-        exclude("META-INF/maven/**")
-        exclude("META-INF/io.netty.versions.properties")
     }
+    // see gh-5953
+    exclude("META-INF/maven/**")
+    exclude("META-INF/io.netty.versions.properties")
     relocate 'reactor', 'io.micrometer.shaded.reactor'
     relocate 'org.reactivestreams', 'io.micrometer.shaded.org.reactorstreams'
     relocate 'io.netty', 'io.micrometer.shaded.io.netty'
@@ -60,7 +62,7 @@ shadowJar {
     mergeServiceFiles()
 }
 
-tasks.japicmp.dependsOn(tasks.shadowJar)
+tasks.japicmp.dependsOn(shadowJar)
 
 // The Nebula Publishing plugin automatically configures the publication of the shadow jar but
 // shadow dependencies are added to the POM as runtime so we manually clean up the POM.

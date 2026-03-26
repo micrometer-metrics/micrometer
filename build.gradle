@@ -35,6 +35,7 @@ buildscript {
 
 plugins {
     alias(libs.plugins.kotlin) apply false
+    alias(libs.plugins.shadow) apply false
 }
 
 // Hacks because of Antora's clone/checkout/worktrees behavior
