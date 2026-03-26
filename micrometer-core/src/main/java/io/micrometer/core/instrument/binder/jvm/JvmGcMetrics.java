@@ -171,7 +171,7 @@ public class JvmGcMetrics implements MeterBinder, AutoCloseable {
                 FunctionCounter.builder("jvm.gc.cpu.time", memoryMXBean, bean -> {
                     try {
                         long nanos = (Long) m.invoke(bean);
-                        return nanos >= 0 ? TimeUtils.nanosToUnit((double) nanos, TimeUnit.SECONDS) : 0;
+                        return nanos >= 0 ? (double) nanos : 0;
                     }
                     catch (Exception e) {
                         return 0;
@@ -179,7 +179,7 @@ public class JvmGcMetrics implements MeterBinder, AutoCloseable {
                 })
                     .tags(tags)
                     .description("Approximate accumulated time spent in garbage collection")
-                    .baseUnit("seconds")
+                    .baseUnit("ns")
                     .register(registry);
             }
         }
