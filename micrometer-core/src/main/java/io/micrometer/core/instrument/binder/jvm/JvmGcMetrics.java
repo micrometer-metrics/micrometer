@@ -23,7 +23,6 @@ import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.binder.MeterBinder;
-import io.micrometer.core.instrument.util.TimeUtils;
 import org.jspecify.annotations.Nullable;
 
 import javax.management.ListenerNotFoundException;
