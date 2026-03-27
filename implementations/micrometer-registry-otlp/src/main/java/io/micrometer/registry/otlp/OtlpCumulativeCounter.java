@@ -33,7 +33,7 @@ class OtlpCumulativeCounter extends CumulativeCounter implements StartTimeAwareM
     OtlpCumulativeCounter(Id id, Clock clock, @Nullable OtlpExemplarSamplerFactory exemplarSamplerFactory) {
         super(id);
         this.startTimeNanos = TimeUnit.MILLISECONDS.toNanos(clock.wallTime());
-        this.exemplarSampler = exemplarSamplerFactory != null ? exemplarSamplerFactory.create(16, false) : null;
+        this.exemplarSampler = exemplarSamplerFactory != null ? exemplarSamplerFactory.create(false) : null;
     }
 
     @Override

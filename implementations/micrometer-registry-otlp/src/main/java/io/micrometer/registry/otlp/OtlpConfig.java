@@ -234,8 +234,8 @@ public interface OtlpConfig extends PushRegistryConfig {
      * {@link HistogramFlavor#EXPLICIT_BUCKET_HISTOGRAM} is used for the supported meters.
      * When this is set to {@link HistogramFlavor#BASE2_EXPONENTIAL_BUCKET_HISTOGRAM} and
      * {@code publishPercentileHistogram} is enabled
-     * {@link io.micrometer.registry.otlp.internal.Base2ExponentialHistogram} is used for
-     * recording distributions.
+     * {@link io.micrometer.registry.otlp.Base2ExponentialHistogram} is used for recording
+     * distributions.
      * <p>
      * Note: If specific SLO's are configured, this property is not honored and
      * {@link HistogramFlavor#EXPLICIT_BUCKET_HISTOGRAM} is used for those meters.
@@ -288,6 +288,17 @@ public interface OtlpConfig extends PushRegistryConfig {
     default boolean publishMaxGaugeForHistograms() {
         return getBoolean(this, "publishMaxGaugeForHistograms")
             .orElseGet(() -> aggregationTemporality() == AggregationTemporality.CUMULATIVE);
+    }
+
+    /**
+     * Max number of exemplars per time series. Histograms use their own strategy for the
+     * number of exemplars and may ignore this value.
+     * @return exemplarsSize
+     *
+     * @since 1.17.0
+     */
+    default int exemplarsSize() {
+        return getInteger(this, "exemplarsSize").orElse(4);
     }
 
     /**

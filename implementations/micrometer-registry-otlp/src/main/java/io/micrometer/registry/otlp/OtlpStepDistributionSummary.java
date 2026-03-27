@@ -56,7 +56,7 @@ class OtlpStepDistributionSummary extends AbstractDistributionSummary
             this.exemplarSampler = null;
         }
         else {
-            this.exemplarSampler = exemplarSamplerFactory != null ? exemplarSamplerFactory.create(1, false) : null;
+            this.exemplarSampler = exemplarSamplerFactory != null ? exemplarSamplerFactory.create(false) : null;
         }
     }
 

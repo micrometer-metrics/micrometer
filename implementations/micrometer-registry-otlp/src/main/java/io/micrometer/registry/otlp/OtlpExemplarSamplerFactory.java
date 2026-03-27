@@ -38,12 +38,17 @@ class OtlpExemplarSamplerFactory {
         this.baseTimeUnit = config.baseTimeUnit();
     }
 
-    ExemplarSampler create(int size, boolean timeBased) {
-        return new OtlpExemplarSampler(exemplarContextProvider, clock, config, size, converter(timeBased));
+    ExemplarSampler create(boolean timeBased) {
+        return new OtlpExemplarSampler(exemplarContextProvider, clock, config, converter(timeBased));
     }
 
     ExemplarSampler create(double[] buckets, boolean timeBased) {
         return new OtlpExemplarSampler(exemplarContextProvider, clock, config, buckets, converter(timeBased));
+    }
+
+    ExemplarSampler create(int maxBucketsCount, boolean timeBased) {
+        int size = Math.max(config.exemplarsSize(), maxBucketsCount / 4);
+        return new OtlpExemplarSampler(exemplarContextProvider, clock, config, size, converter(timeBased));
     }
 
     private DoubleUnaryOperator converter(boolean timeBased) {
