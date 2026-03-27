@@ -63,6 +63,7 @@ import static java.util.stream.Collectors.toSet;
  * @author Jon Schneider
  * @author Clint Checketts
  * @author Johnny Lim
+ * @author Daeho Kwon
  */
 @NullMarked
 public class ExecutorServiceMetrics implements MeterBinder {
@@ -70,6 +71,8 @@ public class ExecutorServiceMetrics implements MeterBinder {
     private static final String CLASS_NAME_THREAD_PER_TASK_EXECUTOR = "java.util.concurrent.ThreadPerTaskExecutor";
 
     private static final @Nullable MethodHandle METHOD_HANDLE_THREAD_COUNT_FROM_THREAD_PER_TASK_EXECUTOR = getMethodHandleForThreadCountFromThreadPerTaskExecutor();
+
+    private static final @Nullable MethodHandle METHOD_HANDLE_FJP_GET_DELAYED_TASK_COUNT = getMethodHandleForDelayedTaskCount();
 
     private static boolean allowIllegalReflectiveAccess = true;
 
@@ -457,6 +460,17 @@ public class ExecutorServiceMetrics implements MeterBinder {
                     .baseUnit(BaseUnits.THREADS)
                     .register(registry));
         registeredMeterIds.addAll(meters.stream().map(Meter::getId).collect(toSet()));
+
+        // getDelayedTaskCount() was added in Java 25; only register when available
+        if (METHOD_HANDLE_FJP_GET_DELAYED_TASK_COUNT != null) {
+            Meter delayedGauge = Gauge
+                .builder(metricPrefix + "executor.delayed", fj, ExecutorServiceMetrics::getDelayedTaskCount)
+                .tags(tags)
+                .description("An estimate of the number of delayed tasks scheduled but not yet ready for execution")
+                .baseUnit(BaseUnits.TASKS)
+                .register(registry);
+            registeredMeterIds.add(delayedGauge.getId());
+        }
     }
 
     private void monitorThreadPerTaskExecutor(MeterRegistry registry, ExecutorService executorService) {
@@ -485,6 +499,25 @@ public class ExecutorServiceMetrics implements MeterBinder {
             Class<?> clazz = Class.forName(CLASS_NAME_THREAD_PER_TASK_EXECUTOR);
             Method method = clazz.getMethod("threadCount");
             method.setAccessible(true);
+            return MethodHandles.lookup().unreflect(method);
+        }
+        catch (Throwable e) {
+            return null;
+        }
+    }
+
+    private static long getDelayedTaskCount(ForkJoinPool pool) {
+        try {
+            return (long) Objects.requireNonNull(METHOD_HANDLE_FJP_GET_DELAYED_TASK_COUNT).invoke(pool);
+        }
+        catch (Throwable e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private static @Nullable MethodHandle getMethodHandleForDelayedTaskCount() {
+        try {
+            Method method = ForkJoinPool.class.getMethod("getDelayedTaskCount");
             return MethodHandles.lookup().unreflect(method);
         }
         catch (Throwable e) {
