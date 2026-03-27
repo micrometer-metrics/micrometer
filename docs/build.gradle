@@ -121,3 +121,7 @@ downloadBaseline {
 japicmp {
     enabled = false
 }
+
+dockerTest {
+    systemProperty 'kafka-image.name', libs.versions.docker.kafka.get()
+}

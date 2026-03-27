@@ -76,6 +76,16 @@ tomcat = "8.5.100"
 wavefront = "3.4.3"
 wiremock = "2.35.2"
 wiremock-junit5 = "1.3.1"
+# docker images for integration tests
+docker-otel-collector = "otel/opentelemetry-collector-contrib:0.144.0"
+docker-prometheus = "prom/prometheus:v3.5.1"
+docker-mongodb = "mongo:8.2.3"
+docker-kafka = "confluentinc/cp-kafka:8.0.3"
+docker-elasticsearch-v7 = "docker.elastic.co/elasticsearch/elasticsearch:7.7.1"
+docker-elasticsearch-v8 = "docker.elastic.co/elasticsearch/elasticsearch:8.19.10"
+docker-elasticsearch-v9 = "docker.elastic.co/elasticsearch/elasticsearch:9.2.4"
+docker-postgres-v14 = "postgres:14.20"
+docker-postgres-v18 = "postgres:18.1"
 
 [libraries]
 activemqArtemisJakartaClient = { module = "org.apache.activemq:artemis-jakarta-client", version.ref = "activemq-artemis" }
