@@ -102,6 +102,7 @@ subprojects {
                     "CatchAndPrintStackTrace",
                     "ClassCanBeStatic",
                     "ClassInitializationDeadlock",
+                    "ClassName",
                     "CollectionUndefinedEquality",
                     "DefaultCharset",
                     "DoNotCallSuggester",
