@@ -82,6 +82,7 @@ subprojects {
                     "BadImport",
                     "CatchAndPrintStackTrace",
                     "ClassCanBeStatic",
+                    "ClassName",
                     "CollectionUndefinedEquality",
                     "DefaultCharset",
                     "DoNotCallSuggester",
