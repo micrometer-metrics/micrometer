@@ -238,7 +238,9 @@ subprojects {
                             'Branch',
                             'Module-Origin',
                             'Created-By',
-                            'Build-Java-Version'
+                            'Build-Java-Version',
+                            'Build-Timezone',
+                            'Build-Url'
                     ].each {
                         ignoreAttribute it
                         ignoreProperty it

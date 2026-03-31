@@ -33,6 +33,10 @@ nebulaPublishVerification {
     ignore('io.netty:netty-transport-native-kqueue')
 }
 
+tasks.named('jar') {
+    enabled = false
+}
+
 shadowJar {
     configurations = [project.configurations.compileClasspath]
     archiveClassifier.set('')
