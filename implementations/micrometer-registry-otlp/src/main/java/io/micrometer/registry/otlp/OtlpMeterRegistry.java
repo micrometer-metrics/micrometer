@@ -118,6 +118,10 @@ public class OtlpMeterRegistry extends PushMeterRegistry {
         this(config, clock, threadFactory, new OtlpHttpMetricsSender(new HttpUrlConnectionSender()), null);
     }
 
+    public OtlpMeterRegistry(OtlpConfig config, Clock clock, ThreadFactory threadFactory, OtlpHttpMetricsSender otlpHttpMetricsSender) {
+        this(config, clock, threadFactory, otlpHttpMetricsSender, null);
+    }
+
     private OtlpMeterRegistry(OtlpConfig config, Clock clock, ThreadFactory threadFactory,
             OtlpMetricsSender metricsSender, @Nullable ExemplarContextProvider exemplarContextProvider) {
         super(config, clock);
