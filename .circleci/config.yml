@@ -4,21 +4,21 @@ executors:
   jdk25-executor:
     working_directory: ~/micrometer
     environment:
-      GRADLE_OPTS: '-Dorg.gradle.jvmargs="-Xmx2g -XX:+HeapDumpOnOutOfMemoryError" -Dorg.gradle.workers.max=2'
+      GRADLE_OPTS: '-Dorg.gradle.workers.max=2'
     resource_class: medium+
     docker:
       - image: cimg/openjdk:25.0.1
   jdk21-executor:
     working_directory: ~/micrometer
     environment:
-      GRADLE_OPTS: '-Dorg.gradle.jvmargs="-Xmx2g -XX:+HeapDumpOnOutOfMemoryError" -Dorg.gradle.workers.max=2'
+      GRADLE_OPTS: '-Dorg.gradle.workers.max=2'
     resource_class: medium+
     docker:
       - image: cimg/openjdk:21.0.9
   jdk17-executor:
     working_directory: ~/micrometer
     environment:
-      GRADLE_OPTS: '-Dorg.gradle.jvmargs="-Xmx2g -XX:+HeapDumpOnOutOfMemoryError" -Dorg.gradle.workers.max=2'
+      GRADLE_OPTS: '-Dorg.gradle.workers.max=2'
     resource_class: medium+
     docker:
       - image: cimg/openjdk:17.0.17
@@ -26,7 +26,7 @@ executors:
   concurrency-tests-executor:
     working_directory: ~/micrometer
     environment:
-      GRADLE_OPTS: '-Dorg.gradle.jvmargs="-Xmx2g -XX:+HeapDumpOnOutOfMemoryError" -Dorg.gradle.workers.max=2'
+      GRADLE_OPTS: '-Dorg.gradle.workers.max=2'
     resource_class: large
     docker:
       - image: cimg/openjdk:25.0.1
