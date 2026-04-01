@@ -22,7 +22,11 @@ import io.micrometer.core.instrument.binder.MeterConvention;
  *
  * @see io.micrometer.core.instrument.binder.system.ProcessorMetrics
  * @since 1.16.0
+ * @deprecated use individual convention types such as {@link JvmCpuTimeMeterConvention},
+ * {@link JvmCpuCountMeterConvention}, and {@link JvmCpuLoadMeterConvention} with
+ * {@link io.micrometer.core.instrument.binder.system.ProcessorMetrics.Builder} instead
  */
+@Deprecated
 public interface JvmCpuMeterConventions {
 
     MeterConvention<Object> cpuTimeConvention();
