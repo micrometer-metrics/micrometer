@@ -16,6 +16,7 @@
 package io.micrometer.core.instrument.binder.jvm;
 
 import io.micrometer.core.Issue;
+import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.Tag;
@@ -26,6 +27,7 @@ import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.DisabledForJreRange;
+import org.junit.jupiter.api.condition.EnabledForJreRange;
 import org.junit.jupiter.api.condition.JRE;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
@@ -43,6 +45,7 @@ import static org.awaitility.Awaitility.await;
  * @author Jon Schneider
  * @author Johnny Lim
  * @author Sebastian Lövdahl
+ * @author Daeho Kwon
  */
 class ExecutorServiceMetricsTest {
 
@@ -355,6 +358,39 @@ class ExecutorServiceMetricsTest {
 
         assertThat(queued).isEqualTo(2.0);
 
+        pool.shutdown();
+    }
+
+    @EnabledForJreRange(min = JRE.JAVA_25)
+    @DisplayName("ForkJoinPool executor.delayed gauge reflects delayed tasks on Java 25+")
+    @Test
+    void forkJoinPoolDelayedTaskCountMetric() {
+        ForkJoinPool pool = new ForkJoinPool(1);
+        ExecutorServiceMetrics.monitor(registry, pool, "myFjp", userTags);
+
+        Gauge gauge = registry.get("executor.delayed").tags(userTags).tag("name", "myFjp").gauge();
+        assertThat(gauge.value()).isEqualTo(0.0);
+
+        ScheduledFuture<?> future = ((ScheduledExecutorService) pool).schedule(() -> {
+        }, 10, TimeUnit.SECONDS);
+        try {
+            await().untilAsserted(() -> assertThat(gauge.value()).isEqualTo(1.0));
+        }
+        finally {
+            future.cancel(true);
+            pool.shutdown();
+        }
+
+        await().untilAsserted(() -> assertThat(gauge.value()).isEqualTo(0.0));
+    }
+
+    @DisabledForJreRange(min = JRE.JAVA_25)
+    @DisplayName("ForkJoinPool executor.delayed gauge is not registered on Java versions before 25")
+    @Test
+    void forkJoinPoolDelayedGaugeNotRegisteredBeforeJava25() {
+        ForkJoinPool pool = new ForkJoinPool(1);
+        ExecutorServiceMetrics.monitor(registry, pool, "myFjp", userTags);
+        assertThatThrownBy(() -> registry.get("executor.delayed").gauge()).isInstanceOf(MeterNotFoundException.class);
         pool.shutdown();
     }
 
