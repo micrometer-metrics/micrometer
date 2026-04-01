@@ -247,6 +247,7 @@ class SimpleObservation implements Observation {
         }
     }
 
+    @Deprecated
     @SuppressWarnings("unchecked")
     void notifyOnScopeMakeCurrent() {
         for (ObservationHandler handler : this.handlers) {
@@ -254,6 +255,7 @@ class SimpleObservation implements Observation {
         }
     }
 
+    @Deprecated
     @SuppressWarnings("unchecked")
     void notifyOnScopeReset() {
         for (ObservationHandler handler : this.handlers) {
