@@ -30,7 +30,10 @@ import java.util.Locale;
  * Semantic conventions for JVM metrics v1.37.0</a>
  * @see io.micrometer.core.instrument.binder.jvm.JvmThreadMetrics
  * @since 1.16.0
+ * @deprecated use {@link OpenTelemetryJvmThreadCountMeterConvention} instead
  */
+@Deprecated
+@SuppressWarnings("deprecation")
 public class OpenTelemetryJvmThreadMeterConventions extends MicrometerJvmThreadMeterConventions {
 
     public OpenTelemetryJvmThreadMeterConventions(Tags extraTags) {
