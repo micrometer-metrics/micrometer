@@ -76,6 +76,8 @@ public class ExecutorServiceMetrics implements MeterBinder {
 
     private static boolean allowIllegalReflectiveAccess = true;
 
+    private static boolean consistentForkJoinPoolBaseUnits = false;
+
     private static final InternalLogger log = InternalLoggerFactory.getInstance(ExecutorServiceMetrics.class);
 
     private static final String DEFAULT_EXECUTOR_METRIC_PREFIX = "";
@@ -424,31 +426,34 @@ public class ExecutorServiceMetrics implements MeterBinder {
     }
 
     private void monitor(MeterRegistry registry, ForkJoinPool fj) {
-        List<Meter> meters = asList(
-                FunctionCounter.builder(metricPrefix + "executor.steals", fj, ForkJoinPool::getStealCount)
-                    .tags(tags)
-                    .description("Estimate of the total number of tasks stolen from "
-                            + "one thread's work queue by another. The reported value "
-                            + "underestimates the actual total number of steals when the pool " + "is not quiescent")
-                    .register(registry),
-
-                Gauge
-                    .builder(metricPrefix + "executor.queued", fj,
-                            pool -> pool.getQueuedTaskCount() + pool.getQueuedSubmissionCount())
-                    .tags(tags)
-                    .description("The approximate number of tasks that are queued for execution")
-                    .register(registry),
-
-                Gauge.builder(metricPrefix + "executor.active", fj, ForkJoinPool::getActiveThreadCount)
-                    .tags(tags)
-                    .description("An estimate of the number of threads that are currently stealing or executing tasks")
-                    .register(registry),
-
-                Gauge.builder(metricPrefix + "executor.running", fj, ForkJoinPool::getRunningThreadCount)
-                    .tags(tags)
-                    .description(
-                            "An estimate of the number of worker threads that are not blocked waiting to join tasks or for other managed synchronization threads")
-                    .register(registry),
+        FunctionCounter.Builder<ForkJoinPool> stealsBuilder = FunctionCounter
+            .builder(metricPrefix + "executor.steals", fj, ForkJoinPool::getStealCount)
+            .tags(tags)
+            .description("Estimate of the total number of tasks stolen from "
+                    + "one thread's work queue by another. The reported value "
+                    + "underestimates the actual total number of steals when the pool " + "is not quiescent");
+        Gauge.Builder<ForkJoinPool> queuedBuilder = Gauge
+            .builder(metricPrefix + "executor.queued", fj,
+                    pool -> pool.getQueuedTaskCount() + pool.getQueuedSubmissionCount())
+            .tags(tags)
+            .description("The approximate number of tasks that are queued for execution");
+        Gauge.Builder<ForkJoinPool> activeBuilder = Gauge
+            .builder(metricPrefix + "executor.active", fj, ForkJoinPool::getActiveThreadCount)
+            .tags(tags)
+            .description("An estimate of the number of threads that are currently stealing or executing tasks");
+        Gauge.Builder<ForkJoinPool> runningBuilder = Gauge
+            .builder(metricPrefix + "executor.running", fj, ForkJoinPool::getRunningThreadCount)
+            .tags(tags)
+            .description(
+                    "An estimate of the number of worker threads that are not blocked waiting to join tasks or for other managed synchronization threads");
+        if (consistentForkJoinPoolBaseUnits) {
+            stealsBuilder.baseUnit(BaseUnits.TASKS);
+            queuedBuilder.baseUnit(BaseUnits.TASKS);
+            activeBuilder.baseUnit(BaseUnits.THREADS);
+            runningBuilder.baseUnit(BaseUnits.THREADS);
+        }
+        List<Meter> meters = asList(stealsBuilder.register(registry), queuedBuilder.register(registry),
+                activeBuilder.register(registry), runningBuilder.register(registry),
 
                 Gauge.builder(metricPrefix + "executor.parallelism", fj, ForkJoinPool::getParallelism)
                     .tags(tags)
@@ -543,6 +548,38 @@ public class ExecutorServiceMetrics implements MeterBinder {
      */
     public static void disableIllegalReflectiveAccess() {
         allowIllegalReflectiveAccess = false;
+    }
+
+    /**
+     * Enable consistent base units for {@link ForkJoinPool} metrics.
+     *
+     * <p>
+     * By default, some {@link ForkJoinPool} metrics (e.g. {@code executor.active},
+     * {@code executor.queued}) do not have base units, which causes inconsistent metric
+     * names compared to {@link ThreadPoolExecutor} metrics in monitoring systems such as
+     * Prometheus (e.g. {@code executor_active} vs {@code executor_active_threads}).
+     *
+     * <p>
+     * Calling this method adds base units to the following {@link ForkJoinPool} metrics,
+     * aligning them with their {@link ThreadPoolExecutor} counterparts:
+     * <ul>
+     * <li>{@code executor.active} - {@code threads}</li>
+     * <li>{@code executor.queued} - {@code tasks}</li>
+     * <li>{@code executor.running} - {@code threads}</li>
+     * <li>{@code executor.steals} - {@code tasks}</li>
+     * </ul>
+     *
+     * <p>
+     * <strong>Note:</strong> This is an opt-in breaking change. Enabling this will rename
+     * the corresponding time series in Prometheus (e.g. {@code executor_active} becomes
+     * {@code executor_active_threads}), which may affect existing dashboards and alerts.
+     */
+    public static void enableConsistentForkJoinPoolBaseUnits() {
+        consistentForkJoinPoolBaseUnits = true;
+    }
+
+    static void resetConsistentForkJoinPoolBaseUnits() {
+        consistentForkJoinPoolBaseUnits = false;
     }
 
 }
