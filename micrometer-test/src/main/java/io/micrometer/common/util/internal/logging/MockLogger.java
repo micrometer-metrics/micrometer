@@ -259,9 +259,11 @@ public class MockLogger implements InternalLogger {
         log(level, MessageFormatter.format(format, argA, argB));
     }
 
+    @SuppressWarnings("NullAway")
     @Override
     public void log(InternalLogLevel level, String format, @Nullable Object... arguments) {
-        log(level, MessageFormatter.arrayFormat(format, arguments));
+        Object[] args = arguments == null ? new Object[0] : arguments;
+        log(level, MessageFormatter.arrayFormat(format, args));
     }
 
     private void log(InternalLogLevel level, FormattingTuple formattingTuple) {

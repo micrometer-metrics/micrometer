@@ -43,7 +43,9 @@ public class TimedHandler extends EventsHandler implements Graceful {
 
     private static final String SAMPLE_HANDLER_LONG_TASK_TIMER_ATTRIBUTE = "__micrometer_handler_ltt_sample";
 
-    protected static final String RESPONSE_STATUS_ATTRIBUTE = "__micrometer_jetty_core_response_status";
+    public static final String RESPONSE_STATUS_ATTRIBUTE = "__micrometer_jetty_core_response_status";
+
+    private static final String RESPONSE_ATTRIBUTE = "__micrometer_jetty_response";
 
     private final MeterRegistry registry;
 
@@ -110,6 +112,16 @@ public class TimedHandler extends EventsHandler implements Graceful {
 
     @Override
     protected void onComplete(Request request, Throwable failure) {
+        // Jetty 12 fires onResponseBegin before the handler sets a response status,
+        // so the status captured in onResponseBegin is 0 (unset). We need to capture
+        // the actual status here in onComplete so that tags reflect the real status.
+        Response response = (Response) request.getAttribute(RESPONSE_ATTRIBUTE);
+        if (response != null) {
+            int status = response.getStatus();
+            if (status > 0) {
+                request.setAttribute(RESPONSE_STATUS_ATTRIBUTE, status);
+            }
+        }
         stopRequestTiming(request);
         super.onComplete(request, failure);
     }
@@ -170,6 +182,7 @@ public class TimedHandler extends EventsHandler implements Graceful {
     public boolean handle(Request request, Response response, Callback callback) throws Exception {
         Timer.Sample sample = Timer.start(registry);
         request.setAttribute(SAMPLE_TIMER_ATTRIBUTE, sample);
+        request.setAttribute(RESPONSE_ATTRIBUTE, response);
         return super.handle(request, response, callback);
     }
 

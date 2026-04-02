@@ -250,6 +250,150 @@ class TimedHandlerTest {
         }
     }
 
+    @Test
+    void statusIsCorrectlyRecordedForSuccessfulRequest() throws Exception {
+        CountDownLatch latch = new CountDownLatch(1);
+        timedHandler.setHandler(new Handler.Abstract() {
+            @Override
+            public boolean handle(Request request, Response response, Callback callback) {
+                response.setStatus(200);
+                response.write(true, BufferUtil.EMPTY_BUFFER, callback);
+                latch.countDown();
+                return true;
+            }
+        });
+        server.start();
+
+        try (LocalConnector.LocalEndPoint endpoint = connector.connect()) {
+            String request = "GET / HTTP/1.1\r\n" + "Host: localhost\r\n" + "\r\n";
+            endpoint.addInputAndExecute(request);
+
+            assertThat(latch.await(5, TimeUnit.SECONDS)).isTrue();
+            assertThat(timedHandler.awaitOnComplete(5, TimeUnit.SECONDS)).isTrue();
+
+            HttpTester.Response response = HttpTester.parseResponse(endpoint.getResponse());
+            assertThat(response.getStatus()).isEqualTo(HttpStatus.OK_200);
+
+            // Verify correct status and outcome tags
+            assertThat(registry.get("jetty.server.requests")
+                .tag("outcome", Outcome.SUCCESS.name())
+                .tag("method", "GET")
+                .tag("status", "200")
+                .timer()
+                .count()).isEqualTo(1);
+        }
+    }
+
+    @Test
+    void statusIsCorrectlyRecordedForNotFoundRequest() throws Exception {
+        CountDownLatch latch = new CountDownLatch(1);
+        timedHandler.setHandler(new Handler.Abstract() {
+            @Override
+            public boolean handle(Request request, Response response, Callback callback) {
+                response.setStatus(404);
+                response.write(true, BufferUtil.EMPTY_BUFFER, callback);
+                latch.countDown();
+                return true;
+            }
+        });
+        server.start();
+
+        try (LocalConnector.LocalEndPoint endpoint = connector.connect()) {
+            String request = "GET /notfound HTTP/1.1\r\n" + "Host: localhost\r\n" + "\r\n";
+            endpoint.addInputAndExecute(request);
+
+            assertThat(latch.await(5, TimeUnit.SECONDS)).isTrue();
+            assertThat(timedHandler.awaitOnComplete(5, TimeUnit.SECONDS)).isTrue();
+
+            HttpTester.Response response = HttpTester.parseResponse(endpoint.getResponse());
+            assertThat(response.getStatus()).isEqualTo(HttpStatus.NOT_FOUND_404);
+
+            // Verify correct status and outcome tags
+            assertThat(registry.get("jetty.server.requests")
+                .tag("outcome", Outcome.CLIENT_ERROR.name())
+                .tag("method", "GET")
+                .tag("status", "404")
+                .timer()
+                .count()).isEqualTo(1);
+        }
+    }
+
+    @Test
+    void statusIsCorrectlyRecordedForServerError() throws Exception {
+        CountDownLatch latch = new CountDownLatch(1);
+        timedHandler.setHandler(new Handler.Abstract() {
+            @Override
+            public boolean handle(Request request, Response response, Callback callback) {
+                response.setStatus(500);
+                response.write(true, BufferUtil.EMPTY_BUFFER, callback);
+                latch.countDown();
+                return true;
+            }
+        });
+        server.start();
+
+        try (LocalConnector.LocalEndPoint endpoint = connector.connect()) {
+            String request = "GET /error HTTP/1.1\r\n" + "Host: localhost\r\n" + "\r\n";
+            endpoint.addInputAndExecute(request);
+
+            assertThat(latch.await(5, TimeUnit.SECONDS)).isTrue();
+            assertThat(timedHandler.awaitOnComplete(5, TimeUnit.SECONDS)).isTrue();
+
+            HttpTester.Response response = HttpTester.parseResponse(endpoint.getResponse());
+            assertThat(response.getStatus()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR_500);
+
+            // Verify correct status and outcome tags
+            assertThat(registry.get("jetty.server.requests")
+                .tag("outcome", Outcome.SERVER_ERROR.name())
+                .tag("method", "GET")
+                .tag("status", "500")
+                .timer()
+                .count()).isEqualTo(1);
+        }
+    }
+
+    @Test
+    void statusIsCorrectlyRecordedWhenSetAfterOnResponseBegin() throws Exception {
+        // This test reproduces the bug scenario from issue #7276:
+        // onResponseBegin is called before the handler sets the response status,
+        // so without our fix the status would be captured as 0 (UNKNOWN outcome).
+        // With our fix, onComplete updates the attribute to the real status.
+        CountDownLatch latch = new CountDownLatch(1);
+        timedHandler.setHandler(new Handler.Abstract() {
+            @Override
+            public boolean handle(Request request, Response response, Callback callback) {
+                // Status is set inside handle() AFTER Jetty has already fired
+                // onResponseBegin with status 0. This is the exact scenario
+                // described in issue #7276.
+                response.setStatus(200);
+                response.write(true, BufferUtil.EMPTY_BUFFER, callback);
+                latch.countDown();
+                return true;
+            }
+        });
+        server.start();
+
+        try (LocalConnector.LocalEndPoint endpoint = connector.connect()) {
+            String request = "GET / HTTP/1.1\r\n" + "Host: localhost\r\n" + "\r\n";
+            endpoint.addInputAndExecute(request);
+
+            assertThat(latch.await(5, TimeUnit.SECONDS)).isTrue();
+            assertThat(timedHandler.awaitOnComplete(5, TimeUnit.SECONDS)).isTrue();
+
+            HttpTester.Response response = HttpTester.parseResponse(endpoint.getResponse());
+            assertThat(response.getStatus()).isEqualTo(HttpStatus.OK_200);
+
+            // The key assertion: without our fix, this would be "UNKNOWN" because
+            // status 0 was captured in onResponseBegin and never updated.
+            // With our fix, status 200 is captured in onComplete.
+            assertThat(registry.get("jetty.server.requests")
+                .tag("outcome", Outcome.SUCCESS.name())
+                .tag("status", "200")
+                .timer()
+                .count()).isEqualTo(1);
+        }
+    }
+
     private static class LatchHandler extends Handler.Wrapper {
 
         private volatile CountDownLatch latch = new CountDownLatch(1);
