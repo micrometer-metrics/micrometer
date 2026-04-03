@@ -99,6 +99,16 @@ public class TimedHandler extends EventsHandler implements Graceful {
 
     @Override
     protected void onAfterHandling(Request request, boolean handled, Throwable failure) {
+        // Same issue as onComplete: onResponseBegin fires before the handler sets
+        // the status, so the attribute may still be 0. Update it here too so
+        // stopHandlerTiming sees the correct status for the handler timer.
+        Response response = (Response) request.getAttribute(RESPONSE_ATTRIBUTE);
+        if (response != null) {
+            int status = response.getStatus();
+            if (status > 0) {
+                request.setAttribute(RESPONSE_STATUS_ATTRIBUTE, status);
+            }
+        }
         stopHandlerTiming(request);
         super.onAfterHandling(request, handled, failure);
     }
