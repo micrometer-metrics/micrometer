@@ -353,6 +353,67 @@ class TimedHandlerTest {
     }
 
     @Test
+    void statusIsCorrectlyRecordedWhenWriteBeforeSetStatus() throws Exception {
+        // This test reproduces the exact bug from issue #7276:
+        // Handler calls response.write() BEFORE calling response.setStatus().
+        // Jetty fires onResponseBegin (with status=0) before the handler runs,
+        // then the handler calls write() first, then setStatus() later.
+        // Without the fix, onComplete sees status=0 (UNKNOWN outcome).
+        // With the fix, onComplete reads the actual status from the Response object.
+        CountDownLatch writeCalled = new CountDownLatch(1);
+        CountDownLatch latch = new CountDownLatch(1);
+        timedHandler.setHandler(new Handler.Abstract() {
+            @Override
+            public boolean handle(Request request, Response response, Callback callback) {
+                // Call write() BEFORE setStatus() - this is the key bug scenario
+                response.write(false, BufferUtil.EMPTY_BUFFER, new Callback() {
+                    @Override
+                    public void succeeded() {
+                        // Now set status after write has started
+                        response.setStatus(200);
+                        writeCalled.countDown();
+                        try {
+                            response.write(true, BufferUtil.EMPTY_BUFFER, callback);
+                            latch.countDown();
+                        }
+                        catch (Exception e) {
+                            callback.failed(e);
+                        }
+                    }
+
+                    @Override
+                    public void failed(Throwable x) {
+                        callback.failed(x);
+                    }
+                });
+                return true;
+            }
+        });
+        server.start();
+
+        try (LocalConnector.LocalEndPoint endpoint = connector.connect()) {
+            String request = "GET / HTTP/1.1\r\n" + "Host: localhost\r\n" + "\r\n";
+            endpoint.addInputAndExecute(request);
+
+            assertThat(writeCalled.await(5, TimeUnit.SECONDS)).isTrue();
+            assertThat(latch.await(5, TimeUnit.SECONDS)).isTrue();
+            assertThat(timedHandler.awaitOnComplete(5, TimeUnit.SECONDS)).isTrue();
+
+            HttpTester.Response response = HttpTester.parseResponse(endpoint.getResponse());
+            assertThat(response.getStatus()).isEqualTo(HttpStatus.OK_200);
+
+            // Key assertion: without the fix, this would be "UNKNOWN" with status "0"
+            // because onResponseBegin captured status=0 before setStatus() was called.
+            // With the fix, status 200 is correctly captured in onComplete.
+            assertThat(registry.get("jetty.server.requests")
+                .tag("outcome", Outcome.SUCCESS.name())
+                .tag("status", "200")
+                .timer()
+                .count()).isEqualTo(1);
+        }
+    }
+
+    @Test
     void statusIsCorrectlyRecordedWhenSetAfterOnResponseBegin() throws Exception {
         // This test reproduces the bug scenario from issue #7276:
         // onResponseBegin is called before the handler sets the response status,
