@@ -43,7 +43,7 @@ public class TimedHandler extends EventsHandler implements Graceful {
 
     private static final String SAMPLE_HANDLER_LONG_TASK_TIMER_ATTRIBUTE = "__micrometer_handler_ltt_sample";
 
-    public static final String RESPONSE_STATUS_ATTRIBUTE = "__micrometer_jetty_core_response_status";
+    protected static final String RESPONSE_STATUS_ATTRIBUTE = "__micrometer_jetty_core_response_status";
 
     private static final String RESPONSE_ATTRIBUTE = "__micrometer_jetty_response";
 
