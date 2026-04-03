@@ -45,7 +45,7 @@ public class TimedHandler extends EventsHandler implements Graceful {
 
     protected static final String RESPONSE_STATUS_ATTRIBUTE = "__micrometer_jetty_core_response_status";
 
-    private static final String RESPONSE_ATTRIBUTE = "__micrometer_jetty_response";
+    private static final String RESPONSE_ATTRIBUTE = "__micrometer_jetty_core_response";
 
     private final MeterRegistry registry;
 
