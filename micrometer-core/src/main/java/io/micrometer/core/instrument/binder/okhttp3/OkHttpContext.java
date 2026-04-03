@@ -37,11 +37,11 @@ import java.util.function.Supplier;
 public class OkHttpContext extends RequestReplySenderContext<Request.Builder, Response>
         implements Supplier<OkHttpContext> {
 
-    private final Function<Request, String> urlMapper;
+    private final Function<@Nullable Request, String> urlMapper;
 
     private final Iterable<KeyValue> extraTags;
 
-    private final Iterable<BiFunction<Request, Response, KeyValue>> contextSpecificTags;
+    private final Iterable<BiFunction<@Nullable Request, @Nullable Response, KeyValue>> contextSpecificTags;
 
     private final Iterable<KeyValue> unknownRequestTags;
 
@@ -51,8 +51,8 @@ public class OkHttpContext extends RequestReplySenderContext<Request.Builder, Re
 
     private OkHttpObservationInterceptor.@Nullable CallState state;
 
-    public OkHttpContext(Function<Request, String> urlMapper, Iterable<KeyValue> extraTags,
-            Iterable<BiFunction<Request, Response, KeyValue>> contextSpecificTags,
+    public OkHttpContext(Function<@Nullable Request, String> urlMapper, Iterable<KeyValue> extraTags,
+            Iterable<BiFunction<@Nullable Request, @Nullable Response, KeyValue>> contextSpecificTags,
             Iterable<KeyValue> unknownRequestTags, boolean includeHostTag, Request originalRequest) {
         super((carrier, key, value) -> {
             if (carrier != null) {
@@ -75,7 +75,7 @@ public class OkHttpContext extends RequestReplySenderContext<Request.Builder, Re
         return state;
     }
 
-    public Function<Request, String> getUrlMapper() {
+    public Function<@Nullable Request, String> getUrlMapper() {
         return urlMapper;
     }
 
@@ -83,7 +83,7 @@ public class OkHttpContext extends RequestReplySenderContext<Request.Builder, Re
         return extraTags;
     }
 
-    public Iterable<BiFunction<Request, Response, KeyValue>> getContextSpecificTags() {
+    public Iterable<BiFunction<@Nullable Request, @Nullable Response, KeyValue>> getContextSpecificTags() {
         return contextSpecificTags;
     }
 

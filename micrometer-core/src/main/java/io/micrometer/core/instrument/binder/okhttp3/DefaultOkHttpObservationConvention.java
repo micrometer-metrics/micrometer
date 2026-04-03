@@ -76,9 +76,10 @@ public class DefaultOkHttpObservationConvention implements OkHttpObservationConv
         Request request = state != null ? state.request : null;
         Response response = state != null ? state.response : null;
         IOException exception = state != null ? state.exception : null;
-        Function<Request, String> urlMapper = context.getUrlMapper();
+        Function<@Nullable Request, String> urlMapper = context.getUrlMapper();
         Iterable<KeyValue> extraTags = context.getExtraTags();
-        Iterable<BiFunction<Request, Response, KeyValue>> contextSpecificTags = context.getContextSpecificTags();
+        Iterable<BiFunction<@Nullable Request, @Nullable Response, KeyValue>> contextSpecificTags = context
+            .getContextSpecificTags();
         Iterable<KeyValue> unknownRequestTags = context.getUnknownRequestTags();
         boolean includeHostTag = context.isIncludeHostTag();
         // TODO: Tags to key values and back - maybe we can improve this?
@@ -98,7 +99,7 @@ public class DefaultOkHttpObservationConvention implements OkHttpObservationConv
         return keyValues;
     }
 
-    private String getUriTag(Function<Request, String> urlMapper, @Nullable Request request) {
+    private String getUriTag(Function<@Nullable Request, String> urlMapper, @Nullable Request request) {
         if (request == null) {
             return TAG_VALUE_UNKNOWN;
         }
