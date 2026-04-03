@@ -56,7 +56,7 @@ class ExecutorServiceMetricsTest {
 
     @AfterEach
     void tearDown() {
-        ExecutorServiceMetrics.resetConsistentForkJoinPoolBaseUnits();
+        ExecutorServiceMetrics.disableConsistentForkJoinPoolBaseUnits();
     }
 
     @DisplayName("Normal executor can be instrumented after being initialized")
