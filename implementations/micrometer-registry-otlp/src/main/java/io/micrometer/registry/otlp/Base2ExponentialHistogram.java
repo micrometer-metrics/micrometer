@@ -82,8 +82,8 @@ abstract class Base2ExponentialHistogram implements Histogram, OtlpExemplarsSupp
         this.scale = maxScale;
         this.maxBucketsCount = maxBucketsCount;
         this.baseUnit = baseUnit;
-        this.exemplarSampler = exemplarSamplerFactory != null ? exemplarSamplerFactory.create(16, baseUnit != null)
-                : null;
+        this.exemplarSampler = exemplarSamplerFactory != null
+                ? exemplarSamplerFactory.create(maxBucketsCount, baseUnit != null) : null;
         this.zeroThreshold = getZeroThreshHoldFromMinExpectedValue(minimumExpectedValue, baseUnit);
 
         this.circularCountHolder = new CircularCountHolder(maxBucketsCount);
