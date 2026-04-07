@@ -32,6 +32,8 @@ public class DefaultGrpcClientObservationConvention implements GrpcClientObserva
 
     private static final KeyValue PEER_PORT_UNKNOWN = LowCardinalityKeyNames.PEER_PORT.withValue(UNKNOWN);
 
+    private static final KeyValue PEER_NAME_UNKNOWN = LowCardinalityKeyNames.PEER_NAME.withValue(UNKNOWN);
+
     private static final KeyValue METHOD_UNKNOWN = LowCardinalityKeyNames.METHOD.withValue(UNKNOWN);
 
     private static final KeyValue SERVICE_UNKNOWN = LowCardinalityKeyNames.SERVICE.withValue(UNKNOWN);
@@ -52,13 +54,14 @@ public class DefaultGrpcClientObservationConvention implements GrpcClientObserva
                 ? LowCardinalityKeyNames.STATUS_CODE.withValue(context.getStatusCode().name()) : STATUS_CODE_UNKNOWN;
         KeyValue peerPortKeyValue = context.getPeerPort() != null
                 ? LowCardinalityKeyNames.PEER_PORT.withValue(context.getPeerPort().toString()) : PEER_PORT_UNKNOWN;
+        KeyValue peerNameKeyValue = context.getPeerName() != null
+                ? LowCardinalityKeyNames.PEER_NAME.withValue(context.getPeerName()) : PEER_NAME_UNKNOWN;
         KeyValue method = context.getMethodName() != null
                 ? LowCardinalityKeyNames.METHOD.withValue(context.getMethodName()) : METHOD_UNKNOWN;
         KeyValue service = context.getServiceName() != null
                 ? LowCardinalityKeyNames.SERVICE.withValue(context.getServiceName()) : SERVICE_UNKNOWN;
 
-        return KeyValues.of(statusCodeKeyValue, LowCardinalityKeyNames.PEER_NAME.withValue(context.getPeerName()),
-                peerPortKeyValue, method, service,
+        return KeyValues.of(statusCodeKeyValue, peerNameKeyValue, peerPortKeyValue, method, service,
                 LowCardinalityKeyNames.METHOD_TYPE.withValue(context.getMethodType().name()));
     }
 
