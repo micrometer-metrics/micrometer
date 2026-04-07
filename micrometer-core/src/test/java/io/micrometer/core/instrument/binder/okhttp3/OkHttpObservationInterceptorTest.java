@@ -32,6 +32,7 @@ import io.micrometer.observation.transport.RequestReplySenderContext;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
+import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -39,7 +40,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import ru.lanwen.wiremock.ext.WiremockResolver;
 
 import java.io.IOException;
-import java.util.Objects;
 import java.util.function.Function;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.any;
@@ -59,7 +59,7 @@ class OkHttpObservationInterceptorTest {
 
     private static final String URI_EXAMPLE_VALUE = "uriExample";
 
-    private static final Function<@Nullable Request, String> URI_MAPPER = req -> URI_EXAMPLE_VALUE;
+    private static final Function<Request, String> URI_MAPPER = req -> URI_EXAMPLE_VALUE;
 
     private final MeterRegistry registry = new SimpleMeterRegistry(SimpleConfig.DEFAULT, new MockClock());
 
@@ -134,12 +134,12 @@ class OkHttpObservationInterceptorTest {
         Observation.@Nullable Context context;
 
         @Override
-        public void onStart(Observation.Context context) {
+        public void onStart(Observation.@NonNull Context context) {
             this.context = context;
         }
 
         @Override
-        public boolean supportsContext(Observation.Context context) {
+        public boolean supportsContext(Observation.@NonNull Context context) {
             return true;
         }
 
@@ -155,7 +155,7 @@ class OkHttpObservationInterceptorTest {
         }
 
         @Override
-        public boolean supportsContext(Observation.Context context) {
+        public boolean supportsContext(Observation.@NonNull Context context) {
             return context instanceof RequestReplySenderContext;
         }
 
@@ -170,9 +170,8 @@ class OkHttpObservationInterceptorTest {
         }
 
         @Override
-        public KeyValues getLowCardinalityKeyValues(OkHttpContext context) {
-            OkHttpObservationInterceptor.CallState state = Objects.requireNonNull(context.getState());
-            return KeyValues.of(convention.peerName(Objects.requireNonNull(state.request)));
+        public @NonNull KeyValues getLowCardinalityKeyValues(OkHttpContext context) {
+            return KeyValues.of(convention.peerName(context.getState().request));
         }
 
         @Override

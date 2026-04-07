@@ -16,13 +16,15 @@
 package io.micrometer.core.instrument.binder.okhttp3;
 
 import io.micrometer.common.KeyValue;
-import io.micrometer.observation.transport.SenderContext;
+import io.micrometer.common.KeyValues;
 import io.micrometer.observation.transport.Kind;
 import io.micrometer.observation.transport.RequestReplySenderContext;
+import io.micrometer.observation.transport.SenderContext;
 import okhttp3.Request;
 import okhttp3.Response;
 import org.jspecify.annotations.Nullable;
 
+import java.util.Objects;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -33,49 +35,59 @@ import java.util.function.Supplier;
  * @author Marcin Grzejszczak
  * @since 1.10.0
  */
-@SuppressWarnings("jol")
 public class OkHttpContext extends RequestReplySenderContext<Request.Builder, Response>
         implements Supplier<OkHttpContext> {
 
-    private final Function<@Nullable Request, String> urlMapper;
+    private final Function<Request, String> urlMapper;
 
     private final Iterable<KeyValue> extraTags;
 
-    private final Iterable<BiFunction<@Nullable Request, @Nullable Response, KeyValue>> contextSpecificTags;
-
-    private final Iterable<KeyValue> unknownRequestTags;
+    private final Iterable<BiFunction<Request, @Nullable Response, KeyValue>> contextSpecificTags;
 
     private final boolean includeHostTag;
 
-    private final Request originalRequest;
+    private final Request request;
 
-    private OkHttpObservationInterceptor.@Nullable CallState state;
+    private OkHttpObservationInterceptor.CallState state;
 
-    public OkHttpContext(Function<@Nullable Request, String> urlMapper, Iterable<KeyValue> extraTags,
-            Iterable<BiFunction<@Nullable Request, @Nullable Response, KeyValue>> contextSpecificTags,
-            Iterable<KeyValue> unknownRequestTags, boolean includeHostTag, Request originalRequest) {
-        super((carrier, key, value) -> {
-            if (carrier != null) {
-                carrier.header(key, value);
-            }
-        }, Kind.CLIENT);
+    public OkHttpContext(Function<Request, String> urlMapper, Iterable<KeyValue> extraTags,
+            Iterable<BiFunction<Request, @Nullable Response, KeyValue>> contextSpecificTags, boolean includeHostTag,
+            Request request) {
+        super(OkHttpContext::setHeader, Kind.CLIENT);
         this.urlMapper = urlMapper;
         this.extraTags = extraTags;
         this.contextSpecificTags = contextSpecificTags;
-        this.unknownRequestTags = unknownRequestTags;
         this.includeHostTag = includeHostTag;
-        this.originalRequest = originalRequest;
+        this.request = request;
+        this.state = new OkHttpObservationInterceptor.CallState(request);
+        this.setCarrier(request.newBuilder());
+    }
+
+    private static void setHeader(Request.@Nullable Builder builder, String key, String value) {
+        if (builder != null) {
+            builder.header(key, value);
+        }
+    }
+
+    /**
+     * @deprecated please use other constructor(s).
+     */
+    @Deprecated
+    public OkHttpContext(Function<Request, String> urlMapper, Iterable<KeyValue> extraTags,
+            Iterable<BiFunction<Request, @Nullable Response, KeyValue>> contextSpecificTags, Iterable<KeyValue> ignored,
+            boolean includeHostTag, Request request) {
+        this(urlMapper, extraTags, contextSpecificTags, includeHostTag, request);
     }
 
     public void setState(OkHttpObservationInterceptor.CallState state) {
         this.state = state;
     }
 
-    public OkHttpObservationInterceptor.@Nullable CallState getState() {
+    public OkHttpObservationInterceptor.CallState getState() {
         return state;
     }
 
-    public Function<@Nullable Request, String> getUrlMapper() {
+    public Function<Request, String> getUrlMapper() {
         return urlMapper;
     }
 
@@ -83,12 +95,16 @@ public class OkHttpContext extends RequestReplySenderContext<Request.Builder, Re
         return extraTags;
     }
 
-    public Iterable<BiFunction<@Nullable Request, @Nullable Response, KeyValue>> getContextSpecificTags() {
+    public Iterable<BiFunction<Request, @Nullable Response, KeyValue>> getContextSpecificTags() {
         return contextSpecificTags;
     }
 
+    /**
+     * @deprecated The request cannot be null according to the OkHttp API
+     */
+    @Deprecated
     public Iterable<KeyValue> getUnknownRequestTags() {
-        return unknownRequestTags;
+        return KeyValues.empty();
     }
 
     public boolean isIncludeHostTag() {
@@ -96,12 +112,17 @@ public class OkHttpContext extends RequestReplySenderContext<Request.Builder, Re
     }
 
     public Request getOriginalRequest() {
-        return originalRequest;
+        return request;
     }
 
     @Override
     public OkHttpContext get() {
         return this;
+    }
+
+    @Override
+    public Request.Builder getCarrier() {
+        return Objects.requireNonNull(super.getCarrier());
     }
 
 }

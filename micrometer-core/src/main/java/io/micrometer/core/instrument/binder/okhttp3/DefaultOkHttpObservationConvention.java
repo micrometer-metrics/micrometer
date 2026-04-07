@@ -59,11 +59,6 @@ public class DefaultOkHttpObservationConvention implements OkHttpObservationConv
 
     private static final String TAG_TARGET_PORT = "target.port";
 
-    private static final String TAG_VALUE_UNKNOWN = "UNKNOWN";
-
-    private static final KeyValues TAGS_TARGET_UNKNOWN = KeyValues.of(TAG_TARGET_SCHEME, TAG_VALUE_UNKNOWN,
-            TAG_TARGET_HOST, TAG_VALUE_UNKNOWN, TAG_TARGET_PORT, TAG_VALUE_UNKNOWN);
-
     private final String metricName;
 
     public DefaultOkHttpObservationConvention(String metricName) {
@@ -73,36 +68,32 @@ public class DefaultOkHttpObservationConvention implements OkHttpObservationConv
     @Override
     public KeyValues getLowCardinalityKeyValues(OkHttpContext context) {
         OkHttpObservationInterceptor.CallState state = context.getState();
-        Request request = state != null ? state.request : null;
-        Response response = state != null ? state.response : null;
-        IOException exception = state != null ? state.exception : null;
-        Function<@Nullable Request, String> urlMapper = context.getUrlMapper();
+        Request request = state.request;
+        Response response = state.response;
+        IOException exception = state.exception;
+        Function<Request, String> urlMapper = context.getUrlMapper();
         Iterable<KeyValue> extraTags = context.getExtraTags();
-        Iterable<BiFunction<@Nullable Request, @Nullable Response, KeyValue>> contextSpecificTags = context
+        Iterable<BiFunction<Request, @Nullable Response, KeyValue>> contextSpecificTags = context
             .getContextSpecificTags();
-        Iterable<KeyValue> unknownRequestTags = context.getUnknownRequestTags();
         boolean includeHostTag = context.isIncludeHostTag();
         // TODO: Tags to key values and back - maybe we can improve this?
-        KeyValues keyValues = KeyValues.of(METHOD.withValue(request != null ? request.method() : TAG_VALUE_UNKNOWN),
-                URI.withValue(getUriTag(urlMapper, request)), STATUS.withValue(getStatusMessage(response, exception)),
-                OUTCOME.withValue(getStatusOutcome(response).name()))
+        KeyValues keyValues = KeyValues
+            .of(METHOD.withValue(request.method()), URI.withValue(getUriTag(urlMapper, request)),
+                    STATUS.withValue(getStatusMessage(response, exception)),
+                    OUTCOME.withValue(getStatusOutcome(response).name()))
             .and(extraTags)
             .and(stream(contextSpecificTags.spliterator(), false).map(contextTag -> contextTag.apply(request, response))
                 .map(tag -> KeyValue.of(tag.getKey(), tag.getValue()))
                 .collect(toList()))
-            .and(getRequestTags(request, unknownRequestTags))
+            .and(getRequestTags(request))
             .and(generateTagsForRoute(request));
         if (includeHostTag) {
-            keyValues = KeyValues.of(keyValues)
-                .and(HOST.withValue(request != null ? request.url().host() : TAG_VALUE_UNKNOWN));
+            keyValues = KeyValues.of(keyValues).and(HOST.withValue(request.url().host()));
         }
         return keyValues;
     }
 
-    private String getUriTag(Function<@Nullable Request, String> urlMapper, @Nullable Request request) {
-        if (request == null) {
-            return TAG_VALUE_UNKNOWN;
-        }
+    private String getUriTag(Function<Request, String> urlMapper, Request request) {
         return urlMapper.apply(request);
     }
 
@@ -126,10 +117,7 @@ public class DefaultOkHttpObservationConvention implements OkHttpObservationConv
         return Integer.toString(response.code());
     }
 
-    private Iterable<KeyValue> getRequestTags(@Nullable Request request, Iterable<KeyValue> unknownRequestTags) {
-        if (request == null) {
-            return unknownRequestTags;
-        }
+    private Iterable<KeyValue> getRequestTags(Request request) {
         if (REQUEST_TAG_CLASS_EXISTS) {
             Tags requestTag = request.tag(Tags.class);
             if (requestTag != null) {
@@ -154,10 +142,7 @@ public class DefaultOkHttpObservationConvention implements OkHttpObservationConv
         return requestTag.map(tag -> KeyValue.of(tag.getKey(), tag.getValue())).collect(Collectors.toList());
     }
 
-    private KeyValues generateTagsForRoute(@Nullable Request request) {
-        if (request == null) {
-            return TAGS_TARGET_UNKNOWN;
-        }
+    private KeyValues generateTagsForRoute(Request request) {
         return KeyValues.of(TAG_TARGET_SCHEME, request.url().scheme(), TAG_TARGET_HOST, request.url().host(),
                 TAG_TARGET_PORT, Integer.toString(request.url().port()));
     }
@@ -168,12 +153,8 @@ public class DefaultOkHttpObservationConvention implements OkHttpObservationConv
     }
 
     @Override
-    public @Nullable String getContextualName(OkHttpContext context) {
-        Request request = context.getOriginalRequest();
-        if (request == null) {
-            return null;
-        }
-        return request.method();
+    public String getContextualName(OkHttpContext context) {
+        return context.getOriginalRequest().method();
     }
 
 }
