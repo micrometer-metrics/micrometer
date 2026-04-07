@@ -79,11 +79,11 @@ public class OkHttpContext extends RequestReplySenderContext<Request.Builder, Re
         this(urlMapper, extraTags, contextSpecificTags, includeHostTag, request);
     }
 
-    public void setState(OkHttpObservationInterceptor.CallState state) {
+    void setState(OkHttpObservationInterceptor.CallState state) {
         this.state = state;
     }
 
-    public OkHttpObservationInterceptor.CallState getState() {
+    OkHttpObservationInterceptor.CallState getState() {
         return state;
     }
 
