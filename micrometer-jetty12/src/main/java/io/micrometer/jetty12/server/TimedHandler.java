@@ -103,12 +103,7 @@ public class TimedHandler extends EventsHandler implements Graceful {
         // the status, so the attribute may still be 0. Update it here too so
         // stopHandlerTiming sees the correct status for the handler timer.
         Response response = (Response) request.getAttribute(RESPONSE_ATTRIBUTE);
-        if (response != null) {
-            int status = response.getStatus();
-            if (status > 0) {
-                request.setAttribute(RESPONSE_STATUS_ATTRIBUTE, status);
-            }
-        }
+        setAttributeToRequest(response, request);
         stopHandlerTiming(request);
         super.onAfterHandling(request, handled, failure);
     }
@@ -126,14 +121,18 @@ public class TimedHandler extends EventsHandler implements Graceful {
         // so the status captured in onResponseBegin is 0 (unset). We need to capture
         // the actual status here in onComplete so that tags reflect the real status.
         Response response = (Response) request.getAttribute(RESPONSE_ATTRIBUTE);
+        setAttributeToRequest(response, request);
+        stopRequestTiming(request);
+        super.onComplete(request, failure);
+    }
+
+    private void setAttributeToRequest(Response response, Request request) {
         if (response != null) {
             int status = response.getStatus();
             if (status > 0) {
                 request.setAttribute(RESPONSE_STATUS_ATTRIBUTE, status);
             }
         }
-        stopRequestTiming(request);
-        super.onComplete(request, failure);
     }
 
     private void beginRequestTiming(Request request) {

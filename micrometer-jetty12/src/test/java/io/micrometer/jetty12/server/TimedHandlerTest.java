@@ -251,6 +251,40 @@ class TimedHandlerTest {
     }
 
     @Test
+    void statusIsCorrectlyRecordedForSuccessfulRequest() throws Exception {
+        CountDownLatch latch = new CountDownLatch(1);
+        timedHandler.setHandler(new Handler.Abstract() {
+            @Override
+            public boolean handle(Request request, Response response, Callback callback) {
+                response.setStatus(200);
+                response.write(true, BufferUtil.EMPTY_BUFFER, callback);
+                latch.countDown();
+                return true;
+            }
+        });
+        server.start();
+
+        try (LocalConnector.LocalEndPoint endpoint = connector.connect()) {
+            String request = "GET / HTTP/1.1\r\n" + "Host: localhost\r\n" + "\r\n";
+            endpoint.addInputAndExecute(request);
+
+            assertThat(latch.await(5, TimeUnit.SECONDS)).isTrue();
+            assertThat(timedHandler.awaitOnComplete(5, TimeUnit.SECONDS)).isTrue();
+
+            HttpTester.Response response = HttpTester.parseResponse(endpoint.getResponse());
+            assertThat(response.getStatus()).isEqualTo(HttpStatus.OK_200);
+
+            // Verify correct status and outcome tags
+            assertThat(registry.get("jetty.server.requests")
+                .tag("outcome", Outcome.SUCCESS.name())
+                .tag("method", "GET")
+                .tag("status", "200")
+                .timer()
+                .count()).isEqualTo(1);
+        }
+    }
+
+    @Test
     void statusIsCorrectlyRecordedForNotFoundRequest() throws Exception {
         CountDownLatch latch = new CountDownLatch(1);
         timedHandler.setHandler(new Handler.Abstract() {
