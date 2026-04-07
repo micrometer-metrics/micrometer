@@ -89,11 +89,11 @@ public class OkHttpMetricsEventListener extends EventListener {
 
     private final String requestsMetricName;
 
-    private final Function<Request, String> urlMapper;
+    private final Function<@Nullable Request, String> urlMapper;
 
     private final Iterable<Tag> extraTags;
 
-    private final Iterable<BiFunction<Request, Response, Tag>> contextSpecificTags;
+    private final Iterable<BiFunction<@Nullable Request, @Nullable Response, Tag>> contextSpecificTags;
 
     private final Iterable<Tag> unknownRequestTags;
 
@@ -103,13 +103,14 @@ public class OkHttpMetricsEventListener extends EventListener {
     final ConcurrentMap<Call, CallState> callState = new ConcurrentHashMap<>();
 
     protected OkHttpMetricsEventListener(MeterRegistry registry, String requestsMetricName,
-            Function<Request, String> urlMapper, Iterable<Tag> extraTags,
-            Iterable<BiFunction<Request, Response, Tag>> contextSpecificTags) {
+            Function<@Nullable Request, String> urlMapper, Iterable<Tag> extraTags,
+            Iterable<BiFunction<@Nullable Request, @Nullable Response, Tag>> contextSpecificTags) {
         this(registry, requestsMetricName, urlMapper, extraTags, contextSpecificTags, emptyList(), true);
     }
 
-    OkHttpMetricsEventListener(MeterRegistry registry, String requestsMetricName, Function<Request, String> urlMapper,
-            Iterable<Tag> extraTags, Iterable<BiFunction<Request, Response, Tag>> contextSpecificTags,
+    OkHttpMetricsEventListener(MeterRegistry registry, String requestsMetricName,
+            Function<@Nullable Request, String> urlMapper, Iterable<Tag> extraTags,
+            Iterable<BiFunction<@Nullable Request, @Nullable Response, Tag>> contextSpecificTags,
             Iterable<String> requestTagKeys, boolean includeHostTag) {
         this.registry = registry;
         this.requestsMetricName = requestsMetricName;
@@ -259,12 +260,12 @@ public class OkHttpMetricsEventListener extends EventListener {
 
         private final String name;
 
-        private Function<Request, String> uriMapper = (request) -> Optional.ofNullable(request.header(URI_PATTERN))
-            .orElse(KeyValue.NONE_VALUE);
+        private Function<@Nullable Request, String> uriMapper = (
+                request) -> Optional.ofNullable(request).map(rq -> rq.header(URI_PATTERN)).orElse(KeyValue.NONE_VALUE);
 
         private Tags tags = Tags.empty();
 
-        private Collection<BiFunction<Request, Response, Tag>> contextSpecificTags = new ArrayList<>();
+        private Collection<BiFunction<@Nullable Request, @Nullable Response, Tag>> contextSpecificTags = new ArrayList<>();
 
         private boolean includeHostTag = true;
 
@@ -297,12 +298,12 @@ public class OkHttpMetricsEventListener extends EventListener {
          * @return this builder
          * @since 1.5.0
          */
-        public Builder tag(BiFunction<Request, Response, Tag> contextSpecificTag) {
+        public Builder tag(BiFunction<@Nullable Request, @Nullable Response, Tag> contextSpecificTag) {
             this.contextSpecificTags.add(contextSpecificTag);
             return this;
         }
 
-        public Builder uriMapper(Function<Request, String> uriMapper) {
+        public Builder uriMapper(Function<@Nullable Request, String> uriMapper) {
             this.uriMapper = uriMapper;
             return this;
         }
