@@ -1,0 +1,24 @@
+description = 'Micrometer core classes that require Java 17'
+
+// skip this module when building with jdk <17
+if (!javaLanguageVersion.canCompileOrRun(17)) {
+    project.tasks.configureEach { task -> task.enabled = false }
+}
+
+dependencies {
+    api project(':micrometer-core')
+
+    testImplementation libs.assertj
+    testImplementation libs.awaitility
+    testImplementation libs.mockitoCore5
+}
+
+java {
+    targetCompatibility = 17
+}
+
+tasks.withType(JavaCompile).configureEach {
+    sourceCompatibility = 17
+    targetCompatibility = 17
+    options.release = 17
+}
