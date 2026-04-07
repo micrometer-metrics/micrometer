@@ -22,17 +22,16 @@ import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.simple.SimpleConfig;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-import okhttp3.Cache;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.Response;
+import okhttp3.*;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
+import org.testcontainers.shaded.org.checkerframework.checker.nullness.qual.Nullable;
 import ru.lanwen.wiremock.ext.WiremockResolver;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
@@ -53,9 +52,9 @@ class OkHttpMetricsEventListenerTest {
 
     private static final String URI_EXAMPLE_VALUE = "uriExample";
 
-    private static final Function<Request, String> URI_MAPPER = req -> URI_EXAMPLE_VALUE;
+    private static final Function<@Nullable Request, String> URI_MAPPER = req -> URI_EXAMPLE_VALUE;
 
-    private MeterRegistry registry = new SimpleMeterRegistry(SimpleConfig.DEFAULT, new MockClock());
+    private final MeterRegistry registry = new SimpleMeterRegistry(SimpleConfig.DEFAULT, new MockClock());
 
     private OkHttpClient client = new OkHttpClient.Builder()
         .eventListener(OkHttpMetricsEventListener.builder(registry, "okhttp.requests")
@@ -146,7 +145,7 @@ class OkHttpMetricsEventListenerTest {
         server.stubFor(any(anyUrl()));
         OkHttpClient client = new OkHttpClient.Builder()
             .eventListener(OkHttpMetricsEventListener.builder(registry, "okhttp.requests")
-                .uriMapper(req -> req.url().encodedPath())
+                .uriMapper(req -> Optional.ofNullable(req).map(Request::url).map(HttpUrl::encodedPath).orElse("null"))
                 .tags(Tags.of("foo", "bar"))
                 .build())
             .build();
@@ -167,7 +166,8 @@ class OkHttpMetricsEventListenerTest {
         server.stubFor(any(anyUrl()));
         OkHttpClient client = new OkHttpClient.Builder()
             .eventListener(OkHttpMetricsEventListener.builder(registry, "okhttp.requests")
-                .tag((req, res) -> Tag.of("another.uri", req.url().encodedPath()))
+                .tag((req, res) -> Tag.of("another.uri",
+                        Optional.ofNullable(req).map(Request::url).map(HttpUrl::encodedPath).orElse("null")))
                 .build())
             .build();
 
@@ -268,7 +268,7 @@ class OkHttpMetricsEventListenerTest {
         server.stubFor(any(anyUrl()));
         OkHttpClient client = new OkHttpClient.Builder()
             .eventListener(OkHttpMetricsEventListener.builder(registry, "okhttp.requests")
-                .uriMapper(req -> req.url().encodedPath())
+                .uriMapper(req -> Optional.ofNullable(req).map(Request::url).map(HttpUrl::encodedPath).orElse("null"))
                 .tags(Tags.of("foo", "bar"))
                 .build())
             .build();
