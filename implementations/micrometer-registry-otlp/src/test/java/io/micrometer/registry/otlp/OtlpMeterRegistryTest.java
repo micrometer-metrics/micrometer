@@ -46,6 +46,7 @@ import static uk.org.webcompere.systemstubs.SystemStubs.withEnvironmentVariables
  *
  * @author Tommy Ludwig
  * @author Johnny Lim
+ * @author Jonatan Ivanov
  */
 abstract class OtlpMeterRegistryTest {
 
@@ -234,14 +235,16 @@ abstract class OtlpMeterRegistryTest {
 
     @RepeatedTest(10)
     void multipleCounterRecordingsShouldBeRandomlySampled() {
+        int exemplarsSize = otlpConfig().exemplarsSize();
         Counter counter = Counter.builder("test.counter").register(registry);
-        recorder.recordRandomMeasurements(5, counter::increment);
+        recorder.recordRandomMeasurements(exemplarsSize, counter::increment);
         stepOverNStep(1);
 
         assertThat(writeToMetrics(counter)).singleElement().satisfies(metric -> {
             assertThat(metric.getSum().getDataPointsList()).hasSize(1);
             assertThat(metric.getSum().getDataPoints(0).getExemplarsList()).doesNotHaveDuplicates()
-                .hasSizeBetween(1, 5);
+                .hasSizeBetween(1, exemplarsSize)
+                .allSatisfy(exemplar -> assertThat(exemplar.getAsDouble()).isBetween(1.0, (double) exemplarsSize));
         });
     }
 
@@ -298,26 +301,30 @@ abstract class OtlpMeterRegistryTest {
 
     @RepeatedTest(10)
     void multipleDistributionsWithoutHistogramRecordingsShouldBeRandomlySampled() {
+        int exemplarsSize = otlpConfig().exemplarsSize();
+
         Timer timer = Timer.builder("timer").description(METER_DESCRIPTION).tags(Tags.of(meterTag)).register(registry);
-        recorder.recordRandomMeasurements(5, index -> timer.record(Duration.ofMillis(index)));
+        recorder.recordRandomMeasurements(exemplarsSize, index -> timer.record(Duration.ofMillis(index)));
 
         DistributionSummary ds = DistributionSummary.builder("ds")
             .description(METER_DESCRIPTION)
             .tags(Tags.of(meterTag))
             .register(registry);
-        recorder.recordRandomMeasurements(5, ds::record);
+        recorder.recordRandomMeasurements(exemplarsSize, ds::record);
         stepOverNStep(1);
 
         assertThat(writeToMetrics(timer)).filteredOn(Metric::hasHistogram).singleElement().satisfies(metric -> {
             assertThat(metric.getHistogram().getDataPointsList()).hasSize(1);
-            assertThat(metric.getHistogram().getDataPoints(0).getExemplarsList()).singleElement()
-                .satisfies(exemplar -> assertThat(exemplar.getAsDouble()).isBetween(1.0, 5.0));
+            assertThat(metric.getHistogram().getDataPoints(0).getExemplarsList()).doesNotHaveDuplicates()
+                .hasSizeBetween(1, exemplarsSize)
+                .allSatisfy(exemplar -> assertThat(exemplar.getAsDouble()).isBetween(1.0, (double) exemplarsSize));
         });
 
         assertThat(writeToMetrics(ds)).filteredOn(Metric::hasHistogram).singleElement().satisfies(metric -> {
             assertThat(metric.getHistogram().getDataPointsList()).hasSize(1);
-            assertThat(metric.getHistogram().getDataPoints(0).getExemplarsList()).singleElement()
-                .satisfies(exemplar -> assertThat(exemplar.getAsDouble()).isBetween(1.0, 5.0));
+            assertThat(metric.getHistogram().getDataPoints(0).getExemplarsList()).doesNotHaveDuplicates()
+                .hasSizeBetween(1, exemplarsSize)
+                .allSatisfy(exemplar -> assertThat(exemplar.getAsDouble()).isBetween(1.0, (double) exemplarsSize));
         });
     }
 
@@ -588,19 +595,20 @@ abstract class OtlpMeterRegistryTest {
 
     @RepeatedTest(10)
     void multipleDistributionsWithExponentialHistogramShouldWriteRandomlySampledExemplars() {
+        int size = otlpConfig().maxBucketCount() / 4;
         Timer timer = Timer.builder("timer")
             .description(METER_DESCRIPTION)
             .tags(Tags.of(meterTag))
             .publishPercentileHistogram()
             .register(registryWithExponentialHistogram);
-        recorder.recordRandomMeasurements(5, index -> timer.record(Duration.ofMillis(index)));
+        recorder.recordRandomMeasurements(size, index -> timer.record(Duration.ofMillis(index)));
 
         DistributionSummary ds = DistributionSummary.builder("ds")
             .description(METER_DESCRIPTION)
             .tags(Tags.of(meterTag))
             .publishPercentileHistogram()
             .register(registryWithExponentialHistogram);
-        recorder.recordRandomMeasurements(5, ds::record);
+        recorder.recordRandomMeasurements(size, ds::record);
 
         stepOverNStep(1);
 
@@ -609,13 +617,15 @@ abstract class OtlpMeterRegistryTest {
             .satisfies(metric -> {
                 assertThat(metric.getExponentialHistogram().getDataPointsList()).hasSize(1);
                 assertThat(metric.getExponentialHistogram().getDataPoints(0).getExemplarsList()).doesNotHaveDuplicates()
-                    .hasSizeBetween(1, 5);
+                    .hasSizeBetween(1, size)
+                    .allSatisfy(exemplar -> assertThat(exemplar.getAsDouble()).isBetween(1.0, (double) size));
             });
 
         assertThat(writeToMetrics(ds)).filteredOn(Metric::hasExponentialHistogram).singleElement().satisfies(metric -> {
             assertThat(metric.getExponentialHistogram().getDataPointsList()).hasSize(1);
             assertThat(metric.getExponentialHistogram().getDataPoints(0).getExemplarsList()).doesNotHaveDuplicates()
-                .hasSizeBetween(1, 5);
+                .hasSizeBetween(1, size)
+                .allSatisfy(exemplar -> assertThat(exemplar.getAsDouble()).isBetween(1.0, (double) size));
         });
     }
 

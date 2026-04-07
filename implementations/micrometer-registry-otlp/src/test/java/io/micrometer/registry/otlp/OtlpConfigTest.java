@@ -16,6 +16,7 @@
 package io.micrometer.registry.otlp;
 
 import io.micrometer.core.instrument.config.InvalidConfigurationException;
+import io.micrometer.core.instrument.config.validate.InvalidReason;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
@@ -237,6 +238,36 @@ class OtlpConfigTest {
 
         OtlpConfig otlpConfig = properties::get;
         assertThat(otlpConfig.validate().isValid()).isFalse();
+    }
+
+    @Test
+    void exemplarsSizeShouldHaveDefault() {
+        OtlpConfig otlpConfig = k -> null;
+        assertThat(otlpConfig.validate().isValid()).isTrue();
+        assertThat(otlpConfig.exemplarsSize()).isEqualTo(1);
+    }
+
+    @Test
+    void exemplarsSizeShouldBePositive() {
+        Map<String, String> properties = new HashMap<>();
+        properties.put("otlp.exemplarsSize", "-1");
+        OtlpConfig otlpConfig = properties::get;
+        assertThat(otlpConfig.validate().isValid()).isFalse();
+        assertThat(otlpConfig.validate().failures()).singleElement().satisfies(failure -> {
+            assertThat(failure.getMessage()).isEqualTo("exemplarsSize must be positive!");
+            assertThat(failure.getProperty()).isEqualTo("otlp.exemplarsSize");
+            assertThat(failure.getReason()).isSameAs(InvalidReason.MALFORMED);
+            assertThat(failure.getValue()).isEqualTo(-1);
+        });
+    }
+
+    @Test
+    void exemplarsSizeShouldBeOverridden() {
+        Map<String, String> properties = new HashMap<>();
+        properties.put("otlp.exemplarsSize", "3");
+        OtlpConfig otlpConfig = properties::get;
+        assertThat(otlpConfig.validate().isValid()).isTrue();
+        assertThat(otlpConfig.exemplarsSize()).isEqualTo(3);
     }
 
     @Test
