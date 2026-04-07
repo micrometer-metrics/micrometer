@@ -43,11 +43,11 @@ public class OkHttpObservationInterceptor implements Interceptor {
 
     private final String requestMetricName;
 
-    private final Function<Request, String> urlMapper;
+    private final Function<@Nullable Request, String> urlMapper;
 
     private final Iterable<KeyValue> extraTags;
 
-    private final Iterable<BiFunction<Request, Response, KeyValue>> contextSpecificTags;
+    private final Iterable<BiFunction<@Nullable Request, @Nullable Response, KeyValue>> contextSpecificTags;
 
     private final Iterable<KeyValue> unknownRequestTags;
 
@@ -55,9 +55,9 @@ public class OkHttpObservationInterceptor implements Interceptor {
 
     public OkHttpObservationInterceptor(ObservationRegistry registry,
             @Nullable OkHttpObservationConvention observationConvention, String requestsMetricName,
-            Function<Request, String> urlMapper, Iterable<KeyValue> extraTags,
-            Iterable<BiFunction<Request, Response, KeyValue>> contextSpecificTags, Iterable<String> requestTagKeys,
-            boolean includeHostTag) {
+            Function<@Nullable Request, String> urlMapper, Iterable<KeyValue> extraTags,
+            Iterable<BiFunction<@Nullable Request, @Nullable Response, KeyValue>> contextSpecificTags,
+            Iterable<String> requestTagKeys, boolean includeHostTag) {
         this.registry = registry;
         this.observationConvention = observationConvention;
         this.requestMetricName = requestsMetricName;
@@ -139,12 +139,12 @@ public class OkHttpObservationInterceptor implements Interceptor {
 
         private final ObservationRegistry registry;
 
-        private Function<Request, String> uriMapper = (request) -> Optional.ofNullable(request.header(URI_PATTERN))
-            .orElse(KeyValue.NONE_VALUE);
+        private Function<@Nullable Request, String> uriMapper = (
+                request) -> Optional.ofNullable(request).map(rq -> rq.header(URI_PATTERN)).orElse(KeyValue.NONE_VALUE);
 
         private KeyValues tags = KeyValues.empty();
 
-        private Collection<BiFunction<Request, Response, KeyValue>> contextSpecificTags = new ArrayList<>();
+        private final Collection<BiFunction<@Nullable Request, @Nullable Response, KeyValue>> contextSpecificTags = new ArrayList<>();
 
         private boolean includeHostTag = true;
 
@@ -183,12 +183,13 @@ public class OkHttpObservationInterceptor implements Interceptor {
          * @param contextSpecificTag function to create a context-specific tag
          * @return this builder
          */
-        public OkHttpObservationInterceptor.Builder tag(BiFunction<Request, Response, KeyValue> contextSpecificTag) {
+        public OkHttpObservationInterceptor.Builder tag(
+                BiFunction<@Nullable Request, @Nullable Response, KeyValue> contextSpecificTag) {
             this.contextSpecificTags.add(contextSpecificTag);
             return this;
         }
 
-        public OkHttpObservationInterceptor.Builder uriMapper(Function<Request, String> uriMapper) {
+        public OkHttpObservationInterceptor.Builder uriMapper(Function<@Nullable Request, String> uriMapper) {
             this.uriMapper = uriMapper;
             return this;
         }

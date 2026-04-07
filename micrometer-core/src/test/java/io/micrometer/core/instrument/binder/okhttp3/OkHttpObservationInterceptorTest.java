@@ -59,13 +59,13 @@ class OkHttpObservationInterceptorTest {
 
     private static final String URI_EXAMPLE_VALUE = "uriExample";
 
-    private static final Function<Request, String> URI_MAPPER = req -> URI_EXAMPLE_VALUE;
+    private static final Function<@Nullable Request, String> URI_MAPPER = req -> URI_EXAMPLE_VALUE;
 
-    private MeterRegistry registry = new SimpleMeterRegistry(SimpleConfig.DEFAULT, new MockClock());
+    private final MeterRegistry registry = new SimpleMeterRegistry(SimpleConfig.DEFAULT, new MockClock());
 
-    private TestObservationRegistry observationRegistry = TestObservationRegistry.create();
+    private final TestObservationRegistry observationRegistry = TestObservationRegistry.create();
 
-    private TestHandler testHandler = new TestHandler();
+    private final TestHandler testHandler = new TestHandler();
 
     // tag::setup[]
     private OkHttpClient client = new OkHttpClient.Builder().addInterceptor(defaultInterceptorBuilder().build())
