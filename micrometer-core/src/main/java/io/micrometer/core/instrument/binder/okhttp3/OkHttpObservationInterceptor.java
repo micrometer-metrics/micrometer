@@ -41,7 +41,7 @@ public class OkHttpObservationInterceptor implements Interceptor {
 
     private @Nullable OkHttpObservationConvention observationConvention;
 
-    private final String requestMetricName;
+    private OkHttpObservationConvention defaultConvention;
 
     private final Function<Request, String> urlMapper;
 
@@ -52,12 +52,12 @@ public class OkHttpObservationInterceptor implements Interceptor {
     private final boolean includeHostTag;
 
     public OkHttpObservationInterceptor(ObservationRegistry registry,
-            @Nullable OkHttpObservationConvention observationConvention, String requestsMetricName,
+            @Nullable OkHttpObservationConvention observationConvention, String metricName,
             Function<Request, String> urlMapper, Iterable<KeyValue> extraTags,
             Iterable<BiFunction<Request, @Nullable Response, KeyValue>> contextSpecificTags, boolean includeHostTag) {
         this.registry = registry;
         this.observationConvention = observationConvention;
-        this.requestMetricName = requestsMetricName;
+        this.defaultConvention = new DefaultOkHttpObservationConvention(metricName);
         this.urlMapper = urlMapper;
         this.extraTags = extraTags;
         this.contextSpecificTags = contextSpecificTags;
@@ -69,12 +69,11 @@ public class OkHttpObservationInterceptor implements Interceptor {
      */
     @Deprecated
     public OkHttpObservationInterceptor(ObservationRegistry registry,
-            @Nullable OkHttpObservationConvention observationConvention, String requestsMetricName,
+            @Nullable OkHttpObservationConvention observationConvention, String metricName,
             Function<Request, String> urlMapper, Iterable<KeyValue> extraTags,
             Iterable<BiFunction<Request, @Nullable Response, KeyValue>> contextSpecificTags, Iterable<String> ignored,
             boolean includeHostTag) {
-        this(registry, observationConvention, requestsMetricName, urlMapper, extraTags, contextSpecificTags,
-                includeHostTag);
+        this(registry, observationConvention, metricName, urlMapper, extraTags, contextSpecificTags, includeHostTag);
     }
 
     public static OkHttpObservationInterceptor.Builder builder(ObservationRegistry registry, String name) {
@@ -86,8 +85,7 @@ public class OkHttpObservationInterceptor implements Interceptor {
         OkHttpContext okHttpContext = new OkHttpContext(this.urlMapper, this.extraTags, this.contextSpecificTags,
                 this.includeHostTag, chain.request());
         Observation observation = OkHttpObservationDocumentation.DEFAULT
-            .observation(this.observationConvention, new DefaultOkHttpObservationConvention(requestMetricName),
-                    okHttpContext, this.registry)
+            .observation(this.observationConvention, this.defaultConvention, okHttpContext, this.registry)
             .start();
         try {
             Response response = chain.proceed(okHttpContext.rebuildAndGetRequest());
