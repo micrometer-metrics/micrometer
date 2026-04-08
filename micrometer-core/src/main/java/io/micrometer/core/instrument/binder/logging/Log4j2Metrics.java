@@ -71,7 +71,7 @@ public class Log4j2Metrics implements MeterBinder, AutoCloseable {
 
     private final List<PropertyChangeListener> changeListeners = new CopyOnWriteArrayList<>();
 
-    private final List<LogInterceptor> logInterceptors;
+    private final Iterable<LogInterceptor> logInterceptors;
 
     public Log4j2Metrics() {
         this(emptyList());
@@ -85,7 +85,7 @@ public class Log4j2Metrics implements MeterBinder, AutoCloseable {
         this(tags, loggerContext, emptyList());
     }
 
-    public Log4j2Metrics(Iterable<Tag> tags, LoggerContext loggerContext, List<LogInterceptor> logInterceptors) {
+    public Log4j2Metrics(Iterable<Tag> tags, LoggerContext loggerContext, Iterable<LogInterceptor> logInterceptors) {
         this.tags = tags;
         this.loggerContext = loggerContext;
         this.logInterceptors = logInterceptors;
@@ -187,9 +187,9 @@ public class Log4j2Metrics implements MeterBinder, AutoCloseable {
 
         private final Iterable<Tag> tags;
 
-        private final List<LogInterceptor> logInterceptors;
+        private final Iterable<LogInterceptor> logInterceptors;
 
-        MetricsFilter(MeterRegistry registry, Iterable<Tag> tags, List<LogInterceptor> logInterceptors) {
+        MetricsFilter(MeterRegistry registry, Iterable<Tag> tags, Iterable<LogInterceptor> logInterceptors) {
             this.registry = registry;
             this.tags = tags;
             this.logInterceptors = logInterceptors;
