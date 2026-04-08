@@ -67,10 +67,9 @@ public class DefaultOkHttpObservationConvention implements OkHttpObservationConv
 
     @Override
     public KeyValues getLowCardinalityKeyValues(OkHttpContext context) {
-        OkHttpObservationInterceptor.CallState state = context.getState();
-        Request request = state.request;
-        Response response = state.response;
-        IOException exception = state.exception;
+        Request request = context.getRequest();
+        Response response = context.getResponse();
+        IOException exception = getIOException(context);
         Function<Request, String> urlMapper = context.getUrlMapper();
         Iterable<KeyValue> extraTags = context.getExtraTags();
         Iterable<BiFunction<Request, @Nullable Response, KeyValue>> contextSpecificTags = context
@@ -91,6 +90,16 @@ public class DefaultOkHttpObservationConvention implements OkHttpObservationConv
             keyValues = KeyValues.of(keyValues).and(HOST.withValue(request.url().host()));
         }
         return keyValues;
+    }
+
+    private @Nullable IOException getIOException(OkHttpContext context) {
+        Throwable error = context.getError();
+        if (error instanceof IOException) {
+            return (IOException) error;
+        }
+        else {
+            return null;
+        }
     }
 
     private String getUriTag(Function<Request, String> urlMapper, Request request) {
@@ -154,7 +163,7 @@ public class DefaultOkHttpObservationConvention implements OkHttpObservationConv
 
     @Override
     public String getContextualName(OkHttpContext context) {
-        return context.getOriginalRequest().method();
+        return context.getRequest().method();
     }
 
 }

@@ -46,9 +46,7 @@ public class OkHttpContext extends RequestReplySenderContext<Request.Builder, Re
 
     private final boolean includeHostTag;
 
-    private final Request request;
-
-    private OkHttpObservationInterceptor.CallState state;
+    private Request request;
 
     public OkHttpContext(Function<Request, String> urlMapper, Iterable<KeyValue> extraTags,
             Iterable<BiFunction<Request, @Nullable Response, KeyValue>> contextSpecificTags, boolean includeHostTag,
@@ -59,7 +57,6 @@ public class OkHttpContext extends RequestReplySenderContext<Request.Builder, Re
         this.contextSpecificTags = contextSpecificTags;
         this.includeHostTag = includeHostTag;
         this.request = request;
-        this.state = new OkHttpObservationInterceptor.CallState(request);
         this.setCarrier(request.newBuilder());
     }
 
@@ -79,12 +76,21 @@ public class OkHttpContext extends RequestReplySenderContext<Request.Builder, Re
         this(urlMapper, extraTags, contextSpecificTags, includeHostTag, request);
     }
 
-    void setState(OkHttpObservationInterceptor.CallState state) {
-        this.state = state;
-    }
-
-    OkHttpObservationInterceptor.CallState getState() {
-        return state;
+    /**
+     * {@link OkHttpContext} being a {@link RequestReplySenderContext} means that during
+     * context-propagation, the request needs to be modified (extra headers are added).
+     * Since {@link Request} is immutable, {@link OkHttpContext} uses its builder as its
+     * "carrier" object (the builder is mutable). This means that after the builder
+     * mutation happens, the request stays the same unless this method is called which
+     * rebuilds the request using the modified builder (enhanced with the extra headers).
+     * It's unlikely that you need to call this method multiple times, once the builder
+     * was mutated, you can rebuild the request once and use {@link #getRequest()}
+     * subsequently.
+     * @return request
+     */
+    public Request rebuildAndGetRequest() {
+        this.request = getCarrier().build();
+        return request;
     }
 
     public Function<Request, String> getUrlMapper() {
@@ -111,6 +117,14 @@ public class OkHttpContext extends RequestReplySenderContext<Request.Builder, Re
         return includeHostTag;
     }
 
+    public Request getRequest() {
+        return request;
+    }
+
+    /**
+     * @deprecated Deprecated in favor of {@link #getRequest()}.
+     */
+    @Deprecated
     public Request getOriginalRequest() {
         return request;
     }

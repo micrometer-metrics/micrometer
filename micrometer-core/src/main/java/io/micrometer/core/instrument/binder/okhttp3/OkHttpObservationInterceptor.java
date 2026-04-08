@@ -89,18 +89,12 @@ public class OkHttpObservationInterceptor implements Interceptor {
             .observation(this.observationConvention, new DefaultOkHttpObservationConvention(requestMetricName),
                     okHttpContext, this.registry)
             .start();
-        Request request = okHttpContext.getCarrier().build();
-        OkHttpObservationInterceptor.CallState callState = new CallState(request);
-        okHttpContext.setState(callState);
-        Response response;
         try {
-            response = chain.proceed(request);
+            Response response = chain.proceed(okHttpContext.rebuildAndGetRequest());
             okHttpContext.setResponse(response);
-            callState.response = response;
             return response;
         }
         catch (IOException ex) {
-            callState.exception = ex;
             observation.error(ex);
             throw ex;
         }
@@ -111,21 +105,6 @@ public class OkHttpObservationInterceptor implements Interceptor {
 
     public void setObservationConvention(OkHttpObservationConvention observationConvention) {
         this.observationConvention = observationConvention;
-    }
-
-    // VisibleForTesting
-    static class CallState {
-
-        final Request request;
-
-        @Nullable Response response;
-
-        @Nullable IOException exception;
-
-        CallState(Request request) {
-            this.request = request;
-        }
-
     }
 
     public static class Builder {

@@ -171,7 +171,7 @@ class OkHttpObservationInterceptorTest {
 
         @Override
         public @NonNull KeyValues getLowCardinalityKeyValues(OkHttpContext context) {
-            return KeyValues.of(convention.peerName(context.getState().request));
+            return KeyValues.of(convention.peerName(context.getRequest()));
         }
 
         @Override
