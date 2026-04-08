@@ -40,11 +40,13 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import ru.lanwen.wiremock.ext.WiremockResolver;
 
 import java.io.IOException;
+import java.net.SocketException;
 import java.util.function.Function;
 
-import static com.github.tomakehurst.wiremock.client.WireMock.any;
-import static com.github.tomakehurst.wiremock.client.WireMock.anyUrl;
+import static com.github.tomakehurst.wiremock.client.WireMock.*;
+import static com.github.tomakehurst.wiremock.http.Fault.CONNECTION_RESET_BY_PEER;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
  * Tests for {@link OkHttpObservationInterceptor}.
@@ -95,14 +97,45 @@ class OkHttpObservationInterceptorTest {
         makeACall(client, request);
 
         assertThat(registry.get("okhttp.requests")
-            .tags("foo", "bar", "status", "200", "uri", URI_EXAMPLE_VALUE, "target.host", "localhost", "target.port",
-                    String.valueOf(server.port()), "target.scheme", "http")
+            .tags("foo", "bar", "method", "GET", "status", "200", "outcome", "SUCCESS", "uri", URI_EXAMPLE_VALUE,
+                    "target.host", "localhost", "target.port", String.valueOf(server.port()), "target.scheme", "http",
+                    "error", "none")
             .timer()
             .count()).isEqualTo(1L);
         assertThat(testHandler.context).isNotNull();
         assertThat(testHandler.context.getAllKeyValues()).contains(KeyValue.of("foo", "bar"),
-                KeyValue.of("status", "200"));
+                KeyValue.of("method", "GET"), KeyValue.of("status", "200"), KeyValue.of("outcome", "SUCCESS"),
+                KeyValue.of("uri", "uriExample"), KeyValue.of("target.host", "localhost"),
+                KeyValue.of("target.port", String.valueOf(server.port())), KeyValue.of("target.scheme", "http"));
         // end::example[]
+        assertThat(testHandler.context.getError()).isNull();
+        server.verify(WireMock.getRequestedFor(WireMock.urlEqualTo("/")).withHeader("foo", WireMock.equalTo("bar")));
+    }
+
+    @Test
+    void timeErrorWithDefaultObservation(@WiremockResolver.Wiremock WireMockServer server) throws IOException {
+        client = new OkHttpClient.Builder().addInterceptor(defaultInterceptorBuilder().build()).build();
+        server.stubFor(any(anyUrl()).willReturn(aResponse().withFault(CONNECTION_RESET_BY_PEER)));
+
+        Request request = new Request.Builder().url(server.baseUrl()).build();
+
+        assertThatThrownBy(() -> makeACall(client, request)).isExactlyInstanceOf(SocketException.class)
+            .hasMessage("Connection reset");
+
+        assertThat(registry.get("okhttp.requests")
+            .tags("foo", "bar", "method", "GET", "status", "IO_ERROR", "outcome", "UNKNOWN", "uri", URI_EXAMPLE_VALUE,
+                    "target.host", "localhost", "target.port", String.valueOf(server.port()), "target.scheme", "http",
+                    "error", "SocketException")
+            .timer()
+            .count()).isEqualTo(1L);
+        assertThat(testHandler.context).isNotNull();
+        assertThat(testHandler.context.getAllKeyValues()).contains(KeyValue.of("foo", "bar"),
+                KeyValue.of("method", "GET"), KeyValue.of("status", "IO_ERROR"), KeyValue.of("outcome", "UNKNOWN"),
+                KeyValue.of("uri", "uriExample"), KeyValue.of("target.host", "localhost"),
+                KeyValue.of("target.port", String.valueOf(server.port())), KeyValue.of("target.scheme", "http"));
+        assertThat(testHandler.context.getError()).isExactlyInstanceOf(SocketException.class)
+            .hasMessage("Connection reset");
+
         server.verify(WireMock.getRequestedFor(WireMock.urlEqualTo("/")).withHeader("foo", WireMock.equalTo("bar")));
     }
 
@@ -121,7 +154,11 @@ class OkHttpObservationInterceptorTest {
 
         makeACall(client, request);
 
-        assertThat(registry.get("new.name").tags("peer", "name").timer().count()).isEqualTo(1L);
+        assertThat(registry.get("new.name").tags("peer", "name", "error", "none").timer().count()).isEqualTo(1L);
+
+        assertThat(testHandler.context).isNotNull();
+        assertThat(testHandler.context.getAllKeyValues()).contains(KeyValue.of("peer", "name"));
+        assertThat(testHandler.context.getError()).isNull();
         server.verify(WireMock.getRequestedFor(WireMock.urlEqualTo("/")).withHeader("foo", WireMock.equalTo("bar")));
     }
 
