@@ -48,6 +48,9 @@ public class OkHttpContext extends RequestReplySenderContext<Request.Builder, Re
 
     private Request request;
 
+    /**
+     * @since 1.17.0
+     */
     public OkHttpContext(Function<Request, String> urlMapper, Iterable<KeyValue> extraTags,
             Iterable<BiFunction<Request, @Nullable Response, KeyValue>> contextSpecificTags, boolean includeHostTag,
             Request request) {
@@ -60,12 +63,6 @@ public class OkHttpContext extends RequestReplySenderContext<Request.Builder, Re
         this.setCarrier(request.newBuilder());
     }
 
-    private static void setHeader(Request.@Nullable Builder builder, String key, String value) {
-        if (builder != null) {
-            builder.header(key, value);
-        }
-    }
-
     /**
      * @deprecated please use other constructor(s).
      */
@@ -74,6 +71,10 @@ public class OkHttpContext extends RequestReplySenderContext<Request.Builder, Re
             Iterable<BiFunction<Request, @Nullable Response, KeyValue>> contextSpecificTags, Iterable<KeyValue> ignored,
             boolean includeHostTag, Request request) {
         this(urlMapper, extraTags, contextSpecificTags, includeHostTag, request);
+    }
+
+    private static void setHeader(Request.@Nullable Builder builder, String key, String value) {
+        Objects.requireNonNull(builder).header(key, value);
     }
 
     /**
@@ -87,6 +88,7 @@ public class OkHttpContext extends RequestReplySenderContext<Request.Builder, Re
      * was mutated, you can rebuild the request once and use {@link #getRequest()}
      * subsequently.
      * @return request
+     * @since 1.17.0
      */
     public Request rebuildAndGetRequest() {
         this.request = getCarrier().build();
@@ -117,6 +119,10 @@ public class OkHttpContext extends RequestReplySenderContext<Request.Builder, Re
         return includeHostTag;
     }
 
+    /**
+     * @return request
+     * @since 1.17.0
+     */
     public Request getRequest() {
         return request;
     }

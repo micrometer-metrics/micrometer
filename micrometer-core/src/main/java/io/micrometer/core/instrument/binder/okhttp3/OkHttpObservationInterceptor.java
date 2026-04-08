@@ -41,7 +41,7 @@ public class OkHttpObservationInterceptor implements Interceptor {
 
     private @Nullable OkHttpObservationConvention observationConvention;
 
-    private OkHttpObservationConvention defaultConvention;
+    private final OkHttpObservationConvention defaultConvention;
 
     private final Function<Request, String> urlMapper;
 
@@ -51,6 +51,9 @@ public class OkHttpObservationInterceptor implements Interceptor {
 
     private final boolean includeHostTag;
 
+    /**
+     * @since 1.17.0
+     */
     public OkHttpObservationInterceptor(ObservationRegistry registry,
             @Nullable OkHttpObservationConvention observationConvention, String metricName,
             Function<Request, String> urlMapper, Iterable<KeyValue> extraTags,

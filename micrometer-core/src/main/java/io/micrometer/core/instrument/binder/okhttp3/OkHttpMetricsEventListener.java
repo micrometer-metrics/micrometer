@@ -302,12 +302,13 @@ public class OkHttpMetricsEventListener extends EventListener {
          * will be added with {@literal UNKNOWN} values when {@link Request} is
          * {@literal null}. Note that this is required only for Prometheus as it requires
          * tag match for the same metric.
-         * @param requestTagKeys request tag keys
          * @return this builder
          * @since 1.3.9
+         * @deprecated The request cannot be null according to the OkHttp API
          */
-        public Builder requestTagKeys(String... requestTagKeys) {
-            return requestTagKeys(Arrays.asList(requestTagKeys));
+        @Deprecated
+        public Builder requestTagKeys(String... ignored) {
+            return this;
         }
 
         /**
@@ -315,13 +316,12 @@ public class OkHttpMetricsEventListener extends EventListener {
          * will be added with {@literal UNKNOWN} values when {@link Request} is
          * {@literal null}. Note that this is required only for Prometheus as it requires
          * tag match for the same metric.
-         * @param requestTagKeys request tag keys
          * @return this builder
          * @since 1.3.9
          * @deprecated The request cannot be null according to the OkHttp API
          */
         @Deprecated
-        public Builder requestTagKeys(Iterable<String> requestTagKeys) {
+        public Builder requestTagKeys(Iterable<String> ignored) {
             return this;
         }
 
