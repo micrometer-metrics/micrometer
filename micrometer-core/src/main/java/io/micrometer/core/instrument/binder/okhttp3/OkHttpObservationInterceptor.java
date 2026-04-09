@@ -41,36 +41,42 @@ public class OkHttpObservationInterceptor implements Interceptor {
 
     private @Nullable OkHttpObservationConvention observationConvention;
 
-    private final String requestMetricName;
+    private final OkHttpObservationConvention defaultConvention;
 
-    private final Function<@Nullable Request, String> urlMapper;
+    private final Function<Request, String> urlMapper;
 
     private final Iterable<KeyValue> extraTags;
 
-    private final Iterable<BiFunction<@Nullable Request, @Nullable Response, KeyValue>> contextSpecificTags;
-
-    private final Iterable<KeyValue> unknownRequestTags;
+    private final Iterable<BiFunction<Request, @Nullable Response, KeyValue>> contextSpecificTags;
 
     private final boolean includeHostTag;
 
+    /**
+     * @since 1.17.0
+     */
     public OkHttpObservationInterceptor(ObservationRegistry registry,
-            @Nullable OkHttpObservationConvention observationConvention, String requestsMetricName,
-            Function<@Nullable Request, String> urlMapper, Iterable<KeyValue> extraTags,
-            Iterable<BiFunction<@Nullable Request, @Nullable Response, KeyValue>> contextSpecificTags,
-            Iterable<String> requestTagKeys, boolean includeHostTag) {
+            @Nullable OkHttpObservationConvention observationConvention, String metricName,
+            Function<Request, String> urlMapper, Iterable<KeyValue> extraTags,
+            Iterable<BiFunction<Request, @Nullable Response, KeyValue>> contextSpecificTags, boolean includeHostTag) {
         this.registry = registry;
         this.observationConvention = observationConvention;
-        this.requestMetricName = requestsMetricName;
+        this.defaultConvention = new DefaultOkHttpObservationConvention(metricName);
         this.urlMapper = urlMapper;
         this.extraTags = extraTags;
         this.contextSpecificTags = contextSpecificTags;
         this.includeHostTag = includeHostTag;
+    }
 
-        List<KeyValue> unknownRequestTags = new ArrayList<>();
-        for (String requestTagKey : requestTagKeys) {
-            unknownRequestTags.add(KeyValue.of(requestTagKey, "UNKNOWN"));
-        }
-        this.unknownRequestTags = unknownRequestTags;
+    /**
+     * @deprecated Please use other ctor(s).
+     */
+    @Deprecated
+    public OkHttpObservationInterceptor(ObservationRegistry registry,
+            @Nullable OkHttpObservationConvention observationConvention, String metricName,
+            Function<Request, String> urlMapper, Iterable<KeyValue> extraTags,
+            Iterable<BiFunction<Request, @Nullable Response, KeyValue>> contextSpecificTags, Iterable<String> ignored,
+            boolean includeHostTag) {
+        this(registry, observationConvention, metricName, urlMapper, extraTags, contextSpecificTags, includeHostTag);
     }
 
     public static OkHttpObservationInterceptor.Builder builder(ObservationRegistry registry, String name) {
@@ -79,28 +85,17 @@ public class OkHttpObservationInterceptor implements Interceptor {
 
     @Override
     public Response intercept(Chain chain) throws IOException {
-        Request request = chain.request();
-        Request.Builder newRequestBuilder = request.newBuilder();
         OkHttpContext okHttpContext = new OkHttpContext(this.urlMapper, this.extraTags, this.contextSpecificTags,
-                this.unknownRequestTags, this.includeHostTag, request);
-        okHttpContext.setCarrier(newRequestBuilder);
-        okHttpContext.setState(new CallState(newRequestBuilder.build()));
+                this.includeHostTag, chain.request());
         Observation observation = OkHttpObservationDocumentation.DEFAULT
-            .observation(this.observationConvention, new DefaultOkHttpObservationConvention(requestMetricName),
-                    okHttpContext, this.registry)
+            .observation(this.observationConvention, this.defaultConvention, okHttpContext, this.registry)
             .start();
-        Request newRequest = newRequestBuilder.build();
-        OkHttpObservationInterceptor.CallState callState = new CallState(newRequest);
-        okHttpContext.setState(callState);
-        Response response;
         try {
-            response = chain.proceed(newRequest);
+            Response response = chain.proceed(okHttpContext.rebuildAndGetRequest());
             okHttpContext.setResponse(response);
-            callState.response = response;
             return response;
         }
         catch (IOException ex) {
-            callState.exception = ex;
             observation.error(ex);
             throw ex;
         }
@@ -111,21 +106,6 @@ public class OkHttpObservationInterceptor implements Interceptor {
 
     public void setObservationConvention(OkHttpObservationConvention observationConvention) {
         this.observationConvention = observationConvention;
-    }
-
-    // VisibleForTesting
-    static class CallState {
-
-        final @Nullable Request request;
-
-        @Nullable Response response;
-
-        @Nullable IOException exception;
-
-        CallState(@Nullable Request request) {
-            this.request = request;
-        }
-
     }
 
     public static class Builder {
@@ -139,16 +119,14 @@ public class OkHttpObservationInterceptor implements Interceptor {
 
         private final ObservationRegistry registry;
 
-        private Function<@Nullable Request, String> uriMapper = (
-                request) -> Optional.ofNullable(request).map(rq -> rq.header(URI_PATTERN)).orElse(KeyValue.NONE_VALUE);
+        private Function<Request, String> uriMapper = (request) -> Optional.ofNullable(request.header(URI_PATTERN))
+            .orElse(KeyValue.NONE_VALUE);
 
         private KeyValues tags = KeyValues.empty();
 
-        private final Collection<BiFunction<@Nullable Request, @Nullable Response, KeyValue>> contextSpecificTags = new ArrayList<>();
+        private final Collection<BiFunction<Request, @Nullable Response, KeyValue>> contextSpecificTags = new ArrayList<>();
 
         private boolean includeHostTag = true;
-
-        private Iterable<String> requestTagKeys = Collections.emptyList();
 
         private @Nullable OkHttpObservationConvention observationConvention;
 
@@ -184,12 +162,12 @@ public class OkHttpObservationInterceptor implements Interceptor {
          * @return this builder
          */
         public OkHttpObservationInterceptor.Builder tag(
-                BiFunction<@Nullable Request, @Nullable Response, KeyValue> contextSpecificTag) {
+                BiFunction<Request, @Nullable Response, KeyValue> contextSpecificTag) {
             this.contextSpecificTags.add(contextSpecificTag);
             return this;
         }
 
-        public OkHttpObservationInterceptor.Builder uriMapper(Function<@Nullable Request, String> uriMapper) {
+        public OkHttpObservationInterceptor.Builder uriMapper(Function<Request, String> uriMapper) {
             this.uriMapper = uriMapper;
             return this;
         }
@@ -214,11 +192,12 @@ public class OkHttpObservationInterceptor implements Interceptor {
          * These keys will be added with {@literal UNKNOWN} values when {@link Request} is
          * {@literal null}. Note that this is required only for Prometheus as it requires
          * tag match for the same metric.
-         * @param requestTagKeys request tag keys
          * @return this builder
+         * @deprecated The request cannot be null according to the OkHttp API
          */
-        public OkHttpObservationInterceptor.Builder requestTagKeys(String... requestTagKeys) {
-            return requestTagKeys(Arrays.asList(requestTagKeys));
+        @Deprecated
+        public OkHttpObservationInterceptor.Builder requestTagKeys(String... ignored) {
+            return this;
         }
 
         /**
@@ -227,18 +206,17 @@ public class OkHttpObservationInterceptor implements Interceptor {
          * These keys will be added with {@literal UNKNOWN} values when {@link Request} is
          * {@literal null}. Note that this is required only for Prometheus as it requires
          * tag match for the same metric.
-         * @param requestTagKeys request tag keys
          * @return this builder
+         * @deprecated The request cannot be null according to the OkHttp API
          */
-        public OkHttpObservationInterceptor.Builder requestTagKeys(Iterable<String> requestTagKeys) {
-            this.requestTagKeys = requestTagKeys;
+        @Deprecated
+        public OkHttpObservationInterceptor.Builder requestTagKeys(Iterable<String> ignored) {
             return this;
         }
 
-        @SuppressWarnings("unchecked")
         public OkHttpObservationInterceptor build() {
             return new OkHttpObservationInterceptor(registry, observationConvention, name, uriMapper, tags,
-                    contextSpecificTags, requestTagKeys, includeHostTag);
+                    contextSpecificTags, includeHostTag);
         }
 
     }

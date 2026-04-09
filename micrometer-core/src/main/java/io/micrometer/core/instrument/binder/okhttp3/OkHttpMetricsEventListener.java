@@ -21,8 +21,8 @@ import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.binder.http.Outcome;
-import okhttp3.EventListener;
 import okhttp3.*;
+import okhttp3.EventListener;
 import org.jspecify.annotations.Nullable;
 
 import java.io.IOException;
@@ -34,7 +34,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
-import static java.util.Collections.emptyList;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.StreamSupport.stream;
 
@@ -43,9 +42,9 @@ import static java.util.stream.StreamSupport.stream;
  * <p>
  * {@literal uri} tag is usually limited to URI patterns to mitigate tag cardinality
  * explosion but {@link OkHttpClient} doesn't provide URI patterns. We provide
- * {@value OkHttpMetricsEventListener#URI_PATTERN} header to support {@literal uri} tag or
- * you can configure a {@link Builder#uriMapper(Function) URI mapper} to provide your own
- * tag values for {@literal uri} tag.
+ * {@value OkHttpMetricsEventListener#URI_PATTERN} header to support {@literal uri} tag,
+ * or you can configure a {@link Builder#uriMapper(Function) URI mapper} to provide your
+ * own tag values for {@literal uri} tag.
  *
  * @author Bjarte S. Karlsen
  * @author Jon Schneider
@@ -71,11 +70,6 @@ public class OkHttpMetricsEventListener extends EventListener {
 
     private static final String TAG_TARGET_PORT = "target.port";
 
-    private static final String TAG_VALUE_UNKNOWN = "UNKNOWN";
-
-    private static final Tags TAGS_TARGET_UNKNOWN = Tags.of(TAG_TARGET_SCHEME, TAG_VALUE_UNKNOWN, TAG_TARGET_HOST,
-            TAG_VALUE_UNKNOWN, TAG_TARGET_PORT, TAG_VALUE_UNKNOWN);
-
     private static @Nullable Method getMethod(Class<?>... parameterTypes) {
         try {
             return Request.class.getMethod("tag", parameterTypes);
@@ -89,13 +83,11 @@ public class OkHttpMetricsEventListener extends EventListener {
 
     private final String requestsMetricName;
 
-    private final Function<@Nullable Request, String> urlMapper;
+    private final Function<Request, String> urlMapper;
 
     private final Iterable<Tag> extraTags;
 
-    private final Iterable<BiFunction<@Nullable Request, @Nullable Response, Tag>> contextSpecificTags;
-
-    private final Iterable<Tag> unknownRequestTags;
+    private final Iterable<BiFunction<Request, @Nullable Response, Tag>> contextSpecificTags;
 
     private final boolean includeHostTag;
 
@@ -103,27 +95,20 @@ public class OkHttpMetricsEventListener extends EventListener {
     final ConcurrentMap<Call, CallState> callState = new ConcurrentHashMap<>();
 
     protected OkHttpMetricsEventListener(MeterRegistry registry, String requestsMetricName,
-            Function<@Nullable Request, String> urlMapper, Iterable<Tag> extraTags,
-            Iterable<BiFunction<@Nullable Request, @Nullable Response, Tag>> contextSpecificTags) {
-        this(registry, requestsMetricName, urlMapper, extraTags, contextSpecificTags, emptyList(), true);
+            Function<Request, String> urlMapper, Iterable<Tag> extraTags,
+            Iterable<BiFunction<Request, @Nullable Response, Tag>> contextSpecificTags) {
+        this(registry, requestsMetricName, urlMapper, extraTags, contextSpecificTags, true);
     }
 
-    OkHttpMetricsEventListener(MeterRegistry registry, String requestsMetricName,
-            Function<@Nullable Request, String> urlMapper, Iterable<Tag> extraTags,
-            Iterable<BiFunction<@Nullable Request, @Nullable Response, Tag>> contextSpecificTags,
-            Iterable<String> requestTagKeys, boolean includeHostTag) {
+    OkHttpMetricsEventListener(MeterRegistry registry, String requestsMetricName, Function<Request, String> urlMapper,
+            Iterable<Tag> extraTags, Iterable<BiFunction<Request, @Nullable Response, Tag>> contextSpecificTags,
+            boolean includeHostTag) {
         this.registry = registry;
         this.requestsMetricName = requestsMetricName;
         this.urlMapper = urlMapper;
         this.extraTags = extraTags;
         this.contextSpecificTags = contextSpecificTags;
         this.includeHostTag = includeHostTag;
-
-        List<Tag> unknownRequestTags = new ArrayList<>();
-        for (String requestTagKey : requestTagKeys) {
-            unknownRequestTags.add(Tag.of(requestTagKey, "UNKNOWN"));
-        }
-        this.unknownRequestTags = unknownRequestTags;
     }
 
     public static Builder builder(MeterRegistry registry, String name) {
@@ -163,7 +148,7 @@ public class OkHttpMetricsEventListener extends EventListener {
         Request request = state.request;
 
         Iterable<Tag> tags = Tags
-            .of("method", request != null ? request.method() : TAG_VALUE_UNKNOWN, "uri", getUriTag(request), "status",
+            .of("method", request.method(), "uri", getUriTag(request), "status",
                     getStatusMessage(state.response, state.exception))
             .and(getStatusOutcome(state.response).asTag())
             .and(extraTags)
@@ -174,7 +159,7 @@ public class OkHttpMetricsEventListener extends EventListener {
             .and(generateTagsForRoute(request));
 
         if (includeHostTag) {
-            tags = Tags.of(tags).and("host", request != null ? request.url().host() : TAG_VALUE_UNKNOWN);
+            tags = Tags.of(tags).and("host", request.url().host());
         }
 
         Timer.builder(this.requestsMetricName)
@@ -184,25 +169,16 @@ public class OkHttpMetricsEventListener extends EventListener {
             .record(registry.config().clock().monotonicTime() - state.startTime, TimeUnit.NANOSECONDS);
     }
 
-    private Tags generateTagsForRoute(@Nullable Request request) {
-        if (request == null) {
-            return TAGS_TARGET_UNKNOWN;
-        }
+    private Tags generateTagsForRoute(Request request) {
         return Tags.of(TAG_TARGET_SCHEME, request.url().scheme(), TAG_TARGET_HOST, request.url().host(),
                 TAG_TARGET_PORT, Integer.toString(request.url().port()));
     }
 
-    private String getUriTag(@Nullable Request request) {
-        if (request == null) {
-            return TAG_VALUE_UNKNOWN;
-        }
+    private String getUriTag(Request request) {
         return urlMapper.apply(request);
     }
 
-    private Iterable<Tag> getRequestTags(@Nullable Request request) {
-        if (request == null) {
-            return unknownRequestTags;
-        }
+    private Iterable<Tag> getRequestTags(Request request) {
         if (REQUEST_TAG_CLASS_EXISTS) {
             Tags requestTag = request.tag(Tags.class);
             if (requestTag != null) {
@@ -241,13 +217,13 @@ public class OkHttpMetricsEventListener extends EventListener {
 
         final long startTime;
 
-        final @Nullable Request request;
+        final Request request;
 
         @Nullable Response response;
 
         @Nullable IOException exception;
 
-        CallState(long startTime, @Nullable Request request) {
+        CallState(long startTime, Request request) {
             this.startTime = startTime;
             this.request = request;
         }
@@ -260,16 +236,14 @@ public class OkHttpMetricsEventListener extends EventListener {
 
         private final String name;
 
-        private Function<@Nullable Request, String> uriMapper = (
-                request) -> Optional.ofNullable(request).map(rq -> rq.header(URI_PATTERN)).orElse(KeyValue.NONE_VALUE);
+        private Function<Request, String> uriMapper = request -> Optional.ofNullable(request.header(URI_PATTERN))
+            .orElse(KeyValue.NONE_VALUE);
 
         private Tags tags = Tags.empty();
 
-        private Collection<BiFunction<@Nullable Request, @Nullable Response, Tag>> contextSpecificTags = new ArrayList<>();
+        private final Collection<BiFunction<Request, @Nullable Response, Tag>> contextSpecificTags = new ArrayList<>();
 
         private boolean includeHostTag = true;
-
-        private Iterable<String> requestTagKeys = Collections.emptyList();
 
         Builder(MeterRegistry registry, String name) {
             this.registry = registry;
@@ -298,12 +272,12 @@ public class OkHttpMetricsEventListener extends EventListener {
          * @return this builder
          * @since 1.5.0
          */
-        public Builder tag(BiFunction<@Nullable Request, @Nullable Response, Tag> contextSpecificTag) {
+        public Builder tag(BiFunction<Request, @Nullable Response, Tag> contextSpecificTag) {
             this.contextSpecificTags.add(contextSpecificTag);
             return this;
         }
 
-        public Builder uriMapper(Function<@Nullable Request, String> uriMapper) {
+        public Builder uriMapper(Function<Request, String> uriMapper) {
             this.uriMapper = uriMapper;
             return this;
         }
@@ -324,37 +298,35 @@ public class OkHttpMetricsEventListener extends EventListener {
         }
 
         /**
-         * Tag keys for {@link Request#tag()} or {@link Request#tag(Class)}.
-         *
-         * These keys will be added with {@literal UNKNOWN} values when {@link Request} is
+         * Tag keys for {@link Request#tag()} or {@link Request#tag(Class)}. These keys
+         * will be added with {@literal UNKNOWN} values when {@link Request} is
          * {@literal null}. Note that this is required only for Prometheus as it requires
          * tag match for the same metric.
-         * @param requestTagKeys request tag keys
          * @return this builder
          * @since 1.3.9
+         * @deprecated The request cannot be null according to the OkHttp API
          */
-        public Builder requestTagKeys(String... requestTagKeys) {
-            return requestTagKeys(Arrays.asList(requestTagKeys));
+        @Deprecated
+        public Builder requestTagKeys(String... ignored) {
+            return this;
         }
 
         /**
-         * Tag keys for {@link Request#tag()} or {@link Request#tag(Class)}.
-         *
-         * These keys will be added with {@literal UNKNOWN} values when {@link Request} is
+         * Tag keys for {@link Request#tag()} or {@link Request#tag(Class)}. These keys
+         * will be added with {@literal UNKNOWN} values when {@link Request} is
          * {@literal null}. Note that this is required only for Prometheus as it requires
          * tag match for the same metric.
-         * @param requestTagKeys request tag keys
          * @return this builder
          * @since 1.3.9
+         * @deprecated The request cannot be null according to the OkHttp API
          */
-        public Builder requestTagKeys(Iterable<String> requestTagKeys) {
-            this.requestTagKeys = requestTagKeys;
+        @Deprecated
+        public Builder requestTagKeys(Iterable<String> ignored) {
             return this;
         }
 
         public OkHttpMetricsEventListener build() {
-            return new OkHttpMetricsEventListener(registry, name, uriMapper, tags, contextSpecificTags, requestTagKeys,
-                    includeHostTag);
+            return new OkHttpMetricsEventListener(registry, name, uriMapper, tags, contextSpecificTags, includeHostTag);
         }
 
     }

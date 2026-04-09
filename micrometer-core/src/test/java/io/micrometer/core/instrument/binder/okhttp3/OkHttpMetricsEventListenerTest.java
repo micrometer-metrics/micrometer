@@ -22,16 +22,17 @@ import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.simple.SimpleConfig;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-import okhttp3.*;
+import okhttp3.Cache;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
-import org.testcontainers.shaded.org.checkerframework.checker.nullness.qual.Nullable;
 import ru.lanwen.wiremock.ext.WiremockResolver;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
@@ -52,7 +53,7 @@ class OkHttpMetricsEventListenerTest {
 
     private static final String URI_EXAMPLE_VALUE = "uriExample";
 
-    private static final Function<@Nullable Request, String> URI_MAPPER = req -> URI_EXAMPLE_VALUE;
+    private static final Function<Request, String> URI_MAPPER = req -> URI_EXAMPLE_VALUE;
 
     private final MeterRegistry registry = new SimpleMeterRegistry(SimpleConfig.DEFAULT, new MockClock());
 
@@ -145,7 +146,7 @@ class OkHttpMetricsEventListenerTest {
         server.stubFor(any(anyUrl()));
         OkHttpClient client = new OkHttpClient.Builder()
             .eventListener(OkHttpMetricsEventListener.builder(registry, "okhttp.requests")
-                .uriMapper(req -> Optional.ofNullable(req).map(Request::url).map(HttpUrl::encodedPath).orElse("null"))
+                .uriMapper(req -> req.url().encodedPath())
                 .tags(Tags.of("foo", "bar"))
                 .build())
             .build();
@@ -166,8 +167,7 @@ class OkHttpMetricsEventListenerTest {
         server.stubFor(any(anyUrl()));
         OkHttpClient client = new OkHttpClient.Builder()
             .eventListener(OkHttpMetricsEventListener.builder(registry, "okhttp.requests")
-                .tag((req, res) -> Tag.of("another.uri",
-                        Optional.ofNullable(req).map(Request::url).map(HttpUrl::encodedPath).orElse("null")))
+                .tag((req, res) -> Tag.of("another.uri", req.url().encodedPath()))
                 .build())
             .build();
 
@@ -236,39 +236,11 @@ class OkHttpMetricsEventListenerTest {
             .getTags()).doesNotContain(Tag.of("host", "localhost"));
     }
 
-    @Test
-    void timeWhenRequestIsNull() {
-        OkHttpMetricsEventListener listener = OkHttpMetricsEventListener.builder(registry, "okhttp.requests").build();
-        OkHttpMetricsEventListener.CallState state = new OkHttpMetricsEventListener.CallState(
-                registry.config().clock().monotonicTime(), null);
-        listener.time(state);
-
-        assertThat(registry.get("okhttp.requests")
-            .tags("uri", "UNKNOWN", "target.host", "UNKNOWN", "target.port", "UNKNOWN", "target.scheme", "UNKNOWN")
-            .timer()
-            .count()).isEqualTo(1L);
-    }
-
-    @Test
-    void timeWhenRequestIsNullAndRequestTagKeysAreGiven() {
-        OkHttpMetricsEventListener listener = OkHttpMetricsEventListener.builder(registry, "okhttp.requests")
-            .requestTagKeys("tag1", "tag2")
-            .build();
-        OkHttpMetricsEventListener.CallState state = new OkHttpMetricsEventListener.CallState(
-                registry.config().clock().monotonicTime(), null);
-        listener.time(state);
-
-        assertThat(registry.get("okhttp.requests")
-            .tags("uri", "UNKNOWN", "tag1", "UNKNOWN", "tag2", "UNKNOWN")
-            .timer()
-            .count()).isEqualTo(1L);
-    }
-
     private void testRequestTags(@WiremockResolver.Wiremock WireMockServer server, Request request) throws IOException {
         server.stubFor(any(anyUrl()));
         OkHttpClient client = new OkHttpClient.Builder()
             .eventListener(OkHttpMetricsEventListener.builder(registry, "okhttp.requests")
-                .uriMapper(req -> Optional.ofNullable(req).map(Request::url).map(HttpUrl::encodedPath).orElse("null"))
+                .uriMapper(req -> req.url().encodedPath())
                 .tags(Tags.of("foo", "bar"))
                 .build())
             .build();
