@@ -49,8 +49,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class KafkaClientMetricsIntegrationTest {
 
     @Container
-    private final ConfluentKafkaContainer kafkaContainer = new ConfluentKafkaContainer(
-            DockerImageName.parse("confluentinc/cp-kafka:8.0.3"));
+    private final ConfluentKafkaContainer kafkaContainer = new ConfluentKafkaContainer(getKafkaImage());
 
     @Test
     void shouldManageProducerAndConsumerMetrics() {
@@ -186,6 +185,15 @@ class KafkaClientMetricsIntegrationTest {
 
     void printMeters(SimpleMeterRegistry registry) {
         registry.getMeters().forEach(meter -> out.println(meter.getId() + " => " + meter.measure()));
+    }
+
+    private static DockerImageName getKafkaImage() {
+        String imageName = System.getProperty("kafka-image.name");
+        if (imageName == null) {
+            throw new IllegalStateException(
+                    "System property 'kafka-image.name' is not set. This should be set in the build configuration for running from the command line. If you are running KafkaClientMetricsIntegrationTest from an IDE, set the system property to the desired kafka image name.");
+        }
+        return DockerImageName.parse(imageName);
     }
 
 }
