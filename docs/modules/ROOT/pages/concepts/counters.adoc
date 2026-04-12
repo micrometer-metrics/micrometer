@@ -154,6 +154,19 @@ FunctionCounter counter = FunctionCounter
     .register(registry);
 ----
 
+If the function tracks a time value, you can use `timeUnit` on the builder to create a `FunctionCounter` that scales its value to the registry's base time unit. This is analogous to how `TimeGauge` works, and provides a way to register monotonically increasing time values (like `jvm.gc.cpu.time` or `process.cpu.time`) in a way that automatically scales to the preferred time unit of the metrics backend.
+
+[source, java]
+----
+MyCounterState state = ...;
+
+FunctionCounter.builder("counter.time", state, state -> state.totalTime())
+    .timeUnit(TimeUnit.NANOSECONDS) // optional, scales the value to the registry's base time unit
+    .description("a description of what this counter does") // optional
+    .tags("region", "test") // optional
+    .register(registry);
+----
+
 WARNING: Attempting to construct a function-tracking counter with a primitive number or one of its `java.lang` object forms is always incorrect. These numbers are immutable. Thus, the function-tracking counter cannot ever be changed. Attempting to "re-register" the function-tracking counter with a different number does not work, as the registry maintains only one meter for each unique combination of name and tags. "Re-registering" a function-tracking counter can happen indirectly for example as the result of a `MeterFilter` modifying the name and/or the tags of two different function-tracking counters so that they will be the same after the filter is applied.
 
 Attempting to "re-register" a function-tracking counter will result in a warning like this:
