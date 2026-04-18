@@ -15,6 +15,7 @@
  */
 package io.micrometer.core.instrument.binder.logging;
 
+import com.google.common.collect.Iterables;
 import io.micrometer.common.util.internal.logging.InternalLogger;
 import io.micrometer.common.util.internal.logging.InternalLoggerFactory;
 import io.micrometer.core.instrument.Counter;
@@ -56,10 +57,6 @@ import static java.util.Collections.emptyList;
  * @since 1.1.0
  */
 public class Log4j2Metrics implements MeterBinder, AutoCloseable {
-
-    private static final String METER_NAME = "log4j2.events";
-
-    private static final String METER_DESCRIPTION = "Number of log events";
 
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(Log4j2Metrics.class);
 
@@ -183,16 +180,11 @@ public class Log4j2Metrics implements MeterBinder, AutoCloseable {
 
     static class MetricsFilter extends AbstractFilter {
 
-        private final MeterRegistry registry;
-
-        private final Iterable<Tag> tags;
-
-        private final Iterable<LogInterceptor> logInterceptors;
+        private final IncrementLogCounterStrategy incrementLogCounterStrategy;
 
         MetricsFilter(MeterRegistry registry, Iterable<Tag> tags, Iterable<LogInterceptor> logInterceptors) {
-            this.registry = registry;
-            this.tags = tags;
-            this.logInterceptors = logInterceptors;
+            this.incrementLogCounterStrategy = IncrementLogCounterFactory.getIncrementLogCounterStrategy(registry, tags,
+                    logInterceptors);
         }
 
         @Override
@@ -202,22 +194,153 @@ public class Log4j2Metrics implements MeterBinder, AutoCloseable {
         }
 
         private void incrementCounter(LogEvent event) {
-            List<Tag> dynamicTags = new ArrayList<>();
-            for (LogInterceptor logInterceptor : logInterceptors) {
-                dynamicTags.addAll(logInterceptor.getTagFromLogs(event));
-            }
-
-            Counter counter = Counter.builder(METER_NAME)
-                .tags(tags)
-                .tags(dynamicTags)
-                .tags("level", event.getLevel().getStandardLevel().name().toLowerCase(Locale.ROOT))
-                .description(METER_DESCRIPTION)
-                .baseUnit(BaseUnits.EVENTS)
-                .register(registry);
-
-            counter.increment();
+            incrementLogCounterStrategy.incrementCounter(event);
         }
 
+    }
+
+}
+
+class IncrementLogCounterFactory {
+
+    public static IncrementLogCounterStrategy getIncrementLogCounterStrategy(MeterRegistry registry, Iterable<Tag> tags,
+            Iterable<LogInterceptor> logInterceptors) {
+        if (Iterables.isEmpty(logInterceptors)) {
+            return new StaticLogCounter(registry, tags);
+        }
+        else {
+            return new DynamicLogCounter(registry, tags, logInterceptors);
+        }
+    }
+
+}
+
+interface IncrementLogCounterStrategy {
+
+    String METER_DESCRIPTION = "Number of log events";
+
+    String METER_NAME = "log4j2.events";
+
+    void incrementCounter(LogEvent event);
+
+}
+
+class StaticLogCounter implements IncrementLogCounterStrategy {
+
+    private final Counter fatalCounter;
+
+    private final Counter errorCounter;
+
+    private final Counter warnCounter;
+
+    private final Counter infoCounter;
+
+    private final Counter debugCounter;
+
+    private final Counter traceCounter;
+
+    StaticLogCounter(MeterRegistry registry, Iterable<Tag> tags) {
+        fatalCounter = Counter.builder(METER_NAME)
+            .tags(tags)
+            .tags("level", "fatal")
+            .description(METER_DESCRIPTION)
+            .baseUnit(BaseUnits.EVENTS)
+            .register(registry);
+
+        errorCounter = Counter.builder(METER_NAME)
+            .tags(tags)
+            .tags("level", "error")
+            .description(METER_DESCRIPTION)
+            .baseUnit(BaseUnits.EVENTS)
+            .register(registry);
+
+        warnCounter = Counter.builder(METER_NAME)
+            .tags(tags)
+            .tags("level", "warn")
+            .description(METER_DESCRIPTION)
+            .baseUnit(BaseUnits.EVENTS)
+            .register(registry);
+
+        infoCounter = Counter.builder(METER_NAME)
+            .tags(tags)
+            .tags("level", "info")
+            .description(METER_DESCRIPTION)
+            .baseUnit(BaseUnits.EVENTS)
+            .register(registry);
+
+        debugCounter = Counter.builder(METER_NAME)
+            .tags(tags)
+            .tags("level", "debug")
+            .description(METER_DESCRIPTION)
+            .baseUnit(BaseUnits.EVENTS)
+            .register(registry);
+
+        traceCounter = Counter.builder(METER_NAME)
+            .tags(tags)
+            .tags("level", "trace")
+            .description(METER_DESCRIPTION)
+            .baseUnit(BaseUnits.EVENTS)
+            .register(registry);
+    }
+
+    @Override
+    public void incrementCounter(LogEvent event) {
+        switch (event.getLevel().getStandardLevel()) {
+            case FATAL:
+                fatalCounter.increment();
+                break;
+            case ERROR:
+                errorCounter.increment();
+                break;
+            case WARN:
+                warnCounter.increment();
+                break;
+            case INFO:
+                infoCounter.increment();
+                break;
+            case DEBUG:
+                debugCounter.increment();
+                break;
+            case TRACE:
+                traceCounter.increment();
+                break;
+            default:
+                break;
+        }
+    }
+
+}
+
+class DynamicLogCounter implements IncrementLogCounterStrategy {
+
+    private final MeterRegistry registry;
+
+    private final Iterable<Tag> tags;
+
+    private final Iterable<LogInterceptor> logInterceptors;
+
+    DynamicLogCounter(MeterRegistry registry, Iterable<Tag> tags, Iterable<LogInterceptor> logInterceptors) {
+        this.registry = registry;
+        this.tags = tags;
+        this.logInterceptors = logInterceptors;
+    }
+
+    @Override
+    public void incrementCounter(LogEvent event) {
+        List<Tag> dynamicTags = new ArrayList<>();
+        for (LogInterceptor logInterceptor : logInterceptors) {
+            dynamicTags.addAll(logInterceptor.getTagFromLogs(event));
+        }
+
+        Counter counter = Counter.builder(METER_NAME)
+            .tags(tags)
+            .tags(dynamicTags)
+            .tags("level", event.getLevel().getStandardLevel().name().toLowerCase(Locale.ROOT))
+            .description(METER_DESCRIPTION)
+            .baseUnit(BaseUnits.EVENTS)
+            .register(registry);
+
+        counter.increment();
     }
 
 }

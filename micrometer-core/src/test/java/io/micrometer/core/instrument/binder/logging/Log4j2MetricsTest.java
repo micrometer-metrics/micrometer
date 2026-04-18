@@ -74,7 +74,7 @@ class Log4j2MetricsTest {
         new Log4j2Metrics().bindTo(registry);
         // end::setup[]
 
-        assertThatThrownBy(() -> registry.get("log4j2.events").counter()).isInstanceOf(MeterNotFoundException.class);
+        assertThat(registry.get("log4j2.events").counter().count()).isEqualTo(0.0);
 
         // tag::example[]
         Logger logger = LogManager.getLogger(Log4j2MetricsTest.class);
@@ -90,10 +90,8 @@ class Log4j2MetricsTest {
         assertThat(registry.get("log4j2.events").tags("level", "warn").counter().count()).isEqualTo(1.0);
         assertThat(registry.get("log4j2.events").tags("level", "fatal").counter().count()).isEqualTo(1.0);
         assertThat(registry.get("log4j2.events").tags("level", "error").counter().count()).isEqualTo(1.0);
-        assertThatThrownBy(() -> registry.get("log4j2.events").tags("level", "debug").counter())
-            .isInstanceOf(MeterNotFoundException.class);
-        assertThatThrownBy(() -> registry.get("log4j2.events").tags("level", "trace").counter())
-            .isInstanceOf(MeterNotFoundException.class);
+        assertThat(registry.get("log4j2.events").tags("level", "debug").counter().count()).isEqualTo(0.0);
+        assertThat(registry.get("log4j2.events").tags("level", "trace").counter().count()).isEqualTo(0.0);
         // end::example[]
     }
 
@@ -134,7 +132,7 @@ class Log4j2MetricsTest {
 
         new Log4j2Metrics().bindTo(registry);
 
-        assertThatThrownBy(() -> registry.get("log4j2.events").counter()).isInstanceOf(MeterNotFoundException.class);
+        assertThat(registry.get("log4j2.events").counter().count()).isEqualTo(0.0);
 
         additivityDisabledLogger.info("Hello, world!");
         assertThat(registry.get("log4j2.events").tags("level", "info").counter().count()).isEqualTo(1);
@@ -151,7 +149,7 @@ class Log4j2MetricsTest {
 
         new Log4j2Metrics().bindTo(registry);
 
-        assertThatThrownBy(() -> registry.get("log4j2.events").counter()).isInstanceOf(MeterNotFoundException.class);
+        assertThat(registry.get("log4j2.events").counter().count()).isEqualTo(0.0);
 
         logger.info("Hello, world!");
         assertThat(registry.get("log4j2.events").tags("level", "info").counter().count()).isEqualTo(1);
@@ -164,7 +162,7 @@ class Log4j2MetricsTest {
         Logger logger = LogManager.getLogger(Log4j2MetricsTest.class);
         logger.isErrorEnabled();
 
-        assertThatThrownBy(() -> registry.get("log4j2.events").counter()).isInstanceOf(MeterNotFoundException.class);
+        assertThat(registry.get("log4j2.events").counter().count()).isEqualTo(0.0);
     }
 
     @Test
@@ -196,7 +194,7 @@ class Log4j2MetricsTest {
 
         new Log4j2Metrics(emptyList(), loggerContext).bindTo(registry);
 
-        assertThatThrownBy(() -> registry.get("log4j2.events").counter()).isInstanceOf(MeterNotFoundException.class);
+        assertThat(registry.get("log4j2.events").counter().count()).isEqualTo(0.0);
         logger1.info("Hello, world!");
         assertThat(registry.get("log4j2.events").tags("level", "info").counter().count()).isEqualTo(1);
     }
@@ -212,7 +210,7 @@ class Log4j2MetricsTest {
 
         new Log4j2Metrics().bindTo(registry);
 
-        assertThatThrownBy(() -> registry.get("log4j2.events").counter()).isInstanceOf(MeterNotFoundException.class);
+        assertThat(registry.get("log4j2.events").counter().count()).isEqualTo(0.0);
         logger.info("Hello, world!");
         logger.info("Hello, world!");
         logger.info("Hello, world!");
