@@ -15,7 +15,6 @@
  */
 package io.micrometer.core.instrument.binder.logging;
 
-import com.google.common.collect.Iterables;
 import io.micrometer.common.util.internal.logging.InternalLogger;
 import io.micrometer.common.util.internal.logging.InternalLoggerFactory;
 import io.micrometer.core.instrument.Counter;
@@ -68,7 +67,7 @@ public class Log4j2Metrics implements MeterBinder, AutoCloseable {
 
     private final List<PropertyChangeListener> changeListeners = new CopyOnWriteArrayList<>();
 
-    private final Iterable<LogInterceptor> logInterceptors;
+    private final List<LogInterceptor> logInterceptors;
 
     public Log4j2Metrics() {
         this(emptyList());
@@ -82,7 +81,7 @@ public class Log4j2Metrics implements MeterBinder, AutoCloseable {
         this(tags, loggerContext, emptyList());
     }
 
-    public Log4j2Metrics(Iterable<Tag> tags, LoggerContext loggerContext, Iterable<LogInterceptor> logInterceptors) {
+    public Log4j2Metrics(Iterable<Tag> tags, LoggerContext loggerContext, List<LogInterceptor> logInterceptors) {
         this.tags = tags;
         this.loggerContext = loggerContext;
         this.logInterceptors = logInterceptors;
@@ -182,7 +181,7 @@ public class Log4j2Metrics implements MeterBinder, AutoCloseable {
 
         private final IncrementLogCounterStrategy incrementLogCounterStrategy;
 
-        MetricsFilter(MeterRegistry registry, Iterable<Tag> tags, Iterable<LogInterceptor> logInterceptors) {
+        MetricsFilter(MeterRegistry registry, Iterable<Tag> tags, List<LogInterceptor> logInterceptors) {
             this.incrementLogCounterStrategy = IncrementLogCounterFactory.getIncrementLogCounterStrategy(registry, tags,
                     logInterceptors);
         }
@@ -204,8 +203,8 @@ public class Log4j2Metrics implements MeterBinder, AutoCloseable {
 class IncrementLogCounterFactory {
 
     public static IncrementLogCounterStrategy getIncrementLogCounterStrategy(MeterRegistry registry, Iterable<Tag> tags,
-            Iterable<LogInterceptor> logInterceptors) {
-        if (Iterables.isEmpty(logInterceptors)) {
+            List<LogInterceptor> logInterceptors) {
+        if (logInterceptors.isEmpty()) {
             return new StaticLogCounter(registry, tags);
         }
         else {
