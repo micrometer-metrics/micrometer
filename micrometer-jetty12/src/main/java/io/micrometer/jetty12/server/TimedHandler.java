@@ -97,6 +97,9 @@ public class TimedHandler extends EventsHandler implements Graceful {
 
     @Override
     protected void onAfterHandling(Request request, boolean handled, Throwable failure) {
+        // Same issue as onComplete: onResponseBegin fires before the handler sets
+        // the status, so the attribute may still be 0. Update it here too so
+        // stopHandlerTiming sees the correct status for the handler timer.
         stopHandlerTiming(request);
         super.onAfterHandling(request, handled, failure);
     }
@@ -109,9 +112,14 @@ public class TimedHandler extends EventsHandler implements Graceful {
     }
 
     @Override
-    protected void onComplete(Request request, Throwable failure) {
+    protected void onComplete(Request request, int status, HttpFields headers, Throwable failure) {
+        // Jetty 12 fires onResponseBegin before the handler sets a response status,
+        // so the status captured in onResponseBegin is 0 (unset). Use the status
+        // parameter from this 4-param onComplete overload — Jetty 12.1+ provides
+        // the actual status here directly.
+        request.setAttribute(RESPONSE_STATUS_ATTRIBUTE, status);
         stopRequestTiming(request);
-        super.onComplete(request, failure);
+        super.onComplete(request, status, headers, failure);
     }
 
     private void beginRequestTiming(Request request) {
