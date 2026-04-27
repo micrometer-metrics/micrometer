@@ -27,6 +27,7 @@ import org.junit.jupiter.api.Test;
 
 import javax.annotation.Nonnull;
 
+import java.time.Duration;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -355,6 +356,25 @@ class MeterRegistryTest {
             .describedAs("If the meter-filter doesn't alter the meter creation, meters are never unmarked "
                     + "from staleness and we end up paying the additional cost every time")
             .isEmpty();
+    }
+
+    @Test
+    @Issue("https://github.com/micrometer-metrics/micrometer/issues/7409")
+    void closeShouldOnlyCloseHighCardinalityTagsDetectorOnce() {
+        AtomicInteger closeCount = new AtomicInteger();
+        HighCardinalityTagsDetector detector = new HighCardinalityTagsDetector(registry, Long.MAX_VALUE,
+                Duration.ofHours(1)) {
+            @Override
+            public void close() {
+                closeCount.incrementAndGet();
+            }
+        };
+        registry.config().withHighCardinalityTagsDetector(detector);
+
+        registry.close();
+        registry.close();
+
+        assertThat(closeCount.get()).isEqualTo(1);
     }
 
 }
