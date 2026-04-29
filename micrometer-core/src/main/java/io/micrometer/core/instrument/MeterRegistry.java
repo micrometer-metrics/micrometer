@@ -1215,10 +1215,9 @@ public abstract class MeterRegistry {
                     meter.close();
                 }
             }
-        }
-
-        if (highCardinalityTagsDetector != null) {
-            highCardinalityTagsDetector.close();
+            if (highCardinalityTagsDetector != null) {
+                highCardinalityTagsDetector.close();
+            }
         }
     }
 
