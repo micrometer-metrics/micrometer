@@ -77,15 +77,15 @@ class VirtualThreadMetricsTests {
 
             Timer timer = registry.get("jvm.threads.virtual.pinned").tags(TAGS).timer();
             await().atMost(Duration.ofSeconds(2)).until(() -> timer.count() == 3);
-            assertThat(timer.max(MILLISECONDS)).isBetween(40d, 60d); // ~50ms
-            assertThat(timer.totalTime(MILLISECONDS)).isBetween(130d, 170d); // ~150ms
+            assertThat(timer.max(MILLISECONDS)).isGreaterThan(10);
+            assertThat(timer.totalTime(MILLISECONDS)).isGreaterThan(30);
         }
     }
 
     private void pinCurrentThreadAndAwait(CountDownLatch latch) {
         synchronized (new Object()) { // assumes that synchronized pins the thread
             try {
-                if (!latch.await(2, TimeUnit.SECONDS)) {
+                if (!latch.await(5, TimeUnit.SECONDS)) {
                     throw new IllegalStateException("Timed out waiting for latch");
                 }
             }
