@@ -26,12 +26,11 @@ import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
 
 import javax.annotation.Nonnull;
-
-import java.time.Duration;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.*;
 
 /**
  * Tests for {@link MeterRegistry}.
@@ -359,22 +358,16 @@ class MeterRegistryTest {
     }
 
     @Test
-    @Issue("https://github.com/micrometer-metrics/micrometer/issues/7409")
-    void closeShouldOnlyCloseHighCardinalityTagsDetectorOnce() {
-        AtomicInteger closeCount = new AtomicInteger();
-        HighCardinalityTagsDetector detector = new HighCardinalityTagsDetector(registry, Long.MAX_VALUE,
-                Duration.ofHours(1)) {
-            @Override
-            public void close() {
-                closeCount.incrementAndGet();
-            }
-        };
-        registry.config().withHighCardinalityTagsDetector(registry -> detector);
+    @Issue("#7409")
+    void registryCloseShouldCloseHighCardinalityTagsDetectorOnlyOnce() {
+        MeterRegistry registry = new SimpleMeterRegistry();
+        HighCardinalityTagsDetector detector = mock(HighCardinalityTagsDetector.class);
+        registry.config().withHighCardinalityTagsDetector(mr -> detector);
 
         registry.close();
         registry.close();
 
-        assertThat(closeCount.get()).isEqualTo(1);
+        verify(detector, times(1)).close();
     }
 
 }
