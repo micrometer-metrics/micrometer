@@ -26,11 +26,11 @@ import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
 
 import javax.annotation.Nonnull;
-
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.*;
 
 /**
  * Tests for {@link MeterRegistry}.
@@ -355,6 +355,19 @@ class MeterRegistryTest {
             .describedAs("If the meter-filter doesn't alter the meter creation, meters are never unmarked "
                     + "from staleness and we end up paying the additional cost every time")
             .isEmpty();
+    }
+
+    @Test
+    @Issue("#7409")
+    void registryCloseShouldCloseHighCardinalityTagsDetectorOnlyOnce() {
+        MeterRegistry registry = new SimpleMeterRegistry();
+        HighCardinalityTagsDetector detector = mock(HighCardinalityTagsDetector.class);
+        registry.config().withHighCardinalityTagsDetector(mr -> detector);
+
+        registry.close();
+        registry.close();
+
+        verify(detector, times(1)).close();
     }
 
 }
