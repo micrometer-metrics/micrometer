@@ -57,7 +57,8 @@ public class DefaultJerseyObservationConvention implements JerseyObservationConv
         if (context.getCarrier() == null) {
             return null;
         }
-        return "HTTP " + context.getCarrier().getMethod();
+        String method = context.getCarrier().getMethod();
+        return "HTTP " + (HttpMethods.isStandard(method) ? method : "UNKNOWN");
     }
 
 }

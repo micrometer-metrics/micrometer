@@ -16,6 +16,7 @@
 
 package io.micrometer.jetty12.server;
 
+import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.binder.http.Outcome;
@@ -38,8 +39,13 @@ public class DefaultJettyCoreRequestTagsProvider implements JettyCoreRequestTags
         return Tags.of(method(request), status(request), outcome(request));
     }
 
-    private Tag method(Request request) {
-        return (request != null) ? Tag.of("method", request.getMethod()) : METHOD_UNKNOWN;
+    private Tag method(@Nullable Request request) {
+        if (request == null) {
+            return METHOD_UNKNOWN;
+        }
+
+        String method = request.getMethod();
+        return HttpMethods.isStandard(method) ? Tag.of("method", method) : METHOD_UNKNOWN;
     }
 
     private Tag status(Request request) {

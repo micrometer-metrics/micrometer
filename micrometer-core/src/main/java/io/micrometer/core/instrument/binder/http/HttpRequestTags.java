@@ -15,6 +15,7 @@
  */
 package io.micrometer.core.instrument.binder.http;
 
+import io.micrometer.common.lang.Nullable;
 import io.micrometer.common.util.StringUtils;
 import io.micrometer.core.annotation.Incubating;
 import io.micrometer.core.instrument.Tag;
@@ -46,8 +47,13 @@ public class HttpRequestTags {
      * @param request the request
      * @return the method tag whose value is a capitalized method (e.g. GET).
      */
-    public static Tag method(HttpServletRequest request) {
-        return (request != null) ? Tag.of("method", request.getMethod()) : METHOD_UNKNOWN;
+    public static Tag method(@Nullable HttpServletRequest request) {
+        if (request == null) {
+            return METHOD_UNKNOWN;
+        }
+
+        String method = request.getMethod();
+        return HttpMethods.isStandard(method) ? Tag.of("method", method) : METHOD_UNKNOWN;
     }
 
     /**
