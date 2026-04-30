@@ -47,9 +47,9 @@ class MicrometerCollectorTest {
                     Labels.of("k", Integer.toString(i)), null, 0);
 
             collector.add(id,
-                    (conventionName) -> Stream.of(new MicrometerCollector.Family<>(conventionName,
+                    () -> Stream.of(new MicrometerCollector.Family<>(collector.getConventionName(),
                             family -> new CounterSnapshot(family.metadata, family.dataPointSnapshots),
-                            new MetricMetadata(conventionName), sample)));
+                            new MetricMetadata(collector.getConventionName()), sample)));
         }
 
         // Threw StackOverflowException because of too many nested streams originally
@@ -69,13 +69,13 @@ class MicrometerCollectorTest {
         Meter.Id sample2Id = id.withTags(Tags.of("k", "v2", "k2", "v1"));
 
         collector.add(sampleId,
-                (conventionName) -> Stream.of(new MicrometerCollector.Family<>(conventionName,
+                () -> Stream.of(new MicrometerCollector.Family<>(collector.getConventionName(),
                         family -> new CounterSnapshot(family.metadata, family.dataPointSnapshots),
-                        new MetricMetadata(conventionName), sample)));
+                        new MetricMetadata(collector.getConventionName()), sample)));
         collector.add(sample2Id,
-                (conventionName) -> Stream.of(new MicrometerCollector.Family<>(conventionName,
+                () -> Stream.of(new MicrometerCollector.Family<>(collector.getConventionName(),
                         family -> new CounterSnapshot(family.metadata, family.dataPointSnapshots),
-                        new MetricMetadata(conventionName), sample2)));
+                        new MetricMetadata(collector.getConventionName()), sample2)));
 
         assertThat(collector.collect().get(0).getDataPoints()).hasSize(2);
     }
@@ -93,13 +93,13 @@ class MicrometerCollectorTest {
         Meter.Id id2 = id.replaceTags(Tags.of("k1", "v1", "k4", "v4"));
 
         collector.add(id,
-                (conventionName) -> Stream.of(new MicrometerCollector.Family<>(conventionName,
+                () -> Stream.of(new MicrometerCollector.Family<>(collector.getConventionName(),
                         family -> new CounterSnapshot(family.metadata, family.dataPointSnapshots),
-                        new MetricMetadata(conventionName), sample)));
+                        new MetricMetadata(collector.getConventionName()), sample)));
         collector.add(id2,
-                (conventionName) -> Stream.of(new MicrometerCollector.Family<>(conventionName,
+                () -> Stream.of(new MicrometerCollector.Family<>(collector.getConventionName(),
                         family -> new CounterSnapshot(family.metadata, family.dataPointSnapshots),
-                        new MetricMetadata(conventionName), sample2)));
+                        new MetricMetadata(collector.getConventionName()), sample2)));
 
         assertThat(collector.collect().get(0).getDataPoints()).hasSize(2);
     }
@@ -117,13 +117,13 @@ class MicrometerCollectorTest {
         Meter.Id id2 = id.replaceTags(Tags.of("k1", "v1", "k2", "v2"));
 
         collector.add(id,
-                (conventionName) -> Stream.of(new MicrometerCollector.Family<>(conventionName,
+                () -> Stream.of(new MicrometerCollector.Family<>(collector.getConventionName(),
                         family -> new CounterSnapshot(family.metadata, family.dataPointSnapshots),
-                        new MetricMetadata(conventionName), sample)));
+                        new MetricMetadata(collector.getConventionName()), sample)));
         collector.add(id2,
-                (conventionName) -> Stream.of(new MicrometerCollector.Family<>(conventionName,
+                () -> Stream.of(new MicrometerCollector.Family<>(collector.getConventionName(),
                         family -> new CounterSnapshot(family.metadata, family.dataPointSnapshots),
-                        new MetricMetadata(conventionName), sample2)));
+                        new MetricMetadata(collector.getConventionName()), sample2)));
 
         assertThat(collector.collect().get(0).getDataPoints()).hasSize(2);
     }
@@ -141,13 +141,13 @@ class MicrometerCollectorTest {
         Meter.Id id2 = id.replaceTags(Tags.empty());
 
         collector.add(id,
-                (conventionName) -> Stream.of(new MicrometerCollector.Family<>(conventionName,
+                () -> Stream.of(new MicrometerCollector.Family<>(collector.getConventionName(),
                         family -> new CounterSnapshot(family.metadata, family.dataPointSnapshots),
-                        new MetricMetadata(conventionName), sample)));
+                        new MetricMetadata(collector.getConventionName()), sample)));
         collector.add(id2,
-                (conventionName) -> Stream.of(new MicrometerCollector.Family<>(conventionName,
+                () -> Stream.of(new MicrometerCollector.Family<>(collector.getConventionName(),
                         family -> new CounterSnapshot(family.metadata, family.dataPointSnapshots),
-                        new MetricMetadata(conventionName), sample2)));
+                        new MetricMetadata(collector.getConventionName()), sample2)));
 
         assertThat(collector.collect().get(0).getDataPoints()).hasSize(2);
     }
