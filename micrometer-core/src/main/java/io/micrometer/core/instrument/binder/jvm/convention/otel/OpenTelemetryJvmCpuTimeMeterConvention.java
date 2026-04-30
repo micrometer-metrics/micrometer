@@ -13,26 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.core.instrument.binder.jvm.convention;
+package io.micrometer.core.instrument.binder.jvm.convention.otel;
 
-import io.micrometer.core.instrument.binder.MeterConvention;
+import io.micrometer.core.instrument.binder.jvm.convention.JvmCpuTimeMeterConvention;
 
 /**
- * Get {@link MeterConvention} for CPU-related metrics from the JVM.
+ * Convention for process CPU time metrics based on OpenTelemetry semantic conventions.
  *
+ * @see <a href=
+ * "https://github.com/open-telemetry/semantic-conventions/blob/v1.37.0/docs/runtime/jvm-metrics.md">OpenTelemetry
+ * Semantic conventions for JVM metrics v1.37.0</a>
  * @see io.micrometer.core.instrument.binder.system.ProcessorMetrics
  * @since 1.16.0
- * @deprecated use individual convention types such as {@link JvmCpuTimeMeterConvention},
- * {@link JvmCpuCountMeterConvention}, and {@link JvmCpuLoadMeterConvention} with
- * {@link io.micrometer.core.instrument.binder.system.ProcessorMetrics.Builder} instead
  */
-@Deprecated
-public interface JvmCpuMeterConventions {
+public class OpenTelemetryJvmCpuTimeMeterConvention implements JvmCpuTimeMeterConvention {
 
-    MeterConvention<Object> cpuTimeConvention();
-
-    MeterConvention<Object> cpuCountConvention();
-
-    MeterConvention<Object> processCpuLoadConvention();
+    @Override
+    public String getName() {
+        return "jvm.cpu.time";
+    }
 
 }

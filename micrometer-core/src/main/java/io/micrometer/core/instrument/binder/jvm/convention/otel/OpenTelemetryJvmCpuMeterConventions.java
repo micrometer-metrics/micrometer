@@ -28,7 +28,13 @@ import io.micrometer.core.instrument.binder.jvm.convention.micrometer.Micrometer
  * Semantic conventions for JVM metrics v1.37.0</a>
  * @see io.micrometer.core.instrument.binder.system.ProcessorMetrics
  * @since 1.16.0
+ * @deprecated use individual convention types such as
+ * {@link OpenTelemetryJvmCpuTimeMeterConvention},
+ * {@link OpenTelemetryJvmCpuCountMeterConvention}, and
+ * {@link OpenTelemetryJvmCpuLoadMeterConvention} instead
  */
+@Deprecated
+@SuppressWarnings("deprecation")
 public class OpenTelemetryJvmCpuMeterConventions extends MicrometerJvmCpuMeterConventions {
 
     public OpenTelemetryJvmCpuMeterConventions(Tags extraTags) {

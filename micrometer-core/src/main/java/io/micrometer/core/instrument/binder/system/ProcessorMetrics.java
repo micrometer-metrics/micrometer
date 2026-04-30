@@ -17,9 +17,16 @@ package io.micrometer.core.instrument.binder.system;
 
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.MeterBinder;
-import io.micrometer.core.instrument.binder.MeterConvention;
+import io.micrometer.core.instrument.binder.jvm.convention.JvmCpuCountMeterConvention;
+import io.micrometer.core.instrument.binder.jvm.convention.JvmCpuLoadMeterConvention;
 import io.micrometer.core.instrument.binder.jvm.convention.JvmCpuMeterConventions;
-import io.micrometer.core.instrument.binder.jvm.convention.micrometer.MicrometerJvmCpuMeterConventions;
+import io.micrometer.core.instrument.binder.jvm.convention.JvmCpuTimeMeterConvention;
+import io.micrometer.core.instrument.binder.jvm.convention.micrometer.MicrometerJvmCpuCountMeterConvention;
+import io.micrometer.core.instrument.binder.jvm.convention.micrometer.MicrometerJvmCpuLoadMeterConvention;
+import io.micrometer.core.instrument.binder.jvm.convention.micrometer.MicrometerJvmCpuTimeMeterConvention;
+import io.micrometer.core.instrument.binder.jvm.convention.otel.OpenTelemetryJvmCpuCountMeterConvention;
+import io.micrometer.core.instrument.binder.jvm.convention.otel.OpenTelemetryJvmCpuLoadMeterConvention;
+import io.micrometer.core.instrument.binder.jvm.convention.otel.OpenTelemetryJvmCpuTimeMeterConvention;
 import org.jspecify.annotations.Nullable;
 
 import java.lang.management.ManagementFactory;
@@ -58,7 +65,11 @@ public class ProcessorMetrics implements MeterBinder {
 
     private final Tags extraTags;
 
-    private final JvmCpuMeterConventions conventions;
+    private final JvmCpuTimeMeterConvention cpuTimeConvention;
+
+    private final JvmCpuCountMeterConvention cpuCountConvention;
+
+    private final JvmCpuLoadMeterConvention cpuLoadConvention;
 
     private final OperatingSystemMXBean operatingSystemBean;
 
@@ -79,7 +90,8 @@ public class ProcessorMetrics implements MeterBinder {
      * @param extraTags tags to add to each meter's tags produced by this binder
      */
     public ProcessorMetrics(Iterable<Tag> extraTags) {
-        this(extraTags, new MicrometerJvmCpuMeterConventions(Tags.of(extraTags)));
+        this(Tags.of(extraTags), new MicrometerJvmCpuTimeMeterConvention(), new MicrometerJvmCpuCountMeterConvention(),
+                new MicrometerJvmCpuLoadMeterConvention());
     }
 
     /**
@@ -89,10 +101,25 @@ public class ProcessorMetrics implements MeterBinder {
      * @param extraTags extra tags to add to meters not covered by the conventions
      * @param conventions custom conventions for applicable meters
      * @since 1.16.0
+     * @deprecated use {@link #builder()} to provide individual conventions
      */
+    @Deprecated
     public ProcessorMetrics(Iterable<? extends Tag> extraTags, JvmCpuMeterConventions conventions) {
-        this.extraTags = Tags.of(extraTags);
-        this.conventions = conventions;
+        this(Tags.of(extraTags),
+                JvmCpuTimeMeterConvention.of(conventions.cpuTimeConvention().getName(),
+                        conventions.cpuTimeConvention().getTags(null)),
+                JvmCpuCountMeterConvention.of(conventions.cpuCountConvention().getName(),
+                        conventions.cpuCountConvention().getTags(null)),
+                JvmCpuLoadMeterConvention.of(conventions.processCpuLoadConvention().getName(),
+                        conventions.processCpuLoadConvention().getTags(null)));
+    }
+
+    private ProcessorMetrics(Tags extraTags, JvmCpuTimeMeterConvention cpuTimeConvention,
+            JvmCpuCountMeterConvention cpuCountConvention, JvmCpuLoadMeterConvention cpuLoadConvention) {
+        this.extraTags = extraTags;
+        this.cpuTimeConvention = cpuTimeConvention;
+        this.cpuCountConvention = cpuCountConvention;
+        this.cpuLoadConvention = cpuLoadConvention;
         this.operatingSystemBean = ManagementFactory.getOperatingSystemMXBean();
         this.operatingSystemBeanClass = getFirstClassFound(OPERATING_SYSTEM_BEAN_CLASS_NAMES);
         Method getCpuLoad = detectMethod("getCpuLoad");
@@ -101,12 +128,21 @@ public class ProcessorMetrics implements MeterBinder {
         this.processCpuTime = detectMethod("getProcessCpuTime");
     }
 
+    /**
+     * Create a new builder for {@link ProcessorMetrics}.
+     * @return a new builder
+     * @since 1.16.0
+     */
+    public static Builder builder() {
+        return new Builder();
+    }
+
     @Override
     public void bindTo(MeterRegistry registry) {
         Runtime runtime = Runtime.getRuntime();
-        MeterConvention<Object> cpuCountConvention = conventions.cpuCountConvention();
         Gauge.builder(cpuCountConvention.getName(), runtime, Runtime::availableProcessors)
             .tags(cpuCountConvention.getTags(null))
+            .tags(extraTags)
             .description("The number of processors available to the Java virtual machine")
             .register(registry);
 
@@ -126,17 +162,17 @@ public class ProcessorMetrics implements MeterBinder {
         }
 
         if (processCpuUsage != null) {
-            MeterConvention<Object> processCpuLoadConvention = conventions.processCpuLoadConvention();
-            Gauge.builder(processCpuLoadConvention.getName(), operatingSystemBean, x -> invoke(processCpuUsage))
-                .tags(processCpuLoadConvention.getTags(null))
+            Gauge.builder(cpuLoadConvention.getName(), operatingSystemBean, x -> invoke(processCpuUsage))
+                .tags(cpuLoadConvention.getTags(null))
+                .tags(extraTags)
                 .description("The \"recent cpu usage\" for the Java Virtual Machine process")
                 .register(registry);
         }
 
         if (processCpuTime != null) {
-            MeterConvention<Object> cpuTimeConvention = this.conventions.cpuTimeConvention();
             FunctionCounter.builder(cpuTimeConvention.getName(), operatingSystemBean, x -> invoke(processCpuTime))
                 .tags(cpuTimeConvention.getTags(null))
+                .tags(extraTags)
                 .description("The \"cpu time\" used by the Java Virtual Machine process")
                 .baseUnit("ns")
                 .register(registry);
@@ -180,6 +216,90 @@ public class ProcessorMetrics implements MeterBinder {
             }
         }
         return null;
+    }
+
+    /**
+     * Builder for {@link ProcessorMetrics}.
+     *
+     * @since 1.16.0
+     */
+    public static class Builder {
+
+        private Tags extraTags = Tags.empty();
+
+        private @Nullable JvmCpuTimeMeterConvention cpuTimeConvention;
+
+        private @Nullable JvmCpuCountMeterConvention cpuCountConvention;
+
+        private @Nullable JvmCpuLoadMeterConvention cpuLoadConvention;
+
+        Builder() {
+        }
+
+        /**
+         * Extra tags to add to meters registered by this binder.
+         * @param extraTags tags to add
+         * @return this builder
+         */
+        public Builder extraTags(Iterable<? extends Tag> extraTags) {
+            this.extraTags = Tags.of(extraTags);
+            return this;
+        }
+
+        /**
+         * Custom convention for the CPU time meter.
+         * @param convention the convention to use
+         * @return this builder
+         */
+        public Builder cpuTimeConvention(JvmCpuTimeMeterConvention convention) {
+            this.cpuTimeConvention = convention;
+            return this;
+        }
+
+        /**
+         * Custom convention for the CPU count meter.
+         * @param convention the convention to use
+         * @return this builder
+         */
+        public Builder cpuCountConvention(JvmCpuCountMeterConvention convention) {
+            this.cpuCountConvention = convention;
+            return this;
+        }
+
+        /**
+         * Custom convention for the process CPU load meter.
+         * @param convention the convention to use
+         * @return this builder
+         */
+        public Builder cpuLoadConvention(JvmCpuLoadMeterConvention convention) {
+            this.cpuLoadConvention = convention;
+            return this;
+        }
+
+        /**
+         * Use OpenTelemetry semantic conventions for all meters. Individual conventions
+         * can still be overridden by calling the specific convention methods after this
+         * one.
+         * @return this builder
+         */
+        public Builder openTelemetryConventions() {
+            this.cpuTimeConvention = new OpenTelemetryJvmCpuTimeMeterConvention();
+            this.cpuCountConvention = new OpenTelemetryJvmCpuCountMeterConvention();
+            this.cpuLoadConvention = new OpenTelemetryJvmCpuLoadMeterConvention();
+            return this;
+        }
+
+        /**
+         * Build a new {@link ProcessorMetrics} instance.
+         * @return a new {@link ProcessorMetrics}
+         */
+        public ProcessorMetrics build() {
+            return new ProcessorMetrics(extraTags,
+                    cpuTimeConvention != null ? cpuTimeConvention : new MicrometerJvmCpuTimeMeterConvention(),
+                    cpuCountConvention != null ? cpuCountConvention : new MicrometerJvmCpuCountMeterConvention(),
+                    cpuLoadConvention != null ? cpuLoadConvention : new MicrometerJvmCpuLoadMeterConvention());
+        }
+
     }
 
 }
