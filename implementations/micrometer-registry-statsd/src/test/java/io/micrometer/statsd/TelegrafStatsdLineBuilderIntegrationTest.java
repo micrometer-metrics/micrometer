@@ -21,6 +21,7 @@ import io.micrometer.core.instrument.Counter;
 import io.restassured.config.EncoderConfig;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
+import reactor.core.Disposable;
 import org.hamcrest.Matcher;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
@@ -100,7 +101,7 @@ class TelegrafStatsdLineBuilderIntegrationTest {
             .increment());
 
         await().alias("Telegraf flushing and InfluxDB ingestion")
-            .atMost(5, TimeUnit.SECONDS)
+            .atMost(10, TimeUnit.SECONDS)
             .untilAsserted(
                     () -> verifyMetric("test=metric=equal", containsString("this_is_the"), containsString("tag=test")));
     }
@@ -113,7 +114,7 @@ class TelegrafStatsdLineBuilderIntegrationTest {
             .increment());
 
         await().alias("Telegraf flushing and InfluxDB ingestion")
-            .atMost(5, TimeUnit.SECONDS)
+            .atMost(10, TimeUnit.SECONDS)
             .untilAsserted(() -> verifyMetric("test_metric_comma", containsString("comma_key"),
                     containsString("comma_value")));
     }
@@ -126,7 +127,7 @@ class TelegrafStatsdLineBuilderIntegrationTest {
             .increment());
 
         await().alias("Telegraf flushing and InfluxDB ingestion")
-            .atMost(5, TimeUnit.SECONDS)
+            .atMost(10, TimeUnit.SECONDS)
             .untilAsserted(() -> verifyMetric("test_metric_space", containsString("space_key"),
                     containsString("space_value")));
     }
@@ -168,7 +169,8 @@ class TelegrafStatsdLineBuilderIntegrationTest {
     }
 
     private boolean clientIsDisposed(StatsdMeterRegistry meterRegistry) {
-        return meterRegistry.statsdConnection.get().isDisposed();
+        Disposable conn = meterRegistry.statsdConnection.get();
+        return conn != null && conn.isDisposed();
     }
 
     private StatsdConfig getStatsdConfig() {
