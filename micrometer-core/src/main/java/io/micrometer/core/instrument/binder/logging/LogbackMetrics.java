@@ -30,11 +30,15 @@ import io.micrometer.core.instrument.binder.MeterBinder;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Marker;
 
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.LongAdder;
 
 import static java.util.Collections.emptyList;
+import static java.util.Collections.emptySet;
 
 /**
  * Metrics instrumentation of Logback log events. Counts the log events with a log level
@@ -49,6 +53,8 @@ public class LogbackMetrics implements MeterBinder, AutoCloseable {
     private final Iterable<Tag> tags;
 
     private final LoggerContext loggerContext;
+
+    private final Set<String> excludedLoggerNames;
 
     private final Map<MeterRegistry, MetricsTurboFilter> metricsTurboFilters = new HashMap<>();
 
@@ -67,8 +73,13 @@ public class LogbackMetrics implements MeterBinder, AutoCloseable {
     }
 
     public LogbackMetrics(Iterable<Tag> tags, LoggerContext context) {
+        this(tags, context, emptySet());
+    }
+
+    public LogbackMetrics(Iterable<Tag> tags, LoggerContext context, Set<String> excludedLoggerNames) {
         this.tags = tags;
         this.loggerContext = context;
+        this.excludedLoggerNames = Collections.unmodifiableSet(new HashSet<>(excludedLoggerNames));
 
         loggerContext.addListener(new LoggerContextListener() {
             @Override
@@ -105,7 +116,7 @@ public class LogbackMetrics implements MeterBinder, AutoCloseable {
 
     @Override
     public void bindTo(MeterRegistry registry) {
-        MetricsTurboFilter filter = new MetricsTurboFilter(registry, tags);
+        MetricsTurboFilter filter = new MetricsTurboFilter(registry, tags, excludedLoggerNames);
         synchronized (metricsTurboFilters) {
             metricsTurboFilters.put(registry, filter);
             loggerContext.addTurboFilter(filter);
@@ -144,6 +155,8 @@ class MetricsTurboFilter extends TurboFilter {
 
     private static final String METER_DESCRIPTION = "Number of log events that were enabled by the effective log level";
 
+    private final Set<String> excludedLoggerNames;
+
     private final LongAdder errorCount = new LongAdder();
 
     private final LongAdder warnCount = new LongAdder();
@@ -154,7 +167,8 @@ class MetricsTurboFilter extends TurboFilter {
 
     private final LongAdder traceCount = new LongAdder();
 
-    MetricsTurboFilter(MeterRegistry registry, Iterable<Tag> tags) {
+    MetricsTurboFilter(MeterRegistry registry, Iterable<Tag> tags, Set<String> excludedLoggerNames) {
+        this.excludedLoggerNames = excludedLoggerNames;
         FunctionCounter.builder(METER_NAME, errorCount, LongAdder::doubleValue)
             .tags(tags)
             .tags("level", "error")
@@ -203,7 +217,9 @@ class MetricsTurboFilter extends TurboFilter {
             return FilterReply.NEUTRAL;
         }
 
-        recordMetrics(level);
+        if (!excludedLoggerNames.contains(logger.getName())) {
+            recordMetrics(level);
+        }
 
         return FilterReply.NEUTRAL;
     }
