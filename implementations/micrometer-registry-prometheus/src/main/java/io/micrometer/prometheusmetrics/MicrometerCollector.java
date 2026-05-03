@@ -52,6 +52,10 @@ class MicrometerCollector implements MultiCollector {
         this.originalMeterId = id;
     }
 
+    public String getConventionName() {
+        return conventionName;
+    }
+
     public void add(Meter.Id id, Child child) {
         children.put(id, child);
     }
@@ -77,7 +81,7 @@ class MicrometerCollector implements MultiCollector {
         Map<String, Family> families = new HashMap<>();
 
         for (Child child : children.values()) {
-            child.samples(conventionName)
+            child.samples()
                 .forEach(family -> families.compute(family.getConventionName(),
                         (name, matchingFamily) -> matchingFamily != null
                                 ? matchingFamily.addSamples(family.dataPointSnapshots) : family));
@@ -93,7 +97,7 @@ class MicrometerCollector implements MultiCollector {
 
     interface Child {
 
-        Stream<Family<?>> samples(String conventionName);
+        Stream<Family<?>> samples();
 
     }
 
