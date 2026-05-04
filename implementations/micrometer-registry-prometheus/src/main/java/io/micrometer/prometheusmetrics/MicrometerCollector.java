@@ -16,10 +16,6 @@
 package io.micrometer.prometheusmetrics;
 
 import io.micrometer.core.instrument.Meter;
-import io.prometheus.metrics.model.snapshots.CounterSnapshot;
-import io.prometheus.metrics.model.snapshots.GaugeSnapshot;
-import io.prometheus.metrics.model.snapshots.HistogramSnapshot;
-import io.prometheus.metrics.model.snapshots.InfoSnapshot;
 import io.prometheus.metrics.model.registry.MultiCollector;
 import io.prometheus.metrics.model.registry.MetricType;
 import io.prometheus.metrics.model.snapshots.DataPointSnapshot;
@@ -45,6 +41,7 @@ import static java.util.stream.Collectors.toList;
 class MicrometerCollector implements MultiCollector {
 
     private final Map<Meter.Id, Child> children = new ConcurrentHashMap<>();
+    private final Map<Meter.Id, List<Descriptor>> descriptors = new ConcurrentHashMap<>();
 
     private final String conventionName;
 
@@ -58,12 +55,14 @@ class MicrometerCollector implements MultiCollector {
         this.originalMeterId = id;
     }
 
-    public void add(Meter.Id id, Child child) {
+    public void add(Meter.Id id, Child child, Descriptor... descriptors) {
         children.put(id, child);
+        this.descriptors.put(id, Arrays.asList(descriptors));
     }
 
     public void remove(Meter.Id id) {
         children.remove(id);
+        descriptors.remove(id);
     }
 
     public boolean isEmpty() {
@@ -80,32 +79,17 @@ class MicrometerCollector implements MultiCollector {
 
     @Override
     public List<String> getPrometheusNames() {
-        return metricSnapshots().stream()
-            .map(snapshot -> snapshot.getMetadata().getPrometheusName())
+        return registrationDescriptors().stream()
+            .map(Descriptor::getPrometheusName)
             .distinct()
             .collect(toList());
     }
 
     @Override
     public @Nullable MetricType getMetricType(String prometheusName) {
-        for (MetricSnapshot snapshot : metricSnapshots()) {
-            if (snapshot.getMetadata().getPrometheusName().equals(prometheusName)) {
-                if (snapshot instanceof CounterSnapshot) {
-                    return MetricType.COUNTER;
-                }
-                if (snapshot instanceof InfoSnapshot) {
-                    return MetricType.INFO;
-                }
-                if (snapshot instanceof HistogramSnapshot) {
-                    return MetricType.HISTOGRAM;
-                }
-                if (snapshot instanceof io.prometheus.metrics.model.snapshots.SummarySnapshot) {
-                    return MetricType.SUMMARY;
-                }
-                if (snapshot instanceof GaugeSnapshot) {
-                    return MetricType.GAUGE;
-                }
-                return MetricType.UNKNOWN;
+        for (Descriptor descriptor : registrationDescriptors()) {
+            if (descriptor.getPrometheusName().equals(prometheusName)) {
+                return descriptor.getMetricType();
             }
         }
         return null;
@@ -114,11 +98,9 @@ class MicrometerCollector implements MultiCollector {
     @Override
     public @Nullable Set<String> getLabelNames(String prometheusName) {
         Set<String> names = new HashSet<>();
-        for (MetricSnapshot snapshot : metricSnapshots()) {
-            if (snapshot.getMetadata().getPrometheusName().equals(prometheusName)) {
-                for (DataPointSnapshot dataPoint : snapshot.getDataPoints()) {
-                    dataPoint.getLabels().forEach(label -> names.add(label.getName()));
-                }
+        for (Descriptor descriptor : registrationDescriptors()) {
+            if (descriptor.getPrometheusName().equals(prometheusName)) {
+                names.addAll(descriptor.getLabelNames());
             }
         }
         return names.isEmpty() ? null : names;
@@ -126,9 +108,9 @@ class MicrometerCollector implements MultiCollector {
 
     @Override
     public @Nullable MetricMetadata getMetadata(String prometheusName) {
-        for (MetricSnapshot snapshot : metricSnapshots()) {
-            if (snapshot.getMetadata().getPrometheusName().equals(prometheusName)) {
-                return snapshot.getMetadata();
+        for (Descriptor descriptor : registrationDescriptors()) {
+            if (descriptor.getPrometheusName().equals(prometheusName)) {
+                return descriptor.getMetadata();
             }
         }
         return null;
@@ -153,14 +135,48 @@ class MicrometerCollector implements MultiCollector {
         return new MetricSnapshots(metricSnapshots);
     }
 
-    private List<MetricSnapshot> metricSnapshots() {
-        return collect().stream().collect(toList());
+    private List<Descriptor> registrationDescriptors() {
+        return descriptors.values().stream().flatMap(Collection::stream).collect(toList());
     }
 
     interface Child {
 
         Stream<Family<?>> samples(String conventionName);
 
+    }
+
+    static class Descriptor {
+
+        private final String prometheusName;
+
+        private final MetricType metricType;
+
+        private final MetricMetadata metadata;
+
+        private final Set<String> labelNames;
+
+        Descriptor(MetricType metricType, MetricMetadata metadata, Collection<String> labelNames) {
+            this.prometheusName = metadata.getPrometheusName();
+            this.metricType = metricType;
+            this.metadata = metadata;
+            this.labelNames = new LinkedHashSet<>(labelNames);
+        }
+
+        String getPrometheusName() {
+            return prometheusName;
+        }
+
+        MetricType getMetricType() {
+            return metricType;
+        }
+
+        MetricMetadata getMetadata() {
+            return metadata;
+        }
+
+        Set<String> getLabelNames() {
+            return labelNames;
+        }
     }
 
     static class Family<T extends DataPointSnapshot> {
