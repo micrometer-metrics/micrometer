@@ -17,10 +17,12 @@ package io.micrometer.prometheusmetrics;
 
 import io.micrometer.core.instrument.Meter;
 import io.prometheus.metrics.model.registry.MultiCollector;
+import io.prometheus.metrics.model.registry.MetricType;
 import io.prometheus.metrics.model.snapshots.DataPointSnapshot;
 import io.prometheus.metrics.model.snapshots.MetricMetadata;
 import io.prometheus.metrics.model.snapshots.MetricSnapshot;
 import io.prometheus.metrics.model.snapshots.MetricSnapshots;
+import org.jspecify.annotations.Nullable;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -70,6 +72,50 @@ class MicrometerCollector implements MultiCollector {
 
     Meter.Id getOriginalId() {
         return originalMeterId;
+    }
+
+    @Override
+    public List<String> getPrometheusNames() {
+        return Collections.singletonList(conventionName);
+    }
+
+    @Override
+    public @Nullable MetricType getMetricType(String prometheusName) {
+        if (!conventionName.equals(prometheusName)) {
+            return null;
+        }
+        switch (originalMeterId.getType()) {
+            case COUNTER:
+                return MetricType.COUNTER;
+            case TIMER:
+            case LONG_TASK_TIMER:
+            case DISTRIBUTION_SUMMARY:
+                return MetricType.SUMMARY;
+            case GAUGE:
+            case OTHER:
+            default:
+                return MetricType.GAUGE;
+        }
+    }
+
+    @Override
+    public @Nullable Set<String> getLabelNames(String prometheusName) {
+        if (!conventionName.equals(prometheusName)) {
+            return null;
+        }
+        Set<String> names = new HashSet<>();
+        for (io.micrometer.core.instrument.Tag tag : originalMeterId.getConventionTags(new PrometheusNamingConvention())) {
+            names.add(tag.getKey());
+        }
+        return names;
+    }
+
+    @Override
+    public @Nullable MetricMetadata getMetadata(String prometheusName) {
+        if (!conventionName.equals(prometheusName)) {
+            return null;
+        }
+        return new MetricMetadata(conventionName, " ", null);
     }
 
     @Override
