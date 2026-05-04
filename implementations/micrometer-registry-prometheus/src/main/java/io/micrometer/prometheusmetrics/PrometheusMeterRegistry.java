@@ -219,8 +219,9 @@ public class PrometheusMeterRegistry extends MeterRegistry {
             List<String> tagKeys = tagKeys(id);
             collector.add(id, (conventionName) -> Stream.of(new MicrometerCollector.Family<>(conventionName,
                     family -> new CounterSnapshot(family.metadata, family.dataPointSnapshots),
-                    getMetadata(conventionName, id.getDescription()), new CounterDataPointSnapshot(counter.count(),
-                            Labels.of(tagKeys, tagValues), counter.exemplar(), createdTimestampMillis))));
+                    getCounterMetadata(conventionName, id.getDescription()),
+                    new CounterDataPointSnapshot(counter.count(), Labels.of(tagKeys, tagValues),
+                            counter.exemplar(), createdTimestampMillis))));
         });
         return counter;
     }
@@ -332,7 +333,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
                 collector.add(id,
                         (conventionName) -> Stream.of(new MicrometerCollector.Family<>(conventionName,
                                 family -> new InfoSnapshot(family.metadata, family.dataPointSnapshots),
-                                getMetadata(conventionName, id.getDescription()),
+                                getInfoMetadata(conventionName, id.getDescription()),
                                 new InfoDataPointSnapshot(Labels.of(tagKeys, tagValues)))));
             }
             else {
@@ -383,8 +384,9 @@ public class PrometheusMeterRegistry extends MeterRegistry {
             collector.add(id,
                     (conventionName) -> Stream.of(new MicrometerCollector.Family<>(conventionName,
                             family -> new CounterSnapshot(family.metadata, family.dataPointSnapshots),
-                            getMetadata(conventionName, id.getDescription()), new CounterDataPointSnapshot(fc.count(),
-                                    Labels.of(tagKeys, tagValues), null, createdTimestampMillis))));
+                            getCounterMetadata(conventionName, id.getDescription()),
+                            new CounterDataPointSnapshot(fc.count(), Labels.of(tagKeys, tagValues), null,
+                                    createdTimestampMillis))));
         });
         return fc;
     }
@@ -442,7 +444,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
         long createdTimestampMillis = clock.wallTime();
         return new MicrometerCollector.Family<>(conventionName + suffix,
                 family -> new CounterSnapshot(family.metadata, family.dataPointSnapshots),
-                getMetadata(conventionName + suffix, id.getDescription()),
+                getCounterMetadata(conventionName + suffix, id.getDescription()),
                 new CounterDataPointSnapshot(value, labels, null, createdTimestampMillis));
     }
 
@@ -579,13 +581,35 @@ public class PrometheusMeterRegistry extends MeterRegistry {
         return new MetricMetadata(name, help, null);
     }
 
+    private MetricMetadata getCounterMetadata(String name, @Nullable String description) {
+        String help = prometheusConfig.descriptions() && description != null ? description : " ";
+        if (name.endsWith("_total")) {
+            return new MetricMetadata(name.substring(0, name.length() - "_total".length()), name, name, help, null);
+        }
+        return new MetricMetadata(name, help, null);
+    }
+
+    private MetricMetadata getInfoMetadata(String name, @Nullable String description) {
+        String help = prometheusConfig.descriptions() && description != null ? description : " ";
+        if (name.endsWith("_info")) {
+            return new MetricMetadata(name.substring(0, name.length() - "_info".length()), name, name, help, null);
+        }
+        return new MetricMetadata(name, help, null);
+    }
+
     private void applyToCollector(Meter.Id id, Consumer<MicrometerCollector> consumer) {
         collectorMap.compute(getConventionName(id), (name, existingCollector) -> {
             if (existingCollector == null) {
                 MicrometerCollector micrometerCollector = new MicrometerCollector(name, id);
                 consumer.accept(micrometerCollector);
-                registry.register(micrometerCollector);
-                return micrometerCollector;
+                try {
+                    registry.register(micrometerCollector);
+                    return micrometerCollector;
+                }
+                catch (IllegalArgumentException e) {
+                    meterRegistrationFailed(id, e.getMessage());
+                    return null;
+                }
             }
 
             if (!existingCollector.getOriginalId().getName().equals(id.getName())) {

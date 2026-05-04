@@ -16,6 +16,10 @@
 package io.micrometer.prometheusmetrics;
 
 import io.micrometer.core.instrument.Meter;
+import io.prometheus.metrics.model.snapshots.CounterSnapshot;
+import io.prometheus.metrics.model.snapshots.GaugeSnapshot;
+import io.prometheus.metrics.model.snapshots.HistogramSnapshot;
+import io.prometheus.metrics.model.snapshots.InfoSnapshot;
 import io.prometheus.metrics.model.registry.MultiCollector;
 import io.prometheus.metrics.model.registry.MetricType;
 import io.prometheus.metrics.model.snapshots.DataPointSnapshot;
@@ -76,46 +80,58 @@ class MicrometerCollector implements MultiCollector {
 
     @Override
     public List<String> getPrometheusNames() {
-        return Collections.singletonList(conventionName);
+        return metricSnapshots().stream()
+            .map(snapshot -> snapshot.getMetadata().getPrometheusName())
+            .distinct()
+            .collect(toList());
     }
 
     @Override
     public @Nullable MetricType getMetricType(String prometheusName) {
-        if (!conventionName.equals(prometheusName)) {
-            return null;
+        for (MetricSnapshot snapshot : metricSnapshots()) {
+            if (snapshot.getMetadata().getPrometheusName().equals(prometheusName)) {
+                if (snapshot instanceof CounterSnapshot) {
+                    return MetricType.COUNTER;
+                }
+                if (snapshot instanceof InfoSnapshot) {
+                    return MetricType.INFO;
+                }
+                if (snapshot instanceof HistogramSnapshot) {
+                    return MetricType.HISTOGRAM;
+                }
+                if (snapshot instanceof io.prometheus.metrics.model.snapshots.SummarySnapshot) {
+                    return MetricType.SUMMARY;
+                }
+                if (snapshot instanceof GaugeSnapshot) {
+                    return MetricType.GAUGE;
+                }
+                return MetricType.UNKNOWN;
+            }
         }
-        switch (originalMeterId.getType()) {
-            case COUNTER:
-                return MetricType.COUNTER;
-            case TIMER:
-            case LONG_TASK_TIMER:
-            case DISTRIBUTION_SUMMARY:
-                return MetricType.SUMMARY;
-            case GAUGE:
-            case OTHER:
-            default:
-                return MetricType.GAUGE;
-        }
+        return null;
     }
 
     @Override
     public @Nullable Set<String> getLabelNames(String prometheusName) {
-        if (!conventionName.equals(prometheusName)) {
-            return null;
-        }
         Set<String> names = new HashSet<>();
-        for (io.micrometer.core.instrument.Tag tag : originalMeterId.getConventionTags(new PrometheusNamingConvention())) {
-            names.add(tag.getKey());
+        for (MetricSnapshot snapshot : metricSnapshots()) {
+            if (snapshot.getMetadata().getPrometheusName().equals(prometheusName)) {
+                for (DataPointSnapshot dataPoint : snapshot.getDataPoints()) {
+                    dataPoint.getLabels().forEach(label -> names.add(label.getName()));
+                }
+            }
         }
-        return names;
+        return names.isEmpty() ? null : names;
     }
 
     @Override
     public @Nullable MetricMetadata getMetadata(String prometheusName) {
-        if (!conventionName.equals(prometheusName)) {
-            return null;
+        for (MetricSnapshot snapshot : metricSnapshots()) {
+            if (snapshot.getMetadata().getPrometheusName().equals(prometheusName)) {
+                return snapshot.getMetadata();
+            }
         }
-        return new MetricMetadata(conventionName, " ", null);
+        return null;
     }
 
     @Override
@@ -135,6 +151,10 @@ class MicrometerCollector implements MultiCollector {
             .collect(toList());
 
         return new MetricSnapshots(metricSnapshots);
+    }
+
+    private List<MetricSnapshot> metricSnapshots() {
+        return collect().stream().collect(toList());
     }
 
     interface Child {
