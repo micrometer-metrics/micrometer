@@ -418,68 +418,15 @@ public class PrometheusMeterRegistry extends MeterRegistry {
             List<MicrometerCollector.Descriptor> registrationDescriptors = new ArrayList<>();
             String name = conventionName(id);
             for (Measurement measurement : measurements) {
-                switch (measurement.getStatistic()) {
-                    case TOTAL:
-                    case TOTAL_TIME:
-                        registrationDescriptors.add(descriptor(MetricType.COUNTER,
-                                getCounterMetadata(name + "_sum", id.getDescription()), statKeys));
-                        break;
-                    case COUNT:
-                        registrationDescriptors.add(descriptor(MetricType.COUNTER,
-                                getCounterMetadata(name, id.getDescription()), statKeys));
-                        break;
-                    case MAX:
-                        registrationDescriptors.add(descriptor(MetricType.GAUGE,
-                                getMetadata(name + "_max", id.getDescription()), statKeys));
-                        break;
-                    case VALUE:
-                    case UNKNOWN:
-                        registrationDescriptors.add(descriptor(MetricType.GAUGE,
-                                getMetadata(name + "_value", id.getDescription()), statKeys));
-                        break;
-                    case ACTIVE_TASKS:
-                        registrationDescriptors.add(descriptor(MetricType.GAUGE,
-                                getMetadata(name + "_active_count", id.getDescription()), statKeys));
-                        break;
-                    case DURATION:
-                        registrationDescriptors.add(descriptor(MetricType.GAUGE,
-                                getMetadata(name + "_duration_sum", id.getDescription()), statKeys));
-                        break;
-                }
+                registrationDescriptors.add(customMeterDescriptor(id, name, measurement.getStatistic(), statKeys));
             }
             collector.add(id, (conventionName) -> {
                 Stream.Builder<MicrometerCollector.Family<?>> families = Stream.builder();
                 for (Measurement measurement : measurements) {
                     List<String> statValues = new ArrayList<>(tagValues);
                     statValues.add(measurement.getStatistic().toString());
-                    switch (measurement.getStatistic()) {
-                        case TOTAL:
-                        case TOTAL_TIME:
-                            families.add(customCounterFamily(id, conventionName, "_sum",
-                                    Labels.of(statKeys, statValues), measurement.getValue()));
-                            break;
-                        case COUNT:
-                            families.add(customCounterFamily(id, conventionName, "", Labels.of(statKeys, statValues),
-                                    measurement.getValue()));
-                            break;
-                        case MAX:
-                            families.add(customGaugeFamily(id, conventionName, "_max", Labels.of(statKeys, statValues),
-                                    measurement.getValue()));
-                            break;
-                        case VALUE:
-                        case UNKNOWN:
-                            families.add(customGaugeFamily(id, conventionName, "_value",
-                                    Labels.of(statKeys, statValues), measurement.getValue()));
-                            break;
-                        case ACTIVE_TASKS:
-                            families.add(customGaugeFamily(id, conventionName, "_active_count",
-                                    Labels.of(statKeys, statValues), measurement.getValue()));
-                            break;
-                        case DURATION:
-                            families.add(customGaugeFamily(id, conventionName, "_duration_sum",
-                                    Labels.of(statKeys, statValues), measurement.getValue()));
-                            break;
-                    }
+                    families.add(customMeterFamily(id, conventionName, measurement.getStatistic(),
+                            Labels.of(statKeys, statValues), measurement.getValue()));
                 }
                 return families.build();
             }, registrationDescriptors.toArray(new MicrometerCollector.Descriptor[0]));
@@ -488,21 +435,78 @@ public class PrometheusMeterRegistry extends MeterRegistry {
         return new DefaultMeter(id, type, measurements);
     }
 
-    private MicrometerCollector.Family<CounterDataPointSnapshot> customCounterFamily(Meter.Id id, String conventionName,
-            String suffix, Labels labels, double value) {
+    private MicrometerCollector.Descriptor customMeterDescriptor(
+            Meter.Id id, String conventionName, Statistic statistic, Collection<String> labelNames) {
+        CustomMeterMetric metric = customMeterMetric(id, conventionName, statistic);
+        return descriptor(metric.metricType, metric.metadata, labelNames);
+    }
+
+    private MicrometerCollector.Family<?> customMeterFamily(
+            Meter.Id id, String conventionName, Statistic statistic, Labels labels, double value) {
+        CustomMeterMetric metric = customMeterMetric(id, conventionName, statistic);
+        if (metric.metricType == MetricType.COUNTER) {
+            return customCounterFamily(metric, labels, value);
+        }
+        return customGaugeFamily(metric, labels, value);
+    }
+
+    private CustomMeterMetric customMeterMetric(Meter.Id id, String conventionName, Statistic statistic) {
+        switch (statistic) {
+            case TOTAL:
+            case TOTAL_TIME:
+                return new CustomMeterMetric(conventionName + "_sum", MetricType.COUNTER,
+                        getCounterMetadata(conventionName + "_sum", id.getDescription()));
+            case COUNT:
+                return new CustomMeterMetric(conventionName, MetricType.COUNTER,
+                        getCounterMetadata(conventionName, id.getDescription()));
+            case MAX:
+                return new CustomMeterMetric(conventionName + "_max", MetricType.GAUGE,
+                        getMetadata(conventionName + "_max", id.getDescription()));
+            case VALUE:
+            case UNKNOWN:
+                return new CustomMeterMetric(conventionName + "_value", MetricType.GAUGE,
+                        getMetadata(conventionName + "_value", id.getDescription()));
+            case ACTIVE_TASKS:
+                return new CustomMeterMetric(conventionName + "_active_count", MetricType.GAUGE,
+                        getMetadata(conventionName + "_active_count", id.getDescription()));
+            case DURATION:
+                return new CustomMeterMetric(conventionName + "_duration_sum", MetricType.GAUGE,
+                        getMetadata(conventionName + "_duration_sum", id.getDescription()));
+            default:
+                throw new IllegalArgumentException("Unsupported meter statistic: " + statistic);
+        }
+    }
+
+    private MicrometerCollector.Family<CounterDataPointSnapshot> customCounterFamily(
+            CustomMeterMetric metric, Labels labels, double value) {
         long createdTimestampMillis = clock.wallTime();
-        return new MicrometerCollector.Family<>(conventionName + suffix,
+        return new MicrometerCollector.Family<>(metric.name,
                 family -> new CounterSnapshot(family.metadata, family.dataPointSnapshots),
-                getCounterMetadata(conventionName + suffix, id.getDescription()),
+                metric.metadata,
                 new CounterDataPointSnapshot(value, labels, null, createdTimestampMillis));
     }
 
-    private MicrometerCollector.Family<GaugeDataPointSnapshot> customGaugeFamily(Meter.Id id, String conventionName,
-            String suffix, Labels labels, double value) {
-        return new MicrometerCollector.Family<>(conventionName + suffix,
+    private MicrometerCollector.Family<GaugeDataPointSnapshot> customGaugeFamily(
+            CustomMeterMetric metric, Labels labels, double value) {
+        return new MicrometerCollector.Family<>(metric.name,
                 family -> new GaugeSnapshot(family.metadata, family.dataPointSnapshots),
-                getMetadata(conventionName + suffix, id.getDescription()),
+                metric.metadata,
                 new GaugeDataPointSnapshot(value, labels, null));
+    }
+
+    private static class CustomMeterMetric {
+
+        private final String name;
+
+        private final MetricType metricType;
+
+        private final MetricMetadata metadata;
+
+        private CustomMeterMetric(String name, MetricType metricType, MetricMetadata metadata) {
+            this.name = name;
+            this.metricType = metricType;
+            this.metadata = metadata;
+        }
     }
 
     @Override
