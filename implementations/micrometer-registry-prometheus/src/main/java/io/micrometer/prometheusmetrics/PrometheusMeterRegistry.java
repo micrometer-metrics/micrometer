@@ -659,17 +659,9 @@ public class PrometheusMeterRegistry extends MeterRegistry {
 
     private MetricMetadata getCounterMetadata(String name, String originalName, @Nullable String description) {
         String help = prometheusConfig.descriptions() && description != null ? description : " ";
-        String baseName = name;
-        if (originalName.endsWith(".bucket")) {
-            baseName = stripSuffix(name, "_bucket");
-        }
-        else if (originalName.endsWith(".created")) {
-            baseName = stripSuffix(name, "_created");
-        }
-        else if (originalName.endsWith(".info")) {
-            baseName = stripSuffix(name, "_info");
-        }
-        else if (name.endsWith("_total")) {
+        String baseName = normalizeBaseName(name, originalName, ".bucket", "_bucket", ".created", "_created",
+                ".info", "_info");
+        if (baseName.equals(name)) {
             baseName = stripSuffix(name, "_total");
         }
         return new MetricMetadata(baseName, name, originalName, help, null);
@@ -677,10 +669,17 @@ public class PrometheusMeterRegistry extends MeterRegistry {
 
     private MetricMetadata getInfoMetadata(String name, String originalName, @Nullable String description) {
         String help = prometheusConfig.descriptions() && description != null ? description : " ";
-        if (name.endsWith("_info")) {
-            return new MetricMetadata(stripSuffix(name, "_info"), name, originalName, help, null);
+        return new MetricMetadata(normalizeBaseName(name, originalName, ".info", "_info"), name, originalName, help,
+                null);
+    }
+
+    private static String normalizeBaseName(String name, String originalName, String... suffixMappings) {
+        for (int i = 0; i < suffixMappings.length; i += 2) {
+            if (originalName.endsWith(suffixMappings[i])) {
+                return stripSuffix(name, suffixMappings[i + 1]);
+            }
         }
-        return new MetricMetadata(name, name, originalName, help, null);
+        return name;
     }
 
     private static String stripSuffix(String name, String suffix) {
