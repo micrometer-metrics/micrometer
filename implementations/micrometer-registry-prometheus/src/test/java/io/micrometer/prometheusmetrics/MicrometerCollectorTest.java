@@ -21,11 +21,13 @@ import io.micrometer.core.instrument.Metrics;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.config.NamingConvention;
+import io.prometheus.metrics.model.registry.MetricType;
 import io.prometheus.metrics.model.snapshots.CounterSnapshot;
 import io.prometheus.metrics.model.snapshots.Labels;
 import io.prometheus.metrics.model.snapshots.MetricMetadata;
 import org.junit.jupiter.api.Test;
 
+import java.util.Objects;
 import java.util.stream.Stream;
 
 import static java.util.Arrays.asList;
@@ -150,6 +152,26 @@ class MicrometerCollectorTest {
                         new MetricMetadata(conventionName), sample2)));
 
         assertThat(collector.collect().get(0).getDataPoints()).hasSize(2);
+    }
+
+    @Test
+    void registrationDescriptorUsesPrometheusFamilyName() {
+        Meter.Id id = Metrics.counter("my.counter").getId();
+        MicrometerCollector collector = new MicrometerCollector(id.getConventionName(convention), id);
+
+        CounterSnapshot.CounterDataPointSnapshot sample = new CounterSnapshot.CounterDataPointSnapshot(1.0,
+                Labels.of("k", "v"), null, 0);
+        MetricMetadata metadata = new MetricMetadata("my_counter", "help");
+
+        collector.add(id,
+                (conventionName) -> Stream.of(new MicrometerCollector.Family<>("my_counter_total",
+                        family -> new CounterSnapshot(family.metadata, family.dataPointSnapshots), metadata, sample)),
+                new MicrometerCollector.Descriptor("my_counter_total", MetricType.COUNTER, metadata, asList("k")));
+
+        assertThat(collector.getPrometheusNames()).containsExactly("my_counter_total");
+        assertThat(collector.getMetricType("my_counter_total")).isEqualTo(MetricType.COUNTER);
+        assertThat(collector.getLabelNames("my_counter_total")).containsExactly("k");
+        assertThat(Objects.requireNonNull(collector.getMetadata("my_counter_total")).getName()).isEqualTo("my_counter");
     }
 
 }

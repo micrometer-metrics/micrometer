@@ -155,8 +155,8 @@ class MicrometerCollector implements MultiCollector {
 
         private final Set<String> labelNames;
 
-        Descriptor(MetricType metricType, MetricMetadata metadata, Collection<String> labelNames) {
-            this.prometheusName = metadata.getPrometheusName();
+        Descriptor(String prometheusName, MetricType metricType, MetricMetadata metadata, Collection<String> labelNames) {
+            this.prometheusName = prometheusName;
             this.metricType = metricType;
             this.metadata = metadata;
             this.labelNames = new LinkedHashSet<>(labelNames);
