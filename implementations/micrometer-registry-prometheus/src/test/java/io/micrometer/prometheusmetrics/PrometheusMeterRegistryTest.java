@@ -91,6 +91,19 @@ class PrometheusMeterRegistryTest {
     }
 
     @Test
+    void functionTimerCollisionUsesPrometheusRegistrationMetadata() {
+        registry.throwExceptionOnRegistrationFailure();
+
+        registry.more().timer("test", Tags.empty(), this, o -> 1, o -> 2, TimeUnit.SECONDS);
+
+        assertThatThrownBy(
+                () -> Gauge.builder("test.seconds", new AtomicInteger(42), AtomicInteger::get).register(registry))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("same Prometheus name (test_seconds)")
+            .hasMessageContaining("would fail with an exception on scrape");
+    }
+
+    @Test
     @Disabled("We don't detect this situation yet; scrape will fail")
     void differentTypesThatProduceSamePrometheusMetricFamilyFailsToRegister() {
         AtomicBoolean failed = new AtomicBoolean(false);
