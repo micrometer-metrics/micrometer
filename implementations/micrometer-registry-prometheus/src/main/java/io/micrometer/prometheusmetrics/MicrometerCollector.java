@@ -41,6 +41,7 @@ import static java.util.stream.Collectors.toList;
 class MicrometerCollector implements MultiCollector {
 
     private final Map<Meter.Id, Child> children = new ConcurrentHashMap<>();
+
     private final Map<Meter.Id, List<Descriptor>> descriptors = new ConcurrentHashMap<>();
 
     private final String conventionName;
@@ -79,10 +80,7 @@ class MicrometerCollector implements MultiCollector {
 
     @Override
     public List<String> getPrometheusNames() {
-        return registrationDescriptors().stream()
-            .map(Descriptor::getPrometheusName)
-            .distinct()
-            .collect(toList());
+        return registrationDescriptors().stream().map(Descriptor::getPrometheusName).distinct().collect(toList());
     }
 
     @Override
@@ -155,7 +153,8 @@ class MicrometerCollector implements MultiCollector {
 
         private final Set<String> labelNames;
 
-        Descriptor(String prometheusName, MetricType metricType, MetricMetadata metadata, Collection<String> labelNames) {
+        Descriptor(String prometheusName, MetricType metricType, MetricMetadata metadata,
+                Collection<String> labelNames) {
             this.prometheusName = prometheusName;
             this.metricType = metricType;
             this.metadata = metadata;
@@ -177,6 +176,7 @@ class MicrometerCollector implements MultiCollector {
         Set<String> getLabelNames() {
             return labelNames;
         }
+
     }
 
     static class Family<T extends DataPointSnapshot> {
