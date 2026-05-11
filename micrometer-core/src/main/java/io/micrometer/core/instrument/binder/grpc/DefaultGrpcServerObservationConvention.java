@@ -48,14 +48,18 @@ public class DefaultGrpcServerObservationConvention implements GrpcServerObserva
     public KeyValues getLowCardinalityKeyValues(GrpcServerObservationContext context) {
         KeyValue statusCodeKeyValue = context.getStatusCode() != null
                 ? LowCardinalityKeyNames.STATUS_CODE.withValue(context.getStatusCode().name()) : STATUS_CODE_UNKNOWN;
+        return KeyValues.of(statusCodeKeyValue, LowCardinalityKeyNames.METHOD.withValue(context.getMethodName()),
+                LowCardinalityKeyNames.SERVICE.withValue(context.getServiceName()),
+                LowCardinalityKeyNames.METHOD_TYPE.withValue(context.getMethodType().name()));
+    }
+
+    @Override
+    public KeyValues getHighCardinalityKeyValues(GrpcServerObservationContext context) {
         KeyValue peerNameKeyValue = context.getPeerName() != null
                 ? LowCardinalityKeyNames.PEER_NAME.withValue(context.getPeerName()) : PEER_NAME_UNKNOWN;
         KeyValue peerPortKeyValue = context.getPeerPort() != null
                 ? LowCardinalityKeyNames.PEER_PORT.withValue(context.getPeerPort().toString()) : PEER_PORT_UNKNOWN;
-        return KeyValues.of(statusCodeKeyValue, peerNameKeyValue, peerPortKeyValue,
-                LowCardinalityKeyNames.METHOD.withValue(context.getMethodName()),
-                LowCardinalityKeyNames.SERVICE.withValue(context.getServiceName()),
-                LowCardinalityKeyNames.METHOD_TYPE.withValue(context.getMethodType().name()));
+        return KeyValues.of(peerNameKeyValue, peerPortKeyValue);
     }
 
 }

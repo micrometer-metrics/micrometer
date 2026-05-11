@@ -173,9 +173,11 @@ class GrpcObservationTest {
             assertThat(observationRegistry).hasAnObservation(observationContextAssert -> {
                 observationContextAssert.hasNameEqualTo("grpc.client");
                 assertCommonKeyValueNames(observationContextAssert);
+                assertClientKeyValues(observationContextAssert);
             }).hasAnObservation(observationContextAssert -> {
                 observationContextAssert.hasNameEqualTo("grpc.server");
                 assertCommonKeyValueNames(observationContextAssert);
+                assertServerKeyValues(observationContextAssert);
             });
             // end::assertion[]
             verifyHeaders();
@@ -357,6 +359,7 @@ class GrpcObservationTest {
                 observationContextAssert.doesNotHaveError();
                 observationContextAssert.hasNameEqualTo("grpc.client");
                 assertCommonKeyValueNames(observationContextAssert);
+                assertClientKeyValues(observationContextAssert);
             });
         }
 
@@ -397,9 +400,11 @@ class GrpcObservationTest {
         assertThat(observationRegistry).hasAnObservation(observationContextAssert -> {
             observationContextAssert.hasNameEqualTo("grpc.client");
             assertCommonKeyValueNames(observationContextAssert);
+            assertClientKeyValues(observationContextAssert);
         }).hasAnObservation(observationContextAssert -> {
             observationContextAssert.hasNameEqualTo("grpc.server");
             assertCommonKeyValueNames(observationContextAssert);
+            assertServerKeyValues(observationContextAssert);
         });
     }
 
@@ -512,6 +517,7 @@ class GrpcObservationTest {
             assertThat(observationRegistry).hasAnObservation(observationContextAssert -> {
                 observationContextAssert.hasNameEqualTo("grpc.server").hasError();
                 assertCommonKeyValueNames(observationContextAssert);
+                assertServerKeyValues(observationContextAssert);
             });
         }
 
@@ -635,9 +641,9 @@ class GrpcObservationTest {
             assertThat(serverContext.getMethodName()).isEqualTo(methodName);
             assertThat(serverContext.getFullMethodName()).isEqualTo(contextualName);
             assertThat(serverContext.getMethodType()).isEqualTo(methodType);
-            assertThat(serverContext.getAuthority()).isEqualTo("localhost");
-            assertThat(serverContext.getPeerName()).isEqualTo("localhost");
-            assertThat(serverContext.getPeerPort()).isEqualTo(-1);
+            assertThat(serverContext.getAuthority()).isEqualTo("test-host:1234");
+            assertThat(serverContext.getPeerName()).isEqualTo("test-host");
+            assertThat(serverContext.getPeerPort()).isEqualTo(1234);
         });
     }
 
@@ -649,6 +655,7 @@ class GrpcObservationTest {
             assertThat(clientContext.getMethodName()).isEqualTo(methodName);
             assertThat(clientContext.getFullMethodName()).isEqualTo(contextualName);
             assertThat(clientContext.getMethodType()).isEqualTo(methodType);
+            // TODO: this should be test-host:1234, test interceptor needs a fix
             assertThat(clientContext.getAuthority()).isEqualTo("localhost");
             assertThat(clientContext.getPeerName()).isEqualTo("localhost");
             assertThat(clientContext.getPeerPort()).isEqualTo(-1);
@@ -663,6 +670,21 @@ class GrpcObservationTest {
             .hasLowCardinalityKeyValueWithKey(GrpcObservationDocumentation.LowCardinalityKeyNames.SERVICE.asString())
             .hasLowCardinalityKeyValueWithKey(
                     GrpcObservationDocumentation.LowCardinalityKeyNames.STATUS_CODE.asString());
+    }
+
+    void assertClientKeyValues(ObservationContextAssert<?> observationContextAssert) {
+        // TODO: value should be asserted, test interceptor needs a fix
+        observationContextAssert
+            .hasLowCardinalityKeyValueWithKey(GrpcObservationDocumentation.LowCardinalityKeyNames.PEER_NAME.asString())
+            .hasLowCardinalityKeyValueWithKey(GrpcObservationDocumentation.LowCardinalityKeyNames.PEER_PORT.asString());
+    }
+
+    void assertServerKeyValues(ObservationContextAssert<?> observationContextAssert) {
+        observationContextAssert
+            .hasHighCardinalityKeyValue(GrpcObservationDocumentation.LowCardinalityKeyNames.PEER_NAME.asString(),
+                    "test-host")
+            .hasHighCardinalityKeyValue(GrpcObservationDocumentation.LowCardinalityKeyNames.PEER_PORT.asString(),
+                    "1234");
     }
 
     // GRPC service extending SimpleService and provides echo implementation.
@@ -836,13 +858,15 @@ class GrpcObservationTest {
 
     static class ClientHeaderInterceptor implements ClientInterceptor {
 
+        private static final String AUTHORITY = "test-host:1234";
+
         private static final Metadata.Key<String> CLIENT_KEY = Metadata.Key.of("client",
                 Metadata.ASCII_STRING_MARSHALLER);
 
         @Override
         public <ReqT, RespT> ClientCall<ReqT, RespT> interceptCall(MethodDescriptor<ReqT, RespT> method,
                 CallOptions callOptions, Channel next) {
-            ClientCall<ReqT, RespT> call = next.newCall(method, callOptions);
+            ClientCall<ReqT, RespT> call = next.newCall(method, callOptions.withAuthority(AUTHORITY));
             return new SimpleForwardingClientCall<>(call) {
                 @Override
                 public void start(ClientCall.Listener<RespT> responseListener, Metadata headers) {
