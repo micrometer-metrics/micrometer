@@ -119,7 +119,7 @@ guava = { module = "com.google.guava:guava", version.ref = "guava" }
 guice = { module = "com.google.inject:guice", version.ref = "guice" }
 h2 = { module = "com.h2database:h2", version.ref = "h2" }
 # latest hazelcast version to run integration tests with
-hazelcast = { module = "com.hazelcast:hazelcast", version = "5.6.0" }
+hazelcast = { module = "com.hazelcast:hazelcast", version = "5.7.0" }
 hdrhistogram = { module = "org.hdrhistogram:HdrHistogram", version.ref = "hdrhistogram" }
 hibernateEntitymanager = { module = "org.hibernate:hibernate-entitymanager", version.ref = "hibernate" }
 hsqldb = { module = "org.hsqldb:hsqldb", version.ref = "hsqldb" }
