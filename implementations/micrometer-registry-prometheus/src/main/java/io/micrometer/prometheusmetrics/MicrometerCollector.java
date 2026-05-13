@@ -16,15 +16,24 @@
 package io.micrometer.prometheusmetrics;
 
 import io.micrometer.core.instrument.Meter;
-import io.prometheus.metrics.model.registry.MultiCollector;
 import io.prometheus.metrics.model.registry.MetricType;
+import io.prometheus.metrics.model.registry.MultiCollector;
 import io.prometheus.metrics.model.snapshots.DataPointSnapshot;
+import io.prometheus.metrics.model.snapshots.MetricFamilyDescriptor;
 import io.prometheus.metrics.model.snapshots.MetricMetadata;
 import io.prometheus.metrics.model.snapshots.MetricSnapshot;
 import io.prometheus.metrics.model.snapshots.MetricSnapshots;
 import org.jspecify.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.stream.Stream;
@@ -42,7 +51,7 @@ class MicrometerCollector implements MultiCollector {
 
     private final Map<Meter.Id, Child> children = new ConcurrentHashMap<>();
 
-    private final Map<Meter.Id, List<Descriptor>> descriptors = new ConcurrentHashMap<>();
+    private final Map<Meter.Id, List<RegisteredFamily>> registeredFamilies = new ConcurrentHashMap<>();
 
     private final String conventionName;
 
@@ -56,14 +65,14 @@ class MicrometerCollector implements MultiCollector {
         this.originalMeterId = id;
     }
 
-    public void add(Meter.Id id, Child child, Descriptor... descriptors) {
+    public void add(Meter.Id id, Child child, RegisteredFamily... registeredFamilies) {
         children.put(id, child);
-        this.descriptors.put(id, Arrays.asList(descriptors));
+        this.registeredFamilies.put(id, Arrays.asList(registeredFamilies));
     }
 
     public void remove(Meter.Id id) {
         children.remove(id);
-        descriptors.remove(id);
+        registeredFamilies.remove(id);
     }
 
     public boolean isEmpty() {
@@ -80,14 +89,17 @@ class MicrometerCollector implements MultiCollector {
 
     @Override
     public List<String> getPrometheusNames() {
-        return registrationDescriptors().stream().map(Descriptor::getPrometheusName).distinct().collect(toList());
+        return registrationFamilies().stream()
+            .map(RegisteredFamily::getPrometheusName)
+            .distinct()
+            .collect(toList());
     }
 
     @Override
     public @Nullable MetricType getMetricType(String prometheusName) {
-        for (Descriptor descriptor : registrationDescriptors()) {
-            if (descriptor.getPrometheusName().equals(prometheusName)) {
-                return descriptor.getMetricType();
+        for (RegisteredFamily family : registrationFamilies()) {
+            if (family.getPrometheusName().equals(prometheusName)) {
+                return family.getMetricType();
             }
         }
         return null;
@@ -96,9 +108,9 @@ class MicrometerCollector implements MultiCollector {
     @Override
     public @Nullable Set<String> getLabelNames(String prometheusName) {
         Set<String> names = new HashSet<>();
-        for (Descriptor descriptor : registrationDescriptors()) {
-            if (descriptor.getPrometheusName().equals(prometheusName)) {
-                names.addAll(descriptor.getLabelNames());
+        for (RegisteredFamily family : registrationFamilies()) {
+            if (family.getPrometheusName().equals(prometheusName)) {
+                names.addAll(family.getLabelNames());
             }
         }
         return names.isEmpty() ? null : names;
@@ -106,9 +118,9 @@ class MicrometerCollector implements MultiCollector {
 
     @Override
     public @Nullable MetricMetadata getMetadata(String prometheusName) {
-        for (Descriptor descriptor : registrationDescriptors()) {
-            if (descriptor.getPrometheusName().equals(prometheusName)) {
-                return descriptor.getMetadata();
+        for (RegisteredFamily family : registrationFamilies()) {
+            if (family.getPrometheusName().equals(prometheusName)) {
+                return family.getMetadata();
             }
         }
         return null;
@@ -133,8 +145,8 @@ class MicrometerCollector implements MultiCollector {
         return new MetricSnapshots(metricSnapshots);
     }
 
-    private List<Descriptor> registrationDescriptors() {
-        return descriptors.values().stream().flatMap(Collection::stream).collect(toList());
+    private List<RegisteredFamily> registrationFamilies() {
+        return registeredFamilies.values().stream().flatMap(Collection::stream).collect(toList());
     }
 
     interface Child {
@@ -143,57 +155,42 @@ class MicrometerCollector implements MultiCollector {
 
     }
 
-    static class Descriptor {
+    static final class RegisteredFamily {
 
-        private final String prometheusName;
+        private final MetricFamilyDescriptor descriptor;
 
-        private final MetricType metricType;
-
-        private final MetricMetadata metadata;
-
-        private final Set<String> labelNames;
-
-        Descriptor(String prometheusName, MetricType metricType, MetricMetadata metadata,
-                Collection<String> labelNames) {
-            this.prometheusName = prometheusName;
-            this.metricType = metricType;
-            this.metadata = metadata;
-            this.labelNames = new LinkedHashSet<>(labelNames);
+        RegisteredFamily(MetricFamilyDescriptor descriptor) {
+            this.descriptor = descriptor;
         }
 
         String getPrometheusName() {
-            return prometheusName;
+            return descriptor.getPrometheusName();
         }
 
         MetricType getMetricType() {
-            return metricType;
-        }
-
-        MetricMetadata getMetadata() {
-            return metadata;
+            return descriptor.getType();
         }
 
         Set<String> getLabelNames() {
-            return labelNames;
+            return descriptor.getLabelNames();
         }
 
+        MetricMetadata getMetadata() {
+            return descriptor.getMetadata();
+        }
     }
 
     static class Family<T extends DataPointSnapshot> {
 
         final String conventionName;
 
-        final MetricMetadata metadata;
-
         final List<T> dataPointSnapshots = new ArrayList<>();
 
         final Function<Family<T>, MetricSnapshot> metricSnapshotFactory;
 
-        Family(String conventionName, Function<Family<T>, MetricSnapshot> metricSnapshotFactory,
-                MetricMetadata metadata, T... dataPointSnapshots) {
+        Family(String conventionName, Function<Family<T>, MetricSnapshot> metricSnapshotFactory, T... dataPointSnapshots) {
             this.conventionName = conventionName;
             this.metricSnapshotFactory = metricSnapshotFactory;
-            this.metadata = metadata;
             Collections.addAll(this.dataPointSnapshots, dataPointSnapshots);
         }
 
