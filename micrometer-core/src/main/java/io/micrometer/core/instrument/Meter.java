@@ -18,7 +18,6 @@ package io.micrometer.core.instrument;
 import io.micrometer.core.annotation.Incubating;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.distribution.HistogramGauges;
-import org.jspecify.annotations.NullUnmarked;
 import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -86,16 +85,15 @@ public interface Meter {
      * @param visitFunctionCounter function to apply for {@link FunctionCounter}
      * @param visitFunctionTimer function to apply for {@link FunctionTimer}
      * @param visitMeter function to apply as a fallback
-     * @param <T> return type of function to apply
+     * @param <T> return type of function to apply, possibly nullable
      * @return return value from the applied function
      * @since 1.1.0
      */
-    @NullUnmarked // I can't figure out the magical combination that makes NullAway happy
-                  // here
-    default <T> T match(Function<Gauge, T> visitGauge, Function<Counter, T> visitCounter, Function<Timer, T> visitTimer,
-            Function<DistributionSummary, T> visitSummary, Function<LongTaskTimer, T> visitLongTaskTimer,
-            Function<TimeGauge, T> visitTimeGauge, Function<FunctionCounter, T> visitFunctionCounter,
-            Function<FunctionTimer, T> visitFunctionTimer, Function<Meter, T> visitMeter) {
+    default <T extends @Nullable Object> T match(Function<Gauge, T> visitGauge, Function<Counter, T> visitCounter,
+            Function<Timer, T> visitTimer, Function<DistributionSummary, T> visitSummary,
+            Function<LongTaskTimer, T> visitLongTaskTimer, Function<TimeGauge, T> visitTimeGauge,
+            Function<FunctionCounter, T> visitFunctionCounter, Function<FunctionTimer, T> visitFunctionTimer,
+            Function<Meter, T> visitMeter) {
         if (this instanceof TimeGauge) {
             return visitTimeGauge.apply((TimeGauge) this);
         }
