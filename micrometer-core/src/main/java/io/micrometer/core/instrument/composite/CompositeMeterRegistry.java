@@ -227,6 +227,13 @@ public class CompositeMeterRegistry extends MeterRegistry {
 
         nonCompositeDescendants = descendants;
 
+        for (MeterRegistry nonCompositeDescendant : nonCompositeDescendants) {
+            Config config = nonCompositeDescendant.config();
+            if (config != null) { // for tests
+                config.merge(config());
+            }
+        }
+
         lock(parentLock, () -> parents.forEach(CompositeMeterRegistry::updateDescendants));
     }
 

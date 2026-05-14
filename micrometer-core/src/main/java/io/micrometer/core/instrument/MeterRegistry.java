@@ -849,6 +849,24 @@ public abstract class MeterRegistry {
             return this;
         }
 
+        MeterFilter[] getFilters() {
+            return filters;
+        }
+
+        /**
+         * Merges the provided configuration with this one.
+         * @param config configuration to merge
+         * @return this configuration with merged elements from the provided configuration
+         * @since 1.9.18
+         */
+        public Config merge(Config config) {
+            for (MeterFilter filter : config.getFilters()) {
+                meterFilter(filter);
+            }
+            // TODO: What else should we merge?
+            return this;
+        }
+
         /**
          * @return The pause detector that is currently in effect.
          */
