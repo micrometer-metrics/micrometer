@@ -55,7 +55,7 @@ class OkHttpMetricsEventListenerTest {
 
     private static final Function<Request, String> URI_MAPPER = req -> URI_EXAMPLE_VALUE;
 
-    private MeterRegistry registry = new SimpleMeterRegistry(SimpleConfig.DEFAULT, new MockClock());
+    private final MeterRegistry registry = new SimpleMeterRegistry(SimpleConfig.DEFAULT, new MockClock());
 
     private OkHttpClient client = new OkHttpClient.Builder()
         .eventListener(OkHttpMetricsEventListener.builder(registry, "okhttp.requests")
@@ -234,34 +234,6 @@ class OkHttpMetricsEventListenerTest {
             .timer()
             .getId()
             .getTags()).doesNotContain(Tag.of("host", "localhost"));
-    }
-
-    @Test
-    void timeWhenRequestIsNull() {
-        OkHttpMetricsEventListener listener = OkHttpMetricsEventListener.builder(registry, "okhttp.requests").build();
-        OkHttpMetricsEventListener.CallState state = new OkHttpMetricsEventListener.CallState(
-                registry.config().clock().monotonicTime(), null);
-        listener.time(state);
-
-        assertThat(registry.get("okhttp.requests")
-            .tags("uri", "UNKNOWN", "target.host", "UNKNOWN", "target.port", "UNKNOWN", "target.scheme", "UNKNOWN")
-            .timer()
-            .count()).isEqualTo(1L);
-    }
-
-    @Test
-    void timeWhenRequestIsNullAndRequestTagKeysAreGiven() {
-        OkHttpMetricsEventListener listener = OkHttpMetricsEventListener.builder(registry, "okhttp.requests")
-            .requestTagKeys("tag1", "tag2")
-            .build();
-        OkHttpMetricsEventListener.CallState state = new OkHttpMetricsEventListener.CallState(
-                registry.config().clock().monotonicTime(), null);
-        listener.time(state);
-
-        assertThat(registry.get("okhttp.requests")
-            .tags("uri", "UNKNOWN", "tag1", "UNKNOWN", "tag2", "UNKNOWN")
-            .timer()
-            .count()).isEqualTo(1L);
     }
 
     private void testRequestTags(@WiremockResolver.Wiremock WireMockServer server, Request request) throws IOException {

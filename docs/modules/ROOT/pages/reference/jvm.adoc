@@ -55,6 +55,7 @@ another. The reported value underestimates the actual total number of steals whe
 * `executor.running` (`Gauge`): An estimate of the number of worker threads that are not blocked but are waiting to join tasks or for other managed synchronization threads.
 * `executor.parallelism` (`Gauge`): The targeted parallelism level of this pool.
 * `executor.pool.size` (`Gauge`): The current number of threads in the pool.
+* `executor.delayed` (`Gauge`): An estimate of the number of delayed (including periodic) tasks scheduled but not yet ready for execution. Available on Java 25+.
 
 To use the following `ExecutorService` instances, `--add-opens java.base/java.util.concurrent=ALL-UNNAMED` is required:
 

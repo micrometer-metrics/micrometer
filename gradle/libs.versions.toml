@@ -1,24 +1,24 @@
 [versions]
 activemq-artemis = "2.53.0"
 application-insights = "2.6.4"
-archunit = "1.4.1"
+archunit = "1.4.2"
 asmForPlugins = "7.3.1"
 aspectjweaver = "1.9.25.1"
 assertj = "3.27.7"
 awaitility = "4.3.0"
 caffeine = "2.9.3"
 caffeine3 = "3.2.3"
-cloudwatch2 = "2.42.22"
+cloudwatch2 = "2.44.5"
 colt = "1.2.0"
 dagger = "2.59.2"
 dropwizard-metrics = "4.2.38"
 dropwizard-metrics5 = "5.0.6"
-dynatrace-utils = "2.4.0"
+dynatrace-utils = "2.5.0"
 ehcache2 = "2.10.9.2"
-ehcache3 = "3.11.1"
+ehcache3 = "3.12.0"
 gmetric4j = "1.0.10"
-google-cloud-monitoring = "3.89.0"
-grpc = "1.80.0"
+google-cloud-monitoring = "3.93.0"
+grpc = "1.81.0"
 grpcKotlin = "1.4.3"
 guava = "32.1.3-jre"
 guice = "5.1.0"
@@ -29,12 +29,12 @@ hibernate = "5.6.15.Final"
 hsqldb = "2.7.4"
 httpcomponents-async = "4.1.5"
 httpcomponents-client = "4.5.14"
-httpcomponents-client5 = "5.6"
+httpcomponents-client5 = "5.6.1"
 # metrics are better with https://github.com/Netflix/Hystrix/pull/1568 introduced
 # in hystrix 1.5.12, but Netflix re-released 1.5.11 as 1.5.18 late in 2018.
 # <=1.5.11 or 1.5.18 doesn't break with Micrometer, but open metrics won't be correct necessarily.
 hystrix = "1.5.12"
-jackson-databind = "2.21.2"
+jackson-databind = "2.21.3"
 javax-cache = "1.1.1"
 javax-inject = "1"
 jaxb = "2.3.1"
@@ -44,32 +44,32 @@ jetty12 = "12.0.6"
 jersey3 = "3.1.11"
 jmh = "1.37"
 # latest version of jOOQ to run tests against
-jooqNew = "3.21.1"
+jooqNew = "3.21.4"
 jsr107 = "1.1.1"
 jsr305 = "3.0.2"
-junit = "5.14.3"
-kafka = "3.9.2"
+junit = "5.14.4"
+kafka = "2.8.2"
 kafka-junit = "4.2.10"
 latency-utils = "2.0.3"
 logback-latest = "1.5.32"
-log4j = "2.25.3"
+log4j = "2.26.0"
 maven-resolver = "1.9.27"
 mockito5 = "5.18.0"
 mongo = "4.11.5"
-netty = "4.2.12.Final"
+netty = "4.2.13.Final"
 newrelic-api = "5.14.0"
 # Kotlin 1.7 sample will fail from OkHttp 4.12.0 due to okio dependency being a Kotlin 1.9 module
 okhttp = "4.12.0"
-postgre = "42.7.10"
+postgre = "42.7.11"
 prometheus = "1.5.1"
 prometheusSimpleClient = "0.16.0"
 reactor = "2022.0.22"
 rest-assured = "5.5.7"
 signalfx = "1.0.49"
 slf4j = "1.7.36"
-spectator-atlas = "1.9.5"
+spectator-atlas = "1.9.6"
 spring5 = "5.3.39"
-spring6 = "6.2.17"
+spring6 = "6.2.18"
 spring-javaformat = "0.0.47"
 testcontainers = "1.21.4"
 tomcat = "8.5.100"
@@ -102,13 +102,13 @@ dropwizardMetricsCore5 = { module = "io.dropwizard.metrics5:metrics-core", versi
 dynatraceUtils = { module = "com.dynatrace.metric.util:dynatrace-metric-utils-java", version.ref = "dynatrace-utils" }
 ehcache2 = { module = "net.sf.ehcache:ehcache", version.ref = "ehcache2" }
 ehcache3 = { module = "org.ehcache:ehcache", version.ref = "ehcache3" }
-errorprone = { module = "com.google.errorprone:error_prone_core", version = "2.48.0" }
+errorprone = { module = "com.google.errorprone:error_prone_core", version = "2.49.0" }
 felixFramework = "org.apache.felix:org.apache.felix.framework:7.0.5"
-felixScr = "org.apache.felix:org.apache.felix.scr:2.2.14"
+felixScr = "org.apache.felix:org.apache.felix.scr:2.2.18"
 gmetric4j = { module = "info.ganglia.gmetric4j:gmetric4j", version.ref = "gmetric4j" }
-googleCloudLibrariesBom = { module = "com.google.cloud:libraries-bom", version = "26.79.0" }
+googleCloudLibrariesBom = { module = "com.google.cloud:libraries-bom", version = "26.82.0" }
 googleCloudMonitoring = { module = "com.google.cloud:google-cloud-monitoring", version.ref = "google-cloud-monitoring" }
-googleOauth2Http = { module = "com.google.auth:google-auth-library-oauth2-http", version = "1.43.0"}
+googleOauth2Http = { module = "com.google.auth:google-auth-library-oauth2-http", version = "1.47.0"}
 grpcApi = { module = "io.grpc:grpc-api", version.ref = "grpc" }
 grpcCore = { module = "io.grpc:grpc-core", version.ref = "grpc" }
 grpcInprocess = { module = "io.grpc:grpc-inprocess", version.ref = "grpc" }
@@ -119,7 +119,7 @@ guava = { module = "com.google.guava:guava", version.ref = "guava" }
 guice = { module = "com.google.inject:guice", version.ref = "guice" }
 h2 = { module = "com.h2database:h2", version.ref = "h2" }
 # latest hazelcast version to run integration tests with
-hazelcast = { module = "com.hazelcast:hazelcast", version = "5.6.0" }
+hazelcast = { module = "com.hazelcast:hazelcast", version = "5.7.0" }
 hdrhistogram = { module = "org.hdrhistogram:HdrHistogram", version.ref = "hdrhistogram" }
 hibernateEntitymanager = { module = "org.hibernate:hibernate-entitymanager", version.ref = "hibernate" }
 hsqldb = { module = "org.hsqldb:hsqldb", version.ref = "hsqldb" }
@@ -175,13 +175,13 @@ logbackLatest = {module = "ch.qos.logback:logback-classic", version.ref = "logba
 log4j = { module = "org.apache.logging.log4j:log4j-core", version.ref = "log4j" }
 mavenResolverConnectorBasic = { module = "org.apache.maven.resolver:maven-resolver-connector-basic", version.ref = "maven-resolver" }
 mavenResolverTransportHttp = { module = "org.apache.maven.resolver:maven-resolver-transport-http", version.ref = "maven-resolver" }
-mavenResolverProvider = { module = "org.apache.maven:maven-resolver-provider", version = "3.9.14" }
+mavenResolverProvider = { module = "org.apache.maven:maven-resolver-provider", version = "3.9.15" }
 mockitoCore5 = { module = "org.mockito:mockito-core", version.ref = "mockito5" }
 mongoSync = { module = "org.mongodb:mongodb-driver-sync", version.ref = "mongo" }
 nettyBom = { module = "io.netty:netty-bom", version.ref = "netty" }
-nettyBom42 = { module = "io.netty:netty-bom", version = "4.2.12.Final" }
+nettyBom42 = { module = "io.netty:netty-bom", version = "4.2.13.Final" }
 newrelicApi = { module = "com.newrelic.agent.java:newrelic-api", version.ref = "newrelic-api" }
-nullAway = { module = "com.uber.nullaway:nullaway", version = "0.13.1" }
+nullAway = { module = "com.uber.nullaway:nullaway", version = "0.13.4" }
 okhttp = { module = "com.squareup.okhttp3:okhttp", version.ref = "okhttp" }
 # some proto are marked alpha, hence the alpha version. metrics proto is what we use and it is marked stable
 openTelemetry-proto = { module = "io.opentelemetry.proto:opentelemetry-proto", version = "1.10.0-alpha" }
@@ -221,7 +221,7 @@ plugin-errorprone = { module = "net.ltgt.errorprone:net.ltgt.errorprone.gradle.p
 plugin-license = { module = "gradle.plugin.com.hierynomus.gradle.plugins:license-gradle-plugin", version = "0.16.1" }
 plugin-nebulaRelease = { module = "com.netflix.nebula:nebula-release-plugin", version = "21.0.0" }
 plugin-nebulaPublishing = { module = "com.netflix.nebula:nebula-publishing-plugin", version = "23.1.0" }
-plugin-nebulaProject = { module = "com.netflix.nebula:nebula-project-plugin", version = "13.1.0" }
+plugin-nebulaProject = { module = "com.netflix.nebula:nebula-project-plugin", version = "13.1.2" }
 plugin-nebulaInfo = { module = "com.netflix.nebula:gradle-info-plugin", version = "16.2.1" }
 plugin-noHttp = { module = "io.spring.nohttp:nohttp-gradle", version = "0.0.11" }
 plugin-nexusPublish = { module = "io.github.gradle-nexus:publish-plugin", version = "2.0.0" }

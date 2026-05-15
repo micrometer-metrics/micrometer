@@ -102,6 +102,7 @@ subprojects {
                     "CatchAndPrintStackTrace",
                     "ClassCanBeStatic",
                     "ClassInitializationDeadlock",
+                    "ClassName",
                     "CollectionUndefinedEquality",
                     "DefaultCharset",
                     "DoNotCallSuggester",
@@ -245,7 +246,9 @@ subprojects {
                             'Branch',
                             'Module-Origin',
                             'Created-By',
-                            'Build-Java-Version'
+                            'Build-Java-Version',
+                            'Build-Timezone',
+                            'Build-Url'
                     ].each {
                         ignoreAttribute it
                         ignoreProperty it
@@ -473,7 +476,10 @@ subprojects {
                     packageExcludes = ['io.micrometer.shaded.*', 'io.micrometer.statsd.internal', 'io.micrometer.registry.otlp.internal']
 
                     fieldExcludes = []
-                    methodExcludes = []
+                    methodExcludes = [
+                        'io.micrometer.core.instrument.binder.okhttp3.OkHttpContext#getState()',
+                        'io.micrometer.core.instrument.binder.okhttp3.OkHttpContext#setState(io.micrometer.core.instrument.binder.okhttp3.OkHttpObservationInterceptor$CallState)'
+                    ]
 
                     onlyIf { compatibleVersion != 'SKIP' }
                 }
@@ -536,10 +542,6 @@ tasks.register('check') {
 
 tasks.register('build') {
     dependsOn check
-}
-
-wrapper {
-    gradleVersion = '9.4.1'
 }
 
 defaultTasks 'build'

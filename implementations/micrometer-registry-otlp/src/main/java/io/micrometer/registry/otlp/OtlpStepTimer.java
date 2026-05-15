@@ -57,7 +57,7 @@ class OtlpStepTimer extends AbstractTimer implements OtlpHistogramSupport, OtlpE
             this.exemplarSampler = null;
         }
         else {
-            this.exemplarSampler = exemplarSamplerFactory != null ? exemplarSamplerFactory.create(1, true) : null;
+            this.exemplarSampler = exemplarSamplerFactory != null ? exemplarSamplerFactory.create(true) : null;
         }
     }
 

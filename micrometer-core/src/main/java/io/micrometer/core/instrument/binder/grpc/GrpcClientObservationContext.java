@@ -51,8 +51,7 @@ public class GrpcClientObservationContext extends RequestReplySenderContext<Meta
 
     private @Nullable Metadata trailers;
 
-    @SuppressWarnings("NullAway.Init")
-    private String peerName;
+    private @Nullable String peerName;
 
     private @Nullable Integer peerPort;
 
@@ -144,11 +143,11 @@ public class GrpcClientObservationContext extends RequestReplySenderContext<Meta
         this.trailers = trailers;
     }
 
-    public String getPeerName() {
+    public @Nullable String getPeerName() {
         return this.peerName;
     }
 
-    public void setPeerName(String peerName) {
+    public void setPeerName(@Nullable String peerName) {
         this.peerName = peerName;
     }
 

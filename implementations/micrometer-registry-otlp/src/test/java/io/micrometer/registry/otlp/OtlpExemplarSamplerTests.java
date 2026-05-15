@@ -48,6 +48,11 @@ class OtlpExemplarSamplerTests {
         }
 
         @Override
+        public int exemplarsSize() {
+            return 4;
+        }
+
+        @Override
         public @Nullable String get(@NonNull String key) {
             return null;
         }
@@ -60,11 +65,9 @@ class OtlpExemplarSamplerTests {
     private final OtlpExemplarSamplerFactory factory = new OtlpExemplarSamplerFactory(contextProvider, clock, config);
 
     @Nested
-    class FixedSizeSamplerTests {
+    class FixedSizedCounterSamplerTests {
 
-        private static final int SIZE = 16;
-
-        private final ExemplarSampler sampler = factory.create(SIZE, false);
+        private final ExemplarSampler sampler = factory.create(false);
 
         private final ExemplarTestRecorder recorder = new ExemplarTestRecorder(contextProvider, clock, sampler);
 
@@ -190,10 +193,10 @@ class OtlpExemplarSamplerTests {
         @RepeatedTest(10)
         void multipleRecordingsShouldBeRandomlySampled() {
             assertThat(sampler.collectExemplars()).isEmpty();
-            recorder.recordRandomMeasurements(5);
+            recorder.recordRandomMeasurements(config.exemplarsSize());
             assertThat(sampler.collectExemplars()).isEmpty();
             clock.add(STEP);
-            assertThat(sampler.collectExemplars()).doesNotHaveDuplicates().hasSizeBetween(1, 5);
+            assertThat(sampler.collectExemplars()).doesNotHaveDuplicates().hasSizeBetween(1, config.exemplarsSize());
         }
 
         @Test
@@ -251,10 +254,169 @@ class OtlpExemplarSamplerTests {
         @RepeatedTest(10)
         void samplerCanBeFilled() {
             assertThat(sampler.collectExemplars()).isEmpty();
+            // likely to fill 4 exemplars
+            recorder.recordRandomMeasurements(10_000);
+            assertThat(sampler.collectExemplars()).isEmpty();
+            clock.add(STEP);
+            assertThat(sampler.collectExemplars()).hasSize(config.exemplarsSize());
+        }
+
+        @RepeatedTest(10)
+        void samplerUsesSizeFromConfig() {
+            OtlpConfig config = new OtlpConfig() {
+                @Override
+                public @NonNull Duration step() {
+                    return STEP;
+                }
+
+                @Override
+                public int exemplarsSize() {
+                    return 4;
+                }
+
+                @Override
+                public @Nullable String get(@NonNull String key) {
+                    return null;
+                }
+            };
+            ExemplarSampler sampler = new OtlpExemplarSamplerFactory(contextProvider, clock, config).create(false);
+            ExemplarTestRecorder recorder = new ExemplarTestRecorder(contextProvider, clock, sampler);
+
+            assertThat(sampler.collectExemplars()).isEmpty();
+            recorder.recordRandomMeasurements(10_000);
+            assertThat(sampler.collectExemplars()).isEmpty();
+            clock.add(STEP);
+            assertThat(sampler.collectExemplars()).hasSize(4);
+        }
+
+        @RepeatedTest(10)
+        void samplerUsesDefaultSizeFromConfig() {
+            OtlpConfig config = new OtlpConfig() {
+                @Override
+                public @NonNull Duration step() {
+                    return STEP;
+                }
+
+                @Override
+                public @Nullable String get(@NonNull String key) {
+                    return null;
+                }
+            };
+            ExemplarSampler sampler = new OtlpExemplarSamplerFactory(contextProvider, clock, config).create(false);
+            ExemplarTestRecorder recorder = new ExemplarTestRecorder(contextProvider, clock, sampler);
+
+            assertThat(sampler.collectExemplars()).isEmpty();
+            recorder.recordRandomMeasurements(10_000);
+            assertThat(sampler.collectExemplars()).isEmpty();
+            clock.add(STEP);
+            assertThat(sampler.collectExemplars()).hasSize(1);
+        }
+
+    }
+
+    @Nested
+    class FixedSizedExponentialHistogramSamplerTests {
+
+        private final ExemplarSampler sampler = factory.create(config.maxBucketCount(), false);
+
+        private final ExemplarTestRecorder recorder = new ExemplarTestRecorder(contextProvider, clock, sampler);
+
+        @Test
+        void firstRecordingShouldBeAlwaysSampled() {
+            assertThat(sampler.collectExemplars()).isEmpty();
+            Exemplar expected = recorder.record("4bf92f3577b34da6a3ce929d0e0e4736", "00f067aa0ba902b7", 42.0);
+            assertThat(sampler.collectExemplars()).isEmpty();
+            clock.add(STEP);
+
+            assertThat(sampler.collectExemplars()).singleElement().satisfies(exemplar -> {
+                assertThat(encodeHexString(exemplar.getTraceId())).isEqualTo("4bf92f3577b34da6a3ce929d0e0e4736");
+                assertThat(encodeHexString(exemplar.getSpanId())).isEqualTo("00f067aa0ba902b7");
+                assertThat(exemplar.getAsDouble()).isEqualTo(42.0);
+                assertThat(exemplar.getTimeUnixNano()).isEqualTo(expected.getTimeUnixNano());
+                assertThat(exemplar.getFilteredAttributesList()).isEmpty();
+            });
+        }
+
+        @RepeatedTest(10)
+        void multipleRecordingsShouldBeRandomlySampled() {
+            assertThat(sampler.collectExemplars()).isEmpty();
+            recorder.recordRandomMeasurements(config.exemplarsSize());
+            assertThat(sampler.collectExemplars()).isEmpty();
+            clock.add(STEP);
+            assertThat(sampler.collectExemplars()).doesNotHaveDuplicates().hasSizeBetween(1, config.exemplarsSize());
+        }
+
+        @RepeatedTest(10)
+        void samplerCanBeFilled() {
+            assertThat(sampler.collectExemplars()).isEmpty();
+            // likely to fill 40 exemplars
             recorder.recordRandomMeasurements(1_000_000);
             assertThat(sampler.collectExemplars()).isEmpty();
             clock.add(STEP);
-            assertThat(sampler.collectExemplars()).hasSize(16);
+            assertThat(sampler.collectExemplars()).hasSize(40);
+        }
+
+        @RepeatedTest(10)
+        void samplerUsesSizeFromConfig() {
+            OtlpConfig config = new OtlpConfig() {
+                @Override
+                public @NonNull Duration step() {
+                    return STEP;
+                }
+
+                @Override
+                public int maxBucketCount() {
+                    return 16; // -> 16/4 = 4 exemplars
+                }
+
+                @Override
+                public @Nullable String get(@NonNull String key) {
+                    return null;
+                }
+            };
+            ExemplarSampler sampler = new OtlpExemplarSamplerFactory(contextProvider, clock, config)
+                .create(config.maxBucketCount(), false);
+            ExemplarTestRecorder recorder = new ExemplarTestRecorder(contextProvider, clock, sampler);
+
+            assertThat(sampler.collectExemplars()).isEmpty();
+            recorder.recordRandomMeasurements(10_000);
+            assertThat(sampler.collectExemplars()).isEmpty();
+            clock.add(STEP);
+            assertThat(sampler.collectExemplars()).hasSize(4);
+        }
+
+        @RepeatedTest(10)
+        void samplerUsesMinimumExemplarsSizeFromConfig() {
+            OtlpConfig config = new OtlpConfig() {
+                @Override
+                public @NonNull Duration step() {
+                    return STEP;
+                }
+
+                @Override
+                public int exemplarsSize() {
+                    return 2;
+                }
+
+                @Override
+                public int maxBucketCount() {
+                    return 4; // -> 4/4 = 1 exemplar
+                }
+
+                @Override
+                public @Nullable String get(@NonNull String key) {
+                    return null;
+                }
+            };
+            ExemplarSampler sampler = new OtlpExemplarSamplerFactory(contextProvider, clock, config)
+                .create(config.maxBucketCount(), false);
+            ExemplarTestRecorder recorder = new ExemplarTestRecorder(contextProvider, clock, sampler);
+
+            assertThat(sampler.collectExemplars()).isEmpty();
+            recorder.recordRandomMeasurements(10_000);
+            assertThat(sampler.collectExemplars()).isEmpty();
+            clock.add(STEP);
+            assertThat(sampler.collectExemplars()).hasSize(2);
         }
 
     }

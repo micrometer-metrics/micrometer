@@ -62,6 +62,12 @@ class OtlpDeltaMeterRegistryTest extends OtlpMeterRegistryTest {
     @Override
     protected OtlpConfig otlpConfig() {
         return new OtlpConfig() {
+
+            @Override
+            public int exemplarsSize() {
+                return 4;
+            }
+
             @Override
             public AggregationTemporality aggregationTemporality() {
                 return DELTA;
@@ -998,8 +1004,8 @@ class OtlpDeltaMeterRegistryTest extends OtlpMeterRegistryTest {
         @Override
         protected void publish() {
             publishCount.incrementAndGet();
-            forEachMeter(meter -> meter.match(null, this::publishCounter, this::publishTimer, this::publishSummary,
-                    null, null, this::publishFunctionCounter, this::publishFunctionTimer, null));
+            forEachMeter(meter -> meter.match(g -> null, this::publishCounter, this::publishTimer, this::publishSummary,
+                    ltt -> null, tg -> null, this::publishFunctionCounter, this::publishFunctionTimer, m -> null));
         }
 
         private void scheduledPublish() {

@@ -45,6 +45,12 @@ class OtlpExemplarSampler implements ExemplarSampler {
 
     private final DoubleUnaryOperator converter;
 
+    OtlpExemplarSampler(ExemplarContextProvider exemplarContextProvider, Clock clock, OtlpConfig config,
+            DoubleUnaryOperator converter) {
+        this(exemplarContextProvider, clock, new Exemplars(clock, config.step().toMillis(), config.exemplarsSize()),
+                converter);
+    }
+
     OtlpExemplarSampler(ExemplarContextProvider exemplarContextProvider, Clock clock, OtlpConfig config, int size,
             DoubleUnaryOperator converter) {
         this(exemplarContextProvider, clock, new Exemplars(clock, config.step().toMillis(), size), converter);

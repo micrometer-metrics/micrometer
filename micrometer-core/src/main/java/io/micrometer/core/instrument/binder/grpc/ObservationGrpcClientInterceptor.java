@@ -89,7 +89,7 @@ public class ObservationGrpcClientInterceptor implements ClientInterceptor {
                 context.setPeerName(uri.getHost());
                 context.setPeerPort(uri.getPort());
             }
-            catch (Exception ex) {
+            catch (Exception ignored) {
             }
             return context;
         };

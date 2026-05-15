@@ -15,35 +15,15 @@
  */
 package io.micrometer.core.instrument.binder.grpc;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
-
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import io.grpc.CallOptions;
-import io.grpc.Channel;
-import io.grpc.ClientCall;
-import io.grpc.ClientInterceptor;
+import io.grpc.*;
 import io.grpc.ForwardingClientCall.SimpleForwardingClientCall;
 import io.grpc.ForwardingServerCall.SimpleForwardingServerCall;
-import io.grpc.ManagedChannel;
-import io.grpc.Metadata;
-import io.grpc.MethodDescriptor;
 import io.grpc.MethodDescriptor.MethodType;
-import io.grpc.Server;
-import io.grpc.ServerCall;
 import io.grpc.ServerCall.Listener;
-import io.grpc.ServerCallHandler;
-import io.grpc.ServerInterceptor;
 import io.grpc.Status.Code;
-import io.grpc.StatusRuntimeException;
 import io.grpc.inprocess.InProcessChannelBuilder;
 import io.grpc.inprocess.InProcessServerBuilder;
 import io.grpc.stub.StreamObserver;
@@ -54,6 +34,9 @@ import io.grpc.testing.protobuf.SimpleServiceGrpc.SimpleServiceBlockingStub;
 import io.grpc.testing.protobuf.SimpleServiceGrpc.SimpleServiceFutureStub;
 import io.grpc.testing.protobuf.SimpleServiceGrpc.SimpleServiceImplBase;
 import io.grpc.testing.protobuf.SimpleServiceGrpc.SimpleServiceStub;
+import io.micrometer.common.KeyValue;
+import io.micrometer.common.KeyValues;
+import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.binder.grpc.GrpcObservationDocumentation.GrpcClientEvents;
 import io.micrometer.core.instrument.binder.grpc.GrpcObservationDocumentation.GrpcServerEvents;
@@ -72,6 +55,15 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
@@ -579,6 +571,24 @@ class GrpcObservationTest {
             assertThat(scopeAwareServerInterceptor.lastObservation).isNotNull()
                 .satisfies(observation -> assertThat(observation.getContext().getContextualName())
                     .isEqualTo("grpc.testing.SimpleService/UnaryRpc"));
+        }
+
+    }
+
+    @Nested
+    class GrpcClientObservationConvention {
+
+        @Test
+        @Issue("#7380")
+        void nullPeerNameShouldBeHandledGracefully() {
+            DefaultGrpcClientObservationConvention convention = new DefaultGrpcClientObservationConvention();
+            GrpcClientObservationContext context = new GrpcClientObservationContext((carrier, key, value) -> {
+            });
+            context.setMethodType(MethodDescriptor.MethodType.UNARY);
+
+            // Context is intentionally left without a peerName set
+            KeyValues keyValues = convention.getLowCardinalityKeyValues(context);
+            assertThat(keyValues).contains(KeyValue.of("net.peer.name", "UNKNOWN"));
         }
 
     }
