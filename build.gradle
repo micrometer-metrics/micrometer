@@ -349,6 +349,12 @@ subprojects {
                         password = findProperty('SNAPSHOT_REPO_PASSWORD')
                     }
                 }
+                if (project.hasProperty("deploymentRepository")) {
+                    maven {
+                        name = 'Deployment'
+                        url = project.property("deploymentRepository")
+                    }
+                }
             }
         }
 
@@ -499,6 +505,18 @@ subprojects {
 
     repositories {
         mavenCentral()
+        if (System.getenv("RELEASE_TRAIN_MAVEN_REPOSITORY_URL") != null) {
+            repositories {
+                maven {
+                    name = "Release Train"
+                    url = System.getenv("RELEASE_TRAIN_MAVEN_REPOSITORY_URL")
+                    credentials {
+                        username = System.getenv("RELEASE_TRAIN_MAVEN_REPOSITORY_USERNAME")
+                        password = System.getenv("RELEASE_TRAIN_MAVEN_REPOSITORY_PASSWORD")
+                    }
+                }
+            }
+        }
     }
 
     def check = tasks.findByName('check')
