@@ -16,11 +16,14 @@
 package io.micrometer.prometheusmetrics;
 
 import io.micrometer.core.instrument.Meter;
+import io.prometheus.metrics.model.registry.MetricType;
 import io.prometheus.metrics.model.registry.MultiCollector;
 import io.prometheus.metrics.model.snapshots.DataPointSnapshot;
+import io.prometheus.metrics.model.snapshots.MetricFamilyDescriptor;
 import io.prometheus.metrics.model.snapshots.MetricMetadata;
 import io.prometheus.metrics.model.snapshots.MetricSnapshot;
 import io.prometheus.metrics.model.snapshots.MetricSnapshots;
+import org.jspecify.annotations.Nullable;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -54,6 +57,21 @@ class MicrometerCollector implements MultiCollector {
 
     public void add(Meter.Id id, Child child) {
         children.put(id, child);
+    }
+
+    public void add(Meter.Id id, Function<String, Stream<Family<?>>> samples,
+            Function<String, Stream<MetricFamilyDescriptor>> descriptors) {
+        children.put(id, new Child() {
+            @Override
+            public Stream<Family<?>> samples(String conventionName) {
+                return samples.apply(conventionName);
+            }
+
+            @Override
+            public Stream<MetricFamilyDescriptor> descriptors(String conventionName) {
+                return descriptors.apply(conventionName);
+            }
+        });
     }
 
     public void remove(Meter.Id id) {
@@ -91,9 +109,51 @@ class MicrometerCollector implements MultiCollector {
         return new MetricSnapshots(metricSnapshots);
     }
 
+    @Override
+    public List<String> getPrometheusNames() {
+        return new ArrayList<>(descriptorsByName().keySet());
+    }
+
+    @Override
+    public @Nullable MetricType getMetricType(String prometheusName) {
+        List<MetricFamilyDescriptor> descriptors = descriptorsByName().get(prometheusName);
+        return descriptors == null || descriptors.isEmpty() ? null : descriptors.get(0).getType();
+    }
+
+    @Override
+    public @Nullable Set<String> getLabelNames(String prometheusName) {
+        List<MetricFamilyDescriptor> descriptors = descriptorsByName().get(prometheusName);
+        if (descriptors == null || descriptors.isEmpty()) {
+            return null;
+        }
+        Set<String> labelNames = new LinkedHashSet<>();
+        descriptors.forEach(descriptor -> labelNames.addAll(descriptor.getLabelNames()));
+        return labelNames;
+    }
+
+    @Override
+    public @Nullable MetricMetadata getMetadata(String prometheusName) {
+        List<MetricFamilyDescriptor> descriptors = descriptorsByName().get(prometheusName);
+        return descriptors == null || descriptors.isEmpty() ? null : descriptors.get(0).getMetadata();
+    }
+
+    private Map<String, List<MetricFamilyDescriptor>> descriptorsByName() {
+        Map<String, List<MetricFamilyDescriptor>> descriptors = new LinkedHashMap<>();
+        for (Child child : children.values()) {
+            child.descriptors(conventionName)
+                .forEach(descriptor -> descriptors.computeIfAbsent(descriptor.getPrometheusName(), name -> new ArrayList<>())
+                    .add(descriptor));
+        }
+        return descriptors;
+    }
+
     interface Child {
 
         Stream<Family<?>> samples(String conventionName);
+
+        default Stream<MetricFamilyDescriptor> descriptors(String conventionName) {
+            return Stream.empty();
+        }
 
     }
 
@@ -106,6 +166,11 @@ class MicrometerCollector implements MultiCollector {
         final List<T> dataPointSnapshots = new ArrayList<>();
 
         final Function<Family<T>, MetricSnapshot> metricSnapshotFactory;
+
+        Family(String conventionName, Function<Family<T>, MetricSnapshot> metricSnapshotFactory,
+                MetricFamilyDescriptor descriptor, T... dataPointSnapshots) {
+            this(conventionName, metricSnapshotFactory, descriptor.getMetadata(), dataPointSnapshots);
+        }
 
         Family(String conventionName, Function<Family<T>, MetricSnapshot> metricSnapshotFactory,
                 MetricMetadata metadata, T... dataPointSnapshots) {

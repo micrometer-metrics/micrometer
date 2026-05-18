@@ -30,6 +30,9 @@ import org.jspecify.annotations.Nullable;
  */
 public class PrometheusNamingConvention implements NamingConvention {
 
+    private static final String[] RESERVED_SUFFIXES = { "_total", "_created", "_bucket", "_info", ".total", ".created",
+            ".bucket", ".info" };
+
     private final String timerSuffix;
 
     public PrometheusNamingConvention() {
@@ -75,7 +78,28 @@ public class PrometheusNamingConvention implements NamingConvention {
                 break;
         }
 
-        return PrometheusNaming.sanitizeMetricName(conventionName);
+        return stripReservedSuffixes(PrometheusNaming.sanitizeMetricName(conventionName));
+    }
+
+    private static String stripReservedSuffixes(String metricName) {
+        String sanitizedName = metricName;
+        boolean stripped = true;
+        while (stripped) {
+            stripped = false;
+            for (String reservedSuffix : RESERVED_SUFFIXES) {
+                if (sanitizedName.equals(reservedSuffix)) {
+                    return reservedSuffix.substring(1);
+                }
+            }
+            for (String reservedSuffix : RESERVED_SUFFIXES) {
+                if (sanitizedName.endsWith(reservedSuffix)) {
+                    sanitizedName = sanitizedName.substring(0, sanitizedName.length() - reservedSuffix.length());
+                    stripped = true;
+                    break;
+                }
+            }
+        }
+        return sanitizedName;
     }
 
     /**
