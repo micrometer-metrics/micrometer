@@ -28,7 +28,11 @@ import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.verifyNoInteractions;
 
 @ExtendWith(WiremockResolver.class)
@@ -159,6 +163,132 @@ class DatadogMeterRegistryTest {
         Meter.Id id = new Meter.Id("my.meter", Tags.empty(), null, null, Meter.Type.COUNTER);
         registry.postMetricMetadata("my.meter", new DatadogMetricMetadata(id, Statistic.COUNT, true, null));
         verifyNoInteractions(httpSender);
+    }
+
+    @Test
+    void publishCompressesMetricsWhenEnabled(@WiremockResolver.Wiremock WireMockServer server) {
+        Clock clock = new MockClock();
+        DatadogMeterRegistry registry = new DatadogMeterRegistry(new DatadogConfig() {
+            @Override
+            public String uri() {
+                return server.baseUrl();
+            }
+
+            @Override
+            public @Nullable String get(String key) {
+                return null;
+            }
+
+            @Override
+            public String apiKey() {
+                return "fake";
+            }
+
+            @Override
+            public boolean enabled() {
+                return false;
+            }
+
+            @Override
+            public boolean compress() {
+                return true;
+            }
+        }, clock);
+
+        server.stubFor(any(anyUrl()));
+
+        Counter.builder("my.counter#abc")
+            .baseUnit(TimeUnit.MICROSECONDS.toString().toLowerCase(Locale.ROOT))
+            .register(registry)
+            .increment(Math.PI);
+        registry.publish();
+
+        server.verify(postRequestedFor(urlEqualTo("/api/v1/series?api_key=fake")).withHeader("Content-Encoding",
+                equalTo("gzip")));
+
+        registry.close();
+    }
+
+    @Test
+    void publishDoesNotCompressMetricsWhenDisabled(@WiremockResolver.Wiremock WireMockServer server) {
+        Clock clock = new MockClock();
+        DatadogMeterRegistry registry = new DatadogMeterRegistry(new DatadogConfig() {
+            @Override
+            public String uri() {
+                return server.baseUrl();
+            }
+
+            @Override
+            public @Nullable String get(String key) {
+                return null;
+            }
+
+            @Override
+            public String apiKey() {
+                return "fake";
+            }
+
+            @Override
+            public boolean enabled() {
+                return false;
+            }
+
+            @Override
+            public boolean compress() {
+                return false;
+            }
+        }, clock);
+
+        server.stubFor(any(anyUrl()));
+
+        Counter.builder("my.counter#abc")
+            .baseUnit(TimeUnit.MICROSECONDS.toString().toLowerCase(Locale.ROOT))
+            .register(registry)
+            .increment(Math.PI);
+        registry.publish();
+
+        server.verify(postRequestedFor(urlEqualTo("/api/v1/series?api_key=fake")).withoutHeader("Content-Encoding"));
+
+        registry.close();
+    }
+
+    @Test
+    void postMetricMetadataDoesNotCompressWhenCompressionEnabled() throws Throwable {
+        DatadogConfig config = new DatadogConfig() {
+
+            @Override
+            public @Nullable String get(String key) {
+                return null;
+            }
+
+            @Override
+            public String apiKey() {
+                return "fake";
+            }
+
+            @Override
+            public String applicationKey() {
+                return "fake";
+            }
+
+            @Override
+            public boolean compress() {
+                return true;
+            }
+        };
+
+        HttpSender httpSender = mock(HttpSender.class);
+        when(httpSender.put(anyString())).thenCallRealMethod();
+        when(httpSender.newRequest(anyString())).thenCallRealMethod();
+        when(httpSender.send(org.mockito.ArgumentMatchers.any(HttpSender.Request.class)))
+            .thenReturn(new HttpSender.Response(200, ""));
+        DatadogMeterRegistry registry = DatadogMeterRegistry.builder(config).httpClient(httpSender).build();
+        Meter.Id id = new Meter.Id("my.meter", Tags.empty(), "metric description", "milliseconds", Meter.Type.COUNTER);
+        registry.postMetricMetadata("my.meter", new DatadogMetricMetadata(id, Statistic.COUNT, true, null));
+
+        verify(httpSender).send(argThat(request -> !request.getRequestHeaders().containsKey("Content-Encoding")));
+
+        registry.close();
     }
 
 }
