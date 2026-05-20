@@ -17,9 +17,9 @@ package io.micrometer.prometheusmetrics;
 
 import io.micrometer.common.lang.Nullable;
 import io.micrometer.core.Issue;
+import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.LongTaskTimer.Sample;
 import io.micrometer.core.instrument.Timer;
-import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.binder.jvm.JvmInfoMetrics;
 import io.micrometer.core.instrument.composite.CompositeMeterRegistry;
@@ -37,12 +37,16 @@ import org.junit.jupiter.api.Test;
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import static io.micrometer.core.instrument.MockClock.clock;
 import static java.util.Collections.emptyList;
+import static java.util.stream.Collectors.toList;
 import static org.assertj.core.api.Assertions.*;
 
 /**
@@ -889,6 +893,49 @@ class PrometheusMeterRegistryTest {
         assertThat(registry.get("another.gauge").gauge().value()).isEqualTo(2d);
 
         executorService.shutdownNow();
+    }
+
+    @Issue("#6851")
+    @Test
+    void scrapeWhileOverwritingMultiGaugeRowsDoesNotCreateDuplicateLabels() throws Exception {
+        MultiGauge multiGauge = MultiGauge.builder("my.metric").register(registry);
+        List<MultiGauge.Row<?>> rows = IntStream.range(0, 100)
+            .boxed()
+            .map(i -> MultiGauge.Row
+                .of(Tags.of("tag1", "abc", "poll_count", Integer.toString(i), "some_other_tag", "cde"), i))
+            .collect(toList());
+
+        multiGauge.register(rows, true);
+
+        final int scraperThreadCount = 4;
+        AtomicBoolean stop = new AtomicBoolean();
+        AtomicReference<Throwable> scrapeFailure = new AtomicReference<>();
+        ExecutorService scraperExecutor = Executors.newFixedThreadPool(scraperThreadCount);
+
+        CompletableFuture<Void> scraperTasks = CompletableFuture
+            .allOf(IntStream.range(0, scraperThreadCount).mapToObj(i -> CompletableFuture.runAsync(() -> {
+                while (!stop.get()) {
+                    try {
+                        registry.scrape();
+                    }
+                    catch (Throwable ex) {
+                        scrapeFailure.compareAndSet(null, ex);
+                    }
+                }
+            }, scraperExecutor)).toArray(CompletableFuture[]::new));
+
+        try {
+            for (int i = 1; i < 10_000 && scrapeFailure.get() == null; i++) {
+                multiGauge.register(rows, true);
+            }
+        }
+        finally {
+            stop.set(true);
+            scraperTasks.get();
+            scraperExecutor.shutdownNow();
+        }
+
+        assertThat(scrapeFailure.get()).isNull();
     }
 
     @Test
