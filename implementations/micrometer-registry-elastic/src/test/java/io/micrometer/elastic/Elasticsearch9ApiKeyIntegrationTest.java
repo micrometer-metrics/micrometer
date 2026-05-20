@@ -23,8 +23,8 @@ package io.micrometer.elastic;
 class Elasticsearch9ApiKeyIntegrationTest extends AbstractElasticsearchApiKeyIntegrationTest {
 
     @Override
-    protected String getVersion() {
-        return VERSION_9;
+    protected ElasticsearchVersion getElasticsearchVersion() {
+        return ElasticsearchVersion.VERSION_9;
     }
 
 }

@@ -26,6 +26,7 @@ import org.postgresql.ds.PGSimpleDataSource;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
+import org.testcontainers.utility.DockerImageName;
 
 import javax.sql.DataSource;
 import java.sql.*;
@@ -45,9 +46,23 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Tag("docker")
 abstract class AbstractPostgreSQLDatabaseMetricsIntegrationTest {
 
-    protected static final String VERSION_14 = "14.20";
+    protected enum PostgresVersion {
 
-    protected static final String VERSION_18 = "18.1";
+        VERSION_14("v14"),
+
+        VERSION_18("v18");
+
+        private final String systemPropertySuffix;
+
+        PostgresVersion(String systemPropertySuffix) {
+            this.systemPropertySuffix = systemPropertySuffix;
+        }
+
+        protected String dockerImageSystemProperty() {
+            return "postgres-" + systemPropertySuffix + "-image.name";
+        }
+
+    }
 
     // statistics are updated only every PGSTAT_STAT_INTERVAL, which is 500ms.
     // Add a bit for stable tests.
@@ -62,7 +77,7 @@ abstract class AbstractPostgreSQLDatabaseMetricsIntegrationTest {
 
     private Tags tags;
 
-    protected abstract String getImageVersion();
+    protected abstract PostgresVersion getPostgresVersion();
 
     @BeforeEach
     void setup() {
@@ -141,7 +156,7 @@ abstract class AbstractPostgreSQLDatabaseMetricsIntegrationTest {
                 // auto-closed by the statement
                 ResultSet resultSet = statement.executeQuery();
                 assertThat(resultSet.next()).isTrue();
-                assertThat(resultSet.getString("server_version")).startsWith(getImageVersion());
+                assertThat(resultSet.getString("server_version")).startsWith(getDockerImageName().getVersionPart());
             }
         }
     }
@@ -174,11 +189,17 @@ abstract class AbstractPostgreSQLDatabaseMetricsIntegrationTest {
     }
 
     private PostgreSQLContainer<?> getContainer() {
-        return new PostgreSQLContainer<>(getDockerImageName(getImageVersion()));
+        return new PostgreSQLContainer<>(getDockerImageName());
     }
 
-    private static String getDockerImageName(String version) {
-        return "postgres:" + version;
+    private DockerImageName getDockerImageName() {
+        String propertyName = getPostgresVersion().dockerImageSystemProperty();
+        String imageName = System.getProperty(propertyName);
+        if (imageName == null) {
+            throw new IllegalStateException("System property '" + propertyName
+                    + "' is not set. This should be set in the build configuration for running from the command line. If you are running AbstractPostgreSQLDatabaseMetricsIntegrationTest from an IDE, set the system property to the desired postgres image name.");
+        }
+        return DockerImageName.parse(imageName);
     }
 
 }

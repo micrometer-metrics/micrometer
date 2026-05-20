@@ -10,3 +10,9 @@ dependencies {
     testImplementation libs.jsonPath
     testImplementation libs.logback12
 }
+
+dockerTest {
+    systemProperty 'elasticsearch-v7-image.name', libs.versions.docker.elasticsearch.v7.get()
+    systemProperty 'elasticsearch-v8-image.name', libs.versions.docker.elasticsearch.v8.get()
+    systemProperty 'elasticsearch-v9-image.name', libs.versions.docker.elasticsearch.v9.get()
+}

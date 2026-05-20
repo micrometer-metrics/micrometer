@@ -24,8 +24,8 @@ class ElasticsearchMeterRegistryElasticsearch8IntegrationTest
         extends AbstractElasticsearchMeterRegistryIntegrationTest {
 
     @Override
-    protected String getVersion() {
-        return VERSION_8;
+    protected ElasticsearchVersion getElasticsearchVersion() {
+        return ElasticsearchVersion.VERSION_8;
     }
 
 }

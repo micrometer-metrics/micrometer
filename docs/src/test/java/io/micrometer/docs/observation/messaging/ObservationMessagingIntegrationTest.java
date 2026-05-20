@@ -62,8 +62,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class ObservationMessagingIntegrationTest {
 
     @Container
-    private ConfluentKafkaContainer kafkaContainer = new ConfluentKafkaContainer(
-            DockerImageName.parse("confluentinc/cp-kafka:8.0.3"));
+    private ConfluentKafkaContainer kafkaContainer = new ConfluentKafkaContainer(getKafkaImage());
 
     private AdminClient adminClient;
 
@@ -223,5 +222,14 @@ class ObservationMessagingIntegrationTest {
 
     }
     // end::header_receiving_handler[]
+
+    private static DockerImageName getKafkaImage() {
+        String imageName = System.getProperty("kafka-image.name");
+        if (imageName == null) {
+            throw new IllegalStateException(
+                    "System property 'kafka-image.name' is not set. This should be set in the build configuration for running from the command line. If you are running ObservationMessagingIntegrationTest from an IDE, set the system property to the desired kafka image name.");
+        }
+        return DockerImageName.parse(imageName);
+    }
 
 }
