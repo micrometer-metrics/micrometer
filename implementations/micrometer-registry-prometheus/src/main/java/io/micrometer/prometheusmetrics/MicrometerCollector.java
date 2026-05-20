@@ -15,6 +15,7 @@
  */
 package io.micrometer.prometheusmetrics;
 
+import io.micrometer.common.util.CollectionUtils;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.config.NamingConvention;
@@ -80,8 +81,17 @@ class MicrometerCollector implements MultiCollector {
     public MetricSnapshots collect() {
         Map<String, Family> families = new HashMap<>();
 
-        for (Child child : children.values()) {
-            child.samples(conventionName, tagKeys)
+        Set<List<String>> seen = CollectionUtils.newHashSet(children.size());
+
+        for (Map.Entry<List<String>, Child> child : children.entrySet()) {
+            // `children` is a `ConcurrentHashMap` and its iterator is weakly-consistent.
+            // This means we could see duplicate children in case there are other threads
+            // concurrently adding to it. As such we deduplicate here.
+            if (!seen.add(child.getKey())) {
+                continue;
+            }
+            child.getValue()
+                .samples(conventionName, tagKeys)
                 .forEach(family -> families.compute(family.getConventionName(),
                         (name, matchingFamily) -> matchingFamily != null
                                 ? matchingFamily.addSamples(family.dataPointSnapshots) : family));
