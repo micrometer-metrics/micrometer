@@ -15,10 +15,14 @@
  */
 package io.micrometer.core.instrument.search;
 
+import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
+import java.util.Collections;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -153,6 +157,35 @@ class RequiredSearchTest {
     @Test
     void allMetersWithTagKey() {
         assertThat(RequiredSearch.in(registry).tagKeys("k", "k2").counter()).isNotNull();
+    }
+
+    @Test
+    void meterNotFoundExceptionDoesNotReportMetersThatAppearedAfterSearch() {
+        MeterAppearingAfterSearchRegistry registry = new MeterAppearingAfterSearchRegistry();
+        registry.timer("name");
+        registry.hideMetersOnce();
+
+        assertThatThrownBy(() -> registry.get("name").timer()).isInstanceOf(MeterNotFoundException.class)
+            .hasMessageNotContaining("OK:");
+    }
+
+    private static class MeterAppearingAfterSearchRegistry extends SimpleMeterRegistry {
+
+        private boolean hideMetersOnce;
+
+        void hideMetersOnce() {
+            hideMetersOnce = true;
+        }
+
+        @Override
+        public List<Meter> getMeters() {
+            if (hideMetersOnce) {
+                hideMetersOnce = false;
+                return Collections.emptyList();
+            }
+            return super.getMeters();
+        }
+
     }
 
 }
