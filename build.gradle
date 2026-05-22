@@ -20,6 +20,10 @@ antora {
 	]
 }
 
+node {
+	version = '24.15.0' // Antora does not generate the site using node 24.16.0
+}
+
 wrapper {
 	gradleVersion = '9.2.1'
 }
