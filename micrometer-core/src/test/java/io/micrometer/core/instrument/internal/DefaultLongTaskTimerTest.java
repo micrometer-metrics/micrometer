@@ -15,6 +15,7 @@
  */
 package io.micrometer.core.instrument.internal;
 
+import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.LongTaskTimer;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.MockClock;
@@ -117,6 +118,7 @@ class DefaultLongTaskTimerTest {
     }
 
     @Test
+    @Issue("#3877")
     void snapshotWithMorePercentilesThanValuesContainsAllConfiguredPercentilesInSortedOrder() {
         // N=1, percentiles [0.1, 0.25, 0.5, 0.75, 0.9]
         // The above-line condition is p*2>1, so {0.75, 0.9} go directly to max and
