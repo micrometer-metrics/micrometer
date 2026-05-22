@@ -197,22 +197,24 @@ public class DefaultLongTaskTimer extends AbstractMeter implements LongTaskTimer
                 }
                 count++;
 
-                if (percentile != null) {
+                // We are looping here as multiple percentiles ranks might be rank-mapped
+                // between this and the prior active task duration.
+                while (percentile != null) {
                     double rank = percentile * (activeTasks.size() + 1);
-
-                    if (count >= rank) {
-                        double percentileValue = activeTaskDuration;
-                        if (count != rank && priorActiveTaskDuration != null) {
-                            // interpolate the percentile value when the active task rank
-                            // is non-integral
-                            double priorPercentileValue = priorActiveTaskDuration;
-                            percentileValue = priorPercentileValue
-                                    + ((percentileValue - priorPercentileValue) * (rank - (int) rank));
-                        }
-
-                        valueAtPercentiles.add(new ValueAtPercentile(percentile, percentileValue));
-                        percentile = percentilesRequested.poll();
+                    if (count < rank) {
+                        break;
                     }
+                    double percentileValue = activeTaskDuration;
+                    if (count != rank && priorActiveTaskDuration != null) {
+                        // interpolate the percentile value when the active task rank
+                        // is non-integral
+                        double priorPercentileValue = priorActiveTaskDuration;
+                        percentileValue = priorPercentileValue
+                                + ((percentileValue - priorPercentileValue) * (rank - (int) rank));
+                    }
+
+                    valueAtPercentiles.add(new ValueAtPercentile(percentile, percentileValue));
+                    percentile = percentilesRequested.poll();
                 }
 
                 priorActiveTaskDuration = activeTaskDuration;
