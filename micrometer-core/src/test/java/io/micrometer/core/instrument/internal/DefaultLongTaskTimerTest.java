@@ -18,6 +18,7 @@ package io.micrometer.core.instrument.internal;
 import io.micrometer.core.instrument.LongTaskTimer;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.MockClock;
+import io.micrometer.core.instrument.distribution.ValueAtPercentile;
 import io.micrometer.core.instrument.internal.DefaultLongTaskTimer.SampleImpl;
 import io.micrometer.core.instrument.internal.DefaultLongTaskTimer.SampleImplCounted;
 import io.micrometer.core.instrument.simple.SimpleConfig;
@@ -25,6 +26,7 @@ import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -112,6 +114,25 @@ class DefaultLongTaskTimerTest {
         ((DefaultLongTaskTimer) ltt).setCounter(-2);
         assertInternalCounterValue(ltt.start(), -1);
         assertInternalCounterValue(ltt.start(), 1);
+    }
+
+    @Test
+    void snapshotWithMorePercentilesThanValuesContainsAllConfiguredPercentilesInSortedOrder() {
+        // N=1, percentiles [0.1, 0.25, 0.5, 0.75, 0.9]
+        // The above-line condition is p*2>1, so {0.75, 0.9} go directly to max and
+        // {0.1, 0.25, 0.5} enter the interpolation loop.
+        // Prior to #7507, we process one percentile per value, which would be wrong here.
+        // We would process 0.1 with the first and only duration and leave both 0.25 and
+        // 0.5 uncomputed.
+        final LongTaskTimer ltt2 = LongTaskTimer.builder("my.ltt.2")
+            .publishPercentiles(0.1, 0.25, 0.5, 0.75, 0.9)
+            .register(registry);
+        ltt2.start();
+        clock.add(Duration.ofSeconds(5));
+        final ValueAtPercentile[] snap2 = ltt2.takeSnapshot().percentileValues();
+        // Prior to #7507, this would be [0.1, 0.75, 0.9] only
+        assertThat(snap2).extracting(ValueAtPercentile::percentile).containsExactly(0.1, 0.25, 0.5, 0.75, 0.9);
+        assertThat(snap2).extracting(v -> v.value(TimeUnit.SECONDS)).containsOnly(5.0);
     }
 
     private void assertInternalCounterIsZero(LongTaskTimer.Sample sample) {
