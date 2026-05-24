@@ -18,12 +18,10 @@ package io.micrometer.java17.instrument.binder.jdk;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Timer;
-import io.micrometer.core.instrument.binder.MeterBinder;
 import jdk.jfr.consumer.EventStream;
 import jdk.jfr.consumer.RecordedEvent;
 import jdk.jfr.consumer.RecordingStream;
 
-import java.io.Closeable;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.LinkedHashMap;
@@ -45,7 +43,7 @@ import static java.util.Collections.emptyList;
  * @see <a href="https://openjdk.org/jeps/328">JEP 328: Flight Recorder</a>
  * @since 1.17.0
  */
-public class JvmSafepointMetrics implements MeterBinder, Closeable {
+public class JvmSafepointMetrics extends JfrMeterBinder {
 
     private static final String METER_NAME_PREFIX = "jvm.safepoint.";
 
@@ -55,8 +53,6 @@ public class JvmSafepointMetrics implements MeterBinder, Closeable {
     static final String JFR_EVENT_EXECUTE_VM_OPERATION = "jdk.ExecuteVMOperation";
 
     private final Iterable<Tag> tags;
-
-    private final EventStream eventStream;
 
     // Stores all begin times of not-yet-ended safepoints.
     private final Map<Long, Instant> safepointBeginCache;
@@ -70,11 +66,11 @@ public class JvmSafepointMetrics implements MeterBinder, Closeable {
     }
 
     public JvmSafepointMetrics(RecordingConfig config, Iterable<Tag> tags) {
-        this(configureRecordingStream(new RecordingStream(), config), config, tags);
+        this(createRecordingStream(config), config, tags);
     }
 
     JvmSafepointMetrics(EventStream eventStream, RecordingConfig config, Iterable<Tag> tags) {
-        this.eventStream = Objects.requireNonNull(eventStream, "eventStream parameter must not be null");
+        super(eventStream);
         Objects.requireNonNull(config, "config parameter must not be null");
         this.tags = Objects.requireNonNull(tags, "tags parameter must not be null");
 
@@ -86,25 +82,23 @@ public class JvmSafepointMetrics implements MeterBinder, Closeable {
         };
     }
 
-    private static RecordingStream configureRecordingStream(RecordingStream recordingStream, RecordingConfig config) {
+    private static RecordingStream createRecordingStream(RecordingConfig config) {
+        RecordingStream recordingStream = JfrMeterBinder.createRecordingStream(config.jfrRecordingConfig());
         recordingStream.enable(JFR_EVENT_SAFEPOINT_BEGIN).withoutStackTrace().withoutThreshold();
         recordingStream.enable(JFR_EVENT_SAFEPOINT_END).withoutStackTrace().withoutThreshold();
         recordingStream.enable(JFR_EVENT_EXECUTE_VM_OPERATION).withoutStackTrace().withoutThreshold();
         recordingStream.enable(JFR_EVENT_SAFEPOINT_STATE_SYNCHRONIZATION).withoutStackTrace().withoutThreshold();
 
-        recordingStream.setMaxAge(config.maxAge());
-        recordingStream.setMaxSize(config.maxSizeBytes());
         return recordingStream;
     }
 
     @Override
-    public void bindTo(MeterRegistry registry) {
+    protected void register(MeterRegistry registry, EventStream eventStream) {
         eventStream.onEvent(JFR_EVENT_SAFEPOINT_BEGIN, this::handleSafepointBegin);
         eventStream.onEvent(JFR_EVENT_EXECUTE_VM_OPERATION, event -> handleExecuteVmOperation(event, registry));
         eventStream.onEvent(JFR_EVENT_SAFEPOINT_END, event -> handleSafepointEnd(event, registry));
         eventStream.onEvent(JFR_EVENT_SAFEPOINT_STATE_SYNCHRONIZATION,
                 event -> handleSafepointStateSynchronization(event, registry));
-        eventStream.startAsync();
     }
 
     private void handleSafepointBegin(RecordedEvent event) {
@@ -147,11 +141,10 @@ public class JvmSafepointMetrics implements MeterBinder, Closeable {
 
     @Override
     public void close() {
-        eventStream.close();
+        super.close();
         safepointBeginCache.clear();
     }
 
-    // todo: extract and share with VT MeterBinder
     public record RecordingConfig(Duration maxAge, long maxSizeBytes, int maxCacheSize) {
         public RecordingConfig() {
             this(Duration.ofSeconds(5), 10L * 1024 * 1024, 1024);
@@ -165,6 +158,10 @@ public class JvmSafepointMetrics implements MeterBinder, Closeable {
             if (maxCacheSize < 1) {
                 throw new IllegalArgumentException("maxCacheSize must be positive");
             }
+        }
+
+        private JfrMeterBinder.RecordingConfig jfrRecordingConfig() {
+            return new JfrMeterBinder.RecordingConfig(maxAge, maxSizeBytes);
         }
     }
 
