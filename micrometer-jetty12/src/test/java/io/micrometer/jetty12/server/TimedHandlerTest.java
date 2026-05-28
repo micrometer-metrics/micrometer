@@ -15,6 +15,7 @@
  */
 package io.micrometer.jetty12.server;
 
+import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.Tags;
@@ -319,13 +320,8 @@ class TimedHandlerTest {
     }
 
     @Test
+    @Issue("#7276")
     void statusIsCorrectlyRecordedWhenWriteBeforeSetStatus() throws Exception {
-        // This test reproduces the exact bug from issue #7276:
-        // Handler calls response.write() BEFORE calling response.setStatus().
-        // Jetty fires onResponseBegin (with status=0) before the handler runs,
-        // then the handler calls write() first, then setStatus() later.
-        // Without the fix, onComplete sees status=0 (UNKNOWN outcome).
-        // With the fix, onComplete reads the actual status from the Response object.
         CountDownLatch writeCalled = new CountDownLatch(1);
         CountDownLatch latch = new CountDownLatch(1);
         timedHandler.setHandler(new Handler.Abstract() {
@@ -368,9 +364,7 @@ class TimedHandlerTest {
             HttpTester.Response response = HttpTester.parseResponse(endpoint.getResponse());
             assertThat(response.getStatus()).isEqualTo(HttpStatus.OK_200);
 
-            // Key assertion: without the fix, this would be "UNKNOWN" with status "0"
-            // because onResponseBegin captured status=0 before setStatus() was called.
-            // With the fix, status 200 is correctly captured in onComplete.
+            // Key assertion: without the fix, this would be "UNKNOWN" with status "0".
             assertThat(registry.get("jetty.server.requests")
                 .tag("outcome", Outcome.SUCCESS.name())
                 .tag("status", "200")
