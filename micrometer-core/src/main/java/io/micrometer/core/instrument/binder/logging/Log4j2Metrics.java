@@ -33,12 +33,16 @@ import org.apache.logging.log4j.core.filter.CompositeFilter;
 
 import java.beans.PropertyChangeListener;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import static java.util.Collections.emptyList;
+import static java.util.Collections.emptySet;
 
 /**
  * {@link MeterBinder} for Apache Log4j 2. Please use at least 2.21.0 since there was a
@@ -64,6 +68,8 @@ public class Log4j2Metrics implements MeterBinder, AutoCloseable {
 
     private final LoggerContext loggerContext;
 
+    private final Set<String> excludedLoggerNames;
+
     private final ConcurrentMap<MeterRegistry, MetricsFilter> metricsFilters = new ConcurrentHashMap<>();
 
     private final List<PropertyChangeListener> changeListeners = new CopyOnWriteArrayList<>();
@@ -77,8 +83,13 @@ public class Log4j2Metrics implements MeterBinder, AutoCloseable {
     }
 
     public Log4j2Metrics(Iterable<Tag> tags, LoggerContext loggerContext) {
+        this(tags, loggerContext, emptySet());
+    }
+
+    public Log4j2Metrics(Iterable<Tag> tags, LoggerContext loggerContext, Set<String> excludedLoggerNames) {
         this.tags = tags;
         this.loggerContext = loggerContext;
+        this.excludedLoggerNames = Collections.unmodifiableSet(new HashSet<>(excludedLoggerNames));
     }
 
     @Override
@@ -135,7 +146,7 @@ public class Log4j2Metrics implements MeterBinder, AutoCloseable {
 
     private MetricsFilter getOrCreateMetricsFilterAndStart(MeterRegistry registry) {
         return metricsFilters.computeIfAbsent(registry, r -> {
-            MetricsFilter metricsFilter = new MetricsFilter(r, tags);
+            MetricsFilter metricsFilter = new MetricsFilter(r, tags, excludedLoggerNames);
             metricsFilter.start();
             return metricsFilter;
         });
@@ -173,6 +184,8 @@ public class Log4j2Metrics implements MeterBinder, AutoCloseable {
 
     static class MetricsFilter extends AbstractFilter {
 
+        private final Set<String> excludedLoggerNames;
+
         private final Counter fatalCounter;
 
         private final Counter errorCounter;
@@ -185,7 +198,8 @@ public class Log4j2Metrics implements MeterBinder, AutoCloseable {
 
         private final Counter traceCounter;
 
-        MetricsFilter(MeterRegistry registry, Iterable<Tag> tags) {
+        MetricsFilter(MeterRegistry registry, Iterable<Tag> tags, Set<String> excludedLoggerNames) {
+            this.excludedLoggerNames = excludedLoggerNames;
             fatalCounter = Counter.builder(METER_NAME)
                 .tags(tags)
                 .tags("level", "fatal")
@@ -231,7 +245,9 @@ public class Log4j2Metrics implements MeterBinder, AutoCloseable {
 
         @Override
         public Result filter(LogEvent event) {
-            incrementCounter(event);
+            if (!excludedLoggerNames.contains(event.getLoggerName())) {
+                incrementCounter(event);
+            }
             return Result.NEUTRAL;
         }
 

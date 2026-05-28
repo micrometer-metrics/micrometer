@@ -29,6 +29,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.slf4j.LoggerFactory;
 
+import java.util.Collections;
+
 import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -124,6 +126,65 @@ class LogbackMetricsTest {
         logger.atWarn().setMessage("test warn log with fluent builder").log();
 
         assertThat(registry.get("logback.events").tags("level", "warn").functionCounter().count()).isEqualTo(1.0);
+    }
+
+    @Issue("#6233")
+    @Test
+    void excludedLoggerShouldNotBeCounted() {
+        logbackMetrics.close();
+        registry = new SimpleMeterRegistry(SimpleConfig.DEFAULT, new MockClock());
+
+        LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
+        logbackMetrics = new LogbackMetrics(emptyList(), loggerContext, Collections.singleton("com.test.excluded"));
+        logbackMetrics.bindTo(registry);
+
+        Logger excludedLogger = loggerContext.getLogger("com.test.excluded");
+        excludedLogger.setLevel(Level.INFO);
+        Logger includedLogger = loggerContext.getLogger("com.test.included");
+        includedLogger.setLevel(Level.INFO);
+
+        excludedLogger.info("should not be counted");
+        includedLogger.info("should be counted");
+
+        assertThat(registry.get("logback.events").tags("level", "info").functionCounter().count()).isEqualTo(1.0);
+    }
+
+    @Issue("#6233")
+    @Test
+    void excludeDoesNotAffectChildLoggers() {
+        logbackMetrics.close();
+        registry = new SimpleMeterRegistry(SimpleConfig.DEFAULT, new MockClock());
+
+        LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
+        logbackMetrics = new LogbackMetrics(emptyList(), loggerContext, Collections.singleton("com.test"));
+        logbackMetrics.bindTo(registry);
+
+        Logger parentLogger = loggerContext.getLogger("com.test");
+        parentLogger.setLevel(Level.INFO);
+        Logger childLogger = loggerContext.getLogger("com.test.child");
+        childLogger.setLevel(Level.INFO);
+
+        parentLogger.info("should not be counted");
+        childLogger.info("should be counted");
+
+        assertThat(registry.get("logback.events").tags("level", "info").functionCounter().count()).isEqualTo(1.0);
+    }
+
+    @Issue("#6233")
+    @Test
+    void emptyExcludeSetBehavesLikeDefault() {
+        logbackMetrics.close();
+        registry = new SimpleMeterRegistry(SimpleConfig.DEFAULT, new MockClock());
+
+        LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
+        logbackMetrics = new LogbackMetrics(emptyList(), loggerContext, Collections.emptySet());
+        logbackMetrics.bindTo(registry);
+
+        Logger testLogger = loggerContext.getLogger("com.test");
+        testLogger.setLevel(Level.INFO);
+        testLogger.info("should be counted");
+
+        assertThat(registry.get("logback.events").tags("level", "info").functionCounter().count()).isEqualTo(1.0);
     }
 
     @NullMarked
