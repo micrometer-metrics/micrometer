@@ -79,9 +79,17 @@ class MicrometerCollector implements MultiCollector {
     @Override
     public MetricSnapshots collect() {
         Map<String, Family> families = new HashMap<>();
+        Set<List<String>> seen = new HashSet<>(children.size());
 
-        for (Child child : children.values()) {
-            child.samples(conventionName, tagKeys)
+        for (Map.Entry<List<String>, Child> child : children.entrySet()) {
+            // `children` is a `ConcurrentHashMap` and its iterator is weakly-consistent.
+            // This means we could see duplicate children in case there are other threads
+            // concurrently adding to it. As such we deduplicate here.
+            if (!seen.add(child.getKey())) {
+                continue;
+            }
+            child.getValue()
+                .samples(conventionName, tagKeys)
                 .forEach(family -> families.compute(family.getConventionName(),
                         (name, matchingFamily) -> matchingFamily != null
                                 ? matchingFamily.addSamples(family.dataPointSnapshots) : family));
