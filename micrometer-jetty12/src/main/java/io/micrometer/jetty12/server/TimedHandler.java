@@ -29,7 +29,7 @@ import org.eclipse.jetty.util.component.Graceful;
 import java.util.concurrent.CompletableFuture;
 
 /**
- * Jetty 12 Metrics Handler.
+ * Jetty 12 Server Metrics Handler. The implementation requires at least Jetty 12.0.8.
  *
  * @author Jon Schneider
  * @author Joakim Erdfelt
@@ -103,15 +103,14 @@ public class TimedHandler extends EventsHandler implements Graceful {
 
     @Override
     protected void onResponseBegin(Request request, int status, HttpFields headers) {
-        // If we see a status of 0 here, that mean the Handler hasn't set a status code.
-        request.setAttribute(RESPONSE_STATUS_ATTRIBUTE, status);
         super.onResponseBegin(request, status, headers);
     }
 
     @Override
-    protected void onComplete(Request request, Throwable failure) {
+    protected void onComplete(Request request, int status, HttpFields headers, Throwable failure) {
+        request.setAttribute(RESPONSE_STATUS_ATTRIBUTE, status);
         stopRequestTiming(request);
-        super.onComplete(request, failure);
+        super.onComplete(request, status, headers, failure);
     }
 
     private void beginRequestTiming(Request request) {
