@@ -40,7 +40,7 @@ class UptimeMetricsTest {
         MeterRegistry registry = new SimpleMeterRegistry(SimpleConfig.DEFAULT, new MockClock());
         new UptimeMetrics().bindTo(registry);
 
-        registry.get("process.uptime").timeGauge();
+        registry.get("process.uptime").functionCounter();
         registry.get("process.start.time").timeGauge();
     }
 
@@ -53,7 +53,7 @@ class UptimeMetricsTest {
         MeterRegistry registry = new SimpleMeterRegistry(SimpleConfig.DEFAULT, new MockClock());
         new UptimeMetrics(runtimeMXBean, emptyList()).bindTo(registry);
 
-        assertThat(registry.get("process.uptime").timeGauge().value()).isEqualTo(1.337);
+        assertThat(registry.get("process.uptime").functionCounter().count()).isEqualTo(1337.0);
         assertThat(registry.get("process.start.time").timeGauge().value()).isEqualTo(4.711);
         // end::example[]
     }
