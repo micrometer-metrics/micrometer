@@ -13,26 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.core.instrument.binder.jvm.convention;
+package io.micrometer.core.instrument.binder.jvm.convention.micrometer;
 
-import io.micrometer.core.instrument.binder.MeterConvention;
+import io.micrometer.core.instrument.binder.jvm.convention.JvmCpuTimeMeterConvention;
 
 /**
- * Get {@link MeterConvention} for CPU-related metrics from the JVM.
+ * Historical convention used in Micrometer for process CPU time metrics.
  *
  * @see io.micrometer.core.instrument.binder.system.ProcessorMetrics
  * @since 1.16.0
- * @deprecated use individual convention types such as {@link JvmCpuTimeMeterConvention},
- * {@link JvmCpuCountMeterConvention}, and {@link JvmCpuLoadMeterConvention} with
- * {@link io.micrometer.core.instrument.binder.system.ProcessorMetrics.Builder} instead
  */
-@Deprecated
-public interface JvmCpuMeterConventions {
+public class MicrometerJvmCpuTimeMeterConvention implements JvmCpuTimeMeterConvention {
 
-    MeterConvention<Object> cpuTimeConvention();
-
-    MeterConvention<Object> cpuCountConvention();
-
-    MeterConvention<Object> processCpuLoadConvention();
+    @Override
+    public String getName() {
+        return "process.cpu.time";
+    }
 
 }
