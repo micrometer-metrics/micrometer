@@ -183,9 +183,31 @@ Using the following Prometheus queries, we can graph the most commonly used stat
 .Timer over a simulated service.
 image::implementations/prometheus-timer.png[Grafana-rendered Prometheus timer]
 
+[[prometheus-long-task-timers]]
 === Long task timers
 
-The following example shows a Prometheus query to plot the duration of a long task timer for a serial task is `long_task_timer_sum`. In Grafana, we can set an alert threshold at some fixed point.
+Long task timers measure tasks that are still running when Prometheus scrapes the registry.
+This differs from a `Timer`, which records completed events.
+
+The exposed Prometheus series depend on whether `publishPercentileHistogram()` is enabled:
+
+|===
+| Micrometer meter | Default Prometheus output | With `publishPercentileHistogram()`
+
+| `Timer`
+| `$\{name}_seconds_count`, `$\{name}_seconds_sum`, and `$\{name}_seconds_max`
+| Adds `$\{name}_seconds_bucket`; the count, sum, and max series are unchanged.
+
+| `LongTaskTimer`
+| `$\{name}_seconds_count`, `$\{name}_seconds_sum`, and `$\{name}_seconds_max`
+| Replaces `$\{name}_seconds_count` and `$\{name}_seconds_sum` with the gauge-histogram series `$\{name}_seconds_gcount` and `$\{name}_seconds_gsum`, adds `$\{name}_seconds_bucket`, and keeps `$\{name}_seconds_max`.
+|===
+
+In the Prometheus Java Client 1.x registry, `$\{name}_seconds_max` is always exposed as a separate metric family.
+
+A `LongTaskTimer` only samples tasks that are running at scrape time, so its values return to zero when no tasks are in progress. If you need bucket-based queries such as `histogram_quantile()` over in-progress task duration, or if alert rules need histogram buckets, enable percentile histograms by calling `publishPercentileHistogram()` on the builder.
+
+For a serial task, `long_task_timer_sum` plots the current cumulative duration of in-progress tasks. In Grafana, we can set an alert threshold at some fixed point.
 
 .Simulated back-to-back long tasks with a fixed alert threshold.
 image::implementations/prometheus-long-task-timer.png[Grafana-rendered Prometheus long task timer]
