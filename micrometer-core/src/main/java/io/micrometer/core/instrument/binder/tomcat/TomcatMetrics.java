@@ -53,6 +53,16 @@ public class TomcatMetrics implements MeterBinder, AutoCloseable {
 
     private static final String OBJECT_NAME_SERVER_STANDALONE = JMX_DOMAIN_STANDALONE + OBJECT_NAME_SERVER_SUFFIX;
 
+    // The :type=GlobalRequestProcessor,name=*,Upgrade=* ObjectName shape is shared by
+    // RequestGroupInfo (HTTP/1.1 + HTTP/2 per-connector aggregator) and UpgradeGroupInfo
+    // (servlet upgrades such as WebSocket). They expose different attribute sets, so we
+    // only register meters for the former. Tomcat wraps RequestGroupInfo in a
+    // BaseModelMBean, so MBeanServer.isInstanceOf and className comparison both fail;
+    // we discriminate on the presence of "requestCount" (defining attribute of
+    // RequestGroupInfo, absent from UpgradeGroupInfo which exposes
+    // msgsReceived/msgsSent).
+    private static final String REQUEST_GROUP_INFO_ATTRIBUTE = "requestCount";
+
     private final @Nullable Manager manager;
 
     private final MBeanServer mBeanServer;
@@ -222,38 +232,93 @@ public class TomcatMetrics implements MeterBinder, AutoCloseable {
     }
 
     private void registerGlobalRequestMetrics(MeterRegistry registry) {
-        registerMetricsEventually(":type=GlobalRequestProcessor,name=*", (name, allTags) -> {
+        // The trailing ",*" lets the pattern also match the per-upgrade MBean that
+        // Tomcat registers for HTTP/2 (an extra Upgrade="h2c" key). Without it, HTTP/2
+        // traffic is silently dropped from the tomcat.global.* meters.
+        registerMetricsEventually(":type=GlobalRequestProcessor,name=*,*", (name, allTags) -> {
+            // Skip UpgradeGroupInfo (e.g., the WebSocket servlet-upgrade aggregator)
+            // which shares this ObjectName shape but exposes a different attribute set;
+            // registering meters against it would produce NaN/0 series.
+            if (!isRequestGroupInfo(name)) {
+                return;
+            }
+            // The Upgrade key disambiguates the HTTP/2 RequestGroupInfo from the
+            // HTTP/1.1 one that shares the same connector name; surface it as a tag so
+            // both series can register and stay distinguishable.
+            Iterable<Tag> tagsWithUpgrade = Tags.concat(allTags, "upgrade", upgradeTagValue(name));
+
             FunctionCounter
                 .builder("tomcat.global.sent", mBeanServer, s -> safeDouble(() -> s.getAttribute(name, "bytesSent")))
-                .tags(allTags)
+                .tags(tagsWithUpgrade)
                 .baseUnit(BaseUnits.BYTES)
                 .register(registry);
 
             FunctionCounter
                 .builder("tomcat.global.received", mBeanServer,
                         s -> safeDouble(() -> s.getAttribute(name, "bytesReceived")))
-                .tags(allTags)
+                .tags(tagsWithUpgrade)
                 .baseUnit(BaseUnits.BYTES)
                 .register(registry);
 
             FunctionCounter
                 .builder("tomcat.global.error", mBeanServer, s -> safeDouble(() -> s.getAttribute(name, "errorCount")))
-                .tags(allTags)
+                .tags(tagsWithUpgrade)
                 .register(registry);
 
             FunctionTimer
                 .builder("tomcat.global.request", mBeanServer,
                         s -> safeLong(() -> s.getAttribute(name, "requestCount")),
                         s -> safeDouble(() -> s.getAttribute(name, "processingTime")), TimeUnit.MILLISECONDS)
-                .tags(allTags)
+                .tags(tagsWithUpgrade)
                 .register(registry);
 
             TimeGauge
                 .builder("tomcat.global.request.max", mBeanServer, TimeUnit.MILLISECONDS,
                         s -> safeDouble(() -> s.getAttribute(name, "maxTime")))
-                .tags(allTags)
+                .tags(tagsWithUpgrade)
                 .register(registry);
         });
+    }
+
+    private static String upgradeTagValue(ObjectName name) {
+        String upgrade = name.getKeyProperty("Upgrade");
+        if (upgrade == null) {
+            return "none";
+        }
+        return unquoteKeyProperty(upgrade);
+    }
+
+    /**
+     * Strip the optional surrounding quotes from an {@link ObjectName} key-property
+     * value. JMX only quotes values that contain reserved characters, so unquoted values
+     * are returned as-is; quoted values are unescaped through {@link ObjectName#unquote}
+     * so backslash escapes survive the round-trip.
+     */
+    private static String unquoteKeyProperty(String value) {
+        if (value.length() >= 2 && value.charAt(0) == '"' && value.charAt(value.length() - 1) == '"') {
+            return ObjectName.unquote(value);
+        }
+        return value;
+    }
+
+    private boolean isRequestGroupInfo(ObjectName name) {
+        try {
+            // Tomcat's modeler exposes the attribute as "requestCount" (lowercase, per
+            // its mbean-descriptors), whereas a Standard MBean derived from a getter
+            // exposes it as "RequestCount" (capitalized JavaBean convention). Accept
+            // either casing so both forms are recognized.
+            for (MBeanAttributeInfo attribute : mBeanServer.getMBeanInfo(name).getAttributes()) {
+                if (REQUEST_GROUP_INFO_ATTRIBUTE.equalsIgnoreCase(attribute.getName())) {
+                    return true;
+                }
+            }
+            return false;
+        }
+        catch (InstanceNotFoundException | IntrospectionException | ReflectionException ex) {
+            // The MBean was unregistered or its metadata is unavailable; treat it as a
+            // non-match so the callback skips it.
+            return false;
+        }
     }
 
     /**
@@ -381,7 +446,7 @@ public class TomcatMetrics implements MeterBinder, AutoCloseable {
     private Iterable<Tag> nameTag(ObjectName name) {
         String nameTagValue = name.getKeyProperty("name");
         if (nameTagValue != null) {
-            return Tags.of("name", nameTagValue.replace("\"", ""));
+            return Tags.of("name", unquoteKeyProperty(nameTagValue));
         }
         return Collections.emptyList();
     }
