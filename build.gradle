@@ -41,10 +41,12 @@ plugins {
 // Hacks because of Antora's clone/checkout/worktrees behavior
 // Antora uses shallow-clone and worktrees to check out branches/tags.
 if (project.hasProperty('antora')) {
-    'git fetch --unshallow --all --tags'.execute().text // Antora shallow-clones so there is no history (we need commit history to find the last tag in the tree)
+    'git fetch --unshallow --all --tags'.execute().text
+    // Antora shallow-clones so there is no history (we need commit history to find the last tag in the tree)
     String ref = 'git rev-parse --abbrev-ref HEAD'.execute().text.trim()
     if (ref == 'HEAD') { // if Antora checks out a tag instead of a branch
-        String tag = 'git tag --points-at HEAD'.execute().text.trim() // jgit is not able to figure out tags in Antora's worktree
+        String tag = 'git tag --points-at HEAD'.execute().text.trim()
+        // jgit is not able to figure out tags in Antora's worktree
         if (tag) {
             println "Found release tag: $tag, using it as release.version"
             ext['release.version'] = tag.substring(1)
@@ -83,7 +85,7 @@ subprojects {
             }
             if (it.name == "compileJava" && !(it.project.name in ["micrometer-java11"])) {
                 options.errorprone.disable(
-                    "JavaDurationGetSecondsToToSeconds" // Requires JDK 9+
+                        "JavaDurationGetSecondsToToSeconds" // Requires JDK 9+
                 )
             }
             options.errorprone {
@@ -91,40 +93,40 @@ subprojects {
                 excludedPaths = ".*/generated/.*"
 
                 disable(
-                    "StringConcatToTextBlock" // Requires JDK 15+
+                        "StringConcatToTextBlock" // Requires JDK 15+
                 )
 
                 error(
-                    "AlmostJavadoc",
-                    "ArrayAsKeyOfSetOrMap",
-                    "AttemptedNegativeZero",
-                    "BadImport",
-                    "CatchAndPrintStackTrace",
-                    "ClassCanBeStatic",
-                    "ClassInitializationDeadlock",
-                    "ClassName",
-                    "CollectionUndefinedEquality",
-                    "DefaultCharset",
-                    "DoNotCallSuggester",
-                    "EnumOrdinal",
-                    "EqualsGetClass",
-                    "FallThrough",
-                    "Finally",
-                    "InlineFormatString",
-                    "LongDoubleConversion",
-                    "MissingOverride",
-                    "MixedMutabilityReturnType",
-                    "ModifyCollectionInEnhancedForLoop",
-                    "MutablePublicArray",
-                    "NarrowCalculation",
-                    "NullAway",
-                    "OperatorPrecedence",
-                    "StringCaseLocaleUsage",
-                    "StringSplitter",
-                    "UnnecessaryAsync",
-                    "UnnecessaryParentheses",
-                    "UnusedMethod",
-                    "URLEqualsHashCode"
+                        "AlmostJavadoc",
+                        "ArrayAsKeyOfSetOrMap",
+                        "AttemptedNegativeZero",
+                        "BadImport",
+                        "CatchAndPrintStackTrace",
+                        "ClassCanBeStatic",
+                        "ClassInitializationDeadlock",
+                        "ClassName",
+                        "CollectionUndefinedEquality",
+                        "DefaultCharset",
+                        "DoNotCallSuggester",
+                        "EnumOrdinal",
+                        "EqualsGetClass",
+                        "FallThrough",
+                        "Finally",
+                        "InlineFormatString",
+                        "LongDoubleConversion",
+                        "MissingOverride",
+                        "MixedMutabilityReturnType",
+                        "ModifyCollectionInEnhancedForLoop",
+                        "MutablePublicArray",
+                        "NarrowCalculation",
+                        "NullAway",
+                        "OperatorPrecedence",
+                        "StringCaseLocaleUsage",
+                        "StringSplitter",
+                        "UnnecessaryAsync",
+                        "UnnecessaryParentheses",
+                        "UnusedMethod",
+                        "URLEqualsHashCode"
                 )
 
                 option("NullAway:OnlyNullMarked", "true")
@@ -427,7 +429,8 @@ subprojects {
 
             check.dependsOn("testModules")
 
-            if (!(project.name in [])) { // add projects here that do not exist in the previous minor so should be excluded from japicmp
+            if (!(project.name in ['micrometer-java17'])) {
+                // add projects here that do not exist in the previous minor so should be excluded from japicmp
                 apply plugin: 'me.champeau.gradle.japicmp'
                 apply plugin: 'de.undercouch.download'
 
@@ -450,7 +453,7 @@ subprojects {
                     String rootUrl
                     if (compatibleVersion.contains('-M') || compatibleVersion.contains('-RC')) {
                         rootUrl = 'https://repo.spring.io/milestone/'
-                    } else if (compatibleVersion.contains('-SNAPSHOT') ) {
+                    } else if (compatibleVersion.contains('-SNAPSHOT')) {
                         rootUrl = 'https://repo.spring.io/snapshot/'
                     } else {
                         rootUrl = repositories.mavenCentral().url
@@ -470,15 +473,25 @@ subprojects {
                     ignoreMissingClasses = true
                     includeSynthetic = true
 
-                    classExcludes = []
-                    compatibilityChangeExcludes = [ "METHOD_NEW_DEFAULT" ]
+                    classExcludes = [
+                            // VirtualThreadMetrics was refactored in 1.17.0 to extend the
+                            // new JfrMeterBinder base class (from micrometer-java17).
+                            // Its public surface (bindTo, close) is unchanged for
+                            // callers because both methods are inherited from the new
+                            // superclass, but japicmp flags the superclass switch and the
+                            // disappearance of the directly-declared methods as binary
+                            // incompatibilities. Remove this exclude once 1.17.0 is the
+                            // baseline.
+                            'io.micrometer.java21.instrument.binder.jdk.VirtualThreadMetrics'
+                    ]
+                    compatibilityChangeExcludes = ["METHOD_NEW_DEFAULT"]
 
                     packageExcludes = ['io.micrometer.shaded.*', 'io.micrometer.statsd.internal', 'io.micrometer.registry.otlp.internal']
 
                     fieldExcludes = []
                     methodExcludes = [
-                        'io.micrometer.core.instrument.binder.okhttp3.OkHttpContext#getState()',
-                        'io.micrometer.core.instrument.binder.okhttp3.OkHttpContext#setState(io.micrometer.core.instrument.binder.okhttp3.OkHttpObservationInterceptor$CallState)'
+                            'io.micrometer.core.instrument.binder.okhttp3.OkHttpContext#getState()',
+                            'io.micrometer.core.instrument.binder.okhttp3.OkHttpContext#setState(io.micrometer.core.instrument.binder.okhttp3.OkHttpObservationInterceptor$CallState)'
                     ]
 
                     onlyIf { compatibleVersion != 'SKIP' }
@@ -516,7 +529,8 @@ nexusPublishing {
     repositories {
         mavenCentral {
             nexusUrl.set(uri('https://ossrh-staging-api.central.sonatype.com/service/local/'))
-            snapshotRepositoryUrl.set(uri('https://repo.spring.io/snapshot/')) // not used but necessary for the plugin
+            snapshotRepositoryUrl.set(uri('https://repo.spring.io/snapshot/'))
+            // not used but necessary for the plugin
             username = findProperty('MAVEN_CENTRAL_USER')
             password = findProperty('MAVEN_CENTRAL_PASSWORD')
         }

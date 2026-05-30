@@ -17,10 +17,8 @@ package io.micrometer.java21.instrument.binder.jdk;
 
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.BaseUnits;
-import io.micrometer.core.instrument.binder.MeterBinder;
-import jdk.jfr.consumer.RecordingStream;
+import io.micrometer.java17.instrument.binder.jdk.JfrMeterBinder;
 
-import java.io.Closeable;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
@@ -40,7 +38,7 @@ import static java.util.Collections.emptyList;
  * "https://www.oracle.com/java/technologies/javase/24-relnote-issues.html#JDK-8338890">jdk.management.VirtualThreadSchedulerMXBean</a>
  * @since 1.14.0
  */
-public class VirtualThreadMetrics implements MeterBinder, Closeable {
+public class VirtualThreadMetrics extends JfrMeterBinder {
 
     private static final String PINNED_EVENT = "jdk.VirtualThreadPinned";
 
@@ -50,25 +48,27 @@ public class VirtualThreadMetrics implements MeterBinder, Closeable {
 
     private static final String METER_NAME_PREFIX = "jvm.threads.virtual.";
 
-    private final RecordingStream recordingStream;
+    private static final Duration DEFAULT_PINNED_THRESHOLD = Duration.ofMillis(20);
+
+    private final Duration pinnedThreshold;
 
     private final Iterable<Tag> tags;
 
     public VirtualThreadMetrics() {
-        this(new RecordingConfig(), emptyList());
+        this(emptyList());
     }
 
     public VirtualThreadMetrics(Iterable<Tag> tags) {
-        this(new RecordingConfig(), tags);
+        this(DEFAULT_PINNED_THRESHOLD, tags);
     }
 
-    private VirtualThreadMetrics(RecordingConfig config, Iterable<Tag> tags) {
-        this.recordingStream = createRecordingStream(config);
+    private VirtualThreadMetrics(Duration pinnedThreshold, Iterable<Tag> tags) {
+        this.pinnedThreshold = Objects.requireNonNull(pinnedThreshold, "pinnedThreshold parameter must not be null");
         this.tags = tags;
     }
 
     @Override
-    public void bindTo(MeterRegistry registry) {
+    protected final void bindTo(MeterRegistry registry, EventHandlerRegistrar eventRegistrar) {
         Timer pinnedTimer = Timer.builder(METER_NAME_PREFIX + "pinned")
             .description("The duration while the virtual thread was pinned without releasing its platform thread")
             .tags(tags)
@@ -79,8 +79,8 @@ public class VirtualThreadMetrics implements MeterBinder, Closeable {
             .tags(tags)
             .register(registry);
 
-        recordingStream.onEvent(PINNED_EVENT, event -> pinnedTimer.record(event.getDuration()));
-        recordingStream.onEvent(SUBMIT_FAILED_EVENT, event -> submitFailedCounter.increment());
+        eventRegistrar.register(PINNED_EVENT, event -> pinnedTimer.record(event.getDuration()), pinnedThreshold);
+        eventRegistrar.register(SUBMIT_FAILED_EVENT, event -> submitFailedCounter.increment());
 
         bindVirtualThreadSchedulerMXBean(registry);
     }
@@ -134,36 +134,6 @@ public class VirtualThreadMetrics implements MeterBinder, Closeable {
         }
         catch (Throwable t) {
             throw new RuntimeException(t);
-        }
-    }
-
-    private RecordingStream createRecordingStream(RecordingConfig config) {
-        RecordingStream recordingStream = new RecordingStream();
-        recordingStream.enable(PINNED_EVENT).withThreshold(config.pinnedThreshold);
-        recordingStream.enable(SUBMIT_FAILED_EVENT);
-        recordingStream.setMaxAge(config.maxAge);
-        recordingStream.setMaxSize(config.maxSizeBytes);
-        recordingStream.startAsync();
-
-        return recordingStream;
-    }
-
-    @Override
-    public void close() {
-        recordingStream.close();
-    }
-
-    private record RecordingConfig(Duration maxAge, long maxSizeBytes, Duration pinnedThreshold) {
-        private RecordingConfig() {
-            this(Duration.ofSeconds(5), 10L * 1024 * 1024, Duration.ofMillis(20));
-        }
-
-        private RecordingConfig {
-            Objects.requireNonNull(maxAge, "maxAge parameter must not be null");
-            Objects.requireNonNull(pinnedThreshold, "pinnedThreshold must not be null");
-            if (maxSizeBytes < 0) {
-                throw new IllegalArgumentException("maxSizeBytes must be positive");
-            }
         }
     }
 
