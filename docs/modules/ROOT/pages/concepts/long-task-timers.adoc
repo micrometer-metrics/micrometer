@@ -49,4 +49,4 @@ LongTaskTimer longTaskTimer = LongTaskTimer
     .register(registry);
 ----
 
-The exact series exposed by a long task timer depend on the registry. For example, the Prometheus registry exposes a different set of series when `publishPercentileHistogram()` is enabled; see the xref:../implementations/prometheus.adoc#prometheus-long-task-timers[Long task timers section of the Prometheus implementation docs] for details.
+The exact series exposed by a long task timer depend on the registry. For example, the Prometheus registry exposes a different set of series when `publishPercentileHistogram()` is enabled; see the xref:../implementations/prometheus.adoc#_long_task_timers[Long task timers section of the Prometheus implementation docs] for details.
