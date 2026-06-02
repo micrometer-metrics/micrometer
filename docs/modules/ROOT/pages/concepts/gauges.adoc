@@ -120,3 +120,8 @@ statuses.register(
     true // whether to overwrite the previous value or only record it once
 );
 ----
+The `overwrite` argument controls how rows with the same set of tags are handled on subsequent registrations.
+Use `overwrite=true` when each registration represents a new snapshot and previously registered rows should be replaced with the latest values.
+Use `overwrite=false` when existing rows should remain unchanged on later registrations with the same tags.
+Rows that are no longer present in the new registration are removed.
+
