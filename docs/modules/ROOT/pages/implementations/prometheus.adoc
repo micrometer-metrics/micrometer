@@ -174,7 +174,7 @@ The Prometheus `Timer` produces the following time series:
 * `$\{name}_seconds_sum`: Total time of all calls.
 * `$\{name}_seconds_max`: Maximum recorded value within a configurable time window.
 
-Calling `publishPercentileHistogram()` on the builder adds `$\{name}_seconds_bucket` time series; the count, sum, and max series are unchanged.
+Enabling xref:../concepts/histogram-quantiles.adoc[percentile histograms] adds a `$\{name}_seconds_bucket` time series; the count, sum, and max series are unchanged.
 
 Again, representing a counter without rate normalization over some time window is rarely useful, as the representation is a function of both the rapidity with which the counter is incremented and the longevity of the service.
 
@@ -194,17 +194,18 @@ This differs from a `Timer`, which records completed events.
 The exposed Prometheus series depend on whether `publishPercentileHistogram()` is enabled:
 
 |===
-| Default Prometheus output | With `publishPercentileHistogram()`
+| Default Prometheus output | With percentile histograms enabled
 
-| `$\{name}_seconds_count`, `$\{name}_seconds_sum`, and `$\{name}_seconds_max`
-| `$\{name}_seconds_gcount`, `$\{name}_seconds_gsum`, `$\{name}_seconds_bucket`, and `$\{name}_seconds_max`
+| `$\{name}_seconds_count`, `$\{name}_seconds_sum`,  `$\{name}_seconds_max`
+| `$\{name}_seconds_gcount`, `$\{name}_seconds_gsum`, `$\{name}_seconds_bucket`, `$\{name}_seconds_max`
 |===
 
-The gauge-histogram series are defined in https://github.com/prometheus/OpenMetrics/blob/main/specification/OpenMetrics.md#gaugehistogram[GaugeHistogram] in the OpenMetrics specification.
+The time series with xref:../concepts/histogram-quantiles.adoc[percentile histograms] enabled are defined by the https://github.com/prometheus/OpenMetrics/blob/main/specification/OpenMetrics.md#gaugehistogram[GaugeHistogram] in the OpenMetrics specification.
 
-In the Prometheus Java Client 1.x registry, `$\{name}_seconds_max` is always exposed as a separate metric family.
+With the `micrometer-registry-prometheus` module, `$\{name}_seconds_max` is exposed as a separate metric family.
+With the `micrometer-registry-prometheus-simpleclient` module, it is part of the same metric family as the other time series.
 
-A `LongTaskTimer` only samples tasks that are running at scrape time, so its values return to zero when no tasks are in progress. If you need bucket-based queries such as `histogram_quantile()` over in-progress task duration, or if alert rules need histogram buckets, enable percentile histograms by calling `publishPercentileHistogram()` on the builder.
+A `LongTaskTimer` only samples tasks that are running at scrape time, so its values return to zero when no tasks are in progress. If you need bucket-based queries such as `histogram_quantile()` over in-progress task duration, or if alert rules need histogram buckets, enable xref:../concepts/histogram-quantiles.adoc[percentile histograms].
 
 For a serial task, `long_task_timer_seconds_sum` plots the current cumulative duration of in-progress tasks. In Grafana, we can set an alert threshold at some fixed point.
 
