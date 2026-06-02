@@ -47,6 +47,10 @@ import static java.util.Collections.emptyList;
  * described in <a href=
  * "https://www.jetbrains.com/help/teamcity/teamcity-memory-monitor.html">TeamCity's
  * Memory Monitor</a>.
+ * <p>
+ * Note: the {@link #close()} method should be called when the application shuts down to
+ * clean up the GC notification listeners this binder registers on the JVM's
+ * {@link java.lang.management.GarbageCollectorMXBean}s.
  *
  * @author Jon Schneider
  * @since 1.4.0

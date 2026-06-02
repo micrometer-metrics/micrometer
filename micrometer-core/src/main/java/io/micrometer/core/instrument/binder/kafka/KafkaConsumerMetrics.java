@@ -43,6 +43,9 @@ import static java.util.Collections.emptyList;
  * <p>
  * Metric names here are based on the naming scheme as it was last changed in Kafka
  * version 0.11.0. Metrics for earlier versions of Kafka will not report correctly.
+ * <p>
+ * Note: the {@link #close()} method should be called when the application shuts down to
+ * clean up the {@code MBeanServer} notification listeners this binder registers.
  *
  * @author Wardha Perinkadakattu
  * @author Jon Schneider

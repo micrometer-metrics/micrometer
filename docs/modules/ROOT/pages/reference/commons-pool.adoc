@@ -16,3 +16,8 @@ include::{include-core-test-java}/io/micrometer/core/instrument/binder/commonspo
 // Generic Keyed Pool instrumentation (with examples of created meters)
 include::{include-core-test-java}/io/micrometer/core/instrument/binder/commonspool2/CommonsObjectPool2MetricsTest.java[tags=generic_keyed_pool, indent=0]
 -----
+
+[[lifecycle]]
+== Lifecycle
+
+NOTE: `CommonsObjectPool2Metrics` implements `AutoCloseable`. When used outside a lifecycle-aware container, call `close()` on application shutdown so the binder can clean up the resources it registered or started, such as listeners, schedulers, or meters.

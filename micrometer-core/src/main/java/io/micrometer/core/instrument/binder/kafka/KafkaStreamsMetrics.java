@@ -25,13 +25,16 @@ import org.apache.kafka.streams.KafkaStreams;
 import java.util.concurrent.ScheduledExecutorService;
 
 /**
- * Kafka Streams metrics binder. This should be closed on application shutdown to clean up
- * resources.
+ * Kafka Streams metrics binder.
  * <p>
  * It is based on the Kafka client's {@code metrics()} method returning a {@link Metric}
  * map.
  * <p>
  * Meter names have the following convention: {@code kafka.(metric_group).(metric_name)}
+ * <p>
+ * Note: the {@link #close()} method should be called when the application shuts down to
+ * shut down the internal metrics-refresh scheduler (when not externally managed) and to
+ * remove the meters this binder registered.
  *
  * @author Jorge Quilcate
  * @see <a href="https://docs.confluent.io/current/kafka/monitoring.html">Kakfa monitoring
