@@ -168,24 +168,45 @@ In contrast, without rate normalization, the counter drops back to zero on servi
 
 === Timers
 
-The Prometheus `Timer` produces two counter time series with different names:
+The Prometheus `Timer` produces the following time series:
 
-* `$\{name}_count`: Total number of all calls.
-* `$\{name}_sum`: Total time of all calls.
+* `$\{name}_seconds_count`: Total number of all calls.
+* `$\{name}_seconds_sum`: Total time of all calls.
+* `$\{name}_seconds_max`: Maximum recorded value within a configurable time window.
+
+Calling `publishPercentileHistogram()` on the builder adds `$\{name}_seconds_bucket` time series; the count, sum, and max series are unchanged.
 
 Again, representing a counter without rate normalization over some time window is rarely useful, as the representation is a function of both the rapidity with which the counter is incremented and the longevity of the service.
 
 Using the following Prometheus queries, we can graph the most commonly used statistics about timers:
 
-* Average latency: `rate(timer_sum[10s])/rate(timer_count[10s])`
-* Throughput (requests per second): `rate(timer_count[10s])`
+* Average latency: `rate(timer_seconds_sum[10s])/rate(timer_seconds_count[10s])`
+* Throughput (requests per second): `rate(timer_seconds_count[10s])`
 
 .Timer over a simulated service.
 image::implementations/prometheus-timer.png[Grafana-rendered Prometheus timer]
 
 === Long task timers
 
-The following example shows a Prometheus query to plot the duration of a long task timer for a serial task is `long_task_timer_sum`. In Grafana, we can set an alert threshold at some fixed point.
+Long task timers measure tasks that are still running when Prometheus scrapes the registry.
+This differs from a `Timer`, which records completed events.
+
+The exposed Prometheus series depend on whether `publishPercentileHistogram()` is enabled:
+
+|===
+| Default Prometheus output | With `publishPercentileHistogram()`
+
+| `$\{name}_seconds_count`, `$\{name}_seconds_sum`, and `$\{name}_seconds_max`
+| `$\{name}_seconds_gcount`, `$\{name}_seconds_gsum`, `$\{name}_seconds_bucket`, and `$\{name}_seconds_max`
+|===
+
+The gauge-histogram series are defined in https://github.com/prometheus/OpenMetrics/blob/main/specification/OpenMetrics.md#gaugehistogram[GaugeHistogram] in the OpenMetrics specification.
+
+In the Prometheus Java Client 1.x registry, `$\{name}_seconds_max` is always exposed as a separate metric family.
+
+A `LongTaskTimer` only samples tasks that are running at scrape time, so its values return to zero when no tasks are in progress. If you need bucket-based queries such as `histogram_quantile()` over in-progress task duration, or if alert rules need histogram buckets, enable percentile histograms by calling `publishPercentileHistogram()` on the builder.
+
+For a serial task, `long_task_timer_seconds_sum` plots the current cumulative duration of in-progress tasks. In Grafana, we can set an alert threshold at some fixed point.
 
 .Simulated back-to-back long tasks with a fixed alert threshold.
 image::implementations/prometheus-long-task-timer.png[Grafana-rendered Prometheus long task timer]
