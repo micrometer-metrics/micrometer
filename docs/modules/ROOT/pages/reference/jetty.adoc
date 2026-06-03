@@ -52,6 +52,11 @@ resourceConfig.register(new MetricsApplicationEventListener(
 ServletContainer servletContainer = new ServletContainer(resourceConfig);
 ----
 
+[[lifecycle]]
+== Lifecycle
+
+NOTE: `JettyServerThreadPoolMetrics` implements `AutoCloseable`. When used outside a lifecycle-aware container, call `close()` on application shutdown so the binder can clean up the resources it registered or started, such as listeners, schedulers, or meters.
+
 [[overview-observation]]
 == Eclipse Observation Jersey Instrumentation
 
