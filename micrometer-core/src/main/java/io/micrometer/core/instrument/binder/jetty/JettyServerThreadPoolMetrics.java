@@ -39,6 +39,9 @@ import java.util.concurrent.ConcurrentHashMap;
  *     new JettyServerThreadPoolMetrics(threadPool, tags).bindTo(registry);
  *     }
  * </pre>
+ * <p>
+ * Note: the {@link #close()} method should be called when the application shuts down to
+ * remove the meters this binder registered from the {@link MeterRegistry}.
  *
  * @author Manabu Matsuzaki
  * @author Andy Wilkinson

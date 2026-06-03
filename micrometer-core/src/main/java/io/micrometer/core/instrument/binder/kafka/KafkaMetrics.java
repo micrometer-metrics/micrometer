@@ -43,8 +43,11 @@ import static io.micrometer.core.instrument.Meter.Type.OTHER;
 import static java.util.Collections.emptyList;
 
 /**
- * Kafka metrics binder. This should be closed on application shutdown to clean up
- * resources.
+ * Kafka metrics binder.
+ * <p>
+ * Note: the {@link #close()} method should be called when the application shuts down to
+ * shut down the internal metrics-refresh scheduler (when not externally managed) and to
+ * remove the meters this binder registered.
  *
  * @author Jorge Quilcate
  * @see <a href="https://docs.confluent.io/current/kafka/monitoring.html">Kakfa monitoring

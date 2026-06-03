@@ -39,6 +39,10 @@ import static java.util.Collections.emptyList;
 /**
  * Apache Commons Pool 2.x metrics collected from metrics exposed via the MBeanServer.
  * Metrics are exposed for each object pool.
+ * <p>
+ * Note: the {@link #close()} method should be called when the application shuts down to
+ * clean up the {@code MBeanServer} notification listeners and to shut down the internal
+ * metrics-updater executor this binder starts.
  *
  * @author Chao Chang
  * @since 1.6.0

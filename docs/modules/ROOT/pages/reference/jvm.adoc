@@ -128,3 +128,8 @@ If you are running your application with Java 24 or later on a JVM that has `jdk
 |===
 
 Note that aggregating the values of `jvm.threads.virtual.live` across the different tags gives the total number of virtual threads started but not ended.
+
+[[lifecycle]]
+== Lifecycle
+
+NOTE: `JvmGcMetrics` and `JvmHeapPressureMetrics` implement `AutoCloseable`. When used outside a lifecycle-aware container, call `close()` on application shutdown so the binder can clean up the resources it registered or started, such as listeners, schedulers, or meters.
