@@ -40,6 +40,9 @@ import static java.util.Collections.emptyList;
  * Metrics instrumentation of Logback log events. Counts the log events with a log level
  * equal to or higher than the corresponding logger's effective log level. A filter added
  * to an appender will not affect the metrics.
+ * <p>
+ * Note: the {@link #close()} method should be called when the application shuts down to
+ * clean up the {@code LoggerContext} listener and turbo filters this binder registers.
  *
  * @author Jon Schneider
  */
