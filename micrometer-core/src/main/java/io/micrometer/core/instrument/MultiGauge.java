@@ -29,6 +29,14 @@ import static java.util.Collections.emptySet;
 import static java.util.stream.Collectors.toSet;
 
 /**
+ * A virtual meter that manages a dynamic set of gauges with a common name and common
+ * tags.
+ * <p>
+ * A {@code MultiGauge} is not itself a {@link Meter}; it creates and removes individual
+ * {@link Gauge} meters as rows are registered. Each row contributes unique tags and a
+ * value function. Re-registering rows reconciles the gauges currently managed by this
+ * instance with the supplied rows.
+ *
  * @author Jon Schneider
  * @since 1.1.0
  */
@@ -54,10 +62,27 @@ public class MultiGauge {
         return new Builder(name);
     }
 
+    /**
+     * Register rows for this multi-gauge without replacing rows that have already been
+     * registered with the same tags. Rows that are no longer present are removed.
+     * @param rows rows to register
+     */
     public void register(Iterable<? extends Row<?>> rows) {
         register(rows, false);
     }
 
+    /**
+     * Register rows for this multi-gauge.
+     * <p>
+     * Each row is registered as a gauge using this multi-gauge's common name and tags,
+     * combined with the row's unique tags. When {@code overwrite} is {@code true}, rows
+     * that were previously registered with the same tags are replaced with the latest
+     * values. When {@code overwrite} is {@code false}, previously registered rows with
+     * the same tags are left unchanged. Rows that are no longer present are removed.
+     * @param rows rows to register
+     * @param overwrite whether to replace rows that have already been registered with the
+     * same tags
+     */
     @SuppressWarnings("unchecked")
     public void register(Iterable<? extends Row<?>> rows, boolean overwrite) {
         registeredRows.getAndUpdate(oldRows -> {
@@ -105,14 +130,38 @@ public class MultiGauge {
             this.valueFunction = valueFunction;
         }
 
+        /**
+         * Create a row from tags, an object, and a value function.
+         * @param uniqueTags tags that identify this row
+         * @param obj object from which the gauge value is read
+         * @param valueFunction function used to extract the gauge value
+         * @param <T> object type
+         * @return a row for use with {@link MultiGauge#register(Iterable)} or
+         * {@link MultiGauge#register(Iterable, boolean)}
+         */
         public static <T> Row<T> of(Tags uniqueTags, T obj, ToDoubleFunction<T> valueFunction) {
             return new Row<>(uniqueTags, obj, valueFunction);
         }
 
+        /**
+         * Create a row from tags and a number.
+         * @param uniqueTags tags that identify this row
+         * @param number number used as the gauge value
+         * @return a row for use with {@link MultiGauge#register(Iterable)} or
+         * {@link MultiGauge#register(Iterable, boolean)}
+         */
         public static Row<Number> of(Tags uniqueTags, Number number) {
             return new Row<>(uniqueTags, number, Number::doubleValue);
         }
 
+        /**
+         * Create a row from tags and a number supplier.
+         * @param uniqueTags tags that identify this row
+         * @param valueFunction supplier used to provide the gauge value
+         * @param <T> number type
+         * @return a row for use with {@link MultiGauge#register(Iterable)} or
+         * {@link MultiGauge#register(Iterable, boolean)}
+         */
         public static <T extends Number> Row<Supplier<T>> of(Tags uniqueTags, Supplier<T> valueFunction) {
             return new Row<>(uniqueTags, valueFunction, f -> {
                 Number value = valueFunction.get();
@@ -187,6 +236,12 @@ public class MultiGauge {
             return this;
         }
 
+        /**
+         * Create a multi-gauge associated with the given registry and the configured
+         * name, tags, description, and base unit.
+         * @param registry registry used to manage the gauges created for registered rows
+         * @return a multi-gauge associated with the given registry
+         */
         public MultiGauge register(MeterRegistry registry) {
             return new MultiGauge(registry, new Meter.Id(name, tags, baseUnit, description, Meter.Type.GAUGE, null));
         }
