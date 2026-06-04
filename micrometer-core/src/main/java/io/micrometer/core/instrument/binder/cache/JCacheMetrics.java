@@ -195,6 +195,9 @@ public class JCacheMetrics<K, V, C extends Cache<K, V>> extends CacheMeterBinder
         }
     }
 
+    // Captured once at construction; runtime toggles via
+    // CacheManager#enableStatistics(...) are not tracked.
+    // Rebind the metrics if statistics are enabled later.
     private static boolean isStatisticsEnabled(Cache<?, ?> cache) {
         try {
             CompleteConfiguration<?, ?> config = cache.getConfiguration(CompleteConfiguration.class);
