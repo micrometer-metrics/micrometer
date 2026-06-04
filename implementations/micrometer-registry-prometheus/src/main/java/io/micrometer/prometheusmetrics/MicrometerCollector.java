@@ -89,10 +89,7 @@ class MicrometerCollector implements MultiCollector {
 
     @Override
     public List<String> getPrometheusNames() {
-        return registrationFamilies().stream()
-            .map(RegisteredFamily::getPrometheusName)
-            .distinct()
-            .collect(toList());
+        return registrationFamilies().stream().map(RegisteredFamily::getPrometheusName).distinct().collect(toList());
     }
 
     @Override
@@ -178,6 +175,7 @@ class MicrometerCollector implements MultiCollector {
         MetricMetadata getMetadata() {
             return descriptor.getMetadata();
         }
+
     }
 
     static class Family<T extends DataPointSnapshot> {
@@ -188,7 +186,8 @@ class MicrometerCollector implements MultiCollector {
 
         final Function<Family<T>, MetricSnapshot> metricSnapshotFactory;
 
-        Family(String conventionName, Function<Family<T>, MetricSnapshot> metricSnapshotFactory, T... dataPointSnapshots) {
+        Family(String conventionName, Function<Family<T>, MetricSnapshot> metricSnapshotFactory,
+                T... dataPointSnapshots) {
             this.conventionName = conventionName;
             this.metricSnapshotFactory = metricSnapshotFactory;
             Collections.addAll(this.dataPointSnapshots, dataPointSnapshots);
